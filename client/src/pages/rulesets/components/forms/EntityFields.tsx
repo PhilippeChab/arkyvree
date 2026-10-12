@@ -125,11 +125,7 @@ function FieldInput<T extends FieldValues>({ field, ...props }: FieldInputProps<
         <FormTextField
           control={form.control}
           name={name}
-          rules={wholeNumberRules(
-            field.min,
-            field.default === null ? undefined : `${field.label} is required`,
-            field.max,
-          )}
+          rules={wholeNumberRules(field.min, field.default === null ? false : `${field.label} is required`, field.max)}
           number
           label={field.label}
           fullWidth

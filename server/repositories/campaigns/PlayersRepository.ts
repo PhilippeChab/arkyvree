@@ -1,11 +1,22 @@
-import { and, eq, inArray, type InferInsertModel, isNull, sql } from "drizzle-orm";
+import { and, eq, inArray, type InferInsertModel, isNull, sql, type SQLWrapper } from "drizzle-orm";
+import type { PgColumn } from "drizzle-orm/pg-core";
 
 import type { Db } from "@/drizzle/database.ts";
-import { campaignsInCampaign, playersInCampaign, usersInAccount } from "@/drizzle/schema.ts";
+import { campaignsInCampaign, invitesInCampaign, playersInCampaign, usersInAccount } from "@/drizzle/schema.ts";
 import { include } from "@/lib/mixins.ts";
 import BaseRepository, { Visibility } from "@/server/repositories/BaseRepository.ts";
 import { Paginates } from "@/server/repositories/concerns/Paginates.ts";
 import { Searches } from "@/server/repositories/concerns/Searches.ts";
+
+/**
+ * When a slot's invite was accepted, its answer's time: a subquery inside a players query, which renders every column it
+ * names as the players table's own, so the invites' are named by hand.
+ */
+function acceptedAt(playerId: SQLWrapper) {
+  const invite = (column: PgColumn) => sql`${sql.identifier("accepted")}.${sql.identifier(column.name)}`;
+  return sql`(select max(${invite(invitesInCampaign.updatedAt)}) from ${invitesInCampaign} as ${sql.identifier("accepted")}
+    where ${invite(invitesInCampaign.playerId)} = ${playerId} and ${invite(invitesInCampaign.status)} = 'Accepted')`;
+}
 
 class PlayersRepository extends include(BaseRepository<typeof playersInCampaign>, Paginates, Searches) {
   constructor() {
@@ -104,6 +115,15 @@ class PlayersRepository extends include(BaseRepository<typeof playersInCampaign>
             this.visibility(visibility),
             searchCondition,
           ]),
+          // When its user joined: its accepted invite's answer, or the slot's creation for one made with its user (a
+          // campaign's first Game Master); none while it has no user
+          extras: (players) => ({
+            joinedAt: sql<
+              string | null
+            >`coalesce(${acceptedAt(players.id)}, case when ${players.userId} is not null then ${players.createdAt} end)`.as(
+              "joined_at",
+            ),
+          }),
           with: {
             usersInAccount: {
               columns: {

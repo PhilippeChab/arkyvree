@@ -131,9 +131,8 @@ export function RulesetEntityDetail<TEntity extends EntityBase, TForm extends Fi
   editing,
 }: RulesetEntityDetailProps<TEntity, TForm, TKey>) {
   const location = useLocation();
-  const back = entityPageBack(location.state, `/rulesets/${rulesetId}/${section}`);
-
   const { data: ruleset, isLoading: isRulesetLoading, error: rulesetError } = useQuery(rulesetDetailQuery(rulesetId));
+  const back = entityPageBack(location.state, `/rulesets/${rulesetId}/${section}`, ruleset?.baseRules);
   const { data: entity, isLoading: isEntityLoading, error: entityError } = useQuery(query(entityId));
 
   usePageTitle(entity?.name);

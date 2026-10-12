@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { type QueryKey, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
@@ -34,11 +34,11 @@ export function useAnswerInvite(onNoLongerPending?: (answer: InviteAnswer) => vo
 
   const accept = useMutation({
     mutationKey: [...QUERY_KEYS.invites.answer, "accept"],
-    mutationFn: async ({ kind, inviteId }: InviteAnswer) => {
-      await INVITE_KINDS[kind].acceptFn(inviteId);
-    },
-    onSuccess: (_, { kind }) => {
+    mutationFn: ({ kind, inviteId }: InviteAnswer): Promise<QueryKey> => INVITE_KINDS[kind].acceptFn(inviteId),
+    // The record it joined refreshes now, cached or not, so its page opens with the user's new rights
+    onSuccess: (detailKey, { kind }) => {
       snackbar.success(`${INVITE_KINDS[kind].label} accepted`);
+      void queryClient.invalidateQueries({ queryKey: detailKey, refetchType: "all" });
       void queryClient.invalidateQueries({ queryKey: INVITE_KINDS[kind].listKey });
       refresh();
     },

@@ -231,7 +231,7 @@ export function CharacterIdentitySection({
                   <FormTextField
                     control={form.control}
                     name="experience"
-                    rules={wholeNumberRules(0)}
+                    rules={wholeNumberRules(0, "Experience points are required")}
                     number
                     label="Experience Points"
                     size="small"
@@ -260,7 +260,7 @@ export function CharacterIdentitySection({
               <FormTextField
                 control={form.control}
                 name="age"
-                rules={wholeNumberRules(1)}
+                rules={wholeNumberRules(1, false)}
                 number
                 label="Age"
                 size="small"

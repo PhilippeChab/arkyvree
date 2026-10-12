@@ -37,6 +37,15 @@ export const EMPTY_INVENTORY_FORM: InventoryFormData = {
 export const LOCATION_CHOICES = [...LOCATION_OPTIONS, "none"] as const;
 
 /**
+ * Where a picked item goes: the slot its placement sets, else the location the form holds when the item can take it (an
+ * earlier pick's, which a weapon's hands or another item's slot may not offer), else not equipped.
+ */
+export function pickedLocation(current: InventoryFormData["location"], placement: PlacementProfile) {
+  if (placement.slot) return placement.slot;
+  return placement.locations.some((option) => option.location === current) ? current : "none";
+}
+
+/**
  * The placement as the inventory endpoints take it: a slot equips the item, charges only for an item that has them (as
  * its `profile` says), and the weapon sets stored from 0, which the server keeps for a hand only.
  */

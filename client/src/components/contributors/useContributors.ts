@@ -18,7 +18,7 @@ export function useContributors(kind: ContributorKind, id: string, enabled: bool
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
   const navigate = useNavigate();
-  const { noun, listKey, listPath, inviteFn, removeFn, leaveFn } = CONTRIBUTOR_KINDS[kind];
+  const { noun, detailKey, listKey, listPath, inviteFn, removeFn, leaveFn } = CONTRIBUTOR_KINDS[kind];
   const query = contributorsQuery(kind, id);
 
   const inviteDialog = useDialogState();
@@ -62,7 +62,8 @@ export function useContributors(kind: ContributorKind, id: string, enabled: bool
     onError: (error) => snackbar.error(error, "Failed to remove contributor"),
   });
 
-  // Gone from the record: its list no longer holds it, and its page sends the user back to that list
+  // Gone from the record: its list no longer holds it, and its page sends the user back to that list, in its place, its
+  // queries removed, so Back never renders it from the cache with the rights they had
   const leaveMutation = useMutation({
     mutationFn: async () => {
       await leaveFn(id);
@@ -71,7 +72,8 @@ export function useContributors(kind: ContributorKind, id: string, enabled: bool
       snackbar.success(`You left the ${noun}`);
       void queryClient.invalidateQueries({ queryKey: listKey });
       leaveDialog.close();
-      navigate(listPath);
+      navigate(listPath, { replace: true });
+      queryClient.removeQueries({ queryKey: detailKey(id) });
     },
     onError: (error) => snackbar.error(error, `Failed to leave ${noun}`),
   });

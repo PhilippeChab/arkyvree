@@ -11,9 +11,9 @@ import { getEntityPages } from "./entityPageFactory.ts";
 export default function SkillDetailsPage() {
   const { id: rulesetId = "", skillId = "" } = useParams<{ id: string; skillId: string }>();
   const location = useLocation();
-  const back = entityPageBack(location.state, `/rulesets/${rulesetId}/skills`);
   // A skill's details are its ruleset's base rules': the page waits for the ruleset to know them
   const { data: ruleset, isLoading, error } = useQuery(rulesetDetailQuery(rulesetId));
+  const back = entityPageBack(location.state, `/rulesets/${rulesetId}/skills`, ruleset?.baseRules);
 
   if (ruleset) {
     const { SkillDetails } = getEntityPages(ruleset.baseRules);

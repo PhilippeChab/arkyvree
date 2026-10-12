@@ -32,8 +32,9 @@ export interface InviteAnswer {
 export type InviteKind = "campaign" | "characterContributor" | "rulesetContributor";
 
 /**
- * Each kind's name in a toast (`label`), its answers' requests, and the list that gains its entity once it's accepted
- * (`listKey`); its page's facts: its title, its icon, what it's to (`entityLabel`, what accepting does, `verb`), the
+ * Each kind's name in a toast (`label`), its answers' requests (an accept's answering the cache key of the record it
+ * gave the user rights on, which it refreshes), and the list that gains its entity once it's accepted (`listKey`); its
+ * page's facts: its title, its icon, what it's to (`entityLabel`, what accepting does, `verb`), the
  * invite read for it (`inviteFn`) and the status an accepted one ends in; and where accepting lands: its entity's
  * page, or its list's (`acceptedPath`).
  */
@@ -59,8 +60,11 @@ export const INVITE_KINDS = {
         invitedAt: invite.createdAt,
       };
     },
-    acceptFn: (inviteId: string) =>
-      parseResponse(rpc.api.campaigns.invites[":inviteId"].accept.$post({ param: { inviteId } })),
+    // The answer names its slot, not its campaign: every campaign's own data, which only a member's page holds
+    acceptFn: async (inviteId: string) => {
+      await parseResponse(rpc.api.campaigns.invites[":inviteId"].accept.$post({ param: { inviteId } }));
+      return QUERY_KEYS.campaigns.details;
+    },
     rejectFn: (inviteId: string) =>
       parseResponse(rpc.api.campaigns.invites[":inviteId"].reject.$post({ param: { inviteId } })),
   },
@@ -85,8 +89,12 @@ export const INVITE_KINDS = {
         role: invite.role,
       };
     },
-    acceptFn: (id: string) =>
-      parseResponse(rpc.api.characters.contributors.invites[":id"].accept.$post({ param: { id } })),
+    acceptFn: async (id: string) => {
+      const contributor = await parseResponse(
+        rpc.api.characters.contributors.invites[":id"].accept.$post({ param: { id } }),
+      );
+      return QUERY_KEYS.characters.detail(contributor.characterId);
+    },
     rejectFn: (id: string) =>
       parseResponse(rpc.api.characters.contributors.invites[":id"].reject.$post({ param: { id } })),
   },
@@ -111,8 +119,12 @@ export const INVITE_KINDS = {
         role: invite.role,
       };
     },
-    acceptFn: (id: string) =>
-      parseResponse(rpc.api.rulesets.contributors.invites[":id"].accept.$post({ param: { id } })),
+    acceptFn: async (id: string) => {
+      const contributor = await parseResponse(
+        rpc.api.rulesets.contributors.invites[":id"].accept.$post({ param: { id } }),
+      );
+      return QUERY_KEYS.rulesets.detail(contributor.rulesetId);
+    },
     rejectFn: (id: string) =>
       parseResponse(rpc.api.rulesets.contributors.invites[":id"].reject.$post({ param: { id } })),
   },

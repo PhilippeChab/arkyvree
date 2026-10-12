@@ -21,12 +21,14 @@ export function useOpenActivityTarget() {
   return (targetTable: string, targetId: string) => {
     queryClient.fetchQuery({ ...activityTargetQuery(targetTable, targetId), staleTime: NO_TIME }).then(
       ({ url }) => navigate(url),
-      // A 403 says why ("You no longer have access to this character"), a 404 that the entity is gone; any other
-      // failure (the server's, the network's) is an error of its own
+      // A 403 says why ("You no longer have access to this character"), a 404 that there's no page to open, the entity
+      // gone or its page too (a deleted class's levels); any other failure (the server's, the network's) is an error of
+      // its own
       (error) => {
         if (error instanceof ApiError && error.status === 403)
           snackbar.warning(errorMessage(error, "You no longer have access to this item"));
-        else if (error instanceof ApiError && error.status === 404) snackbar.warning("This item was deleted");
+        else if (error instanceof ApiError && error.status === 404)
+          snackbar.warning("This item can't be found: it may have been deleted");
         else snackbar.error(error, "Failed to open this item");
       },
     );

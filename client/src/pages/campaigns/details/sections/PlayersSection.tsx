@@ -151,6 +151,8 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
       snackbar.success(removedSelf ? "You left the campaign" : "Player removed");
       if (removedSelf) {
         navigate("/campaigns", { replace: true });
+        // Back never renders it from the cache, as if they still played in it
+        queryClient.removeQueries({ queryKey: QUERY_KEYS.campaigns.detail(campaign.id) });
         queryClient.invalidateQueries({ queryKey: QUERY_KEYS.campaigns.lists });
       } else {
         invalidateCampaignPlayers(queryClient, campaign.id, true);
@@ -290,9 +292,9 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
                         <StatusChip icon={statusChip.icon} label={statusChip.label} color={statusChip.color} />
                       </TableCell>
                       <TableCell>
-                        {slot.state === "assigned" ? (
+                        {player.joinedAt ? (
                           <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                            {formatDate(player.createdAt)}
+                            {formatDate(player.joinedAt)}
                           </Typography>
                         ) : (
                           <EmptyValue />

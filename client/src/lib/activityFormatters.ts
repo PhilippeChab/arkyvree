@@ -13,11 +13,8 @@ const CONTENT_CHANGES: Record<string, string> = { create: "created", delete: "de
 
 /** The changed fields whose name doesn't read as their label (`formatSegment`'s "Hd") */
 const FIELD_LABELS: Record<string, string> = {
-  abilityId: "Ability",
   costGp: "Cost (gp)",
   hd: "Hit Die",
-  primaryAbilityId: "Primary Ability",
-  saveId: "Save",
 };
 
 const NOTIFICATION_MESSAGES: Record<string, (actor: string, d: Record<string, unknown>) => string> = {
@@ -70,6 +67,9 @@ const NOTIFICATION_MESSAGES: Record<string, (actor: string, d: Record<string, un
   pdfFailed: (_actor, d) => `PDF generation failed for ${d.characterName || "your character"}`,
 };
 
+/** A field that points to another entity by its id (`primaryAbilityId`, `sourceItemId`): its name, then "Id". */
+const REFERENCE_FIELD = /^(\w+)Id$/;
+
 /** The base rules an activity's ruleset follows, when it says */
 function baseRulesOf(d: Record<string, unknown>) {
   return oneOf(d.baseRules, BASE_RULES_OPTIONS);
@@ -88,6 +88,10 @@ function contentChange(type: string, actor: string, d: Record<string, unknown>) 
 }
 
 function formatChange(change: ChangedField): string {
+  // An entity a field points to is recorded by its id, which says nothing to a reader: only that it changed
+  const reference = REFERENCE_FIELD.exec(change.field)?.[1];
+  if (reference) return `${formatSegment(reference)} updated`;
+
   const label = FIELD_LABELS[change.field] ?? formatSegment(change.field);
   if (change.from == null && change.to == null) return `${label} updated`;
 

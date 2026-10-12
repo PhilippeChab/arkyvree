@@ -579,7 +579,7 @@ export function CreateCharacterDialog({ open, onClose, onExited }: CreateCharact
             <FormTextField
               control={control}
               name="age"
-              rules={wholeNumberRules(1)}
+              rules={wholeNumberRules(1, false)}
               number
               label="Age"
               slotProps={{ htmlInput: { min: 1 } }}

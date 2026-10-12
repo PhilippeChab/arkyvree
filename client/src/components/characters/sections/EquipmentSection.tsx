@@ -12,6 +12,7 @@ import {
   BlankNote,
   CreateDialog,
   DeleteDialog,
+  DiceSpinner,
   EditDialog,
   LoadError,
   RowAction,
@@ -37,6 +38,7 @@ import {
   EMPTY_INVENTORY_FORM,
   type InventoryFormData,
   LOCATION_CHOICES,
+  pickedLocation,
   placementPayload,
   weaponSetChoices,
 } from "./equipment.ts";
@@ -70,7 +72,13 @@ export function EquipmentSection({ characterId, rulesetId, readOnly, load }: Equ
   const { canEditEntities: canCreateItems } = useRulesetPermissions(ruleset);
 
   // The inventory the dialogs check a slot against
-  const { data: inventoryItems = [], error: inventoryError } = useQuery(characterInventoryQuery(characterId));
+  const {
+    data: inventory,
+    isLoading: isLoadingInventory,
+    error: inventoryError,
+    refetch: refetchInventory,
+  } = useQuery(characterInventoryQuery(characterId));
+  const inventoryItems = inventory ?? [];
 
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const { issues, setIssues, handleSaveError } = useValidationIssues("Failed to save item");
@@ -99,8 +107,7 @@ export function EquipmentSection({ characterId, rulesetId, readOnly, load }: Equ
     queryClient.fetchQuery(rulesetItemQuery(rulesetId, itemId)).then(
       ({ placement }) => {
         if (addForm.getValues("selectedItem")?.id !== itemId) return;
-        if (placement.slot) addForm.setValue("location", placement.slot, { shouldDirty: true });
-        else if (!placement.hand) addForm.setValue("location", "none", { shouldDirty: true });
+        addForm.setValue("location", pickedLocation(addForm.getValues("location"), placement), { shouldDirty: true });
         if (placement.charges !== null) {
           addForm.setValue("totalCharges", placement.charges, { shouldDirty: true });
           addForm.setValue("remainingCharges", placement.charges, { shouldDirty: true });
@@ -269,7 +276,11 @@ export function EquipmentSection({ characterId, rulesetId, readOnly, load }: Equ
       <Stack spacing={2}>
         {/* Whether Create Item shows: the ruleset's rights */}
         {!readOnly && !!rulesetError && !ruleset && <LoadError what="Ruleset" error={rulesetError} />}
-        {hasItems ? (
+        {isLoadingInventory && <DiceSpinner sx={{ py: 4 }} />}
+        {!isLoadingInventory && !inventory && (
+          <LoadError what="Inventory" error={inventoryError} onRetry={() => void refetchInventory()} />
+        )}
+        {inventory && hasItems && (
           <EquipmentTable
             rows={inventoryItems.map((entry) => ({
               ...entry,
@@ -296,7 +307,8 @@ export function EquipmentSection({ characterId, rulesetId, readOnly, load }: Equ
                   )
             }
           />
-        ) : (
+        )}
+        {inventory && !hasItems && (
           <Stack spacing={2} sx={{ alignItems: "flex-start" }}>
             <BlankNote>No equipment</BlankNote>
             {!readOnly && <AddButton label="Add Item" onClick={handleAddItem} />}

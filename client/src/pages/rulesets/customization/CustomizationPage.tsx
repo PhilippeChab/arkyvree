@@ -74,7 +74,7 @@ function CustomizationView({
   const label = entityTypeLabel(type, ruleset.baseRules);
   const { title, pageTitle, subtitle, backPath } = describe(data, rulesetId);
   // Where it was opened from, else what holds it (a class's level, an entity's modifier), else its list
-  const back = entityPageBack(location.state, backPath ?? `/rulesets/${rulesetId}/${type}`);
+  const back = entityPageBack(location.state, backPath ?? `/rulesets/${rulesetId}/${type}`, ruleset.baseRules);
   usePageTitle(pageTitle);
 
   const entityKey = QUERY_KEYS.rulesets.entity(rulesetId, type, entityId);
@@ -263,8 +263,6 @@ export default function CustomizationPage() {
   const validType = parseCustomizationSegment(entityType);
 
   const { copiedFrom } = entityPageState(location.state);
-  // Until the entity says what holds it, Back goes where the page was opened from, else to the ruleset
-  const back = entityPageBack(location.state, `/rulesets/${rulesetId}`);
 
   // Right after a copy-on-write, keep showing the entity the copy was made
   // from until the copy loads, so the page and any unsaved edits stay; the
@@ -284,6 +282,8 @@ export default function CustomizationPage() {
   }
 
   const { data: ruleset, isLoading: isRulesetLoading, error: rulesetError } = useQuery(rulesetDetailQuery(rulesetId));
+  // Until the entity says what holds it, Back goes where the page was opened from, else to the ruleset
+  const back = entityPageBack(location.state, `/rulesets/${rulesetId}`, ruleset?.baseRules);
   const {
     data,
     isLoading: isEntityLoading,

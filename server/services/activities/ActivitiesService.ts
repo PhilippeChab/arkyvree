@@ -1,27 +1,21 @@
+import { EntityRepositories } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import {
   Activities,
-  Aptitudes,
   Campaigns,
   CharacterContributors,
   Characters,
   Contributors,
-  Feats,
   Invites,
-  Items,
   Klasses,
   KlassLevels,
-  Languages,
   Modifiers,
   PlayerCharacters,
   Players,
-  Powers,
   Properties,
-  Races,
   Requirements,
+  RULESET_ENTITY_TYPES,
   Rulesets,
-  Saves,
-  Skills,
   Visibility,
 } from "@/server/repositories/index.ts";
 import { isNavigableTarget } from "@/shared/activity.ts";
@@ -76,36 +70,16 @@ class ActivitiesService {
       return `/rulesets/${klass.rulesetId}/${buildCustomizationPath("klass_levels", entityId)}`;
     }
 
-    const repoMap: Record<string, (id: string) => Promise<{ rulesetId: string } | undefined>> = {
-      feats: (id) => Feats.findOne(db, { id }),
-      powers: (id) => Powers.findOne(db, { id }),
-      items: (id) => Items.findOne(db, { id }),
-      races: (id) => Races.findOne(db, { id }),
-    };
-
-    const findOne = repoMap[entityType];
-    if (!findOne || !isOneOf(entityType, CUSTOMIZATION_PAGE_TYPES)) return null;
-    const entity = await findOne(entityId);
+    if (!isOneOf(entityType, RULESET_ENTITY_TYPES) || !isOneOf(entityType, CUSTOMIZATION_PAGE_TYPES)) return null;
+    const entity = await EntityRepositories.of(entityType).findOne(db, { id: entityId });
     if (!entity) return null;
     return `/rulesets/${entity.rulesetId}/${buildCustomizationPath(entityType, entityId)}`;
   }
 
+  /** A ruleset entity's page, any type's: its customization page when it has one, else its own. */
   private async resolveRulesSubEntity(targetTable: string, targetId: string): Promise<string | null> {
-    const finders: Record<string, (id: string) => Promise<{ rulesetId: string } | undefined>> = {
-      feats: (id) => Feats.findOne(db, { id }),
-      powers: (id) => Powers.findOne(db, { id }),
-      skills: (id) => Skills.findOne(db, { id }),
-      races: (id) => Races.findOne(db, { id }),
-      klasses: (id) => Klasses.findOne(db, { id }),
-      items: (id) => Items.findOne(db, { id }),
-      saves: (id) => Saves.findOne(db, { id }),
-      languages: (id) => Languages.findOne(db, { id }),
-      aptitudes: (id) => Aptitudes.findOne(db, { id }),
-    };
-
-    const findOne = finders[targetTable];
-    if (!findOne) return null;
-    const entity = await findOne(targetId);
+    if (!isOneOf(targetTable, RULESET_ENTITY_TYPES)) return null;
+    const entity = await EntityRepositories.of(targetTable).findOne(db, { id: targetId });
     if (!entity) return null;
 
     return isOneOf(targetTable, CUSTOMIZATION_PAGE_TYPES)

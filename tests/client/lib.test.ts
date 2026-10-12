@@ -186,11 +186,19 @@ describe("An activity", () => {
           { field: "hd", to: "8" },
           { field: "slot", from: "Neck" },
           { field: "baseSpeed" },
+          {
+            field: "primaryAbilityId",
+            from: "7c0d4b52-0c0e-4b8e-9d7f-1f2a3b4c5d6e",
+            to: "00000000-0000-0000-0000-000000000000",
+          },
+          { field: "sourceItemId", to: "00000000-0000-0000-0000-000000000000" },
           { bad: true },
         ],
         level: 3,
       }),
-    ).toBe("Name: A → B\nHit Die set to 8\nSlot cleared\nBase Speed updated\nLevel 3");
+    ).toBe(
+      "Name: A → B\nHit Die set to 8\nSlot cleared\nBase Speed updated\nPrimary Ability updated\nSource Item updated\nLevel 3",
+    );
     expect([
       formatActivityDetails("createModifier", { target: "combat.ac.misc", operator: "add", value: "1" }),
       formatActivityDetails("updateRequirement", { target: "identity.name", operator: "not_empty" }),

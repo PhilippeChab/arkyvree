@@ -3,8 +3,9 @@ import { describe, expect, test } from "bun:test";
 import { db } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
 import { Activities, Campaigns, Invites, Players } from "@/server/repositories/index.ts";
+import { CampaignInvitesService } from "@/server/services/campaigns/invites/index.ts";
 import { CampaignPlayersService } from "@/server/services/campaigns/players/index.ts";
-import { createTestCampaign } from "@/tests/support/campaigns.ts";
+import { createTestCampaign, inviteToSlot } from "@/tests/support/campaigns.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 
@@ -31,6 +32,26 @@ describe("CampaignPlayersService", () => {
       expect([page1.items.length, page1.nextPage]).toEqual([2, 2]);
       const page2 = await CampaignPlayersService.getPlayers(session, campaign.id, {}, { limit: 2, page: 2 });
       expect([page2.items.length, page2.nextPage]).toEqual([1, undefined]);
+    });
+
+    test("says when each player joined: its invite's acceptance, the first Game Master's slot's creation", async () => {
+      const { session, campaign, gmPlayer } = await setup();
+      const { player: slot } = await CampaignPlayersService.addPlayer(session, campaign.id, "Player Character");
+      const { user: invitee, session: inviteeSession } = await createTestUser("invitee");
+      const invite = await inviteToSlot(session, slot, invitee.emailAddress);
+      const joinedAt = async () =>
+        new Map(
+          (await CampaignPlayersService.getPlayers(session, campaign.id, {}, firstPage)).items.map((p) => [
+            p.id,
+            p.joinedAt,
+          ]),
+        );
+      expect((await joinedAt()).get(slot.id)).toBeNull();
+
+      await CampaignInvitesService.acceptInvite(inviteeSession, invite.id);
+      const joined = await joinedAt();
+      expect(joined.get(slot.id)).toBe((await Invites.findOne(db, { id: invite.id }))?.updatedAt);
+      expect(joined.get(gmPlayer.id)).toBe(gmPlayer.createdAt);
     });
 
     test("refuses non-members and throws NotFoundError for a missing campaign", async () => {

@@ -188,9 +188,8 @@ export default function ClassDetailsPage() {
     id: string;
     section?: string;
   }>();
-  const back = entityPageBack(location.state, `/rulesets/${rulesetId}/classes`);
-
   const { data: ruleset, isLoading, error } = useQuery(rulesetDetailQuery(rulesetId));
+  const back = entityPageBack(location.state, `/rulesets/${rulesetId}/classes`, ruleset?.baseRules);
   // The class loads alongside its ruleset, which its page waits for: its forms and its tabs are its base rules'
   useQuery(classDetailQuery(rulesetId, classId));
 

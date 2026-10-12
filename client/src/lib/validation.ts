@@ -77,11 +77,12 @@ export function wholeNumberError(value: number, min: number, max?: number) {
 /**
  * React Hook Form rules for a whole number of at least `min` (any, without one), for a number field
  * (`<FormTextField number />`). Use these rather than native `min`: the browser's own check would block the submit
- * before the field shows why.
+ * before the field shows why. An emptied number field holds NaN, which a request sends as null: `required` says why it
+ * can't be empty, or is `false` for one its save sends empty on purpose (a cleared age).
  */
-export function wholeNumberRules(min: number | undefined, required?: string, max?: number) {
+export function wholeNumberRules(min: number | undefined, required: string | false, max?: number) {
   return {
-    required,
+    required: required || undefined,
     ...(min !== undefined && { min: { value: min, message: `Minimum ${min}` } }),
     ...(max !== undefined && { max: { value: max, message: `Maximum ${max}` } }),
     validate: (value: unknown) =>

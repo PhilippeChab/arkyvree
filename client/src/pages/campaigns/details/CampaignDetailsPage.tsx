@@ -253,7 +253,7 @@ export default function CampaignDetailsPage() {
           onClose={() => setHardDeleteDialogOpen(false)}
           onConfirm={() => hardDeleteMutation.mutate()}
           title="Delete Permanently"
-          message="Are you sure you want to permanently delete this campaign? Its players, invites and campaign-specific ruleset extensions go with it. This action cannot be undone."
+          message="Are you sure you want to permanently delete this campaign? Its players, its invites and the ruleset content made for it go with it. This action cannot be undone."
           pending={hardDeleteMutation.isPending}
           confirmLabel="Delete Permanently"
         />
