@@ -58,7 +58,13 @@ export function SheetSections({
       <SpellsSection spellGroups={character.spellGroups} spellsPerDay={character.spellsPerDay} rulesetId={rulesetId} />
 
       {equipmentMode === "editable" && rulesetId ? (
-        <EquipmentSection characterId={characterId} rulesetId={rulesetId} readOnly={readOnly} load={load} />
+        <EquipmentSection
+          baseRules={baseRules}
+          characterId={characterId}
+          rulesetId={rulesetId}
+          readOnly={readOnly}
+          load={load}
+        />
       ) : (
         <ReadOnlyEquipmentSection equipment={character.equipment} load={load} />
       )}

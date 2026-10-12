@@ -59,8 +59,8 @@
  *   `animationOffset` is `itemsBeforeLastPage(data)`.
  * - `empty-values`: a value that isn't there is an `EmptyValue`, never a dash of its own, and a description that isn't
  *   there says `NO_DESCRIPTION`, never a sentence of its own.
- * - `entity-pages`: a ruleset entity page saves its details through `useEntitySave` (no `sync.saved` of its own under
- *   `pages/rulesets/`), and deletes through its `EntityDetailLayout`'s `deletion` (no `EntityDeleteDialog` beside it).
+ * - `entity-pages`: a ruleset entity page's details are `useEntityForm`'s, its form saved through `useEntitySave`,
+ *   which nothing else under `pages/rulesets/` calls (no `sync.saved` of its own there either), and it deletes through its `EntityDetailLayout`'s `deletion` (no `EntityDeleteDialog` beside it).
  *   It goes back where it was opened from: its error's way back is `entityPageBack`'s, never a label written in place.
  * - `notification-messages`: a notification shows through `NotificationMessage` (`components/notifications`), its
  *   message, its details and its unread dot, wherever it shows; what an activity or a notification changed shows
@@ -88,9 +88,12 @@ const ACTION_ALERTS = [
 ];
 /** The confirmations, whose `onConfirm` sends what they ask */
 const CONFIRMATIONS = new Set(["ConfirmDialog", "DeleteDialog", "EntityDeleteDialog"]);
+/** How a row pushes what it holds to its end: a list's actions there sit in its toolbar instead */
+const END_JUSTIFICATIONS = new Set(["flex-end", "space-between"]);
 /** The modules of a ruleset entity page's save and delete: its inline save's hook, its layout's delete */
 const ENTITY_PAGE_MODULES = {
   layout: "client/src/pages/rulesets/components/EntityDetailLayout.tsx",
+  form: "client/src/pages/rulesets/hooks/useEntityForm.ts",
   save: "client/src/pages/rulesets/hooks/useEntitySave.ts",
 };
 
@@ -424,8 +427,15 @@ function createEntityPages(context) {
   let layout = false;
   const deleteDialogs = [];
   return {
-    // An inline form's `sync.saved(…)`, once its save is in
+    // An inline form's `sync.saved(…)`, once its save is in, and its save made beside its form
     CallExpression(node) {
+      if (calleeName(node) === "useEntitySave" && file !== ENTITY_PAGE_MODULES.form) {
+        report(
+          node,
+          "A ruleset entity page's details are `useEntityForm`'s (`pages/rulesets/hooks`): its form, kept in step " +
+            "with the record, and its save, which its card takes whole.",
+        );
+      }
       if (file === ENTITY_PAGE_MODULES.save || node.callee.type !== "MemberExpression") return;
       if (calleeName(node) !== "saved") return;
       report(
@@ -611,11 +621,12 @@ function createListToolbars(context) {
           message: "Load More sits 16px under its list: the column holding a `LoadMoreButton` takes `spacing={2}`.",
         });
       }
+      // A row that pushes its actions to its end: alone, or across from a line of its own (a dialog's lead)
       const endAligned = styleProperties(attributeValue(attribute(node, "sx")), node).some(
         (property) =>
           propertyKey(property) === "justifyContent" &&
           property.value.type === "Literal" &&
-          property.value.value === "flex-end",
+          END_JUSTIFICATIONS.has(property.value.value),
       );
       if (!isRow(node) || !endAligned || !children.some((child) => LIST_ACTIONS.has(child))) return;
       context.report({

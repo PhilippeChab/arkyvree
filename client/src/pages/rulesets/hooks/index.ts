@@ -2,6 +2,7 @@ export { useAptitudeFilter } from "./useAptitudeFilter.ts";
 export { useCopyOnWrite } from "./useCopyOnWrite.ts";
 export { useEntityFields } from "./useEntityFields.ts";
 export { useEntityFilters } from "./useEntityFilters.ts";
+export { useEntityForm } from "./useEntityForm.ts";
 export { useEntitySave } from "./useEntitySave.ts";
 export { useOpenEntity } from "./useOpenEntity.ts";
 export { useRestorableDelete } from "./useRestorableDelete.ts";

@@ -1,7 +1,14 @@
 import { DialogContent, DialogContentText, DialogTitle, Stack } from "@mui/material";
 import { useFieldArray, type UseFormReturn } from "react-hook-form";
 
-import { AddButton, DialogFooter, FormDialog, FormTextField, RowAction } from "@/client/src/components/common/index.ts";
+import {
+  AddButton,
+  DialogFooter,
+  FormDialog,
+  FormTextField,
+  RowAction,
+  TextAreaField,
+} from "@/client/src/components/common/index.ts";
 import { DeleteIcon } from "@/client/src/components/icons/index.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { NAME_RULES } from "@/client/src/lib/validation.ts";
@@ -71,14 +78,12 @@ export function BulkVariantsDialog({
                       size="small"
                       fullWidth
                     />
-                    <FormTextField
+                    <TextAreaField
                       control={form.control}
                       name={`variants.${index}.description`}
                       label="Description"
                       size="small"
-                      fullWidth
-                      multiline
-                      minRows={1}
+                      rows={1}
                     />
                   </Stack>
                   {/* Level with its name field */}

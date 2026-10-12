@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
-import { useCallback, useMemo, useState } from "react";
+import { useState } from "react";
 
 import { useValidationIssues } from "@/client/src/components/characters/index.ts";
 import { useDebouncedValue, useFormWith, useToggleSet } from "@/client/src/hooks/index.ts";
@@ -84,7 +84,7 @@ export function useLevelWizardBase<O extends WizardStep>({
   const queryClient = useQueryClient();
 
   const form = useFormWith<LevelUpFormData>(EMPTY_PICKS, { mode: "onChange" });
-  const { control, handleSubmit, getValues, setValue, reset, watch } = form;
+  const { control, handleSubmit, watch } = form;
   // What was picked: each wizard reads it fitted to its slots (`fitPicks.ts`)
   const picked = {
     feats: watch("selectedFeats"),
@@ -102,47 +102,32 @@ export function useLevelWizardBase<O extends WizardStep>({
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [featSearch, setFeatSearch] = useState("");
   const debouncedFeatSearch = useDebouncedValue(featSearch);
-  const { keys: expandedFeatFamilies, toggle: toggleFeatFamily, clear: collapseFeatFamilies } = useToggleSet();
+  const { keys: expandedFeatFamilies, toggle: toggleFeatFamily } = useToggleSet();
   const [powerSearch, setPowerSearch] = useState("");
   const debouncedPowerSearch = useDebouncedValue(powerSearch);
   const { issues, setIssues, handleSaveError } = useValidationIssues("Failed to finalize level up");
 
   // Its steps: its own, the steps the ruleset lists for the level, then its review
   const stepsQuery = useQuery({ ...levelStepsQuery(characterId, editedLevelId), enabled: open });
-  const steps = useMemo(() => [...ownSteps, ...(stepsQuery.data ?? []), REVIEW_STEP], [ownSteps, stepsQuery.data]);
+  const steps = [...ownSteps, ...(stepsQuery.data ?? []), REVIEW_STEP];
   const activeStep = shownStep(steps, movedTo);
   const stepName = steps[activeStep].name;
   const isLastStep = activeStep === steps.length - 1;
   // The steps' list failed to load: the wizard can't go on
   const stepsError = !stepsQuery.data && stepsQuery.error ? { what: "Steps", error: stepsQuery.error } : undefined;
 
-  const resetPicks = useCallback(() => {
-    setShowCancelConfirm(false);
-    reset();
-    setSelectedAptitude(null);
-    setSelectedPowerAptitude(null);
-    setSelectedPowerLevel(null);
-    setFeatSearch("");
-    collapseFeatFamilies();
-    setPowerSearch("");
-    setIssues([]);
-    setActiveStep(0);
-  }, [reset, setIssues, collapseFeatFamilies]);
-
   /** Drops the wizard's cached slots and refetches the sheet once the save lands. */
-  const refreshAfterSave = useCallback(async () => {
+  const refreshAfterSave = async () => {
     queryClient.removeQueries({ queryKey: QUERY_KEYS.characters.levelUp.all(characterId) });
     // Its cards show its levels
     void invalidateCharacterListings(queryClient);
     await invalidateCharacter(queryClient, characterId);
-  }, [queryClient, characterId]);
+  };
 
   return {
     form,
     control,
     handleSubmit,
-    getValues,
-    setValue,
     watch,
     picked,
     debouncedSkillPoints,
@@ -171,7 +156,6 @@ export function useLevelWizardBase<O extends WizardStep>({
     debouncedPowerSearch,
     issues,
     setIssues,
-    resetPicks,
     refreshAfterSave,
     handleSaveError,
   };

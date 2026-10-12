@@ -256,9 +256,11 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
                   const isGameMaster = player.role === "Game Master";
                   const isCurrentUser = player.userId === currentUserId;
                   const canRevokeInvite = slot.state === "pending" && canManagePlayers && !campaign.deletedAt;
-                  // A row's actions: the manager's on any slot but an assigned Game Master's, the player's on their own
+                  // A row's actions: the manager's on any slot but an assigned Game Master's, the player's on their own,
+                  // but the last Game Master's, whom the server neither demotes nor lets leave
                   const hasActions =
                     !campaign.deletedAt &&
+                    !player.isLastGameMaster &&
                     ((canManagePlayers && (!isGameMaster || slot.state !== "assigned")) || isCurrentUser);
 
                   return (

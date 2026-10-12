@@ -9,7 +9,6 @@ import {
   TableRow,
   Typography,
 } from "@mui/material";
-import { useMemo } from "react";
 
 import { SheetSection } from "@/client/src/components/characters/sections/SheetSection.tsx";
 import { BlankNote, EmptyValue } from "@/client/src/components/common/index.ts";
@@ -26,7 +25,7 @@ interface SkillsSectionProps {
 const COLUMN_HEADER_SX = { fontSize: { xs: "0.7rem", sm: "0.8125rem" } };
 
 export function SkillsSection({ skills }: SkillsSectionProps) {
-  const sortedSkills = useMemo(() => Object.values(skills).sort((a, b) => a.name.localeCompare(b.name)), [skills]);
+  const sortedSkills = Object.values(skills).sort((a, b) => a.name.localeCompare(b.name));
 
   return (
     <SheetSection title="Skills">

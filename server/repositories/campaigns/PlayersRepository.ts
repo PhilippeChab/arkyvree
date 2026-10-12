@@ -8,14 +8,44 @@ import BaseRepository, { Visibility } from "@/server/repositories/BaseRepository
 import { Paginates } from "@/server/repositories/concerns/Paginates.ts";
 import { Searches } from "@/server/repositories/concerns/Searches.ts";
 
+/** The columns of a players query's row that its subqueries read. */
+interface SlotColumns {
+  campaignId: SQLWrapper;
+  createdAt: SQLWrapper;
+  id: SQLWrapper;
+  role: SQLWrapper;
+  userId: SQLWrapper;
+}
+
 /**
- * When a slot's invite was accepted, its answer's time: a subquery inside a players query, which renders every column it
- * names as the players table's own, so the invites' are named by hand.
+ * A column of a table a subquery names `alias`: a players query renders every column it names as the players table's
+ * own, so a subquery's are named by hand.
  */
-function acceptedAt(playerId: SQLWrapper) {
-  const invite = (column: PgColumn) => sql`${sql.identifier("accepted")}.${sql.identifier(column.name)}`;
-  return sql`(select max(${invite(invitesInCampaign.updatedAt)}) from ${invitesInCampaign} as ${sql.identifier("accepted")}
-    where ${invite(invitesInCampaign.playerId)} = ${playerId} and ${invite(invitesInCampaign.status)} = 'Accepted')`;
+function aliasedColumn(alias: string, column: PgColumn) {
+  return sql`${sql.identifier(alias)}.${sql.identifier(column.name)}`;
+}
+
+/**
+ * When a slot's user joined: its accepted invite's answer, or the slot's creation for one made with its user (a
+ * campaign's first Game Master); none while it has no user.
+ */
+function joinedAt(slot: SlotColumns) {
+  const invite = (column: PgColumn) => aliasedColumn("accepted", column);
+  return sql<string | null>`coalesce(
+    (select max(${invite(invitesInCampaign.updatedAt)}) from ${invitesInCampaign} as ${sql.identifier("accepted")}
+      where ${invite(invitesInCampaign.playerId)} = ${slot.id} and ${invite(invitesInCampaign.status)} = 'Accepted'),
+    case when ${slot.userId} is not null then ${slot.createdAt} end
+  )`;
+}
+
+/** Whether a slot is its campaign's only Game Master, whom the server neither removes nor demotes. */
+function lastGameMaster(slot: SlotColumns) {
+  const master = (column: PgColumn) => aliasedColumn("masters", column);
+  return sql<boolean>`${slot.role} = 'Game Master' and (
+    select count(*) from ${playersInCampaign} as ${sql.identifier("masters")}
+      where ${master(playersInCampaign.campaignId)} = ${slot.campaignId}
+        and ${master(playersInCampaign.role)} = 'Game Master' and ${master(playersInCampaign.deletedAt)} is null
+  ) = 1`;
 }
 
 class PlayersRepository extends include(BaseRepository<typeof playersInCampaign>, Paginates, Searches) {
@@ -115,14 +145,9 @@ class PlayersRepository extends include(BaseRepository<typeof playersInCampaign>
             this.visibility(visibility),
             searchCondition,
           ]),
-          // When its user joined: its accepted invite's answer, or the slot's creation for one made with its user (a
-          // campaign's first Game Master); none while it has no user
           extras: (players) => ({
-            joinedAt: sql<
-              string | null
-            >`coalesce(${acceptedAt(players.id)}, case when ${players.userId} is not null then ${players.createdAt} end)`.as(
-              "joined_at",
-            ),
+            joinedAt: joinedAt(players).as("joined_at"),
+            isLastGameMaster: lastGameMaster(players).as("is_last_game_master"),
           }),
           with: {
             usersInAccount: {

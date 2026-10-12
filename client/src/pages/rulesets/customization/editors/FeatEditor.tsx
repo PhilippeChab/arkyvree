@@ -1,6 +1,5 @@
 import { parseResponse } from "hono/client";
 
-import { useFormSync, useFormWith } from "@/client/src/hooks/index.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import {
   EMPTY_FEAT,
@@ -11,7 +10,7 @@ import {
 import { byName, EntityDetailsCard } from "@/client/src/pages/rulesets/components/index.ts";
 import type { Feat } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
 import type { EntityField } from "@/client/src/pages/rulesets/details/rulesetQueries.ts";
-import { useEntityFields, useEntitySave } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { useEntityFields, useEntityForm } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
 import type { EditorProps } from "./renderEditor.tsx";
@@ -39,13 +38,16 @@ export function FeatEditor({
   followCopy,
   refetchSaved,
 }: EditorProps<Feat>) {
-  const form = useFormWith<FeatFormData>(EMPTY_FEAT);
   const { fields } = useEntityFields(rulesetId, "feats");
-  const sync = useFormSync(form, toFeatForm(feat, fields), { key: recordKey, adoptKey, updatedAt: feat.updatedAt });
-  const saveMutation = useEntitySave({
+  const { form, save } = useEntityForm({
+    empty: EMPTY_FEAT,
+    values: toFeatForm(feat, fields),
+    formKey: recordKey,
+    adoptKey,
+    updatedAt: feat.updatedAt,
+    locked,
     rulesetId,
     entityId,
-    sync,
     followCopy,
     storeSaved: refetchSaved,
     listKey: QUERY_KEYS.rulesets.section(rulesetId, "feats"),
@@ -71,9 +73,7 @@ export function FeatEditor({
             generated={feat.generated}
           />
         ),
-        onSubmit: sync.handleSubmit((data) => saveMutation.mutate(data)),
-        canSave: sync.isDirty && !locked,
-        isSaving: saveMutation.isPending,
+        ...save,
       }}
     />
   );

@@ -180,6 +180,22 @@ describe("frontend rules", () => {
     ).toEqual(["query-keys client/src/c.ts"]);
   });
 
+  test("a field of several lines is a TextAreaField", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/notes.tsx":
+            'export const n = <FormTextField control={c} name="notes" label="Notes" multiline minRows={3} />;\n',
+          "client/src/bare.tsx": 'export const b = <TextField label="Notes" multiline />;\n',
+          "client/src/area.tsx": 'export const a = <TextAreaField control={c} name="notes" label="Notes" />;\n',
+          "client/src/components/common/FormFields.tsx":
+            "export const t = <FormTextField {...field} fullWidth multiline minRows={rows} />;\n",
+        },
+        ["form-fields"],
+      ),
+    ).toEqual(["form-fields client/src/bare.tsx", "form-fields client/src/notes.tsx"]);
+  });
+
   test("a field the viewer can't edit is readOnly, never a disabled one restyled", async () => {
     expect(
       await lintRepo(
@@ -895,7 +911,7 @@ describe("frontend rules", () => {
     ).toEqual(["date-formats client/src/intl.ts", "date-formats client/src/local.ts"]);
   });
 
-  test("a control that only navigates is a link, an external one an anchor, the URL and router state read through their guards, a customization page's path built", async () => {
+  test("a control that only navigates is a link, an external one an anchor, the URL and router state read through their guards, a customization page's path built, an auth page's redirect carried", async () => {
     expect(
       await lintRepo(
         {
@@ -931,6 +947,16 @@ describe("frontend rules", () => {
           "client/src/components/auth/authRedirect.ts":
             "export const b = (to: string) => `/sign-in?redirect=${encodeURIComponent(to)}`;\n",
           "client/src/components/auth/useAuthRedirect.ts": 'export const u = () => useSearchParam("redirect");\n',
+          "client/src/pages/auth/BareLinkPage.tsx":
+            'export const l = <MuiLink component={Link} to="/sign-in">Back</MuiLink>;\n',
+          "client/src/pages/auth/BareBranchPage.tsx":
+            'export const n = <Navigate to={fromSignIn ? "/sign-in" : "/sign-up"} replace />;\n',
+          "client/src/pages/auth/BareNavigatePage.tsx": 'export const g = () => navigate("/reset-password");\n',
+          "client/src/pages/auth/CarriedPage.tsx":
+            'export const c = <MuiLink component={Link} to={authPagePath("/forgot-password", redirect)}>Forgot</MuiLink>;\n' +
+            'export const v = () => navigate("/verify-email", { state: { redirect } satisfies AuthPageState });\n',
+          "client/src/components/layout/SignUpLink.tsx":
+            'export const s = <Button component={Link} to="/sign-up">Sign Up</Button>;\n',
         },
         ["navigation"],
       ),
@@ -940,6 +966,10 @@ describe("frontend rules", () => {
       "navigation client/src/customized.tsx",
       "navigation client/src/handler.tsx",
       "navigation client/src/menu.tsx",
+      "navigation client/src/pages/auth/BareBranchPage.tsx",
+      "navigation client/src/pages/auth/BareBranchPage.tsx",
+      "navigation client/src/pages/auth/BareLinkPage.tsx",
+      "navigation client/src/pages/auth/BareNavigatePage.tsx",
       "navigation client/src/params.tsx",
       "navigation client/src/redirectLink.tsx",
       "navigation client/src/redirectParam.tsx",

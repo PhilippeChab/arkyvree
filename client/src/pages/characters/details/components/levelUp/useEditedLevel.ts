@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import { useMemo } from "react";
 import { useController } from "react-hook-form";
 
 import type { EditingLevel } from "@/client/src/components/characters/index.ts";
@@ -42,25 +41,22 @@ export function useEditedLevel({ open, characterId, editingLevel }: EditedLevelP
   } = useQuery({ ...characterLevelQuery(characterId, editingLevelId), enabled: open });
 
   // The saved level, as the wizard's picks: the form takes them once it loads
-  const savedPicks = useMemo<LevelUpFormData | undefined>(
-    () =>
-      levelData && {
-        selectedClass: {
-          id: editingLevel.klassId,
-          name: editingLevel.klassName,
-          nextLevel: editingLevel.level,
-          maxLevel: editingLevel.level,
-          hd: editingLevel.hd,
-          eligible: true,
-        },
-        selectedHP: levelData.hp,
-        selectedAttribute: levelData.abilityIncreases[0]?.abilityId ?? null,
-        selectedFeats: levelData.feats,
-        selectedPowers: levelData.powers,
-        skillPointAllocations: levelData.skills,
-      },
-    [levelData, editingLevel],
-  );
+  const savedPicks: LevelUpFormData | undefined = levelData && {
+    selectedClass: {
+      id: editingLevel.klassId,
+      name: editingLevel.klassName,
+      nextLevel: editingLevel.level,
+      maxLevel: editingLevel.level,
+      hd: editingLevel.hd,
+      eligible: true,
+    },
+    selectedHP: levelData.hp,
+    selectedAttribute: levelData.abilityIncreases[0]?.abilityId ?? null,
+    selectedFeats: levelData.feats,
+    selectedPowers: levelData.powers,
+    skillPointAllocations: levelData.skills,
+  };
+
   const sync = useFormSync(form, savedPicks, { key: editingLevelId });
 
   const selectedClass = watch("selectedClass");

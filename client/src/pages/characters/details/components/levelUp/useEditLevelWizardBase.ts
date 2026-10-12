@@ -40,7 +40,6 @@ export function useEditLevelWizardBase({ level, answers, characterId, onClose }:
     levelData,
     levelError,
     refreshAfterSave,
-    resetPicks,
     selectedClass,
     selectedHP,
     stepName,
@@ -77,7 +76,6 @@ export function useEditLevelWizardBase({ level, answers, characterId, onClose }:
     onSuccess: async () => {
       await refreshAfterSave();
       snackbar.success("Level updated");
-      resetPicks();
       onClose();
     },
     onError: handleSaveError,
@@ -97,7 +95,6 @@ export function useEditLevelWizardBase({ level, answers, characterId, onClose }:
       // Changed picks ask before they're discarded, as Add Level's plan does
       hasProgress: sync.isDirty,
       onClose,
-      reset: resetPicks,
       // Through the form, so its own rules still hold on a forced save, as on any other
       save: (force) => handleSubmit((data) => finalizeMutation.mutate({ data, force }))(),
       wizard: level,

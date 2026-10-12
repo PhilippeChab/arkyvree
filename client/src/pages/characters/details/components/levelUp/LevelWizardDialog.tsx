@@ -17,6 +17,8 @@ interface LevelWizardDialogProps<N extends string, W extends WizardControls<N>> 
   /** It has faded out (`useDialogState`'s `onExited`): its owner unmounts it. */
   onExited: () => void;
   open: boolean;
+  /** The character's ruleset, whose names its steps read */
+  rulesetId: string;
   /** Its steps' components, by the name its wizard lists each by: the one it's at shows */
   steps: Record<N, ComponentType<LevelStepProps<W>>>;
   title: string;
@@ -59,6 +61,7 @@ export function LevelWizardDialog<N extends string, W extends WizardControls<N>>
   finishLabel,
   characterId,
   baseRules,
+  rulesetId,
 }: LevelWizardDialogProps<N, W>) {
   const isMobile = useIsMobile();
   const { isSaving } = wizard;
@@ -79,6 +82,7 @@ export function LevelWizardDialog<N extends string, W extends WizardControls<N>>
         <DialogTitle>{title}</DialogTitle>
         <Stack component={DialogContent} sx={{ height: "100%", overflow: "hidden" }}>
           <ValidationIssuesAlert
+            baseRules={baseRules}
             issues={wizard.issues}
             title="Validation Warnings"
             onClose={() => wizard.setIssues([])}
@@ -120,7 +124,7 @@ export function LevelWizardDialog<N extends string, W extends WizardControls<N>>
               {wizard.loadError ? (
                 <LoadError what={wizard.loadError.what} error={wizard.loadError.error} />
               ) : (
-                <ActiveStep wizard={wizard} characterId={characterId} baseRules={baseRules} />
+                <ActiveStep wizard={wizard} characterId={characterId} baseRules={baseRules} rulesetId={rulesetId} />
               )}
             </Stack>
           </Stack>

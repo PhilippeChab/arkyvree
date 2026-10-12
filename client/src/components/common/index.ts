@@ -21,6 +21,7 @@ export {
   PasswordField,
   SelectField,
   SwitchField,
+  TextAreaField,
 } from "./FormFields.tsx";
 export { GoldDivider } from "./GoldDivider.tsx";
 export { HelpLabel } from "./HelpLabel.tsx";

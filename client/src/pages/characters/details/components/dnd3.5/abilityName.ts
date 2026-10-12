@@ -1,9 +1,19 @@
+import type { Ability } from "@/client/src/hooks/index.ts";
 import { capitalize } from "@/shared/text.ts";
 
-import type { AttributesData } from "./levelUp/index.ts";
+import type { LevelAbilities } from "./levelUp/index.ts";
 
-/** An ability's display name ("Strength") in the level's ability slots, by ability id. */
-export function abilityName(attributeData: AttributesData | undefined, abilityId: string): string {
-  const entry = Object.entries(attributeData?.attributes ?? {}).find(([, v]) => v.abilityId === abilityId);
-  return entry ? capitalize(entry[0]) : abilityId;
+/**
+ * An ability's name ("Force Points"), by its id: its ruleset's (`useRulesetAbilities`), else, while that list loads, its
+ * key's in the level's abilities ("Forcepoints": a name without its spaces), else its id.
+ */
+export function abilityName(
+  names: Pick<Ability, "id" | "name">[] | undefined,
+  abilities: Partial<Record<string, Pick<LevelAbilities[string], "abilityId">>> | undefined,
+  abilityId: string,
+) {
+  const named = names?.find((ability) => ability.id === abilityId)?.name;
+  if (named) return named;
+  const key = Object.entries(abilities ?? {}).find(([, ability]) => ability?.abilityId === abilityId)?.[0];
+  return key ? capitalize(key) : abilityId;
 }

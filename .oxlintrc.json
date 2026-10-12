@@ -197,6 +197,7 @@
     "arkyvree/confirm-wording": "error",
     "arkyvree/typography-marks": "error",
     "arkyvree/app-name": "error",
+    "arkyvree/entity-type-labels": "error",
     "arkyvree/dialog-mounts": "error",
     "arkyvree/menus": "error",
     "arkyvree/page-errors": "error",

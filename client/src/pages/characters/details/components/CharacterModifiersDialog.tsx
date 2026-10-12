@@ -22,6 +22,7 @@ import {
   DiceSpinner,
   EditDialog,
   HelpLabel,
+  ListToolbar,
   LoadError,
   Modal,
   ROW_ACTIONS_HOVER_SX,
@@ -164,11 +165,9 @@ export function CharacterModifiersDialog({ open, onClose, characterId, rulesetId
           <HelpLabel label="Manage Modifiers" help={MODIFIERS_HELP} />
         </DialogTitle>
         <DialogContent sx={{ overflowY: "auto", scrollbarGutter: "stable" }}>
-          <Stack spacing={2}>
-            <Stack direction="row" spacing={1} sx={{ justifyContent: "space-between", alignItems: "center" }}>
-              <DialogContentText>Custom bonuses and overrides of this character's own.</DialogContentText>
-              <AddButton label="Add Modifier" onClick={handleAdd} />
-            </Stack>
+          <Stack spacing={3}>
+            <DialogContentText>Custom bonuses and overrides of this character's own.</DialogContentText>
+            <ListToolbar actions={<AddButton label="Add Modifier" onClick={handleAdd} />} />
             {isLoading ? (
               <DiceSpinner sx={{ py: 4 }} />
             ) : error && modifiers.length === 0 ? (

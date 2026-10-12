@@ -18,10 +18,11 @@ import { usePageTitle } from "@/client/src/hooks/index.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { formatDate } from "@/client/src/lib/formatDate.ts";
 
+import { INVITE_PAGES } from "./invitePages.ts";
 import { inviteQuery } from "./inviteQueries.ts";
 
 interface InvitePageProps {
-  /** What the invite is to, which its route says: its page's facts and its answers (`INVITE_KINDS`). */
+  /** What the invite is to, which its route says: its page's facts (`INVITE_PAGES`) and its answers (`INVITE_KINDS`). */
   kind: InviteKind;
 }
 
@@ -72,7 +73,8 @@ function InviteStateCard({ icon, title, children, action }: InviteStateCardProps
  * accept or reject it, or explains why it can no longer be answered.
  */
 export default function InvitePage({ kind }: InvitePageProps) {
-  const { pageTitle, icon: Icon, entityLabel, entityPath, verb, acceptedStatus } = INVITE_KINDS[kind];
+  const { pageTitle, icon: Icon, entityLabel, verb, acceptedStatus } = INVITE_PAGES[kind];
+  const { entityPath } = INVITE_KINDS[kind];
   usePageTitle(pageTitle);
   const { inviteId = "" } = useParams<{ inviteId: string }>();
   const navigate = useNavigate();

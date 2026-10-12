@@ -1,5 +1,5 @@
 import { Typography } from "@mui/material";
-import { type ElementType, useMemo } from "react";
+import type { ElementType } from "react";
 
 import { EmptyValue, ValueChip } from "@/client/src/components/common/index.ts";
 import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
@@ -50,7 +50,7 @@ export function ClassLevelCountsTable<L extends { id: string; level: number }>({
         ];
 
   // A copy: sorting the query's own array would reorder its cache.
-  const sortedLevels = useMemo(() => levels && [...levels].sort((a, b) => a.level - b.level), [levels]);
+  const sortedLevels = levels && [...levels].sort((a, b) => a.level - b.level);
 
   const renderCell = (level: L, columnKey: string) => {
     if (columnKey === "level") return <ValueChip label={level.level} color="primary" />;

@@ -4,7 +4,7 @@ import type { DefaultValues, FieldValues, UseFormReturn } from "react-hook-form"
 import { Navigate, useLocation } from "react-router-dom";
 
 import { ReadOnlyFields } from "@/client/src/components/common/index.ts";
-import { useFormSync, useFormWith, usePageTitle, useRulesetPermissions } from "@/client/src/hooks/index.ts";
+import { usePageTitle, useRulesetPermissions } from "@/client/src/hooks/index.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { rulesetDetailQuery } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
@@ -14,7 +14,7 @@ import {
   EntityPageError,
 } from "@/client/src/pages/rulesets/components/index.ts";
 import { entityPageBack } from "@/client/src/pages/rulesets/entityPageState.ts";
-import { useCopyOnWrite, useEntitySave, useRestorableDelete } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { useCopyOnWrite, useEntityForm, useRestorableDelete } from "@/client/src/pages/rulesets/hooks/index.ts";
 
 interface EntityBase {
   description?: string | null;
@@ -75,21 +75,19 @@ function FormDetails<TEntity extends EntityBase, TForm extends FieldValues, TKey
   const queryClient = useQueryClient();
 
   const copy = useCopyOnWrite(rulesetId, entityId, (id) => `${section}/${id}`);
-  const form = useFormWith<TForm>(editing.empty);
-  const sync = useFormSync(form, editing.toFormValues(entity), {
-    key: copy.key,
-    adoptKey: copy.adoptKey,
-    updatedAt: entity.updatedAt,
-  });
   // The copy's data is in as the page moves to it: the save seeds it
   const forgetSource = copy.forgetSource(true);
 
-  const saveMutation = useEntitySave({
+  const { form, save } = useEntityForm({
+    empty: editing.empty,
+    values: editing.toFormValues(entity),
+    formKey: copy.key,
+    adoptKey: copy.adoptKey,
+    updatedAt: entity.updatedAt,
     rulesetId,
     entityId,
     label,
     listKey: QUERY_KEYS.rulesets.section(rulesetId, section),
-    sync,
     saveFn: editing.updateFn,
     toFormValues: editing.toFormValues,
     // The save's response is the whole entity: the copy's page shows it at once
@@ -109,9 +107,7 @@ function FormDetails<TEntity extends EntityBase, TForm extends FieldValues, TKey
         title={`${label} Details`}
         form={{
           fields: editing.renderFields(form),
-          onSubmit: sync.handleSubmit((data) => saveMutation.mutate(data)),
-          canSave: sync.isDirty,
-          isSaving: saveMutation.isPending,
+          ...save,
         }}
       />
     </>

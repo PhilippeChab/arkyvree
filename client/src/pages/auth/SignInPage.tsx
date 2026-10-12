@@ -55,7 +55,7 @@ export default function SignInPage() {
           </Stack>
 
           <Box sx={{ textAlign: "right" }}>
-            <MuiLink component={Link} to="/forgot-password" underline="hover" variant="body2">
+            <MuiLink component={Link} to={authPagePath("/forgot-password", redirect)} underline="hover" variant="body2">
               Forgot password?
             </MuiLink>
           </Box>

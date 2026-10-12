@@ -123,7 +123,7 @@ export function SkillsStep({ wizard }: SkillsStepProps) {
   // Read as a row allocates, so the callback the memoized rows get stays the same
   const latestAllocations = useLatest(skillPointAllocations);
   const setAllocations = allocationsField.onChange;
-  const randomAssign = useCallback(() => {
+  const randomAssign = () => {
     if (!skillData) return;
 
     // Each skill up to the most it takes spent alone: the step keeps what the points come to once all are spent
@@ -143,7 +143,7 @@ export function SkillsStep({ wizard }: SkillsStepProps) {
     }
 
     setAllocations(allocations);
-  }, [skillData, setAllocations]);
+  };
 
   const skillPointsToSpend = skillData?.skillPointsToSpend ?? 0;
 

@@ -1,7 +1,7 @@
 import { IconButton, MenuItem, Paper, Stack, TextField, Typography } from "@mui/material";
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { type Control, Controller, useController } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 
@@ -352,11 +352,9 @@ export function CreateCharacterDialog({ open, onClose, onExited }: CreateCharact
     isLoading: abilitiesLoading,
   } = useRulesetAbilities(selectedRulesetId || undefined);
   const baseRules = selectedRuleset?.baseRules;
-  const rulesetAbilities = useMemo(() => {
-    const items = abilityItems ?? [];
-    if (!baseRules) return items;
-    return sortAbilities(items, baseRules, (a) => a.name);
-  }, [abilityItems, baseRules]);
+  const rulesetAbilities = baseRules
+    ? sortAbilities(abilityItems ?? [], baseRules, (a) => a.name)
+    : (abilityItems ?? []);
 
   // How the ruleset sets its scores, and the method picked: its first until one is
   const {

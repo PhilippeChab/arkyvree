@@ -1,5 +1,5 @@
 import { Autocomplete, Box, TextField } from "@mui/material";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useController } from "react-hook-form";
 
 import {
@@ -58,16 +58,12 @@ export function ClassLevelFields({ form, rulesetId, rulesetSaves, savesError, fe
   const [pickedLabels, setPickedLabels] = useState<ReadonlyMap<string, string>>(new Map());
 
   // One option per feat and aptitude it can be taken for.
-  const featOptions = useMemo<FeatOption[]>(
-    () =>
-      rulesetFeats.flatMap((feat) =>
-        feat.featsAptitudesInRules.map((fa) => ({
-          featId: feat.id,
-          aptitudeId: fa.aptitudeId,
-          label: levelFeatLabel(feat.name, fa.aptitudesInRule?.name),
-        })),
-      ),
-    [rulesetFeats],
+  const featOptions: FeatOption[] = rulesetFeats.flatMap((feat) =>
+    feat.featsAptitudesInRules.map((fa) => ({
+      featId: feat.id,
+      aptitudeId: fa.aptitudeId,
+      label: levelFeatLabel(feat.name, fa.aptitudesInRule?.name),
+    })),
   );
 
   // The freshest label first: the loaded options, then the saved level's, then the one it was picked with.

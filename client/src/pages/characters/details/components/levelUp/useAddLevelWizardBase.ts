@@ -1,6 +1,6 @@
 import { keepPreviousData, useMutation } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useListboxQuery } from "@/client/src/hooks/index.ts";
@@ -43,7 +43,6 @@ export function useAddLevelWizardBase({ plan, answers, characterId, open, onClos
     planOpenedClass,
     refreshAfterSave,
     handleSaveError,
-    resetPlan,
     selectedPowerAptitude,
     selectedPowerLevel,
     stepName,
@@ -54,22 +53,17 @@ export function useAddLevelWizardBase({ plan, answers, characterId, open, onClos
   const { abilityIncreaseLevels, levelDetails, nextPickLevels } = answers;
 
   // Each planned level's ability increase: its slot's, while the level is one that takes an increase
-  const abilityIncreases = useMemo(
-    () => levelKeys.map((key, index) => (abilityIncreaseLevels.includes(index) ? (abilityBySlot[key] ?? null) : null)),
-    [levelKeys, abilityBySlot, abilityIncreaseLevels],
+  const abilityIncreases = levelKeys.map((key, index) =>
+    abilityIncreaseLevels.includes(index) ? (abilityBySlot[key] ?? null) : null,
   );
 
   // The planned levels whose hit points the HP step sets, as the preview lists them, with the hit points each may gain
-  const hpLevels = useMemo<HpLevel[]>(
-    () =>
-      (levelDetails ?? []).map((detail) => ({
-        className: detail.klassName,
-        hd: detail.hd,
-        hitPoints: detail.hitPoints,
-        nextLevel: detail.level,
-      })),
-    [levelDetails],
-  );
+  const hpLevels: HpLevel[] = (levelDetails ?? []).map((detail) => ({
+    className: detail.klassName,
+    hd: detail.hd,
+    hitPoints: detail.hitPoints,
+    nextLevel: detail.level,
+  }));
 
   // The picks the preview fits to the plan's pools: while it answers for earlier picks, they stand
   const fitted = useFittedPicks(plan, answers);
@@ -148,7 +142,6 @@ export function useAddLevelWizardBase({ plan, answers, characterId, open, onClos
     onSuccess: async () => {
       await refreshAfterSave();
       snackbar.success(`Added ${formatCount(validClassPlan.length, "level")}`);
-      resetPlan();
       onClose();
     },
     onError: handleSaveError,
@@ -156,17 +149,13 @@ export function useAddLevelWizardBase({ plan, answers, characterId, open, onClos
 
   // Next waits for the steps the ruleset lists, and on one of them for what its answers wait for (`waiting`). The dialog
   // also disables it while the save runs.
-  const isNextDisabled = useMemo(() => {
-    if (!stepsLoaded) return true;
-    switch (stepName) {
-      case CLASS_PLAN_STEP.name:
-        return validClassPlan.length < 1;
-      case HP_STEP.name:
-        return !hpSet(hpLevels, hpValues);
-      default:
-        return answers.waiting;
-    }
-  }, [stepsLoaded, stepName, validClassPlan, hpLevels, hpValues, answers.waiting]);
+  const isNextDisabled =
+    !stepsLoaded ||
+    (stepName === CLASS_PLAN_STEP.name
+      ? validClassPlan.length < 1
+      : stepName === HP_STEP.name
+        ? !hpSet(hpLevels, hpValues)
+        : answers.waiting);
 
   return {
     ...plan,
@@ -174,7 +163,6 @@ export function useAddLevelWizardBase({ plan, answers, characterId, open, onClos
     ...navigationOf({
       hasProgress: plan.hasProgress,
       onClose,
-      reset: resetPlan,
       save: (force) => finalizeMutation.mutate({ force }),
       wizard: plan,
     }),

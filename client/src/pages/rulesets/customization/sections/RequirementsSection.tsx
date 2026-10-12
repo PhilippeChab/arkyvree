@@ -2,7 +2,7 @@ import { Alert, Card, CardContent, Stack, Typography } from "@mui/material";
 import { SimpleTreeView } from "@mui/x-tree-view/SimpleTreeView";
 import { TreeItem } from "@mui/x-tree-view/TreeItem";
 import { type InferResponseType, parseResponse } from "hono/client";
-import { type ReactNode, useMemo, useState } from "react";
+import { type ReactNode, useState } from "react";
 
 import {
   AddButton,
@@ -63,6 +63,13 @@ type RequirementsArray = InferResponseType<
 
 /** A requirement in the tree the section shows, with the requirements it groups. */
 type RequirementTreeNode = RequirementNode<Requirement>;
+
+/** The ids of a tree's requirements that group others, at every depth: what opens expanded. */
+function parentIdsOf(nodes: RequirementTreeNode[]): string[] {
+  return nodes.flatMap((node) =>
+    node.children.length > 0 ? [node.requirement.id, ...parentIdsOf(node.children)] : [],
+  );
+}
 
 function PublishedWarning() {
   return (
@@ -161,31 +168,15 @@ export function RequirementsSection({
 
   // The requirements' tree, and after it a requirement under a condition (which groups nothing), so it can be fixed
   const loadFailed = !!error && !requirements;
-  const requirementsTree = useMemo((): RequirementTreeNode[] => {
-    if (!requirements) return [];
-    const tree = RequirementTree.fromRows(requirements);
-    return [...tree.roots, ...tree.detached.map((requirement) => ({ requirement, children: [] }))];
-  }, [requirements]);
-
-  const parentIds = useMemo(() => {
-    const expandedIds: string[] = [];
-
-    const collectParentIds = (nodes: RequirementTreeNode[]) => {
-      for (const node of nodes) {
-        if (node.children.length > 0) {
-          expandedIds.push(node.requirement.id);
-          collectParentIds(node.children);
-        }
-      }
-    };
-
-    collectParentIds(requirementsTree);
-    return expandedIds;
-  }, [requirementsTree]);
+  const tree = requirements && RequirementTree.fromRows(requirements);
+  const requirementsTree: RequirementTreeNode[] = tree
+    ? [...tree.roots, ...tree.detached.map((requirement) => ({ requirement, children: [] }))]
+    : [];
+  const parentIds = parentIdsOf(requirementsTree);
 
   // Parents are expanded, new ones included, except those the user collapsed.
   const [collapsedIds, setCollapsedIds] = useState<ReadonlySet<string>>(new Set());
-  const expandedItems = useMemo(() => parentIds.filter((id) => !collapsedIds.has(id)), [parentIds, collapsedIds]);
+  const expandedItems = parentIds.filter((id) => !collapsedIds.has(id));
 
   const handleEditChaining = (requirement: Requirement) => {
     setEditRequirementType("chaining");

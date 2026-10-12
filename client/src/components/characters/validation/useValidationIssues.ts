@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useState } from "react";
 
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { ApiError, type ApiValidationIssue } from "@/client/src/services/ApiError.ts";
@@ -11,13 +11,10 @@ export function useValidationIssues(fallback: string) {
   const snackbar = useSnackbar();
   const [issues, setIssues] = useState<ApiValidationIssue[]>([]);
 
-  const handleSaveError = useCallback(
-    (error: Error) => {
-      if (error instanceof ApiError && error.issues && error.issues.length > 0) setIssues(error.issues);
-      else snackbar.error(error, fallback);
-    },
-    [snackbar, fallback],
-  );
+  const handleSaveError = (error: Error) => {
+    if (error instanceof ApiError && error.issues && error.issues.length > 0) setIssues(error.issues);
+    else snackbar.error(error, fallback);
+  };
 
   return { issues, setIssues, handleSaveError };
 }

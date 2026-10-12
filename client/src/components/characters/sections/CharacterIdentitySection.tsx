@@ -1,7 +1,6 @@
 import { Autocomplete, Box, Stack, TextField, Typography } from "@mui/material";
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { type InferResponseType, parseResponse } from "hono/client";
-import { useMemo } from "react";
 import { useController } from "react-hook-form";
 
 import {
@@ -11,6 +10,7 @@ import {
   FormTextField,
   SaveButton,
   SelectField,
+  TextAreaField,
   ValueChip,
 } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
@@ -169,12 +169,13 @@ export function CharacterIdentitySection({
   });
   const automaticIds = new Set(languages.automatic.map(({ id }) => id));
   const currentLanguages = character?.identity?.physiology?.languages ?? NO_LANGUAGES;
-  const selectedLanguages = useMemo(() => {
-    const byId = new Map<string, LanguageOption>();
-    for (const lang of currentLanguages) byId.set(lang.id, lang);
-    for (const lang of [...languages.automatic, ...languages.picks, ...languages.options]) byId.set(lang.id, lang);
-    return selectedLanguageIds.map((id) => byId.get(id)).filter((l): l is LanguageOption => !!l);
-  }, [selectedLanguageIds, languages, currentLanguages]);
+  const languagesById = new Map<string, LanguageOption>();
+  for (const lang of currentLanguages) languagesById.set(lang.id, lang);
+  for (const lang of [...languages.automatic, ...languages.picks, ...languages.options])
+    languagesById.set(lang.id, lang);
+  const selectedLanguages = selectedLanguageIds
+    .map((id) => languagesById.get(id))
+    .filter((l): l is LanguageOption => !!l);
 
   // A viewer who can't edit the character reads its fields as they are
   const fieldSlots = { input: { readOnly } };
@@ -350,17 +351,14 @@ export function CharacterIdentitySection({
             ) : (
               <>
                 <Box sx={{ display: "grid", gridTemplateColumns: "1fr", gap: 3 }}>
-                  <FormTextField
+                  <TextAreaField
                     control={form.control}
                     name="description"
                     label="Description"
                     size="small"
                     variant="outlined"
-                    multiline
-                    minRows={3}
                     placeholder="Character appearance, personality, or background…"
                     slotProps={fieldSlots}
-                    sx={{ "& textarea": { resize: "vertical" } }}
                   />
                 </Box>
 

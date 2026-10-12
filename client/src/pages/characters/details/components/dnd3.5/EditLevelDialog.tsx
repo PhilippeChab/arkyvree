@@ -32,6 +32,7 @@ export function EditLevelDialog({
   characterId,
   baseRules,
   editingLevel,
+  rulesetId,
 }: EditLevelDialogProps) {
   const wizard = useEditLevelWizard({ open, onClose, characterId, editingLevel });
 
@@ -45,6 +46,7 @@ export function EditLevelDialog({
       finishLabel="Finish"
       characterId={characterId}
       baseRules={baseRules}
+      rulesetId={rulesetId}
     />
   );
 }

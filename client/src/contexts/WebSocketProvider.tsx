@@ -1,5 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { type ReactNode, useCallback, useRef, useState } from "react";
+import { type ReactNode, useRef, useState } from "react";
 
 import { ConfirmDialog } from "@/client/src/components/common/index.ts";
 import { APP_NAME } from "@/client/src/lib/brand.ts";
@@ -30,30 +30,28 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
   // A refresh would discard unsaved form work: confirm it first.
   const [confirmRefresh, setConfirmRefresh] = useState(false);
 
-  const handleMessage = useCallback(
-    (event: WsEvent) => {
-      if (event.type === "app:version") {
-        const { version } = event;
-        if (buildVersionRef.current && buildVersionRef.current !== version) {
-          snackbar.info("A new version is available", {
-            action: {
-              label: "Refresh",
-              onClick: () => {
-                if (useDirtyFormsStore.getState().count > 0) setConfirmRefresh(true);
-                else window.location.reload();
-              },
+  // Read through `useLatest` by the socket, which keeps its connection whatever this is
+  const handleMessage = (event: WsEvent) => {
+    if (event.type === "app:version") {
+      const { version } = event;
+      if (buildVersionRef.current && buildVersionRef.current !== version) {
+        snackbar.info("A new version is available", {
+          action: {
+            label: "Refresh",
+            onClick: () => {
+              if (useDirtyFormsStore.getState().count > 0) setConfirmRefresh(true);
+              else window.location.reload();
             },
-            persistent: true,
-          });
-        }
-        buildVersionRef.current = version;
-        return;
+          },
+          persistent: true,
+        });
       }
+      buildVersionRef.current = version;
+      return;
+    }
 
-      for (const key of EVENT_INVALIDATION_MAP[event.type]) queryClient.invalidateQueries({ queryKey: key });
-    },
-    [queryClient, snackbar],
-  );
+    for (const key of EVENT_INVALIDATION_MAP[event.type]) queryClient.invalidateQueries({ queryKey: key });
+  };
 
   useWebSocket({ enabled: isAuthenticated, identity: userId, onMessage: handleMessage });
 

@@ -98,6 +98,14 @@ type SelectOption = string | { disabled?: boolean; label: ReactNode; value: Sele
 /** What a select's choice holds: a word, or a number (a hit die) */
 type SelectValue = string | number;
 
+/** A text field of several lines: its lines to start (`rows`, 3 by default), and the text field's own props. */
+type TextAreaFieldProps<T extends FieldValues> = Omit<
+  FormTextFieldProps<T>,
+  "minRows" | "multiline" | "number" | "sx"
+> & {
+  rows?: number;
+};
+
 /**
  * A number field's rules: its empty value is NaN, which `required` doesn't count as empty (only `""`), so a required one
  * checks it too.
@@ -112,18 +120,8 @@ function numberRules<T extends FieldValues>(rules: BoundFieldProps<T>["rules"]):
 }
 
 /** An entity's description: several lines, resizable. */
-export function DescriptionField<T extends FieldValues>({ rows = 3, placeholder, ...field }: DescriptionFieldProps<T>) {
-  return (
-    <FormTextField
-      {...field}
-      label="Description"
-      fullWidth
-      multiline
-      minRows={rows}
-      placeholder={placeholder}
-      sx={{ "& textarea": { resize: "vertical" } }}
-    />
-  );
+export function DescriptionField<T extends FieldValues>({ rows, placeholder, ...field }: DescriptionFieldProps<T>) {
+  return <TextAreaField {...field} label="Description" rows={rows} placeholder={placeholder} />;
 }
 
 /** An email address, "Email Address" wherever it's asked, validated by `EMAIL_RULES` (`OPTIONAL_EMAIL_RULES`). */
@@ -313,4 +311,12 @@ export function SwitchField<T extends FieldValues>({
       }
     />
   );
+}
+
+/**
+ * A text of several lines (a description, notes): as tall as its `rows` to start, taller as it's written, and resizable
+ * by its corner, down the page. Under `ReadOnlyFields` it's as tall as its text, and doesn't resize.
+ */
+export function TextAreaField<T extends FieldValues>({ rows = 3, ...field }: TextAreaFieldProps<T>) {
+  return <FormTextField {...field} fullWidth multiline minRows={rows} sx={{ "& textarea": { resize: "vertical" } }} />;
 }

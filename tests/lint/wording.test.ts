@@ -150,4 +150,26 @@ describe("wording rules", () => {
       ),
     ).toEqual(["app-name client/src/string.tsx", "app-name client/src/template.ts", "app-name client/src/text.tsx"]);
   });
+
+  test("an entity's type shows in its ruleset's words, never as the code names it", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/cell.tsx": "export const c = <TableCell>{item.sourceName ?? item.entityType}</TableCell>;\n",
+          "client/src/template.tsx":
+            'export const t = <span>{issue.entityType ? ` (${issue.entityType})` : ""}</span>;\n',
+          "client/src/bare.tsx": "export const b = <TableCell>{modifier.sourceType}</TableCell>;\n",
+          "client/src/labelled.tsx":
+            "export const l = <TableCell>{entityTypeLabel(modifier.sourceType, baseRules)}</TableCell>;\n",
+          "client/src/tested.tsx": "export const t = <span>{issue.entityType && <Chip />}</span>;\n",
+          "client/src/prop.tsx": "export const p = <ModifierFormFields entityType={entity.entityType} />;\n",
+        },
+        ["entity-type-labels"],
+      ),
+    ).toEqual([
+      "entity-type-labels client/src/bare.tsx",
+      "entity-type-labels client/src/cell.tsx",
+      "entity-type-labels client/src/template.tsx",
+    ]);
+  });
 });

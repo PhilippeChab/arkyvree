@@ -69,6 +69,7 @@ export function CharacterSheetBody({
 
           {diagnostics && Object.values(character.classes).some((cls) => cls.levels.length > 0) && (
             <DiagnosticsSection
+              baseRules={character.baseRules}
               validation={diagnostics.validation}
               requirements={diagnostics.requirements}
               modifiers={diagnostics.modifiers}

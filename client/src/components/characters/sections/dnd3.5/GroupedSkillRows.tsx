@@ -1,5 +1,5 @@
 import { Box, Stack, TableCell, TableRow } from "@mui/material";
-import { type ReactNode, useMemo } from "react";
+import type { ReactNode } from "react";
 
 import { CLICKABLE_ROW_SX, ExpandArrow, toggleProps } from "@/client/src/components/common/index.ts";
 import { useToggleSet } from "@/client/src/hooks/index.ts";
@@ -44,7 +44,7 @@ export function GroupedSkillRows<S extends { name: string }>({
   renderSkill,
 }: GroupedSkillRowsProps<S>) {
   const { keys: expanded, toggle } = useToggleSet();
-  const rows = useMemo(() => groupSkills(skills), [skills]);
+  const rows = groupSkills(skills);
 
   return (
     <>

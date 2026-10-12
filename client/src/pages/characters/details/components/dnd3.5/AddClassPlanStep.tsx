@@ -1,5 +1,5 @@
 import { alpha, Autocomplete, Box, IconButton, Stack, TextField, type Theme, Typography } from "@mui/material";
-import { type ReactNode, type UIEvent, useMemo } from "react";
+import type { ReactNode, UIEvent } from "react";
 
 import { AddButton, BlankNote, ScrollSafeListbox } from "@/client/src/components/common/index.ts";
 import { DeleteIcon } from "@/client/src/components/icons/index.ts";
@@ -91,31 +91,17 @@ export function AddClassPlanStep({ wizard }: AddClassPlanStepProps) {
 
   // A button adds a class at the end of the plan, at the level after those planned: "+ Wizard 3" once Wizard 2 is.
   // It pushes the class as the server gives it, which the wizard numbers in its place.
-  const quickAddClasses = useMemo(() => {
-    // Start with the character's existing classes (nextLevel > 1 means already
-    // taken). Use the unfiltered `quickAddKlasses` snapshot so searching in
-    // the Autocomplete doesn't drop existing-class buttons from the row.
-    const existing: SelectedKlass[] = quickAddKlasses
-      .filter((k) => k.nextLevel > 1 && k.eligible)
-      .map((k) => ({
-        id: k.id,
-        name: k.name,
-        nextLevel: k.nextLevel,
-        maxLevel: k.maxLevel,
-        hd: k.hd,
-        eligible: k.eligible,
-      }));
-
-    // Add any selected classes not already in the list
-    const seen = new Set(existing.map((k) => k.id));
-    for (const k of levels) {
-      if (!k || seen.has(k.id)) continue;
-      seen.add(k.id);
-      existing.push(k);
-    }
-
-    return existing.map((klass) => ({ klass, level: plannedLevel(klass, levels) }));
-  }, [levels, quickAddKlasses]);
+  // Start with the character's existing classes (nextLevel > 1 means already taken), from the unfiltered
+  // `quickAddKlasses` snapshot, so searching in the Autocomplete doesn't drop existing-class buttons from the row
+  const quickAdd: SelectedKlass[] = quickAddKlasses.filter((k) => k.nextLevel > 1 && k.eligible);
+  // Then any selected class not already in the list
+  const seen = new Set(quickAdd.map((k) => k.id));
+  for (const k of levels) {
+    if (!k || seen.has(k.id)) continue;
+    seen.add(k.id);
+    quickAdd.push(k);
+  }
+  const quickAddClasses = quickAdd.map((klass) => ({ klass, level: plannedLevel(klass, levels) }));
 
   // The plan stops at the character's last level: every class's option says how many levels it has left
   const levelsLeft = quickAddKlasses[0]?.levelsLeft;

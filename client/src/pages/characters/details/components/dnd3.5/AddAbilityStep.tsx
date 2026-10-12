@@ -18,10 +18,11 @@ interface AddAbilityState {
 
 interface AddAbilityStepProps {
   baseRules: BaseRules;
+  rulesetId: string;
   wizard: AddAbilityState;
 }
 
-export function AddAbilityStep({ wizard, baseRules }: AddAbilityStepProps) {
+export function AddAbilityStep({ wizard, baseRules, rulesetId }: AddAbilityStepProps) {
   const {
     attributeData,
     isLoadingAttributes,
@@ -52,6 +53,7 @@ export function AddAbilityStep({ wizard, baseRules }: AddAbilityStepProps) {
               <AbilityIncreaseField
                 abilities={attributeData.attributes}
                 baseRules={baseRules}
+                rulesetId={rulesetId}
                 name={`ability-increase-${index}`}
                 value={selected}
                 onChange={(abilityId) => onAbilityIncreaseChange(index, abilityId)}

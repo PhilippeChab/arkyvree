@@ -1,4 +1,3 @@
-import { useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import type { EntityPageState } from "@/client/src/pages/rulesets/entityPageState.ts";
@@ -7,9 +6,6 @@ import type { EntityPageState } from "@/client/src/pages/rulesets/entityPageStat
 export function useOpenEntity(rulesetId: string) {
   const navigate = useNavigate();
   const { pathname, search } = useLocation();
-  return useCallback(
-    (path: string) =>
-      navigate(`/rulesets/${rulesetId}/${path}`, { state: { from: pathname + search } satisfies EntityPageState }),
-    [navigate, rulesetId, pathname, search],
-  );
+  return (path: string) =>
+    navigate(`/rulesets/${rulesetId}/${path}`, { state: { from: pathname + search } satisfies EntityPageState });
 }

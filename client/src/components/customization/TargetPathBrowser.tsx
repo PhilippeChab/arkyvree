@@ -70,28 +70,20 @@ export function TargetPathBrowser({
   });
 
   // Segment labels from the completions response
-  const segmentLabels = useMemo(() => firstPage(completionsData)?.segmentLabels ?? {}, [completionsData]);
+  const segmentLabels = firstPage(completionsData)?.segmentLabels ?? {};
 
-  const completions = useMemo(() => {
-    const items = pageItems(completionsData);
-    return items.reduce((acc: PathCompletion[], item) => {
-      if (!acc.some((c) => c.insertText === item.insertText)) acc.push(item);
-      return acc;
-    }, []);
-  }, [completionsData]);
+  const completions = pageItems(completionsData).reduce((acc: PathCompletion[], item) => {
+    if (!acc.some((c) => c.insertText === item.insertText)) acc.push(item);
+    return acc;
+  }, []);
 
   // Detect selected leaf from completions. In flat mode insertText is the full
   // path; in drill mode it's the last segment.
   const fullPath = segments.join(".");
   const lastSegment = segments.length > 0 ? segments[segments.length - 1] : null;
-  const selectedLeaf = useMemo(() => {
-    if (flatMode) {
-      if (!fullPath) return null;
-      return completions.find((c) => c.path === fullPath) ?? null;
-    }
-    if (!lastSegment) return null;
-    return completions.find((c) => c.insertText === lastSegment && c.path) ?? null;
-  }, [flatMode, fullPath, lastSegment, completions]);
+  const selectedLeaf = flatMode
+    ? (fullPath && completions.find((c) => c.path === fullPath)) || null
+    : (lastSegment && completions.find((c) => c.insertText === lastSegment && c.path)) || null;
 
   const handleNavigate = (option: PathCompletion) => {
     setSearch("");

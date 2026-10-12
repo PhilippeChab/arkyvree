@@ -4,10 +4,12 @@ import { Link, Navigate, useNavigate } from "react-router-dom";
 
 import {
   AuthPage,
+  authPagePath,
   CodeSentMessage,
   EMPTY_VERIFICATION_CODE,
   isCodeComplete,
   ResendCodeLink,
+  useAuthRedirect,
   useCodeMessages,
   VerificationCodeField,
   type VerificationCodeFormData,
@@ -29,6 +31,7 @@ export default function ResetPasswordPage() {
   usePageTitle("Reset Password");
   const pendingPasswordResetEmail = useAuthStore((s) => s.pendingPasswordResetEmail);
   const navigate = useNavigate();
+  const redirect = useAuthRedirect();
   const auth = useAuthRequests();
 
   const form = useFormWith<ResetPasswordFormData>({
@@ -42,7 +45,7 @@ export default function ResetPasswordPage() {
     auth.forgotPassword.mutate(pendingPasswordResetEmail ?? "", callbacks),
   );
 
-  if (!pendingPasswordResetEmail) return <Navigate to="/forgot-password" replace />;
+  if (!pendingPasswordResetEmail) return <Navigate to={authPagePath("/forgot-password", redirect)} replace />;
 
   const handleReset = (data: ResetPasswordFormData) => {
     setError(null);
@@ -54,7 +57,7 @@ export default function ResetPasswordPage() {
         newPasswordConfirmation: data.newPasswordConfirmation,
       },
       {
-        onSuccess: () => navigate("/sign-in"),
+        onSuccess: () => navigate(authPagePath("/sign-in", redirect)),
         onError: (error) => setError(errorMessage(error, "Failed to reset password")),
       },
     );
@@ -96,7 +99,7 @@ export default function ResetPasswordPage() {
         <Stack spacing={1} sx={{ textAlign: "center" }}>
           <ResendCodeLink onResend={handleResend} disabled={auth.pending} />
           <Typography variant="body2">
-            <MuiLink component={Link} to="/sign-in" underline="hover">
+            <MuiLink component={Link} to={authPagePath("/sign-in", redirect)} underline="hover">
               Back to Sign In
             </MuiLink>
           </Typography>

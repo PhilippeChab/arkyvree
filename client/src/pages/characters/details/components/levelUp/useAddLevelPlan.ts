@@ -1,5 +1,5 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
 import { useDebouncedValue } from "@/client/src/hooks/index.ts";
 
@@ -30,7 +30,7 @@ const OWN_STEPS = [CLASS_PLAN_STEP, HP_STEP] as const;
  */
 export function useAddLevelPlan({ open, characterId, klassId }: AddLevelPlanParams) {
   const base = useLevelWizardBase({ characterId, open, ownSteps: OWN_STEPS });
-  const { picked, activeStep, debouncedSkillPoints, resetPicks } = base;
+  const { picked, activeStep, debouncedSkillPoints } = base;
 
   const [klassSearch, setKlassSearch] = useState("");
   const debouncedKlassSearch = useDebouncedValue(klassSearch);
@@ -59,19 +59,19 @@ export function useAddLevelPlan({ open, characterId, klassId }: AddLevelPlanPara
     [classPlan],
   );
 
-  const handleAddLevel = useCallback(() => {
+  const handleAddLevel = () => {
     const key = slotCounter.current++;
     setSlotKeys((prev) => [...prev, key]);
     setClassPlan((prev) => [...prev, null]);
-  }, []);
+  };
 
   // Its slot's key, which the class it opened for keeps
-  const handleQuickAddLevel = useCallback((klass: SelectedKlass) => {
+  const handleQuickAddLevel = (klass: SelectedKlass) => {
     const key = slotCounter.current++;
     setSlotKeys((prev) => [...prev, key]);
     setClassPlan((prev) => [...prev, klass]);
     return key;
-  }, []);
+  };
 
   /**
    * Plans the class it opened for, once, as its quick-add button would, from the class options as they stand (never a
@@ -86,26 +86,22 @@ export function useAddLevelPlan({ open, characterId, klassId }: AddLevelPlanPara
   };
 
   // A removed slot's hit points and ability increase go with its key
-  const handleRemoveLevel = useCallback((index: number) => {
+  const handleRemoveLevel = (index: number) => {
     setClassPlan((prev) => prev.filter((_, i) => i !== index));
     setSlotKeys((prev) => prev.filter((_, i) => i !== index));
-  }, []);
+  };
 
   // Only non-null entries matter for downstream steps
-  const validClassPlan = useMemo(() => classPlan.filter((k): k is SelectedKlass => k !== null), [classPlan]);
+  const validClassPlan = classPlan.filter((k): k is SelectedKlass => k !== null);
   // The planned levels' slots, by which their hit points and ability increases are kept
   const levelKeys = useMemo(() => plannedSlotKeys(classPlan, slotKeys), [classPlan, slotKeys]);
-  const hpValues = useMemo(() => levelKeys.map((key) => hpBySlot[key] ?? null), [levelKeys, hpBySlot]);
+  const hpValues = levelKeys.map((key) => hpBySlot[key] ?? null);
 
-  const handleHpChange = useCallback(
-    (index: number, value: number | null) => setHpBySlot((prev) => ({ ...prev, [levelKeys[index]]: value })),
-    [levelKeys],
-  );
+  const handleHpChange = (index: number, value: number | null) =>
+    setHpBySlot((prev) => ({ ...prev, [levelKeys[index]]: value }));
 
-  const handleAbilityIncreaseChange = useCallback(
-    (index: number, abilityId: string) => setAbilityBySlot((prev) => ({ ...prev, [levelKeys[index]]: abilityId })),
-    [levelKeys],
-  );
+  const handleAbilityIncreaseChange = (index: number, abilityId: string) =>
+    setAbilityBySlot((prev) => ({ ...prev, [levelKeys[index]]: abilityId }));
 
   // In plan order: the preview's levels pair by index with the plan's HP and ability increases. Each takes its slot's
   // ability, which the preview raises at a level that takes an increase only
@@ -132,17 +128,6 @@ export function useAddLevelPlan({ open, characterId, klassId }: AddLevelPlanPara
     placeholderData: keepPreviousData,
   });
 
-  const resetPlan = useCallback(() => {
-    resetPicks();
-    setKlassSearch("");
-    slotCounter.current = 0;
-    setSlotKeys([]);
-    setClassPlan([]);
-    setHpBySlot({});
-    setAbilityBySlot({});
-    setOpenedSlot(undefined);
-  }, [resetPicks]);
-
   return {
     ...base,
     abilityBySlot,
@@ -161,7 +146,6 @@ export function useAddLevelPlan({ open, characterId, klassId }: AddLevelPlanPara
     levelKeys,
     planOpenedClass,
     previewQuery,
-    resetPlan,
     setKlassSearch,
     slotKeys,
     validClassPlan,

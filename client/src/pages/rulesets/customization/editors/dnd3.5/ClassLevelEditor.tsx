@@ -1,6 +1,5 @@
 import { parseResponse } from "hono/client";
 
-import { useFormSync, useFormWith } from "@/client/src/hooks/index.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import {
   allLevelSaves,
@@ -16,7 +15,7 @@ import type { EditorProps } from "@/client/src/pages/rulesets/customization/edit
 import type { ClassLevel } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
 import type { ClassLevelFormData } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 import type { EntityField } from "@/client/src/pages/rulesets/details/rulesetQueries.ts";
-import { useEntityFields, useEntitySave, useRulesetSaves } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { useEntityFields, useEntityForm, useRulesetSaves } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
 type LevelFeatRow = ClassLevel["feats"][number];
@@ -52,18 +51,17 @@ export function ClassLevelEditor({
   followCopy,
   refetchSaved,
 }: EditorProps<ClassLevel>) {
-  const form = useFormWith<ClassLevelFormData>(EMPTY_CLASS_LEVEL);
   const { fields } = useEntityFields(rulesetId, "klass_levels");
-  const sync = useFormSync(form, toClassLevelForm(level, fields), {
-    key: recordKey,
+  const { data: rulesetSaves, error: savesError } = useRulesetSaves(rulesetId);
+  const { form, save } = useEntityForm({
+    empty: EMPTY_CLASS_LEVEL,
+    values: toClassLevelForm(level, fields),
+    formKey: recordKey,
     adoptKey,
     updatedAt: level.updatedAt,
-  });
-  const { data: rulesetSaves, error: savesError } = useRulesetSaves(rulesetId);
-  const saveMutation = useEntitySave({
+    locked,
     rulesetId,
     entityId,
-    sync,
     followCopy,
     storeSaved: refetchSaved,
     listKey: QUERY_KEYS.rulesets.classLevels(rulesetId, level.klassId),
@@ -98,9 +96,7 @@ export function ClassLevelEditor({
             />
           </>
         ),
-        onSubmit: sync.handleSubmit((data) => saveMutation.mutate(data)),
-        canSave: sync.isDirty && !locked,
-        isSaving: saveMutation.isPending,
+        ...save,
       }}
     />
   );

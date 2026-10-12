@@ -48,7 +48,7 @@ If you have house rules, fork the SRD ruleset and point the campaign at your for
 
 Roles:
 
-- **Game Master** — every player with that role: adds, invites and removes players, sees every linked character's full sheet regardless of visibility and can download its PDF, edits the campaign's name and description (**Edit**, in the campaign's **⋮** menu), and archives it. A campaign keeps at least one Game Master: the last one can't be removed or made a Player Character.
+- **Game Master** — every player with that role: adds, invites and removes players, sees every linked character's full sheet regardless of visibility and can download its PDF, edits the campaign's name and description (**Edit**, in the campaign's **⋮** menu), and archives it. A campaign keeps at least one Game Master: the last one can't be removed, leave or be made a Player Character, so their row offers neither **Edit** nor **Leave**.
 - **Player Character** — sees other characters according to each character's visibility; edits their own characters; can **Leave** at any time.
 
 Campaigns are a character / ruleset organization layer. They aren't a virtual tabletop — no initiative tracker, dice roller, combat state, maps, or in-app chat.

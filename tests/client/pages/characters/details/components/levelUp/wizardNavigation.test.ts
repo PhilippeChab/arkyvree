@@ -26,7 +26,6 @@ function wizardAt(activeStep: number, isLastStep = false) {
   const navigation = navigationOf({
     hasProgress: true,
     onClose: () => undefined,
-    reset: () => undefined,
     save: (force) => saves.push(force),
     wizard: {
       activeStep,

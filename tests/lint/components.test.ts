@@ -521,6 +521,8 @@ describe("component rules", () => {
             'export const b = <Stack direction="row" sx={{ justifyContent: "flex-end" }}><AddButton label="Add" /></Stack>;\n',
           "client/src/save.tsx":
             'export const s = <Stack direction="row" sx={{ justifyContent: "flex-end" }}><Button>Save</Button></Stack>;\n',
+          "client/src/lead.tsx":
+            'export const l = <Stack direction="row" sx={{ justifyContent: "space-between" }}><DialogContentText>Lead</DialogContentText><AddButton label="Add" /></Stack>;\n',
           "client/src/bar.tsx": 'export const a = <ListToolbar actions={<AddButton label="Add" onClick={add} />} />;\n',
         },
         ["list-toolbars"],
@@ -529,6 +531,7 @@ describe("component rules", () => {
       "list-toolbars client/src/bare.tsx",
       "list-toolbars client/src/close.tsx",
       "list-toolbars client/src/far.tsx",
+      "list-toolbars client/src/lead.tsx",
     ]);
   });
 
@@ -691,11 +694,12 @@ describe("component rules", () => {
     ]);
   });
 
-  test("a ruleset entity page saves through useEntitySave and deletes through its layout", async () => {
+  test("a ruleset entity page's details are useEntityForm's, saved through useEntitySave, and deletes through its layout", async () => {
     const page =
       "export const p = <EntityDetailLayout backTo={back} deletion={deletion}>{card}</EntityDetailLayout>;\n";
     const dialog = "export const d = <EntityDeleteDialog open={open} what={what} restorable={restorable} />;\n";
     const saved = "export const s = () => sync.saved(values, saved.updatedAt);\n";
+    const save = "export const v = () => useEntitySave({ ...options, sync });\n";
     expect(
       await lintRepo(
         {
@@ -705,6 +709,8 @@ describe("component rules", () => {
           "client/src/pages/rulesets/Editor.tsx": saved,
           "client/src/pages/profile/ProfilePage.tsx": saved,
           "client/src/pages/rulesets/hooks/useEntitySave.ts": saved,
+          "client/src/pages/rulesets/hooks/useEntityForm.ts": save,
+          "client/src/pages/rulesets/OwnSave.tsx": save,
           "client/src/pages/rulesets/components/EntityDetailLayout.tsx": page + dialog,
         },
         ["entity-pages"],
@@ -712,6 +718,7 @@ describe("component rules", () => {
     ).toEqual([
       "entity-pages client/src/pages/rulesets/Editor.tsx",
       "entity-pages client/src/pages/rulesets/OwnDelete.tsx",
+      "entity-pages client/src/pages/rulesets/OwnSave.tsx",
     ]);
   });
 

@@ -18,6 +18,9 @@
  *   itself in words, never an emoji (the spinner's die is `DiceSpinner`'s own).
  * - `app-name`: the app's name is `APP_NAME` (`lib/brand.ts`), wherever it shows (a tab's title, the brand, a welcome,
  *   the footer): never written out.
+ * - `entity-type-labels`: an entity's type shows in its ruleset's words, `entityTypeLabel(type, baseRules)`
+ *   (`lib/rulesetLabels.ts`: "Class Level", a 3.5 power a "Spell"), never as the code names it ("klass_levels"): an
+ *   `entityType` or a `sourceType` is never rendered as it is.
  *
  * Plain JS: oxlint loads its plugins without a TypeScript step.
  */
@@ -36,6 +39,9 @@ const BRAND_MODULE = "client/src/lib/brand.ts";
 
 /** How a deletion's confirmation ends: for good, or restorable, what a fork inherits (`isRestorableDelete`) */
 const DELETE_ENDINGS = ["This action cannot be undone.", "You can restore it from Local Changes."];
+
+/** The members that hold an entity's type as the code names it ("klass_levels"), which a reader sees in words */
+const ENTITY_TYPE_MEMBERS = new Set(["entityType", "sourceType"]);
 
 /** What lays a label out without being one: its row, its box, its spinner while pending */
 const LABEL_LAYOUT = new Set(["Box", "DiceSpinner", "Stack", "Typography", "span"]);
@@ -125,6 +131,21 @@ function createConfirmWording(context) {
           'A confirmation asks "Are you sure you want to …?", then says what follows; a deletion ends "This action ' +
           'cannot be undone.", or "You can restore it from Local Changes." for what a fork inherits; an archive ends ' +
           `"${ARCHIVE_ENDINGS[0]}", or "${ARCHIVE_ENDINGS[1]}" for who doesn't own it`,
+      });
+    },
+  };
+}
+
+function createEntityTypeLabels(context) {
+  if (!inClient(context)) return {};
+  return {
+    MemberExpression(node) {
+      if (node.computed || !ENTITY_TYPE_MEMBERS.has(node.property.name) || !rendered(node)) return;
+      context.report({
+        node,
+        message:
+          "An entity's type shows in its ruleset's words, `entityTypeLabel(type, baseRules)` (`lib/rulesetLabels.ts`), " +
+          'never as the code names it ("klass_levels").',
       });
     },
   };
@@ -252,6 +273,23 @@ function labelledBy(node) {
   return false;
 }
 
+/**
+ * Whether a value (`node`) is what an element shows: a child of it, as it is, a fallback's or a condition's branch, or
+ * in a template, never a condition's test nor an attribute's value.
+ */
+function rendered(node) {
+  let shown = node;
+  for (;;) {
+    const { parent } = shown;
+    if (parent.type === "ConditionalExpression" && parent.test === shown) return false;
+    if (parent.type === "LogicalExpression" && parent.operator === "&&" && parent.left === shown) return false;
+    if (!["ChainExpression", "ConditionalExpression", "LogicalExpression", "TemplateLiteral"].includes(parent.type))
+      break;
+    shown = parent;
+  }
+  return shown.parent.type === "JSXExpressionContainer" && shown.parent.parent.type !== "JSXAttribute";
+}
+
 /** Whether a Tooltip names the icon button it wraps: its title is the button's name, not a description. */
 function wrapsIconButton(tooltip) {
   if (tooltip.openingElement.attributes.some((a) => a.type === "JSXAttribute" && a.name.name === "describeChild"))
@@ -267,6 +305,7 @@ function wrapsIconButton(tooltip) {
 export default {
   "app-name": { meta: { type: "suggestion" }, create: createAppName },
   "confirm-wording": { meta: { type: "suggestion" }, create: createConfirmWording },
+  "entity-type-labels": { meta: { type: "suggestion" }, create: createEntityTypeLabels },
   "label-case": { meta: { type: "suggestion" }, create: createLabelCase },
   "toast-wording": { meta: { type: "suggestion" }, create: createToastWording },
   "typography-marks": { meta: { type: "suggestion" }, create: createTypographyMarks },

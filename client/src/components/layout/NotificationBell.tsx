@@ -57,7 +57,11 @@ export function NotificationBell() {
   const navigate = useNavigate();
   const actions = useNotificationActions();
 
-  const { data: unreadData, error } = useQuery({ ...unreadNotificationsQuery(), refetchInterval: ONE_MINUTE });
+  const {
+    data: unreadData,
+    isLoading,
+    error,
+  } = useQuery({ ...unreadNotificationsQuery(), refetchInterval: ONE_MINUTE });
 
   const unreadCount = unreadData?.count ?? 0;
   const notifications = unreadData?.items ?? [];
@@ -82,7 +86,8 @@ export function NotificationBell() {
           size="large"
           color="inherit"
           onClick={menu.openMenu}
-          aria-label={formatCount(unreadCount, "unread notification")}
+          // Its count once it's known: none while it loads, never a "0 unread" that isn't so
+          aria-label={unreadData ? formatCount(unreadCount, "unread notification") : "Notifications"}
           sx={{ animation: shake ? ANIMATIONS.bellShake : undefined, [PREFERS_REDUCED_MOTION]: { animation: "none" } }}
           onAnimationEnd={() => setShake(false)}
         >
@@ -107,7 +112,9 @@ export function NotificationBell() {
         }}
       >
         <Stack sx={{ py: 1 }}>
-          {error && !unreadData ? (
+          {isLoading ? (
+            <DiceSpinner sx={{ py: 4 }} />
+          ) : error && !unreadData ? (
             <Box sx={{ px: 2, py: 1.5 }}>
               <LoadError what="Notifications" error={error} />
             </Box>

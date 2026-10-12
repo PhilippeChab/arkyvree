@@ -15,6 +15,8 @@ interface LevelDialogProps {
   /** It has faded out: its owner unmounts it. */
   onExited: () => void;
   open: boolean;
+  /** The character's ruleset, whose names its steps read (an ability's) */
+  rulesetId: string;
 }
 
 /**
@@ -56,6 +58,7 @@ export interface EditLevelDialogProps extends LevelDialogProps {
 export interface LevelStepProps<W> {
   baseRules: BaseRules;
   characterId: string;
+  rulesetId: string;
   wizard: W;
 }
 

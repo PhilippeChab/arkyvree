@@ -1,25 +1,12 @@
 /**
  * The kinds of invite, answered one way wherever they're answered (a notification's buttons, an invite's own page):
- * `useAnswerInvite` runs their requests, and the invite's page (`pages/invites`) shows one.
+ * `useAnswerInvite` runs their requests.
  */
 
 import { parseResponse } from "hono/client";
 
-import { ContributorsIcon, PlayersIcon } from "@/client/src/components/icons/index.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
-import type { ContributorRole } from "@/shared/enums.ts";
-
-/** What an invite's page shows of it, whatever its kind. */
-interface InviteDetails {
-  entityId: string | null | undefined;
-  entityName: string | undefined;
-  invitedAt: string;
-  isArchived: boolean;
-  /** The contributor role it offers. */
-  role?: ContributorRole;
-  status: string;
-}
 
 /** An answer to an invite: its kind and id, and the notification it came from when it's answered from one. */
 export interface InviteAnswer {
@@ -33,33 +20,16 @@ export type InviteKind = "campaign" | "characterContributor" | "rulesetContribut
 
 /**
  * Each kind's name in a toast (`label`), its answers' requests (an accept's answering the cache key of the record it
- * gave the user rights on, which it refreshes), and the list that gains its entity once it's accepted (`listKey`); its
- * page's facts: its title, its icon, what it's to (`entityLabel`, what accepting does, `verb`), the
- * invite read for it (`inviteFn`) and the status an accepted one ends in; and where accepting lands: its entity's
- * page, or its list's (`acceptedPath`).
+ * gave the user rights on, which it refreshes), the list that gains its entity once it's accepted (`listKey`), and where
+ * accepting lands: its entity's page, or its list's (`acceptedPath`). What its page shows of it is its page's
+ * (`INVITE_PAGES`, `pages/invites`).
  */
 export const INVITE_KINDS = {
   campaign: {
     label: "Campaign invite",
-    pageTitle: "Campaign Invite",
-    icon: PlayersIcon,
-    entityLabel: "Campaign",
-    verb: "join",
-    acceptedStatus: "Accepted",
     entityPath: (id: string) => `/campaigns/${id}`,
     listPath: "/campaigns",
     listKey: QUERY_KEYS.campaigns.lists,
-    inviteFn: async (inviteId: string): Promise<InviteDetails> => {
-      const invite = await parseResponse(rpc.api.campaigns.invites[":inviteId"].$get({ param: { inviteId } }));
-      const campaign = invite.playersInCampaign?.campaignsInCampaign;
-      return {
-        status: invite.status,
-        entityName: campaign?.name,
-        entityId: campaign?.id,
-        isArchived: !!campaign?.deletedAt,
-        invitedAt: invite.createdAt,
-      };
-    },
     // The answer names its slot, not its campaign: every campaign's own data, which only a member's page holds
     acceptFn: async (inviteId: string) => {
       await parseResponse(rpc.api.campaigns.invites[":inviteId"].accept.$post({ param: { inviteId } }));
@@ -70,25 +40,9 @@ export const INVITE_KINDS = {
   },
   characterContributor: {
     label: "Contributor invite",
-    pageTitle: "Character Contributor Invite",
-    icon: ContributorsIcon,
-    entityLabel: "Character",
-    verb: "contribute to",
-    acceptedStatus: "Active",
     entityPath: (id: string) => `/characters/${id}`,
     listPath: "/characters",
     listKey: QUERY_KEYS.characters.lists,
-    inviteFn: async (id: string): Promise<InviteDetails> => {
-      const invite = await parseResponse(rpc.api.characters.contributors.invites[":id"].$get({ param: { id } }));
-      return {
-        status: invite.status,
-        entityName: invite.charactersInCharacter?.name,
-        entityId: invite.characterId,
-        isArchived: !!invite.charactersInCharacter?.deletedAt,
-        invitedAt: invite.createdAt,
-        role: invite.role,
-      };
-    },
     acceptFn: async (id: string) => {
       const contributor = await parseResponse(
         rpc.api.characters.contributors.invites[":id"].accept.$post({ param: { id } }),
@@ -100,25 +54,9 @@ export const INVITE_KINDS = {
   },
   rulesetContributor: {
     label: "Contributor invite",
-    pageTitle: "Ruleset Contributor Invite",
-    icon: ContributorsIcon,
-    entityLabel: "Ruleset",
-    verb: "contribute to",
-    acceptedStatus: "Active",
     entityPath: (id: string) => `/rulesets/${id}`,
     listPath: "/rulesets",
     listKey: QUERY_KEYS.rulesets.lists,
-    inviteFn: async (id: string): Promise<InviteDetails> => {
-      const invite = await parseResponse(rpc.api.rulesets.contributors.invites[":id"].$get({ param: { id } }));
-      return {
-        status: invite.status,
-        entityName: invite.rulesetsInRule?.name,
-        entityId: invite.rulesetId,
-        isArchived: invite.rulesetsInRule?.status === "Archived",
-        invitedAt: invite.createdAt,
-        role: invite.role,
-      };
-    },
     acceptFn: async (id: string) => {
       const contributor = await parseResponse(
         rpc.api.rulesets.contributors.invites[":id"].accept.$post({ param: { id } }),

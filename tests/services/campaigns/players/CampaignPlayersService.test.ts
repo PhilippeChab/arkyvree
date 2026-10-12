@@ -54,6 +54,19 @@ describe("CampaignPlayersService", () => {
       expect(joined.get(gmPlayer.id)).toBe(gmPlayer.createdAt);
     });
 
+    test("says which slot is its campaign's last Game Master, whom the server neither removes nor demotes", async () => {
+      const { session, campaign, gmPlayer } = await setup();
+      const lastGameMasters = async () =>
+        (await CampaignPlayersService.getPlayers(session, campaign.id, {}, firstPage)).items
+          .filter((player) => player.isLastGameMaster)
+          .map((player) => player.id);
+      const { player: slot } = await CampaignPlayersService.addPlayer(session, campaign.id, "Player Character");
+      expect(await lastGameMasters()).toEqual([gmPlayer.id]);
+
+      await CampaignPlayersService.updatePlayer(session, campaign.id, slot.id, "Game Master");
+      expect(await lastGameMasters()).toEqual([]);
+    });
+
     test("refuses non-members and throws NotFoundError for a missing campaign", async () => {
       const { campaign } = await setup();
       const { session: stranger } = await createTestUser();
