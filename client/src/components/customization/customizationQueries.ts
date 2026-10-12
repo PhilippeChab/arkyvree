@@ -7,9 +7,16 @@ import { FIVE_SECONDS } from "@/client/src/lib/durations.ts";
 import { nextPage } from "@/client/src/lib/pageItems.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
+import type { CustomizableEntityType } from "@/shared/customization/entities.ts";
 import type { TargetPathKind } from "@/shared/customization/target.ts";
 
 import { type PathInfo, toPathInfo } from "./pathValues.ts";
+
+/**
+ * Whose modifier or requirement a target path is written for, which the paths it offers depend on: a customizable
+ * entity's, or a character's own modifier; none for a requirement.
+ */
+export type TargetPathOwner = CustomizableEntityType | "characters";
 
 /** Remembers what a path picked from a list takes, which the list carried, so it shows at once. */
 export function seedTargetPath(
@@ -17,7 +24,7 @@ export function seedTargetPath(
   rulesetId: string,
   kind: TargetPathKind,
   picked: PathInfo,
-  entityType?: string,
+  entityType?: TargetPathOwner,
 ) {
   queryClient.setQueryData(targetPathQuery(rulesetId, kind, picked.path, entityType).queryKey, picked);
 }
@@ -29,7 +36,7 @@ export function seedTargetPath(
 export function targetCompletionsQuery(
   rulesetId: string,
   kind: TargetPathKind,
-  entityType: string | undefined,
+  entityType: TargetPathOwner | undefined,
   prefix: string,
   search: string,
   flat: boolean,
@@ -66,7 +73,7 @@ export function targetCompletionsQuery(
 }
 
 /** What a target path takes, once it's a complete path its entity type takes: null while it's incomplete or unknown. */
-export function targetPathQuery(rulesetId: string, kind: TargetPathKind, path: string, entityType?: string) {
+export function targetPathQuery(rulesetId: string, kind: TargetPathKind, path: string, entityType?: TargetPathOwner) {
   return queryOptions({
     queryKey: QUERY_KEYS.rulesets.targetPath(rulesetId, kind, path, entityType),
     queryFn: path

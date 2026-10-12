@@ -1,4 +1,4 @@
-import { THEME_MODES, type ThemeMode } from "@/client/src/contexts/themeContext.ts";
+import { THEME_MODES, type ThemeMode } from "@/client/src/contexts/themeModeContext.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
 
 import { readStored, removeStored, writeStored } from "./browserStorage.ts";

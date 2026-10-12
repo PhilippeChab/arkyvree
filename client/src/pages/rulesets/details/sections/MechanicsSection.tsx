@@ -2,7 +2,13 @@ import { Stack } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { type InferResponseType, parseResponse } from "hono/client";
 
-import { CreateDialog, LoadMoreButton, SearchBar, SectionContent } from "@/client/src/components/common/index.ts";
+import {
+  BlankState,
+  CreateDialog,
+  LoadMoreButton,
+  SearchBar,
+  SectionContent,
+} from "@/client/src/components/common/index.ts";
 import { MechanicsIcon } from "@/client/src/components/icons/index.ts";
 import { useSearchText } from "@/client/src/hooks/index.ts";
 import { itemsBeforeLastPage, pageItems } from "@/client/src/lib/pageItems.ts";
@@ -18,8 +24,7 @@ import { mechanicsQuery } from "@/client/src/pages/rulesets/details/sectionQueri
 import { useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
-type Mechanic = MechanicsPaginated["items"][number];
-type MechanicsPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["mechanics"]["$get"], 200>;
+type Mechanic = InferResponseType<(typeof rpc.api.rulesets)[":id"]["mechanics"]["$get"], 200>["items"][number];
 
 const MECHANICS_COLUMNS = [
   { key: "name", label: "Name", width: "30%" },
@@ -58,7 +63,7 @@ export function MechanicsSection({ ruleset, childOnly, onChildOnlyChange }: Rule
     openEntity(`mechanics/${mechanic.id}`);
   };
 
-  const handleRowMouseEnter = (mechanic: Mechanic) => {
+  const handleRowPrefetch = (mechanic: Mechanic) => {
     void queryClient.prefetchQuery(mechanicQuery(ruleset.id, mechanic.id));
   };
 
@@ -99,11 +104,15 @@ export function MechanicsSection({ ruleset, childOnly, onChildOnlyChange }: Rule
             isLoading={isLoading}
             columns={MECHANICS_COLUMNS}
             onRowClick={handleRowClick}
-            onRowMouseEnter={handleRowMouseEnter}
+            onRowPrefetch={handleRowPrefetch}
             renderCell={renderCell}
-            emptyIcon={MechanicsIcon}
-            emptyTitle="No mechanics"
-            emptyDescription="No mechanics documented for this ruleset."
+            empty={
+              <BlankState
+                icon={MechanicsIcon}
+                title="No mechanics"
+                description="No mechanics documented for this ruleset."
+              />
+            }
           />
           <LoadMoreButton
             hasNextPage={hasNextPage}

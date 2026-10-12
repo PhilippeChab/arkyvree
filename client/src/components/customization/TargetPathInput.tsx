@@ -1,15 +1,16 @@
 import { Box, FormControl, FormHelperText, InputLabel } from "@mui/material";
-import { type Ref } from "react";
+import { type Ref, useId } from "react";
 
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import type { TargetPathKind } from "@/shared/customization/target.ts";
 
+import type { TargetPathOwner } from "./customizationQueries.ts";
 import type { PathInfo } from "./pathValues.ts";
 import { TargetPathBrowser } from "./TargetPathBrowser.tsx";
 import { useTargetPath } from "./useTargetPath.ts";
 
 interface TargetPathInputProps {
-  entityType?: string;
+  entityType?: TargetPathOwner;
   error?: boolean;
   helperText?: string;
   /** Its form field's `ref`, so a failed submit focuses its search. */
@@ -37,22 +38,25 @@ export function TargetPathInput({
   // What the path takes didn't load: the field says so, under what its form says
   const shownHelperText = helperText ?? (targetError ? loadFailureMessage("Path", targetError) : undefined);
   const segments = value ? value.split(".").filter(Boolean) : [];
+  // Its label names its search field, as a text field's does; its border says an error as its label and its text do
+  const inputId = useId();
+  const invalid = error || !!targetError;
 
   return (
     // The field's border sits below its label, which the control holds over its top padding
-    <FormControl fullWidth error={error || !!targetError} sx={{ pt: 2 }}>
-      <InputLabel shrink sx={{ bgcolor: "background.paper", px: 0.5 }}>
+    <FormControl fullWidth error={invalid} sx={{ pt: 2 }}>
+      <InputLabel shrink htmlFor={inputId} sx={{ bgcolor: "background.paper", px: 0.5 }}>
         {label}
       </InputLabel>
       <Box
         sx={{
           border: 1,
-          borderColor: error ? "error.main" : "divider",
+          borderColor: invalid ? "error.main" : "divider",
           borderRadius: 1,
           px: 1.5,
           py: 1,
           "&:hover": {
-            borderColor: error ? "error.main" : "text.primary",
+            borderColor: invalid ? "error.main" : "text.primary",
           },
         }}
       >
@@ -62,6 +66,7 @@ export function TargetPathInput({
           entityType={entityType}
           segments={segments}
           isComplete={target !== null}
+          inputId={inputId}
           inputRef={inputRef}
           onChange={(path, picked) => {
             if (picked) pick(picked);

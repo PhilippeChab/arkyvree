@@ -16,7 +16,14 @@ import type { NewClassLevelFieldsProps } from "@/client/src/pages/rulesets/detai
 import { useRulesetFeats } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { MAX_SAVE_BASE } from "@/vocabulary/dnd3.5/classes.ts";
 
-import { areSaveBasesValid, featKey, type LevelFeat, levelFeatLabel, saveBaseError } from "./classLevelForm.ts";
+import {
+  areSaveBasesValid,
+  featKey,
+  type LevelFeat,
+  levelFeatLabel,
+  saveBaseError,
+  sortLevelFeats,
+} from "./classLevelForm.ts";
 
 /** A level's form, and the ruleset's saves (a new level's fields'), with the labels of the feats it was saved with. */
 interface ClassLevelFieldsProps extends NewClassLevelFieldsProps {
@@ -89,11 +96,7 @@ export function ClassLevelFields({ form, rulesetId, rulesetSaves, savesError, fe
   // Kept sorted by label, so the order doesn't depend on picking order.
   const setFeats = (next: FeatOption[]) => {
     setPickedLabels((labels) => new Map([...labels, ...next.map((o) => [featKey(o), o.label] as const)]));
-    featsField.onChange(
-      [...next]
-        .sort((a, b) => a.label.localeCompare(b.label))
-        .map(({ featId, aptitudeId }) => ({ featId, aptitudeId })),
-    );
+    featsField.onChange(sortLevelFeats(next, (o) => o.label).map(({ featId, aptitudeId }) => ({ featId, aptitudeId })));
   };
 
   return (
@@ -107,9 +110,11 @@ export function ClassLevelFields({ form, rulesetId, rulesetSaves, savesError, fe
             gap: 2,
           }}
         >
-          {saveList.map((save) => (
+          {saveList.map((save, index) => (
             <TextField
               key={save.id}
+              // The saves' one field: a failed submit focuses its first input
+              inputRef={index === 0 ? savesField.ref : undefined}
               label={`${save.name} Save`}
               type="number"
               value={baseFor(save.id)}

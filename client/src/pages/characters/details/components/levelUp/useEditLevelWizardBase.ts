@@ -64,7 +64,7 @@ export function useEditLevelWizardBase({ level, answers, characterId, onClose }:
           param: { characterId, characterLevelId: editingLevelId },
           json: {
             hp: data.selectedHP,
-            abilityIncreases: abilityIncreasesOf(data.selectedAttribute),
+            abilityIncreases: abilityIncreasesOf(data.selectedAbility),
             skills: skillPointAllocations,
             feats: pickIds(selectedFeats),
             powers: pickIds(selectedPowers),

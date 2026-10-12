@@ -2,7 +2,7 @@ import { Container, Stack, Typography } from "@mui/material";
 
 import { CardTitle, OptionToggle, PageHeader, PageTransition, Panel } from "@/client/src/components/common/index.ts";
 import { DarkModeIcon, LightModeIcon, SettingsBrightnessIcon } from "@/client/src/components/icons/index.ts";
-import { type ThemeMode } from "@/client/src/contexts/themeContext.ts";
+import { type ThemeMode } from "@/client/src/contexts/themeModeContext.ts";
 import { useThemeMode } from "@/client/src/contexts/useThemeMode.ts";
 import { usePageTitle } from "@/client/src/hooks/index.ts";
 import { APP_NAME } from "@/client/src/lib/brand.ts";

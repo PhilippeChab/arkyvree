@@ -97,10 +97,12 @@ export function useRulesetOperations() {
           param: { id },
         }),
       ),
+    // Gone from its lists but the Archived filter, as an archived campaign or character is: back to them
     onSuccess: (_, id) => {
       snackbar.success("Ruleset archived");
       void refreshRuleset(id);
       archiveDialog.close();
+      navigate("/rulesets");
     },
     onError: (error) => {
       snackbar.error(error, "Failed to archive ruleset");
@@ -223,6 +225,19 @@ export function useRulesetOperations() {
     if (forkDialog.target) forkMutation.mutate({ id: forkDialog.target.id, data });
   };
 
+  const confirmEdit = (data: EditRulesetFormData) => {
+    const edited = editDialog.target;
+    if (edited) updateMutation.mutate({ id: edited.id, data, updatedAt: edited.updatedAt });
+  };
+
+  const confirmArchive = () => {
+    if (archiveDialog.target) archiveMutation.mutate(archiveDialog.target.id);
+  };
+
+  const confirmPublish = (kind: PublishKind) => {
+    if (publishDialog.target) publishMutation.mutate({ id: publishDialog.target.id, kind });
+  };
+
   return {
     /** Each dialog: `open`, `close`, and what it acts on (`target`). */
     editDialog,
@@ -251,7 +266,10 @@ export function useRulesetOperations() {
     handlePublish,
     handleSubscribe,
     handleUnsubscribe,
+    confirmArchive,
+    confirmEdit,
     confirmFork,
+    confirmPublish,
     confirmSubscribe,
     confirmUnsubscribe,
   };

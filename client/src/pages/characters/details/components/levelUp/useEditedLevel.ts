@@ -51,7 +51,7 @@ export function useEditedLevel({ open, characterId, editingLevel }: EditedLevelP
       eligible: true,
     },
     selectedHP: levelData.hp,
-    selectedAttribute: levelData.abilityIncreases[0]?.abilityId ?? null,
+    selectedAbility: levelData.abilityIncreases[0]?.abilityId ?? null,
     selectedFeats: levelData.feats,
     selectedPowers: levelData.powers,
     skillPointAllocations: levelData.skills,
@@ -61,7 +61,7 @@ export function useEditedLevel({ open, characterId, editingLevel }: EditedLevelP
 
   const selectedClass = watch("selectedClass");
   const selectedHP = watch("selectedHP");
-  const selectedAttribute = watch("selectedAttribute");
+  const selectedAbility = watch("selectedAbility");
 
   // The HP step's one level, the edited one, its HP the form's field
   const { field: hpField } = useController({ control, name: "selectedHP" });
@@ -84,7 +84,7 @@ export function useEditedLevel({ open, characterId, editingLevel }: EditedLevelP
     editedLevelId: editingLevelId,
   };
   // The edited level with its ability increase, which its skill points, its slots and its pickers' options read
-  const increasedStep: StepLevel = { ...step, abilityId: selectedAttribute ?? undefined };
+  const increasedStep: StepLevel = { ...step, abilityId: selectedAbility ?? undefined };
   // The level with its feats and spells, which the steps that fit them to their pools take
   const pickedStep: StepLevel = {
     ...increasedStep,
@@ -103,7 +103,7 @@ export function useEditedLevel({ open, characterId, editingLevel }: EditedLevelP
     levelData,
     levelError,
     pickedStep,
-    selectedAttribute,
+    selectedAbility,
     selectedClass,
     selectedHP,
     step,

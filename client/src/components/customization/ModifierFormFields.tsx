@@ -5,10 +5,11 @@ import type { rpc } from "@/client/src/services/rpc.ts";
 
 import { ConditionFields, type ConditionMode } from "./ConditionFields.tsx";
 import { CONDITION_OPERATOR_RULES, CONDITION_TARGET_RULES, MODIFIER_VALUE_RULES } from "./conditionRules.ts";
+import type { TargetPathOwner } from "./customizationQueries.ts";
 
 interface ModifierFormFieldsProps {
-  /** Filters target-path completions to those allowed for this entity type. */
-  entityType?: string;
+  /** Whose modifier it is: its target paths are those allowed for it. */
+  entityType: TargetPathOwner;
   form: UseFormReturn<ModifierFormData>;
   mode: ConditionMode;
   rulesetId: string;

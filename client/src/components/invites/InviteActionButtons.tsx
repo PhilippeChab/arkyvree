@@ -3,11 +3,13 @@ import { Button, Stack } from "@mui/material";
 import { DiceSpinner } from "@/client/src/components/common/index.ts";
 import { CheckIcon, CloseIcon } from "@/client/src/components/icons/index.ts";
 
+import type { InviteVerb } from "./inviteKinds.ts";
+
 interface InviteActionButtonsProps {
   onAccept: () => void;
   onReject: () => void;
   /** The answer being sent: its button shows it running, and both wait. */
-  pending?: "accept" | "reject" | null;
+  pending?: InviteVerb | null;
   /** Full-width buttons for an invite page, instead of small inline ones. */
   prominent?: boolean;
 }

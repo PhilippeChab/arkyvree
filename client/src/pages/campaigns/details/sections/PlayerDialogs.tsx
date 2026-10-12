@@ -9,19 +9,12 @@ import {
   EmailField,
   SelectField,
 } from "@/client/src/components/common/index.ts";
-import {
-  CharacterIcon,
-  DeleteIcon,
-  EditIcon,
-  GMIcon,
-  LeaveIcon,
-  PersonAddIcon,
-  SendIcon,
-} from "@/client/src/components/icons/index.ts";
+import { DeleteIcon, EditIcon, LeaveIcon, PersonAddIcon, SendIcon } from "@/client/src/components/icons/index.ts";
 import { formatDate } from "@/client/src/lib/formatDate.ts";
 import { requiredRules } from "@/client/src/lib/validation.ts";
+import type { CampaignRole } from "@/shared/enums.ts";
 
-import type { PlayerFormData, PlayerSlot } from "./players.ts";
+import { type PlayerFormData, type PlayerSlot, ROLE_ICONS } from "./players.ts";
 
 interface AddPlayerDialogProps {
   form: UseFormReturn<PlayerFormData>;
@@ -62,6 +55,9 @@ interface RoleLabelProps {
   label: string;
 }
 
+/** The roles a slot's dialogs offer, in the order they offer them. */
+const ROLE_CHOICES = ["Player Character", "Game Master"] as const satisfies readonly CampaignRole[];
+
 function PlayerEmailField({ form, pending }: PlayerFieldProps) {
   return (
     <EmailField
@@ -82,10 +78,7 @@ function PlayerRoleSelect({ form, pending }: PlayerFieldProps) {
       label="Role"
       rules={requiredRules("Role is required")}
       disabled={pending}
-      options={[
-        { value: "Player Character", label: <RoleLabel icon={CharacterIcon} label="Player Character" /> },
-        { value: "Game Master", label: <RoleLabel icon={GMIcon} label="Game Master" /> },
-      ]}
+      options={ROLE_CHOICES.map((role) => ({ value: role, label: <RoleLabel icon={ROLE_ICONS[role]} label={role} /> }))}
     />
   );
 }
@@ -194,7 +187,7 @@ export function RemovePlayerDialog({
         ) : (
           <>
             Are you sure you want to remove <strong>{slot?.name}</strong> from this campaign?
-            {slot?.pendingInvite && " This will also cancel its pending invite."} This action cannot be undone.
+            {slot?.pendingInvite && " This will also revoke its pending invite."} This action cannot be undone.
           </>
         )
       }

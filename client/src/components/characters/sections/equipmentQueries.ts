@@ -57,18 +57,8 @@ export function inventoryPlacementQuery(
   });
 }
 
-/** A ruleset item's details, which say how it's placed; skipped until an item is picked. */
-export function rulesetItemQuery(rulesetId: string, itemId: string | undefined) {
-  return queryOptions({
-    queryKey: QUERY_KEYS.rulesets.item(rulesetId, itemId ?? ""),
-    queryFn: itemId
-      ? () => parseResponse(rpc.api.rulesets[":id"].items[":itemId"].$get({ param: { id: rulesetId, itemId } }))
-      : skipToken,
-  });
-}
-
 /** The ruleset's items the add dialog offers, filtered by what's typed. */
-export function rulesetItemSearchQuery(rulesetId: string, search: string) {
+export function itemOptionsQuery(rulesetId: string, search: string) {
   return infiniteQueryOptions({
     queryKey: QUERY_KEYS.rulesets.sectionSearch(rulesetId, "items", search),
     queryFn: ({ pageParam }) =>
@@ -80,5 +70,15 @@ export function rulesetItemSearchQuery(rulesetId: string, search: string) {
       ),
     initialPageParam: 1,
     getNextPageParam: nextPage,
+  });
+}
+
+/** A ruleset item's details, which say how it's placed; skipped until an item is picked. */
+export function rulesetItemQuery(rulesetId: string, itemId: string | undefined) {
+  return queryOptions({
+    queryKey: QUERY_KEYS.rulesets.item(rulesetId, itemId ?? ""),
+    queryFn: itemId
+      ? () => parseResponse(rpc.api.rulesets[":id"].items[":itemId"].$get({ param: { id: rulesetId, itemId } }))
+      : skipToken,
   });
 }

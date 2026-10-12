@@ -53,7 +53,13 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
     for (const key of EVENT_INVALIDATION_MAP[event.type]) queryClient.invalidateQueries({ queryKey: key });
   };
 
-  useWebSocket({ enabled: isAuthenticated, identity: userId, onMessage: handleMessage });
+  // Back after a lost connection: every event's queries catch up on what it missed, as no poll does
+  const handleReconnect = () => {
+    for (const keys of Object.values(EVENT_INVALIDATION_MAP))
+      for (const key of keys) queryClient.invalidateQueries({ queryKey: key });
+  };
+
+  useWebSocket({ enabled: isAuthenticated, identity: userId, onMessage: handleMessage, onReconnect: handleReconnect });
 
   return (
     <>

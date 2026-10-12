@@ -405,6 +405,7 @@ export function CreateCharacterDialog({ open, onClose, onExited }: CreateCharact
         }),
       ),
     onSuccess: (data) => {
+      snackbar.success("Character created");
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.characters.lists });
       onClose();
       navigate(`/characters/${data.id}`, { state: { openLevelUp: true } satisfies CharacterPageState });
@@ -541,9 +542,8 @@ export function CreateCharacterDialog({ open, onClose, onExited }: CreateCharact
               {method.kind === "pointBuy" && (
                 <CountChip
                   label={formatPointsSpent(pointBuyPoints, method.budget)}
-                  color={
-                    pointBuyPoints > method.budget ? "error" : pointBuyPoints === method.budget ? "success" : "default"
-                  }
+                  // Its increases stop at its budget: spent whole, or not yet
+                  color={pointBuyPoints === method.budget ? "success" : "default"}
                 />
               )}
             </Stack>

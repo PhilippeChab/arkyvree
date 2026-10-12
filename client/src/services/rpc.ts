@@ -6,13 +6,12 @@ import { apiFetch } from "./apiFetch.ts";
 
 type RPC = typeof _rpc;
 
-/** We need to do this in order for tsserver to be usable */
+/** The client's type, named so `rpc` is annotated with it rather than inferring it again: tsserver stays usable */
 const _rpc = hc<Application>("");
 
 /**
- * Same-origin in all environments — vite's dev proxy forwards /api/* and /auth/* to API_PORT, and in production the
- * server that serves the built client serves them too. Hardcoding `localhost:8000` in dev meant e2e tests on CI (where nothing is listening on
- * 8000) silently failed sign-in because requests bypassed the configured proxy.
+ * Same-origin in all environments: vite's dev proxy forwards /api/* and /auth/* to API_PORT, and in production the
+ * server that serves the built client serves them too.
  */
 const host = document.location.origin;
 

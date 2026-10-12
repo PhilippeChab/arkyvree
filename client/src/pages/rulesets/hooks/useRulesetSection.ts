@@ -100,8 +100,8 @@ export function useRulesetSection<
       if (sourceId === undefined) return createFn(data);
       return duplicateFn ? duplicateFn(sourceId, data) : Promise.reject(new Error(`${label} can't be duplicated here`));
     },
-    onSuccess: (created) => {
-      snackbar.success(`${label} created`);
+    onSuccess: (created, { sourceId }) => {
+      snackbar.success(`${label} ${sourceId === undefined ? "created" : "duplicated"}`);
       invalidateOnMutation();
       createDialog.close();
       onCreateSuccess?.(created);

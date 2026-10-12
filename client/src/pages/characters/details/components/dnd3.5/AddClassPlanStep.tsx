@@ -1,7 +1,7 @@
-import { alpha, Autocomplete, Box, IconButton, Stack, TextField, type Theme, Typography } from "@mui/material";
+import { alpha, Autocomplete, Box, Stack, TextField, type Theme, Typography } from "@mui/material";
 import type { ReactNode, UIEvent } from "react";
 
-import { AddButton, BlankNote, ScrollSafeListbox } from "@/client/src/components/common/index.ts";
+import { AddButton, BlankNote, RowAction, ScrollSafeListbox } from "@/client/src/components/common/index.ts";
 import { DeleteIcon } from "@/client/src/components/icons/index.ts";
 import { emptyOptionsText } from "@/client/src/lib/errorMessage.ts";
 import {
@@ -66,9 +66,12 @@ function LevelSlot({ index, onRemove, children }: LevelSlotProps) {
   return (
     <Stack direction="row" spacing={0.5} sx={{ minHeight: 56, alignItems: "center" }}>
       {children}
-      <IconButton size="small" aria-label={`Remove Level ${index + 1}`} onClick={() => onRemove(index)}>
-        <DeleteIcon fontSize="small" />
-      </IconButton>
+      <RowAction
+        icon={DeleteIcon}
+        label={`Remove Level ${index + 1}`}
+        intent="destructive"
+        onClick={() => onRemove(index)}
+      />
     </Stack>
   );
 }

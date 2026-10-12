@@ -37,6 +37,7 @@ export function SheetSections({
         baseRules={baseRules}
         characterId={characterId}
         readOnly={readOnly}
+        rulesetId={rulesetId}
       />
 
       <SavingThrowsSection saves={character.saves} />
@@ -66,7 +67,7 @@ export function SheetSections({
           load={load}
         />
       ) : (
-        <ReadOnlyEquipmentSection equipment={character.equipment} load={load} />
+        <ReadOnlyEquipmentSection equipment={character.equipment} load={load} rulesetId={rulesetId} />
       )}
     </>
   );

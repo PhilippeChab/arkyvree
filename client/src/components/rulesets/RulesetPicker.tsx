@@ -2,14 +2,10 @@ import { Autocomplete, TextField } from "@mui/material";
 import type { Ref } from "react";
 import type { FieldError } from "react-hook-form";
 
-import { AnimatedAlert, ScrollSafeListbox } from "@/client/src/components/common/index.ts";
+import { ScrollSafeListbox } from "@/client/src/components/common/index.ts";
 import { emptyOptionsText } from "@/client/src/lib/errorMessage.ts";
 
 import type { RulesetOption, RulesetPickerOptions } from "./useRulesetPickerOptions.ts";
-
-interface BaseRulesetAlertProps {
-  ruleset: RulesetOption | null;
-}
 
 interface RulesetPickerProps {
   disabled?: boolean;
@@ -20,19 +16,6 @@ interface RulesetPickerProps {
   /** What it lists, searched and paged on the server, and why it didn't load: `useRulesetPickerOptions`'. */
   options: RulesetPickerOptions;
   value: RulesetOption | null;
-}
-
-/**
- * The warning shown once a base ruleset is picked: it can't be edited until forked. Its dialog's column spaces it, which
- * would space it even closed: it's mounted only while it shows.
- */
-export function BaseRulesetAlert({ ruleset }: BaseRulesetAlertProps) {
-  if (ruleset === null || ruleset.userId) return null;
-  return (
-    <AnimatedAlert in severity="warning">
-      Base rulesets are read-only templates. Fork it first to customize rules for your group.
-    </AnimatedAlert>
-  );
 }
 
 /** A create dialog's ruleset field, with the rulesets under their group headings. */

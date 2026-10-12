@@ -5,14 +5,14 @@ import type { LevelUpFormData } from "@/client/src/pages/characters/details/comp
 import type { BaseRules } from "@/shared/enums.ts";
 
 import { AbilityIncreaseField } from "./AbilityIncreaseField.tsx";
-import type { AttributesData } from "./levelUp/index.ts";
+import type { AbilitiesData } from "./levelUp/index.ts";
 
 interface EditAbilityState {
-  attributeData: AttributesData | undefined;
-  attributesError: Error | null;
+  abilitiesError: Error | null;
+  abilityData: AbilitiesData | undefined;
   /** The picks' form: the ability field. */
   control: Control<LevelUpFormData>;
-  isLoadingAttributes: boolean;
+  isLoadingAbilities: boolean;
 }
 
 interface EditAbilityStepProps {
@@ -22,15 +22,15 @@ interface EditAbilityStepProps {
 }
 
 export function EditAbilityStep({ wizard, baseRules, rulesetId }: EditAbilityStepProps) {
-  const { attributeData, isLoadingAttributes, attributesError, control } = wizard;
-  const { field } = useController({ control, name: "selectedAttribute" });
-  if (isLoadingAttributes) return <DiceSpinner />;
-  if (attributesError && !attributeData) return <LoadError what="Abilities" error={attributesError} />;
-  if (!attributeData?.isAvailable) return <BlankNote>No ability increase at this level</BlankNote>;
+  const { abilityData, isLoadingAbilities, abilitiesError, control } = wizard;
+  const { field } = useController({ control, name: "selectedAbility" });
+  if (isLoadingAbilities) return <DiceSpinner />;
+  if (abilitiesError && !abilityData) return <LoadError what="Abilities" error={abilitiesError} />;
+  if (!abilityData?.isAvailable) return <BlankNote>No ability increase at this level</BlankNote>;
 
   return (
     <AbilityIncreaseField
-      abilities={attributeData.attributes}
+      abilities={abilityData.attributes}
       baseRules={baseRules}
       rulesetId={rulesetId}
       name="ability-increase"

@@ -94,7 +94,7 @@ class CharactersRepository extends include(
     return await db.insert(this.table).values(values).returning();
   }
 
-  /** Hard delete — bonded children are reconcile-managed, not user-archived. */
+  /** Hard delete — bonded children follow their owner's levels (`BondedPlans`), never archived by a user. */
   async delete(db: Db, where: { id: string }) {
     return await db.delete(this.table).where(eq(this.table.id, where.id));
   }

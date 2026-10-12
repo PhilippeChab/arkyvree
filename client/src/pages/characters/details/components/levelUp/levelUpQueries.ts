@@ -32,6 +32,9 @@ type LevelStepData = InferResponseType<LevelsApi["level-steps"][":step"]["$get"]
 /** A step named `N`, as the server describes it. */
 type NamedStep<N extends StepName> = Extract<LevelStepData, { name: N }>;
 
+/** The name of a step the ruleset lists for a level. */
+type StepName = LevelStepData["name"];
+
 /** A step's description as the steps read it: a step's without its name. */
 type Unnamed<S> = S extends unknown ? Omit<S, "name"> : never;
 
@@ -75,9 +78,6 @@ export type LevelPreview = InferResponseType<LevelsApi["preview"]["$post"], 200>
 
 /** A step's answer, by the name the ruleset lists it by, as its steps read it: without its name. */
 export type StepAnswer<N extends StepName> = Unnamed<NamedStep<N>>;
-
-/** The name of a step the ruleset lists for a level. */
-export type StepName = LevelStepData["name"];
 
 /** Whether the server's step is the one asked for, by its name. */
 function isNamed<N extends StepName>(step: LevelStepData, name: N): step is NamedStep<N> {

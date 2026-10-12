@@ -228,7 +228,7 @@ function createTypographyMarks(context) {
   };
   return {
     JSXText(node) {
-      check(node, node.value);
+      check(node, decodedText(node.value));
     },
     Literal(node) {
       if (typeof node.value === "string" && node.parent.type !== "ImportDeclaration") check(node, node.value);
@@ -251,6 +251,16 @@ function createTypographyMarks(context) {
       });
     },
   };
+}
+
+/**
+ * A JSX text as it shows: its numeric character references (`&#x1F480;`, `&#8230;`) decoded, which the parser leaves as
+ * written.
+ */
+function decodedText(text) {
+  return text.replace(/&#(x[0-9a-f]+|\d+);/gi, (_, code) =>
+    String.fromCodePoint(code[0].toLowerCase() === "x" ? Number.parseInt(code.slice(1), 16) : Number(code)),
+  );
 }
 
 /** Whether a label's words are in Title Case: each capitalized, but a small word that isn't first. */

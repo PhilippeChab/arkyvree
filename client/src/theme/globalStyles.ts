@@ -7,7 +7,6 @@ export const GLOBAL_STYLES = {
   ":root": {
     lineHeight: 1.5,
     fontWeight: 400,
-    colorScheme: "light dark",
     fontSynthesis: "none",
     textRendering: "optimizeLegibility",
     WebkitFontSmoothing: "antialiased",

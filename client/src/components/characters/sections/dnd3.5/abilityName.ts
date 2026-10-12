@@ -1,15 +1,13 @@
 import type { Ability } from "@/client/src/hooks/index.ts";
 import { capitalize } from "@/shared/text.ts";
 
-import type { LevelAbilities } from "./levelUp/index.ts";
-
 /**
  * An ability's name ("Force Points"), by its id: its ruleset's (`useRulesetAbilities`), else, while that list loads, its
- * key's in the level's abilities ("Forcepoints": a name without its spaces), else its id.
+ * key's among a character's abilities, the sheet's or a level's ("Forcepoints": a name without its spaces), else its id.
  */
 export function abilityName(
   names: Pick<Ability, "id" | "name">[] | undefined,
-  abilities: Partial<Record<string, Pick<LevelAbilities[string], "abilityId">>> | undefined,
+  abilities: Partial<Record<string, { abilityId: string }>> | undefined,
   abilityId: string,
 ) {
   const named = names?.find((ability) => ability.id === abilityId)?.name;

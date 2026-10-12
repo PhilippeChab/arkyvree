@@ -98,7 +98,7 @@
  *   prop, never through `forwardRef`.
  * - `row-prefetch`: a table's row warms the page it opens through `useRowPrefetch` (`pages/rulesets/hooks`), 150ms
  *   into a hover and at once on focus: never an `onMouseEnter` or an `onFocus` of its own. A ruleset table whose rows
- *   open a page (`onRowClick`) warms it (`onRowMouseEnter`).
+ *   open a page (`onRowClick`) warms it (`onRowPrefetch`).
  * - `pending-props`: a request in flight is `pending`, a dialog's and a button's alike (`pending={mutation.isPending}`):
  *   never `isLoading`, a query's first load (a table's, a page's skeleton), nor `loading`, which a spinner and MUI's
  *   picker say of themselves.
@@ -1483,16 +1483,12 @@ function createRowPrefetch(context) {
   return {
     JSXElement(node) {
       const name = elementName(node);
-      if (
-        name === "RulesetSectionTable" &&
-        hasAttribute(node, "onRowClick") &&
-        !hasAttribute(node, "onRowMouseEnter")
-      ) {
+      if (name === "RulesetSectionTable" && hasAttribute(node, "onRowClick") && !hasAttribute(node, "onRowPrefetch")) {
         context.report({
           node: node.openingElement,
           message:
             "A row that opens a page warms it as it's about to be opened: a table given `onRowClick` takes its " +
-            "`onRowMouseEnter` too.",
+            "`onRowPrefetch` too.",
         });
       }
       if (name !== "TableRow") return;

@@ -18,6 +18,9 @@ export interface InviteAnswer {
 /** An invite's kind: who it invites to what. */
 export type InviteKind = "campaign" | "characterContributor" | "rulesetContributor";
 
+/** An answer to an invite, as its buttons send it and its mutation's key names it. */
+export type InviteVerb = (typeof INVITE_VERBS)[number];
+
 /**
  * Each kind's name in a toast (`label`), its answers' requests (an accept's answering the cache key of the record it
  * gave the user rights on, which it refreshes), the list that gains its entity once it's accepted (`listKey`), and where
@@ -67,6 +70,9 @@ export const INVITE_KINDS = {
       parseResponse(rpc.api.rulesets.contributors.invites[":id"].reject.$post({ param: { id } })),
   },
 } as const satisfies Record<InviteKind, unknown>;
+
+/** The answers to an invite. */
+export const INVITE_VERBS = ["accept", "reject"] as const;
 
 /** Where accepting an invite of `kind` lands: its entity's page, or its list's when it doesn't name the entity. */
 export function acceptedPath(kind: InviteKind, entityId: string | null | undefined) {

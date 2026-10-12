@@ -3,6 +3,7 @@ import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/re
 import { type InferResponseType, parseResponse } from "hono/client";
 
 import {
+  BlankState,
   CreateDialog,
   LoadMoreButton,
   SearchBar,
@@ -30,8 +31,7 @@ import {
 import { rpc } from "@/client/src/services/rpc.ts";
 import { buildCustomizationPath } from "@/shared/customization/entities.ts";
 
-type Race = RacesPaginated["items"][number];
-type RacesPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["races"]["$get"], 200>;
+type Race = InferResponseType<(typeof rpc.api.rulesets)[":id"]["races"]["$get"], 200>["items"][number];
 
 const RACES_COLUMNS = [
   { key: "name", label: "Name", width: "15%" },
@@ -73,7 +73,7 @@ export function RacesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
     openEntity(buildCustomizationPath("races", race.id));
   };
 
-  const handleRowMouseEnter = (race: Race) => {
+  const handleRowPrefetch = (race: Race) => {
     void queryClient.prefetchQuery(customizationEntityQuery(ruleset.id, "races", race.id));
   };
 
@@ -118,11 +118,9 @@ export function RacesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
             isLoading={isLoading}
             columns={RACES_COLUMNS}
             onRowClick={handleRowClick}
-            onRowMouseEnter={handleRowMouseEnter}
+            onRowPrefetch={handleRowPrefetch}
             renderCell={renderCell}
-            emptyIcon={RacesIcon}
-            emptyTitle="No races"
-            emptyDescription="No races available for this ruleset."
+            empty={<BlankState icon={RacesIcon} title="No races" description="No races available for this ruleset." />}
           />
           <LoadMoreButton
             hasNextPage={hasNextPage}

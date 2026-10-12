@@ -5,7 +5,7 @@ import { parseResponse } from "hono/client";
 import { DialogFooter, FormDialog, FormTextField, PasswordField } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useFormWith } from "@/client/src/hooks/index.ts";
-import { requiredRules } from "@/client/src/lib/validation.ts";
+import { PASSWORD_RULES } from "@/client/src/lib/validation.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 
@@ -29,6 +29,11 @@ const DELETE_CONFIRMATION_TEXT = "DELETE";
 const DELETE_CONFIRMATION_RULES = {
   validate: (value: string) => value === DELETE_CONFIRMATION_TEXT || `Type "${DELETE_CONFIRMATION_TEXT}" to confirm`,
 };
+
+/** What deleting an account removes and what it leaves, where it's offered and where it's confirmed. */
+export const ACCOUNT_DELETION_TEXT =
+  "Deleting your account removes it, your characters and your campaign memberships for good. Your rulesets stay, " +
+  "without an owner, for the characters, campaigns and contributors that use them. This action cannot be undone.";
 
 /** Asks for the password (or "DELETE" without one), then deletes the account; mounted while it's open. */
 export function DeleteAccountDialog({ open, onClose, onExited, hasPassword }: DeleteAccountDialogProps) {
@@ -71,17 +76,13 @@ export function DeleteAccountDialog({ open, onClose, onExited, hasPassword }: De
         <DialogTitle>Delete Account</DialogTitle>
         <DialogContent>
           <Stack spacing={3} sx={{ pt: 1 }}>
-            <DialogContentText>
-              This action is <strong>permanent</strong> and cannot be undone. Your characters, your campaign memberships
-              and your account data are removed. Your rulesets stay, without an owner, for the characters, campaigns and
-              contributors that use them.
-            </DialogContentText>
+            <DialogContentText>{ACCOUNT_DELETION_TEXT}</DialogContentText>
 
             {hasPassword ? (
               <PasswordField
                 control={control}
                 name="password"
-                rules={requiredRules("Password is required")}
+                rules={PASSWORD_RULES}
                 label="Confirm Your Password"
                 autoComplete="current-password"
               />

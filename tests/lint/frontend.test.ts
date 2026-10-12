@@ -506,7 +506,7 @@ describe("frontend rules", () => {
           "client/src/card.tsx": "export const c = <ListCard onMouseEnter={prefetch} onFocus={prefetch} />;\n",
           "client/src/cold.tsx": "export const o = <RulesetSectionTable what={what} onRowClick={open} />;\n",
           "client/src/warm.tsx":
-            "export const w = <RulesetSectionTable what={what} onRowClick={open} onRowMouseEnter={prefetch} />;\n",
+            "export const w = <RulesetSectionTable what={what} onRowClick={open} onRowPrefetch={prefetch} />;\n",
         },
         ["row-prefetch"],
       ),

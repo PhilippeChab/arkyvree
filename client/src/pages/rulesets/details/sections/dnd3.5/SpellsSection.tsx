@@ -2,7 +2,13 @@ import { Box, Stack } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 
-import { CreateDialog, LoadMoreButton, SearchBar, SectionContent } from "@/client/src/components/common/index.ts";
+import {
+  BlankState,
+  CreateDialog,
+  LoadMoreButton,
+  SearchBar,
+  SectionContent,
+} from "@/client/src/components/common/index.ts";
 import { PowersIcon } from "@/client/src/components/icons/index.ts";
 import { useSearchText } from "@/client/src/hooks/index.ts";
 import { itemsBeforeLastPage, pageItems } from "@/client/src/lib/pageItems.ts";
@@ -34,9 +40,6 @@ import {
 import { rpc } from "@/client/src/services/rpc.ts";
 import { buildCustomizationPath } from "@/shared/customization/entities.ts";
 
-/** A ruleset's spell: its power, as its list gives it. */
-type Spell = Power;
-
 const SPELLS_COLUMNS = [
   { key: "name", label: "Name", width: "25%" },
   { key: "aptitudes", label: "Aptitudes", width: "15%" },
@@ -52,7 +55,7 @@ export function SpellsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
   const { level: selectedLevel, setLevel: setSelectedLevel } = useSpellLevelFilter(ruleset.baseRules, true);
 
   const { fields: spellFields } = useEntityFields(ruleset.id, "powers");
-  const { createForm, createDialogProps, handleCreate } = useRulesetSection<Spell, SpellFormData>({
+  const { createForm, createDialogProps, handleCreate } = useRulesetSection<Power, SpellFormData>({
     createDefaults: withEntityFields(EMPTY_SPELL, spellFields),
     rulesetId: ruleset.id,
     sectionName: "powers",
@@ -76,15 +79,15 @@ export function SpellsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
 
   const { data: createSaves = [], error: createSavesError } = useRulesetSaves(ruleset.id, createDialogProps.open);
 
-  const handleRowClick = (spell: Spell) => {
+  const handleRowClick = (spell: Power) => {
     openEntity(buildCustomizationPath("powers", spell.id));
   };
 
-  const handleRowMouseEnter = (spell: Spell) => {
+  const handleRowPrefetch = (spell: Power) => {
     void queryClient.prefetchQuery(customizationEntityQuery(ruleset.id, "powers", spell.id));
   };
 
-  const renderCell = (spell: Spell, columnKey: string) => {
+  const renderCell = (spell: Power, columnKey: string) => {
     switch (columnKey) {
       case "name":
         return spell.name;
@@ -142,11 +145,11 @@ export function SpellsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
             isLoading={isLoading}
             columns={SPELLS_COLUMNS}
             onRowClick={handleRowClick}
-            onRowMouseEnter={handleRowMouseEnter}
+            onRowPrefetch={handleRowPrefetch}
             renderCell={renderCell}
-            emptyIcon={PowersIcon}
-            emptyTitle="No spells"
-            emptyDescription="No spells available for this ruleset."
+            empty={
+              <BlankState icon={PowersIcon} title="No spells" description="No spells available for this ruleset." />
+            }
           />
           <LoadMoreButton
             hasNextPage={hasNextPage}

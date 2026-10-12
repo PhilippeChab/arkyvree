@@ -31,7 +31,7 @@ AppRoutes
 |---|---|---|---|
 | `AuthLayoutRoute` | `client/src/components/auth/AuthLayoutRoute.tsx` | Unauth users on auth-flow pages | Demo → `signOut()` then form. Real user → `/dashboard`. Unauth → form. |
 | `PublicLayout` | `client/src/components/layout/PublicLayout.tsx` | Anyone | None. Toolbar swaps "Sign Up" ↔ "Dashboard" by auth state. |
-| `PrivateRoute` | `client/src/components/auth/PrivateRoute.tsx` | Authenticated users | Authed → `<Outlet/>`. Unauth → `/demo-expired` if a demo ran out (`isDemoExpired()`), else `/sign-in?redirect=<path>` (`authPagePath`; no redirect when the user signed out of the page). |
+| `PrivateRoute` | `client/src/components/auth/PrivateRoute.tsx` | Authenticated users | Authed → `<Outlet/>`. While the session probe runs on a cold load → `PageLoader`. Unauth → `/demo-expired` if a demo ran out (`isDemoExpired()`), else `/sign-in?redirect=<path>` (`authPagePath`; no redirect when the user signed out of the page). |
 
 ## Cookie security
 
@@ -118,12 +118,12 @@ There's no `BroadcastChannel`-based active sync today. Recovery happens lazily v
 | `client/src/App.tsx` | `AppRoutes` static tree |
 | `client/src/lib/queryClient.ts` | `createQueryClient`: `handleGlobalError`, the 401 handler, and the cache cleared when the user changes |
 | `client/src/components/auth/AuthLayoutRoute.tsx` | `AuthLayoutRoute` — demo signOut on entry, real-user redirect (`useAuthRedirect`) |
-| `client/src/components/auth/PrivateRoute.tsx` | `PrivateRoute` guard: the session probe, the redirect to sign in |
+| `client/src/components/auth/PrivateRoute.tsx` | `PrivateRoute` guard: the session probe (`checkSession`, a `fetchQuery` of `/auth/me`), the redirect to sign in |
 | `client/src/components/layout/PublicLayout.tsx` | Public toolbar with auth-aware CTA |
 | `client/src/components/layout/Layout.tsx` | In-app shell, `isDemo` feature gates |
-| `client/src/stores/authStore.ts` | Zustand store + persist: who is signed in, the emails waiting for a code; `clearSession`, `updateUser` |
-| `client/src/hooks/useAuthRequests.ts` | The auth requests as mutations the store follows (sign in / up / out, start a demo, verify, reset), their shared `pending`, and `checkSession` (the `PrivateRoute` probe, a `fetchQuery` of `/auth/me`) |
-| `client/src/stores/demoExpiredFlag.ts` | The demo-expired flag: `markDemoExpired`, `isDemoExpired`, `clearDemoExpired` |
+| `client/src/stores/authStore.ts` | Zustand store + persist: who is signed in, the emails waiting for a code; `startSession`, `clearSession`, `updateUser` |
+| `client/src/hooks/useAuthRequests.ts` | The auth requests as mutations the store follows (sign in / up / out, start a demo, verify, reset), and their shared `pending` |
+| `client/src/stores/demoExpiredStorage.ts` | The demo-expired flag: `markDemoExpired`, `isDemoExpired`, `clearDemoExpired` |
 | `client/src/pages/demo-expired/DemoExpiredPage.tsx` | Post-expiry messaging; clears flag on mount |
 | `server/middlewares/session.ts` | Cookie config, session validation middleware |
 | `server/middlewares/denyDemoUser.ts` | Server-side gate for collaboration/profile mutations |

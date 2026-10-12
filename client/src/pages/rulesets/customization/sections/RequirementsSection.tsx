@@ -48,7 +48,7 @@ import { getUrlSegment } from "@/shared/urlSegments.ts";
 interface RequirementsSectionProps {
   entityId: string;
   entityType: CustomizationOwnerType;
-  onEntityIdChange?: (copyId: string, sourceId: string) => void;
+  followCopy?: (copyId: string, sourceId: string) => void;
   queryKeysToInvalidate?: readonly (readonly unknown[])[];
   /** A delete can be undone from Local Changes, its entity's being inherited (`useRestorableDelete`) */
   restorable: boolean;
@@ -64,18 +64,19 @@ type RequirementsArray = InferResponseType<
 /** A requirement in the tree the section shows, with the requirements it groups. */
 type RequirementTreeNode = RequirementNode<Requirement>;
 
+/** Whatever its status: characters can be built on a Draft ruleset as on a Published one. */
+function CharactersWarning() {
+  return (
+    <Alert severity="warning">
+      Changing requirements may break the validation of characters built on this ruleset.
+    </Alert>
+  );
+}
+
 /** The ids of a tree's requirements that group others, at every depth: what opens expanded. */
 function parentIdsOf(nodes: RequirementTreeNode[]): string[] {
   return nodes.flatMap((node) =>
     node.children.length > 0 ? [node.requirement.id, ...parentIdsOf(node.children)] : [],
-  );
-}
-
-function PublishedWarning() {
-  return (
-    <Alert severity="warning">
-      This ruleset is published. Changing requirements may break character validation for existing users.
-    </Alert>
   );
 }
 
@@ -91,10 +92,10 @@ export function RequirementsSection({
   entityType,
   entityId,
   queryKeysToInvalidate,
-  onEntityIdChange,
+  followCopy,
   restorable,
 }: RequirementsSectionProps) {
-  const { tag, followCopies } = followCopiesOf(entityId, onEntityIdChange);
+  const { tag, followCopies } = followCopiesOf(entityId, followCopy);
   const entityParam = { id: ruleset.id, entityType: getUrlSegment(entityType), entityId };
 
   // Parent level for contextual "Add Child" (null = root)
@@ -154,7 +155,6 @@ export function RequirementsSection({
   });
 
   const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
-  const isPublished = ruleset.status === "Published";
 
   /**
    * Opens the create dialog for a root requirement (null) or a child of the given level, empty: its type, its parent and
@@ -180,10 +180,6 @@ export function RequirementsSection({
 
   const handleEditChaining = (requirement: Requirement) => {
     setEditRequirementType("chaining");
-    // Unregister fields that won't be used
-    editForm.unregister("target");
-    editForm.unregister("operator");
-    editForm.unregister("value");
     handleEdit(requirement, {
       level: requirement.level,
       chainingOperator: requirement.chainingOperator || "",
@@ -195,8 +191,6 @@ export function RequirementsSection({
 
   const handleEditCondition = (requirement: Requirement) => {
     setEditRequirementType("condition");
-    // Unregister fields that won't be used
-    editForm.unregister("chainingOperator");
     handleEdit(requirement, {
       level: requirement.level,
       target: requirement.target || "",
@@ -365,7 +359,7 @@ export function RequirementsSection({
         }
         maxWidth="md"
       >
-        {isPublished && <PublishedWarning />}
+        <CharactersWarning />
         <RequirementFormFields
           form={createForm}
           type={createRequirementType}
@@ -387,7 +381,7 @@ export function RequirementsSection({
         }}
         maxWidth="md"
       >
-        {isPublished && <PublishedWarning />}
+        <CharactersWarning />
         <RequirementFormFields
           form={editForm}
           type={editRequirementType}

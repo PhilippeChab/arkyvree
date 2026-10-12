@@ -5,8 +5,8 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
 import { AuthLayoutRoute, PrivateRoute } from "./components/auth/index.ts";
 import { ErrorBoundary, Layout, PublicLayout } from "./components/layout/index.ts";
-import { CustomThemeProvider } from "./contexts/CustomThemeProvider.tsx";
 import { SnackbarProvider } from "./contexts/SnackbarProvider.tsx";
+import { ThemeModeProvider } from "./contexts/ThemeModeProvider.tsx";
 import { WebSocketProvider } from "./contexts/WebSocketProvider.tsx";
 import { createQueryClient } from "./lib/queryClient.ts";
 import SignInPage from "./pages/auth/SignInPage.tsx";
@@ -106,14 +106,14 @@ export default function App() {
     <ErrorBoundary>
       <BrowserRouter>
         <QueryClientProvider client={queryClient}>
-          <CustomThemeProvider>
+          <ThemeModeProvider>
             <SnackbarProvider>
               <WebSocketProvider>
-                <CssBaseline />
+                <CssBaseline enableColorScheme />
                 <AppRoutes />
               </WebSocketProvider>
             </SnackbarProvider>
-          </CustomThemeProvider>
+          </ThemeModeProvider>
         </QueryClientProvider>
       </BrowserRouter>
     </ErrorBoundary>

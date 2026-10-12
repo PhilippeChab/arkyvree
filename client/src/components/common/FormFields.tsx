@@ -7,14 +7,7 @@
 
 import { FormControlLabel, MenuItem, Switch, TextField, type TextFieldProps } from "@mui/material";
 import type { ReactNode, UIEventHandler } from "react";
-import {
-  type Control,
-  Controller,
-  type ControllerProps,
-  type FieldPath,
-  type FieldValues,
-  useController,
-} from "react-hook-form";
+import { type Control, type ControllerProps, type FieldPath, type FieldValues, useController } from "react-hook-form";
 
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { EMAIL_RULES, NAME_RULES, OPTIONAL_EMAIL_RULES } from "@/client/src/lib/validation.ts";
@@ -56,8 +49,7 @@ interface PresetFieldProps<T extends FieldValues> extends BoundFieldProps<T> {
   disabled?: boolean;
 }
 
-interface SelectFieldProps<T extends FieldValues> {
-  control: Control<T>;
+interface SelectFieldProps<T extends FieldValues> extends BoundFieldProps<T> {
   disabled?: boolean;
   /** A first choice for no value ("None"): picking it stores `""`, as an empty text field holds. */
   emptyLabel?: string;
@@ -66,7 +58,6 @@ interface SelectFieldProps<T extends FieldValues> {
   label: string;
   /** Why its options didn't load: said under it. */
   loadError?: unknown;
-  name: FieldPath<T>;
   /** What follows from a pick, in the same event: the fields that depended on the old value reset. */
   onChange?: (value: SelectValue) => void;
   /** Loads more options as the open menu nears its end (see `createListboxScrollHandler`). */
@@ -75,7 +66,6 @@ interface SelectFieldProps<T extends FieldValues> {
   options: readonly SelectOption[];
   /** Shown as it is, its menu closed: a viewer who can't edit it reads it (`readOnly`, never a disabled field). */
   readOnly?: boolean;
-  rules?: ControllerProps<T>["rules"];
   size?: "small" | "medium";
 }
 
@@ -228,52 +218,48 @@ export function SelectField<T extends FieldValues>({
   const formReadOnly = useReadOnlyFields();
   const readOnly = ownReadOnly || formReadOnly;
   const choices = options.map((option) => (typeof option === "string" ? { value: option, label: option } : option));
+  const {
+    field: { ref, ...field },
+    fieldState,
+  } = useController({ control, name, rules });
   return (
-    <Controller
-      control={control}
-      name={name}
-      rules={rules}
-      render={({ field: { ref, ...field }, fieldState }) => (
-        <TextField
-          {...field}
-          // On the input, not the root, so a failed submit focuses the select.
-          inputRef={ref}
-          select
-          fullWidth
-          label={label}
-          value={choices.some((choice) => choice.value === field.value) ? field.value : ""}
-          onChange={(event) => {
-            field.onChange(event.target.value);
-            onChange?.(event.target.value);
-          }}
-          error={!!fieldState.error || !!loadError}
-          helperText={fieldState.error?.message ?? (loadError ? loadFailureMessage(label, loadError) : helperText)}
-          disabled={disabled}
-          size={size}
-          slotProps={{
-            input: { readOnly },
-            inputLabel: formReadOnly ? { shrink: true } : undefined,
-            select: {
-              ...(onMenuScroll && {
-                MenuProps: { slotProps: { paper: { sx: { maxHeight: 300 }, onScroll: onMenuScroll } } },
-              }),
-              ...(formReadOnly && {
-                displayEmpty: true,
-                renderValue: (value: unknown) =>
-                  choices.find((choice) => choice.value === value)?.label ?? <EmptyValue />,
-              }),
-            },
-          }}
-        >
-          {emptyLabel && <MenuItem value="">{emptyLabel}</MenuItem>}
-          {choices.map((choice) => (
-            <MenuItem key={choice.value} value={choice.value} disabled={choice.disabled}>
-              {choice.label}
-            </MenuItem>
-          ))}
-        </TextField>
-      )}
-    />
+    <TextField
+      {...field}
+      // On the input, not the root, so a failed submit focuses the select.
+      inputRef={ref}
+      select
+      fullWidth
+      label={label}
+      value={choices.some((choice) => choice.value === field.value) ? field.value : ""}
+      onChange={(event) => {
+        field.onChange(event.target.value);
+        onChange?.(event.target.value);
+      }}
+      error={!!fieldState.error || !!loadError}
+      helperText={fieldState.error?.message ?? (loadError ? loadFailureMessage(label, loadError) : helperText)}
+      disabled={disabled}
+      size={size}
+      slotProps={{
+        input: { readOnly },
+        inputLabel: formReadOnly ? { shrink: true } : undefined,
+        select: {
+          ...(onMenuScroll && {
+            MenuProps: { slotProps: { paper: { sx: { maxHeight: 300 }, onScroll: onMenuScroll } } },
+          }),
+          ...(formReadOnly && {
+            displayEmpty: true,
+            renderValue: (value: unknown) => choices.find((choice) => choice.value === value)?.label ?? <EmptyValue />,
+          }),
+        },
+      }}
+    >
+      {emptyLabel && <MenuItem value="">{emptyLabel}</MenuItem>}
+      {choices.map((choice) => (
+        <MenuItem key={choice.value} value={choice.value} disabled={choice.disabled}>
+          {choice.label}
+        </MenuItem>
+      ))}
+    </TextField>
   );
 }
 

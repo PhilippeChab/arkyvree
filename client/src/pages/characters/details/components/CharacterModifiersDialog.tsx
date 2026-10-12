@@ -43,8 +43,9 @@ import { CopyIcon, DeleteIcon, EditIcon } from "@/client/src/components/icons/in
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useDialogState, useFormWith } from "@/client/src/hooks/index.ts";
 import { invalidateCharacter } from "@/client/src/lib/queries.ts";
-import { characterModifiersQuery } from "@/client/src/pages/characters/characterQueries.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
+
+import { characterModifiersQuery } from "./characterModifierQueries.ts";
 
 interface CharacterModifiersDialogProps {
   characterId: string;

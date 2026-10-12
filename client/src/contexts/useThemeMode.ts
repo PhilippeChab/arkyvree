@@ -1,11 +1,11 @@
 import { useContext } from "react";
 
-import { ThemeContext } from "./themeContext.ts";
+import { ThemeModeContext } from "./themeModeContext.ts";
 
 /** The app's theme mode (light, dark or the system's), and how to change it. */
 export function useThemeMode() {
-  const context = useContext(ThemeContext);
-  if (context === undefined) throw new Error("useThemeMode must be used within a CustomThemeProvider");
+  const context = useContext(ThemeModeContext);
+  if (context === undefined) throw new Error("useThemeMode must be used within a ThemeModeProvider");
 
   return context;
 }

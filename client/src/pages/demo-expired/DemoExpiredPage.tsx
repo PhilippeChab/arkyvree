@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 
 import { AuthPage } from "@/client/src/components/auth/index.ts";
 import { usePageTitle } from "@/client/src/hooks/index.ts";
-import { clearDemoExpired } from "@/client/src/stores/demoExpiredFlag.ts";
+import { clearDemoExpired } from "@/client/src/stores/demoExpiredStorage.ts";
 
 export default function DemoExpiredPage() {
   usePageTitle("Demo Expired");

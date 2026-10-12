@@ -4,7 +4,7 @@ import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { ApiError } from "@/client/src/services/ApiError.ts";
 
-import { INVITE_KINDS, type InviteAnswer } from "./inviteKinds.ts";
+import { INVITE_KINDS, type InviteAnswer, type InviteVerb } from "./inviteKinds.ts";
 
 /**
  * Accepting and rejecting an invite, one way wherever it's answered (a notification's buttons, the invite's own page):
@@ -21,7 +21,7 @@ export function useAnswerInvite(onNoLongerPending?: (answer: InviteAnswer) => vo
     void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.invites.all });
   };
 
-  const handleError = (verb: "accept" | "reject") => (error: Error, answer: InviteAnswer) => {
+  const handleError = (verb: InviteVerb) => (error: Error, answer: InviteAnswer) => {
     if (error instanceof ApiError && error.status === 409) {
       snackbar.warning("This invite is no longer pending");
       refresh();
@@ -57,5 +57,8 @@ export function useAnswerInvite(onNoLongerPending?: (answer: InviteAnswer) => vo
     onError: handleError("reject"),
   });
 
-  return { accept, reject };
+  // The answer it's sending, which its buttons show running (`useAnsweringInvites` reads every one's, by notification)
+  const answering: InviteVerb | null = accept.isPending ? "accept" : reject.isPending ? "reject" : null;
+
+  return { accept, answering, reject };
 }

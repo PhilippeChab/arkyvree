@@ -296,7 +296,7 @@ function SkippedModifierTable({ baseRules, items }: SkippedModifierTableProps) {
 export function DiagnosticsSection({ baseRules, validation, requirements, modifiers }: DiagnosticsSectionProps) {
   return (
     <Panel>
-      <Accordion defaultExpanded={false} disableGutters sx={ACCORDION_SX}>
+      <Accordion disableGutters sx={ACCORDION_SX}>
         <AccordionSummary expandIcon={<ExpandMoreIcon fontSize="small" />} sx={SUMMARY_SX}>
           <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
             <CardTitle>Diagnostics</CardTitle>

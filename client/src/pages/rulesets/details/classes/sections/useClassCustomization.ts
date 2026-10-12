@@ -10,7 +10,7 @@ export function useClassCustomization({ rulesetId, classId, ruleset, restorable 
     entityType: "klasses" as const,
     entityId: classId,
     queryKeysToInvalidate,
-    onEntityIdChange: followCopy,
+    followCopy,
     restorable,
   };
 }

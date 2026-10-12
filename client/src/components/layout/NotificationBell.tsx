@@ -20,7 +20,6 @@ import { NotificationsIcon } from "@/client/src/components/icons/index.ts";
 import { InviteActionButtons } from "@/client/src/components/invites/index.ts";
 import { NotificationMessage } from "@/client/src/components/notifications/index.ts";
 import { useAnchorMenu, useNotificationActions } from "@/client/src/hooks/index.ts";
-import { ONE_MINUTE } from "@/client/src/lib/durations.ts";
 import { formatRelativeTime } from "@/client/src/lib/formatDate.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
@@ -57,11 +56,7 @@ export function NotificationBell() {
   const navigate = useNavigate();
   const actions = useNotificationActions();
 
-  const {
-    data: unreadData,
-    isLoading,
-    error,
-  } = useQuery({ ...unreadNotificationsQuery(), refetchInterval: ONE_MINUTE });
+  const { data: unreadData, isLoading, error } = useQuery(unreadNotificationsQuery());
 
   const unreadCount = unreadData?.count ?? 0;
   const notifications = unreadData?.items ?? [];

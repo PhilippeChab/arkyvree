@@ -4,6 +4,7 @@ import { type InferResponseType, parseResponse } from "hono/client";
 
 import {
   AddButton,
+  BlankState,
   CreateDialog,
   EditDialog,
   ListToolbar,
@@ -33,7 +34,7 @@ import { getUrlSegment } from "@/shared/urlSegments.ts";
 interface ModifiersSectionProps {
   entityId: string;
   entityType: CustomizableEntityType;
-  onEntityIdChange?: (copyId: string, sourceId: string) => void;
+  followCopy?: (copyId: string, sourceId: string) => void;
   queryKeysToInvalidate?: readonly (readonly unknown[])[];
   /** A delete can be undone from Local Changes, its entity's being inherited (`useRestorableDelete`) */
   restorable: boolean;
@@ -63,12 +64,12 @@ export function ModifiersSection({
   entityType,
   entityId,
   queryKeysToInvalidate,
-  onEntityIdChange,
+  followCopy,
   restorable,
 }: ModifiersSectionProps) {
   const openEntity = useOpenEntity(ruleset.id);
 
-  const { tag, followCopies } = followCopiesOf(entityId, onEntityIdChange);
+  const { tag, followCopies } = followCopiesOf(entityId, followCopy);
   const entityParam = { id: ruleset.id, entityType: getUrlSegment(entityType), entityId };
 
   const {
@@ -136,7 +137,7 @@ export function ModifiersSection({
     openEntity(`${buildCustomizationPath("modifiers", modifier.id)}/requirements`);
   };
 
-  const handleRowMouseEnter = (modifier: Modifier) => {
+  const handleRowPrefetch = (modifier: Modifier) => {
     void queryClient.prefetchQuery(customizationEntityQuery(ruleset.id, "modifiers", modifier.id));
   };
 
@@ -176,11 +177,11 @@ export function ModifiersSection({
           restorable={restorable}
           onDuplicate={(modifier) => handleDuplicate(modifier, modifierForm(modifier))}
           onRowClick={handleRowClick}
-          onRowMouseEnter={handleRowMouseEnter}
+          onRowPrefetch={handleRowPrefetch}
           renderCell={renderCell}
-          emptyIcon={ModifiersIcon}
-          emptyTitle="No modifiers"
-          emptyDescription="No modifiers defined for this entity."
+          empty={
+            <BlankState icon={ModifiersIcon} title="No modifiers" description="No modifiers defined for this entity." />
+          }
         />
       </Stack>
 

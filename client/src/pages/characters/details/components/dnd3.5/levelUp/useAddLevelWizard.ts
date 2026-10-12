@@ -24,7 +24,7 @@ export type AddLevelWizard = ReturnType<typeof useAddLevelWizard>;
  * The character's abilities with the plan's increases, and whether they're picked, at levels that take one (`taken`):
  * none to pick otherwise.
  */
-function abilityData({ attributes, picked }: LevelPreview["attributes"], taken: boolean) {
+function abilityChoices({ attributes, picked }: LevelPreview["attributes"], taken: boolean) {
   return taken
     ? { isAvailable: true as const, attributes, picked }
     : { isAvailable: false as const, attributes: {}, picked };
@@ -46,18 +46,18 @@ export function useAddLevelWizard({ open, onClose, characterId, klassId }: UseAd
   const pickOptions = usePickOptions({ characterId, open, wizard });
 
   // The character's abilities with the plan's increases, at the levels that take one, and whether they're picked
-  const attributeData = preview && abilityData(preview.attributes, answers.abilityIncreaseLevels.length > 0);
+  const abilityData = preview && abilityChoices(preview.attributes, answers.abilityIncreaseLevels.length > 0);
 
   // Each step reads the preview, which loads its answers together
   return {
     ...wizard,
     ...pickOptions,
     abilityIncreaseLevels: answers.abilityIncreaseLevels,
-    attributeData,
-    attributesError: error,
+    abilityData,
+    abilitiesError: error,
     featData: preview?.feats ?? null,
     featsError: error,
-    isLoadingAttributes: isLoading,
+    isLoadingAbilities: isLoading,
     isLoadingFeats: isLoading,
     isLoadingPowers: isLoading,
     isLoadingSkills: isLoading,

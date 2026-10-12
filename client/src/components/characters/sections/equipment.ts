@@ -50,7 +50,7 @@ export function pickedLocation(current: InventoryFormData["location"], placement
  * its `profile` says), and the weapon sets stored from 0, which the server keeps for a hand only.
  */
 export function placementPayload(data: InventoryFormData, profile: PlacementProfile | null) {
-  const location = data.location && data.location !== "none" ? data.location : null;
+  const location = data.location === "none" ? null : data.location;
   const hasCharges = typeof profile?.charges === "number";
   return {
     quantity: data.quantity,

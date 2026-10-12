@@ -1,10 +1,12 @@
-import { useQueryClient } from "@tanstack/react-query";
+import { type QueryClient, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 
-import { checkSession } from "@/client/src/hooks/index.ts";
+import { PageLoader } from "@/client/src/components/common/index.ts";
+import { NO_TIME } from "@/client/src/lib/durations.ts";
+import { currentUserQuery } from "@/client/src/lib/queries.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
-import { isDemoExpired } from "@/client/src/stores/demoExpiredFlag.ts";
+import { isDemoExpired } from "@/client/src/stores/demoExpiredStorage.ts";
 
 import { authPagePath } from "./authRedirect.ts";
 
@@ -15,6 +17,18 @@ import { authPagePath } from "./authRedirect.ts";
  * cleanup cancels its peer.
  */
 let authProbe: Promise<void> | null = null;
+
+/**
+ * Reconciles the store with the server's cookie, as the app opens a private page: a session the store doesn't know is
+ * the server's user, and one the server refuses (a 401, any failure) is no session.
+ */
+function checkSession(queryClient: QueryClient): Promise<void> {
+  const { isAuthenticated, startSession } = useAuthStore.getState();
+  if (isAuthenticated) return Promise.resolve();
+  return queryClient.fetchQuery({ ...currentUserQuery(), staleTime: NO_TIME }).then(startSession, () => {
+    useAuthStore.setState({ user: null, isAuthenticated: false });
+  });
+}
 
 /**
  * The private pages' layout route: a signed-in user's, once the session is probed; a signed-out one goes to sign in,
@@ -38,7 +52,8 @@ export function PrivateRoute() {
     };
   }, [queryClient]);
 
-  if (!checked && !isAuthenticated) return null;
+  // The session is being checked: the page loads, as an auth page does meanwhile (`AuthLayoutRoute`)
+  if (!checked && !isAuthenticated) return <PageLoader />;
   if (isAuthenticated) return <Outlet />;
 
   // Read-only here; DemoExpiredPage clears the flag on mount. Mutating during

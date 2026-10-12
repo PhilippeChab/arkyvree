@@ -27,7 +27,7 @@ import {
   useListboxQuery,
   useRulesetPermissions,
 } from "@/client/src/hooks/index.ts";
-import { emptyOptionsText } from "@/client/src/lib/errorMessage.ts";
+import { emptyOptionsText, loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { formatCost, formatWeight } from "@/client/src/lib/formatNumeric.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
 import { invalidateCharacter, rulesetDetailQuery } from "@/client/src/lib/queries.ts";
@@ -47,9 +47,9 @@ import {
   characterInventoryQuery,
   type InventoryEntry,
   inventoryPlacementQuery,
+  itemOptionsQuery,
   type RulesetItem,
   rulesetItemQuery,
-  rulesetItemSearchQuery,
 } from "./equipmentQueries.ts";
 import { EquipmentTable } from "./EquipmentTable.tsx";
 import { InventoryPlacementFields } from "./InventoryPlacementFields.tsx";
@@ -83,11 +83,11 @@ export function EquipmentSection({ baseRules, characterId, rulesetId, readOnly, 
   } = useQuery(characterInventoryQuery(characterId));
   const inventoryItems = inventory ?? [];
 
-  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const addDialog = useDialogState();
   const { issues, setIssues, handleSaveError } = useValidationIssues("Failed to save item");
   // An entry's edit and remove dialogs keep it while they fade out
   const editDialog = useDialogState<InventoryEntry>();
-  const deleteDialog = useDialogState<string>();
+  const removeDialog = useDialogState<string>();
   const editingEntry = editDialog.target;
   const [itemSearch, setItemSearch] = useState("");
   const debouncedItemSearch = useDebouncedValue(itemSearch);
@@ -104,6 +104,7 @@ export function EquipmentSection({ baseRules, characterId, rulesetId, readOnly, 
   // The picked item's details (add dialog): how it's placed
   const { data: itemDetail, error: itemDetailError } = useQuery(rulesetItemQuery(rulesetId, selectedItem?.id));
   const addProfile = itemDetail?.placement ?? null;
+  const itemLoadFailed = !!selectedItem && !!itemDetailError && !itemDetail;
 
   // An item picked in the add dialog fills its slot and charges once its details arrive, unless another was picked since
   const fillPlacement = (itemId: string) => {
@@ -128,7 +129,7 @@ export function EquipmentSection({ baseRules, characterId, rulesetId, readOnly, 
   // save held while it stands, which the server would refuse
   const { data: addPlacement, error: addPlacementError } = useQuery({
     ...inventoryPlacementQuery(characterId, addLocation, addWeaponSets),
-    enabled: addDialogOpen,
+    enabled: addDialog.open,
   });
   const { data: editPlacement, error: editPlacementError } = useQuery({
     ...inventoryPlacementQuery(characterId, editLocation, editWeaponSets, editingEntry?.id),
@@ -143,7 +144,7 @@ export function EquipmentSection({ baseRules, characterId, rulesetId, readOnly, 
     isLoading: isLoadingSearch,
     error: searchError,
     onScroll: handleItemsScroll,
-  } = useListboxQuery({ ...rulesetItemSearchQuery(rulesetId, debouncedItemSearch), enabled: addDialogOpen });
+  } = useListboxQuery({ ...itemOptionsQuery(rulesetId, debouncedItemSearch), enabled: addDialog.open });
 
   const addMutation = useMutation({
     mutationFn: async ({
@@ -164,7 +165,7 @@ export function EquipmentSection({ baseRules, characterId, rulesetId, readOnly, 
     onSuccess: () => {
       snackbar.success("Item added to inventory");
       invalidateCharacter(queryClient, characterId);
-      setAddDialogOpen(false);
+      addDialog.close();
       setIssues([]);
     },
     onError: handleSaveError,
@@ -205,7 +206,7 @@ export function EquipmentSection({ baseRules, characterId, rulesetId, readOnly, 
     onSuccess: () => {
       snackbar.success("Item removed from inventory");
       invalidateCharacter(queryClient, characterId);
-      deleteDialog.close();
+      removeDialog.close();
     },
     onError: (error) => {
       snackbar.error(error, "Failed to remove item");
@@ -216,7 +217,7 @@ export function EquipmentSection({ baseRules, characterId, rulesetId, readOnly, 
   const handleAddItem = () => {
     addForm.reset();
     setItemSearch("");
-    setAddDialogOpen(true);
+    addDialog.openWith(true);
   };
 
   const handleEditItem = (entry: InventoryEntry) => {
@@ -230,7 +231,7 @@ export function EquipmentSection({ baseRules, characterId, rulesetId, readOnly, 
     editDialog.openWith(entry);
   };
 
-  const handleDeleteItem = (entryId: string) => deleteDialog.openWith(entryId);
+  const handleRemoveItem = (entryId: string) => removeDialog.openWith(entryId);
 
   // The item's rule holds the submit until one is picked
   const handleAddSubmit = (data: InventoryFormData, force?: boolean) => {
@@ -305,7 +306,7 @@ export function EquipmentSection({ baseRules, characterId, rulesetId, readOnly, 
                         icon={DeleteIcon}
                         label={`Remove ${entry.name}`}
                         intent="destructive"
-                        onClick={() => handleDeleteItem(entry.id)}
+                        onClick={() => handleRemoveItem(entry.id)}
                       />
                     </>
                   )
@@ -320,9 +321,9 @@ export function EquipmentSection({ baseRules, characterId, rulesetId, readOnly, 
         )}
       </Stack>
       <CreateDialog
-        open={addDialogOpen}
+        open={addDialog.open}
         onClose={() => {
-          setAddDialogOpen(false);
+          addDialog.close();
           setIssues([]);
         }}
         title="Add Item to Inventory"
@@ -334,7 +335,7 @@ export function EquipmentSection({ baseRules, characterId, rulesetId, readOnly, 
         maxWidth="md"
       >
         {issuesAlert(
-          issues.length > 0 && addDialogOpen,
+          issues.length > 0 && addDialog.open,
           // Through the form, so its own rules still hold on a forced save; the warnings clear once it passes.
           () =>
             void addForm.handleSubmit((data) => {
@@ -380,8 +381,12 @@ export function EquipmentSection({ baseRules, characterId, rulesetId, readOnly, 
                   {...params}
                   inputRef={field.ref}
                   label="Search Item"
-                  error={!!fieldState.error}
-                  helperText={fieldState.error?.message}
+                  // The picked item's details, which place it, said under it when they fail to load
+                  error={!!fieldState.error || itemLoadFailed}
+                  helperText={
+                    fieldState.error?.message ??
+                    (itemLoadFailed ? loadFailureMessage("Item", itemDetailError) : undefined)
+                  }
                 />
               )}
               renderOption={(props, option) => (
@@ -413,7 +418,6 @@ export function EquipmentSection({ baseRules, characterId, rulesetId, readOnly, 
             />
           )}
         />
-        {!!selectedItem && !!itemDetailError && <LoadError what="Item" error={itemDetailError} />}
         <InventoryPlacementFields
           form={addForm}
           profile={selectedItem ? addProfile : null}
@@ -461,12 +465,12 @@ export function EquipmentSection({ baseRules, characterId, rulesetId, readOnly, 
         />
       </EditDialog>
       <DeleteDialog
-        open={deleteDialog.open}
-        onClose={deleteDialog.close}
+        open={removeDialog.open}
+        onClose={removeDialog.close}
         title="Remove Item"
         message="Are you sure you want to remove this item from the inventory? This action cannot be undone."
         confirmLabel="Remove Item"
-        onConfirm={() => deleteDialog.target && removeMutation.mutate(deleteDialog.target)}
+        onConfirm={() => removeDialog.target && removeMutation.mutate(removeDialog.target)}
         pending={removeMutation.isPending}
       />
     </SheetSection>

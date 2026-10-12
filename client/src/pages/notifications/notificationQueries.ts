@@ -6,7 +6,7 @@ import { type Direction, LIST_PAGE_SIZE } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
-export interface NotificationListFilters {
+interface NotificationListFilters {
   orderDir: Direction;
   search: string;
   unreadOnly: boolean;

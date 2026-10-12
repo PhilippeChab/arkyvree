@@ -35,7 +35,7 @@ import { rpc } from "@/client/src/services/rpc.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 import type { AuthUser } from "@/client/src/stores/authUser.ts";
 
-import { DeleteAccountDialog, EmailChangeVerificationDialog } from "./components/index.ts";
+import { ACCOUNT_DELETION_TEXT, DeleteAccountDialog, EmailChangeVerificationDialog } from "./components/index.ts";
 import { linkedAccountsQuery } from "./profileQueries.ts";
 
 interface ProfileCardProps {
@@ -336,11 +336,7 @@ export default function ProfilePage() {
 
             <ProfileCard title="Delete Account" danger>
               <Stack spacing={2} sx={{ alignItems: "flex-start" }}>
-                <Typography variant="body2">
-                  Permanently delete your account, your characters and your campaign memberships. Your rulesets stay,
-                  without an owner, for the characters, campaigns and contributors that use them. This action cannot be
-                  undone.
-                </Typography>
+                <Typography variant="body2">{ACCOUNT_DELETION_TEXT}</Typography>
                 <Button variant="contained" color="error" onClick={() => deleteDialog.openWith(true)}>
                   Delete Account
                 </Button>

@@ -2,7 +2,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import type { TargetPathKind } from "@/shared/customization/target.ts";
 
-import { seedTargetPath, targetPathQuery } from "./customizationQueries.ts";
+import { seedTargetPath, type TargetPathOwner, targetPathQuery } from "./customizationQueries.ts";
 import type { PathInfo } from "./pathValues.ts";
 
 /**
@@ -10,7 +10,12 @@ import type { PathInfo } from "./pathValues.ts";
  * it's incomplete or unknown. `pick` remembers a path picked from a list, which carried what it takes, so it shows at
  * once.
  */
-export function useTargetPath(rulesetId: string, kind: TargetPathKind, entityType: string | undefined, path: string) {
+export function useTargetPath(
+  rulesetId: string,
+  kind: TargetPathKind,
+  entityType: TargetPathOwner | undefined,
+  path: string,
+) {
   const queryClient = useQueryClient();
   const { data, error } = useQuery(targetPathQuery(rulesetId, kind, path, entityType));
   const pick = (picked: PathInfo) => seedTargetPath(queryClient, rulesetId, kind, picked, entityType);

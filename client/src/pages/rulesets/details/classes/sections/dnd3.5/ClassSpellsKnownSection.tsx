@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 
+import { BlankState } from "@/client/src/components/common/index.ts";
 import { SpellsIcon } from "@/client/src/components/icons/index.ts";
 import type { ClassSectionProps } from "@/client/src/pages/rulesets/details/classes/classSectionFactory.ts";
 import { classSpellsKnownQuery } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
@@ -19,9 +20,13 @@ export function ClassSpellsKnownSection({ rulesetId, classId }: ClassSectionProp
       countOf={(level, key) => level.spellsKnown[Number(key)]}
       compareKeys={bySpellLevel}
       labelOf={spellLevelLabel}
-      emptyIcon={SpellsIcon}
-      emptyTitle="No spells known"
-      emptyDescription="This class doesn't have any spells known data."
+      empty={
+        <BlankState
+          icon={SpellsIcon}
+          title="No spells known"
+          description="This class doesn't have any spells known data."
+        />
+      }
     />
   );
 }

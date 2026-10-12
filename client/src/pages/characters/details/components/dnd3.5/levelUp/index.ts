@@ -1,6 +1,6 @@
 export {
+  type AbilitiesData,
   type AptitudePool,
-  type AttributesData,
   type FeatsData,
   type LevelAbilities,
   type PowerAptitudePool,

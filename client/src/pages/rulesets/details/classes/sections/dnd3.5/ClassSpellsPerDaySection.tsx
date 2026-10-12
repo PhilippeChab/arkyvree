@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 
+import { BlankState } from "@/client/src/components/common/index.ts";
 import { SpellUsesIcon } from "@/client/src/components/icons/index.ts";
 import type { ClassSectionProps } from "@/client/src/pages/rulesets/details/classes/classSectionFactory.ts";
 import { classSpellsPerDayQuery } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
@@ -19,9 +20,13 @@ export function ClassSpellsPerDaySection({ rulesetId, classId }: ClassSectionPro
       countOf={(level, key) => level.spellsPerDay[Number(key)]}
       compareKeys={bySpellLevel}
       labelOf={spellLevelLabel}
-      emptyIcon={SpellUsesIcon}
-      emptyTitle="No spells per day"
-      emptyDescription="This class doesn't have any spells per day data."
+      empty={
+        <BlankState
+          icon={SpellUsesIcon}
+          title="No spells per day"
+          description="This class doesn't have any spells per day data."
+        />
+      }
     />
   );
 }

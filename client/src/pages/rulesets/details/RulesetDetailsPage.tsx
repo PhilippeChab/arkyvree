@@ -173,7 +173,10 @@ export default function RulesetDetailsPage() {
     handlePublish,
     handleSubscribe,
     handleUnsubscribe,
+    confirmArchive,
+    confirmEdit,
     confirmFork,
+    confirmPublish,
     confirmSubscribe,
     confirmUnsubscribe,
   } = useRulesetOperations();
@@ -263,7 +266,7 @@ export default function RulesetDetailsPage() {
           />,
         ]
       : []),
-    ...(canEditRuleset && isActive
+    ...(canEditRuleset
       ? [
           <ActionMenuItem
             key="edit"
@@ -394,10 +397,7 @@ export default function RulesetDetailsPage() {
           open={editDialog.open}
           onClose={editDialog.close}
           form={editForm}
-          onSubmit={(data) => {
-            const edited = editDialog.target;
-            if (edited) updateMutation.mutate({ id: edited.id, data, updatedAt: edited.updatedAt });
-          }}
+          onSubmit={confirmEdit}
           pending={updateMutation.isPending}
           isPublic={editDialog.target ? !editDialog.target.private : false}
           canBeExtension={canBeExtension}
@@ -406,13 +406,7 @@ export default function RulesetDetailsPage() {
         <ArchiveRulesetDialog
           open={archiveDialog.open}
           onClose={archiveDialog.close}
-          onConfirm={() => {
-            if (archiveDialog.target) {
-              archiveMutation.mutate(archiveDialog.target.id, {
-                onSuccess: () => navigate("/rulesets"),
-              });
-            }
-          }}
+          onConfirm={confirmArchive}
           pending={archiveMutation.isPending}
           canUnarchive={isOwner}
         />
@@ -420,9 +414,7 @@ export default function RulesetDetailsPage() {
         <PublishRulesetDialog
           open={publishDialog.open}
           onClose={publishDialog.close}
-          onConfirm={(kind) => {
-            if (publishDialog.target) publishMutation.mutate({ id: publishDialog.target.id, kind });
-          }}
+          onConfirm={confirmPublish}
           pending={publishMutation.isPending}
           canBeExtension={canBeExtension}
           kind={publishKind}

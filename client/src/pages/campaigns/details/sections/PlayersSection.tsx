@@ -25,7 +25,6 @@ import {
   CharacterIcon,
   DeleteIcon,
   EditIcon,
-  GMIcon,
   LeaveIcon,
   PendingIcon,
   PlayersIcon,
@@ -52,6 +51,7 @@ import {
   playerDisplay,
   type PlayerFormData,
   type PlayerState,
+  ROLE_ICONS,
   toPlayerPayload,
 } from "./players.ts";
 
@@ -173,7 +173,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
       ),
     onSuccess: () => {
       snackbar.success("Invite revoked");
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.campaigns.section(campaign.id, "players") });
+      invalidateCampaignPlayers(queryClient, campaign.id);
       revokeDialog.close();
     },
     onError: (error) => {
@@ -254,6 +254,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
                   const displayInfo = playerDisplay(player, slot);
                   const statusChip = STATUS_CHIPS[slot.state];
                   const isGameMaster = player.role === "Game Master";
+                  const RoleIcon = ROLE_ICONS[player.role];
                   const isCurrentUser = player.userId === currentUserId;
                   const canRevokeInvite = slot.state === "pending" && canManagePlayers && !campaign.deletedAt;
                   // A row's actions: the manager's on any slot but an assigned Game Master's, the player's on their own,
@@ -277,15 +278,13 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
                             {displayInfo.name}
                           </Typography>
                           <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                            {displayInfo.email}
+                            {displayInfo.caption}
                           </Typography>
                         </Box>
                       </TableCell>
                       <TableCell>
                         <RoleChip
-                          icon={
-                            isGameMaster ? <GMIcon sx={{ fontSize: 14 }} /> : <CharacterIcon sx={{ fontSize: 14 }} />
-                          }
+                          icon={<RoleIcon sx={{ fontSize: 14 }} />}
                           label={player.role}
                           color={isGameMaster ? "warning" : "primary"}
                         />

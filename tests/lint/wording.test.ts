@@ -122,6 +122,7 @@ describe("wording rules", () => {
           "client/src/cut.tsx": "export const t = `${text.slice(0, 60)}…`;\n",
           "client/src/lib/truncate.ts": "export const u = `${text.slice(0, length)}…`;\n",
           "client/src/emoji.tsx": "export const e = <PageHeader title={`⚔️ ${name}`} />;\n",
+          "client/src/entity.tsx": "export const n = <Typography>&#x1F480;</Typography>;\n",
           "client/src/symbols.tsx": 'export const y = <Button>{"×"} − ÷ © 2026</Button>;\n',
           "client/src/components/common/DiceSpinner.tsx": "export const z = <Typography>🎲</Typography>;\n",
         },
@@ -132,6 +133,7 @@ describe("wording rules", () => {
       "typography-marks client/src/dash.tsx",
       "typography-marks client/src/dots.tsx",
       "typography-marks client/src/emoji.tsx",
+      "typography-marks client/src/entity.tsx",
       "typography-marks client/src/template.tsx",
     ]);
   });

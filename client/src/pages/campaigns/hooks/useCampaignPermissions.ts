@@ -7,7 +7,6 @@ export function useCampaignPermissions(campaign: Pick<CampaignDetail, "currentUs
   const isDM = campaign?.currentUserRole === "Game Master";
 
   return {
-    isDM,
     canEdit: isDM,
     canManagePlayers: isDM,
   };

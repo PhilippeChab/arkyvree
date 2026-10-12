@@ -1,15 +1,16 @@
 import { Typography } from "@mui/material";
-import type { ElementType } from "react";
+import type { ReactNode } from "react";
 
 import { EmptyValue, ValueChip } from "@/client/src/components/common/index.ts";
 import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
 
+import { byLevel } from "./byLevel.ts";
+
 interface ClassLevelCountsTableProps<L extends { id: string; level: number }> {
   compareKeys?: (a: string, b: string) => number;
   countOf: (level: L, key: string) => number | "All" | undefined;
-  emptyDescription: string;
-  emptyIcon: ElementType;
-  emptyTitle: string;
+  /** What it shows while the class has no counts: its `BlankState` */
+  empty: ReactNode;
   /** Its query's failure. */
   error: unknown;
   isLoading: boolean;
@@ -31,9 +32,7 @@ export function ClassLevelCountsTable<L extends { id: string; level: number }>({
   countOf,
   compareKeys,
   labelOf = (key) => key,
-  emptyIcon,
-  emptyTitle,
-  emptyDescription,
+  empty,
 }: ClassLevelCountsTableProps<L>) {
   const keys = [...new Set((levels ?? []).flatMap(keysOf))].sort(compareKeys);
 
@@ -50,7 +49,7 @@ export function ClassLevelCountsTable<L extends { id: string; level: number }>({
         ];
 
   // A copy: sorting the query's own array would reorder its cache.
-  const sortedLevels = levels && [...levels].sort((a, b) => a.level - b.level);
+  const sortedLevels = levels?.toSorted(byLevel);
 
   const renderCell = (level: L, columnKey: string) => {
     if (columnKey === "level") return <ValueChip label={level.level} color="primary" />;
@@ -71,9 +70,7 @@ export function ClassLevelCountsTable<L extends { id: string; level: number }>({
       isLoading={isLoading}
       columns={columns}
       renderCell={renderCell}
-      emptyIcon={emptyIcon}
-      emptyTitle={emptyTitle}
-      emptyDescription={emptyDescription}
+      empty={empty}
     />
   );
 }

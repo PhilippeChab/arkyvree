@@ -184,6 +184,7 @@ describe("An activity", () => {
         changedFields: [
           { field: "name", from: "A", to: "B" },
           { field: "hd", to: "8" },
+          { field: "costGp", from: "15", to: "20" },
           { field: "slot", from: "Neck" },
           { field: "baseSpeed" },
           {
@@ -197,7 +198,7 @@ describe("An activity", () => {
         level: 3,
       }),
     ).toBe(
-      "Name: A → B\nHit Die set to 8\nSlot cleared\nBase Speed updated\nPrimary Ability updated\nSource Item updated\nLevel 3",
+      "Name: A → B\nHit Die set to d8\nCost: 15.00 gp → 20.00 gp\nSlot cleared\nBase Speed updated\nPrimary Ability updated\nSource Item updated\nLevel 3",
     );
     expect([
       formatActivityDetails("createModifier", { target: "combat.ac.misc", operator: "add", value: "1" }),

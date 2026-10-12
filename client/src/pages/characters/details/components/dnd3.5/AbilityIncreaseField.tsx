@@ -2,12 +2,12 @@ import { FormControl, FormControlLabel, FormLabel, Radio, RadioGroup } from "@mu
 import { useId } from "react";
 
 import { sortAbilities } from "@/client/src/components/characters/index.ts";
+import { abilityName } from "@/client/src/components/characters/sections/dnd3.5/index.ts";
 import { LoadError } from "@/client/src/components/common/index.ts";
 import { useRulesetAbilities } from "@/client/src/hooks/index.ts";
 import type { BaseRules } from "@/shared/enums.ts";
 import { formatSigned } from "@/shared/text.ts";
 
-import { abilityName } from "./abilityName.ts";
 import type { LevelAbilities } from "./levelUp/index.ts";
 
 interface AbilityIncreaseFieldProps {

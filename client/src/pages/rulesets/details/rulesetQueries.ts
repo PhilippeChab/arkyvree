@@ -16,11 +16,13 @@ export type EntityField = RulesetFields["feats"][number];
 /** The fields each entity type's form shows, and the ruleset's Settings' (`rulesets`), as the ruleset declares them. */
 export type RulesetFields = InferResponseType<(typeof rpc.api.rulesets)[":id"]["fields"]["$get"], 200>;
 
-/** What a fork changed from the rulesets it inherits: the Local Changes dialog's list. */
-export function rulesetChangesQuery(rulesetId: string) {
+/** What a fork changed from the rulesets it inherits: the Local Changes dialog's list; skipped until it's known. */
+export function rulesetChangesQuery(rulesetId: string | undefined) {
   return queryOptions({
-    queryKey: QUERY_KEYS.rulesets.changes(rulesetId),
-    queryFn: () => parseResponse(rpc.api.rulesets[":id"].changes.$get({ param: { id: rulesetId } })),
+    queryKey: QUERY_KEYS.rulesets.changes(rulesetId ?? ""),
+    queryFn: rulesetId
+      ? () => parseResponse(rpc.api.rulesets[":id"].changes.$get({ param: { id: rulesetId } }))
+      : skipToken,
   });
 }
 

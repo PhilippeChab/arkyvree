@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { abilityName } from "@/client/src/pages/characters/details/components/dnd3.5/abilityName.ts";
+import { abilityName } from "@/client/src/components/characters/sections/dnd3.5/abilityName.ts";
 
 /** A level's abilities, by their keys: their names without their spaces, lowercased. */
 const ABILITIES = { forcepoints: { abilityId: "a1" }, strength: { abilityId: "a2" } };

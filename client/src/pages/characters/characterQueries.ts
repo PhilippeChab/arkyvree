@@ -1,7 +1,4 @@
-/**
- * Queries of the character pages: the races a new character can take, how it sets its ability scores, and a
- * character's modifiers.
- */
+/** Queries of the character pages: the races a new character can take, and how it sets its ability scores. */
 
 import { infiniteQueryOptions, queryOptions, skipToken } from "@tanstack/react-query";
 import { type InferResponseType, parseResponse } from "hono/client";
@@ -49,14 +46,5 @@ export function characterCreationQuery(rulesetId: string) {
     queryKey: QUERY_KEYS.characters.creation(rulesetId),
     queryFn: rulesetId ? () => parseResponse(rpc.api.characters.creation.$get({ query: { rulesetId } })) : skipToken,
     staleTime: FOREVER,
-  });
-}
-
-/** The modifiers set on a character itself, which its Modifiers dialog lists. */
-export function characterModifiersQuery(characterId: string) {
-  return queryOptions({
-    queryKey: QUERY_KEYS.characters.modifiers(characterId),
-    queryFn: () =>
-      parseResponse(rpc.api.characters.modifiers[":characterId"].modifiers.$get({ param: { characterId } })),
   });
 }

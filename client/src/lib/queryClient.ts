@@ -2,7 +2,7 @@ import { matchMutation, MutationCache, QueryCache, QueryClient } from "@tanstack
 
 import { ApiError } from "@/client/src/services/ApiError.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
-import { markDemoExpired } from "@/client/src/stores/demoExpiredFlag.ts";
+import { markDemoExpired } from "@/client/src/stores/demoExpiredStorage.ts";
 
 import { FIVE_MINUTES } from "./durations.ts";
 import { QUERY_KEYS } from "./queryKeys.ts";

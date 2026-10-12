@@ -1,7 +1,7 @@
 import { Stack } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 
-import { ListToolbar, LoadMoreButton, SectionContent } from "@/client/src/components/common/index.ts";
+import { BlankState, ListToolbar, LoadMoreButton, SectionContent } from "@/client/src/components/common/index.ts";
 import { AbilitiesIcon } from "@/client/src/components/icons/index.ts";
 import type { Ability } from "@/client/src/hooks/index.ts";
 import { itemsBeforeLastPage, pageItems } from "@/client/src/lib/pageItems.ts";
@@ -42,7 +42,7 @@ export function AbilitiesSection({ ruleset, childOnly, onChildOnlyChange }: Rule
     openEntity(`abilities/${ability.id}`);
   };
 
-  const handleRowMouseEnter = (ability: Ability) => {
+  const handleRowPrefetch = (ability: Ability) => {
     void queryClient.prefetchQuery(abilityQuery(ruleset.id, ability.id));
   };
 
@@ -64,11 +64,15 @@ export function AbilitiesSection({ ruleset, childOnly, onChildOnlyChange }: Rule
             isLoading={isLoading}
             columns={ABILITIES_COLUMNS}
             onRowClick={handleRowClick}
-            onRowMouseEnter={handleRowMouseEnter}
+            onRowPrefetch={handleRowPrefetch}
             renderCell={renderCell}
-            emptyIcon={AbilitiesIcon}
-            emptyTitle="No abilities"
-            emptyDescription="No abilities available for this ruleset."
+            empty={
+              <BlankState
+                icon={AbilitiesIcon}
+                title="No abilities"
+                description="No abilities available for this ruleset."
+              />
+            }
           />
           <LoadMoreButton
             hasNextPage={hasNextPage}

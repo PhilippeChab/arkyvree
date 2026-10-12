@@ -8,6 +8,10 @@ interface RulesetPermissions {
   canEditEntities: boolean;
   /** Owner or Admin — can update ruleset name/description/privacy, archive */
   canEditRuleset: boolean;
+  /** Owner or Admin, while it isn't archived — can invite contributors and change their roles. Demo users blocked. */
+  canInviteContributors: boolean;
+  /** A contributor, but its owner — can leave it, archived or not. */
+  canLeave: boolean;
   /** Owner or Admin — can invite/remove contributors. Demo users blocked. */
   canManageContributors: boolean;
   /** Owner only. Demo users blocked. */
@@ -31,6 +35,8 @@ export function useRulesetPermissions(ruleset: RulesetData | undefined): Ruleset
       isOwner: false,
       canEditEntities: false,
       canEditRuleset: false,
+      canInviteContributors: false,
+      canLeave: false,
       canManageContributors: false,
       canPublish: false,
       isContributor: false,
@@ -49,6 +55,8 @@ export function useRulesetPermissions(ruleset: RulesetData | undefined): Ruleset
     isContributor,
     canEditEntities: (isOwner || isAdmin || isEditor) && isNotArchived,
     canEditRuleset: (isOwner || isAdmin) && isNotArchived,
+    canInviteContributors: (isOwner || isAdmin) && !isDemo && isNotArchived,
+    canLeave: isContributor && !isOwner,
     canManageContributors: (isOwner || isAdmin) && !isDemo,
     canPublish: isOwner && !isDemo,
   };

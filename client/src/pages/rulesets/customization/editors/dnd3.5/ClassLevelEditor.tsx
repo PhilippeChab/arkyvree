@@ -8,6 +8,7 @@ import {
   featKey,
   type LevelFeat,
   levelFeatLabel,
+  sortLevelFeats,
 } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
 import { EntityFields, withEntityFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { EntityDetailsCard } from "@/client/src/pages/rulesets/components/index.ts";
@@ -27,16 +28,11 @@ function featLabel(feat: LevelFeatRow) {
   return levelFeatLabel(feat.name, feat.aptitudeName);
 }
 
-/** Feats in the form's (label) order, like ClassLevelFields keeps them. */
-function sortedFeats(level: ClassLevel) {
-  return [...level.feats].sort((a, b) => featLabel(a).localeCompare(featLabel(b)));
-}
-
 function toClassLevelForm(level: ClassLevel, fields: readonly EntityField[] | undefined): ClassLevelFormData {
   const values: ClassLevelFormData = {
     level: level.level,
     saves: level.saves.map(({ saveId, base }) => ({ saveId, base })),
-    feats: sortedFeats(level).map(asLevelFeat),
+    feats: sortLevelFeats(level.feats, featLabel).map(asLevelFeat),
   };
   return withEntityFields(values, fields, level);
 }

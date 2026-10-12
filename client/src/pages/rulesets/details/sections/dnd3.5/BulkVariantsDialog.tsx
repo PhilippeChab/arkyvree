@@ -63,8 +63,9 @@ export function BulkVariantsDialog({
         <DialogContent>
           <Stack spacing={2} sx={{ pt: 1 }}>
             <DialogContentText>
-              Each variant copies the base item's cost, weight, type, and slot. You'll be able to customize them
-              individually after.
+              Each variant copies the base item's cost, weight, type, slot and template, and its modifiers and
+              requirements unless the base item is a template itself. You'll be able to customize them individually
+              after.
             </DialogContentText>
             <Stack spacing={3}>
               {fields.map((field, index) => (
@@ -113,7 +114,7 @@ export function BulkVariantsDialog({
         <DialogFooter
           onCancel={onClose}
           pending={pending}
-          action={{ label: `Create ${formatCount(fields.length, "variant")}` }}
+          action={{ label: `Create ${formatCount(fields.length, "Variant")}` }}
         />
       </form>
     </FormDialog>

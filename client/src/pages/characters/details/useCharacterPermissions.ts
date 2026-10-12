@@ -19,7 +19,6 @@ export function useCharacterPermissions(character: Pick<CharacterDetail, "delete
   return {
     isArchived,
     isBonded,
-    isOwner,
     /** Archive it, unarchive it, delete it for good: its owner's alone, a player character's. */
     canArchive: isOwner && !isBonded,
     canDownloadPdf: !isDemo,

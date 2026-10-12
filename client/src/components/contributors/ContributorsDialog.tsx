@@ -57,7 +57,7 @@ export function ContributorsDialog({
   roles,
   rowActions,
 }: ContributorsDialogProps) {
-  const { lead } = CONTRIBUTOR_KINDS[kind];
+  const { lead, hasRoles } = CONTRIBUTOR_KINDS[kind];
   const contributors = useContributors(kind, id, open);
   const { removeDialog, leaveDialog } = contributors;
 
@@ -68,6 +68,7 @@ export function ContributorsDialog({
     return (
       <Stack spacing={2}>
         <ContributorsTable
+          showRoles={hasRoles}
           owner={contributors.owner}
           contributors={contributors.contributors}
           renderActions={

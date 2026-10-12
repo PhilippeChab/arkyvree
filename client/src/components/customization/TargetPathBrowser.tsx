@@ -9,12 +9,14 @@ import { createListboxScrollHandler } from "@/client/src/lib/listboxScroll.ts";
 import { firstPage, pageItems } from "@/client/src/lib/pageItems.ts";
 import { formatSegment, type PathCompletion, type TargetPathKind } from "@/shared/customization/target.ts";
 
-import { targetCompletionsQuery } from "./customizationQueries.ts";
+import { targetCompletionsQuery, type TargetPathOwner } from "./customizationQueries.ts";
 import { type PathInfo, toPathInfo } from "./pathValues.ts";
 import { TargetPathBreadcrumbs } from "./TargetPathBreadcrumbs.tsx";
 
 interface TargetPathBrowserProps {
-  entityType?: string;
+  entityType?: TargetPathOwner;
+  /** Its search field's id, which its label names it by (`TargetPathInput`'s). */
+  inputId?: string;
   /** Its search field's: the target's form field `ref`, so a failed submit focuses it. */
   inputRef?: Ref<HTMLInputElement>;
   isComplete: boolean;
@@ -39,6 +41,7 @@ export function TargetPathBrowser({
   segments,
   isComplete,
   onChange,
+  inputId,
   inputRef,
 }: TargetPathBrowserProps) {
   const [search, setSearch] = useState("");
@@ -140,6 +143,7 @@ export function TargetPathBrowser({
           placeholder="Search…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
+          id={inputId}
           inputRef={inputRef}
           fullWidth
         />

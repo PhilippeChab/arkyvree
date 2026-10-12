@@ -1,13 +1,14 @@
+import type { DialogProps } from "@mui/material";
 import { type ReactNode } from "react";
 import type { FieldValues, UseFormReturn } from "react-hook-form";
 
 import { useDirtyForm } from "@/client/src/hooks/index.ts";
 
-import { Modal, type ModalProps } from "./Modal.tsx";
+import { Modal } from "./Modal.tsx";
 import { valuesEqual } from "./valuesEqual.ts";
 
 interface FormDialogProps<TFormValues extends FieldValues = FieldValues> extends Omit<
-  ModalProps,
+  DialogProps,
   "onClose" | "children"
 > {
   children: ReactNode;

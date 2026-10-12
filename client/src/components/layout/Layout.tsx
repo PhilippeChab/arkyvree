@@ -40,7 +40,6 @@ import {
   SettingsIcon,
   SupportIcon,
 } from "@/client/src/components/icons/index.ts";
-import { Onboarding, ONBOARDING_STEPS } from "@/client/src/components/onboarding/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useAnchorMenu, useAttachment, useAuthRequests, useIsDemo, useIsMobile } from "@/client/src/hooks/index.ts";
 import { APP_NAME } from "@/client/src/lib/brand.ts";
@@ -63,6 +62,8 @@ import { AppMain } from "./AppMain.tsx";
 import { DemoBanner } from "./DemoBanner.tsx";
 import { FeedbackButton } from "./FeedbackButton.tsx";
 import { NotificationBell } from "./NotificationBell.tsx";
+import { Onboarding } from "./Onboarding.tsx";
+import { ONBOARDING_STEPS } from "./onboardingSteps.ts";
 
 /** A sidebar item's id: the first segment of its page's path, or an outside page's name. */
 export type SidebarId = (typeof SIDEBAR_ITEMS)[number]["id"];

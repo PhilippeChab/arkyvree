@@ -4,15 +4,15 @@ import { BlankNote, DiceSpinner, LoadError, SubsectionTitle } from "@/client/src
 import type { BaseRules } from "@/shared/enums.ts";
 
 import { AbilityIncreaseField } from "./AbilityIncreaseField.tsx";
-import type { AttributesData, PreviewLevelDetail } from "./levelUp/index.ts";
+import type { AbilitiesData, PreviewLevelDetail } from "./levelUp/index.ts";
 
 interface AddAbilityState {
+  abilitiesError: Error | null;
+  abilityData: AbilitiesData | undefined;
   abilityIncreaseLevels: number[];
   abilityIncreases: (string | null)[];
-  attributeData: AttributesData | undefined;
-  attributesError: Error | null;
   handleAbilityIncreaseChange: (index: number, abilityId: string) => void;
-  isLoadingAttributes: boolean;
+  isLoadingAbilities: boolean;
   levelDetails: Pick<PreviewLevelDetail, "klassName" | "level">[];
 }
 
@@ -24,17 +24,17 @@ interface AddAbilityStepProps {
 
 export function AddAbilityStep({ wizard, baseRules, rulesetId }: AddAbilityStepProps) {
   const {
-    attributeData,
-    isLoadingAttributes,
-    attributesError,
+    abilityData,
+    isLoadingAbilities,
+    abilitiesError,
     abilityIncreaseLevels,
     abilityIncreases,
     handleAbilityIncreaseChange: onAbilityIncreaseChange,
     levelDetails,
   } = wizard;
-  if (isLoadingAttributes) return <DiceSpinner />;
-  if (attributesError && !attributeData) return <LoadError what="Abilities" error={attributesError} />;
-  if (!attributeData?.isAvailable || abilityIncreaseLevels.length === 0)
+  if (isLoadingAbilities) return <DiceSpinner />;
+  if (abilitiesError && !abilityData) return <LoadError what="Abilities" error={abilitiesError} />;
+  if (!abilityData?.isAvailable || abilityIncreaseLevels.length === 0)
     return <BlankNote>No ability increase at these levels</BlankNote>;
 
   return (
@@ -51,7 +51,7 @@ export function AddAbilityStep({ wizard, baseRules, rulesetId }: AddAbilityStepP
             {/* The field on a line of its own, under the level's title */}
             <Box>
               <AbilityIncreaseField
-                abilities={attributeData.attributes}
+                abilities={abilityData.attributes}
                 baseRules={baseRules}
                 rulesetId={rulesetId}
                 name={`ability-increase-${index}`}

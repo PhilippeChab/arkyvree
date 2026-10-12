@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import {
-  type AttributesData,
+  type AbilitiesData,
   previewAnswers,
   stepAnswers,
 } from "@/client/src/pages/characters/details/components/dnd3.5/levelUp/levelAnswers.ts";
@@ -12,7 +12,7 @@ const UNANSWERED = { data: undefined, isLoading: false, isPlaceholderData: false
 
 /** Edit Level's abilities step as it answers an increase level: picked, or not yet. */
 function abilitiesStep(picked: boolean, isPlaceholderData = false) {
-  const data: AttributesData = { isAvailable: true, attributes: {}, picked };
+  const data: AbilitiesData = { isAvailable: true, attributes: {}, picked };
   return { data, isLoading: false, isPlaceholderData };
 }
 

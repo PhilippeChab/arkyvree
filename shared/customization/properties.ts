@@ -1,12 +1,4 @@
-/** Values in the order of `options`, those it doesn't name after them as given. */
-function sortByOptions(values: string[], options: readonly string[] | null): string[] {
-  if (!options) return values;
-  const rank = (value: string) => {
-    const at = options.indexOf(value);
-    return at === -1 ? options.length : at;
-  };
-  return values.toSorted((a, b) => rank(a) - rank(b));
-}
+import { sortByOrder } from "@/shared/sortByOrder.ts";
 
 /** An UPPER_SNAKE_CASE property type as a label ("SPELL_SCHOOL" → "Spell School"). */
 export function formatPropertyType(type: string) {
@@ -22,7 +14,10 @@ export function formatPropertyValues(
   optionsOf: (type: string) => readonly string[] | null,
 ): Record<string, string> {
   return Object.fromEntries(
-    Object.entries(valuesByType).map(([type, values]) => [type, sortByOptions(values, optionsOf(type)).join(", ")]),
+    Object.entries(valuesByType).map(([type, values]) => [
+      type,
+      sortByOrder(values, optionsOf(type) ?? [], (value) => value).join(", "),
+    ]),
   );
 }
 
@@ -39,6 +34,9 @@ export function groupPropertyValues(
   const valuesByType: Record<string, string[]> = {};
   for (const { type, value } of properties) (valuesByType[type] ??= []).push(value);
   return Object.fromEntries(
-    Object.entries(valuesByType).map(([type, values]) => [type, sortByOptions(values, optionsOf(type))]),
+    Object.entries(valuesByType).map(([type, values]) => [
+      type,
+      sortByOrder(values, optionsOf(type) ?? [], (value) => value),
+    ]),
   );
 }

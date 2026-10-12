@@ -1,5 +1,5 @@
 import { Stack, Typography } from "@mui/material";
-import { type QueryKey, useQuery, useQueryClient } from "@tanstack/react-query";
+import { partialMatchKey, type QueryKey, useQuery, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 import { type ReactNode } from "react";
 import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
@@ -35,6 +35,7 @@ import {
 import { formatOperator } from "@/shared/customization/operators.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
 
+import { modifiersQuery, requirementsQuery } from "./customizationSectionQueries.ts";
 import { type EditableEntity, isEditable, renderEditor } from "./editors/index.ts";
 import { type CustomizationEntity, customizationEntityQuery } from "./entityQueries.ts";
 import {
@@ -94,7 +95,7 @@ function CustomizationView({
   const sectionProps = {
     ruleset,
     entityId,
-    onEntityIdChange: copy.followCopy,
+    followCopy: copy.followCopy,
     restorable,
   };
 
@@ -111,7 +112,8 @@ function CustomizationView({
           ? {
               rulesetId,
               deleteFn: () => deleteEntityFn(data, rulesetId, entityId),
-              listKeys: [QUERY_KEYS.rulesets.section(rulesetId, type), ...(klassLevelsKey ? [klassLevelsKey] : [])],
+              // A class level is listed by its class's levels alone: a ruleset has no list of them
+              listKeys: [klassLevelsKey ?? QUERY_KEYS.rulesets.section(rulesetId, type)],
               entityKey,
               restorable,
               changesError,
@@ -138,6 +140,12 @@ function CustomizationView({
         <SectionTabs
           tabs={tabs}
           value={section}
+          // A tab's rows load as it's pointed at, as a ruleset's tabs do
+          onTabHover={(key) => {
+            if (key === "requirements" || data.type === "modifiers")
+              void queryClient.prefetchQuery(requirementsQuery(rulesetId, type, entityId));
+            else void queryClient.prefetchQuery(modifiersQuery(rulesetId, data.type, entityId));
+          }}
           // While locked the entry still says where the copy came from: replace it
           // rather than leave more entries to clean up.
           onChange={(key) =>
@@ -275,7 +283,8 @@ export default function CustomizationPage() {
   ) {
     return copiedFrom &&
       previous &&
-      previousQuery?.queryKey[2] === rulesetId &&
+      !!previousQuery &&
+      partialMatchKey(previousQuery.queryKey, QUERY_KEYS.rulesets.detail(rulesetId)) &&
       (previous.entity.id === copiedFrom || previous.entity.id === entityId)
       ? previous
       : undefined;

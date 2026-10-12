@@ -1,6 +1,6 @@
 import { Autocomplete, Box, Stack, TextField, Typography } from "@mui/material";
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { type InferResponseType, parseResponse } from "hono/client";
+import { parseResponse } from "hono/client";
 import { useController } from "react-hook-form";
 
 import {
@@ -17,13 +17,14 @@ import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useFormSync, useFormWith } from "@/client/src/hooks/index.ts";
 import { emptyOptionsText } from "@/client/src/lib/errorMessage.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
-import { type CharacterDetail, invalidateCharacter, invalidateCharacterListings } from "@/client/src/lib/queries.ts";
+import { invalidateCharacter, invalidateCharacterListings } from "@/client/src/lib/queries.ts";
 import { wholeNumberRules } from "@/client/src/lib/validation.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { type Alignment, ALIGNMENT_OPTIONS, type Gender, GENDER_OPTIONS } from "@/shared/enums.ts";
 
 import { type CharacterLanguage, type CharacterLanguages, characterLanguagesQuery } from "./languageQueries.ts";
 import { NotesField, PrivateNotesField } from "./NotesFields.tsx";
+import type { CharacterData } from "./sectionFactory.ts";
 import { SheetSection } from "./SheetSection.tsx";
 
 interface CharacterIdentityFormData {
@@ -55,29 +56,20 @@ interface CharacterIdentitySectionProps {
   showPrivateNotes?: boolean;
 }
 
-type CampaignCharacterData = InferResponseType<
-  (typeof rpc.api.campaigns)[":id"]["characters"][":characterId"]["$get"],
-  200
->;
-
 /** A language as the picker shows it: one the character speaks, or one its rules let it pick. */
 type LanguageOption = Pick<CharacterLanguage, "id" | "name">;
-
-type SharedCharacterData = InferResponseType<(typeof rpc.api.shared.characters)[":shareToken"]["$get"], 200>;
-
-/** A character sheet's data, whose identity the section shows: the owner's view, a campaign member's, or a share link's. */
-export type CharacterData = CharacterDetail | CampaignCharacterData | SharedCharacterData;
 
 /** No answer yet: no language its rules give it, nor one to add. */
 const NO_ANSWER: CharacterLanguages = { automatic: [], options: [], picks: [] };
 
-/** No saved languages: one list, so the selection's memo keeps its value. */
+/** No saved languages. */
 const NO_LANGUAGES: LanguageOption[] = [];
 
 /** What a Partial character hides from the campaign's other players, said on its sheet and on its card. */
 export const PARTIAL_IDENTITY_NOTE = "The rest of this character's identity is private";
 
-function toIdentityForm({ identity }: CharacterIdentitySectionProps["character"]): CharacterIdentityFormData {
+/** A character's identity as its form holds it: its empty values before the character's are in. */
+function toIdentityForm(identity: CharacterData["identity"] | undefined): CharacterIdentityFormData {
   return {
     race: identity?.physiology?.race?.name || "",
     alignment: oneOf(identity?.beliefs?.alignment, ALIGNMENT_OPTIONS) ?? "",
@@ -105,22 +97,12 @@ export function CharacterIdentitySection({
 }: CharacterIdentitySectionProps) {
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
-  const form = useFormWith<CharacterIdentityFormData>({
-    race: "",
-    alignment: "",
-    experience: 0,
-    age: Number.NaN,
-    gender: "",
-    height: "",
-    weight: "",
-    deity: "",
-    description: "",
-    notes: "",
-    privateNotes: "",
-    languageIds: [],
-  });
+  const form = useFormWith<CharacterIdentityFormData>(toIdentityForm(undefined));
 
-  const sync = useFormSync(form, toIdentityForm(character), { key: characterId, updatedAt: character.updatedAt });
+  const sync = useFormSync(form, toIdentityForm(character.identity), {
+    key: characterId,
+    updatedAt: character.updatedAt,
+  });
 
   const saveIdentity = useMutation({
     mutationFn: (formData: CharacterIdentityFormData) =>
@@ -350,24 +332,22 @@ export function CharacterIdentitySection({
               <BlankNote>{PARTIAL_IDENTITY_NOTE}</BlankNote>
             ) : (
               <>
-                <Box sx={{ display: "grid", gridTemplateColumns: "1fr", gap: 3 }}>
-                  <TextAreaField
-                    control={form.control}
-                    name="description"
-                    label="Description"
-                    size="small"
-                    variant="outlined"
-                    placeholder="Character appearance, personality, or background…"
-                    slotProps={fieldSlots}
-                  />
-                </Box>
+                <TextAreaField
+                  control={form.control}
+                  name="description"
+                  label="Description"
+                  size="small"
+                  variant="outlined"
+                  placeholder="Character appearance, personality, or background…"
+                  slotProps={fieldSlots}
+                />
 
-                <Box sx={{ display: "grid", gridTemplateColumns: "1fr", gap: 3 }}>
+                <Stack spacing={3}>
                   <NotesField control={form.control} name="notes" size="small" readOnly={readOnly} />
                   {showPrivateNotes && (
                     <PrivateNotesField control={form.control} name="privateNotes" size="small" readOnly={readOnly} />
                   )}
-                </Box>
+                </Stack>
               </>
             )}
           </Stack>

@@ -1,8 +1,13 @@
-import { useMutation, useMutationState, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { type InferResponseType, parseResponse } from "hono/client";
 import { useNavigate } from "react-router-dom";
 
-import { acceptedPath, type InviteKind, useAnswerInvite } from "@/client/src/components/invites/index.ts";
+import {
+  acceptedPath,
+  type InviteKind,
+  useAnsweringInvites,
+  useAnswerInvite,
+} from "@/client/src/components/invites/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { saveBlob } from "@/client/src/lib/download.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
@@ -45,16 +50,6 @@ function notificationData(n: NotificationLike): NotificationData {
     : {};
 }
 
-/** A pending answer's notification and answer, read off its mutation: its key's last part, its variables' notification. */
-function pendingAnswerOf(
-  mutationKey: readonly unknown[] | undefined,
-  variables: unknown,
-): { answer: "accept" | "reject"; id: string } | undefined {
-  const answer = mutationKey?.at(-1);
-  const id = isRecord(variables) ? variables.notificationId : undefined;
-  return typeof id === "string" && (answer === "accept" || answer === "reject") ? { id, answer } : undefined;
-}
-
 /**
  * What a user can do with a notification, shared by the bell, the dashboard card and the notifications page: answer an
  * invite, download a ready PDF, or open the entity the notification is about.
@@ -86,15 +81,12 @@ export function useNotificationActions() {
     if (notificationId) markRead.mutate(notificationId);
   });
 
-  const pendingAnswers = useMutationState({
-    filters: { mutationKey: QUERY_KEYS.invites.answer, status: "pending" },
-    select: (mutation) => pendingAnswerOf(mutation.options.mutationKey, mutation.state.variables),
-  });
+  const { answering: answeringNotification } = useAnsweringInvites();
 
   const isActionable = (n: NotificationLike) => isInviteType(n.type) && !n.readAt;
 
   /** The answer being sent to this invite right now, if any. */
-  const answering = (n: NotificationLike) => pendingAnswers.find((pending) => pending?.id === n.id)?.answer ?? null;
+  const answering = (n: NotificationLike) => answeringNotification(n.id);
 
   const isDownloadable = (n: NotificationLike) => n.type === "pdfReady";
 

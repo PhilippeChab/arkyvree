@@ -1,7 +1,14 @@
 export { toClassForm } from "./classForm.ts";
 export { ClassFormFields } from "./ClassFormFields.tsx";
 export { ClassLevelFields } from "./ClassLevelFields.tsx";
-export { allLevelSaves, featKey, type LevelFeat, levelFeatLabel, nextClassLevel } from "./classLevelForm.ts";
+export {
+  allLevelSaves,
+  featKey,
+  type LevelFeat,
+  levelFeatLabel,
+  nextClassLevel,
+  sortLevelFeats,
+} from "./classLevelForm.ts";
 export { EMPTY_CLASS, EMPTY_CLASS_LEVEL, EMPTY_ITEM, EMPTY_SKILL, EMPTY_SPELL } from "./emptyForms.ts";
 export { type ItemFormData, toItemForm, toItemPayload } from "./itemForm.ts";
 export { ItemFormFields } from "./ItemFormFields.tsx";

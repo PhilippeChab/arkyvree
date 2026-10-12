@@ -4,21 +4,21 @@ import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { readThemeMode, saveThemeMode } from "@/client/src/stores/themeModeStorage.ts";
 import { createAppTheme } from "@/client/src/theme/appTheme.ts";
 
-import { ThemeContext, type ThemeMode } from "./themeContext.ts";
+import { type ThemeMode, ThemeModeContext } from "./themeModeContext.ts";
 
-interface CustomThemeProviderProps {
+interface ThemeModeProviderProps {
   children: ReactNode;
 }
 
-export function CustomThemeProvider({ children }: CustomThemeProviderProps) {
+const PREFERS_DARK = "(prefers-color-scheme: dark)";
+
+export function ThemeModeProvider({ children }: ThemeModeProviderProps) {
   const [themeMode, setThemeMode] = useState<ThemeMode>(readThemeMode);
 
-  const [systemPrefersDark, setSystemPrefersDark] = useState(
-    () => window.matchMedia?.("(prefers-color-scheme: dark)").matches ?? false,
-  );
+  const [systemPrefersDark, setSystemPrefersDark] = useState(() => window.matchMedia(PREFERS_DARK).matches);
 
   useEffect(() => {
-    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    const mediaQuery = window.matchMedia(PREFERS_DARK);
     const handler = (e: MediaQueryListEvent) => setSystemPrefersDark(e.matches);
     mediaQuery.addEventListener("change", handler);
     return () => mediaQuery.removeEventListener("change", handler);
@@ -30,8 +30,8 @@ export function CustomThemeProvider({ children }: CustomThemeProviderProps) {
   const appTheme = useMemo(() => createAppTheme(darkMode), [darkMode]);
 
   return (
-    <ThemeContext.Provider value={{ themeMode, setThemeMode }}>
+    <ThemeModeContext.Provider value={{ themeMode, setThemeMode }}>
       <ThemeProvider theme={appTheme}>{children}</ThemeProvider>
-    </ThemeContext.Provider>
+    </ThemeModeContext.Provider>
   );
 }

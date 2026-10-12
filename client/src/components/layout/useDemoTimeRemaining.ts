@@ -10,13 +10,11 @@ interface DemoTimeRemaining {
   urgency: DemoUrgency;
 }
 
-type DemoUrgency = "normal" | "warning" | "critical" | "expired";
+type DemoUrgency = "normal" | "critical" | "expired";
 
 const CRITICAL_THRESHOLD_MS = 5 * 60 * 1000;
 /** What the hook returns for a user who isn't a demo's. */
 const NOT_A_DEMO: DemoTimeRemaining = { hours: 0, minutes: 0, seconds: 0, urgency: "normal" };
-
-const WARNING_THRESHOLD_MS = 30 * 60 * 1000;
 
 /** `msRemaining` as the banner says it: hours, minutes and seconds, and how urgent it is. */
 function describe(msRemaining: number): DemoTimeRemaining {
@@ -27,7 +25,6 @@ function describe(msRemaining: number): DemoTimeRemaining {
   let urgency: DemoUrgency = "normal";
   if (msRemaining <= 0) urgency = "expired";
   else if (msRemaining <= CRITICAL_THRESHOLD_MS) urgency = "critical";
-  else if (msRemaining <= WARNING_THRESHOLD_MS) urgency = "warning";
   return { hours, minutes, seconds, urgency };
 }
 

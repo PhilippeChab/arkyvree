@@ -11,16 +11,19 @@ export const DECIMAL_RULES = { pattern: { value: /^(\d+\.?\d*|\.\d+)?$/, message
 
 /** React Hook Form rules for a required email address field. */
 export const EMAIL_RULES = {
-  required: "Email is required",
+  required: "Email address is required",
   pattern: { value: EMAIL_PATTERN, message: "Enter a valid email address" },
 } as const;
 
 /** React Hook Form rules for an entity's required name. */
 export const NAME_RULES = { required: "Name is required" } as const;
 
+/** React Hook Form rules for the user's password, as a sign-in or a confirmation asks it. */
+export const PASSWORD_RULES = { required: "Password is required" } as const;
+
 /** React Hook Form rules for a password the user is choosing, measured as it's stored (`sanitizeText`). */
 export const NEW_PASSWORD_RULES = {
-  required: "Password is required",
+  ...PASSWORD_RULES,
   validate: (value: unknown) =>
     sanitizeText(String(value)).length >= PASSWORD_MIN_LENGTH ||
     `Password must be at least ${PASSWORD_MIN_LENGTH} characters`,

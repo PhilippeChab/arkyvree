@@ -79,7 +79,7 @@ export default function InvitePage({ kind }: InvitePageProps) {
   const { inviteId = "" } = useParams<{ inviteId: string }>();
   const navigate = useNavigate();
   // An invite answered or revoked elsewhere refreshes, and the page shows why it can't be answered anymore
-  const { accept: acceptMutation, reject: rejectMutation } = useAnswerInvite();
+  const { accept: acceptMutation, reject: rejectMutation, answering } = useAnswerInvite();
   const answer = { kind, inviteId };
 
   // Once answered, the page is on its way out: don't refetch the invite and
@@ -199,7 +199,7 @@ export default function InvitePage({ kind }: InvitePageProps) {
                   })
                 }
                 onReject={() => rejectMutation.mutate(answer, { onSuccess: () => navigate("/dashboard") })}
-                pending={acceptMutation.isPending ? "accept" : rejectMutation.isPending ? "reject" : null}
+                pending={answering}
               />
             </Stack>
           </Stack>

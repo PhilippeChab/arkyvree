@@ -8,6 +8,8 @@ interface UseWebSocketOptions {
   identity: string | null;
   /** An event the server pushed (`WsEvent`). */
   onMessage: (event: WsEvent) => void;
+  /** The connection is back after it was lost: what the server pushed meanwhile never came. */
+  onReconnect: () => void;
 }
 
 const PING_INTERVAL_MS = 30000;
@@ -15,8 +17,9 @@ const PONG_TIMEOUT_MS = 10000;
 const RECONNECT_BASE_MS = 1000;
 const RECONNECT_MAX_MS = 30000;
 
-export function useWebSocket({ enabled, identity, onMessage }: UseWebSocketOptions) {
+export function useWebSocket({ enabled, identity, onMessage, onReconnect }: UseWebSocketOptions) {
   const onMessageRef = useLatest(onMessage);
+  const onReconnectRef = useLatest(onReconnect);
 
   useEffect(() => {
     if (!enabled || !identity) return;
@@ -27,6 +30,8 @@ export function useWebSocket({ enabled, identity, onMessage }: UseWebSocketOptio
     let pingTimer: ReturnType<typeof setInterval> | null = null;
     let pongTimer: ReturnType<typeof setTimeout> | null = null;
     let disposed = false;
+    // Whether it was ever open: an open after that is a reconnection
+    let connectedBefore = false;
 
     function cleanup() {
       if (pingTimer) {
@@ -57,6 +62,8 @@ export function useWebSocket({ enabled, identity, onMessage }: UseWebSocketOptio
 
       ws.onopen = () => {
         reconnectAttempt = 0;
+        if (connectedBefore) onReconnectRef.current();
+        connectedBefore = true;
         pingTimer = setInterval(() => {
           if (ws?.readyState === WebSocket.OPEN) {
             ws.send("ping");
@@ -105,5 +112,5 @@ export function useWebSocket({ enabled, identity, onMessage }: UseWebSocketOptio
         ws.close();
       }
     };
-  }, [enabled, identity, onMessageRef]);
+  }, [enabled, identity, onMessageRef, onReconnectRef]);
 }

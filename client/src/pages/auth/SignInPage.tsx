@@ -7,7 +7,7 @@ import { AuthPage, authPagePath, type AuthPageState, useAuthRedirect } from "@/c
 import { EmailField, PasswordField } from "@/client/src/components/common/index.ts";
 import { useAuthRequests, useFormWith, usePageTitle } from "@/client/src/hooks/index.ts";
 import { emailNotVerified, errorMessage } from "@/client/src/lib/errorMessage.ts";
-import { requiredRules } from "@/client/src/lib/validation.ts";
+import { PASSWORD_RULES } from "@/client/src/lib/validation.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
 
 import { AuthSubmitButton, GoogleSignInSection } from "./components/index.ts";
@@ -48,7 +48,7 @@ export default function SignInPage() {
             <PasswordField
               control={control}
               name="password"
-              rules={requiredRules("Password is required")}
+              rules={PASSWORD_RULES}
               label="Password"
               autoComplete="current-password"
             />

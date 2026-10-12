@@ -4,7 +4,8 @@ import { Controller, type UseFormReturn } from "react-hook-form";
 import { DescriptionField, NameField } from "@/client/src/components/common/index.ts";
 import { APTITUDES_RULES } from "@/client/src/lib/validation.ts";
 import { AptitudesAutocomplete } from "@/client/src/pages/rulesets/components/AptitudesAutocomplete.tsx";
-import { byName, useAptitudeLookup } from "@/client/src/pages/rulesets/components/useAptitudeLookup.ts";
+import { byName } from "@/client/src/pages/rulesets/components/byName.ts";
+import { useAptitudeLookup } from "@/client/src/pages/rulesets/components/useAptitudeLookup.ts";
 import type { Aptitude } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
 

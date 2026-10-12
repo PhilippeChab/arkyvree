@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import { reloadForStaleChunks } from "@/client/src/lib/chunkReload.ts";
 import { readStored, removeStored, writeStored } from "@/client/src/stores/browserStorage.ts";
-import { isDemoExpired, markDemoExpired } from "@/client/src/stores/demoExpiredFlag.ts";
+import { isDemoExpired, markDemoExpired } from "@/client/src/stores/demoExpiredStorage.ts";
 import { readThemeMode, saveThemeMode } from "@/client/src/stores/themeModeStorage.ts";
 
 // Bun has no browser storage: reading `localStorage` throws, as a browser that blocks site data does

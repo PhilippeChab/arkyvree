@@ -4,15 +4,17 @@ import { parseResponse } from "hono/client";
 
 import { sortAbilities } from "@/client/src/components/characters/sections/abilityOrder.ts";
 import { SheetSection } from "@/client/src/components/characters/sections/SheetSection.tsx";
-import { BlankNote, ConfirmDialog } from "@/client/src/components/common/index.ts";
+import { BlankNote, ConfirmDialog, LoadError } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import { useDialogState } from "@/client/src/hooks/index.ts";
+import { useDialogState, useRulesetAbilities } from "@/client/src/hooks/index.ts";
 import { type CharacterDetail, characterDetailQuery, invalidateCharacter } from "@/client/src/lib/queries.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
-import { useSuppressedWarningsStore } from "@/client/src/stores/suppressedWarningsStore.ts";
 import type { BaseRules } from "@/shared/enums.ts";
+import { STARTING_ABILITY_SCORE } from "@/vocabulary/dnd3.5/abilities.ts";
 
+import { abilityName } from "./abilityName.ts";
 import { AbilityScoreBox } from "./AbilityScoreBox.tsx";
+import { useSuppressedWarningsStore } from "./suppressedWarningsStore.ts";
 
 interface AbilityScoresSectionProps {
   abilities: CharacterDetail["abilities"];
@@ -20,9 +22,18 @@ interface AbilityScoresSectionProps {
   baseRules: BaseRules;
   characterId: string;
   readOnly?: boolean;
+  /** The character's ruleset, which names its abilities; none, and they're named by their keys */
+  rulesetId: string | undefined;
 }
 
-export function AbilityScoresSection({ abilities, baseRules, characterId, readOnly }: AbilityScoresSectionProps) {
+export function AbilityScoresSection({
+  abilities,
+  baseRules,
+  characterId,
+  readOnly,
+  rulesetId,
+}: AbilityScoresSectionProps) {
+  const { data: names, error: namesError } = useRulesetAbilities(rulesetId);
   const entries = Object.entries(abilities);
   const sortedEntries = sortAbilities(entries, baseRules, ([name]) => name);
   const queryClient = useQueryClient();
@@ -72,7 +83,7 @@ export function AbilityScoresSection({ abilities, baseRules, characterId, readOn
 
   const handleBaseChange = (abilityId: string, score: number) => {
     const current = Object.values(abilities).find((a) => a.abilityId === abilityId);
-    const currentBase = current?.base ?? 10;
+    const currentBase = current?.base ?? STARTING_ABILITY_SCORE;
 
     if (score > currentBase || !shouldWarn("abilityDecrease")) updateMutation.mutate({ abilityId, score });
     else decreaseDialog.openWith({ abilityId, score });
@@ -80,41 +91,45 @@ export function AbilityScoresSection({ abilities, baseRules, characterId, readOn
 
   return (
     <SheetSection title="Ability Scores">
-      {sortedEntries.length > 0 ? (
-        <Stack direction="row" spacing={2} sx={{ flexWrap: "wrap", justifyContent: "center" }}>
-          {sortedEntries.map(([ability, abilityData]) => (
-            <Box key={ability} sx={{ minWidth: { xs: 120, sm: 140 } }}>
-              <AbilityScoreBox
-                ability={ability}
-                score={abilityData.total}
-                modifier={abilityData.modifier}
-                abilityData={abilityData}
-                onBaseChange={handleBaseChange}
-                readOnly={readOnly}
-              />
-            </Box>
-          ))}
-        </Stack>
-      ) : (
-        <BlankNote>No ability scores</BlankNote>
-      )}
-      <ConfirmDialog
-        open={decreaseDialog.open}
-        onClose={decreaseDialog.close}
-        title="Decrease Ability Score"
-        message="Are you sure you want to decrease this ability score? It may break the prerequisites of what the character took."
-        confirmLabel="Decrease Ability Score"
-        onConfirm={() => {
-          if (!decreaseDialog.target) return;
-          updateMutation.mutate(decreaseDialog.target, {
-            onSuccess: () => {
-              decreaseDialog.close();
-              suppressWarningForSession("abilityDecrease");
-            },
-          });
-        }}
-        pending={updateMutation.isPending}
-      />
+      <Stack spacing={2}>
+        {/* Its abilities named by their keys meanwhile */}
+        {!!namesError && !names && <LoadError what="Ability names" error={namesError} />}
+        {sortedEntries.length > 0 ? (
+          <Stack direction="row" spacing={2} sx={{ flexWrap: "wrap", justifyContent: "center" }}>
+            {sortedEntries.map(([ability, abilityData]) => (
+              <Box key={ability} sx={{ minWidth: { xs: 120, sm: 140 } }}>
+                <AbilityScoreBox
+                  ability={abilityName(names, abilities, abilityData.abilityId)}
+                  score={abilityData.total}
+                  modifier={abilityData.modifier}
+                  abilityData={abilityData}
+                  onBaseChange={handleBaseChange}
+                  readOnly={readOnly}
+                />
+              </Box>
+            ))}
+          </Stack>
+        ) : (
+          <BlankNote>No ability scores</BlankNote>
+        )}
+        <ConfirmDialog
+          open={decreaseDialog.open}
+          onClose={decreaseDialog.close}
+          title="Decrease Ability Score"
+          message="Are you sure you want to decrease this ability score? It may break the prerequisites of what the character took."
+          confirmLabel="Decrease Ability Score"
+          onConfirm={() => {
+            if (!decreaseDialog.target) return;
+            updateMutation.mutate(decreaseDialog.target, {
+              onSuccess: () => {
+                decreaseDialog.close();
+                suppressWarningForSession("abilityDecrease");
+              },
+            });
+          }}
+          pending={updateMutation.isPending}
+        />
+      </Stack>
     </SheetSection>
   );
 }
