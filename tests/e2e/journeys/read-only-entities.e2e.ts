@@ -74,6 +74,16 @@ const ENTITY_PAGES: EntityPage[] = [
   },
 ];
 
+/** The arrows that open a card's selects and pickers, which a read-only field shows none of. */
+function arrowsOf(card: Locator) {
+  return card.locator(".MuiSelect-icon, .MuiAutocomplete-popupIndicator");
+}
+
+/** The outline of a card's Name field, its box, which a read-only field shows none of. */
+function nameOutlineOf(card: Locator) {
+  return card.getByRole("textbox", { name: "Name", exact: true }).locator("..").locator("fieldset");
+}
+
 /** The id of the entity of the ruleset's list named `name`. */
 async function entityId(page: Page, rulesetId: string, list: EntityPage["list"], name: string) {
   const response = await apiOf(page).api.rulesets[":id"][list].$get({
@@ -111,6 +121,8 @@ test.describe("A page the viewer can't edit", () => {
       await page.goto(entityPage.path(forkId, id));
       const editable = await openCard(page, entityPage);
       await expect(editable.card.getByRole("button", { name: /^Save$/ })).toBeVisible();
+      await expect(nameOutlineOf(editable.card)).toHaveCSS("border-top-style", "solid");
+      await expect(arrowsOf(editable.card).first()).toBeVisible();
 
       await page.goto(entityPage.path(coreId, id));
       const { card, labels } = await openCard(page, entityPage);
@@ -118,6 +130,9 @@ test.describe("A page the viewer can't edit", () => {
       await entityPage.shows(card);
       await expect(card.getByRole("button", { name: /^Save$/ })).toHaveCount(0);
       await expect(card.getByRole("textbox", { name: "Name", exact: true })).toHaveValue(entityPage.name);
+      // Values on display, not inputs: no box, no arrow
+      await expect(nameOutlineOf(card)).toHaveCSS("border-top-style", "none");
+      for (const arrow of await arrowsOf(card).all()) await expect(arrow).toBeHidden();
       for (const role of ["textbox", "spinbutton", "combobox"] as const)
         for (const input of await card.getByRole(role).all()) await expect(input).not.toBeEditable();
     });
