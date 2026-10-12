@@ -21,11 +21,6 @@ export type EntityFieldValues = NonNullable<
   InferRequestType<(typeof rpc.api.rulesets)[":id"]["skills"]["$post"]>["json"]["fields"]
 >;
 
-/** A group's field's empty value: a group holds no group. */
-function emptyInner(field: EntityField): LeafValue {
-  return field.input === "group" ? null : emptyValueOf(field);
-}
-
 /** A field's value in an empty form: false (none, for a three-state flag), a number's default, no text, no choice. */
 function emptyValueOf(field: ValueField): LeafValue {
   switch (field.input) {
@@ -55,9 +50,24 @@ function formValueOf(field: ValueField, value: unknown): LeafValue {
   }
 }
 
-/** A field's name in its group's values: its key, past its group's (`weapon.damage`'s `damage`). */
-function nameIn(group: { key: string }, field: { key: string }) {
-  return field.key.slice(group.key.length + 1);
+/** The fields that hold a value, a group's among them, each once: one shown in several groups too. */
+function valueFieldsOf(fields: readonly EntityField[]): ValueField[] {
+  const leaves = fields.flatMap((field) => (field.input === "group" ? valueFieldsOf(field.fields) : [field]));
+  return [...new Map(leaves.map((leaf) => [leaf.key, leaf])).values()];
+}
+
+/**
+ * Values by their fields' keys (`entries`), as a form holds them: a dotted key's under its group's name
+ * (`weapon.damage`), others by their own, a field shown in a group but held by the entity (an armor's max Dex) too.
+ */
+function valuesByKey(entries: [string, LeafValue][]): EntityFieldValues {
+  const values: Record<string, LeafValue | Record<string, LeafValue>> = {};
+  for (const [key, value] of entries) {
+    const [name, ...inner] = key.split(".");
+    if (inner.length === 0) values[name] = value;
+    else values[name] = { ...(isRecord(values[name]) ? values[name] : {}), [inner.join(".")]: value };
+  }
+  return values;
 }
 
 /**
@@ -78,15 +88,9 @@ export function choiceOptions(options: readonly string[], saved: unknown): strin
   return [...new Set([...options, ...held])];
 }
 
-/** An entity's empty fields: each field's empty value, a group's under its name. */
+/** An entity's empty fields: each field's empty value, at its key. */
 export function emptyFieldValues(fields: readonly EntityField[]): EntityFieldValues {
-  return Object.fromEntries(
-    fields.map((field) =>
-      field.input === "group"
-        ? [field.key, Object.fromEntries(field.fields.map((inner) => [nameIn(field, inner), emptyInner(inner)]))]
-        : [field.key, emptyValueOf(field)],
-    ),
-  );
+  return valuesByKey(valueFieldsOf(fields).map((field) => [field.key, emptyValueOf(field)]));
 }
 
 /** Whether a field shows, its condition's value read off the form (`watched`, at its `shownWhen.path`). */
@@ -99,18 +103,9 @@ export function noneLabel(options: readonly string[]) {
   return options.includes("None") ? "Default" : "None";
 }
 
-/** An entity's fields as its form holds them, off its description (`entity`, which carries each by its name). */
+/** An entity's fields as its form holds them, off its description (`entity`, which carries each at its key). */
 export function toFieldValues(fields: readonly EntityField[], entity: unknown): EntityFieldValues {
-  const values = isRecord(entity) ? entity : {};
-  return Object.fromEntries(
-    fields.map((field) => {
-      if (field.input !== "group") return [field.key, formValueOf(field, values[field.key])];
-      const group = values[field.key];
-      const read = (inner: EntityField) =>
-        inner.input === "group" ? null : formValueOf(inner, valueAt(group, nameIn(field, inner)));
-      return [field.key, Object.fromEntries(field.fields.map((inner) => [nameIn(field, inner), read(inner)]))];
-    }),
-  );
+  return valuesByKey(valueFieldsOf(fields).map((field) => [field.key, formValueOf(field, valueAt(entity, field.key))]));
 }
 
 /** The value at a dotted path of a form's values (`fields.weapon.type`): none where the path leads nowhere. */

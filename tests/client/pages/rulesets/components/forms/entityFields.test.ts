@@ -45,6 +45,28 @@ const FIELDS: EntityField[] = [
   },
 ];
 
+/** Two groups that both show a field held at the entity's own level: an armor's and a shield's max Dex bonus. */
+const WORN_FIELDS: EntityField[] = [
+  {
+    key: "armor",
+    label: "Armor",
+    input: "group",
+    fields: [
+      { ...BASE, key: "armor.bonus", label: "Armor Bonus", input: "number", default: null },
+      { ...BASE, key: "maxDex", label: "Max Dex Bonus", input: "number", default: null },
+    ],
+  },
+  {
+    key: "shield",
+    label: "Shield",
+    input: "group",
+    fields: [
+      { ...BASE, key: "shield.bonus", label: "Shield Bonus", input: "number", default: null },
+      { ...BASE, key: "maxDex", label: "Max Dex Bonus", input: "number", default: null },
+    ],
+  },
+];
+
 describe("an entity's fields in its form", () => {
   test("start empty: no choice, no text, a flag off (none, a three-state one), a number its default", () => {
     expect(emptyFieldValues(FIELDS)).toEqual({
@@ -117,5 +139,16 @@ describe("an entity's fields in its form", () => {
     expect(changedFieldValues({ school: "Evocation", tags: ["Fire"] }, baseline)).toEqual({ school: "Evocation" });
     expect(changedFieldValues(undefined, baseline)).toEqual({});
     expect(changedFieldValues({ school: "Illusion" }, undefined)).toEqual({ school: "Illusion" });
+  });
+});
+
+describe("an entity's fields shown in a group but held at its own level", () => {
+  test("hold their value once, at their own key, whichever group shows them", () => {
+    expect(emptyFieldValues(WORN_FIELDS)).toEqual({ armor: { bonus: null }, maxDex: null, shield: { bonus: null } });
+    expect(toFieldValues(WORN_FIELDS, { armor: { bonus: 4 }, maxDex: 6, shield: { bonus: null } })).toEqual({
+      armor: { bonus: 4 },
+      maxDex: 6,
+      shield: { bonus: null },
+    });
   });
 });

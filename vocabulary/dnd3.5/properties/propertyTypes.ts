@@ -185,14 +185,14 @@ const ITEM_PROPERTY_TYPES: Record<string, PropertyTypeDeclaration> = {
     description: "Shield proficiency classification (Light, Heavy, Tower)",
   },
   [SHIELD_AC_BONUS]: { label: "Shield Bonus", description: "Armor class bonus from shield" },
+  [ARMOR_MAX_DEX]: { label: "Max Dex Bonus", description: "Maximum dexterity bonus allowed" },
+  [ARMOR_CHECK_PENALTY]: { label: "Armor Check Penalty", description: "Penalty to Str/Dex-based skill checks" },
+  [ITEM_SPELL_FAILURE]: { label: "Arcane Spell Failure (%)", description: "Arcane spell failure chance percentage" },
   [ITEM_MASTERWORK]: {
     label: "Masterwork",
     description: "Whether this item is masterwork quality (reduces armor check penalty by 1)",
   },
   [ITEM_MADE_OF]: { label: "Material", description: "Material composition" },
-  [ARMOR_MAX_DEX]: { label: "Max Dex Bonus", description: "Maximum dexterity bonus allowed" },
-  [ARMOR_CHECK_PENALTY]: { label: "Armor Check Penalty", description: "Penalty to Str/Dex-based skill checks" },
-  [ITEM_SPELL_FAILURE]: { label: "Arcane Spell Failure (%)", description: "Arcane spell failure chance percentage" },
   [ITEM_HAS_CHARGES]: { label: "Charges", description: "Default number of charges for this item" },
   [MAGIC_CASTER_LEVEL]: { label: "Caster Level", description: "Caster level required to create this magic item" },
   [MAGIC_AURA]: {

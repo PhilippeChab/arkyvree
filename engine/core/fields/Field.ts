@@ -16,7 +16,8 @@ export type FieldCondition =
 export type Fields = Record<string, PropertyField<unknown>>;
 
 /**
- * How a field is stored and read, and when it counts (`when`, `FieldCondition`):
+ * How a field is stored and read, when it counts (`when`, `FieldCondition`), and where its form shows it (`shownIn`: in
+ * the groups at its level it names, which show it with their own fields, its value its own all the same):
  * - a flag is true once one of its rows says `"true"`; without any, it's false, or none when it tells its absence apart
  *   (`absent: null`, an item's: a `"false"` row is written and read too);
  * - a number, a text, a choice and a reference come from the first row of their type that holds one; a number in its
@@ -39,7 +40,7 @@ export type FieldSpec = (
   | { kind: "list"; type: string }
   | { kind: "ref"; required: boolean; type: string }
   | { kind: "text"; type: string }
-) & { when?: FieldCondition };
+) & { shownIn?: readonly string[]; when?: FieldCondition };
 
 /** The values an entity's fields read, by name. */
 export type FieldValues<S extends Fields> = { [K in keyof S]: S[K] extends PropertyField<infer T> ? T : never };
@@ -110,6 +111,15 @@ export default class Field {
   /** An entity's id, from its first row: none without one, which a form may leave it at unless it's `required`. */
   static ref(type: string, options: { required?: boolean } = {}): PropertyField<string | null> {
     return { kind: "ref", required: options.required ?? false, type };
+  }
+
+  /**
+   * A field its form shows in the groups at its level it names (`groups`), among their own fields, rather than on its
+   * own: an armor's or a shield's max Dex bonus in its Armor or Shield section. Its value stays its own, read and
+   * written at its level as any other field's.
+   */
+  static shownIn<F extends PropertyField<unknown>>(groups: readonly string[], field: F): F {
+    return { ...field, shownIn: groups };
   }
 
   /** A text, from its first row: none without one, and none written when it's empty. */

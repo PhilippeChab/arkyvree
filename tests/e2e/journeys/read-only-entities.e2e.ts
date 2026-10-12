@@ -29,7 +29,23 @@ const ENTITY_PAGES: EntityPage[] = [
     path: (rulesetId, id) => `/rulesets/${rulesetId}/powers/${id}/customization`,
     shows: async (card) => {
       await expect(card.getByRole("combobox", { name: "School", exact: true })).toHaveText("Evocation");
-      await expect(card.getByRole("combobox", { name: "Range", exact: true })).toHaveText("Long");
+      await expect(card.getByRole("textbox", { name: "Range", exact: true })).toHaveValue("Long");
+      // An empty field says so
+      await expect(card.getByRole("textbox", { name: "Target", exact: true })).toHaveAttribute("placeholder", "—");
+    },
+  },
+  {
+    list: "items",
+    name: "Absorbing Shield",
+    title: "Item Details",
+    field: "Shield Bonus",
+    path: (rulesetId, id) => `/rulesets/${rulesetId}/items/${id}/customization`,
+    shows: async (card) => {
+      // A shield's own stats in its Shield section, its template's
+      const shield = card.getByRole("heading", { name: "Shield", exact: true }).locator("..");
+      await expect(shield.getByRole("spinbutton", { name: "Armor Check Penalty" })).toHaveValue("-2");
+      await expect(shield.getByRole("spinbutton", { name: "Arcane Spell Failure (%)" })).toHaveValue("15");
+      await expect(shield.getByRole("spinbutton", { name: "Max Dex Bonus" })).toHaveAttribute("placeholder", "—");
     },
   },
   {

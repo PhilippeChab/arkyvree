@@ -205,4 +205,23 @@ describe("A field codec", () => {
       ],
     });
   });
+
+  test("shows a field in the groups it names, among their own in declared order, its value its own all the same", () => {
+    const codec = new FieldCodec({
+      first: Field.group("First", { level: Field.number("LEVEL") }),
+      kind: Field.shownIn(["first", "second"], Field.choice("KIND", ["Arcane", "Divine"] as const)),
+      second: Field.group("Second", { known: Field.flag("KNOWN", { absent: null }) }),
+      title: Field.text("TITLE"),
+    });
+    const fields = codec.describe(DECLARATIONS, "items");
+    // Not on its own: in each group, keyed where its value goes
+    expect(fields.map((field) => field.key)).toEqual(["title", "first", "second"]);
+    const keysIn = (field: (typeof fields)[number]) =>
+      field.input === "group" ? field.fields.map((inner) => inner.key) : [];
+    expect(keysIn(fields[1]!)).toEqual(["kind", "first.level"]);
+    expect(keysIn(fields[2]!)).toEqual(["kind", "second.known"]);
+
+    expect(codec.read(rows(["KIND", "Divine"], ["LEVEL", "2"]))).toMatchObject({ first: { level: 2 }, kind: "Divine" });
+    expect(codec.parse({ kind: "Arcane" }, CONTEXT)).toEqual({ kind: "Arcane" });
+  });
 });

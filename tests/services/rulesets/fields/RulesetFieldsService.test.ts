@@ -63,7 +63,7 @@ describe("RulesetFieldsService", () => {
     ]);
   });
 
-  test("groups an item's weapon, armor and shield, each shown for an item of that type", async () => {
+  test("groups an item's weapon, armor and shield, each shown for an item of that type, its stats in it", async () => {
     const { rulesetId } = await getSeedCtx();
     const { items } = await RulesetFieldsService.getFields(rulesetId);
     const groups = items.flatMap((field) => (field.input === "group" ? [[field.label, field.shownWhen?.values]] : []));
@@ -83,8 +83,19 @@ describe("RulesetFieldsService", () => {
         expect.objectContaining({ key: "weapon.finessable", input: "flag", nullable: true }),
       ]),
     });
-    expect(items.find((field) => field.key === "maxDex")).toMatchObject({
-      shownWhen: { path: "type", values: ["Armor", "Shield"] },
-    });
+    // The stats an armor and a shield both keep, held by the item itself: in each one's section, after its own
+    expect(items.find((field) => field.key === "maxDex")).toBeUndefined();
+    for (const section of ["armor", "shield"]) {
+      const group = items.find((field) => field.key === section);
+      const keys = group?.input === "group" ? group.fields.map((field) => field.key) : [];
+      expect(keys).toEqual([
+        `${section}.type`,
+        `${section}.proficiency`,
+        `${section}.acBonus`,
+        "maxDex",
+        "checkPenalty",
+        "spellFailure",
+      ]);
+    }
   });
 });

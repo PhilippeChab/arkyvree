@@ -40,14 +40,15 @@ export type ItemFieldValues = FieldValues<typeof ITEM_FIELDS.fields>;
 /** A weapon's fields: what its attacks, its groupings and the hands it's held in read. */
 export type WeaponFields = ItemFieldValues["weapon"];
 
-/** The fields of an armor's or a shield's, which its form shows for one. */
-const WORN = { column: "type", values: ["Armor", "Shield"] } as const;
+/** The groups of an armor's and a shield's fields, which show a stat both have among their own. */
+const WORN = ["armor", "shield"] as const;
 
 /**
  * An item's fields its properties hold, as stored: each none (or empty) without its row, so an item made from a
  * template holds only the fields it overrides, and what the engine does without one (a critical of 1, Strength to damage
  * by the hand) stays where the engine reads it. A flag tells a `"false"` row from none. Read off the item's own rows
- * merged with its template's. Its form shows a weapon's, an armor's and a shield's fields for an item of that type.
+ * merged with its template's. Its form shows a weapon's, an armor's and a shield's fields for an item of that type, in
+ * its section: an armor's or a shield's max Dex bonus, check penalty and spell failure too, which both keep alike.
  */
 export const ITEM_FIELDS = new FieldCodec({
   armor: Field.when(
@@ -61,13 +62,13 @@ export const ITEM_FIELDS = new FieldCodec({
   /** `ITEM_HAS_CHARGES`: the charges it comes with, none for an item without charges. */
   charges: Field.number(ITEM_HAS_CHARGES),
   /** An armor's or a shield's. */
-  checkPenalty: Field.when(WORN, Field.number(ARMOR_CHECK_PENALTY)),
+  checkPenalty: Field.shownIn(WORN, Field.number(ARMOR_CHECK_PENALTY)),
   madeOf: Field.text(ITEM_MADE_OF),
   magicAuras: Field.list(MAGIC_AURA),
   magicCasterLevel: Field.number(MAGIC_CASTER_LEVEL),
   masterwork: Field.flag(ITEM_MASTERWORK, { absent: null }),
   /** An armor's, or a tower shield's. */
-  maxDex: Field.when(WORN, Field.number(ARMOR_MAX_DEX)),
+  maxDex: Field.shownIn(WORN, Field.number(ARMOR_MAX_DEX)),
   shield: Field.when(
     { column: "type", values: ["Shield"] },
     Field.group("Shield", {
@@ -76,7 +77,7 @@ export const ITEM_FIELDS = new FieldCodec({
       type: Field.text(SHIELD_TYPE),
     }),
   ),
-  spellFailure: Field.when(WORN, Field.number(ITEM_SPELL_FAILURE)),
+  spellFailure: Field.shownIn(WORN, Field.number(ITEM_SPELL_FAILURE)),
   weapon: Field.when(
     { column: "type", values: ["Weapon"] },
     Field.group("Weapon", {

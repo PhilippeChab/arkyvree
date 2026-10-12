@@ -9,6 +9,20 @@ import { isRecord } from "@/shared/isRecord.ts";
 import Field, { type FieldCondition, type Fields, type FieldSpec } from "./Field.ts";
 import type { FormField } from "./FormField.ts";
 
+/** What fields are described with: the ruleset's property types, those the entity type declares, and their order. */
+interface DescribeContext {
+  declarations: PropertyTypesProvider;
+  declared: Readonly<Record<string, PropertyDeclaration>>;
+  ranks: ReadonlyMap<string, number>;
+}
+
+/** A field where its form shows it: its spec, its name, and where its value goes (`prefix`, before its name). */
+interface Placed {
+  field: FieldSpec;
+  name: string;
+  prefix: string;
+}
+
 /** A field of a spec that isn't a group: a value of its own, which its property type keeps. */
 type LeafSpec = Exclude<FieldSpec, { kind: "group" }>;
 
@@ -68,6 +82,42 @@ export default class FieldForms {
         return { ...base, input: "text", multiple, placeholder: declaration?.placeholder };
       }
     }
+  }
+
+  /**
+   * Fields as a form shows them (`placed`), in the order their types are declared, its own fields before its groups': a
+   * group's own fields, and those of its level (`level`) that a form shows in it, under its label.
+   */
+  private static describePlaced(placed: Placed[], level: Fields, context: DescribeContext): FormField[] {
+    const { declarations, declared, ranks } = context;
+    const order = (field: FieldSpec) => (field.kind === "group" ? ranks.size : 0) + FieldForms.rankOf(field, ranks);
+    return placed
+      .toSorted((a, b) => order(a.field) - order(b.field))
+      .map(({ field, name, prefix }): FormField => {
+        const key = `${prefix}${name}`;
+        const shownWhen = FieldForms.shownWhen(field.when, prefix);
+        if (field.kind !== "group")
+          return { ...FieldForms.describeLeaf(key, field, declared[field.type], declarations), shownWhen };
+        const guests = Object.entries(level).filter(([, guest]) => guest.shownIn?.includes(name));
+        const inner = [
+          ...FieldForms.placedAt(field.fields, `${key}.`),
+          ...guests.map(([guestName, guest]) => ({ field: guest, name: guestName, prefix })),
+        ];
+        return {
+          fields: FieldForms.describePlaced(inner, field.fields, context),
+          input: "group",
+          key,
+          label: field.label,
+          shownWhen,
+        };
+      });
+  }
+
+  /** The fields of a level (`fields`, whose values go under `prefix`) a form shows on their own: those no group shows. */
+  private static placedAt(fields: Fields, prefix: string): Placed[] {
+    return Object.entries(fields)
+      .filter(([, field]) => !field.shownIn)
+      .map(([name, field]) => ({ field, name, prefix }));
   }
 
   /** A field's place in its form: its declared type's rank, a group's first field's. */
@@ -168,28 +218,17 @@ export default class FieldForms {
 
   /**
    * The fields of a spec (`fields`) as a form shows them, those whose property types the entity type declares
-   * (`declared`), in the order it declares them: its own fields before its groups', each group's under its label.
-   * `prefix`: a group's, before its fields' keys.
+   * (`declared`), in the order it declares them: its own fields before its groups', each group's under its label, with
+   * the fields of its level that a form shows in it (`Field.shownIn`), each keyed where its value goes.
    */
   static describe(
     fields: Fields,
     declared: Readonly<Record<string, PropertyDeclaration>>,
     declarations: PropertyTypesProvider,
-    prefix = "",
   ): FormField[] {
-    const ranks = new Map(Object.keys(declared).map((type, rank) => [type, rank]));
-    const order = (field: FieldSpec) => (field.kind === "group" ? ranks.size : 0) + FieldForms.rankOf(field, ranks);
-    return Object.entries(FieldForms.declaredOf(fields, declared))
-      .toSorted(([, a], [, b]) => order(a) - order(b))
-      .map(([name, field]): FormField => {
-        const key = `${prefix}${name}`;
-        const shownWhen = FieldForms.shownWhen(field.when, prefix);
-        if (field.kind === "group") {
-          const inner = FieldForms.describe(field.fields, declared, declarations, `${key}.`);
-          return { fields: inner, input: "group", key, label: field.label, shownWhen };
-        }
-        return { ...FieldForms.describeLeaf(key, field, declared[field.type], declarations), shownWhen };
-      });
+    const shown = FieldForms.declaredOf(fields, declared);
+    const context = { declarations, declared, ranks: new Map(Object.keys(declared).map((type, rank) => [type, rank])) };
+    return FieldForms.describePlaced(FieldForms.placedAt(shown, ""), shown, context);
   }
 
   /**
