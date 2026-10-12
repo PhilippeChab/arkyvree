@@ -97,12 +97,10 @@ export function useRulesetOperations() {
           param: { id },
         }),
       ),
-    // Gone from its lists but the Archived filter, as an archived campaign or character is: back to them
     onSuccess: (_, id) => {
       snackbar.success("Ruleset archived");
       void refreshRuleset(id);
       archiveDialog.close();
-      navigate("/rulesets");
     },
     onError: (error) => {
       snackbar.error(error, "Failed to archive ruleset");
@@ -231,7 +229,10 @@ export function useRulesetOperations() {
   };
 
   const confirmArchive = () => {
-    if (archiveDialog.target) archiveMutation.mutate(archiveDialog.target.id);
+    // Gone from its lists but the Archived filter, as an archived campaign or character is: back to them, from the
+    // call's own onSuccess, which runs only while its page is still open (a user who left isn't pulled back)
+    if (archiveDialog.target)
+      archiveMutation.mutate(archiveDialog.target.id, { onSuccess: () => navigate("/rulesets") });
   };
 
   const confirmPublish = (kind: PublishKind) => {

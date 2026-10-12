@@ -35,7 +35,9 @@ const NOTIFICATION_MESSAGES: Record<string, (actor: string, d: Record<string, un
     `${actor} invited you to contribute to ${d.rulesetName || "a ruleset"} as ${d.role || "Editor"}`,
   acceptContributorInvite: (actor) => `${actor} accepted your contributor invite`,
   rejectContributorInvite: (actor) => `${actor} rejected your contributor invite`,
-  revokeContributor: (actor, d) => `${actor} revoked your access to ${d.rulesetName || "a ruleset"}`,
+  // An older one carries no ruleset's name
+  revokeContributor: (actor, d) =>
+    d.rulesetName ? `${actor} revoked your access to ${d.rulesetName}` : `${actor} revoked your contributor access`,
   updateContributorRole: (actor, d) => `${actor} changed your role to ${d.role || "Editor"}`,
   leaveRuleset: (actor) => `${actor} stopped contributing to your ruleset`,
 

@@ -1,6 +1,7 @@
 import { Autocomplete, Box, Stack, TextField, Typography } from "@mui/material";
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
+import { useState } from "react";
 import { useController } from "react-hook-form";
 
 import {
@@ -155,6 +156,7 @@ export function CharacterIdentitySection({
   for (const lang of currentLanguages) languagesById.set(lang.id, lang);
   for (const lang of [...languages.automatic, ...languages.picks, ...languages.options])
     languagesById.set(lang.id, lang);
+  const [languageSearch, setLanguageSearch] = useState("");
   const selectedLanguages = selectedLanguageIds
     .map((id) => languagesById.get(id))
     .filter((l): l is LanguageOption => !!l);
@@ -300,6 +302,12 @@ export function CharacterIdentitySection({
                     getOptionLabel={(option) => option.name}
                     isOptionEqualToValue={(option, value) => option.id === value.id}
                     value={selectedLanguages}
+                    // Each render builds a new value, which the Autocomplete answers with a "reset" that would clear
+                    // the search as it's typed. Typing, picking a language and blur still set it.
+                    inputValue={languageSearch}
+                    onInputChange={(_, input, reason) => {
+                      if (reason !== "reset") setLanguageSearch(input);
+                    }}
                     // Those its modifiers grant it (its race's, its classes') stay: only its picks come and go
                     onChange={(_, newValue) =>
                       languageIds.onChange([

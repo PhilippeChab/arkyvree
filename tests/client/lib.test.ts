@@ -170,6 +170,13 @@ describe("An activity", () => {
     expect(formatNotificationMessage("createFeat", { entityName: "Dodge" })).toBe("Someone created feat Dodge");
     expect(formatNotificationMessage("createFeat", {})).toBe("Someone created feat");
     expect(formatNotificationMessage("somethingNew", { actorName: "Ann" })).toBe("Ann: something new");
+    // A revoked contributor's names its ruleset; an older one's data has no name, and keeps the old words
+    expect(formatNotificationMessage("revokeContributor", { actorName: "Ann", rulesetName: "Homebrew" })).toBe(
+      "Ann revoked your access to Homebrew",
+    );
+    expect(formatNotificationMessage("revokeContributor", { actorName: "Ann" })).toBe(
+      "Ann revoked your contributor access",
+    );
     // An entity is named in its ruleset's word: a 3.5 power is a spell, another ruleset's a power
     expect([
       formatNotificationMessage("deletePower", { baseRules: "Dungeons & Dragons: 3.5", entityName: "Fireball" }),

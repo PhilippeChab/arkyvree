@@ -1,4 +1,4 @@
-import { alpha, Button, Stack, ThemeProvider, Typography } from "@mui/material";
+import { alpha, Button, CssBaseline, Stack, ThemeProvider, Typography } from "@mui/material";
 import * as Sentry from "@sentry/react";
 import { Component, type ErrorInfo, type ReactNode } from "react";
 
@@ -42,6 +42,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     if (this.state.isChunkError) {
       return (
         <ThemeProvider theme={ERROR_THEME}>
+          <CssBaseline enableColorScheme />
           <Stack
             direction="row"
             sx={{
@@ -61,6 +62,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     if (this.state.hasError) {
       return (
         <ThemeProvider theme={ERROR_THEME}>
+          <CssBaseline enableColorScheme />
           <Stack
             spacing={3}
             sx={{
