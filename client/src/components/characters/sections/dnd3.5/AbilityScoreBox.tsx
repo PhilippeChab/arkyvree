@@ -8,7 +8,6 @@ import { MAX_ABILITY_SCORE, MIN_ABILITY_SCORE, STARTING_ABILITY_SCORE } from "@/
 import { ScoreBox } from "./ScoreBox.tsx";
 
 interface AbilityScoreBoxProps {
-  /** Its name, as its ruleset names it ("Force Points"), which its label and its buttons' names say */
   ability: string;
   abilityData?: CharacterDetail["abilities"][string];
   compact?: boolean;

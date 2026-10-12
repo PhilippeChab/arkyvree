@@ -37,7 +37,6 @@ export function SheetSections({
         baseRules={baseRules}
         characterId={characterId}
         readOnly={readOnly}
-        rulesetId={rulesetId}
       />
 
       <SavingThrowsSection saves={character.saves} />

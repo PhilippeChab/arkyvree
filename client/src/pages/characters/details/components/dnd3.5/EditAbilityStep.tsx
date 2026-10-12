@@ -17,11 +17,10 @@ interface EditAbilityState {
 
 interface EditAbilityStepProps {
   baseRules: BaseRules;
-  rulesetId: string;
   wizard: EditAbilityState;
 }
 
-export function EditAbilityStep({ wizard, baseRules, rulesetId }: EditAbilityStepProps) {
+export function EditAbilityStep({ wizard, baseRules }: EditAbilityStepProps) {
   const { abilityData, isLoadingAbilities, abilitiesError, control } = wizard;
   const { field } = useController({ control, name: "selectedAbility" });
   if (isLoadingAbilities) return <DiceSpinner />;
@@ -32,7 +31,6 @@ export function EditAbilityStep({ wizard, baseRules, rulesetId }: EditAbilitySte
     <AbilityIncreaseField
       abilities={abilityData.attributes}
       baseRules={baseRules}
-      rulesetId={rulesetId}
       name="ability-increase"
       value={field.value}
       onChange={field.onChange}

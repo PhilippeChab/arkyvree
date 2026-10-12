@@ -332,7 +332,6 @@ export default function CharacterDetailsPage() {
               onExited={addLevel.onExited}
               characterId={id}
               baseRules={character.baseRules}
-              rulesetId={character.rulesetId}
               klassId={addLevel.target.klassId}
             />
           )}
@@ -343,7 +342,6 @@ export default function CharacterDetailsPage() {
               onExited={editLevel.onExited}
               characterId={id}
               baseRules={character.baseRules}
-              rulesetId={character.rulesetId}
               editingLevel={editLevel.target}
             />
           )}
