@@ -16,8 +16,6 @@ here, locally and in cloud sessions.
   - open an issue: `gh api repos/PhilippeChab/arkyvree/issues -f title="…" -F body=@body.md -f "labels[]=bug"`
   - comment on one: `gh api repos/PhilippeChab/arkyvree/issues/<number>/comments -F body=@comment.md`
   - read a commit's checks: `gh api repos/PhilippeChab/arkyvree/commits/$(git rev-parse HEAD)/check-runs --jq '.check_runs[] | .name + " " + (.conclusion // .status)'`
-- **No production:** the production database is never configured in the cloud. A data fix ships its SQL in its pull
-  request's body: a read-only check, then a guarded, idempotent script. The owner runs it before the deploy.
 - **No end-to-end tests:** Playwright's browsers aren't installed in the cloud. CI runs the end-to-end tests on every
   pull request.
 
