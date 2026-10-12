@@ -64,3 +64,6 @@ content/dnd3.5/generated.lock
 
 # diff-prod.ts output
 sync.sql
+
+# Claude Code cloud sessions' setup state (scripts/cloud/session-start.sh)
+.cloud-session/
