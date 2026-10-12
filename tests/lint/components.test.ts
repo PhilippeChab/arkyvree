@@ -361,7 +361,7 @@ describe("component rules", () => {
     ]);
   });
 
-  test("a page's first load is a PageLoader, and any other spinner takes a section's spacing alone", async () => {
+  test("a page's first load is a PageLoader, and any other spinner takes a section's spacing alone, or a small one a line's", async () => {
     const page = "export const p = <DiceSpinner sx={{ py: { xs: 4, sm: 8 } }} />;\n";
     const large = 'export const l = <DiceSpinner size="large" />;\n';
     expect(
@@ -374,6 +374,9 @@ describe("component rules", () => {
           "client/src/centred.tsx": "export const c = <DiceSpinner sx={{ flex: 1 }} />;\n",
           "client/src/deeper.tsx": "export const d = <DiceSpinner sx={{ py: 8 }} />;\n",
           "client/src/plain.tsx": "export const n = <DiceSpinner />;\n",
+          "client/src/line.tsx": 'export const l = <DiceSpinner size="small" sx={{ py: 1.5 }} />;\n',
+          "client/src/small-section.tsx": 'export const s = <DiceSpinner size="small" sx={{ py: 4 }} />;\n',
+          "client/src/icon.tsx": 'export const i = <DiceSpinner size="small" />;\n',
           "client/src/components/common/PageLoader.tsx": page,
           "client/src/components/characters/CharacterDetailSkeleton.tsx": large,
         },
@@ -384,6 +387,7 @@ describe("component rules", () => {
       "page-loaders client/src/deeper.tsx",
       "page-loaders client/src/large.tsx",
       "page-loaders client/src/page.tsx",
+      "page-loaders client/src/small-section.tsx",
       "page-loaders client/src/tall.tsx",
     ]);
   });

@@ -108,7 +108,7 @@ export function NotificationBell() {
       >
         <Stack sx={{ py: 1 }}>
           {isLoading ? (
-            <DiceSpinner sx={{ py: 4 }} />
+            <DiceSpinner size="small" sx={{ py: 1.5 }} />
           ) : error && !unreadData ? (
             <Box sx={{ px: 2, py: 1.5 }}>
               <LoadError what="Notifications" error={error} />

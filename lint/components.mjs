@@ -762,19 +762,21 @@ function createPageLoaders(context) {
       const size = attributeValue(attribute(node, "size"));
       const properties = styleProperties(attributeValue(attribute(node, "sx")), node);
       const large = size?.type === "Literal" && size.value === "large" && !skeleton;
-      // A section's or a dialog's spinner: `py: 4` alone
+      // A section's or a dialog's spinner: `py: 4` alone; a small one, a menu's or a popover's line: `py: 1.5` alone
+      const spacing = size?.type === "Literal" && size.value === "small" ? 1.5 : 4;
       const styled =
         !ownLoader &&
         properties.some(
           (property) =>
-            propertyKey(property) !== "py" || property.value.type !== "Literal" || property.value.value !== 4,
+            propertyKey(property) !== "py" || property.value.type !== "Literal" || property.value.value !== spacing,
         );
       if (!large && !styled) return;
       context.report({
         node: node.openingElement,
         message:
           "A page's first load is a `PageLoader` (the character sheet draws its skeleton); a section's or a " +
-          "dialog's spinner takes a section's spacing (`sx={{ py: 4 }}`) and nothing else, never the large size.",
+          "dialog's spinner takes a section's spacing (`sx={{ py: 4 }}`) and nothing else, a menu's or a popover's " +
+          'the small die on a line\'s (`size="small" sx={{ py: 1.5 }}`), never the large size.',
       });
     },
     "Program:exit"() {

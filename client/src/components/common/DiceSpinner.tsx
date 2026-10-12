@@ -12,7 +12,11 @@ interface DiceSpinnerProps {
    */
   loading?: boolean;
   size?: "small" | "medium" | "large";
-  /** Standalone medium / large only: the centered block's spacing, a section's (`py`), never a height. */
+  /**
+   * Standalone only: the centered block's spacing (`py`), never a height. A section's or a dialog's medium die takes a
+   * section's (`py: 4`); a small die given it is a line's, a menu's or a popover's (`py: 1.5`, as its one line), and
+   * without it an inline icon.
+   */
   sx?: SxProps<Theme>;
 }
 
@@ -69,7 +73,7 @@ export function DiceSpinner({ size = "medium", loading, children, sx }: DiceSpin
     );
   }
 
-  if (size === "small") return dice;
+  if (size === "small" && sx === undefined) return dice;
 
   return (
     <Stack
