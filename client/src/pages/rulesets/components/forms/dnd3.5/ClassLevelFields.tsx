@@ -2,7 +2,13 @@ import { Autocomplete, Box, TextField } from "@mui/material";
 import { useMemo, useState } from "react";
 import { useController } from "react-hook-form";
 
-import { LoadError, ScrollSafeListbox, useReadOnlyFields, ValueChip } from "@/client/src/components/common/index.ts";
+import {
+  EMPTY_VALUE_TEXT,
+  LoadError,
+  ScrollSafeListbox,
+  useReadOnlyFields,
+  ValueChip,
+} from "@/client/src/components/common/index.ts";
 import { useDebouncedValue } from "@/client/src/hooks/index.ts";
 import { emptyOptionsText } from "@/client/src/lib/errorMessage.ts";
 import { readNumberInput } from "@/client/src/lib/validation.ts";
@@ -114,7 +120,11 @@ export function ClassLevelFields({ form, rulesetId, rulesetSaves, savesError, fe
               onChange={(e) => setBase(save.id, readNumberInput(e.target.value) ?? 0)}
               error={savesInvalid && saveBaseError(baseFor(save.id)) !== undefined}
               helperText={savesInvalid && saveBaseError(baseFor(save.id))}
-              slotProps={{ htmlInput: { min: 0, max: MAX_SAVE_BASE }, input: { readOnly } }}
+              slotProps={{
+                htmlInput: { min: 0, max: MAX_SAVE_BASE },
+                input: { readOnly },
+                inputLabel: readOnly ? { shrink: true } : undefined,
+              }}
             />
           ))}
         </Box>
@@ -139,7 +149,17 @@ export function ClassLevelFields({ form, rulesetId, rulesetSaves, savesError, fe
         noOptionsText={emptyOptionsText("Feats", featsError)}
         slotProps={{ listbox: { component: ScrollSafeListbox, onScroll } }}
         renderInput={(params) => (
-          <TextField {...params} label="Feats" placeholder="Select feats with aptitudes granted at this level" />
+          <TextField
+            {...params}
+            label="Feats"
+            // Read-only, "—" for none
+            placeholder={
+              readOnly
+                ? (selectedFeats.length === 0 && EMPTY_VALUE_TEXT) || undefined
+                : "Select feats with aptitudes granted at this level"
+            }
+            slotProps={readOnly ? { ...params.slotProps, inputLabel: { shrink: true } } : params.slotProps}
+          />
         )}
         renderValue={(value, getItemProps) =>
           value.map((option, index) => (

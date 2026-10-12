@@ -10,16 +10,21 @@ interface ReadOnlyFieldsProps {
 }
 
 /**
- * Fields a viewer reads, as values on display, never inputs: each in its place under its label, with no outline in any
- * state, nothing to open, remove or type into, and its value at full contrast; a switch or a checkbox shows its state,
+ * Fields a viewer reads, as values on display, never inputs: each in its place, its label above its value, as tall as
+ * they are (a multiline one too: its form gives it its text's rows), with no outline in any state, nothing to open,
+ * remove or type into, and its value at full contrast, "—" muted for none; a switch or a checkbox shows its state,
  * muted, and answers no pointer.
  */
 const READ_ONLY_FIELDS_SX = {
   "& .MuiOutlinedInput-notchedOutline": { borderStyle: "none" },
-  // Each label above its value, as a filled field's, an empty one's too: its value is none, never the label
-  "& .MuiInputLabel-outlined": { transform: "translate(14px, -9px) scale(0.75)", maxWidth: "calc(133% - 32px)" },
+  "& .MuiInputLabel-root": { position: "static", transform: "none", maxWidth: "100%", px: 1.75, fontSize: "0.75rem" },
   "& .MuiInputLabel-root.Mui-focused": { color: "text.secondary" },
-  "& .MuiInputBase-input::placeholder": { opacity: 0 },
+  "& .MuiOutlinedInput-input, & .MuiInputBase-multiline": { py: 0 },
+  "& .MuiAutocomplete-root .MuiAutocomplete-inputRoot": { py: 0 },
+  "& .MuiAutocomplete-root .MuiAutocomplete-inputRoot .MuiAutocomplete-input": { py: 0 },
+  // Beside its chips, a list holds nothing more to type
+  "& .MuiChip-root ~ .MuiAutocomplete-input": { display: "none" },
+  "& .MuiInputBase-input::placeholder": { opacity: 1, color: "text.secondary" },
   "& .MuiSelect-icon, & .MuiAutocomplete-popupIndicator, & .MuiAutocomplete-clearIndicator, & .MuiChip-deleteIcon": {
     display: "none",
   },

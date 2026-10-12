@@ -5,6 +5,8 @@ import { type FieldPath, type FieldValues, useController, type UseFormReturn, us
 
 import {
   DiceSpinner,
+  EMPTY_VALUE_TEXT,
+  EmptyValue,
   FormTextField,
   LoadError,
   SelectField,
@@ -82,6 +84,12 @@ type ValuesField = Extract<EntityField, { input: "choice" | "text" }>;
 
 /** A grid of fields: a column, 24px between its rows. */
 const FIELDS_GRID_SX = { display: "grid", gridTemplateColumns: "1fr", columnGap: 2, rowGap: 3 };
+
+/** A three-state flag's values, as its select names them; none is "None". */
+const FLAG_CHOICES = [
+  { value: "true", label: "Yes" },
+  { value: "false", label: "No" },
+] as const;
 
 /** The lists of a ruleset a reference picks from, by the kind of entity it names. */
 const REFERENCE_LISTS = ["abilities", "saves"] as const;
@@ -198,7 +206,10 @@ function FlagField<T extends FieldValues>({ field, form, help }: FieldInputProps
   );
 }
 
-/** A yes or no, or none: a three-state flag's select, which holds `true`, `false` or null. */
+/**
+ * A yes or no, or none: a three-state flag's select, which holds `true`, `false` or null. Read-only, its label above its
+ * value, "—" for none.
+ */
 function FlagSelect({ field, help, inputRef, onChange, readOnly, value }: FlagSelectProps) {
   return (
     <TextField
@@ -209,11 +220,24 @@ function FlagSelect({ field, help, inputRef, onChange, readOnly, value }: FlagSe
       value={value === true ? "true" : value === false ? "false" : ""}
       onChange={(event) => onChange(event.target.value === "" ? null : event.target.value === "true")}
       helperText={help ? field.help : undefined}
-      slotProps={{ input: { readOnly } }}
+      slotProps={{
+        input: { readOnly },
+        inputLabel: readOnly ? { shrink: true } : undefined,
+        select: readOnly
+          ? {
+              displayEmpty: true,
+              renderValue: (shown: unknown) =>
+                FLAG_CHOICES.find((choice) => choice.value === shown)?.label ?? <EmptyValue />,
+            }
+          : undefined,
+      }}
     >
       <MenuItem value="">None</MenuItem>
-      <MenuItem value="true">Yes</MenuItem>
-      <MenuItem value="false">No</MenuItem>
+      {FLAG_CHOICES.map((choice) => (
+        <MenuItem key={choice.value} value={choice.value}>
+          {choice.label}
+        </MenuItem>
+      ))}
     </TextField>
   );
 }
@@ -265,6 +289,10 @@ function ValuesInput<T extends FieldValues>({ field, form, help }: FieldInputPro
   } = useController({ control: form.control, name });
   const saved = valueAt(form.formState.defaultValues, name);
   const values: string[] = Array.isArray(value) ? value : [];
+  // Read-only, "—" for none, nothing beside its chips; an example of a free one otherwise
+  const placeholder = readOnly
+    ? (values.length === 0 && EMPTY_VALUE_TEXT) || undefined
+    : (field.input === "text" && field.placeholder) || undefined;
   return (
     <Autocomplete
       {...bound}
@@ -286,7 +314,8 @@ function ValuesInput<T extends FieldValues>({ field, form, help }: FieldInputPro
           inputRef={ref}
           label={field.label}
           helperText={help ? field.help : undefined}
-          placeholder={field.input === "text" ? field.placeholder : undefined}
+          placeholder={placeholder}
+          slotProps={readOnly ? { ...params.slotProps, inputLabel: { shrink: true } } : params.slotProps}
         />
       )}
     />

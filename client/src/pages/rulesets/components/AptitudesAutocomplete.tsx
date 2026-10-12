@@ -2,7 +2,7 @@ import { Autocomplete, TextField } from "@mui/material";
 import { type Ref } from "react";
 import type { FieldError } from "react-hook-form";
 
-import { useReadOnlyFields, ValueChip } from "@/client/src/components/common/index.ts";
+import { EMPTY_VALUE_TEXT, useReadOnlyFields, ValueChip } from "@/client/src/components/common/index.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import type { Aptitude } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import type { AptitudeScope } from "@/client/src/pages/rulesets/optionQueries.ts";
@@ -79,7 +79,16 @@ export function AptitudesAutocomplete({ rulesetId, value, onChange, inputRef, er
         })
       }
       renderInput={(params) => (
-        <TextField {...params} inputRef={inputRef} label="Aptitudes" error={!!error} helperText={error?.message} />
+        <TextField
+          {...params}
+          inputRef={inputRef}
+          label="Aptitudes"
+          error={!!error}
+          helperText={error?.message}
+          // Read-only, "—" for none
+          placeholder={(readOnly && value.length === 0 && EMPTY_VALUE_TEXT) || undefined}
+          slotProps={readOnly ? { ...params.slotProps, inputLabel: { shrink: true } } : params.slotProps}
+        />
       )}
     />
   );

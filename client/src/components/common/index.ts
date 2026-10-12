@@ -10,7 +10,7 @@ export { CLICKABLE_ROW_SX, CLICKABLE_SX, clickableProps, toggleProps } from "./c
 export { DetailPageHeader } from "./DetailPageHeader.tsx";
 export { DialogFooter } from "./DialogFooter.tsx";
 export { DiceSpinner } from "./DiceSpinner.tsx";
-export { EmptyValue, NO_DESCRIPTION } from "./EmptyValue.tsx";
+export { EMPTY_VALUE_TEXT, EmptyValue, NO_DESCRIPTION } from "./EmptyValue.tsx";
 export { ExpandArrow } from "./ExpandArrow.tsx";
 export { FormDialog } from "./FormDialog.tsx";
 export {

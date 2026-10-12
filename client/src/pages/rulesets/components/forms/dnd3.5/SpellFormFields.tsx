@@ -3,6 +3,7 @@ import { useController, type UseFormReturn } from "react-hook-form";
 
 import {
   DescriptionField,
+  EMPTY_VALUE_TEXT,
   FormTextField,
   NameField,
   SelectField,
@@ -102,7 +103,13 @@ export function SpellFormFields({
                 label="Level"
                 type="number"
                 size="small"
-                slotProps={{ htmlInput: { min: 0, max: MAX_SPELL_LEVEL }, input: { readOnly } }}
+                // Read-only, "—" for none
+                placeholder={readOnly ? EMPTY_VALUE_TEXT : undefined}
+                slotProps={{
+                  htmlInput: { min: 0, max: MAX_SPELL_LEVEL },
+                  input: { readOnly },
+                  inputLabel: readOnly ? { shrink: true } : undefined,
+                }}
                 value={levelOf(apt.id) ?? ""}
                 error={levelsInvalid && spellLevelError(levelOf(apt.id)) !== undefined}
                 helperText={levelsInvalid && spellLevelError(levelOf(apt.id))}

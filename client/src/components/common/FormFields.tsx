@@ -19,6 +19,7 @@ import {
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { EMAIL_RULES, NAME_RULES, OPTIONAL_EMAIL_RULES } from "@/client/src/lib/validation.ts";
 
+import { EMPTY_VALUE_TEXT, EmptyValue } from "./EmptyValue.tsx";
 import { useReadOnlyFields } from "./useReadOnlyFields.ts";
 
 /** A field of a form: its control, its name, and the rules its value is validated by. */
@@ -141,8 +142,8 @@ export function EmailField<T extends FieldValues>({ optional = false, ...field }
 }
 
 /**
- * A text field bound to a form's field: the form holds its value, and its error shows under it; read-only under
- * `ReadOnlyFields`.
+ * A text field bound to a form's field: the form holds its value, and its error shows under it. Under `ReadOnlyFields`
+ * it's read-only, its label above its value, "—" when it holds none, and a multiline one as tall as its text.
  */
 export function FormTextField<T extends FieldValues>({
   control,
@@ -162,7 +163,17 @@ export function FormTextField<T extends FieldValues>({
     <TextField
       {...props}
       {...field}
-      slotProps={readOnly ? { ...slotProps, input: { ...slotProps?.input, readOnly } } : slotProps}
+      slotProps={
+        readOnly
+          ? {
+              ...slotProps,
+              input: { ...slotProps?.input, readOnly },
+              inputLabel: { ...slotProps?.inputLabel, shrink: true },
+            }
+          : slotProps
+      }
+      placeholder={readOnly ? EMPTY_VALUE_TEXT : props.placeholder}
+      minRows={readOnly ? undefined : props.minRows}
       // A number field is one: a select of numbers keeps its own
       type={number && !props.select ? "number" : props.type}
       // On the input, so a failed submit focuses it
@@ -199,7 +210,7 @@ export function PasswordField<T extends FieldValues>({ label, autoComplete, ...f
 
 /**
  * A labeled select bound to a form field; a value missing from the options (not loaded yet) shows empty. Read-only, its
- * menu closed, when it's `readOnly` or under `ReadOnlyFields`.
+ * menu closed, when it's `readOnly` or under `ReadOnlyFields`, which shows its label above its value, "—" for none.
  */
 export function SelectField<T extends FieldValues>({
   control,
@@ -243,8 +254,16 @@ export function SelectField<T extends FieldValues>({
           size={size}
           slotProps={{
             input: { readOnly },
-            select: onMenuScroll && {
-              MenuProps: { slotProps: { paper: { sx: { maxHeight: 300 }, onScroll: onMenuScroll } } },
+            inputLabel: formReadOnly ? { shrink: true } : undefined,
+            select: {
+              ...(onMenuScroll && {
+                MenuProps: { slotProps: { paper: { sx: { maxHeight: 300 }, onScroll: onMenuScroll } } },
+              }),
+              ...(formReadOnly && {
+                displayEmpty: true,
+                renderValue: (value: unknown) =>
+                  choices.find((choice) => choice.value === value)?.label ?? <EmptyValue />,
+              }),
             },
           }}
         >
