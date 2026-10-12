@@ -50,8 +50,9 @@
  *   tabs, in a `SectionTabPanel`.
  * - `page-titles`: a page's title (its `h1`) is its header's: `PageHeader`, `DetailPageHeader`, or the header of a page
  *   that opens on its own (the dashboard, the auth pages, an invite).
- * - `list-toolbars`: a list's actions sit in its `ListToolbar` (`SearchBar` is one), never a bare row; the list sits
- *   24px under it (`spacing={3}`), and its Load More 16px under the list (`spacing={2}`).
+ * - `list-toolbars`: a list's actions sit in its `ListToolbar` (`SearchBar` is one), or in a dialog across from its lead
+ *   (`DialogLead`), never a bare row; the list sits 24px under it (`spacing={3}`), and its Load More 16px under the
+ *   list (`spacing={2}`).
  * - `list-results`: a searched list's results, a page's or a tab's, show one way: `ListPageResults` (a tab's
  *   `variant="section"`), or a ruleset tab's `RulesetSectionTable`, each with its first load, its failure, the search
  *   that found nothing (`NoMatchesState`) and its empty state. No other module draws a `NoMatchesState`. A ruleset
@@ -110,8 +111,8 @@ const LIST_RESULTS_OWNERS = new Set([
   "client/src/pages/rulesets/components/RulesetSectionTable.tsx",
 ]);
 
-/** The bars above a list: its toolbar, or its search's */
-const LIST_TOOLBARS = new Set(["ListToolbar", "SearchBar"]);
+/** What sits above a list and holds its actions: its toolbar, its search's, or in a dialog its lead */
+const LIST_TOOLBARS = new Set(["DialogLead", "ListToolbar", "SearchBar"]);
 
 /** The words a missing description is said in, which `NO_DESCRIPTION` holds */
 const NO_DESCRIPTION_WORDS = /^No description\b/;
@@ -604,6 +605,14 @@ function createListToolbars(context) {
   if (!inClient(context)) return {};
   return {
     JSXElement(node) {
+      if (elementName(node) === "ListToolbar" && inDialog(node)) {
+        context.report({
+          node: node.openingElement,
+          message:
+            "A dialog holds one list: its actions sit across from its lead, `DialogLead`'s `actions`, never in a " +
+            "`ListToolbar`, a page's bar.",
+        });
+      }
       if (elementName(node) !== "Stack") return;
       const children = childElements(node).map(elementName);
       const spacing = attributeValue(attribute(node, "spacing"));
@@ -612,7 +621,8 @@ function createListToolbars(context) {
         context.report({
           node: node.openingElement,
           message:
-            "A list sits 24px under its toolbar: the column holding a `ListToolbar` (`SearchBar`) takes `spacing={3}`.",
+            "A list sits 24px under its toolbar: the column holding a `ListToolbar` (`SearchBar`, `DialogLead`) takes " +
+            "`spacing={3}`.",
         });
       }
       if (children.includes("LoadMoreButton") && !spaced(2)) {
@@ -631,7 +641,9 @@ function createListToolbars(context) {
       if (!isRow(node) || !endAligned || !children.some((child) => LIST_ACTIONS.has(child))) return;
       context.report({
         node: node.openingElement,
-        message: "A list's actions sit in its toolbar, a `ListToolbar`'s `actions`: never a bare row of their own.",
+        message:
+          "A list's actions sit in its toolbar, a `ListToolbar`'s `actions` (in a dialog, `DialogLead`'s): never a bare " +
+          "row of their own.",
       });
     },
   };
@@ -1100,6 +1112,12 @@ function inConfirmation(node) {
     if (p.type === "JSXAttribute" && p.name.name === "message") return true;
     if (p.type === "JSXElement" && ["ConfirmDialog", "DeleteDialog"].includes(elementName(p))) return true;
   }
+  return false;
+}
+
+/** Whether `node` sits in a dialog's content, a `DialogContent`. */
+function inDialog(node) {
+  for (let p = parentElement(node); p; p = parentElement(p)) if (elementName(p) === "DialogContent") return true;
   return false;
 }
 

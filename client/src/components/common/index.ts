@@ -9,6 +9,7 @@ export { ChoiceChip, CountChip, PickChip, RoleChip, StatusChip, ValueChip } from
 export { CLICKABLE_ROW_SX, CLICKABLE_SX, clickableProps, toggleProps } from "./clickable.ts";
 export { DetailPageHeader } from "./DetailPageHeader.tsx";
 export { DialogFooter } from "./DialogFooter.tsx";
+export { DialogLead } from "./DialogLead.tsx";
 export { DiceSpinner } from "./DiceSpinner.tsx";
 export { EMPTY_VALUE_TEXT, EmptyValue, NO_DESCRIPTION } from "./EmptyValue.tsx";
 export { ExpandArrow } from "./ExpandArrow.tsx";

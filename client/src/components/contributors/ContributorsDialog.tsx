@@ -1,12 +1,12 @@
-import { Button, DialogContent, DialogContentText, DialogTitle, Stack } from "@mui/material";
+import { Button, DialogContent, DialogTitle, Stack } from "@mui/material";
 import type { ReactNode } from "react";
 
 import {
   AddButton,
   BlankNote,
   DialogFooter,
+  DialogLead,
   DiceSpinner,
-  ListToolbar,
   LoadError,
   LoadMoreButton,
   Modal,
@@ -112,10 +112,9 @@ export function ContributorsDialog({
         <DialogTitle>Contributors</DialogTitle>
         <DialogContent dividers>
           <Stack spacing={3}>
-            <DialogContentText>{lead}</DialogContentText>
-            {(canLeave || canInvite) && (
-              <ListToolbar
-                actions={
+            <DialogLead
+              actions={
+                (canLeave || canInvite) && (
                   <>
                     {canLeave && (
                       <Button
@@ -130,9 +129,11 @@ export function ContributorsDialog({
                     )}
                     {canInvite && <AddButton label="Invite" onClick={contributors.openInvite} />}
                   </>
-                }
-              />
-            )}
+                )
+              }
+            >
+              {lead}
+            </DialogLead>
             <Stack sx={{ minHeight: { xs: 280, sm: 360 } }}>{renderList()}</Stack>
           </Stack>
         </DialogContent>

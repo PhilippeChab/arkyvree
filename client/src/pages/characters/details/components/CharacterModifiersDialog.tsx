@@ -1,14 +1,4 @@
-import {
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
-  Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-} from "@mui/material";
+import { DialogContent, DialogTitle, Stack, Table, TableBody, TableCell, TableHead, TableRow } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { type InferResponseType, parseResponse } from "hono/client";
 import { useState } from "react";
@@ -19,10 +9,10 @@ import {
   CreateDialog,
   DeleteDialog,
   DialogFooter,
+  DialogLead,
   DiceSpinner,
   EditDialog,
   HelpLabel,
-  ListToolbar,
   LoadError,
   Modal,
   ROW_ACTIONS_HOVER_SX,
@@ -167,8 +157,9 @@ export function CharacterModifiersDialog({ open, onClose, characterId, rulesetId
         </DialogTitle>
         <DialogContent sx={{ overflowY: "auto", scrollbarGutter: "stable" }}>
           <Stack spacing={3}>
-            <DialogContentText>Custom bonuses and overrides of this character's own.</DialogContentText>
-            <ListToolbar actions={<AddButton label="Add Modifier" onClick={handleAdd} />} />
+            <DialogLead actions={<AddButton label="Add Modifier" onClick={handleAdd} />}>
+              Custom bonuses and overrides of this character's own.
+            </DialogLead>
             {isLoading ? (
               <DiceSpinner sx={{ py: 4 }} />
             ) : error && modifiers.length === 0 ? (
