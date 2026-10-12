@@ -1,15 +1,28 @@
 # Changelog
 
-## Unreleased
+## 0.6.0 — 2026-10-12
 
-- Characters list: the most recently updated character comes first
-- D&D 3.5 sheets and PDFs: a Spells per Day table opens the spells section, with domain and specialist slots shown as "+1"
-- D&D 3.5 sheets and PDFs show AC for each weapon set
-- D&D 3.5 sheets and PDFs show each ranged attack's maximum range and its -2 per range increment
-- D&D 3.5 characters speak the languages their race and classes grant, and pick others by Intelligence and Speak Language
-- Creating a character starts on your own ruleset when you have one
-- Edit an entity's rules data (a spell's school, a weapon's damage, a class's caster type) as fields of its own form
-- A ruleset's Settings tab, to pick the ability skill points come from
+- Character sheet: classes are listed under the name, with a button to add a level
+- Rules data (a spell's school, a weapon's damage) is edited in the entity's own form
+- A Settings tab for rulesets
+- Classes have their own Modifiers and Requirements tabs
+- Game Masters can download their campaign's character PDFs
+- Private notes on the character sheet
+- Carry the same item in several places
+- The characters list shows the most recently updated first
+- New characters start on your own ruleset
+- D&D 3.5: a Spells per Day table on the sheet and the PDF
+- D&D 3.5: AC for each weapon set on the sheet and the PDF
+- D&D 3.5: ranged attacks show their maximum range and range penalty
+- D&D 3.5: languages from race and classes, and extra ones from Intelligence and Speak Language
+- D&D 3.5: more accurate attacks (thrown and double weapons, composite bows, weapon size, non-proficiency)
+- D&D 3.5: more accurate AC and speed (flat-footed, uncanny dodge, monk AC, fast movement)
+- D&D 3.5: Martial Weapon Proficiency picked per weapon, and racial weapon proficiencies
+- D&D 3.5: more accurate familiars
+- D&D 3.5: correct domain and specialist school spell slots
+- D&D 3.5: prestige classes that use other classes' spell lists get their spells
+- D&D 3.5: more accurate feat and prestige class prerequisites
+- D&D 3.5: full spell descriptions and stat blocks
 
 ## 0.5.0 — 2026-05-21
 
