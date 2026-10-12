@@ -125,6 +125,9 @@ test.describe("Character inventory", () => {
     await page.getByRole("option", { name: "Set 2" }).click();
     await expect(addItem).toBeEnabled();
     await page.getByRole("option", { name: "Set 3" }).click();
+    // The picker's list stays open over the dialog's footer: close it first
+    await sets.press("Escape");
+    await expect(page.getByRole("listbox")).toBeHidden();
     await save(dialog, /^Add Item$/);
     await expect(daggers.filter({ hasText: "Two Handed (Sets 2, 3)" })).toHaveCount(1);
   });
