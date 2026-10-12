@@ -1,5 +1,8 @@
 import { describe, expect, test } from "bun:test";
 
+import { eq } from "drizzle-orm";
+
+import { usersInAccount } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
 import { Activities, Campaigns, Invites, Players } from "@/server/repositories/index.ts";
@@ -65,6 +68,25 @@ describe("CampaignPlayersService", () => {
 
       await CampaignPlayersService.updatePlayer(session, campaign.id, slot.id, "Game Master");
       expect(await lastGameMasters()).toEqual([]);
+    });
+
+    test("a slot whose user deleted their account has no Joined date, and isn't the last Game Master", async () => {
+      const { session, campaign, gmPlayer } = await setup();
+      const { player: slot } = await CampaignPlayersService.addPlayer(session, campaign.id, "Game Master");
+      const { user: invitee, session: inviteeSession } = await createTestUser("invitee");
+      const invite = await inviteToSlot(session, slot, invitee.emailAddress);
+      await CampaignInvitesService.acceptInvite(inviteeSession, invite.id);
+      // As deleting an account does: its slots archived, then its user gone
+      await Players.archive(db, { userId: invitee.id });
+      await db.delete(usersInAccount).where(eq(usersInAccount.id, invitee.id));
+
+      const players = (await CampaignPlayersService.getPlayers(session, campaign.id, {}, firstPage)).items;
+      expect(players.find((player) => player.id === slot.id)).toMatchObject({
+        userId: null,
+        joinedAt: null,
+        isLastGameMaster: false,
+      });
+      expect(players.filter((player) => player.isLastGameMaster).map((player) => player.id)).toEqual([gmPlayer.id]);
     });
 
     test("refuses non-members and throws NotFoundError for a missing campaign", async () => {

@@ -301,7 +301,7 @@ export function SwitchField<T extends FieldValues>({
 
 /**
  * A text of several lines (a description, notes): as tall as its `rows` to start, taller as it's written, and resizable
- * by its corner, down the page. Under `ReadOnlyFields` it's as tall as its text, and doesn't resize.
+ * by its corner, down the page. Under `ReadOnlyFields` it's as tall as its text.
  */
 export function TextAreaField<T extends FieldValues>({ rows = 3, ...field }: TextAreaFieldProps<T>) {
   return <FormTextField {...field} fullWidth multiline minRows={rows} sx={{ "& textarea": { resize: "vertical" } }} />;

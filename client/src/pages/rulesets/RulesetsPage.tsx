@@ -45,7 +45,7 @@ const SCOPE_LABELS = {
   archived: "Archived",
 } as const;
 
-const SCOPES = Object.keys(SCOPE_LABELS).filter((scope): scope is keyof typeof SCOPE_LABELS => scope in SCOPE_LABELS);
+const SCOPES = Object.keys(SCOPE_LABELS) as (keyof typeof SCOPE_LABELS)[];
 
 const RULESET_FILTER_OPTIONS: FilterOption<FilterScope>[] = [
   { value: undefined, label: "All" },

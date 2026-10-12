@@ -77,7 +77,6 @@ export function EquipmentSection({ baseRules, characterId, rulesetId, readOnly, 
   // The inventory the dialogs check a slot against
   const {
     data: inventory,
-    isLoading: isLoadingInventory,
     error: inventoryError,
     refetch: refetchInventory,
   } = useQuery(characterInventoryQuery(characterId));
@@ -281,8 +280,9 @@ export function EquipmentSection({ baseRules, characterId, rulesetId, readOnly, 
       <Stack spacing={2}>
         {/* Whether Create Item shows: the ruleset's rights */}
         {!readOnly && !!rulesetError && !ruleset && <LoadError what="Ruleset" error={rulesetError} />}
-        {isLoadingInventory && <DiceSpinner sx={{ py: 4 }} />}
-        {!isLoadingInventory && !inventory && (
+        {/* Loading, or waiting for the connection (offline, the query pauses): only a failure says so */}
+        {!inventory && !inventoryError && <DiceSpinner sx={{ py: 4 }} />}
+        {!inventory && !!inventoryError && (
           <LoadError what="Inventory" error={inventoryError} onRetry={() => void refetchInventory()} />
         )}
         {inventory && hasItems && (

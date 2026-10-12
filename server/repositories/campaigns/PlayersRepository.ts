@@ -12,6 +12,7 @@ import { Searches } from "@/server/repositories/concerns/Searches.ts";
 interface SlotColumns {
   campaignId: SQLWrapper;
   createdAt: SQLWrapper;
+  deletedAt: SQLWrapper;
   id: SQLWrapper;
   role: SQLWrapper;
   userId: SQLWrapper;
@@ -27,21 +28,24 @@ function aliasedColumn(alias: string, column: PgColumn) {
 
 /**
  * When a slot's user joined: its accepted invite's answer, or the slot's creation for one made with its user (a
- * campaign's first Game Master); none while it has no user.
+ * campaign's first Game Master); none while it has no user (an empty slot, or one whose user deleted their account).
  */
 function joinedAt(slot: SlotColumns) {
   const invite = (column: PgColumn) => aliasedColumn("accepted", column);
-  return sql<string | null>`coalesce(
+  return sql<string | null>`case when ${slot.userId} is not null then coalesce(
     (select max(${invite(invitesInCampaign.updatedAt)}) from ${invitesInCampaign} as ${sql.identifier("accepted")}
       where ${invite(invitesInCampaign.playerId)} = ${slot.id} and ${invite(invitesInCampaign.status)} = 'Accepted'),
-    case when ${slot.userId} is not null then ${slot.createdAt} end
-  )`;
+    ${slot.createdAt}
+  ) end`;
 }
 
-/** Whether a slot is its campaign's only Game Master, whom the server neither removes nor demotes. */
+/**
+ * Whether a slot is its campaign's only live Game Master, whom the server neither removes nor demotes: an archived one
+ * (its user's account deleted) never is.
+ */
 function lastGameMaster(slot: SlotColumns) {
   const master = (column: PgColumn) => aliasedColumn("masters", column);
-  return sql<boolean>`${slot.role} = 'Game Master' and (
+  return sql<boolean>`${slot.role} = 'Game Master' and ${slot.deletedAt} is null and (
     select count(*) from ${playersInCampaign} as ${sql.identifier("masters")}
       where ${master(playersInCampaign.campaignId)} = ${slot.campaignId}
         and ${master(playersInCampaign.role)} = 'Game Master' and ${master(playersInCampaign.deletedAt)} is null
