@@ -1,6 +1,9 @@
 import type { InferRequestType, InferResponseType } from "hono/client";
+import type { ElementType } from "react";
 
+import { CharacterIcon, GMIcon } from "@/client/src/components/icons/index.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
+import type { CampaignRole } from "@/shared/enums.ts";
 
 type PendingInvite = NonNullable<CampaignPlayer["invitesInCampaigns"]>[number];
 
@@ -22,11 +25,15 @@ export type PlayerSlot =
 
 export type PlayerState = PlayerSlot["state"];
 
-/** The slot's latest invite, while it is still pending. */
+/** Each role's icon, wherever a role shows: a player's chip, the role's choice in its dialogs. */
+export const ROLE_ICONS = {
+  "Game Master": GMIcon,
+  "Player Character": CharacterIcon,
+} as const satisfies Record<CampaignRole, ElementType>;
+
+/** The slot's pending invite: the API lists its latest pending one alone. */
 function pendingInviteOf(player: CampaignPlayer): PendingInvite | undefined {
-  // The API lists the latest invite first.
-  const invite = player.invitesInCampaigns?.[0];
-  return invite?.status === "Pending" ? invite : undefined;
+  return player.invitesInCampaigns?.[0];
 }
 
 /** Where a player slot stands, and its name: its user's, its invitee's, else what it is ("Unassigned Player Slot"). */
@@ -46,18 +53,21 @@ export function getPlayerSlot(player: CampaignPlayer): PlayerSlot {
   return { state: "unassigned", name: "Unassigned Player Slot" };
 }
 
-/** The name and email lines of a slot in the players list: the slot's one name, and its email when the name isn't it. */
+/**
+ * The two lines of a slot in the players list: the slot's one name, and under it its email when the name isn't it, or
+ * what an empty slot is ("No player assigned").
+ */
 export function playerDisplay(
   player: CampaignPlayer,
   slot = getPlayerSlot(player),
-): { email: string | null | undefined; name: string } {
-  const email =
+): { caption: string | null | undefined; name: string } {
+  const caption =
     slot.state === "assigned"
       ? player.usersInAccount?.emailAddress
       : slot.state === "pending"
         ? (slot.pendingInvite.usersInAccount?.emailAddress ?? slot.pendingInvite.email)
         : "No player assigned";
-  return { name: slot.name, email: email === slot.name ? undefined : email };
+  return { name: slot.name, caption: caption === slot.name ? undefined : caption };
 }
 
 /** The request body for a player form: an empty email field means no invite. */

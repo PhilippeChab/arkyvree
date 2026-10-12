@@ -1,6 +1,7 @@
 import { Stack, Typography } from "@mui/material";
 
 import { StatusChip } from "@/client/src/components/common/index.ts";
+import { formatWeight } from "@/client/src/lib/formatNumeric.ts";
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
 import { capitalize } from "@/shared/text.ts";
 
@@ -25,16 +26,16 @@ export function Encumbrance({ encumbrance }: EncumbranceProps) {
       }}
     >
       <Typography variant="body2" sx={{ fontWeight: 500, color: "text.secondary" }}>
-        Carried Weight: {encumbrance.carriedweight ?? 0} lbs
+        Carried Weight: {formatWeight(encumbrance.carriedweight ?? 0)}
       </Typography>
       <Typography variant="body2" sx={{ color: "text.secondary" }}>
-        Light: {encumbrance.lightload ?? 0}
+        Light: {formatWeight(encumbrance.lightload ?? 0)}
       </Typography>
       <Typography variant="body2" sx={{ color: "text.secondary" }}>
-        Medium: {encumbrance.mediumload ?? 0}
+        Medium: {formatWeight(encumbrance.mediumload ?? 0)}
       </Typography>
       <Typography variant="body2" sx={{ color: "text.secondary" }}>
-        Heavy: {encumbrance.heavyload ?? 0}
+        Heavy: {formatWeight(encumbrance.heavyload ?? 0)}
       </Typography>
       {encumbrance.load && encumbrance.load !== "light" && (
         <StatusChip

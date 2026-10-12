@@ -1,7 +1,7 @@
 import { Box, MenuItem, Stack, TextField } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { LoadMoreButton, SearchBar } from "@/client/src/components/common/index.ts";
+import { BlankState, LoadMoreButton, SearchBar } from "@/client/src/components/common/index.ts";
 import { PowersIcon } from "@/client/src/components/icons/index.ts";
 import { useSearchParam, useSearchText } from "@/client/src/hooks/index.ts";
 import { itemsBeforeLastPage, pageItems } from "@/client/src/lib/pageItems.ts";
@@ -57,7 +57,7 @@ export function ClassSpellListSection({ rulesetId, classId, ruleset }: ClassSect
     openEntity(buildCustomizationPath("powers", spell.id));
   };
 
-  const handleRowMouseEnter = (spell: Power) => {
+  const handleRowPrefetch = (spell: Power) => {
     void queryClient.prefetchQuery(customizationEntityQuery(rulesetId, "powers", spell.id));
   };
 
@@ -112,14 +112,18 @@ export function ClassSpellListSection({ rulesetId, classId, ruleset }: ClassSect
           isLoading={isLoadingLists || isLoading}
           columns={COLUMNS}
           onRowClick={handleRowClick}
-          onRowMouseEnter={handleRowMouseEnter}
+          onRowPrefetch={handleRowPrefetch}
           renderCell={renderCell}
-          emptyIcon={PowersIcon}
-          emptyTitle="No spells"
-          emptyDescription={
-            lists.length === 0 && !isLoadingLists
-              ? "This class has no spell list of its own."
-              : "No spells found for this class at the selected level."
+          empty={
+            <BlankState
+              icon={PowersIcon}
+              title="No spells"
+              description={
+                lists.length === 0 && !isLoadingLists
+                  ? "This class has no spell list of its own."
+                  : "No spells found for this class at the selected level."
+              }
+            />
           }
         />
 

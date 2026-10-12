@@ -14,7 +14,7 @@ interface DirtyFormsState {
  * and the `beforeunload` handler in main.tsx uses the same to gate
  * the native "leave site?" prompt.
  *
- * `useStore.getState()` is read synchronously inside event handlers
+ * `useDirtyFormsStore.getState()` is read synchronously inside event handlers
  * (no React subscription) so it doesn't trigger re-renders.
  */
 export const useDirtyFormsStore = create<DirtyFormsState>((set) => ({

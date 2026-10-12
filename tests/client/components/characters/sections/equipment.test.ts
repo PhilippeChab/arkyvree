@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import {
+  pickedLocation,
   placementPayload,
   type PlacementProfile,
   weaponSetChoices,
@@ -50,5 +51,30 @@ describe("The weapon sets a held item is offered", () => {
     expect(weaponSetChoices(entries, [1])).toEqual([1, 3, 4]);
     expect(weaponSetChoices(entries, [5])).toEqual([1, 3, 5, 6]);
     expect(weaponSetChoices([], [])).toEqual([1]);
+  });
+});
+
+describe("A picked item's location", () => {
+  const hands: PlacementProfile = {
+    charges: null,
+    hand: true,
+    locations: [
+      { location: "Main Hand", weaponSet: true },
+      { location: "Off Hand", weaponSet: true },
+    ],
+    slot: null,
+  };
+
+  test("is the slot its placement sets", () => {
+    expect(pickedLocation("Main Hand", profile(null))).toBe("Neck");
+  });
+
+  test("drops an earlier pick's slot the item can't take", () => {
+    expect(pickedLocation("Torso", hands)).toBe("none");
+  });
+
+  test("keeps a location the item can take", () => {
+    expect(pickedLocation("Off Hand", hands)).toBe("Off Hand");
+    expect(pickedLocation("none", hands)).toBe("none");
   });
 });

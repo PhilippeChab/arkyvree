@@ -54,7 +54,7 @@ test.describe("Notifications", () => {
 
     await gm.goto("/notifications");
     const unreadRejections = gm
-      .locator("tr", { hasText: "declined your campaign invite" })
+      .locator("tr", { hasText: "rejected your campaign invite" })
       .getByRole("img", { name: "Unread" });
     await expect.poll(() => unreadRejections.count(), { timeout: 15_000 }).toBeGreaterThanOrEqual(2);
     const unread = await unreadCount(gm);

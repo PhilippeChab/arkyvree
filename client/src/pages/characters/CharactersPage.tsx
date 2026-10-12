@@ -30,6 +30,7 @@ import {
 import { oneOf } from "@/client/src/lib/oneOf.ts";
 import {
   CHARACTER_LIST_DEFAULTS,
+  CHARACTER_VIEWS,
   characterDetailQuery,
   type CharacterListFilters,
   characterListQuery,
@@ -59,7 +60,7 @@ export default function CharactersPage() {
     CHARACTER_LIST_DEFAULTS,
   );
 
-  const view = oneOf(searchParams.get("view"), ["active", "shared", "archived"], CHARACTER_LIST_DEFAULTS.view);
+  const view = oneOf(searchParams.get("view"), CHARACTER_VIEWS, CHARACTER_LIST_DEFAULTS.view);
 
   const characters = useListPageQuery(characterListQuery({ view, search, orderBy, orderDir }));
   const portraitsByCharacterId = useCharacterPortraits(characters.items);

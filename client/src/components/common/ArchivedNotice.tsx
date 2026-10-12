@@ -12,7 +12,7 @@ export function ArchivedNotice({ canUnarchive, what }: ArchivedNoticeProps) {
   return (
     <Alert severity="info">
       <Typography variant="body2">
-        <strong>This {what} is archived and read-only.</strong> You can view all content but cannot make changes.
+        <strong>This {what} is archived and read-only.</strong> You can view all content but cannot edit it.
         {canUnarchive && " Unarchive it from its menu to edit it again."}
       </Typography>
     </Alert>

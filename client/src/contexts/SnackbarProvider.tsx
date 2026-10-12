@@ -1,5 +1,5 @@
 import { Alert, type AlertColor, Button, Snackbar } from "@mui/material";
-import { type ReactNode, type SyntheticEvent, useCallback, useState } from "react";
+import { type ReactNode, type SyntheticEvent, useCallback, useMemo, useState } from "react";
 
 import { errorMessage } from "@/client/src/lib/errorMessage.ts";
 
@@ -34,6 +34,8 @@ export function SnackbarProvider({ children }: SnackbarProviderProps) {
   );
   const info = useCallback((message: string, options?: ToastOptions) => enqueue(message, "info", options), [enqueue]);
   const warning = useCallback((message: string) => enqueue(message, "warning"), [enqueue]);
+  // The context's value, the same while its toasts come and go: its every reader would re-render with each one
+  const snackbar = useMemo(() => ({ success, error, info, warning }), [success, error, info, warning]);
 
   const handleClose = (_event?: SyntheticEvent | Event, reason?: string) => {
     if (reason === "clickaway") return;
@@ -48,7 +50,7 @@ export function SnackbarProvider({ children }: SnackbarProviderProps) {
   const action = current?.action;
 
   return (
-    <SnackbarContext.Provider value={{ success, error, info, warning }}>
+    <SnackbarContext.Provider value={snackbar}>
       {children}
       <Snackbar
         open={open}

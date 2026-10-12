@@ -1,6 +1,10 @@
 import { describe, expect, test } from "bun:test";
 
-import { allLevelSaves, nextClassLevel } from "@/client/src/pages/rulesets/components/forms/dnd3.5/classLevelForm.ts";
+import {
+  allLevelSaves,
+  nextClassLevel,
+  sortLevelFeats,
+} from "@/client/src/pages/rulesets/components/forms/dnd3.5/classLevelForm.ts";
 import { EMPTY_CLASS_LEVEL } from "@/client/src/pages/rulesets/components/forms/dnd3.5/emptyForms.ts";
 
 const FORTITUDE = { saveId: "fortitude", base: 2 };
@@ -26,5 +30,17 @@ describe("a class level's form", () => {
       { saveId: "will", base: 0 },
     ]);
     expect(allLevelSaves(undefined, saves)).toBe(saves);
+  });
+});
+
+describe("a level's granted feats", () => {
+  test("are kept in their labels' order, whatever order they came in", () => {
+    const feats = [{ label: "Toughness (General)" }, { label: "Alertness (General)" }, { label: "Dodge (Fighter)" }];
+    expect(sortLevelFeats(feats, (feat) => feat.label).map((feat) => feat.label)).toEqual([
+      "Alertness (General)",
+      "Dodge (Fighter)",
+      "Toughness (General)",
+    ]);
+    expect(feats[0].label).toBe("Toughness (General)");
   });
 });

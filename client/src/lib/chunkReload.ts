@@ -1,4 +1,4 @@
-import { readChunkReloadTime, saveChunkReloadTime } from "@/client/src/stores/chunkReloadTime.ts";
+import { readChunkReloadTime, saveChunkReloadTime } from "@/client/src/stores/chunkReloadStorage.ts";
 
 const RELOAD_WINDOW_MS = 10_000;
 

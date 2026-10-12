@@ -170,6 +170,13 @@ describe("An activity", () => {
     expect(formatNotificationMessage("createFeat", { entityName: "Dodge" })).toBe("Someone created feat Dodge");
     expect(formatNotificationMessage("createFeat", {})).toBe("Someone created feat");
     expect(formatNotificationMessage("somethingNew", { actorName: "Ann" })).toBe("Ann: something new");
+    // A revoked contributor's names its ruleset; an older one's data has no name, and keeps the old words
+    expect(formatNotificationMessage("revokeContributor", { actorName: "Ann", rulesetName: "Homebrew" })).toBe(
+      "Ann revoked your access to Homebrew",
+    );
+    expect(formatNotificationMessage("revokeContributor", { actorName: "Ann" })).toBe(
+      "Ann revoked your contributor access",
+    );
     // An entity is named in its ruleset's word: a 3.5 power is a spell, another ruleset's a power
     expect([
       formatNotificationMessage("deletePower", { baseRules: "Dungeons & Dragons: 3.5", entityName: "Fireball" }),
@@ -184,13 +191,22 @@ describe("An activity", () => {
         changedFields: [
           { field: "name", from: "A", to: "B" },
           { field: "hd", to: "8" },
+          { field: "costGp", from: "15", to: "20" },
           { field: "slot", from: "Neck" },
           { field: "baseSpeed" },
+          {
+            field: "primaryAbilityId",
+            from: "7c0d4b52-0c0e-4b8e-9d7f-1f2a3b4c5d6e",
+            to: "00000000-0000-0000-0000-000000000000",
+          },
+          { field: "sourceItemId", to: "00000000-0000-0000-0000-000000000000" },
           { bad: true },
         ],
         level: 3,
       }),
-    ).toBe("Name: A → B\nHit Die set to 8\nSlot cleared\nBase Speed updated\nLevel 3");
+    ).toBe(
+      "Name: A → B\nHit Die set to d8\nCost: 15.00 gp → 20.00 gp\nSlot cleared\nBase Speed updated\nPrimary Ability updated\nSource Item updated\nLevel 3",
+    );
     expect([
       formatActivityDetails("createModifier", { target: "combat.ac.misc", operator: "add", value: "1" }),
       formatActivityDetails("updateRequirement", { target: "identity.name", operator: "not_empty" }),

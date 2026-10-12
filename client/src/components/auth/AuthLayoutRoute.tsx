@@ -8,7 +8,7 @@ import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useAuthRequests, useIsDemo, useIsMobile } from "@/client/src/hooks/index.ts";
 import { APP_NAME, TAGLINE } from "@/client/src/lib/brand.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
-import { DURATION, EASING, fadeInUp, PREFERS_REDUCED_MOTION } from "@/client/src/theme/animations.ts";
+import { fadeInUpSx } from "@/client/src/theme/animations.ts";
 
 import { useAuthRedirect } from "./useAuthRedirect.ts";
 
@@ -55,15 +55,6 @@ function AuthFooterLinks() {
 
 /** The branding panel on a wide screen, which the layout route renders once. */
 function DesktopBranding() {
-  const animBase = {
-    [PREFERS_REDUCED_MOTION]: { animation: "none" },
-  } as const;
-
-  const stagger = (i: number) => ({
-    animation: `${fadeInUp} ${DURATION.slow}ms ${EASING.decelerate} ${i * DURATION.slowStagger}ms both`,
-    ...animBase,
-  });
-
   return (
     <Stack
       spacing={3}
@@ -131,7 +122,7 @@ function DesktopBranding() {
           height: 120,
           position: "relative",
           filter: (theme) => theme.dropShadows.authLogo,
-          ...stagger(0),
+          ...fadeInUpSx(0, 0, "slow"),
         }}
       />
 
@@ -146,13 +137,15 @@ function DesktopBranding() {
             textShadow: (theme) => theme.textShadows.brand,
             textAlign: "center",
             position: "relative",
-            ...stagger(1),
+            ...fadeInUpSx(1, 0, "slow"),
           }}
         >
           {APP_NAME}
         </Typography>
 
-        <GoldDivider sx={{ width: 120, height: 2, borderRadius: 1, position: "relative", ...stagger(2) }} />
+        <GoldDivider
+          sx={{ width: 120, height: 2, borderRadius: 1, position: "relative", ...fadeInUpSx(2, 0, "slow") }}
+        />
 
         <Typography
           variant="subtitle1"
@@ -162,7 +155,7 @@ function DesktopBranding() {
             fontStyle: "italic",
             textAlign: "center",
             position: "relative",
-            ...stagger(3),
+            ...fadeInUpSx(3, 0, "slow"),
           }}
         >
           {TAGLINE}

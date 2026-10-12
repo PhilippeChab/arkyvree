@@ -139,7 +139,7 @@ export function TemplateExpressionInput({
                   <span>
                     <IconButton
                       size="small"
-                      aria-label="Insert Path"
+                      aria-label="Insert Path…"
                       onClick={openPicker}
                       disabled={disabled}
                       edge="end"

@@ -79,13 +79,16 @@ export const fadeInUp = keyframes`
 
 export const PREFERS_REDUCED_MOTION = "@media (prefers-reduced-motion: reduce)" as const;
 
-export function fadeInUpSx(index: number, offset = 0) {
-  const delay = (index - offset) * DURATION.stagger;
+export function fadeInUpSx(index: number, offset = 0, pace: "normal" | "slow" = "normal") {
+  // A list's items at the normal pace; a page's few blocks (the auth pages' branding) at the slow one
+  const [duration, stagger] =
+    pace === "slow" ? [DURATION.slow, DURATION.slowStagger] : [DURATION.normal, DURATION.stagger];
+  const delay = (index - offset) * stagger;
   return {
     // `backwards`, not `both`: hold the first frame through the stagger delay,
     // but don't pin the last one, which would override hover transforms and
     // opacity on the animated card once it has finished.
-    animation: `${fadeInUp} ${DURATION.normal}ms ${EASING.decelerate} ${delay}ms backwards`,
+    animation: `${fadeInUp} ${duration}ms ${EASING.decelerate} ${delay}ms backwards`,
     [PREFERS_REDUCED_MOTION]: { animation: "none" },
   } as const;
 }

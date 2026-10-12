@@ -1,14 +1,4 @@
-import {
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
-  Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-} from "@mui/material";
+import { DialogContent, DialogTitle, Stack, Table, TableBody, TableCell, TableHead, TableRow } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { type InferResponseType, parseResponse } from "hono/client";
 import { useState } from "react";
@@ -19,6 +9,7 @@ import {
   CreateDialog,
   DeleteDialog,
   DialogFooter,
+  DialogLead,
   DiceSpinner,
   EditDialog,
   HelpLabel,
@@ -42,8 +33,9 @@ import { CopyIcon, DeleteIcon, EditIcon } from "@/client/src/components/icons/in
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useDialogState, useFormWith } from "@/client/src/hooks/index.ts";
 import { invalidateCharacter } from "@/client/src/lib/queries.ts";
-import { characterModifiersQuery } from "@/client/src/pages/characters/characterQueries.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
+
+import { characterModifiersQuery } from "./characterModifierQueries.ts";
 
 interface CharacterModifiersDialogProps {
   characterId: string;
@@ -164,11 +156,10 @@ export function CharacterModifiersDialog({ open, onClose, characterId, rulesetId
           <HelpLabel label="Manage Modifiers" help={MODIFIERS_HELP} />
         </DialogTitle>
         <DialogContent sx={{ overflowY: "auto", scrollbarGutter: "stable" }}>
-          <Stack spacing={2}>
-            <Stack direction="row" spacing={1} sx={{ justifyContent: "space-between", alignItems: "center" }}>
-              <DialogContentText>Custom bonuses and overrides of this character's own.</DialogContentText>
-              <AddButton label="Add Modifier" onClick={handleAdd} />
-            </Stack>
+          <Stack spacing={3}>
+            <DialogLead actions={<AddButton label="Add Modifier" onClick={handleAdd} />}>
+              Custom bonuses and overrides of this character's own.
+            </DialogLead>
             {isLoading ? (
               <DiceSpinner sx={{ py: 4 }} />
             ) : error && modifiers.length === 0 ? (

@@ -2,7 +2,7 @@ import { Stack } from "@mui/material";
 
 import { EmptyValue, ValueChip } from "@/client/src/components/common/index.ts";
 
-import { byName } from "./useAptitudeLookup.ts";
+import { byName } from "./byName.ts";
 
 interface AptitudeChipsCellProps {
   links: AptitudeLink[] | null | undefined;

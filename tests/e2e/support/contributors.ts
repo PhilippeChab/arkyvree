@@ -21,7 +21,7 @@ export async function inviteContributor(page: Page, email: string) {
   const dialog = page.getByRole("dialog", { name: "Invite Contributor" });
   await dialog.getByLabel("Email Address").fill(email);
   const invited = apiResponse(page, "POST", /\/api\/(rulesets|characters)\/[a-f0-9-]+\/contributors/);
-  await dialog.getByRole("button", { name: /^Invite$/ }).click();
+  await dialog.getByRole("button", { name: /^Send Invite$/ }).click();
   await invited;
   await expect(dialog).toBeHidden({ timeout: 15_000 });
 }

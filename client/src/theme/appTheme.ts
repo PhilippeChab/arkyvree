@@ -327,11 +327,11 @@ export function createAppTheme(darkMode: boolean): Theme {
                 };
               }
               return {
-                borderColor: darkMode ? "#d2b48c" : "#8d1e1e",
-                color: darkMode ? "#d2b48c" : "#8d1e1e",
+                borderColor: theme.palette.primary.main,
+                color: theme.palette.primary.main,
                 "&:hover": {
                   backgroundColor: darkMode ? "rgba(210, 180, 140, 0.08)" : "rgba(141, 30, 30, 0.04)",
-                  borderColor: darkMode ? "#deb887" : "#5d1313",
+                  borderColor: darkMode ? theme.palette.primary.light : theme.palette.primary.dark,
                 },
               };
             },
@@ -339,15 +339,15 @@ export function createAppTheme(darkMode: boolean): Theme {
         },
         MuiCard: {
           styleOverrides: {
-            root: {
+            root: ({ theme }) => ({
               boxShadow: darkMode
                 ? "0px 4px 12px rgba(0, 0, 0, 0.25), inset 0px 1px 0px rgba(232, 220, 198, 0.08)"
                 : "0px 4px 12px rgba(62, 39, 35, 0.15), inset 0px 1px 0px rgba(255, 255, 255, 0.6)",
               borderRadius: 8,
               border: darkMode ? "1px solid rgba(210, 180, 140, 0.3)" : "1px solid rgba(141, 30, 30, 0.1)",
               background: darkMode
-                ? "linear-gradient(145deg, #3d352a, #2a251e)"
-                : "linear-gradient(145deg, #ede7d9, #e8dcc6)",
+                ? `linear-gradient(145deg, ${theme.palette.background.paper}, ${theme.palette.background.default})`
+                : `linear-gradient(145deg, ${theme.palette.background.paper}, #e8dcc6)`,
               "&::before": {
                 content: '""',
                 position: "absolute",
@@ -362,7 +362,7 @@ export function createAppTheme(darkMode: boolean): Theme {
                 pointerEvents: "none",
               },
               position: "relative",
-            },
+            }),
           },
         },
         MuiAccordionSummary: {
@@ -377,7 +377,7 @@ export function createAppTheme(darkMode: boolean): Theme {
             root: ({ theme }) => ({
               boxShadow: darkMode ? "0px 2px 8px rgba(0, 0, 0, 0.25)" : "0px 2px 8px rgba(62, 39, 35, 0.2)",
               background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
-              borderBottom: darkMode ? "2px solid #f57f17" : "2px solid #bf9000",
+              borderBottom: `2px solid ${theme.palette.secondary.main}`,
             }),
           },
         },
@@ -389,30 +389,30 @@ export function createAppTheme(darkMode: boolean): Theme {
         },
         MuiDrawer: {
           styleOverrides: {
-            paper: {
-              backgroundColor: darkMode ? "#3d352a" : "#ede7d9",
+            paper: ({ theme }) => ({
+              backgroundColor: theme.palette.background.paper,
               backgroundImage: "none",
-            },
+            }),
           },
         },
         MuiPaper: {
           styleOverrides: {
-            root: {
+            root: ({ theme }) => ({
               backgroundImage: "none",
-              backgroundColor: darkMode ? "#3d352a" : "#ede7d9",
-            },
+              backgroundColor: theme.palette.background.paper,
+            }),
           },
         },
         MuiTableHead: {
           styleOverrides: {
-            root: {
+            root: ({ theme }) => ({
               backgroundColor: darkMode ? "rgba(210, 180, 140, 0.15)" : "rgba(141, 30, 30, 0.1)",
               "& .MuiTableCell-head": {
                 fontWeight: 600,
-                color: darkMode ? "#d2b48c" : "#8d1e1e",
-                borderBottom: darkMode ? "2px solid #f57f17" : "2px solid #bf9000",
+                color: theme.palette.primary.main,
+                borderBottom: `2px solid ${theme.palette.secondary.main}`,
               },
-            },
+            }),
           },
         },
         MuiChip: {

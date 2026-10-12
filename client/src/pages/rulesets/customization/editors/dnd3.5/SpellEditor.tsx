@@ -1,6 +1,5 @@
 import { parseResponse } from "hono/client";
 
-import { useFormSync, useFormWith } from "@/client/src/hooks/index.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import {
   EMPTY_SPELL,
@@ -13,7 +12,7 @@ import { byName, EntityDetailsCard } from "@/client/src/pages/rulesets/component
 import type { EditorProps } from "@/client/src/pages/rulesets/customization/editors/renderEditor.tsx";
 import type { Power } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
 import type { EntityField } from "@/client/src/pages/rulesets/details/rulesetQueries.ts";
-import { useEntityFields, useEntitySave, useRulesetSaves } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { useEntityFields, useEntityForm, useRulesetSaves } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
 /** The spell's aptitudes with their levels, in the form's (name) order. */
@@ -44,14 +43,17 @@ export function SpellEditor({
   followCopy,
   refetchSaved,
 }: EditorProps<Power>) {
-  const form = useFormWith<SpellFormData>(EMPTY_SPELL);
   const { fields } = useEntityFields(rulesetId, "powers");
-  const sync = useFormSync(form, toSpellForm(power, fields), { key: recordKey, adoptKey, updatedAt: power.updatedAt });
   const { data: saves = [], error: savesError } = useRulesetSaves(rulesetId);
-  const saveMutation = useEntitySave({
+  const { form, save } = useEntityForm({
+    empty: EMPTY_SPELL,
+    values: toSpellForm(power, fields),
+    formKey: recordKey,
+    adoptKey,
+    updatedAt: power.updatedAt,
+    locked,
     rulesetId,
     entityId,
-    sync,
     followCopy,
     storeSaved: refetchSaved,
     listKey: QUERY_KEYS.rulesets.section(rulesetId, "powers"),
@@ -78,9 +80,7 @@ export function SpellEditor({
             knownAptitudes={linkedAptitudes(power)}
           />
         ),
-        onSubmit: sync.handleSubmit((data) => saveMutation.mutate(data)),
-        canSave: sync.isDirty && !locked,
-        isSaving: saveMutation.isPending,
+        ...save,
       }}
     />
   );

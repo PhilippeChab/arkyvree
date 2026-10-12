@@ -5,8 +5,9 @@ import {
   RulesetIcon,
   type SvgIconComponent,
 } from "@/client/src/components/icons/index.ts";
-import type { SidebarId } from "@/client/src/components/layout/index.ts";
 import { APP_NAME, TAGLINE, TAGLINE_DETAIL } from "@/client/src/lib/brand.ts";
+
+import type { SidebarId } from "./Layout.tsx";
 
 /** A step of the tour: a dialog's, or one shown beside the sidebar's item it names (`sidebarId`). */
 interface OnboardingStep {

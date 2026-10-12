@@ -240,7 +240,7 @@ class ContributorsService {
 
   async revokeContributor(session: Session, contributorId: string) {
     return await withTransaction(async (tx) => {
-      const { contributor, policy } = await this.getManagedContributor(tx, session, contributorId);
+      const { contributor, ruleset, policy } = await this.getManagedContributor(tx, session, contributorId);
 
       if (contributor.role === "Admin") policy.canManageAdminContributors();
 
@@ -256,7 +256,8 @@ class ContributorsService {
         targetId: updated.id,
         targetTable: getTableName(contributorsInRules),
         type: "revokeContributor",
-        data: { contributorId, prevStatus },
+        // Its notification names the ruleset it no longer contributes to
+        data: { contributorId, prevStatus, rulesetName: ruleset.name },
       });
 
       return updated;

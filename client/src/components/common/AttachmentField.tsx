@@ -161,7 +161,7 @@ export function AttachmentField({ recordId, name, label, readOnly = false, url: 
                 <>
                   <CloudUploadOutlinedIcon sx={{ fontSize: DIMENSION * 0.32 }} />
                   <Typography variant="caption" sx={{ fontWeight: 500, lineHeight: 1.2 }}>
-                    {dragOver ? "Drop to upload" : isAvatar ? "Add photo" : "Drop or click to upload"}
+                    {dragOver ? "Drop to upload" : "Drop or click to upload"}
                   </Typography>
                 </>
               ) : (

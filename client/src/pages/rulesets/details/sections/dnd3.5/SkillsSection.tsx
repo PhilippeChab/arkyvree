@@ -3,6 +3,7 @@ import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/re
 import { type InferResponseType, parseResponse } from "hono/client";
 
 import {
+  BlankState,
   CreateDialog,
   EmptyValue,
   LoadError,
@@ -28,12 +29,11 @@ import { skillsQuery } from "@/client/src/pages/rulesets/details/sectionQueries.
 import { useEntityFields, useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
-type Skill = SkillsPaginated["items"][number];
-type SkillsPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["skills"]["$get"], 200>;
+type Skill = InferResponseType<(typeof rpc.api.rulesets)[":id"]["skills"]["$get"], 200>["items"][number];
 
 const SKILLS_COLUMNS = [
   { key: "name", label: "Name", width: "25%" },
-  { key: "ability", label: "Ability", width: "15%" },
+  { key: "ability", label: "Primary Ability", width: "15%" },
   { key: "trainedOnly", label: "Trained Only", width: "15%" },
   { key: "description", label: "Description", width: "45%" },
 ];
@@ -73,7 +73,7 @@ export function SkillsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
     openEntity(`skills/${skill.id}`);
   };
 
-  const handleRowMouseEnter = (skill: Skill) => {
+  const handleRowPrefetch = (skill: Skill) => {
     void queryClient.prefetchQuery(skillQuery(ruleset.id, skill.id));
   };
 
@@ -127,11 +127,11 @@ export function SkillsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
             isLoading={isLoading}
             columns={SKILLS_COLUMNS}
             onRowClick={handleRowClick}
-            onRowMouseEnter={handleRowMouseEnter}
+            onRowPrefetch={handleRowPrefetch}
             renderCell={renderCell}
-            emptyIcon={SkillsIcon}
-            emptyTitle="No skills"
-            emptyDescription="No skills available for this ruleset."
+            empty={
+              <BlankState icon={SkillsIcon} title="No skills" description="No skills available for this ruleset." />
+            }
           />
           <LoadMoreButton
             hasNextPage={hasNextPage}

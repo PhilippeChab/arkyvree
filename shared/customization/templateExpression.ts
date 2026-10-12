@@ -97,8 +97,8 @@ class Tokenizer {
       }
       if (/[a-zA-Z_]/.test(ch)) {
         let end = this.pos + 1;
-        // Identifiers include dots so existing single-path templates like
-        // {{ [abilities.charisma.modifier] }} keep working as a bare path.
+        // Identifiers include dots, so an unbracketed path like
+        // {{ abilities.charisma.modifier }} reads as a bare path.
         while (end < this.src.length && /[a-zA-Z0-9_.]/.test(this.src[end])) end++;
         tokens.push({ type: "IDENT", value: this.src.slice(this.pos, end) });
         this.pos = end;
@@ -172,8 +172,8 @@ class Parser {
         this.pos++;
         return { type: "call", name: tok.value, args };
       }
-      // Bare identifier (no parens) is treated as a path. Keeps existing
-      // single-path templates like `{{ [abilities.charisma.modifier] }}` working.
+      // A bare identifier (no parens) is a path: an unbracketed one like
+      // `{{ abilities.charisma.modifier }}` reads as `[abilities.charisma.modifier]` does.
       return { type: "path", value: tok.value };
     }
     if (tok.type === "PUNC" && tok.value === "(") {

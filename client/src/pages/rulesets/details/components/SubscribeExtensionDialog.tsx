@@ -1,5 +1,5 @@
 import { Autocomplete, DialogContent, DialogContentText, DialogTitle, Stack, TextField } from "@mui/material";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
 import { DialogFooter, Modal, ScrollSafeListbox, ValueChip } from "@/client/src/components/common/index.ts";
 import { ExtensionIcon } from "@/client/src/components/icons/index.ts";
@@ -30,10 +30,7 @@ function SubscribeExtensionForm({ onClose, onConfirm, pending, subscribedExtensi
     onScroll,
   } = useListboxQuery(rulesetPickerQuery("extensions", debouncedSearch));
 
-  const options = useMemo(
-    () => extensions.filter((ext) => !subscribedExtensionIds.includes(ext.id)),
-    [extensions, subscribedExtensionIds],
-  );
+  const options = extensions.filter((ext) => !subscribedExtensionIds.includes(ext.id));
 
   return (
     <>

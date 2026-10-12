@@ -8,6 +8,7 @@ import { extractTemplateExpression, isTemplateValue } from "@/shared/customizati
 
 import { Crossfade } from "./Crossfade.tsx";
 import { TEMPLATE_HELP } from "./customizationHelp.ts";
+import type { TargetPathOwner } from "./customizationQueries.ts";
 import { OperatorSelect } from "./OperatorSelect.tsx";
 import { PathValueInput } from "./PathValueInput.tsx";
 import { defaultValueForPath, fitsPath, type PathInfo } from "./pathValues.ts";
@@ -24,7 +25,7 @@ interface BoundField {
 
 interface ConditionFieldsProps {
   /** Filters target-path completions to those allowed for this entity type. Not applied to the template path picker. */
-  entityType?: string;
+  entityType?: TargetPathOwner;
   /** Its form's target, operator and value, each bound to the form (`useController`). */
   fields: Record<ConditionField, BoundField>;
   kind: OperatorKind;

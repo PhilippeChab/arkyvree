@@ -4,7 +4,7 @@ import { parseResponse } from "hono/client";
 import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
 
 import { ReadOnlyFields, SectionTabPanel, SectionTabs } from "@/client/src/components/common/index.ts";
-import { useFormSync, useFormWith, usePageTitle, useRulesetPermissions } from "@/client/src/hooks/index.ts";
+import { usePageTitle, useRulesetPermissions } from "@/client/src/hooks/index.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { type RulesetDetail, rulesetDetailQuery } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
@@ -14,7 +14,7 @@ import { entityPageBack } from "@/client/src/pages/rulesets/entityPageState.ts";
 import {
   useCopyOnWrite,
   useEntityFields,
-  useEntitySave,
+  useEntityForm,
   useRestorableDelete,
 } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { isStillOpen } from "@/client/src/pages/rulesets/stillOpen.ts";
@@ -54,8 +54,6 @@ function ClassView({ back, classId, ruleset, rulesetId, section }: ClassViewProp
   // Its own tabs, then its base rules', then those that customize it
   const tabs = [...CLASS_TABS, ...classSections.tabs, ...CLASS_CUSTOMIZATION_TABS];
   const currentTab = tabs.find((tab) => tab.key === section);
-  // Its base rules' empty class until the class loads, which its editor never shows
-  const editForm = useFormWith<ClassFormData>(classForms.emptyClass);
 
   const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
   // Deleting an inherited class, or what it holds, can be undone
@@ -65,19 +63,19 @@ function ClassView({ back, classId, ruleset, rulesetId, section }: ClassViewProp
   // Its base rules' form of the class, with the fields its ruleset declares for classes
   const toClassForm = (klass: Pick<ClassDetail, "description" | "hd" | "name">) =>
     withEntityFields(classForms.toClassForm(klass), classFields, klass);
-  const sync = useFormSync(editForm, classData && toClassForm(classData), {
-    key: copy.key,
-    adoptKey: copy.adoptKey,
-    updatedAt: classData?.updatedAt,
-  });
   const forgetSource = copy.forgetSource(!!classData);
 
-  const updateMutation = useEntitySave({
+  const { form: editForm, save } = useEntityForm({
+    // Its base rules' empty class until the class loads, which its editor never shows
+    empty: classForms.emptyClass,
+    values: classData && toClassForm(classData),
+    formKey: copy.key,
+    adoptKey: copy.adoptKey,
+    updatedAt: classData?.updatedAt,
     rulesetId,
     entityId: classId,
     label: "Class",
     listKey: QUERY_KEYS.rulesets.section(rulesetId, "classes"),
-    sync,
     saveFn: (data: ClassFormData, updatedAt: string | undefined) =>
       parseResponse(
         rpc.api.rulesets[":id"].classes[":classId"].$put({
@@ -136,15 +134,7 @@ function ClassView({ back, classId, ruleset, rulesetId, section }: ClassViewProp
           <>
             {/* The same form whoever reads it, its fields read-only for who can't edit the class */}
             <ReadOnlyFields readOnly={!canEdit}>
-              <ClassDetails
-                rulesetId={rulesetId}
-                edit={{
-                  form: editForm,
-                  onSubmit: sync.handleSubmit((data) => updateMutation.mutate(data)),
-                  canSave: sync.isDirty,
-                  isSaving: updateMutation.isPending,
-                }}
-              />
+              <ClassDetails rulesetId={rulesetId} edit={{ form: editForm, ...save }} />
             </ReadOnlyFields>
             <Stack spacing={4}>
               <SectionTabs
@@ -188,9 +178,8 @@ export default function ClassDetailsPage() {
     id: string;
     section?: string;
   }>();
-  const back = entityPageBack(location.state, `/rulesets/${rulesetId}/classes`);
-
   const { data: ruleset, isLoading, error } = useQuery(rulesetDetailQuery(rulesetId));
+  const back = entityPageBack(location.state, `/rulesets/${rulesetId}/classes`, ruleset?.baseRules);
   // The class loads alongside its ruleset, which its page waits for: its forms and its tabs are its base rules'
   useQuery(classDetailQuery(rulesetId, classId));
 

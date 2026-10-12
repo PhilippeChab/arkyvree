@@ -2,7 +2,13 @@ import { Stack } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 
-import { CreateDialog, LoadMoreButton, SearchBar, SectionContent } from "@/client/src/components/common/index.ts";
+import {
+  BlankState,
+  CreateDialog,
+  LoadMoreButton,
+  SearchBar,
+  SectionContent,
+} from "@/client/src/components/common/index.ts";
 import { AptitudesIcon } from "@/client/src/components/icons/index.ts";
 import { useSearchText } from "@/client/src/hooks/index.ts";
 import { itemsBeforeLastPage, pageItems } from "@/client/src/lib/pageItems.ts";
@@ -55,7 +61,7 @@ export function AptitudesSection({ ruleset, childOnly, onChildOnlyChange }: Rule
     openEntity(`aptitudes/${aptitude.id}`);
   };
 
-  const handleRowMouseEnter = (aptitude: Aptitude) => {
+  const handleRowPrefetch = (aptitude: Aptitude) => {
     void queryClient.prefetchQuery(aptitudeQuery(ruleset.id, aptitude.id));
   };
 
@@ -96,11 +102,15 @@ export function AptitudesSection({ ruleset, childOnly, onChildOnlyChange }: Rule
             isLoading={isLoading}
             columns={APTITUDES_COLUMNS}
             onRowClick={handleRowClick}
-            onRowMouseEnter={handleRowMouseEnter}
+            onRowPrefetch={handleRowPrefetch}
             renderCell={renderCell}
-            emptyIcon={AptitudesIcon}
-            emptyTitle="No aptitudes"
-            emptyDescription="No aptitudes available for this ruleset."
+            empty={
+              <BlankState
+                icon={AptitudesIcon}
+                title="No aptitudes"
+                description="No aptitudes available for this ruleset."
+              />
+            }
           />
           <LoadMoreButton
             hasNextPage={hasNextPage}

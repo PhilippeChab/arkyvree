@@ -44,6 +44,9 @@ export const QUERY_KEYS = {
       ["rulesets", "detail", id, "feats", "family", family, childOnly] as const,
     entity: (id: string, entityType: string, entityId: string) =>
       ["rulesets", "detail", id, "entity", entityType, entityId] as const,
+    /** An entity's customization tab's rows (its modifiers, its requirements), nested in the ruleset its saves refresh. */
+    customization: (id: string, entityType: string, entityId: string, tab: "modifiers" | "requirements") =>
+      ["rulesets", "detail", id, "customization", entityType, entityId, tab] as const,
     targetCompletions: (id: string, prefix: string, kind: string, search: string, entityType?: string) =>
       ["rulesets", "detail", id, "targetCompletions", prefix, kind, search, entityType] as const,
     /** What a target path takes, once it's complete and its entity type takes it. */
@@ -109,7 +112,7 @@ export const QUERY_KEYS = {
     },
   },
   legal: {
-    ogl: ["legal", "ogl-1.0a"] as const,
+    ogl: ["legal", "oglLicense"] as const,
   },
   shared: {
     character: (shareToken: string) => ["shared", "character", shareToken] as const,

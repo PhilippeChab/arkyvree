@@ -10,11 +10,11 @@ import {
   SaveButton,
   SectionContent,
 } from "@/client/src/components/common/index.ts";
-import { useFormSync, useFormWith, useRulesetPermissions } from "@/client/src/hooks/index.ts";
+import { useRulesetPermissions } from "@/client/src/hooks/index.ts";
 import { EntityFields, withEntityFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { rulesetSettingsQuery } from "@/client/src/pages/rulesets/details/rulesetQueries.ts";
 import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
-import { useEntityFields, useEntitySave } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { useEntityFields, useEntityForm } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
 /** The ruleset's Settings, as the API answers them: its own fields' values. */
@@ -39,15 +39,15 @@ export function SettingsSection({ ruleset }: RulesetSectionProps) {
   const settingsQuery = rulesetSettingsQuery(ruleset.id);
   const { data: settings, error } = useQuery(settingsQuery);
   const { fields } = useEntityFields(ruleset.id, "rulesets");
-  const form = useFormWith<SettingsFormData>(EMPTY_SETTINGS);
   const toFormValues = (saved: Settings) => withEntityFields(EMPTY_SETTINGS, fields, saved.fields);
-  const sync = useFormSync(form, settings && toFormValues(settings), { key: ruleset.id });
-  const saveMutation = useEntitySave({
+  const { form, save } = useEntityForm({
+    empty: EMPTY_SETTINGS,
+    values: settings && toFormValues(settings),
+    formKey: ruleset.id,
     rulesetId: ruleset.id,
     entityId: ruleset.id,
     label: "Settings",
     listKey: settingsQuery.queryKey,
-    sync,
     saveFn: (data: SettingsFormData) =>
       parseResponse(rpc.api.rulesets[":id"].settings.$put({ param: { id: ruleset.id }, json: data })),
     toFormValues,
@@ -62,14 +62,9 @@ export function SettingsSection({ ruleset }: RulesetSectionProps) {
       {settings ? (
         <Panel>
           {canEdit ? (
-            <Stack
-              component="form"
-              noValidate
-              onSubmit={sync.handleSubmit((data) => saveMutation.mutate(data))}
-              spacing={3}
-            >
+            <Stack component="form" noValidate onSubmit={save.onSubmit} spacing={3}>
               <EntityFields form={form} entityType="rulesets" rulesetId={ruleset.id} help />
-              <SaveButton canSave={sync.isDirty} pending={saveMutation.isPending} />
+              <SaveButton canSave={save.canSave} pending={save.isSaving} />
             </Stack>
           ) : (
             // The same fields, read-only, which nothing submits

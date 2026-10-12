@@ -3,7 +3,7 @@ import { IconButton, Stack, Typography } from "@mui/material";
 import { AddIcon, RemoveIcon } from "@/client/src/components/icons/index.ts";
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
 import { formatSigned } from "@/shared/text.ts";
-import { MAX_ABILITY_SCORE } from "@/vocabulary/dnd3.5/abilities.ts";
+import { MAX_ABILITY_SCORE, MIN_ABILITY_SCORE, STARTING_ABILITY_SCORE } from "@/vocabulary/dnd3.5/abilities.ts";
 
 import { ScoreBox } from "./ScoreBox.tsx";
 
@@ -26,7 +26,7 @@ export function AbilityScoreBox({
   readOnly,
   compact,
 }: AbilityScoreBoxProps) {
-  const baseValue = abilityData?.base ?? 10;
+  const baseValue = abilityData?.base ?? STARTING_ABILITY_SCORE;
   const edit =
     !readOnly && !compact && abilityData?.abilityId && onBaseChange
       ? { abilityId: abilityData.abilityId, onBaseChange }
@@ -65,7 +65,7 @@ export function AbilityScoreBox({
               size="small"
               aria-label={`Lower Base ${ability}`}
               onClick={() => edit.onBaseChange(edit.abilityId, baseValue - 1)}
-              disabled={baseValue <= 1}
+              disabled={baseValue <= MIN_ABILITY_SCORE}
               sx={{ p: 0 }}
             >
               <RemoveIcon sx={{ fontSize: 14 }} />

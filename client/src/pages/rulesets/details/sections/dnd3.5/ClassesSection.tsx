@@ -3,6 +3,7 @@ import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/re
 import { type InferResponseType, parseResponse } from "hono/client";
 
 import {
+  BlankState,
   CreateDialog,
   LoadMoreButton,
   SearchBar,
@@ -30,8 +31,7 @@ import {
 } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
-type Class = ClassesPaginated["items"][number];
-type ClassesPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["classes"]["$get"], 200>;
+type Class = InferResponseType<(typeof rpc.api.rulesets)[":id"]["classes"]["$get"], 200>["items"][number];
 
 const CLASSES_COLUMNS = [
   { key: "name", label: "Name", width: "25%" },
@@ -72,7 +72,7 @@ export function ClassesSection({ ruleset, childOnly, onChildOnlyChange }: Rulese
     openEntity(`classes/${klass.id}/levels`);
   };
 
-  const handleRowMouseEnter = (klass: Class) => {
+  const handleRowPrefetch = (klass: Class) => {
     void queryClient.prefetchQuery(classDetailQuery(ruleset.id, klass.id));
     // And the Levels tab its page opens on
     void queryClient.prefetchQuery(classLevelsQuery(ruleset.id, klass.id));
@@ -121,11 +121,11 @@ export function ClassesSection({ ruleset, childOnly, onChildOnlyChange }: Rulese
             isLoading={isLoading}
             columns={CLASSES_COLUMNS}
             onRowClick={handleRowClick}
-            onRowMouseEnter={handleRowMouseEnter}
+            onRowPrefetch={handleRowPrefetch}
             renderCell={renderCell}
-            emptyIcon={ClassesIcon}
-            emptyTitle="No classes"
-            emptyDescription="No classes available for this ruleset."
+            empty={
+              <BlankState icon={ClassesIcon} title="No classes" description="No classes available for this ruleset." />
+            }
           />
           <LoadMoreButton
             hasNextPage={hasNextPage}

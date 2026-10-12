@@ -6,6 +6,7 @@ import {
   Contributors,
   Invites,
   KlassLevels,
+  Mechanics,
   Modifiers,
   Properties,
   Requirements,
@@ -30,7 +31,7 @@ async function resolveAll(targets: string[][]) {
 }
 
 describe("ActivitiesService.getActivityUrl", () => {
-  test("links rulesets, characters and campaigns to their page, archived or not, and users and sessions nowhere", async () => {
+  test("links rulesets, characters and campaigns to their page, archived or not, and accounts nowhere", async () => {
     const { user } = await createTestUser();
     const ruleset = await createTestRuleset(user.id);
     const character = await createTestCharacter(user.id, { deletedAt: new Date().toISOString() });
@@ -42,13 +43,32 @@ describe("ActivitiesService.getActivityUrl", () => {
         ["campaigns", campaign.id],
         ["users", user.id],
         ["sessions", NIL_UUID],
+        ["oauth_accounts", NIL_UUID],
       ]),
-    ).toEqual([`/rulesets/${ruleset.id}`, `/characters/${character.id}`, `/campaigns/${campaign.id}`, null, null]);
+    ).toEqual([
+      `/rulesets/${ruleset.id}`,
+      `/characters/${character.id}`,
+      `/campaigns/${campaign.id}`,
+      null,
+      null,
+      null,
+    ]);
   });
 
   test("links a ruleset's entities to their page, or their customization when they have one", async () => {
-    const { rulesetId: r, featMap, powerMap, itemMap, raceMap, skillMap, aptMap, klassMap } = await getSeedCtx();
+    const {
+      rulesetId: r,
+      featMap,
+      powerMap,
+      itemMap,
+      raceMap,
+      skillMap,
+      aptMap,
+      klassMap,
+      abilityMap,
+    } = await getSeedCtx();
     const fighter = klassMap.pc["Fighter"];
+    const [mechanic] = await Mechanics.create(db, { name: "Linked Mechanic", rulesetId: r });
     const [level] = await KlassLevels.findMany(db, { klassId: fighter });
     for (const [table, id, url] of [
       ["feats", featMap["Toughness"], `/rulesets/${r}/feats/${featMap["Toughness"]}/customization`],
@@ -57,6 +77,8 @@ describe("ActivitiesService.getActivityUrl", () => {
       ["races", raceMap.pc["Human"], `/rulesets/${r}/races/${raceMap.pc["Human"]}/customization`],
       ["skills", skillMap["Climb"], `/rulesets/${r}/skills/${skillMap["Climb"]}`],
       ["aptitudes", aptMap["General"], `/rulesets/${r}/aptitudes/${aptMap["General"]}`],
+      ["abilities", abilityMap["Strength"], `/rulesets/${r}/abilities/${abilityMap["Strength"]}`],
+      ["mechanics", mechanic.id, `/rulesets/${r}/mechanics/${mechanic.id}`],
       ["klasses", fighter, `/rulesets/${r}/classes/${fighter}`],
       ["klass_levels", level.id, `/rulesets/${r}/classes/${fighter}/levels`],
       // A class skill's activity targets the class.

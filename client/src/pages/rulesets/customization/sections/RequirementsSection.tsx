@@ -2,7 +2,7 @@ import { Alert, Card, CardContent, Stack, Typography } from "@mui/material";
 import { SimpleTreeView } from "@mui/x-tree-view/SimpleTreeView";
 import { TreeItem } from "@mui/x-tree-view/TreeItem";
 import { type InferResponseType, parseResponse } from "hono/client";
-import { type ReactNode, useMemo, useState } from "react";
+import { type ReactNode, useState } from "react";
 
 import {
   AddButton,
@@ -48,7 +48,7 @@ import { getUrlSegment } from "@/shared/urlSegments.ts";
 interface RequirementsSectionProps {
   entityId: string;
   entityType: CustomizationOwnerType;
-  onEntityIdChange?: (copyId: string, sourceId: string) => void;
+  followCopy?: (copyId: string, sourceId: string) => void;
   queryKeysToInvalidate?: readonly (readonly unknown[])[];
   /** A delete can be undone from Local Changes, its entity's being inherited (`useRestorableDelete`) */
   restorable: boolean;
@@ -64,11 +64,19 @@ type RequirementsArray = InferResponseType<
 /** A requirement in the tree the section shows, with the requirements it groups. */
 type RequirementTreeNode = RequirementNode<Requirement>;
 
-function PublishedWarning() {
+/** Whatever its status: characters can be built on a Draft ruleset as on a Published one. */
+function CharactersWarning() {
   return (
     <Alert severity="warning">
-      This ruleset is published. Changing requirements may break character validation for existing users.
+      Changing requirements may break the validation of characters built on this ruleset.
     </Alert>
+  );
+}
+
+/** The ids of a tree's requirements that group others, at every depth: what opens expanded. */
+function parentIdsOf(nodes: RequirementTreeNode[]): string[] {
+  return nodes.flatMap((node) =>
+    node.children.length > 0 ? [node.requirement.id, ...parentIdsOf(node.children)] : [],
   );
 }
 
@@ -84,10 +92,10 @@ export function RequirementsSection({
   entityType,
   entityId,
   queryKeysToInvalidate,
-  onEntityIdChange,
+  followCopy,
   restorable,
 }: RequirementsSectionProps) {
-  const { tag, followCopies } = followCopiesOf(entityId, onEntityIdChange);
+  const { tag, followCopies } = followCopiesOf(entityId, followCopy);
   const entityParam = { id: ruleset.id, entityType: getUrlSegment(entityType), entityId };
 
   // Parent level for contextual "Add Child" (null = root)
@@ -147,7 +155,6 @@ export function RequirementsSection({
   });
 
   const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
-  const isPublished = ruleset.status === "Published";
 
   /**
    * Opens the create dialog for a root requirement (null) or a child of the given level, empty: its type, its parent and
@@ -161,38 +168,18 @@ export function RequirementsSection({
 
   // The requirements' tree, and after it a requirement under a condition (which groups nothing), so it can be fixed
   const loadFailed = !!error && !requirements;
-  const requirementsTree = useMemo((): RequirementTreeNode[] => {
-    if (!requirements) return [];
-    const tree = RequirementTree.fromRows(requirements);
-    return [...tree.roots, ...tree.detached.map((requirement) => ({ requirement, children: [] }))];
-  }, [requirements]);
-
-  const parentIds = useMemo(() => {
-    const expandedIds: string[] = [];
-
-    const collectParentIds = (nodes: RequirementTreeNode[]) => {
-      for (const node of nodes) {
-        if (node.children.length > 0) {
-          expandedIds.push(node.requirement.id);
-          collectParentIds(node.children);
-        }
-      }
-    };
-
-    collectParentIds(requirementsTree);
-    return expandedIds;
-  }, [requirementsTree]);
+  const tree = requirements && RequirementTree.fromRows(requirements);
+  const requirementsTree: RequirementTreeNode[] = tree
+    ? [...tree.roots, ...tree.detached.map((requirement) => ({ requirement, children: [] }))]
+    : [];
+  const parentIds = parentIdsOf(requirementsTree);
 
   // Parents are expanded, new ones included, except those the user collapsed.
   const [collapsedIds, setCollapsedIds] = useState<ReadonlySet<string>>(new Set());
-  const expandedItems = useMemo(() => parentIds.filter((id) => !collapsedIds.has(id)), [parentIds, collapsedIds]);
+  const expandedItems = parentIds.filter((id) => !collapsedIds.has(id));
 
   const handleEditChaining = (requirement: Requirement) => {
     setEditRequirementType("chaining");
-    // Unregister fields that won't be used
-    editForm.unregister("target");
-    editForm.unregister("operator");
-    editForm.unregister("value");
     handleEdit(requirement, {
       level: requirement.level,
       chainingOperator: requirement.chainingOperator || "",
@@ -204,8 +191,6 @@ export function RequirementsSection({
 
   const handleEditCondition = (requirement: Requirement) => {
     setEditRequirementType("condition");
-    // Unregister fields that won't be used
-    editForm.unregister("chainingOperator");
     handleEdit(requirement, {
       level: requirement.level,
       target: requirement.target || "",
@@ -374,7 +359,7 @@ export function RequirementsSection({
         }
         maxWidth="md"
       >
-        {isPublished && <PublishedWarning />}
+        <CharactersWarning />
         <RequirementFormFields
           form={createForm}
           type={createRequirementType}
@@ -396,7 +381,7 @@ export function RequirementsSection({
         }}
         maxWidth="md"
       >
-        {isPublished && <PublishedWarning />}
+        <CharactersWarning />
         <RequirementFormFields
           form={editForm}
           type={editRequirementType}

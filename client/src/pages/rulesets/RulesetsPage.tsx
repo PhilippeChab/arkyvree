@@ -32,30 +32,27 @@ type FilterScope = (typeof SCOPES)[number];
 
 type SortField = RulesetListFilters["orderBy"];
 
+/** The scopes the list filters by, in the order its menu offers them, each with its label. */
+const SCOPE_LABELS = {
+  base: "Base",
+  extensions: "Extensions",
+  systems: "Systems",
+  community: "Community",
+  forked: "Forked",
+  // The rulesets of the campaigns the user plays in
+  campaignAccessible: "My Campaigns",
+  starred: "Starred",
+  archived: "Archived",
+} as const;
+
+const SCOPES = Object.keys(SCOPE_LABELS) as (keyof typeof SCOPE_LABELS)[];
+
 const RULESET_FILTER_OPTIONS: FilterOption<FilterScope>[] = [
   { value: undefined, label: "All" },
-  { value: "base", label: "Base" },
-  { value: "extensions", label: "Extensions" },
-  { value: "systems", label: "Systems" },
-  { value: "community", label: "Community" },
-  { value: "forked", label: "Forked" },
-  { value: "campaignAccessible", label: "Invited" },
-  { value: "starred", label: "Starred" },
-  { value: "archived", label: "Archived" },
+  ...SCOPES.map((scope) => ({ value: scope, label: SCOPE_LABELS[scope] })),
 ];
 
 const RULESET_SORT_OPTIONS: SortOption<SortField>[] = [...CREATED_SORTS, ...UPDATED_SORTS];
-
-const SCOPES = [
-  "base",
-  "extensions",
-  "systems",
-  "community",
-  "forked",
-  "campaignAccessible",
-  "starred",
-  "archived",
-] as const;
 
 export default function RulesetsPage() {
   usePageTitle("Rulesets");
@@ -97,7 +94,7 @@ export default function RulesetsPage() {
                 <BlankState
                   icon={RulesetIcon}
                   title="No rulesets found"
-                  description="Try another filter, or fork a base ruleset"
+                  description="Try another filter, or fork a base ruleset."
                 />
               }
             >

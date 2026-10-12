@@ -6,7 +6,7 @@ import type { FormSync } from "@/client/src/hooks/index.ts";
 import { changedFieldValues } from "@/client/src/pages/rulesets/components/forms/entityFields.ts";
 import { invalidateRulesetEdit } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 
-interface EntitySaveOptions<TForm extends FieldValues, TSaved> {
+export interface EntitySaveOptions<TForm extends FieldValues, TSaved> {
   /** The record the form edits, from the URL */
   entityId: string;
   /**

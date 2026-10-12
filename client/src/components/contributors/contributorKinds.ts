@@ -20,14 +20,18 @@ export type ContributorKind = "character" | "ruleset";
 export type ContributorsPage = Awaited<ReturnType<(typeof CONTRIBUTOR_KINDS)[ContributorKind]["listFn"]>>;
 
 /**
- * Each kind's words (its name, its noun, its dialog's lead line), its requests, its contributors' cache key, and the
- * list its record leaves once its contributor leaves it, where leaving lands.
+ * Each kind's words (its name, its noun, its dialog's lead line), whether its contributors have roles (a character's
+ * are all its editors: none shows), its requests, its contributors' cache key, its record's
+ * own (`detailKey`, which leaving removes), and the list its record leaves once its contributor leaves it, where leaving
+ * lands.
  */
 export const CONTRIBUTOR_KINDS = {
   character: {
     label: "Character",
     noun: "character",
+    hasRoles: false,
     lead: "Contributors can edit this character and download its PDF.",
+    detailKey: (id: string) => QUERY_KEYS.characters.detail(id),
     listKey: QUERY_KEYS.characters.lists,
     listPath: "/characters",
     queryKey: (id: string) => QUERY_KEYS.characters.contributors(id),
@@ -44,7 +48,9 @@ export const CONTRIBUTOR_KINDS = {
   ruleset: {
     label: "Ruleset",
     noun: "ruleset",
+    hasRoles: true,
     lead: "Contributors work on this ruleset by their role: a Viewer reads it, an Editor edits its content, and an Admin also edits its details and manages its contributors.",
+    detailKey: (id: string) => QUERY_KEYS.rulesets.detail(id),
     listKey: QUERY_KEYS.rulesets.lists,
     listPath: "/rulesets",
     queryKey: (id: string) => QUERY_KEYS.rulesets.section(id, "contributors"),

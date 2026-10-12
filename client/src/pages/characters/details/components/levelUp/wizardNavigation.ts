@@ -8,9 +8,8 @@ import type { ApiValidationIssue } from "@/client/src/services/ApiError.ts";
 interface NavigationParams {
   /** Something was picked or planned: Cancel asks before it's discarded */
   hasProgress: boolean;
+  /** Closes the wizard, which unmounts once faded: what it picked and planned goes with it */
   onClose: () => void;
-  /** Clears what the wizard picked and planned, as it's discarded */
-  reset: () => void;
   /** Sends the wizard's save, forced past the rules' warnings or not */
   save: (force: boolean) => void;
   /** Its step, and what a step change clears (`useLevelWizardBase`'s) */
@@ -28,7 +27,7 @@ interface StepState {
 }
 
 /** The wizard's Back, Next, forced save and Cancel, which its dialog's buttons and its warnings' Proceed Anyway take. */
-export function navigationOf({ hasProgress, onClose, reset, save, wizard }: NavigationParams) {
+export function navigationOf({ hasProgress, onClose, save, wizard }: NavigationParams) {
   const { activeStep, isLastStep, setActiveStep, setIssues, setShowCancelConfirm } = wizard;
   return {
     handleBack: () => {
@@ -40,7 +39,7 @@ export function navigationOf({ hasProgress, onClose, reset, save, wizard }: Navi
       else onClose();
     },
     handleConfirmCancel: () => {
-      reset();
+      setShowCancelConfirm(false);
       onClose();
     },
     handleForceSubmit: () => {

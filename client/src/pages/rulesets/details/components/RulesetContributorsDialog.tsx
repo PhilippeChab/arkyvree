@@ -28,11 +28,9 @@ type RoleFormData = InferRequestType<
 export function RulesetContributorsDialog({ ruleset, open, onClose }: RulesetContributorsDialogProps) {
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
-  const { isOwner, canManageContributors } = useRulesetPermissions(ruleset);
   // An archived ruleset refuses invites and role changes, as the server does, but who manages its contributors still
   // removes one, and a contributor still leaves
-  const isArchived = ruleset.status === "Archived";
-  const canEditRoles = canManageContributors && !isArchived;
+  const { isOwner, canInviteContributors, canLeave, canManageContributors } = useRulesetPermissions(ruleset);
   // Only the owner may grant Admin
   const assignableRoles: ContributorRole[] = isOwner ? ["Admin", "Editor", "Viewer"] : ["Editor", "Viewer"];
   // Only the owner can change or remove an Admin
@@ -65,12 +63,12 @@ export function RulesetContributorsDialog({ ruleset, open, onClose }: RulesetCon
         id={ruleset.id}
         open={open}
         onClose={onClose}
-        canInvite={canManageContributors && !isArchived}
-        canLeave={!isOwner && !!ruleset.contributorRole}
+        canInvite={canInviteContributors}
+        canLeave={canLeave}
         canRemove={canManageContributors ? outranks : undefined}
         roles={assignableRoles}
         rowActions={(contributor) =>
-          canEditRoles &&
+          canInviteContributors &&
           outranks(contributor) &&
           contributor.status === "Active" && (
             <RowAction

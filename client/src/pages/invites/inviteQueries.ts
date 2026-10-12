@@ -1,9 +1,11 @@
 import { queryOptions } from "@tanstack/react-query";
 
-import { INVITE_KINDS, type InviteKind } from "@/client/src/components/invites/index.ts";
+import type { InviteKind } from "@/client/src/components/invites/index.ts";
 import { NO_TIME } from "@/client/src/lib/durations.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { ApiError } from "@/client/src/services/ApiError.ts";
+
+import { INVITE_PAGES } from "./invitePages.ts";
 
 /** An invite its page answers, as its kind reads it (`inviteFn`), or null once it's gone (a 404). */
 export function inviteQuery(kind: InviteKind, inviteId: string) {
@@ -11,7 +13,7 @@ export function inviteQuery(kind: InviteKind, inviteId: string) {
     queryKey: QUERY_KEYS.invites.detail(kind, inviteId),
     queryFn: async () => {
       try {
-        return await INVITE_KINDS[kind].inviteFn(inviteId);
+        return await INVITE_PAGES[kind].inviteFn(inviteId);
       } catch (error) {
         // Revoked, or addressed to someone else.
         if (error instanceof ApiError && error.status === 404) return null;

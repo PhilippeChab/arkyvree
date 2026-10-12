@@ -1,5 +1,5 @@
 /** A row of the skills table: a skill, or the header of the group a prefix two of them share makes. */
-export type SkillTableRow<S> =
+type SkillTableRow<S> =
   | { group: string | null; skill: S; type: "skill" }
   | { count: number; prefix: string; type: "group" };
 

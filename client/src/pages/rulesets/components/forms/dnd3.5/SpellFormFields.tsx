@@ -12,8 +12,9 @@ import {
 } from "@/client/src/components/common/index.ts";
 import { APTITUDES_RULES, readNumberInput } from "@/client/src/lib/validation.ts";
 import { AptitudesAutocomplete } from "@/client/src/pages/rulesets/components/AptitudesAutocomplete.tsx";
+import { byName } from "@/client/src/pages/rulesets/components/byName.ts";
 import { EntityFields } from "@/client/src/pages/rulesets/components/forms/EntityFields.tsx";
-import { byName, useAptitudeLookup } from "@/client/src/pages/rulesets/components/useAptitudeLookup.ts";
+import { useAptitudeLookup } from "@/client/src/pages/rulesets/components/useAptitudeLookup.ts";
 import type { Aptitude } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import type { Save } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { MAX_SPELL_LEVEL } from "@/vocabulary/dnd3.5/spells.ts";

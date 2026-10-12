@@ -1,11 +1,56 @@
-import { and, eq, inArray, type InferInsertModel, isNull, sql } from "drizzle-orm";
+import { and, eq, inArray, type InferInsertModel, isNull, sql, type SQLWrapper } from "drizzle-orm";
+import type { PgColumn } from "drizzle-orm/pg-core";
 
 import type { Db } from "@/drizzle/database.ts";
-import { campaignsInCampaign, playersInCampaign, usersInAccount } from "@/drizzle/schema.ts";
+import { campaignsInCampaign, invitesInCampaign, playersInCampaign, usersInAccount } from "@/drizzle/schema.ts";
 import { include } from "@/lib/mixins.ts";
 import BaseRepository, { Visibility } from "@/server/repositories/BaseRepository.ts";
 import { Paginates } from "@/server/repositories/concerns/Paginates.ts";
 import { Searches } from "@/server/repositories/concerns/Searches.ts";
+
+/** The columns of a players query's row that its subqueries read. */
+interface SlotColumns {
+  campaignId: SQLWrapper;
+  createdAt: SQLWrapper;
+  deletedAt: SQLWrapper;
+  id: SQLWrapper;
+  role: SQLWrapper;
+  userId: SQLWrapper;
+}
+
+/**
+ * A column of a table a subquery names `alias`: a players query renders every column it names as the players table's
+ * own, so a subquery's are named by hand.
+ */
+function aliasedColumn(alias: string, column: PgColumn) {
+  return sql`${sql.identifier(alias)}.${sql.identifier(column.name)}`;
+}
+
+/**
+ * When a slot's user joined: its accepted invite's answer, or the slot's creation for one made with its user (a
+ * campaign's first Game Master); none while it has no user (an empty slot, or one whose user deleted their account).
+ */
+function joinedAt(slot: SlotColumns) {
+  const invite = (column: PgColumn) => aliasedColumn("accepted", column);
+  return sql<string | null>`case when ${slot.userId} is not null then coalesce(
+    (select max(${invite(invitesInCampaign.updatedAt)}) from ${invitesInCampaign} as ${sql.identifier("accepted")}
+      where ${invite(invitesInCampaign.playerId)} = ${slot.id} and ${invite(invitesInCampaign.status)} = 'Accepted'),
+    ${slot.createdAt}
+  ) end`;
+}
+
+/**
+ * Whether a slot is its campaign's only live Game Master, whom the server neither removes nor demotes: an archived one
+ * (its user's account deleted) never is.
+ */
+function lastGameMaster(slot: SlotColumns) {
+  const master = (column: PgColumn) => aliasedColumn("masters", column);
+  return sql<boolean>`${slot.role} = 'Game Master' and ${slot.deletedAt} is null and (
+    select count(*) from ${playersInCampaign} as ${sql.identifier("masters")}
+      where ${master(playersInCampaign.campaignId)} = ${slot.campaignId}
+        and ${master(playersInCampaign.role)} = 'Game Master' and ${master(playersInCampaign.deletedAt)} is null
+  ) = 1`;
+}
 
 class PlayersRepository extends include(BaseRepository<typeof playersInCampaign>, Paginates, Searches) {
   constructor() {
@@ -104,6 +149,10 @@ class PlayersRepository extends include(BaseRepository<typeof playersInCampaign>
             this.visibility(visibility),
             searchCondition,
           ]),
+          extras: (players) => ({
+            joinedAt: joinedAt(players).as("joined_at"),
+            isLastGameMaster: lastGameMaster(players).as("is_last_game_master"),
+          }),
           with: {
             usersInAccount: {
               columns: {

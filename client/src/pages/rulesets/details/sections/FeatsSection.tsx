@@ -66,17 +66,18 @@ interface GroupedRowProps {
   /** Opens a feat's page: the row's own, or one of its variants'. */
   onRowClick: (feat: Pick<Feat, "id">) => void;
   /** Warms a feat's page, as it's about to be opened (`useRowPrefetch`). */
-  onRowMouseEnter: (feat: Pick<Feat, "id">) => void;
+  onRowPrefetch: (feat: Pick<Feat, "id">) => void;
   onToggleFamily: (family: string) => void;
   row: GroupedFeatRow;
   rulesetId: string;
 }
 
-type Feat = FeatsPaginated["items"][number];
-type FeatsPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["feats"]["$get"], 200>;
+type Feat = InferResponseType<(typeof rpc.api.rulesets)[":id"]["feats"]["$get"], 200>["items"][number];
 
-type GroupedFeatRow = GroupedPaginated["items"][number];
-type GroupedPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["feats"]["grouped"]["$get"], 200>;
+type GroupedFeatRow = InferResponseType<
+  (typeof rpc.api.rulesets)[":id"]["feats"]["grouped"]["$get"],
+  200
+>["items"][number];
 
 const FEATS_COLUMNS = [
   { key: "name", label: "Name", width: "25%" },
@@ -102,10 +103,10 @@ function GroupedRow({
   animationOffset,
   onToggleFamily,
   onRowClick,
-  onRowMouseEnter,
+  onRowPrefetch,
 }: GroupedRowProps) {
   const variantQuery = useInfiniteQuery({ ...featFamilyQuery(rulesetId, family, childOnly), enabled: isExpanded });
-  const prefetchProps = useRowPrefetch(onRowMouseEnter);
+  const prefetchProps = useRowPrefetch(onRowPrefetch);
 
   const variants = pageItems(variantQuery.data);
 
@@ -143,25 +144,22 @@ function GroupedRow({
           </TableRow>
         )}
         {isExpanded &&
-          variants.map((feat, i) => {
-            const previousItemCount = itemsBeforeLastPage(variantQuery.data);
-            const isNew = i >= previousItemCount;
-            return (
-              <TableRow
-                key={feat.id}
-                {...clickableProps(() => onRowClick(feat))}
-                {...prefetchProps(feat)}
-                sx={[CLICKABLE_ROW_SX, isNew && fadeInUpSx(i - previousItemCount)]}
-              >
-                <TableCell sx={{ pl: 6 }}>
-                  <Typography variant="body2">{feat.name}</Typography>
-                </TableCell>
-                <TableCell>
-                  <DescriptionCell text={feat.description} />
-                </TableCell>
-              </TableRow>
-            );
-          })}
+          variants.map((feat, i) => (
+            <TableRow
+              key={feat.id}
+              {...clickableProps(() => onRowClick(feat))}
+              {...prefetchProps(feat)}
+              // The page that came in staggers in, as a paged table's rows do
+              sx={[CLICKABLE_ROW_SX, fadeInUpSx(i, itemsBeforeLastPage(variantQuery.data))]}
+            >
+              <TableCell sx={{ pl: 6 }}>
+                <Typography variant="body2">{feat.name}</Typography>
+              </TableCell>
+              <TableCell>
+                <DescriptionCell text={feat.description} />
+              </TableCell>
+            </TableRow>
+          ))}
         {isExpanded && variantQuery.hasNextPage && (
           <TableRow>
             <TableCell colSpan={2} sx={{ pl: 6 }}>
@@ -235,7 +233,7 @@ export function FeatsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
     openEntity(buildCustomizationPath("feats", feat.id));
   };
 
-  const handleRowMouseEnter = (feat: Pick<Feat, "id">) => {
+  const handleRowPrefetch = (feat: Pick<Feat, "id">) => {
     void queryClient.prefetchQuery(customizationEntityQuery(ruleset.id, "feats", feat.id));
   };
 
@@ -320,7 +318,7 @@ export function FeatsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
                         animationOffset={groupedList.offset}
                         onToggleFamily={toggleFamily}
                         onRowClick={handleRowClick}
-                        onRowMouseEnter={handleRowMouseEnter}
+                        onRowPrefetch={handleRowPrefetch}
                       />
                     );
                   })}
@@ -339,11 +337,9 @@ export function FeatsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
               isLoading={flatQuery.isLoading}
               columns={FEATS_COLUMNS}
               onRowClick={handleRowClick}
-              onRowMouseEnter={handleRowMouseEnter}
+              onRowPrefetch={handleRowPrefetch}
               renderCell={renderCell}
-              emptyIcon={FeatsIcon}
-              emptyTitle={NO_FEATS.title}
-              emptyDescription={NO_FEATS.description}
+              empty={<BlankState icon={FeatsIcon} title={NO_FEATS.title} description={NO_FEATS.description} />}
             />
             <LoadMoreButton
               hasNextPage={flatQuery.hasNextPage}

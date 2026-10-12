@@ -38,7 +38,7 @@ export function RemoveContributorDialog({
       title={isSelfRemoval ? `Leave ${label}` : "Remove Contributor"}
       message={
         isSelfRemoval ? (
-          `Are you sure you want to leave this ${noun}? You will lose access unless you're invited again.`
+          `Are you sure you want to leave this ${noun}? You will no longer be a contributor unless you're invited again.`
         ) : (
           <>
             Are you sure you want to remove <strong>{contributor?.user?.username || contributor?.email}</strong> as a

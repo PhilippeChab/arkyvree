@@ -6,7 +6,7 @@ import { TEST_USERS } from "@/tests/fixtures/auth.fixture.ts";
 // A successful sign-up is the start of the new-account journeys (journeys/accounts.e2e.ts).
 test.describe("Sign Up", () => {
   for (const [what, email, password, confirmation, errors] of [
-    ["nothing", "", "", "", ["Email is required", "Password is required"]],
+    ["nothing", "", "", "", ["Email address is required", "Password is required"]],
     ["an invalid email", "not-an-email", "password1234", "password1234", ["Enter a valid email address"]],
     ["a short password", "newuser@example.com", "12345", "12345", ["Password must be at least 12 characters"]],
     ["passwords that differ", "newuser@example.com", "password1234", "different123", ["Passwords do not match"]],

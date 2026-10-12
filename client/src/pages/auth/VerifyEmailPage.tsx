@@ -3,11 +3,13 @@ import { Link, Navigate, useLocation } from "react-router-dom";
 
 import {
   AuthPage,
+  authPagePath,
   authPageState,
   CodeSentMessage,
   EMPTY_VERIFICATION_CODE,
   isCodeComplete,
   ResendCodeLink,
+  useAuthRedirect,
   useCodeMessages,
   VerificationCodeField,
   type VerificationCodeFormData,
@@ -23,6 +25,9 @@ export default function VerifyEmailPage() {
   const pendingVerificationEmail = useAuthStore((s) => s.pendingVerificationEmail);
   const location = useLocation();
   const fromSignIn = authPageState(location.state).from === "sign-in";
+  const redirect = useAuthRedirect();
+  // Back where it came from, with where the user was going
+  const backPath = authPagePath(fromSignIn ? "/sign-in" : "/sign-up", redirect);
   const auth = useAuthRequests();
 
   const form = useFormWith<VerificationCodeFormData>({ digits: EMPTY_VERIFICATION_CODE });
@@ -32,7 +37,7 @@ export default function VerifyEmailPage() {
     auth.resendVerification.mutate(pendingVerificationEmail ?? "", callbacks),
   );
 
-  if (!pendingVerificationEmail) return <Navigate to={fromSignIn ? "/sign-in" : "/sign-up"} replace />;
+  if (!pendingVerificationEmail) return <Navigate to={backPath} replace />;
 
   const handleVerify = (data: VerificationCodeFormData) => {
     setError(null);
@@ -60,7 +65,7 @@ export default function VerifyEmailPage() {
         <Stack spacing={1} sx={{ textAlign: "center" }}>
           <ResendCodeLink onResend={handleResend} disabled={auth.pending} />
           <Typography variant="body2">
-            <MuiLink component={Link} to={fromSignIn ? "/sign-in" : "/sign-up"} underline="hover">
+            <MuiLink component={Link} to={backPath} underline="hover">
               {fromSignIn ? "Back to Sign In" : "Back to Sign Up"}
             </MuiLink>
           </Typography>

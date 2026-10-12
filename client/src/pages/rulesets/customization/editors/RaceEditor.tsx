@@ -1,6 +1,5 @@
 import { parseResponse } from "hono/client";
 
-import { useFormSync, useFormWith } from "@/client/src/hooks/index.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import {
   EMPTY_RACE,
@@ -11,7 +10,7 @@ import {
 import { EntityDetailsCard } from "@/client/src/pages/rulesets/components/index.ts";
 import type { Race } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
 import type { EntityField } from "@/client/src/pages/rulesets/details/rulesetQueries.ts";
-import { useEntityFields, useEntitySave } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { useEntityFields, useEntityForm } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
 import type { EditorProps } from "./renderEditor.tsx";
@@ -36,13 +35,16 @@ export function RaceEditor({
   followCopy,
   refetchSaved,
 }: EditorProps<Race>) {
-  const form = useFormWith<RaceFormData>(EMPTY_RACE);
   const { fields } = useEntityFields(rulesetId, "races");
-  const sync = useFormSync(form, toRaceForm(race, fields), { key: recordKey, adoptKey, updatedAt: race.updatedAt });
-  const saveMutation = useEntitySave({
+  const { form, save } = useEntityForm({
+    empty: EMPTY_RACE,
+    values: toRaceForm(race, fields),
+    formKey: recordKey,
+    adoptKey,
+    updatedAt: race.updatedAt,
+    locked,
     rulesetId,
     entityId,
-    sync,
     followCopy,
     storeSaved: refetchSaved,
     listKey: QUERY_KEYS.rulesets.section(rulesetId, "races"),
@@ -61,9 +63,7 @@ export function RaceEditor({
       title="Race Details"
       form={{
         fields: <RaceFormFields form={form} rulesetId={rulesetId} />,
-        onSubmit: sync.handleSubmit((data) => saveMutation.mutate(data)),
-        canSave: sync.isDirty && !locked,
-        isSaving: saveMutation.isPending,
+        ...save,
       }}
     />
   );

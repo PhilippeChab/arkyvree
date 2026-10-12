@@ -1,6 +1,8 @@
-import type { InferRequestType } from "hono/client";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { type InferRequestType, parseResponse } from "hono/client";
 import { useState } from "react";
 import { Controller, type UseFormReturn } from "react-hook-form";
+import { useNavigate } from "react-router-dom";
 
 import { CreateDialog, DescriptionField, EditDialog, NameField } from "@/client/src/components/common/index.ts";
 import {
@@ -9,17 +11,17 @@ import {
   RulesetPicker,
   useRulesetPickerOptions,
 } from "@/client/src/components/rulesets/index.ts";
+import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
+import { useFormWith } from "@/client/src/hooks/index.ts";
+import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { requiredRules } from "@/client/src/lib/validation.ts";
-import type { rpc } from "@/client/src/services/rpc.ts";
+import { rpc } from "@/client/src/services/rpc.ts";
 
 interface CreateCampaignDialogProps {
-  form: UseFormReturn<CreateCampaignFormData>;
   onClose: () => void;
-  /** It has faded out: its opener lets it go, so the next opening's picker starts clean. */
+  /** It has faded out: its opener lets it go, so the next opening starts clean. */
   onExited: () => void;
-  onSubmit: (data: CreateCampaignFormData) => void;
   open: boolean;
-  pending: boolean;
 }
 
 interface EditCampaignDialogProps {
@@ -30,14 +32,33 @@ interface EditCampaignDialogProps {
   pending: boolean;
 }
 
-export type CreateCampaignFormData = InferRequestType<(typeof rpc.api.campaigns)["$post"]>["json"];
+type CreateCampaignFormData = InferRequestType<(typeof rpc.api.campaigns)["$post"]>["json"];
 
 export type EditCampaignFormData = InferRequestType<(typeof rpc.api.campaigns)[":id"]["$put"]>["json"];
 
-/** A new campaign's name, ruleset and description; mounted while it's open, the ruleset's search and pick its own. */
-export function CreateCampaignDialog({ open, onClose, onExited, form, onSubmit, pending }: CreateCampaignDialogProps) {
+/**
+ * A new campaign's name, ruleset and description, and its create, which opens the campaign; mounted while it's open,
+ * its form, the ruleset's search and pick its own.
+ */
+export function CreateCampaignDialog({ open, onClose, onExited }: CreateCampaignDialogProps) {
+  const queryClient = useQueryClient();
+  const snackbar = useSnackbar();
+  const navigate = useNavigate();
+  const form = useFormWith<CreateCampaignFormData>({ name: "", description: "", rulesetId: "" });
   const rulesetOptions = useRulesetPickerOptions("campaign", open);
   const [selectedRuleset, setSelectedRuleset] = useState<RulesetOption | null>(null);
+
+  const createMutation = useMutation({
+    mutationFn: (data: CreateCampaignFormData) => parseResponse(rpc.api.campaigns.$post({ json: data })),
+    onSuccess: (data) => {
+      snackbar.success("Campaign created");
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.campaigns.lists });
+      onClose();
+      navigate(`/campaigns/${data.campaign.id}`);
+    },
+    onError: (error) => snackbar.error(error, "Failed to create campaign"),
+  });
+  const pending = createMutation.isPending;
 
   return (
     <CreateDialog
@@ -45,7 +66,7 @@ export function CreateCampaignDialog({ open, onClose, onExited, form, onSubmit, 
       onClose={onClose}
       title="Create New Campaign"
       form={form}
-      onSubmit={onSubmit}
+      onSubmit={(data) => createMutation.mutate(data)}
       pending={pending}
       onExited={onExited}
     >

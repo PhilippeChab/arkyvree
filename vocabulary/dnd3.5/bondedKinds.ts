@@ -2,7 +2,7 @@ export type BondedKind = (typeof BONDED_KINDS)[number]["slug"];
 
 /**
  * The creatures a character can be bonded to. `className` is the seeded class a bonded creature levels in, kept apart
- * from `label` so renaming one in the UI ("Special Mount" → "Mount") doesn't break the reconciler's class lookup.
+ * from `label` so renaming one in the UI ("Special Mount" → "Mount") doesn't break `BondedPlans`' class lookup.
  */
 export const BONDED_KINDS = [
   { slug: "familiar", label: "Familiar", className: "Familiar" },

@@ -79,6 +79,7 @@ export function LevelWizardDialog<N extends string, W extends WizardControls<N>>
         <DialogTitle>{title}</DialogTitle>
         <Stack component={DialogContent} sx={{ height: "100%", overflow: "hidden" }}>
           <ValidationIssuesAlert
+            baseRules={baseRules}
             issues={wizard.issues}
             title="Validation Warnings"
             onClose={() => wizard.setIssues([])}
@@ -148,7 +149,7 @@ export function LevelWizardDialog<N extends string, W extends WizardControls<N>>
         onConfirm={wizard.handleConfirmCancel}
         pending={isSaving}
         title="Discard Progress"
-        message="Are you sure you want to discard all level-up progress? The choices made in this wizard are lost."
+        message="Are you sure you want to discard your progress? The choices made in this wizard are lost."
         confirmLabel="Discard Progress"
         intent="destructive"
       />

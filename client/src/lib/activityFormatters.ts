@@ -5,6 +5,7 @@ import { formatSegment } from "@/shared/customization/target.ts";
 import { BASE_RULES_OPTIONS } from "@/shared/enums.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 
+import { formatCost, formatDie } from "./formatNumeric.ts";
 import { oneOf } from "./oneOf.ts";
 import { entityTypeLabel, entityTypeOfCode, getActivityLabelOverrides } from "./rulesetLabels.ts";
 
@@ -13,35 +14,39 @@ const CONTENT_CHANGES: Record<string, string> = { create: "created", delete: "de
 
 /** The changed fields whose name doesn't read as their label (`formatSegment`'s "Hd") */
 const FIELD_LABELS: Record<string, string> = {
-  abilityId: "Ability",
-  costGp: "Cost (gp)",
+  costGp: "Cost",
   hd: "Hit Die",
-  primaryAbilityId: "Primary Ability",
-  saveId: "Save",
+};
+
+/** The changed fields whose values read in their own format, as a page writes them ("d8", "15.00 gp"), by field. */
+const FIELD_VALUES: Record<string, (value: string) => string | null> = {
+  costGp: formatCost,
+  hd: (value) => formatDie(Number(value)),
 };
 
 const NOTIFICATION_MESSAGES: Record<string, (actor: string, d: Record<string, unknown>) => string> = {
   // Campaign invites
   createCampaignInvite: (actor, d) => `${actor} invited you to ${d.campaignName || "a campaign"}`,
   acceptCampaignInvite: (actor) => `${actor} accepted your campaign invite`,
-  rejectCampaignInvite: (actor) => `${actor} declined your campaign invite`,
-  revokeCampaignInvite: (actor) => `${actor} revoked your campaign invite`,
+  rejectCampaignInvite: (actor) => `${actor} rejected your campaign invite`,
 
   // Contributor invites
   inviteContributor: (actor, d) =>
     `${actor} invited you to contribute to ${d.rulesetName || "a ruleset"} as ${d.role || "Editor"}`,
   acceptContributorInvite: (actor) => `${actor} accepted your contributor invite`,
-  rejectContributorInvite: (actor) => `${actor} declined your contributor invite`,
-  revokeContributor: (actor) => `${actor} revoked your contributor access`,
+  rejectContributorInvite: (actor) => `${actor} rejected your contributor invite`,
+  // An older one carries no ruleset's name
+  revokeContributor: (actor, d) =>
+    d.rulesetName ? `${actor} revoked your access to ${d.rulesetName}` : `${actor} revoked your contributor access`,
   updateContributorRole: (actor, d) => `${actor} changed your role to ${d.role || "Editor"}`,
-  leaveRuleset: (actor) => `${actor} left your ruleset`,
+  leaveRuleset: (actor) => `${actor} stopped contributing to your ruleset`,
 
   // Character contributor invites
   inviteCharacterContributor: (actor, d) => `${actor} invited you to edit ${d.characterName || "a character"}`,
   acceptCharacterContributorInvite: (actor, d) =>
     `${actor} accepted your invite to edit ${d.characterName || "your character"}`,
   rejectCharacterContributorInvite: (actor, d) =>
-    `${actor} declined your invite to edit ${d.characterName || "your character"}`,
+    `${actor} rejected your invite to edit ${d.characterName || "your character"}`,
   revokeCharacterContributor: (actor, d) => `${actor} revoked your access to ${d.characterName || "a character"}`,
   leaveCharacter: (actor, d) => `${actor} stopped contributing to ${d.characterName || "your character"}`,
 
@@ -70,6 +75,9 @@ const NOTIFICATION_MESSAGES: Record<string, (actor: string, d: Record<string, un
   pdfFailed: (_actor, d) => `PDF generation failed for ${d.characterName || "your character"}`,
 };
 
+/** A field that points to another entity by its id (`primaryAbilityId`, `sourceItemId`): its name, then "Id". */
+const REFERENCE_FIELD = /^(\w+)Id$/;
+
 /** The base rules an activity's ruleset follows, when it says */
 function baseRulesOf(d: Record<string, unknown>) {
   return oneOf(d.baseRules, BASE_RULES_OPTIONS);
@@ -88,12 +96,17 @@ function contentChange(type: string, actor: string, d: Record<string, unknown>) 
 }
 
 function formatChange(change: ChangedField): string {
+  // An entity a field points to is recorded by its id, which says nothing to a reader: only that it changed
+  const reference = REFERENCE_FIELD.exec(change.field)?.[1];
+  if (reference) return `${formatSegment(reference)} updated`;
+
   const label = FIELD_LABELS[change.field] ?? formatSegment(change.field);
   if (change.from == null && change.to == null) return `${label} updated`;
 
-  if (change.from && change.to) return `${label}: ${change.from} → ${change.to}`;
+  const shown = (value: string) => FIELD_VALUES[change.field]?.(value) ?? value;
+  if (change.from && change.to) return `${label}: ${shown(change.from)} → ${shown(change.to)}`;
 
-  if (change.to) return `${label} set to ${change.to}`;
+  if (change.to) return `${label} set to ${shown(change.to)}`;
 
   return `${label} cleared`;
 }

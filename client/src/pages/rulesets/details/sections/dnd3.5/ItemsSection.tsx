@@ -3,6 +3,7 @@ import { keepPreviousData, useInfiniteQuery, useMutation, useQueryClient } from 
 import { type InferResponseType, parseResponse } from "hono/client";
 
 import {
+  BlankState,
   CreateDialog,
   EmptyValue,
   LoadMoreButton,
@@ -36,8 +37,7 @@ import { buildCustomizationPath } from "@/shared/customization/entities.ts";
 import { type BulkVariantsFormValues, type VariantRow, variantRow } from "./bulkVariants.ts";
 import { BulkVariantsDialog } from "./BulkVariantsDialog.tsx";
 
-type Item = ItemsPaginated["items"][number];
-type ItemsPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["items"]["$get"], 200>;
+type Item = InferResponseType<(typeof rpc.api.rulesets)[":id"]["items"]["$get"], 200>["items"][number];
 
 const ITEMS_COLUMNS = [
   { key: "name", label: "Name", width: "25%" },
@@ -121,7 +121,7 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
       ),
     onSuccess: (data) => {
       const count = data.length;
-      snackbar.success(`Created ${formatCount(count, "variant")}`);
+      snackbar.success(`${formatCount(count, "variant")} created`);
       bulkDialog.close();
       invalidateRulesetEdit(queryClient, ruleset.id, [QUERY_KEYS.rulesets.section(ruleset.id, "items")]);
     },
@@ -130,7 +130,7 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
     },
   });
 
-  const handleRowMouseEnter = (item: Item) => {
+  const handleRowPrefetch = (item: Item) => {
     void queryClient.prefetchQuery(customizationEntityQuery(ruleset.id, "items", item.id));
   };
 
@@ -147,7 +147,7 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
             </Typography>
           );
         }
-        return null;
+        return <EmptyValue />;
       case "type":
         return (
           <Typography variant="body2" sx={{ color: "text.secondary" }}>
@@ -197,11 +197,9 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
               bulkDialog.openWith(item);
             }}
             onRowClick={handleRowClick}
-            onRowMouseEnter={handleRowMouseEnter}
+            onRowPrefetch={handleRowPrefetch}
             renderCell={renderCell}
-            emptyIcon={ItemsIcon}
-            emptyTitle="No items"
-            emptyDescription="No items available for this ruleset."
+            empty={<BlankState icon={ItemsIcon} title="No items" description="No items available for this ruleset." />}
           />
           <LoadMoreButton
             hasNextPage={hasNextPage}

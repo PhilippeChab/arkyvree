@@ -361,7 +361,7 @@ describe("component rules", () => {
     ]);
   });
 
-  test("a page's first load is a PageLoader, and any other spinner takes a section's spacing alone", async () => {
+  test("a page's first load is a PageLoader, and any other spinner takes a section's spacing alone, or a small one a line's", async () => {
     const page = "export const p = <DiceSpinner sx={{ py: { xs: 4, sm: 8 } }} />;\n";
     const large = 'export const l = <DiceSpinner size="large" />;\n';
     expect(
@@ -374,6 +374,9 @@ describe("component rules", () => {
           "client/src/centred.tsx": "export const c = <DiceSpinner sx={{ flex: 1 }} />;\n",
           "client/src/deeper.tsx": "export const d = <DiceSpinner sx={{ py: 8 }} />;\n",
           "client/src/plain.tsx": "export const n = <DiceSpinner />;\n",
+          "client/src/line.tsx": 'export const l = <DiceSpinner size="small" sx={{ py: 1.5 }} />;\n',
+          "client/src/small-section.tsx": 'export const s = <DiceSpinner size="small" sx={{ py: 4 }} />;\n',
+          "client/src/icon.tsx": 'export const i = <DiceSpinner size="small" />;\n',
           "client/src/components/common/PageLoader.tsx": page,
           "client/src/components/characters/CharacterDetailSkeleton.tsx": large,
         },
@@ -384,6 +387,7 @@ describe("component rules", () => {
       "page-loaders client/src/deeper.tsx",
       "page-loaders client/src/large.tsx",
       "page-loaders client/src/page.tsx",
+      "page-loaders client/src/small-section.tsx",
       "page-loaders client/src/tall.tsx",
     ]);
   });
@@ -507,7 +511,7 @@ describe("component rules", () => {
     ]);
   });
 
-  test("a list's actions sit in its toolbar, the list 24px under it and its Load More 16px under the list", async () => {
+  test("a list's actions sit in its toolbar (a dialog's across from its lead), the list 24px under it and its Load More 16px under the list", async () => {
     const more = "<LoadMoreButton hasNextPage={more} isFetchingNextPage={fetching} onClick={next} />";
     expect(
       await lintRepo(
@@ -521,14 +525,25 @@ describe("component rules", () => {
             'export const b = <Stack direction="row" sx={{ justifyContent: "flex-end" }}><AddButton label="Add" /></Stack>;\n',
           "client/src/save.tsx":
             'export const s = <Stack direction="row" sx={{ justifyContent: "flex-end" }}><Button>Save</Button></Stack>;\n',
+          "client/src/lead.tsx":
+            'export const l = <Stack direction="row" sx={{ justifyContent: "space-between" }}><DialogContentText>Lead</DialogContentText><AddButton label="Add" /></Stack>;\n',
           "client/src/bar.tsx": 'export const a = <ListToolbar actions={<AddButton label="Add" onClick={add} />} />;\n',
+          "client/src/dialog-bar.tsx":
+            'export const d = <DialogContent><Stack spacing={3}><ListToolbar actions={<AddButton label="Add" />} /><Table /></Stack></DialogContent>;\n',
+          "client/src/dialog-lead.tsx":
+            'export const d = <DialogContent><Stack spacing={3}><DialogLead actions={<AddButton label="Add" />}>Lead</DialogLead><Table /></Stack></DialogContent>;\n',
+          "client/src/dialog-close.tsx":
+            "export const d = <Stack spacing={2}><DialogLead>Lead</DialogLead><Table /></Stack>;\n",
         },
         ["list-toolbars"],
       ),
     ).toEqual([
       "list-toolbars client/src/bare.tsx",
       "list-toolbars client/src/close.tsx",
+      "list-toolbars client/src/dialog-bar.tsx",
+      "list-toolbars client/src/dialog-close.tsx",
       "list-toolbars client/src/far.tsx",
+      "list-toolbars client/src/lead.tsx",
     ]);
   });
 
@@ -691,11 +706,12 @@ describe("component rules", () => {
     ]);
   });
 
-  test("a ruleset entity page saves through useEntitySave and deletes through its layout", async () => {
+  test("a ruleset entity page's details are useEntityForm's, saved through useEntitySave, and deletes through its layout", async () => {
     const page =
       "export const p = <EntityDetailLayout backTo={back} deletion={deletion}>{card}</EntityDetailLayout>;\n";
     const dialog = "export const d = <EntityDeleteDialog open={open} what={what} restorable={restorable} />;\n";
     const saved = "export const s = () => sync.saved(values, saved.updatedAt);\n";
+    const save = "export const v = () => useEntitySave({ ...options, sync });\n";
     expect(
       await lintRepo(
         {
@@ -705,6 +721,8 @@ describe("component rules", () => {
           "client/src/pages/rulesets/Editor.tsx": saved,
           "client/src/pages/profile/ProfilePage.tsx": saved,
           "client/src/pages/rulesets/hooks/useEntitySave.ts": saved,
+          "client/src/pages/rulesets/hooks/useEntityForm.ts": save,
+          "client/src/pages/rulesets/OwnSave.tsx": save,
           "client/src/pages/rulesets/components/EntityDetailLayout.tsx": page + dialog,
         },
         ["entity-pages"],
@@ -712,6 +730,7 @@ describe("component rules", () => {
     ).toEqual([
       "entity-pages client/src/pages/rulesets/Editor.tsx",
       "entity-pages client/src/pages/rulesets/OwnDelete.tsx",
+      "entity-pages client/src/pages/rulesets/OwnSave.tsx",
     ]);
   });
 

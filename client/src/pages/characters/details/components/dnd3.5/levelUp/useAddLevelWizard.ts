@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 
 import {
+  type LevelPreview,
   useAddLevelPlan,
   useAddLevelWizardBase,
 } from "@/client/src/pages/characters/details/components/levelUp/index.ts";
@@ -20,6 +21,16 @@ interface UseAddLevelWizardParams {
 export type AddLevelWizard = ReturnType<typeof useAddLevelWizard>;
 
 /**
+ * The character's abilities with the plan's increases, and whether they're picked, at levels that take one (`taken`):
+ * none to pick otherwise.
+ */
+function abilityChoices({ attributes, picked }: LevelPreview["attributes"], taken: boolean) {
+  return taken
+    ? { isAvailable: true as const, attributes, picked }
+    : { isAvailable: false as const, attributes: {}, picked };
+}
+
+/**
  * 3.5's Add Level, on the generic wizard: its plan, what 3.5's preview answers of it (`previewAnswers`), and what its
  * steps read of the preview, its feat and spell options among them.
  */
@@ -35,23 +46,18 @@ export function useAddLevelWizard({ open, onClose, characterId, klassId }: UseAd
   const pickOptions = usePickOptions({ characterId, open, wizard });
 
   // The character's abilities with the plan's increases, at the levels that take one, and whether they're picked
-  const attributeData = useMemo(() => {
-    if (!preview) return undefined;
-    const { attributes, picked } = preview.attributes;
-    if (answers.abilityIncreaseLevels.length === 0) return { isAvailable: false as const, attributes: {}, picked };
-    return { isAvailable: true as const, attributes, picked };
-  }, [preview, answers.abilityIncreaseLevels]);
+  const abilityData = preview && abilityChoices(preview.attributes, answers.abilityIncreaseLevels.length > 0);
 
   // Each step reads the preview, which loads its answers together
   return {
     ...wizard,
     ...pickOptions,
     abilityIncreaseLevels: answers.abilityIncreaseLevels,
-    attributeData,
-    attributesError: error,
+    abilityData,
+    abilitiesError: error,
     featData: preview?.feats ?? null,
     featsError: error,
-    isLoadingAttributes: isLoading,
+    isLoadingAbilities: isLoading,
     isLoadingFeats: isLoading,
     isLoadingPowers: isLoading,
     isLoadingSkills: isLoading,

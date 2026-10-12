@@ -98,7 +98,7 @@ Customizations (`Modifiers`, `Requirements`, `Properties`) and `Attachments` nam
 
 Others name their row the same way, and stay when it's deleted, on purpose:
 
-- **`Activities` and `Notifications`** are history, kept until the retention sweep. Opening one whose target is gone resolves to no page (`getActivityUrl`), and the client says the item was deleted.
+- **`Activities` and `Notifications`** are history, kept until the retention sweep. Opening one whose target is gone resolves to no page (`getActivityUrl`), and the client says the item can't be found.
 - **`EntitySnapshots`:** a snapshot whose fork copy is deleted is the tombstone that hides the inherited entity in that fork.
 
 ### A character's last change (`last_changed_at`)

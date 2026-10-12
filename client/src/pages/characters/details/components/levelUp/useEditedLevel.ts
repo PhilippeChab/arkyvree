@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import { useMemo } from "react";
 import { useController } from "react-hook-form";
 
 import type { EditingLevel } from "@/client/src/components/characters/index.ts";
@@ -42,30 +41,27 @@ export function useEditedLevel({ open, characterId, editingLevel }: EditedLevelP
   } = useQuery({ ...characterLevelQuery(characterId, editingLevelId), enabled: open });
 
   // The saved level, as the wizard's picks: the form takes them once it loads
-  const savedPicks = useMemo<LevelUpFormData | undefined>(
-    () =>
-      levelData && {
-        selectedClass: {
-          id: editingLevel.klassId,
-          name: editingLevel.klassName,
-          nextLevel: editingLevel.level,
-          maxLevel: editingLevel.level,
-          hd: editingLevel.hd,
-          eligible: true,
-        },
-        selectedHP: levelData.hp,
-        selectedAttribute: levelData.abilityIncreases[0]?.abilityId ?? null,
-        selectedFeats: levelData.feats,
-        selectedPowers: levelData.powers,
-        skillPointAllocations: levelData.skills,
-      },
-    [levelData, editingLevel],
-  );
+  const savedPicks: LevelUpFormData | undefined = levelData && {
+    selectedClass: {
+      id: editingLevel.klassId,
+      name: editingLevel.klassName,
+      nextLevel: editingLevel.level,
+      maxLevel: editingLevel.level,
+      hd: editingLevel.hd,
+      eligible: true,
+    },
+    selectedHP: levelData.hp,
+    selectedAbility: levelData.abilityIncreases[0]?.abilityId ?? null,
+    selectedFeats: levelData.feats,
+    selectedPowers: levelData.powers,
+    skillPointAllocations: levelData.skills,
+  };
+
   const sync = useFormSync(form, savedPicks, { key: editingLevelId });
 
   const selectedClass = watch("selectedClass");
   const selectedHP = watch("selectedHP");
-  const selectedAttribute = watch("selectedAttribute");
+  const selectedAbility = watch("selectedAbility");
 
   // The HP step's one level, the edited one, its HP the form's field
   const { field: hpField } = useController({ control, name: "selectedHP" });
@@ -88,7 +84,7 @@ export function useEditedLevel({ open, characterId, editingLevel }: EditedLevelP
     editedLevelId: editingLevelId,
   };
   // The edited level with its ability increase, which its skill points, its slots and its pickers' options read
-  const increasedStep: StepLevel = { ...step, abilityId: selectedAttribute ?? undefined };
+  const increasedStep: StepLevel = { ...step, abilityId: selectedAbility ?? undefined };
   // The level with its feats and spells, which the steps that fit them to their pools take
   const pickedStep: StepLevel = {
     ...increasedStep,
@@ -107,7 +103,7 @@ export function useEditedLevel({ open, characterId, editingLevel }: EditedLevelP
     levelData,
     levelError,
     pickedStep,
-    selectedAttribute,
+    selectedAbility,
     selectedClass,
     selectedHP,
     step,

@@ -25,7 +25,7 @@ export function useFittedPicks({ picked, selectedAptitude }: PickedSoFar, answer
   const { featPools, fittedFeats, fittedPowers, skills } = answers;
   const selectedFeats = useMemo(() => keepFitted(picked.feats, fittedFeats), [picked.feats, fittedFeats]);
   const selectedPowers = useMemo(() => keepFitted(picked.powers, fittedPowers), [picked.powers, fittedPowers]);
-  const skillPointAllocations = useMemo(() => fitSkillPoints(picked.skillPoints, skills), [picked.skillPoints, skills]);
+  const skillPointAllocations = fitSkillPoints(picked.skillPoints, skills);
   const featPicks = useMemo(() => pickerPairString(selectedFeats), [selectedFeats]);
   const powerPicks = useMemo(() => pickerPairString(selectedPowers), [selectedPowers]);
   return {

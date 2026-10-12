@@ -1,6 +1,5 @@
 import { parseResponse } from "hono/client";
 
-import { useFormSync, useFormWith } from "@/client/src/hooks/index.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import {
   allLevelSaves,
@@ -9,6 +8,7 @@ import {
   featKey,
   type LevelFeat,
   levelFeatLabel,
+  sortLevelFeats,
 } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
 import { EntityFields, withEntityFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { EntityDetailsCard } from "@/client/src/pages/rulesets/components/index.ts";
@@ -16,7 +16,7 @@ import type { EditorProps } from "@/client/src/pages/rulesets/customization/edit
 import type { ClassLevel } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
 import type { ClassLevelFormData } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 import type { EntityField } from "@/client/src/pages/rulesets/details/rulesetQueries.ts";
-import { useEntityFields, useEntitySave, useRulesetSaves } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { useEntityFields, useEntityForm, useRulesetSaves } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
 type LevelFeatRow = ClassLevel["feats"][number];
@@ -28,16 +28,11 @@ function featLabel(feat: LevelFeatRow) {
   return levelFeatLabel(feat.name, feat.aptitudeName);
 }
 
-/** Feats in the form's (label) order, like ClassLevelFields keeps them. */
-function sortedFeats(level: ClassLevel) {
-  return [...level.feats].sort((a, b) => featLabel(a).localeCompare(featLabel(b)));
-}
-
 function toClassLevelForm(level: ClassLevel, fields: readonly EntityField[] | undefined): ClassLevelFormData {
   const values: ClassLevelFormData = {
     level: level.level,
     saves: level.saves.map(({ saveId, base }) => ({ saveId, base })),
-    feats: sortedFeats(level).map(asLevelFeat),
+    feats: sortLevelFeats(level.feats, featLabel).map(asLevelFeat),
   };
   return withEntityFields(values, fields, level);
 }
@@ -52,18 +47,17 @@ export function ClassLevelEditor({
   followCopy,
   refetchSaved,
 }: EditorProps<ClassLevel>) {
-  const form = useFormWith<ClassLevelFormData>(EMPTY_CLASS_LEVEL);
   const { fields } = useEntityFields(rulesetId, "klass_levels");
-  const sync = useFormSync(form, toClassLevelForm(level, fields), {
-    key: recordKey,
+  const { data: rulesetSaves, error: savesError } = useRulesetSaves(rulesetId);
+  const { form, save } = useEntityForm({
+    empty: EMPTY_CLASS_LEVEL,
+    values: toClassLevelForm(level, fields),
+    formKey: recordKey,
     adoptKey,
     updatedAt: level.updatedAt,
-  });
-  const { data: rulesetSaves, error: savesError } = useRulesetSaves(rulesetId);
-  const saveMutation = useEntitySave({
+    locked,
     rulesetId,
     entityId,
-    sync,
     followCopy,
     storeSaved: refetchSaved,
     listKey: QUERY_KEYS.rulesets.classLevels(rulesetId, level.klassId),
@@ -98,9 +92,7 @@ export function ClassLevelEditor({
             />
           </>
         ),
-        onSubmit: sync.handleSubmit((data) => saveMutation.mutate(data)),
-        canSave: sync.isDirty && !locked,
-        isSaving: saveMutation.isPending,
+        ...save,
       }}
     />
   );

@@ -17,7 +17,7 @@ export function useRestorableDelete(
   const { canEditEntities } = useRulesetPermissions(ruleset);
   const inherits = !!ruleset?.rulesetId;
   const { data: changes, error } = useQuery({
-    ...rulesetChangesQuery(ruleset?.id ?? ""),
+    ...rulesetChangesQuery(ruleset?.id),
     // Only an editor deletes, and only what a ruleset inherits comes back
     enabled: canEditEntities && inherits,
   });

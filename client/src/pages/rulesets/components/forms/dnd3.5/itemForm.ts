@@ -20,17 +20,8 @@ export type ItemFormData = Omit<ItemBody, "costGp" | "slot" | "sourceItemId" | "
   weight?: string;
 };
 
-/** The types an item's form offers. */
-export const ITEM_TYPE_OPTIONS = [
-  "Weapon",
-  "Armor",
-  "Shield",
-  "Wondrous Item",
-  "Ring",
-  "Rod",
-  "Staff",
-  "Other",
-] as const;
+/** The types an item's form offers: those a template is of, then the others. */
+export const ITEM_TYPE_OPTIONS = [...TEMPLATE_ITEM_TYPES, "Wondrous Item", "Ring", "Rod", "Staff", "Other"] as const;
 
 /** A decimal field's number: null for none, which clears it. */
 function parseNumericField(value: string | undefined): number | null {

@@ -54,17 +54,8 @@ export function RequirementFormFields({ form, type, onTypeChange, rulesetId, mod
         label="Type"
         options={REQUIREMENT_TYPE_OPTIONS}
         value={type}
-        onChange={(next) => {
-          onTypeChange(next);
-          // Only the chosen type's fields (and their rules) take part in the submit.
-          if (next === "chaining") {
-            form.unregister("target");
-            form.unregister("operator");
-            form.unregister("value");
-          } else {
-            form.unregister("chainingOperator");
-          }
-        }}
+        // Only the chosen type's fields show, so only their rules check the submit, and its save sends them alone
+        onChange={onTypeChange}
       />
 
       {type === "chaining" ? (

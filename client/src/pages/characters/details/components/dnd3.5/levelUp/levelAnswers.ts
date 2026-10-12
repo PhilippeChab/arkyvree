@@ -11,7 +11,7 @@ import type { EditAnswers, PreviewAnswers } from "@/client/src/pages/characters/
 
 /** Edit Level's steps whose answers its picks are fitted by and its Next waits for, each asked at the edited level. */
 interface EditedSteps {
-  abilities: StepQuery<AttributesData>;
+  abilities: StepQuery<AbilitiesData>;
   feats: StepQuery<FeatsData>;
   powers: StepQuery<PowersData>;
   skills: StepQuery<SkillsData>;
@@ -20,16 +20,16 @@ interface EditedSteps {
 /** A step's query, as its answer is read: its data, its first load, and whether the data is for earlier picks. */
 type StepQuery<T> = Pick<UseQueryResult<T>, "data" | "isLoading" | "isPlaceholderData">;
 
+/** Whether a level takes an ability increase, and the character's abilities at it. */
+export type AbilitiesData = StepAnswer<"abilities">;
+
 /** A feat pool of the level's slots. */
 export type AptitudePool = FeatsData["aptitudePools"][string];
-
-/** Whether a level takes an ability increase, and the character's abilities at it. */
-export type AttributesData = StepAnswer<"abilities">;
 
 export type FeatsData = StepAnswer<"feats">;
 
 /** The character's abilities at a level, by name: each with its score and modifier. */
-export type LevelAbilities = AttributesData["attributes"];
+export type LevelAbilities = AbilitiesData["attributes"];
 
 /** A spell pool of the level's slots. */
 export type PowerAptitudePool = PowersData["aptitudePools"][string];

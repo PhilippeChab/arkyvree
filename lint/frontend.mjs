@@ -76,16 +76,17 @@
  *   `MuiLink`; a customization page's path is `buildCustomizationPath(entityType, id)`, never written by hand. A page's
  *   router state is read through its guard (`entityPageState(location.state)`), never a member of `location.state`;
  *   the `?redirect=` an auth page carries along is built by `authPagePath` and read by `useAuthRedirect`
- *   (`components/auth`), nowhere else.
+ *   (`components/auth`), nowhere else, and an auth page (`pages/auth/`) goes to another carrying it: through
+ *   `authPagePath(path, redirect)`, or its router state's `redirect`, never a bare path.
  * - `clickable-elements`: an element that opens or expands on click spreads `clickableProps` (and `CLICKABLE_SX`); a row
  *   that does takes `CLICKABLE_ROW_SX`, whose hover tint says it opens: a table's row spreading `clickableProps` or
  *   `toggleProps` names it in its `sx`, and no row tints itself (MUI's `hover`, an `"&:hover"` of its own).
  * - `tooltips`: a `Tooltip` has no arrow; one around a control that can be disabled wraps it in a `<span>`; one on a
  *   control its own text names takes `describeChild`; its child takes focus, so it opens from the keyboard: never an
  *   icon alone. A tooltip is the `Tooltip`, never the browser's: no `title` on an element that renders it.
- * - `form-fields`: a number field is `FormTextField number`, without a `type`; a field's rules are named
- *   (`lib/validation.ts`), never written in place. A field the viewer can't edit is `readOnly`, never a disabled one
- *   restyled to look editable.
+ * - `form-fields`: a number field is `FormTextField number`, without a `type`; a field of several lines is a
+ *   `TextAreaField`, never a `multiline` field of its own; a field's rules are named (`lib/validation.ts`), never written
+ *   in place. A field the viewer can't edit is `readOnly`, never a disabled one restyled to look editable.
  * - `icons`: an icon comes from `components/icons`, where every icon the app shows is named, never from
  *   `@mui/icons-material`; there, a glyph goes by one name, one meaning per glyph. A control that removes or deletes
  *   (named "Remove …", "Delete …") shows the bin, `DeleteIcon`.
@@ -97,7 +98,7 @@
  *   prop, never through `forwardRef`.
  * - `row-prefetch`: a table's row warms the page it opens through `useRowPrefetch` (`pages/rulesets/hooks`), 150ms
  *   into a hover and at once on focus: never an `onMouseEnter` or an `onFocus` of its own. A ruleset table whose rows
- *   open a page (`onRowClick`) warms it (`onRowMouseEnter`).
+ *   open a page (`onRowClick`) warms it (`onRowPrefetch`).
  * - `pending-props`: a request in flight is `pending`, a dialog's and a button's alike (`pending={mutation.isPending}`):
  *   never `isLoading`, a query's first load (a table's, a page's skeleton), nor `loading`, which a spinner and MUI's
  *   picker say of themselves.
@@ -118,6 +119,12 @@ import {
   texts,
 } from "./jsx.mjs";
 import { repoPath } from "./paths.mjs";
+
+/** The auth pages, which carry the `redirect` that sent the user to sign in from one to another. */
+const AUTH_PAGES = "client/src/pages/auth/";
+
+/** The auth pages' paths. */
+const AUTH_PATHS = new Set(["/forgot-password", "/reset-password", "/sign-in", "/sign-up", "/verify-email"]);
 
 /** The hook that reads an auth page's `?redirect=` back (`useAuthRedirect`). */
 const AUTH_REDIRECT_HOOK = "client/src/components/auth/useAuthRedirect.ts";
@@ -156,6 +163,9 @@ const ERROR_PREDICATES_MODULE = "client/src/lib/errorMessage.ts";
 /** The form writes an effect never makes, but `useFormSync`'s. */
 const FIELD_WRITES = new Set(["setValue", "resetField", "reset"]);
 
+/** The module of the shared form fields, whose `TextAreaField` is the one field of several lines */
+const FORM_FIELDS = "client/src/components/common/FormFields.tsx";
+
 /** The keys a domain's helper invalidates, with what goes with them, which no other module invalidates on its own */
 const HELPER_INVALIDATED_KEYS = new Map([
   ["QUERY_KEYS.characters.detail", { module: "client/src/lib/queries.ts", name: "invalidateCharacter" }],
@@ -182,6 +192,9 @@ const LAYOUT_ELEMENTS = new Set(["Box", "Stack"]);
 
 /** The elements whose `loading` is their own word: MUI's picker ("Loading…" in its list), the spinners it shows */
 const LOADING_OWNERS = new Set(["Autocomplete", "DiceSpinner", "NextPageSpinner"]);
+
+/** The text fields a form's field of several lines would be written with */
+const MULTILINE_FIELDS = new Set(["FormTextField", "TextField"]);
 
 /** A mutation's callbacks, where its writes to the cache go, and an entity save's `storeSaved`, its `onSuccess`'s step */
 const MUTATION_CALLBACKS = new Set(["onError", "onMutate", "onSettled", "onSuccess", "storeSaved"]);
@@ -923,6 +936,18 @@ function createFormFields(context) {
           message: "A number field is `FormTextField number`, which sets its type: never `type` again.",
         });
       }
+      if (
+        MULTILINE_FIELDS.has(elementName(node)) &&
+        hasAttribute(node, "multiline") &&
+        repoPath(context.filename) !== FORM_FIELDS
+      ) {
+        context.report({
+          node: node.openingElement,
+          message:
+            "A field of several lines is a `TextAreaField` (`components/common`): its rows to start, resizable, " +
+            "never a `multiline` field of its own.",
+        });
+      }
     },
     JSXAttribute(node) {
       if (node.name.name !== "rules" || node.value?.type !== "JSXExpressionContainer") return;
@@ -1170,6 +1195,14 @@ function createNavigation(context) {
     Literal(node) {
       if (typeof node.value === "string" && node.value.includes("redirect=") && file !== AUTH_REDIRECT_MODULE)
         reportRedirect(node);
+      if (file.startsWith(AUTH_PAGES) && AUTH_PATHS.has(node.value) && dropsRedirect(node)) {
+        context.report({
+          node,
+          message:
+            "An auth page goes to another carrying the `redirect` that sent the user to sign in: " +
+            "`authPagePath(path, redirect)` (`components/auth`), or a router state naming `redirect`.",
+        });
+      }
     },
     TemplateElement(node) {
       if (node.value.raw.includes("redirect=") && file !== AUTH_REDIRECT_MODULE) reportRedirect(node);
@@ -1450,16 +1483,12 @@ function createRowPrefetch(context) {
   return {
     JSXElement(node) {
       const name = elementName(node);
-      if (
-        name === "RulesetSectionTable" &&
-        hasAttribute(node, "onRowClick") &&
-        !hasAttribute(node, "onRowMouseEnter")
-      ) {
+      if (name === "RulesetSectionTable" && hasAttribute(node, "onRowClick") && !hasAttribute(node, "onRowPrefetch")) {
         context.report({
           node: node.openingElement,
           message:
             "A row that opens a page warms it as it's about to be opened: a table given `onRowClick` takes its " +
-            "`onRowMouseEnter` too.",
+            "`onRowPrefetch` too.",
         });
       }
       if (name !== "TableRow") return;
@@ -1522,6 +1551,28 @@ function createTooltips(context) {
       }
     },
   };
+}
+
+/**
+ * Whether an auth page's path (`node`, a literal, or a branch of a condition) goes somewhere without the `redirect` the
+ * page carries: a link's or a `<Navigate>`'s `to`, or `navigate`'s path without a router state naming `redirect`.
+ */
+function dropsRedirect(node) {
+  let path = node;
+  while (path.parent.type === "ConditionalExpression" && path.parent.test !== path) path = path.parent;
+  const parent = path.parent.type === "JSXExpressionContainer" ? path.parent.parent : path.parent;
+  if (parent.type === "JSXAttribute") return parent.name.name === "to";
+  if (parent.type !== "CallExpression" || calleeName(parent) !== "navigate" || parent.arguments[0] !== path)
+    return false;
+  const options = parent.arguments[1];
+  const state =
+    options?.type === "ObjectExpression" &&
+    options.properties.find((property) => property.type === "Property" && property.key.name === "state");
+  const value = state && (state.value.type === "TSSatisfiesExpression" ? state.value.expression : state.value);
+  return !(
+    value?.type === "ObjectExpression" &&
+    value.properties.some((property) => property.type === "Property" && property.key.name === "redirect")
+  );
 }
 
 /** An element's first child element, text and expressions aside; null when it has none. */

@@ -7,7 +7,8 @@ interface PageHeaderProps {
   subtitle: ReactNode;
   title: string;
   /**
-   * `hero`: solid brand gradient, for account and activity pages.
+   * `hero`: solid brand gradient, for the pages that aren't content lists: the account, the settings, the activity,
+   *   the notifications, the legal page.
    * `tinted`: light wash, for the content lists (rulesets, characters, campaigns).
    */
   variant?: "hero" | "tinted";

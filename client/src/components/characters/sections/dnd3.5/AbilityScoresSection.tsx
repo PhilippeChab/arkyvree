@@ -9,10 +9,11 @@ import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useDialogState } from "@/client/src/hooks/index.ts";
 import { type CharacterDetail, characterDetailQuery, invalidateCharacter } from "@/client/src/lib/queries.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
-import { useSuppressedWarningsStore } from "@/client/src/stores/suppressedWarningsStore.ts";
 import type { BaseRules } from "@/shared/enums.ts";
+import { STARTING_ABILITY_SCORE } from "@/vocabulary/dnd3.5/abilities.ts";
 
 import { AbilityScoreBox } from "./AbilityScoreBox.tsx";
+import { useSuppressedWarningsStore } from "./suppressedWarningsStore.ts";
 
 interface AbilityScoresSectionProps {
   abilities: CharacterDetail["abilities"];
@@ -72,7 +73,7 @@ export function AbilityScoresSection({ abilities, baseRules, characterId, readOn
 
   const handleBaseChange = (abilityId: string, score: number) => {
     const current = Object.values(abilities).find((a) => a.abilityId === abilityId);
-    const currentBase = current?.base ?? 10;
+    const currentBase = current?.base ?? STARTING_ABILITY_SCORE;
 
     if (score > currentBase || !shouldWarn("abilityDecrease")) updateMutation.mutate({ abilityId, score });
     else decreaseDialog.openWith({ abilityId, score });

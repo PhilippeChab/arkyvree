@@ -59,9 +59,10 @@ function CharacterNameEditor({ characterId, updatedAt, parentCharacterId, name, 
       void invalidateCharacterListings(queryClient);
       await invalidateCharacter(queryClient, characterId);
       if (parentCharacterId) await invalidateCharacter(queryClient, parentCharacterId);
+      onDone();
     },
+    // The field stays, with the name typed, to try again or cancel
     onError: (error) => snackbar.error(error, "Failed to rename character"),
-    onSettled: onDone,
   });
   const save = form.handleSubmit(({ name: next }) => {
     const trimmed = next.trim();

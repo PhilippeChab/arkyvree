@@ -3,7 +3,7 @@ import type { InferRequestType } from "hono/client";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
-import { AuthPage } from "@/client/src/components/auth/index.ts";
+import { AuthPage, authPagePath, useAuthRedirect } from "@/client/src/components/auth/index.ts";
 import { EmailField } from "@/client/src/components/common/index.ts";
 import { useAuthRequests, useFormWith, usePageTitle } from "@/client/src/hooks/index.ts";
 import { errorMessage } from "@/client/src/lib/errorMessage.ts";
@@ -18,6 +18,7 @@ export default function ForgotPasswordPage() {
   const auth = useAuthRequests();
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const redirect = useAuthRedirect();
 
   const { control, handleSubmit } = useFormWith<ForgotPasswordFormData>({
     emailAddress: "",
@@ -26,7 +27,7 @@ export default function ForgotPasswordPage() {
   const handleSendCode = (data: ForgotPasswordFormData) => {
     setError(null);
     auth.forgotPassword.mutate(data.emailAddress, {
-      onSuccess: () => navigate("/reset-password"),
+      onSuccess: () => navigate(authPagePath("/reset-password", redirect)),
       onError: (error) => setError(errorMessage(error, "Failed to send reset code")),
     });
   };
@@ -46,7 +47,7 @@ export default function ForgotPasswordPage() {
         </Stack>
         <Box sx={{ textAlign: "center" }}>
           <Typography variant="body2">
-            <MuiLink component={Link} to="/sign-in" underline="hover">
+            <MuiLink component={Link} to={authPagePath("/sign-in", redirect)} underline="hover">
               Back to Sign In
             </MuiLink>
           </Typography>

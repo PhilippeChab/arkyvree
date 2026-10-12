@@ -36,13 +36,13 @@ export interface CampaignListFilters {
   orderBy: NonNullable<CampaignListParams["orderBy"]>;
   orderDir: Direction;
   search: string;
-  view: "active" | "archived";
+  view: (typeof CAMPAIGN_VIEWS)[number];
 }
 export interface CharacterListFilters {
   orderBy: NonNullable<CharacterListParams["orderBy"]>;
   orderDir: Direction;
   search: string;
-  view: "active" | "shared" | "archived";
+  view: (typeof CHARACTER_VIEWS)[number];
 }
 export interface RulesetListFilters {
   orderBy: NonNullable<RulesetListParams["orderBy"]>;
@@ -81,6 +81,9 @@ export const CAMPAIGN_LIST_DEFAULTS = {
   view: "active",
 } as const satisfies CampaignListFilters;
 
+/** The campaigns a list shows: the live ones, or the archived ones. */
+export const CAMPAIGN_VIEWS = ["active", "archived"] as const;
+
 /** How the characters list opens: its page reads them as its URL's defaults, and the sidebar warms its first page. */
 export const CHARACTER_LIST_DEFAULTS = {
   orderBy: "lastChangedAt",
@@ -88,6 +91,9 @@ export const CHARACTER_LIST_DEFAULTS = {
   search: "",
   view: "active",
 } as const satisfies CharacterListFilters;
+
+/** The characters a list shows: the user's own live ones, those shared with them, or their archived ones. */
+export const CHARACTER_VIEWS = ["active", "shared", "archived"] as const;
 
 /** A list page's page: what a page asks for, and what its prefetch warms. */
 export const LIST_PAGE_SIZE = 10;

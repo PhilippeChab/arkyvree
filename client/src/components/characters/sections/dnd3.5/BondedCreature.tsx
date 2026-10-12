@@ -56,7 +56,7 @@ export function BondedCreature({ bonded, baseRules, linkable = false }: BondedCr
 
   return (
     <Stack spacing={2}>
-      <Stack sx={{ minWidth: 0 }}>{nameNode}</Stack>
+      {nameNode}
 
       <Stack direction={{ xs: "column", md: "row" }} spacing={3}>
         <Stack spacing={1} sx={{ flex: "0 0 auto" }}>

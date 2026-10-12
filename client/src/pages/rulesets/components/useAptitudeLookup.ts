@@ -2,11 +2,6 @@ import { useState } from "react";
 
 import type { Aptitude } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 
-/** Order aptitudes by name, so a form's list doesn't depend on picking order. */
-export function byName(a: { name: string }, b: { name: string }) {
-  return a.name.localeCompare(b.name);
-}
-
 /**
  * Aptitude records for the ids a form keeps: the ones known when it mounted,
  * the current ones and any picked since, so the form stores plain ids and

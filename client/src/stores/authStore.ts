@@ -4,7 +4,7 @@ import { persist } from "zustand/middleware";
 import { AUTH_STORAGE_KEY } from "@/shared/auth.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 
-import { type AuthUser, readAuthUser } from "./authUser.ts";
+import { type AuthUser, readAuthUser, toAuthUser } from "./authUser.ts";
 
 /** Who is signed in, and the emails waiting for a code. The requests that change it are `useAuthRequests`'. */
 interface AuthState {
@@ -14,6 +14,8 @@ interface AuthState {
   pendingVerificationEmail: string | null;
   /** The user signed out (rather than the server ending the session): their private pages send them to sign in afresh */
   signedOutByUser: boolean;
+  /** The server signed the user in: the store keeps them, and no email waits for its code any more. */
+  startSession: (user: AuthUser) => void;
   /** Merge fields into the signed-in user, e.g. after a profile update. */
   updateUser: (patch: Partial<AuthUser>) => void;
   user: AuthUser | null;
@@ -36,6 +38,10 @@ export const useAuthStore = create<AuthState>()(
         set({ ...SIGNED_OUT, signedOutByUser: byUser });
       },
 
+      startSession: (user) => {
+        set({ ...SIGNED_OUT, user: toAuthUser(user), isAuthenticated: true });
+      },
+
       updateUser: (patch) => {
         set((state) => ({ user: state.user ? { ...state.user, ...patch } : null }));
       },
@@ -43,7 +49,7 @@ export const useAuthStore = create<AuthState>()(
     {
       name: AUTH_STORAGE_KEY,
       // Version 0 stored the whole sign-in response, password digest included:
-      // drop it, and checkSession (`useAuthRequests.ts`) reloads the user from /auth/me.
+      // drop it, and checkSession (`PrivateRoute.tsx`) reloads the user from /auth/me.
       version: 1,
       migrate: () => ({ user: null, isAuthenticated: false }),
       partialize: (state) => ({

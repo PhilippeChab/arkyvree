@@ -3,6 +3,7 @@ import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/re
 import { type InferResponseType, parseResponse } from "hono/client";
 
 import {
+  BlankState,
   CreateDialog,
   EmptyValue,
   LoadMoreButton,
@@ -24,8 +25,7 @@ import { languagesQuery } from "@/client/src/pages/rulesets/details/sectionQueri
 import { useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
-type Language = LanguagesPaginated["items"][number];
-type LanguagesPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["languages"]["$get"], 200>;
+type Language = InferResponseType<(typeof rpc.api.rulesets)[":id"]["languages"]["$get"], 200>["items"][number];
 
 const LANGUAGES_COLUMNS = [
   { key: "name", label: "Name", width: "25%" },
@@ -65,7 +65,7 @@ export function LanguagesSection({ ruleset, childOnly, onChildOnlyChange }: Rule
     openEntity(`languages/${language.id}`);
   };
 
-  const handleRowMouseEnter = (language: Language) => {
+  const handleRowPrefetch = (language: Language) => {
     void queryClient.prefetchQuery(languageQuery(ruleset.id, language.id));
   };
 
@@ -108,11 +108,15 @@ export function LanguagesSection({ ruleset, childOnly, onChildOnlyChange }: Rule
             isLoading={isLoading}
             columns={LANGUAGES_COLUMNS}
             onRowClick={handleRowClick}
-            onRowMouseEnter={handleRowMouseEnter}
+            onRowPrefetch={handleRowPrefetch}
             renderCell={renderCell}
-            emptyIcon={LanguagesIcon}
-            emptyTitle="No languages"
-            emptyDescription="No languages available for this ruleset."
+            empty={
+              <BlankState
+                icon={LanguagesIcon}
+                title="No languages"
+                description="No languages available for this ruleset."
+              />
+            }
           />
           <LoadMoreButton
             hasNextPage={hasNextPage}

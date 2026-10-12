@@ -3,6 +3,7 @@ import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/re
 import { parseResponse } from "hono/client";
 
 import {
+  BlankState,
   CreateDialog,
   EmptyValue,
   LoadError,
@@ -63,7 +64,7 @@ export function SavesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
     openEntity(`saves/${save.id}`);
   };
 
-  const handleRowMouseEnter = (save: Save) => {
+  const handleRowPrefetch = (save: Save) => {
     void queryClient.prefetchQuery(saveQuery(ruleset.id, save.id));
   };
 
@@ -109,11 +110,15 @@ export function SavesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
             isLoading={isLoading}
             columns={SAVES_COLUMNS}
             onRowClick={handleRowClick}
-            onRowMouseEnter={handleRowMouseEnter}
+            onRowPrefetch={handleRowPrefetch}
             renderCell={renderCell}
-            emptyIcon={SavesIcon}
-            emptyTitle="No saves"
-            emptyDescription="No saving throws available for this ruleset."
+            empty={
+              <BlankState
+                icon={SavesIcon}
+                title="No saves"
+                description="No saving throws available for this ruleset."
+              />
+            }
           />
           <LoadMoreButton
             hasNextPage={hasNextPage}

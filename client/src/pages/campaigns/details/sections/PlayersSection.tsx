@@ -25,7 +25,6 @@ import {
   CharacterIcon,
   DeleteIcon,
   EditIcon,
-  GMIcon,
   LeaveIcon,
   PendingIcon,
   PlayersIcon,
@@ -52,6 +51,7 @@ import {
   playerDisplay,
   type PlayerFormData,
   type PlayerState,
+  ROLE_ICONS,
   toPlayerPayload,
 } from "./players.ts";
 
@@ -151,6 +151,8 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
       snackbar.success(removedSelf ? "You left the campaign" : "Player removed");
       if (removedSelf) {
         navigate("/campaigns", { replace: true });
+        // Back never renders it from the cache, as if they still played in it
+        queryClient.removeQueries({ queryKey: QUERY_KEYS.campaigns.detail(campaign.id) });
         queryClient.invalidateQueries({ queryKey: QUERY_KEYS.campaigns.lists });
       } else {
         invalidateCampaignPlayers(queryClient, campaign.id, true);
@@ -171,7 +173,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
       ),
     onSuccess: () => {
       snackbar.success("Invite revoked");
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.campaigns.section(campaign.id, "players") });
+      invalidateCampaignPlayers(queryClient, campaign.id);
       revokeDialog.close();
     },
     onError: (error) => {
@@ -252,11 +254,14 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
                   const displayInfo = playerDisplay(player, slot);
                   const statusChip = STATUS_CHIPS[slot.state];
                   const isGameMaster = player.role === "Game Master";
+                  const RoleIcon = ROLE_ICONS[player.role];
                   const isCurrentUser = player.userId === currentUserId;
                   const canRevokeInvite = slot.state === "pending" && canManagePlayers && !campaign.deletedAt;
-                  // A row's actions: the manager's on any slot but an assigned Game Master's, the player's on their own
+                  // A row's actions: the manager's on any slot but an assigned Game Master's, the player's on their own,
+                  // but the last Game Master's, whom the server neither demotes nor lets leave
                   const hasActions =
                     !campaign.deletedAt &&
+                    !player.isLastGameMaster &&
                     ((canManagePlayers && (!isGameMaster || slot.state !== "assigned")) || isCurrentUser);
 
                   return (
@@ -273,15 +278,13 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
                             {displayInfo.name}
                           </Typography>
                           <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                            {displayInfo.email}
+                            {displayInfo.caption}
                           </Typography>
                         </Box>
                       </TableCell>
                       <TableCell>
                         <RoleChip
-                          icon={
-                            isGameMaster ? <GMIcon sx={{ fontSize: 14 }} /> : <CharacterIcon sx={{ fontSize: 14 }} />
-                          }
+                          icon={<RoleIcon sx={{ fontSize: 14 }} />}
                           label={player.role}
                           color={isGameMaster ? "warning" : "primary"}
                         />
@@ -290,9 +293,9 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
                         <StatusChip icon={statusChip.icon} label={statusChip.label} color={statusChip.color} />
                       </TableCell>
                       <TableCell>
-                        {slot.state === "assigned" ? (
+                        {player.joinedAt ? (
                           <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                            {formatDate(player.createdAt)}
+                            {formatDate(player.joinedAt)}
                           </Typography>
                         ) : (
                           <EmptyValue />

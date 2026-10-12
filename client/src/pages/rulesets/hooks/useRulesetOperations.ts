@@ -223,6 +223,22 @@ export function useRulesetOperations() {
     if (forkDialog.target) forkMutation.mutate({ id: forkDialog.target.id, data });
   };
 
+  const confirmEdit = (data: EditRulesetFormData) => {
+    const edited = editDialog.target;
+    if (edited) updateMutation.mutate({ id: edited.id, data, updatedAt: edited.updatedAt });
+  };
+
+  const confirmArchive = () => {
+    // Gone from its lists but the Archived filter, as an archived campaign or character is: back to them, from the
+    // call's own onSuccess, which runs only while its page is still open (a user who left isn't pulled back)
+    if (archiveDialog.target)
+      archiveMutation.mutate(archiveDialog.target.id, { onSuccess: () => navigate("/rulesets") });
+  };
+
+  const confirmPublish = (kind: PublishKind) => {
+    if (publishDialog.target) publishMutation.mutate({ id: publishDialog.target.id, kind });
+  };
+
   return {
     /** Each dialog: `open`, `close`, and what it acts on (`target`). */
     editDialog,
@@ -251,7 +267,10 @@ export function useRulesetOperations() {
     handlePublish,
     handleSubscribe,
     handleUnsubscribe,
+    confirmArchive,
+    confirmEdit,
     confirmFork,
+    confirmPublish,
     confirmSubscribe,
     confirmUnsubscribe,
   };

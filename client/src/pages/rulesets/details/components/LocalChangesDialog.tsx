@@ -12,7 +12,7 @@ import {
 } from "@mui/material";
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { type InferResponseType, parseResponse } from "hono/client";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 import {
   BlankNote,
@@ -30,6 +30,7 @@ import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
 import { rulesetChangesQuery } from "@/client/src/pages/rulesets/details/rulesetQueries.ts";
+import type { EntityPageState } from "@/client/src/pages/rulesets/entityPageState.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { DURATION } from "@/client/src/theme/animations.ts";
 import { buildCustomizationPath, CUSTOMIZATION_PAGE_TYPES } from "@/shared/customization/entities.ts";
@@ -41,7 +42,7 @@ interface LocalChangesDialogProps {
   /** The ruleset's base rules, whose words name the entity types */
   baseRules: BaseRules;
   /** Restore a change: an editor of the ruleset's entities (`canEditEntities`), as the restore route allows */
-  canEdit?: boolean;
+  canEdit: boolean;
   onClose: () => void;
   open: boolean;
   rulesetId: string;
@@ -64,7 +65,8 @@ function getEntityUrl(rulesetId: string, change: Change): string | undefined {
     : `/rulesets/${rulesetId}/${getUrlSegment(entityType)}/${entityId}`;
 }
 
-export function LocalChangesDialog({ open, onClose, rulesetId, baseRules, canEdit = false }: LocalChangesDialogProps) {
+export function LocalChangesDialog({ open, onClose, rulesetId, baseRules, canEdit }: LocalChangesDialogProps) {
+  const { pathname, search } = useLocation();
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
 
@@ -135,7 +137,13 @@ export function LocalChangesDialog({ open, onClose, rulesetId, baseRules, canEdi
                     return (
                       <ListItem key={key} disablePadding sx={{ gap: 0.5, pr: showRestore ? 1 : 0 }}>
                         {url ? (
-                          <ListItemButton component={Link} to={url} target="_blank">
+                          // Its page, whose Back returns to the ruleset's tab the dialog opened over
+                          <ListItemButton
+                            component={Link}
+                            to={url}
+                            state={{ from: pathname + search } satisfies EntityPageState}
+                            onClick={onClose}
+                          >
                             {rowContent}
                           </ListItemButton>
                         ) : (

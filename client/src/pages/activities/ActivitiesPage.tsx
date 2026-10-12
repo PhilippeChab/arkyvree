@@ -20,9 +20,9 @@ import { formatActivityType } from "@/client/src/lib/activityFormatters.ts";
 import { formatDateTime } from "@/client/src/lib/formatDate.ts";
 import { isNavigableTarget } from "@/shared/activity.ts";
 
-import { activityListQuery } from "./activityQueries.ts";
+import { type ActivityListFilters, activityListQuery } from "./activityQueries.ts";
 
-type SortField = "createdAt" | "type";
+type SortField = ActivityListFilters["orderBy"];
 
 const ACTIVITY_SORT_OPTIONS: SortOption<SortField>[] = [
   ...CREATED_SORTS,

@@ -77,7 +77,7 @@ export function InventoryPlacementFields({ form, profile, setChoices }: Inventor
               <FormTextField
                 control={form.control}
                 name="totalCharges"
-                rules={wholeNumberRules(0)}
+                rules={wholeNumberRules(0, false)}
                 number
                 label="Total Charges"
                 fullWidth
@@ -85,7 +85,7 @@ export function InventoryPlacementFields({ form, profile, setChoices }: Inventor
               <FormTextField
                 control={form.control}
                 name="remainingCharges"
-                rules={wholeNumberRules(0)}
+                rules={wholeNumberRules(0, false)}
                 number
                 label="Remaining Charges"
                 fullWidth

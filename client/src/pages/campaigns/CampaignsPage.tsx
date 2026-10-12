@@ -20,15 +20,19 @@ import {
   ValueChip,
 } from "@/client/src/components/common/index.ts";
 import { ArchiveIcon, CampaignIcon } from "@/client/src/components/icons/index.ts";
-import { useIsDemo, useListPageQuery, useListParams, usePageTitle } from "@/client/src/hooks/index.ts";
+import { useDialogState, useIsDemo, useListPageQuery, useListParams, usePageTitle } from "@/client/src/hooks/index.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
-import { CAMPAIGN_LIST_DEFAULTS, type CampaignListFilters, campaignListQuery } from "@/client/src/lib/queries.ts";
+import {
+  CAMPAIGN_LIST_DEFAULTS,
+  CAMPAIGN_VIEWS,
+  type CampaignListFilters,
+  campaignListQuery,
+} from "@/client/src/lib/queries.ts";
 
 import { campaignDetailQuery } from "./campaignQueries.ts";
 import { CreateCampaignDialog } from "./components/index.ts";
 import { prefetchCampaignSections } from "./details/sectionQueries.ts";
-import { useCampaignOperations } from "./hooks/index.ts";
 
 type CampaignView = CampaignListFilters["view"];
 type SortField = CampaignListFilters["orderBy"];
@@ -50,9 +54,10 @@ export default function CampaignsPage() {
   );
   const isDemo = useIsDemo();
 
-  const view = oneOf(searchParams.get("view"), ["active", "archived"], CAMPAIGN_LIST_DEFAULTS.view);
+  const view = oneOf(searchParams.get("view"), CAMPAIGN_VIEWS, CAMPAIGN_LIST_DEFAULTS.view);
 
-  const { createDialog, createForm, createMutation, handleCreate, confirmCreate } = useCampaignOperations();
+  // Mounted as it opens: the create dialog keeps its form and its picker
+  const createDialog = useDialogState();
 
   const campaigns = useListPageQuery(campaignListQuery({ view, search, orderBy, orderDir }));
 
@@ -62,7 +67,9 @@ export default function CampaignsPage() {
     void prefetchCampaignSections(queryClient, id);
   };
 
-  const createButton = (label: string) => <PageActionButton label={label} onClick={handleCreate} />;
+  const createButton = (label: string) => (
+    <PageActionButton label={label} onClick={() => createDialog.openWith(true)} />
+  );
 
   return (
     <PageTransition>
@@ -146,9 +153,6 @@ export default function CampaignsPage() {
             open={createDialog.open}
             onClose={createDialog.close}
             onExited={createDialog.onExited}
-            form={createForm}
-            onSubmit={confirmCreate}
-            pending={createMutation.isPending}
           />
         )}
       </Container>

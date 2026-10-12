@@ -1,6 +1,6 @@
 export { useAnchorMenu } from "./useAnchorMenu.ts";
 export { useAttachment } from "./useAttachment.ts";
-export { checkSession, useAuthRequests } from "./useAuthRequests.ts";
+export { useAuthRequests } from "./useAuthRequests.ts";
 export { useCharacterPortraits } from "./useCharacterPortraits.ts";
 export { useDebouncedValue } from "./useDebouncedValue.ts";
 export { useDialogState } from "./useDialogState.ts";

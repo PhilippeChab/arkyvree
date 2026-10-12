@@ -35,10 +35,10 @@ describe("a player slot", () => {
       "Unassigned Player Slot",
     ]);
     expect(players.map((p) => playerDisplay(p))).toEqual([
-      { name: "ann", email: "ann@example.com" },
-      { name: "bob@example.com", email: undefined },
-      { name: "cy@example.com", email: undefined },
-      { name: "Unassigned Player Slot", email: "No player assigned" },
+      { name: "ann", caption: "ann@example.com" },
+      { name: "bob@example.com", caption: undefined },
+      { name: "cy@example.com", caption: undefined },
+      { name: "Unassigned Player Slot", caption: "No player assigned" },
     ]);
   });
 });

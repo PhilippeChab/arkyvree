@@ -2,7 +2,14 @@ import { Stack, Tooltip, Typography } from "@mui/material";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 
-import { AddButton, EmptyValue, ListToolbar, LoadError, ValueChip } from "@/client/src/components/common/index.ts";
+import {
+  AddButton,
+  BlankState,
+  EmptyValue,
+  ListToolbar,
+  LoadError,
+  ValueChip,
+} from "@/client/src/components/common/index.ts";
 import { LevelsIcon } from "@/client/src/components/icons/index.ts";
 import { useRulesetPermissions } from "@/client/src/hooks/index.ts";
 import { withEntityFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
@@ -30,6 +37,7 @@ import { rpc } from "@/client/src/services/rpc.ts";
 import { buildCustomizationPath } from "@/shared/customization/entities.ts";
 import { formatSigned } from "@/shared/text.ts";
 
+import { byLevel } from "./byLevel.ts";
 import { useClassCopy } from "./useClassCopy.ts";
 
 /** The feats' column's share of the table's width, in percent. */
@@ -94,7 +102,7 @@ export function ClassLevelsSection({ rulesetId, classId, className, ruleset }: C
     openEntity(buildCustomizationPath("klass_levels", level.id));
   };
 
-  const handleRowMouseEnter = (level: ClassLevelRow) => {
+  const handleRowPrefetch = (level: ClassLevelRow) => {
     void queryClient.prefetchQuery(customizationEntityQuery(rulesetId, "klass_levels", level.id));
   };
 
@@ -149,18 +157,22 @@ export function ClassLevelsSection({ rulesetId, classId, className, ruleset }: C
       <RulesetSectionTable
         what="Levels"
         error={error}
-        data={levels && [...levels].sort((a, b) => a.level - b.level)}
+        data={levels?.toSorted(byLevel)}
         isLoading={isLoading}
         columns={levelsColumns}
         onRowClick={handleRowClick}
-        onRowMouseEnter={handleRowMouseEnter}
+        onRowPrefetch={handleRowPrefetch}
         renderCell={renderCell}
-        emptyIcon={LevelsIcon}
-        emptyTitle="No levels"
-        emptyDescription={
-          canEdit
-            ? "Start by adding the first level for this class."
-            : "This class doesn't have any levels defined yet."
+        empty={
+          <BlankState
+            icon={LevelsIcon}
+            title="No levels"
+            description={
+              canEdit
+                ? "Start by adding the first level for this class."
+                : "This class doesn't have any levels defined yet."
+            }
+          />
         }
       />
 

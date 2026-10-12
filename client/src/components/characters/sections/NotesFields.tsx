@@ -2,7 +2,7 @@
 
 import type { Control, FieldPath, FieldValues } from "react-hook-form";
 
-import { FormTextField } from "@/client/src/components/common/index.ts";
+import { TextAreaField } from "@/client/src/components/common/index.ts";
 
 interface NotesFieldProps<T extends FieldValues> {
   control: Control<T>;
@@ -19,16 +19,7 @@ interface NotesTextFieldProps<T extends FieldValues> extends NotesFieldProps<T> 
 
 /** A notes field: several lines, resizable. */
 function NotesTextField<T extends FieldValues>({ readOnly = false, ...field }: NotesTextFieldProps<T>) {
-  return (
-    <FormTextField
-      {...field}
-      multiline
-      minRows={3}
-      fullWidth
-      slotProps={{ input: { readOnly } }}
-      sx={{ "& textarea": { resize: "vertical" } }}
-    />
-  );
+  return <TextAreaField {...field} slotProps={{ input: { readOnly } }} />;
 }
 
 /** What anyone who reads the character's sheet reads. */

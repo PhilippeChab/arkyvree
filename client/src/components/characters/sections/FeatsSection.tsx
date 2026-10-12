@@ -46,7 +46,6 @@ function FeatRow({ feat, suffix, rulesetId, extra, component }: FeatRowProps) {
         to={`/rulesets/${rulesetId}/${buildCustomizationPath("feats", feat.id)}`}
         target="_blank"
         underline="hover"
-        sx={{ color: "primary.main" }}
       >
         {label}
       </MuiLink>

@@ -29,6 +29,8 @@ export function ShareDialog({ open, onClose, characterId, shareToken }: ShareDia
   const snackbar = useSnackbar();
   const queryClient = useQueryClient();
   const [confirmRevoke, setConfirmRevoke] = useState(false);
+  // A new link replaces the one already shared, which stops working: asked first
+  const [confirmRegenerate, setConfirmRegenerate] = useState(false);
 
   const shareUrl = shareToken ? `${window.location.origin}/share/${shareToken}` : null;
 
@@ -41,6 +43,7 @@ export function ShareDialog({ open, onClose, characterId, shareToken }: ShareDia
       ),
     onSuccess: () => {
       invalidateCharacter(queryClient, characterId);
+      setConfirmRegenerate(false);
       snackbar.success("Share link generated");
     },
     onError: (error) => {
@@ -111,12 +114,10 @@ export function ShareDialog({ open, onClose, characterId, shareToken }: ShareDia
                     variant="outlined"
                     size="small"
                     startIcon={<RefreshIcon />}
-                    onClick={() => generateMutation.mutate()}
+                    onClick={() => setConfirmRegenerate(true)}
                     disabled={isLoading}
                   >
-                    <DiceSpinner size="small" loading={generateMutation.isPending}>
-                      Regenerate
-                    </DiceSpinner>
+                    Regenerate
                   </Button>
                   <Button
                     variant="contained"
@@ -156,6 +157,16 @@ export function ShareDialog({ open, onClose, characterId, shareToken }: ShareDia
         message="Are you sure you want to revoke this link? Anyone who has it loses access to the sheet."
         confirmLabel="Revoke Link"
         intent="destructive"
+      />
+      <ConfirmDialog
+        open={confirmRegenerate}
+        onClose={() => setConfirmRegenerate(false)}
+        onConfirm={() => generateMutation.mutate()}
+        pending={generateMutation.isPending}
+        title="Regenerate Link"
+        message="Are you sure you want to regenerate this link? The current link stops working."
+        confirmLabel="Regenerate Link"
+        intent="caution"
       />
     </>
   );

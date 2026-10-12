@@ -50,8 +50,9 @@
  *   tabs, in a `SectionTabPanel`.
  * - `page-titles`: a page's title (its `h1`) is its header's: `PageHeader`, `DetailPageHeader`, or the header of a page
  *   that opens on its own (the dashboard, the auth pages, an invite).
- * - `list-toolbars`: a list's actions sit in its `ListToolbar` (`SearchBar` is one), never a bare row; the list sits
- *   24px under it (`spacing={3}`), and its Load More 16px under the list (`spacing={2}`).
+ * - `list-toolbars`: a list's actions sit in its `ListToolbar` (`SearchBar` is one), or in a dialog across from its lead
+ *   (`DialogLead`), never a bare row; the list sits 24px under it (`spacing={3}`), and its Load More 16px under the
+ *   list (`spacing={2}`).
  * - `list-results`: a searched list's results, a page's or a tab's, show one way: `ListPageResults` (a tab's
  *   `variant="section"`), or a ruleset tab's `RulesetSectionTable`, each with its first load, its failure, the search
  *   that found nothing (`NoMatchesState`) and its empty state. No other module draws a `NoMatchesState`. A ruleset
@@ -59,8 +60,8 @@
  *   `animationOffset` is `itemsBeforeLastPage(data)`.
  * - `empty-values`: a value that isn't there is an `EmptyValue`, never a dash of its own, and a description that isn't
  *   there says `NO_DESCRIPTION`, never a sentence of its own.
- * - `entity-pages`: a ruleset entity page saves its details through `useEntitySave` (no `sync.saved` of its own under
- *   `pages/rulesets/`), and deletes through its `EntityDetailLayout`'s `deletion` (no `EntityDeleteDialog` beside it).
+ * - `entity-pages`: a ruleset entity page's details are `useEntityForm`'s, its form saved through `useEntitySave`,
+ *   which nothing else under `pages/rulesets/` calls (no `sync.saved` of its own there either), and it deletes through its `EntityDetailLayout`'s `deletion` (no `EntityDeleteDialog` beside it).
  *   It goes back where it was opened from: its error's way back is `entityPageBack`'s, never a label written in place.
  * - `notification-messages`: a notification shows through `NotificationMessage` (`components/notifications`), its
  *   message, its details and its unread dot, wherever it shows; what an activity or a notification changed shows
@@ -88,9 +89,12 @@ const ACTION_ALERTS = [
 ];
 /** The confirmations, whose `onConfirm` sends what they ask */
 const CONFIRMATIONS = new Set(["ConfirmDialog", "DeleteDialog", "EntityDeleteDialog"]);
+/** How a row pushes what it holds to its end: a list's actions there sit in its toolbar instead */
+const END_JUSTIFICATIONS = new Set(["flex-end", "space-between"]);
 /** The modules of a ruleset entity page's save and delete: its inline save's hook, its layout's delete */
 const ENTITY_PAGE_MODULES = {
   layout: "client/src/pages/rulesets/components/EntityDetailLayout.tsx",
+  form: "client/src/pages/rulesets/hooks/useEntityForm.ts",
   save: "client/src/pages/rulesets/hooks/useEntitySave.ts",
 };
 
@@ -107,8 +111,8 @@ const LIST_RESULTS_OWNERS = new Set([
   "client/src/pages/rulesets/components/RulesetSectionTable.tsx",
 ]);
 
-/** The bars above a list: its toolbar, or its search's */
-const LIST_TOOLBARS = new Set(["ListToolbar", "SearchBar"]);
+/** What sits above a list and holds its actions: its toolbar, its search's, or in a dialog its lead */
+const LIST_TOOLBARS = new Set(["DialogLead", "ListToolbar", "SearchBar"]);
 
 /** The words a missing description is said in, which `NO_DESCRIPTION` holds */
 const NO_DESCRIPTION_WORDS = /^No description\b/;
@@ -424,8 +428,15 @@ function createEntityPages(context) {
   let layout = false;
   const deleteDialogs = [];
   return {
-    // An inline form's `sync.saved(…)`, once its save is in
+    // An inline form's `sync.saved(…)`, once its save is in, and its save made beside its form
     CallExpression(node) {
+      if (calleeName(node) === "useEntitySave" && file !== ENTITY_PAGE_MODULES.form) {
+        report(
+          node,
+          "A ruleset entity page's details are `useEntityForm`'s (`pages/rulesets/hooks`): its form, kept in step " +
+            "with the record, and its save, which its card takes whole.",
+        );
+      }
       if (file === ENTITY_PAGE_MODULES.save || node.callee.type !== "MemberExpression") return;
       if (calleeName(node) !== "saved") return;
       report(
@@ -594,6 +605,14 @@ function createListToolbars(context) {
   if (!inClient(context)) return {};
   return {
     JSXElement(node) {
+      if (elementName(node) === "ListToolbar" && inDialog(node)) {
+        context.report({
+          node: node.openingElement,
+          message:
+            "A dialog holds one list: its actions sit across from its lead, `DialogLead`'s `actions`, never in a " +
+            "`ListToolbar`, a page's bar.",
+        });
+      }
       if (elementName(node) !== "Stack") return;
       const children = childElements(node).map(elementName);
       const spacing = attributeValue(attribute(node, "spacing"));
@@ -602,7 +621,8 @@ function createListToolbars(context) {
         context.report({
           node: node.openingElement,
           message:
-            "A list sits 24px under its toolbar: the column holding a `ListToolbar` (`SearchBar`) takes `spacing={3}`.",
+            "A list sits 24px under its toolbar: the column holding a `ListToolbar` (`SearchBar`, `DialogLead`) takes " +
+            "`spacing={3}`.",
         });
       }
       if (children.includes("LoadMoreButton") && !spaced(2)) {
@@ -611,16 +631,19 @@ function createListToolbars(context) {
           message: "Load More sits 16px under its list: the column holding a `LoadMoreButton` takes `spacing={2}`.",
         });
       }
+      // A row that pushes its actions to its end: alone, or across from a line of its own (a dialog's lead)
       const endAligned = styleProperties(attributeValue(attribute(node, "sx")), node).some(
         (property) =>
           propertyKey(property) === "justifyContent" &&
           property.value.type === "Literal" &&
-          property.value.value === "flex-end",
+          END_JUSTIFICATIONS.has(property.value.value),
       );
       if (!isRow(node) || !endAligned || !children.some((child) => LIST_ACTIONS.has(child))) return;
       context.report({
         node: node.openingElement,
-        message: "A list's actions sit in its toolbar, a `ListToolbar`'s `actions`: never a bare row of their own.",
+        message:
+          "A list's actions sit in its toolbar, a `ListToolbar`'s `actions` (in a dialog, `DialogLead`'s): never a bare " +
+          "row of their own.",
       });
     },
   };
@@ -739,19 +762,21 @@ function createPageLoaders(context) {
       const size = attributeValue(attribute(node, "size"));
       const properties = styleProperties(attributeValue(attribute(node, "sx")), node);
       const large = size?.type === "Literal" && size.value === "large" && !skeleton;
-      // A section's or a dialog's spinner: `py: 4` alone
+      // A section's or a dialog's spinner: `py: 4` alone; a small one, a menu's or a popover's line: `py: 1.5` alone
+      const spacing = size?.type === "Literal" && size.value === "small" ? 1.5 : 4;
       const styled =
         !ownLoader &&
         properties.some(
           (property) =>
-            propertyKey(property) !== "py" || property.value.type !== "Literal" || property.value.value !== 4,
+            propertyKey(property) !== "py" || property.value.type !== "Literal" || property.value.value !== spacing,
         );
       if (!large && !styled) return;
       context.report({
         node: node.openingElement,
         message:
           "A page's first load is a `PageLoader` (the character sheet draws its skeleton); a section's or a " +
-          "dialog's spinner takes a section's spacing (`sx={{ py: 4 }}`) and nothing else, never the large size.",
+          "dialog's spinner takes a section's spacing (`sx={{ py: 4 }}`) and nothing else, a menu's or a popover's " +
+          'the small die on a line\'s (`size="small" sx={{ py: 1.5 }}`), never the large size.',
       });
     },
     "Program:exit"() {
@@ -1089,6 +1114,12 @@ function inConfirmation(node) {
     if (p.type === "JSXAttribute" && p.name.name === "message") return true;
     if (p.type === "JSXElement" && ["ConfirmDialog", "DeleteDialog"].includes(elementName(p))) return true;
   }
+  return false;
+}
+
+/** Whether `node` sits in a dialog's content, a `DialogContent`. */
+function inDialog(node) {
+  for (let p = parentElement(node); p; p = parentElement(p)) if (elementName(p) === "DialogContent") return true;
   return false;
 }
 

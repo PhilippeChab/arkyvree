@@ -62,3 +62,8 @@ export function nextClassLevel(
 export function saveBaseError(base: number) {
   return wholeNumberError(base, 0, MAX_SAVE_BASE);
 }
+
+/** A level's granted feats in the order its form keeps them, by their labels (`labelOf`): never their picking order. */
+export function sortLevelFeats<F>(feats: readonly F[], labelOf: (feat: F) => string) {
+  return feats.toSorted((a, b) => labelOf(a).localeCompare(labelOf(b)));
+}

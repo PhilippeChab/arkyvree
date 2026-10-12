@@ -1,8 +1,7 @@
 import { Table, TableBody, TableCell, TableRow } from "@mui/material";
-import { type ElementType, type ReactNode } from "react";
+import type { ReactNode } from "react";
 
 import {
-  BlankState,
   CLICKABLE_ROW_SX,
   clickableProps,
   LoadError,
@@ -31,9 +30,8 @@ interface RulesetSectionTableProps<T extends { id: string }> {
   canEdit?: boolean;
   columns: TableColumn[];
   data?: T[];
-  emptyDescription: string;
-  emptyIcon: ElementType;
-  emptyTitle: string;
+  /** What it shows while it lists nothing and nothing was searched: its `BlankState` */
+  empty: ReactNode;
   /** Its query's failure, shown while there are no rows to keep (a failed refetch keeps them). */
   error?: unknown;
   isLoading: boolean;
@@ -43,7 +41,7 @@ interface RulesetSectionTableProps<T extends { id: string }> {
   onEdit?: (item: T) => void;
   onRowClick?: (item: T) => void;
   /** Warms the page a row opens (`useRowPrefetch`): 150ms into a hover, at once on focus */
-  onRowMouseEnter?: (item: T) => void;
+  onRowPrefetch?: (item: T) => void;
   renderCell: (item: T, columnKey: string) => ReactNode;
   /** A row's delete can be undone from Local Changes (`useRestorableDelete`): "Delete", not "Delete Permanently". */
   restorable?: boolean;
@@ -69,15 +67,13 @@ export function RulesetSectionTable<T extends { id: string }>({
   onDuplicate,
   onCreateVariants,
   onRowClick,
-  onRowMouseEnter,
+  onRowPrefetch,
   renderCell,
   restorable = false,
-  emptyIcon,
-  emptyTitle,
-  emptyDescription,
+  empty,
   search,
 }: RulesetSectionTableProps<T>) {
-  const prefetchProps = useRowPrefetch(onRowMouseEnter);
+  const prefetchProps = useRowPrefetch(onRowPrefetch);
 
   const showInlineActions = canEdit && !!(onEdit || onDelete || onDuplicate || onCreateVariants);
 
@@ -87,13 +83,7 @@ export function RulesetSectionTable<T extends { id: string }>({
 
   if (error && !data?.length) return <LoadError what={what} error={error} />;
 
-  if (!data || data.length === 0) {
-    return search ? (
-      <NoMatchesState search={search} />
-    ) : (
-      <BlankState icon={emptyIcon} title={emptyTitle} description={emptyDescription} />
-    );
-  }
+  if (!data || data.length === 0) return search ? <NoMatchesState search={search} /> : empty;
 
   return (
     <TableFrame sx={TABLE_CONTAINER_SX}>
@@ -113,14 +103,12 @@ export function RulesetSectionTable<T extends { id: string }>({
               {showInlineActions && (
                 <TableCell align="right">
                   <RowActions>
-                    {canEdit && onEdit && <RowAction icon={EditIcon} label="Edit" onClick={() => onEdit(item)} />}
-                    {canEdit && onDuplicate && (
-                      <RowAction icon={CopyIcon} label="Duplicate" onClick={() => onDuplicate(item)} />
-                    )}
-                    {canEdit && onCreateVariants && (
+                    {onEdit && <RowAction icon={EditIcon} label="Edit" onClick={() => onEdit(item)} />}
+                    {onDuplicate && <RowAction icon={CopyIcon} label="Duplicate" onClick={() => onDuplicate(item)} />}
+                    {onCreateVariants && (
                       <RowAction icon={LibraryAddIcon} label="Create Variants" onClick={() => onCreateVariants(item)} />
                     )}
-                    {canEdit && onDelete && (
+                    {onDelete && (
                       <RowAction
                         icon={DeleteIcon}
                         label={restorable ? "Delete" : "Delete Permanently"}

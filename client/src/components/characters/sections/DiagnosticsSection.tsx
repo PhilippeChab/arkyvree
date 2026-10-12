@@ -10,10 +10,10 @@ import {
   TableCell,
   TableContainer,
   TableRow,
-  Typography,
 } from "@mui/material";
-import { Fragment, type ReactNode, useMemo } from "react";
+import { Fragment, type ReactNode } from "react";
 
+import { ValidationIssueList } from "@/client/src/components/characters/validation/index.ts";
 import {
   CardTitle,
   CLICKABLE_ROW_SX,
@@ -30,8 +30,10 @@ import {
 import { ExpandMoreIcon } from "@/client/src/components/icons/index.ts";
 import { useToggleSet } from "@/client/src/hooks/index.ts";
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
+import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
 import { DURATION } from "@/client/src/theme/animations.ts";
 import { formatChainingOperator, formatOperator } from "@/shared/customization/operators.ts";
+import type { BaseRules } from "@/shared/enums.ts";
 
 interface DiagnosticsGroupProps {
   children: ReactNode;
@@ -40,6 +42,8 @@ interface DiagnosticsGroupProps {
 }
 
 interface DiagnosticsSectionProps {
+  /** The character's, whose words name what a rule's source is (a 3.5 power is a "Spell") */
+  baseRules: BaseRules;
   modifiers: CharacterDetail["modifiers"];
   requirements: CharacterDetail["requirements"];
   validation: CharacterDetail["validation"];
@@ -54,15 +58,18 @@ interface GroupedRuleTableProps {
 }
 
 interface InvalidRequirementTableProps {
+  baseRules: BaseRules;
   items: DiagnosticsSectionProps["requirements"]["invalidRequirements"];
 }
 
 interface ModifierTableProps {
+  baseRules: BaseRules;
   label: string;
   modifiers: Modifier[];
 }
 
 interface RequirementTableProps {
+  baseRules: BaseRules;
   groups: RequirementGroup[];
   label: string;
 }
@@ -78,6 +85,7 @@ interface RuleGroup {
 }
 
 interface SkippedModifierTableProps {
+  baseRules: BaseRules;
   items: DiagnosticsSectionProps["modifiers"]["skippedModifiers"];
 }
 /** A modifier in the applied, unapplied or inactive list, with its source's name. */
@@ -185,14 +193,14 @@ function GroupedRuleTable({ label, count, columns, groups }: GroupedRuleTablePro
   );
 }
 
-function InvalidRequirementTable({ items }: InvalidRequirementTableProps) {
+function InvalidRequirementTable({ baseRules, items }: InvalidRequirementTableProps) {
   return (
     <DiagnosticsGroup label="Invalid" count={items.length}>
       <TableColumnsHead columns={INVALID_COLUMNS} />
       <TableBody>
         {items.map((item, i) => (
           <TableRow key={i}>
-            <TableCell>{item.sourceName ?? item.requirement.entityType}</TableCell>
+            <TableCell>{item.sourceName ?? entityTypeLabel(item.requirement.entityType, baseRules)}</TableCell>
             <TableCell>{item.requirement.level}</TableCell>
             <TableCell>{item.requirement.target || <EmptyValue />}</TableCell>
             <TableCell>{item.warning}</TableCell>
@@ -203,23 +211,21 @@ function InvalidRequirementTable({ items }: InvalidRequirementTableProps) {
   );
 }
 
-function ModifierTable({ modifiers, label }: ModifierTableProps) {
-  const groups = useMemo(() => {
-    const bySource = new Map<string, RuleCells[]>();
-    for (const mod of modifiers) {
-      const source = mod.sourceName ?? mod.sourceType;
-      const cells: RuleCells = [mod.target, formatOperator("modifier", mod.operator), mod.value, mod.valueType];
-      const rules = bySource.get(source);
-      if (rules) rules.push(cells);
-      else bySource.set(source, [cells]);
-    }
-    return [...bySource].map(([source, rules]) => ({ key: source, source, rules }));
-  }, [modifiers]);
+function ModifierTable({ baseRules, modifiers, label }: ModifierTableProps) {
+  const bySource = new Map<string, RuleCells[]>();
+  for (const mod of modifiers) {
+    const source = mod.sourceName ?? entityTypeLabel(mod.sourceType, baseRules);
+    const cells: RuleCells = [mod.target, formatOperator("modifier", mod.operator), mod.value, mod.valueType];
+    const rules = bySource.get(source);
+    if (rules) rules.push(cells);
+    else bySource.set(source, [cells]);
+  }
+  const groups = [...bySource].map(([source, rules]) => ({ key: source, source, rules }));
 
   return <GroupedRuleTable label={label} count={modifiers.length} columns={ruleColumns("Type")} groups={groups} />;
 }
 
-function RequirementTable({ groups, label }: RequirementTableProps) {
+function RequirementTable({ baseRules, groups, label }: RequirementTableProps) {
   return (
     <GroupedRuleTable
       label={label}
@@ -227,7 +233,7 @@ function RequirementTable({ groups, label }: RequirementTableProps) {
       columns={ruleColumns("Chaining")}
       groups={groups.map((group, index) => ({
         key: String(index),
-        source: group.sourceName ?? group.sourceType ?? <EmptyValue />,
+        source: group.sourceName ?? (group.sourceType ? entityTypeLabel(group.sourceType, baseRules) : <EmptyValue />),
         rules: group.requirements.map((req): RuleCells => [
           req.target,
           req.operator && formatOperator("requirement", req.operator),
@@ -270,14 +276,14 @@ function shownCell(cell: ReactNode) {
   return cell === "" || cell == null ? <EmptyValue /> : cell;
 }
 
-function SkippedModifierTable({ items }: SkippedModifierTableProps) {
+function SkippedModifierTable({ baseRules, items }: SkippedModifierTableProps) {
   return (
     <DiagnosticsGroup label="Skipped" count={items.length}>
       <TableColumnsHead columns={SKIPPED_COLUMNS} />
       <TableBody>
         {items.map((item, i) => (
           <TableRow key={i}>
-            <TableCell>{item.modifier.sourceType}</TableCell>
+            <TableCell>{entityTypeLabel(item.modifier.sourceType, baseRules)}</TableCell>
             <TableCell>{item.modifier.target}</TableCell>
             <TableCell>{item.warning}</TableCell>
           </TableRow>
@@ -287,10 +293,10 @@ function SkippedModifierTable({ items }: SkippedModifierTableProps) {
   );
 }
 
-export function DiagnosticsSection({ validation, requirements, modifiers }: DiagnosticsSectionProps) {
+export function DiagnosticsSection({ baseRules, validation, requirements, modifiers }: DiagnosticsSectionProps) {
   return (
     <Panel>
-      <Accordion defaultExpanded={false} disableGutters sx={ACCORDION_SX}>
+      <Accordion disableGutters sx={ACCORDION_SX}>
         <AccordionSummary expandIcon={<ExpandMoreIcon fontSize="small" />} sx={SUMMARY_SX}>
           <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
             <CardTitle>Diagnostics</CardTitle>
@@ -302,13 +308,7 @@ export function DiagnosticsSection({ validation, requirements, modifiers }: Diag
             {validation.issues.length > 0 && (
               <Stack spacing={1}>
                 <SubsectionTitle>Issues</SubsectionTitle>
-                <Box>
-                  {validation.issues.map((issue, i) => (
-                    <Typography key={i} variant="body2" sx={{ pl: 1, py: 0.25 }}>
-                      {issue.message}
-                    </Typography>
-                  ))}
-                </Box>
+                <ValidationIssueList issues={validation.issues} baseRules={baseRules} named={false} />
               </Stack>
             )}
 
@@ -324,9 +324,13 @@ export function DiagnosticsSection({ validation, requirements, modifiers }: Diag
                   )}
                 </Stack>
               </Stack>
-              <RequirementTable groups={requirements.fulfilledRequirementGroups} label="Fulfilled" />
-              <RequirementTable groups={requirements.unmetRequirementGroups} label="Unmet" />
-              <InvalidRequirementTable items={requirements.invalidRequirements} />
+              <RequirementTable
+                baseRules={baseRules}
+                groups={requirements.fulfilledRequirementGroups}
+                label="Fulfilled"
+              />
+              <RequirementTable baseRules={baseRules} groups={requirements.unmetRequirementGroups} label="Unmet" />
+              <InvalidRequirementTable baseRules={baseRules} items={requirements.invalidRequirements} />
             </Box>
 
             <Box>
@@ -346,10 +350,10 @@ export function DiagnosticsSection({ validation, requirements, modifiers }: Diag
                   )}
                 </Stack>
               </Stack>
-              <ModifierTable modifiers={modifiers.appliedModifiers} label="Applied" />
-              <ModifierTable modifiers={modifiers.unappliedModifiers} label="Unapplied" />
-              <ModifierTable modifiers={modifiers.inactiveModifiers} label="Inactive" />
-              <SkippedModifierTable items={modifiers.skippedModifiers} />
+              <ModifierTable baseRules={baseRules} modifiers={modifiers.appliedModifiers} label="Applied" />
+              <ModifierTable baseRules={baseRules} modifiers={modifiers.unappliedModifiers} label="Unapplied" />
+              <ModifierTable baseRules={baseRules} modifiers={modifiers.inactiveModifiers} label="Inactive" />
+              <SkippedModifierTable baseRules={baseRules} items={modifiers.skippedModifiers} />
             </Box>
           </Stack>
         </AccordionDetails>

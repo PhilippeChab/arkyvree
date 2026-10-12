@@ -10,12 +10,18 @@ interface ReadOnlyEquipmentSectionProps {
   equipment: EquipmentRow[];
   /** What the sheet's base rules say of the load it carries, under the table. */
   load?: ReactNode;
+  /** Links each item to its page in this ruleset, for a viewer who reads it (a bonded creature's sheet) */
+  rulesetId?: string;
 }
 
-export function ReadOnlyEquipmentSection({ equipment, load }: ReadOnlyEquipmentSectionProps) {
+export function ReadOnlyEquipmentSection({ equipment, load, rulesetId }: ReadOnlyEquipmentSectionProps) {
   return (
     <SheetSection title="Equipment & Inventory">
-      {equipment.length > 0 ? <EquipmentTable rows={equipment} load={load} /> : <BlankNote>No equipment</BlankNote>}
+      {equipment.length > 0 ? (
+        <EquipmentTable rows={equipment} load={load} rulesetId={rulesetId} />
+      ) : (
+        <BlankNote>No equipment</BlankNote>
+      )}
     </SheetSection>
   );
 }

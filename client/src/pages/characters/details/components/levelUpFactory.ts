@@ -29,6 +29,14 @@ interface LevelWizards {
   EditLevelDialog: ComponentType<EditLevelDialogProps>;
 }
 
+/** A planned level, as a ruleset's preview lists it: its class's level, and the hit points it may gain. */
+interface PlannedLevelDetail extends Pick<HpLevel, "hd" | "hitPoints"> {
+  klassId: string;
+  klassLevelId: string;
+  klassName: string;
+  level: number;
+}
+
 /** What a character's sheet passes its Add Level dialog: a level dialog's, and the class it opens with planned. */
 export interface AddLevelDialogProps extends LevelDialogProps {
   /**
@@ -78,14 +86,6 @@ export interface PickAnswers {
    * (an ability increase), as the rules check the save
    */
   waiting: boolean;
-}
-
-/** A planned level, as a ruleset's preview lists it: its class's level, and the hit points it may gain. */
-export interface PlannedLevelDetail extends Pick<HpLevel, "hd" | "hitPoints"> {
-  klassId: string;
-  klassLevelId: string;
-  klassName: string;
-  level: number;
 }
 
 /**

@@ -122,6 +122,7 @@ describe("wording rules", () => {
           "client/src/cut.tsx": "export const t = `${text.slice(0, 60)}…`;\n",
           "client/src/lib/truncate.ts": "export const u = `${text.slice(0, length)}…`;\n",
           "client/src/emoji.tsx": "export const e = <PageHeader title={`⚔️ ${name}`} />;\n",
+          "client/src/entity.tsx": "export const n = <Typography>&#x1F480;</Typography>;\n",
           "client/src/symbols.tsx": 'export const y = <Button>{"×"} − ÷ © 2026</Button>;\n',
           "client/src/components/common/DiceSpinner.tsx": "export const z = <Typography>🎲</Typography>;\n",
         },
@@ -132,6 +133,7 @@ describe("wording rules", () => {
       "typography-marks client/src/dash.tsx",
       "typography-marks client/src/dots.tsx",
       "typography-marks client/src/emoji.tsx",
+      "typography-marks client/src/entity.tsx",
       "typography-marks client/src/template.tsx",
     ]);
   });
@@ -149,5 +151,27 @@ describe("wording rules", () => {
         ["app-name"],
       ),
     ).toEqual(["app-name client/src/string.tsx", "app-name client/src/template.ts", "app-name client/src/text.tsx"]);
+  });
+
+  test("an entity's type shows in its ruleset's words, never as the code names it", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/cell.tsx": "export const c = <TableCell>{item.sourceName ?? item.entityType}</TableCell>;\n",
+          "client/src/template.tsx":
+            'export const t = <span>{issue.entityType ? ` (${issue.entityType})` : ""}</span>;\n',
+          "client/src/bare.tsx": "export const b = <TableCell>{modifier.sourceType}</TableCell>;\n",
+          "client/src/labelled.tsx":
+            "export const l = <TableCell>{entityTypeLabel(modifier.sourceType, baseRules)}</TableCell>;\n",
+          "client/src/tested.tsx": "export const t = <span>{issue.entityType && <Chip />}</span>;\n",
+          "client/src/prop.tsx": "export const p = <ModifierFormFields entityType={entity.entityType} />;\n",
+        },
+        ["entity-type-labels"],
+      ),
+    ).toEqual([
+      "entity-type-labels client/src/bare.tsx",
+      "entity-type-labels client/src/cell.tsx",
+      "entity-type-labels client/src/template.tsx",
+    ]);
   });
 });

@@ -1,4 +1,4 @@
-import { alpha, Button, Stack, ThemeProvider, Typography } from "@mui/material";
+import { alpha, Button, CssBaseline, Stack, ThemeProvider, Typography } from "@mui/material";
 import * as Sentry from "@sentry/react";
 import { Component, type ErrorInfo, type ReactNode } from "react";
 
@@ -42,6 +42,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     if (this.state.isChunkError) {
       return (
         <ThemeProvider theme={ERROR_THEME}>
+          <CssBaseline enableColorScheme />
           <Stack
             direction="row"
             sx={{
@@ -61,6 +62,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     if (this.state.hasError) {
       return (
         <ThemeProvider theme={ERROR_THEME}>
+          <CssBaseline enableColorScheme />
           <Stack
             spacing={3}
             sx={{
@@ -72,15 +74,6 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
               bgcolor: "background.default",
             }}
           >
-            <Typography
-              sx={{
-                fontSize: { xs: "4rem", sm: "6rem" },
-                lineHeight: 1,
-                filter: "grayscale(0.3)",
-              }}
-            >
-              &#x1F480;
-            </Typography>
             <Typography variant="h4" component="h1" sx={{ color: "primary.main" }}>
               A Critical Failure
             </Typography>
@@ -93,10 +86,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
               <Stack direction="row" spacing={2}>
                 <Button
                   variant="outlined"
-                  onClick={() => {
-                    this.setState({ hasError: false });
-                    window.location.reload();
-                  }}
+                  onClick={() => window.location.reload()}
                   sx={{
                     color: "primary.main",
                     borderColor: "primary.main",
@@ -108,12 +98,10 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                 >
                   Reload Page
                 </Button>
+                {/* A link, which loads the app afresh: the router is the app's, which failed */}
                 <Button
                   variant="contained"
-                  onClick={() => {
-                    this.setState({ hasError: false });
-                    window.location.href = "/";
-                  }}
+                  href="/"
                   sx={{
                     bgcolor: "primary.main",
                     color: "background.default",

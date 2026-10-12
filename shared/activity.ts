@@ -8,8 +8,8 @@ export interface ChangedField {
 /** An invite's notification type. */
 export type InviteNotificationType = (typeof INVITE_NOTIFICATION_TYPES)[number];
 
-/** The tables whose activities have no page to open: an account's, a session's. */
-const NON_NAVIGABLE_TABLES: readonly string[] = ["users", "sessions"];
+/** The tables whose activities have no page to open: an account's, a session's, a linked sign-in's. */
+const NON_NAVIGABLE_TABLES: readonly string[] = ["oauth_accounts", "sessions", "users"];
 
 /**
  * The notification types that are invites: answered in place with Accept / Reject, wherever a notification shows, and

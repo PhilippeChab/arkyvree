@@ -9,12 +9,14 @@ import { createListboxScrollHandler } from "@/client/src/lib/listboxScroll.ts";
 import { firstPage, pageItems } from "@/client/src/lib/pageItems.ts";
 import { formatSegment, type PathCompletion, type TargetPathKind } from "@/shared/customization/target.ts";
 
-import { targetCompletionsQuery } from "./customizationQueries.ts";
+import { targetCompletionsQuery, type TargetPathOwner } from "./customizationQueries.ts";
 import { type PathInfo, toPathInfo } from "./pathValues.ts";
 import { TargetPathBreadcrumbs } from "./TargetPathBreadcrumbs.tsx";
 
 interface TargetPathBrowserProps {
-  entityType?: string;
+  entityType?: TargetPathOwner;
+  /** Its search field's id, which its label names it by (`TargetPathInput`'s). */
+  inputId?: string;
   /** Its search field's: the target's form field `ref`, so a failed submit focuses it. */
   inputRef?: Ref<HTMLInputElement>;
   isComplete: boolean;
@@ -39,6 +41,7 @@ export function TargetPathBrowser({
   segments,
   isComplete,
   onChange,
+  inputId,
   inputRef,
 }: TargetPathBrowserProps) {
   const [search, setSearch] = useState("");
@@ -70,28 +73,20 @@ export function TargetPathBrowser({
   });
 
   // Segment labels from the completions response
-  const segmentLabels = useMemo(() => firstPage(completionsData)?.segmentLabels ?? {}, [completionsData]);
+  const segmentLabels = firstPage(completionsData)?.segmentLabels ?? {};
 
-  const completions = useMemo(() => {
-    const items = pageItems(completionsData);
-    return items.reduce((acc: PathCompletion[], item) => {
-      if (!acc.some((c) => c.insertText === item.insertText)) acc.push(item);
-      return acc;
-    }, []);
-  }, [completionsData]);
+  const completions = pageItems(completionsData).reduce((acc: PathCompletion[], item) => {
+    if (!acc.some((c) => c.insertText === item.insertText)) acc.push(item);
+    return acc;
+  }, []);
 
   // Detect selected leaf from completions. In flat mode insertText is the full
   // path; in drill mode it's the last segment.
   const fullPath = segments.join(".");
   const lastSegment = segments.length > 0 ? segments[segments.length - 1] : null;
-  const selectedLeaf = useMemo(() => {
-    if (flatMode) {
-      if (!fullPath) return null;
-      return completions.find((c) => c.path === fullPath) ?? null;
-    }
-    if (!lastSegment) return null;
-    return completions.find((c) => c.insertText === lastSegment && c.path) ?? null;
-  }, [flatMode, fullPath, lastSegment, completions]);
+  const selectedLeaf = flatMode
+    ? (fullPath && completions.find((c) => c.path === fullPath)) || null
+    : (lastSegment && completions.find((c) => c.insertText === lastSegment && c.path)) || null;
 
   const handleNavigate = (option: PathCompletion) => {
     setSearch("");
@@ -148,6 +143,7 @@ export function TargetPathBrowser({
           placeholder="Search…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
+          id={inputId}
           inputRef={inputRef}
           fullWidth
         />
