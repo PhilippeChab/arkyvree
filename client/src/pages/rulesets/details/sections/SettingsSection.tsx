@@ -2,7 +2,14 @@ import { Stack } from "@mui/material";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { type InferRequestType, type InferResponseType, parseResponse } from "hono/client";
 
-import { DiceSpinner, LoadError, Panel, SaveButton, SectionContent } from "@/client/src/components/common/index.ts";
+import {
+  DiceSpinner,
+  LoadError,
+  Panel,
+  ReadOnlyFields,
+  SaveButton,
+  SectionContent,
+} from "@/client/src/components/common/index.ts";
 import { useFormSync, useFormWith, useRulesetPermissions } from "@/client/src/hooks/index.ts";
 import { EntityFields, withEntityFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { rulesetSettingsQuery } from "@/client/src/pages/rulesets/details/rulesetQueries.ts";
@@ -54,15 +61,22 @@ export function SettingsSection({ ruleset }: RulesetSectionProps) {
     <SectionContent>
       {settings ? (
         <Panel>
-          <Stack
-            component="form"
-            noValidate
-            onSubmit={sync.handleSubmit((data) => saveMutation.mutate(data))}
-            spacing={3}
-          >
-            <EntityFields form={form} entityType="rulesets" rulesetId={ruleset.id} help readOnly={!canEdit} />
-            {canEdit && <SaveButton canSave={sync.isDirty} pending={saveMutation.isPending} />}
-          </Stack>
+          {canEdit ? (
+            <Stack
+              component="form"
+              noValidate
+              onSubmit={sync.handleSubmit((data) => saveMutation.mutate(data))}
+              spacing={3}
+            >
+              <EntityFields form={form} entityType="rulesets" rulesetId={ruleset.id} help />
+              <SaveButton canSave={sync.isDirty} pending={saveMutation.isPending} />
+            </Stack>
+          ) : (
+            // The same fields, read-only, which nothing submits
+            <ReadOnlyFields readOnly>
+              <EntityFields form={form} entityType="rulesets" rulesetId={ruleset.id} help />
+            </ReadOnlyFields>
+          )}
         </Panel>
       ) : error ? (
         <LoadError what="Settings" error={error} />

@@ -1,6 +1,5 @@
 import { parseResponse } from "hono/client";
 
-import { ValueChip } from "@/client/src/components/common/index.ts";
 import { useFormSync, useFormWith } from "@/client/src/hooks/index.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import {
@@ -33,7 +32,6 @@ export function RaceEditor({
   recordKey,
   adoptKey,
   entity: race,
-  canEdit,
   locked,
   followCopy,
   refetchSaved,
@@ -61,23 +59,12 @@ export function RaceEditor({
   return (
     <EntityDetailsCard
       title="Race Details"
-      description={race.description}
-      chips={
-        <>
-          <ValueChip label={race.size} />
-          <ValueChip label={`${race.baseSpeed} ft`} color="info" />
-        </>
-      }
-      edit={
-        canEdit
-          ? {
-              fields: <RaceFormFields form={form} rulesetId={rulesetId} />,
-              onSubmit: sync.handleSubmit((data) => saveMutation.mutate(data)),
-              canSave: sync.isDirty && !locked,
-              isSaving: saveMutation.isPending,
-            }
-          : undefined
-      }
+      form={{
+        fields: <RaceFormFields form={form} rulesetId={rulesetId} />,
+        onSubmit: sync.handleSubmit((data) => saveMutation.mutate(data)),
+        canSave: sync.isDirty && !locked,
+        isSaving: saveMutation.isPending,
+      }}
     />
   );
 }

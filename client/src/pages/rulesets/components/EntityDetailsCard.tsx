@@ -1,55 +1,46 @@
 import { Stack, Typography } from "@mui/material";
 import type { FormEventHandler, ReactNode } from "react";
 
-import { CardTitle, NO_DESCRIPTION, Panel, SaveButton } from "@/client/src/components/common/index.ts";
+import {
+  CardTitle,
+  NO_DESCRIPTION,
+  Panel,
+  SaveButton,
+  useReadOnlyFields,
+} from "@/client/src/components/common/index.ts";
 
 interface EntityDetailsCardProps {
-  /** Facts shown next to the title in the read-only view: chips alone */
-  chips?: ReactNode;
+  /** An entity with no form, which no one edits (an ability): its description, in its place. */
   description?: string | null;
-  /** The inline edit form, for editors; everyone else sees the description. */
-  edit?: {
+  /** The entity's form: its fields, and their save. */
+  form?: {
     canSave: boolean;
     fields: ReactNode;
     isSaving: boolean;
     onSubmit: FormEventHandler;
   };
-  /** What failed to load for the read-only view (a `LoadError`), stated above its body */
-  notice?: ReactNode;
-  /** Read-only body for entities without a description; replaces it. */
-  readOnlyBody?: ReactNode;
   title: string;
 }
 
-/** Card at the top of a ruleset entity page: its edit form, or its description. */
-export function EntityDetailsCard({ title, chips, description, notice, readOnlyBody, edit }: EntityDetailsCardProps) {
+/**
+ * Card at the top of a ruleset entity page: its form, the same whoever reads it. A viewer who can't edit the entity
+ * (under `ReadOnlyFields`) reads its fields, read-only, with no Save, which nothing submits.
+ */
+export function EntityDetailsCard({ title, description, form }: EntityDetailsCardProps) {
+  const readOnly = useReadOnlyFields();
   return (
     <Panel spacing={{ xs: 2, sm: 4 }}>
-      <Stack
-        direction="row"
-        spacing={1}
-        sx={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap" }}
-      >
-        <CardTitle>{title}</CardTitle>
-        {!edit && chips && (
-          <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
-            {chips}
-          </Stack>
-        )}
-      </Stack>
-      {edit ? (
-        <Stack component="form" noValidate onSubmit={edit.onSubmit} spacing={3}>
-          {edit.fields}
-          <SaveButton canSave={edit.canSave} pending={edit.isSaving} />
-        </Stack>
-      ) : (
-        <Stack spacing={2}>
-          {notice}
-          {readOnlyBody ?? (
-            <Typography variant="body1" sx={{ color: "text.secondary", lineHeight: 1.6, whiteSpace: "pre-wrap" }}>
-              {description || NO_DESCRIPTION}
-            </Typography>
-          )}
+      <CardTitle>{title}</CardTitle>
+      {!form && (
+        <Typography variant="body1" sx={{ color: "text.secondary", lineHeight: 1.6, whiteSpace: "pre-wrap" }}>
+          {description || NO_DESCRIPTION}
+        </Typography>
+      )}
+      {form && readOnly && <Stack spacing={3}>{form.fields}</Stack>}
+      {form && !readOnly && (
+        <Stack component="form" noValidate onSubmit={form.onSubmit} spacing={3}>
+          {form.fields}
+          <SaveButton canSave={form.canSave} pending={form.isSaving} />
         </Stack>
       )}
     </Panel>

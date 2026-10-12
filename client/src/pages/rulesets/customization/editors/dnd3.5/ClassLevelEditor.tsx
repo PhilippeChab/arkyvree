@@ -1,7 +1,5 @@
-import { Stack } from "@mui/material";
 import { parseResponse } from "hono/client";
 
-import { BlankNote, ValueChip } from "@/client/src/components/common/index.ts";
 import { useFormSync, useFormWith } from "@/client/src/hooks/index.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import {
@@ -20,7 +18,6 @@ import type { ClassLevelFormData } from "@/client/src/pages/rulesets/details/cla
 import type { EntityField } from "@/client/src/pages/rulesets/details/rulesetQueries.ts";
 import { useEntityFields, useEntitySave, useRulesetSaves } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
-import { formatSigned } from "@/shared/text.ts";
 
 type LevelFeatRow = ClassLevel["feats"][number];
 
@@ -51,7 +48,6 @@ export function ClassLevelEditor({
   recordKey,
   adoptKey,
   entity: level,
-  canEdit,
   locked,
   followCopy,
   refetchSaved,
@@ -86,53 +82,26 @@ export function ClassLevelEditor({
       ),
   });
 
-  const saveName = (saveId: string) => rulesetSaves?.find((s) => s.id === saveId)?.name;
-
   return (
     <EntityDetailsCard
       title="Class Level Details"
-      chips={level.saves.map(
-        (save) =>
-          saveName(save.saveId) && (
-            <ValueChip
-              color="default"
-              key={save.saveId}
-              label={`${saveName(save.saveId)}: ${formatSigned(save.base)}`}
+      form={{
+        fields: (
+          <>
+            <EntityFields form={form} entityType="klass_levels" rulesetId={rulesetId} />
+            <ClassLevelFields
+              form={form}
+              rulesetId={rulesetId}
+              rulesetSaves={rulesetSaves}
+              savesError={savesError}
+              featLabels={new Map(level.feats.map((feat) => [featKey(asLevelFeat(feat)), featLabel(feat)]))}
             />
-          ),
-      )}
-      readOnlyBody={
-        level.feats.length > 0 ? (
-          <Stack direction="row" spacing={0.5} sx={{ flexWrap: "wrap" }}>
-            {sortedFeats(level).map((feat) => (
-              <ValueChip color="default" key={featKey(asLevelFeat(feat))} label={featLabel(feat)} />
-            ))}
-          </Stack>
-        ) : (
-          <BlankNote>No feats at this level</BlankNote>
-        )
-      }
-      edit={
-        canEdit
-          ? {
-              fields: (
-                <>
-                  <EntityFields form={form} entityType="klass_levels" rulesetId={rulesetId} />
-                  <ClassLevelFields
-                    form={form}
-                    rulesetId={rulesetId}
-                    rulesetSaves={rulesetSaves}
-                    savesError={savesError}
-                    featLabels={new Map(level.feats.map((feat) => [featKey(asLevelFeat(feat)), featLabel(feat)]))}
-                  />
-                </>
-              ),
-              onSubmit: sync.handleSubmit((data) => saveMutation.mutate(data)),
-              canSave: sync.isDirty && !locked,
-              isSaving: saveMutation.isPending,
-            }
-          : undefined
-      }
+          </>
+        ),
+        onSubmit: sync.handleSubmit((data) => saveMutation.mutate(data)),
+        canSave: sync.isDirty && !locked,
+        isSaving: saveMutation.isPending,
+      }}
     />
   );
 }

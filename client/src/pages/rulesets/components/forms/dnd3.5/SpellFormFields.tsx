@@ -7,6 +7,7 @@ import {
   NameField,
   SelectField,
   SubsectionTitle,
+  useReadOnlyFields,
 } from "@/client/src/components/common/index.ts";
 import { APTITUDES_RULES, readNumberInput } from "@/client/src/lib/validation.ts";
 import { AptitudesAutocomplete } from "@/client/src/pages/rulesets/components/AptitudesAutocomplete.tsx";
@@ -57,6 +58,7 @@ export function SpellFormFields({
   const selectedAptitudes = aptitudes.resolve(selected.map((a) => a.id));
   const setSelected = (next: SpellAptitude[]) => field.onChange(next);
   const levelOf = (id: string) => selected.find((a) => a.id === id)?.level;
+  const readOnly = useReadOnlyFields();
 
   return (
     <>
@@ -100,7 +102,7 @@ export function SpellFormFields({
                 label="Level"
                 type="number"
                 size="small"
-                slotProps={{ htmlInput: { min: 0, max: MAX_SPELL_LEVEL } }}
+                slotProps={{ htmlInput: { min: 0, max: MAX_SPELL_LEVEL }, input: { readOnly } }}
                 value={levelOf(apt.id) ?? ""}
                 error={levelsInvalid && spellLevelError(levelOf(apt.id)) !== undefined}
                 helperText={levelsInvalid && spellLevelError(levelOf(apt.id))}

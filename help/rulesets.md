@@ -18,7 +18,7 @@ A ruleset holds:
 - **Aptitudes** — pools of choosable options at certain class levels (Fighter Bonus Feats, Cleric Domains).
 - **Mechanics** — free-form rules the system doesn't model on the sheet (trip, grapple, bull rush).
 - **Settings** — the ruleset's own rules, such as the ability a character's skill points come from.
-- **Customization** — the layer that wires it all together (properties, the rules data of an entity's own form; requirements; modifiers).
+- **Customization** — the layer that wires it all together (an entity's fields, the rules data of its own form; requirements; modifiers).
 
 The base **Core SRD 3.5** ruleset and its sourcebook extensions are read-only — they're maintained by us. To change anything in them, make your own copy. See [What is forking?](forking-and-syncing.md#what-is-forking)
 

@@ -4,7 +4,13 @@ import { parseResponse } from "hono/client";
 import { type ReactNode } from "react";
 import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
 
-import { DiceSpinner, type SectionTab, SectionTabPanel, SectionTabs } from "@/client/src/components/common/index.ts";
+import {
+  DiceSpinner,
+  ReadOnlyFields,
+  type SectionTab,
+  SectionTabPanel,
+  SectionTabs,
+} from "@/client/src/components/common/index.ts";
 import { TargetPathBreadcrumbs } from "@/client/src/components/customization/index.ts";
 import { usePageTitle, useRulesetPermissions } from "@/client/src/hooks/index.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
@@ -114,17 +120,20 @@ function CustomizationView({
       }
     >
       {forgetSource && <Navigate to={forgetSource.to} replace state={forgetSource.state} />}
-      {isEditable(data) &&
-        renderEditor(data, ruleset.baseRules, {
-          rulesetId,
-          entityId,
-          recordKey: copy.key,
-          adoptKey: copy.adoptKey,
-          canEdit,
-          locked,
-          followCopy: copy.followCopy,
-          refetchSaved,
-        })}
+      {isEditable(data) && (
+        // The same form whoever reads it, its fields read-only for who can't edit the entity
+        <ReadOnlyFields readOnly={!canEdit}>
+          {renderEditor(data, ruleset.baseRules, {
+            rulesetId,
+            entityId,
+            recordKey: copy.key,
+            adoptKey: copy.adoptKey,
+            locked,
+            followCopy: copy.followCopy,
+            refetchSaved,
+          })}
+        </ReadOnlyFields>
+      )}
       <Stack spacing={4}>
         <SectionTabs
           tabs={tabs}

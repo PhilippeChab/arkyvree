@@ -1,8 +1,6 @@
 import { parseResponse } from "hono/client";
 
-import { ValueChip } from "@/client/src/components/common/index.ts";
 import { useFormSync, useFormWith } from "@/client/src/hooks/index.ts";
-import { formatCost, formatWeight } from "@/client/src/lib/formatNumeric.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import {
   EMPTY_ITEM,
@@ -24,7 +22,6 @@ export function ItemEditor({
   recordKey,
   adoptKey,
   entity: item,
-  canEdit,
   locked,
   followCopy,
   refetchSaved,
@@ -53,31 +50,15 @@ export function ItemEditor({
       ),
   });
 
-  const cost = formatCost(item.costGp);
-  const weight = formatWeight(item.weight);
-
   return (
     <EntityDetailsCard
       title="Item Details"
-      description={item.description}
-      chips={
-        <>
-          {item.type && <ValueChip label={item.type} />}
-          {item.slot && <ValueChip label={item.slot} color="info" />}
-          {cost && <ValueChip label={cost} color="default" />}
-          {weight && <ValueChip label={weight} color="default" />}
-        </>
-      }
-      edit={
-        canEdit
-          ? {
-              fields: <ItemFormFields form={form} rulesetId={rulesetId} templateName={item.templateName} />,
-              onSubmit: sync.handleSubmit((data) => saveMutation.mutate(data)),
-              canSave: sync.isDirty && !locked,
-              isSaving: saveMutation.isPending,
-            }
-          : undefined
-      }
+      form={{
+        fields: <ItemFormFields form={form} rulesetId={rulesetId} templateName={item.templateName} />,
+        onSubmit: sync.handleSubmit((data) => saveMutation.mutate(data)),
+        canSave: sync.isDirty && !locked,
+        isSaving: saveMutation.isPending,
+      }}
     />
   );
 }

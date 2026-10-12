@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
 
-import { SectionTabPanel, SectionTabs } from "@/client/src/components/common/index.ts";
+import { ReadOnlyFields, SectionTabPanel, SectionTabs } from "@/client/src/components/common/index.ts";
 import { useFormSync, useFormWith, usePageTitle, useRulesetPermissions } from "@/client/src/hooks/index.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { type RulesetDetail, rulesetDetailQuery } from "@/client/src/lib/queries.ts";
@@ -134,20 +134,18 @@ function ClassView({ back, classId, ruleset, rulesetId, section }: ClassViewProp
       >
         {classData && (
           <>
-            <ClassDetails
-              klass={classData}
-              rulesetId={rulesetId}
-              edit={
-                canEdit
-                  ? {
-                      form: editForm,
-                      onSubmit: sync.handleSubmit((data) => updateMutation.mutate(data)),
-                      canSave: sync.isDirty,
-                      isSaving: updateMutation.isPending,
-                    }
-                  : undefined
-              }
-            />
+            {/* The same form whoever reads it, its fields read-only for who can't edit the class */}
+            <ReadOnlyFields readOnly={!canEdit}>
+              <ClassDetails
+                rulesetId={rulesetId}
+                edit={{
+                  form: editForm,
+                  onSubmit: sync.handleSubmit((data) => updateMutation.mutate(data)),
+                  canSave: sync.isDirty,
+                  isSaving: updateMutation.isPending,
+                }}
+              />
+            </ReadOnlyFields>
             <Stack spacing={4}>
               <SectionTabs
                 tabs={tabs}

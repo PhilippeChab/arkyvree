@@ -10,6 +10,7 @@ import {
   SelectField,
   SubsectionTitle,
   SwitchField,
+  useReadOnlyFields,
   ValueChip,
 } from "@/client/src/components/common/index.ts";
 import { rulesetOptionsQuery } from "@/client/src/lib/queries.ts";
@@ -29,8 +30,6 @@ interface EntityFieldsProps<T extends FieldValues> {
   form: UseFormReturn<T>;
   /** Each says what it's for under it: a class's do, and the Settings'. */
   help?: boolean;
-  /** Shown as they are: a viewer who can't edit them reads them. */
-  readOnly?: boolean;
   rulesetId: string;
 }
 
@@ -49,7 +48,6 @@ interface FieldsShowing<T extends FieldValues> {
   columns: 1 | 2;
   form: UseFormReturn<T>;
   help: boolean;
-  readOnly: boolean;
   rulesetId: string;
 }
 
@@ -96,7 +94,7 @@ const WIDE_FIELD_SX = { gridColumn: "1 / -1" };
 
 /** A field's input, by its kind: a select, several values, a number, a yes or no, a text, an entity of the ruleset. */
 function FieldInput<T extends FieldValues>({ field, ...props }: FieldInputProps<T>) {
-  const { form, help, readOnly } = props;
+  const { form, help } = props;
   if (field.input === "group") {
     return (
       <Stack spacing={1}>
@@ -112,7 +110,7 @@ function FieldInput<T extends FieldValues>({ field, ...props }: FieldInputProps<
       return field.nullable ? (
         <FlagField {...props} field={field} />
       ) : (
-        <SwitchField control={form.control} name={name} label={field.label} readOnly={readOnly} />
+        <SwitchField control={form.control} name={name} label={field.label} />
       );
     case "number":
       return (
@@ -128,7 +126,7 @@ function FieldInput<T extends FieldValues>({ field, ...props }: FieldInputProps<
           label={field.label}
           fullWidth
           helperText={helperText}
-          slotProps={{ htmlInput: { min: field.min, max: field.max }, input: { readOnly } }}
+          slotProps={{ htmlInput: { min: field.min, max: field.max } }}
         />
       );
     case "ref":
@@ -145,7 +143,6 @@ function FieldInput<T extends FieldValues>({ field, ...props }: FieldInputProps<
           options={choiceOptions(field.options, valueAt(form.formState.defaultValues, name))}
           emptyLabel={noneLabel(field.options)}
           helperText={helperText}
-          readOnly={readOnly}
         />
       );
     case "text":
@@ -159,7 +156,6 @@ function FieldInput<T extends FieldValues>({ field, ...props }: FieldInputProps<
       placeholder={"placeholder" in field ? field.placeholder : undefined}
       fullWidth
       helperText={helperText}
-      slotProps={{ input: { readOnly } }}
     />
   );
 }
@@ -187,8 +183,9 @@ function FieldsGrid<T extends FieldValues>({ fields, ...props }: FieldsGridProps
 }
 
 /** A three-state flag, bound to its form's field: its select, handed the field's value, change and ref. */
-function FlagField<T extends FieldValues>({ field, form, help, readOnly }: FieldInputProps<T, FlagField>) {
+function FlagField<T extends FieldValues>({ field, form, help }: FieldInputProps<T, FlagField>) {
   const { field: bound } = useController({ control: form.control, name: fieldPath<T>(field.key) });
+  const readOnly = useReadOnlyFields();
   return (
     <FlagSelect
       field={field}
@@ -232,14 +229,7 @@ function isWide(field: EntityField) {
 }
 
 /** An entity of the ruleset, by its id: a select of the list its kind names (`list`), none too unless it's required. */
-function ReferenceSelect<T extends FieldValues>({
-  field,
-  form,
-  help,
-  readOnly,
-  rulesetId,
-  list,
-}: ReferenceSelectProps<T>) {
+function ReferenceSelect<T extends FieldValues>({ field, form, help, rulesetId, list }: ReferenceSelectProps<T>) {
   const { data: entities, error } = useQuery(rulesetOptionsQuery(list, rulesetId));
   return (
     <SelectField
@@ -251,7 +241,6 @@ function ReferenceSelect<T extends FieldValues>({
       emptyLabel={field.required ? undefined : "None"}
       loadError={error}
       helperText={help ? field.help : undefined}
-      readOnly={readOnly}
     />
   );
 }
@@ -268,8 +257,9 @@ function ShownField<T extends FieldValues>({ path, ...props }: ShownFieldProps<T
 }
 
 /** Several values, as chips: a closed list's options (and those the saved form holds), or free ones. */
-function ValuesInput<T extends FieldValues>({ field, form, help, readOnly }: FieldInputProps<T, ValuesField>) {
+function ValuesInput<T extends FieldValues>({ field, form, help }: FieldInputProps<T, ValuesField>) {
   const name = fieldPath<T>(field.key);
+  const readOnly = useReadOnlyFields();
   const {
     field: { ref, value, onChange, ...bound },
   } = useController({ control: form.control, name });
@@ -305,21 +295,18 @@ function ValuesInput<T extends FieldValues>({ field, form, help, readOnly }: Fie
 
 /**
  * An entity's fields, as its ruleset declares them (`useEntityFields`): each its input, one a row (two side by side,
- * `columns`), a group's under its label, a field on a condition while the form meets it. Bound to the form's
- * `fields`, which its save sends as they are.
+ * `columns`), a group's under its label, a field on a condition while the form meets it, read-only under
+ * `ReadOnlyFields`. Bound to the form's `fields`, which its save sends as they are.
  */
 export function EntityFields<T extends FieldValues>({
   columns = 1,
   entityType,
   form,
   help = false,
-  readOnly = false,
   rulesetId,
 }: EntityFieldsProps<T>) {
   const { fields, error } = useEntityFields(rulesetId, entityType);
   if (!fields) return error ? <LoadError what="Fields" error={error} /> : <DiceSpinner sx={{ py: 4 }} />;
   if (fields.length === 0) return null;
-  return (
-    <FieldsGrid columns={columns} fields={fields} form={form} help={help} readOnly={readOnly} rulesetId={rulesetId} />
-  );
+  return <FieldsGrid columns={columns} fields={fields} form={form} help={help} rulesetId={rulesetId} />;
 }

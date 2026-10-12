@@ -1,6 +1,5 @@
 import { parseResponse } from "hono/client";
 
-import { LoadError, StatusChip, ValueChip } from "@/client/src/components/common/index.ts";
 import { useRulesetAbilities } from "@/client/src/hooks/index.ts";
 import {
   EMPTY_SKILL,
@@ -14,7 +13,7 @@ import { RulesetEntityDetail } from "@/client/src/pages/rulesets/details/entitie
 import { useEntityFields } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
-/** A 3.5 skill's page: its primary ability, whether it needs training, and its armor check penalty. */
+/** A 3.5 skill's page: its primary ability, and its fields, as its ruleset declares them. */
 export function SkillDetails({ rulesetId, skillId }: SkillDetailsProps) {
   const param = { id: rulesetId, skillId };
   const endpoint = rpc.api.rulesets[":id"].skills[":skillId"];
@@ -41,26 +40,6 @@ export function SkillDetails({ rulesetId, skillId }: SkillDetailsProps) {
         renderFields: (form) => (
           <SkillFormFields form={form} abilities={abilities} abilitiesError={abilitiesError} rulesetId={rulesetId} />
         ),
-      }}
-      notice={!!abilitiesError && abilities.length === 0 && <LoadError what="Abilities" error={abilitiesError} />}
-      renderChips={(skill) => {
-        const primaryAbilityName = abilities.find((a) => a.id === skill.primaryAbilityId)?.name;
-        return (
-          <>
-            {primaryAbilityName && <ValueChip label={primaryAbilityName} />}
-            {!skill.usableWithoutTraining && <StatusChip label="Trained Only" color="warning" />}
-            {skill.impactedByWeight && (
-              <ValueChip
-                label={
-                  skill.checkPenaltyMultiplier > 1
-                    ? `Weight Penalty ×${skill.checkPenaltyMultiplier}`
-                    : "Weight Penalty"
-                }
-                color="info"
-              />
-            )}
-          </>
-        );
       }}
     />
   );

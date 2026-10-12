@@ -438,18 +438,18 @@ describe("frontend rules", () => {
     ]);
   });
 
-  test("a card's chips row holds chips alone: what failed to load is its notice", async () => {
+  test("a card's chips row holds chips alone: what failed to load is stated above its body", async () => {
     const failed = '<LoadError what="Abilities" error={error} />';
+    const chip = '<ValueChip label="d10" />';
     expect(
       await lintRepo(
         {
-          "client/src/chips.tsx": `export const c = <EntityDetailsCard title="Skill Details" chips={${failed}} />;\n`,
-          "client/src/render.tsx": `export const r = <RulesetEntityDetail renderChips={() => ${failed}} />;\n`,
-          "client/src/notice.tsx": `export const n = <EntityDetailsCard title="Skill Details" notice={${failed}} />;\n`,
+          "client/src/chips.tsx": `export const c = <ListCard title="Fighter" chips={<>{${failed}}</>} />;\n`,
+          "client/src/above.tsx": `export const a = <Stack>{${failed}}<ListCard title="Fighter" chips={${chip}} /></Stack>;\n`,
         },
         ["load-errors"],
       ),
-    ).toEqual(["load-errors client/src/chips.tsx", "load-errors client/src/render.tsx"]);
+    ).toEqual(["load-errors client/src/chips.tsx"]);
   });
 
   test("a select whose options failed to load says so under its field, its loadError", async () => {

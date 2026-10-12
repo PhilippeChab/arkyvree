@@ -22,7 +22,7 @@ Answers to common questions about Arkyvree. Something missing or unclear? [Open 
 
 ## [Customization System](customization-system.md)
 
-- [What are Properties?](customization-system.md#what-are-properties)
+- [What are Fields?](customization-system.md#what-are-fields)
 - [What are Requirements?](customization-system.md#what-are-requirements)
 - [What are Modifiers?](customization-system.md#what-are-modifiers)
 - [How do these three work together?](customization-system.md#how-do-these-three-work-together)

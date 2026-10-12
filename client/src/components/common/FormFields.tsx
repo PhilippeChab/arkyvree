@@ -2,7 +2,7 @@
  * The form fields many forms share, each bound to its form's field through `useController` (controlled: the form holds
  * the value, the field shows it and reports its changes): `<NameField control={form.control} name="name" />`.
  * `FormTextField` binds any text field; the others are its presets, which apply their own rules, `SelectField` a select
- * and `SwitchField` a switch.
+ * and `SwitchField` a switch. Under `ReadOnlyFields` each shows its value as it is, read-only, as one given `readOnly` does.
  */
 
 import { FormControlLabel, MenuItem, Switch, TextField, type TextFieldProps } from "@mui/material";
@@ -18,6 +18,8 @@ import {
 
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { EMAIL_RULES, NAME_RULES, OPTIONAL_EMAIL_RULES } from "@/client/src/lib/validation.ts";
+
+import { useReadOnlyFields } from "./useReadOnlyFields.ts";
 
 /** A field of a form: its control, its name, and the rules its value is validated by. */
 interface BoundFieldProps<T extends FieldValues> {
@@ -138,23 +140,29 @@ export function EmailField<T extends FieldValues>({ optional = false, ...field }
   );
 }
 
-/** A text field bound to a form's field: the form holds its value, and its error shows under it. */
+/**
+ * A text field bound to a form's field: the form holds its value, and its error shows under it; read-only under
+ * `ReadOnlyFields`.
+ */
 export function FormTextField<T extends FieldValues>({
   control,
   name,
   rules,
   number = false,
   helperText,
+  slotProps,
   ...props
 }: FormTextFieldProps<T>) {
   const {
     field: { ref, value, onChange, ...field },
     fieldState,
   } = useController({ control, name, rules: number ? numberRules(rules) : rules });
+  const readOnly = useReadOnlyFields();
   return (
     <TextField
       {...props}
       {...field}
+      slotProps={readOnly ? { ...slotProps, input: { ...slotProps?.input, readOnly } } : slotProps}
       // A number field is one: a select of numbers keeps its own
       type={number && !props.select ? "number" : props.type}
       // On the input, so a failed submit focuses it
@@ -189,7 +197,10 @@ export function PasswordField<T extends FieldValues>({ label, autoComplete, ...f
   );
 }
 
-/** A labeled select bound to a form field; a value missing from the options (not loaded yet) shows empty. */
+/**
+ * A labeled select bound to a form field; a value missing from the options (not loaded yet) shows empty. Read-only, its
+ * menu closed, when it's `readOnly` or under `ReadOnlyFields`.
+ */
 export function SelectField<T extends FieldValues>({
   control,
   name,
@@ -201,10 +212,12 @@ export function SelectField<T extends FieldValues>({
   helperText,
   loadError,
   disabled,
-  readOnly,
+  readOnly: ownReadOnly = false,
   size,
   onMenuScroll,
 }: SelectFieldProps<T>) {
+  const formReadOnly = useReadOnlyFields();
+  const readOnly = ownReadOnly || formReadOnly;
   const choices = options.map((option) => (typeof option === "string" ? { value: option, label: option } : option));
   return (
     <Controller
@@ -247,18 +260,23 @@ export function SelectField<T extends FieldValues>({
   );
 }
 
-/** A labeled switch bound to a form's boolean field. `onChange` follows the field's own change, for what it changes too. */
+/**
+ * A labeled switch bound to a form's boolean field. `onChange` follows the field's own change, for what it changes too.
+ * Read-only, its clicks changing nothing, when it's `readOnly` or under `ReadOnlyFields`.
+ */
 export function SwitchField<T extends FieldValues>({
   control,
   name,
   rules,
   label,
   onChange,
-  readOnly,
+  readOnly: ownReadOnly = false,
 }: SwitchFieldProps<T>) {
   const {
     field: { ref, value, onChange: change, ...field },
   } = useController({ control, name, rules });
+  const formReadOnly = useReadOnlyFields();
+  const readOnly = ownReadOnly || formReadOnly;
   return (
     <FormControlLabel
       label={label}

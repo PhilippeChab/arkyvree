@@ -1,6 +1,5 @@
 import { parseResponse } from "hono/client";
 
-import { ValueChip } from "@/client/src/components/common/index.ts";
 import { useFormSync, useFormWith } from "@/client/src/hooks/index.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import {
@@ -36,7 +35,6 @@ export function FeatEditor({
   recordKey,
   adoptKey,
   entity: feat,
-  canEdit,
   locked,
   followCopy,
   refetchSaved,
@@ -64,27 +62,19 @@ export function FeatEditor({
   return (
     <EntityDetailsCard
       title="Feat Details"
-      description={feat.description}
-      chips={featAptitudes(feat).map((apt) => (
-        <ValueChip key={apt.id} label={apt.name} />
-      ))}
-      edit={
-        canEdit
-          ? {
-              fields: (
-                <FeatFormFields
-                  form={form}
-                  rulesetId={rulesetId}
-                  knownAptitudes={featAptitudes(feat)}
-                  generated={feat.generated}
-                />
-              ),
-              onSubmit: sync.handleSubmit((data) => saveMutation.mutate(data)),
-              canSave: sync.isDirty && !locked,
-              isSaving: saveMutation.isPending,
-            }
-          : undefined
-      }
+      form={{
+        fields: (
+          <FeatFormFields
+            form={form}
+            rulesetId={rulesetId}
+            knownAptitudes={featAptitudes(feat)}
+            generated={feat.generated}
+          />
+        ),
+        onSubmit: sync.handleSubmit((data) => saveMutation.mutate(data)),
+        canSave: sync.isDirty && !locked,
+        isSaving: saveMutation.isPending,
+      }}
     />
   );
 }

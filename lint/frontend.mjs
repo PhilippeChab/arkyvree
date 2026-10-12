@@ -37,7 +37,7 @@
  *   `function deleteEntityFn`); a queries module's (`…Queries.ts`) helpers are its queries'.
  * - `load-errors`: a list, a section or a step that failed to load says so with `LoadError` (`components/common`), in
  *   `loadFailureMessage`'s words: an error `Alert` never writes its own "Failed to load…". A card's chips row holds
- *   chips alone: what failed to load is its `notice`, above its body. A select says it under its field, its
+ *   chips alone: what failed to load is stated above its body. A select says it under its field, its
  *   `loadError`: no `LoadError` beside a `SelectField`, nor `loadFailureMessage` in its `helperText`.
  * - `component-props`: a component destructures its props in its signature, typed by one named type: its own
  *   (`interface CardProps`, `type CardProps = Omit<…>`) or one its family shares (`RulesetSectionProps`), never written
@@ -1111,9 +1111,7 @@ function createLoadErrors(context) {
       if (elementName(node) === "LoadError" && inChips(node)) {
         context.report({
           node: node.openingElement,
-          message:
-            "A card's chips row holds chips alone: what failed to load is stated above its body, its `notice` " +
-            "(`EntityDetailsCard`'s).",
+          message: "A card's chips row holds chips alone: what failed to load is stated above its body.",
         });
         return;
       }
@@ -1580,10 +1578,9 @@ function hoverTint(expression) {
   );
 }
 
-/** Whether `node` is among a card's chips: what its `chips` (or `renderChips`) attribute holds or returns. */
+/** Whether `node` is among a card's chips: what its `chips` attribute holds. */
 function inChips(node) {
-  for (let p = node.parent; p; p = p.parent)
-    if (p.type === "JSXAttribute" && ["chips", "renderChips"].includes(p.name.name)) return true;
+  for (let p = node.parent; p; p = p.parent) if (p.type === "JSXAttribute" && p.name.name === "chips") return true;
   return false;
 }
 

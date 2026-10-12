@@ -2,11 +2,11 @@
 
 [← Help home](README.md)
 
-## What are Properties?
+## What are Fields?
 
-**Properties** are the rules data an entity carries beside its name and description: a weapon's proficiency and damage, an armor's bonus, a spell's school and components, a class's caster type and bonus spell ability, a skill's armor check penalty. The engine reads them to compute the sheet, and [requirements](#what-are-requirements) and [modifiers](#what-are-modifiers) can reference them.
+An entity's **fields** are the rules data it carries beside its name and description: a weapon's proficiency and damage, an armor's bonus, a spell's school and components, a class's caster type and bonus spell ability, a skill's armor check penalty. The engine reads them to compute the sheet, and [requirements](#what-are-requirements) and [modifiers](#what-are-modifiers) can reference them.
 
-You edit them as ordinary fields of the entity's own form, when you create it and on its page: the ruleset decides which fields each kind of entity has, their labels and their choices. On the Longsword item, for example, the **Weapon** section shows:
+You edit them in the entity's own form, when you create it and on its page: the ruleset decides which fields each kind of entity has, their labels and their choices. On a ruleset you can't edit (the core rules, someone else's), an entity's page shows the same form, its fields read-only. On the Longsword item, for example, the **Weapon** section shows:
 
 - **Base Weapon**: Longsword
 - **Proficiency**: Martial
@@ -25,7 +25,7 @@ Tagging for grouping is a field too: a homebrew Weapon Focus variant with **Fami
 
 A ruleset's own rules data is in its **Settings** tab: the ability a character's skill points come from (Intelligence in the core rules). A fork starts with its source's settings, and its owner and editors can change them.
 
-Properties don't add bonuses. Some tell the engine how to read an entity (a ranged weapon attacks with Dexterity, a composite bow has a Strength rating, Weapon Finesse lets a light weapon use Dexterity), but to add a `+1`, use a [modifier](#what-are-modifiers).
+Fields don't add bonuses. Some tell the engine how to read an entity (a ranged weapon attacks with Dexterity, a composite bow has a Strength rating, Weapon Finesse lets a light weapon use Dexterity), but to add a `+1`, use a [modifier](#what-are-modifiers).
 
 ## What are Requirements?
 
@@ -41,7 +41,7 @@ Each condition (a requirement of type **Condition**) has three parts: **target**
 
 Pick the path in the editor's **Target** field: drill down its list, or search it.
 
-On an item, the requirements of a base weapon, armor or shield (a template) are the proficiency with it, and an item made from it shares them. An item is made from a template of its own type, so changing its type drops its template, and the template's properties and requirements with it. A template is a weapon, an armor or a shield, and its type can't change while items are made from it in your ruleset, or in a ruleset built on yours (a subscriber to your extension, whose items are counted, not named). Another fork's items, made from the original template, don't count: your change doesn't reach them. Not being proficient with a weapon costs 4 to hit and nothing else; armor and shields can't be equipped without their proficiency. Requirements added to any other item are its own: while one isn't met, the item's own modifiers don't apply. So for the proficiency penalty, make a weapon from a base weapon: a requirement added to a plain one only turns its modifiers off.
+On an item, the requirements of a base weapon, armor or shield (a template) are the proficiency with it, and an item made from it shares them. An item is made from a template of its own type, so changing its type drops its template, and the template's fields and requirements with it. A template is a weapon, an armor or a shield, and its type can't change while items are made from it in your ruleset, or in a ruleset built on yours (a subscriber to your extension, whose items are counted, not named). Another fork's items, made from the original template, don't count: your change doesn't reach them. Not being proficient with a weapon costs 4 to hit and nothing else; armor and shields can't be equipped without their proficiency. Requirements added to any other item are its own: while one isn't met, the item's own modifiers don't apply. So for the proficiency penalty, make a weapon from a base weapon: a requirement added to a plain one only turns its modifiers off.
 
 Multiple requirements on the same entity are AND'd together. To express OR, add a requirement of type **Chaining** with the **Chaining Operator** OR, then add each condition under it with its **Add Child Requirement**.
 
@@ -114,7 +114,7 @@ Two advanced patterns: **wildcards** (target `saves.*.misc` to apply to all thre
 
 Three things plug into every entity in a ruleset:
 
-- [Properties](#what-are-properties) describe what the entity *is* — its rules data, the fields of its form. A spell's **School** is Evocation, a longsword's **Proficiency** is Martial.
+- [Fields](#what-are-fields) describe what the entity *is* — its rules data, in its form. A spell's **School** is Evocation, a longsword's **Proficiency** is Martial.
 - [Requirements](#what-are-requirements) decide when the entity is *available* to a character. Power Attack requires `abilities.strength.total >= 13`; Cleave requires having Power Attack already.
 - [Modifiers](#what-are-modifiers) describe what the entity *does* once it applies. Toughness adds `+3` to `combat.hp.misc`. A `+1` longsword adds `+1` to its `weapon.tohit.magic` and `+1` to its `weapon.damage.magic`.
 
@@ -124,7 +124,7 @@ An entity uses any combination of the three — all three, just one, or none. Th
 
 Greater Weapon Focus uses all three.
 
-**Property** — its **Families** field: Greater Weapon Focus. This lets a downstream prestige class that wants "any Greater Weapon Focus" reference `feats.greaterweaponfocus.*.possessed` in a single requirement, and that wildcard expands to every Greater Weapon Focus variant — Longsword, Greatsword, or homebrew.
+**Field** — its **Families**: Greater Weapon Focus. This lets a downstream prestige class that wants "any Greater Weapon Focus" reference `feats.greaterweaponfocus.*.possessed` in a single requirement, and that wildcard expands to every Greater Weapon Focus variant — Longsword, Greatsword, or homebrew.
 
 **Requirements** — two conditions AND'd:
 
@@ -139,13 +139,13 @@ A Fighter 8 with Weapon Focus: Longsword qualifies. Once picked, the `+1` attack
 
 ### Building Improved Initiative from scratch
 
-Improved Initiative is a modifier-only feat. No property, no prerequisite — just one effect.
+Improved Initiative is a modifier-only feat. No family, no prerequisite — just one effect.
 
 **Modifier** — one row: target `combat.initiative.misc`, operator `+`, value `4`.
 
 Any character with Improved Initiative gets `+4` to initiative on their sheet automatically.
 
-Where the feat shows up in the level-up wizard — the General feat pool, the Fighter Bonus Feat pool — is set by the feat's *aptitude link* when you create it, not by a property. Properties give the entity engine-readable data; the aptitude link decides which pool the engine offers it from.
+Where the feat shows up in the level-up wizard — the General feat pool, the Fighter Bonus Feat pool — is set by the feat's *aptitude link* when you create it, not by a field. Fields give the entity engine-readable data; the aptitude link decides which pool the engine offers it from.
 
 ## How do wildcard patterns work?
 

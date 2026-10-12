@@ -1,6 +1,5 @@
 import { parseResponse } from "hono/client";
 
-import { ValueChip } from "@/client/src/components/common/index.ts";
 import { useFormSync, useFormWith } from "@/client/src/hooks/index.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import {
@@ -41,7 +40,6 @@ export function SpellEditor({
   recordKey,
   adoptKey,
   entity: power,
-  canEdit,
   locked,
   followCopy,
   refetchSaved,
@@ -67,40 +65,23 @@ export function SpellEditor({
       ),
   });
 
-  const saveName = power.saveId ? saves.find((s) => s.id === power.saveId)?.name : undefined;
-
   return (
     <EntityDetailsCard
       title="Spell Details"
-      description={power.description}
-      chips={
-        <>
-          {linkedAptitudes(power).map((apt) => (
-            <ValueChip key={apt.id} label={apt.name} />
-          ))}
-          {saveName && (
-            <ValueChip label={`Save: ${saveName}${power.saveEffect ? ` (${power.saveEffect})` : ""}`} color="warning" />
-          )}
-        </>
-      }
-      edit={
-        canEdit
-          ? {
-              fields: (
-                <SpellFormFields
-                  form={form}
-                  rulesetId={rulesetId}
-                  saves={saves}
-                  savesError={savesError}
-                  knownAptitudes={linkedAptitudes(power)}
-                />
-              ),
-              onSubmit: sync.handleSubmit((data) => saveMutation.mutate(data)),
-              canSave: sync.isDirty && !locked,
-              isSaving: saveMutation.isPending,
-            }
-          : undefined
-      }
+      form={{
+        fields: (
+          <SpellFormFields
+            form={form}
+            rulesetId={rulesetId}
+            saves={saves}
+            savesError={savesError}
+            knownAptitudes={linkedAptitudes(power)}
+          />
+        ),
+        onSubmit: sync.handleSubmit((data) => saveMutation.mutate(data)),
+        canSave: sync.isDirty && !locked,
+        isSaving: saveMutation.isPending,
+      }}
     />
   );
 }
