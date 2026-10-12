@@ -175,17 +175,26 @@ function fieldPath<T extends FieldValues>(key: string): FieldPath<T> {
 
 /** Fields in their grid, each where its width puts it, those whose condition the form doesn't meet left out. */
 function FieldsGrid<T extends FieldValues>({ fields, ...props }: FieldsGridProps<T>) {
+  // Its yes-or-no switches open it, together, before the fields one of them may reveal
+  const switches = fields.filter(isSwitch);
   return (
     <Box sx={[FIELDS_GRID_SX, props.columns === 2 && TWO_COLUMNS_SX]}>
-      {fields.map((field) =>
-        field.shownWhen ? (
-          <ShownField key={field.key} {...props} field={field} path={field.shownWhen.path} />
-        ) : (
-          <Box key={field.key} sx={[isWide(field) && WIDE_FIELD_SX]}>
-            <FieldInput {...props} field={field} />
-          </Box>
-        ),
+      {switches.length > 0 && (
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          spacing={{ xs: 1, sm: 3 }}
+          sx={[WIDE_FIELD_SX, { flexWrap: "wrap" }]}
+        >
+          {switches.map((field) => (
+            <GridField key={field.key} {...props} field={field} />
+          ))}
+        </Stack>
       )}
+      {fields
+        .filter((field) => !isSwitch(field))
+        .map((field) => (
+          <GridField key={field.key} {...props} field={field} />
+        ))}
     </Box>
   );
 }
@@ -245,6 +254,21 @@ function FlagSelect({ field, help, inputRef, onChange, readOnly, value }: FlagSe
 /** A path of a form's values, which the fields' declarations name as text (`fields.weapon.type`, `type`). */
 function formPath<T extends FieldValues>(path: string): FieldPath<T> {
   return path as FieldPath<T>;
+}
+
+/** A field in its grid, where its width puts it; on its condition, while the form meets it. */
+function GridField<T extends FieldValues>({ field, ...props }: FieldInputProps<T>) {
+  if (field.shownWhen) return <ShownField {...props} field={field} path={field.shownWhen.path} />;
+  return (
+    <Box sx={[isWide(field) && WIDE_FIELD_SX]}>
+      <FieldInput {...props} field={field} />
+    </Box>
+  );
+}
+
+/** Whether a field is a yes or no a switch shows: a two-state flag (a three-state one is a select). */
+function isSwitch(field: EntityField) {
+  return field.input === "flag" && !field.nullable;
 }
 
 /** Whether a field takes the grid's whole width: a group, or several values. */
