@@ -1,5 +1,5 @@
 import { racesInRules } from "@/drizzle/schema.ts";
-import { Engine } from "@/engine/index.ts";
+import { Engine, type EntityFieldValues } from "@/engine/index.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Races } from "@/server/repositories/index.ts";
@@ -17,6 +17,7 @@ class RacesService {
     body: {
       baseSpeed: number;
       description?: string | null;
+      fields?: EntityFieldValues;
       name: string;
       size: SizeType;
     },
@@ -65,6 +66,7 @@ class RacesService {
     body: {
       baseSpeed: number;
       description?: string | null;
+      fields?: EntityFieldValues;
       name: string;
       size: SizeType;
       updatedAt?: string;

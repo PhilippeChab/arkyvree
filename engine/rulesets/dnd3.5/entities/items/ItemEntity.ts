@@ -3,6 +3,8 @@
 import { z } from "zod";
 
 import { CustomizationPageEntity } from "@/engine/core/entities/index.ts";
+import type { EntityFieldValues } from "@/engine/core/fields/index.ts";
+import type { EntityWrites, PropertyValue } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import { RULESET_LIMITS } from "@/engine/rulesets/dnd3.5/limits.ts";
 import ItemPlacement from "@/engine/rulesets/dnd3.5/rules/ItemPlacement.ts";
@@ -11,12 +13,16 @@ import { isOneOf } from "@/shared/isOneOf.ts";
 import type { Item } from "@/shared/relations.ts";
 import { TEMPLATE_ITEM_TYPES, type TemplateItemType } from "@/vocabulary/dnd3.5/itemTemplates.ts";
 
-import { ITEM_FIELDS } from "./fields.ts";
+import { ITEM_FIELDS, type ItemFieldValues } from "./fields.ts";
 
-/** An item's save, as its form sends it: a cost, a weight, a slot or a template it leaves out is kept, null clears it. */
+/**
+ * An item's save, as its form sends it: a cost, a weight, a slot or a template it leaves out is kept, null clears it;
+ * and its fields (its weapon's, its armor's…).
+ */
 interface ItemBody {
   costGp?: number | null;
   description?: string | null;
+  fields?: EntityFieldValues;
   isTemplate?: boolean;
   name: string;
   slot?: ItemLocation | null;
@@ -32,10 +38,10 @@ interface VariantBody {
 }
 
 /**
- * An item's row, as its forms write it: a template keeps no source, an edit leaves whether it's one as it is, and a slot
- * is always one (`"Other"` for none).
+ * An item's row, as its forms write it: a template keeps no source, an edit leaves whether it's one as it is, and a
+ * slot is always one (`"Other"` for none).
  */
-type ItemColumns = Omit<ItemBody, "costGp" | "isTemplate" | "slot" | "sourceItemId" | "weight"> & {
+type ItemColumns = Omit<ItemBody, "costGp" | "fields" | "isTemplate" | "slot" | "sourceItemId" | "weight"> & {
   costGp?: string | null;
   isTemplate?: boolean;
   slot?: ItemLocation;
@@ -98,7 +104,7 @@ export default class ItemEntity extends CustomizationPageEntity<
   protected override keptProperties(columns: ItemColumns, item?: Item) {
     const sourceItemId = this.templateIdOf(columns, item);
     if (item) return this.propertiesOf({ id: item.id, sourceItemId });
-    return sourceItemId ? this.propertiesOf({ id: sourceItemId, sourceItemId: null }) : [];
+    return sourceItemId ? this.templatePropertiesOf(sourceItemId) : [];
   }
 
   /** An item's properties: its template's of each type it doesn't set, then its own. */
@@ -118,6 +124,31 @@ export default class ItemEntity extends CustomizationPageEntity<
   }
 
   /**
+   * What saving an item writes (`item`: the one edited): the fields its form gives, over those it shows (its own over
+   * its template's), as the properties of its own: those its template's don't hold (`toOverrides`), so it keeps reading
+   * the rest off its template (the one its form saves it with). Nothing when the form gives none of its fields.
+   */
+  protected override writesOf(body: ItemBody, given: Partial<ItemFieldValues>, item?: Item): EntityWrites | undefined {
+    const fields = this.formFields(given, item);
+    if (!fields) return undefined;
+    const templateId = this.templateIdOf(body, item);
+    const template = templateId ? this.fields.read(this.templatePropertiesOf(templateId)) : this.fields.defaults;
+    return { properties: this.fields.write(fields, this.fields.toOverrides(fields, template)) };
+  }
+
+  /**
+   * The properties a saved item's fields are read off: those its form writes, over its template's of the types they
+   * don't set (the one it's saved with), or those it keeps when its form writes none.
+   */
+  protected override writtenProperties(columns: ItemColumns, written: PropertyValue[] | undefined, item?: Item) {
+    if (!written) return this.keptProperties(columns, item);
+    const templateId = this.templateIdOf(columns, item);
+    const types = new Set(written.map((property) => property.type));
+    const template = templateId ? this.templatePropertiesOf(templateId) : [];
+    return [...template.filter((property) => !types.has(property.type)), ...written];
+  }
+
+  /**
    * An item as its page shows it, with where a character carrying it can place it (`placement`), and its template's
    * name (`templateName`), which its editor shows while the template isn't one of its type.
    */
@@ -125,7 +156,7 @@ export default class ItemEntity extends CustomizationPageEntity<
     const item = super.describe(id);
     return {
       ...item,
-      placement: ItemPlacement.describe(item, item.properties),
+      placement: ItemPlacement.describe(item, this.propertiesOf(item)),
       templateName: this.templateNameOf(item.sourceItemId),
     };
   }
@@ -141,9 +172,9 @@ export default class ItemEntity extends CustomizationPageEntity<
   }
 
   /**
-   * Deleting an item: the item as the view has it, and, a template, the ids the items made from it hold (`copiesOf`: its
-   * own, and those it stands for), which the server reads where the delete reaches them (the ruleset's view, and the
-   * rulesets built on it) for `checkCopies`, which refuses deleting a template that has any.
+   * Deleting an item: the item as the view has it, and, a template, the ids the items made from it hold (`copiesOf`:
+   * its own, and those it stands for), which the server reads where the delete reaches them (the ruleset's view, and
+   * the rulesets built on it) for `checkCopies`, which refuses deleting a template that has any.
    */
   override planDelete(itemId: string) {
     const plan = super.planDelete(itemId);
@@ -266,6 +297,11 @@ export default class ItemEntity extends CustomizationPageEntity<
     return item.isTemplate ? item.id : (item.sourceItemId ?? undefined);
   }
 
+  /** A template's properties, its own alone: a template is no copy. */
+  private templatePropertiesOf(templateId: string) {
+    return this.propertiesOf({ id: templateId, sourceItemId: null });
+  }
+
   /** The type a form saves an item with: the form's (null: none), or the one the edited item keeps. */
   private typeOf(body: ItemBody, item?: Item) {
     return body.type === undefined ? (item?.type ?? null) : body.type;
@@ -282,14 +318,16 @@ export default class ItemEntity extends CustomizationPageEntity<
   /**
    * A duplicate of an item (`sourceItemId`), from its form: it points at the same template, isn't one itself, and takes
    * its source's customizations unless its source is a template, whose copies read the template's
-   * (`copyCustomizationsFrom`). It keeps the fields its source's properties hold, which it takes.
+   * (`copyCustomizationsFrom`). It keeps the fields its form gives, written over those it takes, or, given none, the
+   * fields its source's properties hold.
    */
   planDuplicate(sourceItemId: string, body: ItemBody) {
     const source = this.findSource(sourceItemId);
+    const plan = this.planCreate({ ...body, isTemplate: false, sourceItemId: this.templateOf(source) });
     return {
-      ...this.planCreate({ ...body, isTemplate: false, sourceItemId: this.templateOf(source) }),
+      ...plan,
       copyCustomizationsFrom: source.isTemplate ? undefined : source.id,
-      fields: this.fields.read(this.propertiesOf(source)),
+      fields: plan.writes ? plan.fields : this.fieldsOf(source),
     };
   }
 

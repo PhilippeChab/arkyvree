@@ -13,7 +13,6 @@ import {
   Modifiers,
   Notifications,
   Players,
-  Properties,
   Requirements,
   RULESET_ENTITY_TYPES,
   Rulesets,
@@ -70,13 +69,6 @@ const CONTENT_OWNERS = new Map<string, (db: Db, id: string) => Promise<ContentRo
     async (db, id) => {
       const modifier = await Modifiers.findOne(db, { id });
       return modifier && { id: modifier.sourceId, table: modifier.sourceType };
-    },
-  ],
-  [
-    "properties",
-    async (db, id) => {
-      const property = await Properties.findOne(db, { id });
-      return property && { id: property.entityId, table: property.entityType };
     },
   ],
   [

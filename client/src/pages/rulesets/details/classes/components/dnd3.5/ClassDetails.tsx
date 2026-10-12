@@ -1,17 +1,12 @@
-import { ValueChip } from "@/client/src/components/common/index.ts";
+import { LoadError, ValueChip } from "@/client/src/components/common/index.ts";
 import { useRulesetAbilities } from "@/client/src/hooks/index.ts";
 import { formatDie } from "@/client/src/lib/formatNumeric.ts";
 import { ClassFormFields } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
 import { EntityDetailsCard } from "@/client/src/pages/rulesets/components/index.ts";
 import type { ClassDetailsProps } from "@/client/src/pages/rulesets/details/classes/classSectionFactory.ts";
 
-import { ClassPropertySelects } from "./ClassPropertySelects.tsx";
-
-/**
- * A 3.5 class's details: its hit die, bonus spell ability and caster type, over its description; for an editor, its
- * form's fields, then the bonus spell ability and caster type it sets in place.
- */
-export function ClassDetails({ klass, classId, rulesetId, edit, followCopy, isFetching }: ClassDetailsProps) {
+/** A 3.5 class's details: its hit die, bonus spell ability and caster type, over its description; its form's fields. */
+export function ClassDetails({ klass, rulesetId, edit }: ClassDetailsProps) {
   const { data: abilities, error: abilitiesError } = useRulesetAbilities(rulesetId);
   const bonusSpellAbility = abilities?.find((a) => a.id === klass.bonusSpellAbilityId);
 
@@ -19,6 +14,7 @@ export function ClassDetails({ klass, classId, rulesetId, edit, followCopy, isFe
     <EntityDetailsCard
       title="Class Details"
       description={klass.description}
+      notice={!!abilitiesError && !abilities && <LoadError what="Abilities" error={abilitiesError} />}
       chips={
         <>
           <ValueChip label={formatDie(klass.hd)} />
@@ -28,20 +24,7 @@ export function ClassDetails({ klass, classId, rulesetId, edit, followCopy, isFe
       }
       edit={
         edit && {
-          fields: (
-            <>
-              <ClassFormFields form={edit.form} />
-              <ClassPropertySelects
-                klass={klass}
-                classId={classId}
-                rulesetId={rulesetId}
-                followCopy={followCopy}
-                isFetching={isFetching}
-                abilities={abilities}
-                abilitiesError={abilitiesError}
-              />
-            </>
-          ),
+          fields: <ClassFormFields form={edit.form} rulesetId={rulesetId} />,
           onSubmit: edit.onSubmit,
           canSave: edit.canSave,
           isSaving: edit.isSaving,

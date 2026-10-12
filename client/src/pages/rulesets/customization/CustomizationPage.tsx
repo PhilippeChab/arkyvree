@@ -35,7 +35,6 @@ import {
   CUSTOMIZATION_TABS,
   type CustomizationSection,
   ModifiersSection,
-  PropertiesSection,
   RequirementsSection,
 } from "./sections/index.ts";
 
@@ -147,15 +146,8 @@ function CustomizationView({
             <DiceSpinner sx={{ py: 4 }} />
           ) : section === "requirements" || data.type === "modifiers" ? (
             <RequirementsSection {...sectionProps} entityType={type} queryKeysToInvalidate={[entityKey]} />
-          ) : section === "modifiers" ? (
-            <ModifiersSection {...sectionProps} entityType={data.type} queryKeysToInvalidate={[entityKey]} />
           ) : (
-            <PropertiesSection
-              {...sectionProps}
-              entityType={data.type}
-              data={"properties" in data.entity ? data.entity.properties : undefined}
-              queryKeysToInvalidate={klassLevelsKey ? [entityKey, klassLevelsKey] : [entityKey]}
-            />
+            <ModifiersSection {...sectionProps} entityType={data.type} queryKeysToInvalidate={[entityKey]} />
           )}
         </SectionTabPanel>
       </Stack>

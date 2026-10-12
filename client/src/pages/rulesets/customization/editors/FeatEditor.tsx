@@ -3,10 +3,16 @@ import { parseResponse } from "hono/client";
 import { ValueChip } from "@/client/src/components/common/index.ts";
 import { useFormSync, useFormWith } from "@/client/src/hooks/index.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
-import { EMPTY_FEAT, type FeatFormData, FeatFormFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
+import {
+  EMPTY_FEAT,
+  type FeatFormData,
+  FeatFormFields,
+  withEntityFields,
+} from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { byName, EntityDetailsCard } from "@/client/src/pages/rulesets/components/index.ts";
 import type { Feat } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
-import { useEntitySave } from "@/client/src/pages/rulesets/hooks/index.ts";
+import type { EntityField } from "@/client/src/pages/rulesets/details/rulesetQueries.ts";
+import { useEntityFields, useEntitySave } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
 import type { EditorProps } from "./renderEditor.tsx";
@@ -15,12 +21,13 @@ function featAptitudes(feat: Feat) {
   return feat.featsAptitudesInRules.flatMap((fa) => fa.aptitudesInRule ?? []).sort(byName);
 }
 
-function toFeatForm(feat: Feat): FeatFormData {
-  return {
+function toFeatForm(feat: Feat, fields: readonly EntityField[] | undefined): FeatFormData {
+  const values: FeatFormData = {
     name: feat.name,
     description: feat.description ?? "",
     aptitudeIds: featAptitudes(feat).map((a) => a.id),
   };
+  return withEntityFields(values, fields, feat);
 }
 
 export function FeatEditor({
@@ -35,7 +42,8 @@ export function FeatEditor({
   refetchSaved,
 }: EditorProps<Feat>) {
   const form = useFormWith<FeatFormData>(EMPTY_FEAT);
-  const sync = useFormSync(form, toFeatForm(feat), { key: recordKey, adoptKey, updatedAt: feat.updatedAt });
+  const { fields } = useEntityFields(rulesetId, "feats");
+  const sync = useFormSync(form, toFeatForm(feat, fields), { key: recordKey, adoptKey, updatedAt: feat.updatedAt });
   const saveMutation = useEntitySave({
     rulesetId,
     entityId,

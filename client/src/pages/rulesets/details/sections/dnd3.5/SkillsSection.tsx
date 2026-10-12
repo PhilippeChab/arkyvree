@@ -20,11 +20,12 @@ import {
   type SkillFormData,
   SkillFormFields,
 } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
+import { withEntityFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { DescriptionCell, RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";
 import { skillQuery } from "@/client/src/pages/rulesets/details/entities/entityDetailQueries.ts";
 import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
 import { skillsQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
-import { useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { useEntityFields, useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
 type Skill = SkillsPaginated["items"][number];
@@ -43,10 +44,11 @@ export function SkillsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
 
   const { search: searchQuery, searchBarProps: searchTextProps } = useSearchText("search");
 
+  const { fields: skillFields } = useEntityFields(ruleset.id, "skills");
   const { createForm, handleCreate, createDialogProps } = useRulesetSection<Skill, SkillFormData>({
     rulesetId: ruleset.id,
     sectionName: "skills",
-    createDefaults: EMPTY_SKILL,
+    createDefaults: withEntityFields(EMPTY_SKILL, skillFields),
     label: "Skill",
     createFn: async (data) =>
       parseResponse(
@@ -140,7 +142,12 @@ export function SkillsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
       </Stack>
 
       <CreateDialog {...createDialogProps} title="Create New Skill">
-        <SkillFormFields form={createForm} abilities={rulesetAbilities} abilitiesError={abilitiesError} />
+        <SkillFormFields
+          form={createForm}
+          abilities={rulesetAbilities}
+          abilitiesError={abilitiesError}
+          rulesetId={ruleset.id}
+        />
       </CreateDialog>
     </SectionContent>
   );

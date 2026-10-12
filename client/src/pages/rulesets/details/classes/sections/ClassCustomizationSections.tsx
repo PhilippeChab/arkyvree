@@ -1,8 +1,4 @@
-import {
-  ModifiersSection,
-  PropertiesSection,
-  RequirementsSection,
-} from "@/client/src/pages/rulesets/customization/sections/index.ts";
+import { ModifiersSection, RequirementsSection } from "@/client/src/pages/rulesets/customization/sections/index.ts";
 import type { ClassSectionProps } from "@/client/src/pages/rulesets/details/classes/classSectionFactory.ts";
 
 import { useClassCustomization } from "./useClassCustomization.ts";
@@ -10,10 +6,6 @@ import { useClassCustomization } from "./useClassCustomization.ts";
 /** The class's own modifiers, which a character with any level of it has, once. */
 export function ClassModifiersSection({ ...props }: ClassSectionProps) {
   return <ModifiersSection {...useClassCustomization(props)} />;
-}
-
-export function ClassPropertiesSection({ ...props }: ClassSectionProps) {
-  return <PropertiesSection {...useClassCustomization(props)} />;
 }
 
 /** The class's own requirements, checked to take any level of it, with that level's own. */

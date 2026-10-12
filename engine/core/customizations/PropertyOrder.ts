@@ -1,4 +1,4 @@
-import type { PropertyTypesProvider } from "./PropertyTypeCatalog.ts";
+import type { PropertyTypesProvider } from "./PropertyTypesProvider.ts";
 
 /**
  * Properties as a stat block shows them, by a ruleset's property types (`provider`): by type, in the order its rules list
@@ -8,7 +8,7 @@ import type { PropertyTypesProvider } from "./PropertyTypeCatalog.ts";
  */
 export default class PropertyOrder {
   constructor(private readonly provider: PropertyTypesProvider) {
-    this.typeRanks = new Map(Object.keys(provider.getStaticPropertyTypes()).map((type, rank) => [type, rank]));
+    this.typeRanks = new Map(Object.keys(provider.getDeclarations()).map((type, rank) => [type, rank]));
   }
 
   /** Each type's place: the rules' types in their order, as a stat block shows them. */
@@ -21,7 +21,7 @@ export default class PropertyOrder {
 
   /** A value's place among its type's options: after all of them when it isn't one. */
   private valueRank({ type, value }: { type: string; value: string }) {
-    const options = this.provider.getStaticPropertyValues(type) ?? [];
+    const options = this.provider.getValues(type) ?? [];
     const rank = options.indexOf(value);
     return rank === -1 ? options.length : rank;
   }

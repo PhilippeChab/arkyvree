@@ -31,19 +31,10 @@ interface ClassSections {
   tabs: ClassTab[];
 }
 
-/**
- * What the class page passes its details card: the class, its editor's form and save for who may edit it, and where a
- * copy of it goes.
- */
+/** What the class page passes its details card: the class, and its editor's form and save for who may edit it. */
 export interface ClassDetailsProps {
-  /** The class from the URL, which a save names */
-  classId: string;
   /** The editor, for who may edit the class: its form, which the card's fields bind, and its save */
   edit?: ClassEditor;
-  /** The page's `followCopy`: a save of an inherited class copies it, the page moving to the copy */
-  followCopy: (copyId: string, sourceId: string) => void;
-  /** The class is refetching: what the card saves in place waits for it */
-  isFetching: boolean;
   klass: ClassDetail;
   rulesetId: string;
 }

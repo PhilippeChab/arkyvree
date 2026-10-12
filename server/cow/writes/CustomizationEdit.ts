@@ -1,14 +1,7 @@
 import type { Db } from "@/drizzle/database.ts";
 import type { CowData, RulesetSources } from "@/engine/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
-import {
-  Klasses,
-  KlassLevels,
-  Modifiers,
-  Properties,
-  Requirements,
-  type RulesetEntityType,
-} from "@/server/repositories/index.ts";
+import { Klasses, KlassLevels, Modifiers, Requirements, type RulesetEntityType } from "@/server/repositories/index.ts";
 
 import EntityCopy from "./EntityCopy.ts";
 import EntityRepositories from "./EntityRepositories.ts";
@@ -26,7 +19,6 @@ type CustomizationKind = keyof typeof CUSTOMIZATION_REPOS;
 
 /** Each customization kind's repository: what a change to a copied entity's customization resolves the row through. */
 const CUSTOMIZATION_REPOS = {
-  property: Properties,
   requirement: Requirements,
   modifier: Modifiers,
 } as const;
@@ -41,7 +33,7 @@ const OWNER_TYPES: Record<string, RulesetEntityType> = {
 };
 
 /**
- * The row a customization (a modifier, a property, a requirement) of a ruleset's entity changes, made in its scope
+ * The row a customization (a modifier, a requirement) of a ruleset's entity changes, made in its scope
  * (`new CustomizationEdit(ruleset, rulesetData.cow)`): on the ruleset's own owner, locked, or on the copy of an
  * inherited one, made on its first edit (`EntityCopy`), the customization mapped to its copy. Its copy-on-write data
  * gives it the entity the view shows for an id and the source chain. Every method takes the transaction; a copy and the

@@ -3,6 +3,7 @@
 import { z } from "zod";
 
 import { RulesetEntity } from "@/engine/core/entities/index.ts";
+import type { EntityFieldValues } from "@/engine/core/fields/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { Klass } from "@/shared/relations.ts";
 import { DEFAULT_HIT_DIE, HIT_DIE_VALUES } from "@/vocabulary/dnd3.5/classes.ts";
@@ -10,11 +11,12 @@ import { DEFAULT_HIT_DIE, HIT_DIE_VALUES } from "@/vocabulary/dnd3.5/classes.ts"
 import ClassLevelEntity from "./ClassLevelEntity.ts";
 import ClassSkills from "./ClassSkills.ts";
 import ClassTable from "./ClassTable.ts";
-import { CLASS_FIELDS } from "./fields.ts";
+import { CLASS_FIELDS, CLASS_LEVEL_FIELDS } from "./fields.ts";
 
-/** A class's form: its name, description and hit die. */
+/** A class's form: its name, description and hit die, and its fields (its bonus spell ability, its caster type). */
 interface ClassBody {
   description?: string | null;
+  fields?: EntityFieldValues;
   hd?: number;
   name: string;
 }
@@ -49,12 +51,6 @@ export default class ClassEntity extends RulesetEntity<
     return { description, hd: klass ? (hd ?? klass.hd) : hd || DEFAULT_HIT_DIE, name };
   }
 
-  /** A class with its fields, and the ids of the properties that keep them, which its page edits them through. */
-  override describe(klassId: string) {
-    const klass = super.describe(klassId);
-    return { ...klass, propertyIds: this.fields.readIds(this.propertiesOf(klass)) };
-  }
-
   /**
    * A class level by its id alone, with its details, its class's name, which its page shows, and the ruleset that holds
    * its class: an inherited one's level is inherited too. Refused when the view has no such level.
@@ -64,6 +60,11 @@ export default class ClassEntity extends RulesetEntity<
     if (!level) throw new RulesError("not-found", "Class level not found in this ruleset");
     const klass = this.find(level.klassId);
     return { ...this.levels(klass.id).describe(level.id), name: klass.name, rulesetId: klass.rulesetId };
+  }
+
+  /** The fields a class level's form shows, as the ruleset declares them: its base attack bonus, its skill points. */
+  describeLevelFields() {
+    return CLASS_LEVEL_FIELDS.describe(this.rulesetData.propertyTypes, "klass_levels");
   }
 
   /** A class's levels (`klassId`): described, and what saving or deleting one writes. Refused without the class. */

@@ -142,12 +142,12 @@ The invite services' `acceptInvite` and `rejectInvite` (campaigns, rulesets and 
 
 ## Customizations
 
-Modifiers, properties, and requirements live on a parent entity (a feat, item, klass, race, power, klass-level, modifier, or character). They have no policy of their own: the gating is whichever policy owns the parent's, and the engine's customization operations check that the parent exists in the ruleset's view (`CustomizedEntity`, `engine/core/customizations/`):
+Modifiers, properties, and requirements live on a parent entity (a feat, item, klass, race, power, klass-level, modifier, or character), properties on a ruleset too. They have no policy of their own: the gating is whichever policy owns the parent's, and the engine's customization operations check that the parent exists in the ruleset's view (`CustomizedEntity`, `engine/core/customizations/`):
 
-- Customizations on a **ruleset entity** are gated by `RulesetsPolicy.canUpdateEntity` (owner / Admin / Editor).
+- Customizations on a **ruleset entity** are gated by `RulesetsPolicy.canUpdateEntity` (owner / Admin / Editor). Its properties are its fields, written by its own save, gated as its save is; a ruleset's own, its Settings (`RulesetSettingsService.updateSettings`), by `canUpdateEntity` too: who edits its content edits them, never a system ruleset.
 - Customizations on a **character** (e.g. character modifiers) go through `CharactersService` and are gated by `getEditableCharacter` (owner / contributor).
 
-A ruleset entity's customization plans (`Engine.for(scope).modifiers(entityType, entityId).planCreate`, `.properties(…).planEdit`, `.requirements(…).planDelete`…) refuse as not found (a 404) a parent the composed ruleset doesn't have (`CustomizedEntity.find`), and answer its display name for activity logging; before an update or a delete, `checkCustomizedEntity` (`server/services/rulesets/customization/customizableEntities.ts`) checks that the customization's own parent is still stored, read from the database itself.
+A ruleset entity's customization plans (`Engine.for(scope).modifiers(entityType, entityId).planCreate`, `.requirements(…).planDelete`…) refuse as not found (a 404) a parent the composed ruleset doesn't have (`CustomizedEntity.find`), and answer its display name for activity logging; before an update or a delete, `checkCustomizedEntity` (`server/services/rulesets/customization/customizableEntities.ts`) checks that the customization's own parent is still stored, read from the database itself.
 
 ## Identity vs. policy
 

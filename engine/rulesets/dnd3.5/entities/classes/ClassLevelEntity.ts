@@ -3,6 +3,7 @@
 import { z } from "zod";
 
 import { CustomizationPageEntity } from "@/engine/core/entities/index.ts";
+import type { EntityFieldValues } from "@/engine/core/fields/index.ts";
 import type { EntityWrites } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
@@ -19,7 +20,7 @@ import { CLASS_LEVEL_FIELDS, type ClassLevelFieldValues } from "./fields.ts";
  */
 interface ClassLevelBody {
   feats?: { aptitudeId: string; featId: string; free?: boolean }[];
-  fields?: Partial<ClassLevelFieldValues>;
+  fields?: EntityFieldValues;
   level?: number;
   saves?: { base: number; saveId: string }[];
 }
@@ -94,7 +95,7 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
     given: Partial<ClassLevelFieldValues>,
     level?: KlassLevel,
   ): EntityWrites {
-    const writes: EntityWrites = {};
+    const writes: EntityWrites = { ...super.writesOf(body, given, level) };
     if (!level && body.level !== undefined && body.level > 1) {
       writes.requirement = {
         level: "1",
@@ -104,8 +105,7 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
         operator: "greater_than",
       };
     }
-    const fields = this.formFields(given, level);
-    return fields ? { ...writes, properties: this.fields.write(fields) } : writes;
+    return writes;
   }
 
   /** One of the class's levels with its details and its customizations: refused when it isn't the class's. */

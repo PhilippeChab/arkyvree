@@ -1,6 +1,6 @@
 import type { Db } from "@/drizzle/database.ts";
 import { featsInRules } from "@/drizzle/schema.ts";
-import { Engine } from "@/engine/index.ts";
+import { Engine, type EntityFieldValues } from "@/engine/index.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Feats } from "@/server/repositories/index.ts";
@@ -26,6 +26,7 @@ class FeatsService {
     body: {
       aptitudeIds: string[];
       description?: string | null;
+      fields?: EntityFieldValues;
       name: string;
     },
   ) {
@@ -98,6 +99,7 @@ class FeatsService {
     body: {
       aptitudeIds?: string[];
       description?: string | null;
+      fields?: EntityFieldValues;
       name: string;
       updatedAt?: string;
     },

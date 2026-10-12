@@ -1,5 +1,7 @@
 export { type AptitudeFormData, AptitudeFormFields } from "./AptitudeFormFields.tsx";
 export { EMPTY_APTITUDE, EMPTY_FEAT, EMPTY_LANGUAGE, EMPTY_MECHANIC, EMPTY_RACE, EMPTY_SAVE } from "./emptyForms.ts";
+export { changedFieldValues, emptyFieldValues, type EntityFieldValues, withEntityFields } from "./entityFields.ts";
+export { EntityFields } from "./EntityFields.tsx";
 export { type FeatFormData, FeatFormFields } from "./FeatFormFields.tsx";
 export { type LanguageFormData, LanguageFormFields } from "./LanguageFormFields.tsx";
 export { type MechanicFormData, MechanicFormFields } from "./MechanicFormFields.tsx";

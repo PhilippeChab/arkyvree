@@ -8,6 +8,8 @@
 - D&D 3.5 sheets and PDFs show each ranged attack's maximum range and its -2 per range increment
 - D&D 3.5 characters speak the languages their race and classes grant, and pick others by Intelligence and Speak Language
 - Creating a character starts on your own ruleset when you have one
+- Edit an entity's rules data (a spell's school, a weapon's damage, a class's caster type) as fields of its own form
+- A ruleset's Settings tab, to pick the ability skill points come from
 
 ## 0.5.0 — 2026-05-21
 

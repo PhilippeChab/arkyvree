@@ -46,20 +46,16 @@ export function levelFeatLabel(featName: string, aptitudeName: string | null | u
 }
 
 /**
- * A class's next level, which its create dialog opens on: one above its highest, from whose base attack bonus, skill
- * points and saves it starts; a class without levels starts from the first's empty form.
+ * A class's next level, which its create dialog opens on: one above its highest, from whose saves it starts; a class
+ * without levels starts from the first's empty form. Its declared fields start from the highest's too (the class
+ * levels' section's `withEntityFields`).
  */
 export function nextClassLevel(
-  levels: readonly Pick<ClassLevelRow, "bab" | "level" | "saves" | "skills">[] | undefined,
+  levels: readonly Pick<ClassLevelRow, "level" | "saves">[] | undefined,
 ): ClassLevelFormData {
   if (!levels?.length) return EMPTY_CLASS_LEVEL;
   const highest = levels.reduce((top, level) => (level.level > top.level ? level : top));
-  return {
-    level: highest.level + 1,
-    fields: { bab: highest.bab, skills: highest.skills },
-    saves: highest.saves.map(({ saveId, base }) => ({ saveId, base })),
-    feats: [],
-  };
+  return { level: highest.level + 1, saves: highest.saves.map(({ saveId, base }) => ({ saveId, base })), feats: [] };
 }
 
 /** What's wrong with a save's base, if anything. */

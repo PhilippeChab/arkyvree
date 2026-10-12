@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { z } from "zod";
 
 import { type SessionContext, validate } from "@/server/middlewares/index.ts";
-import { entityOrderBy, idParam, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
+import { entityFields, entityOrderBy, idParam, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 
 const featParams = idParam.extend({ featId: z.string().uuid() });
@@ -68,6 +68,7 @@ export default new Hono<SessionContext>()
           .optional()
           .transform((v) => v || null),
         aptitudeIds: z.array(z.string().uuid()).min(1, "At least one aptitude must be selected"),
+        fields: entityFields.optional(),
       }),
     ),
     async (c) => {
@@ -88,6 +89,7 @@ export default new Hono<SessionContext>()
           .optional()
           .transform((v) => v || null),
         aptitudeIds: z.array(z.string().uuid()).optional(),
+        fields: entityFields.optional(),
         updatedAt: z.string().optional(),
       }),
     ),

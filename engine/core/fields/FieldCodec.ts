@@ -1,13 +1,13 @@
-import { z } from "zod";
-
+import type { PropertyTypesProvider } from "@/engine/core/customizations/index.ts";
 import type { PropertyValue } from "@/engine/core/module/index.ts";
+import type { PropertyEntityType } from "@/shared/customization/entities.ts";
 
-import type { Fields, FieldSpec, FieldValues, NoFields } from "./Field.ts";
+import Field, { type Fields, type FieldSpec, type FieldValues, type NoFields } from "./Field.ts";
+import FieldForms, { type FormContext } from "./FieldForms.ts";
+import type { FormField } from "./FormField.ts";
 
-/** What a codec's rules add to its fields': a rule between fields, and when the entity keeps none of them. */
+/** What a codec's rules add to its fields': when the entity keeps none of them. */
 interface FieldRules<V> {
-  /** The values as the entity keeps them, a field's value depending on another's. */
-  normalize?(values: V): V;
   /** Whether the entity keeps its fields at all: it stores none of their rows otherwise. */
   storesWhen?(values: Partial<V>): boolean;
 }
@@ -22,8 +22,8 @@ interface Row {
 /**
  * An entity's fields kept in its properties, read and written by one spec (`fields`, written with `Field`): their
  * defaults, the property types that store them, the rows of an entity read into values in one pass, values written
- * back as rows, an edit's values merged over what's kept, and the schema a create or an edit reads a form's fields
- * with.
+ * back as rows (all of them, or those another's don't hold: `toOverrides`), an edit's values merged over what's kept,
+ * a form's fields read as a save takes them (`parse`), and described as a form shows them (`describe`).
  */
 export default class FieldCodec<S extends Fields> {
   constructor(
@@ -38,6 +38,16 @@ export default class FieldCodec<S extends Fields> {
 
   /** No fields: a kind's whose properties hold none of its own, read as nothing. */
   static readonly NONE: FieldCodec<NoFields> = new FieldCodec({});
+
+  /** The values of the fields at a level, each that doesn't count on its condition (`Field.counts`) at its default. */
+  private static applyConditions(fields: Fields, values: Record<string, unknown>): Record<string, unknown> {
+    return Object.fromEntries(
+      Object.entries(values).map(([key, value]) => {
+        const field = fields[key];
+        return [key, !field || Field.counts(field, values) ? value : FieldCodec.defaultOf(field)];
+      }),
+    );
+  }
 
   /** A field's value without a row. */
   private static defaultOf(field: FieldSpec): unknown {
@@ -60,6 +70,11 @@ export default class FieldCodec<S extends Fields> {
     return Object.fromEntries(Object.entries(fields).map(([key, field]) => [key, FieldCodec.defaultOf(field)]));
   }
 
+  /** Rows by their type, each type's values in their order. */
+  private static groupByType(rows: readonly PropertyValue[]) {
+    return Map.groupBy(rows, (row) => row.type);
+  }
+
   /** A field's value off its rows' values (`values`), in their order: what its kind reads. */
   private static readField(field: FieldSpec, rows: Map<string, string[]>): unknown {
     if (field.kind === "group") return FieldCodec.readFields(field.fields, rows);
@@ -80,9 +95,12 @@ export default class FieldCodec<S extends Fields> {
     }
   }
 
-  /** The fields' values off their rows' values, by property type. */
+  /** The fields' values off their rows' values, by property type, each that doesn't count at its default. */
   private static readFields(fields: Fields, rows: Map<string, string[]>): Record<string, unknown> {
-    return Object.fromEntries(Object.entries(fields).map(([key, field]) => [key, FieldCodec.readField(field, rows)]));
+    const values = Object.fromEntries(
+      Object.entries(fields).map(([key, field]) => [key, FieldCodec.readField(field, rows)]),
+    );
+    return FieldCodec.applyConditions(fields, values);
   }
 
   /** A number field's value: the first of its rows' values that's a number in its bounds, its default otherwise. */
@@ -96,26 +114,10 @@ export default class FieldCodec<S extends Fields> {
     return field.default;
   }
 
-  /** A field's shape in a form: a flag a boolean, a number a whole one in its bounds, a list strings. */
-  private static shapeOf(field: FieldSpec): z.ZodType {
-    switch (field.kind) {
-      case "flag":
-        return field.absent === null ? z.boolean().nullable() : z.boolean();
-      case "number": {
-        let number = z.number().int();
-        if (field.min !== undefined) number = number.min(field.min);
-        if (field.max !== undefined) number = number.max(field.max);
-        return number;
-      }
-      case "choice":
-        return z.enum(field.values as [string, ...string[]]);
-      case "list":
-        return z.array(z.string());
-      case "group":
-        return z.object(Object.fromEntries(Object.entries(field.fields).map(([k, f]) => [k, FieldCodec.shapeOf(f)])));
-      default:
-        return z.string();
-    }
+  /** Whether two rows' values of a type hold the same values, whatever their order. */
+  private static sameValues(a: readonly PropertyValue[], b: readonly PropertyValue[]) {
+    const sorted = (rows: readonly PropertyValue[]) => rows.map((row) => row.value).toSorted();
+    return JSON.stringify(sorted(a)) === JSON.stringify(sorted(b));
   }
 
   /** The property types that store the fields, a group's too. */
@@ -144,9 +146,10 @@ export default class FieldCodec<S extends Fields> {
     }
   }
 
-  /** The fields' values as rows, in the spec's order: a field not given writes none. */
+  /** The fields' values as rows, in the spec's order: a field not given writes none, nor one that doesn't count. */
   private static writeFields(fields: Fields, values: Record<string, unknown>): PropertyValue[] {
-    return Object.entries(fields).flatMap(([key, field]) => FieldCodec.writeField(field, values[key]));
+    const counted = FieldCodec.applyConditions(fields, values);
+    return Object.entries(fields).flatMap(([key, field]) => FieldCodec.writeField(field, counted[key]));
   }
 
   private readonly typeSet: ReadonlySet<string>;
@@ -160,9 +163,12 @@ export default class FieldCodec<S extends Fields> {
   /** The property types that store the fields. */
   readonly types: string[];
 
-  /** The values as the entity keeps them, its rule between fields applied. */
-  private normalize(values: FieldValues<S>): FieldValues<S> {
-    return this.rules.normalize ? this.rules.normalize(values) : values;
+  /**
+   * The fields as an entity type's form shows them (`entityType`, whose property types the ruleset declares with their
+   * labels and values: `declarations`), in the order it declares them: its own fields before its groups'.
+   */
+  describe(declarations: PropertyTypesProvider, entityType: PropertyEntityType): FormField[] {
+    return FieldForms.describe(this.fields, declarations.getDeclarations(entityType), declarations);
   }
 
   /** The values an edit keeps: what's kept, with the fields the edit gives over it (its other keys aside). */
@@ -171,7 +177,17 @@ export default class FieldCodec<S extends Fields> {
     return { ...kept, ...Object.fromEntries(defined) };
   }
 
-  /** The fields' values off an entity's property rows (several entities' too), in one pass, its rule applied. */
+  /**
+   * A form's fields (`given`), as a save takes them: those it gives, each of its field's shape, a field a condition
+   * leaves out dropped, a reference resolved (`FieldForms.parse`); refused as invalid otherwise.
+   */
+  parse(given: unknown, context: FormContext): Partial<FieldValues<S>> {
+    return FieldForms.parse(this.fields, given, { ...context, kept: context.kept ?? this.defaults }) as Partial<
+      FieldValues<S>
+    >;
+  }
+
+  /** The fields' values off an entity's property rows (several entities' too), in one pass. */
   read(rows: readonly Row[]): FieldValues<S> {
     const byType = new Map<string, string[]>();
     for (const { type, value } of rows) {
@@ -180,40 +196,37 @@ export default class FieldCodec<S extends Fields> {
       if (values) values.push(value);
       else byType.set(type, [value]);
     }
-    return this.normalize(FieldCodec.readFields(this.fields, byType) as FieldValues<S>);
+    return FieldCodec.readFields(this.fields, byType) as FieldValues<S>;
   }
 
-  /** The id of the row each top-level field is read from, for an edit of that row: none without one. */
-  readIds(rows: readonly Row[]): Record<keyof S, string | null> {
-    return Object.fromEntries(
-      Object.entries(this.fields).map(([key, field]) => [
-        key,
-        field.kind === "group" ? null : (rows.find((row) => row.type === field.type)?.id ?? null),
-      ]),
-    ) as Record<keyof S, string | null>;
+  /** The values, each reference the id `resolve` gives for the one it holds (the view's: a copy's for its source's). */
+  resolveReferences(values: FieldValues<S>, resolve: (id: string) => string): FieldValues<S> {
+    const references = Object.entries(this.fields)
+      .filter(([key, field]) => field.kind === "ref" && typeof values[key] === "string")
+      .map(([key]) => [key, resolve(values[key] as string)]);
+    return { ...values, ...Object.fromEntries(references) };
   }
 
   /**
-   * What a create or an edit reads a form's fields with: an object of each field's shape, every one of them, or those
-   * an edit changes (`optional`), the rest of the form's keys left out.
+   * The values as the rows that keep them, but those of each type the base's rows (`base`: an item's template's) hold
+   * already: what an entity read over another keeps of its own.
    */
-  schema(options: { optional?: boolean } = {}): z.ZodType<Partial<FieldValues<S>>> {
-    const shapes = Object.entries(this.fields).map(([key, field]) => {
-      const shape = FieldCodec.shapeOf(field);
-      return [key, options.optional ? shape.optional() : shape];
-    });
-    // Each field's shape reads its value (`shapeOf`), so the object reads the fields' values
-    return z.object(Object.fromEntries(shapes)) as z.ZodType<Partial<FieldValues<S>>>;
+  toOverrides(values: FieldValues<S>, base: FieldValues<S>): PropertyValue[] {
+    const rows = this.toProperties(values);
+    const baseRows = FieldCodec.groupByType(this.toProperties(base));
+    return [...FieldCodec.groupByType(rows)]
+      .filter(([type, typed]) => !FieldCodec.sameValues(typed, baseRows.get(type) ?? []))
+      .flatMap(([, typed]) => typed);
   }
 
-  /** The values as the rows that keep them, its rule applied: none when the entity keeps no field (`storesWhen`). */
+  /** The values as the rows that keep them: none when the entity keeps no field (`storesWhen`). */
   toProperties(values: FieldValues<S>): PropertyValue[] {
     if (this.rules.storesWhen && !this.rules.storesWhen(values)) return [];
-    return FieldCodec.writeFields(this.fields, this.normalize(values) as Record<string, unknown>);
+    return FieldCodec.writeFields(this.fields, values as Record<string, unknown>);
   }
 
-  /** The values as a form's property write: the rows, and the types they replace. */
-  write(values: FieldValues<S>): { types: string[]; values: PropertyValue[] } {
-    return { types: this.types, values: this.toProperties(values) };
+  /** The values as a form's property write: the rows (`values`, the codec's by default), and the types they replace. */
+  write(values: FieldValues<S>, rows = this.toProperties(values)): { types: string[]; values: PropertyValue[] } {
+    return { types: this.types, values: rows };
   }
 }

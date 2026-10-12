@@ -2,10 +2,10 @@ import { describe, expect, test } from "bun:test";
 
 import { CustomizationEdit } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { Feats, Modifiers, Properties, Requirements } from "@/server/repositories/index.ts";
+import { Feats, Modifiers, Requirements } from "@/server/repositories/index.ts";
 import { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";
-import { PropertiesService } from "@/server/services/rulesets/customization/properties/index.ts";
 import { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";
+import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
 import { STRENGTH_BONUS } from "@/tests/support/customizations.ts";
 import { createSeededTestRuleset, editRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
@@ -29,12 +29,8 @@ async function setup() {
 }
 
 describe("ruleset customization isolation", () => {
-  test("rejects foreign properties, modifiers, and requirements before writing", async () => {
+  test("rejects foreign modifiers and requirements before writing", async () => {
     const { session, own, feat } = await setup();
-    await expectRefusedWith(
-      PropertiesService.createProperty(session, own.id, "feats", feat.id, { type: "test", value: "changed" }),
-      404,
-    );
     await expectRefusedWith(
       ModifiersService.createModifier(session, own.id, "feats", feat.id, {
         target: "combat.ac.misc",
@@ -50,19 +46,12 @@ describe("ruleset customization isolation", () => {
       }),
       404,
     );
-    expect(await Properties.findMany(db, { entityIds: [feat.id], entityType: "feats" })).toHaveLength(0);
     expect(await Modifiers.findMany(db, { sourceIds: [feat.id], sourceType: "feats" })).toHaveLength(0);
     expect(await Requirements.findMany(db, { entityIds: [feat.id], entityType: "feats" })).toHaveLength(0);
   });
 
   test("rejects changing or deleting existing foreign rows", async () => {
     const { session, own, feat } = await setup();
-    const [property] = await Properties.create(db, {
-      entityId: feat.id,
-      entityType: "feats",
-      type: "test",
-      value: "original",
-    });
     const [requirement] = await Requirements.create(db, {
       entityId: feat.id,
       entityType: "feats",
@@ -70,18 +59,9 @@ describe("ruleset customization isolation", () => {
       chainingOperator: "and",
     });
     await expectRefusedWith(
-      PropertiesService.updateProperty(session, own.id, "feats", feat.id, property.id, {
-        type: "test",
-        value: "changed",
-      }),
-      404,
-    );
-    await expectRefusedWith(PropertiesService.deleteProperty(session, own.id, "feats", feat.id, property.id), 404);
-    await expectRefusedWith(
       RequirementsService.deleteRequirement(session, own.id, "feats", feat.id, requirement.id),
       404,
     );
-    expect((await Properties.findOne(db, { id: property.id }))?.value).toBe("original");
     expect(await Requirements.findOne(db, { id: requirement.id })).toBeDefined();
   });
 
@@ -93,15 +73,15 @@ describe("ruleset customization isolation", () => {
   test("inherited customizations still copy their source", async () => {
     const { session, own } = await setup();
     const feat = (await Feats.findOne(db, { rulesetId: own.ancestorRulesetIds[0], name: "Skill Focus: Climb" }))!;
-    const property = await PropertiesService.createProperty(session, own.id, "feats", feat.id, {
-      type: "audit",
-      value: "local",
+    const modifiers = await Modifiers.findMany(db, { sourceIds: [feat.id], sourceType: "feats" });
+    const modifier = await ModifiersService.createModifier(session, own.id, "feats", feat.id, {
+      target: "combat.ac.misc",
+      operator: "add",
+      value: "1",
     });
-    expect(property.resolvedEntityId).not.toBe(feat.id);
-    expect((await Feats.findOne(db, { id: property.resolvedEntityId }))?.rulesetId).toBe(own.id);
-    expect(
-      (await Properties.findMany(db, { entityIds: [feat.id], entityType: "feats" })).some((p) => p.type === "audit"),
-    ).toBe(false);
+    expect(modifier.resolvedEntityId).not.toBe(feat.id);
+    expect((await Feats.findOne(db, { id: modifier.resolvedEntityId }))?.rulesetId).toBe(own.id);
+    expect(await Modifiers.findMany(db, { sourceIds: [feat.id], sourceType: "feats" })).toEqual(modifiers);
   });
 });
 
@@ -188,30 +168,6 @@ describe("modifier requirement ownership", () => {
 
 describe("stale ancestor customization IDs", () => {
   for (const action of ["update", "delete"] as const) {
-    test(`rejects ${action} through an ancestor property ID after the entity was copied`, async () => {
-      const { session, own } = await setup();
-      const feat = (await Feats.findOne(db, { rulesetId: own.ancestorRulesetIds[0], name: "Skill Focus: Climb" }))!;
-      const [original] = await Properties.create(db, {
-        entityId: feat.id,
-        entityType: "feats",
-        type: "review",
-        value: "ancestor",
-      });
-      invalidateSeededRuleset(feat.rulesetId);
-      const local = await PropertiesService.createProperty(session, own.id, "feats", feat.id, {
-        type: "local",
-        value: "copy",
-      });
-      const operation =
-        action === "update"
-          ? PropertiesService.updateProperty(session, own.id, "feats", local.resolvedEntityId, original.id, {
-              type: "review",
-              value: "changed",
-            })
-          : PropertiesService.deleteProperty(session, own.id, "feats", local.resolvedEntityId, original.id);
-      await expectRefusedWith(operation, 404);
-      expect(await Properties.findOne(db, { id: original.id })).toEqual(original);
-    });
     test(`rejects ${action} through an ancestor requirement ID after the entity was copied`, async () => {
       const { session, own } = await setup();
       const feat = (await Feats.findOne(db, { rulesetId: own.ancestorRulesetIds[0], name: "Skill Focus: Climb" }))!;
@@ -222,17 +178,17 @@ describe("stale ancestor customization IDs", () => {
         chainingOperator: "and",
       });
       invalidateSeededRuleset(feat.rulesetId);
-      const local = await PropertiesService.createProperty(session, own.id, "feats", feat.id, {
-        type: "local",
-        value: "copy",
+      const local = await FeatsService.updateFeat(session, own.id, feat.id, {
+        name: feat.name,
+        fields: { families: ["Skill Focus"] },
       });
       const operation =
         action === "update"
-          ? RequirementsService.updateRequirement(session, own.id, "feats", local.resolvedEntityId, original.id, {
+          ? RequirementsService.updateRequirement(session, own.id, "feats", local.id, original.id, {
               level: "2",
               chainingOperator: "or",
             })
-          : RequirementsService.deleteRequirement(session, own.id, "feats", local.resolvedEntityId, original.id);
+          : RequirementsService.deleteRequirement(session, own.id, "feats", local.id, original.id);
       await expectRefusedWith(operation, 404);
       expect(await Requirements.findOne(db, { id: original.id })).toEqual(original);
     });

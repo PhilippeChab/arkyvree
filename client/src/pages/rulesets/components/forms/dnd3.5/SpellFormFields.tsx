@@ -1,5 +1,5 @@
-import { Autocomplete, Stack, TextField, Typography } from "@mui/material";
-import { Controller, useController, type UseFormReturn } from "react-hook-form";
+import { Stack, TextField, Typography } from "@mui/material";
+import { useController, type UseFormReturn } from "react-hook-form";
 
 import {
   DescriptionField,
@@ -7,22 +7,14 @@ import {
   NameField,
   SelectField,
   SubsectionTitle,
-  ValueChip,
 } from "@/client/src/components/common/index.ts";
 import { APTITUDES_RULES, readNumberInput } from "@/client/src/lib/validation.ts";
 import { AptitudesAutocomplete } from "@/client/src/pages/rulesets/components/AptitudesAutocomplete.tsx";
+import { EntityFields } from "@/client/src/pages/rulesets/components/forms/EntityFields.tsx";
 import { byName, useAptitudeLookup } from "@/client/src/pages/rulesets/components/useAptitudeLookup.ts";
 import type { Aptitude } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import type { Save } from "@/client/src/pages/rulesets/hooks/index.ts";
-import {
-  MAX_SPELL_LEVEL,
-  SPELL_COMPONENTS,
-  SPELL_DESCRIPTORS,
-  SPELL_RANGE_TYPES,
-  SPELL_RESISTANCE_OPTIONS,
-  SPELL_SCHOOLS,
-  SPELL_SUBSCHOOLS,
-} from "@/vocabulary/dnd3.5/spells.ts";
+import { MAX_SPELL_LEVEL } from "@/vocabulary/dnd3.5/spells.ts";
 
 import {
   areSpellLevelsValid,
@@ -36,7 +28,6 @@ interface SpellFormFieldsProps {
   /** A new spell needs an aptitude; an existing one may lose its own. */
   aptitudesRequired?: boolean;
   form: UseFormReturn<SpellFormData>;
-  hideProperties?: boolean;
   /** Aptitudes the form may already hold (the spell's own), so they show by name. */
   knownAptitudes?: Aptitude[];
   rulesetId: string;
@@ -45,129 +36,11 @@ interface SpellFormFieldsProps {
   savesError: unknown;
 }
 
-interface SpellPropertyFieldsProps {
-  form: UseFormReturn<SpellFormData>;
-}
-
-interface TagsFieldProps {
-  form: UseFormReturn<SpellFormData>;
-  label: string;
-  name: "fields.components" | "fields.descriptors";
-  options: readonly string[];
-}
-
-function SpellPropertyFields({ form }: SpellPropertyFieldsProps) {
-  return (
-    <>
-      <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-        <SelectField
-          control={form.control}
-          name="fields.school"
-          label="School"
-          options={SPELL_SCHOOLS}
-          emptyLabel="None"
-        />
-        <SelectField
-          control={form.control}
-          name="fields.subschool"
-          label="Subschool"
-          options={SPELL_SUBSCHOOLS}
-          emptyLabel="None"
-        />
-      </Stack>
-      <TagsField form={form} name="fields.descriptors" label="Descriptors" options={SPELL_DESCRIPTORS} />
-      <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-        <FormTextField
-          control={form.control}
-          name="fields.castingTime"
-          label="Casting Time"
-          fullWidth
-          placeholder='e.g., "1 standard action"'
-        />
-        <SelectField
-          control={form.control}
-          name="fields.rangeType"
-          label="Range"
-          options={SPELL_RANGE_TYPES}
-          emptyLabel="None"
-        />
-      </Stack>
-      <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-        <FormTextField
-          control={form.control}
-          name="fields.target"
-          label="Target"
-          fullWidth
-          placeholder='e.g., "One creature"'
-        />
-        <FormTextField
-          control={form.control}
-          name="fields.effect"
-          label="Effect"
-          fullWidth
-          placeholder='e.g., "One summoned creature"'
-        />
-        <FormTextField
-          control={form.control}
-          name="fields.areaOfEffect"
-          label="Area of Effect"
-          fullWidth
-          placeholder='e.g., "20-ft. radius"'
-        />
-      </Stack>
-      <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-        <FormTextField
-          control={form.control}
-          name="fields.duration"
-          label="Duration"
-          fullWidth
-          placeholder='e.g., "1 round/level"'
-        />
-        <SelectField
-          control={form.control}
-          name="fields.spellResistance"
-          label="Spell Resistance"
-          options={SPELL_RESISTANCE_OPTIONS}
-          emptyLabel="None"
-        />
-      </Stack>
-      <TagsField form={form} name="fields.components" label="Components" options={SPELL_COMPONENTS} />
-    </>
-  );
-}
-
-/** A free-text list with suggestions, shown as chips. */
-function TagsField({ form, name, label, options }: TagsFieldProps) {
-  return (
-    <Controller
-      name={name}
-      control={form.control}
-      render={({ field }) => (
-        <Autocomplete
-          multiple
-          freeSolo
-          options={options}
-          value={field.value ?? []}
-          onChange={(_, newValue) => field.onChange(newValue)}
-          renderValue={(value, getItemProps) =>
-            value.map((option, index) => {
-              const { key, ...tagProps } = getItemProps({ index });
-              return <ValueChip color="default" key={key} label={option} {...tagProps} />;
-            })
-          }
-          renderInput={(params) => <TextField {...params} label={label} />}
-        />
-      )}
-    />
-  );
-}
-
 export function SpellFormFields({
   form,
   rulesetId,
   saves,
   savesError,
-  hideProperties,
   knownAptitudes = [],
   aptitudesRequired = false,
 }: SpellFormFieldsProps) {
@@ -204,7 +77,7 @@ export function SpellFormFields({
         fullWidth
         placeholder='e.g., "negates", "half", "partial"'
       />
-      {!hideProperties && <SpellPropertyFields form={form} />}
+      <EntityFields form={form} entityType="powers" rulesetId={rulesetId} columns={2} />
       <AptitudesAutocomplete
         rulesetId={rulesetId}
         inputRef={field.ref}

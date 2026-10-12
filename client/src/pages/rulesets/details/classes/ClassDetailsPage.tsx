@@ -8,15 +8,21 @@ import { useFormSync, useFormWith, usePageTitle, useRulesetPermissions } from "@
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { type RulesetDetail, rulesetDetailQuery } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
+import { withEntityFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { EntityDetailLayout, EntityPageError } from "@/client/src/pages/rulesets/components/index.ts";
 import { entityPageBack } from "@/client/src/pages/rulesets/entityPageState.ts";
-import { useCopyOnWrite, useEntitySave, useRestorableDelete } from "@/client/src/pages/rulesets/hooks/index.ts";
+import {
+  useCopyOnWrite,
+  useEntityFields,
+  useEntitySave,
+  useRestorableDelete,
+} from "@/client/src/pages/rulesets/hooks/index.ts";
 import { isStillOpen } from "@/client/src/pages/rulesets/stillOpen.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
 import { getClassForms } from "./classFormFactory.ts";
 import { getClassSections } from "./classSectionFactory.ts";
-import { classDetailQuery, type ClassFormData } from "./classSectionQueries.ts";
+import { type ClassDetail, classDetailQuery, type ClassFormData } from "./classSectionQueries.ts";
 import { CLASS_CUSTOMIZATION_TABS, CLASS_TABS } from "./sections/index.ts";
 
 interface ClassViewProps {
@@ -39,7 +45,7 @@ function ClassView({ back, classId, ruleset, rulesetId, section }: ClassViewProp
   // what its base rules' card saves in place); its tabs' through theirs (`useClassCopy`)
   const copy = useCopyOnWrite(rulesetId, classId, (id) => `classes/${id}`);
 
-  const { data: classData, isLoading, isFetching, error } = useQuery(classDetailQuery(rulesetId, classId));
+  const { data: classData, isLoading, error } = useQuery(classDetailQuery(rulesetId, classId));
 
   usePageTitle(classData?.name);
 
@@ -55,7 +61,11 @@ function ClassView({ back, classId, ruleset, rulesetId, section }: ClassViewProp
   // Deleting an inherited class, or what it holds, can be undone
   const { restorable, error: changesError } = useRestorableDelete(ruleset, classData);
 
-  const sync = useFormSync(editForm, classData && classForms.toClassForm(classData), {
+  const { fields: classFields } = useEntityFields(rulesetId, "klasses");
+  // Its base rules' form of the class, with the fields its ruleset declares for classes
+  const toClassForm = (klass: Pick<ClassDetail, "description" | "hd" | "name">) =>
+    withEntityFields(classForms.toClassForm(klass), classFields, klass);
+  const sync = useFormSync(editForm, classData && toClassForm(classData), {
     key: copy.key,
     adoptKey: copy.adoptKey,
     updatedAt: classData?.updatedAt,
@@ -75,12 +85,11 @@ function ClassView({ back, classId, ruleset, rulesetId, section }: ClassViewProp
           json: { ...data, updatedAt },
         }),
       ),
-    toFormValues: classForms.toClassForm,
+    toFormValues: toClassForm,
     storeSaved: (saved, sourceId) => {
       const savedKey = classDetailQuery(rulesetId, saved.id).queryKey;
-      // The PUT returns the bare class row: keep showing what the class's response adds to it (what its details read of
-      // its properties) until the refetch brings the saved class's own, what its card sets in place waiting until then
-      // (`isFetching`); unless the page has left that class while the save was in flight
+      // The PUT returns the class row with its fields: keep showing what the class's response adds to it until the
+      // refetch brings the saved class's own; unless the page has left that class while the save was in flight
       if (classData && isStillOpen(`/rulesets/${rulesetId}/classes/${sourceId}`))
         queryClient.setQueryData(savedKey, { ...classData, ...saved });
       void queryClient.invalidateQueries({ queryKey: savedKey, exact: true });
@@ -127,7 +136,6 @@ function ClassView({ back, classId, ruleset, rulesetId, section }: ClassViewProp
           <>
             <ClassDetails
               klass={classData}
-              classId={classId}
               rulesetId={rulesetId}
               edit={
                 canEdit
@@ -139,8 +147,6 @@ function ClassView({ back, classId, ruleset, rulesetId, section }: ClassViewProp
                     }
                   : undefined
               }
-              followCopy={copy.followCopy}
-              isFetching={isFetching}
             />
             <Stack spacing={4}>
               <SectionTabs

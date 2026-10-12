@@ -1,10 +1,8 @@
 import { Hono } from "hono";
 import { z } from "zod";
 
-import type { EntityKinds } from "@/engine/index.ts";
 import { type SessionContext, validate } from "@/server/middlewares/index.ts";
-import { buildEntityFieldsSchema } from "@/server/routers/api/schemaBuilders.ts";
-import { entityOrderBy, idParam, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
+import { entityFields, entityOrderBy, idParam, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
 import { PowersService } from "@/server/services/rulesets/powers/index.ts";
 
 /** The aptitudes a power is linked to, each at its spell level. */
@@ -33,9 +31,6 @@ const powerColumns = {
     .optional()
     .transform((v) => v || null),
 };
-
-/** A power's fields (a spell's), its create's and its update's: its ruleset's rules read them. */
-const powerFields = buildEntityFieldsSchema<EntityKinds["powers"]["planCreate"]>();
 
 const powerParams = idParam.extend({ powerId: z.string().uuid() });
 
@@ -76,7 +71,7 @@ export default new Hono<SessionContext>()
       "json",
       z.object({
         ...powerColumns,
-        fields: powerFields.optional(),
+        fields: entityFields.optional(),
         aptitudes: aptitudeLinks.min(1, "At least one aptitude must be selected"),
       }),
     ),
@@ -93,7 +88,7 @@ export default new Hono<SessionContext>()
       "json",
       z.object({
         ...powerColumns,
-        fields: powerFields.optional(),
+        fields: entityFields.optional(),
         aptitudes: aptitudeLinks.optional(),
         updatedAt: z.string().optional(),
       }),

@@ -8,6 +8,8 @@ import { byName, useAptitudeLookup } from "@/client/src/pages/rulesets/component
 import type { Aptitude } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
 
+import { EntityFields } from "./EntityFields.tsx";
+
 interface FeatFormFieldsProps {
   /** A new feat needs an aptitude; an existing one may lose its own. */
   aptitudesRequired?: boolean;
@@ -21,7 +23,10 @@ interface FeatFormFieldsProps {
 
 export type FeatFormData = InferRequestType<(typeof rpc.api.rulesets)[":id"]["feats"]["$post"]>["json"];
 
-/** Name, description and aptitudes of a feat; the aptitudes live in the form as `aptitudeIds`, sorted by name. */
+/**
+ * Name, description and aptitudes of a feat, then the fields its ruleset declares for feats; the aptitudes live in the
+ * form as `aptitudeIds`, sorted by name.
+ */
 export function FeatFormFields({
   form,
   rulesetId,
@@ -56,6 +61,7 @@ export function FeatFormFields({
           />
         )}
       />
+      <EntityFields form={form} entityType="feats" rulesetId={rulesetId} />
     </>
   );
 }

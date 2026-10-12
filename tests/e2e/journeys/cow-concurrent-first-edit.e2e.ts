@@ -6,7 +6,7 @@ import { uniqueName } from "@/tests/e2e/support/page.ts";
 import { visitCoreRulesetList } from "@/tests/e2e/support/rulesets.ts";
 import { signIn } from "@/tests/e2e/support/signIn.ts";
 
-test("concurrent first edits preserve every property on one fork copy", async ({ page, ownerUser }) => {
+test("concurrent first edits preserve every modifier on one fork copy", async ({ page, ownerUser }) => {
   await signIn(page, ownerUser.email, ownerUser.password);
   await visitCoreRulesetList(page);
   await page.getByRole("heading", { name: "Core SRD 3.5" }).first().click();
@@ -26,19 +26,19 @@ test("concurrent first edits preserve every property on one fork copy", async ({
   const ids = page.url().match(/\/rulesets\/([a-f0-9-]+)\/races\/([a-f0-9-]+)/);
   expect(ids).toBeTruthy();
   const [, forkId, sourceId] = ids!;
-  const propertiesUrl = (rulesetId: string, entityId: string) =>
-    `/api/rulesets/${rulesetId}/customization/races/${entityId}/properties`;
-  const parentBefore = await page.request.get(propertiesUrl(baseId!, sourceId));
+  const modifiersUrl = (rulesetId: string, entityId: string) =>
+    `/api/rulesets/${rulesetId}/customization/races/${entityId}/modifiers`;
+  const parentBefore = await page.request.get(modifiersUrl(baseId!, sourceId));
   expect(parentBefore.ok()).toBe(true);
-  const parentProperties: unknown = await parentBefore.json();
+  const parentModifiers: unknown = await parentBefore.json();
 
   // Independent HTTP requests use separate database transactions. The burst
   // exercises the first-copy window that single-transaction unit tests miss.
-  const types = Array.from({ length: 8 }, (_, index) => `CONCURRENT_COW_${index}`);
+  const values = Array.from({ length: 8 }, (_, index) => String(100 + index));
   const responses = await Promise.all(
-    types.map((type) =>
-      page.request.post(propertiesUrl(forkId, sourceId), {
-        data: { type, value: "1" },
+    values.map((value) =>
+      page.request.post(modifiersUrl(forkId, sourceId), {
+        data: { target: "abilities.strength.misc", value, operator: "add" },
       }),
     ),
   );
@@ -50,11 +50,11 @@ test("concurrent first edits preserve every property on one fork copy", async ({
   expect(copiedIds.size).toBe(1);
   const [copyId] = [...copiedIds];
   expect(copyId).not.toBe(sourceId);
-  const properties = await page.request.get(propertiesUrl(forkId, copyId));
-  expect(properties.ok()).toBe(true);
-  const rows = z.array(z.object({ type: z.string() })).parse(await properties.json());
-  for (const type of types) expect(rows.filter((row) => row.type === type)).toHaveLength(1);
-  const parentAfter = await page.request.get(propertiesUrl(baseId!, sourceId));
+  const modifiers = await page.request.get(modifiersUrl(forkId, copyId));
+  expect(modifiers.ok()).toBe(true);
+  const rows = z.array(z.object({ value: z.string() })).parse(await modifiers.json());
+  for (const value of values) expect(rows.filter((row) => row.value === value)).toHaveLength(1);
+  const parentAfter = await page.request.get(modifiersUrl(baseId!, sourceId));
   expect(parentAfter.ok()).toBe(true);
-  expect(await parentAfter.json()).toEqual(parentProperties);
+  expect(await parentAfter.json()).toEqual(parentModifiers);
 });

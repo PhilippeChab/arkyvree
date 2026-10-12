@@ -6,17 +6,12 @@ import {
 import type { ClassTab } from "@/client/src/pages/rulesets/details/classes/classSectionFactory.ts";
 import { classLevelsQuery, classSkillsQuery } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 
-import {
-  ClassModifiersSection,
-  ClassPropertiesSection,
-  ClassRequirementsSection,
-} from "./ClassCustomizationSections.tsx";
+import { ClassModifiersSection, ClassRequirementsSection } from "./ClassCustomizationSections.tsx";
 import { ClassLevelsSection } from "./ClassLevelsSection.tsx";
 import { ClassSkillsSection } from "./ClassSkillsSection.tsx";
 
 /** The class's sections of the tabs that customize it, which read their own rows. */
 const CUSTOMIZATION_SECTIONS: Record<CustomizationSection, ClassTab["Section"]> = {
-  properties: ClassPropertiesSection,
   modifiers: ClassModifiersSection,
   requirements: ClassRequirementsSection,
 };

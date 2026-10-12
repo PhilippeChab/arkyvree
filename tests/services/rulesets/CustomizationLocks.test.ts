@@ -4,9 +4,8 @@ import { featsInRules } from "@/drizzle/schema.ts";
 import { EntityRepositories, RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { createTestDbFromClient, createTestPool } from "@/server/database/test.ts";
-import { Feats, Modifiers, Properties, Requirements } from "@/server/repositories/index.ts";
+import { Feats, Modifiers, Requirements } from "@/server/repositories/index.ts";
 import { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";
-import { PropertiesService } from "@/server/services/rulesets/customization/properties/index.ts";
 import { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";
 import { insertRows, runWhileLocked } from "@/tests/support/database.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
@@ -34,15 +33,13 @@ async function setupRemovedCustomizations() {
       sourceType: "feats",
     },
   ]);
-  const [property] = await Properties.createMany(db, [{ ...owner, type: "NOTE", value: "Removed" }]);
   const [requirement] = await Requirements.createMany(db, [
     { ...owner, level: "1", target: "combat.bab", operator: "greater_than_or_equal", value: "1", valueType: "number" },
   ]);
   await withRulesetScope(db, ruleset.id, async () => {});
   await Modifiers.delete(db, { ids: [modifier.id] });
-  await Properties.delete(db, { ids: [property.id] });
   await Requirements.delete(db, { ids: [requirement.id] });
-  return { session, rulesetId: ruleset.id, featId: feat.id, modifier, property, requirement };
+  return { session, rulesetId: ruleset.id, featId: feat.id, modifier, requirement };
 }
 afterAll(() => pool.end());
 afterEach(() => RulesetViews.invalidateAll());
@@ -77,7 +74,7 @@ test("a missing owner is rejected before customization writes", async () => {
 });
 
 test("every customization kind reports a row removed before the owner lock as missing", async () => {
-  const { session, rulesetId, featId, modifier, property, requirement } = await setupRemovedCustomizations();
+  const { session, rulesetId, featId, modifier, requirement } = await setupRemovedCustomizations();
   const mutations = [
     () =>
       ModifiersService.updateModifier(session, rulesetId, "feats", featId, modifier.id, {
@@ -86,12 +83,6 @@ test("every customization kind reports a row removed before the owner lock as mi
         operator: "add",
       }),
     () => ModifiersService.deleteModifier(session, rulesetId, "feats", featId, modifier.id),
-    () =>
-      PropertiesService.updateProperty(session, rulesetId, "feats", featId, property.id, {
-        type: "NOTE",
-        value: "Edited",
-      }),
-    () => PropertiesService.deleteProperty(session, rulesetId, "feats", featId, property.id),
     () => RequirementsService.updateRequirement(session, rulesetId, "feats", featId, requirement.id, { level: "1" }),
     () => RequirementsService.deleteRequirement(session, rulesetId, "feats", featId, requirement.id),
   ];

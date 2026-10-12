@@ -1,6 +1,6 @@
 import type { Db } from "@/drizzle/database.ts";
 import { itemsInRules } from "@/drizzle/schema.ts";
-import { Engine } from "@/engine/index.ts";
+import { Engine, type EntityFieldValues } from "@/engine/index.ts";
 import { include } from "@/lib/mixins.ts";
 import { type RulesetScope, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
@@ -14,6 +14,7 @@ import { Variants } from "./concerns/Variants.ts";
 interface ItemBody {
   costGp?: number | null;
   description?: string | null;
+  fields?: EntityFieldValues;
   isTemplate?: boolean;
   name: string;
   slot?: ItemLocation | null;

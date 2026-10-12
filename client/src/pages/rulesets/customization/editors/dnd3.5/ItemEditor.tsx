@@ -11,10 +11,11 @@ import {
   toItemForm,
   toItemPayload,
 } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
+import { withEntityFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { EntityDetailsCard } from "@/client/src/pages/rulesets/components/index.ts";
 import type { EditorProps } from "@/client/src/pages/rulesets/customization/editors/renderEditor.tsx";
 import type { Item } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
-import { useEntitySave } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { useEntityFields, useEntitySave } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
 export function ItemEditor({
@@ -29,7 +30,12 @@ export function ItemEditor({
   refetchSaved,
 }: EditorProps<Item>) {
   const form = useFormWith<ItemFormData>(EMPTY_ITEM);
-  const sync = useFormSync(form, toItemForm(item), { key: recordKey, adoptKey, updatedAt: item.updatedAt });
+  const { fields } = useEntityFields(rulesetId, "items");
+  const sync = useFormSync(form, withEntityFields(toItemForm(item), fields, item), {
+    key: recordKey,
+    adoptKey,
+    updatedAt: item.updatedAt,
+  });
   const saveMutation = useEntitySave({
     rulesetId,
     entityId,

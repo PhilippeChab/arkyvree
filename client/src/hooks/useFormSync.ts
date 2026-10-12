@@ -38,6 +38,9 @@ export type FormSync<T extends FieldValues> = ReturnType<typeof useFormSync<T>>;
  *   while it does, a reload of the page asks first (`useDirtyForm`).
  * - `handleSubmit(onValid)` replaces `form.handleSubmit`: it remembers which
  *   record the save is for.
+ * - `baseline()` is the server values the form is based on: what an edit's
+ *   changes are read against (`useEntitySave` sends a ruleset entity's
+ *   changed fields alone).
  * - `updatedAt()` is the token of the server values the form is based on.
  *   Send it with the save, not the query's current `updatedAt`: when the
  *   record changed under the user's edits, the save is then rejected as
@@ -108,6 +111,7 @@ export function useFormSync<T extends FieldValues>(
     });
 
   return {
+    baseline: (): T | undefined => (synced.current ? (JSON.parse(synced.current.snapshot) as T) : undefined),
     handleSubmit,
     isDirty,
     updatedAt: () => synced.current?.updatedAt,

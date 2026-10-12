@@ -79,6 +79,8 @@ interface SelectFieldProps<T extends FieldValues> {
 interface SwitchFieldProps<T extends FieldValues> extends BoundFieldProps<T> {
   label: string;
   onChange?: (checked: boolean) => void;
+  /** Shown as it is: a viewer who can't edit it reads it, its clicks changing nothing. */
+  readOnly?: boolean;
 }
 
 /** A text field's own props: the form gives its value, change, error and ref. */
@@ -246,7 +248,14 @@ export function SelectField<T extends FieldValues>({
 }
 
 /** A labeled switch bound to a form's boolean field. `onChange` follows the field's own change, for what it changes too. */
-export function SwitchField<T extends FieldValues>({ control, name, rules, label, onChange }: SwitchFieldProps<T>) {
+export function SwitchField<T extends FieldValues>({
+  control,
+  name,
+  rules,
+  label,
+  onChange,
+  readOnly,
+}: SwitchFieldProps<T>) {
   const {
     field: { ref, value, onChange: change, ...field },
   } = useController({ control, name, rules });
@@ -256,9 +265,10 @@ export function SwitchField<T extends FieldValues>({ control, name, rules, label
       control={
         <Switch
           {...field}
-          slotProps={{ input: { ref } }}
+          slotProps={{ input: { ref, readOnly, "aria-readonly": readOnly } }}
           checked={!!value}
           onChange={(event) => {
+            if (readOnly) return;
             change(event.target.checked);
             onChange?.(event.target.checked);
           }}

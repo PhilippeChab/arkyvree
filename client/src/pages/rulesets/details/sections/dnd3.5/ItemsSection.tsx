@@ -23,11 +23,13 @@ import {
   toItemForm,
   toItemPayload,
 } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
+import { withEntityFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { DescriptionCell, RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";
 import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
+import type { EntityField } from "@/client/src/pages/rulesets/details/rulesetQueries.ts";
 import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
 import { invalidateRulesetEdit, itemsQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
-import { useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { useEntityFields, useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { buildCustomizationPath } from "@/shared/customization/entities.ts";
 
@@ -46,14 +48,18 @@ const ITEMS_COLUMNS = [
   { key: "description", label: "Description", width: "37%" },
 ];
 
-/** An item's copy, as its duplicate's dialog opens on it: based on the item, or on the item's own template */
-function duplicateForm(item: Item): ItemFormData {
-  return {
+/**
+ * An item's copy, as its duplicate's dialog opens on it: based on the item, or on the item's own template, with its
+ * fields (`fields`, its ruleset's)
+ */
+function duplicateForm(item: Item, fields: readonly EntityField[] | undefined): ItemFormData {
+  const form = {
     ...toItemForm(item),
     name: `${item.name} (Copy)`,
     sourceItemId: item.isTemplate ? item.id : (item.sourceItemId ?? ""),
     isTemplate: false,
   };
+  return withEntityFields(form, fields, item);
 }
 
 export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetSectionProps) {
@@ -62,11 +68,12 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
 
   const { search: searchQuery, searchBarProps: searchTextProps } = useSearchText("search");
 
+  const { fields: itemFields } = useEntityFields(ruleset.id, "items");
   const { createForm, createDialogProps, duplicateSource, handleCreate, handleDuplicate } = useRulesetSection<
     Item,
     ItemFormData
   >({
-    createDefaults: EMPTY_ITEM,
+    createDefaults: withEntityFields(EMPTY_ITEM, itemFields),
     rulesetId: ruleset.id,
     sectionName: "items",
     label: "Item",
@@ -184,7 +191,7 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
             isLoading={isLoading}
             columns={ITEMS_COLUMNS}
             canEdit={canEdit}
-            onDuplicate={(item) => handleDuplicate(item, duplicateForm(item))}
+            onDuplicate={(item) => handleDuplicate(item, duplicateForm(item, itemFields))}
             onCreateVariants={(item) => {
               bulkForm.reset({ variants: [variantRow(item, 1)] });
               bulkDialog.openWith(item);
@@ -203,7 +210,7 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
           />
         </Stack>
       </Stack>
-      <CreateDialog {...createDialogProps} title="Create New Item">
+      <CreateDialog {...createDialogProps} title="Create New Item" maxWidth="md">
         {/* A duplicate keeps its source's type, while the dialog fades out too */}
         <ItemFormFields form={createForm} rulesetId={ruleset.id} lockType={!!duplicateSource} />
       </CreateDialog>

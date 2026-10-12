@@ -1,15 +1,10 @@
 import type { InferRequestType } from "hono/client";
 import type { UseFormReturn } from "react-hook-form";
 
-import {
-  DescriptionField,
-  FormTextField,
-  NameField,
-  SelectField,
-  SwitchField,
-} from "@/client/src/components/common/index.ts";
+import { DescriptionField, NameField, SelectField } from "@/client/src/components/common/index.ts";
 import type { Ability } from "@/client/src/hooks/index.ts";
-import { requiredRules, wholeNumberRules } from "@/client/src/lib/validation.ts";
+import { requiredRules } from "@/client/src/lib/validation.ts";
+import { EntityFields } from "@/client/src/pages/rulesets/components/forms/EntityFields.tsx";
 import type { rpc } from "@/client/src/services/rpc.ts";
 
 interface SkillFormFieldsProps {
@@ -17,13 +12,13 @@ interface SkillFormFieldsProps {
   /** Why the abilities didn't load. */
   abilitiesError: unknown;
   form: UseFormReturn<SkillFormData>;
+  rulesetId: string;
 }
 
 export type SkillFormData = InferRequestType<(typeof rpc.api.rulesets)[":id"]["skills"]["$post"]>["json"];
 
-export function SkillFormFields({ form, abilities, abilitiesError }: SkillFormFieldsProps) {
-  const impactedByWeight = !!form.watch("fields.impactedByWeight");
-
+/** A skill's name, description and primary ability, then the fields its ruleset declares for skills. */
+export function SkillFormFields({ form, abilities, abilitiesError, rulesetId }: SkillFormFieldsProps) {
   return (
     <>
       <NameField control={form.control} name="name" />
@@ -36,26 +31,7 @@ export function SkillFormFields({ form, abilities, abilitiesError }: SkillFormFi
         options={abilities.map((ability) => ({ value: ability.id, label: ability.name }))}
         loadError={abilitiesError}
       />
-      <SwitchField
-        control={form.control}
-        name="fields.impactedByWeight"
-        label="Impacted by Weight"
-        // The multiplier field hides with the weight, and a hidden field isn't validated: drop its value.
-        onChange={(checked) => {
-          if (!checked) form.setValue("fields.checkPenaltyMultiplier", 1, { shouldDirty: true });
-        }}
-      />
-      {impactedByWeight && (
-        <FormTextField
-          control={form.control}
-          name="fields.checkPenaltyMultiplier"
-          rules={wholeNumberRules(1, "Multiplier is required")}
-          number
-          label="Armor Check Penalty Multiplier"
-          fullWidth
-        />
-      )}
-      <SwitchField control={form.control} name="fields.usableWithoutTraining" label="Usable Without Training" />
+      <EntityFields form={form} entityType="skills" rulesetId={rulesetId} />
     </>
   );
 }

@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import { location } from "@/drizzle/schema.ts";
 import { type SessionContext, validate } from "@/server/middlewares/index.ts";
-import { entityOrderBy, idParam, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
+import { entityFields, entityOrderBy, idParam, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
 import { ItemsService } from "@/server/services/rulesets/items/index.ts";
 
 const itemBody = z.object({
@@ -23,6 +23,7 @@ const itemBody = z.object({
   slot: z.enum(location.enumValues).nullable().optional(),
   sourceItemId: z.string().uuid().nullable().optional(),
   isTemplate: z.boolean().optional(),
+  fields: entityFields.optional(),
   updatedAt: z.string().optional(),
 });
 

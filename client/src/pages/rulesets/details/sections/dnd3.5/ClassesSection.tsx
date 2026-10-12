@@ -13,6 +13,7 @@ import { ClassesIcon } from "@/client/src/components/icons/index.ts";
 import { formatDie } from "@/client/src/lib/formatNumeric.ts";
 import { itemsBeforeLastPage, pageItems } from "@/client/src/lib/pageItems.ts";
 import { ClassFormFields, EMPTY_CLASS } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
+import { withEntityFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { DescriptionCell, RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";
 import {
   classDetailQuery,
@@ -21,7 +22,12 @@ import {
 } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
 import { classesQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
-import { useEntityFilters, useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
+import {
+  useEntityFields,
+  useEntityFilters,
+  useOpenEntity,
+  useRulesetSection,
+} from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
 type Class = ClassesPaginated["items"][number];
@@ -39,11 +45,12 @@ export function ClassesSection({ ruleset, childOnly, onChildOnlyChange }: Rulese
 
   const { search, kind, orderBy, orderDir, searchBarProps } = useEntityFilters(ruleset.baseRules);
 
+  const { fields: classFields } = useEntityFields(ruleset.id, "klasses");
   const { createForm, handleCreate, createDialogProps } = useRulesetSection<Class, ClassFormData>({
     rulesetId: ruleset.id,
     sectionName: "classes",
     label: "Class",
-    createDefaults: EMPTY_CLASS,
+    createDefaults: withEntityFields(EMPTY_CLASS, classFields),
     createFn: async (data) =>
       parseResponse(
         rpc.api.rulesets[":id"].classes.$post({
@@ -129,7 +136,7 @@ export function ClassesSection({ ruleset, childOnly, onChildOnlyChange }: Rulese
       </Stack>
 
       <CreateDialog {...createDialogProps} title="Create New Class">
-        <ClassFormFields form={createForm} />
+        <ClassFormFields form={createForm} rulesetId={ruleset.id} />
       </CreateDialog>
     </SectionContent>
   );

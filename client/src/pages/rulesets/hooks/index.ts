@@ -1,5 +1,6 @@
 export { useAptitudeFilter } from "./useAptitudeFilter.ts";
 export { useCopyOnWrite } from "./useCopyOnWrite.ts";
+export { useEntityFields } from "./useEntityFields.ts";
 export { useEntityFilters } from "./useEntityFilters.ts";
 export { useEntitySave } from "./useEntitySave.ts";
 export { useOpenEntity } from "./useOpenEntity.ts";

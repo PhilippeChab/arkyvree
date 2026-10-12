@@ -27,7 +27,6 @@ import {
 import { AptitudesService } from "@/server/services/rulesets/aptitudes/index.ts";
 import { RulesetChangesService } from "@/server/services/rulesets/changes/index.ts";
 import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
-import { PropertiesService } from "@/server/services/rulesets/customization/properties/index.ts";
 import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { PowersService } from "@/server/services/rulesets/powers/index.ts";
@@ -280,7 +279,7 @@ for (const [chainingOperator, reverseOrder] of [
     const read = () =>
       withRulesetScope(db, host.id, async ({ rulesetData }) => rulesetData.requirementsByEntity.get(copies[0]) ?? []);
     const before = evaluate([await read()]);
-    await PropertiesService.createProperty(session, host.id, "feats", copies[0], { type: "AUDIT", value: "1" });
+    await FeatsService.updateFeat(session, host.id, copies[0], { name: "Toughness", fields: { families: ["Luck"] } });
     const after = evaluate([await read()]);
     RulesetViews.invalidateAll();
     const cold = evaluate([await read()]);

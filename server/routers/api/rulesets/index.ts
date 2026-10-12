@@ -12,17 +12,18 @@ import changes from "./changes/index.ts";
 import classes from "./classes/index.ts";
 import contributorsRouter from "./contributors/index.ts";
 import modifiers from "./customization/modifiers/index.ts";
-import properties from "./customization/properties/index.ts";
 import requirements from "./customization/requirements/index.ts";
 import targetRouter from "./customization/target/index.ts";
 import extensions from "./extensions/index.ts";
 import feats from "./feats/index.ts";
+import fields from "./fields/index.ts";
 import items from "./items/index.ts";
 import languages from "./languages/index.ts";
 import mechanics from "./mechanics/index.ts";
 import powers from "./powers/index.ts";
 import races from "./races/index.ts";
 import saves from "./saves/index.ts";
+import settings from "./settings/index.ts";
 import skills from "./skills/index.ts";
 
 export default new Hono()
@@ -32,16 +33,17 @@ export default new Hono()
   .route("/", aptitudes)
   .route("/", classes)
   .route("/", feats)
+  .route("/", fields)
   .route("/", items)
   .route("/", languages)
   .route("/", mechanics)
   .route("/", powers)
   .route("/", races)
   .route("/", saves)
+  .route("/", settings)
   .route("/", skills)
   .route("/", modifiers)
   .route("/", requirements)
-  .route("/", properties)
   .route("/", targetRouter)
   .route("/", extensions)
   .route("/", changes)

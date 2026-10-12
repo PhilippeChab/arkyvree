@@ -11,6 +11,7 @@ import {
   type SpellFormData,
   SpellFormFields,
 } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
+import { withEntityFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import {
   AptitudeAutocomplete,
   AptitudeChipsCell,
@@ -24,6 +25,7 @@ import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/se
 import { type Power, powersQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import {
   useAptitudeFilter,
+  useEntityFields,
   useOpenEntity,
   useRulesetSaves,
   useRulesetSection,
@@ -49,8 +51,9 @@ export function SpellsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
   const { aptitude, aptitudeError, aptitudeId, setAptitude } = useAptitudeFilter(ruleset.id);
   const { level: selectedLevel, setLevel: setSelectedLevel } = useSpellLevelFilter(ruleset.baseRules, true);
 
+  const { fields: spellFields } = useEntityFields(ruleset.id, "powers");
   const { createForm, createDialogProps, handleCreate } = useRulesetSection<Spell, SpellFormData>({
-    createDefaults: EMPTY_SPELL,
+    createDefaults: withEntityFields(EMPTY_SPELL, spellFields),
     rulesetId: ruleset.id,
     sectionName: "powers",
     label: "Spell",

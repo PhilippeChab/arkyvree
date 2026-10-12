@@ -37,6 +37,7 @@ import {
   PublishIcon,
   RacesIcon,
   SavesIcon,
+  SettingsIcon,
   SkillsIcon,
   UnarchiveIcon,
 } from "@/client/src/components/icons/index.ts";
@@ -72,6 +73,7 @@ import {
   MechanicsSection,
   RacesSection,
   SavesSection,
+  SettingsSection,
 } from "./sections/index.ts";
 
 /** What a ruleset page's tab is: its key, label and icon, and the section it shows. */
@@ -116,6 +118,17 @@ function rulesetTabs(baseRules: BaseRules): TabConfig[] {
       ),
       icon: MechanicsIcon,
       component: MechanicsSection,
+    },
+    {
+      key: "settings",
+      label: (
+        <HelpLabel
+          label="Settings"
+          help="The ruleset's own rules, such as the ability a character's skill points come from. A fork starts from its source's and can change them."
+        />
+      ),
+      icon: SettingsIcon,
+      component: SettingsSection,
     },
   ];
 }

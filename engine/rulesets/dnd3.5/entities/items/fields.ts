@@ -40,52 +40,64 @@ export type ItemFieldValues = FieldValues<typeof ITEM_FIELDS.fields>;
 /** A weapon's fields: what its attacks, its groupings and the hands it's held in read. */
 export type WeaponFields = ItemFieldValues["weapon"];
 
+/** The fields of an armor's or a shield's, which its form shows for one. */
+const WORN = { column: "type", values: ["Armor", "Shield"] } as const;
+
 /**
  * An item's fields its properties hold, as stored: each none (or empty) without its row, so an item made from a
  * template holds only the fields it overrides, and what the engine does without one (a critical of 1, Strength to damage
  * by the hand) stays where the engine reads it. A flag tells a `"false"` row from none. Read off the item's own rows
- * merged with its template's.
+ * merged with its template's. Its form shows a weapon's, an armor's and a shield's fields for an item of that type.
  */
 export const ITEM_FIELDS = new FieldCodec({
-  armor: Field.group({
-    acBonus: Field.number(ARMOR_AC_BONUS),
-    proficiency: Field.text(ARMOR_PROFICIENCY),
-    type: Field.text(ARMOR_TYPE),
-  }),
+  armor: Field.when(
+    { column: "type", values: ["Armor"] },
+    Field.group("Armor", {
+      acBonus: Field.number(ARMOR_AC_BONUS),
+      proficiency: Field.text(ARMOR_PROFICIENCY),
+      type: Field.text(ARMOR_TYPE),
+    }),
+  ),
   /** `ITEM_HAS_CHARGES`: the charges it comes with, none for an item without charges. */
   charges: Field.number(ITEM_HAS_CHARGES),
   /** An armor's or a shield's. */
-  checkPenalty: Field.number(ARMOR_CHECK_PENALTY),
+  checkPenalty: Field.when(WORN, Field.number(ARMOR_CHECK_PENALTY)),
   madeOf: Field.text(ITEM_MADE_OF),
   magicAuras: Field.list(MAGIC_AURA),
   magicCasterLevel: Field.number(MAGIC_CASTER_LEVEL),
   masterwork: Field.flag(ITEM_MASTERWORK, { absent: null }),
   /** An armor's, or a tower shield's. */
-  maxDex: Field.number(ARMOR_MAX_DEX),
-  shield: Field.group({
-    acBonus: Field.number(SHIELD_AC_BONUS),
-    proficiency: Field.text(SHIELD_PROFICIENCY),
-    type: Field.text(SHIELD_TYPE),
-  }),
-  spellFailure: Field.number(ITEM_SPELL_FAILURE),
-  weapon: Field.group({
-    baseDamage: Field.text(WEAPON_BASE_DAMAGE),
-    criticalMultiplier: Field.number(WEAPON_CRITICAL_MULTIPLIER),
-    criticalRange: Field.number(WEAPON_CRITICAL_RANGE),
-    damageTypes: Field.list(DAMAGE_TYPE),
-    doubleDamage: Field.text(WEAPON_DOUBLE_DAMAGE),
-    family: Field.text(WEAPON_FAMILY),
-    finessable: Field.flag(WEAPON_FINESSABLE, { absent: null }),
-    maxRangeIncrements: Field.number(WEAPON_MAX_RANGE_INCREMENTS),
-    mighty: Field.number(WEAPON_MIGHTY),
-    oneHandedPenalty: Field.number(WEAPON_ONE_HANDED_PENALTY),
-    oneHandTraining: Field.flag(WEAPON_ONE_HAND_TRAINING, { absent: null }),
-    proficiency: Field.text(WEAPON_PROFICIENCY),
-    range: Field.number(WEAPON_RANGE),
-    ranged: Field.flag(WEAPON_RANGED, { absent: null }),
-    reach: Field.number(WEAPON_REACH),
-    size: Field.text(WEAPON_SIZE),
-    strengthDamage: Field.text(WEAPON_STRENGTH_DAMAGE),
-    type: Field.text(WEAPON_TYPE),
-  }),
+  maxDex: Field.when(WORN, Field.number(ARMOR_MAX_DEX)),
+  shield: Field.when(
+    { column: "type", values: ["Shield"] },
+    Field.group("Shield", {
+      acBonus: Field.number(SHIELD_AC_BONUS),
+      proficiency: Field.text(SHIELD_PROFICIENCY),
+      type: Field.text(SHIELD_TYPE),
+    }),
+  ),
+  spellFailure: Field.when(WORN, Field.number(ITEM_SPELL_FAILURE)),
+  weapon: Field.when(
+    { column: "type", values: ["Weapon"] },
+    Field.group("Weapon", {
+      baseDamage: Field.text(WEAPON_BASE_DAMAGE),
+      criticalMultiplier: Field.number(WEAPON_CRITICAL_MULTIPLIER),
+      criticalRange: Field.number(WEAPON_CRITICAL_RANGE),
+      damageTypes: Field.list(DAMAGE_TYPE),
+      doubleDamage: Field.text(WEAPON_DOUBLE_DAMAGE),
+      family: Field.text(WEAPON_FAMILY),
+      finessable: Field.flag(WEAPON_FINESSABLE, { absent: null }),
+      maxRangeIncrements: Field.number(WEAPON_MAX_RANGE_INCREMENTS),
+      mighty: Field.number(WEAPON_MIGHTY),
+      oneHandedPenalty: Field.number(WEAPON_ONE_HANDED_PENALTY),
+      oneHandTraining: Field.flag(WEAPON_ONE_HAND_TRAINING, { absent: null }),
+      proficiency: Field.text(WEAPON_PROFICIENCY),
+      range: Field.number(WEAPON_RANGE),
+      ranged: Field.flag(WEAPON_RANGED, { absent: null }),
+      reach: Field.number(WEAPON_REACH),
+      size: Field.text(WEAPON_SIZE),
+      strengthDamage: Field.text(WEAPON_STRENGTH_DAMAGE),
+      type: Field.text(WEAPON_TYPE),
+    }),
+  ),
 });

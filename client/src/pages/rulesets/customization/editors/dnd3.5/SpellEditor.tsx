@@ -9,10 +9,12 @@ import {
   type SpellFormData,
   SpellFormFields,
 } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
+import { withEntityFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { byName, EntityDetailsCard } from "@/client/src/pages/rulesets/components/index.ts";
 import type { EditorProps } from "@/client/src/pages/rulesets/customization/editors/renderEditor.tsx";
 import type { Power } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
-import { useEntitySave, useRulesetSaves } from "@/client/src/pages/rulesets/hooks/index.ts";
+import type { EntityField } from "@/client/src/pages/rulesets/details/rulesetQueries.ts";
+import { useEntityFields, useEntitySave, useRulesetSaves } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
 /** The spell's aptitudes with their levels, in the form's (name) order. */
@@ -22,14 +24,15 @@ function linkedAptitudes(power: Power) {
     .sort(byName);
 }
 
-function toSpellForm(power: Power): SpellFormData {
-  return {
+function toSpellForm(power: Power, fields: readonly EntityField[] | undefined): SpellFormData {
+  const values: SpellFormData = {
     name: power.name,
     description: power.description ?? "",
     saveId: power.saveId ?? "",
     saveEffect: power.saveEffect ?? "",
     aptitudes: linkedAptitudes(power).map((a) => spellAptitude(a.id, a.level)),
   };
+  return withEntityFields(values, fields, power);
 }
 
 export function SpellEditor({
@@ -44,7 +47,8 @@ export function SpellEditor({
   refetchSaved,
 }: EditorProps<Power>) {
   const form = useFormWith<SpellFormData>(EMPTY_SPELL);
-  const sync = useFormSync(form, toSpellForm(power), { key: recordKey, adoptKey, updatedAt: power.updatedAt });
+  const { fields } = useEntityFields(rulesetId, "powers");
+  const sync = useFormSync(form, toSpellForm(power, fields), { key: recordKey, adoptKey, updatedAt: power.updatedAt });
   const { data: saves = [], error: savesError } = useRulesetSaves(rulesetId);
   const saveMutation = useEntitySave({
     rulesetId,
@@ -89,7 +93,6 @@ export function SpellEditor({
                   saves={saves}
                   savesError={savesError}
                   knownAptitudes={linkedAptitudes(power)}
-                  hideProperties
                 />
               ),
               onSubmit: sync.handleSubmit((data) => saveMutation.mutate(data)),

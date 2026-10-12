@@ -3,13 +3,19 @@ import { afterEach, expect, test } from "bun:test";
 import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Feats, Items, Properties, Requirements, Rulesets } from "@/server/repositories/index.ts";
-import { PropertiesService } from "@/server/services/rulesets/customization/properties/index.ts";
 import { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";
 import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
 import { ItemsService } from "@/server/services/rulesets/items/index.ts";
 import { api, expectRefusedWith, expectStatus } from "@/tests/support/api.ts";
 import { copyEntity, createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { makeSession } from "@/tests/support/users.ts";
+import { WEAPON_BASE_DAMAGE, WEAPON_CRITICAL_RANGE } from "@/vocabulary/dnd3.5/properties/index.ts";
+
+/** What each extension's copy of the template holds of its own: a weapon field, its damage or its critical range. */
+const TEMPLATE_PROPERTIES = [
+  { type: WEAPON_BASE_DAMAGE, value: "1d6" },
+  { type: WEAPON_CRITICAL_RANGE, value: "2" },
+];
 
 async function setup(
   entityType: "items" | "feats",
@@ -39,7 +45,7 @@ async function setup(
     if (configure) {
       await configure(copy.id, i);
     } else if (entityType === "items") {
-      await Properties.create(db, { entityId: copy.id, entityType, type: `AUDIT_PROPERTY_${i}`, value: String(i) });
+      await Properties.create(db, { ...TEMPLATE_PROPERTIES[i], entityId: copy.id, entityType });
     } else if (i === 1) {
       await Requirements.create(db, {
         entityId: copy.id,
@@ -63,26 +69,30 @@ async function setup(
 
 afterEach(() => RulesetViews.invalidateAll());
 
-for (const index of [0, 1]) {
-  test(`derived item can override template property from extension ${index}`, async () => {
-    const { session, host, source } = await setup("items");
-    const item = await ItemsService.duplicateItem(session, host.id, source.id, {
-      name: "Audit Derived Item",
-      type: "Weapon",
-    });
-    const before = await ItemsService.getItem(host.id, item.id);
-    const property = before.properties.find((p) => p.type === `AUDIT_PROPERTY_${index}`)!;
-    expect(property).toBeDefined();
-    const original = await Properties.findOne(db, { id: property.id });
-    await PropertiesService.updateProperty(session, host.id, "items", item.id, property.id, {
-      type: property.type,
-      value: "99",
-    });
-    expect(await Properties.findOne(db, { id: property.id })).toEqual(original);
-    const after = await ItemsService.getItem(host.id, item.id);
-    expect(after.properties.filter((p) => p.type === property.type).map((p) => p.value)).toEqual(["99"]);
+test.each([
+  [0, { baseDamage: "2d6" }, [WEAPON_BASE_DAMAGE, "2d6"]],
+  [1, { criticalRange: 3 }, [WEAPON_CRITICAL_RANGE, "3"]],
+])("derived item can override template field from extension %i", async (_, override, row) => {
+  const { session, host, source, copies } = await setup("items");
+  const item = await ItemsService.duplicateItem(session, host.id, source.id, {
+    name: "Audit Derived Item",
+    type: "Weapon",
   });
-}
+  const templateRows = await Properties.findMany(db, { entityIds: copies, entityType: "items" });
+  // Its template's fields, each extension's copy's own, as the view merges them
+  const { weapon } = await ItemsService.getItem(host.id, item.id);
+  expect(weapon).toMatchObject({ baseDamage: "1d6", criticalRange: 2 });
+  await ItemsService.updateItem(session, host.id, item.id, {
+    name: item.name,
+    type: "Weapon",
+    fields: { weapon: { ...weapon, ...override } },
+  });
+  expect(await Properties.findMany(db, { entityIds: copies, entityType: "items" })).toEqual(templateRows);
+  // The item stores only the field it overrides, and reads the other off its template
+  const own = await Properties.findMany(db, { entityIds: [item.id], entityType: "items" });
+  expect(own.map((p) => [p.type, p.value])).toEqual([row]);
+  expect((await ItemsService.getItem(host.id, item.id)).weapon).toMatchObject({ ...weapon, ...override });
+});
 
 for (const action of ["update", "delete"] as const) {
   test(`visible sibling requirement can be ${action}d before first COW`, async () => {
@@ -176,38 +186,6 @@ for (const action of ["update leaf", "delete leaf", "update chain"] as const) {
     await expectStatus(route.$delete({ param }), 404);
   });
 }
-
-test("hidden and unrelated template properties cannot be overridden", async () => {
-  const { session, host, source, copies } = await setup("items", async (entityId) => {
-    await Properties.create(db, { entityId, entityType: "items", type: "DUPLICATE", value: "1" });
-  });
-  const item = await ItemsService.duplicateItem(session, host.id, source.id, {
-    name: "Template ownership check",
-    type: "Weapon",
-  });
-  const [hidden] = await Properties.findMany(db, { entityIds: [copies[1]], entityType: "items" });
-  const [unrelatedItem] = await Items.create(db, { rulesetId: host.id, name: "Unrelated template", isTemplate: true });
-  const [unrelated] = await Properties.create(db, {
-    entityId: unrelatedItem.id,
-    entityType: "items",
-    type: "OTHER",
-    value: "2",
-  });
-  RulesetViews.invalidateAll();
-  const before = await ItemsService.getItem(host.id, item.id);
-  expect(before.properties).toHaveLength(1);
-  expect(before.properties[0].id).not.toBe(hidden.id);
-  for (const property of [hidden, unrelated]) {
-    await expectRefusedWith(
-      PropertiesService.updateProperty(session, host.id, "items", item.id, property.id, {
-        type: property.type,
-        value: "99",
-      }),
-      404,
-    );
-    expect(await Properties.findOne(db, { id: property.id })).toEqual(property);
-  }
-});
 
 test("three-extension requirement merge preserves chains and rejects a duplicate standalone ID", async () => {
   const { session, host, source, copies } = await setup(

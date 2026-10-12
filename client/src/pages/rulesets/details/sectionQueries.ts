@@ -17,6 +17,8 @@ import {
 } from "@/client/src/pages/rulesets/hooks/useEntityFilters.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
+import { rulesetFieldsQuery, rulesetSettingsQuery } from "./rulesetQueries.ts";
+
 interface AptitudeFilters extends ListFilters {
   aptitudeId?: string;
 }
@@ -55,7 +57,8 @@ export type RulesetSection =
   | "aptitudes"
   | "saves"
   | "abilities"
-  | "mechanics";
+  | "mechanics"
+  | "settings";
 
 /** A tab's search params where an entity's kind and its sort narrow and order its list too (the races, the classes). */
 function entityPageSearchParams(pageParam: number, filters: EntityFilters) {
@@ -293,6 +296,11 @@ export function prefetchSection(
       return queryClient.prefetchInfiniteQuery(mechanicsQuery(rulesetId, filters));
     case "abilities":
       return queryClient.prefetchInfiniteQuery(abilitiesQuery(rulesetId, filters));
+    case "settings":
+      return Promise.all([
+        queryClient.prefetchQuery(rulesetSettingsQuery(rulesetId)),
+        queryClient.prefetchQuery(rulesetFieldsQuery(rulesetId)),
+      ]);
   }
 }
 

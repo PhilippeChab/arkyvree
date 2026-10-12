@@ -3,6 +3,9 @@ import { type UseFormReturn } from "react-hook-form";
 
 import { DescriptionField, FormTextField, NameField, SelectField } from "@/client/src/components/common/index.ts";
 import { DECIMAL_RULES } from "@/client/src/lib/validation.ts";
+import { emptyFieldValues } from "@/client/src/pages/rulesets/components/forms/entityFields.ts";
+import { EntityFields } from "@/client/src/pages/rulesets/components/forms/EntityFields.tsx";
+import { useEntityFields } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { itemTemplatesQuery } from "@/client/src/pages/rulesets/optionQueries.ts";
 import { LOCATION_OPTIONS } from "@/shared/enums.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
@@ -29,7 +32,13 @@ interface TemplateSelectorProps {
 
 function TemplateSelector({ form, rulesetId, templateName, type, disabled }: TemplateSelectorProps) {
   const { data: templates, isLoading, error } = useQuery(itemTemplatesQuery(rulesetId, type));
+  const { fields } = useEntityFields(rulesetId, "items");
   const held = form.watch("sourceItemId");
+
+  // An item reads what it doesn't set off its template: another one leaves its fields to the new template's
+  const handleTemplateChange = () => {
+    if (fields) form.setValue("fields", emptyFieldValues(fields), { shouldDirty: true });
+  };
 
   return (
     <SelectField
@@ -38,6 +47,7 @@ function TemplateSelector({ form, rulesetId, templateName, type, disabled }: Tem
       label={`${type} Template`}
       options={templateOptions(templates, held, templateName)}
       emptyLabel="None"
+      onChange={handleTemplateChange}
       disabled={isLoading || disabled}
       loadError={error}
     />
@@ -109,6 +119,7 @@ export function ItemFormFields({ form, rulesetId, lockType, templateName }: Item
           disabled={lockType}
         />
       )}
+      <EntityFields form={form} entityType="items" rulesetId={rulesetId} columns={2} />
     </>
   );
 }
