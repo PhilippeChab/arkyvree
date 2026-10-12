@@ -623,6 +623,22 @@ export default class RulesetData {
     return (this.built.requirementsByEntity ??= this.resolvingIds(Map.groupBy(this.requirements, (r) => r.entityId)));
   }
 
+  /**
+   * A ruleset's own properties (its Settings), as its chain holds them: each type's of the nearest ruleset that holds
+   * it, the ruleset's own first, then its source chain's in order. The view sorts every property by its value, so its
+   * rows by entity type mix the chain's: a fork's saved setting would read after its source's otherwise.
+   */
+  rulesetPropertiesOf(rulesetId: string): Property[] {
+    const held = new Set<string>();
+    return [rulesetId, ...this.cow.sourceChain].flatMap((id) => {
+      const rows = (this.propertiesByEntity.get(id) ?? []).filter(
+        (row) => row.entityType === "rulesets" && !held.has(row.type),
+      );
+      for (const row of rows) held.add(row.type);
+      return rows;
+    });
+  }
+
   get savesById(): Map<string, RulesetSave> {
     return (this.built.savesById ??= this.resolvingIds(buildById(this.saves)));
   }

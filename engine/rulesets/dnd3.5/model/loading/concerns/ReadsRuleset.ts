@@ -1,6 +1,6 @@
 import type { CharacterDataLoader } from "@/engine/core/character/index.ts";
 import type { CharacterRows } from "@/engine/core/module/index.ts";
-import type { RulesetData } from "@/engine/core/view/index.ts";
+import type { RulesetData, RulesetView } from "@/engine/core/view/index.ts";
 import { CLASS_FIELDS } from "@/engine/rulesets/dnd3.5/entities/classes/fields.ts";
 import { SKILL_FIELDS } from "@/engine/rulesets/dnd3.5/entities/skills/fields.ts";
 import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
@@ -63,7 +63,7 @@ export function ReadsRuleset<B extends Constructor<CharacterDataLoader<LoadedCha
      * The D&D 3.5 reading of the cache's raw property rows: the fields of each skill that has any, and the skill-point
      * ability.
      */
-    protected readRulesetProperties(rulesetData: RulesetData, resolveId: (id: string) => string) {
+    protected readRulesetProperties({ ruleset, rulesetData }: RulesetView, resolveId: (id: string) => string) {
       const propertiesBySkillId = Map.groupBy(
         rulesetData.propertiesByEntityType.get("skills") ?? [],
         (row) => row.entityId,
@@ -72,11 +72,9 @@ export function ReadsRuleset<B extends Constructor<CharacterDataLoader<LoadedCha
         [...propertiesBySkillId].map(([skillId, rows]) => [skillId, SKILL_FIELDS.read(rows)]),
       );
 
-      // The skill-point ability is a field of whichever ruleset in the source chain declares it (usually the base), so
-      // read every "rulesets"-scoped row rather than just the fork's own
-      const { skillPointAbilityId: storedId } = RULESET_FIELDS.read(
-        rulesetData.propertiesByEntityType.get("rulesets") ?? [],
-      );
+      // The skill-point ability is a setting of the nearest ruleset of the chain that holds it: the fork's own once it
+      // saves one, its source's until then
+      const { skillPointAbilityId: storedId } = RULESET_FIELDS.read(rulesetData.rulesetPropertiesOf(ruleset.id));
       const skillPointAbilityId = storedId ? resolveId(storedId) : null;
       return { skillFields, skillPointAbilityId };
     }

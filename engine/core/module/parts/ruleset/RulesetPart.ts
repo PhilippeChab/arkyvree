@@ -26,8 +26,8 @@ export default abstract class RulesetPart {
    * until it saves its own): a reference the id the view keys its entity by.
    */
   private settingsOf(view: RulesetView) {
-    const { rulesetData } = view;
-    const values = this.fields.read(rulesetData.propertiesByEntityType.get("rulesets") ?? []);
+    const { ruleset, rulesetData } = view;
+    const values = this.fields.read(rulesetData.rulesetPropertiesOf(ruleset.id));
     return this.fields.resolveReferences(values, (id) => rulesetData.cow.resolve(id));
   }
 
