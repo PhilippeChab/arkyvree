@@ -2,10 +2,11 @@ import { CharacterComponent, type InventoryEntry } from "@/engine/core/character
 import { type ItemFieldValues } from "@/engine/rulesets/dnd3.5/entities/items/fields.ts";
 import type InventoryComponent from "@/engine/rulesets/dnd3.5/model/inventory/InventoryComponent.ts";
 import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
+import ItemPlacement from "@/engine/rulesets/dnd3.5/rules/ItemPlacement.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { MASTERWORK_CHECK_PENALTY_REDUCTION } from "@/vocabulary/dnd3.5/combat.ts";
 
-/** A type's shields, by the inventory entry holding each: one carried in two sets is two, both of its type. */
+/** A type's shields, by the inventory entry holding each: one entry held in two sets is one shield, in each set. */
 type ShieldGroup = Record<string, ShieldSlot>;
 
 /** Grouping key (normalized) → ShieldGroup */
@@ -44,8 +45,12 @@ export default class ShieldsComponent extends CharacterComponent<LoadedCharacter
       if (entry.item.type === "Shield") this.registerShield(entry, fields);
   }
 
-  /** A shield under its type, and in its entry's weapon set (the first, for an entry stored without one). */
-  private registerShield({ id, item, weaponSet }: InventoryEntry, fields: ItemFieldValues): void {
+  /**
+   * A shield under its type, and in each weapon set its entry is in (the first, for an entry stored without one): the
+   * same shield in each, its penalties counted once.
+   */
+  private registerShield(entry: InventoryEntry, fields: ItemFieldValues): void {
+    const { id, item } = entry;
     if (fields.shield.proficiency === null) return;
 
     const acBonus = fields.shield.acBonus ?? 0;
@@ -75,7 +80,7 @@ export default class ShieldsComponent extends CharacterComponent<LoadedCharacter
     // Under its type: a heavy wooden shield's `heavywooden`
     const grouping = fields.shield.type === null ? "" : stripSeparators(fields.shield.type);
     if (grouping) (this.shields[grouping] ??= {})[id] = shieldSlot;
-    (this.sets[String(weaponSet ?? 0)] ??= []).push(shieldSlot);
+    for (const set of ItemPlacement.heldSets(entry)) (this.sets[String(set)] ??= []).push(shieldSlot);
   }
 
   /**

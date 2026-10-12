@@ -82,5 +82,5 @@ export type DescribedInventoryEntry<T, X = unknown> = T &
 /** A language, as a character's languages name it. */
 export type DescribedLanguage = Pick<Language, "id" | "name" | "type">;
 
-/** An inventory entry, as where it's held reads it: whether it's equipped, where, and its weapon set in a hand. */
-export type HeldInventoryEntry = Pick<InventoryEntryPlan, "equipped" | "location" | "weaponSet">;
+/** An inventory entry, as where it's held reads it: whether it's equipped, where, and its weapon sets in a hand. */
+export type HeldInventoryEntry = Pick<InventoryEntryPlan, "equipped" | "location" | "weaponSets">;

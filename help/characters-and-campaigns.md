@@ -102,6 +102,8 @@ Each weapon on the sheet lists a row per way to attack with it: its own attack, 
 
 The sheet's **Combat** section, and the PDF's, shows your hit points, initiative, speed, base attack bonus and grapple, then each weapon set you switch between: **Set 1** and what its hands hold, its **AC**, **Touch** and **Flat-footed**, then its attacks. A set counts a shield only when it holds one, and what goes with it: a magic shield's bonus, a tower shield's cap on Dexterity, a monk's AC bonus lost only in the sets holding a shield, and the shield's penalties only on that set's attacks. Your skills and your speed have one value each: a shield carried in any set weighs on them. A character holding nothing in a hand has one set, shown without a heading.
 
+An item held in a hand can be in several weapon sets: when you add or edit it, pick each set it's in, or a new one, such as the shield you keep while switching from a longsword (Set 1) to a mace (Set 2). Each set it's in must have room for it in that hand, and counts it in its AC and attacks. The inventory, and the PDF's, shows where it's held, **Off Hand (Sets 1, 2)**, and counts it once: its weight, and its penalties to your skills and speed.
+
 The sheet's **Spells** section, and the PDF's, opens on **Spells per Day**: a row per spell list with slots, a column per spell level you have slots at, and your slots per day there, your ability's bonus spells included. A cleric's domain slot and a specialist wizard's school slot count in their class's row as one more, **3+1**, and have no row of their own; the lists under the table still give each spell level's uses.
 
 ## Can I export my character?

@@ -21,7 +21,7 @@ class CharacterInventoryService {
     location: ItemLocation | null,
     totalCharges: number | null,
     remainingCharges: number | null,
-    weaponSet: number | null,
+    weaponSets: number[],
     force: boolean = false,
   ) {
     return await withTransaction(async (tx) => {
@@ -29,7 +29,7 @@ class CharacterInventoryService {
 
       return await withRulesetScope(tx, characterRecord.rulesetId, async (scope) => {
         const character = await readCharacterInput(tx, characterRecord);
-        const request = { equipped, location, remainingCharges, totalCharges, weaponSet };
+        const request = { equipped, location, remainingCharges, totalCharges, weaponSets };
         // The item the view shows for the id sent (a copy's, when the ruleset copied it), refused when it shows none
         const fields = Engine.for(scope).character(character).planInventoryEntry({ itemId, request }, force);
         const rows = await CharacterInventory.create(tx, { characterId, quantity, ...fields });
@@ -57,22 +57,22 @@ class CharacterInventoryService {
   }
 
   /**
-   * Why `location` (in `weaponSet`, stored from 0, for a hand) can't take one more of the character's items, if it
-   * can't: what its inventory dialogs warn of before a save refuses it, the entry placed (`entryId`, none for a new one)
-   * aside.
+   * Why `location` (in each of `weaponSets`, stored from 0, for a hand) can't take one more of the character's items, if
+   * it can't: what its inventory dialogs warn of before a save refuses it, the entry placed (`entryId`, none for a new
+   * one) aside.
    */
   async getPlacement(
     session: Session,
     characterId: string,
     entryId: string | null,
     location: ItemLocation,
-    weaponSet: number,
+    weaponSets: number[],
   ) {
     const characterRecord = await getEditableCharacter(db, session, characterId);
 
     return await withRulesetScope(db, characterRecord.rulesetId, async (scope) => {
       const character = await readCharacterInput(db, characterRecord);
-      return Engine.for(scope).character(character).describePlacement({ entryId, location, weaponSet });
+      return Engine.for(scope).character(character).describePlacement({ entryId, location, weaponSets });
     });
   }
 
@@ -107,7 +107,7 @@ class CharacterInventoryService {
     location: ItemLocation | null,
     totalCharges: number | null,
     remainingCharges: number | null,
-    weaponSet: number | null,
+    weaponSets: number[],
     force: boolean = false,
     expectedUpdatedAt?: string,
   ) {
@@ -119,7 +119,7 @@ class CharacterInventoryService {
         if (!existing) throw new NotFoundError("Item not in inventory");
 
         const character = await readCharacterInput(tx, characterRecord);
-        const request = { equipped, location, remainingCharges, totalCharges, weaponSet };
+        const request = { equipped, location, remainingCharges, totalCharges, weaponSets };
         const fields = Engine.for(scope).character(character).planInventoryEntry({ entry: existing, request }, force);
 
         const rows = await CharacterInventory.update(

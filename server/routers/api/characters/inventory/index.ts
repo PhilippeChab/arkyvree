@@ -8,6 +8,17 @@ import { CharacterInventoryService } from "@/server/services/characters/inventor
 
 const entryParams = characterIdParam.extend({ entryId: z.string().uuid() });
 
+/** Comma-separated weapon sets, stored from 0: what isn't one is dropped (an empty string is none). */
+const heldSetList = z.string().transform((value) =>
+  value
+    .split(",")
+    .filter((set) => /^\d+$/.test(set))
+    .map(Number),
+);
+
+/** The weapon sets a hand holds an entry in, stored from 0: none outside the hands. */
+const heldSets = z.array(z.number().int().min(0)).default([]);
+
 export default new Hono<SessionContext>()
   .get("/:characterId", validate("param", characterIdParam), async (c) => {
     const { characterId } = c.req.valid("param");
@@ -21,19 +32,19 @@ export default new Hono<SessionContext>()
       z.object({
         entryId: z.string().uuid().optional(),
         location: z.enum(location.enumValues),
-        weaponSet: z.coerce.number().int().min(0),
+        weaponSets: heldSetList,
       }),
     ),
     async (c) => {
       const { characterId } = c.req.valid("param");
-      const { entryId, location, weaponSet } = c.req.valid("query");
+      const { entryId, location, weaponSets } = c.req.valid("query");
       return c.json(
         await CharacterInventoryService.getPlacement(
           c.var.requestSession,
           characterId,
           entryId ?? null,
           location,
-          weaponSet,
+          weaponSets,
         ),
         200,
       );
@@ -51,13 +62,13 @@ export default new Hono<SessionContext>()
         location: z.enum(location.enumValues).nullable().default(null),
         totalCharges: z.number().int().min(0).nullable().default(null),
         remainingCharges: z.number().int().min(0).nullable().default(null),
-        weaponSet: z.number().int().min(0).nullable().default(null),
+        weaponSets: heldSets,
         force: z.boolean().default(false),
       }),
     ),
     async (c) => {
       const { characterId } = c.req.valid("param");
-      const { itemId, quantity, equipped, location, totalCharges, remainingCharges, weaponSet, force } =
+      const { itemId, quantity, equipped, location, totalCharges, remainingCharges, weaponSets, force } =
         c.req.valid("json");
       return c.json(
         await CharacterInventoryService.addItem(
@@ -69,7 +80,7 @@ export default new Hono<SessionContext>()
           location,
           totalCharges,
           remainingCharges,
-          weaponSet,
+          weaponSets,
           force,
         ),
         201,
@@ -87,14 +98,14 @@ export default new Hono<SessionContext>()
         location: z.enum(location.enumValues).nullable().default(null),
         totalCharges: z.number().int().min(0).nullable().default(null),
         remainingCharges: z.number().int().min(0).nullable().default(null),
-        weaponSet: z.number().int().min(0).nullable().default(null),
+        weaponSets: heldSets,
         force: z.boolean().default(false),
         updatedAt: z.string().optional(),
       }),
     ),
     async (c) => {
       const { characterId, entryId } = c.req.valid("param");
-      const { quantity, equipped, location, totalCharges, remainingCharges, weaponSet, force, updatedAt } =
+      const { quantity, equipped, location, totalCharges, remainingCharges, weaponSets, force, updatedAt } =
         c.req.valid("json");
       return c.json(
         await CharacterInventoryService.updateItem(
@@ -106,7 +117,7 @@ export default new Hono<SessionContext>()
           location,
           totalCharges,
           remainingCharges,
-          weaponSet,
+          weaponSets,
           force,
           updatedAt,
         ),

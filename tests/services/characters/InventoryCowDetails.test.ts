@@ -32,7 +32,7 @@ async function setup() {
     height: "180 cm",
     weight: "80 kg",
   });
-  await CharacterInventoryService.addItem(session, character.id, item.id, 2, true, "Main Hand", null, null, 0);
+  await CharacterInventoryService.addItem(session, character.id, item.id, 2, true, "Main Hand", null, null, [0]);
   return { session, ruleset, item, character };
 }
 
@@ -67,7 +67,7 @@ describe("COW inventory item details", () => {
         costGp: "30.00",
         type: "Weapon",
       });
-      expect(entry).toMatchObject({ quantity: 2, equipped: true, location: "Main Hand", weaponSet: 0 });
+      expect(entry).toMatchObject({ quantity: 2, equipped: true, location: "Main Hand", weaponSets: [0] });
       expect(entry.item.properties.length).toBeGreaterThan(0);
 
       // Reading a fork does not rewrite the pick or change the parent item.

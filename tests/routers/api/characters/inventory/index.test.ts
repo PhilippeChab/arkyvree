@@ -95,13 +95,35 @@ describe("character inventory", () => {
       inventory.$post({ param: { characterId }, json: { ...unequipped, itemId, equipped: true, location: "Head" } }),
     );
     expect(
-      await expectOk(placement.$get({ param: { characterId }, query: { location: "Head", weaponSet: "0" } })),
+      await expectOk(placement.$get({ param: { characterId }, query: { location: "Head", weaponSets: "0" } })),
     ).toEqual({ warning: "Head slot is occupied by Inventory Item" });
     expect(
       await expectOk(
-        placement.$get({ param: { characterId }, query: { location: "Head", weaponSet: "0", entryId: held.id } }),
+        placement.$get({ param: { characterId }, query: { location: "Head", weaponSets: "0", entryId: held.id } }),
       ),
     ).toEqual({ warning: null });
+  });
+
+  test("holds an entry in a list of weapon sets, and answers a placement in a comma-separated list of them", async () => {
+    const { characterId, itemId } = await setup();
+    const held = await expectOk(
+      inventory.$post({
+        param: { characterId },
+        json: { ...unequipped, itemId, equipped: true, location: "Off Hand", weaponSets: [1, 0] },
+      }),
+    );
+    expect(held.weaponSets).toEqual([0, 1]);
+    const [listed] = await expectOk(inventory.$get({ param: { characterId } }));
+    expect(listed.slotLabel).toBe("Off Hand (Sets 1, 2)");
+    expect(
+      await expectOk(
+        inventory.placement.$get({ param: { characterId }, query: { location: "Off Hand", weaponSets: "2,1" } }),
+      ),
+    ).toEqual({ warning: "Off Hand is occupied by Inventory Item (Set 2)" });
+    await expectStatus(
+      inventory.$post({ param: { characterId }, json: { ...unequipped, itemId, weaponSets: [-1] } }),
+      400,
+    );
   });
 
   test("returns 404 for an entry the character doesn't have", async () => {
@@ -115,7 +137,7 @@ describe("character inventory", () => {
     const guest = guestApi.api.characters.inventory[":characterId"];
     await expectStatus(guest.$get({ param: { characterId } }), 401);
     await expectStatus(
-      guest.placement.$get({ param: { characterId }, query: { location: "Head", weaponSet: "0" } }),
+      guest.placement.$get({ param: { characterId }, query: { location: "Head", weaponSets: "0" } }),
       401,
     );
     await expectStatus(guest.$post({ param: { characterId }, json: { ...unequipped, itemId } }), 401);

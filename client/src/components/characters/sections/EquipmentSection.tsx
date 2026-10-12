@@ -33,7 +33,13 @@ import { invalidateCharacter, rulesetDetailQuery } from "@/client/src/lib/querie
 import { requiredRules } from "@/client/src/lib/validation.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
-import { EMPTY_INVENTORY_FORM, type InventoryFormData, LOCATION_CHOICES, placementPayload } from "./equipment.ts";
+import {
+  EMPTY_INVENTORY_FORM,
+  type InventoryFormData,
+  LOCATION_CHOICES,
+  placementPayload,
+  weaponSetChoices,
+} from "./equipment.ts";
 import {
   characterInventoryQuery,
   type InventoryEntry,
@@ -80,9 +86,9 @@ export function EquipmentSection({ characterId, rulesetId, readOnly, load }: Equ
 
   const selectedItem = addForm.watch("selectedItem");
   const addLocation = addForm.watch("location");
-  const addWeaponSet = addForm.watch("weaponSet");
+  const addWeaponSets = addForm.watch("weaponSets");
   const editLocation = editForm.watch("location");
-  const editWeaponSet = editForm.watch("weaponSet");
+  const editWeaponSets = editForm.watch("weaponSets");
 
   // The picked item's details (add dialog): how it's placed
   const { data: itemDetail, error: itemDetailError } = useQuery(rulesetItemQuery(rulesetId, selectedItem?.id));
@@ -111,11 +117,11 @@ export function EquipmentSection({ characterId, rulesetId, readOnly, load }: Equ
   // What keeps the picked slot from taking the item, as the server's rules say: shown above each dialog's fields, its
   // save held while it stands, which the server would refuse
   const { data: addPlacement, error: addPlacementError } = useQuery({
-    ...inventoryPlacementQuery(characterId, addLocation, addWeaponSet),
+    ...inventoryPlacementQuery(characterId, addLocation, addWeaponSets),
     enabled: addDialogOpen,
   });
   const { data: editPlacement, error: editPlacementError } = useQuery({
-    ...inventoryPlacementQuery(characterId, editLocation, editWeaponSet, editingEntry?.id),
+    ...inventoryPlacementQuery(characterId, editLocation, editWeaponSets, editingEntry?.id),
     enabled: editDialog.open,
   });
   const addSlotWarning = addPlacement?.warning;
@@ -207,7 +213,7 @@ export function EquipmentSection({ characterId, rulesetId, readOnly, load }: Equ
     editForm.reset({
       quantity: entry.quantity ?? 1,
       location: oneOf(entry.location, LOCATION_CHOICES, "none"),
-      weaponSet: shownWeaponSet(entry.weaponSet ?? 0),
+      weaponSets: entry.weaponSets.length > 0 ? entry.weaponSets.map(shownWeaponSet) : [shownWeaponSet(0)],
       totalCharges: entry.totalCharges ?? 0,
       remainingCharges: entry.remainingCharges ?? 0,
     });
@@ -392,7 +398,11 @@ export function EquipmentSection({ characterId, rulesetId, readOnly, load }: Equ
           )}
         />
         {!!selectedItem && !!itemDetailError && <LoadError what="Item" error={itemDetailError} />}
-        <InventoryPlacementFields form={addForm} profile={selectedItem ? addProfile : null} />
+        <InventoryPlacementFields
+          form={addForm}
+          profile={selectedItem ? addProfile : null}
+          setChoices={weaponSetChoices(inventoryItems, addWeaponSets)}
+        />
       </CreateDialog>
       <EditDialog
         open={editDialog.open}
@@ -428,7 +438,11 @@ export function EquipmentSection({ characterId, rulesetId, readOnly, load }: Equ
           fullWidth
           slotProps={{ input: { readOnly: true } }}
         />
-        <InventoryPlacementFields form={editForm} profile={editProfile} />
+        <InventoryPlacementFields
+          form={editForm}
+          profile={editProfile}
+          setChoices={weaponSetChoices(inventoryItems, editWeaponSets)}
+        />
       </EditDialog>
       <DeleteDialog
         open={deleteDialog.open}

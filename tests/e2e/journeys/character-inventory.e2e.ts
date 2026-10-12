@@ -88,7 +88,9 @@ test.describe("Character inventory", () => {
     await expect(row().getByText("Two Handed (Set 1)")).toBeVisible();
   });
 
-  test("the same weapon goes in each hand, as two entries, and a third waits for a free hand", async ({ page }) => {
+  test("the same weapon goes in each hand, as two entries, and a third waits for free hands, in two sets", async ({
+    page,
+  }) => {
     // A dagger in the main hand, then a second one in the off hand: the inventory lists both. A weapon's details make
     // its slot a hand's, cached the second time
     for (const hand of ["Main Hand", "Off Hand"]) {
@@ -116,7 +118,14 @@ test.describe("Character inventory", () => {
       dialog.getByText("Cannot equip two-handed: Dagger is in Main Hand and Dagger is in Off Hand (Set 1)"),
     ).toBeVisible();
     await expect(addItem).toBeDisabled();
-    await dialog.locator('input[name="weaponSet"]').fill("2");
+    // Its weapon sets: a new one, the second, rather than the first, then a third too, both free
+    const sets = dialog.getByRole("combobox", { name: "Weapon Sets" });
+    await sets.click();
+    await sets.press("Backspace");
+    await page.getByRole("option", { name: "Set 2" }).click();
     await expect(addItem).toBeEnabled();
+    await page.getByRole("option", { name: "Set 3" }).click();
+    await save(dialog, /^Add Item$/);
+    await expect(daggers.filter({ hasText: "Two Handed (Sets 2, 3)" })).toHaveCount(1);
   });
 });

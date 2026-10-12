@@ -90,7 +90,7 @@ describe("A character's weapon rules", () => {
     );
     const lyra = await findSeededCharacter("Lyra Shadowstep");
     await carry(lyra, [
-      { item: rapier.id, location: "Main Hand", weaponSet: 0 },
+      { item: rapier.id, location: "Main Hand", weaponSets: [0] },
       { item: "Full Plate", location: "Torso" },
     ]);
     const detailed = await build(lyra.id);
@@ -109,7 +109,7 @@ describe("A character's weapon rules", () => {
       atLeast("weapon.tohit.strength", 3),
     );
     const lyra = await findSeededCharacter("Lyra Shadowstep");
-    await carry(lyra, [{ item: rapier.id, location: "Main Hand", weaponSet: 0 }]);
+    await carry(lyra, [{ item: rapier.id, location: "Main Hand", weaponSets: [0] }]);
     const detailed = await build(lyra.id);
 
     expect(detailed.components.feats.getFeat("Great Fortitude")).toMatchObject({ possessed: true, count: 1 });
@@ -126,7 +126,7 @@ describe("A character's weapon rules", () => {
       atLeast("weapon.tohit.strength", 3),
     );
     const characterId = await seedHuman("Granted Finesse", "Fighter", [
-      { item: rapier.id, location: "Main Hand", weaponSet: 0 },
+      { item: rapier.id, location: "Main Hand", weaponSets: [0] },
     ]);
     await gated(
       { sourceId: characterId, sourceType: "characters" },
@@ -150,7 +150,7 @@ describe("A character's weapon rules", () => {
       atLeast("weapon.tohit.strength", 3),
     );
     const characterId = await seedHuman("Granted Proficiency", "Wizard", [
-      { item: rapier.id, location: "Main Hand", weaponSet: 0 },
+      { item: rapier.id, location: "Main Hand", weaponSets: [0] },
     ]);
     await Modifiers.create(db, {
       sourceId: characterId,

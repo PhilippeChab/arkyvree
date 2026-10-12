@@ -8,6 +8,8 @@ import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import type { ItemLocation } from "@/shared/enums.ts";
 
+import { storedWeaponSets } from "./weaponSets.ts";
+
 /** An item the character carries, with where it's placed: an entry of its inventory. */
 export type InventoryEntry = InferResponseType<
   (typeof rpc.api.characters.inventory)[":characterId"]["$get"],
@@ -29,16 +31,17 @@ export function characterInventoryQuery(characterId: string) {
 }
 
 /**
- * Why a slot (`location`, in `weaponSet` as the form shows it, from 1) can't take one more of the character's items,
- * the entry edited (`entryId`) aside: the warning an inventory dialog shows, or null. Skipped while no slot is picked.
+ * Why a slot (`location`, in each of `weaponSets` as the form shows them, from 1) can't take one more of the
+ * character's items, the entry edited (`entryId`) aside: the warning an inventory dialog shows, or null. Skipped while
+ * no slot is picked.
  */
 export function inventoryPlacementQuery(
   characterId: string,
   location: ItemLocation | "none",
-  weaponSet: number,
+  weaponSets: number[],
   entryId?: string,
 ) {
-  const query = { entryId, location, weaponSet: String(weaponSet - 1) };
+  const query = { entryId, location, weaponSets: storedWeaponSets(weaponSets).join(",") };
   return queryOptions({
     queryKey: QUERY_KEYS.characters.inventoryPlacement(characterId, query),
     queryFn:

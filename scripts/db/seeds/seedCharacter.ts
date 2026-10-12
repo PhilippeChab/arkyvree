@@ -36,7 +36,7 @@ async function addInventory(db: Db, ctx: SeedContext, characterId: string, items
       quantity: item.quantity,
       equipped: item.equipped ?? false,
       location: item.location,
-      weaponSet: item.weaponSet,
+      weaponSets: item.weaponSets,
     })),
   );
 }

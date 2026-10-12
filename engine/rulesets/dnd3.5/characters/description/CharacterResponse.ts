@@ -60,7 +60,7 @@ export default class CharacterResponse {
       quantity: entry.quantity,
       equipped: entry.equipped,
       location: entry.location,
-      weaponSet: entry.weaponSet,
+      weaponSets: entry.weaponSets,
       slotLabel: ItemPlacement.describeSlot(entry),
       totalCharges: entry.totalCharges,
       remainingCharges: entry.remainingCharges,

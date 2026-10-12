@@ -864,7 +864,7 @@ export const inventoryInCharacter = character.table(
     remainingCharges: integer("remaining_charges"),
     equipped: boolean().default(false).notNull(),
     location: location(),
-    weaponSet: smallint("weapon_set"),
+    weaponSets: smallint("weapon_sets").array().default([]).notNull(),
   },
   (table) => [
     index("character_inventory_character_id").using("btree", table.characterId.asc().nullsLast()),

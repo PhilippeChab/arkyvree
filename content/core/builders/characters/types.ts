@@ -32,5 +32,6 @@ export interface InventorySeed {
   location?: ItemLocation;
   name: string;
   quantity: number;
-  weaponSet?: number;
+  /** The weapon sets a hand holds it in, from 0 */
+  weaponSets?: number[];
 }

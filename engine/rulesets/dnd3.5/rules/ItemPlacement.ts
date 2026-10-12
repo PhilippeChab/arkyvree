@@ -10,8 +10,8 @@ import { ITEM_HAS_CHARGES } from "@/vocabulary/dnd3.5/properties/index.ts";
 interface HeldEntry {
   equipped: boolean;
   location: string | null;
-  /** Stored from 0; null outside the hands. */
-  weaponSet: number | null;
+  /** The weapon sets a hand holds it in, stored from 0; none outside the hands. */
+  weaponSets: number[];
 }
 
 /** An item, as its placement reads it: its type, and the slot it's worn in (`"Other"` for none). */
@@ -78,13 +78,21 @@ export default class ItemPlacement {
     };
   }
 
-  /** Where an entry is worn, its weapon set counted from 1 in a hand ("Main Hand (Set 1)"), or none when it's carried. */
+  /**
+   * Where an entry is worn, its weapon sets counted from 1 in a hand ("Main Hand (Set 1)", "Off Hand (Sets 1, 2)"), or
+   * none when it's carried.
+   */
   static describeSlot(entry: HeldEntry): string | null {
     if (!entry.equipped || !entry.location) return null;
-    if (ItemPlacement.isHand(entry.location) && entry.weaponSet !== null)
-      return `${entry.location} (Set ${entry.weaponSet + 1})`;
+    if (!ItemPlacement.isHand(entry.location) || entry.weaponSets.length === 0) return entry.location;
 
-    return entry.location;
+    const sets = entry.weaponSets.map((set) => set + 1).join(", ");
+    return `${entry.location} (${entry.weaponSets.length === 1 ? "Set" : "Sets"} ${sets})`;
+  }
+
+  /** The weapon sets a hand's entry is in, stored from 0: the first, for an entry stored without one. */
+  static heldSets(entry: Pick<HeldEntry, "weaponSets">): number[] {
+    return entry.weaponSets.length > 0 ? entry.weaponSets : [0];
   }
 
   /** Whether `location` is a hand, which a weapon set applies to. */
