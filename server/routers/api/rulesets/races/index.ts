@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import { sizeType } from "@/drizzle/schema.ts";
 import { type SessionContext, validate } from "@/server/middlewares/index.ts";
-import { entityOrderBy, idParam, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
+import { entityFields, entityOrderBy, idParam, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
 import { RacesService } from "@/server/services/rulesets/races/index.ts";
 
 /** A race's base speed, in feet: a whole number above 0, as its column holds it. */
@@ -53,6 +53,7 @@ export default new Hono<SessionContext>()
           .transform((v) => v || null),
         size: z.enum(sizeType.enumValues),
         baseSpeed: baseSpeed,
+        fields: entityFields.optional(),
       }),
     ),
     async (c) => {
@@ -74,6 +75,7 @@ export default new Hono<SessionContext>()
           .transform((v) => v || null),
         size: z.enum(sizeType.enumValues),
         baseSpeed: baseSpeed,
+        fields: entityFields.optional(),
         updatedAt: z.string().optional(),
       }),
     ),

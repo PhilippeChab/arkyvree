@@ -1,5 +1,5 @@
 import { klassesInRules } from "@/drizzle/schema.ts";
-import { Engine } from "@/engine/index.ts";
+import { Engine, type EntityFieldValues } from "@/engine/index.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Klasses } from "@/server/repositories/index.ts";
@@ -15,6 +15,7 @@ class ClassesService {
     rulesetId: string,
     body: {
       description?: string | null;
+      fields?: EntityFieldValues;
       hd?: number;
       name: string;
     },
@@ -62,6 +63,7 @@ class ClassesService {
     klassId: string,
     body: {
       description?: string | null;
+      fields?: EntityFieldValues;
       hd?: number;
       name: string;
       updatedAt?: string;

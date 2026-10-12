@@ -2,6 +2,7 @@ import type { UseFormReturn } from "react-hook-form";
 
 import { CreateDialog, DeleteDialog, FormTextField } from "@/client/src/components/common/index.ts";
 import { wholeNumberRules } from "@/client/src/lib/validation.ts";
+import { EntityFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { getClassForms } from "@/client/src/pages/rulesets/details/classes/classFormFactory.ts";
 import type { ClassLevelFormData } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 import { useRulesetSaves } from "@/client/src/pages/rulesets/hooks/index.ts";
@@ -65,6 +66,7 @@ export function CreateLevelDialog({
           htmlInput: { min: 1, max: lastLevel },
         }}
       />
+      <EntityFields form={form} entityType="klass_levels" rulesetId={rulesetId} />
       <NewClassLevelFields form={form} rulesetId={rulesetId} rulesetSaves={rulesetSaves} savesError={savesError} />
     </CreateDialog>
   );

@@ -212,8 +212,9 @@ export default class RulesetData {
   readonly powers: PowerWithAptitudes[];
 
   /**
-   * The ruleset's property types, as its rules read them: the order an entity's properties show in, the values a type
-   * takes, and the entity a type's value names by its id (`PropertyLabels`).
+   * The ruleset's property types, as its rules read them, which keep its entities' fields: those each entity type
+   * declares, in the order an entity's properties show in, the values a type takes, and the entity a type's value names
+   * by its id (an entity's form's fields: `FieldCodec.describe`, `parse`).
    */
   readonly propertyTypes: PropertyTypesProvider;
 
@@ -620,6 +621,22 @@ export default class RulesetData {
   /** entityId → its requirements (a sibling's merged into its winner's). */
   get requirementsByEntity(): Map<string, Requirement[]> {
     return (this.built.requirementsByEntity ??= this.resolvingIds(Map.groupBy(this.requirements, (r) => r.entityId)));
+  }
+
+  /**
+   * A ruleset's own properties (its Settings), as its chain holds them: each type's of the nearest ruleset that holds
+   * it, the ruleset's own first, then its source chain's in order. The view sorts every property by its value, so its
+   * rows by entity type mix the chain's: a fork's saved setting would read after its source's otherwise.
+   */
+  rulesetPropertiesOf(rulesetId: string): Property[] {
+    const held = new Set<string>();
+    return [rulesetId, ...this.cow.sourceChain].flatMap((id) => {
+      const rows = (this.propertiesByEntity.get(id) ?? []).filter(
+        (row) => row.entityType === "rulesets" && !held.has(row.type),
+      );
+      for (const row of rows) held.add(row.type);
+      return rows;
+    });
   }
 
   get savesById(): Map<string, RulesetSave> {

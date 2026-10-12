@@ -38,14 +38,6 @@ export const SPELL_DESCRIPTORS = [
   "Sonic",
   "Water",
 ] as const;
-export const SPELL_DURATION_TYPES = [
-  "Instantaneous",
-  "Concentration",
-  "Sustained",
-  "Permanent",
-  "Dismissible",
-  "See Text",
-] as const;
 /** Every spell level, 0 to `MAX_SPELL_LEVEL`. */
 export const SPELL_LEVELS = Array.from({ length: MAX_SPELL_LEVEL + 1 }, (_, level) => level);
 /**
@@ -53,25 +45,9 @@ export const SPELL_LEVELS = Array.from({ length: MAX_SPELL_LEVEL + 1 }, (_, leve
  * per day, a level filter): "Cantrips" for level 0, else "Level 3".
  */
 export const SPELL_LEVEL_LABELS = SPELL_LEVELS.map((level) => (level === 0 ? "Cantrips" : `Level ${level}`));
-export const SPELL_RANGE_TYPES = ["Personal", "Touch", "Close", "Medium", "Long", "Unlimited"] as const;
-export const SPELL_RESISTANCE_OPTIONS = ["Yes", "No"] as const;
 
 /** A spell's save DC before its level and its caster's ability modifier: 10. */
 export const SPELL_SAVE_DC_BASE = 10;
-
-export const SPELL_SAVING_THROWS = [
-  "None",
-  "Fortitude negates",
-  "Fortitude half",
-  "Fortitude partial",
-  "Reflex negates",
-  "Reflex half",
-  "Reflex partial",
-  "Will negates",
-  "Will half",
-  "Will partial",
-  "Will disbelief",
-] as const;
 
 export const SPELL_SUBSCHOOLS = [
   "Calling",

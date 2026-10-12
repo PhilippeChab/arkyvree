@@ -1,8 +1,16 @@
 import { RulesetPart } from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 
-/** What the 3.5 rules answer of a ruleset as a whole, past its entities: what it needs to be published. */
+import { RULESET_FIELDS } from "./fields.ts";
+
+/**
+ * What the 3.5 rules answer of a ruleset as a whole, past its entities: what it needs to be published, and its
+ * Settings (the ability its characters' skill points come from).
+ */
 export default class Dnd35Ruleset extends RulesetPart {
+  /** The ability its characters' skill points come from. */
+  protected override readonly fields = RULESET_FIELDS;
+
   /** What a 3.5 character is made of that the view lacks: a player race, a player class, a skill, a feat. */
   protected override findMissingContent(view: RulesetView) {
     const { feats, klasses, races, skills } = view.rulesetData;

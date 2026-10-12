@@ -3,8 +3,8 @@ import type { UseFormReturn } from "react-hook-form";
 
 import {
   allLevelSaves,
+  ClassLevelFields,
   EMPTY_CLASS,
-  NewClassLevelFields,
   nextClassLevel,
   toClassForm,
 } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
@@ -19,9 +19,12 @@ interface ClassForms {
   allLevelSaves: (rulesetSaves: Pick<Save, "id">[] | undefined, saves: LevelSave[]) => LevelSave[];
   /** A class's form before its class loads. */
   emptyClass: ClassFormData;
-  /** A new class level's fields, under its number: its create dialog's. */
+  /**
+   * A new class level's own fields, under its number and the fields its ruleset declares (`EntityFields`): its create
+   * dialog's (3.5's saves and granted feats).
+   */
   NewClassLevelFields: ComponentType<NewClassLevelFieldsProps>;
-  /** A class's next level, which its create dialog opens on. */
+  /** A class's next level, which its create dialog opens on, its declared fields aside (`withEntityFields`). */
   nextClassLevel: (levels: readonly ClassLevelRow[] | undefined) => ClassLevelFormData;
   /** An existing class's form values. */
   toClassForm: (klass: Pick<ClassDetail, "description" | "hd" | "name">) => ClassFormData;
@@ -43,7 +46,7 @@ const CLASS_FORMS: Record<BaseRules, ClassForms> = {
   "Dungeons & Dragons: 3.5": {
     allLevelSaves,
     emptyClass: EMPTY_CLASS,
-    NewClassLevelFields,
+    NewClassLevelFields: ClassLevelFields,
     nextClassLevel,
     toClassForm,
   },

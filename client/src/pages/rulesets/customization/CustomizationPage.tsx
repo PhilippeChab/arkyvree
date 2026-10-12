@@ -4,7 +4,13 @@ import { parseResponse } from "hono/client";
 import { type ReactNode } from "react";
 import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
 
-import { DiceSpinner, type SectionTab, SectionTabPanel, SectionTabs } from "@/client/src/components/common/index.ts";
+import {
+  DiceSpinner,
+  ReadOnlyFields,
+  type SectionTab,
+  SectionTabPanel,
+  SectionTabs,
+} from "@/client/src/components/common/index.ts";
 import { TargetPathBreadcrumbs } from "@/client/src/components/customization/index.ts";
 import { usePageTitle, useRulesetPermissions } from "@/client/src/hooks/index.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
@@ -35,7 +41,6 @@ import {
   CUSTOMIZATION_TABS,
   type CustomizationSection,
   ModifiersSection,
-  PropertiesSection,
   RequirementsSection,
 } from "./sections/index.ts";
 
@@ -115,17 +120,20 @@ function CustomizationView({
       }
     >
       {forgetSource && <Navigate to={forgetSource.to} replace state={forgetSource.state} />}
-      {isEditable(data) &&
-        renderEditor(data, ruleset.baseRules, {
-          rulesetId,
-          entityId,
-          recordKey: copy.key,
-          adoptKey: copy.adoptKey,
-          canEdit,
-          locked,
-          followCopy: copy.followCopy,
-          refetchSaved,
-        })}
+      {isEditable(data) && (
+        // The same form whoever reads it, its fields read-only for who can't edit the entity
+        <ReadOnlyFields readOnly={!canEdit}>
+          {renderEditor(data, ruleset.baseRules, {
+            rulesetId,
+            entityId,
+            recordKey: copy.key,
+            adoptKey: copy.adoptKey,
+            locked,
+            followCopy: copy.followCopy,
+            refetchSaved,
+          })}
+        </ReadOnlyFields>
+      )}
       <Stack spacing={4}>
         <SectionTabs
           tabs={tabs}
@@ -147,15 +155,8 @@ function CustomizationView({
             <DiceSpinner sx={{ py: 4 }} />
           ) : section === "requirements" || data.type === "modifiers" ? (
             <RequirementsSection {...sectionProps} entityType={type} queryKeysToInvalidate={[entityKey]} />
-          ) : section === "modifiers" ? (
-            <ModifiersSection {...sectionProps} entityType={data.type} queryKeysToInvalidate={[entityKey]} />
           ) : (
-            <PropertiesSection
-              {...sectionProps}
-              entityType={data.type}
-              data={"properties" in data.entity ? data.entity.properties : undefined}
-              queryKeysToInvalidate={klassLevelsKey ? [entityKey, klassLevelsKey] : [entityKey]}
-            />
+            <ModifiersSection {...sectionProps} entityType={data.type} queryKeysToInvalidate={[entityKey]} />
           )}
         </SectionTabPanel>
       </Stack>

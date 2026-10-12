@@ -1,5 +1,5 @@
 import type { RulesetEntity } from "@/engine/core/entities/index.ts";
-import type { Fields } from "@/engine/core/fields/index.ts";
+import type { Fields, FormField } from "@/engine/core/fields/index.ts";
 import type { RulesetView, ViewEntities } from "@/engine/core/view/index.ts";
 
 /** A kind's rules, of its table (`K`): its `RulesetEntity`, whatever form its saves take. */
@@ -24,6 +24,7 @@ export type EntityKindsContract = { [K in Exclude<keyof ViewEntities, "klass_lev
   };
   klasses: {
     describeLevel(levelId: string): unknown;
+    describeLevelFields(): FormField[];
     levels(klassId: string): {
       describe(levelId: string): unknown;
       describeAll(): unknown;

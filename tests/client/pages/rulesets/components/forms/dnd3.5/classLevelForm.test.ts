@@ -7,17 +7,12 @@ const FORTITUDE = { saveId: "fortitude", base: 2 };
 
 describe("a class level's form", () => {
   // Its create dialog opens on the class's next level
-  test("starts one above the class's highest level, from its base attack, skill points and saves", () => {
+  test("starts one above the class's highest level, from its saves (its fields from its own: `withEntityFields`)", () => {
     const levels = [
       { level: 2, bab: 2, skills: 4, saves: [{ ...FORTITUDE, base: 3 }] },
       { level: 1, bab: 1, skills: 4, saves: [FORTITUDE] },
     ];
-    expect(nextClassLevel(levels)).toEqual({
-      level: 3,
-      fields: { bab: 2, skills: 4 },
-      saves: [{ ...FORTITUDE, base: 3 }],
-      feats: [],
-    });
+    expect(nextClassLevel(levels)).toEqual({ level: 3, saves: [{ ...FORTITUDE, base: 3 }], feats: [] });
   });
 
   test("starts from the first level's empty form for a class without one, or while its levels load", () => {

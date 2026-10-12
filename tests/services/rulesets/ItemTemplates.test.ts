@@ -9,23 +9,7 @@ import { expectRefusedWith } from "@/tests/support/api.ts";
 import { createSeededTestRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
-import {
-  ARMOR_AC_BONUS,
-  ARMOR_CHECK_PENALTY,
-  ARMOR_MAX_DEX,
-  ARMOR_PROFICIENCY,
-  ARMOR_TYPE,
-  ITEM_MADE_OF,
-  ITEM_SPELL_FAILURE,
-  SHIELD_AC_BONUS,
-  SHIELD_PROFICIENCY,
-  SHIELD_TYPE,
-  WEAPON_BASE_DAMAGE,
-  WEAPON_FAMILY,
-  WEAPON_PROFICIENCY,
-  WEAPON_SIZE,
-  WEAPON_TYPE,
-} from "@/vocabulary/dnd3.5/properties/index.ts";
+import { ITEM_MADE_OF, WEAPON_BASE_DAMAGE } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 /**
  * Another user's private fork of the seeded base, with an item made from `templateId` there ("Secret Homebrew Blade"),
@@ -40,11 +24,6 @@ async function createSecretBlade(templateId: string, extensionIds: string[] = []
     sourceItemId: templateId,
   });
   if (extensionIds.length > 0) await RulesetExtensionsService.subscribeExtension(session, ruleset.id, extensionIds);
-}
-
-/** An item's properties as read through the service, by type. */
-async function propertiesOf(rulesetId: string, itemId: string) {
-  return Object.fromEntries((await ItemsService.getItem(rulesetId, itemId)).properties.map((p) => [p.type, p.value]));
 }
 
 /** A new user's fork of the seeded base (private, unless `values` says otherwise), and its templates and instances. */
@@ -69,38 +48,28 @@ describe("Item templates", () => {
     test.each([
       [
         "Longsword",
-        {
-          [WEAPON_PROFICIENCY]: "Martial",
-          [WEAPON_FAMILY]: "Sword",
-          [WEAPON_BASE_DAMAGE]: "1d8",
-          [WEAPON_SIZE]: "Medium",
-          [WEAPON_TYPE]: "Longsword",
-        },
+        { weapon: { proficiency: "Martial", family: "Sword", baseDamage: "1d8", size: "Medium", type: "Longsword" } },
       ],
       [
         "Chain Mail",
         {
-          [ARMOR_PROFICIENCY]: "Medium",
-          [ARMOR_TYPE]: "Chain Mail",
-          [ARMOR_AC_BONUS]: "5",
-          [ARMOR_MAX_DEX]: "2",
-          [ARMOR_CHECK_PENALTY]: "-5",
-          [ITEM_SPELL_FAILURE]: "30",
+          armor: { proficiency: "Medium", type: "Chain Mail", acBonus: 5 },
+          maxDex: 2,
+          checkPenalty: -5,
+          spellFailure: 30,
         },
       ],
       [
         "Heavy Steel Shield",
         {
-          [SHIELD_PROFICIENCY]: "Heavy",
-          [SHIELD_TYPE]: "Heavy Steel Shield",
-          [SHIELD_AC_BONUS]: "2",
-          [ARMOR_CHECK_PENALTY]: "-2",
-          [ITEM_SPELL_FAILURE]: "15",
+          shield: { proficiency: "Heavy", type: "Heavy Steel Shield", acBonus: 2 },
+          checkPenalty: -2,
+          spellFailure: 15,
         },
       ],
-    ])("%s properties", async (name, expected) => {
+    ])("%s fields", async (name, expected) => {
       const { ruleset, instance } = await setup();
-      expect(await propertiesOf(ruleset.id, (await instance(name)).id)).toMatchObject(expected);
+      expect(await ItemsService.getItem(ruleset.id, (await instance(name)).id)).toMatchObject(expected);
     });
 
     test.each([
@@ -117,7 +86,7 @@ describe("Item templates", () => {
       expect(requirements.map((r) => r.chainingOperator ?? r.target)).toEqual(expected);
     });
 
-    test("current properties, next to their own", async () => {
+    test("current fields, next to their own", async () => {
       const { ruleset, template, instance } = await setup();
       const sword = await instance("Longsword");
       await Properties.create(db, {
@@ -132,9 +101,9 @@ describe("Item templates", () => {
       await Properties.update(db, { value: "2d6" }, { id: damage!.id });
       invalidateSeededRuleset(ruleset.rulesetId!);
 
-      expect(await propertiesOf(ruleset.id, sword.id)).toMatchObject({
-        [WEAPON_BASE_DAMAGE]: "2d6",
-        [ITEM_MADE_OF]: "Adamantine",
+      expect(await ItemsService.getItem(ruleset.id, sword.id)).toMatchObject({
+        weapon: { baseDamage: "2d6" },
+        madeOf: "Adamantine",
       });
     });
   });
@@ -149,7 +118,8 @@ describe("Item templates", () => {
   test("an item without a template has no properties or requirements of its own", async () => {
     const { session, ruleset } = await setup();
     const item = await ItemsService.createItem(session, ruleset.id, { name: "Custom Item", type: "Weapon" });
-    expect(await ItemsService.getItem(ruleset.id, item.id)).toMatchObject({ properties: [], requirements: [] });
+    expect(await ItemsService.getItem(ruleset.id, item.id)).toMatchObject({ requirements: [] });
+    expect(await Properties.findMany(db, { entityIds: [item.id], entityType: "items" })).toEqual([]);
   });
 
   test("an instance can switch templates", async () => {
@@ -165,7 +135,7 @@ describe("Item templates", () => {
     expect(
       await ItemsService.updateItem(session, ruleset.id, copy.id, { name: copy.name, sourceItemId: sword.id }),
     ).toMatchObject({ isTemplate: false, sourceItemId: sword.id });
-    expect(await propertiesOf(ruleset.id, copy.id)).toMatchObject({ [WEAPON_TYPE]: "Longsword" });
+    expect(await ItemsService.getItem(ruleset.id, copy.id)).toMatchObject({ weapon: { type: "Longsword" } });
   });
 
   test("an instance names the template its fork copied as the copy, sent by its source's id, and not one it lacks", async () => {

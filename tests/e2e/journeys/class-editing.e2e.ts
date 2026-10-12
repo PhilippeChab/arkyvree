@@ -5,9 +5,9 @@ import { apiResponse, selectOption, uniqueName } from "@/tests/e2e/support/page.
 import { forkCoreRuleset } from "@/tests/e2e/support/rulesets.ts";
 import { signIn } from "@/tests/e2e/support/signIn.ts";
 
-// Writing a class of one's own in a fork: its hit die, a level (its base attack bonus, a save and skill points), and
-// its class skills. A class of its own, not an inherited one: the copy-on-write of inherited entities has tests of its
-// own (fork-changes, cow-*).
+// Writing a class of one's own in a fork: its hit die and its caster type, a level (its base attack bonus, a save and
+// skill points), and its class skills. A class of its own, not an inherited one: the copy-on-write of inherited
+// entities has tests of its own (fork-changes, cow-*).
 test.describe("A class created in a fork", () => {
   test("gets a level and a class skill, which it can lose again", async ({ page, ownerUser }) => {
     await signIn(page, ownerUser.email, ownerUser.password);
@@ -21,10 +21,13 @@ test.describe("A class created in a fork", () => {
     await create.getByLabel("Name", { exact: true }).fill(name);
     await selectOption(page, "Hit Die", "d10");
     await expect(create.getByRole("combobox", { name: "Hit Die" })).toHaveText("d10");
+    // A field its ruleset declares for classes, beside its own
+    await selectOption(page, "Caster Type", "Arcane");
     await create.getByRole("button", { name: "Create" }).click();
     await expect(page).toHaveURL(new RegExp(`/rulesets/${forkId}/classes/[a-f0-9-]+/levels`), { timeout: 10_000 });
     // Its editor's overview edits it in place
     await expect(page.getByRole("combobox", { name: "Hit Die" })).toHaveText("d10");
+    await expect(page.getByRole("combobox", { name: "Caster Type" })).toHaveText("Arcane");
     await expect(page.getByText("No levels", { exact: true })).toBeVisible();
 
     // A level: the table shows what it was given, after a reload too

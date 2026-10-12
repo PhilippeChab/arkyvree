@@ -1,28 +1,30 @@
-import type { z } from "zod";
-
-import type { FieldCodec, Fields, FieldValues, NoFields } from "@/engine/core/fields/index.ts";
+import type { FieldCodec, Fields, FieldValues, FormField, NoFields } from "@/engine/core/fields/index.ts";
 import type {
   EntityCreatePlan,
   EntityDeletePlan,
   EntityEditPlan,
   EntityWrites,
   ListLink,
+  PropertyValue,
 } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import { RequestIds, type RulesetData, type RulesetView, type ViewEntities } from "@/engine/core/view/index.ts";
+import { PROPERTY_ENTITY_TYPES } from "@/shared/customization/entities.ts";
+import { isOneOf } from "@/shared/isOneOf.ts";
 import type { Property } from "@/shared/relations.ts";
 
 /**
  * A ruleset's entity kind (its table, `type`), as its rules answer the server of it in a ruleset's view. Every kind
  * takes the same steps, and adds its rules to the ones they name:
  * - an entity found by its id (`find`) and described (`describe`): its row as the view resolves it, with the fields its
- *   properties hold (`fields`);
+ *   properties hold (`fields`), as its form shows them (`describeFields`);
  * - a page of its rows (`openList`): what the server reads it with (`filters`), and its rows described alike;
  * - what its form writes (`planCreate`, `planEdit`): the entities it names by id, as the view reads them (`resolveIds`:
  *   a copy's for its source's id, refused, naming it, when the view shows none), the fields the form gives, read by its
- *   codec (`fieldsSchema`), the form checked (`checkForm`), its row's columns (`columnsOf`), the lists it's linked to
- *   (`linksOf`), what it writes beside them (`writesOf`: its fields, the feats it makes), and the fields it keeps once
- *   written (`fields`, which a create or an edit answers with its row);
+ *   codec against the ruleset's declarations of them (`FieldCodec.parse`), the form checked (`checkForm`), its row's
+ *   columns (`columnsOf`), the lists it's linked to (`linksOf`), what it writes beside them (`writesOf`: its fields,
+ *   the feats it makes), and the fields it keeps once written (`fields`, which a create or an edit answers with its
+ *   row);
  * - what deleting one writes (`planDelete`): checked (`checkDelete`), and what it writes with it (`deleteWritesOf`).
  */
 export default abstract class RulesetEntity<
@@ -53,18 +55,25 @@ export default abstract class RulesetEntity<
   ): EntityCreatePlan<Columns, FieldValues<S>> {
     const columns = this.columnsOf(body, entity);
     const writes = this.writesOf(body, given, entity);
-    const fields = this.fields.read(writes?.properties?.values ?? this.keptProperties(columns, entity));
+    const fields = this.fields.read(this.writtenProperties(columns, writes?.properties?.values, entity));
     return { columns, fields, links: this.linksOf(body), writes };
   }
 
   /**
-   * The fields a form gives (its `fields`, which the route carries as it is), read by the kind's codec: none when it
-   * gives none (a kind whose page edits its properties), and refused as invalid, as a route's validation refuses a body,
-   * when one isn't the field's type or in its bounds.
+   * The fields a form gives (its `fields`, which the route carries as it is), read by the kind's codec, those it gives
+   * (none when it gives none): refused as invalid, by field, as a route's validation refuses a body, when one isn't a
+   * field whose property type the entity type declares, of its field's type, in its bounds or among its type's values,
+   * or names an entity the view shows none of. A reference reads as the id the view keys its entity by.
    */
   private readFields(body: Body, entity?: ViewEntities[K]): Partial<FieldValues<S>> {
     const given = "fields" in body ? body.fields : undefined;
-    return given === undefined ? {} : RulesError.parse(this.fieldsSchema(entity), given, ["fields"]);
+    if (!isOneOf(this.type, PROPERTY_ENTITY_TYPES)) return {};
+    return this.fields.parse(given, {
+      declarations: this.rulesetData.propertyTypes,
+      entityType: this.type,
+      kept: entity && this.fieldsOf(entity),
+      resolve: (type, id) => this.ids.resolve(type, id),
+    });
   }
 
   /** Refuses deleting an entity: nothing does, unless its kind's rules say. */
@@ -80,26 +89,22 @@ export default abstract class RulesetEntity<
 
   /** Rows as the view resolves them (a stored id, its copy or winner), each with the fields its properties hold. */
   protected describeRows<T extends Record<string, unknown> & { id: string }>(rows: T[]): (T & FieldValues<S>)[] {
-    return this.rulesetData.cow
-      .resolveRows(rows)
-      .map((row) => ({ ...row, ...this.fields.read(this.propertiesOf(row)) }));
+    return this.rulesetData.cow.resolveRows(rows).map((row) => ({ ...row, ...this.fieldsOf(row) }));
+  }
+
+  /** The fields an entity's properties hold, a reference the id the view keys its entity by (a copy's). */
+  protected fieldsOf(entity: { id: string }): FieldValues<S> {
+    const values = this.fields.read(this.propertiesOf(entity));
+    return this.fields.resolveReferences(values, (id) => this.rulesetData.cow.resolve(id));
   }
 
   /**
-   * What a form's fields are read by: every field for a new entity, those it changes for an edit (`entity`), which the
-   * engine merges over those the entity keeps.
-   */
-  protected fieldsSchema(entity?: ViewEntities[K]): z.ZodType<Partial<FieldValues<S>>> {
-    return this.fields.schema({ optional: !!entity });
-  }
-
-  /**
-   * The fields a form writes: the ones it gives over the edited entity's (a new one's defaults). None when
-   * the form gives none: an edit keeps those it has, and a new entity keeps none.
+   * The fields a form writes: the ones it gives over the edited entity's (a new one's defaults). None when the form
+   * gives none: an edit keeps those it has, and a new entity keeps none.
    */
   protected formFields(given: Partial<FieldValues<S>>, entity?: ViewEntities[K]) {
     if (this.fields.keys.every((key) => given[key] === undefined)) return undefined;
-    return this.fields.merge(entity ? this.fields.read(this.propertiesOf(entity)) : this.fields.defaults, given);
+    return this.fields.merge(entity ? this.fieldsOf(entity) : this.fields.defaults, given);
   }
 
   /** The entities a form names by id, as the view reads them: refused, naming one it shows none of. */
@@ -140,20 +145,32 @@ export default abstract class RulesetEntity<
   }
 
   /**
-   * What a form writes beside the row (`given`: the fields it gives, read; `entity`: the one edited): nothing,
-   * unless its kind's rules say.
+   * What a form writes beside the row (`given`: the fields it gives, read; `entity`: the one edited): its fields, those
+   * it gives over those the entity keeps, which replace their properties; nothing when it gives none. Its kind's rules
+   * add theirs (the feats it makes).
    */
-  protected writesOf(
-    _body: Body,
-    _given: Partial<FieldValues<S>>,
-    _entity?: ViewEntities[K],
-  ): EntityWrites | undefined {
-    return undefined;
+  protected writesOf(_body: Body, given: Partial<FieldValues<S>>, entity?: ViewEntities[K]): EntityWrites | undefined {
+    const fields = this.formFields(given, entity);
+    return fields && { properties: this.fields.write(fields) };
+  }
+
+  /**
+   * The properties a written entity's fields are read off: those its form writes (`written`), or, when it writes none,
+   * those it keeps (`keptProperties`).
+   */
+  protected writtenProperties(columns: Columns, written: PropertyValue[] | undefined, entity?: ViewEntities[K]) {
+    return written ?? this.keptProperties(columns, entity);
   }
 
   /** An entity as its page shows it: its row as the view resolves it, with the fields its properties hold. */
   describe(id: string) {
     return this.describeRows([this.find(id)])[0];
+  }
+
+  /** The fields its form shows, as the ruleset declares them: their labels, their inputs and their options. */
+  describeFields(): FormField[] {
+    if (!isOneOf(this.type, PROPERTY_ENTITY_TYPES)) return [];
+    return this.fields.describe(this.rulesetData.propertyTypes, this.type);
   }
 
   /** The entity the view shows for an id: refused when it shows none. */

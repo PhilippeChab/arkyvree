@@ -18,7 +18,6 @@ import {
 } from "@/server/repositories/index.ts";
 import { RulesetChangesService } from "@/server/services/rulesets/changes/index.ts";
 import { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";
-import { PropertiesService } from "@/server/services/rulesets/customization/properties/index.ts";
 import { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { RulesetsService } from "@/server/services/rulesets/index.ts";
@@ -45,10 +44,8 @@ type Written = Row & { resolvedEntityId: string };
 /** A class level is copied with its whole class, and a modifier with the entity it modifies. */
 const CASES = [
   ["feats", "modifiers"],
-  ["feats", "properties"],
   ["feats", "requirements"],
   ["klasses", "modifiers"],
-  ["klasses", "properties"],
   ["klasses", "requirements"],
   ["klass_levels", "modifiers"],
   ["modifiers", "requirements"],
@@ -71,15 +68,6 @@ const KINDS: Record<string, Kind> = {
     update: (s, rulesetId, type, ownerId, id) =>
       ModifiersService.updateModifier(s, rulesetId, type, ownerId, id, dexterityBonus),
     remove: ModifiersService.deleteModifier.bind(ModifiersService),
-  },
-  properties: {
-    rowsOf: (entityType, entityId) => Properties.findMany(db, { entityIds: [entityId], entityType }),
-    list: PropertiesService.getProperties.bind(PropertiesService),
-    create: (s, rulesetId, type, ownerId) =>
-      PropertiesService.createProperty(s, rulesetId, type, ownerId, { type: "tag", value: "fork" }),
-    update: (s, rulesetId, type, ownerId, id) =>
-      PropertiesService.updateProperty(s, rulesetId, type, ownerId, id, { type: "tag", value: "changed" }),
-    remove: PropertiesService.deleteProperty.bind(PropertiesService),
   },
   requirements: {
     rowsOf: (entityType, entityId) => Requirements.findMany(db, { entityIds: [entityId], entityType }),
@@ -212,7 +200,7 @@ describe.each(CASES)("an inherited %s's %s", (ownerType, kindName) => {
   });
 });
 
-describe.each(["modifiers", "properties", "requirements"])("the %s of a feat the fork already copied", (kindName) => {
+describe.each(["modifiers", "requirements"])("the %s of a feat the fork already copied", (kindName) => {
   const kind = KINDS[kindName];
 
   test("are read and written through the source feat's id", async () => {

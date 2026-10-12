@@ -52,10 +52,10 @@ export const QUERY_KEYS = {
     changes: (id: string) => ["rulesets", "detail", id, "changes"] as const,
     /** Every save of the ruleset, for pickers and columns; nested like `abilities`. */
     saves: (id: string) => ["rulesets", "detail", id, "saves", "options"] as const,
-    propertyTypeCompletions: (id: string, search: string, entityType?: string) =>
-      ["rulesets", "detail", id, "propertyTypeCompletions", search, entityType] as const,
-    propertyValueCompletions: (id: string, propertyType: string, search: string) =>
-      ["rulesets", "detail", id, "propertyValueCompletions", propertyType, search] as const,
+    /** The fields each entity's form shows, and the ruleset's Settings', as the ruleset declares them. */
+    fields: (id: string) => ["rulesets", "detail", id, "fields"] as const,
+    /** The ruleset's Settings: its own fields' values. */
+    settings: (id: string) => ["rulesets", "detail", id, "settings"] as const,
   },
   campaigns: {
     lists: ["campaigns", "list"] as const,

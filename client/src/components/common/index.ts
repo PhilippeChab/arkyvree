@@ -10,7 +10,7 @@ export { CLICKABLE_ROW_SX, CLICKABLE_SX, clickableProps, toggleProps } from "./c
 export { DetailPageHeader } from "./DetailPageHeader.tsx";
 export { DialogFooter } from "./DialogFooter.tsx";
 export { DiceSpinner } from "./DiceSpinner.tsx";
-export { EmptyValue, NO_DESCRIPTION } from "./EmptyValue.tsx";
+export { EMPTY_VALUE_TEXT, EmptyValue, NO_DESCRIPTION } from "./EmptyValue.tsx";
 export { ExpandArrow } from "./ExpandArrow.tsx";
 export { FormDialog } from "./FormDialog.tsx";
 export {
@@ -40,6 +40,7 @@ export { PageHeader } from "./PageHeader.tsx";
 export { PageLoader } from "./PageLoader.tsx";
 export { PageTransition } from "./PageTransition.tsx";
 export { Panel } from "./Panel.tsx";
+export { ReadOnlyFields } from "./ReadOnlyFields.tsx";
 export { RowAction, RowActions } from "./RowActions.tsx";
 export { ROW_ACTIONS_HOVER_SX } from "./rowActionStyles.ts";
 export { SaveButton } from "./SaveButton.tsx";
@@ -53,3 +54,4 @@ export { type TableColumn, TableColumnsHead } from "./TableColumnsHead.tsx";
 export { TableFrame } from "./TableFrame.tsx";
 export { TableSkeleton } from "./TableSkeleton.tsx";
 export { ToggleLabel } from "./ToggleLabel.tsx";
+export { useReadOnlyFields } from "./useReadOnlyFields.ts";

@@ -1,5 +1,7 @@
+import type { EntityFieldValues, FormField } from "@/engine/core/fields/index.ts";
 import type { CharacterInput } from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
+import type { PropertyEntityType } from "@/shared/customization/entities.ts";
 import type { RulesetKind } from "@/shared/enums.ts";
 
 import CharacterEngine from "./CharacterEngine.ts";
@@ -7,8 +9,6 @@ import CharactersEngine from "./CharactersEngine.ts";
 import ClassEngine from "./ClassEngine.ts";
 import ModifiersEngine from "./ModifiersEngine.ts";
 import Modules, { type EntityType, type Module } from "./Modules.ts";
-import PropertiesEngine from "./PropertiesEngine.ts";
-import PropertyTypesEngine from "./PropertyTypesEngine.ts";
 import RequirementsEngine from "./RequirementsEngine.ts";
 import TargetPathsEngine from "./TargetPathsEngine.ts";
 
@@ -48,6 +48,28 @@ export default class RulesetEngine {
   }
 
   /**
+   * The fields each entity's form shows, by its type, and the ruleset's Settings' (`rulesets`), as the ruleset declares
+   * them: what a form lays out and what its save holds each to.
+   */
+  describeFields(): Record<PropertyEntityType, FormField[]> {
+    return {
+      feats: this.entities("feats").describeFields(),
+      items: this.entities("items").describeFields(),
+      klass_levels: this.entities("klasses").describeLevelFields(),
+      klasses: this.entities("klasses").describeFields(),
+      powers: this.entities("powers").describeFields(),
+      races: this.entities("races").describeFields(),
+      rulesets: this.module.ruleset.describeSettingsFields(this.view),
+      skills: this.entities("skills").describeFields(),
+    };
+  }
+
+  /** The ruleset's Settings, its own fields (3.5's skill points' ability), as its chain composes them. */
+  describeSettings() {
+    return this.module.ruleset.describeSettings(this.view);
+  }
+
+  /**
    * An entity kind of the ruleset (`type`, its table): one found by its id and described, a page of its rows opened
    * (`openList`), and what saving or deleting one writes, by its kind's rules.
    */
@@ -60,14 +82,9 @@ export default class RulesetEngine {
     return new ModifiersEngine(this.view, this.module, entityType, entityId);
   }
 
-  /** An entity's properties (`entityType`, `entityId`). */
-  properties(entityType: string, entityId: string) {
-    return new PropertiesEngine(this.view, entityType, entityId);
-  }
-
-  /** The ruleset's property types and values. */
-  propertyTypes() {
-    return new PropertyTypesEngine(this.view, this.module);
+  /** A save of the ruleset's Settings (`body.fields`): checked, the values it keeps, and the properties it writes. */
+  planSettings(body: { fields?: EntityFieldValues }) {
+    return this.module.ruleset.planSettings(this.view, body);
   }
 
   /** An entity's requirements (`entityType`, `entityId`). */

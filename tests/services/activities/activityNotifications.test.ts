@@ -16,7 +16,6 @@ import { CampaignInvitesService } from "@/server/services/campaigns/invites/inde
 import { CharacterContributorsService } from "@/server/services/characters/contributors/index.ts";
 import { ClassSkillsService } from "@/server/services/rulesets/classes/skills/index.ts";
 import { ContributorsService } from "@/server/services/rulesets/contributors/index.ts";
-import { PropertiesService } from "@/server/services/rulesets/customization/properties/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { MechanicsService } from "@/server/services/rulesets/mechanics/index.ts";
 import { collectNotified } from "@/server/websockets/index.ts";
@@ -178,13 +177,13 @@ describe("activity notifications", () => {
       description: "",
       aptitudeIds: [aptitude.id],
     });
-    await PropertiesService.createProperty(author.session, ruleset.id, "feats", feat.id, {
-      type: "NOTE",
-      value: "A note",
+    await FeatsService.updateFeat(author.session, ruleset.id, feat.id, {
+      name: "Notified Feat",
+      fields: { families: ["Luck"] },
     });
     await FeatsService.deleteFeat(author.session, ruleset.id, feat.id);
 
-    const changes = [note("createFeat", author), note("createProperty", author), note("deleteFeat", author)];
+    const changes = [note("createFeat", author), note("deleteFeat", author), note("updateFeat", author)];
     expect(await inbox(owner)).toEqual(changes);
     expect(await inbox(other)).toEqual(changes);
     expect(await inbox(author)).toEqual([]);
@@ -232,7 +231,10 @@ describe("activity notifications", () => {
       description: "",
       aptitudeIds: [aptitude.id],
     });
-    await PropertiesService.createProperty(author.session, ruleset.id, "feats", feat.id, { type: "NOTE", value: "" });
+    await FeatsService.updateFeat(author.session, ruleset.id, feat.id, {
+      name: "Worded Feat",
+      fields: { families: ["Luck"] },
+    });
     const [ability] = await Abilities.create(db, { name: "Strength", description: "", rulesetId: ruleset.id });
     const [fighter] = await Klasses.create(db, { name: "Fighter", rulesetId: ruleset.id, hd: 10 });
     const [climb] = await Skills.create(db, { name: "Climb", rulesetId: ruleset.id, primaryAbilityId: ability.id });
@@ -244,7 +246,7 @@ describe("activity notifications", () => {
     const notifications = (await Notifications.findPage(db, { recipientId: owner.user.id }, page)).items;
     for (const rows of [activities, notifications]) {
       expect(rows.map(({ type, data }) => [type, isRecord(data) && data.baseRules]).sort()).toEqual(
-        ["addKlassSkill", "createFeat", "createProperty", "deleteFeat"].map((type) => [type, ruleset.baseRules]),
+        ["addKlassSkill", "createFeat", "deleteFeat", "updateFeat"].map((type) => [type, ruleset.baseRules]),
       );
     }
   });

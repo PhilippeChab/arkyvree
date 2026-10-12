@@ -1,14 +1,9 @@
 import { Hono } from "hono";
 import { z } from "zod";
 
-import type { EntityKinds } from "@/engine/index.ts";
 import { type SessionContext, validate } from "@/server/middlewares/index.ts";
-import { buildEntityFieldsSchema } from "@/server/routers/api/schemaBuilders.ts";
-import { entityOrderBy, idParam, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
+import { entityFields, entityOrderBy, idParam, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
 import { SkillsService } from "@/server/services/rulesets/skills/index.ts";
-
-/** A skill's fields, its create's and its update's: its ruleset's rules read them. */
-const skillFields = buildEntityFieldsSchema<EntityKinds["skills"]["planCreate"]>();
 
 const skillParams = idParam.extend({ skillId: z.string().uuid() });
 
@@ -49,7 +44,7 @@ export default new Hono<SessionContext>()
           .optional()
           .transform((v) => v || null),
         primaryAbilityId: z.string().uuid(),
-        fields: skillFields,
+        fields: entityFields.optional(),
       }),
     ),
     async (c) => {
@@ -70,7 +65,7 @@ export default new Hono<SessionContext>()
           .optional()
           .transform((v) => v || null),
         primaryAbilityId: z.string().uuid(),
-        fields: skillFields.optional(),
+        fields: entityFields.optional(),
         updatedAt: z.string().optional(),
       }),
     ),

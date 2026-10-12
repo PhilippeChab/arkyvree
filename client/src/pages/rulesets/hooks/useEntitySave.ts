@@ -3,6 +3,7 @@ import type { FieldValues } from "react-hook-form";
 
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import type { FormSync } from "@/client/src/hooks/index.ts";
+import { changedFieldValues } from "@/client/src/pages/rulesets/components/forms/entityFields.ts";
 import { invalidateRulesetEdit } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 
 interface EntitySaveOptions<TForm extends FieldValues, TSaved> {
@@ -31,9 +32,16 @@ interface EntitySaveOptions<TForm extends FieldValues, TSaved> {
   toFormValues?: (saved: TSaved) => TForm;
 }
 
+/** A form's values as an edit sends them: of its `fields`, those it changed from what it's based on (`baseline`). */
+function changesOf<TForm extends FieldValues>(data: TForm, baseline: TForm | undefined): TForm {
+  if (!("fields" in data)) return data;
+  return { ...data, fields: changedFieldValues(data.fields, baseline?.fields) };
+}
+
 /**
- * The save of a ruleset entity's inline form, its page's details: sends it under its token, rebaselines the form, puts
- * the saved row in the cache, follows a copy of an inherited entity, refreshes its list and says so.
+ * The save of a ruleset entity's inline form, its page's details: sends it under its token, its fields those it changed
+ * alone (a value its ruleset no longer lists stays until it's changed), rebaselines the form, puts the saved row in the
+ * cache, follows a copy of an inherited entity, refreshes its list and says so.
  */
 export function useEntitySave<TForm extends FieldValues, TSaved extends { id: string; updatedAt?: string }>({
   rulesetId,
@@ -54,7 +62,7 @@ export function useEntitySave<TForm extends FieldValues, TSaved extends { id: st
       sourceId: entityId,
       listKey,
       label,
-      saved: await saveFn(data, sync.updatedAt()),
+      saved: await saveFn(changesOf(data, sync.baseline()), sync.updatedAt()),
     }),
     onSuccess: ({ saved, sourceId, listKey: savedListKey, label: savedLabel }, submitted) => {
       sync.saved(toFormValues ? toFormValues(saved) : submitted, saved.updatedAt);

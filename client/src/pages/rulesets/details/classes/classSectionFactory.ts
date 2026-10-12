@@ -6,11 +6,11 @@ import type { SectionTab } from "@/client/src/components/common/index.ts";
 import type { RulesetDetail } from "@/client/src/lib/queries.ts";
 import type { BaseRules } from "@/shared/enums.ts";
 
-import type { ClassDetail, ClassFormData, ClassLevelRow } from "./classSectionQueries.ts";
+import type { ClassFormData, ClassLevelRow } from "./classSectionQueries.ts";
 import { ClassDetails } from "./components/dnd3.5/index.ts";
 import { DND35_CLASS_TABS, DND35_LEVEL_COLUMNS } from "./sections/dnd3.5/index.ts";
 
-/** A class's inline editor: its form, which the details card's fields bind, and its save. */
+/** A class's inline form: what the details card's fields bind, and its save. */
 interface ClassEditor {
   canSave: boolean;
   form: UseFormReturn<ClassFormData>;
@@ -23,7 +23,7 @@ interface ClassEditor {
  * tab shows of a level's own fields, and its own tabs.
  */
 interface ClassSections {
-  /** The class's details card: its facts (3.5's hit die, bonus spell ability, caster type), or its editor's fields */
+  /** The class's details card: its form's fields (3.5's hit die, bonus spell ability, caster type) */
   ClassDetails: ComponentType<ClassDetailsProps>;
   /** The Levels tab's columns of a level's own fields (3.5's base attack bonus, its skill points), around its saves' */
   levelColumns: ClassLevelColumns;
@@ -32,19 +32,12 @@ interface ClassSections {
 }
 
 /**
- * What the class page passes its details card: the class, its editor's form and save for who may edit it, and where a
- * copy of it goes.
+ * What the class page passes its details card: the class's form and its save, which a viewer who can't edit the class
+ * reads (under `ReadOnlyFields`), and its ruleset.
  */
 export interface ClassDetailsProps {
-  /** The class from the URL, which a save names */
-  classId: string;
-  /** The editor, for who may edit the class: its form, which the card's fields bind, and its save */
-  edit?: ClassEditor;
-  /** The page's `followCopy`: a save of an inherited class copies it, the page moving to the copy */
-  followCopy: (copyId: string, sourceId: string) => void;
-  /** The class is refetching: what the card saves in place waits for it */
-  isFetching: boolean;
-  klass: ClassDetail;
+  /** The class's form, which the card's fields bind, and its save */
+  edit: ClassEditor;
   rulesetId: string;
 }
 

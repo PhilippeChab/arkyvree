@@ -8,7 +8,7 @@ import { visitCoreRulesetList } from "@/tests/e2e/support/rulesets.ts";
 import { signIn } from "@/tests/e2e/support/signIn.ts";
 
 for (const operation of ["delete", "revert"] as const) {
-  for (const kind of ["properties", "requirements", "modifiers"] as const) {
+  for (const kind of ["requirements", "modifiers"] as const) {
     test(`${kind} creation racing ${operation} leaves no orphan customization`, async ({ page, ownerUser }) => {
       await signIn(page, ownerUser.email, ownerUser.password);
       await visitCoreRulesetList(page);
@@ -33,18 +33,16 @@ for (const operation of ["delete", "revert"] as const) {
       const pool = new Pool({ connectionString: process.env.DATABASE_URL });
       try {
         for (let repetition = 0; repetition < 3; repetition++) {
-          const copied = await page.request.post(customization(sourceId, "properties"), {
-            data: { type: "QA_INITIAL", value: "1" },
+          const copied = await page.request.post(customization(sourceId, "modifiers"), {
+            data: { target: "abilities.strength.misc", value: "1", operator: "add" },
           });
           expect(copied.status(), await copied.text()).toBe(201);
           const copyId = z.object({ resolvedEntityId: z.string().uuid() }).parse(await copied.json()).resolvedEntityId;
-          expect((await page.request.get(customization(copyId, "properties"))).ok()).toBe(true);
+          expect((await page.request.get(customization(copyId, "modifiers"))).ok()).toBe(true);
           const body =
-            kind === "properties"
-              ? { type: "QA_RACING", value: "1" }
-              : kind === "requirements"
-                ? { level: "1", chainingOperator: "and" }
-                : { target: "abilities.strength.misc", value: "1", operator: "add" };
+            kind === "requirements"
+              ? { level: "1", chainingOperator: "and" }
+              : { target: "abilities.dexterity.misc", value: "1", operator: "add" };
           const [added, removed] = await Promise.all([
             page.request.post(customization(copyId, kind), { data: body }),
             operation === "delete"

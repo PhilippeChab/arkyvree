@@ -118,7 +118,7 @@ server/
     notifications/      # Notifications
     policies/           # Authorization policies
     rulesets/           # Ruleset and ruleset entity services (feats, powers, classes, etc.)
-      customization/    # Modifiers, requirements, properties, target paths
+      customization/    # Modifiers, requirements, target paths
   repositories/         # Database access layer (Drizzle ORM), in folders by domain; concerns/, the mixins they include
   cache/                # In-memory cache (a ruleset's rows, its COW data, its target paths)
   cow/                  # Copy-on-write's writes: the copy of an inherited entity, the rows a change writes

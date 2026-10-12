@@ -25,7 +25,12 @@ import { useListPageQuery, useSearchParam, useSearchText, useToggleSet } from "@
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
 import { itemsBeforeLastPage, pageItems } from "@/client/src/lib/pageItems.ts";
-import { EMPTY_FEAT, type FeatFormData, FeatFormFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
+import {
+  EMPTY_FEAT,
+  type FeatFormData,
+  FeatFormFields,
+  withEntityFields,
+} from "@/client/src/pages/rulesets/components/forms/index.ts";
 import {
   AptitudeAutocomplete,
   AptitudeChipsCell,
@@ -41,6 +46,7 @@ import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/se
 import { featFamilyQuery, featsGroupedQuery, featsQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import {
   useAptitudeFilter,
+  useEntityFields,
   useOpenEntity,
   useRowPrefetch,
   useRulesetSection,
@@ -199,8 +205,9 @@ export function FeatsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
   const grouped = oneOf(groupedParam, ["true", "false"], "true") === "true";
   const { keys: expandedFamilies, toggle: toggleFamily, clear: collapseFamilies } = useToggleSet();
 
+  const { fields: featFields } = useEntityFields(ruleset.id, "feats");
   const { createForm, createDialogProps, handleCreate } = useRulesetSection<Feat, FeatFormData>({
-    createDefaults: EMPTY_FEAT,
+    createDefaults: withEntityFields(EMPTY_FEAT, featFields),
     rulesetId: ruleset.id,
     sectionName: "feats",
     label: "Feat",

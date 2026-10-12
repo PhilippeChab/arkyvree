@@ -75,21 +75,24 @@ test.describe("Customization of a fork", () => {
     await expect(page.locator(".MuiChip-root", { hasText: /Bonus Feat \(Fighter\)/ })).toBeVisible();
   });
 
-  test("adds a property and a requirement to a feat", async ({ page }) => {
+  test("sets a feat's fields, then adds a requirement to it", async ({ page }) => {
     await openFeat(page, "Toughness");
-    const type = `e2e-tag-${Date.now()}`;
-    const value = `e2e-value-${Date.now()}`;
-    await page.getByRole("tab", { name: "Properties" }).click();
-    await page.getByRole("button", { name: "Add Property" }).click();
-    const propertyDialog = page.getByRole("dialog", { name: "Create New Property" });
-    // Both are autocompletes; the required Value's label carries an asterisk.
-    await propertyDialog.getByRole("combobox", { name: "Type" }).fill(type);
-    await propertyDialog.getByRole("combobox", { name: "Value" }).fill(value);
-    const propertyCreated = apiResponse(page, "POST", customizationApi("properties"));
-    await propertyDialog.getByRole("button", { name: /^Create$/ }).click();
-    await propertyCreated;
-    const property = page.locator("table tbody tr").filter({ hasText: type }).filter({ hasText: value });
-    await expect(property).toBeVisible({ timeout: 15_000 });
+    // Its fields stand in its details' form, beside its name
+    const details = page
+      .locator("form")
+      .filter({ has: page.getByLabel("Name", { exact: true }) })
+      .first();
+    const finesse = details.getByLabel("Weapon Finesse");
+    await expect(finesse).not.toBeChecked();
+    await finesse.check();
+    await details.getByRole("combobox", { name: "Families" }).click();
+    await page.getByRole("option", { name: "Luck", exact: true }).click();
+    const saved = apiResponse(page, "PUT", /\/api\/rulesets\/[a-f0-9-]+\/feats\/[a-f0-9-]+/);
+    await details.getByRole("button", { name: /^Save$/ }).click();
+    await saved;
+    await page.reload();
+    await expect(page.getByLabel("Weapon Finesse")).toBeChecked({ timeout: 10_000 });
+    await expect(page.locator("form .MuiChip-root", { hasText: /^Luck$/ })).toBeVisible();
 
     await page.getByRole("tab", { name: "Requirements" }).click();
     await page.getByRole("button", { name: "Add Requirement" }).click();
@@ -113,7 +116,6 @@ test.describe("Customization of a fork", () => {
     await expect(requirement.locator("text=13")).toBeVisible({ timeout: 15_000 });
     await page.reload();
     await expect(requirement.locator("text=13")).toBeVisible({ timeout: 10_000 });
-    await page.getByRole("tab", { name: "Properties" }).click();
-    await expect(property).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByLabel("Weapon Finesse")).toBeChecked();
   });
 });

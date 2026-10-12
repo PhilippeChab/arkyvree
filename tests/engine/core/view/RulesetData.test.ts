@@ -6,7 +6,9 @@ import { db } from "@/server/database/index.ts";
 import { Properties } from "@/server/repositories/index.ts";
 import { insertRows } from "@/tests/support/database.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
+import { NIL_UUID } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
+import { RULESET_SKILL_POINT_ABILITY_ID } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 describe("An item's properties", () => {
   test("are its template's of each type it doesn't set, then its own: its damage types replace all the template's", async () => {
@@ -41,5 +43,29 @@ describe("An item's properties", () => {
       ...pairs(properties.own),
     ]);
     expect(pairs(properties.plain)).toContain("DAMAGE_TYPE=Slashing");
+  });
+});
+
+describe("A ruleset's own properties", () => {
+  test("are each type's of the nearest ruleset of its chain that holds it, the fork's whatever its value", async () => {
+    // Values that sort before and after the source's: the view sorts every property by its value
+    for (const value of [NIL_UUID, "ffffffff-ffff-ffff-ffff-ffffffffffff"]) {
+      const fork = await createSeededTestRuleset(makeSession().userId);
+      // A fork holds a copy of its source's as it's made: without it, it reads its chain's
+      const type = RULESET_SKILL_POINT_ABILITY_ID;
+      await Properties.delete(db, { entityIds: [fork.id], entityType: "rulesets", types: [type] });
+      RulesetViews.invalidate(fork.id);
+      const read = () =>
+        withRulesetScope(db, fork.id, async ({ rulesetData }) =>
+          rulesetData
+            .rulesetPropertiesOf(fork.id)
+            .map((row) => [row.entityId === fork.id ? "fork" : "source", row.type, row.value]),
+        );
+      expect(await read()).toEqual([["source", type, expect.any(String)]]);
+
+      await Properties.createMany(db, [{ entityId: fork.id, entityType: "rulesets", type, value }]);
+      RulesetViews.invalidate(fork.id);
+      expect(await read()).toEqual([["fork", type, value]]);
+    }
   });
 });

@@ -47,10 +47,11 @@ interface PlannedEntity {
 /**
  * A ruleset entity kind's writer (`type`, its table and repository): the steps every kind's create, update and delete
  * take, in one order, around the plan its rules give (`Engine.for(scope).entities(type)`). A create checks access,
- * keeps the name free (taking over a deleted copy's tombstone), writes the row, its list links, what the plan writes
- * beside it and the customizations it copies. An update keeps a new name free as a create does, and writes the row the
- * view's entity resolves to (its copy, made on its first edit), refused when stale. A delete is refused while the
- * entity is in use. Each records its activity, and the ruleset's views drop what it changed.
+ * keeps the name free (taking over a deleted copy's tombstone), writes the row, its list links, the customizations it
+ * copies and what the plan writes beside it (its fields, over the copied properties of their types). An update keeps a
+ * new name free as a create does, and writes the row the view's entity resolves to (its copy, made on its first edit),
+ * refused when stale. A delete is refused while the entity is in use. Each records its activity, and the ruleset's
+ * views drop what it changed.
  */
 export default class EntityWriter<Row extends { id: string; name: string }, Insert extends { rulesetId: string }> {
   constructor(
@@ -118,8 +119,9 @@ export default class EntityWriter<Row extends { id: string; name: string }, Inse
           const [row] = await this.repository.create(tx, { ...planned.columns, rulesetId } as Insert);
           if (tombstoneAncestorId) await names.repointTombstone(tx, this.type, tombstoneAncestorId, row.id);
           await createListLinks(tx, this.type, row.id, planned.links ?? []);
-          await this.writeBeside(tx, scope, row.id, planned.writes);
+          // The customizations it copies first: the fields the plan writes replace their properties of their types
           if (planned.copyCustomizationsFrom) await this.copyCustomizations(tx, row.id, planned.copyCustomizationsFrom);
+          await this.writeBeside(tx, scope, row.id, planned.writes);
 
           await this.recordActivity(tx, session, "create", row.id, { entityName: row.name });
           return { ...row, ...planned.fields };

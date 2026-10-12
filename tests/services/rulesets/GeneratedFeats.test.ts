@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import SkillFocusFeats from "@/engine/rulesets/dnd3.5/entities/feats/SkillFocusFeats.ts";
 import { addClassLevels } from "@/scripts/db/seeds/seedCharacter.ts";
-import { withRulesetScope } from "@/server/cow/index.ts";
+import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import {
   Abilities,
@@ -18,7 +18,6 @@ import {
   Skills,
 } from "@/server/repositories/index.ts";
 import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
-import { PropertiesService } from "@/server/services/rulesets/customization/properties/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { ItemsService } from "@/server/services/rulesets/items/index.ts";
 import { PowersService } from "@/server/services/rulesets/powers/index.ts";
@@ -109,9 +108,11 @@ async function seededForkWithClimb() {
   return { session, fork, climb, climbBody, feat: await findFeat(climb.rulesetId, "Skill Focus: Climb") };
 }
 
-/** A spell's generated properties, read through the service. */
-async function spellFields(rulesetId: string, powerId: string) {
-  return (await PowersService.getPower(rulesetId, powerId)).properties.map((p) => `${p.type}: ${p.value}`).sort();
+/** A spell's stored properties, the rows its fields are written as. */
+async function spellFields(powerId: string) {
+  return (await Properties.findMany(db, { entityIds: [powerId], entityType: "powers" }))
+    .map((p) => `${p.type}: ${p.value}`)
+    .sort();
 }
 
 describe("Spell Focus", () => {
@@ -151,7 +152,7 @@ describe("Spell Focus", () => {
   ])("a spell with %s stores its fields and gets its school's feats", async (_, school, fields, expected) => {
     const { session, ruleset, spells } = await bareRuleset();
     const power = await PowersService.createPower(session, ruleset.id, spell(spells.id, "Fireball", school, fields));
-    expect(await spellFields(ruleset.id, power.id)).toEqual(expected);
+    expect(await spellFields(power.id)).toEqual(expected);
     expect(await featNames(ruleset.id)).toEqual(
       school ? [`Greater Spell Focus: ${school}`, `Spell Focus: ${school}`] : [],
     );
@@ -196,10 +197,7 @@ describe("Spell Focus", () => {
       spell(spells.id, "Evolving Spell", "Conjuration", { castingTime: "1 full round" }),
     );
 
-    expect(await spellFields(ruleset.id, power.id)).toEqual([
-      "SPELL_CASTING_TIME: 1 full round",
-      "SPELL_SCHOOL: Conjuration",
-    ]);
+    expect(await spellFields(power.id)).toEqual(["SPELL_CASTING_TIME: 1 full round", "SPELL_SCHOOL: Conjuration"]);
     expect(await featNames(ruleset.id)).toEqual([
       "Greater Spell Focus: Conjuration",
       "Greater Spell Focus: Evocation",
@@ -533,10 +531,14 @@ describe("generated feats", () => {
   test("of a weapon type outlive its last item", async () => {
     const { session, fork } = await seededFork();
     const weapon = await ItemsService.createItem(session, fork.id, { name: "Unique Weapon", type: "Weapon" });
-    await PropertiesService.createProperty(session, fork.id, "items", weapon.id, {
+    // A weapon type of its own, outside the catalog an item's fields offer
+    await Properties.create(db, {
+      entityId: weapon.id,
+      entityType: "items",
       type: WEAPON_TYPE,
       value: "Unique Weapon",
     });
+    RulesetViews.invalidate(fork.id);
     const [feat] = await Feats.create(db, {
       rulesetId: fork.id,
       name: "Weapon Focus: Unique Weapon",

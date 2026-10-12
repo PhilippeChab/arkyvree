@@ -2,7 +2,7 @@ import { Autocomplete, TextField } from "@mui/material";
 import { type Ref } from "react";
 import type { FieldError } from "react-hook-form";
 
-import { ValueChip } from "@/client/src/components/common/index.ts";
+import { EMPTY_VALUE_TEXT, useReadOnlyFields, ValueChip } from "@/client/src/components/common/index.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import type { Aptitude } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import type { AptitudeScope } from "@/client/src/pages/rulesets/optionQueries.ts";
@@ -55,9 +55,10 @@ export function AptitudeAutocomplete({ rulesetId, value, onChange, loadError, sc
   );
 }
 
-/** A form's aptitudes, any of the ruleset's (a feat's, a spell's lists). */
+/** A form's aptitudes, any of the ruleset's (a feat's, a spell's lists): read-only under `ReadOnlyFields`. */
 export function AptitudesAutocomplete({ rulesetId, value, onChange, inputRef, error }: AptitudesAutocompleteProps) {
   const { fetchedOptions, autocompleteProps } = useAptitudeOptions(rulesetId);
+  const readOnly = useReadOnlyFields();
 
   // Merge selected values with fetched options so selected items always appear
   const selectedIds = new Set(value.map((v) => v.id));
@@ -66,6 +67,7 @@ export function AptitudesAutocomplete({ rulesetId, value, onChange, inputRef, er
   return (
     <Autocomplete
       multiple
+      readOnly={readOnly}
       options={options}
       {...autocompleteProps}
       value={value}
@@ -77,7 +79,16 @@ export function AptitudesAutocomplete({ rulesetId, value, onChange, inputRef, er
         })
       }
       renderInput={(params) => (
-        <TextField {...params} inputRef={inputRef} label="Aptitudes" error={!!error} helperText={error?.message} />
+        <TextField
+          {...params}
+          inputRef={inputRef}
+          label="Aptitudes"
+          error={!!error}
+          helperText={error?.message}
+          // Read-only, "—" for none
+          placeholder={(readOnly && value.length === 0 && EMPTY_VALUE_TEXT) || undefined}
+          slotProps={readOnly ? { ...params.slotProps, inputLabel: { shrink: true } } : params.slotProps}
+        />
       )}
     />
   );

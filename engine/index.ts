@@ -10,6 +10,7 @@ export { default as Engine } from "./api/Engine.ts";
 export type { default as LevelUpEngine } from "./api/LevelUpEngine.ts";
 export type { Accepted, EntityKinds } from "./api/Modules.ts";
 export type { CowData, RulesetSources } from "./core/cow/index.ts";
+export type { EntityFieldValues, FormField } from "./core/fields/index.ts";
 export type {
   AbilityIncrease,
   BondedPlan,

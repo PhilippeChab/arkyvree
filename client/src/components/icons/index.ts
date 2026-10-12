@@ -58,7 +58,6 @@ export {
   Groups as PlayersIcon,
   Bolt as PowersIcon,
   Lock as PrivateIcon,
-  Label as PropertiesIcon,
   Public as PublicIcon,
   CheckCircle as PublishedIcon,
   Publish as PublishIcon,

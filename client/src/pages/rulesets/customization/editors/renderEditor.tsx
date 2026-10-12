@@ -26,7 +26,6 @@ interface RulesetEditors {
 export interface EditorProps<T> {
   /** Set right after a copy-on-write moved the page here: the record the form may still hold. */
   adoptKey?: string;
-  canEdit: boolean;
   entity: T;
   entityId: string;
   /** The page's `followCopy`: a save of an inherited entity copies it, the page moving to the copy (`useEntitySave`) */

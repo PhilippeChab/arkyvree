@@ -2,7 +2,13 @@ import { Autocomplete, Box, TextField } from "@mui/material";
 import { useMemo, useState } from "react";
 import { useController } from "react-hook-form";
 
-import { LoadError, ScrollSafeListbox, ValueChip } from "@/client/src/components/common/index.ts";
+import {
+  EMPTY_VALUE_TEXT,
+  LoadError,
+  ScrollSafeListbox,
+  useReadOnlyFields,
+  ValueChip,
+} from "@/client/src/components/common/index.ts";
 import { useDebouncedValue } from "@/client/src/hooks/index.ts";
 import { emptyOptionsText } from "@/client/src/lib/errorMessage.ts";
 import { readNumberInput } from "@/client/src/lib/validation.ts";
@@ -22,7 +28,10 @@ interface FeatOption extends LevelFeat {
   label: string;
 }
 
-/** A class level's base saves and granted feats, bound to its form: its create dialog's and its page's. */
+/**
+ * A class level's base saves and granted feats, bound to its form: its create dialog's and its page's, read-only under
+ * `ReadOnlyFields`.
+ */
 export function ClassLevelFields({ form, rulesetId, rulesetSaves, savesError, featLabels }: ClassLevelFieldsProps) {
   // Each base out of bounds says why, under its own input
   const { field: savesField, fieldState: savesState } = useController({
@@ -34,6 +43,7 @@ export function ClassLevelFields({ form, rulesetId, rulesetSaves, savesError, fe
   const saves = savesField.value ?? [];
   const feats = featsField.value ?? [];
   const savesInvalid = !!savesState.error;
+  const readOnly = useReadOnlyFields();
   const saveList = rulesetSaves ?? [];
   // The server searches the ruleset's feats and pages them in as the list scrolls.
   const [featSearch, setFeatSearch] = useState("");
@@ -110,13 +120,18 @@ export function ClassLevelFields({ form, rulesetId, rulesetSaves, savesError, fe
               onChange={(e) => setBase(save.id, readNumberInput(e.target.value) ?? 0)}
               error={savesInvalid && saveBaseError(baseFor(save.id)) !== undefined}
               helperText={savesInvalid && saveBaseError(baseFor(save.id))}
-              slotProps={{ htmlInput: { min: 0, max: MAX_SAVE_BASE } }}
+              slotProps={{
+                htmlInput: { min: 0, max: MAX_SAVE_BASE },
+                input: { readOnly },
+                inputLabel: readOnly ? { shrink: true } : undefined,
+              }}
             />
           ))}
         </Box>
       )}
       <Autocomplete
         multiple
+        readOnly={readOnly}
         options={featOptions}
         getOptionLabel={(option) => option.label}
         getOptionKey={(option) => featKey(option)}
@@ -134,7 +149,17 @@ export function ClassLevelFields({ form, rulesetId, rulesetSaves, savesError, fe
         noOptionsText={emptyOptionsText("Feats", featsError)}
         slotProps={{ listbox: { component: ScrollSafeListbox, onScroll } }}
         renderInput={(params) => (
-          <TextField {...params} label="Feats" placeholder="Select feats with aptitudes granted at this level" />
+          <TextField
+            {...params}
+            label="Feats"
+            // Read-only, "—" for none
+            placeholder={
+              readOnly
+                ? (selectedFeats.length === 0 && EMPTY_VALUE_TEXT) || undefined
+                : "Select feats with aptitudes granted at this level"
+            }
+            slotProps={readOnly ? { ...params.slotProps, inputLabel: { shrink: true } } : params.slotProps}
+          />
         )}
         renderValue={(value, getItemProps) =>
           value.map((option, index) => (
@@ -143,7 +168,7 @@ export function ClassLevelFields({ form, rulesetId, rulesetSaves, savesError, fe
               {...getItemProps({ index })}
               key={featKey(option)}
               label={option.label}
-              onDelete={() => setFeats(selectedFeats.filter((_, i) => i !== index))}
+              onDelete={readOnly ? undefined : () => setFeats(selectedFeats.filter((_, i) => i !== index))}
             />
           ))
         }

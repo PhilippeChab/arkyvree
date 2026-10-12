@@ -1,17 +1,3 @@
-export interface PropertyTypeCompletion {
-  detail?: string;
-  entityType?: string;
-  kind: "engine" | "custom";
-  label: string;
-  value: string;
-}
-
-export interface PropertyValueCompletion {
-  kind: "engine" | "custom";
-  label: string;
-  value: string;
-}
-
 /** Values in the order of `options`, those it doesn't name after them as given. */
 function sortByOptions(values: string[], options: readonly string[] | null): string[] {
   if (!options) return values;

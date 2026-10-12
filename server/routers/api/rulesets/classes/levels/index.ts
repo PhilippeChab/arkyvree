@@ -1,15 +1,10 @@
 import { Hono } from "hono";
 import { z } from "zod";
 
-import type { ClassEngine } from "@/engine/index.ts";
 import { type SessionContext, validate } from "@/server/middlewares/index.ts";
 import { classParams } from "@/server/routers/api/rulesets/classes/validation.ts";
-import { buildEntityFieldsSchema } from "@/server/routers/api/schemaBuilders.ts";
-import { idParam } from "@/server/routers/api/validation.ts";
+import { entityFields, idParam } from "@/server/routers/api/validation.ts";
 import { ClassLevelsService } from "@/server/services/rulesets/classes/levels/index.ts";
-
-/** A class level's fields, its create's and its update's: its ruleset's rules read them. */
-const classLevelFields = buildEntityFieldsSchema<ClassEngine["planLevelCreate"]>();
 
 const classLevelParams = idParam.extend({ classLevelId: z.string().uuid() });
 const levelFeats = z
@@ -56,7 +51,7 @@ export default new Hono<SessionContext>()
       "json",
       z.object({
         level: z.number().int(),
-        fields: classLevelFields,
+        fields: entityFields.optional(),
         saves: levelSaves,
         feats: levelFeats,
       }),
@@ -73,7 +68,7 @@ export default new Hono<SessionContext>()
     validate(
       "json",
       z.object({
-        fields: classLevelFields.optional(),
+        fields: entityFields.optional(),
         saves: levelSaves,
         feats: levelFeats,
         updatedAt: z.string().optional(),

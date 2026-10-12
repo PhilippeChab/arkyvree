@@ -53,25 +53,22 @@ describe("ClassesService", () => {
   test("exposes the ability a class's bonus spells come from", async () => {
     const { session, ruleset } = await createTestUserAndRuleset();
     const fighter = await ClassesService.createClass(session, ruleset.id, { name: "Fighter" });
-    expect(await ClassesService.getClass(ruleset.id, fighter.id)).toMatchObject({
-      bonusSpellAbilityId: null,
-      propertyIds: { bonusSpellAbilityId: null },
-    });
+    expect(await ClassesService.getClass(ruleset.id, fighter.id)).toMatchObject({ bonusSpellAbilityId: null });
 
     const wizard = await ClassesService.createClass(session, ruleset.id, { name: "Wizard", hd: 4 });
     const [intelligence] = await insertRows(abilitiesInRules, [
       { name: "Intelligence", description: "Intelligence", rulesetId: ruleset.id },
     ]);
-    const [property] = await Properties.create(db, {
-      entityId: wizard.id,
-      entityType: "klasses",
-      type: KLASS_BONUS_SPELL_ABILITY_ID,
-      value: intelligence.id,
+    await ClassesService.updateClass(session, ruleset.id, wizard.id, {
+      name: "Wizard",
+      fields: { bonusSpellAbilityId: intelligence.id },
     });
     expect(await ClassesService.getClass(ruleset.id, wizard.id)).toMatchObject({
       bonusSpellAbilityId: intelligence.id,
-      propertyIds: { bonusSpellAbilityId: property.id },
     });
+    expect(await Properties.findMany(db, { entityIds: [wizard.id], entityType: "klasses" })).toMatchObject([
+      { type: KLASS_BONUS_SPELL_ABILITY_ID, value: intelligence.id },
+    ]);
   });
 
   test("deletes a class's levels with their feats, powers, saves and modifiers, and its class skills", async () => {

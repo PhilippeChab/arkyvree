@@ -3,6 +3,7 @@ import { type ReactNode } from "react";
 import type { DefaultValues, FieldValues, UseFormReturn } from "react-hook-form";
 import { Navigate, useLocation } from "react-router-dom";
 
+import { ReadOnlyFields } from "@/client/src/components/common/index.ts";
 import { useFormSync, useFormWith, usePageTitle, useRulesetPermissions } from "@/client/src/hooks/index.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { rulesetDetailQuery } from "@/client/src/lib/queries.ts";
@@ -39,33 +40,30 @@ interface EntityEditing<TEntity, TForm extends FieldValues> {
 }
 
 interface RulesetEntityDetailProps<TEntity extends EntityBase, TForm extends FieldValues, TKey extends QueryKey> {
-  /** Omitted for entities that can't be edited (abilities). */
+  /** Its form, its save and its delete; none for an entity no one edits (an ability), which shows its description. */
   editing?: EntityEditing<TEntity, TForm>;
   entityId: string;
   /** Singular display name, e.g. "Language". */
   label: string;
-  /** What failed to load for the read-only view, stated above its description */
-  notice?: ReactNode;
   /** The entity's detail query by id, from `entityDetailQueries.ts`: the page reads it, and a save seeds the copy's. */
   query: (entityId: string) => UseQueryOptions<TEntity, Error, TEntity, TKey>;
-  /** Facts shown next to the title in the read-only view. */
-  renderChips?: (entity: TEntity) => ReactNode;
   rulesetId: string;
   /** Ruleset tab and URL segment, e.g. "languages". */
   section: string;
 }
 
-type EditableDetailsProps<TEntity extends EntityBase, TForm extends FieldValues, TKey extends QueryKey> = Pick<
+type FormDetailsProps<TEntity extends EntityBase, TForm extends FieldValues, TKey extends QueryKey> = Pick<
   RulesetEntityDetailProps<TEntity, TForm, TKey>,
   "rulesetId" | "entityId" | "section" | "label" | "query"
 > & {
-  chips: ReactNode;
   editing: EntityEditing<TEntity, TForm>;
   entity: TEntity;
 };
 
-/** An editor's details: the entity's form, following the entity, which saves it. */
-function EditableDetails<TEntity extends EntityBase, TForm extends FieldValues, TKey extends QueryKey>({
+/**
+ * The entity's details: its form, following the entity, which saves it; a viewer under `ReadOnlyFields` reads it.
+ */
+function FormDetails<TEntity extends EntityBase, TForm extends FieldValues, TKey extends QueryKey>({
   rulesetId,
   entityId,
   section,
@@ -73,8 +71,7 @@ function EditableDetails<TEntity extends EntityBase, TForm extends FieldValues, 
   query,
   editing,
   entity,
-  chips,
-}: EditableDetailsProps<TEntity, TForm, TKey>) {
+}: FormDetailsProps<TEntity, TForm, TKey>) {
   const queryClient = useQueryClient();
 
   const copy = useCopyOnWrite(rulesetId, entityId, (id) => `${section}/${id}`);
@@ -110,9 +107,7 @@ function EditableDetails<TEntity extends EntityBase, TForm extends FieldValues, 
       {forgetSource && <Navigate to={forgetSource.to} replace state={forgetSource.state} />}
       <EntityDetailsCard
         title={`${label} Details`}
-        chips={chips}
-        description={entity.description}
-        edit={{
+        form={{
           fields: editing.renderFields(form),
           onSubmit: sync.handleSubmit((data) => saveMutation.mutate(data)),
           canSave: sync.isDirty,
@@ -124,9 +119,8 @@ function EditableDetails<TEntity extends EntityBase, TForm extends FieldValues, 
 }
 
 /**
- * Page body shared by the simple ruleset entities (languages, skills, saves,
- * mechanics, aptitudes, abilities): an edit form for editors, the description
- * for everyone else.
+ * Page body shared by the simple ruleset entities (languages, skills, saves, mechanics, aptitudes, abilities): its
+ * form, the same whoever reads it, its fields read-only for who can't edit it; an ability's description: it has none.
  */
 export function RulesetEntityDetail<TEntity extends EntityBase, TForm extends FieldValues, TKey extends QueryKey>({
   rulesetId,
@@ -135,8 +129,6 @@ export function RulesetEntityDetail<TEntity extends EntityBase, TForm extends Fi
   label,
   query,
   editing,
-  notice,
-  renderChips,
 }: RulesetEntityDetailProps<TEntity, TForm, TKey>) {
   const location = useLocation();
   const back = entityPageBack(location.state, `/rulesets/${rulesetId}/${section}`);
@@ -182,24 +174,20 @@ export function RulesetEntityDetail<TEntity extends EntityBase, TForm extends Fi
       isLoading={isRulesetLoading || isEntityLoading}
     >
       {entity &&
-        (canEdit ? (
-          <EditableDetails
-            rulesetId={rulesetId}
-            entityId={entityId}
-            section={section}
-            label={label}
-            query={query}
-            editing={editing}
-            entity={entity}
-            chips={renderChips?.(entity)}
-          />
+        (editing ? (
+          <ReadOnlyFields readOnly={!canEdit}>
+            <FormDetails
+              rulesetId={rulesetId}
+              entityId={entityId}
+              section={section}
+              label={label}
+              query={query}
+              editing={editing}
+              entity={entity}
+            />
+          </ReadOnlyFields>
         ) : (
-          <EntityDetailsCard
-            title={`${label} Details`}
-            chips={renderChips?.(entity)}
-            notice={notice}
-            description={entity.description}
-          />
+          <EntityDetailsCard title={`${label} Details`} description={entity.description} />
         ))}
     </EntityDetailLayout>
   );

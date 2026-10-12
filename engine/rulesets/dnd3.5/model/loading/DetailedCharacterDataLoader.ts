@@ -93,7 +93,7 @@ export default class DetailedCharacterDataLoader extends include(
 ) {
   /** The character's data: core's (`loaded`), its parts, its own row, and the ruleset's properties. */
   protected override loadOwn(
-    { rulesetData }: RulesetView,
+    view: RulesetView,
     { klassEntityIds: _klassEntityIds, ...parts }: LoadedParts,
     loaded: LoadedCharacter,
   ): LoadedCharacterData {
@@ -101,7 +101,7 @@ export default class DetailedCharacterDataLoader extends include(
       ...loaded,
       ...parts,
       character: this.character,
-      ...this.readRulesetProperties(rulesetData, (id) => rulesetData.cow.resolve(id)),
+      ...this.readRulesetProperties(view, (id) => view.rulesetData.cow.resolve(id)),
     };
   }
 

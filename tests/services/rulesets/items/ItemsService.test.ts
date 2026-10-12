@@ -10,13 +10,14 @@ import { createTestCharacter } from "@/tests/support/characters.ts";
 import { customize, findCustomizations } from "@/tests/support/customizations.ts";
 import { createTestRuleset, createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
+import { ITEM_MADE_OF } from "@/vocabulary/dnd3.5/properties/index.ts";
 
-/** The property `customize` gives an item. */
-const COLD_RESISTANCE = { type: "resistance", value: "Cold" };
+/** The property `customize` gives an item: what it's made of, which it reads as its field. */
+const COLD_IRON = { type: ITEM_MADE_OF, value: "Cold Iron" };
 
 const copiedCustomizations = {
   modifiers: [{ target: "abilities.strength.misc", requirements: ["combat.bab"] }],
-  properties: ["Cold"],
+  properties: ["Cold Iron"],
   requirements: ["combat.bab"],
 };
 const noCustomizations = { modifiers: [], properties: [], requirements: [] };
@@ -28,7 +29,7 @@ async function createTemplate(session: Parameters<typeof ItemsService.createItem
     type: "Weapon",
     isTemplate: true,
   });
-  await customize("items", template.id, { property: COLD_RESISTANCE });
+  await customize("items", template.id, { property: COLD_IRON });
   return template;
 }
 
@@ -52,7 +53,7 @@ async function expectTemplateInstance(rulesetId: string, itemId: string, templat
   expect(view).toMatchObject({
     sourceItemId: templateId,
     isTemplate: false,
-    properties: [{ value: "Cold" }],
+    madeOf: "Cold Iron",
     requirements: [{ target: "combat.bab" }],
     modifiers: [],
   });
@@ -125,7 +126,7 @@ describe("ItemsService", () => {
       }),
     ).toMatchObject({ sourceItemId: null });
     // Its template's properties went with it
-    expect(await ItemsService.getItem(ruleset.id, sword.id)).toMatchObject({ sourceItemId: null, properties: [] });
+    expect(await ItemsService.getItem(ruleset.id, sword.id)).toMatchObject({ sourceItemId: null, madeOf: null });
   });
 
   test("describes where a character carrying it can place it", async () => {
@@ -163,7 +164,7 @@ describe("ItemsService", () => {
     test("copies the item's customizations, each modifier with its own requirements", async () => {
       const { session, ruleset } = await createTestUserAndRuleset();
       const source = await ItemsService.createItem(session, ruleset.id, { name: "Cloak" });
-      const modifier = await customize("items", source.id, { property: COLD_RESISTANCE });
+      const modifier = await customize("items", source.id, { property: COLD_IRON });
 
       const copy = await ItemsService.duplicateItem(session, ruleset.id, source.id, { name: "Cloak Copy" });
       const copied = await customizationsOf(copy.id);
@@ -199,7 +200,7 @@ describe("ItemsService", () => {
         weight: 0.1,
         costGp: 25,
       });
-      await customize("items", source.id, { property: COLD_RESISTANCE });
+      await customize("items", source.id, { property: COLD_IRON });
 
       const variants = await ItemsService.createVariants(session, ruleset.id, source.id, [
         { name: "Scroll of Healing", description: "Heals 1d8" },

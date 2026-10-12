@@ -98,6 +98,7 @@ test.describe("Every page", () => {
       "saves",
       "abilities",
       "mechanics",
+      "settings",
     ])
       await visit(page, errors, `/rulesets/${rulesetId}/${section}`, "Pages Fork");
   });
@@ -131,7 +132,7 @@ test.describe("Every page", () => {
       const rulesetId = await forkCoreRuleset(page, uniqueName("Customization Pages Fork"));
       const entity = await firstOf(page, rulesetId, list);
       const errors = watchErrors(page);
-      for (const section of ["", "/properties", "/modifiers", "/requirements"])
+      for (const section of ["", "/modifiers", "/requirements"])
         await visit(page, errors, `/rulesets/${rulesetId}/${list}/${entity.id}/customization${section}`, entity.name);
     });
   }

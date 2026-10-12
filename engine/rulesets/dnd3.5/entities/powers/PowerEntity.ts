@@ -3,6 +3,7 @@
 import { z } from "zod";
 
 import { ListedEntity } from "@/engine/core/entities/index.ts";
+import type { EntityFieldValues } from "@/engine/core/fields/index.ts";
 import type { EntityWrites } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import SpellFocusFeats from "@/engine/rulesets/dnd3.5/entities/feats/SpellFocusFeats.ts";
@@ -15,7 +16,7 @@ import { POWER_FIELDS, type PowerFieldValues } from "./fields.ts";
 interface PowerBody {
   aptitudes?: { id: string; level?: number }[];
   description?: string | null;
-  fields?: Partial<PowerFieldValues>;
+  fields?: EntityFieldValues;
   name: string;
   saveEffect?: string | null;
   saveId?: string | null;
@@ -67,11 +68,6 @@ export default class PowerEntity extends ListedEntity<
     return { description, name, saveEffect: saveEffect ?? null, saveId: saveId ?? null };
   }
 
-  /** What a form's fields are read by: those it gives, a new power's too, since a power that isn't a spell has none. */
-  protected override fieldsSchema() {
-    return this.fields.schema({ optional: true });
-  }
-
   /** A power's pool links, as the view composes them. */
   protected override linksIn({ powersAptitudesInRules }: PowerWithAptitudes) {
     return { powersAptitudesInRules };
@@ -99,17 +95,17 @@ export default class PowerEntity extends ListedEntity<
    * those it has.
    */
   protected override writesOf(
-    _body: PowerBody,
+    body: PowerBody,
     given: Partial<PowerFieldValues>,
     power?: PowerWithAptitudes,
   ): EntityWrites {
     const fields = this.formFields(given, power);
     if (!fields) return {};
     const grouping = getGrouping(fields);
-    const before = power && getGrouping(this.fields.read(this.propertiesOf(power)));
+    const before = power && getGrouping(this.fieldsOf(power));
     return {
+      ...super.writesOf(body, given, power),
       made: grouping !== null && grouping !== before ? this.spellFocus.make(grouping) : [],
-      properties: this.fields.write(fields),
     };
   }
 

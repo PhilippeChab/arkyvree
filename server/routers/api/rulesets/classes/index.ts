@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { z } from "zod";
 
 import { type SessionContext, validate } from "@/server/middlewares/index.ts";
-import { entityOrderBy, idParam, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
+import { entityFields, entityOrderBy, idParam, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
 import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
 
 import classLevels from "./levels/index.ts";
@@ -55,6 +55,7 @@ export default new Hono<SessionContext>()
           .optional()
           .transform((v) => v || null),
         hd: hitDie,
+        fields: entityFields.optional(),
       }),
     ),
     async (c) => {
@@ -75,6 +76,7 @@ export default new Hono<SessionContext>()
           .optional()
           .transform((v) => v || null),
         hd: hitDie,
+        fields: entityFields.optional(),
         updatedAt: z.string().optional(),
       }),
     ),

@@ -1,12 +1,14 @@
 import { CustomizationPageEntity } from "@/engine/core/entities/index.ts";
+import type { EntityFieldValues } from "@/engine/core/fields/index.ts";
 import type { SizeType } from "@/shared/enums.ts";
 
 import { RACE_FIELDS } from "./fields.ts";
 
-/** A race's form: its name, description, size and base speed. */
+/** A race's form: its name, description, size and base speed, and its fields (four legs, a speed armor leaves). */
 interface RaceBody {
   baseSpeed: number;
   description?: string | null;
+  fields?: EntityFieldValues;
   name: string;
   size: SizeType;
 }
@@ -18,7 +20,7 @@ interface RaceBody {
 export default class RaceEntity extends CustomizationPageEntity<
   "races",
   RaceBody,
-  RaceBody,
+  Omit<RaceBody, "fields">,
   typeof RACE_FIELDS.fields
 > {
   /** Its body's build: four legs, a speed armor leaves. */

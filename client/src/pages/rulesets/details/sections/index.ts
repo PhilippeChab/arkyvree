@@ -5,3 +5,4 @@ export { LanguagesSection } from "./LanguagesSection.tsx";
 export { MechanicsSection } from "./MechanicsSection.tsx";
 export { RacesSection } from "./RacesSection.tsx";
 export { SavesSection } from "./SavesSection.tsx";
+export { SettingsSection } from "./SettingsSection.tsx";

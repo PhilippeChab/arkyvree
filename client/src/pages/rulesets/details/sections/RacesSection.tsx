@@ -11,12 +11,22 @@ import {
 } from "@/client/src/components/common/index.ts";
 import { RacesIcon } from "@/client/src/components/icons/index.ts";
 import { itemsBeforeLastPage, pageItems } from "@/client/src/lib/pageItems.ts";
-import { EMPTY_RACE, type RaceFormData, RaceFormFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
+import {
+  EMPTY_RACE,
+  type RaceFormData,
+  RaceFormFields,
+  withEntityFields,
+} from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { DescriptionCell, RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";
 import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
 import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
 import { racesQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
-import { useEntityFilters, useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
+import {
+  useEntityFields,
+  useEntityFilters,
+  useOpenEntity,
+  useRulesetSection,
+} from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { buildCustomizationPath } from "@/shared/customization/entities.ts";
 
@@ -36,10 +46,11 @@ export function RacesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
 
   const { search, kind, orderBy, orderDir, searchBarProps } = useEntityFilters(ruleset.baseRules);
 
+  const { fields: raceFields } = useEntityFields(ruleset.id, "races");
   const { createForm, handleCreate, createDialogProps } = useRulesetSection<Race, RaceFormData>({
     rulesetId: ruleset.id,
     sectionName: "races",
-    createDefaults: EMPTY_RACE,
+    createDefaults: withEntityFields(EMPTY_RACE, raceFields),
     label: "Race",
     createFn: async (data) =>
       parseResponse(
@@ -122,7 +133,7 @@ export function RacesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
       </Stack>
 
       <CreateDialog {...createDialogProps} title="Create New Race">
-        <RaceFormFields form={createForm} />
+        <RaceFormFields form={createForm} rulesetId={ruleset.id} />
       </CreateDialog>
     </SectionContent>
   );

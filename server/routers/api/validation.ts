@@ -1,6 +1,8 @@
 import { z } from "zod";
 
+import type { EntityFieldValues } from "@/engine/index.ts";
 import { sanitizeEmail } from "@/server/emailAddress.ts";
+import { isRecord } from "@/shared/isRecord.ts";
 import { sanitizeText } from "@/shared/text.ts";
 
 import { isUuid, limitDefaultingTo } from "./schemaBuilders.ts";
@@ -13,6 +15,16 @@ export const idParam = z.object({ id: z.string().uuid() });
 
 /** A contributor route's `:id` (the ruleset or character) and `:contributorId` */
 export const contributorParams = idParam.extend({ contributorId: z.string().uuid() });
+
+/**
+ * An entity's fields, as a body carries them for its ruleset's rules (`fields`), a ruleset's Settings' too: any object,
+ * which the engine reads by the fields the ruleset declares, refusing as invalid one that isn't its field's type, in
+ * its bounds or among its values.
+ */
+export const entityFields = z.custom<EntityFieldValues>(
+  (value) => isRecord(value),
+  "Expected an object of the entity's fields",
+);
 
 /** Ruleset entity sorting (name/createdAt/updatedAt, ascending) */
 export const entityOrderBy = z.enum(["name", "createdAt", "updatedAt"]).default("name");

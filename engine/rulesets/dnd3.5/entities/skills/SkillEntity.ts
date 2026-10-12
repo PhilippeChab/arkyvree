@@ -1,6 +1,7 @@
 /** A skill as a ruleset's entity: its fields, and what saving or deleting it writes. */
 
 import { RulesetEntity } from "@/engine/core/entities/index.ts";
+import type { EntityFieldValues } from "@/engine/core/fields/index.ts";
 import type { EntityWrites } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import SkillFocusFeats from "@/engine/rulesets/dnd3.5/entities/feats/SkillFocusFeats.ts";
@@ -12,7 +13,7 @@ import { SKILL_FIELDS, type SkillFieldValues } from "./fields.ts";
 /** A skill's save, as its form sends it: its row's columns, and the fields its properties keep (an edit's, those it changes). */
 interface SkillBody {
   description?: string | null;
-  fields?: Partial<SkillFieldValues>;
+  fields?: EntityFieldValues;
   name: string;
   primaryAbilityId: string;
 }
@@ -59,11 +60,10 @@ export default class SkillEntity extends RulesetEntity<
    * and renamed with it.
    */
   protected override writesOf(body: SkillBody, given: Partial<SkillFieldValues>, skill?: Skill): EntityWrites {
-    const fields = this.formFields(given, skill);
     const renamed = skill?.name !== body.name;
     return {
+      ...super.writesOf(body, given, skill),
       made: renamed ? this.skillFocus.make(body.name) : [],
-      properties: fields && this.fields.write(fields),
       removed: skill && renamed ? this.skillFocus.remove(skill.name) : [],
     };
   }

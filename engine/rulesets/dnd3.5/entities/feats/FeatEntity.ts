@@ -1,6 +1,7 @@
 /** A feat as a ruleset's entity: what the ruleset describes of it, lists it by, and checks of its form. */
 
 import { ListedEntity } from "@/engine/core/entities/index.ts";
+import type { EntityFieldValues } from "@/engine/core/fields/index.ts";
 import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import AptitudeTargets from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTargets.ts";
@@ -10,13 +11,14 @@ import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/properties/index.ts";
 import { FEAT_FIELDS } from "./fields.ts";
 
 /**
- * A feat's save, as its form sends it: its name and description, and the pools it's picked in. A new one named as an
- * ancestor its ruleset deleted stands in for it, and is generated when the ancestor was (`tombstoneGenerated`, what the
- * server reads of the ancestor, which the view hides).
+ * A feat's save, as its form sends it: its name and description, the pools it's picked in, and its fields (its
+ * families, the weapon rules it changes). A new one named as an ancestor its ruleset deleted stands in for it, and is
+ * generated when the ancestor was (`tombstoneGenerated`, what the server reads of the ancestor, which the view hides).
  */
 interface FeatBody {
   aptitudeIds?: string[];
   description?: string | null;
+  fields?: EntityFieldValues;
   name: string;
   tombstoneGenerated?: boolean;
 }
