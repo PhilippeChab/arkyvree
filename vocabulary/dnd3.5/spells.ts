@@ -45,8 +45,6 @@ export const SPELL_LEVELS = Array.from({ length: MAX_SPELL_LEVEL + 1 }, (_, leve
  * per day, a level filter): "Cantrips" for level 0, else "Level 3".
  */
 export const SPELL_LEVEL_LABELS = SPELL_LEVELS.map((level) => (level === 0 ? "Cantrips" : `Level ${level}`));
-export const SPELL_RANGE_TYPES = ["Personal", "Touch", "Close", "Medium", "Long", "Unlimited"] as const;
-export const SPELL_RESISTANCE_OPTIONS = ["Yes", "No"] as const;
 
 /** A spell's save DC before its level and its caster's ability modifier: 10. */
 export const SPELL_SAVE_DC_BASE = 10;

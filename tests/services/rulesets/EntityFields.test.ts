@@ -20,7 +20,9 @@ import {
   KLASS_BONUS_SPELL_ABILITY_ID,
   KLASS_CASTER_TYPE,
   SPELL_RANGE_TYPE,
+  SPELL_RESISTANCE,
   SPELL_SCHOOL,
+  SPELL_SUBSCHOOL,
   WEAPON_BASE_DAMAGE,
 } from "@/vocabulary/dnd3.5/properties/index.ts";
 
@@ -169,24 +171,39 @@ describe("An entity's fields", () => {
     expect(await storedProperties(bolt.id)).toEqual([`${SPELL_SCHOOL}=Conjuration`]);
   });
 
+  test("of a spell take its range and its spell resistance in its book's words: free texts, no list", async () => {
+    const { session, rulesetId, spellList } = await setup();
+    const spell = { name: "Bolt", aptitudes: [{ id: spellList, level: 1 }] };
+    const fields = { school: "Evocation", rangeType: "60 ft.", spellResistance: "Yes (harmless)" };
+    const bolt = await PowersService.createPower(session, rulesetId, { ...spell, fields });
+    expect(await storedProperties(bolt.id)).toEqual([
+      `${SPELL_RANGE_TYPE}=60 ft.`,
+      `${SPELL_RESISTANCE}=Yes (harmless)`,
+      `${SPELL_SCHOOL}=Evocation`,
+    ]);
+  });
+
   test("keep a stored value their ruleset no longer lists while an edit leaves its field out", async () => {
     const { session, rulesetId, spellList } = await setup();
     const spell = { name: "Bolt", aptitudes: [{ id: spellList, level: 1 }] };
-    const bolt = await PowersService.createPower(session, rulesetId, { ...spell, fields: { school: "Evocation" } });
+    const bolt = await PowersService.createPower(session, rulesetId, { ...spell, fields: { school: "Conjuration" } });
     await insertRows(propertiesInCustomization, [
-      { entityId: bolt.id, entityType: "powers", type: SPELL_RANGE_TYPE, value: "60 ft." },
+      { entityId: bolt.id, entityType: "powers", type: SPELL_SUBSCHOOL, value: "Creation or Calling" },
     ]);
     RulesetViews.invalidate(rulesetId);
 
     await PowersService.updatePower(session, rulesetId, bolt.id, { ...spell, fields: { castingTime: "1 round" } });
     expect(await PowersService.getPower(rulesetId, bolt.id)).toMatchObject({
       castingTime: "1 round",
-      rangeType: "60 ft.",
+      subschool: "Creation or Calling",
     });
     // Given back, it's refused as any value outside the list
     expect(
-      PowersService.updatePower(session, rulesetId, bolt.id, { ...spell, fields: { rangeType: "60 ft." } }),
-    ).rejects.toMatchObject({ refusal: "invalid", issues: [{ category: "fields.rangeType" }] });
+      PowersService.updatePower(session, rulesetId, bolt.id, {
+        ...spell,
+        fields: { subschool: "Creation or Calling" },
+      }),
+    ).rejects.toMatchObject({ refusal: "invalid", issues: [{ category: "fields.subschool" }] });
   });
 
   test("copy an inherited entity to save them, its source's left as they were", async () => {

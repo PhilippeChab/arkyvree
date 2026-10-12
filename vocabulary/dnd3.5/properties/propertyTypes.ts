@@ -7,14 +7,7 @@
 
 import type { PropertyEntityType } from "@/shared/customization/entities.ts";
 import { FEAT_FAMILIES } from "@/vocabulary/dnd3.5/feats.ts";
-import {
-  SPELL_COMPONENTS,
-  SPELL_DESCRIPTORS,
-  SPELL_RANGE_TYPES,
-  SPELL_RESISTANCE_OPTIONS,
-  SPELL_SCHOOLS,
-  SPELL_SUBSCHOOLS,
-} from "@/vocabulary/dnd3.5/spells.ts";
+import { SPELL_COMPONENTS, SPELL_DESCRIPTORS, SPELL_SCHOOLS, SPELL_SUBSCHOOLS } from "@/vocabulary/dnd3.5/spells.ts";
 
 import { ARMOR_AC_BONUS, ARMOR_CHECK_PENALTY, ARMOR_MAX_DEX, ARMOR_PROFICIENCY, ARMOR_TYPE } from "./armor.ts";
 import {
@@ -237,7 +230,8 @@ const POWER_PROPERTY_TYPES: Record<string, PropertyTypeDeclaration> = {
   },
   [SPELL_RANGE_TYPE]: {
     label: "Range",
-    description: "Range category (Personal, Touch, Close, Medium, Long, Unlimited)",
+    description: 'Range, as its book writes it (e.g., "Touch", "Close (25 ft. + 5 ft./2 levels)", "60 ft.")',
+    placeholder: 'e.g., "Close (25 ft. + 5 ft./2 levels)"',
   },
   [SPELL_TARGET]: {
     label: "Target",
@@ -259,7 +253,11 @@ const POWER_PROPERTY_TYPES: Record<string, PropertyTypeDeclaration> = {
     description: 'Duration description (e.g., "1 round/level", "Instantaneous")',
     placeholder: 'e.g., "1 round/level"',
   },
-  [SPELL_RESISTANCE]: { label: "Spell Resistance", description: "Whether spell resistance applies (Yes/No)" },
+  [SPELL_RESISTANCE]: {
+    label: "Spell Resistance",
+    description: 'Whether spell resistance applies, as its book writes it (e.g., "Yes", "No", "Yes (harmless)")',
+    placeholder: 'e.g., "Yes (harmless)"',
+  },
 };
 
 const RACE_PROPERTY_TYPES: Record<string, PropertyTypeDeclaration> = {
@@ -434,8 +432,6 @@ export const PROPERTY_VALUES: Partial<Record<string, string[]>> = {
   [SPELL_SUBSCHOOL]: [...SPELL_SUBSCHOOLS],
   [SPELL_DESCRIPTOR]: [...SPELL_DESCRIPTORS],
   [SPELL_COMPONENT]: [...SPELL_COMPONENTS],
-  [SPELL_RANGE_TYPE]: [...SPELL_RANGE_TYPES],
-  [SPELL_RESISTANCE]: [...SPELL_RESISTANCE_OPTIONS],
   [ITEM_MADE_OF]: ["Adamantine", "Mithral", "Cold Iron", "Silver", "Darkwood"],
   [SKILL_IMPACTED_BY_WEIGHT]: ["true", "false"],
   [SKILL_USABLE_WITHOUT_TRAINING]: ["true", "false"],

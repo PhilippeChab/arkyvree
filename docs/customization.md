@@ -321,12 +321,12 @@ Properties written from the spell form's fields by `entities("powers").planCreat
 | `SPELL_SUBSCHOOL` | Subschool (optional) |
 | `SPELL_DESCRIPTOR` | Spell descriptor(s) — one property row per value (optional, multi) |
 | `SPELL_CASTING_TIME` | Casting time (optional) |
-| `SPELL_RANGE_TYPE` | Range category (optional) |
+| `SPELL_RANGE_TYPE` | Range, as the book writes it: "Touch", "60 ft.", "Close (25 ft. + 5 ft./2 levels)" (optional, free text) |
 | `SPELL_TARGET` | Target description (optional) |
 | `SPELL_EFFECT` | Effect description: what the spell brings into being, a summoned creature, a wall, a ray (optional) |
 | `SPELL_AREA_OF_EFFECT` | Area of effect description (optional) |
 | `SPELL_DURATION` | Duration description (optional) |
-| `SPELL_RESISTANCE` | Whether spell resistance applies (optional) |
+| `SPELL_RESISTANCE` | Whether spell resistance applies, as the book writes it: "Yes", "No", "Yes (harmless)" (optional, free text) |
 | `SPELL_COMPONENT` | Required components — one property row per value (optional, multi) |
 
 On create: with a school, generates the properties from the form's fields, and the school's Spell Focus feats unless they're there (`entities("powers").planCreate`'s `made`).
