@@ -2,6 +2,7 @@ import { CharacterComponent, type InventoryEntry } from "@/engine/core/character
 import { ITEM_FIELDS, type ItemFieldValues } from "@/engine/rulesets/dnd3.5/entities/items/fields.ts";
 import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
 import InventorySlots from "@/engine/rulesets/dnd3.5/rules/InventorySlots.ts";
+import ItemPlacement from "@/engine/rulesets/dnd3.5/rules/ItemPlacement.ts";
 
 type InventoryData = Record<string, InventorySlotData> & {
   weaponsets: WeaponSetInventory;
@@ -57,21 +58,16 @@ export default class InventoryComponent extends CharacterComponent<LoadedCharact
 
       this.equipped.push({ entry, fields: ITEM_FIELDS.read(entry.item.properties) });
       if (entry.item.type === "Weapon") {
-        // Weapons go into weaponsets
-        const setKey = String(entry.weaponSet ?? 0);
+        // Weapons go into each weapon set that holds them
         const slotKey = slot as "mainhand" | "offhand" | "twohanded";
-
-        if (!this.inventory.weaponsets[setKey]) {
-          this.inventory.weaponsets[setKey] = {
+        for (const set of ItemPlacement.heldSets(entry)) {
+          const weaponSet = (this.inventory.weaponsets[String(set)] ??= {
             mainhand: null,
             offhand: null,
             twohanded: null,
-          };
+          });
+          weaponSet[slotKey] = { properties: propertiesMap };
         }
-
-        this.inventory.weaponsets[setKey][slotKey] = {
-          properties: propertiesMap,
-        };
       } else if (entry.item.type !== "Armor" && entry.item.type !== "Shield") {
         // Non-combat equipment goes into flat equipment slots; the armors and the shields list the armor and shields
         this.inventory[slot] = {

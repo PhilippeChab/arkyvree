@@ -15,11 +15,14 @@ export interface NewCharacterRequest {
   raceId: string;
 }
 
-/** Where an inventory dialog places an item: `location`, in `weaponSet` for a hand, the entry placed (`entryId`) aside. */
+/**
+ * Where an inventory dialog places an item: `location`, in each of `weaponSets` for a hand, the entry placed (`entryId`)
+ * aside.
+ */
 export interface PlacementQuery {
   entryId: string | null;
   location: ItemLocation;
-  weaponSet: number | null;
+  weaponSets: number[];
 }
 
 /** The race picker's query: what a new character's form says so far. */

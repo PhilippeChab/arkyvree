@@ -13,7 +13,7 @@ import { createTestItem } from "@/tests/support/items.ts";
 import { createTestRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
 
 /** An inventory entry's request to carry its item: unequipped, without charges. */
-const CARRIED = { equipped: false, location: null, remainingCharges: null, totalCharges: null, weaponSet: null };
+const CARRIED = { equipped: false, location: null, remainingCharges: null, totalCharges: null, weaponSets: [] };
 
 /** What opens each character's private notes, which a reader who doesn't read them must not find. */
 const NOTES = "Read by its editors and its Game Master alone:";

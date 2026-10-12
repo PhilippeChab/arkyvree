@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Hold the same item in several weapon sets
+
 ## 0.6.0 — 2026-10-12
 
 - Character sheet: classes are listed under the name, with a button to add a level

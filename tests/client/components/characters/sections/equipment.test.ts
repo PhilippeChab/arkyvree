@@ -1,6 +1,10 @@
 import { describe, expect, test } from "bun:test";
 
-import { placementPayload, type PlacementProfile } from "@/client/src/components/characters/sections/equipment.ts";
+import {
+  placementPayload,
+  type PlacementProfile,
+  weaponSetChoices,
+} from "@/client/src/components/characters/sections/equipment.ts";
 
 /** An item's placement, as its ruleset says: one that comes with `charges` (none for an item without charges). */
 function profile(charges: number | null): PlacementProfile {
@@ -8,7 +12,13 @@ function profile(charges: number | null): PlacementProfile {
 }
 
 describe("An inventory placement", () => {
-  const form = { selectedItem: null, quantity: 2, weaponSet: 2, totalCharges: 5, remainingCharges: 3 };
+  const form = { selectedItem: null, quantity: 2, weaponSets: [2], totalCharges: 5, remainingCharges: 3 };
+
+  test("sends each of its weapon sets stored from 0", () => {
+    expect(placementPayload({ ...form, location: "Off Hand", weaponSets: [1, 2] }, null)).toMatchObject({
+      weaponSets: [0, 1],
+    });
+  });
 
   test("equips at a slot, with the weapon set stored from 0, which the server keeps for a hand only", () => {
     expect(placementPayload({ ...form, location: "Main Hand" }, profile(null))).toEqual({
@@ -17,7 +27,7 @@ describe("An inventory placement", () => {
       location: "Main Hand",
       totalCharges: null,
       remainingCharges: null,
-      weaponSet: 1,
+      weaponSets: [1],
     });
     expect(placementPayload({ ...form, location: "none" }, null)).toMatchObject({ equipped: false, location: null });
   });
@@ -31,5 +41,14 @@ describe("An inventory placement", () => {
       totalCharges: null,
       remainingCharges: null,
     });
+  });
+});
+
+describe("The weapon sets a held item is offered", () => {
+  test("are the sets the inventory and the form hold, as shown from 1, then a new one past them", () => {
+    const entries = [{ weaponSets: [0] }, { weaponSets: [] }, { weaponSets: [0, 2] }];
+    expect(weaponSetChoices(entries, [1])).toEqual([1, 3, 4]);
+    expect(weaponSetChoices(entries, [5])).toEqual([1, 3, 5, 6]);
+    expect(weaponSetChoices([], [])).toEqual([1]);
   });
 });

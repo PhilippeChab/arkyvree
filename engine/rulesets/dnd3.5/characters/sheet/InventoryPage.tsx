@@ -1,6 +1,7 @@
 import { Page, Text, View } from "@react-pdf/renderer";
 
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
+import ItemPlacement from "@/engine/rulesets/dnd3.5/rules/ItemPlacement.ts";
 import { capitalize } from "@/shared/text.ts";
 
 import ContinuationHeader from "./ContinuationHeader.tsx";
@@ -56,7 +57,7 @@ function InventoryPage({ detailedCharacter }: { detailedCharacter: DetailedChara
                     {entry.quantity}
                   </Text>
                   <Text style={{ fontSize: FONT_SIZE.base, width: "12%", paddingHorizontal: 2 }}>
-                    {entry.location ?? "—"}
+                    {ItemPlacement.describeSlot(entry) ?? "—"}
                   </Text>
                   <Text style={{ fontSize: FONT_SIZE.base, width: "8%", paddingHorizontal: 2, textAlign: "right" }}>
                     {entry.item.weight ? `${parseFloat(entry.item.weight)} lb` : "—"}

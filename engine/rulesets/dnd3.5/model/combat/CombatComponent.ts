@@ -49,24 +49,25 @@ class CombatComponent extends include(CombatState, ArmorClass, Attacks, HitPoint
   }
 
   /**
-   * What the inventory has equipped (`InventoryComponent.getEquipped`), in its order: each weapon in its set's hand
-   * (one without a proficiency fills none), held (`heldWeapons`), the armor worn, and each shield in its set's off hand
-   * (the first set, for an entry stored without one).
+   * What the inventory has equipped (`InventoryComponent.getEquipped`), in its order: each weapon in the hand of each
+   * set that holds it (one without a proficiency fills none), held (`heldWeapons`), the armor worn, and each shield in
+   * the off hand of each set that holds it (the first set, for an entry stored without one).
    */
   private equipInventory(): void {
     for (const { entry, fields } of this.inventory.getEquipped()) {
       if (entry.item.type === "Weapon") {
-        const setIndex = entry.weaponSet ?? 0;
         const location = entry.location as "Main Hand" | "Off Hand" | "Two Handed";
         const held = { itemId: entry.item.id, entryId: entry.id };
-        const weapon = this.addWeapon(setIndex, location, entry.item, fields.weapon, held);
-        if (weapon) this.heldWeapons.push({ fields: fields.weapon, location, setIndex, weapon });
+        for (const setIndex of ItemPlacement.heldSets(entry)) {
+          const weapon = this.addWeapon(setIndex, location, entry.item, fields.weapon, held);
+          if (weapon) this.heldWeapons.push({ fields: fields.weapon, location, setIndex, weapon });
+        }
       } else if (entry.item.type === "Armor") {
         // The sheet wears it: the heaviest worn slows the character down
         this.addArmor(fields);
       } else if (entry.item.type === "Shield") {
-        // Its set carries it: a tower shield's bulk
-        this.addShield(fields, String(entry.weaponSet ?? 0));
+        // Each set that holds it carries it: a tower shield's bulk
+        for (const set of ItemPlacement.heldSets(entry)) this.addShield(fields, String(set));
       }
     }
   }
@@ -90,7 +91,7 @@ class CombatComponent extends include(CombatState, ArmorClass, Attacks, HitPoint
     const held = this.inventory
       .getEquipped()
       .filter(({ entry }) => entry.item.id === itemId && ItemPlacement.isHand(entry.location));
-    return [...new Set(held.map(({ entry }) => String(entry.weaponSet ?? 0)))];
+    return [...new Set(held.flatMap(({ entry }) => ItemPlacement.heldSets(entry).map(String)))];
   }
 }
 

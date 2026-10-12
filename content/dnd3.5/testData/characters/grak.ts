@@ -33,7 +33,7 @@ export default {
     { levelIndex: 2, featName: "Cleave", aptitude: "General" },
   ],
   inventory: [
-    { name: "Greataxe", quantity: 1, equipped: true, location: "Two Handed", weaponSet: 0 },
+    { name: "Greataxe", quantity: 1, equipped: true, location: "Two Handed", weaponSets: [0] },
     { name: "Hide Armor", quantity: 1, equipped: true, location: "Torso" },
   ],
 } satisfies CharacterSeed;

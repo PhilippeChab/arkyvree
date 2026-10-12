@@ -16,7 +16,7 @@ export interface Carried {
   item: string;
   location?: ItemLocation;
   quantity?: number;
-  weaponSet?: number;
+  weaponSets?: number[];
 }
 
 /** Replaces the character's inventory with these entries (`Carried`): seeded items by name, or item ids. */

@@ -27,7 +27,8 @@ export interface InventoryEntryPlan {
   location: ItemLocation | null;
   remainingCharges: number | null;
   totalCharges: number | null;
-  weaponSet: number | null;
+  /** The weapon sets a hand holds it in, stored from 0: none outside the hands */
+  weaponSets: number[];
 }
 
 /** What a character's languages edit writes: the languages it picked, past those it speaks without picking them. */

@@ -53,9 +53,9 @@ export default {
     { levelIndex: 3, featName: "Weapon Specialization: Longsword", aptitude: "Fighter Bonus Feat" },
   ],
   inventory: [
-    { name: "Longsword", quantity: 1, equipped: true, location: "Main Hand", weaponSet: 0 },
+    { name: "Longsword", quantity: 1, equipped: true, location: "Main Hand", weaponSets: [0] },
     { name: "Chain Mail", quantity: 1, equipped: true, location: "Torso" },
-    { name: "Heavy Steel Shield", quantity: 1, equipped: true, location: "Off Hand", weaponSet: 0 },
+    { name: "Heavy Steel Shield", quantity: 1, equipped: true, location: "Off Hand", weaponSets: [0] },
     { name: "Backpack (empty)", quantity: 1, equipped: true },
     { name: "Bedroll", quantity: 1 },
     { name: "Rope, hempen (50 ft.)", quantity: 1 },

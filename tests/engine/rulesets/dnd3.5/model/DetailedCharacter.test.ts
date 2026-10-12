@@ -271,7 +271,7 @@ async function mightyBow(rating: number) {
 
 /** Whether `name` is proficient with `item` held at `location`. */
 async function proficientWith(name: string, item: string, location: "Main Hand" | "Two Handed") {
-  const set = weaponSet(await buildCarrying(name, [{ item, location, weaponSet: 0 }]));
+  const set = weaponSet(await buildCarrying(name, [{ item, location, weaponSets: [0] }]));
   return (location === "Two Handed" ? set.twohanded : set.mainhand)!.proficient;
 }
 
@@ -417,7 +417,7 @@ async function setupUncannyBlow(location: "Main Hand" | "Two Handed") {
     { characterLevelId: level.id, featId: uncannyBlow.id, aptitudeId: stunt.id },
   ]);
   const character = { ...bjorn, rulesetId: fork.id };
-  await carry(character, [{ item: "Bastard Sword", location, weaponSet: 0 }]);
+  await carry(character, [{ item: "Bastard Sword", location, weaponSets: [0] }]);
   return build(character);
 }
 
@@ -445,7 +445,7 @@ async function setupWeaponTrick(intelligence: number) {
     feats: [{ featId: weaponTrick.id, aptitudeId: secret.id }],
   });
   const character = (await Characters.findOne(db, { id: characterId }))!;
-  await carry(character, [{ item: "Quarterstaff", location: "Two Handed", weaponSet: 0 }]);
+  await carry(character, [{ item: "Quarterstaff", location: "Two Handed", weaponSets: [0] }]);
   return await build(character);
 }
 
@@ -558,7 +558,7 @@ describe("DetailedCharacter", () => {
 
       // A bow's Strength doesn't follow its hand: its share holds no value, which a path reaches nothing of
       const archer = await buildCarrying("Bjorn Ironhand", [
-        { item: "Composite Longbow", location: "Two Handed", weaponSet: 0 },
+        { item: "Composite Longbow", location: "Two Handed", weaponSets: [0] },
       ]);
       expect(
         targetPaths.traversePathInit("items.weapons.compositelongbow.damage.strmultiplier", archer.components),
@@ -572,7 +572,7 @@ describe("DetailedCharacter", () => {
       const targetPaths = new Dnd35TargetPaths();
       const bjorn = await findSeededCharacter("Bjorn Ironhand");
       const characters = [
-        await buildCarrying("Bjorn Ironhand", [{ item: "Heavy Crossbow", location: "Two Handed", weaponSet: 0 }]),
+        await buildCarrying("Bjorn Ironhand", [{ item: "Heavy Crossbow", location: "Two Handed", weaponSets: [0] }]),
         await build({ ...bjorn, age: null, height: null, weight: null }),
         await buildSeeded("Elara Starweaver"),
       ];
@@ -777,8 +777,8 @@ describe("DetailedCharacter", () => {
   describe("weapons", () => {
     test("fill the weapon sets from what the character holds, with half strength in the off hand", async () => {
       const bjorn = await buildCarrying("Bjorn Ironhand", [
-        { item: "Longsword", location: "Main Hand", weaponSet: 0 },
-        { item: "Shortsword", location: "Off Hand", weaponSet: 0 },
+        { item: "Longsword", location: "Main Hand", weaponSets: [0] },
+        { item: "Shortsword", location: "Off Hand", weaponSets: [0] },
       ]);
       // STR 18: +4.
       expect(weaponSet(bjorn)).toMatchObject({
@@ -794,7 +794,9 @@ describe("DetailedCharacter", () => {
     });
 
     test("give a weapon held in two hands one and a half strength", async () => {
-      const bjorn = await buildCarrying("Bjorn Ironhand", [{ item: "Greataxe", location: "Two Handed", weaponSet: 1 }]);
+      const bjorn = await buildCarrying("Bjorn Ironhand", [
+        { item: "Greataxe", location: "Two Handed", weaponSets: [1] },
+      ]);
       expect(weaponSet(bjorn, "1").twohanded).toMatchObject({
         name: "Greataxe",
         damage: { base: "1d12", critical: { range: 1, multiplier: 3 }, strength: 6 },
@@ -817,7 +819,7 @@ describe("DetailedCharacter", () => {
         },
       );
       const weapons = (
-        await buildCarrying("Bjorn Ironhand", [{ item: variant.id, location: "Main Hand", weaponSet: 0 }])
+        await buildCarrying("Bjorn Ironhand", [{ item: variant.id, location: "Main Hand", weaponSets: [0] }])
       ).components.weapons.getWeapons();
       expect(weapons["longsword"]).toBeDefined();
       expect(weapons["longsword1"]).toBeUndefined();
@@ -851,8 +853,8 @@ describe("DetailedCharacter", () => {
 
       const { mainhand, offhand } = weaponSet(
         await buildCarrying("Bjorn Ironhand", [
-          { item: blade.id, location: "Main Hand", weaponSet: 0 },
-          { item: "Shortsword", location: "Off Hand", weaponSet: 0 },
+          { item: blade.id, location: "Main Hand", weaponSets: [0] },
+          { item: "Shortsword", location: "Off Hand", weaponSets: [0] },
         ]),
       );
       // On top of Bjorn's Weapon Focus (+1 to attack) and Weapon Specialization (+2 to damage) in longswords
@@ -872,7 +874,7 @@ describe("DetailedCharacter", () => {
     test("cap a mighty composite bow's strength to damage at its rating, and aim it with dexterity", async () => {
       const bow = weaponSet(
         await buildCarrying("Bjorn Ironhand", [
-          { item: (await mightyBow(2)).id, location: "Two Handed", weaponSet: 0 },
+          { item: (await mightyBow(2)).id, location: "Two Handed", weaponSets: [0] },
         ]),
       ).twohanded;
       // STR 18 (+4), DEX 14 (+2).
@@ -880,7 +882,7 @@ describe("DetailedCharacter", () => {
 
       // The seeded oathbow is a +2 composite longbow: its own rating wins over its template's +0.
       const oathbow = weaponSet(
-        await buildCarrying("Bjorn Ironhand", [{ item: "Oathbow", location: "Two Handed", weaponSet: 0 }]),
+        await buildCarrying("Bjorn Ironhand", [{ item: "Oathbow", location: "Two Handed", weaponSets: [0] }]),
       ).twohanded;
       expect(oathbow).toMatchObject({ name: "Oathbow", damage: { strength: 2 } });
     });
@@ -888,15 +890,15 @@ describe("DetailedCharacter", () => {
     test("take 2 off a composite bow's attack when the strength bonus falls short of its rating, a plain bow's never", async () => {
       // STR 8 (-1), DEX 14 (+2): short of the seeded composite longbow's +0.
       const vex = await buildCarrying("Vex Flamecaller", [
-        { item: "Composite Longbow", location: "Two Handed", weaponSet: 0 },
-        { item: "Longbow", location: "Two Handed", weaponSet: 1 },
+        { item: "Composite Longbow", location: "Two Handed", weaponSets: [0] },
+        { item: "Longbow", location: "Two Handed", weaponSets: [1] },
       ]);
       expect([weaponSet(vex).twohanded!.tohit.strength, weaponSet(vex, "1").twohanded!.tohit.strength]).toEqual([0, 2]);
 
       // STR 18 (+4), short of +5: damage takes all of it.
       const bow = weaponSet(
         await buildCarrying("Bjorn Ironhand", [
-          { item: (await mightyBow(5)).id, location: "Two Handed", weaponSet: 0 },
+          { item: (await mightyBow(5)).id, location: "Two Handed", weaponSets: [0] },
         ]),
       ).twohanded;
       expect(bow).toMatchObject({ tohit: { strength: 0 }, damage: { strength: 4 } });
@@ -905,16 +907,16 @@ describe("DetailedCharacter", () => {
     test("add a sling's strength to damage, a thrown weapon's, and aim it with dexterity", async () => {
       // STR 18 (+4), DEX 14 (+2).
       const sling = weaponSet(
-        await buildCarrying("Bjorn Ironhand", [{ item: "Sling", location: "Main Hand", weaponSet: 0 }]),
+        await buildCarrying("Bjorn Ironhand", [{ item: "Sling", location: "Main Hand", weaponSets: [0] }]),
       ).mainhand;
       expect(sling).toMatchObject({ name: "Sling", tohit: { strength: 2 }, damage: { strength: 4, total: "1d4 + 4" } });
     });
 
     test("take a strength penalty but no bonus to a bow's damage, its rating aside, and none to a crossbow's", async () => {
       const ranged: Carried[] = [
-        { item: "Longbow", location: "Two Handed", weaponSet: 0 },
-        { item: "Composite Longbow", location: "Two Handed", weaponSet: 1 },
-        { item: "Light Crossbow", location: "Two Handed", weaponSet: 2 },
+        { item: "Longbow", location: "Two Handed", weaponSets: [0] },
+        { item: "Composite Longbow", location: "Two Handed", weaponSets: [1] },
+        { item: "Light Crossbow", location: "Two Handed", weaponSets: [2] },
       ];
       const strengthToDamage = (detailed: Detailed) =>
         ["0", "1", "2"].map((set) => weaponSet(detailed, set).twohanded!.damage.strength);
@@ -927,9 +929,9 @@ describe("DetailedCharacter", () => {
       // STR 8, 4 (-3) with the belt.
       const vex = await buildCarrying("Vex Flamecaller", [
         { item: (await createAbilityItem("strength", -4, "Waist")).id, location: "Waist" },
-        { item: "Dagger", location: "Main Hand", weaponSet: 0 },
-        { item: "Sickle", location: "Off Hand", weaponSet: 0 },
-        { item: "Quarterstaff", location: "Two Handed", weaponSet: 1 },
+        { item: "Dagger", location: "Main Hand", weaponSets: [0] },
+        { item: "Sickle", location: "Off Hand", weaponSets: [0] },
+        { item: "Quarterstaff", location: "Two Handed", weaponSets: [1] },
       ]);
       const { mainhand, offhand } = weaponSet(vex);
       expect([mainhand, offhand, weaponSet(vex, "1").twohanded].map((weapon) => weapon!.damage.strength)).toEqual([
@@ -940,15 +942,15 @@ describe("DetailedCharacter", () => {
     test("give a light weapon held in two hands its strength once, not one and a half times", async () => {
       // STR 18 (+4): a shortsword is light for a human, a longsword isn't.
       const bjorn = await buildCarrying("Bjorn Ironhand", [
-        { item: "Shortsword", location: "Two Handed", weaponSet: 0 },
-        { item: "Longsword", location: "Two Handed", weaponSet: 1 },
+        { item: "Shortsword", location: "Two Handed", weaponSets: [0] },
+        { item: "Longsword", location: "Two Handed", weaponSets: [1] },
       ]);
       expect(weaponSet(bjorn).twohanded).toMatchObject({ light: true, damage: { strength: 4 } });
       expect(weaponSet(bjorn, "1").twohanded).toMatchObject({ light: false, damage: { strength: 6 } });
 
       // As a halfling, STR 16 (+3): a shortsword, sized for its wielder, is still light.
       const halfling = await asHalfling("Bjorn Ironhand");
-      await carry(halfling, [{ item: "Shortsword", location: "Two Handed", weaponSet: 0 }]);
+      await carry(halfling, [{ item: "Shortsword", location: "Two Handed", weaponSets: [0] }]);
       expect(weaponSet(await build(halfling)).twohanded).toMatchObject({ light: true, damage: { strength: 3 } });
     });
 
@@ -957,7 +959,7 @@ describe("DetailedCharacter", () => {
       const longsword = weaponSet(
         await buildCarrying("Bjorn Ironhand", [
           { item: (await createAbilityItem("strength", 4, "Waist")).id, location: "Waist" },
-          { item: "Longsword", location: "Main Hand", weaponSet: 0 },
+          { item: "Longsword", location: "Main Hand", weaponSets: [0] },
         ]),
       ).mainhand;
       expect(longsword).toMatchObject({ tohit: { strength: 6 }, damage: { strength: 6 } });
@@ -983,8 +985,8 @@ describe("DetailedCharacter", () => {
     test("aim a javelin and a dart with dexterity, ranged weapons though thrown, their damage taking strength", async () => {
       // STR 8 (-1), DEX 14 (+2).
       const vex = await buildCarrying("Vex Flamecaller", [
-        { item: "Javelin", location: "Main Hand", weaponSet: 0 },
-        { item: "Dart", location: "Main Hand", weaponSet: 1 },
+        { item: "Javelin", location: "Main Hand", weaponSets: [0] },
+        { item: "Dart", location: "Main Hand", weaponSets: [1] },
       ]);
       for (const set of ["0", "1"]) {
         expect(weaponSet(vex, set).mainhand).toMatchObject({
@@ -1001,7 +1003,7 @@ describe("DetailedCharacter", () => {
       const weapons = ["Longbow", "Heavy Crossbow", "Sling", "Javelin", "Dart", "Dagger", "Net"];
       const vex = await buildCarrying(
         "Vex Flamecaller",
-        weapons.map((item, weaponSet) => ({ item, location: "Main Hand", weaponSet })),
+        weapons.map((item, set) => ({ item, location: "Main Hand", weaponSets: [set] })),
       );
       expect(weapons.map((_, set) => weaponSet(vex, String(set)).mainhand)).toMatchObject([
         { name: "Longbow", range: 100, maxRange: 1000 },
@@ -1031,9 +1033,9 @@ describe("DetailedCharacter", () => {
       // A melee weapon one can throw, its thrown attack reaching what it says
       const hurled = await weapon("Hurled Club", { [WEAPON_MAX_RANGE_INCREMENTS]: "3" });
       const bjorn = await buildCarrying("Bjorn Ironhand", [
-        { item: blowgun.id, location: "Main Hand", weaponSet: 0 },
-        { item: stone.id, location: "Main Hand", weaponSet: 1 },
-        { item: hurled.id, location: "Main Hand", weaponSet: 2 },
+        { item: blowgun.id, location: "Main Hand", weaponSets: [0] },
+        { item: stone.id, location: "Main Hand", weaponSets: [1] },
+        { item: hurled.id, location: "Main Hand", weaponSets: [2] },
       ]);
       expect(["0", "1", "2"].map((set) => weaponSet(bjorn, set).mainhand)).toMatchObject([
         { ranged: true, maxRange: 300 },
@@ -1050,8 +1052,8 @@ describe("DetailedCharacter", () => {
         sourceItemId: (await getSeedCtx()).itemMap["Longbow"],
       });
       const bjorn = await buildCarrying("Bjorn Ironhand", [
-        { item: plusOne.id, location: "Two Handed", weaponSet: 0 },
-        { item: "Oathbow", location: "Two Handed", weaponSet: 1 },
+        { item: plusOne.id, location: "Two Handed", weaponSets: [0] },
+        { item: "Oathbow", location: "Two Handed", weaponSets: [1] },
       ]);
       // The oathbow's template is the composite longbow, whose range increment is 110 ft.
       expect([weaponSet(bjorn).twohanded, weaponSet(bjorn, "1").twohanded]).toMatchObject([
@@ -1063,8 +1065,8 @@ describe("DetailedCharacter", () => {
     test("throw a sai but not a handaxe: of the two, the SRD gives a range increment to the sai only", async () => {
       // STR 18 (+4), DEX 14 (+2), BAB +5.
       const bjorn = await buildCarrying("Bjorn Ironhand", [
-        { item: "Sai", location: "Main Hand", weaponSet: 0 },
-        { item: "Handaxe", location: "Main Hand", weaponSet: 1 },
+        { item: "Sai", location: "Main Hand", weaponSets: [0] },
+        { item: "Handaxe", location: "Main Hand", weaponSets: [1] },
       ]);
       expect(weaponSet(bjorn).mainhand).toMatchObject({ name: "Sai", range: 10, thrown: { dexterity: 2 } });
       expect(weaponSet(bjorn, "1").mainhand).toMatchObject({ name: "Handaxe", range: 0, thrown: null });
@@ -1092,8 +1094,8 @@ describe("DetailedCharacter", () => {
       const stick = await weapon("Bow-shaped Stick", "Bow");
       // STR 18 (+4), DEX 14 (+2).
       const bjorn = await buildCarrying("Bjorn Ironhand", [
-        { item: caster.id, location: "Main Hand", weaponSet: 0 },
-        { item: stick.id, location: "Main Hand", weaponSet: 1 },
+        { item: caster.id, location: "Main Hand", weaponSets: [0] },
+        { item: stick.id, location: "Main Hand", weaponSets: [1] },
       ]);
       expect(weaponSet(bjorn).mainhand).toMatchObject({
         ranged: true,
@@ -1121,7 +1123,7 @@ describe("DetailedCharacter", () => {
         const rapier = weaponSet(
           await buildCarrying("Lyra Shadowstep", [
             { item: (await createAbilityItem("strength", 12, "Waist")).id, location: "Waist" },
-            { item: "Rapier", location: "Main Hand", weaponSet: 0 },
+            { item: "Rapier", location: "Main Hand", weaponSets: [0] },
           ]),
         ).mainhand;
         expect(rapier).toMatchObject({ name: "Rapier", tohit: { strength: 6 } });
@@ -1143,7 +1145,7 @@ describe("DetailedCharacter", () => {
         // STR 18 (+4) over DEX 14 (+2).
         expect(
           weaponSet(
-            await buildCarrying("Bjorn Ironhand", [{ item: "Shortsword", location: "Main Hand", weaponSet: 0 }]),
+            await buildCarrying("Bjorn Ironhand", [{ item: "Shortsword", location: "Main Hand", weaponSets: [0] }]),
           ).mainhand!.tohit.strength,
         ).toBe(4);
       });
@@ -1167,8 +1169,8 @@ describe("DetailedCharacter", () => {
           weaponSet(
             await buildCarrying("Lyra Shadowstep", [
               { item: charm.id, location: "Neck" },
-              { item: "Rapier", location: "Main Hand", weaponSet: 0 },
-              { item: shield, location: "Off Hand", weaponSet: 0 },
+              { item: "Rapier", location: "Main Hand", weaponSets: [0] },
+              { item: shield, location: "Off Hand", weaponSets: [0] },
             ]),
           ).mainhand!.tohit;
         expect(await finessed("Heavy Steel Shield")).toMatchObject({ strength: 3, gearpenalty: 0 });
@@ -1179,8 +1181,8 @@ describe("DetailedCharacter", () => {
         // The rogue, proficient with no shield: her whole DEX 20 (+5), and the heavy steel shield's 2 on every attack.
         const { mainhand } = weaponSet(
           await buildCarrying("Lyra Shadowstep", [
-            { item: "Rapier", location: "Main Hand", weaponSet: 0 },
-            { item: "Heavy Steel Shield", location: "Off Hand", weaponSet: 0 },
+            { item: "Rapier", location: "Main Hand", weaponSets: [0] },
+            { item: "Heavy Steel Shield", location: "Off Hand", weaponSets: [0] },
           ]),
         );
         expect(mainhand!.tohit).toMatchObject({ strength: 5, gearpenalty: -2 });
@@ -1208,8 +1210,8 @@ describe("DetailedCharacter", () => {
         // STR 14 (+2), BAB +6: +8/+3 alone. With a light off-hand weapon and the feat, -2 / -2; without, -4 / -4.
         const light = weaponSet(
           await buildRanger([
-            { item: "Longsword", location: "Main Hand", weaponSet: 0 },
-            { item: "Shortsword", location: "Off Hand", weaponSet: 0 },
+            { item: "Longsword", location: "Main Hand", weaponSets: [0] },
+            { item: "Shortsword", location: "Off Hand", weaponSets: [0] },
           ]),
         );
         expect([light.mainhand!.twoweapon!.total, light.offhand!.twoweapon!.total]).toEqual([
@@ -1218,8 +1220,8 @@ describe("DetailedCharacter", () => {
         ]);
         const heavy = weaponSet(
           await buildRanger([
-            { item: "Longsword", location: "Main Hand", weaponSet: 0 },
-            { item: "Battleaxe", location: "Off Hand", weaponSet: 0 },
+            { item: "Longsword", location: "Main Hand", weaponSets: [0] },
+            { item: "Battleaxe", location: "Off Hand", weaponSets: [0] },
           ]),
         );
         expect([heavy.mainhand!.twoweapon!.total, heavy.offhand!.twoweapon!.total]).toEqual([
@@ -1231,8 +1233,8 @@ describe("DetailedCharacter", () => {
       test("weigh a halfling's off-hand weapon as a human's: sized for its wielder, a kukri is light", async () => {
         const halfling = await asHalfling("Bjorn Ironhand");
         await carry(halfling, [
-          { item: "Shortsword", location: "Main Hand", weaponSet: 0 },
-          { item: "Kukri", location: "Off Hand", weaponSet: 0 },
+          { item: "Shortsword", location: "Main Hand", weaponSets: [0] },
+          { item: "Kukri", location: "Off Hand", weaponSets: [0] },
         ]);
         const { mainhand, offhand } = weaponSet(await build(halfling));
         // Without the feats, a light off-hand weapon: -4 / -8.
@@ -1244,7 +1246,7 @@ describe("DetailedCharacter", () => {
         // A quarterstaff (1d6/1d6): +8/+3 alone, 1½ Strength. As two weapons, with the feats and a light other end:
         // -2 / -2, the other end twice (Improved Two-Weapon Fighting), with its whole Strength bonus and half of it
         const { twohanded: staff } = weaponSet(
-          await buildRanger([{ item: "Quarterstaff", location: "Two Handed", weaponSet: 0 }]),
+          await buildRanger([{ item: "Quarterstaff", location: "Two Handed", weaponSets: [0] }]),
         );
         expect(staff!.tohit.total).toEqual([8, 3]);
         expect(staff!.damage.total).toBe("1d6 + 3");
@@ -1264,8 +1266,8 @@ describe("DetailedCharacter", () => {
         invalidateSeededRuleset(rulesetId);
         const set = weaponSet(
           await buildRanger([
-            { item: "Longsword", location: "Main Hand", weaponSet: 0 },
-            { item: "Battleaxe", location: "Off Hand", weaponSet: 0 },
+            { item: "Longsword", location: "Main Hand", weaponSets: [0] },
+            { item: "Battleaxe", location: "Off Hand", weaponSets: [0] },
           ]),
         );
         expect([set.mainhand!.twoweapon!.total, set.offhand!.twoweapon!.total]).toEqual([
@@ -1276,7 +1278,7 @@ describe("DetailedCharacter", () => {
 
       test("count a sling as a one-handed weapon, not a light one", async () => {
         const { mainhand } = weaponSet(
-          await buildCarrying("Bjorn Ironhand", [{ item: "Sling", location: "Main Hand", weaponSet: 0 }]),
+          await buildCarrying("Bjorn Ironhand", [{ item: "Sling", location: "Main Hand", weaponSets: [0] }]),
         );
         expect(mainhand).toMatchObject({ name: "Sling", light: false });
       });
@@ -1285,8 +1287,8 @@ describe("DetailedCharacter", () => {
         // An elf rogue with an Assassin's Dagger (+2) in each hand: two entries of one item
         const { mainhand, offhand } = weaponSet(
           await buildCarrying("Lyra Shadowstep", [
-            { item: "Assassin's Dagger", location: "Main Hand", weaponSet: 0 },
-            { item: "Assassin's Dagger", location: "Off Hand", weaponSet: 0 },
+            { item: "Assassin's Dagger", location: "Main Hand", weaponSets: [0] },
+            { item: "Assassin's Dagger", location: "Off Hand", weaponSets: [0] },
           ]),
         );
         expect([mainhand?.tohit.magic, offhand?.tohit.magic]).toEqual([2, 2]);
@@ -1295,8 +1297,8 @@ describe("DetailedCharacter", () => {
 
       test("leave a weapon alone without one in the other hand, an unarmed strike not counting", async () => {
         const lyra = await buildCarrying("Lyra Shadowstep", [
-          { item: "Dagger", location: "Off Hand", weaponSet: 0 },
-          { item: "Shortsword", location: "Main Hand", weaponSet: 1 },
+          { item: "Dagger", location: "Off Hand", weaponSets: [0] },
+          { item: "Shortsword", location: "Main Hand", weaponSets: [1] },
         ]);
         expect(weaponSet(lyra)).toMatchObject({
           mainhand: { name: "Unarmed Strike", twoweapon: null },
@@ -1308,10 +1310,10 @@ describe("DetailedCharacter", () => {
 
     describe("the gear", () => {
       test("costs every attack the check penalty of armor and shields worn without proficiency", async () => {
-        const dagger: Carried = { item: "Dagger", location: "Main Hand", weaponSet: 0 };
+        const dagger: Carried = { item: "Dagger", location: "Main Hand", weaponSets: [0] };
         const plateAndShield: Carried[] = [
           { item: "Full Plate", location: "Torso" },
-          { item: "Heavy Steel Shield", location: "Off Hand", weaponSet: 0 },
+          { item: "Heavy Steel Shield", location: "Off Hand", weaponSets: [0] },
         ];
         const attacks = async (name: string, carried: Carried[]) => {
           const { tohit, thrown } = weaponSet(await buildCarrying(name, [dagger, ...carried])).mainhand!;
@@ -1332,8 +1334,8 @@ describe("DetailedCharacter", () => {
         const gear = async (name: string) =>
           weaponSet(
             await buildCarrying(name, [
-              { item: "Dagger", location: "Main Hand", weaponSet: 0 },
-              { item: "Tower Shield", location: "Off Hand", weaponSet: 0 },
+              { item: "Dagger", location: "Main Hand", weaponSets: [0] },
+              { item: "Tower Shield", location: "Off Hand", weaponSets: [0] },
             ]),
           ).mainhand!.tohit.gearpenalty;
         // A fighter, proficient with it; a wizard, who isn't, takes its 10 as well
@@ -1343,8 +1345,8 @@ describe("DetailedCharacter", () => {
       test("costs a crossbow in one hand 2 when light, 4 when heavy, and a hand crossbow nothing", async () => {
         const SLOTS = { "Main Hand": "mainhand", "Off Hand": "offhand", "Two Handed": "twohanded" } as const;
         const gear = async (item: string, location: keyof typeof SLOTS) =>
-          weaponSet(await buildCarrying("Bjorn Ironhand", [{ item, location, weaponSet: 0 }]))[SLOTS[location]]!.tohit
-            .gearpenalty;
+          weaponSet(await buildCarrying("Bjorn Ironhand", [{ item, location, weaponSets: [0] }]))[SLOTS[location]]!
+            .tohit.gearpenalty;
         expect([
           await gear("Light Crossbow", "Main Hand"),
           await gear("Heavy Crossbow", "Off Hand"),
@@ -1356,7 +1358,7 @@ describe("DetailedCharacter", () => {
 
     test("take a specific weapon's enhancement bonus, a masterwork one's on attack rolls only", async () => {
       const held = async (item: string) =>
-        weaponSet(await buildCarrying("Bjorn Ironhand", [{ item, location: "Main Hand", weaponSet: 0 }])).mainhand!;
+        weaponSet(await buildCarrying("Bjorn Ironhand", [{ item, location: "Main Hand", weaponSets: [0] }])).mainhand!;
       expect(await held("Holy Avenger")).toMatchObject({ tohit: { magic: 2 }, damage: { magic: 2 } });
       expect(await held("Masterwork Cold Iron Longsword")).toMatchObject({ tohit: { magic: 1 }, damage: { magic: 0 } });
     });
@@ -1364,9 +1366,9 @@ describe("DetailedCharacter", () => {
     test("give a halfling +1 with a sling and a thrown weapon, a dagger's thrown attack too, not a bow", async () => {
       const halfling = await asHalfling("Bjorn Ironhand");
       await carry(halfling, [
-        { item: "Sling", location: "Main Hand", weaponSet: 0 },
-        { item: "Dagger", location: "Main Hand", weaponSet: 1 },
-        { item: "Shortbow", location: "Two Handed", weaponSet: 2 },
+        { item: "Sling", location: "Main Hand", weaponSets: [0] },
+        { item: "Dagger", location: "Main Hand", weaponSets: [1] },
+        { item: "Shortbow", location: "Two Handed", weaponSets: [2] },
       ]);
       const detailed = await build(halfling);
       const { bab, throwing } = detailed.components.combat.getCombat();
@@ -1404,8 +1406,8 @@ describe("DetailedCharacter", () => {
 
       test("judges each place an item is held by its own hands: a bastard sword in one hand, and in two", async () => {
         const detailed = await buildCarrying("Bjorn Ironhand", [
-          { item: "Bastard Sword", location: "Main Hand", weaponSet: 0 },
-          { item: "Bastard Sword", location: "Two Handed", weaponSet: 1 },
+          { item: "Bastard Sword", location: "Main Hand", weaponSets: [0] },
+          { item: "Bastard Sword", location: "Two Handed", weaponSets: [1] },
         ]);
         const oneHanded = weaponSet(detailed).mainhand!;
         const twoHanded = weaponSet(detailed, "1").twohanded!;
@@ -1441,15 +1443,15 @@ describe("DetailedCharacter", () => {
         });
         invalidateSeededRuleset(rulesetId);
         const misc = async (location: "Main Hand" | "Off Hand") => {
-          const set = weaponSet(await buildCarrying("Bjorn Ironhand", [{ item: sword.id, location, weaponSet: 0 }]));
+          const set = weaponSet(await buildCarrying("Bjorn Ironhand", [{ item: sword.id, location, weaponSets: [0] }]));
           return (location === "Main Hand" ? set.mainhand : set.offhand)!.tohit.misc;
         };
         expect([await misc("Main Hand"), await misc("Off Hand")]).toEqual([1, 0]);
         // One in each hand: the main-hand one alone
         const both = weaponSet(
           await buildCarrying("Bjorn Ironhand", [
-            { item: sword.id, location: "Main Hand", weaponSet: 0 },
-            { item: sword.id, location: "Off Hand", weaponSet: 0 },
+            { item: sword.id, location: "Main Hand", weaponSets: [0] },
+            { item: sword.id, location: "Off Hand", weaponSets: [0] },
           ]),
         );
         expect([both.mainhand!.tohit.misc, both.offhand!.tohit.misc]).toEqual([1, 0]);
@@ -1481,7 +1483,7 @@ describe("DetailedCharacter", () => {
         // A wizard with a battleaxe, not an elf's weapon: BAB 1, STR 8.
         expect(
           weaponSet(
-            await buildCarrying("Elara Starweaver", [{ item: "Battleaxe", location: "Main Hand", weaponSet: 0 }]),
+            await buildCarrying("Elara Starweaver", [{ item: "Battleaxe", location: "Main Hand", weaponSets: [0] }]),
           ).mainhand,
         ).toMatchObject({
           name: "Battleaxe",
@@ -1491,7 +1493,7 @@ describe("DetailedCharacter", () => {
       });
 
       test("costs a weapon made from a template when the character isn't proficient with its template", async () => {
-        const battleaxe: Carried[] = [{ item: "Adamantine Battleaxe", location: "Main Hand", weaponSet: 0 }];
+        const battleaxe: Carried[] = [{ item: "Adamantine Battleaxe", location: "Main Hand", weaponSets: [0] }];
         expect(weaponSet(await buildCarrying("Elara Starweaver", battleaxe)).mainhand).toMatchObject({
           name: "Adamantine Battleaxe",
           proficient: false,
@@ -1506,7 +1508,7 @@ describe("DetailedCharacter", () => {
       test("doesn't cost a weapon made from a template its own modifiers", async () => {
         // A luck blade is a shortsword, which a wizard isn't proficient with: her saves still take its +1 luck.
         const elara = await buildCarrying("Elara Starweaver", [
-          { item: "Luck Blade, 0 Wishes", location: "Main Hand", weaponSet: 0 },
+          { item: "Luck Blade, 0 Wishes", location: "Main Hand", weaponSets: [0] },
         ]);
         expect(weaponSet(elara).mainhand).toMatchObject({ proficient: false, tohit: { misc: -4 } });
         const will = (character: DetailedCharacter) => character.components.saves.getSaves().will;
@@ -1523,8 +1525,9 @@ describe("DetailedCharacter", () => {
         );
         // A wizard keeps its +2: -4 + 2
         expect(
-          weaponSet(await buildCarrying("Elara Starweaver", [{ item: blade.id, location: "Main Hand", weaponSet: 0 }]))
-            .mainhand,
+          weaponSet(
+            await buildCarrying("Elara Starweaver", [{ item: blade.id, location: "Main Hand", weaponSets: [0] }]),
+          ).mainhand,
         ).toMatchObject({ name: "Base Blade", proficient: false, tohit: { misc: -2 } });
       });
 
@@ -1537,7 +1540,7 @@ describe("DetailedCharacter", () => {
           "feats.nosuchproficiency.possessed",
         );
         expect(
-          weaponSet(await buildCarrying("Bjorn Ironhand", [{ item: blade.id, location: "Main Hand", weaponSet: 0 }]))
+          weaponSet(await buildCarrying("Bjorn Ironhand", [{ item: blade.id, location: "Main Hand", weaponSets: [0] }]))
             .mainhand,
         ).toMatchObject({ name: "Lost Blade", proficient: false });
       });
@@ -1552,8 +1555,9 @@ describe("DetailedCharacter", () => {
         );
         // A wizard: no -4, and its +2 off
         expect(
-          weaponSet(await buildCarrying("Elara Starweaver", [{ item: blade.id, location: "Main Hand", weaponSet: 0 }]))
-            .mainhand,
+          weaponSet(
+            await buildCarrying("Elara Starweaver", [{ item: blade.id, location: "Main Hand", weaponSets: [0] }]),
+          ).mainhand,
         ).toMatchObject({ name: "Plain Blade", proficient: true, tohit: { misc: 0 } });
       });
 
@@ -1571,20 +1575,20 @@ describe("DetailedCharacter", () => {
         );
         // Bjorn, proficient with longswords, has Weapon Focus: Longsword (+1) and STR 18
         expect(
-          weaponSet(await buildCarrying("Bjorn Ironhand", [{ item: blade.id, location: "Main Hand", weaponSet: 0 }]))
+          weaponSet(await buildCarrying("Bjorn Ironhand", [{ item: blade.id, location: "Main Hand", weaponSets: [0] }]))
             .mainhand,
         ).toMatchObject({ name: "Giant's Blade", proficient: true, tohit: { misc: 1 } });
       });
 
       test("never costs a monk her gauntlet, a strike with it being unarmed, but costs her a spiked one", async () => {
         const holding = async (item: string) =>
-          weaponSet(await buildCarrying("Zen Whitepetal", [{ item, location: "Main Hand", weaponSet: 0 }])).mainhand;
+          weaponSet(await buildCarrying("Zen Whitepetal", [{ item, location: "Main Hand", weaponSets: [0] }])).mainhand;
         expect(await holding("Gauntlet")).toMatchObject({ name: "Gauntlet", proficient: true, tohit: { misc: 0 } });
         expect(await holding("Spiked Gauntlet")).toMatchObject({ name: "Spiked Gauntlet", proficient: false });
         // A wizard isn't proficient with her unarmed strike either.
         expect(
           weaponSet(
-            await buildCarrying("Elara Starweaver", [{ item: "Gauntlet", location: "Main Hand", weaponSet: 0 }]),
+            await buildCarrying("Elara Starweaver", [{ item: "Gauntlet", location: "Main Hand", weaponSets: [0] }]),
           ).mainhand,
         ).toMatchObject({ name: "Gauntlet", proficient: false });
       });
@@ -1617,18 +1621,21 @@ describe("DetailedCharacter", () => {
         });
         expect(
           weaponSet(
-            await buildCarrying("Zen Whitepetal", [{ item: "Gauntlet", location: "Main Hand", weaponSet: 1 }]),
+            await buildCarrying("Zen Whitepetal", [{ item: "Gauntlet", location: "Main Hand", weaponSets: [1] }]),
             "1",
           ).mainhand,
         ).toMatchObject({ name: "Gauntlet", damage: { base: "1d6" } });
         expect(
           weaponSet(
-            await buildCarrying("Zen Whitepetal", [{ item: "Spiked Gauntlet", location: "Main Hand", weaponSet: 0 }]),
+            await buildCarrying("Zen Whitepetal", [
+              { item: "Spiked Gauntlet", location: "Main Hand", weaponSets: [0] },
+            ]),
           ).mainhand,
         ).toMatchObject({ name: "Spiked Gauntlet", damage: { base: "1d4" } });
         expect(
-          weaponSet(await buildCarrying("Zen Whitepetal", [{ item: "Longsword", location: "Main Hand", weaponSet: 0 }]))
-            .mainhand,
+          weaponSet(
+            await buildCarrying("Zen Whitepetal", [{ item: "Longsword", location: "Main Hand", weaponSets: [0] }]),
+          ).mainhand,
         ).toMatchObject({ name: "Longsword", damage: { base: "1d8" } });
       });
     });
@@ -1637,7 +1644,7 @@ describe("DetailedCharacter", () => {
       const smallFighter = await asHalfling("Bjorn Ironhand");
       await carry(smallFighter, []);
       expect(weaponSet(await build(smallFighter)).mainhand!.damage.base).toBe("1d2");
-      await carry(smallFighter, [{ item: "Longsword", location: "Main Hand", weaponSet: 0 }]);
+      await carry(smallFighter, [{ item: "Longsword", location: "Main Hand", weaponSets: [0] }]);
       expect(weaponSet(await build(smallFighter)).mainhand).toMatchObject({
         name: "Longsword",
         damage: { base: "1d6" },
@@ -1677,7 +1684,7 @@ describe("DetailedCharacter", () => {
 
     test("leave an empty hand's unarmed strike to its own group when what it holds fills no slot (an arrow)", async () => {
       const bjorn = await buildCarrying("Bjorn Ironhand", [
-        { item: "Slaying Arrow", location: "Main Hand", weaponSet: 0 },
+        { item: "Slaying Arrow", location: "Main Hand", weaponSets: [0] },
       ]);
       const targetPaths = new Dnd35TargetPaths();
       const read = (path: string) => targetPaths.traversePathInit(path, bjorn.components);
@@ -1752,9 +1759,9 @@ describe("DetailedCharacter", () => {
         await addCharacterLevel(characterId, (await findKlassLevel(duelist.id, level))!.id);
       const character = (await Characters.findOne(db, { id: characterId }))!;
       await carry(character, [
-        { item: "Rapier", location: "Main Hand", weaponSet: 0 },
-        { item: "Rapier", location: "Main Hand", weaponSet: 1 },
-        { item: "Light Steel Shield", location: "Off Hand", weaponSet: 1 },
+        { item: "Rapier", location: "Main Hand", weaponSets: [0] },
+        { item: "Rapier", location: "Main Hand", weaponSets: [1] },
+        { item: "Light Steel Shield", location: "Off Hand", weaponSets: [1] },
       ]);
       const sheet = async () => {
         const detailed = await build(character);
@@ -1832,7 +1839,7 @@ describe("DetailedCharacter", () => {
 
     test("adds armor and shield together, a weapon in hand", async () => {
       const bjorn = await buildCarrying("Bjorn Ironhand", [
-        { item: "Longsword", location: "Main Hand", weaponSet: 0 },
+        { item: "Longsword", location: "Main Hand", weaponSets: [0] },
         { item: "Chain Mail", location: "Torso" },
         { item: "Light Wooden Shield", location: "Off Hand" },
       ]);
@@ -2156,7 +2163,7 @@ describe("DetailedCharacter", () => {
       ]);
 
       const armed = (
-        await buildCarrying("Bjorn Ironhand", [{ item: "Longsword", location: "Main Hand", weaponSet: 0 }])
+        await buildCarrying("Bjorn Ironhand", [{ item: "Longsword", location: "Main Hand", weaponSets: [0] }])
       ).modifierEvaluator.getModifiers();
       expect(armed.inactiveModifiers.filter((m) => m.target.includes("longsword"))).toEqual([]);
       expect(targets.every((target) => armed.appliedModifiers.some((m) => m.target === target))).toBe(true);

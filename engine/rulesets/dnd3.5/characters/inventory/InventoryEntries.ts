@@ -18,14 +18,18 @@ import Equipping from "./Equipping.ts";
  * location from taking an item, and where an entry's add or edit holds its item, checked.
  */
 export default class InventoryEntries {
-  /** Where an entry is held, as it stores it: only an equipped item has a location, only a held one a set. */
-  private static placementOf({ equipped, location, weaponSet }: InventoryEntryRequest): HeldInventoryEntry {
+  /**
+   * Where an entry is held, as it stores it: only an equipped item has a location, only a held one sets, each once, in
+   * order.
+   */
+  private static placementOf({ equipped, location, weaponSets }: InventoryEntryRequest): HeldInventoryEntry {
     const resolvedLocation = equipped ? (location ?? null) : null;
     const resolvedEquipped = !!resolvedLocation;
+    const held = resolvedEquipped && ItemPlacement.isHand(resolvedLocation);
     return {
       equipped: resolvedEquipped,
       location: resolvedLocation,
-      weaponSet: resolvedEquipped && ItemPlacement.isHand(resolvedLocation) ? weaponSet : null,
+      weaponSets: held ? [...new Set(weaponSets)].sort((a, b) => a - b) : [],
     };
   }
 
@@ -35,15 +39,15 @@ export default class InventoryEntries {
   }
 
   /**
-   * Why `location` (in `weaponSet`, stored from 0, for a hand) can't take one more item of the character's, if it
-   * can't: the entry in the way, named, the entry placed (`entryId`, none for a new one) aside.
+   * Why `location` (in each of `weaponSets`, stored from 0, for a hand) can't take one more item of the character's, if
+   * it can't: the entry in the way, named with its set, the entry placed (`entryId`, none for a new one) aside.
    */
   static describePlacement(
     view: RulesetView,
     character: CharacterInput,
-    { entryId, location, weaponSet }: PlacementQuery,
+    { entryId, location, weaponSets }: PlacementQuery,
   ): PlacementDescription {
-    return { warning: new Equipping(view, character).describeConflict(entryId, location, weaponSet) };
+    return { warning: new Equipping(view, character).describeConflict(entryId, location, weaponSets) };
   }
 
   /**
@@ -58,14 +62,14 @@ export default class InventoryEntries {
     force: boolean,
   ): HeldInventoryEntry {
     const { request } = change;
-    const { equipped, location, weaponSet } = request;
+    const { equipped, location, weaponSets } = request;
     if (equipped && location) {
       const entry =
         "item" in change
           ? { id: null, item: change.item }
           : { id: change.entry.id, item: view.rulesetData.itemsById.get(change.entry.itemId) };
       if (!entry.item) throw new RulesError("not-found", "Item not found");
-      new Equipping(view, character).checkEquip({ id: entry.id, item: entry.item }, location, weaponSet, force);
+      new Equipping(view, character).checkEquip({ id: entry.id, item: entry.item }, location, weaponSets, force);
     }
     return InventoryEntries.placementOf(request);
   }

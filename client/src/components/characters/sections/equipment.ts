@@ -2,7 +2,7 @@ import type { CharacterDetail } from "@/client/src/lib/queries.ts";
 import { type ItemLocation, LOCATION_OPTIONS } from "@/shared/enums.ts";
 
 import type { RulesetItem, RulesetItemDetail } from "./equipmentQueries.ts";
-import { shownWeaponSet } from "./weaponSets.ts";
+import { shownWeaponSet, storedWeaponSets } from "./weaponSets.ts";
 
 /** The add and edit inventory dialogs' form: the item (add only) and where and how it's carried. */
 export interface InventoryFormData {
@@ -11,8 +11,8 @@ export interface InventoryFormData {
   remainingCharges: number;
   selectedItem: RulesetItem | null;
   totalCharges: number;
-  /** As shown, from 1 (see `shownWeaponSet`). */
-  weaponSet: number;
+  /** The weapon sets a hand holds it in, as shown, from 1 (see `shownWeaponSet`). */
+  weaponSets: number[];
 }
 
 /** A sheet's equipment row: the inventory entry with its item's fields. */
@@ -28,7 +28,7 @@ export const EMPTY_INVENTORY_FORM: InventoryFormData = {
   selectedItem: null,
   quantity: 1,
   location: "none",
-  weaponSet: shownWeaponSet(0),
+  weaponSets: [shownWeaponSet(0)],
   totalCharges: 0,
   remainingCharges: 0,
 };
@@ -38,7 +38,7 @@ export const LOCATION_CHOICES = [...LOCATION_OPTIONS, "none"] as const;
 
 /**
  * The placement as the inventory endpoints take it: a slot equips the item, charges only for an item that has them (as
- * its `profile` says), and the weapon set stored from 0, which the server keeps for a hand only.
+ * its `profile` says), and the weapon sets stored from 0, which the server keeps for a hand only.
  */
 export function placementPayload(data: InventoryFormData, profile: PlacementProfile | null) {
   const location = data.location && data.location !== "none" ? data.location : null;
@@ -49,6 +49,16 @@ export function placementPayload(data: InventoryFormData, profile: PlacementProf
     location,
     totalCharges: hasCharges ? data.totalCharges : null,
     remainingCharges: hasCharges ? data.remainingCharges : null,
-    weaponSet: data.weaponSet - 1,
+    weaponSets: storedWeaponSets(data.weaponSets),
   };
+}
+
+/**
+ * The weapon sets the form offers a held item, as shown, from 1: those the character's inventory holds something in and
+ * those the form holds, in order, then a new one past them all.
+ */
+export function weaponSetChoices(entries: Pick<EquipmentRow, "weaponSets">[], picked: number[]) {
+  const sets = new Set([...entries.flatMap((entry) => entry.weaponSets.map(shownWeaponSet)), ...picked]);
+  const ordered = [...sets].sort((a, b) => a - b);
+  return [...ordered, (ordered.at(-1) ?? 0) + 1];
 }

@@ -2,3 +2,8 @@
 export function shownWeaponSet(stored: number) {
   return stored + 1;
 }
+
+/** Weapon sets as the server stores them, from 0, from those the user sees, from 1. */
+export function storedWeaponSets(shown: number[]) {
+  return shown.map((set) => set - 1);
+}

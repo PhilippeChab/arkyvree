@@ -45,5 +45,5 @@ export default {
     { levelIndex: 1, featName: "Deflect Arrows", aptitude: "Monk Bonus Feat (2nd)" },
     { levelIndex: 2, featName: "Combat Reflexes", aptitude: "General" },
   ],
-  inventory: [{ name: "Nunchaku", quantity: 1, equipped: true, location: "Main Hand", weaponSet: 0 }],
+  inventory: [{ name: "Nunchaku", quantity: 1, equipped: true, location: "Main Hand", weaponSets: [0] }],
 } satisfies CharacterSeed;

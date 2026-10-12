@@ -31,9 +31,9 @@ function inventoryLine(item: {
   location?: string | null;
   name: string;
   quantity: number;
-  weaponSet?: number | null;
+  weaponSets?: number[];
 }) {
-  return `${item.name} x${item.quantity}${item.equipped ? ", equipped" : ""} in ${item.location ?? "—"} set ${item.weaponSet ?? "—"}`;
+  return `${item.name} x${item.quantity}${item.equipped ? ", equipped" : ""} in ${item.location ?? "—"} set ${item.weaponSets?.join(", ") || "—"}`;
 }
 
 /**
