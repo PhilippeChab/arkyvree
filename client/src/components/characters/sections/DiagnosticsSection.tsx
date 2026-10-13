@@ -1,4 +1,4 @@
-import { Accordion, AccordionDetails, AccordionSummary, Box, Collapse, Stack, type Theme } from "@mui/material";
+import { Accordion, AccordionDetails, AccordionSummary, Box, Collapse, Stack } from "@mui/material";
 import { Fragment, type ReactNode } from "react";
 
 import { ValidationIssueList } from "@/client/src/components/characters/validation/index.ts";
@@ -210,7 +210,7 @@ function GroupedRuleTable({ label, count, columns, groups, lastSlot }: GroupedRu
             <DataRow>
               <DataCell slot="block" colSpan={6} sx={{ py: 0, borderBottom: isOpen ? undefined : "none" }}>
                 <Collapse in={isOpen} timeout={DURATION.normal} unmountOnExit>
-                  <DataTable size="small" sx={[TABLE_SX, nestedInsetSx]}>
+                  <DataTable size="small" inset={1} sx={TABLE_SX}>
                     {rules.map((cells, i) => (
                       <DataRow key={i} indented sx={{ bgcolor: "action.hover" }}>
                         <DataCell slot="hidden" />
@@ -274,11 +274,6 @@ function ModifierTable({ baseRules, modifiers, label }: ModifierTableProps) {
       lastSlot="hidden"
     />
   );
-}
-
-/** A group's rules, shaded, inset from their shade's sides on a phone */
-function nestedInsetSx(theme: Theme) {
-  return { [theme.breakpoints.down("sm")]: { "--data-row-inset": theme.spacing(1) } };
 }
 
 function RequirementTable({ baseRules, groups, label }: RequirementTableProps) {

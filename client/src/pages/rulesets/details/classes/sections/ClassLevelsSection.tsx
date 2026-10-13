@@ -71,7 +71,7 @@ export function ClassLevelsSection({ rulesetId, classId, className, ruleset }: C
       width: `${Math.floor(savesShare / Math.max(rulesetSaves?.length ?? 0, 1))}%`,
     })),
     ...afterSaves.map(tableColumnOf),
-    { key: "feats", label: "Feats", width: `${FEATS_SHARE}%` },
+    { key: "feats", label: "Feats", width: `${FEATS_SHARE}%`, slot: "block" as const },
   ];
 
   // A level added to an inherited class copies it: the page follows the copy, which takes the class's place in the list

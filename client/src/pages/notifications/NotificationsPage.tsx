@@ -30,7 +30,7 @@ const FILTER_OPTIONS: FilterOption<"unread">[] = [
   { value: "unread", label: "Unread" },
 ];
 
-/** A notification's columns: on a phone, its message leads, when under it, and an invite's answers on a line of their own */
+/** A notification's columns: on a phone, its message leads, when at its line's end, and an invite's answers under it */
 const NOTIFICATION_COLUMNS: TableColumn[] = [
   { key: "notification", label: "Notification" },
   { key: "when", label: "When" },
@@ -104,7 +104,7 @@ export default function NotificationsPage() {
                       <DataCell slot="primary">
                         <NotificationMessage notification={notification} unread={isUnread} />
                       </DataCell>
-                      <DataCell slot="inline">
+                      <DataCell slot="trailing">
                         <Typography variant="body2" sx={{ color: "text.secondary" }}>
                           {formatRelativeTime(notification.createdAt)}
                         </Typography>

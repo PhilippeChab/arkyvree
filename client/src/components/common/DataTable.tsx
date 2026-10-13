@@ -42,6 +42,11 @@ interface DataTableProps {
   fixed?: boolean;
   /** On a page or in a dialog, outlined (`TableFrame`); in a panel, it stands bare */
   framed?: boolean;
+  /**
+   * Its rows' inset from its sides on a phone, in the theme's spacing: a frame's padding by default (2), none in a panel
+   * (0), a little (1) for a bare table whose rows are shaded, which would touch their shade's edge
+   */
+  inset?: number;
   /** Its least width from `sm` up, which its container scrolls sideways to; a phone lists its rows instead */
   minWidth?: number;
   size?: "small" | "medium";
@@ -64,15 +69,29 @@ const SECOND_LINE_SX: StyleObject = {
   typography: "caption",
   color: "text.secondary",
   "& > .MuiTypography-root": { display: "inline", font: "inherit" },
+  // Its line sits a little under the first, its cells (a text, a chip) centered on each other
+  pt: 0.5,
+  alignSelf: "center",
 };
 
 /** Each slot's place in a phone's list item, its row a wrapping line of cells */
 const SLOT_SX: Record<PhoneSlot, StyleObject> = {
   primary: { order: 0, flex: "1 1 0", minWidth: 0, fontWeight: 500, overflowWrap: "break-word" },
-  trailing: { order: 1, flex: "none", ml: "auto", textAlign: "right", fontWeight: 600 },
+  // Centered on the first line's text, as tall as it, whatever it holds (a number, icon buttons taller than a line)
+  trailing: {
+    order: 1,
+    flex: "none",
+    ml: "auto",
+    textAlign: "right",
+    fontWeight: 600,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "flex-end",
+    height: "1.43em",
+  },
   inline: SECOND_LINE_SX,
   labeled: { ...SECOND_LINE_SX, color: "text.primary", fontWeight: 600 },
-  block: { order: 4, flexBasis: "100%", minWidth: 0 },
+  block: { order: 4, flexBasis: "100%", minWidth: 0, pt: 1 },
   hidden: { display: "none" },
 };
 
@@ -107,9 +126,9 @@ function phoneRowSx(theme: Theme, indented: boolean): StyleObject {
     [theme.breakpoints.down("sm")]: {
       display: "flex",
       flexWrap: "wrap",
-      alignItems: "baseline",
+      alignItems: "flex-start",
       columnGap: 2,
-      py: 1.25,
+      py: 1.5,
       px: "var(--data-row-inset)",
       ...(indented && { pl: `calc(var(--data-row-inset) + ${theme.spacing(2)})` }),
       borderBottom: 1,
@@ -122,13 +141,20 @@ function phoneRowSx(theme: Theme, indented: boolean): StyleObject {
 }
 
 /** A table's own look on a phone: a list, its header gone, its rows inset from its frame */
-function phoneTableSx(theme: Theme, framed: boolean, headed: boolean, minWidth?: number, fixed?: boolean): StyleObject {
+function phoneTableSx(
+  theme: Theme,
+  inset: number,
+  headed: boolean,
+  framed: boolean,
+  minWidth?: number,
+  fixed?: boolean,
+): StyleObject {
   return {
     [theme.breakpoints.up("sm")]: { minWidth, tableLayout: fixed ? "fixed" : undefined },
     [theme.breakpoints.down("sm")]: {
       display: "block",
-      // Its rows' inset from its sides: a frame's padding, or none in a panel
-      "--data-row-inset": framed ? theme.spacing(2) : "0px",
+      // Its rows' inset from its sides
+      "--data-row-inset": theme.spacing(inset),
       "& > thead": { display: "none" },
       // Bare, the list keeps its header's rule over its first row
       "& > tbody": { display: "block", ...(!framed && headed && { borderTop: 2, borderColor: "secondary.main" }) },
@@ -185,12 +211,16 @@ export function DataTable({
   containerSx,
   fixed,
   framed = false,
+  inset,
   minWidth,
   size,
   sx,
 }: DataTableProps) {
   const table = (
-    <Table size={size} sx={withSx((theme) => phoneTableSx(theme, framed, !!columns, minWidth, fixed), sx)}>
+    <Table
+      size={size}
+      sx={withSx((theme) => phoneTableSx(theme, inset ?? (framed ? 2 : 0), !!columns, framed, minWidth, fixed), sx)}
+    >
       {columns && <TableColumnsHead columns={columns} />}
       <TableBody>{children}</TableBody>
     </Table>

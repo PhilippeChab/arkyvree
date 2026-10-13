@@ -62,7 +62,12 @@ export function EquipmentTable<T extends EquipmentTableRow>({
 }: EquipmentTableProps<T>) {
   return (
     <Stack spacing={2}>
-      <DataTable size="small" columns={renderActions ? [...ITEM_COLUMNS, ACTIONS_COLUMN] : ITEM_COLUMNS} minWidth={640}>
+      <DataTable
+        size="small"
+        columns={renderActions ? [...ITEM_COLUMNS, ACTIONS_COLUMN] : ITEM_COLUMNS}
+        minWidth={640}
+        inset={1}
+      >
         {rows.map((entry) => (
           <DataRow key={entry.id} sx={[ROW_ACTIONS_HOVER_SX, { bgcolor: entry.equipped ? "action.hover" : undefined }]}>
             <DataCell slot="primary" sx={{ fontWeight: 400 }}>

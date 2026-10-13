@@ -22,6 +22,8 @@ interface TargetPathBreadcrumbsProps {
 function phoneWrappedChipsSx(theme: Theme) {
   return {
     [theme.breakpoints.down("sm")]: {
+      // Its wrapped lines apart, as a list's lines are
+      rowGap: 1,
       "& > *": { minWidth: 0, maxWidth: "100%" },
       "& .MuiChip-root": { height: "auto", minHeight: 24, minWidth: 0, flexShrink: 1 },
       "& .MuiChip-label": { whiteSpace: "normal", overflowWrap: "anywhere" },
