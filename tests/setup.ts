@@ -49,7 +49,7 @@ afterEach(async () => {
     ended?.client.release(true);
     throw error;
   } finally {
-    forgetSeededRulesetWrites();
+    await forgetSeededRulesetWrites();
   }
 });
 

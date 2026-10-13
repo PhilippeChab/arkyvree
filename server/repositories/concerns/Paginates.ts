@@ -63,7 +63,7 @@ export function Paginates<B extends Constructor<BaseRepository<Table>>>(Base: B)
 /** Every page of a paginated query, together: `fetchEveryPage((pagination) => Feats.findPage(db, filters, pagination))`. */
 export async function fetchEveryPage<R>(
   fetchPage: (pagination: { limit: number; page: number }) => Promise<Paginated<R>>,
-  limit = 100,
+  limit = 1000,
 ): Promise<R[]> {
   const items: R[] = [];
   let page = 1;

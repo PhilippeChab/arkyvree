@@ -5,6 +5,7 @@ import { RulesetSeeder } from "@/database/seeders/dnd3.5/RulesetSeeder.ts";
 import type { Db } from "@/drizzle/database.ts";
 import { aptitudesInRules, rulesetExtensionsInRules, type rulesetsInRules } from "@/drizzle/schema.ts";
 import type { CowData, RulesetSources } from "@/engine/core/cow/index.ts";
+import type { RulesetRawData } from "@/engine/index.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { EntityCopy, RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
@@ -17,13 +18,10 @@ import { insertRows } from "./database.ts";
 import { uniqueId } from "./seed.ts";
 import { createTestUser } from "./users.ts";
 
-const writtenSeededRulesets = new Set<string>();
+/** The seeded rulesets' own rows as seeded, read once after a rollback: what every later rollback leaves them. */
+const seededRawData = new Map<string, RulesetRawData>();
 
-/** Drops the rules of the seeded rulesets the test wrote to, now that the rollback undid its rows. */
-export function forgetSeededRulesetWrites() {
-  for (const rulesetId of writtenSeededRulesets) RulesetViews.invalidate(rulesetId);
-  writtenSeededRulesets.clear();
-}
+const writtenSeededRulesets = new Set<string>();
 
 /**
  * Drops a seeded ruleset's cached rules after the test wrote rows straight into it, so what it reads next
@@ -144,6 +142,20 @@ export async function createTestUserAndRuleset(aptitudeNames: string[] = []) {
  */
 export async function editRuleset<E>(Edit: new (ruleset: RulesetSources, cow: CowData) => E, ruleset: RulesetSources) {
   return new Edit(ruleset, await RulesetViews.getCowData(ruleset));
+}
+
+/**
+ * Drops the rules of the seeded rulesets the test wrote to, now that the rollback undid its rows, and puts back their
+ * own rows as seeded (read once, the first time): the rollback left them as they were, so no test reads them again.
+ */
+export async function forgetSeededRulesetWrites() {
+  for (const rulesetId of writtenSeededRulesets) {
+    RulesetViews.invalidate(rulesetId);
+    const seeded = seededRawData.get(rulesetId);
+    if (seeded) RulesetViews.restoreRawData(rulesetId, seeded);
+    else seededRawData.set(rulesetId, await RulesetViews.getRawData(rulesetId));
+  }
+  writtenSeededRulesets.clear();
 }
 
 /** A new aptitude of the ruleset, created through the API as the seed user. */
