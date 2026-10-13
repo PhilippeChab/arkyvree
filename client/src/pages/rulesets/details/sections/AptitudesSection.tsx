@@ -8,6 +8,7 @@ import {
   LoadMoreButton,
   SearchBar,
   SectionContent,
+  type TableColumn,
 } from "@/client/src/components/common/index.ts";
 import { AptitudesIcon } from "@/client/src/components/icons/index.ts";
 import { useSearchText } from "@/client/src/hooks/index.ts";
@@ -24,9 +25,9 @@ import { type Aptitude, aptitudesQuery } from "@/client/src/pages/rulesets/detai
 import { useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
-const APTITUDES_COLUMNS = [
+const APTITUDES_COLUMNS: TableColumn[] = [
   { key: "name", label: "Name", width: "30%" },
-  { key: "description", label: "Description", width: "70%" },
+  { key: "description", label: "Description", width: "70%", slot: "block" },
 ];
 
 export function AptitudesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetSectionProps) {

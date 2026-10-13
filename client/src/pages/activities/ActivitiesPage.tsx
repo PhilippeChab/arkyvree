@@ -1,16 +1,19 @@
-import { Container, Stack, Table, TableBody, TableCell, TableHead, TableRow, Typography } from "@mui/material";
+import { Container, Stack, Typography } from "@mui/material";
 
 import {
   BlankState,
   CLICKABLE_ROW_SX,
   clickableProps,
   CREATED_SORTS,
+  DataCell,
+  DataRow,
+  DataTable,
   ListPageResults,
   PageHeader,
   PageTransition,
   SearchBar,
   type SortOption,
-  TableFrame,
+  type TableColumn,
   ValueChip,
 } from "@/client/src/components/common/index.ts";
 import { HistoryIcon } from "@/client/src/components/icons/index.ts";
@@ -23,6 +26,12 @@ import { isNavigableTarget } from "@/shared/activity.ts";
 import { type ActivityListFilters, activityListQuery } from "./activityQueries.ts";
 
 type SortField = ActivityListFilters["orderBy"];
+
+/** An activity's columns: on a phone, what happened leads, its date under it */
+const ACTIVITY_COLUMNS: TableColumn[] = [
+  { key: "action", label: "Action" },
+  { key: "date", label: "Date" },
+];
 
 const ACTIVITY_SORT_OPTIONS: SortOption<SortField>[] = [
   ...CREATED_SORTS,
@@ -66,41 +75,30 @@ export default function ActivitiesPage() {
                 />
               }
             >
-              <TableFrame>
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Action</TableCell>
-                      <TableCell>Date</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {activities.items.map((activity) => {
-                      const isNavigable = isNavigableTarget(activity.targetTable);
-                      return (
-                        <TableRow
-                          key={activity.id}
-                          {...(isNavigable &&
-                            clickableProps(() => openTarget(activity.targetTable, activity.targetId)))}
-                          sx={[isNavigable && CLICKABLE_ROW_SX]}
-                        >
-                          <TableCell>
-                            <Stack spacing={0.5} sx={{ alignItems: "flex-start" }}>
-                              <ValueChip color="default" label={formatActivityType(activity.type, activity.data)} />
-                              <ActivityDetails type={activity.type} data={activity.data} />
-                            </Stack>
-                          </TableCell>
-                          <TableCell>
-                            <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                              {formatDateTime(activity.createdAt)}
-                            </Typography>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </TableFrame>
+              <DataTable framed columns={ACTIVITY_COLUMNS}>
+                {activities.items.map((activity) => {
+                  const isNavigable = isNavigableTarget(activity.targetTable);
+                  return (
+                    <DataRow
+                      key={activity.id}
+                      {...(isNavigable && clickableProps(() => openTarget(activity.targetTable, activity.targetId)))}
+                      sx={[isNavigable && CLICKABLE_ROW_SX]}
+                    >
+                      <DataCell slot="primary">
+                        <Stack spacing={0.5} sx={{ alignItems: "flex-start" }}>
+                          <ValueChip color="default" label={formatActivityType(activity.type, activity.data)} />
+                          <ActivityDetails type={activity.type} data={activity.data} />
+                        </Stack>
+                      </DataCell>
+                      <DataCell slot="inline">
+                        <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                          {formatDateTime(activity.createdAt)}
+                        </Typography>
+                      </DataCell>
+                    </DataRow>
+                  );
+                })}
+              </DataTable>
             </ListPageResults>
           </Stack>
         </Stack>

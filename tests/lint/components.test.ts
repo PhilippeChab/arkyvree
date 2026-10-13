@@ -585,6 +585,8 @@ describe("component rules", () => {
         {
           "client/src/table.tsx":
             "export const t = <Table><TableHead /><TableBody><TableRow><TableCell><Skeleton /></TableCell></TableRow></TableBody></Table>;\n",
+          "client/src/data-table.tsx":
+            'export const d = <DataTable columns={COLUMNS}><DataRow><DataCell slot="primary"><Skeleton /></DataCell></DataRow></DataTable>;\n',
           "client/src/rows.tsx":
             "export const r = <TableRow><TableCell colSpan={2}><Skeleton /></TableCell></TableRow>;\n",
           "client/src/hidden.tsx": 'export const h = <>{partial && <Skeleton variant="rounded" height={40} />}</>;\n',
@@ -595,7 +597,12 @@ describe("component rules", () => {
         },
         ["skeletons"],
       ),
-    ).toEqual(["skeletons client/src/bars.tsx", "skeletons client/src/hidden.tsx", "skeletons client/src/table.tsx"]);
+    ).toEqual([
+      "skeletons client/src/bars.tsx",
+      "skeletons client/src/data-table.tsx",
+      "skeletons client/src/hidden.tsx",
+      "skeletons client/src/table.tsx",
+    ]);
   });
 
   test("a value that isn't there is an EmptyValue", async () => {

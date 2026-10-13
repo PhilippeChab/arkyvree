@@ -1,24 +1,24 @@
-import { Table, TableBody, TableCell, TableRow } from "@mui/material";
 import type { ReactNode } from "react";
 
 import {
   CLICKABLE_ROW_SX,
   clickableProps,
+  DataCell,
+  DataRow,
+  DataTable,
   LoadError,
   NoMatchesState,
   ROW_ACTIONS_HOVER_SX,
   RowAction,
   RowActions,
   type TableColumn,
-  TableColumnsHead,
-  TableFrame,
   TableSkeleton,
 } from "@/client/src/components/common/index.ts";
 import { CopyIcon, DeleteIcon, EditIcon, LibraryAddIcon } from "@/client/src/components/icons/index.ts";
 import { useRowPrefetch } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { fadeInUpSx } from "@/client/src/theme/animations.ts";
 
-import { TABLE_CONTAINER_LOADING_SX, TABLE_CONTAINER_SX, TABLE_SX } from "./tableStyles.ts";
+import { TABLE_CONTAINER_LOADING_SX, TABLE_CONTAINER_SX, TABLE_MIN_WIDTH } from "./tableStyles.ts";
 
 interface RulesetSectionTableProps<T extends { id: string }> {
   /**
@@ -28,6 +28,7 @@ interface RulesetSectionTableProps<T extends { id: string }> {
   animationOffset?: number;
   /** Its rows' actions, for who may edit the ruleset's entities: each shows when its handler is given */
   canEdit?: boolean;
+  /** Its columns; on a phone, the first leads its item and the others go where their `slot` says (`labeled` by default) */
   columns: TableColumn[];
   data?: T[];
   /** What it shows while it lists nothing and nothing was searched: its `BlankState` */
@@ -52,7 +53,7 @@ interface RulesetSectionTableProps<T extends { id: string }> {
 }
 
 /** The column a row's actions take, at its end */
-const ACTIONS_COLUMN: TableColumn = { align: "right", key: "actions", label: "Actions" };
+const ACTIONS_COLUMN: TableColumn = { align: "right", key: "actions", label: "Actions", slot: "trailing" };
 
 export function RulesetSectionTable<T extends { id: string }>({
   animationOffset = 0,
@@ -79,50 +80,52 @@ export function RulesetSectionTable<T extends { id: string }>({
 
   const headerColumns = showInlineActions ? [...columns, ACTIONS_COLUMN] : columns;
 
-  if (isLoading) return <TableSkeleton columns={headerColumns} sx={TABLE_CONTAINER_LOADING_SX} tableSx={TABLE_SX} />;
+  if (isLoading)
+    return <TableSkeleton columns={headerColumns} sx={TABLE_CONTAINER_LOADING_SX} minWidth={TABLE_MIN_WIDTH} />;
 
   if (error && !data?.length) return <LoadError what={what} error={error} />;
 
   if (!data || data.length === 0) return search ? <NoMatchesState search={search} /> : empty;
 
   return (
-    <TableFrame sx={TABLE_CONTAINER_SX}>
-      <Table sx={TABLE_SX}>
-        <TableColumnsHead columns={headerColumns} />
-        <TableBody>
-          {data.map((item, index) => (
-            <TableRow
-              key={item.id}
-              {...(onRowClick && clickableProps(() => onRowClick(item)))}
-              {...prefetchProps(item)}
-              sx={[!!onRowClick && CLICKABLE_ROW_SX, ROW_ACTIONS_HOVER_SX, fadeInUpSx(index, animationOffset)]}
+    <DataTable framed plainChips columns={headerColumns} containerSx={TABLE_CONTAINER_SX} minWidth={TABLE_MIN_WIDTH}>
+      {data.map((item, index) => (
+        <DataRow
+          key={item.id}
+          {...(onRowClick && clickableProps(() => onRowClick(item)))}
+          {...prefetchProps(item)}
+          sx={[!!onRowClick && CLICKABLE_ROW_SX, ROW_ACTIONS_HOVER_SX, fadeInUpSx(index, animationOffset)]}
+        >
+          {columns.map((column, columnIndex) => (
+            <DataCell
+              key={column.key}
+              slot={column.slot ?? (columnIndex === 0 ? "primary" : "labeled")}
+              label={column.label}
             >
-              {columns.map((column) => (
-                <TableCell key={column.key}>{renderCell(item, column.key)}</TableCell>
-              ))}
-              {showInlineActions && (
-                <TableCell align="right">
-                  <RowActions>
-                    {onEdit && <RowAction icon={EditIcon} label="Edit" onClick={() => onEdit(item)} />}
-                    {onDuplicate && <RowAction icon={CopyIcon} label="Duplicate" onClick={() => onDuplicate(item)} />}
-                    {onCreateVariants && (
-                      <RowAction icon={LibraryAddIcon} label="Create Variants" onClick={() => onCreateVariants(item)} />
-                    )}
-                    {onDelete && (
-                      <RowAction
-                        icon={DeleteIcon}
-                        label={restorable ? "Delete" : "Delete Permanently"}
-                        intent="destructive"
-                        onClick={() => onDelete(item.id)}
-                      />
-                    )}
-                  </RowActions>
-                </TableCell>
-              )}
-            </TableRow>
+              {renderCell(item, column.key)}
+            </DataCell>
           ))}
-        </TableBody>
-      </Table>
-    </TableFrame>
+          {showInlineActions && (
+            <DataCell align="right" slot="trailing">
+              <RowActions>
+                {onEdit && <RowAction icon={EditIcon} label="Edit" onClick={() => onEdit(item)} />}
+                {onDuplicate && <RowAction icon={CopyIcon} label="Duplicate" onClick={() => onDuplicate(item)} />}
+                {onCreateVariants && (
+                  <RowAction icon={LibraryAddIcon} label="Create Variants" onClick={() => onCreateVariants(item)} />
+                )}
+                {onDelete && (
+                  <RowAction
+                    icon={DeleteIcon}
+                    label={restorable ? "Delete" : "Delete Permanently"}
+                    intent="destructive"
+                    onClick={() => onDelete(item.id)}
+                  />
+                )}
+              </RowActions>
+            </DataCell>
+          )}
+        </DataRow>
+      ))}
+    </DataTable>
   );
 }

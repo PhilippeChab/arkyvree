@@ -1,7 +1,7 @@
-import { Box, Stack, TableCell, TableRow } from "@mui/material";
+import { Box, Stack } from "@mui/material";
 import type { ReactNode } from "react";
 
-import { CLICKABLE_ROW_SX, ExpandArrow, toggleProps } from "@/client/src/components/common/index.ts";
+import { CLICKABLE_ROW_SX, DataCell, DataRow, ExpandArrow, toggleProps } from "@/client/src/components/common/index.ts";
 import { useToggleSet } from "@/client/src/hooks/index.ts";
 import { DURATION, EASING, fadeIn, PREFERS_REDUCED_MOTION } from "@/client/src/theme/animations.ts";
 
@@ -10,7 +10,7 @@ import { groupSkills } from "./skillGroups.ts";
 interface GroupedSkillRowsProps<S> {
   /** The table's column count, which a group's header row spans. */
   columns: number;
-  /** The skill's keyed row, usually a `SkillRow`. */
+  /** The skill's keyed row, usually a `SkillRow`, whose other cells are `DataCell`s. */
   renderSkill: (skill: S, placement: SkillPlacement) => ReactNode;
   skills: readonly S[];
 }
@@ -34,6 +34,9 @@ const FADE_IN_SX = {
   [PREFERS_REDUCED_MOTION]: { animation: "none" },
 };
 
+/** A group's name, bolder than its skills', a phone's too */
+const GROUP_NAME_SX = { fontWeight: { xs: 600 } };
+
 /**
  * A skill table's rows, with the skills that share a prefix ("Knowledge (…)")
  * under a header row whose click shows or hides them.
@@ -55,34 +58,39 @@ export function GroupedSkillRows<S extends { name: string }>({
         }
         const isExpanded = expanded.has(row.prefix);
         return (
-          <TableRow
+          <DataRow
             key={`group-${row.prefix}`}
             {...toggleProps(isExpanded, () => toggle(row.prefix), "row")}
             sx={[CLICKABLE_ROW_SX, { bgcolor: "action.hover" }]}
           >
-            <TableCell sx={{ fontWeight: 600 }}>
+            <DataCell slot="primary" sx={GROUP_NAME_SX}>
               <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
                 <ExpandArrow open={isExpanded} />
                 <Box component="span">
                   {row.prefix} ({row.count})
                 </Box>
               </Stack>
-            </TableCell>
-            <TableCell colSpan={columns - 1} />
-          </TableRow>
+            </DataCell>
+            <DataCell slot="hidden" colSpan={columns - 1} />
+          </DataRow>
         );
       })}
     </>
   );
 }
 
-/** A skill's row. A grouped skill's name drops the group's prefix ("(arcana)") and sits indented. */
+/**
+ * A skill's row. A grouped skill's name drops its group's prefix, and its brackets when they hold the rest of it
+ * ("Arcana"; "(alchemy) - Masterwork"), and sits indented.
+ */
 export function SkillRow({ name, indented, hidden, renderName = (label) => label, children }: SkillRowProps) {
-  const label = indented ? name.replace(/^.+?\s*\(/, "(") : name;
+  const label = indented ? name.replace(/^.+?\s*\(/, "(").replace(/^\(([^()]*)\)$/, "$1") : name;
   return (
-    <TableRow sx={[hidden && { display: "none" }, !hidden && indented && FADE_IN_SX]}>
-      <TableCell sx={{ pl: indented ? 5 : undefined }}>{renderName(label)}</TableCell>
+    <DataRow hidden={hidden} indented={indented} sx={[!hidden && indented && FADE_IN_SX]}>
+      <DataCell slot="primary" sx={{ pl: indented ? 5 : undefined }}>
+        {renderName(label)}
+      </DataCell>
       {children}
-    </TableRow>
+    </DataRow>
   );
 }

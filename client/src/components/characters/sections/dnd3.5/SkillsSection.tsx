@@ -1,17 +1,7 @@
-import {
-  Box,
-  Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Typography,
-} from "@mui/material";
+import { Stack, Typography } from "@mui/material";
 
 import { SheetSection } from "@/client/src/components/characters/sections/SheetSection.tsx";
-import { BlankNote, EmptyValue } from "@/client/src/components/common/index.ts";
+import { BlankNote, DataCell, DataTable, EmptyValue, type TableColumn } from "@/client/src/components/common/index.ts";
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
 import { formatSigned } from "@/shared/text.ts";
 
@@ -21,8 +11,21 @@ interface SkillsSectionProps {
   skills: NonNullable<CharacterDetail["skills"]>;
 }
 
-/** The narrow number columns' headers. */
-const COLUMN_HEADER_SX = { fontSize: { xs: "0.7rem", sm: "0.8125rem" } };
+/** The number columns' headers, smaller, and their cells closer to their figures */
+const NARROW_HEADERS_SX = {
+  "& > thead th:not(:first-of-type)": { fontSize: "0.8125rem" },
+  "& th:not(:first-of-type), & td:not(:first-of-type)": { px: { sm: 1 } },
+};
+
+/** A skill's columns: on a phone, its name leads, its total at the line's end, and its parts under them, named */
+const SKILL_COLUMNS: TableColumn[] = [
+  { key: "skill", label: "Skill" },
+  { key: "rank", label: "Rank", width: "56px", align: "center" },
+  { key: "ability", label: "Ability", width: "64px", align: "center" },
+  { key: "misc", label: "Misc. Bonus", width: "96px", align: "center" },
+  { key: "weight", label: "Armor Check", width: "104px", align: "center" },
+  { key: "total", label: "Total", width: "56px", align: "center" },
+];
 
 export function SkillsSection({ skills }: SkillsSectionProps) {
   const sortedSkills = Object.values(skills).sort((a, b) => a.name.localeCompare(b.name));
@@ -34,62 +37,36 @@ export function SkillsSection({ skills }: SkillsSectionProps) {
           <Typography variant="body2" sx={{ color: "text.secondary", fontStyle: "italic" }}>
             * indicates a class skill
           </Typography>
-          <TableContainer sx={{ overflowX: "auto" }}>
-            <Table size="small" sx={{ minWidth: 400, tableLayout: "fixed" }}>
-              <colgroup>
-                <col />
-                <Box component="col" sx={{ width: 50 }} />
-                <Box component="col" sx={{ width: 50 }} />
-                <Box component="col" sx={{ width: 50 }} />
-                <Box component="col" sx={{ width: 50 }} />
-                <Box component="col" sx={{ width: 50 }} />
-              </colgroup>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Skill</TableCell>
-                  <TableCell align="center" sx={COLUMN_HEADER_SX}>
-                    Rank
-                  </TableCell>
-                  <TableCell align="center" sx={COLUMN_HEADER_SX}>
-                    Abil
-                  </TableCell>
-                  <TableCell align="center" sx={COLUMN_HEADER_SX}>
-                    Misc
-                  </TableCell>
-                  <TableCell align="center" sx={COLUMN_HEADER_SX}>
-                    Wt
-                  </TableCell>
-                  <TableCell align="center" sx={COLUMN_HEADER_SX}>
-                    Total
-                  </TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                <GroupedSkillRows
-                  skills={sortedSkills}
-                  columns={6}
-                  renderSkill={(skill, placement) => (
-                    <SkillRow
-                      key={skill.name}
-                      name={skill.name}
-                      {...placement}
-                      renderName={(label) => `${label}${skill.innate ? " *" : ""}`}
-                    >
-                      <TableCell align="center">{skill.rank || 0}</TableCell>
-                      <TableCell align="center">{formatSigned(skill.ability)}</TableCell>
-                      <TableCell align="center">
-                        {skill.misc !== 0 ? formatSigned(skill.misc) : <EmptyValue />}
-                      </TableCell>
-                      <TableCell align="center">{skill.weight ? `-${skill.weight}` : <EmptyValue />}</TableCell>
-                      <TableCell align="center" sx={{ fontWeight: 600 }}>
-                        {formatSigned(skill.total)}
-                      </TableCell>
-                    </SkillRow>
-                  )}
-                />
-              </TableBody>
-            </Table>
-          </TableContainer>
+          <DataTable size="small" columns={SKILL_COLUMNS} minWidth={520} fixed sx={NARROW_HEADERS_SX}>
+            <GroupedSkillRows
+              skills={sortedSkills}
+              columns={SKILL_COLUMNS.length}
+              renderSkill={(skill, placement) => (
+                <SkillRow
+                  key={skill.name}
+                  name={skill.name}
+                  {...placement}
+                  renderName={(label) => `${label}${skill.innate ? " *" : ""}`}
+                >
+                  <DataCell slot="labeled" label="Rank" align="center">
+                    {skill.rank || 0}
+                  </DataCell>
+                  <DataCell slot="labeled" label="Ability" align="center">
+                    {formatSigned(skill.ability)}
+                  </DataCell>
+                  <DataCell slot={skill.misc !== 0 ? "labeled" : "hidden"} label="Misc. Bonus" align="center">
+                    {skill.misc !== 0 ? formatSigned(skill.misc) : <EmptyValue />}
+                  </DataCell>
+                  <DataCell slot={skill.weight ? "labeled" : "hidden"} label="Armor Check" align="center">
+                    {skill.weight ? `-${skill.weight}` : <EmptyValue />}
+                  </DataCell>
+                  <DataCell slot="trailing" align="center" sx={{ fontWeight: 600 }}>
+                    {formatSigned(skill.total)}
+                  </DataCell>
+                </SkillRow>
+              )}
+            />
+          </DataTable>
         </Stack>
       ) : (
         <BlankNote>No skills</BlankNote>

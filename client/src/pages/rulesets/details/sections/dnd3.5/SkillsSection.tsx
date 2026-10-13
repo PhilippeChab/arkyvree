@@ -11,6 +11,7 @@ import {
   SearchBar,
   SectionContent,
   StatusChip,
+  type TableColumn,
   ValueChip,
 } from "@/client/src/components/common/index.ts";
 import { SkillsIcon } from "@/client/src/components/icons/index.ts";
@@ -31,11 +32,11 @@ import { rpc } from "@/client/src/services/rpc.ts";
 
 type Skill = InferResponseType<(typeof rpc.api.rulesets)[":id"]["skills"]["$get"], 200>["items"][number];
 
-const SKILLS_COLUMNS = [
+const SKILLS_COLUMNS: TableColumn[] = [
   { key: "name", label: "Name", width: "25%" },
   { key: "ability", label: "Primary Ability", width: "15%" },
   { key: "trainedOnly", label: "Trained Only", width: "15%" },
-  { key: "description", label: "Description", width: "45%" },
+  { key: "description", label: "Description", width: "45%", slot: "block" },
 ];
 
 export function SkillsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetSectionProps) {

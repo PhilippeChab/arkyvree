@@ -1,4 +1,4 @@
-import { Box, Stack, Table, TableBody, TableCell, TableRow, Typography } from "@mui/material";
+import { Box, Stack, Typography } from "@mui/material";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 import { type ReactNode, useState } from "react";
@@ -8,6 +8,10 @@ import {
   AddButton,
   BlankState,
   ConfirmDialog,
+  DataCell,
+  DataRow,
+  DataTable,
+  EMAIL_AS_NAME_SX,
   EmptyValue,
   ListPageResults,
   RoleChip,
@@ -17,9 +21,9 @@ import {
   SearchBar,
   SectionContent,
   StatusChip,
-  TableColumnsHead,
-  TableFrame,
+  type TableColumn,
   TableSkeleton,
+  USERNAME_BESIDE_EMAIL_SX,
 } from "@/client/src/components/common/index.ts";
 import {
   CharacterIcon,
@@ -59,13 +63,16 @@ interface PlayersSectionProps {
   campaign: CampaignDetail;
 }
 
+/** An empty slot's caption under its name ("No player assigned"), which a phone leaves out */
+const CAPTION_SX = { color: "text.secondary", display: { xs: "none", sm: "inline" } };
+
 /** The players table's columns: its header, and its first load's */
-const PLAYER_COLUMNS = [
+const PLAYER_COLUMNS: TableColumn[] = [
   { key: "player", label: "Player", width: "20%" },
   { key: "role", label: "Role", width: "20%" },
   { key: "status", label: "Status", width: "20%" },
   { key: "joined", label: "Joined", width: "20%" },
-  { align: "right" as const, key: "actions", label: "Actions", width: "10%" },
+  { align: "right", key: "actions", label: "Actions", width: "10%" },
 ];
 
 const STATUS_CHIPS = {
@@ -245,92 +252,89 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
             />
           }
         >
-          <TableFrame>
-            <Table sx={{ width: "100%" }}>
-              <TableColumnsHead columns={PLAYER_COLUMNS} />
-              <TableBody>
-                {players.items.map((player) => {
-                  const slot = getPlayerSlot(player);
-                  const displayInfo = playerDisplay(player, slot);
-                  const statusChip = STATUS_CHIPS[slot.state];
-                  const isGameMaster = player.role === "Game Master";
-                  const RoleIcon = ROLE_ICONS[player.role];
-                  const isCurrentUser = player.userId === currentUserId;
-                  const canRevokeInvite = slot.state === "pending" && canManagePlayers && !campaign.deletedAt;
-                  // A row's actions: the manager's on any slot but an assigned Game Master's, the player's on their own,
-                  // but the last Game Master's, whom the server neither demotes nor lets leave
-                  const hasActions =
-                    !campaign.deletedAt &&
-                    !player.isLastGameMaster &&
-                    ((canManagePlayers && (!isGameMaster || slot.state !== "assigned")) || isCurrentUser);
+          <DataTable framed columns={PLAYER_COLUMNS} sx={{ width: "100%" }}>
+            {players.items.map((player) => {
+              const slot = getPlayerSlot(player);
+              const displayInfo = playerDisplay(player, slot);
+              // A player's or an invite's email address, which names the row alone on a phone
+              const hasEmail = slot.state !== "unassigned" && !!displayInfo.caption;
+              const statusChip = STATUS_CHIPS[slot.state];
+              const isGameMaster = player.role === "Game Master";
+              const RoleIcon = ROLE_ICONS[player.role];
+              const isCurrentUser = player.userId === currentUserId;
+              const canRevokeInvite = slot.state === "pending" && canManagePlayers && !campaign.deletedAt;
+              // A row's actions: the manager's on any slot but an assigned Game Master's, the player's on their own,
+              // but the last Game Master's, whom the server neither demotes nor lets leave
+              const hasActions =
+                !campaign.deletedAt &&
+                !player.isLastGameMaster &&
+                ((canManagePlayers && (!isGameMaster || slot.state !== "assigned")) || isCurrentUser);
 
-                  return (
-                    <TableRow
-                      key={player.id}
-                      sx={{
-                        position: "relative",
-                        ...ROW_ACTIONS_HOVER_SX,
-                      }}
-                    >
-                      <TableCell>
-                        <Box>
-                          <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                            {displayInfo.name}
-                          </Typography>
-                          <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                            {displayInfo.caption}
-                          </Typography>
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <RoleChip
-                          icon={<RoleIcon sx={{ fontSize: 14 }} />}
-                          label={player.role}
-                          color={isGameMaster ? "warning" : "primary"}
+              return (
+                <DataRow
+                  key={player.id}
+                  sx={{
+                    position: "relative",
+                    ...ROW_ACTIONS_HOVER_SX,
+                  }}
+                >
+                  <DataCell slot="primary">
+                    <Box>
+                      <Typography variant="body2" sx={hasEmail ? USERNAME_BESIDE_EMAIL_SX : { fontWeight: 500 }}>
+                        {displayInfo.name}
+                      </Typography>
+                      <Typography variant="caption" sx={hasEmail ? EMAIL_AS_NAME_SX : CAPTION_SX}>
+                        {displayInfo.caption}
+                      </Typography>
+                    </Box>
+                  </DataCell>
+                  <DataCell slot="inline">
+                    <RoleChip
+                      icon={<RoleIcon sx={{ fontSize: 14 }} />}
+                      label={player.role}
+                      color={isGameMaster ? "warning" : "primary"}
+                    />
+                  </DataCell>
+                  <DataCell slot="inline">
+                    <StatusChip icon={statusChip.icon} label={statusChip.label} color={statusChip.color} />
+                  </DataCell>
+                  <DataCell slot="hidden">
+                    {player.joinedAt ? (
+                      <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                        {formatDate(player.joinedAt)}
+                      </Typography>
+                    ) : (
+                      <EmptyValue />
+                    )}
+                  </DataCell>
+                  <DataCell slot={hasActions ? "trailing" : "hidden"} align="right">
+                    {hasActions && (
+                      <RowActions>
+                        {canManagePlayers && (
+                          <RowAction icon={EditIcon} label="Edit" onClick={() => handleEditPlayer(player)} />
+                        )}
+                        {canRevokeInvite && (
+                          <RowAction
+                            icon={RevokeIcon}
+                            label="Revoke Invite"
+                            intent="caution"
+                            onClick={() => handleRevokeInvite(slot.pendingInvite.id)}
+                            disabled={revokeInviteMutation.isPending}
+                          />
+                        )}
+                        <RowAction
+                          icon={isCurrentUser ? LeaveIcon : DeleteIcon}
+                          label={isCurrentUser ? "Leave" : "Remove"}
+                          intent={isCurrentUser ? "caution" : "destructive"}
+                          onClick={() => handleRemovePlayer(player)}
                         />
-                      </TableCell>
-                      <TableCell>
-                        <StatusChip icon={statusChip.icon} label={statusChip.label} color={statusChip.color} />
-                      </TableCell>
-                      <TableCell>
-                        {player.joinedAt ? (
-                          <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                            {formatDate(player.joinedAt)}
-                          </Typography>
-                        ) : (
-                          <EmptyValue />
-                        )}
-                      </TableCell>
-                      <TableCell align="right">
-                        {hasActions && (
-                          <RowActions>
-                            {canManagePlayers && (
-                              <RowAction icon={EditIcon} label="Edit" onClick={() => handleEditPlayer(player)} />
-                            )}
-                            {canRevokeInvite && (
-                              <RowAction
-                                icon={RevokeIcon}
-                                label="Revoke Invite"
-                                intent="caution"
-                                onClick={() => handleRevokeInvite(slot.pendingInvite.id)}
-                                disabled={revokeInviteMutation.isPending}
-                              />
-                            )}
-                            <RowAction
-                              icon={isCurrentUser ? LeaveIcon : DeleteIcon}
-                              label={isCurrentUser ? "Leave" : "Remove"}
-                              intent={isCurrentUser ? "caution" : "destructive"}
-                              onClick={() => handleRemovePlayer(player)}
-                            />
-                          </RowActions>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </TableFrame>
+                      </RowActions>
+                    )}
+                  </DataCell>
+                </DataRow>
+              );
+            })}
+          </DataTable>
         </ListPageResults>
       </Stack>
       <AddPlayerDialog

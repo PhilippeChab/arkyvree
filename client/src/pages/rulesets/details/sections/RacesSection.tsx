@@ -8,6 +8,7 @@ import {
   LoadMoreButton,
   SearchBar,
   SectionContent,
+  type TableColumn,
   ValueChip,
 } from "@/client/src/components/common/index.ts";
 import { RacesIcon } from "@/client/src/components/icons/index.ts";
@@ -33,11 +34,11 @@ import { buildCustomizationPath } from "@/shared/customization/entities.ts";
 
 type Race = InferResponseType<(typeof rpc.api.rulesets)[":id"]["races"]["$get"], 200>["items"][number];
 
-const RACES_COLUMNS = [
+const RACES_COLUMNS: TableColumn[] = [
   { key: "name", label: "Name", width: "15%" },
   { key: "size", label: "Size", width: "10%" },
   { key: "speed", label: "Speed", width: "10%" },
-  { key: "description", label: "Description", width: "65%" },
+  { key: "description", label: "Description", width: "65%", slot: "block" },
 ];
 
 export function RacesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetSectionProps) {

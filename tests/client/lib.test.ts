@@ -9,7 +9,15 @@ import {
 } from "@/client/src/lib/activityFormatters.ts";
 import { accessLost, errorMessage, loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { formatRelativeTime } from "@/client/src/lib/formatDate.ts";
-import { formatCost, formatCount, formatDecimal, formatDie, formatWeight } from "@/client/src/lib/formatNumeric.ts";
+import {
+  formatCost,
+  formatCount,
+  formatDecimal,
+  formatDie,
+  formatTrimmed,
+  formatWeight,
+  poundsUnit,
+} from "@/client/src/lib/formatNumeric.ts";
 import { createListboxScrollHandler } from "@/client/src/lib/listboxScroll.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
@@ -40,6 +48,20 @@ describe("Numbers shown to the user", () => {
       "15.00 gp",
       null,
     ]);
+  });
+
+  test("drop the zeros their decimals end with, where a phone shows them shorter", () => {
+    expect([
+      formatTrimmed(5),
+      formatTrimmed("1.50"),
+      formatTrimmed("0.25"),
+      formatTrimmed(""),
+      formatTrimmed(null),
+    ]).toEqual(["5", "1.5", "0.25", null, null]);
+  });
+
+  test("take a pound's unit, singular for a single pound alone", () => {
+    expect(["1", "2", "0.5", "1.5"].map(poundsUnit)).toEqual(["lb", "lbs", "lbs", "lbs"]);
   });
 
   test("write a die in dice notation, as the books write a hit die", () => {

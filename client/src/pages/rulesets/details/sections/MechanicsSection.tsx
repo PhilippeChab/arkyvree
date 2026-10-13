@@ -8,6 +8,7 @@ import {
   LoadMoreButton,
   SearchBar,
   SectionContent,
+  type TableColumn,
 } from "@/client/src/components/common/index.ts";
 import { MechanicsIcon } from "@/client/src/components/icons/index.ts";
 import { useSearchText } from "@/client/src/hooks/index.ts";
@@ -26,9 +27,9 @@ import { rpc } from "@/client/src/services/rpc.ts";
 
 type Mechanic = InferResponseType<(typeof rpc.api.rulesets)[":id"]["mechanics"]["$get"], 200>["items"][number];
 
-const MECHANICS_COLUMNS = [
+const MECHANICS_COLUMNS: TableColumn[] = [
   { key: "name", label: "Name", width: "30%" },
-  { key: "description", label: "Description", width: "70%" },
+  { key: "description", label: "Description", width: "70%", slot: "block" },
 ];
 
 export function MechanicsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetSectionProps) {

@@ -8,6 +8,7 @@ import {
   LoadMoreButton,
   SearchBar,
   SectionContent,
+  type TableColumn,
   ValueChip,
 } from "@/client/src/components/common/index.ts";
 import { ClassesIcon } from "@/client/src/components/icons/index.ts";
@@ -33,10 +34,10 @@ import { rpc } from "@/client/src/services/rpc.ts";
 
 type Class = InferResponseType<(typeof rpc.api.rulesets)[":id"]["classes"]["$get"], 200>["items"][number];
 
-const CLASSES_COLUMNS = [
+const CLASSES_COLUMNS: TableColumn[] = [
   { key: "name", label: "Name", width: "25%" },
   { key: "hitDie", label: "Hit Die", width: "15%" },
-  { key: "description", label: "Description", width: "60%" },
+  { key: "description", label: "Description", width: "60%", slot: "block" },
 ];
 
 export function ClassesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetSectionProps) {

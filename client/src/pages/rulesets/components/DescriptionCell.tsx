@@ -7,7 +7,7 @@ interface DescriptionCellProps {
   text: string | null | undefined;
 }
 
-/** A section table's description column: secondary text clamped to two lines. */
+/** A section table's description column: secondary text clamped to two lines (a dash, which a phone leaves out). */
 export function DescriptionCell({ text }: DescriptionCellProps) {
   return (
     <Typography

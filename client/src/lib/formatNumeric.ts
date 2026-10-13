@@ -21,8 +21,19 @@ export function formatDie(sides: number): string {
   return `d${sides}`;
 }
 
+/** A number without the zeros its decimals end with ("2" for "2.00", "1.5" for "1.50"), or null when it has none. */
+export function formatTrimmed(value: string | number | null | undefined): string | null {
+  const formatted = formatDecimal(value);
+  return formatted === null ? null : String(Number(formatted));
+}
+
 /** An item's weight ("5.00 lbs"), or null when it has none. */
 export function formatWeight(weight: string | number | null | undefined): string | null {
   const formatted = formatDecimal(weight);
   return formatted === null ? null : `${formatted} lbs`;
+}
+
+/** The unit after a weight as `formatTrimmed` writes it: "lb" after a single pound ("1"), "lbs" after any other. */
+export function poundsUnit(pounds: string | null): string {
+  return pounds === "1" ? "lb" : "lbs";
 }

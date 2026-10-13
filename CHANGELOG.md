@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Hold the same item in several weapon sets
+- Tables read as lists on a phone, with nothing to scroll sideways
 
 ## 0.6.0 — 2026-10-12
 

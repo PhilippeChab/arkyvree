@@ -8,6 +8,7 @@ import {
   LoadMoreButton,
   SearchBar,
   SectionContent,
+  type TableColumn,
 } from "@/client/src/components/common/index.ts";
 import { PowersIcon } from "@/client/src/components/icons/index.ts";
 import { useSearchText } from "@/client/src/hooks/index.ts";
@@ -40,10 +41,10 @@ import {
 import { rpc } from "@/client/src/services/rpc.ts";
 import { buildCustomizationPath } from "@/shared/customization/entities.ts";
 
-const SPELLS_COLUMNS = [
+const SPELLS_COLUMNS: TableColumn[] = [
   { key: "name", label: "Name", width: "25%" },
-  { key: "aptitudes", label: "Aptitudes", width: "15%" },
-  { key: "description", label: "Description", width: "60%" },
+  { key: "aptitudes", label: "Aptitudes", width: "15%", slot: "inline" },
+  { key: "description", label: "Description", width: "60%", slot: "block" },
 ];
 
 export function SpellsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetSectionProps) {

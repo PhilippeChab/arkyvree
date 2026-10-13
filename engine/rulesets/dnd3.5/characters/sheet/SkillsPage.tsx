@@ -52,9 +52,9 @@ function SkillsPage({ detailedCharacter }: { detailedCharacter: DetailedCharacte
             <View style={styles.skillsHeader}>
               <Text style={[styles.skillHeaderText, { width: "40%" }]}>SKILL</Text>
               <Text style={[styles.skillHeaderText, { width: "12%", textAlign: "center" }]}>RANK</Text>
-              <Text style={[styles.skillHeaderText, { width: "12%", textAlign: "center" }]}>MOD</Text>
-              <Text style={[styles.skillHeaderText, { width: "12%", textAlign: "center" }]}>MISC</Text>
-              <Text style={[styles.skillHeaderText, { width: "12%", textAlign: "center" }]}>WGT</Text>
+              <Text style={[styles.skillHeaderText, { width: "12%", textAlign: "center" }]}>ABILITY</Text>
+              <Text style={[styles.skillHeaderText, { width: "12%", textAlign: "center" }]}>MISC. BONUS</Text>
+              <Text style={[styles.skillHeaderText, { width: "12%", textAlign: "center" }]}>ARMOR CHECK</Text>
               <Text style={[styles.skillHeaderText, { width: "12%", textAlign: "center" }]}>TOTAL</Text>
             </View>
           );

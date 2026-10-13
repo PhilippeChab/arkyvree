@@ -29,20 +29,20 @@ function InventoryPage({ detailedCharacter }: { detailedCharacter: DetailedChara
             <View style={styles.inventoryTable}>
               <View style={styles.inventoryTableHeader}>
                 <Text style={[styles.inventoryHeaderText, { width: "26%", paddingHorizontal: 4 }]}>ITEM</Text>
-                <Text style={[styles.inventoryHeaderText, { width: "6%", paddingHorizontal: 2, textAlign: "center" }]}>
-                  QTY
+                <Text style={[styles.inventoryHeaderText, { width: "9%", paddingHorizontal: 2, textAlign: "center" }]}>
+                  QUANTITY
                 </Text>
-                <Text style={[styles.inventoryHeaderText, { width: "12%", paddingHorizontal: 2 }]}>SLOT</Text>
+                <Text style={[styles.inventoryHeaderText, { width: "17%", paddingHorizontal: 2 }]}>SLOT</Text>
                 <Text style={[styles.inventoryHeaderText, { width: "8%", paddingHorizontal: 2, textAlign: "right" }]}>
-                  WT
+                  WEIGHT
                 </Text>
                 <Text style={[styles.inventoryHeaderText, { width: "8%", paddingHorizontal: 2, textAlign: "right" }]}>
                   VALUE
                 </Text>
-                <Text style={[styles.inventoryHeaderText, { width: "10%", paddingHorizontal: 2, textAlign: "center" }]}>
+                <Text style={[styles.inventoryHeaderText, { width: "9%", paddingHorizontal: 2, textAlign: "center" }]}>
                   CHARGES
                 </Text>
-                <Text style={[styles.inventoryHeaderText, { width: "30%", paddingHorizontal: 4 }]}>DESCRIPTION</Text>
+                <Text style={[styles.inventoryHeaderText, { width: "23%", paddingHorizontal: 4 }]}>DESCRIPTION</Text>
               </View>
 
               {flatItems.map((entry, i) => (
@@ -53,10 +53,10 @@ function InventoryPage({ detailedCharacter }: { detailedCharacter: DetailedChara
                     </Text>
                     {!entry.equipped && <Text style={{ fontSize: FONT_SIZE.xs, color: "#888" }}>unequipped</Text>}
                   </View>
-                  <Text style={{ fontSize: FONT_SIZE.base, width: "6%", paddingHorizontal: 2, textAlign: "center" }}>
+                  <Text style={{ fontSize: FONT_SIZE.base, width: "9%", paddingHorizontal: 2, textAlign: "center" }}>
                     {entry.quantity}
                   </Text>
-                  <Text style={{ fontSize: FONT_SIZE.base, width: "12%", paddingHorizontal: 2 }}>
+                  <Text style={{ fontSize: FONT_SIZE.base, width: "17%", paddingHorizontal: 2 }}>
                     {ItemPlacement.describeSlot(entry) ?? "—"}
                   </Text>
                   <Text style={{ fontSize: FONT_SIZE.base, width: "8%", paddingHorizontal: 2, textAlign: "right" }}>
@@ -65,31 +65,31 @@ function InventoryPage({ detailedCharacter }: { detailedCharacter: DetailedChara
                   <Text style={{ fontSize: FONT_SIZE.base, width: "8%", paddingHorizontal: 2, textAlign: "right" }}>
                     {entry.item.costGp ? `${parseFloat(entry.item.costGp)} gp` : "—"}
                   </Text>
-                  <Text style={{ fontSize: FONT_SIZE.base, width: "10%", paddingHorizontal: 2, textAlign: "center" }}>
+                  <Text style={{ fontSize: FONT_SIZE.base, width: "9%", paddingHorizontal: 2, textAlign: "center" }}>
                     {entry.totalCharges != null ? `${entry.remainingCharges ?? 0}/${entry.totalCharges}` : "—"}
                   </Text>
-                  <Text style={{ fontSize: FONT_SIZE.sm, width: "30%", paddingHorizontal: 4, color: "#555" }}>
+                  <Text style={{ fontSize: FONT_SIZE.sm, width: "23%", paddingHorizontal: 4, color: "#555" }}>
                     {entry.item.description || "—"}
                   </Text>
                 </View>
               ))}
               {/* Weight Summary Footer */}
               <View style={styles.inventoryTableFooter}>
-                <Text style={[styles.inventoryFooterText, { width: "44%", paddingHorizontal: 4 }]}>
+                <Text style={[styles.inventoryFooterText, { width: "52%", paddingHorizontal: 4 }]}>
                   Carried Weight: {combatData.encumbrance.carriedweight} lbs
                 </Text>
                 <Text
-                  style={[styles.inventoryFooterText, { width: "14%", paddingHorizontal: 2, fontWeight: "normal" }]}
+                  style={[styles.inventoryFooterText, { width: "12%", paddingHorizontal: 2, fontWeight: "normal" }]}
                 >
                   Light: {combatData.encumbrance.lightload}
                 </Text>
                 <Text
-                  style={[styles.inventoryFooterText, { width: "14%", paddingHorizontal: 2, fontWeight: "normal" }]}
+                  style={[styles.inventoryFooterText, { width: "12%", paddingHorizontal: 2, fontWeight: "normal" }]}
                 >
                   Medium: {combatData.encumbrance.mediumload}
                 </Text>
                 <Text
-                  style={[styles.inventoryFooterText, { width: "14%", paddingHorizontal: 2, fontWeight: "normal" }]}
+                  style={[styles.inventoryFooterText, { width: "12%", paddingHorizontal: 2, fontWeight: "normal" }]}
                 >
                   Heavy: {combatData.encumbrance.heavyload}
                 </Text>
@@ -98,7 +98,7 @@ function InventoryPage({ detailedCharacter }: { detailedCharacter: DetailedChara
                     style={[
                       styles.inventoryFooterText,
                       {
-                        width: "14%",
+                        width: "12%",
                         paddingHorizontal: 2,
                         color:
                           combatData.encumbrance.load === "overloaded"

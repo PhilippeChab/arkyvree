@@ -9,6 +9,7 @@ import {
   LoadMoreButton,
   SearchBar,
   SectionContent,
+  type TableColumn,
 } from "@/client/src/components/common/index.ts";
 import { LanguagesIcon } from "@/client/src/components/icons/index.ts";
 import { useSearchText } from "@/client/src/hooks/index.ts";
@@ -27,10 +28,10 @@ import { rpc } from "@/client/src/services/rpc.ts";
 
 type Language = InferResponseType<(typeof rpc.api.rulesets)[":id"]["languages"]["$get"], 200>["items"][number];
 
-const LANGUAGES_COLUMNS = [
+const LANGUAGES_COLUMNS: TableColumn[] = [
   { key: "name", label: "Name", width: "25%" },
-  { key: "type", label: "Type", width: "20%" },
-  { key: "description", label: "Description", width: "55%" },
+  { key: "type", label: "Type", width: "20%", slot: "inline" },
+  { key: "description", label: "Description", width: "55%", slot: "block" },
 ];
 
 export function LanguagesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetSectionProps) {

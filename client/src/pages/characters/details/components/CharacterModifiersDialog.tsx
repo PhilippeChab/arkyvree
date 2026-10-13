@@ -1,4 +1,4 @@
-import { DialogContent, DialogTitle, Stack, Table, TableBody, TableCell, TableHead, TableRow } from "@mui/material";
+import { DialogContent, DialogTitle, Stack } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { type InferResponseType, parseResponse } from "hono/client";
 import { useState } from "react";
@@ -7,6 +7,9 @@ import {
   AddButton,
   BlankNote,
   CreateDialog,
+  DataCell,
+  DataRow,
+  DataTable,
   DeleteDialog,
   DialogFooter,
   DialogLead,
@@ -18,7 +21,7 @@ import {
   ROW_ACTIONS_HOVER_SX,
   RowAction,
   RowActions,
-  TableFrame,
+  type TableColumn,
 } from "@/client/src/components/common/index.ts";
 import {
   EMPTY_MODIFIER,
@@ -48,6 +51,14 @@ type Modifier = InferResponseType<
   (typeof rpc.api.characters.modifiers)[":characterId"]["modifiers"]["$get"],
   200
 >[number];
+
+/** A modifier's columns: on a phone, its target leads, its actions at the line's end, its operator and value under them, named */
+const MODIFIER_COLUMNS: TableColumn[] = [
+  { key: "target", label: "Target", width: "40%" },
+  { key: "operator", label: "Operator", width: "15%" },
+  { key: "value", label: "Value", width: "25%" },
+  { key: "actions", label: "Actions", width: "20%", align: "right" },
+];
 
 /** A character's own modifiers: listed, added, edited and deleted. */
 export function CharacterModifiersDialog({ open, onClose, characterId, rulesetId }: CharacterModifiersDialogProps) {
@@ -167,53 +178,39 @@ export function CharacterModifiersDialog({ open, onClose, characterId, rulesetId
             ) : modifiers.length === 0 ? (
               <BlankNote>No modifiers</BlankNote>
             ) : (
-              <TableFrame>
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell sx={{ width: "40%" }}>Target</TableCell>
-                      <TableCell sx={{ width: "15%" }}>Operator</TableCell>
-                      <TableCell sx={{ width: "25%" }}>Value</TableCell>
-                      <TableCell align="right" sx={{ width: "20%" }}>
-                        Actions
-                      </TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {modifiers.map((mod) => (
-                      <TableRow
-                        key={mod.id}
-                        sx={{
-                          position: "relative",
-                          ...ROW_ACTIONS_HOVER_SX,
-                        }}
-                      >
-                        <TableCell>
-                          <ModifierTargetCell modifier={mod} />
-                        </TableCell>
-                        <TableCell>
-                          <ModifierOperatorCell modifier={mod} />
-                        </TableCell>
-                        <TableCell>
-                          <ModifierValueCell modifier={mod} />
-                        </TableCell>
-                        <TableCell align="right">
-                          <RowActions>
-                            <RowAction icon={EditIcon} label="Edit" onClick={() => handleEdit(mod)} />
-                            <RowAction icon={CopyIcon} label="Duplicate" onClick={() => handleDuplicate(mod)} />
-                            <RowAction
-                              icon={DeleteIcon}
-                              label="Delete"
-                              intent="destructive"
-                              onClick={() => handleDelete(mod)}
-                            />
-                          </RowActions>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableFrame>
+              <DataTable framed size="small" columns={MODIFIER_COLUMNS}>
+                {modifiers.map((mod) => (
+                  <DataRow
+                    key={mod.id}
+                    sx={{
+                      position: "relative",
+                      ...ROW_ACTIONS_HOVER_SX,
+                    }}
+                  >
+                    <DataCell slot="primary">
+                      <ModifierTargetCell modifier={mod} />
+                    </DataCell>
+                    <DataCell slot="labeled" label="Operator">
+                      <ModifierOperatorCell modifier={mod} />
+                    </DataCell>
+                    <DataCell slot="labeled" label="Value">
+                      <ModifierValueCell modifier={mod} />
+                    </DataCell>
+                    <DataCell slot="trailing" align="right">
+                      <RowActions>
+                        <RowAction icon={EditIcon} label="Edit" onClick={() => handleEdit(mod)} />
+                        <RowAction icon={CopyIcon} label="Duplicate" onClick={() => handleDuplicate(mod)} />
+                        <RowAction
+                          icon={DeleteIcon}
+                          label="Delete"
+                          intent="destructive"
+                          onClick={() => handleDelete(mod)}
+                        />
+                      </RowActions>
+                    </DataCell>
+                  </DataRow>
+                ))}
+              </DataTable>
             )}
           </Stack>
         </DialogContent>

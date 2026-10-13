@@ -9,6 +9,7 @@ import {
   EditDialog,
   ListToolbar,
   SectionContent,
+  type TableColumn,
 } from "@/client/src/components/common/index.ts";
 import {
   EMPTY_MODIFIER,
@@ -47,7 +48,7 @@ type ModifiersArray = InferResponseType<
   200
 >;
 
-const MODIFIERS_COLUMNS = [
+const MODIFIERS_COLUMNS: TableColumn[] = [
   { key: "target", label: "Target", width: "30%" },
   { key: "operator", label: "Operator", width: "10%" },
   { key: "value", label: "Value", width: "25%" },
