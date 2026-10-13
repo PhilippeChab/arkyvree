@@ -1,27 +1,21 @@
 import { afterEach, expect, test } from "bun:test";
 
-import type { Db } from "@/drizzle/database.ts";
 import RequirementEvaluator from "@/engine/core/requirements/RequirementEvaluator.ts";
-import { type RulesetData } from "@/engine/core/view/index.ts";
 import Dnd35TargetPaths from "@/engine/rulesets/dnd3.5/Dnd35TargetPaths.ts";
 import AbilitiesComponent from "@/engine/rulesets/dnd3.5/model/abilities/AbilitiesComponent.ts";
-import { EntityEdit, RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
-import { db, withTransaction } from "@/server/database/index.ts";
+import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
+import { db } from "@/server/database/index.ts";
 import { fetchEveryPage } from "@/server/repositories/concerns/Paginates.ts";
 import {
   Abilities,
   Aptitudes,
   Feats,
   FeatsAptitudes,
-  KlassLevelFeats,
-  KlassLevelPowers,
-  KlassLevels,
   Modifiers,
   Powers,
   PowersAptitudes,
   Properties,
   Requirements,
-  type RulesetEntityType,
   Rulesets,
 } from "@/server/repositories/index.ts";
 import { AptitudesService } from "@/server/services/rulesets/aptitudes/index.ts";
@@ -35,91 +29,9 @@ import {
   copyEntity,
   createSeededTestRuleset,
   createSeededTestRulesetWithExtensions,
-  editRuleset,
 } from "@/tests/support/rulesets.ts";
+import { compareCopies, customizationsOf } from "@/tests/support/siblingCopies.ts";
 import { makeSession } from "@/tests/support/users.ts";
-
-/** A winner's merged customizations, as the view shows them: their content, not their ids. */
-function customizationsOf(data: RulesetData, id: string) {
-  const requirementsOf = (entityId: string) =>
-    (data.requirementsByEntity.get(entityId) ?? [])
-      .map((r) => [r.level, r.chainingOperator, r.target, r.operator, r.value, r.valueType].join("|"))
-      .sort();
-  return {
-    modifiers: (data.modifiersBySource.get(id) ?? [])
-      .map((m) => [m.target, m.operator, m.value, m.valueType, ...requirementsOf(m.id)].join("|"))
-      .sort(),
-    properties: (data.propertiesByEntity.get(id) ?? []).map((p) => [p.type, p.value, p.description].join("|")).sort(),
-    requirements: requirementsOf(id),
-    links: [
-      ...(data.featsById.get(id)?.featsAptitudesInRules.map((l) => l.aptitudeId) ?? []),
-      ...(data.powersById.get(id)?.powersAptitudesInRules.map((l) => `${l.aptitudeId}|${l.level}`) ?? []),
-    ].sort(),
-  };
-}
-
-/** The entity type of a feat, a power or an item of the view. */
-function typeOf(data: RulesetData, id: string): RulesetEntityType | undefined {
-  if (data.featsById.has(id)) return "feats";
-  if (data.powersById.has(id)) return "powers";
-  if (data.aptitudesById.has(id)) return "aptitudes";
-  return data.itemsById.has(id) ? "items" : undefined;
-}
-
-/**
- * Copies each winner into the ruleset, in a transaction rolled back, and compares the copy's customizations in the view
- * with the winner's before it was copied: the winners compared, and the mismatches, by winner and kind.
- */
-async function compareCopies(ruleset: Parameters<typeof RulesetViews.getData>[0], winnerIds: string[]) {
-  const before = await RulesetViews.getData(ruleset);
-  const mismatches: string[] = [];
-  let compared = 0;
-  for (const winnerId of winnerIds) {
-    const type = typeOf(before, winnerId);
-    if (!type) continue;
-    compared++;
-    const expected = customizationsOf(before, winnerId);
-    await withTransaction(async (tx) => {
-      const edit = await editRuleset(EntityEdit, ruleset);
-      const { id: copyId } = await edit.cowToEdit(tx, type, { id: winnerId, rulesetId: "inherited" });
-      RulesetViews.invalidate(ruleset.id);
-      const after = await RulesetViews.getData(ruleset);
-      const actual = customizationsOf(after, copyId);
-      for (const kind of ["modifiers", "properties", "requirements", "links"] as const) {
-        if (JSON.stringify(actual[kind]) === JSON.stringify(expected[kind])) continue;
-        mismatches.push(`${type} ${winnerId} ${kind}: view ${expected[kind]} copy ${actual[kind]}`);
-      }
-      const stale = await findStaleAptitudeIds(tx, after, type, copyId);
-      if (stale.length > 0) mismatches.push(`${type} ${winnerId} stores links to losing lists: ${stale}`);
-      throw new Rollback();
-    }).catch((error) => {
-      if (!(error instanceof Rollback)) throw error;
-    });
-    RulesetViews.invalidate(ruleset.id);
-  }
-  return { compared, mismatches };
-}
-
-/**
- * The aptitudes a copy's links store that its ruleset's view resolves to another (a losing copy of a list), read by
- * their stored ids: a feat's or a power's lists, a class's levels' granted feats' and powers'. None, for a right copy.
- */
-async function findStaleAptitudeIds(tx: Db, view: RulesetData, type: RulesetEntityType, copyId: string) {
-  const links = await readAptitudeLinks(tx, type, copyId);
-  return links.map((link) => link.aptitudeId).filter((id) => view.canonicalize(id) !== id);
-}
-
-/** A copy's links to lists as stored: a feat's or a power's lists, a class's levels' granted feats' and powers'. */
-async function readAptitudeLinks(tx: Db, type: RulesetEntityType, copyId: string) {
-  if (type === "feats") return await FeatsAptitudes.findMany(tx, { featId: copyId });
-  if (type === "powers") return await PowersAptitudes.findMany(tx, { powerId: copyId });
-  if (type !== "klasses") return [];
-  const klassLevelIds = (await KlassLevels.findMany(tx, { klassId: copyId })).map((level) => level.id);
-  return [
-    ...(await KlassLevelFeats.findMany(tx, { klassLevelIds })),
-    ...(await KlassLevelPowers.findMany(tx, { klassLevelIds })),
-  ];
-}
 
 /** Every page of a list, by its size and its ids. */
 async function readPages(getPage: (page: number) => Promise<{ items: { id: string }[]; nextPage?: number }>) {
@@ -158,8 +70,6 @@ async function setup(
   );
   return { session, host };
 }
-
-class Rollback extends Error {}
 
 afterEach(() => RulesetViews.invalidateAll());
 
@@ -287,37 +197,6 @@ for (const [chainingOperator, reverseOrder] of [
     expect(await stored()).toEqual(originals);
   });
 }
-
-test("a sibling winner's copy holds what the view showed of it, for every winner of a fork of every extension", async () => {
-  const fork = await createSeededTestRulesetWithExtensions(makeSession().userId);
-  const { cow } = await RulesetViews.getData(fork);
-  const winnerIds = [...new Set([...cow.siblingIds].flatMap((loserId) => cow.getWinner(loserId) ?? []))].sort();
-  const { compared, mismatches } = await compareCopies(fork, winnerIds);
-  expect(compared).toBeGreaterThan(100);
-  expect(mismatches).toEqual([]);
-}, 600_000);
-
-test("a copied class's levels store the lists that stand for their granted feats' and powers' lists", async () => {
-  const fork = await createSeededTestRulesetWithExtensions(makeSession().userId);
-  const view = await RulesetViews.getData(fork);
-  const klassIds = [...new Set([...view.klassesById.values()].map((klass) => klass.id))].sort();
-  const stale: string[] = [];
-  for (const klassId of klassIds) {
-    await withTransaction(async (tx) => {
-      const edit = await editRuleset(EntityEdit, fork);
-      const { id: copyId } = await edit.cowToEdit(tx, "klasses", { id: klassId, rulesetId: "inherited" });
-      RulesetViews.invalidate(fork.id);
-      const ids = await findStaleAptitudeIds(tx, await RulesetViews.getData(fork), "klasses", copyId);
-      if (ids.length > 0) stale.push(`${view.klassesById.get(klassId)?.name}: ${ids}`);
-      throw new Rollback();
-    }).catch((error) => {
-      if (!(error instanceof Rollback)) throw error;
-    });
-    RulesetViews.invalidate(fork.id);
-  }
-  expect(klassIds.length).toBeGreaterThan(50);
-  expect(stale).toEqual([]);
-}, 600_000);
 
 // Three books copy Toughness and Fireball: the first's copies win; the other two give theirs equal rows that differ
 // otherwise: a modifier with a requirement of its own, a property with a description of its own, a condition and a

@@ -60,11 +60,16 @@ jobs:
       - name: Run API Tests (shard ${{ matrix.shard }}/3)
         run: bun --env-file=.env.test test --shard=${{ matrix.shard }}/3 tests
 
+  # A PR's affected tests touch most of the suite: sharded like a push's, else one runner takes them all in turn
   changed:
-    name: API Tests (changed)
+    name: API Tests (changed, shard ${{ matrix.shard }}/3)
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
     timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
     services:
       postgres:
         image: mirror.gcr.io/library/postgres:17
@@ -89,5 +94,15 @@ jobs:
       - run: bun install --frozen-lockfile
       - name: Seed database
         run: bun --env-file=.env.test scripts/db/reset.ts --with-test-data
-      - name: Run API Tests (changed vs ${{ github.base_ref }})
-        run: bun --env-file=.env.test test --changed=origin/${{ github.base_ref }} tests
+      - name: Run API Tests (changed vs ${{ github.base_ref }}, shard ${{ matrix.shard }}/3)
+        run: bun --env-file=.env.test test --changed=origin/${{ github.base_ref }} --shard=${{ matrix.shard }}/3 tests
+
+  # The check branch protection requires by name: green once every shard is
+  changed-result:
+    name: API Tests (changed)
+    runs-on: ubuntu-latest
+    needs: changed
+    if: always() && github.event_name == 'pull_request'
+    steps:
+      - name: Every shard passed
+        run: test "${{ needs.changed.result }}" = success
