@@ -11,7 +11,7 @@ import {
   RowActions,
   type TableColumn,
 } from "@/client/src/components/common/index.ts";
-import { formatCost, formatWeight } from "@/client/src/lib/formatNumeric.ts";
+import { formatCost, formatTrimmed, formatWeight } from "@/client/src/lib/formatNumeric.ts";
 import { buildCustomizationPath } from "@/shared/customization/entities.ts";
 
 import type { EquipmentRow } from "./equipment.ts";
@@ -47,6 +47,12 @@ const ITEM_COLUMNS: TableColumn[] = [
 /** Slots and figures stay on one line */
 const NO_WRAP_SX = { whiteSpace: "nowrap" };
 
+/** A weight in whole pounds where it is one ("2 lbs", "1 lb", "0.5 lbs"), as a phone shows it */
+function formatPounds(weight: EquipmentTableRow["weight"]) {
+  const pounds = formatTrimmed(weight);
+  return `${pounds} ${pounds === "1" ? "lb" : "lbs"}`;
+}
+
 /** A character's inventory: slot, quantity, weight, value, and the carried load under it. */
 export function EquipmentTable<T extends EquipmentTableRow>({
   rows,
@@ -81,13 +87,27 @@ export function EquipmentTable<T extends EquipmentTableRow>({
             <DataCell slot={entry.slotLabel ? "inline" : "hidden"} align="center" sx={NO_WRAP_SX}>
               {entry.slotLabel ?? <EmptyValue />}
             </DataCell>
-            <DataCell slot={(entry.quantity || 1) > 1 ? "labeled" : "hidden"} label="Quantity" align="center">
+            <DataCell
+              slot={(entry.quantity || 1) > 1 ? "inline" : "hidden"}
+              align="center"
+              phoneChildren={`×${entry.quantity || 1}`}
+            >
               {entry.quantity || 1}
             </DataCell>
-            <DataCell slot={formatWeight(entry.weight) ? "inline" : "hidden"} align="center" sx={NO_WRAP_SX}>
+            <DataCell
+              slot={formatWeight(entry.weight) ? "inline" : "hidden"}
+              align="center"
+              sx={NO_WRAP_SX}
+              phoneChildren={formatPounds(entry.weight)}
+            >
               {formatWeight(entry.weight) ?? <EmptyValue />}
             </DataCell>
-            <DataCell slot={formatCost(entry.costGp) ? "inline" : "hidden"} align="center" sx={NO_WRAP_SX}>
+            <DataCell
+              slot={formatCost(entry.costGp) ? "inline" : "hidden"}
+              align="center"
+              sx={NO_WRAP_SX}
+              phoneChildren={`${formatTrimmed(entry.costGp)} gp`}
+            >
               {formatCost(entry.costGp) ?? <EmptyValue />}
             </DataCell>
             <DataCell slot="hidden" sx={{ fontSize: "0.875rem", minWidth: 220 }}>

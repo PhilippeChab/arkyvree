@@ -19,6 +19,8 @@ import { TableFrame } from "./TableFrame.tsx";
 interface DataCellProps extends Omit<TableCellProps, "sx"> {
   /** Its column's name, which a `labeled` cell leads with on a phone ("Rank 6") */
   label?: string;
+  /** What it shows on a phone in place of its children, shorter ("2 lbs" for "2.00 lbs") */
+  phoneChildren?: ReactNode;
   /** Where it goes on a phone (`PhoneSlot`) */
   slot: PhoneSlot;
   sx?: SxProps<Theme>;
@@ -53,6 +55,9 @@ type StyleObject = Exclude<SxProps<Theme>, ReadonlyArray<unknown> | ((theme: The
 /** A `labeled` cell's name, on a phone alone: its header says it from `sm` up */
 const PHONE_LABEL_SX = { display: { xs: "inline", sm: "none" }, color: "text.secondary", fontWeight: 400, pr: 0.5 };
 
+/** What a cell shows on a phone alone, in place of what it shows from `sm` up */
+const PHONE_ONLY_SX = { display: { xs: "inline", sm: "none" } };
+
 /** A cell on a phone's second line: small and muted, as a caption, a text it holds running in its line */
 const SECOND_LINE_SX: StyleObject = {
   order: 3,
@@ -70,6 +75,9 @@ const SLOT_SX: Record<PhoneSlot, StyleObject> = {
   block: { order: 4, flexBasis: "100%", minWidth: 0 },
   hidden: { display: "none" },
 };
+
+/** What a cell shows from `sm` up alone */
+const WIDE_ONLY_SX = { display: { xs: "none", sm: "inline" } };
 
 /**
  * A cell as a phone shows it, in its slot. Its second line's cells are parted by the row's gap, each wrapping onto the
@@ -135,7 +143,7 @@ function withSx(own: SxProps<Theme>, sx: SxProps<Theme> | undefined): SxProps<Th
 }
 
 /** A `DataRow`'s cell: from `sm` up, its column's; on a phone, where its `slot` says. */
-export function DataCell({ children, label, slot, sx, ...props }: DataCellProps) {
+export function DataCell({ children, label, phoneChildren, slot, sx, ...props }: DataCellProps) {
   // A dash says nothing on a phone, nor needs a dot before it
   const shownSlot = isValidElement(children) && children.type === EmptyValue ? "hidden" : slot;
   return (
@@ -145,7 +153,18 @@ export function DataCell({ children, label, slot, sx, ...props }: DataCellProps)
           {label}
         </Box>
       )}
-      {children}
+      {phoneChildren === undefined ? (
+        children
+      ) : (
+        <>
+          <Box component="span" sx={WIDE_ONLY_SX}>
+            {children}
+          </Box>
+          <Box component="span" sx={PHONE_ONLY_SX}>
+            {phoneChildren}
+          </Box>
+        </>
+      )}
     </TableCell>
   );
 }

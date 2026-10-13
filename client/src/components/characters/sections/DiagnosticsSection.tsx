@@ -1,4 +1,4 @@
-import { Accordion, AccordionDetails, AccordionSummary, Box, Collapse, Stack } from "@mui/material";
+import { Accordion, AccordionDetails, AccordionSummary, Box, Collapse, Stack, type Theme } from "@mui/material";
 import { Fragment, type ReactNode } from "react";
 
 import { ValidationIssueList } from "@/client/src/components/characters/validation/index.ts";
@@ -48,6 +48,8 @@ interface GroupedRuleTableProps {
   count: number;
   groups: RuleGroup[];
   label: string;
+  /** Where a rule's last cell goes on a phone: a requirement's chaining, named; a modifier's value type, nowhere */
+  lastSlot: PhoneSlot;
 }
 
 interface InvalidRequirementTableProps {
@@ -71,6 +73,7 @@ interface RuleCellsRowProps {
   cells: RuleCells;
   /** Its last column's name, which a phone leads its cell with */
   last: string;
+  lastSlot: PhoneSlot;
   /** Where its target goes on a phone: under its source, or leading its row (a group's rule, its source above it) */
   targetSlot: PhoneSlot;
 }
@@ -121,8 +124,10 @@ const SKIPPED_COLUMNS: TableColumn[] = [
 
 const SUMMARY_SX = { px: 0, minHeight: 0, "& .MuiAccordionSummary-content": { my: 0 } } as const;
 
-/** Its tables' cells, the header's too: tight, in small type, from `sm` up (a phone lists them) */
-const TABLE_SX = { "& .MuiTableCell-root": { py: { sm: 0.5 }, px: { sm: 1 }, fontSize: { sm: "0.8rem" } } } as const;
+/** Its tables' cells, the header's too: tight, in small type (a phone lists them, unpadded) */
+const TABLE_SX = {
+  "& .MuiTableCell-root": { py: { sm: 0.5 }, px: { sm: 1 }, fontSize: { xs: "0.8125rem", sm: "0.8rem" } },
+} as const;
 
 /** A text `sm` and up show alone */
 const WIDE_ONLY_SX = { display: { xs: "none", sm: "inline" } };
@@ -168,7 +173,7 @@ function DiagnosticsGroup({ label, count, columns, children }: DiagnosticsGroupP
 }
 
 /** Rules by source: a source with one rule is a row, one with several expands to list them. */
-function GroupedRuleTable({ label, count, columns, groups }: GroupedRuleTableProps) {
+function GroupedRuleTable({ label, count, columns, groups, lastSlot }: GroupedRuleTableProps) {
   const last = columns[columns.length - 1].label;
   const { keys: expanded, toggle } = useToggleSet();
 
@@ -180,7 +185,7 @@ function GroupedRuleTable({ label, count, columns, groups }: GroupedRuleTablePro
             <DataRow key={key}>
               <DataCell slot="hidden" />
               <DataCell slot="primary">{source}</DataCell>
-              <RuleCellsRow cells={rules[0]} last={last} targetSlot="inline" />
+              <RuleCellsRow cells={rules[0]} last={last} lastSlot={lastSlot} targetSlot="inline" />
             </DataRow>
           );
         }
@@ -205,11 +210,11 @@ function GroupedRuleTable({ label, count, columns, groups }: GroupedRuleTablePro
             <DataRow>
               <DataCell slot="block" colSpan={6} sx={{ py: 0, borderBottom: isOpen ? undefined : "none" }}>
                 <Collapse in={isOpen} timeout={DURATION.normal} unmountOnExit>
-                  <DataTable size="small" sx={TABLE_SX}>
+                  <DataTable size="small" sx={[TABLE_SX, nestedInsetSx]}>
                     {rules.map((cells, i) => (
                       <DataRow key={i} indented sx={{ bgcolor: "action.hover" }}>
                         <DataCell slot="hidden" />
-                        <RuleCellsRow cells={cells} last={last} targetSlot="primary" />
+                        <RuleCellsRow cells={cells} last={last} lastSlot={lastSlot} targetSlot="primary" />
                       </DataRow>
                     ))}
                   </DataTable>
@@ -260,7 +265,20 @@ function ModifierTable({ baseRules, modifiers, label }: ModifierTableProps) {
   }
   const groups = [...bySource].map(([source, rules]) => ({ key: source, source, rules }));
 
-  return <GroupedRuleTable label={label} count={modifiers.length} columns={ruleColumns("Type")} groups={groups} />;
+  return (
+    <GroupedRuleTable
+      label={label}
+      count={modifiers.length}
+      columns={ruleColumns("Type")}
+      groups={groups}
+      lastSlot="hidden"
+    />
+  );
+}
+
+/** A group's rules, shaded, inset from their shade's sides on a phone */
+function nestedInsetSx(theme: Theme) {
+  return { [theme.breakpoints.down("sm")]: { "--data-row-inset": theme.spacing(1) } };
 }
 
 function RequirementTable({ baseRules, groups, label }: RequirementTableProps) {
@@ -269,6 +287,7 @@ function RequirementTable({ baseRules, groups, label }: RequirementTableProps) {
       label={label}
       count={groups.length}
       columns={ruleColumns("Chaining")}
+      lastSlot="labeled"
       groups={groups.map((group, index) => ({
         key: String(index),
         source: group.sourceName ?? (group.sourceType ? entityTypeLabel(group.sourceType, baseRules) : <EmptyValue />),
@@ -283,7 +302,8 @@ function RequirementTable({ baseRules, groups, label }: RequirementTableProps) {
   );
 }
 
-function RuleCellsRow({ cells, last, targetSlot }: RuleCellsRowProps) {
+/** A rule's cells: on a phone, its target leads, its operator and value at the line's end ("+ 2") */
+function RuleCellsRow({ cells, last, lastSlot, targetSlot }: RuleCellsRowProps) {
   const [target, operator, value, lastCell] = cells;
   return (
     <>
@@ -291,7 +311,7 @@ function RuleCellsRow({ cells, last, targetSlot }: RuleCellsRowProps) {
       <DataCell slot="hidden" align="center">
         {shownCell(operator)}
       </DataCell>
-      <DataCell slot="inline" align="center">
+      <DataCell slot="trailing" align="center">
         {isShown(operator) && (
           <Box component="span" sx={PHONE_OPERATOR_SX}>
             {operator}
@@ -299,7 +319,7 @@ function RuleCellsRow({ cells, last, targetSlot }: RuleCellsRowProps) {
         )}
         {shownCell(value)}
       </DataCell>
-      <DataCell slot={isShown(lastCell) ? "labeled" : "hidden"} label={last} align="center">
+      <DataCell slot={isShown(lastCell) ? lastSlot : "hidden"} label={last} align="center">
         {shownCell(lastCell)}
       </DataCell>
     </>

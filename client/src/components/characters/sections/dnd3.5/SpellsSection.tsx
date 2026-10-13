@@ -23,6 +23,8 @@ import { formatPropertyType } from "@/shared/customization/properties.ts";
 import { SPELL_SCHOOL } from "@/vocabulary/dnd3.5/properties/index.ts";
 import { SPELL_LEVEL_LABELS } from "@/vocabulary/dnd3.5/spells.ts";
 
+import { ScoreBox } from "./ScoreBox.tsx";
+
 interface CollapsibleAptitudeProps {
   apt: AptitudeSpells;
   rulesetId?: string;
@@ -66,6 +68,12 @@ const LEVEL_HEADERS_SX = {
   "& > thead th:not(:first-of-type)": { ...LEVEL_CELL_SX, fontSize: "0.8125rem" },
 };
 
+/** What shows on a phone alone: the slots' boxes */
+const PHONE_ONLY_SX = { display: { sm: "none" } };
+
+/** A list's slots in boxes, four to a row */
+const SLOT_BOXES_SX = { display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 1 };
+
 /** A spell's columns: on a phone, its name leads, its DC at the line's end, its school and save under them */
 const SPELL_COLUMNS: TableColumn[] = [
   { key: "name", label: "Name", width: "40%" },
@@ -73,6 +81,9 @@ const SPELL_COLUMNS: TableColumn[] = [
   { key: "save", label: "Save", width: "30%" },
   { key: "dc", label: "DC", width: "10%", align: "center" },
 ];
+
+/** What shows from `sm` up alone: the slots' table */
+const WIDE_ONLY_SX = { display: { xs: "none", sm: "block" } };
 
 function CollapsibleAptitude({ apt, rulesetId }: CollapsibleAptitudeProps) {
   const [open, setOpen] = useState(false);
@@ -208,8 +219,32 @@ function SpellsPerDayTable({ spellsPerDay }: SpellsPerDayTableProps) {
   return (
     <Stack spacing={1}>
       <SubsectionTitle>Spells per Day</SubsectionTitle>
+      {/* On a phone, each list's slots in boxes, as the sheet's armor classes: a row of numbers reads as one */}
+      <Stack spacing={2} sx={PHONE_ONLY_SX}>
+        {spellsPerDay.lists.map((list) => (
+          <Stack key={list.aptitudeName} spacing={1}>
+            <Typography variant="body2" sx={{ fontWeight: 500 }}>
+              {list.aptitudeName}
+            </Typography>
+            <Box sx={SLOT_BOXES_SX}>
+              {list.slots.map(
+                (slots, index) =>
+                  slots != null && (
+                    <ScoreBox
+                      key={spellsPerDay.levels[index]}
+                      label={SPELL_LEVEL_LABELS[spellsPerDay.levels[index]]}
+                      value={slots}
+                      compact
+                    />
+                  ),
+              )}
+            </Box>
+          </Stack>
+        ))}
+      </Stack>
       <DataTable
         size="small"
+        containerSx={WIDE_ONLY_SX}
         columns={[
           { key: "list", label: "Spell List" },
           ...spellsPerDay.levels.map((level) => ({
