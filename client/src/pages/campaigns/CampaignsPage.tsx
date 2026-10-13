@@ -150,6 +150,7 @@ export default function CampaignsPage() {
 
         {createDialog.target && (
           <CreateCampaignDialog
+            key={createDialog.key}
             open={createDialog.open}
             onClose={createDialog.close}
             onExited={createDialog.onExited}

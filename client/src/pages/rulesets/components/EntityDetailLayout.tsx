@@ -133,6 +133,7 @@ export function EntityDetailLayout({
       </Container>
       {confirm.target && confirming && (
         <EntityDeleteDialog
+          key={confirm.key}
           open={confirm.open}
           onClose={confirm.close}
           what={what}

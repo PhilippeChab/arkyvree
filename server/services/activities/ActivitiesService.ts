@@ -27,6 +27,11 @@ import { getUrlSegment } from "@/shared/urlSegments.ts";
 /** Where an activity links to: a page, nowhere (null), or a record the user no longer has access to. */
 type ActivityUrl = string | null | { entityType: "ruleset" | "character"; noAccess: true };
 
+/** A class's page, on its tab of `section` (its levels, skills, modifiers or requirements) when given. */
+function classPageUrl(rulesetId: string, klassId: string, section?: string) {
+  return `/rulesets/${rulesetId}/classes/${klassId}${section ? `/${section}` : ""}`;
+}
+
 class ActivitiesService {
   /**
    * A contributor's link: its invitee goes to the invite while it's pending and has lost access once it's revoked or
@@ -51,7 +56,26 @@ class ActivitiesService {
   private async klassSectionUrl(klassId: string, section: "levels" | "skills") {
     const klass = await Klasses.findOne(db, { id: klassId });
     if (!klass) return null;
-    return `/rulesets/${klass.rulesetId}/classes/${klass.id}/${section}`;
+    return classPageUrl(klass.rulesetId, klass.id, section);
+  }
+
+  /**
+   * The ruleset an owner of customizations is of: an entity's own, a class level's class's, a modifier's source's (a
+   * requirement's owner can be a modifier); none for an owner outside a ruleset (a character's own modifiers).
+   */
+  private async ownerRulesetId(entityId: string, entityType: string): Promise<string | null> {
+    if (entityType === "modifiers") {
+      const modifier = await Modifiers.findOne(db, { id: entityId });
+      // A modifier is an entity's (or a character's), never another modifier's: a row saying so leads nowhere
+      if (!modifier || modifier.sourceType === "modifiers") return null;
+      return await this.ownerRulesetId(modifier.sourceId, modifier.sourceType);
+    }
+    if (entityType === "klass_levels") {
+      const klassLevel = await KlassLevels.findOne(db, { id: entityId });
+      return klassLevel ? await this.ownerRulesetId(klassLevel.klassId, "klasses") : null;
+    }
+    if (!isOneOf(entityType, RULESET_ENTITY_TYPES)) return null;
+    return (await EntityRepositories.of(entityType).findOne(db, { id: entityId }))?.rulesetId ?? null;
   }
 
   /** The page of a player's campaign (`path` under it), or null when the player is gone. */
@@ -61,19 +85,20 @@ class ActivitiesService {
     return `/campaigns/${player.campaignId}${path}`;
   }
 
-  private async resolveCustomizationUrl(entityId: string, entityType: string): Promise<string | null> {
-    if (entityType === "klass_levels") {
-      const klassLevel = await KlassLevels.findOne(db, { id: entityId });
-      if (!klassLevel) return null;
-      const klass = await Klasses.findOne(db, { id: klassLevel.klassId });
-      if (!klass) return null;
-      return `/rulesets/${klass.rulesetId}/${buildCustomizationPath("klass_levels", entityId)}`;
-    }
-
-    if (!isOneOf(entityType, RULESET_ENTITY_TYPES) || !isOneOf(entityType, CUSTOMIZATION_PAGE_TYPES)) return null;
-    const entity = await EntityRepositories.of(entityType).findOne(db, { id: entityId });
-    if (!entity) return null;
-    return `/rulesets/${entity.rulesetId}/${buildCustomizationPath(entityType, entityId)}`;
+  /**
+   * The page that lists an owner's customizations: its customization page, or a class's page, on the tab of `section`
+   * (its modifiers' or its requirements'; a property's, its details, its first).
+   */
+  private async resolveCustomizationUrl(
+    entityId: string,
+    entityType: string,
+    section?: "modifiers" | "requirements",
+  ): Promise<string | null> {
+    const rulesetId = await this.ownerRulesetId(entityId, entityType);
+    if (!rulesetId) return null;
+    if (entityType === "klasses") return classPageUrl(rulesetId, entityId, section);
+    if (!isOneOf(entityType, CUSTOMIZATION_PAGE_TYPES)) return null;
+    return `/rulesets/${rulesetId}/${buildCustomizationPath(entityType, entityId)}${section ? `/${section}` : ""}`;
   }
 
   /** A ruleset entity's page, any type's: its customization page when it has one, else its own. */
@@ -161,11 +186,15 @@ class ActivitiesService {
       // Customization entities
       case "modifiers": {
         const modifier = await Modifiers.findOne(db, { id: targetId });
-        return modifier ? await this.resolveCustomizationUrl(modifier.sourceId, modifier.sourceType) : null;
+        return modifier
+          ? await this.resolveCustomizationUrl(modifier.sourceId, modifier.sourceType, "modifiers")
+          : null;
       }
       case "requirements": {
         const requirement = await Requirements.findOne(db, { id: targetId });
-        return requirement ? await this.resolveCustomizationUrl(requirement.entityId, requirement.entityType) : null;
+        return requirement
+          ? await this.resolveCustomizationUrl(requirement.entityId, requirement.entityType, "requirements")
+          : null;
       }
       case "properties": {
         const property = await Properties.findOne(db, { id: targetId });

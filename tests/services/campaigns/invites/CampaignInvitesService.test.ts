@@ -153,10 +153,11 @@ describe("CampaignInvitesService", () => {
   });
 
   describe("acceptInvite", () => {
-    test("accepts the invite and gives the slot to the invitee", async () => {
-      const { invitee, slot, invite } = await setup();
+    test("accepts the invite, gives the slot to the invitee, and names the campaign joined", async () => {
+      const { invitee, slot, invite, campaign } = await setup();
       expect(await CampaignInvitesService.acceptInvite(invitee.session, invite.id)).toMatchObject({
         status: "Accepted",
+        campaignId: campaign.id,
       });
       expect((await Players.findOne(db, { id: slot.id }))?.userId).toBe(invitee.user.id);
       expect(CampaignInvitesService.acceptInvite(invitee.session, invite.id)).rejects.toThrow(ConflictError);

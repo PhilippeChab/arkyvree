@@ -87,7 +87,7 @@ describe("ActivitiesService.getActivityUrl", () => {
       expect({ table, url: await resolve(table, id) }).toEqual({ table, url });
   });
 
-  test("links a customization to its entity's customization page", async () => {
+  test("links a customization to its entity's customization page, on its tab", async () => {
     const { rulesetId: r, featMap, itemMap, klassMap } = await getSeedCtx();
     const [clericLevel] = await KlassLevels.findMany(db, { klassId: klassMap.pc["Cleric"] });
     const [featModifier] = await Modifiers.findMany(db, {
@@ -112,15 +112,55 @@ describe("ActivitiesService.getActivityUrl", () => {
     });
 
     expect(await resolve("modifiers", featModifier.id)).toBe(
-      `/rulesets/${r}/feats/${featMap["Toughness"]}/customization`,
+      `/rulesets/${r}/feats/${featMap["Toughness"]}/customization/modifiers`,
     );
     expect(await resolve("modifiers", levelModifier.id)).toBe(
-      `/rulesets/${r}/class-levels/${clericLevel.id}/customization`,
+      `/rulesets/${r}/class-levels/${clericLevel.id}/customization/modifiers`,
     );
     expect(await resolve("requirements", requirement.id)).toBe(
-      `/rulesets/${r}/feats/${featMap["Weapon Focus: Longsword"]}/customization`,
+      `/rulesets/${r}/feats/${featMap["Weapon Focus: Longsword"]}/customization/requirements`,
     );
     expect(await resolve("properties", property.id)).toBe(`/rulesets/${r}/items/${itemMap["Longsword"]}/customization`);
+  });
+
+  test("links a class's customizations to its class page's tab, and a modifier's requirements to the modifier's page", async () => {
+    const { rulesetId: r, featMap, klassMap } = await getSeedCtx();
+    const fighter = klassMap.pc["Fighter"];
+    const [featModifier] = await Modifiers.findMany(db, { sourceIds: [featMap["Toughness"]], sourceType: "feats" });
+    const [classModifier] = await Modifiers.create(db, {
+      sourceId: fighter,
+      sourceType: "klasses",
+      target: "combat.bab",
+      value: "1",
+      valueType: "number",
+      operator: "add",
+    });
+    const requirementOf = async (entityId: string, entityType: string) => {
+      const [row] = await Requirements.create(db, {
+        entityId,
+        entityType,
+        level: "1",
+        target: "abilities.strength.misc",
+        value: "13",
+        valueType: "number",
+        operator: "greater_than_or_equal",
+      });
+      return row;
+    };
+    const classRequirement = await requirementOf(fighter, "klasses");
+    const modifierRequirement = await requirementOf(featModifier.id, "modifiers");
+
+    expect(
+      await resolveAll([
+        ["modifiers", classModifier.id],
+        ["requirements", classRequirement.id],
+        ["requirements", modifierRequirement.id],
+      ]),
+    ).toEqual([
+      `/rulesets/${r}/classes/${fighter}/modifiers`,
+      `/rulesets/${r}/classes/${fighter}/requirements`,
+      `/rulesets/${r}/modifiers/${featModifier.id}/customization/requirements`,
+    ]);
   });
 
   test("links a character's inventory and levels to the character, and a campaign's players, invites and characters to the campaign", async () => {

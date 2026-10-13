@@ -33,10 +33,11 @@ export const INVITE_KINDS = {
     entityPath: (id: string) => `/campaigns/${id}`,
     listPath: "/campaigns",
     listKey: QUERY_KEYS.campaigns.lists,
-    // The answer names its slot, not its campaign: every campaign's own data, which only a member's page holds
     acceptFn: async (inviteId: string) => {
-      await parseResponse(rpc.api.campaigns.invites[":inviteId"].accept.$post({ param: { inviteId } }));
-      return QUERY_KEYS.campaigns.details;
+      const { campaignId } = await parseResponse(
+        rpc.api.campaigns.invites[":inviteId"].accept.$post({ param: { inviteId } }),
+      );
+      return QUERY_KEYS.campaigns.detail(campaignId);
     },
     rejectFn: (inviteId: string) =>
       parseResponse(rpc.api.campaigns.invites[":inviteId"].reject.$post({ param: { inviteId } })),

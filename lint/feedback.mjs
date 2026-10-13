@@ -4,7 +4,7 @@
  * - `dialog-mounts`: a dialog stays mounted, its `open` showing it, so it fades out as it closes; a dialog about a
  *   record opens through `useDialogState`, which keeps the record while it fades, never an `…Open` flag set beside a
  *   record state of its own, and one that keeps state of its own mounts with that record (`{dialog.target && …}`) and
- *   lets it go once faded.
+ *   lets it go once faded, keyed by its opening (`key={dialog.key}`), so one reopened as it fades out mounts afresh.
  * - `menus`: a menu lists its items alone (a panel that opens from a button is a `Popover`), and an action in it is an
  *   `ActionMenuItem`, one line each; a `MenuItem` is one of several to choose, marked `selected`. A menu is sized by
  *   its items and opens where MUI puts it (no width, no anchor of its own), and its delete is "Delete Permanently",
@@ -136,6 +136,19 @@ function createDialogMounts(context) {
           message:
             "A dialog stays mounted, its `open` showing it, so it fades out as it closes; one that keeps state of its " +
             "own mounts with its `useDialogState` record (`{dialog.target && …}`) and lets it go once faded.",
+        });
+      }
+      // One mounted with its record (`{dialog.target && …}`) takes its opening's key: reopened as it fades, it mounts
+      // afresh rather than keeping what it held
+      const owner = condition && readsTarget(condition) ? targetOwner(condition) : null;
+      const key = attributeValue(attribute(node, "key"));
+      const keyed = key?.type === "MemberExpression" && key.object.name === owner && key.property.name === "key";
+      if (owner && !keyed) {
+        context.report({
+          node: node.openingElement,
+          message:
+            `A dialog mounted with its record takes its opening's key (\`key={${owner}.key}\`): one opened again as ` +
+            "it fades out mounts afresh, rather than keeping what it held.",
         });
       }
       const open = attribute(node, "open");
@@ -370,6 +383,18 @@ function readsTarget(node) {
   if (!node || typeof node !== "object") return false;
   if (node.type === "MemberExpression" && !node.computed && node.property.name === "target") return true;
   return ["left", "right", "argument", "expression"].some((key) => readsTarget(node[key]));
+}
+
+/** The dialog state whose `target` a condition reads (`dialog` of `dialog.target`), when one is named. */
+function targetOwner(node) {
+  if (!node || typeof node !== "object") return null;
+  if (node.type === "MemberExpression" && !node.computed && node.property.name === "target")
+    return node.object.type === "Identifier" ? node.object.name : null;
+  for (const key of ["left", "right", "argument", "expression"]) {
+    const owner = targetOwner(node[key]);
+    if (owner) return owner;
+  }
+  return null;
 }
 
 /** Whether a message is `loadFailureMessage`'s: its call, or a condition whose branches are. */

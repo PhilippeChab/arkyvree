@@ -347,6 +347,7 @@ export default function ProfilePage() {
           {/* Each dialog keeps its form and its errors: mounted as it opens, let go once it has faded */}
           {verifyDialog.target !== null && (
             <EmailChangeVerificationDialog
+              key={verifyDialog.key}
               open={verifyDialog.open}
               onClose={verifyDialog.close}
               onExited={verifyDialog.onExited}
@@ -357,6 +358,7 @@ export default function ProfilePage() {
 
         {deleteDialog.target && (
           <DeleteAccountDialog
+            key={deleteDialog.key}
             open={deleteDialog.open}
             onClose={deleteDialog.close}
             onExited={deleteDialog.onExited}

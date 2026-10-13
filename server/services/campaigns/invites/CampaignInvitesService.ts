@@ -50,6 +50,7 @@ class CampaignInvitesService {
     return invite;
   }
 
+  /** Accepts the invite: its answer names the campaign joined, whose data its client refreshes. */
   async acceptInvite(session: Session, inviteId: string) {
     return await withTransaction(async (tx) => {
       const invite = await this.getPendingInviteFor(tx, session, inviteId);
@@ -57,7 +58,7 @@ class CampaignInvitesService {
       if (campaign.deletedAt) throw new ForbiddenError("Cannot accept an invite for an archived campaign");
 
       await Players.update(tx, { userId: session.userId }, { id: invite.playerId });
-      return await this.answerInvite(tx, session, invite, "Accepted");
+      return { ...(await this.answerInvite(tx, session, invite, "Accepted")), campaignId: campaign.id };
     });
   }
 
