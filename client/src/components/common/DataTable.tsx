@@ -70,7 +70,10 @@ const PHONE_ONLY_SX = { display: { xs: "inline", sm: "none" } };
 
 /** A chip read as plain text, in its line's type, parted from the next by a comma */
 const PLAIN_CHIPS_SX: StyleObject = {
+  // Inline in its line, on its text's baseline
   "& .MuiChip-root": {
+    display: "inline",
+    verticalAlign: "baseline",
     height: "auto",
     border: 0,
     borderRadius: 0,
@@ -78,8 +81,12 @@ const PLAIN_CHIPS_SX: StyleObject = {
     color: "inherit",
     font: "inherit",
   },
-  "& .MuiChip-root:not(:last-child)::after": { content: '","' },
-  "& .MuiChip-label": { px: 0 },
+  // A list of chips (aptitudes, a level's feats) reads as a list; a path's chips have their chevrons between them
+  "& .MuiChip-root:has(+ .MuiChip-root)::after": { content: '", "' },
+  // Their rows (a list of aptitudes, a path's segments) run as a sentence, a path's chevrons a space from its words
+  "& .MuiStack-root": { display: "inline" },
+  "& .MuiStack-root > .MuiSvgIcon-root": { px: 0.5, verticalAlign: "middle", boxSizing: "content-box" },
+  "& .MuiChip-label": { display: "inline", px: 0, whiteSpace: "normal" },
   "& .MuiChip-icon": { display: "none" },
 };
 
@@ -89,8 +96,7 @@ const SECOND_LINE_SX: StyleObject = {
   typography: "caption",
   color: "text.secondary",
   "& > .MuiTypography-root": { display: "inline", font: "inherit" },
-  // Its line sits a little under the first, its cells (a text, a chip) centered on each other
-  pt: 0.5,
+  // Its cells (a text, a chip) centered on each other
   alignSelf: "center",
 };
 
@@ -111,7 +117,7 @@ const SLOT_SX: Record<PhoneSlot, StyleObject> = {
   },
   inline: SECOND_LINE_SX,
   labeled: { ...SECOND_LINE_SX, color: "text.primary", fontWeight: 600 },
-  block: { order: 4, flexBasis: "100%", minWidth: 0, pt: 1 },
+  block: { order: 4, flexBasis: "100%", minWidth: 0, pt: 0.5 },
   hidden: { display: "none" },
 };
 
@@ -148,6 +154,8 @@ function phoneRowSx(theme: Theme, indented: boolean): StyleObject {
       flexWrap: "wrap",
       alignItems: "flex-start",
       columnGap: 2,
+      // Its lines apart: its second under its first by twice this (the break between them is a line of its own)
+      rowGap: 0.75,
       py: 1.5,
       px: "var(--data-row-inset)",
       ...(indented && { pl: `calc(var(--data-row-inset) + ${theme.spacing(2)})` }),

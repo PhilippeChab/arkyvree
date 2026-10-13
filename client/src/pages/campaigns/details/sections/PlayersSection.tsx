@@ -63,6 +63,9 @@ interface PlayersSectionProps {
   campaign: CampaignDetail;
 }
 
+/** An empty slot's caption under its name ("No player assigned"), which a phone leaves out */
+const CAPTION_SX = { color: "text.secondary", display: { xs: "none", sm: "inline" } };
+
 /** The players table's columns: its header, and its first load's */
 const PLAYER_COLUMNS: TableColumn[] = [
   { key: "player", label: "Player", width: "20%" },
@@ -280,7 +283,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
                       <Typography variant="body2" sx={hasEmail ? USERNAME_BESIDE_EMAIL_SX : { fontWeight: 500 }}>
                         {displayInfo.name}
                       </Typography>
-                      <Typography variant="caption" sx={hasEmail ? EMAIL_AS_NAME_SX : { color: "text.secondary" }}>
+                      <Typography variant="caption" sx={hasEmail ? EMAIL_AS_NAME_SX : CAPTION_SX}>
                         {displayInfo.caption}
                       </Typography>
                     </Box>
@@ -295,7 +298,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
                   <DataCell slot="inline">
                     <StatusChip icon={statusChip.icon} label={statusChip.label} color={statusChip.color} />
                   </DataCell>
-                  <DataCell slot={player.joinedAt ? "labeled" : "hidden"} label="Joined">
+                  <DataCell slot="hidden">
                     {player.joinedAt ? (
                       <Typography variant="body2" sx={{ color: "text.secondary" }}>
                         {formatDate(player.joinedAt)}

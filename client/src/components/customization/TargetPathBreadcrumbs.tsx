@@ -18,12 +18,22 @@ interface TargetPathBreadcrumbsProps {
   wrap?: boolean;
 }
 
+/** A segment's chevron, before its chip */
+const CHEVRON_SX = { fontSize: 16, color: "text.secondary" };
+
+/** After its chip, on a phone alone, ending its line when the path wraps */
+const CHEVRON_AFTER_SX = { ...CHEVRON_SX, display: { xs: "inline-block", sm: "none" } };
+
+/** Before its chip from `sm` up; on a phone, the chevron goes after the chip before, so a wrapped line starts with a chip */
+const CHEVRON_BEFORE_SX = { ...CHEVRON_SX, display: { xs: "none", sm: "inline-block" } };
+
 /** On a phone, a segment's chip as wide as its line at most, its label wrapping inside it rather than cut */
 function phoneWrappedChipsSx(theme: Theme) {
   return {
     [theme.breakpoints.down("sm")]: {
-      // Its wrapped lines apart, as a list's lines are
+      // Its wrapped lines apart, as a list's lines are; a chip's chevron after it, as close to the next chip
       rowGap: 1,
+      columnGap: 0.25,
       "& > *": { minWidth: 0, maxWidth: "100%" },
       "& .MuiChip-root": { height: "auto", minHeight: 24, minWidth: 0, flexShrink: 1 },
       "& .MuiChip-label": { whiteSpace: "normal", overflowWrap: "anywhere" },
@@ -57,12 +67,13 @@ export function TargetPathBreadcrumbs({
     >
       {segments.map((segment, index) => (
         <Stack key={index} direction="row" spacing={0.25} sx={{ alignItems: "center" }}>
-          {index > 0 && <ChevronRightIcon sx={{ fontSize: 16, color: "text.secondary" }} />}
+          {index > 0 && <ChevronRightIcon sx={wrap ? CHEVRON_SX : CHEVRON_BEFORE_SX} />}
           <ValueChip
             label={targetLabels?.[segment] || formatSegment(segment)}
             color={color}
             onClick={onSegmentClick && (() => onSegmentClick(index))}
           />
+          {!wrap && index < segments.length - 1 && <ChevronRightIcon sx={CHEVRON_AFTER_SX} />}
         </Stack>
       ))}
       {children}
