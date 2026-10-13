@@ -16,6 +16,7 @@
 - Carry the same item in several places
 - The characters list shows the most recently updated first
 - New characters start on your own ruleset
+- Mobile responsiveness overhaul
 - D&D 3.5: a Spells per Day table on the sheet and the PDF
 - D&D 3.5: AC for each weapon set on the sheet and the PDF
 - D&D 3.5: ranged attacks show their maximum range and range penalty
