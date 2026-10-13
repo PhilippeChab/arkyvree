@@ -130,7 +130,7 @@ One workflow per concern, in `.github/workflows/`:
 |---|---|---|
 | `lint.yml` | push to develop, PR, called by Deploy | `Lint`: TypeScript (`tsgo`), oxlint and the formatting (`oxfmt --check`) |
 | `build.yml` | push to develop, PR, called by Deploy | `Build`: the production build and the compiled PDF smoke check |
-| `api-tests.yml` | push to develop, PR, called by Deploy | `API Tests (shard n/3)` on a push, `API Tests (changed)` on a PR |
+| `api-tests.yml` | push to develop, PR, called by Deploy | `API Tests (shard n/3)` on a push, `API Tests (changed, shard n/3)` and `API Tests (changed)` on a PR |
 | `e2e.yml` | push to develop, PR, called by Deploy | `E2E (shard n/3)` |
 | `deploy.yml` | push to main | the four above, `Main's head`, then `Deploy`: the web app, then the worker |
 
@@ -138,7 +138,7 @@ One workflow per concern, in `.github/workflows/`:
 - The check workflows run in parallel. A new push to a PR cancels its previous runs; each push runs to the end
 - API tests split by trigger:
   - **Push** → sharded 3× via `bun test --shard` (matrix jobs in parallel)
-  - **PR** → a single job using `bun test --changed=origin/<base>` — only runs tests affected by the diff
+  - **PR** → sharded 3× too, via `bun test --changed=origin/<base> --shard`: only the tests affected by the diff, split across the shards (a shard left with none passes). Most PRs affect most of the suite, which one job took ~6 minutes to run in turn. `API Tests (changed)` passes once every shard has
 - Both API test commands run every `*.test.ts` under `tests/` (the Playwright specs are `*.e2e.ts`, so they're left out). Dependencies are installed from the frozen lockfile.
 - E2E: the suite sharded 3×, each shard building the client and copying the e2e template (made by `bun test:db:reset`) for its own server (`bunx playwright test --shard`), on the Google Chrome the runners come with (no browser to install). A failing shard uploads its Playwright report
 - `Deploy` deploys the web app (`fly.web.toml`, whose release command migrates the database), then the worker (`fly.worker.toml`), so the worker's code never runs before its migrations; a web deploy that fails stops it before the worker. One deploy runs at a time
