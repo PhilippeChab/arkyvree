@@ -10,6 +10,7 @@ import {
   SearchBar,
   SectionContent,
   StatusChip,
+  type TableColumn,
 } from "@/client/src/components/common/index.ts";
 import { ItemsIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
@@ -39,13 +40,13 @@ import { BulkVariantsDialog } from "./BulkVariantsDialog.tsx";
 
 type Item = InferResponseType<(typeof rpc.api.rulesets)[":id"]["items"]["$get"], 200>["items"][number];
 
-const ITEMS_COLUMNS = [
+const ITEMS_COLUMNS: TableColumn[] = [
   { key: "name", label: "Name", width: "25%" },
-  { key: "type", label: "Type", width: "10%" },
+  { key: "type", label: "Type", width: "10%", slot: "inline" },
   { key: "template", label: "Template", width: "8%" },
   { key: "cost", label: "Cost", width: "10%" },
   { key: "weight", label: "Weight", width: "10%" },
-  { key: "description", label: "Description", width: "37%" },
+  { key: "description", label: "Description", width: "37%", slot: "block" },
 ];
 
 /**

@@ -1,17 +1,20 @@
-import { Container, Stack, Table, TableBody, TableCell, TableHead, TableRow, Typography } from "@mui/material";
+import { Container, Stack, Typography } from "@mui/material";
 
 import {
   BlankState,
   CLICKABLE_ROW_SX,
   clickableProps,
   CREATED_SORTS,
+  DataCell,
+  DataRow,
+  DataTable,
   type FilterOption,
   ListPageResults,
   PageActionButton,
   PageHeader,
   PageTransition,
   SearchBar,
-  TableFrame,
+  type TableColumn,
 } from "@/client/src/components/common/index.ts";
 import { CheckIcon, NotificationsIcon } from "@/client/src/components/icons/index.ts";
 import { InviteActionButtons } from "@/client/src/components/invites/index.ts";
@@ -25,6 +28,13 @@ import { notificationListQuery } from "./notificationQueries.ts";
 const FILTER_OPTIONS: FilterOption<"unread">[] = [
   { value: undefined, label: "All" },
   { value: "unread", label: "Unread" },
+];
+
+/** A notification's columns: on a phone, its message leads, when under it, and an invite's answers on a line of their own */
+const NOTIFICATION_COLUMNS: TableColumn[] = [
+  { key: "notification", label: "Notification" },
+  { key: "when", label: "When" },
+  { key: "actions", label: "Actions" },
 ];
 
 export default function NotificationsPage() {
@@ -80,49 +90,38 @@ export default function NotificationsPage() {
                 />
               }
             >
-              <TableFrame>
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Notification</TableCell>
-                      <TableCell>When</TableCell>
-                      <TableCell>Actions</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {notifications.items.map((notification) => {
-                      const isUnread = !notification.readAt;
-                      const openable = actions.isOpenable(notification);
+              <DataTable framed columns={NOTIFICATION_COLUMNS}>
+                {notifications.items.map((notification) => {
+                  const isUnread = !notification.readAt;
+                  const openable = actions.isOpenable(notification);
 
-                      return (
-                        <TableRow
-                          key={notification.id}
-                          {...(openable && clickableProps(() => actions.open(notification)))}
-                          sx={[openable && CLICKABLE_ROW_SX, isUnread && UNREAD_NOTIFICATION_SX]}
-                        >
-                          <TableCell>
-                            <NotificationMessage notification={notification} unread={isUnread} />
-                          </TableCell>
-                          <TableCell>
-                            <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                              {formatRelativeTime(notification.createdAt)}
-                            </Typography>
-                          </TableCell>
-                          <TableCell>
-                            {actions.isActionable(notification) && (
-                              <InviteActionButtons
-                                onAccept={() => actions.accept(notification)}
-                                onReject={() => actions.reject(notification)}
-                                pending={actions.answering(notification)}
-                              />
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </TableFrame>
+                  return (
+                    <DataRow
+                      key={notification.id}
+                      {...(openable && clickableProps(() => actions.open(notification)))}
+                      sx={[openable && CLICKABLE_ROW_SX, isUnread && UNREAD_NOTIFICATION_SX]}
+                    >
+                      <DataCell slot="primary">
+                        <NotificationMessage notification={notification} unread={isUnread} />
+                      </DataCell>
+                      <DataCell slot="inline">
+                        <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                          {formatRelativeTime(notification.createdAt)}
+                        </Typography>
+                      </DataCell>
+                      <DataCell slot={actions.isActionable(notification) ? "block" : "hidden"}>
+                        {actions.isActionable(notification) && (
+                          <InviteActionButtons
+                            onAccept={() => actions.accept(notification)}
+                            onReject={() => actions.reject(notification)}
+                            pending={actions.answering(notification)}
+                          />
+                        )}
+                      </DataCell>
+                    </DataRow>
+                  );
+                })}
+              </DataTable>
             </ListPageResults>
           </Stack>
         </Stack>

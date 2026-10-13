@@ -933,7 +933,7 @@ function createSkeletons(context) {
       let inCell = false;
       for (let p = parentElement(node); p; p = parentElement(p)) {
         const name = elementName(p);
-        if (name === "TableCell") inCell = true;
+        if (name === "TableCell" || name === "DataCell") inCell = true;
         // A table drawn by hand as it loads: its header over rows of skeletons
         if (name !== "Table" || !holds(p, (child) => elementName(child) === "TableHead")) continue;
         context.report({ node: node.openingElement, message: "A table's first load is a `TableSkeleton`." });

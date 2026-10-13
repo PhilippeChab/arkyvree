@@ -6,10 +6,13 @@ export const EMPTY_VALUE_TEXT = "—";
 /** A description that isn't there, said one way by the cards and headers that show one: a note, no final period */
 export const NO_DESCRIPTION = "No description provided";
 
-/** A value that isn't there, in a cell, a field or a line: "—", muted. */
+/**
+ * A value that isn't there, in a cell, a field or a line: "—", muted. A `DataTable`'s cell on a phone's second line
+ * that holds one shows nothing there (its class, `empty-value`).
+ */
 export function EmptyValue() {
   return (
-    <Box component="span" sx={{ color: "text.secondary" }}>
+    <Box component="span" className="empty-value" sx={{ color: "text.secondary" }}>
       {EMPTY_VALUE_TEXT}
     </Box>
   );

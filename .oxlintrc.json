@@ -227,6 +227,11 @@
             "name": "@mui/material",
             "importNames": ["CircularProgress", "Dialog"],
             "message": "Use DiceSpinner / CreateDialog / EditDialog / FormDialog from @/client/src/components/common instead. Raw MUI Dialog skips the dirty-form close block; raw CircularProgress is not used in this codebase."
+          },
+          {
+            "name": "@mui/material",
+            "importNames": ["Table", "TableBody", "TableCell", "TableContainer", "TableHead", "TableRow"],
+            "message": "A table is a DataTable of DataRows and DataCells (@/client/src/components/common), which lists its rows on a phone: each cell says where it goes there (its slot)."
           }
         ],
         "patterns": [
@@ -256,6 +261,17 @@
     ]
   },
   "overrides": [
+    // DataTable is the single wrapper for MUI's table, which it lists on a phone; its header and its frame are its own
+    {
+      "files": [
+        "client/src/components/common/DataTable.tsx",
+        "client/src/components/common/TableColumnsHead.tsx",
+        "client/src/components/common/TableFrame.tsx"
+      ],
+      "rules": {
+        "no-restricted-imports": "off"
+      }
+    },
     // Modal is the single sanctioned wrapper for raw MUI Dialog; the rest of the
     // codebase must go through Modal/FormDialog/CreateDialog/EditDialog. The
     // wrappers themselves compose with each other, so they need to import

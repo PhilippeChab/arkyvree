@@ -1,7 +1,15 @@
-import { Table, TableBody, TableCell, TableHead, TableRow, Typography } from "@mui/material";
+import { Typography } from "@mui/material";
 import type { ReactNode } from "react";
 
-import { EmptyValue, ROW_ACTIONS_HOVER_SX, RowActions, TableFrame } from "@/client/src/components/common/index.ts";
+import {
+  DataCell,
+  DataRow,
+  DataTable,
+  EmptyValue,
+  ROW_ACTIONS_HOVER_SX,
+  RowActions,
+  type TableColumn,
+} from "@/client/src/components/common/index.ts";
 import { InviteStatusChip } from "@/client/src/components/invites/index.ts";
 import { useIsMobile } from "@/client/src/hooks/index.ts";
 
@@ -21,8 +29,16 @@ interface ContributorsTableProps {
 export function ContributorsTable({ owner, contributors, renderActions, showRoles }: ContributorsTableProps) {
   const isMobile = useIsMobile();
 
+  const columns: TableColumn[] = [
+    { key: "user", label: "User" },
+    ...(isMobile ? [] : [{ key: "email", label: "Email" }]),
+    ...(showRoles ? [{ key: "role", label: "Role" }] : []),
+    { key: "status", label: "Status" },
+    ...(renderActions ? [{ key: "actions", label: "Actions", align: "right" as const }] : []),
+  ];
+
   const userCell = (username: string | null | undefined, email: string) => (
-    <TableCell>
+    <DataCell slot="primary">
       <Typography variant="body2" sx={{ fontWeight: 500 }}>
         {username || <EmptyValue />}
       </Typography>
@@ -31,58 +47,45 @@ export function ContributorsTable({ owner, contributors, renderActions, showRole
           {email}
         </Typography>
       )}
-    </TableCell>
+    </DataCell>
   );
 
   return (
-    <TableFrame>
-      <Table size={isMobile ? "small" : "medium"}>
-        <TableHead>
-          <TableRow>
-            <TableCell>User</TableCell>
-            {!isMobile && <TableCell>Email</TableCell>}
-            {showRoles && <TableCell>Role</TableCell>}
-            <TableCell>Status</TableCell>
-            {renderActions && <TableCell align="right">Actions</TableCell>}
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {owner && (
-            <TableRow>
-              {userCell(owner.username, owner.emailAddress)}
-              {!isMobile && <TableCell>{owner.emailAddress}</TableCell>}
-              {showRoles && (
-                <TableCell>
-                  <ContributorRoleChip role="Owner" />
-                </TableCell>
-              )}
-              <TableCell>
-                <InviteStatusChip status="Active" />
-              </TableCell>
-              {renderActions && <TableCell align="right" />}
-            </TableRow>
+    <DataTable framed size={isMobile ? "small" : "medium"} columns={columns}>
+      {owner && (
+        <DataRow>
+          {userCell(owner.username, owner.emailAddress)}
+          {!isMobile && <DataCell slot="hidden">{owner.emailAddress}</DataCell>}
+          {showRoles && (
+            <DataCell slot="inline">
+              <ContributorRoleChip role="Owner" />
+            </DataCell>
           )}
-          {contributors.map((contributor) => (
-            <TableRow key={contributor.id} sx={ROW_ACTIONS_HOVER_SX}>
-              {userCell(contributor.user?.username, contributor.email)}
-              {!isMobile && <TableCell>{contributor.email}</TableCell>}
-              {showRoles && (
-                <TableCell>
-                  <ContributorRoleChip role={contributor.role} />
-                </TableCell>
-              )}
-              <TableCell>
-                <InviteStatusChip status={contributor.status} />
-              </TableCell>
-              {renderActions && (
-                <TableCell align="right">
-                  <RowActions>{renderActions(contributor)}</RowActions>
-                </TableCell>
-              )}
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </TableFrame>
+          <DataCell slot="inline">
+            <InviteStatusChip status="Active" />
+          </DataCell>
+          {renderActions && <DataCell slot="hidden" align="right" />}
+        </DataRow>
+      )}
+      {contributors.map((contributor) => (
+        <DataRow key={contributor.id} sx={ROW_ACTIONS_HOVER_SX}>
+          {userCell(contributor.user?.username, contributor.email)}
+          {!isMobile && <DataCell slot="hidden">{contributor.email}</DataCell>}
+          {showRoles && (
+            <DataCell slot="inline">
+              <ContributorRoleChip role={contributor.role} />
+            </DataCell>
+          )}
+          <DataCell slot="inline">
+            <InviteStatusChip status={contributor.status} />
+          </DataCell>
+          {renderActions && (
+            <DataCell slot="trailing" align="right">
+              <RowActions>{renderActions(contributor)}</RowActions>
+            </DataCell>
+          )}
+        </DataRow>
+      ))}
+    </DataTable>
   );
 }

@@ -1,7 +1,7 @@
 import { Box, MenuItem, Stack, TextField } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { BlankState, LoadMoreButton, SearchBar } from "@/client/src/components/common/index.ts";
+import { BlankState, LoadMoreButton, SearchBar, type TableColumn } from "@/client/src/components/common/index.ts";
 import { PowersIcon } from "@/client/src/components/icons/index.ts";
 import { useSearchParam, useSearchText } from "@/client/src/hooks/index.ts";
 import { itemsBeforeLastPage, pageItems } from "@/client/src/lib/pageItems.ts";
@@ -20,9 +20,9 @@ import type { Power } from "@/client/src/pages/rulesets/details/sectionQueries.t
 import { useOpenEntity, useSpellLevelFilter } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { buildCustomizationPath } from "@/shared/customization/entities.ts";
 
-const COLUMNS = [
+const COLUMNS: TableColumn[] = [
   { key: "name", label: "Name", width: "30%" },
-  { key: "description", label: "Description", width: "70%" },
+  { key: "description", label: "Description", width: "70%", slot: "block" },
 ];
 
 export function ClassSpellListSection({ rulesetId, classId, ruleset }: ClassSectionProps) {

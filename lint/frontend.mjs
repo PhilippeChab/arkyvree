@@ -207,6 +207,8 @@ const NATIVE_TITLED = new Set([
   "Avatar",
   "Box",
   "Button",
+  "DataCell",
+  "DataRow",
   "IconButton",
   "ListItem",
   "ListItemButton",
@@ -224,6 +226,8 @@ const NON_INTERACTIVE = new Set([
   "Box",
   "Card",
   "CardContent",
+  "DataCell",
+  "DataRow",
   "ListItem",
   "Paper",
   "Stack",
@@ -409,8 +413,9 @@ function createClickableElements(context) {
       const name = elementName(node);
       const sx = node.openingElement.attributes.find((a) => a.type === "JSXAttribute" && a.name.name === "sx");
       const sxValue = sx?.value?.type === "JSXExpressionContainer" ? sx.value.expression : null;
-      const tintsItself = name === "TableRow" && hasAttribute(node, "hover");
-      const untinted = name === "TableRow" && clicks(node) && !namesIdentifier(sxValue, "CLICKABLE_ROW_SX");
+      const row = name === "TableRow" || name === "DataRow";
+      const tintsItself = row && hasAttribute(node, "hover");
+      const untinted = row && clicks(node) && !namesIdentifier(sxValue, "CLICKABLE_ROW_SX");
       if (tintsItself || untinted || (clicks(node) && hoverTint(sxValue))) {
         context.report({ node: node.openingElement, message: rowMessage });
         return;
@@ -1491,7 +1496,7 @@ function createRowPrefetch(context) {
             "`onRowPrefetch` too.",
         });
       }
-      if (name !== "TableRow") return;
+      if (name !== "TableRow" && name !== "DataRow") return;
       for (const attribute of node.openingElement.attributes) {
         if (attribute.type !== "JSXAttribute" || !ROW_WARMERS.has(attribute.name.name)) continue;
         context.report({

@@ -10,6 +10,7 @@ import {
   LoadMoreButton,
   SearchBar,
   SectionContent,
+  type TableColumn,
   ValueChip,
 } from "@/client/src/components/common/index.ts";
 import { SavesIcon } from "@/client/src/components/icons/index.ts";
@@ -23,9 +24,9 @@ import { savesQuery } from "@/client/src/pages/rulesets/details/sectionQueries.t
 import { type Save, useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
-const SAVES_COLUMNS = [
+const SAVES_COLUMNS: TableColumn[] = [
   { key: "name", label: "Name", width: "25%" },
-  { key: "description", label: "Description", width: "45%" },
+  { key: "description", label: "Description", width: "45%", slot: "block" },
   { key: "ability", label: "Linked Ability", width: "30%" },
 ];
 

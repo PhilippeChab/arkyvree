@@ -1,7 +1,13 @@
 import { Stack } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 
-import { BlankState, ListToolbar, LoadMoreButton, SectionContent } from "@/client/src/components/common/index.ts";
+import {
+  BlankState,
+  ListToolbar,
+  LoadMoreButton,
+  SectionContent,
+  type TableColumn,
+} from "@/client/src/components/common/index.ts";
 import { AbilitiesIcon } from "@/client/src/components/icons/index.ts";
 import type { Ability } from "@/client/src/hooks/index.ts";
 import { itemsBeforeLastPage, pageItems } from "@/client/src/lib/pageItems.ts";
@@ -11,9 +17,9 @@ import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/se
 import { abilitiesQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import { useOpenEntity } from "@/client/src/pages/rulesets/hooks/index.ts";
 
-const ABILITIES_COLUMNS = [
+const ABILITIES_COLUMNS: TableColumn[] = [
   { key: "name", label: "Name", width: "30%" },
-  { key: "description", label: "Description", width: "70%" },
+  { key: "description", label: "Description", width: "70%", slot: "block" },
 ];
 
 export function AbilitiesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetSectionProps) {

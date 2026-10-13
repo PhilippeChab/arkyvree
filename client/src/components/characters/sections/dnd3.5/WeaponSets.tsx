@@ -1,17 +1,15 @@
-import {
-  Box,
-  Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Typography,
-} from "@mui/material";
+import { Stack, Typography } from "@mui/material";
 
 import { shownWeaponSet } from "@/client/src/components/characters/sections/weaponSets.ts";
-import { BlankNote, EmptyValue, SubsectionTitle } from "@/client/src/components/common/index.ts";
+import {
+  BlankNote,
+  DataCell,
+  DataRow,
+  DataTable,
+  EmptyValue,
+  SubsectionTitle,
+  type TableColumn,
+} from "@/client/src/components/common/index.ts";
 
 import { ArmorClassBoxes } from "./ArmorClassBoxes.tsx";
 import type { SheetCombat } from "./CombatSection.tsx";
@@ -20,7 +18,21 @@ interface WeaponSetsProps {
   combat: SheetCombat;
 }
 
-/** A range and its increment keep to one line ("-2 / 110 ft."), the table scrolling sideways on a phone instead. */
+/**
+ * An attack's columns. On a phone, its weapon leads, its attack bonus at the line's end, and the rest under them
+ * ("1d8 · ×3 · 1,100 ft. · -2 / 110 ft. · Piercing")
+ */
+const ATTACK_COLUMNS: TableColumn[] = [
+  { key: "weapon", label: "Weapon", width: "22%" },
+  { key: "attack", label: "Attack Bonus", width: "15%", align: "center" },
+  { key: "damage", label: "Damage", width: "12%", align: "center" },
+  { key: "critical", label: "Critical", width: "11%", align: "center" },
+  { key: "range", label: "Range", width: "11%", align: "center" },
+  { key: "increment", label: "Increment", width: "13%", align: "center" },
+  { key: "type", label: "Type", width: "16%", align: "center" },
+];
+
+/** A range and its increment keep to one line ("-2 / 110 ft.") */
 const NO_WRAP_SX = { whiteSpace: "nowrap" };
 
 /**
@@ -49,62 +61,50 @@ export function WeaponSets({ combat }: WeaponSetsProps) {
           <Stack spacing={2}>
             <ArmorClassBoxes ac={ac} />
             {weapons.length > 0 ? (
-              <TableContainer sx={{ overflowX: "auto" }}>
-                <Table size="small" sx={{ minWidth: 700 }}>
-                  <colgroup>
-                    <Box component="col" sx={{ width: "22%" }} />
-                    <Box component="col" sx={{ width: "15%" }} />
-                    <Box component="col" sx={{ width: "12%" }} />
-                    <Box component="col" sx={{ width: "11%" }} />
-                    <Box component="col" sx={{ width: "11%" }} />
-                    <Box component="col" sx={{ width: "13%" }} />
-                    <Box component="col" sx={{ width: "16%" }} />
-                  </colgroup>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Weapon</TableCell>
-                      <TableCell align="center">Attack Bonus</TableCell>
-                      <TableCell align="center">Damage</TableCell>
-                      <TableCell align="center">Critical</TableCell>
-                      <TableCell align="center">Range</TableCell>
-                      <TableCell align="center">Increment</TableCell>
-                      <TableCell align="center">Type</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {weapons.flatMap((weapon) =>
-                      weapon.rows.map((row) => (
-                        <TableRow key={row.key}>
-                          <TableCell sx={{ fontWeight: 500 }}>
-                            {weapon.name}
-                            <Typography variant="caption" sx={{ display: "block", color: "text.secondary" }}>
-                              ({row.label})
-                            </Typography>
-                            {weapon.proficient === false && (
-                              <Typography
-                                variant="caption"
-                                sx={{ display: "block", color: "error.main", fontWeight: 600 }}
-                              >
-                                Not Proficient (-4)
-                              </Typography>
-                            )}
-                          </TableCell>
-                          <TableCell align="center">{row.attack}</TableCell>
-                          <TableCell align="center">{row.damage || <EmptyValue />}</TableCell>
-                          <TableCell align="center">{row.critical}</TableCell>
-                          <TableCell align="center" sx={NO_WRAP_SX}>
-                            {row.range || <EmptyValue />}
-                          </TableCell>
-                          <TableCell align="center" sx={NO_WRAP_SX}>
-                            {row.increment || <EmptyValue />}
-                          </TableCell>
-                          <TableCell align="center">{row.types || <EmptyValue />}</TableCell>
-                        </TableRow>
-                      )),
-                    )}
-                  </TableBody>
-                </Table>
-              </TableContainer>
+              <DataTable size="small" columns={ATTACK_COLUMNS} minWidth={700}>
+                {weapons.flatMap((weapon) =>
+                  weapon.rows.map((row) => (
+                    <DataRow key={row.key}>
+                      <DataCell slot="primary" sx={{ fontWeight: 500 }}>
+                        {weapon.name}
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            display: { xs: "inline", sm: "block" },
+                            color: "text.secondary",
+                            pl: { xs: 0.5, sm: 0 },
+                          }}
+                        >
+                          ({row.label})
+                        </Typography>
+                        {weapon.proficient === false && (
+                          <Typography variant="caption" sx={{ display: "block", color: "error.main", fontWeight: 600 }}>
+                            Not Proficient (-4)
+                          </Typography>
+                        )}
+                      </DataCell>
+                      <DataCell slot="trailing" align="center">
+                        {row.attack}
+                      </DataCell>
+                      <DataCell slot={row.damage ? "inline" : "hidden"} align="center">
+                        {row.damage || <EmptyValue />}
+                      </DataCell>
+                      <DataCell slot="inline" align="center">
+                        {row.critical}
+                      </DataCell>
+                      <DataCell slot={row.range ? "inline" : "hidden"} align="center" sx={NO_WRAP_SX}>
+                        {row.range || <EmptyValue />}
+                      </DataCell>
+                      <DataCell slot={row.increment ? "inline" : "hidden"} align="center" sx={NO_WRAP_SX}>
+                        {row.increment || <EmptyValue />}
+                      </DataCell>
+                      <DataCell slot={row.types ? "inline" : "hidden"} align="center">
+                        {row.types || <EmptyValue />}
+                      </DataCell>
+                    </DataRow>
+                  )),
+                )}
+              </DataTable>
             ) : (
               <BlankNote>No weapons equipped</BlankNote>
             )}

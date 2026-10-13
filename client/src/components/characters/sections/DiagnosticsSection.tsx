@@ -1,16 +1,4 @@
-import {
-  Accordion,
-  AccordionDetails,
-  AccordionSummary,
-  Box,
-  Collapse,
-  Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableRow,
-} from "@mui/material";
+import { Accordion, AccordionDetails, AccordionSummary, Box, Collapse, Stack } from "@mui/material";
 import { Fragment, type ReactNode } from "react";
 
 import { ValidationIssueList } from "@/client/src/components/characters/validation/index.ts";
@@ -18,13 +6,16 @@ import {
   CardTitle,
   CLICKABLE_ROW_SX,
   CountChip,
+  DataCell,
+  DataRow,
+  DataTable,
   EmptyValue,
   ExpandArrow,
   Panel,
+  type PhoneSlot,
   StatusChip,
   SubsectionTitle,
   type TableColumn,
-  TableColumnsHead,
   toggleProps,
 } from "@/client/src/components/common/index.ts";
 import { ExpandMoreIcon } from "@/client/src/components/icons/index.ts";
@@ -36,7 +27,9 @@ import { formatChainingOperator, formatOperator } from "@/shared/customization/o
 import type { BaseRules } from "@/shared/enums.ts";
 
 interface DiagnosticsGroupProps {
+  /** Its rows, each a `DataRow` */
   children: ReactNode;
+  columns: TableColumn[];
   count: number;
   label: string;
 }
@@ -76,6 +69,10 @@ interface RequirementTableProps {
 
 interface RuleCellsRowProps {
   cells: RuleCells;
+  /** Its last column's name, which a phone leads its cell with */
+  last: string;
+  /** Where its target goes on a phone: under its source, or leading its row (a group's rule, its source above it) */
+  targetSlot: PhoneSlot;
 }
 
 interface RuleGroup {
@@ -106,6 +103,12 @@ const INVALID_COLUMNS: TableColumn[] = [
   { key: "warning", label: "Warning" },
 ];
 
+/** What a cell shows on a phone alone: a group's arrow, which leads its source there, its toggle's column gone */
+const PHONE_ONLY_SX = { display: { xs: "inline", sm: "none" }, pr: 0.5, "& svg": { verticalAlign: "middle" } };
+
+/** A rule's operator, before its value on a phone, its own column gone there ("+ 2") */
+const PHONE_OPERATOR_SX = { display: { xs: "inline", sm: "none" }, pr: 0.5 };
+
 /** A skipped modifier's columns */
 const SKIPPED_COLUMNS: TableColumn[] = [
   { key: "sourceType", label: "Source Type" },
@@ -115,11 +118,11 @@ const SKIPPED_COLUMNS: TableColumn[] = [
 
 const SUMMARY_SX = { px: 0, minHeight: 0, "& .MuiAccordionSummary-content": { my: 0 } } as const;
 
-/** Its tables' cells, the header's too: tight, in small type */
-const TABLE_SX = { "& .MuiTableCell-root": { py: 0.5, px: 1, fontSize: "0.8rem" } } as const;
+/** Its tables' cells, the header's too: tight, in small type, from `sm` up (a phone lists them) */
+const TABLE_SX = { "& .MuiTableCell-root": { py: { sm: 0.5 }, px: { sm: 1 }, fontSize: { sm: "0.8rem" } } } as const;
 
 /** A collapsed table of one kind of diagnostic ("Unmet (3)"), hidden when there are none. */
-function DiagnosticsGroup({ label, count, children }: DiagnosticsGroupProps) {
+function DiagnosticsGroup({ label, count, columns, children }: DiagnosticsGroupProps) {
   if (count === 0) return null;
   return (
     <Accordion disableGutters sx={ACCORDION_SX}>
@@ -129,11 +132,9 @@ function DiagnosticsGroup({ label, count, children }: DiagnosticsGroupProps) {
         </SubsectionTitle>
       </AccordionSummary>
       <AccordionDetails sx={{ px: 0, pt: 1 }}>
-        <TableContainer>
-          <Table size="small" sx={TABLE_SX}>
-            {children}
-          </Table>
-        </TableContainer>
+        <DataTable size="small" columns={columns} sx={TABLE_SX}>
+          {children}
+        </DataTable>
       </AccordionDetails>
     </Accordion>
   );
@@ -141,74 +142,84 @@ function DiagnosticsGroup({ label, count, children }: DiagnosticsGroupProps) {
 
 /** Rules by source: a source with one rule is a row, one with several expands to list them. */
 function GroupedRuleTable({ label, count, columns, groups }: GroupedRuleTableProps) {
+  const last = columns[columns.length - 1].label;
   const { keys: expanded, toggle } = useToggleSet();
 
   return (
-    <DiagnosticsGroup label={label} count={count}>
-      <TableColumnsHead columns={columns} />
-      <TableBody>
-        {groups.map(({ key, source, rules }) => {
-          if (rules.length === 1) {
-            return (
-              <TableRow key={key}>
-                <TableCell />
-                <TableCell>{source}</TableCell>
-                <RuleCellsRow cells={rules[0]} />
-              </TableRow>
-            );
-          }
-          const isOpen = expanded.has(key);
+    <DiagnosticsGroup label={label} count={count} columns={columns}>
+      {groups.map(({ key, source, rules }) => {
+        if (rules.length === 1) {
           return (
-            <Fragment key={key}>
-              <TableRow {...toggleProps(isOpen, () => toggle(key), "row")} sx={CLICKABLE_ROW_SX}>
-                <TableCell sx={{ pr: 0 }}>
-                  <ExpandArrow open={isOpen} />
-                </TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{source}</TableCell>
-                <TableCell colSpan={4}>
-                  <CountChip label={rules.length} />
-                </TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell colSpan={6} sx={{ py: 0, borderBottom: isOpen ? undefined : "none" }}>
-                  <Collapse in={isOpen} timeout={DURATION.normal} unmountOnExit>
-                    <Table size="small" sx={TABLE_SX}>
-                      <TableBody>
-                        {rules.map((cells, i) => (
-                          <TableRow key={i} sx={{ bgcolor: "action.hover" }}>
-                            <TableCell />
-                            <RuleCellsRow cells={cells} />
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </Collapse>
-                </TableCell>
-              </TableRow>
-            </Fragment>
+            <DataRow key={key}>
+              <DataCell slot="hidden" />
+              <DataCell slot="primary">{source}</DataCell>
+              <RuleCellsRow cells={rules[0]} last={last} targetSlot="inline" />
+            </DataRow>
           );
-        })}
-      </TableBody>
+        }
+        const isOpen = expanded.has(key);
+        return (
+          <Fragment key={key}>
+            <DataRow {...toggleProps(isOpen, () => toggle(key), "row")} sx={CLICKABLE_ROW_SX}>
+              <DataCell slot="hidden" sx={{ pr: 0 }}>
+                <ExpandArrow open={isOpen} />
+              </DataCell>
+              <DataCell slot="primary" sx={{ fontWeight: 600 }}>
+                <Box component="span" sx={PHONE_ONLY_SX}>
+                  <ExpandArrow open={isOpen} />
+                </Box>
+                {source}
+              </DataCell>
+              <DataCell slot="trailing" colSpan={4}>
+                <CountChip label={rules.length} />
+              </DataCell>
+            </DataRow>
+            {/* Its rules, under it while it's open: closed, its row takes no room on a phone */}
+            <DataRow>
+              <DataCell slot="block" colSpan={6} sx={{ py: 0, borderBottom: isOpen ? undefined : "none" }}>
+                <Collapse in={isOpen} timeout={DURATION.normal} unmountOnExit>
+                  <DataTable size="small" sx={TABLE_SX}>
+                    {rules.map((cells, i) => (
+                      <DataRow key={i} indented sx={{ bgcolor: "action.hover" }}>
+                        <DataCell slot="hidden" />
+                        <RuleCellsRow cells={cells} last={last} targetSlot="primary" />
+                      </DataRow>
+                    ))}
+                  </DataTable>
+                </Collapse>
+              </DataCell>
+            </DataRow>
+          </Fragment>
+        );
+      })}
     </DiagnosticsGroup>
   );
 }
 
 function InvalidRequirementTable({ baseRules, items }: InvalidRequirementTableProps) {
   return (
-    <DiagnosticsGroup label="Invalid" count={items.length}>
-      <TableColumnsHead columns={INVALID_COLUMNS} />
-      <TableBody>
-        {items.map((item, i) => (
-          <TableRow key={i}>
-            <TableCell>{item.sourceName ?? entityTypeLabel(item.requirement.entityType, baseRules)}</TableCell>
-            <TableCell>{item.requirement.level}</TableCell>
-            <TableCell>{item.requirement.target || <EmptyValue />}</TableCell>
-            <TableCell>{item.warning}</TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
+    <DiagnosticsGroup label="Invalid" count={items.length} columns={INVALID_COLUMNS}>
+      {items.map((item, i) => (
+        <DataRow key={i}>
+          <DataCell slot="primary">
+            {item.sourceName ?? entityTypeLabel(item.requirement.entityType, baseRules)}
+          </DataCell>
+          <DataCell slot="labeled" label="Level">
+            {item.requirement.level}
+          </DataCell>
+          <DataCell slot={item.requirement.target ? "inline" : "hidden"}>
+            {item.requirement.target || <EmptyValue />}
+          </DataCell>
+          <DataCell slot="block">{item.warning}</DataCell>
+        </DataRow>
+      ))}
     </DiagnosticsGroup>
   );
+}
+
+/** Whether a rule's cell has something to show (a requirement may have no chaining operator); a 0 is shown. */
+function isShown(cell: ReactNode) {
+  return cell !== "" && cell != null;
 }
 
 function ModifierTable({ baseRules, modifiers, label }: ModifierTableProps) {
@@ -245,16 +256,25 @@ function RequirementTable({ baseRules, groups, label }: RequirementTableProps) {
   );
 }
 
-function RuleCellsRow({ cells }: RuleCellsRowProps) {
-  const [target, ...rest] = cells;
+function RuleCellsRow({ cells, last, targetSlot }: RuleCellsRowProps) {
+  const [target, operator, value, lastCell] = cells;
   return (
     <>
-      <TableCell>{shownCell(target)}</TableCell>
-      {rest.map((cell, i) => (
-        <TableCell key={i} align="center">
-          {shownCell(cell)}
-        </TableCell>
-      ))}
+      <DataCell slot={targetSlot}>{shownCell(target)}</DataCell>
+      <DataCell slot="hidden" align="center">
+        {shownCell(operator)}
+      </DataCell>
+      <DataCell slot="inline" align="center">
+        {isShown(operator) && (
+          <Box component="span" sx={PHONE_OPERATOR_SX}>
+            {operator}
+          </Box>
+        )}
+        {shownCell(value)}
+      </DataCell>
+      <DataCell slot={isShown(lastCell) ? "labeled" : "hidden"} label={last} align="center">
+        {shownCell(lastCell)}
+      </DataCell>
     </>
   );
 }
@@ -271,24 +291,21 @@ function ruleColumns(last: string): TableColumn[] {
   ];
 }
 
-/** A rule's cell, a dash where it has nothing (a requirement without a chaining operator); a 0 is shown. */
+/** A rule's cell, a dash where it has nothing. */
 function shownCell(cell: ReactNode) {
-  return cell === "" || cell == null ? <EmptyValue /> : cell;
+  return isShown(cell) ? cell : <EmptyValue />;
 }
 
 function SkippedModifierTable({ baseRules, items }: SkippedModifierTableProps) {
   return (
-    <DiagnosticsGroup label="Skipped" count={items.length}>
-      <TableColumnsHead columns={SKIPPED_COLUMNS} />
-      <TableBody>
-        {items.map((item, i) => (
-          <TableRow key={i}>
-            <TableCell>{entityTypeLabel(item.modifier.sourceType, baseRules)}</TableCell>
-            <TableCell>{item.modifier.target}</TableCell>
-            <TableCell>{item.warning}</TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
+    <DiagnosticsGroup label="Skipped" count={items.length} columns={SKIPPED_COLUMNS}>
+      {items.map((item, i) => (
+        <DataRow key={i}>
+          <DataCell slot="primary">{entityTypeLabel(item.modifier.sourceType, baseRules)}</DataCell>
+          <DataCell slot="inline">{item.modifier.target}</DataCell>
+          <DataCell slot="block">{item.warning}</DataCell>
+        </DataRow>
+      ))}
     </DiagnosticsGroup>
   );
 }

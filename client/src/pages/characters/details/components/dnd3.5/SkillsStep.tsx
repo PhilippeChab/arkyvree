@@ -1,21 +1,16 @@
-import {
-  Box,
-  Button,
-  Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TextField,
-  Typography,
-} from "@mui/material";
+import { Box, Button, Stack, TextField, Typography } from "@mui/material";
 import { memo, useCallback } from "react";
 import { type Control, useController } from "react-hook-form";
 
 import { GroupedSkillRows, SkillRow } from "@/client/src/components/characters/sections/dnd3.5/index.ts";
-import { DiceSpinner, LoadError, SubsectionTitle } from "@/client/src/components/common/index.ts";
+import {
+  DataCell,
+  DataTable,
+  DiceSpinner,
+  LoadError,
+  SubsectionTitle,
+  type TableColumn,
+} from "@/client/src/components/common/index.ts";
 import { CasinoIcon } from "@/client/src/components/icons/index.ts";
 import { useLatest } from "@/client/src/hooks/index.ts";
 import type { LevelUpFormData } from "@/client/src/pages/characters/details/components/levelUp/index.ts";
@@ -48,8 +43,28 @@ interface SkillsStepProps {
   wizard: SkillPickerState;
 }
 
-/** The narrow number columns' headers. */
-const COLUMN_HEADER_SX = { whiteSpace: "nowrap", fontSize: { xs: "0.7rem", sm: "0.8125rem" } };
+/** The narrow number columns' headers, smaller */
+const NARROW_HEADERS_SX = {
+  "& > thead th:not(:first-of-type)": { whiteSpace: "nowrap", fontSize: "0.8125rem" },
+};
+
+/** What a cell says on a phone alone */
+const PHONE_ONLY_SX = { display: { xs: "inline", sm: "none" } };
+
+/**
+ * A skill's columns: on a phone, its name leads, the ranks it adds at the line's end, and what it comes to under them
+ */
+const SKILL_COLUMNS: TableColumn[] = [
+  { key: "skill", label: "Skill" },
+  { key: "add", label: "Add", width: "80px" },
+  { key: "used", label: "Used", width: "55px" },
+  { key: "rank", label: "Rank", width: "55px" },
+  { key: "total", label: "Total", width: "55px" },
+  { key: "class", label: "Class", width: "55px" },
+];
+
+/** What a cell says from `sm` up alone */
+const WIDE_ONLY_SX = { display: { xs: "none", sm: "inline" } };
 
 const SkillAllocationRow = memo(function SkillAllocationRow({
   skill,
@@ -79,7 +94,7 @@ const SkillAllocationRow = memo(function SkillAllocationRow({
         )
       }
     >
-      <TableCell>
+      <DataCell slot="trailing">
         <TextField
           type="number"
           size="small"
@@ -96,22 +111,31 @@ const SkillAllocationRow = memo(function SkillAllocationRow({
             },
           }}
         />
-      </TableCell>
-      <TableCell>
+      </DataCell>
+      <DataCell slot="labeled" label="Used">
         <Typography variant="body2" sx={{ color: "text.secondary" }}>
           {pointsAllocated}
         </Typography>
-      </TableCell>
-      <TableCell>{skill.currentRank}</TableCell>
-      <TableCell>
+      </DataCell>
+      <DataCell slot="labeled" label="Rank">
+        {skill.currentRank}
+      </DataCell>
+      <DataCell slot="labeled" label="Total">
         <Typography
           variant="body2"
           sx={{ fontWeight: ranksGained > 0 ? 600 : 400, color: ranksGained > 0 ? "primary.main" : "text.secondary" }}
         >
           {skill.currentRank + ranksGained}
         </Typography>
-      </TableCell>
-      <TableCell>{skill.classSkill ? "Yes" : "No"}</TableCell>
+      </DataCell>
+      <DataCell slot={skill.classSkill ? "inline" : "hidden"}>
+        <Box component="span" sx={WIDE_ONLY_SX}>
+          {skill.classSkill ? "Yes" : "No"}
+        </Box>
+        <Box component="span" sx={PHONE_ONLY_SX}>
+          Class Skill
+        </Box>
+      </DataCell>
     </SkillRow>
   );
 });
@@ -199,44 +223,22 @@ export function SkillsStep({ wizard }: SkillsStepProps) {
           )}
         </Stack>
       </Stack>
-      <TableContainer sx={{ overflowX: "auto" }}>
-        <Table size="small" sx={{ minWidth: 420, tableLayout: "fixed" }}>
-          <colgroup>
-            <col />
-            <Box component="col" sx={{ width: 80 }} />
-            <Box component="col" sx={{ width: 55 }} />
-            <Box component="col" sx={{ width: 55 }} />
-            <Box component="col" sx={{ width: 55 }} />
-            <Box component="col" sx={{ width: 55 }} />
-          </colgroup>
-          <TableHead>
-            <TableRow>
-              <TableCell>Skill</TableCell>
-              <TableCell sx={COLUMN_HEADER_SX}>Add</TableCell>
-              <TableCell sx={COLUMN_HEADER_SX}>Used</TableCell>
-              <TableCell sx={COLUMN_HEADER_SX}>Rank</TableCell>
-              <TableCell sx={COLUMN_HEADER_SX}>Total</TableCell>
-              <TableCell sx={COLUMN_HEADER_SX}>Class</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            <GroupedSkillRows
-              skills={skillData.skills}
-              columns={6}
-              renderSkill={(skill, { indented, hidden }) => (
-                <SkillAllocationRow
-                  key={skill.id}
-                  skill={skill}
-                  pointsAllocated={skillPointAllocations[skill.id] || 0}
-                  onAllocate={handleAllocate}
-                  indented={indented}
-                  hidden={hidden}
-                />
-              )}
+      <DataTable size="small" columns={SKILL_COLUMNS} minWidth={420} fixed sx={NARROW_HEADERS_SX}>
+        <GroupedSkillRows
+          skills={skillData.skills}
+          columns={SKILL_COLUMNS.length}
+          renderSkill={(skill, { indented, hidden }) => (
+            <SkillAllocationRow
+              key={skill.id}
+              skill={skill}
+              pointsAllocated={skillPointAllocations[skill.id] || 0}
+              onAllocate={handleAllocate}
+              indented={indented}
+              hidden={hidden}
             />
-          </TableBody>
-        </Table>
-      </TableContainer>
+          )}
+        />
+      </DataTable>
     </Box>
   );
 }

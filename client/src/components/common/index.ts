@@ -7,6 +7,7 @@ export { BlankNote, BlankState, NoMatchesState } from "./BlankState.tsx";
 export { CardTitle } from "./CardTitle.tsx";
 export { ChoiceChip, CountChip, PickChip, RoleChip, StatusChip, ValueChip } from "./Chips.tsx";
 export { CLICKABLE_ROW_SX, CLICKABLE_SX, clickableProps, toggleProps } from "./clickable.ts";
+export { DataCell, DataRow, DataTable } from "./DataTable.tsx";
 export { DetailPageHeader } from "./DetailPageHeader.tsx";
 export { DialogFooter } from "./DialogFooter.tsx";
 export { DialogLead } from "./DialogLead.tsx";
@@ -52,7 +53,7 @@ export { SectionContent, type SectionTab, SectionTabPanel, SectionTabs } from ".
 export { CHANGED_SORTS, CREATED_SORTS, NAME_SORTS, UPDATED_SORTS } from "./sortOptions.ts";
 export { ConfirmDialog, CreateDialog, DeleteDialog, EditDialog } from "./StandardDialogs.tsx";
 export { SubsectionTitle } from "./SubsectionTitle.tsx";
-export { type TableColumn, TableColumnsHead } from "./TableColumnsHead.tsx";
+export { type PhoneSlot, type TableColumn, TableColumnsHead } from "./TableColumnsHead.tsx";
 export { TableFrame } from "./TableFrame.tsx";
 export { TableSkeleton } from "./TableSkeleton.tsx";
 export { ToggleLabel } from "./ToggleLabel.tsx";

@@ -10,4 +10,4 @@ export { RulesetSectionTable } from "./RulesetSectionTable.tsx";
 export { RulesetStarButton } from "./RulesetStarButton.tsx";
 export { SectionActions } from "./SectionActions.tsx";
 export { SpellLevelFilter } from "./SpellLevelFilter.tsx";
-export { TABLE_CONTAINER_LOADING_SX, TABLE_CONTAINER_SX, TABLE_SX } from "./tableStyles.ts";
+export { TABLE_CONTAINER_LOADING_SX, TABLE_CONTAINER_SX, TABLE_MIN_WIDTH } from "./tableStyles.ts";

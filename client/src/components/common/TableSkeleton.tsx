@@ -1,33 +1,30 @@
-import { Skeleton, type SxProps, Table, TableBody, TableCell, TableRow, type Theme } from "@mui/material";
+import { Skeleton, type SxProps, type Theme } from "@mui/material";
 
-import { type TableColumn, TableColumnsHead } from "./TableColumnsHead.tsx";
-import { TableFrame } from "./TableFrame.tsx";
+import { DataCell, DataRow, DataTable } from "./DataTable.tsx";
+import type { TableColumn } from "./TableColumnsHead.tsx";
 
 interface TableSkeletonProps {
-  /** The table's columns: their header and width */
+  /** The table's columns: their header and width, and where their cells go on a phone */
   columns: readonly TableColumn[];
+  /** Its table's least width from `sm` up (`DataTable`'s) */
+  minWidth?: number;
   sx?: SxProps<Theme>;
-  tableSx?: SxProps<Theme>;
 }
 
-/** A table's first load: its frame and header, over rows of placeholder lines. */
-export function TableSkeleton({ columns, sx, tableSx }: TableSkeletonProps) {
+/** A table's first load: its frame and header, over rows of placeholder lines, a list's lines on a phone. */
+export function TableSkeleton({ columns, minWidth, sx }: TableSkeletonProps) {
   return (
-    <TableFrame sx={sx}>
-      <Table sx={tableSx}>
-        <TableColumnsHead columns={columns} />
-        <TableBody>
-          {[...Array(5)].map((_, index) => (
-            <TableRow key={index}>
-              {columns.map((column) => (
-                <TableCell key={column.key}>
-                  <Skeleton variant="text" />
-                </TableCell>
-              ))}
-            </TableRow>
+    <DataTable framed columns={columns} minWidth={minWidth} containerSx={sx}>
+      {[...Array(5)].map((_, index) => (
+        <DataRow key={index}>
+          {columns.map((column, columnIndex) => (
+            // On a phone, an item's first line holds its place
+            <DataCell key={column.key} slot={columnIndex === 0 ? "primary" : "hidden"}>
+              <Skeleton variant="text" />
+            </DataCell>
           ))}
-        </TableBody>
-      </Table>
-    </TableFrame>
+        </DataRow>
+      ))}
+    </DataTable>
   );
 }
