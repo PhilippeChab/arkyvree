@@ -113,9 +113,9 @@ test.describe("Customization of a fork", () => {
     await requirementCreated;
 
     const requirement = page.locator('[role="treeitem"]').filter({ hasText: "Strength" }).first();
-    await expect(requirement.locator("text=13")).toBeVisible({ timeout: 15_000 });
+    await expect(requirement.getByText("13", { exact: true })).toBeVisible({ timeout: 15_000 });
     await page.reload();
-    await expect(requirement.locator("text=13")).toBeVisible({ timeout: 10_000 });
+    await expect(requirement.getByText("13", { exact: true })).toBeVisible({ timeout: 10_000 });
     await expect(page.getByLabel("Weapon Finesse")).toBeChecked();
   });
 });
