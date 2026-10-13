@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 
-import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
+import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import {
   Aptitudes,
@@ -23,7 +23,7 @@ import { PowersService } from "@/server/services/rulesets/powers/index.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
 import { STRENGTH_BONUS } from "@/tests/support/customizations.ts";
 import { measure } from "@/tests/support/database.ts";
-import { copyEntity, createSeededTestRuleset } from "@/tests/support/rulesets.ts";
+import { copyEntity, createSeededTestRuleset, invalidateTestRulesets } from "@/tests/support/rulesets.ts";
 import { makeSession } from "@/tests/support/users.ts";
 
 type EntityType = "feats" | "powers";
@@ -68,13 +68,14 @@ async function setup(entityType: EntityType, pairing: Pairing, extensionCount = 
     loser,
     extensions,
     loserRulesetId: extensions.find((e) => e.copy.id === loser.id)!.extension.id,
+    rulesetIds: [host.id, ...extensions.map((e) => e.extension.id)],
   };
 }
 
 for (const entityType of ["feats", "powers"] as const) {
   for (const pairing of ["snapshot", "name"] as const) {
     test(`${pairing} ${entityType}: removed requirements and aptitude links stay removed, including after entity deletion`, async () => {
-      const { session, host, winnerId, loser, loserRulesetId } = await setup(entityType, pairing);
+      const { session, host, winnerId, loser, loserRulesetId, rulesetIds } = await setup(entityType, pairing);
       const [requirement] = await Requirements.create(db, {
         entityId: loser.id,
         entityType,
@@ -88,7 +89,7 @@ for (const entityType of ["feats", "powers"] as const) {
       if (entityType === "feats") await FeatsAptitudes.create(db, { featId: loser.id, aptitudeId: aptitude.id });
       else await PowersAptitudes.create(db, { powerId: loser.id, aptitudeId: aptitude.id });
 
-      RulesetViews.invalidateAll();
+      invalidateTestRulesets(...rulesetIds);
       const local = await ModifiersService.createModifier(session, host.id, entityType, winnerId, STRENGTH_BONUS);
       const copied = await RequirementsService.getRequirements(host.id, entityType, local.resolvedEntityId);
       const copiedRequirement = copied.find((r) => r.target === requirement.target)!;
@@ -110,7 +111,7 @@ for (const entityType of ["feats", "powers"] as const) {
         await PowersService.updatePower(session, host.id, power.id, { name: power.name, aptitudes: [] });
       }
       for (const cold of [false, true]) {
-        if (cold) RulesetViews.invalidateAll();
+        if (cold) invalidateTestRulesets(...rulesetIds);
         const requirements = await RequirementsService.getRequirements(host.id, entityType, local.resolvedEntityId);
         expect(requirements.some((r) => r.target === requirement.target)).toBe(false);
         if (entityType === "feats")
@@ -121,7 +122,7 @@ for (const entityType of ["feats", "powers"] as const) {
       if (entityType === "feats") await FeatsService.deleteFeat(session, host.id, local.resolvedEntityId);
       else await PowersService.deletePower(session, host.id, local.resolvedEntityId);
 
-      RulesetViews.invalidateAll();
+      invalidateTestRulesets(...rulesetIds);
       await withRulesetScope(db, host.id, async ({ rulesetData }) => {
         const entities = entityType === "feats" ? rulesetData.featsById : rulesetData.powersById;
         for (const id of [winnerId, loser.id, local.resolvedEntityId]) expect(entities.get(id)).toBeUndefined();
@@ -149,7 +150,7 @@ for (const entityType of ["feats", "powers"] as const) {
 
     for (const action of ["create", "update", "delete"] as const) {
       test(`${pairing} ${entityType}: ${action} a sibling modifier requirement without changing its source`, async () => {
-        const { session, host, winnerId, loser } = await setup(entityType, pairing);
+        const { session, host, winnerId, loser, rulesetIds } = await setup(entityType, pairing);
         const [modifier] = await Modifiers.create(db, {
           ...STRENGTH_BONUS,
           sourceId: loser.id,
@@ -161,7 +162,7 @@ for (const entityType of ["feats", "powers"] as const) {
           level: "1",
           chainingOperator: "and",
         });
-        RulesetViews.invalidateAll();
+        invalidateTestRulesets(...rulesetIds);
         expect(
           (await ModifiersService.getModifiers(host.id, entityType, winnerId)).some((m) => m.id === modifier.id),
         ).toBe(true);
@@ -207,7 +208,7 @@ for (const entityType of ["feats", "powers"] as const) {
 
     for (const action of ["update", "delete"] as const) {
       test(`${pairing} ${entityType}: ${action} a sibling modifier survives a fresh read`, async () => {
-        const { session, host, winnerId, loser } = await setup(entityType, pairing);
+        const { session, host, winnerId, loser, rulesetIds } = await setup(entityType, pairing);
         const [modifier] = await Modifiers.create(db, {
           ...STRENGTH_BONUS,
           sourceId: loser.id,
@@ -219,7 +220,7 @@ for (const entityType of ["feats", "powers"] as const) {
           level: "1",
           chainingOperator: "and",
         });
-        RulesetViews.invalidateAll();
+        invalidateTestRulesets(...rulesetIds);
         const result =
           action === "update"
             ? await ModifiersService.updateModifier(session, host.id, entityType, winnerId, modifier.id, {
@@ -227,7 +228,7 @@ for (const entityType of ["feats", "powers"] as const) {
                 value: "5",
               })
             : await ModifiersService.deleteModifier(session, host.id, entityType, winnerId, modifier.id);
-        RulesetViews.invalidateAll();
+        invalidateTestRulesets(...rulesetIds);
         const visible = await ModifiersService.getModifiers(host.id, entityType, result.resolvedEntityId);
         expect(visible.filter((m) => m.target === modifier.target)).toEqual(
           action === "update" ? [expect.objectContaining({ id: result.id, value: "5" })] : [],
@@ -243,12 +244,12 @@ for (const entityType of ["feats", "powers"] as const) {
 }
 
 test("deduplicated sibling modifier IDs are not writable", async () => {
-  const { session, host, winnerId, loser } = await setup("feats", "snapshot");
+  const { session, host, winnerId, loser, rulesetIds } = await setup("feats", "snapshot");
   const [, hiddenModifier] = await Modifiers.createMany(
     db,
     [winnerId, loser.id].map((sourceId) => ({ ...STRENGTH_BONUS, sourceId, sourceType: "feats" })),
   );
-  RulesetViews.invalidateAll();
+  invalidateTestRulesets(...rulesetIds);
   await expectRefusedWith(
     RequirementsService.createRequirement(session, host.id, "modifiers", hiddenModifier.id, {
       level: "1",
@@ -262,7 +263,7 @@ test("deduplicated sibling modifier IDs are not writable", async () => {
 test("copying sibling modifiers and their requirements stays batched", async () => {
   const counts: number[] = [];
   for (const width of [1, 12]) {
-    const { session, host, loser } = await setup("feats", "snapshot");
+    const { session, host, loser, rulesetIds } = await setup("feats", "snapshot");
     const modifiers = await Modifiers.createMany(
       db,
       Array.from({ length: width }, (_, i) => ({
@@ -276,7 +277,7 @@ test("copying sibling modifiers and their requirements stays batched", async () 
       db,
       modifiers.map((m) => ({ entityId: m.id, entityType: "modifiers", level: "1", chainingOperator: "and" })),
     );
-    RulesetViews.invalidateAll();
+    invalidateTestRulesets(...rulesetIds);
     await withRulesetScope(db, host.id, async () => {});
     const { timing } = await measure(() =>
       RequirementsService.createRequirement(session, host.id, "modifiers", modifiers[0].id, {
@@ -290,14 +291,14 @@ test("copying sibling modifiers and their requirements stays batched", async () 
 });
 
 test("installing another extension preserves the local override and exposes unrelated content", async () => {
-  const { session, host, winnerId, loser, loserRulesetId } = await setup("feats", "snapshot");
+  const { session, host, winnerId, loser, loserRulesetId, rulesetIds } = await setup("feats", "snapshot");
   const [property] = await Properties.create(db, {
     entityId: loser.id,
     entityType: "feats",
     type: "NEW_EXTENSION",
     value: "1",
   });
-  RulesetViews.invalidateAll();
+  invalidateTestRulesets(...rulesetIds);
   await RulesetExtensionsService.unsubscribeExtension(session, host.id, loserRulesetId);
   const local = await FeatsService.updateFeat(session, host.id, winnerId, {
     name: "Toughness",
@@ -319,7 +320,7 @@ test("installing another extension preserves the local override and exposes unre
 for (const entityType of ["feats", "powers"] as const) {
   for (const pairing of ["snapshot", "name"] as const) {
     test(`${pairing} ${entityType}: copying follows display precedence across three extensions`, async () => {
-      const { session, extensions } = await setup(entityType, pairing, 3);
+      const { session, extensions, rulesetIds } = await setup(entityType, pairing, 3);
       for (const [index, { copy }] of extensions.entries()) {
         if (index === 0) continue;
         await Properties.create(db, {
@@ -352,7 +353,7 @@ for (const entityType of ["feats", "powers"] as const) {
           fork.id,
           order.map((i) => extensions[i].extension.id),
         );
-        RulesetViews.invalidateAll();
+        invalidateTestRulesets(fork.id, ...rulesetIds);
         const winnerId = extensions[0].copy.id;
         const visible = await withRulesetScope(db, fork.id, async ({ rulesetData }) => ({
           property: rulesetData.propertiesByEntity.get(winnerId)!.find((p) => p.type === "PRECEDENCE")!,

@@ -1,13 +1,18 @@
-import { afterEach, expect, test } from "bun:test";
+import { expect, test } from "bun:test";
 
-import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
+import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Feats, Items, Properties, Requirements, Rulesets } from "@/server/repositories/index.ts";
 import { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";
 import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
 import { ItemsService } from "@/server/services/rulesets/items/index.ts";
 import { api, expectRefusedWith, expectStatus } from "@/tests/support/api.ts";
-import { copyEntity, createSeededTestRuleset } from "@/tests/support/rulesets.ts";
+import {
+  copyEntity,
+  createSeededTestRuleset,
+  invalidateSeededRuleset,
+  invalidateTestRulesets,
+} from "@/tests/support/rulesets.ts";
 import { makeSession } from "@/tests/support/users.ts";
 import { WEAPON_BASE_DAMAGE, WEAPON_CRITICAL_RANGE } from "@/vocabulary/dnd3.5/properties/index.ts";
 
@@ -35,6 +40,7 @@ async function setup(
           })
         )[0]
       : (await Feats.findOne(db, { rulesetId: host.ancestorRulesetIds[0], name: "Toughness" }))!;
+  if (entityType === "items") invalidateSeededRuleset(host.ancestorRulesetIds[0]);
   const copies: string[] = [];
   const extensionIds: string[] = [];
   for (let i = 0; i < extensionCount; i++) {
@@ -64,10 +70,8 @@ async function setup(
     );
   }
   await RulesetExtensionsService.subscribeExtension(session, host.id, extensionIds);
-  return { session, host, source, copies };
+  return { session, host, source, copies, rulesetIds: [host.id, ...extensionIds] };
 }
-
-afterEach(() => RulesetViews.invalidateAll());
 
 test.each([
   [0, { baseDamage: "2d6" }, [WEAPON_BASE_DAMAGE, "2d6"]],
@@ -123,7 +127,7 @@ for (const action of ["update", "delete"] as const) {
 
 for (const action of ["update leaf", "delete leaf", "update chain"] as const) {
   test(`${action} preserves source identity through requirement renumbering`, async () => {
-    const { host, copies } = await setup("feats", async (entityId, index) => {
+    const { host, copies, rulesetIds } = await setup("feats", async (entityId, index) => {
       const owner = { entityId, entityType: "feats" };
       const strength = {
         target: "abilities.strength.total",
@@ -177,7 +181,7 @@ for (const action of ["update leaf", "delete leaf", "update chain"] as const) {
         r.id !== target.id ? r : action === "update chain" ? { ...r, chainingOperator: "and" } : { ...r, value: "17" },
       );
     for (const cold of [false, true]) {
-      if (cold) RulesetViews.invalidateAll();
+      if (cold) invalidateTestRulesets(...rulesetIds);
       const after = await RequirementsService.getRequirements(host.id, "feats", copies[0]);
       expect(shape(after)).toEqual(shape(expected));
       expect(after.some((r) => originals.some((source) => source.id === r.id))).toBe(false);

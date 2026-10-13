@@ -34,6 +34,15 @@ export function invalidateSeededRuleset(rulesetId: string) {
 }
 
 /**
+ * A cold read's cache, for a test that wrote rows straight into rulesets: drops the views of the rulesets it made
+ * (`rulesetIds`) and of those built on them, and of the seeded rulesets it wrote into (`invalidateSeededRuleset`). The
+ * seeded rulesets' rows it left alone stay cached: they read the same again.
+ */
+export function invalidateTestRulesets(...rulesetIds: string[]) {
+  for (const rulesetId of [...rulesetIds, ...writtenSeededRulesets]) RulesetViews.invalidate(rulesetId);
+}
+
+/**
  * Copies an inherited entity into `rulesetId` (`EntityCopy`), on the chain given: what a first edit there copies. The
  * copied row.
  */

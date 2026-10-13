@@ -1,4 +1,4 @@
-import { afterEach, expect, test } from "bun:test";
+import { expect, test } from "bun:test";
 
 import RequirementEvaluator from "@/engine/core/requirements/RequirementEvaluator.ts";
 import Dnd35TargetPaths from "@/engine/rulesets/dnd3.5/Dnd35TargetPaths.ts";
@@ -29,6 +29,7 @@ import {
   copyEntity,
   createSeededTestRuleset,
   createSeededTestRulesetWithExtensions,
+  invalidateTestRulesets,
 } from "@/tests/support/rulesets.ts";
 import { compareCopies, customizationsOf } from "@/tests/support/siblingCopies.ts";
 import { makeSession } from "@/tests/support/users.ts";
@@ -68,10 +69,8 @@ async function setup(
     host.id,
     reverseOrder ? [...extensionIds].reverse() : extensionIds,
   );
-  return { session, host };
+  return { session, host, rulesetIds: [host.id, ...extensionIds] };
 }
-
-afterEach(() => RulesetViews.invalidateAll());
 
 test("a list leaves out a book's copy that lost to another book's in its query: its pages are full", async () => {
   const fork = await createSeededTestRulesetWithExtensions(makeSession().userId);
@@ -95,7 +94,7 @@ test("a list leaves out a book's copy that lost to another book's in its query: 
 test("editing a shared aptitude preserves references from both extensions", async () => {
   const aptitudeIds: string[] = [];
   const featIds: string[] = [];
-  const { session, host } = await setup(async (rulesetId, _baseId, index) => {
+  const { session, host, rulesetIds } = await setup(async (rulesetId, _baseId, index) => {
     const [aptitude] = await Aptitudes.create(db, { rulesetId, name: "Audit Shared Pool" });
     const [feat] = await Feats.create(db, { rulesetId, name: `Audit Pool Feat ${index}` });
     await FeatsAptitudes.create(db, { featId: feat.id, aptitudeId: aptitude.id });
@@ -112,7 +111,7 @@ test("editing a shared aptitude preserves references from both extensions", asyn
     name: "Audit Local Pool",
   });
   const warm = await read();
-  RulesetViews.invalidateAll();
+  invalidateTestRulesets(...rulesetIds);
   const cold = await read();
   expect({ warm, cold }).toEqual({
     warm: { resolved: [local.id, local.id], links: [local.id, local.id] },
@@ -132,7 +131,7 @@ for (const [chainingOperator, reverseOrder] of [
 ] as const) {
   test(`merging A with (${chainingOperator === "or" ? "A OR B" : "A AND B"}) preserves eligibility before and after COW (reverse=${reverseOrder})`, async () => {
     const copies: string[] = [];
-    const { session, host } = await setup(async (rulesetId, baseId, index) => {
+    const { session, host, rulesetIds } = await setup(async (rulesetId, baseId, index) => {
       const source = (await Feats.findOne(db, { rulesetId: baseId, name: "Toughness" }))!;
       const copy = await copyEntity(db, "feats", source.id, {
         id: rulesetId,
@@ -191,7 +190,7 @@ for (const [chainingOperator, reverseOrder] of [
     const before = evaluate([await read()]);
     await FeatsService.updateFeat(session, host.id, copies[0], { name: "Toughness", fields: { families: ["Luck"] } });
     const after = evaluate([await read()]);
-    RulesetViews.invalidateAll();
+    invalidateTestRulesets(...rulesetIds);
     const cold = evaluate([await read()]);
     expect({ before, after, cold }).toEqual({ before: expected, after: expected, cold: expected });
     expect(await stored()).toEqual(originals);

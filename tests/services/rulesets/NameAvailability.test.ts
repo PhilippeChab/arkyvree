@@ -1,4 +1,4 @@
-import { afterEach, expect, test } from "bun:test";
+import { expect, test } from "bun:test";
 
 import { and, eq } from "drizzle-orm";
 
@@ -90,8 +90,6 @@ async function setup() {
     }))!;
   return { session, fork, baseId, general, baseFeat };
 }
-
-afterEach(() => RulesetViews.invalidateAll());
 
 // A renamed local copy is still the override: inherited picks of the source
 // must keep resolving to it, and its snapshot must not move to a new entity

@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 
-import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
+import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Items, Klasses, KlassLevels, Modifiers, Properties, Races, Rulesets } from "@/server/repositories/index.ts";
 import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
@@ -9,7 +9,12 @@ import { ClassSkillsService } from "@/server/services/rulesets/classes/skills/in
 import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
 import { ItemsService } from "@/server/services/rulesets/items/index.ts";
 import { RacesService } from "@/server/services/rulesets/races/index.ts";
-import { copyEntity, createSeededTestRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
+import {
+  copyEntity,
+  createSeededTestRuleset,
+  invalidateSeededRuleset,
+  invalidateTestRulesets,
+} from "@/tests/support/rulesets.ts";
 import { makeSession } from "@/tests/support/users.ts";
 
 type EntityType = "races" | "klasses" | "items";
@@ -74,7 +79,7 @@ async function setup(entityType: EntityType, omitLastLevel = false) {
   const originals = await Properties.findMany(db, { entityIds: sourceIds });
   const assertCopied = async () => {
     for (const cold of [false, true]) {
-      if (cold) RulesetViews.invalidateAll();
+      if (cold) invalidateTestRulesets(host.id, ...extensions);
       expect(await read()).toEqual(before);
     }
     const id = await withRulesetScope(db, host.id, async ({ rulesetData }) => rulesetData.canonicalize(source.id));
