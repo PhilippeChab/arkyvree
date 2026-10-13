@@ -3,9 +3,8 @@
  * each (`partOf`), in files of their own so shards and workers run the parts alongside each other.
  */
 
-import { afterEach, expect, test } from "bun:test";
+import { expect, test } from "bun:test";
 
-import { RulesetViews } from "@/server/cow/index.ts";
 import { createSeededTestRulesetWithExtensions } from "@/tests/support/rulesets.ts";
 import {
   compareCopies,
@@ -15,8 +14,6 @@ import {
   partOf,
 } from "@/tests/support/siblingCopies.ts";
 import { makeSession } from "@/tests/support/users.ts";
-
-afterEach(() => RulesetViews.invalidateAll());
 
 test("a sibling winner's copy holds what the view showed of it, for a third of the winners of a fork of every extension", async () => {
   const fork = await createSeededTestRulesetWithExtensions(makeSession().userId);
