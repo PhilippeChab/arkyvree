@@ -44,8 +44,8 @@ const ITEMS_COLUMNS: TableColumn[] = [
   { key: "name", label: "Name", width: "25%" },
   { key: "type", label: "Type", width: "10%", slot: "inline" },
   { key: "template", label: "Template", width: "8%" },
-  { key: "cost", label: "Cost", width: "10%" },
-  { key: "weight", label: "Weight", width: "10%" },
+  { key: "cost", label: "Cost", width: "10%", slot: "inline" },
+  { key: "weight", label: "Weight", width: "10%", slot: "inline" },
   { key: "description", label: "Description", width: "37%", slot: "block" },
 ];
 

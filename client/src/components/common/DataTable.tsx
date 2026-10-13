@@ -51,7 +51,7 @@ interface DataTableProps {
 type StyleObject = Exclude<SxProps<Theme>, ReadonlyArray<unknown> | ((theme: Theme) => unknown)>;
 
 /** A `labeled` cell's name, on a phone alone: its header says it from `sm` up */
-const PHONE_LABEL_SX = { display: { xs: "inline", sm: "none" }, color: "text.secondary", pr: 0.5 };
+const PHONE_LABEL_SX = { display: { xs: "inline", sm: "none" }, color: "text.secondary", fontWeight: 400, pr: 0.5 };
 
 /** A cell on a phone's second line: small and muted, as a caption, a text it holds running in its line */
 const SECOND_LINE_SX: StyleObject = {
@@ -63,17 +63,17 @@ const SECOND_LINE_SX: StyleObject = {
 
 /** Each slot's place in a phone's list item, its row a wrapping line of cells */
 const SLOT_SX: Record<PhoneSlot, StyleObject> = {
-  primary: { order: 0, flex: "1 1 0", minWidth: 0, fontWeight: 500, overflowWrap: "anywhere" },
+  primary: { order: 0, flex: "1 1 0", minWidth: 0, fontWeight: 500, overflowWrap: "break-word" },
   trailing: { order: 1, flex: "none", ml: "auto", textAlign: "right", fontWeight: 600 },
   inline: SECOND_LINE_SX,
-  labeled: { ...SECOND_LINE_SX, color: "text.primary" },
+  labeled: { ...SECOND_LINE_SX, color: "text.primary", fontWeight: 600 },
   block: { order: 4, flexBasis: "100%", minWidth: 0 },
   hidden: { display: "none" },
 };
 
 /**
- * A cell as a phone shows it, in its slot. Its second line's cells are parted by a dot after each but its last (a
- * chip's gap parts it alone), and one that holds a dash (`EmptyValue`) shows nothing there.
+ * A cell as a phone shows it, in its slot. Its second line's cells are parted by the row's gap, each wrapping onto the
+ * next line whole, and one that holds a dash (`EmptyValue`) shows nothing there.
  */
 function phoneCellSx(theme: Theme, slot: PhoneSlot): StyleObject {
   const secondLine = slot === "inline" || slot === "labeled";
@@ -83,14 +83,7 @@ function phoneCellSx(theme: Theme, slot: PhoneSlot): StyleObject {
       border: 0,
       p: 0,
       ...SLOT_SX[slot],
-      ...(secondLine && {
-        "&:has(.empty-value)": { display: "none" },
-        "&:not(:has(.MuiChip-root)):has(~ [data-slot='inline'], ~ [data-slot='labeled'])::after": {
-          content: '"·"',
-          pl: 1,
-          color: "text.secondary",
-        },
-      }),
+      ...(secondLine && { "&:has(.empty-value)": { display: "none" } }),
     },
   };
 }
@@ -107,7 +100,7 @@ function phoneRowSx(theme: Theme, indented: boolean): StyleObject {
       display: "flex",
       flexWrap: "wrap",
       alignItems: "baseline",
-      columnGap: 1,
+      columnGap: 2,
       py: 1.25,
       px: "var(--data-row-inset)",
       ...(indented && { pl: `calc(var(--data-row-inset) + ${theme.spacing(2)})` }),

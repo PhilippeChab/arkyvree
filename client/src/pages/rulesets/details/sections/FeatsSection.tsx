@@ -161,7 +161,7 @@ function GroupedRow({
               <DataCell slot="primary" sx={VARIANT_INDENT_SX}>
                 <Typography variant="body2">{feat.name}</Typography>
               </DataCell>
-              <DataCell slot="block" sx={VARIANT_INDENT_SX}>
+              <DataCell slot="block">
                 <DescriptionCell text={feat.description} />
               </DataCell>
             </DataRow>

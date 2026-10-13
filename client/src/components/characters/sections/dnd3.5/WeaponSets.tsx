@@ -70,7 +70,8 @@ export function WeaponSets({ combat }: WeaponSetsProps) {
                         <Typography
                           variant="caption"
                           sx={{
-                            display: { xs: "inline", sm: "block" },
+                            // On a phone, after the name, wrapping under it whole
+                            display: { xs: "inline-block", sm: "block" },
                             color: "text.secondary",
                             pl: { xs: 0.5, sm: 0 },
                           }}

@@ -106,6 +106,9 @@ const INVALID_COLUMNS: TableColumn[] = [
 /** What a cell shows on a phone alone: a group's arrow, which leads its source there, its toggle's column gone */
 const PHONE_ONLY_SX = { display: { xs: "inline", sm: "none" }, pr: 0.5, "& svg": { verticalAlign: "middle" } };
 
+/** A text a phone shows alone */
+const PHONE_ONLY_TEXT_SX = { display: { xs: "inline", sm: "none" } };
+
 /** A rule's operator, before its value on a phone, its own column gone there ("+ 2") */
 const PHONE_OPERATOR_SX = { display: { xs: "inline", sm: "none" }, pr: 0.5 };
 
@@ -120,6 +123,30 @@ const SUMMARY_SX = { px: 0, minHeight: 0, "& .MuiAccordionSummary-content": { my
 
 /** Its tables' cells, the header's too: tight, in small type, from `sm` up (a phone lists them) */
 const TABLE_SX = { "& .MuiTableCell-root": { py: { sm: 0.5 }, px: { sm: 1 }, fontSize: { sm: "0.8rem" } } } as const;
+
+/** A text `sm` and up show alone */
+const WIDE_ONLY_SX = { display: { xs: "none", sm: "inline" } };
+
+/** A break that takes no room ("\u200B"), where a path may wrap */
+const ZERO_WIDTH_SPACE = "\u200B";
+
+/**
+ * A rule's target path: whole from `sm` up, as the table sizes its column by it, and on a phone with a break after each
+ * of its dots, where it wraps ("feats.martialweaponproficiencylongbow.possessed")
+ */
+function breakablePath(path: ReactNode) {
+  if (typeof path !== "string") return path;
+  return (
+    <>
+      <Box component="span" sx={WIDE_ONLY_SX}>
+        {path}
+      </Box>
+      <Box component="span" sx={PHONE_ONLY_TEXT_SX}>
+        {path.split(".").join(`.${ZERO_WIDTH_SPACE}`)}
+      </Box>
+    </>
+  );
+}
 
 /** A collapsed table of one kind of diagnostic ("Unmet (3)"), hidden when there are none. */
 function DiagnosticsGroup({ label, count, columns, children }: DiagnosticsGroupProps) {
@@ -208,7 +235,7 @@ function InvalidRequirementTable({ baseRules, items }: InvalidRequirementTablePr
             {item.requirement.level}
           </DataCell>
           <DataCell slot={item.requirement.target ? "inline" : "hidden"}>
-            {item.requirement.target || <EmptyValue />}
+            {item.requirement.target ? breakablePath(item.requirement.target) : <EmptyValue />}
           </DataCell>
           <DataCell slot="block">{item.warning}</DataCell>
         </DataRow>
@@ -260,7 +287,7 @@ function RuleCellsRow({ cells, last, targetSlot }: RuleCellsRowProps) {
   const [target, operator, value, lastCell] = cells;
   return (
     <>
-      <DataCell slot={targetSlot}>{shownCell(target)}</DataCell>
+      <DataCell slot={targetSlot}>{breakablePath(shownCell(target))}</DataCell>
       <DataCell slot="hidden" align="center">
         {shownCell(operator)}
       </DataCell>
@@ -302,7 +329,7 @@ function SkippedModifierTable({ baseRules, items }: SkippedModifierTableProps) {
       {items.map((item, i) => (
         <DataRow key={i}>
           <DataCell slot="primary">{entityTypeLabel(item.modifier.sourceType, baseRules)}</DataCell>
-          <DataCell slot="inline">{item.modifier.target}</DataCell>
+          <DataCell slot="inline">{breakablePath(item.modifier.target)}</DataCell>
           <DataCell slot="block">{item.warning}</DataCell>
         </DataRow>
       ))}
