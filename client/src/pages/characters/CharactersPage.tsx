@@ -154,6 +154,7 @@ export default function CharactersPage() {
         </Stack>
         {createDialog.target && (
           <CreateCharacterDialog
+            key={createDialog.key}
             open={createDialog.open}
             onClose={createDialog.close}
             onExited={createDialog.onExited}

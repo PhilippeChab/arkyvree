@@ -15,7 +15,7 @@ describe("feedback rules", () => {
           "client/src/always.tsx": "export const a = <Modal open onClose={close} />;\n",
           "client/src/record.tsx": "export const r = <EditDialog open={target !== null} />;\n",
           "client/src/target.tsx":
-            "export const t = dialog.target && <AddLevelDialog open={dialog.open} onExited={dialog.onExited} />;\n",
+            "export const t = dialog.target && <AddLevelDialog key={dialog.key} open={dialog.open} onExited={dialog.onExited} />;\n",
           "client/src/flag.tsx":
             "export function F() {\n" +
             "  const [editOpen, setEditOpen] = useState(false);\n" +
@@ -35,6 +35,10 @@ describe("feedback rules", () => {
             "  };\n" +
             "  return <CreateDialog open={addOpen} onClose={() => setAddOpen(false)} onAdd={handleAdd} />;\n" +
             "}\n",
+          "client/src/unkeyed.tsx":
+            "export const u = (\n  <>\n    {wizard.target && (\n      <AddLevelDialog open={wizard.open} onExited={wizard.onExited} />\n    )}\n  </>\n);\n",
+          "client/src/keyed.tsx":
+            "export const k = (\n  <>\n    {wizard.target && (\n      <AddLevelDialog key={wizard.key} open={wizard.open} onExited={wizard.onExited} />\n    )}\n  </>\n);\n",
         },
         ["dialog-mounts"],
       ),
@@ -44,6 +48,7 @@ describe("feedback rules", () => {
       "dialog-mounts client/src/conditional.tsx",
       "dialog-mounts client/src/flag.tsx",
       "dialog-mounts client/src/record.tsx",
+      "dialog-mounts client/src/unkeyed.tsx",
     ]);
   });
 

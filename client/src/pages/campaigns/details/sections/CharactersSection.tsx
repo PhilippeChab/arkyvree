@@ -317,6 +317,7 @@ export function CharactersSection({ campaign }: CharactersSectionProps) {
 
       {linkDialog.target && (
         <LinkCharacterDialog
+          key={linkDialog.key}
           open={linkDialog.open}
           onClose={linkDialog.close}
           onExited={linkDialog.onExited}

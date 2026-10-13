@@ -327,6 +327,7 @@ export default function CharacterDetailsPage() {
 
           {addLevel.target && (
             <AddLevelDialog
+              key={addLevel.key}
               open={addLevel.open}
               onClose={closeAddLevel}
               onExited={addLevel.onExited}
@@ -337,6 +338,7 @@ export default function CharacterDetailsPage() {
           )}
           {editLevel.target && (
             <EditLevelDialog
+              key={editLevel.key}
               open={editLevel.open}
               onClose={editLevel.close}
               onExited={editLevel.onExited}
