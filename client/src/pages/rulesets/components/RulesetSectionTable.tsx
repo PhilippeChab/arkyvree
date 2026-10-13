@@ -88,7 +88,7 @@ export function RulesetSectionTable<T extends { id: string }>({
   if (!data || data.length === 0) return search ? <NoMatchesState search={search} /> : empty;
 
   return (
-    <DataTable framed columns={headerColumns} containerSx={TABLE_CONTAINER_SX} minWidth={TABLE_MIN_WIDTH}>
+    <DataTable framed plainChips columns={headerColumns} containerSx={TABLE_CONTAINER_SX} minWidth={TABLE_MIN_WIDTH}>
       {data.map((item, index) => (
         <DataRow
           key={item.id}

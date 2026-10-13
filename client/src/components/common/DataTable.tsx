@@ -49,6 +49,11 @@ interface DataTableProps {
   inset?: number;
   /** Its least width from `sm` up, which its container scrolls sideways to; a phone lists its rows instead */
   minWidth?: number;
+  /**
+   * On a phone, its items' chips read as plain text, parted by commas, but at a line's end (a count): a ruleset's
+   * entities' facts (a size, a hit die, an aptitude, a level's feats), which name a value rather than flag a state
+   */
+  plainChips?: boolean;
   size?: "small" | "medium";
   /** The `Table`'s own `sx` */
   sx?: SxProps<Theme>;
@@ -62,6 +67,21 @@ const PHONE_LABEL_SX = { display: { xs: "inline", sm: "none" }, color: "text.sec
 
 /** What a cell shows on a phone alone, in place of what it shows from `sm` up */
 const PHONE_ONLY_SX = { display: { xs: "inline", sm: "none" } };
+
+/** A chip read as plain text, in its line's type, parted from the next by a comma */
+const PLAIN_CHIPS_SX: StyleObject = {
+  "& .MuiChip-root": {
+    height: "auto",
+    border: 0,
+    borderRadius: 0,
+    bgcolor: "transparent",
+    color: "inherit",
+    font: "inherit",
+  },
+  "& .MuiChip-root:not(:last-child)::after": { content: '","' },
+  "& .MuiChip-label": { px: 0 },
+  "& .MuiChip-icon": { display: "none" },
+};
 
 /** A cell on a phone's second line: small and muted, as a caption, a text it holds running in its line */
 const SECOND_LINE_SX: StyleObject = {
@@ -146,6 +166,7 @@ function phoneTableSx(
   inset: number,
   headed: boolean,
   framed: boolean,
+  plainChips: boolean,
   minWidth?: number,
   fixed?: boolean,
 ): StyleObject {
@@ -159,6 +180,7 @@ function phoneTableSx(
       // Bare, the list keeps its header's rule over its first row
       "& > tbody": { display: "block", ...(!framed && headed && { borderTop: 2, borderColor: "secondary.main" }) },
       ...(framed && { "& > tbody > tr:last-of-type": { borderBottom: 0 } }),
+      ...(plainChips && { "& > tbody > tr > td:not([data-slot='trailing'])": PLAIN_CHIPS_SX }),
     },
   };
 }
@@ -213,13 +235,17 @@ export function DataTable({
   framed = false,
   inset,
   minWidth,
+  plainChips = false,
   size,
   sx,
 }: DataTableProps) {
   const table = (
     <Table
       size={size}
-      sx={withSx((theme) => phoneTableSx(theme, inset ?? (framed ? 2 : 0), !!columns, framed, minWidth, fixed), sx)}
+      sx={withSx(
+        (theme) => phoneTableSx(theme, inset ?? (framed ? 2 : 0), !!columns, framed, plainChips, minWidth, fixed),
+        sx,
+      )}
     >
       {columns && <TableColumnsHead columns={columns} />}
       <TableBody>{children}</TableBody>

@@ -5,10 +5,12 @@ import {
   DataCell,
   DataRow,
   DataTable,
+  EMAIL_AS_NAME_SX,
   EmptyValue,
   ROW_ACTIONS_HOVER_SX,
   RowActions,
   type TableColumn,
+  USERNAME_BESIDE_EMAIL_SX,
 } from "@/client/src/components/common/index.ts";
 import { InviteStatusChip } from "@/client/src/components/invites/index.ts";
 import { useIsMobile } from "@/client/src/hooks/index.ts";
@@ -39,11 +41,11 @@ export function ContributorsTable({ owner, contributors, renderActions, showRole
 
   const userCell = (username: string | null | undefined, email: string) => (
     <DataCell slot="primary">
-      <Typography variant="body2" sx={{ fontWeight: 500 }}>
+      <Typography variant="body2" sx={username ? USERNAME_BESIDE_EMAIL_SX : { fontWeight: 500 }}>
         {username || <EmptyValue />}
       </Typography>
       {isMobile && (
-        <Typography variant="caption" sx={{ color: "text.secondary" }}>
+        <Typography variant="caption" sx={username ? EMAIL_AS_NAME_SX : { color: "text.secondary" }}>
           {email}
         </Typography>
       )}

@@ -1,3 +1,4 @@
+export { EMAIL_AS_NAME_SX, USERNAME_BESIDE_EMAIL_SX } from "./accountNames.ts";
 export { ActionMenuItem } from "./ActionMenuItem.tsx";
 export { AddButton } from "./AddButton.tsx";
 export { AnimatedAlert } from "./AnimatedAlert.tsx";

@@ -11,6 +11,7 @@ import {
   DataCell,
   DataRow,
   DataTable,
+  EMAIL_AS_NAME_SX,
   EmptyValue,
   ListPageResults,
   RoleChip,
@@ -22,6 +23,7 @@ import {
   StatusChip,
   type TableColumn,
   TableSkeleton,
+  USERNAME_BESIDE_EMAIL_SX,
 } from "@/client/src/components/common/index.ts";
 import {
   CharacterIcon,
@@ -251,6 +253,8 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
             {players.items.map((player) => {
               const slot = getPlayerSlot(player);
               const displayInfo = playerDisplay(player, slot);
+              // A player's or an invite's email address, which names the row alone on a phone
+              const hasEmail = slot.state !== "unassigned" && !!displayInfo.caption;
               const statusChip = STATUS_CHIPS[slot.state];
               const isGameMaster = player.role === "Game Master";
               const RoleIcon = ROLE_ICONS[player.role];
@@ -273,10 +277,10 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
                 >
                   <DataCell slot="primary">
                     <Box>
-                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                      <Typography variant="body2" sx={hasEmail ? USERNAME_BESIDE_EMAIL_SX : { fontWeight: 500 }}>
                         {displayInfo.name}
                       </Typography>
-                      <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                      <Typography variant="caption" sx={hasEmail ? EMAIL_AS_NAME_SX : { color: "text.secondary" }}>
                         {displayInfo.caption}
                       </Typography>
                     </Box>
