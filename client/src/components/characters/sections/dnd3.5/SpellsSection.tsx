@@ -150,9 +150,10 @@ function SpellRowItem({ spell, rulesetId }: SpellRowItemProps) {
     <>
       <DataRow
         {...toggleProps(open, () => setOpen((prev) => !prev), "row")}
-        sx={[CLICKABLE_ROW_SX, open && { borderBottom: 0, "& > td": { borderBottom: "none" } }]}
+        // Open, it runs on into its details at every width (a breakpoint's value outranks a phone's row's own divider)
+        sx={[CLICKABLE_ROW_SX, open && { borderBottom: { xs: 0 }, "& > td": { borderBottom: "none" } }]}
       >
-        <DataCell slot="primary" sx={{ fontWeight: 400 }}>
+        <DataCell slot="primary">
           <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
             <ExpandArrow open={open} />
             {/* A tag sits twice the row's gap from the name, and from the next tag */}

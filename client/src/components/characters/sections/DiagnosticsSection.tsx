@@ -109,9 +109,6 @@ const INVALID_COLUMNS: TableColumn[] = [
 /** What a cell shows on a phone alone: a group's arrow, which leads its source there, its toggle's column gone */
 const PHONE_ONLY_SX = { display: { xs: "inline", sm: "none" }, pr: 0.5, "& svg": { verticalAlign: "middle" } };
 
-/** A text a phone shows alone */
-const PHONE_ONLY_TEXT_SX = { display: { xs: "inline", sm: "none" } };
-
 /** A rule's operator, before its value on a phone, its own column gone there ("+ 2") */
 const PHONE_OPERATOR_SX = { display: { xs: "inline", sm: "none" }, pr: 0.5 };
 
@@ -122,6 +119,9 @@ const SKIPPED_COLUMNS: TableColumn[] = [
   { key: "warning", label: "Warning" },
 ];
 
+/** A source's name, bolder than its rules', a phone's too */
+const SOURCE_NAME_SX = { fontWeight: { xs: 600 } };
+
 const SUMMARY_SX = { px: 0, minHeight: 0, "& .MuiAccordionSummary-content": { my: 0 } } as const;
 
 /** Its tables' cells, the header's too: tight, in small type (a phone lists them, unpadded) */
@@ -129,29 +129,8 @@ const TABLE_SX = {
   "& .MuiTableCell-root": { py: { sm: 0.5 }, px: { sm: 1 }, fontSize: { xs: "0.8125rem", sm: "0.8rem" } },
 } as const;
 
-/** A text `sm` and up show alone */
-const WIDE_ONLY_SX = { display: { xs: "none", sm: "inline" } };
-
 /** A break that takes no room ("\u200B"), where a path may wrap */
 const ZERO_WIDTH_SPACE = "\u200B";
-
-/**
- * A rule's target path: whole from `sm` up, as the table sizes its column by it, and on a phone with a break after each
- * of its dots, where it wraps ("feats.martialweaponproficiencylongbow.possessed")
- */
-function breakablePath(path: ReactNode) {
-  if (typeof path !== "string") return path;
-  return (
-    <>
-      <Box component="span" sx={WIDE_ONLY_SX}>
-        {path}
-      </Box>
-      <Box component="span" sx={PHONE_ONLY_TEXT_SX}>
-        {path.split(".").join(`.${ZERO_WIDTH_SPACE}`)}
-      </Box>
-    </>
-  );
-}
 
 /** A collapsed table of one kind of diagnostic ("Unmet (3)"), hidden when there are none. */
 function DiagnosticsGroup({ label, count, columns, children }: DiagnosticsGroupProps) {
@@ -196,7 +175,7 @@ function GroupedRuleTable({ label, count, columns, groups, lastSlot }: GroupedRu
               <DataCell slot="hidden" sx={{ pr: 0 }}>
                 <ExpandArrow open={isOpen} />
               </DataCell>
-              <DataCell slot="primary" sx={{ fontWeight: 600 }}>
+              <DataCell slot="primary" sx={SOURCE_NAME_SX}>
                 <Box component="span" sx={PHONE_ONLY_SX}>
                   <ExpandArrow open={isOpen} />
                 </Box>
@@ -239,8 +218,11 @@ function InvalidRequirementTable({ baseRules, items }: InvalidRequirementTablePr
           <DataCell slot="labeled" label="Level">
             {item.requirement.level}
           </DataCell>
-          <DataCell slot={item.requirement.target ? "inline" : "hidden"}>
-            {item.requirement.target ? breakablePath(item.requirement.target) : <EmptyValue />}
+          <DataCell
+            slot={item.requirement.target ? "inline" : "hidden"}
+            phoneChildren={phonePath(item.requirement.target)}
+          >
+            {item.requirement.target || <EmptyValue />}
           </DataCell>
           <DataCell slot="block">{item.warning}</DataCell>
         </DataRow>
@@ -276,6 +258,14 @@ function ModifierTable({ baseRules, modifiers, label }: ModifierTableProps) {
   );
 }
 
+/**
+ * A rule's target path as a phone shows it, with a break after each of its dots, where it wraps
+ * ("feats.martialweaponproficiencylongbow.possessed"); `sm` and up show it whole, as the table sizes its column by it
+ */
+function phonePath(path: ReactNode) {
+  return typeof path === "string" ? path.split(".").join(`.${ZERO_WIDTH_SPACE}`) : undefined;
+}
+
 function RequirementTable({ baseRules, groups, label }: RequirementTableProps) {
   return (
     <GroupedRuleTable
@@ -302,7 +292,9 @@ function RuleCellsRow({ cells, last, lastSlot, targetSlot }: RuleCellsRowProps) 
   const [target, operator, value, lastCell] = cells;
   return (
     <>
-      <DataCell slot={targetSlot}>{breakablePath(shownCell(target))}</DataCell>
+      <DataCell slot={targetSlot} phoneChildren={phonePath(shownCell(target))}>
+        {shownCell(target)}
+      </DataCell>
       <DataCell slot="hidden" align="center">
         {shownCell(operator)}
       </DataCell>
@@ -344,7 +336,9 @@ function SkippedModifierTable({ baseRules, items }: SkippedModifierTableProps) {
       {items.map((item, i) => (
         <DataRow key={i}>
           <DataCell slot="primary">{entityTypeLabel(item.modifier.sourceType, baseRules)}</DataCell>
-          <DataCell slot="inline">{breakablePath(item.modifier.target)}</DataCell>
+          <DataCell slot="inline" phoneChildren={phonePath(item.modifier.target)}>
+            {item.modifier.target}
+          </DataCell>
           <DataCell slot="block">{item.warning}</DataCell>
         </DataRow>
       ))}

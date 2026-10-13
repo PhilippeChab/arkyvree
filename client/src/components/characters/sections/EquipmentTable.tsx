@@ -11,7 +11,7 @@ import {
   RowActions,
   type TableColumn,
 } from "@/client/src/components/common/index.ts";
-import { formatCost, formatTrimmed, formatWeight } from "@/client/src/lib/formatNumeric.ts";
+import { formatCost, formatTrimmed, formatWeight, poundsUnit } from "@/client/src/lib/formatNumeric.ts";
 import { buildCustomizationPath } from "@/shared/customization/entities.ts";
 
 import type { EquipmentRow } from "./equipment.ts";
@@ -50,7 +50,7 @@ const NO_WRAP_SX = { whiteSpace: "nowrap" };
 /** A weight in whole pounds where it is one ("2 lbs", "1 lb", "0.5 lbs"), as a phone shows it */
 function formatPounds(weight: EquipmentTableRow["weight"]) {
   const pounds = formatTrimmed(weight);
-  return `${pounds} ${pounds === "1" ? "lb" : "lbs"}`;
+  return `${pounds} ${poundsUnit(pounds)}`;
 }
 
 /** A character's inventory: slot, quantity, weight, value, and the carried load under it. */
@@ -70,7 +70,7 @@ export function EquipmentTable<T extends EquipmentTableRow>({
       >
         {rows.map((entry) => (
           <DataRow key={entry.id} sx={[ROW_ACTIONS_HOVER_SX, { bgcolor: entry.equipped ? "action.hover" : undefined }]}>
-            <DataCell slot="primary" sx={{ fontWeight: 400 }}>
+            <DataCell slot="primary">
               {rulesetId ? (
                 <MuiLink
                   component={Link}

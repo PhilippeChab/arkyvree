@@ -32,3 +32,8 @@ export function formatWeight(weight: string | number | null | undefined): string
   const formatted = formatDecimal(weight);
   return formatted === null ? null : `${formatted} lbs`;
 }
+
+/** The unit after a weight as `formatTrimmed` writes it: "lb" after a single pound ("1"), "lbs" after any other. */
+export function poundsUnit(pounds: string | null): string {
+  return pounds === "1" ? "lb" : "lbs";
+}

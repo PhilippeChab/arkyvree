@@ -23,6 +23,7 @@ interface DataCellProps extends Omit<TableCellProps, "sx"> {
   phoneChildren?: ReactNode;
   /** Where it goes on a phone (`PhoneSlot`) */
   slot: PhoneSlot;
+  /** Its own styles, which its slot's outrank on a phone but those set at a breakpoint (`{ xs: 600 }`) */
   sx?: SxProps<Theme>;
 }
 
@@ -126,7 +127,8 @@ const WIDE_ONLY_SX = { display: { xs: "none", sm: "inline" } };
 
 /**
  * A cell as a phone shows it, in its slot. Its second line's cells are parted by the row's gap, each wrapping onto the
- * next line whole, and one that holds a dash (`EmptyValue`) shows nothing there.
+ * next line whole, and one that holds a dash (`EmptyValue`) shows nothing there; nor does a block that holds nothing
+ * but one (a missing description, in its text).
  */
 function phoneCellSx(theme: Theme, slot: PhoneSlot): StyleObject {
   const secondLine = slot === "inline" || slot === "labeled";
@@ -137,6 +139,9 @@ function phoneCellSx(theme: Theme, slot: PhoneSlot): StyleObject {
       p: 0,
       ...SLOT_SX[slot],
       ...(secondLine && { "&:has(.empty-value)": { display: "none" } }),
+      ...(slot === "block" && {
+        "&:has(> .empty-value:only-child, > :only-child > .empty-value:only-child)": { display: "none" },
+      }),
     },
   };
 }

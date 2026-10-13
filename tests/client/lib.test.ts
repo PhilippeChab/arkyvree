@@ -16,6 +16,7 @@ import {
   formatDie,
   formatTrimmed,
   formatWeight,
+  poundsUnit,
 } from "@/client/src/lib/formatNumeric.ts";
 import { createListboxScrollHandler } from "@/client/src/lib/listboxScroll.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
@@ -57,6 +58,10 @@ describe("Numbers shown to the user", () => {
       formatTrimmed(""),
       formatTrimmed(null),
     ]).toEqual(["5", "1.5", "0.25", null, null]);
+  });
+
+  test("take a pound's unit, singular for a single pound alone", () => {
+    expect(["1", "2", "0.5", "1.5"].map(poundsUnit)).toEqual(["lb", "lbs", "lbs", "lbs"]);
   });
 
   test("write a die in dice notation, as the books write a hit die", () => {

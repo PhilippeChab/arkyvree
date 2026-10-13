@@ -48,9 +48,6 @@ const NARROW_HEADERS_SX = {
   "& > thead th:not(:first-of-type)": { whiteSpace: "nowrap", fontSize: "0.8125rem" },
 };
 
-/** What a cell says on a phone alone */
-const PHONE_ONLY_SX = { display: { xs: "inline", sm: "none" } };
-
 /**
  * A skill's columns: on a phone, its name leads, the ranks it adds at the line's end, and what it comes to under them
  */
@@ -62,9 +59,6 @@ const SKILL_COLUMNS: TableColumn[] = [
   { key: "total", label: "Total", width: "55px" },
   { key: "class", label: "Class", width: "55px" },
 ];
-
-/** What a cell says from `sm` up alone */
-const WIDE_ONLY_SX = { display: { xs: "none", sm: "inline" } };
 
 const SkillAllocationRow = memo(function SkillAllocationRow({
   skill,
@@ -128,13 +122,8 @@ const SkillAllocationRow = memo(function SkillAllocationRow({
           {skill.currentRank + ranksGained}
         </Typography>
       </DataCell>
-      <DataCell slot={skill.classSkill ? "inline" : "hidden"}>
-        <Box component="span" sx={WIDE_ONLY_SX}>
-          {skill.classSkill ? "Yes" : "No"}
-        </Box>
-        <Box component="span" sx={PHONE_ONLY_SX}>
-          Class Skill
-        </Box>
+      <DataCell slot={skill.classSkill ? "inline" : "hidden"} phoneChildren="Class Skill">
+        {skill.classSkill ? "Yes" : "No"}
       </DataCell>
     </SkillRow>
   );

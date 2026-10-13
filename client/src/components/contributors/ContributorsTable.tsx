@@ -39,13 +39,14 @@ export function ContributorsTable({ owner, contributors, renderActions, showRole
     ...(renderActions ? [{ key: "actions", label: "Actions", align: "right" as const }] : []),
   ];
 
+  // On a phone, named by its email alone, its username's dash too left out for one invited without an account
   const userCell = (username: string | null | undefined, email: string) => (
     <DataCell slot="primary">
-      <Typography variant="body2" sx={username ? USERNAME_BESIDE_EMAIL_SX : { fontWeight: 500 }}>
+      <Typography variant="body2" sx={USERNAME_BESIDE_EMAIL_SX}>
         {username || <EmptyValue />}
       </Typography>
       {isMobile && (
-        <Typography variant="caption" sx={username ? EMAIL_AS_NAME_SX : { color: "text.secondary" }}>
+        <Typography variant="caption" sx={EMAIL_AS_NAME_SX}>
           {email}
         </Typography>
       )}

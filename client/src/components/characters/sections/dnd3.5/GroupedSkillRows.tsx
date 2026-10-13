@@ -34,6 +34,9 @@ const FADE_IN_SX = {
   [PREFERS_REDUCED_MOTION]: { animation: "none" },
 };
 
+/** A group's name, bolder than its skills', a phone's too */
+const GROUP_NAME_SX = { fontWeight: { xs: 600 } };
+
 /**
  * A skill table's rows, with the skills that share a prefix ("Knowledge (…)")
  * under a header row whose click shows or hides them.
@@ -60,7 +63,7 @@ export function GroupedSkillRows<S extends { name: string }>({
             {...toggleProps(isExpanded, () => toggle(row.prefix), "row")}
             sx={[CLICKABLE_ROW_SX, { bgcolor: "action.hover" }]}
           >
-            <DataCell slot="primary" sx={{ fontWeight: 600 }}>
+            <DataCell slot="primary" sx={GROUP_NAME_SX}>
               <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
                 <ExpandArrow open={isExpanded} />
                 <Box component="span">
@@ -76,9 +79,12 @@ export function GroupedSkillRows<S extends { name: string }>({
   );
 }
 
-/** A skill's row. A grouped skill's name drops its group's prefix and brackets ("Arcana") and sits indented. */
+/**
+ * A skill's row. A grouped skill's name drops its group's prefix, and its brackets when they hold the rest of it
+ * ("Arcana"; "(alchemy) - Masterwork"), and sits indented.
+ */
 export function SkillRow({ name, indented, hidden, renderName = (label) => label, children }: SkillRowProps) {
-  const label = indented ? name.replace(/^.+?\s*\((.*)\)$/, "$1") : name;
+  const label = indented ? name.replace(/^.+?\s*\(/, "(").replace(/^\(([^()]*)\)$/, "$1") : name;
   return (
     <DataRow hidden={hidden} indented={indented} sx={[!hidden && indented && FADE_IN_SX]}>
       <DataCell slot="primary" sx={{ pl: indented ? 5 : undefined }}>

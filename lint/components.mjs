@@ -934,8 +934,12 @@ function createSkeletons(context) {
       for (let p = parentElement(node); p; p = parentElement(p)) {
         const name = elementName(p);
         if (name === "TableCell" || name === "DataCell") inCell = true;
-        // A table drawn by hand as it loads: its header over rows of skeletons
-        if (name !== "Table" || !holds(p, (child) => elementName(child) === "TableHead")) continue;
+        // A table drawn by hand as it loads: its header (a `DataTable`'s columns) over rows of skeletons
+        const headed =
+          name === "DataTable"
+            ? hasAttribute(p, "columns")
+            : name === "Table" && holds(p, (child) => elementName(child) === "TableHead");
+        if (!headed) continue;
         context.report({ node: node.openingElement, message: "A table's first load is a `TableSkeleton`." });
         return;
       }

@@ -1,7 +1,7 @@
 import { Box, Stack, Typography } from "@mui/material";
 
 import { StatusChip } from "@/client/src/components/common/index.ts";
-import { formatTrimmed, formatWeight } from "@/client/src/lib/formatNumeric.ts";
+import { formatTrimmed, formatWeight, poundsUnit } from "@/client/src/lib/formatNumeric.ts";
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
 import { capitalize } from "@/shared/text.ts";
 
@@ -53,7 +53,7 @@ export function Encumbrance({ encumbrance }: EncumbranceProps) {
                 <>
                   {formatTrimmed(weight ?? 0)}
                   <Box component="span" sx={UNIT_SX}>
-                    lbs
+                    {poundsUnit(formatTrimmed(weight ?? 0))}
                   </Box>
                 </>
               }
