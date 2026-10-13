@@ -138,22 +138,17 @@ function createDialogMounts(context) {
             "own mounts with its `useDialogState` record (`{dialog.target && …}`) and lets it go once faded.",
         });
       }
-      // One let go once faded (`onExited={dialog.onExited}`) takes its opening's key: reopened as it fades, it mounts afresh
-      const exited = attributeValue(attribute(node, "onExited"));
-      const owner =
-        exited?.type === "MemberExpression" &&
-        exited.object.type === "Identifier" &&
-        exited.property.name === "onExited"
-          ? exited.object.name
-          : null;
+      // One mounted with its record (`{dialog.target && …}`) takes its opening's key: reopened as it fades, it mounts
+      // afresh rather than keeping what it held
+      const owner = condition && readsTarget(condition) ? targetOwner(condition) : null;
       const key = attributeValue(attribute(node, "key"));
       const keyed = key?.type === "MemberExpression" && key.object.name === owner && key.property.name === "key";
       if (owner && !keyed) {
         context.report({
           node: node.openingElement,
           message:
-            `A dialog let go once it fades takes its opening's key (\`key={${owner}.key}\`): one opened again as it ` +
-            "fades out mounts afresh, rather than keeping what it held.",
+            `A dialog mounted with its record takes its opening's key (\`key={${owner}.key}\`): one opened again as ` +
+            "it fades out mounts afresh, rather than keeping what it held.",
         });
       }
       const open = attribute(node, "open");
@@ -388,6 +383,18 @@ function readsTarget(node) {
   if (!node || typeof node !== "object") return false;
   if (node.type === "MemberExpression" && !node.computed && node.property.name === "target") return true;
   return ["left", "right", "argument", "expression"].some((key) => readsTarget(node[key]));
+}
+
+/** The dialog state whose `target` a condition reads (`dialog` of `dialog.target`), when one is named. */
+function targetOwner(node) {
+  if (!node || typeof node !== "object") return null;
+  if (node.type === "MemberExpression" && !node.computed && node.property.name === "target")
+    return node.object.type === "Identifier" ? node.object.name : null;
+  for (const key of ["left", "right", "argument", "expression"]) {
+    const owner = targetOwner(node[key]);
+    if (owner) return owner;
+  }
+  return null;
 }
 
 /** Whether a message is `loadFailureMessage`'s: its call, or a condition whose branches are. */

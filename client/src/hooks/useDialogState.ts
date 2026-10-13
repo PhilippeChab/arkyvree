@@ -11,9 +11,10 @@ export function useDialogState<T = true>(initial: T | null = null) {
   return {
     target: state.target,
     open: state.open,
-    /** Which opening it is: each `openWith` a new one */
+    /** Which opening it is: each `openWith` of a closed (or closing) dialog a new one, an open one's its own */
     key: state.opening,
-    openWith: (target: T) => setState((current) => ({ target, open: true, opening: current.opening + 1 })),
+    openWith: (target: T) =>
+      setState((current) => ({ target, open: true, opening: current.open ? current.opening : current.opening + 1 })),
     close: () => setState((current) => ({ ...current, open: false })),
     /** The dialog's transition has ended: closed, it lets its record go; opened again meanwhile, it keeps it. */
     onExited: () => setState((current) => (current.open ? current : { ...current, target: null, open: false })),

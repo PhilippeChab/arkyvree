@@ -37,6 +37,10 @@ describe("feedback rules", () => {
             "}\n",
           "client/src/unkeyed.tsx":
             "export const u = (\n  <>\n    {wizard.target && (\n      <AddLevelDialog open={wizard.open} onExited={wizard.onExited} />\n    )}\n  </>\n);\n",
+          "client/src/wrapped.tsx":
+            "export const w = wizard.target && <AddLevelDialog open={wizard.open} onExited={() => wizard.onExited()} />;\n",
+          "client/src/always-mounted.tsx":
+            "export const a = <EditDialog open={dialog.open} onExited={dialog.onExited} />;\n",
           "client/src/keyed.tsx":
             "export const k = (\n  <>\n    {wizard.target && (\n      <AddLevelDialog key={wizard.key} open={wizard.open} onExited={wizard.onExited} />\n    )}\n  </>\n);\n",
         },
@@ -49,6 +53,7 @@ describe("feedback rules", () => {
       "dialog-mounts client/src/flag.tsx",
       "dialog-mounts client/src/record.tsx",
       "dialog-mounts client/src/unkeyed.tsx",
+      "dialog-mounts client/src/wrapped.tsx",
     ]);
   });
 

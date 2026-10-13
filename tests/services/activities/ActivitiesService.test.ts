@@ -87,7 +87,7 @@ describe("ActivitiesService.getActivityUrl", () => {
       expect({ table, url: await resolve(table, id) }).toEqual({ table, url });
   });
 
-  test("links a customization to its entity's customization page", async () => {
+  test("links a customization to its entity's customization page, on its tab", async () => {
     const { rulesetId: r, featMap, itemMap, klassMap } = await getSeedCtx();
     const [clericLevel] = await KlassLevels.findMany(db, { klassId: klassMap.pc["Cleric"] });
     const [featModifier] = await Modifiers.findMany(db, {
@@ -112,13 +112,13 @@ describe("ActivitiesService.getActivityUrl", () => {
     });
 
     expect(await resolve("modifiers", featModifier.id)).toBe(
-      `/rulesets/${r}/feats/${featMap["Toughness"]}/customization`,
+      `/rulesets/${r}/feats/${featMap["Toughness"]}/customization/modifiers`,
     );
     expect(await resolve("modifiers", levelModifier.id)).toBe(
-      `/rulesets/${r}/class-levels/${clericLevel.id}/customization`,
+      `/rulesets/${r}/class-levels/${clericLevel.id}/customization/modifiers`,
     );
     expect(await resolve("requirements", requirement.id)).toBe(
-      `/rulesets/${r}/feats/${featMap["Weapon Focus: Longsword"]}/customization`,
+      `/rulesets/${r}/feats/${featMap["Weapon Focus: Longsword"]}/customization/requirements`,
     );
     expect(await resolve("properties", property.id)).toBe(`/rulesets/${r}/items/${itemMap["Longsword"]}/customization`);
   });
@@ -159,7 +159,7 @@ describe("ActivitiesService.getActivityUrl", () => {
     ).toEqual([
       `/rulesets/${r}/classes/${fighter}/modifiers`,
       `/rulesets/${r}/classes/${fighter}/requirements`,
-      `/rulesets/${r}/modifiers/${featModifier.id}/customization`,
+      `/rulesets/${r}/modifiers/${featModifier.id}/customization/requirements`,
     ]);
   });
 
