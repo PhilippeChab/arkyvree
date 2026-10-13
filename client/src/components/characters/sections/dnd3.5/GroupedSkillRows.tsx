@@ -76,9 +76,9 @@ export function GroupedSkillRows<S extends { name: string }>({
   );
 }
 
-/** A skill's row. A grouped skill's name drops the group's prefix ("(arcana)") and sits indented. */
+/** A skill's row. A grouped skill's name drops its group's prefix and brackets ("Arcana") and sits indented. */
 export function SkillRow({ name, indented, hidden, renderName = (label) => label, children }: SkillRowProps) {
-  const label = indented ? name.replace(/^.+?\s*\(/, "(") : name;
+  const label = indented ? name.replace(/^.+?\s*\((.*)\)$/, "$1") : name;
   return (
     <DataRow hidden={hidden} indented={indented} sx={[!hidden && indented && FADE_IN_SX]}>
       <DataCell slot="primary" sx={{ pl: indented ? 5 : undefined }}>
