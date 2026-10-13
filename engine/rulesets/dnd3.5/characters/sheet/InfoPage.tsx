@@ -178,7 +178,12 @@ function InfoPage({
                   <Text style={styles.abilityName}>{save.name}</Text>
                   <Text style={styles.abilityMod}>{SheetFormat.formatModifier(save.total)}</Text>
                   <Text style={{ fontSize: FONT_SIZE.xs, color: "#666", marginTop: 2, textAlign: "center" }}>
-                    {`Base ${SheetFormat.formatModifier(save.base)}  |  Abil ${SheetFormat.formatModifier(save.ability)}  |  Misc ${SheetFormat.formatModifier(save.misc)}`}
+                    {/* Each part's name and value kept together (no-break spaces), a part wrapping whole */}
+                    {[
+                      `Base\u00a0${SheetFormat.formatModifier(save.base)}`,
+                      `Ability\u00a0${SheetFormat.formatModifier(save.ability)}`,
+                      `Misc\u00a0${SheetFormat.formatModifier(save.misc)}`,
+                    ].join(" | ")}
                   </Text>
                 </View>
               ))}

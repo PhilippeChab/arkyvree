@@ -175,6 +175,8 @@ export const styles = StyleSheet.create({
   skillsHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
+    // Its two-word labels wrap onto two lines, the others on their last line
+    alignItems: "flex-end",
     padding: 2,
     marginBottom: 1,
     borderBottom: "1px solid #333",
