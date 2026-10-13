@@ -61,14 +61,6 @@ class RulesetViews {
   }
 
   /**
-   * Puts back a ruleset's own rows read before (`getRawData`), for a ruleset whose rows are those again: the test
-   * setup's, once a test's rollback undid what it wrote into a seeded ruleset. Pinned, as a system ruleset's read is.
-   */
-  restoreRawData(rulesetId: string, data: RulesetRawData): void {
-    this.rawData.restore(getRawDataKey(rulesetId), [rulesetId], { data, pinned: true });
-  }
-
-  /**
    * A ruleset's copy-on-write data: its source chain, its overrides and sibling pairs. Keyed by the ruleset and its
    * ordered source chain: a request holding old ruleset metadata must not cache its old subscription chain under the
    * key readers of the newly committed chain use. Read through the shared `db`, never a transaction.

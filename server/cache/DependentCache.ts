@@ -29,14 +29,6 @@ export default class DependentCache<T> {
     return this.cache.isPinned(key);
   }
 
-  /** Puts back an entry read before, for data that holds it again: cached as a read would cache it. */
-  restore(key: string, dependencyIds: readonly string[], { data, pinned }: Loaded<T>): void {
-    if (!MemoryCache.isEnabled()) return;
-    this.pending.delete(key);
-    this.cache.set(key, { data, dependencies: new Set(dependencyIds) });
-    if (pinned) this.cache.pin(key);
-  }
-
   async getOrFetch(key: string, dependencyIds: readonly string[], fetcher: () => Promise<Loaded<T>>): Promise<T> {
     if (!MemoryCache.isEnabled()) return (await fetcher()).data;
 
