@@ -2283,6 +2283,22 @@ describe("DetailedCharacter", () => {
       ]);
     });
 
+    test("name a character its own modifier's issue is from as a Character", async () => {
+      const bjorn = await findSeededCharacter("Bjorn Ironhand");
+      await Modifiers.create(db, {
+        sourceId: bjorn.id,
+        sourceType: "characters",
+        target: "feats.weaponfocus.possessed",
+        value: "true",
+        valueType: "boolean",
+        operator: "set",
+      });
+      const issues = (await build(bjorn)).validate().issues.filter((issue) => issue.category === "modifiers");
+      expect(issues.map((issue) => issue.message)).toEqual([
+        "Skipped modifier on feats.weaponfocus.possessed from Bjorn Ironhand (Character): Element not found: possessed",
+      ]);
+    });
+
     test("don't count a proficiency two classes grant twice", async () => {
       // A barbarian level grants the fighter's proficiency feats again.
       const bjorn = await findSeededCharacter("Bjorn Ironhand");
