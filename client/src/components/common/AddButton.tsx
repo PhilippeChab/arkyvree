@@ -13,8 +13,8 @@ interface AddButtonProps {
   variant?: ButtonProps["variant"];
 }
 
-/** Square, as tall as the small search field beside it. */
-const COMPACT_SX = { minWidth: 0, px: 1, alignSelf: "stretch" } as const;
+/** Square, as tall as the small search field beside it, and as round: its row sets its height, the field's 40px. */
+const COMPACT_SX = { minWidth: 0, width: 40, flexShrink: 0, p: 0, alignSelf: "stretch", borderRadius: 1 } as const;
 
 /** A button that adds something (a row, a level, a contributor): its words after the add icon, or its icon alone. */
 export function AddButton({
