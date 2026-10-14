@@ -101,6 +101,20 @@ const baseConfig: UserConfig = {
             sizes: "512x512",
             type: "image/png",
           },
+          // The launcher's own shape (a circle, a squircle) crops it: the logo stands inside its middle 80% circle,
+          // on the splash screen's background, which fills the rest
+          {
+            src: "pwa-maskable-192x192.png",
+            sizes: "192x192",
+            type: "image/png",
+            purpose: "maskable",
+          },
+          {
+            src: "pwa-maskable-512x512.png",
+            sizes: "512x512",
+            type: "image/png",
+            purpose: "maskable",
+          },
         ],
       },
     }),
