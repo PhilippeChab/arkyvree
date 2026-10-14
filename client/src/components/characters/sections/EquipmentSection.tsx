@@ -33,7 +33,6 @@ import { oneOf } from "@/client/src/lib/oneOf.ts";
 import { invalidateCharacter, rulesetDetailQuery } from "@/client/src/lib/queries.ts";
 import { requiredRules } from "@/client/src/lib/validation.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
-import type { BaseRules } from "@/shared/enums.ts";
 
 import {
   EMPTY_INVENTORY_FORM,
@@ -57,8 +56,6 @@ import { SheetSection } from "./SheetSection.tsx";
 import { shownWeaponSet } from "./weaponSets.ts";
 
 interface EquipmentSectionProps {
-  /** The character's, whose words its save's warnings name their entities in */
-  baseRules: BaseRules;
   characterId: string;
   /** What the sheet's base rules say of the load the character carries, under its table. */
   load?: ReactNode;
@@ -66,7 +63,7 @@ interface EquipmentSectionProps {
   rulesetId: string;
 }
 
-export function EquipmentSection({ baseRules, characterId, rulesetId, readOnly, load }: EquipmentSectionProps) {
+export function EquipmentSection({ characterId, rulesetId, readOnly, load }: EquipmentSectionProps) {
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
 
@@ -241,7 +238,6 @@ export function EquipmentSection({ baseRules, characterId, rulesetId, readOnly, 
   const issuesAlert = (visible: boolean, onForce: () => void) =>
     visible && (
       <ValidationIssuesAlert
-        baseRules={baseRules}
         issues={issues}
         title="Equipment Warnings"
         onClose={() => setIssues([])}

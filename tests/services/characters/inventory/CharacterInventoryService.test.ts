@@ -607,7 +607,14 @@ describe("InventoryService", () => {
       const refusal = await add(session, bjorn.id, sword, equipped("Main Hand", 1)).catch((error: unknown) => error);
       expect(refusal).toMatchObject({
         refusal: "invalid",
-        issues: [{ category: "requirements", entityName: "Bastard Sword", entityType: "items" }],
+        issues: [
+          {
+            category: "requirements",
+            message: "Bastard Sword is too large to use in one hand without its proficiency",
+            entityName: "Bastard Sword",
+            entityType: "items",
+          },
+        ],
       });
       expect(await add(session, bjorn.id, sword, equipped("Two Handed", 1))).toMatchObject({ location: "Two Handed" });
       await remove(session, bjorn.id, sword);

@@ -398,8 +398,8 @@ describe("LevelsService", () => {
       const withWeaponFocus = await fighterWith("Weapon Focus: Longsword");
       expect(await eligible(withPowerAttack)).toBe(true);
       expect(await eligible(withWeaponFocus)).toBe(false);
-      expect(await saving(withPowerAttack)).not.toContain("(klasses)");
-      expect(await saving(withWeaponFocus)).toContain(`Unmet prerequisite on ${klass.name} (klasses)`);
+      expect(await saving(withPowerAttack)).not.toContain("(Class)");
+      expect(await saving(withWeaponFocus)).toContain(`Unmet prerequisite on ${klass.name} (Class)`);
     });
 
     describe("counts the levels, feats and skill ranks being added toward a prestige class", () => {

@@ -2,13 +2,10 @@ import { Button, Stack } from "@mui/material";
 
 import { AnimatedAlert, DiceSpinner, SubsectionTitle } from "@/client/src/components/common/index.ts";
 import type { ApiValidationIssue } from "@/client/src/services/ApiError.ts";
-import type { BaseRules } from "@/shared/enums.ts";
 
 import { ValidationIssueList } from "./ValidationIssueList.tsx";
 
 interface ValidationIssuesAlertProps {
-  /** The character's, whose words its issues name their entities in */
-  baseRules: BaseRules;
   /**
    * The space under it, which opens and closes with it (`AnimatedAlert`'s), where its container doesn't space it; in a
    * spaced `Stack`, which spaces it even closed, it's mounted only while it shows.
@@ -27,7 +24,6 @@ interface ValidationIssuesAlertProps {
 
 /** The rules warnings a save came back with (`useValidationIssues`), at the form's top, and its Proceed Anyway. */
 export function ValidationIssuesAlert({
-  baseRules,
   issues,
   title,
   onClose,
@@ -59,7 +55,7 @@ export function ValidationIssuesAlert({
     >
       <Stack spacing={1}>
         <SubsectionTitle>{title}</SubsectionTitle>
-        <ValidationIssueList issues={issues} baseRules={baseRules} />
+        <ValidationIssueList issues={issues} />
       </Stack>
     </AnimatedAlert>
   );

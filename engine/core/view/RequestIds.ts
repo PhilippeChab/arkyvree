@@ -1,22 +1,7 @@
 import RulesError from "@/engine/core/RulesError.ts";
 
+import { KIND_LABELS } from "./kindLabels.ts";
 import type { default as RulesetData, ViewEntities } from "./RulesetData.ts";
-
-/** What a refusal calls an entity of each kind. */
-const KIND_LABELS: Record<keyof ViewEntities, string> = {
-  abilities: "Ability",
-  aptitudes: "Aptitude",
-  feats: "Feat",
-  items: "Item",
-  klass_levels: "Class level",
-  klasses: "Class",
-  languages: "Language",
-  mechanics: "Mechanic",
-  powers: "Power",
-  races: "Race",
-  saves: "Save",
-  skills: "Skill",
-};
 
 /**
  * The entities a request names by id, as its ruleset's view (`rulesetData`) reads them: each the one the view shows in

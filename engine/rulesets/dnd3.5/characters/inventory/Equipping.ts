@@ -154,8 +154,8 @@ export default class Equipping {
 
     if (!this.character.areRequirementsMet([proficiency], { sourceId: null })) {
       // An issue, as an unmet requirement is: the form shows it, and can equip it anyway (`force`)
-      const message = "This weapon is too large to use in one hand without its proficiency";
       const entityName = rulesetData.itemsById.get(item.id)?.name;
+      const message = `${entityName ?? "This weapon"} is too large to use in one hand without its proficiency`;
       throw new RulesError("invalid", message, [
         { category: "requirements", message, entityName, entityType: "items" },
       ]);

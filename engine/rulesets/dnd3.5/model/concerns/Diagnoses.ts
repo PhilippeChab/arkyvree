@@ -112,6 +112,11 @@ export function Diagnoses<B extends Constructor<CharacterState>>(Base: B) {
       return undefined;
     }
 
+    /** A power as 3.5 calls it, a "Spell"; else the engine's word. */
+    protected override nameEntityType(entityType: string): string {
+      return entityType === "powers" ? "Spell" : super.nameEntityType(entityType);
+    }
+
     override resolveModifierSourceName(modifier: Modifier): { name: string; type: string } | undefined {
       const name = this.resolveEntityName(modifier.sourceId, modifier.sourceType);
       if (name) return { name, type: modifier.sourceType };
