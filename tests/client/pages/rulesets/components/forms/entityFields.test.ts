@@ -7,6 +7,7 @@ import {
   type EntityFieldValues,
   isFieldShown,
   noneLabel,
+  ownFieldValues,
   toFieldValues,
   valueAt,
   withEntityFields,
@@ -129,6 +130,23 @@ describe("an entity's fields in its form", () => {
     expect(isFieldShown(count, true)).toBe(true);
     expect(isFieldShown(weapon, valueAt(values, "type"))).toBe(true);
     expect(valueAt(values, "fields.weighted.deeper")).toBeUndefined();
+  });
+
+  test("hold of their own those another entity doesn't hold the same, a group's by each field", () => {
+    const template = {
+      school: "Evocation",
+      tags: ["Fire"],
+      target: "One creature",
+      weapon: { reach: 10, ranged: true },
+    };
+    const values = { school: "Evocation", tags: [], target: "You", weapon: { reach: 10, ranged: false } };
+    expect(ownFieldValues(FIELDS, values, template)).toEqual({
+      ...emptyFieldValues(FIELDS),
+      tags: [],
+      target: "You",
+      weapon: { reach: null, ranged: false },
+    });
+    expect(ownFieldValues(FIELDS, values, undefined)).toEqual(toFieldValues(FIELDS, values));
   });
 
   test("send an edit's changed fields alone, a group whole", () => {

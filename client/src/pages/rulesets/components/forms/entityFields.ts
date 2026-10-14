@@ -103,6 +103,20 @@ export function noneLabel(options: readonly string[]) {
   return options.includes("None") ? "Default" : "None";
 }
 
+/**
+ * A form's values (`values`) with each one another entity holds the same emptied (`base`, its description: an item's
+ * template's): what the entity holds of its own over the other's.
+ */
+export function ownFieldValues(fields: readonly EntityField[], values: unknown, base: unknown): EntityFieldValues {
+  return valuesByKey(
+    valueFieldsOf(fields).map((field) => {
+      const value = formValueOf(field, valueAt(values, field.key));
+      const same = JSON.stringify(value) === JSON.stringify(formValueOf(field, valueAt(base, field.key)));
+      return [field.key, same ? emptyValueOf(field) : value];
+    }),
+  );
+}
+
 /** An entity's fields as its form holds them, off its description (`entity`, which carries each at its key). */
 export function toFieldValues(fields: readonly EntityField[], entity: unknown): EntityFieldValues {
   return valuesByKey(valueFieldsOf(fields).map((field) => [field.key, formValueOf(field, valueAt(entity, field.key))]));

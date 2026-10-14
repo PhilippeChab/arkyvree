@@ -39,6 +39,8 @@ export function ItemEditor({
     storeSaved: refetchSaved,
     listKey: QUERY_KEYS.rulesets.section(rulesetId, "items"),
     label: "Item",
+    // Moved to another template, it holds that one's fields: the save sends them all, the server keeping its own
+    sendsAllFields: (data, baseline) => !!data.sourceItemId && data.sourceItemId !== baseline?.sourceItemId,
     saveFn: (data: ItemFormData, updatedAt: string | undefined) =>
       parseResponse(
         rpc.api.rulesets[":id"].items[":itemId"].$put({

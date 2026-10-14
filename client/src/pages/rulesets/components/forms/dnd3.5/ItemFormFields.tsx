@@ -1,10 +1,15 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { type QueryClient, useQuery, useQueryClient } from "@tanstack/react-query";
 import { type UseFormReturn } from "react-hook-form";
 
 import { DescriptionField, FormTextField, NameField, SelectField } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
+import { NO_TIME } from "@/client/src/lib/durations.ts";
 import { DECIMAL_RULES } from "@/client/src/lib/validation.ts";
-import { emptyFieldValues, toFieldValues } from "@/client/src/pages/rulesets/components/forms/entityFields.ts";
+import {
+  emptyFieldValues,
+  ownFieldValues,
+  toFieldValues,
+} from "@/client/src/pages/rulesets/components/forms/entityFields.ts";
 import { EntityFields } from "@/client/src/pages/rulesets/components/forms/EntityFields.tsx";
 import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
 import { useEntityFields } from "@/client/src/pages/rulesets/hooks/index.ts";
@@ -32,6 +37,14 @@ interface TemplateSelectorProps {
   type: TemplateItemType;
 }
 
+/**
+ * A template as the server holds it now (`templateId`, of `rulesetId`'s items): a cached one may be older, and a save
+ * keeps of its fields those that differ from the template's at that time.
+ */
+function fetchTemplate(queryClient: QueryClient, rulesetId: string, templateId: string) {
+  return queryClient.fetchQuery({ ...customizationEntityQuery(rulesetId, "items", templateId), staleTime: NO_TIME });
+}
+
 function TemplateSelector({ form, rulesetId, templateName, type, disabled }: TemplateSelectorProps) {
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
@@ -45,12 +58,14 @@ function TemplateSelector({ form, rulesetId, templateName, type, disabled }: Tem
     if (!fields) return;
     form.setValue("fields", emptyFieldValues(fields), { shouldDirty: true });
     if (typeof templateId !== "string" || !templateId) return;
-    queryClient.fetchQuery(customizationEntityQuery(rulesetId, "items", templateId)).then(
+    const stillPicked = () => form.getValues("sourceItemId") === templateId;
+    fetchTemplate(queryClient, rulesetId, templateId).then(
       ({ entity }) => {
-        if (form.getValues("sourceItemId") !== templateId) return;
-        form.setValue("fields", toFieldValues(fields, entity), { shouldDirty: true });
+        if (stillPicked()) form.setValue("fields", toFieldValues(fields, entity), { shouldDirty: true });
       },
-      (error) => snackbar.error(error, "Failed to load the template's fields"),
+      (error) => {
+        if (stillPicked()) snackbar.error(error, "Failed to load the template's fields");
+      },
     );
   };
 
@@ -69,12 +84,28 @@ function TemplateSelector({ form, rulesetId, templateName, type, disabled }: Tem
 }
 
 export function ItemFormFields({ form, rulesetId, lockType, templateName }: ItemFormFieldsProps) {
+  const queryClient = useQueryClient();
+  const snackbar = useSnackbar();
+  const { fields } = useEntityFields(rulesetId, "items");
   const itemType = form.watch("type");
   const isTemplate = form.watch("isTemplate");
 
-  // A new type takes none of the old type's templates, and a template type sets its slot
+  // A new type takes none of the old type's templates, and a template type sets its slot. The template's values go
+  // with it once they load (the item's own stay), unless another template was picked since
   const handleTypeChange = (newType: unknown) => {
+    const templateId = form.getValues("sourceItemId");
     for (const field of fieldsClearedByType(newType)) form.setValue(field, "", { shouldDirty: true });
+    if (!templateId || !fields) return;
+    const noneSince = () => !form.getValues("sourceItemId");
+    fetchTemplate(queryClient, rulesetId, templateId).then(
+      ({ entity }) => {
+        if (!noneSince()) return;
+        form.setValue("fields", ownFieldValues(fields, form.getValues("fields"), entity), { shouldDirty: true });
+      },
+      (error) => {
+        if (noneSince()) snackbar.error(error, "Failed to load the template's fields");
+      },
+    );
   };
 
   return (

@@ -22,6 +22,11 @@ export interface EntitySaveOptions<TForm extends FieldValues, TSaved> {
   /** Sends the form under its stale-edit token (the form's `sync.updatedAt()`); resolves to the saved row. */
   saveFn: (data: TForm, updatedAt: string | undefined) => Promise<TSaved>;
   /**
+   * Whether a save sends every field, not only those it changed from what the form is based on (`baseline`): an item
+   * moved to another template, whose fields the server keeps only where they differ from that template's.
+   */
+  sendsAllFields?: (data: TForm, baseline: TForm | undefined) => boolean;
+  /**
    * The saved row into the cache, before the page follows a copy: seeds its query with it, or refetches it where the
    * save's response lacks what the page shows (a feat's aptitudes, a level's feats). The save stays pending until what
    * it returns resolves.
@@ -32,9 +37,16 @@ export interface EntitySaveOptions<TForm extends FieldValues, TSaved> {
   toFormValues?: (saved: TSaved) => TForm;
 }
 
-/** A form's values as an edit sends them: of its `fields`, those it changed from what it's based on (`baseline`). */
-function changesOf<TForm extends FieldValues>(data: TForm, baseline: TForm | undefined): TForm {
-  if (!("fields" in data)) return data;
+/**
+ * A form's values as an edit sends them: of its `fields`, those it changed from what it's based on (`baseline`), or
+ * every one when `sendsAllFields` says so.
+ */
+function changesOf<TForm extends FieldValues>(
+  data: TForm,
+  baseline: TForm | undefined,
+  sendsAllFields?: EntitySaveOptions<TForm, unknown>["sendsAllFields"],
+): TForm {
+  if (!("fields" in data) || sendsAllFields?.(data, baseline)) return data;
   return { ...data, fields: changedFieldValues(data.fields, baseline?.fields) };
 }
 
@@ -50,6 +62,7 @@ export function useEntitySave<TForm extends FieldValues, TSaved extends { id: st
   listKey,
   sync,
   saveFn,
+  sendsAllFields,
   toFormValues,
   storeSaved,
   followCopy,
@@ -62,7 +75,7 @@ export function useEntitySave<TForm extends FieldValues, TSaved extends { id: st
       sourceId: entityId,
       listKey,
       label,
-      saved: await saveFn(changesOf(data, sync.baseline()), sync.updatedAt()),
+      saved: await saveFn(changesOf(data, sync.baseline(), sendsAllFields), sync.updatedAt()),
     }),
     onSuccess: ({ saved, sourceId, listKey: savedListKey, label: savedLabel }, submitted) => {
       sync.saved(toFormValues ? toFormValues(saved) : submitted, saved.updatedAt);
