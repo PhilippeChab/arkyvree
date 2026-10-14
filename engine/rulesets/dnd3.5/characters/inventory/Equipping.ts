@@ -6,7 +6,6 @@ import type { RulesetView } from "@/engine/core/view/index.ts";
 import { ITEM_FIELDS } from "@/engine/rulesets/dnd3.5/entities/items/fields.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import Dnd35CharacterBuilder from "@/engine/rulesets/dnd3.5/model/Dnd35CharacterBuilder.ts";
-import { SIZE_ORDER } from "@/engine/rulesets/dnd3.5/rules/InventorySlots.ts";
 import ItemPlacement from "@/engine/rulesets/dnd3.5/rules/ItemPlacement.ts";
 import type { ItemLocation } from "@/shared/enums.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
@@ -132,9 +131,7 @@ export default class Equipping {
    * two-handed.
    */
   private checkWeaponHands(itemId: string, location: ItemLocation) {
-    const weaponSize = this.weaponFields(itemId).size;
-    const sizeIndex = weaponSize === null ? undefined : SIZE_ORDER[weaponSize];
-    if (sizeIndex !== undefined && sizeIndex > SIZE_ORDER.Medium && location !== "Two Handed")
+    if (ItemPlacement.isTwoHanded(this.weaponFields(itemId).size) && location !== "Two Handed")
       throw new RulesError("invalid", "This weapon requires two hands");
   }
 

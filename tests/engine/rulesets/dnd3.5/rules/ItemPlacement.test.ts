@@ -3,7 +3,7 @@ import { describe, expect, test } from "bun:test";
 import ItemPlacement from "@/engine/rulesets/dnd3.5/rules/ItemPlacement.ts";
 import { LOCATION_OPTIONS } from "@/shared/enums.ts";
 import { HAND_LOCATIONS } from "@/vocabulary/dnd3.5/equipment.ts";
-import { ITEM_HAS_CHARGES } from "@/vocabulary/dnd3.5/properties/index.ts";
+import { ITEM_HAS_CHARGES, WEAPON_SIZE } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 /** An item's `ITEM_HAS_CHARGES` property, holding `value`. */
 function charges(value: string) {
@@ -44,6 +44,17 @@ describe("An item's placement", () => {
     expect(offered("Shield", "Other")).toEqual(["Off Hand"]);
     expect(offered(null, "Other")).toEqual(["Other"]);
     expect(offered(null, "Head")).toEqual([...LOCATION_OPTIONS]);
+  });
+
+  test("offers a weapon too large for one hand both hands alone: Large or past it", () => {
+    const offered = (size: string) =>
+      ItemPlacement.describe({ type: "Weapon", slot: "Other" }, [{ type: WEAPON_SIZE, value: size }]).locations.map(
+        (option) => option.location,
+      );
+    expect(offered("Large")).toEqual(["Two Handed"]);
+    expect(offered("Huge")).toEqual(["Two Handed"]);
+    expect(offered("Medium")).toEqual([...HAND_LOCATIONS]);
+    expect(offered("Small")).toEqual([...HAND_LOCATIONS]);
   });
 
   test("asks for a weapon set in a weapon's or a shield's hand only", () => {

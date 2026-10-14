@@ -1,10 +1,10 @@
 /** Where an item goes: the locations its type sets, the hands a weapon set applies to, and where an entry is worn. */
 
-import { type ItemLocation, LOCATION_OPTIONS } from "@/shared/enums.ts";
+import { type ItemLocation, LOCATION_OPTIONS, SIZE_OPTIONS } from "@/shared/enums.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
 import type { Property } from "@/shared/relations.ts";
 import { HAND_LOCATIONS, type HandLocation, ITEM_TYPE_LOCATIONS } from "@/vocabulary/dnd3.5/equipment.ts";
-import { ITEM_HAS_CHARGES } from "@/vocabulary/dnd3.5/properties/index.ts";
+import { ITEM_HAS_CHARGES, WEAPON_SIZE } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 /** An inventory entry, as where it's worn reads it. */
 interface HeldEntry {
@@ -40,6 +40,12 @@ export interface ItemPlacementDescription {
 }
 
 /**
+ * The weapon sizes that take both hands, as the weapon table gives them for a Medium wielder, whatever the wielder's
+ * size: Large and past it (a greatsword, a bow).
+ */
+const TWO_HANDED_SIZES = SIZE_OPTIONS.slice(SIZE_OPTIONS.indexOf("Large"));
+
+/**
  * Where an item goes: a weapon to a hand its wielder picks, body armor to the torso, a shield to the off hand, any
  * other item to its own slot (or anywhere, for one worn nowhere in particular); and where an entry is worn.
  */
@@ -55,8 +61,13 @@ export default class ItemPlacement {
     return ItemPlacement.isLocatedType(type) ? ITEM_TYPE_LOCATIONS[type] : undefined;
   }
 
-  /** The locations an item can take: its type's, else its own slot when it's worn nowhere in particular, else any. */
-  private static offeredLocations(item: PlacedItem): readonly ItemLocation[] {
+  /**
+   * The locations an item can take: its type's (both hands alone for a two-handed weapon), else its own slot when it's
+   * worn nowhere in particular, else any.
+   */
+  private static offeredLocations(item: PlacedItem, properties: ItemProperty[]): readonly ItemLocation[] {
+    const size = properties.find((property) => property.type === WEAPON_SIZE)?.value;
+    if (item.type === "Weapon" && ItemPlacement.isTwoHanded(size)) return ["Two Handed"];
     return ItemPlacement.locationsOf(item.type) ?? (item.slot === "Other" ? ["Other"] : LOCATION_OPTIONS);
   }
 
@@ -70,7 +81,7 @@ export default class ItemPlacement {
     return {
       charges: ItemPlacement.chargesOf(properties),
       hand: item.type === "Weapon",
-      locations: ItemPlacement.offeredLocations(item).map((location) => ({
+      locations: ItemPlacement.offeredLocations(item, properties).map((location) => ({
         location,
         weaponSet: asksWeaponSet && ItemPlacement.isHand(location),
       })),
@@ -103,6 +114,11 @@ export default class ItemPlacement {
   /** Whether `type` sets the locations its items go to: a weapon, body armor or a shield. */
   static isLocatedType(type: string | null): type is LocatedItemType {
     return type !== null && Object.hasOwn(ITEM_TYPE_LOCATIONS, type);
+  }
+
+  /** Whether a weapon of `size` (its `WEAPON_SIZE`) takes both hands: Large or past it. */
+  static isTwoHanded(size: string | null | undefined) {
+    return isOneOf(size, TWO_HANDED_SIZES);
   }
 
   /** The location an item of `type` goes to when its type sets that one alone (body armor's torso, a shield's off hand). */
