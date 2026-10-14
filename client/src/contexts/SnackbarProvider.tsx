@@ -1,5 +1,5 @@
-import { Alert, type AlertColor, Button, Snackbar } from "@mui/material";
-import { type ReactNode, type SyntheticEvent, useCallback, useMemo, useState } from "react";
+import { Alert, type AlertColor, Button, duration, Snackbar } from "@mui/material";
+import { type ReactNode, type SyntheticEvent, useCallback, useEffect, useMemo, useState } from "react";
 
 import { errorMessage } from "@/client/src/lib/errorMessage.ts";
 import { pastInset, SAFE_BOTTOM } from "@/client/src/theme/safeArea.ts";
@@ -16,6 +16,12 @@ interface ToastItem {
   persistent?: boolean;
   severity: AlertColor;
 }
+
+/**
+ * How long the queue waits for a closing toast to say its exit ended: a moment past its exit transition (MUI's
+ * `leavingScreen`, which the app's theme keeps).
+ */
+const EXIT_WAIT_MS = duration.leavingScreen + 1000;
 
 export function SnackbarProvider({ children }: SnackbarProviderProps) {
   // The toast showing is the queue's head, until its exit transition ends; the next one opens then
@@ -43,10 +49,18 @@ export function SnackbarProvider({ children }: SnackbarProviderProps) {
     setClosing(true);
   };
 
-  const handleExited = () => {
+  const handleExited = useCallback(() => {
     setQueue((prev) => prev.slice(1));
     setClosing(false);
-  };
+  }, []);
+
+  // A closing toast whose transition never says its exit ended (it can skip `onExited`) would hold every toast after
+  // it until the page reloads: a moment past its exit, the next one opens anyway
+  useEffect(() => {
+    if (!closing) return;
+    const timer = setTimeout(handleExited, EXIT_WAIT_MS);
+    return () => clearTimeout(timer);
+  }, [closing, handleExited]);
 
   const action = current?.action;
 
