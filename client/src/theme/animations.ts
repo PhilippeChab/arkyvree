@@ -1,6 +1,6 @@
 /** The theme's motion: its durations and easings, its keyframes and the animations they make, and how a transition is written. */
 
-import { alpha, keyframes, type Theme } from "@mui/material";
+import { alpha, duration, keyframes, type Theme } from "@mui/material";
 
 /** The bell's ring when a notification comes in */
 const bellShake = keyframes`
@@ -78,6 +78,12 @@ export const fadeInUp = keyframes`
 `;
 
 export const PREFERS_REDUCED_MOTION = "@media (prefers-reduced-motion: reduce)" as const;
+
+/**
+ * How long the toasts' queue (`SnackbarProvider`) waits for a closing toast to say its exit ended before the next one
+ * opens anyway: a moment past MUI's exit transition (`leavingScreen`), which the theme keeps
+ */
+export const TOAST_EXIT_WAIT = duration.leavingScreen + 1000;
 
 export function fadeInUpSx(index: number, offset = 0, pace: "normal" | "slow" = "normal") {
   // A list's items at the normal pace; a page's few blocks (the auth pages' branding) at the slow one

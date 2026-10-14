@@ -1,7 +1,8 @@
-import { Alert, type AlertColor, Button, duration, Snackbar } from "@mui/material";
-import { type ReactNode, type SyntheticEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { Alert, type AlertColor, Button, Snackbar } from "@mui/material";
+import { type ReactNode, type SyntheticEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { errorMessage } from "@/client/src/lib/errorMessage.ts";
+import { TOAST_EXIT_WAIT } from "@/client/src/theme/animations.ts";
 import { pastInset, SAFE_BOTTOM } from "@/client/src/theme/safeArea.ts";
 
 import { SnackbarContext, type ToastAction, type ToastOptions } from "./snackbarContext.ts";
@@ -12,26 +13,26 @@ interface SnackbarProviderProps {
 
 interface ToastItem {
   action?: ToastAction;
+  /** Which toast it is, so only the one closing gives way to the next. */
+  id: number;
   message: string;
   persistent?: boolean;
   severity: AlertColor;
 }
 
-/**
- * How long the queue waits for a closing toast to say its exit ended: a moment past its exit transition (MUI's
- * `leavingScreen`, which the app's theme keeps).
- */
-const EXIT_WAIT_MS = duration.leavingScreen + 1000;
-
 export function SnackbarProvider({ children }: SnackbarProviderProps) {
-  // The toast showing is the queue's head, until its exit transition ends; the next one opens then
+  // The toast showing is the queue's head, until its exit transition ends (`closingId` names it meanwhile); the next one
+  // opens then
   const [queue, setQueue] = useState<ToastItem[]>([]);
-  const [closing, setClosing] = useState(false);
+  const [closingId, setClosingId] = useState<number | null>(null);
+  const lastId = useRef(0);
   const current = queue[0] ?? null;
-  const open = current !== null && !closing;
+  const open = current !== null && current.id !== closingId;
 
   const enqueue = useCallback((message: string, severity: AlertColor, options?: ToastOptions) => {
-    setQueue((prev) => [...prev, { message, severity, action: options?.action, persistent: options?.persistent }]);
+    lastId.current += 1;
+    const id = lastId.current;
+    setQueue((prev) => [...prev, { id, message, severity, action: options?.action, persistent: options?.persistent }]);
   }, []);
 
   const success = useCallback((message: string) => enqueue(message, "success"), [enqueue]);
@@ -44,23 +45,29 @@ export function SnackbarProvider({ children }: SnackbarProviderProps) {
   // The context's value, the same while its toasts come and go: its every reader would re-render with each one
   const snackbar = useMemo(() => ({ success, error, info, warning }), [success, error, info, warning]);
 
+  // The toast `id` gives way to the next while it's the head closing, never after: its exit's late `onExited`, once the
+  // wait below moved on, would drop the next toast unseen
+  const dismiss = useCallback((id: number) => {
+    setQueue((prev) => (prev[0]?.id === id ? prev.slice(1) : prev));
+    setClosingId((prev) => (prev === id ? null : prev));
+  }, []);
+
   const handleClose = (_event?: SyntheticEvent | Event, reason?: string) => {
-    if (reason === "clickaway") return;
-    setClosing(true);
+    if (reason === "clickaway" || !current) return;
+    setClosingId(current.id);
   };
 
-  const handleExited = useCallback(() => {
-    setQueue((prev) => prev.slice(1));
-    setClosing(false);
-  }, []);
+  const handleExited = () => {
+    if (closingId !== null) dismiss(closingId);
+  };
 
   // A closing toast whose transition never says its exit ended (it can skip `onExited`) would hold every toast after
   // it until the page reloads: a moment past its exit, the next one opens anyway
   useEffect(() => {
-    if (!closing) return;
-    const timer = setTimeout(handleExited, EXIT_WAIT_MS);
+    if (closingId === null) return;
+    const timer = setTimeout(() => dismiss(closingId), TOAST_EXIT_WAIT);
     return () => clearTimeout(timer);
-  }, [closing, handleExited]);
+  }, [closingId, dismiss]);
 
   const action = current?.action;
 
@@ -98,7 +105,7 @@ export function SnackbarProvider({ children }: SnackbarProviderProps) {
                 size="small"
                 onClick={() => {
                   action.onClick();
-                  setClosing(true);
+                  handleClose();
                 }}
               >
                 {action.label}
