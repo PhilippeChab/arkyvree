@@ -210,7 +210,7 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
       </Stack>
       <CreateDialog {...createDialogProps} title="Create New Item" maxWidth="md">
         {/* A duplicate keeps its source's type, while the dialog fades out too */}
-        <ItemFormFields form={createForm} rulesetId={ruleset.id} lockType={!!duplicateSource} />
+        <ItemFormFields form={createForm} rulesetId={ruleset.id} lockType={!!duplicateSource} newItem />
       </CreateDialog>
       <BulkVariantsDialog
         open={bulkDialog.open}
