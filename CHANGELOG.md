@@ -2,10 +2,6 @@
 
 ## Unreleased
 
-- Hold the same item in several weapon sets
-- Tables read as lists on a phone, with nothing to scroll sideways
-- A list's filters and sort open in a sheet on a phone, beside its search and its add
-
 ## 0.6.0 — 2026-10-12
 
 - Character sheet: classes are listed under the name, with a button to add a level
