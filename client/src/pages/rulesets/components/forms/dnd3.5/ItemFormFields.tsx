@@ -1,10 +1,12 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { type UseFormReturn } from "react-hook-form";
 
 import { DescriptionField, FormTextField, NameField, SelectField } from "@/client/src/components/common/index.ts";
+import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { DECIMAL_RULES } from "@/client/src/lib/validation.ts";
-import { emptyFieldValues } from "@/client/src/pages/rulesets/components/forms/entityFields.ts";
+import { emptyFieldValues, toFieldValues } from "@/client/src/pages/rulesets/components/forms/entityFields.ts";
 import { EntityFields } from "@/client/src/pages/rulesets/components/forms/EntityFields.tsx";
+import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
 import { useEntityFields } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { itemTemplatesQuery } from "@/client/src/pages/rulesets/optionQueries.ts";
 import { LOCATION_OPTIONS } from "@/shared/enums.ts";
@@ -31,13 +33,25 @@ interface TemplateSelectorProps {
 }
 
 function TemplateSelector({ form, rulesetId, templateName, type, disabled }: TemplateSelectorProps) {
+  const queryClient = useQueryClient();
+  const snackbar = useSnackbar();
   const { data: templates, isLoading, error } = useQuery(itemTemplatesQuery(rulesetId, type));
   const { fields } = useEntityFields(rulesetId, "items");
   const held = form.watch("sourceItemId");
 
-  // An item reads what it doesn't set off its template: another one leaves its fields to the new template's
-  const handleTemplateChange = () => {
-    if (fields) form.setValue("fields", emptyFieldValues(fields), { shouldDirty: true });
+  // An item starts with its template's fields, which a save keeps none of while they're the template's: another
+  // template's fill in once they load, unless another was picked since, and none leaves them empty
+  const handleTemplateChange = (templateId: unknown) => {
+    if (!fields) return;
+    form.setValue("fields", emptyFieldValues(fields), { shouldDirty: true });
+    if (typeof templateId !== "string" || !templateId) return;
+    queryClient.fetchQuery(customizationEntityQuery(rulesetId, "items", templateId)).then(
+      ({ entity }) => {
+        if (form.getValues("sourceItemId") !== templateId) return;
+        form.setValue("fields", toFieldValues(fields, entity), { shouldDirty: true });
+      },
+      (error) => snackbar.error(error, "Failed to load the template's fields"),
+    );
   };
 
   return (
