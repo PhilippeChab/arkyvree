@@ -16,7 +16,6 @@ import {
   ListPageResults,
   LoadError,
   LoadMoreButton,
-  SearchBar,
   SectionContent,
   type TableColumn,
   TableSkeleton,
@@ -38,7 +37,7 @@ import {
   AptitudeChipsCell,
   DescriptionCell,
   RulesetSectionTable,
-  SectionActions,
+  SectionSearchBar,
   TABLE_CONTAINER_LOADING_SX,
   TABLE_CONTAINER_SX,
   TABLE_MIN_WIDTH,
@@ -264,7 +263,7 @@ export function FeatsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
   return (
     <SectionContent>
       <Stack spacing={3}>
-        <SearchBar
+        <SectionSearchBar
           {...searchTextProps}
           searchPlaceholder="Search feats…"
           filters={
@@ -278,25 +277,22 @@ export function FeatsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
               />
             </Box>
           }
-          actions={
-            <SectionActions
-              ruleset={ruleset}
-              childOnly={childOnly}
-              onChildOnlyChange={onChildOnlyChange}
-              addLabel="Add Feat"
-              onAdd={handleCreate}
-            >
-              <ToggleButton
-                value="grouped"
-                selected={grouped}
-                onChange={handleGroupedToggle}
-                sx={{ textTransform: "none" }}
-              >
-                Group Families
-              </ToggleButton>
-            </SectionActions>
-          }
-        />
+          filtered={!!aptitudeId}
+          ruleset={ruleset}
+          childOnly={childOnly}
+          onChildOnlyChange={onChildOnlyChange}
+          addLabel="Add Feat"
+          onAdd={handleCreate}
+        >
+          <ToggleButton
+            value="grouped"
+            selected={grouped}
+            onChange={handleGroupedToggle}
+            sx={{ textTransform: "none" }}
+          >
+            Group Families
+          </ToggleButton>
+        </SectionSearchBar>
         {grouped ? (
           <ListPageResults
             variant="section"

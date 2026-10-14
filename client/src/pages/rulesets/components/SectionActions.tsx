@@ -1,28 +1,15 @@
 import { ToggleButton } from "@mui/material";
 import type { ReactNode } from "react";
 
-import { AddButton } from "@/client/src/components/common/index.ts";
-import { useRulesetPermissions } from "@/client/src/hooks/index.ts";
 import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
 
 type SectionActionsProps = RulesetSectionProps & {
   /** The section's own toggles, shown before "Local Changes". */
   children?: ReactNode;
-} &
-  /** The add button ("Add Race"), shown to users who can edit the ruleset's entities. */
-  ({ addLabel: string; onAdd: () => void } | { addLabel?: never; onAdd?: never });
+};
 
-/** The actions of a ruleset section's toolbar: "Local Changes" on forks, and the add button. */
-export function SectionActions({
-  ruleset,
-  childOnly,
-  onChildOnlyChange,
-  addLabel,
-  onAdd,
-  children,
-}: SectionActionsProps) {
-  const { canEditEntities } = useRulesetPermissions(ruleset);
-
+/** The toggles of a ruleset section's toolbar: the section's own, then "Local Changes" on forks. */
+export function SectionActions({ ruleset, childOnly, onChildOnlyChange, children }: SectionActionsProps) {
   return (
     <>
       {children}
@@ -36,7 +23,6 @@ export function SectionActions({
           Local Changes
         </ToggleButton>
       )}
-      {canEditEntities && onAdd && <AddButton label={addLabel} onClick={onAdd} />}
     </>
   );
 }

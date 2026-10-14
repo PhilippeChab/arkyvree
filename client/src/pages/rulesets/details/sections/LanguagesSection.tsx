@@ -7,7 +7,6 @@ import {
   CreateDialog,
   EmptyValue,
   LoadMoreButton,
-  SearchBar,
   SectionContent,
   type TableColumn,
 } from "@/client/src/components/common/index.ts";
@@ -19,7 +18,11 @@ import {
   type LanguageFormData,
   LanguageFormFields,
 } from "@/client/src/pages/rulesets/components/forms/index.ts";
-import { DescriptionCell, RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";
+import {
+  DescriptionCell,
+  RulesetSectionTable,
+  SectionSearchBar,
+} from "@/client/src/pages/rulesets/components/index.ts";
 import { languageQuery } from "@/client/src/pages/rulesets/details/entities/entityDetailQueries.ts";
 import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
 import { languagesQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
@@ -86,18 +89,14 @@ export function LanguagesSection({ ruleset, childOnly, onChildOnlyChange }: Rule
   return (
     <SectionContent>
       <Stack spacing={3}>
-        <SearchBar
+        <SectionSearchBar
           {...searchTextProps}
           searchPlaceholder="Search languages…"
-          actions={
-            <SectionActions
-              ruleset={ruleset}
-              childOnly={childOnly}
-              onChildOnlyChange={onChildOnlyChange}
-              addLabel="Add Language"
-              onAdd={handleCreate}
-            />
-          }
+          ruleset={ruleset}
+          childOnly={childOnly}
+          onChildOnlyChange={onChildOnlyChange}
+          addLabel="Add Language"
+          onAdd={handleCreate}
         />
         <Stack spacing={2}>
           <RulesetSectionTable

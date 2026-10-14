@@ -8,7 +8,6 @@ import {
   EmptyValue,
   LoadError,
   LoadMoreButton,
-  SearchBar,
   SectionContent,
   type TableColumn,
   ValueChip,
@@ -17,7 +16,11 @@ import { SavesIcon } from "@/client/src/components/icons/index.ts";
 import { useRulesetAbilities, useSearchText } from "@/client/src/hooks/index.ts";
 import { itemsBeforeLastPage, pageItems } from "@/client/src/lib/pageItems.ts";
 import { EMPTY_SAVE, type SaveFormData, SaveFormFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
-import { DescriptionCell, RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";
+import {
+  DescriptionCell,
+  RulesetSectionTable,
+  SectionSearchBar,
+} from "@/client/src/pages/rulesets/components/index.ts";
 import { saveQuery } from "@/client/src/pages/rulesets/details/entities/entityDetailQueries.ts";
 import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
 import { savesQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
@@ -87,18 +90,14 @@ export function SavesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
   return (
     <SectionContent>
       <Stack spacing={3}>
-        <SearchBar
+        <SectionSearchBar
           {...searchTextProps}
           searchPlaceholder="Search saves…"
-          actions={
-            <SectionActions
-              ruleset={ruleset}
-              childOnly={childOnly}
-              onChildOnlyChange={onChildOnlyChange}
-              addLabel="Add Save"
-              onAdd={handleCreate}
-            />
-          }
+          ruleset={ruleset}
+          childOnly={childOnly}
+          onChildOnlyChange={onChildOnlyChange}
+          addLabel="Add Save"
+          onAdd={handleCreate}
         />
         <Stack spacing={2}>
           {!!abilitiesError && abilities.length === 0 && <LoadError what="Abilities" error={abilitiesError} />}

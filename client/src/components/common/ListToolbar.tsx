@@ -15,8 +15,12 @@ export function ListToolbar({ children, actions }: ListToolbarProps) {
       <Toolbar sx={{ px: 2, py: 1 }}>
         <Stack direction="row" sx={{ alignItems: "center", flexGrow: 1, flexWrap: "wrap", columnGap: 3, rowGap: 1 }}>
           {children}
-          <Box sx={{ flexGrow: 1 }} />
-          {actions}
+          {actions && (
+            <>
+              <Box sx={{ flexGrow: 1 }} />
+              {actions}
+            </>
+          )}
         </Stack>
       </Toolbar>
     </Paper>

@@ -6,7 +6,6 @@ import {
   BlankState,
   CreateDialog,
   LoadMoreButton,
-  SearchBar,
   SectionContent,
   type TableColumn,
 } from "@/client/src/components/common/index.ts";
@@ -24,7 +23,7 @@ import {
   AptitudeChipsCell,
   DescriptionCell,
   RulesetSectionTable,
-  SectionActions,
+  SectionSearchBar,
   SpellLevelFilter,
 } from "@/client/src/pages/rulesets/components/index.ts";
 import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
@@ -104,7 +103,7 @@ export function SpellsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
   return (
     <SectionContent>
       <Stack spacing={3}>
-        <SearchBar
+        <SectionSearchBar
           {...searchTextProps}
           searchPlaceholder="Search spells…"
           filters={
@@ -126,15 +125,12 @@ export function SpellsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
               />
             </>
           }
-          actions={
-            <SectionActions
-              ruleset={ruleset}
-              childOnly={childOnly}
-              onChildOnlyChange={onChildOnlyChange}
-              addLabel="Add Spell"
-              onAdd={handleCreate}
-            />
-          }
+          filtered={!!aptitudeId || selectedLevel !== ""}
+          ruleset={ruleset}
+          childOnly={childOnly}
+          onChildOnlyChange={onChildOnlyChange}
+          addLabel="Add Spell"
+          onAdd={handleCreate}
         />
         <Stack spacing={2}>
           <RulesetSectionTable
