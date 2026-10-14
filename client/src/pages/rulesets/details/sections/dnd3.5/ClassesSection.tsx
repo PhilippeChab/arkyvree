@@ -6,7 +6,6 @@ import {
   BlankState,
   CreateDialog,
   LoadMoreButton,
-  SearchBar,
   SectionContent,
   type TableColumn,
   ValueChip,
@@ -16,7 +15,11 @@ import { formatDie } from "@/client/src/lib/formatNumeric.ts";
 import { itemsBeforeLastPage, pageItems } from "@/client/src/lib/pageItems.ts";
 import { ClassFormFields, EMPTY_CLASS } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
 import { withEntityFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
-import { DescriptionCell, RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";
+import {
+  DescriptionCell,
+  RulesetSectionTable,
+  SectionSearchBar,
+} from "@/client/src/pages/rulesets/components/index.ts";
 import {
   classDetailQuery,
   type ClassFormData,
@@ -99,18 +102,14 @@ export function ClassesSection({ ruleset, childOnly, onChildOnlyChange }: Rulese
   return (
     <SectionContent>
       <Stack spacing={3}>
-        <SearchBar
+        <SectionSearchBar
           {...searchBarProps}
           searchPlaceholder="Search classes…"
-          actions={
-            <SectionActions
-              ruleset={ruleset}
-              childOnly={childOnly}
-              onChildOnlyChange={onChildOnlyChange}
-              addLabel="Add Class"
-              onAdd={handleCreate}
-            />
-          }
+          ruleset={ruleset}
+          childOnly={childOnly}
+          onChildOnlyChange={onChildOnlyChange}
+          addLabel="Add Class"
+          onAdd={handleCreate}
         />
         <Stack spacing={2}>
           <RulesetSectionTable

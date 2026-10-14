@@ -6,7 +6,6 @@ import {
   BlankState,
   CreateDialog,
   LoadMoreButton,
-  SearchBar,
   SectionContent,
   type TableColumn,
   ValueChip,
@@ -19,7 +18,11 @@ import {
   RaceFormFields,
   withEntityFields,
 } from "@/client/src/pages/rulesets/components/forms/index.ts";
-import { DescriptionCell, RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";
+import {
+  DescriptionCell,
+  RulesetSectionTable,
+  SectionSearchBar,
+} from "@/client/src/pages/rulesets/components/index.ts";
 import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
 import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
 import { racesQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
@@ -96,18 +99,14 @@ export function RacesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
   return (
     <SectionContent>
       <Stack spacing={3}>
-        <SearchBar
+        <SectionSearchBar
           {...searchBarProps}
           searchPlaceholder="Search races…"
-          actions={
-            <SectionActions
-              ruleset={ruleset}
-              childOnly={childOnly}
-              onChildOnlyChange={onChildOnlyChange}
-              addLabel="Add Race"
-              onAdd={handleCreate}
-            />
-          }
+          ruleset={ruleset}
+          childOnly={childOnly}
+          onChildOnlyChange={onChildOnlyChange}
+          addLabel="Add Race"
+          onAdd={handleCreate}
         />
         <Stack spacing={2}>
           <RulesetSectionTable

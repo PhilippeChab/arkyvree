@@ -8,7 +8,6 @@ import {
   EmptyValue,
   LoadError,
   LoadMoreButton,
-  SearchBar,
   SectionContent,
   StatusChip,
   type TableColumn,
@@ -23,7 +22,11 @@ import {
   SkillFormFields,
 } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
 import { withEntityFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
-import { DescriptionCell, RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";
+import {
+  DescriptionCell,
+  RulesetSectionTable,
+  SectionSearchBar,
+} from "@/client/src/pages/rulesets/components/index.ts";
 import { skillQuery } from "@/client/src/pages/rulesets/details/entities/entityDetailQueries.ts";
 import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
 import { skillsQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
@@ -104,18 +107,14 @@ export function SkillsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
   return (
     <SectionContent>
       <Stack spacing={3}>
-        <SearchBar
+        <SectionSearchBar
           {...searchTextProps}
           searchPlaceholder="Search skills…"
-          actions={
-            <SectionActions
-              ruleset={ruleset}
-              childOnly={childOnly}
-              onChildOnlyChange={onChildOnlyChange}
-              addLabel="Add Skill"
-              onAdd={handleCreate}
-            />
-          }
+          ruleset={ruleset}
+          childOnly={childOnly}
+          onChildOnlyChange={onChildOnlyChange}
+          addLabel="Add Skill"
+          onAdd={handleCreate}
         />
         <Stack spacing={2}>
           {!!abilitiesError && rulesetAbilities.length === 0 && <LoadError what="Abilities" error={abilitiesError} />}

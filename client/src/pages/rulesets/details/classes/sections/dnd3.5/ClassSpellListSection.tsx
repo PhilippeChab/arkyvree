@@ -80,7 +80,7 @@ export function ClassSpellListSection({ rulesetId, classId, ruleset }: ClassSect
         filters={
           <>
             {lists.length > 1 && (
-              <Box sx={{ width: { xs: "100%", sm: 200 } }}>
+              <Box sx={{ width: { xs: "100%", md: 200 } }}>
                 <TextField
                   select
                   fullWidth

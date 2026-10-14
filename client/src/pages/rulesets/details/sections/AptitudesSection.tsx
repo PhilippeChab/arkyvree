@@ -6,7 +6,6 @@ import {
   BlankState,
   CreateDialog,
   LoadMoreButton,
-  SearchBar,
   SectionContent,
   type TableColumn,
 } from "@/client/src/components/common/index.ts";
@@ -18,7 +17,11 @@ import {
   AptitudeFormFields,
   EMPTY_APTITUDE,
 } from "@/client/src/pages/rulesets/components/forms/index.ts";
-import { DescriptionCell, RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";
+import {
+  DescriptionCell,
+  RulesetSectionTable,
+  SectionSearchBar,
+} from "@/client/src/pages/rulesets/components/index.ts";
 import { aptitudeQuery } from "@/client/src/pages/rulesets/details/entities/entityDetailQueries.ts";
 import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
 import { type Aptitude, aptitudesQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
@@ -80,18 +83,14 @@ export function AptitudesSection({ ruleset, childOnly, onChildOnlyChange }: Rule
   return (
     <SectionContent>
       <Stack spacing={3}>
-        <SearchBar
+        <SectionSearchBar
           {...searchTextProps}
           searchPlaceholder="Search aptitudes…"
-          actions={
-            <SectionActions
-              ruleset={ruleset}
-              childOnly={childOnly}
-              onChildOnlyChange={onChildOnlyChange}
-              addLabel="Add Aptitude"
-              onAdd={handleCreate}
-            />
-          }
+          ruleset={ruleset}
+          childOnly={childOnly}
+          onChildOnlyChange={onChildOnlyChange}
+          addLabel="Add Aptitude"
+          onAdd={handleCreate}
         />
         <Stack spacing={2}>
           <RulesetSectionTable

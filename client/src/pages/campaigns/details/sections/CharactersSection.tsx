@@ -6,7 +6,6 @@ import { useNavigate } from "react-router-dom";
 
 import { CharacterBuildChips, PARTIAL_IDENTITY_NOTE } from "@/client/src/components/characters/index.ts";
 import {
-  AddButton,
   BlankState,
   DialogFooter,
   HelpLabel,
@@ -281,9 +280,8 @@ export function CharactersSection({ campaign }: CharactersSectionProps) {
         <SearchBar
           {...searchTextProps}
           searchPlaceholder="Search characters…"
-          actions={
-            !campaign.deletedAt && <AddButton label="Link Character" onClick={() => linkDialog.openWith(true)} />
-          }
+          addLabel="Link Character"
+          onAdd={campaign.deletedAt ? undefined : () => linkDialog.openWith(true)}
         />
 
         <ListPageResults

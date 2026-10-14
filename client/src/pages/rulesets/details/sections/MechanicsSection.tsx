@@ -6,7 +6,6 @@ import {
   BlankState,
   CreateDialog,
   LoadMoreButton,
-  SearchBar,
   SectionContent,
   type TableColumn,
 } from "@/client/src/components/common/index.ts";
@@ -18,7 +17,11 @@ import {
   type MechanicFormData,
   MechanicFormFields,
 } from "@/client/src/pages/rulesets/components/forms/index.ts";
-import { DescriptionCell, RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";
+import {
+  DescriptionCell,
+  RulesetSectionTable,
+  SectionSearchBar,
+} from "@/client/src/pages/rulesets/components/index.ts";
 import { mechanicQuery } from "@/client/src/pages/rulesets/details/entities/entityDetailQueries.ts";
 import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
 import { mechanicsQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
@@ -82,18 +85,14 @@ export function MechanicsSection({ ruleset, childOnly, onChildOnlyChange }: Rule
   return (
     <SectionContent>
       <Stack spacing={3}>
-        <SearchBar
+        <SectionSearchBar
           {...searchTextProps}
           searchPlaceholder="Search mechanics…"
-          actions={
-            <SectionActions
-              ruleset={ruleset}
-              childOnly={childOnly}
-              onChildOnlyChange={onChildOnlyChange}
-              addLabel="Add Mechanic"
-              onAdd={handleCreate}
-            />
-          }
+          ruleset={ruleset}
+          childOnly={childOnly}
+          onChildOnlyChange={onChildOnlyChange}
+          addLabel="Add Mechanic"
+          onAdd={handleCreate}
         />
         <Stack spacing={2}>
           <RulesetSectionTable
