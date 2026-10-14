@@ -24,6 +24,11 @@ interface ItemFormFieldsProps {
   form: UseFormReturn<ItemFormData>;
   /** Keeps the type, slot and template as they are (a duplicate copies them from its source). */
   lockType?: boolean;
+  /**
+   * A new item's form (the create dialog), which sends every field: a type change drops the template's values it holds.
+   * A saved item's sends those it changed, and its save drops its template's and keeps its own.
+   */
+  newItem?: boolean;
   rulesetId: string;
   /** The name of the template the item was saved with, which its select shows while it isn't one of the item's type. */
   templateName?: string | null;
@@ -83,19 +88,19 @@ function TemplateSelector({ form, rulesetId, templateName, type, disabled }: Tem
   );
 }
 
-export function ItemFormFields({ form, rulesetId, lockType, templateName }: ItemFormFieldsProps) {
+export function ItemFormFields({ form, rulesetId, lockType, newItem, templateName }: ItemFormFieldsProps) {
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
   const { fields } = useEntityFields(rulesetId, "items");
   const itemType = form.watch("type");
   const isTemplate = form.watch("isTemplate");
 
-  // A new type takes none of the old type's templates, and a template type sets its slot. The template's values go
-  // with it once they load (the item's own stay), unless another template was picked since
+  // A new type takes none of the old type's templates, and a template type sets its slot. A new item's template's
+  // values go with it once they load (what's typed over them stays), unless another template was picked since
   const handleTypeChange = (newType: unknown) => {
     const templateId = form.getValues("sourceItemId");
     for (const field of fieldsClearedByType(newType)) form.setValue(field, "", { shouldDirty: true });
-    if (!templateId || !fields) return;
+    if (!newItem || !templateId || !fields) return;
     const noneSince = () => !form.getValues("sourceItemId");
     fetchTemplate(queryClient, rulesetId, templateId).then(
       ({ entity }) => {
