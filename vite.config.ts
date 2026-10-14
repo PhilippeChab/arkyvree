@@ -85,6 +85,11 @@ const baseConfig: UserConfig = {
         theme_color: "#8d1e1e",
         background_color: "#2a251e",
         display: "standalone",
+        // An installed app opens on the app itself (the private route sends a signed-out user to sign in), not on the
+        // landing page, which a signed-in user leaves for the dashboard. Its identity is the first start URL's, "/",
+        // written out so the start URL can change without making it another app
+        id: "/",
+        start_url: "/dashboard",
         icons: [
           {
             src: "pwa-192x192.png",
@@ -95,6 +100,20 @@ const baseConfig: UserConfig = {
             src: "pwa-512x512.png",
             sizes: "512x512",
             type: "image/png",
+          },
+          // The launcher's own shape (a circle, a squircle) crops it: the logo stands inside its middle 80% circle,
+          // on the splash screen's background, which fills the rest
+          {
+            src: "pwa-maskable-192x192.png",
+            sizes: "192x192",
+            type: "image/png",
+            purpose: "maskable",
+          },
+          {
+            src: "pwa-maskable-512x512.png",
+            sizes: "512x512",
+            type: "image/png",
+            purpose: "maskable",
           },
         ],
       },

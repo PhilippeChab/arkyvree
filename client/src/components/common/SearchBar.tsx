@@ -1,9 +1,21 @@
-import { Badge, Drawer, IconButton, InputAdornment, Menu, MenuItem, Stack, TextField, Tooltip } from "@mui/material";
+import {
+  Badge,
+  Drawer,
+  IconButton,
+  InputAdornment,
+  Menu,
+  MenuItem,
+  Stack,
+  TextField,
+  type Theme,
+  Tooltip,
+} from "@mui/material";
 import { type ReactNode, useState } from "react";
 
 import { CloseIcon, FilterIcon, SearchIcon, SortIcon } from "@/client/src/components/icons/index.ts";
 import { useAnchorMenu, useIsMobile } from "@/client/src/hooks/index.ts";
 import type { Direction } from "@/client/src/lib/queries.ts";
+import { pastInset, SAFE_BOTTOM, SAFE_LEFT, SAFE_RIGHT } from "@/client/src/theme/safeArea.ts";
 
 import { AddButton } from "./AddButton.tsx";
 import { CardTitle } from "./CardTitle.tsx";
@@ -63,8 +75,16 @@ export interface SortOption<T extends string = string> {
 /** Its field takes what its row leaves on a phone (`useIsMobile`'s breakpoint), and a set width above. */
 const SEARCH_SX = { width: { xs: "auto", md: 300 }, flexGrow: { xs: 1, md: 0 }, minWidth: 0 } as const;
 
-/** Its sheet rises from the screen's foot: rounded at its top alone. */
-const SHEET_SX = { borderRadius: 2, borderBottomLeftRadius: 0, borderBottomRightRadius: 0, p: 2, pb: 3 } as const;
+/** Its sheet rises from the screen's foot: rounded at its top alone, its content clear of the system's edges. */
+const SHEET_SX = {
+  borderRadius: 2,
+  borderBottomLeftRadius: 0,
+  borderBottomRightRadius: 0,
+  pt: 2,
+  pl: (theme: Theme) => pastInset(theme.spacing(2), SAFE_LEFT),
+  pr: (theme: Theme) => pastInset(theme.spacing(2), SAFE_RIGHT),
+  pb: (theme: Theme) => pastInset(theme.spacing(3), SAFE_BOTTOM),
+} as const;
 
 /** A phone's filters, toggles and sort, in a sheet risen from the screen's foot: its title and its close over them. */
 function FilterSheet({ open, onClose, title, children }: FilterSheetProps) {

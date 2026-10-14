@@ -56,6 +56,7 @@ import {
 import { rpc } from "@/client/src/services/rpc.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 import { DURATION, EASING, PREFERS_REDUCED_MOTION, transitionOf } from "@/client/src/theme/animations.ts";
+import { pastInset, SAFE_BOTTOM, SAFE_LEFT } from "@/client/src/theme/safeArea.ts";
 
 import { AppBrand } from "./AppBrand.tsx";
 import { AppMain } from "./AppMain.tsx";
@@ -182,6 +183,7 @@ export function Layout() {
   const onboardingHighlightId = onboardingOpen && !isMobile ? ONBOARDING_STEPS[onboardingStep].sidebarId : undefined;
   const isPopoverStep = !!onboardingHighlightId;
   const effectiveExpanded = sidebarExpanded || isPopoverStep;
+  const drawerWidth = pastInset(`${isMobile || effectiveExpanded ? EXPANDED_DRAWER_WIDTH : DRAWER_WIDTH}px`, SAFE_LEFT);
 
   const onboardingMutation = useMutation({
     mutationFn: () => parseResponse(rpc.auth["complete-onboarding"].$post()),
@@ -277,10 +279,13 @@ export function Layout() {
       </AppBar>
       <Drawer
         sx={{
-          width: isMobile ? EXPANDED_DRAWER_WIDTH : effectiveExpanded ? EXPANDED_DRAWER_WIDTH : DRAWER_WIDTH,
+          width: drawerWidth,
           flexShrink: 0,
           "& .MuiDrawer-paper": {
-            width: isMobile ? EXPANDED_DRAWER_WIDTH : effectiveExpanded ? EXPANDED_DRAWER_WIDTH : DRAWER_WIDTH,
+            width: drawerWidth,
+            // Clear of the notch and the screen's foot (`theme/safeArea.ts`), wider by the notch
+            pl: SAFE_LEFT,
+            pb: SAFE_BOTTOM,
             boxSizing: "border-box",
             borderRight: "none",
             transition: transitionOf(["all"], DURATION.deliberate, EASING.emphasized),
