@@ -50,7 +50,7 @@ export function Validates<
       return {
         category: "requirements",
         message: entityName
-          ? `Invalid requirement on ${entityName} (${requirement.entityType}): ${warning}`
+          ? `Invalid requirement on ${this.labelEntity(entityName, requirement.entityType)}: ${warning}`
           : `Invalid requirement: ${warning}`,
         entityName,
         entityType: requirement.entityType,
@@ -70,7 +70,7 @@ export function Validates<
         issues.push({
           category: "modifiers",
           message: source
-            ? `Unapplied modifier on ${modifier.target} from ${source.name} (${source.type})`
+            ? `Unapplied modifier on ${modifier.target} from ${this.labelEntity(source.name, source.type)}`
             : `Unapplied modifier on ${modifier.target} (blocked by unmet requirements)`,
           entityName: source?.name,
           entityType: source?.type,
@@ -81,7 +81,7 @@ export function Validates<
         issues.push({
           category: "modifiers",
           message: source
-            ? `Skipped modifier on ${modifier.target} from ${source.name} (${source.type}): ${warning}`
+            ? `Skipped modifier on ${modifier.target} from ${this.labelEntity(source.name, source.type)}: ${warning}`
             : `Skipped modifier: ${warning}`,
           entityName: source?.name,
           entityType: source?.type,
@@ -91,7 +91,7 @@ export function Validates<
         const source = this.resolveModifierSourceName(modifier);
         issues.push({
           category: "modifiers",
-          message: `Modifier on ${modifier.target}${source ? ` from ${source.name} (${source.type})` : ""} applied while its requirement held, which no longer holds on the final sheet`,
+          message: `Modifier on ${modifier.target}${source ? ` from ${this.labelEntity(source.name, source.type)}` : ""} applied while its requirement held, which no longer holds on the final sheet`,
           entityName: source?.name,
           entityType: source?.type,
         });
@@ -119,7 +119,7 @@ export function Validates<
       return {
         category: "requirements",
         message: entityName
-          ? `Unmet prerequisite on ${entityName} (${owner.entityType})`
+          ? `Unmet prerequisite on ${this.labelEntity(entityName, owner.entityType)}`
           : `Unmet prerequisite: ${targets.join(", ") || "unknown"}`,
         entityName,
         entityType: owner.entityType,

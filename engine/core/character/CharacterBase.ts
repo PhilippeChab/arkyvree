@@ -4,7 +4,7 @@ import type { TargetPathsTraverser } from "@/engine/core/paths/CategoryPaths.ts"
 import type { PathContext } from "@/engine/core/paths/PathCategory.ts";
 import RequirementEvaluator from "@/engine/core/requirements/RequirementEvaluator.ts";
 import type { RulesIssue } from "@/engine/core/RulesError.ts";
-import type { RulesetData, RulesetView } from "@/engine/core/view/index.ts";
+import { KIND_LABELS, type RulesetData, type RulesetView } from "@/engine/core/view/index.ts";
 import { isTemplateValue } from "@/shared/customization/templateExpression.ts";
 import type { Character, Modifier, Requirement } from "@/shared/relations.ts";
 
@@ -322,7 +322,7 @@ export default abstract class CharacterBase<
         .filter(({ rulesetId }) => !this.data.validRulesetIds.has(rulesetId))
         .map(({ name }) => ({
           category: "integrity",
-          message: `${entityType} "${name}" belongs to a ruleset not in this character's source chain`,
+          message: `${this.labelEntity(name, entityType)} belongs to a ruleset not in this character's source chain`,
           entityName: name,
           entityType,
         })),
@@ -349,6 +349,20 @@ export default abstract class CharacterBase<
       this.data.modifiers.push(modifier);
       this.data.requirementGroups.push(this.rulesetData.requirementsByEntity.get(modifier.id) ?? []);
     }
+  }
+
+  /** An entity as an issue's message names it: its name, then its type in the ruleset's word ("Power Attack (Feat)"). */
+  protected labelEntity(name: string, entityType: string): string {
+    return `${name} (${this.nameEntityType(entityType)})`;
+  }
+
+  /**
+   * The ruleset's word for an entity type, as an issue names it: the engine's (`KIND_LABELS`), which a ruleset can
+   * rename; else the type itself.
+   */
+  protected nameEntityType(entityType: string): string {
+    const labels: Partial<Record<string, string>> = KIND_LABELS;
+    return labels[entityType] ?? entityType;
   }
 
   /** A modifier's own requirement groups, without its source's: what's read in each of its scopes (`scopesOf`). */

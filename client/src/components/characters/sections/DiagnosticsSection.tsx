@@ -361,7 +361,7 @@ export function DiagnosticsSection({ baseRules, validation, requirements, modifi
             {validation.issues.length > 0 && (
               <Stack spacing={1}>
                 <SubsectionTitle>Issues</SubsectionTitle>
-                <ValidationIssueList issues={validation.issues} baseRules={baseRules} named={false} />
+                <ValidationIssueList issues={validation.issues} />
               </Stack>
             )}
 

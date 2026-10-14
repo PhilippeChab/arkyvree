@@ -79,7 +79,6 @@ export function LevelWizardDialog<N extends string, W extends WizardControls<N>>
         <DialogTitle>{title}</DialogTitle>
         <Stack component={DialogContent} sx={{ height: "100%", overflow: "hidden" }}>
           <ValidationIssuesAlert
-            baseRules={baseRules}
             issues={wizard.issues}
             title="Validation Warnings"
             onClose={() => wizard.setIssues([])}

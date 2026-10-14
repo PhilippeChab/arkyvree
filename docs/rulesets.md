@@ -616,15 +616,16 @@ engine/
 │   │                                      components set up and finished, the modifiers in rounds behind their
 │   │                                      requirements, the ruleset's steps its hooks; the rows it has from outside
 │   │                                      its source chain and the names its issues give, findSourceIssues and
-│   │                                      resolveEntityName, over its ruleset's rows and names, listEntityRows
-│   │                                      and nameEntity; CharacterDataLoader: its data, what every ruleset's
-│   │                                      reads (LoadedCharacter: its campaign and player, its inventory's items,
-│   │                                      its modifiers in order and the groups gating them, the rulesets its rows
-│   │                                      may come from), the ruleset's parts, its modifiers' sources and its own
-│   │                                      data its hooks (partsOf, sourcesOf, loadOwn); CharacterComponent: a
-│   │                                      component, its initialize and its finalize; Validates: its issues, the
-│   │                                      ruleset's own a hook; CharacterBuilder: a character of its row's kind,
-│   │                                      on CharacterBase, its master built first)
+│   │                                      resolveEntityName, over its ruleset's rows and names, listEntityRows and
+│   │                                      nameEntity, each type in its ruleset's word, nameEntityType (the engine's
+│   │                                      KIND_LABELS); CharacterDataLoader: its data, what every ruleset's reads
+│   │                                      (LoadedCharacter: its campaign and player, its inventory's items, its
+│   │                                      modifiers in order and the groups gating them, the rulesets its rows may
+│   │                                      come from), the ruleset's parts, its modifiers' sources and its own data
+│   │                                      its hooks (partsOf, sourcesOf, loadOwn); CharacterComponent: a component,
+│   │                                      its initialize and its finalize; Validates: its issues, the ruleset's own
+│   │                                      a hook; CharacterBuilder: a character of its row's kind, on
+│   │                                      CharacterBase, its master built first)
 │   ├── levelUp/                           (LevelUpBase: what every level flow reads, the view, the character's
 │   │                                      rows and its ruleset's level-up rules, LevelUpRules; SelectionChecks: a
 │   │                                      level's hit points and selections checked; the flows any ruleset takes

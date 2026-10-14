@@ -2105,7 +2105,7 @@ describe("DetailedCharacter", () => {
           .issues.filter((issue) => issue.category === "modifiers")
           .map((issue) => issue.message),
       ).toEqual([
-        `Modifier on ${hp.target} from ${race} (races) applied while its requirement held, which no longer holds on the final sheet`,
+        `Modifier on ${hp.target} from ${race} (Race) applied while its requirement held, which no longer holds on the final sheet`,
       ]);
     });
 
@@ -2131,7 +2131,7 @@ describe("DetailedCharacter", () => {
           .issues.filter((issue) => issue.category === "modifiers" && issue.message.includes("no longer holds"))
           .map((issue) => issue.message),
       ).toEqual([
-        `Modifier on ${penalty.target} from ${race} (races) applied while its requirement held, which no longer holds on the final sheet`,
+        `Modifier on ${penalty.target} from ${race} (Race) applied while its requirement held, which no longer holds on the final sheet`,
       ]);
     });
 
@@ -2279,7 +2279,23 @@ describe("DetailedCharacter", () => {
       const bjorn = await buildSeeded("Bjorn Ironhand");
       const issues = bjorn.validate().issues.filter((issue) => issue.category === "modifiers");
       expect(issues.map((issue) => issue.message)).toEqual([
-        "Skipped modifier on feats.weaponfocus.possessed from Dodge (feats): Element not found: possessed",
+        "Skipped modifier on feats.weaponfocus.possessed from Dodge (Feat): Element not found: possessed",
+      ]);
+    });
+
+    test("name a character its own modifier's issue is from as a Character", async () => {
+      const bjorn = await findSeededCharacter("Bjorn Ironhand");
+      await Modifiers.create(db, {
+        sourceId: bjorn.id,
+        sourceType: "characters",
+        target: "feats.weaponfocus.possessed",
+        value: "true",
+        valueType: "boolean",
+        operator: "set",
+      });
+      const issues = (await build(bjorn)).validate().issues.filter((issue) => issue.category === "modifiers");
+      expect(issues.map((issue) => issue.message)).toEqual([
+        "Skipped modifier on feats.weaponfocus.possessed from Bjorn Ironhand (Character): Element not found: possessed",
       ]);
     });
 
@@ -3398,6 +3414,27 @@ describe("DetailedCharacter", () => {
       expect(detailed.components.abilities.getAbilities().strength.misc).toBe(1);
     });
 
+    test("name a spell its modifier's issue is from as 3.5 does, a Spell", async () => {
+      const ctx = await getSeedCtx();
+      const characterId = await seedHuman("Light Skipped", WIZARD_SCORES, { xp: 0 });
+      const wizardLevel = await addClassLevels(db, ctx, characterId, "Wizard", [1], [4]);
+      await addPowers(db, ctx, wizardLevel, [{ levelIndex: 0, powerName: "Light", aptitude: "Wizard Spells" }]);
+      await Modifiers.create(db, {
+        sourceId: ctx.powerMap["Light"],
+        sourceType: "powers",
+        target: "feats.weaponfocus.possessed",
+        value: "true",
+        valueType: "boolean",
+        operator: "set",
+      });
+      invalidateSeededRuleset(ctx.rulesetId);
+      const detailed = await build((await Characters.findOne(db, { id: characterId }))!);
+      const issues = detailed.validate().issues.filter((issue) => issue.category === "modifiers");
+      expect(issues.map((issue) => issue.message)).toEqual([
+        "Skipped modifier on feats.weaponfocus.possessed from Light (Spell): Element not found: possessed",
+      ]);
+    });
+
     describe("the highest spell level cast, by kind", () => {
       test("counts arcane and divine casting apart", async () => {
         expect((await buildSeeded("Elara Starweaver")).getSpellcasting()).toMatchObject({ arcane: 2, divine: 0 });
@@ -3752,7 +3789,7 @@ describe("DetailedCharacter", () => {
       });
       invalidateSeededRuleset(ctx.rulesetId);
       const lyra = await buildSeeded("Lyra Shadowstep");
-      expect(requirementIssues(lyra).map((issue) => issue.message)).toContain("Unmet prerequisite on Rogue (klasses)");
+      expect(requirementIssues(lyra).map((issue) => issue.message)).toContain("Unmet prerequisite on Rogue (Class)");
       expect(dexterityMisc(lyra)).toBe(dexterityMisc(lyraBefore));
     });
   });
