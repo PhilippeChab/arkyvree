@@ -34,10 +34,13 @@ export function SectionSearchBar<TFilter extends string = string, TSort extends 
     <SearchBar
       {...searchBarProps}
       filtered={filtered || (!!ruleset.rulesetId && childOnly)}
+      // No toggles on a ruleset that isn't a fork, with none of its own: a phone's sheet holds nothing for them
       actions={
-        <SectionActions ruleset={ruleset} childOnly={childOnly} onChildOnlyChange={onChildOnlyChange}>
-          {children}
-        </SectionActions>
+        (!!children || !!ruleset.rulesetId) && (
+          <SectionActions ruleset={ruleset} childOnly={childOnly} onChildOnlyChange={onChildOnlyChange}>
+            {children}
+          </SectionActions>
+        )
       }
       addLabel={addLabel}
       onAdd={canEditEntities ? onAdd : undefined}

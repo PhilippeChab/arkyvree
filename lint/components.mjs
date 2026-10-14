@@ -112,7 +112,7 @@ const LIST_RESULTS_OWNERS = new Set([
 ]);
 
 /** What sits above a list and holds its actions: its toolbar, its search's, or in a dialog its lead */
-const LIST_TOOLBARS = new Set(["DialogLead", "ListToolbar", "SearchBar"]);
+const LIST_TOOLBARS = new Set(["DialogLead", "ListToolbar", "SearchBar", "SectionSearchBar"]);
 
 /** The words a missing description is said in, which `NO_DESCRIPTION` holds */
 const NO_DESCRIPTION_WORDS = /^No description\b/;

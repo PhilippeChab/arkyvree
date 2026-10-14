@@ -229,9 +229,8 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
         <SearchBar
           {...searchTextProps}
           searchPlaceholder="Search players…"
-          actions={
-            canManagePlayers && !campaign.deletedAt && <AddButton label="Add Player" onClick={handleAddPlayer} />
-          }
+          addLabel="Add Player"
+          onAdd={canManagePlayers && !campaign.deletedAt ? handleAddPlayer : undefined}
         />
         <ListPageResults
           variant="section"

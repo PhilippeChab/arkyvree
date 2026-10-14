@@ -108,7 +108,7 @@ export function SpellsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
           searchPlaceholder="Search spells…"
           filters={
             <>
-              <Box sx={{ width: { xs: "100%", sm: 200 } }}>
+              <Box sx={{ width: { xs: "100%", md: 200 } }}>
                 <AptitudeAutocomplete
                   rulesetId={ruleset.id}
                   value={aptitude}

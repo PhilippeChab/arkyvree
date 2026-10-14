@@ -267,7 +267,7 @@ export function FeatsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
           {...searchTextProps}
           searchPlaceholder="Search feats…"
           filters={
-            <Box sx={{ width: { xs: "100%", sm: 200 } }}>
+            <Box sx={{ width: { xs: "100%", md: 200 } }}>
               <AptitudeAutocomplete
                 rulesetId={ruleset.id}
                 value={aptitude}
