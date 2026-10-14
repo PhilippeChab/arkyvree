@@ -5,6 +5,7 @@ import { Outlet, useLocation } from "react-router-dom";
 import { PageLoader } from "@/client/src/components/common/index.ts";
 import { DURATION } from "@/client/src/theme/animations.ts";
 import { TOOLBAR_HEIGHT } from "@/client/src/theme/appTheme.ts";
+import { pastInset, SAFE_BOTTOM, SAFE_LEFT, SAFE_RIGHT } from "@/client/src/theme/safeArea.ts";
 
 import { Footer } from "./Footer.tsx";
 
@@ -46,11 +47,15 @@ export function AppMain({ banner, railWidth = 0 }: AppMainProps) {
       component="main"
       sx={{
         position: "fixed",
-        // Right under the fixed app bar
+        // Right under the fixed app bar, and down to the screen's foot, painting under the system's edges
         top: TOOLBAR_HEIGHT,
-        left: railWidth,
+        left: railWidth ? pastInset(`${railWidth}px`, SAFE_LEFT) : 0,
         right: 0,
         bottom: 0,
+        // Its page keeps clear of them (`theme/safeArea.ts`): a rail keeps the notch's side
+        pl: railWidth ? 0 : SAFE_LEFT,
+        pr: SAFE_RIGHT,
+        pb: SAFE_BOTTOM,
         bgcolor: "background.default",
         overflow: "auto",
         scrollbarGutter: "stable",

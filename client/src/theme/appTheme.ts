@@ -3,6 +3,7 @@
 import { alpha, type ButtonProps, createTheme, Grow, responsiveFontSizes, type Theme } from "@mui/material";
 
 import { DURATION, PREFERS_REDUCED_MOTION, transitionOf } from "./animations.ts";
+import { SAFE_BOTTOM, SAFE_LEFT, SAFE_RIGHT } from "./safeArea.ts";
 
 declare module "@mui/material/styles" {
   interface Palette {
@@ -378,6 +379,9 @@ export function createAppTheme(darkMode: boolean): Theme {
               boxShadow: darkMode ? "0px 2px 8px rgba(0, 0, 0, 0.25)" : "0px 2px 8px rgba(62, 39, 35, 0.2)",
               background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
               borderBottom: `2px solid ${theme.palette.secondary.main}`,
+              // Its background under a notch held sideways, its content clear of it (`safeArea.ts`)
+              paddingLeft: SAFE_LEFT,
+              paddingRight: SAFE_RIGHT,
             }),
           },
         },
@@ -482,6 +486,10 @@ export function createAppTheme(darkMode: boolean): Theme {
             slots: {
               transition: Grow,
             },
+          },
+          styleOverrides: {
+            // A phone's full-screen dialog paints under the system's edges, its content clear of them (`safeArea.ts`)
+            paperFullScreen: { paddingLeft: SAFE_LEFT, paddingRight: SAFE_RIGHT, paddingBottom: SAFE_BOTTOM },
           },
         },
       },

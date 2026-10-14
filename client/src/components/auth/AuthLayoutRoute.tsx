@@ -9,6 +9,7 @@ import { useAuthRequests, useIsDemo, useIsMobile } from "@/client/src/hooks/inde
 import { APP_NAME, TAGLINE } from "@/client/src/lib/brand.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 import { fadeInUpSx } from "@/client/src/theme/animations.ts";
+import { pastInset, SAFE_BOTTOM } from "@/client/src/theme/safeArea.ts";
 
 import { useAuthRedirect } from "./useAuthRedirect.ts";
 
@@ -243,7 +244,17 @@ export function AuthLayoutRoute() {
 
   if (isMobile) {
     return (
-      <Stack spacing={2} sx={{ minHeight: "100vh", justifyContent: "center", px: 2, py: 4 }}>
+      <Stack
+        spacing={2}
+        sx={{
+          minHeight: "100vh",
+          justifyContent: "center",
+          px: 2,
+          pt: 4,
+          // Its last links clear the screen's foot (`theme/safeArea.ts`)
+          pb: (theme) => pastInset(theme.spacing(4), SAFE_BOTTOM),
+        }}
+      >
         <Paper sx={{ width: "100%", maxWidth: 450, mx: "auto", overflow: "hidden" }}>
           <MobileBranding />
           <Suspense fallback={<PageLoader />}>

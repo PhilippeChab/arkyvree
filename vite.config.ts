@@ -85,6 +85,11 @@ const baseConfig: UserConfig = {
         theme_color: "#8d1e1e",
         background_color: "#2a251e",
         display: "standalone",
+        // An installed app opens on the app itself (the private route sends a signed-out user to sign in), not on the
+        // landing page, which a signed-in user leaves for the dashboard. Its identity is the first start URL's, "/",
+        // written out so the start URL can change without making it another app
+        id: "/",
+        start_url: "/dashboard",
         icons: [
           {
             src: "pwa-192x192.png",

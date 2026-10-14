@@ -2,6 +2,7 @@ import { Alert, type AlertColor, Button, Snackbar } from "@mui/material";
 import { type ReactNode, type SyntheticEvent, useCallback, useMemo, useState } from "react";
 
 import { errorMessage } from "@/client/src/lib/errorMessage.ts";
+import { pastInset, SAFE_BOTTOM } from "@/client/src/theme/safeArea.ts";
 
 import { SnackbarContext, type ToastAction, type ToastOptions } from "./snackbarContext.ts";
 
@@ -57,8 +58,9 @@ export function SnackbarProvider({ children }: SnackbarProviderProps) {
         autoHideDuration={current?.persistent ? null : action ? 6000 : 4000}
         onClose={handleClose}
         anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-        // MUI sets a snackbar 24px up from `sm` on, in a media query a plain `bottom` loses to: the doubled class wins
-        sx={{ "&&": { bottom: 12 } }}
+        // MUI sets a snackbar 24px up from `sm` on, in a media query a plain `bottom` loses to: the doubled class wins.
+        // It stands over the screen's foot (`theme/safeArea.ts`)
+        sx={{ "&&": { bottom: (theme) => pastInset(theme.spacing(1.5), SAFE_BOTTOM) } }}
         slotProps={{
           transition: { onExited: handleExited },
         }}

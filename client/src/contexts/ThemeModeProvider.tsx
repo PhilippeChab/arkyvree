@@ -29,6 +29,11 @@ export function ThemeModeProvider({ children }: ThemeModeProviderProps) {
   const darkMode = themeMode === "dark" || (themeMode === "system" && systemPrefersDark);
   const appTheme = useMemo(() => createAppTheme(darkMode), [darkMode]);
 
+  // The browser's bar, an installed app's status bar, takes the app bar's color, which the theme's mode changes
+  useEffect(() => {
+    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", appTheme.palette.primary.main);
+  }, [appTheme]);
+
   return (
     <ThemeModeContext.Provider value={{ themeMode, setThemeMode }}>
       <ThemeProvider theme={appTheme}>{children}</ThemeProvider>
