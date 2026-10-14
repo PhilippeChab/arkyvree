@@ -1,16 +1,23 @@
 /**
  * The page's own styles, under every component's: the root's text rendering (its font and colors are the theme's,
- * through `CssBaseline`), the body's frame, thin scrollbars.
+ * through `CssBaseline`), the foot's inset (`safeArea.ts`), the body's frame, thin scrollbars.
  */
+
+import { BOTTOM_INSETS } from "./safeArea.ts";
 
 export const GLOBAL_STYLES = {
   ":root": {
+    "--safe-bottom": BOTTOM_INSETS.live,
     lineHeight: 1.5,
     fontWeight: 400,
     fontSynthesis: "none",
     textRendering: "optimizeLegibility",
     WebkitFontSmoothing: "antialiased",
     MozOsxFontSmoothing: "grayscale",
+  },
+  // An installed app runs under the gesture bar from its first paint
+  "@media (display-mode: standalone)": {
+    ":root": { "--safe-bottom": BOTTOM_INSETS.installed },
   },
   body: {
     margin: 0,

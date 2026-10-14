@@ -5,10 +5,18 @@
  */
 
 /**
- * The foot's inset: Chrome's static one, which an installed app reads from its first paint (its live one reads 0 until
- * the page scrolls), else the live one (Safari's).
+ * The foot's inset, which the page's styles set (`GLOBAL_STYLES`, as `--safe-bottom`). In a browser's tab, the live one:
+ * what covers the foot now (Safari's home indicator; Chrome's gesture bar only once its toolbar hides, which it never
+ * does over a page whose document doesn't scroll). In an installed app, which runs under the gesture bar from its first
+ * paint, Chrome's static one (its live one reads 0 until the page scrolls), else the live one (Safari's).
  */
-export const SAFE_BOTTOM = "env(safe-area-max-inset-bottom, env(safe-area-inset-bottom, 0px))";
+export const BOTTOM_INSETS = {
+  installed: "env(safe-area-max-inset-bottom, env(safe-area-inset-bottom, 0px))",
+  live: "env(safe-area-inset-bottom, 0px)",
+} as const;
+
+/** The foot's inset, `BOTTOM_INSETS`' for where the app runs. */
+export const SAFE_BOTTOM = "var(--safe-bottom)";
 
 /** The left side's inset: an iPhone's notch, held sideways. */
 export const SAFE_LEFT = "env(safe-area-inset-left, 0px)";
