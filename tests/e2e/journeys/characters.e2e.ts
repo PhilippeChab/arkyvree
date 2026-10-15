@@ -243,13 +243,9 @@ test.describe("Characters", () => {
     const anyone = await (await openContext(browser, { acceptDownloads: true })).newPage();
     await anyone.goto(shareUrl);
     await expect(anyone.getByRole("heading", { level: 1, name })).toBeVisible({ timeout: 10_000 });
-    // A viewer reads the sheet: a class's levels, without a level to add or edit
-    await anyone.getByRole("button", { name: "Fighter 1 Levels" }).click();
-    const levels = anyone.getByRole("dialog", { name: "Fighter Levels" });
-    await expect(levels.getByText("Level 1", { exact: true })).toBeVisible();
-    await expect(levels.getByRole("button")).toHaveCount(0);
-    await anyone.keyboard.press("Escape");
-    await expect(levels).toBeHidden();
+    // A viewer reads the sheet: its class and level as text, with no levels to open, nothing there being theirs to do
+    await expect(anyone.getByText("Fighter 1", { exact: true })).toBeVisible();
+    await expect(anyone.getByRole("button", { name: "Fighter 1 Levels" })).toHaveCount(0);
     const pdf = anyone.waitForResponse((r) => /\/api\/shared\/characters\/[^/]+\/pdf$/.test(r.url()), {
       timeout: 60_000,
     });

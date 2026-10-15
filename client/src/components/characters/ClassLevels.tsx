@@ -42,11 +42,14 @@ export interface EditingLevel {
 
 /**
  * A class on a sheet's header, with the character's level in it ("Fighter 3"): its click opens its levels, under its
- * name, which an editor opens in Edit Level, and an editor's plus at the name's end adds a level of the class.
+ * name, which an editor opens in Edit Level, and an editor's plus at the name's end adds a level of the class. A viewer
+ * with nothing to do there, no class page to open and no level to add or edit (a shared sheet's), reads it as text.
  */
 export function ClassLevels({ klass, levels, classLink, onAddLevel, onEditLevel }: ClassLevelsProps) {
   const popover = useAnchorMenu();
   const name = formatClassLevel(klass.name, levels.length);
+
+  if (!classLink && !onAddLevel && !onEditLevel) return name;
 
   return (
     <>
