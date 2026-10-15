@@ -105,7 +105,7 @@ function CharacterNameEditor({ characterId, updatedAt, parentCharacterId, name, 
 /**
  * A character page's header: the character's name, which an editor renames in place, over its line: its classes with
  * their levels ("Fighter 3 · Rogue 1", as its PDF's first page names them), each opening its levels, where an editor
- * adds a level of the class; then its ruleset.
+ * adds a level of the class, or text for a viewer with nothing to do there; then its ruleset.
  */
 export function CharacterHeader({
   name,
