@@ -31,7 +31,7 @@ AppRoutes
 |---|---|---|---|
 | `AuthLayoutRoute` | `client/src/components/auth/AuthLayoutRoute.tsx` | Unauth users on auth-flow pages | Demo → `signOut()` then form. Real user → `/dashboard`. Unauth → form. |
 | `PublicLayout` | `client/src/components/layout/PublicLayout.tsx` | Anyone | None. Toolbar swaps "Sign Up" ↔ "Dashboard" by auth state. |
-| `PrivateRoute` | `client/src/components/auth/PrivateRoute.tsx` | Authenticated users | Authed → `<Outlet/>`. While the session probe runs on a cold load → `PageLoader`. Unauth → `/demo-expired` if a demo ran out (`isDemoExpired()`), else `/sign-in?redirect=<path>` (`authPagePath`; no redirect when the user signed out of the page). |
+| `PrivateRoute` | `client/src/components/auth/PrivateRoute.tsx` | Authenticated users | Authed → `<Outlet/>`, the remembered user's at once while the session probe confirms them. No remembered user: while the probe runs → `PageLoader`. Unauth → `/demo-expired` if a demo ran out (`isDemoExpired()`), else `/sign-in?redirect=<path>` (`authPagePath`; no redirect when the user signed out of the page). |
 
 ## Cookie security
 
@@ -79,7 +79,7 @@ A separate flow from auth-route entry:
 ```
 Demo user uses app, demo TTL hits server-side (1 hour)
    Next API call returns 401
-   handleGlobalError (client/src/lib/queryClient.ts):
+   signOutIfUnauthorized (client/src/lib/queryClient.ts):
      user.expiresAt set ⇒ markDemoExpired() (the flag, in localStorage)
      clearSession()
    React re-renders ⇒ /current-path no longer matches authed Layout
@@ -89,6 +89,23 @@ Demo user uses app, demo TTL hits server-side (1 hour)
 ```
 
 The flag distinguishes "your demo just expired" from "please sign in" so the user gets the right messaging.
+
+## The session probe
+
+The store remembers the signed-in user in `localStorage` (`auth-storage`), but the session is the cookie's, which the server alone reads (`httpOnly`). They can drift apart: a sign-in on another `localhost` port sets the cookie without touching this port's storage (cookies are shared across a host's ports, storage isn't). The server then answers as the cookie's user while the client decides permissions with the remembered one's id, and the viewer's own content shows read-only.
+
+So the first private page a tab opens asks the server whose session the cookie is (`/auth/me`), once (`checkSession`, `client/src/components/auth/sessionCheck.ts`), and the store keeps its answer:
+
+| The store remembers | The server answers | The store |
+|---|---|---|
+| A user | That user | Keeps them, with the server's fields |
+| A user | Another user | Takes the server's user; the cache is cleared, as on any change of user |
+| A user | 401 | Signed out (`signOutIfUnauthorized`: a demo's goes to `/demo-expired`) |
+| A user | Any other failure (offline, 5xx) | Keeps them: the server can't say |
+| No one | A user | Signs them in |
+| No one | Any failure | Stays signed out |
+
+The remembered user renders the page meanwhile, so a signed-in page doesn't flash signed out. An answer that comes once the store has changed (a sign-out, a profile update) changes nothing.
 
 ## Stale-cookie defense (server-side)
 
@@ -116,9 +133,10 @@ There's no `BroadcastChannel`-based active sync today. Recovery happens lazily v
 | File | Purpose |
 |---|---|
 | `client/src/App.tsx` | `AppRoutes` static tree |
-| `client/src/lib/queryClient.ts` | `createQueryClient`: `handleGlobalError`, the 401 handler, and the cache cleared when the user changes |
+| `client/src/lib/queryClient.ts` | `createQueryClient`: `signOutIfUnauthorized`, the 401 handler, and the cache cleared when the user changes |
 | `client/src/components/auth/AuthLayoutRoute.tsx` | `AuthLayoutRoute` — demo signOut on entry, real-user redirect (`useAuthRedirect`) |
-| `client/src/components/auth/PrivateRoute.tsx` | `PrivateRoute` guard: the session probe (`checkSession`, a `fetchQuery` of `/auth/me`), the redirect to sign in |
+| `client/src/components/auth/PrivateRoute.tsx` | `PrivateRoute` guard: the session probe (a `fetchQuery` of `/auth/me`, once per tab), the redirect to sign in |
+| `client/src/components/auth/sessionCheck.ts` | `checkSession`: the store takes the probe's answer (see [The session probe](#the-session-probe)) |
 | `client/src/components/layout/PublicLayout.tsx` | Public toolbar with auth-aware CTA |
 | `client/src/components/layout/Layout.tsx` | In-app shell, `isDemo` feature gates |
 | `client/src/stores/authStore.ts` | Zustand store + persist: who is signed in, the emails waiting for a code; `startSession`, `clearSession`, `updateUser` |
