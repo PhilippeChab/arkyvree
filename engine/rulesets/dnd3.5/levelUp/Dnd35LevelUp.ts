@@ -101,9 +101,12 @@ export default class Dnd35LevelUp extends LevelUpPart<Dnd35Descriptions, Detaile
     return new LevelUpPlan(view, character, this).findOverfullPools(...args);
   }
 
-  /** What the ability increases of the level after `totalLevel` levels add up to: one, at every fourth level. */
-  override getAbilityIncreaseTotal(totalLevel: number) {
-    return LevelRules.isAbilityIncreaseLevel(totalLevel) ? 1 : 0;
+  /**
+   * What the ability increases of the level after `totalLevel` levels add up to: one at each level the ruleset's
+   * Settings give one (`LevelRules`).
+   */
+  override getAbilityIncreaseTotal(view: RulesetView, totalLevel: number) {
+    return LevelRules.of(view).countAbilityIncreases(totalLevel);
   }
 
   /**

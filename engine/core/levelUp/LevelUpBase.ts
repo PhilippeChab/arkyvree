@@ -54,8 +54,8 @@ export interface LevelUpRules<C> {
     holder: C,
     picks: Pick<LevelPicks, "feats" | "powers">,
   ): OverfullPool[];
-  /** What the ability increases of the level after `totalLevel` levels add up to: 0 when it takes none. */
-  getAbilityIncreaseTotal(totalLevel: number): number;
+  /** What the ability increases of the level after `totalLevel` levels add up to in the view's ruleset: 0 for none. */
+  getAbilityIncreaseTotal(view: RulesetView, totalLevel: number): number;
   /**
    * Each planned level's class and class level, with its ability increases (`levels`), the ruleset's: refused when a
    * class or a class level isn't, or the levels go past its bounds.
@@ -129,7 +129,7 @@ export default abstract class LevelUpBase<C> {
 
   /** A level's selections checked against the ruleset, and its ability increases against its rules. */
   protected get checks(): SelectionChecks {
-    return new SelectionChecks(this.rulesetData, this.rules);
+    return new SelectionChecks(this.view, this.rules);
   }
 
   /** The class's level `level`, in the composed ruleset, or a 404. */

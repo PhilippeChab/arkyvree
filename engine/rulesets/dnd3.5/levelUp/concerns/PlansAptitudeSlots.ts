@@ -20,8 +20,8 @@ const ALL_KNOWN_SLOTS = 999;
 /**
  * Each planned level's feat and power slots, from the ruleset's modifiers rather than a character build per level:
  * what its class level's modifiers and the feats it grants add to a pool (`aptitudes.<slug>.allowed`, a spell level's
- * `aptitudes.<slug>.<level>.allowed`), and the general feat every third character level. The character's unspent slots
- * (a human's bonus feat) go to the first level.
+ * `aptitudes.<slug>.<level>.allowed`), and the general feats each character level gives, by the ruleset's Settings.
+ * The character's unspent slots (a human's bonus feat) go to the first level.
  */
 export function PlansAptitudeSlots<B extends Constructor<LevelUpBase<DetailedCharacter>>>(Base: B) {
   abstract class PlanningAptitudeSlots extends Base {
@@ -69,12 +69,12 @@ export function PlansAptitudeSlots<B extends Constructor<LevelUpBase<DetailedCha
 
     /**
      * A planned level's slot deltas: its klass level's modifiers, the modifiers of the feats granted there, and the
-     * general feat every third character level.
+     * general feats it gives (`generalFeats`, its ruleset's Settings').
      */
     private levelDeltas(
       klassLevelId: string,
       autoFeatRecords: { featsInRule: { id: string } }[],
-      charLevel: number,
+      generalFeats: number,
       featSlots: FeatSlots,
       powerSlots: PowerSlots,
     ): SlotDeltas {
@@ -86,10 +86,8 @@ export function PlansAptitudeSlots<B extends Constructor<LevelUpBase<DetailedCha
       for (const rec of autoFeatRecords) add(modifiersBySource.get(rec.featsInRule.id) ?? []);
 
       const generalAptId = aptitudeIdBySlug.get(LevelRules.GENERAL_FEATS_APTITUDE_SLUG);
-      if (generalAptId && featSlots[generalAptId]) {
-        const generalDelta = LevelRules.countGeneralFeats(charLevel) - LevelRules.countGeneralFeats(charLevel - 1);
-        if (generalDelta > 0) deltas.feats[generalAptId] = (deltas.feats[generalAptId] ?? 0) + generalDelta;
-      }
+      if (generalAptId && featSlots[generalAptId] && generalFeats > 0)
+        deltas.feats[generalAptId] = (deltas.feats[generalAptId] ?? 0) + generalFeats;
       return deltas;
     }
 
@@ -113,12 +111,13 @@ export function PlansAptitudeSlots<B extends Constructor<LevelUpBase<DetailedCha
       // A spell level all known (the character's already, or a planned level's set -1) takes no slot from a later add:
       // the sheet's count, and the class tables'
       const allKnown = this.allKnownLevels(baselineAptitudes);
+      const levelRules = LevelRules.of(this.view);
 
       for (let i = 0; i < klassLevelIds.length; i++) {
         const deltas = this.levelDeltas(
           klassLevelIds[i],
           grantedFeatRecords[i] ?? [],
-          savedLevelCount + i + 1,
+          levelRules.countGeneralFeatsAt(savedLevelCount + i + 1),
           perLevelFeatSlots,
           perLevelPowerSlots,
         );

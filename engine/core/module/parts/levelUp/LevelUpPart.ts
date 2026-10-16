@@ -93,8 +93,8 @@ export default abstract class LevelUpPart<
     picks: Pick<LevelPicks, "feats" | "powers">,
   ): OverfullPool[];
 
-  /** What the ability increases of the level after `totalLevel` levels add up to: 0 when it takes none. */
-  abstract getAbilityIncreaseTotal(totalLevel: number): number;
+  /** What the ability increases of the level after `totalLevel` levels add up to in the view's ruleset: 0 for none. */
+  abstract getAbilityIncreaseTotal(view: RulesetView, totalLevel: number): number;
 
   /**
    * Each planned level's class and class level, with its ability increases (`levels`), the ruleset's: refused when a

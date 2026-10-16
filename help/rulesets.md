@@ -17,7 +17,7 @@ A ruleset holds:
 - **Items** — weapons, armor, shields, gear, magic items.
 - **Aptitudes** — pools of choosable options at certain class levels (Fighter Bonus Feats, Cleric Domains).
 - **Mechanics** — free-form rules the system doesn't model on the sheet (trip, grapple, bull rush).
-- **Settings** — the ruleset's own rules, such as the ability a character's skill points come from.
+- **Settings** — the ruleset's own rules, such as the ability a character's skill points come from, and the levels that give every character a feat or an ability score increase.
 - **Customization** — the layer that wires it all together (an entity's fields, the rules data of its own form; requirements; modifiers).
 
 The base **Core SRD 3.5** ruleset and its sourcebook extensions are read-only — they're maintained by us. To change anything in them, make your own copy. See [What is forking?](forking-and-syncing.md#what-is-forking)
@@ -78,7 +78,7 @@ Examples on the SRD ruleset:
 - **Divine Crusader Domain** — one pick at Divine Crusader level 1 (Complete Divine): her spell list is that domain's spells.
 - **Wizard Spells** — spells added to the spellbook at every level.
 - **Sorcerer Spells** — the spontaneous spell list, picked as spells known.
-- **General** — the standard "any feat" pool, available at character levels 1, 3, 6, 9, … Every character's general feats count toward the aptitude named General, so it keeps that name and can't be deleted.
+- **General** — the standard "any feat" pool, available at character levels 1, 3, 6, 9, … (the ruleset's **Settings** say which) Every character's general feats count toward the aptitude named General, so it keeps that name and can't be deleted.
 
 An aptitude defines:
 

@@ -2,6 +2,7 @@ import { CharacterDataLoader, type LoadedCharacter, type ModifierSource } from "
 import type { AbilityIncrease, CharacterRows } from "@/engine/core/module/index.ts";
 import { type RulesetView } from "@/engine/core/view/index.ts";
 import { type SkillFieldValues } from "@/engine/rulesets/dnd3.5/entities/skills/fields.ts";
+import type LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import { include } from "@/lib/mixins.ts";
 import type {
   Character,
@@ -24,7 +25,7 @@ import type { CustomizedClassLevel, CustomizedFeat, CustomizedPower, CustomizedR
  */
 type LoadedParts = Omit<
   LoadedCharacterData,
-  keyof LoadedCharacter | "character" | "skillFields" | "skillPointAbilityId"
+  keyof LoadedCharacter | "character" | "levelRules" | "skillFields" | "skillPointAbilityId"
 > & {
   klassEntityIds: string[];
 };
@@ -57,6 +58,8 @@ export interface LoadedCharacterData extends LoadedCharacter {
   klassSkills: KlassSkill[];
   /** The languages it picked, as its rows store them. */
   languages: Language[];
+  /** What its levels give it whatever its classes, by its ruleset's Settings: its general feats, its increases. */
+  levelRules: LevelRules;
   /**
    * The powers it knows, each in its pool: its levels' picks and grants as it loads, then those its modifiers make it
    * know as they apply in the build's rounds (`PossessesVirtually`), and those its lists make it know as its

@@ -441,6 +441,9 @@ export const BONDED_RACE_STATS: Record<string, BondedRaceStatBlock> = {
   },
 };
 
+/** How many hit dice apart a creature's feats come, after its first hit die's: one at every third (Monster Manual). */
+export const CREATURE_FEAT_HIT_DICE_INTERVAL = 3;
+
 /** The share of its master's hit points a familiar has: half (`FAMILIAR_HIT_POINTS_DIVISOR`), rounded down. */
 export const FAMILIAR_HIT_POINTS_DIVISOR = 2;
 

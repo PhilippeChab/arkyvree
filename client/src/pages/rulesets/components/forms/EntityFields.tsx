@@ -1,6 +1,6 @@
-import { Autocomplete, Box, MenuItem, Stack, TextField } from "@mui/material";
+import { Autocomplete, Box, FormHelperText, MenuItem, Stack, TextField } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
-import type { Ref } from "react";
+import { type Ref, useId } from "react";
 import { type FieldPath, type FieldValues, useController, type UseFormReturn, useWatch } from "react-hook-form";
 
 import {
@@ -16,7 +16,7 @@ import {
   ValueChip,
 } from "@/client/src/components/common/index.ts";
 import { rulesetOptionsQuery } from "@/client/src/lib/queries.ts";
-import { requiredRules, wholeNumberRules } from "@/client/src/lib/validation.ts";
+import { readNumberInput, requiredRules, wholeNumberError, wholeNumberRules } from "@/client/src/lib/validation.ts";
 import type { EntityField, RulesetFields } from "@/client/src/pages/rulesets/details/rulesetQueries.ts";
 import { useEntityFields } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
@@ -76,6 +76,9 @@ interface ShownFieldProps<T extends FieldValues> extends FieldInputProps<T> {
 /** A yes or no. */
 type FlagField = Extract<EntityField, { input: "flag" }>;
 
+/** A count per level: what each level grants. */
+type PerLevelField = Extract<EntityField, { input: "perLevel" }>;
+
 /** A field that names an entity of the ruleset. */
 type RefField = Extract<EntityField, { input: "ref" }>;
 
@@ -90,6 +93,17 @@ const FLAG_CHOICES = [
   { value: "true", label: "Yes" },
   { value: "false", label: "No" },
 ] as const;
+
+/** A count per level's inputs: three levels a row on a phone, five past it, ten on a wide screen. */
+const PER_LEVEL_GRID_SX = {
+  display: "grid",
+  gridTemplateColumns: {
+    xs: "repeat(3, minmax(0, 1fr))",
+    sm: "repeat(5, minmax(0, 1fr))",
+    lg: "repeat(10, minmax(0, 1fr))",
+  },
+  gap: 2,
+};
 
 /** The lists of a ruleset a reference picks from, by the kind of entity it names. */
 const REFERENCE_LISTS = ["abilities", "saves"] as const;
@@ -133,6 +147,8 @@ function FieldInput<T extends FieldValues>({ field, ...props }: FieldInputProps<
           slotProps={{ htmlInput: { min: field.min, max: field.max } }}
         />
       );
+    case "perLevel":
+      return <PerLevelInput {...props} field={field} />;
     case "ref":
       if (isOneOf(field.references, REFERENCE_LISTS))
         return <ReferenceSelect {...props} field={field} list={field.references} />;
@@ -267,9 +283,68 @@ function isSwitch(field: EntityField) {
   return field.input === "flag" && !field.nullable;
 }
 
-/** Whether a field takes the grid's whole width: a group, or several values. */
+/** Whether a field takes the grid's whole width: a group, several values, or a count per level. */
 function isWide(field: EntityField) {
-  return field.input === "group" || ((field.input === "choice" || field.input === "text") && field.multiple);
+  return (
+    field.input === "group" ||
+    field.input === "perLevel" ||
+    ((field.input === "choice" || field.input === "text") && field.multiple)
+  );
+}
+
+/**
+ * A count per level, under its label: each level's number, bound as one field (its first input takes its ref, so a
+ * failed submit focuses it), a count out of its bounds saying why under its own input. Read-only, each its value.
+ */
+function PerLevelInput<T extends FieldValues>({ field, form, help }: FieldInputProps<T, PerLevelField>) {
+  const labelId = useId();
+  const readOnly = useReadOnlyFields();
+  const isCountValid = (count: number) => wholeNumberError(count, 0, field.max) === undefined;
+  const {
+    field: { ref, value, onChange },
+    fieldState,
+  } = useController({
+    control: form.control,
+    name: fieldPath<T>(field.key),
+    rules: {
+      validate: (counts: unknown) =>
+        (Array.isArray(counts) && counts.every(isCountValid)) || `Each level's count is from 0 to ${field.max}`,
+    },
+  });
+  const counts: number[] = Array.isArray(value) ? value : [];
+  // In place, so changing a count back leaves the form clean
+  const setCount = (level: number, count: number) =>
+    onChange(counts.map((kept, index) => (index === level ? count : kept)));
+  return (
+    <Stack role="group" aria-labelledby={labelId} spacing={1.5}>
+      <Box id={labelId}>
+        <SubsectionTitle>{field.label}</SubsectionTitle>
+      </Box>
+      <Box sx={PER_LEVEL_GRID_SX}>
+        {counts.map((count, index) => {
+          const error = fieldState.error ? wholeNumberError(count, 0, field.max) : undefined;
+          return (
+            <TextField
+              key={index}
+              inputRef={index === 0 ? ref : undefined}
+              label={`Level ${index + 1}`}
+              type="number"
+              value={count}
+              onChange={(event) => setCount(index, readNumberInput(event.target.value) ?? 0)}
+              error={error !== undefined}
+              helperText={error}
+              slotProps={{
+                htmlInput: { min: 0, max: field.max },
+                input: { readOnly },
+                inputLabel: readOnly ? { shrink: true } : undefined,
+              }}
+            />
+          );
+        })}
+      </Box>
+      {help && <FormHelperText>{field.help}</FormHelperText>}
+    </Stack>
+  );
 }
 
 /** An entity of the ruleset, by its id: a select of the list its kind names (`list`), none too unless it's required. */

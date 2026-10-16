@@ -17,7 +17,11 @@ describe("rulesets fields", () => {
       ["oversizedTwoWeaponFighting", "Oversized Two-Weapon Fighting"],
       ["prohibitedSchools", "Prohibited Schools"],
     ]);
-    expect(answered.rulesets).toMatchObject([{ key: "skillPointAbilityId", label: "Skill Point Ability" }]);
+    expect(answered.rulesets).toMatchObject([
+      { key: "skillPointAbilityId", label: "Skill Point Ability" },
+      { key: "featsPerLevel", label: "Feat Advancement" },
+      { key: "abilityIncreasesPerLevel", label: "Ability Score Increases" },
+    ]);
   });
 
   test("requires a session, and a ruleset", async () => {

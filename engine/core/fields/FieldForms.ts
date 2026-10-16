@@ -71,6 +71,14 @@ export default class FieldForms {
         return { ...base, input: "flag", nullable: field.absent === null };
       case "number":
         return { ...base, default: field.default, input: "number", max: field.max, min: field.min };
+      case "perLevel":
+        return {
+          ...base,
+          default: [...field.default],
+          input: "perLevel",
+          levels: field.default.length,
+          max: field.max,
+        };
       case "ref": {
         const references = declarations.getReferencedEntityType(field.type);
         if (references) return { ...base, input: "ref", references, required: field.required };
@@ -158,10 +166,11 @@ export default class FieldForms {
   }
 
   /**
-   * The values a form's field takes: a flag's boolean, a number whole in its bounds, a text, a choice or a list among
-   * its type's values when they're a closed list, any string otherwise, a reference any string (which names an entity,
-   * read as the view's: `resolveRefs`); none (null, or `""`) for one that has none (a number without a default, a
-   * reference not `required`). A group's are an object of its fields', each given, and no other.
+   * The values a form's field takes: a flag's boolean, a number whole in its bounds, a count per level one a level,
+   * each whole in its bounds, a text, a choice or a list among its type's values when they're a closed list, any string
+   * otherwise, a reference any string (which names an entity, read as the view's: `resolveRefs`); none (null, or `""`)
+   * for one that has none (a number without a default, a reference not `required`). A group's are an object of its
+   * fields', each given, and no other.
    */
   private static shapeOf(field: FieldSpec, context: FormContext): z.ZodType {
     switch (field.kind) {
@@ -175,6 +184,8 @@ export default class FieldForms {
         if (field.max !== undefined) number = number.max(field.max);
         return field.default === null ? number.nullable() : number;
       }
+      case "perLevel":
+        return z.array(z.number().int().min(0).max(field.max)).length(field.default.length);
       case "ref":
         return field.required ? z.string().min(1) : z.string().nullable();
       default:

@@ -1,12 +1,19 @@
+import type { RulesetView } from "@/engine/core/view/index.ts";
+import { RULESET_FIELDS, type RulesetFieldValues } from "@/engine/rulesets/dnd3.5/ruleset/fields.ts";
 import { stripSeparators } from "@/shared/text.ts";
-import {
-  ABILITY_INCREASE_LEVEL_INTERVAL,
-  GENERAL_FEAT_LEVEL_INTERVAL,
-  MAX_CHARACTER_LEVEL,
-} from "@/vocabulary/dnd3.5/classes.ts";
+import { MAX_CHARACTER_LEVEL } from "@/vocabulary/dnd3.5/classes.ts";
 import { GENERAL_FEATS_APTITUDE } from "@/vocabulary/dnd3.5/feats.ts";
 
+/** What a character's levels give it whatever its classes, by its ruleset's Settings: its feats and its increases. */
+type Progression = Pick<RulesetFieldValues, "abilityIncreasesPerLevel" | "featsPerLevel">;
+
+/**
+ * What a character's levels give it whatever its classes, as its ruleset's Settings have it (`of`): the feats it picks
+ * and the ability increases it takes at each character level; and the bounds every ruleset's levels keep.
+ */
 export default class LevelRules {
+  constructor(private readonly progression: Progression) {}
+
   /**
    * The slug of the aptitude the general feats count toward (`GENERAL_FEATS_APTITUDE`): what the engine, the target
    * paths (`aptitudes.general.*`) and the effects know it by.
@@ -16,15 +23,6 @@ export default class LevelRules {
   static readonly UNROLLED_LEVEL_HP = 10;
 
   /**
-   * The feats a level or hit die count gives: one at the first, and one more every third
-   * (`GENERAL_FEAT_LEVEL_INTERVAL`). A character's general feats at its total level, and a creature's feats at its hit
-   * dice (the Monster Manual's).
-   */
-  static countGeneralFeats(totalLevel: number): number {
-    return totalLevel === 0 ? 0 : Math.floor(totalLevel / GENERAL_FEAT_LEVEL_INTERVAL) + 1;
-  }
-
-  /**
    * The levels a character with `totalLevel` levels can still take, whatever their classes: up to a character's last
    * level (`MAX_CHARACTER_LEVEL`).
    */
@@ -32,8 +30,34 @@ export default class LevelRules {
     return Math.max(0, MAX_CHARACTER_LEVEL - totalLevel);
   }
 
-  /** Whether the level after `totalLevel` levels takes an ability increase: every fourth (`ABILITY_INCREASE_LEVEL_INTERVAL`). */
-  static isAbilityIncreaseLevel(totalLevel: number): boolean {
-    return (totalLevel + 1) % ABILITY_INCREASE_LEVEL_INTERVAL === 0;
+  /**
+   * The level rules of a ruleset's view, off its Settings (`RULESET_FIELDS`): the nearest ruleset of its chain's that
+   * holds them, the fork's first, the core rules' when none does.
+   */
+  static of({ ruleset, rulesetData }: RulesetView): LevelRules {
+    return new LevelRules(RULESET_FIELDS.read(rulesetData.rulesetPropertiesOf(ruleset.id)));
+  }
+
+  /** The ability increases the level after `totalLevel` levels takes: its Settings' (`abilityIncreasesPerLevel`). */
+  countAbilityIncreases(totalLevel: number): number {
+    return this.progression.abilityIncreasesPerLevel[totalLevel] ?? 0;
+  }
+
+  /**
+   * The general feats a character has at its total level: those its levels up to it give, by its Settings
+   * (`featsPerLevel`).
+   */
+  countGeneralFeats(totalLevel: number): number {
+    return this.progression.featsPerLevel.slice(0, totalLevel).reduce((sum, count) => sum + count, 0);
+  }
+
+  /** The general feats character level `level` gives, by its Settings (`featsPerLevel`). */
+  countGeneralFeatsAt(level: number): number {
+    return this.progression.featsPerLevel[level - 1] ?? 0;
+  }
+
+  /** Whether the level after `totalLevel` levels takes an ability increase. */
+  isAbilityIncreaseLevel(totalLevel: number): boolean {
+    return this.countAbilityIncreases(totalLevel) > 0;
   }
 }

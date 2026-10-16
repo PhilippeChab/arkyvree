@@ -23,6 +23,8 @@ export type Fields = Record<string, PropertyField<unknown>>;
  * - a number, a text, a choice and a reference come from the first row of their type that holds one; a number in its
  *   bounds, a choice among its values;
  * - a list is every row of its type, in their order;
+ * - a count per level is a row per level, its count after its level (`3:2`), every level's, a zero's too, so the rows
+ *   of an entity that holds them stand for the whole: its default without any;
  * - a group holds fields of its own, read off the same rows, which its form shows under its `label`.
  */
 export type FieldSpec = (
@@ -38,6 +40,7 @@ export type FieldSpec = (
   | { kind: "choice"; type: string; values: readonly string[] }
   | { fields: Fields; kind: "group"; label: string }
   | { kind: "list"; type: string }
+  | { default: readonly number[]; kind: "perLevel"; max: number; type: string }
   | { kind: "ref"; required: boolean; type: string }
   | { kind: "text"; type: string }
 ) & { shownIn?: readonly string[]; when?: FieldCondition };
@@ -98,6 +101,7 @@ export default class Field {
     type: string,
     options: { default: number; max?: number; min?: number; write?: "always" | "unlessDefault" },
   ): PropertyField<number>;
+
   /** A whole number, from the first row that holds one in its bounds; none without one. */
   static number(type: string, options?: { max?: number; min?: number }): PropertyField<number | null>;
   static number(
@@ -106,6 +110,19 @@ export default class Field {
   ): PropertyField<number | null> {
     const { max, min, write = "unlessDefault" } = options;
     return { default: options.default ?? null, kind: "number", max, min, type, write };
+  }
+  /**
+   * A count per level, of `levels` levels, the first's first: how many of something each grants, from none to `max`
+   * (a ruleset's feats at each character level). Its default without a row: one at each of `grantedAt`, a level once
+   * per grant (`[1, 3, 3]`: one at the first, two at the third).
+   */
+  static perLevel(
+    type: string,
+    options: { grantedAt: readonly number[]; levels: number; max: number },
+  ): PropertyField<number[]> {
+    const { grantedAt, levels, max } = options;
+    const counts = Array.from({ length: levels }, (_, i) => grantedAt.filter((level) => level === i + 1).length);
+    return { default: counts, kind: "perLevel", max, type };
   }
 
   /** An entity's id, from its first row: none without one, which a form may leave it at unless it's `required`. */

@@ -41,7 +41,11 @@ import {
   SPELL_TARGET,
 } from "./power.ts";
 import { RACE_QUADRUPED, RACE_SPEED_IGNORES_ENCUMBRANCE } from "./race.ts";
-import { RULESET_SKILL_POINT_ABILITY_ID } from "./ruleset.ts";
+import {
+  RULESET_ABILITY_INCREASES_PER_LEVEL,
+  RULESET_FEATS_PER_LEVEL,
+  RULESET_SKILL_POINT_ABILITY_ID,
+} from "./ruleset.ts";
 import { SHIELD_AC_BONUS, SHIELD_PROFICIENCY, SHIELD_TYPE } from "./shield.ts";
 import { SKILL_CHECK_PENALTY_MULTIPLIER, SKILL_IMPACTED_BY_WEIGHT, SKILL_USABLE_WITHOUT_TRAINING } from "./skill.ts";
 import {
@@ -276,6 +280,16 @@ const RULESET_PROPERTY_TYPES: Record<string, PropertyTypeDeclaration> = {
   [RULESET_SKILL_POINT_ABILITY_ID]: {
     label: "Skill Point Ability",
     description: "The ability whose modifier a character adds to the skill points each of its levels gives",
+  },
+  [RULESET_FEATS_PER_LEVEL]: {
+    label: "Feat Advancement",
+    description:
+      "The feats each character level gives a character to pick, whatever its classes, besides its classes' bonus feats (the core rules: one at levels 1, 3, 6, 9, 12, 15 and 18)",
+  },
+  [RULESET_ABILITY_INCREASES_PER_LEVEL]: {
+    label: "Ability Score Increases",
+    description:
+      "The character levels that raise one of a character's ability scores by 1, whatever its classes (the core rules: levels 4, 8, 12, 16 and 20)",
   },
 };
 

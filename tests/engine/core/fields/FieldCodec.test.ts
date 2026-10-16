@@ -48,6 +48,16 @@ const CONTEXT: FormContext = {
   },
 };
 
+/** A count per level, of three levels, two at most at one: one at the first and two at the third without a row. */
+const PER_LEVEL = new FieldCodec({ grants: Field.perLevel("GRANT", { grantedAt: [3, 1, 3], levels: 3, max: 2 }) });
+
+/** The rules' declaration of the count per level's type. */
+const PER_LEVEL_DECLARATIONS: PropertyTypesProvider = {
+  getDeclarations: () => ({ GRANT: { description: "What each level grants", label: "Grants" } }),
+  getReferencedEntityType: () => null,
+  getValues: () => null,
+};
+
 /** Rows of `type=value` pairs, in order. */
 function rows(...pairs: [string, string][]) {
   return pairs.map(([type, value]) => ({ type, value }));
@@ -223,5 +233,44 @@ describe("A field codec", () => {
 
     expect(codec.read(rows(["KIND", "Divine"], ["LEVEL", "2"]))).toMatchObject({ first: { level: 2 }, kind: "Divine" });
     expect(codec.parse({ kind: "Arcane" }, CONTEXT)).toEqual({ kind: "Arcane" });
+  });
+});
+
+describe("A count per level", () => {
+  test("reads each level's first count in its bounds, a level without one none, and its default without one", () => {
+    expect(PER_LEVEL.defaults).toEqual({ grants: [1, 0, 2] });
+    expect(PER_LEVEL.read([])).toEqual(PER_LEVEL.defaults);
+    const stored = rows(["GRANT", "2:1"], ["GRANT", "2:2"], ["GRANT", "3:5"], ["GRANT", "1"], ["GRANT", "4:1"]);
+    expect(PER_LEVEL.read(stored)).toEqual({ grants: [0, 1, 0] });
+    expect(PER_LEVEL.read(rows(["GRANT", "0:1"], ["GRANT", "9:1"], ["GRANT", "x:y"]))).toEqual(PER_LEVEL.defaults);
+  });
+
+  test("writes every level's count, a zero's too, so none at any level reads back as none", () => {
+    expect(PER_LEVEL.toProperties({ grants: [0, 0, 0] })).toEqual(
+      rows(["GRANT", "1:0"], ["GRANT", "2:0"], ["GRANT", "3:0"]),
+    );
+    expect(PER_LEVEL.read(PER_LEVEL.toProperties({ grants: [0, 0, 0] }))).toEqual({ grants: [0, 0, 0] });
+    expect(PER_LEVEL.read(PER_LEVEL.toProperties({ grants: [2, 1, 0] }))).toEqual({ grants: [2, 1, 0] });
+  });
+
+  test("reads a form's counts, one a level, each whole in its bounds", () => {
+    const context = { ...CONTEXT, declarations: PER_LEVEL_DECLARATIONS };
+    expect(PER_LEVEL.parse({ grants: [2, 0, 1] }, context)).toEqual({ grants: [2, 0, 1] });
+    for (const grants of [[3, 0, 0], [-1, 0, 0], [0.5, 0, 0], [1, 0], [1, 0, 0, 0], ["1", 0, 0], null])
+      expect(() => PER_LEVEL.parse({ grants }, context)).toThrow(RulesError);
+  });
+
+  test("describes its levels and its bound", () => {
+    expect(PER_LEVEL.describe(PER_LEVEL_DECLARATIONS, "rulesets")).toEqual([
+      {
+        default: [1, 0, 2],
+        help: "What each level grants",
+        input: "perLevel",
+        key: "grants",
+        label: "Grants",
+        levels: 3,
+        max: 2,
+      },
+    ]);
   });
 });

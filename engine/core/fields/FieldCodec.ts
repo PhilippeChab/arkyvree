@@ -58,6 +58,8 @@ export default class FieldCodec<S extends Fields> {
         return field.default;
       case "list":
         return [];
+      case "perLevel":
+        return [...field.default];
       case "group":
         return FieldCodec.defaultsOf(field.fields);
       default:
@@ -90,6 +92,8 @@ export default class FieldCodec<S extends Fields> {
       }
       case "list":
         return [...values];
+      case "perLevel":
+        return FieldCodec.readPerLevel(field, values);
       default:
         return values[0] ?? null;
     }
@@ -114,6 +118,23 @@ export default class FieldCodec<S extends Fields> {
     return field.default;
   }
 
+  /**
+   * A count per level off its rows' values (`level:count`), each level's first in its bounds, a level without one none:
+   * its default when no row is.
+   */
+  private static readPerLevel(field: Extract<FieldSpec, { kind: "perLevel" }>, values: string[]): number[] {
+    const counts = new Map<number, number>();
+    for (const value of values) {
+      const match = /^(\d+):(\d+)$/.exec(value);
+      if (!match) continue;
+      const [level, count] = [Number(match[1]), Number(match[2])];
+      if (level < 1 || level > field.default.length || counts.has(level)) continue;
+      if (count <= field.max) counts.set(level, count);
+    }
+    if (counts.size === 0) return [...field.default];
+    return field.default.map((_, i) => counts.get(i + 1) ?? 0);
+  }
+
   /** Whether two rows' values of a type hold the same values, whatever their order. */
   private static sameValues(a: readonly PropertyValue[], b: readonly PropertyValue[]) {
     const sorted = (rows: readonly PropertyValue[]) => rows.map((row) => row.value).toSorted();
@@ -135,6 +156,8 @@ export default class FieldCodec<S extends Fields> {
         return FieldCodec.writeFields(field.fields, value as Record<string, unknown>);
       case "list":
         return (value as string[]).map((item) => ({ type: field.type, value: item }));
+      case "perLevel":
+        return (value as number[]).map((count, i) => ({ type: field.type, value: `${i + 1}:${count}` }));
       case "flag":
         return field.absent === null || value === true ? [{ type: field.type, value: String(value) }] : [];
       case "number":
@@ -219,8 +242,11 @@ export default class FieldCodec<S extends Fields> {
       .flatMap(([, typed]) => typed);
   }
 
-  /** The values as the rows that keep them: none when the entity keeps no field (`storesWhen`). */
-  toProperties(values: FieldValues<S>): PropertyValue[] {
+  /**
+   * The values as the rows that keep them: none when the entity keeps no field (`storesWhen`), nor for a field they
+   * leave out.
+   */
+  toProperties(values: Partial<FieldValues<S>>): PropertyValue[] {
     if (this.rules.storesWhen && !this.rules.storesWhen(values)) return [];
     return FieldCodec.writeFields(this.fields, values as Record<string, unknown>);
   }

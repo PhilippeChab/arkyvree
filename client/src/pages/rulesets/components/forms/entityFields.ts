@@ -10,8 +10,11 @@ import type { rpc } from "@/client/src/services/rpc.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 
-/** A field's value, but a group's: a flag's, a number's, a text's or a choice's, a list's; null, none. */
-type LeafValue = boolean | number | string | string[] | null;
+/**
+ * A field's value, but a group's: a flag's, a number's, a text's or a choice's, a list's, a count per level's; null,
+ * none.
+ */
+type LeafValue = boolean | number | number[] | string | string[] | null;
 
 /** A field of an entity's form that holds a value of its own: any but a group. */
 type ValueField = Exclude<EntityField, { input: "group" }>;
@@ -21,12 +24,17 @@ export type EntityFieldValues = NonNullable<
   InferRequestType<(typeof rpc.api.rulesets)[":id"]["skills"]["$post"]>["json"]["fields"]
 >;
 
-/** A field's value in an empty form: false (none, for a three-state flag), a number's default, no text, no choice. */
+/**
+ * A field's value in an empty form: false (none, for a three-state flag), a number's or a count per level's default, no
+ * text, no choice.
+ */
 function emptyValueOf(field: ValueField): LeafValue {
   switch (field.input) {
     case "flag":
       return field.nullable ? null : false;
     case "number":
+      return field.default;
+    case "perLevel":
       return field.default;
     case "choice":
     case "text":
@@ -43,6 +51,10 @@ function formValueOf(field: ValueField, value: unknown): LeafValue {
       return typeof value === "boolean" ? value : emptyValueOf(field);
     case "number":
       return typeof value === "number" ? value : emptyValueOf(field);
+    case "perLevel":
+      return Array.isArray(value) && value.length === field.levels && value.every((count) => typeof count === "number")
+        ? value
+        : emptyValueOf(field);
     default:
       if (field.input !== "ref" && field.multiple)
         return Array.isArray(value) ? value.filter((item) => typeof item === "string") : [];

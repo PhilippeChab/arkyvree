@@ -126,19 +126,38 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
   }
 
   /**
+   * The edit of the level after `totalLevel` levels (saved level `characterLevelId`), but the ability increases it
+   * keeps from the level's save where the level's rules give it none now (its ruleset moved them): those go with the
+   * edit, which could never save them, while an increase it picks anew there is refused.
+   */
+  private withoutStaleIncreases(edit: LevelEditRequest, totalLevel: number, characterLevelId: string) {
+    if (edit.abilityIncreases.length === 0 || this.rules.getAbilityIncreaseTotal(this.view, totalLevel) > 0)
+      return edit;
+    const saved = new Set(
+      this.character.rows.picks.abilityIncreases
+        .filter((row) => row.characterLevelId === characterLevelId)
+        .map((row) => row.abilityId),
+    );
+    const stale = edit.abilityIncreases.every(({ abilityId }) => saved.has(abilityId));
+    return stale ? { ...edit, abilityIncreases: [] } : edit;
+  }
+
+  /**
    * The edit of saved level `characterLevelId`, with the character's bonded creatures' rows (`bonded`): the level as
-   * saved, its new hit points, ability increases and picks, checked, its picks refused when they pick a feat that
+   * saved, its new hit points, ability increases (but those it was saved with where its rules give it none now, which
+   * go: `withoutStaleIncreases`) and picks, checked, its picks refused when they pick a feat that
    * doesn't stack the character has already or a power it knows in its pool already, the level's other picks' gifts
    * too (but the level's own saved picks), or overfill a pool (forced or not), and refused with the issues it answers
    * for unless `force`d; and what its bonded creatures become with it.
    */
-  planEdit(bonded: CharacterInput[], characterLevelId: string, edit: LevelEditRequest, force: boolean): LevelEditPlan {
+  planEdit(bonded: CharacterInput[], characterLevelId: string, given: LevelEditRequest, force: boolean): LevelEditPlan {
     const { rows } = this.character;
-    const { abilityIncreases, hp } = edit;
     const level = rows.levels.find((saved) => saved.id === characterLevelId);
     if (!level) throw new RulesError("not-found", "Character level not found");
     const { klassLevel, klass } = this.getSavedKlassLevel(level);
     // The levels in the order the character took them: the edited level's index is its total level less one
+    const edit = this.withoutStaleIncreases(given, rows.levels.indexOf(level), characterLevelId);
+    const { abilityIncreases, hp } = edit;
     this.checks.checkAbilityIncreases(rows.levels.indexOf(level), abilityIncreases);
     this.checks.checkLevel({ klass, ...edit });
     // A new pick the character holds already (at another level, granted, by a modifier, or given by the level's other

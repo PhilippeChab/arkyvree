@@ -5,17 +5,31 @@ import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.
 import { addClassLevels, createCharacter } from "@/scripts/db/seeds/seedCharacter.ts";
 import { db } from "@/server/database/index.ts";
 import { ForbiddenError } from "@/server/errors/index.ts";
-import { Characters, Properties } from "@/server/repositories/index.ts";
+import { CharacterLevelAbilityIncreases, Characters, Properties } from "@/server/repositories/index.ts";
+import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
 import { RulesetSettingsService } from "@/server/services/rulesets/settings/index.ts";
 import { activityTypes } from "@/tests/support/activities.ts";
 import { buildAs } from "@/tests/support/dnd3.5/characters.ts";
+import { getLevelStep } from "@/tests/support/levels.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
-import { createTestUser } from "@/tests/support/users.ts";
+import { createTestUser, makeSession } from "@/tests/support/users.ts";
 import { RULESET_SKILL_POINT_ABILITY_ID } from "@/vocabulary/dnd3.5/properties/index.ts";
 
-/** A human fighter 1 of the fork's, Intelligence 10 and Wisdom 18: its skill points' budget, as the fork reads it. */
-async function fighterBudget(rulesetId: string) {
+/** The core rules' feats at each character level: one at the first, then every third. */
+const CORE_FEATS = [1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0];
+
+/** The core rules' ability increases at each character level: one every fourth. */
+const CORE_INCREASES = [0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1];
+
+/** The core rules' progression, which a fork of theirs reads until it saves its own. */
+const CORE_PROGRESSION = { abilityIncreasesPerLevel: CORE_INCREASES, featsPerLevel: CORE_FEATS };
+
+/**
+ * A human fighter of the fork's, Intelligence 10 and Wisdom 18, of `levels` fighter levels, as the fork builds it, its
+ * row's id and its levels'.
+ */
+async function buildFighter(rulesetId: string, levels = 1) {
   const ctx = await getSeedCtx();
   const scores = { Strength: 10, Dexterity: 10, Constitution: 10, Intelligence: 10, Wisdom: 18, Charisma: 10 };
   const characterId = await createCharacter(db, ctx, {
@@ -32,9 +46,29 @@ async function fighterBudget(rulesetId: string) {
     languages: ["Common"],
     rulesetId,
   });
-  await addClassLevels(db, ctx, characterId, "Fighter", [1], [10]);
+  const numbers = Array.from({ length: levels }, (_, i) => i + 1);
+  const levelIds = await addClassLevels(
+    db,
+    ctx,
+    characterId,
+    "Fighter",
+    numbers,
+    numbers.map(() => 10),
+  );
   const character = await buildAs(DetailedCharacter, (await Characters.findOne(db, { id: characterId }))!);
+  return { character, characterId, levelIds };
+}
+
+/** A human fighter 1 of the fork's, Intelligence 10 and Wisdom 18: its skill points' budget, as the fork reads it. */
+async function fighterBudget(rulesetId: string) {
+  const { character } = await buildFighter(rulesetId);
   return character.components.skills.getSkillBudget().total;
+}
+
+/** The general feats a fighter of `levels` levels of the fork's picks, as the fork builds it. */
+async function fighterGeneralFeats(rulesetId: string, levels: number) {
+  const { character } = await buildFighter(rulesetId, levels);
+  return character.components.aptitudes.getAptitudes()["general"].allowed;
 }
 
 /** A new user's fork of the seeded core rules, and the seeded abilities' ids by name. */
@@ -50,7 +84,7 @@ describe("RulesetSettingsService", () => {
     const { session, fork, abilityMap } = await setup();
     expect(await RulesetSettingsService.getSettings(fork.id)).toEqual({
       id: fork.id,
-      fields: { skillPointAbilityId: abilityMap["Intelligence"] },
+      fields: { ...CORE_PROGRESSION, skillPointAbilityId: abilityMap["Intelligence"] },
     });
     // A human fighter's 2 a level, and the human's 1, four times over at the first: with Intelligence's +0
     expect(await fighterBudget(fork.id)).toBe(12);
@@ -58,19 +92,73 @@ describe("RulesetSettingsService", () => {
     const saved = await RulesetSettingsService.updateSettings(session, fork.id, {
       fields: { skillPointAbilityId: abilityMap["Wisdom"] },
     });
-    expect(saved).toEqual({ id: fork.id, fields: { skillPointAbilityId: abilityMap["Wisdom"] } });
+    expect(saved).toEqual({ id: fork.id, fields: { ...CORE_PROGRESSION, skillPointAbilityId: abilityMap["Wisdom"] } });
     expect(await RulesetSettingsService.getSettings(fork.id)).toEqual(saved);
     // With Wisdom's +4
     expect(await fighterBudget(fork.id)).toBe(28);
 
     // Its own row in place of the copy it held; its source's as they were
-    expect(await Properties.findMany(db, { entityIds: [fork.id], entityType: "rulesets" })).toMatchObject([
-      { type: RULESET_SKILL_POINT_ABILITY_ID, value: abilityMap["Wisdom"] },
+    const own = await Properties.findMany(db, { entityIds: [fork.id], entityType: "rulesets" });
+    expect(own.filter(({ type }) => type === RULESET_SKILL_POINT_ABILITY_ID)).toMatchObject([
+      { value: abilityMap["Wisdom"] },
     ]);
     expect(await RulesetSettingsService.getSettings(fork.rulesetId!)).toMatchObject({
       fields: { skillPointAbilityId: abilityMap["Intelligence"] },
     });
     expect(await activityTypes(session.userId, rulesetsInRules, fork.id)).toEqual(["updateRulesetSettings"]);
+  });
+
+  test("give every character of the fork its feats and ability increases at the levels it says, whatever its class", async () => {
+    const { session, fork } = await setup();
+    // The core rules': two general feats at the fifth level, and the human's bonus feat; an ability increase at the
+    // fourth level, none at the second
+    expect(await fighterGeneralFeats(fork.id, 5)).toBe(3);
+    // The fighter is the seed user's, whose level-up it is
+    const { characterId } = await buildFighter(fork.id);
+    const abilityStep = () => getLevelStep(makeSession(), characterId, "abilities");
+    expect(await abilityStep()).toMatchObject({ isAvailable: false });
+
+    // A feat more at levels 3 and 5, and an ability increase at the second level in place of the fourth
+    const featsPerLevel = CORE_FEATS.map((count, i) => (i === 2 || i === 4 ? count + 1 : count));
+    const abilityIncreasesPerLevel = CORE_INCREASES.map((count, i) => (i === 1 ? 1 : i === 3 ? 0 : count));
+    const saved = await RulesetSettingsService.updateSettings(session, fork.id, {
+      fields: { abilityIncreasesPerLevel, featsPerLevel },
+    });
+    expect(saved.fields).toMatchObject({ abilityIncreasesPerLevel, featsPerLevel });
+    expect(await RulesetSettingsService.getSettings(fork.id)).toEqual(saved);
+
+    expect(await fighterGeneralFeats(fork.id, 3)).toBe(4);
+    expect(await fighterGeneralFeats(fork.id, 5)).toBe(5);
+    expect(await abilityStep()).toMatchObject({ isAvailable: true, picked: false });
+    // Its source's characters follow the core rules still
+    expect(await RulesetSettingsService.getSettings(fork.rulesetId!)).toMatchObject({ fields: CORE_PROGRESSION });
+
+    // None at any level stands for the fork, its source's progression aside
+    const none = Array<number>(20).fill(0);
+    await RulesetSettingsService.updateSettings(session, fork.id, { fields: { abilityIncreasesPerLevel: none } });
+    expect(await RulesetSettingsService.getSettings(fork.id)).toMatchObject({
+      fields: { abilityIncreasesPerLevel: none, featsPerLevel },
+    });
+  });
+
+  test("let a level saved with an increase its Settings no longer give drop it on its edit, never pick one anew", async () => {
+    const { session, fork, abilityMap } = await setup();
+    const { characterId, levelIds } = await buildFighter(fork.id, 4);
+    const fourth = levelIds[3];
+    const strength = [{ abilityId: abilityMap["Strength"], amount: 1 }];
+    await CharacterLevelAbilityIncreases.createMany(db, [{ characterLevelId: fourth, ...strength[0] }]);
+    // The increase moves from the fourth level to the fifth
+    const abilityIncreasesPerLevel = CORE_INCREASES.map((count, i) => (i === 3 ? 0 : i === 4 ? 1 : count));
+    await RulesetSettingsService.updateSettings(session, fork.id, { fields: { abilityIncreasesPerLevel } });
+
+    // The seed user's fighter, its levels' unspent skill points and bonus feats aside
+    const edit = (levelId: string, increases: typeof strength) =>
+      CharacterLevelsService.updateLevel(makeSession(), characterId, levelId, 10, increases, {}, {}, {}, true);
+    expect(edit(levelIds[2], strength)).rejects.toMatchObject({
+      message: "Ability increase is not available at this level",
+    });
+    await edit(fourth, strength);
+    expect(await CharacterLevelAbilityIncreases.findMany(db, { characterLevelIds: [fourth] })).toEqual([]);
   });
 
   test("refuses a setting its rules don't take: an ability the ruleset lacks, none, another field", async () => {
@@ -89,8 +177,18 @@ describe("RulesetSettingsService", () => {
       refusal: "invalid",
       issues: [{ category: "fields.featAdvancement", message: "Not a field of this entity" }],
     });
+    // A count per level past its bounds, or not one a level
+    const twice = CORE_INCREASES.map((count, i) => (i === 3 ? 2 : count));
+    expect(update({ abilityIncreasesPerLevel: twice })).rejects.toMatchObject({
+      refusal: "invalid",
+      issues: [{ category: "fields.abilityIncreasesPerLevel.3" }],
+    });
+    expect(update({ featsPerLevel: CORE_FEATS.slice(1) })).rejects.toMatchObject({
+      refusal: "invalid",
+      issues: [{ category: "fields.featsPerLevel" }],
+    });
     expect(await RulesetSettingsService.getSettings(fork.id)).toMatchObject({
-      fields: { skillPointAbilityId: abilityMap["Intelligence"] },
+      fields: { ...CORE_PROGRESSION, skillPointAbilityId: abilityMap["Intelligence"] },
     });
   });
 

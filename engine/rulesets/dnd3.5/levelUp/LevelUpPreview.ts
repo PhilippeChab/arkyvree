@@ -54,8 +54,9 @@ export default class LevelUpPreview extends PlannedLevelsState {
 
   /** The planned levels (by index) that take an ability increase, after the character's `savedLevelCount` levels. */
   private getAbilityIncreaseLevels(savedLevelCount: number, plannedCount: number) {
+    const levelRules = LevelRules.of(this.view);
     const levels: number[] = [];
-    for (let i = 0; i < plannedCount; i++) if (LevelRules.isAbilityIncreaseLevel(savedLevelCount + i)) levels.push(i);
+    for (let i = 0; i < plannedCount; i++) if (levelRules.isAbilityIncreaseLevel(savedLevelCount + i)) levels.push(i);
     return levels;
   }
 
@@ -100,8 +101,9 @@ export default class LevelUpPreview extends PlannedLevelsState {
    */
   describePreview({ levels, picks = {} }: PreviewRequest) {
     const savedLevelCount = this.character.rows.levels.length;
+    const levelRules = LevelRules.of(this.view);
     const increased = levels.map((level, i) =>
-      LevelRules.isAbilityIncreaseLevel(savedLevelCount + i) ? level : { ...level, abilityIncreases: [] },
+      levelRules.isAbilityIncreaseLevel(savedLevelCount + i) ? level : { ...level, abilityIncreases: [] },
     );
     return this.buildLevelUpPreview(this.buildPlannedLevels(this.getPlannedKlassLevels(increased)), picks);
   }
