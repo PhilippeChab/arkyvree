@@ -1,47 +1,49 @@
 import { describe, expect, test } from "bun:test";
 
-import type { PropertyTypesProvider } from "@/engine/core/customizations/index.ts";
-import { Field, FieldCodec, type FormContext } from "@/engine/core/fields/index.ts";
+import { FieldCodec, type FormContext } from "@/engine/core/fields/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 
-const CODEC = new FieldCodec(
-  {
-    count: Field.when({ field: "flag", values: [true] }, Field.number("COUNT", { default: 1, min: 1 })),
-    flag: Field.flag("FLAG"),
-    group: Field.when(
-      { column: "type", values: ["Weapon"] },
-      Field.group("Group", { known: Field.flag("KNOWN", { absent: null }), level: Field.number("LEVEL") }),
-    ),
-    kind: Field.choice("KIND", ["Arcane", "Divine"] as const),
-    owner: Field.ref("OWNER"),
-    school: Field.text("SCHOOL"),
-    tags: Field.list("TAG"),
-    title: Field.text("TITLE"),
+/**
+ * Fields of every kind, as a vocabulary declares them: their labels, the closed lists, a reference to an ability, a
+ * field on another's condition and a group on a column's, declared among the others (a form shows it last).
+ */
+const FIELDS = {
+  title: { description: "Its title", kind: "text", label: "Title", placeholder: 'e.g., "A"', type: "TITLE" },
+  school: {
+    description: "Its school",
+    kind: "text",
+    label: "School",
+    type: "SCHOOL",
+    values: ["Evocation", "Illusion"],
   },
-  { storesWhen: (fields) => fields.title !== null },
-);
+  flag: { description: "Whether it's on", kind: "flag", label: "Flag", type: "FLAG" },
+  group: {
+    fields: {
+      level: { description: "Its level", kind: "number", label: "Level", type: "LEVEL" },
+      known: { absent: null, description: "Whether it's known", kind: "flag", label: "Known", type: "KNOWN" },
+    },
+    kind: "group",
+    label: "Group",
+    when: { column: "type", values: ["Weapon"] },
+  },
+  count: {
+    default: 1,
+    description: "How many",
+    kind: "number",
+    label: "Count",
+    min: 1,
+    type: "COUNT",
+    when: { field: "flag", values: [true] },
+  },
+  tags: { description: "Its tags", kind: "list", label: "Tags", type: "TAG", values: ["x", "y"] },
+  kind: { description: "Its kind", kind: "choice", label: "Kind", type: "KIND", values: ["Arcane", "Divine"] },
+  owner: { description: "Who owns it", kind: "ref", label: "Owner", references: "abilities", type: "OWNER" },
+} as const;
 
-/** The rules' declarations of the codec's types: their labels, the closed lists, and a reference to an ability. */
-const DECLARATIONS: PropertyTypesProvider = {
-  getDeclarations: () => ({
-    TITLE: { description: "Its title", label: "Title", placeholder: 'e.g., "A"' },
-    SCHOOL: { description: "Its school", label: "School" },
-    FLAG: { description: "Whether it's on", label: "Flag" },
-    COUNT: { description: "How many", label: "Count" },
-    TAG: { description: "Its tags", label: "Tags" },
-    KIND: { description: "Its kind", label: "Kind" },
-    OWNER: { description: "Who owns it", label: "Owner" },
-    LEVEL: { description: "Its level", label: "Level" },
-    KNOWN: { description: "Whether it's known", label: "Known" },
-  }),
-  getReferencedEntityType: (type) => (type === "OWNER" ? "abilities" : null),
-  getValues: (type) => ({ SCHOOL: ["Evocation", "Illusion"], TAG: ["x", "y"] })[type] ?? null,
-};
+const CODEC = new FieldCodec(FIELDS, { storesWhen: (fields) => fields.title !== null });
 
-/** What a form's fields are read with: the declarations, and ids the view resolves by prefixing them. */
+/** What a form's fields are read with: ids the view resolves by prefixing them. */
 const CONTEXT: FormContext = {
-  declarations: DECLARATIONS,
-  entityType: "items",
   resolve: (_type, id) => {
     if (id === "unknown") throw new RulesError("invalid", `Ability ${id} does not belong to this ruleset`);
     return `view-${id}`;
@@ -52,15 +54,16 @@ const CONTEXT: FormContext = {
  * A progression up to level 10, two at most a level: one every 3 levels and one more at the first without a row.
  */
 const PROGRESSION = new FieldCodec({
-  grants: Field.progression("GRANT", { default: { every: 3, extra: [{ amount: 1, level: 1 }] }, levels: 10, max: 2 }),
-});
-
-/** The rules' declaration of the progression's type. */
-const PROGRESSION_DECLARATIONS: PropertyTypesProvider = {
-  getDeclarations: () => ({ GRANT: { description: "What each level grants", label: "Grants" } }),
-  getReferencedEntityType: () => null,
-  getValues: () => null,
-};
+  grants: {
+    default: { every: 3, extra: [{ amount: 1, level: 1 }] },
+    description: "What each level grants",
+    kind: "progression",
+    label: "Grants",
+    levels: 10,
+    max: 2,
+    type: "GRANT",
+  },
+} as const);
 
 /** Rows of `type=value` pairs, in order. */
 function rows(...pairs: [string, string][]) {
@@ -110,10 +113,10 @@ describe("A field codec", () => {
   test("writes a field with a value, none for a default number, an empty text or a false two-state flag", () => {
     const values = { ...CODEC.defaults, flag: false, group: { known: false, level: 2 }, tags: ["x"], title: "A" };
     expect(CODEC.toProperties(values)).toEqual([
-      { type: "KNOWN", value: "false" },
-      { type: "LEVEL", value: "2" },
-      { type: "TAG", value: "x" },
       { type: "TITLE", value: "A" },
+      { type: "LEVEL", value: "2" },
+      { type: "KNOWN", value: "false" },
+      { type: "TAG", value: "x" },
     ]);
     expect(CODEC.toProperties({ ...values, title: "" }).map((row) => row.type)).not.toContain("TITLE");
   });
@@ -121,7 +124,7 @@ describe("A field codec", () => {
   test("writes nothing when the entity keeps no field, and a save's write replaces every type", () => {
     expect(CODEC.toProperties({ ...CODEC.defaults, count: 5 })).toEqual([]);
     expect(CODEC.write({ ...CODEC.defaults, title: "A" })).toEqual({
-      types: ["COUNT", "FLAG", "KNOWN", "LEVEL", "KIND", "OWNER", "SCHOOL", "TAG", "TITLE"],
+      types: ["TITLE", "SCHOOL", "FLAG", "LEVEL", "KNOWN", "COUNT", "TAG", "KIND", "OWNER"],
       values: [{ type: "TITLE", value: "A" }],
     });
   });
@@ -130,9 +133,9 @@ describe("A field codec", () => {
     expect(CODEC.read([{ type: "COUNT", value: "3" }]).count).toBe(1);
     expect(CODEC.toProperties({ ...CODEC.defaults, count: 3, title: "A" })).toEqual([{ type: "TITLE", value: "A" }]);
     expect(CODEC.toProperties({ ...CODEC.defaults, count: 3, flag: true, title: "A" })).toEqual([
-      { type: "COUNT", value: "3" },
-      { type: "FLAG", value: "true" },
       { type: "TITLE", value: "A" },
+      { type: "FLAG", value: "true" },
+      { type: "COUNT", value: "3" },
     ]);
     expect(CODEC.merge({ ...CODEC.defaults, title: "A" }, { count: 2, title: undefined })).toMatchObject({
       count: 2,
@@ -144,8 +147,8 @@ describe("A field codec", () => {
     const template = { ...CODEC.defaults, tags: ["y", "x"], title: "A" };
     expect(CODEC.toOverrides({ ...template, tags: ["x", "y"] }, template)).toEqual([]);
     expect(CODEC.toOverrides({ ...template, group: { known: false, level: null }, title: "B" }, template)).toEqual([
-      { type: "KNOWN", value: "false" },
       { type: "TITLE", value: "B" },
+      { type: "KNOWN", value: "false" },
     ]);
   });
 
@@ -163,20 +166,13 @@ describe("A field codec", () => {
     expect(() => parse({ school: "Sorcery" })).toThrow(RulesError);
   });
 
-  test("refuses a value outside its type's values the entity keeps, a key that's no declared field", () => {
+  test("refuses a value outside its type's values the entity keeps, a key that's no field", () => {
     const kept = { ...CODEC.defaults, school: "Sorcery", tags: ["z"] };
     expect(() => CODEC.parse({ school: "Sorcery" }, { ...CONTEXT, kept })).toThrow(RulesError);
     expect(() => CODEC.parse({ tags: ["z", "x"] }, { ...CONTEXT, kept })).toThrow(RulesError);
     expect(() => CODEC.parse({ title: "A", unknown: "x" }, CONTEXT)).toThrow(
       expect.objectContaining({ issues: [{ category: "fields.unknown", message: "Not a field of this entity" }] }),
     );
-    // A field whose type the entity type doesn't declare is none of its form's, and none a save takes
-    const declaredWithoutTitle = {
-      ...DECLARATIONS,
-      getDeclarations: () => ({ SCHOOL: DECLARATIONS.getDeclarations().SCHOOL }),
-    };
-    expect(() => CODEC.parse({ title: "A" }, { ...CONTEXT, declarations: declaredWithoutTitle })).toThrow(RulesError);
-    expect(CODEC.describe(declaredWithoutTitle, "items").map((field) => field.key)).toEqual(["school"]);
   });
 
   test("drops a field its condition leaves out, read over what the entity keeps", () => {
@@ -192,8 +188,8 @@ describe("A field codec", () => {
     expect(CODEC.resolveReferences({ ...CODEC.defaults, owner: "id-1" }, (id) => `copy-${id}`).owner).toBe("copy-id-1");
   });
 
-  test("describes its fields as a form shows them, in the order their types are declared, groups last", () => {
-    const fields = CODEC.describe(DECLARATIONS, "items");
+  test("describes its fields as a form shows them, in the order they're declared, groups last", () => {
+    const fields = CODEC.describe();
     expect(fields.map((field) => [field.key, field.input])).toEqual([
       ["title", "text"],
       ["school", "choice"],
@@ -222,12 +218,12 @@ describe("A field codec", () => {
 
   test("shows a field in the groups it names, among their own in declared order, its value its own all the same", () => {
     const codec = new FieldCodec({
-      first: Field.group("First", { level: Field.number("LEVEL") }),
-      kind: Field.shownIn(["first", "second"], Field.choice("KIND", ["Arcane", "Divine"] as const)),
-      second: Field.group("Second", { known: Field.flag("KNOWN", { absent: null }) }),
-      title: Field.text("TITLE"),
-    });
-    const fields = codec.describe(DECLARATIONS, "items");
+      title: FIELDS.title,
+      kind: { ...FIELDS.kind, shownIn: ["first", "second"] },
+      first: { fields: { level: FIELDS.group.fields.level }, kind: "group", label: "First" },
+      second: { fields: { known: FIELDS.group.fields.known }, kind: "group", label: "Second" },
+    } as const);
+    const fields = codec.describe();
     // Not on its own: in each group, keyed where its value goes
     expect(fields.map((field) => field.key)).toEqual(["title", "first", "second"]);
     const keysIn = (field: (typeof fields)[number]) =>
@@ -288,8 +284,7 @@ describe("A progression", () => {
   });
 
   test("reads a form's progression sorted by level, refusing a level listed twice or giving past its bound", () => {
-    const parse = (grants: unknown) =>
-      PROGRESSION.parse({ grants }, { ...CONTEXT, declarations: PROGRESSION_DECLARATIONS });
+    const parse = (grants: unknown) => PROGRESSION.parse({ grants }, CONTEXT);
     const given = (...extra: [number, number][]) => extra.map(([level, amount]) => ({ amount, level }));
     expect(parse({ every: 2, extra: given([5, 2], [2, 1]) })).toEqual({
       grants: { every: 2, extra: given([2, 1], [5, 2]) },
@@ -312,7 +307,7 @@ describe("A progression", () => {
   });
 
   test("describes its default and its bounds", () => {
-    expect(PROGRESSION.describe(PROGRESSION_DECLARATIONS, "rulesets")).toEqual([
+    expect(PROGRESSION.describe()).toEqual([
       {
         default: { every: 3, extra: [{ amount: 1, level: 1 }] },
         help: "What each level grants",

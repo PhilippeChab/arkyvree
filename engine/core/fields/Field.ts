@@ -1,5 +1,118 @@
-import type { ProgressionValue } from "@/shared/customization/progression.ts";
+import type { ViewEntities } from "@/engine/core/view/index.ts";
+import type { DeclaredProgression, ProgressionValue } from "@/shared/customization/progression.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
+
+/** What every field declares: when it counts (`when`), and where its form shows it (`shownIn`). */
+interface FieldBase {
+  /**
+   * The groups at its level its form shows it in, among their own fields, rather than on its own (an armor's or a
+   * shield's max Dex bonus in its Armor or Shield section): its value stays its own, read and written at its level.
+   */
+  shownIn?: readonly string[];
+  when?: FieldCondition;
+}
+
+/** What a field with a value of its own declares: the property type that stores it, its label and what it's for. */
+interface LeafBase extends FieldBase {
+  description: string;
+  label: string;
+  type: string;
+}
+
+/** A field's value, by its kind (a group's, its own fields'). */
+type KindValueOf<F extends FieldSpec> = F extends GroupSpec
+  ? FieldValues<F["fields"]>
+  : F extends FlagSpec
+    ? F extends { absent: null }
+      ? boolean | null
+      : boolean
+    : F extends NumberSpec
+      ? F extends { default: number }
+        ? number
+        : number | null
+      : F extends ChoiceSpec
+        ? F["values"][number] | null
+        : F extends ListSpec
+          ? string[]
+          : F extends ProgressionSpec
+            ? ProgressionValue
+            : string | null;
+
+/** A field's value: by its kind (`KindValueOf`), unknown for any field (a kind's fields read without their spec). */
+type ValueOf<F extends FieldSpec> = [FieldSpec] extends [F] ? unknown : KindValueOf<F>;
+
+/** One of `values`, from its first row; none without one, or when its row holds another value. */
+export interface ChoiceSpec extends LeafBase {
+  kind: "choice";
+  values: readonly string[];
+}
+
+/**
+ * True once one of its rows says `"true"`; without any, false, or none when it tells its absence apart (`absent: null`,
+ * an item's: a `"false"` row is written and read too).
+ */
+export interface FlagSpec extends LeafBase {
+  absent?: null;
+  kind: "flag";
+}
+
+/** Fields of their own, read off the same rows (an item's weapon, its armor), which a form shows under `label`. */
+export interface GroupSpec extends FieldBase {
+  fields: Fields;
+  kind: "group";
+  label: string;
+}
+
+/** Every row of its type, in their order: one row per value, among `values` when they're a closed list. */
+export interface ListSpec extends LeafBase {
+  kind: "list";
+  /** An example of one, when it takes any. */
+  placeholder?: string;
+  values?: readonly string[];
+}
+
+/**
+ * A whole number, from the first row that holds one in its bounds; its default without one (none without a
+ * `default`). Written unless it's its default, or always (`write`).
+ */
+export interface NumberSpec extends LeafBase {
+  default?: number;
+  kind: "number";
+  max?: number;
+  min?: number;
+  write?: "always";
+}
+
+/**
+ * What levels give of something (a ruleset's feats, its ability increases): a row of its frequency (`every:3`) and one
+ * per level it gives more at (`5:1`), up to level `levels`, a level giving at most `max` with its frequency's. They
+ * stand for the whole together, so none more is the frequency's row alone: its default without any row. A field of its
+ * own, never a group's: a group's fields hold plain values.
+ */
+export interface ProgressionSpec extends LeafBase {
+  default: DeclaredProgression;
+  kind: "progression";
+  levels: number;
+  max: number;
+}
+
+/**
+ * An entity's id, from its first row (`references`: the kind it names, `abilities`): none without one, which a form
+ * may leave it at unless it's `required`.
+ */
+export interface RefSpec extends LeafBase {
+  kind: "ref";
+  references: Exclude<keyof ViewEntities, "klass_levels">;
+  required?: boolean;
+}
+
+/** A text, from its first row, among `values` when they're a closed list: none without one, none written when empty. */
+export interface TextSpec extends LeafBase {
+  kind: "text";
+  /** An example of one, when it takes any. */
+  placeholder?: string;
+  values?: readonly string[];
+}
 
 /**
  * When a field counts:
@@ -13,59 +126,35 @@ export type FieldCondition =
   | { field: string; values: readonly (boolean | string)[] }
   | { column: string; values: readonly string[] };
 
-/** An entity's fields, by name. */
-export type Fields = Record<string, PropertyField<unknown>>;
+/** An entity's fields, by name, in the order its form shows them. */
+export type Fields = Readonly<Record<string, FieldSpec>>;
 
 /**
- * How a field is stored and read, when it counts (`when`, `FieldCondition`), and where its form shows it (`shownIn`: in
- * the groups at its level it names, which show it with their own fields, its value its own all the same):
- * - a flag is true once one of its rows says `"true"`; without any, it's false, or none when it tells its absence apart
- *   (`absent: null`, an item's: a `"false"` row is written and read too);
- * - a number, a text, a choice and a reference come from the first row of their type that holds one; a number in its
- *   bounds, a choice among its values;
- * - a list is every row of its type, in their order;
- * - a progression is a row of its frequency (`every:3`) and one per level it gives more at (`5:1`), which stand for
- *   the whole together, so none more is the frequency's row alone: its default without any row;
- * - a group holds fields of its own, read off the same rows, which its form shows under its `label`.
+ * A field an entity keeps in its properties, as its ruleset's vocabulary declares it (data, written `as const`, which
+ * types its value: `FieldValues`): its kind, the property type that stores it, its label and what it's for, how its
+ * rows read, when it counts and where its form shows it. A codec reads and writes it (`FieldCodec`).
  */
-export type FieldSpec = (
-  | { absent: false | null; kind: "flag"; type: string }
-  | {
-      default: number | null;
-      kind: "number";
-      max?: number;
-      min?: number;
-      type: string;
-      write: "always" | "unlessDefault";
-    }
-  | { kind: "choice"; type: string; values: readonly string[] }
-  | { fields: Fields; kind: "group"; label: string }
-  | { kind: "list"; type: string }
-  | { default: ProgressionValue; kind: "progression"; levels: number; max: number; type: string }
-  | { kind: "ref"; required: boolean; type: string }
-  | { kind: "text"; type: string }
-) & { shownIn?: readonly string[]; when?: FieldCondition };
+export type FieldSpec =
+  | ChoiceSpec
+  | FlagSpec
+  | GroupSpec
+  | ListSpec
+  | NumberSpec
+  | ProgressionSpec
+  | RefSpec
+  | TextSpec;
 
-/** The values an entity's fields read, by name. */
-export type FieldValues<S extends Fields> = { [K in keyof S]: S[K] extends PropertyField<infer T> ? T : never };
+/** The values an entity's fields read, by name: each by its kind (`ValueOf`), a choice one of its values. */
+export type FieldValues<S extends Fields> = { -readonly [K in keyof S]: ValueOf<S[K]> };
+
+/** A field of a spec that isn't a group: a value of its own, which its property type keeps. */
+export type LeafSpec = Exclude<FieldSpec, GroupSpec>;
 
 /** No fields: a kind whose properties hold none of its own (`FieldCodec.NONE`). */
 export type NoFields = Record<never, never>;
 
-/**
- * A field an entity keeps in its properties, as data a codec reads and writes (`FieldCodec`): its kind, the property type
- * that stores it, and how its rows read, written with `Field`'s kinds. Typed by the value it reads (`T`), which only the
- * types carry.
- */
-export type PropertyField<T> = FieldSpec & { readonly value?: T };
-
-/** The kinds of field an entity keeps in its properties: what a codec's spec is written with. */
+/** What every kind of field shares: when one counts, and the leaves a spec's fields hold. */
 export default class Field {
-  /** One of `values`, from its first row; none without one, or when its row holds another value. */
-  static choice<V extends string>(type: string, values: readonly V[]): PropertyField<V | null> {
-    return { kind: "choice", type, values };
-  }
-
   /**
    * Whether a field counts beside the values of the fields at its level (`values`): always, unless its condition names
    * one of them (`FieldCondition`) whose value isn't one it counts on. A column's condition is its form's alone.
@@ -76,75 +165,8 @@ export default class Field {
     return isOneOf(values[when.field], when.values);
   }
 
-  /** True once one of its rows says so. */
-  static flag(type: string): PropertyField<boolean>;
-  /** True once one of its rows says so, false when they don't, none without a row: written `"false"` too. */
-  static flag(type: string, options: { absent: null }): PropertyField<boolean | null>;
-  static flag(type: string, options?: { absent: null }): PropertyField<boolean | null> {
-    return { absent: options ? null : false, kind: "flag", type };
-  }
-
-  /** Fields of their own, read off the same rows (an item's weapon, its armor), which a form shows under `label`. */
-  static group<S extends Fields>(label: string, fields: S): PropertyField<FieldValues<S>> {
-    return { fields, kind: "group", label };
-  }
-
-  /** Every row of its type, in their order: one row per value. */
-  static list(type: string): PropertyField<string[]> {
-    return { kind: "list", type };
-  }
-
-  /**
-   * A whole number, from the first row that holds one in its bounds; its default without one. Written unless it's its
-   * default, or always (`write`).
-   */
-  static number(
-    type: string,
-    options: { default: number; max?: number; min?: number; write?: "always" | "unlessDefault" },
-  ): PropertyField<number>;
-  /** A whole number, from the first row that holds one in its bounds; none without one. */
-  static number(type: string, options?: { max?: number; min?: number }): PropertyField<number | null>;
-  static number(
-    type: string,
-    options: { default?: number; max?: number; min?: number; write?: "always" | "unlessDefault" } = {},
-  ): PropertyField<number | null> {
-    const { max, min, write = "unlessDefault" } = options;
-    return { default: options.default ?? null, kind: "number", max, min, type, write };
-  }
-
-  /**
-   * What levels give of something (a ruleset's feats, its ability increases): one every `every` levels (none at 0), and
-   * more at the levels it names, up to level `levels`, a level giving at most `max` with its frequency's. Its default
-   * without a row. A field of its own, never a group's: a group's fields hold plain values.
-   */
-  static progression(
-    type: string,
-    options: { default: ProgressionValue; levels: number; max: number },
-  ): PropertyField<ProgressionValue> {
-    return { default: options.default, kind: "progression", levels: options.levels, max: options.max, type };
-  }
-
-  /** An entity's id, from its first row: none without one, which a form may leave it at unless it's `required`. */
-  static ref(type: string, options: { required?: boolean } = {}): PropertyField<string | null> {
-    return { kind: "ref", required: options.required ?? false, type };
-  }
-
-  /**
-   * A field its form shows in the groups at its level it names (`groups`), among their own fields, rather than on its
-   * own: an armor's or a shield's max Dex bonus in its Armor or Shield section. Its value stays its own, read and
-   * written at its level as any other field's.
-   */
-  static shownIn<F extends PropertyField<unknown>>(groups: readonly string[], field: F): F {
-    return { ...field, shownIn: groups };
-  }
-
-  /** A text, from its first row: none without one, and none written when it's empty. */
-  static text(type: string): PropertyField<string | null> {
-    return { kind: "text", type };
-  }
-
-  /** A field that counts only on a condition (`FieldCondition`): another field's value, or a column's. */
-  static when<F extends PropertyField<unknown>>(condition: FieldCondition, field: F): F {
-    return { ...field, when: condition };
+  /** The fields that hold a value of their own, a group's too, in the spec's order. */
+  static leavesOf(fields: Fields): LeafSpec[] {
+    return Object.values(fields).flatMap((field) => (field.kind === "group" ? Field.leavesOf(field.fields) : [field]));
   }
 }

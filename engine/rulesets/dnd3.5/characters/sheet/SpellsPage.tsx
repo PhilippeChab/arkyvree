@@ -1,10 +1,10 @@
 import { Page, Text, View } from "@react-pdf/renderer";
 
 import SpellGroups from "@/engine/rulesets/dnd3.5/characters/description/SpellGroups.ts";
+import { POWER_FIELDS } from "@/engine/rulesets/dnd3.5/entities/powers/fields.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import { formatPropertyType } from "@/shared/customization/properties.ts";
 import {
-  ENTITY_PROPERTY_TYPES,
   SPELL_AREA_OF_EFFECT,
   SPELL_CASTING_TIME,
   SPELL_COMPONENT,
@@ -39,8 +39,8 @@ const SPELL_PROPERTY_ABBR: Record<string, { full: string; short: string }> = {
   [SPELL_DURATION]: { short: "Dur", full: "Duration" },
   [SPELL_RESISTANCE]: { short: "SR", full: "Spell Resistance" },
 };
-/** The spell properties in a 3.5 stat block's order (the property types' registry); the others follow by name. */
-const SPELL_PROPERTY_ORDER = Object.keys(ENTITY_PROPERTY_TYPES.powers ?? {});
+/** The spell properties in a 3.5 stat block's order (the order its fields are declared in); the others follow by name. */
+const SPELL_PROPERTY_ORDER = POWER_FIELDS.types;
 
 const SPELL_PROPERTY_ORDER_INDEX = new Map(SPELL_PROPERTY_ORDER.map((k, i) => [k, i]));
 

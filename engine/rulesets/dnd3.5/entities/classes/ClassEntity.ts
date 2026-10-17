@@ -64,7 +64,7 @@ export default class ClassEntity extends RulesetEntity<
 
   /** The fields a class level's form shows, as the ruleset declares them: its base attack bonus, its skill points. */
   describeLevelFields() {
-    return CLASS_LEVEL_FIELDS.describe(this.rulesetData.propertyTypes, "klass_levels");
+    return CLASS_LEVEL_FIELDS.describe();
   }
 
   /** A class's levels (`klassId`): described, and what saving or deleting one writes. Refused without the class. */

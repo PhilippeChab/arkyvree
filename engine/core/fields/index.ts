@@ -1,14 +1,7 @@
-export {
-  default as Field,
-  type FieldCondition,
-  type Fields,
-  type FieldSpec,
-  type FieldValues,
-  type NoFields,
-  type PropertyField,
-} from "./Field.ts";
+export type { Fields, FieldValues, LeafSpec, NoFields } from "./Field.ts";
 export { default as FieldCodec } from "./FieldCodec.ts";
 export type { FormContext } from "./FieldForms.ts";
+export { default as FieldPropertyTypes } from "./FieldPropertyTypes.ts";
 export type {
   ChoiceFormField,
   EntityFieldGroupValues,

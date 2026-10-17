@@ -55,7 +55,7 @@ export type ReferenceOwner =
  * ruleset), and what an in-use check counts (`exists`). An entity's own rows aren't among them,
  * since they go with it: a feat's or a spell's links to its lists, a class's skills and levels. A customization names
  * its owner by type and id, and goes with it (`docs/persistence.md`); a property naming an ability by its id
- * (`PROPERTY_REFERENCES`) names an entity no ruleset copies or deletes.
+ * (a field's `references`) names an entity no ruleset copies or deletes.
  */
 export const ENTITY_REFERENCES: Record<ReferencedType, EntityReference[]> = {
   abilities: [
