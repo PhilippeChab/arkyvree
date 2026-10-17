@@ -30,7 +30,7 @@ import { rulesetOptionsQuery } from "@/client/src/lib/queries.ts";
 import { requiredRules, wholeNumberRules } from "@/client/src/lib/validation.ts";
 import type { EntityField, RulesetFields } from "@/client/src/pages/rulesets/details/rulesetQueries.ts";
 import { useEntityFields } from "@/client/src/pages/rulesets/hooks/index.ts";
-import { countRoomAt } from "@/shared/customization/progression.ts";
+import { countRoomAt, findProgressionIssues } from "@/shared/customization/progression.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
 
 import { choiceOptions, isFieldShown, noneLabel, valueAt } from "./entityFields.ts";
@@ -322,7 +322,16 @@ function ProgressionInput<T extends FieldValues>({ field, form, help }: FieldInp
   const extra: ProgressionExtra[] = Array.isArray(watched) ? watched : [];
   // One at most a level: each listed level gives one, which its frequency mustn't give already
   const givesOne = field.max === 1;
-  const roomAt = (level: number) => countRoomAt(typeof every === "number" ? every : 0, level, field.max);
+  const frequency = typeof every === "number" ? every : 0;
+  const roomAt = (level: number) => countRoomAt(frequency, level, field.max);
+  // What's wrong with a row's part, with its value as typed: the save's own checks
+  const issueAt = (index: number, part: "amount" | "level", value: number) => {
+    const typed = extra.map((given, row) => (row === index ? { ...given, [part]: value } : given));
+    const issue = findProgressionIssues({ every: frequency, extra: typed }, field.max).find(
+      (found) => found.index === index && found.part === part,
+    );
+    return issue?.message ?? true;
+  };
   // A level's checks read the other levels and the frequency: once a submit has shown them, they follow either
   const levelsListed = extra.map(({ level }) => level).join(",");
   const { isSubmitted } = form.formState;
@@ -363,10 +372,7 @@ function ProgressionInput<T extends FieldValues>({ field, form, help }: FieldInp
               control={control}
               name={formPath<T>(`${path}.extra.${index}.level`)}
               rules={wholeNumberRules(1, "Level is required", field.levels, [
-                (level) =>
-                  extra.filter((given) => given.level === level).length <= 1 || `Level ${level} is listed twice`,
-                (level) =>
-                  !givesOne || roomAt(level) > 0 || `Level ${level} gives one already, every ${String(every)} levels`,
+                (level) => issueAt(index, "level", level),
               ])}
               number
               label="Level"
@@ -380,13 +386,7 @@ function ProgressionInput<T extends FieldValues>({ field, form, help }: FieldInp
                 control={control}
                 name={formPath<T>(`${path}.extra.${index}.amount`)}
                 rules={wholeNumberRules(1, "Amount is required", field.max, [
-                  (amount) => {
-                    const level = extra[index]?.level ?? 0;
-                    const room = roomAt(level);
-                    return (
-                      amount <= room || `Level ${level} would give ${amount + field.max - room}, at most ${field.max}`
-                    );
-                  },
+                  (amount) => issueAt(index, "amount", amount),
                 ])}
                 number
                 label="Amount"
@@ -398,7 +398,7 @@ function ProgressionInput<T extends FieldValues>({ field, form, help }: FieldInp
               <Box sx={{ pt: 1 }}>
                 <RowAction
                   icon={DeleteIcon}
-                  label={`Remove Level ${String(extra[index]?.level ?? "")}`.trim()}
+                  label={Number.isInteger(extra[index]?.level) ? `Remove Level ${extra[index].level}` : "Remove Level"}
                   intent="destructive"
                   onClick={() => remove(index)}
                 />

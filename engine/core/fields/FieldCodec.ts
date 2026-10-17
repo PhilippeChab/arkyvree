@@ -123,13 +123,13 @@ export default class FieldCodec<S extends Fields> {
   }
 
   /**
-   * A progression off its rows' values: its frequency's first (`every:3`), its default's without one, and each level's
-   * first more (`5:1`) in its bounds, giving at most its bound with its frequency's, by level; its default without any
-   * row.
+   * A progression off its rows' values: its frequency's first (`every:3`), and each level's first more (`5:1`) in its
+   * bounds, giving at most its bound with its frequency's, by level; its default without a frequency in its bounds.
    */
   private static readProgression(field: ProgressionSpec, values: string[]): ProgressionValue {
-    if (values.length === 0) return copyProgression(field.default);
     const every = values.map((value) => /^every:(\d+)$/.exec(value)?.[1]).find((match) => match !== undefined);
+    // Its rows stand for the whole together: without a frequency in its bounds, as a number past its bounds, its default
+    if (every === undefined || Number(every) > field.levels) return copyProgression(field.default);
     const extra = new Map<number, number>();
     for (const value of values) {
       const match = /^(\d+):(\d+)$/.exec(value);
@@ -137,8 +137,7 @@ export default class FieldCodec<S extends Fields> {
       const [level, amount] = [Number(match[1]), Number(match[2])];
       if (level >= 1 && level <= field.levels && amount >= 1 && !extra.has(level)) extra.set(level, amount);
     }
-    // A frequency past its last level reads as its default's, as a number past its bounds does
-    const frequency = every === undefined || Number(every) > field.levels ? field.default.every : Number(every);
+    const frequency = Number(every);
     // A level gives at most its bound with its frequency's: what's past it reads as its bound, a level its frequency
     // fills gives none more
     for (const [level, amount] of extra) {

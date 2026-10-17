@@ -274,13 +274,10 @@ describe("A progression", () => {
         ],
       },
     });
-    // A frequency past its last level reads as its default's
-    expect(PROGRESSION.read(rows(["GRANT", "every:11"]))).toEqual({ grants: { every: 3, extra: [] } });
-    // A frequency's row alone: none more; more without a frequency's row: its default's
+    // A frequency's row alone: none more; without a frequency in its bounds, its default
     expect(PROGRESSION.read(rows(["GRANT", "every:0"]))).toEqual({ grants: { every: 0, extra: [] } });
-    expect(PROGRESSION.read(rows(["GRANT", "6:1"]))).toEqual({
-      grants: { every: 3, extra: [{ amount: 1, level: 6 }] },
-    });
+    for (const stored of [rows(["GRANT", "every:11"], ["GRANT", "5:1"]), rows(["GRANT", "6:1"])])
+      expect(PROGRESSION.read(stored)).toEqual(PROGRESSION.defaults);
   });
 
   test("writes its frequency's row and one per level it gives more at, which read back", () => {

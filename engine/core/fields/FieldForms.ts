@@ -4,7 +4,7 @@ import type { PropertyDeclaration, PropertyTypesProvider } from "@/engine/core/c
 import RulesError from "@/engine/core/RulesError.ts";
 import type { ViewEntities } from "@/engine/core/view/index.ts";
 import type { PropertyEntityType } from "@/shared/customization/entities.ts";
-import { copyProgression, countRoomAt } from "@/shared/customization/progression.ts";
+import { copyProgression, findProgressionIssues } from "@/shared/customization/progression.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 
 import Field, { type FieldCondition, type Fields, type FieldSpec } from "./Field.ts";
@@ -140,20 +140,9 @@ export default class FieldForms {
     });
     return z
       .strictObject({ every: z.number().int().min(0).max(levels), extra: z.array(extra) })
-      .superRefine(({ every, extra: levelsGiven }, context) => {
-        const seen = new Set<number>();
-        for (const [index, { amount, level }] of levelsGiven.entries()) {
-          if (seen.has(level)) {
-            const message = `Level ${level} is listed twice`;
-            context.addIssue({ code: "custom", path: ["extra", index, "level"], message });
-          }
-          seen.add(level);
-          if (amount > countRoomAt(every, level, max)) {
-            // One at most a level gives no amount to change: its level is what's wrong
-            const message = `Level ${level} would give ${amount + max - countRoomAt(every, level, max)}, at most ${max}`;
-            context.addIssue({ code: "custom", path: ["extra", index, max === 1 ? "level" : "amount"], message });
-          }
-        }
+      .superRefine((value, context) => {
+        for (const { index, message, part } of findProgressionIssues(value, max))
+          context.addIssue({ code: "custom", path: ["extra", index, part], message });
       })
       .transform(({ every, extra: levelsGiven }) => ({
         every,

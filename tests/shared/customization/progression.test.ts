@@ -5,6 +5,7 @@ import {
   countProgressionAt,
   countRegularAt,
   countRoomAt,
+  findProgressionIssues,
 } from "@/shared/customization/progression.ts";
 
 describe("A progression", () => {
@@ -22,5 +23,19 @@ describe("A progression", () => {
     const copy = copyProgression(original);
     copy.extra[0].amount = 2;
     expect(original.extra[0].amount).toBe(1);
+  });
+
+  test("finds a level listed twice, both of them, and one giving past its bound, by the part to change", () => {
+    const given = (...extra: [number, number][]) => extra.map(([level, amount]) => ({ amount, level }));
+    expect(findProgressionIssues({ every: 3, extra: given([2, 1], [5, 9]) }, 10)).toEqual([]);
+    expect(findProgressionIssues({ every: 3, extra: given([2, 1], [2, 1], [6, 10]) }, 10)).toEqual([
+      { index: 0, message: "Level 2 is listed twice", part: "level" },
+      { index: 1, message: "Level 2 is listed twice", part: "level" },
+      { index: 2, message: "Level 6 would give 11, at most 10", part: "amount" },
+    ]);
+    // One at most a level: its level is what's wrong
+    expect(findProgressionIssues({ every: 1, extra: given([3, 1]) }, 1)).toEqual([
+      { index: 0, message: "Level 3 gives one already, every level", part: "level" },
+    ]);
   });
 });
