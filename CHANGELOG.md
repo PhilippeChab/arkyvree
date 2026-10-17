@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Rulesets choose the levels that give every character a feat or an ability score increase
+
 ## 0.6.0 — 2026-10-12
 
 - Character sheet: classes are listed under the name, with a button to add a level

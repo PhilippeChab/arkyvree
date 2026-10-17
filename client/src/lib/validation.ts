@@ -81,14 +81,23 @@ export function wholeNumberError(value: number, min: number, max?: number) {
  * React Hook Form rules for a whole number of at least `min` (any, without one), for a number field
  * (`<FormTextField number />`). Use these rather than native `min`: the browser's own check would block the submit
  * before the field shows why. An emptied number field holds NaN, which a request sends as null: `required` says why it
- * can't be empty, or is `false` for one its save sends empty on purpose (a cleared age).
+ * can't be empty, or is `false` for one its save sends empty on purpose (a cleared age). A whole number then passes
+ * its field's own `checks`, in order, the first that fails saying why (a progression's level, listed once).
  */
-export function wholeNumberRules(min: number | undefined, required: string | false, max?: number) {
+export function wholeNumberRules(
+  min: number | undefined,
+  required: string | false,
+  max?: number,
+  checks: readonly ((value: number) => string | true)[] = [],
+) {
   return {
     required: required || undefined,
     ...(min !== undefined && { min: { value: min, message: `Minimum ${min}` } }),
     ...(max !== undefined && { max: { value: max, message: `Maximum ${max}` } }),
-    validate: (value: unknown) =>
-      typeof value !== "number" || Number.isNaN(value) || Number.isInteger(value) || "Whole numbers only",
+    validate: (value: unknown) => {
+      if (typeof value !== "number" || Number.isNaN(value)) return true;
+      if (!Number.isInteger(value)) return "Whole numbers only";
+      return checks.map((check) => check(value)).find((result) => result !== true) ?? true;
+    },
   };
 }

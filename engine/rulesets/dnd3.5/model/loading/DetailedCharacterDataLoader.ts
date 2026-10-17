@@ -2,6 +2,7 @@ import { CharacterDataLoader, type LoadedCharacter, type ModifierSource } from "
 import type { AbilityIncrease, CharacterRows } from "@/engine/core/module/index.ts";
 import { type RulesetView } from "@/engine/core/view/index.ts";
 import { type SkillFieldValues } from "@/engine/rulesets/dnd3.5/entities/skills/fields.ts";
+import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import { include } from "@/lib/mixins.ts";
 import type {
   Character,
@@ -24,7 +25,7 @@ import type { CustomizedClassLevel, CustomizedFeat, CustomizedPower, CustomizedR
  */
 type LoadedParts = Omit<
   LoadedCharacterData,
-  keyof LoadedCharacter | "character" | "skillFields" | "skillPointAbilityId"
+  keyof LoadedCharacter | "character" | "levelRules" | "skillFields" | "skillPointAbilityId"
 > & {
   klassEntityIds: string[];
 };
@@ -57,6 +58,8 @@ export interface LoadedCharacterData extends LoadedCharacter {
   klassSkills: KlassSkill[];
   /** The languages it picked, as its rows store them. */
   languages: Language[];
+  /** What its levels give it whatever its classes, by its ruleset's Settings: its general feats, its increases. */
+  levelRules: LevelRules;
   /**
    * The powers it knows, each in its pool: its levels' picks and grants as it loads, then those its modifiers make it
    * know as they apply in the build's rounds (`PossessesVirtually`), and those its lists make it know as its
@@ -109,7 +112,8 @@ export default class DetailedCharacterDataLoader extends include(
    * The character's ability scores and increases, its levels, its picks and grants, each with its customizations, and
    * its classes' fields.
    */
-  protected override partsOf(rows: CharacterRows, { rulesetData }: RulesetView): LoadedParts {
+  protected override partsOf(rows: CharacterRows, view: RulesetView): LoadedParts {
+    const { rulesetData } = view;
     // The character's race, from the view: racesById resolves a stored id (RulesetComposition)
     const race = rulesetData.racesById.get(this.character.raceId);
     if (!race) throw new Error("Race not found");
@@ -131,7 +135,11 @@ export default class DetailedCharacterDataLoader extends include(
     const dcAbilities = { klassBonusSpellAbilityMap: klassProperties.klassBonusSpellAbilityMap, klassLevels };
     return {
       characterAbilityScores: resolve(rows.abilities).map((ca) => this.buildAbilityScore(ca, abilityLookup)),
-      abilityIncreases: resolve(rows.picks.abilityIncreases).map(({ abilityId, amount }) => ({ abilityId, amount })),
+      abilityIncreases: this.readAbilityIncreases(
+        resolve(rows.picks.abilityIncreases),
+        levels.characterLevels,
+        LevelRules.of(view),
+      ),
       race: this.toCustomizedRace(race, rulesetData),
       languages,
       characterLevels: levels.characterLevels,
@@ -175,5 +183,23 @@ export default class DetailedCharacterDataLoader extends include(
         power.free ? { modifiers: power.modifiers } : power,
       ),
     ];
+  }
+
+  /**
+   * The ability increases (`increases`, as the view resolves them) of the character's levels (`characterLevels`, in
+   * order) that take one by its ruleset's Settings (`levelRules`): one its Settings since moved off its level counts
+   * for nothing, as its level's edit opens it without it (`describeLevel`).
+   */
+  private readAbilityIncreases(
+    increases: CharacterRows["picks"]["abilityIncreases"],
+    characterLevels: CharacterLevel[],
+    levelRules: LevelRules,
+  ) {
+    const taking = new Set(
+      characterLevels.filter((_, before) => levelRules.isAbilityIncreaseLevel(before)).map(({ id }) => id),
+    );
+    return increases
+      .filter(({ characterLevelId }) => taking.has(characterLevelId))
+      .map(({ abilityId, amount }) => ({ abilityId, amount }));
   }
 }

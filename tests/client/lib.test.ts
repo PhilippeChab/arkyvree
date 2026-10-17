@@ -158,6 +158,20 @@ describe("Form rules", () => {
     expect([validate(3), validate(2.5), validate(Number.NaN)]).toEqual([true, "Whole numbers only", true]);
     expect(min).toEqual({ value: 1, message: "Minimum 1" });
   });
+
+  test("check a whole number by its field's own checks, the first that fails saying why", () => {
+    const { validate } = wholeNumberRules(1, "Required", 20, [
+      (level) => level !== 3 || "Level 3 is listed twice",
+      (level) => level % 2 === 1 || "Odd levels only",
+    ]);
+    expect([validate(5), validate(3), validate(4), validate(2.5), validate(Number.NaN)]).toEqual([
+      true,
+      "Level 3 is listed twice",
+      "Odd levels only",
+      "Whole numbers only",
+      true,
+    ]);
+  });
 });
 
 describe("An entity type", () => {

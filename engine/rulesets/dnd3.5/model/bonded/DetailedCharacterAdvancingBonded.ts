@@ -1,10 +1,10 @@
-import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import {
   ANIMAL_BAB_PER_HIT_DIE,
   ANIMAL_HIT_DIE_AVERAGE,
   ANIMAL_SAVE_PROGRESSIONS,
   ANIMAL_SKILL_POINTS_PER_HIT_DIE,
   type BondedRaceStatBlock,
+  CREATURE_FEAT_HIT_DICE_INTERVAL,
 } from "@/vocabulary/dnd3.5/bondedCreatures.ts";
 import { SAVE_PROGRESSIONS } from "@/vocabulary/dnd3.5/classes.ts";
 
@@ -17,11 +17,11 @@ import DetailedCharacterBonded from "./DetailedCharacterBonded.ts";
 export default abstract class DetailedCharacterAdvancingBonded extends DetailedCharacterBonded {
   /**
    * A creature's feats at its total hit dice: as many as the Monster Manual gives, one at the first hit die and one more
-   * every third (`LevelRules.countGeneralFeats`, a character's general feats' rule). Its stat block's base feats,
-   * then enough of its `featPriority`, in order, to reach that count.
+   * every third (`CREATURE_FEAT_HIT_DICE_INTERVAL`), whatever its ruleset's Settings give a character's levels. Its
+   * stat block's base feats, then enough of its `featPriority`, in order, to reach that count.
    */
   static scaleFeats(stats: BondedRaceStatBlock, totalHD: number): string[] {
-    const count = LevelRules.countGeneralFeats(Math.max(1, totalHD));
+    const count = Math.floor(Math.max(1, totalHD) / CREATURE_FEAT_HIT_DICE_INTERVAL) + 1;
     const base = stats.baseFeats ?? [];
     const priority = stats.featPriority ?? [];
     const extras = priority.slice(0, Math.max(0, count - base.length));

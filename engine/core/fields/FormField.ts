@@ -1,3 +1,5 @@
+import type { ProgressionValue } from "@/shared/customization/progression.ts";
+
 /** What every field of a form has. */
 interface FormFieldBase {
   /** What it's for, as its ruleset says. */
@@ -55,6 +57,17 @@ export interface NumberFormField extends FormFieldBase {
   min?: number;
 }
 
+/**
+ * What levels give of something (`ProgressionValue`): a frequency, and more at the levels it names, each up to level
+ * `levels` and giving at most `max` with its frequency's; its `default` without one of its own.
+ */
+export interface ProgressionFormField extends FormFieldBase {
+  default: ProgressionValue;
+  input: "progression";
+  levels: number;
+  max: number;
+}
+
 /** An entity of the ruleset, by its id (`references`: its kind, `abilities`): none too, unless it's `required`. */
 export interface RefFormField extends FormFieldBase {
   input: "ref";
@@ -69,17 +82,22 @@ export interface TextFormField extends FormFieldBase {
   placeholder?: string;
 }
 
-/** A field's value as a form sends it: a flag's, a number's, a text's or a choice's, a list's, a group's; null none. */
-export type EntityFieldValue = boolean | number | string | string[] | null | EntityFieldGroupValues;
+/**
+ * A field's value as a form sends it: a flag's, a number's, a text's or a choice's, a list's, a progression's, a
+ * group's; null none.
+ */
+export type EntityFieldValue = boolean | number | string | string[] | null | EntityFieldGroupValues | ProgressionValue;
 
 /**
  * A field of an entity's form, as its ruleset declares it (`FieldCodec.describe`): its label, what it's for, and the
- * input it takes, each with what it needs (a choice's options, a number's bounds, a reference's kind).
+ * input it takes, each with what it needs (a choice's options, a number's bounds, a progression's default and
+ * bounds, a reference's kind).
  */
 export type FormField =
   | ChoiceFormField
   | FlagFormField
   | GroupFormField
   | NumberFormField
+  | ProgressionFormField
   | RefFormField
   | TextFormField;

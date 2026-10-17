@@ -32,9 +32,9 @@ export default class DetailedCharacter extends include(
     return new DetailedCharacterDataLoader(this.character);
   }
 
-  /** The general feats the character has at its total level (`LevelRules.countGeneralFeats`). */
+  /** The general feats the character has at its total level, by its ruleset's Settings (`LevelRules`). */
   protected countGeneralFeats(totalLevel: number): number {
-    return LevelRules.countGeneralFeats(totalLevel);
+    return this.data.levelRules.countGeneralFeats(totalLevel);
   }
 
   /**

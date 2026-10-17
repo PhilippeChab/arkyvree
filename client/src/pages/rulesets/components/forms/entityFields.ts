@@ -7,11 +7,15 @@ import type { InferRequestType } from "hono/client";
 
 import type { EntityField } from "@/client/src/pages/rulesets/details/rulesetQueries.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
+import { copyProgression } from "@/shared/customization/progression.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 
-/** A field's value, but a group's: a flag's, a number's, a text's or a choice's, a list's; null, none. */
-type LeafValue = boolean | number | string | string[] | null;
+/** A field's value, but a group's: a flag's, a number's, a text's, a choice's, a list's, a progression's; null none. */
+type LeafValue = boolean | number | string | string[] | null | ProgressionValue;
+
+/** What levels give of something, as a progression's field holds it: a frequency, and more at the levels it names. */
+type ProgressionValue = Extract<EntityField, { input: "progression" }>["default"];
 
 /** A field of an entity's form that holds a value of its own: any but a group. */
 type ValueField = Exclude<EntityField, { input: "group" }>;
@@ -21,13 +25,18 @@ export type EntityFieldValues = NonNullable<
   InferRequestType<(typeof rpc.api.rulesets)[":id"]["skills"]["$post"]>["json"]["fields"]
 >;
 
-/** A field's value in an empty form: false (none, for a three-state flag), a number's default, no text, no choice. */
+/**
+ * A field's value in an empty form: false (none, for a three-state flag), a number's default, a progression's own copy
+ * of its default, no text, no choice.
+ */
 function emptyValueOf(field: ValueField): LeafValue {
   switch (field.input) {
     case "flag":
       return field.nullable ? null : false;
     case "number":
       return field.default;
+    case "progression":
+      return copyProgression(field.default);
     case "choice":
     case "text":
       return field.multiple ? [] : "";
@@ -43,11 +52,23 @@ function formValueOf(field: ValueField, value: unknown): LeafValue {
       return typeof value === "boolean" ? value : emptyValueOf(field);
     case "number":
       return typeof value === "number" ? value : emptyValueOf(field);
+    case "progression":
+      return isProgression(value) ? copyProgression(value) : emptyValueOf(field);
     default:
       if (field.input !== "ref" && field.multiple)
         return Array.isArray(value) ? value.filter((item) => typeof item === "string") : [];
       return typeof value === "string" ? value : "";
   }
+}
+
+/** Whether a value is a progression's: a frequency, and the levels it gives more at, each its level and its amount. */
+function isProgression(value: unknown): value is ProgressionValue {
+  return (
+    isRecord(value) &&
+    typeof value.every === "number" &&
+    Array.isArray(value.extra) &&
+    value.extra.every((given) => isRecord(given) && typeof given.level === "number" && typeof given.amount === "number")
+  );
 }
 
 /** The fields that hold a value, a group's among them, each once: one shown in several groups too. */
@@ -61,11 +82,13 @@ function valueFieldsOf(fields: readonly EntityField[]): ValueField[] {
  * (`weapon.damage`), others by their own, a field shown in a group but held by the entity (an armor's max Dex) too.
  */
 function valuesByKey(entries: [string, LeafValue][]): EntityFieldValues {
-  const values: Record<string, LeafValue | Record<string, LeafValue>> = {};
+  const values: EntityFieldValues = {};
+  const groups: Record<string, Record<string, Exclude<LeafValue, ProgressionValue>>> = {};
   for (const [key, value] of entries) {
     const [name, ...inner] = key.split(".");
     if (inner.length === 0) values[name] = value;
-    else values[name] = { ...(isRecord(values[name]) ? values[name] : {}), [inner.join(".")]: value };
+    // A group holds plain values: a progression is a field of its own
+    else if (!isProgression(value)) values[name] = groups[name] = { ...groups[name], [inner.join(".")]: value };
   }
   return values;
 }

@@ -105,6 +105,20 @@ describe("an entity's fields in its form", () => {
     });
   });
 
+  test("hold a progression: its default in an empty form, an entity's when it's of its shape, each a copy", () => {
+    const core = { every: 3, extra: [{ amount: 1, level: 1 }] };
+    const fields: EntityField[] = [
+      { ...BASE, key: "feats", label: "Feats", input: "progression", default: core, levels: 20, max: 2 },
+    ];
+    const empty = emptyFieldValues(fields);
+    expect(empty).toEqual({ feats: core });
+    expect(empty.feats).not.toBe(core);
+    const own = { every: 0, extra: [{ amount: 2, level: 5 }] };
+    expect(toFieldValues(fields, { feats: own })).toEqual({ feats: own });
+    for (const feats of [[1, 0], { every: 3 }, { every: 3, extra: [{ level: "5", amount: 1 }] }, null])
+      expect(toFieldValues(fields, { feats })).toEqual({ feats: core });
+  });
+
   test("join a form's values once they load: a new entity's empty, an entity's own", () => {
     const form: { fields?: EntityFieldValues; name: string } = { name: "" };
     expect(withEntityFields(form, undefined)).toEqual({ name: "", fields: {} });
