@@ -293,8 +293,8 @@ function isWide(field: EntityField) {
 }
 
 /**
- * A count per level, under its label: each level's number, bound as one field (its first input takes its ref, so a
- * failed submit focuses it), a count out of its bounds saying why under its own input. Read-only, each its value.
+ * A count per level, under its label: each level's number, bound as one field (its first count out of its bounds takes
+ * its ref, so a failed submit focuses it), each saying why under its own input. Read-only, each its value.
  */
 function PerLevelInput<T extends FieldValues>({ field, form, help }: FieldInputProps<T, PerLevelField>) {
   const labelId = useId();
@@ -311,11 +311,17 @@ function PerLevelInput<T extends FieldValues>({ field, form, help }: FieldInputP
     rules: { validate: (counts: unknown) => Array.isArray(counts) && counts.every(isCountValid) },
   });
   const counts: number[] = Array.isArray(value) ? value : [];
+  // A failed submit focuses the first count out of its bounds
+  const focused = Math.max(
+    0,
+    counts.findIndex((count) => !isCountValid(count)),
+  );
+  const described = help && field.help !== "";
   // In place, so changing a count back leaves the form clean
   const setCount = (level: number, count: number) =>
     onChange(counts.map((kept, index) => (index === level ? count : kept)));
   return (
-    <Stack role="group" aria-labelledby={labelId} aria-describedby={help ? helpId : undefined} spacing={1.5}>
+    <Stack role="group" aria-labelledby={labelId} aria-describedby={described ? helpId : undefined} spacing={1.5}>
       <Box id={labelId}>
         <SubsectionTitle>{field.label}</SubsectionTitle>
       </Box>
@@ -325,7 +331,7 @@ function PerLevelInput<T extends FieldValues>({ field, form, help }: FieldInputP
           return (
             <TextField
               key={index}
-              inputRef={index === 0 ? ref : undefined}
+              inputRef={index === focused ? ref : undefined}
               label={`Level ${index + 1}`}
               type="number"
               value={count}
@@ -341,7 +347,7 @@ function PerLevelInput<T extends FieldValues>({ field, form, help }: FieldInputP
           );
         })}
       </Box>
-      {help && <FormHelperText id={helpId}>{field.help}</FormHelperText>}
+      {described && <FormHelperText id={helpId}>{field.help}</FormHelperText>}
     </Stack>
   );
 }

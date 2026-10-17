@@ -24,7 +24,8 @@ export type Fields = Record<string, PropertyField<unknown>>;
  *   bounds, a choice among its values;
  * - a list is every row of its type, in their order;
  * - a count per level is a row per level, its count after its level (`3:2`), every level's, a zero's too, so the rows
- *   of an entity that holds them stand for the whole: a level's default without its row;
+ *   of an entity that holds them stand for the whole: a level's default without its row, a count past its bound its
+ *   bound;
  * - a group holds fields of its own, read off the same rows, which its form shows under its `label`.
  */
 export type FieldSpec = (

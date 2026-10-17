@@ -237,7 +237,7 @@ describe("A field codec", () => {
 });
 
 describe("A count per level", () => {
-  test("reads each level's first count in its bounds, and its default's without one", () => {
+  test("reads each level's first count, at most its bound, and its default without one", () => {
     expect(PER_LEVEL.defaults).toEqual({ grants: [1, 0, 2] });
     expect(PER_LEVEL.read([])).toEqual(PER_LEVEL.defaults);
     const stored = rows(["GRANT", "2:1"], ["GRANT", "2:2"], ["GRANT", "3:5"], ["GRANT", "1"], ["GRANT", "4:1"]);
