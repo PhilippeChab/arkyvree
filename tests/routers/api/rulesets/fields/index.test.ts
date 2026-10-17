@@ -19,8 +19,8 @@ describe("rulesets fields", () => {
     ]);
     expect(answered.rulesets).toMatchObject([
       { key: "skillPointAbilityId", label: "Skill Point Ability" },
-      { key: "featsPerLevel", label: "Feat Advancement" },
-      { key: "abilityIncreasesPerLevel", label: "Ability Score Increases" },
+      { key: "featAdvancement", label: "Feat Advancement" },
+      { key: "abilityIncreases", label: "Ability Score Increases" },
     ]);
   });
 

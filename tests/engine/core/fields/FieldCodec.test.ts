@@ -48,11 +48,15 @@ const CONTEXT: FormContext = {
   },
 };
 
-/** A count per level, of three levels, two at most at one: one at the first and two at the third without a row. */
-const PER_LEVEL = new FieldCodec({ grants: Field.perLevel("GRANT", { grantedAt: [3, 1, 3], levels: 3, max: 2 }) });
+/**
+ * A progression up to level 10, two at most a level: one every 3 levels and one more at the first without a row.
+ */
+const PROGRESSION = new FieldCodec({
+  grants: Field.progression("GRANT", { default: { every: 3, extra: [{ amount: 1, level: 1 }] }, levels: 10, max: 2 }),
+});
 
-/** The rules' declaration of the count per level's type. */
-const PER_LEVEL_DECLARATIONS: PropertyTypesProvider = {
+/** The rules' declaration of the progression's type. */
+const PROGRESSION_DECLARATIONS: PropertyTypesProvider = {
   getDeclarations: () => ({ GRANT: { description: "What each level grants", label: "Grants" } }),
   getReferencedEntityType: () => null,
   getValues: () => null,
@@ -236,39 +240,77 @@ describe("A field codec", () => {
   });
 });
 
-describe("A count per level", () => {
-  test("reads each level's first count, at most its bound, and its default without one", () => {
-    expect(PER_LEVEL.defaults).toEqual({ grants: [1, 0, 2] });
-    expect(PER_LEVEL.read([])).toEqual(PER_LEVEL.defaults);
-    const stored = rows(["GRANT", "2:1"], ["GRANT", "2:2"], ["GRANT", "3:5"], ["GRANT", "1"], ["GRANT", "4:1"]);
-    expect(PER_LEVEL.read(stored)).toEqual({ grants: [1, 1, 2] });
-    expect(PER_LEVEL.read(rows(["GRANT", "1:0"], ["GRANT", "3:1"]))).toEqual({ grants: [0, 0, 1] });
-    expect(PER_LEVEL.read(rows(["GRANT", "0:1"], ["GRANT", "9:1"], ["GRANT", "x:y"]))).toEqual(PER_LEVEL.defaults);
-  });
-
-  test("writes every level's count, a zero's too, so none at any level reads back as none", () => {
-    expect(PER_LEVEL.toProperties({ grants: [0, 0, 0] })).toEqual(
-      rows(["GRANT", "1:0"], ["GRANT", "2:0"], ["GRANT", "3:0"]),
+describe("A progression", () => {
+  test("reads its frequency and each level's first more in its bounds, at most its bound; its default without a row", () => {
+    expect(PROGRESSION.defaults).toEqual({ grants: { every: 3, extra: [{ amount: 1, level: 1 }] } });
+    expect(PROGRESSION.read([])).toEqual(PROGRESSION.defaults);
+    const stored = rows(
+      ["GRANT", "5:1"],
+      ["GRANT", "every:4"],
+      ["GRANT", "2:1"],
+      ["GRANT", "2:2"],
+      ["GRANT", "3:5"],
+      ["GRANT", "11:1"],
+      ["GRANT", "4:0"],
+      ["GRANT", "every:x"],
     );
-    expect(PER_LEVEL.read(PER_LEVEL.toProperties({ grants: [0, 0, 0] }))).toEqual({ grants: [0, 0, 0] });
-    expect(PER_LEVEL.read(PER_LEVEL.toProperties({ grants: [2, 1, 0] }))).toEqual({ grants: [2, 1, 0] });
+    expect(PROGRESSION.read(stored)).toEqual({
+      grants: {
+        every: 4,
+        extra: [
+          { amount: 1, level: 2 },
+          { amount: 2, level: 3 },
+          { amount: 1, level: 5 },
+        ],
+      },
+    });
+    // A frequency's row alone: none more; more without a frequency's row: its default's
+    expect(PROGRESSION.read(rows(["GRANT", "every:0"]))).toEqual({ grants: { every: 0, extra: [] } });
+    expect(PROGRESSION.read(rows(["GRANT", "6:1"]))).toEqual({
+      grants: { every: 3, extra: [{ amount: 1, level: 6 }] },
+    });
   });
 
-  test("reads a form's counts, one a level, each whole in its bounds", () => {
-    const context = { ...CONTEXT, declarations: PER_LEVEL_DECLARATIONS };
-    expect(PER_LEVEL.parse({ grants: [2, 0, 1] }, context)).toEqual({ grants: [2, 0, 1] });
-    for (const grants of [[3, 0, 0], [-1, 0, 0], [0.5, 0, 0], [1, 0], [1, 0, 0, 0], ["1", 0, 0], null])
-      expect(() => PER_LEVEL.parse({ grants }, context)).toThrow(RulesError);
+  test("writes its frequency's row and one per level it gives more at, which read back", () => {
+    const grants = { every: 0, extra: [{ amount: 2, level: 4 }] };
+    expect(PROGRESSION.toProperties({ grants })).toEqual(rows(["GRANT", "every:0"], ["GRANT", "4:2"]));
+    expect(PROGRESSION.read(PROGRESSION.toProperties({ grants }))).toEqual({ grants });
+    expect(PROGRESSION.toProperties({ grants: { every: 5, extra: [] } })).toEqual(rows(["GRANT", "every:5"]));
   });
 
-  test("describes its default and its bound", () => {
-    expect(PER_LEVEL.describe(PER_LEVEL_DECLARATIONS, "rulesets")).toEqual([
+  test("reads a form's progression sorted by level, refusing a level listed twice or giving past its bound", () => {
+    const parse = (grants: unknown) =>
+      PROGRESSION.parse({ grants }, { ...CONTEXT, declarations: PROGRESSION_DECLARATIONS });
+    const given = (...extra: [number, number][]) => extra.map(([level, amount]) => ({ amount, level }));
+    expect(parse({ every: 2, extra: given([5, 2], [2, 1]) })).toEqual({
+      grants: { every: 2, extra: given([2, 1], [5, 2]) },
+    });
+    const refused = [
+      { every: 3, extra: given([2, 1], [2, 1]) },
+      { every: 3, extra: given([3, 2]) },
+      { every: 3, extra: given([11, 1]) },
+      { every: 3, extra: given([2, 0]) },
+      { every: 11, extra: [] },
+      { every: -1, extra: [] },
+      { every: 3 },
+      { every: 3, extra: [], more: 1 },
+      [1, 0, 1],
+    ];
+    for (const grants of refused) expect(() => parse(grants)).toThrow(RulesError);
+    expect(() => parse({ every: 3, extra: given([3, 2]) })).toThrow(
+      expect.objectContaining({ issues: [expect.objectContaining({ category: "fields.grants.extra.0.amount" })] }),
+    );
+  });
+
+  test("describes its default and its bounds", () => {
+    expect(PROGRESSION.describe(PROGRESSION_DECLARATIONS, "rulesets")).toEqual([
       {
-        default: [1, 0, 2],
+        default: { every: 3, extra: [{ amount: 1, level: 1 }] },
         help: "What each level grants",
-        input: "perLevel",
+        input: "progression",
         key: "grants",
         label: "Grants",
+        levels: 10,
         max: 2,
       },
     ]);

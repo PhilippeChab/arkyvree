@@ -1,5 +1,7 @@
 import { isOneOf } from "@/shared/isOneOf.ts";
 
+import type { ProgressionValue } from "./FormField.ts";
+
 /**
  * When a field counts:
  * - while another of the entity's fields (`field`, at the same level) holds one of `values`: the codec reads it, writes
@@ -23,9 +25,8 @@ export type Fields = Record<string, PropertyField<unknown>>;
  * - a number, a text, a choice and a reference come from the first row of their type that holds one; a number in its
  *   bounds, a choice among its values;
  * - a list is every row of its type, in their order;
- * - a count per level is a row per level, its count after its level (`3:2`), every level's, a zero's too, so the rows
- *   of an entity that holds them stand for the whole: a level's default without its row, a count past its bound its
- *   bound;
+ * - a progression is a row of its frequency (`every:3`) and one per level it gives more at (`5:1`), which stand for
+ *   the whole together, so none more is the frequency's row alone: its default without any row;
  * - a group holds fields of its own, read off the same rows, which its form shows under its `label`.
  */
 export type FieldSpec = (
@@ -41,7 +42,7 @@ export type FieldSpec = (
   | { kind: "choice"; type: string; values: readonly string[] }
   | { fields: Fields; kind: "group"; label: string }
   | { kind: "list"; type: string }
-  | { default: readonly number[]; kind: "perLevel"; max: number; type: string }
+  | { default: ProgressionValue; kind: "progression"; levels: number; max: number; type: string }
   | { kind: "ref"; required: boolean; type: string }
   | { kind: "text"; type: string }
 ) & { shownIn?: readonly string[]; when?: FieldCondition };
@@ -113,17 +114,15 @@ export default class Field {
   }
 
   /**
-   * A count per level, of `levels` levels, the first's first: how many of something each grants, from none to `max`
-   * (a ruleset's feats at each character level). Its default without a row: one at each of `grantedAt`, a level once
-   * per grant (`[1, 3, 3]`: one at the first, two at the third).
+   * What levels give of something (a ruleset's feats, its ability increases): one every `every` levels (none at 0), and
+   * more at the levels it names, up to level `levels`, a level giving at most `max` with its frequency's. Its default
+   * without a row.
    */
-  static perLevel(
+  static progression(
     type: string,
-    options: { grantedAt: readonly number[]; levels: number; max: number },
-  ): PropertyField<number[]> {
-    const { grantedAt, levels, max } = options;
-    const counts = Array.from({ length: levels }, (_, i) => grantedAt.filter((level) => level === i + 1).length);
-    return { default: counts, kind: "perLevel", max, type };
+    options: { default: ProgressionValue; levels: number; max: number },
+  ): PropertyField<ProgressionValue> {
+    return { default: options.default, kind: "progression", levels: options.levels, max: options.max, type };
   }
 
   /** An entity's id, from its first row: none without one, which a form may leave it at unless it's `required`. */

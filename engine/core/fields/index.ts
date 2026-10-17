@@ -18,7 +18,9 @@ export type {
   FormField,
   GroupFormField,
   NumberFormField,
-  PerLevelFormField,
+  ProgressionExtra,
+  ProgressionFormField,
+  ProgressionValue,
   RefFormField,
   TextFormField,
 } from "./FormField.ts";

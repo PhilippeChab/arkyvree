@@ -71,13 +71,8 @@ export default class FieldForms {
         return { ...base, input: "flag", nullable: field.absent === null };
       case "number":
         return { ...base, default: field.default, input: "number", max: field.max, min: field.min };
-      case "perLevel":
-        return {
-          ...base,
-          default: [...field.default],
-          input: "perLevel",
-          max: field.max,
-        };
+      case "progression":
+        return { ...base, default: field.default, input: "progression", levels: field.levels, max: field.max };
       case "ref": {
         const references = declarations.getReferencedEntityType(field.type);
         if (references) return { ...base, input: "ref", references, required: field.required };
@@ -127,6 +122,38 @@ export default class FieldForms {
       .map(([name, field]) => ({ field, name, prefix }));
   }
 
+  /**
+   * A progression's value: its frequency, whole and up to its last level (none at 0), and the levels it gives more at,
+   * each once, in its bounds, giving at most its bound with its frequency's; sorted by level.
+   */
+  private static progressionShapeOf({ levels, max }: Extract<FieldSpec, { kind: "progression" }>) {
+    const extra = z.strictObject({
+      amount: z.number().int().min(1).max(max),
+      level: z.number().int().min(1).max(levels),
+    });
+    return z
+      .strictObject({ every: z.number().int().min(0).max(levels), extra: z.array(extra) })
+      .superRefine(({ every, extra: levelsGiven }, context) => {
+        const seen = new Set<number>();
+        for (const [index, { amount, level }] of levelsGiven.entries()) {
+          if (seen.has(level)) {
+            const message = `Level ${level} is listed twice`;
+            context.addIssue({ code: "custom", path: ["extra", index, "level"], message });
+          }
+          seen.add(level);
+          const total = amount + (every > 0 && level % every === 0 ? 1 : 0);
+          if (total > max) {
+            const message = `Level ${level} would give ${total}, at most ${max}`;
+            context.addIssue({ code: "custom", path: ["extra", index, "amount"], message });
+          }
+        }
+      })
+      .transform(({ every, extra: levelsGiven }) => ({
+        every,
+        extra: levelsGiven.toSorted((a, b) => a.level - b.level),
+      }));
+  }
+
   /** A field's place in its form: its declared type's rank, a group's first field's. */
   private static rankOf(field: FieldSpec, ranks: ReadonlyMap<string, number>): number {
     if (field.kind !== "group") return ranks.get(field.type) ?? ranks.size;
@@ -165,8 +192,8 @@ export default class FieldForms {
   }
 
   /**
-   * The values a form's field takes: a flag's boolean, a number whole in its bounds, a count per level one a level,
-   * each whole in its bounds, a text, a choice or a list among its type's values when they're a closed list, any string
+   * The values a form's field takes: a flag's boolean, a number whole in its bounds, a progression's
+   * (`progressionShapeOf`), a text, a choice or a list among its type's values when they're a closed list, any string
    * otherwise, a reference any string (which names an entity, read as the view's: `resolveRefs`); none (null, or `""`)
    * for one that has none (a number without a default, a reference not `required`). A group's are an object of its
    * fields', each given, and no other.
@@ -183,8 +210,8 @@ export default class FieldForms {
         if (field.max !== undefined) number = number.max(field.max);
         return field.default === null ? number.nullable() : number;
       }
-      case "perLevel":
-        return z.array(z.number().int().min(0).max(field.max)).length(field.default.length);
+      case "progression":
+        return FieldForms.progressionShapeOf(field);
       case "ref":
         return field.required ? z.string().min(1) : z.string().nullable();
       default:

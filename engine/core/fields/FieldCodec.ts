@@ -4,7 +4,7 @@ import type { PropertyEntityType } from "@/shared/customization/entities.ts";
 
 import Field, { type Fields, type FieldSpec, type FieldValues, type NoFields } from "./Field.ts";
 import FieldForms, { type FormContext } from "./FieldForms.ts";
-import type { FormField } from "./FormField.ts";
+import type { FormField, ProgressionValue } from "./FormField.ts";
 
 /** What a codec's rules add to its fields': when the entity keeps none of them. */
 interface FieldRules<V> {
@@ -18,6 +18,9 @@ interface Row {
   type: string;
   value: string;
 }
+
+/** A progression field's spec. */
+type ProgressionSpec = Extract<FieldSpec, { kind: "progression" }>;
 
 /**
  * An entity's fields kept in its properties, read and written by one spec (`fields`, written with `Field`): their
@@ -49,6 +52,11 @@ export default class FieldCodec<S extends Fields> {
     );
   }
 
+  /** A progression's own copy, which an edit may change apart from the one it's copied from. */
+  private static copyProgression({ every, extra }: ProgressionValue): ProgressionValue {
+    return { every, extra: extra.map(({ amount, level }) => ({ amount, level })) };
+  }
+
   /** A field's value without a row. */
   private static defaultOf(field: FieldSpec): unknown {
     switch (field.kind) {
@@ -58,8 +66,8 @@ export default class FieldCodec<S extends Fields> {
         return field.default;
       case "list":
         return [];
-      case "perLevel":
-        return [...field.default];
+      case "progression":
+        return FieldCodec.copyProgression(field.default);
       case "group":
         return FieldCodec.defaultsOf(field.fields);
       default:
@@ -92,8 +100,8 @@ export default class FieldCodec<S extends Fields> {
       }
       case "list":
         return [...values];
-      case "perLevel":
-        return FieldCodec.readPerLevel(field, values);
+      case "progression":
+        return FieldCodec.readProgression(field, values);
       default:
         return values[0] ?? null;
     }
@@ -118,17 +126,25 @@ export default class FieldCodec<S extends Fields> {
     return field.default;
   }
 
-  /** A count per level off its rows (`level:count`): each level's first, at most its bound, else its default. */
-  private static readPerLevel(field: Extract<FieldSpec, { kind: "perLevel" }>, values: string[]): number[] {
-    const counts = new Map<number, number>();
+  /**
+   * A progression off its rows' values: its frequency's first (`every:3`), its default's without one, and each level's
+   * first more (`5:1`) in its bounds, at most its bound, by level; its default without any row.
+   */
+  private static readProgression(field: ProgressionSpec, values: string[]): ProgressionValue {
+    if (values.length === 0) return FieldCodec.copyProgression(field.default);
+    const every = values.map((value) => /^every:(\d+)$/.exec(value)?.[1]).find((match) => match !== undefined);
+    const extra = new Map<number, number>();
     for (const value of values) {
       const match = /^(\d+):(\d+)$/.exec(value);
       if (!match) continue;
-      const [level, count] = [Number(match[1]), Number(match[2])];
-      if (level < 1 || level > field.default.length || counts.has(level)) continue;
-      counts.set(level, Math.min(count, field.max));
+      const [level, amount] = [Number(match[1]), Number(match[2])];
+      if (level < 1 || level > field.levels || amount < 1 || extra.has(level)) continue;
+      extra.set(level, Math.min(amount, field.max));
     }
-    return field.default.map((count, i) => counts.get(i + 1) ?? count);
+    return {
+      every: every === undefined ? field.default.every : Number(every),
+      extra: [...extra].map(([level, amount]) => ({ amount, level })).toSorted((a, b) => a.level - b.level),
+    };
   }
 
   /** Whether two rows' values of a type hold the same values, whatever their order. */
@@ -152,8 +168,11 @@ export default class FieldCodec<S extends Fields> {
         return FieldCodec.writeFields(field.fields, value as Record<string, unknown>);
       case "list":
         return (value as string[]).map((item) => ({ type: field.type, value: item }));
-      case "perLevel":
-        return (value as number[]).map((count, i) => ({ type: field.type, value: `${i + 1}:${count}` }));
+      case "progression": {
+        const { every, extra } = value as ProgressionValue;
+        const rows = [`every:${every}`, ...extra.map(({ amount, level }) => `${level}:${amount}`)];
+        return rows.map((row) => ({ type: field.type, value: row }));
+      }
       case "flag":
         return field.absent === null || value === true ? [{ type: field.type, value: String(value) }] : [];
       case "number":

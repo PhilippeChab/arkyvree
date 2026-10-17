@@ -60,8 +60,8 @@ describe("RulesetFieldsService", () => {
     );
     expect(fields.rulesets).toEqual([
       expect.objectContaining({ key: "skillPointAbilityId", input: "ref", references: "abilities", required: true }),
-      expect.objectContaining({ key: "featsPerLevel", input: "perLevel", max: 10 }),
-      expect.objectContaining({ key: "abilityIncreasesPerLevel", input: "perLevel", max: 1 }),
+      expect.objectContaining({ key: "featAdvancement", input: "progression", levels: 20, max: 10 }),
+      expect.objectContaining({ key: "abilityIncreases", input: "progression", levels: 20, max: 1 }),
     ]);
   });
 

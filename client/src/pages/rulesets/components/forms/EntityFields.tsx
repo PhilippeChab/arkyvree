@@ -1,22 +1,33 @@
-import { Autocomplete, Box, FormHelperText, MenuItem, Stack, TextField } from "@mui/material";
+import { Autocomplete, Box, FormHelperText, MenuItem, Stack, TextField, Typography } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
 import { type Ref, useId } from "react";
-import { type FieldPath, type FieldValues, useController, type UseFormReturn, useWatch } from "react-hook-form";
+import {
+  type ArrayPath,
+  type FieldPath,
+  type FieldValues,
+  useController,
+  useFieldArray,
+  type UseFormReturn,
+  useWatch,
+} from "react-hook-form";
 
 import {
+  AddButton,
   DiceSpinner,
   EMPTY_VALUE_TEXT,
   EmptyValue,
   FormTextField,
   LoadError,
+  RowAction,
   SelectField,
   SubsectionTitle,
   SwitchField,
   useReadOnlyFields,
   ValueChip,
 } from "@/client/src/components/common/index.ts";
+import { DeleteIcon } from "@/client/src/components/icons/index.ts";
 import { rulesetOptionsQuery } from "@/client/src/lib/queries.ts";
-import { readNumberInput, requiredRules, wholeNumberError, wholeNumberRules } from "@/client/src/lib/validation.ts";
+import { requiredRules, wholeNumberRules } from "@/client/src/lib/validation.ts";
 import type { EntityField, RulesetFields } from "@/client/src/pages/rulesets/details/rulesetQueries.ts";
 import { useEntityFields } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
@@ -76,8 +87,11 @@ interface ShownFieldProps<T extends FieldValues> extends FieldInputProps<T> {
 /** A yes or no. */
 type FlagField = Extract<EntityField, { input: "flag" }>;
 
-/** A count per level: what each level grants. */
-type PerLevelField = Extract<EntityField, { input: "perLevel" }>;
+/** A level a progression gives more at, as its form holds it. */
+type ProgressionExtra = ProgressionField["default"]["extra"][number];
+
+/** What levels give of something: a frequency, and more at the levels it names. */
+type ProgressionField = Extract<EntityField, { input: "progression" }>;
 
 /** A field that names an entity of the ruleset. */
 type RefField = Extract<EntityField, { input: "ref" }>;
@@ -94,15 +108,13 @@ const FLAG_CHOICES = [
   { value: "false", label: "No" },
 ] as const;
 
-/** A count per level's inputs: three levels a row on a phone, five past it, ten on a wide screen. */
-const PER_LEVEL_GRID_SX = {
+/** A progression's level and its amount, and the action that removes it: two inputs side by side, then the action. */
+const PROGRESSION_ROW_SX = {
   display: "grid",
-  gridTemplateColumns: {
-    xs: "repeat(3, minmax(0, 1fr))",
-    sm: "repeat(5, minmax(0, 1fr))",
-    lg: "repeat(10, minmax(0, 1fr))",
-  },
-  gap: 2,
+  gridTemplateColumns: "repeat(2, minmax(0, 1fr)) auto",
+  columnGap: 1,
+  alignItems: "start",
+  maxWidth: "28rem",
 };
 
 /** The lists of a ruleset a reference picks from, by the kind of entity it names. */
@@ -147,8 +159,8 @@ function FieldInput<T extends FieldValues>({ field, ...props }: FieldInputProps<
           slotProps={{ htmlInput: { min: field.min, max: field.max } }}
         />
       );
-    case "perLevel":
-      return <PerLevelInput {...props} field={field} />;
+    case "progression":
+      return <ProgressionInput {...props} field={field} />;
     case "ref":
       if (isOneOf(field.references, REFERENCE_LISTS))
         return <ReferenceSelect {...props} field={field} list={field.references} />;
@@ -283,70 +295,114 @@ function isSwitch(field: EntityField) {
   return field.input === "flag" && !field.nullable;
 }
 
-/** Whether a field takes the grid's whole width: a group, several values, or a count per level. */
+/** Whether a field takes the grid's whole width: a group, several values, or a progression. */
 function isWide(field: EntityField) {
   return (
     field.input === "group" ||
-    field.input === "perLevel" ||
+    field.input === "progression" ||
     ((field.input === "choice" || field.input === "text") && field.multiple)
   );
 }
 
 /**
- * A count per level, under its label: each level's number, bound as one field (its first count out of its bounds takes
- * its ref, so a failed submit focuses it), each saying why under its own input. Read-only, each its value.
+ * A progression, under its label: its frequency (none at 0), then the levels it gives more at, each its level and how
+ * many more (none to give for one that gives one at most a level), added and removed. A level listed twice, or giving
+ * past its bound with its frequency's, says why under it. Read-only, its values, nothing to add or remove.
  */
-function PerLevelInput<T extends FieldValues>({ field, form, help }: FieldInputProps<T, PerLevelField>) {
+function ProgressionInput<T extends FieldValues>({ field, form, help }: FieldInputProps<T, ProgressionField>) {
   const labelId = useId();
   const helpId = useId();
   const readOnly = useReadOnlyFields();
-  const isCountValid = (count: number) => wholeNumberError(count, 0, field.max) === undefined;
-  const {
-    field: { ref, value, onChange },
-    fieldState,
-  } = useController({
-    control: form.control,
-    name: fieldPath<T>(field.key),
-    // Each count out of its bounds says why under its own input
-    rules: { validate: (counts: unknown) => Array.isArray(counts) && counts.every(isCountValid) },
-  });
-  const counts: number[] = Array.isArray(value) ? value : [];
-  // A failed submit focuses the first count out of its bounds
-  const focused = Math.max(
-    0,
-    counts.findIndex((count) => !isCountValid(count)),
+  const { control } = form;
+  const path = `fields.${field.key}`;
+  const { fields: rows, append, remove } = useFieldArray({ control, name: `${path}.extra` as ArrayPath<T> });
+  const every: unknown = useWatch({ control, name: formPath<T>(`${path}.every`) });
+  const watched: unknown = useWatch({ control, name: formPath<T>(`${path}.extra`) });
+  const extra: ProgressionExtra[] = Array.isArray(watched) ? watched : [];
+  // One at most a level: each listed level gives one, which its frequency mustn't give already
+  const givesOne = field.max === 1;
+  const regularAt = (level: number) => (typeof every === "number" && every > 0 && level % every === 0 ? 1 : 0);
+  // The first level that may give more: unlisted, and short of its bound with its frequency's
+  const nextLevel = Array.from({ length: field.levels }, (_, i) => i + 1).find(
+    (level) => !extra.some((given) => given.level === level) && regularAt(level) < field.max,
   );
   const described = help && field.help !== "";
-  // In place, so changing a count back leaves the form clean
-  const setCount = (level: number, count: number) =>
-    onChange(counts.map((kept, index) => (index === level ? count : kept)));
   return (
-    <Stack role="group" aria-labelledby={labelId} aria-describedby={described ? helpId : undefined} spacing={1.5}>
+    <Stack role="group" aria-labelledby={labelId} aria-describedby={described ? helpId : undefined} spacing={2}>
       <Box id={labelId}>
         <SubsectionTitle>{field.label}</SubsectionTitle>
       </Box>
-      <Box sx={PER_LEVEL_GRID_SX}>
-        {counts.map((count, index) => {
-          const error = fieldState.error ? wholeNumberError(count, 0, field.max) : undefined;
-          return (
-            <TextField
-              key={index}
-              inputRef={index === focused ? ref : undefined}
-              label={`Level ${index + 1}`}
-              type="number"
-              value={count}
-              onChange={(event) => setCount(index, readNumberInput(event.target.value) ?? 0)}
-              error={error !== undefined}
-              helperText={error}
-              slotProps={{
-                htmlInput: { min: 0, max: field.max },
-                input: { readOnly },
-                inputLabel: readOnly ? { shrink: true } : undefined,
-              }}
-            />
-          );
-        })}
+      <Box sx={{ maxWidth: "28rem" }}>
+        <FormTextField
+          control={control}
+          name={formPath<T>(`${path}.every`)}
+          rules={wholeNumberRules(0, "Frequency is required", field.levels)}
+          number
+          label="Every N Levels"
+          helperText={readOnly ? undefined : "0 for none"}
+          fullWidth
+          slotProps={{ htmlInput: { min: 0, max: field.levels } }}
+        />
       </Box>
+      <Stack spacing={1.5}>
+        <Typography variant="body2" component="p" sx={{ color: "text.secondary" }}>
+          {givesOne ? "Also at Levels" : "More at Levels"}
+        </Typography>
+        {readOnly && rows.length === 0 && <EmptyValue />}
+        {rows.map((row, index) => (
+          <Box key={row.id} sx={PROGRESSION_ROW_SX}>
+            <FormTextField
+              control={control}
+              name={formPath<T>(`${path}.extra.${index}.level`)}
+              rules={wholeNumberRules(1, "Level is required", field.levels, [
+                (level) =>
+                  extra.filter((given) => given.level === level).length <= 1 || `Level ${level} is listed twice`,
+                (level) =>
+                  !givesOne ||
+                  regularAt(level) === 0 ||
+                  `Level ${level} gives one already, every ${String(every)} levels`,
+              ])}
+              number
+              label="Level"
+              fullWidth
+              slotProps={{ htmlInput: { min: 1, max: field.levels } }}
+            />
+            {givesOne ? (
+              <Box />
+            ) : (
+              <FormTextField
+                control={control}
+                name={formPath<T>(`${path}.extra.${index}.amount`)}
+                rules={wholeNumberRules(1, "Amount is required", field.max, [
+                  (amount) => {
+                    const level = extra[index]?.level ?? 0;
+                    const total = amount + regularAt(level);
+                    return total <= field.max || `Level ${level} would give ${total}, at most ${field.max}`;
+                  },
+                ])}
+                number
+                label="Amount"
+                fullWidth
+                slotProps={{ htmlInput: { min: 1, max: field.max } }}
+              />
+            )}
+            {!readOnly && (
+              <Box sx={{ pt: 1 }}>
+                <RowAction icon={DeleteIcon} label="Remove Level" intent="destructive" onClick={() => remove(index)} />
+              </Box>
+            )}
+          </Box>
+        ))}
+        {!readOnly && (
+          <AddButton
+            variant="outlined"
+            label="Add Level"
+            onClick={() => nextLevel !== undefined && append({ amount: 1, level: nextLevel } as never)}
+            disabled={nextLevel === undefined}
+            sx={{ alignSelf: "flex-start" }}
+          />
+        )}
+      </Stack>
       {described && <FormHelperText id={helpId}>{field.help}</FormHelperText>}
     </Stack>
   );

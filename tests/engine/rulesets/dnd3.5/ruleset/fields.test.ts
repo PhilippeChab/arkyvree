@@ -6,45 +6,52 @@ import { propertiesInCustomization } from "@/drizzle/schema.ts";
 import { RULESET_FIELDS } from "@/engine/rulesets/dnd3.5/ruleset/fields.ts";
 import { db } from "@/server/database/index.ts";
 import {
-  RULESET_ABILITY_INCREASES_PER_LEVEL,
-  RULESET_FEATS_PER_LEVEL,
+  RULESET_ABILITY_INCREASES,
+  RULESET_FEAT_ADVANCEMENT,
   RULESET_SKILL_POINT_ABILITY_ID,
 } from "@/vocabulary/dnd3.5/properties/index.ts";
 
-/** The core rules' feats at each character level: one at the first, then every third. */
-const CORE_FEATS = [1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0];
-
-/** The core rules' ability increases at each character level: one every fourth. */
-const CORE_INCREASES = [0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1];
+/** The core rules' progression: a feat every 3 levels and one more at the first, an ability increase every 4. */
+const CORE = {
+  abilityIncreases: { every: 4, extra: [] },
+  featAdvancement: { every: 3, extra: [{ amount: 1, level: 1 }] },
+};
 
 describe("A ruleset's own fields", () => {
   test("are the core rules' progression and no ability without their properties, each off its type's rows with them", () => {
-    const core = { abilityIncreasesPerLevel: CORE_INCREASES, featsPerLevel: CORE_FEATS };
-    expect(RULESET_FIELDS.read([])).toEqual({ ...core, skillPointAbilityId: null });
+    expect(RULESET_FIELDS.read([])).toEqual({ ...CORE, skillPointAbilityId: null });
     expect(
       RULESET_FIELDS.read([
         { type: "SOMETHING_ELSE", value: "1" },
         { type: RULESET_SKILL_POINT_ABILITY_ID, value: "intelligence" },
         { type: RULESET_SKILL_POINT_ABILITY_ID, value: "wisdom" },
-        { type: RULESET_FEATS_PER_LEVEL, value: "3:2" },
+        { type: RULESET_FEAT_ADVANCEMENT, value: "every:3" },
+        { type: RULESET_FEAT_ADVANCEMENT, value: "3:1" },
+        { type: RULESET_FEAT_ADVANCEMENT, value: "5:1" },
       ]),
     ).toEqual({
-      ...core,
-      featsPerLevel: [1, 0, 2, ...CORE_FEATS.slice(3)],
+      ...CORE,
+      featAdvancement: {
+        every: 3,
+        extra: [
+          { amount: 1, level: 3 },
+          { amount: 1, level: 5 },
+        ],
+      },
       skillPointAbilityId: "intelligence",
     });
   });
 
-  test("are kept in a property per field with a value, a count per level's a row a level", () => {
+  test("are kept in a property per field with a value, a progression's its frequency's and one per level more", () => {
     expect(RULESET_FIELDS.toProperties({ skillPointAbilityId: null })).toEqual([]);
     expect(RULESET_FIELDS.toProperties({ skillPointAbilityId: "intelligence" })).toEqual([
       { type: RULESET_SKILL_POINT_ABILITY_ID, value: "intelligence" },
     ]);
-    const rows = RULESET_FIELDS.toProperties({ abilityIncreasesPerLevel: CORE_INCREASES });
-    expect(rows).toHaveLength(20);
-    expect(rows.slice(0, 4)).toEqual(
-      ["1:0", "2:0", "3:0", "4:1"].map((value) => ({ type: RULESET_ABILITY_INCREASES_PER_LEVEL, value })),
-    );
+    expect(RULESET_FIELDS.toProperties(CORE)).toEqual([
+      { type: RULESET_ABILITY_INCREASES, value: "every:4" },
+      { type: RULESET_FEAT_ADVANCEMENT, value: "every:3" },
+      { type: RULESET_FEAT_ADVANCEMENT, value: "1:1" },
+    ]);
   });
 
   test("of every seeded ruleset rebuild its rows", async () => {

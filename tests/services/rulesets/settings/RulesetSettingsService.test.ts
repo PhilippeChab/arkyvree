@@ -16,14 +16,14 @@ import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 import { createTestUser, makeSession } from "@/tests/support/users.ts";
 import { RULESET_SKILL_POINT_ABILITY_ID } from "@/vocabulary/dnd3.5/properties/index.ts";
 
-/** The core rules' feats at each character level: one at the first, then every third. */
-const CORE_FEATS = [1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0];
+/** The core rules' feats: one every 3 levels, and one more at the first. */
+const CORE_FEATS = { every: 3, extra: [{ amount: 1, level: 1 }] };
 
-/** The core rules' ability increases at each character level: one every fourth. */
-const CORE_INCREASES = [0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1];
-
-/** The core rules' progression, which a fork of theirs reads until it saves its own. */
-const CORE_PROGRESSION = { abilityIncreasesPerLevel: CORE_INCREASES, featsPerLevel: CORE_FEATS };
+/**
+ * The core rules' progression, which a fork of theirs reads until it saves its own: its feats, and an ability increase
+ * every 4 levels.
+ */
+const CORE_PROGRESSION = { abilityIncreases: { every: 4, extra: [] }, featAdvancement: CORE_FEATS };
 
 /**
  * A human fighter of the fork's, Intelligence 10 and Wisdom 18, of `levels` fighter levels, as the fork builds it, its
@@ -118,13 +118,20 @@ describe("RulesetSettingsService", () => {
     const abilityStep = () => getLevelStep(makeSession(), characterId, "abilities");
     expect(await abilityStep()).toMatchObject({ isAvailable: false });
 
-    // A feat more at levels 3 and 5, and an ability increase at the second level in place of the fourth
-    const featsPerLevel = CORE_FEATS.map((count, i) => (i === 2 || i === 4 ? count + 1 : count));
-    const abilityIncreasesPerLevel = CORE_INCREASES.map((count, i) => (i === 1 ? 1 : i === 3 ? 0 : count));
+    // A feat more at levels 3 and 5, and an ability increase at the second level alone, none every so many levels
+    const featAdvancement = {
+      every: 3,
+      extra: [
+        { amount: 1, level: 1 },
+        { amount: 1, level: 3 },
+        { amount: 1, level: 5 },
+      ],
+    };
+    const abilityIncreases = { every: 0, extra: [{ amount: 1, level: 2 }] };
     const saved = await RulesetSettingsService.updateSettings(session, fork.id, {
-      fields: { abilityIncreasesPerLevel, featsPerLevel },
+      fields: { abilityIncreases, featAdvancement },
     });
-    expect(saved.fields).toMatchObject({ abilityIncreasesPerLevel, featsPerLevel });
+    expect(saved.fields).toMatchObject({ abilityIncreases, featAdvancement });
     expect(await RulesetSettingsService.getSettings(fork.id)).toEqual(saved);
 
     expect(await fighterGeneralFeats(fork.id, 3)).toBe(4);
@@ -134,10 +141,10 @@ describe("RulesetSettingsService", () => {
     expect(await RulesetSettingsService.getSettings(fork.rulesetId!)).toMatchObject({ fields: CORE_PROGRESSION });
 
     // None at any level stands for the fork, its source's progression aside
-    const none = Array<number>(20).fill(0);
-    await RulesetSettingsService.updateSettings(session, fork.id, { fields: { abilityIncreasesPerLevel: none } });
+    const none = { every: 0, extra: [] };
+    await RulesetSettingsService.updateSettings(session, fork.id, { fields: { abilityIncreases: none } });
     expect(await RulesetSettingsService.getSettings(fork.id)).toMatchObject({
-      fields: { abilityIncreasesPerLevel: none, featsPerLevel },
+      fields: { abilityIncreases: none, featAdvancement },
     });
   });
 
@@ -161,9 +168,9 @@ describe("RulesetSettingsService", () => {
     });
     expect(await strengthScore()).toBe(11);
 
-    // The increase moves from the fourth level to the fifth
-    const abilityIncreasesPerLevel = CORE_INCREASES.map((count, i) => (i === 3 ? 0 : i === 4 ? 1 : count));
-    await RulesetSettingsService.updateSettings(session, fork.id, { fields: { abilityIncreasesPerLevel } });
+    // The increases move to every fifth level
+    const abilityIncreases = { every: 5, extra: [] };
+    await RulesetSettingsService.updateSettings(session, fork.id, { fields: { abilityIncreases } });
     expect(await CharacterLevelsService.getLevel(seedUser, characterId, fourth)).toMatchObject({
       abilityIncreases: [],
     });
@@ -186,19 +193,19 @@ describe("RulesetSettingsService", () => {
       refusal: "invalid",
       issues: [{ category: "fields.skillPointAbilityId" }],
     });
-    expect(update({ skillPointAbilityId: abilityMap["Wisdom"], featAdvancement: 3 })).rejects.toMatchObject({
+    expect(update({ skillPointAbilityId: abilityMap["Wisdom"], epicFeats: 3 })).rejects.toMatchObject({
       refusal: "invalid",
-      issues: [{ category: "fields.featAdvancement", message: "Not a field of this entity" }],
+      issues: [{ category: "fields.epicFeats", message: "Not a field of this entity" }],
     });
-    // A count per level past its bounds, or not one a level
-    const twice = CORE_INCREASES.map((count, i) => (i === 3 ? 2 : count));
-    expect(update({ abilityIncreasesPerLevel: twice })).rejects.toMatchObject({
+    // An increase at a level its frequency gives one already, a progression not of its shape
+    const twice = { every: 4, extra: [{ amount: 1, level: 8 }] };
+    expect(update({ abilityIncreases: twice })).rejects.toMatchObject({
       refusal: "invalid",
-      issues: [{ category: "fields.abilityIncreasesPerLevel.3" }],
+      issues: [{ category: "fields.abilityIncreases.extra.0.amount", message: "Level 8 would give 2, at most 1" }],
     });
-    expect(update({ featsPerLevel: CORE_FEATS.slice(1) })).rejects.toMatchObject({
+    expect(update({ featAdvancement: [1, 0, 1] })).rejects.toMatchObject({
       refusal: "invalid",
-      issues: [{ category: "fields.featsPerLevel" }],
+      issues: [{ category: "fields.featAdvancement" }],
     });
     expect(await RulesetSettingsService.getSettings(fork.id)).toMatchObject({
       fields: { ...CORE_PROGRESSION, skillPointAbilityId: abilityMap["Intelligence"] },
