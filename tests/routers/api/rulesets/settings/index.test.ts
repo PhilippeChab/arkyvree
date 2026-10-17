@@ -11,11 +11,18 @@ describe("rulesets settings", () => {
   test("reads a fork's Settings, and saves its own", async () => {
     const { abilityMap } = await getSeedCtx();
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
-    expect(await expectOk(settings.$get({ param: { id } }))).toEqual({
+    const read = await expectOk(settings.$get({ param: { id } }));
+    expect(read).toEqual({
       id,
-      fields: { skillPointAbilityId: abilityMap["Intelligence"] },
+      fields: {
+        abilityIncreases: { every: 4, extra: [] },
+        featAdvancement: { every: 3, extra: [{ amount: 1, level: 1 }] },
+        skillPointAbilityId: abilityMap["Intelligence"],
+      },
     });
-    const fields = { skillPointAbilityId: abilityMap["Wisdom"] };
+    // Two feats at the first level
+    const featAdvancement = { every: 3, extra: [{ amount: 2, level: 1 }] };
+    const fields = { ...read.fields, featAdvancement, skillPointAbilityId: abilityMap["Wisdom"] };
     expect(await expectOk(settings.$put({ param: { id }, json: { fields } }))).toEqual({ id, fields });
     expect(await expectOk(settings.$get({ param: { id } }))).toEqual({ id, fields });
   });
@@ -25,6 +32,7 @@ describe("rulesets settings", () => {
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
     await expectStatus(settings.$put({ param: { id }, json: { fields: { skillPointAbilityId: NIL_UUID } } }), 400);
     await expectStatus(settings.$put({ param: { id }, json: { fields: { skillPoints: 4 } } }), 400);
+    await expectStatus(settings.$put({ param: { id }, json: { fields: { featAdvancement: { every: 3 } } } }), 400);
     const fields = { skillPointAbilityId: abilityMap["Wisdom"] };
     await expectStatus(settings.$put({ param: { id: rulesetId }, json: { fields } }), 403);
     await expectStatus(guestApi.api.rulesets[":id"].settings.$get({ param: { id } }), 401);

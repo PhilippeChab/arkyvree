@@ -23,7 +23,7 @@ Saving a spell with a new **School** also creates that school's Spell Focus and 
 
 Tagging for grouping is a field too: a homebrew Weapon Focus variant with **Families**: Weapon Focus is matched by the `feats.weaponfocus.*.possessed` wildcard. See [How do wildcard patterns work?](#how-do-wildcard-patterns-work)
 
-A ruleset's own rules data is in its **Settings** tab: the ability a character's skill points come from (Intelligence in the core rules). A fork starts with its source's settings, and its owner and editors can change them.
+A ruleset's own rules data is in its **Settings** tab: the ability a character's skill points come from (Intelligence in the core rules), and what every character's levels give whatever its classes. **Feat Advancement** gives a feat to pick every so many character levels (3 in the core rules), and more at the levels you list (one more at level 1 in the core rules). **Ability Score Increases** raise an ability score every so many levels (4 in the core rules), and at the levels you list, one at most a level. Set the frequency to 0 to give none but at the levels listed. A house rule that gives every class a bonus feat at levels 3 and 5 is two levels added to Feat Advancement, and every class follows it, one added later too. A fork starts with its source's settings, and its owner and editors can change them.
 
 Fields don't add bonuses. Some tell the engine how to read an entity (a ranged weapon attacks with Dexterity, a composite bow has a Strength rating, Weapon Finesse lets a light weapon use Dexterity), but to add a `+1`, use a [modifier](#what-are-modifiers).
 

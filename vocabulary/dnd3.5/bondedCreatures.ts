@@ -146,7 +146,7 @@ export const ANIMAL_SKILL_POINTS_PER_HIT_DIE = 1;
  * source gives the creature the feat.
  *
  * Per-HD scaling:
- *   - Feat count at total HD N = 1 + floor((N-1)/3), the stat block's bonus
+ *   - Feat count at total HD N = 1 + floor(N/3), the stat block's bonus
  *     feats (`bonusFeats`) aside. Compose applies `bonusFeats` and `baseFeats`,
  *     then appends `featPriority` items in order until count met; the appended
  *     feats' bonuses come on top of the totals.
@@ -440,6 +440,9 @@ export const BONDED_RACE_STATS: Record<string, BondedRaceStatBlock> = {
     skillPriority: ["Listen", "Spot"],
   },
 };
+
+/** How many hit dice apart a creature's feats come, after its first hit die's: one at every third (Monster Manual). */
+export const CREATURE_FEAT_HIT_DICE_INTERVAL = 3;
 
 /** The share of its master's hit points a familiar has: half (`FAMILIAR_HIT_POINTS_DIVISOR`), rounded down. */
 export const FAMILIAR_HIT_POINTS_DIVISOR = 2;

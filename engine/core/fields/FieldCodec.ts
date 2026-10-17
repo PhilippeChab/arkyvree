@@ -1,6 +1,7 @@
 import type { PropertyTypesProvider } from "@/engine/core/customizations/index.ts";
 import type { PropertyValue } from "@/engine/core/module/index.ts";
 import type { PropertyEntityType } from "@/shared/customization/entities.ts";
+import { copyProgression, countRoomAt, type ProgressionValue } from "@/shared/customization/progression.ts";
 
 import Field, { type Fields, type FieldSpec, type FieldValues, type NoFields } from "./Field.ts";
 import FieldForms, { type FormContext } from "./FieldForms.ts";
@@ -18,6 +19,9 @@ interface Row {
   type: string;
   value: string;
 }
+
+/** A progression field's spec. */
+type ProgressionSpec = Extract<FieldSpec, { kind: "progression" }>;
 
 /**
  * An entity's fields kept in its properties, read and written by one spec (`fields`, written with `Field`): their
@@ -58,6 +62,8 @@ export default class FieldCodec<S extends Fields> {
         return field.default;
       case "list":
         return [];
+      case "progression":
+        return copyProgression(field.default);
       case "group":
         return FieldCodec.defaultsOf(field.fields);
       default:
@@ -90,6 +96,8 @@ export default class FieldCodec<S extends Fields> {
       }
       case "list":
         return [...values];
+      case "progression":
+        return FieldCodec.readProgression(field, values);
       default:
         return values[0] ?? null;
     }
@@ -114,6 +122,35 @@ export default class FieldCodec<S extends Fields> {
     return field.default;
   }
 
+  /**
+   * A progression off its rows' values: its frequency's first (`every:3`), and each level's first more (`5:1`) in its
+   * bounds, giving at most its bound with its frequency's, by level; its default without a frequency in its bounds.
+   */
+  private static readProgression(field: ProgressionSpec, values: string[]): ProgressionValue {
+    const every = values.map((value) => /^every:(\d+)$/.exec(value)?.[1]).find((match) => match !== undefined);
+    // Its rows stand for the whole together: without a frequency in its bounds, as a number past its bounds, its default
+    if (every === undefined || Number(every) > field.levels) return copyProgression(field.default);
+    const extra = new Map<number, number>();
+    for (const value of values) {
+      const match = /^(\d+):(\d+)$/.exec(value);
+      if (!match) continue;
+      const [level, amount] = [Number(match[1]), Number(match[2])];
+      if (level >= 1 && level <= field.levels && amount >= 1 && !extra.has(level)) extra.set(level, amount);
+    }
+    const frequency = Number(every);
+    // A level gives at most its bound with its frequency's: what's past it reads as its bound, a level its frequency
+    // fills gives none more
+    for (const [level, amount] of extra) {
+      const room = countRoomAt(frequency, level, field.max);
+      if (room > 0) extra.set(level, Math.min(amount, room));
+      else extra.delete(level);
+    }
+    return {
+      every: frequency,
+      extra: [...extra].map(([level, amount]) => ({ amount, level })).toSorted((a, b) => a.level - b.level),
+    };
+  }
+
   /** Whether two rows' values of a type hold the same values, whatever their order. */
   private static sameValues(a: readonly PropertyValue[], b: readonly PropertyValue[]) {
     const sorted = (rows: readonly PropertyValue[]) => rows.map((row) => row.value).toSorted();
@@ -135,6 +172,11 @@ export default class FieldCodec<S extends Fields> {
         return FieldCodec.writeFields(field.fields, value as Record<string, unknown>);
       case "list":
         return (value as string[]).map((item) => ({ type: field.type, value: item }));
+      case "progression": {
+        const { every, extra } = value as ProgressionValue;
+        const rows = [`every:${every}`, ...extra.map(({ amount, level }) => `${level}:${amount}`)];
+        return rows.map((row) => ({ type: field.type, value: row }));
+      }
       case "flag":
         return field.absent === null || value === true ? [{ type: field.type, value: String(value) }] : [];
       case "number":
@@ -219,8 +261,11 @@ export default class FieldCodec<S extends Fields> {
       .flatMap(([, typed]) => typed);
   }
 
-  /** The values as the rows that keep them: none when the entity keeps no field (`storesWhen`). */
-  toProperties(values: FieldValues<S>): PropertyValue[] {
+  /**
+   * The values as the rows that keep them: none when the entity keeps no field (`storesWhen`), nor for a field they
+   * leave out.
+   */
+  toProperties(values: Partial<FieldValues<S>>): PropertyValue[] {
     if (this.rules.storesWhen && !this.rules.storesWhen(values)) return [];
     return FieldCodec.writeFields(this.fields, values as Record<string, unknown>);
   }

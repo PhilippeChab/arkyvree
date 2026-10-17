@@ -197,12 +197,16 @@ describe("character levels", () => {
       const fighter = ctx.klassMap.pc["Fighter"];
       // One at a time: the test's transaction has a single connection
       const planned: string[] = [];
-      for (const level of [1, 2, 3]) planned.push((await findKlassLevel(fighter, level))!.id);
+      for (let level = 1; level <= 11; level++) planned.push((await findKlassLevel(fighter, level))!.id);
       const [strength, dexterity] = [ctx.abilityMap["Strength"], ctx.abilityMap["Dexterity"]];
-      // The fourth level's step: the first three planned, each level's increases "abilityId:amount" pairs joined by ";"
+      // The twelfth level's step: the first eleven planned, each level's increases "abilityId:amount" pairs joined by
+      // ";", the levels' by ",": those of the fourth and the eighth, which take one, beside one that isn't an increase
+      const increases = Array<string>(11).fill("");
+      increases[3] = `${strength}:1;not-an-increase`;
+      increases[7] = `${strength}:2;${dexterity}:1`;
       const abilities = await getStep(characterId, "abilities", {
         plannedClassLevelIds: planned.join(","),
-        plannedAbilityIncreases: `${strength}:1,${strength}:2;${dexterity}:1,not-an-increase`,
+        plannedAbilityIncreases: increases.join(","),
       });
       expect(abilities).toMatchObject({
         isAvailable: true,

@@ -1,6 +1,6 @@
 import type { AbilityIncrease, FeatPick, LevelPickRows, LevelPicks, PowerPick } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
-import type { RulesetData } from "@/engine/core/view/index.ts";
+import type { RulesetData, RulesetView } from "@/engine/core/view/index.ts";
 
 import type { LevelUpRules } from "./LevelUpBase.ts";
 
@@ -64,7 +64,7 @@ export type GrantedFeatRecords =
 export type Holding = (picks: PoolPicks) => HoldingCharacter;
 
 /**
- * A level's selections checked against the ruleset (`rulesetData`): linked to their pools, and not taken twice (a
+ * A level's selections checked against the ruleset's view (`view`): linked to their pools, and not taken twice (a
  * non-stackable feat the character has, a power in a pool it knows it in, the level's other picks' gifts too); and its
  * hit points and ability increases, within what its ruleset's rules give it (`rules`). Each selection is the ruleset's,
  * by the id its view keys it by: the level-up handle resolved the request when it entered, and refused a pick the view
@@ -72,7 +72,7 @@ export type Holding = (picks: PoolPicks) => HoldingCharacter;
  */
 export default class SelectionChecks {
   constructor(
-    private readonly rulesetData: RulesetData,
+    private readonly view: RulesetView,
     private readonly rules: Pick<LevelUpRules<unknown>, "getAbilityIncreaseTotal" | "hitPointsOf">,
   ) {}
 
@@ -84,13 +84,13 @@ export default class SelectionChecks {
   private checkRepeatedPicks(feats: Record<string, string[]>, powers: Record<string, string[]>) {
     const nonStackable = this.findRepeated(feats).find((featId) => !this.isStackable(featId));
     if (nonStackable) {
-      const name = this.rulesetData.featsById.get(nonStackable)?.name ?? nonStackable;
+      const name = this.view.rulesetData.featsById.get(nonStackable)?.name ?? nonStackable;
       throw new RulesError("invalid", `Non-stackable feat "${name}" cannot be picked more than once`);
     }
 
     const [power] = this.findRepeated(powers);
     if (!power) return;
-    const name = this.rulesetData.powersById.get(power)?.name ?? power;
+    const name = this.view.rulesetData.powersById.get(power)?.name ?? power;
     throw new RulesError("invalid", `Power "${name}" cannot be picked more than once at a level`);
   }
 
@@ -99,7 +99,7 @@ export default class SelectionChecks {
    * by what its rules give it (none where they give none), each ability once.
    */
   private findAbilityIncreaseError(totalLevel: number, increases: AbilityIncrease[]) {
-    const total = this.rules.getAbilityIncreaseTotal(totalLevel);
+    const total = this.rules.getAbilityIncreaseTotal(this.view, totalLevel);
     if (increases.length > 0 && total === 0) return "Ability increase is not available at this level";
     if (increases.length === 0 && total > 0) return "Ability increase is required at this level";
     if (new Set(increases.map(({ abilityId }) => abilityId)).size < increases.length)
@@ -117,7 +117,7 @@ export default class SelectionChecks {
   private findGivenPicks(picks: PoolPicks, holding: Holding, kept: KeptPicks): LevelPick[] {
     const ownFeats = new Set(kept.feats.map(({ featId }) => featId));
     const ownPowers = new Set(kept.powers.map(({ aptitudeId, powerId }) => `${powerId}:${aptitudeId}`));
-    const { featsById, powersById } = this.rulesetData;
+    const { featsById, powersById } = this.view.rulesetData;
     const picked = [
       ...this.listPicks("feats", picks.feats, featsById).filter(({ id }) => !this.isStackable(id) && !ownFeats.has(id)),
       ...this.listPicks("powers", picks.powers, powersById).filter(
@@ -146,7 +146,7 @@ export default class SelectionChecks {
 
   /** Whether the ruleset's feat stacks: a character may have it more than once. */
   private isStackable(featId: string) {
-    return this.rulesetData.featsById.get(featId)?.stackable === true;
+    return this.view.rulesetData.featsById.get(featId)?.stackable === true;
   }
 
   /** A pool's picks of a kind (`picks`, by pool) as the level's picks, each named by its row (`byId`). */
@@ -287,7 +287,7 @@ export default class SelectionChecks {
   checkLinks(feats: Record<string, string[]>, powers: Record<string, string[]>) {
     for (const [aptitudeId, ids] of Object.entries(feats)) {
       for (const featId of ids) {
-        const links = this.rulesetData.featsById.get(featId)?.featsAptitudesInRules ?? [];
+        const links = this.view.rulesetData.featsById.get(featId)?.featsAptitudesInRules ?? [];
         if (!links.some((fa) => fa.aptitudeId === aptitudeId))
           throw new RulesError("invalid", "Feat is not linked to the specified aptitude");
       }
@@ -295,7 +295,7 @@ export default class SelectionChecks {
 
     for (const [aptitudeId, ids] of Object.entries(powers)) {
       for (const powerId of ids) {
-        const links = this.rulesetData.powersById.get(powerId)?.powersAptitudesInRules ?? [];
+        const links = this.view.rulesetData.powersById.get(powerId)?.powersAptitudesInRules ?? [];
         if (!links.some((pa) => pa.aptitudeId === aptitudeId))
           throw new RulesError("invalid", "Power is not linked to the specified aptitude");
       }
@@ -314,13 +314,13 @@ export default class SelectionChecks {
     const { feats, powers } = this.splitHeldPicks(picks, holding, kept).refused;
     const [feat] = feats;
     if (feat) {
-      const name = this.rulesetData.featsById.get(feat.featId)?.name ?? feat.featId;
+      const name = this.view.rulesetData.featsById.get(feat.featId)?.name ?? feat.featId;
       throw new RulesError("invalid", `Non-stackable feat "${name}" is already on this character`);
     }
     const [power] = powers;
     if (!power) return;
-    const name = this.rulesetData.powersById.get(power.powerId)?.name ?? power.powerId;
-    const pool = this.rulesetData.aptitudesById.get(power.aptitudeId)?.name ?? power.aptitudeId;
+    const name = this.view.rulesetData.powersById.get(power.powerId)?.name ?? power.powerId;
+    const pool = this.view.rulesetData.aptitudesById.get(power.aptitudeId)?.name ?? power.aptitudeId;
     throw new RulesError("invalid", `Power "${name}" is already known in ${pool}`);
   }
 
