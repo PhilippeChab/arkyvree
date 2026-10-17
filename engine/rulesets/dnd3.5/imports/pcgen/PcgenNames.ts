@@ -157,8 +157,10 @@ export default class PcgenNames {
   /**
    * The skill PCGen names `name`: by its name, or the one whose name it opens ("Knowledge (Nobility)": "Knowledge
    * (Nobility and Royalty)"), or a subtype's base ("Craft (Weaponsmithing)": "Craft") when the ruleset has no subtypes.
+   * PCGen 6 names a subtype "Base ~ Subtype" ("Craft ~ Weaponsmithing"), read as "Base (Subtype)".
    */
-  findSkill(name: string) {
+  findSkill(pcgenName: string) {
+    const name = pcgenName.replace(/^(.+?) ~ (.+)$/, "$1 ($2)");
     const found = this.findFirst("skills", [name]);
     if (found) return found;
     const wanted = PcgenNames.compared(name);

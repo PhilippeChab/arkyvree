@@ -135,8 +135,8 @@ export default class PcgFormat2 {
     ["AGE", (line) => (this.character.identity.age = this.readNumber(line.value))],
     ["ALIGN", (line) => (this.character.identity.alignment = { line: line.line, value: line.value })],
     ["CALCEQUIPSET", (line) => (this.calcEquipSet = line.value)],
-    ["CHARACTERBIO", (line) => this.addText("description", line.value)],
-    ["CHARACTERDESC", (line) => this.addText("description", line.value)],
+    ["CHARACTERBIO", (line) => this.addDescription(line.value)],
+    ["CHARACTERDESC", (line) => this.addDescription(line.value)],
     ["CHARACTERNAME", (line) => (this.character.identity.name = line.value)],
     ["CLASS", (line) => this.readClass(line)],
     ["CLASSABILITIESLEVEL", (line) => this.readLevel(line)],
@@ -162,14 +162,14 @@ export default class PcgFormat2 {
   /** The equipment set the character's sheet uses (`CALCEQUIPSET`), the first one when it names none. */
   private calcEquipSet?: string;
 
+  /** Adds a paragraph of the character's description, when it says something. */
+  private addDescription(value: string) {
+    if (value.trim()) this.character.biography.description.push(value.trim());
+  }
+
   /** Adds a labelled note, when it says something. */
   private addNote(label: string, value: string) {
     if (value.trim()) this.character.biography.notes.push(`${label}: ${value.trim()}`);
-  }
-
-  /** Adds a paragraph of the character's description, when it says something. */
-  private addText(part: "description", value: string) {
-    if (value.trim()) this.character.biography[part].push(value.trim());
   }
 
   /** Whether an equipment set's location holds an item without wearing it: carried, or in a container. */
@@ -314,13 +314,13 @@ export default class PcgFormat2 {
     return Number.isFinite(number) ? number : undefined;
   }
 
-  /** A skill's ranks (`SKILL:<name>|CLASSBOUGHT:[CLASS:<class>|RANKS:<n>|COST:<points>]…`), none for one without. */
+  /** A skill's ranks (`SKILL:<name>|CLASSBOUGHT:[CLASS:<class>|RANKS:<n>|…]…`), none for one without. */
   private readSkill(line: PcgLine) {
     const bought = line.findAll("CLASSBOUGHT").flatMap((value) => {
       const tags = new Map(PcgLine.nested(value).map((part) => [part.tag, part.value]));
       const ranks = this.readNumber(tags.get("RANKS") ?? "") ?? 0;
       if (ranks <= 0) return [];
-      return [{ className: tags.get("CLASS") ?? "", cost: this.readNumber(tags.get("COST") ?? "") ?? 1, ranks }];
+      return [{ className: tags.get("CLASS") ?? "", ranks }];
     });
     const skill: ImportedSkill = { bought, line: line.line, name: line.value };
     if (bought.length > 0) this.character.skills.push(skill);

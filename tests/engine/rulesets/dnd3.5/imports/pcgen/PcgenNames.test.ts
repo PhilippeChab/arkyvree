@@ -35,6 +35,9 @@ describe("PcgenNames", () => {
     const names = await seededNames();
     expect(names.findSkill("Knowledge (Nobility)")?.name).toBe("Knowledge (Nobility and Royalty)");
     expect(names.findSkill("Craft (Weaponsmithing)")?.name).toBe("Craft");
+    // PCGen 6 names a subtype after a tilde
+    expect(names.findSkill("Craft ~ Weaponsmithing")?.name).toBe("Craft");
+    expect(names.findSkill("Perform ~ Sing")?.name).toBe("Perform");
     // A name of another script the ruleset hasn't finds nothing, never its first skill
     expect(names.findSkill("Ψυχή")).toBeUndefined();
   });

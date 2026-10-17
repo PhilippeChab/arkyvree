@@ -82,9 +82,9 @@ export interface ImportedName extends SourcedPart {
   name: string;
 }
 
-/** A skill's ranks as the file holds them: bought in each class (`className`), each rank at its cost in points. */
+/** A skill's ranks as the file holds them: bought in each class (`className`). */
 export interface ImportedSkill extends SourcedPart {
-  bought: { className: string; cost: number; ranks: number }[];
+  bought: { className: string; ranks: number }[];
   name: string;
 }
 

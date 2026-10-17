@@ -16,10 +16,15 @@ function gainsOf(skillId: string, classSkill: boolean) {
   };
 }
 
+/** The seeded ruleset's view. */
+async function getSeededData() {
+  const { rulesetId } = await getSeedCtx();
+  return await RulesetViews.getData((await Rulesets.findOne(db, { id: rulesetId }))!);
+}
+
 /** A placement of a skill's ranks bought as a fighter, in the seeded ruleset's view. */
 async function placementOf(ranks: number) {
-  const { rulesetId } = await getSeedCtx();
-  const data = await RulesetViews.getData((await Rulesets.findOne(db, { id: rulesetId }))!);
+  const data = await getSeededData();
   const skill = data.skills.find(({ name }) => name === "Climb")!;
   const line = { number: 1, text: "SKILL:Climb" };
   const matched = { className: "Fighter", line, name: skill.name, ranks, skillId: skill.id };
@@ -49,6 +54,27 @@ describe("PicksPlacement", () => {
     });
     expect(spent).toEqual({ [skillId]: 3 });
     expect(placement.leftSkills()).toEqual([]);
+  });
+
+  test("gives two of the file's lines naming one skill (two crafts of one Craft) its room at a level once", async () => {
+    const { skillId } = await placementOf(0);
+    const line = (number: number) => ({ className: "Fighter", line: { number, text: "SKILL:Climb" }, name: "Climb" });
+    const twins = new PicksPlacement(
+      await getSeededData(),
+      [],
+      [
+        { ...line(1), ranks: 3, skillId },
+        { ...line(2), ranks: 3, skillId },
+      ],
+    );
+    const spent = twins.placeSkills({
+      characterLevel: 1,
+      className: "Fighter",
+      gains: { ...gainsOf(skillId, true), skillPoints: 8 },
+      lastClassLevel: 1,
+    });
+    expect(spent).toEqual({ [skillId]: 4 });
+    expect(twins.leftSkills().reduce((total, { ranks }) => total + ranks, 0)).toBe(2);
   });
 
   test("leaves the ranks of another class's levels for them", async () => {

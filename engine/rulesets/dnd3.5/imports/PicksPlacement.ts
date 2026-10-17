@@ -121,22 +121,27 @@ export default class PicksPlacement {
     const spent: Record<string, number> = {};
     let points = gains.skillPoints;
     const ofClass = this.skills.filter((skill) => skill.className === className && skill.ranks > 0);
+    // The ranks each skill can still take at the level: the file's lines that name one skill (two crafts of the
+    // ruleset's one Craft) share it
+    const headroom = new Map<string, number>();
     const states = ofClass.map((skill) => {
       const context = gains.skills.get(skill.skillId) ?? { currentRank: 0, isClassSkill: false };
       const max = SkillRules.maxRank(characterLevel, context.isClassSkill);
       const later = SkillRules.maxRank(lastClassLevel, context.isClassSkill) - max;
       const pointsPerRank = SkillRules.pointsFor(1, gains.classSkillIds.has(skill.skillId));
-      return { headroom: max - context.currentRank, later, pointsPerRank, skill };
+      headroom.set(skill.skillId, max - context.currentRank);
+      return { later, pointsPerRank, skill };
     });
     const spend = (state: (typeof states)[number], ranks: number) => {
+      const { skillId } = state.skill;
       // Whole points only: a class skill's rank a point, a cross-class half rank a point
-      const wanted = Math.max(0, Math.min(ranks, state.headroom, state.skill.ranks));
+      const wanted = Math.max(0, Math.min(ranks, headroom.get(skillId)!, state.skill.ranks));
       const cost = Math.min(points, Math.floor(wanted * state.pointsPerRank));
       const bought = cost / state.pointsPerRank;
       if (cost <= 0) return;
-      spent[state.skill.skillId] = (spent[state.skill.skillId] ?? 0) + cost;
+      spent[skillId] = (spent[skillId] ?? 0) + cost;
       points -= cost;
-      state.headroom -= bought;
+      headroom.set(skillId, headroom.get(skillId)! - bought);
       state.skill.ranks -= bought;
     };
     const urgent = states.toSorted((a, b) => b.skill.ranks - b.later - (a.skill.ranks - a.later));

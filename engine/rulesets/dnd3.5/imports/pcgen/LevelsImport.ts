@@ -1,7 +1,7 @@
 import type { ImportedCharacter, ImportedFeat, ImportedLevel, ImportReport } from "@/engine/core/imports/index.ts";
 import { LevelByLevel, type PlannedClassLevel } from "@/engine/core/levelUp/index.ts";
 import type { AbilityIncrease, BondedPlan, CharacterInput, FeatPick, LevelWrites } from "@/engine/core/module/index.ts";
-import RulesError from "@/engine/core/RulesError.ts";
+import RulesError, { type RulesIssue } from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import ImportedLevelGains from "@/engine/rulesets/dnd3.5/imports/ImportedLevelGains.ts";
 import PicksPlacement, {
@@ -45,6 +45,14 @@ export default class LevelsImport {
     private readonly stop?: LevelStop,
   ) {
     this.levels = this.matchLevels();
+  }
+
+  /**
+   * What an issue is about, its counts aside (an unspent point is still one at the next level): its category, the
+   * entity it names, and its message with each number one.
+   */
+  private static issueKey({ category, entityName, entityType, message }: RulesIssue) {
+    return [category, entityType ?? "", entityName ?? "", message.replace(/\d+/g, "#")].join("\u0000");
   }
 
   /** The file's levels the character takes, matched: up to the first the ruleset can't take. */
@@ -232,7 +240,7 @@ export default class LevelsImport {
       writes.push(planned.writes);
       this.report.import(this.describeLevel(index, level, abilityIncreases, featPicks));
       // An issue the level before had already (its counts aside: an unspent point is still one) was said there
-      const issues = new Map(planned.issues.map((issue) => [issue.message.replace(/[\d/()]+/g, ""), issue.message]));
+      const issues = new Map(planned.issues.map((issue) => [LevelsImport.issueKey(issue), issue.message]));
       for (const [key, message] of issues)
         if (!issuesBefore.has(key)) this.report.issue(`Level ${index + 1}: ${message}`);
       issuesBefore = new Set(issues.keys());
