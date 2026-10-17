@@ -115,8 +115,10 @@ const PROGRESSION_ROW_SX = {
   gridTemplateColumns: "repeat(2, minmax(0, 1fr)) auto",
   columnGap: 1,
   alignItems: "start",
-  maxWidth: "28rem",
 };
+
+/** A progression's inputs' width: its frequency's and its levels' rows', which line up. */
+const PROGRESSION_WIDTH_SX = { maxWidth: "28rem" };
 
 /** The lists of a ruleset a reference picks from, by the kind of entity it names. */
 const REFERENCE_LISTS = ["abilities", "saves"] as const;
@@ -322,7 +324,8 @@ function ProgressionInput<T extends FieldValues>({ field, form, help }: FieldInp
   const extra: ProgressionExtra[] = Array.isArray(watched) ? watched : [];
   // One at most a level: each listed level gives one, which its frequency mustn't give already
   const givesOne = field.max === 1;
-  const frequency = typeof every === "number" ? every : 0;
+  // A frequency the form holds whole, none otherwise: its own input says why
+  const frequency = typeof every === "number" && Number.isInteger(every) ? every : 0;
   const roomAt = (level: number) => countRoomAt(frequency, level, field.max);
   // What's wrong with a row's part, with its value as typed: the save's own checks
   const issueAt = (index: number, part: "amount" | "level", value: number) => {
@@ -345,79 +348,83 @@ function ProgressionInput<T extends FieldValues>({ field, form, help }: FieldInp
   );
   const described = help && field.help !== "";
   return (
-    <Stack role="group" aria-labelledby={labelId} aria-describedby={described ? helpId : undefined} spacing={2}>
+    <Stack role="group" aria-labelledby={labelId} aria-describedby={described ? helpId : undefined} spacing={1}>
       <Box id={labelId}>
         <SubsectionTitle>{field.label}</SubsectionTitle>
       </Box>
-      <Box sx={{ maxWidth: "28rem" }}>
-        <FormTextField
-          control={control}
-          name={formPath<T>(`${path}.every`)}
-          rules={wholeNumberRules(0, "Frequency is required", field.levels)}
-          number
-          label="Every N Levels"
-          helperText="0 for none"
-          fullWidth
-          slotProps={{ htmlInput: { min: 0, max: field.levels } }}
-        />
-      </Box>
-      <Stack spacing={1.5}>
-        <Typography variant="body2" component="p" sx={{ color: "text.secondary" }}>
-          {givesOne ? "Also at Levels" : "More at Levels"}
-        </Typography>
-        {readOnly && rows.length === 0 && <EmptyValue />}
-        {rows.map((row, index) => (
-          <Box key={row.id} sx={PROGRESSION_ROW_SX}>
-            <FormTextField
-              control={control}
-              name={formPath<T>(`${path}.extra.${index}.level`)}
-              rules={wholeNumberRules(1, "Level is required", field.levels, [
-                (level) => issueAt(index, "level", level),
-              ])}
-              number
-              label="Level"
-              fullWidth
-              slotProps={{ htmlInput: { min: 1, max: field.levels } }}
-            />
-            {givesOne ? (
-              <Box />
-            ) : (
+      <Stack spacing={2}>
+        <Box sx={PROGRESSION_WIDTH_SX}>
+          <FormTextField
+            control={control}
+            name={formPath<T>(`${path}.every`)}
+            rules={wholeNumberRules(0, "Frequency is required", field.levels)}
+            number
+            label="Every N Levels"
+            helperText="0 for none"
+            fullWidth
+            slotProps={{ htmlInput: { min: 0, max: field.levels } }}
+          />
+        </Box>
+        <Stack spacing={1.5}>
+          <Typography variant="body2" component="p" sx={{ color: "text.secondary" }}>
+            {givesOne ? "Also at Levels" : "More at Levels"}
+          </Typography>
+          {readOnly && rows.length === 0 && <EmptyValue />}
+          {rows.map((row, index) => (
+            <Box key={row.id} sx={[PROGRESSION_ROW_SX, PROGRESSION_WIDTH_SX]}>
               <FormTextField
                 control={control}
-                name={formPath<T>(`${path}.extra.${index}.amount`)}
-                rules={wholeNumberRules(1, "Amount is required", field.max, [
-                  (amount) => issueAt(index, "amount", amount),
+                name={formPath<T>(`${path}.extra.${index}.level`)}
+                rules={wholeNumberRules(1, "Level is required", field.levels, [
+                  (level) => issueAt(index, "level", level),
                 ])}
                 number
-                label="Amount"
+                label="Level"
                 fullWidth
-                slotProps={{ htmlInput: { min: 1, max: field.max } }}
+                slotProps={{ htmlInput: { min: 1, max: field.levels } }}
               />
-            )}
-            {!readOnly && (
-              <Box sx={{ pt: 1 }}>
-                <RowAction
-                  icon={DeleteIcon}
-                  label={Number.isInteger(extra[index]?.level) ? `Remove Level ${extra[index].level}` : "Remove Level"}
-                  intent="destructive"
-                  onClick={() => remove(index)}
+              {givesOne ? (
+                <Box />
+              ) : (
+                <FormTextField
+                  control={control}
+                  name={formPath<T>(`${path}.extra.${index}.amount`)}
+                  rules={wholeNumberRules(1, "Amount is required", field.max, [
+                    (amount) => issueAt(index, "amount", amount),
+                  ])}
+                  number
+                  label="Amount"
+                  fullWidth
+                  slotProps={{ htmlInput: { min: 1, max: field.max } }}
                 />
-              </Box>
-            )}
-          </Box>
-        ))}
-        {!readOnly && (
-          <AddButton
-            variant="outlined"
-            label="Add Level"
-            // The form's type is its owner's, which a path its declarations name can't narrow to a level's row
-            onClick={() => nextLevel !== undefined && append({ amount: 1, level: nextLevel } as never)}
-            disabled={nextLevel === undefined}
-            sx={{ alignSelf: "flex-start" }}
-          />
-        )}
+              )}
+              {!readOnly && (
+                <Box sx={{ pt: 1 }}>
+                  <RowAction
+                    icon={DeleteIcon}
+                    label={
+                      Number.isInteger(extra[index]?.level) ? `Remove Level ${extra[index].level}` : "Remove Level"
+                    }
+                    intent="destructive"
+                    onClick={() => remove(index)}
+                  />
+                </Box>
+              )}
+            </Box>
+          ))}
+          {!readOnly && (
+            <AddButton
+              variant="outlined"
+              label="Add Level"
+              // The form's type is its owner's, which a path its declarations name can't narrow to a level's row
+              onClick={() => nextLevel !== undefined && append({ amount: 1, level: nextLevel } as never)}
+              disabled={nextLevel === undefined}
+              sx={{ alignSelf: "flex-start" }}
+            />
+          )}
+        </Stack>
+        {described && <FormHelperText id={helpId}>{field.help}</FormHelperText>}
       </Stack>
-      {described && <FormHelperText id={helpId}>{field.help}</FormHelperText>}
     </Stack>
   );
 }
