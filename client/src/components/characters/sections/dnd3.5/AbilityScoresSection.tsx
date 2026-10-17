@@ -25,7 +25,7 @@ interface AbilityScoresSectionProps {
 
 export function AbilityScoresSection({ abilities, baseRules, characterId, readOnly }: AbilityScoresSectionProps) {
   const entries = Object.entries(abilities);
-  const sortedEntries = sortAbilities(entries, baseRules, ([name]) => name);
+  const sortedEntries = sortAbilities(entries, baseRules, ([key]) => key);
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
 
@@ -46,11 +46,11 @@ export function AbilityScoresSection({ abilities, baseRules, characterId, readOn
       queryClient.setQueryData(queryKey, (old) => {
         if (!old) return old;
         const updated = { ...old.abilities };
-        for (const [name, data] of Object.entries(updated)) {
+        for (const [key, data] of Object.entries(updated)) {
           if (data.abilityId === abilityId) {
             // Until the server answers: the total moves by the base's change, whatever else adds to it, and the
             // modifier stays the one it gave
-            updated[name] = { ...data, base: score, total: data.total + score - data.base };
+            updated[key] = { ...data, base: score, total: data.total + score - data.base };
             break;
           }
         }
@@ -83,10 +83,10 @@ export function AbilityScoresSection({ abilities, baseRules, characterId, readOn
     <SheetSection title="Ability Scores">
       {sortedEntries.length > 0 ? (
         <Stack direction="row" spacing={2} sx={{ flexWrap: "wrap", justifyContent: "center" }}>
-          {sortedEntries.map(([ability, abilityData]) => (
-            <Box key={ability} sx={{ minWidth: { xs: 120, sm: 140 } }}>
+          {sortedEntries.map(([key, abilityData]) => (
+            <Box key={key} sx={{ minWidth: { xs: 120, sm: 140 } }}>
               <AbilityScoreBox
-                ability={ability}
+                ability={abilityData.name}
                 score={abilityData.total}
                 modifier={abilityData.modifier}
                 abilityData={abilityData}

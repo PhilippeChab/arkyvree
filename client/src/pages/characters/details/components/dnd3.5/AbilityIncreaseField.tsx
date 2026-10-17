@@ -3,7 +3,7 @@ import { useId } from "react";
 
 import { sortAbilities } from "@/client/src/components/characters/index.ts";
 import type { BaseRules } from "@/shared/enums.ts";
-import { capitalize, formatSigned } from "@/shared/text.ts";
+import { formatSigned } from "@/shared/text.ts";
 
 import type { LevelAbilities } from "./levelUp/index.ts";
 
@@ -26,12 +26,12 @@ export function AbilityIncreaseField({ abilities, baseRules, name, value, onChan
         Select an ability to increase
       </FormLabel>
       <RadioGroup aria-labelledby={labelId} name={name} value={value ?? ""} onChange={(e) => onChange(e.target.value)}>
-        {sortAbilities(Object.entries(abilities), baseRules, ([key]) => key).map(([key, ability]) => (
+        {sortAbilities(Object.entries(abilities), baseRules, ([key]) => key).map(([, ability]) => (
           <FormControlLabel
             key={ability.abilityId}
             value={ability.abilityId}
             control={<Radio />}
-            label={`${capitalize(key)}: ${ability.total} (${formatSigned(ability.modifier)})`}
+            label={`${ability.name}: ${ability.total} (${formatSigned(ability.modifier)})`}
           />
         ))}
       </RadioGroup>

@@ -210,7 +210,11 @@ describe("character levels", () => {
       });
       expect(abilities).toMatchObject({
         isAvailable: true,
-        attributes: { strength: { level: 3 }, dexterity: { level: 1 }, constitution: { level: 0 } },
+        attributes: {
+          strength: { name: "Strength", level: 3 },
+          dexterity: { name: "Dexterity", level: 1 },
+          constitution: { name: "Constitution", level: 0 },
+        },
       });
     });
 

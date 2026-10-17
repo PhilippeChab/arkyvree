@@ -821,6 +821,7 @@ describe("previewing a level-up", () => {
       (await preview(ctx, characterId, fighter(4), abilities)).attributes.attributes["intelligence"];
     expect((await intelligence([null, null, null, null])).total).toBe(12);
     expect(await intelligence([null, null, null, ctx.abilityMap["Intelligence"]])).toMatchObject({
+      name: "Intelligence",
       total: 13,
       modifier: 1,
     });

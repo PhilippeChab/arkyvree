@@ -2,12 +2,13 @@ import { IconButton, Stack, Typography } from "@mui/material";
 
 import { AddIcon, RemoveIcon } from "@/client/src/components/icons/index.ts";
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
-import { formatSigned } from "@/shared/text.ts";
+import { formatSigned, stripSeparators } from "@/shared/text.ts";
 import { MAX_ABILITY_SCORE, MIN_ABILITY_SCORE, STARTING_ABILITY_SCORE } from "@/vocabulary/dnd3.5/abilities.ts";
 
 import { ScoreBox } from "./ScoreBox.tsx";
 
 interface AbilityScoreBoxProps {
+  /** The ability's name, as its ruleset gives it ("Force Points"). */
   ability: string;
   abilityData?: CharacterDetail["abilities"][string];
   compact?: boolean;
@@ -31,7 +32,8 @@ export function AbilityScoreBox({
     !readOnly && !compact && abilityData?.abilityId && onBaseChange
       ? { abilityId: abilityData.abilityId, onBaseChange }
       : null;
-  const label = compact ? ability.slice(0, 3).toUpperCase() : ability;
+  // The compact form abbreviates the name's letters: "Ki Points" is KIP
+  const label = compact ? stripSeparators(ability).slice(0, 3).toUpperCase() : ability;
   const breakdown = compact ? undefined : abilityData;
 
   return (

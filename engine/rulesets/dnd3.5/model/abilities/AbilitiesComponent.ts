@@ -17,8 +17,8 @@ interface AbilitiesData {
 export default class AbilitiesComponent extends CharacterComponent<LoadedCharacterData> {
   private readonly abilities: AbilitiesData = {} as AbilitiesData;
 
-  // Map abilityId -> normalized ability name for level-up lookups
-  private readonly abilityIdToName: Map<string, string> = new Map();
+  /** Each ability's name as its ruleset gives it ("Force Points") and its normalized one ("forcepoints"), by its id. */
+  private readonly abilityNames: Map<string, { name: string; normalizedName: string }> = new Map();
 
   /** What the character's race makes of each ability's misc, by the ability's slug: its permanent score keeps it. */
   private raceAdjustments: Readonly<Record<string, number>> = {};
@@ -31,7 +31,7 @@ export default class AbilitiesComponent extends CharacterComponent<LoadedCharact
     // Initialize abilities from the character's ability scores
     for (const { abilityId, name, score } of characterAbilityScores) {
       const normalizedName = stripSeparators(name);
-      this.abilityIdToName.set(abilityId, normalizedName);
+      this.abilityNames.set(abilityId, { name, normalizedName });
 
       // The total and the modifier are computed from the parts when read, so they follow every change to them
       this.abilities[normalizedName] = {
@@ -49,7 +49,7 @@ export default class AbilitiesComponent extends CharacterComponent<LoadedCharact
 
     // Apply the levels' ability increases
     for (const { abilityId, amount } of abilityIncreases) {
-      const normalizedName = this.abilityIdToName.get(abilityId);
+      const normalizedName = this.abilityNames.get(abilityId)?.normalizedName;
       if (normalizedName && this.abilities[normalizedName]) this.abilities[normalizedName].level += amount;
     }
   }
@@ -58,22 +58,13 @@ export default class AbilitiesComponent extends CharacterComponent<LoadedCharact
     return this.abilities;
   }
 
+  /** Each ability, by its normalized name: its id, its name as its ruleset gives it, and its scores. */
   getAbilitiesWithIds() {
-    const result: Record<
-      string,
-      {
-        abilityId: string;
-        base: number;
-        level: number;
-        misc: number;
-        modifier: number;
-        total: number;
-      }
-    > = {};
+    const result: Record<string, AbilitiesData[string] & { abilityId: string; name: string }> = {};
 
-    for (const [abilityId, normalizedName] of this.abilityIdToName.entries()) {
+    for (const [abilityId, { name, normalizedName }] of this.abilityNames.entries()) {
       const ability = this.abilities[normalizedName];
-      if (ability) result[normalizedName] = { abilityId, ...ability };
+      if (ability) result[normalizedName] = { abilityId, name, ...ability };
     }
 
     return result;
@@ -97,9 +88,9 @@ export default class AbilitiesComponent extends CharacterComponent<LoadedCharact
     return AbilityRules.computeModifier(ability.base + ability.level);
   }
 
-  /** An ability's name by its id (as the sheet keys it): none for one the character has no score in. */
+  /** An ability's normalized name by its id (as the sheet keys it): none for one the character has no score in. */
   getAbilityName(abilityId: string): string | undefined {
-    return this.abilityIdToName.get(abilityId);
+    return this.abilityNames.get(abilityId)?.normalizedName;
   }
 
   /**

@@ -1,6 +1,9 @@
 import { describe, expect, test } from "bun:test";
 
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
+import { RulesetViews } from "@/server/cow/index.ts";
+import { db } from "@/server/database/index.ts";
+import { Abilities } from "@/server/repositories/index.ts";
 import { api, createSignedInUser, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
 import { postCampaign } from "@/tests/support/campaigns.ts";
 import { postCharacter } from "@/tests/support/characters.ts";
@@ -150,6 +153,19 @@ describe("characters", () => {
       const detail = await expectOk(character.$get({ param: { id } }));
       const strength = Object.values(detail.abilities).find((a) => a.abilityId === abilityMap["Strength"]);
       expect(strength).toMatchObject({ base: 18, total: 18, modifier: 4 });
+    });
+
+    test("names each ability as its ruleset does", async () => {
+      const fork = await createSeededTestRuleset(SEED_USER_ID);
+      const [forcePoints] = await Abilities.create(db, { name: "Force Points", description: "", rulesetId: fork.id });
+      RulesetViews.invalidate(fork.id);
+      const { abilityMap } = await getSeedCtx();
+      const scores = Object.fromEntries(Object.values(abilityMap).map((abilityId) => [abilityId, 10]));
+      const { id } = await postCharacter({ rulesetId: fork.id, abilities: { ...scores, [forcePoints.id]: 12 } });
+
+      const { abilities } = await expectOk(character.$get({ param: { id } }));
+      expect(abilities.forcepoints).toMatchObject({ abilityId: forcePoints.id, name: "Force Points", base: 12 });
+      expect(abilities.strength).toMatchObject({ abilityId: abilityMap["Strength"], name: "Strength" });
     });
 
     test("refuses an ability the ruleset doesn't have", async () => {
