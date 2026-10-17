@@ -336,6 +336,19 @@ describe("What a file holds past what the app keeps", () => {
     ]);
   });
 
+  test("a feat of no choice a line takes twice (`APPLIEDTO:,`) is taken twice", async () => {
+    const text = riderFile(["ABILITY:FEAT|TYPE:NORMAL|CATEGORY:FEAT|KEY:Toughness|APPLIEDTO:,|TYPE:General"]);
+    expect((await nameLevels(await planImportOf(text)))[0].feats).toEqual(["Toughness", "Toughness"]);
+  });
+
+  test("gear worn where the app has no place for it is carried, said in the report", async () => {
+    const text = (await readPcgenFile("brannoc")).replace("EQUIPSET:Fingers|", "EQUIPSET:Tail|");
+    const { report } = await planImportOf(text);
+    expect(report.issues).toContain(
+      "Ring of Protection +1: worn at PCGen's Tail, which the app has no place for it at: carried",
+    );
+  });
+
   test("gear past the most the app keeps, and gear the character owns without carrying it, said in the report", async () => {
     const text = (await readPcgenFile("brannoc")).replace(
       "EQUIPNAME:Rations (Trail/Per Day)|OUTPUTORDER:7|COST:0.5|WT:1.0|QUANTITY:5.0",

@@ -140,6 +140,31 @@ describe("PcgFormat2", () => {
     ]);
   });
 
+  test("holds a pair of one weapon one in each hand, and sets apart what a container left at home holds", () => {
+    const text = [
+      "PCGVERSION:2.0",
+      "VERSION:6.09",
+      "EQUIPNAME:Dagger|QUANTITY:3.0",
+      "EQUIPNAME:Chest|QUANTITY:1.0",
+      "EQUIPNAME:Gold Bar|QUANTITY:5.0",
+      "EQUIPSET:Default Set|ID:0.1",
+      "EQUIPSET:Two Weapons|ID:0.1.01|VALUE:Dagger|QUANTITY:3.0",
+      "EQUIPSET:Not Carried|ID:0.1.02|VALUE:Chest|QUANTITY:1.0",
+      "EQUIPSET:Chest|ID:0.1.02.01|VALUE:Gold Bar|QUANTITY:5.0",
+      "CALCEQUIPSET:0.1",
+    ].join("\n");
+    const { gear } = new PcgenFile(text).read();
+    expect(
+      gear.map(({ location, name, notCarried, quantity }) => [name, location ?? "", notCarried ?? false, quantity]),
+    ).toEqual([
+      ["Dagger", "Primary Hand", false, 1],
+      ["Dagger", "Secondary Hand", false, 1],
+      ["Dagger", "", false, 1],
+      ["Chest", "", true, 1],
+      ["Gold Bar", "", true, 5],
+    ]);
+  });
+
   test("reads PCGen 5's feat lines too, in its general pool", () => {
     const text = "PCGVERSION:2.0\nVERSION:5.6.0\nFEAT:Weapon Focus|APPLIEDTO:Morningstar|TYPE:GENERAL.FIGHTER";
     expect(new PcgenFile(text).read().feats).toEqual([

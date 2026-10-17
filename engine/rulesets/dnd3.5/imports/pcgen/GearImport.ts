@@ -52,12 +52,17 @@ export default class GearImport {
     gear: ImportedGear,
     placement: ItemPlacementDescription,
   ): Pick<InventoryEntryRequest, "equipped" | "location" | "weaponSets"> {
-    const mapped = gear.location === undefined ? undefined : PCGEN_LOCATIONS.get(gear.location);
-    if (!mapped) return CARRIED;
+    if (gear.location === undefined) return CARRIED;
+    const mapped = PCGEN_LOCATIONS.get(gear.location);
     const offered = placement.locations.map(({ location }) => location);
     const wanted = mapped === "slot" ? placement.slot : mapped;
     const location = wanted && offered.includes(wanted) ? wanted : offered.length === 1 ? offered[0] : undefined;
-    if (!location) return CARRIED;
+    if (!mapped || !location) {
+      this.report.issue(
+        `${gear.name}: worn at PCGen's ${gear.location}, which the app has no place for it at: carried`,
+      );
+      return CARRIED;
+    }
     return { equipped: true, location, weaponSets: ItemPlacement.isHand(location) ? [0] : [] };
   }
 

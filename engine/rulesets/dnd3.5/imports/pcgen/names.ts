@@ -55,11 +55,13 @@ export const PCGEN_ITEMS = new Map<string, string>([
  * finger, a cloak's shoulders), which the app reads off the item.
  */
 export const PCGEN_LOCATIONS = new Map<string, ItemLocation | "slot">([
+  ["Arms", "slot"],
   ["Armor", "slot"],
   ["Back", "slot"],
   ["Belt", "slot"],
   ["Body", "slot"],
   ["Both Hands", "Two Handed"],
+  ["Clothing", "slot"],
   ["Double Weapon", "Two Handed"],
   ["Eyes", "slot"],
   ["Face", "slot"],
@@ -67,6 +69,7 @@ export const PCGEN_LOCATIONS = new Map<string, ItemLocation | "slot">([
   ["Foot", "slot"],
   ["Hands", "slot"],
   ["Head", "slot"],
+  ["Leg", "slot"],
   ["Neck", "slot"],
   ["Primary Hand", "Main Hand"],
   ["Robe", "slot"],
@@ -74,6 +77,7 @@ export const PCGEN_LOCATIONS = new Map<string, ItemLocation | "slot">([
   ["Shield", "Off Hand"],
   ["Shirt", "slot"],
   ["Shoulders", "slot"],
+  ["Skin", "slot"],
   ["Torso", "slot"],
   ["Waist", "slot"],
   ["Wrists", "slot"],

@@ -92,6 +92,9 @@ const NOTE_LABELS = new Map<string, string>([
   ["SPEECHPATTERN", "Speech"],
 ]);
 
+/** The equipment set's location of a pair of one weapon, one in each hand (two daggers). */
+const TWO_WEAPONS = "Two Weapons";
+
 /** The lines PCGen writes of what the import doesn't read yet, each with why: what the user adds in the app. */
 const UNREAD_REASONS = new Map<string, string>([
   ["COMPANIONLIST", "Companions aren't imported"],
@@ -110,6 +113,18 @@ const UNREAD_REASONS = new Map<string, string>([
  */
 export default class PcgFormat2 {
   constructor(private readonly lines: PcgLine[]) {}
+
+  /**
+   * A worn entry by the hands that hold it: a pair of one weapon (PCGen's `Two Weapons`) one in each hand, the others
+   * left to be carried; any other as it is.
+   */
+  private static handsOf(entry: EquipSetEntry): EquipSetEntry[] {
+    if (entry.location !== TWO_WEAPONS) return [entry];
+    return [
+      { location: "Primary Hand", quantity: Math.min(1, entry.quantity) },
+      ...(entry.quantity >= 2 ? [{ location: "Secondary Hand", quantity: 1 }] : []),
+    ];
+  }
 
   /**
    * Whether a customized item's modifiers (`DATA:EQMOD=…$…`, parted by `$`) enhance it: one of its parts holds an
@@ -186,6 +201,18 @@ export default class PcgFormat2 {
     if (value.trim()) this.character.biography.notes.push(`${label}: ${value.trim()}`);
   }
 
+  /**
+   * Whether an equipment set's location sets what it holds apart from what's carried: `Not Carried`, or a container
+   * that is (a chest left at home), its own container's place read in turn.
+   */
+  private isAway(location: string, entries: Map<string, EquipSetEntry[]>, seen = new Set<string>()): boolean {
+    if (location === NOT_CARRIED) return true;
+    const container = entries.get(location);
+    if (!container || seen.has(location)) return false;
+    seen.add(location);
+    return container.every((entry) => this.isAway(entry.location, entries, seen));
+  }
+
   /** Whether an equipment set's location holds an item without wearing it: carried, or in a container. */
   private isCarried(location: string, entries: Map<string, EquipSetEntry[]>, itemNames: Set<string>) {
     return CARRIED_LOCATIONS.has(location) || entries.has(location) || itemNames.has(location);
@@ -202,12 +229,15 @@ export default class PcgFormat2 {
     const sum = (held: EquipSetEntry[]) => held.reduce((total, entry) => total + entry.quantity, 0);
     return this.items.flatMap(({ item, quantity }) => {
       const held = entries.get(item.name) ?? [];
-      const worn = held.filter((entry) => !this.isCarried(entry.location, entries, itemNames));
+      const wearing = held.filter((entry) => !this.isCarried(entry.location, entries, itemNames));
+      const worn = wearing.flatMap((entry) => PcgFormat2.handsOf(entry));
       const left = quantity - sum(worn);
-      // What the set holds but doesn't wear is carried; what it leaves out (or sets apart, `Not Carried`) is owned
-      // without being carried, but in a file of no set, which says nothing of it
-      const inSet = held.filter((entry) => entry.location !== NOT_CARRIED && !worn.includes(entry));
-      const carried = Math.max(0, entries.size > 0 ? Math.min(left, sum(inSet)) : left);
+      // What the set holds but doesn't wear is carried (a pair's third dagger too); what it leaves out (or sets apart,
+      // `Not Carried`, a chest left there with what it holds) is owned without being carried, but in a file of no set,
+      // which says nothing of it
+      const inSet = held.filter((entry) => !wearing.includes(entry) && !this.isAway(entry.location, entries));
+      const extra = sum(wearing) - sum(worn);
+      const carried = Math.max(0, entries.size > 0 ? Math.min(left, sum(inSet) + extra) : left);
       const away = left - carried;
       return [
         ...worn.map((entry) => ({ ...item, location: entry.location, quantity: entry.quantity })),

@@ -1,6 +1,14 @@
 import type { ImportedCharacter, ImportedFeat, ImportedLevel, ImportReport } from "@/engine/core/imports/index.ts";
 import { LevelByLevel, type PlannedClassLevel } from "@/engine/core/levelUp/index.ts";
-import type { AbilityIncrease, BondedPlan, CharacterInput, FeatPick, LevelWrites } from "@/engine/core/module/index.ts";
+import type {
+  AbilityIncrease,
+  BondedPlan,
+  CharacterInput,
+  FeatPick,
+  LevelPicks,
+  LevelRequest,
+  LevelWrites,
+} from "@/engine/core/module/index.ts";
 import RulesError, { type RulesIssue } from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import ImportedLevelGains from "@/engine/rulesets/dnd3.5/imports/ImportedLevelGains.ts";
@@ -81,9 +89,8 @@ export default class LevelsImport {
     }));
     return [...this.imported.feats, ...domains]
       .flatMap((feat) => this.takesOf(feat))
-      .flatMap(({ choice, feat }) => {
+      .flatMap(({ choice, feat, found }) => {
         const shown = choice ? `${feat.name} (${choice})` : feat.name;
-        const found = this.names.findFeat(feat.name, choice);
         if (!found) {
           this.report.skip(feat.line, `${shown} isn't a feat of the ruleset`);
           return [];
@@ -158,11 +165,7 @@ export default class LevelsImport {
    * The next level's plan (`request`, with its `picks`), saved forced: or why a level-up refuses it even forced
    * (`refusal`), which the levels stop at.
    */
-  private planLevel(
-    leveling: LevelByLevel<DetailedCharacter>,
-    request: Parameters<LevelByLevel<DetailedCharacter>["planLevel"]>[0],
-    picks: Parameters<LevelByLevel<DetailedCharacter>["planLevel"]>[1],
-  ) {
+  private planLevel(leveling: LevelByLevel<DetailedCharacter>, request: LevelRequest, picks: LevelPicks) {
     try {
       return leveling.planLevel(request, picks);
     } catch (error) {
@@ -203,17 +206,24 @@ export default class LevelsImport {
   }
 
   /**
-   * The times a feat line takes its feat, each with its choice: PCGen writes a feat taken more than once on one line,
-   * its choices parted by commas (`Weapon Focus` of `Longsword,Sword (Bastard)`), once each; a feat the ruleset keeps
-   * whole whatever its choices (Spell Mastery's spells) once.
+   * The times a feat line takes its feat, each with its choice and the feat it finds: PCGen writes a feat taken more
+   * than once on one line, its choices parted by commas (`Weapon Focus` of `Longsword,Sword (Bastard)`), once each, and
+   * a feat of no choice taken again as empty ones (`Toughness` twice, `APPLIEDTO:,`); a feat the ruleset keeps whole
+   * whatever its choices (Spell Mastery's spells) once.
    */
-  private takesOf(feat: ImportedFeat): { choice?: string; feat: ImportedFeat }[] {
-    const choices = (feat.choice ?? "").split(",").flatMap((choice) => (choice.trim() ? [choice.trim()] : []));
-    if (choices.length <= 1) return [{ choice: feat.choice, feat }];
-    const whole = this.names.findFeat(feat.name)?.id;
-    const ofChoices = choices.map((choice) => ({ choice, id: this.names.findFeat(feat.name, choice)?.id }));
-    if (whole && ofChoices.every(({ id }) => id === whole)) return [{ choice: feat.choice, feat }];
-    return ofChoices.map(({ choice }) => ({ choice, feat }));
+  private takesOf(feat: ImportedFeat): { choice?: string; feat: ImportedFeat; found?: { id: string; name: string } }[] {
+    const parts = (feat.choice ?? "").split(",").map((part) => part.trim());
+    const choices = parts.filter(Boolean);
+    if (parts.length > 1 && choices.length === 0) {
+      const found = this.names.findFeat(feat.name);
+      return parts.map(() => ({ feat, found }));
+    }
+    if (choices.length <= 1) return [{ choice: choices[0], feat, found: this.names.findFeat(feat.name, choices[0]) }];
+    const whole = this.names.findFeat(feat.name);
+    const takes = choices.map((choice) => ({ choice, feat, found: this.names.findFeat(feat.name, choice) }));
+    if (whole && takes.every(({ found }) => found?.id === whole.id))
+      return [{ choice: feat.choice, feat, found: whole }];
+    return takes;
   }
 
   /** How many of the file's levels the character takes: those before the first the ruleset can't take. */
