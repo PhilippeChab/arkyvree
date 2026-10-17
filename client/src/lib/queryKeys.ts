@@ -90,6 +90,7 @@ export const QUERY_KEYS = {
     availableRaces: (rulesetId: string, filters?: Record<string, unknown>) =>
       ["characters", "availableRaces", rulesetId, filters] as const,
     creation: (rulesetId: string) => ["characters", "creation", rulesetId] as const,
+    importers: (rulesetId: string) => ["characters", "importers", rulesetId] as const,
     /** A level-up read's cache: its key holds the query (or the body) it sends, so no parameter is left out of it. */
     levelUp: {
       all: (characterId: string) => ["characters", "levelUp", characterId] as const,

@@ -5,6 +5,7 @@
  */
 
 export { default as BondedCreatures } from "./BondedCreatures.ts";
+export { default as LevelByLevel } from "./LevelByLevel.ts";
 export { default as LevelRemoval } from "./LevelRemoval.ts";
 export { default as LevelSelections } from "./LevelSelections.ts";
 export { type CheckedCharacter, default as LevelsPlanning } from "./LevelsPlanning.ts";

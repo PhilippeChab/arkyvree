@@ -1,9 +1,16 @@
 import { Hono } from "hono";
 import { z } from "zod";
 
-import { denyDemoUser, exportRateLimit, sessionMiddleware, validate } from "@/server/middlewares/index.ts";
+import {
+  denyDemoUser,
+  exportRateLimit,
+  importRateLimit,
+  sessionMiddleware,
+  validate,
+} from "@/server/middlewares/index.ts";
 import { characterIdParam, idList, idParam, limit, orderDirDesc, page } from "@/server/routers/api/validation.ts";
 import { CharactersService } from "@/server/services/characters/index.ts";
+import { MAX_CHARACTER_NAME_LENGTH, MAX_IMPORT_FILE_LENGTH } from "@/shared/characters.ts";
 import { ALIGNMENT_OPTIONS, GENDER_OPTIONS } from "@/shared/enums.ts";
 
 import contributors from "./contributors/index.ts";
@@ -84,6 +91,11 @@ export default new Hono()
     const { rulesetId } = c.req.valid("query");
     return c.json(await CharactersService.getCreation(rulesetId), 200);
   })
+  // The programs whose files a ruleset imports characters from
+  .get("/importers", validate("query", z.object({ rulesetId: z.string().uuid() })), async (c) => {
+    const { rulesetId } = c.req.valid("query");
+    return c.json(await CharactersService.getImporters(rulesetId), 200);
+  })
   // Get characters not in a campaign
   .get(
     "/unlinked/:campaignId",
@@ -127,7 +139,7 @@ export default new Hono()
       z.object({
         rulesetId: z.string().uuid(),
         raceId: z.string().uuid(),
-        name: z.string().min(1).max(255),
+        name: z.string().min(1).max(MAX_CHARACTER_NAME_LENGTH),
         xp: z.number().int().min(0),
         alignment: z.enum(ALIGNMENT_OPTIONS),
         abilities: z.record(z.string().uuid(), abilityScore),
@@ -153,6 +165,16 @@ export default new Hono()
       return c.json(await CharactersService.createCharacter(c.var.requestSession, body), 201);
     },
   )
+  // Import the character another program's file holds (its text) into a ruleset, with the report of what it imported
+  .post(
+    "/import",
+    importRateLimit,
+    validate("json", z.object({ rulesetId: z.string().uuid(), text: z.string().min(1).max(MAX_IMPORT_FILE_LENGTH) })),
+    async (c) => {
+      const { rulesetId, text } = c.req.valid("json");
+      return c.json(await CharactersService.importCharacter(c.var.requestSession, rulesetId, text), 201);
+    },
+  )
   // Enqueue async PDF generation
   .post("/:characterId/pdf", denyDemoUser, exportRateLimit, validate("param", characterIdParam), async (c) => {
     const { characterId } = c.req.valid("param");
@@ -172,7 +194,7 @@ export default new Hono()
     validate(
       "json",
       z.object({
-        name: z.string().min(1).max(255).optional(),
+        name: z.string().min(1).max(MAX_CHARACTER_NAME_LENGTH).optional(),
         // An age, a height or a weight is cleared with null
         age: z.number().int().min(1).nullable().optional(),
         gender: z.enum(GENDER_OPTIONS).optional(),

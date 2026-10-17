@@ -5,6 +5,7 @@ import type { TargetPaths } from "@/engine/core/paths/CategoryPaths.ts";
 import type { CharactersPart, DescribedSheet } from "./parts/characters/index.ts";
 import type { ContentPart } from "./parts/content/index.ts";
 import type { EntitiesPart, EntityKindsContract } from "./parts/entities/index.ts";
+import type { ImportsPart } from "./parts/imports/index.ts";
 import type { LevelUpPart } from "./parts/levelUp/index.ts";
 import type { RulesetPart } from "./parts/ruleset/index.ts";
 
@@ -47,6 +48,8 @@ export interface RulesetModule<
   createTargetPaths(): TargetPaths;
   /** What the ruleset answers of its entities: their fields, and what their forms write */
   entities: EntitiesPart<E>;
+  /** What the ruleset answers of a character imported from another program's file: which importers it offers */
+  imports: ImportsPart;
   /** What the ruleset answers a character's level-up, from the rows the server reads */
   levelUp: LevelUpPart<D>;
   /** What the ruleset answers of a ruleset as a whole, past its entities: what it needs to be published */

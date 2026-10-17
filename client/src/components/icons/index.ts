@@ -40,6 +40,7 @@ export {
   HelpOutlined as HelpIcon,
   History as HistoryIcon,
   ImageOutlined as ImageOutlinedIcon,
+  FileUploadOutlined as ImportIcon,
   Construction as ItemsIcon,
   Translate as LanguagesIcon,
   ExitToApp as LeaveIcon,

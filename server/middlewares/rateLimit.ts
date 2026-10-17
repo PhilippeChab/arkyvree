@@ -17,4 +17,7 @@ export const authSessionRateLimit = limitRate({ windowMs: 15 * MINUTE, limit: 60
 
 export const exportRateLimit = limitRate({ windowMs: MINUTE, limit: 5 });
 
+/** An import reads a whole character file and builds the character level by level: a few a minute is plenty. */
+export const importRateLimit = limitRate({ windowMs: MINUTE, limit: 10 });
+
 export const publicApiRateLimit = limitRate({ windowMs: MINUTE, limit: 30 });

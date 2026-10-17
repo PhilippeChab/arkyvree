@@ -19,7 +19,7 @@ import {
   type SortOption,
   StatusChip,
 } from "@/client/src/components/common/index.ts";
-import { ArchiveIcon, CharacterIcon, ContributorsIcon } from "@/client/src/components/icons/index.ts";
+import { ArchiveIcon, CharacterIcon, ContributorsIcon, ImportIcon } from "@/client/src/components/icons/index.ts";
 import {
   useCharacterPortraits,
   useDialogState,
@@ -36,7 +36,8 @@ import {
   characterListQuery,
 } from "@/client/src/lib/queries.ts";
 
-import { CreateCharacterDialog } from "./components/index.ts";
+import type { CharacterImport } from "./characterQueries.ts";
+import { CreateCharacterDialog, ImportCharacterDialog, ImportReportDialog } from "./components/index.ts";
 
 type CharacterView = CharacterListFilters["view"];
 type SortField = CharacterListFilters["orderBy"];
@@ -55,6 +56,9 @@ export default function CharactersPage() {
   const queryClient = useQueryClient();
   // Mounted as it opens: the create dialog keeps its form, its pickers and its roll method
   const createDialog = useDialogState();
+  // Mounted as it opens too: the import's form starts clean; once it's in, its report opens on what it answered
+  const importDialog = useDialogState();
+  const reportDialog = useDialogState<CharacterImport>();
   const { searchParams, updateSearchParams, search, orderBy, orderDir, searchBarProps } = useListParams(
     ["name", "createdAt", "lastChangedAt"],
     CHARACTER_LIST_DEFAULTS,
@@ -96,6 +100,11 @@ export default function CharactersPage() {
               filterValue={view}
               onFilterChange={(value) => updateSearchParams({ view: value })}
               sortOptions={CHARACTER_SORT_OPTIONS}
+              actions={
+                <Button variant="outlined" startIcon={<ImportIcon />} onClick={() => importDialog.openWith(true)}>
+                  Import Character
+                </Button>
+              }
             />
 
             <ListPageResults
@@ -158,6 +167,24 @@ export default function CharactersPage() {
             open={createDialog.open}
             onClose={createDialog.close}
             onExited={createDialog.onExited}
+          />
+        )}
+        {importDialog.target && (
+          <ImportCharacterDialog
+            key={importDialog.key}
+            open={importDialog.open}
+            onClose={importDialog.close}
+            onExited={importDialog.onExited}
+            onImported={(imported) => reportDialog.openWith(imported)}
+          />
+        )}
+        {reportDialog.target && (
+          <ImportReportDialog
+            key={reportDialog.key}
+            imported={reportDialog.target}
+            open={reportDialog.open}
+            onClose={reportDialog.close}
+            onExited={reportDialog.onExited}
           />
         )}
       </Container>

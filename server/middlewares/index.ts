@@ -5,6 +5,7 @@ export {
   authRateLimit,
   authSessionRateLimit,
   exportRateLimit,
+  importRateLimit,
   publicApiRateLimit,
 } from "./rateLimit.ts";
 export { requestLogger } from "./requestLogger.ts";

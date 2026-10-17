@@ -19,6 +19,14 @@ The engine refuses illegal choices at every step: prestige classes you don't qua
 
 A character can't be switched to a different ruleset later — build a new character on the new ruleset.
 
+## Can I import a character from another program?
+
+Yes, from **PCGen**: on your characters list, **Import Character** takes a character file PCGen saved (`.pcg`) and the ruleset to import it into. The ruleset decides which programs it reads: a D&D 3.5 ruleset, **Core SRD 3.5** or a fork of it, reads PCGen's 3.5 characters. Names are matched in the ruleset you pick, so a fork's own classes and items are found.
+
+The character is built as if leveled up one level at a time, so it's checked like one you made yourself. PCGen saves your feats and each skill's ranks without the level you took them at: the import places each feat on the first level that could take it (Weapon Specialization not before Fighter 4) and spreads each skill's ranks over the levels of the class you bought them in. Your ability scores end where PCGen has them, each level taking the increases your ruleset gives it.
+
+The import ends with a report: what it imported, what a level's checks found, and every line of the file it couldn't match, with why. Magic gear the ruleset has no item of (a +3 morningstar) is listed for you to make in your ruleset, then add to the character; class feature choices (a favored enemy), templates, companions and spells aren't imported yet: add them in the app.
+
 ## Which languages can a character speak?
 
 A character speaks the languages its race, its classes, its feats or its items grant it: a dwarf's Common and Dwarven from the start, a druid's Druidic from its first druid level. They show on its sheet and can't be removed. A grant holds while what it asks of the character does, as any modifier: a druid whose alignment is no longer neutral loses Druidic, as he loses his first level's spell slots, and keeps his other druid features. A ruleset grants them with modifiers (`languages.dwarven.known` set to `true`), so a homebrew race or feat can grant any language: see [What are Modifiers?](customization-system.md#what-are-modifiers)
