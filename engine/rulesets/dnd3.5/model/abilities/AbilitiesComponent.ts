@@ -17,7 +17,10 @@ interface AbilitiesData {
 export default class AbilitiesComponent extends CharacterComponent<LoadedCharacterData> {
   private readonly abilities: AbilitiesData = {} as AbilitiesData;
 
-  /** Each ability's name as its ruleset gives it ("Force Points") and its normalized one ("forcepoints"), by its id. */
+  /**
+   * Each ability's name as its ruleset gives it ("Force Points") and its normalized one ("forcepoints"), by its id: no
+   * two of a ruleset's share one, which its seeding refuses (`refuseSharedSlugs`).
+   */
   private readonly abilityNames: Map<string, { name: string; normalizedName: string }> = new Map();
 
   /** What the character's race makes of each ability's misc, by the ability's slug: its permanent score keeps it. */

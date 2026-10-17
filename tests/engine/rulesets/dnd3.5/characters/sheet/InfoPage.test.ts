@@ -2,12 +2,20 @@ import { describe, expect, test } from "bun:test";
 
 import { isValidElement, type ReactElement, type ReactNode } from "react";
 
+import { characterAbilitiesInCharacter } from "@/drizzle/schema.ts";
 import CombatSheet from "@/engine/rulesets/dnd3.5/characters/description/CombatSheet.ts";
 import InfoPage from "@/engine/rulesets/dnd3.5/characters/sheet/InfoPage.tsx";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
+import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
+import { RulesetViews } from "@/server/cow/index.ts";
+import { db } from "@/server/database/index.ts";
+import { Abilities } from "@/server/repositories/index.ts";
+import { createTestCharacter } from "@/tests/support/characters.ts";
+import { insertRows } from "@/tests/support/database.ts";
 import { buildAs } from "@/tests/support/dnd3.5/characters.ts";
 import { carry } from "@/tests/support/items.ts";
-import { findSeededCharacter } from "@/tests/support/seed.ts";
+import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
+import { findSeededCharacter, getSeedCtx } from "@/tests/support/seed.ts";
 
 /** The first element of a page's tree, its components called, that `matches`. */
 function findElement(
@@ -38,6 +46,49 @@ describe("InfoPage", () => {
     const at = text.indexOf("Kael Stormborn");
     // Its race is its Personal Details'
     expect(text.slice(at, at + 3)).toEqual(["Kael Stormborn", "Fighter 3 · Barbarian 1", "Core SRD 3.5"]);
+  });
+
+  test("prints every ability the character has a score in, the books' six first, then the others by name, with their name", async () => {
+    const fork = await createSeededTestRuleset(SEED_USER_ID);
+    const ability = async (name: string) =>
+      (await Abilities.create(db, { name, description: "", rulesetId: fork.id }))[0];
+    const sanity = await ability("Sanity");
+    const forcePoints = await ability("Force Points");
+    RulesetViews.invalidate(fork.id);
+    const character = await createTestCharacter(SEED_USER_ID, { rulesetId: fork.id });
+    const { abilityMap } = await getSeedCtx();
+    // Written out of order: the page orders them, not the rows
+    const score = (abilityId: string, value: number) => ({ characterId: character.id, abilityId, score: value });
+    await insertRows(characterAbilitiesInCharacter, [
+      score(sanity.id, 9),
+      score(forcePoints.id, 14),
+      ...Object.values(abilityMap).map((abilityId) => score(abilityId, 12)),
+    ]);
+
+    const text = textOf(InfoPage({ detailedCharacter: await buildAs(DetailedCharacter, character) }));
+    const at = text.indexOf("Ability Scores");
+    // Each box: its abbreviation, its total, its modifier, and its base / levels / misc
+    const books = text.slice(at + 1, at + 1 + 6 * 4);
+    expect(books.filter((_, i) => i % 4 === 0)).toEqual(["STR", "DEX", "CON", "INT", "WIS", "CHA"]);
+    // The others, their name under their abbreviation
+    expect(text.slice(at + 1 + 6 * 4, at + 1 + 6 * 4 + 2 * 5)).toEqual([
+      "FOR",
+      "Force Points",
+      "14",
+      "+2",
+      "14 / +0 / +0",
+      "SAN",
+      "Sanity",
+      "9",
+      "-1",
+      "9 / +0 / +0",
+    ]);
+  });
+
+  test("says a character with no ability score has none", async () => {
+    const character = await createTestCharacter(SEED_USER_ID);
+    const text = textOf(InfoPage({ detailedCharacter: await buildAs(DetailedCharacter, character) }));
+    expect(text[text.indexOf("Ability Scores") + 1]).toBe("No ability scores");
   });
 
   test("shows a height and a weight as the player wrote them, free text without a unit added", async () => {

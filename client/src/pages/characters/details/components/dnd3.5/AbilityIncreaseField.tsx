@@ -26,7 +26,7 @@ export function AbilityIncreaseField({ abilities, baseRules, name, value, onChan
         Select an ability to increase
       </FormLabel>
       <RadioGroup aria-labelledby={labelId} name={name} value={value ?? ""} onChange={(e) => onChange(e.target.value)}>
-        {sortAbilities(Object.entries(abilities), baseRules, ([key]) => key).map(([, ability]) => (
+        {sortAbilities(Object.entries(abilities), baseRules, ([, ability]) => ability.name).map(([, ability]) => (
           <FormControlLabel
             key={ability.abilityId}
             value={ability.abilityId}

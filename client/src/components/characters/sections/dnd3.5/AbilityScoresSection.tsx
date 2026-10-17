@@ -25,7 +25,7 @@ interface AbilityScoresSectionProps {
 
 export function AbilityScoresSection({ abilities, baseRules, characterId, readOnly }: AbilityScoresSectionProps) {
   const entries = Object.entries(abilities);
-  const sortedEntries = sortAbilities(entries, baseRules, ([key]) => key);
+  const sortedEntries = sortAbilities(entries, baseRules, ([, ability]) => ability.name);
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
 

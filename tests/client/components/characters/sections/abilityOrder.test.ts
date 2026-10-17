@@ -12,4 +12,13 @@ describe("Abilities", () => {
       "Luck",
     ]);
   });
+
+  test("put those their base rules don't name after its own by name, whatever order they came in", () => {
+    const names = ["Sanity", "Dexterity", "Force Points"];
+    expect(sortAbilities(names, "Dungeons & Dragons: 3.5", (name) => name)).toEqual([
+      "Dexterity",
+      "Force Points",
+      "Sanity",
+    ]);
+  });
 });

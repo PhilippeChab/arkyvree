@@ -28,7 +28,7 @@ function isFeat(entry: FeatEntry): entry is Extract<FeatEntry, { possessed: bool
 }
 
 export function BondedCreature({ bonded, baseRules, linkable = false }: BondedCreatureProps) {
-  const abilityEntries = sortAbilities(Object.entries(bonded.abilities), baseRules, ([key]) => key);
+  const abilityEntries = sortAbilities(Object.entries(bonded.abilities), baseRules, ([, ability]) => ability.name);
 
   const combat = bonded.combat;
   // A creature has one weapon set, its natural attacks', with no shield: its armor class
