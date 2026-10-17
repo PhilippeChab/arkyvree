@@ -204,9 +204,8 @@ const WORN = ["armor", "shield"] as const;
 
 /**
  * An item's fields, as stored: each none (or empty) without its row, a flag telling a `"false"` row from none
- * (`absent: null`). Its form shows a weapon's, an
- * armor's and a shield's fields for an item of that type, in its section: an armor's or a shield's max Dex bonus,
- * check penalty and spell failure too, which both keep alike.
+ * (`absent: null`). Its form shows a weapon's, an armor's and a shield's fields for an item of that type, in its
+ * section: an armor's or a shield's max Dex bonus, check penalty and spell failure too, which both keep alike.
  */
 const ITEM_FIELDS = {
   weapon: {
@@ -471,9 +470,7 @@ const ITEM_FIELDS = {
   },
 } as const;
 
-/**
- * A class's fields: the ability its bonus spells and spell DCs come from, and its caster type.
- */
+/** A class's fields: the ability its bonus spells and spell DCs come from, and its caster type. */
 const KLASS_FIELDS = {
   bonusSpellAbilityId: {
     description: "Ability score used for bonus spells per day",
@@ -491,9 +488,7 @@ const KLASS_FIELDS = {
   },
 } as const;
 
-/**
- * A class level's fields: its base attack bonus and its skill points, 0 without their rows, both always written.
- */
+/** A class level's fields: its base attack bonus and its skill points, 0 without their rows, both always written. */
 const KLASS_LEVEL_FIELDS = {
   bab: {
     default: 0,
@@ -515,9 +510,7 @@ const KLASS_LEVEL_FIELDS = {
   },
 } as const;
 
-/**
- * A spell's fields, in the order a 3.5 stat block shows them: its school, components, range…
- */
+/** A spell's fields, in the order a 3.5 stat block shows them: its school, components, range… */
 const POWER_FIELDS = {
   school: {
     description: "Spell school (Abjuration, Conjuration, etc.)",

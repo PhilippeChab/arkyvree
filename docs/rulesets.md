@@ -697,8 +697,9 @@ engine/rulesets/
     │   ├── aptitudes/ classes/ feats/ items/ powers/ races/ skills/
     │   │                                  (XEntity: an entity described, what saving or deleting one writes; fields.ts:
     │   │                                  its codec, built from its vocabulary's fields, and their values;
-    │   │                                  classes/ ClassLevelEntity, ClassSkills, ClassTable: a class's parts, which ClassEntity hands out; the abilities,
-    │   │                                  languages, mechanics and saves are core's kinds as they are)
+    │   │                                  classes/ ClassLevelEntity, ClassSkills, ClassTable: a class's parts,
+    │   │                                  which ClassEntity hands out; the abilities, languages, mechanics and
+    │   │                                  saves are core's kinds as they are)
     │   └── feats/                         (SkillFocusFeats, SpellFocusFeats: a skill's Skill Focus, a school's Spell
     │                                      Focus, sets of core's GeneratedFeats in the general feats' pool)
     ├── ruleset/                           ← the module's `ruleset`: what it answers of a ruleset as a whole
