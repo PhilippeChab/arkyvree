@@ -9,9 +9,9 @@ import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { apiFetch } from "@/client/src/services/apiFetch.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 import { db } from "@/server/database/index.ts";
-import { SESSION_COOKIE_NAME } from "@/server/middlewares/session.ts";
 import { Sessions } from "@/server/repositories/index.ts";
 import { application, type Application } from "@/server/routers/application.ts";
+import { sessionHeaders } from "@/tests/support/clients.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 
 /** A key the cache holds a page's data under, until the signed-in user changes. */
@@ -34,7 +34,7 @@ function serveApi() {
           parseResponse(
             hc<Application>(server.url.href, {
               fetch: apiFetch,
-              headers: sessionId ? { cookie: `${SESSION_COOKIE_NAME}=${sessionId}` } : {},
+              headers: sessionId ? sessionHeaders(sessionId) : {},
             }).auth.me.$get(),
           ),
         staleTime: NO_TIME,
@@ -107,6 +107,25 @@ describe("The session check, with a user the store remembers", () => {
     }
   });
 
+  test("keeps a profile update made while it asked over the server's older answer", async () => {
+    const { server, fetchUserOf } = serveApi();
+    try {
+      const { user, sessionId } = await createUserWithSession();
+      useAuthStore.getState().startSession({ ...(await fetchUserOf(sessionId)()), username: "stale-name" });
+
+      const check = checkSession(fetchUserOf(sessionId));
+      useAuthStore.getState().updateUser({ username: "renamed" });
+      await check;
+
+      expect(useAuthStore.getState()).toMatchObject({
+        isAuthenticated: true,
+        user: { id: user.id, username: "renamed" },
+      });
+    } finally {
+      await server.stop(true);
+    }
+  });
+
   test("leaves them as the store holds them when the cookie is theirs, their cache kept", async () => {
     const { server, fetchUserOf } = serveApi();
     try {
@@ -141,13 +160,17 @@ describe("The session check, with a user the store remembers", () => {
 
   test("keeps them when the server can't be reached, offline", async () => {
     const { server, fetchUserOf } = serveApi();
-    const { user, sessionId } = await createUserWithSession();
-    useAuthStore.getState().startSession(await fetchUserOf(sessionId)());
-    await server.stop(true);
+    try {
+      const { user, sessionId } = await createUserWithSession();
+      useAuthStore.getState().startSession(await fetchUserOf(sessionId)());
+      await server.stop(true);
 
-    await checkSession(fetchUserOf(sessionId));
+      await checkSession(fetchUserOf(sessionId));
 
-    expect(useAuthStore.getState()).toMatchObject({ isAuthenticated: true, user: { id: user.id } });
+      expect(useAuthStore.getState()).toMatchObject({ isAuthenticated: true, user: { id: user.id } });
+    } finally {
+      await server.stop(true);
+    }
   });
 
   test("changes nothing once the session has changed while it asked, even back to the same user", async () => {

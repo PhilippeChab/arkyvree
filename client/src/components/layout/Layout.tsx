@@ -158,8 +158,9 @@ export function Layout() {
   const { data: avatarAttachment } = useAttachment({ name: "avatar", recordId: user?.id });
   const isDemo = useIsDemo();
   // Suppress the onboarding popovers for demo users — they already see a
-  // dedicated demo banner and the popover would just stack on top.
-  const [onboardingOpen, setOnboardingOpen] = useState(() => !isDemo && !user?.onboardingCompletedAt);
+  // dedicated demo banner and the popover would just stack on top. The store says whether the user finished it,
+  // which the session check can learn after the first paint (`checkSession`)
+  const onboardingOpen = !isDemo && !user?.onboardingCompletedAt;
   const [onboardingStep, setOnboardingStep] = useState(0);
   // Sidebar item elements live in state (not a ref) so the onboarding popover
   // can read its anchor during render, on the same render its step changes.
@@ -191,7 +192,6 @@ export function Layout() {
   });
 
   const handleOnboardingClose = () => {
-    setOnboardingOpen(false);
     updateUser({ onboardingCompletedAt: new Date().toISOString() });
     onboardingMutation.mutate();
   };

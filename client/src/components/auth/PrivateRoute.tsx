@@ -13,9 +13,9 @@ import { checkSession } from "./sessionCheck.ts";
 
 /**
  * One-shot per browser-tab: probe /auth/me at most once, to confirm the user the store remembers or find the cookie's
- * when it remembers none, even if the visitor bounces between auth-only routes while unauth. Memoizing a Promise (rather than a boolean "started" flag) keeps strict-mode's double-effect honest — each
- * mount awaits the same probe and attaches its own .finally, so the surviving mount's callback fires after the first
- * cleanup cancels its peer.
+ * when it remembers none, even if the visitor bounces between auth-only routes while unauth. Memoizing a Promise
+ * (rather than a boolean "started" flag) keeps strict-mode's double-effect honest — each mount awaits the same probe
+ * and attaches its own .finally, so the surviving mount's callback fires after the first cleanup cancels its peer.
  */
 let authProbe: Promise<void> | null = null;
 
