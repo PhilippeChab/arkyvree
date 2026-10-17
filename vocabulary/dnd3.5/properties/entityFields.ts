@@ -203,9 +203,8 @@ const WEAPON_TYPE_NAMES = [
 const WORN = ["armor", "shield"] as const;
 
 /**
- * An item's fields, as stored: each none (or empty) without its row, so an item made from a template holds only the
- * fields it overrides, and what the engine does without one (a critical of 1, Strength to damage by the hand) stays
- * where the engine reads it. A flag tells a `"false"` row from none (`absent: null`). Its form shows a weapon's, an
+ * An item's fields, as stored: each none (or empty) without its row, a flag telling a `"false"` row from none
+ * (`absent: null`). Its form shows a weapon's, an
  * armor's and a shield's fields for an item of that type, in its section: an armor's or a shield's max Dex bonus,
  * check penalty and spell failure too, which both keep alike.
  */
@@ -473,8 +472,7 @@ const ITEM_FIELDS = {
 } as const;
 
 /**
- * A class's fields: the ability its bonus spells and spell DCs come from, and its caster type, one of the two the
- * engine casts by.
+ * A class's fields: the ability its bonus spells and spell DCs come from, and its caster type.
  */
 const KLASS_FIELDS = {
   bonusSpellAbilityId: {
@@ -494,8 +492,7 @@ const KLASS_FIELDS = {
 } as const;
 
 /**
- * A class level's fields: its base attack bonus and its skill points, 0 without their rows (a familiar's levels give
- * none: it uses its master's), both always written.
+ * A class level's fields: its base attack bonus and its skill points, 0 without their rows, both always written.
  */
 const KLASS_LEVEL_FIELDS = {
   bab: {
@@ -519,8 +516,7 @@ const KLASS_LEVEL_FIELDS = {
 } as const;
 
 /**
- * A spell's fields, in the order a 3.5 stat block shows them: its school, components, range… A power that isn't a
- * spell (no school) keeps none of them.
+ * A spell's fields, in the order a 3.5 stat block shows them: its school, components, range…
  */
 const POWER_FIELDS = {
   school: {
@@ -622,8 +618,8 @@ const RACE_FIELDS = {
 /**
  * A ruleset's own fields, its Settings: the ability its characters' skill points come from, which a ruleset always
  * names, and its progression, which every character follows whatever its classes: the feats its levels give it to
- * pick, and the ability increases they give, each a frequency and more at the levels it names, the core rules' unless
- * the ruleset's chain holds its own.
+ * pick, and the ability increases they give, each a frequency and more at the levels it names, the core rules'
+ * without a row.
  */
 const RULESET_FIELDS = {
   skillPointAbilityId: {

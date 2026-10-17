@@ -2,9 +2,8 @@ import { FieldPropertyTypes } from "@/engine/core/fields/index.ts";
 import { ENTITY_FIELDS } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 /**
- * The property types the 3.5 rules read: those its entities' fields are stored in, as its vocabulary declares them
- * (`ENTITY_FIELDS`), by the entity they're on (each with its field's label and what it's for), and the values each
- * takes when they're a closed list.
+ * The property types the 3.5 entities' fields are stored in, as its vocabulary declares them (`ENTITY_FIELDS`): their
+ * order, as a stat block shows them, and the values each takes when they're a closed list.
  */
 export default class Dnd35PropertyTypes extends FieldPropertyTypes {
   constructor() {

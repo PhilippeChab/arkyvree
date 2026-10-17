@@ -161,7 +161,6 @@ export default class RulesetData {
     this.skills = lists.skills;
     this.cow = cow;
     this.propertyOrder = new PropertyOrder(propertyTypes);
-    this.propertyTypes = propertyTypes;
   }
 
   private readonly built: Partial<Indices> = {};
@@ -210,13 +209,6 @@ export default class RulesetData {
   readonly mechanics: Mechanic[];
 
   readonly powers: PowerWithAptitudes[];
-
-  /**
-   * The ruleset's property types, as its rules read them, which keep its entities' fields: those each entity type
-   * declares, in the order an entity's properties show in, the values a type takes, and the entity a type's value names
-   * by its id (an entity's form's fields: `FieldCodec.describe`, `parse`).
-   */
-  readonly propertyTypes: PropertyTypesProvider;
 
   readonly races: Race[];
 

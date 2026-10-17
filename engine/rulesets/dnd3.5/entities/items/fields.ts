@@ -8,8 +8,8 @@ export type ItemFieldValues = FieldValues<typeof ITEM_FIELDS.fields>;
 export type WeaponFields = ItemFieldValues["weapon"];
 
 /**
- * An item's fields its properties hold, as the vocabulary declares them (`ENTITY_FIELDS.items`): a weapon's, an
- * armor's and a shield's, and what any item has, each none (or empty) without its row, so an item made from a template
- * holds only the fields it overrides. Read off the item's own rows merged with its template's.
+ * An item's fields its properties hold, as the vocabulary declares them (`ENTITY_FIELDS.items`). An item made from a
+ * template holds only the fields it overrides, read off its own rows merged with its template's, and what the engine
+ * does without one (a critical of 1, Strength to damage by the hand) stays where the engine reads it.
  */
 export const ITEM_FIELDS = new FieldCodec(ENTITY_FIELDS.items);

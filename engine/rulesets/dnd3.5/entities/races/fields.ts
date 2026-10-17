@@ -5,7 +5,6 @@ import { ENTITY_FIELDS } from "@/vocabulary/dnd3.5/properties/index.ts";
 export type RaceFieldValues = FieldValues<typeof RACE_FIELDS.fields>;
 
 /**
- * A race's fields its properties hold, as the vocabulary declares them (`ENTITY_FIELDS.races`): whether armor and load
- * leave its speed, and whether it walks on four legs.
+ * A race's fields its properties hold, as the vocabulary declares them (`ENTITY_FIELDS.races`).
  */
 export const RACE_FIELDS = new FieldCodec(ENTITY_FIELDS.races);
