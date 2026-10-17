@@ -4,6 +4,7 @@ import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import Dnd35Characters from "@/engine/rulesets/dnd3.5/characters/Dnd35Characters.ts";
 import ItemPlacement, { type ItemPlacementDescription } from "@/engine/rulesets/dnd3.5/rules/ItemPlacement.ts";
+import { MAX_CHARACTER_NUMBER } from "@/shared/characters.ts";
 import type { Item } from "@/shared/relations.ts";
 
 import { PCGEN_LOCATIONS } from "./names.ts";
@@ -30,11 +31,16 @@ export default class GearImport {
 
   private readonly characters = new Dnd35Characters();
 
-  /** The item a piece of gear is: by its name, or a plain custom item's by its base item's. */
+  /**
+   * The item a piece of gear is: by its name, or a plain custom item's by its base item's, which the report says (what
+   * it's made of, its quality, aren't the base item's: a masterwork longsword is a longsword).
+   */
   private findItem(gear: ImportedGear) {
     const found = this.names.findItem(gear.name);
     if (found || gear.magic || !gear.baseName) return found;
-    return this.names.findItem(gear.baseName);
+    const base = this.names.findItem(gear.baseName);
+    if (base) this.report.issue(`${gear.name}: imported as ${base.name}, its base item: what sets it apart isn't`);
+    return base;
   }
 
   /**
@@ -63,8 +69,10 @@ export default class GearImport {
     const described = ItemPlacement.describe(item, this.view.rulesetData.itemProperties(item));
     const placement = this.placementOf(gear, described);
     const { charges } = described;
-    const request = { ...placement, remainingCharges: charges, totalCharges: charges };
-    const quantity = Math.max(1, Math.round(gear.quantity));
+    // The charges the file says are left, within those the item comes with
+    const left = charges !== null && gear.charges !== undefined ? Math.min(gear.charges, charges) : charges;
+    const request = { ...placement, remainingCharges: left, totalCharges: charges };
+    const quantity = this.quantityOf(gear, item);
     const plan = (asked: InventoryEntryRequest) =>
       this.characters.planInventoryEntry(this.view, character, { itemId: item.id, request: asked }, false);
     try {
@@ -74,6 +82,18 @@ export default class GearImport {
       this.report.issue(`${item.name}: carried, not in ${placement.location}: ${error.message}`);
       return { ...plan({ ...request, ...CARRIED }), quantity };
     }
+  }
+
+  /**
+   * How many of an item the entry holds: the file's, whole, at least one and at most the largest the app keeps, which
+   * the report says; and that the file's character doesn't carry it, when it doesn't (the app's inventory is carried).
+   */
+  private quantityOf(gear: ImportedGear, item: Item) {
+    const whole = Math.max(1, Math.round(gear.quantity));
+    const quantity = Math.min(whole, MAX_CHARACTER_NUMBER);
+    if (quantity < whole) this.report.issue(`${item.name} ×${whole} is past the most the app keeps: ${quantity} kept`);
+    if (gear.notCarried) this.report.issue(`${item.name} ×${quantity}: not carried in PCGen, carried here`);
+    return quantity;
   }
 
   /** The character's rows with an entry added, which the next entry's slot is checked against. */

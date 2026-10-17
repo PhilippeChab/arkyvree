@@ -41,13 +41,17 @@ export interface ImportedFeat extends SourcedPart {
 
 /**
  * A piece of gear: its name, the base item it's made of (a custom one's), whether it's magic (enhanced past its base),
- * how many, and where it's worn (the program's location: `Primary Hand`, `Armor`), none when it's carried.
+ * how many, the charges it has left (a wand's, when the file records them), and where it's worn (the program's
+ * location: `Primary Hand`, `Armor`), none when it's carried; `notCarried` when the character owns it without carrying
+ * it (left at home).
  */
 export interface ImportedGear extends SourcedPart {
   baseName?: string;
+  charges?: number;
   location?: string;
   magic: boolean;
   name: string;
+  notCarried?: true;
   quantity: number;
 }
 

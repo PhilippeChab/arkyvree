@@ -12,18 +12,11 @@ interface Named {
 /** A list's entities, each with its compared name, in the view's order: what a scan of the list reads. */
 type Compared = { compared: string; entity: Named }[];
 
-/** The view's list each kind of entity is found in. */
-const LISTS = {
-  feats: "feats",
-  items: "items",
-  klasses: "klasses",
-  languages: "languages",
-  races: "races",
-  skills: "skills",
-} as const;
+/** The view's lists an import finds entities in. */
+type List = "feats" | "items" | "klasses" | "languages" | "races" | "skills";
 
 /** The lists an import finds a player's entity in alone: a race or a class a creature takes isn't a character's. */
-const PLAYER_LISTS = new Set<keyof typeof LISTS>(["klasses", "races"]);
+const PLAYER_LISTS = new Set<List>(["klasses", "races"]);
 
 /**
  * The view's entities found by the names PCGen gives them, in the picked ruleset (a custom ruleset's own classes and
@@ -76,16 +69,16 @@ export default class PcgenNames {
   }
 
   /** Each list's entities with their compared names, once read. */
-  private readonly compares = new Map<keyof typeof LISTS, Compared>();
+  private readonly compares = new Map<List, Compared>();
 
   /** Each list's entities by their compared name (and an item's by its name before a closing parenthesis too). */
-  private readonly indexes = new Map<keyof typeof LISTS, Map<string, Named>>();
+  private readonly indexes = new Map<List, Map<string, Named>>();
 
   /** A list's entities with their compared names, in the view's order: a player's alone of a race's or a class's. */
-  private comparedOf(list: keyof typeof LISTS): Compared {
+  private comparedOf(list: List): Compared {
     const cached = this.compares.get(list);
     if (cached) return cached;
-    const entities: Named[] = this.rulesetData[LISTS[list]];
+    const entities: Named[] = this.rulesetData[list];
     const players = PLAYER_LISTS.has(list) ? entities.filter((entity) => entity.kind === "pc") : entities;
     const compared = players.map((entity) => ({ compared: PcgenNames.compared(entity.name), entity }));
     this.compares.set(list, compared);
@@ -93,7 +86,7 @@ export default class PcgenNames {
   }
 
   /** The first of `names` the list has an entity of. */
-  private findFirst(list: keyof typeof LISTS, names: string[]): Named | undefined {
+  private findFirst(list: List, names: string[]): Named | undefined {
     const index = this.indexOf(list);
     for (const name of names) {
       const found = index.get(PcgenNames.compared(name));
@@ -106,7 +99,7 @@ export default class PcgenNames {
    * A list's entities by their compared name, the first of a name kept (the view lists a ruleset's own before what it
    * inherits); an item also by its name before a parenthesis it ends on, when no item has that name.
    */
-  private indexOf(list: keyof typeof LISTS): Map<string, Named> {
+  private indexOf(list: List): Map<string, Named> {
     const cached = this.indexes.get(list);
     if (cached) return cached;
     const index = new Map<string, Named>();

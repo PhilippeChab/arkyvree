@@ -13,6 +13,22 @@ import { createTestItem } from "@/tests/support/items.ts";
 import { createSeededTestRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 
+/** A PCGen file of a human fighter 1, with these lines (`lines`): its skills and feats. */
+function riderFile(lines: string[]) {
+  const stats = ["STR|SCORE:14", "DEX|SCORE:12", "CON|SCORE:12", "INT|SCORE:10", "WIS|SCORE:10", "CHA|SCORE:10"];
+  return [
+    "PCGVERSION:2.0",
+    "VERSION:6.09.08",
+    "GAMEMODE:35e",
+    "CHARACTERNAME:Rider",
+    "RACE:Human",
+    ...stats.map((stat) => `STAT:${stat}`),
+    "CLASS:Fighter|LEVEL:1",
+    "CLASSABILITIESLEVEL:Fighter=1|HITPOINTS:10",
+    ...lines,
+  ].join("\n");
+}
+
 /** Each skill's points over every level of a plan. */
 function totalPoints(levels: Awaited<ReturnType<typeof nameLevels>>) {
   const totals: Record<string, number> = {};
@@ -301,22 +317,47 @@ describe("What a file holds past what the app keeps", () => {
   });
 
   test("a feat that requires a skill's ranks is taken at the level that buys them", async () => {
-    const text = [
-      "PCGVERSION:2.0",
-      "VERSION:6.09.08",
-      "GAMEMODE:35e",
-      "CHARACTERNAME:Rider",
-      "RACE:Human",
-      ...["STR|SCORE:14", "DEX|SCORE:12", "CON|SCORE:12", "INT|SCORE:10", "WIS|SCORE:10", "CHA|SCORE:10"].map(
-        (stat) => `STAT:${stat}`,
-      ),
-      "CLASS:Fighter|LEVEL:1",
-      "CLASSABILITIESLEVEL:Fighter=1|HITPOINTS:10",
+    const text = riderFile([
       "SKILL:Ride|CLASSBOUGHT:[CLASS:Fighter|RANKS:4.0|COST:1]",
       "ABILITY:FEAT|TYPE:NORMAL|CATEGORY:FEAT|KEY:Mounted Combat|APPLIEDTO:",
-    ].join("\n");
+    ]);
     const plan = await planImportOf(text);
     expect((await nameLevels(plan))[0]).toMatchObject({ feats: ["Mounted Combat"], skills: { Ride: 4 } });
+  });
+
+  test("a feat line holding several choices takes the feat once for each", async () => {
+    const text = riderFile([
+      "ABILITY:FEAT|TYPE:NORMAL|CATEGORY:FEAT|KEY:Weapon Focus|APPLIEDTO:Longsword,Battleaxe|TYPE:General",
+    ]);
+    const plan = await planImportOf(text);
+    expect((await nameLevels(plan))[0].feats.toSorted()).toEqual([
+      "Weapon Focus: Battleaxe",
+      "Weapon Focus: Longsword",
+    ]);
+  });
+
+  test("gear past the most the app keeps, and gear the character owns without carrying it, said in the report", async () => {
+    const text = (await readPcgenFile("brannoc")).replace(
+      "EQUIPNAME:Rations (Trail/Per Day)|OUTPUTORDER:7|COST:0.5|WT:1.0|QUANTITY:5.0",
+      "EQUIPNAME:Rations (Trail/Per Day)|OUTPUTORDER:7|COST:0.5|WT:1.0|QUANTITY:3000000005.0",
+    );
+    const { inventory, report } = await planImportOf(text);
+    expect(inventory.map(({ quantity }) => quantity)).toContain(2_147_483_647);
+    expect(report.issues).toContain(
+      "Rations, trail (per day) ×3000000000 is past the most the app keeps: 2147483647 kept",
+    );
+    expect(report.issues).toContain("Rations, trail (per day) ×2147483647: not carried in PCGen, carried here");
+  });
+
+  test("a custom item the ruleset has only the base item of, imported as it, said in the report", async () => {
+    const text = (await readPcgenFile("brannoc")).replace(
+      "EQUIPNAME:Waterskin|OUTPUTORDER:10|COST:1|WT:0.0|QUANTITY:1.0|NOTE:",
+      "EQUIPNAME:Waterskin|OUTPUTORDER:10|COST:1|WT:0.0|QUANTITY:1.0|NOTE:\nEQUIPNAME:Longsword (Masterwork)|QUANTITY:1.0|CUSTOMIZATION:[BASEITEM:Longsword|DATA:EQMOD=MWORKW.STEEL]",
+    );
+    const { report } = await planImportOf(text);
+    expect(report.issues).toContain(
+      "Longsword (Masterwork): imported as Longsword, its base item: what sets it apart isn't",
+    );
   });
 
   test("a gender in another case, or its initial", async () => {

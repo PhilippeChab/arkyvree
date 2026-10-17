@@ -79,25 +79,27 @@ export default class LevelsImport {
       name: `${name} Domain`,
       pool: "Domain",
     }));
-    return [...this.imported.feats, ...domains].flatMap((feat) => {
-      const shown = feat.choice ? `${feat.name} (${feat.choice})` : feat.name;
-      const found = this.names.findFeat(feat.name, feat.choice);
-      if (!found) {
-        this.report.skip(feat.line, `${shown} isn't a feat of the ruleset`);
-        return [];
-      }
-      const poolIds = (featsById.get(found.id)?.featsAptitudesInRules ?? []).map((link) => link.aptitudeId);
-      const hinted = aptitudes.find((aptitude) => aptitude.name === PCGEN_POOLS.get(feat.pool))?.id;
-      return [
-        {
-          featId: found.id,
-          line: feat.line,
-          name: found.name,
-          poolIds,
-          hintedPoolId: hinted && poolIds.includes(hinted) ? hinted : undefined,
-        },
-      ];
-    });
+    return [...this.imported.feats, ...domains]
+      .flatMap((feat) => this.takesOf(feat))
+      .flatMap(({ choice, feat }) => {
+        const shown = choice ? `${feat.name} (${choice})` : feat.name;
+        const found = this.names.findFeat(feat.name, choice);
+        if (!found) {
+          this.report.skip(feat.line, `${shown} isn't a feat of the ruleset`);
+          return [];
+        }
+        const poolIds = (featsById.get(found.id)?.featsAptitudesInRules ?? []).map((link) => link.aptitudeId);
+        const hinted = aptitudes.find((aptitude) => aptitude.name === PCGEN_POOLS.get(feat.pool))?.id;
+        return [
+          {
+            featId: found.id,
+            line: feat.line,
+            name: found.name,
+            poolIds,
+            hintedPoolId: hinted && poolIds.includes(hinted) ? hinted : undefined,
+          },
+        ];
+      });
   }
 
   /**
@@ -198,6 +200,20 @@ export default class LevelsImport {
   private skipFrom(level: ImportedLevel, reason: string) {
     for (const later of this.imported.levels.slice(this.imported.levels.indexOf(level)))
       this.report.skip(later.line, later === level ? reason : "A level before it couldn't be imported");
+  }
+
+  /**
+   * The times a feat line takes its feat, each with its choice: PCGen writes a feat taken more than once on one line,
+   * its choices parted by commas (`Weapon Focus` of `Longsword,Sword (Bastard)`), once each; a feat the ruleset keeps
+   * whole whatever its choices (Spell Mastery's spells) once.
+   */
+  private takesOf(feat: ImportedFeat): { choice?: string; feat: ImportedFeat }[] {
+    const choices = (feat.choice ?? "").split(",").flatMap((choice) => (choice.trim() ? [choice.trim()] : []));
+    if (choices.length <= 1) return [{ choice: feat.choice, feat }];
+    const whole = this.names.findFeat(feat.name)?.id;
+    const ofChoices = choices.map((choice) => ({ choice, id: this.names.findFeat(feat.name, choice)?.id }));
+    if (whole && ofChoices.every(({ id }) => id === whole)) return [{ choice: feat.choice, feat }];
+    return ofChoices.map(({ choice }) => ({ choice, feat }));
   }
 
   /** How many of the file's levels the character takes: those before the first the ruleset can't take. */

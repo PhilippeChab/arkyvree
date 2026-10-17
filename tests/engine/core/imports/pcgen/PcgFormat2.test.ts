@@ -121,6 +121,25 @@ describe("PcgFormat2", () => {
     expect(performance.now() - started).toBeLessThan(1000);
   });
 
+  test("reads the charges an item has left, and what the character owns without carrying it", () => {
+    const text = [
+      "PCGVERSION:2.0",
+      "VERSION:6.09",
+      "EQUIPNAME:Wand|QUANTITY:1.0|CUSTOMIZATION:[BASEITEM:Wand|DATA:EQMOD=CHARGED&pipe;CHARGES&lbracket;23&rbracket;]",
+      "EQUIPNAME:Tent|QUANTITY:2.0",
+      "EQUIPSET:Default Set|ID:0.1",
+      "EQUIPSET:Carried|ID:0.1.01|VALUE:Wand|QUANTITY:1.0",
+      "EQUIPSET:Carried|ID:0.1.02|VALUE:Tent|QUANTITY:1.0",
+      "CALCEQUIPSET:0.1",
+    ].join("\n");
+    const { gear } = new PcgenFile(text).read();
+    expect(gear.map(({ charges, name, notCarried, quantity }) => ({ charges, name, notCarried, quantity }))).toEqual([
+      { charges: 23, name: "Wand", notCarried: undefined, quantity: 1 },
+      { charges: undefined, name: "Tent", notCarried: undefined, quantity: 1 },
+      { charges: undefined, name: "Tent", notCarried: true, quantity: 1 },
+    ]);
+  });
+
   test("reads PCGen 5's feat lines too, in its general pool", () => {
     const text = "PCGVERSION:2.0\nVERSION:5.6.0\nFEAT:Weapon Focus|APPLIEDTO:Morningstar|TYPE:GENERAL.FIGHTER";
     expect(new PcgenFile(text).read().feats).toEqual([

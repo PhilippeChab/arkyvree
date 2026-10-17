@@ -66,6 +66,9 @@ const LEFT_OUT = new Set([
   "WEAPONPROF",
 ]);
 
+/** The equipment set's location of what the character owns without carrying it. */
+const NOT_CARRIED = "Not Carried";
+
 /** The lines of the character's own text that go to its notes, each labelled. */
 const NOTE_LABELS = new Map<string, string>([
   ["BIRTHDAY", "Birthday"],
@@ -196,15 +199,20 @@ export default class PcgFormat2 {
     const setId = this.calcEquipSet ?? [...this.equipSets.keys()][0];
     const entries = (setId && this.equipSets.get(setId)) || new Map<string, EquipSetEntry[]>();
     const itemNames = new Set(this.items.map(({ item }) => item.name));
+    const sum = (held: EquipSetEntry[]) => held.reduce((total, entry) => total + entry.quantity, 0);
     return this.items.flatMap(({ item, quantity }) => {
-      const worn = (entries.get(item.name) ?? []).filter(
-        (entry) => !this.isCarried(entry.location, entries, itemNames),
-      );
-      const wornQuantity = worn.reduce((sum, entry) => sum + entry.quantity, 0);
-      const left = quantity - wornQuantity;
+      const held = entries.get(item.name) ?? [];
+      const worn = held.filter((entry) => !this.isCarried(entry.location, entries, itemNames));
+      const left = quantity - sum(worn);
+      // What the set holds but doesn't wear is carried; what it leaves out (or sets apart, `Not Carried`) is owned
+      // without being carried, but in a file of no set, which says nothing of it
+      const inSet = held.filter((entry) => entry.location !== NOT_CARRIED && !worn.includes(entry));
+      const carried = Math.max(0, entries.size > 0 ? Math.min(left, sum(inSet)) : left);
+      const away = left - carried;
       return [
         ...worn.map((entry) => ({ ...item, location: entry.location, quantity: entry.quantity })),
-        ...(left > 0 ? [{ ...item, quantity: left }] : []),
+        ...(carried > 0 ? [{ ...item, quantity: carried }] : []),
+        ...(away > 0 ? [{ ...item, notCarried: true as const, quantity: away }] : []),
       ];
     });
   }
@@ -289,7 +297,15 @@ export default class PcgFormat2 {
     const data = customization.find((part) => part.tag === "DATA")?.value ?? "";
     const magic = PcgFormat2.isEnhanced(data) || /\+\d/.test(line.value);
     const quantity = this.readNumber(line.find("QUANTITY") ?? "") ?? 1;
-    const item = { line: line.line, magic, name: line.value, ...(baseName && baseName !== line.value && { baseName }) };
+    // The charges left, which PCGen keeps in the modifier that gives them (`CHARGES[23]`)
+    const charges = /CHARGES\[(\d+)\]/.exec(data)?.[1];
+    const item = {
+      line: line.line,
+      magic,
+      name: line.value,
+      ...(baseName && baseName !== line.value && { baseName }),
+      ...(charges !== undefined && { charges: Number(charges) }),
+    };
     this.items.push({ item, quantity });
   }
 

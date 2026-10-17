@@ -27,10 +27,19 @@ export default class ScoresImport {
     private readonly report: ImportReport,
   ) {}
 
-  /** The view's abilities by PCGen's key for each (`STR`). */
+  /**
+   * The view's abilities by PCGen's key for each (`STR`); one PCGen has no key for (a custom ruleset's renamed one) by
+   * its name, which a level's increase can still go to.
+   */
   private abilityIdsByKey() {
-    const byName = new Map(this.view.rulesetData.abilities.map((ability) => [ability.name, ability.id]));
-    return new Map([...PCGEN_ABILITIES].flatMap(([key, name]) => (byName.has(name) ? [[key, byName.get(name)!]] : [])));
+    const { abilities } = this.view.rulesetData;
+    const byName = new Map(abilities.map((ability) => [ability.name, ability.id]));
+    const ids = new Map(
+      [...PCGEN_ABILITIES].flatMap(([key, name]) => (byName.has(name) ? [[key, byName.get(name)!]] : [])),
+    );
+    const keyed = new Set(ids.values());
+    for (const ability of abilities) if (!keyed.has(ability.id)) ids.set(ability.name, ability.id);
+    return ids;
   }
 
   /**
@@ -72,7 +81,7 @@ export default class ScoresImport {
       const highest = [...scores].sort((a, b) => b[1] - a[1])[0]?.[0] ?? fallback;
       if (highest) {
         taken.set(highest, (taken.get(highest) ?? 0) + left);
-        const name = PCGEN_ABILITIES.get(highest);
+        const name = PCGEN_ABILITIES.get(highest) ?? highest;
         this.report.issue(
           `Level ${levelNumber}: the file records no ability increase there: ${name} +${left}, its highest`,
         );
