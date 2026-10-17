@@ -30,7 +30,7 @@ describe("A ruleset's own fields", () => {
       ]),
     ).toEqual({
       ...core,
-      featsPerLevel: [0, 0, 2, ...Array<number>(17).fill(0)],
+      featsPerLevel: [1, 0, 2, ...CORE_FEATS.slice(3)],
       skillPointAbilityId: "intelligence",
     });
   });

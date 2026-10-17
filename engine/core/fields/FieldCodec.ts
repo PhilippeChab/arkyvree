@@ -118,10 +118,7 @@ export default class FieldCodec<S extends Fields> {
     return field.default;
   }
 
-  /**
-   * A count per level off its rows' values (`level:count`), each level's first in its bounds, a level without one none:
-   * its default when no row is.
-   */
+  /** A count per level off its rows' values (`level:count`): each level's first in its bounds, else its default's. */
   private static readPerLevel(field: Extract<FieldSpec, { kind: "perLevel" }>, values: string[]): number[] {
     const counts = new Map<number, number>();
     for (const value of values) {
@@ -131,8 +128,7 @@ export default class FieldCodec<S extends Fields> {
       if (level < 1 || level > field.default.length || counts.has(level)) continue;
       if (count <= field.max) counts.set(level, count);
     }
-    if (counts.size === 0) return [...field.default];
-    return field.default.map((_, i) => counts.get(i + 1) ?? 0);
+    return field.default.map((count, i) => counts.get(i + 1) ?? count);
   }
 
   /** Whether two rows' values of a type hold the same values, whatever their order. */

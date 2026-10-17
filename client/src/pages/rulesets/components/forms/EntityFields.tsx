@@ -298,6 +298,7 @@ function isWide(field: EntityField) {
  */
 function PerLevelInput<T extends FieldValues>({ field, form, help }: FieldInputProps<T, PerLevelField>) {
   const labelId = useId();
+  const helpId = useId();
   const readOnly = useReadOnlyFields();
   const isCountValid = (count: number) => wholeNumberError(count, 0, field.max) === undefined;
   const {
@@ -306,17 +307,15 @@ function PerLevelInput<T extends FieldValues>({ field, form, help }: FieldInputP
   } = useController({
     control: form.control,
     name: fieldPath<T>(field.key),
-    rules: {
-      validate: (counts: unknown) =>
-        (Array.isArray(counts) && counts.every(isCountValid)) || `Each level's count is from 0 to ${field.max}`,
-    },
+    // Each count out of its bounds says why under its own input
+    rules: { validate: (counts: unknown) => Array.isArray(counts) && counts.every(isCountValid) },
   });
   const counts: number[] = Array.isArray(value) ? value : [];
   // In place, so changing a count back leaves the form clean
   const setCount = (level: number, count: number) =>
     onChange(counts.map((kept, index) => (index === level ? count : kept)));
   return (
-    <Stack role="group" aria-labelledby={labelId} spacing={1.5}>
+    <Stack role="group" aria-labelledby={labelId} aria-describedby={help ? helpId : undefined} spacing={1.5}>
       <Box id={labelId}>
         <SubsectionTitle>{field.label}</SubsectionTitle>
       </Box>
@@ -342,7 +341,7 @@ function PerLevelInput<T extends FieldValues>({ field, form, help }: FieldInputP
           );
         })}
       </Box>
-      {help && <FormHelperText>{field.help}</FormHelperText>}
+      {help && <FormHelperText id={helpId}>{field.help}</FormHelperText>}
     </Stack>
   );
 }

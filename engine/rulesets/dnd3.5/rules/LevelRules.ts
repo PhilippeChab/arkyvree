@@ -51,9 +51,9 @@ export default class LevelRules {
     return this.progression.featsPerLevel.slice(0, totalLevel).reduce((sum, count) => sum + count, 0);
   }
 
-  /** The general feats character level `level` gives, by its Settings (`featsPerLevel`). */
-  countGeneralFeatsAt(level: number): number {
-    return this.progression.featsPerLevel[level - 1] ?? 0;
+  /** The general feats the level after `totalLevel` levels gives, by its Settings (`featsPerLevel`). */
+  countGeneralFeatsAfter(totalLevel: number): number {
+    return this.progression.featsPerLevel[totalLevel] ?? 0;
   }
 
   /** Whether the level after `totalLevel` levels takes an ability increase. */

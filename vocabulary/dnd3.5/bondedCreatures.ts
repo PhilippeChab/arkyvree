@@ -146,7 +146,7 @@ export const ANIMAL_SKILL_POINTS_PER_HIT_DIE = 1;
  * source gives the creature the feat.
  *
  * Per-HD scaling:
- *   - Feat count at total HD N = 1 + floor((N-1)/3), the stat block's bonus
+ *   - Feat count at total HD N = 1 + floor(N/3), the stat block's bonus
  *     feats (`bonusFeats`) aside. Compose applies `bonusFeats` and `baseFeats`,
  *     then appends `featPriority` items in order until count met; the appended
  *     feats' bonuses come on top of the totals.

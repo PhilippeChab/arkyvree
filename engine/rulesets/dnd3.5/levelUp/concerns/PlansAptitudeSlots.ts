@@ -117,7 +117,7 @@ export function PlansAptitudeSlots<B extends Constructor<LevelUpBase<DetailedCha
         const deltas = this.levelDeltas(
           klassLevelIds[i],
           grantedFeatRecords[i] ?? [],
-          levelRules.countGeneralFeatsAt(savedLevelCount + i + 1),
+          levelRules.countGeneralFeatsAfter(savedLevelCount + i),
           perLevelFeatSlots,
           perLevelPowerSlots,
         );

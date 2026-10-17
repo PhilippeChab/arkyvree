@@ -33,7 +33,6 @@ function emptyValueOf(field: ValueField): LeafValue {
     case "flag":
       return field.nullable ? null : false;
     case "number":
-      return field.default;
     case "perLevel":
       return field.default;
     case "choice":

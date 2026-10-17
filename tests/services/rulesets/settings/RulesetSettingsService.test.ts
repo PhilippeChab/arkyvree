@@ -141,7 +141,7 @@ describe("RulesetSettingsService", () => {
     });
   });
 
-  test("open a level saved with an increase its Settings no longer give without it, which its edit writes away", async () => {
+  test("count no increase its Settings no longer give, which a level's edit opens without and writes away", async () => {
     const { session, fork, abilityMap } = await setup();
     const { characterId, levelIds } = await buildFighter(fork.id, 4);
     const fourth = levelIds[3];
@@ -151,9 +151,15 @@ describe("RulesetSettingsService", () => {
     const seedUser = makeSession();
     const edit = (increases: (typeof strength)[]) =>
       CharacterLevelsService.updateLevel(seedUser, characterId, fourth, 10, increases, {}, {}, {}, true);
+    // The fighter's Strength, as the fork builds it
+    const strengthScore = async () => {
+      const row = await Characters.findOne(db, { id: characterId });
+      return (await buildAs(DetailedCharacter, row!)).components.abilities.getAbility("Strength")?.total;
+    };
     expect(await CharacterLevelsService.getLevel(seedUser, characterId, fourth)).toMatchObject({
       abilityIncreases: [strength],
     });
+    expect(await strengthScore()).toBe(11);
 
     // The increase moves from the fourth level to the fifth
     const abilityIncreasesPerLevel = CORE_INCREASES.map((count, i) => (i === 3 ? 0 : i === 4 ? 1 : count));
@@ -161,6 +167,7 @@ describe("RulesetSettingsService", () => {
     expect(await CharacterLevelsService.getLevel(seedUser, characterId, fourth)).toMatchObject({
       abilityIncreases: [],
     });
+    expect(await strengthScore()).toBe(10);
     for (const increases of [[strength], [{ ...strength, abilityId: abilityMap["Dexterity"] }]])
       expect(edit(increases)).rejects.toMatchObject({ message: "Ability increase is not available at this level" });
     await edit([]);
