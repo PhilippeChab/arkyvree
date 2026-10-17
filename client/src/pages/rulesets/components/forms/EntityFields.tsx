@@ -317,10 +317,13 @@ function ProgressionInput<T extends FieldValues>({ field, form, help }: FieldInp
   const helpId = useId();
   const readOnly = useReadOnlyFields();
   const { control } = form;
-  const path = `fields.${field.key}`;
-  const { fields: rows, append, remove } = useFieldArray({ control, name: `${path}.extra` as ArrayPath<T> });
-  const every: unknown = useWatch({ control, name: formPath<T>(`${path}.every`) });
-  const watched: unknown = useWatch({ control, name: formPath<T>(`${path}.extra`) });
+  const {
+    fields: rows,
+    append,
+    remove,
+  } = useFieldArray({ control, name: `fields.${field.key}.extra` as ArrayPath<T> });
+  const every: unknown = useWatch({ control, name: fieldPath<T>(`${field.key}.every`) });
+  const watched: unknown = useWatch({ control, name: fieldPath<T>(`${field.key}.extra`) });
   const extra: ProgressionExtra[] = Array.isArray(watched) ? watched : [];
   // One at most a level: each listed level gives one, which its frequency mustn't give already
   const givesOne = field.max === 1;
@@ -339,9 +342,10 @@ function ProgressionInput<T extends FieldValues>({ field, form, help }: FieldInp
   const levelsListed = extra.map(({ level }) => level).join(",");
   const { isSubmitted } = form.formState;
   const { trigger } = form;
+  const extraPath = fieldPath<T>(`${field.key}.extra`);
   useEffect(() => {
-    if (isSubmitted) void trigger(formPath<T>(`${path}.extra`));
-  }, [every, isSubmitted, levelsListed, path, trigger]);
+    if (isSubmitted) void trigger(extraPath);
+  }, [every, extraPath, isSubmitted, levelsListed, trigger]);
   // The first level that may give more: unlisted, and short of its bound with its frequency's
   const nextLevel = Array.from({ length: field.levels }, (_, i) => i + 1).find(
     (level) => !extra.some((given) => given.level === level) && roomAt(level) > 0,
@@ -356,7 +360,7 @@ function ProgressionInput<T extends FieldValues>({ field, form, help }: FieldInp
         <Box sx={PROGRESSION_WIDTH_SX}>
           <FormTextField
             control={control}
-            name={formPath<T>(`${path}.every`)}
+            name={fieldPath<T>(`${field.key}.every`)}
             rules={wholeNumberRules(0, "Frequency is required", field.levels)}
             number
             label="Every N Levels"
@@ -374,7 +378,7 @@ function ProgressionInput<T extends FieldValues>({ field, form, help }: FieldInp
             <Box key={row.id} sx={[PROGRESSION_ROW_SX, PROGRESSION_WIDTH_SX]}>
               <FormTextField
                 control={control}
-                name={formPath<T>(`${path}.extra.${index}.level`)}
+                name={fieldPath<T>(`${field.key}.extra.${index}.level`)}
                 rules={wholeNumberRules(1, "Level is required", field.levels, [
                   (level) => issueAt(index, "level", level),
                 ])}
@@ -388,7 +392,7 @@ function ProgressionInput<T extends FieldValues>({ field, form, help }: FieldInp
               ) : (
                 <FormTextField
                   control={control}
-                  name={formPath<T>(`${path}.extra.${index}.amount`)}
+                  name={fieldPath<T>(`${field.key}.extra.${index}.amount`)}
                   rules={wholeNumberRules(1, "Amount is required", field.max, [
                     (amount) => issueAt(index, "amount", amount),
                   ])}
