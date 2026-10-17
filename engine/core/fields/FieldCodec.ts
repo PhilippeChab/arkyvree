@@ -1,7 +1,7 @@
 import type { PropertyTypesProvider } from "@/engine/core/customizations/index.ts";
 import type { PropertyValue } from "@/engine/core/module/index.ts";
 import type { PropertyEntityType } from "@/shared/customization/entities.ts";
-import { copyProgression, countRegularAt, type ProgressionValue } from "@/shared/customization/progression.ts";
+import { copyProgression, countRoomAt, type ProgressionValue } from "@/shared/customization/progression.ts";
 
 import Field, { type Fields, type FieldSpec, type FieldValues, type NoFields } from "./Field.ts";
 import FieldForms, { type FormContext } from "./FieldForms.ts";
@@ -137,11 +137,12 @@ export default class FieldCodec<S extends Fields> {
       const [level, amount] = [Number(match[1]), Number(match[2])];
       if (level >= 1 && level <= field.levels && amount >= 1 && !extra.has(level)) extra.set(level, amount);
     }
-    const frequency = every === undefined ? field.default.every : Number(every);
+    // A frequency past its last level reads as its default's, as a number past its bounds does
+    const frequency = every === undefined || Number(every) > field.levels ? field.default.every : Number(every);
     // A level gives at most its bound with its frequency's: what's past it reads as its bound, a level its frequency
     // fills gives none more
     for (const [level, amount] of extra) {
-      const room = field.max - countRegularAt(frequency, level);
+      const room = countRoomAt(frequency, level, field.max);
       if (room > 0) extra.set(level, Math.min(amount, room));
       else extra.delete(level);
     }

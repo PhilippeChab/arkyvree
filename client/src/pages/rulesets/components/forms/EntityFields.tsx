@@ -30,7 +30,7 @@ import { rulesetOptionsQuery } from "@/client/src/lib/queries.ts";
 import { requiredRules, wholeNumberRules } from "@/client/src/lib/validation.ts";
 import type { EntityField, RulesetFields } from "@/client/src/pages/rulesets/details/rulesetQueries.ts";
 import { useEntityFields } from "@/client/src/pages/rulesets/hooks/index.ts";
-import { countRegularAt } from "@/shared/customization/progression.ts";
+import { countRoomAt } from "@/shared/customization/progression.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
 
 import { choiceOptions, isFieldShown, noneLabel, valueAt } from "./entityFields.ts";
@@ -322,7 +322,7 @@ function ProgressionInput<T extends FieldValues>({ field, form, help }: FieldInp
   const extra: ProgressionExtra[] = Array.isArray(watched) ? watched : [];
   // One at most a level: each listed level gives one, which its frequency mustn't give already
   const givesOne = field.max === 1;
-  const regularAt = (level: number) => (typeof every === "number" ? countRegularAt(every, level) : 0);
+  const roomAt = (level: number) => countRoomAt(typeof every === "number" ? every : 0, level, field.max);
   // A level's checks read the other levels and the frequency: once a submit has shown them, they follow either
   const levelsListed = extra.map(({ level }) => level).join(",");
   const { isSubmitted } = form.formState;
@@ -332,7 +332,7 @@ function ProgressionInput<T extends FieldValues>({ field, form, help }: FieldInp
   }, [every, isSubmitted, levelsListed, path, trigger]);
   // The first level that may give more: unlisted, and short of its bound with its frequency's
   const nextLevel = Array.from({ length: field.levels }, (_, i) => i + 1).find(
-    (level) => !extra.some((given) => given.level === level) && regularAt(level) < field.max,
+    (level) => !extra.some((given) => given.level === level) && roomAt(level) > 0,
   );
   const described = help && field.help !== "";
   return (
@@ -366,9 +366,7 @@ function ProgressionInput<T extends FieldValues>({ field, form, help }: FieldInp
                 (level) =>
                   extra.filter((given) => given.level === level).length <= 1 || `Level ${level} is listed twice`,
                 (level) =>
-                  !givesOne ||
-                  regularAt(level) === 0 ||
-                  `Level ${level} gives one already, every ${String(every)} levels`,
+                  !givesOne || roomAt(level) > 0 || `Level ${level} gives one already, every ${String(every)} levels`,
               ])}
               number
               label="Level"
@@ -384,8 +382,10 @@ function ProgressionInput<T extends FieldValues>({ field, form, help }: FieldInp
                 rules={wholeNumberRules(1, "Amount is required", field.max, [
                   (amount) => {
                     const level = extra[index]?.level ?? 0;
-                    const total = amount + regularAt(level);
-                    return total <= field.max || `Level ${level} would give ${total}, at most ${field.max}`;
+                    const room = roomAt(level);
+                    return (
+                      amount <= room || `Level ${level} would give ${amount + field.max - room}, at most ${field.max}`
+                    );
                   },
                 ])}
                 number
@@ -396,7 +396,12 @@ function ProgressionInput<T extends FieldValues>({ field, form, help }: FieldInp
             )}
             {!readOnly && (
               <Box sx={{ pt: 1 }}>
-                <RowAction icon={DeleteIcon} label="Remove Level" intent="destructive" onClick={() => remove(index)} />
+                <RowAction
+                  icon={DeleteIcon}
+                  label={`Remove Level ${String(extra[index]?.level ?? "")}`.trim()}
+                  intent="destructive"
+                  onClick={() => remove(index)}
+                />
               </Box>
             )}
           </Box>

@@ -274,6 +274,8 @@ describe("A progression", () => {
         ],
       },
     });
+    // A frequency past its last level reads as its default's
+    expect(PROGRESSION.read(rows(["GRANT", "every:11"]))).toEqual({ grants: { every: 3, extra: [] } });
     // A frequency's row alone: none more; more without a frequency's row: its default's
     expect(PROGRESSION.read(rows(["GRANT", "every:0"]))).toEqual({ grants: { every: 0, extra: [] } });
     expect(PROGRESSION.read(rows(["GRANT", "6:1"]))).toEqual({

@@ -28,5 +28,10 @@ export function countProgressionAt({ every, extra }: ProgressionValue, level: nu
 
 /** What a progression's frequency (`every`) gives at character level `level`: one at each multiple, none at 0. */
 export function countRegularAt(every: number, level: number): number {
-  return every > 0 && level % every === 0 ? 1 : 0;
+  return every > 0 && level >= 1 && level % every === 0 ? 1 : 0;
+}
+
+/** How many more a progression may give at character level `level` than its frequency, within its bound (`max`). */
+export function countRoomAt(every: number, level: number, max: number): number {
+  return max - countRegularAt(every, level);
 }

@@ -4,7 +4,7 @@ import type { PropertyDeclaration, PropertyTypesProvider } from "@/engine/core/c
 import RulesError from "@/engine/core/RulesError.ts";
 import type { ViewEntities } from "@/engine/core/view/index.ts";
 import type { PropertyEntityType } from "@/shared/customization/entities.ts";
-import { copyProgression, countRegularAt } from "@/shared/customization/progression.ts";
+import { copyProgression, countRoomAt } from "@/shared/customization/progression.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 
 import Field, { type FieldCondition, type Fields, type FieldSpec } from "./Field.ts";
@@ -148,10 +148,9 @@ export default class FieldForms {
             context.addIssue({ code: "custom", path: ["extra", index, "level"], message });
           }
           seen.add(level);
-          const total = amount + countRegularAt(every, level);
-          if (total > max) {
+          if (amount > countRoomAt(every, level, max)) {
             // One at most a level gives no amount to change: its level is what's wrong
-            const message = `Level ${level} would give ${total}, at most ${max}`;
+            const message = `Level ${level} would give ${amount + max - countRoomAt(every, level, max)}, at most ${max}`;
             context.addIssue({ code: "custom", path: ["extra", index, max === 1 ? "level" : "amount"], message });
           }
         }
