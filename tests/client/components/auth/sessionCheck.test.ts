@@ -25,7 +25,8 @@ function serveApi() {
   const server = Bun.serve({ port: 0, fetch: (request) => application.fetch(request) });
   return {
     server,
-    // What `/auth/me` answers the cookie of `sessionId`, asked as the app asks it
+    // What `/auth/me` answers the cookie of `sessionId`, asked as the app asks it: `currentUserQuery`'s key and
+    // options, its request sent to this server (the app's `rpc` reads the page's origin, which a test has none of)
     fetchUserOf: (sessionId: string | null) => () =>
       queryClient.fetchQuery({
         queryKey: QUERY_KEYS.auth.me,
@@ -88,6 +89,24 @@ describe("The session check, with a user the store remembers", () => {
     }
   });
 
+  test("takes the server's fields when the cookie is theirs and storage held older ones", async () => {
+    const { server, fetchUserOf } = serveApi();
+    try {
+      const { user, sessionId } = await createUserWithSession();
+      const sessionUser = await fetchUserOf(sessionId)();
+      useAuthStore.getState().startSession({ ...sessionUser, username: "stale-name" });
+
+      await checkSession(fetchUserOf(sessionId));
+
+      expect(useAuthStore.getState()).toMatchObject({
+        isAuthenticated: true,
+        user: { id: user.id, username: user.username },
+      });
+    } finally {
+      await server.stop(true);
+    }
+  });
+
   test("leaves them as the store holds them when the cookie is theirs, their cache kept", async () => {
     const { server, fetchUserOf } = serveApi();
     try {
@@ -129,6 +148,25 @@ describe("The session check, with a user the store remembers", () => {
     await checkSession(fetchUserOf(sessionId));
 
     expect(useAuthStore.getState()).toMatchObject({ isAuthenticated: true, user: { id: user.id } });
+  });
+
+  test("changes nothing once the session has changed while it asked, even back to the same user", async () => {
+    const { server, fetchUserOf } = serveApi();
+    try {
+      const earlier = await createUserWithSession();
+      const current = await createUserWithSession();
+      const remembered = await fetchUserOf(earlier.sessionId)();
+      useAuthStore.getState().startSession(remembered);
+
+      const check = checkSession(fetchUserOf(current.sessionId));
+      useAuthStore.getState().clearSession({ byUser: true });
+      useAuthStore.getState().startSession(remembered);
+      await check;
+
+      expect(useAuthStore.getState()).toMatchObject({ isAuthenticated: true, user: { id: earlier.user.id } });
+    } finally {
+      await server.stop(true);
+    }
   });
 
   test("changes nothing once the store has changed while it asked: a sign-out stands", async () => {

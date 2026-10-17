@@ -7,6 +7,19 @@ import { markDemoExpired } from "@/client/src/stores/demoExpiredStorage.ts";
 import { FIVE_MINUTES } from "./durations.ts";
 import { QUERY_KEYS } from "./queryKeys.ts";
 
+/** A 401 signs the session out: the server no longer knows it. */
+function handleGlobalError(error: unknown) {
+  if (error instanceof ApiError && error.status === 401) {
+    // Skip when already unauth — re-clearing on every 401 creates a refetch loop.
+    if (!useAuthStore.getState().isAuthenticated) return;
+    // If the cleared user was a demo, leave a breadcrumb so the post-clear
+    // catch-all can route to /demo-expired instead of /sign-in.
+    if (useAuthStore.getState().user?.expiresAt) markDemoExpired();
+
+    useAuthStore.getState().clearSession();
+  }
+}
+
 /**
  * The app's query client: a 401 from any query or mutation signs the session out, and the cache is cleared whenever the
  * signed-in user changes, so one user never sees another's data.
@@ -20,12 +33,12 @@ export function createQueryClient() {
       },
     },
     queryCache: new QueryCache({
-      onError: (error) => signOutIfUnauthorized(error),
+      onError: (error) => handleGlobalError(error),
     }),
     // An auth request handles its own 401: a wrong password, a session already gone at sign-out
     mutationCache: new MutationCache({
       onError: (error, _variables, _context, mutation) => {
-        if (!matchMutation({ mutationKey: QUERY_KEYS.auth.requests }, mutation)) signOutIfUnauthorized(error);
+        if (!matchMutation({ mutationKey: QUERY_KEYS.auth.requests }, mutation)) handleGlobalError(error);
       },
     }),
   });
@@ -42,17 +55,4 @@ export function createQueryClient() {
   });
 
   return queryClient;
-}
-
-/** A 401 signs the session out: the server no longer knows it. */
-export function signOutIfUnauthorized(error: unknown) {
-  if (error instanceof ApiError && error.status === 401) {
-    // Skip when already unauth — re-clearing on every 401 creates a refetch loop.
-    if (!useAuthStore.getState().isAuthenticated) return;
-    // If the cleared user was a demo, leave a breadcrumb so the post-clear
-    // catch-all can route to /demo-expired instead of /sign-in.
-    if (useAuthStore.getState().user?.expiresAt) markDemoExpired();
-
-    useAuthStore.getState().clearSession();
-  }
 }

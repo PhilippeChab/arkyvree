@@ -79,7 +79,7 @@ A separate flow from auth-route entry:
 ```
 Demo user uses app, demo TTL hits server-side (1 hour)
    Next API call returns 401
-   signOutIfUnauthorized (client/src/lib/queryClient.ts):
+   handleGlobalError (client/src/lib/queryClient.ts):
      user.expiresAt set ⇒ markDemoExpired() (the flag, in localStorage)
      clearSession()
    React re-renders ⇒ /current-path no longer matches authed Layout
@@ -98,14 +98,14 @@ So the first private page a tab opens asks the server whose session the cookie i
 
 | The store remembers | The server answers | The store |
 |---|---|---|
-| A user | That user | Keeps them, as it holds them |
+| A user | That user | Keeps them, with the server's fields (unless a profile update came meanwhile) |
 | A user | Another user | Takes the server's user: the cache is cleared, as on any change of user, and the private pages mount afresh (`PrivateRoute` keys its `<Outlet>` by the user) |
-| A user | 401 | Signed out (`signOutIfUnauthorized`: a demo's goes to `/demo-expired`) |
+| A user | 401 | Signed out, as by any query's 401 (`handleGlobalError`: a demo's goes to `/demo-expired`) |
 | A user | Any other failure (offline, 5xx) | Keeps them: the server can't say |
 | No one | A user | Signs them in |
 | No one | Any failure | Stays signed out |
 
-The remembered user renders the page meanwhile, so a signed-in page doesn't flash signed out. An answer that comes once the store holds another user (a sign-out meanwhile) changes nothing.
+The remembered user renders the page meanwhile, so a signed-in page doesn't flash signed out. An answer that comes once the session has changed (a sign-out, a sign-in again, meanwhile) changes nothing. The probe runs once a tab: a cookie that changes user later (another tab signs out, then in as someone else) isn't caught until the tab reloads (see [Cross-tab behavior](#cross-tab-behavior)).
 
 ## Stale-cookie defense (server-side)
 
@@ -124,6 +124,7 @@ The cookie is shared across tabs in the same origin. State is server-authoritati
 | Tab A (real session), Tab B opens `/sign-in` | Tab B redirects to `/dashboard`. Tab A untouched. |
 | Tab A (demo), Tab B opens `/sign-in` | Tab B kills the demo server-side. Tab A's next API call → 401 → `/demo-expired`. Self-heals. |
 | Tab A (real session), Tab B signs out | Tab B clears session. Tab A's next API call → 401 → `/sign-in`. |
+| Tab A (real session), Tab B signs out, then in as another user | Tab A's requests answer as the new user while it still holds the old one, until it reloads: its probe then takes the new user (see [The session probe](#the-session-probe)). |
 | Tab A (demo), Tab B opens `/share/:t` | Both safe — `/share` is public-no-auth, demo persists in both tabs. |
 
 There's no `BroadcastChannel`-based active sync today. Recovery happens lazily via the next 401 in the stale tab.
@@ -133,7 +134,7 @@ There's no `BroadcastChannel`-based active sync today. Recovery happens lazily v
 | File | Purpose |
 |---|---|
 | `client/src/App.tsx` | `AppRoutes` static tree |
-| `client/src/lib/queryClient.ts` | `createQueryClient`: `signOutIfUnauthorized`, the 401 handler, and the cache cleared when the user changes |
+| `client/src/lib/queryClient.ts` | `createQueryClient`: `handleGlobalError`, the 401 handler, and the cache cleared when the user changes |
 | `client/src/components/auth/AuthLayoutRoute.tsx` | `AuthLayoutRoute` — demo signOut on entry, real-user redirect (`useAuthRedirect`) |
 | `client/src/components/auth/PrivateRoute.tsx` | `PrivateRoute` guard: the session probe (a `fetchQuery` of `/auth/me`, once per tab), the redirect to sign in |
 | `client/src/components/auth/sessionCheck.ts` | `checkSession`: the store takes the probe's answer (see [The session probe](#the-session-probe)) |
