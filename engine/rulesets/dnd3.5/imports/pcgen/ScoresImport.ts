@@ -3,6 +3,7 @@ import type { AbilityIncrease } from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import NewCharacters from "@/engine/rulesets/dnd3.5/characters/NewCharacters.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
+import { formatSigned } from "@/shared/text.ts";
 import { ABILITY_NAMES } from "@/vocabulary/dnd3.5/abilities.ts";
 
 import { PCGEN_ABILITIES } from "./names.ts";
@@ -103,7 +104,7 @@ export default class ScoresImport {
       const taken = this.takeIncreases(index + 1, rules.countAbilityIncreases(index), recorded, { fallback, scores });
       for (const [key, amount] of recorded) {
         if (amount !== 0) {
-          const change = `${PCGEN_ABILITIES.get(key) ?? key} ${amount > 0 ? "+" : ""}${amount}`;
+          const change = `${PCGEN_ABILITIES.get(key) ?? key} ${formatSigned(amount)}`;
           this.report.issue(
             `Level ${index + 1}: ${change} isn't an increase the ruleset gives there: kept in the starting score`,
           );

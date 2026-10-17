@@ -23,12 +23,17 @@ export interface LevelGains {
  * and the feats placed on it so far (`buildWith`), whose requirements and pools the next feat is read against.
  */
 export default class ImportedLevelGains extends PlannedLevelsState {
-  /** The character with the level (`entry`) and these feats (`feats`, each in its pool) picked at it. */
-  buildWith(entry: PlannedClassLevel, feats: FeatPick[]): DetailedCharacter {
+  /**
+   * The character with the level (`entry`), its skill points (`skills`, by skill id) and these feats (`feats`, each in
+   * its pool) picked at it: a feat whose requirement the level's ranks meet is taken there, as a level-up takes it.
+   */
+  buildWith(entry: PlannedClassLevel, skills: Record<string, number>, feats: FeatPick[]): DetailedCharacter {
     const projection = new CharacterProjection(this.character);
     const { abilityIncreases, klassLevel } = entry;
+    const ranks = Object.entries(skills).map(([skillId, rank]) => ({ rank, skillId }));
     projection.pick(projection.addLevel(klassLevel.id, { abilityIncreases, hp: LevelRules.UNROLLED_LEVEL_HP }), {
       feats,
+      skills: ranks,
     });
     return this.build(projection);
   }

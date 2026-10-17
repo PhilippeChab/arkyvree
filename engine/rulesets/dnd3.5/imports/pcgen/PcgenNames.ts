@@ -36,6 +36,13 @@ const PLAYER_LISTS = new Set<keyof typeof LISTS>(["klasses", "races"]);
 export default class PcgenNames {
   constructor(private readonly rulesetData: RulesetData) {}
 
+  /** A name without the parenthesis it ends on ("Elf (Gray)": "Elf"), as it is when it ends on none. */
+  private static base(name: string) {
+    const open = name.lastIndexOf(" (");
+    if (open < 0 || !name.endsWith(")") || name.slice(open + 2, -1).includes(")")) return name;
+    return name.slice(0, open);
+  }
+
   /** A name as names are compared: lower case, without accents, spaces or punctuation. */
   private static compared(name: string) {
     // Accents dropped with their marks, any script's letters kept
@@ -50,9 +57,12 @@ export default class PcgenNames {
    * "Base, kind more" and "Base of Kind"; a name without parentheses only as it is.
    */
   private static wordings(name: string): string[] {
-    const match = /^(.+?) \((.+)\)$/.exec(name.trim());
-    if (!match) return [name];
-    const [, base, inner] = match;
+    // Its first " (" past its first character, when it ends on ")": found without a pattern that backtracks
+    const trimmed = name.trim();
+    const open = trimmed.indexOf(" (", 1);
+    if (open < 0 || !trimmed.endsWith(")") || trimmed.length - 1 <= open + 2) return [name];
+    const base = trimmed.slice(0, open);
+    const inner = trimmed.slice(open + 2, -1);
     const [kind, ...more] = inner.split("/");
     const rest = more.join(" ");
     return [
@@ -103,7 +113,7 @@ export default class PcgenNames {
     for (const { compared, entity } of this.comparedOf(list)) if (!index.has(compared)) index.set(compared, entity);
     if (list === "items") {
       for (const { entity } of this.comparedOf(list)) {
-        const key = PcgenNames.compared(entity.name.replace(/ \([^)]*\)$/, ""));
+        const key = PcgenNames.compared(PcgenNames.base(entity.name));
         if (!index.has(key)) index.set(key, entity);
       }
     }
@@ -149,9 +159,12 @@ export default class PcgenNames {
     return this.findFirst("languages", [name]);
   }
 
-  /** The player race PCGen names `name`, or the one its name before a parenthesis names ("Elf (Gray)": "Elf"). */
+  /**
+   * The player race PCGen names `name`, through its wordings ("Elf (Gray)": "Gray Elf"), or the one its name before a
+   * parenthesis names ("Elf").
+   */
   findRace(name: string) {
-    return this.findFirst("races", [name, name.replace(/ \([^)]*\)$/, "")]);
+    return this.findFirst("races", [...PcgenNames.wordings(name), PcgenNames.base(name)]);
   }
 
   /**
@@ -160,7 +173,8 @@ export default class PcgenNames {
    * PCGen 6 names a subtype "Base ~ Subtype" ("Craft ~ Weaponsmithing"), read as "Base (Subtype)".
    */
   findSkill(pcgenName: string) {
-    const name = pcgenName.replace(/^(.+?) ~ (.+)$/, "$1 ($2)");
+    const tilde = pcgenName.indexOf(" ~ ", 1);
+    const name = tilde < 0 ? pcgenName : `${pcgenName.slice(0, tilde)} (${pcgenName.slice(tilde + 3)})`;
     const found = this.findFirst("skills", [name]);
     if (found) return found;
     const wanted = PcgenNames.compared(name);
@@ -168,6 +182,6 @@ export default class PcgenNames {
     const opened = wanted
       ? this.comparedOf("skills").find(({ compared }) => compared.startsWith(wanted))?.entity
       : undefined;
-    return opened ?? this.findFirst("skills", [name.replace(/ \([^)]*\)$/, "")]);
+    return opened ?? this.findFirst("skills", [PcgenNames.base(name)]);
   }
 }

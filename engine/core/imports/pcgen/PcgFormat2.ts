@@ -108,6 +108,17 @@ const UNREAD_REASONS = new Map<string, string>([
 export default class PcgFormat2 {
   constructor(private readonly lines: PcgLine[]) {}
 
+  /**
+   * Whether a customized item's modifiers (`DATA:EQMOD=…$…`, parted by `$`) enhance it: one of its parts holds an
+   * `EQMOD=` and a `PLUS<n>` after it. Read part by part, in a time its length bounds, whatever the file holds.
+   */
+  private static isEnhanced(data: string) {
+    return data.split("$").some((part) => {
+      const at = part.indexOf("EQMOD=");
+      return at >= 0 && /PLUS\d/.test(part.slice(at));
+    });
+  }
+
   /** The character the file holds, as it reads it so far. */
   private readonly character: ImportedCharacter = {
     abilities: [],
@@ -276,7 +287,7 @@ export default class PcgFormat2 {
     const customization = PcgLine.nested(line.find("CUSTOMIZATION") ?? "");
     const baseName = customization.find((part) => part.tag === "BASEITEM")?.value;
     const data = customization.find((part) => part.tag === "DATA")?.value ?? "";
-    const magic = /EQMOD=[^$]*PLUS\d/.test(data) || /\+\d/.test(line.value);
+    const magic = PcgFormat2.isEnhanced(data) || /\+\d/.test(line.value);
     const quantity = this.readNumber(line.find("QUANTITY") ?? "") ?? 1;
     const item = { line: line.line, magic, name: line.value, ...(baseName && baseName !== line.value && { baseName }) };
     this.items.push({ item, quantity });
@@ -339,7 +350,7 @@ export default class PcgFormat2 {
       name === "Base Race Type" ||
       name.endsWith(" Base") ||
       name.includes(" ~ ") ||
-      /^\S*[a-z][A-Z]\S*$/.test(name) ||
+      (!/\s/.test(name) && /[a-z][A-Z]/.test(name)) ||
       (race !== undefined && name.endsWith(` ${race}`));
     if (!automatic) this.character.unread.push({ line: line.line, reason: "Templates aren't imported" });
   }

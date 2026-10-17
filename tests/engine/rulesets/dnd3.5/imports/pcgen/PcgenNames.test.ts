@@ -46,6 +46,16 @@ describe("PcgenNames", () => {
     expect((await seededNames()).findRace("Half-Élf")?.name).toBe("Half-Elf");
   });
 
+  test("reads a name crafted to make a pattern backtrack in a time its length bounds", async () => {
+    const names = await seededNames();
+    const name = `a${" (".repeat(40_000)}x`;
+    const started = performance.now();
+    expect(names.findItem(name)).toBeUndefined();
+    expect(names.findRace(name)).toBeUndefined();
+    expect(names.findSkill(name)).toBeUndefined();
+    expect(performance.now() - started).toBeLessThan(1000);
+  });
+
   test("finds a player's race alone: a familiar's isn't a character's", async () => {
     expect((await seededNames()).findRace("Cat")).toBeUndefined();
   });

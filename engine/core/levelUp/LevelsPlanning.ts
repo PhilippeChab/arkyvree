@@ -78,6 +78,14 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
     }));
   }
 
+  /** What planned levels write: each its row's columns (its class level and hit points) and its rows under it. */
+  private levelWritesOf(planned: PlannedLevel[]): LevelsPlan["levels"] {
+    return planned.map(({ abilityIncreases, hp, klassLevelId, picks: levelPicks }) => ({
+      columns: { hp, klassLevelId },
+      rows: { abilityIncreases, ...this.toPickRows(levelPicks) },
+    }));
+  }
+
   /**
    * A level-up's levels (`request`) checked, up to the character with them (`saved`): each level's class level, ability
    * increases, hit points and picks (`planned`), its picks refused when the character holds them already or they
@@ -164,17 +172,6 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
     PicksDistribution.refuseOverfull(this.rules.findOverfullPools(this.view, this.character, holder, picks));
   }
 
-  /** What planned levels write, and what the master's bonded creatures (`bonded`) become with them (`saved`). */
-  private writesOf(planned: PlannedLevel[], saved: C, bonded: CharacterInput[]): LevelsPlan {
-    return {
-      ...this.planBondedOf(saved, bonded),
-      levels: planned.map(({ abilityIncreases, hp, klassLevelId, picks: levelPicks }) => ({
-        columns: { hp, klassLevelId },
-        rows: { abilityIncreases, ...this.toPickRows(levelPicks) },
-      })),
-    };
-  }
-
   /**
    * The edit of saved level `characterLevelId`, with the character's bonded creatures' rows (`bonded`): the level as
    * saved, its new hit points, ability increases and picks, checked, its picks refused when they pick a feat that
@@ -227,15 +224,16 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
   planLevels(bonded: CharacterInput[], request: LevelUpRequest, force: boolean): LevelsPlan {
     const { planned, saved } = this.planSaved(request);
     if (!force) RulesError.refuseIssues(saved.validate().issues);
-    return this.writesOf(planned, saved, bonded);
+    return { ...this.planBondedOf(saved, bonded), levels: this.levelWritesOf(planned) };
   }
 
   /**
-   * The levels a level-up writes, saved forced (an import's, one level at a time), with what the character with them
-   * fails of what an unforced save refuses (`issues`, none when it passes): what's refused even forced refuses them.
+   * The levels a level-up writes, saved forced (an import's, one level at a time, whose bonded creatures its caller
+   * plans once they're all in), with what the character with them fails of what an unforced save refuses (`issues`,
+   * none when it passes): what's refused even forced refuses them.
    */
-  planLevelsForced(bonded: CharacterInput[], request: LevelUpRequest): LevelsPlan & { issues: RulesIssue[] } {
+  planLevelsForced(request: LevelUpRequest): Pick<LevelsPlan, "levels"> & { issues: RulesIssue[] } {
     const { planned, saved } = this.planSaved(request);
-    return { ...this.writesOf(planned, saved, bonded), issues: saved.validate().issues };
+    return { issues: saved.validate().issues, levels: this.levelWritesOf(planned) };
   }
 }

@@ -94,21 +94,25 @@ export default class PicksPlacement {
   }
 
   /**
-   * The feats a level (`entry`, whose gains `levelGains` reads) takes, each in a pool: one at a time, while a pool has
-   * room, the first feat (in the file's order) the character with the level and the feats placed on it so far can
-   * take, in its file's pool first, then in any pool of its.
+   * The feats a level (`entry`, whose gains `levelGains` reads, with the skill points it spends, `skills`) takes, each
+   * in a pool: one at a time, while a pool has room, the first feat (in the file's order) the character with the
+   * level, its ranks and the feats placed on it so far can take, in its file's pool first, then in any pool of its.
    */
-  placeFeats(levelGains: ImportedLevelGains, entry: PlannedClassLevel, room: Map<string, number>): FeatPick[] {
+  placeFeats(
+    levelGains: ImportedLevelGains,
+    entry: PlannedClassLevel,
+    { room, skills }: { room: Map<string, number>; skills: Record<string, number> },
+  ): FeatPick[] {
     const placed: FeatPick[] = [];
     const left = new Map(room);
-    let character = levelGains.buildWith(entry, placed);
+    let character = levelGains.buildWith(entry, skills, placed);
     for (;;) {
       const next = this.findNext(character, left, true) ?? this.findNext(character, left, false);
       if (!next) return placed;
       placed.push({ aptitudeId: next.poolId, featId: next.feat.featId });
       left.set(next.poolId, (left.get(next.poolId) ?? 0) - 1);
       this.feats.splice(this.feats.indexOf(next.feat), 1);
-      character = levelGains.buildWith(entry, placed);
+      character = levelGains.buildWith(entry, skills, placed);
     }
   }
 

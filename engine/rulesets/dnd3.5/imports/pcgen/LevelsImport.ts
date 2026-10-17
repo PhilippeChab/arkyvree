@@ -12,6 +12,7 @@ import Dnd35LevelUp from "@/engine/rulesets/dnd3.5/levelUp/Dnd35LevelUp.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import type { Klass, KlassLevel } from "@/shared/relations.ts";
+import { formatSigned } from "@/shared/text.ts";
 
 import { PCGEN_POOLS } from "./names.ts";
 import type PcgenNames from "./PcgenNames.ts";
@@ -64,7 +65,8 @@ export default class LevelsImport {
   private describeLevel(index: number, level: MatchedLevel, increases: AbilityIncrease[], feats: FeatPick[]) {
     const { abilitiesById, featsById } = this.view.rulesetData;
     const parts = [`${level.klass.name} ${level.klassLevel.level}`, `${level.hp} hit points`];
-    for (const { abilityId, amount } of increases) parts.push(`${abilitiesById.get(abilityId)?.name} +${amount}`);
+    for (const { abilityId, amount } of increases)
+      parts.push(`${abilitiesById.get(abilityId)?.name} ${formatSigned(amount)}`);
     for (const { featId } of feats) parts.push(featsById.get(featId)?.name ?? featId);
     return `Level ${index + 1}: ${parts.join(", ")}`;
   }
@@ -223,13 +225,14 @@ export default class LevelsImport {
       const entry: PlannedClassLevel = { abilityIncreases, klass: level.klass, klassLevel: level.klassLevel };
       const levelGains = new ImportedLevelGains(this.view, leveling.character, this.levelUp);
       const gains = levelGains.describeGains(entry);
-      const featPicks = placement.placeFeats(levelGains, entry, gains.featRoom);
+      // Its ranks first: a feat that requires them is taken at the level that buys them
       const skills = placement.placeSkills({
         characterLevel: index + 1,
         className: level.level.className,
         gains,
         lastClassLevel: lastOfClass.get(level.level.className) ?? index + 1,
       });
+      const featPicks = placement.placeFeats(levelGains, entry, { room: gains.featRoom, skills });
       const feats: Record<string, string[]> = {};
       for (const { aptitudeId, featId } of featPicks) (feats[aptitudeId] ??= []).push(featId);
       const request = { abilityIncreases, hp: level.hp, klassId: level.klass.id, level: level.klassLevel.level };
@@ -245,7 +248,8 @@ export default class LevelsImport {
         if (!issuesBefore.has(key)) this.report.issue(`Level ${index + 1}: ${message}`);
       issuesBefore = new Set(issues.keys());
     }
-    this.reportLeft(placement, leveling.buildCharacter(), writes);
-    return { bonded: leveling.planBonded().bonded, character: leveling.character, levels: writes };
+    const leveled = leveling.buildCharacter();
+    this.reportLeft(placement, leveled, writes);
+    return { bonded: leveling.planBonded(leveled).bonded, character: leveling.character, levels: writes };
   }
 }

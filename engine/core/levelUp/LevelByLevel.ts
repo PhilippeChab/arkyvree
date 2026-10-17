@@ -41,9 +41,12 @@ export default class LevelByLevel<C extends CheckedCharacter> {
     return this.input;
   }
 
-  /** What the character's bonded creatures become with its levels saved so far: those its levels make it. */
-  planBonded(): BondedCreaturesPlan {
-    return this.rules.planBondedCreatures(this.view, this.buildCharacter(), this.input.record, []);
+  /**
+   * What the character's bonded creatures become with its levels saved so far: those its levels make it, read off the
+   * character with them (`character`, its caller's when it built it already).
+   */
+  planBonded(character: C = this.buildCharacter()): BondedCreaturesPlan {
+    return this.rules.planBondedCreatures(this.view, character, this.input.record, []);
   }
 
   /**
@@ -51,10 +54,7 @@ export default class LevelByLevel<C extends CheckedCharacter> {
    * character with it fails of what a level-up checks (none when it passes), as an unforced level-up would refuse it.
    */
   planLevel(level: LevelRequest, picks: LevelPicks): { issues: RulesIssue[]; writes: LevelWrites } {
-    const planned = new LevelsPlanning(this.view, this.input, this.rules).planLevelsForced([], {
-      levels: [level],
-      picks,
-    });
+    const planned = new LevelsPlanning(this.view, this.input, this.rules).planLevelsForced({ levels: [level], picks });
     const [writes] = planned.levels;
     const projection = new CharacterProjection(this.input);
     const { abilityIncreases } = writes.rows;

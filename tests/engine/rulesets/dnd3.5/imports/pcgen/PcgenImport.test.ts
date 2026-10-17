@@ -300,6 +300,25 @@ describe("What a file holds past what the app keeps", () => {
     expect(plan.report.issues).toContain("Charisma would start at 0, outside 1 to 100: it starts at 1");
   });
 
+  test("a feat that requires a skill's ranks is taken at the level that buys them", async () => {
+    const text = [
+      "PCGVERSION:2.0",
+      "VERSION:6.09.08",
+      "GAMEMODE:35e",
+      "CHARACTERNAME:Rider",
+      "RACE:Human",
+      ...["STR|SCORE:14", "DEX|SCORE:12", "CON|SCORE:12", "INT|SCORE:10", "WIS|SCORE:10", "CHA|SCORE:10"].map(
+        (stat) => `STAT:${stat}`,
+      ),
+      "CLASS:Fighter|LEVEL:1",
+      "CLASSABILITIESLEVEL:Fighter=1|HITPOINTS:10",
+      "SKILL:Ride|CLASSBOUGHT:[CLASS:Fighter|RANKS:4.0|COST:1]",
+      "ABILITY:FEAT|TYPE:NORMAL|CATEGORY:FEAT|KEY:Mounted Combat|APPLIEDTO:",
+    ].join("\n");
+    const plan = await planImportOf(text);
+    expect((await nameLevels(plan))[0]).toMatchObject({ feats: ["Mounted Combat"], skills: { Ride: 4 } });
+  });
+
   test("a gender in another case, or its initial", async () => {
     const text = (await readPcgenFile("brannoc")).replace("GENDER:Male", "GENDER:f");
     expect((await planImportOf(text)).character.gender).toBe("Female");

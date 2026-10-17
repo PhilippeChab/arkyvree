@@ -112,6 +112,15 @@ describe("PcgFormat2", () => {
     ]);
   });
 
+  test("reads a line crafted to make a pattern backtrack in a time its length bounds", () => {
+    const data = "EQMOD=".repeat(40_000);
+    const name = `${"aA".repeat(40_000)} x`;
+    const text = `PCGVERSION:2.0\nVERSION:6.09\nEQUIPNAME:x|CUSTOMIZATION:[DATA:${data}]\nTEMPLATESAPPLIED:[NAME:${name}]`;
+    const started = performance.now();
+    expect(new PcgenFile(text).read().gear.map(({ magic }) => magic)).toEqual([false]);
+    expect(performance.now() - started).toBeLessThan(1000);
+  });
+
   test("reads PCGen 5's feat lines too, in its general pool", () => {
     const text = "PCGVERSION:2.0\nVERSION:5.6.0\nFEAT:Weapon Focus|APPLIEDTO:Morningstar|TYPE:GENERAL.FIGHTER";
     expect(new PcgenFile(text).read().feats).toEqual([
