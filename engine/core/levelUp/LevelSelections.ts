@@ -50,13 +50,16 @@ export default abstract class LevelSelections<C, F extends object> extends Level
   /**
    * The character's saved level `characterLevelId`: its class level, its hit points and the bounds its ruleset sets
    * them by its class's die (`hitPoints`), its ability increases, its skill ranks, its feats by pool and its powers by
-   * pool. Refused when the character has no such level.
+   * pool. Refused when the character has no such level. Its increases are none where its rules give it none now (its
+   * ruleset moved them): its edit opens without them, which a save could never keep, and writes them away.
    */
   describeLevel(characterLevelId: string) {
     const level = this.character.rows.levels.find((saved) => saved.id === characterLevelId);
     if (!level) throw new RulesError("not-found", "Character level not found");
     const { abilityIncreases, ...picks } = this.getSavedPicks(characterLevelId);
     const { klassLevel, klass } = this.getSavedKlassLevel(level);
+    // The levels in the order the character took them: the level's index is its total level less one
+    const increased = this.rules.getAbilityIncreaseTotal(this.view, this.character.rows.levels.indexOf(level)) > 0;
     return {
       characterLevelId: level.id,
       klassId: klass.id,
@@ -65,7 +68,7 @@ export default abstract class LevelSelections<C, F extends object> extends Level
       hd: klass.hd,
       hitPoints: this.rules.hitPointsOf(klass.hd),
       hp: level.hp,
-      abilityIncreases: abilityIncreases.map(({ abilityId, amount }) => ({ abilityId, amount })),
+      abilityIncreases: increased ? abilityIncreases.map(({ abilityId, amount }) => ({ abilityId, amount })) : [],
       ...this.buildLevelSelections(picks),
     };
   }

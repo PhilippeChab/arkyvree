@@ -141,23 +141,29 @@ describe("RulesetSettingsService", () => {
     });
   });
 
-  test("let a level saved with an increase its Settings no longer give drop it on its edit, never pick one anew", async () => {
+  test("open a level saved with an increase its Settings no longer give without it, which its edit writes away", async () => {
     const { session, fork, abilityMap } = await setup();
     const { characterId, levelIds } = await buildFighter(fork.id, 4);
     const fourth = levelIds[3];
-    const strength = [{ abilityId: abilityMap["Strength"], amount: 1 }];
-    await CharacterLevelAbilityIncreases.createMany(db, [{ characterLevelId: fourth, ...strength[0] }]);
+    const strength = { abilityId: abilityMap["Strength"], amount: 1 };
+    await CharacterLevelAbilityIncreases.createMany(db, [{ characterLevelId: fourth, ...strength }]);
+    // The seed user's fighter, whose edit opens its level and saves it, its unspent skill points and bonus feat aside
+    const seedUser = makeSession();
+    const edit = (increases: (typeof strength)[]) =>
+      CharacterLevelsService.updateLevel(seedUser, characterId, fourth, 10, increases, {}, {}, {}, true);
+    expect(await CharacterLevelsService.getLevel(seedUser, characterId, fourth)).toMatchObject({
+      abilityIncreases: [strength],
+    });
+
     // The increase moves from the fourth level to the fifth
     const abilityIncreasesPerLevel = CORE_INCREASES.map((count, i) => (i === 3 ? 0 : i === 4 ? 1 : count));
     await RulesetSettingsService.updateSettings(session, fork.id, { fields: { abilityIncreasesPerLevel } });
-
-    // The seed user's fighter, its levels' unspent skill points and bonus feats aside
-    const edit = (levelId: string, increases: typeof strength) =>
-      CharacterLevelsService.updateLevel(makeSession(), characterId, levelId, 10, increases, {}, {}, {}, true);
-    expect(edit(levelIds[2], strength)).rejects.toMatchObject({
-      message: "Ability increase is not available at this level",
+    expect(await CharacterLevelsService.getLevel(seedUser, characterId, fourth)).toMatchObject({
+      abilityIncreases: [],
     });
-    await edit(fourth, strength);
+    for (const increases of [[strength], [{ ...strength, abilityId: abilityMap["Dexterity"] }]])
+      expect(edit(increases)).rejects.toMatchObject({ message: "Ability increase is not available at this level" });
+    await edit([]);
     expect(await CharacterLevelAbilityIncreases.findMany(db, { characterLevelIds: [fourth] })).toEqual([]);
   });
 

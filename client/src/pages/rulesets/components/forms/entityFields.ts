@@ -52,7 +52,9 @@ function formValueOf(field: ValueField, value: unknown): LeafValue {
     case "number":
       return typeof value === "number" ? value : emptyValueOf(field);
     case "perLevel":
-      return Array.isArray(value) && value.length === field.levels && value.every((count) => typeof count === "number")
+      return Array.isArray(value) &&
+        value.length === field.default.length &&
+        value.every((count) => typeof count === "number")
         ? value
         : emptyValueOf(field);
     default:

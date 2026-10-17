@@ -107,7 +107,7 @@ describe("an entity's fields in its form", () => {
 
   test("hold a count per level one a level: its default in an empty form, an entity's when it has one a level", () => {
     const fields: EntityField[] = [
-      { ...BASE, key: "feats", label: "Feats", input: "perLevel", default: [1, 0, 2], levels: 3, max: 2 },
+      { ...BASE, key: "feats", label: "Feats", input: "perLevel", default: [1, 0, 2], max: 2 },
     ];
     expect(emptyFieldValues(fields)).toEqual({ feats: [1, 0, 2] });
     expect(toFieldValues(fields, { feats: [1, 0, 2] })).toEqual({ feats: [1, 0, 2] });

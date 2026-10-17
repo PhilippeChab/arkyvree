@@ -56,13 +56,12 @@ export interface NumberFormField extends FormFieldBase {
 }
 
 /**
- * A count per level, of `levels` levels, the first's first, each from none to `max`: what each level grants, its
- * `default` without one of its own.
+ * A count per level, the first's first, each from none to `max`: what each level grants, its `default` without one of
+ * its own, which counts its levels.
  */
 export interface PerLevelFormField extends FormFieldBase {
   default: number[];
   input: "perLevel";
-  levels: number;
   max: number;
 }
 
@@ -88,8 +87,8 @@ export type EntityFieldValue = boolean | number | number[] | string | string[] |
 
 /**
  * A field of an entity's form, as its ruleset declares it (`FieldCodec.describe`): its label, what it's for, and the
- * input it takes, each with what it needs (a choice's options, a number's bounds, a count per level's levels, a
- * reference's kind).
+ * input it takes, each with what it needs (a choice's options, a number's bounds, a count per level's default and
+ * bound, a reference's kind).
  */
 export type FormField =
   | ChoiceFormField

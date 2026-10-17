@@ -260,7 +260,7 @@ describe("A count per level", () => {
       expect(() => PER_LEVEL.parse({ grants }, context)).toThrow(RulesError);
   });
 
-  test("describes its levels and its bound", () => {
+  test("describes its default and its bound", () => {
     expect(PER_LEVEL.describe(PER_LEVEL_DECLARATIONS, "rulesets")).toEqual([
       {
         default: [1, 0, 2],
@@ -268,7 +268,6 @@ describe("A count per level", () => {
         input: "perLevel",
         key: "grants",
         label: "Grants",
-        levels: 3,
         max: 2,
       },
     ]);

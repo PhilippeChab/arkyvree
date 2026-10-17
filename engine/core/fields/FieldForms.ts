@@ -76,7 +76,6 @@ export default class FieldForms {
           ...base,
           default: [...field.default],
           input: "perLevel",
-          levels: field.default.length,
           max: field.max,
         };
       case "ref": {

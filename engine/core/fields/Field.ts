@@ -101,7 +101,6 @@ export default class Field {
     type: string,
     options: { default: number; max?: number; min?: number; write?: "always" | "unlessDefault" },
   ): PropertyField<number>;
-
   /** A whole number, from the first row that holds one in its bounds; none without one. */
   static number(type: string, options?: { max?: number; min?: number }): PropertyField<number | null>;
   static number(
@@ -111,6 +110,7 @@ export default class Field {
     const { max, min, write = "unlessDefault" } = options;
     return { default: options.default ?? null, kind: "number", max, min, type, write };
   }
+
   /**
    * A count per level, of `levels` levels, the first's first: how many of something each grants, from none to `max`
    * (a ruleset's feats at each character level). Its default without a row: one at each of `grantedAt`, a level once
