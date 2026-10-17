@@ -2,7 +2,8 @@
  * The SRD's weapons: the weapon table (each base weapon type's definition, which its properties and proficiency are read
  * from; a name the table doesn't have has none), and the weapons by proficiency, which the weapon feats and the
  * proficiency requirements name: the table's, by their proficiency, and the unarmed strike, a simple weapon that's no
- * item.
+ * item. Beside them, the values a weapon's stats take, which the table and an item's fields are written in: its
+ * names, families, proficiencies, damage types and how Strength applies to its damage.
  */
 
 import { UNARMED_STRIKE } from "./combat.ts";
@@ -11,12 +12,12 @@ interface WeaponDefinition {
   baseDamage: string;
   criticalMultiplier: number;
   criticalRange: number;
-  damageTypes: DamageType[];
+  damageTypes: (typeof DAMAGE_TYPES)[number][];
   /** A double weapon's other end's damage dice (WEAPON_DOUBLE_DAMAGE): in two hands, it fights as two weapons. */
   doubleDamage?: string;
   /** The race that treats it as a martial weapon (its weapon familiarity): a dwarf's waraxe and urgrosh, a gnome's hooked hammer. */
   familiarity?: string;
-  family: string;
+  family: (typeof WEAPON_FAMILIES)[number];
   finessable?: boolean;
   /**
    * How many range increments its ranged or thrown attack reaches (WEAPON_MAX_RANGE_INCREMENTS): a projectile weapon's
@@ -33,7 +34,7 @@ interface WeaponDefinition {
    * can use it two-handed as a martial weapon.
    */
   oneHandTraining?: true;
-  proficiency: "Simple" | "Martial" | "Exotic";
+  proficiency: (typeof WEAPON_PROFICIENCIES)[number];
   range?: number;
   /** A ranged weapon (thrown or projectile, not used in melee), which attacks with Dexterity (WEAPON_RANGED). */
   ranged?: true;
@@ -41,10 +42,8 @@ interface WeaponDefinition {
   /** Its effort, as the weapon table gives it for a Medium wielder: Tiny or Small light, Medium one-handed, Large two-handed (bows). */
   size: string;
   /** How Strength applies to its damage when not by its slot: a bow's "Rating", a crossbow's "None". */
-  strengthDamage?: "Rating" | "None";
+  strengthDamage?: Exclude<(typeof STRENGTH_DAMAGE_RULES)[number], "Slot">;
 }
-
-type DamageType = "Bludgeoning" | "Piercing" | "Slashing";
 
 /**
  * Each entry is the canonical definition for a base weapon type. All properties are derived from selecting a weapon
@@ -143,3 +142,40 @@ export const SIMPLE_WEAPONS = [
 export const ALL_WEAPONS = [...SIMPLE_WEAPONS, ...MARTIAL_WEAPONS, ...EXOTIC_WEAPONS];
 
 export const CROSSBOW_WEAPONS = ALL_WEAPONS.filter((w) => w.toLowerCase().includes("crossbow"));
+
+/** The damage types a weapon deals, in the order a stat block lists them. */
+export const DAMAGE_TYPES = ["Slashing", "Piercing", "Bludgeoning"] as const;
+
+/**
+ * How Strength applies to a weapon's damage: by its slot (the hand's share, when none is given), up to a bow's rating,
+ * or not at all (a crossbow's).
+ */
+export const STRENGTH_DAMAGE_RULES = ["Slot", "Rating", "None"] as const;
+
+/** The families the weapons are grouped in (a feat's or a modifier's targets), by name. */
+export const WEAPON_FAMILIES = [
+  "Axe",
+  "Bow",
+  "Close",
+  "Club",
+  "Crossbow",
+  "Dagger",
+  "Flail",
+  "Hammer",
+  "Mace",
+  "Monk",
+  "Pick",
+  "Polearm",
+  "Sickle",
+  "Sling",
+  "Spear",
+  "Staff",
+  "Sword",
+  "Thrown",
+] as const;
+
+/** The weapon proficiencies, from the least training to the most. */
+export const WEAPON_PROFICIENCIES = ["Simple", "Martial", "Exotic"] as const;
+
+/** The base weapon types, the table's, by name. */
+export const WEAPON_TYPE_NAMES = Object.keys(WEAPON_TYPE_DEFINITIONS).toSorted();

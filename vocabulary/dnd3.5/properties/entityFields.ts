@@ -8,6 +8,12 @@
  */
 
 import {
+  ARMOR_PROFICIENCIES,
+  ARMOR_TYPE_NAMES,
+  SHIELD_PROFICIENCIES,
+  SHIELD_TYPE_NAMES,
+} from "@/vocabulary/dnd3.5/armor.ts";
+import {
   ABILITY_INCREASE_LEVEL_INTERVAL,
   FIRST_LEVEL_GENERAL_FEATS,
   GENERAL_FEAT_LEVEL_INTERVAL,
@@ -16,6 +22,13 @@ import {
 } from "@/vocabulary/dnd3.5/classes.ts";
 import { FEAT_FAMILIES } from "@/vocabulary/dnd3.5/feats.ts";
 import { SPELL_COMPONENTS, SPELL_DESCRIPTORS, SPELL_SCHOOLS, SPELL_SUBSCHOOLS } from "@/vocabulary/dnd3.5/spells.ts";
+import {
+  DAMAGE_TYPES,
+  STRENGTH_DAMAGE_RULES,
+  WEAPON_FAMILIES,
+  WEAPON_PROFICIENCIES,
+  WEAPON_TYPE_NAMES,
+} from "@/vocabulary/dnd3.5/weapons.ts";
 
 import { ARMOR_AC_BONUS, ARMOR_CHECK_PENALTY, ARMOR_MAX_DEX, ARMOR_PROFICIENCY, ARMOR_TYPE } from "./armor.ts";
 import {
@@ -72,21 +85,6 @@ import {
   WEAPON_TYPE,
 } from "./weapon.ts";
 
-const ARMOR_TYPE_NAMES = [
-  "Banded Mail",
-  "Breastplate",
-  "Chain Mail",
-  "Chain Shirt",
-  "Full Plate",
-  "Half-Plate",
-  "Hide Armor",
-  "Leather Armor",
-  "Padded Armor",
-  "Scale Mail",
-  "Splint Mail",
-  "Studded Leather",
-] as const;
-
 /**
  * A feat's fields: the families it's in (a feat can be in two), the weapon rules it changes, and the schools it forbids
  * (a specialist wizard's).
@@ -120,85 +118,6 @@ const FEAT_FIELDS = {
   },
 } as const;
 
-const SHIELD_TYPE_NAMES = [
-  "Buckler",
-  "Heavy Steel Shield",
-  "Heavy Wooden Shield",
-  "Light Steel Shield",
-  "Light Wooden Shield",
-  "Tower Shield",
-] as const;
-
-const WEAPON_TYPE_NAMES = [
-  "Bastard Sword",
-  "Battleaxe",
-  "Bolas",
-  "Club",
-  "Composite Longbow",
-  "Composite Shortbow",
-  "Dagger",
-  "Dart",
-  "Dire Flail",
-  "Dwarven Urgrosh",
-  "Dwarven Waraxe",
-  "Falchion",
-  "Flail",
-  "Gauntlet",
-  "Glaive",
-  "Gnome Hooked Hammer",
-  "Greataxe",
-  "Greatclub",
-  "Greatsword",
-  "Guisarme",
-  "Halberd",
-  "Hand Crossbow",
-  "Handaxe",
-  "Heavy Crossbow",
-  "Heavy Flail",
-  "Heavy Mace",
-  "Heavy Pick",
-  "Javelin",
-  "Kama",
-  "Kukri",
-  "Lance",
-  "Light Crossbow",
-  "Light Hammer",
-  "Light Mace",
-  "Light Pick",
-  "Longbow",
-  "Longspear",
-  "Longsword",
-  "Morningstar",
-  "Net",
-  "Nunchaku",
-  "Orc Double Axe",
-  "Punching Dagger",
-  "Quarterstaff",
-  "Ranseur",
-  "Rapier",
-  "Repeating Heavy Crossbow",
-  "Repeating Light Crossbow",
-  "Sai",
-  "Sap",
-  "Scimitar",
-  "Scythe",
-  "Shortbow",
-  "Shortspear",
-  "Shortsword",
-  "Shuriken",
-  "Siangham",
-  "Sickle",
-  "Sling",
-  "Spear",
-  "Spiked Chain",
-  "Spiked Gauntlet",
-  "Throwing Axe",
-  "Trident",
-  "Two-Bladed Sword",
-  "Warhammer",
-  "Whip",
-] as const;
-
 /** The groups of an armor's and a shield's fields, which show a stat both have among their own. */
 const WORN = ["armor", "shield"] as const;
 
@@ -222,33 +141,14 @@ const ITEM_FIELDS = {
         kind: "text",
         label: "Proficiency",
         type: WEAPON_PROFICIENCY,
-        values: ["Simple", "Martial", "Exotic"],
+        values: WEAPON_PROFICIENCIES,
       },
       family: {
         description: "Weapon family grouping (Sword, Axe, Bow, etc.)",
         kind: "text",
         label: "Family",
         type: WEAPON_FAMILY,
-        values: [
-          "Axe",
-          "Bow",
-          "Close",
-          "Club",
-          "Crossbow",
-          "Dagger",
-          "Flail",
-          "Hammer",
-          "Mace",
-          "Monk",
-          "Pick",
-          "Polearm",
-          "Sickle",
-          "Sling",
-          "Spear",
-          "Staff",
-          "Sword",
-          "Thrown",
-        ],
+        values: WEAPON_FAMILIES,
       },
       size: {
         description:
@@ -276,7 +176,7 @@ const ITEM_FIELDS = {
         kind: "list",
         label: "Damage Types",
         type: DAMAGE_TYPE,
-        values: ["Slashing", "Piercing", "Bludgeoning"],
+        values: DAMAGE_TYPES,
       },
       criticalRange: {
         description: "Critical threat count (1 = 20, 2 = 19-20, 3 = 18-20, etc.)",
@@ -295,7 +195,7 @@ const ITEM_FIELDS = {
         kind: "text",
         label: "Strength to Damage",
         type: WEAPON_STRENGTH_DAMAGE,
-        values: ["Slot", "Rating", "None"],
+        values: STRENGTH_DAMAGE_RULES,
       },
       mighty: {
         description:
@@ -372,7 +272,7 @@ const ITEM_FIELDS = {
         kind: "text",
         label: "Proficiency",
         type: ARMOR_PROFICIENCY,
-        values: ["Light", "Medium", "Heavy"],
+        values: ARMOR_PROFICIENCIES,
       },
       acBonus: {
         description: "Armor class bonus from armor",
@@ -399,7 +299,7 @@ const ITEM_FIELDS = {
         kind: "text",
         label: "Proficiency",
         type: SHIELD_PROFICIENCY,
-        values: ["Light", "Heavy", "Tower"],
+        values: SHIELD_PROFICIENCIES,
       },
       acBonus: {
         description: "Armor class bonus from shield",
