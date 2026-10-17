@@ -200,11 +200,10 @@ describe("character levels", () => {
       for (let level = 1; level <= 11; level++) planned.push((await findKlassLevel(fighter, level))!.id);
       const [strength, dexterity] = [ctx.abilityMap["Strength"], ctx.abilityMap["Dexterity"]];
       // The twelfth level's step: the first eleven planned, each level's increases "abilityId:amount" pairs joined by
-      // ";", the levels' by ",": those of the fourth and the eighth, which take one, and one that isn't an increase
+      // ";", the levels' by ",": those of the fourth and the eighth, which take one, beside one that isn't an increase
       const increases = Array<string>(11).fill("");
-      increases[3] = `${strength}:1`;
+      increases[3] = `${strength}:1;not-an-increase`;
       increases[7] = `${strength}:2;${dexterity}:1`;
-      increases[8] = "not-an-increase";
       const abilities = await getStep(characterId, "abilities", {
         plannedClassLevelIds: planned.join(","),
         plannedAbilityIncreases: increases.join(","),
