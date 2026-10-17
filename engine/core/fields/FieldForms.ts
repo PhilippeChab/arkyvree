@@ -4,6 +4,7 @@ import type { PropertyDeclaration, PropertyTypesProvider } from "@/engine/core/c
 import RulesError from "@/engine/core/RulesError.ts";
 import type { ViewEntities } from "@/engine/core/view/index.ts";
 import type { PropertyEntityType } from "@/shared/customization/entities.ts";
+import { copyProgression, countRegularAt } from "@/shared/customization/progression.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 
 import Field, { type FieldCondition, type Fields, type FieldSpec } from "./Field.ts";
@@ -72,7 +73,13 @@ export default class FieldForms {
       case "number":
         return { ...base, default: field.default, input: "number", max: field.max, min: field.min };
       case "progression":
-        return { ...base, default: field.default, input: "progression", levels: field.levels, max: field.max };
+        return {
+          ...base,
+          default: copyProgression(field.default),
+          input: "progression",
+          levels: field.levels,
+          max: field.max,
+        };
       case "ref": {
         const references = declarations.getReferencedEntityType(field.type);
         if (references) return { ...base, input: "ref", references, required: field.required };
@@ -141,10 +148,11 @@ export default class FieldForms {
             context.addIssue({ code: "custom", path: ["extra", index, "level"], message });
           }
           seen.add(level);
-          const total = amount + (every > 0 && level % every === 0 ? 1 : 0);
+          const total = amount + countRegularAt(every, level);
           if (total > max) {
+            // One at most a level gives no amount to change: its level is what's wrong
             const message = `Level ${level} would give ${total}, at most ${max}`;
-            context.addIssue({ code: "custom", path: ["extra", index, "amount"], message });
+            context.addIssue({ code: "custom", path: ["extra", index, max === 1 ? "level" : "amount"], message });
           }
         }
       })

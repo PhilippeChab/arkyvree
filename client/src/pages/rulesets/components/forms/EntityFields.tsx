@@ -1,6 +1,6 @@
 import { Autocomplete, Box, FormHelperText, MenuItem, Stack, TextField, Typography } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
-import { type Ref, useId } from "react";
+import { type Ref, useEffect, useId } from "react";
 import {
   type ArrayPath,
   type FieldPath,
@@ -30,6 +30,7 @@ import { rulesetOptionsQuery } from "@/client/src/lib/queries.ts";
 import { requiredRules, wholeNumberRules } from "@/client/src/lib/validation.ts";
 import type { EntityField, RulesetFields } from "@/client/src/pages/rulesets/details/rulesetQueries.ts";
 import { useEntityFields } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { countRegularAt } from "@/shared/customization/progression.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
 
 import { choiceOptions, isFieldShown, noneLabel, valueAt } from "./entityFields.ts";
@@ -321,7 +322,14 @@ function ProgressionInput<T extends FieldValues>({ field, form, help }: FieldInp
   const extra: ProgressionExtra[] = Array.isArray(watched) ? watched : [];
   // One at most a level: each listed level gives one, which its frequency mustn't give already
   const givesOne = field.max === 1;
-  const regularAt = (level: number) => (typeof every === "number" && every > 0 && level % every === 0 ? 1 : 0);
+  const regularAt = (level: number) => (typeof every === "number" ? countRegularAt(every, level) : 0);
+  // A level's checks read the other levels and the frequency: once a submit has shown them, they follow either
+  const levelsListed = extra.map(({ level }) => level).join(",");
+  const { isSubmitted } = form.formState;
+  const { trigger } = form;
+  useEffect(() => {
+    if (isSubmitted) void trigger(formPath<T>(`${path}.extra`));
+  }, [every, isSubmitted, levelsListed, path, trigger]);
   // The first level that may give more: unlisted, and short of its bound with its frequency's
   const nextLevel = Array.from({ length: field.levels }, (_, i) => i + 1).find(
     (level) => !extra.some((given) => given.level === level) && regularAt(level) < field.max,
@@ -339,7 +347,7 @@ function ProgressionInput<T extends FieldValues>({ field, form, help }: FieldInp
           rules={wholeNumberRules(0, "Frequency is required", field.levels)}
           number
           label="Every N Levels"
-          helperText={readOnly ? undefined : "0 for none"}
+          helperText="0 for none"
           fullWidth
           slotProps={{ htmlInput: { min: 0, max: field.levels } }}
         />
@@ -397,6 +405,7 @@ function ProgressionInput<T extends FieldValues>({ field, form, help }: FieldInp
           <AddButton
             variant="outlined"
             label="Add Level"
+            // The form's type is its owner's, which a path its declarations name can't narrow to a level's row
             onClick={() => nextLevel !== undefined && append({ amount: 1, level: nextLevel } as never)}
             disabled={nextLevel === undefined}
             sx={{ alignSelf: "flex-start" }}

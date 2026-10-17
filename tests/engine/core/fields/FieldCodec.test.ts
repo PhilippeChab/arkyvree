@@ -264,6 +264,16 @@ describe("A progression", () => {
         ],
       },
     });
+    // A level gives at most its bound with its frequency's: what's past it reads as its bound
+    expect(PROGRESSION.read(rows(["GRANT", "every:4"], ["GRANT", "4:5"], ["GRANT", "6:5"]))).toEqual({
+      grants: {
+        every: 4,
+        extra: [
+          { amount: 1, level: 4 },
+          { amount: 2, level: 6 },
+        ],
+      },
+    });
     // A frequency's row alone: none more; more without a frequency's row: its default's
     expect(PROGRESSION.read(rows(["GRANT", "every:0"]))).toEqual({ grants: { every: 0, extra: [] } });
     expect(PROGRESSION.read(rows(["GRANT", "6:1"]))).toEqual({

@@ -1,6 +1,5 @@
+import type { ProgressionValue } from "@/shared/customization/progression.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
-
-import type { ProgressionValue } from "./FormField.ts";
 
 /**
  * When a field counts:
@@ -116,7 +115,7 @@ export default class Field {
   /**
    * What levels give of something (a ruleset's feats, its ability increases): one every `every` levels (none at 0), and
    * more at the levels it names, up to level `levels`, a level giving at most `max` with its frequency's. Its default
-   * without a row.
+   * without a row. A field of its own, never a group's: a group's fields hold plain values.
    */
   static progression(
     type: string,

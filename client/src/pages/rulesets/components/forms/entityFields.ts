@@ -7,6 +7,7 @@ import type { InferRequestType } from "hono/client";
 
 import type { EntityField } from "@/client/src/pages/rulesets/details/rulesetQueries.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
+import { copyProgression } from "@/shared/customization/progression.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 
@@ -23,11 +24,6 @@ type ValueField = Exclude<EntityField, { input: "group" }>;
 export type EntityFieldValues = NonNullable<
   InferRequestType<(typeof rpc.api.rulesets)[":id"]["skills"]["$post"]>["json"]["fields"]
 >;
-
-/** A progression's own copy, which its form changes apart from what it's copied from. */
-function copyProgression({ every, extra }: ProgressionValue): ProgressionValue {
-  return { every, extra: extra.map(({ amount, level }) => ({ amount, level })) };
-}
 
 /**
  * A field's value in an empty form: false (none, for a three-state flag), a number's default, a progression's own copy

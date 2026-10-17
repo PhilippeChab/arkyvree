@@ -1,6 +1,6 @@
-import type { ProgressionValue } from "@/engine/core/fields/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import { RULESET_FIELDS, type RulesetFieldValues } from "@/engine/rulesets/dnd3.5/ruleset/fields.ts";
+import { countProgressionAt } from "@/shared/customization/progression.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { MAX_CHARACTER_LEVEL } from "@/vocabulary/dnd3.5/classes.ts";
 import { GENERAL_FEATS_APTITUDE } from "@/vocabulary/dnd3.5/feats.ts";
@@ -23,12 +23,6 @@ export default class LevelRules {
   /** The hit points a level counts before they're rolled: a level a level-up adds, whose hit points its save sets. */
   static readonly UNROLLED_LEVEL_HP = 10;
 
-  /** What character level `level` gives of a progression: one at each of its frequency's levels, and its own more. */
-  private static countAt({ every, extra }: ProgressionValue, level: number): number {
-    const regular = every > 0 && level % every === 0 ? 1 : 0;
-    return regular + (extra.find((given) => given.level === level)?.amount ?? 0);
-  }
-
   /**
    * The levels a character with `totalLevel` levels can still take, whatever their classes: up to a character's last
    * level (`MAX_CHARACTER_LEVEL`).
@@ -47,7 +41,7 @@ export default class LevelRules {
 
   /** The ability increases the level after `totalLevel` levels takes, by its Settings (`abilityIncreases`). */
   countAbilityIncreases(totalLevel: number): number {
-    return LevelRules.countAt(this.progression.abilityIncreases, totalLevel + 1);
+    return countProgressionAt(this.progression.abilityIncreases, totalLevel + 1);
   }
 
   /**
@@ -62,7 +56,7 @@ export default class LevelRules {
 
   /** The general feats the level after `totalLevel` levels gives, by its Settings (`featAdvancement`). */
   countGeneralFeatsAfter(totalLevel: number): number {
-    return LevelRules.countAt(this.progression.featAdvancement, totalLevel + 1);
+    return countProgressionAt(this.progression.featAdvancement, totalLevel + 1);
   }
 
   /** Whether the level after `totalLevel` levels takes an ability increase. */

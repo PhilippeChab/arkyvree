@@ -1,10 +1,11 @@
 import type { PropertyTypesProvider } from "@/engine/core/customizations/index.ts";
 import type { PropertyValue } from "@/engine/core/module/index.ts";
 import type { PropertyEntityType } from "@/shared/customization/entities.ts";
+import { copyProgression, countRegularAt, type ProgressionValue } from "@/shared/customization/progression.ts";
 
 import Field, { type Fields, type FieldSpec, type FieldValues, type NoFields } from "./Field.ts";
 import FieldForms, { type FormContext } from "./FieldForms.ts";
-import type { FormField, ProgressionValue } from "./FormField.ts";
+import type { FormField } from "./FormField.ts";
 
 /** What a codec's rules add to its fields': when the entity keeps none of them. */
 interface FieldRules<V> {
@@ -52,11 +53,6 @@ export default class FieldCodec<S extends Fields> {
     );
   }
 
-  /** A progression's own copy, which an edit may change apart from the one it's copied from. */
-  private static copyProgression({ every, extra }: ProgressionValue): ProgressionValue {
-    return { every, extra: extra.map(({ amount, level }) => ({ amount, level })) };
-  }
-
   /** A field's value without a row. */
   private static defaultOf(field: FieldSpec): unknown {
     switch (field.kind) {
@@ -67,7 +63,7 @@ export default class FieldCodec<S extends Fields> {
       case "list":
         return [];
       case "progression":
-        return FieldCodec.copyProgression(field.default);
+        return copyProgression(field.default);
       case "group":
         return FieldCodec.defaultsOf(field.fields);
       default:
@@ -128,21 +124,29 @@ export default class FieldCodec<S extends Fields> {
 
   /**
    * A progression off its rows' values: its frequency's first (`every:3`), its default's without one, and each level's
-   * first more (`5:1`) in its bounds, at most its bound, by level; its default without any row.
+   * first more (`5:1`) in its bounds, giving at most its bound with its frequency's, by level; its default without any
+   * row.
    */
   private static readProgression(field: ProgressionSpec, values: string[]): ProgressionValue {
-    if (values.length === 0) return FieldCodec.copyProgression(field.default);
+    if (values.length === 0) return copyProgression(field.default);
     const every = values.map((value) => /^every:(\d+)$/.exec(value)?.[1]).find((match) => match !== undefined);
     const extra = new Map<number, number>();
     for (const value of values) {
       const match = /^(\d+):(\d+)$/.exec(value);
       if (!match) continue;
       const [level, amount] = [Number(match[1]), Number(match[2])];
-      if (level < 1 || level > field.levels || amount < 1 || extra.has(level)) continue;
-      extra.set(level, Math.min(amount, field.max));
+      if (level >= 1 && level <= field.levels && amount >= 1 && !extra.has(level)) extra.set(level, amount);
+    }
+    const frequency = every === undefined ? field.default.every : Number(every);
+    // A level gives at most its bound with its frequency's: what's past it reads as its bound, a level its frequency
+    // fills gives none more
+    for (const [level, amount] of extra) {
+      const room = field.max - countRegularAt(frequency, level);
+      if (room > 0) extra.set(level, Math.min(amount, room));
+      else extra.delete(level);
     }
     return {
-      every: every === undefined ? field.default.every : Number(every),
+      every: frequency,
       extra: [...extra].map(([level, amount]) => ({ amount, level })).toSorted((a, b) => a.level - b.level),
     };
   }

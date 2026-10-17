@@ -1,3 +1,5 @@
+import type { ProgressionValue } from "@/shared/customization/progression.ts";
+
 /** What every field of a form has. */
 interface FormFieldBase {
   /** What it's for, as its ruleset says. */
@@ -55,12 +57,6 @@ export interface NumberFormField extends FormFieldBase {
   min?: number;
 }
 
-/** A level a progression gives more at than its frequency (`ProgressionValue`): its level, and how many more. */
-export interface ProgressionExtra {
-  amount: number;
-  level: number;
-}
-
 /**
  * What levels give of something (`ProgressionValue`): a frequency, and more at the levels it names, each up to level
  * `levels` and giving at most `max` with its frequency's; its `default` without one of its own.
@@ -70,12 +66,6 @@ export interface ProgressionFormField extends FormFieldBase {
   input: "progression";
   levels: number;
   max: number;
-}
-
-/** What levels give of something: one every `every` levels (none at 0), and more at the levels `extra` names. */
-export interface ProgressionValue {
-  every: number;
-  extra: ProgressionExtra[];
 }
 
 /** An entity of the ruleset, by its id (`references`: its kind, `abilities`): none too, unless it's `required`. */

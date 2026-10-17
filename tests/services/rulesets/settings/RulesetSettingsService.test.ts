@@ -201,7 +201,7 @@ describe("RulesetSettingsService", () => {
     const twice = { every: 4, extra: [{ amount: 1, level: 8 }] };
     expect(update({ abilityIncreases: twice })).rejects.toMatchObject({
       refusal: "invalid",
-      issues: [{ category: "fields.abilityIncreases.extra.0.amount", message: "Level 8 would give 2, at most 1" }],
+      issues: [{ category: "fields.abilityIncreases.extra.0.level", message: "Level 8 would give 2, at most 1" }],
     });
     expect(update({ featAdvancement: [1, 0, 1] })).rejects.toMatchObject({
       refusal: "invalid",
