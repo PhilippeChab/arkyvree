@@ -49,7 +49,7 @@ export const useAuthStore = create<AuthState>()(
     {
       name: AUTH_STORAGE_KEY,
       // Version 0 stored the whole sign-in response, password digest included:
-      // drop it, and checkSession (`PrivateRoute.tsx`) reloads the user from /auth/me.
+      // drop it, and checkSession (`sessionCheck.ts`) reloads the user from /auth/me.
       version: 1,
       migrate: () => ({ user: null, isAuthenticated: false }),
       partialize: (state) => ({

@@ -98,14 +98,14 @@ So the first private page a tab opens asks the server whose session the cookie i
 
 | The store remembers | The server answers | The store |
 |---|---|---|
-| A user | That user | Keeps them, with the server's fields |
-| A user | Another user | Takes the server's user; the cache is cleared, as on any change of user |
+| A user | That user | Keeps them, as it holds them |
+| A user | Another user | Takes the server's user: the cache is cleared, as on any change of user, and the private pages mount afresh (`PrivateRoute` keys its `<Outlet>` by the user) |
 | A user | 401 | Signed out (`signOutIfUnauthorized`: a demo's goes to `/demo-expired`) |
 | A user | Any other failure (offline, 5xx) | Keeps them: the server can't say |
 | No one | A user | Signs them in |
 | No one | Any failure | Stays signed out |
 
-The remembered user renders the page meanwhile, so a signed-in page doesn't flash signed out. An answer that comes once the store has changed (a sign-out, a profile update) changes nothing.
+The remembered user renders the page meanwhile, so a signed-in page doesn't flash signed out. An answer that comes once the store holds another user (a sign-out meanwhile) changes nothing.
 
 ## Stale-cookie defense (server-side)
 

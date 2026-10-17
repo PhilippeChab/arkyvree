@@ -3,7 +3,9 @@ import { afterEach, describe, expect, test } from "bun:test";
 import { hc, parseResponse } from "hono/client";
 
 import { checkSession } from "@/client/src/components/auth/sessionCheck.ts";
+import { NO_TIME } from "@/client/src/lib/durations.ts";
 import { createQueryClient } from "@/client/src/lib/queryClient.ts";
+import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { apiFetch } from "@/client/src/services/apiFetch.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 import { db } from "@/server/database/index.ts";
@@ -15,19 +17,27 @@ import { createTestUser } from "@/tests/support/users.ts";
 /** A key the cache holds a page's data under, until the signed-in user changes. */
 const CACHED_KEY = ["rulesets", "detail", "r1"];
 
-/** The API served as the app reaches it: through `apiFetch`, with a session's cookie, or none. */
+/** The app's query client, which the probe goes through as `PrivateRoute`'s does. */
+const queryClient = createQueryClient();
+
+/** The API served as the app reaches it: through `apiFetch` and the query client, with a session's cookie, or none. */
 function serveApi() {
   const server = Bun.serve({ port: 0, fetch: (request) => application.fetch(request) });
   return {
     server,
-    // What `/auth/me` answers the cookie of `sessionId`, as the app asks it
+    // What `/auth/me` answers the cookie of `sessionId`, asked as the app asks it
     fetchUserOf: (sessionId: string | null) => () =>
-      parseResponse(
-        hc<Application>(server.url.href, {
-          fetch: apiFetch,
-          headers: sessionId ? { cookie: `${SESSION_COOKIE_NAME}=${sessionId}` } : {},
-        }).auth.me.$get(),
-      ),
+      queryClient.fetchQuery({
+        queryKey: QUERY_KEYS.auth.me,
+        queryFn: () =>
+          parseResponse(
+            hc<Application>(server.url.href, {
+              fetch: apiFetch,
+              headers: sessionId ? { cookie: `${SESSION_COOKIE_NAME}=${sessionId}` } : {},
+            }).auth.me.$get(),
+          ),
+        staleTime: NO_TIME,
+      }),
   };
 }
 
@@ -40,6 +50,7 @@ async function createUserWithSession() {
 
 afterEach(() => {
   useAuthStore.getState().clearSession();
+  queryClient.clear();
 });
 
 describe("The session check, with a user the store remembers", () => {
@@ -48,7 +59,6 @@ describe("The session check, with a user the store remembers", () => {
     try {
       const earlier = await createUserWithSession();
       const current = await createUserWithSession();
-      const queryClient = createQueryClient();
       useAuthStore.getState().startSession(await fetchUserOf(earlier.sessionId)());
       queryClient.setQueryData(CACHED_KEY, { userId: earlier.user.id });
 
@@ -61,17 +71,35 @@ describe("The session check, with a user the store remembers", () => {
     }
   });
 
-  test("stays signed in when the cookie is theirs, their cache kept", async () => {
+  test("gives way to the session's user even when the remembered one's profile changed while it asked", async () => {
+    const { server, fetchUserOf } = serveApi();
+    try {
+      const earlier = await createUserWithSession();
+      const current = await createUserWithSession();
+      useAuthStore.getState().startSession(await fetchUserOf(earlier.sessionId)());
+
+      const check = checkSession(fetchUserOf(current.sessionId));
+      useAuthStore.getState().updateUser({ onboardingCompletedAt: new Date().toISOString() });
+      await check;
+
+      expect(useAuthStore.getState()).toMatchObject({ isAuthenticated: true, user: { id: current.user.id } });
+    } finally {
+      await server.stop(true);
+    }
+  });
+
+  test("leaves them as the store holds them when the cookie is theirs, their cache kept", async () => {
     const { server, fetchUserOf } = serveApi();
     try {
       const { user, sessionId } = await createUserWithSession();
-      const queryClient = createQueryClient();
       useAuthStore.getState().startSession(await fetchUserOf(sessionId)());
+      const remembered = useAuthStore.getState().user;
       queryClient.setQueryData(CACHED_KEY, { userId: user.id });
 
       await checkSession(fetchUserOf(sessionId));
 
-      expect(useAuthStore.getState()).toMatchObject({ isAuthenticated: true, user: { id: user.id } });
+      expect(useAuthStore.getState()).toMatchObject({ isAuthenticated: true });
+      expect(useAuthStore.getState().user).toBe(remembered);
       expect(queryClient.getQueryData<{ userId: string }>(CACHED_KEY)).toEqual({ userId: user.id });
     } finally {
       await server.stop(true);
@@ -106,10 +134,11 @@ describe("The session check, with a user the store remembers", () => {
   test("changes nothing once the store has changed while it asked: a sign-out stands", async () => {
     const { server, fetchUserOf } = serveApi();
     try {
-      const { sessionId } = await createUserWithSession();
-      useAuthStore.getState().startSession(await fetchUserOf(sessionId)());
+      const earlier = await createUserWithSession();
+      const current = await createUserWithSession();
+      useAuthStore.getState().startSession(await fetchUserOf(earlier.sessionId)());
 
-      const check = checkSession(fetchUserOf(sessionId));
+      const check = checkSession(fetchUserOf(current.sessionId));
       useAuthStore.getState().clearSession({ byUser: true });
       await check;
 

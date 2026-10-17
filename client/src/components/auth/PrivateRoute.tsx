@@ -29,6 +29,7 @@ export function PrivateRoute() {
   const location = useLocation();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const signedOutByUser = useAuthStore((s) => s.signedOutByUser);
+  const userId = useAuthStore((s) => s.user?.id);
   const [checked, setChecked] = useState(false);
 
   useEffect(() => {
@@ -44,7 +45,8 @@ export function PrivateRoute() {
 
   // The session is being checked: the page loads, as an auth page does meanwhile (`AuthLayoutRoute`)
   if (!checked && !isAuthenticated) return <PageLoader />;
-  if (isAuthenticated) return <Outlet />;
+  // Another user is another app: what its pages set up once for the last one (the onboarding tour) starts afresh
+  if (isAuthenticated) return <Outlet key={userId} />;
 
   // Read-only here; DemoExpiredPage clears the flag on mount. Mutating during
   // render is unsafe under StrictMode's double-invoke (the second pass would
