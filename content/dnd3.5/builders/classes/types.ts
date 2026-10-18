@@ -1,17 +1,24 @@
 import type { ModifierSeed, RequirementEntry } from "@/content/core/builders/customization/types.ts";
 import type { CasterType } from "@/vocabulary/dnd3.5/classes.ts";
 
-/** A class: its levels' hit die, base attack, saves and skill points, its class skills and features, its spells. */
+/**
+ * A class: its levels' hit die, base attack, saves and skill points, its class skills and features, its spells.
+ *
+ * The levels of a class that add a caster level to another class: one of a type (`divine`, `arcane`), of any, or to
+ * both of a dual caster's.
+ */
+export interface CasterLevelAdvancement {
+  levels: number[];
+  type: "divine" | "arcane" | "any" | "dual";
+}
+
 export interface ClassSeed {
   /** One more pick in the `target` aptitude at each of these levels. */
   aptitudePicks?: { levels: number[]; target: string }[];
   bab: BabType;
   bonusSpellAbility?: string;
   /** The levels that add a caster level to another class of this type. */
-  casterLevelAdvancement?: {
-    levels: number[];
-    type: "divine" | "arcane" | "any" | "dual";
-  };
+  casterLevelAdvancement?: CasterLevelAdvancement;
   casterType?: CasterType;
   classFeatureAptitude?: string;
   /** The class features the class grants, by level: feats in `classFeatureAptitude`. */

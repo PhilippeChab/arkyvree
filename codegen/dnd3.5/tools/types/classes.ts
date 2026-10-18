@@ -1,5 +1,5 @@
 import type { ModifierSeed, RequirementEntry } from "@/content/core/builders/customization/types.ts";
-import type { BabType, SaveType } from "@/content/dnd3.5/builders/classes/types.ts";
+import type { BabType, CasterLevelAdvancement, SaveType } from "@/content/dnd3.5/builders/classes/types.ts";
 import type { CasterType } from "@/vocabulary/dnd3.5/classes.ts";
 
 import type { DetectedModifiers, ScrapedMeta } from "./reference.ts";
@@ -72,7 +72,7 @@ export interface ClassReference {
     bab: BabType;
     /** Bonus feat lists — features that let the player pick from existing feats */
     bonusFeatLists?: BonusFeatList[];
-    casterLevelAdvancement?: { levels: number[]; type: "divine" | "arcane" | "any" | "dual" };
+    casterLevelAdvancement?: CasterLevelAdvancement;
     /** Detected caster type from class feature descriptions */
     casterType?: CasterType;
     /** Invalid paths that failed validation — bugs to fix */
