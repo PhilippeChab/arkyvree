@@ -17,10 +17,12 @@ export interface CharacterCard {
 }
 
 /**
- * How a new character's ability scores are set: the ways its form offers (`methods`), the scores' bounds and the one
- * an ability shows before it's rolled or set (`scores`), and each score's modifier over those bounds (`modifiers`).
+ * How a new character's ability scores are set: the ruleset's abilities, in the order its sheet lists them
+ * (`abilities`), the ways its form offers (`methods`), the scores' bounds and the one an ability shows before it's
+ * rolled or set (`scores`), and each score's modifier over those bounds (`modifiers`).
  */
 export interface CharacterCreation {
+  abilities: { id: string; name: string }[];
   methods: CreationMethod[];
   modifiers: Record<number, number>;
   scores: { max: number; min: number; start: number };

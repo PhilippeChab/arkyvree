@@ -1,15 +1,13 @@
 import { FormControl, FormControlLabel, FormLabel, Radio, RadioGroup } from "@mui/material";
 import { useId } from "react";
 
-import { sortAbilities } from "@/client/src/components/characters/index.ts";
-import type { BaseRules } from "@/shared/enums.ts";
-import { capitalize, formatSigned } from "@/shared/text.ts";
+import { formatSigned } from "@/shared/text.ts";
 
 import type { LevelAbilities } from "./levelUp/index.ts";
 
 interface AbilityIncreaseFieldProps {
+  /** The character's abilities, in the order its sheet lists them. */
   abilities: LevelAbilities;
-  baseRules: BaseRules;
   /** Its radios' group, one per field (a level's). */
   name: string;
   onChange: (abilityId: string) => void;
@@ -17,7 +15,7 @@ interface AbilityIncreaseFieldProps {
 }
 
 /** The ability a level's ability increase goes to, each with its score and modifier. */
-export function AbilityIncreaseField({ abilities, baseRules, name, value, onChange }: AbilityIncreaseFieldProps) {
+export function AbilityIncreaseField({ abilities, name, value, onChange }: AbilityIncreaseFieldProps) {
   // The radios are named by the field's label
   const labelId = useId();
   return (
@@ -26,12 +24,12 @@ export function AbilityIncreaseField({ abilities, baseRules, name, value, onChan
         Select an ability to increase
       </FormLabel>
       <RadioGroup aria-labelledby={labelId} name={name} value={value ?? ""} onChange={(e) => onChange(e.target.value)}>
-        {sortAbilities(Object.entries(abilities), baseRules, ([key]) => key).map(([key, ability]) => (
+        {abilities.map((ability) => (
           <FormControlLabel
             key={ability.abilityId}
             value={ability.abilityId}
             control={<Radio />}
-            label={`${capitalize(key)}: ${ability.total} (${formatSigned(ability.modifier)})`}
+            label={`${ability.name}: ${ability.total} (${formatSigned(ability.modifier)})`}
           />
         ))}
       </RadioGroup>

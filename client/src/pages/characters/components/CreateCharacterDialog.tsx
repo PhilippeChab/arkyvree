@@ -5,7 +5,7 @@ import { useState } from "react";
 import { type Control, Controller, useController } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 
-import { NotesField, sortAbilities } from "@/client/src/components/characters/index.ts";
+import { NotesField } from "@/client/src/components/characters/index.ts";
 import {
   BlankNote,
   CountChip,
@@ -26,7 +26,7 @@ import {
   useRulesetPickerOptions,
 } from "@/client/src/components/rulesets/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import { type Ability, useFormWith, useListboxQuery, useRulesetAbilities } from "@/client/src/hooks/index.ts";
+import { useFormWith, useListboxQuery } from "@/client/src/hooks/index.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { requiredRules, wholeNumberRules } from "@/client/src/lib/validation.ts";
 import type { CharacterPageState } from "@/client/src/pages/characters/characterPageState.ts";
@@ -93,7 +93,8 @@ interface StandardArrayScoresProps extends SetScoresProps {
   modifiers: CharacterCreation["modifiers"];
 }
 
-type AbilityOption = Pick<Ability, "id" | "name">;
+/** An ability of the ruleset, in the order its sheets list them. */
+type AbilityOption = CharacterCreation["abilities"][number];
 
 /** The scores taken from an array, each ability one of them. */
 type ArrayMethod = Extract<CreationMethod, { kind: "array" }>;
@@ -346,22 +347,13 @@ export function CreateCharacterDialog({ open, onClose, onExited }: CreateCharact
     return race.eligible ? undefined : "Not open to this alignment or gender: pick another";
   };
 
-  const {
-    data: abilityItems,
-    error: abilitiesError,
-    isLoading: abilitiesLoading,
-  } = useRulesetAbilities(selectedRulesetId || undefined);
-  const baseRules = selectedRuleset?.baseRules;
-  const rulesetAbilities = baseRules
-    ? sortAbilities(abilityItems ?? [], baseRules, (a) => a.name)
-    : (abilityItems ?? []);
-
-  // How the ruleset sets its scores, and the method picked: its first until one is
+  // How the ruleset sets its scores, its abilities in its sheets' order, and the method picked: its first until one is
   const {
     data: creation,
     error: creationError,
     isLoading: creationLoading,
   } = useQuery(characterCreationQuery(selectedRulesetId));
+  const rulesetAbilities = creation?.abilities ?? [];
   const method = creation?.methods.find((m) => m.id === methodId) ?? creation?.methods[0];
 
   // What a point buy's scores cost, its chip says
@@ -556,11 +548,9 @@ export function CreateCharacterDialog({ open, onClose, onExited }: CreateCharact
               diceRoll={diceRoll}
               method={method}
             />
-          ) : abilitiesError ? (
-            <LoadError what="Abilities" error={abilitiesError} />
           ) : creationError ? (
-            <LoadError what="Ability Score Methods" error={creationError} />
-          ) : abilitiesLoading || creationLoading ? (
+            <LoadError what="Ability Scores" error={creationError} />
+          ) : creationLoading ? (
             <DiceSpinner sx={{ py: 4 }} />
           ) : (
             <BlankNote>

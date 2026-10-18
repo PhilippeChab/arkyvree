@@ -26,18 +26,12 @@ export function SheetSections({
   // A partial sheet carries no combat
   const combat: SheetCombat = character.combat;
   const load = combat.encumbrance && <Encumbrance encumbrance={combat.encumbrance} />;
-  const { baseRules } = character;
   // The bonded creatures, by the feat that bonds each
   const bondedByFeat = new Map(Object.values(character.bonded).map((creature) => [creature.bondFeatId, creature]));
 
   return (
     <>
-      <AbilityScoresSection
-        abilities={character.abilities}
-        baseRules={baseRules}
-        characterId={characterId}
-        readOnly={readOnly}
-      />
+      <AbilityScoresSection abilities={character.abilities} characterId={characterId} readOnly={readOnly} />
 
       <SavingThrowsSection saves={character.saves} />
 
@@ -51,7 +45,7 @@ export function SheetSections({
         rulesetId={rulesetId}
         renderFeatExtra={(feat) => {
           const bonded = bondedByFeat.get(feat.id);
-          return bonded && <BondedCreature bonded={bonded} baseRules={baseRules} linkable={bondedLinkable} />;
+          return bonded && <BondedCreature bonded={bonded} linkable={bondedLinkable} />;
         }}
       />
 

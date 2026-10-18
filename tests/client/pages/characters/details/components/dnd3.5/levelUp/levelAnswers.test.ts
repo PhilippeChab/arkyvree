@@ -12,14 +12,14 @@ const UNANSWERED = { data: undefined, isLoading: false, isPlaceholderData: false
 
 /** Edit Level's abilities step as it answers an increase level: picked, or not yet. */
 function abilitiesStep(picked: boolean, isPlaceholderData = false) {
-  const data: AbilitiesData = { isAvailable: true, attributes: {}, picked };
+  const data: AbilitiesData = { isAvailable: true, attributes: [], picked };
   return { data, isLoading: false, isPlaceholderData };
 }
 
 /** A plan's preview whose fourth level takes an ability increase, picked or not: what the answers read of it. */
 function previewOf(picked: boolean) {
   return {
-    attributes: { abilityIncreaseLevels: [3], attributes: {}, picked },
+    attributes: { abilityIncreaseLevels: [3], attributes: [], picked },
     feats: { aptitudePools: {}, fitted: {} },
     powers: { fitted: {} },
     skills: { skills: [] },

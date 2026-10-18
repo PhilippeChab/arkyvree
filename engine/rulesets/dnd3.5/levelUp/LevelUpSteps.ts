@@ -61,7 +61,7 @@ export default class LevelUpSteps extends LevelUpState {
     // The levels before this one: the level added or edited is the next
     const levelsBefore = projection.input.rows.levels.length;
     if (!LevelRules.of(this.view).isAbilityIncreaseLevel(levelsBefore))
-      return { isAvailable: false, attributes: {}, picked: true };
+      return { isAvailable: false, attributes: [], picked: true };
     return {
       isAvailable: true,
       attributes: this.build(projection).components.abilities.getAbilitiesWithIds(),

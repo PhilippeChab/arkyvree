@@ -1,6 +1,9 @@
 import { describe, expect, test } from "bun:test";
 
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
+import { RulesetViews } from "@/server/cow/index.ts";
+import { db } from "@/server/database/index.ts";
+import { Abilities } from "@/server/repositories/index.ts";
 import { api, createSignedInUser, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
 import { postCampaign } from "@/tests/support/campaigns.ts";
 import { postCharacter } from "@/tests/support/characters.ts";
@@ -8,6 +11,7 @@ import { addCharacterContributor } from "@/tests/support/contributors.ts";
 import { createWizardWithFamiliar } from "@/tests/support/dnd3.5/levelFixtures.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
+import { ABILITY_NAMES } from "@/vocabulary/dnd3.5/abilities.ts";
 
 const characters = api.api.characters;
 const character = characters[":id"];
@@ -79,6 +83,7 @@ describe("characters", () => {
       "Point Buy",
     ]);
     expect(creation.scores).toEqual({ max: 100, min: 1, start: 10 });
+    expect(creation.abilities).toEqual(ABILITY_NAMES.map((name) => ({ id: ctx.abilityMap[name], name })));
     expect(creation.modifiers[15]).toBe(2);
 
     await expectStatus(characters.creation.$get({ query: { rulesetId: NIL_UUID } }), 404);
@@ -150,6 +155,39 @@ describe("characters", () => {
       const detail = await expectOk(character.$get({ param: { id } }));
       const strength = Object.values(detail.abilities).find((a) => a.abilityId === abilityMap["Strength"]);
       expect(strength).toMatchObject({ base: 18, total: 18, modifier: 4 });
+    });
+
+    test("lists the abilities in the order a sheet does, each named as its ruleset names it", async () => {
+      const fork = await createSeededTestRuleset(SEED_USER_ID);
+      const [forcePoints] = await Abilities.create(db, { name: "Force Points", description: "", rulesetId: fork.id });
+      RulesetViews.invalidate(fork.id);
+      const { abilityMap } = await getSeedCtx();
+      const scores = Object.fromEntries(Object.values(abilityMap).map((abilityId) => [abilityId, 10]));
+      const { id } = await postCharacter({ rulesetId: fork.id, abilities: { ...scores, [forcePoints.id]: 12 } });
+
+      const { abilities } = await expectOk(character.$get({ param: { id } }));
+      // The books' six first, then the ruleset's own
+      expect(abilities.map((ability) => ability.name)).toEqual([...ABILITY_NAMES, "Force Points"]);
+      expect(abilities[0]).toMatchObject({ abilityId: abilityMap["Strength"], key: "strength", abbreviation: "STR" });
+      expect(abilities[6]).toMatchObject({
+        abilityId: forcePoints.id,
+        key: "forcepoints",
+        abbreviation: "FOR",
+        base: 12,
+      });
+    });
+
+    test("lists a bonded creature's abilities in its master's sheet as its own, each with its abbreviation", async () => {
+      const { masterId } = await createWizardWithFamiliar();
+      const master = await expectOk(character.$get({ param: { id: masterId } }));
+      expect(master.bonded.familiar?.abilities.map((ability) => ability.abbreviation)).toEqual([
+        "STR",
+        "DEX",
+        "CON",
+        "INT",
+        "WIS",
+        "CHA",
+      ]);
     });
 
     test("refuses an ability the ruleset doesn't have", async () => {

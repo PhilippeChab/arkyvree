@@ -202,6 +202,34 @@ describe("Seeding", () => {
     ]);
   });
 
+  describe("abilities", () => {
+    test("seeds them and names them", async () => {
+      const seeder = await freshSeeder();
+      await seeder.seedAbilities([
+        { name: "Strength", description: "" },
+        { name: "Force Points", description: "" },
+      ]);
+      expect(Object.keys(seeder.ctx.abilityMap).sort()).toEqual(["Force Points", "Strength"]);
+    });
+
+    test("refuses two whose names share a slug, or one whose name has none, seeding none of them", async () => {
+      const seeder = await freshSeeder();
+      const seed = (...names: string[]) => seeder.seedAbilities(names.map((name) => ({ name, description: "" })));
+      expect(seed("Force Points", "Strength", "Force-Points")).rejects.toThrow(
+        "The abilities Force Points and Force-Points share the slug forcepoints",
+      );
+      expect(seed("気力")).rejects.toThrow("The ability 気力 has no slug");
+      expect(seeder.ctx.abilityMap).toEqual({});
+    });
+
+    test("refuses one whose slug an ability the ruleset has already takes", async () => {
+      const seeder = await freshSeeder({ named: true });
+      expect(seeder.seedAbilities([{ name: "STRENGTH", description: "" }])).rejects.toThrow(
+        "The abilities Strength and STRENGTH share the slug strength",
+      );
+    });
+  });
+
   describe("feats", () => {
     test("seeds them with their defaults, aptitudes and customizations, a modifier's requirements its own, and names them", async () => {
       const seeder = await freshSeeder();

@@ -97,7 +97,7 @@ export default class CharacterDescription {
         } satisfies Record<keyof typeof physiology, unknown>,
       } satisfies Record<keyof typeof response.identity, unknown>,
       skillBudget: { available: 0, spent: 0, total: 0 },
-      abilities: {},
+      abilities: [],
       combat: {},
       saves: {},
       classes: {},

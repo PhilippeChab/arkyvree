@@ -8,8 +8,6 @@ import type { HpLevel, SpentSkill } from "./levelUp/index.ts";
 
 /** What a character's sheet passes a level dialog: the character it levels, and the dialog's own state. */
 interface LevelDialogProps {
-  /** The character's, which its steps read (the order of its abilities) */
-  baseRules: BaseRules;
   characterId: string;
   onClose: () => void;
   /** It has faded out: its owner unmounts it. */
@@ -60,9 +58,8 @@ export interface EditLevelDialogProps extends LevelDialogProps {
   editingLevel: EditingLevel;
 }
 
-/** What a level wizard's step takes: the wizard's state, and the character it levels, of its base rules. */
+/** What a level wizard's step takes: the wizard's state, and the character it levels. */
 export interface LevelStepProps<W> {
-  baseRules: BaseRules;
   characterId: string;
   wizard: W;
 }

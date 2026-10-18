@@ -27,7 +27,7 @@ export type AddLevelWizard = ReturnType<typeof useAddLevelWizard>;
 function abilityChoices({ attributes, picked }: LevelPreview["attributes"], taken: boolean) {
   return taken
     ? { isAvailable: true as const, attributes, picked }
-    : { isAvailable: false as const, attributes: {}, picked };
+    : { isAvailable: false as const, attributes: [], picked };
 }
 
 /**

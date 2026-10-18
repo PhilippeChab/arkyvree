@@ -4,12 +4,31 @@ import type { SaveSeed } from "@/content/core/builders/saves/types.ts";
 import { SeederState } from "@/database/seeders/core/SeederState.ts";
 import { abilitiesInRules, languagesInRules, savesInRules } from "@/drizzle/schema.ts";
 import type { Constructor } from "@/lib/mixins.ts";
+import { stripSeparators } from "@/shared/text.ts";
 
 /** Seeding a base ruleset's own rules: its abilities, saves and languages. */
 export function SeedsCoreRules<B extends Constructor<SeederState>>(Base: B) {
   abstract class SeedingCoreRules extends Base {
-    /** The abilities. */
+    /**
+     * Refuses abilities a sheet couldn't tell apart, among themselves or from those the ruleset has: a character's sheet
+     * and a target path know an ability by its slug (`abilities.forcepoints.misc`), so two names that share one ("Force
+     * Points", "Force-Points") would be one ability's scores, and a name with none (no letter or digit of a-z, 0-9)
+     * would have no path.
+     */
+    protected refuseSharedSlugs(abilities: AbilitySeed[]) {
+      const namesBySlug = new Map(Object.keys(this.ctx.abilityMap).map((name) => [stripSeparators(name), name]));
+      for (const { name } of abilities) {
+        const slug = stripSeparators(name);
+        if (!slug) throw new Error(`The ability ${name} has no slug: its name needs a letter or a digit of a-z, 0-9`);
+        const other = namesBySlug.get(slug);
+        if (other) throw new Error(`The abilities ${other} and ${name} share the slug ${slug}`);
+        namesBySlug.set(slug, name);
+      }
+    }
+
+    /** The abilities, each with a slug of its own (`refuseSharedSlugs`). */
     async seedAbilities(abilities: AbilitySeed[]) {
+      this.refuseSharedSlugs(abilities);
       Object.assign(
         this.ctx.abilityMap,
         SeederState.idsByName(

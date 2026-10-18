@@ -1,4 +1,4 @@
-import { Box, Stack } from "@mui/material";
+import { Stack } from "@mui/material";
 
 import { SheetSection } from "@/client/src/components/characters/sections/SheetSection.tsx";
 import { BlankNote } from "@/client/src/components/common/index.ts";
@@ -6,6 +6,7 @@ import type { CharacterDetail } from "@/client/src/lib/queries.ts";
 import { formatSigned } from "@/shared/text.ts";
 
 import { ScoreBox } from "./ScoreBox.tsx";
+import { SCORE_ROW_GAP, SCORE_ROW_SX, SCORE_SLOT_SX } from "./scoreRow.ts";
 
 interface SavingThrowsSectionProps {
   saves: CharacterDetail["saves"];
@@ -22,20 +23,20 @@ export function SavingThrowsSection({ saves }: SavingThrowsSectionProps) {
     <SheetSection title="Saving Throws">
       {entries.length > 0 ? (
         // The boxes keep the space under them
-        <Stack direction="row" spacing={2} sx={{ flexWrap: "wrap", justifyContent: "center", pb: 2 }}>
+        <Stack direction="row" spacing={SCORE_ROW_GAP} sx={[SCORE_ROW_SX, { pb: 2 }]}>
           {entries.map(([save, saveData]) => (
-            <Box key={save} sx={{ minWidth: { xs: 120, sm: 140 } }}>
-              <ScoreBox
-                label={saveData.name}
-                value={formatSigned(saveData.total)}
-                minHeight={160}
-                breakdown={[
-                  `Base: ${formatSigned(saveData.base)}`,
-                  `Ability: ${formatSigned(saveData.ability)}`,
-                  `Misc: ${formatSigned(saveData.misc)}`,
-                ]}
-              />
-            </Box>
+            <ScoreBox
+              key={save}
+              sx={SCORE_SLOT_SX}
+              label={saveData.name}
+              value={formatSigned(saveData.total)}
+              minHeight={160}
+              breakdown={[
+                `Base: ${formatSigned(saveData.base)}`,
+                `Ability: ${formatSigned(saveData.ability)}`,
+                `Misc: ${formatSigned(saveData.misc)}`,
+              ]}
+            />
           ))}
         </Stack>
       ) : (

@@ -80,7 +80,6 @@ const CLIENT_COMPONENTS = "client/src/components/";
  * reaches a ruleset's folders.
  */
 const CLIENT_REGISTRIES = [
-  "client/src/components/characters/sections/abilityOrder.ts",
   "client/src/components/characters/sections/sectionFactory.ts",
   "client/src/lib/rulesetLabels.ts",
   "client/src/pages/characters/details/components/levelUpFactory.ts",
