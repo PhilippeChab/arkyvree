@@ -14,6 +14,9 @@ export default class ImportReport {
 
   private readonly issues: string[] = [];
 
+  /** The issues said, and the lines listed with each reason: one is said once, however often it comes up. */
+  private readonly said = new Set<string>();
+
   private readonly unmatched: ImportReportDescription["unmatched"] = [];
 
   /** The report as the import answers it: the lines it couldn't match in the file's order. */
@@ -29,11 +32,16 @@ export default class ImportReport {
 
   /** Says what the checks a level-up runs found of a level saved anyway (`Level 3: 2 unspent skill point(s)`). */
   issue(message: string) {
-    if (!this.issues.includes(message)) this.issues.push(message);
+    if (this.said.has(message)) return;
+    this.said.add(message);
+    this.issues.push(message);
   }
 
-  /** Lists a line of the file that couldn't be matched, and why. */
+  /** Lists a line of the file that couldn't be matched, and why: once for each reason (a line's takes say one). */
   skip(line: SourceLine, reason: string) {
+    const key = `${line.number}\u0000${reason}`;
+    if (this.said.has(key)) return;
+    this.said.add(key);
     this.unmatched.push({ line: line.number, reason, text: line.text });
   }
 }

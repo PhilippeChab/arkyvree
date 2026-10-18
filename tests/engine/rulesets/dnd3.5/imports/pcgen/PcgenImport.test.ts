@@ -383,6 +383,35 @@ describe("What a file holds past what the app keeps", () => {
     ]);
   });
 
+  test("a line's many takes no level places, listed once for their reason", async () => {
+    const text = riderFile([`ABILITY:FEAT|TYPE:NORMAL|CATEGORY:FEAT|KEY:Toughness|APPLIEDTO:${",".repeat(1000)}`]);
+    const { report } = await planImportOf(text);
+    expect(report.unmatched.filter(({ reason }) => reason.startsWith("Toughness"))).toHaveLength(1);
+  });
+
+  test("an item's entries at one place, and its lines, add up: one entry for each place it's held", async () => {
+    const armor = Array.from(
+      { length: 2000 },
+      (_, index) => `EQUIPSET:Armor|ID:0.1.${index + 10}|VALUE:Chainmail|QUANTITY:1.0`,
+    );
+    const ropes = Array.from({ length: 2000 }, () => "EQUIPNAME:Rope (Hempen/50 Ft.)|QUANTITY:1.0");
+    const text = riderFile([
+      "EQUIPNAME:Chainmail|QUANTITY:2000.0",
+      ...ropes,
+      "EQUIPSET:Default Set|ID:0.1",
+      ...armor,
+      "EQUIPSET:Carried|ID:0.1.02|VALUE:Rope (Hempen/50 Ft.)|QUANTITY:2000.0",
+      "CALCEQUIPSET:0.1",
+    ]);
+    const plan = await planImportOf(text);
+    const data = await seededData();
+    expect(
+      plan.inventory.map(
+        ({ equipped, itemId, quantity }) => `${data.itemsById.get(itemId)?.name} ${equipped} ${quantity}`,
+      ),
+    ).toEqual(["Chain Mail true 1", "Chain Mail false 1999", "Rope, hempen (50 ft.) false 2000"]);
+  });
+
   test("gear past the most the app keeps, and gear the character owns without carrying it, said in the report", async () => {
     const text = (await readPcgenFile("brannoc")).replace(
       "EQUIPNAME:Rations (Trail/Per Day)|OUTPUTORDER:7|COST:0.5|WT:1.0|QUANTITY:5.0",

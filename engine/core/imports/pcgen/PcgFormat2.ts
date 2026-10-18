@@ -120,6 +120,13 @@ const UNREAD_REASONS = new Map<string, string>([
 export default class PcgFormat2 {
   constructor(private readonly lines: PcgLine[]) {}
 
+  /** An item's entries in a set, one for each location, with what they hold there summed. */
+  private static byLocation(entries: EquipSetEntry[]): EquipSetEntry[] {
+    const held = new Map<string, number>();
+    for (const { location, quantity } of entries) held.set(location, (held.get(location) ?? 0) + quantity);
+    return [...held].map(([location, quantity]) => ({ location, quantity }));
+  }
+
   /**
    * A worn entry by the hands that hold it: a pair of one weapon (PCGen's `Two Weapons`) one in each hand, the others
    * left to be carried; any other as it is (how many its place wears, its ruleset's importer says).
@@ -172,8 +179,8 @@ export default class PcgFormat2 {
   /** Each equipment set's entries by the item they hold, by the set's id. */
   private readonly equipSets = new Map<string, Map<string, EquipSetEntry[]>>();
 
-  /** The items the file names (`EQUIPNAME`), in order, before their equipment set says where each is. */
-  private readonly items: { item: Omit<ImportedGear, "location" | "quantity">; quantity: number }[] = [];
+  /** The items the character owns, by name: lines that name one item add up (the first line its own). */
+  private readonly items = new Map<string, { item: Omit<ImportedGear, "location" | "quantity">; quantity: number }>();
 
   /** What reads each line, by the tag it's named for. */
   private readonly readers = new Map<string, TagReader>([
@@ -237,10 +244,10 @@ export default class PcgFormat2 {
   private placeGear(): ImportedGear[] {
     const setId = this.calcEquipSet ?? [...this.equipSets.keys()][0];
     const entries = (setId && this.equipSets.get(setId)) || new Map<string, EquipSetEntry[]>();
-    const itemNames = new Set(this.items.map(({ item }) => item.name));
+    const itemNames = new Set(this.items.keys());
     const sum = (held: EquipSetEntry[]) => held.reduce((total, entry) => total + entry.quantity, 0);
-    return this.items.flatMap(({ item, quantity }) => {
-      const held = entries.get(item.name) ?? [];
+    return [...this.items.values()].flatMap(({ item, quantity }) => {
+      const held = PcgFormat2.byLocation(entries.get(item.name) ?? []);
       const wearing = held.filter((entry) => !PcgFormat2.isCarried(entry.location, itemNames));
       const worn = wearing.flatMap((entry) => PcgFormat2.handsOf(entry));
       const left = quantity - sum(worn);
@@ -348,7 +355,9 @@ export default class PcgFormat2 {
       ...(baseName && baseName !== line.value && { baseName }),
       ...(charges !== undefined && { charges: Number(charges) }),
     };
-    this.items.push({ item, quantity });
+    const owned = this.items.get(item.name);
+    if (owned) owned.quantity += quantity;
+    else this.items.set(item.name, { item, quantity });
   }
 
   /** The languages the character speaks (`LANGUAGE:Common|LANGUAGE:Dwarven`). */

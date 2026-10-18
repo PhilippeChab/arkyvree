@@ -137,6 +137,9 @@ export default class GearImport {
    */
   planInventory(character: CharacterInput, gear: ImportedGear[]): ImportedEntry[] {
     const entries: ImportedEntry[] = [];
+    // The carried entries by item and charges left: two pieces of one item carried (one owned without being carried,
+    // a pair's third dagger) are one entry
+    const carried = new Map<string, ImportedEntry>();
     let holder = character;
     for (const piece of gear.flatMap((worn) => GearImport.unitsOf(worn))) {
       const item = this.findItem(piece);
@@ -151,10 +154,20 @@ export default class GearImport {
         continue;
       }
       const entry = this.planEntry(holder, piece, this.view.rulesetData.itemsById.get(item.id)!);
-      entries.push(entry);
-      holder = this.withEntry(holder, entry);
       const held = entry.location ? `, ${entry.location}` : "";
       this.report.import(`Item: ${item.name} ×${entry.quantity}${held}`);
+      const key = `${entry.itemId}:${entry.remainingCharges ?? ""}`;
+      const same = entry.equipped ? undefined : carried.get(key);
+      if (same) {
+        const total = same.quantity + entry.quantity;
+        same.quantity = Math.min(MAX_CHARACTER_NUMBER, total);
+        if (same.quantity < total)
+          this.report.issue(`${item.name} ×${total} is past the most the app keeps: ${same.quantity} kept`);
+        continue;
+      }
+      if (!entry.equipped) carried.set(key, entry);
+      entries.push(entry);
+      holder = this.withEntry(holder, entry);
     }
     return entries;
   }
