@@ -2,8 +2,8 @@
  * The SRD's weapons: the weapon table (each base weapon type's definition, which its properties and proficiency are read
  * from; a name the table doesn't have has none), and the weapons by proficiency, which the weapon feats and the
  * proficiency requirements name: the table's, by their proficiency, and the unarmed strike, a simple weapon that's no
- * item. Beside them, the values a weapon's stats take, which the table and an item's fields are written in: its
- * names, families, proficiencies, damage types and how Strength applies to its damage.
+ * item. Beside them, the values a weapon's stats take, which an item's fields offer: its families, proficiencies and
+ * damage types, which the table is written in, how Strength applies to its damage, and its names, read off the table.
  */
 
 import { UNARMED_STRIKE } from "./combat.ts";

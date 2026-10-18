@@ -1,7 +1,7 @@
 /**
  * The SRD's armor and shield tables: each base armor and shield type's definition, which its properties are read from
- * (an item's builders, the codegen's items). A name the tables don't have has none. Beside them, their names and their
- * proficiencies, which the tables and an item's fields are written in.
+ * (an item's builders, the codegen's items). A name the tables don't have has none. Beside them, what an item's fields
+ * offer: their proficiencies, which the tables are written in, and their names, read off them.
  */
 
 interface ArmorDefinition {
