@@ -24,8 +24,8 @@ import SpellsPerDayTable from "./SpellsPerDayTable.tsx";
 import { FONT_SIZE, styles } from "./styles.ts";
 
 /**
- * Short labels so each spell's property row fits on a single line. A legend is rendered once at the top of the spells
- * section, which spells each one out as its field's label.
+ * Short labels so each spell's property row fits on a single line. A legend at the top of the spells section spells
+ * each one out as its field's label.
  */
 const SPELL_PROPERTY_ABBR: Record<string, string> = {
   [SPELL_SUBSCHOOL]: "SS",

@@ -15,7 +15,7 @@ import {
 } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 /** Properties in the 3.5 rules' stat-block order. */
-const ORDER = new PropertyOrder(new Dnd35PropertyTypes());
+const ORDER = new PropertyOrder(Dnd35PropertyTypes.SHARED);
 
 describe("Properties", () => {
   test("come in a stat block's order of types, each type's values in its options' order", () => {

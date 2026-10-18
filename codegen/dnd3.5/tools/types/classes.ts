@@ -203,7 +203,7 @@ export interface ClassReference {
       parsed: {
         alignment?: string;
         bab?: number;
-        casterLevel?: { level: number; type: "divine" | "arcane" | "any" }[];
+        casterLevel?: { level: number; type: Exclude<CasterLevelAdvancement["type"], "dual"> }[];
         classLevels?: { className: string; level: number }[];
         feats?: string[];
         saves?: { base: number; name: string }[];

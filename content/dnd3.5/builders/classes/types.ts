@@ -7,7 +7,7 @@ import type { CasterType } from "@/vocabulary/dnd3.5/classes.ts";
  */
 export interface CasterLevelAdvancement {
   levels: number[];
-  type: "divine" | "arcane" | "any" | "dual";
+  type: Lowercase<CasterType> | "any" | "dual";
 }
 
 /** A class: its levels' hit die, base attack, saves and skill points, its class skills and features, its spells. */
