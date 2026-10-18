@@ -1,4 +1,4 @@
-import { IconButton, Stack, Typography } from "@mui/material";
+import { IconButton, Stack, type SxProps, type Theme, Typography } from "@mui/material";
 
 import { AddIcon, RemoveIcon } from "@/client/src/components/icons/index.ts";
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
@@ -16,6 +16,8 @@ interface AbilityScoreBoxProps {
   onBaseChange?: (abilityId: string, value: number) => void;
   readOnly?: boolean;
   score: number;
+  /** Its place in a row of boxes (`ScoreBox`'s). */
+  sx?: SxProps<Theme>;
 }
 
 export function AbilityScoreBox({
@@ -26,6 +28,7 @@ export function AbilityScoreBox({
   onBaseChange,
   readOnly,
   compact,
+  sx,
 }: AbilityScoreBoxProps) {
   const baseValue = abilityData?.base ?? STARTING_ABILITY_SCORE;
   const edit =
@@ -38,6 +41,7 @@ export function AbilityScoreBox({
 
   return (
     <ScoreBox
+      sx={sx}
       label={label}
       value={score}
       compact={compact}

@@ -1,4 +1,4 @@
-import { Box, Stack } from "@mui/material";
+import { Stack } from "@mui/material";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 
@@ -11,6 +11,7 @@ import { rpc } from "@/client/src/services/rpc.ts";
 import { STARTING_ABILITY_SCORE } from "@/vocabulary/dnd3.5/abilities.ts";
 
 import { AbilityScoreBox } from "./AbilityScoreBox.tsx";
+import { SCORE_ROW_GAP, SCORE_ROW_SX, SCORE_SLOT_SX } from "./scoreRow.ts";
 import { useSuppressedWarningsStore } from "./suppressedWarningsStore.ts";
 
 interface AbilityScoresSectionProps {
@@ -73,18 +74,18 @@ export function AbilityScoresSection({ abilities, characterId, readOnly }: Abili
   return (
     <SheetSection title="Ability Scores">
       {abilities.length > 0 ? (
-        <Stack direction="row" spacing={2} sx={{ flexWrap: "wrap", justifyContent: "center" }}>
+        <Stack direction="row" spacing={SCORE_ROW_GAP} sx={SCORE_ROW_SX}>
           {abilities.map((abilityData) => (
-            <Box key={abilityData.abilityId} sx={{ minWidth: { xs: 120, sm: 140 } }}>
-              <AbilityScoreBox
-                ability={abilityData.name}
-                score={abilityData.total}
-                modifier={abilityData.modifier}
-                abilityData={abilityData}
-                onBaseChange={handleBaseChange}
-                readOnly={readOnly}
-              />
-            </Box>
+            <AbilityScoreBox
+              key={abilityData.abilityId}
+              sx={SCORE_SLOT_SX}
+              ability={abilityData.name}
+              score={abilityData.total}
+              modifier={abilityData.modifier}
+              abilityData={abilityData}
+              onBaseChange={handleBaseChange}
+              readOnly={readOnly}
+            />
           ))}
         </Stack>
       ) : (
