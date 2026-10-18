@@ -818,7 +818,9 @@ describe("previewing a level-up", () => {
     const ctx = await getSeedCtx();
     const characterId = await createSeedCharacter(ctx);
     const intelligence = async (abilities: (string | null)[]) =>
-      (await preview(ctx, characterId, fighter(4), abilities)).attributes.attributes["intelligence"];
+      (await preview(ctx, characterId, fighter(4), abilities)).attributes.attributes.find(
+        (ability) => ability.key === "intelligence",
+      )!;
     expect((await intelligence([null, null, null, null])).total).toBe(12);
     expect(await intelligence([null, null, null, ctx.abilityMap["Intelligence"]])).toMatchObject({
       name: "Intelligence",

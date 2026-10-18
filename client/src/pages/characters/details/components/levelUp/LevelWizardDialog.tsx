@@ -6,11 +6,8 @@ import { ConfirmDialog, DialogFooter, LoadError, Modal } from "@/client/src/comp
 import { useIsMobile } from "@/client/src/hooks/index.ts";
 import type { LevelStepProps } from "@/client/src/pages/characters/details/components/levelUpFactory.ts";
 import type { ApiValidationIssue } from "@/client/src/services/ApiError.ts";
-import type { BaseRules } from "@/shared/enums.ts";
 
 interface LevelWizardDialogProps<N extends string, W extends WizardControls<N>> {
-  /** The character's, which its steps read */
-  baseRules: BaseRules;
   characterId: string;
   /** The last step's button ("Finish"). */
   finishLabel: string;
@@ -58,7 +55,6 @@ export function LevelWizardDialog<N extends string, W extends WizardControls<N>>
   steps,
   finishLabel,
   characterId,
-  baseRules,
 }: LevelWizardDialogProps<N, W>) {
   const isMobile = useIsMobile();
   const { isSaving } = wizard;
@@ -120,7 +116,7 @@ export function LevelWizardDialog<N extends string, W extends WizardControls<N>>
               {wizard.loadError ? (
                 <LoadError what={wizard.loadError.what} error={wizard.loadError.error} />
               ) : (
-                <ActiveStep wizard={wizard} characterId={characterId} baseRules={baseRules} />
+                <ActiveStep wizard={wizard} characterId={characterId} />
               )}
             </Stack>
           </Stack>

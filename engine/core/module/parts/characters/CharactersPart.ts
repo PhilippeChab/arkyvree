@@ -148,9 +148,9 @@ export default abstract class CharactersPart<D extends Descriptions> {
   ): HeldInventoryEntry;
 
   /**
-   * How a new character's ability scores are set: the ways its form offers, run by their kind, the scores' bounds and
-   * the one an unset ability shows, and each score's modifier over those bounds. What its creation and an ability edit
-   * check their scores by, and start an unset one at.
+   * How a new character's ability scores are set: the ruleset's abilities, in its sheet's order, the ways its form
+   * offers, run by their kind, the scores' bounds and the one an unset ability shows, and each score's modifier over
+   * those bounds. What its creation and an ability edit check their scores by, and start an unset one at.
    */
   abstract describeCreation(view: RulesetView): CharacterCreation;
 

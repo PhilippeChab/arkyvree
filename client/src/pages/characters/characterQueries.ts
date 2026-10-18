@@ -8,7 +8,10 @@ import { nextPage } from "@/client/src/lib/pageItems.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
-/** How a new character sets its ability scores: its rules' methods, the scores' bounds, their modifiers. */
+/**
+ * How a new character sets its ability scores: its ruleset's abilities in its sheets' order, its rules' methods, the
+ * scores' bounds, their modifiers.
+ */
 export type CharacterCreation = InferResponseType<typeof rpc.api.characters.creation.$get, 200>;
 
 /** A way a new character's ability scores are set, which the create dialog runs by its kind. */
@@ -40,10 +43,13 @@ export function availableRacesQuery(rulesetId: string, alignment: string, gender
   });
 }
 
-/** How a new character of a ruleset sets its ability scores, which only a deploy changes; none until it's picked. */
+/**
+ * How a new character of a ruleset sets its ability scores, for its abilities: its methods and bounds only a deploy
+ * changes, and its abilities are refreshed with the ruleset (its key is nested under it); none until it's picked.
+ */
 export function characterCreationQuery(rulesetId: string) {
   return queryOptions({
-    queryKey: QUERY_KEYS.characters.creation(rulesetId),
+    queryKey: QUERY_KEYS.rulesets.characterCreation(rulesetId),
     queryFn: rulesetId ? () => parseResponse(rpc.api.characters.creation.$get({ query: { rulesetId } })) : skipToken,
     staleTime: FOREVER,
   });

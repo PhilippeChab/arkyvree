@@ -1,7 +1,6 @@
 import { Box, Stack } from "@mui/material";
 
 import { BlankNote, DiceSpinner, LoadError, SubsectionTitle } from "@/client/src/components/common/index.ts";
-import type { BaseRules } from "@/shared/enums.ts";
 
 import { AbilityIncreaseField } from "./AbilityIncreaseField.tsx";
 import type { AbilitiesData, PreviewLevelDetail } from "./levelUp/index.ts";
@@ -17,11 +16,10 @@ interface AddAbilityState {
 }
 
 interface AddAbilityStepProps {
-  baseRules: BaseRules;
   wizard: AddAbilityState;
 }
 
-export function AddAbilityStep({ wizard, baseRules }: AddAbilityStepProps) {
+export function AddAbilityStep({ wizard }: AddAbilityStepProps) {
   const {
     abilityData,
     isLoadingAbilities,
@@ -51,7 +49,6 @@ export function AddAbilityStep({ wizard, baseRules }: AddAbilityStepProps) {
             <Box>
               <AbilityIncreaseField
                 abilities={abilityData.attributes}
-                baseRules={baseRules}
                 name={`ability-increase-${index}`}
                 value={selected}
                 onChange={(abilityId) => onAbilityIncreaseChange(index, abilityId)}

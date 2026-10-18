@@ -25,14 +25,7 @@ const EDIT_STEPS: Record<EditLevelWizard["steps"][number]["name"], ComponentType
 };
 
 /** 3.5's Edit Level: its wizard, its steps shown by name. */
-export function EditLevelDialog({
-  open,
-  onClose,
-  onExited,
-  characterId,
-  baseRules,
-  editingLevel,
-}: EditLevelDialogProps) {
+export function EditLevelDialog({ open, onClose, onExited, characterId, editingLevel }: EditLevelDialogProps) {
   const wizard = useEditLevelWizard({ open, onClose, characterId, editingLevel });
 
   return (
@@ -44,7 +37,6 @@ export function EditLevelDialog({
       steps={EDIT_STEPS}
       finishLabel="Finish"
       characterId={characterId}
-      baseRules={baseRules}
     />
   );
 }

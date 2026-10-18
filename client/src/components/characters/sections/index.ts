@@ -1,4 +1,3 @@
-export { sortAbilities } from "./abilityOrder.ts";
 export { CharacterIdentitySection, PARTIAL_IDENTITY_NOTE } from "./CharacterIdentitySection.tsx";
 export { DiagnosticsSection } from "./DiagnosticsSection.tsx";
 export { EquipmentSection } from "./EquipmentSection.tsx";

@@ -11,6 +11,7 @@ import { addCharacterContributor } from "@/tests/support/contributors.ts";
 import { createWizardWithFamiliar } from "@/tests/support/dnd3.5/levelFixtures.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
+import { ABILITY_NAMES } from "@/vocabulary/dnd3.5/abilities.ts";
 
 const characters = api.api.characters;
 const character = characters[":id"];
@@ -82,6 +83,7 @@ describe("characters", () => {
       "Point Buy",
     ]);
     expect(creation.scores).toEqual({ max: 100, min: 1, start: 10 });
+    expect(creation.abilities).toEqual(ABILITY_NAMES.map((name) => ({ id: ctx.abilityMap[name], name })));
     expect(creation.modifiers[15]).toBe(2);
 
     await expectStatus(characters.creation.$get({ query: { rulesetId: NIL_UUID } }), 404);
@@ -155,7 +157,7 @@ describe("characters", () => {
       expect(strength).toMatchObject({ base: 18, total: 18, modifier: 4 });
     });
 
-    test("names each ability as its ruleset does", async () => {
+    test("lists the abilities in the order a sheet does, each named as its ruleset names it", async () => {
       const fork = await createSeededTestRuleset(SEED_USER_ID);
       const [forcePoints] = await Abilities.create(db, { name: "Force Points", description: "", rulesetId: fork.id });
       RulesetViews.invalidate(fork.id);
@@ -164,8 +166,10 @@ describe("characters", () => {
       const { id } = await postCharacter({ rulesetId: fork.id, abilities: { ...scores, [forcePoints.id]: 12 } });
 
       const { abilities } = await expectOk(character.$get({ param: { id } }));
-      expect(abilities.forcepoints).toMatchObject({ abilityId: forcePoints.id, name: "Force Points", base: 12 });
-      expect(abilities.strength).toMatchObject({ abilityId: abilityMap["Strength"], name: "Strength" });
+      // The books' six first, then the ruleset's own
+      expect(abilities.map((ability) => ability.name)).toEqual([...ABILITY_NAMES, "Force Points"]);
+      expect(abilities[0]).toMatchObject({ abilityId: abilityMap["Strength"], key: "strength" });
+      expect(abilities[6]).toMatchObject({ abilityId: forcePoints.id, key: "forcepoints", base: 12 });
     });
 
     test("refuses an ability the ruleset doesn't have", async () => {

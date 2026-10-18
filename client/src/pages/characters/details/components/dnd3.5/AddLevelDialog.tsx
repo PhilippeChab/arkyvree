@@ -27,7 +27,7 @@ const ADD_STEPS: Record<AddLevelWizard["steps"][number]["name"], ComponentType<L
 };
 
 /** 3.5's Add Level: its wizard, its steps shown by name. */
-export function AddLevelDialog({ open, onClose, onExited, characterId, baseRules, klassId }: AddLevelDialogProps) {
+export function AddLevelDialog({ open, onClose, onExited, characterId, klassId }: AddLevelDialogProps) {
   const wizard = useAddLevelWizard({ open, onClose, characterId, klassId });
 
   return (
@@ -39,7 +39,6 @@ export function AddLevelDialog({ open, onClose, onExited, characterId, baseRules
       steps={ADD_STEPS}
       finishLabel="Finish All"
       characterId={characterId}
-      baseRules={baseRules}
     />
   );
 }

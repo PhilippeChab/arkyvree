@@ -135,7 +135,7 @@ describe("A character's languages", () => {
     const character = await createOfRace(race.id, { Intelligence: 14 }, fork.id);
 
     const sheet = await CharactersService.getCharacter(makeSession(), character.id);
-    expect(sheet.abilities.intelligence.total).toBe(intelligence);
+    expect(sheet.abilities.find((ability) => ability.key === "intelligence")?.total).toBe(intelligence);
     expect(await roomOf(character)).toBe(picks);
   });
 

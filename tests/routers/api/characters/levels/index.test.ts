@@ -208,13 +208,17 @@ describe("character levels", () => {
         plannedClassLevelIds: planned.join(","),
         plannedAbilityIncreases: increases.join(","),
       });
+      // In the order a sheet lists them
       expect(abilities).toMatchObject({
         isAvailable: true,
-        attributes: {
-          strength: { name: "Strength", level: 3 },
-          dexterity: { name: "Dexterity", level: 1 },
-          constitution: { name: "Constitution", level: 0 },
-        },
+        attributes: [
+          { name: "Strength", level: 3 },
+          { name: "Dexterity", level: 1 },
+          { name: "Constitution", level: 0 },
+          { name: "Intelligence", level: 0 },
+          { name: "Wisdom", level: 0 },
+          { name: "Charisma", level: 0 },
+        ],
       });
     });
 

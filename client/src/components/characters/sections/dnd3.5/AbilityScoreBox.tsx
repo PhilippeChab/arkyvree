@@ -10,7 +10,7 @@ import { ScoreBox } from "./ScoreBox.tsx";
 interface AbilityScoreBoxProps {
   /** The ability's name, as its ruleset gives it ("Force Points"). */
   ability: string;
-  abilityData?: CharacterDetail["abilities"][string];
+  abilityData?: CharacterDetail["abilities"][number];
   compact?: boolean;
   modifier: number;
   onBaseChange?: (abilityId: string, value: number) => void;

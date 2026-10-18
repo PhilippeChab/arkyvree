@@ -2,30 +2,25 @@ import { Box, Stack } from "@mui/material";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 
-import { sortAbilities } from "@/client/src/components/characters/sections/abilityOrder.ts";
 import { SheetSection } from "@/client/src/components/characters/sections/SheetSection.tsx";
 import { BlankNote, ConfirmDialog } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useDialogState } from "@/client/src/hooks/index.ts";
 import { type CharacterDetail, characterDetailQuery, invalidateCharacter } from "@/client/src/lib/queries.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
-import type { BaseRules } from "@/shared/enums.ts";
 import { STARTING_ABILITY_SCORE } from "@/vocabulary/dnd3.5/abilities.ts";
 
 import { AbilityScoreBox } from "./AbilityScoreBox.tsx";
 import { useSuppressedWarningsStore } from "./suppressedWarningsStore.ts";
 
 interface AbilityScoresSectionProps {
+  /** The character's abilities, in the order its sheet lists them. */
   abilities: CharacterDetail["abilities"];
-  /** The sheet's base rules, which order its abilities. */
-  baseRules: BaseRules;
   characterId: string;
   readOnly?: boolean;
 }
 
-export function AbilityScoresSection({ abilities, baseRules, characterId, readOnly }: AbilityScoresSectionProps) {
-  const entries = Object.entries(abilities);
-  const sortedEntries = sortAbilities(entries, baseRules, ([, ability]) => ability.name);
+export function AbilityScoresSection({ abilities, characterId, readOnly }: AbilityScoresSectionProps) {
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
 
@@ -45,16 +40,12 @@ export function AbilityScoresSection({ abilities, baseRules, characterId, readOn
 
       queryClient.setQueryData(queryKey, (old) => {
         if (!old) return old;
-        const updated = { ...old.abilities };
-        for (const [key, data] of Object.entries(updated)) {
-          if (data.abilityId === abilityId) {
-            // Until the server answers: the total moves by the base's change, whatever else adds to it, and the
-            // modifier stays the one it gave
-            updated[key] = { ...data, base: score, total: data.total + score - data.base };
-            break;
-          }
-        }
-        return { ...old, abilities: updated };
+        // Until the server answers: the total moves by the base's change, whatever else adds to it, and the modifier
+        // stays the one it gave
+        const abilities = old.abilities.map((data) =>
+          data.abilityId === abilityId ? { ...data, base: score, total: data.total + score - data.base } : data,
+        );
+        return { ...old, abilities };
       });
 
       return { previous };
@@ -72,7 +63,7 @@ export function AbilityScoresSection({ abilities, baseRules, characterId, readOn
   const suppressWarningForSession = useSuppressedWarningsStore((s) => s.suppressWarningForSession);
 
   const handleBaseChange = (abilityId: string, score: number) => {
-    const current = Object.values(abilities).find((a) => a.abilityId === abilityId);
+    const current = abilities.find((a) => a.abilityId === abilityId);
     const currentBase = current?.base ?? STARTING_ABILITY_SCORE;
 
     if (score > currentBase || !shouldWarn("abilityDecrease")) updateMutation.mutate({ abilityId, score });
@@ -81,10 +72,10 @@ export function AbilityScoresSection({ abilities, baseRules, characterId, readOn
 
   return (
     <SheetSection title="Ability Scores">
-      {sortedEntries.length > 0 ? (
+      {abilities.length > 0 ? (
         <Stack direction="row" spacing={2} sx={{ flexWrap: "wrap", justifyContent: "center" }}>
-          {sortedEntries.map(([key, abilityData]) => (
-            <Box key={key} sx={{ minWidth: { xs: 120, sm: 140 } }}>
+          {abilities.map((abilityData) => (
+            <Box key={abilityData.abilityId} sx={{ minWidth: { xs: 120, sm: 140 } }}>
               <AbilityScoreBox
                 ability={abilityData.name}
                 score={abilityData.total}

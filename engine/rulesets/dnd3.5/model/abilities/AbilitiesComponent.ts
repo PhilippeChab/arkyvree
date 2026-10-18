@@ -61,16 +61,17 @@ export default class AbilitiesComponent extends CharacterComponent<LoadedCharact
     return this.abilities;
   }
 
-  /** Each ability, by its normalized name: its id, its name as its ruleset gives it, and its scores. */
+  /**
+   * The character's abilities in the order its sheet lists them (`AbilityRules.orderAbilities`): each with its id, its
+   * key (its normalized name, which its target paths name: `forcepoints`), its name as its ruleset gives it ("Force
+   * Points"), and its scores.
+   */
   getAbilitiesWithIds() {
-    const result: Record<string, AbilitiesData[string] & { abilityId: string; name: string }> = {};
-
-    for (const [abilityId, { name, normalizedName }] of this.abilityNames.entries()) {
+    const abilities = [...this.abilityNames].flatMap(([abilityId, { name, normalizedName }]) => {
       const ability = this.abilities[normalizedName];
-      if (ability) result[normalizedName] = { abilityId, name, ...ability };
-    }
-
-    return result;
+      return ability ? [{ abilityId, key: normalizedName, name, ...ability }] : [];
+    });
+    return AbilityRules.orderAbilities(abilities, (ability) => ability.name);
   }
 
   getAbility(abilityName: string) {
