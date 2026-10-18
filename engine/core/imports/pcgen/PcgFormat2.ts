@@ -31,10 +31,13 @@ const NOT_CARRIED = "Not Carried";
 /** The locations of an equipment set that hold an item without wearing it: what's carried. */
 const CARRIED_LOCATIONS = new Set(["Carried", "Equipped", NOT_CARRIED]);
 
+/** PCGen's book of the spells a character chose to know (`Globals.getDefaultSpellBook`). */
+const KNOWN_SPELLS = "Known Spells";
+
 /**
- * The lines PCGen writes of its own settings, of what the rules work out from the class and race (weapon
- * proficiencies, the pools' points, the equipment set the character's sheet is computed with), and of the character's
- * spells, which an import never brings (the character and its choices alone): nothing to import.
+ * The lines PCGen writes of its own settings, and of what the rules work out from the class and race (weapon
+ * proficiencies, the pools' points, the equipment set the character's sheet is computed with, a domain's spells, the
+ * spell lists a class reads): nothing to import, the character's choices aside.
  */
 const LEFT_OUT = new Set([
   "AGESET",
@@ -72,7 +75,6 @@ const LEFT_OUT = new Set([
   "SKILLSOUTPUTORDER",
   "SPELLBOOK",
   "SPELLLIST",
-  "SPELLNAME",
   "SUPPRESSBIOFIELDS",
   "TABLABEL",
   "TABNAME",
@@ -184,6 +186,7 @@ export default class PcgFormat2 {
     languages: [],
     levels: [],
     skills: [],
+    spells: [],
     source: { format: "2.0", program: "PCGen", version: "" },
     unread: [],
   };
@@ -222,6 +225,7 @@ export default class PcgFormat2 {
     ["NOTE", (line) => this.addNote(line.value, line.find("VALUE") ?? "")],
     ["RACE", (line) => (this.character.identity.race = { line: line.line, value: line.value })],
     ["SKILL", (line) => this.readSkill(line)],
+    ["SPELLNAME", (line) => this.readSpell(line)],
     ["STAT", (line) => this.readAbilityScore(line)],
     ["TEMPLATESAPPLIED", (line) => this.readTemplate(line)],
     ["VERSION", (line) => (this.character.source.version = line.value)],
@@ -424,6 +428,17 @@ export default class PcgFormat2 {
     });
     const skill: ImportedSkill = { bought, line: line.line, name: line.value };
     if (bought.length > 0) this.character.skills.push(skill);
+  }
+
+  /**
+   * A spell (`SPELLNAME:<spell>|CLASS:<class>|BOOK:<book>|SPELLLEVEL:<n>`): one the character chose to know, in PCGen's
+   * book of them (`Known Spells`: a sorcerer's, a wizard's spellbook; a class that knows its whole list has none
+   * written), read; one of a day's preparation (another book) isn't a choice of the character's, and is left out.
+   */
+  private readSpell(line: PcgLine) {
+    if (line.find("BOOK") !== KNOWN_SPELLS) return;
+    const level = PcgFormat2.readNumber(line.find("SPELLLEVEL") ?? "") ?? 0;
+    this.character.spells.push({ className: line.find("CLASS") ?? "", level, line: line.line, name: line.value });
   }
 
   /**

@@ -27,7 +27,9 @@ export interface ImportedCharacter {
   skills: ImportedSkill[];
   /** The program and its version that saved the file, and the file's format */
   source: { format: string; program: string; version: string };
-  /** The lines the reader knows it can't import, each with why (a spell, a template) */
+  /** The spells the character chose to know (a sorcerer's, a wizard's spellbook), each of its class */
+  spells: ImportedSpell[];
+  /** The lines the reader knows it can't import, each with why (a template, a companion) */
   unread: { line: SourceLine; reason: string }[];
 }
 
@@ -89,6 +91,16 @@ export interface ImportedName extends SourcedPart {
 /** A skill's ranks as the file holds them: bought in each class (`className`). */
 export interface ImportedSkill extends SourcedPart {
   bought: { className: string; ranks: number }[];
+  name: string;
+}
+
+/**
+ * A spell the character chose to know, as the file holds it: its name, the class it's known as (`className`), and its
+ * level in that class's list.
+ */
+export interface ImportedSpell extends SourcedPart {
+  className: string;
+  level: number;
   name: string;
 }
 

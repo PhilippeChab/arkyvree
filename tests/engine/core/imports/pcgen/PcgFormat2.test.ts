@@ -251,6 +251,23 @@ describe("PcgFormat2", () => {
     });
   });
 
+  test("reads the spells the character chose to know, each of its class and level; a day's preparation left out", async () => {
+    const { spells } = new PcgenFile(await readPcgenFile("selene")).read();
+    expect(spells.map(({ className, level, name }) => `${className} ${level}: ${name}`)).toEqual([
+      "Sorcerer 0: Detect Magic",
+      "Sorcerer 0: Light",
+      "Sorcerer 0: Mage Hand",
+      "Sorcerer 1: Magic Missile",
+      "Sorcerer 0: Prestidigitation",
+      "Sorcerer 0: Ray of Frost",
+      "Sorcerer 0: Read Magic",
+      "Sorcerer 2: Scorching Ray",
+      "Sorcerer 1: Shield",
+      "Sorcerer 1: Sleep",
+    ]);
+    expect(new PcgenFile(await readPcgenFile("hilda")).read().spells).toEqual([]);
+  });
+
   test("reads PCGen 5's feat lines too, in its general pool", () => {
     const text = "PCGVERSION:2.0\nVERSION:5.6.0\nFEAT:Weapon Focus|APPLIEDTO:Morningstar|TYPE:GENERAL.FIGHTER";
     expect(new PcgenFile(text).read().feats).toEqual([

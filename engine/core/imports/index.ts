@@ -11,6 +11,7 @@ export type {
   ImportedLevel,
   ImportedName,
   ImportedSkill,
+  ImportedSpell,
   SourceLine,
 } from "./imported.ts";
 export { default as ImportReport } from "./ImportReport.ts";
