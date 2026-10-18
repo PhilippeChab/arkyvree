@@ -21,6 +21,9 @@ type TagReader = (line: PcgLine) => void;
 /** The locations of an equipment set that hold an item without wearing it: what's carried, a container's by its name. */
 const CARRIED_LOCATIONS = new Set(["Carried", "Equipped", "Not Carried"]);
 
+/** The equipment set's location of the rings a character wears, two at most. */
+const FINGERS = "Fingers";
+
 /**
  * The lines PCGen writes of its own settings and of what the rules work out from the class and race (weapon
  * proficiencies, the pools' points, the equipment set the character's sheet is computed with): nothing to import.
@@ -37,16 +40,20 @@ const LEFT_OUT = new Set([
   "CHARACTERTYPE",
   "EQSETBONUS",
   "EXPERIENCETABLE",
+  "FAVOREDCLASS",
   "FEATPOOL",
   "GAMEMODE",
   "IGNORECOST",
   "LOADCOMPANIONS",
+  "OUTPUTSHEETHTML",
+  "OUTPUTSHEETPDF",
   "PCGVERSION",
   "PLAYERNAME",
   "POOLPOINTS",
   "POOLPOINTSAVAIL",
   "PORTRAIT",
   "PREVIEWSHEET",
+  "PREVIEWVAR",
   "PURCHASEPOINTS",
   "REGION",
   "ROLLMETHOD",
@@ -97,6 +104,7 @@ const TWO_WEAPONS = "Two Weapons";
 
 /** The lines PCGen writes of what the import doesn't read yet, each with why: what the user adds in the app. */
 const UNREAD_REASONS = new Map<string, string>([
+  ["CHRONICLEENTRY", "Chronicle entries aren't imported: add them to the notes"],
   ["COMPANIONLIST", "Companions aren't imported"],
   ["DOMAINSPELLS", "Spells aren't imported yet"],
   ["FOLLOWER", "Companions aren't imported"],
@@ -114,16 +122,9 @@ const UNREAD_REASONS = new Map<string, string>([
 export default class PcgFormat2 {
   constructor(private readonly lines: PcgLine[]) {}
 
-  /**
-   * A worn entry by the hands that hold it: a pair of one weapon (PCGen's `Two Weapons`) one in each hand, the others
-   * left to be carried; any other as it is.
-   */
-  private static handsOf(entry: EquipSetEntry): EquipSetEntry[] {
-    if (entry.location !== TWO_WEAPONS) return [entry];
-    return [
-      { location: "Primary Hand", quantity: Math.min(1, entry.quantity) },
-      ...(entry.quantity >= 2 ? [{ location: "Secondary Hand", quantity: 1 }] : []),
-    ];
+  /** Whether an equipment set's location holds an item without wearing it: carried, or in a container. */
+  private static isCarried(location: string, itemNames: Set<string>) {
+    return CARRIED_LOCATIONS.has(location) || itemNames.has(location);
   }
 
   /**
@@ -135,6 +136,23 @@ export default class PcgFormat2 {
       const at = part.indexOf("EQMOD=");
       return at >= 0 && /PLUS\d/.test(part.slice(at));
     });
+  }
+
+  /**
+   * A worn entry as the places that wear it, one each: a pair of one weapon (PCGen's `Two Weapons`) a hand each, two
+   * of one ring (`Fingers`, which PCGen counts as one entry) a finger each, one of any other at its place; the others
+   * left to be carried.
+   */
+  private static unitsOf(entry: EquipSetEntry): EquipSetEntry[] {
+    if (entry.location === TWO_WEAPONS) {
+      return [
+        { location: "Primary Hand", quantity: Math.min(1, entry.quantity) },
+        ...(entry.quantity >= 2 ? [{ location: "Secondary Hand", quantity: 1 }] : []),
+      ];
+    }
+    if (entry.quantity <= 1) return [entry];
+    const worn = entry.location === FINGERS ? Math.min(2, Math.floor(entry.quantity)) : 1;
+    return Array.from({ length: worn }, () => ({ location: entry.location, quantity: 1 }));
   }
 
   /** The character the file holds, as it reads it so far. */
@@ -213,11 +231,6 @@ export default class PcgFormat2 {
     return container.every((entry) => this.isAway(entry.location, entries, seen));
   }
 
-  /** Whether an equipment set's location holds an item without wearing it: carried, or in a container. */
-  private isCarried(location: string, entries: Map<string, EquipSetEntry[]>, itemNames: Set<string>) {
-    return CARRIED_LOCATIONS.has(location) || entries.has(location) || itemNames.has(location);
-  }
-
   /**
    * The gear the items make, by where the equipment set the character uses puts them: an entry worn or held (in a
    * location that isn't carried) a piece of its own, and what its entries leave of the item's quantity carried.
@@ -229,8 +242,8 @@ export default class PcgFormat2 {
     const sum = (held: EquipSetEntry[]) => held.reduce((total, entry) => total + entry.quantity, 0);
     return this.items.flatMap(({ item, quantity }) => {
       const held = entries.get(item.name) ?? [];
-      const wearing = held.filter((entry) => !this.isCarried(entry.location, entries, itemNames));
-      const worn = wearing.flatMap((entry) => PcgFormat2.handsOf(entry));
+      const wearing = held.filter((entry) => !PcgFormat2.isCarried(entry.location, itemNames));
+      const worn = wearing.flatMap((entry) => PcgFormat2.unitsOf(entry));
       const left = quantity - sum(worn);
       // What the set holds but doesn't wear is carried (a pair's third dagger too); what it leaves out (or sets apart,
       // `Not Carried`, a chest left there with what it holds) is owned without being carried, but in a file of no set,
@@ -365,7 +378,7 @@ export default class PcgFormat2 {
     this.character.levels.push(level);
   }
 
-  /** A whole number of a value, if it is one (PCGen writes some as decimals: `QUANTITY:2.0`). */
+  /** A number of a value, if it is one (PCGen writes whole ones as decimals too: `QUANTITY:2.0`). */
   private readNumber(value: string): number | undefined {
     const number = Number.parseFloat(value);
     return Number.isFinite(number) ? number : undefined;

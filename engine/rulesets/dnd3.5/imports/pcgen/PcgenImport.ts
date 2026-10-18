@@ -112,6 +112,8 @@ export default class PcgenImport {
    */
   private planLanguages(character: CharacterInput): string[] {
     const kept: string[] = [];
+    // The last plan that took a language: what the character speaks with those kept
+    let planned = this.characters.planLanguages(this.view, character, kept);
     for (const language of this.imported.languages) {
       const found = this.names.findLanguage(language.name);
       if (!found) {
@@ -123,14 +125,14 @@ export default class PcgenImport {
         continue;
       }
       try {
-        this.characters.planLanguages(this.view, character, [...kept, found.id]);
+        planned = this.characters.planLanguages(this.view, character, [...kept, found.id]);
         kept.push(found.id);
       } catch (error) {
         if (!(error instanceof RulesError)) throw error;
         this.report.skip(language.line, `${language.name}: ${error.message}`);
       }
     }
-    const { languageIds } = this.characters.planLanguages(this.view, character, kept);
+    const { languageIds } = planned;
     const { languagesById } = this.view.rulesetData;
     const spoken = kept.map((id) => languagesById.get(id)?.name).join(", ");
     if (spoken) this.report.import(`Languages: ${spoken}`);

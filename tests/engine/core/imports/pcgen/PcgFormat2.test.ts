@@ -165,6 +165,28 @@ describe("PcgFormat2", () => {
     ]);
   });
 
+  test("wears two of one ring a finger each, and leaves out PCGen's sheet settings; a chronicle listed", () => {
+    const text = [
+      "PCGVERSION:2.0",
+      "VERSION:6.09",
+      "FAVOREDCLASS:Fighter",
+      "OUTPUTSHEETHTML:sheet.htm",
+      "PREVIEWVAR:x",
+      "CHRONICLEENTRY:[EXPORT:Y|CAMPAIGN:Saga|ADVENTURE:The Keep|XP:500|CHRONICLE:Cleared the keep]",
+      "EQUIPNAME:Ring of Protection +1|QUANTITY:3.0",
+      "EQUIPSET:Default Set|ID:0.1",
+      "EQUIPSET:Fingers|ID:0.1.01|VALUE:Ring of Protection +1|QUANTITY:3.0",
+      "CALCEQUIPSET:0.1",
+    ].join("\n");
+    const { gear, unread } = new PcgenFile(text).read();
+    expect(gear.map(({ location, quantity }) => `${location ?? "carried"} ${quantity}`)).toEqual([
+      "Fingers 1",
+      "Fingers 1",
+      "carried 1",
+    ]);
+    expect(unread.map(({ reason }) => reason)).toEqual(["Chronicle entries aren't imported: add them to the notes"]);
+  });
+
   test("reads PCGen 5's feat lines too, in its general pool", () => {
     const text = "PCGVERSION:2.0\nVERSION:5.6.0\nFEAT:Weapon Focus|APPLIEDTO:Morningstar|TYPE:GENERAL.FIGHTER";
     expect(new PcgenFile(text).read().feats).toEqual([
