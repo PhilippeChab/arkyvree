@@ -227,7 +227,7 @@ export default class PcgFormat2 {
     ["WEIGHT", (line) => (this.character.identity.weight = PcgFormat2.readNumber(line.value))],
   ]);
 
-  /** The equipment set the character's sheet uses (`CALCEQUIPSET`), the first one when it names none. */
+  /** The equipment set the character's sheet uses (`CALCEQUIPSET`), the file's first when it names none it has. */
   private calcEquipSet?: string;
 
   /** Adds a paragraph of the character's description, when it says something. */
@@ -262,8 +262,9 @@ export default class PcgFormat2 {
    * location that isn't carried) a piece of its own, and what its entries leave of the item's quantity carried.
    */
   private placeGear(): ImportedGear[] {
-    const setId = this.calcEquipSet ?? [...this.equipSets.keys()][0];
-    const entries = (setId && this.equipSets.get(setId)) || new Map<string, EquipSetEntry[]>();
+    // The set the sheet uses, else the file's first (one CALCEQUIPSET names that the file hasn't, or none)
+    const used = this.calcEquipSet ? this.equipSets.get(this.calcEquipSet) : undefined;
+    const entries = used ?? [...this.equipSets.values()][0] ?? new Map<string, EquipSetEntry[]>();
     const sum = (held: EquipSetEntry[]) => held.reduce((total, entry) => total + entry.quantity, 0);
     return [...this.items.values()].flatMap(({ item, quantity }) => {
       // What the set sets apart (`Not Carried`, a chest left there with what it holds) is owned without being carried

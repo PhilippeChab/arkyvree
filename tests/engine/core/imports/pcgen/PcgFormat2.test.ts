@@ -225,10 +225,23 @@ describe("PcgFormat2", () => {
     ]);
   });
 
-  test("reads a note that opens on a bracket as text", () => {
-    const text =
-      "PCGVERSION:2.0\nVERSION:6.09\nEQUIPNAME:Wand|QUANTITY:1.0|NOTE:[ask GM|CUSTOMIZATION:[BASEITEM:Wand|DATA:EQMOD=CHARGES[23]$]";
-    expect(new PcgenFile(text).read().gear[0]).toMatchObject({ charges: 23, name: "Wand" });
+  test("reads a note's brackets as text, at its start or after a colon in it", () => {
+    for (const note of ["[ask GM", "Ammo:[20 left"]) {
+      const text = `PCGVERSION:2.0\nVERSION:6.09\nEQUIPNAME:Wand|QUANTITY:1.0|NOTE:${note}|CUSTOMIZATION:[BASEITEM:Wand|DATA:EQMOD=CHARGES[23]$]`;
+      expect(new PcgenFile(text).read().gear[0]).toMatchObject({ charges: 23, name: "Wand" });
+    }
+  });
+
+  test("places gear by the file's first set when CALCEQUIPSET names one it hasn't", () => {
+    const text = [
+      "PCGVERSION:2.0",
+      "VERSION:6.09",
+      "EQUIPNAME:Longsword|QUANTITY:1.0",
+      "EQUIPSET:Adventuring|ID:0.2",
+      "EQUIPSET:Primary Hand|ID:0.2.01|VALUE:Longsword|QUANTITY:1.0",
+      "CALCEQUIPSET:0.1",
+    ].join("\n");
+    expect(new PcgenFile(text).read().gear.map(({ location }) => location)).toEqual(["Primary Hand"]);
   });
 
   test("reads PCGen 5's feat lines too, in its general pool", () => {
