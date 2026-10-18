@@ -22,20 +22,20 @@ function expectCommitted(folder: string) {
 }
 
 describe("The generator", () => {
-  test("writes, from the committed references, exactly the committed generated files", () => {
+  test("writes, from the committed references, exactly the committed generated files", async () => {
     const folder = mkdtempSync(join(tmpdir(), "generated-"));
     try {
       // As `parser:dnd3.5:generate` writes them: generated in a copy, formatted, then swapped in
-      expect(GeneratedFolder.generateAtomically(folder, (copy) => new Generator(copy, true).generateAll({}))).toEqual(
-        [],
-      );
+      expect(
+        await GeneratedFolder.generateAtomically(folder, (copy) => new Generator(copy, true).generateAll({})),
+      ).toEqual([]);
       expectCommitted(folder);
     } finally {
       rmSync(folder, { recursive: true, force: true });
     }
   }, 60_000);
 
-  test("writes, from one reference, what generating them all wrote", () => {
+  test("writes, from one reference, what generating them all wrote", async () => {
     const folder = mkdtempSync(join(tmpdir(), "generated-"));
     try {
       cpSync(GENERATED, folder, { recursive: true });
@@ -47,7 +47,7 @@ describe("The generator", () => {
         "complete-divine/domains.json",
       ];
       expect(
-        GeneratedFolder.generateAtomically(folder, (copy) => {
+        await GeneratedFolder.generateAtomically(folder, (copy) => {
           const generator = new Generator(copy, true);
           return references.flatMap((reference) => generator.generateReference(join(References.dir, reference)));
         }),
@@ -58,13 +58,13 @@ describe("The generator", () => {
     }
   }, 60_000);
 
-  test("removes the files of a book it generates that it no longer makes, and leaves the other books'", () => {
+  test("removes the files of a book it generates that it no longer makes, and leaves the other books'", async () => {
     const folder = mkdtempSync(join(tmpdir(), "generated-"));
     try {
       cpSync(GENERATED, folder, { recursive: true });
       for (const book of ["srd", "complete-divine"]) writeFileSync(join(folder, book, "classes/retired.ts"), code("x"));
       expect(
-        GeneratedFolder.generateAtomically(folder, (copy) =>
+        await GeneratedFolder.generateAtomically(folder, (copy) =>
           new Generator(copy, true).generateReference(join(References.dir, "srd/classes/wizard.json")),
         ),
       ).toEqual([]);
