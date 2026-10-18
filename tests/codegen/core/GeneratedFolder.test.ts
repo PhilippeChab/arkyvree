@@ -7,7 +7,7 @@ import { GeneratedFolder } from "@/codegen/core/GeneratedFolder.ts";
 import { code, filesOf } from "@/tests/support/generatedFiles.ts";
 
 describe("A generation", () => {
-  test("leaves its folder as it was when a generation fails or throws, and replaces it when one succeeds", () => {
+  test("leaves its folder as it was when a generation fails or throws, and replaces it when one succeeds", async () => {
     const parent = mkdtempSync(join(tmpdir(), "generation-"));
     const folder = join(parent, "generated");
     const contentOf = (file: string) => readFileSync(join(folder, file), "utf8");
@@ -20,23 +20,23 @@ describe("A generation", () => {
       };
 
       expect(
-        GeneratedFolder.generateAtomically(folder, (copy) => {
+        await GeneratedFolder.generateAtomically(folder, (copy) => {
           halfWrite(copy);
           return ["a reference failed"];
         }),
       ).toEqual(["a reference failed"]);
-      expect(() =>
+      expect(
         GeneratedFolder.generateAtomically(folder, (copy) => {
           halfWrite(copy);
           throw new Error("the generator broke");
         }),
-      ).toThrow("the generator broke");
+      ).rejects.toThrow("the generator broke");
       expect(filesOf(folder)).toEqual(["index.ts"]);
       expect(contentOf("index.ts")).toBe(code("before"));
       expect(readdirSync(parent)).toEqual(["generated"]);
 
       expect(
-        GeneratedFolder.generateAtomically(folder, (copy) => {
+        await GeneratedFolder.generateAtomically(folder, (copy) => {
           writeFileSync(join(copy, "index.ts"), code("after"));
           return [];
         }),
@@ -48,7 +48,7 @@ describe("A generation", () => {
     }
   });
 
-  test("drops the files a generation removes, and recovers what a killed run left", () => {
+  test("drops the files a generation removes, and recovers what a killed run left", async () => {
     const parent = mkdtempSync(join(tmpdir(), "generation-"));
     const folder = join(parent, "generated");
     try {
@@ -60,7 +60,7 @@ describe("A generation", () => {
       writeFileSync(join(`${folder}.next`, "junk.ts"), code("junk"));
 
       expect(
-        GeneratedFolder.generateAtomically(folder, (copy) => {
+        await GeneratedFolder.generateAtomically(folder, (copy) => {
           rmSync(join(copy, "domainFeats.ts"));
           return [];
         }),
@@ -73,19 +73,19 @@ describe("A generation", () => {
     }
   });
 
-  test("puts the folder back when the swap fails", () => {
+  test("puts the folder back when the swap fails", async () => {
     const parent = mkdtempSync(join(tmpdir(), "generation-"));
     const folder = join(parent, "generated");
     try {
       mkdirSync(folder);
       writeFileSync(join(folder, "index.ts"), code("before"));
       // The copy gone, the second rename of the swap fails
-      expect(() =>
+      expect(
         GeneratedFolder.generateAtomically(folder, (copy) => {
           rmSync(copy, { recursive: true });
           return [];
         }),
-      ).toThrow("ENOENT");
+      ).rejects.toThrow("ENOENT");
       expect(readFileSync(join(folder, "index.ts"), "utf8")).toBe(code("before"));
       expect(readdirSync(parent)).toEqual(["generated"]);
     } finally {
@@ -93,16 +93,16 @@ describe("A generation", () => {
     }
   });
 
-  test("refuses a second generation on the same folder while one runs", () => {
+  test("refuses a second generation on the same folder while one runs", async () => {
     const parent = mkdtempSync(join(tmpdir(), "generation-"));
     const folder = join(parent, "generated");
     try {
       mkdirSync(folder);
       writeFileSync(join(folder, "index.ts"), code("before"));
       expect(
-        GeneratedFolder.generateAtomically(folder, (copy) => {
+        await GeneratedFolder.generateAtomically(folder, (copy) => {
           writeFileSync(join(copy, "index.ts"), code("first"));
-          expect(() => GeneratedFolder.generateAtomically(folder, () => [])).toThrow(
+          expect(GeneratedFolder.generateAtomically(folder, () => [])).rejects.toThrow(
             "Another generation is running on this folder",
           );
           writeFileSync(join(copy, "items.ts"), code("first"));
