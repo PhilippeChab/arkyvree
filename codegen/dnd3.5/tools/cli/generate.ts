@@ -18,7 +18,7 @@ import { CommandLine } from "./CommandLine.ts";
 /** What the generator writes: the content package's seed data. */
 const GENERATED_DIR = join(import.meta.dirname!, "../../../../content/dnd3.5/generated");
 
-function main() {
+async function main() {
   const args = process.argv.slice(2);
   // A reference's book is its own: an option after it (the old `--book`) would be ignored, so it's refused
   if (args[0]?.endsWith(".json") && args.length > 1) {
@@ -33,7 +33,7 @@ function main() {
       : new Generator(dir, true).generateAll(CommandLine.filters());
   let failures: string[];
   try {
-    failures = GeneratedFolder.generateAtomically(GENERATED_DIR, generate);
+    failures = await GeneratedFolder.generateAtomically(GENERATED_DIR, generate);
   } catch (error) {
     // A reference file refused, another generation running, or the copy or the swap failing: generated/ is as it was
     console.error(error instanceof Error ? error.message : error);
@@ -47,4 +47,4 @@ function main() {
   }
 }
 
-main();
+await main();

@@ -18,7 +18,10 @@ export default class CharactersEngine {
     return this.module.characters.describeCard(this.view, ...args);
   }
 
-  /** How a new character's ability scores are set: the ways its form offers, their bounds, each score's modifier. */
+  /**
+   * How a new character's ability scores are set: the ruleset's abilities in its sheets' order, the ways its form
+   * offers, their bounds, each score's modifier.
+   */
   describeCreation(...args: Args<"describeCreation">) {
     return this.module.characters.describeCreation(this.view, ...args);
   }

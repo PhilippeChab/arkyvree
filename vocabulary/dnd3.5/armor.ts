@@ -1,11 +1,12 @@
 /**
  * The SRD's armor and shield tables: each base armor and shield type's definition, which its properties are read from
- * (an item's builders, the codegen's items). A name the tables don't have has none.
+ * (an item's builders, the codegen's items). A name the tables don't have has none. Beside them, what an item's fields
+ * offer: their proficiencies, which the tables are written in, and their names, read off them.
  */
 
 interface ArmorDefinition {
   acBonus: number;
-  armorType: ArmorCategory;
+  armorType: (typeof ARMOR_PROFICIENCIES)[number];
   checkPenalty: number;
   maxDex: number;
   spellFailure: number;
@@ -13,13 +14,12 @@ interface ArmorDefinition {
 interface ShieldDefinition {
   acBonus: number;
   checkPenalty: number;
-  shieldType: ShieldCategory;
+  shieldType: (typeof SHIELD_PROFICIENCIES)[number];
   spellFailure: number;
 }
 
-type ArmorCategory = "Light" | "Medium" | "Heavy";
-
-type ShieldCategory = "Light" | "Heavy" | "Tower";
+/** The armor proficiencies, from the lightest armor to the heaviest. */
+export const ARMOR_PROFICIENCIES = ["Light", "Medium", "Heavy"] as const;
 
 /**
  * Each entry is the canonical definition for a base armor type. All properties are derived from selecting an armor type
@@ -40,6 +40,12 @@ export const ARMOR_TYPE_DEFINITIONS: Partial<Record<string, ArmorDefinition>> = 
   "Full Plate": { armorType: "Heavy", acBonus: 8, maxDex: 1, checkPenalty: -6, spellFailure: 35 },
 };
 
+/** The base armor types, the table's, by name. */
+export const ARMOR_TYPE_NAMES = Object.keys(ARMOR_TYPE_DEFINITIONS).toSorted();
+
+/** The shield proficiencies, from the lightest shield to the tower shield. */
+export const SHIELD_PROFICIENCIES = ["Light", "Heavy", "Tower"] as const;
+
 export const SHIELD_TYPE_DEFINITIONS: Partial<Record<string, ShieldDefinition>> = {
   Buckler: { shieldType: "Light", acBonus: 1, checkPenalty: -1, spellFailure: 5 },
   "Light Wooden Shield": { shieldType: "Light", acBonus: 1, checkPenalty: -1, spellFailure: 5 },
@@ -48,3 +54,6 @@ export const SHIELD_TYPE_DEFINITIONS: Partial<Record<string, ShieldDefinition>> 
   "Heavy Steel Shield": { shieldType: "Heavy", acBonus: 2, checkPenalty: -2, spellFailure: 15 },
   "Tower Shield": { shieldType: "Tower", acBonus: 4, checkPenalty: -10, spellFailure: 50 },
 };
+
+/** The base shield types, the table's, by name. */
+export const SHIELD_TYPE_NAMES = Object.keys(SHIELD_TYPE_DEFINITIONS).toSorted();

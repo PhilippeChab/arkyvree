@@ -1,4 +1,14 @@
 import type { ModifierSeed, RequirementEntry } from "@/content/core/builders/customization/types.ts";
+import type { CasterType } from "@/vocabulary/dnd3.5/classes.ts";
+
+/**
+ * The levels of a class that add a caster level to another class: an arcane or a divine one, any one, or both of a dual
+ * caster's.
+ */
+export interface CasterLevelAdvancement {
+  levels: number[];
+  type: Lowercase<CasterType> | "any" | "dual";
+}
 
 /** A class: its levels' hit die, base attack, saves and skill points, its class skills and features, its spells. */
 export interface ClassSeed {
@@ -7,11 +17,8 @@ export interface ClassSeed {
   bab: BabType;
   bonusSpellAbility?: string;
   /** The levels that add a caster level to another class of this type. */
-  casterLevelAdvancement?: {
-    levels: number[];
-    type: "divine" | "arcane" | "any" | "dual";
-  };
-  casterType?: "Arcane" | "Divine";
+  casterLevelAdvancement?: CasterLevelAdvancement;
+  casterType?: CasterType;
   classFeatureAptitude?: string;
   /** The class features the class grants, by level: feats in `classFeatureAptitude`. */
   classFeatures?: [number, string][];

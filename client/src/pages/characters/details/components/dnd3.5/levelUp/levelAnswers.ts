@@ -28,7 +28,7 @@ export type AptitudePool = FeatsData["aptitudePools"][string];
 
 export type FeatsData = StepAnswer<"feats">;
 
-/** The character's abilities at a level, by name: each with its score and modifier. */
+/** The character's abilities at a level, in the order its sheet lists them: each with its score and modifier. */
 export type LevelAbilities = AbilitiesData["attributes"];
 
 /** A spell pool of the level's slots. */

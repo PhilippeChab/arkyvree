@@ -1,4 +1,4 @@
-import { Box, Paper, Stack, Typography } from "@mui/material";
+import { Box, Paper, Stack, type SxProps, type Theme, Typography } from "@mui/material";
 import type { ReactNode } from "react";
 
 interface ScoreBoxProps {
@@ -13,6 +13,8 @@ interface ScoreBoxProps {
   label: string;
   /** The full form's least height, which lines up a row of boxes. */
   minHeight?: number;
+  /** Its place in a row: a row of score boxes gives each its width (`SCORE_SLOT_SX`). */
+  sx?: SxProps<Theme>;
   value: ReactNode;
 }
 
@@ -20,7 +22,7 @@ interface ScoreBoxProps {
  * A score in its box, as the sheet shows ability scores, saving throws and armor classes: its label over its value, and
  * under it what goes with it. The full form gives each its breakdown; the compact one, a caption over a smaller value.
  */
-export function ScoreBox({ badge, breakdown, compact = false, editor, label, minHeight, value }: ScoreBoxProps) {
+export function ScoreBox({ badge, breakdown, compact = false, editor, label, minHeight, sx, value }: ScoreBoxProps) {
   return (
     <Stack
       component={Paper}
@@ -28,7 +30,10 @@ export function ScoreBox({ badge, breakdown, compact = false, editor, label, min
       spacing={compact ? 0.5 : 0}
       sx={[
         { textAlign: "center" },
-        compact ? { py: 1, px: 0.5, justifyContent: "center" } : { p: 2, minHeight, justifyContent: "space-between" },
+        compact
+          ? { py: 1, px: 0.5, justifyContent: "center" }
+          : { py: 2, px: 1.5, minHeight, justifyContent: "space-between" },
+        ...(Array.isArray(sx) ? sx : [sx]),
       ]}
     >
       <Typography
@@ -36,8 +41,9 @@ export function ScoreBox({ badge, breakdown, compact = false, editor, label, min
         component="p"
         sx={[
           { fontWeight: 600, textTransform: "uppercase" },
-          // Each label on one line: "Flat-footed" fits a phone's third of the row
-          compact ? { lineHeight: 1, whiteSpace: "nowrap" } : { fontSize: "0.9rem" },
+          // The compact form's label on one line: "Flat-footed" fits a phone's third of the row. The full form's wraps, a
+          // word too long for its box broken inside it
+          compact ? { lineHeight: 1, whiteSpace: "nowrap" } : { fontSize: "0.9rem", overflowWrap: "anywhere" },
         ]}
       >
         {label}

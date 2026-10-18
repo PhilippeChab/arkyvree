@@ -59,7 +59,7 @@ export default class RulesetEngine {
       klasses: this.entities("klasses").describeFields(),
       powers: this.entities("powers").describeFields(),
       races: this.entities("races").describeFields(),
-      rulesets: this.module.ruleset.describeSettingsFields(this.view),
+      rulesets: this.module.ruleset.describeSettingsFields(),
       skills: this.entities("skills").describeFields(),
     };
   }

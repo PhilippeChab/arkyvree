@@ -113,9 +113,13 @@ describe("parser:dnd3.5:validate", () => {
     ]);
   });
 
-  test("finds no issue in the committed references", () => {
-    expect(ReferenceIssues.of(References.files())).toEqual([]);
-  });
+  // A book at a time: all of them together take seconds, past the default timeout in a busy parallel run
+  test.each([...new Set(References.files().map(({ book }) => book))])(
+    "finds no issue in the committed references of %s",
+    (book) => {
+      expect(ReferenceIssues.of(References.files({ bookFilter: book }))).toEqual([]);
+    },
+  );
 
   test("reports what a reference's review list covers, once cleared: a class's aptitude picks, prerequisites and features' modifiers, feats' modifiers and prerequisites", () => {
     const clear = (overrides: Record<string, unknown>) => void (overrides.reviewed = []);

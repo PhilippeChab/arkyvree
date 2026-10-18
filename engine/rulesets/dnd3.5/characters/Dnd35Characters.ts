@@ -46,7 +46,10 @@ export default class Dnd35Characters extends CharactersPart<Dnd35Descriptions> {
     return InventoryEntries.planPlacement(...args);
   }
 
-  /** How a new character's ability scores are set: the SRD's methods, the scores' bounds, each score's modifier. */
+  /**
+   * How a new character's ability scores are set: the ruleset's abilities, the SRD's methods, the scores' bounds, each
+   * score's modifier.
+   */
   override describeCreation(...args: Parameters<typeof NewCharacters.describeCreation>) {
     return NewCharacters.describeCreation(...args);
   }

@@ -13,6 +13,7 @@ import type {
   Language,
   Skill,
 } from "@/shared/relations.ts";
+import type { CasterType } from "@/vocabulary/dnd3.5/classes.ts";
 
 import { CustomizesEntities } from "./concerns/CustomizesEntities.ts";
 import { LoadsPicks } from "./concerns/LoadsPicks.ts";
@@ -48,7 +49,7 @@ export interface LoadedCharacterData extends LoadedCharacter {
    */
   feats: CustomizedFeat[];
   klassBonusSpellAbilityMap: Map<string, string>;
-  klassCasterTypeMap: Map<string, "Arcane" | "Divine">;
+  klassCasterTypeMap: Map<string, CasterType>;
   klasses: Klass[];
   klassLevelFeatCountsByAptitudeId: Record<string, number>;
   klassLevelPowerCountsByAptitudeId: Record<string, number>;

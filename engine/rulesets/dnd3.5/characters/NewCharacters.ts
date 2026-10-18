@@ -4,6 +4,11 @@ import AbilityRules from "@/engine/rulesets/dnd3.5/rules/AbilityRules.ts";
 import { MIN_ABILITY_SCORE, STARTING_ABILITY_SCORE } from "@/vocabulary/dnd3.5/abilities.ts";
 import { CREATION_METHODS } from "@/vocabulary/dnd3.5/creation.ts";
 
+/** What a new character's form reads of a ruleset's view: its abilities, each by its id and name. */
+interface CreationView {
+  rulesetData: { abilities: readonly CharacterCreation["abilities"][number][] };
+}
+
 /** A 3.5 creation method, as its data writes it. */
 type MethodData = (typeof CREATION_METHODS)[number];
 
@@ -20,10 +25,11 @@ export default class NewCharacters {
   }
 
   /**
-   * How a new character's ability scores are set: the SRD's methods, the scores' bounds and the one an unset ability
-   * shows, and each score's modifier over those bounds, by the abilities' one formula.
+   * How a new character's ability scores are set: the ruleset's abilities (`view`'s), in the order its sheet lists
+   * them, the SRD's methods, the scores' bounds and the one an unset ability shows, and each score's modifier over those
+   * bounds, by the abilities' one formula.
    */
-  static describeCreation(): CharacterCreation {
+  static describeCreation(view: CreationView): CharacterCreation {
     const scores = { max: RULESET_LIMITS.abilityScore, min: MIN_ABILITY_SCORE, start: STARTING_ABILITY_SCORE };
     const modifiers = Object.fromEntries(
       Array.from({ length: scores.max - scores.min + 1 }, (_, index) => {
@@ -31,6 +37,12 @@ export default class NewCharacters {
         return [score, AbilityRules.computeModifier(score)];
       }),
     );
-    return { methods: CREATION_METHODS.map((method) => NewCharacters.methodOf(method)), modifiers, scores };
+    const abilities = view.rulesetData.abilities.map(({ id, name }) => ({ id, name }));
+    return {
+      abilities: AbilityRules.orderAbilities(abilities, (ability) => ability.name),
+      methods: CREATION_METHODS.map((method) => NewCharacters.methodOf(method)),
+      modifiers,
+      scores,
+    };
   }
 }

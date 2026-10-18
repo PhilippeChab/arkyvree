@@ -62,15 +62,13 @@ export default abstract class RulesetEntity<
   /**
    * The fields a form gives (its `fields`, which the route carries as it is), read by the kind's codec, those it gives
    * (none when it gives none): refused as invalid, by field, as a route's validation refuses a body, when one isn't a
-   * field whose property type the entity type declares, of its field's type, in its bounds or among its type's values,
-   * or names an entity the view shows none of. A reference reads as the id the view keys its entity by.
+   * field its kind declares, of its field's type, in its bounds or among its values, or names an entity the view shows
+   * none of. A reference reads as the id the view keys its entity by.
    */
   private readFields(body: Body, entity?: ViewEntities[K]): Partial<FieldValues<S>> {
     const given = "fields" in body ? body.fields : undefined;
     if (!isOneOf(this.type, PROPERTY_ENTITY_TYPES)) return {};
     return this.fields.parse(given, {
-      declarations: this.rulesetData.propertyTypes,
-      entityType: this.type,
       kept: entity && this.fieldsOf(entity),
       resolve: (type, id) => this.ids.resolve(type, id),
     });
@@ -170,7 +168,7 @@ export default abstract class RulesetEntity<
   /** The fields its form shows, as the ruleset declares them: their labels, their inputs and their options. */
   describeFields(): FormField[] {
     if (!isOneOf(this.type, PROPERTY_ENTITY_TYPES)) return [];
-    return this.fields.describe(this.rulesetData.propertyTypes, this.type);
+    return this.fields.describe();
   }
 
   /** The entity the view shows for an id: refused when it shows none. */

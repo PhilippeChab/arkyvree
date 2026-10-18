@@ -438,14 +438,14 @@ describe("LevelsService", () => {
     expect(await getLevelStep(session, character.id, "abilities")).toEqual({
       name: "abilities",
       isAvailable: false,
-      attributes: {},
+      attributes: [],
       picked: true,
     });
 
     await addCharacterLevel(character.id, klassLevels[2].id);
     expect(await getLevelStep(session, character.id, "abilities")).toMatchObject({
       isAvailable: true,
-      attributes: expect.any(Object),
+      attributes: expect.any(Array),
       picked: false,
     });
     // One at a time: the test's transaction has a single connection

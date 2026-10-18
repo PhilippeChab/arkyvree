@@ -23,6 +23,11 @@ export const QUERY_KEYS = {
      */
     abilities: (id: string) => ["rulesets", "detail", id, "abilities", "options"] as const,
     /**
+     * How a new character of the ruleset sets its ability scores, and its abilities in its sheets' order. Nested like
+     * `abilities`, so the ruleset's refresh refreshes them too.
+     */
+    characterCreation: (id: string) => ["rulesets", "detail", id, "abilities", "creation"] as const,
+    /**
      * The templates of an item type (the weapons, armors or shields an item can be based on). Nested under the Items
      * section key so an item's write refreshes them too.
      */
@@ -89,7 +94,6 @@ export const QUERY_KEYS = {
         : (["characters", "unlinked", campaignId] as const),
     availableRaces: (rulesetId: string, filters?: Record<string, unknown>) =>
       ["characters", "availableRaces", rulesetId, filters] as const,
-    creation: (rulesetId: string) => ["characters", "creation", rulesetId] as const,
     /** A level-up read's cache: its key holds the query (or the body) it sends, so no parameter is left out of it. */
     levelUp: {
       all: (characterId: string) => ["characters", "levelUp", characterId] as const,

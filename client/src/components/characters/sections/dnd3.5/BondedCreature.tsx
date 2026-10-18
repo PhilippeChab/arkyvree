@@ -1,11 +1,9 @@
 import { Box, Link as MuiLink, Stack } from "@mui/material";
 import { Link } from "react-router-dom";
 
-import { sortAbilities } from "@/client/src/components/characters/sections/abilityOrder.ts";
 import { EntryTitle } from "@/client/src/components/characters/sections/EntryTitle.tsx";
 import { SubsectionTitle, ValueChip } from "@/client/src/components/common/index.ts";
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
-import type { BaseRules } from "@/shared/enums.ts";
 import { formatSigned } from "@/shared/text.ts";
 
 import { AbilityScoreBox } from "./AbilityScoreBox.tsx";
@@ -13,8 +11,6 @@ import { ArmorClassBoxes } from "./ArmorClassBoxes.tsx";
 import { StatField } from "./StatField.tsx";
 
 interface BondedCreatureProps {
-  /** Its master's sheet's base rules, which order its abilities. */
-  baseRules: BaseRules;
   bonded: NonNullable<CharacterDetail["bonded"][string]>;
   /** The creature's name links to its sheet. */
   linkable?: boolean;
@@ -27,9 +23,7 @@ function isFeat(entry: FeatEntry): entry is Extract<FeatEntry, { possessed: bool
   return "possessed" in entry && typeof entry.possessed === "boolean";
 }
 
-export function BondedCreature({ bonded, baseRules, linkable = false }: BondedCreatureProps) {
-  const abilityEntries = sortAbilities(Object.entries(bonded.abilities), baseRules, ([name]) => name);
-
+export function BondedCreature({ bonded, linkable = false }: BondedCreatureProps) {
   const combat = bonded.combat;
   // A creature has one weapon set, its natural attacks', with no shield: its armor class
   const armorClass = combat?.weaponSets?.[0]?.ac;
@@ -68,8 +62,8 @@ export function BondedCreature({ bonded, baseRules, linkable = false }: BondedCr
               gap: 1,
             }}
           >
-            {abilityEntries.map(([name, data]) => (
-              <AbilityScoreBox key={name} ability={name} score={data.total} modifier={data.modifier} compact />
+            {bonded.abilities.map((ability) => (
+              <AbilityScoreBox key={ability.abilityId} ability={ability} compact />
             ))}
           </Box>
         </Stack>

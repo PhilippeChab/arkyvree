@@ -1,9 +1,15 @@
-import type { PropertyTypesProvider } from "@/engine/core/customizations/index.ts";
 import type { PropertyValue } from "@/engine/core/module/index.ts";
-import type { PropertyEntityType } from "@/shared/customization/entities.ts";
 import { copyProgression, countRoomAt, type ProgressionValue } from "@/shared/customization/progression.ts";
 
-import Field, { type Fields, type FieldSpec, type FieldValues, type NoFields } from "./Field.ts";
+import Field, {
+  type Fields,
+  type FieldSpec,
+  type FieldValues,
+  type FlagSpec,
+  type NoFields,
+  type NumberSpec,
+  type ProgressionSpec,
+} from "./Field.ts";
 import FieldForms, { type FormContext } from "./FieldForms.ts";
 import type { FormField } from "./FormField.ts";
 
@@ -20,14 +26,12 @@ interface Row {
   value: string;
 }
 
-/** A progression field's spec. */
-type ProgressionSpec = Extract<FieldSpec, { kind: "progression" }>;
-
 /**
- * An entity's fields kept in its properties, read and written by one spec (`fields`, written with `Field`): their
- * defaults, the property types that store them, the rows of an entity read into values in one pass, values written
- * back as rows (all of them, or those another's don't hold: `toOverrides`), an edit's values merged over what's kept,
- * a form's fields read as a save takes them (`parse`), and described as a form shows them (`describe`).
+ * An entity's fields kept in its properties, read and written by one spec (`fields`, as its ruleset's vocabulary
+ * declares them: `FieldSpec`): their defaults, the property types that store them, the rows of an entity read into
+ * values in one pass, values written back as rows (all of them, or those another's don't hold: `toOverrides`), an
+ * edit's values merged over what's kept, a form's fields read as a save takes them (`parse`), and described as a form
+ * shows them (`describe`).
  */
 export default class FieldCodec<S extends Fields> {
   constructor(
@@ -36,12 +40,17 @@ export default class FieldCodec<S extends Fields> {
   ) {
     this.defaults = FieldCodec.defaultsOf(fields) as FieldValues<S>;
     this.keys = Object.keys(fields) as (keyof S & string)[];
-    this.types = FieldCodec.typesOf(fields);
+    this.types = Field.leavesOf(fields).map((field) => field.type);
     this.typeSet = new Set(this.types);
   }
 
   /** No fields: a kind's whose properties hold none of its own, read as nothing. */
   static readonly NONE: FieldCodec<NoFields> = new FieldCodec({});
+
+  /** A flag's value without a row: none when it tells its absence apart, false otherwise. */
+  private static absentOf(field: FlagSpec) {
+    return field.absent === null ? null : false;
+  }
 
   /** The values of the fields at a level, each that doesn't count on its condition (`Field.counts`) at its default. */
   private static applyConditions(fields: Fields, values: Record<string, unknown>): Record<string, unknown> {
@@ -57,9 +66,9 @@ export default class FieldCodec<S extends Fields> {
   private static defaultOf(field: FieldSpec): unknown {
     switch (field.kind) {
       case "flag":
-        return field.absent;
+        return FieldCodec.absentOf(field);
       case "number":
-        return field.default;
+        return field.default ?? null;
       case "list":
         return [];
       case "progression":
@@ -87,7 +96,7 @@ export default class FieldCodec<S extends Fields> {
     const values = rows.get(field.type) ?? [];
     switch (field.kind) {
       case "flag":
-        return values.length === 0 ? field.absent : values.includes("true");
+        return values.length === 0 ? FieldCodec.absentOf(field) : values.includes("true");
       case "number":
         return FieldCodec.readNumber(field, values);
       case "choice": {
@@ -112,14 +121,14 @@ export default class FieldCodec<S extends Fields> {
   }
 
   /** A number field's value: the first of its rows' values that's a number in its bounds, its default otherwise. */
-  private static readNumber(field: Extract<FieldSpec, { kind: "number" }>, values: string[]): number | null {
+  private static readNumber(field: NumberSpec, values: string[]): number | null {
     for (const value of values) {
       const number = Number(value);
       if (value.trim() === "" || !Number.isFinite(number)) continue;
       if ((field.min !== undefined && number < field.min) || (field.max !== undefined && number > field.max)) continue;
       return number;
     }
-    return field.default;
+    return field.default ?? null;
   }
 
   /**
@@ -157,13 +166,6 @@ export default class FieldCodec<S extends Fields> {
     return JSON.stringify(sorted(a)) === JSON.stringify(sorted(b));
   }
 
-  /** The property types that store the fields, a group's too. */
-  private static typesOf(fields: Fields): string[] {
-    return Object.values(fields).flatMap((field) =>
-      field.kind === "group" ? FieldCodec.typesOf(field.fields) : field.type,
-    );
-  }
-
   /** A field's value as its rows' values: none for no value (an empty text, a default number unless always written). */
   private static writeField(field: FieldSpec, value: unknown): PropertyValue[] {
     if (value === undefined || value === null) return [];
@@ -180,9 +182,7 @@ export default class FieldCodec<S extends Fields> {
       case "flag":
         return field.absent === null || value === true ? [{ type: field.type, value: String(value) }] : [];
       case "number":
-        return field.write === "unlessDefault" && value === field.default
-          ? []
-          : [{ type: field.type, value: String(value) }];
+        return field.write !== "always" && value === field.default ? [] : [{ type: field.type, value: String(value) }];
       default:
         return value === "" ? [] : [{ type: field.type, value: String(value) }];
     }
@@ -202,15 +202,15 @@ export default class FieldCodec<S extends Fields> {
   /** The fields' names, in the spec's order. */
   readonly keys: (keyof S & string)[];
 
-  /** The property types that store the fields. */
+  /** The property types that store the fields, a group's too, in the spec's order. */
   readonly types: string[];
 
   /**
-   * The fields as an entity type's form shows them (`entityType`, whose property types the ruleset declares with their
-   * labels and values: `declarations`), in the order it declares them: its own fields before its groups'.
+   * The fields as the entity's form shows them, labeled and explained as they're declared, in their order: its own
+   * fields before its groups'.
    */
-  describe(declarations: PropertyTypesProvider, entityType: PropertyEntityType): FormField[] {
-    return FieldForms.describe(this.fields, declarations.getDeclarations(entityType), declarations);
+  describe(): FormField[] {
+    return FieldForms.describe(this.fields);
   }
 
   /** The values an edit keeps: what's kept, with the fields the edit gives over it (its other keys aside). */

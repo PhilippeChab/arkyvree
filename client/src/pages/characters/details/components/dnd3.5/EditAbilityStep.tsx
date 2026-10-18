@@ -2,7 +2,6 @@ import { type Control, useController } from "react-hook-form";
 
 import { BlankNote, DiceSpinner, LoadError } from "@/client/src/components/common/index.ts";
 import type { LevelUpFormData } from "@/client/src/pages/characters/details/components/levelUp/index.ts";
-import type { BaseRules } from "@/shared/enums.ts";
 
 import { AbilityIncreaseField } from "./AbilityIncreaseField.tsx";
 import type { AbilitiesData } from "./levelUp/index.ts";
@@ -16,11 +15,10 @@ interface EditAbilityState {
 }
 
 interface EditAbilityStepProps {
-  baseRules: BaseRules;
   wizard: EditAbilityState;
 }
 
-export function EditAbilityStep({ wizard, baseRules }: EditAbilityStepProps) {
+export function EditAbilityStep({ wizard }: EditAbilityStepProps) {
   const { abilityData, isLoadingAbilities, abilitiesError, control } = wizard;
   const { field } = useController({ control, name: "selectedAbility" });
   if (isLoadingAbilities) return <DiceSpinner />;
@@ -30,7 +28,6 @@ export function EditAbilityStep({ wizard, baseRules }: EditAbilityStepProps) {
   return (
     <AbilityIncreaseField
       abilities={abilityData.attributes}
-      baseRules={baseRules}
       name="ability-increase"
       value={field.value}
       onChange={field.onChange}

@@ -1,9 +1,7 @@
-import { capitalize } from "@/shared/text.ts";
-
 import type { AbilitiesData } from "./levelUp/index.ts";
 
-/** An ability's display name ("Strength") in the level's ability slots, by ability id. */
+/** An ability's name as its ruleset gives it ("Force Points") in the level's ability slots, by ability id. */
 export function abilityName(abilityData: AbilitiesData | undefined, abilityId: string): string {
-  const entry = Object.entries(abilityData?.attributes ?? {}).find(([, v]) => v.abilityId === abilityId);
-  return entry ? capitalize(entry[0]) : abilityId;
+  const ability = abilityData?.attributes.find((a) => a.abilityId === abilityId);
+  return ability?.name ?? abilityId;
 }

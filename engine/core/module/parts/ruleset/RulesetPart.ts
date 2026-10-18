@@ -1,10 +1,4 @@
-import type {
-  EntityFieldValue,
-  EntityFieldValues,
-  FieldCodec,
-  FormField,
-  PropertyField,
-} from "@/engine/core/fields/index.ts";
+import type { EntityFieldValues, FieldCodec, FormField, LeafSpec } from "@/engine/core/fields/index.ts";
 import type { EntityWrites } from "@/engine/core/module/parts/entities/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import { RequestIds, type RulesetView } from "@/engine/core/view/index.ts";
@@ -15,8 +9,11 @@ import type { RulesetKind } from "@/shared/enums.ts";
  * its Settings (`fields`, which its properties hold), as its chain composes them and as their save writes them.
  */
 export default abstract class RulesetPart {
-  /** The ruleset's own fields, its Settings, which its properties hold (3.5's: the skill points' ability). */
-  protected abstract readonly fields: FieldCodec<Record<string, PropertyField<EntityFieldValue>>>;
+  /**
+   * The ruleset's own fields, its Settings, which its properties hold (3.5's: the skill points' ability), each a value of
+   * its own: none is a group.
+   */
+  protected abstract readonly fields: FieldCodec<Readonly<Record<string, LeafSpec>>>;
 
   /** The content its rules make a character of that a ruleset's view lacks, each named by its kind (`race`, `skill`). */
   protected abstract findMissingContent(view: RulesetView): string[];
@@ -47,8 +44,8 @@ export default abstract class RulesetPart {
   }
 
   /** The fields of the ruleset's Settings, as it declares them: their labels, their inputs and their options. */
-  describeSettingsFields(view: RulesetView): FormField[] {
-    return this.fields.describe(view.rulesetData.propertyTypes, "rulesets");
+  describeSettingsFields(): FormField[] {
+    return this.fields.describe();
   }
 
   /**
@@ -63,8 +60,6 @@ export default abstract class RulesetPart {
     const kept = this.settingsOf(view);
     const ids = new RequestIds(view.rulesetData, "this ruleset");
     const given = this.fields.parse(body.fields, {
-      declarations: view.rulesetData.propertyTypes,
-      entityType: "rulesets",
       kept,
       resolve: (type, id) => ids.resolve(type, id),
     });

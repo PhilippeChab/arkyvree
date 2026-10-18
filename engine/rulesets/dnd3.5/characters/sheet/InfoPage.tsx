@@ -4,6 +4,7 @@ import CombatSheet from "@/engine/rulesets/dnd3.5/characters/description/CombatS
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import { CLASS_SEPARATOR, formatClassLevel } from "@/shared/characterClasses.ts";
 
+import AbilityScores from "./AbilityScores.tsx";
 import SheetFormat from "./SheetFormat.ts";
 import { FONT_SIZE, styles } from "./styles.ts";
 import WeaponSets from "./WeaponSets.tsx";
@@ -23,7 +24,6 @@ function InfoPage({
   const saves = detailedCharacter.components.saves;
   const classes = detailedCharacter.components.classes;
   const identityData = identity.getIdentity();
-  const abilityData = abilities.getAbilities();
   const combatData = CombatSheet.describe(combat);
   const saveData = saves.getSaves();
   const classData = classes.getCharacterClasses();
@@ -138,32 +138,7 @@ function InfoPage({
           {/* Ability Scores */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Ability Scores</Text>
-            <View style={[styles.row, { justifyContent: "space-between" }]}>
-              {(
-                [
-                  { label: "STR", key: "strength", name: "Strength" },
-                  { label: "DEX", key: "dexterity", name: "Dexterity" },
-                  { label: "CON", key: "constitution", name: "Constitution" },
-                  { label: "INT", key: "intelligence", name: "Intelligence" },
-                  { label: "WIS", key: "wisdom", name: "Wisdom" },
-                  { label: "CHA", key: "charisma", name: "Charisma" },
-                ] as const
-              ).map(({ label, key, name }) => {
-                const ab = abilityData[key];
-                return (
-                  <View key={key} style={styles.abilityBox}>
-                    <Text style={styles.abilityName}>{label}</Text>
-                    <Text style={styles.abilityScore}>{ab?.total ?? 10}</Text>
-                    <Text style={styles.abilityMod}>
-                      {SheetFormat.formatModifier(abilities.getAbilityModifier(name))}
-                    </Text>
-                    <Text style={{ fontSize: FONT_SIZE.xs, color: "#666", marginTop: 2, textAlign: "center" }}>
-                      {`${ab?.base ?? 10} / ${SheetFormat.formatModifier(ab?.level)} / ${SheetFormat.formatModifier(ab?.misc)}`}
-                    </Text>
-                  </View>
-                );
-              })}
-            </View>
+            <AbilityScores abilities={abilities.getAbilitiesWithIds()} />
           </View>
         </View>
 

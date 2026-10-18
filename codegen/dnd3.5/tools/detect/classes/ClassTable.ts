@@ -2,7 +2,7 @@
 
 import { normalizeFeatureName } from "@/codegen/dnd3.5/tools/text/names.ts";
 import type { ClassReference } from "@/codegen/dnd3.5/tools/types/classes.ts";
-import type { BabType, SaveType } from "@/content/dnd3.5/builders/classes/types.ts";
+import type { BabType, CasterLevelAdvancement, SaveType } from "@/content/dnd3.5/builders/classes/types.ts";
 
 function goodSave(level: number): number {
   return Math.floor(level / 2) + 2;
@@ -54,7 +54,7 @@ export class ClassTable {
   }
 
   /** The levels that advance an existing spellcasting class ("+1 level of existing arcane class"), and its kind. */
-  casterAdvancement(): ClassReference["detected"]["casterLevelAdvancement"] | undefined {
+  casterAdvancement(): CasterLevelAdvancement | undefined {
     const levels: number[] = [];
     let hasArcane = false;
     let hasDivine = false;
@@ -77,7 +77,7 @@ export class ClassTable {
 
     if (levels.length === 0) return undefined;
 
-    let type: "divine" | "arcane" | "any" | "dual";
+    let type: CasterLevelAdvancement["type"];
     if (hasArcane && hasDivine) type = "dual"; // Both arcane+divine (e.g. Mystic Theurge)
     else if (hasArcane) type = "arcane";
     else if (hasDivine) type = "divine";

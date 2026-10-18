@@ -5,6 +5,9 @@ import { type ClassReference } from "@/codegen/dnd3.5/tools/types/classes.ts";
 /** What a class's prerequisites ask for, read from their text. */
 type Parsed = ClassReference["raw"]["prerequisites"]["parsed"];
 
+/** A kind of spellcasting a prerequisite names: arcane or divine (any is none named). */
+type SpellcastingKind = Exclude<NonNullable<Parsed["casterLevel"]>[number]["type"], "any">;
+
 /** A Spells line's label: "Spells", "Spell", "Spells or Spell-Like Abilities", "Spellcasting". */
 const SPELLS_LABEL = String.raw`Spell(?:s|casting)?(?: or Spell-Like Abilities)?`;
 
@@ -32,12 +35,12 @@ export class PrerequisiteText {
 
   /** The spellcasting the prerequisites require: a spell level of a kind (arcane, divine, any), or a kind from 1st. */
   private requiredCasterLevels(): NonNullable<Parsed["casterLevel"]> {
-    const casterLevels: { level: number; type: "divine" | "arcane" | "any" }[] = [];
+    const casterLevels: NonNullable<Parsed["casterLevel"]> = [];
 
     const spellLevelRegex = /(\d+)(?:st|nd|rd|th)[- ]level\s+(divine|arcane)\s*spells?/gi;
     let slMatch;
     while ((slMatch = spellLevelRegex.exec(this.text)) !== null)
-      casterLevels.push({ type: slMatch[2].toLowerCase() as "divine" | "arcane", level: parseInt(slMatch[1], 10) });
+      casterLevels.push({ type: slMatch[2].toLowerCase() as SpellcastingKind, level: parseInt(slMatch[1], 10) });
 
     if (casterLevels.length === 0) {
       const genericMatch = this.text.match(/(?:Able to|ability to) cast (\d+)(?:st|nd|rd|th)[- ]level\s*spells?/i);
@@ -47,14 +50,14 @@ export class PrerequisiteText {
     const spellOfMatch = this.text.match(/(arcane|divine)\s+spells?\s+of\s+(\d+)(?:st|nd|rd|th)\s+level/i);
     if (spellOfMatch) {
       casterLevels.push({
-        type: spellOfMatch[1].toLowerCase() as "divine" | "arcane",
+        type: spellOfMatch[1].toLowerCase() as SpellcastingKind,
         level: parseInt(spellOfMatch[2], 10),
       });
     }
 
     const castTypeMatch = this.text.match(/(?:Able to|ability to) cast (arcane|divine) spells/i);
     if (castTypeMatch && casterLevels.every((c) => c.type !== castTypeMatch[1].toLowerCase()))
-      casterLevels.push({ type: castTypeMatch[1].toLowerCase() as "divine" | "arcane", level: 1 });
+      casterLevels.push({ type: castTypeMatch[1].toLowerCase() as SpellcastingKind, level: 1 });
 
     return casterLevels;
   }

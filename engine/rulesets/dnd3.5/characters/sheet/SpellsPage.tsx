@@ -1,10 +1,10 @@
 import { Page, Text, View } from "@react-pdf/renderer";
 
 import SpellGroups from "@/engine/rulesets/dnd3.5/characters/description/SpellGroups.ts";
+import { POWER_FIELDS } from "@/engine/rulesets/dnd3.5/entities/powers/fields.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import { formatPropertyType } from "@/shared/customization/properties.ts";
 import {
-  ENTITY_PROPERTY_TYPES,
   SPELL_AREA_OF_EFFECT,
   SPELL_CASTING_TIME,
   SPELL_COMPONENT,
@@ -24,23 +24,28 @@ import SpellsPerDayTable from "./SpellsPerDayTable.tsx";
 import { FONT_SIZE, styles } from "./styles.ts";
 
 /**
- * Short labels so each spell's property row fits on a single line. A legend is rendered once at the top of the spells
- * section.
+ * Short labels so each spell's property row fits on a single line. A legend at the top of the spells section spells
+ * each one out as its field's label.
  */
-const SPELL_PROPERTY_ABBR: Record<string, { full: string; short: string }> = {
-  [SPELL_SUBSCHOOL]: { short: "SS", full: "Subschool" },
-  [SPELL_DESCRIPTOR]: { short: "Desc", full: "Descriptor" },
-  [SPELL_COMPONENT]: { short: "Comp", full: "Components" },
-  [SPELL_CASTING_TIME]: { short: "CT", full: "Casting Time" },
-  [SPELL_RANGE_TYPE]: { short: "R", full: "Range" },
-  [SPELL_TARGET]: { short: "T", full: "Target" },
-  [SPELL_EFFECT]: { short: "Eff", full: "Effect" },
-  [SPELL_AREA_OF_EFFECT]: { short: "Area", full: "Area of Effect" },
-  [SPELL_DURATION]: { short: "Dur", full: "Duration" },
-  [SPELL_RESISTANCE]: { short: "SR", full: "Spell Resistance" },
+const SPELL_PROPERTY_ABBR: Record<string, string> = {
+  [SPELL_SUBSCHOOL]: "SS",
+  [SPELL_DESCRIPTOR]: "Desc",
+  [SPELL_COMPONENT]: "Comp",
+  [SPELL_CASTING_TIME]: "CT",
+  [SPELL_RANGE_TYPE]: "R",
+  [SPELL_TARGET]: "T",
+  [SPELL_EFFECT]: "Eff",
+  [SPELL_AREA_OF_EFFECT]: "Area",
+  [SPELL_DURATION]: "Dur",
+  [SPELL_RESISTANCE]: "SR",
 };
-/** The spell properties in a 3.5 stat block's order (the property types' registry); the others follow by name. */
-const SPELL_PROPERTY_ORDER = Object.keys(ENTITY_PROPERTY_TYPES.powers ?? {});
+
+/** Each spell property's label, as its field declares it. */
+const SPELL_PROPERTY_LABELS = new Map<string, string>(
+  Object.values(POWER_FIELDS.fields).map((field) => [field.type, field.label]),
+);
+/** The spell properties in a 3.5 stat block's order (the order its fields are declared in); the others follow by name. */
+const SPELL_PROPERTY_ORDER = POWER_FIELDS.types;
 
 const SPELL_PROPERTY_ORDER_INDEX = new Map(SPELL_PROPERTY_ORDER.map((k, i) => [k, i]));
 
@@ -74,9 +79,10 @@ function SpellsPage({ detailedCharacter }: { detailedCharacter: DetailedCharacte
               }
             }
           }
-          const legendEntries = SPELL_PROPERTY_ORDER.filter((key) => presentKeys.has(key)).map(
-            (key) => SPELL_PROPERTY_ABBR[key],
-          );
+          const legendEntries = SPELL_PROPERTY_ORDER.filter((key) => presentKeys.has(key)).map((key) => ({
+            full: SPELL_PROPERTY_LABELS.get(key),
+            short: SPELL_PROPERTY_ABBR[key],
+          }));
           if (legendEntries.length === 0) return null;
           return (
             <Text style={{ fontSize: FONT_SIZE.sm, color: "#666", fontStyle: "italic", marginBottom: 4 }}>
@@ -162,7 +168,7 @@ function SpellsPage({ detailedCharacter }: { detailedCharacter: DetailedCharacte
                                 <Text key={key}>
                                   {i > 0 ? " • " : ""}
                                   <Text style={{ fontWeight: "bold", color: "#333" }}>
-                                    {SPELL_PROPERTY_ABBR[key]?.short ?? formatPropertyType(key)}
+                                    {SPELL_PROPERTY_ABBR[key] ?? formatPropertyType(key)}
                                   </Text>{" "}
                                   {value}
                                 </Text>

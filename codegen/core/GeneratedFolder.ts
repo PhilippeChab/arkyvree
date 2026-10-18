@@ -38,28 +38,6 @@ export class GeneratedFolder {
   ) {}
 
   /**
-   * Lays a generated tree out as the rest of the repo is, by the repo's configs wherever the tree is written, so what
-   * the generator writes passes the lint and the format check: its declarations sorted by `member-order` (with its
-   * suggestions: a generated value builds data, whatever order it runs in), then formatted by `oxfmt`.
-   */
-  private static format(dir: string) {
-    // Its files by name: the repo ignores the copy a generation writes (`.gitignore`), and oxfmt a folder it ignores
-    const files = readdirSync(dir, { recursive: true, withFileTypes: true })
-      .filter((entry) => entry.isFile() && entry.name.endsWith(".ts"))
-      .map((entry) => join(entry.parentPath, entry.name));
-    const sorted = Bun.spawnSync(
-      [LINTER, "-c", LINTER_CONFIG, "-A", "all", "-D", "arkyvree/member-order", "--fix", "--fix-suggestions", ...files],
-      { stdout: "pipe", stderr: "pipe" },
-    );
-    if (sorted.exitCode !== 0) throw new Error(`Sorting ${dir} failed: ${sorted.stdout.toString()}`);
-    const formatted = Bun.spawnSync([FORMATTER, "-c", FORMATTER_CONFIG, ...files], {
-      stdout: "pipe",
-      stderr: "pipe",
-    });
-    if (formatted.exitCode !== 0) throw new Error(`Formatting ${dir} failed: ${formatted.stderr.toString()}`);
-  }
-
-  /**
    * Takes `lock`, a file only one process can create: a second generation on the same folder would work in the first's
    * copy.
    */
@@ -73,11 +51,54 @@ export class GeneratedFolder {
   }
 
   /**
+   * Lays a generated tree out as the rest of the repo is, by the repo's configs wherever the tree is written, so what
+   * the generator writes passes the lint and the format check: its declarations sorted by `member-order` (with its
+   * suggestions: a generated value builds data, whatever order it runs in), then formatted by `oxfmt`.
+   */
+  private static async format(dir: string) {
+    // Its files by name: the repo ignores the copy a generation writes (`.gitignore`), and oxfmt a folder it ignores
+    const files = readdirSync(dir, { recursive: true, withFileTypes: true })
+      .filter((entry) => entry.isFile() && entry.name.endsWith(".ts"))
+      .map((entry) => join(entry.parentPath, entry.name));
+    // Given no file, oxlint and oxfmt would work on the folder they run in: the repo's
+    if (files.length === 0) return;
+    const sorted = await GeneratedFolder.run([
+      LINTER,
+      "-c",
+      LINTER_CONFIG,
+      "-A",
+      "all",
+      "-D",
+      "arkyvree/member-order",
+      "--fix",
+      "--fix-suggestions",
+      ...files,
+    ]);
+    if (sorted.exitCode !== 0) throw new Error(`Sorting ${dir} failed: ${sorted.stdout}`);
+    const formatted = await GeneratedFolder.run([FORMATTER, "-c", FORMATTER_CONFIG, ...files]);
+    if (formatted.exitCode !== 0) throw new Error(`Formatting ${dir} failed: ${formatted.stderr}`);
+  }
+
+  /**
+   * Runs a tool on a generated tree, asynchronously: Bun's `spawnSync` can miss a child's exit in a `bun test --parallel`
+   * worker and spin it for good, past its test's timeout. Its exit code and output.
+   */
+  private static async run(command: string[]) {
+    const proc = Bun.spawn(command, { stdout: "pipe", stderr: "pipe" });
+    const [stdout, stderr, exitCode] = await Promise.all([
+      new Response(proc.stdout).text(),
+      new Response(proc.stderr).text(),
+      proc.exited,
+    ]);
+    return { stdout, stderr, exitCode };
+  }
+
+  /**
    * Runs a generation in a copy of `dir`, which takes `dir`'s place only when the generation reports no failure: a
    * failed one leaves `dir` as it was rather than half-written. The copy sits next to `dir`, so the swap is a rename,
    * and one generation runs on `dir` at a time.
    */
-  static generateAtomically(dir: string, generate: (copy: string) => string[]): string[] {
+  static async generateAtomically(dir: string, generate: (copy: string) => string[]): Promise<string[]> {
     const copy = `${dir}.next`;
     const previous = `${dir}.previous`;
     const lock = `${dir}.lock`;
@@ -90,7 +111,7 @@ export class GeneratedFolder {
       cpSync(dir, copy, { recursive: true });
       const failures = generate(copy);
       if (failures.length === 0) {
-        GeneratedFolder.format(copy);
+        await GeneratedFolder.format(copy);
         renameSync(dir, previous);
         try {
           renameSync(copy, dir);

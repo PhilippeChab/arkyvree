@@ -44,7 +44,6 @@ export interface RulesetModule<
   characters: CharactersPart<D>;
   /** What the ruleset answers its content's seeders and codegen: the paths a book can target, its fields' properties */
   content: ContentPart<F>;
-  createPropertyTypes(): PropertyTypesProvider;
   createTargetPaths(): TargetPaths;
   /** What the ruleset answers of its entities: their fields, and what their forms write */
   entities: EntitiesPart<E>;
@@ -52,6 +51,8 @@ export interface RulesetModule<
   imports: ImportsPart;
   /** What the ruleset answers a character's level-up, from the rows the server reads */
   levelUp: LevelUpPart<D>;
+  /** The property types its entities' fields are stored in, their order and values: one instance nothing changes */
+  propertyTypes: PropertyTypesProvider;
   /** What the ruleset answers of a ruleset as a whole, past its entities: what it needs to be published */
   ruleset: RulesetPart;
 }

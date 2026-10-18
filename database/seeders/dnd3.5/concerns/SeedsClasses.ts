@@ -1,7 +1,7 @@
 import { bonus } from "@/content/core/builders/customization/modifiers.ts";
 import { gt } from "@/content/core/builders/customization/requirements.ts";
 import type { ModifierSeed, RequirementEntry } from "@/content/core/builders/customization/types.ts";
-import type { BabType, ClassSeed, SaveType } from "@/content/dnd3.5/builders/classes/types.ts";
+import type { BabType, CasterLevelAdvancement, ClassSeed, SaveType } from "@/content/dnd3.5/builders/classes/types.ts";
 import type { BaseSeeder } from "@/database/seeders/dnd3.5/BaseSeeder.ts";
 import { getSpellLevelOpenings } from "@/database/seeders/dnd3.5/spellTable.ts";
 import {
@@ -29,7 +29,7 @@ const BAB: Record<BabType, (level: number) => number> = {
 };
 
 /** The aptitudes a level that advances spellcasting gives a pick in, by the kind of caster it advances. */
-const CASTER_LEVEL_APTITUDES = {
+const CASTER_LEVEL_APTITUDES: Record<CasterLevelAdvancement["type"], string[]> = {
   divine: ["Bonus Divine Caster Level"],
   arcane: ["Bonus Arcane Caster Level"],
   any: ["Bonus Caster Level"],

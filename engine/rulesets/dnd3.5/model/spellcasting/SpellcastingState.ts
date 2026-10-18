@@ -8,7 +8,7 @@ import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading
 import type PowerGroupingsComponent from "@/engine/rulesets/dnd3.5/model/powers/PowerGroupingsComponent.ts";
 import type PowersComponent from "@/engine/rulesets/dnd3.5/model/powers/PowersComponent.ts";
 import type { KlassLevel, Modifier, Power, Property } from "@/shared/relations.ts";
-import { MAX_CLASS_LEVEL } from "@/vocabulary/dnd3.5/classes.ts";
+import { type CasterType, MAX_CLASS_LEVEL } from "@/vocabulary/dnd3.5/classes.ts";
 import { MAX_SPELL_LEVEL } from "@/vocabulary/dnd3.5/spells.ts";
 
 /**
@@ -51,8 +51,8 @@ export default abstract class SpellcastingState extends CharacterComponent<Loade
    * arcane (`spellcasting.casterlevel`, `.arcanecasterlevel`).
    */
   protected readonly castingLevels: CastingLevels = (() => {
-    const casterLevel = (casterType?: "Arcane" | "Divine") => this.highestCasterLevel(casterType);
-    const spellLevel = (casterType: "Arcane" | "Divine") => this.highestSpellLevel(casterType);
+    const casterLevel = (casterType?: CasterType) => this.highestCasterLevel(casterType);
+    const spellLevel = (casterType: CasterType) => this.highestSpellLevel(casterType);
     return {
       get arcane() {
         return spellLevel("Arcane");
@@ -89,7 +89,7 @@ export default abstract class SpellcastingState extends CharacterComponent<Loade
   protected bonusKlassLevels: KlassLevel[] = [];
 
   /** Each class's caster type, by its id: a class casting neither has none. */
-  protected casterTypeByKlassId = new Map<string, "Arcane" | "Divine">();
+  protected casterTypeByKlassId = new Map<string, CasterType>();
 
   /** Each class's spell lists, by its id (`initialize`). */
   protected classListsByKlassId = new Map<string, Set<string>>();
@@ -106,7 +106,7 @@ export default abstract class SpellcastingState extends CharacterComponent<Loade
    * casts once it has slots at a spell level, cantrips included, so a bard from his first level and a paladin from his
    * fourth. A multiclass character's caster levels don't add up.
    */
-  private highestCasterLevel(casterType?: "Arcane" | "Divine"): number {
+  private highestCasterLevel(casterType?: CasterType): number {
     let highest = 0;
     for (const [className, klassData] of Object.entries(this.classes.getCharacterClasses())) {
       const classCasterType = this.casterTypeByKlassId.get(klassData.klass.id);
@@ -135,7 +135,7 @@ export default abstract class SpellcastingState extends CharacterComponent<Loade
   }
 
   /** The highest spell level any of the classes of a caster type has slots at, in any of its lists: 0 for cantrips alone. */
-  private highestSpellLevel(casterType: "Arcane" | "Divine"): number {
+  private highestSpellLevel(casterType: CasterType): number {
     let highest = 0;
     for (const [className, klassData] of Object.entries(this.classes.getCharacterClasses())) {
       if (this.casterTypeByKlassId.get(klassData.klass.id) === casterType)
