@@ -193,6 +193,18 @@ describe("PcgFormat2", () => {
     expect(new PcgenFile(text).read().gear[0]).toMatchObject({ charges: 23, name: "Wand" });
   });
 
+  test("wears an item named as a place is (a shield named Shield), a container's only by its entries' ids", () => {
+    const text = [
+      "PCGVERSION:2.0",
+      "VERSION:6.09",
+      "EQUIPNAME:Shield|QUANTITY:1.0|CUSTOMIZATION:[BASEITEM:Shield (Heavy/Steel)|DATA:EQMOD=STEEL]",
+      "EQUIPSET:Default Set|ID:0.1",
+      "EQUIPSET:Shield|ID:0.1.01|VALUE:Shield|QUANTITY:1.0",
+      "CALCEQUIPSET:0.1",
+    ].join("\n");
+    expect(new PcgenFile(text).read().gear.map(({ location }) => location)).toEqual(["Shield"]);
+  });
+
   test("reads PCGen 5's feat lines too, in its general pool", () => {
     const text = "PCGVERSION:2.0\nVERSION:5.6.0\nFEAT:Weapon Focus|APPLIEDTO:Morningstar|TYPE:GENERAL.FIGHTER";
     expect(new PcgenFile(text).read().feats).toEqual([

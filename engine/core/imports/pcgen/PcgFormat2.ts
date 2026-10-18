@@ -9,8 +9,13 @@ import type {
 
 import PcgLine from "./PcgLine.ts";
 
-/** An equipment set's line: where an item of the set the character uses is (`location`), and how many. */
+/**
+ * An equipment set's line: where an item of the set the character uses is (`location`), how many, and whether it's in
+ * a container (`contained`: its id is under the container's, `0.1.05.01` in `0.1.05`, its location the container's
+ * name).
+ */
 interface EquipSetEntry {
+  contained: boolean;
   location: string;
   quantity: number;
 }
@@ -21,7 +26,7 @@ type TagReader = (line: PcgLine) => void;
 /** The equipment set's location of what the character owns without carrying it. */
 const NOT_CARRIED = "Not Carried";
 
-/** The locations of an equipment set that hold an item without wearing it: what's carried, a container's by its name. */
+/** The locations of an equipment set that hold an item without wearing it: what's carried. */
 const CARRIED_LOCATIONS = new Set(["Carried", "Equipped", NOT_CARRIED]);
 
 /**
@@ -122,9 +127,14 @@ export default class PcgFormat2 {
 
   /** An item's entries in a set, one for each location, with what they hold there summed. */
   private static byLocation(entries: EquipSetEntry[]): EquipSetEntry[] {
-    const held = new Map<string, number>();
-    for (const { location, quantity } of entries) held.set(location, (held.get(location) ?? 0) + quantity);
-    return [...held].map(([location, quantity]) => ({ location, quantity }));
+    const held = new Map<string, EquipSetEntry>();
+    for (const entry of entries) {
+      const key = `${entry.contained}:${entry.location}`;
+      const same = held.get(key);
+      if (same) same.quantity += entry.quantity;
+      else held.set(key, { ...entry });
+    }
+    return [...held.values()];
   }
 
   /**
@@ -134,14 +144,14 @@ export default class PcgFormat2 {
   private static handsOf(entry: EquipSetEntry): EquipSetEntry[] {
     if (entry.location !== TWO_WEAPONS) return [entry];
     return [
-      { location: "Primary Hand", quantity: Math.min(1, entry.quantity) },
-      ...(entry.quantity >= 2 ? [{ location: "Secondary Hand", quantity: 1 }] : []),
+      { contained: false, location: "Primary Hand", quantity: Math.min(1, entry.quantity) },
+      ...(entry.quantity >= 2 ? [{ contained: false, location: "Secondary Hand", quantity: 1 }] : []),
     ];
   }
 
-  /** Whether an equipment set's location holds an item without wearing it: carried, or in a container. */
-  private static isCarried(location: string, itemNames: Set<string>) {
-    return CARRIED_LOCATIONS.has(location) || itemNames.has(location);
+  /** Whether an equipment set's entry holds an item without wearing it: carried, or in a container. */
+  private static isCarried({ contained, location }: EquipSetEntry) {
+    return contained || CARRIED_LOCATIONS.has(location);
   }
 
   /**
@@ -244,11 +254,10 @@ export default class PcgFormat2 {
   private placeGear(): ImportedGear[] {
     const setId = this.calcEquipSet ?? [...this.equipSets.keys()][0];
     const entries = (setId && this.equipSets.get(setId)) || new Map<string, EquipSetEntry[]>();
-    const itemNames = new Set(this.items.keys());
     const sum = (held: EquipSetEntry[]) => held.reduce((total, entry) => total + entry.quantity, 0);
     return [...this.items.values()].flatMap(({ item, quantity }) => {
       const held = PcgFormat2.byLocation(entries.get(item.name) ?? []);
-      const wearing = held.filter((entry) => !PcgFormat2.isCarried(entry.location, itemNames));
+      const wearing = held.filter((entry) => !PcgFormat2.isCarried(entry));
       const worn = wearing.flatMap((entry) => PcgFormat2.handsOf(entry));
       const left = quantity - sum(worn);
       // What the set holds but doesn't wear is carried (a pair's third dagger too); what it leaves out (or sets apart,
@@ -325,7 +334,8 @@ export default class PcgFormat2 {
     if (!item) return;
     const entries = this.equipSets.get(setId)!;
     const quantity = PcgFormat2.readNumber(line.find("QUANTITY") ?? "") ?? 1;
-    entries.set(item, [...(entries.get(item) ?? []), { location: line.value, quantity }]);
+    const contained = id.split(".").length > 3;
+    entries.set(item, [...(entries.get(item) ?? []), { contained, location: line.value, quantity }]);
   }
 
   /** A feat its user picked, in its pool (`pool`), with the choice it's taken with (`APPLIEDTO`), when it has one. */
