@@ -1,2 +1,9 @@
 export { type CharacterImporter, default as ImportsPart } from "./ImportsPart.ts";
-export type { ImportedRow, ImportOwner, ImportPlan, ImportReportDescription } from "./plans.ts";
+export type {
+  ImportDetection,
+  ImportedRow,
+  ImportOwner,
+  ImportPlan,
+  ImportReportDescription,
+  ImportSource,
+} from "./plans.ts";

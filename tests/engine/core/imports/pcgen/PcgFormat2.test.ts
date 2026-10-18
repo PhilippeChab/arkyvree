@@ -73,14 +73,12 @@ describe("PcgFormat2", () => {
     expect(biography.notes).toEqual(["Handed: Right", "Eyes: Grey", "Hair: Black", "Money: 212.50"]);
   });
 
-  test("lists what it doesn't read, with why, and leaves out PCGen's own settings", async () => {
+  test("lists what it doesn't read, with why, and leaves out PCGen's own settings and the character's spells", async () => {
     const text = `${await readPcgenFile("hilda")}\nFAVOREDCOLOR:Blue`;
     const { unread } = new PcgenFile(text).read();
-    // The templates PCGen applies by itself (its race's, its subrace's, a class's, its own) are left out
+    // The templates PCGen applies by itself (its race's, its subrace's, a class's, its own) are left out, and the
+    // cleric's spells: an import never brings them
     expect(unread.map(({ line, reason }) => `${line.text.split(/[|:]/)[0]}: ${reason}`)).toEqual([
-      "SPELLNAME: Spells aren't imported yet",
-      "SPELLNAME: Spells aren't imported yet",
-      "SPELLNAME: Spells aren't imported yet",
       "FAVOREDCOLOR: Not read by the import",
     ]);
   });

@@ -1,5 +1,5 @@
 import { PcgenFile } from "@/engine/core/imports/index.ts";
-import type { CharacterImporter, ImportOwner, ImportPlan } from "@/engine/core/module/index.ts";
+import type { CharacterImporter, ImportDetection, ImportOwner, ImportPlan } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 
@@ -16,17 +16,24 @@ export default class PcgenImporter implements CharacterImporter {
   readonly program = "PCGen";
 
   /**
-   * What importing the character the file holds writes, and the report of it: refused when the file is of another game
-   * mode (a Pathfinder character), whose rules aren't 3.5's.
+   * What a file is, when PCGen saved it: its format, the PCGen version and its character's game mode; refused when
+   * its format has no reader yet, or its character is of another game mode (a Pathfinder character), whose rules
+   * aren't 3.5's.
    */
-  planImport(view: RulesetView, text: string, owner: ImportOwner): ImportPlan {
-    const gameMode = PcgenFile.gameModeOf(text);
-    if (gameMode && gameMode !== GAME_MODE) {
-      throw new RulesError(
-        "unprocessable",
-        `This file is a character of PCGen's ${gameMode} game mode: this ruleset imports 3.5 characters`,
-      );
+  detect(text: string): ImportDetection | undefined {
+    if (!PcgenFile.reads(text)) return undefined;
+    const source = { program: this.program, ...PcgenFile.describe(text) };
+    if (!PcgenFile.readsFormat(source.format))
+      return { refusal: `PCGen's character file format ${source.format || "(unnamed)"} isn't read yet`, source };
+    if (source.rules && source.rules !== GAME_MODE) {
+      const refusal = `This file is a character of PCGen's ${source.rules} game mode: a 3.5 ruleset imports its ${GAME_MODE} characters`;
+      return { refusal, source };
     }
+    return { source };
+  }
+
+  /** What importing the character the file holds writes, and the report of it. */
+  planImport(view: RulesetView, text: string, owner: ImportOwner): ImportPlan {
     const imported = new PcgenFile(text).read();
     const planned = new PcgenImport(view, imported, owner).plan();
     if ("plan" in planned) return planned.plan;
@@ -34,10 +41,5 @@ export default class PcgenImporter implements CharacterImporter {
     const replanned = new PcgenImport(view, imported, owner, planned.refused).plan();
     if ("plan" in replanned) return replanned.plan;
     throw new RulesError("unprocessable", replanned.refused.reason);
-  }
-
-  /** Whether a file is one PCGen saved. */
-  reads(text: string): boolean {
-    return PcgenFile.reads(text);
   }
 }

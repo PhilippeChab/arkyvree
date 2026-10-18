@@ -4,7 +4,7 @@ import { charactersInCharacter } from "@/drizzle/schema.ts";
 import { Engine } from "@/engine/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
-import { db, withTransaction } from "@/server/database/index.ts";
+import { withTransaction } from "@/server/database/index.ts";
 import {
   Activities,
   CharacterAbilities,
@@ -17,12 +17,16 @@ import { createLevelRows, writeBondedCreatures } from "@/server/services/charact
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import type { Session } from "@/shared/relations.ts";
 
-/** Importing a character from another program's file into a ruleset, and which programs a ruleset imports from. */
+/** Importing a character from another program's file into a ruleset, and what such a file is before one is picked. */
 export function Imports<B extends Constructor>(Base: B) {
   abstract class Importing extends Base {
-    /** The programs whose files a ruleset (`rulesetId`) imports characters from, as its rules answer it. */
-    async getImporters(rulesetId: string) {
-      return await withRulesetScope(db, rulesetId, async (scope) => Engine.for(scope).characters().describeImporters());
+    /**
+     * What a character file another program saved is (`text`), before a ruleset is picked: the program that saved it,
+     * its version, the file's format and its character's rules, the base rules whose rulesets import it, and why none
+     * does.
+     */
+    getImportSource(text: string) {
+      return Engine.imports().describeFile(text);
     }
 
     /**

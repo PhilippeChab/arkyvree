@@ -20,4 +20,7 @@ export const exportRateLimit = limitRate({ windowMs: MINUTE, limit: 5 });
 /** An import reads a whole character file and builds the character level by level: a few a minute is plenty. */
 export const importRateLimit = limitRate({ windowMs: MINUTE, limit: 10 });
 
+/** What a picked character file is: asked once a file is picked, its header's tags read, nothing built. */
+export const importSourceRateLimit = limitRate({ windowMs: MINUTE, limit: 30 });
+
 export const publicApiRateLimit = limitRate({ windowMs: MINUTE, limit: 30 });

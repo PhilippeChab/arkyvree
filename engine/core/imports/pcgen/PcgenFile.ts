@@ -24,14 +24,29 @@ export default class PcgenFile {
       .filter((line) => line.line.text.trim().length > 0);
   }
 
-  /** The game mode a file PCGen saved names (`GAMEMODE:35e`), if it names one: the rules its character is of. */
-  static gameModeOf(text: string): string | undefined {
-    return /^GAMEMODE:(.*)$/m.exec(text)?.[1]?.trim() || undefined;
+  /**
+   * What a file PCGen saved says of itself: its format (`PCGVERSION:2.0`), the PCGen version that saved it
+   * (`VERSION:6.09.08`), and the game mode its character is of (`GAMEMODE:35e`), when it names one.
+   */
+  static describe(text: string): { format: string; rules?: string; version: string } {
+    // Read as the file's lines are: a byte order mark an editor saved it with isn't its first line's
+    const unmarked = text.replace(/^\uFEFF/, "");
+    const tagged = (tag: string) => new RegExp(`^${tag}:(.*)$`, "m").exec(unmarked)?.[1]?.trim() ?? "";
+    const rules = tagged("GAMEMODE");
+    return { format: tagged("PCGVERSION"), version: tagged("VERSION"), ...(rules && { rules }) };
   }
 
-  /** Whether `text` is a file PCGen saved: it opens on its format's line, and names the PCGen version that saved it. */
+  /**
+   * Whether `text` is a file PCGen saved: it opens on its format's line (after a byte order mark an editor saved it
+   * with, as its lines are read), and names the PCGen version that saved it.
+   */
   static reads(text: string): boolean {
-    return text.trimStart().startsWith("PCGVERSION:") && /^VERSION:/m.test(text);
+    return text.replace(/^\uFEFF/, "").startsWith("PCGVERSION:") && /^VERSION:/m.test(text);
+  }
+
+  /** Whether a format of PCGen's character files (`2.0`) has a reader. */
+  static readsFormat(format: string): boolean {
+    return READERS.has(format);
   }
 
   /** The file's lines, those blank left out, each with its number. */
@@ -39,7 +54,7 @@ export default class PcgenFile {
 
   /** The character the file holds, read by its format's reader: refused when no reader reads its format. */
   read(): ImportedCharacter {
-    const format = this.lines.find((line) => line.tag === "PCGVERSION")?.value ?? "";
+    const format = this.lines.find((line) => line.tag === "PCGVERSION")?.value.trim() ?? "";
     const Reader = READERS.get(format);
     if (!Reader) throw new RulesError("unprocessable", `PCGen's character file format ${format} isn't read yet`);
     return new Reader(this.lines).read();

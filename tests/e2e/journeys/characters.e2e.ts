@@ -1,9 +1,10 @@
 import { statSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 
 import { expect, type Page } from "@playwright/test";
 
 import { test } from "@/tests/e2e/fixtures.ts";
-import { addFirstLevel, createCharacter } from "@/tests/e2e/support/characters.ts";
+import { addFirstLevel, createCharacter, openCreateChoice } from "@/tests/e2e/support/characters.ts";
 import { apiResponse, filterList, openActionsMenu, selectOption, uniqueName } from "@/tests/e2e/support/page.ts";
 import { fillStrengthModifier, forkCoreRuleset } from "@/tests/e2e/support/rulesets.ts";
 import { openContext, signedInPage, signIn } from "@/tests/e2e/support/signIn.ts";
@@ -26,7 +27,7 @@ test.describe("Characters", () => {
   test("creating one needs a name, a ruleset and a race", async ({ page, user }) => {
     await signIn(page, user.email, user.password);
     await page.goto("/characters");
-    await page.getByRole("button", { name: "Create Character" }).click();
+    await openCreateChoice(page, "New Character");
     const dialog = page.getByRole("dialog", { name: "Create New Character" });
     const submit = dialog.getByRole("button", { name: /^Create$/ });
 
@@ -69,12 +70,32 @@ test.describe("Characters", () => {
     await page.keyboard.press("Escape");
   });
 
+  test("importing one reads what the file is, then imports it into a ruleset that takes it", async ({ page, user }) => {
+    await signIn(page, user.email, user.password);
+    await page.goto("/characters");
+    await openCreateChoice(page, "Import Character");
+    const dialog = page.getByRole("dialog", { name: "Import Character" });
+    await dialog
+      .locator('input[type="file"]')
+      .setInputFiles(fileURLToPath(new URL("../../support/dnd3.5/pcgen/hilda.pcg", import.meta.url)));
+    await expect(dialog.getByText("PCGen 6.09.08.RC1, file format 2.0, a character of its 35e rules")).toBeVisible({
+      timeout: 10_000,
+    });
+    await selectOption(page, "Ruleset", "Core SRD 3.5");
+    await dialog.getByRole("button", { name: /^Import$/ }).click();
+
+    const report = page.getByRole("dialog", { name: "Import Report" });
+    await expect(report.getByText("Race: Dwarf")).toBeVisible({ timeout: 30_000 });
+    await report.getByRole("button", { name: "Open Character" }).click();
+    await expect(page.getByRole("heading", { level: 1, name: "Hilda Stonebrow" })).toBeVisible({ timeout: 15_000 });
+  });
+
   test("a new character starts on the user's own ruleset, its age empty", async ({ page, user }) => {
     await signIn(page, user.email, user.password);
     const rulesetName = uniqueName("Own Rules");
     await forkCoreRuleset(page, rulesetName);
     await page.goto("/characters");
-    await page.getByRole("button", { name: "Create Character" }).click();
+    await openCreateChoice(page, "New Character");
     const dialog = page.getByRole("dialog", { name: "Create New Character" });
 
     await expect(dialog.getByRole("combobox", { name: "Ruleset" })).toHaveValue(rulesetName, { timeout: 10_000 });
@@ -93,7 +114,7 @@ test.describe("Characters", () => {
       await route.continue();
     });
     await page.goto("/characters");
-    await page.getByRole("button", { name: "Create Character" }).click();
+    await openCreateChoice(page, "New Character");
     const dialog = page.getByRole("dialog", { name: "Create New Character" });
     await selectOption(page, "Ruleset", "Core SRD 3.5");
 

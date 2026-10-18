@@ -21,11 +21,11 @@ A character can't be switched to a different ruleset later — build a new chara
 
 ## Can I import a character from another program?
 
-Yes, from **PCGen**: on your characters list, **Import Character** takes a character file PCGen saved (`.pcg`) and the ruleset to import it into. The ruleset decides which programs it reads: a D&D 3.5 ruleset, **Core SRD 3.5** or a fork of it, reads PCGen's 3.5 characters. Names are matched in the ruleset you pick, so a fork's own classes and items are found.
+Yes, from **PCGen**: on your characters list, **Create Character** offers **Import Character**, which takes a character file another program saved. Pick the file first: the app reads which program saved it, its version and the rules its character is of (a PCGen file of its 3.5 game mode), then offers the rulesets that import it. A D&D 3.5 ruleset, **Core SRD 3.5** or a fork of it, imports PCGen's 3.5 characters; a character of another game mode (Pathfinder) is refused with why. Names are matched in the ruleset you pick, so a fork's own classes and items are found.
 
 The character is built as if leveled up one level at a time, so it's checked like one you made yourself. PCGen saves your feats and each skill's ranks without the level you took them at: the import places each feat on the first level that could take it (Weapon Specialization not before Fighter 4) and spreads each skill's ranks over the levels of the class you bought them in. Your ability scores end where PCGen has them, each level taking the increases your ruleset gives it.
 
-The import ends with a report: what it imported, what a level's checks found, and every line of the file it couldn't match, with why. Magic gear the ruleset has no item of (a +3 morningstar) is listed for you to make in your ruleset, then add to the character; class feature choices (a favored enemy), templates, companions and spells aren't imported yet: add them in the app.
+The import ends with a report: what it imported, what a level's checks found, and every line of the file it couldn't match, with why. Magic gear the ruleset has no item of (a +3 morningstar) is listed for you to make in your ruleset, then add to the character; class feature choices (a favored enemy), templates and companions aren't imported yet: add them in the app. Spells are never imported: the import brings the character and its choices alone, so a caster picks its spells in the app.
 
 ## Which languages can a character speak?
 

@@ -5,6 +5,7 @@ import {
   denyDemoUser,
   exportRateLimit,
   importRateLimit,
+  importSourceRateLimit,
   sessionMiddleware,
   validate,
 } from "@/server/middlewares/index.ts";
@@ -91,11 +92,6 @@ export default new Hono()
     const { rulesetId } = c.req.valid("query");
     return c.json(await CharactersService.getCreation(rulesetId), 200);
   })
-  // The programs whose files a ruleset imports characters from
-  .get("/importers", validate("query", z.object({ rulesetId: z.string().uuid() })), async (c) => {
-    const { rulesetId } = c.req.valid("query");
-    return c.json(await CharactersService.getImporters(rulesetId), 200);
-  })
   // Get characters not in a campaign
   .get(
     "/unlinked/:campaignId",
@@ -173,6 +169,17 @@ export default new Hono()
     async (c) => {
       const { rulesetId, text } = c.req.valid("json");
       return c.json(await CharactersService.importCharacter(c.var.requestSession, rulesetId, text), 201);
+    },
+  )
+  // What a character file another program saved is (its text), before a ruleset is picked: the program, its version,
+  // the file's format and its character's rules, and the base rules whose rulesets import it
+  .post(
+    "/import/source",
+    importSourceRateLimit,
+    validate("json", z.object({ text: z.string().min(1).max(MAX_IMPORT_FILE_LENGTH) })),
+    (c) => {
+      const { text } = c.req.valid("json");
+      return c.json(CharactersService.getImportSource(text), 200);
     },
   )
   // Enqueue async PDF generation

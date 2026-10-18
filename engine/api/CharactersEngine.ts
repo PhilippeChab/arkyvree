@@ -23,11 +23,6 @@ export default class CharactersEngine {
     return this.module.characters.describeCreation(this.view, ...args);
   }
 
-  /** The programs whose files the ruleset imports characters from, in the order they're tried. */
-  describeImporters() {
-    return this.module.imports.describeImporters();
-  }
-
   /**
    * A character's inventory entries (each naming its item), as stored, as its sheet lists them: each with its item as
    * the view has it, where it can go and where it's worn.

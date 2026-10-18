@@ -32,8 +32,9 @@ const NOT_CARRIED = "Not Carried";
 const CARRIED_LOCATIONS = new Set(["Carried", "Equipped", NOT_CARRIED]);
 
 /**
- * The lines PCGen writes of its own settings and of what the rules work out from the class and race (weapon
- * proficiencies, the pools' points, the equipment set the character's sheet is computed with): nothing to import.
+ * The lines PCGen writes of its own settings, of what the rules work out from the class and race (weapon
+ * proficiencies, the pools' points, the equipment set the character's sheet is computed with), and of the character's
+ * spells, which an import never brings (the character and its choices alone): nothing to import.
  */
 const LEFT_OUT = new Set([
   "AGESET",
@@ -45,6 +46,7 @@ const LEFT_OUT = new Set([
   "AUTOSPELLS",
   "CAMPAIGN",
   "CHARACTERTYPE",
+  "DOMAINSPELLS",
   "EQSETBONUS",
   "EXPERIENCETABLE",
   "FAVOREDCLASS",
@@ -69,6 +71,8 @@ const LEFT_OUT = new Set([
   "SKILLFILTER",
   "SKILLSOUTPUTORDER",
   "SPELLBOOK",
+  "SPELLLIST",
+  "SPELLNAME",
   "SUPPRESSBIOFIELDS",
   "TABLABEL",
   "TABNAME",
@@ -110,12 +114,9 @@ const TWO_WEAPONS = "Two Weapons";
 const UNREAD_REASONS = new Map<string, string>([
   ["CHRONICLEENTRY", "Chronicle entries aren't imported: add them to the notes"],
   ["COMPANIONLIST", "Companions aren't imported"],
-  ["DOMAINSPELLS", "Spells aren't imported yet"],
   ["FOLLOWER", "Companions aren't imported"],
   ["KIT", "Kits aren't imported"],
   ["MASTER", "Companions aren't imported"],
-  ["SPELLLIST", "Spells aren't imported yet"],
-  ["SPELLNAME", "Spells aren't imported yet"],
 ]);
 
 /**

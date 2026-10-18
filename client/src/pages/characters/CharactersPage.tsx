@@ -1,9 +1,10 @@
-import { Button, Container, Stack } from "@mui/material";
+import { Button, Container, Menu, Stack } from "@mui/material";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 
 import { CharacterBuildChips } from "@/client/src/components/characters/index.ts";
 import {
+  ActionMenuItem,
   BlankState,
   CHANGED_SORTS,
   CREATED_SORTS,
@@ -19,8 +20,15 @@ import {
   type SortOption,
   StatusChip,
 } from "@/client/src/components/common/index.ts";
-import { ArchiveIcon, CharacterIcon, ContributorsIcon, ImportIcon } from "@/client/src/components/icons/index.ts";
 import {
+  ArchiveIcon,
+  CharacterIcon,
+  ContributorsIcon,
+  ImportIcon,
+  PersonAddIcon,
+} from "@/client/src/components/icons/index.ts";
+import {
+  useAnchorMenu,
   useCharacterPortraits,
   useDialogState,
   useListPageQuery,
@@ -50,6 +58,9 @@ const CHARACTER_FILTER_OPTIONS: FilterOption<CharacterView>[] = [
 
 const CHARACTER_SORT_OPTIONS: SortOption<SortField>[] = [...NAME_SORTS, ...CREATED_SORTS, ...CHANGED_SORTS];
 
+/** The menu of the ways to create a character, which its buttons say they control. */
+const CREATE_MENU_ID = "create-character-menu";
+
 export default function CharactersPage() {
   usePageTitle("Characters");
   const navigate = useNavigate();
@@ -71,8 +82,13 @@ export default function CharactersPage() {
 
   const prefetchCharacter = (id: string) => void queryClient.prefetchQuery(characterDetailQuery(id));
 
-  const createButton = (label: string) => (
-    <PageActionButton label={label} onClick={() => createDialog.openWith(true)} />
+  // A character is created two ways: built in the app, or imported from a file another program saved; the header's
+  // button and the empty list's each open the menu, which says which one it's open from
+  const headerMenu = useAnchorMenu();
+  const emptyMenu = useAnchorMenu();
+  const createMenu = headerMenu.open ? headerMenu : emptyMenu;
+  const createButton = (label: string, menu: ReturnType<typeof useAnchorMenu>) => (
+    <PageActionButton label={label} menu={{ id: CREATE_MENU_ID, open: menu.open }} onClick={menu.openMenu} />
   );
 
   const viewActiveButton = (
@@ -89,7 +105,7 @@ export default function CharactersPage() {
             variant="tinted"
             title="Characters"
             subtitle="View and manage your character collection"
-            action={createButton("Create Character")}
+            action={createButton("Create Character", headerMenu)}
           />
 
           <Stack spacing={3}>
@@ -100,11 +116,6 @@ export default function CharactersPage() {
               filterValue={view}
               onFilterChange={(value) => updateSearchParams({ view: value })}
               sortOptions={CHARACTER_SORT_OPTIONS}
-              actions={
-                <Button variant="outlined" startIcon={<ImportIcon />} onClick={() => importDialog.openWith(true)}>
-                  Import Character
-                </Button>
-              }
             />
 
             <ListPageResults
@@ -131,7 +142,7 @@ export default function CharactersPage() {
                     icon={CharacterIcon}
                     title="No characters yet"
                     description="Create your first character to start your adventure"
-                    action={createButton("Create Your First Character")}
+                    action={createButton("Create Your First Character", emptyMenu)}
                   />
                 )
               }
@@ -161,6 +172,18 @@ export default function CharactersPage() {
             </ListPageResults>
           </Stack>
         </Stack>
+        <Menu id={CREATE_MENU_ID} anchorEl={createMenu.anchorEl} open={createMenu.open} onClose={createMenu.closeMenu}>
+          <ActionMenuItem
+            icon={PersonAddIcon}
+            label="New Character"
+            onClick={createMenu.closeMenuAnd(() => createDialog.openWith(true))}
+          />
+          <ActionMenuItem
+            icon={ImportIcon}
+            label="Import Character"
+            onClick={createMenu.closeMenuAnd(() => importDialog.openWith(true))}
+          />
+        </Menu>
         {createDialog.target && (
           <CreateCharacterDialog
             key={createDialog.key}

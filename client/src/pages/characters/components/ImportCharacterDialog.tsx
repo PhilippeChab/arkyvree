@@ -1,10 +1,10 @@
 import { Button, DialogContentText, FormHelperText, Stack, Typography } from "@mui/material";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 import { useRef, useState } from "react";
 import { type Control, Controller, useController } from "react-hook-form";
 
-import { CreateDialog, LoadError } from "@/client/src/components/common/index.ts";
+import { CreateDialog } from "@/client/src/components/common/index.ts";
 import { ImportIcon } from "@/client/src/components/icons/index.ts";
 import {
   BaseRulesetAlert,
@@ -14,9 +14,10 @@ import {
 } from "@/client/src/components/rulesets/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useFormWith } from "@/client/src/hooks/index.ts";
+import { errorMessage } from "@/client/src/lib/errorMessage.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { requiredRules } from "@/client/src/lib/validation.ts";
-import { type CharacterImport, characterImportersQuery } from "@/client/src/pages/characters/characterQueries.ts";
+import type { CharacterImport, ImportFileDescription } from "@/client/src/pages/characters/characterQueries.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { MAX_IMPORT_FILE_LENGTH } from "@/shared/characters.ts";
 
@@ -31,31 +32,53 @@ interface ImportCharacterDialogProps {
 
 interface ImportFileFieldProps {
   control: Control<ImportFormData>;
+  /** What the file picked is, once the app read it: the rulesets that import it are offered alone. */
+  onDescribed: (description: ImportFileDescription) => void;
 }
 
-/** What an import is sent with: the ruleset it goes into, and the file picked. */
+/** What an import is sent with: the file picked, and the ruleset it goes into. */
 interface ImportFormData {
   file: PickedFile | null;
   rulesetId: string;
 }
 
-/** A file picked: its name, and its text once it's read, or why it can't be sent (too large, unread). */
+/**
+ * A file picked: its name, its text once it's read, and what it is once the app read it (`description`); or why it
+ * can't be sent (too large, unread, a file no ruleset imports, which its description says), or that it's still being
+ * read.
+ */
 interface PickedFile {
+  description?: ImportFileDescription;
   error?: string;
   name: string;
+  reading?: boolean;
   text?: string;
 }
 
 /** The import's form before anything is picked. */
 const EMPTY_IMPORT: ImportFormData = { file: null, rulesetId: "" };
 
-/** The file's rules: one is picked, and read. */
+/** The file's rules: one is picked, read, and of a kind a ruleset imports. */
 const FILE_RULES = {
-  validate: (file: ImportFormData["file"]) => (file ? (file.error ?? true) : "File is required"),
+  validate: (file: ImportFormData["file"]) => {
+    if (!file) return "File is required";
+    if (file.reading) return "The file is still being read";
+    return file.error ?? true;
+  },
 };
 
-/** The file to import, picked from the device and read as text: its name once picked, and why it can't be sent. */
-function ImportFileField({ control }: ImportFileFieldProps) {
+/** What a file is, in a line: the program that saved it and its version, the file's format, its character's rules. */
+function describeSource(source: NonNullable<ImportFileDescription["source"]>) {
+  const rules = source.rules ? `, a character of its ${source.rules} rules` : "";
+  return `${source.program} ${source.version}, file format ${source.format}${rules}`;
+}
+
+/**
+ * The file to import, picked from the device and read as text, then what it is, which the app reads from it (the
+ * program that saved it, its version, its character's rules): its name once picked, what it is, and why it can't be
+ * sent.
+ */
+function ImportFileField({ control, onDescribed }: ImportFileFieldProps) {
   const {
     field: { onChange, ref, value },
     fieldState,
@@ -63,9 +86,24 @@ function ImportFileField({ control }: ImportFileFieldProps) {
   const [fileInput, setFileInput] = useState<HTMLInputElement | null>(null);
   // Which pick is the latest: a read that ends after another file was picked is let go
   const latestPick = useRef<File | null>(null);
+  // What the app makes of the file's text: what it is, or why it can't be imported; a read another pick overtook is
+  // let go
+  const sourceMutation = useMutation({
+    mutationFn: async ({ text }: { file: File; text: string }) =>
+      parseResponse(rpc.api.characters.import.source.$post({ json: { text } })),
+    onSuccess: (description, { file, text }) => {
+      if (latestPick.current !== file) return;
+      onChange({ description, name: file.name, text, ...(description.refusal && { error: description.refusal }) });
+      onDescribed(description);
+    },
+    onError: (error, { file }) => {
+      if (latestPick.current !== file) return;
+      onChange({ error: errorMessage(error, "The app couldn't tell what this file is"), name: file.name });
+    },
+  });
 
   // An import reads up to so many characters: a file whose bytes can't hold so few (three bytes at most each) isn't
-  // read at all, one read is checked by its characters
+  // read at all, one read is checked by its characters, then sent to be told what it is
   const handleFile = async (file: File | undefined) => {
     if (!file) return;
     latestPick.current = file;
@@ -74,15 +112,16 @@ function ImportFileField({ control }: ImportFileFieldProps) {
       onChange(tooLarge);
       return;
     }
-    const picked = await file.text().then(
-      (text): PickedFile => {
-        if (text.length > MAX_IMPORT_FILE_LENGTH) return tooLarge;
-        return text.trim() ? { name: file.name, text } : { error: "This file is empty", name: file.name };
-      },
-      (): PickedFile => ({ error: "This file couldn't be read: pick it again", name: file.name }),
-    );
-    if (latestPick.current === file) onChange(picked);
+    onChange({ name: file.name, reading: true });
+    const text = await file.text().catch(() => undefined);
+    if (latestPick.current !== file) return;
+    if (text === undefined) onChange({ error: "This file couldn't be read: pick it again", name: file.name });
+    else if (text.length > MAX_IMPORT_FILE_LENGTH) onChange(tooLarge);
+    else if (!text.trim()) onChange({ error: "This file is empty", name: file.name });
+    else sourceMutation.mutate({ file, text });
   };
+
+  const described = value?.description?.source && !value.error ? describeSource(value.description.source) : "";
 
   return (
     <Stack spacing={1}>
@@ -94,11 +133,12 @@ function ImportFileField({ control }: ImportFileFieldProps) {
           {value?.name ?? "No file chosen"}
         </Typography>
       </Stack>
+      {value?.reading && <FormHelperText>Reading the file…</FormHelperText>}
+      {described && <FormHelperText>{described}</FormHelperText>}
       {fieldState.error && <FormHelperText error>{fieldState.error.message}</FormHelperText>}
       <input
         ref={setFileInput}
         type="file"
-        accept=".pcg"
         hidden
         onChange={(event) => {
           const file = event.target.files?.[0];
@@ -112,25 +152,39 @@ function ImportFileField({ control }: ImportFileFieldProps) {
 }
 
 /**
- * A character imported from a file another program saved (PCGen's), into a ruleset: the ruleset picked decides which
- * programs' files it reads, which the dialog says. Mounted while it's open, it starts clean at each opening; once the
- * import is in, its opener shows its report.
+ * A character imported from a file another program saved (PCGen's): the file first, which the app reads what it is
+ * from (the program that saved it, its version, its character's rules), then the ruleset it goes into, of the rulesets
+ * that import it alone. Mounted while it's open, it starts clean at each opening; once the import is in, its opener
+ * shows its report.
  */
 export function ImportCharacterDialog({ open, onClose, onExited, onImported }: ImportCharacterDialogProps) {
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
   const rulesetOptions = useRulesetPickerOptions("character", open);
   const { preselected } = rulesetOptions;
-  // The user's own ruleset is picked once it's known, unless the user picked one already
+  // The base rules whose rulesets import the file the app last read, kept while another is read: none before one, or
+  // for a file none imports (which its own error blocks), which every ruleset is offered for
+  const [importing, setImporting] = useState<ImportFileDescription["baseRules"] | null>(null);
+  const imports = (ruleset: RulesetOption) => !importing || importing.includes(ruleset.baseRules);
+  const importingOptions = { ...rulesetOptions, rulesets: rulesetOptions.rulesets.filter(imports) };
+  // The user's own ruleset is picked once it's known, when it imports the file, unless the user picked one already
   const form = useFormWith<ImportFormData>(EMPTY_IMPORT, {
-    values: preselected ? { ...EMPTY_IMPORT, rulesetId: preselected.id } : undefined,
+    values: preselected && imports(preselected) ? { ...EMPTY_IMPORT, rulesetId: preselected.id } : undefined,
     resetOptions: { keepDirtyValues: true },
   });
-  const { control, watch } = form;
+  const { control, setValue, watch } = form;
   const selectedRulesetId = watch("rulesetId");
   const [pickedRuleset, setPickedRuleset] = useState<RulesetOption | null>(null);
   const selectedRuleset = pickedRuleset ?? (preselected?.id === selectedRulesetId ? preselected : null);
-  const importers = useQuery(characterImportersQuery(selectedRulesetId));
+
+  // A file the ruleset picked doesn't import lets the ruleset go: the rulesets that import it are offered instead
+  const handleDescribed = ({ baseRules, refusal }: ImportFileDescription) => {
+    setImporting(refusal ? null : baseRules);
+    if (!refusal && selectedRuleset && !baseRules.includes(selectedRuleset.baseRules)) {
+      setPickedRuleset(null);
+      setValue("rulesetId", "", { shouldDirty: true, shouldValidate: true });
+    }
+  };
 
   const importMutation = useMutation({
     mutationFn: async ({ rulesetId, text }: { rulesetId: string; text: string }) =>
@@ -150,8 +204,6 @@ export function ImportCharacterDialog({ open, onClose, onExited, onImported }: I
     if (file?.text) importMutation.mutate({ rulesetId, text: file.text });
   };
 
-  const programs = importers.data?.programs.join(", ");
-
   return (
     <CreateDialog
       open={open}
@@ -165,11 +217,10 @@ export function ImportCharacterDialog({ open, onClose, onExited, onImported }: I
       onExited={onExited}
     >
       <DialogContentText>
-        {programs
-          ? `This ruleset imports characters from ${programs}: pick a character file it saved.`
-          : "Pick the ruleset to import into, then a character file another program saved."}
+        Pick a character file another program saved (PCGen&apos;s): the app reads which program saved it, its version
+        and its rules, then offers the rulesets that import it.
       </DialogContentText>
-      {importers.error && <LoadError what="Importers" error={importers.error} />}
+      <ImportFileField control={control} onDescribed={handleDescribed} />
       <BaseRulesetAlert ruleset={selectedRuleset} />
       <Controller
         name="rulesetId"
@@ -177,7 +228,7 @@ export function ImportCharacterDialog({ open, onClose, onExited, onImported }: I
         rules={requiredRules("Ruleset is required")}
         render={({ field, fieldState }) => (
           <RulesetPicker
-            options={rulesetOptions}
+            options={importingOptions}
             value={selectedRuleset}
             onChange={(ruleset) => {
               setPickedRuleset(ruleset);
@@ -188,7 +239,6 @@ export function ImportCharacterDialog({ open, onClose, onExited, onImported }: I
           />
         )}
       />
-      <ImportFileField control={control} />
     </CreateDialog>
   );
 }

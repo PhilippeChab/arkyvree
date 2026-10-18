@@ -51,7 +51,7 @@ describe("Imports", () => {
     const { imported } = await importAsNewUser("hilda");
     expect(imported.report.program).toBe("PCGen 6.09.08.RC1");
     expect(imported.report.imported).toContain("Race: Dwarf");
-    expect(imported.report.unmatched.filter(({ reason }) => reason === "Spells aren't imported yet")).toHaveLength(3);
+    expect(imported.report.unmatched).toEqual([]);
   });
 
   test("refuses a ruleset the session can't create characters in", async () => {
@@ -62,8 +62,23 @@ describe("Imports", () => {
     expect(CharactersService.importCharacter(session, ruleset.id, text)).rejects.toThrow(ForbiddenError);
   });
 
-  test("answers the programs a ruleset imports from", async () => {
-    const { rulesetId } = await getSeedCtx();
-    expect(await CharactersService.getImporters(rulesetId)).toEqual({ programs: ["PCGen"] });
+  test("answers what a file is before a ruleset is picked: its program, version, format and rules", async () => {
+    expect(CharactersService.getImportSource(await readPcgenFile("hilda"))).toEqual({
+      baseRules: ["Dungeons & Dragons: 3.5"],
+      source: { format: "2.0", program: "PCGen", rules: "35e", version: "6.09.08.RC1" },
+    });
+  });
+
+  test("answers why no ruleset imports a file: another game mode's character, or a file no importer recognizes", async () => {
+    const pathfinder = (await readPcgenFile("hilda")).replace("GAMEMODE:35e", "GAMEMODE:Pathfinder_RPG");
+    expect(CharactersService.getImportSource(pathfinder)).toEqual({
+      baseRules: [],
+      refusal: "This file is a character of PCGen's Pathfinder_RPG game mode: a 3.5 ruleset imports its 35e characters",
+      source: { format: "2.0", program: "PCGen", rules: "Pathfinder_RPG", version: "6.09.08.RC1" },
+    });
+    expect(CharactersService.getImportSource("Not a character")).toEqual({
+      baseRules: [],
+      refusal: "This isn't a character file the app imports: it imports PCGen's",
+    });
   });
 });

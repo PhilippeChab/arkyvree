@@ -467,14 +467,9 @@ describe("A PCGen cleric", () => {
     );
   });
 
-  test("lists its spells, which aren't imported yet", async () => {
+  test("leaves its spells out: an import brings the character and its choices alone", async () => {
     const { report } = await planImportOf(await readPcgenFile("hilda"));
-    const spells = report.unmatched.filter(({ reason }) => reason === "Spells aren't imported yet");
-    expect(spells.map(({ text }) => text.split("|")[0])).toEqual([
-      "SPELLNAME:Bless",
-      "SPELLNAME:Bull's Strength",
-      "SPELLNAME:Cure Light Wounds",
-    ]);
+    expect(report.unmatched.filter(({ text }) => text.startsWith("SPELL"))).toEqual([]);
   });
 });
 
@@ -505,7 +500,7 @@ describe("A level a level-up refuses", () => {
 describe("An import's refusals", () => {
   test("a file no importer of the ruleset reads", async () => {
     expect(await refusalOf(planImportOf("Name: Brannoc\nRace: Human"))).toEqual({
-      message: "No importer reads this file: this ruleset imports files from PCGen",
+      message: "This isn't a character file the app imports: it imports PCGen's",
       refusal: "unprocessable",
     });
   });
@@ -513,7 +508,7 @@ describe("An import's refusals", () => {
   test("a PCGen character of another game mode", async () => {
     const text = (await readPcgenFile("brannoc")).replace("GAMEMODE:35e", "GAMEMODE:Pathfinder_RPG");
     expect(await refusalOf(planImportOf(text))).toEqual({
-      message: "This file is a character of PCGen's Pathfinder_RPG game mode: this ruleset imports 3.5 characters",
+      message: "This file is a character of PCGen's Pathfinder_RPG game mode: a 3.5 ruleset imports its 35e characters",
       refusal: "unprocessable",
     });
   });

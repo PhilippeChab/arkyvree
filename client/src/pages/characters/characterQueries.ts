@@ -21,6 +21,12 @@ export type CharacterImport = InferResponseType<typeof rpc.api.characters.import
 export type CreationMethod = CharacterCreation["methods"][number];
 
 /**
+ * What a picked character file is, before a ruleset is: the program that saved it, its version, the file's format and
+ * its character's rules, the base rules whose rulesets import it, and why none does.
+ */
+export type ImportFileDescription = InferResponseType<typeof rpc.api.characters.import.source.$post, 200>;
+
+/**
  * The races a ruleset offers a new character, each marked eligible or not for its alignment and gender (`""` while
  * unpicked); skipped until a ruleset is picked.
  */
@@ -51,15 +57,6 @@ export function characterCreationQuery(rulesetId: string) {
   return queryOptions({
     queryKey: QUERY_KEYS.characters.creation(rulesetId),
     queryFn: rulesetId ? () => parseResponse(rpc.api.characters.creation.$get({ query: { rulesetId } })) : skipToken,
-    staleTime: FOREVER,
-  });
-}
-
-/** The programs whose files a ruleset imports characters from, which only a deploy changes; none until it's picked. */
-export function characterImportersQuery(rulesetId: string) {
-  return queryOptions({
-    queryKey: QUERY_KEYS.characters.importers(rulesetId),
-    queryFn: rulesetId ? () => parseResponse(rpc.api.characters.importers.$get({ query: { rulesetId } })) : skipToken,
     staleTime: FOREVER,
   });
 }

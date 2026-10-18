@@ -58,6 +58,12 @@ const MODULES = {
 
 /** The base rules' modules, which the engine's handles ask what their rules answer. */
 export default class Modules {
+  /** Every base rules' module, with the base rules it's registered for. */
+  static all(): [BaseRules, RulesetModule][] {
+    const modules: { [K in BaseRules]: RulesetModule } = MODULES;
+    return Object.entries(modules) as [BaseRules, RulesetModule][];
+  }
+
   /** A base rules' module (`B`), by its own types: any registered module's for base rules the caller doesn't know. */
   static of<B extends BaseRules>(baseRules: B): ModuleOf<B> {
     // One module per base rules, the contract's first: a row MODULES lacks or gets wrong is this one error, and `B`

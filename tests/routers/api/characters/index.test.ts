@@ -157,9 +157,13 @@ describe("characters", () => {
       expect(sheet).toMatchObject({ id: imported.character.id, name: "Brannoc Vale" });
     });
 
-    test("answers which programs a ruleset imports from", async () => {
-      const { rulesetId } = await getSeedCtx();
-      expect(await expectOk(characters.importers.$get({ query: { rulesetId } }))).toEqual({ programs: ["PCGen"] });
+    test("answers what a picked file is, and the base rules whose rulesets import it", async () => {
+      const text = await readPcgenFile("brannoc");
+      expect(await expectOk(characters.import.source.$post({ json: { text } }))).toEqual({
+        baseRules: ["Dungeons & Dragons: 3.5"],
+        source: { format: "2.0", program: "PCGen", rules: "35e", version: "6.09.08.RC1" },
+      });
+      await expectStatus(characters.import.source.$post({ json: { text: "" } }), 400);
     });
 
     test("refuses a file no importer reads, and an empty one", async () => {

@@ -7,6 +7,15 @@ import type { AbilityScore, InventoryEntryPlan } from "@/engine/core/module/part
 import type { BondedCreaturesPlan, LevelWrites } from "@/engine/core/module/parts/levelUp/index.ts";
 import type { Character } from "@/shared/relations.ts";
 
+/**
+ * What an importer makes of a file it recognizes, before any ruleset is picked: the file (`source`), and why the
+ * importer can't import it when it can't (`refusal`: another game mode's character, a format no reader reads yet).
+ */
+export interface ImportDetection {
+  refusal?: string;
+  source: ImportSource;
+}
+
 /** Who an imported character is: its row's id, which its rows under it and its bonded creatures name, and its owner. */
 export interface ImportOwner {
   characterId: string;
@@ -36,6 +45,18 @@ export interface ImportReportDescription {
   issues: string[];
   program: string;
   unmatched: { line: number; reason: string; text: string }[];
+}
+
+/**
+ * The file a character is imported from, as the file says it: the program that saved it and that program's version,
+ * the file's format, and the rules its character is of, in the program's words (PCGen's game mode, `35e`), when it
+ * names them.
+ */
+export interface ImportSource {
+  format: string;
+  program: string;
+  rules?: string;
+  version: string;
 }
 
 /** A new character's row, as an import fills it. */
