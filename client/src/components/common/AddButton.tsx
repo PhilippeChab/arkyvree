@@ -1,5 +1,4 @@
 import { Button, type ButtonProps } from "@mui/material";
-import type { MouseEvent } from "react";
 
 import { AddIcon } from "@/client/src/components/icons/index.ts";
 
@@ -8,9 +7,7 @@ interface AddButtonProps {
   compact?: boolean;
   disabled?: boolean;
   label: string;
-  /** It opens a menu, open or not, which it says to assistive technology. */
-  menu?: { id: string; open: boolean };
-  onClick: (event: MouseEvent<HTMLElement>) => void;
+  onClick: () => void;
   size?: ButtonProps["size"];
   sx?: ButtonProps["sx"];
   variant?: ButtonProps["variant"];
@@ -28,13 +25,7 @@ export function AddButton({
   disabled,
   sx,
   compact = false,
-  menu,
 }: AddButtonProps) {
-  const menuProps = menu && {
-    "aria-controls": menu.open ? menu.id : undefined,
-    "aria-expanded": menu.open,
-    "aria-haspopup": "menu" as const,
-  };
   if (compact) {
     return (
       <Button
@@ -43,7 +34,6 @@ export function AddButton({
         onClick={onClick}
         disabled={disabled}
         aria-label={label}
-        {...menuProps}
         sx={[COMPACT_SX, ...(Array.isArray(sx) ? sx : [sx])]}
       >
         <AddIcon />
@@ -51,15 +41,7 @@ export function AddButton({
     );
   }
   return (
-    <Button
-      variant={variant}
-      size={size}
-      startIcon={<AddIcon />}
-      onClick={onClick}
-      disabled={disabled}
-      sx={sx}
-      {...menuProps}
-    >
+    <Button variant={variant} size={size} startIcon={<AddIcon />} onClick={onClick} disabled={disabled} sx={sx}>
       {label}
     </Button>
   );

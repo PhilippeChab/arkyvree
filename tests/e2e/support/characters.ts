@@ -90,12 +90,12 @@ export async function fillNewCharacter(page: Page, name: string) {
 }
 
 /**
- * Opens one of the ways the characters list's Create Character offers: a new character built in the app, or one
- * imported from a file.
+ * Opens one of the ways the characters list creates a character: a new one built in the app (its page's Create
+ * Character), or one imported from a file (the link beside it).
  */
 export async function openCreateChoice(page: Page, choice: "Import Character" | "New Character") {
-  await page.getByRole("button", { name: "Create Character" }).click();
-  await page.getByRole("menuitem", { name: choice }).click();
+  if (choice === "New Character") await page.getByRole("button", { name: "Create Character" }).click();
+  else await page.getByRole("button", { name: "import one from a file" }).first().click();
 }
 
 /** Opens a character shared with the user, from the Shared view of their characters. */

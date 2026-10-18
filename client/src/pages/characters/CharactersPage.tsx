@@ -1,15 +1,15 @@
-import { Button, Container, Menu, Stack } from "@mui/material";
+import { Button, Container, Stack, Typography } from "@mui/material";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRef } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { CharacterBuildChips } from "@/client/src/components/characters/index.ts";
 import {
-  ActionMenuItem,
   BlankState,
   CHANGED_SORTS,
   CREATED_SORTS,
   type FilterOption,
+  LinkButton,
   ListCard,
   ListCardGrid,
   ListPageResults,
@@ -21,15 +21,8 @@ import {
   type SortOption,
   StatusChip,
 } from "@/client/src/components/common/index.ts";
+import { ArchiveIcon, CharacterIcon, ContributorsIcon } from "@/client/src/components/icons/index.ts";
 import {
-  ArchiveIcon,
-  CharacterIcon,
-  ContributorsIcon,
-  ImportIcon,
-  PersonAddIcon,
-} from "@/client/src/components/icons/index.ts";
-import {
-  useAnchorMenu,
   useCharacterPortraits,
   useDialogState,
   useListPageQuery,
@@ -59,9 +52,6 @@ const CHARACTER_FILTER_OPTIONS: FilterOption<CharacterView>[] = [
 
 const CHARACTER_SORT_OPTIONS: SortOption<SortField>[] = [...NAME_SORTS, ...CREATED_SORTS, ...CHANGED_SORTS];
 
-/** The menu of the ways to create a character, which its buttons say they control. */
-const CREATE_MENU_ID = "create-character-menu";
-
 export default function CharactersPage() {
   usePageTitle("Characters");
   const navigate = useNavigate();
@@ -86,14 +76,12 @@ export default function CharactersPage() {
 
   const prefetchCharacter = (id: string) => void queryClient.prefetchQuery(characterDetailQuery(id));
 
-  // A character is created two ways: built in the app, or imported from a file another program saved; the header's
-  // button and the empty list's each open the menu, which says which one it's open from
-  const headerMenu = useAnchorMenu();
-  const emptyMenu = useAnchorMenu();
-  const createMenu = headerMenu.open ? headerMenu : emptyMenu;
-  const createButton = (label: string, menu: ReturnType<typeof useAnchorMenu>) => (
-    <PageActionButton label={label} menu={{ id: CREATE_MENU_ID, open: menu.open }} onClick={menu.openMenu} />
+  const createButton = (label: string) => (
+    <PageActionButton label={label} onClick={() => createDialog.openWith(true)} />
   );
+  // A character is built in the app, its page's action, or imported from a file another program saved, a link beside
+  // it: the frequent way first, the other in sight
+  const importLink = (words: string) => <LinkButton onClick={() => importDialog.openWith(true)}>{words}</LinkButton>;
 
   const viewActiveButton = (
     <Button variant="outlined" onClick={() => updateSearchParams({ view: null })}>
@@ -108,8 +96,8 @@ export default function CharactersPage() {
           <PageHeader
             variant="tinted"
             title="Characters"
-            subtitle="View and manage your character collection"
-            action={createButton("Create Character", headerMenu)}
+            subtitle={<>View and manage your character collection, or {importLink("import one from a file")}</>}
+            action={createButton("Create Character")}
           />
 
           <Stack spacing={3}>
@@ -146,7 +134,14 @@ export default function CharactersPage() {
                     icon={CharacterIcon}
                     title="No characters yet"
                     description="Create your first character to start your adventure"
-                    action={createButton("Create Your First Character", emptyMenu)}
+                    action={
+                      <Stack spacing={1.5} sx={{ alignItems: "center" }}>
+                        {createButton("Create Your First Character")}
+                        <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                          or {importLink("import one from a file")}
+                        </Typography>
+                      </Stack>
+                    }
                   />
                 )
               }
@@ -176,18 +171,6 @@ export default function CharactersPage() {
             </ListPageResults>
           </Stack>
         </Stack>
-        <Menu id={CREATE_MENU_ID} anchorEl={createMenu.anchorEl} open={createMenu.open} onClose={createMenu.closeMenu}>
-          <ActionMenuItem
-            icon={PersonAddIcon}
-            label="New Character"
-            onClick={createMenu.closeMenuAnd(() => createDialog.openWith(true))}
-          />
-          <ActionMenuItem
-            icon={ImportIcon}
-            label="Import Character"
-            onClick={createMenu.closeMenuAnd(() => importDialog.openWith(true))}
-          />
-        </Menu>
         {createDialog.target && (
           <CreateCharacterDialog
             key={createDialog.key}
