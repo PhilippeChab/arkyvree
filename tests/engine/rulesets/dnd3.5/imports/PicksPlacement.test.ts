@@ -11,6 +11,7 @@ function gainsOf(skillId: string, classSkill: boolean) {
   return {
     classSkillIds: new Set(classSkill ? [skillId] : []),
     featRoom: new Map<string, number>(),
+    powerRoom: new Map<string, Map<number, number>>(),
     skillPoints: 4,
     skills: new Map([[skillId, { currentRank: 0, isClassSkill: classSkill }]]),
   };
@@ -28,7 +29,7 @@ async function placementOf(ranks: number) {
   const skill = data.skills.find(({ name }) => name === "Climb")!;
   const line = { number: 1, text: "SKILL:Climb" };
   const matched = { className: "Fighter", line, name: skill.name, ranks, skillId: skill.id };
-  return { placement: new PicksPlacement(data, [], [matched]), skillId: skill.id };
+  return { placement: new PicksPlacement(data, [], [matched], []), skillId: skill.id };
 }
 
 describe("PicksPlacement", () => {
@@ -66,6 +67,7 @@ describe("PicksPlacement", () => {
         { ...line(1), ranks: 3, skillId },
         { ...line(2), ranks: 3, skillId },
       ],
+      [],
     );
     const spent = twins.placeSkills({
       characterLevel: 1,
@@ -87,5 +89,39 @@ describe("PicksPlacement", () => {
         lastClassLevel: 1,
       }),
     ).toEqual({});
+  });
+
+  test("places a spell its class's list has room for at its spell level, never one known already there", async () => {
+    const data = await getSeededData();
+    const sorcerer = data.aptitudes.find(({ name }) => name === "Sorcerer Spells")!;
+    const spell = (name: string, level: number, number: number) => ({
+      aptitudeId: sorcerer.id,
+      level,
+      line: { number, text: `SPELLNAME:${name}` },
+      name,
+      powerId: data.powers.find((power) => power.name === name)!.id,
+    });
+    const placement = new PicksPlacement(
+      data,
+      [],
+      [],
+      [spell("Light", 0, 1), spell("Magic Missile", 1, 2), spell("Scorching Ray", 2, 3), spell("Shield", 1, 4)],
+    );
+    const shield = data.powers.find((power) => power.name === "Shield")!.id;
+    const placed = placement.placePowers({
+      held: [{ aptitudeId: sorcerer.id, id: shield }],
+      room: new Map([
+        [
+          sorcerer.id,
+          new Map([
+            [0, 4],
+            [1, 2],
+          ]),
+        ],
+      ]),
+    });
+    expect(placed.map(({ powerId }) => data.powersById.get(powerId)?.name)).toEqual(["Light", "Magic Missile"]);
+    // No room at the 2nd level yet, and Shield known already: both left for a later level, or the report
+    expect(placement.leftPowers().map(({ name }) => name)).toEqual(["Scorching Ray", "Shield"]);
   });
 });

@@ -473,6 +473,50 @@ describe("A PCGen cleric", () => {
   });
 });
 
+describe("A PCGen sorcerer", () => {
+  test("learns the spells she chose, each on the first level her spell list has room for it at its spell level", async () => {
+    const plan = await planImportOf(await readPcgenFile("selene"));
+    const data = await seededData();
+    const spells = plan.levels.map(({ rows }) =>
+      rows.powers.map(({ powerId }) => data.powersById.get(powerId)?.name).toSorted(),
+    );
+    expect(spells).toEqual([
+      ["Detect Magic", "Light", "Mage Hand", "Magic Missile", "Prestidigitation", "Shield"],
+      ["Ray of Frost"],
+      ["Sleep"],
+      ["Read Magic", "Scorching Ray"],
+    ]);
+    expect(plan.report.unmatched).toEqual([]);
+    expect(plan.report.imported).toContain("Level 4: Sorcerer 4, 2 hit points, Charisma +1, Read Magic, Scorching Ray");
+  });
+
+  test("lists a spell the ruleset hasn't, and one its class's list hasn't: an import never makes a spell", async () => {
+    const text = (await readPcgenFile("selene"))
+      .replace("SPELLNAME:Sleep|", "SPELLNAME:Arcane Storm|")
+      .replace("SPELLNAME:Shield|", "SPELLNAME:Cure Light Wounds|");
+    const reasons = (await planImportOf(text)).report.unmatched.map(({ reason }) => reason);
+    expect(reasons).toContain("Arcane Storm isn't a spell of the ruleset");
+    expect(reasons).toContain("Cure Light Wounds isn't on the Sorcerer's spell list in the ruleset");
+  });
+
+  test("lists a spell of a class the ruleset hasn't by its class", async () => {
+    const text = (await readPcgenFile("selene")).replace(
+      "SPELLNAME:Sleep|TIMES:1|CLASS:Sorcerer|",
+      "SPELLNAME:Sleep|TIMES:1|CLASS:Favored Soul|",
+    );
+    expect((await planImportOf(text)).report.unmatched.map(({ reason }) => reason)).toContain(
+      "Sleep: its class, Favored Soul, isn't a class of the ruleset",
+    );
+  });
+
+  test("leaves out a spell its class knows all of, which a file PCGen saved without its auto-known spells holds", async () => {
+    const text = `${await readPcgenFile("hilda")}\nSPELLNAME:Bless|TIMES:1|CLASS:Cleric|BOOK:Known Spells|SPELLLEVEL:1|SOURCE:[TYPE:CLASS|NAME:Cleric]`;
+    const plan = await planImportOf(text);
+    expect(plan.levels.flatMap(({ rows }) => rows.powers)).toEqual([]);
+    expect(plan.report.unmatched).toEqual([]);
+  });
+});
+
 describe("A level a level-up refuses", () => {
   test("stops the levels there when the import is planned again: the levels after it listed, their increases out", async () => {
     const { rulesetId } = await getSeedCtx();

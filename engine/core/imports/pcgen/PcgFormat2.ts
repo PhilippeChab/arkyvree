@@ -431,12 +431,15 @@ export default class PcgFormat2 {
   }
 
   /**
-   * A spell (`SPELLNAME:<spell>|CLASS:<class>|BOOK:<book>|SPELLLEVEL:<n>`): one the character chose to know, in PCGen's
-   * book of them (`Known Spells`: a sorcerer's, a wizard's spellbook; a class that knows its whole list has none
-   * written), read; one of a day's preparation (another book) isn't a choice of the character's, and is left out.
+   * A spell (`SPELLNAME:<spell>|CLASS:<class>|BOOK:<book>|SPELLLEVEL:<n>|SOURCE:[TYPE:CLASS|…]`): one the character
+   * chose to know as its class's, in PCGen's book of them (`Known Spells`: a sorcerer's, a wizard's spellbook), read.
+   * Left out: one of a day's preparation (another book), and one something else makes known (`SOURCE` a domain's, a
+   * feat's, an item's), none a choice of the character's.
    */
   private readSpell(line: PcgLine) {
     if (line.find("BOOK") !== KNOWN_SPELLS) return;
+    const source = PcgLine.nested(line.find("SOURCE") ?? "").find((part) => part.tag === "TYPE")?.value;
+    if (source !== undefined && source.toUpperCase() !== "CLASS") return;
     const level = PcgFormat2.readNumber(line.find("SPELLLEVEL") ?? "") ?? 0;
     this.character.spells.push({ className: line.find("CLASS") ?? "", level, line: line.line, name: line.value });
   }

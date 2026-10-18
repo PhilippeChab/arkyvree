@@ -8,6 +8,7 @@ import {
   CharacterInventory,
   CharacterLanguages,
   CharacterLevelFeats,
+  CharacterLevelPowers,
   CharacterLevels,
   Characters,
 } from "@/server/repositories/index.ts";
@@ -45,6 +46,17 @@ describe("Imports", () => {
     expect(built.validate()).toEqual({ issues: [], valid: true });
 
     expect(await activityTypes(user.id, charactersInCharacter, character.id)).toEqual(["createCharacter"]);
+  });
+
+  test("writes the spells a sorcerer chose on her levels, which pass every check a level-up runs", async () => {
+    const { imported } = await importAsNewUser("selene");
+    const levels = await CharacterLevels.findMany(db, { characterId: imported.character.id });
+    const powers = await CharacterLevelPowers.findMany(db, { characterLevelIds: levels.map(({ id }) => id) });
+    expect(powers).toHaveLength(10);
+    // Her spells pass; the familiar her file has none of is hers to pick in the app, which the report says
+    const built = await buildAs(DetailedCharacter, (await Characters.findOne(db, { id: imported.character.id }))!);
+    expect(built.validate().issues.map(({ message }) => message)).toEqual(["Familiar Bond: 1 unspent slot(s) (0/1)"]);
+    expect(imported.report.issues).toEqual(["Level 1: Familiar Bond: 1 unspent slot(s) (0/1)"]);
   });
 
   test("answers the report of what it imported and every line it couldn't match", async () => {

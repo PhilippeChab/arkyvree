@@ -7,13 +7,16 @@ import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 
 /**
  * What an imported level gives, read as a level-up of that level alone reads it (`PlannedLevelsState`), over the
- * character's rows with the levels imported before it: the room each feat pool has with it, its skill points, the
+ * character's rows with the levels imported before it: the room each feat pool and each spell list has with it, its
+ * skill points, the
  * skills its class makes class skills, and each skill's ranks so far and whether it's a class skill of the character's.
  */
 export interface LevelGains {
   classSkillIds: Set<string>;
   /** Each feat pool's room with the level, by aptitude id: what its slots (and the levels before it left) open */
   featRoom: Map<string, number>;
+  /** Each spell list's room with the level, by aptitude id, then by spell level: the spells its class learns there */
+  powerRoom: Map<string, Map<number, number>>;
   skillPoints: number;
   skills: ReturnType<typeof Dnd35PicksDistribution.contextsOf>;
 }
@@ -47,9 +50,18 @@ export default class ImportedLevelGains extends PlannedLevelsState {
       gains.classSkills.merged,
     );
     const featRoom = new Map(Object.values(gains.pools.featPools).map((pool) => [pool.id, pool.available]));
+    const powerRoom = new Map(
+      Object.values(gains.pools.powerPools).map((pool) => [
+        pool.id,
+        new Map(
+          Object.entries(pool.levels ?? {}).map(([spellLevel, { available }]) => [Number(spellLevel), available]),
+        ),
+      ]),
+    );
     return {
       classSkillIds: new Set(gains.classSkills.perLevel[0]),
       featRoom,
+      powerRoom,
       skillPoints: gains.perLevelSkillPoints[0] ?? 0,
       skills: Dnd35PicksDistribution.contextsOf(skills),
     };

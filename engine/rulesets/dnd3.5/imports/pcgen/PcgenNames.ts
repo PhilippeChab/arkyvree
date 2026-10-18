@@ -13,7 +13,7 @@ interface Named {
 type Compared = { compared: string; entity: Named }[];
 
 /** The view's lists an import finds entities in. */
-type List = "feats" | "items" | "klasses" | "languages" | "races" | "skills";
+type List = "feats" | "items" | "klasses" | "languages" | "powers" | "races" | "skills";
 
 /** The lists an import finds a player's entity in alone: a race or a class a creature takes isn't a character's. */
 const PLAYER_LISTS = new Set<List>(["klasses", "races"]);
@@ -162,6 +162,13 @@ export default class PcgenNames {
   /** The language PCGen names `name`. */
   findLanguage(name: string) {
     return this.findFirst("languages", [name]);
+  }
+
+  /** The spells PCGen names `name`, among the ruleset's own (an import never makes one): two lists may each have one. */
+  findPowers(name: string): Named[] {
+    const compared = PcgenNames.compared(name);
+    if (!compared) return [];
+    return this.comparedOf("powers").flatMap((power) => (power.compared === compared ? [power.entity] : []));
   }
 
   /** The player race PCGen names `name`, through its wordings ("Elf (Gray)": "Gray Elf"). */

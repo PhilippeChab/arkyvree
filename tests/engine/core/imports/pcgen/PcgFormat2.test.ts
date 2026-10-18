@@ -266,6 +266,9 @@ describe("PcgFormat2", () => {
       "Sorcerer 1: Sleep",
     ]);
     expect(new PcgenFile(await readPcgenFile("hilda")).read().spells).toEqual([]);
+    // A spell a feat or a domain makes known isn't a choice of the class's
+    const bonus = `${await readPcgenFile("selene")}\nSPELLNAME:Enlarge Person|TIMES:1|CLASS:Sorcerer|BOOK:Known Spells|SPELLLEVEL:1|SOURCE:[TYPE:FEAT|NAME:Arcane Gift]`;
+    expect(new PcgenFile(bonus).read().spells).toHaveLength(10);
   });
 
   test("reads PCGen 5's feat lines too, in its general pool", () => {

@@ -1,6 +1,6 @@
 import type { SourceLine } from "@/engine/core/imports/index.ts";
 import type { PlannedClassLevel } from "@/engine/core/levelUp/index.ts";
-import type { FeatPick } from "@/engine/core/module/index.ts";
+import type { FeatPick, PowerPick } from "@/engine/core/module/index.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import SkillRules from "@/engine/rulesets/dnd3.5/rules/SkillRules.ts";
@@ -30,6 +30,18 @@ export interface MatchedFeat {
   poolIds: string[];
 }
 
+/**
+ * A spell the character chose to know, matched to the view's: the spell list of its class it's on (`aptitudeId`), its
+ * level there, and its line.
+ */
+export interface MatchedPower {
+  aptitudeId: string;
+  level: number;
+  line: SourceLine;
+  name: string;
+  powerId: string;
+}
+
 /** A skill's ranks the file holds, matched to the view's: those bought in a class (`className`), and its line. */
 export interface MatchedSkill {
   className: string;
@@ -40,24 +52,30 @@ export interface MatchedSkill {
 }
 
 /**
- * The feats and skill ranks a file holds placed on the levels the character takes, one level at a time, as a player
- * leveling up would have picked them (PCGen lists them, not the level each was taken at): a feat on the first level
- * with room in a pool it can be picked in whose requirements the character meets there, its file's pool first; a
- * skill's ranks over the levels of the class they were bought in, within each level's points and maximum ranks, what
- * can't wait for a later level first. What no level takes is left (`leftFeats`, `leftSkills`), for the report.
+ * The feats, skill ranks and spells a file holds placed on the levels the character takes, one level at a time, as a
+ * player leveling up would have picked them (PCGen lists them, not the level each was taken at): a feat on the first
+ * level with room in a pool it can be picked in whose requirements the character meets there, its file's pool first;
+ * a skill's ranks over the levels of the class they were bought in, within each level's points and maximum ranks, what
+ * can't wait for a later level first; a spell on the first level its class's spell list has room for it at its spell
+ * level. What no level takes is left (`leftFeats`, `leftSkills`, `leftPowers`), for the report.
  */
 export default class PicksPlacement {
   constructor(
     private readonly rulesetData: RulesetData,
     feats: MatchedFeat[],
     skills: MatchedSkill[],
+    powers: MatchedPower[],
   ) {
     this.feats = [...feats];
     this.skills = skills.map((skill) => ({ ...skill }));
+    this.powers = [...powers];
   }
 
   /** The feats not placed yet, in the file's order. */
   private readonly feats: MatchedFeat[];
+
+  /** The spells not placed yet, in the file's order. */
+  private readonly powers: MatchedPower[];
 
   /** The skills' ranks not placed yet, by the class they were bought in. */
   private readonly skills: MatchedSkill[];
@@ -83,9 +101,19 @@ export default class PicksPlacement {
     return undefined;
   }
 
+  /** Whether a level's spell lists have room (`room`, by list, then spell level) for a spell not placed yet. */
+  hasRoomFor(room: Map<string, Map<number, number>>) {
+    return this.powers.some((power) => (room.get(power.aptitudeId)?.get(power.level) ?? 0) > 0);
+  }
+
   /** The feats no level took, in the file's order. */
   leftFeats(): MatchedFeat[] {
     return this.feats;
+  }
+
+  /** The spells no level took, in the file's order. */
+  leftPowers(): MatchedPower[] {
+    return this.powers;
   }
 
   /** The skills whose ranks no level took all of: the ranks each has left. */
@@ -114,6 +142,27 @@ export default class PicksPlacement {
       this.feats.splice(this.feats.indexOf(next.feat), 1);
       character = levelGains.buildWith(entry, skills, placed);
     }
+  }
+
+  /**
+   * The spells a level learns, each in its class's spell list: in the file's order, each its list has room for at its
+   * spell level (`room`, by list, then spell level), and the character doesn't know there already (`held`: a spell its
+   * class or race makes known, or one a level before it learned).
+   */
+  placePowers({ held, room }: { held: { aptitudeId: string; id: string }[]; room: Map<string, Map<number, number>> }) {
+    const placed: PowerPick[] = [];
+    const known = new Set(held.map(({ aptitudeId, id }) => `${aptitudeId}:${id}`));
+    const left = new Map([...room].map(([aptitudeId, byLevel]) => [aptitudeId, new Map(byLevel)]));
+    for (const power of [...this.powers]) {
+      const key = `${power.aptitudeId}:${power.powerId}`;
+      const atLevel = left.get(power.aptitudeId);
+      if (known.has(key) || !atLevel || (atLevel.get(power.level) ?? 0) <= 0) continue;
+      placed.push({ aptitudeId: power.aptitudeId, powerId: power.powerId });
+      atLevel.set(power.level, atLevel.get(power.level)! - 1);
+      known.add(key);
+      this.powers.splice(this.powers.indexOf(power), 1);
+    }
+    return placed;
   }
 
   /**
