@@ -1,5 +1,6 @@
 import type { ModifierSeed, RequirementEntry } from "@/content/core/builders/customization/types.ts";
 import type { BabType, SaveType } from "@/content/dnd3.5/builders/classes/types.ts";
+import type { CasterType } from "@/vocabulary/dnd3.5/classes.ts";
 
 import type { DetectedModifiers, ScrapedMeta } from "./reference.ts";
 
@@ -73,7 +74,7 @@ export interface ClassReference {
     bonusFeatLists?: BonusFeatList[];
     casterLevelAdvancement?: { levels: number[]; type: "divine" | "arcane" | "any" | "dual" };
     /** Detected caster type from class feature descriptions */
-    casterType?: "Arcane" | "Divine";
+    casterType?: CasterType;
     /** Invalid paths that failed validation — bugs to fix */
     errors?: string[];
     /**
@@ -113,7 +114,7 @@ export interface ClassReference {
     bab: BabType;
     bonusFeatLists?: BonusFeatList[];
     bonusSpellAbility?: string;
-    casterType?: "Arcane" | "Divine";
+    casterType?: CasterType;
     classFeatureAptitude: string;
     classSkills: string[];
     /** The table columns its levels' modifiers read, by header */
@@ -149,7 +150,7 @@ export interface ClassReference {
     bonusFeatLists?: BonusFeatList[];
     /** Manual bonusSpellAbility (when scraper can't detect it from page text) */
     bonusSpellAbility?: string;
-    casterType?: "Arcane" | "Divine";
+    casterType?: CasterType;
     classSkills?: string[];
     /** The table columns its levels' modifiers read, by header */
     columns?: Record<string, ColumnModifier>;

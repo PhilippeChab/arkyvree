@@ -15,6 +15,7 @@ import {
 } from "@/vocabulary/dnd3.5/armor.ts";
 import {
   ABILITY_INCREASE_LEVEL_INTERVAL,
+  CASTER_TYPES,
   FIRST_LEVEL_GENERAL_FEATS,
   GENERAL_FEAT_LEVEL_INTERVAL,
   MAX_CHARACTER_LEVEL,
@@ -384,7 +385,7 @@ const KLASS_FIELDS = {
     kind: "choice",
     label: "Caster Type",
     type: KLASS_CASTER_TYPE,
-    values: ["Arcane", "Divine"],
+    values: CASTER_TYPES,
   },
 } as const;
 

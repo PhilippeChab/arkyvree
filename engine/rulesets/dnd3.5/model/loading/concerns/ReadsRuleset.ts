@@ -7,6 +7,7 @@ import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import { RULESET_FIELDS } from "@/engine/rulesets/dnd3.5/ruleset/fields.ts";
 import type { Constructor } from "@/lib/mixins.ts";
+import type { CasterType } from "@/vocabulary/dnd3.5/classes.ts";
 
 /**
  * What a character's load reads of its ruleset's view: its rows, its fields and the 3.5 meaning of its properties, and
@@ -48,7 +49,7 @@ export function ReadsRuleset<B extends Constructor<CharacterDataLoader<LoadedCha
       abilityLookup: Map<string, string>,
     ) {
       const klassBonusSpellAbilityMap = new Map<string, string>();
-      const klassCasterTypeMap = new Map<string, "Arcane" | "Divine">();
+      const klassCasterTypeMap = new Map<string, CasterType>();
       for (const klassId of klassEntityIds) {
         const { bonusSpellAbilityId, casterType } = CLASS_FIELDS.read(
           rulesetData.propertiesByEntity.get(klassId) ?? [],
