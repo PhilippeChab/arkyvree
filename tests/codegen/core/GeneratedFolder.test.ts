@@ -6,12 +6,6 @@ import { join } from "node:path";
 import { GeneratedFolder } from "@/codegen/core/GeneratedFolder.ts";
 import { code, filesOf } from "@/tests/support/generatedFiles.ts";
 
-/** The message of the error a generation was refused with. */
-async function refusalOf(generation: Promise<unknown>) {
-  const error = await generation.catch((thrown: unknown) => thrown);
-  return error instanceof Error ? error.message : String(error);
-}
-
 describe("A generation", () => {
   test("leaves its folder as it was when a generation fails or throws, and replaces it when one succeeds", async () => {
     const parent = mkdtempSync(join(tmpdir(), "generation-"));
@@ -32,13 +26,11 @@ describe("A generation", () => {
         }),
       ).toEqual(["a reference failed"]);
       expect(
-        await refusalOf(
-          GeneratedFolder.generateAtomically(folder, (copy) => {
-            halfWrite(copy);
-            throw new Error("the generator broke");
-          }),
-        ),
-      ).toBe("the generator broke");
+        GeneratedFolder.generateAtomically(folder, (copy) => {
+          halfWrite(copy);
+          throw new Error("the generator broke");
+        }),
+      ).rejects.toThrow("the generator broke");
       expect(filesOf(folder)).toEqual(["index.ts"]);
       expect(contentOf("index.ts")).toBe(code("before"));
       expect(readdirSync(parent)).toEqual(["generated"]);
@@ -89,13 +81,11 @@ describe("A generation", () => {
       writeFileSync(join(folder, "index.ts"), code("before"));
       // The copy gone, the second rename of the swap fails
       expect(
-        await refusalOf(
-          GeneratedFolder.generateAtomically(folder, (copy) => {
-            rmSync(copy, { recursive: true });
-            return [];
-          }),
-        ),
-      ).toContain("ENOENT");
+        GeneratedFolder.generateAtomically(folder, (copy) => {
+          rmSync(copy, { recursive: true });
+          return [];
+        }),
+      ).rejects.toThrow("ENOENT");
       expect(readFileSync(join(folder, "index.ts"), "utf8")).toBe(code("before"));
       expect(readdirSync(parent)).toEqual(["generated"]);
     } finally {
@@ -109,18 +99,16 @@ describe("A generation", () => {
     try {
       mkdirSync(folder);
       writeFileSync(join(folder, "index.ts"), code("before"));
-      // The second is refused as it starts, while the first holds the folder
-      const second: Promise<string>[] = [];
       expect(
         await GeneratedFolder.generateAtomically(folder, (copy) => {
           writeFileSync(join(copy, "index.ts"), code("first"));
-          second.push(refusalOf(GeneratedFolder.generateAtomically(folder, () => [])));
+          expect(GeneratedFolder.generateAtomically(folder, () => [])).rejects.toThrow(
+            "Another generation is running on this folder",
+          );
           writeFileSync(join(copy, "items.ts"), code("first"));
           return [];
         }),
       ).toEqual([]);
-      expect(second).toHaveLength(1);
-      expect(await second[0]).toStartWith("Another generation is running on this folder");
       expect(filesOf(folder)).toEqual(["index.ts", "items.ts"]);
       expect(readFileSync(join(folder, "index.ts"), "utf8")).toBe(code("first"));
       expect(readdirSync(parent)).toEqual(["generated"]);

@@ -60,6 +60,8 @@ export class GeneratedFolder {
     const files = readdirSync(dir, { recursive: true, withFileTypes: true })
       .filter((entry) => entry.isFile() && entry.name.endsWith(".ts"))
       .map((entry) => join(entry.parentPath, entry.name));
+    // Given no file, oxlint and oxfmt would work on the folder they run in: the repo's
+    if (files.length === 0) return;
     const sorted = await GeneratedFolder.run([
       LINTER,
       "-c",
