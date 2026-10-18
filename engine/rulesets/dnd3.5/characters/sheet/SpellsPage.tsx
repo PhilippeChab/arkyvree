@@ -5,7 +5,6 @@ import { POWER_FIELDS } from "@/engine/rulesets/dnd3.5/entities/powers/fields.ts
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import { formatPropertyType } from "@/shared/customization/properties.ts";
 import {
-  ENTITY_FIELDS,
   SPELL_AREA_OF_EFFECT,
   SPELL_CASTING_TIME,
   SPELL_COMPONENT,
@@ -26,7 +25,7 @@ import { FONT_SIZE, styles } from "./styles.ts";
 
 /**
  * Short labels so each spell's property row fits on a single line. A legend is rendered once at the top of the spells
- * section, each beside its field's label.
+ * section, which spells each one out as its field's label.
  */
 const SPELL_PROPERTY_ABBR: Record<string, string> = {
   [SPELL_SUBSCHOOL]: "SS",
@@ -41,9 +40,9 @@ const SPELL_PROPERTY_ABBR: Record<string, string> = {
   [SPELL_RESISTANCE]: "SR",
 };
 
-/** Each spell property's label, as its field declares it: what the legend spells an abbreviation out as. */
+/** Each spell property's label, as its field declares it. */
 const SPELL_PROPERTY_LABELS = new Map<string, string>(
-  Object.values(ENTITY_FIELDS.powers).map((field) => [field.type, field.label]),
+  Object.values(POWER_FIELDS.fields).map((field) => [field.type, field.label]),
 );
 /** The spell properties in a 3.5 stat block's order (the order its fields are declared in); the others follow by name. */
 const SPELL_PROPERTY_ORDER = POWER_FIELDS.types;

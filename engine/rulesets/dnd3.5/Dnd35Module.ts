@@ -28,7 +28,7 @@ export default class Dnd35Module {
       },
 
       createPropertyTypes() {
-        return new Dnd35PropertyTypes();
+        return Dnd35PropertyTypes.SHARED;
       },
     };
   }

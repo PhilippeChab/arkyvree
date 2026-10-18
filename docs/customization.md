@@ -399,7 +399,7 @@ A feat's or a class's "Caster level Nth" prerequisite (the item creation feats: 
 
 ### Caster level advancement:
 
-Prestige classes that advance spellcasting use a "Bonus Caster Level" aptitude system. Each advancement feat adds +1 to `classes.<name>.bonuscasterlevel` via a stackable modifier, which the class's caster level counts. Classes define `casterLevelAdvancement` with a type (`divine`, `arcane`, or general) and which levels grant the advancement feat pick. See `database/seeders/dnd3.5/concerns/SeedsClasses.ts` for implementation. The class levels a bonus caster level reaches apply their spell slots each while its own requirements hold.
+Prestige classes that advance spellcasting use a "Bonus Caster Level" aptitude system. Each advancement feat adds +1 to `classes.<name>.bonuscasterlevel` via a stackable modifier, which the class's caster level counts. Classes define `casterLevelAdvancement` with a type (`divine`, `arcane`, `any`, or `dual`, both of a dual caster's) and which levels grant the advancement feat pick. See `database/seeders/dnd3.5/concerns/SeedsClasses.ts` for implementation. The class levels a bonus caster level reaches apply their spell slots each while its own requirements hold.
 
 ### A class's spell lists:
 

@@ -23,7 +23,7 @@ interface LeafBase extends FieldBase {
 type KindValueOf<F extends FieldSpec> = F extends GroupSpec
   ? FieldValues<F["fields"]>
   : F extends FlagSpec
-    ? F extends { absent: null }
+    ? "absent" extends keyof F
       ? boolean | null
       : boolean
     : F extends NumberSpec

@@ -10,8 +10,8 @@ export default class Dnd35PropertyTypes extends FieldPropertyTypes {
     super(ENTITY_FIELDS);
   }
 
-  /** The property types every 3.5 ruleset reads, which `valuesOf` answers from. */
-  private static readonly SHARED = new Dnd35PropertyTypes();
+  /** The property types every 3.5 ruleset reads: its module hands them out, and `valuesOf` answers from them. */
+  static readonly SHARED = new Dnd35PropertyTypes();
 
   /** The values a property type takes, in their order, when they're a closed list: none for a free-text type. */
   static valuesOf(type: string): readonly string[] | null {
