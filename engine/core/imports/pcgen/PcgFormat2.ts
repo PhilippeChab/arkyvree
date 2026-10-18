@@ -18,11 +18,11 @@ interface EquipSetEntry {
 /** A tag's reading: what a line named for it adds to the character. */
 type TagReader = (line: PcgLine) => void;
 
-/** The locations of an equipment set that hold an item without wearing it: what's carried, a container's by its name. */
-const CARRIED_LOCATIONS = new Set(["Carried", "Equipped", "Not Carried"]);
+/** The equipment set's location of what the character owns without carrying it. */
+const NOT_CARRIED = "Not Carried";
 
-/** The equipment set's location of the rings a character wears, two at most. */
-const FINGERS = "Fingers";
+/** The locations of an equipment set that hold an item without wearing it: what's carried, a container's by its name. */
+const CARRIED_LOCATIONS = new Set(["Carried", "Equipped", NOT_CARRIED]);
 
 /**
  * The lines PCGen writes of its own settings and of what the rules work out from the class and race (weapon
@@ -52,6 +52,7 @@ const LEFT_OUT = new Set([
   "POOLPOINTS",
   "POOLPOINTSAVAIL",
   "PORTRAIT",
+  "PORTRAITTHUMBNAILRECT",
   "PREVIEWSHEET",
   "PREVIEWVAR",
   "PURCHASEPOINTS",
@@ -72,9 +73,6 @@ const LEFT_OUT = new Set([
   "VFEAT",
   "WEAPONPROF",
 ]);
-
-/** The equipment set's location of what the character owns without carrying it. */
-const NOT_CARRIED = "Not Carried";
 
 /** The lines of the character's own text that go to its notes, each labelled. */
 const NOTE_LABELS = new Map<string, string>([
@@ -122,6 +120,18 @@ const UNREAD_REASONS = new Map<string, string>([
 export default class PcgFormat2 {
   constructor(private readonly lines: PcgLine[]) {}
 
+  /**
+   * A worn entry by the hands that hold it: a pair of one weapon (PCGen's `Two Weapons`) one in each hand, the others
+   * left to be carried; any other as it is (how many its place wears, its ruleset's importer says).
+   */
+  private static handsOf(entry: EquipSetEntry): EquipSetEntry[] {
+    if (entry.location !== TWO_WEAPONS) return [entry];
+    return [
+      { location: "Primary Hand", quantity: Math.min(1, entry.quantity) },
+      ...(entry.quantity >= 2 ? [{ location: "Secondary Hand", quantity: 1 }] : []),
+    ];
+  }
+
   /** Whether an equipment set's location holds an item without wearing it: carried, or in a container. */
   private static isCarried(location: string, itemNames: Set<string>) {
     return CARRIED_LOCATIONS.has(location) || itemNames.has(location);
@@ -138,21 +148,10 @@ export default class PcgFormat2 {
     });
   }
 
-  /**
-   * A worn entry as the places that wear it, one each: a pair of one weapon (PCGen's `Two Weapons`) a hand each, two
-   * of one ring (`Fingers`, which PCGen counts as one entry) a finger each, one of any other at its place; the others
-   * left to be carried.
-   */
-  private static unitsOf(entry: EquipSetEntry): EquipSetEntry[] {
-    if (entry.location === TWO_WEAPONS) {
-      return [
-        { location: "Primary Hand", quantity: Math.min(1, entry.quantity) },
-        ...(entry.quantity >= 2 ? [{ location: "Secondary Hand", quantity: 1 }] : []),
-      ];
-    }
-    if (entry.quantity <= 1) return [entry];
-    const worn = entry.location === FINGERS ? Math.min(2, Math.floor(entry.quantity)) : 1;
-    return Array.from({ length: worn }, () => ({ location: entry.location, quantity: 1 }));
+  /** A number of a value, if it is one (PCGen writes whole ones as decimals too: `QUANTITY:2.0`). */
+  private static readNumber(value: string): number | undefined {
+    const number = Number.parseFloat(value);
+    return Number.isFinite(number) ? number : undefined;
   }
 
   /** The character the file holds, as it reads it so far. */
@@ -179,7 +178,7 @@ export default class PcgFormat2 {
   /** What reads each line, by the tag it's named for. */
   private readonly readers = new Map<string, TagReader>([
     ["ABILITY", (line) => this.readAbility(line)],
-    ["AGE", (line) => (this.character.identity.age = this.readNumber(line.value))],
+    ["AGE", (line) => (this.character.identity.age = PcgFormat2.readNumber(line.value))],
     ["ALIGN", (line) => (this.character.identity.alignment = { line: line.line, value: line.value })],
     ["CALCEQUIPSET", (line) => (this.calcEquipSet = line.value)],
     ["CHARACTERBIO", (line) => this.addDescription(line.value)],
@@ -191,10 +190,10 @@ export default class PcgFormat2 {
     ["DOMAIN", (line) => this.character.domains.push({ line: line.line, name: line.value })],
     ["EQUIPNAME", (line) => this.readItem(line)],
     ["EQUIPSET", (line) => this.readEquipSet(line)],
-    ["EXPERIENCE", (line) => (this.character.identity.xp = this.readNumber(line.value) ?? 0)],
+    ["EXPERIENCE", (line) => (this.character.identity.xp = PcgFormat2.readNumber(line.value) ?? 0)],
     ["FEAT", (line) => this.readFeat(line, "FEAT")],
     ["GENDER", (line) => (this.character.identity.gender = { line: line.line, value: line.value })],
-    ["HEIGHT", (line) => (this.character.identity.height = this.readNumber(line.value))],
+    ["HEIGHT", (line) => (this.character.identity.height = PcgFormat2.readNumber(line.value))],
     ["LANGUAGE", (line) => this.readLanguages(line)],
     ["MONEY", (line) => this.addNote("Money", line.value)],
     ["NOTE", (line) => this.addNote(line.value, line.find("VALUE") ?? "")],
@@ -203,7 +202,7 @@ export default class PcgFormat2 {
     ["STAT", (line) => this.readAbilityScore(line)],
     ["TEMPLATESAPPLIED", (line) => this.readTemplate(line)],
     ["VERSION", (line) => (this.character.source.version = line.value)],
-    ["WEIGHT", (line) => (this.character.identity.weight = this.readNumber(line.value))],
+    ["WEIGHT", (line) => (this.character.identity.weight = PcgFormat2.readNumber(line.value))],
   ]);
 
   /** The equipment set the character's sheet uses (`CALCEQUIPSET`), the first one when it names none. */
@@ -243,7 +242,7 @@ export default class PcgFormat2 {
     return this.items.flatMap(({ item, quantity }) => {
       const held = entries.get(item.name) ?? [];
       const wearing = held.filter((entry) => !PcgFormat2.isCarried(entry.location, itemNames));
-      const worn = wearing.flatMap((entry) => PcgFormat2.unitsOf(entry));
+      const worn = wearing.flatMap((entry) => PcgFormat2.handsOf(entry));
       const left = quantity - sum(worn);
       // What the set holds but doesn't wear is carried (a pair's third dagger too); what it leaves out (or sets apart,
       // `Not Carried`, a chest left there with what it holds) is owned without being carried, but in a file of no set,
@@ -281,7 +280,7 @@ export default class PcgFormat2 {
 
   /** An ability score (`STAT:STR|SCORE:16`): the score before its race's adjustments, its level increases in. */
   private readAbilityScore(line: PcgLine) {
-    const score = this.readNumber(line.find("SCORE") ?? "");
+    const score = PcgFormat2.readNumber(line.find("SCORE") ?? "");
     if (score !== undefined) this.character.abilities.push({ key: line.value, line: line.line, score });
   }
 
@@ -318,7 +317,7 @@ export default class PcgFormat2 {
     if (!this.equipSets.has(setId)) this.equipSets.set(setId, new Map());
     if (!item) return;
     const entries = this.equipSets.get(setId)!;
-    const quantity = this.readNumber(line.find("QUANTITY") ?? "") ?? 1;
+    const quantity = PcgFormat2.readNumber(line.find("QUANTITY") ?? "") ?? 1;
     entries.set(item, [...(entries.get(item) ?? []), { location: line.value, quantity }]);
   }
 
@@ -339,7 +338,7 @@ export default class PcgFormat2 {
     const baseName = customization.find((part) => part.tag === "BASEITEM")?.value;
     const data = customization.find((part) => part.tag === "DATA")?.value ?? "";
     const magic = PcgFormat2.isEnhanced(data) || /\+\d/.test(line.value);
-    const quantity = this.readNumber(line.find("QUANTITY") ?? "") ?? 1;
+    const quantity = PcgFormat2.readNumber(line.find("QUANTITY") ?? "") ?? 1;
     // The charges left, which PCGen keeps in the modifier that gives them (`CHARGES[23]`)
     const charges = /CHARGES\[(\d+)\]/.exec(data)?.[1];
     const item = {
@@ -365,30 +364,24 @@ export default class PcgFormat2 {
     const [className, classLevel] = line.value.split("=");
     const abilityChanges = line.findAll("PRESTAT").flatMap((change) => {
       const [key, amount] = change.split("=");
-      const value = this.readNumber(amount ?? "");
+      const value = PcgFormat2.readNumber(amount ?? "");
       return value ? [{ amount: value, key }] : [];
     });
     const level: ImportedLevel = {
       abilityChanges,
       className,
-      classLevel: this.readNumber(classLevel ?? "") ?? 0,
-      hp: this.readNumber(line.find("HITPOINTS") ?? "") ?? 0,
+      classLevel: PcgFormat2.readNumber(classLevel ?? "") ?? 0,
+      hp: PcgFormat2.readNumber(line.find("HITPOINTS") ?? "") ?? 0,
       line: line.line,
     };
     this.character.levels.push(level);
-  }
-
-  /** A number of a value, if it is one (PCGen writes whole ones as decimals too: `QUANTITY:2.0`). */
-  private readNumber(value: string): number | undefined {
-    const number = Number.parseFloat(value);
-    return Number.isFinite(number) ? number : undefined;
   }
 
   /** A skill's ranks (`SKILL:<name>|CLASSBOUGHT:[CLASS:<class>|RANKS:<n>|…]…`), none for one without. */
   private readSkill(line: PcgLine) {
     const bought = line.findAll("CLASSBOUGHT").flatMap((value) => {
       const tags = new Map(PcgLine.nested(value).map((part) => [part.tag, part.value]));
-      const ranks = this.readNumber(tags.get("RANKS") ?? "") ?? 0;
+      const ranks = PcgFormat2.readNumber(tags.get("RANKS") ?? "") ?? 0;
       if (ranks <= 0) return [];
       return [{ className: tags.get("CLASS") ?? "", ranks }];
     });

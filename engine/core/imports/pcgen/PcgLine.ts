@@ -38,13 +38,14 @@ export default class PcgLine {
     const parts: string[] = [];
     let depth = 0;
     let start = 0;
-    // By UTF-16 code unit, as `slice` cuts: a bracket or a `|` is never half of a pair
+    // By UTF-16 code unit, as `slice` cuts: a bracket or a `|` is never half of a pair. A bracket opens a value when it
+    // opens one (`TAG:[`) or sits in one; PCGen encodes its others, but writes a note as it is, whose `[` holds nothing
     for (let index = 0; index < text.length; index++) {
       const char = text[index];
-      if (char === "[") {
+      if (char === "[" && (depth > 0 || text[index - 1] === ":")) {
         depth++;
-      } else if (char === "]") {
-        depth = Math.max(0, depth - 1);
+      } else if (char === "]" && depth > 0) {
+        depth--;
       } else if (char === "|" && depth === 0) {
         parts.push(text.slice(start, index));
         start = index + 1;

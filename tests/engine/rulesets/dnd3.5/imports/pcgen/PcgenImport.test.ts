@@ -369,6 +369,20 @@ describe("What a file holds past what the app keeps", () => {
     );
   });
 
+  test("rings PCGen wears as one entry, a finger each, as many as a character wears, the others carried", async () => {
+    const text = (await readPcgenFile("brannoc"))
+      .replace("|COST:2000|WT:0.0|QUANTITY:1.0|", "|COST:2000|WT:0.0|QUANTITY:3.0|")
+      .replace("VALUE:Ring of Protection +1|QUANTITY:1.0", "VALUE:Ring of Protection +1|QUANTITY:3.0");
+    const plan = await planImportOf(text);
+    const data = await seededData();
+    const rings = plan.inventory.filter((entry) => data.itemsById.get(entry.itemId)?.name === "Ring of Protection +1");
+    expect(rings.map(({ equipped, location, quantity }) => `${equipped ? location : "carried"} ${quantity}`)).toEqual([
+      "Finger 1",
+      "Finger 1",
+      "carried 1",
+    ]);
+  });
+
   test("gear past the most the app keeps, and gear the character owns without carrying it, said in the report", async () => {
     const text = (await readPcgenFile("brannoc")).replace(
       "EQUIPNAME:Rations (Trail/Per Day)|OUTPUTORDER:7|COST:0.5|WT:1.0|QUANTITY:5.0",

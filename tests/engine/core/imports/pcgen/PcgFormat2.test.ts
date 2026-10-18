@@ -165,13 +165,14 @@ describe("PcgFormat2", () => {
     ]);
   });
 
-  test("wears two of one ring a finger each, and leaves out PCGen's sheet settings; a chronicle listed", () => {
+  test("reads the rings worn as one entry, leaves out PCGen's sheet settings, and lists a chronicle", () => {
     const text = [
       "PCGVERSION:2.0",
       "VERSION:6.09",
       "FAVOREDCLASS:Fighter",
       "OUTPUTSHEETHTML:sheet.htm",
       "PREVIEWVAR:x",
+      "PORTRAITTHUMBNAILRECT:12,4,96,96",
       "CHRONICLEENTRY:[EXPORT:Y|CAMPAIGN:Saga|ADVENTURE:The Keep|XP:500|CHRONICLE:Cleared the keep]",
       "EQUIPNAME:Ring of Protection +1|QUANTITY:3.0",
       "EQUIPSET:Default Set|ID:0.1",
@@ -179,12 +180,17 @@ describe("PcgFormat2", () => {
       "CALCEQUIPSET:0.1",
     ].join("\n");
     const { gear, unread } = new PcgenFile(text).read();
-    expect(gear.map(({ location, quantity }) => `${location ?? "carried"} ${quantity}`)).toEqual([
-      "Fingers 1",
-      "Fingers 1",
-      "carried 1",
-    ]);
+    expect(gear.map(({ location, quantity }) => `${location ?? "carried"} ${quantity}`)).toEqual(["Fingers 3"]);
     expect(unread.map(({ reason }) => reason)).toEqual(["Chronicle entries aren't imported: add them to the notes"]);
+  });
+
+  test("reads an item whose note opens a bracket it doesn't close, as PCGen writes a note as it is", () => {
+    const text = [
+      "PCGVERSION:2.0",
+      "VERSION:6.09",
+      "EQUIPNAME:Wand|QUANTITY:1.0|NOTE:recharge? [ask GM|CUSTOMIZATION:[BASEITEM:Wand|DATA:EQMOD=CHARGES[23]$]",
+    ].join("\n");
+    expect(new PcgenFile(text).read().gear[0]).toMatchObject({ charges: 23, name: "Wand" });
   });
 
   test("reads PCGen 5's feat lines too, in its general pool", () => {

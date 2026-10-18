@@ -6,6 +6,7 @@ import Dnd35Characters from "@/engine/rulesets/dnd3.5/characters/Dnd35Characters
 import ItemPlacement, { type ItemPlacementDescription } from "@/engine/rulesets/dnd3.5/rules/ItemPlacement.ts";
 import { MAX_CHARACTER_NUMBER } from "@/shared/characters.ts";
 import type { Item } from "@/shared/relations.ts";
+import { MAX_FINGER_ITEMS } from "@/vocabulary/dnd3.5/equipment.ts";
 
 import { PCGEN_LOCATIONS } from "./names.ts";
 import type PcgenNames from "./PcgenNames.ts";
@@ -28,6 +29,21 @@ export default class GearImport {
     private readonly names: PcgenNames,
     private readonly report: ImportReport,
   ) {}
+
+  /**
+   * A worn piece as the entries that wear it: two of one ring (PCGen's `Fingers` counts them as one entry) a finger
+   * each, as many as a character wears (`MAX_FINGER_ITEMS`), one of anything else at its place; the rest carried.
+   */
+  private static unitsOf(gear: ImportedGear): ImportedGear[] {
+    const { location, ...carried } = gear;
+    if (location === undefined || gear.quantity <= 1) return [gear];
+    const worn = Math.min(Math.floor(gear.quantity), location === "Fingers" ? MAX_FINGER_ITEMS : 1);
+    const rest = gear.quantity - worn;
+    return [
+      ...Array.from({ length: worn }, () => ({ ...gear, quantity: 1 })),
+      ...(rest > 0 ? [{ ...carried, quantity: rest }] : []),
+    ];
+  }
 
   private readonly characters = new Dnd35Characters();
 
@@ -122,7 +138,7 @@ export default class GearImport {
   planInventory(character: CharacterInput, gear: ImportedGear[]): ImportedEntry[] {
     const entries: ImportedEntry[] = [];
     let holder = character;
-    for (const piece of gear) {
+    for (const piece of gear.flatMap((worn) => GearImport.unitsOf(worn))) {
       const item = this.findItem(piece);
       if (!item) {
         const made = piece.baseName ? ` (from ${piece.baseName})` : "";
