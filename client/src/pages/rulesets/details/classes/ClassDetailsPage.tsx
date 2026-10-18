@@ -51,9 +51,11 @@ function ClassView({ back, classId, ruleset, rulesetId, section }: ClassViewProp
 
   const classForms = getClassForms(ruleset.baseRules);
   const classSections = getClassSections(ruleset.baseRules);
-  // Its own tabs, then its base rules', then those that customize it
-  const tabs = [...CLASS_TABS, ...classSections.tabs, ...CLASS_CUSTOMIZATION_TABS];
+  // Its base rules' tabs, then its own, then those that customize it
+  const tabs = [...classSections.tabs, ...CLASS_TABS, ...CLASS_CUSTOMIZATION_TABS];
   const currentTab = tabs.find((tab) => tab.key === section);
+  // An address of a tab it had before opens the one that took its place
+  const aliasedTab = section === undefined ? undefined : classSections.tabAliases[section];
 
   const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
   // Deleting an inherited class, or what it holds, can be undone
@@ -95,8 +97,16 @@ function ClassView({ back, classId, ruleset, rulesetId, section }: ClassViewProp
     followCopy: copy.followCopy,
   });
 
-  // Normalize the URL to a tab its base rules give.
-  if (!currentTab) return <Navigate to={`/rulesets/${rulesetId}/classes/${classId}/levels`} replace />;
+  // Normalize the URL to a tab its base rules give: the one an old tab's address names, or its first.
+  if (!currentTab) {
+    return (
+      <Navigate
+        to={`/rulesets/${rulesetId}/classes/${classId}/${aliasedTab ?? tabs[0].key}`}
+        replace
+        state={location.state}
+      />
+    );
+  }
 
   if (!isLoading && !classData)
     return <EntityPageError message={loadFailureMessage("Class", error)} backLabel={back.label} backTo={back.to} />;

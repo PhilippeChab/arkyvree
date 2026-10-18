@@ -62,7 +62,7 @@ export function ClassesSection({ ruleset, childOnly, onChildOnlyChange }: Rulese
           json: data,
         }),
       ),
-    onCreateSuccess: (created) => openEntity(`classes/${created.id}/levels`),
+    onCreateSuccess: (created) => openEntity(`classes/${created.id}/progression`),
   });
 
   const { data, isLoading, error, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
@@ -73,7 +73,7 @@ export function ClassesSection({ ruleset, childOnly, onChildOnlyChange }: Rulese
   const classes = pageItems(data);
 
   const handleRowClick = (klass: Class) => {
-    openEntity(`classes/${klass.id}/levels`);
+    openEntity(`classes/${klass.id}/progression`);
   };
 
   const handleRowPrefetch = (klass: Class) => {

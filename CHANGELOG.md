@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Rulesets choose the levels that give every character a feat or an ability score increase
+- D&D 3.5: edit a class's whole progression at once: base attack bonus and save presets, skill points, class features and feat pools by level, and spells per day and known as a table
 
 ## 0.6.0 — 2026-10-12
 

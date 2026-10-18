@@ -1,43 +1,56 @@
-import { FeatPoolsIcon, PowersIcon, SpellsIcon, SpellUsesIcon } from "@/client/src/components/icons/index.ts";
+import { LevelsIcon, PowersIcon, SpellUsesIcon } from "@/client/src/components/icons/index.ts";
 import type { ClassTab } from "@/client/src/pages/rulesets/details/classes/classSectionFactory.ts";
 import {
   classFeatPoolsQuery,
+  classLevelsQuery,
+  classProgressionQuery,
   classSpellListsQuery,
   classSpellsKnownQuery,
   classSpellsPerDayQuery,
 } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 
-import { ClassFeatPoolsSection } from "./ClassFeatPoolsSection.tsx";
+import { ClassProgressionSection } from "./ClassProgressionSection.tsx";
 import { ClassSpellListSection } from "./ClassSpellListSection.tsx";
-import { ClassSpellsKnownSection } from "./ClassSpellsKnownSection.tsx";
-import { ClassSpellsPerDaySection } from "./ClassSpellsPerDaySection.tsx";
+import { ClassSpellsSection } from "./ClassSpellsSection.tsx";
+
+/** The tabs a 3.5 class page had before its Progression and Spells tabs, by the tab each one's address now opens. */
+export const DND35_CLASS_TAB_ALIASES: Record<string, string> = {
+  "feat-pools": "progression",
+  levels: "progression",
+  "spells-known": "spells",
+  "spells-per-day": "spells",
+};
 
 /**
- * A 3.5 class page's own tabs, what its rules make of a class: its feat pools, its spells known and per day, and the
- * spell list it casts from, each warming its rows as it's pointed at (the spell list's, the lists it picks among).
+ * A 3.5 class page's own tabs, its first: its progression (its table, its base attack bonus, saves and skill points,
+ * its features and feat pools), its spells per day and known, and the spell list it casts from, each warming its rows
+ * as it's pointed at.
  */
 export const DND35_CLASS_TABS: ClassTab[] = [
   {
-    key: "feat-pools",
-    label: "Feat Pools",
-    icon: FeatPoolsIcon,
-    Section: ClassFeatPoolsSection,
-    prefetch: (queryClient, rulesetId, classId) => queryClient.prefetchQuery(classFeatPoolsQuery(rulesetId, classId)),
+    key: "progression",
+    label: "Progression",
+    icon: LevelsIcon,
+    Section: ClassProgressionSection,
+    prefetch: async (queryClient, rulesetId, classId) => {
+      await Promise.all([
+        queryClient.prefetchQuery(classLevelsQuery(rulesetId, classId)),
+        queryClient.prefetchQuery(classProgressionQuery(rulesetId, classId)),
+        queryClient.prefetchQuery(classFeatPoolsQuery(rulesetId, classId)),
+      ]);
+    },
   },
   {
-    key: "spells-known",
-    label: "Spells Known",
-    icon: SpellsIcon,
-    Section: ClassSpellsKnownSection,
-    prefetch: (queryClient, rulesetId, classId) => queryClient.prefetchQuery(classSpellsKnownQuery(rulesetId, classId)),
-  },
-  {
-    key: "spells-per-day",
-    label: "Spells per Day",
+    key: "spells",
+    label: "Spells",
     icon: SpellUsesIcon,
-    Section: ClassSpellsPerDaySection,
-    prefetch: (queryClient, rulesetId, classId) =>
-      queryClient.prefetchQuery(classSpellsPerDayQuery(rulesetId, classId)),
+    Section: ClassSpellsSection,
+    prefetch: async (queryClient, rulesetId, classId) => {
+      await Promise.all([
+        queryClient.prefetchQuery(classSpellsPerDayQuery(rulesetId, classId)),
+        queryClient.prefetchQuery(classSpellsKnownQuery(rulesetId, classId)),
+      ]);
+    },
   },
   {
     key: "spell-list",

@@ -9,6 +9,9 @@ type Levels = ReturnType<EntityKindsContract["klasses"]["levels"]>;
 /** A class's levels, as the registered rulesets' classes have them: whose saves take each ruleset's own body. */
 type RegisteredLevels = ReturnType<EntityKinds["klasses"]["levels"]>;
 
+/** A class's progression, as the registered rulesets' classes have it: whose save takes each ruleset's own body. */
+type RegisteredProgression = ReturnType<EntityKinds["klasses"]["progression"]>;
+
 /** A class's class skills, as the contract has every ruleset's classes answer them. */
 type Skills = ReturnType<EntityKindsContract["klasses"]["skills"]>;
 
@@ -45,6 +48,11 @@ export default class ClassEngine {
     return this.classes.levels(this.klassId).describeAll();
   }
 
+  /** What the class's progression tabs read beside its levels and tables: its pools' own picks, its spell list. */
+  describeProgression() {
+    return this.classes.progression(this.klassId).describe();
+  }
+
   /** The class's class skills, each with its skill. */
   describeSkills() {
     return this.classes.skills(this.klassId).describe();
@@ -78,6 +86,11 @@ export default class ClassEngine {
   /** One of the class's levels' edit: its new join rows, what its form writes, and what it answers. */
   planLevelEdit(levelId: Parameters<Levels["planEdit"]>[0], body: Accepted<RegisteredLevels["planEdit"]>[1]) {
     return this.classes.levels(this.klassId).planEdit(levelId, body);
+  }
+
+  /** One save of the class's progression: each level it changes, with its form's edit and its modifiers' changes. */
+  planProgression(body: Accepted<RegisteredProgression["plan"]>[0]) {
+    return this.classes.progression(this.klassId).plan(body);
   }
 
   /** Assigning a skill to the class: refused when the skill isn't the ruleset's, or the class has it already. */

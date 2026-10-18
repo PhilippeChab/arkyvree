@@ -8,7 +8,7 @@ type Kind<K extends keyof ViewEntities> = RulesetEntity<K, never, object, Fields
 /**
  * The entity kinds a ruleset answers of, by the schema's tables: each its table's `RulesetEntity`, and those whose
  * pages read more than an entity have it: a class's parts (its levels, its class skills, its table, a level by its id
- * alone), an item's duplicates and variants, and the feats' and powers' lists by pool.
+ * alone, its progression), an item's duplicates and variants, and the feats' and powers' lists by pool.
  */
 export type EntityKindsContract = { [K in Exclude<keyof ViewEntities, "klass_levels">]: Kind<K> } & {
   feats: {
@@ -31,6 +31,10 @@ export type EntityKindsContract = { [K in Exclude<keyof ViewEntities, "klass_lev
       planCreate(body: never): unknown;
       planDelete(levelId: string): unknown;
       planEdit(levelId: string, body: never): unknown;
+    };
+    progression(klassId: string): {
+      describe(): unknown;
+      plan(body: never): unknown;
     };
     skills(klassId: string): {
       describe(): unknown;
