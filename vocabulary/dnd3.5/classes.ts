@@ -1,5 +1,10 @@
+/** A class's caster type: the magic its spells are, arcane or divine. */
+export type CasterType = (typeof CASTER_TYPES)[number];
+
 /** How many character levels apart the ability increases come in the core rules: one at every fourth level. */
 export const ABILITY_INCREASE_LEVEL_INTERVAL = 4;
+/** The caster types a class's spells are of. */
+export const CASTER_TYPES = ["Arcane", "Divine"] as const;
 /** The hit die a new class has when its form gives none. */
 export const DEFAULT_HIT_DIE = 8;
 /** The feats a character's first level gives to pick in the core rules, past its frequency's. */

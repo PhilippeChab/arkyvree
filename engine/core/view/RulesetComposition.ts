@@ -59,7 +59,10 @@ export interface RulesetRawData {
  * resolve to the winners, and every id-keyed map takes a stored id. Built on every read (`RulesetViews.getData`).
  */
 export default class RulesetComposition {
-  /** `propertyTypes`: the ruleset's property types, as its rules read them, which its view keeps. */
+  /**
+   * `propertyTypes`: the ruleset's property types, as its rules read them, which its view orders its entities'
+   * properties by.
+   */
   constructor(chain: RulesetRawData[], cow: CowData, propertyTypes: PropertyTypesProvider) {
     this.chain = chain;
     this.cow = cow;

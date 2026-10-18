@@ -4,6 +4,15 @@
  * it, and a form checks it as it's written.
  */
 
+/**
+ * A progression as data declares it, written `as const` (a field's default): its levels read-only, which a copy makes
+ * its own (`copyProgression`).
+ */
+export interface DeclaredProgression {
+  every: number;
+  extra: readonly ProgressionExtra[];
+}
+
 /** A level a progression gives more at than its frequency: its level, and how many more. */
 export interface ProgressionExtra {
   amount: number;
@@ -26,8 +35,8 @@ export interface ProgressionValue {
   extra: ProgressionExtra[];
 }
 
-/** A progression's own copy, which an edit changes apart from the one it's copied from (a spec's default). */
-export function copyProgression({ every, extra }: ProgressionValue): ProgressionValue {
+/** A progression's own copy, which an edit changes apart from the one it's copied from (a field's default). */
+export function copyProgression({ every, extra }: DeclaredProgression): ProgressionValue {
   return { every, extra: extra.map(({ amount, level }) => ({ amount, level })) };
 }
 

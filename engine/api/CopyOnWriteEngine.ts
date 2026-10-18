@@ -33,11 +33,10 @@ export default class CopyOnWriteEngine {
 
   /**
    * A ruleset's view: its own rows and its source chain's (`chain`, its own first, then its chain's in order), composed
-   * by its copy-on-write data (`cow`), with its rules' property types: each entity's properties in their order, and the
-   * entity a property's value names.
+   * by its copy-on-write data (`cow`), with its rules' property types: each entity's properties in their order.
    */
   buildView(ruleset: { baseRules: BaseRules }, chain: RulesetRawData[], cow: CowData): RulesetData {
-    return new RulesetComposition(chain, cow, Modules.of(ruleset.baseRules).createPropertyTypes()).build();
+    return new RulesetComposition(chain, cow, Modules.of(ruleset.baseRules).propertyTypes).build();
   }
 
   /**

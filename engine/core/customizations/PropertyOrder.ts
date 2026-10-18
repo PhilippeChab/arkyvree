@@ -8,7 +8,7 @@ import type { PropertyTypesProvider } from "./PropertyTypesProvider.ts";
  */
 export default class PropertyOrder {
   constructor(private readonly provider: PropertyTypesProvider) {
-    this.typeRanks = new Map(Object.keys(provider.getDeclarations()).map((type, rank) => [type, rank]));
+    this.typeRanks = new Map(provider.getTypes().map((type, rank) => [type, rank]));
   }
 
   /** Each type's place: the rules' types in their order, as a stat block shows them. */

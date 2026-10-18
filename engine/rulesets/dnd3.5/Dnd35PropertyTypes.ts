@@ -1,27 +1,20 @@
-import type { PropertyDeclaration, PropertyTypesProvider } from "@/engine/core/customizations/index.ts";
-import type { PropertyEntityType } from "@/shared/customization/entities.ts";
-import { ENTITY_PROPERTY_TYPES, PROPERTY_REFERENCES, PROPERTY_VALUES } from "@/vocabulary/dnd3.5/properties/index.ts";
+import { FieldPropertyTypes } from "@/engine/core/fields/index.ts";
+import { ENTITY_FIELDS } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 /**
- * The property types the 3.5 rules read, by the entity they're on (each with its field's label and what it's for), the
- * values each takes when they're a closed list, and the entity kind one's value names by its id.
+ * The property types the 3.5 entities' fields are stored in, as its vocabulary declares them (`ENTITY_FIELDS`): their
+ * order, as a stat block shows them, and the values each takes when they're a closed list.
  */
-export default class Dnd35PropertyTypes implements PropertyTypesProvider {
+export default class Dnd35PropertyTypes extends FieldPropertyTypes {
+  constructor() {
+    super(ENTITY_FIELDS);
+  }
+
+  /** The property types every 3.5 ruleset reads: its module hands them out, and `valuesOf` answers from them. */
+  static readonly SHARED = new Dnd35PropertyTypes();
+
   /** The values a property type takes, in their order, when they're a closed list: none for a free-text type. */
-  static valuesOf(type: string): string[] | null {
-    return PROPERTY_VALUES[type] ?? null;
-  }
-
-  getDeclarations(entityType?: PropertyEntityType): Readonly<Record<string, PropertyDeclaration>> {
-    if (!entityType) return Object.assign({}, ...Object.values(ENTITY_PROPERTY_TYPES));
-    return ENTITY_PROPERTY_TYPES[entityType] ?? {};
-  }
-
-  getReferencedEntityType(type: string) {
-    return PROPERTY_REFERENCES[type] ?? null;
-  }
-
-  getValues(type: string): string[] | null {
-    return Dnd35PropertyTypes.valuesOf(type);
+  static valuesOf(type: string): readonly string[] | null {
+    return Dnd35PropertyTypes.SHARED.getValues(type);
   }
 }

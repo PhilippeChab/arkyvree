@@ -47,10 +47,10 @@ export type ModuleOf<B extends BaseRules> = RulesetModule<
 export type Rest<F, Lead extends unknown[]> = F extends (...args: [...Lead, ...infer R]) => unknown ? R : never;
 
 /**
- * Each base rules' module, built once: a module keeps no state (its parts are fieldless, its factories make new paths
- * on each call). One the database's enum gains has to be written here, or `Modules.of` doesn't compile, and each is
- * checked against the contract part by part there (`ModuleOf`: `RulesetModule`, each part an abstract class of
- * `core/module/parts/`).
+ * Each base rules' module, built once: a module keeps no state (its parts are fieldless, its paths' factory makes new
+ * paths on each call, and its property types are one instance, which nothing changes). One the database's enum gains
+ * has to be written here, or `Modules.of` doesn't compile, and each is checked against the contract part by part there
+ * (`ModuleOf`: `RulesetModule`, each part an abstract class of `core/module/parts/`).
  */
 const MODULES = {
   "Dungeons & Dragons: 3.5": Dnd35Module.create(),

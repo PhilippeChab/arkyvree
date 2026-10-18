@@ -21,14 +21,11 @@ export default class Dnd35Module {
       content: new Dnd35Content(),
       entities: new Dnd35Entities(),
       levelUp: new Dnd35LevelUp(),
+      propertyTypes: Dnd35PropertyTypes.SHARED,
       ruleset: new Dnd35Ruleset(),
 
       createTargetPaths() {
         return new Dnd35TargetPaths();
-      },
-
-      createPropertyTypes() {
-        return new Dnd35PropertyTypes();
       },
     };
   }

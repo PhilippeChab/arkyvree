@@ -8,6 +8,7 @@ import { getFeatureBaseName } from "@/codegen/dnd3.5/tools/text/names.ts";
 import { type ClassReference } from "@/codegen/dnd3.5/tools/types/classes.ts";
 import type { NamedText } from "@/codegen/dnd3.5/tools/types/reference.ts";
 import { include } from "@/lib/mixins.ts";
+import type { CasterType } from "@/vocabulary/dnd3.5/classes.ts";
 
 import { BaseClassDetector } from "./BaseClassDetector.ts";
 import { ClassMapping } from "./ClassMapping.ts";
@@ -93,7 +94,7 @@ export class ClassDetector extends include(
   }
 
   /** The kind of spells the class casts, as its features' text says. */
-  private casterType(): { casterType?: "Arcane" | "Divine" } {
+  private casterType(): { casterType?: CasterType } {
     const text = this.raw.classFeatures.map((f) => f.description).join(" ");
     if (/casts?\b.{0,30}\barcane spells/i.test(text) || /arcane spell failure/i.test(text))
       return { casterType: "Arcane" };

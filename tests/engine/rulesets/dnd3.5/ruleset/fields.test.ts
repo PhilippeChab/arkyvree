@@ -48,9 +48,9 @@ describe("A ruleset's own fields", () => {
       { type: RULESET_SKILL_POINT_ABILITY_ID, value: "intelligence" },
     ]);
     expect(RULESET_FIELDS.toProperties(CORE)).toEqual([
-      { type: RULESET_ABILITY_INCREASES, value: "every:4" },
       { type: RULESET_FEAT_ADVANCEMENT, value: "every:3" },
       { type: RULESET_FEAT_ADVANCEMENT, value: "1:1" },
+      { type: RULESET_ABILITY_INCREASES, value: "every:4" },
     ]);
   });
 
