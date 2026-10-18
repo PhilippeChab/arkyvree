@@ -116,7 +116,12 @@ export function SpellTableGrid({
                     "aria-label": `${label}, Level ${level}, ${name}`,
                   }}
                   sx={[
-                    { width: "3.2em", "& input": { textAlign: "center", py: 0.25 } },
+                    {
+                      width: "3.2em",
+                      borderBottom: 1,
+                      borderColor: "divider",
+                      "& input": { textAlign: "center", py: 0.25 },
+                    },
                     changed && { fontWeight: 600, color: "secondary.dark" },
                   ]}
                 />
