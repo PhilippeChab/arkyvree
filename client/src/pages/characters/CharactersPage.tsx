@@ -1,5 +1,6 @@
 import { Button, Container, Menu, Stack } from "@mui/material";
 import { useQueryClient } from "@tanstack/react-query";
+import { useRef } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { CharacterBuildChips } from "@/client/src/components/characters/index.ts";
@@ -70,6 +71,9 @@ export default function CharactersPage() {
   // Mounted as it opens too: the import's form starts clean; once it's in, its report opens on what it answered
   const importDialog = useDialogState();
   const reportDialog = useDialogState<CharacterImport>();
+  // The report opens once the import's dialog has faded out: two modals at once leave the page hidden from assistive
+  // technology (each restores the page's aria-hidden as it found it, the closing one after the opening one)
+  const pendingReport = useRef<CharacterImport | null>(null);
   const { searchParams, updateSearchParams, search, orderBy, orderDir, searchBarProps } = useListParams(
     ["name", "createdAt", "lastChangedAt"],
     CHARACTER_LIST_DEFAULTS,
@@ -197,8 +201,12 @@ export default function CharactersPage() {
             key={importDialog.key}
             open={importDialog.open}
             onClose={importDialog.close}
-            onExited={importDialog.onExited}
-            onImported={(imported) => reportDialog.openWith(imported)}
+            onExited={() => {
+              importDialog.onExited();
+              if (pendingReport.current) reportDialog.openWith(pendingReport.current);
+              pendingReport.current = null;
+            }}
+            onImported={(imported) => (pendingReport.current = imported)}
           />
         )}
         {reportDialog.target && (
