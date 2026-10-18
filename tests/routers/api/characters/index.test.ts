@@ -168,8 +168,26 @@ describe("characters", () => {
       const { abilities } = await expectOk(character.$get({ param: { id } }));
       // The books' six first, then the ruleset's own
       expect(abilities.map((ability) => ability.name)).toEqual([...ABILITY_NAMES, "Force Points"]);
-      expect(abilities[0]).toMatchObject({ abilityId: abilityMap["Strength"], key: "strength" });
-      expect(abilities[6]).toMatchObject({ abilityId: forcePoints.id, key: "forcepoints", base: 12 });
+      expect(abilities[0]).toMatchObject({ abilityId: abilityMap["Strength"], key: "strength", abbreviation: "STR" });
+      expect(abilities[6]).toMatchObject({
+        abilityId: forcePoints.id,
+        key: "forcepoints",
+        abbreviation: "FOR",
+        base: 12,
+      });
+    });
+
+    test("lists a bonded creature's abilities in its master's sheet as its own, each with its abbreviation", async () => {
+      const { masterId } = await createWizardWithFamiliar();
+      const master = await expectOk(character.$get({ param: { id: masterId } }));
+      expect(master.bonded.familiar?.abilities.map((ability) => ability.abbreviation)).toEqual([
+        "STR",
+        "DEX",
+        "CON",
+        "INT",
+        "WIS",
+        "CHA",
+      ]);
     });
 
     test("refuses an ability the ruleset doesn't have", async () => {

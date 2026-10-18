@@ -64,12 +64,15 @@ export default class AbilitiesComponent extends CharacterComponent<LoadedCharact
   /**
    * The character's abilities in the order its sheet lists them (`AbilityRules.orderAbilities`): each with its id, its
    * key (its normalized name, which its target paths name: `forcepoints`), its name as its ruleset gives it ("Force
-   * Points"), and its scores.
+   * Points"), its abbreviation (FOR: `AbilityRules.abbreviate`), and its scores.
    */
   getAbilitiesWithIds() {
     const abilities = [...this.abilityNames].flatMap(([abilityId, { name, normalizedName }]) => {
       const ability = this.abilities[normalizedName];
-      return ability ? [{ abilityId, key: normalizedName, name, ...ability }] : [];
+      if (!ability) return [];
+      return [
+        { abbreviation: AbilityRules.abbreviate(normalizedName), abilityId, key: normalizedName, name, ...ability },
+      ];
     });
     return AbilityRules.orderAbilities(abilities, (ability) => ability.name);
   }

@@ -7,6 +7,11 @@ const BOOK_ABILITY_SLUGS = ABILITY_NAMES.map((name) => stripSeparators(name));
 
 /** The 3.5 ability rules: what a score gives, and the order a sheet lists the abilities in. */
 export default class AbilityRules {
+  /** An ability's abbreviation, as a sheet's small boxes label it: its slug's first three letters ("forcepoints": FOR). */
+  static abbreviate(slug: string): string {
+    return slug.slice(0, 3).toUpperCase();
+  }
+
   /** An ability's modifier at a score: +1 for every 2 points above 10, rounded down (a score of 9 is -1). */
   static computeModifier(score: number): number {
     return Math.floor((score - ABILITY_MODIFIER_OFFSET) / ABILITY_MODIFIER_DIVISOR);

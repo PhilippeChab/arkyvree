@@ -63,13 +63,7 @@ export function BondedCreature({ bonded, linkable = false }: BondedCreatureProps
             }}
           >
             {bonded.abilities.map((ability) => (
-              <AbilityScoreBox
-                key={ability.abilityId}
-                ability={ability.name}
-                score={ability.total}
-                modifier={ability.modifier}
-                compact
-              />
+              <AbilityScoreBox key={ability.abilityId} ability={ability} compact />
             ))}
           </Box>
         </Stack>

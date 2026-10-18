@@ -27,7 +27,7 @@ function AbilityScores({ abilities }: { abilities: SheetAbilities }) {
       )}
       {abilities.map((ability) => (
         <View key={ability.abilityId} style={styles.abilityBox}>
-          <Text style={styles.abilityName}>{ability.key.slice(0, 3).toUpperCase()}</Text>
+          <Text style={styles.abilityName}>{ability.abbreviation}</Text>
           {!AbilityRules.isBookAbility(ability.key) && (
             <Text style={{ fontSize: FONT_SIZE.xs, color: "#666", textAlign: "center" }}>{ability.name}</Text>
           )}

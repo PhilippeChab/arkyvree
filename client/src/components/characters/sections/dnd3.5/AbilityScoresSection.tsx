@@ -8,7 +8,6 @@ import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useDialogState } from "@/client/src/hooks/index.ts";
 import { type CharacterDetail, characterDetailQuery, invalidateCharacter } from "@/client/src/lib/queries.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
-import { STARTING_ABILITY_SCORE } from "@/vocabulary/dnd3.5/abilities.ts";
 
 import { AbilityScoreBox } from "./AbilityScoreBox.tsx";
 import { SCORE_ROW_GAP, SCORE_ROW_SX, SCORE_SLOT_SX } from "./scoreRow.ts";
@@ -63,11 +62,9 @@ export function AbilityScoresSection({ abilities, characterId, readOnly }: Abili
   const shouldWarn = useSuppressedWarningsStore((s) => s.shouldWarn);
   const suppressWarningForSession = useSuppressedWarningsStore((s) => s.suppressWarningForSession);
 
-  const handleBaseChange = (abilityId: string, score: number) => {
-    const current = abilities.find((a) => a.abilityId === abilityId);
-    const currentBase = current?.base ?? STARTING_ABILITY_SCORE;
-
-    if (score > currentBase || !shouldWarn("abilityDecrease")) updateMutation.mutate({ abilityId, score });
+  // A lower base asks first, unless its warning is off for the session
+  const handleBaseChange = ({ abilityId, base }: CharacterDetail["abilities"][number], score: number) => {
+    if (score > base || !shouldWarn("abilityDecrease")) updateMutation.mutate({ abilityId, score });
     else decreaseDialog.openWith({ abilityId, score });
   };
 
@@ -79,10 +76,7 @@ export function AbilityScoresSection({ abilities, characterId, readOnly }: Abili
             <AbilityScoreBox
               key={abilityData.abilityId}
               sx={SCORE_SLOT_SX}
-              ability={abilityData.name}
-              score={abilityData.total}
-              modifier={abilityData.modifier}
-              abilityData={abilityData}
+              ability={abilityData}
               onBaseChange={handleBaseChange}
               readOnly={readOnly}
             />

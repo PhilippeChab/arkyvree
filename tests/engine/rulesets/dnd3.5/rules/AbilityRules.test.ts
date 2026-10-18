@@ -21,6 +21,14 @@ describe("3.5's abilities", () => {
     ]);
   });
 
+  test("are abbreviated by their slug's first three letters", () => {
+    expect(["strength", "forcepoints", "kipoints"].map((slug) => AbilityRules.abbreviate(slug))).toEqual([
+      "STR",
+      "FOR",
+      "KIP",
+    ]);
+  });
+
   test("tell the books' six by their slug", () => {
     expect(["strength", "charisma", "forcepoints"].map((slug) => AbilityRules.isBookAbility(slug))).toEqual([
       true,
