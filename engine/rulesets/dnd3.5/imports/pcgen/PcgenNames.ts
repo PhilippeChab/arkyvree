@@ -114,6 +114,15 @@ export default class PcgenNames {
     return index;
   }
 
+  /**
+   * The player race PCGen's subrace (`name`) is a kind of: the one its name before a parenthesis names ("Elf (Drow)":
+   * "Elf"), none when it ends on none.
+   */
+  findBaseRace(name: string) {
+    const base = PcgenNames.base(name);
+    return base === name ? undefined : this.findFirst("races", [base]);
+  }
+
   /** The class PCGen names `name`, a player's. */
   findClass(name: string) {
     const found = this.findFirst("klasses", [name]);
@@ -122,12 +131,15 @@ export default class PcgenNames {
 
   /**
    * The feat PCGen names `name` taken with `choice` (`Weapon Focus` of `Sword (Bastard)`: the app's "Weapon Focus:
-   * Bastard Sword"), or by its name alone when the ruleset keeps it whole (Spell Mastery); a class's feat PCGen names
+   * Bastard Sword"; `Skill Focus` of `Perform ~ Sing`: "Skill Focus: Perform"), or by its name alone when the ruleset keeps it whole (Spell Mastery); a class's feat PCGen names
    * "Class ~ Feat" by the app's that opens on "Feat (" and names the class.
    */
   findFeat(name: string, choice?: string) {
     const named = PCGEN_FEATS.get(name) ?? name;
-    const choices = choice ? [PCGEN_ITEMS.get(choice), ...PcgenNames.wordings(choice)] : [];
+    // A choice is an item's (Weapon Focus) or a skill's (Skill Focus), each as PCGen names it
+    const choices = choice
+      ? [PCGEN_ITEMS.get(choice), ...PcgenNames.wordings(choice), this.findSkill(choice)?.name]
+      : [];
     const wordings = choices.filter((wording) => wording !== undefined).map((wording) => `${named}: ${wording}`);
     // A feat the ruleset keeps whole whatever its choice (Spell Mastery) is found by its name
     const found = this.findFirst("feats", [...wordings, named]);
@@ -152,12 +164,9 @@ export default class PcgenNames {
     return this.findFirst("languages", [name]);
   }
 
-  /**
-   * The player race PCGen names `name`, through its wordings ("Elf (Gray)": "Gray Elf"), or the one its name before a
-   * parenthesis names ("Elf").
-   */
+  /** The player race PCGen names `name`, through its wordings ("Elf (Gray)": "Gray Elf"). */
   findRace(name: string) {
-    return this.findFirst("races", [...PcgenNames.wordings(name), PcgenNames.base(name)]);
+    return this.findFirst("races", PcgenNames.wordings(name));
   }
 
   /**

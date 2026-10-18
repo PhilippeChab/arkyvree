@@ -21,6 +21,7 @@ describe("PcgenNames", () => {
     expect(names.findItem("Backpack")?.name).toBe("Backpack (empty)");
     expect(names.findItem("Pouch (Belt)")?.name).toBe("Pouch, belt (empty)");
     expect(names.findItem("Ring (Freedom of Movement)")?.name).toBe("Ring of Freedom of Movement");
+    expect(names.findItem("Leather")?.name).toBe("Leather Armor");
     expect(names.findItem("Potion (Cure Light Wounds)")).toBeUndefined();
   });
 
@@ -29,6 +30,8 @@ describe("PcgenNames", () => {
     expect(names.findFeat("Weapon Focus", "Sword (Bastard)")?.name).toBe("Weapon Focus: Bastard Sword");
     expect(names.findFeat("Skill Focus", "Diplomacy")?.name).toBe("Skill Focus: Diplomacy");
     expect(names.findFeat("Spell Mastery", "Magic Missile,Shield")?.name).toBe("Spell Mastery");
+    // A skill's, as PCGen names it
+    expect(names.findFeat("Skill Focus", "Perform ~ Sing")?.name).toBe("Skill Focus: Perform");
   });
 
   test("finds a skill by its name, the one it opens, or its subtype's base", async () => {
@@ -54,6 +57,12 @@ describe("PcgenNames", () => {
     expect(names.findRace(name)).toBeUndefined();
     expect(names.findSkill(name)).toBeUndefined();
     expect(performance.now() - started).toBeLessThan(1000);
+  });
+
+  test("finds a subrace the ruleset hasn't by the race it's a kind of, apart", async () => {
+    const names = await seededNames();
+    expect(names.findRace("Elf (Drow)")).toBeUndefined();
+    expect(names.findBaseRace("Elf (Drow)")?.name).toBe("Elf");
   });
 
   test("finds a player's race alone: a familiar's isn't a character's", async () => {

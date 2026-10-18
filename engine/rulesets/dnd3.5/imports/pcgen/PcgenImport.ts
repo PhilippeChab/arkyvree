@@ -59,6 +59,20 @@ export default class PcgenImport {
   }
 
   /**
+   * The character's race: the file's, or the race a subrace the ruleset hasn't is a kind of ("Elf (Drow)": "Elf"),
+   * which the report says. Refused when the ruleset has neither: a character needs one.
+   */
+  private findRace() {
+    const named = this.imported.identity.race?.value;
+    const race = named && this.names.findRace(named);
+    if (race) return race;
+    const base = named && this.names.findBaseRace(named);
+    if (!base) throw new RulesError("unprocessable", `The file's race (${named ?? "none"}) isn't in this ruleset`);
+    this.report.issue(`Race ${named} isn't one of the ruleset's: ${base.name}, the race it's a kind of, imported`);
+    return base;
+  }
+
+  /**
    * The character's rows before its levels: its row, under the id it's created with and its owner's, its ability scores,
    * and nothing else yet. What its levels, languages and gear are planned against, and its bonded creatures take after.
    */
@@ -104,6 +118,10 @@ export default class PcgenImport {
         this.report.skip(language.line, `${language.name} isn't a language of the ruleset`);
         continue;
       }
+      if (kept.includes(found.id)) {
+        this.report.skip(language.line, `${language.name} is imported already, from another name of it`);
+        continue;
+      }
       try {
         this.characters.planLanguages(this.view, character, [...kept, found.id]);
         kept.push(found.id);
@@ -125,13 +143,7 @@ export default class PcgenImport {
    */
   private readRow(): ImportedRow {
     const { identity, biography } = this.imported;
-    const race = identity.race && this.names.findRace(identity.race.value);
-    if (!race) {
-      throw new RulesError(
-        "unprocessable",
-        `The file's race (${identity.race?.value ?? "none"}) isn't in this ruleset`,
-      );
-    }
+    const race = this.findRace();
     const alignment = identity.alignment && PCGEN_ALIGNMENTS.get(identity.alignment.value);
     if (identity.alignment && !alignment)
       this.report.skip(identity.alignment.line, `${identity.alignment.value} isn't an alignment: True Neutral kept`);

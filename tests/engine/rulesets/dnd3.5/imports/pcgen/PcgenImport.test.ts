@@ -349,6 +349,26 @@ describe("What a file holds past what the app keeps", () => {
     );
   });
 
+  test("a subrace the ruleset hasn't, imported as the race it's a kind of, said in the report", async () => {
+    const { report } = await planImportOf(riderFile([]).replace("RACE:Human", "RACE:Elf (Drow)"));
+    expect(report.imported).toContain("Race: Elf");
+    expect(report.issues).toContain(
+      "Race Elf (Drow) isn't one of the ruleset's: Elf, the race it's a kind of, imported",
+    );
+  });
+
+  test("a language named twice, imported once", async () => {
+    const text = (await readPcgenFile("brannoc")).replace(
+      "LANGUAGE:Common|LANGUAGE:Dwarven",
+      "LANGUAGE:Common|LANGUAGE:Dwarven|LANGUAGE:Dwarven",
+    );
+    const { languageIds, report } = await planImportOf(text);
+    expect(languageIds).toHaveLength(new Set(languageIds).size);
+    expect(report.unmatched.map(({ reason }) => reason)).toContain(
+      "Dwarven is imported already, from another name of it",
+    );
+  });
+
   test("gear past the most the app keeps, and gear the character owns without carrying it, said in the report", async () => {
     const text = (await readPcgenFile("brannoc")).replace(
       "EQUIPNAME:Rations (Trail/Per Day)|OUTPUTORDER:7|COST:0.5|WT:1.0|QUANTITY:5.0",

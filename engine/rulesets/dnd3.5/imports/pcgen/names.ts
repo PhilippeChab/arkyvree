@@ -37,7 +37,19 @@ export const PCGEN_FEATS = new Map<string, string>([
 
 /** The app's item a PCGen item names, where no general rule turns one into the other. */
 export const PCGEN_ITEMS = new Map<string, string>([
+  ["Bottle (Glass/Wine)", "Bottle, wine, glass"],
+  ["Bread (Loaf)", "Bread, per loaf"],
   ["Chainmail", "Chain Mail"],
+  ["Cheese (Hunk)", "Cheese, hunk of"],
+  ["Donkey", "Donkey or mule"],
+  ["Hide", "Hide Armor"],
+  ["Ladder (10 Ft.)", "Ladder, 10-foot"],
+  ["Leather", "Leather Armor"],
+  ["Masterwork Silver Dagger", "Silver Dagger, Masterwork"],
+  ["Meat (Chunk)", "Meat, chunk of"],
+  ["Mule", "Donkey or mule"],
+  ["Padded", "Padded Armor"],
+  ["Pole (10 Ft.)", "Pole, 10-foot"],
   ["Shield (Heavy/Metal)", "Heavy Steel Shield"],
   ["Shield (Heavy/Steel)", "Heavy Steel Shield"],
   ["Shield (Heavy/Wood)", "Heavy Wooden Shield"],
