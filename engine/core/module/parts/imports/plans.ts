@@ -41,5 +41,16 @@ export interface ImportReportDescription {
 /** A new character's row, as an import fills it. */
 export type ImportedRow = Pick<
   Character,
-  "age" | "alignment" | "deity" | "description" | "gender" | "height" | "name" | "notes" | "raceId" | "weight" | "xp"
+  | "age"
+  | "alignment"
+  | "deity"
+  | "description"
+  | "gender"
+  | "height"
+  | "name"
+  | "notes"
+  | "privateNotes"
+  | "raceId"
+  | "weight"
+  | "xp"
 >;

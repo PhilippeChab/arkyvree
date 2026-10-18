@@ -88,7 +88,6 @@ const NOTE_LABELS = new Map<string, string>([
   ["CATCHPHRASE", "Catchphrase"],
   ["CHARACTERASSET", "Assets"],
   ["CHARACTERCOMP", "Companions"],
-  ["CHARACTERDMNOTES", "GM Notes"],
   ["CHARACTERMAGIC", "Magic"],
   ["CITY", "City"],
   ["EYECOLOR", "Eyes"],
@@ -176,7 +175,7 @@ export default class PcgFormat2 {
   /** The character the file holds, as it reads it so far. */
   private readonly character: ImportedCharacter = {
     abilities: [],
-    biography: { description: [], notes: [] },
+    biography: { description: [], notes: [], privateNotes: [] },
     domains: [],
     feats: [],
     gear: [],
@@ -205,6 +204,7 @@ export default class PcgFormat2 {
     ["CALCEQUIPSET", (line) => (this.calcEquipSet = line.value)],
     ["CHARACTERBIO", (line) => this.addDescription(line.value)],
     ["CHARACTERDESC", (line) => this.addDescription(line.value)],
+    ["CHARACTERDMNOTES", (line) => this.addPrivateNote(line.value)],
     ["CHARACTERNAME", (line) => (this.character.identity.name = line.value)],
     ["CLASS", (line) => this.readClass(line)],
     ["CLASSABILITIESLEVEL", (line) => this.readLevel(line)],
@@ -238,6 +238,11 @@ export default class PcgFormat2 {
   /** Adds a labelled note, when it says something. */
   private addNote(label: string, value: string) {
     if (value.trim()) this.character.biography.notes.push(`${label}: ${value.trim()}`);
+  }
+
+  /** Adds a note for the game master alone (PCGen's DM notes), which the sheet keeps from its readers. */
+  private addPrivateNote(value: string) {
+    if (value.trim()) this.character.biography.privateNotes.push(value.trim());
   }
 
   /**

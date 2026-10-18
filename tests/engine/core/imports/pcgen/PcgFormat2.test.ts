@@ -244,6 +244,15 @@ describe("PcgFormat2", () => {
     expect(new PcgenFile(text).read().gear.map(({ location }) => location)).toEqual(["Primary Hand"]);
   });
 
+  test("keeps the DM's notes apart from the character's, for its game master alone", () => {
+    const text = "PCGVERSION:2.0\nVERSION:6.09\nCHARACTERDMNOTES:Secretly a doppelganger\nHANDED:Left";
+    expect(new PcgenFile(text).read().biography).toEqual({
+      description: [],
+      notes: ["Handed: Left"],
+      privateNotes: ["Secretly a doppelganger"],
+    });
+  });
+
   test("reads PCGen 5's feat lines too, in its general pool", () => {
     const text = "PCGVERSION:2.0\nVERSION:5.6.0\nFEAT:Weapon Focus|APPLIEDTO:Morningstar|TYPE:GENERAL.FIGHTER";
     expect(new PcgenFile(text).read().feats).toEqual([

@@ -92,10 +92,14 @@ export interface ImportedSkill extends SourcedPart {
   name: string;
 }
 
-/** The character's own text: its description, and its notes (each labelled). */
+/**
+ * The character's own text: its description, its notes (each labelled), and the notes for its game master alone
+ * (`privateNotes`: PCGen's DM notes), which a reader of its sheet doesn't see.
+ */
 export interface ImportedText {
   description: string[];
   notes: string[];
+  privateNotes: string[];
 }
 
 /** What the file holds of a part of the character, with the line it was read from. */

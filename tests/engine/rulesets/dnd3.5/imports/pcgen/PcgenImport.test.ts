@@ -282,6 +282,11 @@ describe("What a file holds past what the app keeps", () => {
     expect(report.unmatched.map(({ reason }) => reason)).toContain("Unknown isn't a gender of the app's: Other kept");
   });
 
+  test("the DM's notes, in the character's private notes", async () => {
+    const { character } = await planImportOf(`${riderFile([])}\nCHARACTERDMNOTES:Secretly a doppelganger`);
+    expect(character).toMatchObject({ notes: null, privateNotes: "Secretly a doppelganger" });
+  });
+
   test("a height in inches with a fraction, in whole feet and inches", async () => {
     const text = (await readPcgenFile("brannoc")).replace("HEIGHT:72", "HEIGHT:71.6");
     expect((await planImportOf(text)).character.height).toBe(`6' 0"`);
