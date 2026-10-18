@@ -205,6 +205,32 @@ describe("PcgFormat2", () => {
     expect(new PcgenFile(text).read().gear.map(({ location }) => location)).toEqual(["Shield"]);
   });
 
+  test("sets apart what one of two containers of a name, left at home, holds", () => {
+    const text = [
+      "PCGVERSION:2.0",
+      "VERSION:6.09",
+      "EQUIPNAME:Sack|QUANTITY:2.0",
+      "EQUIPNAME:Torch|QUANTITY:5.0",
+      "EQUIPSET:Default Set|ID:0.1",
+      "EQUIPSET:Carried|ID:0.1.01|VALUE:Sack|QUANTITY:1.0",
+      "EQUIPSET:Not Carried|ID:0.1.02|VALUE:Sack|QUANTITY:1.0",
+      "EQUIPSET:Sack|ID:0.1.02.01|VALUE:Torch|QUANTITY:5.0",
+      "CALCEQUIPSET:0.1",
+    ].join("\n");
+    const { gear } = new PcgenFile(text).read();
+    expect(gear.map(({ name, notCarried, quantity }) => `${name} ${quantity}${notCarried ? " away" : ""}`)).toEqual([
+      "Sack 1",
+      "Sack 1 away",
+      "Torch 5 away",
+    ]);
+  });
+
+  test("reads a note that opens on a bracket as text", () => {
+    const text =
+      "PCGVERSION:2.0\nVERSION:6.09\nEQUIPNAME:Wand|QUANTITY:1.0|NOTE:[ask GM|CUSTOMIZATION:[BASEITEM:Wand|DATA:EQMOD=CHARGES[23]$]";
+    expect(new PcgenFile(text).read().gear[0]).toMatchObject({ charges: 23, name: "Wand" });
+  });
+
   test("reads PCGen 5's feat lines too, in its general pool", () => {
     const text = "PCGVERSION:2.0\nVERSION:5.6.0\nFEAT:Weapon Focus|APPLIEDTO:Morningstar|TYPE:GENERAL.FIGHTER";
     expect(new PcgenFile(text).read().feats).toEqual([

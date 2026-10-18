@@ -16,6 +16,8 @@ import PcgLine from "./PcgLine.ts";
  */
 interface EquipSetEntry {
   contained: boolean;
+  /** Its id in the file's sets, a container's entry's own under it */
+  id: string;
   location: string;
   quantity: number;
 }
@@ -144,8 +146,8 @@ export default class PcgFormat2 {
   private static handsOf(entry: EquipSetEntry): EquipSetEntry[] {
     if (entry.location !== TWO_WEAPONS) return [entry];
     return [
-      { contained: false, location: "Primary Hand", quantity: Math.min(1, entry.quantity) },
-      ...(entry.quantity >= 2 ? [{ contained: false, location: "Secondary Hand", quantity: 1 }] : []),
+      { ...entry, location: "Primary Hand", quantity: Math.min(1, entry.quantity) },
+      ...(entry.quantity >= 2 ? [{ ...entry, location: "Secondary Hand", quantity: 1 }] : []),
     ];
   }
 
@@ -185,6 +187,9 @@ export default class PcgFormat2 {
     source: { format: "2.0", program: "PCGen", version: "" },
     unread: [],
   };
+
+  /** Every equipment set's entries by their id. */
+  private readonly equipSetEntries = new Map<string, EquipSetEntry>();
 
   /** Each equipment set's entries by the item they hold, by the set's id. */
   private readonly equipSets = new Map<string, Map<string, EquipSetEntry[]>>();
@@ -236,15 +241,20 @@ export default class PcgFormat2 {
   }
 
   /**
-   * Whether an equipment set's location sets what it holds apart from what's carried: `Not Carried`, or a container
-   * that is (a chest left at home), its own container's place read in turn.
+   * Whether an equipment set's entry is set apart from what's carried: at `Not Carried`, or in a container that is (a
+   * chest left at home), the container's entry found by its id (`0.1.02` of `0.1.02.01`: two sacks are two entries).
    */
-  private isAway(location: string, entries: Map<string, EquipSetEntry[]>, seen = new Set<string>()): boolean {
-    if (location === NOT_CARRIED) return true;
-    const container = entries.get(location);
-    if (!container || seen.has(location)) return false;
-    seen.add(location);
-    return container.every((entry) => this.isAway(entry.location, entries, seen));
+  private isAway(entry: EquipSetEntry): boolean {
+    // Up its containers, one id shorter each
+    for (
+      let at: EquipSetEntry | undefined = entry;
+      at;
+      at = this.equipSetEntries.get(at.id.slice(0, at.id.lastIndexOf(".")))
+    ) {
+      if (at.location === NOT_CARRIED) return true;
+      if (!at.contained) return false;
+    }
+    return false;
   }
 
   /**
@@ -256,14 +266,14 @@ export default class PcgFormat2 {
     const entries = (setId && this.equipSets.get(setId)) || new Map<string, EquipSetEntry[]>();
     const sum = (held: EquipSetEntry[]) => held.reduce((total, entry) => total + entry.quantity, 0);
     return [...this.items.values()].flatMap(({ item, quantity }) => {
-      const held = PcgFormat2.byLocation(entries.get(item.name) ?? []);
+      // What the set sets apart (`Not Carried`, a chest left there with what it holds) is owned without being carried
+      const held = PcgFormat2.byLocation((entries.get(item.name) ?? []).filter((entry) => !this.isAway(entry)));
       const wearing = held.filter((entry) => !PcgFormat2.isCarried(entry));
       const worn = wearing.flatMap((entry) => PcgFormat2.handsOf(entry));
       const left = quantity - sum(worn);
-      // What the set holds but doesn't wear is carried (a pair's third dagger too); what it leaves out (or sets apart,
-      // `Not Carried`, a chest left there with what it holds) is owned without being carried, but in a file of no set,
-      // which says nothing of it
-      const inSet = held.filter((entry) => !wearing.includes(entry) && !this.isAway(entry.location, entries));
+      // What the set holds but doesn't wear is carried (a pair's third dagger too); what it leaves out or sets apart is
+      // owned without being carried, but in a file of no set, which says nothing of it
+      const inSet = held.filter((entry) => !wearing.includes(entry));
       const extra = sum(wearing) - sum(worn);
       const carried = Math.max(0, entries.size > 0 ? Math.min(left, sum(inSet) + extra) : left);
       const away = left - carried;
@@ -334,8 +344,9 @@ export default class PcgFormat2 {
     if (!item) return;
     const entries = this.equipSets.get(setId)!;
     const quantity = PcgFormat2.readNumber(line.find("QUANTITY") ?? "") ?? 1;
-    const contained = id.split(".").length > 3;
-    entries.set(item, [...(entries.get(item) ?? []), { contained, location: line.value, quantity }]);
+    const entry = { contained: id.split(".").length > 3, id, location: line.value, quantity };
+    entries.set(item, [...(entries.get(item) ?? []), entry]);
+    this.equipSetEntries.set(id, entry);
   }
 
   /** A feat its user picked, in its pool (`pool`), with the choice it's taken with (`APPLIEDTO`), when it has one. */
