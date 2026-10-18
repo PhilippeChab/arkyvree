@@ -47,7 +47,7 @@ export default class ScoresImport {
    * past them is brought to the bound, which the report says.
    */
   private bounded(key: string, score: number) {
-    const { max, min } = NewCharacters.describeCreation().scores;
+    const { max, min } = NewCharacters.describeCreation(this.view).scores;
     const kept = Math.min(max, Math.max(min, score));
     if (kept !== score) {
       const name = PCGEN_ABILITIES.get(key) ?? key;
