@@ -12,11 +12,11 @@ import { useClassDraft } from "./useClassDraft.ts";
 
 /**
  * A class's Progression tab's changes before its save (`edits`), over its levels as saved: a value set back to the
- * saved one drops its edit, so the tab holds only what differs. They're the class's (`classId`): once the page follows
- * a copy of it, whose levels are others, it holds none.
+ * saved one drops its edit, so the tab holds only what differs. They're the class's (`classId`, `useClassDraft`'s),
+ * with the tokens they began over (`tokens`).
  */
-export function useProgressionDraft(classId: string, levels: readonly ClassLevelRow[]) {
-  const { edits, setEdits } = useClassDraft<ProgressionEdits>(classId, NO_EDITS);
+export function useProgressionDraft(rulesetId: string, classId: string, levels: readonly ClassLevelRow[]) {
+  const { discard, edits, setEdits, tokens } = useClassDraft<ProgressionEdits>(rulesetId, classId, levels, NO_EDITS);
   const levelById = new Map(levels.map((level) => [level.id, level]));
 
   /** A track's new values, by level id: each one equal to the saved value forgets its edit. */
@@ -61,10 +61,11 @@ export function useProgressionDraft(classId: string, levels: readonly ClassLevel
   return {
     addFeature,
     addPool,
-    discard: () => setEdits(() => NO_EDITS),
+    discard,
     edits,
     setFeatureLevels,
     setPoolPick,
     setTrack,
+    tokens,
   };
 }

@@ -66,7 +66,6 @@ export function ClassSpellsSection({ rulesetId, classId, className, ruleset }: C
   const snackbar = useSnackbar();
   const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
   const [table, setTable] = useState<SpellTable>("perDay");
-  const { edits, setEdits } = useClassDraft<SpellEdits>(classId, NO_SPELL_EDITS);
   const [pasting, setPasting] = useState(false);
   const [classSearch, setClassSearch] = useState("");
 
@@ -89,7 +88,8 @@ export function ClassSpellsSection({ rulesetId, classId, className, ruleset }: C
     known: knownRows(known.data ?? []),
   };
   const levels = (perDay.data ?? []).toSorted(byLevel);
-  const save = useProgressionSave(rulesetId, classId, levels);
+  const save = useProgressionSave(rulesetId, classId);
+  const { discard, edits, setEdits, tokens } = useClassDraft<SpellEdits>(rulesetId, classId, levels, NO_SPELL_EDITS);
   const totalsById: Record<SpellTable, Map<string, SpellLevelRow["totals"]>> = {
     perDay: new Map(rowsOf.perDay.map((row) => [row.id, row.totals])),
     known: new Map(rowsOf.known.map((row) => [row.id, row.totals])),
@@ -195,12 +195,13 @@ export function ClassSpellsSection({ rulesetId, classId, className, ruleset }: C
     const knownRows = rowsBody("known");
     save.mutate(
       {
+        ...tokens(),
         spells: {
           ...(perDayRows.length > 0 && { perDay: perDayRows }),
           ...(knownRows.length > 0 && { known: knownRows }),
         },
       },
-      { onSuccess: () => setEdits(() => NO_SPELL_EDITS) },
+      { onSuccess: discard },
     );
   };
 
@@ -307,7 +308,7 @@ export function ClassSpellsSection({ rulesetId, classId, className, ruleset }: C
       <ProgressionSaveBar
         what="Spells"
         changes={changes}
-        onDiscard={() => setEdits(() => NO_SPELL_EDITS)}
+        onDiscard={discard}
         onSave={handleSave}
         pending={save.isPending}
       />

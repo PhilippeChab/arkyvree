@@ -34,6 +34,8 @@ describe("A pasted spell table", () => {
     // Two rows of counts alone, and three counting up from past 1: counts too
     expect(parseSpellRows("3 1\n4 2", false)).toEqual([{ cells: [3, 1] }, { cells: [4, 2] }]);
     expect(parseSpellRows("2 1\n3 2\n4 3", false).map((row) => row.level)).toEqual([undefined, undefined, undefined]);
+    // Unless they count up from the level the paste starts at
+    expect(parseSpellRows("11 4\n12 4\n13 5", false, 11).map((row) => row.level)).toEqual([11, 12, 13]);
   });
 
   test("keeps a spreadsheet's empty cells where they are", () => {

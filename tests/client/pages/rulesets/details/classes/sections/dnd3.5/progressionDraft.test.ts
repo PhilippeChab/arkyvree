@@ -49,6 +49,12 @@ describe("A Progression tab's save", () => {
     expect(body.levels?.[0].saves).toEqual([{ saveId: "fort", base: 2 }]);
   });
 
+  test("sends no pick at a level the class no longer has", () => {
+    const pools = [{ aptitudeId: "pool", name: "Pool", picks: {} }];
+    const body = buildProgressionBody(twoLevels(), ["fort"], [], pools, { ...NO_EDITS, pools: { pool: { gone: 1 } } });
+    expect(body).toEqual({});
+  });
+
   test("sends each changed level's fields and saves, its feats when they changed, and a pool's changed picks", () => {
     const features = describeFeatureRows(twoLevels());
     const body = buildProgressionBody(

@@ -38,6 +38,7 @@ import {
 import { rpc } from "@/client/src/services/rpc.ts";
 import { buildCustomizationPath } from "@/shared/customization/entities.ts";
 import { formatSigned } from "@/shared/text.ts";
+import { MAX_SAVE_BASE } from "@/vocabulary/dnd3.5/classes.ts";
 
 import { ClassFeaturesCard } from "./ClassFeaturesCard.tsx";
 import {
@@ -59,6 +60,8 @@ interface Track {
   format: (value: number) => string;
   key: TrackKey;
   label: string;
+  /** The highest value the rules take, which a value past it is set back to (a save's base) */
+  max?: number;
   presets?: readonly ProgressionPreset[];
 }
 
@@ -89,8 +92,8 @@ export function ClassProgressionSection({ rulesetId, classId, className, ruleset
   const { data: progression, error: progressionError } = useQuery(classProgressionQuery(rulesetId, classId));
   const { data: poolTotals, error: poolsError } = useQuery(classFeatPoolsQuery(rulesetId, classId));
   const levels = levelRows?.toSorted(byLevel) ?? [];
-  const draft = useProgressionDraft(classId, levels);
-  const save = useProgressionSave(rulesetId, classId, levels);
+  const draft = useProgressionDraft(rulesetId, classId, levels);
+  const save = useProgressionSave(rulesetId, classId);
 
   // Its create opens on the class's next level, its fields the highest's
   const { fields: levelFields } = useEntityFields(rulesetId, "klass_levels");
@@ -121,6 +124,7 @@ export function ClassProgressionSection({ rulesetId, classId, className, ruleset
       key: `save:${save.id}`,
       label: save.name,
       format: formatSigned,
+      max: MAX_SAVE_BASE,
       presets: SAVE_PRESETS,
     })),
     { key: "skills", label: "Skill Points", format: String },
@@ -207,7 +211,7 @@ export function ClassProgressionSection({ rulesetId, classId, className, ruleset
     }),
   ];
 
-  const handleSave = () => save.mutate(body, { onSuccess: draft.discard });
+  const handleSave = () => save.mutate({ ...body, ...draft.tokens() }, { onSuccess: draft.discard });
 
   const descriptionByFeat = new Map(levels.flatMap((level) => level.feats.map((feat) => [feat.id, feat.description])));
   const featuresAt = (levelId: string) => features.filter((row) => row.levelIds.includes(levelId));
@@ -309,13 +313,21 @@ export function ClassProgressionSection({ rulesetId, classId, className, ruleset
                 presets={track.presets}
                 saved={valuesOf((level) => readTrack(level, track.key))}
                 values={valuesOf((level) => readEditedTrack(level, track.key, draft.edits))}
-                onChange={(values) => draft.setTrack(track.key, values)}
+                onChange={(values) =>
+                  draft.setTrack(
+                    track.key,
+                    Object.fromEntries(
+                      Object.entries(values).map(([levelId, value]) => [levelId, Math.min(value, track.max ?? value)]),
+                    ),
+                  )
+                }
               />
             ))}
           </Box>
         </Panel>
       )}
-      {levels.length > 0 && (features.length > 0 || pools.length > 0 || canEdit) && (
+      {/* Its pools wait for the class's progression, so a pool it has can't be added again */}
+      {levels.length > 0 && progression && (features.length > 0 || pools.length > 0 || canEdit) && (
         <ClassFeaturesCard
           rulesetId={rulesetId}
           levels={levels}

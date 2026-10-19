@@ -41,10 +41,11 @@ export function parseSpellCell(text: string, allowsAll: boolean): SpellCell | un
 
 /**
  * A pasted block's rows, one a line: each names its class level when its first cell does with a suffix or a colon
- * ("1st", "4:"), or when every row's first cell counts up one a row from 1 over three rows or more (a table's level
- * column); its other cells are read by `parseSpellCell`, a spreadsheet's empty one as none.
+ * ("1st", "4:"), or when every row's first cell counts up one a row over three rows or more (a table's level column),
+ * from 1 or from the level it's pasted at (`firstLevel`); its other cells are read by `parseSpellCell`, a spreadsheet's
+ * empty one as none.
  */
-export function parseSpellRows(text: string, allowsAll: boolean): PastedRow[] {
+export function parseSpellRows(text: string, allowsAll: boolean, firstLevel = 1): PastedRow[] {
   const rows = text
     .replace(/\r/g, "")
     .split("\n")
@@ -52,7 +53,8 @@ export function parseSpellRows(text: string, allowsAll: boolean): PastedRow[] {
     .filter((line) => line.includes("\t") || line.trim() !== "")
     .map(splitCells);
   const leads = rows.map((cells) => LEVEL_CELL.exec(cells[0]));
-  const counting = rows.length >= 3 && leads.every((lead, index) => lead && Number(lead[1]) === index + 1);
+  const countsFrom = (first: number) => leads.every((lead, index) => lead && Number(lead[1]) === first + index);
+  const counting = rows.length >= 3 && (countsFrom(1) || countsFrom(firstLevel));
   return rows.map((cells, index) => {
     const lead = leads[index];
     const named = lead && (counting || !/^\d+$/.test(cells[0]));

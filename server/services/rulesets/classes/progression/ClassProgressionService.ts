@@ -12,12 +12,6 @@ import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import { writeLevelEdit } from "@/server/services/rulesets/classes/levels/index.ts";
 import type { Session } from "@/shared/relations.ts";
 
-/** The tokens a save was read with: the class's, and each level's by its id. */
-interface ReadTokens {
-  levels: ReadonlyMap<string, string>;
-  updatedAt?: string;
-}
-
 /** The class row a progression's save writes: the ruleset's own, or the copy of an inherited one, and what it copied. */
 interface TargetClass {
   /** The class was copied: its levels' modifiers are their sources' copies, by their sources' ids (`copiedIds`) */
@@ -109,10 +103,7 @@ class ClassProgressionService {
     body: ProgressionBody & { levelTokens?: { levelId: string; updatedAt: string }[]; updatedAt?: string },
   ) {
     const { levelTokens, updatedAt, ...form } = body;
-    const tokens: ReadTokens = {
-      levels: new Map((levelTokens ?? []).map((token) => [token.levelId, token.updatedAt])),
-      updatedAt,
-    };
+    const tokens = new Map((levelTokens ?? []).map((token) => [token.levelId, token.updatedAt]));
     const result = await withTransaction(
       async (tx) =>
         await withRulesetScope(tx, rulesetId, async (scope) => {
@@ -120,8 +111,8 @@ class ClassProgressionService {
           const plan = Engine.for(scope).class(classId).planProgression(form);
           if (plan.levels.length === 0) return { klassId: plan.klass.id, updatedAt: plan.klass.updatedAt };
 
-          const target = await this.targetClass(tx, scope, plan.klass, tokens.updatedAt);
-          await this.writeLevels(tx, scope, target, plan.levels, tokens.levels);
+          const target = await this.targetClass(tx, scope, plan.klass, updatedAt);
+          await this.writeLevels(tx, scope, target, plan.levels, tokens);
 
           await createActivityWithNotifications(tx, {
             userId: session.userId,
