@@ -1,7 +1,7 @@
 import { and, count, eq, getTableColumns, isNull, lt, or } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
-import { apiKeysInAccount } from "@/drizzle/schema.ts";
+import { apiKeysInAccount, usersInAccount } from "@/drizzle/schema.ts";
 import BaseRepository from "@/server/repositories/BaseRepository.ts";
 
 /** What a key shows its user: all but its digest, which never leaves the database. */
@@ -43,9 +43,16 @@ class ApiKeysRepository extends BaseRepository<typeof apiKeysInAccount> {
       .orderBy(this.orderBy(this.table.createdAt, "desc"), this.orderBy(this.table.id));
   }
 
-  /** The key a token's digest names. */
-  async findOne(db: Db, where: { digest: string }) {
-    const [key] = await db.select(SHOWN_COLUMNS).from(this.table).where(eq(this.table.digest, where.digest));
+  /**
+   * The key a token's digest names, with whether its user is a demo's (`userExpiresAt`): none when its user's account
+   * is deleted.
+   */
+  async findOneWithUser(db: Db, where: { digest: string }) {
+    const [key] = await db
+      .select({ ...SHOWN_COLUMNS, userExpiresAt: usersInAccount.expiresAt })
+      .from(this.table)
+      .innerJoin(usersInAccount, and(eq(usersInAccount.id, this.table.userId), isNull(usersInAccount.deletedAt)))
+      .where(eq(this.table.digest, where.digest));
     return key;
   }
 

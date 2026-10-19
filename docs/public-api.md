@@ -60,8 +60,8 @@ A page answers `{ items, page, nextPage }`, `nextPage` null on the last. An erro
 - `classes`: the classes the character can take, each with its next level and its hit die, and the requirements it
   doesn't meet (`requirements`, `[UNMET]` marked) when it isn't `eligible`.
 - A planned level is refused as the wizard refuses to plan it: a class the character has no next level of (404), or
-  one it doesn't qualify for, or any once it has no level left (422). Ability increases sent at a level that takes
-  none are refused (400): the other steps would build the character with them.
+  one it doesn't qualify for, or any once it has no level left (422). Ability increases that aren't the level's (at a
+  level that takes none, or more than it takes) are refused (400): the other steps would build the character with them.
 - With `classId`, the planned level of that class (`level`): whether an ability increase is due and whether the
   increases sent are the level's (`picked`), the skill points and each skill's ranks before the level, the most it may
   reach with the level's points alone, its ranks per point and what the points sent for it come to (`pointsSpent`,

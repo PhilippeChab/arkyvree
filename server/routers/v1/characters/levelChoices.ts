@@ -113,7 +113,8 @@ async function readSpellSlots(
  * The character's choices at its next level: the classes it can take, and, for a planned level of class `classId`,
  * what each step offers with the picks made so far. Refused, as the wizard refuses to plan it, when the class isn't one
  * the character has a next level of, when the character doesn't qualify for it, or when it has no level left to take;
- * and when it sends ability increases at a level that takes none, which the other steps would build the character with.
+ * and when it sends ability increases that aren't the level's (at a level that takes none, or more than it takes),
+ * which the other steps would build the character with.
  */
 export async function readLevelChoices(session: Session, characterId: string, query: LevelChoicesQuery) {
   const classes = await fetchEveryPage(
@@ -133,6 +134,8 @@ export async function readLevelChoices(session: Session, characterId: string, qu
   );
   if (!abilities.isAvailable && query.abilityIncreases?.length)
     throw new BadRequestError("This level takes no ability increase");
+  if (query.abilityIncreases?.length && !abilities.picked)
+    throw new BadRequestError("The ability increases aren't the level's: send the one it takes");
   const skills = narrowStep(
     await CharacterLevelsService.getStep(session, characterId, "skills", level),
     (answer) => "skillPointsToSpend" in answer,

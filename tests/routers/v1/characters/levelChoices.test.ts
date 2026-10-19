@@ -72,10 +72,13 @@ describe("v1 level choices", () => {
     const jump = skills.find(({ name }) => name === "Jump");
     if (!climb || !jump) throw new Error("No Climb or Jump among the fighter's skills");
 
-    const { level } = await choicesOf("Bjorn Ironhand", "Fighter", { skillPoints: `${climb.id}:2` });
+    const { level } = await choicesOf("Bjorn Ironhand", "Fighter", {
+      // What isn't a whole number of points is dropped
+      skillPoints: `${climb.id}:2,${jump.id}:-3`,
+    });
     const after = level?.skills.skills ?? [];
     expect(after.find(({ id }) => id === climb.id)).toMatchObject({ pointsSpent: 2, ranksAdded: 2 });
-    expect(after.find(({ id }) => id === jump.id)?.maxRanks).toBe(jump.maxRanks);
+    expect(after.find(({ id }) => id === jump.id)).toMatchObject({ maxRanks: jump.maxRanks, pointsSpent: 0 });
   });
 
   test("refuses ability increases at a level that takes none, and says whether a due one's are picked", async () => {
@@ -99,6 +102,16 @@ describe("v1 level choices", () => {
     const intelligence = unpicked.level?.abilityIncrease.abilities.find(({ name }) => name === "Intelligence");
     const picked = await choicesOf("Elara Starweaver", "Wizard", { abilityIncreases: `${intelligence?.id}:1` });
     expect(picked.level?.abilityIncrease).toMatchObject({ due: true, picked: true });
+
+    // More than the level takes
+    const elara = await findSeededCharacter("Elara Starweaver");
+    await expectStatus(
+      api.v1.characters[":id"]["level-choices"].$get({
+        param: { id: elara.id },
+        query: { classId: unpicked.level?.class.id, abilityIncreases: `${intelligence?.id}:10` },
+      }),
+      400,
+    );
   });
 
   test("answers a wizard's spells by spell level, and the ability increase its 4th level takes", async () => {

@@ -3,7 +3,8 @@ import { describe, expect, test } from "bun:test";
 import { Hono, type MiddlewareHandler } from "hono";
 
 import { toJson } from "@/server/errors/index.ts";
-import { limitRate } from "@/server/middlewares/limitRate.ts";
+import type { ApiKeyContext } from "@/server/middlewares/apiKey.ts";
+import { limitRate, limitRatePerKey } from "@/server/middlewares/limitRate.ts";
 import { expectStatus } from "@/tests/support/api.ts";
 
 /** An app behind `limiter`, answering errors as the application does. */
@@ -21,8 +22,21 @@ function from(ip: string, init: RequestInit = {}) {
   return { ...init, headers: { ...init.headers, "x-forwarded-for": ip } };
 }
 
+/** An app behind the per-key limit, its requests' key the `x-key` header's, as the public API's sign-in sets it. */
 function limitedPerApiKey() {
-  return behind(limitRate({ windowMs: 60_000, limit: 1, per: "key" }, true));
+  return new Hono<ApiKeyContext>()
+    .use(async (c, next) => {
+      const id = c.req.header("x-key") ?? "";
+      c.set("requestApiKey", { id, userId: id });
+      c.set("requestSession", { userId: id });
+      await next();
+    })
+    .use(limitRatePerKey({ windowMs: 60_000, limit: 1 }, true))
+    .all("/", (c) => c.text("ok"))
+    .onError((err, c) => {
+      const [error, code] = toJson(err);
+      return c.json(error, code);
+    });
 }
 
 function limitedPerEmail() {
@@ -33,8 +47,8 @@ function limitedPerIp() {
   return behind(limitRate({ windowMs: 60_000, limit: 2 }, true));
 }
 
-function withApiKey(token: string, ip = "10.0.0.1") {
-  return from(ip, { headers: { authorization: `Bearer ${token}` } });
+function withApiKey(keyId: string, ip = "10.0.0.1") {
+  return from(ip, { headers: { "x-key": keyId } });
 }
 
 function withEmail(emailAddress: unknown) {
@@ -99,13 +113,9 @@ describe("limitRate", () => {
   describe("per API key", () => {
     test("refuses a key past its limit from any address, and counts each key apart", async () => {
       const app = limitedPerApiKey();
-      expect((await app.request("/", withApiKey("ark_first", "10.0.0.1"))).status).toBe(200);
-      await expectStatus(app.request("/", withApiKey("ark_first", "10.0.0.2")), 429);
-      expect((await app.request("/", withApiKey("ark_second", "10.0.0.1"))).status).toBe(200);
-    });
-
-    test("refuses a request without a key, which the public API's sign-in refused before", async () => {
-      await expectStatus(limitedPerApiKey().request("/"), 401);
+      expect((await app.request("/", withApiKey("first", "10.0.0.1"))).status).toBe(200);
+      await expectStatus(app.request("/", withApiKey("first", "10.0.0.2")), 429);
+      expect((await app.request("/", withApiKey("second", "10.0.0.1"))).status).toBe(200);
     });
   });
 });

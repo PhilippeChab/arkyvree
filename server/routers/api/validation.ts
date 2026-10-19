@@ -63,7 +63,7 @@ export const sanitizedEmail = z.string().overwrite(sanitizeEmail).email();
 /** Text, sanitized as it's stored: a check chained to it (`sanitizedText.min(3)`) reads the sanitized text. */
 export const sanitizedText = z.string().overwrite(sanitizeText);
 
-/** Comma-separated `skillId:points` points spent on each skill: what isn't one is dropped. */
+/** Comma-separated `skillId:points` points spent on each skill, a whole number: what isn't one is dropped. */
 export const skillPoints = z
   .string()
   .optional()
@@ -74,7 +74,7 @@ export const skillPoints = z
           value
             .split(",")
             .map((pair) => pair.split(":"))
-            .filter(([skillId, points]) => isUuid(skillId) && !isNaN(Number(points)))
+            .filter(([skillId, points]) => isUuid(skillId) && /^\d+$/.test(points ?? ""))
             .map(([skillId, points]) => [skillId, Number(points)]),
         ),
   );

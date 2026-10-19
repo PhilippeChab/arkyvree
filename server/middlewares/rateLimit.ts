@@ -1,4 +1,4 @@
-import { limitRate } from "./limitRate.ts";
+import { limitRate, limitRatePerKey } from "./limitRate.ts";
 
 const MINUTE = 60 * 1000;
 
@@ -9,7 +9,7 @@ const MINUTE = 60 * 1000;
 export const apiClientRateLimit = limitRate({ windowMs: MINUTE, limit: 600 });
 
 /** The public API's requests, counted per key: an agent's run reads a character and its choices a few times a level. */
-export const apiKeyRateLimit = limitRate({ windowMs: MINUTE, limit: 120, per: "key" });
+export const apiKeyRateLimit = limitRatePerKey({ windowMs: MINUTE, limit: 120 });
 
 /**
  * Each direct-upload commits a blob row + S3 object that the sweep won't reclaim until UNATTACHED_BLOB_TTL_MS
@@ -36,6 +36,6 @@ export const importSourceRateLimit = limitRate({ windowMs: MINUTE, limit: 30 });
  * A character's choices at its next level, counted per key apart from its other requests: one builds the character a
  * time for each step and each pool it reads.
  */
-export const levelChoicesRateLimit = limitRate({ windowMs: MINUTE, limit: 20, per: "key" });
+export const levelChoicesRateLimit = limitRatePerKey({ windowMs: MINUTE, limit: 20 });
 
 export const publicApiRateLimit = limitRate({ windowMs: MINUTE, limit: 30 });

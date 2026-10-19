@@ -19,7 +19,7 @@ describe("ApiKeysService", () => {
     expect(key.token).toMatch(/^ark_[A-Za-z0-9_-]{43}$/);
     expect(key).toMatchObject({ name: "Leveling agent", prefix: key.token.slice(0, 12), lastUsedAt: null });
     expect(key).not.toHaveProperty("digest");
-    expect(await ApiKeys.findOne(db, { digest: hashApiKeyToken(key.token) })).toMatchObject({ id: key.id });
+    expect(await ApiKeys.findOneWithUser(db, { digest: hashApiKeyToken(key.token) })).toMatchObject({ id: key.id });
 
     const [listed] = await ApiKeysService.getKeys(session);
     expect(listed).toMatchObject({ id: key.id, name: "Leveling agent", prefix: key.prefix });
@@ -68,7 +68,7 @@ describe("ApiKeysService", () => {
 
     expect(await ApiKeysService.revokeKey(session, key.id)).toMatchObject({ id: key.id });
     expect(await ApiKeysService.getKeys(session)).toEqual([]);
-    expect(await ApiKeys.findOne(db, { digest: hashApiKeyToken(key.token) })).toBeUndefined();
+    expect(await ApiKeys.findOneWithUser(db, { digest: hashApiKeyToken(key.token) })).toBeUndefined();
   });
 
   test("refuses to revoke another user's key, which keeps working", async () => {
