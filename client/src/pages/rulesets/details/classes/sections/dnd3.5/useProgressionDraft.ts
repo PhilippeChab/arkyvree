@@ -13,10 +13,14 @@ import {
 
 /**
  * A class's Progression tab's changes before its save (`edits`), over its levels as saved: a value set back to the
- * saved one drops its edit, so the tab holds only what differs.
+ * saved one drops its edit, so the tab holds only what differs. They're the class's (`classId`): once the page follows
+ * a copy of it, whose levels are others, it holds none.
  */
-export function useProgressionDraft(levels: readonly ClassLevelRow[]) {
-  const [edits, setEdits] = useState<ProgressionEdits>(NO_EDITS);
+export function useProgressionDraft(classId: string, levels: readonly ClassLevelRow[]) {
+  const [draft, setDraft] = useState<{ classId: string; edits: ProgressionEdits }>({ classId, edits: NO_EDITS });
+  const edits = draft.classId === classId ? draft.edits : NO_EDITS;
+  const setEdits = (change: (current: ProgressionEdits) => ProgressionEdits) =>
+    setDraft((current) => ({ classId, edits: change(current.classId === classId ? current.edits : NO_EDITS) }));
   const levelById = new Map(levels.map((level) => [level.id, level]));
 
   /** A track's new values, by level id: each one equal to the saved value forgets its edit. */
@@ -61,7 +65,7 @@ export function useProgressionDraft(levels: readonly ClassLevelRow[]) {
   return {
     addFeature,
     addPool,
-    discard: () => setEdits(NO_EDITS),
+    discard: () => setEdits(() => NO_EDITS),
     edits,
     setFeatureLevels,
     setPoolPick,

@@ -1,5 +1,5 @@
 import { InputBase } from "@mui/material";
-import type { ClipboardEvent, KeyboardEvent } from "react";
+import { type ClipboardEvent, type KeyboardEvent, useState } from "react";
 
 import { DataCell, DataRow, DataTable, ValueChip } from "@/client/src/components/common/index.ts";
 
@@ -36,8 +36,9 @@ function displayCell(cell: SpellCell) {
 
 /**
  * A class's spell table as the book prints it, one row a class level, one column a spell level, its totals edited in
- * place: a typed cell writes as it's left (Enter moves down its column), a block pasted into a cell fills from there
- * (rows naming their level land on it), and a changed cell is marked until the tab's save.
+ * place: a typed cell writes as it's left (Enter moves down its column; what it can't read leaves it as it was), a
+ * block pasted into a cell fills from there (rows naming their level land on it), and a changed cell is marked until
+ * the tab's save.
  */
 export function SpellTableGrid({
   allowsAll,
@@ -49,7 +50,11 @@ export function SpellTableGrid({
   saved,
   value,
 }: SpellTableGridProps) {
+  // The cell being typed in, and its text, until it's left
+  const [typing, setTyping] = useState<{ levelId: string; spellLevel: number; text: string } | null>(null);
+
   const commit = (levelId: string, spellLevel: number, text: string) => {
+    setTyping(null);
     const cell = parseSpellCell(text, allowsAll);
     if (cell !== undefined && cell !== value(levelId, spellLevel)) onCells([{ levelId, spellLevel, value: cell }]);
   };
@@ -102,13 +107,15 @@ export function SpellTableGrid({
                 sx={[changed && { bgcolor: "action.selected" }]}
               >
                 <InputBase
-                  // A saved or a pasted value resets what the input shows
-                  key={displayCell(cell)}
                   id={cellId(label, row, spellLevel)}
-                  defaultValue={displayCell(cell)}
+                  value={typing?.levelId === id && typing.spellLevel === spellLevel ? typing.text : displayCell(cell)}
                   readOnly={readOnly}
+                  onChange={(e) => setTyping({ levelId: id, spellLevel, text: e.target.value })}
                   title={changed ? `Was ${displayCell(before) || "none"}` : undefined}
-                  onBlur={(e) => commit(id, spellLevel, e.target.value)}
+                  onBlur={(e) => {
+                    if (typing?.levelId === id && typing.spellLevel === spellLevel)
+                      commit(id, spellLevel, e.target.value);
+                  }}
                   onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => handleKeyDown(e, row, spellLevel)}
                   onPaste={(e: ClipboardEvent<HTMLInputElement>) => handlePaste(e, row, spellLevel)}
                   inputProps={{

@@ -60,6 +60,11 @@ export function buildProgressionBody(
   const rows = [...features, ...edits.addedFeatures];
   const levelsOf = (row: FeatureRow) => edits.features[row.key] ?? row.levelIds;
   const valueOf = (level: ClassLevelRow, key: TrackKey) => readEditedTrack(level, key, edits);
+  const grantOf = (row: FeatureRow, level: ClassLevelRow) =>
+    level.feats.find((feat) => describeFeatureKey({ featId: feat.id, aptitudeId: feat.aptitudeId }) === row.key);
+  // A grant keeps whether it's free; a new one is as its feature's first grant, or free for a new feature
+  const freeOf = (row: FeatureRow, level: ClassLevelRow) =>
+    (grantOf(row, level) ?? levels.map((other) => grantOf(row, other)).find(Boolean))?.free ?? true;
   const levelEdits = levels.flatMap((level) => {
     const keys: TrackKey[] = ["bab", "skills", ...saveIds.map((id): TrackKey => `save:${id}`)];
     const tracksChanged = keys.some((key) => valueOf(level, key) !== readTrack(level, key));
@@ -69,16 +74,15 @@ export function buildProgressionBody(
       features.filter((row) => row.levelIds.includes(level.id)).map((row) => row.key),
     );
     if (!tracksChanged && !featsChanged) return [];
-    const freeOf = (row: FeatureRow) =>
-      level.feats.find((feat) => describeFeatureKey({ featId: feat.id, aptitudeId: feat.aptitudeId }) === row.key)
-        ?.free;
+    // Every save the level has a base for, and the ruleset's: none loaded yet sends the level's own as they are
+    const levelSaveIds = [...new Set([...level.saves.map((save) => save.saveId), ...saveIds])];
     return [
       {
         levelId: level.id,
         fields: { bab: valueOf(level, "bab"), skills: valueOf(level, "skills") },
-        saves: saveIds.map((saveId) => ({ saveId, base: valueOf(level, `save:${saveId}`) })),
+        saves: levelSaveIds.map((saveId) => ({ saveId, base: valueOf(level, `save:${saveId}`) })),
         ...(featsChanged && {
-          feats: granted.map((row) => ({ featId: row.featId, aptitudeId: row.aptitudeId, free: freeOf(row) ?? true })),
+          feats: granted.map((row) => ({ featId: row.featId, aptitudeId: row.aptitudeId, free: freeOf(row, level) })),
         }),
       },
     ];

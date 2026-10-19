@@ -3,8 +3,8 @@ import { Box, Button, Stack, Typography } from "@mui/material";
 import { DiceSpinner, Panel } from "@/client/src/components/common/index.ts";
 
 interface ProgressionSaveBarProps {
-  /** What the tab changed, in words, one a line ("Base Attack Bonus: Medium → Good, 20 levels") */
-  changes: string[];
+  /** What the tab changed, in words, one a line ("Base Attack Bonus: Medium → Good, 20 levels"), each by what it changed */
+  changes: { key: string; label: string }[];
   onDiscard: () => void;
   onSave: () => void;
   pending: boolean;
@@ -30,8 +30,8 @@ export function ProgressionSaveBar({ changes, onDiscard, onSave, pending, what }
       <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ alignItems: { sm: "center" } }}>
         <Box component="ul" sx={{ m: 0, pl: 2.5, flex: 1 }}>
           {changes.map((change) => (
-            <Typography component="li" variant="body2" key={change}>
-              {change}
+            <Typography component="li" variant="body2" key={change.key}>
+              {change.label}
             </Typography>
           ))}
         </Box>

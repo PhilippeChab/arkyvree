@@ -67,23 +67,26 @@ class ClassProgressionService {
   ) {
     const rows = await KlassLevels.findMany(tx, { klassId: target.id });
     const idByNumber = new Map(rows.map((row) => [row.level, row.id]));
-    for (const { added, edit, level, removedIds } of levels) {
-      const levelId = idByNumber.get(level.level);
+    const removedIds: string[] = [];
+    const added: Parameters<typeof Modifiers.createMany>[1] = [];
+    for (const level of levels) {
+      const levelId = idByNumber.get(level.level.level);
       if (!levelId) throw new NotFoundError("Class level no longer exists; refresh the class");
 
-      const expectedUpdatedAt = target.copied ? undefined : tokens.get(level.id);
+      const expectedUpdatedAt = target.copied ? undefined : tokens.get(level.level.id);
       const [row] = await KlassLevels.update(tx, {}, { id: levelId, expectedUpdatedAt });
       if (!row) throw new ConflictError(STALE_ENTITY_MESSAGE);
-      if (edit) await writeLevelEdit(tx, scope, levelId, edit);
+      if (level.edit) await writeLevelEdit(tx, scope, levelId, level.edit);
 
-      const ids = removedIds.flatMap((id) => (target.copied ? (target.copiedIds.get(id) ?? []) : [id]));
-      const removed = ids.length > 0 ? await Modifiers.delete(tx, { ids }) : [];
-      if (removed.length !== removedIds.length) throw new ConflictError(STALE_ENTITY_MESSAGE);
-      await Modifiers.createMany(
-        tx,
-        added.map((modifier) => ({ ...modifier, sourceId: levelId, sourceType: "klass_levels" })),
-      );
+      removedIds.push(...level.removedIds);
+      added.push(...level.added.map((modifier) => ({ ...modifier, sourceId: levelId, sourceType: "klass_levels" })));
     }
+
+    // The levels' modifiers at once: those dropped (their copies', on a copy), then those added
+    const ids = removedIds.flatMap((id) => (target.copied ? (target.copiedIds.get(id) ?? []) : [id]));
+    const removed = ids.length > 0 ? await Modifiers.delete(tx, { ids }) : [];
+    if (removed.length !== removedIds.length) throw new ConflictError(STALE_ENTITY_MESSAGE);
+    if (added.length > 0) await Modifiers.createMany(tx, added);
   }
 
   /** What a class's progression tabs read beside its levels and tables: its pools' own picks, and its spell list. */

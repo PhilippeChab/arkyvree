@@ -80,7 +80,7 @@ export function ClassProgressionSection({ rulesetId, classId, className, ruleset
   const { data: progression, error: progressionError } = useQuery(classProgressionQuery(rulesetId, classId));
   const { data: poolTotals, error: poolsError } = useQuery(classFeatPoolsQuery(rulesetId, classId));
   const levels = levelRows?.toSorted(byLevel) ?? [];
-  const draft = useProgressionDraft(levels);
+  const draft = useProgressionDraft(classId, levels);
   const save = useProgressionSave(rulesetId, classId, levels);
 
   // Its create opens on the class's next level, its fields the highest's
@@ -153,16 +153,21 @@ export function ClassProgressionSection({ rulesetId, classId, className, ruleset
           ]
         : plain;
       const how = from !== to ? `${from} → ${to}, ` : "";
-      return [`${track.label}: ${how}${changed} ${changed === 1 ? "level" : "levels"}`];
+      return [{ key: track.key, label: `${track.label}: ${how}${changed} ${changed === 1 ? "level" : "levels"}` }];
     }),
     ...features.flatMap((row) => {
       const saved = savedFeatures.find((s) => s.key === row.key)?.levelIds ?? [];
       const changed = levels.filter(({ id }) => row.levelIds.includes(id) !== saved.includes(id)).length;
-      return changed > 0 ? [`${row.name}: ${changed} ${changed === 1 ? "level" : "levels"}`] : [];
+      return changed > 0
+        ? [{ key: row.key, label: `${row.name}: ${changed} ${changed === 1 ? "level" : "levels"}` }]
+        : [];
     }),
     ...(body.pools ?? []).map((pool) => {
       const name = pools.find((p) => p.aptitudeId === pool.aptitudeId)?.name;
-      return `${name}: ${pool.picks.length} ${pool.picks.length === 1 ? "level" : "levels"}`;
+      return {
+        key: `pool:${pool.aptitudeId}`,
+        label: `${name}: ${pool.picks.length} ${pool.picks.length === 1 ? "level" : "levels"}`,
+      };
     }),
   ];
 

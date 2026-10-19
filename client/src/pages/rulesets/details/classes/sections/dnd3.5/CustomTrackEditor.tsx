@@ -39,19 +39,27 @@ function readLevelInput(text: string, fallback: number) {
  * A level range sets, adds to or takes from every level of it at once.
  */
 export function CustomTrackEditor({ base, baseControl, label, onChange, onClose, values }: CustomTrackEditorProps) {
+  // The range's fields as typed, read when it's applied
   const [range, setRange] = useState({
-    from: 1,
-    to: values.at(-1)?.level ?? 1,
+    from: "1",
+    to: String(values.at(-1)?.level ?? 1),
     operation: "set" as RangeOperation,
-    amount: 0,
+    amount: "0",
   });
+  // A level's input as typed (an emptied one before its new number), until it's left
+  const [typing, setTyping] = useState<{ levelId: string; text: string } | null>(null);
   const highest = Math.max(1, ...values.map(({ value }) => value), ...base);
 
   const applyRange = () => {
-    const [from, to] = [Math.min(range.from, range.to), Math.max(range.from, range.to)];
+    const [start, end, amount] = [
+      readLevelInput(range.from, 1),
+      readLevelInput(range.to, 1),
+      readLevelInput(range.amount, 0),
+    ];
+    const [from, to] = [Math.min(start, end), Math.max(start, end)];
     const changed = values.filter(({ level }) => level >= from && level <= to);
     const next = (value: number) =>
-      range.operation === "set" ? range.amount : value + (range.operation === "add" ? range.amount : -range.amount);
+      range.operation === "set" ? amount : value + (range.operation === "add" ? amount : -amount);
     onChange(Object.fromEntries(changed.map(({ levelId, value }) => [levelId, Math.max(0, next(value))])));
   };
 
@@ -99,9 +107,13 @@ export function CustomTrackEditor({ base, baseControl, label, onChange, onClose,
                     {level}
                   </Typography>
                   <InputBase
-                    value={overridden ? String(value) : ""}
+                    value={typing?.levelId === levelId ? typing.text : overridden ? String(value) : ""}
                     placeholder={String(base[index])}
-                    onChange={(e) => onChange({ [levelId]: readLevelInput(e.target.value, base[index]) })}
+                    onBlur={() => setTyping(null)}
+                    onChange={(e) => {
+                      setTyping({ levelId, text: e.target.value });
+                      onChange({ [levelId]: readLevelInput(e.target.value, base[index]) });
+                    }}
                     inputProps={{ inputMode: "numeric", "aria-label": `${label}, Level ${level}` }}
                     sx={{
                       width: "100%",
@@ -125,7 +137,7 @@ export function CustomTrackEditor({ base, baseControl, label, onChange, onClose,
           type="number"
           label="From"
           value={range.from}
-          onChange={(e) => setRange({ ...range, from: readLevelInput(e.target.value, 1) })}
+          onChange={(e) => setRange({ ...range, from: e.target.value })}
           sx={{ width: 80 }}
         />
         <TextField
@@ -133,7 +145,7 @@ export function CustomTrackEditor({ base, baseControl, label, onChange, onClose,
           type="number"
           label="To"
           value={range.to}
-          onChange={(e) => setRange({ ...range, to: readLevelInput(e.target.value, 1) })}
+          onChange={(e) => setRange({ ...range, to: e.target.value })}
           sx={{ width: 80 }}
         />
         <TextField
@@ -155,7 +167,7 @@ export function CustomTrackEditor({ base, baseControl, label, onChange, onClose,
           type="number"
           label="Amount"
           value={range.amount}
-          onChange={(e) => setRange({ ...range, amount: readLevelInput(e.target.value, 0) })}
+          onChange={(e) => setRange({ ...range, amount: e.target.value })}
           sx={{ width: 90 }}
         />
         <Button variant="outlined" onClick={applyRange}>

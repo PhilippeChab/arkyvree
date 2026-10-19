@@ -65,14 +65,23 @@ export function ClassSpellsSection({ rulesetId, classId, className, ruleset }: C
   const snackbar = useSnackbar();
   const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
   const [table, setTable] = useState<SpellTable>("perDay");
-  const [edits, setEdits] = useState<SpellEdits>(NO_SPELL_EDITS);
+  // The class's edits: once the page follows a copy of it, whose levels are others, it holds none
+  const [draft, setDraft] = useState<{ classId: string; edits: SpellEdits }>({ classId, edits: NO_SPELL_EDITS });
+  const edits = draft.classId === classId ? draft.edits : NO_SPELL_EDITS;
+  const setEdits = (change: (current: SpellEdits) => SpellEdits) =>
+    setDraft((current) => ({ classId, edits: change(current.classId === classId ? current.edits : NO_SPELL_EDITS) }));
   const [pasting, setPasting] = useState(false);
   const [classSearch, setClassSearch] = useState("");
 
   const perDay = useQuery(classSpellsPerDayQuery(rulesetId, classId));
   const known = useQuery(classSpellsKnownQuery(rulesetId, classId));
   const { data: progression, error: progressionError } = useQuery(classProgressionQuery(rulesetId, classId));
-  const classes = useListboxQuery(classOptionsQuery(rulesetId, useDebouncedValue(classSearch)));
+  // An editor's, of a class with one spell list: its classes to start from are only read then
+  const editable = canEdit && !!progression?.spellList && !progression.severalSpellLists;
+  const classes = useListboxQuery({
+    ...classOptionsQuery(rulesetId, useDebouncedValue(classSearch)),
+    enabled: editable,
+  });
 
   const rowsOf: Record<SpellTable, SpellLevelRow[]> = {
     perDay: (perDay.data ?? []).map((row) => ({ id: row.id, level: row.level, totals: row.spellsPerDay })),
@@ -157,7 +166,7 @@ export function ClassSpellsSection({ rulesetId, classId, className, ruleset }: C
           ...(knownRows.length > 0 && { known: knownRows }),
         },
       },
-      { onSuccess: () => setEdits(NO_SPELL_EDITS) },
+      { onSuccess: () => setEdits(() => NO_SPELL_EDITS) },
     );
   };
 
@@ -169,7 +178,6 @@ export function ClassSpellsSection({ rulesetId, classId, className, ruleset }: C
       <BlankState icon={SpellUsesIcon} title="No levels" description="Add levels to the class to give it spells." />
     );
   }
-  const editable = canEdit && !!progression?.spellList;
 
   return (
     <Stack spacing={3}>
@@ -221,6 +229,11 @@ export function ClassSpellsSection({ rulesetId, classId, className, ruleset }: C
           </Typography>
         )}
         {!!progressionError && !progression && <LoadError what="Spell list" error={progressionError} />}
+        {canEdit && progression?.severalSpellLists && (
+          <Typography variant="body2" sx={{ color: "text.secondary" }}>
+            {className} gives spells in several lists, which these totals add up: edit each level&apos;s modifiers.
+          </Typography>
+        )}
         {progression && !progression.spellList && (
           <Typography variant="body2" sx={{ color: "text.secondary" }}>
             {className} has no spell list. Add an aptitude named &quot;{className} Spells&quot; to give it spells.
@@ -253,9 +266,11 @@ export function ClassSpellsSection({ rulesetId, classId, className, ruleset }: C
         what="Spells"
         changes={(["perDay", "known"] as const).flatMap((which) => {
           const count = changedCells(which);
-          return count > 0 ? [`${TABLE_LABELS[which]}: ${count} ${count === 1 ? "cell" : "cells"}`] : [];
+          return count > 0
+            ? [{ key: which, label: `${TABLE_LABELS[which]}: ${count} ${count === 1 ? "cell" : "cells"}` }]
+            : [];
         })}
-        onDiscard={() => setEdits(NO_SPELL_EDITS)}
+        onDiscard={() => setEdits(() => NO_SPELL_EDITS)}
         onSave={handleSave}
         pending={save.isPending}
       />

@@ -44,6 +44,11 @@ describe("A Progression tab's save", () => {
     expect(buildProgressionBody(twoLevels(), ["fort"], describeFeatureRows(twoLevels()), [], NO_EDITS)).toEqual({});
   });
 
+  test("sends a level's own saves as they are while the ruleset's aren't read yet, never none", () => {
+    const body = buildProgressionBody(twoLevels(), [], [], [], { ...NO_EDITS, tracks: { bab: { l1: 0 } } });
+    expect(body.levels?.[0].saves).toEqual([{ saveId: "fort", base: 2 }]);
+  });
+
   test("sends each changed level's fields and saves, its feats when they changed, and a pool's changed picks", () => {
     const features = describeFeatureRows(twoLevels());
     const body = buildProgressionBody(
@@ -64,7 +69,8 @@ describe("A Progression tab's save", () => {
           levelId: "l1",
           fields: { bab: 1, skills: 6 },
           saves: [{ saveId: "fort", base: 2 }],
-          feats: [{ featId: "evasion", aptitudeId: "features", free: true }],
+          // Granted at a new level, as its first grant is: not free
+          feats: [{ featId: "evasion", aptitudeId: "features", free: false }],
         },
       ],
       pools: [{ aptitudeId: "pool", picks: [{ levelId: "l2", count: 2 }] }],

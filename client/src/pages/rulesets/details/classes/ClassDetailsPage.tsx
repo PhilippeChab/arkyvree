@@ -55,7 +55,10 @@ function ClassView({ back, classId, ruleset, rulesetId, section }: ClassViewProp
   const tabs = [...classSections.tabs, ...CLASS_TABS, ...CLASS_CUSTOMIZATION_TABS];
   const currentTab = tabs.find((tab) => tab.key === section);
   // An address of a tab it had before opens the one that took its place
-  const aliasedTab = section === undefined ? undefined : classSections.tabAliases[section];
+  const aliasedTab =
+    section !== undefined && Object.hasOwn(classSections.tabAliases, section)
+      ? classSections.tabAliases[section]
+      : undefined;
 
   const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
   // Deleting an inherited class, or what it holds, can be undone

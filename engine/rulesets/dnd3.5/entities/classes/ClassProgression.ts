@@ -99,14 +99,16 @@ function normalizedColumn(column: SpellTotal[]): SpellTotal[] {
  * The modifiers a spell table's column (`target`, a spell level's) gives each level, for the totals it's asked
  * (`wanted`, normalized) over what the levels' other modifiers give (`kept`): each level adds what its total gains on
  * the level before; a column counted from a level the others give nothing at opens there with 0; "All" sets it once.
+ * A level the others already give "All" at (a gated one's, perhaps) keeps its own as they are (`undefined`).
  */
-function planColumn(target: string, wanted: SpellTotal[], kept: SpellTotal[]): LevelModifier[][] {
+function planColumn(target: string, wanted: SpellTotal[], kept: SpellTotal[]): (LevelModifier[] | undefined)[] {
   let given = 0;
   let open = false;
   let all = false;
   return wanted.map((total, index) => {
     const other = kept[index];
-    if (all || other === "All" || total === undefined) return [];
+    if (other === "All") return all ? [] : undefined;
+    if (all || total === undefined) return [];
     if (total === "All") {
       all = true;
       return [planned(target, "set", -1)];
@@ -189,7 +191,7 @@ export default class ClassProgression {
   /**
    * A spell table's totals (`field`: `uses` for spells per day, `allowed` for spells known), each level's given
    * (`rows`) over the ones it has, as each spell level's own modifiers on the class's list: refused for a class
-   * without one.
+   * without one, or with several (whose table adds them all up).
    */
   private planSpells(
     working: Map<string, LevelModifier[]>,
@@ -198,6 +200,8 @@ export default class ClassProgression {
   ) {
     const list = this.spellList;
     if (!list) throw new RulesError("invalid", `${this.klass.name} has no spell list to give spells in`);
+    const several = `${this.klass.name} gives spells in several lists: edit each level's modifiers`;
+    if (this.table.describeSpellLists().length > 1) throw new RulesError("invalid", several);
     const levels = this.classLevels;
     const given = new Map(rows.map(({ counts, levelId }) => [this.levels.find(levelId).id, counts]));
     const totals = this.spellTotals(field, working);
@@ -218,7 +222,10 @@ export default class ClassProgression {
         wanted,
         levels.map(({ id }) => kept.get(id)?.[spellLevel]),
       );
-      for (const [index, { id }] of levels.entries()) replaceOwn(working, id, isOwn, columnModifiers[index]);
+      for (const [index, { id }] of levels.entries()) {
+        const next = columnModifiers[index];
+        if (next) replaceOwn(working, id, isOwn, next);
+      }
     }
   }
 
@@ -253,8 +260,9 @@ export default class ClassProgression {
 
   /**
    * What the class's tabs read beside its levels and its tables: its pools, each with its levels' own picks (what the
-   * pool's own modifiers add, by the level's id; a feat the level grants adds its own apart), and the spell list its
-   * spells go to (none for a class without one).
+   * pool's own modifiers add, by the level's id; a feat the level grants adds its own apart), the spell list its
+   * spells go to (none for a class without one), and whether its levels give spells in several (`severalSpellLists`:
+   * its tables add them up, which no save can split).
    */
   describe() {
     const { rulesetData } = this;
@@ -274,7 +282,11 @@ export default class ClassProgression {
       return aptitude && !lists.has(aptitude.id) ? [{ aptitudeId: aptitude.id, name: aptitude.name, picks }] : [];
     });
     const list = this.spellList;
-    return { pools, spellList: list ? { id: list.id, name: list.name } : null };
+    return {
+      pools,
+      severalSpellLists: this.table.describeSpellLists().length > 1,
+      spellList: list ? { id: list.id, name: list.name } : null,
+    };
   }
 
   /**
