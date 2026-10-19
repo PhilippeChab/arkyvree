@@ -1,10 +1,12 @@
 /**
  * A character's choices at its next level, read in one request: the classes it can take, and for a planned level, what
- * each of the level-up wizard's steps offers with the picks made so far, each pool's options read whole.
+ * each of the level-up wizard's steps offers with the picks made so far, each pool's options read whole. The steps and
+ * the pools are read together: each read builds the character again, which one engine operation for the whole answer
+ * would build once.
  */
 
 import type { AbilityIncrease } from "@/engine/index.ts";
-import { NotFoundError } from "@/server/errors/index.ts";
+import { NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
 import { fetchEveryPage } from "@/server/repositories/index.ts";
 import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
 import type { Session } from "@/shared/relations.ts";
@@ -55,9 +57,10 @@ async function readFeatSlots(
     await CharacterLevelsService.getStep(session, characterId, "feats", level),
     (answer) => "featsToSelect" in answer,
   );
-  const slots = [];
-  for (const pool of Object.values(step.aptitudePools).filter(({ available }) => available > 0))
-    slots.push({ options: await readFeatOptions(session, characterId, level, pool.id), pool });
+  const pools = Object.values(step.aptitudePools).filter(({ available }) => available > 0);
+  const slots = await Promise.all(
+    pools.map(async (pool) => ({ options: await readFeatOptions(session, characterId, level, pool.id), pool })),
+  );
   return { fitted: step.fitted, granted: step.autoGrantedFeats, slots };
 }
 
@@ -87,23 +90,29 @@ async function readSpellSlots(
     await CharacterLevelsService.getStep(session, characterId, "powers", level),
     (answer) => "powersToSelect" in answer,
   );
-  const slots = [];
-  for (const pool of Object.values(step.aptitudePools).filter(({ available }) => available > 0)) {
-    const levels = pool.leveled
-      ? Object.entries(pool.levels ?? {}).filter(([, { available }]) => available > 0)
-      : [[undefined, pool] as const];
-    for (const [spellLevel, { available }] of levels) {
-      const powerLevel = spellLevel === undefined ? undefined : Number(spellLevel);
-      const options = await readPowerOptions(session, characterId, level, pool.id, powerLevel);
-      slots.push({ available, options, pool, powerLevel });
-    }
-  }
+  // Each pool with room left, a leveled one's at each spell level with room left
+  const rooms = Object.values(step.aptitudePools)
+    .filter(({ available }) => available > 0)
+    .flatMap((pool): { available: number; pool: typeof pool; powerLevel?: number }[] =>
+      pool.leveled
+        ? Object.entries(pool.levels ?? {})
+            .filter(([, { available }]) => available > 0)
+            .map(([spellLevel, { available }]) => ({ available, pool, powerLevel: Number(spellLevel) }))
+        : [{ available: pool.available, pool, powerLevel: undefined }],
+    );
+  const slots = await Promise.all(
+    rooms.map(async (room) => ({
+      ...room,
+      options: await readPowerOptions(session, characterId, level, room.pool.id, room.powerLevel),
+    })),
+  );
   return { fitted: step.fitted, granted: step.autoGrantedPowers, slots };
 }
 
 /**
  * The character's choices at its next level: the classes it can take, and, for a planned level of class `classId`,
- * what each step offers with the picks made so far. Refused when the character can't take a level in that class.
+ * what each step offers with the picks made so far. Refused, as the wizard refuses to plan it, when the class isn't one
+ * the character has a next level of, when the character doesn't qualify for it, or when it has no level left to take.
  */
 export async function readLevelChoices(session: Session, characterId: string, query: LevelChoicesQuery) {
   const classes = await fetchEveryPage(
@@ -112,18 +121,20 @@ export async function readLevelChoices(session: Session, characterId: string, qu
   );
   if (!query.classId) return { classes, level: null };
   const klass = classes.find(({ id }) => id === query.classId);
-  if (!klass) throw new NotFoundError("The character can't take a level in this class");
+  if (!klass) throw new NotFoundError("The character has no next level in this class");
+  if (klass.levelsLeft <= 0) throw new UnprocessableEntityError("The character has no level left to take");
+  if (!klass.eligible) throw new UnprocessableEntityError(`The character doesn't meet ${klass.name}'s requirements`);
 
   const level = { ...query, classId: klass.id, level: klass.nextLevel };
-  const abilities = narrowStep(
-    await CharacterLevelsService.getStep(session, characterId, "abilities", level),
-    (answer) => "isAvailable" in answer,
-  );
-  const skills = narrowStep(
-    await CharacterLevelsService.getStep(session, characterId, "skills", level),
-    (answer) => "skillPointsToSpend" in answer,
-  );
-  const feats = await readFeatSlots(session, characterId, level);
-  const spells = await readSpellSlots(session, characterId, level);
-  return { classes, level: { abilities, class: klass, feats, skills, spells } };
+  const [abilities, skills, feats, spells] = await Promise.all([
+    CharacterLevelsService.getStep(session, characterId, "abilities", level),
+    CharacterLevelsService.getStep(session, characterId, "skills", level),
+    readFeatSlots(session, characterId, level),
+    readSpellSlots(session, characterId, level),
+  ]);
+  const steps = {
+    abilities: narrowStep(abilities, (answer) => "isAvailable" in answer),
+    skills: narrowStep(skills, (answer) => "skillPointsToSpend" in answer),
+  };
+  return { classes, level: { ...steps, class: klass, feats, spells } };
 }

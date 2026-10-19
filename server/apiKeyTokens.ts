@@ -19,3 +19,8 @@ export function generateApiKeyToken() {
 export function hashApiKeyToken(token: string) {
   return new Bun.CryptoHasher("sha256").update(token).digest("hex");
 }
+
+/** The token a request sends, `Authorization: Bearer <token>`, if it sends one. */
+export function readApiKeyToken(authorization: string | undefined) {
+  return authorization?.match(/^Bearer\s+(\S+)$/i)?.[1];
+}

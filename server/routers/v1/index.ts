@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 
-import { apiKeyMiddleware, apiKeyRateLimit } from "@/server/middlewares/index.ts";
+import { apiClientRateLimit, apiKeyMiddleware, apiKeyRateLimit } from "@/server/middlewares/index.ts";
 
 import characters from "./characters/index.ts";
 import rulesets from "./rulesets/index.ts";
@@ -11,6 +11,7 @@ import rulesets from "./rulesets/index.ts";
  * API changes with its screens.
  */
 export default new Hono()
+  .use(apiClientRateLimit)
   .use(apiKeyMiddleware)
   .use(apiKeyRateLimit)
   .route("/characters", characters)

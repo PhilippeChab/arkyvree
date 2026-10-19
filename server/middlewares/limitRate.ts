@@ -1,7 +1,7 @@
 import { rateLimiter } from "hono-rate-limiter";
 import { createMiddleware } from "hono/factory";
 
-import { hashApiKeyToken } from "@/server/apiKeyTokens.ts";
+import { hashApiKeyToken, readApiKeyToken } from "@/server/apiKeyTokens.ts";
 import { sanitizeEmail } from "@/server/emailAddress.ts";
 import { isTest } from "@/server/environment.ts";
 import { TooManyRequestsError, UnauthorizedError } from "@/server/errors/index.ts";
@@ -15,7 +15,7 @@ const noop = createMiddleware(async (_, next) => next());
  * counted together. The public API's sign-in (`apiKey.ts`) refused a request without a valid one before.
  */
 function apiKeyKey(c: Parameters<KeyGenerator>[0]): string {
-  const token = c.req.header("authorization")?.replace(/^Bearer\s+/i, "");
+  const token = readApiKeyToken(c.req.header("authorization"));
   if (!token) throw new UnauthorizedError("Send an API key: `Authorization: Bearer <key>`");
   return `key:${hashApiKeyToken(token)}`;
 }

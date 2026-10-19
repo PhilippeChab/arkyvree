@@ -1,6 +1,6 @@
 import { createMiddleware } from "hono/factory";
 
-import { hashApiKeyToken } from "@/server/apiKeyTokens.ts";
+import { hashApiKeyToken, readApiKeyToken } from "@/server/apiKeyTokens.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { UnauthorizedError } from "@/server/errors/index.ts";
 import { ApiKeys, Users } from "@/server/repositories/index.ts";
@@ -17,17 +17,12 @@ export interface ApiKeyContext {
 /** How long a key's last use stands before a request marks it again: a key's every request needn't write it. */
 const LAST_USED_PRECISION_MS = 60 * 1000;
 
-/** The token a request sends: `Authorization: Bearer <token>`. */
-function readBearerToken(header: string | undefined) {
-  return header?.match(/^Bearer\s+(\S+)$/i)?.[1];
-}
-
 /**
  * The public API's sign-in: the request's key, which acts as its user. Refused when it sends none, or one that's revoked
  * or whose user is gone, a demo's included.
  */
 export default createMiddleware<ApiKeyContext>(async (c, next) => {
-  const token = readBearerToken(c.req.header("authorization"));
+  const token = readApiKeyToken(c.req.header("authorization"));
   if (!token) throw new UnauthorizedError("Send an API key: `Authorization: Bearer <key>`");
 
   const key = await ApiKeys.findOne(db, { digest: hashApiKeyToken(token) });

@@ -29,4 +29,4 @@ The 3.5 data is auto-generated from SRD pages and hand-checked. Errors get fixed
 
 Yes, through Arkyvree's public API, with an API key. Make one under **Settings → API Keys**, named for what will use it (a script, an assistant leveling your fighter). Its key is shown once: copy it then, and give it to the program, which sends it with each request.
 
-A key acts as you: it reads your characters and the rulesets you can read, and a character's choices at its next level (the classes it can take, and the feats and spells it qualifies for). Revoke it on the same page once nothing uses it: it stops working at once.
+A key acts as you: it reads your characters and the rulesets you can read, and a character's choices at its next level (the classes it can take, and the feats and spells it qualifies for). Revoke it on the same page once nothing uses it: it stops working at once. Changing or resetting your password, or deleting your account, revokes every key too.

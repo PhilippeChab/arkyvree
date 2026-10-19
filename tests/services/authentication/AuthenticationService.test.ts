@@ -13,6 +13,7 @@ import {
 } from "@/server/errors/index.ts";
 import { Visibility } from "@/server/repositories/BaseRepository.ts";
 import {
+  ApiKeys,
   Characters,
   EmailVerifications,
   Invites,
@@ -24,6 +25,7 @@ import {
   Users,
 } from "@/server/repositories/index.ts";
 import { AccountService } from "@/server/services/authentication/account/index.ts";
+import { ApiKeysService } from "@/server/services/authentication/apiKeys/index.ts";
 import { AuthenticationService, signInAsGoogleAccount } from "@/server/services/authentication/index.ts";
 import { LinkedAccountsService, linkGoogleAccountTo } from "@/server/services/authentication/linkedAccounts/index.ts";
 import type { SessionRow } from "@/shared/relations.ts";
@@ -374,9 +376,10 @@ describe("AuthenticationService", () => {
   });
 
   describe("the password", () => {
-    test("changes with the current one, signing out the user's other sessions", async () => {
+    test("changes with the current one, signing out the user's other sessions and revoking their keys", async () => {
       const { session, account } = await signUpAndVerify();
       const [other] = await Sessions.create(db, { userId: session.userId });
+      await ApiKeysService.createKey(session, "Agent");
       const change = (currentPassword: string, newPassword: string) =>
         AccountService.updatePassword(session, currentPassword, newPassword);
 
@@ -388,6 +391,7 @@ describe("AuthenticationService", () => {
 
       expect(await Sessions.findOne(db, { id: other.id })).toBeUndefined();
       expect(await Sessions.findOne(db, { id: session.id })).toBeDefined();
+      expect(await ApiKeysService.getKeys(session)).toEqual([]);
       expect((await AuthenticationService.signIn(account.emailAddress, "newpassword1234")).user.id).toBe(
         session.userId,
       );
@@ -415,10 +419,12 @@ describe("AuthenticationService", () => {
         });
       });
 
-      test("is reset with the code, signing out every session of the user's and nobody else's", async () => {
+      test("is reset with the code, signing out every session of the user's and nobody else's, and revoking their keys", async () => {
         const { session, user, account } = await signUpAndVerify();
         const [second] = await Sessions.create(db, { userId: user.id });
         const { session: someoneElse } = await signUpAndVerify();
+        await ApiKeysService.createKey(session, "Agent");
+        await ApiKeysService.createKey(someoneElse, "Theirs");
         await AuthenticationService.forgotPassword(account.emailAddress);
         const reset = (await PasswordResets.findOne(db, { userId: user.id }))!;
         const resetWith = (code: string) =>
@@ -429,6 +435,8 @@ describe("AuthenticationService", () => {
 
         for (const { id } of [session, second]) expect(await Sessions.findOne(db, { id })).toBeUndefined();
         expect(await Sessions.findOne(db, { id: someoneElse.id })).toBeDefined();
+        expect(await ApiKeysService.getKeys(session)).toEqual([]);
+        expect(await ApiKeysService.getKeys(someoneElse)).toHaveLength(1);
         expect((await AuthenticationService.signIn(account.emailAddress, "replacement1234")).user.id).toBe(user.id);
       });
 
@@ -528,8 +536,9 @@ describe("AuthenticationService", () => {
   });
 
   describe("deleting the account", () => {
-    test("archives the user with their characters, campaign seats and sessions, and hands their rulesets to nobody", async () => {
+    test("archives the user with their characters, campaign seats and sessions, deletes their keys, and hands their rulesets to nobody", async () => {
       const { session, user, account } = await signUpAndVerify();
+      await ApiKeysService.createKey(session, "Agent");
       const character = await createTestCharacter(user.id);
       const ruleset = await createTestRuleset(user.id, { private: false });
       await createTestCampaign(user.id);
@@ -542,6 +551,7 @@ describe("AuthenticationService", () => {
       expect(await Characters.findOne(db, { id: character.id }, Visibility.UnarchivedOnly)).toBeUndefined();
       expect(await Players.findMany(db, { userId: user.id })).toEqual([]);
       expect(await Sessions.findOne(db, { id: session.id })).toBeUndefined();
+      expect(await ApiKeys.findMany(db, { userId: user.id })).toEqual([]);
       expect(await Rulesets.findOne(db, { id: ruleset.id })).toMatchObject({ userId: null });
       expect(AuthenticationService.signIn(account.emailAddress, account.password)).rejects.toThrow(UnauthorizedError);
     });

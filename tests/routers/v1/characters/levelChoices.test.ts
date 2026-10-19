@@ -82,6 +82,12 @@ describe("v1 level choices", () => {
     const { api } = await createKeyedApi();
     const { id } = await findSeededCharacter("Bjorn Ironhand");
     const choices = api.v1.characters[":id"]["level-choices"];
+    const { classes } = await expectOk(choices.$get({ param: { id }, query: {} }));
+    const barbarian = classes.find(({ name }) => name === "Barbarian");
+    if (!barbarian) throw new Error("No Barbarian among the classes");
+
+    // Its requirements unmet, as the wizard refuses to plan it
+    await expectStatus(choices.$get({ param: { id }, query: { classId: barbarian.id } }), 422);
     await expectStatus(choices.$get({ param: { id }, query: { classId: NIL_UUID } }), 404);
     await expectStatus(choices.$get({ param: { id: NIL_UUID }, query: {} }), 404);
   });

@@ -13,6 +13,7 @@ import {
 import { hashPassword, verifyPassword } from "@/server/password.ts";
 import {
   Activities,
+  ApiKeys,
   EmailVerifications,
   PasswordResets,
   Sessions,
@@ -118,7 +119,9 @@ class AuthenticationService {
       const newHash = await hashPassword(newPassword);
       await Users.update(tx, { passwordDigest: newHash }, { id: user.id });
       await PasswordResets.archive(tx, { id: reset.id });
+      // A reset is how an account is taken back: whatever signed in as the user before is signed out, its keys too
       await Sessions.archive(tx, { userId: user.id });
+      await ApiKeys.delete(tx, { userId: user.id });
 
       await Activities.create(tx, {
         userId: user.id,

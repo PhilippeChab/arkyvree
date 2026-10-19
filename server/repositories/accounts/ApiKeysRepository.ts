@@ -16,10 +16,16 @@ class ApiKeysRepository extends BaseRepository<typeof apiKeysInAccount> {
     return await db.insert(this.table).values(values).returning(SHOWN_COLUMNS);
   }
 
-  async delete(db: Db, where: { id: string; userId: string }) {
+  /** Deletes one of a user's keys, or every key of theirs: a revoked key's token names no key from then on. */
+  async delete(db: Db, where: { id: string; userId: string } | { userId: string }) {
     return await db
       .delete(this.table)
-      .where(and(eq(this.table.id, where.id), eq(this.table.userId, where.userId)))
+      .where(
+        this.branchWhere(
+          ["id" in where && eq(this.table.id, where.id), !("id" in where) && eq(this.table.userId, where.userId)],
+          [eq(this.table.userId, where.userId)],
+        ),
+      )
       .returning(SHOWN_COLUMNS);
   }
 
@@ -28,16 +34,13 @@ class ApiKeysRepository extends BaseRepository<typeof apiKeysInAccount> {
     return await db
       .select(SHOWN_COLUMNS)
       .from(this.table)
-      .where(and(eq(this.table.userId, where.userId), isNull(this.table.deletedAt)))
+      .where(eq(this.table.userId, where.userId))
       .orderBy(this.orderBy(this.table.createdAt, "desc"), this.orderBy(this.table.id));
   }
 
   /** The key a token's digest names. */
   async findOne(db: Db, where: { digest: string }) {
-    const [key] = await db
-      .select(SHOWN_COLUMNS)
-      .from(this.table)
-      .where(and(eq(this.table.digest, where.digest), isNull(this.table.deletedAt)));
+    const [key] = await db.select(SHOWN_COLUMNS).from(this.table).where(eq(this.table.digest, where.digest));
     return key;
   }
 
