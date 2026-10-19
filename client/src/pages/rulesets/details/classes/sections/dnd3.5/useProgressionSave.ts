@@ -12,16 +12,22 @@ import { invalidateRulesetEdit } from "@/client/src/pages/rulesets/details/secti
 import { rpc } from "@/client/src/services/rpc.ts";
 
 /**
- * The save of a class's Progression or Spells tab: one request for all it changed, sent with the class's token, which
- * refreshes every tab of the class (its key's own) and follows the copy a save of an inherited class makes.
+ * The save of a class's Progression or Spells tab: one request for all it changed, sent with the class's token and its
+ * levels' (`levels`, as the tab read them), which refreshes every tab of the class (its key's own) and follows the copy
+ * a save of an inherited class makes. It stays pending until they're read again, so the tab never shows its changes
+ * gone before their save comes back.
  */
-export function useProgressionSave(rulesetId: string, classId: string) {
+export function useProgressionSave(
+  rulesetId: string,
+  classId: string,
+  levels: readonly { id: string; updatedAt: string }[],
+) {
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
   const { followCopy, queryKeysToInvalidate, tag } = useClassCopy(rulesetId, classId);
 
   return useMutation({
-    mutationFn: (body: Omit<ClassProgressionBody, "updatedAt">) =>
+    mutationFn: (body: Omit<ClassProgressionBody, "levelTokens" | "updatedAt">) =>
       tag(
         parseResponse(
           rpc.api.rulesets[":id"].classes[":classId"].progression.$put({
@@ -29,6 +35,7 @@ export function useProgressionSave(rulesetId: string, classId: string) {
             // The class's token as the page read it, which its details card keeps fresh
             json: {
               ...body,
+              levelTokens: levels.map((level) => ({ levelId: level.id, updatedAt: level.updatedAt })),
               updatedAt: queryClient.getQueryData(classDetailQuery(rulesetId, classId).queryKey)?.updatedAt,
             },
           }),
@@ -39,10 +46,9 @@ export function useProgressionSave(rulesetId: string, classId: string) {
       followCopy(saved.klassId, saved.sourceEntityId);
     },
     onError: (error) => snackbar.error(error, "Failed to save the class progression"),
-    onSettled: () =>
-      invalidateRulesetEdit(queryClient, rulesetId, [
-        QUERY_KEYS.rulesets.classDetail(rulesetId, classId),
-        ...queryKeysToInvalidate,
-      ]),
+    onSettled: async () => {
+      invalidateRulesetEdit(queryClient, rulesetId, queryKeysToInvalidate);
+      await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.rulesets.classDetail(rulesetId, classId) });
+    },
   });
 }

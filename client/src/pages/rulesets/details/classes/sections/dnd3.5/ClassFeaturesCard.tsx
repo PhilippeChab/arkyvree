@@ -52,8 +52,8 @@ function RowName({ name, kind }: RowNameProps) {
 
 /**
  * A class's features and feat pools by level, on its Progression tab: a row each, whose toggles grant the feature (a
- * feature granted at several levels stacks) or give one pick in the pool at a level; and pickers that add a feature
- * or a pool, granted at no level until one is clicked.
+ * feature granted at several levels stacks) or give picks in the pool at a level, a click each; and pickers that add
+ * a feature or a pool, granted at no level until one is clicked. Read-only, it only shows them.
  */
 export function ClassFeaturesCard({
   features,
@@ -86,6 +86,8 @@ export function ClassFeaturesCard({
       name: feat.name,
     })),
   );
+  const savedPicks = (aptitudeId: string, levelId: string) =>
+    savedPools.find((saved) => saved.aptitudeId === aptitudeId)?.picks[levelId] ?? 0;
   const grid = {
     display: "grid",
     gridTemplateColumns: { xs: "1fr", sm: "200px 1fr" },
@@ -98,7 +100,7 @@ export function ClassFeaturesCard({
       <CardTitle>Class Features and Feat Pools</CardTitle>
       <Typography variant="body2" sx={{ color: "text.secondary" }}>
         A filled level grants the feature there; a feature granted at several levels stacks. A feat pool&apos;s filled
-        level gives one pick in it.
+        level gives a pick in it; click it again for a second pick.
       </Typography>
       <Box sx={{ overflowX: "auto" }}>
         <Stack spacing={0.75} sx={{ minWidth: { sm: 640 } }}>
@@ -132,10 +134,13 @@ export function ClassFeaturesCard({
                 levels={levels}
                 readOnly={readOnly}
                 value={(levelId) => pool.picks[levelId] ?? 0}
-                saved={(levelId) =>
-                  savedPools.find((saved) => saved.aptitudeId === pool.aptitudeId)?.picks[levelId] ?? 0
-                }
-                onToggle={(levelId) => onPoolPick(pool.aptitudeId, levelId, (pool.picks[levelId] ?? 0) > 0 ? 0 : 1)}
+                saved={(levelId) => savedPicks(pool.aptitudeId, levelId)}
+                onToggle={(levelId) => {
+                  // A click adds a pick, up to two (or the saved count, when more), then clears the level
+                  const count = pool.picks[levelId] ?? 0;
+                  const most = Math.max(2, savedPicks(pool.aptitudeId, levelId));
+                  onPoolPick(pool.aptitudeId, levelId, count >= most ? 0 : count + 1);
+                }}
               />
             </Box>
           ))}

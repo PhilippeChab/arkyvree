@@ -11,6 +11,7 @@ import {
   ScrollSafeListbox,
 } from "@/client/src/components/common/index.ts";
 import { SpellUsesIcon } from "@/client/src/components/icons/index.ts";
+import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useDebouncedValue, useListboxQuery, useRulesetPermissions } from "@/client/src/hooks/index.ts";
 import { emptyOptionsText } from "@/client/src/lib/errorMessage.ts";
 import type { ClassSectionProps } from "@/client/src/pages/rulesets/details/classes/classSectionFactory.ts";
@@ -61,12 +62,12 @@ function toCell(total: number | "All" | undefined): SpellCell {
  */
 export function ClassSpellsSection({ rulesetId, classId, className, ruleset }: ClassSectionProps) {
   const queryClient = useQueryClient();
+  const snackbar = useSnackbar();
   const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
   const [table, setTable] = useState<SpellTable>("perDay");
   const [edits, setEdits] = useState<SpellEdits>(NO_SPELL_EDITS);
   const [pasting, setPasting] = useState(false);
   const [classSearch, setClassSearch] = useState("");
-  const save = useProgressionSave(rulesetId, classId);
 
   const perDay = useQuery(classSpellsPerDayQuery(rulesetId, classId));
   const known = useQuery(classSpellsKnownQuery(rulesetId, classId));
@@ -77,11 +78,19 @@ export function ClassSpellsSection({ rulesetId, classId, className, ruleset }: C
     perDay: (perDay.data ?? []).map((row) => ({ id: row.id, level: row.level, totals: row.spellsPerDay })),
     known: (known.data ?? []).map((row) => ({ id: row.id, level: row.level, totals: row.spellsKnown })),
   };
-  const levels = rowsOf.perDay.toSorted(byLevel);
+  const levels = (perDay.data ?? []).toSorted(byLevel);
+  const save = useProgressionSave(rulesetId, classId, levels);
+  const totalsById: Record<SpellTable, Map<string, SpellLevelRow["totals"]>> = {
+    perDay: new Map(rowsOf.perDay.map((row) => [row.id, row.totals])),
+    known: new Map(rowsOf.known.map((row) => [row.id, row.totals])),
+  };
   const savedCell = (which: SpellTable, levelId: string, spellLevel: number) =>
-    toCell(rowsOf[which].find((row) => row.id === levelId)?.totals[spellLevel]);
-  const cellOf = (which: SpellTable, levelId: string, spellLevel: number) =>
-    edits[which][levelId]?.[spellLevel] ?? savedCell(which, levelId, spellLevel);
+    toCell(totalsById[which].get(levelId)?.[spellLevel]);
+  // An emptied cell's edit is `null`, which holds over the saved value as much as a count does
+  const cellOf = (which: SpellTable, levelId: string, spellLevel: number) => {
+    const row = edits[which][levelId];
+    return row && spellLevel in row ? row[spellLevel] : savedCell(which, levelId, spellLevel);
+  };
   const changedCells = (which: SpellTable) =>
     Object.entries(edits[which]).flatMap(([levelId, cells]) =>
       Object.entries(cells).filter(([spellLevel, cell]) => cell !== savedCell(which, levelId, Number(spellLevel))),
@@ -94,9 +103,9 @@ export function ClassSpellsSection({ rulesetId, classId, className, ruleset }: C
       return { ...current, [which]: next };
     });
 
-  /** Every cell of the table from another class's, by level number: none where it has none. */
-  const startFrom = async (otherId: string | undefined) => {
-    const other: SpellLevelRow[] = !otherId
+  /** Another class's table, the one the tab shows: none for no class. */
+  const readTable = async (otherId: string | undefined): Promise<SpellLevelRow[]> =>
+    !otherId
       ? []
       : table === "perDay"
         ? (await queryClient.fetchQuery(classSpellsPerDayQuery(rulesetId, otherId))).map((row) => ({
@@ -109,6 +118,16 @@ export function ClassSpellsSection({ rulesetId, classId, className, ruleset }: C
             level: row.level,
             totals: row.spellsKnown,
           }));
+
+  /** Every cell of the table from another class's, by level number: none where it has none. */
+  const startFrom = async (otherId: string | undefined) => {
+    let other: SpellLevelRow[];
+    try {
+      other = await readTable(otherId);
+    } catch (error) {
+      snackbar.error(error, "Failed to load the class's table");
+      return;
+    }
     const totalsAt = (level: number) => other.find((row) => row.level === level)?.totals;
     setCells(
       table,

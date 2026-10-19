@@ -145,7 +145,7 @@ describe("ClassProgressionService", () => {
     expect(progression.spellList?.name).toBe("Wizard Spells");
   });
 
-  test("refuses a stale save of a class of its own, a count past the rules' bounds, and spells for a class without a list", async () => {
+  test("refuses a stale save of a class of its own or of its level, a count past the rules' bounds, and spells for a class without a list", async () => {
     const { session, fork, klass, levelId } = await forkWithClass("Fighter");
     const { saved } = await save(session, fork.id, klass.id, {
       levels: [{ levelId: levelId(1), fields: { bab: 1, skills: 4 } }],
@@ -154,8 +154,17 @@ describe("ClassProgressionService", () => {
     const ownLevels = await ClassLevelsService.getClassLevels(fork.id, own.id);
     const first = ownLevels.find((level) => level.level === 1)!.id;
 
+    const change = { levels: [{ levelId: first, fields: { bab: 1, skills: 6 } }] };
+    const stale = "2000-01-01T00:00:00Z";
     expect(
-      ClassProgressionService.updateProgression(session, fork.id, own.id, { updatedAt: "2000-01-01T00:00:00Z" }),
+      ClassProgressionService.updateProgression(session, fork.id, own.id, { ...change, updatedAt: stale }),
+    ).rejects.toBeInstanceOf(ConflictError);
+    expect(
+      ClassProgressionService.updateProgression(session, fork.id, own.id, {
+        ...change,
+        levelTokens: [{ levelId: first, updatedAt: stale }],
+        updatedAt: own.updatedAt,
+      }),
     ).rejects.toBeInstanceOf(ConflictError);
     const [aptitude] = await Aptitudes.create(db, { name: "Fighter Bonus Feat Two", rulesetId: fork.id });
     await expectRefusedWith(
@@ -171,5 +180,19 @@ describe("ClassProgressionService", () => {
       400,
     );
     expect((await ClassesService.getClass(fork.id, own.id)).updatedAt).toBe(saved.updatedAt);
+  });
+
+  test("writes nothing for a save that changes nothing, not even a copy of an inherited class", async () => {
+    const { session, fork, klass, levelId } = await forkWithClass("Wizard");
+    const levels = await ClassLevelsService.getClassLevelSpells(fork.id, klass.id);
+    const first = levels.find((level) => level.level === 1)!;
+    const counts = [0, 1, 2].map((spellLevel) => first.spellsPerDay[spellLevel] ?? null);
+
+    const saved = await ClassProgressionService.updateProgression(session, fork.id, klass.id, {
+      spells: { perDay: [{ levelId: levelId(1), counts }] },
+    });
+
+    expect(saved.klassId).toBe(klass.id);
+    expect(await Klasses.findOne(db, { name: "Wizard", rulesetId: fork.id })).toBeUndefined();
   });
 });

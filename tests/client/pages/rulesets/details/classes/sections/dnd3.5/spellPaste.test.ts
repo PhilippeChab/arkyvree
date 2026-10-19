@@ -31,8 +31,13 @@ describe("A pasted spell table", () => {
     expect(parseSpellRows("4: 6, 3, -", false)).toEqual([{ cells: [6, 3, null], level: 4 }]);
     // Three rows counting up from 1: a book's table, its level column first
     expect(parseSpellRows("1 3 1\n2 4 2\n3 4 2 1", false).map((row) => row.level)).toEqual([1, 2, 3]);
-    // Two rows of counts alone
+    // Two rows of counts alone, and three counting up from past 1: counts too
     expect(parseSpellRows("3 1\n4 2", false)).toEqual([{ cells: [3, 1] }, { cells: [4, 2] }]);
+    expect(parseSpellRows("2 1\n3 2\n4 3", false).map((row) => row.level)).toEqual([undefined, undefined, undefined]);
+  });
+
+  test("keeps a spreadsheet's empty cells where they are", () => {
+    expect(parseSpellRows("4\t\t2\n\t3", false)).toEqual([{ cells: [4, null, 2] }, { cells: [null, 3] }]);
   });
 
   test("lands its rows on the levels they name, or one a level from where it's pasted", () => {
@@ -47,6 +52,12 @@ describe("A pasted spell table", () => {
     expect(plain).toEqual([
       { levelId: "l3", spellLevel: 9, value: 1 },
       { levelId: "l5", spellLevel: 9, value: 7 },
+    ]);
+    // A level the class lacks: the rows after it go on from the next one it has
+    const gap = placeSpellRows(parseSpellRows("1st 1\n3rd 3\n9", false), [LEVELS[0], LEVELS[3]], 0, 0, 10);
+    expect(gap).toEqual([
+      { levelId: "l1", spellLevel: 0, value: 1 },
+      { levelId: "l4", spellLevel: 0, value: 9 },
     ]);
   });
 });

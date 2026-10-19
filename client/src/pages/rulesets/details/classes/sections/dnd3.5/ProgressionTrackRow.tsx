@@ -52,6 +52,7 @@ export function ProgressionTrackRow({ format, id, label, onChange, presets, save
   const [custom, setCustom] = useState(false);
   const [baseKey, setBaseKey] = useState<string>();
   const [baseValue, setBaseValue] = useState<number>();
+  const [typing, setTyping] = useState<string | null>(null);
   const detected = presets && detectPreset(presets, values);
   const basePreset =
     presets && (presets.find((preset) => preset.key === baseKey) ?? findNearestPreset(presets, values));
@@ -119,9 +120,12 @@ export function ProgressionTrackRow({ format, id, label, onChange, presets, save
               size="small"
               type="number"
               label="Points a Level"
-              value={constant ? (values[0]?.value ?? "") : ""}
+              // What's typed shows as it is (an emptied field before its new number) until the field is left
+              value={typing ?? (constant ? (values[0]?.value ?? "") : "")}
               placeholder={constant ? undefined : "Varies"}
+              onBlur={() => setTyping(null)}
               onChange={(e) => {
+                setTyping(e.target.value);
                 const typed = readNumberInput(e.target.value);
                 if (typed === undefined || !Number.isInteger(typed) || typed < 0) return;
                 setBaseValue(typed);

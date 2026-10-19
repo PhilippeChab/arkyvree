@@ -65,7 +65,8 @@ interface Track {
 /**
  * A class's Progression tab: its table, the levels' base attack bonus, saves, skill points and features at once, which
  * opens a level's page from its row; its progression, each track a preset to follow or its levels to set; and its
- * features and feat pools by level. What it changes waits for its save bar, which writes it all at once.
+ * features and feat pools by level (shown read-only to who can't edit). What it changes waits for its save bar, which
+ * writes it all at once.
  */
 export function ClassProgressionSection({ rulesetId, classId, className, ruleset }: ClassSectionProps) {
   const openEntity = useOpenEntity(rulesetId);
@@ -80,7 +81,7 @@ export function ClassProgressionSection({ rulesetId, classId, className, ruleset
   const { data: poolTotals, error: poolsError } = useQuery(classFeatPoolsQuery(rulesetId, classId));
   const levels = levelRows?.toSorted(byLevel) ?? [];
   const draft = useProgressionDraft(levels);
-  const save = useProgressionSave(rulesetId, classId);
+  const save = useProgressionSave(rulesetId, classId, levels);
 
   // Its create opens on the class's next level, its fields the highest's
   const { fields: levelFields } = useEntityFields(rulesetId, "klass_levels");
@@ -251,45 +252,47 @@ export function ClassProgressionSection({ rulesetId, classId, className, ruleset
         }
       />
       {canEdit && levels.length > 0 && (
-        <>
-          <Panel spacing={0}>
-            <CardTitle>Progression</CardTitle>
-            <Box sx={{ pt: 1 }}>
-              {tracks.map((track) => (
-                <ProgressionTrackRow
-                  key={track.key}
-                  id={`progression-${track.key}`}
-                  label={track.label}
-                  format={track.format}
-                  presets={track.presets}
-                  saved={valuesOf((level) => readTrack(level, track.key))}
-                  values={valuesOf((level) => readEditedTrack(level, track.key, draft.edits))}
-                  onChange={(values) => draft.setTrack(track.key, values)}
-                />
-              ))}
-            </Box>
-          </Panel>
-          <ClassFeaturesCard
-            rulesetId={rulesetId}
-            levels={levels}
-            readOnly={!canEdit}
-            features={features}
-            savedFeatures={savedFeatures}
-            pools={pools}
-            savedPools={savedPools}
-            onFeatureLevels={draft.setFeatureLevels}
-            onPoolPick={draft.setPoolPick}
-            onAddFeature={draft.addFeature}
-            onAddPool={draft.addPool}
-          />
-          <ProgressionSaveBar
-            what="Progression"
-            changes={changes}
-            onDiscard={draft.discard}
-            onSave={handleSave}
-            pending={save.isPending}
-          />
-        </>
+        <Panel spacing={0}>
+          <CardTitle>Progression</CardTitle>
+          <Box sx={{ pt: 1 }}>
+            {tracks.map((track) => (
+              <ProgressionTrackRow
+                key={track.key}
+                id={`progression-${track.key}`}
+                label={track.label}
+                format={track.format}
+                presets={track.presets}
+                saved={valuesOf((level) => readTrack(level, track.key))}
+                values={valuesOf((level) => readEditedTrack(level, track.key, draft.edits))}
+                onChange={(values) => draft.setTrack(track.key, values)}
+              />
+            ))}
+          </Box>
+        </Panel>
+      )}
+      {levels.length > 0 && (features.length > 0 || pools.length > 0 || canEdit) && (
+        <ClassFeaturesCard
+          rulesetId={rulesetId}
+          levels={levels}
+          readOnly={!canEdit}
+          features={features}
+          savedFeatures={savedFeatures}
+          pools={pools}
+          savedPools={savedPools}
+          onFeatureLevels={draft.setFeatureLevels}
+          onPoolPick={draft.setPoolPick}
+          onAddFeature={draft.addFeature}
+          onAddPool={draft.addPool}
+        />
+      )}
+      {canEdit && levels.length > 0 && (
+        <ProgressionSaveBar
+          what="Progression"
+          changes={changes}
+          onDiscard={draft.discard}
+          onSave={handleSave}
+          pending={save.isPending}
+        />
       )}
       <CreateLevelDialog {...createDialogProps} rulesetId={rulesetId} baseRules={ruleset.baseRules} />
     </Stack>

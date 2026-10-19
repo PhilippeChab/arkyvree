@@ -52,6 +52,7 @@ export default new Hono<SessionContext>()
               .optional(),
           })
           .optional(),
+        levelTokens: z.array(z.object({ levelId: z.string().uuid(), updatedAt: z.string() })).optional(),
         updatedAt: z.string().optional(),
       }),
     ),
