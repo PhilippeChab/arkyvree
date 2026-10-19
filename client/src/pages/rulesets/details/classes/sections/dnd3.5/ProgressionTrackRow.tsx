@@ -2,18 +2,21 @@ import { Box, Button, MenuItem, Stack, TextField, Typography } from "@mui/materi
 import { useState } from "react";
 
 import { DataCell, DataRow, DataTable, OptionToggle } from "@/client/src/components/common/index.ts";
-import { readNumberInput } from "@/client/src/lib/validation.ts";
 
 import { CustomTrackEditor } from "./CustomTrackEditor.tsx";
+import { readWholeNumber } from "./progressionDraft.ts";
 import { detectPreset, findNearestPreset, type LevelValue, type ProgressionPreset } from "./progressionPresets.ts";
 
 interface ProgressionTrackRowProps {
+  /** Its levels' editor is open: the tab's, which its Discard and its save close */
+  custom: boolean;
   /** How a value reads ("+6/+1" for a base attack bonus, "+4" for a save) */
   format: (value: number) => string;
   /** Its element's id */
   id: string;
   label: string;
   onChange: (values: Record<string, number>) => void;
+  onCustomChange: (custom: boolean) => void;
   /** The progressions it can follow: none for one number at every level (skill points) */
   presets?: readonly ProgressionPreset[];
   /** Its values as saved, by level */
@@ -48,8 +51,17 @@ function readMostCommon(values: readonly LevelValue[]) {
  * a click sets at every level, or Custom, whose editor sets the levels that differ; skill points are one number. A
  * change shows the levels it changes, before and after, until it's saved or reverted.
  */
-export function ProgressionTrackRow({ format, id, label, onChange, presets, saved, values }: ProgressionTrackRowProps) {
-  const [custom, setCustom] = useState(false);
+export function ProgressionTrackRow({
+  custom,
+  format,
+  id,
+  label,
+  onChange,
+  onCustomChange: setCustom,
+  presets,
+  saved,
+  values,
+}: ProgressionTrackRowProps) {
   const [baseKey, setBaseKey] = useState<string>();
   const [baseValue, setBaseValue] = useState<number>();
   const [typing, setTyping] = useState<string | null>(null);
@@ -134,8 +146,8 @@ export function ProgressionTrackRow({ format, id, label, onChange, presets, save
               onBlur={() => setTyping(null)}
               onChange={(e) => {
                 setTyping(e.target.value);
-                const typed = readNumberInput(e.target.value);
-                if (typed === undefined || !Number.isInteger(typed) || typed < 0) return;
+                const typed = readWholeNumber(e.target.value);
+                if (typed === undefined) return;
                 setBaseValue(typed);
                 onChange(Object.fromEntries(values.map(({ levelId }) => [levelId, typed])));
               }}

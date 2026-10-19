@@ -84,7 +84,7 @@ export function useClassSkills(rulesetId: string, classId: string) {
     },
     onSettled: () => {
       // Always refetch after error or success to ensure we have the latest data
-      invalidateRulesetEdit(queryClient, rulesetId, [classSkillsKey, ...queryKeysToInvalidate]);
+      void invalidateRulesetEdit(queryClient, rulesetId, [classSkillsKey, ...queryKeysToInvalidate]);
     },
   });
 
@@ -127,7 +127,7 @@ export function useClassSkills(rulesetId: string, classId: string) {
     },
     onSettled: () => {
       // Always refetch after error or success to ensure we have the latest data
-      invalidateRulesetEdit(queryClient, rulesetId, [classSkillsKey, ...queryKeysToInvalidate]);
+      void invalidateRulesetEdit(queryClient, rulesetId, [classSkillsKey, ...queryKeysToInvalidate]);
     },
   });
 

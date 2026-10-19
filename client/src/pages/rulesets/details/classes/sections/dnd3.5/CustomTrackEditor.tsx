@@ -1,8 +1,7 @@
 import { Box, Button, InputBase, MenuItem, Stack, TextField, Typography } from "@mui/material";
 import { type ReactNode, useState } from "react";
 
-import { readNumberInput } from "@/client/src/lib/validation.ts";
-
+import { readWholeNumber } from "./progressionDraft.ts";
 import type { LevelValue } from "./progressionPresets.ts";
 
 interface CustomTrackEditorProps {
@@ -29,8 +28,7 @@ const RANGE_OPERATIONS: { label: string; value: RangeOperation }[] = [
 
 /** A typed level's value: a whole number, 0 at least, or its base when it isn't one. */
 function readLevelInput(text: string, fallback: number) {
-  const typed = readNumberInput(text);
-  return typed === undefined || !Number.isInteger(typed) ? fallback : Math.max(0, typed);
+  return readWholeNumber(text) ?? fallback;
 }
 
 /**

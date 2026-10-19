@@ -49,6 +49,8 @@ export const DND35_CLASS_TABS: ClassTab[] = [
       await Promise.all([
         queryClient.prefetchQuery(classSpellsPerDayQuery(rulesetId, classId)),
         queryClient.prefetchQuery(classSpellsKnownQuery(rulesetId, classId)),
+        // Its spell list, which its editing waits for
+        queryClient.prefetchQuery(classProgressionQuery(rulesetId, classId)),
       ]);
     },
   },

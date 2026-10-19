@@ -25,7 +25,8 @@ import { classOptionsQuery } from "@/client/src/pages/rulesets/optionQueries.ts"
 import { SPELL_LEVELS } from "@/vocabulary/dnd3.5/spells.ts";
 
 import { ProgressionSaveBar } from "./ProgressionSaveBar.tsx";
-import { type PlacedCell, type SpellCell } from "./spellPaste.ts";
+import { NO_SPELL_EDITS, readSpellCell, SpellDraft, type SpellEdits, type SpellTable } from "./SpellDraft.ts";
+import { type PlacedCell } from "./spellPaste.ts";
 import { SpellPasteBox } from "./SpellPasteBox.tsx";
 import { SpellTableGrid } from "./SpellTableGrid.tsx";
 import { useClassDraft } from "./useClassDraft.ts";
@@ -38,23 +39,8 @@ interface SpellLevelRow {
   totals: Record<string, number | "All">;
 }
 
-/** A table's cells the tab changed and hasn't saved: by level id, then by spell level. */
-type SpellEdits = Record<SpellTable, Record<string, Record<number, SpellCell>>>;
-
-/** The spell tables a class has: its spells per day and its spells known (the spells it picks). */
-type SpellTable = "known" | "perDay";
-
-/** A tab that changed nothing yet. */
-const NO_SPELL_EDITS: SpellEdits = { known: {}, perDay: {} };
-
 /** Each table's label, as its toggle and its save bar name it. */
 const TABLE_LABELS: Record<SpellTable, string> = { perDay: "Spells per Day", known: "Spells Known" };
-
-/** A total as a cell holds it: none, a count, or "all". */
-function toCell(total: number | "All" | undefined): SpellCell {
-  if (total === undefined) return null;
-  return total === "All" ? "all" : total;
-}
 
 /**
  * A class's Spells tab: its spells per day and its spells known (how many spells it picks at each spell level), each
@@ -90,72 +76,16 @@ export function ClassSpellsSection({ rulesetId, classId, className, ruleset }: C
   const levels = (perDay.data ?? []).toSorted(byLevel);
   const save = useProgressionSave(rulesetId, classId);
   const { discard, edits, setEdits, tokens } = useClassDraft<SpellEdits>(classId, levels, NO_SPELL_EDITS);
-  const totalsById: Record<SpellTable, Map<string, SpellLevelRow["totals"]>> = {
-    perDay: new Map(rowsOf.perDay.map((row) => [row.id, row.totals])),
-    known: new Map(rowsOf.known.map((row) => [row.id, row.totals])),
-  };
-  const savedCell = (which: SpellTable, levelId: string, spellLevel: number) =>
-    toCell(totalsById[which].get(levelId)?.[spellLevel]);
-  // A cell as edits hold it (`state`): an emptied cell's edit is `null`, which holds over the saved value as a count does
-  const editedCell = (state: SpellEdits, which: SpellTable, levelId: string, spellLevel: number) => {
-    const row = state[which][levelId];
-    return row && spellLevel in row ? row[spellLevel] : savedCell(which, levelId, spellLevel);
-  };
-  const indexById = new Map(levels.map((level, index) => [level.id, index]));
-  /** Each spell level's first level whose spells known are all of them, as edits (`state`) hold them: -1 for none. */
-  const firstAllOf = (state: SpellEdits) =>
-    SPELL_LEVELS.map((spellLevel) =>
-      levels.findIndex(({ id }) => editedCell(state, "known", id, spellLevel) === "all"),
-    );
-  // A cell as the table shows it (`firstAll`, `state`'s): every spell known, once a level knows them all, stays known
-  const shownCell = (
-    state: SpellEdits,
-    firstAll: number[],
-    which: SpellTable,
-    levelId: string,
-    spellLevel: number,
-  ): SpellCell => {
-    const cell = editedCell(state, which, levelId, spellLevel);
-    const allFrom = firstAll[spellLevel] ?? -1;
-    return which === "known" && allFrom !== -1 && (indexById.get(levelId) ?? 0) > allFrom ? "all" : cell;
-  };
-  const firstAll = firstAllOf(edits);
-  const cellOf = (which: SpellTable, levelId: string, spellLevel: number) =>
-    shownCell(edits, firstAll, which, levelId, spellLevel);
-  const changedCells = (which: SpellTable) =>
-    levels.flatMap(({ id }) =>
-      SPELL_LEVELS.filter((spellLevel) => cellOf(which, id, spellLevel) !== savedCell(which, id, spellLevel)),
-    ).length;
-
-  /** Edits (`state`) once a table's `cells` are written: on Spells Known, a cell under an All keeps no edit of its own. */
-  const writeCells = (state: SpellEdits, which: SpellTable, cells: PlacedCell[]): SpellEdits => {
-    const next = { ...state[which] };
-    for (const { levelId, spellLevel, value } of cells) next[levelId] = { ...next[levelId], [spellLevel]: value };
-    const written = { ...state, [which]: next };
-    if (which === "perDay") return written;
-    for (const spellLevel of SPELL_LEVELS) {
-      let known = false;
-      for (const { id } of levels) {
-        if (known && next[id] && spellLevel in next[id]) {
-          const row = { ...next[id] };
-          delete row[spellLevel];
-          next[id] = row;
-        }
-        known ||= editedCell(written, which, id, spellLevel) === "all";
-      }
-    }
-    return written;
-  };
-  const setCells = (which: SpellTable, cells: PlacedCell[]) => setEdits((current) => writeCells(current, which, cells));
-  /** The cells of a paste that change the table as it shows. */
-  const changesOf = (cells: PlacedCell[]) => {
-    const next = writeCells(edits, table, cells);
-    const nextAll = firstAllOf(next);
-    return cells.filter(
-      ({ levelId, spellLevel }) =>
-        shownCell(next, nextAll, table, levelId, spellLevel) !== cellOf(table, levelId, spellLevel),
-    );
-  };
+  const spells = new SpellDraft(
+    levels,
+    {
+      perDay: new Map(rowsOf.perDay.map((row) => [row.id, row.totals])),
+      known: new Map(rowsOf.known.map((row) => [row.id, row.totals])),
+    },
+    edits,
+  );
+  const setCells = (which: SpellTable, cells: PlacedCell[]) =>
+    setEdits((current) => new SpellDraft(levels, spells.saved, current).write(which, cells));
 
   /** Another class's table, the one the tab shows: none for no class. */
   const readTable = async (otherId: string | undefined): Promise<SpellLevelRow[]> => {
@@ -178,44 +108,25 @@ export function ClassSpellsSection({ rulesetId, classId, className, ruleset }: C
     setCells(
       table,
       levels.flatMap(({ id, level }) =>
-        SPELL_LEVELS.map((spellLevel) => ({ levelId: id, spellLevel, value: toCell(totalsAt(level)?.[spellLevel]) })),
+        SPELL_LEVELS.map((spellLevel) => ({
+          levelId: id,
+          spellLevel,
+          value: readSpellCell(totalsAt(level)?.[spellLevel]),
+        })),
       ),
     );
   };
 
   const changes = editable
     ? (["perDay", "known"] as const).flatMap((which) => {
-        const count = changedCells(which);
+        const count = spells.countChanged(which);
         return count > 0
           ? [{ key: which, label: `${TABLE_LABELS[which]}: ${count} ${count === 1 ? "cell" : "cells"}` }]
           : [];
       })
     : [];
 
-  const rowsBody = (which: SpellTable) =>
-    levels.flatMap(({ id }) =>
-      SPELL_LEVELS.some((spellLevel) => cellOf(which, id, spellLevel) !== savedCell(which, id, spellLevel))
-        ? [{ levelId: id, counts: SPELL_LEVELS.map((spellLevel) => cellOf(which, id, spellLevel)) }]
-        : [],
-    );
-  const handleSave = () => {
-    // Per day takes no "all": a typed one is no count
-    const perDayRows = rowsBody("perDay").map(({ levelId, counts }) => ({
-      levelId,
-      counts: counts.map((count) => (count === "all" ? null : count)),
-    }));
-    const knownRows = rowsBody("known");
-    save.mutate(
-      {
-        ...tokens(),
-        spells: {
-          ...(perDayRows.length > 0 && { perDay: perDayRows }),
-          ...(knownRows.length > 0 && { known: knownRows }),
-        },
-      },
-      { onSuccess: discard },
-    );
-  };
+  const handleSave = () => save.mutate({ ...tokens(), spells: spells.buildBody() }, { onSuccess: discard });
 
   if (perDay.isLoading || known.isLoading) return <DiceSpinner sx={{ py: 4 }} />;
   const failed = (perDay.error && !perDay.data && perDay.error) || (known.error && !known.data && known.error);
@@ -253,7 +164,7 @@ export function ClassSpellsSection({ rulesetId, classId, className, ruleset }: C
             value={table}
             onChange={setTable}
             options={(["perDay", "known"] as const).map((which) => ({
-              label: `${TABLE_LABELS[which]}${changedCells(which) > 0 ? " •" : ""}`,
+              label: `${TABLE_LABELS[which]}${spells.countChanged(which) > 0 ? " •" : ""}`,
               value: which,
             }))}
           />
@@ -298,7 +209,7 @@ export function ClassSpellsSection({ rulesetId, classId, className, ruleset }: C
           <SpellPasteBox
             allowsAll={table === "known"}
             levels={levels}
-            changesOf={changesOf}
+            changesOf={(cells) => spells.changesOf(table, cells)}
             onCancel={() => setPasting(false)}
             onApply={(cells) => {
               setCells(table, cells);
@@ -312,8 +223,8 @@ export function ClassSpellsSection({ rulesetId, classId, className, ruleset }: C
           columns={SPELL_LEVELS.length}
           levels={levels}
           readOnly={!editable}
-          value={(levelId, spellLevel) => cellOf(table, levelId, spellLevel)}
-          saved={(levelId, spellLevel) => savedCell(table, levelId, spellLevel)}
+          value={(levelId, spellLevel) => spells.cellOf(table, levelId, spellLevel)}
+          saved={(levelId, spellLevel) => spells.savedCell(table, levelId, spellLevel)}
           onCells={(cells) => setCells(table, cells)}
         />
       </Panel>

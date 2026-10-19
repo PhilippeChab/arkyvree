@@ -1,6 +1,7 @@
 import { Box, Stack, Tooltip, Typography } from "@mui/material";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
+import { useState } from "react";
 
 import {
   AddButton,
@@ -93,6 +94,7 @@ export function ClassProgressionSection({ rulesetId, classId, className, ruleset
   const { data: poolTotals, error: poolsError } = useQuery(classFeatPoolsQuery(rulesetId, classId));
   const levels = levelRows?.toSorted(byLevel) ?? [];
   const draft = useProgressionDraft(classId, levels);
+  const [customTracks, setCustomTracks] = useState<TrackKey[]>([]);
   const save = useProgressionSave(rulesetId, classId);
 
   // Its create opens on the class's next level, its fields the highest's
@@ -211,15 +213,21 @@ export function ClassProgressionSection({ rulesetId, classId, className, ruleset
     }),
   ];
 
-  const handleSave = () => save.mutate({ ...body, ...draft.tokens() }, { onSuccess: draft.discard });
+  // Its edits, and the tracks' editors they were made in
+  const discard = () => {
+    draft.discard();
+    setCustomTracks([]);
+  };
+  const handleSave = () => save.mutate({ ...body, ...draft.tokens() }, { onSuccess: discard });
 
   const descriptionByFeat = new Map(levels.flatMap((level) => level.feats.map((feat) => [feat.id, feat.description])));
   const featuresAt = (levelId: string) => features.filter((row) => row.levelIds.includes(levelId));
   const columns = [
     { key: "level", label: "Level", width: "8%" },
     ...tracks.map((track) => ({ key: track.key, label: track.key === "bab" ? "BAB" : track.label, width: "9%" })),
-    ...poolNames.map((name) => ({ key: `pool:${name}`, label: name, width: "9%" })),
-    { key: "special", label: "Special", width: "30%", slot: "block" as const },
+    ...poolNames.map((name) => ({ key: `pool:${name}`, label: name, width: "7%" })),
+    // The rest of the table's width, however many tracks and pools it has
+    { key: "special", label: "Special", slot: "block" as const },
   ];
 
   const renderCell = (level: ClassLevelRow, columnKey: string) => {
@@ -309,6 +317,13 @@ export function ClassProgressionSection({ rulesetId, classId, className, ruleset
                 key={track.key}
                 id={`progression-${track.key}`}
                 label={track.label}
+                custom={customTracks.includes(track.key)}
+                onCustomChange={(open) =>
+                  setCustomTracks((current) => [
+                    ...current.filter((key) => key !== track.key),
+                    ...(open ? [track.key] : []),
+                  ])
+                }
                 format={track.format}
                 presets={track.presets}
                 saved={valuesOf((level) => readTrack(level, track.key))}
@@ -346,7 +361,7 @@ export function ClassProgressionSection({ rulesetId, classId, className, ruleset
         <ProgressionSaveBar
           what="Progression"
           changes={changes}
-          onDiscard={draft.discard}
+          onDiscard={discard}
           onSave={handleSave}
           pending={save.isPending}
         />
