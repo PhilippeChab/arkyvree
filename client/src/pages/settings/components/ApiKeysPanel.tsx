@@ -27,6 +27,7 @@ import { formatDate, formatRelativeTime } from "@/client/src/lib/formatDate.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { apiKeysQuery } from "@/client/src/pages/settings/settingsQueries.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
+import { MAX_API_KEYS } from "@/shared/apiKeys.ts";
 
 import { ApiKeyTokenDialog } from "./ApiKeyTokenDialog.tsx";
 import { CreateApiKeyDialog, type CreatedApiKey } from "./CreateApiKeyDialog.tsx";
@@ -74,11 +75,19 @@ export function ApiKeysPanel() {
         <CardTitle>API Keys</CardTitle>
         <Typography variant="body2" sx={{ color: "text.secondary" }}>
           A key lets a program outside the app, such as a script or an assistant, read your characters and rulesets
-          through the public API. It acts as you: revoke it once nothing uses it.
+          through the public API. It acts as you: revoke it once nothing uses it. You can keep {MAX_API_KEYS} at most.
         </Typography>
       </Stack>
       {!isDemo && (
-        <ListToolbar actions={<AddButton label="Create Key" onClick={() => createDialog.openWith(true)} />} />
+        <ListToolbar
+          actions={
+            <AddButton
+              label="Create Key"
+              disabled={(keys?.length ?? 0) >= MAX_API_KEYS}
+              onClick={() => createDialog.openWith(true)}
+            />
+          }
+        />
       )}
       {!keys && !error && <DiceSpinner sx={{ py: 4 }} />}
       {!keys && !!error && <LoadError what="API keys" error={error} />}

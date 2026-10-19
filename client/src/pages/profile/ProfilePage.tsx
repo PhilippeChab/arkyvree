@@ -154,6 +154,8 @@ export default function ProfilePage() {
     onSuccess: () => {
       passwordSync.saved(EMPTY_PASSWORD_FORM);
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.auth.me });
+      // A changed password revokes the user's API keys
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.auth.apiKeys });
       snackbar.success(hasPassword ? "Password updated" : "Password set");
     },
     onError: (error) => snackbar.error(error, hasPassword ? "Failed to update password" : "Failed to set password"),

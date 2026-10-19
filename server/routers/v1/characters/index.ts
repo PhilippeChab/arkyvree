@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 
-import { type ApiKeyContext, validate } from "@/server/middlewares/index.ts";
+import { type ApiKeyContext, levelChoicesRateLimit, validate } from "@/server/middlewares/index.ts";
 import { buildPickPairsSchema } from "@/server/routers/api/schemaBuilders.ts";
 import { idParam, increaseList, limit, page, skillPoints } from "@/server/routers/api/validation.ts";
 import { V1 } from "@/server/routers/v1/translators/V1.ts";
@@ -24,6 +24,7 @@ export default new Hono<ApiKeyContext>()
   // with its picks so far (`abilityId:amount;…`, `skillId:points,…`, `featId:poolId,…`, `spellId:poolId,…`)
   .get(
     "/:id/level-choices",
+    levelChoicesRateLimit,
     validate("param", idParam),
     validate(
       "query",

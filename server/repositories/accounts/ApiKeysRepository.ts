@@ -1,4 +1,4 @@
-import { and, eq, getTableColumns, isNull, lt, or } from "drizzle-orm";
+import { and, count, eq, getTableColumns, isNull, lt, or } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
 import { apiKeysInAccount } from "@/drizzle/schema.ts";
@@ -10,6 +10,11 @@ const { digest: _digest, ...SHOWN_COLUMNS } = getTableColumns(apiKeysInAccount);
 class ApiKeysRepository extends BaseRepository<typeof apiKeysInAccount> {
   constructor() {
     super(apiKeysInAccount);
+  }
+
+  async count(db: Db, where: { userId: string }) {
+    const [row] = await db.select({ count: count() }).from(this.table).where(eq(this.table.userId, where.userId));
+    return row?.count ?? 0;
   }
 
   async create(db: Db, values: { digest: string; name: string; prefix: string; userId: string }) {

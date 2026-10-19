@@ -5,6 +5,7 @@ import { hashApiKeyToken } from "@/server/apiKeyTokens.ts";
 import { db } from "@/server/database/index.ts";
 import { ApiKeys } from "@/server/repositories/index.ts";
 import { ApiKeysService } from "@/server/services/authentication/apiKeys/index.ts";
+import { MAX_API_KEYS } from "@/shared/apiKeys.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
 import { insertRows } from "@/tests/support/database.ts";
 import { uniqueId } from "@/tests/support/seed.ts";
@@ -49,6 +50,16 @@ describe("ApiKeysService", () => {
     await ApiKeysService.createKey(other, "Someone else's");
 
     expect((await ApiKeysService.getKeys(session)).map(({ id }) => id)).toEqual([newer.id, older.id]);
+  });
+
+  test("refuses a key past the most a user keeps, until one is revoked", async () => {
+    const { session } = await createTestUser();
+    const keys = [];
+    for (let i = 0; i < MAX_API_KEYS; i++) keys.push(await ApiKeysService.createKey(session, `Key ${i}`));
+
+    await expectRefusedWith(ApiKeysService.createKey(session, "One too many"), 422);
+    await ApiKeysService.revokeKey(session, keys[0]!.id);
+    expect(await ApiKeysService.createKey(session, "In its place")).toMatchObject({ name: "In its place" });
   });
 
   test("revokes a key: it's deleted, and its token names no key from then on", async () => {

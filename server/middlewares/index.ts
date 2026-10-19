@@ -11,6 +11,7 @@ export {
   exportRateLimit,
   importRateLimit,
   importSourceRateLimit,
+  levelChoicesRateLimit,
   publicApiRateLimit,
 } from "./rateLimit.ts";
 export { requestLogger } from "./requestLogger.ts";

@@ -32,4 +32,10 @@ export const importRateLimit = limitRate({ windowMs: MINUTE, limit: 10 });
 /** What a picked character file is: asked once a file is picked, its header's tags read, nothing built. */
 export const importSourceRateLimit = limitRate({ windowMs: MINUTE, limit: 30 });
 
+/**
+ * A character's choices at its next level, counted per key apart from its other requests: one builds the character a
+ * time for each step and each pool it reads.
+ */
+export const levelChoicesRateLimit = limitRate({ windowMs: MINUTE, limit: 20, per: "key" });
+
 export const publicApiRateLimit = limitRate({ windowMs: MINUTE, limit: 30 });

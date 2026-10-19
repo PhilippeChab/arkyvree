@@ -20,7 +20,8 @@ interface V1ClassChoice {
 
 /** What the planned level offers, step by step. */
 interface V1PlannedLevel {
-  abilityIncrease: { abilities: { id: string; name: string; score: number }[]; due: boolean };
+  /** Whether the level takes one, and whether the increases sent are the level's as its save takes them (`picked`) */
+  abilityIncrease: { abilities: { id: string; name: string; score: number }[]; due: boolean; picked: boolean };
   class: { id: string; level: number; name: string };
   feats: { granted: { id: string; name: string }[]; picked: { featId: string; poolId: string }[]; slots: V1Slot[] };
   skills: { points: number; skills: V1SkillChoice[] };
@@ -31,13 +32,19 @@ interface V1PlannedLevel {
   };
 }
 
-/** A skill the planned level's points may go to: its ranks, the most it may have, and what a point buys. */
+/**
+ * A skill the planned level's points may go to: its ranks before the level, the most it may reach with the level's
+ * points spent on it alone, what a point buys, and what the points sent for it (`skillPoints`) come to, as a save spreads
+ * them: the points it keeps, and the ranks they buy.
+ */
 interface V1SkillChoice {
   classSkill: boolean;
   id: string;
   maxRanks: number;
   name: string;
+  pointsSpent: number;
   ranks: number;
+  ranksAdded: number;
   ranksPerPoint: number;
 }
 
@@ -88,6 +95,7 @@ function toPlannedLevel({ abilities, class: klass, feats, skills, spells }: Plan
     abilityIncrease: {
       abilities: abilities.attributes.map(({ abilityId, name, total }) => ({ id: abilityId, name, score: total })),
       due: abilities.isAvailable,
+      picked: abilities.picked,
     },
     class: { id: klass.id, level: klass.nextLevel, name: klass.name },
     feats: {
@@ -104,9 +112,11 @@ function toPlannedLevel({ abilities, class: klass, feats, skills, spells }: Plan
       skills: skills.skills.map((skill) => ({
         classSkill: skill.classSkill,
         id: skill.id,
-        maxRanks: skill.currentRank + (skill.ranksByPoints.at(-1) ?? 0),
+        maxRanks: skill.currentRank + skill.maxPoints * skill.rankStep,
         name: skill.name,
+        pointsSpent: skill.points,
         ranks: skill.currentRank,
+        ranksAdded: skill.ranks,
         ranksPerPoint: skill.rankStep,
       })),
     },

@@ -30,8 +30,9 @@ export default createMiddleware<ApiKeyContext>(async (c, next) => {
   const user = await Users.findOne(db, { id: key.userId });
   if (!user || user.expiresAt) throw new UnauthorizedError("Invalid API key");
 
-  const since = new Date(Date.now() - LAST_USED_PRECISION_MS).toISOString();
-  await withTransaction(async (tx) => ApiKeys.markUsed(tx, { id: key.id, since }));
+  const since = Date.now() - LAST_USED_PRECISION_MS;
+  if (!key.lastUsedAt || new Date(key.lastUsedAt).getTime() < since)
+    await withTransaction(async (tx) => ApiKeys.markUsed(tx, { id: key.id, since: new Date(since).toISOString() }));
 
   c.set("requestApiKey", { id: key.id, userId: key.userId });
   c.set("requestSession", { userId: key.userId });

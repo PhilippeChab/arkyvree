@@ -38,7 +38,9 @@ describe("v1 level choices", () => {
     expect(level?.skills.skills.find(({ name }) => name === "Climb")).toMatchObject({
       classSkill: true,
       maxRanks: 9,
+      pointsSpent: 0,
       ranks: 7,
+      ranksAdded: 0,
       ranksPerPoint: 1,
     });
 
@@ -61,6 +63,42 @@ describe("v1 level choices", () => {
     const { level } = await choicesOf("Bjorn Ironhand", "Fighter", { feats });
     expect(level?.feats.picked).toEqual([{ featId: first.id, poolId: slot.pool.id }]);
     expect(level?.feats.slots.find(({ pool }) => pool.id === slot.pool.id)?.count).toBe(1);
+  });
+
+  test("answers what the skill points sent come to, each skill's most ranks the same whatever the others take", async () => {
+    const before = await choicesOf("Bjorn Ironhand", "Fighter");
+    const skills = before.level?.skills.skills ?? [];
+    const climb = skills.find(({ name }) => name === "Climb");
+    const jump = skills.find(({ name }) => name === "Jump");
+    if (!climb || !jump) throw new Error("No Climb or Jump among the fighter's skills");
+
+    const { level } = await choicesOf("Bjorn Ironhand", "Fighter", { skillPoints: `${climb.id}:2` });
+    const after = level?.skills.skills ?? [];
+    expect(after.find(({ id }) => id === climb.id)).toMatchObject({ pointsSpent: 2, ranksAdded: 2 });
+    expect(after.find(({ id }) => id === jump.id)?.maxRanks).toBe(jump.maxRanks);
+  });
+
+  test("refuses ability increases at a level that takes none, and says whether a due one's are picked", async () => {
+    const fighter = await choicesOf("Bjorn Ironhand", "Fighter");
+    const { api } = await createKeyedApi();
+    const bjorn = await findSeededCharacter("Bjorn Ironhand");
+    const sheet = await expectOk(api.v1.characters[":id"].$get({ param: { id: bjorn.id } }));
+    const strength = sheet.abilities.find(({ name }) => name === "Strength");
+    if (!strength) throw new Error("No Strength among the fighter's abilities");
+    const classId = fighter.level?.class.id;
+    await expectStatus(
+      api.v1.characters[":id"]["level-choices"].$get({
+        param: { id: bjorn.id },
+        query: { classId, abilityIncreases: `${strength.id}:1` },
+      }),
+      400,
+    );
+
+    const unpicked = await choicesOf("Elara Starweaver", "Wizard");
+    expect(unpicked.level?.abilityIncrease).toMatchObject({ due: true, picked: false });
+    const intelligence = unpicked.level?.abilityIncrease.abilities.find(({ name }) => name === "Intelligence");
+    const picked = await choicesOf("Elara Starweaver", "Wizard", { abilityIncreases: `${intelligence?.id}:1` });
+    expect(picked.level?.abilityIncrease).toMatchObject({ due: true, picked: true });
   });
 
   test("answers a wizard's spells by spell level, and the ability increase its 4th level takes", async () => {
