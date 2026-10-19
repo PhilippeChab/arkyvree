@@ -3,7 +3,13 @@ import { getTableName } from "drizzle-orm";
 import type { Db } from "@/drizzle/database.ts";
 import { klassesInRules } from "@/drizzle/schema.ts";
 import { type ClassEngine, Engine } from "@/engine/index.ts";
-import { EntityEdit, type RulesetScope, RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
+import {
+  EntityEdit,
+  EntityRepositories,
+  type RulesetScope,
+  RulesetViews,
+  withRulesetScope,
+} from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Klasses, KlassLevels, Modifiers } from "@/server/repositories/index.ts";
@@ -29,20 +35,15 @@ type ProgressionBody = Parameters<ClassEngine["planProgression"]>[0];
 
 class ClassProgressionService {
   /**
-   * The class row a progression's save writes (`klass`, as the view has it): the ruleset's own, its `updatedAt` moved
-   * and refused when stale (`updatedAt`, the class the client read), or the copy of an inherited one, with its levels
-   * and their customizations, which takes no stale check (the client's token is the source's).
+   * The class row a progression's save writes (`klass`, as the view has it): the ruleset's own, locked, its levels'
+   * writes waiting on other saves of it (its own columns aren't written, nor its token moved: its levels' tokens check
+   * the save), or the copy of an inherited one, with its levels and their customizations.
    */
-  private async targetClass(
-    tx: Db,
-    scope: RulesetScope,
-    klass: { id: string; rulesetId: string },
-    updatedAt: string | undefined,
-  ): Promise<TargetClass> {
+  private async targetClass(tx: Db, scope: RulesetScope, klass: { id: string; rulesetId: string }) {
     const target = await new EntityEdit(scope.ruleset).cowToEdit(tx, "klasses", klass);
-    const expectedUpdatedAt = target.copied ? undefined : updatedAt;
-    const [row] = await Klasses.update(tx, {}, { id: target.id, expectedUpdatedAt });
-    if (!row) throw new ConflictError(STALE_ENTITY_MESSAGE);
+    if (!target.copied) await EntityRepositories.lock(tx, "klasses", target.id);
+    const row = await Klasses.findOne(tx, { id: target.id });
+    if (!row) throw new NotFoundError("Class no longer exists; refresh the class");
     return { copied: target.copied, copiedIds: target.copiedIds, id: target.id, updatedAt: row.updatedAt };
   }
 
@@ -92,17 +93,17 @@ class ClassProgressionService {
 
   /**
    * Saves a class's progression at once (`body`): its levels' fields, saves and granted feats, its pools' picks and its
-   * spell tables, in one transaction, copying an inherited class first. Refused when the class, or a level it changes,
-   * changed since the client read it (`updatedAt`, `levelTokens`). A save that changes nothing writes nothing. Answers
-   * the class written (`klassId`: a copy's, when it copied one) and its token.
+   * spell tables, in one transaction, copying an inherited class first. Refused when a level it changes changed since
+   * the client read it (`levelTokens`). A save that changes nothing writes nothing. Answers the class written
+   * (`klassId`: a copy's, when it copied one) and its token.
    */
   async updateProgression(
     session: Session,
     rulesetId: string,
     classId: string,
-    body: ProgressionBody & { levelTokens?: { levelId: string; updatedAt: string }[]; updatedAt?: string },
+    body: ProgressionBody & { levelTokens?: { levelId: string; updatedAt: string }[] },
   ) {
-    const { levelTokens, updatedAt, ...form } = body;
+    const { levelTokens, ...form } = body;
     const tokens = new Map((levelTokens ?? []).map((token) => [token.levelId, token.updatedAt]));
     const result = await withTransaction(
       async (tx) =>
@@ -111,7 +112,7 @@ class ClassProgressionService {
           const plan = Engine.for(scope).class(classId).planProgression(form);
           if (plan.levels.length === 0) return { klassId: plan.klass.id, updatedAt: plan.klass.updatedAt };
 
-          const target = await this.targetClass(tx, scope, plan.klass, updatedAt);
+          const target = await this.targetClass(tx, scope, plan.klass);
           await this.writeLevels(tx, scope, target, plan.levels, tokens);
 
           await createActivityWithNotifications(tx, {

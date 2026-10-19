@@ -92,7 +92,7 @@ export function ClassProgressionSection({ rulesetId, classId, className, ruleset
   const { data: progression, error: progressionError } = useQuery(classProgressionQuery(rulesetId, classId));
   const { data: poolTotals, error: poolsError } = useQuery(classFeatPoolsQuery(rulesetId, classId));
   const levels = levelRows?.toSorted(byLevel) ?? [];
-  const draft = useProgressionDraft(rulesetId, classId, levels);
+  const draft = useProgressionDraft(classId, levels);
   const save = useProgressionSave(rulesetId, classId);
 
   // Its create opens on the class's next level, its fields the highest's

@@ -158,6 +158,18 @@ export default class ClassProgression {
     private readonly table: ClassTable,
   ) {}
 
+  /**
+   * Refuses spell tables a save empties of every modifier on the class's list when the list isn't named for the class
+   * ("Blackguard Spells", a templar's): its levels' modifiers are all that tie the class to it.
+   */
+  private checkListKept(working: Map<string, LevelModifier[]>) {
+    const list = this.spellList;
+    if (!list || list.slug === `${stripSeparators(this.klass.name)}spells`) return;
+    const onList = (modifier: LevelModifier) => modifier.target.startsWith(`aptitudes.${list.slug}.`);
+    const lost = `Emptied, ${this.klass.name}'s spell tables would lose ${list.name}: keep a count on one`;
+    if (![...working.values()].some((modifiers) => modifiers.some(onList))) throw new RulesError("invalid", lost);
+  }
+
   /** The class's levels, as the view has them, by their number. */
   private get classLevels(): KlassLevel[] {
     return (this.rulesetData.klassLevelsByKlass.get(this.klass.id) ?? []).toSorted((a, b) => a.level - b.level);
@@ -322,6 +334,7 @@ export default class ClassProgression {
     for (const pool of body.pools ?? []) this.planPool(working, pool);
     if (body.spells?.known) this.planSpells(working, body.spells.known, "allowed");
     if (body.spells?.perDay) this.planSpells(working, body.spells.perDay, "uses");
+    if (body.spells) this.checkListKept(working);
     const edits = new Map(
       (body.levels ?? []).map(({ levelId, ...form }) => {
         const edit = this.levels.planEdit(levelId, form);

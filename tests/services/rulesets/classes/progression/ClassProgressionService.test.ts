@@ -167,7 +167,7 @@ describe("ClassProgressionService", () => {
     expect(progression.spellList?.name).toBe("Wizard Spells");
   });
 
-  test("refuses a stale save of a class of its own or of its level, a count past the rules' bounds, and spells for a class without a list", async () => {
+  test("refuses a stale save of its own class's level, a count past the rules' bounds, and spells for a class without a list", async () => {
     const { session, fork, klass, levelId } = await forkWithClass("Fighter");
     const { saved } = await save(session, fork.id, klass.id, {
       levels: [{ levelId: levelId(1), fields: { bab: 1, skills: 4 } }],
@@ -179,13 +179,9 @@ describe("ClassProgressionService", () => {
     const change = { levels: [{ levelId: first, fields: { bab: 1, skills: 6 } }] };
     const stale = "2000-01-01T00:00:00Z";
     expect(
-      ClassProgressionService.updateProgression(session, fork.id, own.id, { ...change, updatedAt: stale }),
-    ).rejects.toBeInstanceOf(ConflictError);
-    expect(
       ClassProgressionService.updateProgression(session, fork.id, own.id, {
         ...change,
         levelTokens: [{ levelId: first, updatedAt: stale }],
-        updatedAt: own.updatedAt,
       }),
     ).rejects.toBeInstanceOf(ConflictError);
     const [aptitude] = await Aptitudes.create(db, { name: "Fighter Bonus Feat Two", rulesetId: fork.id });

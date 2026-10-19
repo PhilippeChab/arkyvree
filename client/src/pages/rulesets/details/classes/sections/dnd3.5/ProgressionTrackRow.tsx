@@ -92,24 +92,32 @@ export function ProgressionTrackRow({ format, id, label, onChange, presets, save
   return (
     <Stack id={id} spacing={1.5} sx={{ py: 2, borderTop: 1, borderColor: "divider" }}>
       {presets ? (
-        <OptionToggle
-          label={label}
-          caption={status}
-          value={custom || !detected ? CUSTOM : detected.key}
-          options={[
-            ...presets.map(({ key, label: presetLabel }) => ({ label: presetLabel, value: key })),
-            { label: "Custom", value: CUSTOM },
-          ]}
-          onChange={(next) => {
-            const preset = presets.find((p) => p.key === next);
-            if (preset) {
-              follow(preset);
-              return;
-            }
-            setCustom(true);
-            setBaseKey((detected ?? findNearestPreset(presets, values)).key);
-          }}
-        />
+        <Stack direction="row" spacing={2} useFlexGap sx={{ alignItems: "flex-end", flexWrap: "wrap" }}>
+          <OptionToggle
+            label={label}
+            caption={status}
+            value={custom || !detected ? CUSTOM : detected.key}
+            options={[
+              ...presets.map(({ key, label: presetLabel }) => ({ label: presetLabel, value: key })),
+              { label: "Custom", value: CUSTOM },
+            ]}
+            onChange={(next) => {
+              const preset = presets.find((p) => p.key === next);
+              if (preset) {
+                follow(preset);
+                return;
+              }
+              setCustom(true);
+              setBaseKey((detected ?? findNearestPreset(presets, values)).key);
+            }}
+          />
+          {/* A track that follows no preset is Custom already, whose toggle a click can't select again */}
+          {!custom && !detected && (
+            <Button size="small" onClick={() => setCustom(true)}>
+              Edit Levels
+            </Button>
+          )}
+        </Stack>
       ) : (
         <Box>
           <Typography variant="subtitle2" component="p" gutterBottom sx={{ color: "text.secondary" }}>

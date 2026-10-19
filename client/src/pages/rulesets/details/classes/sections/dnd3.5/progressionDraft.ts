@@ -59,7 +59,7 @@ export function buildProgressionBody(
   features: readonly FeatureRow[],
   pools: readonly PoolRow[],
   edits: ProgressionEdits,
-): Omit<ClassProgressionBody, "levelTokens" | "updatedAt"> {
+): Omit<ClassProgressionBody, "levelTokens"> {
   const rows = [...features, ...edits.addedFeatures];
   const classLevelIds = new Set(levels.map((level) => level.id));
   const levelsOf = (row: FeatureRow) => edits.features[row.key] ?? row.levelIds;

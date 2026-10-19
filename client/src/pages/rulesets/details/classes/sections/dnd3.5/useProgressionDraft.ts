@@ -15,8 +15,8 @@ import { useClassDraft } from "./useClassDraft.ts";
  * saved one drops its edit, so the tab holds only what differs. They're the class's (`classId`, `useClassDraft`'s),
  * with the tokens they began over (`tokens`).
  */
-export function useProgressionDraft(rulesetId: string, classId: string, levels: readonly ClassLevelRow[]) {
-  const { discard, edits, setEdits, tokens } = useClassDraft<ProgressionEdits>(rulesetId, classId, levels, NO_EDITS);
+export function useProgressionDraft(classId: string, levels: readonly ClassLevelRow[]) {
+  const { discard, edits, setEdits, tokens } = useClassDraft<ProgressionEdits>(classId, levels, NO_EDITS);
   const levelById = new Map(levels.map((level) => [level.id, level]));
 
   /** A track's new values, by level id: each one equal to the saved value forgets its edit. */

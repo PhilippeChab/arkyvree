@@ -89,7 +89,7 @@ export function ClassSpellsSection({ rulesetId, classId, className, ruleset }: C
   };
   const levels = (perDay.data ?? []).toSorted(byLevel);
   const save = useProgressionSave(rulesetId, classId);
-  const { discard, edits, setEdits, tokens } = useClassDraft<SpellEdits>(rulesetId, classId, levels, NO_SPELL_EDITS);
+  const { discard, edits, setEdits, tokens } = useClassDraft<SpellEdits>(classId, levels, NO_SPELL_EDITS);
   const totalsById: Record<SpellTable, Map<string, SpellLevelRow["totals"]>> = {
     perDay: new Map(rowsOf.perDay.map((row) => [row.id, row.totals])),
     known: new Map(rowsOf.known.map((row) => [row.id, row.totals])),
@@ -101,16 +101,27 @@ export function ClassSpellsSection({ rulesetId, classId, className, ruleset }: C
     const row = state[which][levelId];
     return row && spellLevel in row ? row[spellLevel] : savedCell(which, levelId, spellLevel);
   };
-  // A cell as the table shows it: every spell known, once a level knows them all, stays known at the levels after it
-  const shownCell = (state: SpellEdits, which: SpellTable, levelId: string, spellLevel: number): SpellCell => {
+  const indexById = new Map(levels.map((level, index) => [level.id, index]));
+  /** Each spell level's first level whose spells known are all of them, as edits (`state`) hold them: -1 for none. */
+  const firstAllOf = (state: SpellEdits) =>
+    SPELL_LEVELS.map((spellLevel) =>
+      levels.findIndex(({ id }) => editedCell(state, "known", id, spellLevel) === "all"),
+    );
+  // A cell as the table shows it (`firstAll`, `state`'s): every spell known, once a level knows them all, stays known
+  const shownCell = (
+    state: SpellEdits,
+    firstAll: number[],
+    which: SpellTable,
+    levelId: string,
+    spellLevel: number,
+  ): SpellCell => {
     const cell = editedCell(state, which, levelId, spellLevel);
-    if (which === "perDay" || cell === "all") return cell;
-    const index = levels.findIndex((level) => level.id === levelId);
-    const known = levels.slice(0, index).some((level) => editedCell(state, which, level.id, spellLevel) === "all");
-    return known ? "all" : cell;
+    const allFrom = firstAll[spellLevel] ?? -1;
+    return which === "known" && allFrom !== -1 && (indexById.get(levelId) ?? 0) > allFrom ? "all" : cell;
   };
+  const firstAll = firstAllOf(edits);
   const cellOf = (which: SpellTable, levelId: string, spellLevel: number) =>
-    shownCell(edits, which, levelId, spellLevel);
+    shownCell(edits, firstAll, which, levelId, spellLevel);
   const changedCells = (which: SpellTable) =>
     levels.flatMap(({ id }) =>
       SPELL_LEVELS.filter((spellLevel) => cellOf(which, id, spellLevel) !== savedCell(which, id, spellLevel)),
@@ -139,9 +150,10 @@ export function ClassSpellsSection({ rulesetId, classId, className, ruleset }: C
   /** The cells of a paste that change the table as it shows. */
   const changesOf = (cells: PlacedCell[]) => {
     const next = writeCells(edits, table, cells);
+    const nextAll = firstAllOf(next);
     return cells.filter(
       ({ levelId, spellLevel }) =>
-        shownCell(next, table, levelId, spellLevel) !== shownCell(edits, table, levelId, spellLevel),
+        shownCell(next, nextAll, table, levelId, spellLevel) !== cellOf(table, levelId, spellLevel),
     );
   };
 

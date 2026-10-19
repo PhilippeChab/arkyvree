@@ -35,7 +35,7 @@ export type ClassProgression = InferResponseType<
   200
 >;
 
-/** A save of a class's progression: its levels' forms, its pools' picks, its spell tables' totals, the class's token. */
+/** A save of a class's progression: its levels' forms, its pools' picks, its spell tables' totals, its levels' tokens. */
 export type ClassProgressionBody = InferRequestType<
   (typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["progression"]["$put"]
 >["json"];

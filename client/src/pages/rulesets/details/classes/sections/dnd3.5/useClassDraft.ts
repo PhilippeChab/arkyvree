@@ -1,7 +1,4 @@
-import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-
-import { classDetailQuery } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 
 /** A draft: the class it's of, its edits, and the tokens of what it began over. */
 interface Draft<T> {
@@ -10,30 +7,22 @@ interface Draft<T> {
   tokens?: DraftTokens;
 }
 
-/** The tokens a draft's save is checked against: its class's and its levels', as the tab read them when it began. */
+/** The tokens a draft's save is checked against: its levels', as the tab read them when it began. */
 export interface DraftTokens {
   levelTokens: { levelId: string; updatedAt: string }[];
-  updatedAt?: string;
 }
 
 /**
  * A class tab's changes before its save (`edits`, from `empty`), the class's (`classId`): once the page follows a copy
- * of it, whose levels are others, it holds none. Its first edit keeps the class's token and its `levels`' (`tokens`),
- * so a save refuses what changed since, however often the tab reads them again.
+ * of it, whose levels are others, it holds none. Its first edit keeps its `levels`' tokens (`tokens`), so a save
+ * refuses a level changed since, however often the tab reads them again.
  */
-export function useClassDraft<T>(
-  rulesetId: string,
-  classId: string,
-  levels: readonly { id: string; updatedAt: string }[],
-  empty: T,
-) {
-  const queryClient = useQueryClient();
+export function useClassDraft<T>(classId: string, levels: readonly { id: string; updatedAt: string }[], empty: T) {
   const [draft, setDraft] = useState<Draft<T>>({ classId, edits: empty });
   const own = (current: Draft<T>): Draft<T> => (current.classId === classId ? current : { classId, edits: empty });
 
   const readTokens = (): DraftTokens => ({
     levelTokens: levels.map((level) => ({ levelId: level.id, updatedAt: level.updatedAt })),
-    updatedAt: queryClient.getQueryData(classDetailQuery(rulesetId, classId).queryKey)?.updatedAt,
   });
 
   const setEdits = (change: (current: T) => T) =>
