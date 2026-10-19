@@ -81,7 +81,11 @@ export default function CharactersPage() {
   );
   // A character is built in the app, its page's action, or imported from a file another program saved, a link beside
   // it: the frequent way first, the other in sight
-  const importLink = (words: string) => <LinkButton onClick={() => importDialog.openWith(true)}>{words}</LinkButton>;
+  // While an import's report waits for its dialog to fade out, the link waits too: an opening then would remount that
+  // dialog, whose fade-out, and the report with it, would never end
+  const importLink = (words: string) => (
+    <LinkButton onClick={() => !pendingReport.current && importDialog.openWith(true)}>{words}</LinkButton>
+  );
 
   const viewActiveButton = (
     <Button variant="outlined" onClick={() => updateSearchParams({ view: null })}>

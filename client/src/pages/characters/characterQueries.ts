@@ -1,6 +1,6 @@
 /**
- * Queries of the character pages: the races a new character can take, and how it sets its ability scores; and what an
- * import answers.
+ * Queries of the character pages: the races a new character can take, and how it sets its ability scores; and what a
+ * file picked to import is, and what its import answers.
  */
 
 import { infiniteQueryOptions, queryOptions, skipToken } from "@tanstack/react-query";

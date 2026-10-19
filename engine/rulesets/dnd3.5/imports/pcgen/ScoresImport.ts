@@ -43,11 +43,10 @@ export default class ScoresImport {
   }
 
   /**
-   * A starting score (`score`, of PCGen's key `key`) within the bounds a new character's are (`describeCreation`): one
-   * past them is brought to the bound, which the report says.
+   * A starting score (`score`, of PCGen's key `key`) within the bounds a new character's are (`max`, `min`): one past
+   * them is brought to the bound, which the report says.
    */
-  private bounded(key: string, score: number) {
-    const { max, min } = NewCharacters.describeCreation(this.view).scores;
+  private bounded(key: string, score: number, { max, min }: { max: number; min: number }) {
     const kept = Math.min(max, Math.max(min, score));
     if (kept !== score) {
       const name = PCGEN_ABILITIES.get(key) ?? key;
@@ -122,8 +121,9 @@ export default class ScoresImport {
       for (const [key, amount] of taken) totals.set(key, (totals.get(key) ?? 0) + amount);
       return [...taken].flatMap(([key, amount]) => (ids.has(key) ? [{ abilityId: ids.get(key)!, amount }] : []));
     });
+    const bounds = NewCharacters.describeCreation(this.view).scores;
     const starting = Object.fromEntries(
-      [...scores].map(([key, score]) => [ids.get(key)!, this.bounded(key, score - (totals.get(key) ?? 0))]),
+      [...scores].map(([key, score]) => [ids.get(key)!, this.bounded(key, score - (totals.get(key) ?? 0), bounds)]),
     );
     const listed = ABILITY_NAMES.flatMap((name) => {
       const key = [...PCGEN_ABILITIES].find(([, candidate]) => candidate === name)?.[0];
