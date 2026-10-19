@@ -48,7 +48,8 @@ export function parseSpellRows(text: string, allowsAll: boolean): PastedRow[] {
   const rows = text
     .replace(/\r/g, "")
     .split("\n")
-    .filter((line) => line.trim() !== "")
+    // A blank line is none, a spreadsheet's row of empty cells a row
+    .filter((line) => line.includes("\t") || line.trim() !== "")
     .map(splitCells);
   const leads = rows.map((cells) => LEVEL_CELL.exec(cells[0]));
   const counting = rows.length >= 3 && leads.every((lead, index) => lead && Number(lead[1]) === index + 1);

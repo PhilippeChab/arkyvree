@@ -28,6 +28,7 @@ import { ProgressionSaveBar } from "./ProgressionSaveBar.tsx";
 import { type PlacedCell, type SpellCell } from "./spellPaste.ts";
 import { SpellPasteBox } from "./SpellPasteBox.tsx";
 import { SpellTableGrid } from "./SpellTableGrid.tsx";
+import { useClassDraft } from "./useClassDraft.ts";
 import { useProgressionSave } from "./useProgressionSave.ts";
 
 /** A table's level as its query reads it: its totals by spell level ("All" for spells known's every spell). */
@@ -65,11 +66,7 @@ export function ClassSpellsSection({ rulesetId, classId, className, ruleset }: C
   const snackbar = useSnackbar();
   const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
   const [table, setTable] = useState<SpellTable>("perDay");
-  // The class's edits: once the page follows a copy of it, whose levels are others, it holds none
-  const [draft, setDraft] = useState<{ classId: string; edits: SpellEdits }>({ classId, edits: NO_SPELL_EDITS });
-  const edits = draft.classId === classId ? draft.edits : NO_SPELL_EDITS;
-  const setEdits = (change: (current: SpellEdits) => SpellEdits) =>
-    setDraft((current) => ({ classId, edits: change(current.classId === classId ? current.edits : NO_SPELL_EDITS) }));
+  const { edits, setEdits } = useClassDraft<SpellEdits>(classId, NO_SPELL_EDITS);
   const [pasting, setPasting] = useState(false);
   const [classSearch, setClassSearch] = useState("");
 
@@ -83,9 +80,13 @@ export function ClassSpellsSection({ rulesetId, classId, className, ruleset }: C
     enabled: editable,
   });
 
+  const perDayRows = (rows: NonNullable<typeof perDay.data>): SpellLevelRow[] =>
+    rows.map((row) => ({ id: row.id, level: row.level, totals: row.spellsPerDay }));
+  const knownRows = (rows: NonNullable<typeof known.data>): SpellLevelRow[] =>
+    rows.map((row) => ({ id: row.id, level: row.level, totals: row.spellsKnown }));
   const rowsOf: Record<SpellTable, SpellLevelRow[]> = {
-    perDay: (perDay.data ?? []).map((row) => ({ id: row.id, level: row.level, totals: row.spellsPerDay })),
-    known: (known.data ?? []).map((row) => ({ id: row.id, level: row.level, totals: row.spellsKnown })),
+    perDay: perDayRows(perDay.data ?? []),
+    known: knownRows(known.data ?? []),
   };
   const levels = (perDay.data ?? []).toSorted(byLevel);
   const save = useProgressionSave(rulesetId, classId, levels);
@@ -113,20 +114,12 @@ export function ClassSpellsSection({ rulesetId, classId, className, ruleset }: C
     });
 
   /** Another class's table, the one the tab shows: none for no class. */
-  const readTable = async (otherId: string | undefined): Promise<SpellLevelRow[]> =>
-    !otherId
-      ? []
-      : table === "perDay"
-        ? (await queryClient.fetchQuery(classSpellsPerDayQuery(rulesetId, otherId))).map((row) => ({
-            id: row.id,
-            level: row.level,
-            totals: row.spellsPerDay,
-          }))
-        : (await queryClient.fetchQuery(classSpellsKnownQuery(rulesetId, otherId))).map((row) => ({
-            id: row.id,
-            level: row.level,
-            totals: row.spellsKnown,
-          }));
+  const readTable = async (otherId: string | undefined): Promise<SpellLevelRow[]> => {
+    if (!otherId) return [];
+    return table === "perDay"
+      ? perDayRows(await queryClient.fetchQuery(classSpellsPerDayQuery(rulesetId, otherId)))
+      : knownRows(await queryClient.fetchQuery(classSpellsKnownQuery(rulesetId, otherId)));
+  };
 
   /** Every cell of the table from another class's, by level number: none where it has none. */
   const startFrom = async (otherId: string | undefined) => {

@@ -75,7 +75,7 @@ export function ClassFeaturesCard({
     error,
     onScroll,
   } = useRulesetFeats(rulesetId, useDebouncedValue(featSearch), !readOnly);
-  const { fetchedOptions: aptitudes, autocompleteProps } = useAptitudeOptions(rulesetId, "feats");
+  const { fetchedOptions: aptitudes, autocompleteProps } = useAptitudeOptions(rulesetId, "feats", !readOnly);
   const featOptions = feats.flatMap((feat) =>
     feat.featsAptitudesInRules.map((fa) => ({
       aptitudeId: fa.aptitudeId,

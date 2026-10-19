@@ -62,6 +62,15 @@ interface Track {
   presets?: readonly ProgressionPreset[];
 }
 
+/** A table cell the tab changed before its save. */
+const CHANGED_CELL_SX = {
+  fontWeight: 600,
+  color: "secondary.dark",
+  bgcolor: "action.selected",
+  px: 0.5,
+  borderRadius: 0.5,
+} as const;
+
 /**
  * A class's Progression tab: its table, the levels' base attack bonus, saves, skill points and features at once, which
  * opens a level's page from its row; its progression, each track a preset to follow or its levels to set; and its
@@ -129,7 +138,21 @@ export function ClassProgressionSection({ rulesetId, classId, className, ruleset
     ...pool,
     picks: { ...pool.picks, ...draft.edits.pools[pool.aptitudeId] },
   }));
-  const poolNames = [...new Set((poolTotals ?? []).flatMap((level) => Object.keys(level.featPools)))].sort();
+  const poolNames = [
+    ...new Set([
+      ...(poolTotals ?? []).flatMap((level) => Object.keys(level.featPools)),
+      ...pools.filter((pool) => Object.values(pool.picks).some((count) => count > 0)).map((pool) => pool.name),
+    ]),
+  ].sort();
+  /** What the tab's picks change a pool's total by at a level (`name`'s, by then): their running difference. */
+  const poolChangeAt = (name: string, at: ClassLevelRow) =>
+    pools
+      .filter((pool) => pool.name === name)
+      .reduce((sum, pool) => {
+        const saved = savedPools.find((s) => s.aptitudeId === pool.aptitudeId)?.picks ?? {};
+        const upTo = levels.filter((level) => level.level <= at.level);
+        return sum + upTo.reduce((change, { id }) => change + (pool.picks[id] ?? 0) - (saved[id] ?? 0), 0);
+      }, 0);
 
   const body = buildProgressionBody(
     levels,
@@ -184,8 +207,15 @@ export function ClassProgressionSection({ rulesetId, classId, className, ruleset
   const renderCell = (level: ClassLevelRow, columnKey: string) => {
     if (columnKey === "level") return <ValueChip label={level.level} color="primary" />;
     if (columnKey.startsWith("pool:")) {
-      const total = poolTotals?.find((row) => row.id === level.id)?.featPools[columnKey.slice(5)];
-      return <Typography variant="body2">{total ?? <EmptyValue />}</Typography>;
+      const name = columnKey.slice(5);
+      const saved = poolTotals?.find((row) => row.id === level.id)?.featPools[name];
+      const change = poolChangeAt(name, level);
+      const total = change === 0 ? saved : (saved ?? 0) + change;
+      return (
+        <Typography variant="body2" sx={[change !== 0 && CHANGED_CELL_SX]}>
+          {total ?? <EmptyValue />}
+        </Typography>
+      );
     }
     if (columnKey === "special") {
       const granted = featuresAt(level.id);
@@ -210,18 +240,7 @@ export function ClassProgressionSection({ rulesetId, classId, className, ruleset
     const value = readEditedTrack(level, track.key, draft.edits);
     const changed = value !== readTrack(level, track.key);
     return (
-      <Typography
-        variant="body2"
-        sx={[
-          changed && {
-            fontWeight: 600,
-            color: "secondary.dark",
-            bgcolor: "action.selected",
-            px: 0.5,
-            borderRadius: 0.5,
-          },
-        ]}
-      >
+      <Typography variant="body2" sx={[changed && CHANGED_CELL_SX]}>
         {track.format(value)}
       </Typography>
     );

@@ -37,7 +37,11 @@ describe("A pasted spell table", () => {
   });
 
   test("keeps a spreadsheet's empty cells where they are", () => {
-    expect(parseSpellRows("4\t\t2\n\t3", false)).toEqual([{ cells: [4, null, 2] }, { cells: [null, 3] }]);
+    expect(parseSpellRows("4\t\t2\n\t3\n\t\n", false)).toEqual([
+      { cells: [4, null, 2] },
+      { cells: [null, 3] },
+      { cells: [null, null] },
+    ]);
   });
 
   test("lands its rows on the levels they name, or one a level from where it's pasted", () => {

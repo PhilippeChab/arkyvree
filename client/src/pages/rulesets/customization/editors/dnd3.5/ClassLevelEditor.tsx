@@ -60,7 +60,8 @@ export function ClassLevelEditor({
     entityId,
     followCopy,
     storeSaved: refetchSaved,
-    listKey: QUERY_KEYS.rulesets.classLevels(rulesetId, level.klassId),
+    // Its class's tabs, its levels' table among them, read the level
+    listKey: QUERY_KEYS.rulesets.classDetail(rulesetId, level.klassId),
     label: "Class level",
     saveFn: (data: ClassLevelFormData, updatedAt: string | undefined) =>
       parseResponse(
