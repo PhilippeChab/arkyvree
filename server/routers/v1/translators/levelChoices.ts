@@ -50,12 +50,14 @@ interface V1SkillChoice {
 
 /**
  * A pool's room at the level (a class's bonus feats, General, a spell list at a spell level), the picks so far that fit
- * in it counted in (`picked`), and the options that qualify for it.
+ * in it counted in (`picked`), and the options that qualify for it. A shared pool's room is one, which a feat or a spell
+ * fills: it shows as a feat slot and a spell slot both (`shared`).
  */
 interface V1Slot {
   count: number;
   options: { id: string; name: string }[];
   pool: { id: string; name: string };
+  shared: boolean;
 }
 
 /** The choices, as the levels' service answers them. */
@@ -101,7 +103,12 @@ function toPlannedLevel(level: PlannedLevel): V1PlannedLevel {
     feats: {
       granted: feats.autoGrantedFeats.map(toNamed),
       picked: toPicked(feats.fitted).map(({ id, poolId }) => ({ featId: id, poolId })),
-      slots: featSlots.map(({ options, pool, room }) => ({ count: room, options: options.map(toNamed), pool })),
+      slots: featSlots.map(({ options, pool, room, shared }) => ({
+        count: room,
+        options: options.map(toNamed),
+        pool,
+        shared,
+      })),
     },
     skills: {
       points: skills.skillPointsToSpend,
@@ -119,10 +126,11 @@ function toPlannedLevel(level: PlannedLevel): V1PlannedLevel {
     spells: {
       granted: powers.autoGrantedPowers.map(toNamed),
       picked: toPicked(powers.fitted).map(({ id, poolId }) => ({ poolId, spellId: id })),
-      slots: powerSlots.map(({ options, pool, powerLevel, room }) => ({
+      slots: powerSlots.map(({ options, pool, powerLevel, room, shared }) => ({
         count: room,
         options: options.map(toNamed),
         pool,
+        shared,
         spellLevel: powerLevel ?? null,
       })),
     },

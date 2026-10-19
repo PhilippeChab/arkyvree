@@ -6,11 +6,15 @@
 import type { OpenedPicker, PickFilters } from "@/engine/core/module/pickers.ts";
 import type { Klass } from "@/shared/relations.ts";
 
-/** A pool with room left at a level, and its picker: what fills the room. */
+/**
+ * A pool with room left at a level, and its picker: what fills the room. A shared pool's room is one, which a feat or a
+ * power fills: it opens as a feat pool and a power pool both (`shared`).
+ */
 interface OpenedPool<Option> {
   picker: OpenedPicker<PickFilters, { id: string }, Option>;
   pool: { id: string; name: string };
   room: number;
+  shared: boolean;
 }
 
 /**

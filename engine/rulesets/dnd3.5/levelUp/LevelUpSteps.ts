@@ -70,24 +70,6 @@ export default class LevelUpSteps extends LevelUpState {
   }
 
   /**
-   * The feats step of the step's level: the pools the character picks feats in with it, each with its room for the
-   * feats picked at it (`step.picks`), what of them fits (`fitted`), and its grants.
-   */
-  private describeFeatStep(step: LevelQuery) {
-    const { klassLevel, picks, pools } = this.buildPicked(step);
-    return { ...this.featStep(pools, [klassLevel.id]), fitted: picks.feats };
-  }
-
-  /**
-   * The powers step of the step's level: the pools the character picks powers in with it, each with its room for the
-   * powers picked at it (`step.picks`), what of them fits (`fitted`), and its grants.
-   */
-  private describePowerStep(step: LevelQuery) {
-    const { klassLevel, picks, pools } = this.buildPicked(step);
-    return { ...this.powerStep(pools, [klassLevel.id]), fitted: picks.powers };
-  }
-
-  /**
    * The skills step of the step's level: the points to spend, each skill's class status and what the form's points
    * (`step.picks.skills`) come to at the level, and the levels the character has with it, the planned ones before it
    * too (an edit's level takes the edited one's place). The level's points are all the character has left to spend.
@@ -139,6 +121,19 @@ export default class LevelUpSteps extends LevelUpState {
   }
 
   /**
+   * The feats and the powers steps of the step's level, from one build of the character with the picks made at it
+   * (`step.picks`): the pools the character picks in with it, each with its room for those picks, what of them fits
+   * (`fitted`), and its grants.
+   */
+  describePickSteps(step: LevelQuery) {
+    const { klassLevel, picks, pools } = this.buildPicked(step);
+    return {
+      feats: { ...this.featStep(pools, [klassLevel.id]), fitted: picks.feats },
+      powers: { ...this.powerStep(pools, [klassLevel.id]), fitted: picks.powers },
+    };
+  }
+
+  /**
    * The wizard's step `name` of the step's level, named for which it is: refused when 3.5 has no such step, or when it
    * reads the level's class (its skills, feats and powers) and the step names none.
    */
@@ -147,9 +142,9 @@ export default class LevelUpSteps extends LevelUpState {
       case "abilities":
         return { name, ...this.describeAbilityStep(step) };
       case "feats":
-        return { name, ...this.describeFeatStep(step) };
+        return { name, ...this.describePickSteps(step).feats };
       case "powers":
-        return { name, ...this.describePowerStep(step) };
+        return { name, ...this.describePickSteps(step).powers };
       case "skills":
         return { name, ...this.describeSkillStep(step) };
       default:

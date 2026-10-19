@@ -13,14 +13,11 @@ interface PickedSoFar {
   powers: PowerPick[];
 }
 
-/** The feats step's answer. */
-type FeatStep = Extract<Step, { featsToSelect: number }>;
+/** The feats and powers steps' answers, described together. */
+type PickSteps = ReturnType<LevelUpSteps["describePickSteps"]>;
 
 /** The level a step or a picker is for: the planned level's class and its next level. */
 type PlannedStep = LevelQuery & { klassId: string; level: number };
-
-/** The powers step's answer. */
-type PowerStep = Extract<Step, { powersToSelect: number }>;
 
 /** A step's answer, as `describeStep` gives it. */
 type Step = ReturnType<LevelUpSteps["describeStep"]>;
@@ -47,12 +44,13 @@ export default class LevelChoices extends LevelUpSteps {
   }
 
   /** A feat picker for each feat pool with room left at the level, with the feats and powers that fit so far. */
-  private openFeatPools(step: PlannedStep, feats: FeatStep, picks: PickedSoFar) {
+  private openFeatPools(step: PlannedStep, feats: PickSteps["feats"], picks: PickedSoFar) {
     const pools = Object.values(feats.aptitudePools).filter(({ available }) => available > 0);
     return pools.map((pool) => ({
       picker: new FeatPicker(this.view, this.character, this.pickQuery(step, pool.id, picks)),
       pool: { id: pool.id, name: pool.name },
       room: pool.available,
+      shared: pool.shared,
     }));
   }
 
@@ -60,7 +58,7 @@ export default class LevelChoices extends LevelUpSteps {
    * A power picker for each power pool with room left at the level, at each of its spell levels with room left when it
    * counts them by level, with the feats and powers that fit so far.
    */
-  private openPowerPools(step: PlannedStep, powers: PowerStep, picks: PickedSoFar) {
+  private openPowerPools(step: PlannedStep, powers: PickSteps["powers"], picks: PickedSoFar) {
     const rooms = Object.values(powers.aptitudePools)
       .filter(({ available }) => available > 0)
       .flatMap((pool): { pool: typeof pool; powerLevel?: number; room: number }[] =>
@@ -70,11 +68,13 @@ export default class LevelChoices extends LevelUpSteps {
               .map(([powerLevel, { available }]) => ({ pool, powerLevel: Number(powerLevel), room: available }))
           : [{ pool, room: pool.available }],
       );
+    // A power pool that doesn't count its powers by level is a shared one: a feat pool's room too
     return rooms.map(({ pool, powerLevel, room }) => ({
       picker: new PowerPicker(this.view, this.character, { ...this.pickQuery(step, pool.id, picks), powerLevel }),
       pool: { id: pool.id, name: pool.name },
       powerLevel,
       room,
+      shared: !pool.leveled,
     }));
   }
 
@@ -84,14 +84,14 @@ export default class LevelChoices extends LevelUpSteps {
   }
 
   /**
-   * The ability increases step of the level: refused when the query sends increases that aren't the level's, at a level
-   * that takes none or past what it takes, which the other steps and the pickers would build the character with.
+   * The ability increases step of the level: refused when the query sends increases that aren't the level's, as its save
+   * refuses them, which the other steps and the pickers would build the character with.
    */
-  private readAbilityStep(step: LevelQuery) {
+  private readAbilityStep(step: PlannedStep) {
     const abilities = this.narrowStep("abilities", step, (answer) => "isAvailable" in answer);
-    if (!step.abilityIncreases?.length) return abilities;
-    if (!abilities.isAvailable) throw new RulesError("invalid", "This level takes no ability increase");
-    if (!abilities.picked) throw new RulesError("invalid", "The ability increases aren't the level's");
+    // The levels before this one: the character's, and those planned before it
+    const levelsBefore = this.character.rows.levels.length + (step.planned?.klassLevelIds?.length ?? 0);
+    if (step.abilityIncreases?.length) this.checks.checkAbilityIncreases(levelsBefore, step.abilityIncreases);
     return abilities;
   }
 
@@ -123,8 +123,7 @@ export default class LevelChoices extends LevelUpSteps {
     const step = { ...query, klassId: klass.id, level: klass.nextLevel };
     const abilities = this.readAbilityStep(step);
     const skills = this.narrowStep("skills", step, (answer) => "skillPointsToSpend" in answer);
-    const feats = this.narrowStep("feats", step, (answer): answer is FeatStep => "featsToSelect" in answer);
-    const powers = this.narrowStep("powers", step, (answer): answer is PowerStep => "powersToSelect" in answer);
+    const { feats, powers } = this.describePickSteps(step);
     const picks = { feats: toPicks(feats.fitted, "featId"), powers: toPicks(powers.fitted, "powerId") };
     return {
       classPicker,
@@ -134,8 +133,8 @@ export default class LevelChoices extends LevelUpSteps {
         steps: {
           abilities,
           class: { id: klass.id, level: klass.nextLevel, name: klass.name },
-          feats,
-          powers,
+          feats: { name: "feats", ...feats },
+          powers: { name: "powers", ...powers },
           skills,
         },
       },

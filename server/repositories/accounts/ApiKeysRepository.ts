@@ -60,7 +60,7 @@ class ApiKeysRepository extends BaseRepository<typeof apiKeysInAccount> {
   async markUsed(db: Db, where: { id: string; since: string }) {
     await db
       .update(this.table)
-      .set({ lastUsedAt: new Date().toISOString() })
+      .set({ lastUsedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
       .where(
         and(eq(this.table.id, where.id), or(isNull(this.table.lastUsedAt), lt(this.table.lastUsedAt, where.since))),
       );

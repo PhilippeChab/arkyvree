@@ -45,7 +45,7 @@ describe("v1 level choices", () => {
     });
 
     const bonusFeats = level?.feats.slots.find(({ pool }) => pool.name === "Fighter Bonus Feat");
-    expect(bonusFeats?.count).toBe(1);
+    expect(bonusFeats).toMatchObject({ count: 1, shared: false });
     const options = bonusFeats?.options.map(({ name }) => name);
     expect(options).toContain("Exotic Weapon Proficiency: Bolas");
     // Improved Unarmed Strike is its prerequisite, which the fighter lacks
