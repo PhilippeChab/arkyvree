@@ -144,19 +144,23 @@ export function ClassProgressionSection({ rulesetId, classId, className, ruleset
       ...pools.filter((pool) => Object.values(pool.picks).some((count) => count > 0)).map((pool) => pool.name),
     ]),
   ].sort();
-  /** What the tab's picks change a pool's total by at a level (`name`'s, by then): their running difference. */
-  const poolChangeAt = (name: string, at: ClassLevelRow) =>
-    pools
-      .filter((pool) => pool.name === name)
-      .reduce((sum, pool) => {
-        const saved = savedPools.find((s) => s.aptitudeId === pool.aptitudeId)?.picks ?? {};
-        const upTo = levels.filter((level) => level.level <= at.level);
-        return sum + upTo.reduce((change, { id }) => change + (pool.picks[id] ?? 0) - (saved[id] ?? 0), 0);
-      }, 0);
+  // What the tab's picks change each pool's total by at each level (by its name, then the level's id): their running
+  // difference from the saved picks
+  const poolChanges = new Map<string, Map<string, number>>();
+  for (const pool of pools) {
+    const saved = savedPools.find((s) => s.aptitudeId === pool.aptitudeId)?.picks ?? {};
+    const byLevel = poolChanges.get(pool.name) ?? new Map<string, number>();
+    let change = 0;
+    for (const { id } of levels) {
+      change += (pool.picks[id] ?? 0) - (saved[id] ?? 0);
+      byLevel.set(id, (byLevel.get(id) ?? 0) + change);
+    }
+    poolChanges.set(pool.name, byLevel);
+  }
 
   const body = buildProgressionBody(
     levels,
-    saves.map(({ id }) => id),
+    rulesetSaves?.map(({ id }) => id),
     savedFeatures,
     savedPools,
     draft.edits,
@@ -196,6 +200,7 @@ export function ClassProgressionSection({ rulesetId, classId, className, ruleset
 
   const handleSave = () => save.mutate(body, { onSuccess: draft.discard });
 
+  const descriptionByFeat = new Map(levels.flatMap((level) => level.feats.map((feat) => [feat.id, feat.description])));
   const featuresAt = (levelId: string) => features.filter((row) => row.levelIds.includes(levelId));
   const columns = [
     { key: "level", label: "Level", width: "8%" },
@@ -209,7 +214,7 @@ export function ClassProgressionSection({ rulesetId, classId, className, ruleset
     if (columnKey.startsWith("pool:")) {
       const name = columnKey.slice(5);
       const saved = poolTotals?.find((row) => row.id === level.id)?.featPools[name];
-      const change = poolChangeAt(name, level);
+      const change = poolChanges.get(name)?.get(level.id) ?? 0;
       const total = change === 0 ? saved : (saved ?? 0) + change;
       return (
         <Typography variant="body2" sx={[change !== 0 && CHANGED_CELL_SX]}>
@@ -223,7 +228,14 @@ export function ClassProgressionSection({ rulesetId, classId, className, ruleset
       return granted.length > 0 ? (
         <Stack direction="row" spacing={0.5} useFlexGap sx={{ flexWrap: "wrap" }}>
           {granted.map((row) => (
-            <Tooltip key={row.key} title={row.aptitudeName ?? ""} placement="top" enterDelay={300}>
+            <Tooltip
+              describeChild
+              key={row.key}
+              title={descriptionByFeat.get(row.featId) || row.aptitudeName || ""}
+              placement="top"
+              enterDelay={300}
+              slotProps={{ tooltip: { sx: { maxWidth: 400 } } }}
+            >
               <ValueChip
                 color="default"
                 label={row.name.endsWith(suffix) ? row.name.slice(0, -suffix.length) : row.name}

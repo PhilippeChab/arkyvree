@@ -45,7 +45,7 @@ describe("A Progression tab's save", () => {
   });
 
   test("sends a level's own saves as they are while the ruleset's aren't read yet, never none", () => {
-    const body = buildProgressionBody(twoLevels(), [], [], [], { ...NO_EDITS, tracks: { bab: { l1: 0 } } });
+    const body = buildProgressionBody(twoLevels(), undefined, [], [], { ...NO_EDITS, tracks: { bab: { l1: 0 } } });
     expect(body.levels?.[0].saves).toEqual([{ saveId: "fort", base: 2 }]);
   });
 

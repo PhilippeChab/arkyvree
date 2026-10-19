@@ -120,6 +120,18 @@ describe("ClassProgressionService", () => {
     expect(known.get(3)!.spellsKnown).toMatchObject({ 0: 5, 1: "All" });
   });
 
+  test("refuses a spell list's picks as a pool's", async () => {
+    const { session, fork, klass, levelId } = await forkWithClass("Sorcerer");
+    const list = (await ClassProgressionService.getProgression(fork.id, klass.id)).spellList!;
+
+    await expectRefusedWith(
+      ClassProgressionService.updateProgression(session, fork.id, klass.id, {
+        pools: [{ aptitudeId: list.id, picks: [{ levelId: levelId(1), count: 1 }] }],
+      }),
+      400,
+    );
+  });
+
   test("moves a pool's picks between levels, and reads them back", async () => {
     const { session, fork, klass, levelId } = await forkWithClass("Wizard");
     const before = await ClassProgressionService.getProgression(fork.id, klass.id);

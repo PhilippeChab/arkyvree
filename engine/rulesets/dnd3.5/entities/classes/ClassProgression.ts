@@ -179,9 +179,16 @@ export default class ClassProgression {
     }));
   }
 
-  /** A pool's picks, each level's (`count`), as its own modifiers on the pool (`aptitudes.<pool>.allowed`). */
+  /**
+   * A pool's picks, each level's (`count`), as its own modifiers on the pool (`aptitudes.<pool>.allowed`): refused for
+   * a class's spell list (any class's, this one's before its levels give it slots), which its spell tables write.
+   */
   private planPool(working: Map<string, LevelModifier[]>, { aptitudeId, picks }: PoolPicks) {
-    const target = `aptitudes.${stripSeparators(this.ids.find("aptitudes", aptitudeId).name)}.allowed`;
+    const pool = this.ids.find("aptitudes", aptitudeId);
+    const notPool = `${pool.name} is a spell list, not a feat pool`;
+    const lists = SpellLists.of(this.rulesetData).classListIds;
+    if (lists.has(pool.id) || pool.id === this.spellList?.id) throw new RulesError("invalid", notPool);
+    const target = `aptitudes.${stripSeparators(pool.name)}.allowed`;
     for (const { count, levelId } of picks) {
       const isOwn = (modifier: LevelModifier) => modifier.target === target && isPlainAdd(modifier);
       replaceOwn(working, this.levels.find(levelId).id, isOwn, count > 0 ? [planned(target, "add", count)] : []);
@@ -210,13 +217,13 @@ export default class ClassProgression {
       const isOwn = (modifier: LevelModifier) =>
         modifier.target === target && (isPlainAdd(modifier) || (field === "allowed" && isPlainAll(modifier)));
       const kept = this.spellTotals(field, working, (modifier) => !isOwn(modifier));
-      const wanted = normalizedColumn(
-        levels.map(({ id }) => {
-          const count = given.get(id)?.[spellLevel];
-          if (count === undefined) return totals.get(id)?.[spellLevel];
-          return count === "all" ? "All" : (count ?? undefined);
-        }),
-      );
+      const asked = levels.map(({ id }): SpellTotal => {
+        const count = given.get(id)?.[spellLevel];
+        if (count === undefined) return totals.get(id)?.[spellLevel];
+        return count === "all" ? "All" : (count ?? undefined);
+      });
+      // Every spell of a spell level, once known, stays known: a count after it is all of them too
+      const wanted = normalizedColumn(asked);
       const columnModifiers = planColumn(
         target,
         wanted,

@@ -68,8 +68,9 @@ export function SpellTableGrid({
   };
 
   const handlePaste = (event: ClipboardEvent<HTMLInputElement>, row: number, column: number) => {
+    // A block, or a row's cells (a PDF's, by spaces), fills from the cell; a value alone is the cell's own text
     const text = event.clipboardData.getData("text/plain");
-    if (!/[\t\n]/.test(text.trim())) return;
+    if (readOnly || !/[\s,;|]/.test(text.trim())) return;
     event.preventDefault();
     onCells(placeSpellRows(parseSpellRows(text, allowsAll), levels, row, column, columns));
   };

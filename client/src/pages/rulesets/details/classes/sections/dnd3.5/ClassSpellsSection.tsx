@@ -97,13 +97,21 @@ export function ClassSpellsSection({ rulesetId, classId, className, ruleset }: C
   const savedCell = (which: SpellTable, levelId: string, spellLevel: number) =>
     toCell(totalsById[which].get(levelId)?.[spellLevel]);
   // An emptied cell's edit is `null`, which holds over the saved value as much as a count does
-  const cellOf = (which: SpellTable, levelId: string, spellLevel: number) => {
+  const editedCell = (which: SpellTable, levelId: string, spellLevel: number) => {
     const row = edits[which][levelId];
     return row && spellLevel in row ? row[spellLevel] : savedCell(which, levelId, spellLevel);
   };
+  // Every spell known, once a level knows them all, stays known: the levels after it know them all too
+  const cellOf = (which: SpellTable, levelId: string, spellLevel: number): SpellCell => {
+    const cell = editedCell(which, levelId, spellLevel);
+    if (which === "perDay" || cell === "all") return cell;
+    const index = levels.findIndex((level) => level.id === levelId);
+    const known = levels.slice(0, index).some((level) => editedCell(which, level.id, spellLevel) === "all");
+    return known ? "all" : cell;
+  };
   const changedCells = (which: SpellTable) =>
-    Object.entries(edits[which]).flatMap(([levelId, cells]) =>
-      Object.entries(cells).filter(([spellLevel, cell]) => cell !== savedCell(which, levelId, Number(spellLevel))),
+    levels.flatMap(({ id }) =>
+      SPELL_LEVELS.filter((spellLevel) => cellOf(which, id, spellLevel) !== savedCell(which, id, spellLevel)),
     ).length;
 
   const setCells = (which: SpellTable, cells: PlacedCell[]) =>
@@ -138,6 +146,15 @@ export function ClassSpellsSection({ rulesetId, classId, className, ruleset }: C
       ),
     );
   };
+
+  const changes = editable
+    ? (["perDay", "known"] as const).flatMap((which) => {
+        const count = changedCells(which);
+        return count > 0
+          ? [{ key: which, label: `${TABLE_LABELS[which]}: ${count} ${count === 1 ? "cell" : "cells"}` }]
+          : [];
+      })
+    : [];
 
   const rowsBody = (which: SpellTable) =>
     levels.flatMap(({ id }) =>
@@ -257,12 +274,7 @@ export function ClassSpellsSection({ rulesetId, classId, className, ruleset }: C
       </Panel>
       <ProgressionSaveBar
         what="Spells"
-        changes={(["perDay", "known"] as const).flatMap((which) => {
-          const count = changedCells(which);
-          return count > 0
-            ? [{ key: which, label: `${TABLE_LABELS[which]}: ${count} ${count === 1 ? "cell" : "cells"}` }]
-            : [];
-        })}
+        changes={changes}
         onDiscard={() => setEdits(() => NO_SPELL_EDITS)}
         onSave={handleSave}
         pending={save.isPending}

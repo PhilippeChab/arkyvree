@@ -49,10 +49,13 @@ function sameLevels(a: readonly string[], b: readonly string[]) {
   return a.length === b.length && a.every((id) => b.includes(id));
 }
 
-/** The save a tab's edits make (`edits`, over the class's `levels`, `features` and `pools` as saved). */
+/**
+ * The save a tab's edits make (`edits`, over the class's `levels`, `features` and `pools` as saved), each level's
+ * with the ruleset's saves (`saveIds`: none while they load, the level's own then, never an empty list).
+ */
 export function buildProgressionBody(
   levels: readonly ClassLevelRow[],
-  saveIds: readonly string[],
+  saveIds: readonly string[] | undefined,
   features: readonly FeatureRow[],
   pools: readonly PoolRow[],
   edits: ProgressionEdits,
@@ -66,7 +69,9 @@ export function buildProgressionBody(
   const freeOf = (row: FeatureRow, level: ClassLevelRow) =>
     (grantOf(row, level) ?? levels.map((other) => grantOf(row, other)).find(Boolean))?.free ?? true;
   const levelEdits = levels.flatMap((level) => {
-    const keys: TrackKey[] = ["bab", "skills", ...saveIds.map((id): TrackKey => `save:${id}`)];
+    // The ruleset's saves, as a level's form sends them; until they're read, the level's own
+    const levelSaveIds = saveIds ?? level.saves.map((save) => save.saveId);
+    const keys: TrackKey[] = ["bab", "skills", ...levelSaveIds.map((id): TrackKey => `save:${id}`)];
     const tracksChanged = keys.some((key) => valueOf(level, key) !== readTrack(level, key));
     const granted = rows.filter((row) => levelsOf(row).includes(level.id));
     const featsChanged = !sameLevels(
@@ -74,8 +79,6 @@ export function buildProgressionBody(
       features.filter((row) => row.levelIds.includes(level.id)).map((row) => row.key),
     );
     if (!tracksChanged && !featsChanged) return [];
-    // Every save the level has a base for, and the ruleset's: none loaded yet sends the level's own as they are
-    const levelSaveIds = [...new Set([...level.saves.map((save) => save.saveId), ...saveIds])];
     return [
       {
         levelId: level.id,
