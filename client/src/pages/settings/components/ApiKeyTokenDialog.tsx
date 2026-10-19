@@ -36,7 +36,8 @@ export function ApiKeyTokenDialog({ apiKey, open, onClose, onExited }: ApiKeyTok
   };
 
   return (
-    <Modal open={open} onClose={onClose} slotProps={{ transition: { onExited } }}>
+    // Closed by its Close alone: a stray click or Escape would lose the token, which the app keeps no copy of
+    <Modal open={open} slotProps={{ transition: { onExited } }}>
       <DialogTitle>API Key Created</DialogTitle>
       <DialogContent>
         <Stack spacing={2} sx={{ pt: 1 }}>

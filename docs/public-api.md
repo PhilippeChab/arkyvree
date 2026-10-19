@@ -20,9 +20,10 @@ answers in shapes of its own, which stay fixed.
 - A key acts as its user: `requestSession` is `{ userId }`, the `Session` the services read, so a key sees and
   changes only what its user can, by the checks the services already make. A session's cookie signs in nothing under
   `/v1`.
-- Its requests are counted per IP before the key is looked up (`apiClientRateLimit`: 600 a minute), so a request with
-  a wrong key or none is limited too, then per key (`apiKeyRateLimit`: 120 a minute); a character's level choices, which
-  build the character once for each step and pool they read, apart (`levelChoicesRateLimit`: 20 a minute).
+- Its refused requests are counted per IP before the key is looked up (`apiClientRateLimit`: 120 a minute), so a
+  request with a wrong key or none is limited too, while many users' keys behind one IP run on their own limits; its
+  requests are counted per key (`apiKeyRateLimit`: 120 a minute), and a character's level choices, which read every
+  option of each pool, apart (`levelChoicesRateLimit`: 20 a minute).
 - A ruleset is read as the app reads it: any ruleset by its id, a private one too, as `/api` answers it to any signed-in
   user. The lists (`GET /v1/rulesets`) list what the user's scope does.
 
@@ -70,6 +71,11 @@ A page answers `{ items, page, nextPage }`, `nextPage` null on the last. An erro
   `abilityIncreases=abilityId:amount;…`, `skillPoints=skillId:points,…`, `feats=featId:poolId,…`,
   `spells=spellId:poolId,…`. A slot's `count` is its room at the level, the picks so far counted in it, and `picked`
   lists the picks that fit, a pick past its pool's room left out.
+
+The engine opens the choices whole, in one operation (`levelUp().openLevelChoices`): the class picker, the planned
+level's steps, and a picker for each pool with room left, which checks its options against the character with the picks
+that fit. The levels' service (`CharacterLevelsService.getLevelChoices`) reads the character once, asks it, and reads
+each picker's options, every page of them.
 
 The level is then saved whole, as the app saves one: its class, hit points, ability increases, skills, feats and
 spells (a later stage's route).

@@ -4,7 +4,7 @@
  */
 
 import type { AbilityIncrease } from "@/engine/index.ts";
-import type { LevelChoicesQuery, readLevelChoices } from "@/server/routers/v1/characters/levelChoices.ts";
+import type { CharacterLevelsService, StepQuery } from "@/server/services/characters/levels/index.ts";
 
 /** A class the character can take a level in next: that level, and whether it qualifies for it. */
 interface V1ClassChoice {
@@ -58,10 +58,10 @@ interface V1Slot {
   pool: { id: string; name: string };
 }
 
-/** The choices, as the level-up wizard's services answer them. */
-type LevelChoices = Awaited<ReturnType<typeof readLevelChoices>>;
+/** The choices, as the levels' service answers them. */
+type LevelChoices = Awaited<ReturnType<typeof CharacterLevelsService.getLevelChoices>>;
 
-/** The planned level's choices, as the level-up wizard's services answer them. */
+/** The planned level's choices, as the levels' service answers them. */
 type PlannedLevel = NonNullable<LevelChoices["level"]>;
 
 /** A character's choices at its next level, as v1 answers them. */
@@ -90,22 +90,19 @@ function toPicked(fitted: Record<string, string[]>) {
 }
 
 /** The planned level's offer, step by step. */
-function toPlannedLevel({ abilities, class: klass, feats, skills, spells }: PlannedLevel): V1PlannedLevel {
+function toPlannedLevel(level: PlannedLevel): V1PlannedLevel {
+  const { abilities, class: klass, featSlots, feats, powerSlots, powers, skills } = level;
   return {
     abilityIncrease: {
       abilities: abilities.attributes.map(({ abilityId, name, total }) => ({ id: abilityId, name, score: total })),
       due: abilities.isAvailable,
       picked: abilities.picked,
     },
-    class: { id: klass.id, level: klass.nextLevel, name: klass.name },
+    class: klass,
     feats: {
-      granted: feats.granted.map(toNamed),
+      granted: feats.autoGrantedFeats.map(toNamed),
       picked: toPicked(feats.fitted).map(({ id, poolId }) => ({ featId: id, poolId })),
-      slots: feats.slots.map(({ options, pool }) => ({
-        count: pool.available,
-        options: options.map(toNamed),
-        pool: toNamed(pool),
-      })),
+      slots: featSlots.map(({ options, pool, room }) => ({ count: room, options: options.map(toNamed), pool })),
     },
     skills: {
       points: skills.skillPointsToSpend,
@@ -121,12 +118,12 @@ function toPlannedLevel({ abilities, class: klass, feats, skills, spells }: Plan
       })),
     },
     spells: {
-      granted: spells.granted.map(toNamed),
-      picked: toPicked(spells.fitted).map(({ id, poolId }) => ({ poolId, spellId: id })),
-      slots: spells.slots.map(({ available, options, pool, powerLevel }) => ({
-        count: available,
+      granted: powers.autoGrantedPowers.map(toNamed),
+      picked: toPicked(powers.fitted).map(({ id, poolId }) => ({ poolId, spellId: id })),
+      slots: powerSlots.map(({ options, pool, powerLevel, room }) => ({
+        count: room,
         options: options.map(toNamed),
-        pool: toNamed(pool),
+        pool,
         spellLevel: powerLevel ?? null,
       })),
     },
@@ -134,7 +131,7 @@ function toPlannedLevel({ abilities, class: klass, feats, skills, spells }: Plan
 }
 
 /** A v1 request for a character's choices, as the level-up wizard's services take it: its spells are its powers. */
-export function toLevelChoicesQuery({ feats, spells, ...query }: V1LevelChoicesQuery): LevelChoicesQuery {
+export function toLevelChoicesQuery({ feats, spells, ...query }: V1LevelChoicesQuery): StepQuery {
   return {
     ...query,
     featPicks: feats,

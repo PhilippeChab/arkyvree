@@ -6,8 +6,7 @@ import { buildPickPairsSchema } from "@/server/routers/api/schemaBuilders.ts";
 import { idParam, increaseList, limit, page, skillPoints } from "@/server/routers/api/validation.ts";
 import { V1 } from "@/server/routers/v1/translators/V1.ts";
 import { CharactersService } from "@/server/services/characters/index.ts";
-
-import { readLevelChoices } from "./levelChoices.ts";
+import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
 
 /** The key's user's characters: a page of them, one's sheet, and its choices at its next level. */
 export default new Hono<ApiKeyContext>()
@@ -39,7 +38,11 @@ export default new Hono<ApiKeyContext>()
     async (c) => {
       const { id } = c.req.valid("param");
       const query = c.req.valid("query");
-      const choices = await readLevelChoices(c.var.requestSession, id, V1.levelChoicesQuery(query));
+      const choices = await CharacterLevelsService.getLevelChoices(
+        c.var.requestSession,
+        id,
+        V1.levelChoicesQuery(query),
+      );
       return c.json(V1.levelChoices(choices), 200);
     },
   );

@@ -73,6 +73,7 @@ export {
   type LevelUpRequest,
   type LevelWrites,
   type NewBondedCreature,
+  type OpenedLevelChoices,
   type PickQuery,
   type PlannedSoFar,
   type PowerPick,

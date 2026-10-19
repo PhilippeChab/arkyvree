@@ -1,7 +1,8 @@
 /**
- * A character's levels: the level-up wizard's steps (`Steps`), pickers (`Pickers`) and preview, a saved level's
- * selections, and a level's save, edit and removal. Each reads the character's rows and asks the engine, which answers
- * by the character's ruleset; a save writes what the engine plans, with what the character's bonded creatures become.
+ * A character's levels: the level-up wizard's steps (`Steps`), pickers (`Pickers`) and preview, a level's choices read
+ * whole (`Choices`), a saved level's selections, and a level's save, edit and removal. Each reads the character's rows
+ * and asks the engine, which answers by the character's ruleset; a save writes what the engine plans, with what the
+ * character's bonded creatures become.
  */
 
 import { getTableName } from "drizzle-orm";
@@ -26,11 +27,12 @@ import { getEditableCharacter, withEditableCharacter } from "@/server/services/c
 import type { Session } from "@/shared/relations.ts";
 
 import { writeBondedCreatures } from "./bondedWrites.ts";
+import { Choices } from "./concerns/Choices.ts";
 import { Pickers } from "./concerns/Pickers.ts";
 import { Steps } from "./concerns/Steps.ts";
 import { createLevelRows } from "./levelRows.ts";
 
-class CharacterLevelsService extends include(Object, Pickers, Steps) {
+class CharacterLevelsService extends include(Object, Choices, Pickers, Steps) {
   /** Deletes a level's rows in the tables under it, which an edit writes again. */
   private async deleteLevelRows(tx: Db, characterLevelId: string) {
     await CharacterLevelAbilityIncreases.delete(tx, { characterLevelId });

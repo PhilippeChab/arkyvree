@@ -49,7 +49,7 @@ export function CreateApiKeyDialog({ open, onClose, onCreated, onExited }: Creat
       pending={createMutation.isPending}
     >
       <DialogContentText>
-        A key acts as you on the public API: it reads and changes what you can. Name it for what will use it.
+        A key acts as you on the public API: it reads what you can. Name it for what will use it.
       </DialogContentText>
       <FormTextField
         control={form.control}

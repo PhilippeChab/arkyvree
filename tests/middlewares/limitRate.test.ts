@@ -110,6 +110,22 @@ describe("limitRate", () => {
     });
   });
 
+  describe("of refused requests alone", () => {
+    test("counts a client's refused requests, not those answered", async () => {
+      const app = new Hono()
+        .use(limitRate({ windowMs: 60_000, limit: 1, refusedOnly: true }, true))
+        .get("/ok", (c) => c.text("ok"))
+        .get("/refused", (c) => c.text("no", 401))
+        .onError((err, c) => {
+          const [error, code] = toJson(err);
+          return c.json(error, code);
+        });
+      for (let i = 0; i < 3; i++) expect((await app.request("/ok", from("10.0.0.7"))).status).toBe(200);
+      expect((await app.request("/refused", from("10.0.0.7"))).status).toBe(401);
+      await expectStatus(app.request("/ok", from("10.0.0.7")), 429);
+    });
+  });
+
   describe("per API key", () => {
     test("refuses a key past its limit from any address, and counts each key apart", async () => {
       const app = limitedPerApiKey();

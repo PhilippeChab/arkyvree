@@ -4,6 +4,7 @@ import type CharacterDescription from "./characters/description/CharacterDescrip
 import type InventoryEntries from "./characters/inventory/InventoryEntries.ts";
 import type CharacterSheet from "./characters/sheet/CharacterSheet.tsx";
 import type Dnd35LevelSelections from "./levelUp/Dnd35LevelSelections.ts";
+import type LevelChoices from "./levelUp/LevelChoices.ts";
 import type LevelUpPreview from "./levelUp/LevelUpPreview.ts";
 import type LevelUpSteps from "./levelUp/LevelUpSteps.ts";
 import type ClassPicker from "./pickers/ClassPicker.ts";
@@ -16,7 +17,7 @@ type DetailsOf<P> = P extends Picker<infer _Row, infer Details> ? Details : neve
 
 /**
  * What the 3.5 rules describe in their own shape: the sheets, an inventory entry's placement, the level-up wizard's
- * pages, the pickers' options.
+ * pages, a planned level's steps as a character's choices at its next level describe them, the pickers' options.
  */
 export interface Dnd35Descriptions {
   classOption: DetailsOf<ClassPicker>;
@@ -25,6 +26,7 @@ export interface Dnd35Descriptions {
   inventoryEntry: ReturnType<typeof InventoryEntries.describeInventoryEntry>;
   levelSelections: ReturnType<Dnd35LevelSelections["describeLevel"]>;
   partialSheet: ReturnType<typeof CharacterDescription.describePartial>;
+  plannedLevel: NonNullable<ReturnType<LevelChoices["openLevelChoices"]>["level"]>["steps"];
   powerOption: DetailsOf<PowerPicker>;
   preview: ReturnType<LevelUpPreview["describePreview"]>;
   raceOption: DetailsOf<RacePicker>;

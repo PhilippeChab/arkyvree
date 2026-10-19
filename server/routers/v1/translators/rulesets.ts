@@ -90,22 +90,6 @@ function toPage<T, R>(
   return { items: items.map(toItem), nextPage: nextPage ?? null, page };
 }
 
-/** A ruleset, in a list or on its own, as v1 answers it. */
-function toRuleset(ruleset: Ruleset | RulesetListItem): V1Ruleset {
-  return {
-    baseRules: ruleset.baseRules,
-    description: ruleset.description,
-    extensionIds: ruleset.extensionRulesetIds,
-    id: ruleset.id,
-    kind: ruleset.kind,
-    name: ruleset.name,
-    parentId: ruleset.rulesetId,
-    private: ruleset.private,
-    status: ruleset.status,
-    system: ruleset.system,
-  };
-}
-
 /** A page of a ruleset's classes. */
 export function toV1Classes(page: PageOf<typeof ClassesService.getClasses>) {
   return toPage(page, ({ description, hd, id, kind, name }): V1Class => ({
@@ -144,14 +128,25 @@ export function toV1Races(page: PageOf<typeof RacesService.getRaces>) {
   }));
 }
 
-/** A ruleset as v1 answers it. */
-export function toV1Ruleset(ruleset: Ruleset) {
-  return toRuleset(ruleset);
+/** A ruleset, in a list or on its own, as v1 answers it. */
+export function toV1Ruleset(ruleset: Ruleset | RulesetListItem): V1Ruleset {
+  return {
+    baseRules: ruleset.baseRules,
+    description: ruleset.description,
+    extensionIds: ruleset.extensionRulesetIds,
+    id: ruleset.id,
+    kind: ruleset.kind,
+    name: ruleset.name,
+    parentId: ruleset.rulesetId,
+    private: ruleset.private,
+    status: ruleset.status,
+    system: ruleset.system,
+  };
 }
 
 /** A page of rulesets. */
 export function toV1Rulesets(page: PageOf<typeof RulesetsService.getRulesets>) {
-  return toPage(page, toRuleset);
+  return toPage(page, toV1Ruleset);
 }
 
 /** A page of a ruleset's skills. */
