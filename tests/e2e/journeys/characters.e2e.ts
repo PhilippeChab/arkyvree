@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { expect, type Page } from "@playwright/test";
 
 import { test } from "@/tests/e2e/fixtures.ts";
-import { addFirstLevel, createCharacter, openCreateChoice } from "@/tests/e2e/support/characters.ts";
+import { addFirstLevel, createCharacter } from "@/tests/e2e/support/characters.ts";
 import { apiResponse, filterList, openActionsMenu, selectOption, uniqueName } from "@/tests/e2e/support/page.ts";
 import { fillStrengthModifier, forkCoreRuleset } from "@/tests/e2e/support/rulesets.ts";
 import { openContext, signedInPage, signIn } from "@/tests/e2e/support/signIn.ts";
@@ -27,7 +27,7 @@ test.describe("Characters", () => {
   test("creating one needs a name, a ruleset and a race", async ({ page, user }) => {
     await signIn(page, user.email, user.password);
     await page.goto("/characters");
-    await openCreateChoice(page, "New Character");
+    await page.getByRole("button", { name: "Create Character" }).click();
     const dialog = page.getByRole("dialog", { name: "Create New Character" });
     const submit = dialog.getByRole("button", { name: /^Create$/ });
 
@@ -73,7 +73,7 @@ test.describe("Characters", () => {
   test("importing one reads what the file is, then imports it into a ruleset that takes it", async ({ page, user }) => {
     await signIn(page, user.email, user.password);
     await page.goto("/characters");
-    await openCreateChoice(page, "Import Character");
+    await page.getByRole("button", { name: "import one from a file" }).first().click();
     const dialog = page.getByRole("dialog", { name: "Import Character" });
     await dialog
       .locator('input[type="file"]')
@@ -95,7 +95,7 @@ test.describe("Characters", () => {
     const rulesetName = uniqueName("Own Rules");
     await forkCoreRuleset(page, rulesetName);
     await page.goto("/characters");
-    await openCreateChoice(page, "New Character");
+    await page.getByRole("button", { name: "Create Character" }).click();
     const dialog = page.getByRole("dialog", { name: "Create New Character" });
 
     await expect(dialog.getByRole("combobox", { name: "Ruleset" })).toHaveValue(rulesetName, { timeout: 10_000 });
@@ -114,7 +114,7 @@ test.describe("Characters", () => {
       await route.continue();
     });
     await page.goto("/characters");
-    await openCreateChoice(page, "New Character");
+    await page.getByRole("button", { name: "Create Character" }).click();
     const dialog = page.getByRole("dialog", { name: "Create New Character" });
     await selectOption(page, "Ruleset", "Core SRD 3.5");
 

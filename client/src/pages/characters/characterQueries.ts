@@ -1,6 +1,6 @@
 /**
- * Queries of the character pages: the races a new character can take, how it sets its ability scores, and the programs
- * a ruleset imports characters from.
+ * Queries of the character pages: the races a new character can take, and how it sets its ability scores; and what an
+ * import answers.
  */
 
 import { infiniteQueryOptions, queryOptions, skipToken } from "@tanstack/react-query";

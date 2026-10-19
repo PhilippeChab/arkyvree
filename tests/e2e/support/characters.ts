@@ -66,7 +66,7 @@ export async function createCharacter(page: Page, name: string, scores: Record<s
 /** Opens the Create Character dialog and fills it for a D&D 3.5 character named `name`, without submitting it. */
 export async function fillNewCharacter(page: Page, name: string) {
   await page.goto("/characters");
-  await openCreateChoice(page, "New Character");
+  await page.getByRole("button", { name: "Create Character" }).click();
   const dialog = page.locator('[role="dialog"][aria-modal="true"]');
   await dialog.locator('input[name="name"]').fill(name);
   // The race select waits for the core rules' races: listen before picking them (the dialog may start on the user's
@@ -87,15 +87,6 @@ export async function fillNewCharacter(page: Page, name: string) {
   await selectOption(page, "Alignment");
   await selectOption(page, "Gender");
   return dialog;
-}
-
-/**
- * Opens one of the ways the characters list creates a character: a new one built in the app (its page's Create
- * Character), or one imported from a file (the link beside it).
- */
-export async function openCreateChoice(page: Page, choice: "Import Character" | "New Character") {
-  if (choice === "New Character") await page.getByRole("button", { name: "Create Character" }).click();
-  else await page.getByRole("button", { name: "import one from a file" }).first().click();
 }
 
 /** Opens a character shared with the user, from the Shared view of their characters. */
