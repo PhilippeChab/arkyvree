@@ -25,10 +25,11 @@ import type { Character, Session } from "@/shared/relations.ts";
 import { describeCharacterCards } from "./characterCards.ts";
 import { readBondedInputs, readCharacterInput } from "./characterInputs.ts";
 import { Archives } from "./concerns/Archives.ts";
+import { Imports } from "./concerns/Imports.ts";
 import { findEditableCharacterOrBonded, getEditableCharacter } from "./editableCharacter.ts";
 import { enqueueCharacterPdf, findExportableCharacter } from "./pdf.ts";
 
-class CharactersService extends include(Object, Archives) {
+class CharactersService extends include(Object, Archives, Imports) {
   /**
    * Replace a character's picked languages in-place, as the engine plans them from its rows (`planLanguages`: each the
    * view's language, a copy's when the ruleset copied one; those its race and classes give it left out; refused when

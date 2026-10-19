@@ -43,6 +43,16 @@ export {
   type PropertyValue,
 } from "./parts/entities/index.ts";
 export {
+  type CharacterImporter,
+  type ImportDetection,
+  type ImportedRow,
+  type ImportOwner,
+  type ImportPlan,
+  type ImportReportDescription,
+  type ImportSource,
+  ImportsPart,
+} from "./parts/imports/index.ts";
+export {
   type AbilityIncrease,
   type BondedCreaturesPlan,
   type BondedLevelsPlan,

@@ -9,7 +9,7 @@ import {
   type LevelsPlan,
   type LevelUpRequest,
 } from "@/engine/core/module/index.ts";
-import RulesError from "@/engine/core/RulesError.ts";
+import RulesError, { type RulesIssue } from "@/engine/core/RulesError.ts";
 
 import LevelUpBase from "./LevelUpBase.ts";
 import PicksDistribution from "./PicksDistribution.ts";
@@ -76,6 +76,53 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
         powers: keep(level.picks.powers, left.powers),
       },
     }));
+  }
+
+  /** What planned levels write: each its row's columns (its class level and hit points) and its rows under it. */
+  private levelWritesOf(planned: PlannedLevel[]): LevelsPlan["levels"] {
+    return planned.map(({ abilityIncreases, hp, klassLevelId, picks: levelPicks }) => ({
+      columns: { hp, klassLevelId },
+      rows: { abilityIncreases, ...this.toPickRows(levelPicks) },
+    }));
+  }
+
+  /**
+   * A level-up's levels (`request`) checked, up to the character with them (`saved`): each level's class level, ability
+   * increases, hit points and picks (`planned`), its picks refused when the character holds them already or they
+   * overfill a pool, forced or not; the character's own issues aside, which its callers read.
+   */
+  private planSaved({ levels, picks }: LevelUpRequest) {
+    const { rows } = this.character;
+    const klassLevelEntries = this.rules.getPlannedKlassLevels(this.view, this.character, levels);
+    // Every selection is linked to its pool before a character is built with it
+    this.checks.checkLinks(picks.feats, picks.powers);
+    const distributed = this.rules.distributePicks(this.view, this.character, klassLevelEntries, picks);
+
+    // Each level sees the saved ones and those planned before it
+    const otherLevels: { klassLevelId: string }[] = [...rows.levels];
+    const planned: PlannedLevel[] = [];
+    for (const [i, { klass, klassLevel }] of klassLevelEntries.entries()) {
+      const { hp, abilityIncreases } = levels[i];
+      const levelPicks = distributed[i];
+      // A refusal names the character's level it's about, after its saved levels and those planned before it
+      const label = `Level ${rows.levels.length + i + 1}: `;
+      if (otherLevels.some((other) => other.klassLevelId === klassLevel.id))
+        throw new RulesError("invalid", `${label}This level has already been finalized`);
+      this.checks.checkAbilityIncreases(rows.levels.length + i, abilityIncreases, label);
+      this.checks.checkLevel({ klass, hp, ...levelPicks });
+      planned.push({ abilityIncreases, hp, klassLevelId: klassLevel.id, picks: levelPicks });
+      otherLevels.push({ klassLevelId: klassLevel.id });
+    }
+    // A pick the character holds with every planned level, a later one too, the plan picks before, or the plan's other
+    // picks give, is refused
+    const holding = this.buildOnce((kept) =>
+      this.build(this.projectLevelRequests(this.keepPlannedPicks(planned, kept))),
+    );
+    this.checks.checkPicksNotHeld(picks, holding);
+
+    const saved = holding(picks);
+    this.refuseOverfull(saved, picks);
+    return { planned, saved };
   }
 
   /**
@@ -174,44 +221,19 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
    * character with them with what it fails, unless `force`d. Each level's writes are its row's columns (its class level and hit points) and its rows under it
    * (its ability increases and picks).
    */
-  planLevels(bonded: CharacterInput[], { levels, picks }: LevelUpRequest, force: boolean): LevelsPlan {
-    const { rows } = this.character;
-    const klassLevelEntries = this.rules.getPlannedKlassLevels(this.view, this.character, levels);
-    // Every selection is linked to its pool before a character is built with it
-    this.checks.checkLinks(picks.feats, picks.powers);
-    const distributed = this.rules.distributePicks(this.view, this.character, klassLevelEntries, picks);
-
-    // Each level sees the saved ones and those planned before it
-    const otherLevels: { klassLevelId: string }[] = [...rows.levels];
-    const planned: PlannedLevel[] = [];
-    for (const [i, { klass, klassLevel }] of klassLevelEntries.entries()) {
-      const { hp, abilityIncreases } = levels[i];
-      const levelPicks = distributed[i];
-      // A refusal names the character's level it's about, after its saved levels and those planned before it
-      const label = `Level ${rows.levels.length + i + 1}: `;
-      if (otherLevels.some((other) => other.klassLevelId === klassLevel.id))
-        throw new RulesError("invalid", `${label}This level has already been finalized`);
-      this.checks.checkAbilityIncreases(rows.levels.length + i, abilityIncreases, label);
-      this.checks.checkLevel({ klass, hp, ...levelPicks });
-      planned.push({ abilityIncreases, hp, klassLevelId: klassLevel.id, picks: levelPicks });
-      otherLevels.push({ klassLevelId: klassLevel.id });
-    }
-    // A pick the character holds with every planned level, a later one too, the plan picks before, or the plan's other
-    // picks give, is refused
-    const holding = this.buildOnce((kept) =>
-      this.build(this.projectLevelRequests(this.keepPlannedPicks(planned, kept))),
-    );
-    this.checks.checkPicksNotHeld(picks, holding);
-
-    const saved = holding(picks);
-    this.refuseOverfull(saved, picks);
+  planLevels(bonded: CharacterInput[], request: LevelUpRequest, force: boolean): LevelsPlan {
+    const { planned, saved } = this.planSaved(request);
     if (!force) RulesError.refuseIssues(saved.validate().issues);
-    return {
-      ...this.planBondedOf(saved, bonded),
-      levels: planned.map(({ abilityIncreases, hp, klassLevelId, picks: levelPicks }) => ({
-        columns: { hp, klassLevelId },
-        rows: { abilityIncreases, ...this.toPickRows(levelPicks) },
-      })),
-    };
+    return { ...this.planBondedOf(saved, bonded), levels: this.levelWritesOf(planned) };
+  }
+
+  /**
+   * The levels a level-up writes, saved forced (an import's, one level at a time, whose bonded creatures its caller
+   * plans once they're all in), with what the character with them fails of what an unforced save refuses (`issues`,
+   * none when it passes): what's refused even forced refuses them.
+   */
+  planLevelsForced(request: LevelUpRequest): Pick<LevelsPlan, "levels"> & { issues: RulesIssue[] } {
+    const { planned, saved } = this.planSaved(request);
+    return { issues: saved.validate().issues, levels: this.levelWritesOf(planned) };
   }
 }

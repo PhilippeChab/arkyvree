@@ -59,7 +59,7 @@ const REPOSITORY = JSON.parse(
 
 // oxfmt-ignore
 const SERVICE_ACTIONS = [
-  "accept", "attach", "cancel", "complete", "detach", "enqueue", "finalize", "forgot", "fork", "generate", "invite",
+  "accept", "attach", "cancel", "complete", "detach", "enqueue", "finalize", "forgot", "fork", "generate", "import", "invite",
   "leave", "link", "publish", "reject", "resend", "reset", "revert", "revoke", "sign", "star", "start", "subscribe",
   "unlink", "unstar", "unsubscribe", "validate", "verify",
 ];

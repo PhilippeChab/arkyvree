@@ -1,5 +1,6 @@
-import { Button, Container, Stack } from "@mui/material";
+import { Button, Container, Stack, Typography } from "@mui/material";
 import { useQueryClient } from "@tanstack/react-query";
+import { useRef } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { CharacterBuildChips } from "@/client/src/components/characters/index.ts";
@@ -8,6 +9,7 @@ import {
   CHANGED_SORTS,
   CREATED_SORTS,
   type FilterOption,
+  LinkButton,
   ListCard,
   ListCardGrid,
   ListPageResults,
@@ -36,7 +38,8 @@ import {
   characterListQuery,
 } from "@/client/src/lib/queries.ts";
 
-import { CreateCharacterDialog } from "./components/index.ts";
+import type { CharacterImport } from "./characterQueries.ts";
+import { CreateCharacterDialog, ImportCharacterDialog, ImportReportDialog } from "./components/index.ts";
 
 type CharacterView = CharacterListFilters["view"];
 type SortField = CharacterListFilters["orderBy"];
@@ -55,6 +58,12 @@ export default function CharactersPage() {
   const queryClient = useQueryClient();
   // Mounted as it opens: the create dialog keeps its form, its pickers and its roll method
   const createDialog = useDialogState();
+  // Mounted as it opens too: the import's form starts clean; once it's in, its report opens on what it answered
+  const importDialog = useDialogState();
+  const reportDialog = useDialogState<CharacterImport>();
+  // The report opens once the import's dialog has faded out: two modals at once leave the page hidden from assistive
+  // technology (each restores the page's aria-hidden as it found it, the closing one after the opening one)
+  const pendingReport = useRef<CharacterImport | null>(null);
   const { searchParams, updateSearchParams, search, orderBy, orderDir, searchBarProps } = useListParams(
     ["name", "createdAt", "lastChangedAt"],
     CHARACTER_LIST_DEFAULTS,
@@ -70,6 +79,13 @@ export default function CharactersPage() {
   const createButton = (label: string) => (
     <PageActionButton label={label} onClick={() => createDialog.openWith(true)} />
   );
+  // A character is built in the app, its page's action, or imported from a file another program saved, a link beside
+  // it: the frequent way first, the other in sight
+  // While an import's report waits for its dialog to fade out, the link waits too: an opening then would remount that
+  // dialog, and the report would wait on the new one's fade-out instead, to open after it, or be lost to its import
+  const importLink = (words: string) => (
+    <LinkButton onClick={() => !pendingReport.current && importDialog.openWith(true)}>{words}</LinkButton>
+  );
 
   const viewActiveButton = (
     <Button variant="outlined" onClick={() => updateSearchParams({ view: null })}>
@@ -84,7 +100,7 @@ export default function CharactersPage() {
           <PageHeader
             variant="tinted"
             title="Characters"
-            subtitle="View and manage your character collection"
+            subtitle={<>View and manage your character collection, or {importLink("import one from a file")}</>}
             action={createButton("Create Character")}
           />
 
@@ -122,7 +138,14 @@ export default function CharactersPage() {
                     icon={CharacterIcon}
                     title="No characters yet"
                     description="Create your first character to start your adventure"
-                    action={createButton("Create Your First Character")}
+                    action={
+                      <Stack spacing={1.5} sx={{ alignItems: "center" }}>
+                        {createButton("Create Your First Character")}
+                        <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                          or {importLink("import one from a file")}
+                        </Typography>
+                      </Stack>
+                    }
                   />
                 )
               }
@@ -158,6 +181,28 @@ export default function CharactersPage() {
             open={createDialog.open}
             onClose={createDialog.close}
             onExited={createDialog.onExited}
+          />
+        )}
+        {importDialog.target && (
+          <ImportCharacterDialog
+            key={importDialog.key}
+            open={importDialog.open}
+            onClose={importDialog.close}
+            onExited={() => {
+              importDialog.onExited();
+              if (pendingReport.current) reportDialog.openWith(pendingReport.current);
+              pendingReport.current = null;
+            }}
+            onImported={(imported) => (pendingReport.current = imported)}
+          />
+        )}
+        {reportDialog.target && (
+          <ImportReportDialog
+            key={reportDialog.key}
+            imported={reportDialog.target}
+            open={reportDialog.open}
+            onClose={reportDialog.close}
+            onExited={reportDialog.onExited}
           />
         )}
       </Container>

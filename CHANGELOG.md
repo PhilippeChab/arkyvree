@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Rulesets choose the levels that give every character a feat or an ability score increase
+- Import a character from a PCGen file
 
 ## 0.6.0 — 2026-10-12
 
