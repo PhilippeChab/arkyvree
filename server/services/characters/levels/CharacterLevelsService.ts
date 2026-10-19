@@ -8,13 +8,7 @@ import { getTableName } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
 import { levelsInCharacter } from "@/drizzle/schema.ts";
-import {
-  type AbilityIncrease,
-  Engine,
-  type LevelRequest,
-  type LevelRows,
-  type PreviewRequest,
-} from "@/engine/index.ts";
+import { type AbilityIncrease, Engine, type LevelRequest, type PreviewRequest } from "@/engine/index.ts";
 import { include } from "@/lib/mixins.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
@@ -34,29 +28,9 @@ import type { Session } from "@/shared/relations.ts";
 import { writeBondedCreatures } from "./bondedWrites.ts";
 import { Pickers } from "./concerns/Pickers.ts";
 import { Steps } from "./concerns/Steps.ts";
+import { createLevelRows } from "./levelRows.ts";
 
 class CharacterLevelsService extends include(Object, Pickers, Steps) {
-  /** Writes a level's rows in the tables under it, each table's as the engine plans them. */
-  private async createLevelRows(tx: Db, characterLevelId: string, rows: LevelRows) {
-    const { abilityIncreases, feats, powers, skills } = rows;
-    await CharacterLevelAbilityIncreases.createMany(
-      tx,
-      abilityIncreases.map((row) => ({ characterLevelId, ...row })),
-    );
-    await CharacterLevelFeats.createMany(
-      tx,
-      feats.map((row) => ({ characterLevelId, ...row })),
-    );
-    await CharacterLevelPowers.createMany(
-      tx,
-      powers.map((row) => ({ characterLevelId, ...row })),
-    );
-    await CharacterLevelSkills.createMany(
-      tx,
-      skills.map((row) => ({ characterLevelId, ...row })),
-    );
-  }
-
   /** Deletes a level's rows in the tables under it, which an edit writes again. */
   private async deleteLevelRows(tx: Db, characterLevelId: string) {
     await CharacterLevelAbilityIncreases.delete(tx, { characterLevelId });
@@ -103,7 +77,7 @@ class CharacterLevelsService extends include(Object, Pickers, Steps) {
         for (const { columns, rows } of plan.levels) {
           const [created] = await CharacterLevels.create(tx, { characterId, ...columns });
           createdLevels.push(created);
-          await this.createLevelRows(tx, created.id, rows);
+          await createLevelRows(tx, created.id, rows);
         }
         await writeBondedCreatures(tx, characterRecord, plan.bonded);
 
@@ -200,7 +174,7 @@ class CharacterLevelsService extends include(Object, Pickers, Steps) {
 
         await CharacterLevels.update(tx, edit.columns, { id: characterLevelId });
         await this.deleteLevelRows(tx, characterLevelId);
-        await this.createLevelRows(tx, characterLevelId, edit.rows);
+        await createLevelRows(tx, characterLevelId, edit.rows);
         await writeBondedCreatures(tx, characterRecord, edit.bonded);
 
         await Activities.create(tx, {

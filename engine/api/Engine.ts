@@ -3,6 +3,7 @@ import type { BaseRules } from "@/shared/enums.ts";
 
 import ContentEngine from "./ContentEngine.ts";
 import CopyOnWriteEngine from "./CopyOnWriteEngine.ts";
+import ImportsEngine from "./ImportsEngine.ts";
 import Modules from "./Modules.ts";
 import RulesetEngine from "./RulesetEngine.ts";
 
@@ -29,5 +30,13 @@ export default class Engine {
    */
   static forRules<B extends BaseRules>(baseRules: B) {
     return new ContentEngine(Modules.of(baseRules).content);
+  }
+
+  /**
+   * The engine asked of imports before a ruleset is picked: what a character file another program saved is, and which
+   * base rules' rulesets import it.
+   */
+  static imports() {
+    return new ImportsEngine(Modules.all());
   }
 }

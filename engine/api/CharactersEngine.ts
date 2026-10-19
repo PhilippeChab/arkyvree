@@ -1,4 +1,4 @@
-import type { HeldInventoryEntry } from "@/engine/core/module/index.ts";
+import type { HeldInventoryEntry, ImportOwner } from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 
 import type { Module, Rest } from "./Modules.ts";
@@ -53,5 +53,14 @@ export default class CharactersEngine {
    */
   planCreate(...args: Args<"planCreate">) {
     return this.module.characters.planCreate(this.view, ...args);
+  }
+
+  /**
+   * What importing the character another program's file holds (`text`) as `owner`'s (its owner, and the id its row is
+   * created with) writes, as if leveled up one level at a time, and the report of what it imported and couldn't: by
+   * the importer of the ruleset's that reads the file, refused when none does.
+   */
+  planImport(text: string, owner: ImportOwner) {
+    return this.module.imports.planImport(this.view, text, owner);
   }
 }

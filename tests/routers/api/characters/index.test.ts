@@ -9,6 +9,7 @@ import { postCampaign } from "@/tests/support/campaigns.ts";
 import { postCharacter } from "@/tests/support/characters.ts";
 import { addCharacterContributor } from "@/tests/support/contributors.ts";
 import { createWizardWithFamiliar } from "@/tests/support/dnd3.5/levelFixtures.ts";
+import { readPcgenFile } from "@/tests/support/dnd3.5/pcgenFiles.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 import { ABILITY_NAMES } from "@/vocabulary/dnd3.5/abilities.ts";
@@ -144,6 +145,37 @@ describe("characters", () => {
       Object.values(detail.classes).flatMap((klass) => klass.levels.flatMap((level) => level.powers.map((p) => p.id))),
     );
     expect(spells.some((spell) => spell.tags && classPowerIds.has(spell.id))).toBe(true);
+  });
+
+  describe("import", () => {
+    test("imports the character a PCGen file holds, with the report of what it imported and couldn't", async () => {
+      const { rulesetId } = await getSeedCtx();
+      const imported = await expectOk(
+        characters.import.$post({ json: { rulesetId, text: await readPcgenFile("brannoc") } }),
+      );
+      expect(imported.character).toMatchObject({ name: "Brannoc Vale", rulesetId, userId: SEED_USER_ID });
+      expect(imported.report.imported).toContain("Race: Human");
+      expect(imported.report.unmatched.map(({ reason }) => reason)).toContain(
+        "Potion (Cure Light Wounds) isn't an item of the ruleset",
+      );
+      const sheet = await expectOk(character.$get({ param: { id: imported.character.id } }));
+      expect(sheet).toMatchObject({ id: imported.character.id, name: "Brannoc Vale" });
+    });
+
+    test("answers what a picked file is, and the base rules whose rulesets import it", async () => {
+      const text = await readPcgenFile("brannoc");
+      expect(await expectOk(characters.import.source.$post({ json: { text } }))).toEqual({
+        baseRules: ["Dungeons & Dragons: 3.5"],
+        source: { format: "2.0", program: "PCGen", rules: "35e", version: "6.09.08.RC1" },
+      });
+      await expectStatus(characters.import.source.$post({ json: { text: "" } }), 400);
+    });
+
+    test("refuses a file no importer reads, and an empty one", async () => {
+      const { rulesetId } = await getSeedCtx();
+      await expectStatus(characters.import.$post({ json: { rulesetId, text: "Not a character" } }), 422);
+      await expectStatus(characters.import.$post({ json: { rulesetId, text: "" } }), 400);
+    });
   });
 
   describe("abilities", () => {

@@ -1,9 +1,17 @@
 import { Hono } from "hono";
 import { z } from "zod";
 
-import { denyDemoUser, exportRateLimit, sessionMiddleware, validate } from "@/server/middlewares/index.ts";
+import {
+  denyDemoUser,
+  exportRateLimit,
+  importRateLimit,
+  importSourceRateLimit,
+  sessionMiddleware,
+  validate,
+} from "@/server/middlewares/index.ts";
 import { characterIdParam, idList, idParam, limit, orderDirDesc, page } from "@/server/routers/api/validation.ts";
 import { CharactersService } from "@/server/services/characters/index.ts";
+import { MAX_CHARACTER_NAME_LENGTH, MAX_IMPORT_FILE_LENGTH } from "@/shared/characters.ts";
 import { ALIGNMENT_OPTIONS, GENDER_OPTIONS } from "@/shared/enums.ts";
 
 import contributors from "./contributors/index.ts";
@@ -127,7 +135,7 @@ export default new Hono()
       z.object({
         rulesetId: z.string().uuid(),
         raceId: z.string().uuid(),
-        name: z.string().min(1).max(255),
+        name: z.string().min(1).max(MAX_CHARACTER_NAME_LENGTH),
         xp: z.number().int().min(0),
         alignment: z.enum(ALIGNMENT_OPTIONS),
         abilities: z.record(z.string().uuid(), abilityScore),
@@ -153,6 +161,27 @@ export default new Hono()
       return c.json(await CharactersService.createCharacter(c.var.requestSession, body), 201);
     },
   )
+  // Import the character another program's file holds (its text) into a ruleset, with the report of what it imported
+  .post(
+    "/import",
+    importRateLimit,
+    validate("json", z.object({ rulesetId: z.string().uuid(), text: z.string().min(1).max(MAX_IMPORT_FILE_LENGTH) })),
+    async (c) => {
+      const { rulesetId, text } = c.req.valid("json");
+      return c.json(await CharactersService.importCharacter(c.var.requestSession, rulesetId, text), 201);
+    },
+  )
+  // What a character file another program saved is (its text), before a ruleset is picked: the program, its version,
+  // the file's format and its character's rules, and the base rules whose rulesets import it
+  .post(
+    "/import/source",
+    importSourceRateLimit,
+    validate("json", z.object({ text: z.string().min(1).max(MAX_IMPORT_FILE_LENGTH) })),
+    (c) => {
+      const { text } = c.req.valid("json");
+      return c.json(CharactersService.getImportSource(text), 200);
+    },
+  )
   // Enqueue async PDF generation
   .post("/:characterId/pdf", denyDemoUser, exportRateLimit, validate("param", characterIdParam), async (c) => {
     const { characterId } = c.req.valid("param");
@@ -172,7 +201,7 @@ export default new Hono()
     validate(
       "json",
       z.object({
-        name: z.string().min(1).max(255).optional(),
+        name: z.string().min(1).max(MAX_CHARACTER_NAME_LENGTH).optional(),
         // An age, a height or a weight is cleared with null
         age: z.number().int().min(1).nullable().optional(),
         gender: z.enum(GENDER_OPTIONS).optional(),

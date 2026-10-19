@@ -31,6 +31,7 @@ Answers to common questions about Arkyvree. Something missing or unclear? [Open 
 ## [Characters & Campaigns](characters-and-campaigns.md)
 
 - [How does character creation work?](characters-and-campaigns.md#how-does-character-creation-work)
+- [Can I import a character from another program?](characters-and-campaigns.md#can-i-import-a-character-from-another-program)
 - [Which languages can a character speak?](characters-and-campaigns.md#which-languages-can-a-character-speak)
 - [What are Campaigns?](characters-and-campaigns.md#what-are-campaigns)
 - [What is character visibility?](characters-and-campaigns.md#what-is-character-visibility)

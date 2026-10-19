@@ -15,6 +15,11 @@ class CharacterInventoryRepository extends include(BaseRepository<typeof invento
     return await db.insert(this.table).values(values).returning();
   }
 
+  async createMany(db: Db, values: InferInsertModel<typeof inventoryInCharacter>[]) {
+    if (values.length === 0) return [];
+    return await db.insert(this.table).values(values).returning();
+  }
+
   // Exception to soft-delete: inventory entries are disposable
   async delete(db: Db, where: { characterId: string; id: string }) {
     return await db

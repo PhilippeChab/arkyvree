@@ -13,6 +13,11 @@ class CharacterLanguagesRepository extends BaseRepository<typeof languagesInChar
     return await db.insert(this.table).values(values).returning();
   }
 
+  async createMany(db: Db, values: InferInsertModel<typeof languagesInCharacter>[]) {
+    if (values.length === 0) return [];
+    return await db.insert(this.table).values(values).returning();
+  }
+
   // Exception to soft-delete: character languages are disposable reference data
   async delete(db: Db, where: { characterId: string; languageId: string }) {
     return await db

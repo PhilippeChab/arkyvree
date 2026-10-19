@@ -565,13 +565,15 @@ engine/
 │                                          kind's own class, from its module; describeFields, every entity type's
 │                                          form's fields; describeSettings and planSettings, the ruleset's own;
 │                                          ContentEngine, Engine.forRules; CopyOnWriteEngine, Engine.copyOnWrite;
-│                                          Modules: each base rules' module, built once)
+│                                          ImportsEngine, Engine.imports: what a character file is, before a
+│                                          ruleset is picked, each base rules' importers asked; Modules: each base
+│                                          rules' module, built once)
 ├── core/                                  ← machinery, no game vocabulary
 │   ├── RulesError.ts                      (a rule's refusal, by kind, and the issues a character fails)
 │   ├── module/                            ← the module's contract
 │   │   ├── contract.ts                    (RulesetModule: a module's parts, typed by what it describes in its own
 │   │   │                                  shape, Descriptions, its entity kinds and its seeded fields)
-│   │   ├── parts/                         (a folder per part: characters/, levelUp/, entities/, content/, ruleset/.
+│   │   ├── parts/                         (a folder per part: characters/, levelUp/, entities/, imports/, content/, ruleset/.
 │   │   │                                  Each holds its abstract class (CharactersPart, LevelUpPart…: the
 │   │   │                                  operations a ruleset answers its own way abstract, those that read the
 │   │   │                                  schema alone or guard a character's privacy and integrity concrete,
@@ -629,6 +631,10 @@ engine/
 │   │                                      its initialize and its finalize; Validates: its issues, the ruleset's own
 │   │                                      a hook; CharacterBuilder: a character of its row's kind, on
 │   │                                      CharacterBase, its master built first)
+│   ├── imports/                           (what every ruleset's importers read another program's file with: a
+│   │                                      program's file read into the character it holds, in its own names,
+│   │                                      ImportedCharacter: PCGen's, PcgenFile, by its format's reader,
+│   │                                      PcgFormat2, its lines PcgLine's; ImportReport: what an import says it did)
 │   ├── levelUp/                           (LevelUpBase: what every level flow reads, the view, the character's
 │   │                                      rows and its ruleset's level-up rules, LevelUpRules; SelectionChecks: a
 │   │                                      level's hit points and selections checked; the flows any ruleset takes
@@ -638,7 +644,8 @@ engine/
 │   │                                      of a picked feat; PicksDistribution: a save's pooled picks spread over
 │   │                                      its planned levels, the feats and powers in each level's pool slots,
 │   │                                      none dropped, the skill points a hook, distributeSkills, and the picks
-│   │                                      that overfill a pool refused, refuseOverfull)
+│   │                                      that overfill a pool refused, refuseOverfull; LevelByLevel: levels
+│   │                                      saved one at a time, an import's, each a level-up of its own)
 │   ├── pickers/                           (Picker: one pipeline, `filters` and `describe(rows)`: the rows as the
 │   │                                      view reads them, those it offers, each with whether who it picks for
 │   │                                      meets its requirements and the tree of those it fails, and what it adds;
@@ -719,6 +726,10 @@ engine/rulesets/
     │   ├── inventory/                     (InventoryEntries: where an entry's add or edit holds its item,
     │   │                                  planPlacement; Equipping: what equipping an item checks)
     │   └── sheet/                         (the printed sheet, in React PDF: CharacterSheet and its pages, SheetFormat)
+    ├── imports/                           ← the module's `imports`: Dnd35Imports, its importers; PicksPlacement and
+    │                                      ImportedLevelGains: a file's feats, ranks and spells placed on levels;
+    │                                      pcgen/: PCGen's importer, its name table (names.ts, PcgenNames), and
+    │                                      what it imports, ScoresImport, LevelsImport, GearImport, PcgenImport
     ├── levelUp/                           ← the module's `levelUp`: Dnd35LevelUp, on core's LevelUpPart, gives
     │                                      the level-up rules core's flows read (buildCharacter,
     │                                      getAbilityIncreaseTotal, hitPointsOf, unrolledLevelHp,
@@ -864,13 +875,14 @@ The engine's own types name no ruleset (`arkyvree/layers`): its path walk reads 
 
 ### The module's parts
 
-What a ruleset answers is its module's: five parts, each a class whose operations call the classes its domain folders hold, and the factories and the order the machinery calls. A character isn't one of them: an operation builds the ruleset's own (`CharacterBuilder.build`), from the input it's given. The entry's handles ask them, each past what it binds (the view, a character's rows, a class).
+What a ruleset answers is its module's: six parts, each a class whose operations call the classes its domain folders hold, and the factories and the order the machinery calls. A character isn't one of them: an operation builds the ruleset's own (`CharacterBuilder.build`), from the input it's given. The entry's handles ask them, each past what it binds (the view, a character's rows, a class).
 
 | Member | What it answers | 3.5's | The handles that ask it |
 |---|---|---|---|
 | `characters` | a character's sheets (the API's, a campaign member's reading, partial or whole, the printed one), a list's card of one, its inventory (each entry with where its item can go and where it's worn), how a new one sets its ability scores (the ruleset's abilities in the order its sheets list them, the methods its form runs by kind, the scores' bounds, each score's modifier), what a new one and an inventory entry store (what equipping an item checks), what keeps a slot from taking an item, the languages it speaks and may pick (what its picks leave room for, and an edit's picks, a new one refused past that room), the races a new character can pick | `Dnd35Characters`: `describeCreation`, `describeSheet`, `describePlacement`, `openRacePicker`: each named as its handle's operation is; `describeCard` and `describeInventory` (over its hook, `describeInventoryEntry`: 3.5's `InventoryEntries`, by `ItemPlacement`) are `CharactersPart`'s, which read the schema's rows and the view alone, and so are `describe`, `describeForMember`, `planInventoryEntry`, `planAbilities`, `planCreate`, `describeLanguages` and `planLanguages`, which guard a character's privacy and integrity over 3.5's hooks (`describeFull`, `describePartial`: `CharacterDescription`; `planPlacement`: `InventoryEntries`; `describeCreation`: `NewCharacters`; `describeLanguageRoom`, `fitLanguages`: `SpokenLanguages`, by `LanguageRules`) | `character(input)` (`CharacterEngine`), `characters()` (`CharactersEngine`) |
 | `entities` | each entity kind's rules, by its table: an entity found and described, a page opened (`openList`), what saving or deleting one writes, what the rules refuse of an edit; a class's levels, class skills and table, which the classes' kind hands out | `Dnd35Entities`: `of(view, type)`, each kind's class (`SkillEntity`, `FeatEntity`, `ItemEntity`…; `ClassEntity`'s `levels(klassId)`, `skills(klassId)`, `table(klassId)`) | `entities(type)`, `class(klassId)` (`ClassEngine`) |
 | `levelUp` | the level flows: the preview, a save's levels and its check (its picks refused when they pick a power the character knows in its pool already or overfill a pool, forced or not; the character with them, unless forced), a saved level's edit, the last level's removal, the bonded creatures the levels make, the wizard's steps and pickers, a saved level's selections | `Dnd35LevelUp`: `describePreview`, `describeSteps`, `describeStep`, `openFeatPicker`…, `describeLevel`: each named as its handle's operation is, and as the class it opens names it (`LevelUpPreview.describePreview`, `Dnd35LevelSelections.describeLevel`); `planLevels`, `planEdit`, `planRemoval` and `planBonded` are `LevelUpPart`'s, core's flows over the rules 3.5 gives (`LevelsPlanning`, `LevelRemoval`, `BondedCreatures`) | `character(input).levelUp()` (`LevelUpEngine`) |
+| `imports` | a character imported from another program's file: what a file is (`detect`: the program that saved it, its version, its format and its character's rules, as the first importer that recognizes it says, and why it can't import it), the ruleset's importers each a program's, tried in order, and what importing one writes, as if leveled up one level at a time (each level a level-up of its own, checked as one, `LevelByLevel`), with the report of what it imported and every line of the file it couldn't match | `Dnd35Imports`: PCGen's importer (`PcgenImporter`), which reads a file of PCGen's 3.5 game mode through core's `PcgenFile` (its format's reader, `PcgFormat2`, into a program's names, `ImportedCharacter`), then matches it in the ruleset through PCGen's name table (`PcgenNames`, `names.ts`) and places its feats, skill ranks and known spells on its levels (`PicksPlacement`, over each level's gains, `ImportedLevelGains`); `detect`, `describeImporters` and `planImport`, which picks the importer, are `ImportsPart`'s | `characters()` (`CharactersEngine`: `planImport`); `Engine.imports()` (`ImportsEngine`: `describeFile`, every base rules' `detect`) |
 | `ruleset` | what a ruleset needs as a whole, past its entities: to be published to be played, a player race and class, a skill and a feat; its own fields, its Settings (the skill points' ability, the feats and ability increases each character level gives; read off its chain's rows, the fork's first, and what their save writes) | `Dnd35Ruleset`: `findMissingContent`, which `RulesetPart.checkPublishable` reads (an extension needs none); its `fields` (`RULESET_FIELDS`), which `RulesetPart`'s `describeSettings`, `describeSettingsFields` and `planSettings` read | `checkPublishable`, `describeSettings`, `planSettings`, `describeFields` |
 | `content` | what the seeders and the codegen ask: the paths a book can target, an entity's fields as its properties | `Dnd35Content`: `listBookTargetPaths`, and the codecs of its seeded fields, which `ContentPart.toEntityProperties` writes with | `Engine.forRules(baseRules)` (`ContentEngine`) |
 | `createTargetPaths`, `propertyTypes` | the ruleset's path categories, its property types: those each entity type's fields are stored in, in stat-block order (which the view orders an entity's properties by: `PropertyOrder`), and their closed values | `Dnd35TargetPaths`, `Dnd35PropertyTypes` | `targetPaths()`, `modifiers(…)`, `requirements(…)`; the view's order of every entity's properties (`PropertyOrder`) |
@@ -1031,7 +1043,7 @@ An audit on 2026-04-16 identified real leaks and some false alarms. It predates 
 | `server/services/characters/characterInputs.ts` | `readCharacterInput`, `readBondedInputs`: a character's rows, read in its ruleset's scope, which the engine builds it from |
 | `server/repositories/*Repository.ts` | COW-aware SQL queries with snapshot exclusion |
 | `engine/index.ts` | The engine's one entry: `Engine`, its handles' types (`ClassEngine`, `LevelUpEngine`), each entity kind's rules by table (`EntityKinds`, its operations' arguments as every registered ruleset's take them: `Accepted`), its operations' types, and `RulesError` |
-| `engine/api/` | `Engine` and the handles it hands out, a class each (`RulesetEngine`, which `Engine.for(scope)` binds to a view, and its handles by what the rules are about: `CharacterEngine`, `LevelUpEngine`, `ClassEngine`…, and an entity kind's own class, which `entities(type)` hands out; `ContentEngine`, `Engine.forRules`; `CopyOnWriteEngine`, `Engine.copyOnWrite`), each operation a method dispatched to the ruleset's module by its base rules (`Modules.ts`: `Modules.of`), or to the core's classes with the module's factories (`ModifiersEngine`, `RequirementsEngine`, `TargetPathsEngine`) |
+| `engine/api/` | `Engine` and the handles it hands out, a class each (`RulesetEngine`, which `Engine.for(scope)` binds to a view, and its handles by what the rules are about: `CharacterEngine`, `LevelUpEngine`, `ClassEngine`…, and an entity kind's own class, which `entities(type)` hands out; `ContentEngine`, `Engine.forRules`; `CopyOnWriteEngine`, `Engine.copyOnWrite`; `ImportsEngine`, `Engine.imports`), each operation a method dispatched to the ruleset's module by its base rules (`Modules.ts`: `Modules.of`), or to the core's classes with the module's factories (`ModifiersEngine`, `RequirementsEngine`, `TargetPathsEngine`) |
 | `engine/core/module/` | The module's contract (`contract.ts`: `RulesetModule`), the rows a character is built from (`CharacterInputs.ts`: `CharacterInput`, `CharacterRows`, resolved as the view reads them) and those a level-up adds before it's saved (`CharacterProjection.ts`), the parts, a folder each (`parts/characters/`, `parts/levelUp/`, `parts/entities/`, `parts/content/`, `parts/ruleset/`: its abstract class, and its types by role: what an operation takes, `requests.ts`; what a plan writes, `plans.ts`: `EntityWrites`, `LevelsPlan`…; what a description shares, `descriptions.ts`), and a picker's shape (`pickers.ts`) |
 | `engine/rulesets/dnd3.5/model/` | The 3.5 character: its state (`CharacterState`, on core's `CharacterBase`), its concerns (`Builds`, the build's 3.5 steps; `Diagnoses`; `PossessesVirtually`; core's `Validates`), its components (`CharacterComponents`, each on core's `CharacterComponent`, in the order the build sets them up), `DetailedCharacter`, which wires them, `Dnd35CharacterBuilder`, which builds one from its input, and a folder per concept a character has (its component and its paths' category) |
 | `engine/core/` | The machinery: `ModifierEvaluator`, `RequirementEvaluator`, the path walk and the path language and their types (`paths/`), the ruleset view and `RulesetView` (`view/`), copy-on-write's state (`cow/`), an entity's customizations and the property types (`customizations/`), and the bases a ruleset extends: the module's parts (`module/parts/`), a character (`character/`), the level flows (`levelUp/`), the pickers (`pickers/`) and the entity kinds (`entities/`) |
