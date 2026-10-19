@@ -268,8 +268,9 @@ export default class ClassProgression {
   /**
    * What the class's tabs read beside its levels and its tables: its pools, each with its levels' own picks (what the
    * pool's own modifiers add, by the level's id; a feat the level grants adds its own apart), the spell list its
-   * spells go to (none for a class without one), and whether its levels give spells in several (`severalSpellLists`:
-   * its tables add them up, which no save can split).
+   * spells go to (none for a class without one), whether its levels give spells in several (`severalSpellLists`:
+   * its tables add them up, which no save can split), and the picks the ruleset's feats give in pools (`featPicks`, a
+   * granted feature's).
    */
   describe() {
     const { rulesetData } = this;
@@ -288,8 +289,21 @@ export default class ClassProgression {
       const aptitude = rulesetData.aptitudesById.get(rulesetData.aptitudeIdBySlug.get(slug) ?? "");
       return aptitude && !lists.has(aptitude.id) ? [{ aptitudeId: aptitude.id, name: aptitude.name, picks }] : [];
     });
+    // The picks each feat gives in pools, by its id then the pool's name: a feature granted at a level gives them there
+    const featPicks: Record<string, Record<string, number>> = {};
+    for (const [sourceId, modifiers] of rulesetData.modifiersBySource) {
+      for (const modifier of modifiers) {
+        const slug = modifier.sourceType === "feats" ? AptitudeTargets.parsePool(modifier.target) : undefined;
+        const value = LiteralValue.parse(modifier.value, "number");
+        const pool = rulesetData.aptitudesById.get(rulesetData.aptitudeIdBySlug.get(slug ?? "") ?? "");
+        if (!pool || typeof value !== "number") continue;
+        const picks = (featPicks[sourceId] ??= {});
+        picks[pool.name] = (picks[pool.name] ?? 0) + value;
+      }
+    }
     const list = this.spellList;
     return {
+      featPicks,
       pools,
       severalSpellLists: this.table.describeSpellLists().length > 1,
       spellList: list ? { id: list.id, name: list.name } : null,

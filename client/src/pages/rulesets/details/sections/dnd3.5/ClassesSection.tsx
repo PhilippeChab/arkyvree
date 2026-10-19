@@ -23,8 +23,8 @@ import {
 import {
   classDetailQuery,
   type ClassFormData,
-  classLevelsQuery,
 } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
+import { DND35_CLASS_TABS } from "@/client/src/pages/rulesets/details/classes/sections/dnd3.5/index.ts";
 import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
 import { classesQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import {
@@ -78,8 +78,8 @@ export function ClassesSection({ ruleset, childOnly, onChildOnlyChange }: Rulese
 
   const handleRowPrefetch = (klass: Class) => {
     void queryClient.prefetchQuery(classDetailQuery(ruleset.id, klass.id));
-    // And the Levels tab its page opens on
-    void queryClient.prefetchQuery(classLevelsQuery(ruleset.id, klass.id));
+    // And the tab its page opens on, its first
+    void DND35_CLASS_TABS[0].prefetch?.(queryClient, ruleset.id, klass.id);
   };
 
   const renderCell = (klass: Class, columnKey: string) => {

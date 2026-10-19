@@ -132,6 +132,16 @@ describe("ClassProgressionService", () => {
     );
   });
 
+  test("reads the picks a feature gives in its pool where it's granted", async () => {
+    const { fork, klass } = await forkWithClass("Fighter");
+    const levels = await ClassLevelsService.getClassLevels(fork.id, klass.id);
+    const bonusFeat = levels[0].feats.find((feat) => feat.name === "Bonus Feat (Fighter)")!;
+
+    const { featPicks } = await ClassProgressionService.getProgression(fork.id, klass.id);
+
+    expect(featPicks[bonusFeat.id]).toEqual({ "Fighter Bonus Feat": 1 });
+  });
+
   test("moves a pool's picks between levels, and reads them back", async () => {
     const { session, fork, klass, levelId } = await forkWithClass("Wizard");
     const before = await ClassProgressionService.getProgression(fork.id, klass.id);

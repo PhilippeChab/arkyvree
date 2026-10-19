@@ -4,7 +4,7 @@ import { TextAreaField } from "@/client/src/components/common/index.ts";
 import { useFormWith } from "@/client/src/hooks/index.ts";
 import { SPELL_LEVELS } from "@/vocabulary/dnd3.5/spells.ts";
 
-import { parseSpellRows, type PlacedCell, placeSpellRows, type SpellCell } from "./spellPaste.ts";
+import { parseSpellRows, type PlacedCell, placeSpellRows } from "./spellPaste.ts";
 
 /** The pasted text, as the box's form holds it. */
 interface PasteForm {
@@ -14,8 +14,8 @@ interface PasteForm {
 interface SpellPasteBoxProps {
   /** Spells known take "all" */
   allowsAll: boolean;
-  /** A cell as the tab holds it, which a pasted one changes or leaves */
-  cellOf: (levelId: string, spellLevel: number) => SpellCell;
+  /** The pasted cells that change the table as it shows */
+  changesOf: (cells: PlacedCell[]) => PlacedCell[];
   levels: readonly { id: string; level: number }[];
   onApply: (cells: PlacedCell[]) => void;
   onCancel: () => void;
@@ -25,12 +25,10 @@ interface SpellPasteBoxProps {
  * A spell table pasted from a book, a PDF or a spreadsheet, one row a class level: how many cells it changes, before
  * Apply writes them onto the table (a row naming its level lands on it, the others from the class's first).
  */
-export function SpellPasteBox({ allowsAll, cellOf, levels, onApply, onCancel }: SpellPasteBoxProps) {
+export function SpellPasteBox({ allowsAll, changesOf, levels, onApply, onCancel }: SpellPasteBoxProps) {
   const { control, watch } = useFormWith<PasteForm>({ table: "" });
   const text = watch("table");
-  const changes = placeSpellRows(parseSpellRows(text, allowsAll), levels, 0, 0, SPELL_LEVELS.length).filter(
-    ({ levelId, spellLevel, value }) => cellOf(levelId, spellLevel) !== value,
-  );
+  const changes = changesOf(placeSpellRows(parseSpellRows(text, allowsAll), levels, 0, 0, SPELL_LEVELS.length));
 
   return (
     <Stack spacing={1}>

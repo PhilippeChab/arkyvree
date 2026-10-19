@@ -59,7 +59,7 @@ function toCell(total: number | "All" | undefined): SpellCell {
 /**
  * A class's Spells tab: its spells per day and its spells known (how many spells it picks at each spell level), each
  * a grid of the totals the book prints, edited in place, filled from another class's table or emptied, or from a
- * pasted table; one save writes both. A class with no spell list says how to give it one.
+ * pasted table; one save writes both. A class with no spell list casts none, which its editor is told how to change.
  */
 export function ClassSpellsSection({ rulesetId, classId, className, ruleset }: ClassSectionProps) {
   const queryClient = useQueryClient();
@@ -96,30 +96,54 @@ export function ClassSpellsSection({ rulesetId, classId, className, ruleset }: C
   };
   const savedCell = (which: SpellTable, levelId: string, spellLevel: number) =>
     toCell(totalsById[which].get(levelId)?.[spellLevel]);
-  // An emptied cell's edit is `null`, which holds over the saved value as much as a count does
-  const editedCell = (which: SpellTable, levelId: string, spellLevel: number) => {
-    const row = edits[which][levelId];
+  // A cell as edits hold it (`state`): an emptied cell's edit is `null`, which holds over the saved value as a count does
+  const editedCell = (state: SpellEdits, which: SpellTable, levelId: string, spellLevel: number) => {
+    const row = state[which][levelId];
     return row && spellLevel in row ? row[spellLevel] : savedCell(which, levelId, spellLevel);
   };
-  // Every spell known, once a level knows them all, stays known: the levels after it know them all too
-  const cellOf = (which: SpellTable, levelId: string, spellLevel: number): SpellCell => {
-    const cell = editedCell(which, levelId, spellLevel);
+  // A cell as the table shows it: every spell known, once a level knows them all, stays known at the levels after it
+  const shownCell = (state: SpellEdits, which: SpellTable, levelId: string, spellLevel: number): SpellCell => {
+    const cell = editedCell(state, which, levelId, spellLevel);
     if (which === "perDay" || cell === "all") return cell;
     const index = levels.findIndex((level) => level.id === levelId);
-    const known = levels.slice(0, index).some((level) => editedCell(which, level.id, spellLevel) === "all");
+    const known = levels.slice(0, index).some((level) => editedCell(state, which, level.id, spellLevel) === "all");
     return known ? "all" : cell;
   };
+  const cellOf = (which: SpellTable, levelId: string, spellLevel: number) =>
+    shownCell(edits, which, levelId, spellLevel);
   const changedCells = (which: SpellTable) =>
     levels.flatMap(({ id }) =>
       SPELL_LEVELS.filter((spellLevel) => cellOf(which, id, spellLevel) !== savedCell(which, id, spellLevel)),
     ).length;
 
-  const setCells = (which: SpellTable, cells: PlacedCell[]) =>
-    setEdits((current) => {
-      const next = { ...current[which] };
-      for (const { levelId, spellLevel, value } of cells) next[levelId] = { ...next[levelId], [spellLevel]: value };
-      return { ...current, [which]: next };
-    });
+  /** Edits (`state`) once a table's `cells` are written: on Spells Known, a cell under an All keeps no edit of its own. */
+  const writeCells = (state: SpellEdits, which: SpellTable, cells: PlacedCell[]): SpellEdits => {
+    const next = { ...state[which] };
+    for (const { levelId, spellLevel, value } of cells) next[levelId] = { ...next[levelId], [spellLevel]: value };
+    const written = { ...state, [which]: next };
+    if (which === "perDay") return written;
+    for (const spellLevel of SPELL_LEVELS) {
+      let known = false;
+      for (const { id } of levels) {
+        if (known && next[id] && spellLevel in next[id]) {
+          const row = { ...next[id] };
+          delete row[spellLevel];
+          next[id] = row;
+        }
+        known ||= editedCell(written, which, id, spellLevel) === "all";
+      }
+    }
+    return written;
+  };
+  const setCells = (which: SpellTable, cells: PlacedCell[]) => setEdits((current) => writeCells(current, which, cells));
+  /** The cells of a paste that change the table as it shows. */
+  const changesOf = (cells: PlacedCell[]) => {
+    const next = writeCells(edits, table, cells);
+    return cells.filter(
+      ({ levelId, spellLevel }) =>
+        shownCell(next, table, levelId, spellLevel) !== shownCell(edits, table, levelId, spellLevel),
+    );
+  };
 
   /** Another class's table, the one the tab shows: none for no class. */
   const readTable = async (otherId: string | undefined): Promise<SpellLevelRow[]> => {
@@ -188,6 +212,19 @@ export function ClassSpellsSection({ rulesetId, classId, className, ruleset }: C
       <BlankState icon={SpellUsesIcon} title="No levels" description="Add levels to the class to give it spells." />
     );
   }
+  if (progression && !progression.spellList) {
+    return (
+      <BlankState
+        icon={SpellUsesIcon}
+        title="No spells"
+        description={
+          canEdit
+            ? `${className} has no spell list. Add an aptitude named "${className} Spells" to give it spells.`
+            : `${className} casts no spells.`
+        }
+      />
+    );
+  }
 
   return (
     <Stack spacing={3}>
@@ -244,16 +281,11 @@ export function ClassSpellsSection({ rulesetId, classId, className, ruleset }: C
             {className} gives spells in several lists, which these totals add up: edit each level&apos;s modifiers.
           </Typography>
         )}
-        {progression && !progression.spellList && (
-          <Typography variant="body2" sx={{ color: "text.secondary" }}>
-            {className} has no spell list. Add an aptitude named &quot;{className} Spells&quot; to give it spells.
-          </Typography>
-        )}
         {pasting && editable && (
           <SpellPasteBox
             allowsAll={table === "known"}
             levels={levels}
-            cellOf={(levelId, spellLevel) => cellOf(table, levelId, spellLevel)}
+            changesOf={changesOf}
             onCancel={() => setPasting(false)}
             onApply={(cells) => {
               setCells(table, cells);

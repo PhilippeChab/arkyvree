@@ -72,6 +72,8 @@ export function SpellTableGrid({
     const text = event.clipboardData.getData("text/plain");
     if (readOnly || !/[\s,;|]/.test(text.trim())) return;
     event.preventDefault();
+    // The paste is the cell's value now, not what was typed before it
+    setTyping(null);
     onCells(placeSpellRows(parseSpellRows(text, allowsAll), levels, row, column, columns));
   };
 

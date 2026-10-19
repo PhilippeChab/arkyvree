@@ -22,38 +22,31 @@ export interface TrackValue {
   value: number;
 }
 
-/** The base attack bonus progressions: a good one's as fast as its level, a medium one's ¾ of it, a poor one's ½. */
-export const BAB_PRESETS: ProgressionPreset[] = [
-  {
-    key: "good",
-    label: "Good (full)",
-    valueAt: (level) => Math.floor((level * BAB_PROGRESSIONS.good.points) / BAB_PROGRESSIONS.good.levels),
-  },
-  {
-    key: "medium",
-    label: "Medium (¾)",
-    valueAt: (level) => Math.floor((level * BAB_PROGRESSIONS.medium.points) / BAB_PROGRESSIONS.medium.levels),
-  },
-  {
-    key: "poor",
-    label: "Poor (½)",
-    valueAt: (level) => Math.floor((level * BAB_PROGRESSIONS.poor.points) / BAB_PROGRESSIONS.poor.levels),
-  },
-];
+/** The base attack bonus progressions' labels: a good one's as fast as its level, a medium one's ¾ of it, a poor one's ½. */
+const BAB_LABELS: Record<keyof typeof BAB_PROGRESSIONS, string> = {
+  good: "Good (full)",
+  medium: "Medium (¾)",
+  poor: "Poor (½)",
+};
 
-/** A save's progressions: a good one's base plus one every two levels, a poor one's one every three. */
-export const SAVE_PRESETS: ProgressionPreset[] = [
-  {
-    key: "good",
-    label: "Good",
-    valueAt: (level) => SAVE_PROGRESSIONS.good.base + Math.floor(level / SAVE_PROGRESSIONS.good.hitDicePerPoint),
-  },
-  {
-    key: "poor",
-    label: "Poor",
-    valueAt: (level) => SAVE_PROGRESSIONS.poor.base + Math.floor(level / SAVE_PROGRESSIONS.poor.hitDicePerPoint),
-  },
-];
+/** A save's progressions' labels: a good one's base plus one every two levels, a poor one's one every three. */
+const SAVE_LABELS: Record<keyof typeof SAVE_PROGRESSIONS, string> = { good: "Good", poor: "Poor" };
+
+/** The base attack bonus progressions, as the rules' table gives them: a point every so many levels. */
+export const BAB_PRESETS: ProgressionPreset[] = (Object.keys(BAB_LABELS) as (keyof typeof BAB_LABELS)[]).map((key) => ({
+  key,
+  label: BAB_LABELS[key],
+  valueAt: (level) => Math.floor((level * BAB_PROGRESSIONS[key].points) / BAB_PROGRESSIONS[key].levels),
+}));
+
+/** A save's progressions, as the rules' table gives them: a base, and a point every so many levels. */
+export const SAVE_PRESETS: ProgressionPreset[] = (Object.keys(SAVE_LABELS) as (keyof typeof SAVE_LABELS)[]).map(
+  (key) => ({
+    key,
+    label: SAVE_LABELS[key],
+    valueAt: (level) => SAVE_PROGRESSIONS[key].base + Math.floor(level / SAVE_PROGRESSIONS[key].hitDicePerPoint),
+  }),
+);
 
 /** The levels at which a track's values differ from a preset's. */
 export function countPresetDifferences(preset: ProgressionPreset, values: readonly TrackValue[]) {

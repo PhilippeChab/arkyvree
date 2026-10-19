@@ -8,7 +8,6 @@ import {
   type ClassProgressionBody,
 } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 import { useClassCopy } from "@/client/src/pages/rulesets/details/classes/sections/useClassCopy.ts";
-import { invalidateRulesetEdit } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
 /**
@@ -46,9 +45,10 @@ export function useProgressionSave(
       followCopy(saved.klassId, saved.sourceEntityId);
     },
     onError: (error) => snackbar.error(error, "Failed to save the class progression"),
+    // The class's tabs and the classes list, refetched before the tab drops its edits, and the ruleset's changes
     onSettled: async () => {
-      invalidateRulesetEdit(queryClient, rulesetId, queryKeysToInvalidate);
-      await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.rulesets.classDetail(rulesetId, classId) });
+      const keys = [...queryKeysToInvalidate, QUERY_KEYS.rulesets.changes(rulesetId)];
+      await Promise.all(keys.map((queryKey) => queryClient.invalidateQueries({ queryKey })));
     },
   });
 }

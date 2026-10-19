@@ -138,25 +138,34 @@ export function ClassProgressionSection({ rulesetId, classId, className, ruleset
     ...pool,
     picks: { ...pool.picks, ...draft.edits.pools[pool.aptitudeId] },
   }));
+  // What the tab changes each pool's total by at each level (by its name, then the level's id): the running difference
+  // of its picks, and of the picks its features give where they're granted
+  const poolChanges = new Map<string, Map<string, number>>();
+  const addChanges = (name: string, changeAt: (levelId: string) => number) => {
+    const byLevel = poolChanges.get(name) ?? new Map<string, number>();
+    let change = 0;
+    for (const { id } of levels) {
+      change += changeAt(id);
+      byLevel.set(id, (byLevel.get(id) ?? 0) + change);
+    }
+    poolChanges.set(name, byLevel);
+  };
+  for (const pool of pools) {
+    const saved = savedPools.find((s) => s.aptitudeId === pool.aptitudeId)?.picks ?? {};
+    addChanges(pool.name, (id) => (pool.picks[id] ?? 0) - (saved[id] ?? 0));
+  }
+  for (const row of features) {
+    const saved = savedFeatures.find((s) => s.key === row.key)?.levelIds ?? [];
+    const granted = (id: string) => Number(row.levelIds.includes(id)) - Number(saved.includes(id));
+    for (const [name, picks] of Object.entries(progression?.featPicks[row.featId] ?? {}))
+      addChanges(name, (id) => granted(id) * picks);
+  }
   const poolNames = [
     ...new Set([
       ...(poolTotals ?? []).flatMap((level) => Object.keys(level.featPools)),
-      ...pools.filter((pool) => Object.values(pool.picks).some((count) => count > 0)).map((pool) => pool.name),
+      ...[...poolChanges].filter(([, byLevel]) => [...byLevel.values()].some(Boolean)).map(([name]) => name),
     ]),
   ].sort();
-  // What the tab's picks change each pool's total by at each level (by its name, then the level's id): their running
-  // difference from the saved picks
-  const poolChanges = new Map<string, Map<string, number>>();
-  for (const pool of pools) {
-    const saved = savedPools.find((s) => s.aptitudeId === pool.aptitudeId)?.picks ?? {};
-    const byLevel = poolChanges.get(pool.name) ?? new Map<string, number>();
-    let change = 0;
-    for (const { id } of levels) {
-      change += (pool.picks[id] ?? 0) - (saved[id] ?? 0);
-      byLevel.set(id, (byLevel.get(id) ?? 0) + change);
-    }
-    poolChanges.set(pool.name, byLevel);
-  }
 
   const body = buildProgressionBody(
     levels,
