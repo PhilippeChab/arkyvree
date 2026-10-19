@@ -17,20 +17,15 @@ function getClientIp(c: { req: { header: (name: string) => string | undefined } 
   return c.req.header("x-forwarded-for")?.split(",")[0]?.trim() || c.req.header("x-real-ip") || "unknown";
 }
 
-/**
- * At most `limit` requests per `windowMs` of those `keyGenerator` counts together, or of those that failed to sign in
- * alone (`unauthorizedOnly`: a 401); past it, `TooManyRequestsError`.
- */
+/** At most `limit` requests per `windowMs` of those `keyGenerator` counts together; past it, `TooManyRequestsError`. */
 function limitBy<E extends Env>(
-  { windowMs, limit, unauthorizedOnly = false }: { limit: number; unauthorizedOnly?: boolean; windowMs: number },
+  { windowMs, limit }: { limit: number; windowMs: number },
   keyGenerator: (c: Context<E>) => Promise<string> | string,
 ) {
   return rateLimiter<E>({
     windowMs,
     limit,
     standardHeaders: "draft-6",
-    skipSuccessfulRequests: unauthorizedOnly,
-    requestWasSuccessful: (c) => c.res.status !== 401,
     keyGenerator,
     handler: () => {
       throw new TooManyRequestsError();
@@ -53,11 +48,11 @@ async function emailKey(c: Parameters<KeyGenerator>[0]): Promise<string> {
 }
 
 /**
- * At most `limit` requests per `windowMs` from each client IP, or `per` email address, or of those that failed to sign
- * in alone (`unauthorizedOnly`); past it, `TooManyRequestsError`. Off in the tests, whose requests share an IP.
+ * At most `limit` requests per `windowMs` from each client IP, or `per` email address; past it,
+ * `TooManyRequestsError`. Off in the tests, whose requests share an IP.
  */
 export function limitRate(
-  { per = "ip", ...options }: { limit: number; per?: "email" | "ip"; unauthorizedOnly?: boolean; windowMs: number },
+  { per = "ip", ...options }: { limit: number; per?: "email" | "ip"; windowMs: number },
   enabled = !isTest(),
 ) {
   if (!enabled) return noop;

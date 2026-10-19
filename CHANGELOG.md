@@ -4,7 +4,7 @@
 
 - Rulesets choose the levels that give every character a feat or an ability score increase
 - Import a character from a PCGen file
-- API keys, and a public API to read your characters, rulesets and a character's choices at its next level
+- API keys and a public API
 
 ## 0.6.0 — 2026-10-12
 

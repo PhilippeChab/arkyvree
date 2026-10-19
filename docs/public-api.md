@@ -20,11 +20,9 @@ answers in shapes of its own, which stay fixed.
 - A key acts as its user: `requestSession` is `{ userId }`, the `Session` the services read, so a key sees and
   changes only what its user can, by the checks the services already make. A session's cookie signs in nothing under
   `/v1`.
-- Its requests that fail to sign in are counted per IP before the key is looked up (`apiClientRateLimit`: 120 a minute),
-  so a wrong key or none is limited too, while a valid key's requests don't count: many users' keys behind one IP run on
-  their own limits. Its requests are counted per key (`apiKeyRateLimit`: 120 a minute), and a character's level choices,
-  which read every option of each pool, per user, whichever keys of theirs ask (`levelChoicesRateLimit`: 20 a minute).
-
+- Its requests are counted per key (`apiKeyRateLimit`: 120 a minute), and a character's level choices, which read every
+  option of each pool, per user, whichever keys of theirs ask (`levelChoicesRateLimit`: 20 a minute). A request with a
+  wrong key or none costs a lookup by digest, as a wrong session cookie does the app's.
 - A ruleset is read as the app reads it: any ruleset by its id, a private one too, as `/api` answers it to any signed-in
   user. The lists (`GET /v1/rulesets`) list what the user's scope does.
 
@@ -63,13 +61,14 @@ A page answers `{ items, page, nextPage }`, `nextPage` null on the last. An erro
   doesn't meet (`requirements`, `[UNMET]` marked); `eligible` once it meets them and has a level left (`levelsLeft`,
   whatever their classes).
 - The level is the next one, after the character's levels: none planned before it, none edited. A planned level is
-  refused as the wizard refuses to plan it: a class the character has no next level of (404), or
-  one it doesn't qualify for, or any once it has no level left (422). Ability increases that aren't the level's (at a
-  level that takes none, or more than it takes) are refused (400): the other steps would build the character with them.
-- With `classId`, the planned level of that class (`level`): whether an ability increase is due, the skill points and each skill's ranks before the level, the most it may
-  reach with the level's points alone, its ranks per point and what the points sent for it come to (`pointsSpent`,
-  `ranksAdded`), each feat slot (`pool`, `count`) with the feats that qualify
-  for it, and each spell slot by spell level with the spells that do, with the picks made so far:
+  refused as the wizard refuses to plan it: a class the character has no next level of (404), or one it doesn't qualify
+  for, or any once it has no level left (422). Ability increases that can't be the level's (at a level that takes none,
+  past what it gives, or raising one twice) are refused (400): the other steps would build the character with them.
+  Those sent so far may fall short of what it gives.
+- With `classId`, the planned level of that class (`level`): whether an ability increase is due, the skill points and
+  each skill's ranks before the level, the most it may reach with the level's points alone, its ranks per point and what
+  the points sent for it come to (`pointsSpent`, `ranksAdded`), each feat slot (`pool`, `count`) with the feats that
+  qualify for it, and each spell slot by spell level with the spells that do, with the picks made so far:
   `abilityIncreases=abilityId:amount;…`, `skillPoints=skillId:points,…`, `feats=featId:poolId,…`,
   `spells=spellId:poolId,…`. A slot's `count` is its room at the level, the picks so far counted in it, and `picked`
   lists the picks that fit, a pick past its pool's room left out. A shared pool's room is one, which a feat or a spell

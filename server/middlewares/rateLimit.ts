@@ -2,12 +2,6 @@ import { limitRate, limitRatePerKey } from "./limitRate.ts";
 
 const MINUTE = 60 * 1000;
 
-/**
- * The public API's requests from each IP that failed to sign in, counted before their key is looked up: a wrong key or
- * none costs a lookup too. A valid key's requests don't count, so many users' keys behind one IP run on their own limits.
- */
-export const apiClientRateLimit = limitRate({ windowMs: MINUTE, limit: 120, unauthorizedOnly: true });
-
 /** The public API's requests, counted per key: an agent's run reads a character and its choices a few times a level. */
 export const apiKeyRateLimit = limitRatePerKey({ windowMs: MINUTE, limit: 120 });
 

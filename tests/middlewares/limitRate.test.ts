@@ -114,26 +114,6 @@ describe("limitRate", () => {
     });
   });
 
-  describe("of failed sign-ins alone", () => {
-    test("counts a client's requests that failed to sign in, not those answered or refused otherwise", async () => {
-      const app = new Hono()
-        .use(limitRate({ windowMs: 60_000, limit: 1, unauthorizedOnly: true }, true))
-        .get("/ok", (c) => c.text("ok"))
-        .get("/forbidden", (c) => c.text("no", 403))
-        .get("/refused", (c) => c.text("no", 401))
-        .onError((err, c) => {
-          const [error, code] = toJson(err);
-          return c.json(error, code);
-        });
-      for (let i = 0; i < 3; i++) {
-        expect((await app.request("/ok", from("10.0.0.7"))).status).toBe(200);
-        expect((await app.request("/forbidden", from("10.0.0.7"))).status).toBe(403);
-      }
-      expect((await app.request("/refused", from("10.0.0.7"))).status).toBe(401);
-      await expectStatus(app.request("/ok", from("10.0.0.7")), 429);
-    });
-  });
-
   describe("per API key", () => {
     test("refuses a key past its limit from any address, and counts each key apart", async () => {
       const app = limitedPerApiKey();

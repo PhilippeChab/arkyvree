@@ -19,9 +19,6 @@ type PickSteps = ReturnType<LevelUpSteps["describePickSteps"]>;
 /** The level a step or a picker is for: the planned level's class and its next level. */
 type PlannedStep = LevelQuery & { klassId: string; level: number };
 
-/** A step's answer, as `describeStep` gives it. */
-type Step = ReturnType<LevelUpSteps["describeStep"]>;
-
 /** The picks a step fitted to their pools, each pool's, as a picker's query takes them. */
 function toPicks<K extends "featId" | "powerId">(fitted: Record<string, string[]>, idKey: K) {
   return Object.entries(fitted).flatMap(([aptitudeId, ids]) =>
@@ -36,13 +33,6 @@ function toPicks<K extends "featId" | "powerId">(fitted: Record<string, string[]
  * that fit (the steps' `fitted`). What the wizard refuses to plan, it refuses.
  */
 export default class LevelChoices extends LevelUpSteps {
-  /** The step `name`'s answer of the kind `isKind` tells. */
-  private narrowStep<S extends Step>(name: string, step: LevelQuery, isKind: (answer: Step) => answer is S) {
-    const answer = this.describeStep(name, step);
-    if (!isKind(answer)) throw new RulesError("not-found", `Level step ${name} not found`);
-    return answer;
-  }
-
   /** A feat picker for each feat pool with room left at the level, with the feats and powers that fit so far. */
   private openFeatPools(step: PlannedStep, feats: PickSteps["feats"], picks: PickedSoFar) {
     const pools = Object.values(feats.aptitudePools).filter(({ available }) => available > 0);
@@ -84,15 +74,15 @@ export default class LevelChoices extends LevelUpSteps {
   }
 
   /**
-   * The ability increases step of the level: refused when the query sends increases that aren't the level's, as its save
-   * refuses them, which the other steps and the pickers would build the character with.
+   * The ability increases step of the level: refused when the query sends increases that can't be the level's, at a
+   * level that takes none, past what it gives, or raising one twice, which the other steps and the pickers would build
+   * the character with. Those picked so far may fall short of what it gives.
    */
   private readAbilityStep(step: PlannedStep) {
-    const abilities = this.narrowStep("abilities", step, (answer) => "isAvailable" in answer);
     // The levels before this one: the character's, none planned before it
-    const levelsBefore = this.character.rows.levels.length;
-    if (step.abilityIncreases?.length) this.checks.checkAbilityIncreases(levelsBefore, step.abilityIncreases);
-    return abilities;
+    if (step.abilityIncreases?.length)
+      this.checks.checkAbilityIncreasesSoFar(this.character.rows.levels.length, step.abilityIncreases);
+    return this.describeAbilityStep(step);
   }
 
   /**
@@ -122,7 +112,7 @@ export default class LevelChoices extends LevelUpSteps {
     const klass = this.readPlannedKlass(classPicker, query.klassId);
     const step = { ...query, klassId: klass.id, level: klass.nextLevel };
     const abilities = this.readAbilityStep(step);
-    const skills = this.narrowStep("skills", step, (answer) => "skillPointsToSpend" in answer);
+    const skills = this.describeSkillStep(step);
     const { feats, powers } = this.describePickSteps(step);
     const picks = { feats: toPicks(feats.fitted, "featId"), powers: toPicks(powers.fitted, "powerId") };
     return {
@@ -133,8 +123,8 @@ export default class LevelChoices extends LevelUpSteps {
         steps: {
           abilities,
           class: { id: klass.id, level: klass.nextLevel, name: klass.name },
-          feats: { name: "feats", ...feats },
-          powers: { name: "powers", ...powers },
+          feats,
+          powers,
           skills,
         },
       },
