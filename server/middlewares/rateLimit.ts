@@ -3,10 +3,10 @@ import { limitRate, limitRatePerKey } from "./limitRate.ts";
 const MINUTE = 60 * 1000;
 
 /**
- * The public API's refused requests from each IP, counted before their key is looked up: a request with a wrong key or
- * none costs a lookup too. Its answered requests don't count, so many users' keys behind one IP run on their own limits.
+ * The public API's requests from each IP that failed to sign in, counted before their key is looked up: a wrong key or
+ * none costs a lookup too. A valid key's requests don't count, so many users' keys behind one IP run on their own limits.
  */
-export const apiClientRateLimit = limitRate({ windowMs: MINUTE, limit: 120, refusedOnly: true });
+export const apiClientRateLimit = limitRate({ windowMs: MINUTE, limit: 120, unauthorizedOnly: true });
 
 /** The public API's requests, counted per key: an agent's run reads a character and its choices a few times a level. */
 export const apiKeyRateLimit = limitRatePerKey({ windowMs: MINUTE, limit: 120 });
@@ -33,9 +33,9 @@ export const importRateLimit = limitRate({ windowMs: MINUTE, limit: 10 });
 export const importSourceRateLimit = limitRate({ windowMs: MINUTE, limit: 30 });
 
 /**
- * A character's choices at its next level, counted per key apart from its other requests: one builds the character a
- * time for each step and each pool it reads.
+ * A character's choices at its next level, which read every option of each pool: counted per user, whatever keys of
+ * theirs ask, apart from the keys' other requests.
  */
-export const levelChoicesRateLimit = limitRatePerKey({ windowMs: MINUTE, limit: 20 });
+export const levelChoicesRateLimit = limitRatePerKey({ windowMs: MINUTE, limit: 20, per: "user" });
 
 export const publicApiRateLimit = limitRate({ windowMs: MINUTE, limit: 30 });

@@ -6,6 +6,8 @@
 
 import type { CharactersService } from "@/server/services/characters/index.ts";
 
+import { toV1Page } from "./pages.ts";
+
 /** An ability score of a character's. */
 interface V1Ability {
   abbreviation: string;
@@ -259,13 +261,12 @@ export function toV1Character(sheet: CharacterSheet): V1Character {
 }
 
 /** A page of characters, each as v1 lists it. */
-export function toV1Characters({ items, nextPage, page }: CharacterList) {
-  const characters: V1CharacterSummary[] = items.map((character) => ({
+export function toV1Characters(page: CharacterList) {
+  return toV1Page(page, (character): V1CharacterSummary => ({
     classes: character.levels.map(({ klass, level }) => ({ level, name: klass })),
     id: character.id,
     level: character.totalLevel,
     name: character.name,
     race: character.race,
   }));
-  return { items: characters, nextPage: nextPage ?? null, page };
 }

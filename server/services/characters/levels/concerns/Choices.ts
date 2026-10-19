@@ -2,10 +2,16 @@ import { type CharacterInput, Engine, type LevelUpEngine } from "@/engine/index.
 import type { Constructor } from "@/lib/mixins.ts";
 import type { RulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { Feats, fetchEveryPage, Klasses, Powers } from "@/server/repositories/index.ts";
+import { Feats, fetchEveryPage, Klasses, type Paginated, Powers } from "@/server/repositories/index.ts";
 import { withEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
 import { type StepQuery, toLevelQuery } from "@/server/services/characters/levels/stepQueries.ts";
 import type { Session } from "@/shared/relations.ts";
+
+/** A pool's picker, as the server reads it: what it reads a page of options with, and a page described. */
+interface SlotPicker {
+  describe<R extends { id: string }>(rows: R[]): (R & { eligible: boolean })[];
+  filters: object;
+}
 
 /** A character's choices at its next level, as the engine opens them. */
 type OpenedChoices = ReturnType<LevelUpEngine["openLevelChoices"]>;
@@ -32,28 +38,18 @@ export function Choices<B extends Constructor>(Base: B) {
       return classPicker.describe(rows);
     }
 
-    /** Each feat pool with room left, with every feat it offers that the character qualifies for. */
-    private async readFeatSlots(level: NonNullable<OpenedChoices["level"]>) {
+    /**
+     * Each pool with room left (`pools`), with every option its picker offers that the character qualifies for, read a
+     * page at a time (`findPage`).
+     */
+    private async readSlots<P extends { picker: SlotPicker }, R extends { id: string }>(
+      pools: P[],
+      findPage: (filters: P["picker"]["filters"], pagination: { limit: number; page: number }) => Promise<Paginated<R>>,
+    ) {
       const slots = [];
-      for (const { picker, pool, room } of level.featPools) {
-        const rows = await fetchEveryPage(
-          (pagination) => Feats.findOptionPage(db, picker.filters, pagination),
-          OPTIONS_PAGE_SIZE,
-        );
-        slots.push({ options: picker.describe(rows).filter((option) => option.eligible), pool, room });
-      }
-      return slots;
-    }
-
-    /** Each power pool with room left, at each spell level it counts, with every power it offers that qualifies. */
-    private async readPowerSlots(level: NonNullable<OpenedChoices["level"]>) {
-      const slots = [];
-      for (const { picker, pool, powerLevel, room } of level.powerPools) {
-        const rows = await fetchEveryPage(
-          (pagination) => Powers.findOptionPage(db, picker.filters, pagination),
-          OPTIONS_PAGE_SIZE,
-        );
-        slots.push({ options: picker.describe(rows).filter((option) => option.eligible), pool, powerLevel, room });
+      for (const { picker, ...pool } of pools) {
+        const rows = await fetchEveryPage((pagination) => findPage(picker.filters, pagination), OPTIONS_PAGE_SIZE);
+        slots.push({ ...pool, options: picker.describe(rows).filter((option) => option.eligible) });
       }
       return slots;
     }
@@ -68,8 +64,11 @@ export function Choices<B extends Constructor>(Base: B) {
         const choices = Engine.for(scope).character(character).levelUp().openLevelChoices(toLevelQuery(query));
         const classes = await this.readClasses(scope, character, choices);
         if (!choices.level) return { classes, level: null };
-        const featSlots = await this.readFeatSlots(choices.level);
-        const powerSlots = await this.readPowerSlots(choices.level);
+        const { featPools, powerPools } = choices.level;
+        const featSlots = await this.readSlots(featPools, (filters, page) => Feats.findOptionPage(db, filters, page));
+        const powerSlots = await this.readSlots(powerPools, (filters, page) =>
+          Powers.findOptionPage(db, filters, page),
+        );
         return { classes, level: { ...choices.level.steps, featSlots, powerSlots } };
       });
     }

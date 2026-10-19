@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import { db } from "@/server/database/index.ts";
 import { ApiKeys, Users } from "@/server/repositories/index.ts";
+import { application } from "@/server/routers/application.ts";
 import { ApiKeysService } from "@/server/services/authentication/apiKeys/index.ts";
 import { createKeyedApi, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
 import { apiAs, apiWithKey } from "@/tests/support/clients.ts";
@@ -23,6 +24,13 @@ describe("v1", () => {
     await expectStatus(guestApi.v1.characters.$get({ query: {} }), 401);
     await expectStatus(apiWithKey("ark_not-a-key").v1.characters.$get({ query: {} }), 401);
     await expectStatus(apiAs(session.id).v1.characters.$get({ query: {} }), 401);
+  });
+
+  test("answers a path no route answers with the API's error, never the app's page", async () => {
+    const { key } = await createKeyedApi();
+    const headers = { authorization: `Bearer ${key.token}` };
+    const response = await expectStatus(application.request("/v1/campaigns", { headers }), 404);
+    expect(await response.json()).toMatchObject({ cause: "notFound" });
   });
 
   test("refuses a revoked key, and a key whose user deleted their account", async () => {

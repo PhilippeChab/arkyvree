@@ -13,7 +13,6 @@ import {
 import { hashPassword, verifyPassword } from "@/server/password.ts";
 import {
   Activities,
-  ApiKeys,
   EmailVerifications,
   PasswordResets,
   Sessions,
@@ -22,7 +21,7 @@ import {
 } from "@/server/repositories/index.ts";
 import type { Session, SessionRow } from "@/shared/relations.ts";
 
-import { openSession, purgeDemoSessionUser, signInAsGoogleAccount, toSafeUser } from "./accounts.ts";
+import { openSession, purgeDemoSessionUser, signInAsGoogleAccount, signOutEverywhere, toSafeUser } from "./accounts.ts";
 import { compareInConstantTime, generateVerificationCode } from "./codes.ts";
 import { verifyGoogleIdToken } from "./google.ts";
 
@@ -119,9 +118,8 @@ class AuthenticationService {
       const newHash = await hashPassword(newPassword);
       await Users.update(tx, { passwordDigest: newHash }, { id: user.id });
       await PasswordResets.archive(tx, { id: reset.id });
-      // A reset is how an account is taken back: whatever signed in as the user before is signed out, its keys too
-      await Sessions.archive(tx, { userId: user.id });
-      await ApiKeys.delete(tx, { userId: user.id });
+      // A reset is how an account is taken back
+      await signOutEverywhere(tx, user.id);
 
       await Activities.create(tx, {
         userId: user.id,

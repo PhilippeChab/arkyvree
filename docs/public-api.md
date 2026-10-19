@@ -12,18 +12,19 @@ answers in shapes of its own, which stay fixed.
   keeps its SHA-256 digest, which a request's token is looked up by, and its start, which names it on the page
   (`server/apiKeyTokens.ts`). A revoked key is deleted. A user keeps 10 at most (`MAX_API_KEYS`), since each key's
   requests are counted apart.
-- Wherever the user's other sessions are signed out, their keys are revoked too: a password reset, a password change
-  and the account's deletion.
+- Wherever the user's other sessions are signed out, their keys are revoked too (`signOutEverywhere`): a password
+  reset, a password change and the account's deletion.
 - A request sends it as `Authorization: Bearer <token>`. `apiKeyMiddleware` (`server/middlewares/apiKey.ts`) refuses
   one without a key, with a revoked one, or with one whose user is gone (an archived account, a demo), with a 401, and
   marks the key used, at most once a minute.
 - A key acts as its user: `requestSession` is `{ userId }`, the `Session` the services read, so a key sees and
   changes only what its user can, by the checks the services already make. A session's cookie signs in nothing under
   `/v1`.
-- Its refused requests are counted per IP before the key is looked up (`apiClientRateLimit`: 120 a minute), so a
-  request with a wrong key or none is limited too, while many users' keys behind one IP run on their own limits; its
-  requests are counted per key (`apiKeyRateLimit`: 120 a minute), and a character's level choices, which read every
-  option of each pool, apart (`levelChoicesRateLimit`: 20 a minute).
+- Its requests that fail to sign in are counted per IP before the key is looked up (`apiClientRateLimit`: 120 a minute),
+  so a wrong key or none is limited too, while a valid key's requests don't count: many users' keys behind one IP run on
+  their own limits. Its requests are counted per key (`apiKeyRateLimit`: 120 a minute), and a character's level choices,
+  which read every option of each pool, per user, whichever keys of theirs ask (`levelChoicesRateLimit`: 20 a minute).
+
 - A ruleset is read as the app reads it: any ruleset by its id, a private one too, as `/api` answers it to any signed-in
   user. The lists (`GET /v1/rulesets`) list what the user's scope does.
 
@@ -52,7 +53,7 @@ returns to v1's shape (`V1.character`), and from a v1 request to what the servic
 | `GET /v1/rulesets/:id/classes`, `feats`, `races`, `skills`, `spells` | A ruleset's content, a page at a time (`page`, `limit`, `search`) |
 
 A page answers `{ items, page, nextPage }`, `nextPage` null on the last. An error answers the app's envelope
-(`{ error, cause, message }`) with its status.
+(`{ error, cause, message }`) with its status, a path no route answers a 404.
 
 ### A character's choices at its next level
 
@@ -63,8 +64,7 @@ A page answers `{ items, page, nextPage }`, `nextPage` null on the last. An erro
 - A planned level is refused as the wizard refuses to plan it: a class the character has no next level of (404), or
   one it doesn't qualify for, or any once it has no level left (422). Ability increases that aren't the level's (at a
   level that takes none, or more than it takes) are refused (400): the other steps would build the character with them.
-- With `classId`, the planned level of that class (`level`): whether an ability increase is due and whether the
-  increases sent are the level's (`picked`), the skill points and each skill's ranks before the level, the most it may
+- With `classId`, the planned level of that class (`level`): whether an ability increase is due, the skill points and each skill's ranks before the level, the most it may
   reach with the level's points alone, its ranks per point and what the points sent for it come to (`pointsSpent`,
   `ranksAdded`), each feat slot (`pool`, `count`) with the feats that qualify
   for it, and each spell slot by spell level with the spells that do, with the picks made so far:

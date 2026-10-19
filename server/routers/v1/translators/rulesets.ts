@@ -7,6 +7,8 @@ import type { PowersService } from "@/server/services/rulesets/powers/index.ts";
 import type { RacesService } from "@/server/services/rulesets/races/index.ts";
 import type { SkillsService } from "@/server/services/rulesets/skills/index.ts";
 
+import { toV1Page } from "./pages.ts";
+
 /** A class of a ruleset's. */
 interface V1Class {
   description: string | null;
@@ -24,13 +26,6 @@ interface V1Feat {
   pools: { id: string; name: string }[];
   selectable: boolean;
   stackable: boolean;
-}
-
-/** A page of a ruleset's things, as v1 answers it. */
-interface V1Page<T> {
-  items: T[];
-  nextPage: number | null;
-  page: number;
 }
 
 /** A race of a ruleset's. */
@@ -82,17 +77,9 @@ export interface V1Ruleset {
   system: boolean;
 }
 
-/** A page of a service's, its items each as `toItem` answers it. */
-function toPage<T, R>(
-  { items, nextPage, page }: { items: T[]; nextPage?: number; page: number },
-  toItem: (item: T) => R,
-): V1Page<R> {
-  return { items: items.map(toItem), nextPage: nextPage ?? null, page };
-}
-
 /** A page of a ruleset's classes. */
 export function toV1Classes(page: PageOf<typeof ClassesService.getClasses>) {
-  return toPage(page, ({ description, hd, id, kind, name }): V1Class => ({
+  return toV1Page(page, ({ description, hd, id, kind, name }): V1Class => ({
     description,
     hitDie: hd,
     id,
@@ -103,7 +90,7 @@ export function toV1Classes(page: PageOf<typeof ClassesService.getClasses>) {
 
 /** A page of a ruleset's feats. */
 export function toV1Feats(page: PageOf<typeof FeatsService.getFeats>) {
-  return toPage(page, (feat): V1Feat => ({
+  return toV1Page(page, (feat): V1Feat => ({
     description: feat.description,
     id: feat.id,
     name: feat.name,
@@ -118,7 +105,7 @@ export function toV1Feats(page: PageOf<typeof FeatsService.getFeats>) {
 
 /** A page of a ruleset's races. */
 export function toV1Races(page: PageOf<typeof RacesService.getRaces>) {
-  return toPage(page, ({ baseSpeed, description, id, kind, name, size }): V1Race => ({
+  return toV1Page(page, ({ baseSpeed, description, id, kind, name, size }): V1Race => ({
     description,
     id,
     kind,
@@ -146,12 +133,12 @@ export function toV1Ruleset(ruleset: Ruleset | RulesetListItem): V1Ruleset {
 
 /** A page of rulesets. */
 export function toV1Rulesets(page: PageOf<typeof RulesetsService.getRulesets>) {
-  return toPage(page, toV1Ruleset);
+  return toV1Page(page, toV1Ruleset);
 }
 
 /** A page of a ruleset's skills. */
 export function toV1Skills(page: PageOf<typeof SkillsService.getSkills>) {
-  return toPage(page, ({ description, id, name, usableWithoutTraining }): V1Skill => ({
+  return toV1Page(page, ({ description, id, name, usableWithoutTraining }): V1Skill => ({
     description,
     id,
     name,
@@ -161,7 +148,7 @@ export function toV1Skills(page: PageOf<typeof SkillsService.getSkills>) {
 
 /** A page of a ruleset's spells. */
 export function toV1Spells(page: PageOf<typeof PowersService.getPowers>) {
-  return toPage(page, (spell): V1Spell => ({
+  return toV1Page(page, (spell): V1Spell => ({
     description: spell.description,
     id: spell.id,
     lists: spell.powersAptitudesInRules.map(({ aptitudesInRule, level }) => ({

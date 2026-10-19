@@ -20,8 +20,8 @@ interface V1ClassChoice {
 
 /** What the planned level offers, step by step. */
 interface V1PlannedLevel {
-  /** Whether the level takes one, and whether the increases sent are the level's as its save takes them (`picked`) */
-  abilityIncrease: { abilities: { id: string; name: string; score: number }[]; due: boolean; picked: boolean };
+  /** Whether the level takes one: increases that aren't the level's are refused */
+  abilityIncrease: { abilities: { id: string; name: string; score: number }[]; due: boolean };
   class: { id: string; level: number; name: string };
   feats: { granted: { id: string; name: string }[]; picked: { featId: string; poolId: string }[]; slots: V1Slot[] };
   skills: { points: number; skills: V1SkillChoice[] };
@@ -96,7 +96,6 @@ function toPlannedLevel(level: PlannedLevel): V1PlannedLevel {
     abilityIncrease: {
       abilities: abilities.attributes.map(({ abilityId, name, total }) => ({ id: abilityId, name, score: total })),
       due: abilities.isAvailable,
-      picked: abilities.picked,
     },
     class: klass,
     feats: {

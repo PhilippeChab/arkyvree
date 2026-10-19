@@ -22,16 +22,20 @@ function from(ip: string, init: RequestInit = {}) {
   return { ...init, headers: { ...init.headers, "x-forwarded-for": ip } };
 }
 
-/** An app behind the per-key limit, its requests' key the `x-key` header's, as the public API's sign-in sets it. */
-function limitedPerApiKey() {
+/**
+ * An app behind the per-key limit (or per user, `per`), its requests' key the `x-key` header's and its user the
+ * `x-user` header's, as the public API's sign-in sets them.
+ */
+function limitedPerApiKey(per: "key" | "user" = "key") {
   return new Hono<ApiKeyContext>()
     .use(async (c, next) => {
       const id = c.req.header("x-key") ?? "";
-      c.set("requestApiKey", { id, userId: id });
-      c.set("requestSession", { userId: id });
+      const userId = c.req.header("x-user") ?? id;
+      c.set("requestApiKey", { id, userId });
+      c.set("requestSession", { userId });
       await next();
     })
-    .use(limitRatePerKey({ windowMs: 60_000, limit: 1 }, true))
+    .use(limitRatePerKey({ windowMs: 60_000, limit: 1, per }, true))
     .all("/", (c) => c.text("ok"))
     .onError((err, c) => {
       const [error, code] = toJson(err);
@@ -110,17 +114,21 @@ describe("limitRate", () => {
     });
   });
 
-  describe("of refused requests alone", () => {
-    test("counts a client's refused requests, not those answered", async () => {
+  describe("of failed sign-ins alone", () => {
+    test("counts a client's requests that failed to sign in, not those answered or refused otherwise", async () => {
       const app = new Hono()
-        .use(limitRate({ windowMs: 60_000, limit: 1, refusedOnly: true }, true))
+        .use(limitRate({ windowMs: 60_000, limit: 1, unauthorizedOnly: true }, true))
         .get("/ok", (c) => c.text("ok"))
+        .get("/forbidden", (c) => c.text("no", 403))
         .get("/refused", (c) => c.text("no", 401))
         .onError((err, c) => {
           const [error, code] = toJson(err);
           return c.json(error, code);
         });
-      for (let i = 0; i < 3; i++) expect((await app.request("/ok", from("10.0.0.7"))).status).toBe(200);
+      for (let i = 0; i < 3; i++) {
+        expect((await app.request("/ok", from("10.0.0.7"))).status).toBe(200);
+        expect((await app.request("/forbidden", from("10.0.0.7"))).status).toBe(403);
+      }
       expect((await app.request("/refused", from("10.0.0.7"))).status).toBe(401);
       await expectStatus(app.request("/ok", from("10.0.0.7")), 429);
     });
@@ -132,6 +140,14 @@ describe("limitRate", () => {
       expect((await app.request("/", withApiKey("first", "10.0.0.1"))).status).toBe(200);
       await expectStatus(app.request("/", withApiKey("first", "10.0.0.2")), 429);
       expect((await app.request("/", withApiKey("second", "10.0.0.1"))).status).toBe(200);
+    });
+
+    test("counts the keys of one user together, per user", async () => {
+      const app = limitedPerApiKey("user");
+      const as = (key: string, user: string) => ({ headers: { "x-key": key, "x-user": user } });
+      expect((await app.request("/", as("first", "ada"))).status).toBe(200);
+      await expectStatus(app.request("/", as("second", "ada")), 429);
+      expect((await app.request("/", as("third", "grace"))).status).toBe(200);
     });
   });
 });

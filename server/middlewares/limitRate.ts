@@ -18,18 +18,19 @@ function getClientIp(c: { req: { header: (name: string) => string | undefined } 
 }
 
 /**
- * At most `limit` requests per `windowMs` of those `keyGenerator` counts together, or of those refused alone
- * (`refusedOnly`: an answer past 3xx); past it, `TooManyRequestsError`.
+ * At most `limit` requests per `windowMs` of those `keyGenerator` counts together, or of those that failed to sign in
+ * alone (`unauthorizedOnly`: a 401); past it, `TooManyRequestsError`.
  */
 function limitBy<E extends Env>(
-  { windowMs, limit, refusedOnly = false }: { limit: number; refusedOnly?: boolean; windowMs: number },
+  { windowMs, limit, unauthorizedOnly = false }: { limit: number; unauthorizedOnly?: boolean; windowMs: number },
   keyGenerator: (c: Context<E>) => Promise<string> | string,
 ) {
   return rateLimiter<E>({
     windowMs,
     limit,
     standardHeaders: "draft-6",
-    skipSuccessfulRequests: refusedOnly,
+    skipSuccessfulRequests: unauthorizedOnly,
+    requestWasSuccessful: (c) => c.res.status !== 401,
     keyGenerator,
     handler: () => {
       throw new TooManyRequestsError();
@@ -52,11 +53,11 @@ async function emailKey(c: Parameters<KeyGenerator>[0]): Promise<string> {
 }
 
 /**
- * At most `limit` requests per `windowMs` from each client IP, or `per` email address, or of those refused alone
- * (`refusedOnly`); past it, `TooManyRequestsError`. Off in the tests, whose requests share an IP.
+ * At most `limit` requests per `windowMs` from each client IP, or `per` email address, or of those that failed to sign
+ * in alone (`unauthorizedOnly`); past it, `TooManyRequestsError`. Off in the tests, whose requests share an IP.
  */
 export function limitRate(
-  { per = "ip", ...options }: { limit: number; per?: "email" | "ip"; refusedOnly?: boolean; windowMs: number },
+  { per = "ip", ...options }: { limit: number; per?: "email" | "ip"; unauthorizedOnly?: boolean; windowMs: number },
   enabled = !isTest(),
 ) {
   if (!enabled) return noop;
@@ -64,14 +65,18 @@ export function limitRate(
 }
 
 /**
- * At most `limit` requests per `windowMs` with each API key: the one the public API's sign-in (`apiKey.ts`) found, which
- * runs before. Past it, `TooManyRequestsError`. Off in the tests.
+ * At most `limit` requests per `windowMs` with each API key, or `per` user its keys act as: the key the public API's
+ * sign-in (`apiKey.ts`) found, which runs before. Past it, `TooManyRequestsError`. Off in the tests.
  */
-export function limitRatePerKey(options: { limit: number; windowMs: number }, enabled = !isTest()) {
+export function limitRatePerKey(
+  { per = "key", ...options }: { limit: number; per?: "key" | "user"; windowMs: number },
+  enabled = !isTest(),
+) {
   if (!enabled) return noop;
   return limitBy<ApiKeyContext>(options, (c) => {
     // The sign-in sets it: a limit on a route without it is the code's mistake, which the tests' disabled limits miss
-    if (!c.var.requestApiKey) throw new InternalError("A per-key rate limit runs after the API key's sign-in");
-    return `key:${c.var.requestApiKey.id}`;
+    const key = c.var.requestApiKey;
+    if (!key) throw new InternalError("A per-key rate limit runs after the API key's sign-in");
+    return per === "user" ? `user:${key.userId}` : `key:${key.id}`;
   });
 }

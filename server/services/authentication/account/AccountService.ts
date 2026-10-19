@@ -7,7 +7,6 @@ import { BadRequestError, InternalError, UnauthorizedError } from "@/server/erro
 import { hashPassword, verifyPassword } from "@/server/password.ts";
 import {
   Activities,
-  ApiKeys,
   Characters,
   EmailVerifications,
   Invites,
@@ -15,12 +14,11 @@ import {
   PasswordResets,
   Players,
   Rulesets,
-  Sessions,
   StarredRulesets,
   Users,
 } from "@/server/repositories/index.ts";
 import { purgeAttachmentsForRecords } from "@/server/services/attachments/index.ts";
-import { toSafeUser } from "@/server/services/authentication/accounts.ts";
+import { signOutEverywhere, toSafeUser } from "@/server/services/authentication/accounts.ts";
 import { compareInConstantTime, generateVerificationCode } from "@/server/services/authentication/codes.ts";
 import type { Session, SessionRow } from "@/shared/relations.ts";
 
@@ -76,8 +74,7 @@ class AccountService {
       await Players.archive(tx, { userId });
       await Invites.archive(tx, { userId });
       await StarredRulesets.archive(tx, { userId });
-      await Sessions.archive(tx, { userId });
-      await ApiKeys.delete(tx, { userId });
+      await signOutEverywhere(tx, userId);
       await EmailVerifications.archive(tx, { userId });
       await PasswordResets.archive(tx, { userId });
       await OauthAccounts.archive(tx, { userId });
@@ -166,9 +163,8 @@ class AccountService {
       const rows = await Users.update(tx, { passwordDigest: newHash }, { id: session.userId });
       const updatedUser = rows[0];
       if (!updatedUser) throw new InternalError("Failed to update password");
-      // The user's other sessions are signed out, and their keys revoked: whatever had the old password is cut off
-      await Sessions.archive(tx, { userId: session.userId, exceptId: session.id });
-      await ApiKeys.delete(tx, { userId: session.userId });
+      // Whatever had the old password is cut off: but the session changing it
+      await signOutEverywhere(tx, session.userId, session.id);
 
       await Activities.create(tx, {
         userId: session.userId,
