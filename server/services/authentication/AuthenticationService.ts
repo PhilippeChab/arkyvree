@@ -19,7 +19,7 @@ import {
   Users,
   Visibility,
 } from "@/server/repositories/index.ts";
-import type { Session } from "@/shared/relations.ts";
+import type { Session, SessionRow } from "@/shared/relations.ts";
 
 import { openSession, purgeDemoSessionUser, signInAsGoogleAccount, toSafeUser } from "./accounts.ts";
 import { compareInConstantTime, generateVerificationCode } from "./codes.ts";
@@ -166,7 +166,7 @@ class AuthenticationService {
     return await signInAsGoogleAccount(payload, existingSessionId);
   }
 
-  async signOut(session: Session) {
+  async signOut(session: SessionRow) {
     return await withTransaction(async (tx) => {
       const user = await Users.findOne(tx, { id: session.userId });
       if (user?.expiresAt) {

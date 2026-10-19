@@ -1,7 +1,14 @@
+import { MAX_API_KEY_NAME_LENGTH } from "@/shared/apiKeys.ts";
 import { PASSWORD_MIN_LENGTH, USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH } from "@/shared/auth.ts";
 import { sanitizeText } from "@/shared/text.ts";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/** React Hook Form rules for an API key's name: required, and within the bound the API holds it to. */
+export const API_KEY_NAME_RULES = {
+  required: "Name is required",
+  maxLength: { value: MAX_API_KEY_NAME_LENGTH, message: `Name must be at most ${MAX_API_KEY_NAME_LENGTH} characters` },
+} as const;
 
 /** React Hook Form rules for a new feat's or spell's aptitudes: at least one, as the API asks. */
 export const APTITUDES_RULES = { required: "At least one aptitude must be selected" } as const;

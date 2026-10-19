@@ -21,7 +21,7 @@ import {
 import { purgeAttachmentsForRecords } from "@/server/services/attachments/index.ts";
 import { toSafeUser } from "@/server/services/authentication/accounts.ts";
 import { compareInConstantTime, generateVerificationCode } from "@/server/services/authentication/codes.ts";
-import type { Session } from "@/shared/relations.ts";
+import type { Session, SessionRow } from "@/shared/relations.ts";
 
 class AccountService {
   async cancelEmailChange(session: Session) {
@@ -146,7 +146,7 @@ class AccountService {
     });
   }
 
-  async updatePassword(session: Session, currentPassword: string, newPassword: string) {
+  async updatePassword(session: SessionRow, currentPassword: string, newPassword: string) {
     return await withTransaction(async (tx) => {
       const user = await Users.findOne(tx, { id: session.userId });
       if (!user) throw new InternalError("User not found");

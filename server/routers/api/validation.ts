@@ -35,6 +35,18 @@ export const idList = z
   .optional()
   .transform((value) => value?.split(",").filter(isUuid));
 
+/**
+ * A level's ability increases in the query string: `abilityId:amount` pairs joined by `;`, what isn't one dropped (an
+ * empty string is none).
+ */
+export const increaseList = z.string().transform((value) =>
+  value
+    .split(";")
+    .map((pair) => pair.split(":"))
+    .filter(([abilityId, amount]) => isUuid(abilityId) && /^[1-9]\d*$/.test(amount ?? ""))
+    .map(([abilityId, amount]) => ({ abilityId, amount: Number(amount) })),
+);
+
 /** Standard limit: 1–100, defaults to 10 */
 export const limit = limitDefaultingTo(10);
 /** Standard orderDir */
@@ -50,3 +62,19 @@ export const sanitizedEmail = z.string().overwrite(sanitizeEmail).email();
 
 /** Text, sanitized as it's stored: a check chained to it (`sanitizedText.min(3)`) reads the sanitized text. */
 export const sanitizedText = z.string().overwrite(sanitizeText);
+
+/** Comma-separated `skillId:points` points spent on each skill: what isn't one is dropped. */
+export const skillPoints = z
+  .string()
+  .optional()
+  .transform((value) =>
+    value === undefined
+      ? undefined
+      : Object.fromEntries(
+          value
+            .split(",")
+            .map((pair) => pair.split(":"))
+            .filter(([skillId, points]) => isUuid(skillId) && !isNaN(Number(points)))
+            .map(([skillId, points]) => [skillId, Number(points)]),
+        ),
+  );

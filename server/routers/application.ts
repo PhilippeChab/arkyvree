@@ -16,6 +16,7 @@ import apiRouter from "./api/index.ts";
 import authenticationRouter from "./authentication/index.ts";
 import healthRouter from "./health.ts";
 import staticRouter from "./static.ts";
+import v1Router from "./v1/index.ts";
 import wsRouter from "./ws.ts";
 
 export type Application = typeof application;
@@ -101,6 +102,7 @@ export const application = new Hono<{ Variables: Partial<SessionContext["Variabl
   .route("/", healthRouter)
   .route("/auth", authenticationRouter)
   .route("/api", apiRouter)
+  .route("/v1", v1Router)
   .route("/", staticRouter)
   .onError((err, c) => {
     if (err instanceof HTTPException)

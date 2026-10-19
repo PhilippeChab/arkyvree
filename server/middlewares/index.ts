@@ -1,5 +1,8 @@
+export { default as apiKeyMiddleware } from "./apiKey.ts";
+export type { ApiKeyContext } from "./apiKey.ts";
 export { default as denyDemoUser } from "./denyDemoUser.ts";
 export {
+  apiKeyRateLimit,
   attachmentUploadRateLimit,
   authEmailRateLimit,
   authRateLimit,

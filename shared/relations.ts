@@ -68,6 +68,9 @@ export type Requirement = typeof requirementsInCustomization.$inferSelect;
 export type Ruleset = typeof rulesetsInRules.$inferSelect;
 export type RulesetAbility = typeof abilitiesInRules.$inferSelect;
 export type RulesetSave = typeof savesInRules.$inferSelect;
-export type Session = typeof sessionsInAccount.$inferSelect;
+/** Who a request acts as, which the services read: a signed-in session's user, or the user an API key acts as. */
+export type Session = Pick<SessionRow, "userId">;
+/** A signed-in session's row, which signing in and out write. */
+export type SessionRow = typeof sessionsInAccount.$inferSelect;
 export type Skill = typeof skillsInRules.$inferSelect;
 export type User = typeof usersInAccount.$inferSelect;

@@ -7,8 +7,9 @@ import { toJson } from "@/server/errors/index.ts";
 import { SESSION_COOKIE_NAME } from "@/server/middlewares/session.ts";
 import { Sessions } from "@/server/repositories/index.ts";
 import { application, type Application } from "@/server/routers/application.ts";
+import { ApiKeysService } from "@/server/services/authentication/apiKeys/index.ts";
 
-import { apiAs } from "./clients.ts";
+import { apiAs, apiWithKey } from "./clients.ts";
 import { createTestUser } from "./users.ts";
 
 /** The seeded session of the seeded user (`SEED_USER_ID`, LocalUser). */
@@ -25,6 +26,12 @@ export function sessionIdFrom(response: { headers: Headers }) {
   const sessionId = response.headers.get("set-cookie")?.match(new RegExp(`${SESSION_COOKIE_NAME}=([^;]+)`))?.[1];
   if (!sessionId) throw new Error("No session cookie in the response");
   return sessionId;
+}
+
+/** A new API key of `userId`'s, with its token, and a public API (`/v1`) client that sends it. */
+export async function createKeyedApi(userId: string = SEED_USER_ID) {
+  const key = await ApiKeysService.createKey({ userId }, `Test key ${crypto.randomUUID()}`);
+  return { key, api: apiWithKey(key.token) };
 }
 
 /** A new user and a client signed in as them. */

@@ -2,6 +2,9 @@ import { limitRate } from "./limitRate.ts";
 
 const MINUTE = 60 * 1000;
 
+/** The public API's requests, counted per key: an agent's run reads a character and its choices a few times a level. */
+export const apiKeyRateLimit = limitRate({ windowMs: MINUTE, limit: 120, per: "key" });
+
 /**
  * Each direct-upload commits a blob row + S3 object that the sweep won't reclaim until UNATTACHED_BLOB_TTL_MS
  * (server/jobs/sweepPendingBlobs.ts) after creation. Cap per-IP creation rate so a single scripted client can't bloat storage at

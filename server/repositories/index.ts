@@ -5,6 +5,7 @@ export type { Paginated } from "./concerns/Paginates.ts";
 export {
   Abilities,
   Activities,
+  ApiKeys,
   Aptitudes,
   Attachments,
   Blobs,

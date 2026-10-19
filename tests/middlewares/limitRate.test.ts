@@ -21,12 +21,20 @@ function from(ip: string, init: RequestInit = {}) {
   return { ...init, headers: { ...init.headers, "x-forwarded-for": ip } };
 }
 
+function limitedPerApiKey() {
+  return behind(limitRate({ windowMs: 60_000, limit: 1, per: "key" }, true));
+}
+
 function limitedPerEmail() {
   return behind(limitRate({ windowMs: 60_000, limit: 1, per: "email" }, true));
 }
 
 function limitedPerIp() {
   return behind(limitRate({ windowMs: 60_000, limit: 2 }, true));
+}
+
+function withApiKey(token: string, ip = "10.0.0.1") {
+  return from(ip, { headers: { authorization: `Bearer ${token}` } });
 }
 
 function withEmail(emailAddress: unknown) {
@@ -85,6 +93,19 @@ describe("limitRate", () => {
         expect((await app.request("/", { method: "PUT", body: "not json" })).status).toBe(200);
         expect((await app.request("/", withEmail(42))).status).toBe(200);
       }
+    });
+  });
+
+  describe("per API key", () => {
+    test("refuses a key past its limit from any address, and counts each key apart", async () => {
+      const app = limitedPerApiKey();
+      expect((await app.request("/", withApiKey("ark_first", "10.0.0.1"))).status).toBe(200);
+      await expectStatus(app.request("/", withApiKey("ark_first", "10.0.0.2")), 429);
+      expect((await app.request("/", withApiKey("ark_second", "10.0.0.1"))).status).toBe(200);
+    });
+
+    test("refuses a request without a key, which the public API's sign-in refused before", async () => {
+      await expectStatus(limitedPerApiKey().request("/"), 401);
     });
   });
 });
