@@ -1,4 +1,9 @@
-import { type CharacterInput, type LevelQuery, LevelUpPart, type PlannedSoFar } from "@/engine/core/module/index.ts";
+import {
+  type CharacterInput,
+  type LevelChoicesQuery,
+  LevelUpPart,
+  type PlannedSoFar,
+} from "@/engine/core/module/index.ts";
 import type { RulesIssue } from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import type { Dnd35Descriptions } from "@/engine/rulesets/dnd3.5/descriptions.ts";
@@ -148,7 +153,7 @@ export default class Dnd35LevelUp extends LevelUpPart<Dnd35Descriptions, Detaile
    * The character's choices at its next level, opened whole: the class picker, and for the class the query names, the
    * planned level's four steps and a picker for each pool with room left.
    */
-  override openLevelChoices(view: RulesetView, character: CharacterInput, query: LevelQuery) {
+  override openLevelChoices(view: RulesetView, character: CharacterInput, query: LevelChoicesQuery) {
     return new LevelChoices(view, character, this).openLevelChoices(query);
   }
 

@@ -13,6 +13,12 @@ interface SlotPicker {
   filters: object;
 }
 
+/**
+ * A character's next level, as a request for its choices sends it: its class, and the picks made at it so far. The level
+ * is the next one, after the character's: none planned before it, none edited.
+ */
+type LevelChoicesQuery = Pick<StepQuery, "abilityIncreases" | "classId" | "featPicks" | "powerPicks" | "skillPoints">;
+
 /** A character's choices at its next level, as the engine opens them. */
 type OpenedChoices = ReturnType<LevelUpEngine["openLevelChoices"]>;
 
@@ -59,7 +65,7 @@ export function Choices<B extends Constructor>(Base: B) {
      * query names, its steps with the picks made so far, and each pool with room left with the options that qualify.
      * Refused as the wizard refuses to plan the level (`openLevelChoices`).
      */
-    async getLevelChoices(session: Session, characterId: string, query: StepQuery) {
+    async getLevelChoices(session: Session, characterId: string, query: LevelChoicesQuery) {
       return await withEditableCharacter(db, session, characterId, async (scope, character) => {
         const choices = Engine.for(scope).character(character).levelUp().openLevelChoices(toLevelQuery(query));
         const classes = await this.readClasses(scope, character, choices);

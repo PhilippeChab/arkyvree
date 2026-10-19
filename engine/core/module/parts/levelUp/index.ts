@@ -19,6 +19,7 @@ export type {
 } from "./plans.ts";
 export type {
   FeatPickQuery,
+  LevelChoicesQuery,
   LevelEditRequest,
   LevelPicks,
   LevelQuery,

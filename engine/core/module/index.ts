@@ -59,6 +59,7 @@ export {
   type BondedPlan,
   type FeatPick,
   type FeatPickQuery,
+  type LevelChoicesQuery,
   type LevelColumns,
   type LevelEditPlan,
   type LevelEditRequest,

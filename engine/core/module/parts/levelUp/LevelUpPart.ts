@@ -19,6 +19,7 @@ import type { OpenedLevelChoices, WizardStep } from "./descriptions.ts";
 import type { BondedCreaturesPlan, LevelEditPlan, LevelRemovalPlan, LevelsPlan } from "./plans.ts";
 import type {
   FeatPickQuery,
+  LevelChoicesQuery,
   LevelEditRequest,
   LevelPicks,
   LevelQuery,
@@ -133,7 +134,7 @@ export default abstract class LevelUpPart<
   abstract openLevelChoices(
     view: RulesetView,
     character: CharacterInput,
-    query: LevelQuery,
+    query: LevelChoicesQuery,
   ): OpenedLevelChoices<D["plannedLevel"], D["classOption"], D["featOption"], D["powerOption"]>;
 
   /** A power picker at a level, of a spell level when given: the powers it offers, less those picked so far. */

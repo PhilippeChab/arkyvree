@@ -63,6 +63,13 @@ export interface PreviewRequest {
 /** A feat picker's query: a level's pool, and a family's feats when it names one. */
 export type FeatPickQuery = PickQuery & { family?: string };
 
+/**
+ * What a character's choices at its next level are opened with: the class its next level is of (`klassId`, none for
+ * the classes alone), and the picks made at it so far, its ability increases among them. The level is the next one,
+ * after the character's levels: none planned before it, none edited.
+ */
+export type LevelChoicesQuery = Pick<LevelQuery, "abilityIncreases" | "klassId" | "picks">;
+
 /** A saved level's edit, as the form sends it: its new hit points, ability increases and picks. */
 export type LevelEditRequest = LevelPicks & { abilityIncreases: AbilityIncrease[]; hp: number };
 

@@ -60,8 +60,10 @@ A page answers `{ items, page, nextPage }`, `nextPage` null on the last. An erro
 `GET /v1/characters/:id/level-choices` answers what the level-up wizard reads a step at a time, in one request:
 
 - `classes`: the classes the character can take, each with its next level and its hit die, and the requirements it
-  doesn't meet (`requirements`, `[UNMET]` marked) when it isn't `eligible`.
-- A planned level is refused as the wizard refuses to plan it: a class the character has no next level of (404), or
+  doesn't meet (`requirements`, `[UNMET]` marked); `eligible` once it meets them and has a level left (`levelsLeft`,
+  whatever their classes).
+- The level is the next one, after the character's levels: none planned before it, none edited. A planned level is
+  refused as the wizard refuses to plan it: a class the character has no next level of (404), or
   one it doesn't qualify for, or any once it has no level left (422). Ability increases that aren't the level's (at a
   level that takes none, or more than it takes) are refused (400): the other steps would build the character with them.
 - With `classId`, the planned level of that class (`level`): whether an ability increase is due, the skill points and each skill's ranks before the level, the most it may

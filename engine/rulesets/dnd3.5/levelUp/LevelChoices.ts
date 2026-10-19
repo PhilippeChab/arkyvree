@@ -1,4 +1,4 @@
-import type { FeatPick, LevelQuery, PowerPick } from "@/engine/core/module/index.ts";
+import type { FeatPick, LevelChoicesQuery, LevelQuery, PowerPick } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import ClassPicker from "@/engine/rulesets/dnd3.5/pickers/ClassPicker.ts";
 import FeatPicker from "@/engine/rulesets/dnd3.5/pickers/FeatPicker.ts";
@@ -89,8 +89,8 @@ export default class LevelChoices extends LevelUpSteps {
    */
   private readAbilityStep(step: PlannedStep) {
     const abilities = this.narrowStep("abilities", step, (answer) => "isAvailable" in answer);
-    // The levels before this one: the character's, and those planned before it
-    const levelsBefore = this.character.rows.levels.length + (step.planned?.klassLevelIds?.length ?? 0);
+    // The levels before this one: the character's, none planned before it
+    const levelsBefore = this.character.rows.levels.length;
     if (step.abilityIncreases?.length) this.checks.checkAbilityIncreases(levelsBefore, step.abilityIncreases);
     return abilities;
   }
@@ -110,7 +110,7 @@ export default class LevelChoices extends LevelUpSteps {
   }
 
   /** The character's choices at its next level, for the class the query names, if it names one. */
-  openLevelChoices(query: LevelQuery) {
+  openLevelChoices(query: LevelChoicesQuery) {
     const classPicker = new ClassPicker(
       this.view,
       this.character,

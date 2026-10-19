@@ -8,16 +8,17 @@ async function choicesOf(name: string, className?: string, picks: Record<string,
   const { api } = await createKeyedApi();
   const { id } = await findSeededCharacter(name);
   const choices = api.v1.characters[":id"]["level-choices"];
-  const { classes } = await expectOk(choices.$get({ param: { id }, query: {} }));
-  const classId = classes.find((klass) => klass.name === className)?.id;
-  if (!classId) return { classes, level: null };
+  const answer = await expectOk(choices.$get({ param: { id }, query: {} }));
+  const classId = answer.classes.find((klass) => klass.name === className)?.id;
+  if (!classId) return answer;
   return await expectOk(choices.$get({ param: { id }, query: { classId, ...picks } }));
 }
 
 describe("v1 level choices", () => {
   test("lists the classes a character can take: each with its next level, and why it can't when it can't", async () => {
-    const { classes, level } = await choicesOf("Bjorn Ironhand");
+    const { classes, level, levelsLeft } = await choicesOf("Bjorn Ironhand");
     expect(level).toBeNull();
+    expect(levelsLeft).toBe(15);
     expect(classes.find(({ name }) => name === "Fighter")).toMatchObject({
       eligible: true,
       hitDie: 10,

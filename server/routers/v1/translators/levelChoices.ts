@@ -14,7 +14,7 @@ interface V1ClassChoice {
   maxLevel: number;
   name: string;
   nextLevel: number;
-  /** The class's requirements, those the character doesn't meet marked, when it doesn't qualify. */
+  /** The class's requirements, those the character doesn't meet marked, when it doesn't meet them. */
   requirements: string | null;
 }
 
@@ -66,10 +66,14 @@ type LevelChoices = Awaited<ReturnType<typeof CharacterLevelsService.getLevelCho
 /** The planned level's choices, as the levels' service answers them. */
 type PlannedLevel = NonNullable<LevelChoices["level"]>;
 
-/** A character's choices at its next level, as v1 answers them. */
+/**
+ * A character's choices at its next level, as v1 answers them: the levels it has left to take, whatever their classes
+ * (none when no class is listed), which a class's `eligible` counts too.
+ */
 export interface V1LevelChoices {
   classes: V1ClassChoice[];
   level: V1PlannedLevel | null;
+  levelsLeft: number | null;
 }
 
 /** What a v1 request for a character's choices asks: the planned level's class, and its picks so far, by id. */
@@ -150,7 +154,7 @@ export function toLevelChoicesQuery({ feats, spells, ...query }: V1LevelChoicesQ
 export function toV1LevelChoices({ classes, level }: LevelChoices): V1LevelChoices {
   return {
     classes: classes.map((klass) => ({
-      eligible: klass.eligible,
+      eligible: klass.eligible && klass.levelsLeft > 0,
       hitDie: klass.hd,
       id: klass.id,
       maxLevel: klass.maxLevel,
@@ -159,5 +163,6 @@ export function toV1LevelChoices({ classes, level }: LevelChoices): V1LevelChoic
       requirements: klass.eligible ? null : (klass.requirementTree ?? null),
     })),
     level: level && toPlannedLevel(level),
+    levelsLeft: classes[0]?.levelsLeft ?? null,
   };
 }
