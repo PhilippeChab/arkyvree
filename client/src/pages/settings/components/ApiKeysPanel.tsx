@@ -5,16 +5,15 @@ import { type InferResponseType, parseResponse } from "hono/client";
 import {
   AddButton,
   BlankNote,
-  CardTitle,
   ConfirmDialog,
   DataCell,
   DataRow,
   DataTable,
   DiceSpinner,
   EmptyValue,
-  ListToolbar,
   LoadError,
   Panel,
+  PanelLead,
   ROW_ACTIONS_HOVER_SX,
   RowAction,
   RowActions,
@@ -72,23 +71,24 @@ export function ApiKeysPanel() {
   return (
     <Panel spacing={3}>
       <Stack spacing={1}>
-        <CardTitle>API Keys</CardTitle>
+        <PanelLead
+          actions={
+            !isDemo && (
+              <AddButton
+                label="Create Key"
+                disabled={(keys?.length ?? 0) >= MAX_API_KEYS}
+                onClick={() => createDialog.openWith(true)}
+              />
+            )
+          }
+        >
+          API Keys
+        </PanelLead>
         <Typography variant="body2" sx={{ color: "text.secondary" }}>
           A key lets a program outside the app, such as a script or an assistant, read your characters and rulesets
           through the public API. It acts as you: revoke it once nothing uses it. You can keep {MAX_API_KEYS} at most.
         </Typography>
       </Stack>
-      {!isDemo && (
-        <ListToolbar
-          actions={
-            <AddButton
-              label="Create Key"
-              disabled={(keys?.length ?? 0) >= MAX_API_KEYS}
-              onClick={() => createDialog.openWith(true)}
-            />
-          }
-        />
-      )}
       {!keys && !error && <DiceSpinner sx={{ py: 4 }} />}
       {!keys && !!error && <LoadError what="API keys" error={error} />}
       {keys?.length === 0 && <BlankNote>{isDemo ? "Sign up to create API keys" : "No API keys yet"}</BlankNote>}
