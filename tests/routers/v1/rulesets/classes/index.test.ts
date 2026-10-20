@@ -130,4 +130,38 @@ describe("v1 ruleset classes", () => {
     const { rulesetId: id } = await getSeedCtx();
     await expectStatus(api.v1.rulesets[":id"].classes.$post({ json: { name: "Warden" }, param: { id } }), 403);
   });
+
+  test("answers a class's progression: its pools' picks by level, and its spell list", async () => {
+    const { classId, id, route } = await openWizard();
+    const { aptMap } = await getSeedCtx();
+    const progression = await expectOk(route.progression.$get({ param: { classId, id } }));
+    expect(progression.spellList).toEqual({ id: aptMap["Wizard Spells"], name: "Wizard Spells" });
+    expect(progression.severalSpellLists).toBe(false);
+    expect(progression.pools).toContainEqual({
+      aptitude: { id: aptMap["Wizard Specialization"], name: "Wizard Specialization" },
+      picks: [{ count: 1, levelId: expect.any(String) }],
+    });
+  });
+
+  test("saves a class's progression at once, on a copy of its own when it's inherited", async () => {
+    const { api, rulesetId: id } = await createKeyedFork();
+    const { aptMap, klassMap } = await getSeedCtx();
+    const classId = klassMap.pc!.Wizard!;
+    const route = api.v1.rulesets[":id"].classes[":classId"];
+    const [first, second] = await expectOk(route.levels.$get({ param: { classId, id } }));
+    const aptitudeId = aptMap["Wizard Specialization"]!;
+
+    const json = {
+      levels: [{ fields: { bab: 1 }, levelId: second!.id }],
+      pools: [{ aptitudeId, picks: [{ count: 2, levelId: first!.id }] }],
+    };
+    const levels = await expectOk(route.progression.$put({ json, param: { classId, id } }));
+    expect(levels[1]?.fields).toMatchObject({ bab: 1 });
+    expect(levels[1]?.id).not.toBe(second!.id);
+
+    const progression = await expectOk(route.progression.$get({ param: { classId, id } }));
+    expect(progression.pools.find(({ aptitude }) => aptitude.id === aptitudeId)?.picks).toEqual([
+      { count: 2, levelId: levels[0]!.id },
+    ]);
+  });
 });
