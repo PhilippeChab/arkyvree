@@ -40,8 +40,9 @@ import {
 import { rpc } from "@/client/src/services/rpc.ts";
 import { buildCustomizationPath } from "@/shared/customization/entities.ts";
 import { formatSigned } from "@/shared/text.ts";
-import { MAX_SAVE_BASE } from "@/vocabulary/dnd3.5/classes.ts";
+import { MAX_CLASS_LEVEL, MAX_SAVE_BASE, MAX_TABLE_COUNT } from "@/vocabulary/dnd3.5/classes.ts";
 
+import { CHANGED_CELL_SX } from "./changedCell.ts";
 import { ClassFeaturesCard } from "./ClassFeaturesCard.tsx";
 import {
   buildProgressionBody,
@@ -63,19 +64,10 @@ interface Track {
   format: (value: number) => string;
   key: TrackKey;
   label: string;
-  /** The highest value the rules take, which a value past it is set back to (a save's base) */
-  max?: number;
+  /** The highest value the rules take, which a value past it is set back to */
+  max: number;
   presets?: readonly ProgressionPreset[];
 }
-
-/** A table cell the tab changed before its save. */
-const CHANGED_CELL_SX = {
-  fontWeight: 600,
-  color: "secondary.dark",
-  bgcolor: "action.selected",
-  px: 0.5,
-  borderRadius: 0.5,
-} as const;
 
 /**
  * A class's Progression tab: its table, the levels' base attack bonus, saves, skill points and features at once, which
@@ -123,7 +115,8 @@ export function ClassProgressionSection({ rulesetId, classId, className, ruleset
 
   const saves = rulesetSaves ?? [];
   const tracks: Track[] = [
-    { key: "bab", label: "Base Attack Bonus", format: formatBab, presets: BAB_PRESETS },
+    // A base attack bonus never outruns a full one's, its level
+    { key: "bab", label: "Base Attack Bonus", format: formatBab, max: MAX_CLASS_LEVEL, presets: BAB_PRESETS },
     ...saves.map((save): Track => ({
       key: `save:${save.id}`,
       label: save.name,
@@ -131,7 +124,7 @@ export function ClassProgressionSection({ rulesetId, classId, className, ruleset
       max: MAX_SAVE_BASE,
       presets: SAVE_PRESETS,
     })),
-    { key: "skills", label: "Skill Points", format: String },
+    { key: "skills", label: "Skill Points", format: String, max: MAX_TABLE_COUNT },
   ];
   const valuesOf = (read: (level: ClassLevelRow) => number) =>
     levels.map((level) => ({ level: level.level, levelId: level.id, value: read(level) }));
@@ -331,6 +324,7 @@ export function ClassProgressionSection({ rulesetId, classId, className, ruleset
                 key={track.key}
                 id={`progression-${track.key}`}
                 label={track.label}
+                max={track.max}
                 custom={customTracks.includes(track.key)}
                 onCustomChange={(open) =>
                   setCustomTracks((current) => [
@@ -346,7 +340,7 @@ export function ClassProgressionSection({ rulesetId, classId, className, ruleset
                   draft.setTrack(
                     track.key,
                     Object.fromEntries(
-                      Object.entries(values).map(([levelId, value]) => [levelId, Math.min(value, track.max ?? value)]),
+                      Object.entries(values).map(([levelId, value]) => [levelId, Math.min(value, track.max)]),
                     ),
                   )
                 }

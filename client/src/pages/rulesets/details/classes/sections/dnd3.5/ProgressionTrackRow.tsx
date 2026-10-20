@@ -4,6 +4,7 @@ import { useState } from "react";
 import { DataCell, DataRow, DataTable, OptionToggle } from "@/client/src/components/common/index.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 
+import { CHANGED_TEXT_SX } from "./changedCell.ts";
 import { CustomTrackEditor } from "./CustomTrackEditor.tsx";
 import { readWholeNumber } from "./progressionDraft.ts";
 import { detectPreset, findNearestPreset, type LevelValue, type ProgressionPreset } from "./progressionPresets.ts";
@@ -16,6 +17,8 @@ interface ProgressionTrackRowProps {
   /** Its element's id */
   id: string;
   label: string;
+  /** The highest value the rules take, which a typed one past it is set back to */
+  max: number;
   onChange: (values: Record<string, number>) => void;
   onCustomChange: (custom: boolean) => void;
   /** The progressions it can follow: none for one number at every level (skill points) */
@@ -57,6 +60,7 @@ export function ProgressionTrackRow({
   format,
   id,
   label,
+  max,
   onChange,
   onCustomChange: setCustom,
   presets,
@@ -155,8 +159,10 @@ export function ProgressionTrackRow({
               placeholder={constant ? undefined : "Varies"}
               onBlur={() => setTyping(null)}
               onChange={(e) => {
-                setTyping(e.target.value);
-                const typed = readWholeNumber(e.target.value);
+                const read = readWholeNumber(e.target.value);
+                const typed = read === undefined ? undefined : Math.min(read, max);
+                // Past the bound, it shows the bound it takes
+                setTyping(typed !== undefined && typed !== read ? String(typed) : e.target.value);
                 if (typed === undefined) return;
                 setBaseValue(typed);
                 onChange(Object.fromEntries(values.map(({ levelId }) => [levelId, typed])));
@@ -216,7 +222,7 @@ export function ProgressionTrackRow({
             <DataRow>
               <DataCell slot="primary">After</DataCell>
               {changed.map(({ level, value }) => (
-                <DataCell key={level} slot="inline" align="center" sx={{ fontWeight: 600, color: "secondary.dark" }}>
+                <DataCell key={level} slot="inline" align="center" sx={CHANGED_TEXT_SX}>
                   {format(value)}
                 </DataCell>
               ))}
@@ -227,6 +233,7 @@ export function ProgressionTrackRow({
       {custom && (
         <CustomTrackEditor
           label={label}
+          max={max}
           values={values}
           base={base}
           onChange={onChange}

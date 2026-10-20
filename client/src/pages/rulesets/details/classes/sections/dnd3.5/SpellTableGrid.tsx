@@ -3,6 +3,7 @@ import { type ClipboardEvent, type KeyboardEvent, useState } from "react";
 
 import { DataCell, DataRow, DataTable, ValueChip } from "@/client/src/components/common/index.ts";
 
+import { CHANGED_TEXT_SX } from "./changedCell.ts";
 import { spellLevelLabel } from "./spellLevels.ts";
 import { parseSpellCell, parseSpellRows, type PlacedCell, placeSpellRows, type SpellCell } from "./spellPaste.ts";
 
@@ -141,7 +142,7 @@ export function SpellTableGrid({
                       borderColor: "divider",
                       "& input": { textAlign: "center", py: 0.25 },
                     },
-                    changed && { fontWeight: 600, color: "secondary.dark" },
+                    changed && CHANGED_TEXT_SX,
                   ]}
                 />
               </DataCell>

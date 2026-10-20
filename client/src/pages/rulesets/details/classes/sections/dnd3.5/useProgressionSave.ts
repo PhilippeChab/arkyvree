@@ -34,14 +34,10 @@ export function useProgressionSave(rulesetId: string, classId: string) {
       followCopy(saved.klassId, saved.sourceEntityId);
     },
     onError: (error) => snackbar.error(error, "Failed to save the class progression"),
-    // The class's tabs and the classes list, refetched before the tab drops its edits, and the ruleset's changes; its
-    // tabs not open too, so another tab's draft begins over its levels as saved; and its levels' pages
+    // The class's tabs and the classes list, refetched before the tab drops its edits (another tab's, read again as it
+    // opens, takes no tokens till then), the ruleset's changes, and its levels' pages
     onSettled: async (saved) => {
       await invalidateRulesetEdit(queryClient, rulesetId, queryKeysToInvalidate);
-      await queryClient.refetchQueries({
-        queryKey: QUERY_KEYS.rulesets.classDetail(rulesetId, classId),
-        type: "inactive",
-      });
       // The pages of the levels it wrote (a row's hover warms them), their modifiers and requirements among them
       const levelKeys = (saved?.levelIds ?? []).flatMap((levelId) => [
         QUERY_KEYS.rulesets.entity(rulesetId, "klass_levels", levelId),

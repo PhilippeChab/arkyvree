@@ -11,6 +11,8 @@ interface CustomTrackEditorProps {
   baseControl?: ReactNode;
   /** What the track's inputs say they are ("Reflex", "Skill points") */
   label: string;
+  /** The highest value the rules take, which a typed or applied one past it is set back to */
+  max: number;
   onChange: (values: Record<string, number>) => void;
   onClose: () => void;
   values: readonly LevelValue[];
@@ -36,7 +38,15 @@ function readLevelInput(text: string, fallback: number) {
  * the base greyed, so only the levels that differ are typed, and a bar a level shows its shape, an override in gold.
  * A level range sets, adds to or takes from every level of it at once.
  */
-export function CustomTrackEditor({ base, baseControl, label, onChange, onClose, values }: CustomTrackEditorProps) {
+export function CustomTrackEditor({
+  base,
+  baseControl,
+  label,
+  max,
+  onChange,
+  onClose,
+  values,
+}: CustomTrackEditorProps) {
   // The range's fields as typed, read when it's applied
   const [range, setRange] = useState({
     from: "1",
@@ -58,7 +68,9 @@ export function CustomTrackEditor({ base, baseControl, label, onChange, onClose,
     const changed = values.filter(({ level }) => level >= from && level <= to);
     const next = (value: number) =>
       range.operation === "set" ? amount : value + (range.operation === "add" ? amount : -amount);
-    onChange(Object.fromEntries(changed.map(({ levelId, value }) => [levelId, Math.max(0, next(value))])));
+    onChange(
+      Object.fromEntries(changed.map(({ levelId, value }) => [levelId, Math.min(max, Math.max(0, next(value)))])),
+    );
   };
 
   return (
@@ -109,9 +121,10 @@ export function CustomTrackEditor({ base, baseControl, label, onChange, onClose,
                     placeholder={String(base[index])}
                     onBlur={() => setTyping(null)}
                     onChange={(e) => {
-                      setTyping({ levelId, text: e.target.value });
-                      // Emptied, it follows its base again; unread, it stays as it was
-                      const typed = e.target.value.trim() === "" ? base[index] : readWholeNumber(e.target.value);
+                      // Emptied, it follows its base again; unread, it stays as it was; past the bound, it shows the bound
+                      const read = e.target.value.trim() === "" ? base[index] : readWholeNumber(e.target.value);
+                      const typed = read === undefined ? undefined : Math.min(read, max);
+                      setTyping({ levelId, text: typed !== read ? String(typed) : e.target.value });
                       if (typed !== undefined) onChange({ [levelId]: typed });
                     }}
                     inputProps={{ inputMode: "numeric", "aria-label": `${label}, Level ${level}` }}
