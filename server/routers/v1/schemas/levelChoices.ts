@@ -77,7 +77,6 @@ export const v1LevelChoices = z
     levelsLeft: z
       .number()
       .int()
-      .nullable()
-      .meta({ description: "The levels the character has left to take, whatever their classes (null: no class)" }),
+      .meta({ description: "The levels the character has left to take, whatever their classes" }),
   })
   .meta({ description: "A character's choices at its next level", id: "LevelChoices" });
