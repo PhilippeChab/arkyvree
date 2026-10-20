@@ -42,18 +42,19 @@ export function Choices<B extends Constructor>(Base: B) {
 
     /**
      * Each pool with room left (`pools`), with every option its picker offers that the character qualifies for, read a
-     * page at a time (`findPage`), the pools side by side.
+     * page at a time (`findPage`), one pool after another: a caster's pools, one per spell level, hold no more than one
+     * of the database's connections.
      */
     private async readSlots<P extends { picker: SlotPicker }, R extends { id: string }>(
       pools: P[],
       findPage: (filters: P["picker"]["filters"], pagination: { limit: number; page: number }) => Promise<Paginated<R>>,
     ) {
-      return await Promise.all(
-        pools.map(async ({ picker, ...pool }) => {
-          const rows = await fetchEveryPage((pagination) => findPage(picker.filters, pagination), OPTIONS_PAGE_SIZE);
-          return { ...pool, options: picker.describe(rows).filter((option) => option.eligible) };
-        }),
-      );
+      const slots = [];
+      for (const { picker, ...pool } of pools) {
+        const rows = await fetchEveryPage((pagination) => findPage(picker.filters, pagination), OPTIONS_PAGE_SIZE);
+        slots.push({ ...pool, options: picker.describe(rows).filter((option) => option.eligible) });
+      }
+      return slots;
     }
 
     /**
@@ -64,15 +65,14 @@ export function Choices<B extends Constructor>(Base: B) {
     async getLevelChoices(session: Session, characterId: string, query: LevelChoicesQuery) {
       return await withEditableCharacter(db, session, characterId, async (scope, character) => {
         const choices = Engine.for(scope).character(character).levelUp().openLevelChoices(toLevelQuery(query));
-        if (!choices.level) return { classes: await this.readClasses(scope, character, choices), level: null };
-        const { featPools, powerPools, steps } = choices.level;
-        // The classes and each pool's options, read side by side
+        const { level, levelsLeft } = choices;
+        // The classes, the feat pools' options and the power pools', read side by side
         const [classes, featSlots, powerSlots] = await Promise.all([
           this.readClasses(scope, character, choices),
-          this.readSlots(featPools, (filters, page) => Feats.findOptionPage(db, filters, page)),
-          this.readSlots(powerPools, (filters, page) => Powers.findOptionPage(db, filters, page)),
+          this.readSlots(level?.featPools ?? [], (filters, page) => Feats.findOptionPage(db, filters, page)),
+          this.readSlots(level?.powerPools ?? [], (filters, page) => Powers.findOptionPage(db, filters, page)),
         ]);
-        return { classes, level: { ...steps, featSlots, powerSlots } };
+        return { classes, level: level && { ...level.steps, featSlots, powerSlots }, levelsLeft };
       });
     }
   }

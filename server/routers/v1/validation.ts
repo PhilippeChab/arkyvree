@@ -3,17 +3,12 @@
 import { z } from "zod";
 
 import { entityOrderBy, idParam, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
-import type { CustomizableEntityType } from "@/shared/customization/entities.ts";
+import { CUSTOMIZABLE_ENTITY_TYPES } from "@/shared/customization/entities.ts";
+
+import { toV1Kind } from "./kinds.ts";
 
 /** The kinds whose entities have modifiers and requirements, as v1 names them, each its entity type. */
-const CUSTOMIZABLE_KINDS = {
-  "class-levels": "klass_levels",
-  classes: "klasses",
-  feats: "feats",
-  items: "items",
-  races: "races",
-  spells: "powers",
-} as const satisfies Record<string, CustomizableEntityType>;
+const customizableKinds = new Map(CUSTOMIZABLE_ENTITY_TYPES.map((entityType) => [toV1Kind(entityType), entityType]));
 
 /** A ruleset route's `:id` (the ruleset) and `:classId`. */
 export const classParams = idParam.extend({ classId: z.string().uuid() });
@@ -45,14 +40,14 @@ export const CONTENT_FILTERS = {
 export const customizableParams = idParam.extend({
   entityId: z.string().uuid(),
   kind: z
-    .enum(["class-levels", "classes", "feats", "items", "races", "spells"])
-    .transform((kind) => CUSTOMIZABLE_KINDS[kind]),
+    .enum([...customizableKinds.keys()] as [string, ...string[]])
+    .transform((kind) => customizableKinds.get(kind)!),
 });
 
 /** As `customizableParams`, for what owns requirements: a modifier too (`modifiers`). */
 export const requirementOwnerParams = idParam.extend({
   entityId: z.string().uuid(),
   kind: z
-    .enum(["class-levels", "classes", "feats", "items", "modifiers", "races", "spells"])
-    .transform((kind) => (kind === "modifiers" ? kind : CUSTOMIZABLE_KINDS[kind])),
+    .enum(["modifiers", ...customizableKinds.keys()])
+    .transform((kind) => (kind === "modifiers" ? kind : customizableKinds.get(kind)!)),
 });

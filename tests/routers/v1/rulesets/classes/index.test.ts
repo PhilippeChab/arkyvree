@@ -61,7 +61,17 @@ describe("v1 ruleset classes", () => {
         { count: 1, spellLevel: 1 },
       ],
     });
-    expect(await expectOk(route["spells-known"].$get({ param }))).toEqual(expect.any(Array));
+    // A wizard prepares its spells: a sorcerer knows them
+    const sorcererId = (await getSeedCtx()).klassMap.pc!.Sorcerer!;
+    const sorcerer = { classId: sorcererId, id };
+    const [known] = await expectOk(route["spells-known"].$get({ param: sorcerer }));
+    expect(known).toEqual({
+      level: 1,
+      spells: [
+        { count: 4, spellLevel: 0 },
+        { count: 2, spellLevel: 1 },
+      ],
+    });
     const [pools] = await expectOk(route["feat-pools"].$get({ param }));
     expect(pools?.level).toBe(1);
     expect(pools?.aptitudes).toContainEqual({ count: 1, name: "Familiar Bond" });
