@@ -184,7 +184,7 @@ export function CustomTrackEditor({
           sx={{ width: 90 }}
         />
         <Button variant="outlined" onClick={applyRange}>
-          Apply
+          Set Levels
         </Button>
         <Button onClick={onClose}>Close</Button>
       </Stack>

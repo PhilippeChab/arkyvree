@@ -23,12 +23,12 @@ interface SpellPasteBoxProps {
 
 /**
  * A spell table pasted from a book, a PDF or a spreadsheet, one row a class level: how many cells it changes, before
- * Apply writes them onto the table (a row naming its level lands on it, the others from the class's first).
+ * Fill Grid writes them onto the grid, unsaved (a row naming its level lands on it, the others from the class's first).
  */
 export function SpellPasteBox({ allowsAll, changesOf, levels, onApply, onCancel }: SpellPasteBoxProps) {
   const { control, watch } = useFormWith<PasteForm>({ table: "" });
   const text = watch("table");
-  // Apply writes every placed cell, as a paste into the grid does: what one writes can depend on another
+  // Fill Grid writes every placed cell, as a paste into the grid does: what one writes can depend on another
   // From the class's first level, and the spell level its header names (a paladin's from 1st), else from cantrips
   const placed = placeSpellTable(text, allowsAll, levels, 0, 0, SPELL_LEVELS.length);
   const changes = changesOf(placed);
@@ -54,7 +54,7 @@ export function SpellPasteBox({ allowsAll, changesOf, levels, onApply, onCancel 
         </Typography>
         <Button onClick={onCancel}>Cancel</Button>
         <Button variant="contained" disabled={changes.length === 0} onClick={() => onApply(placed)}>
-          Apply
+          Fill Grid
         </Button>
       </Stack>
     </Stack>
