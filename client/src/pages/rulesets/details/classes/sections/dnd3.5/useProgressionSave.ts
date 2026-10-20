@@ -9,12 +9,12 @@ import { invalidateRulesetEdit } from "@/client/src/pages/rulesets/details/secti
 import { rpc } from "@/client/src/services/rpc.ts";
 
 /**
- * The save of a class's Progression or Spells tab: one request for all it changed, sent with the tokens its draft began
+ * The save of a class's Progression or Spells tab (`what`, which its messages name): one request for all it changed, sent with the tokens its draft began
  * over (`useClassDraft`'s), which refreshes every tab of the class (its key's own) and follows the copy a save of an
  * inherited class makes. It stays pending until they're read again, so the tab never shows its changes gone before
  * their save comes back.
  */
-export function useProgressionSave(rulesetId: string, classId: string) {
+export function useProgressionSave(rulesetId: string, classId: string, what: "Progression" | "Spells") {
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
   const { followCopy, queryKeysToInvalidate, tag } = useClassCopy(rulesetId, classId);
@@ -30,10 +30,10 @@ export function useProgressionSave(rulesetId: string, classId: string) {
         ),
       ),
     onSuccess: (saved) => {
-      snackbar.success("Class progression saved");
+      snackbar.success(`Class ${what.toLowerCase()} saved`);
       followCopy(saved.klassId, saved.sourceEntityId);
     },
-    onError: (error) => snackbar.error(error, "Failed to save the class progression"),
+    onError: (error) => snackbar.error(error, `Failed to save the class ${what.toLowerCase()}`),
     // The class's tabs and the classes list, refetched before the tab drops its edits (another tab's, read again as it
     // opens, takes no tokens till then), the ruleset's changes, and its levels' pages
     onSettled: async (saved) => {

@@ -89,7 +89,7 @@ export function ClassProgressionSection({ rulesetId, classId, className, ruleset
   const levels = levelRows?.toSorted(byLevel) ?? [];
   const draft = useProgressionDraft(classId, levels, !isFetching);
   const [customTracks, setCustomTracks] = useState<TrackKey[]>([]);
-  const save = useProgressionSave(rulesetId, classId);
+  const save = useProgressionSave(rulesetId, classId, "Progression");
 
   // Its create opens on the class's next level, its fields the highest's
   const { fields: levelFields } = useEntityFields(rulesetId, "klass_levels");
@@ -384,6 +384,8 @@ export function ClassProgressionSection({ rulesetId, classId, className, ruleset
           changes={changes}
           onDiscard={discard}
           onSave={handleSave}
+          // Only a feature or pool added at no level yet saves nothing: its Discard drops it
+          canSave={Object.keys(body).length > 0}
           pending={save.isPending}
         />
       )}

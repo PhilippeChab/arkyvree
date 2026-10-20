@@ -52,6 +52,13 @@ export function useClassDraft<T>(
         const mine = own(current);
         return mine.edits === sent ? { classId, edits: empty } : { classId, edits: mine.edits };
       }),
-    tokens: () => own(draft).tokens ?? readTokens(),
+    /** The tokens to send: those the draft began over, and the current ones of levels added since. */
+    tokens: (): DraftTokens => {
+      const kept = own(draft).tokens;
+      if (!kept) return readTokens();
+      const known = new Set(kept.levelTokens.map(({ levelId }) => levelId));
+      const added = readTokens().levelTokens.filter(({ levelId }) => !known.has(levelId));
+      return { levelTokens: [...kept.levelTokens, ...added] };
+    },
   };
 }

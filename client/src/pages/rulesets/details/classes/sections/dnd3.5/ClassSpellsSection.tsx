@@ -78,7 +78,7 @@ export function ClassSpellsSection({ rulesetId, classId, className, ruleset }: C
     known: knownRows(known.data ?? []),
   };
   const levels = (perDay.data ?? []).toSorted(byLevel);
-  const save = useProgressionSave(rulesetId, classId);
+  const save = useProgressionSave(rulesetId, classId, "Spells");
   const { discard, edits, forgetTokens, setEdits, settle, tokens } = useClassDraft<SpellEdits>(
     classId,
     levels,
