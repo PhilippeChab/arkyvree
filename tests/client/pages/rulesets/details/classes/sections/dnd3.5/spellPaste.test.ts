@@ -4,6 +4,7 @@ import {
   parseSpellCell,
   parseSpellRows,
   placeSpellRows,
+  readPastedColumn,
 } from "@/client/src/pages/rulesets/details/classes/sections/dnd3.5/spellPaste.ts";
 
 /** Levels 1 to 5 of a class, their ids `l1`… */
@@ -61,6 +62,14 @@ describe("A pasted spell table", () => {
     expect(parseSpellRows("0\t1\t2\n3\t1\n4\t2", false)).toEqual([{ cells: [3, 1] }, { cells: [4, 2] }]);
     // A header numbering its spell levels is one too
     expect(parseSpellRows("Level 0 1 2\n1 3 1\n2 4 2\n3 4 2 1", false).map((row) => row.level)).toEqual([1, 2, 3]);
+  });
+
+  test("reads the spell level a header names its first count column", () => {
+    // A paladin's, from 1st; a table from its cantrips; one with no header
+    expect(readPastedColumn("Level\t1st\t2nd\n4th\t0\t—\n6th\t1\t—", false)).toBe(1);
+    expect(readPastedColumn("Level\tCantrips\t1st\n1\t3\t1\n2\t4\t2\n3\t4\t2", false)).toBe(0);
+    expect(readPastedColumn("0 1st 2nd\n3 1\n4 2", false)).toBe(0);
+    expect(readPastedColumn("1st 3 1\n2nd 4 2", false)).toBeUndefined();
   });
 
   test("keeps a spreadsheet's empty cells where they are", () => {

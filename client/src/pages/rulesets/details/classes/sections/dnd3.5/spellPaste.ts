@@ -25,30 +25,8 @@ const LEVEL_CELL = /^(\d+)(?:st|nd|rd|th)?[:.)]?$/i;
 /** The separators of a row's cells, outside a spreadsheet's: spaces, commas, semicolons and bars. */
 const SEPARATORS = /[\s,;|]+/;
 
-/** A line's cells: a spreadsheet's split on each tab (an empty cell stays one), any other on its separators. */
-function splitCells(line: string) {
-  return line.includes("\t") ? line.split("\t").map((cell) => cell.trim()) : line.trim().split(SEPARATORS);
-}
-
-/**
- * A cell as it's typed or pasted (`text`): a count up to the rules' bound, "all" or "*" where spells known take it
- * (`allowsAll`), none for an empty cell or a dash, and `undefined` for anything else.
- */
-export function parseSpellCell(text: string, allowsAll: boolean): SpellCell | undefined {
-  const cell = text.trim();
-  if (cell === "" || /^[-–—]$/.test(cell)) return null;
-  if (allowsAll && /^(all|\*)$/i.test(cell)) return "all";
-  return /^\d+$/.test(cell) && Number(cell) <= MAX_TABLE_COUNT ? Number(cell) : undefined;
-}
-
-/**
- * A pasted block's rows, one a line: each names its class level when its first cell does with a suffix or a colon
- * ("1st", "4:"), or when every row's first cell counts up one a row over three rows or more (a table's level column),
- * from 1 or from the level it's pasted at (`firstLevel`); its other cells are read by `parseSpellCell`, a spreadsheet's
- * empty one as none. Header rows before them, each with a word in it, are left out, and with a level column a
- * spreadsheet's header of bare numbers over it and its spacer rows.
- */
-export function parseSpellRows(text: string, allowsAll: boolean, firstLevel = 1): PastedRow[] {
+/** A pasted table (`parseSpellRows`'s): its rows, and the spell level its header names its first count column (`column`). */
+function readPastedTable(text: string, allowsAll: boolean, firstLevel: number): { column?: number; rows: PastedRow[] } {
   const lines = text
     .replace(/\r/g, "")
     .split("\n")
@@ -76,7 +54,7 @@ export function parseSpellRows(text: string, allowsAll: boolean, firstLevel = 1)
   const counting = cornered || levelColumn(body);
   const rows = (cornered ? body.slice(1) : body).filter((cells) => !counting || cells.some(Boolean));
   const leads = rows.map((cells) => LEVEL_CELL.exec(cells[0]));
-  return rows.map((cells, index) => {
+  const read = rows.map((cells, index): PastedRow => {
     const lead = leads[index];
     const named = lead && (counting || !/^\d+$/.test(cells[0]));
     return {
@@ -84,6 +62,44 @@ export function parseSpellRows(text: string, allowsAll: boolean, firstLevel = 1)
       ...(named && { level: Number(lead[1]) }),
     };
   });
+  // The header just above them names its spell levels over the counts: after its level column's, when it has one
+  const headerRow = cornered ? body[0] : lines[header - 1];
+  const labels = headerRow && (read.some((row) => row.level !== undefined) ? headerRow.slice(1) : headerRow);
+  return { column: labels && readSpellLevelLabel(labels[0] ?? ""), rows: read };
+}
+
+/** The spell level a header's label names: "0", "1st", "Cantrips"; `undefined` for anything else. */
+function readSpellLevelLabel(label: string) {
+  if (/^(cantrips?|orisons?)$/i.test(label.trim())) return 0;
+  const match = /^(\d)(?:st|nd|rd|th)?$/i.exec(label.trim());
+  return match ? Number(match[1]) : undefined;
+}
+
+/** A line's cells: a spreadsheet's split on each tab (an empty cell stays one), any other on its separators. */
+function splitCells(line: string) {
+  return line.includes("\t") ? line.split("\t").map((cell) => cell.trim()) : line.trim().split(SEPARATORS);
+}
+
+/**
+ * A cell as it's typed or pasted (`text`): a count up to the rules' bound, "all" or "*" where spells known take it
+ * (`allowsAll`), none for an empty cell or a dash, and `undefined` for anything else.
+ */
+export function parseSpellCell(text: string, allowsAll: boolean): SpellCell | undefined {
+  const cell = text.trim();
+  if (cell === "" || /^[-–—]$/.test(cell)) return null;
+  if (allowsAll && /^(all|\*)$/i.test(cell)) return "all";
+  return /^\d+$/.test(cell) && Number(cell) <= MAX_TABLE_COUNT ? Number(cell) : undefined;
+}
+
+/**
+ * A pasted block's rows, one a line: each names its class level when its first cell does with a suffix or a colon
+ * ("1st", "4:"), or when every row's first cell counts up one a row over three rows or more (a table's level column),
+ * from 1 or from the level it's pasted at (`firstLevel`); its other cells are read by `parseSpellCell`, a spreadsheet's
+ * empty one as none. Header rows before them, each with a word in it, are left out, and with a level column a
+ * spreadsheet's header of bare numbers over it and its spacer rows.
+ */
+export function parseSpellRows(text: string, allowsAll: boolean, firstLevel = 1): PastedRow[] {
+  return readPastedTable(text, allowsAll, firstLevel).rows;
 }
 
 /**
@@ -115,4 +131,12 @@ export function placeSpellRows(
       return value === undefined || spellLevel >= columns ? [] : [{ levelId: level.id, spellLevel, value }];
     });
   });
+}
+
+/**
+ * The spell level a pasted table's first count column is, when its header names it ("Level 1st 2nd": a paladin's, from
+ * 1st; "Cantrips 1st": from 0); `undefined` for a table without one, which lands where it's pasted.
+ */
+export function readPastedColumn(text: string, allowsAll: boolean, firstLevel = 1) {
+  return readPastedTable(text, allowsAll, firstLevel).column;
 }

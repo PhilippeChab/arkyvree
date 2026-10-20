@@ -129,7 +129,7 @@ function planned(target: string, operator: "add" | "set", value: number): LevelM
 
 /**
  * Swaps the modifiers of a level that a save rewrites (`isOwn`) for the ones it plans (`next`), unless they already say
- * the same: a level whose own modifiers stand keeps them, and writes nothing.
+ * the same: a level whose own modifiers stand keeps them, and writes nothing. Answers whether it swapped them.
  */
 function replaceOwn(
   working: Map<string, LevelModifier[]>,
@@ -141,8 +141,9 @@ function replaceOwn(
   const own = modifiers.filter(isOwn);
   const same = (a: LevelModifier, b: LevelModifier) =>
     a.target === b.target && a.operator === b.operator && Number(a.value) === Number(b.value);
-  if (own.length === next.length && own.every((modifier, index) => same(modifier, next[index]))) return;
+  if (own.length === next.length && own.every((modifier, index) => same(modifier, next[index]))) return false;
   working.set(levelId, [...modifiers.filter((modifier) => !isOwn(modifier)), ...next]);
+  return true;
 }
 
 /**
@@ -269,9 +270,14 @@ export default class ClassProgression {
         wanted,
         levels.map(({ id }) => kept.get(id)?.[spellLevel]),
       );
+      // A column requirements gate a modifier of counts it for every character: a change to it is the levels' own to make
+      const gated = levels.some(({ id }) =>
+        working.get(id)?.some((modifier) => modifier.gated && modifier.target === target),
+      );
+      const refused = `Spell level ${spellLevel} has modifiers requirements gate: edit its levels' modifiers`;
       for (const [index, { id }] of levels.entries()) {
         const next = columnModifiers[index];
-        if (next) replaceOwn(working, id, isOwn, next);
+        if (next && replaceOwn(working, id, isOwn, next) && gated) throw new RulesError("invalid", refused);
       }
     }
   }

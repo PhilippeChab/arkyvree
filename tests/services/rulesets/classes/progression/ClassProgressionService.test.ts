@@ -1,8 +1,9 @@
 import { describe, expect, test } from "bun:test";
 
+import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
-import { Aptitudes, Klasses, Saves } from "@/server/repositories/index.ts";
+import { Aptitudes, Klasses, Modifiers, Requirements, Saves } from "@/server/repositories/index.ts";
 import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
 import { ClassLevelsService } from "@/server/services/rulesets/classes/levels/index.ts";
 import { ClassProgressionService } from "@/server/services/rulesets/classes/progression/index.ts";
@@ -142,6 +143,40 @@ describe("ClassProgressionService", () => {
     ]);
     // Its 0 a day at 4th and 5th came of its spells known opening there: they stay
     expect([4, 5, 6].map((level) => perDay.get(level)!.spellsPerDay[1])).toEqual([0, 0, 1]);
+  });
+
+  test("refuses a change to a spell column a requirement gates a modifier of", async () => {
+    const { session, fork, klass, levelId } = await forkWithClass("Wizard");
+    // The fork's own wizard, its first level given a 1st-level spell a day more past 5th character level
+    const { saved } = await save(session, fork.id, klass.id, {
+      levels: [{ levelId: levelId(1), fields: { bab: 0, skills: 4 } }],
+    });
+    const first = (await ClassLevelsService.getClassLevels(fork.id, saved.klassId)).find((level) => level.level === 1)!;
+    const [gated] = await Modifiers.create(db, {
+      sourceId: first.id,
+      sourceType: "klass_levels",
+      target: "aptitudes.wizardspells.1.uses",
+      operator: "add",
+      value: "1",
+      valueType: "number",
+    });
+    await Requirements.create(db, {
+      entityId: gated.id,
+      entityType: "modifiers",
+      level: "1",
+      target: "identity.meta.level",
+      operator: "greater_than_or_equal",
+      value: "5",
+      valueType: "number",
+    });
+    RulesetViews.invalidate(fork.id);
+
+    await expectRefusedWith(
+      ClassProgressionService.updateProgression(session, fork.id, saved.klassId, {
+        spells: { perDay: [{ levelId: first.id, counts: [3, 1] }] },
+      }),
+      400,
+    );
   });
 
   test("refuses a spell list's picks as a pool's", async () => {

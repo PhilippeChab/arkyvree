@@ -4,7 +4,7 @@ import { TextAreaField } from "@/client/src/components/common/index.ts";
 import { useFormWith } from "@/client/src/hooks/index.ts";
 import { SPELL_LEVELS } from "@/vocabulary/dnd3.5/spells.ts";
 
-import { parseSpellRows, type PlacedCell, placeSpellRows } from "./spellPaste.ts";
+import { parseSpellRows, type PlacedCell, placeSpellRows, readPastedColumn } from "./spellPaste.ts";
 
 /** The pasted text, as the box's form holds it. */
 interface PasteForm {
@@ -29,7 +29,9 @@ export function SpellPasteBox({ allowsAll, changesOf, levels, onApply, onCancel 
   const { control, watch } = useFormWith<PasteForm>({ table: "" });
   const text = watch("table");
   // Apply writes every placed cell, as a paste into the grid does: what one writes can depend on another
-  const placed = placeSpellRows(parseSpellRows(text, allowsAll), levels, 0, 0, SPELL_LEVELS.length);
+  // From the spell level its header names (a paladin's from 1st), else from cantrips
+  const column = readPastedColumn(text, allowsAll) ?? 0;
+  const placed = placeSpellRows(parseSpellRows(text, allowsAll), levels, 0, column, SPELL_LEVELS.length);
   const changes = changesOf(placed);
 
   return (
