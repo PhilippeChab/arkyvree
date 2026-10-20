@@ -4,7 +4,7 @@ import {
   parseSpellCell,
   parseSpellRows,
   placeSpellRows,
-  readPastedColumn,
+  placeSpellTable,
 } from "@/client/src/pages/rulesets/details/classes/sections/dnd3.5/spellPaste.ts";
 
 /** Levels 1 to 5 of a class, their ids `l1`… */
@@ -64,20 +64,31 @@ describe("A pasted spell table", () => {
     expect(parseSpellRows("Level 0 1 2\n1 3 1\n2 4 2\n3 4 2 1", false).map((row) => row.level)).toEqual([1, 2, 3]);
   });
 
-  test("reads the spell level a header names its first count column", () => {
-    // A paladin's, from 1st; a table from its cantrips; one with no header
-    expect(readPastedColumn("Level\t1st\t2nd\n4th\t0\t—\n6th\t1\t—", false)).toBe(1);
-    expect(readPastedColumn("Level\tCantrips\t1st\n1\t3\t1\n2\t4\t2\n3\t4\t2", false)).toBe(0);
-    expect(readPastedColumn("0 1st 2nd\n3 1\n4 2", false)).toBe(0);
-    expect(readPastedColumn("1st 3 1\n2nd 4 2", false)).toBeUndefined();
-    // A header that lost its corner over the level column (a book's, split on spaces)
-    expect(readPastedColumn("0 1st 2nd\n1st 4 2 1\n2nd 5 2 1", false)).toBe(0);
-    // A "Level" header over two rows: their first cells are levels
-    const two = parseSpellRows("Level\tCantrips\t1st\n1\t3\t1\n2\t4\t2", false);
-    expect(two).toEqual([
-      { cells: [3, 1], level: 1 },
-      { cells: [4, 2], level: 2 },
-    ]);
+  test("places a pasted table from the spell level its header names, or from where it's pasted", () => {
+    // The spell levels each pasted level's cells land on, from level 1's cantrips, by level
+    const landing = (text: string, startIndex = 0, startColumn = 0) =>
+      Object.groupBy(placeSpellTable(text, false, LEVELS, startIndex, startColumn, 10), (cell) => cell.levelId);
+    const columns = (text: string, startIndex?: number, startColumn?: number) =>
+      Object.fromEntries(
+        Object.entries(landing(text, startIndex, startColumn)).map(([id, cells]) => [
+          id,
+          cells!.map((cell) => `${cell.spellLevel}:${cell.value}`).join(" "),
+        ]),
+      );
+    // A paladin's, from 1st
+    expect(columns("Level\t1st\t2nd\n4th\t0\t—\n5th\t1\t—")).toEqual({ l4: "1:0 2:null", l5: "1:1 2:null" });
+    // A header with no cell over its level column, and one of bare numbers over counts alone
+    expect(columns("0 1st 2nd\n1st 4 2\n2nd 5 2")).toEqual({ l1: "0:4 1:2", l2: "0:5 1:2" });
+    expect(columns("0 1 2 3 4 5 6 7 8 9\n1 3 1\n2 4 2\n3 4 2 1")).toEqual({
+      l1: "0:3 1:1",
+      l2: "0:4 1:2",
+      l3: "0:4 1:2 2:1",
+    });
+    // "Class Level" split on spaces, and a spacer row under a "Level" header
+    expect(columns("Class Level 0 1st\n1st 3 1\n2nd 4 2", 0, 2)).toEqual({ l1: "0:3 1:1", l2: "0:4 1:2" });
+    expect(columns("Level\t0\t1st\n1\t3\t1\n\t\t\n2\t4\t2")).toEqual({ l1: "0:3 1:1", l2: "0:4 1:2" });
+    // No header: from the cell it's pasted into; a single column of counts is counts, however it runs
+    expect(columns("1\n2\n3", 0, 1)).toEqual({ l1: "1:1", l2: "1:2", l3: "1:3" });
   });
 
   test("keeps a spreadsheet's empty cells where they are", () => {

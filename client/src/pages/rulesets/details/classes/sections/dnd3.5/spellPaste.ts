@@ -45,15 +45,19 @@ function readPastedTable(text: string, allowsAll: boolean, firstLevel: number): 
   const body = header === -1 ? [] : lines.slice(header);
   // A table whose rows count up its levels from 1 or from where it's pasted (`firstLevel`), over three rows or more: a
   // spreadsheet's spacer rows of empty cells aside, and a header of bare numbers over it, its corner cell empty
+  // (each with counts after its level: a single column of counts is counts)
+  const filled = (rows: string[][]) => rows.filter((cells) => cells.some(Boolean));
   const levelColumn = (rows: string[][]) => {
-    const leads = rows.filter((cells) => cells.some(Boolean)).map((cells) => LEVEL_CELL.exec(cells[0]));
+    const leads = filled(rows).map((cells) => LEVEL_CELL.exec(cells[0]));
     const countsFrom = (first: number) => leads.every((lead, index) => lead && Number(lead[1]) === first + index);
-    return leads.length >= 3 && (countsFrom(1) || countsFrom(firstLevel));
+    const counted = filled(rows).every((cells) => cells.length >= 2);
+    return counted && leads.length >= 3 && (countsFrom(1) || countsFrom(firstLevel));
   };
   const cornered = body[0]?.[0] === "" && levelColumn(body.slice(1));
   // A header led by "Level" says its rows are led by theirs, however few
   const levelHeader = /^(class\s+)?(level|lvl)\.?$/i.test(lines[header - 1]?.[0]?.trim() ?? "");
-  const counting = cornered || levelColumn(body) || (levelHeader && body.every((cells) => LEVEL_CELL.test(cells[0])));
+  const counting =
+    cornered || levelColumn(body) || (levelHeader && filled(body).every((cells) => LEVEL_CELL.test(cells[0])));
   const rows = (cornered ? body.slice(1) : body).filter((cells) => !counting || cells.some(Boolean));
   const leads = rows.map((cells) => LEVEL_CELL.exec(cells[0]));
   const read = rows.map((cells, index): PastedRow => {
@@ -64,16 +68,11 @@ function readPastedTable(text: string, allowsAll: boolean, firstLevel: number): 
       ...(named && { level: Number(lead[1]) }),
     };
   });
-  // The header just above them names its spell levels over the counts: past a corner over the level column, when it
-  // has one (as wide as the rows, or empty, or "Level"; a header split from a table's cells may have lost it)
+  // The header just above them names its spell levels over the counts: its first cell that names one ("0", "1st",
+  // "Cantrips"), past whatever stands over a level column ("Level", "Class Level", nothing)
   const headerRow = cornered ? body[0] : lines[header - 1];
-  const width = Math.max(0, ...rows.map((cells) => cells.length));
-  const corner =
-    !!headerRow &&
-    read.some((row) => row.level !== undefined) &&
-    (headerRow.length >= width || headerRow[0] === "" || levelHeader);
-  const labels = headerRow && (corner ? headerRow.slice(1) : headerRow);
-  return { column: labels && readSpellLevelLabel(labels[0] ?? ""), rows: read };
+  const labels = (headerRow ?? []).map(readSpellLevelLabel);
+  return { column: labels.find((label) => label !== undefined), rows: read };
 }
 
 /** The spell level a header's label names: "0", "1st", "Cantrips"; `undefined` for anything else. */
@@ -155,12 +154,4 @@ export function placeSpellTable(
 ) {
   const { column, rows } = readPastedTable(text, allowsAll, levels[startIndex]?.level ?? 1);
   return placeSpellRows(rows, levels, startIndex, column ?? startColumn, columns);
-}
-
-/**
- * The spell level a pasted table's first count column is, when its header names it ("Level 1st 2nd": a paladin's, from
- * 1st; "Cantrips 1st": from 0); `undefined` for a table without one, which lands where it's pasted.
- */
-export function readPastedColumn(text: string, allowsAll: boolean, firstLevel = 1) {
-  return readPastedTable(text, allowsAll, firstLevel).column;
 }

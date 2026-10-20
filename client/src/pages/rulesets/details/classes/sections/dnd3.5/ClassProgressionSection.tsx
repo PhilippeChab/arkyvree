@@ -197,6 +197,14 @@ export function ClassProgressionSection({ rulesetId, classId, className, ruleset
       const changed = levels.filter(({ id }) => row.levelIds.includes(id) !== saved.includes(id)).length;
       return changed > 0 ? [{ key: row.key, label: `${row.name}: ${formatCount(changed, "level")}` }] : [];
     }),
+    // A feature or pool added and given no level yet saves nothing, but shows, so its Discard can drop it
+    ...features
+      .filter((row) => row.levelIds.length === 0 && !savedFeatures.some((s) => s.key === row.key))
+      .map((row) => ({ key: `added:${row.key}`, label: `${row.name}: added, at no level yet` })),
+    ...pools
+      .filter((pool) => !savedPools.some((s) => s.aptitudeId === pool.aptitudeId))
+      .filter((pool) => !Object.values(pool.picks).some((count) => count > 0))
+      .map((pool) => ({ key: `added:${pool.aptitudeId}`, label: `${pool.name}: added, at no level yet` })),
     ...(body.pools ?? []).map((pool) => {
       const name = pools.find((p) => p.aptitudeId === pool.aptitudeId)?.name;
       return {
@@ -340,7 +348,12 @@ export function ClassProgressionSection({ rulesetId, classId, className, ruleset
                   draft.setTrack(
                     track.key,
                     Object.fromEntries(
-                      Object.entries(values).map(([levelId, value]) => [levelId, Math.min(value, track.max)]),
+                      // A value as saved stays, past the bound or not (a Revert's)
+                      Object.entries(values).map(([levelId, value]) => {
+                        const level = levels.find(({ id }) => id === levelId);
+                        const saved = level && readTrack(level, track.key);
+                        return [levelId, value === saved ? value : Math.min(value, track.max)];
+                      }),
                     ),
                   )
                 }
