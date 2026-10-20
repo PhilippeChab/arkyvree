@@ -27,7 +27,7 @@ import { getUrlSegment } from "@/shared/urlSegments.ts";
 /** Where an activity links to: a page, nowhere (null), or a record the user no longer has access to. */
 type ActivityUrl = string | null | { entityType: "ruleset" | "character"; noAccess: true };
 
-/** A class's page, on its tab of `section` (its progression, skills, modifiers or requirements) when given. */
+/** A class's page, on its tab of `section` (its skills, modifiers or requirements) when given, else its first. */
 function classPageUrl(rulesetId: string, klassId: string, section?: string) {
   return `/rulesets/${rulesetId}/classes/${klassId}${section ? `/${section}` : ""}`;
 }
@@ -52,8 +52,8 @@ class ActivitiesService {
     return entityUrl;
   }
 
-  /** A class's section page (its progression, its skills), or null when the class is gone. */
-  private async klassSectionUrl(klassId: string, section: "progression" | "skills") {
+  /** A class's page (on its skills, `section`; else its first tab, its base rules'), or null when the class is gone. */
+  private async klassSectionUrl(klassId: string, section?: "skills") {
     const klass = await Klasses.findOne(db, { id: klassId });
     if (!klass) return null;
     return classPageUrl(klass.rulesetId, klass.id, section);
@@ -150,7 +150,7 @@ class ActivitiesService {
       // Class sub-entities
       case "klass_levels": {
         const klassLevel = await KlassLevels.findOne(db, { id: targetId });
-        return klassLevel ? await this.klassSectionUrl(klassLevel.klassId, "progression") : null;
+        return klassLevel ? await this.klassSectionUrl(klassLevel.klassId) : null;
       }
       // targetId is klassId for klassSkills activities
       case "klass_skills":

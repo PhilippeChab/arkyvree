@@ -35,13 +35,16 @@ export function useProgressionSave(rulesetId: string, classId: string) {
     },
     onError: (error) => snackbar.error(error, "Failed to save the class progression"),
     // The class's tabs and the classes list, refetched before the tab drops its edits, and the ruleset's changes; its
-    // tabs not open too, so another tab's draft begins over its levels as saved
+    // tabs not open too, so another tab's draft begins over its levels as saved; and its levels' pages
     onSettled: async () => {
       await invalidateRulesetEdit(queryClient, rulesetId, queryKeysToInvalidate);
       await queryClient.refetchQueries({
         queryKey: QUERY_KEYS.rulesets.classDetail(rulesetId, classId),
         type: "inactive",
       });
+      // Its levels' own pages, which a row's hover warms
+      const levelPages = QUERY_KEYS.rulesets.entity(rulesetId, "klass_levels", "").slice(0, -1);
+      await queryClient.invalidateQueries({ queryKey: levelPages });
     },
   });
 }

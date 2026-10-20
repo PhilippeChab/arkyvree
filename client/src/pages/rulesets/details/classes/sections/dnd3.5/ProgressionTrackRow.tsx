@@ -2,6 +2,7 @@ import { Box, Button, MenuItem, Stack, TextField, Typography } from "@mui/materi
 import { useState } from "react";
 
 import { DataCell, DataRow, DataTable, OptionToggle } from "@/client/src/components/common/index.ts";
+import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 
 import { CustomTrackEditor } from "./CustomTrackEditor.tsx";
 import { readWholeNumber } from "./progressionDraft.ts";
@@ -173,7 +174,7 @@ export function ProgressionTrackRow({
         <Stack spacing={0.5} sx={{ border: 1, borderColor: "secondary.main", borderRadius: 1, px: 1.5, py: 1 }}>
           <Stack direction="row" spacing={2} sx={{ alignItems: "baseline" }}>
             <Typography variant="body2" sx={{ fontWeight: 600 }}>
-              Changes {changed.length} {changed.length === 1 ? "level" : "levels"}
+              Changes {formatCount(changed.length, "level")}
             </Typography>
             <Button
               size="small"

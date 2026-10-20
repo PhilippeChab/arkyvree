@@ -211,7 +211,8 @@ function describe(
       return {
         title: `${data.entity.name} Level ${data.entity.level}`,
         pageTitle: `${data.entity.name} Level ${data.entity.level}`,
-        backPath: `/rulesets/${rulesetId}/classes/${data.entity.klassId}/progression`,
+        // Its class's page, which opens on its base rules' first tab
+        backPath: `/rulesets/${rulesetId}/classes/${data.entity.klassId}`,
       };
     default:
       return { title: data.entity.name, pageTitle: data.entity.name };

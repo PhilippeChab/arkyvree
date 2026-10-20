@@ -15,6 +15,7 @@ import {
 } from "@/client/src/components/common/index.ts";
 import { LevelsIcon } from "@/client/src/components/icons/index.ts";
 import { useRulesetPermissions } from "@/client/src/hooks/index.ts";
+import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { withEntityFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
 import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
@@ -197,20 +198,18 @@ export function ClassProgressionSection({ rulesetId, classId, className, ruleset
           ]
         : plain;
       const how = from !== to ? `${from} → ${to}, ` : "";
-      return [{ key: track.key, label: `${track.label}: ${how}${changed} ${changed === 1 ? "level" : "levels"}` }];
+      return [{ key: track.key, label: `${track.label}: ${how}${formatCount(changed, "level")}` }];
     }),
     ...features.flatMap((row) => {
       const saved = savedFeatures.find((s) => s.key === row.key)?.levelIds ?? [];
       const changed = levels.filter(({ id }) => row.levelIds.includes(id) !== saved.includes(id)).length;
-      return changed > 0
-        ? [{ key: row.key, label: `${row.name}: ${changed} ${changed === 1 ? "level" : "levels"}` }]
-        : [];
+      return changed > 0 ? [{ key: row.key, label: `${row.name}: ${formatCount(changed, "level")}` }] : [];
     }),
     ...(body.pools ?? []).map((pool) => {
       const name = pools.find((p) => p.aptitudeId === pool.aptitudeId)?.name;
       return {
         key: `pool:${pool.aptitudeId}`,
-        label: `${name}: ${pool.picks.length} ${pool.picks.length === 1 ? "level" : "levels"}`,
+        label: `${name}: ${formatCount(pool.picks.length, "level")}`,
       };
     }),
   ];

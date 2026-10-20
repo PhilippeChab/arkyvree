@@ -6,6 +6,7 @@
 import { infiniteQueryOptions, queryOptions, skipToken } from "@tanstack/react-query";
 import { type InferRequestType, type InferResponseType, parseResponse } from "hono/client";
 
+import { NO_TIME } from "@/client/src/lib/durations.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { powersQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
@@ -68,10 +69,16 @@ export function classLevelsQuery(rulesetId: string, classId: string) {
   });
 }
 
-/** What a class's Progression and Spells tabs read beside its levels and tables: its pools' own picks, its spell list. */
+/**
+ * What a class's Progression and Spells tabs read beside its levels and tables: its pools' own picks, its spell list.
+ *
+ * A class's progression beside its levels: its pools' picks, its spell list, its feats' picks. Read again each time a
+ * tab mounts: an aptitude or a feat changed elsewhere (a spell list added) changes it.
+ */
 export function classProgressionQuery(rulesetId: string, classId: string) {
   return queryOptions({
     queryKey: QUERY_KEYS.rulesets.classProgression(rulesetId, classId),
+    staleTime: NO_TIME,
     queryFn: () =>
       parseResponse(rpc.api.rulesets[":id"].classes[":classId"].progression.$get(classParam(rulesetId, classId))),
   });

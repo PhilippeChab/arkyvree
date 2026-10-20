@@ -12,8 +12,9 @@ import {
 } from "@/client/src/components/common/index.ts";
 import { SpellUsesIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import { useDebouncedValue, useListboxQuery, useRulesetPermissions } from "@/client/src/hooks/index.ts";
+import { useDebouncedValue, useListboxQuery, useRulesetPermissions, useSearchParam } from "@/client/src/hooks/index.ts";
 import { emptyOptionsText } from "@/client/src/lib/errorMessage.ts";
+import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import type { ClassSectionProps } from "@/client/src/pages/rulesets/details/classes/classSectionFactory.ts";
 import {
   classProgressionQuery,
@@ -51,7 +52,10 @@ export function ClassSpellsSection({ rulesetId, classId, className, ruleset }: C
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
   const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
-  const [table, setTable] = useState<SpellTable>("perDay");
+  // The table it shows is its address's, which its old Spells Known tab's opens on
+  const tableParam = useSearchParam("table", "perDay");
+  const table: SpellTable = tableParam.value === "known" ? "known" : "perDay";
+  const setTable = (which: SpellTable) => tableParam.setValue(which, { replace: true });
   const [pasting, setPasting] = useState(false);
   const [classSearch, setClassSearch] = useState("");
 
@@ -125,9 +129,7 @@ export function ClassSpellsSection({ rulesetId, classId, className, ruleset }: C
   const changes = editable
     ? (["perDay", "known"] as const).flatMap((which) => {
         const count = spells.countChanged(which);
-        return count > 0
-          ? [{ key: which, label: `${TABLE_LABELS[which]}: ${count} ${count === 1 ? "cell" : "cells"}` }]
-          : [];
+        return count > 0 ? [{ key: which, label: `${TABLE_LABELS[which]}: ${formatCount(count, "cell")}` }] : [];
       })
     : [];
 

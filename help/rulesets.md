@@ -72,7 +72,7 @@ A ruleset can't be deleted: Archive it when you want to step away from it withou
 A class's **Progression** tab shows its table, level by level, and edits it all at once. Nothing is written until **Save Progression**, which lists every change first.
 
 - **Base attack bonus and saves** follow a preset: Good, Medium or Poor for the base attack bonus, Good or Poor for a save. Clicking one sets every level. **Custom** (or **Edit Levels**, for a class that follows no preset) shows each level's value, greyed where it follows the preset, so you only type the levels that differ; a level range can be set, raised or lowered at once.
-- **Skill points** are one number a level.
+- **Skill points** are one number a level, or set level by level (**Vary by Level**) for a class whose levels differ.
 - **Class features and feat pools**: each feature or pool has a row with a button per level. A filled level grants the feature there, or gives a pick in the pool (click again for a second pick). **Add Class Feature** and **Add Feat Pool** add a row.
 
 Its **Spells** tab holds the class's spells per day and spells known (how many spells it picks at each spell level) as the book prints them: type a total in a cell (Enter moves down), paste a table from a book, a PDF or a spreadsheet (**Paste a Table**, or straight into a cell), or start from another class's table (**Start From a Class**). Once a level knows **All** of a spell level's spells, every level after it does too. **Save Spells** writes both tables.
