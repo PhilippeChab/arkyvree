@@ -45,6 +45,8 @@ export const QUERY_KEYS = {
     classSpellLists: (id: string, classId: string) =>
       ["rulesets", "detail", id, "class", classId, "spellLists"] as const,
     classFeatPools: (id: string, classId: string) => ["rulesets", "detail", id, "class", classId, "featPools"] as const,
+    classProgression: (id: string, classId: string) =>
+      ["rulesets", "detail", id, "class", classId, "progression"] as const,
     sectionGrouped: (id: string, section: string) => ["rulesets", "detail", id, section, "grouped"] as const,
     familyVariants: (id: string, family: string, childOnly: boolean) =>
       ["rulesets", "detail", id, "feats", "family", family, childOnly] as const,

@@ -1,10 +1,10 @@
 import { CssBaseline } from "@mui/material";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { lazy } from "react";
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { createBrowserRouter, createRoutesFromElements, Navigate, Route, RouterProvider } from "react-router-dom";
 
 import { AuthLayoutRoute, PrivateRoute } from "./components/auth/index.ts";
-import { ErrorBoundary, Layout, PublicLayout } from "./components/layout/index.ts";
+import { ErrorBoundary, Layout, PublicLayout, RouteError } from "./components/layout/index.ts";
 import { SnackbarProvider } from "./contexts/SnackbarProvider.tsx";
 import { ThemeModeProvider } from "./contexts/ThemeModeProvider.tsx";
 import { WebSocketProvider } from "./contexts/WebSocketProvider.tsx";
@@ -41,9 +41,13 @@ const SignUpPage = lazy(() => import("./pages/auth/SignUpPage.tsx"));
 const SkillDetailsPage = lazy(() => import("./pages/rulesets/details/entities/SkillDetailsPage.tsx"));
 const VerifyEmailPage = lazy(() => import("./pages/auth/VerifyEmailPage.tsx"));
 
-function AppRoutes() {
-  return (
-    <Routes>
+/**
+ * The app's pages, under a data router: a page can then hold the user back from leaving it (`useBlocker`, through
+ * `useLeaveGuard`), which a class's unsaved progression does.
+ */
+const router = createBrowserRouter(
+  createRoutesFromElements(
+    <Route errorElement={<RouteError />}>
       <Route element={<AuthLayoutRoute />}>
         <Route path="/sign-in" element={<SignInPage />} />
         <Route path="/sign-up" element={<SignUpPage />} />
@@ -97,25 +101,23 @@ function AppRoutes() {
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Route>
       </Route>
-    </Routes>
-  );
-}
+    </Route>,
+  ),
+);
 
 export default function App() {
   return (
     <ErrorBoundary>
-      <BrowserRouter>
-        <QueryClientProvider client={queryClient}>
-          <ThemeModeProvider>
-            <SnackbarProvider>
-              <WebSocketProvider>
-                <CssBaseline enableColorScheme />
-                <AppRoutes />
-              </WebSocketProvider>
-            </SnackbarProvider>
-          </ThemeModeProvider>
-        </QueryClientProvider>
-      </BrowserRouter>
+      <QueryClientProvider client={queryClient}>
+        <ThemeModeProvider>
+          <SnackbarProvider>
+            <WebSocketProvider>
+              <CssBaseline enableColorScheme />
+              <RouterProvider router={router} />
+            </WebSocketProvider>
+          </SnackbarProvider>
+        </ThemeModeProvider>
+      </QueryClientProvider>
     </ErrorBoundary>
   );
 }

@@ -19,8 +19,9 @@ export function useCopyOnWrite(rulesetId: string, entityId: string, pathOf: (ent
   const followCopy = (copyId: string, sourceId: string) => {
     const sourcePath = `/rulesets/${rulesetId}/${pathOf(sourceId)}`;
     if (copyId === sourceId || !isStillOpen(sourcePath)) return;
-    // Onto the tab shown now, which may have changed while the request ran
-    navigate(`/rulesets/${rulesetId}/${pathOf(copyId)}${window.location.pathname.slice(sourcePath.length)}`, {
+    // Onto the tab shown now, which may have changed while the request ran, as it shows (its search: a table's)
+    const tab = window.location.pathname.slice(sourcePath.length);
+    navigate(`/rulesets/${rulesetId}/${pathOf(copyId)}${tab}${window.location.search}`, {
       replace: true,
       state: { ...state, copiedFrom: sourceId },
     });

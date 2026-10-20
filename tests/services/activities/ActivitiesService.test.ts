@@ -80,7 +80,7 @@ describe("ActivitiesService.getActivityUrl", () => {
       ["abilities", abilityMap["Strength"], `/rulesets/${r}/abilities/${abilityMap["Strength"]}`],
       ["mechanics", mechanic.id, `/rulesets/${r}/mechanics/${mechanic.id}`],
       ["klasses", fighter, `/rulesets/${r}/classes/${fighter}`],
-      ["klass_levels", level.id, `/rulesets/${r}/classes/${fighter}/levels`],
+      ["klass_levels", level.id, `/rulesets/${r}/classes/${fighter}`],
       // A class skill's activity targets the class.
       ["klass_skills", fighter, `/rulesets/${r}/classes/${fighter}/skills`],
     ])

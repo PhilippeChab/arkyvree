@@ -92,7 +92,7 @@ export function useRulesetSection<
   const rowsKey = config.query ? config.query.queryKey : QUERY_KEYS.rulesets.section(rulesetId, config.sectionName);
 
   const invalidateOnMutation = () =>
-    invalidateRulesetEdit(queryClient, rulesetId, [rowsKey, ...(queryKeysToInvalidate ?? [])]);
+    void invalidateRulesetEdit(queryClient, rulesetId, [rowsKey, ...(queryKeysToInvalidate ?? [])]);
 
   const createMutation = useMutation({
     // A duplicate's source is fixed as it's sent

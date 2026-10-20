@@ -23,8 +23,8 @@ import {
 import {
   classDetailQuery,
   type ClassFormData,
-  classLevelsQuery,
 } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
+import { DND35_CLASS_TABS } from "@/client/src/pages/rulesets/details/classes/sections/dnd3.5/index.ts";
 import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
 import { classesQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import {
@@ -62,7 +62,7 @@ export function ClassesSection({ ruleset, childOnly, onChildOnlyChange }: Rulese
           json: data,
         }),
       ),
-    onCreateSuccess: (created) => openEntity(`classes/${created.id}/levels`),
+    onCreateSuccess: (created) => openEntity(`classes/${created.id}/progression`),
   });
 
   const { data, isLoading, error, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
@@ -73,13 +73,13 @@ export function ClassesSection({ ruleset, childOnly, onChildOnlyChange }: Rulese
   const classes = pageItems(data);
 
   const handleRowClick = (klass: Class) => {
-    openEntity(`classes/${klass.id}/levels`);
+    openEntity(`classes/${klass.id}/progression`);
   };
 
   const handleRowPrefetch = (klass: Class) => {
     void queryClient.prefetchQuery(classDetailQuery(ruleset.id, klass.id));
-    // And the Levels tab its page opens on
-    void queryClient.prefetchQuery(classLevelsQuery(ruleset.id, klass.id));
+    // And the tab its page opens on, its first
+    void DND35_CLASS_TABS[0].prefetch?.(queryClient, ruleset.id, klass.id);
   };
 
   const renderCell = (klass: Class, columnKey: string) => {

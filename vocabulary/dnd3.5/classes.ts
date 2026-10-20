@@ -3,6 +3,15 @@ export type CasterType = (typeof CASTER_TYPES)[number];
 
 /** How many character levels apart the ability increases come in the core rules: one at every fourth level. */
 export const ABILITY_INCREASE_LEVEL_INTERVAL = 4;
+/**
+ * A class's base attack bonus progression by class level: `points` a `levels` levels, rounded down: a good one's as
+ * fast as its level, a medium one's three quarters of it, a poor one's half.
+ */
+export const BAB_PROGRESSIONS = {
+  good: { levels: 1, points: 1 },
+  medium: { levels: 4, points: 3 },
+  poor: { levels: 2, points: 1 },
+} as const;
 /** The caster types a class's spells are of. */
 export const CASTER_TYPES = ["Arcane", "Divine"] as const;
 /** The hit die a new class has when its form gives none. */
@@ -20,6 +29,8 @@ export const MAX_CLASS_LEVEL = 20;
 export const MAX_GENERAL_FEATS_PER_LEVEL = 10;
 /** The highest base bonus a class level gives a save. */
 export const MAX_SAVE_BASE = 12;
+/** The most picks in a pool, or spells at a spell level, a class's table gives by a level: a bound of the app's. */
+export const MAX_TABLE_COUNT = 99;
 
 /** The fewest hit points a level gives, whatever its Constitution: 1. */
 export const MIN_HIT_POINTS_PER_LEVEL = 1;

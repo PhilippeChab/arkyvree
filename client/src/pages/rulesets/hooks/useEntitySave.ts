@@ -81,7 +81,7 @@ export function useEntitySave<TForm extends FieldValues, TSaved extends { id: st
       sync.saved(toFormValues ? toFormValues(saved) : submitted, saved.updatedAt);
       const stored = storeSaved(saved, sourceId);
       followCopy(saved.id, sourceId);
-      invalidateRulesetEdit(queryClient, rulesetId, [savedListKey]);
+      void invalidateRulesetEdit(queryClient, rulesetId, [savedListKey]);
       snackbar.success(`${savedLabel} updated`);
       return stored;
     },

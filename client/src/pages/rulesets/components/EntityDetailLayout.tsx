@@ -74,7 +74,7 @@ export function EntityDetailLayout({
   const deleteMutation = useMutation({
     mutationFn: (confirmed: EntityDeletion) => confirmed.deleteFn(),
     onSuccess: (_, { rulesetId, listKeys, entityKey }) => {
-      invalidateRulesetEdit(queryClient, rulesetId, listKeys);
+      void invalidateRulesetEdit(queryClient, rulesetId, listKeys);
       snackbar.success(`${capitalize(what.toLowerCase())} deleted`);
       navigate(backTo);
       // Gone: don't let Back render it from the cache

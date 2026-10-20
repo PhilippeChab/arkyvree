@@ -3,14 +3,14 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
 
-import { ReadOnlyFields, SectionTabPanel, SectionTabs } from "@/client/src/components/common/index.ts";
-import { usePageTitle, useRulesetPermissions } from "@/client/src/hooks/index.ts";
+import { ConfirmDialog, ReadOnlyFields, SectionTabPanel, SectionTabs } from "@/client/src/components/common/index.ts";
+import { useLeaveGuard, usePageTitle, useRulesetPermissions } from "@/client/src/hooks/index.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { type RulesetDetail, rulesetDetailQuery } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { withEntityFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { EntityDetailLayout, EntityPageError } from "@/client/src/pages/rulesets/components/index.ts";
-import { entityPageBack } from "@/client/src/pages/rulesets/entityPageState.ts";
+import { entityPageBack, entityPageState } from "@/client/src/pages/rulesets/entityPageState.ts";
 import {
   useCopyOnWrite,
   useEntityFields,
@@ -19,6 +19,7 @@ import {
 } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { isStillOpen } from "@/client/src/pages/rulesets/stillOpen.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
+import { useClassDraftsStore } from "@/client/src/stores/classDraftsStore.ts";
 
 import { getClassForms } from "./classFormFactory.ts";
 import { getClassSections } from "./classSectionFactory.ts";
@@ -47,13 +48,40 @@ function ClassView({ back, classId, ruleset, rulesetId, section }: ClassViewProp
 
   const { data: classData, isLoading, error } = useQuery(classDetailQuery(rulesetId, classId));
 
+  // Its tabs' unsaved edits: a reload asks first, and so does leaving the class's page (its tabs are the page, and so
+  // is the copy a save of it follows), which discards them
+  const unsaved = useClassDraftsStore(
+    (state) => state.classId === classId && Object.values(state.drafts).some((draft) => draft.changed),
+  );
+  const discardDrafts = useClassDraftsStore((state) => state.discard);
+  const classPath = `/rulesets/${rulesetId}/classes/${classId}`;
+  const leave = useLeaveGuard(
+    unsaved,
+    (next) =>
+      next.pathname === classPath ||
+      next.pathname.startsWith(`${classPath}/`) ||
+      entityPageState(next.state).copiedFrom === classId,
+  );
+
   usePageTitle(classData?.name);
 
   const classForms = getClassForms(ruleset.baseRules);
   const classSections = getClassSections(ruleset.baseRules);
-  // Its own tabs, then its base rules', then those that customize it
-  const tabs = [...CLASS_TABS, ...classSections.tabs, ...CLASS_CUSTOMIZATION_TABS];
+  // Every class's tabs, each in the place of its base rules' tab that replaces it, then its base rules' others, then
+  // those that customize it
+  const replacing = (key: string) => classSections.tabs.find((tab) => tab.replaces === key);
+  const tabs = [
+    ...CLASS_TABS.map((tab) => replacing(tab.key) ?? tab),
+    ...classSections.tabs.filter((tab) => !tab.replaces),
+    ...CLASS_CUSTOMIZATION_TABS,
+  ];
   const currentTab = tabs.find((tab) => tab.key === section);
+  // An address of a tab it had before opens the one that took its place: one its base rules replaced, or renamed
+  const renamed =
+    section !== undefined && Object.hasOwn(classSections.tabAliases, section)
+      ? classSections.tabAliases[section]
+      : undefined;
+  const aliasedTab = section === undefined ? undefined : (replacing(section)?.key ?? renamed);
 
   const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
   // Deleting an inherited class, or what it holds, can be undone
@@ -95,8 +123,16 @@ function ClassView({ back, classId, ruleset, rulesetId, section }: ClassViewProp
     followCopy: copy.followCopy,
   });
 
-  // Normalize the URL to a tab its base rules give.
-  if (!currentTab) return <Navigate to={`/rulesets/${rulesetId}/classes/${classId}/levels`} replace />;
+  // Normalize the URL to a tab its base rules give: the one an old tab's address names, or its first.
+  if (!currentTab) {
+    return (
+      <Navigate
+        to={`/rulesets/${rulesetId}/classes/${classId}/${aliasedTab ?? tabs[0].key}`}
+        replace
+        state={location.state}
+      />
+    );
+  }
 
   if (!isLoading && !classData)
     return <EntityPageError message={loadFailureMessage("Class", error)} backLabel={back.label} backTo={back.to} />;
@@ -163,6 +199,19 @@ function ClassView({ back, classId, ruleset, rulesetId, section }: ClassViewProp
           </>
         )}
       </EntityDetailLayout>
+      <ConfirmDialog
+        open={leave.blocked}
+        onClose={leave.stay}
+        onConfirm={() => {
+          discardDrafts();
+          leave.proceed();
+        }}
+        pending={false}
+        title="Discard Changes"
+        message="Are you sure you want to leave this class? The changes you haven't saved on its tabs are lost."
+        confirmLabel="Discard Changes"
+        intent="destructive"
+      />
     </>
   );
 }

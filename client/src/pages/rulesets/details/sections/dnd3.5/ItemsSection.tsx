@@ -127,7 +127,7 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
       const count = data.length;
       snackbar.success(`${formatCount(count, "variant")} created`);
       bulkDialog.close();
-      invalidateRulesetEdit(queryClient, ruleset.id, [QUERY_KEYS.rulesets.section(ruleset.id, "items")]);
+      void invalidateRulesetEdit(queryClient, ruleset.id, [QUERY_KEYS.rulesets.section(ruleset.id, "items")]);
     },
     onError: (error) => {
       snackbar.error(error, "Failed to create variants");

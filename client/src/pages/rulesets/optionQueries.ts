@@ -37,6 +37,22 @@ export function aptitudeOptionsQuery(rulesetId: string, search: string, scope?: 
   });
 }
 
+/** A class picker's options: a ruleset's classes, searched on the server, 20 a page. */
+export function classOptionsQuery(rulesetId: string, search: string) {
+  return infiniteQueryOptions({
+    queryKey: QUERY_KEYS.rulesets.sectionSearch(rulesetId, "classes", search),
+    queryFn: async ({ pageParam }) =>
+      parseResponse(
+        rpc.api.rulesets[":id"].classes.$get({
+          param: { id: rulesetId },
+          query: { page: pageParam.toString(), limit: "20", search: search || undefined },
+        }),
+      ),
+    initialPageParam: 1,
+    getNextPageParam: nextPage,
+  });
+}
+
 /** A feat picker's options: a ruleset's feats with their aptitudes, searched on the server, 50 a page. */
 export function featOptionsQuery(rulesetId: string, search: string) {
   return infiniteQueryOptions({
