@@ -48,6 +48,8 @@ import type { SavesService } from "@/server/services/rulesets/saves/index.ts";
 import type { SkillsService } from "@/server/services/rulesets/skills/index.ts";
 import type { PathCompletion, PathValidationResult } from "@/shared/customization/target.ts";
 
+import type { Answer } from "./answers.ts";
+
 /** A modifier as the services describe one (an entity's, a character's own): its target's segments named. */
 interface LabeledModifier {
   id: string;
@@ -58,9 +60,6 @@ interface LabeledModifier {
   valueLabel?: string | null;
   valueType: string;
 }
-
-/** What a service answers, awaited. */
-type Answer<F extends (...args: never[]) => Promise<unknown>> = Awaited<ReturnType<F>>;
 
 /** A class level, as its class's levels list it or on its own. */
 type ClassLevel =

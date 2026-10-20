@@ -21,10 +21,8 @@ import type { CharactersService } from "@/server/services/characters/index.ts";
 import type { CharacterInventoryService } from "@/server/services/characters/inventory/index.ts";
 import type { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
 
+import type { Answer } from "./answers.ts";
 import { toV1Character } from "./characters.ts";
-
-/** What a service answers, awaited. */
-type Answer<F extends (...args: never[]) => Promise<unknown>> = Awaited<ReturnType<F>>;
 
 /** A way a new character's ability scores are set, as the service describes it. */
 type CreationMethod = Answer<typeof CharactersService.getCreation>["methods"][number];
