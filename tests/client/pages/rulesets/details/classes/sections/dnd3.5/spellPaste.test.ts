@@ -21,6 +21,8 @@ describe("A pasted spell table", () => {
       undefined,
     ]);
     expect(parseSpellCell("all", false)).toBeUndefined();
+    // Past the rules' bound for a table's count
+    expect(parseSpellCell("120", false)).toBeUndefined();
   });
 
   test("reads a row's level when it says one, or when the rows count up from it", () => {
@@ -42,6 +44,8 @@ describe("A pasted spell table", () => {
     const rows = parseSpellRows("Level\tCantrips\t1st\n1\t3\t1\n2\t4\t2\n3\t4\t2", false);
     expect(rows.map((row) => row.level)).toEqual([1, 2, 3]);
     expect(rows[0].cells).toEqual([3, 1]);
+    // A header naming its spell levels after a 0 is one too, and with no level column its rows are counts
+    expect(parseSpellRows("0 1st 2nd\n3 1\n4 2", false)).toEqual([{ cells: [3, 1] }, { cells: [4, 2] }]);
     // A header numbering its spell levels is one too
     expect(parseSpellRows("Level 0 1 2\n1 3 1\n2 4 2\n3 4 2 1", false).map((row) => row.level)).toEqual([1, 2, 3]);
   });

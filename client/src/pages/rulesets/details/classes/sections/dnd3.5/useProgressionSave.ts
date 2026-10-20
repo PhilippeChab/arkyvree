@@ -42,9 +42,13 @@ export function useProgressionSave(rulesetId: string, classId: string) {
         queryKey: QUERY_KEYS.rulesets.classDetail(rulesetId, classId),
         type: "inactive",
       });
-      // Its levels' own pages (a row's hover warms them), their modifiers and requirements among them
-      const levelIds = (body.levelTokens ?? []).map(({ levelId }) => levelId);
-      const levelKeys = levelIds.flatMap((levelId) => [
+      // The pages of the levels it changes (a row's hover warms them), their modifiers and requirements among them
+      const levelIds = new Set([
+        ...(body.levels ?? []).map(({ levelId }) => levelId),
+        ...(body.pools ?? []).flatMap(({ picks }) => picks.map(({ levelId }) => levelId)),
+        ...[...(body.spells?.known ?? []), ...(body.spells?.perDay ?? [])].map(({ levelId }) => levelId),
+      ]);
+      const levelKeys = [...levelIds].flatMap((levelId) => [
         QUERY_KEYS.rulesets.entity(rulesetId, "klass_levels", levelId),
         QUERY_KEYS.rulesets.customization(rulesetId, "klass_levels", levelId, "modifiers"),
         QUERY_KEYS.rulesets.customization(rulesetId, "klass_levels", levelId, "requirements"),

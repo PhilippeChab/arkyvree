@@ -40,10 +40,26 @@ describe("A Spells tab's draft", () => {
     expect(spells.changesOf("known", [{ levelId: "l3", spellLevel: 0, value: 5 }])).toEqual([]);
   });
 
-  test("takes a count over a column's first All down the levels it made All", () => {
+  test("takes a count over a column's first All down the levels saved All by it, up to an All of their own", () => {
+    // Saved: 2 known at level 1, All from level 2, and at level 4 an All of its own after a count at 3
+    const known = new Map<string, Record<string, number | "All">>([
+      ["l1", { 0: 2 }],
+      ["l2", { 0: "All" }],
+      ["l3", { 0: 3 }],
+      ["l4", { 0: "All" }],
+    ]);
+    const saved = new SpellDraft(LEVELS, { perDay: new Map(), known }, NO_SPELL_EDITS);
+    const counted = new SpellDraft(
+      LEVELS,
+      saved.saved,
+      saved.write("known", [{ levelId: "l2", spellLevel: 0, value: 4 }]),
+    );
+    expect(LEVELS.map(({ id }) => counted.cellOf("known", id, 0))).toEqual([2, 4, 3, "all"]);
+
+    // An All typed over saved counts, then a count over it: the counts below come back
     const allFromTwo = draft().write("known", [{ levelId: "l2", spellLevel: 0, value: "all" }]);
-    const counted = draft(allFromTwo).write("known", [{ levelId: "l2", spellLevel: 0, value: 4 }]);
-    expect(LEVELS.map(({ id }) => draft(counted).cellOf("known", id, 0))).toEqual([2, 4, 4, 4]);
+    const undone = draft(allFromTwo).write("known", [{ levelId: "l2", spellLevel: 0, value: 4 }]);
+    expect(LEVELS.map(({ id }) => draft(undone).cellOf("known", id, 0))).toEqual([2, 4, 3, 3]);
   });
 
   test("sends each changed level's row, with its every spell level, per day's All as none", () => {

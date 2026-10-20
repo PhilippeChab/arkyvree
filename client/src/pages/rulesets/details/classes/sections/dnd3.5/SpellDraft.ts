@@ -105,7 +105,8 @@ export class SpellDraft {
 
   /**
    * The edits once a table's `cells` are written: on Spells Known, a cell under an All keeps no edit of its own, and a
-   * count written over a column's first All goes down to the levels that were All by it, so the All is gone, not moved.
+   * count written over a column's first All goes down to the levels saved All by it (not those with a count, nor past
+   * an All of their own), so the All is gone, not moved.
    */
   write(which: SpellTable, cells: PlacedCell[]): SpellEdits {
     const next = { ...this.edits[which] };
@@ -116,10 +117,14 @@ export class SpellDraft {
       place(levelId, spellLevel, value);
       const first = this.levels[this.firstAll[spellLevel] ?? -1];
       if (which !== "known" || value === "all" || first?.id !== levelId) continue;
-      const below = this.levels.slice((this.indexById.get(levelId) ?? 0) + 1);
-      for (const { id } of below) {
+      // The levels below it as saved: a count stays, an All by it takes the count, one that's its own stops it
+      const index = this.indexById.get(levelId) ?? 0;
+      for (const [offset, { id }] of this.levels.slice(index + 1).entries()) {
+        const previous = this.levels[index + offset];
+        const saved = this.savedCell(which, id, spellLevel);
+        if (saved === "all" && previous && this.savedCell(which, previous.id, spellLevel) !== "all") break;
         const written = cells.some((cell) => cell.levelId === id && cell.spellLevel === spellLevel);
-        if (!written && this.cellOf(which, id, spellLevel) === "all") place(id, spellLevel, value);
+        if (!written && saved === "all" && !(id in next && spellLevel in next[id])) place(id, spellLevel, value);
       }
     }
     const written = { ...this.edits, [which]: next };

@@ -165,7 +165,10 @@ export function ProgressionTrackRow({
             <Button
               size="small"
               onClick={() => {
-                setBaseValue(readMostCommon(values));
+                const common = readMostCommon(values);
+                setBaseValue(common);
+                // Back to one number: every level takes the one most of them have
+                if (custom) onChange(Object.fromEntries(values.map(({ levelId }) => [levelId, common])));
                 setCustom(!custom);
               }}
             >

@@ -1,5 +1,7 @@
 /** What a pasted spell table says: its rows, as a book, a PDF or a spreadsheet writes them, read into counts. */
 
+import { MAX_TABLE_COUNT } from "@/vocabulary/dnd3.5/classes.ts";
+
 /** A row a paste gives: the class level it names, when it names one, and its cells from the column it lands at. */
 export interface PastedRow {
   /** Unreadable cells are `undefined`: they leave the cell they land on as it is */
@@ -29,14 +31,14 @@ function splitCells(line: string) {
 }
 
 /**
- * A cell as it's typed or pasted (`text`): a count, "all" or "*" where spells known take it (`allowsAll`), none for an
- * empty cell or a dash, and `undefined` for anything else.
+ * A cell as it's typed or pasted (`text`): a count up to the rules' bound, "all" or "*" where spells known take it
+ * (`allowsAll`), none for an empty cell or a dash, and `undefined` for anything else.
  */
 export function parseSpellCell(text: string, allowsAll: boolean): SpellCell | undefined {
   const cell = text.trim();
   if (cell === "" || /^[-–—]$/.test(cell)) return null;
   if (allowsAll && /^(all|\*)$/i.test(cell)) return "all";
-  return /^\d+$/.test(cell) ? Number(cell) : undefined;
+  return /^\d+$/.test(cell) && Number(cell) <= MAX_TABLE_COUNT ? Number(cell) : undefined;
 }
 
 /**
@@ -52,9 +54,11 @@ export function parseSpellRows(text: string, allowsAll: boolean, firstLevel = 1)
     // A blank line is none, a spreadsheet's row of empty cells a row
     .filter((line) => line.includes("\t") || line.trim() !== "")
     .map(splitCells);
-  // A table's header rows, led by a word ("Level", "Cantrips") rather than a level or a count, aren't levels
-  const isHeader = ([lead]: string[]) =>
-    lead !== "" && !LEVEL_CELL.test(lead) && parseSpellCell(lead, allowsAll) === undefined;
+  // A table's header rows aren't levels: one led by a word ("Level", "Cantrips"), or naming its spell levels after its
+  // first cell ("0 1st 2nd"), where a level's row has counts
+  const isHeader = ([lead, ...rest]: string[]) =>
+    (lead !== "" && !LEVEL_CELL.test(lead) && parseSpellCell(lead, allowsAll) === undefined) ||
+    rest.some((cell) => cell !== "" && parseSpellCell(cell, allowsAll) === undefined);
   const header = lines.findIndex((cells) => !isHeader(cells));
   const rows = header === -1 ? [] : lines.slice(header);
   const leads = rows.map((cells) => LEVEL_CELL.exec(cells[0]));
