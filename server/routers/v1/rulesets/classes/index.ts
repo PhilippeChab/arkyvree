@@ -14,12 +14,35 @@ import {
   v1NamedList,
 } from "@/server/routers/v1/schemas/content.ts";
 import { V1 } from "@/server/routers/v1/translators/V1.ts";
-import { classParams, CONTENT_FILTERS } from "@/server/routers/v1/validation.ts";
+import { classParams, CONTENT_FILTERS, entityDescription, fields } from "@/server/routers/v1/validation.ts";
 import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
 import { ClassLevelsService } from "@/server/services/rulesets/classes/levels/index.ts";
 import { ClassSkillsService } from "@/server/services/rulesets/classes/skills/index.ts";
 
+/** A class, its create's and its update's. */
+const classBody = z.object({
+  description: entityDescription,
+  fields,
+  hitDie: z.number().int().optional().meta({ description: "Its hit die's sides: `10` a d10" }),
+  name: z.string().min(1),
+});
+
+/** A class level, its create's and its update's: its fields, its base saves and the feats it grants. */
+const levelBody = z.object({
+  feats: z
+    .array(z.object({ aptitudeId: z.string().uuid(), featId: z.string().uuid(), free: z.boolean().optional() }))
+    .optional()
+    .meta({ description: "The feats it grants, each in its aptitude, `free` without taking a pick: its whole list" }),
+  fields,
+  saves: z
+    .array(z.object({ base: z.number().int(), saveId: z.string().uuid() }))
+    .optional()
+    .meta({ description: "Its base save bonuses: its whole list" }),
+});
+
 const levelParams = classParams.extend({ levelId: z.string().uuid() });
+
+const skillParams = classParams.extend({ skillId: z.string().uuid() });
 
 /** A ruleset's classes: a page of them, one, and its levels, skills, spells and feat pools. */
 export default new Hono<ApiKeyContext>()
@@ -127,5 +150,107 @@ export default new Hono<ApiKeyContext>()
     async (c) => {
       const { classId, id } = c.req.valid("param");
       return c.json(V1.classSpellCounts(await ClassLevelsService.getClassLevelSpells(id, classId)), 200);
+    },
+  )
+  .post(
+    "/:id/classes",
+    describeRoute({ response: v1Class, status: 201, summary: "Adds a class to a ruleset" }),
+    validate("param", idParam),
+    validate("json", classBody),
+    async (c) => {
+      const { id } = c.req.valid("param");
+      const body = c.req.valid("json");
+      const created = await ClassesService.createClass(c.var.requestSession, id, V1.classRequest(body));
+      return c.json(V1.class(await ClassesService.getClass(id, created.id)), 201);
+    },
+  )
+  .post(
+    "/:id/classes/:classId/levels",
+    describeRoute({ response: v1ClassLevel, status: 201, summary: "Adds a level to a class" }),
+    validate("param", classParams),
+    validate("json", levelBody.extend({ level: z.number().int().meta({ description: "The class's level it is" }) })),
+    async (c) => {
+      const { classId, id } = c.req.valid("param");
+      const body = c.req.valid("json");
+      const created = await ClassLevelsService.createClassLevel(c.var.requestSession, id, classId, body);
+      return c.json(V1.classLevel(await ClassLevelsService.getClassLevel(id, classId, created.id)), 201);
+    },
+  )
+  .post(
+    "/:id/classes/:classId/skills",
+    describeRoute({
+      response: v1NamedList,
+      status: 201,
+      summary: "Makes a skill one of a class's: answers its skills",
+    }),
+    validate("param", classParams),
+    validate("json", z.object({ skillId: z.string().uuid() })),
+    async (c) => {
+      const { classId, id } = c.req.valid("param");
+      const { skillId } = c.req.valid("json");
+      await ClassSkillsService.addClassSkill(c.var.requestSession, id, classId, skillId);
+      return c.json(V1.classSkills(await ClassSkillsService.getClassSkills(id, classId)), 201);
+    },
+  )
+  .put(
+    "/:id/classes/:classId",
+    describeRoute({
+      response: v1Class,
+      status: 200,
+      summary: "Changes a class of a ruleset's: a copy of its own, when it's inherited",
+    }),
+    validate("param", classParams),
+    validate("json", classBody),
+    async (c) => {
+      const { classId, id } = c.req.valid("param");
+      const body = c.req.valid("json");
+      const updated = await ClassesService.updateClass(c.var.requestSession, id, classId, V1.classRequest(body));
+      return c.json(V1.class(await ClassesService.getClass(id, updated.id)), 200);
+    },
+  )
+  .put(
+    "/:id/classes/:classId/levels/:levelId",
+    describeRoute({ response: v1ClassLevel, status: 200, summary: "Changes a class's level" }),
+    validate("param", levelParams),
+    validate("json", levelBody),
+    async (c) => {
+      const { classId, id, levelId } = c.req.valid("param");
+      const body = c.req.valid("json");
+      const updated = await ClassLevelsService.updateClassLevel(c.var.requestSession, id, classId, levelId, body);
+      return c.json(V1.classLevel(await ClassLevelsService.getClassLevel(id, classId, updated.id)), 200);
+    },
+  )
+  .delete(
+    "/:id/classes/:classId",
+    describeRoute({
+      response: null,
+      status: 204,
+      summary: "Deletes a class of a ruleset's: refused while a character has a level in it",
+    }),
+    validate("param", classParams),
+    async (c) => {
+      const { classId, id } = c.req.valid("param");
+      await ClassesService.deleteClass(c.var.requestSession, id, classId);
+      return c.body(null, 204);
+    },
+  )
+  .delete(
+    "/:id/classes/:classId/levels/:levelId",
+    describeRoute({ response: null, status: 204, summary: "Deletes a class's level" }),
+    validate("param", levelParams),
+    async (c) => {
+      const { classId, id, levelId } = c.req.valid("param");
+      await ClassLevelsService.deleteClassLevel(c.var.requestSession, id, classId, levelId);
+      return c.body(null, 204);
+    },
+  )
+  .delete(
+    "/:id/classes/:classId/skills/:skillId",
+    describeRoute({ response: null, status: 204, summary: "Makes a skill no longer one of a class's" }),
+    validate("param", skillParams),
+    async (c) => {
+      const { classId, id, skillId } = c.req.valid("param");
+      await ClassSkillsService.removeClassSkill(c.var.requestSession, id, classId, skillId);
+      return c.body(null, 204);
     },
   );

@@ -15,6 +15,7 @@ import {
   racesInRules,
   skillsInRules,
 } from "@/drizzle/schema.ts";
+import { InternalError } from "@/server/errors/index.ts";
 import type {
   v1Class,
   v1ClassFeatPools,
@@ -29,6 +30,8 @@ import type {
   v1Save,
   v1Skill,
   v1Spell,
+  v1TargetPath,
+  v1TargetPathCheck,
 } from "@/server/routers/v1/schemas/content.ts";
 import type { ClassesService } from "@/server/services/rulesets/classes/index.ts";
 import type { ClassLevelsService } from "@/server/services/rulesets/classes/levels/index.ts";
@@ -41,6 +44,7 @@ import type { PowersService } from "@/server/services/rulesets/powers/index.ts";
 import type { RacesService } from "@/server/services/rulesets/races/index.ts";
 import type { SavesService } from "@/server/services/rulesets/saves/index.ts";
 import type { SkillsService } from "@/server/services/rulesets/skills/index.ts";
+import type { PathCompletion, PathValidationResult } from "@/shared/customization/target.ts";
 
 /** A modifier as the services describe one (an entity's, a character's own): its target's segments named. */
 interface LabeledModifier {
@@ -92,6 +96,7 @@ const FEAT_COLUMNS = new Set([
 const ITEM_COLUMNS = new Set([
   ...Object.keys(getTableColumns(itemsInRules)),
   "modifiers",
+  "placement",
   "properties",
   "requirements",
   "templateName",
@@ -244,6 +249,13 @@ export function toV1Modifier(modifier: LabeledModifier): z.infer<typeof v1Modifi
   };
 }
 
+/** The modifier of a list that has an id, as the list describes it: one a write just made. */
+export function toV1ModifierOf(modifiers: LabeledModifier[], modifierId: string): z.infer<typeof v1Modifier> {
+  const modifier = modifiers.find(({ id }) => id === modifierId);
+  if (!modifier) throw new InternalError("The modifier written isn't among its owner's");
+  return toV1Modifier(modifier);
+}
+
 /** Things named (a class's spell lists), each by its id and its name. */
 export function toV1Names(named: { id: string; name: string }[]) {
   return named.map(({ id, name }) => ({ id, name }));
@@ -280,6 +292,16 @@ export function toV1Requirement(
     valueLabel: requirement.valueLabel ?? null,
     valueType: requirement.valueType as z.infer<typeof v1Requirement>["valueType"],
   };
+}
+
+/** The requirement of an entity's tree that has an id, as the tree describes it: one a write just made. */
+export function toV1RequirementOf(
+  requirements: Answer<typeof RequirementsService.getRequirements>,
+  requirementId: string,
+): z.infer<typeof v1Requirement> {
+  const requirement = requirements.find(({ id }) => id === requirementId);
+  if (!requirement) throw new InternalError("The requirement written isn't in its entity's tree");
+  return toV1Requirement(requirement);
 }
 
 /** A saving throw of a ruleset's. */
@@ -321,5 +343,38 @@ export function toV1Spell(
     name: spell.name,
     saveEffect: spell.saveEffect,
     saveId: spell.saveId,
+  };
+}
+
+/** A target path, or a segment of one, that completes the path given. */
+export function toV1TargetPath(completion: PathCompletion): z.infer<typeof v1TargetPath> {
+  return {
+    description: completion.documentation,
+    detail: completion.detail,
+    insertText: completion.insertText,
+    kind: completion.kind,
+    label: completion.label,
+    operators: completion.operators ?? [],
+    path: completion.path ?? null,
+    values: completion.possibleValues ?? completion.setValues ?? [],
+    valueType: completion.valueType ?? null,
+  };
+}
+
+/** Whether a target path is one a modifier or a requirement may take, and what a valid one takes. */
+export function toV1TargetPathCheck(check: PathValidationResult): z.infer<typeof v1TargetPathCheck> {
+  const { target } = check;
+  return {
+    errors: check.errors.map(({ message, position, severity }) => ({ ...position, message, severity })),
+    suggestions: check.suggestions,
+    target: target
+      ? {
+          operators: target.operators,
+          path: target.path,
+          values: target.possibleValues ?? target.setValues ?? [],
+          valueType: target.valueType,
+        }
+      : null,
+    valid: check.isValid,
   };
 }

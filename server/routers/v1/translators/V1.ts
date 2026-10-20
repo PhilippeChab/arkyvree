@@ -11,7 +11,18 @@ import {
   toV1LinkableCharacter,
   toV1PlayerSlot,
 } from "./campaigns.ts";
-import { toV1CharacterLanguages, toV1Inventory, toV1SavedLevel } from "./characterParts.ts";
+import {
+  toV1CharacterCreation,
+  toV1CharacterLanguages,
+  toV1ImportedCharacter,
+  toV1ImportSource,
+  toV1InventoryEntry,
+  toV1InventoryEntryOf,
+  toV1Placement,
+  toV1RaceOption,
+  toV1SavedLevel,
+} from "./characterParts.ts";
+import { toInventoryRequest, toLevelEditRequest, toLevelSaveRequest } from "./characterRequests.ts";
 import { toV1Character, toV1Characters } from "./characters.ts";
 import {
   toV1Class,
@@ -24,13 +35,24 @@ import {
   toV1Item,
   toV1Language,
   toV1Modifier,
+  toV1ModifierOf,
   toV1Names,
   toV1Race,
   toV1Requirement,
+  toV1RequirementOf,
   toV1Save,
   toV1Skill,
   toV1Spell,
+  toV1TargetPath,
+  toV1TargetPathCheck,
 } from "./content.ts";
+import {
+  toClassRequest,
+  toItemRequest,
+  toRaceRequest,
+  toRequirementRequest,
+  toSkillRequest,
+} from "./contentRequests.ts";
 import { toV1Contributor, toV1Contributors } from "./contributors.ts";
 import { toV1Stats } from "./dashboard.ts";
 import { toV1Export } from "./exports.ts";
@@ -55,7 +77,7 @@ import { toV1ShareLink } from "./sharing.ts";
 
 /**
  * Version 1's translators, one per kind: from what a service answers to v1's shape, and from a v1 request to what a
- * service takes (`levelChoicesQuery`). Each is typed by the service it reads and by v1's schema of its answer
+ * service takes (`levelChoicesQuery`, `raceRequest`). Each is typed by the service it reads and by v1's schema of its answer
  * (`schemas/`), so an answer that changes inside the app stops its translator compiling until v1's shape is kept. A
  * page's items are each translated by their kind's (`V1.page(feats, V1.feat)`). A new version copies the last,
  * replacing only what changed (`const V2 = { ...V1, character: … }`), and v1 keeps working untouched.
@@ -71,9 +93,11 @@ export const V1 = {
   campaignPlayer: toV1CampaignPlayer,
   campaignSummary: toV1CampaignSummary,
   character: toV1Character,
+  characterCreation: toV1CharacterCreation,
   characterLanguages: toV1CharacterLanguages,
   characters: toV1Characters,
   class: toV1Class,
+  classRequest: toClassRequest,
   classFeatPools: toV1ClassFeatPools,
   classLevel: toV1ClassLevel,
   classSkills: toV1ClassSkills,
@@ -85,14 +109,22 @@ export const V1 = {
   export: toV1Export,
   feat: toV1Feat,
   fieldDeclarations: toV1FieldDeclarations,
-  inventory: toV1Inventory,
   inviteStatus: toV1InviteStatus,
+  importedCharacter: toV1ImportedCharacter,
+  importSource: toV1ImportSource,
+  inventoryEntry: toV1InventoryEntry,
+  inventoryEntryOf: toV1InventoryEntryOf,
+  inventoryRequest: toInventoryRequest,
   item: toV1Item,
+  itemRequest: toItemRequest,
   language: toV1Language,
   levelChoices: toV1LevelChoices,
   levelChoicesQuery: toLevelChoicesQuery,
   linkableCharacter: toV1LinkableCharacter,
+  levelEditRequest: toLevelEditRequest,
+  levelSaveRequest: toLevelSaveRequest,
   modifier: toV1Modifier,
+  modifierOf: toV1ModifierOf,
   names: toV1Names,
   notification: toV1Notification,
   page: toV1Page,
@@ -102,7 +134,12 @@ export const V1 = {
   receivedCampaignInvites: toV1ReceivedCampaignInvites,
   receivedCharacterInvite: toV1ReceivedCharacterInvite,
   receivedRulesetInvite: toV1ReceivedRulesetInvite,
+  placement: toV1Placement,
+  raceOption: toV1RaceOption,
+  raceRequest: toRaceRequest,
   requirement: toV1Requirement,
+  requirementOf: toV1RequirementOf,
+  requirementRequest: toRequirementRequest,
   ruleset: toV1Ruleset,
   rulesetChanges: toV1RulesetChanges,
   rulesetExtensions: toV1RulesetExtensions,
@@ -111,9 +148,12 @@ export const V1 = {
   savedLevel: toV1SavedLevel,
   shareLink: toV1ShareLink,
   skill: toV1Skill,
+  skillRequest: toSkillRequest,
   spell: toV1Spell,
   stats: toV1Stats,
   target: toV1Target,
   targetPage: toV1TargetPage,
   unreadNotifications: toV1UnreadNotifications,
+  targetPath: toV1TargetPath,
+  targetPathCheck: toV1TargetPathCheck,
 };

@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { createKeyedApi, expectOk, expectStatus } from "@/tests/support/api.ts";
+import { createKeyedFork } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 
 describe("v1 ruleset items", () => {
@@ -37,5 +38,66 @@ describe("v1 ruleset items", () => {
     );
     expect(weapons.map(({ name }) => name)).toContain("Longsword");
     expect(weapons.every(({ template, type }) => template && type === "Weapon")).toBe(true);
+  });
+
+  test("adds an item to a user's ruleset, changes one it inherits on a copy of its own, and deletes one", async () => {
+    const { api, rulesetId: id } = await createKeyedFork();
+    const ctx = await getSeedCtx();
+    const route = api.v1.rulesets[":id"].items;
+
+    const created = await expectOk(
+      route.$post({ json: { cost: 5, name: "Lucky Coin", type: "Other", weight: 0.5 }, param: { id } }),
+    );
+    expect(created).toMatchObject({
+      cost: 5,
+      name: "Lucky Coin",
+      template: false,
+      templateId: null,
+      type: "Other",
+      weight: 0.5,
+    });
+
+    const itemId = ctx.itemMap.Longsword!;
+    const changed = await expectOk(route[":itemId"].$put({ json: { name: "Arming Sword" }, param: { id, itemId } }));
+    expect(changed).toMatchObject({ name: "Arming Sword", type: "Weapon" });
+    expect(changed.id).not.toBe(itemId);
+
+    await expectStatus(route[":itemId"].$delete({ param: { id, itemId: created.id } }), 204);
+    await expectStatus(route[":itemId"].$get({ param: { id, itemId: created.id } }), 404);
+  });
+
+  test("refuses to change a ruleset the key's user can't edit", async () => {
+    const { api } = await createKeyedApi();
+    const ctx = await getSeedCtx();
+    const id = ctx.rulesetId;
+    await expectStatus(
+      api.v1.rulesets[":id"].items.$post({
+        json: { cost: 5, name: "Lucky Coin", type: "Other", weight: 0.5 },
+        param: { id },
+      }),
+      403,
+    );
+  });
+
+  test("adds a copy of an item, and the variants of a template", async () => {
+    const { api, rulesetId: id } = await createKeyedFork();
+    const ctx = await getSeedCtx();
+    const route = api.v1.rulesets[":id"].items[":itemId"];
+    const itemId = ctx.itemMap.Longsword!;
+
+    const copy = await expectOk(
+      route.duplicate.$post({ json: { cost: 15, name: "Longsword (Copy)", type: "Weapon" }, param: { id, itemId } }),
+    );
+    expect(copy).toMatchObject({ cost: 15, name: "Longsword (Copy)", type: "Weapon" });
+    const variants = await expectOk(
+      route.variants.$post({
+        json: { variants: [{ name: "Longsword +1" }, { name: "Longsword +2" }] },
+        param: { id, itemId },
+      }),
+    );
+    expect(variants.map(({ name, templateId }) => ({ name, templateId }))).toEqual([
+      { name: "Longsword +1", templateId: itemId },
+      { name: "Longsword +2", templateId: itemId },
+    ]);
   });
 });

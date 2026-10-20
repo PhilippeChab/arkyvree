@@ -12,7 +12,7 @@ import { Properties, type RulesetEntityType, Rulesets } from "@/server/repositor
 import type { TargetPathKind } from "@/shared/customization/target.ts";
 import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 
-import { api, expectOk } from "./api.ts";
+import { api, createKeyedApi, expectOk } from "./api.ts";
 import { insertRows } from "./database.ts";
 import { uniqueId } from "./seed.ts";
 import { createTestUser } from "./users.ts";
@@ -55,6 +55,14 @@ export async function copyEntity(
   ruleset: RulesetSources,
 ) {
   return (await EntityCopy.create(database, entityType, entityId, ruleset)).entity;
+}
+
+/** A new user's seeded fork, and a public API (`/v1`) client with a key of theirs: a ruleset they may edit. */
+export async function createKeyedFork() {
+  const { user } = await createTestUser();
+  const ruleset = await createSeededTestRuleset(user.id);
+  const { api: keyedApi } = await createKeyedApi(user.id);
+  return { api: keyedApi, rulesetId: ruleset.id, user };
 }
 
 /** A new seeded fork of the seed user's with an aptitude of its own: the fork's `id` and the `aptitudeId`. */

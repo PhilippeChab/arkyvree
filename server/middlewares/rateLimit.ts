@@ -2,6 +2,12 @@ import { limitRate, limitRatePerKey } from "./limitRate.ts";
 
 const MINUTE = 60 * 1000;
 
+/**
+ * The public API's imports of a character file, counted per user, whatever keys of theirs ask: as many a minute as the
+ * app's own allow an address.
+ */
+export const apiImportRateLimit = limitRatePerKey({ windowMs: MINUTE, limit: 10, per: "user" });
+
 /** The public API's requests, counted per key: an agent's run reads a character and its choices a few times a level. */
 export const apiKeyRateLimit = limitRatePerKey({ windowMs: MINUTE, limit: 120 });
 

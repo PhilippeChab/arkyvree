@@ -75,16 +75,20 @@ function collectRoutes(router: Router) {
   return routes;
 }
 
-/** A schema the document names, its references moved from zod's `$defs` to the document's components. */
-function toComponentRefs(value: unknown): unknown {
-  if (Array.isArray(value)) return value.map(toComponentRefs);
+/**
+ * A schema the document names, its references moved from zod's `$defs` to the document's components, each name ending
+ * in `suffix`: a request's are its own (`FeatInput`), since a default or a transform makes what a request may send
+ * differ from what an answer holds.
+ */
+function toComponentRefs(value: unknown, suffix: string): unknown {
+  if (Array.isArray(value)) return value.map((entry) => toComponentRefs(entry, suffix));
   if (typeof value !== "object" || value === null) return value;
   return Object.fromEntries(
     Object.entries(value).map(([key, entry]) => [
       key,
       key === "$ref" && typeof entry === "string"
-        ? entry.replace("#/$defs/", "#/components/schemas/")
-        : toComponentRefs(entry),
+        ? `${entry.replace("#/$defs/", "#/components/schemas/")}${suffix}`
+        : toComponentRefs(entry, suffix),
     ]),
   );
 }
@@ -100,9 +104,11 @@ function toIdWord(segment: string) {
  * gathered in `components`.
  */
 function toJsonSchema(schema: z.ZodType, io: "input" | "output", components: Record<string, unknown>) {
-  const { $defs, $schema: _dialect, ...json } = z.toJSONSchema(schema, { io, unrepresentable: "any" });
-  Object.assign(components, toComponentRefs($defs ?? {}));
-  return toComponentRefs(json) as JsonSchema;
+  const { $defs = {}, $schema: _dialect, ...json } = z.toJSONSchema(schema, { io, unrepresentable: "any" });
+  const suffix = io === "input" ? "Input" : "";
+  for (const [name, definition] of Object.entries($defs))
+    components[`${name}${suffix}`] = toComponentRefs(definition, suffix);
+  return toComponentRefs(json, suffix) as JsonSchema;
 }
 
 /** A route's operation: what it does, what it takes and what it answers. */
