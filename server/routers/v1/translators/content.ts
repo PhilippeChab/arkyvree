@@ -92,6 +92,7 @@ const FEAT_COLUMNS = new Set([
 const ITEM_COLUMNS = new Set([
   ...Object.keys(getTableColumns(itemsInRules)),
   "modifiers",
+  "placement",
   "properties",
   "requirements",
   "templateName",
