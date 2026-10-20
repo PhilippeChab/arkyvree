@@ -140,7 +140,11 @@ describe("CharacterContributorsService", () => {
 
     test("lose edit access when revoked or when they leave", async () => {
       const revoked = await setup();
-      await CharacterContributorsService.revokeContributor(revoked.ownerSession, revoked.invite.id);
+      await CharacterContributorsService.revokeContributor(
+        revoked.ownerSession,
+        revoked.character.id,
+        revoked.invite.id,
+      );
       expect(
         CharactersService.updateCharacter(revoked.inviteeSession, revoked.character.id, { notes: "after revoke" }),
       ).rejects.toThrow(NotFoundError);
@@ -150,6 +154,14 @@ describe("CharacterContributorsService", () => {
       expect(
         CharactersService.updateCharacter(left.inviteeSession, left.character.id, { notes: "after leaving" }),
       ).rejects.toThrow(NotFoundError);
+    });
+
+    test("are revoked through their own character alone: another's is a 404", async () => {
+      const { ownerSession, invite } = await setup();
+      const other = await createCharacterAs(ownerSession);
+      expect(CharacterContributorsService.revokeContributor(ownerSession, other.id, invite.id)).rejects.toThrow(
+        NotFoundError,
+      );
     });
 
     test("can edit and print, but can't archive, share or invite", async () => {

@@ -29,10 +29,13 @@ class ContributorsService {
     return updated;
   }
 
-  /** A contributor the session's user may manage, with its ruleset and the policy that allowed it. */
-  private async getManagedContributor(tx: Db, session: Session, contributorId: string) {
+  /**
+   * A contributor of the ruleset (`rulesetId`) the session's user may manage, with its ruleset and the policy that
+   * allowed it: another ruleset's is a 404.
+   */
+  private async getManagedContributor(tx: Db, session: Session, rulesetId: string, contributorId: string) {
     const contributor = await Contributors.findOne(tx, { id: contributorId });
-    if (!contributor) throw new NotFoundError("Contributor not found");
+    if (!contributor || contributor.rulesetId !== rulesetId) throw new NotFoundError("Contributor not found");
 
     const ruleset = await Rulesets.findOne(tx, { id: contributor.rulesetId }, Visibility.All);
     if (!ruleset) throw new NotFoundError("Ruleset not found");
@@ -238,9 +241,9 @@ class ContributorsService {
     });
   }
 
-  async revokeContributor(session: Session, contributorId: string) {
+  async revokeContributor(session: Session, rulesetId: string, contributorId: string) {
     return await withTransaction(async (tx) => {
-      const { contributor, ruleset, policy } = await this.getManagedContributor(tx, session, contributorId);
+      const { contributor, ruleset, policy } = await this.getManagedContributor(tx, session, rulesetId, contributorId);
 
       if (contributor.role === "Admin") policy.canManageAdminContributors();
 
@@ -264,9 +267,9 @@ class ContributorsService {
     });
   }
 
-  async updateContributorRole(session: Session, contributorId: string, role: ContributorRole) {
+  async updateContributorRole(session: Session, rulesetId: string, contributorId: string, role: ContributorRole) {
     return await withTransaction(async (tx) => {
-      const { contributor, ruleset, policy } = await this.getManagedContributor(tx, session, contributorId);
+      const { contributor, ruleset, policy } = await this.getManagedContributor(tx, session, rulesetId, contributorId);
 
       if (ruleset.status === "Archived") throw new ConflictError("Cannot modify roles on an archived ruleset");
 
