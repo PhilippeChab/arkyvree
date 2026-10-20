@@ -22,6 +22,7 @@ import { RulesetSettingsService } from "@/server/services/rulesets/settings/inde
 import abilities from "./abilities/index.ts";
 import aptitudes from "./aptitudes/index.ts";
 import classes from "./classes/index.ts";
+import contributors from "./contributors/index.ts";
 import customization from "./customization/index.ts";
 import feats from "./feats/index.ts";
 import items from "./items/index.ts";
@@ -32,11 +33,12 @@ import saves from "./saves/index.ts";
 import skills from "./skills/index.ts";
 import spells from "./spells/index.ts";
 
-/** The rulesets the key's user reads: a page of them, one, its settings and fields, and its content. */
+/** The rulesets the key's user reads: a page of them, one, its settings and fields, its content and its contributors. */
 export default new Hono<ApiKeyContext>()
   .route("/", abilities)
   .route("/", aptitudes)
   .route("/", classes)
+  .route("/", contributors)
   .route("/", feats)
   .route("/", items)
   .route("/", languages)

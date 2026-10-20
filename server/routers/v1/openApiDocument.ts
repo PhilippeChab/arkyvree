@@ -44,6 +44,9 @@ const ERROR_RESPONSES = {
   default: { $ref: "#/components/responses/Error" },
 };
 
+/** A file a route answers instead of JSON (a PDF), its bytes as they are. */
+const FILE_SCHEMA = { format: "binary", type: "string" };
+
 /** Where a validation's input is in the request, as the document names it. */
 const PARAMETER_PLACES = { param: "path", query: "query" } as const;
 
@@ -111,7 +114,7 @@ function toOperation(
 ) {
   if (!description) throw new Error(`The public API's route ${path} has no description (\`describeRoute\`)`);
   const body = validations.find(({ target }) => target === "json" || target === "form");
-  const { response, status, summary } = description;
+  const { file, response, status, summary } = description;
   const operation: Operation = {
     description: summary,
     operationId: toOperationId(method, path),
@@ -119,6 +122,7 @@ function toOperation(
     responses: {
       [status]: {
         description: summary,
+        ...(file && { content: { [file]: { schema: FILE_SCHEMA } } }),
         ...(response && { content: { "application/json": { schema: toJsonSchema(response, "output", components) } } }),
       },
       ...ERROR_RESPONSES,

@@ -22,7 +22,7 @@ answers in shapes of its own, which stay fixed.
   marks the key used, at most once a minute.
 - A key acts as its user: `requestSession` is `{ userId }`, the `Session` the services read, so a key sees and
   changes only what its user can, by the checks the services already make. A session's cookie signs in nothing under
-  `/v1`.
+  `/v1`. No key acts for a demo, so a v1 write needs no `denyDemoUser`, which reads the app's session.
 - Its requests are counted per key (`apiKeyRateLimit`: 120 a minute), and a character's level choices, which read every
   option of each pool, per user, whichever keys of theirs ask (`levelChoicesRateLimit`: 20 a minute). A request with a
   wrong key or none costs a lookup by digest, as a wrong session cookie does the app's.
@@ -55,9 +55,11 @@ returns to v1's shape (`V1.character`), and from a v1 request to what the servic
 
 - Each route's `validate` middleware carries its schema (`validation`): its path, its query and its body.
 - Each route says what it does and what it answers on success (`describeRoute({ summary, response, status })`), the
-  answer's schema its `response`. A route without a description stops the server starting.
+  answer's schema its `response`: none for a 204, and none for a file it answers instead of JSON, whose media type
+  (`file: "application/pdf"`) the document gives. A route without a description stops the server starting.
 - Outside production, `describeRoute` checks each success a route answers against its schema (a strict one: a key it
-  doesn't name fails too), so every test that calls a route checks the document describes its answer.
+  doesn't name fails too), or a file's media type, so every test that calls a route checks the document describes its
+  answer.
 
 A page answers `{ items, page, nextPage }`, `nextPage` null on the last. An error answers the app's envelope
 (`{ error, cause, message }`) with its status, a path no route answers a 404.
@@ -91,7 +93,65 @@ each picker's options, every page of them.
 The level is then saved whole, as the app saves one: its class, hit points, ability increases, skills, feats and
 spells (a later stage's route).
 
+## Writes
+
+A write answers what it made or changed, in v1's shape: a creation with 201, a change with 200, a queued PDF with 202,
+and a removal (an archive, a delete, a contributor's removal, leaving) with 204 and no body. A campaign's creation,
+edit and restore answer the campaign as `GET /v1/campaigns/{id}` reads it, read again once the write is done. An
+invite's answer (accept, reject, revoke) answers the invite's status.
+
+## Campaigns, contributors and the rest
+
+- **Campaigns** (`/v1/campaigns`): the key's user's, created on a ruleset (they're its Game Master), edited, archived
+  (`DELETE`, every player, invite and link kept), restored (`/unarchive`) and deleted for good once archived
+  (`/permanent`). Their player slots (`/players`: each one's role, its user and its pending invite, added and changed
+  with an address to invite), the invites they sent (`/invites`), and their characters (`/characters`), each as the
+  key's user may see it: a character linked `Partial` shows the other players its identity alone (`partial`, its
+  `sheet` a `PartialCharacter`), a `Private` one none of them. `/linkable-characters` lists the user's player
+  characters a campaign could link: on its exact ruleset, in no campaign.
+- **Invites to the key's user**: to play in a campaign (`/v1/campaign-invites`: the latest ten, any status), and to
+  contribute to a character or a ruleset (`/v1/character-invites`, `/v1/ruleset-invites`: the pending ones, ten at
+  most), each read alone and answered (`/accept`, `/reject`); a campaign's Game Master takes one back
+  (`/v1/campaign-invites/{id}/revoke`). Another user's invite is a 404, as the app's own invite pages answer it.
+- **Contributors** of a character or a ruleset (`/v1/characters/{id}/contributors`,
+  `/v1/rulesets/{id}/contributors`), each by the address they were invited at, with the record's owner: invited,
+  a ruleset's given another role (`PUT`), removed, and left (`/leave`). A contributor's routes reach it through its own
+  record alone: another record's id in the path is a 404 (`ContributorsService.revokeContributor`,
+  `updateContributorRole` and `CharacterContributorsService.revokeContributor` take the record's id).
+- **Sharing**: a character's share link (`POST`/`DELETE /v1/characters/{id}/share`), and the character it shares,
+  read by its token (`/v1/shared-characters/{shareToken}`, the same `Character` as the user's own, and its PDF, made
+  as it's asked for).
+- **Notifications** (`/v1/notifications`) and **activities** (`/v1/activities`), from the last three months: a page of
+  them, the unread notifications' count and latest, a notification marked read, or all of them but the invites, which
+  stay unread until they're answered. Each names what it's about (`target`) by its kind as v1 names it (`classes`,
+  `spells`, `campaigns`…), and `/v1/activities/targets/{kind}/{targetId}` answers the app's page of it (a 404 once
+  it's gone, a 403 once the user lost access to it).
+- **Attachments** (`/v1/attachments`): a record's image (a user's avatar, a character's portrait), uploaded as the app
+  uploads it, in two steps: `POST /v1/attachments/direct-uploads` answers where to send the file (`uploadUrl`, with
+  `PUT` and its `headers`) and what attaches it; `POST /v1/attachments/{signedId}/attach` then attaches it to its
+  slot, replacing the image there.
+- **The dashboard** (`/v1/dashboard/stats`): how many campaigns, characters and rulesets the user has.
+
+## A PDF, made in the background
+
+A character's PDF takes a render, which the worker makes: the app's user hears of it through a notification, and a
+caller asks for it by its export.
+
+1. `POST /v1/characters/{id}/pdf` (its owner or a contributor), or
+   `POST /v1/campaigns/{id}/characters/{characterId}/pdf` (its editors or the campaign's Game Master), answers 202 and
+   the export, `pending`. Both count against `exportRateLimit`, as the app's do.
+2. `GET /v1/exports/{id}` answers where it stands: `pending` while the worker makes it, `ready` once its file is
+   stored, or `failed` (the character can't be exported by the time the worker runs, or the render failed its last
+   attempt).
+3. `GET /v1/exports/{id}/download` answers the file (`application/pdf`) once it's ready, for the hour it's kept; a
+   pending or failed export is a 409, and one past its expiry, or another user's, a 404.
+
+The export is stored as the PDF is queued (`enqueueCharacterPdf`), its file none and its status `pending`
+(`account.exports.status`, migration `0081_export-status`), and its id goes in the job's payload: the job
+(`generatePdf.ts`) fills its file in and makes it `ready`, or marks it `failed`, and notifies the user as before, the
+notification naming the export (`data.exportId`). A pending export keeps a day, a ready one an hour, and the daily
+cleanup deletes either once it's past. A job queued before exports were stored pending stores a new one, as it did.
+
 ## Not yet
 
-The issue's later stages: editing characters and rulesets, campaigns and notifications, and a route that says whether
-a PDF is ready and fetches it.
+The issue's other stage: editing characters and rulesets.

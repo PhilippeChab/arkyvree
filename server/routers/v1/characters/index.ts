@@ -19,13 +19,21 @@ import { CharacterInventoryService } from "@/server/services/characters/inventor
 import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
 import { CharacterModifiersService } from "@/server/services/characters/modifiers/index.ts";
 
+import contributors from "./contributors/index.ts";
+import pdf from "./pdf/index.ts";
+import sharing from "./sharing/index.ts";
+
 const levelParams = idParam.extend({ levelId: z.string().uuid() });
 
 /**
  * The key's user's characters: a page of them, one's sheet, its choices at its next level, and the parts its edits
- * change (its inventory, its own modifiers, its languages, a level it took).
+ * change (its inventory, its own modifiers, its languages, a level it took); its contributors, its share link and its
+ * PDF.
  */
 export default new Hono<ApiKeyContext>()
+  .route("/", contributors)
+  .route("/", pdf)
+  .route("/", sharing)
   .get(
     "/",
     describeRoute({ response: v1CharacterPage, status: 200, summary: "The key's user's characters, a page at a time" }),
