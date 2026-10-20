@@ -4,17 +4,19 @@ import { z } from "zod";
 import { type ApiKeyContext, describeRoute, validate } from "@/server/middlewares/index.ts";
 import { v1Modifier, v1Modifiers, v1Requirement, v1Requirements } from "@/server/routers/v1/schemas/content.ts";
 import { V1 } from "@/server/routers/v1/translators/V1.ts";
-import { customizableParams, requirementOwnerParams } from "@/server/routers/v1/validation.ts";
+import {
+  customizableParams,
+  modifierOperator,
+  modifierTarget,
+  modifierValue,
+  requirementOwnerParams,
+} from "@/server/routers/v1/validation.ts";
 import { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";
 import { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";
-import { CHAINING_OPERATORS, MODIFIER_OPERATORS, REQUIREMENT_OPERATORS } from "@/shared/customization/operators.ts";
+import { CHAINING_OPERATORS, REQUIREMENT_OPERATORS } from "@/shared/customization/operators.ts";
 
 /** A modifier, its create's, its duplicate's and its update's. */
-const modifierBody = z.object({
-  operator: z.enum(MODIFIER_OPERATORS),
-  target: z.string().min(1).meta({ description: "The path it changes (`GET /v1/rulesets/{id}/target-paths`)" }),
-  value: z.string().min(1).meta({ description: "A number, a text or a flag, as its target takes, or a template" }),
-});
+const modifierBody = z.object({ operator: modifierOperator, target: modifierTarget, value: modifierValue });
 
 const modifierParams = customizableParams.extend({ modifierId: z.string().uuid() });
 
@@ -109,7 +111,7 @@ export default new Hono<ApiKeyContext>()
         V1.requirementRequest(body),
       );
       const requirements = await RequirementsService.getRequirements(id, kind, created.resolvedEntityId);
-      return c.json(V1.requirementOf(requirements, created.id), 201);
+      return c.json(V1.written(requirements, created.id, V1.requirement), 201);
     },
   )
   .put(
@@ -143,7 +145,7 @@ export default new Hono<ApiKeyContext>()
         V1.requirementRequest(body),
       );
       const requirements = await RequirementsService.getRequirements(id, kind, updated.resolvedEntityId);
-      return c.json(V1.requirementOf(requirements, updated.id), 200);
+      return c.json(V1.written(requirements, updated.id, V1.requirement), 200);
     },
   )
   .delete(

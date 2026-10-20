@@ -12,35 +12,26 @@ import { CharacterInventoryService } from "@/server/services/characters/inventor
 const charges = z
   .object({ remaining: z.number().int().min(0).nullable(), total: z.number().int().min(0).nullable() })
   .nullable()
-  .default(null)
   .meta({ description: "Its charges, for an item that has them" });
 
-/** Where an entry is carried: its place, and the weapon sets a hand holds it in, stored from 0. */
-const placement = {
-  location: z
-    .enum(location.enumValues)
-    .nullable()
-    .default(null)
-    .meta({ description: "Where it's worn or held: `Two Handed`, `Torso`, `Finger`…; none, carried" }),
-  weaponSets: z
-    .array(z.number().int().min(0))
-    .default([])
-    .meta({ description: "The weapon sets a hand holds it in, from 0: none outside the hands" }),
-};
-
-/** An inventory entry, its add's and its update's. */
-const entryBody = z.object({
-  ...placement,
-  charges,
-  equipped: z.boolean().default(false),
-  force: z
-    .boolean()
-    .default(false)
-    .meta({ description: "Equip it even when the character doesn't meet its requirements (a proficiency it lacks)" }),
-  quantity: z.number().int().min(1),
-});
+/** Where an entry is carried: its place, none for one carried loose. */
+const entryLocation = z
+  .enum(location.enumValues)
+  .nullable()
+  .meta({ description: "Where it's worn or held: `Two Handed`, `Torso`, `Finger`…; none, carried" });
 
 const entryParams = idParam.extend({ entryId: z.string().uuid() });
+
+/** Whether an add or an update equips an item the character doesn't meet the requirements of. */
+const force = z
+  .boolean()
+  .default(false)
+  .meta({ description: "Equip it even when the character doesn't meet its requirements (a proficiency it lacks)" });
+
+/** The weapon sets a hand holds an entry in, stored from 0: none outside the hands. */
+const heldSets = z
+  .array(z.number().int().min(0))
+  .meta({ description: "The weapon sets a hand holds it in, from 0: none outside the hands" });
 
 /** A character's inventory: what it carries, where, and how many. */
 export default new Hono<ApiKeyContext>()
@@ -100,7 +91,18 @@ export default new Hono<ApiKeyContext>()
     "/:id/inventory",
     describeRoute({ response: v1InventoryEntry, status: 201, summary: "Adds an item to a character's inventory" }),
     validate("param", idParam),
-    validate("json", entryBody.extend({ itemId: z.string().uuid() })),
+    validate(
+      "json",
+      z.object({
+        charges: charges.default(null),
+        equipped: z.boolean().default(false),
+        force,
+        itemId: z.string().uuid(),
+        location: entryLocation.default(null),
+        quantity: z.number().int().min(1),
+        weaponSets: heldSets.default([]),
+      }),
+    ),
     async (c) => {
       const { id } = c.req.valid("param");
       const body = c.req.valid("json");
@@ -119,19 +121,34 @@ export default new Hono<ApiKeyContext>()
         entry.force,
       );
       const inventory = await CharacterInventoryService.getInventory(session, id);
-      return c.json(V1.inventoryEntryOf(inventory, created.id), 201);
+      return c.json(V1.written(inventory, created.id, V1.inventoryEntry), 201);
     },
   )
   .put(
     "/:id/inventory/:entryId",
-    describeRoute({ response: v1InventoryEntry, status: 200, summary: "Changes an item a character carries" }),
+    describeRoute({
+      response: v1InventoryEntry,
+      status: 200,
+      summary: "Changes an item a character carries: what the body names, the rest kept",
+    }),
     validate("param", entryParams),
-    validate("json", entryBody),
+    validate(
+      "json",
+      z.object({
+        charges: charges.optional(),
+        equipped: z.boolean().optional(),
+        force,
+        location: entryLocation.optional(),
+        quantity: z.number().int().min(1).optional(),
+        weaponSets: heldSets.optional(),
+      }),
+    ),
     async (c) => {
       const { entryId, id } = c.req.valid("param");
       const body = c.req.valid("json");
       const session = c.var.requestSession;
-      const entry = V1.inventoryRequest(body);
+      const before = V1.found(await CharacterInventoryService.getInventory(session, id), entryId, V1.inventoryEntry);
+      const entry = V1.inventoryEditRequest(before, body);
       await CharacterInventoryService.updateItem(
         session,
         id,
@@ -145,7 +162,7 @@ export default new Hono<ApiKeyContext>()
         entry.force,
       );
       const inventory = await CharacterInventoryService.getInventory(session, id);
-      return c.json(V1.inventoryEntryOf(inventory, entryId), 200);
+      return c.json(V1.written(inventory, entryId, V1.inventoryEntry), 200);
     },
   )
   .delete(

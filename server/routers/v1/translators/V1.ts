@@ -4,12 +4,16 @@ import {
   toV1ImportedCharacter,
   toV1ImportSource,
   toV1InventoryEntry,
-  toV1InventoryEntryOf,
   toV1Placement,
   toV1RaceOption,
   toV1SavedLevel,
 } from "./characterParts.ts";
-import { toInventoryRequest, toLevelEditRequest, toLevelSaveRequest } from "./characterRequests.ts";
+import {
+  toInventoryEditRequest,
+  toInventoryRequest,
+  toLevelEditRequest,
+  toLevelSaveRequest,
+} from "./characterRequests.ts";
 import { toV1Character, toV1Characters } from "./characters.ts";
 import {
   toV1Class,
@@ -23,11 +27,9 @@ import {
   toV1Item,
   toV1Language,
   toV1Modifier,
-  toV1ModifierOf,
   toV1Names,
   toV1Race,
   toV1Requirement,
-  toV1RequirementOf,
   toV1Save,
   toV1Skill,
   toV1Spell,
@@ -50,6 +52,7 @@ import {
   toV1RulesetExtensions,
   toV1RulesetSettings,
 } from "./rulesets.ts";
+import { toV1Found, toV1Written } from "./written.ts";
 
 /**
  * Version 1's translators, one per kind: from what a service answers to v1's shape, and from a v1 request to what a
@@ -72,11 +75,12 @@ export const V1 = {
   classSpellCounts: toV1ClassSpellCounts,
   entity: toV1Entity,
   feat: toV1Feat,
+  found: toV1Found,
   fieldDeclarations: toV1FieldDeclarations,
   importedCharacter: toV1ImportedCharacter,
   importSource: toV1ImportSource,
+  inventoryEditRequest: toInventoryEditRequest,
   inventoryEntry: toV1InventoryEntry,
-  inventoryEntryOf: toV1InventoryEntryOf,
   inventoryRequest: toInventoryRequest,
   item: toV1Item,
   itemRequest: toItemRequest,
@@ -86,7 +90,6 @@ export const V1 = {
   levelEditRequest: toLevelEditRequest,
   levelSaveRequest: toLevelSaveRequest,
   modifier: toV1Modifier,
-  modifierOf: toV1ModifierOf,
   names: toV1Names,
   page: toV1Page,
   placement: toV1Placement,
@@ -94,7 +97,6 @@ export const V1 = {
   raceOption: toV1RaceOption,
   raceRequest: toRaceRequest,
   requirement: toV1Requirement,
-  requirementOf: toV1RequirementOf,
   requirementRequest: toRequirementRequest,
   ruleset: toV1Ruleset,
   rulesetChanges: toV1RulesetChanges,
@@ -107,4 +109,5 @@ export const V1 = {
   spell: toV1Spell,
   targetPath: toV1TargetPath,
   targetPathCheck: toV1TargetPathCheck,
+  written: toV1Written,
 };

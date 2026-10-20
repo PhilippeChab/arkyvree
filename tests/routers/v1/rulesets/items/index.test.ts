@@ -79,6 +79,16 @@ describe("v1 ruleset items", () => {
     );
   });
 
+  test("answers an item with no cost or weight as none, never 0", async () => {
+    const { api, rulesetId: id } = await createKeyedFork();
+    const items = api.v1.rulesets[":id"].items;
+    const rope = await expectOk(
+      items.$post({ json: { cost: null, name: "Old Rope", type: "Other", weight: null }, param: { id } }),
+    );
+    expect(rope).toMatchObject({ cost: null, weight: null });
+    expect(await expectOk(items[":itemId"].$get({ param: { id, itemId: rope.id } }))).toEqual(rope);
+  });
+
   test("adds a copy of an item, and the variants of a template", async () => {
     const { api, rulesetId: id } = await createKeyedFork();
     const ctx = await getSeedCtx();
@@ -99,5 +109,8 @@ describe("v1 ruleset items", () => {
       { name: "Longsword +1", templateId: itemId },
       { name: "Longsword +2", templateId: itemId },
     ]);
+    // Each answered as its read answers it, with the fields it takes from its template
+    expect(variants[0]?.fields).toMatchObject({ weapon: expect.objectContaining({ type: "Longsword" }) });
+    expect(variants[0]).toEqual(await expectOk(route.$get({ param: { id, itemId: variants[0]!.id } })));
   });
 });

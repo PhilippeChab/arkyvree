@@ -129,7 +129,9 @@ export default new Hono<ApiKeyContext>()
       const { id, itemId } = c.req.valid("param");
       const { variants } = c.req.valid("json");
       const created = await ItemsService.createVariants(c.var.requestSession, id, itemId, variants);
-      return c.json(created.map(V1.item), 201);
+      // Each read back as its read answers it, with the fields it takes from its template
+      const items = await Promise.all(created.map((variant) => ItemsService.getItem(id, variant.id)));
+      return c.json(items.map(V1.item), 201);
     },
   )
   .put(

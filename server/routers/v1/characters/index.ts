@@ -1,7 +1,13 @@
 import { Hono } from "hono";
 import { z } from "zod";
 
-import { apiImportRateLimit, type ApiKeyContext, describeRoute, validate } from "@/server/middlewares/index.ts";
+import {
+  apiImportRateLimit,
+  apiImportSourceRateLimit,
+  type ApiKeyContext,
+  describeRoute,
+  validate,
+} from "@/server/middlewares/index.ts";
 import { idList, idParam, orderDirDesc } from "@/server/routers/api/validation.ts";
 import {
   v1CharacterCreation,
@@ -205,6 +211,7 @@ export default new Hono<ApiKeyContext>()
       status: 200,
       summary: "What a character file another program saved is, and the base rules whose rulesets import it",
     }),
+    apiImportSourceRateLimit,
     validate("json", z.object({ text: fileText })),
     (c) => {
       const { text } = c.req.valid("json");

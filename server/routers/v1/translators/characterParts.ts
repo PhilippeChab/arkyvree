@@ -6,7 +6,6 @@
 
 import type { z } from "zod";
 
-import { InternalError } from "@/server/errors/index.ts";
 import type {
   v1CharacterCreation,
   v1CharacterLanguages,
@@ -127,16 +126,6 @@ export function toV1InventoryEntry(
     quantity: entry.quantity,
     weaponSets: entry.weaponSets,
   };
-}
-
-/** The entry of a character's inventory that has an id: one a write just made. */
-export function toV1InventoryEntryOf(
-  inventory: Answer<typeof CharacterInventoryService.getInventory>,
-  entryId: string,
-): z.infer<typeof v1InventoryEntry> {
-  const entry = inventory.find(({ id }) => id === entryId);
-  if (!entry) throw new InternalError("The inventory entry written isn't in its character's inventory");
-  return toV1InventoryEntry(entry);
 }
 
 /** Why a place can't take one more of a character's items, if it can't. */

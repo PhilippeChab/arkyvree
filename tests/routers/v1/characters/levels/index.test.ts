@@ -98,6 +98,16 @@ describe("v1 character levels", () => {
     await expectStatus(route.levels[":levelId"].$get({ param: { id, levelId } }), 404);
   });
 
+  test("changes only what an edit of a level names: its picks are kept", async () => {
+    const { id, json, route } = await planFighterLevel();
+    const { levels } = await expectOk(route.levels.$post({ json, param: { id } }));
+    const levelId = levels.at(-1)!.id;
+    const before = await expectOk(route.levels[":levelId"].$get({ param: { id, levelId } }));
+
+    const changed = await expectOk(route.levels[":levelId"].$put({ json: { hitPoints: 9 }, param: { id, levelId } }));
+    expect(changed).toEqual({ ...before, hitPoints: 9 });
+  });
+
   test("refuses another user's character", async () => {
     const { id, json } = await planFighterLevel();
     const { api } = await createKeyedApi((await createTestUser()).user.id);

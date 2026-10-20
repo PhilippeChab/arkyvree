@@ -5,6 +5,8 @@
 
 import { z } from "zod";
 
+import { location } from "@/drizzle/schema.ts";
+
 import { v1Character } from "./characters.ts";
 import { v1Modifier } from "./content.ts";
 import { buildPageSchema, v1Id, v1Named } from "./references.ts";
@@ -121,7 +123,10 @@ export const v1InventoryEntry = z
       type: z.string().nullable(),
       weight: z.number(),
     }),
-    location: z.string().nullable().meta({ description: "Where it's worn or held: `Two Handed`, `Torso`, `Finger`…" }),
+    location: z
+      .enum(location.enumValues)
+      .nullable()
+      .meta({ description: "Where it's worn or held: `Two Handed`, `Torso`, `Finger`…; none, carried" }),
     locationLabel: z.string().nullable().meta({ description: "Its location named, with its weapon sets" }),
     quantity: z.number().int(),
     weaponSets: z.array(z.number().int()).meta({ description: "The weapon sets it's held in, by index" }),
