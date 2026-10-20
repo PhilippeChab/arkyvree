@@ -183,6 +183,9 @@ export default class ClassProgression {
     return featPicks;
   }
 
+  /** The spell lists the class's levels give slots in, once read (`spellLists`). */
+  private lists?: { id: string; name: string }[];
+
   /**
    * Refuses spell tables a save empties of every modifier on the class's list when the list isn't named for the class
    * ("Blackguard Spells", a templar's): its levels' modifiers are all that tie the class to it.
@@ -246,7 +249,7 @@ export default class ClassProgression {
     const list = this.spellList;
     if (!list) throw new RulesError("invalid", `${this.klass.name} has no spell list to give spells in`);
     const several = `${this.klass.name} gives spells in several lists: edit each level's modifiers`;
-    if (this.table.describeSpellLists().length > 1) throw new RulesError("invalid", several);
+    if (this.spellLists.length > 1) throw new RulesError("invalid", several);
     const levels = this.classLevels;
     const given = new Map(rows.map(({ counts, levelId }) => [this.levels.find(levelId).id, counts]));
     for (const spellLevel of SPELL_LEVELS) {
@@ -282,10 +285,15 @@ export default class ClassProgression {
    * the class ("Wizard Spells") before any does; none for a class without one.
    */
   private get spellList() {
-    const [list] = this.table.describeSpellLists();
+    const [list] = this.spellLists;
     const id = list?.id ?? this.rulesetData.aptitudeIdBySlug.get(`${stripSeparators(this.klass.name)}spells`);
     const aptitude = id === undefined ? undefined : this.rulesetData.aptitudesById.get(id);
     return aptitude && { id: aptitude.id, name: aptitude.name, slug: stripSeparators(aptitude.name) };
+  }
+
+  /** The spell lists the class's levels give slots in, its own first: read once. */
+  private get spellLists() {
+    return (this.lists ??= this.table.describeSpellLists());
   }
 
   /** A spell table's totals by each level (`field`'s), of the levels' modifiers as a save plans them (`keep`: those). */
@@ -331,7 +339,7 @@ export default class ClassProgression {
     return {
       featPicks,
       pools,
-      severalSpellLists: this.table.describeSpellLists().length > 1,
+      severalSpellLists: this.spellLists.length > 1,
       spellList: list ? { id: list.id, name: list.name } : null,
     };
   }
@@ -344,7 +352,8 @@ export default class ClassProgression {
    */
   plan(body: ProgressionBody) {
     RulesError.parse(COUNTS, body);
-    const working = new Map(this.classLevels.map((level) => [level.id, this.modifiersOf(level.id)]));
+    const original = new Map(this.classLevels.map((level) => [level.id, this.modifiersOf(level.id)]));
+    const working = new Map(original);
     for (const pool of body.pools ?? []) this.planPool(working, pool);
     // Spells per day open where spells known do: a save of spells known keeps spells per day's totals as they were
     const perDay = this.spellTotals("uses", working);
@@ -361,7 +370,7 @@ export default class ClassProgression {
     const levels = this.classLevels.flatMap((level) => {
       const kept = working.get(level.id) ?? [];
       const keptIds = new Set(kept.flatMap(({ id }) => id ?? []));
-      const removedIds = this.modifiersOf(level.id).flatMap(({ id }) => (id && !keptIds.has(id) ? [id] : []));
+      const removedIds = (original.get(level.id) ?? []).flatMap(({ id }) => (id && !keptIds.has(id) ? [id] : []));
       const added = kept.flatMap(({ id, operator, target, value }) =>
         id ? [] : [{ operator, target, value, valueType: "number" as const }],
       );

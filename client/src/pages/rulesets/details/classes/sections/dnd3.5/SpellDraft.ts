@@ -103,10 +103,25 @@ export class SpellDraft {
     return readSpellCell(this.saved[which].get(levelId)?.[spellLevel]);
   }
 
-  /** The edits once a table's `cells` are written: on Spells Known, a cell under an All keeps no edit of its own. */
+  /**
+   * The edits once a table's `cells` are written: on Spells Known, a cell under an All keeps no edit of its own, and a
+   * count written over a column's first All goes down to the levels that were All by it, so the All is gone, not moved.
+   */
   write(which: SpellTable, cells: PlacedCell[]): SpellEdits {
     const next = { ...this.edits[which] };
-    for (const { levelId, spellLevel, value } of cells) next[levelId] = { ...next[levelId], [spellLevel]: value };
+    const place = (levelId: string, spellLevel: number, value: SpellCell) => {
+      next[levelId] = { ...next[levelId], [spellLevel]: value };
+    };
+    for (const { levelId, spellLevel, value } of cells) {
+      place(levelId, spellLevel, value);
+      const first = this.levels[this.firstAll[spellLevel] ?? -1];
+      if (which !== "known" || value === "all" || first?.id !== levelId) continue;
+      const below = this.levels.slice((this.indexById.get(levelId) ?? 0) + 1);
+      for (const { id } of below) {
+        const written = cells.some((cell) => cell.levelId === id && cell.spellLevel === spellLevel);
+        if (!written && this.cellOf(which, id, spellLevel) === "all") place(id, spellLevel, value);
+      }
+    }
     const written = { ...this.edits, [which]: next };
     if (which === "perDay") return written;
     const draft = new SpellDraft(this.levels, this.saved, written);

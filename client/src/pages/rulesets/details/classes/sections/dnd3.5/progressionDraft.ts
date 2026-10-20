@@ -61,7 +61,7 @@ export function buildProgressionBody(
   pools: readonly PoolRow[],
   edits: ProgressionEdits,
 ): Omit<ClassProgressionBody, "levelTokens"> {
-  const rows = [...features, ...edits.addedFeatures];
+  const rows = withAddedFeatures(features, edits);
   const classLevelIds = new Set(levels.map((level) => level.id));
   const levelsOf = (row: FeatureRow) => edits.features[row.key] ?? row.levelIds;
   const valueOf = (level: ClassLevelRow, key: TrackKey) => readEditedTrack(level, key, edits);
@@ -92,7 +92,7 @@ export function buildProgressionBody(
       },
     ];
   });
-  const poolEdits = [...pools, ...edits.addedPools].flatMap((pool) => {
+  const poolEdits = withAddedPools(pools, edits).flatMap((pool) => {
     // A level gone since its pick was made takes none
     const picks = Object.entries(edits.pools[pool.aptitudeId] ?? {})
       .filter(([levelId, count]) => classLevelIds.has(levelId) && count !== (pool.picks[levelId] ?? 0))
@@ -136,7 +136,7 @@ export function describeFeatureRows(levels: readonly ClassLevelRow[]): FeatureRo
 
 /** The pools the class's levels give picks in, as its progression reads them. */
 export function describePoolRows(progression: ClassProgression | undefined): PoolRow[] {
-  return progression?.pools.map(({ aptitudeId, name, picks }) => ({ aptitudeId, name, picks })) ?? [];
+  return progression?.pools ?? [];
 }
 
 /** A track's value at a level, as the tab shows it: its edit's, or the saved one. */
@@ -155,4 +155,14 @@ export function readTrack(level: ClassLevelRow, key: TrackKey) {
 export function readWholeNumber(text: string) {
   const typed = readNumberInput(text);
   return typed !== undefined && Number.isInteger(typed) && typed >= 0 ? typed : undefined;
+}
+
+/** The features as saved, then those the edits add that a save hasn't made the class's yet. */
+export function withAddedFeatures(features: readonly FeatureRow[], edits: ProgressionEdits): FeatureRow[] {
+  return [...features, ...edits.addedFeatures.filter((added) => !features.some((row) => row.key === added.key))];
+}
+
+/** The pools as saved, then those the edits add that a save hasn't made the class's yet. */
+export function withAddedPools(pools: readonly PoolRow[], edits: ProgressionEdits): PoolRow[] {
+  return [...pools, ...edits.addedPools.filter((added) => !pools.some((pool) => pool.aptitudeId === added.aptitudeId))];
 }

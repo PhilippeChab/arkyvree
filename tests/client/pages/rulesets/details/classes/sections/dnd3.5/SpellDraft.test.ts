@@ -40,6 +40,12 @@ describe("A Spells tab's draft", () => {
     expect(spells.changesOf("known", [{ levelId: "l3", spellLevel: 0, value: 5 }])).toEqual([]);
   });
 
+  test("takes a count over a column's first All down the levels it made All", () => {
+    const allFromTwo = draft().write("known", [{ levelId: "l2", spellLevel: 0, value: "all" }]);
+    const counted = draft(allFromTwo).write("known", [{ levelId: "l2", spellLevel: 0, value: 4 }]);
+    expect(LEVELS.map(({ id }) => draft(counted).cellOf("known", id, 0))).toEqual([2, 4, 4, 4]);
+  });
+
   test("sends each changed level's row, with its every spell level, per day's All as none", () => {
     const edited = draft().write("perDay", [{ levelId: "l2", spellLevel: 1, value: "all" }]);
     const known = draft(edited).write("known", [{ levelId: "l1", spellLevel: 0, value: 1 }]);

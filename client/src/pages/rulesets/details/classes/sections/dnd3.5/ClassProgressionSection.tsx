@@ -49,6 +49,8 @@ import {
   readEditedTrack,
   readTrack,
   type TrackKey,
+  withAddedFeatures,
+  withAddedPools,
 } from "./progressionDraft.ts";
 import { BAB_PRESETS, detectPreset, formatBab, type ProgressionPreset, SAVE_PRESETS } from "./progressionPresets.ts";
 import { ProgressionSaveBar } from "./ProgressionSaveBar.tsx";
@@ -89,11 +91,11 @@ export function ClassProgressionSection({ rulesetId, classId, className, ruleset
   const { followCopy, queryKeysToInvalidate, tag } = useClassCopy(rulesetId, classId);
 
   const query = classLevelsQuery(rulesetId, classId);
-  const { data: levelRows, isLoading, error } = useQuery(query);
+  const { data: levelRows, isLoading, isFetching, error } = useQuery(query);
   const { data: progression, error: progressionError } = useQuery(classProgressionQuery(rulesetId, classId));
   const { data: poolTotals, error: poolsError } = useQuery(classFeatPoolsQuery(rulesetId, classId));
   const levels = levelRows?.toSorted(byLevel) ?? [];
-  const draft = useProgressionDraft(classId, levels);
+  const draft = useProgressionDraft(classId, levels, !isFetching);
   const [customTracks, setCustomTracks] = useState<TrackKey[]>([]);
   const save = useProgressionSave(rulesetId, classId);
 
@@ -135,12 +137,12 @@ export function ClassProgressionSection({ rulesetId, classId, className, ruleset
     levels.map((level) => ({ level: level.level, levelId: level.id, value: read(level) }));
 
   const savedFeatures = describeFeatureRows(levels);
-  const features = [...savedFeatures, ...draft.edits.addedFeatures].map((row) => ({
+  const features = withAddedFeatures(savedFeatures, draft.edits).map((row) => ({
     ...row,
     levelIds: draft.edits.features[row.key] ?? row.levelIds,
   }));
   const savedPools = describePoolRows(progression);
-  const pools = [...savedPools, ...draft.edits.addedPools].map((pool) => ({
+  const pools = withAddedPools(savedPools, draft.edits).map((pool) => ({
     ...pool,
     picks: { ...pool.picks, ...draft.edits.pools[pool.aptitudeId] },
   }));

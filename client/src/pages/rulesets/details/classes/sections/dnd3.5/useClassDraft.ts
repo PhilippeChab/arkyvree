@@ -15,9 +15,15 @@ export interface DraftTokens {
 /**
  * A class tab's changes before its save (`edits`, from `empty`), the class's (`classId`): once the page follows a copy
  * of it, whose levels are others, it holds none. Its first edit keeps its `levels`' tokens (`tokens`), so a save
- * refuses a level changed since, however often the tab reads them again.
+ * refuses a level changed since, however often the tab reads them again; an edit while they're read again (`fresh`
+ * false: what shows may be older) keeps none yet, the next one or the save reading them.
  */
-export function useClassDraft<T>(classId: string, levels: readonly { id: string; updatedAt: string }[], empty: T) {
+export function useClassDraft<T>(
+  classId: string,
+  levels: readonly { id: string; updatedAt: string }[],
+  fresh: boolean,
+  empty: T,
+) {
   const [draft, setDraft] = useState<Draft<T>>({ classId, edits: empty });
   const own = (current: Draft<T>): Draft<T> => (current.classId === classId ? current : { classId, edits: empty });
 
@@ -28,7 +34,7 @@ export function useClassDraft<T>(classId: string, levels: readonly { id: string;
   const setEdits = (change: (current: T) => T) =>
     setDraft((current) => {
       const mine = own(current);
-      return { classId, edits: change(mine.edits), tokens: mine.tokens ?? readTokens() };
+      return { classId, edits: change(mine.edits), tokens: mine.tokens ?? (fresh ? readTokens() : undefined) };
     });
 
   return {

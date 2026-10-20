@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
+import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { type ClassProgressionBody } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 import { useClassCopy } from "@/client/src/pages/rulesets/details/classes/sections/useClassCopy.ts";
 import { invalidateRulesetEdit } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
@@ -33,7 +34,14 @@ export function useProgressionSave(rulesetId: string, classId: string) {
       followCopy(saved.klassId, saved.sourceEntityId);
     },
     onError: (error) => snackbar.error(error, "Failed to save the class progression"),
-    // The class's tabs and the classes list, refetched before the tab drops its edits, and the ruleset's changes
-    onSettled: () => invalidateRulesetEdit(queryClient, rulesetId, queryKeysToInvalidate),
+    // The class's tabs and the classes list, refetched before the tab drops its edits, and the ruleset's changes; its
+    // tabs not open too, so another tab's draft begins over its levels as saved
+    onSettled: async () => {
+      await invalidateRulesetEdit(queryClient, rulesetId, queryKeysToInvalidate);
+      await queryClient.refetchQueries({
+        queryKey: QUERY_KEYS.rulesets.classDetail(rulesetId, classId),
+        type: "inactive",
+      });
+    },
   });
 }

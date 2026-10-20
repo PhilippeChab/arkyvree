@@ -42,6 +42,8 @@ describe("A pasted spell table", () => {
     const rows = parseSpellRows("Level\tCantrips\t1st\n1\t3\t1\n2\t4\t2\n3\t4\t2", false);
     expect(rows.map((row) => row.level)).toEqual([1, 2, 3]);
     expect(rows[0].cells).toEqual([3, 1]);
+    // A header numbering its spell levels is one too
+    expect(parseSpellRows("Level 0 1 2\n1 3 1\n2 4 2\n3 4 2 1", false).map((row) => row.level)).toEqual([1, 2, 3]);
   });
 
   test("keeps a spreadsheet's empty cells where they are", () => {

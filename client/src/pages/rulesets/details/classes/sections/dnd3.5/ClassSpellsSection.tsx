@@ -75,7 +75,12 @@ export function ClassSpellsSection({ rulesetId, classId, className, ruleset }: C
   };
   const levels = (perDay.data ?? []).toSorted(byLevel);
   const save = useProgressionSave(rulesetId, classId);
-  const { discard, edits, setEdits, settle, tokens } = useClassDraft<SpellEdits>(classId, levels, NO_SPELL_EDITS);
+  const { discard, edits, setEdits, settle, tokens } = useClassDraft<SpellEdits>(
+    classId,
+    levels,
+    !perDay.isFetching,
+    NO_SPELL_EDITS,
+  );
   const spells = new SpellDraft(
     levels,
     {
