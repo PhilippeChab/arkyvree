@@ -4,103 +4,12 @@
  * owner's private notes).
  */
 
+import type { z } from "zod";
+
+import type { v1Character, v1CharacterSummary } from "@/server/routers/v1/schemas/characters.ts";
 import type { CharactersService } from "@/server/services/characters/index.ts";
 
 import { toV1Page } from "./pages.ts";
-
-/** An ability score of a character's. */
-interface V1Ability {
-  abbreviation: string;
-  id: string;
-  modifier: number;
-  name: string;
-  score: number;
-}
-
-/** A bonded creature of a character's (its familiar, its animal companion, its mount): its sheet, and its kind. */
-interface V1BondedCreature extends V1Sheet {
-  bond: string;
-}
-
-/** A class a character has levels in. */
-interface V1CharacterClass {
-  hitDie: number;
-  id: string;
-  level: number;
-  name: string;
-}
-
-/** An item a character carries: where it is, and whether it's equipped. */
-interface V1Equipment {
-  equipped: boolean;
-  id: string;
-  itemId: string;
-  location: string | null;
-  name: string;
-  quantity: number;
-  type: string | null;
-  weight: number;
-}
-
-/** A feat a character has: picked at a level, given by its class at one, or granted by what it is (`level` null). */
-interface V1Feat {
-  given: boolean;
-  id: string;
-  level: number | null;
-  name: string;
-}
-
-/** A level a character has: its class's level, and its hit points. */
-interface V1Level {
-  class: { id: string; level: number; name: string };
-  hitPoints: number;
-  level: number;
-}
-
-/** A saving throw of a character's. */
-interface V1Save {
-  name: string;
-  total: number;
-}
-
-/** What a character's sheet and a bonded creature's both carry. */
-interface V1Sheet {
-  abilities: V1Ability[];
-  alignment: string;
-  armorClass: { flatFooted: number; total: number; touch: number } | null;
-  baseAttackBonus: number;
-  classes: V1CharacterClass[];
-  equipment: V1Equipment[];
-  feats: V1Feat[];
-  hitPoints: number;
-  id: string;
-  initiative: number;
-  issues: string[];
-  languages: { id: string; name: string }[];
-  level: number;
-  levels: V1Level[];
-  name: string;
-  race: { id: string; name: string; size: string; speed: number };
-  saves: V1Save[];
-  skills: V1Skill[];
-  speed: number;
-  spells: V1SpellList[];
-  valid: boolean;
-}
-
-/** A skill of a character's: its ranks, and its check's total. */
-interface V1Skill {
-  name: string;
-  ranks: number;
-  total: number;
-  trained: boolean;
-}
-
-/** A spell list a character casts from: its spells by level, and how many it casts a day at each. */
-interface V1SpellList {
-  levels: { level: number; perDay: number | null; spells: { dc: number | null; id: string; name: string }[] }[];
-  name: string;
-}
 
 /** A bonded creature's sheet (a familiar's, a mount's), as its master's answers it. */
 type BondedSheet = CharacterSheet["bonded"][string];
@@ -115,32 +24,13 @@ type CharacterSheet = Awaited<ReturnType<typeof CharactersService.getCharacter>>
 type Sheet = BondedSheet | CharacterSheet;
 
 /** A character as v1 answers it. */
-export interface V1Character extends V1Sheet {
-  bonded: V1BondedCreature[];
-  identity: {
-    age: number | null;
-    deity: string;
-    description: string;
-    gender: string;
-    height: string | null;
-    notes: string;
-    weight: string | null;
-  };
-  ruleset: { baseRules: string; id: string; name: string };
-  xp: number;
-}
+type V1Character = z.infer<typeof v1Character>;
 
-/** A character in a list, as v1 answers it. */
-export interface V1CharacterSummary {
-  classes: { level: number; name: string }[];
-  id: string;
-  level: number;
-  name: string;
-  race: string;
-}
+/** What a character's sheet and a bonded creature's both carry. */
+type V1Sheet = Omit<V1Character, "bonded" | "identity" | "ruleset" | "xp">;
 
 /** The feats a sheet's levels picked and were given, by the character level that took them, and those it's granted. */
-function toFeats(sheet: Sheet): V1Feat[] {
+function toFeats(sheet: Sheet): V1Sheet["feats"] {
   const levelFeats = Object.values(sheet.classes).flatMap((klass) =>
     klass.levels.flatMap(({ characterLevel, feats }) =>
       feats.map((feat) => ({
@@ -156,12 +46,13 @@ function toFeats(sheet: Sheet): V1Feat[] {
 }
 
 /** A sheet's levels, in the order the character took them. */
-function toLevels(sheet: Sheet): V1Level[] {
+function toLevels(sheet: Sheet): V1Sheet["levels"] {
   return Object.values(sheet.classes)
     .flatMap(({ klass, levels }) =>
       levels.map(({ characterLevel, klassLevel }) => ({
         class: { id: klass.id, level: klassLevel.level, name: klass.name },
         hitPoints: characterLevel.hp,
+        id: characterLevel.id,
         level: characterLevel.position,
       })),
     )
@@ -229,7 +120,7 @@ function toSheet(sheet: Sheet): V1Sheet {
 }
 
 /** A sheet's spell lists, each its spells by level, with what it casts a day at each. */
-function toSpellLists(sheet: Sheet): V1SpellList[] {
+function toSpellLists(sheet: Sheet): V1Sheet["spells"] {
   return sheet.spellGroups.map(({ aptitudeName, levels }) => ({
     levels: levels.map(({ level, spells, uses }) => ({
       level,
@@ -262,7 +153,7 @@ export function toV1Character(sheet: CharacterSheet): V1Character {
 
 /** A page of characters, each as v1 lists it. */
 export function toV1Characters(page: CharacterList) {
-  return toV1Page(page, (character): V1CharacterSummary => ({
+  return toV1Page(page, (character): z.infer<typeof v1CharacterSummary> => ({
     classes: character.levels.map(({ klass, level }) => ({ level, name: klass })),
     id: character.id,
     level: character.totalLevel,

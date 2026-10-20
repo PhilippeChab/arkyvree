@@ -1,7 +1,9 @@
 import { describe, expect, test } from "bun:test";
 
+import { CharacterModifiersService } from "@/server/services/characters/modifiers/index.ts";
 import { createKeyedApi, expectOk, expectStatus } from "@/tests/support/api.ts";
-import { findSeededCharacter, NIL_UUID } from "@/tests/support/seed.ts";
+import { createTestCharacter } from "@/tests/support/characters.ts";
+import { findSeededCharacter, getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 
 /** What the app's screens read, which v1 leaves out of every answer. */
@@ -66,5 +68,74 @@ describe("v1 characters", () => {
     const { id } = await findSeededCharacter("Fenn Ashwalker");
     await expectStatus(api.v1.characters[":id"].$get({ param: { id } }), 404);
     await expectStatus(api.v1.characters[":id"].$get({ param: { id: NIL_UUID } }), 404);
+  });
+
+  test("answers a character's inventory: each item it carries, where, and how many", async () => {
+    const { api } = await createKeyedApi();
+    const { id } = await findSeededCharacter("Fenn Ashwalker");
+    const inventory = await expectOk(api.v1.characters[":id"].inventory.$get({ param: { id } }));
+    expect(inventory).toContainEqual({
+      charges: null,
+      equipped: true,
+      id: expect.any(String),
+      item: { id: expect.any(String), name: "Longbow", slot: "Other", type: "Weapon", weight: 3 },
+      location: "Two Handed",
+      locationLabel: "Two Handed (Set 1)",
+      quantity: 1,
+      weaponSets: [0],
+    });
+  });
+
+  test("answers what a character speaks, and what the languages it would pick leave it room for", async () => {
+    const { api } = await createKeyedApi();
+    const { langMap } = await getSeedCtx();
+    const { id } = await findSeededCharacter("Fenn Ashwalker");
+    const route = api.v1.characters[":id"].languages;
+
+    const languages = await expectOk(route.$get({ param: { id }, query: { languageIds: langMap.Goblin! } }));
+    expect(languages.automatic.map(({ name }) => name)).toEqual(expect.arrayContaining(["Common", "Elven"]));
+    expect(languages.picks).toEqual([{ id: langMap.Goblin, name: "Goblin", type: expect.any(String) }]);
+    expect(languages.options.map(({ name }) => name)).not.toContain("Goblin");
+  });
+
+  test("answers a level a character took, its picks as a save sends them back", async () => {
+    const { api } = await createKeyedApi();
+    const { id } = await findSeededCharacter("Fenn Ashwalker");
+    const { levels } = await expectOk(api.v1.characters[":id"].$get({ param: { id } }));
+    const levelId = levels[0]!.id;
+
+    const level = await expectOk(api.v1.characters[":id"].levels[":levelId"].$get({ param: { id, levelId } }));
+    expect(level).toMatchObject({
+      class: { level: 1, name: "Ranger" },
+      hitDie: 8,
+      hitPoints: 8,
+      hitPointsRange: { max: 8, min: 1 },
+      id: levelId,
+    });
+    expect(level.feats.map(({ name }) => name)).toEqual(
+      expect.arrayContaining(["Favored Enemy: Humanoid (Goblinoid)", "Point Blank Shot"]),
+    );
+    expect(Object.values(level.skillPoints)).toContain(4);
+    expect(level.spells).toEqual([]);
+    await expectStatus(api.v1.characters[":id"].levels[":levelId"].$get({ param: { id, levelId: NIL_UUID } }), 404);
+  });
+
+  test("answers a character's own modifiers, each target named", async () => {
+    const { user, session } = await createTestUser();
+    const { api } = await createKeyedApi(user.id);
+    const { id } = await createTestCharacter(user.id);
+    await CharacterModifiersService.createModifier(session, id, {
+      operator: "add",
+      target: "abilities.strength.misc",
+      value: "2",
+    });
+    expect(await expectOk(api.v1.characters[":id"].modifiers.$get({ param: { id } }))).toEqual([
+      expect.objectContaining({
+        operator: "add",
+        target: "abilities.strength.misc",
+        targetLabels: ["Abilities", "Strength", "Misc"],
+        value: "2",
+      }),
+    ]);
   });
 });

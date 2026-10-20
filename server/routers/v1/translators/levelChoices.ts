@@ -1,64 +1,13 @@
 /**
  * A character's choices at its next level as v1 answers them: the classes it can take, and for a planned level, each
- * step's offer named, the options of each pool limited to those the character qualifies for.
+ * step's offer named, the options of each aptitude limited to those the character qualifies for.
  */
+
+import type { z } from "zod";
 
 import type { AbilityIncrease } from "@/engine/index.ts";
+import type { v1LevelChoices } from "@/server/routers/v1/schemas/levelChoices.ts";
 import type { CharacterLevelsService, StepQuery } from "@/server/services/characters/levels/index.ts";
-
-/** A class the character can take a level in next: that level, and whether it qualifies for it. */
-interface V1ClassChoice {
-  eligible: boolean;
-  hitDie: number;
-  id: string;
-  maxLevel: number;
-  name: string;
-  nextLevel: number;
-  /** The class's requirements, those the character doesn't meet marked, when it doesn't meet them. */
-  requirements: string | null;
-}
-
-/** What the planned level offers, step by step. */
-interface V1PlannedLevel {
-  /** Whether the level takes one: increases that aren't the level's are refused */
-  abilityIncrease: { abilities: { id: string; name: string; score: number }[]; due: boolean };
-  class: { id: string; level: number; name: string };
-  feats: { granted: { id: string; name: string }[]; picked: { featId: string; poolId: string }[]; slots: V1Slot[] };
-  skills: { points: number; skills: V1SkillChoice[] };
-  spells: {
-    granted: { id: string; name: string }[];
-    picked: { poolId: string; spellId: string }[];
-    slots: (V1Slot & { spellLevel: number | null })[];
-  };
-}
-
-/**
- * A skill the planned level's points may go to: its ranks before the level, the most it may reach with the level's
- * points spent on it alone, what a point buys, and what the points sent for it (`skillPoints`) come to, as a save spreads
- * them: the points it keeps, and the ranks they buy.
- */
-interface V1SkillChoice {
-  classSkill: boolean;
-  id: string;
-  maxRanks: number;
-  name: string;
-  pointsSpent: number;
-  ranks: number;
-  ranksAdded: number;
-  ranksPerPoint: number;
-}
-
-/**
- * A pool's room at the level (a class's bonus feats, General, a spell list at a spell level), the picks so far that fit
- * in it counted in (`picked`), and the options that qualify for it. A shared pool's room is one, which a feat or a spell
- * fills: it shows as a feat slot and a spell slot both (`shared`).
- */
-interface V1Slot {
-  count: number;
-  options: { id: string; name: string }[];
-  pool: { id: string; name: string };
-  shared: boolean;
-}
 
 /** The choices, as the levels' service answers them. */
 type LevelChoices = Awaited<ReturnType<typeof CharacterLevelsService.getLevelChoices>>;
@@ -66,15 +15,8 @@ type LevelChoices = Awaited<ReturnType<typeof CharacterLevelsService.getLevelCho
 /** The planned level's choices, as the levels' service answers them. */
 type PlannedLevel = NonNullable<LevelChoices["level"]>;
 
-/**
- * A character's choices at its next level, as v1 answers them: the levels it has left to take, whatever their classes
- * (none when no class is listed), which a class's `eligible` counts too.
- */
-export interface V1LevelChoices {
-  classes: V1ClassChoice[];
-  level: V1PlannedLevel | null;
-  levelsLeft: number | null;
-}
+/** A character's choices at its next level, as v1 answers them. */
+type V1LevelChoices = z.infer<typeof v1LevelChoices>;
 
 /** What a v1 request for a character's choices asks: the planned level's class, and its picks so far, by id. */
 export interface V1LevelChoicesQuery {
@@ -85,18 +27,18 @@ export interface V1LevelChoicesQuery {
   spells?: { aptitudeId: string; spellId: string }[];
 }
 
-/** A named thing (a feat, a spell, a pool), by its id and name alone. */
+/** A named thing (a feat, a spell, an aptitude), by its id and name alone. */
 function toNamed({ id, name }: { id: string; name: string }) {
   return { id, name };
 }
 
-/** The picks so far that fit in their pools, by pool, as the request's own pairs. */
+/** The picks so far that fit in their aptitudes, by aptitude, as the request's own pairs. */
 function toPicked(fitted: Record<string, string[]>) {
-  return Object.entries(fitted).flatMap(([poolId, ids]) => ids.map((id) => ({ id, poolId })));
+  return Object.entries(fitted).flatMap(([aptitudeId, ids]) => ids.map((id) => ({ aptitudeId, id })));
 }
 
 /** The planned level's offer, step by step. */
-function toPlannedLevel(level: PlannedLevel): V1PlannedLevel {
+function toPlannedLevel(level: PlannedLevel): NonNullable<V1LevelChoices["level"]> {
   const { abilities, class: klass, featSlots, feats, powerSlots, powers, skills } = level;
   return {
     abilityIncrease: {
@@ -106,11 +48,11 @@ function toPlannedLevel(level: PlannedLevel): V1PlannedLevel {
     class: klass,
     feats: {
       granted: feats.autoGrantedFeats.map(toNamed),
-      picked: toPicked(feats.fitted).map(({ id, poolId }) => ({ featId: id, poolId })),
+      picked: toPicked(feats.fitted).map(({ aptitudeId, id }) => ({ aptitudeId, featId: id })),
       slots: featSlots.map(({ options, pool, room, shared }) => ({
+        aptitude: pool,
         count: room,
         options: options.map(toNamed),
-        pool,
         shared,
       })),
     },
@@ -129,11 +71,11 @@ function toPlannedLevel(level: PlannedLevel): V1PlannedLevel {
     },
     spells: {
       granted: powers.autoGrantedPowers.map(toNamed),
-      picked: toPicked(powers.fitted).map(({ id, poolId }) => ({ poolId, spellId: id })),
+      picked: toPicked(powers.fitted).map(({ aptitudeId, id }) => ({ aptitudeId, spellId: id })),
       slots: powerSlots.map(({ options, pool, powerLevel, room, shared }) => ({
+        aptitude: pool,
         count: room,
         options: options.map(toNamed),
-        pool,
         shared,
         spellLevel: powerLevel ?? null,
       })),

@@ -35,30 +35,36 @@ answers in shapes of its own, which stay fixed.
 own route calls, and answering through v1's translators (`translators/V1.ts`), one per kind: from what the service
 returns to v1's shape (`V1.character`), and from a v1 request to what the service takes (`V1.levelChoicesQuery`).
 
-- Each translator is typed by the service it reads, so an answer that changes inside the app stops its translator
-  compiling, and v1 is kept before anyone outside sees the change.
-- An answer names things: a character's feats are "Power Attack", their ids beside them. Timestamps, modifiers,
-  requirement groups and the owner's private notes stay out.
+- Each answer's shape is a zod schema (`schemas/`), named for the document (`.meta({ id: "Character" })`), and its
+  translator is typed by the service it reads and by that schema (`z.infer`): an answer that changes inside the app
+  stops its translator compiling, and v1 is kept before anyone outside sees the change.
+- An answer names things: a character's feats are "Power Attack", their ids beside them. Timestamps, the links the
+  screens read and the owner's private notes stay out. A kind is named as the app's screens name it: a class
+  (`classes`, `class-levels`), a spell (`spells`, the code's powers), an aptitude (the pool a feat or a spell is picked
+  in).
+- A ruleset's entity answers its columns, named, and the fields its ruleset declares for it under `fields` (what's left
+  of its row past its table's columns): what a write sends back in `fields`, as `GET /v1/rulesets/{id}/fields`
+  declares them.
 - A new version copies the last, replacing only what changed (`const V2 = { ...V1, character: … }`, mounted at `/v2`),
   and v1 keeps working untouched.
 
-## Routes
+## The reference
 
-| Route | Answers |
-|---|---|
-| `GET /v1/characters` | The user's characters, a page at a time (`page`, `limit`, `search`): each its name, race, level and classes |
-| `GET /v1/characters/:id` | A character's sheet: its abilities, combat numbers, saves, skills, levels, feats, equipment, spells, validation and bonded creatures |
-| `GET /v1/characters/:id/level-choices` | Its choices at its next level, below |
-| `GET /v1/rulesets` | Rulesets, a page at a time (`scope`: `base`, `community`, `createdByMe`, `contributedTo`, `starred`; `search`) |
-| `GET /v1/rulesets/:id` | A ruleset |
-| `GET /v1/rulesets/:id/classes`, `feats`, `races`, `skills`, `spells` | A ruleset's content, a page at a time (`page`, `limit`, `search`) |
+`GET /v1/openapi.json` answers the OpenAPI 3.1 document of every v1 route, without a key, built as the server starts
+(`openApiDocument.ts`) from the routes themselves:
+
+- Each route's `validate` middleware carries its schema (`validation`): its path, its query and its body.
+- Each route says what it does and what it answers on success (`describeRoute({ summary, response, status })`), the
+  answer's schema its `response`. A route without a description stops the server starting.
+- Outside production, `describeRoute` checks each success a route answers against its schema (a strict one: a key it
+  doesn't name fails too), so every test that calls a route checks the document describes its answer.
 
 A page answers `{ items, page, nextPage }`, `nextPage` null on the last. An error answers the app's envelope
 (`{ error, cause, message }`) with its status, a path no route answers a 404.
 
-### A character's choices at its next level
+## A character's choices at its next level
 
-`GET /v1/characters/:id/level-choices` answers what the level-up wizard reads a step at a time, in one request:
+`GET /v1/characters/{id}/level-choices` answers what the level-up wizard reads a step at a time, in one request:
 
 - `classes`: the classes the character can take, each with its next level and its hit die, and the requirements it
   doesn't meet (`requirements`, `[UNMET]` marked); `eligible` once it meets them and has a level left (`levelsLeft`,
@@ -70,11 +76,11 @@ A page answers `{ items, page, nextPage }`, `nextPage` null on the last. An erro
   Those sent so far may fall short of what it gives.
 - With `classId`, the planned level of that class (`level`): whether an ability increase is due, the skill points and
   each skill's ranks before the level, the most it may reach with the level's points alone, its ranks per point and what
-  the points sent for it come to (`pointsSpent`, `ranksAdded`), each feat slot (`pool`, `count`) with the feats that
+  the points sent for it come to (`pointsSpent`, `ranksAdded`), each feat slot (`aptitude`, `count`) with the feats that
   qualify for it, and each spell slot by spell level with the spells that do, with the picks made so far:
-  `abilityIncreases=abilityId:amount;…`, `skillPoints=skillId:points,…`, `feats=featId:poolId,…`,
-  `spells=spellId:poolId,…`. A slot's `count` is its room at the level, the picks so far counted in it, and `picked`
-  lists the picks that fit, a pick past its pool's room left out. A shared pool's room is one, which a feat or a spell
+  `abilityIncreases=abilityId:amount;…`, `skillPoints=skillId:points,…`, `feats=featId:aptitudeId,…`,
+  `spells=spellId:aptitudeId,…`. A slot's `count` is its room at the level, the picks so far counted in it, and `picked`
+  lists the picks that fit, a pick past its aptitude's room left out. A shared aptitude's room is one, which a feat or a spell
   fills: it shows as a feat slot and a spell slot both, each `shared`.
 
 The engine opens the choices whole, in one operation (`levelUp().openLevelChoices`): the class picker, the planned
@@ -87,5 +93,5 @@ spells (a later stage's route).
 
 ## Not yet
 
-The issue's later stages: editing characters and rulesets, campaigns and notifications, a route that says whether a
-PDF is ready and fetches it, and reference docs generated from the v1 routes' validation schemas.
+The issue's later stages: editing characters and rulesets, campaigns and notifications, and a route that says whether
+a PDF is ready and fetches it.

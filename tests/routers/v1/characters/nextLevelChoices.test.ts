@@ -45,7 +45,7 @@ describe("v1 level choices", () => {
       ranksPerPoint: 1,
     });
 
-    const bonusFeats = level?.feats.slots.find(({ pool }) => pool.name === "Fighter Bonus Feat");
+    const bonusFeats = level?.feats.slots.find(({ aptitude }) => aptitude.name === "Fighter Bonus Feat");
     expect(bonusFeats).toMatchObject({ count: 1, shared: false });
     const options = bonusFeats?.options.map(({ name }) => name);
     expect(options).toContain("Exotic Weapon Proficiency: Bolas");
@@ -54,16 +54,16 @@ describe("v1 level choices", () => {
     expect(level?.spells.slots).toEqual([]);
   });
 
-  test("answers the picks so far that fit, a pick past its pool's room left out", async () => {
+  test("answers the picks so far that fit, a pick past its aptitude's room left out", async () => {
     const before = await choicesOf("Bjorn Ironhand", "Fighter");
-    const slot = before.level?.feats.slots.find(({ pool }) => pool.name === "Fighter Bonus Feat");
+    const slot = before.level?.feats.slots.find(({ aptitude }) => aptitude.name === "Fighter Bonus Feat");
     const [first, second] = slot?.options ?? [];
     if (!slot || !first || !second) throw new Error("The fighter has no bonus feats to pick");
 
-    const feats = [first, second].map(({ id }) => `${id}:${slot.pool.id}`).join(",");
+    const feats = [first, second].map(({ id }) => `${id}:${slot.aptitude.id}`).join(",");
     const { level } = await choicesOf("Bjorn Ironhand", "Fighter", { feats });
-    expect(level?.feats.picked).toEqual([{ featId: first.id, poolId: slot.pool.id }]);
-    expect(level?.feats.slots.find(({ pool }) => pool.id === slot.pool.id)?.count).toBe(1);
+    expect(level?.feats.picked).toEqual([{ aptitudeId: slot.aptitude.id, featId: first.id }]);
+    expect(level?.feats.slots.find(({ aptitude }) => aptitude.id === slot.aptitude.id)?.count).toBe(1);
   });
 
   test("answers what the skill points sent come to, each skill's most ranks the same whatever the others take", async () => {
@@ -110,7 +110,7 @@ describe("v1 level choices", () => {
     expect(level?.abilityIncrease.abilities.map(({ name }) => name)).toContain("Intelligence");
 
     const [slot] = level?.spells.slots ?? [];
-    expect(slot).toMatchObject({ count: 2, pool: { name: "Wizard Spells" }, spellLevel: 2 });
+    expect(slot).toMatchObject({ count: 2, aptitude: { name: "Wizard Spells" }, spellLevel: 2 });
     const spells = slot?.options.map(({ name }) => name);
     expect(spells).toContain("Glitterdust");
     // A spell she knows already
