@@ -2,7 +2,8 @@
 
 import { z } from "zod";
 
-import { entityOrderBy, idParam, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
+import { entityFields, entityOrderBy, idParam, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
+import type { RestorableEntityType } from "@/server/services/rulesets/changes/index.ts";
 import type { CustomizableEntityType } from "@/shared/customization/entities.ts";
 
 /** The kinds whose entities have modifiers and requirements, as v1 names them, each its entity type. */
@@ -14,6 +15,20 @@ const CUSTOMIZABLE_KINDS = {
   races: "races",
   spells: "powers",
 } as const satisfies Record<string, CustomizableEntityType>;
+
+/** The kinds a fork's change to restores to its parent's, as v1 names them, each its entity type. */
+const RESTORABLE_KINDS = {
+  aptitudes: "aptitudes",
+  classes: "klasses",
+  feats: "feats",
+  items: "items",
+  languages: "languages",
+  mechanics: "mechanics",
+  races: "races",
+  saves: "saves",
+  skills: "skills",
+  spells: "powers",
+} as const satisfies Record<string, RestorableEntityType>;
 
 /** A ruleset route's `:id` (the ruleset) and `:classId`. */
 export const classParams = idParam.extend({ classId: z.string().uuid() });
@@ -41,12 +56,24 @@ export const CONTENT_FILTERS = {
   search: z.string().optional().meta({ description: "A part of the name" }),
 };
 
+/** A kind whose entities have modifiers and requirements, as v1 names it, read back as its entity type. */
+export const customizableKind = z
+  .enum(["class-levels", "classes", "feats", "items", "races", "spells"])
+  .transform((kind) => CUSTOMIZABLE_KINDS[kind]);
+
 /** A customization route's entity: the ruleset (`id`), and the entity by its kind and its id. */
-export const customizableParams = idParam.extend({
-  entityId: z.string().uuid(),
-  kind: z
-    .enum(["class-levels", "classes", "feats", "items", "races", "spells"])
-    .transform((kind) => CUSTOMIZABLE_KINDS[kind]),
+export const customizableParams = idParam.extend({ entityId: z.string().uuid(), kind: customizableKind });
+
+/** An entity's description, its create's and its update's: none when it's empty, kept by an update that leaves it out. */
+export const entityDescription = z
+  .string()
+  .nullable()
+  .optional()
+  .transform((value) => (value === "" ? null : value));
+
+/** An entity's fields, as its ruleset declares them (`GET /v1/rulesets/{id}/fields`): those it changes, by key. */
+export const fields = entityFields.optional().meta({
+  description: "Its fields, as its ruleset declares them (`GET /v1/rulesets/{id}/fields`), by key: those it sets",
 });
 
 /** As `customizableParams`, for what owns requirements: a modifier too (`modifiers`). */
@@ -55,4 +82,12 @@ export const requirementOwnerParams = idParam.extend({
   kind: z
     .enum(["class-levels", "classes", "feats", "items", "modifiers", "races", "spells"])
     .transform((kind) => (kind === "modifiers" ? kind : CUSTOMIZABLE_KINDS[kind])),
+});
+
+/** A fork's entity a restore names: the ruleset (`id`), and the entity by its kind and its id. */
+export const restorableParams = idParam.extend({
+  entityId: z.string().uuid(),
+  kind: z
+    .enum(["aptitudes", "classes", "feats", "items", "languages", "mechanics", "races", "saves", "skills", "spells"])
+    .transform((kind) => RESTORABLE_KINDS[kind]),
 });

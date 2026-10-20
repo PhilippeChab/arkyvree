@@ -21,4 +21,27 @@ describe("v1 ruleset mechanics", () => {
     expect(await expectOk(answer)).toEqual(expected);
     await expectStatus(route[":mechanicId"].$get({ param: { id: ruleset.id, mechanicId: NIL_UUID } }), 404);
   });
+
+  test("adds a mechanic to a user's ruleset, changes it and deletes it, and refuses one the user can't edit", async () => {
+    const { session, ruleset } = await createTestUserAndRuleset();
+    const { api } = await createKeyedApi(session.userId);
+    const route = api.v1.rulesets[":id"].mechanics;
+    const id = ruleset.id;
+
+    const created = await expectOk(route.$post({ json: { name: "Flank" }, param: { id } }));
+    expect(created).toEqual({ description: null, id: expect.any(String), name: "Flank" });
+    const mechanicId = created.id;
+    const changed = await expectOk(
+      route[":mechanicId"].$put({
+        json: { description: "From two sides", name: "Flanking" },
+        param: { id, mechanicId },
+      }),
+    );
+    expect(changed).toEqual({ description: "From two sides", id: mechanicId, name: "Flanking" });
+    await expectStatus(route[":mechanicId"].$delete({ param: { id, mechanicId } }), 204);
+    await expectStatus(route[":mechanicId"].$get({ param: { id, mechanicId } }), 404);
+
+    const { api: otherApi } = await createKeyedApi();
+    await expectStatus(otherApi.v1.rulesets[":id"].mechanics.$post({ json: { name: "Flank" }, param: { id } }), 403);
+  });
 });

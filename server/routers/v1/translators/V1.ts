@@ -1,4 +1,15 @@
-import { toV1CharacterLanguages, toV1Inventory, toV1SavedLevel } from "./characterParts.ts";
+import {
+  toV1CharacterCreation,
+  toV1CharacterLanguages,
+  toV1ImportedCharacter,
+  toV1ImportSource,
+  toV1InventoryEntry,
+  toV1InventoryEntryOf,
+  toV1Placement,
+  toV1RaceOption,
+  toV1SavedLevel,
+} from "./characterParts.ts";
+import { toInventoryRequest, toLevelEditRequest, toLevelSaveRequest } from "./characterRequests.ts";
 import { toV1Character, toV1Characters } from "./characters.ts";
 import {
   toV1Class,
@@ -11,13 +22,24 @@ import {
   toV1Item,
   toV1Language,
   toV1Modifier,
+  toV1ModifierOf,
   toV1Names,
   toV1Race,
   toV1Requirement,
+  toV1RequirementOf,
   toV1Save,
   toV1Skill,
   toV1Spell,
+  toV1TargetPath,
+  toV1TargetPathCheck,
 } from "./content.ts";
+import {
+  toClassRequest,
+  toItemRequest,
+  toRaceRequest,
+  toRequirementRequest,
+  toSkillRequest,
+} from "./contentRequests.ts";
 import { toLevelChoicesQuery, toV1LevelChoices } from "./levelChoices.ts";
 import { toV1Page } from "./pages.ts";
 import {
@@ -30,16 +52,18 @@ import {
 
 /**
  * Version 1's translators, one per kind: from what a service answers to v1's shape, and from a v1 request to what a
- * service takes (`levelChoicesQuery`). Each is typed by the service it reads and by v1's schema of its answer
+ * service takes (`levelChoicesQuery`, `raceRequest`). Each is typed by the service it reads and by v1's schema of its answer
  * (`schemas/`), so an answer that changes inside the app stops its translator compiling until v1's shape is kept. A
  * page's items are each translated by their kind's (`V1.page(feats, V1.feat)`). A new version copies the last,
  * replacing only what changed (`const V2 = { ...V1, character: … }`), and v1 keeps working untouched.
  */
 export const V1 = {
   character: toV1Character,
+  characterCreation: toV1CharacterCreation,
   characterLanguages: toV1CharacterLanguages,
   characters: toV1Characters,
   class: toV1Class,
+  classRequest: toClassRequest,
   classFeatPools: toV1ClassFeatPools,
   classLevel: toV1ClassLevel,
   classSkills: toV1ClassSkills,
@@ -47,16 +71,29 @@ export const V1 = {
   entity: toV1Entity,
   feat: toV1Feat,
   fieldDeclarations: toV1FieldDeclarations,
-  inventory: toV1Inventory,
+  importedCharacter: toV1ImportedCharacter,
+  importSource: toV1ImportSource,
+  inventoryEntry: toV1InventoryEntry,
+  inventoryEntryOf: toV1InventoryEntryOf,
+  inventoryRequest: toInventoryRequest,
   item: toV1Item,
+  itemRequest: toItemRequest,
   language: toV1Language,
   levelChoices: toV1LevelChoices,
   levelChoicesQuery: toLevelChoicesQuery,
+  levelEditRequest: toLevelEditRequest,
+  levelSaveRequest: toLevelSaveRequest,
   modifier: toV1Modifier,
+  modifierOf: toV1ModifierOf,
   names: toV1Names,
   page: toV1Page,
+  placement: toV1Placement,
   race: toV1Race,
+  raceOption: toV1RaceOption,
+  raceRequest: toRaceRequest,
   requirement: toV1Requirement,
+  requirementOf: toV1RequirementOf,
+  requirementRequest: toRequirementRequest,
   ruleset: toV1Ruleset,
   rulesetChanges: toV1RulesetChanges,
   rulesetExtensions: toV1RulesetExtensions,
@@ -64,5 +101,8 @@ export const V1 = {
   save: toV1Save,
   savedLevel: toV1SavedLevel,
   skill: toV1Skill,
+  skillRequest: toSkillRequest,
   spell: toV1Spell,
+  targetPath: toV1TargetPath,
+  targetPathCheck: toV1TargetPathCheck,
 };

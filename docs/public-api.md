@@ -24,8 +24,9 @@ answers in shapes of its own, which stay fixed.
   changes only what its user can, by the checks the services already make. A session's cookie signs in nothing under
   `/v1`.
 - Its requests are counted per key (`apiKeyRateLimit`: 120 a minute), and a character's level choices, which read every
-  option of each pool, per user, whichever keys of theirs ask (`levelChoicesRateLimit`: 20 a minute). A request with a
-  wrong key or none costs a lookup by digest, as a wrong session cookie does the app's.
+  option of each pool, and a character file's import, which builds the character level by level, per user, whichever
+  keys of theirs ask (`levelChoicesRateLimit`: 20 a minute; `apiImportRateLimit`: 10). A request with a wrong key or
+  none costs a lookup by digest, as a wrong session cookie does the app's.
 - A ruleset is read as the app reads it: any ruleset by its id, a private one too, as `/api` answers it to any signed-in
   user. The lists (`GET /v1/rulesets`) list what the user's scope does.
 
@@ -88,10 +89,31 @@ level's steps, and a picker for each pool with room left, which checks its optio
 that fit. The levels' service (`CharacterLevelsService.getLevelChoices`) reads the character once, asks it, and reads
 each picker's options, every page of them.
 
-The level is then saved whole, as the app saves one: its class, hit points, ability increases, skills, feats and
-spells (a later stage's route).
+The level is then saved whole, as the app saves one (`POST /v1/characters/{id}/levels`): its class and the class's level
+(`level.class`), its hit points, ability increases, skill points, and its feats and spells, each in the aptitude its
+slot is. The engine checks it and the character with it, as it checks the wizard's save, refusing what it finds wrong
+unless the save is `force`d, and the answer is the character's sheet.
+
+## Writes
+
+Each write calls the service the app's own route calls, its body a v1 shape translated to what the service takes
+(`V1.raceRequest`, `V1.levelSaveRequest`) where v1 names a column apart (a class's `hitDie`, a race's `speed`, a skill's
+`abilityId`, an item's `cost` and `template`, a requirement's `group`).
+
+- A create answers what it made (201), an update what it changed (200), each read back as its read answers it; a delete
+  answers nothing (204). An action answers what it acts on (a fork the new ruleset, a publish the ruleset).
+- An update keeps what its body leaves out, where the service does (a description, an item's cost); a list it names
+  (a feat's aptitudes, a class level's feats) it replaces whole.
+- A fork's change to an entity it inherits is made on a copy of its own, as the app makes it: the answer is the copy,
+  under its own id. `POST /v1/rulesets/{id}/{kind}/{entityId}/restore` undoes it, `entityId` the parent's entity.
+- Its writes record activities and notify users as the app's do, and tell them over the websocket
+  (`publishNotified`, on `/api` and `/v1` alike).
+- v1 sends no `updatedAt`: a write never refuses an entity another edit changed since it was read, which the app's
+  forms check. A character's private notes, which v1 never answers, it never writes either.
+- A modifier's or a requirement's target is a path (`abilities.strength.misc`): `GET /v1/rulesets/{id}/target-paths`
+  completes one a segment at a time, or finds every path whose name has a word, and `…/target-paths/check` says what a
+  path takes, or what it may have meant.
 
 ## Not yet
 
-The issue's later stages: editing characters and rulesets, campaigns and notifications, and a route that says whether
-a PDF is ready and fetches it.
+The issue's last stage: campaigns and notifications, and a route that says whether a PDF is ready and fetches it.

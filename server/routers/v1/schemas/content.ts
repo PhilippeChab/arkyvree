@@ -204,3 +204,45 @@ export const v1Spell = v1Entity
   .meta({ description: "A spell of a ruleset's", id: "Spell" });
 
 export const v1SpellPage = buildPageSchema(v1Spell);
+
+export const v1TargetPath = z
+  .strictObject({
+    description: z.string(),
+    detail: z.string(),
+    insertText: z.string().meta({ description: "What completes the path given: its next segment, or a whole path" }),
+    kind: z.enum(["category", "group", "operator", "property", "value"]),
+    label: z.string(),
+    operators: z.array(z.string()).meta({ description: "A whole path's: the operators it takes" }),
+    path: z.string().nullable().meta({ description: "A whole path's: itself" }),
+    values: z
+      .array(z.strictObject({ label: z.string(), value: z.string() }))
+      .meta({ description: "A whole path's: the values it takes, when it takes a closed list" }),
+    valueType: z.enum(["boolean", "number", "string"]).nullable(),
+  })
+  .meta({ description: "A target path, or a segment of one, that completes the path given", id: "TargetPath" });
+
+export const v1TargetPathCheck = z
+  .strictObject({
+    errors: z.array(
+      z.strictObject({
+        end: z.number().int(),
+        message: z.string(),
+        severity: z.enum(["error", "info", "warning"]),
+        start: z.number().int(),
+      }),
+    ),
+    suggestions: z.array(z.string()).meta({ description: "Paths it may have meant" }),
+    target: z
+      .strictObject({
+        operators: z.array(z.string()),
+        path: z.string(),
+        values: z.array(z.strictObject({ label: z.string(), value: z.string() })),
+        valueType: z.enum(["boolean", "number", "string"]),
+      })
+      .nullable()
+      .meta({ description: "A valid path's: what it takes" }),
+    valid: z.boolean(),
+  })
+  .meta({ description: "Whether a target path is one a modifier or a requirement may take", id: "TargetPathCheck" });
+
+export const v1TargetPathPage = buildPageSchema(v1TargetPath);
