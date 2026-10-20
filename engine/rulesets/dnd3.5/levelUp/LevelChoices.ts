@@ -1,10 +1,9 @@
 import type { FeatPick, LevelChoicesQuery, LevelQuery, PowerPick } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
-import ClassPicker from "@/engine/rulesets/dnd3.5/pickers/ClassPicker.ts";
+import type ClassPicker from "@/engine/rulesets/dnd3.5/pickers/ClassPicker.ts";
 import FeatPicker from "@/engine/rulesets/dnd3.5/pickers/FeatPicker.ts";
 import PowerPicker from "@/engine/rulesets/dnd3.5/pickers/PowerPicker.ts";
 
-import LevelUpPlan from "./LevelUpPlan.ts";
 import LevelUpSteps from "./LevelUpSteps.ts";
 
 /** The feats and powers picked so far that fit in their pools, as a picker's query takes them. */
@@ -99,14 +98,11 @@ export default class LevelChoices extends LevelUpSteps {
     return option;
   }
 
-  /** The character's choices at its next level, for the class the query names, if it names one. */
-  openLevelChoices(query: LevelChoicesQuery) {
-    const classPicker = new ClassPicker(
-      this.view,
-      this.character,
-      {},
-      new LevelUpPlan(this.view, this.character, this.rules),
-    );
+  /**
+   * The character's choices at its next level, for the class the query names, if it names one: the classes the
+   * wizard's picker offers it (`classPicker`, nothing planned before the level).
+   */
+  openLevelChoices(query: LevelChoicesQuery, classPicker: ClassPicker) {
     if (!query.klassId) return { classPicker, level: null };
 
     const klass = this.readPlannedKlass(classPicker, query.klassId);

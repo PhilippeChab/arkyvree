@@ -3,6 +3,7 @@ import type { Constructor } from "@/lib/mixins.ts";
 import { db } from "@/server/database/index.ts";
 import { Feats, Klasses, Powers } from "@/server/repositories/index.ts";
 import { withEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
+import { buildClassFilters } from "@/server/services/characters/levels/classFilters.ts";
 import type { Session } from "@/shared/relations.ts";
 
 /**
@@ -85,17 +86,8 @@ export function Pickers<B extends Constructor>(Base: B) {
     ) {
       return await withEditableCharacter(db, session, characterId, async (scope, character) => {
         const picker = Engine.for(scope).character(character).levelUp().openClassPicker(plannedOf(where));
-        const result = await Klasses.findPage(
-          db,
-          {
-            rulesetId: character.record.rulesetId,
-            ...scope.rulesetData.cow.listFilters,
-            characterId,
-            ...picker.filters,
-            search: where.search,
-          },
-          pagination,
-        );
+        const filters = buildClassFilters(scope, character, picker.filters);
+        const result = await Klasses.findPage(db, { ...filters, search: where.search }, pagination);
         return { items: picker.describe(result.items), page: result.page, nextPage: result.nextPage };
       });
     }

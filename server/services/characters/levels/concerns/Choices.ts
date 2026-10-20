@@ -4,6 +4,7 @@ import type { RulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Feats, fetchEveryPage, Klasses, type Paginated, Powers } from "@/server/repositories/index.ts";
 import { withEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
+import { buildClassFilters } from "@/server/services/characters/levels/classFilters.ts";
 import { type StepQuery, toLevelQuery } from "@/server/services/characters/levels/stepQueries.ts";
 import type { Session } from "@/shared/relations.ts";
 
@@ -34,30 +35,25 @@ export function Choices<B extends Constructor>(Base: B) {
   abstract class WithChoices extends Base {
     /** Every class the class picker offers, described for the character, in the ruleset its scope reads. */
     private async readClasses(scope: RulesetScope, character: CharacterInput, { classPicker }: OpenedChoices) {
-      const where = {
-        rulesetId: character.record.rulesetId,
-        ...scope.rulesetData.cow.listFilters,
-        characterId: character.record.id,
-        ...classPicker.filters,
-      };
+      const where = buildClassFilters(scope, character, classPicker.filters);
       const rows = await fetchEveryPage((pagination) => Klasses.findPage(db, where, pagination), OPTIONS_PAGE_SIZE);
       return classPicker.describe(rows);
     }
 
     /**
      * Each pool with room left (`pools`), with every option its picker offers that the character qualifies for, read a
-     * page at a time (`findPage`).
+     * page at a time (`findPage`), the pools side by side.
      */
     private async readSlots<P extends { picker: SlotPicker }, R extends { id: string }>(
       pools: P[],
       findPage: (filters: P["picker"]["filters"], pagination: { limit: number; page: number }) => Promise<Paginated<R>>,
     ) {
-      const slots = [];
-      for (const { picker, ...pool } of pools) {
-        const rows = await fetchEveryPage((pagination) => findPage(picker.filters, pagination), OPTIONS_PAGE_SIZE);
-        slots.push({ ...pool, options: picker.describe(rows).filter((option) => option.eligible) });
-      }
-      return slots;
+      return await Promise.all(
+        pools.map(async ({ picker, ...pool }) => {
+          const rows = await fetchEveryPage((pagination) => findPage(picker.filters, pagination), OPTIONS_PAGE_SIZE);
+          return { ...pool, options: picker.describe(rows).filter((option) => option.eligible) };
+        }),
+      );
     }
 
     /**
@@ -68,14 +64,15 @@ export function Choices<B extends Constructor>(Base: B) {
     async getLevelChoices(session: Session, characterId: string, query: LevelChoicesQuery) {
       return await withEditableCharacter(db, session, characterId, async (scope, character) => {
         const choices = Engine.for(scope).character(character).levelUp().openLevelChoices(toLevelQuery(query));
-        const classes = await this.readClasses(scope, character, choices);
-        if (!choices.level) return { classes, level: null };
-        const { featPools, powerPools } = choices.level;
-        const featSlots = await this.readSlots(featPools, (filters, page) => Feats.findOptionPage(db, filters, page));
-        const powerSlots = await this.readSlots(powerPools, (filters, page) =>
-          Powers.findOptionPage(db, filters, page),
-        );
-        return { classes, level: { ...choices.level.steps, featSlots, powerSlots } };
+        if (!choices.level) return { classes: await this.readClasses(scope, character, choices), level: null };
+        const { featPools, powerPools, steps } = choices.level;
+        // The classes and each pool's options, read side by side
+        const [classes, featSlots, powerSlots] = await Promise.all([
+          this.readClasses(scope, character, choices),
+          this.readSlots(featPools, (filters, page) => Feats.findOptionPage(db, filters, page)),
+          this.readSlots(powerPools, (filters, page) => Powers.findOptionPage(db, filters, page)),
+        ]);
+        return { classes, level: { ...steps, featSlots, powerSlots } };
       });
     }
   }
