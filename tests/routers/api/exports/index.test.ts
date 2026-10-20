@@ -11,7 +11,9 @@ describe("exports", () => {
     const response = await api.api.exports[":id"].download.$get({ param: { id } });
     expect(response.status).toBe(200);
     expect(response.headers.get("Content-Type")).toBe("application/pdf");
-    expect(response.headers.get("Content-Disposition")).toBe('attachment; filename="test-sheet.pdf"');
+    expect(response.headers.get("Content-Disposition")).toBe(
+      `attachment; filename="test-sheet.pdf"; filename*=UTF-8''test-sheet.pdf`,
+    );
     expect(await response.text()).toBe("fake pdf content");
   });
 

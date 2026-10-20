@@ -2,7 +2,12 @@ import { Hono } from "hono";
 import { z } from "zod";
 
 import { NotFoundError } from "@/server/errors/index.ts";
-import { type ApiKeyContext, attachmentUploadRateLimit, describeRoute, validate } from "@/server/middlewares/index.ts";
+import {
+  apiAttachmentUploadRateLimit,
+  type ApiKeyContext,
+  describeRoute,
+  validate,
+} from "@/server/middlewares/index.ts";
 import { idParam } from "@/server/routers/api/validation.ts";
 import { v1Attachment, v1DirectUpload } from "@/server/routers/v1/schemas/attachments.ts";
 import { V1 } from "@/server/routers/v1/translators/V1.ts";
@@ -46,7 +51,7 @@ export default new Hono<ApiKeyContext>()
         "Where to upload an image for a record's slot the key's user may change: a PNG, JPEG, WebP or GIF, 5 MB at " +
         "most",
     }),
-    attachmentUploadRateLimit,
+    apiAttachmentUploadRateLimit,
     validate(
       "json",
       z.object({

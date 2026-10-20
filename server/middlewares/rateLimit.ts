@@ -3,6 +3,18 @@ import { limitRate, limitRatePerKey } from "./limitRate.ts";
 const MINUTE = 60 * 1000;
 
 /**
+ * The public API's direct uploads, counted per user, whatever keys of theirs ask: as many a minute as the app's own
+ * allow an address, each committing a blob the sweep reclaims only later.
+ */
+export const apiAttachmentUploadRateLimit = limitRatePerKey({ windowMs: MINUTE, limit: 20, per: "user" });
+
+/**
+ * The public API's PDFs, rendered or queued, counted per user, whatever keys of theirs ask: as many a minute as the
+ * app's own allow an address, each costing a render.
+ */
+export const apiExportRateLimit = limitRatePerKey({ windowMs: MINUTE, limit: 5, per: "user" });
+
+/**
  * The public API's imports of a character file, counted per user, whatever keys of theirs ask: as many a minute as the
  * app's own allow an address.
  */

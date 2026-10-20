@@ -2,6 +2,7 @@ import { Hono } from "hono";
 
 import { type ApiKeyContext, describeRoute, validate } from "@/server/middlewares/index.ts";
 import { idParam } from "@/server/routers/api/validation.ts";
+import { buildFileHeaders } from "@/server/routers/fileHeaders.ts";
 import { v1Export } from "@/server/routers/v1/schemas/exports.ts";
 import { V1 } from "@/server/routers/v1/translators/V1.ts";
 import { ExportsService } from "@/server/services/exports/index.ts";
@@ -36,9 +37,6 @@ export default new Hono<ApiKeyContext>()
     async (c) => {
       const { id } = c.req.valid("param");
       const { data, fileName, mimeType } = await ExportsService.getExport(c.var.requestSession, id);
-      return c.body(new Uint8Array(data), 200, {
-        "Content-Disposition": `attachment; filename="${fileName}"`,
-        "Content-Type": mimeType,
-      });
+      return c.body(new Uint8Array(data), 200, buildFileHeaders({ disposition: "attachment", fileName, mimeType }));
     },
   );

@@ -17,7 +17,8 @@
  *   reads its input into a const and destructures what it reads of it (`body` or `query` when it reads one whole), a
  *   router is its module's export (`export default new Hono()…`) and names a schema for what it validates (never
  *   `…Schema`), and it lets an error reach `onError` instead of catching it (`server/routers/api/`; a `finally` alone
- *   is fine). A route that renders a PDF or queues one (its path ends in `/pdf`) takes `exportRateLimit`, signed in or
+ *   is fine). A route that renders a PDF or queues one (its path ends in `/pdf`) takes `exportRateLimit` (the public API's
+ *   `apiExportRateLimit`, counted per user), signed in or
  *   not: each request costs a render.
  * - `order-through-repository`: the server's queries sort with a repository's `this.orderBy(column, direction)`, never
  *   drizzle's `asc` / `desc`, and a repository method that reads a page orders it by `this.pageOrder(keys)`, which ends
@@ -82,8 +83,11 @@ import { repoPath, rootOf } from "./paths.mjs";
 const CAMEL_CASE = /^[a-z][a-zA-Z0-9]*$/;
 
 const CONCURRENT = new Set(["all", "allSettled", "any", "race"]);
+
 /** An `eslint-disable` / `oxlint-disable` comment's text. */
 const DIRECTIVE = /^\s*(?:eslint|oxlint)-disable(?:-next-line|-line)?\b/;
+/** The limits a route that renders a PDF or queues one counts its requests with: per address, or per user (`/v1`). */
+const EXPORT_RATE_LIMITS = new Set(["apiExportRateLimit", "exportRateLimit"]);
 /** kebab-case, a file's name (`sitemap.xml`) or a wildcard */
 const FIXED_SEGMENT = /^([a-z0-9]+(-[a-z0-9]+)*(\.[a-z0-9]+)?|\*)$/;
 /** A module or folder named for no particular thing: `helpers.ts`, `utils/`. */
@@ -827,11 +831,13 @@ function createRouteConventions(context) {
       if (
         callee.property.name !== "route" &&
         routePath.endsWith("/pdf") &&
-        !node.arguments.some((arg) => arg.type === "Identifier" && arg.name === "exportRateLimit")
+        !node.arguments.some((arg) => arg.type === "Identifier" && EXPORT_RATE_LIMITS.has(arg.name))
       ) {
         context.report({
           node: route,
-          message: "A route that renders a PDF, or queues one, takes `exportRateLimit`: each request costs a render.",
+          message:
+            "A route that renders a PDF, or queues one, takes `exportRateLimit` (the public API's `apiExportRateLimit`): " +
+            "each request costs a render.",
         });
       }
       for (const segment of routePath.split("/")) {

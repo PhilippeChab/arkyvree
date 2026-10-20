@@ -126,12 +126,13 @@ describe("conventions", () => {
     ]);
   });
 
-  test("a route that renders or queues a PDF takes exportRateLimit", async () => {
+  test("a route that renders or queues a PDF takes exportRateLimit, or the public API's per-user one", async () => {
     expect(
       await lintRepo(
         {
           "server/routers/api/limited.ts":
             'export const r = app.post("/:id/pdf", denyDemoUser, exportRateLimit, (c) => c).get("/:id/pdfs", (c) => c);\n',
+          "server/routers/v1/limited.ts": 'export const r = app.post("/:id/pdf", apiExportRateLimit, (c) => c);\n',
           "server/routers/api/shared.ts": 'export const r = app.get("/characters/:shareToken/pdf", (c) => c);\n',
           "server/routers/api/queued.ts": 'export const r = app.post("/:id/pdf", denyDemoUser, (c) => c);\n',
         },

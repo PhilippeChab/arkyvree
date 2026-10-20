@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 
-import { type ApiKeyContext, describeRoute, exportRateLimit, validate } from "@/server/middlewares/index.ts";
+import { apiExportRateLimit, type ApiKeyContext, describeRoute, validate } from "@/server/middlewares/index.ts";
 import { idParam } from "@/server/routers/api/validation.ts";
 import { v1Export } from "@/server/routers/v1/schemas/exports.ts";
 import { V1 } from "@/server/routers/v1/translators/V1.ts";
@@ -16,7 +16,7 @@ export default new Hono<ApiKeyContext>().post(
       "Queues a character's PDF, as its owner or a contributor: its export, pending, which `GET /v1/exports/{id}` " +
       "answers until it's ready",
   }),
-  exportRateLimit,
+  apiExportRateLimit,
   validate("param", idParam),
   async (c) => {
     const { id } = c.req.valid("param");

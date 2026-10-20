@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 
-import { type ApiKeyContext, describeRoute, exportRateLimit, validate } from "@/server/middlewares/index.ts";
+import { apiExportRateLimit, type ApiKeyContext, describeRoute, validate } from "@/server/middlewares/index.ts";
 import { idParam } from "@/server/routers/api/validation.ts";
 import {
   v1CampaignCharacter,
@@ -118,7 +118,7 @@ export default new Hono<ApiKeyContext>()
         "Queues a linked character's PDF, as its editors or the Game Master: its export, pending, which " +
         "`GET /v1/exports/{id}` answers until it's ready",
     }),
-    exportRateLimit,
+    apiExportRateLimit,
     validate("param", characterParams),
     async (c) => {
       const { characterId, id } = c.req.valid("param");

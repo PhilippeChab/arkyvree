@@ -142,6 +142,9 @@ describe("v1 campaign characters", () => {
     const { api } = await createKeyedApi((await createTestUser()).user.id);
     await expectStatus(api.v1.campaigns[":id"].characters.$get({ param: { id: campaign.id }, query: {} }), 403);
     await expectStatus(api.v1.campaigns[":id"].characters[":characterId"].$get({ param }), 403);
+    // Which ruleset a campaign is on is its members' to read
+    const linkable = api.v1.campaigns[":id"]["linkable-characters"];
+    await expectStatus(linkable.$get({ param: { id: campaign.id }, query: {} }), 403);
     await expectStatus(api.v1.campaigns[":id"].characters.$get({ param: { id: NIL_UUID }, query: {} }), 404);
     await expectStatus(
       api.v1.campaigns[":id"]["linkable-characters"].$get({ param: { id: NIL_UUID }, query: {} }),

@@ -25,7 +25,9 @@ answers in shapes of its own, which stay fixed.
   `/v1`. No key acts for a demo, so a v1 write needs no `denyDemoUser`, which reads the app's session.
 - Its requests are counted per key (`apiKeyRateLimit`: 120 a minute), and a character's level choices, which read every
   option of each pool, and a character file's import, which builds the character level by level, per user, whichever
-  keys of theirs ask (`levelChoicesRateLimit`: 20 a minute; `apiImportRateLimit`: 10). A request with a wrong key or
+  keys of theirs ask (`levelChoicesRateLimit`: 20 a minute; `apiImportRateLimit`: 10), as are its PDFs, which each cost a
+  render (`apiExportRateLimit`: 5), and its direct uploads (`apiAttachmentUploadRateLimit`: 20), which the app's own
+  routes count per address. A request with a wrong key or
   none costs a lookup by digest, as a wrong session cookie does the app's.
 - A ruleset is read as the app reads it: any ruleset by its id, a private one too, as `/api` answers it to any signed-in
   user. The lists (`GET /v1/rulesets`) list what the user's scope does.
@@ -157,7 +159,7 @@ caller asks for it by its export.
 
 1. `POST /v1/characters/{id}/pdf` (its owner or a contributor), or
    `POST /v1/campaigns/{id}/characters/{characterId}/pdf` (its editors or the campaign's Game Master), answers 202 and
-   the export, `pending`. Both count against `exportRateLimit`, as the app's do.
+   the export, `pending`. Both count against `apiExportRateLimit`, per user, whatever keys of theirs ask.
 2. `GET /v1/exports/{id}` answers where it stands: `pending` while the worker makes it, `ready` once its file is
    stored, or `failed` (the character can't be exported by the time the worker runs, or the render failed its last
    attempt).

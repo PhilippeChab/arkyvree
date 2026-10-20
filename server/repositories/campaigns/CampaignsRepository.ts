@@ -62,7 +62,11 @@ class CampaignsRepository extends include(BaseRepository<typeof campaignsInCampa
         deletedAt: campaignsInCampaign.deletedAt,
         createdAt: campaignsInCampaign.createdAt,
         updatedAt: campaignsInCampaign.updatedAt,
-        currentPlayers: count(playersInCampaign.userId).as("currentPlayers"),
+        // Its live players, as a page of campaigns counts them: an archived slot is none
+        currentPlayers:
+          sql<number>`(count(${playersInCampaign.userId}) filter (where ${playersInCampaign.deletedAt} is null))::int`.as(
+            "currentPlayers",
+          ),
       })
       .from(campaignsInCampaign)
       .innerJoin(playersInCampaign, eq(campaignsInCampaign.id, playersInCampaign.campaignId))

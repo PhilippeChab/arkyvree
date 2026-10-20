@@ -1,5 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
+import { db } from "@/server/database/index.ts";
+import { Players } from "@/server/repositories/index.ts";
 import { createKeyedApi, expectOk, expectStatus } from "@/tests/support/api.ts";
 import { createTestCampaign } from "@/tests/support/campaigns.ts";
 import { createTestRuleset } from "@/tests/support/rulesets.ts";
@@ -51,6 +53,18 @@ describe("v1 campaigns", () => {
     expect((await list({})).items).toEqual([]);
     expect((await list({ visibility: "archived" })).items).toEqual([summary]);
     expect((await list({ visibility: "all", search: campaign.name.slice(-6) })).items).toEqual([summary]);
+  });
+
+  test("counts a campaign's live players alike in its list and its read: an archived slot is none", async () => {
+    const { api, campaign } = await createCampaign();
+    const [left, stays] = [(await createTestUser()).user, (await createTestUser()).user];
+    for (const { id: userId } of [left, stays])
+      await Players.create(db, { campaignId: campaign.id, role: "Player Character", userId });
+    // A user whose account is deleted leaves their slot archived, their id on it
+    await Players.archive(db, { userId: left.id });
+
+    expect((await expectOk(api.v1.campaigns[":id"].$get({ param: { id: campaign.id } }))).players).toBe(2);
+    expect((await expectOk(api.v1.campaigns.$get({ query: {} }))).items[0]?.players).toBe(2);
   });
 
   test("edits a campaign's name and description, as its Game Master", async () => {

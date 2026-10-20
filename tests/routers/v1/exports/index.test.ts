@@ -8,11 +8,11 @@ import { queuedPdfJobs, silentJobHelpers } from "@/tests/support/jobs.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 
-/** A new user's character, its PDF queued through the public API, and the job the worker would run. */
-async function queuePdf() {
+/** A new user's character (named `name`), its PDF queued through the public API, and the job the worker would run. */
+async function queuePdf(name?: string) {
   const { user, session } = await createTestUser();
   const { api } = await createKeyedApi(user.id);
-  const character = await createCharacterAs(session);
+  const character = await createCharacterAs(session, name ? { name } : {});
   const pending = await expectOk(api.v1.characters[":id"].pdf.$post({ param: { id: character.id } }));
   const [job] = await queuedPdfJobs(character.id);
   return { api, character, job: job!, pending, session };
@@ -20,7 +20,8 @@ async function queuePdf() {
 
 describe("v1 exports", () => {
   test("answers a queued PDF's export pending, then ready once the worker made it, and its file", async () => {
-    const { api, character, job, pending } = await queuePdf();
+    // A name past Latin-1, which a header holds encoded
+    const { api, character, job, pending } = await queuePdf("Ryū 龍");
     const route = api.v1.exports[":id"];
     const param = { id: pending.id };
     expect(pending).toEqual({
@@ -38,7 +39,9 @@ describe("v1 exports", () => {
     const file = await route.download.$get({ param });
     expect(file.status).toBe(200);
     expect(file.headers.get("content-type")).toBe("application/pdf");
-    expect(file.headers.get("content-disposition")).toBe(`attachment; filename="${character.name}-sheet.pdf"`);
+    expect(file.headers.get("content-disposition")).toBe(
+      `attachment; filename="Ry_ _-sheet.pdf"; filename*=UTF-8''${encodeURIComponent(`${character.name}-sheet.pdf`)}`,
+    );
     expect(
       Buffer.from(await file.arrayBuffer())
         .subarray(0, 5)

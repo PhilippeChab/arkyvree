@@ -1,5 +1,9 @@
 import { describe, expect, test } from "bun:test";
 
+import { eq } from "drizzle-orm";
+
+import { exportsInAccount } from "@/drizzle/schema.ts";
+import { db } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError } from "@/server/errors/index.ts";
 import { ExportsService } from "@/server/services/exports/index.ts";
 import { createExport } from "@/tests/support/files.ts";
@@ -57,5 +61,15 @@ describe("ExportsService.getExportStatus", () => {
     expect(ExportsService.getExportStatus(owner, NIL_UUID)).rejects.toThrow(NotFoundError);
     const expired = await createExport(owner.userId, new Date(Date.now() - 1000).toISOString(), "pending");
     expect(ExportsService.getExportStatus(owner, expired.id)).rejects.toThrow("expired");
+  });
+
+  test("answers a pending export failed once its job is past its time, which its download refuses as failed", async () => {
+    const { session } = await createTestUser();
+    const { id } = await createExport(session.userId, undefined, "pending");
+    const halfAnHourAgo = new Date(Date.now() - 31 * 60 * 1000).toISOString();
+    await db.update(exportsInAccount).set({ createdAt: halfAnHourAgo }).where(eq(exportsInAccount.id, id));
+
+    expect(await ExportsService.getExportStatus(session, id)).toMatchObject({ id, status: "failed" });
+    expect(ExportsService.getExport(session, id)).rejects.toThrow("failed");
   });
 });
