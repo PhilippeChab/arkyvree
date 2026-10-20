@@ -21,7 +21,7 @@ describe("v1 character sharing", () => {
     expect(second).not.toBe(first);
     await expectStatus(sheet.$get({ param: { shareToken: first! } }), 404);
 
-    expect(await expectOk(share.$delete({ param: { id } }))).toEqual({ shareToken: null });
+    await expectStatus(share.$delete({ param: { id } }), 204);
     await expectStatus(sheet.$get({ param: { shareToken: second! } }), 404);
   });
 

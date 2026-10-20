@@ -24,13 +24,14 @@ export default new Hono<ApiKeyContext>()
   .delete(
     "/:id/share",
     describeRoute({
-      response: v1ShareLink,
-      status: 200,
+      response: null,
+      status: 204,
       summary: "Revokes a character's share link, as its owner: its token reads nothing from then on",
     }),
     validate("param", idParam),
     async (c) => {
       const { id } = c.req.valid("param");
-      return c.json(V1.shareLink(await CharacterSharingService.revokeShareToken(c.var.requestSession, id)), 200);
+      await CharacterSharingService.revokeShareToken(c.var.requestSession, id);
+      return c.body(null, 204);
     },
   );
