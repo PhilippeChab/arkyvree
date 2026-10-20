@@ -44,6 +44,8 @@ describe("ClassProgressionService", () => {
     const { saved, levels } = await save(session, fork.id, klass.id, body);
 
     expect(saved.klassId).not.toBe(klass.id);
+    // The copy's levels it wrote
+    expect(saved.levelIds.toSorted()).toEqual([1, 2, 20].map((level) => levels.get(level)!.id).toSorted());
     expect([1, 2, 20].map((level) => [levels.get(level)!.bab, levels.get(level)!.skills])).toEqual([
       [1, 6],
       [2, 6],

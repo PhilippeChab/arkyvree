@@ -22,6 +22,9 @@ export type SpellCell = number | "all" | null;
 /** A row's first cell as a class level: "4", "4:", "4th", "4th:". */
 const LEVEL_CELL = /^(\d+)(?:st|nd|rd|th)?[:.)]?$/i;
 
+/** A cell naming a spell level or a class level as an ordinal: "1st", "4th". */
+const ORDINAL = /^\d+(st|nd|rd|th)$/i;
+
 /** The separators of a row's cells, outside a spreadsheet's: spaces, commas, semicolons and bars. */
 const SEPARATORS = /[\s,;|]+/;
 
@@ -54,11 +57,11 @@ export function parseSpellRows(text: string, allowsAll: boolean, firstLevel = 1)
     // A blank line is none, a spreadsheet's row of empty cells a row
     .filter((line) => line.includes("\t") || line.trim() !== "")
     .map(splitCells);
-  // A table's header rows aren't levels: one led by a word ("Level", "Cantrips"), or naming its spell levels after its
-  // first cell ("0 1st 2nd"), where a level's row has counts
+  // A table's header rows aren't levels: one led by a word ("Level", "Cantrips"), or naming spell levels after its first
+  // cell ("0 1st 2nd"), where a level's row has counts
   const isHeader = ([lead, ...rest]: string[]) =>
     (lead !== "" && !LEVEL_CELL.test(lead) && parseSpellCell(lead, allowsAll) === undefined) ||
-    rest.some((cell) => cell !== "" && parseSpellCell(cell, allowsAll) === undefined);
+    rest.some((cell) => ORDINAL.test(cell));
   const header = lines.findIndex((cells) => !isHeader(cells));
   const rows = header === -1 ? [] : lines.slice(header);
   const leads = rows.map((cells) => LEVEL_CELL.exec(cells[0]));

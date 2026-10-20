@@ -117,14 +117,18 @@ export class SpellDraft {
       place(levelId, spellLevel, value);
       const first = this.levels[this.firstAll[spellLevel] ?? -1];
       if (which !== "known" || value === "all" || first?.id !== levelId) continue;
-      // The levels below it as saved: a count stays, an All by it takes the count, one that's its own stops it
+      // The levels below it as saved: a count stays, an All by it takes the count written nearest above it, one that's its
+      // own (or one written) stops it
       const index = this.indexById.get(levelId) ?? 0;
+      let carried: SpellCell = value;
       for (const [offset, { id }] of this.levels.slice(index + 1).entries()) {
         const previous = this.levels[index + offset];
         const saved = this.savedCell(which, id, spellLevel);
         if (saved === "all" && previous && this.savedCell(which, previous.id, spellLevel) !== "all") break;
-        const written = cells.some((cell) => cell.levelId === id && cell.spellLevel === spellLevel);
-        if (!written && saved === "all" && !(id in next && spellLevel in next[id])) place(id, spellLevel, value);
+        const written = cells.find((cell) => cell.levelId === id && cell.spellLevel === spellLevel);
+        if (written?.value === "all") break;
+        if (written) carried = written.value;
+        else if (saved === "all" && !(id in next && spellLevel in next[id])) place(id, spellLevel, carried);
       }
     }
     const written = { ...this.edits, [which]: next };

@@ -46,6 +46,11 @@ describe("A pasted spell table", () => {
     expect(rows[0].cells).toEqual([3, 1]);
     // A header naming its spell levels after a 0 is one too, and with no level column its rows are counts
     expect(parseSpellRows("0 1st 2nd\n3 1\n4 2", false)).toEqual([{ cells: [3, 1] }, { cells: [4, 2] }]);
+    // A row with a cell it can't read is a row still (a cleric's "1+1")
+    expect(parseSpellRows("1st\t3\t1+1\n2nd\t4\t2+1", false)).toEqual([
+      { cells: [3, undefined], level: 1 },
+      { cells: [4, undefined], level: 2 },
+    ]);
     // A header numbering its spell levels is one too
     expect(parseSpellRows("Level 0 1 2\n1 3 1\n2 4 2\n3 4 2 1", false).map((row) => row.level)).toEqual([1, 2, 3]);
   });

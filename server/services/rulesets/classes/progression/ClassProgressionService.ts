@@ -51,7 +51,7 @@ class ClassProgressionService {
    * Writes each level a progression's save changes on the target class's level of its number (a copy's own, once the
    * class was copied): its `updatedAt` moved, refused when stale (`tokens`: the level the client read; a copy's take no
    * check), its form's edit, and its modifiers, those it drops (their copies', on a copy: refused when one is gone
-   * since) and those it adds.
+   * since) and those it adds. Answers the levels it wrote, by their ids.
    */
   private async writeLevels(
     tx: Db,
@@ -64,6 +64,7 @@ class ClassProgressionService {
     const idByNumber = new Map(rows.map((row) => [row.level, row.id]));
     const removedIds: string[] = [];
     const added: Parameters<typeof Modifiers.createMany>[1] = [];
+    const writtenIds: string[] = [];
     for (const level of levels) {
       const levelId = idByNumber.get(level.level.level);
       if (!levelId) throw new NotFoundError("Class level no longer exists; refresh the class");
@@ -71,6 +72,7 @@ class ClassProgressionService {
       const expectedUpdatedAt = target.copied ? undefined : tokens.get(level.level.id);
       const [row] = await KlassLevels.update(tx, {}, { id: levelId, expectedUpdatedAt });
       if (!row) throw new ConflictError(STALE_ENTITY_MESSAGE);
+      writtenIds.push(levelId);
       if (level.edit) await writeLevelEdit(tx, scope, levelId, level.edit);
 
       removedIds.push(...level.removedIds);
@@ -82,6 +84,7 @@ class ClassProgressionService {
     const removed = ids.length > 0 ? await Modifiers.delete(tx, { ids }) : [];
     if (removed.length !== removedIds.length) throw new ConflictError(STALE_ENTITY_MESSAGE);
     if (added.length > 0) await Modifiers.createMany(tx, added);
+    return writtenIds;
   }
 
   /** What a class's progression tabs read beside its levels and tables: its pools' own picks, and its spell list. */
@@ -95,7 +98,7 @@ class ClassProgressionService {
    * Saves a class's progression at once (`body`): its levels' fields, saves and granted feats, its pools' picks and its
    * spell tables, in one transaction, copying an inherited class first. Refused when a level it changes changed since
    * the client read it (`levelTokens`). A save that changes nothing writes nothing. Answers the class written
-   * (`klassId`: a copy's, when it copied one) and its token.
+   * (`klassId`: a copy's, when it copied one), its token, and the levels it wrote (`levelIds`).
    */
   async updateProgression(
     session: Session,
@@ -110,10 +113,11 @@ class ClassProgressionService {
         await withRulesetScope(tx, rulesetId, async (scope) => {
           (await RulesetsPolicy.for(tx, session, scope.ruleset)).canUpdateEntity();
           const plan = Engine.for(scope).class(classId).planProgression(form);
-          if (plan.levels.length === 0) return { klassId: plan.klass.id, updatedAt: plan.klass.updatedAt };
+          const unchanged = { klassId: plan.klass.id, levelIds: [] as string[], updatedAt: plan.klass.updatedAt };
+          if (plan.levels.length === 0) return unchanged;
 
           const target = await this.targetClass(tx, scope, plan.klass);
-          await this.writeLevels(tx, scope, target, plan.levels, tokens);
+          const levelIds = await this.writeLevels(tx, scope, target, plan.levels, tokens);
 
           await createActivityWithNotifications(tx, {
             userId: session.userId,
@@ -123,7 +127,7 @@ class ClassProgressionService {
             data: { entityName: plan.klass.name, levels: plan.levels.length },
           });
 
-          return { klassId: target.id, updatedAt: target.updatedAt };
+          return { klassId: target.id, levelIds, updatedAt: target.updatedAt };
         }),
     );
     RulesetViews.invalidate(rulesetId);

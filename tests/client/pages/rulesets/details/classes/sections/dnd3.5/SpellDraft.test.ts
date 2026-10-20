@@ -56,6 +56,17 @@ describe("A Spells tab's draft", () => {
     );
     expect(LEVELS.map(({ id }) => counted.cellOf("known", id, 0))).toEqual([2, 4, 3, "all"]);
 
+    // A block of counts over it: each level below takes the count written nearest above it
+    const allFromOne = new Map(LEVELS.map(({ id }) => [id, { 0: "All" as const }]));
+    const all = new SpellDraft(LEVELS, { perDay: new Map(), known: allFromOne }, NO_SPELL_EDITS);
+    const block = all.write("known", [
+      { levelId: "l1", spellLevel: 0, value: 2 },
+      { levelId: "l2", spellLevel: 0, value: 3 },
+    ]);
+    expect(LEVELS.map(({ id }) => new SpellDraft(LEVELS, all.saved, block).cellOf("known", id, 0))).toEqual([
+      2, 3, 3, 3,
+    ]);
+
     // An All typed over saved counts, then a count over it: the counts below come back
     const allFromTwo = draft().write("known", [{ levelId: "l2", spellLevel: 0, value: "all" }]);
     const undone = draft(allFromTwo).write("known", [{ levelId: "l2", spellLevel: 0, value: 4 }]);
