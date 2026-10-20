@@ -40,10 +40,20 @@ export class SpellDraft {
     this.firstAll = SPELL_LEVELS.map((spellLevel) =>
       levels.findIndex(({ id }) => this.editedCell("known", id, spellLevel) === "all"),
     );
+    // (spells per day's "all" is none: its body sends it so)
+    const counts = (which: SpellTable, cell: SpellCell) => cell !== null && !(which === "perDay" && cell === "all");
+    const firstCounted = (which: SpellTable) =>
+      SPELL_LEVELS.map((spellLevel) =>
+        levels.findIndex(({ id }) => counts(which, this.editedCell(which, id, spellLevel))),
+      );
+    this.firstCount = { known: firstCounted("known"), perDay: firstCounted("perDay") };
   }
 
   /** Each spell level's first level whose spells known are all of them: -1 for none. */
   private readonly firstAll: number[];
+
+  /** Each table's spell levels' first level with a count (or All): -1 for none. */
+  private readonly firstCount: Record<SpellTable, number[]>;
 
   private readonly indexById: Map<string, number>;
 
@@ -76,12 +86,18 @@ export class SpellDraft {
   cellOf(which: SpellTable, levelId: string, spellLevel: number): SpellCell {
     if (this.isKnownAbove(which, levelId, spellLevel)) return "all";
     const cell = this.editedCell(which, levelId, spellLevel);
-    // A spell level the class knows spells of reads 0 a day at least, as its saved table does
-    if (which === "perDay" && cell === null) {
+    if (cell !== null) return cell;
+    // A column, once counted, reads 0 where it has none, as its save writes it
+    const index = this.indexById.get(levelId) ?? 0;
+    const first = this.firstCount[which][spellLevel] ?? -1;
+    if (first !== -1 && index > first) return 0;
+    // A day's cell emptied where its spells known open the spell level reads 0, as its saved table does
+    const emptied = this.edits[which][levelId] && spellLevel in this.edits[which][levelId];
+    if (which === "perDay" && emptied) {
       const known = this.cellOf("known", levelId, spellLevel);
       if (known === "all" || (typeof known === "number" && known > 0)) return 0;
     }
-    return cell;
+    return null;
   }
 
   /** The cells of a write (`cells`) that change the table as it shows. */

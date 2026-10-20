@@ -1,6 +1,7 @@
 import { Autocomplete, Button, Stack, TextField, Typography } from "@mui/material";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { useLocation } from "react-router-dom";
 
 import {
   BlankState,
@@ -55,7 +56,9 @@ export function ClassSpellsSection({ rulesetId, classId, className, ruleset }: C
   // The table it shows is its address's, which its old Spells Known tab's opens on
   const tableParam = useSearchParam("table", "perDay");
   const table: SpellTable = tableParam.value === "known" ? "known" : "perDay";
-  const setTable = (which: SpellTable) => tableParam.setValue(which, { replace: true });
+  // Its page's state (where Back goes) stays with it
+  const location = useLocation();
+  const setTable = (which: SpellTable) => tableParam.setValue(which, { replace: true, state: location.state });
   const [pasting, setPasting] = useState(false);
   const [classSearch, setClassSearch] = useState("");
 
@@ -96,6 +99,17 @@ export function ClassSpellsSection({ rulesetId, classId, className, ruleset }: C
   );
   const setCells = (which: SpellTable, cells: PlacedCell[]) =>
     setEdits((current) => new SpellDraft(levels, spells.saved, current).write(which, cells));
+
+  /** A typed or pasted block's cells, written: those it can't change (under an earlier All, holding a count) are told. */
+  const writePasted = (cells: PlacedCell[]) => {
+    const next = new SpellDraft(levels, spells.saved, spells.write(table, cells));
+    const unchanged = cells.filter(
+      ({ levelId, spellLevel, value }) =>
+        next.isKnownAbove(table, levelId, spellLevel) && next.cellOf(table, levelId, spellLevel) !== value,
+    ).length;
+    if (unchanged > 0) snackbar.info(`${formatCount(unchanged, "cell")} under an All left as they are`);
+    setCells(table, cells);
+  };
 
   /** Another class's table, the one the tab shows: none for no class. */
   const readTable = async (otherId: string | undefined): Promise<SpellLevelRow[]> => {
@@ -239,7 +253,7 @@ export function ClassSpellsSection({ rulesetId, classId, className, ruleset }: C
             changesOf={(cells) => spells.changesOf(table, cells)}
             onCancel={() => setPasting(false)}
             onApply={(cells) => {
-              setCells(table, cells);
+              writePasted(cells);
               setPasting(false);
             }}
           />
@@ -253,13 +267,7 @@ export function ClassSpellsSection({ rulesetId, classId, className, ruleset }: C
           value={(levelId, spellLevel) => spells.cellOf(table, levelId, spellLevel)}
           saved={(levelId, spellLevel) => spells.savedCell(table, levelId, spellLevel)}
           knownAbove={(levelId, spellLevel) => spells.isKnownAbove(table, levelId, spellLevel)}
-          onCells={(cells) => {
-            // Cells a paste lands on under an earlier All take nothing: say so
-            const next = new SpellDraft(levels, spells.saved, spells.write(table, cells));
-            const under = cells.filter((cell) => next.isKnownAbove(table, cell.levelId, cell.spellLevel)).length;
-            if (under > 0) snackbar.info(`${formatCount(under, "cell")} under an All left as they are`);
-            setCells(table, cells);
-          }}
+          onCells={(cells) => writePasted(cells)}
         />
       </Panel>
       {saveBar}

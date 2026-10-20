@@ -83,6 +83,15 @@ describe("A Spells tab's draft", () => {
     expect([0, 1].map((spellLevel) => draft(emptied).cellOf("perDay", "l1", spellLevel))).toEqual([0, null]);
   });
 
+  test("reads a column's empty cells after its first count as 0, as its save writes them", () => {
+    const opened = draft().write("known", [{ levelId: "l2", spellLevel: 1, value: 2 }]);
+    const spells = draft(opened);
+    expect(LEVELS.map(({ id }) => spells.cellOf("known", id, 1))).toEqual([null, 2, 0, 0]);
+    expect(spells.countChanged("known")).toBe(3);
+    // Spells per day, untouched, stay as they were
+    expect(spells.countChanged("perDay")).toBe(0);
+  });
+
   test("sends each changed level's row, with its every spell level, per day's All as none", () => {
     const edited = draft().write("perDay", [{ levelId: "l2", spellLevel: 1, value: "all" }]);
     const known = draft(edited).write("known", [{ levelId: "l1", spellLevel: 0, value: 1 }]);
