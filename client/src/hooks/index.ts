@@ -11,6 +11,7 @@ export { useGoogleSignIn } from "./useGoogleSignIn.ts";
 export { useIsDemo } from "./useIsDemo.ts";
 export { useIsMobile } from "./useIsMobile.ts";
 export { useLatest } from "./useLatest.ts";
+export { useLeaveGuard } from "./useLeaveGuard.ts";
 export { useListboxQuery } from "./useListboxQuery.ts";
 export { useListPageQuery } from "./useListPageQuery.ts";
 export { useListParams } from "./useListParams.ts";

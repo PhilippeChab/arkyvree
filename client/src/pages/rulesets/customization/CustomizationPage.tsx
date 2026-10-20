@@ -79,8 +79,10 @@ function CustomizationView({
   usePageTitle(pageTitle);
 
   const entityKey = QUERY_KEYS.rulesets.entity(rulesetId, type, entityId);
-  const klassLevelsKey =
-    data.type === "klass_levels" ? QUERY_KEYS.rulesets.classLevels(rulesetId, data.entity.klassId) : undefined;
+  // A class level's class: its tabs (its levels, its tables, its progression) read what the level's page changes
+  const klassKey =
+    data.type === "klass_levels" ? QUERY_KEYS.rulesets.classDetail(rulesetId, data.entity.klassId) : undefined;
+  const customizedKeys = klassKey ? [entityKey, klassKey] : [entityKey];
 
   // A copy-on-write moves the page to the copy; `copiedFrom` keeps the source on screen while the copy loads
   const copy = useCopyOnWrite(rulesetId, entityId, (id) => buildCustomizationPath(type, id));
@@ -113,7 +115,7 @@ function CustomizationView({
               rulesetId,
               deleteFn: () => deleteEntityFn(data, rulesetId, entityId),
               // A class level is listed by its class's levels alone: a ruleset has no list of them
-              listKeys: [klassLevelsKey ?? QUERY_KEYS.rulesets.section(rulesetId, type)],
+              listKeys: [klassKey ?? QUERY_KEYS.rulesets.section(rulesetId, type)],
               entityKey,
               restorable,
               changesError,
@@ -162,9 +164,9 @@ function CustomizationView({
           {locked ? (
             <DiceSpinner sx={{ py: 4 }} />
           ) : section === "requirements" || data.type === "modifiers" ? (
-            <RequirementsSection {...sectionProps} entityType={type} queryKeysToInvalidate={[entityKey]} />
+            <RequirementsSection {...sectionProps} entityType={type} queryKeysToInvalidate={customizedKeys} />
           ) : (
-            <ModifiersSection {...sectionProps} entityType={data.type} queryKeysToInvalidate={[entityKey]} />
+            <ModifiersSection {...sectionProps} entityType={data.type} queryKeysToInvalidate={customizedKeys} />
           )}
         </SectionTabPanel>
       </Stack>
@@ -209,7 +211,8 @@ function describe(
       return {
         title: `${data.entity.name} Level ${data.entity.level}`,
         pageTitle: `${data.entity.name} Level ${data.entity.level}`,
-        backPath: `/rulesets/${rulesetId}/classes/${data.entity.klassId}/levels`,
+        // Its class's page, which opens on its base rules' first tab
+        backPath: `/rulesets/${rulesetId}/classes/${data.entity.klassId}`,
       };
     default:
       return { title: data.entity.name, pageTitle: data.entity.name };

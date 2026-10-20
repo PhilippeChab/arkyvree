@@ -9,6 +9,7 @@ import type { Klass } from "@/shared/relations.ts";
 import { DEFAULT_HIT_DIE, HIT_DIE_VALUES } from "@/vocabulary/dnd3.5/classes.ts";
 
 import ClassLevelEntity from "./ClassLevelEntity.ts";
+import ClassProgression from "./ClassProgression.ts";
 import ClassSkills from "./ClassSkills.ts";
 import ClassTable from "./ClassTable.ts";
 import { CLASS_FIELDS, CLASS_LEVEL_FIELDS } from "./fields.ts";
@@ -70,6 +71,20 @@ export default class ClassEntity extends RulesetEntity<
   /** A class's levels (`klassId`): described, and what saving or deleting one writes. Refused without the class. */
   levels(klassId: string) {
     return new ClassLevelEntity(this.view, this.find(klassId));
+  }
+
+  /**
+   * A class's progression (`klassId`): what its Progression and Spells tabs read beside its levels and table, and what
+   * one save of them writes. Refused without the class.
+   */
+  progression(klassId: string) {
+    const klass = this.find(klassId);
+    return new ClassProgression(
+      this.view,
+      klass,
+      new ClassLevelEntity(this.view, klass),
+      new ClassTable(this.view, klass),
+    );
   }
 
   /** A class's class skills (`klassId`): described, and what adding or removing one takes. Refused without the class. */

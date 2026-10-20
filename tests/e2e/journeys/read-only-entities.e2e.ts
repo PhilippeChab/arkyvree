@@ -64,7 +64,7 @@ const ENTITY_PAGES: EntityPage[] = [
     name: "Wizard",
     title: "Class Details",
     field: "Caster Type",
-    path: (rulesetId, id) => `/rulesets/${rulesetId}/classes/${id}/levels`,
+    path: (rulesetId, id) => `/rulesets/${rulesetId}/classes/${id}/progression`,
     shows: async (card) => {
       await expect(card.getByRole("combobox", { name: "Caster Type", exact: true })).toHaveText("Arcane");
       await expect(card.getByRole("combobox", { name: "Bonus Spell Ability", exact: true })).toHaveText(

@@ -59,6 +59,7 @@ const NOTIFICATION_MESSAGES: Record<string, (actor: string, d: Record<string, un
 
   // Ruleset content — update
   updateKlassLevel: (actor, d) => `${actor} updated a level of ${d.entityName || "a class"}`,
+  updateKlassProgression: (actor, d) => `${actor} updated the progression of ${d.entityName || "a class"}`,
   updateModifier: (actor, d) => `${actor} updated a modifier on ${d.entityName || "an entity"}`,
   updateRequirement: (actor, d) => `${actor} updated a requirement on ${d.entityName || "an entity"}`,
   updateProperty: (actor, d) => `${actor} updated a property on ${d.entityName || "an entity"}`,

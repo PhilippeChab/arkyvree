@@ -7,7 +7,7 @@ import { emptyOptionsText } from "@/client/src/lib/errorMessage.ts";
 import type { Aptitude } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import { aptitudeOptionsQuery, type AptitudeScope } from "@/client/src/pages/rulesets/optionQueries.ts";
 
-export function useAptitudeOptions(rulesetId: string, scope?: AptitudeScope) {
+export function useAptitudeOptions(rulesetId: string, scope?: AptitudeScope, enabled = true) {
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebouncedValue(search);
 
@@ -16,7 +16,7 @@ export function useAptitudeOptions(rulesetId: string, scope?: AptitudeScope) {
     isLoading,
     error,
     onScroll,
-  } = useListboxQuery(aptitudeOptionsQuery(rulesetId, debouncedSearch, scope));
+  } = useListboxQuery({ ...aptitudeOptionsQuery(rulesetId, debouncedSearch, scope), enabled });
 
   // The server searches and pages the list; the Autocomplete only shows it.
   const autocompleteProps = {

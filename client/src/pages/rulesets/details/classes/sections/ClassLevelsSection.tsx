@@ -18,6 +18,7 @@ import { customizationEntityQuery } from "@/client/src/pages/rulesets/customizat
 import { getClassForms } from "@/client/src/pages/rulesets/details/classes/classFormFactory.ts";
 import {
   type ClassLevelColumn,
+  type ClassLevelColumns,
   type ClassSectionProps,
   getClassSections,
 } from "@/client/src/pages/rulesets/details/classes/classSectionFactory.ts";
@@ -46,6 +47,9 @@ const FEATS_SHARE = 28;
 /** The level's number's column's share of the table's width, in percent. */
 const LEVEL_SHARE = 8;
 
+/** No column of a level's own fields: the table shows the level, its saves and its feats only. */
+const NO_LEVEL_COLUMNS: ClassLevelColumns = { beforeSaves: [], afterSaves: [] };
+
 /** A base rules' level column as the table lays it out. */
 function tableColumnOf({ key, label, share }: ClassLevelColumn) {
   return { key, label, width: `${share}%` };
@@ -58,7 +62,7 @@ export function ClassLevelsSection({ rulesetId, classId, className, ruleset }: C
 
   // Its base rules' columns of a level's own fields, around one column per ruleset save, which share the room left
   const { data: rulesetSaves, error: savesError } = useRulesetSaves(rulesetId);
-  const { beforeSaves, afterSaves } = getClassSections(ruleset.baseRules).levelColumns;
+  const { beforeSaves, afterSaves } = getClassSections(ruleset.baseRules).levelColumns ?? NO_LEVEL_COLUMNS;
   const rulesetColumns = [...beforeSaves, ...afterSaves];
   const savesShare =
     100 - LEVEL_SHARE - FEATS_SHARE - rulesetColumns.reduce((total, column) => total + column.share, 0);

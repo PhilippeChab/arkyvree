@@ -9,6 +9,7 @@ import {
   v1ClassLevel,
   v1ClassLevels,
   v1ClassPage,
+  v1ClassProgression,
   v1ClassSpellsKnown,
   v1ClassSpellsPerDay,
   v1NamedList,
@@ -17,6 +18,7 @@ import { V1 } from "@/server/routers/v1/translators/V1.ts";
 import { classParams, CONTENT_FILTERS, entityDescription, fields } from "@/server/routers/v1/validation.ts";
 import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
 import { ClassLevelsService } from "@/server/services/rulesets/classes/levels/index.ts";
+import { ClassProgressionService } from "@/server/services/rulesets/classes/progression/index.ts";
 import { ClassSkillsService } from "@/server/services/rulesets/classes/skills/index.ts";
 
 /** A class, its create's and its update's. */
@@ -106,6 +108,19 @@ export default new Hono<ApiKeyContext>()
     async (c) => {
       const { classId, id, levelId } = c.req.valid("param");
       return c.json(V1.classLevel(await ClassLevelsService.getClassLevel(id, classId, levelId)), 200);
+    },
+  )
+  .get(
+    "/:id/classes/:classId/progression",
+    describeRoute({
+      response: v1ClassProgression,
+      status: 200,
+      summary: "What a class's progression reads beside its levels and spell tables: its pools' picks by level",
+    }),
+    validate("param", classParams),
+    async (c) => {
+      const { classId, id } = c.req.valid("param");
+      return c.json(V1.classProgression(await ClassProgressionService.getProgression(id, classId)), 200);
     },
   )
   .get(
@@ -218,6 +233,58 @@ export default new Hono<ApiKeyContext>()
       const body = c.req.valid("json");
       const updated = await ClassLevelsService.updateClassLevel(c.var.requestSession, id, classId, levelId, body);
       return c.json(V1.classLevel(await ClassLevelsService.getClassLevel(id, classId, updated.id)), 200);
+    },
+  )
+  .put(
+    "/:id/classes/:classId/progression",
+    describeRoute({
+      response: v1ClassLevels,
+      status: 200,
+      summary:
+        "Saves a class's progression at once: its levels' fields, saves and granted feats, its pools' picks by level " +
+        "and its spell tables, a copy of its own when it's inherited. Answers its levels",
+    }),
+    validate("param", classParams),
+    validate(
+      "json",
+      z.object({
+        levels: z
+          .array(levelBody.extend({ levelId: z.string().uuid() }))
+          .optional()
+          .meta({ description: "The levels it changes, each by its id" }),
+        pools: z
+          .array(
+            z.object({
+              aptitudeId: z.string().uuid(),
+              picks: z.array(z.object({ count: z.number().int(), levelId: z.string().uuid() })),
+            }),
+          )
+          .optional()
+          .meta({ description: "The picks each level gives in each of its pools" }),
+        spells: z
+          .object({
+            known: z
+              .array(
+                z.object({
+                  counts: z.array(z.union([z.number().int(), z.literal("all")]).nullable()),
+                  levelId: z.string().uuid(),
+                }),
+              )
+              .optional()
+              .meta({ description: "Each level's spells known by spell level, from 0: `all`, or none (null)" }),
+            perDay: z
+              .array(z.object({ counts: z.array(z.number().int().nullable()), levelId: z.string().uuid() }))
+              .optional()
+              .meta({ description: "Each level's spells a day by spell level, from 0: none (null)" }),
+          })
+          .optional(),
+      }),
+    ),
+    async (c) => {
+      const { classId, id } = c.req.valid("param");
+      const body = c.req.valid("json");
+      const { klassId } = await ClassProgressionService.updateProgression(c.var.requestSession, id, classId, body);
+      return c.json((await ClassLevelsService.getClassLevels(id, klassId)).map(V1.classLevel), 200);
     },
   )
   .delete(

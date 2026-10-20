@@ -7,11 +7,7 @@ import SpellLists from "@/engine/rulesets/dnd3.5/rules/SpellLists.ts";
 import type { Klass, Modifier } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
-/** What a level's modifier steps on its table: the key it counts toward, and that key's total after it. */
-interface TableStep<V> {
-  key: string | number;
-  step: (total: V | undefined) => V;
-}
+import LevelTotals from "./LevelTotals.ts";
 
 /** The modifiers a class's levels set, each level's. */
 function getLevelModifiers(rulesetData: RulesetData, levels: { id: string }[]) {
@@ -29,31 +25,6 @@ function getSpellListIds(rulesetData: RulesetData, klass: Klass): string[] {
   return [...lists.filter((list) => list === own), ...lists.filter((list) => list !== own)].flatMap(
     (list) => rulesetData.aptitudeIdBySlug.get(list) ?? [],
   );
-}
-
-/**
- * Each level's running totals by key, by its id: each of its modifiers (`modifiers`, by their `sourceId`, its level)
- * steps the total of the key it counts toward (`stepOf`; none counts toward no key), over the levels by their number.
- */
-function runningTotals<V>(
-  levels: { id: string; level: number }[],
-  modifiers: { operator: string; sourceId: string; target: string; value: string }[],
-  stepOf: (modifier: { operator: string; target: string; value: string }) => TableStep<V> | undefined,
-): Map<string, Record<string | number, V>> {
-  const stepsByLevelId = Map.groupBy(
-    modifiers.flatMap((modifier) => {
-      const step = stepOf(modifier);
-      return step ? [{ ...step, levelId: modifier.sourceId }] : [];
-    }),
-    (step) => step.levelId,
-  );
-  const totals: Record<string | number, V> = {};
-  const totalsByLevelId = new Map<string, Record<string | number, V>>();
-  for (const level of levels.toSorted((a, b) => a.level - b.level)) {
-    for (const { key, step } of stepsByLevelId.get(level.id) ?? []) totals[key] = step(totals[key]);
-    totalsByLevelId.set(level.id, { ...totals });
-  }
-  return totalsByLevelId;
 }
 
 /**
@@ -89,7 +60,7 @@ export default class ClassTable {
     const nameBySlug = new Map(
       rulesetData.aptitudes.map((aptitude) => [stripSeparators(aptitude.name), aptitude.name]),
     );
-    const totals = runningTotals<number>(
+    const totals = LevelTotals.computeRunning<number>(
       levels,
       [...getLevelModifiers(rulesetData, levels), ...featModifiers],
       (modifier) => {
@@ -119,13 +90,11 @@ export default class ClassTable {
    */
   describeSpells() {
     const { levels } = this;
-    const totals = runningTotals<number>(levels, getLevelModifiers(this.view.rulesetData, levels), (modifier) => {
-      const target = AptitudeTargets.parseSpellLevel(modifier.target);
-      const value = LiteralValue.parse(modifier.value, "number");
-      if (!target || typeof value !== "number") return undefined;
-      if (target.field === "uses") return { key: target.level, step: (total) => (total ?? 0) + value };
-      return value === 0 ? undefined : { key: target.level, step: (total) => total ?? 0 };
-    });
+    const totals = LevelTotals.computeRunning(
+      levels,
+      getLevelModifiers(this.view.rulesetData, levels),
+      LevelTotals.readPerDayStep,
+    );
     return levels.map((level) => ({ ...level, spellsPerDay: totals.get(level.id) ?? {} }));
   }
 
@@ -135,19 +104,10 @@ export default class ClassTable {
    */
   describeSpellsKnown() {
     const { levels } = this;
-    const totals = runningTotals<number | "All">(
+    const totals = LevelTotals.computeRunning(
       levels,
       getLevelModifiers(this.view.rulesetData, levels),
-      (modifier) => {
-        const target = AptitudeTargets.parseSpellLevel(modifier.target);
-        const value = LiteralValue.parse(modifier.value, "number");
-        if (target?.field !== "allowed" || typeof value !== "number") return undefined;
-        const setsAll = modifier.operator === "set" && value === -1;
-        return {
-          key: target.level,
-          step: (total) => (setsAll ? "All" : total === "All" ? "All" : (total ?? 0) + value),
-        };
-      },
+      LevelTotals.readKnownStep,
     );
     return levels.map((level) => ({ ...level, spellsKnown: totals.get(level.id) ?? {} }));
   }

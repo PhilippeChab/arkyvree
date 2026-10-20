@@ -24,15 +24,16 @@ export default class EntityEdit {
 
   /**
    * The row an edit of `entity` (as the engine found it in the view) writes: the ruleset's own entity, or the copy of an
-   * inherited one, made on its first edit. A copy takes no stale-edit check: the client's `updatedAt` is the source's.
+   * inherited one, made on its first edit, with the customizations it copied, by their source's id (`copiedIds`). A
+   * copy takes no stale-edit check: the client's `updatedAt` is the source's.
    */
   async cowToEdit(
     tx: Db,
     entityType: RulesetEntityType,
     entity: { id: string; rulesetId: string },
-  ): Promise<{ copied: boolean; id: string }> {
-    if (entity.rulesetId === this.ruleset.id) return { id: entity.id, copied: false };
+  ): Promise<{ copied: boolean; copiedIds: ReadonlyMap<string, string>; id: string }> {
+    if (entity.rulesetId === this.ruleset.id) return { id: entity.id, copied: false, copiedIds: new Map() };
     const copy = await EntityCopy.create(tx, entityType, entity.id, this.ruleset);
-    return { id: copy.entity.id, copied: true };
+    return { id: copy.entity.id, copied: true, copiedIds: copy.copiedIds };
   }
 }

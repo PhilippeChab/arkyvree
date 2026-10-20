@@ -51,7 +51,7 @@ export async function openFeat(page: Page, name: string) {
 export async function openFighterLevel1(page: Page) {
   await page.getByRole("tab", { name: "Classes" }).click();
   await page.getByRole("cell", { name: "Fighter", exact: true }).first().click();
-  await expect(page).toHaveURL(/\/rulesets\/[a-f0-9-]+\/classes\/[a-f0-9-]+\/levels/);
+  await expect(page).toHaveURL(/\/rulesets\/[a-f0-9-]+\/classes\/[a-f0-9-]+\/progression/);
   // A level's first cell is its number.
   await page
     .locator("table tbody tr")

@@ -17,16 +17,10 @@ import { Engine } from "@/engine/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
+import { BAB_PROGRESSIONS, SAVE_PROGRESSIONS } from "@/vocabulary/dnd3.5/classes.ts";
 
 /** A class's levels, as seeded: each level's id and number. */
 type Levels = { id: string; level: number }[];
-
-/** A level's base attack bonus, by the class's progression. */
-const BAB: Record<BabType, (level: number) => number> = {
-  good: (level) => level,
-  medium: (level) => Math.floor((level * 3) / 4),
-  poor: (level) => Math.floor(level / 2),
-};
 
 /** The aptitudes a level that advances spellcasting gives a pick in, by the kind of caster it advances. */
 const CASTER_LEVEL_APTITUDES: Record<CasterLevelAdvancement["type"], string[]> = {
@@ -36,11 +30,11 @@ const CASTER_LEVEL_APTITUDES: Record<CasterLevelAdvancement["type"], string[]> =
   dual: ["Bonus Arcane Caster Level", "Bonus Divine Caster Level"],
 };
 
-/** A level's base save, by how good the class's save is. */
-const SAVE: Record<SaveType, (level: number) => number> = {
-  good: (level) => Math.floor(level / 2) + 2,
-  poor: (level) => Math.floor(level / 3),
-};
+/** A level's base attack bonus, by the class's progression. */
+function babAt(progression: BabType, level: number) {
+  const { levels, points } = BAB_PROGRESSIONS[progression];
+  return Math.floor((level * points) / levels);
+}
 
 /** A spellcaster's slots in one of its lists, gated by its requirements. */
 function listSlots(
@@ -66,6 +60,12 @@ function listSlots(
       ? getSpellLevelOpenings(spells.perDay).map((o) => modifier(o.level, slot(o.spellLevel, "allowed"), "-1", "set"))
       : []),
   ];
+}
+
+/** A level's base save, by how good the class's save is. */
+function saveAt(progression: SaveType, level: number) {
+  const { base, hitDicePerPoint } = SAVE_PROGRESSIONS[progression];
+  return base + Math.floor(level / hitDicePerPoint);
 }
 
 /**
@@ -170,7 +170,7 @@ export function SeedsClasses<B extends Constructor<BaseSeeder>>(Base: B) {
             id,
             "klass_levels",
             Engine.forRules(DND35_BASE_RULES).toEntityProperties("klassLevels", {
-              bab: BAB[def.bab](level),
+              bab: babAt(def.bab, level),
               skills: def.skillPoints,
             }),
           ),
@@ -183,9 +183,9 @@ export function SeedsClasses<B extends Constructor<BaseSeeder>>(Base: B) {
       await this.insertAll(
         klassLevelSavesInRules,
         levels.flatMap(({ id, level }) => [
-          { klassLevelId: id, saveId: this.ctx.saveMap["Fortitude"], base: SAVE[def.saves.fortitude](level) },
-          { klassLevelId: id, saveId: this.ctx.saveMap["Reflex"], base: SAVE[def.saves.reflex](level) },
-          { klassLevelId: id, saveId: this.ctx.saveMap["Will"], base: SAVE[def.saves.will](level) },
+          { klassLevelId: id, saveId: this.ctx.saveMap["Fortitude"], base: saveAt(def.saves.fortitude, level) },
+          { klassLevelId: id, saveId: this.ctx.saveMap["Reflex"], base: saveAt(def.saves.reflex, level) },
+          { klassLevelId: id, saveId: this.ctx.saveMap["Will"], base: saveAt(def.saves.will, level) },
         ]),
       );
     }

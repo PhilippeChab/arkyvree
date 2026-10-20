@@ -81,6 +81,32 @@ export const v1ClassLevels = z.array(v1ClassLevel).meta({ description: "A class'
 
 export const v1ClassPage = buildPageSchema(v1Class);
 
+export const v1ClassProgression = z
+  .strictObject({
+    featPicks: z
+      .array(
+        z.strictObject({
+          aptitudes: z.array(z.strictObject({ count: z.number().int(), name: z.string() })),
+          featId: v1Id,
+        }),
+      )
+      .meta({ description: "The feats a level may grant that give picks of their own, each aptitude's" }),
+    pools: z
+      .array(
+        z.strictObject({
+          aptitude: v1Named,
+          picks: z.array(z.strictObject({ count: z.number().int(), levelId: v1Id })),
+        }),
+      )
+      .meta({ description: "The class's own pools: the picks each of its levels gives in it" }),
+    severalSpellLists: z.boolean().meta({ description: "Whether its levels give slots in more than its own list" }),
+    spellList: v1Named.nullable().meta({ description: "Its own spell list" }),
+  })
+  .meta({
+    description: "What a class's progression reads beside its levels and spell tables: its pools' picks by level",
+    id: "ClassProgression",
+  });
+
 export const v1ClassSpellsKnown = v1SpellLevelCounts.meta({
   description: "The spells a class's levels know, each level's by spell level",
   id: "ClassSpellsKnown",

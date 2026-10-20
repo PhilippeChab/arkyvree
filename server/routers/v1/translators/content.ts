@@ -20,6 +20,7 @@ import type {
   v1Class,
   v1ClassFeatPools,
   v1ClassLevel,
+  v1ClassProgression,
   v1ClassSpellsPerDay,
   v1Feat,
   v1Item,
@@ -35,6 +36,7 @@ import type {
 } from "@/server/routers/v1/schemas/content.ts";
 import type { ClassesService } from "@/server/services/rulesets/classes/index.ts";
 import type { ClassLevelsService } from "@/server/services/rulesets/classes/levels/index.ts";
+import type { ClassProgressionService } from "@/server/services/rulesets/classes/progression/index.ts";
 import type { ClassSkillsService } from "@/server/services/rulesets/classes/skills/index.ts";
 import type { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";
 import type { FeatsService } from "@/server/services/rulesets/feats/index.ts";
@@ -166,6 +168,24 @@ export function toV1ClassLevel(level: ClassLevel): z.infer<typeof v1ClassLevel> 
     id: level.id,
     level: level.level,
     saves: level.saves.map(({ base, saveId }) => ({ base, saveId })),
+  };
+}
+
+/** What a class's progression reads beside its levels and spell tables: its pools' picks by level. */
+export function toV1ClassProgression(
+  progression: Answer<typeof ClassProgressionService.getProgression>,
+): z.infer<typeof v1ClassProgression> {
+  return {
+    featPicks: Object.entries(progression.featPicks).map(([featId, picks]) => ({
+      aptitudes: Object.entries(picks).map(([name, count]) => ({ count, name })),
+      featId,
+    })),
+    pools: progression.pools.map(({ aptitudeId, name, picks }) => ({
+      aptitude: { id: aptitudeId, name },
+      picks: Object.entries(picks).map(([levelId, count]) => ({ count, levelId })),
+    })),
+    severalSpellLists: progression.severalSpellLists,
+    spellList: progression.spellList ? { id: progression.spellList.id, name: progression.spellList.name } : null,
   };
 }
 
