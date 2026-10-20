@@ -51,7 +51,9 @@ function readPastedTable(text: string, allowsAll: boolean, firstLevel: number): 
     return leads.length >= 3 && (countsFrom(1) || countsFrom(firstLevel));
   };
   const cornered = body[0]?.[0] === "" && levelColumn(body.slice(1));
-  const counting = cornered || levelColumn(body);
+  // A header led by "Level" says its rows are led by theirs, however few
+  const levelHeader = /^(class\s+)?(level|lvl)\.?$/i.test(lines[header - 1]?.[0]?.trim() ?? "");
+  const counting = cornered || levelColumn(body) || (levelHeader && body.every((cells) => LEVEL_CELL.test(cells[0])));
   const rows = (cornered ? body.slice(1) : body).filter((cells) => !counting || cells.some(Boolean));
   const leads = rows.map((cells) => LEVEL_CELL.exec(cells[0]));
   const read = rows.map((cells, index): PastedRow => {
@@ -62,9 +64,15 @@ function readPastedTable(text: string, allowsAll: boolean, firstLevel: number): 
       ...(named && { level: Number(lead[1]) }),
     };
   });
-  // The header just above them names its spell levels over the counts: after its level column's, when it has one
+  // The header just above them names its spell levels over the counts: past a corner over the level column, when it
+  // has one (as wide as the rows, or empty, or "Level"; a header split from a table's cells may have lost it)
   const headerRow = cornered ? body[0] : lines[header - 1];
-  const labels = headerRow && (read.some((row) => row.level !== undefined) ? headerRow.slice(1) : headerRow);
+  const width = Math.max(0, ...rows.map((cells) => cells.length));
+  const corner =
+    !!headerRow &&
+    read.some((row) => row.level !== undefined) &&
+    (headerRow.length >= width || headerRow[0] === "" || levelHeader);
+  const labels = headerRow && (corner ? headerRow.slice(1) : headerRow);
   return { column: labels && readSpellLevelLabel(labels[0] ?? ""), rows: read };
 }
 
@@ -131,6 +139,22 @@ export function placeSpellRows(
       return value === undefined || spellLevel >= columns ? [] : [{ levelId: level.id, spellLevel, value }];
     });
   });
+}
+
+/**
+ * A pasted table's cells where they land (`placeSpellRows`'s), read once: its rows from the level at `startIndex`, its
+ * counts from the spell level its header names, else from `startColumn`.
+ */
+export function placeSpellTable(
+  text: string,
+  allowsAll: boolean,
+  levels: readonly { id: string; level: number }[],
+  startIndex: number,
+  startColumn: number,
+  columns: number,
+) {
+  const { column, rows } = readPastedTable(text, allowsAll, levels[startIndex]?.level ?? 1);
+  return placeSpellRows(rows, levels, startIndex, column ?? startColumn, columns);
 }
 
 /**

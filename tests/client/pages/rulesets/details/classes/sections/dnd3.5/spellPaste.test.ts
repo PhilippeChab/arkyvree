@@ -70,6 +70,14 @@ describe("A pasted spell table", () => {
     expect(readPastedColumn("Level\tCantrips\t1st\n1\t3\t1\n2\t4\t2\n3\t4\t2", false)).toBe(0);
     expect(readPastedColumn("0 1st 2nd\n3 1\n4 2", false)).toBe(0);
     expect(readPastedColumn("1st 3 1\n2nd 4 2", false)).toBeUndefined();
+    // A header that lost its corner over the level column (a book's, split on spaces)
+    expect(readPastedColumn("0 1st 2nd\n1st 4 2 1\n2nd 5 2 1", false)).toBe(0);
+    // A "Level" header over two rows: their first cells are levels
+    const two = parseSpellRows("Level\tCantrips\t1st\n1\t3\t1\n2\t4\t2", false);
+    expect(two).toEqual([
+      { cells: [3, 1], level: 1 },
+      { cells: [4, 2], level: 2 },
+    ]);
   });
 
   test("keeps a spreadsheet's empty cells where they are", () => {

@@ -145,7 +145,7 @@ describe("ClassProgressionService", () => {
     expect([4, 5, 6].map((level) => perDay.get(level)!.spellsPerDay[1])).toEqual([0, 0, 1]);
   });
 
-  test("refuses a change to a spell column a requirement gates a modifier of", async () => {
+  test("refuses a change to a spell column a requirement gates a modifier of, and takes one to another", async () => {
     const { session, fork, klass, levelId } = await forkWithClass("Wizard");
     // The fork's own wizard, its first level given a 1st-level spell a day more past 5th character level
     const { saved } = await save(session, fork.id, klass.id, {
@@ -177,6 +177,13 @@ describe("ClassProgressionService", () => {
       }),
       400,
     );
+    // Its cantrips: their column has no such modifier, and the 1st-level one keeps its total
+    const before = await ClassLevelsService.getClassLevelSpells(fork.id, saved.klassId);
+    const firstBefore = before.find((level) => level.level === 1)!.spellsPerDay;
+    const { perDay } = await save(session, fork.id, saved.klassId, {
+      spells: { perDay: [{ levelId: first.id, counts: [4, firstBefore[1] ?? null] }] },
+    });
+    expect(perDay.get(1)!.spellsPerDay).toMatchObject({ 0: 4, 1: firstBefore[1] });
   });
 
   test("refuses a spell list's picks as a pool's", async () => {

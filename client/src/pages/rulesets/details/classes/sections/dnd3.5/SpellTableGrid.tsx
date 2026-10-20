@@ -5,14 +5,7 @@ import { DataCell, DataRow, DataTable, ValueChip } from "@/client/src/components
 
 import { CHANGED_TEXT_SX } from "./changedCell.ts";
 import { spellLevelLabel } from "./spellLevels.ts";
-import {
-  parseSpellCell,
-  parseSpellRows,
-  type PlacedCell,
-  placeSpellRows,
-  readPastedColumn,
-  type SpellCell,
-} from "./spellPaste.ts";
+import { parseSpellCell, type PlacedCell, placeSpellTable, type SpellCell } from "./spellPaste.ts";
 
 interface SpellTableGridProps {
   /** Spells known take "all" (every spell of the list) */
@@ -86,9 +79,7 @@ export function SpellTableGrid({
     // The paste is the cell's value now, not what was typed before it
     setTyping(null);
     // From the spell level its header names, else the cell's
-    const firstLevel = levels[row]?.level;
-    const from = readPastedColumn(text, allowsAll, firstLevel) ?? column;
-    onCells(placeSpellRows(parseSpellRows(text, allowsAll, firstLevel), levels, row, from, columns));
+    onCells(placeSpellTable(text, allowsAll, levels, row, column, columns));
   };
 
   return (

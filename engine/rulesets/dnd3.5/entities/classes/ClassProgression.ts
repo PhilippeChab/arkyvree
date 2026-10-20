@@ -270,14 +270,21 @@ export default class ClassProgression {
         wanted,
         levels.map(({ id }) => kept.get(id)?.[spellLevel]),
       );
-      // A column requirements gate a modifier of counts it for every character: a change to it is the levels' own to make
-      const gated = levels.some(({ id }) =>
-        working.get(id)?.some((modifier) => modifier.gated && modifier.target === target),
-      );
-      const refused = `Spell level ${spellLevel} has modifiers requirements gate: edit its levels' modifiers`;
+      // A column with a modifier the table can't read as a count (one requirements gate, which it counts for every
+      // character; one that isn't an add of a number) takes no change: that's its levels' own to make
+      const unread = (modifier: LevelModifier) =>
+        modifier.target === target && !isPlainAdd(modifier) && !(field === "allowed" && isPlainAll(modifier));
+      const current = normalizedColumn(levels.map(({ id }) => totals.get(id)?.[spellLevel]));
+      const changes = wanted.some((total, index) => total !== current[index]);
+      if (changes && levels.some(({ id }) => working.get(id)?.some(unread))) {
+        throw new RulesError(
+          "invalid",
+          `Spell level ${spellLevel} has modifiers this table can't edit: edit its levels'`,
+        );
+      }
       for (const [index, { id }] of levels.entries()) {
         const next = columnModifiers[index];
-        if (next && replaceOwn(working, id, isOwn, next) && gated) throw new RulesError("invalid", refused);
+        if (next) replaceOwn(working, id, isOwn, next);
       }
     }
   }
