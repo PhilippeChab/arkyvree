@@ -17,13 +17,14 @@ function draft(edits: SpellEdits = NO_SPELL_EDITS) {
 }
 
 describe("A Spells tab's draft", () => {
-  test("shows its edits over the saved cells, an emptied one as none, and counts what differs", () => {
+  test("shows its edits over the saved cells, and counts what differs", () => {
     const edited = draft().write("perDay", [
       { levelId: "l2", spellLevel: 0, value: 4 },
       { levelId: "l3", spellLevel: 0, value: null },
     ]);
     const spells = draft(edited);
-    expect(LEVELS.map(({ id }) => spells.cellOf("perDay", id, 0))).toEqual([3, 4, null, 3]);
+    // The emptied one reads 0: cantrips are known there
+    expect(LEVELS.map(({ id }) => spells.cellOf("perDay", id, 0))).toEqual([3, 4, 0, 3]);
     expect(spells.countChanged("perDay")).toBe(2);
   });
 
@@ -71,6 +72,15 @@ describe("A Spells tab's draft", () => {
     const allFromTwo = draft().write("known", [{ levelId: "l2", spellLevel: 0, value: "all" }]);
     const undone = draft(allFromTwo).write("known", [{ levelId: "l2", spellLevel: 0, value: 4 }]);
     expect(LEVELS.map(({ id }) => draft(undone).cellOf("known", id, 0))).toEqual([2, 4, 3, 3]);
+  });
+
+  test("reads an emptied cell a day as 0 where its spells known open the spell level", () => {
+    const emptied = draft().write("perDay", [
+      { levelId: "l1", spellLevel: 0, value: null },
+      { levelId: "l1", spellLevel: 1, value: null },
+    ]);
+    // Cantrips are known from level 1; 1st-level spells aren't
+    expect([0, 1].map((spellLevel) => draft(emptied).cellOf("perDay", "l1", spellLevel))).toEqual([0, null]);
   });
 
   test("sends each changed level's row, with its every spell level, per day's All as none", () => {

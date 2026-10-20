@@ -149,17 +149,31 @@ export function ClassSpellsSection({ rulesetId, classId, className, ruleset }: C
       <BlankState icon={SpellUsesIcon} title="No levels" description="Add levels to the class to give it spells." />
     );
   }
+  const saveBar = (
+    <ProgressionSaveBar
+      what="Spells"
+      changes={changes}
+      onDiscard={discard}
+      onSave={handleSave}
+      canSave={editable}
+      pending={save.isPending}
+    />
+  );
   if (progression && !progression.spellList) {
+    // Edits made before its list went (elsewhere) keep their Discard
     return (
-      <BlankState
-        icon={SpellUsesIcon}
-        title="No spells"
-        description={
-          canEdit
-            ? `${className} has no spell list of its own, so no spells per day or known. A class that casts gets one from an aptitude named "${className} Spells".`
-            : `${className} casts no spells.`
-        }
-      />
+      <Stack spacing={3}>
+        <BlankState
+          icon={SpellUsesIcon}
+          title="No spells"
+          description={
+            canEdit
+              ? `${className} has no spell list of its own, so no spells per day or known. A class that casts gets one from an aptitude named "${className} Spells".`
+              : `${className} casts no spells.`
+          }
+        />
+        {saveBar}
+      </Stack>
     );
   }
 
@@ -239,17 +253,16 @@ export function ClassSpellsSection({ rulesetId, classId, className, ruleset }: C
           value={(levelId, spellLevel) => spells.cellOf(table, levelId, spellLevel)}
           saved={(levelId, spellLevel) => spells.savedCell(table, levelId, spellLevel)}
           knownAbove={(levelId, spellLevel) => spells.isKnownAbove(table, levelId, spellLevel)}
-          onCells={(cells) => setCells(table, cells)}
+          onCells={(cells) => {
+            // Cells a paste lands on under an earlier All take nothing: say so
+            const next = new SpellDraft(levels, spells.saved, spells.write(table, cells));
+            const under = cells.filter((cell) => next.isKnownAbove(table, cell.levelId, cell.spellLevel)).length;
+            if (under > 0) snackbar.info(`${formatCount(under, "cell")} under an All left as they are`);
+            setCells(table, cells);
+          }}
         />
       </Panel>
-      <ProgressionSaveBar
-        what="Spells"
-        changes={changes}
-        onDiscard={discard}
-        onSave={handleSave}
-        canSave={editable}
-        pending={save.isPending}
-      />
+      {saveBar}
     </Stack>
   );
 }

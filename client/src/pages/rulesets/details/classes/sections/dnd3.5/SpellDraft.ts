@@ -72,9 +72,16 @@ export class SpellDraft {
     return { ...(perDay.length > 0 && { perDay }), ...(known.length > 0 && { known }) };
   }
 
-  /** A cell as the table shows it. */
+  /** A cell as the table shows it, and as its save writes it. */
   cellOf(which: SpellTable, levelId: string, spellLevel: number): SpellCell {
-    return this.isKnownAbove(which, levelId, spellLevel) ? "all" : this.editedCell(which, levelId, spellLevel);
+    if (this.isKnownAbove(which, levelId, spellLevel)) return "all";
+    const cell = this.editedCell(which, levelId, spellLevel);
+    // A spell level the class knows spells of reads 0 a day at least, as its saved table does
+    if (which === "perDay" && cell === null) {
+      const known = this.cellOf("known", levelId, spellLevel);
+      if (known === "all" || (typeof known === "number" && known > 0)) return 0;
+    }
+    return cell;
   }
 
   /** The cells of a write (`cells`) that change the table as it shows. */
