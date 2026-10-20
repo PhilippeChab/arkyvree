@@ -7,9 +7,7 @@ import type { NotificationsService } from "@/server/services/notifications/index
 import { isRecord } from "@/shared/isRecord.ts";
 
 import { toV1Target } from "./activities.ts";
-
-/** What a service answers, awaited. */
-type Answer<F extends (...args: never[]) => Promise<unknown>> = Awaited<ReturnType<F>>;
+import type { Answer } from "./answers.ts";
 
 /** Something the key's user is told of: in a list, or as marking it read leaves it. */
 export function toV1Notification(

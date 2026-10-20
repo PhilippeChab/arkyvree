@@ -16,8 +16,7 @@ import type { CampaignInvitesService } from "@/server/services/campaigns/invites
 import type { CharacterContributorsService } from "@/server/services/characters/contributors/index.ts";
 import type { ContributorsService } from "@/server/services/rulesets/contributors/index.ts";
 
-/** What a service answers, awaited. */
-type Answer<F extends (...args: never[]) => Promise<unknown>> = Awaited<ReturnType<F>>;
+import type { Answer } from "./answers.ts";
 
 /** An invite to the key's user to play in a campaign, in their list, read with its campaign. */
 type ReceivedCampaignInvite = Extract<

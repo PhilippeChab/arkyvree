@@ -6,10 +6,8 @@ import type { v1Contributor, v1ContributorPage } from "@/server/routers/v1/schem
 import type { CharacterContributorsService } from "@/server/services/characters/contributors/index.ts";
 import type { ContributorsService } from "@/server/services/rulesets/contributors/index.ts";
 
+import type { Answer } from "./answers.ts";
 import { toV1Page } from "./pages.ts";
-
-/** What a service answers, awaited. */
-type Answer<F extends (...args: never[]) => Promise<unknown>> = Awaited<ReturnType<F>>;
 
 /** A page of contributors, as a character's or a ruleset's service answers it, with its owner. */
 type ContributorList =

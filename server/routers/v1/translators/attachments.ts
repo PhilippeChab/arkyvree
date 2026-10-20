@@ -5,8 +5,7 @@ import type { z } from "zod";
 import type { v1Attachment, v1DirectUpload } from "@/server/routers/v1/schemas/attachments.ts";
 import type { AttachmentsService } from "@/server/services/attachments/index.ts";
 
-/** What a service answers, awaited. */
-type Answer<F extends (...args: never[]) => Promise<unknown>> = Awaited<ReturnType<F>>;
+import type { Answer } from "./answers.ts";
 
 /** A record's image in its slot. */
 export function toV1Attachment({

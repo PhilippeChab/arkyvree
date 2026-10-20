@@ -7,8 +7,7 @@ import type { CampaignCharactersService } from "@/server/services/campaigns/char
 import type { CharactersService } from "@/server/services/characters/index.ts";
 import type { ExportsService } from "@/server/services/exports/index.ts";
 
-/** What a service answers, awaited. */
-type Answer<F extends (...args: never[]) => Promise<unknown>> = Awaited<ReturnType<F>>;
+import type { Answer } from "./answers.ts";
 
 /** An export, as its queueing or its read answers it. */
 export function toV1Export(

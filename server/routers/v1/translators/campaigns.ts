@@ -25,6 +25,7 @@ import type { CharactersService } from "@/server/services/characters/index.ts";
 import { CHARACTER_VISIBILITY_OPTIONS, type CharacterVisibility } from "@/shared/campaigns.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
 
+import type { Answer } from "./answers.ts";
 import { toV1Character } from "./characters.ts";
 
 /** An invite sent for a player slot, as its rows are stored. */
@@ -33,9 +34,6 @@ interface SlotInvite {
   id: string;
   status: string;
 }
-
-/** What a service answers, awaited. */
-type Answer<F extends (...args: never[]) => Promise<unknown>> = Awaited<ReturnType<F>>;
 
 /** A character linked to a campaign, as its service answers it to the key's user. */
 type CampaignCharacter = Answer<typeof CampaignCharactersService.getCharacter>;

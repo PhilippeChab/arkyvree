@@ -7,8 +7,7 @@ import type { v1Activity, v1Target, v1TargetPage } from "@/server/routers/v1/sch
 import type { ActivitiesService } from "@/server/services/activities/index.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 
-/** What a service answers, awaited. */
-type Answer<F extends (...args: never[]) => Promise<unknown>> = Awaited<ReturnType<F>>;
+import type { Answer } from "./answers.ts";
 
 /** Something the key's user did. */
 export function toV1Activity(
