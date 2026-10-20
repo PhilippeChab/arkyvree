@@ -74,7 +74,8 @@ export function SpellTableGrid({
   const handlePaste = (event: ClipboardEvent<HTMLInputElement>, row: number, column: number) => {
     // A block, or a row's cells (a PDF's, by spaces), fills from the cell; a value alone is the cell's own text
     const text = event.clipboardData.getData("text/plain");
-    if (readOnly || !/[\s,;|]/.test(text.trim())) return;
+    const locked = readOnly || knownAbove(levels[row]?.id ?? "", column);
+    if (locked || !/[\s,;|]/.test(text.trim())) return;
     event.preventDefault();
     // The paste is the cell's value now, not what was typed before it
     setTyping(null);

@@ -127,12 +127,11 @@ export function ClassSpellsSection({ rulesetId, classId, className, ruleset }: C
     );
   };
 
-  const changes = editable
-    ? (["perDay", "known"] as const).flatMap((which) => {
-        const count = spells.countChanged(which);
-        return count > 0 ? [{ key: which, label: `${TABLE_LABELS[which]}: ${formatCount(count, "cell")}` }] : [];
-      })
-    : [];
+  // Shown even once the tab can't save them (its class's spell lists changed elsewhere), so its Discard drops them
+  const changes = (["perDay", "known"] as const).flatMap((which) => {
+    const count = spells.countChanged(which);
+    return count > 0 ? [{ key: which, label: `${TABLE_LABELS[which]}: ${formatCount(count, "cell")}` }] : [];
+  });
 
   // What changes while the save runs stays, for the next save; refused (its levels changed since), it's sent again over
   // them as they're read again
@@ -248,6 +247,7 @@ export function ClassSpellsSection({ rulesetId, classId, className, ruleset }: C
         changes={changes}
         onDiscard={discard}
         onSave={handleSave}
+        canSave={editable}
         pending={save.isPending}
       />
     </Stack>
