@@ -6,6 +6,7 @@
 import { infiniteQueryOptions, queryOptions, skipToken } from "@tanstack/react-query";
 import { type InferRequestType, type InferResponseType, parseResponse } from "hono/client";
 
+import { NO_TIME } from "@/client/src/lib/durations.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { powersQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
@@ -23,11 +24,22 @@ export type ClassLevelFormData = InferRequestType<
   (typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["levels"]["$post"]
 >["json"];
 
-/** A class's level as its Levels tab lists it */
+/** A class's level as its Progression tab lists it */
 export type ClassLevelRow = InferResponseType<
   (typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["levels"]["$get"],
   200
 >[number];
+
+/** What a class's Progression and Spells tabs read beside its levels and tables: its pools' own picks, its spell list. */
+export type ClassProgression = InferResponseType<
+  (typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["progression"]["$get"],
+  200
+>;
+
+/** A save of a class's progression: its levels' forms, its pools' picks, its spell tables' totals, its levels' tokens. */
+export type ClassProgressionBody = InferRequestType<
+  (typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["progression"]["$put"]
+>["json"];
 
 function classParam(rulesetId: string, classId: string) {
   return { param: { id: rulesetId, classId } };
@@ -54,6 +66,20 @@ export function classLevelsQuery(rulesetId: string, classId: string) {
     queryKey: QUERY_KEYS.rulesets.classLevels(rulesetId, classId),
     queryFn: () =>
       parseResponse(rpc.api.rulesets[":id"].classes[":classId"].levels.$get(classParam(rulesetId, classId))),
+  });
+}
+
+/**
+ * What a class's Progression and Spells tabs read beside its levels and tables: its pools' own picks, its spell list,
+ * its feats' picks. Read again each time a tab mounts: an aptitude or a feat changed elsewhere (a spell list added)
+ * changes it.
+ */
+export function classProgressionQuery(rulesetId: string, classId: string) {
+  return queryOptions({
+    queryKey: QUERY_KEYS.rulesets.classProgression(rulesetId, classId),
+    staleTime: NO_TIME,
+    queryFn: () =>
+      parseResponse(rpc.api.rulesets[":id"].classes[":classId"].progression.$get(classParam(rulesetId, classId))),
   });
 }
 

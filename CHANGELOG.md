@@ -4,6 +4,7 @@
 
 - Rulesets choose the levels that give every character a feat or an ability score increase
 - Import a character from a PCGen file
+- D&D 3.5: edit a class's whole progression at once
 
 ## 0.6.0 — 2026-10-12
 

@@ -11,6 +11,7 @@ Answers to common questions about Arkyvree. Something missing or unclear? [Open 
 
 - [What is a Ruleset?](rulesets.md#what-is-a-ruleset)
 - [What is the Ruleset lifecycle?](rulesets.md#what-is-the-ruleset-lifecycle)
+- [How do I edit a class's progression?](rulesets.md#how-do-i-edit-a-classs-progression)
 - [What are Aptitudes?](rulesets.md#what-are-aptitudes)
 - [What are Mechanics?](rulesets.md#what-are-mechanics)
 

@@ -22,7 +22,10 @@ export const CLASS_CUSTOMIZATION_TABS: ClassTab[] = CUSTOMIZATION_TABS.map((tab)
   Section: CUSTOMIZATION_SECTIONS[tab.key],
 }));
 
-/** The tabs every class's page opens on, its levels and its skills, which its base rules' own follow (`getClassSections`). */
+/**
+ * The tabs every class's page opens on, its levels and its skills, which its base rules' own follow (`getClassSections`),
+ * but for one of them its base rules' takes the place of (`replaces`).
+ */
 export const CLASS_TABS: ClassTab[] = [
   {
     key: "levels",

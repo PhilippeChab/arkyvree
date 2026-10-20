@@ -190,11 +190,15 @@ export function featsQuery(rulesetId: string, filters: AptitudeFilters) {
 
 /**
  * After a write to a ruleset's content: the lists it shows in (a section's, a customization tab's, a class's), and the
- * ruleset's Local Changes, which any write can change.
+ * ruleset's Local Changes, which any write can change. It settles once they're read again, for a write that waits.
  */
-export function invalidateRulesetEdit(queryClient: QueryClient, rulesetId: string, keys: readonly QueryKey[]) {
-  for (const queryKey of keys) void queryClient.invalidateQueries({ queryKey });
-  void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.rulesets.changes(rulesetId) });
+export function invalidateRulesetEdit(
+  queryClient: QueryClient,
+  rulesetId: string,
+  keys: readonly QueryKey[],
+): Promise<void> {
+  const all = [...keys, QUERY_KEYS.rulesets.changes(rulesetId)];
+  return Promise.all(all.map((queryKey) => queryClient.invalidateQueries({ queryKey }))).then(() => undefined);
 }
 
 export function itemsQuery(rulesetId: string, filters: ListFilters) {
