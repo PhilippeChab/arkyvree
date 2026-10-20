@@ -268,6 +268,11 @@ export function ClassSpellsSection({ rulesetId, classId, className, ruleset }: C
           saved={(levelId, spellLevel) => spells.savedCell(table, levelId, spellLevel)}
           knownAbove={(levelId, spellLevel) => spells.isKnownAbove(table, levelId, spellLevel)}
           onCells={(cells) => writePasted(cells)}
+          onLockedPaste={() =>
+            snackbar.info(
+              "That cell knows every spell from an earlier level: paste into an open cell, or Paste a Table",
+            )
+          }
         />
       </Panel>
       {saveBar}

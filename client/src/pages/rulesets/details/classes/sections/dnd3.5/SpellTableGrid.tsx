@@ -19,6 +19,8 @@ interface SpellTableGridProps {
   levels: readonly { id: string; level: number }[];
   /** Cells a typed value or a paste writes */
   onCells: (cells: PlacedCell[]) => void;
+  /** A block was pasted into a cell under an earlier All, which takes nothing */
+  onLockedPaste: () => void;
   readOnly: boolean;
   /** A cell's value as saved: a changed cell is marked against it */
   saved: (levelId: string, spellLevel: number) => SpellCell;
@@ -50,6 +52,7 @@ export function SpellTableGrid({
   label,
   levels,
   onCells,
+  onLockedPaste,
   readOnly,
   saved,
   value,
@@ -74,8 +77,12 @@ export function SpellTableGrid({
   const handlePaste = (event: ClipboardEvent<HTMLInputElement>, row: number, column: number) => {
     // A block, or a row's cells (a PDF's, by spaces), fills from the cell; a value alone is the cell's own text
     const text = event.clipboardData.getData("text/plain");
-    const locked = readOnly || knownAbove(levels[row]?.id ?? "", column);
-    if (locked || !/[\s,;|]/.test(text.trim())) return;
+    if (readOnly || !/[\s,;|]/.test(text.trim())) return;
+    if (knownAbove(levels[row]?.id ?? "", column)) {
+      event.preventDefault();
+      onLockedPaste();
+      return;
+    }
     event.preventDefault();
     // The paste is the cell's value now, not what was typed before it
     setTyping(null);
