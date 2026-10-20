@@ -3,7 +3,6 @@
  * its features' levels and its pools' picks, by level id, over the class as saved; and the save they make.
  */
 
-import { readNumberInput } from "@/client/src/lib/validation.ts";
 import type {
   ClassLevelRow,
   ClassProgressionBody,
@@ -147,8 +146,7 @@ export function readTrack(level: ClassLevelRow, key: TrackKey) {
 
 /** A track's value as typed (`text`): a whole number, 0 at least, or `undefined` for anything else. */
 export function readWholeNumber(text: string) {
-  const typed = readNumberInput(text);
-  return typed !== undefined && Number.isInteger(typed) && typed >= 0 ? typed : undefined;
+  return /^\d+$/.test(text.trim()) ? Number(text.trim()) : undefined;
 }
 
 /** The features as saved, then those the edits add that a save hasn't made the class's yet. */

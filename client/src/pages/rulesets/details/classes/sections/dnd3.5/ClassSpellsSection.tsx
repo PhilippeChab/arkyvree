@@ -82,7 +82,8 @@ export function ClassSpellsSection({ rulesetId, classId, className, ruleset }: C
   const { discard, edits, forgetTokens, setEdits, settle, tokens } = useClassDraft<SpellEdits>(
     classId,
     levels,
-    !perDay.isFetching,
+    // Both its tables read as they are now
+    !perDay.isFetching && !known.isFetching,
     NO_SPELL_EDITS,
   );
   const spells = new SpellDraft(

@@ -45,7 +45,8 @@ export function parseSpellCell(text: string, allowsAll: boolean): SpellCell | un
  * A pasted block's rows, one a line: each names its class level when its first cell does with a suffix or a colon
  * ("1st", "4:"), or when every row's first cell counts up one a row over three rows or more (a table's level column),
  * from 1 or from the level it's pasted at (`firstLevel`); its other cells are read by `parseSpellCell`, a spreadsheet's
- * empty one as none. Header rows before them, each led by a word, are left out.
+ * empty one as none. Header rows before them, each with a word in it, are left out, and with a level column a
+ * spreadsheet's header of bare numbers over it and its spacer rows.
  */
 export function parseSpellRows(text: string, allowsAll: boolean, firstLevel = 1): PastedRow[] {
   const lines = text
@@ -59,10 +60,18 @@ export function parseSpellRows(text: string, allowsAll: boolean, firstLevel = 1)
   const isWord = (cell: string) => /[a-z]/i.test(cell) && parseSpellCell(cell, allowsAll) === undefined;
   const isHeader = ([lead, ...rest]: string[]) => (isWord(lead) && !LEVEL_CELL.test(lead)) || rest.some(isWord);
   const header = lines.findIndex((cells) => !isHeader(cells));
-  const rows = header === -1 ? [] : lines.slice(header);
+  const body = header === -1 ? [] : lines.slice(header);
+  // A table whose rows count up its levels from 1 or from where it's pasted (`firstLevel`), over three rows or more: a
+  // spreadsheet's spacer rows of empty cells aside, and a header of bare numbers over it, its corner cell empty
+  const levelColumn = (rows: string[][]) => {
+    const leads = rows.filter((cells) => cells.some(Boolean)).map((cells) => LEVEL_CELL.exec(cells[0]));
+    const countsFrom = (first: number) => leads.every((lead, index) => lead && Number(lead[1]) === first + index);
+    return leads.length >= 3 && (countsFrom(1) || countsFrom(firstLevel));
+  };
+  const cornered = body[0]?.[0] === "" && levelColumn(body.slice(1));
+  const counting = cornered || levelColumn(body);
+  const rows = (cornered ? body.slice(1) : body).filter((cells) => !counting || cells.some(Boolean));
   const leads = rows.map((cells) => LEVEL_CELL.exec(cells[0]));
-  const countsFrom = (first: number) => leads.every((lead, index) => lead && Number(lead[1]) === first + index);
-  const counting = rows.length >= 3 && (countsFrom(1) || countsFrom(firstLevel));
   return rows.map((cells, index) => {
     const lead = leads[index];
     const named = lead && (counting || !/^\d+$/.test(cells[0]));

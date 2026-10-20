@@ -62,7 +62,7 @@ export class SpellDraft {
     );
   }
 
-  /** The save's spells: each table's changed rows, spells per day's "all" sent as none (it takes no "all"). */
+  /** The save's spells: each table's changed rows (spells per day's never hold "all": its type is told so). */
   buildBody() {
     const perDay = this.rowsOf("perDay").map(({ levelId, counts }) => ({
       levelId,
