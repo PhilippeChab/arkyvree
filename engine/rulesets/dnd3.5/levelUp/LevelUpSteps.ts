@@ -47,24 +47,6 @@ export default class LevelUpSteps extends LevelUpState {
   }
 
   /**
-   * The feats step of the step's level: the pools the character picks feats in with it, each with its room for the
-   * feats picked at it (`step.picks`), what of them fits (`fitted`), and its grants.
-   */
-  private describeFeatStep(step: LevelQuery) {
-    const { klassLevel, picks, pools } = this.buildPicked(step);
-    return { ...this.featStep(pools, [klassLevel.id]), fitted: picks.feats };
-  }
-
-  /**
-   * The powers step of the step's level: the pools the character picks powers in with it, each with its room for the
-   * powers picked at it (`step.picks`), what of them fits (`fitted`), and its grants.
-   */
-  private describePowerStep(step: LevelQuery) {
-    const { klassLevel, picks, pools } = this.buildPicked(step);
-    return { ...this.powerStep(pools, [klassLevel.id]), fitted: picks.powers };
-  }
-
-  /**
    * The step's projection: a level of class level `klassLevelId` after the levels planned before it, or in the edited
    * level's place, so the first level stays the first (its x4 skill points), with the feats and powers it picks
    * (`picks`), when given.
@@ -160,9 +142,9 @@ export default class LevelUpSteps extends LevelUpState {
       case "abilities":
         return { name, ...this.describeAbilityStep(step) };
       case "feats":
-        return { name, ...this.describeFeatStep(step) };
+        return { name, ...this.describePickSteps(step).feats };
       case "powers":
-        return { name, ...this.describePowerStep(step) };
+        return { name, ...this.describePickSteps(step).powers };
       case "skills":
         return { name, ...this.describeSkillStep(step) };
       default:

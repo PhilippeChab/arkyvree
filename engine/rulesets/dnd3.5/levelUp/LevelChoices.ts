@@ -3,6 +3,7 @@ import RulesError from "@/engine/core/RulesError.ts";
 import type ClassPicker from "@/engine/rulesets/dnd3.5/pickers/ClassPicker.ts";
 import FeatPicker from "@/engine/rulesets/dnd3.5/pickers/FeatPicker.ts";
 import PowerPicker from "@/engine/rulesets/dnd3.5/pickers/PowerPicker.ts";
+import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 
 import LevelUpSteps from "./LevelUpSteps.ts";
 
@@ -103,7 +104,8 @@ export default class LevelChoices extends LevelUpSteps {
    * wizard's picker offers it (`classPicker`, nothing planned before the level).
    */
   openLevelChoices(query: LevelChoicesQuery, classPicker: ClassPicker) {
-    if (!query.klassId) return { classPicker, level: null };
+    const levelsLeft = LevelRules.countLevelsLeft(this.character.rows.levels.length);
+    if (!query.klassId) return { classPicker, level: null, levelsLeft };
 
     const klass = this.readPlannedKlass(classPicker, query.klassId);
     const step = { ...query, klassId: klass.id, level: klass.nextLevel };
@@ -113,6 +115,7 @@ export default class LevelChoices extends LevelUpSteps {
     const picks = { feats: toPicks(feats.fitted, "featId"), powers: toPicks(powers.fitted, "powerId") };
     return {
       classPicker,
+      levelsLeft,
       level: {
         featPools: this.openFeatPools(step, feats, picks),
         powerPools: this.openPowerPools(step, powers, picks),

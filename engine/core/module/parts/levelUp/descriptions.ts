@@ -30,6 +30,8 @@ export interface OpenedLevelChoices<Steps, ClassOption, FeatOption, PowerOption>
     powerPools: (OpenedPool<PowerOption> & { powerLevel?: number })[];
     steps: Steps;
   } | null;
+  /** The levels the character has left to take, whatever their classes. */
+  levelsLeft: number;
 }
 
 /** A level-up wizard's step, as its ruleset lists it: its name, which the ruleset answers the step by, and its label. */

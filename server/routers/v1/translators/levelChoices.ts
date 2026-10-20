@@ -9,6 +9,8 @@ import type { AbilityIncrease } from "@/engine/index.ts";
 import type { v1LevelChoices } from "@/server/routers/v1/schemas/levelChoices.ts";
 import type { CharacterLevelsService, StepQuery } from "@/server/services/characters/levels/index.ts";
 
+import { toV1Names } from "./content.ts";
+
 /** The choices, as the levels' service answers them. */
 type LevelChoices = Awaited<ReturnType<typeof CharacterLevelsService.getLevelChoices>>;
 
@@ -27,11 +29,6 @@ export interface V1LevelChoicesQuery {
   spells?: { aptitudeId: string; spellId: string }[];
 }
 
-/** A named thing (a feat, a spell, an aptitude), by its id and name alone. */
-function toNamed({ id, name }: { id: string; name: string }) {
-  return { id, name };
-}
-
 /** The picks so far that fit in their aptitudes, by aptitude, as the request's own pairs. */
 function toPicked(fitted: Record<string, string[]>) {
   return Object.entries(fitted).flatMap(([aptitudeId, ids]) => ids.map((id) => ({ aptitudeId, id })));
@@ -47,12 +44,12 @@ function toPlannedLevel(level: PlannedLevel): NonNullable<V1LevelChoices["level"
     },
     class: klass,
     feats: {
-      granted: feats.autoGrantedFeats.map(toNamed),
+      granted: toV1Names(feats.autoGrantedFeats),
       picked: toPicked(feats.fitted).map(({ aptitudeId, id }) => ({ aptitudeId, featId: id })),
       slots: featSlots.map(({ options, pool, room, shared }) => ({
         aptitude: pool,
         count: room,
-        options: options.map(toNamed),
+        options: toV1Names(options),
         shared,
       })),
     },
@@ -70,12 +67,12 @@ function toPlannedLevel(level: PlannedLevel): NonNullable<V1LevelChoices["level"
       })),
     },
     spells: {
-      granted: powers.autoGrantedPowers.map(toNamed),
+      granted: toV1Names(powers.autoGrantedPowers),
       picked: toPicked(powers.fitted).map(({ aptitudeId, id }) => ({ aptitudeId, spellId: id })),
       slots: powerSlots.map(({ options, pool, powerLevel, room, shared }) => ({
         aptitude: pool,
         count: room,
-        options: options.map(toNamed),
+        options: toV1Names(options),
         shared,
         spellLevel: powerLevel ?? null,
       })),
@@ -93,7 +90,7 @@ export function toLevelChoicesQuery({ feats, spells, ...query }: V1LevelChoicesQ
 }
 
 /** A character's choices at its next level, as v1 answers them. */
-export function toV1LevelChoices({ classes, level }: LevelChoices): V1LevelChoices {
+export function toV1LevelChoices({ classes, level, levelsLeft }: LevelChoices): V1LevelChoices {
   return {
     classes: classes.map((klass) => ({
       eligible: klass.eligible && klass.levelsLeft > 0,
@@ -105,6 +102,6 @@ export function toV1LevelChoices({ classes, level }: LevelChoices): V1LevelChoic
       requirements: klass.eligible ? null : (klass.requirementTree ?? null),
     })),
     level: level && toPlannedLevel(level),
-    levelsLeft: classes[0]?.levelsLeft ?? null,
+    levelsLeft,
   };
 }
