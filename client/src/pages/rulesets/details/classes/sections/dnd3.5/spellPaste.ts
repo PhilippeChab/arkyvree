@@ -56,9 +56,13 @@ export function parseSpellRows(text: string, allowsAll: boolean, firstLevel = 1)
     .filter((line) => line.includes("\t") || line.trim() !== "")
     .map(splitCells);
   // A table's header rows aren't levels: those with a word in them ("Level", "Cantrips", "1st"), where a level's row
-  // has its level and counts (a cleric's "1+1" isn't a word)
+  // has its level and counts (a cleric's "1+1" isn't a word),
   const isWord = (cell: string) => /[a-z]/i.test(cell) && parseSpellCell(cell, allowsAll) === undefined;
-  const isHeader = ([lead, ...rest]: string[]) => (isWord(lead) && !LEVEL_CELL.test(lead)) || rest.some(isWord);
+  // and those numbering the spell levels, 0 1 2… (a level's counts never run so)
+  const isHeader = ([lead, ...rest]: string[]) =>
+    (isWord(lead) && !LEVEL_CELL.test(lead)) ||
+    rest.some(isWord) ||
+    (rest.length >= 2 && [lead, ...rest].every((cell, index) => cell === String(index)));
   const header = lines.findIndex((cells) => !isHeader(cells));
   const body = header === -1 ? [] : lines.slice(header);
   // A table whose rows count up its levels from 1 or from where it's pasted (`firstLevel`), over three rows or more: a

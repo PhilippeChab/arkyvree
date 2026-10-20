@@ -146,7 +146,9 @@ export function readTrack(level: ClassLevelRow, key: TrackKey) {
 
 /** A track's value as typed (`text`): a whole number, 0 at least, or `undefined` for anything else. */
 export function readWholeNumber(text: string) {
-  return /^\d+$/.test(text.trim()) ? Number(text.trim()) : undefined;
+  // A save shows signed ("+4"): typed so, it's the same number
+  const digits = text.trim().replace(/^\+/, "");
+  return /^\d+$/.test(digits) ? Number(digits) : undefined;
 }
 
 /** The features as saved, then those the edits add that a save hasn't made the class's yet. */

@@ -67,8 +67,10 @@ export function ProgressionTrackRow({
   const [baseValue, setBaseValue] = useState<number>();
   const [typing, setTyping] = useState<string | null>(null);
   const detected = presets && detectPreset(presets, values);
+  // The Based On picked in the editor while it's open; the nearest preset otherwise
   const basePreset =
-    presets && (presets.find((preset) => preset.key === baseKey) ?? findNearestPreset(presets, values));
+    presets &&
+    ((custom ? presets.find((preset) => preset.key === baseKey) : undefined) ?? findNearestPreset(presets, values));
   const base = values.map(({ level }) =>
     basePreset ? basePreset.valueAt(level) : (baseValue ?? readMostCommon(values)),
   );

@@ -57,6 +57,8 @@ describe("A pasted spell table", () => {
     // Over a level column: a header of bare numbers under an empty corner, and spacer rows
     expect(parseSpellRows("\t0\t1\t2\n1\t3\t1\n2\t4\t2\n3\t4\t2\t1", false).map((row) => row.level)).toEqual([1, 2, 3]);
     expect(parseSpellRows("1\t3\t1\n2\t4\t2\n\t\t\n3\t4\t2\t1", false).map((row) => row.level)).toEqual([1, 2, 3]);
+    // A header of the spell levels' numbers alone, over counts alone
+    expect(parseSpellRows("0\t1\t2\n3\t1\n4\t2", false)).toEqual([{ cells: [3, 1] }, { cells: [4, 2] }]);
     // A header numbering its spell levels is one too
     expect(parseSpellRows("Level 0 1 2\n1 3 1\n2 4 2\n3 4 2 1", false).map((row) => row.level)).toEqual([1, 2, 3]);
   });

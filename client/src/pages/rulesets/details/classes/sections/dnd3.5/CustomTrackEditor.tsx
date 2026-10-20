@@ -110,7 +110,9 @@ export function CustomTrackEditor({ base, baseControl, label, onChange, onClose,
                     onBlur={() => setTyping(null)}
                     onChange={(e) => {
                       setTyping({ levelId, text: e.target.value });
-                      onChange({ [levelId]: readLevelInput(e.target.value, base[index]) });
+                      // Emptied, it follows its base again; unread, it stays as it was
+                      const typed = e.target.value.trim() === "" ? base[index] : readWholeNumber(e.target.value);
+                      if (typed !== undefined) onChange({ [levelId]: typed });
                     }}
                     inputProps={{ inputMode: "numeric", "aria-label": `${label}, Level ${level}` }}
                     sx={{

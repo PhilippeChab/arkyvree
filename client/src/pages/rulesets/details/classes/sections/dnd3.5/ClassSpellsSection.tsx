@@ -157,7 +157,7 @@ export function ClassSpellsSection({ rulesetId, classId, className, ruleset }: C
         title="No spells"
         description={
           canEdit
-            ? `${className} has no spell list. Add an aptitude named "${className} Spells" to give it spells.`
+            ? `${className} has no spell list of its own, so no spells per day or known. A class that casts gets one from an aptitude named "${className} Spells".`
             : `${className} casts no spells.`
         }
       />
