@@ -15,8 +15,7 @@ import type { RulesetFieldsService } from "@/server/services/rulesets/fields/ind
 import type { RulesetsService } from "@/server/services/rulesets/index.ts";
 import type { RulesetSettingsService } from "@/server/services/rulesets/settings/index.ts";
 
-/** What a service answers, awaited. */
-type Answer<F extends (...args: never[]) => Promise<unknown>> = Awaited<ReturnType<F>>;
+import type { Answer } from "./answers.ts";
 
 /** A field a ruleset declares, as the engine describes it. */
 type FieldDeclaration = Answer<typeof RulesetFieldsService.getFields>[keyof Answer<

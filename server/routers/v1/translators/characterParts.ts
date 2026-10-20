@@ -10,8 +10,7 @@ import type { CharactersService } from "@/server/services/characters/index.ts";
 import type { CharacterInventoryService } from "@/server/services/characters/inventory/index.ts";
 import type { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
 
-/** What a service answers, awaited. */
-type Answer<F extends (...args: never[]) => Promise<unknown>> = Awaited<ReturnType<F>>;
+import type { Answer } from "./answers.ts";
 
 /** A language a character speaks or may pick, named. */
 function toLanguage({ id, name, type }: { id: string; name: string; type: string | null }) {
