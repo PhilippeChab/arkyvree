@@ -30,6 +30,18 @@ class ExportsRepository extends BaseRepository<typeof exportsInAccount> {
       where: and(eq(this.table.id, where.id), eq(this.table.userId, where.userId)),
     });
   }
+
+  /** An export of its owner's without its file: where it stands, which a caller asks until it's ready. */
+  async findStatus(db: Db, where: { id: string; userId: string }) {
+    return await db.query.exportsInAccount.findFirst({
+      columns: { data: false },
+      where: and(eq(this.table.id, where.id), eq(this.table.userId, where.userId)),
+    });
+  }
+
+  async update(db: Db, values: Partial<InferInsertModel<typeof exportsInAccount>>, where: { id: string }) {
+    return await db.update(this.table).set(values).where(eq(this.table.id, where.id)).returning();
+  }
 }
 
 export default ExportsRepository;

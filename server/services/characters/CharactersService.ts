@@ -115,7 +115,7 @@ class CharactersService extends include(Object, Archives, Imports) {
     const characterRecord = await findExportableCharacter(session.userId, characterId);
     if (!characterRecord) throw new NotFoundError("Character not found");
 
-    await enqueueCharacterPdf(session, characterRecord);
+    return await enqueueCharacterPdf(session, characterRecord);
   }
 
   async getAvailableRaces(

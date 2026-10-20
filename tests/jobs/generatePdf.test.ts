@@ -5,9 +5,10 @@ import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { db } from "@/server/database/index.ts";
 import { generatePdfTask } from "@/server/jobs/generatePdf.ts";
 import { Exports, Modifiers, Notifications, Requirements } from "@/server/repositories/index.ts";
-import { createTestCharacter } from "@/tests/support/characters.ts";
+import { CharactersService } from "@/server/services/characters/index.ts";
+import { createCharacterAs, createTestCharacter } from "@/tests/support/characters.ts";
 import { buildAs } from "@/tests/support/dnd3.5/characters.ts";
-import { silentJobHelpers } from "@/tests/support/jobs.ts";
+import { queuedPdfJobs, silentJobHelpers } from "@/tests/support/jobs.ts";
 import { findSeededCharacter } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 
@@ -33,7 +34,7 @@ describe("generatePdf", () => {
       const pdf = await Exports.findOne(db, { id: ready.targetId, userId: SEED_USER_ID });
       // A file name keeps no path separator or colon.
       expect(pdf).toMatchObject({ type: "pdf", mimeType: "application/pdf", fileName: `${name}_ Draft_1-sheet.pdf` });
-      expect(Buffer.from(pdf!.data).subarray(0, 5).toString()).toBe("%PDF-");
+      expect(Buffer.from(pdf!.data!).subarray(0, 5).toString()).toBe("%PDF-");
       expect(new Date(pdf!.expiresAt).getTime()).toBeGreaterThan(Date.now());
     },
     30_000,
@@ -91,7 +92,7 @@ describe("generatePdf", () => {
     );
     const [ready] = await notificationsOf(user.id, "pdfReady");
     const pdf = await Exports.findOne(db, { id: ready.targetId, userId: user.id });
-    expect(Buffer.from(pdf!.data).subarray(0, 5).toString()).toBe("%PDF-");
+    expect(Buffer.from(pdf!.data!).subarray(0, 5).toString()).toBe("%PDF-");
   }, 30_000);
 
   test("tells the player it failed when the character isn't theirs to export anymore", async () => {
@@ -107,5 +108,37 @@ describe("generatePdf", () => {
       { targetId: character.id, data: { characterName: character.name } },
     ]);
     expect(await notificationsOf(user.id, "pdfReady")).toEqual([]);
+  });
+
+  test("fills in the export its request stored, pending, which then reads ready", async () => {
+    const { session } = await createTestUser();
+    const character = await createCharacterAs(session);
+    const pending = await CharactersService.enqueuePdf(session, character.id);
+    expect(pending).toMatchObject({ status: "pending", data: null, fileName: `${character.name}-sheet.pdf` });
+
+    const [job] = await queuedPdfJobs(character.id);
+    expect(job?.payload).toMatchObject({ exportId: pending.id });
+    await generatePdfTask(job!.payload, silentJobHelpers);
+
+    const ready = await Exports.findOne(db, { id: pending.id, userId: session.userId });
+    expect(ready?.status).toBe("ready");
+    expect(Buffer.from(ready!.data!).subarray(0, 5).toString()).toBe("%PDF-");
+    expect(await notificationsOf(session.userId, "pdfReady")).toMatchObject([{ targetId: pending.id }]);
+  }, 30_000);
+
+  test("marks the export its request stored failed when the character can't be exported anymore", async () => {
+    const { session } = await createTestUser();
+    const character = await createCharacterAs(session);
+    const pending = await CharactersService.enqueuePdf(session, character.id);
+    await CharactersService.archiveCharacter(session, character.id);
+
+    const [job] = await queuedPdfJobs(character.id);
+    await generatePdfTask(job!.payload, silentJobHelpers);
+
+    expect(await Exports.findOne(db, { id: pending.id, userId: session.userId })).toMatchObject({
+      status: "failed",
+      data: null,
+    });
+    expect(await notificationsOf(session.userId, "pdfFailed")).toMatchObject([{ data: { exportId: pending.id } }]);
   });
 });

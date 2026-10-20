@@ -1,6 +1,7 @@
 import { pdf } from "@react-pdf/renderer";
 import type { JobHelpers } from "graphile-worker";
 
+import type { Db } from "@/drizzle/database.ts";
 import { Engine } from "@/engine/index.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
@@ -20,14 +21,55 @@ interface GeneratePdfPayload {
   campaignId?: string;
   characterId: string;
   characterName: string;
+  /** The export its request stored, pending, which the job fills in or marks failed: none on a job queued before. */
+  exportId?: string;
   userId: string;
 }
 
 const MAX_PDF_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
 const ONE_HOUR_MS = 60 * 60 * 1000;
 
+/** The user's PDF failed: its export marked so, and the user told. */
+async function failExport({ campaignId, characterId, characterName, exportId, userId }: GeneratePdfPayload) {
+  await withTransaction(async (tx) => {
+    if (exportId) await Exports.update(tx, { status: "failed" }, { id: exportId });
+    await Notifications.create(tx, {
+      recipientId: userId,
+      actorId: userId,
+      type: "pdfFailed",
+      targetId: characterId,
+      targetTable: getCharacterPdfTargetTable(campaignId),
+      data: { characterName, ...(exportId && { exportId }) },
+    });
+  });
+}
+
+/**
+ * The character's PDF file stored in its export, ready for an hour: the one its request stored, or a new one (a job
+ * queued before exports were stored pending, or a pending one the cleanup reaped, kept by its id).
+ */
+async function storeExport(tx: Db, { exportId, userId }: GeneratePdfPayload, data: Buffer, fileName: string) {
+  const file = {
+    data,
+    fileName,
+    expiresAt: new Date(Date.now() + ONE_HOUR_MS).toISOString(),
+    status: "ready" as const,
+  };
+  const [stored] = exportId ? await Exports.update(tx, file, { id: exportId }) : [];
+  if (stored) return stored;
+  const [created] = await Exports.create(tx, {
+    ...file,
+    id: exportId,
+    userId,
+    type: "pdf",
+    mimeType: "application/pdf",
+  });
+  return created;
+}
+
 export async function generatePdfTask(payload: unknown, helpers: JobHelpers): Promise<void> {
-  const { userId, characterId, characterName, campaignId } = payload as GeneratePdfPayload;
+  const job = payload as GeneratePdfPayload;
+  const { userId, characterId, characterName, campaignId } = job;
 
   helpers.logger.info(`Generating PDF for character ${characterId}`);
 
@@ -37,16 +79,7 @@ export async function generatePdfTask(payload: unknown, helpers: JobHelpers): Pr
 
     if (!characterRecord) {
       helpers.logger.warn(`Character ${characterId} not found or not exportable for user ${userId}`);
-      await withTransaction((tx) =>
-        Notifications.create(tx, {
-          recipientId: userId,
-          actorId: userId,
-          type: "pdfFailed",
-          targetId: characterId,
-          targetTable: getCharacterPdfTargetTable(campaignId),
-          data: { characterName },
-        }),
-      );
+      await failExport(job);
       await publishWsEvent(userId, { type: "notifications:updated" }).catch((err) =>
         helpers.logger.warn(`Failed to publish PDF failure notification: ${err}`),
       );
@@ -74,17 +107,9 @@ export async function generatePdfTask(payload: unknown, helpers: JobHelpers): Pr
     const pdfBuffer = Buffer.from(arrayBuffer);
 
     const fileName = formatSheetFileName(characterName);
-    const expiresAt = new Date(Date.now() + ONE_HOUR_MS).toISOString();
 
     const exportId = await withTransaction(async (tx) => {
-      const [exportRecord] = await Exports.create(tx, {
-        userId,
-        type: "pdf",
-        mimeType: "application/pdf",
-        fileName,
-        data: pdfBuffer,
-        expiresAt,
-      });
+      const exportRecord = await storeExport(tx, job, pdfBuffer, fileName);
 
       await Notifications.create(tx, {
         recipientId: userId,
@@ -113,16 +138,7 @@ export async function generatePdfTask(payload: unknown, helpers: JobHelpers): Pr
 
     if (helpers.job.attempts >= helpers.job.max_attempts) {
       try {
-        await withTransaction((tx) =>
-          Notifications.create(tx, {
-            recipientId: userId,
-            actorId: userId,
-            type: "pdfFailed",
-            targetId: characterId,
-            targetTable: getCharacterPdfTargetTable(campaignId),
-            data: { characterName },
-          }),
-        );
+        await failExport(job);
         await publishWsEvent(userId, { type: "notifications:updated" });
       } catch {
         // Best-effort failure notification
