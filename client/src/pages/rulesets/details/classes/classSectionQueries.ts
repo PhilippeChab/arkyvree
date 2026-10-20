@@ -70,10 +70,9 @@ export function classLevelsQuery(rulesetId: string, classId: string) {
 }
 
 /**
- * What a class's Progression and Spells tabs read beside its levels and tables: its pools' own picks, its spell list.
- *
- * A class's progression beside its levels: its pools' picks, its spell list, its feats' picks. Read again each time a
- * tab mounts: an aptitude or a feat changed elsewhere (a spell list added) changes it.
+ * What a class's Progression and Spells tabs read beside its levels and tables: its pools' own picks, its spell list,
+ * its feats' picks. Read again each time a tab mounts: an aptitude or a feat changed elsewhere (a spell list added)
+ * changes it.
  */
 export function classProgressionQuery(rulesetId: string, classId: string) {
   return queryOptions({

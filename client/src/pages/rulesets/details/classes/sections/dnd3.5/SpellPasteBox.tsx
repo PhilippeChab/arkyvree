@@ -14,7 +14,7 @@ interface PasteForm {
 interface SpellPasteBoxProps {
   /** Spells known take "all" */
   allowsAll: boolean;
-  /** The pasted cells that change the table as it shows */
+  /** The pasted cells that change the table as it shows, which the box counts */
   changesOf: (cells: PlacedCell[]) => PlacedCell[];
   levels: readonly { id: string; level: number }[];
   onApply: (cells: PlacedCell[]) => void;
@@ -28,7 +28,9 @@ interface SpellPasteBoxProps {
 export function SpellPasteBox({ allowsAll, changesOf, levels, onApply, onCancel }: SpellPasteBoxProps) {
   const { control, watch } = useFormWith<PasteForm>({ table: "" });
   const text = watch("table");
-  const changes = changesOf(placeSpellRows(parseSpellRows(text, allowsAll), levels, 0, 0, SPELL_LEVELS.length));
+  // Apply writes every placed cell, as a paste into the grid does: what one writes can depend on another
+  const placed = placeSpellRows(parseSpellRows(text, allowsAll), levels, 0, 0, SPELL_LEVELS.length);
+  const changes = changesOf(placed);
 
   return (
     <Stack spacing={1}>
@@ -50,7 +52,7 @@ export function SpellPasteBox({ allowsAll, changesOf, levels, onApply, onCancel 
               : ""}
         </Typography>
         <Button onClick={onCancel}>Cancel</Button>
-        <Button variant="contained" disabled={changes.length === 0} onClick={() => onApply(changes)}>
+        <Button variant="contained" disabled={changes.length === 0} onClick={() => onApply(placed)}>
           Apply
         </Button>
       </Stack>

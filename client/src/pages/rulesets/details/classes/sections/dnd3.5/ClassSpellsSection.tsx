@@ -79,7 +79,7 @@ export function ClassSpellsSection({ rulesetId, classId, className, ruleset }: C
   };
   const levels = (perDay.data ?? []).toSorted(byLevel);
   const save = useProgressionSave(rulesetId, classId);
-  const { discard, edits, setEdits, settle, tokens } = useClassDraft<SpellEdits>(
+  const { discard, edits, forgetTokens, setEdits, settle, tokens } = useClassDraft<SpellEdits>(
     classId,
     levels,
     !perDay.isFetching,
@@ -133,9 +133,13 @@ export function ClassSpellsSection({ rulesetId, classId, className, ruleset }: C
       })
     : [];
 
-  // What changes while the save runs stays, for the next save
+  // What changes while the save runs stays, for the next save; refused (its levels changed since), it's sent again over
+  // them as they're read again
   const handleSave = () =>
-    save.mutate({ ...tokens(), spells: spells.buildBody() }, { onSuccess: () => settle(spells.edits) });
+    save.mutate(
+      { ...tokens(), spells: spells.buildBody() },
+      { onSuccess: () => settle(spells.edits), onError: forgetTokens },
+    );
 
   if (perDay.isLoading || known.isLoading) return <DiceSpinner sx={{ py: 4 }} />;
   const failed = (perDay.error && !perDay.data && perDay.error) || (known.error && !known.data && known.error);

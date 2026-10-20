@@ -40,6 +40,8 @@ export function useClassDraft<T>(
   return {
     discard: () => setDraft({ classId, edits: empty }),
     edits: own(draft).edits,
+    /** After a refused save: the tokens it sent are forgotten, the next save reading the levels as they're read again. */
+    forgetTokens: () => setDraft((current) => ({ classId, edits: own(current).edits })),
     setEdits,
     /**
      * After a save of the edits it sent (`sent`): none left, or those made while it ran, over the levels it moved, whose

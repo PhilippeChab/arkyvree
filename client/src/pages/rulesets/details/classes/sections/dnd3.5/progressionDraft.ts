@@ -6,7 +6,6 @@
 import { readNumberInput } from "@/client/src/lib/validation.ts";
 import type {
   ClassLevelRow,
-  ClassProgression,
   ClassProgressionBody,
 } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 
@@ -132,11 +131,6 @@ export function describeFeatureRows(levels: readonly ClassLevelRow[]): FeatureRo
     }
   }
   return [...rows.values()];
-}
-
-/** The pools the class's levels give picks in, as its progression reads them. */
-export function describePoolRows(progression: ClassProgression | undefined): PoolRow[] {
-  return progression?.pools ?? [];
 }
 
 /** A track's value at a level, as the tab shows it: its edit's, or the saved one. */

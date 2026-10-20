@@ -16,7 +16,7 @@ import { useClassDraft } from "./useClassDraft.ts";
  * with the tokens they began over (`tokens`).
  */
 export function useProgressionDraft(classId: string, levels: readonly ClassLevelRow[], fresh: boolean) {
-  const { discard, edits, setEdits, settle, tokens } = useClassDraft<ProgressionEdits>(
+  const { discard, edits, forgetTokens, setEdits, settle, tokens } = useClassDraft<ProgressionEdits>(
     classId,
     levels,
     fresh,
@@ -68,6 +68,7 @@ export function useProgressionDraft(classId: string, levels: readonly ClassLevel
     addPool,
     discard,
     edits,
+    forgetTokens,
     setFeatureLevels,
     setPoolPick,
     setTrack,

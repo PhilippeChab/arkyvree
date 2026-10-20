@@ -46,7 +46,6 @@ import { ClassFeaturesCard } from "./ClassFeaturesCard.tsx";
 import {
   buildProgressionBody,
   describeFeatureRows,
-  describePoolRows,
   readEditedTrack,
   readTrack,
   type TrackKey,
@@ -142,7 +141,7 @@ export function ClassProgressionSection({ rulesetId, classId, className, ruleset
     ...row,
     levelIds: draft.edits.features[row.key] ?? row.levelIds,
   }));
-  const savedPools = describePoolRows(progression);
+  const savedPools = progression?.pools ?? [];
   const pools = withAddedPools(savedPools, draft.edits).map((pool) => ({
     ...pool,
     picks: { ...pool.picks, ...draft.edits.pools[pool.aptitudeId] },
@@ -229,6 +228,8 @@ export function ClassProgressionSection({ rulesetId, classId, className, ruleset
           draft.settle(sent);
           setCustomTracks([]);
         },
+        // Refused (its levels changed since), it's sent again over them as they're read again
+        onError: draft.forgetTokens,
       },
     );
   };

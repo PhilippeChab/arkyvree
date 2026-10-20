@@ -126,7 +126,14 @@ export function ProgressionTrackRow({
           />
           {/* A track that follows no preset is Custom already, whose toggle a click can't select again */}
           {!custom && !detected && (
-            <Button size="small" onClick={() => setCustom(true)}>
+            <Button
+              size="small"
+              onClick={() => {
+                // Its base stays the one nearest its values as they are, however they're typed after
+                setBaseKey(findNearestPreset(presets, values).key);
+                setCustom(true);
+              }}
+            >
               Edit Levels
             </Button>
           )}
