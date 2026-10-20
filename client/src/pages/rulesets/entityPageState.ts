@@ -11,7 +11,7 @@ export interface EntityPageState {
   from?: string;
 }
 
-/** A class's page, on any of its tabs (`/rulesets/:id/classes/:classId/levels`); the ruleset's Classes tab isn't one. */
+/** A class's page, on any of its tabs (`/rulesets/:id/classes/:classId/:tab`); the ruleset's Classes tab isn't one. */
 const CLASS_PAGE = /^\/rulesets\/[^/]+\/classes\/[^/?#]+/;
 
 /** An entity's customization page, on any of its tabs (`/rulesets/:id/feats/:featId/customization/modifiers`): its type's segment. */

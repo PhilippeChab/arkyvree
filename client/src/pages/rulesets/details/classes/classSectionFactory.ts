@@ -8,7 +8,7 @@ import type { BaseRules } from "@/shared/enums.ts";
 
 import type { ClassFormData, ClassLevelRow } from "./classSectionQueries.ts";
 import { ClassDetails } from "./components/dnd3.5/index.ts";
-import { DND35_CLASS_TABS, DND35_LEVEL_COLUMNS } from "./sections/dnd3.5/index.ts";
+import { DND35_CLASS_TAB_ALIASES, DND35_CLASS_TABS } from "./sections/dnd3.5/index.ts";
 
 /** A class's inline form: what the details card's fields bind, and its save. */
 interface ClassEditor {
@@ -20,14 +20,23 @@ interface ClassEditor {
 
 /**
  * What a class's page shows by its ruleset's base rules: the class's details and their editor, the columns its Levels
- * tab shows of a level's own fields, and its own tabs.
+ * tab shows of a level's own fields, its own tabs, and the tabs its addresses named before, by the tab each opens now.
  */
 interface ClassSections {
   /** The class's details card: its form's fields (3.5's hit die, bonus spell ability, caster type) */
   ClassDetails: ComponentType<ClassDetailsProps>;
-  /** The Levels tab's columns of a level's own fields (3.5's base attack bonus, its skill points), around its saves' */
-  levelColumns: ClassLevelColumns;
-  /** Its own tabs (3.5's feat pools, spells, spell list), after its levels and its skills, before its customization */
+  /**
+   * The Levels tab's columns of a level's own fields, around its saves'; none when a tab of its own replaces the Levels
+   * tab (3.5's Progression)
+   */
+  levelColumns?: ClassLevelColumns;
+  /** Old tab keys of its own, by the key of the tab each opens now (3.5's Feat Pools, by its Progression) */
+  tabAliases: Record<string, string>;
+  /**
+   * Its own tabs (3.5's progression, spells, spell list), after every class's levels and skills, before its
+   * customization; one that replaces a tab of every class's (`replaces`: 3.5's Progression, the Levels tab) takes its
+   * place
+   */
   tabs: ClassTab[];
 }
 
@@ -71,13 +80,15 @@ export interface ClassSectionProps {
 export interface ClassTab extends SectionTab<string> {
   /** Warms its rows as it's pointed at; a tab whose section reads its own rows warms none */
   prefetch?: (queryClient: QueryClient, rulesetId: string, classId: string) => Promise<void>;
+  /** The key of a tab every class has that this base rules' tab takes the place of, whose address opens it */
+  replaces?: string;
   Section: ComponentType<ClassSectionProps>;
 }
 
 const CLASS_SECTIONS: Record<BaseRules, ClassSections> = {
   "Dungeons & Dragons: 3.5": {
     ClassDetails,
-    levelColumns: DND35_LEVEL_COLUMNS,
+    tabAliases: DND35_CLASS_TAB_ALIASES,
     tabs: DND35_CLASS_TABS,
   },
 };

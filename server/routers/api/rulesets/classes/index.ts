@@ -6,6 +6,7 @@ import { entityFields, entityOrderBy, idParam, limit, orderDirAsc, page } from "
 import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
 
 import classLevels from "./levels/index.ts";
+import classProgression from "./progression/index.ts";
 import classSkills from "./skills/index.ts";
 import { classParams } from "./validation.ts";
 
@@ -14,6 +15,7 @@ const hitDie = z.number().int().optional();
 
 export default new Hono<SessionContext>()
   .route("/", classLevels)
+  .route("/", classProgression)
   .route("/", classSkills)
   .get(
     "/:id/classes",

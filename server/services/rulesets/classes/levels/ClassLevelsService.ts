@@ -14,6 +14,7 @@ import { writeEntityWrites } from "@/server/services/rulesets/entityWrites.ts";
 import type { Session } from "@/shared/relations.ts";
 
 import { ListsSpells } from "./concerns/ListsSpells.ts";
+import { writeLevelEdit } from "./levelEdits.ts";
 
 /** A class level's body: the feats it grants, its saves' base bonuses, and its fields (`planClassLevelCreate`). */
 type ClassLevelBody = Omit<Parameters<ClassEngine["planLevelCreate"]>[0], "level">;
@@ -155,24 +156,7 @@ class ClassLevelsService extends include(Object, ListsSpells) {
           const rows = await KlassLevels.update(tx, {}, { id: resolvedLevelId, expectedUpdatedAt });
           if (expectedUpdatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
 
-          const entity = { entityId: resolvedLevelId, entityType: "klass_levels" } as const;
-          if (plan.writes) await writeEntityWrites(tx, scope, entity, plan.writes);
-
-          if (plan.feats !== undefined) {
-            await KlassLevelFeats.delete(tx, { klassLevelId: resolvedLevelId });
-            await KlassLevelFeats.createMany(
-              tx,
-              plan.feats.map((feat) => ({ klassLevelId: resolvedLevelId, ...feat })),
-            );
-          }
-
-          if (plan.saves !== undefined) {
-            await KlassLevelSaves.delete(tx, { klassLevelId: resolvedLevelId });
-            await KlassLevelSaves.createMany(
-              tx,
-              plan.saves.map((save) => ({ klassLevelId: resolvedLevelId, ...save })),
-            );
-          }
+          await writeLevelEdit(tx, scope, resolvedLevelId, plan);
 
           await createActivityWithNotifications(tx, {
             userId: session.userId,
