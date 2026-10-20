@@ -4,7 +4,7 @@ import { z } from "zod";
 import { denyDemoUser, type SessionContext, validate } from "@/server/middlewares/index.ts";
 import { idParam, sanitizedText } from "@/server/routers/api/validation.ts";
 import { ApiKeysService } from "@/server/services/authentication/apiKeys/index.ts";
-import { MAX_API_KEY_NAME_LENGTH } from "@/shared/apiKeys.ts";
+import { MAX_API_KEY_LIFETIME_IN_DAYS, MAX_API_KEY_NAME_LENGTH } from "@/shared/apiKeys.ts";
 
 /** The user's API keys, which act as them on the public API: listed, made and revoked, a demo account's never made. */
 export default new Hono<SessionContext>()
@@ -12,10 +12,17 @@ export default new Hono<SessionContext>()
   .post(
     "/api-keys",
     denyDemoUser,
-    validate("json", z.object({ name: sanitizedText.min(1).max(MAX_API_KEY_NAME_LENGTH) })),
+    validate(
+      "json",
+      z.object({
+        // Its lifetime in days, or none: a key that never expires
+        expiresInDays: z.number().int().min(1).max(MAX_API_KEY_LIFETIME_IN_DAYS).nullable(),
+        name: sanitizedText.min(1).max(MAX_API_KEY_NAME_LENGTH),
+      }),
+    ),
     async (c) => {
-      const { name } = c.req.valid("json");
-      return c.json(await ApiKeysService.createKey(c.var.requestSession, name), 201);
+      const { expiresInDays, name } = c.req.valid("json");
+      return c.json(await ApiKeysService.createKey(c.var.requestSession, name, expiresInDays), 201);
     },
   )
   .delete("/api-keys/:id", validate("param", idParam), async (c) => {

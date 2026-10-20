@@ -34,6 +34,6 @@ describe("demo", () => {
     // A campaign would leave a players row behind when the demo expires.
     await expectStatus(api.api.campaigns.$post({ json: { name: "demo campaign", rulesetId: NIL_UUID } }), 403);
     // An API key would outlive the demo it acts as.
-    await expectStatus(api.auth["api-keys"].$post({ json: { name: "demo key" } }), 403);
+    await expectStatus(api.auth["api-keys"].$post({ json: { expiresInDays: null, name: "demo key" } }), 403);
   });
 });

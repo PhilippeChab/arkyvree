@@ -1,4 +1,4 @@
-import { and, count, eq, getTableColumns, isNull, lt, or } from "drizzle-orm";
+import { and, count, eq, getTableColumns, gt, isNull, lt, or } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
 import { apiKeysInAccount, usersInAccount } from "@/drizzle/schema.ts";
@@ -17,19 +17,26 @@ class ApiKeysRepository extends BaseRepository<typeof apiKeysInAccount> {
     return row?.count ?? 0;
   }
 
-  async create(db: Db, values: { digest: string; name: string; prefix: string; userId: string }) {
+  async create(
+    db: Db,
+    values: { digest: string; expiresAt: string | null; name: string; prefix: string; userId: string },
+  ) {
     return await db.insert(this.table).values(values).returning(SHOWN_COLUMNS);
   }
 
-  /** Deletes one of a user's keys, or every key of theirs: a revoked key's token names no key from then on. */
-  async delete(db: Db, where: { id: string; userId: string } | { userId: string }) {
+  /**
+   * Deletes one of a user's keys, or every key of theirs, or the keys expired before a time (`expiresBefore`, the
+   * cleanup's): a deleted key's token names no key from then on.
+   */
+  async delete(db: Db, where: { id: string; userId: string } | { userId: string } | { expiresBefore: string }) {
     return await db
       .delete(this.table)
       .where(
-        this.branchWhere(
-          ["id" in where && eq(this.table.id, where.id), !("id" in where) && eq(this.table.userId, where.userId)],
-          [eq(this.table.userId, where.userId)],
-        ),
+        this.branchWhere([
+          "id" in where && (and(eq(this.table.id, where.id), eq(this.table.userId, where.userId)) ?? false),
+          "userId" in where && !("id" in where) && eq(this.table.userId, where.userId),
+          "expiresBefore" in where && lt(this.table.expiresAt, where.expiresBefore),
+        ]),
       )
       .returning(SHOWN_COLUMNS);
   }
@@ -44,15 +51,20 @@ class ApiKeysRepository extends BaseRepository<typeof apiKeysInAccount> {
   }
 
   /**
-   * The key a token's digest names, with whether its user is a demo's (`userExpiresAt`): none when its user's account
-   * is deleted.
+   * The key a token's digest names, unless it's expired, with whether its user is a demo's (`userExpiresAt`): none when
+   * its user's account is deleted.
    */
   async findOneWithUser(db: Db, where: { digest: string }) {
     const [key] = await db
       .select({ ...SHOWN_COLUMNS, userExpiresAt: usersInAccount.expiresAt })
       .from(this.table)
       .innerJoin(usersInAccount, and(eq(usersInAccount.id, this.table.userId), isNull(usersInAccount.deletedAt)))
-      .where(eq(this.table.digest, where.digest));
+      .where(
+        and(
+          eq(this.table.digest, where.digest),
+          or(isNull(this.table.expiresAt), gt(this.table.expiresAt, new Date().toISOString())),
+        ),
+      );
     return key;
   }
 

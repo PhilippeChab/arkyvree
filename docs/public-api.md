@@ -12,6 +12,9 @@ answers in shapes of its own, which stay fixed.
   keeps its SHA-256 digest, which a request's token is looked up by, and its start, which names it on the page
   (`server/apiKeyTokens.ts`). A revoked key is deleted. A user keeps 10 at most (`MAX_API_KEYS`), since each key's
   requests are counted apart.
+- A key expires when its user chose as they made it: in 30 days, 90 (the form's default) or a year, or never, which its
+  form warns works until it's revoked. An expired key is refused as a revoked one is, and the daily cleanup
+  (`runCleanup`) deletes it.
 - Wherever the user's other sessions are signed out, their keys are revoked too (`signOutEverywhere`): a password
   reset, a password change and the account's deletion.
 - A request sends it as `Authorization: Bearer <token>`. `apiKeyMiddleware` (`server/middlewares/apiKey.ts`) refuses

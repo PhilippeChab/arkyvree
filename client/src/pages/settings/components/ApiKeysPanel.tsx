@@ -39,6 +39,7 @@ const API_KEY_COLUMNS: TableColumn[] = [
   { key: "key", label: "Key" },
   { key: "created", label: "Created" },
   { key: "lastUsed", label: "Last Used" },
+  { key: "expires", label: "Expires" },
   { key: "actions", label: "Actions", align: "right" },
 ];
 
@@ -105,6 +106,9 @@ export function ApiKeysPanel() {
               </DataCell>
               <DataCell slot="labeled" label="Last Used">
                 {key.lastUsedAt ? formatRelativeTime(key.lastUsedAt) : <EmptyValue />}
+              </DataCell>
+              <DataCell slot="labeled" label="Expires">
+                {key.expiresAt ? formatDate(key.expiresAt) : "Never"}
               </DataCell>
               <DataCell slot="trailing" align="right">
                 <RowActions>

@@ -1,5 +1,8 @@
 import { describe, expect, test } from "bun:test";
 
+import { eq } from "drizzle-orm";
+
+import { apiKeysInAccount } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { ApiKeys, Users } from "@/server/repositories/index.ts";
 import { application } from "@/server/routers/application.ts";
@@ -31,6 +34,17 @@ describe("v1", () => {
     const headers = { authorization: `Bearer ${key.token}` };
     const response = await expectStatus(application.request("/v1/campaigns", { headers }), 404);
     expect(await response.json()).toMatchObject({ cause: "notFound" });
+  });
+
+  test("refuses an expired key", async () => {
+    const { user } = await createTestUser();
+    const { api, key } = await createKeyedApi(user.id);
+    await expectOk(api.v1.characters.$get({ query: {} }));
+    await db
+      .update(apiKeysInAccount)
+      .set({ expiresAt: new Date(Date.now() - 1000).toISOString() })
+      .where(eq(apiKeysInAccount.id, key.id));
+    await expectStatus(api.v1.characters.$get({ query: {} }), 401);
   });
 
   test("refuses a revoked key, and a key whose user deleted their account", async () => {

@@ -30,7 +30,7 @@ export function sessionIdFrom(response: { headers: Headers }) {
 
 /** A new API key of `userId`'s, with its token, and a public API (`/v1`) client that sends it. */
 export async function createKeyedApi(userId: string = SEED_USER_ID) {
-  const key = await ApiKeysService.createKey({ userId }, `Test key ${crypto.randomUUID()}`);
+  const key = await ApiKeysService.createKey({ userId }, `Test key ${crypto.randomUUID()}`, null);
   return { key, api: apiWithKey(key.token) };
 }
 

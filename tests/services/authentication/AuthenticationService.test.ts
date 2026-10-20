@@ -379,7 +379,7 @@ describe("AuthenticationService", () => {
     test("changes with the current one, signing out the user's other sessions and revoking their keys", async () => {
       const { session, account } = await signUpAndVerify();
       const [other] = await Sessions.create(db, { userId: session.userId });
-      await ApiKeysService.createKey(session, "Agent");
+      await ApiKeysService.createKey(session, "Agent", null);
       const change = (currentPassword: string, newPassword: string) =>
         AccountService.updatePassword(session, currentPassword, newPassword);
 
@@ -423,8 +423,8 @@ describe("AuthenticationService", () => {
         const { session, user, account } = await signUpAndVerify();
         const [second] = await Sessions.create(db, { userId: user.id });
         const { session: someoneElse } = await signUpAndVerify();
-        await ApiKeysService.createKey(session, "Agent");
-        await ApiKeysService.createKey(someoneElse, "Theirs");
+        await ApiKeysService.createKey(session, "Agent", null);
+        await ApiKeysService.createKey(someoneElse, "Theirs", null);
         await AuthenticationService.forgotPassword(account.emailAddress);
         const reset = (await PasswordResets.findOne(db, { userId: user.id }))!;
         const resetWith = (code: string) =>
@@ -538,7 +538,7 @@ describe("AuthenticationService", () => {
   describe("deleting the account", () => {
     test("archives the user with their characters, campaign seats and sessions, deletes their keys, and hands their rulesets to nobody", async () => {
       const { session, user, account } = await signUpAndVerify();
-      await ApiKeysService.createKey(session, "Agent");
+      await ApiKeysService.createKey(session, "Agent", null);
       const character = await createTestCharacter(user.id);
       const ruleset = await createTestRuleset(user.id, { private: false });
       await createTestCampaign(user.id);

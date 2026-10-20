@@ -1,5 +1,5 @@
 {
-  "id": "1b907d6b-0642-4450-ae19-22fc01afaefa",
+  "id": "59afce4d-33b1-4885-9991-5fa6536c0490",
   "prevId": "8a64933e-22bd-469d-923b-f8c0c6c7208d",
   "version": "7",
   "dialect": "postgresql",
@@ -381,6 +381,12 @@
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {
@@ -395,6 +401,21 @@
             }
           ],
           "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "api_keys_expires_at": {
+          "name": "api_keys_expires_at",
+          "columns": [
+            {
+              "expression": "expires_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
           "concurrently": false,
           "method": "btree",
           "with": {}

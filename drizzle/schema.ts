@@ -229,9 +229,12 @@ export const apiKeysInAccount = account.table(
     /** The token's SHA-256 digest, hex: what a request's token is looked up by. */
     digest: text().notNull(),
     lastUsedAt: timestamp("last_used_at", { mode: "string", withTimezone: true }),
+    /** When the key stops working, chosen as it's made: none for a key that never expires. */
+    expiresAt: timestamp("expires_at", { mode: "string", withTimezone: true }),
   },
   (table) => [
     uniqueIndex("api_keys_digest").using("btree", table.digest.asc().nullsLast()),
+    index("api_keys_expires_at").using("btree", table.expiresAt.asc().nullsLast()),
     index("api_keys_user_id").using("btree", table.userId.asc().nullsLast()),
     foreignKey({
       columns: [table.userId],
