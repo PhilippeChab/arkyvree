@@ -21,8 +21,9 @@ export interface ClassTabDraft {
 }
 
 /**
- * The unsaved edits of a class page's tabs (its progression, its spells), kept while the page shows another of its
- * tabs, so switching tabs loses none; the page reads whether any changes something, which its leaving asks about.
+ * The unsaved edits of a class page's tabs (those of its base rules' that edit before a save), kept while the page shows
+ * another of its tabs, so switching tabs loses none; the page reads whether any changes something, which its leaving
+ * asks about.
  */
 export const useClassDraftsStore = create<ClassDraftsState>((set) => ({
   drafts: {},

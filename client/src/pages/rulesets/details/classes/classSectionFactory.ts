@@ -1,12 +1,12 @@
 import type { QueryClient } from "@tanstack/react-query";
-import type { ComponentType, FormEventHandler } from "react";
+import type { ComponentType, FormEventHandler, ReactNode } from "react";
 import type { UseFormReturn } from "react-hook-form";
 
 import type { SectionTab } from "@/client/src/components/common/index.ts";
 import type { RulesetDetail } from "@/client/src/lib/queries.ts";
 import type { BaseRules } from "@/shared/enums.ts";
 
-import type { ClassFormData } from "./classSectionQueries.ts";
+import type { ClassFormData, ClassLevelRow } from "./classSectionQueries.ts";
 import { ClassDetails } from "./components/dnd3.5/index.ts";
 import { DND35_CLASS_TAB_ALIASES, DND35_CLASS_TABS } from "./sections/dnd3.5/index.ts";
 
@@ -19,15 +19,24 @@ interface ClassEditor {
 }
 
 /**
- * What a class's page shows by its ruleset's base rules: the class's details and their editor, its own tabs, and the
- * tabs its addresses named before, by the tab each opens now.
+ * What a class's page shows by its ruleset's base rules: the class's details and their editor, the columns its Levels
+ * tab shows of a level's own fields, its own tabs, and the tabs its addresses named before, by the tab each opens now.
  */
 interface ClassSections {
   /** The class's details card: its form's fields (3.5's hit die, bonus spell ability, caster type) */
   ClassDetails: ComponentType<ClassDetailsProps>;
-  /** Old tab keys, by the key of the tab each opens now (3.5's Levels, by its Progression) */
+  /**
+   * The Levels tab's columns of a level's own fields, around its saves'; none when a tab of its own replaces the Levels
+   * tab (3.5's Progression)
+   */
+  levelColumns?: ClassLevelColumns;
+  /** Old tab keys of its own, by the key of the tab each opens now (3.5's Feat Pools, by its Progression) */
   tabAliases: Record<string, string>;
-  /** Its own tabs (3.5's progression, spells, spell list), its page's first, before its skills and its customization */
+  /**
+   * Its own tabs (3.5's progression, spells, spell list), after every class's levels and skills, before its
+   * customization; one that replaces a tab of every class's (`replaces`: 3.5's Progression, the Levels tab) takes its
+   * place
+   */
   tabs: ClassTab[];
 }
 
@@ -39,6 +48,22 @@ export interface ClassDetailsProps {
   /** The class's form, which the card's fields bind, and its save */
   edit: ClassEditor;
   rulesetId: string;
+}
+
+/** A column a class's Levels tab shows of its levels' own fields. */
+export interface ClassLevelColumn {
+  key: string;
+  label: string;
+  /** Its share of the table's width, in percent: the saves share what the level's, the feats' and these leave */
+  share: number;
+  /** What its cell says of a level */
+  valueOf: (level: ClassLevelRow) => ReactNode;
+}
+
+/** The columns a class's Levels tab shows of its levels' own fields: those before its saves', and those after. */
+export interface ClassLevelColumns {
+  afterSaves: ClassLevelColumn[];
+  beforeSaves: ClassLevelColumn[];
 }
 
 /** What the class page passes each of its tabs. */
@@ -55,6 +80,8 @@ export interface ClassSectionProps {
 export interface ClassTab extends SectionTab<string> {
   /** Warms its rows as it's pointed at; a tab whose section reads its own rows warms none */
   prefetch?: (queryClient: QueryClient, rulesetId: string, classId: string) => Promise<void>;
+  /** The key of a tab every class has that this base rules' tab takes the place of, whose address opens it */
+  replaces?: string;
   Section: ComponentType<ClassSectionProps>;
 }
 

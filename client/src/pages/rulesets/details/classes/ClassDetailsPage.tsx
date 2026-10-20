@@ -67,14 +67,21 @@ function ClassView({ back, classId, ruleset, rulesetId, section }: ClassViewProp
 
   const classForms = getClassForms(ruleset.baseRules);
   const classSections = getClassSections(ruleset.baseRules);
-  // Its base rules' tabs, then its own, then those that customize it
-  const tabs = [...classSections.tabs, ...CLASS_TABS, ...CLASS_CUSTOMIZATION_TABS];
+  // Every class's tabs, each in the place of its base rules' tab that replaces it, then its base rules' others, then
+  // those that customize it
+  const replacing = (key: string) => classSections.tabs.find((tab) => tab.replaces === key);
+  const tabs = [
+    ...CLASS_TABS.map((tab) => replacing(tab.key) ?? tab),
+    ...classSections.tabs.filter((tab) => !tab.replaces),
+    ...CLASS_CUSTOMIZATION_TABS,
+  ];
   const currentTab = tabs.find((tab) => tab.key === section);
-  // An address of a tab it had before opens the one that took its place
-  const aliasedTab =
+  // An address of a tab it had before opens the one that took its place: one its base rules replaced, or renamed
+  const renamed =
     section !== undefined && Object.hasOwn(classSections.tabAliases, section)
       ? classSections.tabAliases[section]
       : undefined;
+  const aliasedTab = section === undefined ? undefined : (replacing(section)?.key ?? renamed);
 
   const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
   // Deleting an inherited class, or what it holds, can be undone

@@ -14,12 +14,11 @@ import { ClassSpellListSection } from "./ClassSpellListSection.tsx";
 import { ClassSpellsSection } from "./ClassSpellsSection.tsx";
 
 /**
- * The tabs a 3.5 class page had before its Progression and Spells tabs, by the address each one now opens: Spells
- * Known's opens the Spells tab on its table.
+ * The 3.5 tabs a class page had before its Progression and Spells tabs, by the address each one now opens: Spells
+ * Known's opens the Spells tab on its table. (The Levels tab's opens Progression, which replaces it.)
  */
 export const DND35_CLASS_TAB_ALIASES: Record<string, string> = {
   "feat-pools": "progression",
-  levels: "progression",
   "spells-known": "spells?table=known",
   "spells-per-day": "spells",
 };
@@ -34,6 +33,8 @@ export const DND35_CLASS_TABS: ClassTab[] = [
     key: "progression",
     label: "Progression",
     icon: LevelsIcon,
+    // Every class's Levels tab: its table is this tab's top
+    replaces: "levels",
     Section: ClassProgressionSection,
     prefetch: async (queryClient, rulesetId, classId) => {
       await Promise.all([
