@@ -99,6 +99,16 @@ test.describe("A class's progression", () => {
       .filter({ has: page.getByRole("cell", { name: "+20/+15/+10/+5", exact: true }) });
     await expect(lastRow).toHaveCount(1);
 
+    // The Spells tab and back keeps them; leaving the class asks first, and Cancel stays
+    await page.getByRole("tab", { name: "Spells" }).click();
+    await page.getByRole("tab", { name: "Progression" }).click();
+    await expect(page.getByRole("button", { name: "Good (full)" })).toHaveAttribute("aria-pressed", "true");
+    await page.getByLabel("Back", { exact: true }).click();
+    const leave = page.getByRole("dialog").filter({ hasText: "Discard Changes" });
+    await expect(leave).toBeVisible();
+    await leave.getByRole("button", { name: "Cancel" }).click();
+    await expect(page).toHaveURL(new RegExp(`/classes/${monk.id}/progression`));
+
     // One save writes both, onto the fork's copy of the class, which the page follows
     const saved = apiResponse(page, "PUT", /\/classes\/[a-f0-9-]+\/progression$/);
     await page.getByRole("button", { name: "Save Progression" }).click();

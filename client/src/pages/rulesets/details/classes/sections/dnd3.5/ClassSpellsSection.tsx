@@ -82,21 +82,23 @@ export function ClassSpellsSection({ rulesetId, classId, className, ruleset }: C
   };
   const levels = (perDay.data ?? []).toSorted(byLevel);
   const save = useProgressionSave(rulesetId, classId, "Spells");
+  const saved = {
+    perDay: new Map(rowsOf.perDay.map((row) => [row.id, row.totals])),
+    known: new Map(rowsOf.known.map((row) => [row.id, row.totals])),
+  };
   const { discard, edits, forgetTokens, setEdits, settle, tokens } = useClassDraft<SpellEdits>(
     classId,
+    "spells",
     levels,
     // Both its tables read as they are now
     !perDay.isFetching && !known.isFetching,
     NO_SPELL_EDITS,
-  );
-  const spells = new SpellDraft(
-    levels,
-    {
-      perDay: new Map(rowsOf.perDay.map((row) => [row.id, row.totals])),
-      known: new Map(rowsOf.known.map((row) => [row.id, row.totals])),
+    (next) => {
+      const draft = new SpellDraft(levels, saved, next);
+      return draft.countChanged("perDay") + draft.countChanged("known") > 0;
     },
-    edits,
   );
+  const spells = new SpellDraft(levels, saved, edits);
   const setCells = (which: SpellTable, cells: PlacedCell[]) =>
     setEdits((current) => new SpellDraft(levels, spells.saved, current).write(which, cells));
 

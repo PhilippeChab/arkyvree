@@ -13,14 +13,22 @@ import { useClassDraft } from "./useClassDraft.ts";
 /**
  * A class's Progression tab's changes before its save (`edits`), over its levels as saved: a value set back to the
  * saved one drops its edit, so the tab holds only what differs. They're the class's (`classId`, `useClassDraft`'s),
- * with the tokens they began over (`tokens`).
+ * kept while the page shows another tab, with the tokens they began over (`tokens`); `changed` says whether they change
+ * anything.
  */
-export function useProgressionDraft(classId: string, levels: readonly ClassLevelRow[], fresh: boolean) {
+export function useProgressionDraft(
+  classId: string,
+  levels: readonly ClassLevelRow[],
+  fresh: boolean,
+  changed: (edits: ProgressionEdits) => boolean,
+) {
   const { discard, edits, forgetTokens, setEdits, settle, tokens } = useClassDraft<ProgressionEdits>(
     classId,
+    "progression",
     levels,
     fresh,
     NO_EDITS,
+    changed,
   );
   const levelById = new Map(levels.map((level) => [level.id, level]));
 

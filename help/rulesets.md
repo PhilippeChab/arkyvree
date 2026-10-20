@@ -77,6 +77,8 @@ A class's **Progression** tab shows its table, level by level, and edits it all 
 
 Its **Spells** tab holds the class's spells per day and spells known (how many spells it picks at each spell level) as the book prints them: type a total in a cell (Enter moves down), paste a table from a book, a PDF or a spreadsheet (**Paste a Table**, then **Fill Grid**, or straight into a cell), or start from another class's table (**Start From a Class**). Once a level knows **All** of a spell level's spells, every level after it does too. **Save Spells** writes both tables.
 
+Unsaved changes stay while you switch between the class's tabs. Leaving the class, or reloading the page, asks first.
+
 Editing an inherited class copies it into your ruleset first, as any edit does.
 
 ## What are Aptitudes?

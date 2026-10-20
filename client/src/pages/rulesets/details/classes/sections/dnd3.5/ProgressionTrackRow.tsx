@@ -190,7 +190,8 @@ export function ProgressionTrackRow({
       )}
       {changed.length > 0 && (
         <Stack spacing={0.5} sx={{ border: 1, borderColor: "secondary.main", borderRadius: 1, px: 1.5, py: 1 }}>
-          <Stack direction="row" spacing={2} sx={{ alignItems: "baseline" }}>
+          {/* What changes on the left, its Revert on the far right */}
+          <Stack direction="row" spacing={2} sx={{ alignItems: "baseline", justifyContent: "space-between" }}>
             <Typography variant="body2" sx={{ fontWeight: 600 }}>
               Changes {formatCount(changed.length, "level")}
             </Typography>

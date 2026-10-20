@@ -165,7 +165,8 @@ What the sections above don't name, so no one writes a second one:
 - **Hooks** (`hooks/`):
   - `usePageTitle`: the browser tab's title.
   - `useStaggerAnimation(listKey)` (within `hooks/`: `useListPageQuery` uses it): the offset that animates only a list's newly loaded page.
-  - `useDirtyForm(isDirty)`: a form's unsaved edits guard the page's close and refresh. `FormDialog` calls it for a dialog's form and `useFormSync` for an inline one's, and nothing else does (`arkyvree/dirty-forms`).
+  - `useDirtyForm(isDirty)`: a form's unsaved edits guard the page's close and refresh. `FormDialog` calls it for a dialog's form, `useFormSync` for an inline one's and `useLeaveGuard` for a page's edits outside a form, and nothing else does (`arkyvree/dirty-forms`).
+  - `useLeaveGuard(unsaved, stays)`: a page's unsaved edits outside a form (a class page's tabs' drafts, `stores/classDraftsStore.ts`): a reload asks first (`useDirtyForm`), and so does leaving the page in the app (`useBlocker`, which the app's data router, `createBrowserRouter`, allows), the page asking with a `ConfirmDialog` (`blocked`, `proceed`, `stay`), but for an address still the page's (`stays`: its tabs).
   - `useLatest(value)`: a ref to the latest committed value, for an effect or a handler.
   - `usePdfExport(exportFn)`: queues a PDF export, whose ready notice comes later.
   - `useAttachment`: an image's URL, cached per id; `useCharacterPortraits(characters)`: a list's portraits, a query per character.

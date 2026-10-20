@@ -87,7 +87,22 @@ export function ClassProgressionSection({ rulesetId, classId, className, ruleset
   const { data: progression, error: progressionError } = useQuery(classProgressionQuery(rulesetId, classId));
   const { data: poolTotals, error: poolsError } = useQuery(classFeatPoolsQuery(rulesetId, classId));
   const levels = levelRows?.toSorted(byLevel) ?? [];
-  const draft = useProgressionDraft(classId, levels, !isFetching);
+  const savedFeatures = describeFeatureRows(levels);
+  const savedPools = progression?.pools ?? [];
+  // Edits change something when they send something, or add a row a save hasn't made the class's yet
+  const draft = useProgressionDraft(classId, levels, !isFetching, (edits) => {
+    const body = buildProgressionBody(
+      levels,
+      rulesetSaves?.map(({ id }) => id),
+      savedFeatures,
+      savedPools,
+      edits,
+    );
+    const added =
+      withAddedFeatures(savedFeatures, edits).length > savedFeatures.length ||
+      withAddedPools(savedPools, edits).length > savedPools.length;
+    return Object.keys(body).length > 0 || added;
+  });
   const [customTracks, setCustomTracks] = useState<TrackKey[]>([]);
   const save = useProgressionSave(rulesetId, classId, "Progression");
 
@@ -129,12 +144,10 @@ export function ClassProgressionSection({ rulesetId, classId, className, ruleset
   const valuesOf = (read: (level: ClassLevelRow) => number) =>
     levels.map((level) => ({ level: level.level, levelId: level.id, value: read(level) }));
 
-  const savedFeatures = describeFeatureRows(levels);
   const features = withAddedFeatures(savedFeatures, draft.edits).map((row) => ({
     ...row,
     levelIds: draft.edits.features[row.key] ?? row.levelIds,
   }));
-  const savedPools = progression?.pools ?? [];
   const pools = withAddedPools(savedPools, draft.edits).map((pool) => ({
     ...pool,
     picks: { ...pool.picks, ...draft.edits.pools[pool.aptitudeId] },

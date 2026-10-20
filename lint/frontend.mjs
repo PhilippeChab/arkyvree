@@ -23,8 +23,8 @@
  *   follows from a pick) is marked dirty as its input would: `setValue(name, value, { shouldDirty: true })`. A field's
  *   error shows where its binding puts it (`fieldState.error`), never read from `formState.errors`.
  * - `dirty-forms`: a form's unsaved edits guard the page's reload: an inline form reads them from its `useFormSync`
- *   (`sync.isDirty`), which registers them, and a dialog's `FormDialog` does; nothing else reads `formState.isDirty` or
- *   calls `useDirtyForm`.
+ *   (`sync.isDirty`), which registers them, and a dialog's `FormDialog` does, and a page's edits outside a form its
+ *   `useLeaveGuard`; nothing else reads `formState.isDirty` or calls `useDirtyForm`.
  * - `effect-writes`: an effect synchronizes with what's outside React, and never does what an event or a render does: it
  *   never writes a form's field (`setValue`, `resetField`, `reset`, but `useFormSync`'s, which follows the server),
  *   navigates (a redirect is a rendered `<Navigate>`) nor calls back its owner (an `on…` prop, or a callback a ref
@@ -152,7 +152,11 @@ const DEMO_READERS = new Set([
 const DIALOG_PADDINGS = new Set(["p", "padding", "pb", "paddingBottom", "pt", "paddingTop", "py"]);
 
 /** The modules that read a form's unsaved edits, and register them: a dialog's `FormDialog`, an inline form's sync */
-const DIRTY_FORM_OWNERS = new Set(["client/src/components/common/FormDialog.tsx", "client/src/hooks/useFormSync.ts"]);
+const DIRTY_FORM_OWNERS = new Set([
+  "client/src/components/common/FormDialog.tsx",
+  "client/src/hooks/useFormSync.ts",
+  "client/src/hooks/useLeaveGuard.ts",
+]);
 
 /** The hooks whose callback is an effect. */
 const EFFECTS = new Set(["useEffect", "useLayoutEffect"]);

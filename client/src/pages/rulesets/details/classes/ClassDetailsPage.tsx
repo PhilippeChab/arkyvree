@@ -3,14 +3,14 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
 
-import { ReadOnlyFields, SectionTabPanel, SectionTabs } from "@/client/src/components/common/index.ts";
-import { usePageTitle, useRulesetPermissions } from "@/client/src/hooks/index.ts";
+import { ConfirmDialog, ReadOnlyFields, SectionTabPanel, SectionTabs } from "@/client/src/components/common/index.ts";
+import { useLeaveGuard, usePageTitle, useRulesetPermissions } from "@/client/src/hooks/index.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { type RulesetDetail, rulesetDetailQuery } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { withEntityFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { EntityDetailLayout, EntityPageError } from "@/client/src/pages/rulesets/components/index.ts";
-import { entityPageBack } from "@/client/src/pages/rulesets/entityPageState.ts";
+import { entityPageBack, entityPageState } from "@/client/src/pages/rulesets/entityPageState.ts";
 import {
   useCopyOnWrite,
   useEntityFields,
@@ -19,6 +19,7 @@ import {
 } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { isStillOpen } from "@/client/src/pages/rulesets/stillOpen.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
+import { useClassDraftsStore } from "@/client/src/stores/classDraftsStore.ts";
 
 import { getClassForms } from "./classFormFactory.ts";
 import { getClassSections } from "./classSectionFactory.ts";
@@ -46,6 +47,21 @@ function ClassView({ back, classId, ruleset, rulesetId, section }: ClassViewProp
   const copy = useCopyOnWrite(rulesetId, classId, (id) => `classes/${id}`);
 
   const { data: classData, isLoading, error } = useQuery(classDetailQuery(rulesetId, classId));
+
+  // Its tabs' unsaved edits: a reload asks first, and so does leaving the class's page (its tabs are the page, and so
+  // is the copy a save of it follows), which discards them
+  const unsaved = useClassDraftsStore(
+    (state) => state.classId === classId && Object.values(state.drafts).some((draft) => draft.changed),
+  );
+  const discardDrafts = useClassDraftsStore((state) => state.discard);
+  const classPath = `/rulesets/${rulesetId}/classes/${classId}`;
+  const leave = useLeaveGuard(
+    unsaved,
+    (next) =>
+      next.pathname === classPath ||
+      next.pathname.startsWith(`${classPath}/`) ||
+      entityPageState(next.state).copiedFrom === classId,
+  );
 
   usePageTitle(classData?.name);
 
@@ -176,6 +192,19 @@ function ClassView({ back, classId, ruleset, rulesetId, section }: ClassViewProp
           </>
         )}
       </EntityDetailLayout>
+      <ConfirmDialog
+        open={leave.blocked}
+        onClose={leave.stay}
+        onConfirm={() => {
+          discardDrafts();
+          leave.proceed();
+        }}
+        pending={false}
+        title="Discard Changes"
+        message="Are you sure you want to leave this class? The changes you haven't saved on its tabs are lost."
+        confirmLabel="Discard Changes"
+        intent="destructive"
+      />
     </>
   );
 }
