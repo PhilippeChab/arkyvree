@@ -154,7 +154,7 @@ export default class Dnd35LevelUp extends LevelUpPart<Dnd35Descriptions, Detaile
    * planned level's four steps and a picker for each pool with room left.
    */
   override openLevelChoices(view: RulesetView, character: CharacterInput, query: LevelChoicesQuery) {
-    return new LevelChoices(view, character, this).openLevelChoices(query);
+    return new LevelChoices(view, character, this).openLevelChoices(query, this.openClassPicker(view, character, {}));
   }
 
   /** A power picker for the character: what it offers and leaves out, and a page of options described. */

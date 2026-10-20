@@ -12,8 +12,20 @@ class ApiKeysRepository extends BaseRepository<typeof apiKeysInAccount> {
     super(apiKeysInAccount);
   }
 
+  /** A key that works: neither archived nor expired. */
+  private working() {
+    return and(
+      isNull(this.table.deletedAt),
+      or(isNull(this.table.expiresAt), gt(this.table.expiresAt, new Date().toISOString())),
+    );
+  }
+
+  /** How many keys a user has that work: none archived or expired. */
   async count(db: Db, where: { userId: string }) {
-    const [row] = await db.select({ count: count() }).from(this.table).where(eq(this.table.userId, where.userId));
+    const [row] = await db
+      .select({ count: count() })
+      .from(this.table)
+      .where(and(eq(this.table.userId, where.userId), this.working()));
     return row?.count ?? 0;
   }
 
@@ -41,30 +53,25 @@ class ApiKeysRepository extends BaseRepository<typeof apiKeysInAccount> {
       .returning(SHOWN_COLUMNS);
   }
 
-  /** A user's keys, the newest first. */
+  /** A user's keys that work, the newest first: an expired one is gone to its user, before the cleanup deletes it. */
   async findMany(db: Db, where: { userId: string }) {
     return await db
       .select(SHOWN_COLUMNS)
       .from(this.table)
-      .where(eq(this.table.userId, where.userId))
+      .where(and(eq(this.table.userId, where.userId), this.working()))
       .orderBy(this.orderBy(this.table.createdAt, "desc"), this.orderBy(this.table.id));
   }
 
   /**
-   * The key a token's digest names, unless it's expired, with whether its user is a demo's (`userExpiresAt`): none when
-   * its user's account is deleted.
+   * The key a token's digest names, unless it's archived or expired, with whether its user is a demo's
+   * (`userExpiresAt`): none when its user's account is deleted.
    */
   async findOneWithUser(db: Db, where: { digest: string }) {
     const [key] = await db
       .select({ ...SHOWN_COLUMNS, userExpiresAt: usersInAccount.expiresAt })
       .from(this.table)
       .innerJoin(usersInAccount, and(eq(usersInAccount.id, this.table.userId), isNull(usersInAccount.deletedAt)))
-      .where(
-        and(
-          eq(this.table.digest, where.digest),
-          or(isNull(this.table.expiresAt), gt(this.table.expiresAt, new Date().toISOString())),
-        ),
-      );
+      .where(and(eq(this.table.digest, where.digest), this.working()));
     return key;
   }
 
