@@ -37,9 +37,9 @@ type ApiKey = InferResponseType<(typeof rpc.auth)["api-keys"]["$get"], 200>[numb
 const API_KEY_COLUMNS: TableColumn[] = [
   { key: "name", label: "Name" },
   { key: "key", label: "Key" },
+  { key: "expires", label: "Expires" },
   { key: "created", label: "Created" },
   { key: "lastUsed", label: "Last Used" },
-  { key: "expires", label: "Expires" },
   { key: "actions", label: "Actions", align: "right" },
 ];
 
@@ -101,14 +101,14 @@ export function ApiKeysPanel() {
               <DataCell slot="inline" sx={{ fontFamily: "monospace" }}>
                 {`${key.prefix}…`}
               </DataCell>
+              <DataCell slot="labeled" label="Expires">
+                {key.expiresAt ? formatDate(key.expiresAt) : "Never"}
+              </DataCell>
               <DataCell slot="labeled" label="Created">
                 {formatDate(key.createdAt)}
               </DataCell>
               <DataCell slot="labeled" label="Last Used">
                 {key.lastUsedAt ? formatRelativeTime(key.lastUsedAt) : <EmptyValue />}
-              </DataCell>
-              <DataCell slot="labeled" label="Expires">
-                {key.expiresAt ? formatDate(key.expiresAt) : "Never"}
               </DataCell>
               <DataCell slot="trailing" align="right">
                 <RowActions>
