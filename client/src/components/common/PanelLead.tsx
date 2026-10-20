@@ -12,12 +12,14 @@ interface PanelLeadProps {
 
 /**
  * A panel's title, its list's actions across from it: a panel holds one list, so its actions take no bar of their own
- * (a page's, `ListToolbar`), as a dialog's sit across from its lead (`DialogLead`). On a narrow screen they wrap under it.
+ * (a page's, `ListToolbar`), as a dialog's sit across from its lead (`DialogLead`). They share its line, a phone's too,
+ * and wrap under it only when a long title leaves them no room.
  */
 export function PanelLead({ children, actions }: PanelLeadProps) {
   return (
     <Stack direction="row" sx={{ alignItems: "center", flexWrap: "wrap", columnGap: 2, rowGap: 1 }}>
-      <Box sx={{ flex: "1 1 240px" }}>
+      {/* A title is a label: as wide as its words, so its actions share its line wherever both fit */}
+      <Box sx={{ flex: "1 1 auto", minWidth: 0 }}>
         <CardTitle>{children}</CardTitle>
       </Box>
       {actions && (
