@@ -218,7 +218,19 @@ export function ClassProgressionSection({ rulesetId, classId, className, ruleset
     draft.discard();
     setCustomTracks([]);
   };
-  const handleSave = () => save.mutate({ ...body, ...draft.tokens() }, { onSuccess: discard });
+  // What changes while the save runs stays, for the next save
+  const handleSave = () => {
+    const sent = draft.edits;
+    save.mutate(
+      { ...body, ...draft.tokens() },
+      {
+        onSuccess: () => {
+          draft.settle(sent);
+          setCustomTracks([]);
+        },
+      },
+    );
+  };
 
   const descriptionByFeat = new Map(levels.flatMap((level) => level.feats.map((feat) => [feat.id, feat.description])));
   const featuresAt = (levelId: string) => features.filter((row) => row.levelIds.includes(levelId));

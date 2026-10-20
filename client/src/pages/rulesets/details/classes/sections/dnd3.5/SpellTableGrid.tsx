@@ -11,6 +11,8 @@ interface SpellTableGridProps {
   allowsAll: boolean;
   /** The table's columns: its spell levels, from 0 */
   columns: number;
+  /** A cell whose spells an earlier level knows all of: it shows All, and takes nothing */
+  knownAbove: (levelId: string, spellLevel: number) => boolean;
   /** What the table says it is ("Spells per Day") */
   label: string;
   levels: readonly { id: string; level: number }[];
@@ -43,6 +45,7 @@ function displayCell(cell: SpellCell) {
 export function SpellTableGrid({
   allowsAll,
   columns,
+  knownAbove,
   label,
   levels,
   onCells,
@@ -112,9 +115,15 @@ export function SpellTableGrid({
                 <InputBase
                   id={cellId(label, row, spellLevel)}
                   value={typing?.levelId === id && typing.spellLevel === spellLevel ? typing.text : displayCell(cell)}
-                  readOnly={readOnly}
+                  readOnly={readOnly || knownAbove(id, spellLevel)}
                   onChange={(e) => setTyping({ levelId: id, spellLevel, text: e.target.value })}
-                  title={changed ? `Was ${displayCell(before) || "none"}` : undefined}
+                  title={
+                    knownAbove(id, spellLevel)
+                      ? "All Known From an Earlier Level"
+                      : changed
+                        ? `Was ${displayCell(before) || "none"}`
+                        : undefined
+                  }
                   onBlur={(e) => {
                     if (typing?.levelId === id && typing.spellLevel === spellLevel)
                       commit(id, spellLevel, e.target.value);

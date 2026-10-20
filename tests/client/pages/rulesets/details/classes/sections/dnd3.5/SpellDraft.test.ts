@@ -35,6 +35,7 @@ describe("A Spells tab's draft", () => {
     const spells = draft(edited);
     expect(LEVELS.map(({ id }) => spells.cellOf("known", id, 0))).toEqual([2, "all", "all", "all"]);
     expect(edited.known.l4).toEqual({});
+    expect(LEVELS.map(({ id }) => spells.isKnownAbove("known", id, 0))).toEqual([false, false, true, true]);
     // A write under the All changes nothing that shows
     expect(spells.changesOf("known", [{ levelId: "l3", spellLevel: 0, value: 5 }])).toEqual([]);
   });

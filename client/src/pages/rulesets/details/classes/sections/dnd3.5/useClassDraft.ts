@@ -35,6 +35,15 @@ export function useClassDraft<T>(classId: string, levels: readonly { id: string;
     discard: () => setDraft({ classId, edits: empty }),
     edits: own(draft).edits,
     setEdits,
+    /**
+     * After a save of the edits it sent (`sent`): none left, or those made while it ran, over the levels it moved, whose
+     * tokens are read again.
+     */
+    settle: (sent: T) =>
+      setDraft((current) => {
+        const mine = own(current);
+        return mine.edits === sent ? { classId, edits: empty } : { classId, edits: mine.edits };
+      }),
     tokens: () => own(draft).tokens ?? readTokens(),
   };
 }

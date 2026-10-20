@@ -74,9 +74,7 @@ export class SpellDraft {
 
   /** A cell as the table shows it. */
   cellOf(which: SpellTable, levelId: string, spellLevel: number): SpellCell {
-    const cell = this.editedCell(which, levelId, spellLevel);
-    const allFrom = this.firstAll[spellLevel] ?? -1;
-    return which === "known" && allFrom !== -1 && (this.indexById.get(levelId) ?? 0) > allFrom ? "all" : cell;
+    return this.isKnownAbove(which, levelId, spellLevel) ? "all" : this.editedCell(which, levelId, spellLevel);
   }
 
   /** The cells of a write (`cells`) that change the table as it shows. */
@@ -92,6 +90,12 @@ export class SpellDraft {
     return this.levels.flatMap(({ id }) =>
       SPELL_LEVELS.filter((spellLevel) => this.cellOf(which, id, spellLevel) !== this.savedCell(which, id, spellLevel)),
     ).length;
+  }
+
+  /** Whether a cell's spells are all known from an earlier level: it shows All, whatever it holds. */
+  isKnownAbove(which: SpellTable, levelId: string, spellLevel: number) {
+    const allFrom = this.firstAll[spellLevel] ?? -1;
+    return which === "known" && allFrom !== -1 && (this.indexById.get(levelId) ?? 0) > allFrom;
   }
 
   /** A cell as saved. */

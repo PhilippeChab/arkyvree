@@ -120,6 +120,28 @@ describe("ClassProgressionService", () => {
     expect(known.get(3)!.spellsKnown).toMatchObject({ 0: 5, 1: "All" });
   });
 
+  test("keeps a paladin's spells per day as they were when its spells known move", async () => {
+    const { session, fork, klass, levelId } = await forkWithClass("Paladin");
+
+    const { perDay, known } = await save(session, fork.id, klass.id, {
+      spells: {
+        known: [
+          { levelId: levelId(4), counts: [null, null] },
+          { levelId: levelId(5), counts: [null, null] },
+          { levelId: levelId(6), counts: [null, "all"] },
+        ],
+      },
+    });
+
+    expect([4, 5, 6].map((level) => String(known.get(level)!.spellsKnown[1]))).toEqual([
+      "undefined",
+      "undefined",
+      "All",
+    ]);
+    // Its 0 a day at 4th and 5th came of its spells known opening there: they stay
+    expect([4, 5, 6].map((level) => perDay.get(level)!.spellsPerDay[1])).toEqual([0, 0, 1]);
+  });
+
   test("refuses a spell list's picks as a pool's", async () => {
     const { session, fork, klass, levelId } = await forkWithClass("Sorcerer");
     const list = (await ClassProgressionService.getProgression(fork.id, klass.id)).spellList!;

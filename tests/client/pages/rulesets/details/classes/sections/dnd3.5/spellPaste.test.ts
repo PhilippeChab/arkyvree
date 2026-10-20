@@ -38,6 +38,12 @@ describe("A pasted spell table", () => {
     expect(parseSpellRows("11 4\n12 4\n13 5", false, 11).map((row) => row.level)).toEqual([11, 12, 13]);
   });
 
+  test("leaves out a table's header rows", () => {
+    const rows = parseSpellRows("Level\tCantrips\t1st\n1\t3\t1\n2\t4\t2\n3\t4\t2", false);
+    expect(rows.map((row) => row.level)).toEqual([1, 2, 3]);
+    expect(rows[0].cells).toEqual([3, 1]);
+  });
+
   test("keeps a spreadsheet's empty cells where they are", () => {
     expect(parseSpellRows("4\t\t2\n\t3\n\t\n", false)).toEqual([
       { cells: [4, null, 2] },

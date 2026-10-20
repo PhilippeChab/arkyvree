@@ -158,6 +158,31 @@ export default class ClassProgression {
     private readonly table: ClassTable,
   ) {}
 
+  /** The picks each feat gives in pools, by the ruleset's view: read once a view. */
+  private static readonly featPicksByView = new WeakMap<RulesetData, Record<string, Record<string, number>>>();
+
+  /**
+   * The picks each of the ruleset's feats gives in pools (`rulesetData`'s), by its id then the pool's name: a feature
+   * granted at a level gives them there.
+   */
+  private static readFeatPicks(rulesetData: RulesetData) {
+    const cached = ClassProgression.featPicksByView.get(rulesetData);
+    if (cached) return cached;
+    const featPicks: Record<string, Record<string, number>> = {};
+    for (const [sourceId, modifiers] of rulesetData.modifiersBySource) {
+      for (const modifier of modifiers) {
+        const slug = modifier.sourceType === "feats" ? AptitudeTargets.parsePool(modifier.target) : undefined;
+        const value = LiteralValue.parse(modifier.value, "number");
+        const pool = rulesetData.aptitudesById.get(rulesetData.aptitudeIdBySlug.get(slug ?? "") ?? "");
+        if (!pool || typeof value !== "number") continue;
+        const picks = (featPicks[sourceId] ??= {});
+        picks[pool.name] = (picks[pool.name] ?? 0) + value;
+      }
+    }
+    ClassProgression.featPicksByView.set(rulesetData, featPicks);
+    return featPicks;
+  }
+
   /**
    * Refuses spell tables a save empties of every modifier on the class's list when the list isn't named for the class
    * ("Blackguard Spells", a templar's): its levels' modifiers are all that tie the class to it.
@@ -209,13 +234,14 @@ export default class ClassProgression {
 
   /**
    * A spell table's totals (`field`: `uses` for spells per day, `allowed` for spells known), each level's given
-   * (`rows`) over the ones it has, as each spell level's own modifiers on the class's list: refused for a class
-   * without one, or with several (whose table adds them all up).
+   * (`rows`) over the ones it had before the save (`totals`), as each spell level's own modifiers on the class's list:
+   * refused for a class without one, or with several (whose table adds them all up).
    */
   private planSpells(
     working: Map<string, LevelModifier[]>,
     rows: SpellRow<number | "all">[],
     field: "allowed" | "uses",
+    totals: Map<string, Record<string | number, SpellTotal>>,
   ) {
     const list = this.spellList;
     if (!list) throw new RulesError("invalid", `${this.klass.name} has no spell list to give spells in`);
@@ -223,7 +249,6 @@ export default class ClassProgression {
     if (this.table.describeSpellLists().length > 1) throw new RulesError("invalid", several);
     const levels = this.classLevels;
     const given = new Map(rows.map(({ counts, levelId }) => [this.levels.find(levelId).id, counts]));
-    const totals = this.spellTotals(field, working);
     for (const spellLevel of SPELL_LEVELS) {
       const target = `aptitudes.${list.slug}.${spellLevel}.${field}`;
       const isOwn = (modifier: LevelModifier) =>
@@ -301,18 +326,7 @@ export default class ClassProgression {
       const aptitude = rulesetData.aptitudesById.get(rulesetData.aptitudeIdBySlug.get(slug) ?? "");
       return aptitude && !lists.has(aptitude.id) ? [{ aptitudeId: aptitude.id, name: aptitude.name, picks }] : [];
     });
-    // The picks each feat gives in pools, by its id then the pool's name: a feature granted at a level gives them there
-    const featPicks: Record<string, Record<string, number>> = {};
-    for (const [sourceId, modifiers] of rulesetData.modifiersBySource) {
-      for (const modifier of modifiers) {
-        const slug = modifier.sourceType === "feats" ? AptitudeTargets.parsePool(modifier.target) : undefined;
-        const value = LiteralValue.parse(modifier.value, "number");
-        const pool = rulesetData.aptitudesById.get(rulesetData.aptitudeIdBySlug.get(slug ?? "") ?? "");
-        if (!pool || typeof value !== "number") continue;
-        const picks = (featPicks[sourceId] ??= {});
-        picks[pool.name] = (picks[pool.name] ?? 0) + value;
-      }
-    }
+    const featPicks = ClassProgression.readFeatPicks(rulesetData);
     const list = this.spellList;
     return {
       featPicks,
@@ -332,8 +346,11 @@ export default class ClassProgression {
     RulesError.parse(COUNTS, body);
     const working = new Map(this.classLevels.map((level) => [level.id, this.modifiersOf(level.id)]));
     for (const pool of body.pools ?? []) this.planPool(working, pool);
-    if (body.spells?.known) this.planSpells(working, body.spells.known, "allowed");
-    if (body.spells?.perDay) this.planSpells(working, body.spells.perDay, "uses");
+    // Spells per day open where spells known do: a save of spells known keeps spells per day's totals as they were
+    const perDay = this.spellTotals("uses", working);
+    if (body.spells?.known)
+      this.planSpells(working, body.spells.known, "allowed", this.spellTotals("allowed", working));
+    if (body.spells) this.planSpells(working, body.spells.perDay ?? [], "uses", perDay);
     if (body.spells) this.checkListKept(working);
     const edits = new Map(
       (body.levels ?? []).map(({ levelId, ...form }) => {

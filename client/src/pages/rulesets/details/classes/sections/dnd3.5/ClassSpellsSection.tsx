@@ -75,7 +75,7 @@ export function ClassSpellsSection({ rulesetId, classId, className, ruleset }: C
   };
   const levels = (perDay.data ?? []).toSorted(byLevel);
   const save = useProgressionSave(rulesetId, classId);
-  const { discard, edits, setEdits, tokens } = useClassDraft<SpellEdits>(classId, levels, NO_SPELL_EDITS);
+  const { discard, edits, setEdits, settle, tokens } = useClassDraft<SpellEdits>(classId, levels, NO_SPELL_EDITS);
   const spells = new SpellDraft(
     levels,
     {
@@ -126,7 +126,9 @@ export function ClassSpellsSection({ rulesetId, classId, className, ruleset }: C
       })
     : [];
 
-  const handleSave = () => save.mutate({ ...tokens(), spells: spells.buildBody() }, { onSuccess: discard });
+  // What changes while the save runs stays, for the next save
+  const handleSave = () =>
+    save.mutate({ ...tokens(), spells: spells.buildBody() }, { onSuccess: () => settle(spells.edits) });
 
   if (perDay.isLoading || known.isLoading) return <DiceSpinner sx={{ py: 4 }} />;
   const failed = (perDay.error && !perDay.data && perDay.error) || (known.error && !known.data && known.error);
@@ -225,6 +227,7 @@ export function ClassSpellsSection({ rulesetId, classId, className, ruleset }: C
           readOnly={!editable}
           value={(levelId, spellLevel) => spells.cellOf(table, levelId, spellLevel)}
           saved={(levelId, spellLevel) => spells.savedCell(table, levelId, spellLevel)}
+          knownAbove={(levelId, spellLevel) => spells.isKnownAbove(table, levelId, spellLevel)}
           onCells={(cells) => setCells(table, cells)}
         />
       </Panel>
