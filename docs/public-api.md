@@ -108,8 +108,9 @@ Each write calls the service the app's own route calls, its body a v1 shape tran
   campaign's as `GET /v1/campaigns/{id}` reads it); a removal (an archive, a delete, a contributor's removal, leaving)
   answers nothing (204). An action answers what it acts on (a fork the new ruleset, a publish the ruleset, an invite's
   answer its status), and a queued PDF its export (202).
-- An update keeps what its body leaves out, where the service does (a description, an item's cost); a list it names
-  (a feat's aptitudes, a class level's feats) it replaces whole.
+- An update keeps what its body leaves out (a description, an item's cost, an inventory entry's place and charges, a
+  saved level's picks: v1 reads the entry or the level first where its service takes it whole); a list it names (a
+  feat's aptitudes, a class level's feats) it replaces whole.
 - A fork's change to an entity it inherits is made on a copy of its own, as the app makes it: the answer is the copy,
   under its own id. `POST /v1/rulesets/{id}/{kind}/{entityId}/restore` undoes it, `entityId` the parent's entity.
 - Its writes record activities and notify users as the app's do, and tell them over the websocket

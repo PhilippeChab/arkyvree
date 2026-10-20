@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { z } from "zod";
 
 import { type ApiKeyContext, describeRoute, validate } from "@/server/middlewares/index.ts";
+import { levelFeats, levelSaves } from "@/server/routers/api/rulesets/classes/validation.ts";
 import { idParam } from "@/server/routers/api/validation.ts";
 import {
   v1Class,
@@ -31,15 +32,11 @@ const classBody = z.object({
 
 /** A class level, its create's and its update's: its fields, its base saves and the feats it grants. */
 const levelBody = z.object({
-  feats: z
-    .array(z.object({ aptitudeId: z.string().uuid(), featId: z.string().uuid(), free: z.boolean().optional() }))
-    .optional()
-    .meta({ description: "The feats it grants, each in its aptitude, `free` without taking a pick: its whole list" }),
+  feats: levelFeats.meta({
+    description: "The feats it grants, each in its aptitude, `free` without taking a pick: its whole list",
+  }),
   fields,
-  saves: z
-    .array(z.object({ base: z.number().int(), saveId: z.string().uuid() }))
-    .optional()
-    .meta({ description: "Its base save bonuses: its whole list" }),
+  saves: levelSaves.meta({ description: "Its base save bonuses: its whole list" }),
 });
 
 const levelParams = classParams.extend({ levelId: z.string().uuid() });

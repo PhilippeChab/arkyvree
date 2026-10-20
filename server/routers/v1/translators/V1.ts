@@ -17,12 +17,16 @@ import {
   toV1ImportedCharacter,
   toV1ImportSource,
   toV1InventoryEntry,
-  toV1InventoryEntryOf,
   toV1Placement,
   toV1RaceOption,
   toV1SavedLevel,
 } from "./characterParts.ts";
-import { toInventoryRequest, toLevelEditRequest, toLevelSaveRequest } from "./characterRequests.ts";
+import {
+  toInventoryEditRequest,
+  toInventoryRequest,
+  toLevelEditRequest,
+  toLevelSaveRequest,
+} from "./characterRequests.ts";
 import { toV1Character, toV1Characters } from "./characters.ts";
 import {
   toV1Class,
@@ -36,11 +40,9 @@ import {
   toV1Item,
   toV1Language,
   toV1Modifier,
-  toV1ModifierOf,
   toV1Names,
   toV1Race,
   toV1Requirement,
-  toV1RequirementOf,
   toV1Save,
   toV1Skill,
   toV1Spell,
@@ -75,6 +77,7 @@ import {
   toV1RulesetSettings,
 } from "./rulesets.ts";
 import { toV1ShareLink } from "./sharing.ts";
+import { toV1Found, toV1Written } from "./written.ts";
 
 /**
  * Version 1's translators, one per kind: from what a service answers to v1's shape, and from a v1 request to what a
@@ -111,10 +114,11 @@ export const V1 = {
   export: toV1Export,
   feat: toV1Feat,
   fieldDeclarations: toV1FieldDeclarations,
+  found: toV1Found,
   importedCharacter: toV1ImportedCharacter,
   importSource: toV1ImportSource,
+  inventoryEditRequest: toInventoryEditRequest,
   inventoryEntry: toV1InventoryEntry,
-  inventoryEntryOf: toV1InventoryEntryOf,
   inventoryRequest: toInventoryRequest,
   inviteStatus: toV1InviteStatus,
   item: toV1Item,
@@ -126,7 +130,6 @@ export const V1 = {
   levelSaveRequest: toLevelSaveRequest,
   linkableCharacter: toV1LinkableCharacter,
   modifier: toV1Modifier,
-  modifierOf: toV1ModifierOf,
   names: toV1Names,
   notification: toV1Notification,
   page: toV1Page,
@@ -140,7 +143,6 @@ export const V1 = {
   receivedCharacterInvite: toV1ReceivedCharacterInvite,
   receivedRulesetInvite: toV1ReceivedRulesetInvite,
   requirement: toV1Requirement,
-  requirementOf: toV1RequirementOf,
   requirementRequest: toRequirementRequest,
   ruleset: toV1Ruleset,
   rulesetChanges: toV1RulesetChanges,
@@ -158,4 +160,5 @@ export const V1 = {
   targetPath: toV1TargetPath,
   targetPathCheck: toV1TargetPathCheck,
   unreadNotifications: toV1UnreadNotifications,
+  written: toV1Written,
 };

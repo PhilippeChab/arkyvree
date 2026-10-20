@@ -6,15 +6,11 @@ import { idParam } from "@/server/routers/api/validation.ts";
 import { v1CharacterModifiers } from "@/server/routers/v1/schemas/characterParts.ts";
 import { v1Modifier } from "@/server/routers/v1/schemas/content.ts";
 import { V1 } from "@/server/routers/v1/translators/V1.ts";
+import { modifierOperator, modifierTarget, modifierValue } from "@/server/routers/v1/validation.ts";
 import { CharacterModifiersService } from "@/server/services/characters/modifiers/index.ts";
-import { MODIFIER_OPERATORS } from "@/shared/customization/operators.ts";
 
 /** A character's own modifier, its create's and its update's. */
-const modifierBody = z.object({
-  operator: z.enum(MODIFIER_OPERATORS),
-  target: z.string().min(1).meta({ description: "The path it changes (`GET /v1/rulesets/{id}/target-paths`)" }),
-  value: z.string().min(1).meta({ description: "A number, a text or a flag, as its target takes, or a template" }),
-});
+const modifierBody = z.object({ operator: modifierOperator, target: modifierTarget, value: modifierValue });
 
 const modifierParams = idParam.extend({ modifierId: z.string().uuid() });
 
@@ -43,7 +39,10 @@ export default new Hono<ApiKeyContext>()
       const body = c.req.valid("json");
       const session = c.var.requestSession;
       const created = await CharacterModifiersService.createModifier(session, id, body);
-      return c.json(V1.modifierOf(await CharacterModifiersService.getModifiers(session, id), created.id), 201);
+      return c.json(
+        V1.written(await CharacterModifiersService.getModifiers(session, id), created.id, V1.modifier),
+        201,
+      );
     },
   )
   .put(
@@ -56,7 +55,10 @@ export default new Hono<ApiKeyContext>()
       const body = c.req.valid("json");
       const session = c.var.requestSession;
       await CharacterModifiersService.updateModifier(session, id, modifierId, body);
-      return c.json(V1.modifierOf(await CharacterModifiersService.getModifiers(session, id), modifierId), 200);
+      return c.json(
+        V1.written(await CharacterModifiersService.getModifiers(session, id), modifierId, V1.modifier),
+        200,
+      );
     },
   )
   .delete(

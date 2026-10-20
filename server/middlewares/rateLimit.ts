@@ -20,6 +20,12 @@ export const apiExportRateLimit = limitRatePerKey({ windowMs: MINUTE, limit: 5, 
  */
 export const apiImportRateLimit = limitRatePerKey({ windowMs: MINUTE, limit: 10, per: "user" });
 
+/**
+ * What a character file is, as the public API reads its header, counted per user, whatever keys of theirs ask: as many a
+ * minute as the app's own allow an address.
+ */
+export const apiImportSourceRateLimit = limitRatePerKey({ windowMs: MINUTE, limit: 30, per: "user" });
+
 /** The public API's requests, counted per key: an agent's run reads a character and its choices a few times a level. */
 export const apiKeyRateLimit = limitRatePerKey({ windowMs: MINUTE, limit: 120 });
 

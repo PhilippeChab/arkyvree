@@ -11,32 +11,36 @@ import { V1 } from "@/server/routers/v1/translators/V1.ts";
 import { CharactersService } from "@/server/services/characters/index.ts";
 import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
 
-/** A level's picks, its save's and its edit's: its hit points, its ability increases, and its skills, feats and spells. */
-const levelBody = z.object({
-  abilityIncreases: z
-    .array(z.object({ abilityId: z.string().uuid(), amount: z.number().int().min(1) }))
-    .default([])
-    .meta({ description: "Its ability increases, when the level takes one: each an ability, and how much" }),
-  feats: z
-    .array(z.object({ aptitudeId: z.string().uuid(), featId: z.string().uuid() }))
-    .default([])
-    .meta({ description: "The feats it picks, each in its aptitude (`level-choices`' feat slots)" }),
-  force: z
-    .boolean()
-    .default(false)
-    .meta({ description: "Save it even when the rules find the character wrong with it: what they find is refused" }),
-  hitPoints: z.number().int().min(1).meta({ description: "What its hit die gave it" }),
-  skillPoints: z
-    .record(z.string().uuid(), z.number().int().min(0))
-    .default({})
-    .meta({ description: "The points it spends, by skill id" }),
-  spells: z
-    .array(z.object({ aptitudeId: z.string().uuid(), spellId: z.string().uuid() }))
-    .default([])
-    .meta({ description: "The spells it picks, each in its aptitude (`level-choices`' spell slots)" }),
-});
+/** A level's ability increases: each an ability, and how much. */
+const abilityIncreases = z
+  .array(z.object({ abilityId: z.string().uuid(), amount: z.number().int().min(1) }))
+  .meta({ description: "Its ability increases, when the level takes one: each an ability, and how much" });
+
+/** The feats a level picks, each in its aptitude. */
+const featPicks = z
+  .array(z.object({ aptitudeId: z.string().uuid(), featId: z.string().uuid() }))
+  .meta({ description: "The feats it picks, each in its aptitude (`level-choices`' feat slots)" });
+
+/** Whether a level's save or edit stands though the rules find the character wrong with it. */
+const force = z
+  .boolean()
+  .default(false)
+  .meta({ description: "Save it even when the rules find the character wrong with it: what they find is refused" });
+
+/** The hit points a level gives. */
+const hitPoints = z.number().int().min(1).meta({ description: "What its hit die gave it" });
 
 const levelParams = idParam.extend({ levelId: z.string().uuid() });
+
+/** The skill points a level spends, by skill. */
+const levelSkillPoints = z
+  .record(z.string().uuid(), z.number().int().min(0))
+  .meta({ description: "The points it spends, by skill id" });
+
+/** The spells a level picks, each in its aptitude. */
+const spellPicks = z
+  .array(z.object({ aptitudeId: z.string().uuid(), spellId: z.string().uuid() }))
+  .meta({ description: "The spells it picks, each in its aptitude (`level-choices`' spell slots)" });
 
 /**
  * A character's levels: its choices at its next level, which a caller reads given its picks so far, then saves whole,
@@ -106,8 +110,14 @@ export default new Hono<ApiKeyContext>()
     validate("param", idParam),
     validate(
       "json",
-      levelBody.extend({
+      z.object({
+        abilityIncreases: abilityIncreases.default([]),
         classId: z.string().uuid(),
+        feats: featPicks.default([]),
+        force,
+        hitPoints,
+        skillPoints: levelSkillPoints.default({}),
+        spells: spellPicks.default([]),
         level: z
           .number()
           .int()
@@ -129,15 +139,26 @@ export default new Hono<ApiKeyContext>()
     describeRoute({
       response: v1SavedLevel,
       status: 200,
-      summary: "Changes a level a character took: its hit points, ability increases and picks",
+      summary: "Changes a level a character took: what the body names of its hit points, ability increases and picks",
     }),
     validate("param", levelParams),
-    validate("json", levelBody),
+    validate(
+      "json",
+      z.object({
+        abilityIncreases: abilityIncreases.optional(),
+        feats: featPicks.optional(),
+        force,
+        hitPoints: hitPoints.optional(),
+        skillPoints: levelSkillPoints.optional(),
+        spells: spellPicks.optional(),
+      }),
+    ),
     async (c) => {
       const { id, levelId } = c.req.valid("param");
       const body = c.req.valid("json");
       const session = c.var.requestSession;
-      const { abilityIncreases, feats, force, hp, powers, skills } = V1.levelEditRequest(body);
+      const before = V1.savedLevel(await CharacterLevelsService.getLevel(session, id, levelId));
+      const { abilityIncreases, feats, force, hp, powers, skills } = V1.levelEditRequest(before, body);
       await CharacterLevelsService.updateLevel(
         session,
         id,

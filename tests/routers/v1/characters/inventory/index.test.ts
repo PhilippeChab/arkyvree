@@ -52,6 +52,16 @@ describe("v1 character inventory", () => {
     expect(await expectOk(route.$get({ param: { id } }))).toEqual([]);
   });
 
+  test("changes only what an update names of an entry: where it's equipped and its charges are kept", async () => {
+    const { api } = await createKeyedApi();
+    const { id } = await findSeededCharacter("Fenn Ashwalker");
+    const route = api.v1.characters[":id"].inventory;
+    const bow = (await expectOk(route.$get({ param: { id } }))).find(({ item }) => item.name === "Longbow")!;
+
+    const changed = await expectOk(route[":entryId"].$put({ json: { quantity: 2 }, param: { entryId: bow.id, id } }));
+    expect(changed).toEqual({ ...bow, quantity: 2 });
+  });
+
   test("says why a place can't take one more item, and refuses an add there", async () => {
     const { api } = await createKeyedApi();
     const { itemMap } = await getSeedCtx();

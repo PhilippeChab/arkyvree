@@ -15,7 +15,6 @@ import {
   racesInRules,
   skillsInRules,
 } from "@/drizzle/schema.ts";
-import { InternalError } from "@/server/errors/index.ts";
 import type {
   v1Class,
   v1ClassFeatPools,
@@ -232,7 +231,7 @@ export function toV1Item(
     | ItemOf<typeof ItemsService.getItems>,
 ): z.infer<typeof v1Item> {
   return {
-    cost: Number(item.costGp),
+    cost: item.costGp === null ? null : Number(item.costGp),
     description: item.description,
     fields: toFields(item, ITEM_COLUMNS),
     id: item.id,
@@ -241,7 +240,7 @@ export function toV1Item(
     template: item.isTemplate,
     templateId: item.sourceItemId,
     type: item.type,
-    weight: Number(item.weight),
+    weight: item.weight === null ? null : Number(item.weight),
   };
 }
 
@@ -266,13 +265,6 @@ export function toV1Modifier(modifier: LabeledModifier): z.infer<typeof v1Modifi
     valueLabel: modifier.valueLabel ?? null,
     valueType: modifier.valueType as z.infer<typeof v1Modifier>["valueType"],
   };
-}
-
-/** The modifier of a list that has an id, as the list describes it: one a write just made. */
-export function toV1ModifierOf(modifiers: LabeledModifier[], modifierId: string): z.infer<typeof v1Modifier> {
-  const modifier = modifiers.find(({ id }) => id === modifierId);
-  if (!modifier) throw new InternalError("The modifier written isn't among its owner's");
-  return toV1Modifier(modifier);
 }
 
 /** Things named (a class's spell lists), each by its id and its name. */
@@ -311,16 +303,6 @@ export function toV1Requirement(
     valueLabel: requirement.valueLabel ?? null,
     valueType: requirement.valueType as z.infer<typeof v1Requirement>["valueType"],
   };
-}
-
-/** The requirement of an entity's tree that has an id, as the tree describes it: one a write just made. */
-export function toV1RequirementOf(
-  requirements: Answer<typeof RequirementsService.getRequirements>,
-  requirementId: string,
-): z.infer<typeof v1Requirement> {
-  const requirement = requirements.find(({ id }) => id === requirementId);
-  if (!requirement) throw new InternalError("The requirement written isn't in its entity's tree");
-  return toV1Requirement(requirement);
 }
 
 /** A saving throw of a ruleset's. */
