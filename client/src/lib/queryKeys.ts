@@ -120,6 +120,8 @@ export const QUERY_KEYS = {
   legal: {
     ogl: ["legal", "oglLicense"] as const,
   },
+  /** What every base rules' rulesets share: their words, kinds and license, the same for anyone. */
+  rules: ["rules"] as const,
   shared: {
     character: (shareToken: string) => ["shared", "character", shareToken] as const,
   },

@@ -12,7 +12,7 @@ import {
   SectionTabs,
 } from "@/client/src/components/common/index.ts";
 import { TargetPathBreadcrumbs } from "@/client/src/components/customization/index.ts";
-import { usePageTitle, useRulesetPermissions } from "@/client/src/hooks/index.ts";
+import { usePageTitle, useRules, useRulesetPermissions } from "@/client/src/hooks/index.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { type RulesetDetail, rulesetDetailQuery } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
@@ -72,10 +72,11 @@ function CustomizationView({
   const queryClient = useQueryClient();
 
   const type = data.type;
-  const label = entityTypeLabel(type, ruleset.baseRules);
+  const { rules } = useRules(ruleset.baseRules);
+  const label = entityTypeLabel(type, rules?.words);
   const { title, pageTitle, subtitle, backPath } = describe(data, rulesetId);
   // Where it was opened from, else what holds it (a class's level, an entity's modifier), else its list
-  const back = entityPageBack(location.state, backPath ?? `/rulesets/${rulesetId}/${type}`, ruleset.baseRules);
+  const back = entityPageBack(location.state, backPath ?? `/rulesets/${rulesetId}/${type}`, rules?.words);
   usePageTitle(pageTitle);
 
   const entityKey = QUERY_KEYS.rulesets.entity(rulesetId, type, entityId);
@@ -295,7 +296,8 @@ export default function CustomizationPage() {
 
   const { data: ruleset, isLoading: isRulesetLoading, error: rulesetError } = useQuery(rulesetDetailQuery(rulesetId));
   // Until the entity says what holds it, Back goes where the page was opened from, else to the ruleset
-  const back = entityPageBack(location.state, `/rulesets/${rulesetId}`, ruleset?.baseRules);
+  const { rules } = useRules(ruleset?.baseRules);
+  const back = entityPageBack(location.state, `/rulesets/${rulesetId}`, rules?.words);
   const {
     data,
     isLoading: isEntityLoading,
@@ -338,7 +340,7 @@ export default function CustomizationPage() {
             ? `Invalid entity type: ${entityType}`
             : !ruleset && (rulesetError || !entityError)
               ? loadFailureMessage("Ruleset", rulesetError)
-              : loadFailureMessage(entityTypeLabel(validType, ruleset?.baseRules), entityError)
+              : loadFailureMessage(entityTypeLabel(validType, rules?.words), entityError)
         }
         backLabel={back.label}
         backTo={back.to}
@@ -348,7 +350,7 @@ export default function CustomizationPage() {
 
   if (!ruleset || !data || !currentTab) {
     return (
-      <EntityDetailLayout backTo={back.to} what={entityTypeLabel(validType, ruleset?.baseRules)} isLoading>
+      <EntityDetailLayout backTo={back.to} what={entityTypeLabel(validType, rules?.words)} isLoading>
         {null}
       </EntityDetailLayout>
     );

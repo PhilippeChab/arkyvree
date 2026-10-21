@@ -27,6 +27,7 @@ import {
 } from "@/client/src/components/common/index.ts";
 import { RestoreIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
+import { useRules } from "@/client/src/hooks/index.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
 import { rulesetChangesQuery } from "@/client/src/pages/rulesets/details/rulesetQueries.ts";
@@ -69,6 +70,7 @@ export function LocalChangesDialog({ open, onClose, rulesetId, baseRules, canEdi
   const { pathname, search } = useLocation();
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
+  const { rules } = useRules(baseRules);
 
   const {
     data: changes,
@@ -118,7 +120,7 @@ export function LocalChangesDialog({ open, onClose, rulesetId, baseRules, canEdi
             {[...grouped.entries()].map(([entityType, items]) => (
               <Paper key={entityType} variant="outlined" sx={{ overflow: "hidden" }}>
                 <Stack direction="row" spacing={1} sx={{ px: 2, py: 1, bgcolor: "action.hover", alignItems: "center" }}>
-                  <SubsectionTitle>{entityTypeLabel(entityType, baseRules, true)}</SubsectionTitle>
+                  <SubsectionTitle>{entityTypeLabel(entityType, rules?.words, true)}</SubsectionTitle>
                   <CountChip label={items.length} />
                 </Stack>
                 <List dense disablePadding>

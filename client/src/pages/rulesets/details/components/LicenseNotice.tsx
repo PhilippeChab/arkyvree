@@ -8,10 +8,17 @@ import {
   OglLicenseText,
   SubsectionTitle,
 } from "@/client/src/components/common/index.ts";
-import type { LicenseNoticeProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
+import type { RulesDescription } from "@/client/src/lib/queries.ts";
 
-/** A 3.5 system ruleset's License & Attribution, under its header: the Open Game License its SRD content is under. */
-export function RulesetLicenseNotice({ name }: LicenseNoticeProps) {
+interface LicenseNoticeProps {
+  /** What its rules say its content is licensed under: their notice, and the license whose text the app serves */
+  license: NonNullable<RulesDescription["license"]>;
+  /** The system ruleset's. */
+  name: string;
+}
+
+/** A system ruleset's License & Attribution, under its header: its rules' notice, and its license's text. */
+export function LicenseNotice({ license, name }: LicenseNoticeProps) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -27,12 +34,9 @@ export function RulesetLicenseNotice({ name }: LicenseNoticeProps) {
           <Stack spacing={3}>
             <Stack spacing={1}>
               <SubsectionTitle>{name}</SubsectionTitle>
-              <Typography variant="body2">
-                This notice applies to the SRD-derived Open Game Content in this system source package. It does not
-                license the application code or designate independent user-created content as Open Game Content.
-              </Typography>
+              <Typography variant="body2">{license.notice}</Typography>
             </Stack>
-            {/* Its dialog's content mounts as it opens: the license loads then */}
+            {/* Its dialog's content mounts as it opens: the license loads then (`text`: the Open Game License alone) */}
             <OglLicenseText />
           </Stack>
         </DialogContent>

@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useLocation, useParams } from "react-router-dom";
 
+import { useRules } from "@/client/src/hooks/index.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { rulesetDetailQuery } from "@/client/src/lib/queries.ts";
 import { EntityDetailLayout, EntityPageError } from "@/client/src/pages/rulesets/components/index.ts";
@@ -13,7 +14,8 @@ export default function SkillDetailsPage() {
   const location = useLocation();
   // A skill's details are its ruleset's base rules': the page waits for the ruleset to know them
   const { data: ruleset, isLoading, error } = useQuery(rulesetDetailQuery(rulesetId));
-  const back = entityPageBack(location.state, `/rulesets/${rulesetId}/skills`, ruleset?.baseRules);
+  const { rules } = useRules(ruleset?.baseRules);
+  const back = entityPageBack(location.state, `/rulesets/${rulesetId}/skills`, rules?.words);
 
   if (ruleset) {
     const { SkillDetails } = getEntityPages(ruleset.baseRules);

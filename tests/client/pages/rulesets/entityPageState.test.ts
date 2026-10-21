@@ -1,6 +1,10 @@
 import { describe, expect, test } from "bun:test";
 
 import { entityPageBack } from "@/client/src/pages/rulesets/entityPageState.ts";
+import { Engine } from "@/engine/index.ts";
+
+/** A 3.5 ruleset's words, as the engine describes them to the client. */
+const DND35_WORDS = Engine.rules().describeAll()["Dungeons & Dragons: 3.5"].words;
 
 const FALLBACK = "/rulesets/r1/skills";
 
@@ -28,9 +32,9 @@ describe("An entity page's way back", () => {
       label: "Back to Feat",
       to: "/rulesets/r1/feats/f1/customization/modifiers",
     });
-    expect(
-      entityPageBack({ from: "/rulesets/r1/powers/p1/customization" }, FALLBACK, "Dungeons & Dragons: 3.5").label,
-    ).toBe("Back to Spell");
+    expect(entityPageBack({ from: "/rulesets/r1/powers/p1/customization" }, FALLBACK, DND35_WORDS).label).toBe(
+      "Back to Spell",
+    );
     expect(entityPageBack({ from: "/rulesets/r1/class-levels/l1/customization/requirements" }, FALLBACK).label).toBe(
       "Back to Class Level",
     );

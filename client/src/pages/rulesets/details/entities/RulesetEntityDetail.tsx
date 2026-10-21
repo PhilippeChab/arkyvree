@@ -4,7 +4,7 @@ import type { DefaultValues, FieldValues, UseFormReturn } from "react-hook-form"
 import { Navigate, useLocation } from "react-router-dom";
 
 import { ReadOnlyFields } from "@/client/src/components/common/index.ts";
-import { usePageTitle, useRulesetPermissions } from "@/client/src/hooks/index.ts";
+import { usePageTitle, useRules, useRulesetPermissions } from "@/client/src/hooks/index.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { rulesetDetailQuery } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
@@ -128,7 +128,8 @@ export function RulesetEntityDetail<TEntity extends EntityBase, TForm extends Fi
 }: RulesetEntityDetailProps<TEntity, TForm, TKey>) {
   const location = useLocation();
   const { data: ruleset, isLoading: isRulesetLoading, error: rulesetError } = useQuery(rulesetDetailQuery(rulesetId));
-  const back = entityPageBack(location.state, `/rulesets/${rulesetId}/${section}`, ruleset?.baseRules);
+  const { rules } = useRules(ruleset?.baseRules);
+  const back = entityPageBack(location.state, `/rulesets/${rulesetId}/${section}`, rules?.words);
   const { data: entity, isLoading: isEntityLoading, error: entityError } = useQuery(query(entityId));
 
   usePageTitle(entity?.name);

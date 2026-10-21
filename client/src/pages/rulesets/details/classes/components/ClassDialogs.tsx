@@ -1,12 +1,12 @@
 import type { UseFormReturn } from "react-hook-form";
 
 import { CreateDialog, DeleteDialog, FormTextField } from "@/client/src/components/common/index.ts";
+import { useRules } from "@/client/src/hooks/index.ts";
 import { wholeNumberRules } from "@/client/src/lib/validation.ts";
 import { EntityFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { getClassForms } from "@/client/src/pages/rulesets/details/classes/classFormFactory.ts";
 import type { ClassLevelFormData } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 import { useRulesetSaves } from "@/client/src/pages/rulesets/hooks/index.ts";
-import { getVocabulary } from "@/client/src/pages/rulesets/vocabularyFactory.ts";
 import type { BaseRules } from "@/shared/enums.ts";
 
 interface CreateLevelDialogProps {
@@ -39,7 +39,8 @@ export function CreateLevelDialog({
   baseRules,
 }: CreateLevelDialogProps) {
   const { data: rulesetSaves, error: savesError } = useRulesetSaves(rulesetId, open);
-  const { lastLevel } = getVocabulary(baseRules).classes;
+  // Its rules' last class level bounds the number (none while they load: the save's check still holds it)
+  const lastLevel = useRules(baseRules).rules?.lastClassLevel;
   const { allLevelSaves, NewClassLevelFields } = getClassForms(baseRules);
 
   // The endpoint takes every ruleset save, 0 when unset.

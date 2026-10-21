@@ -41,12 +41,18 @@ import {
   SkillsIcon,
   UnarchiveIcon,
 } from "@/client/src/components/icons/index.ts";
-import { useAnchorMenu, usePageTitle, useRulesetPermissions, useSearchParam } from "@/client/src/hooks/index.ts";
+import {
+  useAnchorMenu,
+  usePageTitle,
+  useRules,
+  useRulesetPermissions,
+  useSearchParam,
+} from "@/client/src/hooks/index.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { EXTERNAL_LINKS } from "@/client/src/lib/externalLinks.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
-import { rulesetDetailQuery } from "@/client/src/lib/queries.ts";
+import { rulesetDetailQuery, type RulesWords } from "@/client/src/lib/queries.ts";
 import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
 import { RulesetFactChips, RulesetStarButton } from "@/client/src/pages/rulesets/components/index.ts";
 import { useRulesetOperations } from "@/client/src/pages/rulesets/hooks/index.ts";
@@ -56,6 +62,7 @@ import {
   ArchiveRulesetDialog,
   EditRulesetDialog,
   ForkRulesetDialog,
+  LicenseNotice,
   LocalChangesDialog,
   PublishRulesetDialog,
   RulesetContributorsDialog,
@@ -79,8 +86,11 @@ import {
 /** What a ruleset page's tab is: its key, label and icon, and the section it shows. */
 type TabConfig = SectionTab<RulesetSection> & { component: (props: RulesetSectionProps) => ReactNode };
 
-/** The ruleset page's tabs, an entity's section each: its base rules' own among them (`getSections`). */
-function rulesetTabs(baseRules: BaseRules): TabConfig[] {
+/**
+ * The ruleset page's tabs, an entity's section each: its base rules' own among them (`getSections`), named in its
+ * rules' words (`words`).
+ */
+function rulesetTabs(baseRules: BaseRules, words: RulesWords | undefined): TabConfig[] {
   const sections = getSections(baseRules);
   return [
     { key: "races", label: "Races", icon: RacesIcon, component: RacesSection },
@@ -89,7 +99,7 @@ function rulesetTabs(baseRules: BaseRules): TabConfig[] {
     { key: "feats", label: "Feats", icon: FeatsIcon, component: FeatsSection },
     {
       key: "powers",
-      label: entityTypeLabel("powers", baseRules, true),
+      label: entityTypeLabel("powers", words, true),
       icon: PowersIcon,
       component: sections.PowersSection,
     },
@@ -195,8 +205,10 @@ export default function RulesetDetailsPage() {
   const isFork = !!ruleset?.rulesetId && !isExtension;
 
   const [contributorsDialogOpen, setContributorsDialogOpen] = useState(false);
+  const { rules, isPending: rulesPending } = useRules(ruleset?.baseRules);
 
-  if (isLoading) {
+  // Its tabs' names are its rules' words: it waits for them too, as they load once
+  if (isLoading || rulesPending) {
     return (
       <Container>
         <PageLoader />
@@ -214,14 +226,13 @@ export default function RulesetDetailsPage() {
   }
 
   // Its tabs are its base rules' (`getSections`): the page waits for its ruleset to know them
-  const tabConfig = rulesetTabs(ruleset.baseRules);
+  const tabConfig = rulesetTabs(ruleset.baseRules, rules?.words);
   const currentTab = tabConfig.find((tab) => tab.key === section);
 
   // Normalize the URL to a known tab.
   if (!currentTab) return <Navigate to={`/rulesets/${id}/races`} replace />;
 
   const isActive = ruleset.status !== "Archived";
-  const { LicenseNotice } = getSections(ruleset.baseRules);
   // A user's fork that subscribes to none can be an extension: what its edit and its publish offer
   const canBeExtension = !!ruleset.rulesetId && ruleset.userId !== null && ruleset.extensionRulesetIds.length === 0;
   // What the session may do here: the header's menu, whose button shows only when it holds something
@@ -360,7 +371,9 @@ export default function RulesetDetailsPage() {
             }
             description={ruleset.description}
           >
-            {ruleset.system && LicenseNotice && <LicenseNotice key={ruleset.id} name={ruleset.name} />}
+            {ruleset.system && rules?.license && (
+              <LicenseNotice key={ruleset.id} license={rules.license} name={ruleset.name} />
+            )}
           </DetailPageHeader>
 
           {/* An archived ruleset's notice, and extensions that failed to load, above its tabs */}

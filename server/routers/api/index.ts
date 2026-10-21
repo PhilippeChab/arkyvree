@@ -8,6 +8,7 @@ import dashboard from "./dashboard/index.ts";
 import demo from "./demo/index.ts";
 import exports from "./exports/index.ts";
 import notifications from "./notifications/index.ts";
+import rules from "./rules/index.ts";
 import rulesets from "./rulesets/index.ts";
 import shared from "./shared/index.ts";
 
@@ -21,5 +22,6 @@ export default new Hono()
   .route("/demo", demo)
   .route("/exports", exports)
   .route("/notifications", notifications)
+  .route("/rules", rules)
   .route("/rulesets", rulesets)
   .route("/campaigns", campaigns);
