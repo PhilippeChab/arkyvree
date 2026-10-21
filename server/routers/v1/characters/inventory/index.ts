@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import { location } from "@/drizzle/schema.ts";
 import { type ApiKeyContext, describeRoute, validate } from "@/server/middlewares/index.ts";
-import { heldSetList, idParam } from "@/server/routers/api/validation.ts";
+import { heldSetList, heldSets, idParam } from "@/server/routers/api/validation.ts";
 import { v1Inventory, v1InventoryEntry, v1Placement } from "@/server/routers/v1/schemas/characterParts.ts";
 import { V1 } from "@/server/routers/v1/translators/V1.ts";
 import { CharacterInventoryService } from "@/server/services/characters/inventory/index.ts";
@@ -34,10 +34,10 @@ const force = z
   .default(false)
   .meta({ description: "Equip it even when the character doesn't meet its requirements (a proficiency it lacks)" });
 
-/** The weapon sets a hand holds an entry in, stored from 0: none outside the hands. */
-const heldSets = z
-  .array(z.number().int().min(0))
-  .meta({ description: "The weapon sets a hand holds it in, from 0: none outside the hands" });
+/** The weapon sets a hand holds an entry in, as the document describes them. */
+const heldWeaponSets = heldSets.meta({
+  description: "The weapon sets a hand holds it in, from 0: none outside the hands",
+});
 
 /** A character's inventory: what it carries, where, and how many. */
 export default new Hono<ApiKeyContext>()
@@ -99,7 +99,7 @@ export default new Hono<ApiKeyContext>()
         itemId: z.string().uuid(),
         location: entryLocation.default(null),
         quantity: z.number().int().min(1),
-        weaponSets: heldSets.default([]),
+        weaponSets: heldWeaponSets.default([]),
       }),
     ),
     async (c) => {
@@ -139,7 +139,7 @@ export default new Hono<ApiKeyContext>()
         force,
         location: entryLocation.optional(),
         quantity: z.number().int().min(1).optional(),
-        weaponSets: heldSets.optional(),
+        weaponSets: heldWeaponSets.optional(),
       }),
     ),
     async (c) => {

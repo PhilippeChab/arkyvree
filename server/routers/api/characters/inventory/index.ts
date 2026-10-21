@@ -3,13 +3,10 @@ import { z } from "zod";
 
 import { location } from "@/drizzle/schema.ts";
 import { type SessionContext, validate } from "@/server/middlewares/index.ts";
-import { characterIdParam, heldSetList } from "@/server/routers/api/validation.ts";
+import { characterIdParam, heldSetList, heldSets } from "@/server/routers/api/validation.ts";
 import { CharacterInventoryService } from "@/server/services/characters/inventory/index.ts";
 
 const entryParams = characterIdParam.extend({ entryId: z.string().uuid() });
-
-/** The weapon sets a hand holds an entry in, stored from 0: none outside the hands. */
-const heldSets = z.array(z.number().int().min(0)).default([]);
 
 export default new Hono<SessionContext>()
   .get("/:characterId", validate("param", characterIdParam), async (c) => {
@@ -54,7 +51,7 @@ export default new Hono<SessionContext>()
         location: z.enum(location.enumValues).nullable().default(null),
         totalCharges: z.number().int().min(0).nullable().default(null),
         remainingCharges: z.number().int().min(0).nullable().default(null),
-        weaponSets: heldSets,
+        weaponSets: heldSets.default([]),
         force: z.boolean().default(false),
       }),
     ),
@@ -90,7 +87,7 @@ export default new Hono<SessionContext>()
         location: z.enum(location.enumValues).nullable().default(null),
         totalCharges: z.number().int().min(0).nullable().default(null),
         remainingCharges: z.number().int().min(0).nullable().default(null),
-        weaponSets: heldSets,
+        weaponSets: heldSets.default([]),
         force: z.boolean().default(false),
         updatedAt: z.string().optional(),
       }),

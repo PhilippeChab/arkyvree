@@ -83,13 +83,16 @@ export default class ItemEntity extends CustomizationPageEntity<
     else this.checkTemplateOf(body, item);
   }
 
-  /** A form's columns: a new item's template, and whether it's one; an edited template keeps no source. */
+  /**
+   * A form's columns: a new item's template, and whether it's one; an edited template keeps no source. Its slot is the
+   * one its type sets, the type an edit keeps when its form leaves it out.
+   */
   protected override columnsOf(body: ItemBody, item?: Item): ItemColumns {
     const columns = {
       costGp: decimalColumn(body.costGp),
       description: body.description,
       name: body.name,
-      slot: this.slotOf(body),
+      slot: this.slotOf({ slot: body.slot, type: this.typeOf(body, item) }),
       type: body.type,
       weight: decimalColumn(body.weight),
     };
