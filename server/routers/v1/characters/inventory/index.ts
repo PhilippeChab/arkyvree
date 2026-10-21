@@ -149,7 +149,7 @@ export default new Hono<ApiKeyContext>()
       const { entryId, id } = c.req.valid("param");
       const body = c.req.valid("json");
       const session = c.var.requestSession;
-      const stored = V1.found(await CharacterInventoryService.getInventory(session, id), entryId, (found) => found);
+      const stored = V1.found(await CharacterInventoryService.getInventory(session, id), entryId);
       const entry = V1.inventoryEditRequest(V1.inventoryEntry(stored), body);
       await CharacterInventoryService.updateItem(
         session,

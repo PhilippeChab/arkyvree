@@ -10,8 +10,8 @@ function findTranslated<T extends { id: string }, R>(items: T[], id: string, toI
 }
 
 /** The item of a list that a request names (an inventory entry its update changes): a 404 when there's none. */
-export function toV1Found<T extends { id: string }, R>(items: T[], id: string, toItem: (item: T) => R) {
-  return findTranslated(items, id, toItem, new NotFoundError("Not found"));
+export function toV1Found<T extends { id: string }>(items: T[], id: string) {
+  return findTranslated(items, id, (item) => item, new NotFoundError("Not found"));
 }
 
 /** The item of a list that a write just made: none is the server's error, since the write answered it. */

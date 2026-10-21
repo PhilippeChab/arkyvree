@@ -93,6 +93,17 @@ describe("v1 character levels", () => {
     expect((await expectOk(route.levels.$post({ json: { ...unpicked, force: true }, param: { id } }))).level).toBe(6);
   });
 
+  test("changes a forced level's hit points alone, its picks kept as they were saved", async () => {
+    const { id, json, route } = await planFighterLevel();
+    const unpicked = { ...json, feats: [], force: true };
+    const { levels } = await expectOk(route.levels.$post({ json: unpicked, param: { id } }));
+    const levelId = levels.at(-1)!.id;
+
+    const changed = await expectOk(route.levels[":levelId"].$put({ json: { hitPoints: 6 }, param: { id, levelId } }));
+    expect(changed).toMatchObject({ hitPoints: 6, feats: [] });
+    await expectStatus(route.levels[":levelId"].$put({ json: { feats: [] }, param: { id, levelId } }), 400);
+  });
+
   test("changes a level a character took, and removes its latest level", async () => {
     const { id, json, route } = await planFighterLevel();
     const { levels } = await expectOk(route.levels.$post({ json, param: { id } }));
