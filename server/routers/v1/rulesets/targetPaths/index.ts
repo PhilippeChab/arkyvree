@@ -45,17 +45,17 @@ export default new Hono<ApiKeyContext>()
     async (c) => {
       const { id } = c.req.valid("param");
       const { entityKind, kind, limit, page, path, search } = c.req.valid("query");
-      const flat = search !== undefined;
+      // An empty search is none: it completes the path
       const completions = await TargetPathsService.getCompletions(
         id,
         path,
         path.length,
         kind,
         entityKind,
-        search,
+        search || undefined,
         limit,
         page,
-        flat,
+        !!search,
       );
       return c.json(V1.page(completions, V1.targetPath), 200);
     },

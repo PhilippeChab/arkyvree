@@ -39,6 +39,22 @@ describe("v1 ruleset target paths", () => {
     expect(await aptitudePaths("characters")).toEqual([]);
   });
 
+  test("answers apart the values a path takes and those a set on it takes alone, and completes on an empty search", async () => {
+    const { api } = await createKeyedApi();
+    const { rulesetId: id } = await getSeedCtx();
+    const route = api.v1.rulesets[":id"]["target-paths"];
+
+    const query = { entityKind: "feats", limit: "100", search: "allowed" } as const;
+    const { items } = await expectOk(route.$get({ param: { id }, query }));
+    const allowed = items.find(({ path }) => path?.endsWith(".allowed"));
+    expect(allowed).toMatchObject({ setValues: [{ label: "All known", value: "-1" }], values: [] });
+
+    const { items: segments } = await expectOk(
+      route.$get({ param: { id }, query: { path: "abilities.", search: "" } }),
+    );
+    expect(segments.map(({ label }) => label)).toContain("strength");
+  });
+
   test("checks a path: what a valid one takes, and what an invalid one may have meant", async () => {
     const { api } = await createKeyedApi();
     const { rulesetId: id } = await getSeedCtx();
