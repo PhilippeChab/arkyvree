@@ -86,8 +86,8 @@ const CONCURRENT = new Set(["all", "allSettled", "any", "race"]);
 
 /** An `eslint-disable` / `oxlint-disable` comment's text. */
 const DIRECTIVE = /^\s*(?:eslint|oxlint)-disable(?:-next-line|-line)?\b/;
-/** The limits a route that renders a PDF or queues one counts its requests with: per address, or per user (`/v1`). */
-const EXPORT_RATE_LIMITS = new Set(["apiExportRateLimit", "exportRateLimit"]);
+/** The limit a route that renders a PDF or queues one counts its requests with: per user under `/v1`, per address else. */
+const EXPORT_RATE_LIMITS = { api: "exportRateLimit", v1: "apiExportRateLimit" };
 /** kebab-case, a file's name (`sitemap.xml`) or a wildcard */
 const FIXED_SEGMENT = /^([a-z0-9]+(-[a-z0-9]+)*(\.[a-z0-9]+)?|\*)$/;
 /** A module or folder named for no particular thing: `helpers.ts`, `utils/`. */
@@ -828,16 +828,17 @@ function createRouteConventions(context) {
       const routePath = pathOf(route);
       if (!routePath?.startsWith("/")) return;
       // .post("/:id/pdf", exportRateLimit, …): a sheet's PDF costs a render, so its route counts its requests
+      const exportLimit = EXPORT_RATE_LIMITS[file.startsWith("server/routers/v1/") ? "v1" : "api"];
       if (
         callee.property.name !== "route" &&
         routePath.endsWith("/pdf") &&
-        !node.arguments.some((arg) => arg.type === "Identifier" && EXPORT_RATE_LIMITS.has(arg.name))
+        !node.arguments.some((arg) => arg.type === "Identifier" && arg.name === exportLimit)
       ) {
         context.report({
           node: route,
           message:
-            "A route that renders a PDF, or queues one, takes `exportRateLimit` (the public API's `apiExportRateLimit`): " +
-            "each request costs a render.",
+            `A route that renders a PDF, or queues one, takes \`${exportLimit}\`: each request costs a render ` +
+            "(the public API's counted per user, the app's per address).",
         });
       }
       for (const segment of routePath.split("/")) {

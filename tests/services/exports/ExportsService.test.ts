@@ -1,14 +1,18 @@
 import { describe, expect, test } from "bun:test";
 
-import { eq } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 
-import { exportsInAccount } from "@/drizzle/schema.ts";
-import { db } from "@/server/database/index.ts";
+import { addJob, db } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError } from "@/server/errors/index.ts";
 import { ExportsService } from "@/server/services/exports/index.ts";
 import { createExport } from "@/tests/support/files.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
+
+/** Queues the job of a pending export, as a PDF's queueing does. */
+async function queueExportJob(exportId: string) {
+  await addJob(db, "generatePdf", { exportId }, { maxAttempts: 2 });
+}
 
 describe("ExportsService.getExport", () => {
   test("returns the owner's export", async () => {
@@ -47,6 +51,7 @@ describe("ExportsService.getExportStatus", () => {
     const { session } = await createTestUser();
     for (const status of ["pending", "ready", "failed"] as const) {
       const { id } = await createExport(session.userId, undefined, status);
+      if (status === "pending") await queueExportJob(id);
       const read = await ExportsService.getExportStatus(session, id);
       expect(read).toMatchObject({ id, status, fileName: "test-sheet.pdf" });
       expect(read).not.toHaveProperty("data");
@@ -63,12 +68,17 @@ describe("ExportsService.getExportStatus", () => {
     expect(ExportsService.getExportStatus(owner, expired.id)).rejects.toThrow("expired");
   });
 
-  test("answers a pending export failed once its job is past its time, which its download refuses as failed", async () => {
+  test("answers a pending export failed once its job is gone, which its download refuses as failed", async () => {
     const { session } = await createTestUser();
     const { id } = await createExport(session.userId, undefined, "pending");
-    const halfAnHourAgo = new Date(Date.now() - 31 * 60 * 1000).toISOString();
-    await db.update(exportsInAccount).set({ createdAt: halfAnHourAgo }).where(eq(exportsInAccount.id, id));
+    await queueExportJob(id);
+    // Still to run, however long it waits behind the user's other PDFs or for a worker
+    expect(await ExportsService.getExportStatus(session, id)).toMatchObject({ id, status: "pending" });
 
+    // Its last attempt spent, as a worker killed mid-render leaves it
+    await db.execute(
+      sql`UPDATE graphile_worker._private_jobs SET attempts = max_attempts WHERE payload->>'exportId' = ${id}`,
+    );
     expect(await ExportsService.getExportStatus(session, id)).toMatchObject({ id, status: "failed" });
     expect(ExportsService.getExport(session, id)).rejects.toThrow("failed");
   });

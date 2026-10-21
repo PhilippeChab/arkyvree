@@ -11,6 +11,11 @@ describe("buildFileHeaders", () => {
       "Content-Type": "application/pdf",
     });
     expect(
+      buildFileHeaders({ disposition: "attachment", fileName: "Ryū's (Blade)!.pdf", mimeType: "application/pdf" })[
+        "Content-Disposition"
+      ],
+    ).toEndWith(`filename*=UTF-8''Ry%C5%AB%27s%20%28Blade%29%21.pdf`);
+    expect(
       buildFileHeaders({ disposition: "inline", fileName: "sheet.pdf", mimeType: "application/pdf" }),
     ).toMatchObject({
       "Content-Disposition": `inline; filename="sheet.pdf"; filename*=UTF-8''sheet.pdf`,

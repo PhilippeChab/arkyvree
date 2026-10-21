@@ -15,11 +15,6 @@ import { v1User } from "./users.ts";
 /** A player slot's role. */
 const v1CampaignRole = z.enum(role.enumValues);
 
-/** How much of a character the campaign's other players see. */
-const v1CharacterVisibility = z.enum(CHARACTER_VISIBILITY_OPTIONS).meta({
-  description: "What the campaign's other players see of it: nothing (`Private`), all of it, or its identity alone",
-});
-
 /** An invite sent for a player slot. */
 const v1SlotInvite = z.strictObject({
   email: z.string().nullable().meta({ description: "The address it was sent to" }),
@@ -43,6 +38,11 @@ export const v1Campaign = v1CampaignSummary
     role: v1CampaignRole.meta({ description: "The key's user's role in it" }),
   })
   .meta({ description: "A campaign the key's user plays in, or is the Game Master of", id: "Campaign" });
+
+/** How much of a character the campaign's other players see. */
+export const v1CharacterVisibility = z.enum(CHARACTER_VISIBILITY_OPTIONS).meta({
+  description: "What the campaign's other players see of it: nothing (`Private`), all of it, or its identity alone",
+});
 
 export const v1PartialCharacter = z
   .strictObject({

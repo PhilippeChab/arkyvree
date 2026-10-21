@@ -8,9 +8,14 @@ import { getEntityTypeOfSegment, getUrlSegment } from "@/shared/urlSegments.ts";
 /** The kinds v1 renames past their URL segment, by entity type: a power is a spell. */
 const V1_SEGMENTS: Readonly<Record<string, string>> = { powers: "spells" };
 
+/** The entity types v1 renames, by the kind it names them. */
+const V1_RENAMED: ReadonlyMap<string, string> = new Map(
+  Object.entries(V1_SEGMENTS).map(([entityType, kind]) => [kind, entityType]),
+);
+
 /** The entity type, or the table, a kind v1 names stands for: a route's kind read back (`spells` the powers). */
 export function toEntityType(kind: string): string {
-  return kind === V1_SEGMENTS.powers ? "powers" : getEntityTypeOfSegment(kind);
+  return V1_RENAMED.get(kind) ?? getEntityTypeOfSegment(kind);
 }
 
 /** An entity type's kind, as v1 names it. */

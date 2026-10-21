@@ -166,9 +166,9 @@ caller asks for it by its export.
 1. `POST /v1/characters/{id}/pdf` (its owner or a contributor), or
    `POST /v1/campaigns/{id}/characters/{characterId}/pdf` (its editors or the campaign's Game Master), answers 202 and
    the export, `pending`. Both count against `apiExportRateLimit`, per user, whatever keys of theirs ask.
-2. `GET /v1/exports/{id}` answers where it stands: `pending` while the worker makes it, `ready` once its file is
-   stored, or `failed` (the character can't be exported by the time the worker runs, or the render failed its last
-   attempt).
+2. `GET /v1/exports/{id}` answers where it stands: `pending` while its job is still to run (queued behind the user's
+   other PDFs, or waiting on a worker), `ready` once its file is stored, or `failed` (the character can't be exported
+   by the time the worker runs, the render failed its last attempt, or its job is gone without storing it).
 3. `GET /v1/exports/{id}/download` answers the file (`application/pdf`) once it's ready, for the hour it's kept; a
    pending or failed export is a 409, and one past its expiry, or another user's, a 404.
 
@@ -176,4 +176,5 @@ The export is stored as the PDF is queued (`enqueueCharacterPdf`), its file none
 (`account.exports.status`, migration `0081_export-status`), and its id goes in the job's payload: the job
 (`generatePdf.ts`) fills its file in and makes it `ready`, or marks it `failed`, and notifies the user as before, the
 notification naming the export (`data.exportId`). A pending export keeps a day, a ready one an hour, and the daily
-cleanup deletes either once it's past. A job queued before exports were stored pending stores a new one, as it did.
+cleanup deletes either once it's past. A job queued before exports were stored pending stores a new one, as it did;
+the pending one it never fills reads `failed` once that job is done (`countJobsToRun`, over the worker's queue).
