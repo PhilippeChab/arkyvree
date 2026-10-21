@@ -22,6 +22,12 @@ const entryLocation = z
 
 const entryParams = idParam.extend({ entryId: z.string().uuid() });
 
+/** Whether an entry is worn or held: an entry with a location is, one without isn't. */
+const equipped = z
+  .boolean()
+  .optional()
+  .meta({ description: "Whether it's worn or held, which its `location` says when left out: one with a place is" });
+
 /** Whether an add or an update equips an item the character doesn't meet the requirements of. */
 const force = z
   .boolean()
@@ -95,7 +101,7 @@ export default new Hono<ApiKeyContext>()
       "json",
       z.object({
         charges: charges.default(null),
-        equipped: z.boolean().default(false),
+        equipped,
         force,
         itemId: z.string().uuid(),
         location: entryLocation.default(null),
@@ -136,7 +142,7 @@ export default new Hono<ApiKeyContext>()
       "json",
       z.object({
         charges: charges.optional(),
-        equipped: z.boolean().optional(),
+        equipped,
         force,
         location: entryLocation.optional(),
         quantity: z.number().int().min(1).optional(),

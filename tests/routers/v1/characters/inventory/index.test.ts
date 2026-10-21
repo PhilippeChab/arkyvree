@@ -62,6 +62,23 @@ describe("v1 character inventory", () => {
     expect(changed).toEqual({ ...bow, quantity: 2 });
   });
 
+  test("reads whether an entry is equipped off its location, and refuses a body that names them at odds", async () => {
+    const { id, route } = await openInventory();
+    const itemId = (await getSeedCtx()).itemMap["Studded Leather"]!;
+    await expectStatus(route.$post({ json: { equipped: true, itemId, quantity: 1 }, param: { id } }), 400);
+
+    const { id: entryId } = await expectOk(route.$post({ json: { itemId, quantity: 1 }, param: { id } }));
+    const entry = route[":entryId"];
+    await expectStatus(entry.$put({ json: { equipped: true }, param: { entryId, id } }), 400);
+    const worn = await expectOk(entry.$put({ json: { force: true, location: "Torso" }, param: { entryId, id } }));
+    expect(worn).toMatchObject({ equipped: true, location: "Torso" });
+    const kept = await expectOk(entry.$put({ json: { equipped: true, force: true }, param: { entryId, id } }));
+    expect(kept).toMatchObject({ equipped: true, location: "Torso" });
+    const off = await expectOk(entry.$put({ json: { equipped: false }, param: { entryId, id } }));
+    expect(off).toMatchObject({ equipped: false, location: null });
+    await expectStatus(entry.$put({ json: { equipped: false, location: "Torso" }, param: { entryId, id } }), 400);
+  });
+
   test("says why a place can't take one more item, and refuses an add there", async () => {
     const { api } = await createKeyedApi();
     const { itemMap } = await getSeedCtx();

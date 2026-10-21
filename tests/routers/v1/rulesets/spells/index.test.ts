@@ -48,8 +48,15 @@ describe("v1 ruleset spells", () => {
 
     const spellId = ctx.powerMap.Fireball!;
     const changed = await expectOk(route[":spellId"].$put({ json: { name: "Fire Burst" }, param: { id, spellId } }));
-    expect(changed).toMatchObject({ name: "Fire Burst" });
+    expect(changed).toMatchObject({ name: "Fire Burst", saveEffect: "half", saveId: ctx.saveMap.Reflex });
     expect(changed.id).not.toBe(spellId);
+    const cleared = await expectOk(
+      route[":spellId"].$put({
+        json: { name: "Fire Burst", saveEffect: null, saveId: null },
+        param: { id, spellId: changed.id },
+      }),
+    );
+    expect(cleared).toMatchObject({ saveEffect: null, saveId: null });
 
     await expectStatus(route[":spellId"].$delete({ param: { id, spellId: created.id } }), 204);
     await expectStatus(route[":spellId"].$get({ param: { id, spellId: created.id } }), 404);
