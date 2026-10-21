@@ -3,7 +3,8 @@ import { Box, Stack } from "@mui/material";
 import { BlankNote, DiceSpinner, LoadError, SubsectionTitle } from "@/client/src/components/common/index.ts";
 
 import { AbilityIncreaseField } from "./AbilityIncreaseField.tsx";
-import type { AbilitiesData, PreviewLevelDetail } from "./levelUp/index.ts";
+import type { AbilitiesData, PreviewLevelDetail } from "./levelAnswers.ts";
+import { useCharacterRules } from "./useCharacterRules.ts";
 
 interface AddAbilityState {
   abilitiesError: Error | null;
@@ -16,10 +17,13 @@ interface AddAbilityState {
 }
 
 interface AddAbilityStepProps {
+  characterId: string;
   wizard: AddAbilityState;
 }
 
-export function AddAbilityStep({ wizard }: AddAbilityStepProps) {
+export function AddAbilityStep({ characterId, wizard }: AddAbilityStepProps) {
+  // Its rules' word for an ability increase, and what its picker asks
+  const increase = useCharacterRules(characterId).rules?.levelUp.abilityIncrease;
   const {
     abilityData,
     isLoadingAbilities,
@@ -32,7 +36,7 @@ export function AddAbilityStep({ wizard }: AddAbilityStepProps) {
   if (isLoadingAbilities) return <DiceSpinner />;
   if (abilitiesError && !abilityData) return <LoadError what="Abilities" error={abilitiesError} />;
   if (!abilityData?.isAvailable || abilityIncreaseLevels.length === 0)
-    return <BlankNote>No ability increase at these levels</BlankNote>;
+    return <BlankNote>No {increase?.word.one.toLowerCase()} at these levels</BlankNote>;
 
   return (
     <Stack spacing={1.5}>
@@ -48,6 +52,7 @@ export function AddAbilityStep({ wizard }: AddAbilityStepProps) {
             {/* The field on a line of its own, under the level's title */}
             <Box>
               <AbilityIncreaseField
+                prompt={increase?.prompt}
                 abilities={abilityData.attributes}
                 name={`ability-increase-${index}`}
                 value={selected}

@@ -1,12 +1,9 @@
 import { useMemo } from "react";
 
-import {
-  type LevelPreview,
-  useAddLevelPlan,
-  useAddLevelWizardBase,
-} from "@/client/src/pages/characters/details/components/levelUp/index.ts";
-
 import { previewAnswers } from "./levelAnswers.ts";
+import type { LevelPreview } from "./levelUpQueries.ts";
+import { useAddLevelPlan } from "./useAddLevelPlan.ts";
+import { useAddLevelWizardBase } from "./useAddLevelWizardBase.ts";
 import { usePickOptions } from "./usePickOptions.ts";
 
 interface UseAddLevelWizardParams {
@@ -31,7 +28,7 @@ function abilityChoices({ attributes, picked }: LevelPreview["attributes"], take
 }
 
 /**
- * 3.5's Add Level, on the generic wizard: its plan, what 3.5's preview answers of it (`previewAnswers`), and what its
+ * Add Level, on the generic wizard: its plan, what its ruleset's preview answers of it (`previewAnswers`), and what its
  * steps read of the preview, its feat and spell options among them.
  */
 export function useAddLevelWizard({ open, onClose, characterId, klassId }: UseAddLevelWizardParams) {

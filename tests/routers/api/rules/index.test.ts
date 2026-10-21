@@ -3,7 +3,7 @@ import { describe, expect, test } from "bun:test";
 import { expectOk, guestApi } from "@/tests/support/api.ts";
 
 describe("rules", () => {
-  test("answers what every base rules' rulesets share, to anyone: words, kinds, levels, lists, progression and license", async () => {
+  test("answers what every base rules' rulesets share, to anyone: words, kinds, levels, lists, progression, level wizard and license", async () => {
     const rules = await expectOk(guestApi.api.rules.$get());
     const dnd35 = rules["Dungeons & Dragons: 3.5"];
     expect(dnd35.words).toEqual({ powers: { many: "Spells", one: "Spell" } });
@@ -39,5 +39,8 @@ describe("rules", () => {
       ["perDay", undefined],
       ["known", "All"],
     ]);
+    // Its level wizard's words: an ability increase of 1, skill points buying ranks, class skills cheaper
+    expect(dnd35.levelUp.abilityIncrease).toMatchObject({ amount: 1, word: { one: "Ability Increase" } });
+    expect(dnd35.levelUp.pointSpend).toMatchObject({ favored: "Class Skill", unit: { many: "Ranks", one: "Rank" } });
   });
 });

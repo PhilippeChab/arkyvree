@@ -382,7 +382,7 @@ describe("architecture rules", () => {
           "client/src/components/characters/sections/sectionFactory.ts": imports("@/vocabulary/dnd3.5/spells.ts"),
           "client/src/pages/rulesets/components/dnd3.5/u.ts": imports("@/vocabulary/dnd3.5/spells.ts"),
           "client/src/pages/rulesets/components/v.ts": imports("@/client/src/pages/rulesets/components/dnd3.5/u.ts"),
-          "client/src/pages/characters/details/components/levelUpFactory.ts": imports(
+          "client/src/pages/rulesets/hooks/useEntityFilters.ts": imports(
             "@/client/src/pages/rulesets/components/dnd3.5/u.ts",
           ),
           "vocabulary/pf1/w.ts": imports("@/vocabulary/dnd3.5/spells.ts"),

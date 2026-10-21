@@ -5,6 +5,7 @@ import { ITEM_COLUMNS, ITEM_LIST } from "@/engine/rulesets/dnd3.5/entities/items
 import { POWER_COLUMNS, POWER_LIST } from "@/engine/rulesets/dnd3.5/entities/powers/columns.ts";
 import { RACE_COLUMNS, RACE_LIST } from "@/engine/rulesets/dnd3.5/entities/races/columns.ts";
 import { SKILL_COLUMNS, SKILL_LIST } from "@/engine/rulesets/dnd3.5/entities/skills/columns.ts";
+import { LEVEL_WIZARD } from "@/engine/rulesets/dnd3.5/levelUp/wizard.ts";
 import { BONDED_KINDS } from "@/vocabulary/dnd3.5/bondedKinds.ts";
 import { MAX_CLASS_LEVEL } from "@/vocabulary/dnd3.5/classes.ts";
 import { MAX_ITEM_VARIANTS } from "@/vocabulary/dnd3.5/itemTemplates.ts";
@@ -28,6 +29,7 @@ export const RULES: RulesDescription = {
     ...BONDED_KINDS.map((kind) => ({ label: kind.label, value: kind.slug })),
   ],
   lastClassLevel: MAX_CLASS_LEVEL,
+  levelUp: LEVEL_WIZARD,
   lists: { items: ITEM_LIST, klasses: CLASS_LIST, powers: POWER_LIST, races: RACE_LIST, skills: SKILL_LIST },
   maxItemVariants: MAX_ITEM_VARIANTS,
   license: {

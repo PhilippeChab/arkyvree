@@ -4,15 +4,10 @@ import type { ReactNode, UIEvent } from "react";
 import { AddButton, BlankNote, RowAction, ScrollSafeListbox } from "@/client/src/components/common/index.ts";
 import { DeleteIcon } from "@/client/src/components/icons/index.ts";
 import { emptyOptionsText } from "@/client/src/lib/errorMessage.ts";
-import {
-  type AvailableKlass,
-  canPlanLevel,
-  hasRoomForLevel,
-  plannedLevel,
-  type SelectedKlass,
-} from "@/client/src/pages/characters/details/components/levelUp/index.ts";
 
+import { canPlanLevel, hasRoomForLevel, plannedLevel } from "./classPlan.ts";
 import { OptionTooltip } from "./OptionTooltip.tsx";
+import type { AvailableKlass, SelectedKlass } from "./useLevelWizardBase.ts";
 
 /** The class plan a level wizard hands the Class Plan step, and the class picker's list. */
 interface AddClassPlanState {

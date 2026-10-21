@@ -1,11 +1,11 @@
 import { describe, expect, test } from "bun:test";
 
+import type { LevelPreview } from "@/client/src/pages/characters/details/components/levelUp/index.ts";
 import {
   type AbilitiesData,
   previewAnswers,
   stepAnswers,
-} from "@/client/src/pages/characters/details/components/dnd3.5/levelUp/levelAnswers.ts";
-import type { LevelPreview } from "@/client/src/pages/characters/details/components/levelUp/index.ts";
+} from "@/client/src/pages/characters/details/components/levelUp/levelAnswers.ts";
 
 /** A step's query that has answered nothing yet, nor is loading. */
 const UNANSWERED = { data: undefined, isLoading: false, isPlaceholderData: false };

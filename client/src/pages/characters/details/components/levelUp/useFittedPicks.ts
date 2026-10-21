@@ -1,8 +1,6 @@
 import { useMemo } from "react";
 
-import type { PickAnswers } from "@/client/src/pages/characters/details/components/levelUpFactory.ts";
-
-import { fitSkillPoints, keepFitted, openPoolOf } from "./fitPicks.ts";
+import { fitSkillPoints, keepFitted, openPoolOf, type SpentSkill } from "./fitPicks.ts";
 import { pickerPairString } from "./pendingPicks.ts";
 import type { LevelUpFormData } from "./useLevelWizardBase.ts";
 
@@ -14,6 +12,27 @@ interface PickedSoFar {
     skillPoints: LevelUpFormData["skillPointAllocations"];
   };
   selectedAptitude: string | null;
+}
+
+/**
+ * What a ruleset answers of the picks so far, which a level wizard keeps them by (`fitPicks.ts`) and its Next waits for:
+ * the feat pools' room, what of the feats and powers picked fits, what the skill points come to, and whether the step
+ * shown is answered and done.
+ */
+export interface PickAnswers {
+  /** Each feat pool's room for the feats picked: one with none left closes its picker */
+  featPools: Record<string, { available: number }>;
+  /** What of the feats picked fits their pools, each pool's ids: none while the answer is for earlier picks */
+  fittedFeats: Record<string, string[]> | undefined;
+  /** What of the powers picked fits their pools, each pool's ids: none while the answer is for earlier picks */
+  fittedPowers: Record<string, string[]> | undefined;
+  /** The skills the points are spent on, each with its ranks by points: none until they load */
+  skills: SpentSkill[] | undefined;
+  /**
+   * Next waits: an answer it waits for loads, the step shown has none, or its answer says a pick is still to make there
+   * (an ability increase), as the rules check the save
+   */
+  waiting: boolean;
 }
 
 /**

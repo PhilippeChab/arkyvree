@@ -2,7 +2,7 @@ import { Box, Button, Stack, TextField, Typography } from "@mui/material";
 import { memo, useCallback } from "react";
 import { type Control, useController } from "react-hook-form";
 
-import { GroupedSkillRows, SkillRow } from "@/client/src/components/characters/sections/dnd3.5/index.ts";
+import { GroupedSkillRows, SkillRow } from "@/client/src/components/characters/index.ts";
 import {
   DataCell,
   DataTable,
@@ -13,11 +13,14 @@ import {
 } from "@/client/src/components/common/index.ts";
 import { CasinoIcon } from "@/client/src/components/icons/index.ts";
 import { useLatest } from "@/client/src/hooks/index.ts";
-import type { LevelUpFormData } from "@/client/src/pages/characters/details/components/levelUp/index.ts";
+import type { RulesDescription } from "@/client/src/lib/queries.ts";
 import { formatPointsSpent, pointsSpent } from "@/client/src/pages/characters/pointsSpent.ts";
 
-import { pointsAt, ranksAt, type SkillsData } from "./levelUp/index.ts";
+import type { SkillsData } from "./levelAnswers.ts";
 import { OptionTooltip } from "./OptionTooltip.tsx";
+import { pointsAt, ranksAt } from "./skillRanks.ts";
+import { useCharacterRules } from "./useCharacterRules.ts";
+import type { LevelUpFormData } from "./useLevelWizardBase.ts";
 
 interface SkillAllocationRowProps {
   hidden: boolean;
@@ -25,6 +28,7 @@ interface SkillAllocationRowProps {
   onAllocate: (skillId: string, rawPoints: number) => void;
   pointsAllocated: number;
   skill: SkillsData["skills"][number];
+  words: PointSpendWords;
 }
 
 /** The skill points state a level wizard hands the Skills step. */
@@ -40,25 +44,17 @@ interface SkillPickerState {
 }
 
 interface SkillsStepProps {
+  characterId: string;
   wizard: SkillPickerState;
 }
+
+/** The words of a spend of points, its rules': what a point buys ("Rank"), and a row it's cheaper on ("Class Skill"). */
+type PointSpendWords = RulesDescription["levelUp"]["pointSpend"];
 
 /** The narrow number columns' headers, smaller */
 const NARROW_HEADERS_SX = {
   "& > thead th:not(:first-of-type)": { whiteSpace: "nowrap", fontSize: "0.8125rem" },
 };
-
-/**
- * A skill's columns: on a phone, its name leads, the ranks it adds at the line's end, and what it comes to under them
- */
-const SKILL_COLUMNS: TableColumn[] = [
-  { key: "skill", label: "Skill" },
-  { key: "add", label: "Add", width: "80px" },
-  { key: "used", label: "Used", width: "55px" },
-  { key: "rank", label: "Rank", width: "55px" },
-  { key: "total", label: "Total", width: "55px" },
-  { key: "class", label: "Class", width: "55px" },
-];
 
 const SkillAllocationRow = memo(function SkillAllocationRow({
   skill,
@@ -66,6 +62,7 @@ const SkillAllocationRow = memo(function SkillAllocationRow({
   onAllocate,
   indented,
   hidden,
+  words,
 }: SkillAllocationRowProps) {
   // As the step answers them: the ranks the points buy, and the most the skill gains
   const ranksGained = ranksAt(skill, pointsAllocated);
@@ -101,7 +98,7 @@ const SkillAllocationRow = memo(function SkillAllocationRow({
               max: maxRanksCanAdd,
               step: skill.rankStep,
               // Named by its row's skill, which its column adds ranks to
-              "aria-label": `${skill.name} Ranks to Add`,
+              "aria-label": `${skill.name} ${words.unit.many} to Add`,
             },
           }}
         />
@@ -111,7 +108,7 @@ const SkillAllocationRow = memo(function SkillAllocationRow({
           {pointsAllocated}
         </Typography>
       </DataCell>
-      <DataCell slot="labeled" label="Rank">
+      <DataCell slot="labeled" label={words.unit.one}>
         {skill.currentRank}
       </DataCell>
       <DataCell slot="labeled" label="Total">
@@ -122,14 +119,31 @@ const SkillAllocationRow = memo(function SkillAllocationRow({
           {skill.currentRank + ranksGained}
         </Typography>
       </DataCell>
-      <DataCell slot={skill.classSkill ? "inline" : "hidden"} phoneChildren="Class Skill">
+      <DataCell slot={skill.classSkill ? "inline" : "hidden"} phoneChildren={words.favored}>
         {skill.classSkill ? "Yes" : "No"}
       </DataCell>
     </SkillRow>
   );
 });
 
-export function SkillsStep({ wizard }: SkillsStepProps) {
+/**
+ * A skill's columns, in its rules' words (`words`): on a phone, its name leads, the ranks it adds at the line's end, and
+ * what it comes to under them
+ */
+function skillColumns(words: PointSpendWords): TableColumn[] {
+  return [
+    { key: "skill", label: "Skill" },
+    { key: "add", label: "Add", width: "80px" },
+    { key: "used", label: "Used", width: "55px" },
+    { key: "rank", label: words.unit.one, width: "55px" },
+    { key: "total", label: "Total", width: "55px" },
+    { key: "class", label: words.favoredShort, width: "55px" },
+  ];
+}
+
+export function SkillsStep({ characterId, wizard }: SkillsStepProps) {
+  // Its rules' words for what a point buys and a row it's cheaper on
+  const words = useCharacterRules(characterId).rules?.levelUp.pointSpend;
   const { skillData, isLoadingSkills, skillsError, control, skillPointAllocations } = wizard;
   // Changed from the points as they fit the slots, which the wizard reads
   const { field: allocationsField } = useController({ control, name: "skillPointAllocations" });
@@ -175,7 +189,8 @@ export function SkillsStep({ wizard }: SkillsStepProps) {
 
   if (isLoadingSkills) return <DiceSpinner />;
   if (skillsError && !skillData) return <LoadError what="Skills" error={skillsError} />;
-  if (!skillData) return null;
+  if (!skillData || !words) return null;
+  const columns = skillColumns(words);
 
   const spent = pointsSpent(skillPointAllocations);
   const pointsRemaining = skillData.skillPointsToSpend - spent;
@@ -212,10 +227,10 @@ export function SkillsStep({ wizard }: SkillsStepProps) {
           )}
         </Stack>
       </Stack>
-      <DataTable size="small" columns={SKILL_COLUMNS} minWidth={420} fixed sx={NARROW_HEADERS_SX}>
+      <DataTable size="small" columns={columns} minWidth={420} fixed sx={NARROW_HEADERS_SX}>
         <GroupedSkillRows
           skills={skillData.skills}
-          columns={SKILL_COLUMNS.length}
+          columns={columns.length}
           renderSkill={(skill, { indented, hidden }) => (
             <SkillAllocationRow
               key={skill.id}
@@ -224,6 +239,7 @@ export function SkillsStep({ wizard }: SkillsStepProps) {
               onAllocate={handleAllocate}
               indented={indented}
               hidden={hidden}
+              words={words}
             />
           )}
         />
