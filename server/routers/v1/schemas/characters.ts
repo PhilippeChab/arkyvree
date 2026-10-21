@@ -53,7 +53,7 @@ const v1Equipment = z
     name: z.string(),
     quantity: z.number().int(),
     type: z.string().nullable(),
-    weight: z.number(),
+    weight: z.number().nullable().meta({ description: "In pounds: none, unweighed" }),
   })
   .meta({ description: "An item a character carries: where it is, and whether it's equipped", id: "Equipment" });
 

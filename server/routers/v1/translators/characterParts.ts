@@ -22,6 +22,7 @@ import type { CharacterLevelsService } from "@/server/services/characters/levels
 
 import type { Answer } from "./answers.ts";
 import { toV1Character } from "./characters.ts";
+import { toV1Number } from "./content.ts";
 
 /** A way a new character's ability scores are set, as the service describes it. */
 type CreationMethod = Answer<typeof CharactersService.getCreation>["methods"][number];
@@ -119,7 +120,7 @@ export function toV1InventoryEntry(
       name: entry.item.name,
       slot: entry.item.slot,
       type: entry.item.type,
-      weight: Number(entry.item.weight),
+      weight: toV1Number(entry.item.weight),
     },
     location: entry.location,
     locationLabel: entry.slotLabel,

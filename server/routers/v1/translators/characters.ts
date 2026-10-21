@@ -9,6 +9,7 @@ import type { z } from "zod";
 import type { v1Character, v1CharacterSummary } from "@/server/routers/v1/schemas/characters.ts";
 import type { CharactersService } from "@/server/services/characters/index.ts";
 
+import { toV1Number } from "./content.ts";
 import { toV1Page } from "./pages.ts";
 
 /** A bonded creature's sheet (a familiar's, a mount's), as its master's answers it. */
@@ -94,7 +95,7 @@ function toSheet(sheet: Sheet): V1Sheet {
       name: entry.name,
       quantity: entry.quantity,
       type: entry.type,
-      weight: Number(entry.weight),
+      weight: toV1Number(entry.weight),
     })),
     feats: toFeats(sheet),
     hitPoints: combat.hp.total,
