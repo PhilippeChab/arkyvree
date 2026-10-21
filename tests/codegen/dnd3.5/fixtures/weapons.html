@@ -1,375 +1,410 @@
-<!doctype html>
+<!DOCTYPE html>
 <!-- https://www.d20srd.org/srd/equipment/weapons.htm, trimmed to what the parser reads -->
 <html>
-  <body>
-    <table id="tableWeapons" cellspacing="0">
-      <caption>
-        Table: Weapons
-      </caption>
-      <tfoot>
-        <tr>
-          <td colspan="8">
-            <ol>
-              <li>
-                Weight figures are for Medium weapons. A Small weapon weighs half as much, and a Large weapon weighs
-                twice as much.
-              </li>
-              <li>
-                When two types are given, the weapon is both types if the entry specifies "and," or either type
-                (player's choice at time of attack) if the entry specifies "or."
-              </li>
-              <li>
-                The weapon deals <a href="/srd/combat/injuryandDeath.htm#nonlethalDamage">nonlethal damage</a> rather
-                than lethal damage.
-              </li>
-              <li><a href="#reachWeapons">Reach weapon</a>.</li>
-              <li><a href="#doubleWeapons">Double weapon</a>.</li>
-            </ol>
-          </td>
-        </tr>
-      </tfoot>
-      <tbody>
-        <tr>
-          <th align="left" id="simpleWeapons">Simple Weapons</th>
-          <th>Cost</th>
-          <th>Dmg (S)</th>
-          <th>Dmg (M)</th>
-          <th>Critical</th>
-          <th>Range Increment</th>
-          <th>Weight<sup>1</sup></th>
-          <th align="left">Type<sup>2</sup></th>
-        </tr>
-        <tr class="h2">
-          <th colspan="8">Unarmed Attacks</th>
-        </tr>
-        <tr>
-          <td><a href="#gauntlet">Gauntlet</a></td>
-          <td align="center">2 gp</td>
-          <td align="center">1d2</td>
-          <td align="center">1d3</td>
-          <td align="center">×2</td>
-          <td align="center">-</td>
-          <td align="center">1 lb.</td>
-          <td>Bludgeoning</td>
-        </tr>
-        <tr>
-          <td><a href="/srd/equipment/weapons.htm#unarmedStrike">Unarmed strike</a></td>
-          <td align="center">-</td>
-          <td align="center">1d2<sup>3</sup></td>
-          <td align="center">1d3<sup>3</sup></td>
-          <td align="center">×2</td>
-          <td align="center">-</td>
-          <td align="center">-</td>
-          <td>Bludgeoning</td>
-        </tr>
-        <tr class="h2">
-          <th colspan="8">Light Melee Weapons</th>
-        </tr>
-        <tr>
-          <td><a href="#dagger">Dagger</a></td>
-          <td align="center">2 gp</td>
-          <td align="center">1d3</td>
-          <td align="center">1d4</td>
-          <td align="center">19-20/×2</td>
-          <td align="center">10 ft.</td>
-          <td align="center">1 lb.</td>
-          <td>Piercing or slashing</td>
-        </tr>
-        <tr>
-          <td><a href="#dagger">Dagger</a>, punching</td>
-          <td align="center">2 gp</td>
-          <td align="center">1d3</td>
-          <td align="center">1d4</td>
-          <td align="center">×3</td>
-          <td align="center">-</td>
-          <td align="center">1 lb.</td>
-          <td>Piercing</td>
-        </tr>
-
-        <tr class="h2">
-          <th colspan="8">One-Handed Melee Weapons</th>
-        </tr>
-        <tr>
-          <td>Club</td>
-          <td align="center">-</td>
-          <td align="center">1d4</td>
-          <td align="center">1d6</td>
-          <td align="center">×2</td>
-          <td align="center">10 ft.</td>
-          <td align="center">3 lb.</td>
-          <td>Bludgeoning</td>
-        </tr>
-        <tr>
-          <td>Mace, heavy</td>
-          <td align="center">12 gp</td>
-          <td align="center">1d6</td>
-          <td align="center">1d8</td>
-          <td align="center">×2</td>
-          <td align="center">-</td>
-          <td align="center">8 lb.</td>
-          <td>Bludgeoning</td>
-        </tr>
-
-        <tr class="h2">
-          <th colspan="8">Two-Handed Melee Weapons</th>
-        </tr>
-        <tr>
-          <td><a href="#longspear">Longspear</a><sup>4</sup></td>
-          <td align="center">5 gp</td>
-          <td align="center">1d6</td>
-          <td align="center">1d8</td>
-          <td align="center">×3</td>
-          <td align="center">-</td>
-          <td align="center">9 lb.</td>
-          <td>Piercing</td>
-        </tr>
-        <tr>
-          <td><a href="#quarterstaff">Quarterstaff</a><sup>5</sup></td>
-          <td align="center">-</td>
-          <td align="center">1d4/1d4</td>
-          <td align="center">1d6/1d6</td>
-          <td align="center">×2</td>
-          <td align="center">-</td>
-          <td align="center">4 lb.</td>
-          <td>Bludgeoning</td>
-        </tr>
-
-        <tr class="h2">
-          <th colspan="8">Ranged Weapons</th>
-        </tr>
-        <tr>
-          <td><a href="#crossbowHeavy">Crossbow, heavy</a></td>
-          <td align="center">50 gp</td>
-          <td align="center">1d8</td>
-          <td align="center">1d10</td>
-          <td align="center">19-20/×2</td>
-          <td align="center">120 ft.</td>
-          <td align="center">8 lb.</td>
-          <td>Piercing</td>
-        </tr>
-        <tr>
-          <td class="sub"><a href="#bolts">Bolts, crossbow</a> (10)</td>
-          <td align="center">1 gp</td>
-          <td align="center">-</td>
-          <td align="center">-</td>
-          <td align="center">-</td>
-          <td align="center">-</td>
-          <td align="center">1 lb.</td>
-          <td>-</td>
-        </tr>
-
-        <tr>
-          <th align="left" id="martialWeapons">Martial Weapons</th>
-          <th>Cost</th>
-          <th>Dmg (S)</th>
-          <th>Dmg (M)</th>
-          <th>Critical</th>
-          <th>Range Increment</th>
-          <th>Weight<sup>1</sup></th>
-          <th align="left">Type<sup>2</sup></th>
-        </tr>
-        <tr class="h2">
-          <th colspan="8">Light Melee Weapons</th>
-        </tr>
-        <tr>
-          <td>Axe, throwing</td>
-          <td align="center">8 gp</td>
-          <td align="center">1d4</td>
-          <td align="center">1d6</td>
-          <td align="center">×2</td>
-          <td align="center">10 ft.</td>
-          <td align="center">2 lb.</td>
-          <td>Slashing</td>
-        </tr>
-        <tr>
-          <td>Hammer, light</td>
-          <td align="center">1 gp</td>
-          <td align="center">1d3</td>
-          <td align="center">1d4</td>
-          <td align="center">×2</td>
-          <td align="center">20 ft.</td>
-          <td align="center">2 lb.</td>
-          <td>Bludgeoning</td>
-        </tr>
-
-        <tr class="h2">
-          <th colspan="8">One-Handed Melee Weapons</th>
-        </tr>
-        <tr>
-          <td>Battleaxe</td>
-          <td align="center">10 gp</td>
-          <td align="center">1d6</td>
-          <td align="center">1d8</td>
-          <td align="center">×3</td>
-          <td align="center">-</td>
-          <td align="center">6 lb.</td>
-          <td>Slashing</td>
-        </tr>
-        <tr>
-          <td><a href="#flailorHeavyFlail">Flail</a></td>
-          <td align="center">8 gp</td>
-          <td align="center">1d6</td>
-          <td align="center">1d8</td>
-          <td align="center">×2</td>
-          <td align="center">-</td>
-          <td align="center">5 lb.</td>
-          <td>Bludgeoning</td>
-        </tr>
-
-        <tr class="h2">
-          <th colspan="8">Two-Handed Melee Weapons</th>
-        </tr>
-        <tr>
-          <td>Falchion</td>
-          <td align="center">75 gp</td>
-          <td align="center">1d6</td>
-          <td align="center">2d4</td>
-          <td align="center">18-20/×2</td>
-          <td align="center">-</td>
-          <td align="center">8 lb.</td>
-          <td>Slashing</td>
-        </tr>
-        <tr>
-          <td><a href="#glaive">Glaive</a><sup>4</sup></td>
-          <td align="center">8 gp</td>
-          <td align="center">1d8</td>
-          <td align="center">1d10</td>
-          <td align="center">×3</td>
-          <td align="center">-</td>
-          <td align="center">10 lb.</td>
-          <td>Slashing</td>
-        </tr>
-
-        <tr class="h2">
-          <th colspan="8">Ranged Weapons</th>
-        </tr>
-        <tr>
-          <td><a href="#longbow">Longbow</a></td>
-          <td align="center">75 gp</td>
-          <td align="center">1d6</td>
-          <td align="center">1d8</td>
-          <td align="center">×3</td>
-          <td align="center">100 ft.</td>
-          <td align="center">3 lb.</td>
-          <td>Piercing</td>
-        </tr>
-        <tr>
-          <td class="sub"><a href="#arrows">Arrows</a> (20)</td>
-          <td align="center">1 gp</td>
-          <td align="center">-</td>
-          <td align="center">-</td>
-          <td align="center">-</td>
-          <td align="center">-</td>
-          <td align="center">3 lb.</td>
-          <td>-</td>
-        </tr>
-
-        <tr>
-          <th align="left" id="exoticWeapons">Exotic Weapons</th>
-          <th>Cost</th>
-          <th>Dmg (S)</th>
-          <th>Dmg (M)</th>
-          <th>Critical</th>
-          <th>Range Increment</th>
-          <th>Weight<sup>1</sup></th>
-          <th align="left">Type<sup>2</sup></th>
-        </tr>
-        <tr class="h2">
-          <th colspan="8">Light Melee Weapons</th>
-        </tr>
-        <tr>
-          <td><a href="#kama">Kama</a></td>
-          <td align="center">2 gp</td>
-          <td align="center">1d4</td>
-          <td align="center">1d6</td>
-          <td align="center">×2</td>
-          <td align="center">-</td>
-          <td align="center">2 lb.</td>
-          <td>Slashing</td>
-        </tr>
-        <tr>
-          <td><a href="#nunchaku">Nunchaku</a></td>
-          <td align="center">2 gp</td>
-          <td align="center">1d4</td>
-          <td align="center">1d6</td>
-          <td align="center">×2</td>
-          <td align="center">-</td>
-          <td align="center">2 lb.</td>
-          <td>Bludgeoning</td>
-        </tr>
-
-        <tr class="h2">
-          <th colspan="8">One-Handed Melee Weapons</th>
-        </tr>
-        <tr>
-          <td><a href="#swordBastard">Sword, bastard</a></td>
-          <td align="center">35 gp</td>
-          <td align="center">1d8</td>
-          <td align="center">1d10</td>
-          <td align="center">19-20/×2</td>
-          <td align="center">-</td>
-          <td align="center">6 lb.</td>
-          <td>Slashing</td>
-        </tr>
-        <tr>
-          <td><a href="#waraxeDwarven">Waraxe, dwarven</a></td>
-          <td align="center">30 gp</td>
-          <td align="center">1d8</td>
-          <td align="center">1d10</td>
-          <td align="center">×3</td>
-          <td align="center">-</td>
-          <td align="center">8 lb.</td>
-          <td>Slashing</td>
-        </tr>
-
-        <tr class="h2">
-          <th colspan="8">Two-Handed Melee Weapons</th>
-        </tr>
-        <tr>
-          <td><a href="#axeOrcDouble">Axe, orc double</a><sup>5</sup></td>
-          <td align="center">60 gp</td>
-          <td align="center">1d6/1d6</td>
-          <td align="center">1d8/1d8</td>
-          <td align="center">×3</td>
-          <td align="center">-</td>
-          <td align="center">15 lb.</td>
-          <td>Slashing</td>
-        </tr>
-        <tr>
-          <td><a href="#chainSpiked">Chain, spiked</a><sup>4</sup></td>
-          <td align="center">25 gp</td>
-          <td align="center">1d6</td>
-          <td align="center">2d4</td>
-          <td align="center">×2</td>
-          <td align="center">-</td>
-          <td align="center">10 lb.</td>
-          <td>Piercing</td>
-        </tr>
-
-        <tr class="h2">
-          <th colspan="8">Ranged Weapons</th>
-        </tr>
-        <tr>
-          <td><a href="#bolas">Bolas</a></td>
-          <td align="center">5 gp</td>
-          <td align="center">1d3<sup>3</sup></td>
-          <td align="center">1d4<sup>3</sup></td>
-          <td align="center">×2</td>
-          <td align="center">10 ft.</td>
-          <td align="center">2 lb.</td>
-          <td>Bludgeoning</td>
-        </tr>
-        <tr>
-          <td><a href="#crossbowHand">Crossbow, hand</a></td>
-          <td align="center">100 gp</td>
-          <td align="center">1d3</td>
-          <td align="center">1d4</td>
-          <td align="center">19-20/×2</td>
-          <td align="center">30 ft.</td>
-          <td align="center">2 lb.</td>
-          <td>Piercing</td>
-        </tr>
-      </tbody>
-    </table>
-  </body>
+<body>
+<table id="tableWeapons" cellspacing="0">
+	<caption>Table: Weapons</caption>
+	<tfoot>
+		<tr>
+			<td colspan="8">
+				<ol>
+					<li>Weight figures are for Medium weapons. A Small weapon weighs half as much, and a Large weapon weighs twice as much.</li>
+					<li>When two types are given, the weapon is both types if the entry specifies "and," or either type (player's choice at time of attack) if the entry specifies "or."</li>
+					<li>The weapon deals <a href="/srd/combat/injuryandDeath.htm#nonlethalDamage">nonlethal damage</a> rather than lethal damage.</li>
+					<li><a href="#reachWeapons">Reach weapon</a>.</li>
+					<li><a href="#doubleWeapons">Double weapon</a>.</li>
+				</ol>
+			</td>
+		</tr>
+	</tfoot>
+	<tbody>
+		<tr>
+			<th align="left" id="simpleWeapons">Simple Weapons</th>
+			<th>Cost</th>
+			<th>Dmg (S)</th>
+			<th>Dmg (M)</th>
+			<th>Critical</th>
+			<th>Range Increment</th>
+			<th>Weight<sup>1</sup></th>
+			<th align="left">Type<sup>2</sup></th>
+		</tr>
+		<tr class="h2">
+			<th colspan="8">Unarmed Attacks</th>
+		</tr>
+		<tr>
+			<td><a href="#gauntlet">Gauntlet</a></td>
+			<td align="center">2 gp</td>
+			<td align="center">1d2</td>
+			<td align="center">1d3</td>
+			<td align="center">×2</td>
+			<td align="center">-</td>
+			<td align="center">1 lb.</td>
+			<td>Bludgeoning</td>
+		</tr>
+		<tr>
+			<td><a href="/srd/equipment/weapons.htm#unarmedStrike">Unarmed strike</a></td>
+			<td align="center">-</td>
+			<td align="center">1d2<sup>3</sup></td>
+			<td align="center">1d3<sup>3</sup></td>
+			<td align="center">×2</td>
+			<td align="center">-</td>
+			<td align="center">-</td>
+			<td>Bludgeoning</td>
+		</tr>
+		<tr class="h2">
+			<th colspan="8">Light Melee Weapons</th>
+		</tr>
+		<tr>
+			<td><a href="#dagger">Dagger</a></td>
+			<td align="center">2 gp</td>
+			<td align="center">1d3</td>
+			<td align="center">1d4</td>
+			<td align="center">19-20/×2</td>
+			<td align="center">10 ft.</td>
+			<td align="center">1 lb.</td>
+			<td>Piercing or slashing</td>
+		</tr>
+		<tr>
+			<td><a href="#dagger">Dagger</a>, punching</td>
+			<td align="center">2 gp</td>
+			<td align="center">1d3</td>
+			<td align="center">1d4</td>
+			<td align="center">×3</td>
+			<td align="center">-</td>
+			<td align="center">1 lb.</td>
+			<td>Piercing</td>
+		</tr>
+		
+		
+		
+		<tr class="h2">
+			<th colspan="8">One-Handed Melee Weapons</th>
+		</tr>
+		<tr>
+			<td>Club</td>
+			<td align="center">-</td>
+			<td align="center">1d4</td>
+			<td align="center">1d6</td>
+			<td align="center">×2</td>
+			<td align="center">10 ft.</td>
+			<td align="center">3 lb.</td>
+			<td>Bludgeoning</td>
+		</tr>
+		<tr>
+			<td>Mace, heavy</td>
+			<td align="center">12 gp</td>
+			<td align="center">1d6</td>
+			<td align="center">1d8</td>
+			<td align="center">×2</td>
+			<td align="center">-</td>
+			<td align="center">8 lb.</td>
+			<td>Bludgeoning</td>
+		</tr>
+		
+		
+		<tr class="h2">
+			<th colspan="8">Two-Handed Melee Weapons</th>
+		</tr>
+		<tr>
+			<td><a href="#longspear">Longspear</a><sup>4</sup></td>
+			<td align="center">5 gp</td>
+			<td align="center">1d6</td>
+			<td align="center">1d8</td>
+			<td align="center">×3</td>
+			<td align="center">-</td>
+			<td align="center">9 lb.</td>
+			<td>Piercing</td>
+		</tr>
+		<tr>
+			<td><a href="#quarterstaff">Quarterstaff</a><sup>5</sup></td>
+			<td align="center">-</td>
+			<td align="center">1d4/1d4</td>
+			<td align="center">1d6/1d6</td>
+			<td align="center">×2</td>
+			<td align="center">-</td>
+			<td align="center">4 lb.</td>
+			<td>Bludgeoning</td>
+		</tr>
+		
+		<tr class="h2">
+			<th colspan="8">Ranged Weapons</th>
+		</tr>
+		<tr>
+			<td><a href="#crossbowHeavy">Crossbow, heavy</a></td>
+			<td align="center">50 gp</td>
+			<td align="center">1d8</td>
+			<td align="center">1d10</td>
+			<td align="center">19-20/×2</td>
+			<td align="center">120 ft.</td>
+			<td align="center">8 lb.</td>
+			<td>Piercing</td>
+		</tr>
+		<tr>
+			<td class="sub"><a href="#bolts">Bolts, crossbow</a> (10)</td>
+			<td align="center">1 gp</td>
+			<td align="center">-</td>
+			<td align="center">-</td>
+			<td align="center">-</td>
+			<td align="center">-</td>
+			<td align="center">1 lb.</td>
+			<td>-</td>
+		</tr>
+		
+		
+		
+		
+		
+		
+		<tr>
+			<th align="left" id="martialWeapons">Martial Weapons</th>
+			<th>Cost</th>
+			<th>Dmg (S)</th>
+			<th>Dmg (M)</th>
+			<th>Critical</th>
+			<th>Range Increment</th>
+			<th>Weight<sup>1</sup></th>
+			<th align="left">Type<sup>2</sup></th>
+		</tr>
+		<tr class="h2">
+			<th colspan="8">Light Melee Weapons</th>
+		</tr>
+		<tr>
+			<td>Axe, throwing</td>
+			<td align="center">8 gp</td>
+			<td align="center">1d4</td>
+			<td align="center">1d6</td>
+			<td align="center">×2</td>
+			<td align="center">10 ft.</td>
+			<td align="center">2 lb.</td>
+			<td>Slashing</td>
+		</tr>
+		<tr>
+			<td>Hammer, light</td>
+			<td align="center">1 gp</td>
+			<td align="center">1d3</td>
+			<td align="center">1d4</td>
+			<td align="center">×2</td>
+			<td align="center">20 ft.</td>
+			<td align="center">2 lb.</td>
+			<td>Bludgeoning</td>
+		</tr>
+		
+		
+		
+		
+		
+		
+		
+		
+		<tr class="h2">
+			<th colspan="8">One-Handed Melee Weapons</th>
+		</tr>
+		<tr>
+			<td>Battleaxe</td>
+			<td align="center">10 gp</td>
+			<td align="center">1d6</td>
+			<td align="center">1d8</td>
+			<td align="center">×3</td>
+			<td align="center">-</td>
+			<td align="center">6 lb.</td>
+			<td>Slashing</td>
+		</tr>
+		<tr>
+			<td><a href="#flailorHeavyFlail">Flail</a></td>
+			<td align="center">8 gp</td>
+			<td align="center">1d6</td>
+			<td align="center">1d8</td>
+			<td align="center">×2</td>
+			<td align="center">-</td>
+			<td align="center">5 lb.</td>
+			<td>Bludgeoning</td>
+		</tr>
+		
+		
+		
+		
+		
+		
+		
+		
+		<tr class="h2">
+			<th colspan="8">Two-Handed Melee Weapons</th>
+		</tr>
+		<tr>
+			<td>Falchion</td>
+			<td align="center">75 gp</td>
+			<td align="center">1d6</td>
+			<td align="center">2d4</td>
+			<td align="center">18-20/×2</td>
+			<td align="center">-</td>
+			<td align="center">8 lb.</td>
+			<td>Slashing</td>
+		</tr>
+		<tr>
+			<td><a href="#glaive">Glaive</a><sup>4</sup></td>
+			<td align="center">8 gp</td>
+			<td align="center">1d8</td>
+			<td align="center">1d10</td>
+			<td align="center">×3</td>
+			<td align="center">-</td>
+			<td align="center">10 lb.</td>
+			<td>Slashing</td>
+		</tr>
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		<tr class="h2">
+			<th colspan="8">Ranged Weapons</th>
+		</tr>
+		<tr>
+			<td><a href="#longbow">Longbow</a></td>
+			<td align="center">75 gp</td>
+			<td align="center">1d6</td>
+			<td align="center">1d8</td>
+			<td align="center">×3</td>
+			<td align="center">100 ft.</td>
+			<td align="center">3 lb.</td>
+			<td>Piercing</td>
+		</tr>
+		<tr>
+			<td class="sub"><a href="#arrows">Arrows</a> (20)</td>
+			<td align="center">1 gp</td>
+			<td align="center">-</td>
+			<td align="center">-</td>
+			<td align="center">-</td>
+			<td align="center">-</td>
+			<td align="center">3 lb.</td>
+			<td>-</td>
+		</tr>
+		
+		
+		
+		
+		
+		
+		<tr>
+			<th align="left" id="exoticWeapons">Exotic Weapons</th>
+			<th>Cost</th>
+			<th>Dmg (S)</th>
+			<th>Dmg (M)</th>
+			<th>Critical</th>
+			<th>Range Increment</th>
+			<th>Weight<sup>1</sup></th>
+			<th align="left">Type<sup>2</sup></th>
+		</tr>
+		<tr class="h2">
+			<th colspan="8">Light Melee Weapons</th>
+		</tr>
+		<tr>
+			<td><a href="#kama">Kama</a></td>
+			<td align="center">2 gp</td>
+			<td align="center">1d4</td>
+			<td align="center">1d6</td>
+			<td align="center">×2</td>
+			<td align="center">-</td>
+			<td align="center">2 lb.</td>
+			<td>Slashing</td>
+		</tr>
+		<tr>
+			<td><a href="#nunchaku">Nunchaku</a></td>
+			<td align="center">2 gp</td>
+			<td align="center">1d4</td>
+			<td align="center">1d6</td>
+			<td align="center">×2</td>
+			<td align="center">-</td>
+			<td align="center">2 lb.</td>
+			<td>Bludgeoning</td>
+		</tr>
+		
+		
+		<tr class="h2">
+			<th colspan="8">One-Handed Melee Weapons</th>
+		</tr>
+		<tr>
+			<td><a href="#swordBastard">Sword, bastard</a></td>
+			<td align="center">35 gp</td>
+			<td align="center">1d8</td>
+			<td align="center">1d10</td>
+			<td align="center">19-20/×2</td>
+			<td align="center">-</td>
+			<td align="center">6 lb.</td>
+			<td>Slashing</td>
+		</tr>
+		<tr>
+			<td><a href="#waraxeDwarven">Waraxe, dwarven</a></td>
+			<td align="center">30 gp</td>
+			<td align="center">1d8</td>
+			<td align="center">1d10</td>
+			<td align="center">×3</td>
+			<td align="center">-</td>
+			<td align="center">8 lb.</td>
+			<td>Slashing</td>
+		</tr>
+		
+		<tr class="h2">
+			<th colspan="8">Two-Handed Melee Weapons</th>
+		</tr>
+		<tr>
+			<td><a href="#axeOrcDouble">Axe, orc double</a><sup>5</sup></td>
+			<td align="center">60 gp</td>
+			<td align="center">1d6/1d6</td>
+			<td align="center">1d8/1d8</td>
+			<td align="center">×3</td>
+			<td align="center">-</td>
+			<td align="center">15 lb.</td>
+			<td>Slashing</td>
+		</tr>
+		<tr>
+			<td><a href="#chainSpiked">Chain, spiked</a><sup>4</sup></td>
+			<td align="center">25 gp</td>
+			<td align="center">1d6</td>
+			<td align="center">2d4</td>
+			<td align="center">×2</td>
+			<td align="center">-</td>
+			<td align="center">10 lb.</td>
+			<td>Piercing</td>
+		</tr>
+		
+		
+		
+		
+		<tr class="h2">
+			<th colspan="8">Ranged Weapons</th>
+		</tr>
+		<tr>
+			<td><a href="#bolas">Bolas</a></td>
+			<td align="center">5 gp</td>
+			<td align="center">1d3<sup>3</sup></td>
+			<td align="center">1d4<sup>3</sup></td>
+			<td align="center">×2</td>
+			<td align="center">10 ft.</td>
+			<td align="center">2 lb.</td>
+			<td>Bludgeoning</td>
+		</tr>
+		<tr>
+			<td><a href="#crossbowHand">Crossbow, hand</a></td>
+			<td align="center">100 gp</td>
+			<td align="center">1d3</td>
+			<td align="center">1d4</td>
+			<td align="center">19-20/×2</td>
+			<td align="center">30 ft.</td>
+			<td align="center">2 lb.</td>
+			<td>Piercing</td>
+		</tr>
+		
+		
+		
+		
+		
+		
+		
+	</tbody>
+</table>
+</body>
 </html>

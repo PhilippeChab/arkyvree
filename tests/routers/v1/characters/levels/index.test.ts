@@ -118,7 +118,7 @@ describe("v1 character levels", () => {
     await expectOk(route.levels[":levelId"].$put({ json: { hitPoints: 6 }, param: { id, levelId } }));
 
     const stale = CharacterLevelsService.updateLevel(session, id, levelId, 5, [], {}, {}, {}, true, updatedAt);
-    await expect(stale).rejects.toThrow(ConflictError);
+    expect(stale).rejects.toThrow(ConflictError);
   });
 
   test("changes only what an edit of a level names: its picks are kept", async () => {
