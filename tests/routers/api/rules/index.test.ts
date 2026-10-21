@@ -3,7 +3,7 @@ import { describe, expect, test } from "bun:test";
 import { expectOk, guestApi } from "@/tests/support/api.ts";
 
 describe("rules", () => {
-  test("answers what every base rules' rulesets share, to anyone: words, kinds, levels and license", async () => {
+  test("answers what every base rules' rulesets share, to anyone: words, kinds, levels, lists and license", async () => {
     const rules = await expectOk(guestApi.api.rules.$get());
     const dnd35 = rules["Dungeons & Dragons: 3.5"];
     expect(dnd35.words).toEqual({ powers: { many: "Spells", one: "Spell" } });
@@ -17,5 +17,16 @@ describe("rules", () => {
     expect(dnd35.powerLevels.at(0)).toEqual({ label: "Cantrips", level: 0 });
     expect(dnd35.powerLevels.at(-1)).toEqual({ label: "Level 9", level: 9 });
     expect(dnd35.license).toMatchObject({ text: "ogl" });
+    // Its lists: a class's hit die as dice notation, an item's cost and weight in their units
+    expect(dnd35.lists.klasses?.columns).toEqual([
+      expect.objectContaining({ key: "hd", labels: expect.objectContaining({ 10: "d10" }) }),
+    ]);
+    expect(dnd35.lists.items?.columns.map(({ key, unit }) => [key, unit])).toEqual([
+      ["type", undefined],
+      ["template", undefined],
+      ["costGp", "gp"],
+      ["weight", "lbs"],
+    ]);
+    expect(dnd35.maxItemVariants).toBe(50);
   });
 });

@@ -1,4 +1,5 @@
 import type { FormField } from "@/engine/core/fields/index.ts";
+import type { ListDescription } from "@/engine/core/module/index.ts";
 import { LOCATION_OPTIONS } from "@/shared/enums.ts";
 import { ITEM_TYPES, TEMPLATE_ITEM_TYPES } from "@/vocabulary/dnd3.5/itemTemplates.ts";
 
@@ -53,3 +54,14 @@ export const ITEM_COLUMNS: FormField[] = [
     typeKey: "type",
   },
 ];
+
+/** A 3.5 item's list: its name, type, template, cost and weight, its description. */
+export const ITEM_LIST: ListDescription = {
+  nameShare: 25,
+  columns: [
+    { key: "type", label: "Type", reads: "muted", share: 10, slot: "inline" },
+    { key: "template", label: "Template", reads: "template", share: 8 },
+    { key: "costGp", label: "Cost", reads: "decimal", share: 10, slot: "inline", unit: "gp" },
+    { key: "weight", label: "Weight", reads: "decimal", share: 10, slot: "inline", unit: "lbs" },
+  ],
+};

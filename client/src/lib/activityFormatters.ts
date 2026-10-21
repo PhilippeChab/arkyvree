@@ -5,25 +5,16 @@ import { formatSegment } from "@/shared/customization/target.ts";
 import { BASE_RULES_OPTIONS } from "@/shared/enums.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 
-import { formatCost, formatDie } from "./formatNumeric.ts";
+import { formatDecimal } from "./formatNumeric.ts";
 import { oneOf } from "./oneOf.ts";
-import type { RulesDescriptions } from "./queries.ts";
+import type { RulesDescription, RulesDescriptions } from "./queries.ts";
 import { entityTypeLabel, entityTypeOfCode, getActivityLabelOverrides } from "./rulesetLabels.ts";
+
+/** An entity's column, as its rules describe its form's. */
+type Column = NonNullable<RulesDescription["columns"][string]>[number];
 
 /** A ruleset entity's change, as its notification says it: its verb, by the type's (`createFeat`) */
 const CONTENT_CHANGES: Record<string, string> = { create: "created", delete: "deleted", update: "updated" };
-
-/** The changed fields whose name doesn't read as their label (`formatSegment`'s "Hd") */
-const FIELD_LABELS: Record<string, string> = {
-  costGp: "Cost",
-  hd: "Hit Die",
-};
-
-/** The changed fields whose values read in their own format, as a page writes them ("d8", "15.00 gp"), by field. */
-const FIELD_VALUES: Record<string, (value: string) => string | null> = {
-  costGp: formatCost,
-  hd: (value) => formatDie(Number(value)),
-};
 
 const NOTIFICATION_MESSAGES: Record<string, (actor: string, d: Record<string, unknown>) => string> = {
   // Campaign invites
@@ -92,15 +83,20 @@ function contentChange(type: string, actor: string, d: Record<string, unknown>, 
   return `${actor} ${CONTENT_CHANGES[verb]} ${word} ${d.entityName || ""}`.trim();
 }
 
-function formatChange(change: ChangedField): string {
+/**
+ * A changed field as an activity says it: named and read as its entity's column (`columns`, its rules': "Hit Die set to
+ * d8", "Cost: 15.00 gp → 20.00 gp"), else by its key.
+ */
+function formatChange(change: ChangedField, columns: readonly Column[]): string {
   // An entity a field points to is recorded by its id, which says nothing to a reader: only that it changed
   const reference = REFERENCE_FIELD.exec(change.field)?.[1];
   if (reference) return `${formatSegment(reference)} updated`;
 
-  const label = FIELD_LABELS[change.field] ?? formatSegment(change.field);
+  const column = columns.find((own) => own.key === change.field);
+  const label = column?.label ?? formatSegment(change.field);
   if (change.from == null && change.to == null) return `${label} updated`;
 
-  const shown = (value: string) => FIELD_VALUES[change.field]?.(value) ?? value;
+  const shown = (value: string) => (column && readColumn(column, value)) ?? value;
   if (change.from && change.to) return `${label}: ${shown(change.from)} → ${shown(change.to)}`;
 
   if (change.to) return `${label} set to ${shown(change.to)}`;
@@ -117,19 +113,38 @@ function payload(data: unknown): Record<string, unknown> {
   return isRecord(data) ? data : {};
 }
 
+/**
+ * A column's value as its form reads it (`value`, as an activity records it): a choice's label ("d8"), a decimal in its
+ * unit ("15.00 gp"); none for one that reads as it is.
+ */
+function readColumn(column: Column, value: string): string | null {
+  if (column.input === "choice") {
+    const index = column.options.findIndex((option) => String(option) === value);
+    return index >= 0 ? (column.labels?.[index] ?? null) : null;
+  }
+  if (column.input !== "decimal") return null;
+  const decimal = formatDecimal(value);
+  return decimal === null ? null : `${decimal}${column.unit ? ` ${column.unit}` : ""}`;
+}
+
 /** The words of the base rules an activity's ruleset follows, when it says, as its rules describe them (`rules`). */
 function wordsOf(d: Record<string, unknown>, rules: RulesDescriptions | undefined) {
   const baseRules = oneOf(d.baseRules, BASE_RULES_OPTIONS);
   return baseRules && rules?.[baseRules].words;
 }
 
-/** What an activity of `type` changed: its fields, its level, its modifier's or requirement's change, its property. */
-export function formatActivityDetails(type: string, data: unknown): string | null {
+/**
+ * What an activity of `type` changed: its fields (named as its entities' columns, `rules`: every base rules'), its
+ * level, its modifier's or requirement's change, its property.
+ */
+export function formatActivityDetails(type: string, data: unknown, rules?: RulesDescriptions): string | null {
   const d = payload(data);
   const parts: string[] = [];
+  const baseRules = oneOf(d.baseRules, BASE_RULES_OPTIONS);
+  const columns = Object.values((baseRules && rules?.[baseRules].columns) ?? {}).flatMap((own) => own ?? []);
 
   if (Array.isArray(d.changedFields))
-    for (const change of d.changedFields.filter(isChangedField)) parts.push(formatChange(change));
+    for (const change of d.changedFields.filter(isChangedField)) parts.push(formatChange(change, columns));
 
   if (d.level != null) parts.push(`Level ${d.level}`);
 

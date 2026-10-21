@@ -1,4 +1,5 @@
 import type { FormField } from "@/engine/core/fields/index.ts";
+import type { ListDescription } from "@/engine/core/module/index.ts";
 import { RULESET_LIMITS } from "@/engine/rulesets/dnd3.5/limits.ts";
 import { DEFAULT_HIT_DIE, HIT_DIE_VALUES } from "@/vocabulary/dnd3.5/classes.ts";
 
@@ -37,3 +38,17 @@ export const CLASS_LEVEL_COLUMNS: FormField[] = [
     label: "Feats",
   },
 ];
+
+/** A 3.5 class's list: its name, its hit die as dice notation writes it ("d10"), its description. */
+export const CLASS_LIST: ListDescription = {
+  nameShare: 25,
+  columns: [
+    {
+      key: "hd",
+      label: "Hit Die",
+      labels: Object.fromEntries(HIT_DIE_VALUES.map((die) => [die, `d${die}`])),
+      reads: "chip",
+      share: 15,
+    },
+  ],
+};

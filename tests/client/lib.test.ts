@@ -235,23 +235,28 @@ describe("An activity", () => {
 
   test("details the fields it changed, its level, modifier and property", () => {
     expect(
-      formatActivityDetails("updateItem", {
-        changedFields: [
-          { field: "name", from: "A", to: "B" },
-          { field: "hd", to: "8" },
-          { field: "costGp", from: "15", to: "20" },
-          { field: "slot", from: "Neck" },
-          { field: "baseSpeed" },
-          {
-            field: "primaryAbilityId",
-            from: "7c0d4b52-0c0e-4b8e-9d7f-1f2a3b4c5d6e",
-            to: "00000000-0000-0000-0000-000000000000",
-          },
-          { field: "sourceItemId", to: "00000000-0000-0000-0000-000000000000" },
-          { bad: true },
-        ],
-        level: 3,
-      }),
+      formatActivityDetails(
+        "updateItem",
+        {
+          baseRules: "Dungeons & Dragons: 3.5",
+          changedFields: [
+            { field: "name", from: "A", to: "B" },
+            { field: "hd", to: "8" },
+            { field: "costGp", from: "15", to: "20" },
+            { field: "slot", from: "Neck" },
+            { field: "baseSpeed" },
+            {
+              field: "primaryAbilityId",
+              from: "7c0d4b52-0c0e-4b8e-9d7f-1f2a3b4c5d6e",
+              to: "00000000-0000-0000-0000-000000000000",
+            },
+            { field: "sourceItemId", to: "00000000-0000-0000-0000-000000000000" },
+            { bad: true },
+          ],
+          level: 3,
+        },
+        RULES,
+      ),
     ).toBe(
       "Name: A → B\nHit Die set to d8\nCost: 15.00 gp → 20.00 gp\nSlot cleared\nBase Speed updated\nPrimary Ability updated\nSource Item updated\nLevel 3",
     );

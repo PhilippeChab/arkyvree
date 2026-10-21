@@ -22,10 +22,9 @@ import { isStillOpen } from "@/client/src/pages/rulesets/stillOpen.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { useClassDraftsStore } from "@/client/src/stores/classDraftsStore.ts";
 
-import { getClassSections } from "./classSectionFactory.ts";
 import { type ClassDetail, classDetailQuery, type ClassFormData } from "./classSectionQueries.ts";
+import { getClassTabAlias, getClassTabs } from "./classTabs.ts";
 import { ClassDetails } from "./components/index.ts";
-import { CLASS_CUSTOMIZATION_TABS, CLASS_TABS } from "./sections/index.ts";
 
 interface ClassViewProps {
   /** Where Back goes, and its name */
@@ -66,22 +65,10 @@ function ClassView({ back, classId, ruleset, rulesetId, section }: ClassViewProp
 
   usePageTitle(classData?.name);
 
-  const classSections = getClassSections(ruleset.baseRules);
-  // Every class's tabs, each in the place of its base rules' tab that replaces it, then its base rules' others, then
-  // those that customize it
-  const replacing = (key: string) => classSections.tabs.find((tab) => tab.replaces === key);
-  const tabs = [
-    ...CLASS_TABS.map((tab) => replacing(tab.key) ?? tab),
-    ...classSections.tabs.filter((tab) => !tab.replaces),
-    ...CLASS_CUSTOMIZATION_TABS,
-  ];
+  const tabs = getClassTabs(ruleset.baseRules);
   const currentTab = tabs.find((tab) => tab.key === section);
-  // An address of a tab it had before opens the one that took its place: one its base rules replaced, or renamed
-  const renamed =
-    section !== undefined && Object.hasOwn(classSections.tabAliases, section)
-      ? classSections.tabAliases[section]
-      : undefined;
-  const aliasedTab = section === undefined ? undefined : (replacing(section)?.key ?? renamed);
+  // An address of a tab it had before opens the one that took its place
+  const aliasedTab = getClassTabAlias(ruleset.baseRules, section);
 
   const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
   // Deleting an inherited class, or what it holds, can be undone

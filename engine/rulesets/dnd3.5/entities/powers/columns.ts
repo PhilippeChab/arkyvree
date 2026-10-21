@@ -1,4 +1,5 @@
 import type { FormField } from "@/engine/core/fields/index.ts";
+import type { ListDescription } from "@/engine/core/module/index.ts";
 import { RULESET_LIMITS } from "@/engine/rulesets/dnd3.5/limits.ts";
 
 /**
@@ -33,3 +34,9 @@ export const POWER_COLUMNS: FormField[] = [
     required: true,
   },
 ];
+
+/** A 3.5 spell's list: its name, its spell lists, its description. */
+export const POWER_LIST: ListDescription = {
+  nameShare: 25,
+  columns: [{ key: "aptitudes", label: "Aptitudes", reads: "aptitudes", share: 15, slot: "inline" }],
+};

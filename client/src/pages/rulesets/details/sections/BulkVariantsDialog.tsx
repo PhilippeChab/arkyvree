@@ -12,7 +12,7 @@ import {
 import { DeleteIcon } from "@/client/src/components/icons/index.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { NAME_RULES } from "@/client/src/lib/validation.ts";
-import { MAX_ITEM_VARIANTS } from "@/vocabulary/dnd3.5/itemTemplates.ts";
+import { useRulesetRules } from "@/client/src/pages/rulesets/hooks/index.ts";
 
 import { type BulkVariantsFormValues, type VariantRow, variantRow } from "./bulkVariants.ts";
 
@@ -25,7 +25,12 @@ interface BulkVariantsDialogProps {
   onSubmit: (variants: VariantRow[]) => void;
   open: boolean;
   pending: boolean;
+  /** The ruleset's, whose rules bound how many variants a form makes and name what a variant copies */
+  rulesetId: string;
 }
+
+/** A list of words as a sentence names them, "a, b and c". */
+const COPIED_LIST = new Intl.ListFormat("en-GB", { style: "long", type: "conjunction" });
 
 export function BulkVariantsDialog({
   open,
@@ -35,7 +40,13 @@ export function BulkVariantsDialog({
   form,
   onSubmit,
   pending,
+  rulesetId,
 }: BulkVariantsDialogProps) {
+  const { rules } = useRulesetRules(rulesetId);
+  // What a variant copies of its base item: its columns, as its rules name them ("cost, weight, item type…")
+  const copied = COPIED_LIST.format([
+    ...new Set((rules?.columns.items ?? []).map((column) => column.label.toLowerCase())),
+  ]);
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: "variants",
@@ -63,9 +74,8 @@ export function BulkVariantsDialog({
         <DialogContent>
           <Stack spacing={2} sx={{ pt: 1 }}>
             <DialogContentText>
-              Each variant copies the base item's cost, weight, type, slot and template, and its modifiers and
-              requirements unless the base item is a template itself. You'll be able to customize them individually
-              after.
+              Each variant copies the base item's {copied}, and its modifiers and requirements unless the base item is a
+              template itself. You'll be able to customize them individually after.
             </DialogContentText>
             <Stack spacing={3}>
               {fields.map((field, index) => (
@@ -106,7 +116,7 @@ export function BulkVariantsDialog({
               onClick={() =>
                 append(variantRow({ name: baseItemName, description: baseItemDescription }, fields.length + 1))
               }
-              disabled={fields.length >= MAX_ITEM_VARIANTS || pending}
+              disabled={fields.length >= (rules?.maxItemVariants ?? 1) || pending}
               sx={{ alignSelf: "flex-start" }}
             />
           </Stack>

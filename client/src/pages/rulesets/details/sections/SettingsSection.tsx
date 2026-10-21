@@ -13,7 +13,7 @@ import {
 import { useRulesetPermissions } from "@/client/src/hooks/index.ts";
 import { EntityFields, withEntityFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { rulesetSettingsQuery } from "@/client/src/pages/rulesets/details/rulesetQueries.ts";
-import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
+import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionProps.ts";
 import { useEntityFields, useEntityForm } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
