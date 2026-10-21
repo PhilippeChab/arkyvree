@@ -8,7 +8,7 @@ import { V1 } from "@/server/routers/v1/translators/V1.ts";
 import { CONTENT_FILTERS, entityDescription, fields } from "@/server/routers/v1/validation.ts";
 import { PowersService } from "@/server/services/rulesets/powers/index.ts";
 
-/** The aptitudes (spell lists) a spell is on, each at its level, at least one, which an update replaces when it names them. */
+/** The aptitudes (spell lists) a spell is on, each at its level, one at least, which an update replaces whole. */
 const spellAptitudes = z
   .array(z.object({ id: z.string().uuid(), level: z.number().int().optional() }))
   .min(1, "At least one aptitude must be selected")
