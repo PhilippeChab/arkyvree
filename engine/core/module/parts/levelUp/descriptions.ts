@@ -38,8 +38,18 @@ export interface OpenedLevelChoices<Steps, ClassOption, FeatOption, PowerOption>
   levelsLeft: number;
 }
 
-/** A level-up wizard's step, as its ruleset lists it: its name, which the ruleset answers the step by, and its label. */
-export interface WizardStep<N extends string = string> {
+/**
+ * A level-up wizard's step, as its ruleset lists it: its name, its kind, which the ruleset answers the step by, and its
+ * label.
+ */
+export interface WizardStep<N extends LevelStepKind = LevelStepKind> {
   label: string;
   name: N;
 }
+
+/**
+ * The kinds of step the generic level wizard shows, each its step's name: an ability increase (`abilities`), points
+ * spent over a list (`skills`), and picks in pools, of feats (`feats`) and of powers by level (`powers`). A ruleset lists
+ * those its levels take, each answering in its kind's shape; one whose step no kind covers adds a kind.
+ */
+export type LevelStepKind = "abilities" | "feats" | "powers" | "skills";

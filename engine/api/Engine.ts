@@ -5,13 +5,15 @@ import ContentEngine from "./ContentEngine.ts";
 import CopyOnWriteEngine from "./CopyOnWriteEngine.ts";
 import ImportsEngine from "./ImportsEngine.ts";
 import Modules from "./Modules.ts";
+import RulesEngine from "./RulesEngine.ts";
 import RulesetEngine from "./RulesetEngine.ts";
 
 /**
  * The engine's entry: what code outside it asks the rules, as the client asks the server through its API. A ruleset's
  * rules answer through a handle bound to its view (`Engine.for(scope)`), and through it to what they're about
- * (`.character(input)`, `.class(klassId)`, `.skills()`); a base rules' content before any view (`forRules`); and
- * copy-on-write, which builds the view (`copyOnWrite`). Which ruleset answers is the engine's to know.
+ * (`.character(input)`, `.class(klassId)`, `.skills()`); a base rules' content before any view (`forRules`); what
+ * every base rules' rulesets share (`rules`); and copy-on-write, which builds the view (`copyOnWrite`). Which ruleset
+ * answers is the engine's to know.
  */
 export default class Engine {
   /** The copy-on-write the cache builds a ruleset's view with, and its writes copy an entity by. */
@@ -38,5 +40,10 @@ export default class Engine {
    */
   static imports() {
     return new ImportsEngine(Modules.all());
+  }
+
+  /** The engine asked of what every base rules' rulesets share, before any ruleset: their words, kinds and license. */
+  static rules() {
+    return new RulesEngine(Modules.all());
   }
 }

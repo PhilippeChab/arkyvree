@@ -1,4 +1,4 @@
-import type { ClassSectionProps } from "@/client/src/pages/rulesets/details/classes/classSectionFactory.ts";
+import type { ClassSectionProps } from "@/client/src/pages/rulesets/details/classes/classTab.ts";
 
 import { useClassCopy } from "./useClassCopy.ts";
 

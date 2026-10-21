@@ -202,13 +202,13 @@ describe("A field codec", () => {
     ]);
     expect(fields[0]).toMatchObject({ label: "Title", help: "Its title", multiple: false, placeholder: 'e.g., "A"' });
     expect(fields[1]).toMatchObject({ multiple: false, options: ["Evocation", "Illusion"] });
-    expect(fields[3]).toMatchObject({ default: 1, min: 1, shownWhen: { path: "fields.flag", values: [true] } });
+    expect(fields[3]).toMatchObject({ default: 1, min: 1, shownWhen: [{ path: "fields.flag", values: [true] }] });
     expect(fields[4]).toMatchObject({ multiple: true, options: ["x", "y"] });
     expect(fields[5]).toMatchObject({ options: ["Arcane", "Divine"] });
     expect(fields[6]).toMatchObject({ references: "abilities", required: false });
     expect(fields[7]).toMatchObject({
       label: "Group",
-      shownWhen: { path: "type", values: ["Weapon"] },
+      shownWhen: [{ path: "type", values: ["Weapon"] }],
       fields: [
         { key: "group.level", input: "number", default: null },
         { key: "group.known", input: "flag", nullable: true },

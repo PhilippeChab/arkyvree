@@ -12,7 +12,9 @@ import { type InferRequestType, type InferResponseType, parseResponse } from "ho
 
 import { rpc } from "@/client/src/services/rpc.ts";
 import { ATTACHMENT_SLOTS, type AttachmentSlotName } from "@/shared/attachments.ts";
+import type { BaseRules } from "@/shared/enums.ts";
 
+import { FOREVER } from "./durations.ts";
 import { nextPage } from "./pageItems.ts";
 import { QUERY_KEYS } from "./queryKeys.ts";
 
@@ -61,9 +63,21 @@ export type CharacterDetail = InferResponseType<(typeof rpc.api.characters)[":id
 /** A list's sort direction, as every list endpoint takes it. */
 export type Direction = NonNullable<RulesetListParams["orderDir"]>;
 
+/** What a base rules' rulesets share: their words, the kinds a race or a class is for, their levels, their license. */
+export type RulesDescription = RulesDescriptions[BaseRules];
+
+/** What every base rules' rulesets share, by base rules. */
+export type RulesDescriptions = InferResponseType<typeof rpc.api.rules.$get, 200>;
+
 export type RulesetDetail = InferResponseType<(typeof rpc.api.rulesets)[":id"]["$get"], 200>;
 
 export type RulesetListItem = InferResponseType<typeof rpc.api.rulesets.$get, 200>["items"][number];
+
+/** How a base rules' classes progress, as a class's Progression and Spells tabs set it: its tracks, its spell tables. */
+export type RulesProgression = RulesDescription["progression"];
+
+/** A ruleset's words for the entity types whose word isn't the engine's, as its rules describe them. */
+export type RulesWords = RulesDescription["words"];
 
 /** A list read whole: its first page of 100, the most one request returns (a ruleset has far fewer of each). */
 const FIRST_HUNDRED = { page: "1", limit: "100" };
@@ -261,5 +275,14 @@ export function rulesetPickerQuery(scope: RulesetListParams["scope"], search: st
       ),
     initialPageParam: 1,
     getNextPageParam: nextPage,
+  });
+}
+
+/** What every base rules' rulesets share, which changes only with the app's rules: read once, for every ruleset. */
+export function rulesQuery() {
+  return queryOptions({
+    queryKey: QUERY_KEYS.rules,
+    queryFn: () => parseResponse(rpc.api.rules.$get()),
+    staleTime: FOREVER,
   });
 }

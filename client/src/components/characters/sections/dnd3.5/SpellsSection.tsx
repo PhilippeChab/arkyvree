@@ -2,6 +2,7 @@ import { Box, Collapse, Link as MuiLink, Stack, Typography } from "@mui/material
 import { useState } from "react";
 import { Link } from "react-router-dom";
 
+import { ScoreBox } from "@/client/src/components/characters/sections/ScoreBox.tsx";
 import { SheetSection } from "@/client/src/components/characters/sections/SheetSection.tsx";
 import {
   CLICKABLE_ROW_SX,
@@ -19,11 +20,6 @@ import {
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
 import { DURATION } from "@/client/src/theme/animations.ts";
 import { buildCustomizationPath } from "@/shared/customization/entities.ts";
-import { formatPropertyType } from "@/shared/customization/properties.ts";
-import { SPELL_SCHOOL } from "@/vocabulary/dnd3.5/properties/index.ts";
-import { SPELL_LEVEL_LABELS } from "@/vocabulary/dnd3.5/spells.ts";
-
-import { ScoreBox } from "./ScoreBox.tsx";
 
 interface CollapsibleAptitudeProps {
   apt: AptitudeSpells;
@@ -110,7 +106,7 @@ function CollapsibleAptitude({ apt, rulesetId }: CollapsibleAptitudeProps) {
 
 function CollapsibleLevel({ group, rulesetId }: CollapsibleLevelProps) {
   const [open, setOpen] = useState(false);
-  const label = SPELL_LEVEL_LABELS[group.level];
+  const { label } = group;
 
   return (
     // The last level, closed, keeps the space its title has to its spells
@@ -142,7 +138,6 @@ function CollapsibleLevel({ group, rulesetId }: CollapsibleLevelProps) {
 function SpellRowItem({ spell, rulesetId }: SpellRowItemProps) {
   const [open, setOpen] = useState(false);
 
-  const detailProps = Object.entries(spell.properties).filter(([key]) => key !== SPELL_SCHOOL);
   const spellLink =
     rulesetId && spell.id ? `/rulesets/${rulesetId}/${buildCustomizationPath("powers", spell.id)}` : undefined;
 
@@ -184,7 +179,7 @@ function SpellRowItem({ spell, rulesetId }: SpellRowItemProps) {
         <DataCell slot="block" colSpan={4} sx={{ py: 0, borderBottom: open ? undefined : "none" }}>
           <Collapse in={open} timeout={DURATION.normal} unmountOnExit>
             <Stack spacing={1.5} sx={{ py: 1.5, px: 1 }}>
-              {detailProps.length > 0 && (
+              {spell.details.length > 0 && (
                 <Box
                   sx={{
                     display: "grid",
@@ -192,9 +187,9 @@ function SpellRowItem({ spell, rulesetId }: SpellRowItemProps) {
                     gap: 0.5,
                   }}
                 >
-                  {detailProps.map(([key, value]) => (
-                    <Typography key={key} variant="body2" sx={{ color: "text.secondary" }}>
-                      <strong>{formatPropertyType(key)}:</strong> {value}
+                  {spell.details.map(({ label, value }) => (
+                    <Typography key={label} variant="body2" sx={{ color: "text.secondary" }}>
+                      <strong>{label}:</strong> {value}
                     </Typography>
                   ))}
                 </Box>
@@ -233,7 +228,7 @@ function SpellsPerDayTable({ spellsPerDay }: SpellsPerDayTableProps) {
                   slots != null && (
                     <ScoreBox
                       key={spellsPerDay.levels[index]}
-                      label={SPELL_LEVEL_LABELS[spellsPerDay.levels[index]]}
+                      label={spellsPerDay.labels[index]}
                       value={slots}
                       compact
                     />
@@ -248,9 +243,9 @@ function SpellsPerDayTable({ spellsPerDay }: SpellsPerDayTableProps) {
         containerSx={WIDE_ONLY_SX}
         columns={[
           { key: "list", label: "Spell List" },
-          ...spellsPerDay.levels.map((level) => ({
+          ...spellsPerDay.levels.map((level, index) => ({
             key: String(level),
-            label: SPELL_LEVEL_LABELS[level],
+            label: spellsPerDay.labels[index],
             align: "center" as const,
           })),
         ]}
@@ -265,7 +260,7 @@ function SpellsPerDayTable({ spellsPerDay }: SpellsPerDayTableProps) {
               <DataCell
                 key={spellsPerDay.levels[index]}
                 slot={slots == null ? "hidden" : "labeled"}
-                label={SPELL_LEVEL_LABELS[spellsPerDay.levels[index]]}
+                label={spellsPerDay.labels[index]}
                 align="center"
                 sx={LEVEL_CELL_SX}
               >

@@ -2,14 +2,13 @@ import { useMutation } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import type { EditAnswers } from "@/client/src/pages/characters/details/components/levelUpFactory.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
 import { hpSet } from "./hitPoints.ts";
 import type { PickerLevel } from "./levelUpQueries.ts";
 import { abilityIncreasesOf } from "./pendingPicks.ts";
 import type { EditedLevel } from "./useEditedLevel.ts";
-import { useFittedPicks } from "./useFittedPicks.ts";
+import { type PickAnswers, useFittedPicks } from "./useFittedPicks.ts";
 import { type LevelUpFormData, pickIds } from "./useLevelWizardBase.ts";
 import { navigationOf } from "./wizardNavigation.ts";
 import { HP_STEP } from "./wizardSteps.ts";
@@ -21,6 +20,15 @@ interface EditLevelWizardBaseParams {
   /** The level it edits (`useEditedLevel`'s), which the ruleset answered */
   level: EditedLevel;
   onClose: () => void;
+}
+
+/**
+ * What a ruleset's steps answer of the level Edit Level edits (`useEditedLevel`'s), which it keeps its picks by and
+ * waits for.
+ */
+export interface EditAnswers extends PickAnswers {
+  /** The answers its save takes are in: the picks are saved as they fit */
+  complete: boolean;
 }
 
 /**

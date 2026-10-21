@@ -5,14 +5,13 @@ import { useState } from "react";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useListboxQuery } from "@/client/src/hooks/index.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
-import type { PreviewAnswers } from "@/client/src/pages/characters/details/components/levelUpFactory.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
 import { type HpLevel, hpSet } from "./hitPoints.ts";
 import { availableClassesQuery, type ClassPicker } from "./levelUpQueries.ts";
 import { abilityIncreasesOf, plannedLevelsOf, plannedPicker, skillPointString } from "./pendingPicks.ts";
 import type { AddLevelPlan } from "./useAddLevelPlan.ts";
-import { useFittedPicks } from "./useFittedPicks.ts";
+import { type PickAnswers, useFittedPicks } from "./useFittedPicks.ts";
 import { type AvailableKlass, pickIds } from "./useLevelWizardBase.ts";
 import { navigationOf } from "./wizardNavigation.ts";
 import { CLASS_PLAN_STEP, HP_STEP } from "./wizardSteps.ts";
@@ -25,6 +24,30 @@ interface AddLevelWizardBaseParams {
   open: boolean;
   /** Its plan (`useAddLevelPlan`'s), which the ruleset answered */
   plan: AddLevelPlan;
+}
+
+/** A planned level, as a ruleset's preview lists it: its class's level, and the hit points it may gain. */
+export interface PlannedLevelDetail extends Pick<HpLevel, "hd" | "hitPoints"> {
+  klassId: string;
+  klassLevelId: string;
+  klassName: string;
+  level: number;
+}
+
+/**
+ * What a ruleset's preview answers of Add Level's plan (`useAddLevelPlan`'s), which it keeps its levels and its picks
+ * by.
+ */
+export interface PreviewAnswers extends PickAnswers {
+  /** The planned levels that take an ability increase, by their place in the plan */
+  abilityIncreaseLevels: number[];
+  /** The planned levels, in plan order: none until the preview loads */
+  levelDetails: PlannedLevelDetail[] | undefined;
+  /**
+   * The planned level each pool's next pick lands on, by its place: a feat pool's, and a power pool's at each spell
+   * level and at any (`""`). None until the preview loads.
+   */
+  nextPickLevels: { feats: Record<string, number>; powers: Record<string, Record<string, number>> } | undefined;
 }
 
 /**

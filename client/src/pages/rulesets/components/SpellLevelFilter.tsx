@@ -1,6 +1,6 @@
 import { MenuItem, TextField } from "@mui/material";
 
-import { getVocabulary } from "@/client/src/pages/rulesets/vocabularyFactory.ts";
+import { useRules } from "@/client/src/hooks/index.ts";
 import type { BaseRules } from "@/shared/enums.ts";
 
 interface SpellLevelFilterProps {
@@ -15,7 +15,7 @@ interface SpellLevelFilterProps {
 
 /** The spell level select in a spell list's search bar. */
 export function SpellLevelFilter({ value, onChange, allowAll, baseRules }: SpellLevelFilterProps) {
-  const { labels, levels } = getVocabulary(baseRules).spellLevels;
+  const { rules } = useRules(baseRules);
   return (
     <TextField
       select
@@ -26,9 +26,9 @@ export function SpellLevelFilter({ value, onChange, allowAll, baseRules }: Spell
       sx={{ minWidth: 100 }}
     >
       {allowAll && <MenuItem value="">All</MenuItem>}
-      {levels.map((level) => (
+      {rules?.powerLevels.map(({ label, level }) => (
         <MenuItem key={level} value={level}>
-          {labels[level]}
+          {label}
         </MenuItem>
       ))}
     </TextField>

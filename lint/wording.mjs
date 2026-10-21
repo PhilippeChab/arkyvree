@@ -18,9 +18,9 @@
  *   itself in words, never an emoji (the spinner's die is `DiceSpinner`'s own).
  * - `app-name`: the app's name is `APP_NAME` (`lib/brand.ts`), wherever it shows (a tab's title, the brand, a welcome,
  *   the footer): never written out.
- * - `entity-type-labels`: an entity's type shows in its ruleset's words, `entityTypeLabel(type, baseRules)`
- *   (`lib/rulesetLabels.ts`: "Class Level", a 3.5 power a "Spell"), never as the code names it ("klass_levels"): an
- *   `entityType` or a `sourceType` is never rendered as it is.
+ * - `entity-type-labels`: an entity's type shows in its ruleset's words, `entityTypeLabel(type, words)`
+ *   (`lib/rulesetLabels.ts`, its rules' words: "Class Level", a 3.5 power a "Spell"), never as the code names it
+ *   ("klass_levels"): an `entityType` or a `sourceType` is never rendered as it is.
  *
  * Plain JS: oxlint loads its plugins without a TypeScript step.
  */
@@ -144,7 +144,7 @@ function createEntityTypeLabels(context) {
       context.report({
         node,
         message:
-          "An entity's type shows in its ruleset's words, `entityTypeLabel(type, baseRules)` (`lib/rulesetLabels.ts`), " +
+          "An entity's type shows in its ruleset's words, `entityTypeLabel(type, words)` (`lib/rulesetLabels.ts`), " +
           'never as the code names it ("klass_levels").',
       });
     },

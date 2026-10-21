@@ -4,15 +4,16 @@ import { parseResponse } from "hono/client";
 import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
 
 import { ConfirmDialog, ReadOnlyFields, SectionTabPanel, SectionTabs } from "@/client/src/components/common/index.ts";
-import { useLeaveGuard, usePageTitle, useRulesetPermissions } from "@/client/src/hooks/index.ts";
+import { useLeaveGuard, usePageTitle, useRules, useRulesetPermissions } from "@/client/src/hooks/index.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { type RulesetDetail, rulesetDetailQuery } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
-import { withEntityFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
+import { toEntityBody, toEntityForm, withEntityFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { EntityDetailLayout, EntityPageError } from "@/client/src/pages/rulesets/components/index.ts";
 import { entityPageBack, entityPageState } from "@/client/src/pages/rulesets/entityPageState.ts";
 import {
   useCopyOnWrite,
+  useEntityColumns,
   useEntityFields,
   useEntityForm,
   useRestorableDelete,
@@ -21,10 +22,9 @@ import { isStillOpen } from "@/client/src/pages/rulesets/stillOpen.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { useClassDraftsStore } from "@/client/src/stores/classDraftsStore.ts";
 
-import { getClassForms } from "./classFormFactory.ts";
-import { getClassSections } from "./classSectionFactory.ts";
 import { type ClassDetail, classDetailQuery, type ClassFormData } from "./classSectionQueries.ts";
-import { CLASS_CUSTOMIZATION_TABS, CLASS_TABS } from "./sections/index.ts";
+import { getClassTabAlias, getClassTabs } from "./classTabs.ts";
+import { ClassDetails } from "./components/index.ts";
 
 interface ClassViewProps {
   /** Where Back goes, and its name */
@@ -65,37 +65,26 @@ function ClassView({ back, classId, ruleset, rulesetId, section }: ClassViewProp
 
   usePageTitle(classData?.name);
 
-  const classForms = getClassForms(ruleset.baseRules);
-  const classSections = getClassSections(ruleset.baseRules);
-  // Every class's tabs, each in the place of its base rules' tab that replaces it, then its base rules' others, then
-  // those that customize it
-  const replacing = (key: string) => classSections.tabs.find((tab) => tab.replaces === key);
-  const tabs = [
-    ...CLASS_TABS.map((tab) => replacing(tab.key) ?? tab),
-    ...classSections.tabs.filter((tab) => !tab.replaces),
-    ...CLASS_CUSTOMIZATION_TABS,
-  ];
+  const { rules } = useRules(ruleset.baseRules);
+  const tabs = getClassTabs(rules);
   const currentTab = tabs.find((tab) => tab.key === section);
-  // An address of a tab it had before opens the one that took its place: one its base rules replaced, or renamed
-  const renamed =
-    section !== undefined && Object.hasOwn(classSections.tabAliases, section)
-      ? classSections.tabAliases[section]
-      : undefined;
-  const aliasedTab = section === undefined ? undefined : (replacing(section)?.key ?? renamed);
+  // An address of a tab it had before opens the one that took its place
+  const aliasedTab = getClassTabAlias(section);
 
   const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
   // Deleting an inherited class, or what it holds, can be undone
   const { restorable, error: changesError } = useRestorableDelete(ruleset, classData);
 
   const { fields: classFields } = useEntityFields(rulesetId, "klasses");
-  // Its base rules' form of the class, with the fields its ruleset declares for classes
+  const { columns: classColumns } = useEntityColumns(rulesetId, "klasses");
+  // Its form of the class: its columns as its rules describe them, and the fields its ruleset declares for classes
   const toClassForm = (klass: Pick<ClassDetail, "description" | "hd" | "name">) =>
-    withEntityFields(classForms.toClassForm(klass), classFields, klass);
+    withEntityFields(toEntityForm<ClassFormData>(classColumns, klass), classFields, klass);
   const forgetSource = copy.forgetSource(!!classData);
 
   const { form: editForm, save } = useEntityForm({
-    // Its base rules' empty class until the class loads, which its editor never shows
-    empty: classForms.emptyClass,
+    // Its rules' empty class until the class loads, which its editor never shows
+    empty: toEntityForm<ClassFormData>(classColumns),
     values: classData && toClassForm(classData),
     formKey: copy.key,
     adoptKey: copy.adoptKey,
@@ -108,7 +97,7 @@ function ClassView({ back, classId, ruleset, rulesetId, section }: ClassViewProp
       parseResponse(
         rpc.api.rulesets[":id"].classes[":classId"].$put({
           param: { id: rulesetId, classId },
-          json: { ...data, updatedAt },
+          json: { ...toEntityBody<ClassFormData, ClassFormData>(classColumns, data), updatedAt },
         }),
       ),
     toFormValues: toClassForm,
@@ -123,7 +112,7 @@ function ClassView({ back, classId, ruleset, rulesetId, section }: ClassViewProp
     followCopy: copy.followCopy,
   });
 
-  // Normalize the URL to a tab its base rules give: the one an old tab's address names, or its first.
+  // Normalize the URL to a tab its rules give: the one an old tab's address names, or its first.
   if (!currentTab) {
     return (
       <Navigate
@@ -138,7 +127,6 @@ function ClassView({ back, classId, ruleset, rulesetId, section }: ClassViewProp
     return <EntityPageError message={loadFailureMessage("Class", error)} backLabel={back.label} backTo={back.to} />;
 
   const { Section } = currentTab;
-  const { ClassDetails } = classSections;
 
   return (
     <>
@@ -228,7 +216,8 @@ export default function ClassDetailsPage() {
     section?: string;
   }>();
   const { data: ruleset, isLoading, error } = useQuery(rulesetDetailQuery(rulesetId));
-  const back = entityPageBack(location.state, `/rulesets/${rulesetId}/classes`, ruleset?.baseRules);
+  const { rules } = useRules(ruleset?.baseRules);
+  const back = entityPageBack(location.state, `/rulesets/${rulesetId}/classes`, rules?.words);
   // The class loads alongside its ruleset, which its page waits for: its forms and its tabs are its base rules'
   useQuery(classDetailQuery(rulesetId, classId));
 

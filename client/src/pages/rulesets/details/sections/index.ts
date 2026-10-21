@@ -1,8 +1,12 @@
 export { AbilitiesSection } from "./AbilitiesSection.tsx";
 export { AptitudesSection } from "./AptitudesSection.tsx";
+export { ClassesSection } from "./ClassesSection.tsx";
 export { FeatsSection } from "./FeatsSection.tsx";
+export { ItemsSection } from "./ItemsSection.tsx";
 export { LanguagesSection } from "./LanguagesSection.tsx";
 export { MechanicsSection } from "./MechanicsSection.tsx";
+export { PowersSection } from "./PowersSection.tsx";
 export { RacesSection } from "./RacesSection.tsx";
 export { SavesSection } from "./SavesSection.tsx";
 export { SettingsSection } from "./SettingsSection.tsx";
+export { SkillsSection } from "./SkillsSection.tsx";

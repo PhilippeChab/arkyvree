@@ -1,0 +1,172 @@
+/**
+ * What a class's Progression tab changes before its save: its tracks' values (a level's fields its rules set, its
+ * saves), its features' levels and its pools' picks, by level id, over the class as saved; and the save they make.
+ */
+
+import type {
+  ClassLevelRow,
+  ClassProgressionBody,
+} from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
+
+/** A feature the class grants, and the levels it grants it at, by their ids. */
+export interface FeatureRow {
+  aptitudeId: string;
+  aptitudeName: string | null;
+  featId: string;
+  key: string;
+  levelIds: string[];
+  name: string;
+}
+
+/** A pool the class's levels give picks in, and how many each gives, by its id. */
+export interface PoolRow {
+  aptitudeId: string;
+  name: string;
+  picks: Record<string, number>;
+}
+
+/** What the tab changed and hasn't saved: each track's, feature's and pool's new values, and the rows it added. */
+export interface ProgressionEdits {
+  addedFeatures: FeatureRow[];
+  addedPools: PoolRow[];
+  /** A feature's levels, by its key */
+  features: Record<string, string[]>;
+  /** A pool's picks, by its aptitude's id, then by level id */
+  pools: Record<string, Record<string, number>>;
+  /** A track's values, by its key, then by level id */
+  tracks: Partial<Record<TrackKey, Record<string, number>>>;
+}
+
+/** A track the Progression tab edits: a level's field, by its key (3.5's `bab`), or a save (`save:<id>`). */
+export type TrackKey = string;
+
+/** A save's track's key's prefix. */
+const SAVE_TRACK = "save:";
+
+/** A tab that changed nothing yet. */
+export const NO_EDITS: ProgressionEdits = { addedFeatures: [], addedPools: [], features: {}, pools: {}, tracks: {} };
+
+/** Whether two lists of level ids hold the same levels. */
+function sameLevels(a: readonly string[], b: readonly string[]) {
+  return a.length === b.length && a.every((id) => b.includes(id));
+}
+
+/**
+ * The save a tab's edits make (`edits`, over the class's `levels`, `features` and `pools` as saved), each level's
+ * with the fields its tracks set (`fieldKeys`) and the ruleset's saves (`saveIds`: none while they load, the level's
+ * own then, never an empty list).
+ */
+export function buildProgressionBody(
+  levels: readonly ClassLevelRow[],
+  fieldKeys: readonly string[],
+  saveIds: readonly string[] | undefined,
+  features: readonly FeatureRow[],
+  pools: readonly PoolRow[],
+  edits: ProgressionEdits,
+): Omit<ClassProgressionBody, "levelTokens"> {
+  const rows = withAddedFeatures(features, edits);
+  const classLevelIds = new Set(levels.map((level) => level.id));
+  const levelsOf = (row: FeatureRow) => edits.features[row.key] ?? row.levelIds;
+  const valueOf = (level: ClassLevelRow, key: TrackKey) => readEditedTrack(level, key, edits);
+  const grantOf = (row: FeatureRow, level: ClassLevelRow) =>
+    level.feats.find((feat) => describeFeatureKey({ featId: feat.id, aptitudeId: feat.aptitudeId }) === row.key);
+  // A grant keeps whether it's free; a new one is as its feature's first grant, or free for a new feature
+  const freeOf = (row: FeatureRow, level: ClassLevelRow) =>
+    (grantOf(row, level) ?? levels.map((other) => grantOf(row, other)).find(Boolean))?.free ?? true;
+  const levelEdits = levels.flatMap((level) => {
+    // The ruleset's saves, as a level's form sends them; until they're read, the level's own
+    const levelSaveIds = saveIds ?? level.saves.map((save) => save.saveId);
+    const keys: TrackKey[] = [...fieldKeys, ...levelSaveIds.map((id) => saveTrackKey(id))];
+    const tracksChanged = keys.some((key) => valueOf(level, key) !== readTrack(level, key));
+    const granted = rows.filter((row) => levelsOf(row).includes(level.id));
+    const featsChanged = !sameLevels(
+      granted.map((row) => row.key),
+      features.filter((row) => row.levelIds.includes(level.id)).map((row) => row.key),
+    );
+    if (!tracksChanged && !featsChanged) return [];
+    return [
+      {
+        levelId: level.id,
+        fields: Object.fromEntries(fieldKeys.map((key) => [key, valueOf(level, key)])),
+        saves: levelSaveIds.map((saveId) => ({ saveId, base: valueOf(level, saveTrackKey(saveId)) })),
+        ...(featsChanged && {
+          feats: granted.map((row) => ({ featId: row.featId, aptitudeId: row.aptitudeId, free: freeOf(row, level) })),
+        }),
+      },
+    ];
+  });
+  const poolEdits = withAddedPools(pools, edits).flatMap((pool) => {
+    // A level gone since its pick was made takes none
+    const picks = Object.entries(edits.pools[pool.aptitudeId] ?? {})
+      .filter(([levelId, count]) => classLevelIds.has(levelId) && count !== (pool.picks[levelId] ?? 0))
+      .map(([levelId, count]) => ({ levelId, count }));
+    return picks.length > 0 ? [{ aptitudeId: pool.aptitudeId, picks }] : [];
+  });
+  return {
+    ...(levelEdits.length > 0 && { levels: levelEdits }),
+    ...(poolEdits.length > 0 && { pools: poolEdits }),
+  };
+}
+
+/** A feature's key: its feat, and the pool it's granted in (a feat can be granted in several). */
+export function describeFeatureKey({ aptitudeId, featId }: { aptitudeId: string; featId: string }) {
+  return `${featId}-${aptitudeId}`;
+}
+
+/**
+ * The features the class's levels grant, each with the levels it's granted at: by the first of them, then by name,
+ * one a feat and the pool it's granted in.
+ */
+export function describeFeatureRows(levels: readonly ClassLevelRow[]): FeatureRow[] {
+  const rows = new Map<string, FeatureRow>();
+  for (const level of levels.toSorted((a, b) => a.level - b.level)) {
+    for (const feat of level.feats) {
+      const key = describeFeatureKey({ featId: feat.id, aptitudeId: feat.aptitudeId });
+      const row = rows.get(key) ?? {
+        aptitudeId: feat.aptitudeId,
+        aptitudeName: feat.aptitudeName,
+        featId: feat.id,
+        key,
+        levelIds: [],
+        name: feat.name,
+      };
+      row.levelIds.push(level.id);
+      rows.set(key, row);
+    }
+  }
+  return [...rows.values()];
+}
+
+/** A track's value at a level, as the tab shows it: its edit's, or the saved one. */
+export function readEditedTrack(level: ClassLevelRow, key: TrackKey, edits: ProgressionEdits) {
+  return edits.tracks[key]?.[level.id] ?? readTrack(level, key);
+}
+
+/** A track's value at a level, as saved: 0 for a save the level has no base for, or a field it holds no number in. */
+export function readTrack(level: ClassLevelRow, key: TrackKey) {
+  if (key.startsWith(SAVE_TRACK)) return level.saves.find((save) => saveTrackKey(save.saveId) === key)?.base ?? 0;
+  const value: unknown = (level as Record<string, unknown>)[key];
+  return typeof value === "number" ? value : 0;
+}
+
+/** A track's value as typed (`text`): a whole number, 0 at least, or `undefined` for anything else. */
+export function readWholeNumber(text: string) {
+  // A save shows signed ("+4"): typed so, it's the same number
+  const digits = text.trim().replace(/^\+/, "");
+  return /^\d+$/.test(digits) ? Number(digits) : undefined;
+}
+
+/** A save's track's key. */
+export function saveTrackKey(saveId: string): TrackKey {
+  return `${SAVE_TRACK}${saveId}`;
+}
+
+/** The features as saved, then those the edits add that a save hasn't made the class's yet. */
+export function withAddedFeatures(features: readonly FeatureRow[], edits: ProgressionEdits): FeatureRow[] {
+  return [...features, ...edits.addedFeatures.filter((added) => !features.some((row) => row.key === added.key))];
+}
+
+/** The pools as saved, then those the edits add that a save hasn't made the class's yet. */
+export function withAddedPools(pools: readonly PoolRow[], edits: ProgressionEdits): PoolRow[] {
+  return [...pools, ...edits.addedPools.filter((added) => !pools.some((pool) => pool.aptitudeId === added.aptitudeId))];
+}

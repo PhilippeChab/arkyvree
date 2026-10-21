@@ -191,7 +191,7 @@ export default class FieldForms {
   private static shownWhen(condition: FieldCondition | undefined, prefix: string) {
     if (!condition) return undefined;
     const path = "field" in condition ? `fields.${prefix}${condition.field}` : condition.column;
-    return { path, values: condition.values };
+    return [{ path, values: condition.values }];
   }
 
   /**

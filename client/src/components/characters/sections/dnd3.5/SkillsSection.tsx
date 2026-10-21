@@ -1,11 +1,10 @@
 import { Stack, Typography } from "@mui/material";
 
+import { GroupedSkillRows, SkillRow } from "@/client/src/components/characters/sections/GroupedSkillRows.tsx";
 import { SheetSection } from "@/client/src/components/characters/sections/SheetSection.tsx";
 import { BlankNote, DataCell, DataTable, EmptyValue, type TableColumn } from "@/client/src/components/common/index.ts";
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
 import { formatSigned } from "@/shared/text.ts";
-
-import { GroupedSkillRows, SkillRow } from "./GroupedSkillRows.tsx";
 
 interface SkillsSectionProps {
   skills: NonNullable<CharacterDetail["skills"]>;
@@ -45,6 +44,7 @@ export function SkillsSection({ skills }: SkillsSectionProps) {
                 <SkillRow
                   key={skill.name}
                   name={skill.name}
+                  shortName={skill.shortName}
                   {...placement}
                   renderName={(label) => `${label}${skill.innate ? " *" : ""}`}
                 >

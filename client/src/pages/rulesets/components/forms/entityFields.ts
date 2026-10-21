@@ -5,11 +5,15 @@
 
 import type { InferRequestType } from "hono/client";
 
+import { formatDecimal } from "@/client/src/lib/formatNumeric.ts";
 import type { EntityField } from "@/client/src/pages/rulesets/details/rulesetQueries.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
 import { copyProgression } from "@/shared/customization/progression.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
 import { isRecord } from "@/shared/isRecord.ts";
+
+/** A column's value: a field's, or a list of links (a spell's aptitudes, a level's saves). */
+type ColumnValue = LeafValue | unknown[];
 
 /** A field's value, but a group's: a flag's, a number's, a text's, a choice's, a list's, a progression's; null none. */
 type LeafValue = boolean | number | string | string[] | null | ProgressionValue;
@@ -26,10 +30,24 @@ export type EntityFieldValues = NonNullable<
 >;
 
 /**
- * A field's value in an empty form: false (none, for a three-state flag), a number's default, a progression's own copy
- * of its default, no text, no choice.
+ * The columns that hold a value, each key once: of several columns at one key (an item's type, a template's narrower),
+ * the one that takes any value it holds, not one that must hold one of its own.
  */
-function emptyValueOf(field: ValueField): LeafValue {
+function columnsByKey(columns: readonly EntityField[]): ValueField[] {
+  const byKey = new Map<string, ValueField>();
+  for (const column of columns) {
+    if (column.input === "group") continue;
+    const held = byKey.get(column.key);
+    if (!held || (held.input === "choice" && held.required)) byKey.set(column.key, column);
+  }
+  return [...byKey.values()];
+}
+
+/**
+ * A field's value in an empty form: false (none, for a three-state flag), a number's default, a progression's own copy
+ * of its default, a choice's default or none, no text, no decimal, no reference or template, no list's items.
+ */
+function emptyValueOf(field: ValueField): ColumnValue {
   switch (field.input) {
     case "flag":
       return field.nullable ? null : false;
@@ -38,15 +56,22 @@ function emptyValueOf(field: ValueField): LeafValue {
     case "progression":
       return copyProgression(field.default);
     case "choice":
+      return field.multiple ? [] : (field.default ?? "");
     case "text":
       return field.multiple ? [] : "";
+    case "decimal":
     case "ref":
+    case "template":
       return "";
+    case "aptitudeLevels":
+    case "grantedFeats":
+    case "saveBases":
+      return [];
   }
 }
 
 /** A field's value as a form holds it, of an entity's (`value`): its empty value when it has none (`""` for a text). */
-function formValueOf(field: ValueField, value: unknown): LeafValue {
+function formValueOf(field: ValueField, value: unknown): ColumnValue {
   switch (field.input) {
     case "flag":
       return typeof value === "boolean" ? value : emptyValueOf(field);
@@ -54,9 +79,23 @@ function formValueOf(field: ValueField, value: unknown): LeafValue {
       return typeof value === "number" ? value : emptyValueOf(field);
     case "progression":
       return isProgression(value) ? copyProgression(value) : emptyValueOf(field);
+    case "decimal":
+      return typeof value === "number" || typeof value === "string" ? (formatDecimal(value) ?? "") : "";
+    case "aptitudeLevels":
+    case "grantedFeats":
+    case "saveBases":
+      return Array.isArray(value) ? value : [];
+    case "choice":
+      if (!field.multiple) {
+        // One the field must hold, and a value it doesn't offer, reads as its default
+        if (isOneOf(value, field.options)) return value;
+        return field.required ? emptyValueOf(field) : typeof value === "string" ? value : "";
+      }
+      return Array.isArray(value) ? value.filter((item) => typeof item === "string") : [];
+    case "text":
+      if (field.multiple) return Array.isArray(value) ? value.filter((item) => typeof item === "string") : [];
+      return typeof value === "string" ? value : "";
     default:
-      if (field.input !== "ref" && field.multiple)
-        return Array.isArray(value) ? value.filter((item) => typeof item === "string") : [];
       return typeof value === "string" ? value : "";
   }
 }
@@ -69,6 +108,13 @@ function isProgression(value: unknown): value is ProgressionValue {
     Array.isArray(value.extra) &&
     value.extra.every((given) => isRecord(given) && typeof given.level === "number" && typeof given.amount === "number")
   );
+}
+
+/** A decimal's text as its save sends it: its number, null for none (which clears it). */
+function parseDecimal(value: unknown): number | null {
+  if (typeof value !== "string" || value.trim() === "") return null;
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
 }
 
 /** The fields that hold a value, a group's among them, each once: one shown in several groups too. */
@@ -106,23 +152,28 @@ export function changedFieldValues(values: EntityFieldValues | undefined, baseli
 }
 
 /** A choice's options: its own, then the ones the saved form holds (`saved`) it doesn't list, which stand. */
-export function choiceOptions(options: readonly string[], saved: unknown): string[] {
+export function choiceOptions(options: readonly (number | string)[], saved: unknown): (number | string)[] {
   const held = (Array.isArray(saved) ? saved : [saved]).filter((value) => typeof value === "string" && value !== "");
   return [...new Set([...options, ...held])];
 }
 
 /** An entity's empty fields: each field's empty value, at its key. */
 export function emptyFieldValues(fields: readonly EntityField[]): EntityFieldValues {
-  return valuesByKey(valueFieldsOf(fields).map((field) => [field.key, emptyValueOf(field)]));
+  return valuesByKey(valueFieldsOf(fields).map((field) => [field.key, emptyValueOf(field) as LeafValue]));
 }
 
-/** Whether a field shows, its condition's value read off the form (`watched`, at its `shownWhen.path`). */
-export function isFieldShown(field: EntityField, watched: unknown) {
-  return !field.shownWhen || isOneOf(watched, field.shownWhen.values);
+/**
+ * Whether a field shows, each of its conditions' values read off the form (`watched`, at their paths, in their
+ * order): while every one is among its values, or, one `except`, isn't.
+ */
+export function isFieldShown(field: EntityField, watched: readonly unknown[]) {
+  return (field.shownWhen ?? []).every(
+    (condition, index) => isOneOf(watched[index], condition.values) !== (condition.except ?? false),
+  );
 }
 
 /** The first choice of a select for none: "None", or "Default" when "None" is one of its values. */
-export function noneLabel(options: readonly string[]) {
+export function noneLabel(options: readonly (number | string)[]) {
   return options.includes("None") ? "Default" : "None";
 }
 
@@ -135,14 +186,66 @@ export function ownFieldValues(fields: readonly EntityField[], values: unknown, 
     valueFieldsOf(fields).map((field) => {
       const value = formValueOf(field, valueAt(values, field.key));
       const same = JSON.stringify(value) === JSON.stringify(formValueOf(field, valueAt(base, field.key)));
-      return [field.key, same ? emptyValueOf(field) : value];
+      return [field.key, (same ? emptyValueOf(field) : value) as LeafValue];
     }),
+  );
+}
+
+/**
+ * A form's columns (`values`) as its save sends them (`columns`, its rules'): a decimal its number, an optional choice,
+ * reference or template null for none, and a column its form hides (every column of its key: an item's slot, its type
+ * a template's) null, which its save reads as none.
+ */
+export function toColumnsBody(
+  columns: readonly EntityField[],
+  values: Record<string, unknown>,
+): Record<string, unknown> {
+  const shown = (column: EntityField) =>
+    isFieldShown(
+      column,
+      (column.shownWhen ?? []).map((condition) => valueAt(values, condition.path)),
+    );
+  const visibleKeys = new Set(columns.filter(shown).map((column) => column.key));
+  return Object.fromEntries(
+    columnsByKey(columns).map((column) => {
+      const value = values[column.key];
+      if (!visibleKeys.has(column.key)) return [column.key, null];
+      switch (column.input) {
+        case "decimal":
+          return [column.key, parseDecimal(value)];
+        case "choice":
+          return [column.key, !column.multiple && !column.required && value === "" ? null : value];
+        case "ref":
+          return [column.key, !column.required && value === "" ? null : value];
+        case "template":
+          return [column.key, value === "" ? null : value];
+        default:
+          return [column.key, value];
+      }
+    }),
+  );
+}
+
+/**
+ * An entity's columns, as its form holds them (`columns`, its rules'): a new one's empty values (`entity` none), else
+ * those its description holds at their keys (a decimal as its text, "15.00"; one a column must hold but doesn't offer,
+ * its default). A column that's a list of links (a spell's aptitudes, a level's saves and feats) reads its description's
+ * list at its key, which its owner gives in the form's shape.
+ */
+export function toColumnValues(columns: readonly EntityField[], entity?: unknown): Record<string, unknown> {
+  return Object.fromEntries(
+    columnsByKey(columns).map((column) => [
+      column.key,
+      entity === undefined ? emptyValueOf(column) : formValueOf(column, valueAt(entity, column.key)),
+    ]),
   );
 }
 
 /** An entity's fields as its form holds them, off its description (`entity`, which carries each at its key). */
 export function toFieldValues(fields: readonly EntityField[], entity: unknown): EntityFieldValues {
-  return valuesByKey(valueFieldsOf(fields).map((field) => [field.key, formValueOf(field, valueAt(entity, field.key))]));
+  return valuesByKey(
+    valueFieldsOf(fields).map((field) => [field.key, formValueOf(field, valueAt(entity, field.key)) as LeafValue]),
+  );
 }
 
 /** The value at a dotted path of a form's values (`fields.weapon.type`): none where the path leads nowhere. */
