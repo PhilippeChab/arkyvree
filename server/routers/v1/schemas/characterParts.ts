@@ -121,7 +121,7 @@ export const v1InventoryEntry = z
       name: z.string(),
       slot: z.string().nullable(),
       type: z.string().nullable(),
-      weight: z.number(),
+      weight: z.number().nullable().meta({ description: "In pounds: none, unweighed" }),
     }),
     location: z
       .enum(location.enumValues)

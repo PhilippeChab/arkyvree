@@ -131,6 +131,8 @@ describe("v1 rulesets", () => {
       rulesets.$put({ json: { description: "Our table's", name: "Table Rules" }, param: { id } }),
     );
     expect(changed).toMatchObject({ description: "Our table's", name: "Table Rules" });
+    const renamed = await expectOk(rulesets.$put({ json: { name: "House Rules" }, param: { id } }));
+    expect(renamed).toMatchObject({ description: "Our table's", name: "House Rules" });
     const abilityIncreases = { every: 3, extra: [] };
     const settings = await expectOk(rulesets.settings.$put({ json: { fields: { abilityIncreases } }, param: { id } }));
     expect(settings.fields).toMatchObject({ abilityIncreases });

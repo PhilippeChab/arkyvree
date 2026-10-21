@@ -95,7 +95,14 @@ export default new Hono<ApiKeyContext>()
     async (c) => {
       const { id, spellId } = c.req.valid("param");
       const body = c.req.valid("json");
-      const updated = await PowersService.updatePower(c.var.requestSession, id, spellId, body);
+      // The service clears a save its body leaves out, which an update keeps
+      const before = await PowersService.getPower(id, spellId);
+      const { saveEffect = before.saveEffect, saveId = before.saveId } = body;
+      const updated = await PowersService.updatePower(c.var.requestSession, id, spellId, {
+        ...body,
+        saveEffect,
+        saveId,
+      });
       return c.json(V1.spell(await PowersService.getPower(id, updated.id)), 200);
     },
   )

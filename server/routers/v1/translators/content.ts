@@ -231,7 +231,7 @@ export function toV1Item(
     | ItemOf<typeof ItemsService.getItems>,
 ): z.infer<typeof v1Item> {
   return {
-    cost: item.costGp === null ? null : Number(item.costGp),
+    cost: toV1Number(item.costGp),
     description: item.description,
     fields: toFields(item, ITEM_COLUMNS),
     id: item.id,
@@ -240,7 +240,7 @@ export function toV1Item(
     template: item.isTemplate,
     templateId: item.sourceItemId,
     type: item.type,
-    weight: item.weight === null ? null : Number(item.weight),
+    weight: toV1Number(item.weight),
   };
 }
 
@@ -270,6 +270,11 @@ export function toV1Modifier(modifier: LabeledModifier): z.infer<typeof v1Modifi
 /** Things named (a class's spell lists), each by its id and its name. */
 export function toV1Names(named: { id: string; name: string }[]) {
   return named.map(({ id, name }) => ({ id, name }));
+}
+
+/** A decimal column (an item's cost, its weight) as a number: none when it's empty. */
+export function toV1Number(value: string | null) {
+  return value === null ? null : Number(value);
 }
 
 /** A race of a ruleset's. */

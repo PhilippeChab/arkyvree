@@ -3,6 +3,7 @@
  * grouped by the aptitude they're picked in, its spells the service's powers.
  */
 
+import { BadRequestError } from "@/server/errors/index.ts";
 import type { ItemLocation } from "@/shared/enums.ts";
 
 /** An inventory entry's charges: those it has left, out of those it came with. */
@@ -44,6 +45,20 @@ function toLevelPicks({ abilityIncreases, feats, force, hitPoints, skillPoints, 
 }
 
 /**
+ * Where an entry is held, as the service takes it: equipped exactly when it has a location, the one a body leaves out
+ * read off the other. Refused when a body names them at odds: an equipped item nowhere, or a place for one it isn't.
+ */
+function toPlacement(equipped: boolean | undefined, location: ItemLocation | null) {
+  const placed = location !== null;
+  if (equipped !== undefined && equipped !== placed) {
+    throw new BadRequestError(
+      equipped ? "An equipped item needs its `location`" : "An item it doesn't equip has no `location`",
+    );
+  }
+  return { equipped: placed, location };
+}
+
+/**
  * An inventory entry's update, what its body leaves out kept from the entry as it is (`before`), as the service takes
  * it: every column, its charges its own two numbers.
  */
@@ -64,19 +79,31 @@ export function toInventoryEditRequest(
     weaponSets?: number[];
   },
 ) {
+  // An entry the body unequips leaves its place; one it equips without naming a place keeps the one it has
+  const location = body.location !== undefined ? body.location : body.equipped === false ? null : before.location;
   return toInventoryRequest({
     charges: body.charges === undefined ? before.charges : body.charges,
-    equipped: body.equipped ?? before.equipped,
+    equipped: body.equipped,
     force: body.force,
-    location: body.location === undefined ? before.location : body.location,
+    location,
     quantity: body.quantity ?? before.quantity,
     weaponSets: body.weaponSets ?? before.weaponSets,
   });
 }
 
-/** An inventory entry's write, its charges the service's own two numbers. */
-export function toInventoryRequest<T extends { charges?: Charges | null }>({ charges, ...body }: T) {
-  return { ...body, remainingCharges: charges?.remaining ?? null, totalCharges: charges?.total ?? null };
+/**
+ * An inventory entry's write, its charges the service's own two numbers, and whether it's equipped read off its
+ * location when the body leaves it out: refused when the two are at odds.
+ */
+export function toInventoryRequest<
+  T extends { charges?: Charges | null; equipped?: boolean; location: ItemLocation | null },
+>({ charges, equipped, location, ...body }: T) {
+  return {
+    ...body,
+    ...toPlacement(equipped, location),
+    remainingCharges: charges?.remaining ?? null,
+    totalCharges: charges?.total ?? null,
+  };
 }
 
 /**

@@ -175,7 +175,7 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
   async updateRuleset(
     session: Session,
     id: string,
-    body: { description: string; kind?: RulesetKind; name: string; private?: boolean; updatedAt?: string },
+    body: { description?: string; kind?: RulesetKind; name?: string; private?: boolean; updatedAt?: string },
   ) {
     const result = await withTransaction(async (tx) => {
       // First verify the ruleset exists
