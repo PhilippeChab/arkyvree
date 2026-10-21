@@ -2,10 +2,10 @@ import { describe, expect, test } from "bun:test";
 
 import {
   allLevelSaves,
+  EMPTY_CLASS_LEVEL,
   nextClassLevel,
   sortLevelFeats,
-} from "@/client/src/pages/rulesets/components/forms/dnd3.5/classLevelForm.ts";
-import { EMPTY_CLASS_LEVEL } from "@/client/src/pages/rulesets/components/forms/dnd3.5/emptyForms.ts";
+} from "@/client/src/pages/rulesets/components/forms/classLevelForm.ts";
 
 const FORTITUDE = { saveId: "fortitude", base: 2 };
 

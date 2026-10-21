@@ -27,13 +27,29 @@ import {
 } from "@/client/src/components/common/index.ts";
 import { DeleteIcon } from "@/client/src/components/icons/index.ts";
 import { rulesetOptionsQuery } from "@/client/src/lib/queries.ts";
-import { requiredRules, wholeNumberRules } from "@/client/src/lib/validation.ts";
+import { DECIMAL_RULES, requiredRules, wholeNumberRules } from "@/client/src/lib/validation.ts";
 import type { EntityField, RulesetFields } from "@/client/src/pages/rulesets/details/rulesetQueries.ts";
 import { useEntityFields } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { countRoomAt, findProgressionIssues } from "@/shared/customization/progression.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
 
+import { AptitudeLevelsInput } from "./AptitudeLevelsInput.tsx";
+import type { ColumnContext } from "./columnContext.ts";
 import { choiceOptions, isFieldShown, noneLabel, valueAt } from "./entityFields.ts";
+import { GrantedFeatsInput } from "./GrantedFeatsInput.tsx";
+import { SaveBasesInput } from "./SaveBasesInput.tsx";
+import { TemplateInput } from "./TemplateInput.tsx";
+import { useTemplateReset } from "./useTemplateReset.ts";
+
+/** What lays out an entity's columns: their description, its form, where they go, and what they read of the entity. */
+interface EntityColumnsProps<T extends FieldValues> {
+  /** Its rules' (`useEntityColumns`) */
+  columns: readonly EntityField[];
+  context?: ColumnContext;
+  form: UseFormReturn<T>;
+  placement: "after" | "before";
+  rulesetId: string;
+}
 
 /** What lays out an entity's fields: its form, and how they show. */
 interface EntityFieldsProps<T extends FieldValues> {
@@ -57,11 +73,19 @@ interface FieldsGridProps<T extends FieldValues> extends FieldsShowing<T> {
   fields: readonly EntityField[];
 }
 
-/** What every field of a form shares: the form, how its fields show, and the ruleset whose entities they name. */
+/**
+ * What every field of a form shares: the form, where their values go in it (`prefix`: `fields.` for its declared
+ * fields, none for its columns), how they show, what its columns read of the entity, and the ruleset whose entities
+ * they name.
+ */
 interface FieldsShowing<T extends FieldValues> {
   columns: 1 | 2;
+  context: ColumnContext;
   form: UseFormReturn<T>;
   help: boolean;
+  /** What a choice's change does besides (`useTemplateReset`: a type's empties its template) */
+  onChoiceChange?: (key: string, value: unknown) => void;
+  prefix: string;
   rulesetId: string;
 }
 
@@ -80,9 +104,9 @@ interface ReferenceSelectProps<T extends FieldValues> extends FieldInputProps<T,
   list: (typeof REFERENCE_LISTS)[number];
 }
 
-/** What a field shown on its condition takes: the path of the form's value its condition reads. */
+/** What a field shown on its conditions takes: the paths of the form's values they read, in their order. */
 interface ShownFieldProps<T extends FieldValues> extends FieldInputProps<T> {
-  path: string;
+  paths: string[];
 }
 
 /** A yes or no. */
@@ -108,6 +132,12 @@ const FLAG_CHOICES = [
   { value: "true", label: "Yes" },
   { value: "false", label: "No" },
 ] as const;
+
+/** The column inputs that list links (a spell's aptitudes, a level's saves and feats), below the form's fields. */
+const LINK_INPUTS = ["aptitudeLevels", "grantedFeats", "saveBases"] as const;
+
+/** A form that reads nothing of its entity past its values. */
+const NO_CONTEXT: ColumnContext = {};
 
 /** A progression's level and its amount, and the action that removes it: two inputs side by side, then the action. */
 const PROGRESSION_ROW_SX = {
@@ -140,8 +170,9 @@ function FieldInput<T extends FieldValues>({ field, ...props }: FieldInputProps<
       </Stack>
     );
   }
-  const name = fieldPath<T>(field.key);
+  const name = formPath<T>(`${props.prefix}${field.key}`);
   const helperText = help ? field.help : undefined;
+  const locked = props.context.locked?.includes(field.key) ?? false;
   switch (field.input) {
     case "flag":
       return field.nullable ? (
@@ -156,12 +187,33 @@ function FieldInput<T extends FieldValues>({ field, ...props }: FieldInputProps<
           name={name}
           rules={wholeNumberRules(field.min, field.default === null ? false : `${field.label} is required`, field.max)}
           number
-          label={field.label}
+          label={labelOf(field)}
           fullWidth
           helperText={helperText}
           slotProps={{ htmlInput: { min: field.min, max: field.max } }}
         />
       );
+    case "decimal":
+      return (
+        <FormTextField
+          control={form.control}
+          name={name}
+          rules={DECIMAL_RULES}
+          label={labelOf(field)}
+          type="text"
+          fullWidth
+          helperText={helperText}
+          slotProps={{ htmlInput: { inputMode: "decimal" } }}
+        />
+      );
+    case "aptitudeLevels":
+      return <AptitudeLevelsInput {...props} field={field} name={name} />;
+    case "grantedFeats":
+      return <GrantedFeatsInput {...props} field={field} name={name} />;
+    case "saveBases":
+      return <SaveBasesInput {...props} field={field} name={name} />;
+    case "template":
+      return <TemplateInput {...props} field={field} name={name} />;
     case "progression":
       return <ProgressionInput {...props} field={field} />;
     case "ref":
@@ -175,9 +227,14 @@ function FieldInput<T extends FieldValues>({ field, ...props }: FieldInputProps<
           control={form.control}
           name={name}
           label={field.label}
-          options={choiceOptions(field.options, valueAt(form.formState.defaultValues, name))}
-          emptyLabel={noneLabel(field.options)}
+          options={choiceOptions(field.options, valueAt(form.formState.defaultValues, name)).map((value) => ({
+            value,
+            label: field.labels?.[field.options.indexOf(value)] ?? String(value),
+          }))}
+          emptyLabel={field.required ? undefined : noneLabel(field.options)}
           helperText={helperText}
+          disabled={locked}
+          onChange={props.onChoiceChange && ((value) => props.onChoiceChange?.(field.key, value))}
         />
       );
     case "text":
@@ -195,7 +252,7 @@ function FieldInput<T extends FieldValues>({ field, ...props }: FieldInputProps<
   );
 }
 
-/** Where a field's value goes in its form: under its fields. */
+/** Where a declared field's value goes in its form: under its fields (a progression's, which only fields are). */
 function fieldPath<T extends FieldValues>(key: string): FieldPath<T> {
   return formPath<T>(`fields.${key}`);
 }
@@ -227,8 +284,8 @@ function FieldsGrid<T extends FieldValues>({ fields, ...props }: FieldsGridProps
 }
 
 /** A three-state flag, bound to its form's field: its select, handed the field's value, change and ref. */
-function FlagField<T extends FieldValues>({ field, form, help }: FieldInputProps<T, FlagField>) {
-  const { field: bound } = useController({ control: form.control, name: fieldPath<T>(field.key) });
+function FlagField<T extends FieldValues>({ field, form, help, prefix }: FieldInputProps<T, FlagField>) {
+  const { field: bound } = useController({ control: form.control, name: formPath<T>(`${prefix}${field.key}`) });
   const readOnly = useReadOnlyFields();
   return (
     <FlagSelect
@@ -283,9 +340,10 @@ function formPath<T extends FieldValues>(path: string): FieldPath<T> {
   return path as FieldPath<T>;
 }
 
-/** A field in its grid, where its width puts it; on its condition, while the form meets it. */
+/** A field in its grid, where its width puts it; on its conditions, while the form meets them. */
 function GridField<T extends FieldValues>({ field, ...props }: FieldInputProps<T>) {
-  if (field.shownWhen) return <ShownField {...props} field={field} path={field.shownWhen.path} />;
+  if (field.shownWhen?.length)
+    return <ShownField {...props} field={field} paths={field.shownWhen.map((condition) => condition.path)} />;
   return (
     <Box sx={[isWide(field) && WIDE_FIELD_SX]}>
       <FieldInput {...props} field={field} />
@@ -298,13 +356,17 @@ function isSwitch(field: EntityField) {
   return field.input === "flag" && !field.nullable;
 }
 
-/** Whether a field takes the grid's whole width: a group, several values, or a progression. */
+/** Whether a field takes the grid's whole width: a group, several values, a progression, or a column's list. */
 function isWide(field: EntityField) {
   return (
-    field.input === "group" ||
-    field.input === "progression" ||
+    isOneOf(field.input, ["aptitudeLevels", "grantedFeats", "group", "progression", "saveBases"]) ||
     ((field.input === "choice" || field.input === "text") && field.multiple)
   );
+}
+
+/** A field's label, with its unit when it has one ("Cost (gp)"). */
+function labelOf(field: { label: string; unit?: string }) {
+  return field.unit ? `${field.label} (${field.unit})` : field.label;
 }
 
 /**
@@ -434,12 +496,19 @@ function ProgressionInput<T extends FieldValues>({ field, form, help }: FieldInp
 }
 
 /** An entity of the ruleset, by its id: a select of the list its kind names (`list`), none too unless it's required. */
-function ReferenceSelect<T extends FieldValues>({ field, form, help, rulesetId, list }: ReferenceSelectProps<T>) {
+function ReferenceSelect<T extends FieldValues>({
+  field,
+  form,
+  help,
+  prefix,
+  rulesetId,
+  list,
+}: ReferenceSelectProps<T>) {
   const { data: entities, error } = useQuery(rulesetOptionsQuery(list, rulesetId));
   return (
     <SelectField
       control={form.control}
-      name={fieldPath<T>(field.key)}
+      name={formPath<T>(`${prefix}${field.key}`)}
       label={field.label}
       rules={field.required ? requiredRules(`${field.label} is required`) : undefined}
       options={(entities ?? []).map((entity) => ({ value: entity.id, label: entity.name }))}
@@ -450,9 +519,9 @@ function ReferenceSelect<T extends FieldValues>({ field, form, help, rulesetId, 
   );
 }
 
-/** A field shown on its condition: while the form's value at its condition's `path` is one it shows for. */
-function ShownField<T extends FieldValues>({ path, ...props }: ShownFieldProps<T>) {
-  const watched = useWatch({ control: props.form.control, name: formPath<T>(path) });
+/** A field shown on its conditions: while the form's values at their `paths` are ones it shows for. */
+function ShownField<T extends FieldValues>({ paths, ...props }: ShownFieldProps<T>) {
+  const watched: unknown[] = useWatch({ control: props.form.control, name: paths.map((path) => formPath<T>(path)) });
   if (!isFieldShown(props.field, watched)) return null;
   return (
     <Box sx={[isWide(props.field) && WIDE_FIELD_SX]}>
@@ -462,8 +531,8 @@ function ShownField<T extends FieldValues>({ path, ...props }: ShownFieldProps<T
 }
 
 /** Several values, as chips: a closed list's options (and those the saved form holds), or free ones. */
-function ValuesInput<T extends FieldValues>({ field, form, help }: FieldInputProps<T, ValuesField>) {
-  const name = fieldPath<T>(field.key);
+function ValuesInput<T extends FieldValues>({ field, form, help, prefix }: FieldInputProps<T, ValuesField>) {
+  const name = formPath<T>(`${prefix}${field.key}`);
   const readOnly = useReadOnlyFields();
   const {
     field: { ref, value, onChange, ...bound },
@@ -504,6 +573,36 @@ function ValuesInput<T extends FieldValues>({ field, form, help }: FieldInputPro
 }
 
 /**
+ * An entity's columns, as its rules describe them (`columns`: its form's own, beside its name and description), bound
+ * where each goes in the form itself: its plain values (`placement` "before", the form's fields' place: a hit die, a
+ * cost, a type), or its lists of links (`after`, below the fields: a spell's aptitudes, a level's saves and feats),
+ * each as `EntityFields` lays a field out, reading what it needs of the entity (`context`).
+ */
+export function EntityColumns<T extends FieldValues>({
+  columns,
+  context = NO_CONTEXT,
+  form,
+  placement,
+  rulesetId,
+}: EntityColumnsProps<T>) {
+  const { onChoiceChange } = useTemplateReset(form, rulesetId, columns, context);
+  const placed = columns.filter((column) => isOneOf(column.input, LINK_INPUTS) === (placement === "after"));
+  if (placed.length === 0) return null;
+  return (
+    <FieldsGrid
+      columns={1}
+      context={context}
+      fields={placed}
+      form={form}
+      help={false}
+      onChoiceChange={onChoiceChange}
+      prefix=""
+      rulesetId={rulesetId}
+    />
+  );
+}
+
+/**
  * An entity's fields, as its ruleset declares them (`useEntityFields`): each its input, one a row (two side by side,
  * `columns`), a group's under its label, a field on a condition while the form meets it, read-only under
  * `ReadOnlyFields`. Bound to the form's `fields`, which its save sends as they are.
@@ -518,5 +617,15 @@ export function EntityFields<T extends FieldValues>({
   const { fields, error } = useEntityFields(rulesetId, entityType);
   if (!fields) return error ? <LoadError what="Fields" error={error} /> : <DiceSpinner sx={{ py: 4 }} />;
   if (fields.length === 0) return null;
-  return <FieldsGrid columns={columns} fields={fields} form={form} help={help} rulesetId={rulesetId} />;
+  return (
+    <FieldsGrid
+      columns={columns}
+      context={NO_CONTEXT}
+      fields={fields}
+      form={form}
+      help={help}
+      prefix="fields."
+      rulesetId={rulesetId}
+    />
+  );
 }

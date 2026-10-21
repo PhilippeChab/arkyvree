@@ -4,7 +4,7 @@ import { useState } from "react";
 import { CardTitle, Panel, ScrollSafeListbox } from "@/client/src/components/common/index.ts";
 import { useDebouncedValue } from "@/client/src/hooks/index.ts";
 import { emptyOptionsText } from "@/client/src/lib/errorMessage.ts";
-import { levelFeatLabel } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
+import { levelFeatLabel } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { useAptitudeOptions } from "@/client/src/pages/rulesets/components/index.ts";
 import { useRulesetFeats } from "@/client/src/pages/rulesets/hooks/index.ts";
 

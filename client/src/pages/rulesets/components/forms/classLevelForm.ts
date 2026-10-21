@@ -1,15 +1,11 @@
 import type { InferRequestType } from "hono/client";
 
-import { wholeNumberError } from "@/client/src/lib/validation.ts";
 import type {
   ClassLevelFormData,
   ClassLevelRow,
 } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 import type { Save } from "@/client/src/pages/rulesets/hooks/index.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
-import { MAX_SAVE_BASE } from "@/vocabulary/dnd3.5/classes.ts";
-
-import { EMPTY_CLASS_LEVEL } from "./emptyForms.ts";
 
 type LevelJson = InferRequestType<
   (typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["levels"][":levelId"]["$put"]
@@ -18,6 +14,9 @@ type LevelJson = InferRequestType<
 type LevelSave = NonNullable<LevelJson["saves"]>[number];
 
 export type LevelFeat = Pick<NonNullable<LevelJson["feats"]>[number], "featId" | "aptitudeId">;
+
+/** A class level's empty form: the first, which saves nothing and grants no feat. */
+export const EMPTY_CLASS_LEVEL: ClassLevelFormData = { level: 1, saves: [], feats: [] };
 
 /**
  * Every ruleset save with its base at this level, 0 when unset: the shape the
@@ -28,11 +27,6 @@ export type LevelFeat = Pick<NonNullable<LevelJson["feats"]>[number], "featId" |
 export function allLevelSaves(rulesetSaves: Pick<Save, "id">[] | undefined, saves: LevelSave[]): LevelSave[] {
   if (!rulesetSaves) return saves;
   return rulesetSaves.map((save) => ({ saveId: save.id, base: saves.find((s) => s.saveId === save.id)?.base ?? 0 }));
-}
-
-/** Whether every save's base is a whole number from 0 to `MAX_SAVE_BASE`: the saves field's `validate`, each input saying what's wrong (`saveBaseError`). */
-export function areSaveBasesValid(saves: LevelSave[] | undefined) {
-  return (saves ?? []).every((save) => saveBaseError(save.base) === undefined);
 }
 
 /** Identifies a granted feat: the same feat can be granted for several aptitudes. */
@@ -56,11 +50,6 @@ export function nextClassLevel(
   if (!levels?.length) return EMPTY_CLASS_LEVEL;
   const highest = levels.reduce((top, level) => (level.level > top.level ? level : top));
   return { level: highest.level + 1, saves: highest.saves.map(({ saveId, base }) => ({ saveId, base })), feats: [] };
-}
-
-/** What's wrong with a save's base, if anything. */
-export function saveBaseError(base: number) {
-  return wholeNumberError(base, 0, MAX_SAVE_BASE);
 }
 
 /** A level's granted feats in the order its form keeps them, by their labels (`labelOf`): never their picking order. */

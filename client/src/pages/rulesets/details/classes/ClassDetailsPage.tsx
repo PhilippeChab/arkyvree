@@ -8,11 +8,12 @@ import { useLeaveGuard, usePageTitle, useRules, useRulesetPermissions } from "@/
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { type RulesetDetail, rulesetDetailQuery } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
-import { withEntityFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
+import { toEntityBody, toEntityForm, withEntityFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { EntityDetailLayout, EntityPageError } from "@/client/src/pages/rulesets/components/index.ts";
 import { entityPageBack, entityPageState } from "@/client/src/pages/rulesets/entityPageState.ts";
 import {
   useCopyOnWrite,
+  useEntityColumns,
   useEntityFields,
   useEntityForm,
   useRestorableDelete,
@@ -21,9 +22,9 @@ import { isStillOpen } from "@/client/src/pages/rulesets/stillOpen.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { useClassDraftsStore } from "@/client/src/stores/classDraftsStore.ts";
 
-import { getClassForms } from "./classFormFactory.ts";
 import { getClassSections } from "./classSectionFactory.ts";
 import { type ClassDetail, classDetailQuery, type ClassFormData } from "./classSectionQueries.ts";
+import { ClassDetails } from "./components/index.ts";
 import { CLASS_CUSTOMIZATION_TABS, CLASS_TABS } from "./sections/index.ts";
 
 interface ClassViewProps {
@@ -65,7 +66,6 @@ function ClassView({ back, classId, ruleset, rulesetId, section }: ClassViewProp
 
   usePageTitle(classData?.name);
 
-  const classForms = getClassForms(ruleset.baseRules);
   const classSections = getClassSections(ruleset.baseRules);
   // Every class's tabs, each in the place of its base rules' tab that replaces it, then its base rules' others, then
   // those that customize it
@@ -88,14 +88,15 @@ function ClassView({ back, classId, ruleset, rulesetId, section }: ClassViewProp
   const { restorable, error: changesError } = useRestorableDelete(ruleset, classData);
 
   const { fields: classFields } = useEntityFields(rulesetId, "klasses");
-  // Its base rules' form of the class, with the fields its ruleset declares for classes
+  const { columns: classColumns } = useEntityColumns(rulesetId, "klasses");
+  // Its form of the class: its columns as its rules describe them, and the fields its ruleset declares for classes
   const toClassForm = (klass: Pick<ClassDetail, "description" | "hd" | "name">) =>
-    withEntityFields(classForms.toClassForm(klass), classFields, klass);
+    withEntityFields(toEntityForm<ClassFormData>(classColumns, klass), classFields, klass);
   const forgetSource = copy.forgetSource(!!classData);
 
   const { form: editForm, save } = useEntityForm({
-    // Its base rules' empty class until the class loads, which its editor never shows
-    empty: classForms.emptyClass,
+    // Its rules' empty class until the class loads, which its editor never shows
+    empty: toEntityForm<ClassFormData>(classColumns),
     values: classData && toClassForm(classData),
     formKey: copy.key,
     adoptKey: copy.adoptKey,
@@ -108,7 +109,7 @@ function ClassView({ back, classId, ruleset, rulesetId, section }: ClassViewProp
       parseResponse(
         rpc.api.rulesets[":id"].classes[":classId"].$put({
           param: { id: rulesetId, classId },
-          json: { ...data, updatedAt },
+          json: { ...toEntityBody<ClassFormData, ClassFormData>(classColumns, data), updatedAt },
         }),
       ),
     toFormValues: toClassForm,
@@ -138,7 +139,6 @@ function ClassView({ back, classId, ruleset, rulesetId, section }: ClassViewProp
     return <EntityPageError message={loadFailureMessage("Class", error)} backLabel={back.label} backTo={back.to} />;
 
   const { Section } = currentTab;
-  const { ClassDetails } = classSections;
 
   return (
     <>

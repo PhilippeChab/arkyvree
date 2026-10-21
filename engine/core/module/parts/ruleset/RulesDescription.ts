@@ -1,9 +1,16 @@
+import type { FormField } from "@/engine/core/fields/index.ts";
+
 /**
- * What a base rules' rulesets share, past any ruleset's view: what the app calls their entities, the kinds a race or a
- * class is for, a class's last level, a power's levels, and the license a system ruleset's content is under. The
- * client reads it once, for every base rules, and holds none of it.
+ * What a base rules' rulesets share, past any ruleset's view: what the app calls their entities, the columns their
+ * forms show, the kinds a race or a class is for, a class's last level, a power's levels, and the license a system
+ * ruleset's content is under. The client reads it once, for every base rules, and holds none of it.
  */
 export interface RulesDescription {
+  /**
+   * The columns each entity type's form shows beside its name and description, by type, as its rules hold them (a
+   * class's hit die, an item's cost, type and slot): each keyed where its value goes in the form's body
+   */
+  columns: Partial<Record<string, FormField[]>>;
   /** The kinds a race or a class is for: a player character (`pc`), and those its rules add (3.5's bonded creatures) */
   entityKinds: { label: string; value: string }[];
   /** A class's last level */

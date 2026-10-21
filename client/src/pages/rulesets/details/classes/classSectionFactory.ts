@@ -1,30 +1,18 @@
 import type { QueryClient } from "@tanstack/react-query";
-import type { ComponentType, FormEventHandler, ReactNode } from "react";
-import type { UseFormReturn } from "react-hook-form";
+import type { ComponentType, ReactNode } from "react";
 
 import type { SectionTab } from "@/client/src/components/common/index.ts";
 import type { RulesetDetail } from "@/client/src/lib/queries.ts";
 import type { BaseRules } from "@/shared/enums.ts";
 
-import type { ClassFormData, ClassLevelRow } from "./classSectionQueries.ts";
-import { ClassDetails } from "./components/dnd3.5/index.ts";
+import type { ClassLevelRow } from "./classSectionQueries.ts";
 import { DND35_CLASS_TAB_ALIASES, DND35_CLASS_TABS } from "./sections/dnd3.5/index.ts";
 
-/** A class's inline form: what the details card's fields bind, and its save. */
-interface ClassEditor {
-  canSave: boolean;
-  form: UseFormReturn<ClassFormData>;
-  isSaving: boolean;
-  onSubmit: FormEventHandler;
-}
-
 /**
- * What a class's page shows by its ruleset's base rules: the class's details and their editor, the columns its Levels
- * tab shows of a level's own fields, its own tabs, and the tabs its addresses named before, by the tab each opens now.
+ * What a class's page shows by its ruleset's base rules: the columns its Levels tab shows of a level's own fields, its
+ * own tabs, and the tabs its addresses named before, by the tab each opens now.
  */
 interface ClassSections {
-  /** The class's details card: its form's fields (3.5's hit die, bonus spell ability, caster type) */
-  ClassDetails: ComponentType<ClassDetailsProps>;
   /**
    * The Levels tab's columns of a level's own fields, around its saves'; none when a tab of its own replaces the Levels
    * tab (3.5's Progression)
@@ -38,16 +26,6 @@ interface ClassSections {
    * place
    */
   tabs: ClassTab[];
-}
-
-/**
- * What the class page passes its details card: the class's form and its save, which a viewer who can't edit the class
- * reads (under `ReadOnlyFields`), and its ruleset.
- */
-export interface ClassDetailsProps {
-  /** The class's form, which the card's fields bind, and its save */
-  edit: ClassEditor;
-  rulesetId: string;
 }
 
 /** A column a class's Levels tab shows of its levels' own fields. */
@@ -87,7 +65,6 @@ export interface ClassTab extends SectionTab<string> {
 
 const CLASS_SECTIONS: Record<BaseRules, ClassSections> = {
   "Dungeons & Dragons: 3.5": {
-    ClassDetails,
     tabAliases: DND35_CLASS_TAB_ALIASES,
     tabs: DND35_CLASS_TABS,
   },

@@ -13,11 +13,13 @@ import { PowersIcon } from "@/client/src/components/icons/index.ts";
 import { useSearchText } from "@/client/src/hooks/index.ts";
 import { itemsBeforeLastPage, pageItems } from "@/client/src/lib/pageItems.ts";
 import {
-  EMPTY_SPELL,
-  type SpellFormData,
-  SpellFormFields,
-} from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
-import { withEntityFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
+  type ColumnContext,
+  type PowerFormData,
+  PowerFormFields,
+  toEntityBody,
+  toEntityForm,
+  withEntityFields,
+} from "@/client/src/pages/rulesets/components/forms/index.ts";
 import {
   AptitudeAutocomplete,
   AptitudeChipsCell,
@@ -31,14 +33,17 @@ import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/se
 import { type Power, powersQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import {
   useAptitudeFilter,
+  useEntityColumns,
   useEntityFields,
   useOpenEntity,
-  useRulesetSaves,
   useRulesetSection,
   useSpellLevelFilter,
 } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { buildCustomizationPath } from "@/shared/customization/entities.ts";
+
+/** A new spell's form: it needs a spell list. */
+const NEW_POWER: ColumnContext = { newEntity: true };
 
 const SPELLS_COLUMNS: TableColumn[] = [
   { key: "name", label: "Name", width: "25%" },
@@ -55,13 +60,19 @@ export function SpellsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
   const { level: selectedLevel, setLevel: setSelectedLevel } = useSpellLevelFilter(ruleset.baseRules, true);
 
   const { fields: spellFields } = useEntityFields(ruleset.id, "powers");
-  const { createForm, createDialogProps, handleCreate } = useRulesetSection<Power, SpellFormData>({
-    createDefaults: withEntityFields(EMPTY_SPELL, spellFields),
+  const { columns: spellColumns } = useEntityColumns(ruleset.id, "powers");
+  const { createForm, createDialogProps, handleCreate } = useRulesetSection<Power, PowerFormData>({
+    createDefaults: withEntityFields(toEntityForm<PowerFormData>(spellColumns), spellFields),
     rulesetId: ruleset.id,
     sectionName: "powers",
     label: "Spell",
     createFn: async (data) =>
-      parseResponse(rpc.api.rulesets[":id"].powers.$post({ param: { id: ruleset.id }, json: data })),
+      parseResponse(
+        rpc.api.rulesets[":id"].powers.$post({
+          param: { id: ruleset.id },
+          json: toEntityBody<PowerFormData, PowerFormData>(spellColumns, data),
+        }),
+      ),
     onCreateSuccess: (created) => openEntity(buildCustomizationPath("powers", created.id)),
   });
 
@@ -76,8 +87,6 @@ export function SpellsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
   });
 
   const spells = pageItems(data);
-
-  const { data: createSaves = [], error: createSavesError } = useRulesetSaves(ruleset.id, createDialogProps.open);
 
   const handleRowClick = (spell: Power) => {
     openEntity(buildCustomizationPath("powers", spell.id));
@@ -157,13 +166,7 @@ export function SpellsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
       </Stack>
 
       <CreateDialog {...createDialogProps} title="Create New Spell" maxWidth="md" fixedHeight>
-        <SpellFormFields
-          form={createForm}
-          rulesetId={ruleset.id}
-          saves={createSaves}
-          savesError={createSavesError}
-          aptitudesRequired
-        />
+        <PowerFormFields form={createForm} rulesetId={ruleset.id} context={NEW_POWER} />
       </CreateDialog>
     </SectionContent>
   );

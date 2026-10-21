@@ -40,7 +40,7 @@
  *   them: the runner and the scripts reach a ruleset's packages, seeder and test characters through the content's
  *   registry alone (`CONTENT_REGISTRY`: `RULESET_CONTENT`, keyed by base rules). A client module outside a ruleset's
  *   folder reaches a ruleset's code and vocabulary only through the client's registries, keyed by base rules
- *   (`CLIENT_REGISTRIES`: `getSections`, `getClassForms`…), never from its folders.
+ *   (`CLIENT_REGISTRIES`: `getSections`, `getClassSections`…), never from its folders.
  * - `vocabulary-data`: a ruleset's vocabulary (`vocabulary/<ruleset>/`) is data: its lists, labels, tables and bounds,
  *   never a rule. It declares no function or class, and holds none in a constant (a callback in a constant's value,
  *   `SPELL_LEVELS.map((level) => …)`, builds the data): a rule is the engine's, which the client reads from a response.
@@ -82,10 +82,7 @@ const CLIENT_COMPONENTS = "client/src/components/";
 const CLIENT_REGISTRIES = [
   "client/src/components/characters/sections/sectionFactory.ts",
   "client/src/pages/characters/details/components/levelUpFactory.ts",
-  "client/src/pages/rulesets/customization/editors/renderEditor.tsx",
-  "client/src/pages/rulesets/details/classes/classFormFactory.ts",
   "client/src/pages/rulesets/details/classes/classSectionFactory.ts",
-  "client/src/pages/rulesets/details/entities/entityPageFactory.ts",
   "client/src/pages/rulesets/details/sectionFactory.ts",
   "client/src/pages/rulesets/hooks/useEntityFilters.ts",
 ];
@@ -672,7 +669,7 @@ function createRulesetFolders(context) {
         node,
         message:
           `A generic client module reaches ${other}'s code and vocabulary through a registry keyed by base rules ` +
-          "(`getSections`, `getClassForms`…: lint/architecture.mjs `CLIENT_REGISTRIES`), never from " +
+          "(`getSections`, `getClassSections`…: lint/architecture.mjs `CLIENT_REGISTRIES`), never from " +
           "its folders.",
       });
     } else if (home && other) {

@@ -17,11 +17,12 @@ import { SkillsIcon } from "@/client/src/components/icons/index.ts";
 import { useRulesetAbilities, useSearchText } from "@/client/src/hooks/index.ts";
 import { itemsBeforeLastPage, pageItems } from "@/client/src/lib/pageItems.ts";
 import {
-  EMPTY_SKILL,
   type SkillFormData,
   SkillFormFields,
-} from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
-import { withEntityFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
+  toEntityBody,
+  toEntityForm,
+  withEntityFields,
+} from "@/client/src/pages/rulesets/components/forms/index.ts";
 import {
   DescriptionCell,
   RulesetSectionTable,
@@ -30,7 +31,12 @@ import {
 import { skillQuery } from "@/client/src/pages/rulesets/details/entities/entityDetailQueries.ts";
 import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
 import { skillsQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
-import { useEntityFields, useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
+import {
+  useEntityColumns,
+  useEntityFields,
+  useOpenEntity,
+  useRulesetSection,
+} from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
 type Skill = InferResponseType<(typeof rpc.api.rulesets)[":id"]["skills"]["$get"], 200>["items"][number];
@@ -49,16 +55,17 @@ export function SkillsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
   const { search: searchQuery, searchBarProps: searchTextProps } = useSearchText("search");
 
   const { fields: skillFields } = useEntityFields(ruleset.id, "skills");
+  const { columns: skillColumns } = useEntityColumns(ruleset.id, "skills");
   const { createForm, handleCreate, createDialogProps } = useRulesetSection<Skill, SkillFormData>({
     rulesetId: ruleset.id,
     sectionName: "skills",
-    createDefaults: withEntityFields(EMPTY_SKILL, skillFields),
+    createDefaults: withEntityFields(toEntityForm<SkillFormData>(skillColumns), skillFields),
     label: "Skill",
     createFn: async (data) =>
       parseResponse(
         rpc.api.rulesets[":id"].skills.$post({
           param: { id: ruleset.id },
-          json: data,
+          json: toEntityBody<SkillFormData, SkillFormData>(skillColumns, data),
         }),
       ),
     onCreateSuccess: (created) => openEntity(`skills/${created.id}`),
@@ -142,12 +149,7 @@ export function SkillsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
       </Stack>
 
       <CreateDialog {...createDialogProps} title="Create New Skill">
-        <SkillFormFields
-          form={createForm}
-          abilities={rulesetAbilities}
-          abilitiesError={abilitiesError}
-          rulesetId={ruleset.id}
-        />
+        <SkillFormFields form={createForm} rulesetId={ruleset.id} />
       </CreateDialog>
     </SectionContent>
   );

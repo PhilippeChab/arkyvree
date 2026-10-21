@@ -13,9 +13,10 @@ import {
 import { RacesIcon } from "@/client/src/components/icons/index.ts";
 import { itemsBeforeLastPage, pageItems } from "@/client/src/lib/pageItems.ts";
 import {
-  EMPTY_RACE,
   type RaceFormData,
   RaceFormFields,
+  toEntityBody,
+  toEntityForm,
   withEntityFields,
 } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import {
@@ -27,6 +28,7 @@ import { customizationEntityQuery } from "@/client/src/pages/rulesets/customizat
 import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
 import { racesQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import {
+  useEntityColumns,
   useEntityFields,
   useEntityFilters,
   useOpenEntity,
@@ -51,16 +53,17 @@ export function RacesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
   const { search, kind, orderBy, orderDir, searchBarProps } = useEntityFilters(ruleset.baseRules);
 
   const { fields: raceFields } = useEntityFields(ruleset.id, "races");
+  const { columns: raceColumns } = useEntityColumns(ruleset.id, "races");
   const { createForm, handleCreate, createDialogProps } = useRulesetSection<Race, RaceFormData>({
     rulesetId: ruleset.id,
     sectionName: "races",
-    createDefaults: withEntityFields(EMPTY_RACE, raceFields),
+    createDefaults: withEntityFields(toEntityForm<RaceFormData>(raceColumns), raceFields),
     label: "Race",
     createFn: async (data) =>
       parseResponse(
         rpc.api.rulesets[":id"].races.$post({
           param: { id: ruleset.id },
-          json: data,
+          json: toEntityBody<RaceFormData, RaceFormData>(raceColumns, data),
         }),
       ),
     onCreateSuccess: (created) => openEntity(buildCustomizationPath("races", created.id)),

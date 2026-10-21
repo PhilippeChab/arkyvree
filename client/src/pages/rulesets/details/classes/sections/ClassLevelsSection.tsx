@@ -12,10 +12,9 @@ import {
 } from "@/client/src/components/common/index.ts";
 import { LevelsIcon } from "@/client/src/components/icons/index.ts";
 import { useRulesetPermissions } from "@/client/src/hooks/index.ts";
-import { withEntityFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
+import { nextClassLevel, withEntityFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
 import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
-import { getClassForms } from "@/client/src/pages/rulesets/details/classes/classFormFactory.ts";
 import {
   type ClassLevelColumn,
   type ClassLevelColumns,
@@ -87,7 +86,7 @@ export function ClassLevelsSection({ rulesetId, classId, className, ruleset }: C
   // Its create opens on the class's next level, its fields the highest's
   const highest = levels?.reduce((top, level) => (level.level > top.level ? level : top), levels[0]);
   const { createDialogProps, handleCreate } = useRulesetSection({
-    createDefaults: withEntityFields(getClassForms(ruleset.baseRules).nextClassLevel(levels), levelFields, highest),
+    createDefaults: withEntityFields(nextClassLevel(levels), levelFields, highest),
     rulesetId,
     label: "Class level",
     query,
