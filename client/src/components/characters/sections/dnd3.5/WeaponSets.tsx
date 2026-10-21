@@ -1,5 +1,7 @@
 import { Stack, Typography } from "@mui/material";
 
+import { ArmorClassBoxes } from "@/client/src/components/characters/sections/ArmorClassBoxes.tsx";
+import type { SheetCombat } from "@/client/src/components/characters/sections/CombatSection.tsx";
 import { shownWeaponSet } from "@/client/src/components/characters/sections/weaponSets.ts";
 import {
   BlankNote,
@@ -10,9 +12,6 @@ import {
   SubsectionTitle,
   type TableColumn,
 } from "@/client/src/components/common/index.ts";
-
-import { ArmorClassBoxes } from "./ArmorClassBoxes.tsx";
-import type { SheetCombat } from "./CombatSection.tsx";
 
 interface WeaponSetsProps {
   combat: SheetCombat;
@@ -46,7 +45,7 @@ export function WeaponSets({ combat }: WeaponSetsProps) {
   return weaponSets.length > 0 ? (
     // The last set keeps the space under it
     <Stack spacing={3} sx={{ pb: 2 }}>
-      {weaponSets.map(({ set, ac, held, weapons }) => (
+      {weaponSets.map(({ set, armorClass, held, weapons }) => (
         <Stack key={set} spacing={1}>
           {combat?.hasWeaponSets && (
             <SubsectionTitle>
@@ -59,7 +58,7 @@ export function WeaponSets({ combat }: WeaponSetsProps) {
             </SubsectionTitle>
           )}
           <Stack spacing={2}>
-            <ArmorClassBoxes ac={ac} />
+            <ArmorClassBoxes boxes={armorClass} />
             {weapons.length > 0 ? (
               <DataTable size="small" columns={ATTACK_COLUMNS} minWidth={700}>
                 {weapons.flatMap((weapon) =>

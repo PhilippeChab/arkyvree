@@ -1,16 +1,29 @@
 import type { InferSelectModel } from "drizzle-orm";
 
 import type { charactersInCharacter } from "@/drizzle/schema.ts";
-import type { NotedSheet } from "@/engine/core/module/index.ts";
+import type { NotedSheet, SheetStat } from "@/engine/core/module/index.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import ItemPlacement from "@/engine/rulesets/dnd3.5/rules/ItemPlacement.ts";
 import type { Modifier, Requirement } from "@/shared/relations.ts";
+import { formatSigned } from "@/shared/text.ts";
 
 import CombatSheet from "./CombatSheet.ts";
+import SkillNames from "./SkillNames.ts";
 import SpellGroups from "./SpellGroups.ts";
 
 /** A built character as the API answers it. */
 export default class CharacterResponse {
+  /** The abilities, each with the parts its box lists beside its base (`parts`: its levels' increases, its misc). */
+  private static abilitiesOf(built: DetailedCharacter) {
+    return built.components.abilities.getAbilitiesWithIds().map((ability) => ({
+      ...ability,
+      parts: [
+        { label: "Level", value: formatSigned(ability.level) },
+        { label: "Misc", value: formatSigned(ability.misc) },
+      ] satisfies SheetStat[],
+    }));
+  }
+
   /** The modifiers, applied, unapplied and inactive, each with the name of its source. */
   private static enrichedModifiersOf(built: DetailedCharacter) {
     const modifiersData = built.modifierEvaluator.getModifiers();
@@ -82,6 +95,33 @@ export default class CharacterResponse {
     return { ...data, background };
   }
 
+  /** The saves, each with the parts its box lists (`parts`: its base, its ability's, its misc). */
+  private static savesOf(built: DetailedCharacter) {
+    return Object.fromEntries(
+      Object.entries(built.components.saves.getSaves()).map(([key, save]) => [
+        key,
+        {
+          ...save,
+          parts: [
+            { label: "Base", value: formatSigned(save.base) },
+            { label: "Ability", value: formatSigned(save.ability) },
+            { label: "Misc", value: formatSigned(save.misc) },
+          ] satisfies SheetStat[],
+        },
+      ]),
+    );
+  }
+
+  /** The skills, each with the family a sheet groups it in and its name within it (`SkillNames`). */
+  private static skillsOf(built: DetailedCharacter) {
+    return Object.fromEntries(
+      Object.entries(built.components.skills.getSkills()).map(([slug, skill]) => [
+        slug,
+        { ...skill, ...SkillNames.describe(skill.name) },
+      ]),
+    );
+  }
+
   /** A bonded creature (`record`, built from its rows: `built`) as the API answers it: a sheet, with its feats. */
   static buildBonded(record: InferSelectModel<typeof charactersInCharacter>, built: DetailedCharacter) {
     return {
@@ -116,13 +156,13 @@ export default class CharacterResponse {
       shareToken: record.shareToken ?? null,
       identity: CharacterResponse.identityWithPrivateNotes(built),
       skillBudget: built.components.skills.getSkillBudget(),
-      abilities: built.components.abilities.getAbilitiesWithIds(),
+      abilities: CharacterResponse.abilitiesOf(built),
       combat: CombatSheet.describe(built.components.combat),
-      saves: built.components.saves.getSaves(),
+      saves: CharacterResponse.savesOf(built),
       classes: built.components.classes.getCharacterClasses(),
       inventory: built.components.inventory.getInventory(),
       equipment: CharacterResponse.equipmentOf(built),
-      skills: built.components.skills.getSkills(),
+      skills: CharacterResponse.skillsOf(built),
       virtualFeats: built.getVirtualFeats(),
       spellGroups: SpellGroups.describe(built),
       spellsPerDay: SpellGroups.describePerDay(built),

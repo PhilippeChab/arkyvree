@@ -2,27 +2,27 @@ import { parseResponse } from "hono/client";
 
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import {
-  EMPTY_RACE,
   type RaceFormData,
   RaceFormFields,
+  toEntityBody,
+  toEntityForm,
   withEntityFields,
 } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { EntityDetailsCard } from "@/client/src/pages/rulesets/components/index.ts";
 import type { Race } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
 import type { EntityField } from "@/client/src/pages/rulesets/details/rulesetQueries.ts";
-import { useEntityFields, useEntityForm } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { useEntityColumns, useEntityFields, useEntityForm } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
 import type { EditorProps } from "./renderEditor.tsx";
 
-function toRaceForm(race: Race, fields: readonly EntityField[] | undefined): RaceFormData {
-  const values: RaceFormData = {
-    name: race.name,
-    description: race.description ?? "",
-    size: race.size,
-    baseSpeed: race.baseSpeed,
-  };
-  return withEntityFields(values, fields, race);
+/** A race's form: its name, description and columns (`columns`, its rules'), and its fields. */
+function toRaceForm(
+  race: Race,
+  columns: readonly EntityField[],
+  fields: readonly EntityField[] | undefined,
+): RaceFormData {
+  return withEntityFields(toEntityForm<RaceFormData>(columns, race), fields, race);
 }
 
 export function RaceEditor({
@@ -36,9 +36,10 @@ export function RaceEditor({
   refetchSaved,
 }: EditorProps<Race>) {
   const { fields } = useEntityFields(rulesetId, "races");
+  const { columns } = useEntityColumns(rulesetId, "races");
   const { form, save } = useEntityForm({
-    empty: EMPTY_RACE,
-    values: toRaceForm(race, fields),
+    empty: toEntityForm<RaceFormData>(columns),
+    values: toRaceForm(race, columns, fields),
     formKey: recordKey,
     adoptKey,
     updatedAt: race.updatedAt,
@@ -53,7 +54,7 @@ export function RaceEditor({
       parseResponse(
         rpc.api.rulesets[":id"].races[":raceId"].$put({
           param: { id: rulesetId, raceId: entityId },
-          json: { ...data, updatedAt },
+          json: { ...toEntityBody<RaceFormData, RaceFormData>(columns, data), updatedAt },
         }),
       ),
   });

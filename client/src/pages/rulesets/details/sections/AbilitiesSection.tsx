@@ -13,7 +13,7 @@ import type { Ability } from "@/client/src/hooks/index.ts";
 import { itemsBeforeLastPage, pageItems } from "@/client/src/lib/pageItems.ts";
 import { DescriptionCell, RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";
 import { abilityQuery } from "@/client/src/pages/rulesets/details/entities/entityDetailQueries.ts";
-import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
+import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionProps.ts";
 import { abilitiesQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import { useOpenEntity } from "@/client/src/pages/rulesets/hooks/index.ts";
 

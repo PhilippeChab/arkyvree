@@ -62,6 +62,15 @@ export interface PlacementDescription {
 }
 
 /**
+ * A value a sheet shows under its label, as its rules write it ("BAB", "+6/+1"): what the generic sheet's sections read
+ * of a ruleset's sheet, a score's parts, its combat's line, an armor class's boxes, a load's figures.
+ */
+export interface SheetStat {
+  label: string;
+  value: string;
+}
+
+/**
  * A way a new character's ability scores are set, which its form runs by its kind: rolled (`dice`: `count` dice of
  * `sides`, the highest `keep` summed), taken from an array (`scores`, each to one ability), or bought (`costs`, each
  * score's from `min` to `max`, out of `budget`).

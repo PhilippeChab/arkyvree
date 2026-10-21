@@ -4,9 +4,12 @@ import RulesError from "@/engine/core/RulesError.ts";
 import { RequestIds, type RulesetView } from "@/engine/core/view/index.ts";
 import type { RulesetKind } from "@/shared/enums.ts";
 
+import type { RulesDescription } from "./RulesDescription.ts";
+
 /**
- * What a ruleset answers of a ruleset as a whole, past its entities: what it needs to be published, and its own fields,
- * its Settings (`fields`, which its properties hold), as its chain composes them and as their save writes them.
+ * What a ruleset answers of a ruleset as a whole, past its entities: what it needs to be published, its own fields, its
+ * Settings (`fields`, which its properties hold), as its chain composes them and as their save writes them, and what
+ * every ruleset of its base rules shares (`rules`).
  */
 export default abstract class RulesetPart {
   /**
@@ -14,6 +17,9 @@ export default abstract class RulesetPart {
    * its own: none is a group.
    */
   protected abstract readonly fields: FieldCodec<Readonly<Record<string, LeafSpec>>>;
+
+  /** What every ruleset of its base rules shares: its words, its kinds, its bounds, its license */
+  protected abstract readonly rules: RulesDescription;
 
   /** The content its rules make a character of that a ruleset's view lacks, each named by its kind (`race`, `skill`). */
   protected abstract findMissingContent(view: RulesetView): string[];
@@ -36,6 +42,11 @@ export default abstract class RulesetPart {
     if (kind === "extension") return;
     const missing = this.findMissingContent(view).join(", ");
     if (missing) throw new RulesError("unprocessable", `Ruleset requires at least one of each: ${missing}`);
+  }
+
+  /** What every ruleset of its base rules shares, which the client reads once: its words, its kinds, its license… */
+  describeRules(): RulesDescription {
+    return this.rules;
   }
 
   /** The ruleset's Settings, by name: what its Settings tab shows. */

@@ -55,7 +55,7 @@ describe("RulesetFieldsService", () => {
     expect(fields.skills).toContainEqual(
       expect.objectContaining({
         key: "checkPenaltyMultiplier",
-        shownWhen: { path: "fields.impactedByWeight", values: [true] },
+        shownWhen: [{ path: "fields.impactedByWeight", values: [true] }],
       }),
     );
     expect(fields.rulesets).toEqual([
@@ -68,7 +68,9 @@ describe("RulesetFieldsService", () => {
   test("groups an item's weapon, armor and shield, each shown for an item of that type, its stats in it", async () => {
     const { rulesetId } = await getSeedCtx();
     const { items } = await RulesetFieldsService.getFields(rulesetId);
-    const groups = items.flatMap((field) => (field.input === "group" ? [[field.label, field.shownWhen?.values]] : []));
+    const groups = items.flatMap((field) =>
+      field.input === "group" ? [[field.label, field.shownWhen?.[0].values]] : [],
+    );
     expect(groups).toEqual([
       ["Weapon", ["Weapon"]],
       ["Armor", ["Armor"]],

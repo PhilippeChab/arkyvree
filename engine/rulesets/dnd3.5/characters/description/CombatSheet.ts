@@ -1,4 +1,6 @@
+import type { SheetStat } from "@/engine/core/module/index.ts";
 import type { SetArmorClass, WeaponSet, WeaponSlot } from "@/engine/rulesets/dnd3.5/model/combat/CombatState.ts";
+import type { EncumbranceData } from "@/engine/rulesets/dnd3.5/model/combat/EncumbranceComponent.ts";
 import AttackRules from "@/engine/rulesets/dnd3.5/rules/AttackRules.ts";
 import { WEAPON_SET_SLOTS } from "@/engine/rulesets/dnd3.5/rules/InventorySlots.ts";
 import { capitalize, formatSigned } from "@/shared/text.ts";
@@ -33,6 +35,10 @@ interface AttackRow extends AttackRange {
  */
 interface CombatStats {
   bab: number;
+  encumbrance: EncumbranceData;
+  grapple: { total: number };
+  hp: { total: number };
+  initiative: { total: number };
   speed: { total: number };
   weaponsets: Record<
     string,
@@ -52,10 +58,11 @@ interface SheetWeapon {
 
 /**
  * A weapon set as a sheet lists it: its index, stored from 0, the names of the items its hands hold (an unarmed strike
- * holds none), its armor class, and its weapons with their attacks.
+ * holds none), its armor class (and its boxes, labelled: `armorClass`), and its weapons with their attacks.
  */
 interface SheetWeaponSet {
   ac: SheetArmorClass;
+  armorClass: SheetStat[];
   held: string[];
   set: number;
   weapons: SheetWeapon[];
@@ -172,6 +179,7 @@ export default class CombatSheet {
         return {
           set: Number(set),
           ac: CombatSheet.armorClass(slots.ac),
+          armorClass: CombatSheet.describeArmorClass(slots.ac),
           held: [...held.filter((weapon) => weapon.itemId).map((weapon) => weapon.name), ...slots.shield.names],
           weapons: WEAPON_SET_SLOTS.flatMap((slot) => {
             const weapon = slots[slot];
@@ -193,13 +201,54 @@ export default class CombatSheet {
   static describe<C extends CombatStats & { ac: unknown }>(combat: { getCombat(): C }) {
     const { ac: _parts, weaponsets, ...stats } = combat.getCombat();
     const weaponSets = CombatSheet.weaponSets(weaponsets);
+    const babLabel = CombatSheet.formatBab(stats.bab);
+    const speedLabel = CombatSheet.formatFeet(stats.speed.total);
+    const hp = { label: "HP", value: String(stats.hp.total) };
+    const bab = { label: "BAB", value: babLabel };
+    const speed = { label: "Speed", value: speedLabel };
     return {
       ...stats,
-      babLabel: CombatSheet.formatBab(stats.bab),
-      speedLabel: CombatSheet.formatFeet(stats.speed.total),
+      babLabel,
+      speedLabel,
       weaponSets,
       hasWeaponSets: weaponSets.some(({ held }) => held.length > 0),
+      load: CombatSheet.describeLoad(stats.encumbrance),
+      // Its line, in the PDF's order, and what a bonded creature's summary shows of it
+      stats: [
+        hp,
+        { label: "Initiative", value: formatSigned(stats.initiative.total) },
+        speed,
+        bab,
+        { label: "Grapple", value: formatSigned(stats.grapple.total) },
+      ] satisfies SheetStat[],
+      summary: [hp, bab, speed] satisfies SheetStat[],
     };
+  }
+
+  /** A weapon set's armor class in its three boxes: its AC, its touch AC and its flat-footed AC. */
+  static describeArmorClass(ac: SheetArmorClass): SheetStat[] {
+    return [
+      { label: "AC", value: String(ac.total) },
+      { label: "Touch", value: String(ac.touch) },
+      { label: "Flat-footed", value: String(ac.flatfooted) },
+    ];
+  }
+
+  /**
+   * The load a character carries: its carried weight and its loads' limits, each with its label and a short one for a
+   * box (`figures`, in pounds), and its load past light, how it reads and how grave it is (`status`: none for light).
+   */
+  static describeLoad(encumbrance: EncumbranceData) {
+    const figures = [
+      { label: "Carried Weight", shortLabel: "Carried", weight: encumbrance.carriedweight },
+      { label: "Light", shortLabel: "Light", weight: encumbrance.lightload },
+      { label: "Medium", shortLabel: "Medium", weight: encumbrance.mediumload },
+      { label: "Heavy", shortLabel: "Heavy", weight: encumbrance.heavyload },
+    ];
+    const { load } = encumbrance;
+    const tones = { heavy: "warning", medium: "info", overloaded: "error" } as const;
+    const status = load && load !== "light" ? { label: capitalize(load), tone: tones[load] } : null;
+    return { figures, status };
   }
 
   /**

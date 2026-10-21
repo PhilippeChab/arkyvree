@@ -149,6 +149,7 @@ describe("SpellGroups", () => {
     test("counts a cleric's domain slot as one more in his class's row, from the first spell level", async () => {
       // Theron, a seeded cleric 3 of the Healing and Sun domains: no Domain Spells row of its own
       expect(await seededPerDay("Theron Lightbringer")).toEqual({
+        labels: ["Cantrips", "Level 1", "Level 2"],
         levels: [0, 1, 2],
         lists: [{ aptitudeName: "Cleric Spells", slots: ["4", "3+1", "2+1"] }],
       });
@@ -157,6 +158,7 @@ describe("SpellGroups", () => {
     test("counts a specialist wizard's school slot as one more in her class's row, cantrips too", async () => {
       // Elara, a seeded evoker 3: no Evocation Specialist Spells row of its own
       expect(await seededPerDay("Elara Starweaver")).toEqual({
+        labels: ["Cantrips", "Level 1", "Level 2"],
         levels: [0, 1, 2],
         lists: [{ aptitudeName: "Wizard Spells", slots: ["4+1", "3+1", "2+1"] }],
       });
@@ -165,6 +167,7 @@ describe("SpellGroups", () => {
     test("prints a list no feat adds to as its slots alone", async () => {
       // Vex, a seeded sorcerer 3
       expect(await seededPerDay("Vex Flamecaller")).toEqual({
+        labels: ["Cantrips", "Level 1"],
         levels: [0, 1],
         lists: [{ aptitudeName: "Sorcerer Spells", slots: ["6", "6"] }],
       });
@@ -173,6 +176,7 @@ describe("SpellGroups", () => {
     test("gives a multiclass caster a row per class, each with the slot its own feat adds", async () => {
       // Cleric 5 (Wisdom 16): 5/3/2/1 and his bonus spells; wizard 5 (Intelligence 16): 4/3/2/1 and his
       expect(SpellGroups.describePerDay(await buildClericWizard())).toEqual({
+        labels: ["Cantrips", "Level 1", "Level 2", "Level 3"],
         levels: [0, 1, 2, 3],
         lists: [
           { aptitudeName: "Cleric Spells", slots: ["5", "4+1", "3+1", "2+1"] },
@@ -183,7 +187,7 @@ describe("SpellGroups", () => {
 
     test("gives a character without slots none", async () => {
       // Bjorn, a seeded fighter 5
-      expect(await seededPerDay("Bjorn Ironhand")).toEqual({ levels: [], lists: [] });
+      expect(await seededPerDay("Bjorn Ironhand")).toEqual({ labels: [], levels: [], lists: [] });
     });
 
     test("keeps a row of its own for a slot a feat's list gives where its class's lists have none", () => {
@@ -210,6 +214,7 @@ describe("SpellGroups", () => {
         getVirtualPowers: () => [],
       };
       expect(SpellGroups.describePerDay(character)).toEqual({
+        labels: ["Level 1", "Level 2"],
         levels: [1, 2],
         lists: [
           { aptitudeName: "Cleric Spells", slots: ["2+1", null] },
