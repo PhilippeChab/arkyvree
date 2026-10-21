@@ -17,13 +17,13 @@ function normalizeValue(value: unknown): string {
 
 /**
  * What an update (`body`) changes of an entity (`existing`): each field it gives another value, with the value before
- * and after, but a long text field's, which only says it changed.
+ * and after, but a long text field's, which only says it changed. A field it leaves undefined it doesn't write.
  */
 export function getChangedFields(existing: object, body: object): ChangedField[] {
   const before = new Map(Object.entries(existing));
   const changes: ChangedField[] = [];
   for (const [field, after] of Object.entries(body)) {
-    if (!before.has(field)) continue;
+    if (!before.has(field) || after === undefined) continue;
     const old = before.get(field);
     if (old == null && after == null) continue;
     if (normalizeValue(old) === normalizeValue(after)) continue;

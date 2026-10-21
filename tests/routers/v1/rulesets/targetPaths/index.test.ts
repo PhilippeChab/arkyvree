@@ -25,6 +25,20 @@ describe("v1 ruleset target paths", () => {
     );
   });
 
+  test("narrows the paths to those an entity's modifiers take, a character's own too", async () => {
+    const { api } = await createKeyedApi();
+    const { rulesetId: id } = await getSeedCtx();
+    const route = api.v1.rulesets[":id"]["target-paths"];
+    const aptitudePaths = async (entityKind: "characters" | "feats") => {
+      const query = { entityKind, limit: "100", search: "uses" };
+      const { items } = await expectOk(route.$get({ param: { id }, query }));
+      return items.filter(({ path }) => path?.startsWith("aptitudes."));
+    };
+
+    expect(await aptitudePaths("feats")).not.toEqual([]);
+    expect(await aptitudePaths("characters")).toEqual([]);
+  });
+
   test("checks a path: what a valid one takes, and what an invalid one may have meant", async () => {
     const { api } = await createKeyedApi();
     const { rulesetId: id } = await getSeedCtx();
