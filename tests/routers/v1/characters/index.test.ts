@@ -1,5 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
+import { db } from "@/server/database/index.ts";
+import { Characters } from "@/server/repositories/index.ts";
 import { CharacterModifiersService } from "@/server/services/characters/modifiers/index.ts";
 import { createKeyedApi, expectOk, expectStatus } from "@/tests/support/api.ts";
 import { createTestCharacter } from "@/tests/support/characters.ts";
@@ -17,6 +19,7 @@ describe("v1 characters", () => {
     const { items } = await expectOk(api.v1.characters.$get({ query: { search: "Fenn" } }));
     expect(items).toEqual([
       {
+        archived: false,
         classes: [{ level: 3, name: "Ranger" }],
         id: (await findSeededCharacter("Fenn Ashwalker")).id,
         level: 3,
@@ -24,6 +27,17 @@ describe("v1 characters", () => {
         race: "Half-Elf",
       },
     ]);
+  });
+
+  test("lists the user's archived characters with their active ones, each saying which it is", async () => {
+    const { user } = await createTestUser();
+    const { api } = await createKeyedApi(user.id);
+    const [active, archived] = [await createTestCharacter(user.id), await createTestCharacter(user.id)];
+    await Characters.archive(db, { id: archived.id });
+
+    const { items } = await expectOk(api.v1.characters.$get({ query: { visibility: "all" } }));
+    const archivedOf = (id: string) => items.find((character) => character.id === id)?.archived;
+    expect([archivedOf(active.id), archivedOf(archived.id)]).toEqual([false, true]);
   });
 
   test("answers a character's sheet, each thing it has named, without what only the app's screens read", async () => {
