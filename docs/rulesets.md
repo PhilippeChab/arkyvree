@@ -995,7 +995,7 @@ The contract is the code: `engine/core/module/parts/` holds a folder per part, i
    - its sheet's sections under the identity, in its order, the generic ones among them, which read what its sheet labels (`SheetStat`: a score's `parts`, its combat's `stats`, `summary` and `load`, an armor class's boxes, a skill's `family` and `shortName`) (`getSections`: `SheetSections`, 3.5's in `components/characters/sections/dnd3.5/`, with its weapon sets and its spells);
 10. **Its rulings**: `docs/<ruleset>/rules-decisions.md`, how it reads its rules where the source is ambiguous or where it deliberately differs, each naming the code that holds it (3.5's: [docs/dnd3.5/rules-decisions.md](./dnd3.5/rules-decisions.md)).
 
-   A generic client page holds no rule of a ruleset: what one has (a field, a column, a tab, a section) is a registry's slot, and a page whose parts are its base rules' waits for its ruleset to load, never assuming one. No generic client module imports its folders (`arkyvree/ruleset-folders`).
+   A generic client page holds no rule of a ruleset: what one has (a field, a column, a tab, a word) is the engine's to describe, its sheet's layout the registry's slot, and a page whose parts are its base rules' waits for its ruleset to load, never assuming one. No generic client module imports its folders (`arkyvree/ruleset-folders`).
 
 ### How to extend `engine/` without leaking a ruleset
 
