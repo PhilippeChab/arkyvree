@@ -1,7 +1,7 @@
 /** The headers a route sends a file with: its type, and how a browser takes it, under its name. */
 
-/** What `encodeURIComponent` leaves that an RFC 5987 value can't hold, `'` its own delimiter. */
-const RESERVED_IN_EXT_VALUE = /['()*!]/g;
+/** What `encodeURIComponent` leaves that an RFC 5987 value can't hold (its `attr-char`), `'` its own delimiter. */
+const RESERVED_IN_EXT_VALUE = /['()*]/g;
 
 /**
  * What a quoted header value can't hold: a character outside printable ASCII (one each, an emoji too), a quote or a

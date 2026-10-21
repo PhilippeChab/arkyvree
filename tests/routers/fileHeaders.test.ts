@@ -14,7 +14,7 @@ describe("buildFileHeaders", () => {
       buildFileHeaders({ disposition: "attachment", fileName: "Ryū's (Blade)!.pdf", mimeType: "application/pdf" })[
         "Content-Disposition"
       ],
-    ).toEndWith(`filename*=UTF-8''Ry%C5%AB%27s%20%28Blade%29%21.pdf`);
+    ).toEndWith(`filename*=UTF-8''Ry%C5%AB%27s%20%28Blade%29!.pdf`);
     // A character past the Basic Multilingual Plane is one character, replaced once
     expect(
       buildFileHeaders({ disposition: "attachment", fileName: "Zed 🐉.pdf", mimeType: "application/pdf" })[

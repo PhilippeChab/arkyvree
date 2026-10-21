@@ -69,15 +69,7 @@ function toVisibility(visibility: string): CharacterVisibility {
 
 /** A campaign the key's user plays in, or is the Game Master of. */
 export function toV1Campaign(campaign: Answer<typeof CampaignsService.getCampaign>): z.infer<typeof v1Campaign> {
-  return {
-    archived: campaign.deletedAt !== null,
-    description: campaign.description,
-    id: campaign.id,
-    name: campaign.name,
-    players: campaign.currentPlayers,
-    role: campaign.currentUserRole,
-    ruleset: { id: campaign.rulesetId, name: campaign.rulesetName },
-  };
+  return { ...toV1CampaignSummary(campaign), role: campaign.currentUserRole };
 }
 
 /** A character linked to a campaign, as the key's user sees it: its sheet, or its identity alone. */
