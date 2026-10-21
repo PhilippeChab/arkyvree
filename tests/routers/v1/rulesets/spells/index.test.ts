@@ -91,4 +91,12 @@ describe("v1 ruleset spells", () => {
       403,
     );
   });
+
+  test("refuses a spell level that isn't one, an empty one too, rather than reading it as cantrips", async () => {
+    const { api } = await createKeyedApi();
+    const { aptMap, rulesetId: id } = await getSeedCtx();
+    const aptitudeId = aptMap["Wizard Spells"]!;
+    for (const level of ["", "-1", "1.5"])
+      await expectStatus(api.v1.rulesets[":id"].spells.$get({ param: { id }, query: { aptitudeId, level } }), 400);
+  });
 });

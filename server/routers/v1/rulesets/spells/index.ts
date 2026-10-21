@@ -45,11 +45,13 @@ export default new Hono<ApiKeyContext>()
       z.object({
         ...CONTENT_FILTERS,
         aptitudeId: z.string().uuid().optional().meta({ description: "Only those on an aptitude (a spell list)" }),
-        level: z.coerce
-          .number()
-          .int()
+        // Digits alone: an empty `level=` coerced is 0, cantrips
+        level: z
+          .string()
+          .regex(/^\d+$/)
+          .transform(Number)
           .optional()
-          .meta({ description: "Only those at a spell level, with `aptitudeId`" }),
+          .meta({ description: "Only those at a spell level (0 for cantrips), with `aptitudeId`" }),
       }),
     ),
     async (c) => {
