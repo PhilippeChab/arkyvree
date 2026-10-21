@@ -231,14 +231,18 @@ export default new Hono<ApiKeyContext>()
   )
   .put(
     "/:id",
-    describeRoute({ response: v1Ruleset, status: 200, summary: "Changes a ruleset's name, description and kind" }),
+    describeRoute({
+      response: v1Ruleset,
+      status: 200,
+      summary: "Changes a ruleset's name, description and kind: what the body names, the rest kept",
+    }),
     validate("param", idParam),
     validate(
       "json",
       z.object({
-        description: z.string(),
+        description: z.string().optional(),
         kind: z.enum(rulesetKind.enumValues).optional(),
-        name: z.string().min(1),
+        name: z.string().min(1).optional(),
         private: z.boolean().optional(),
       }),
     ),

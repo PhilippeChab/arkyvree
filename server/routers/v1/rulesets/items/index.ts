@@ -129,9 +129,11 @@ export default new Hono<ApiKeyContext>()
       const { id, itemId } = c.req.valid("param");
       const { variants } = c.req.valid("json");
       const created = await ItemsService.createVariants(c.var.requestSession, id, itemId, variants);
-      // Each read back as its read answers it, with the fields it takes from its template
-      const items = await Promise.all(created.map((variant) => ItemsService.getItem(id, variant.id)));
-      return c.json(items.map(V1.item), 201);
+      // Each read back as its read answers it, with the fields it takes from its template, one after another: the
+      // ruleset's cached view answers all but the first, and a body's many variants hold one connection
+      const items = [];
+      for (const variant of created) items.push(V1.item(await ItemsService.getItem(id, variant.id)));
+      return c.json(items, 201);
     },
   )
   .put(
