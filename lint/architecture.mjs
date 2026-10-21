@@ -659,14 +659,13 @@ function createRulesetFolders(context) {
   return onImports((node, spec) => {
     const target = targetOf(file, spec);
     const other = target && rulesetOf(target, rulesets);
-    if (genericClient && other) {
+    // A client's import of a ruleset's vocabulary is root-folders' to refuse: the client reads none of it
+    if (genericClient && other && !target.startsWith("vocabulary/")) {
       context.report({
         node,
-        message: target.startsWith("vocabulary/")
-          ? `A client module reads ${other}'s vocabulary as the engine describes it (\`useRules\`, a sheet's ` +
-            "labels), never from its folder."
-          : `A generic client module reaches ${other}'s code through the registry keyed by base rules ` +
-            "(`getSections`: lint/architecture.mjs `CLIENT_REGISTRIES`), never from its folders.",
+        message:
+          `A generic client module reaches ${other}'s code through the registry keyed by base rules ` +
+          "(`getSections`: lint/architecture.mjs `CLIENT_REGISTRIES`), never from its folders.",
       });
     } else if (home && other) {
       context.report({
