@@ -104,13 +104,13 @@ export const v1FeatPage = buildPageSchema(v1Feat);
 
 export const v1Item = v1Entity
   .extend({
-    cost: z.number().meta({ description: "In gold pieces" }),
+    cost: z.number().nullable().meta({ description: "In gold pieces: none, unpriced" }),
     fields: v1Fields,
     slot: z.string().nullable(),
     template: z.boolean().meta({ description: "Whether it's a template other items are made from (Longsword)" }),
     templateId: v1Id.nullable().meta({ description: "The template it's made from" }),
     type: z.string().nullable(),
-    weight: z.number().meta({ description: "In pounds" }),
+    weight: z.number().nullable().meta({ description: "In pounds: none, unweighed" }),
   })
   .meta({ description: "An item of a ruleset's", id: "Item" });
 

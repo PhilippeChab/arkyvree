@@ -21,7 +21,7 @@ const v1InventoryEntry = z
       name: z.string(),
       slot: z.string().nullable(),
       type: z.string().nullable(),
-      weight: z.number(),
+      weight: z.number().nullable().meta({ description: "In pounds: none, unweighed" }),
     }),
     location: z.string().nullable().meta({ description: "Where it's worn or held: `Two Handed`, `Torso`, `Backpack`" }),
     locationLabel: z.string().nullable().meta({ description: "Its location named, with its weapon sets" }),

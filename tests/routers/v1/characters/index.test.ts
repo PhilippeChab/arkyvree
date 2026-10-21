@@ -3,6 +3,7 @@ import { describe, expect, test } from "bun:test";
 import { CharacterModifiersService } from "@/server/services/characters/modifiers/index.ts";
 import { createKeyedApi, expectOk, expectStatus } from "@/tests/support/api.ts";
 import { createTestCharacter } from "@/tests/support/characters.ts";
+import { carry, createTestItem } from "@/tests/support/items.ts";
 import { addCharacterLevel, findKlassLevel } from "@/tests/support/levels.ts";
 import { findSeededCharacter, getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
@@ -103,6 +104,22 @@ describe("v1 characters", () => {
       quantity: 1,
       weaponSets: [0],
     });
+  });
+
+  test("answers an item without a cost or a weight as none, in a ruleset, an inventory and a sheet alike", async () => {
+    const { user } = await createTestUser();
+    const { api } = await createKeyedApi(user.id);
+    const character = await createTestCharacter(user.id);
+    const { id: itemId, rulesetId } = await createTestItem({ costGp: null, weight: null });
+    await carry(character, [{ equipped: false, item: itemId }]);
+    const param = { id: character.id };
+
+    const item = await expectOk(api.v1.rulesets[":id"].items[":itemId"].$get({ param: { id: rulesetId, itemId } }));
+    expect(item).toMatchObject({ cost: null, weight: null });
+    const [entry] = await expectOk(api.v1.characters[":id"].inventory.$get({ param }));
+    expect(entry?.item.weight).toBeNull();
+    const { equipment } = await expectOk(api.v1.characters[":id"].$get({ param }));
+    expect(equipment).toEqual([expect.objectContaining({ itemId, weight: null })]);
   });
 
   test("answers what a character speaks, and what the languages it would pick leave it room for", async () => {
