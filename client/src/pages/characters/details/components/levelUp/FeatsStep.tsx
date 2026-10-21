@@ -12,6 +12,7 @@ import {
 } from "@/client/src/components/common/index.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { itemsBeforeLastPage, pageItems } from "@/client/src/lib/pageItems.ts";
+import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
 
 import { AutoGrantedPicks } from "./AutoGrantedPicks.tsx";
 import { withoutPick, withPick } from "./fitPicks.ts";
@@ -120,6 +121,8 @@ function FeatFamilyExpansion({ characterId, aptitudeId, family, picker, onPick }
 
 export function FeatsStep({ wizard, characterId }: FeatsStepProps) {
   const { rules } = useCharacterRules(characterId);
+  // Its rules' word for feats ("Feats")
+  const featsWord = entityTypeLabel("feats", rules?.words, true);
   const {
     featData,
     isLoadingFeats,
@@ -142,24 +145,24 @@ export function FeatsStep({ wizard, characterId }: FeatsStepProps) {
   // Changed from the picks as they fit the pools, which the wizard reads
   const { field: feats } = useController({ control, name: "selectedFeats" });
   if (isLoadingFeats) return <DiceSpinner />;
-  if (featsError && !featData) return <LoadError what="Feats" error={featsError} />;
+  if (featsError && !featData) return <LoadError what={featsWord} error={featsError} />;
   if (!featData) return null;
 
   // The level's feat pools, each with its room for the feats picked
   const openPools = Object.values(featData.aptitudePools).filter((pool) => pool.available > 0);
   if (openPools.length === 0 && featData.autoGrantedFeats.length === 0)
-    return <BlankNote>No feats to select at this level</BlankNote>;
+    return <BlankNote>No {featsWord.toLowerCase()} to select at this level</BlankNote>;
 
   const currentPool = openPools.find((pool) => pool.id === selectedAptitude);
   const pick = (aptitudeId: string, feat: SelectedFeat) => feats.onChange(withPick(selectedFeats, aptitudeId, feat));
 
   return (
     <PoolPicker
-      what="Feats"
+      what={featsWord}
       granted={
         featData.autoGrantedFeats.length > 0 && (
           <AutoGrantedPicks
-            what="Feats"
+            what={featsWord}
             note={rules?.levelUp.freeGrantNote}
             picks={featData.autoGrantedFeats}
             defaultCollapsed={openPools.length > 0}
