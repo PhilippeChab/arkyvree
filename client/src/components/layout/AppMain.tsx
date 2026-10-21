@@ -26,7 +26,9 @@ interface AppMainProps {
 export function AppMain({ banner, railWidth = 0 }: AppMainProps) {
   const mainRef = useRef<HTMLDivElement>(null);
   const { pathname } = useLocation();
-  const { all: rules, error: rulesError, isPending: rulesPending, retry: retryRules } = useRules();
+  const { all: rules, error: rulesError, isPending, retry: retryRules, retrying } = useRules();
+  // The rules load, or load again after a failure, which its Retry asked
+  const rulesPending = isPending || (!rules && retrying);
 
   useEffect(() => {
     const el = mainRef.current;
