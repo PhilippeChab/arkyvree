@@ -170,7 +170,8 @@ class CharacterLevelsService extends include(Object, Choices, Pickers, Steps) {
 
       return await withRulesetScope(tx, characterRecord.rulesetId, async (scope) => {
         const character = await readCharacterInput(tx, characterRecord);
-        // A level saved since its edit read it is refused before its edit is checked against it
+        // A level saved since its edit read it is refused before its edit is checked against it: the character's lock
+        // keeps it as read until the write
         const saved = character.rows.levels.find((level) => level.id === characterLevelId);
         if (expectedUpdatedAt && saved && saved.updatedAt !== expectedUpdatedAt)
           throw new ConflictError(STALE_ENTITY_MESSAGE);
@@ -180,8 +181,7 @@ class CharacterLevelsService extends include(Object, Choices, Pickers, Steps) {
           .levelUp()
           .planEdit(bonded, characterLevelId, { abilityIncreases, feats, hp, powers, skills }, force);
 
-        const rows = await CharacterLevels.update(tx, edit.columns, { id: characterLevelId, expectedUpdatedAt });
-        if (expectedUpdatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
+        await CharacterLevels.update(tx, edit.columns, { id: characterLevelId });
         await this.deleteLevelRows(tx, characterLevelId);
         await createLevelRows(tx, characterLevelId, edit.rows);
         await writeBondedCreatures(tx, characterRecord, edit.bonded);
