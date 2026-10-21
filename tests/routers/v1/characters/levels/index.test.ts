@@ -1,5 +1,8 @@
 import { describe, expect, test } from "bun:test";
 
+import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
+import { ConflictError } from "@/server/errors/index.ts";
+import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
 import { createKeyedApi, expectOk, expectStatus } from "@/tests/support/api.ts";
 import { findSeededCharacter, NIL_UUID } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
@@ -104,6 +107,18 @@ describe("v1 character levels", () => {
     await expectStatus(route.levels.latest.$delete({ param: { id } }), 204);
     expect((await expectOk(route.$get({ param: { id } }))).level).toBe(5);
     await expectStatus(route.levels[":levelId"].$get({ param: { id, levelId } }), 404);
+  });
+
+  test("refuses an edit of a level saved again since the edit read it", async () => {
+    const { id, json, route } = await planFighterLevel();
+    const { levels } = await expectOk(route.levels.$post({ json, param: { id } }));
+    const levelId = levels.at(-1)!.id;
+    const session = { userId: SEED_USER_ID };
+    const { updatedAt } = await CharacterLevelsService.getLevel(session, id, levelId);
+    await expectOk(route.levels[":levelId"].$put({ json: { hitPoints: 6 }, param: { id, levelId } }));
+
+    const stale = CharacterLevelsService.updateLevel(session, id, levelId, 5, [], {}, {}, {}, true, updatedAt);
+    expect(stale).rejects.toThrow(ConflictError);
   });
 
   test("changes only what an edit of a level names: its picks are kept", async () => {
