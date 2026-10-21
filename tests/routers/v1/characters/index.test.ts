@@ -3,6 +3,7 @@ import { describe, expect, test } from "bun:test";
 import { CharacterModifiersService } from "@/server/services/characters/modifiers/index.ts";
 import { createKeyedApi, expectOk, expectStatus } from "@/tests/support/api.ts";
 import { createTestCharacter } from "@/tests/support/characters.ts";
+import { addCharacterLevel, findKlassLevel } from "@/tests/support/levels.ts";
 import { findSeededCharacter, getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 
@@ -53,6 +54,24 @@ describe("v1 characters", () => {
 
     const json = JSON.stringify(sheet);
     for (const key of SCREEN_ONLY) expect(json).not.toContain(`"${key}"`);
+  });
+
+  test("answers a skill's half ranks, a cross-class point's, in its ranks and its total", async () => {
+    const { api } = await createKeyedApi();
+    const { id } = await findSeededCharacter("Fenn Ashwalker");
+    const before = await expectOk(api.v1.characters[":id"].$get({ param: { id } }));
+    const disguise = before.skills.find(({ name }) => name === "Disguise");
+    const { items } = await expectOk(
+      api.v1.rulesets[":id"].skills.$get({ param: { id: before.ruleset.id }, query: { search: "Disguise" } }),
+    );
+    const klassLevel = await findKlassLevel(before.classes[0]!.id, 4);
+    await addCharacterLevel(id, klassLevel!.id, { skills: [{ rank: 1, skillId: items[0]!.id }] });
+
+    const { skills } = await expectOk(api.v1.characters[":id"].$get({ param: { id } }));
+    expect(skills.find(({ name }) => name === "Disguise")).toMatchObject({
+      ranks: 0.5,
+      total: (disguise?.total ?? 0) + 0.5,
+    });
   });
 
   test("answers a bonded creature with its master's sheet", async () => {

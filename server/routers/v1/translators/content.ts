@@ -63,12 +63,6 @@ type ClassLevel =
 /** An item of a page a service answers. */
 type ItemOf<F extends (...args: never[]) => Promise<{ items: unknown[] }>> = Answer<F>["items"][number];
 
-/** A count by spell level, as a class level's row keys it: the spell level, then its count. */
-type SpellLevelRow = { level: number } & (
-  | { spellsKnown: Record<string, number | "All"> }
-  | { spellsPerDay: Record<string, number | "All"> }
-);
-
 /** Each kind's columns: what v1 gives a place of its own, or leaves out. The rest of a row is its `fields`. */
 const CLASS_COLUMNS = new Set(Object.keys(getTableColumns(klassesInRules)));
 
@@ -169,11 +163,17 @@ export function toV1ClassSkills(skills: Answer<typeof ClassSkillsService.getClas
   return skills.map(({ skillsInRule }) => ({ id: skillsInRule.id, name: skillsInRule.name }));
 }
 
-/** What a class's levels give by spell level (the spells they cast a day, or know), each level's. */
-export function toV1ClassSpellCounts(levels: SpellLevelRow[]): z.infer<typeof v1ClassSpellsPerDay> {
+/**
+ * What a class's levels give by spell level, each level's: the spells they cast a day (`spellsPerDay`), or know
+ * (`spellsKnown`), as the route reads them, since a level's declared fields sit beside them.
+ */
+export function toV1ClassSpellCounts<K extends "spellsKnown" | "spellsPerDay">(
+  levels: ({ level: number } & Record<K, Record<string, number | "All">>)[],
+  counts: K,
+): z.infer<typeof v1ClassSpellsPerDay> {
   return levels.map((row) => ({
     level: row.level,
-    spells: toSpellLevelCounts("spellsPerDay" in row ? row.spellsPerDay : row.spellsKnown),
+    spells: toSpellLevelCounts(row[counts]),
   }));
 }
 
