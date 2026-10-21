@@ -107,8 +107,8 @@ Each write calls the service the app's own route calls, its body a v1 shape tran
 
 - A create answers what it made (201), an update what it changed (200), each read back as its read answers it (a
   campaign's as `GET /v1/campaigns/{id}` reads it); a removal (an archive, a delete, a contributor's removal, leaving)
-  answers nothing (204). An action answers what it acts on (a fork the new ruleset, a publish the ruleset, an invite's
-  answer its status), and a queued PDF its export (202).
+  answers nothing (204), as a star does. An action answers what it acts on (a fork the new ruleset, a publish the
+  ruleset, an invite's answer its status), and a queued PDF its export (202).
 - An entity's update takes what its create requires (its name; a race's size and speed, a save's or a skill's ability,
   a language's type), as the document marks them, and keeps the rest its body leaves out (a description, an item's
   cost, a spell's save); a ruleset's, an inventory entry's and a saved level's require nothing (v1 reads the entry or

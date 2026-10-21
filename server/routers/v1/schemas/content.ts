@@ -240,6 +240,9 @@ export const v1TargetPath = z
     label: z.string(),
     operators: z.array(z.string()).meta({ description: "A whole path's: the operators it takes" }),
     path: z.string().nullable().meta({ description: "A whole path's: itself" }),
+    setValues: z
+      .array(z.strictObject({ label: z.string(), value: z.string() }))
+      .meta({ description: "A whole path's: the values a `set` on it takes, when it takes only those" }),
     values: z
       .array(z.strictObject({ label: z.string(), value: z.string() }))
       .meta({ description: "A whole path's: the values it takes, when it takes a closed list" }),
@@ -262,7 +265,12 @@ export const v1TargetPathCheck = z
       .strictObject({
         operators: z.array(z.string()),
         path: z.string(),
-        values: z.array(z.strictObject({ label: z.string(), value: z.string() })),
+        setValues: z
+          .array(z.strictObject({ label: z.string(), value: z.string() }))
+          .meta({ description: "The values a `set` on it takes, when it takes only those" }),
+        values: z
+          .array(z.strictObject({ label: z.string(), value: z.string() }))
+          .meta({ description: "The values it takes, when it takes a closed list" }),
         valueType: z.enum(["boolean", "number", "string"]),
       })
       .nullable()

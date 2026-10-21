@@ -111,6 +111,21 @@ describe("v1 rulesets", () => {
     expect(await expectOk(ruleset.$get({ param: { id } }))).toMatchObject({ starCount, starred: false });
   });
 
+  test("refuses a fork's or a rename's name another ruleset has, an archived one's too", async () => {
+    const { user } = await createTestUser();
+    const { api } = await createKeyedApi(user.id);
+    const { rulesetId: coreId } = await getSeedCtx();
+    const rulesets = api.v1.rulesets[":id"];
+    const fork = async (name: string) => await expectOk(rulesets.fork.$post({ json: { name }, param: { id: coreId } }));
+
+    const archived = await fork("Old Table Rules");
+    await expectStatus(rulesets.archive.$post({ param: { id: archived.id } }), 204);
+    const { id } = await fork("New Table Rules");
+
+    await expectStatus(rulesets.fork.$post({ json: { name: "Old Table Rules" }, param: { id: coreId } }), 409);
+    await expectStatus(rulesets.$put({ json: { name: "Old Table Rules" }, param: { id } }), 409);
+  });
+
   test("forks a ruleset, changes it and its settings, publishes it, and archives it and unarchives it", async () => {
     const { user } = await createTestUser();
     const { api } = await createKeyedApi(user.id);

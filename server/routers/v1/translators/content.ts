@@ -362,7 +362,8 @@ export function toV1TargetPath(completion: PathCompletion): z.infer<typeof v1Tar
     label: completion.label,
     operators: completion.operators ?? [],
     path: completion.path ?? null,
-    values: completion.possibleValues ?? completion.setValues ?? [],
+    setValues: completion.setValues ?? [],
+    values: completion.possibleValues ?? [],
     valueType: completion.valueType ?? null,
   };
 }
@@ -377,7 +378,8 @@ export function toV1TargetPathCheck(check: PathValidationResult): z.infer<typeof
       ? {
           operators: target.operators,
           path: target.path,
-          values: target.possibleValues ?? target.setValues ?? [],
+          setValues: target.setValues ?? [],
+          values: target.possibleValues ?? [],
           valueType: target.valueType,
         }
       : null,
