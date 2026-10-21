@@ -1,6 +1,6 @@
 /**
- * What a class's Progression tab changes before its save: its tracks' values (base attack bonus, skill points, saves),
- * its features' levels and its pools' picks, by level id, over the class as saved; and the save they make.
+ * What a class's Progression tab changes before its save: its tracks' values (a level's fields its rules set, its
+ * saves), its features' levels and its pools' picks, by level id, over the class as saved; and the save they make.
  */
 
 import type {
@@ -37,8 +37,11 @@ export interface ProgressionEdits {
   tracks: Partial<Record<TrackKey, Record<string, number>>>;
 }
 
-/** A track the Progression tab edits: the base attack bonus, the skill points, or a save (`save:<id>`). */
-export type TrackKey = "bab" | "skills" | `save:${string}`;
+/** A track the Progression tab edits: a level's field, by its key (3.5's `bab`), or a save (`save:<id>`). */
+export type TrackKey = string;
+
+/** A save's track's key's prefix. */
+const SAVE_TRACK = "save:";
 
 /** A tab that changed nothing yet. */
 export const NO_EDITS: ProgressionEdits = { addedFeatures: [], addedPools: [], features: {}, pools: {}, tracks: {} };
@@ -50,10 +53,12 @@ function sameLevels(a: readonly string[], b: readonly string[]) {
 
 /**
  * The save a tab's edits make (`edits`, over the class's `levels`, `features` and `pools` as saved), each level's
- * with the ruleset's saves (`saveIds`: none while they load, the level's own then, never an empty list).
+ * with the fields its tracks set (`fieldKeys`) and the ruleset's saves (`saveIds`: none while they load, the level's
+ * own then, never an empty list).
  */
 export function buildProgressionBody(
   levels: readonly ClassLevelRow[],
+  fieldKeys: readonly string[],
   saveIds: readonly string[] | undefined,
   features: readonly FeatureRow[],
   pools: readonly PoolRow[],
@@ -71,7 +76,7 @@ export function buildProgressionBody(
   const levelEdits = levels.flatMap((level) => {
     // The ruleset's saves, as a level's form sends them; until they're read, the level's own
     const levelSaveIds = saveIds ?? level.saves.map((save) => save.saveId);
-    const keys: TrackKey[] = ["bab", "skills", ...levelSaveIds.map((id): TrackKey => `save:${id}`)];
+    const keys: TrackKey[] = [...fieldKeys, ...levelSaveIds.map((id) => saveTrackKey(id))];
     const tracksChanged = keys.some((key) => valueOf(level, key) !== readTrack(level, key));
     const granted = rows.filter((row) => levelsOf(row).includes(level.id));
     const featsChanged = !sameLevels(
@@ -82,8 +87,8 @@ export function buildProgressionBody(
     return [
       {
         levelId: level.id,
-        fields: { bab: valueOf(level, "bab"), skills: valueOf(level, "skills") },
-        saves: levelSaveIds.map((saveId) => ({ saveId, base: valueOf(level, `save:${saveId}`) })),
+        fields: Object.fromEntries(fieldKeys.map((key) => [key, valueOf(level, key)])),
+        saves: levelSaveIds.map((saveId) => ({ saveId, base: valueOf(level, saveTrackKey(saveId)) })),
         ...(featsChanged && {
           feats: granted.map((row) => ({ featId: row.featId, aptitudeId: row.aptitudeId, free: freeOf(row, level) })),
         }),
@@ -137,11 +142,11 @@ export function readEditedTrack(level: ClassLevelRow, key: TrackKey, edits: Prog
   return edits.tracks[key]?.[level.id] ?? readTrack(level, key);
 }
 
-/** A track's value at a level, as saved: 0 for a save the level has no base for. */
+/** A track's value at a level, as saved: 0 for a save the level has no base for, or a field it holds no number in. */
 export function readTrack(level: ClassLevelRow, key: TrackKey) {
-  if (key === "bab") return level.bab;
-  if (key === "skills") return level.skills;
-  return level.saves.find((save) => `save:${save.saveId}` === key)?.base ?? 0;
+  if (key.startsWith(SAVE_TRACK)) return level.saves.find((save) => saveTrackKey(save.saveId) === key)?.base ?? 0;
+  const value: unknown = (level as Record<string, unknown>)[key];
+  return typeof value === "number" ? value : 0;
 }
 
 /** A track's value as typed (`text`): a whole number, 0 at least, or `undefined` for anything else. */
@@ -149,6 +154,11 @@ export function readWholeNumber(text: string) {
   // A save shows signed ("+4"): typed so, it's the same number
   const digits = text.trim().replace(/^\+/, "");
   return /^\d+$/.test(digits) ? Number(digits) : undefined;
+}
+
+/** A save's track's key. */
+export function saveTrackKey(saveId: string): TrackKey {
+  return `${SAVE_TRACK}${saveId}`;
 }
 
 /** The features as saved, then those the edits add that a save hasn't made the class's yet. */

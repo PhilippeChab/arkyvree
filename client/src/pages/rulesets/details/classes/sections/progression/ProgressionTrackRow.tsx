@@ -19,12 +19,16 @@ interface ProgressionTrackRowProps {
   label: string;
   /** The highest value the rules take, which a typed one past it is set back to */
   max: number;
+  /** The lowest value the rules take, which a typed one below it is set back to */
+  min: number;
   onChange: (values: Record<string, number>) => void;
   onCustomChange: (custom: boolean) => void;
   /** The progressions it can follow: none for one number at every level (skill points) */
   presets?: readonly ProgressionPreset[];
   /** Its values as saved, by level */
   saved: readonly LevelValue[];
+  /** What its one number is, when one sets every level ("Points a Level") */
+  unitLabel?: string;
   /** Its values as the tab holds them, by level */
   values: readonly LevelValue[];
 }
@@ -51,9 +55,9 @@ function readMostCommon(values: readonly LevelValue[]) {
 }
 
 /**
- * A track of a class's Progression tab (its base attack bonus, a save, its skill points): the preset it follows, which
- * a click sets at every level, or Custom, whose editor sets the levels that differ; skill points are one number. A
- * change shows the levels it changes, before and after, until it's saved or reverted.
+ * A track of a class's Progression tab (3.5's base attack bonus, a save, its skill points): the preset it follows,
+ * which a click sets at every level, or Custom, whose editor sets the levels that differ; one without presets is one
+ * number (3.5's skill points). A change shows the levels it changes, before and after, until it's saved or reverted.
  */
 export function ProgressionTrackRow({
   custom,
@@ -61,10 +65,12 @@ export function ProgressionTrackRow({
   id,
   label,
   max,
+  min,
   onChange,
   onCustomChange: setCustom,
   presets,
   saved,
+  unitLabel,
   values,
 }: ProgressionTrackRowProps) {
   const [baseKey, setBaseKey] = useState<string>();
@@ -153,21 +159,21 @@ export function ProgressionTrackRow({
             <TextField
               size="small"
               type="number"
-              label="Points a Level"
+              label={unitLabel}
               // What's typed shows as it is (an emptied field before its new number) until the field is left
               value={typing ?? (constant ? (values[0]?.value ?? "") : "")}
               placeholder={constant ? undefined : "Varies"}
               onBlur={() => setTyping(null)}
               onChange={(e) => {
                 const read = readWholeNumber(e.target.value);
-                const typed = read === undefined ? undefined : Math.min(read, max);
+                const typed = read === undefined ? undefined : Math.max(min, Math.min(read, max));
                 // Past the bound, it shows the bound it takes
                 setTyping(typed !== undefined && typed !== read ? String(typed) : e.target.value);
                 if (typed === undefined) return;
                 setBaseValue(typed);
                 onChange(Object.fromEntries(values.map(({ levelId }) => [levelId, typed])));
               }}
-              slotProps={{ htmlInput: { min: 0 } }}
+              slotProps={{ htmlInput: { min } }}
               sx={{ width: 180 }}
             />
             <Button
@@ -235,6 +241,7 @@ export function ProgressionTrackRow({
         <CustomTrackEditor
           label={label}
           max={max}
+          min={min}
           values={values}
           base={base}
           onChange={onChange}

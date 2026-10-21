@@ -1,5 +1,6 @@
 import type { RulesDescription } from "@/engine/core/module/index.ts";
 import { CLASS_COLUMNS, CLASS_LEVEL_COLUMNS, CLASS_LIST } from "@/engine/rulesets/dnd3.5/entities/classes/columns.ts";
+import { PROGRESSION } from "@/engine/rulesets/dnd3.5/entities/classes/progression.ts";
 import { ITEM_COLUMNS, ITEM_LIST } from "@/engine/rulesets/dnd3.5/entities/items/columns.ts";
 import { POWER_COLUMNS, POWER_LIST } from "@/engine/rulesets/dnd3.5/entities/powers/columns.ts";
 import { RACE_COLUMNS, RACE_LIST } from "@/engine/rulesets/dnd3.5/entities/races/columns.ts";
@@ -35,5 +36,6 @@ export const RULES: RulesDescription = {
     text: "ogl",
   },
   powerLevels: SPELL_LEVELS.map((level) => ({ label: SPELL_LEVEL_LABELS[level], level })),
+  progression: PROGRESSION,
   words: { powers: { many: "Spells", one: "Spell" } },
 };

@@ -5,9 +5,12 @@ import {
   buildProgressionBody,
   describeFeatureRows,
   NO_EDITS,
-} from "@/client/src/pages/rulesets/details/classes/sections/dnd3.5/progressionDraft.ts";
+} from "@/client/src/pages/rulesets/details/classes/sections/progression/progressionDraft.ts";
 
 const EVASION = { id: "evasion", aptitudeId: "features", name: "Evasion" };
+
+/** The fields a 3.5 class's Progression tab sets: its base attack bonus and skill points. */
+const FIELDS = ["bab", "skills"];
 
 /** A class level as its query reads it: its base attack bonus, skill points, a save's base and its granted feats. */
 function level(id: string, number: number, feats: { aptitudeId: string; id: string; name: string }[] = []) {
@@ -41,17 +44,25 @@ describe("A Progression tab's save", () => {
   });
 
   test("sends nothing for a tab that changed nothing", () => {
-    expect(buildProgressionBody(twoLevels(), ["fort"], describeFeatureRows(twoLevels()), [], NO_EDITS)).toEqual({});
+    expect(buildProgressionBody(twoLevels(), FIELDS, ["fort"], describeFeatureRows(twoLevels()), [], NO_EDITS)).toEqual(
+      {},
+    );
   });
 
   test("sends a level's own saves as they are while the ruleset's aren't read yet, never none", () => {
-    const body = buildProgressionBody(twoLevels(), undefined, [], [], { ...NO_EDITS, tracks: { bab: { l1: 0 } } });
+    const body = buildProgressionBody(twoLevels(), FIELDS, undefined, [], [], {
+      ...NO_EDITS,
+      tracks: { bab: { l1: 0 } },
+    });
     expect(body.levels?.[0].saves).toEqual([{ saveId: "fort", base: 2 }]);
   });
 
   test("sends no pick at a level the class no longer has", () => {
     const pools = [{ aptitudeId: "pool", name: "Pool", picks: {} }];
-    const body = buildProgressionBody(twoLevels(), ["fort"], [], pools, { ...NO_EDITS, pools: { pool: { gone: 1 } } });
+    const body = buildProgressionBody(twoLevels(), FIELDS, ["fort"], [], pools, {
+      ...NO_EDITS,
+      pools: { pool: { gone: 1 } },
+    });
     expect(body).toEqual({});
   });
 
@@ -59,6 +70,7 @@ describe("A Progression tab's save", () => {
     const features = describeFeatureRows(twoLevels());
     const body = buildProgressionBody(
       twoLevels(),
+      FIELDS,
       ["fort"],
       features,
       [{ aptitudeId: "pool", name: "Pool", picks: { l1: 1 } }],

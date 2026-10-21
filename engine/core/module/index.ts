@@ -84,6 +84,9 @@ export {
 export {
   type ListColumn,
   type ListDescription,
+  type ProgressionDescription,
+  type ProgressionTable,
+  type ProgressionTrack,
   type RulesDescription,
   RulesetPart,
   type RulesWord,
