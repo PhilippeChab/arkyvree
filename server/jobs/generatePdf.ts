@@ -35,18 +35,19 @@ const MAX_PDF_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
  */
 async function failExport({ campaignId, characterId, characterName, exportId, userId }: GeneratePdfPayload) {
   await withTransaction(async (tx) => {
-    if (exportId) {
-      const [failed] = await Exports.update(tx, { status: "failed" }, { id: exportId, status: "pending" });
-      // One an earlier attempt stored stays as it is; of one the cleanup deleted (its pending day past) the user hears
-      if (!failed && (await Exports.findStatus(tx, { id: exportId, userId }))) return;
-    }
+    const [failed] = exportId
+      ? await Exports.update(tx, { status: "failed" }, { id: exportId, status: "pending" })
+      : [];
+    // One an earlier attempt stored stays as it is; of one the cleanup deleted (its pending day past) the user hears,
+    // the notification naming no export
+    if (exportId && !failed && (await Exports.findStatus(tx, { id: exportId, userId }))) return;
     await Notifications.create(tx, {
       recipientId: userId,
       actorId: userId,
       type: "pdfFailed",
       targetId: characterId,
       targetTable: getCharacterPdfTargetTable(campaignId),
-      data: { characterName, ...(exportId && { exportId }) },
+      data: { characterName, ...(failed && { exportId: failed.id }) },
     });
   });
 }

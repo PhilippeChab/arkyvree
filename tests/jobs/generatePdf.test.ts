@@ -167,6 +167,7 @@ describe("generatePdf", () => {
 
     const [job] = await queuedPdfJobs(character.id);
     await generatePdfTask(job!.payload, silentJobHelpers);
-    expect(await notificationsOf(session.userId, "pdfFailed")).toMatchObject([{ data: { exportId: pending.id } }]);
+    const [notification] = await notificationsOf(session.userId, "pdfFailed");
+    expect(notification?.data).not.toHaveProperty("exportId");
   });
 });

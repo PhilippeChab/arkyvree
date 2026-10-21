@@ -13,8 +13,7 @@ class ExportsService {
    * pending. A pending one's jobs are counted before it's read again: the worker stores the export before it deletes
    * the job that made it, so an export whose job is gone by then reads as that job left it.
    */
-  private async readExport<T extends { expiresAt: string; status: string }>(
-    exportId: string,
+  private async readExport<T extends { expiresAt: string; id: string; status: string }>(
     read: () => Promise<T | undefined>,
   ) {
     let exportRecord = await read();
@@ -23,7 +22,7 @@ class ExportsService {
     if (new Date(exportRecord.expiresAt) < new Date()) throw new NotFoundError("Export has expired");
     if (exportRecord.status !== "pending") return exportRecord;
 
-    if ((await countJobsToRun(toExportJobKey(exportId))) > 0) return exportRecord;
+    if ((await countJobsToRun(toExportJobKey(exportRecord.id))) > 0) return exportRecord;
     // Its job gone, it was stored by then, or lost
     exportRecord = (await read()) ?? exportRecord;
     return exportRecord.status === "pending" ? { ...exportRecord, status: "failed" as const } : exportRecord;
@@ -32,7 +31,7 @@ class ExportsService {
   /** An export's file, once it's ready: a pending or failed one has none to download. */
   async getExport(session: Session, exportId: string) {
     const where = { id: exportId, userId: session.userId };
-    const exportRecord = await this.readExport(exportId, () => Exports.findOne(db, where));
+    const exportRecord = await this.readExport(() => Exports.findOne(db, where));
 
     const { data, status } = exportRecord;
     if (status === "failed") throw new ConflictError("The export failed: queue it again");
@@ -44,7 +43,7 @@ class ExportsService {
   /** Where an export stands, without its file: pending, ready to download, or failed. */
   async getExportStatus(session: Session, exportId: string) {
     const where = { id: exportId, userId: session.userId };
-    return await this.readExport(exportId, () => Exports.findStatus(db, where));
+    return await this.readExport(() => Exports.findStatus(db, where));
   }
 }
 

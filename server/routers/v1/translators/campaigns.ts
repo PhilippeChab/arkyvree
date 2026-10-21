@@ -57,9 +57,9 @@ function toPartialCharacter({ id, identity, name }: PartialCampaignCharacter): z
   };
 }
 
-/** An invite sent for a player slot, none when there's none: its address the Game Master's alone (`withEmail`). */
-function toSlotInvite(invite: SlotInvite | null | undefined, withEmail: boolean) {
-  return invite ? { email: withEmail ? invite.email : null, id: invite.id, status: invite.status } : null;
+/** An invite sent for a player slot, none when there's none. */
+function toSlotInvite(invite: SlotInvite | null | undefined) {
+  return invite ? { email: invite.email, id: invite.id, status: invite.status } : null;
 }
 
 /** A link's visibility, the column's check's: one it doesn't hold reads as the most hidden, `Private`. */
@@ -112,16 +112,14 @@ export function toV1CampaignCharacterSummary(
   };
 }
 
-/**
- * An invite to play in a campaign, as the campaign lists it: the slot it offers, and whom it was sent to, its address
- * the Game Master's alone (`withEmail`), who sent it: a player reads whom by their name.
- */
-export function toV1CampaignInvite(
-  { invites, players, users }: Answer<typeof CampaignInvitesService.getInvites>["items"][number],
-  withEmail: boolean,
-): z.infer<typeof v1CampaignInvite> {
+/** An invite to play in a campaign, as the campaign lists it: the slot it offers, and whom it was sent to. */
+export function toV1CampaignInvite({
+  invites,
+  players,
+  users,
+}: Answer<typeof CampaignInvitesService.getInvites>["items"][number]): z.infer<typeof v1CampaignInvite> {
   return {
-    email: withEmail ? invites.email : null,
+    email: invites.email,
     id: invites.id,
     player: { id: players.id, role: players.role },
     status: invites.status,
@@ -132,12 +130,11 @@ export function toV1CampaignInvite(
 /** A player slot of a campaign, in its list: its role, its user, and the pending invite sent for it. */
 export function toV1CampaignPlayer(
   player: Answer<typeof CampaignPlayersService.getPlayers>["items"][number],
-  withEmail: boolean,
 ): z.infer<typeof v1CampaignPlayer> {
   const { usersInAccount: user } = player;
   return {
     id: player.id,
-    invite: toSlotInvite(player.invitesInCampaigns[0], withEmail),
+    invite: toSlotInvite(player.invitesInCampaigns[0]),
     joinedAt: player.joinedAt,
     role: player.role,
     user: user ? { id: user.id, username: user.username } : null,
@@ -172,6 +169,5 @@ export function toV1PlayerSlot({
 }: Answer<typeof CampaignPlayersService.addPlayer> | Answer<typeof CampaignPlayersService.updatePlayer>): z.infer<
   typeof v1PlayerSlot
 > {
-  // A slot's write is its Game Master's
-  return { id: player.id, invite: toSlotInvite(invite, true), role: player.role, userId: player.userId };
+  return { id: player.id, invite: toSlotInvite(invite), role: player.role, userId: player.userId };
 }

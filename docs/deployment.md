@@ -154,7 +154,7 @@ Create a token: `fly tokens create deploy -o personal`.
 
 **Known caveat**: logs emitted in the first ~1-1.5s of a cold boot can still be dropped. Fly's Vector collector doesn't ingest immediately on process start. Nothing app-side fixes this — it'd require a log drain (Better Stack / Axiom) to cover. Currently accepted.
 
-**Source of truth for job success is the database, not the logs.** A PDF's `account.exports` row is stored as it's queued, `pending`: once its `status` is `ready`, the PDF was generated, regardless of whether you see the completion log (`failed` once the job gave up on it).
+**Source of truth for job success is the database, not the logs.** A PDF's `account.exports` row is stored as it's queued, `pending`: once its `status` is `ready`, the PDF was generated, regardless of whether you see the completion log (`failed` once the job gave up on it). Deploy the worker before the web app, or with it: a worker older than the web app ignores the export a job names and stores another, so the pending one reads `failed` once its job is done (`ExportsService` reads an export whose job is gone as lost).
 
 ## Debugging
 

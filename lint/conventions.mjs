@@ -779,6 +779,7 @@ function createRouteConventions(context) {
   if (!file.startsWith("server/")) return {};
   const inRouters = file.startsWith("server/routers/");
   const inApi = file.startsWith("server/routers/api/");
+  const exportLimit = EXPORT_RATE_LIMITS[file.startsWith("server/routers/v1/") ? "v1" : "api"];
   const constants = new Set();
   const named = new Map();
   return {
@@ -828,7 +829,6 @@ function createRouteConventions(context) {
       const routePath = pathOf(route);
       if (!routePath?.startsWith("/")) return;
       // .post("/:id/pdf", exportRateLimit, …): a sheet's PDF costs a render, so its route counts its requests
-      const exportLimit = EXPORT_RATE_LIMITS[file.startsWith("server/routers/v1/") ? "v1" : "api"];
       if (
         callee.property.name !== "route" &&
         routePath.endsWith("/pdf") &&

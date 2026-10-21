@@ -9,6 +9,17 @@ import { createActivityWithNotifications } from "@/server/services/activities/in
 import { CampaignsPolicy } from "@/server/services/policies/index.ts";
 import type { Invite, Session } from "@/shared/relations.ts";
 
+/** An invite as a player reads it: whom it went to by name, its addresses left out, which its Game Master reads. */
+function hideInviteAddresses<I extends { invites: { email: string | null }; users: { emailAddress: string } | null }>(
+  invite: I,
+) {
+  return {
+    ...invite,
+    invites: { ...invite.invites, email: null },
+    users: invite.users && { ...invite.users, emailAddress: null },
+  };
+}
+
 class CampaignInvitesService {
   /**
    * The invitee's answer: the invite's status, its notification read,
@@ -84,12 +95,13 @@ class CampaignInvitesService {
     const campaign = await Campaigns.findOne(db, { id: campaignId }, Visibility.All);
     if (!campaign) throw new NotFoundError("Campaign not found");
 
-    const reader = (await CampaignsPolicy.for(db, session, campaign)).canRead();
+    const policy = await CampaignsPolicy.for(db, session, campaign);
+    policy.canRead();
 
     // An address is its Game Master's to read, and so to search
-    const searchAddresses = reader.role === "Game Master";
-    const page = await Invites.findPage(db, { campaignId, ...where, searchAddresses }, pagination);
-    return { ...page, readerRole: reader.role };
+    const readsAddresses = policy.isGameMaster();
+    const page = await Invites.findPage(db, { campaignId, ...where, searchAddresses: readsAddresses }, pagination);
+    return readsAddresses ? page : { ...page, items: page.items.map(hideInviteAddresses) };
   }
 
   async getUserInvites(userId: string) {

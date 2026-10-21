@@ -27,6 +27,24 @@ interface InviteEmailData {
   inviterName: string;
 }
 
+/** A player slot as a player reads it: its user's and its invites' addresses left out, which its Game Master reads. */
+function hidePlayerAddresses<
+  P extends {
+    invitesInCampaigns: { email: string | null; usersInAccount: { emailAddress: string } | null }[];
+    usersInAccount: { emailAddress: string } | null;
+  },
+>(player: P) {
+  return {
+    ...player,
+    invitesInCampaigns: player.invitesInCampaigns.map((invite) => ({
+      ...invite,
+      email: null,
+      usersInAccount: invite.usersInAccount && { ...invite.usersInAccount, emailAddress: null },
+    })),
+    usersInAccount: player.usersInAccount && { ...player.usersInAccount, emailAddress: null },
+  };
+}
+
 class CampaignPlayersService {
   /** Send the invite email (fire-and-forget, call after transaction commits). */
   private sendInviteEmail(data: InviteEmailData) {
@@ -169,12 +187,14 @@ class CampaignPlayersService {
     const campaign = await Campaigns.findOne(db, { id: campaignId }, Visibility.All);
     if (!campaign) throw new NotFoundError("Campaign not found");
 
-    const reader = (await CampaignsPolicy.for(db, session, campaign)).canRead();
+    const policy = await CampaignsPolicy.for(db, session, campaign);
+    policy.canRead();
 
     // An address is its Game Master's to read, and so to search
-    const searchAddresses = reader.role === "Game Master";
-    const page = await Players.findPage(db, { campaignId, ...where, searchAddresses }, pagination, Visibility.All);
-    return { ...page, readerRole: reader.role };
+    const readsAddresses = policy.isGameMaster();
+    const query = { campaignId, ...where, searchAddresses: readsAddresses };
+    const page = await Players.findPage(db, query, pagination, Visibility.All);
+    return readsAddresses ? page : { ...page, items: page.items.map(hidePlayerAddresses) };
   }
 
   async removePlayer(session: Session, campaignId: string, playerId: string) {

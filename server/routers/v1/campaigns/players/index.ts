@@ -50,12 +50,7 @@ export default new Hono<ApiKeyContext>()
         { orderBy, orderDir, search },
         { limit, page },
       );
-      // An invite's address is its Game Master's to read
-      const withEmail = players.readerRole === "Game Master";
-      return c.json(
-        V1.page(players, (item) => V1.campaignPlayer(item, withEmail)),
-        200,
-      );
+      return c.json(V1.page(players, V1.campaignPlayer), 200);
     },
   )
   .post(
