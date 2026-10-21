@@ -21,6 +21,7 @@ describe("v1 campaign players", () => {
     expect(await expectOk(players.$get({ param, query: {} }))).toEqual({
       items: [
         {
+          archived: false,
           id: gmSlot.id,
           invite: null,
           joinedAt: expect.any(String),
@@ -46,6 +47,7 @@ describe("v1 campaign players", () => {
     // A test's rows share their transaction's time: its slots tie on their creation
     const listed = (await expectOk(players.$get({ param, query: {} }))).items;
     expect(listed.find(({ id }) => id === slot.id)).toEqual({
+      archived: false,
       id: slot.id,
       invite: slot.invite,
       joinedAt: null,

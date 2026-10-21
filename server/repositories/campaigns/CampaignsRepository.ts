@@ -116,6 +116,7 @@ class CampaignsRepository extends include(BaseRepository<typeof campaignsInCampa
         rulesetName: rulesetsInRules.name,
         createdAt: campaignsInCampaign.createdAt,
         updatedAt: campaignsInCampaign.updatedAt,
+        deletedAt: campaignsInCampaign.deletedAt,
         currentPlayers: sql<number>`coalesce(${playerCountSubquery.count}, 0)::int`.as("currentPlayers"),
       })
       .from(campaignsInCampaign)
@@ -131,6 +132,7 @@ class CampaignsRepository extends include(BaseRepository<typeof campaignsInCampa
         rulesetsInRules.name,
         campaignsInCampaign.createdAt,
         campaignsInCampaign.updatedAt,
+        campaignsInCampaign.deletedAt,
         playerCountSubquery.count,
       )
       .orderBy(...this.pageOrder(this.orderBy(this.table[orderBy], orderDir)))

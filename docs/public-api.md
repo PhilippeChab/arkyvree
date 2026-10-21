@@ -152,7 +152,8 @@ Each write calls the service the app's own route calls, its body a v1 shape tran
   them, the unread notifications' count and latest, a notification marked read, or all of them but the invites, which
   stay unread until they're answered. Each names what it's about (`target`) by its kind as v1 names it (`classes`,
   `spells`, `campaigns`…), and `/v1/activities/targets/{kind}/{targetId}` answers the app's page of it (a 404 once
-  it's gone, a 403 once the user lost access to it).
+  it's gone, a 403 once the user lost access to it). An export (`exports`, a PDF's notice) has no page:
+  `GET /v1/exports/{id}` reads it.
 - **Attachments** (`/v1/attachments`): a record's image (a user's avatar, a character's portrait), uploaded as the app
   uploads it, in two steps: `POST /v1/attachments/direct-uploads` answers where to send the file (`uploadUrl`, with
   `PUT` and its `headers`) and what attaches it; `POST /v1/attachments/{signedId}/attach` then attaches it to its

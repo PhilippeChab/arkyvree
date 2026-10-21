@@ -38,6 +38,7 @@ describe("v1 campaigns", () => {
     const { api, campaign } = await createCampaign();
     const { campaign: other } = await createTestCampaign((await createTestUser()).user.id);
     const summary = {
+      archived: false,
       description: "Into the dark",
       id: campaign.id,
       name: campaign.name,
@@ -51,11 +52,12 @@ describe("v1 campaigns", () => {
     expect((await list({ search: other.name })).items).toEqual([]);
     await expectStatus(api.v1.campaigns[":id"].$delete({ param: { id: campaign.id } }), 204);
     expect((await list({})).items).toEqual([]);
-    expect((await list({ visibility: "archived" })).items).toEqual([summary]);
-    expect((await list({ visibility: "all", search: campaign.name.slice(-6) })).items).toEqual([summary]);
+    const archived = { ...summary, archived: true };
+    expect((await list({ visibility: "archived" })).items).toEqual([archived]);
+    expect((await list({ visibility: "all", search: campaign.name.slice(-6) })).items).toEqual([archived]);
   });
 
-  test("counts a campaign's live players alike in its list and its read: an archived slot is none", async () => {
+  test("counts a campaign's live players alike in its list and its read, and lists an archived slot as one", async () => {
     const { api, campaign } = await createCampaign();
     const [left, stays] = [(await createTestUser()).user, (await createTestUser()).user];
     for (const { id: userId } of [left, stays])
@@ -65,6 +67,10 @@ describe("v1 campaigns", () => {
 
     expect((await expectOk(api.v1.campaigns[":id"].$get({ param: { id: campaign.id } }))).players).toBe(2);
     expect((await expectOk(api.v1.campaigns.$get({ query: {} }))).items[0]?.players).toBe(2);
+    const slots = (await expectOk(api.v1.campaigns[":id"].players.$get({ param: { id: campaign.id }, query: {} })))
+      .items;
+    const archivedOf = (userId: string) => slots.find(({ user }) => user?.id === userId)?.archived;
+    expect([archivedOf(left.id), archivedOf(stays.id)]).toEqual([true, false]);
   });
 
   test("edits a campaign's name and description, as its Game Master", async () => {

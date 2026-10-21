@@ -8,7 +8,7 @@ import {
 
 /** A player slot as the API lists it: its user, and its invites (the latest first). */
 function player(
-  user: { emailAddress: string; username: string | null } | null,
+  user: { emailAddress: string | null; username: string | null } | null,
   invites: Partial<NonNullable<CampaignPlayer["invitesInCampaigns"]>[number]>[] = [],
 ) {
   return {
@@ -39,6 +39,19 @@ describe("a player slot", () => {
       { name: "bob@example.com", caption: undefined },
       { name: "cy@example.com", caption: undefined },
       { name: "Unassigned Player Slot", caption: "No player assigned" },
+    ]);
+  });
+
+  test("is named for a player who doesn't read the addresses of those without a username", () => {
+    const players = [
+      player({ username: null, emailAddress: null }),
+      player(null, [
+        { status: "Pending", email: null, usersInAccount: { id: "u2", emailAddress: null, username: null } },
+      ]),
+    ];
+    expect(players.map((p) => playerDisplay(p))).toEqual([
+      { name: "Unnamed Player", caption: null },
+      { name: "Invited User", caption: null },
     ]);
   });
 });

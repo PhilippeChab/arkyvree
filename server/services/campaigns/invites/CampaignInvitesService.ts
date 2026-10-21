@@ -9,10 +9,11 @@ import { createActivityWithNotifications } from "@/server/services/activities/in
 import { CampaignsPolicy } from "@/server/services/policies/index.ts";
 import type { Invite, Session } from "@/shared/relations.ts";
 
+/** An invite as its campaign's list reads it. */
+type InviteRow = Awaited<ReturnType<typeof Invites.findPage>>["items"][number];
+
 /** An invite as a player reads it: whom it went to by name, its addresses left out, which its Game Master reads. */
-function hideInviteAddresses<I extends { invites: { email: string | null }; users: { emailAddress: string } | null }>(
-  invite: I,
-) {
+function hideInviteAddresses(invite: InviteRow) {
   return {
     ...invite,
     invites: { ...invite.invites, email: null },
@@ -99,7 +100,7 @@ class CampaignInvitesService {
     policy.canRead();
 
     // An address is its Game Master's to read, and so to search
-    const readsAddresses = policy.isGameMaster();
+    const readsAddresses = policy.isAddressReader();
     const page = await Invites.findPage(db, { campaignId, ...where, searchAddresses: readsAddresses }, pagination);
     return readsAddresses ? page : { ...page, items: page.items.map(hideInviteAddresses) };
   }

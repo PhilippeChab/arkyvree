@@ -24,6 +24,7 @@ const v1SlotInvite = z.strictObject({
 
 export const v1CampaignSummary = z
   .strictObject({
+    archived: z.boolean(),
     description: z.string().nullable(),
     id: v1Id,
     name: z.string(),
@@ -34,7 +35,6 @@ export const v1CampaignSummary = z
 
 export const v1Campaign = v1CampaignSummary
   .extend({
-    archived: z.boolean(),
     role: v1CampaignRole.meta({ description: "The key's user's role in it" }),
   })
   .meta({ description: "A campaign the key's user plays in, or is the Game Master of", id: "Campaign" });
@@ -113,6 +113,7 @@ export const v1CampaignPage = buildPageSchema(v1CampaignSummary);
 
 export const v1CampaignPlayer = z
   .strictObject({
+    archived: z.boolean().meta({ description: "Archived, as a deleted account's slot is: `players` doesn't count it" }),
     id: v1Id,
     invite: v1SlotInvite.nullable().meta({ description: "The pending invite sent for the slot" }),
     joinedAt: z.string().nullable().meta({ description: "When its user joined, none while it has none" }),

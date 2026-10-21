@@ -1,10 +1,13 @@
 /** The headers a route sends a file with: its type, and how a browser takes it, under its name. */
 
-/** What isn't a printable ASCII character a quoted header value holds: its name's fallback replaces it. */
-const NON_ASCII = /[^\x20-\x7e]|["\\]/g;
-
 /** What `encodeURIComponent` leaves that an RFC 5987 value can't hold, `'` its own delimiter. */
 const RESERVED_IN_EXT_VALUE = /['()*!]/g;
+
+/**
+ * What a quoted header value can't hold: a character outside printable ASCII (one each, an emoji too), a quote or a
+ * backslash. Its name's fallback replaces each.
+ */
+const UNQUOTABLE = /[^\x20-\x7e]|["\\]/gu;
 
 /** A name as an RFC 5987 value holds it: UTF-8, percent-encoded but its unreserved characters. */
 function encodeExtValue(name: string) {
@@ -20,7 +23,7 @@ function encodeExtValue(name: string) {
  * character's name in any script names its PDF, which a raw header value would refuse.
  */
 export function buildFileHeaders(file: { disposition: "attachment" | "inline"; fileName: string; mimeType: string }) {
-  const fallback = file.fileName.replaceAll(NON_ASCII, "_");
+  const fallback = file.fileName.replaceAll(UNQUOTABLE, "_");
   return {
     "Content-Disposition": `${file.disposition}; filename="${fallback}"; filename*=UTF-8''${encodeExtValue(file.fileName)}`,
     "Content-Type": file.mimeType,

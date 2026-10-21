@@ -27,13 +27,14 @@ interface InviteEmailData {
   inviterName: string;
 }
 
-/** A player slot as a player reads it: its user's and its invites' addresses left out, which its Game Master reads. */
-function hidePlayerAddresses<
-  P extends {
-    invitesInCampaigns: { email: string | null; usersInAccount: { emailAddress: string } | null }[];
-    usersInAccount: { emailAddress: string } | null;
-  },
->(player: P) {
+/** A player slot as its campaign's list reads it. */
+type PlayerRow = Awaited<ReturnType<typeof Players.findPage>>["items"][number];
+
+/**
+ * A player slot as a player reads it: its user's and its invites' addresses left out, which its Game Master reads. The
+ * row is named whole so its addresses read nullable to the app.
+ */
+function hidePlayerAddresses(player: PlayerRow) {
   return {
     ...player,
     invitesInCampaigns: player.invitesInCampaigns.map((invite) => ({
@@ -191,7 +192,7 @@ class CampaignPlayersService {
     policy.canRead();
 
     // An address is its Game Master's to read, and so to search
-    const readsAddresses = policy.isGameMaster();
+    const readsAddresses = policy.isAddressReader();
     const query = { campaignId, ...where, searchAddresses: readsAddresses };
     const page = await Players.findPage(db, query, pagination, Visibility.All);
     return readsAddresses ? page : { ...page, items: page.items.map(hidePlayerAddresses) };

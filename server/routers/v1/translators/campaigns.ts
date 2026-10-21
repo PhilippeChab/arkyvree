@@ -133,6 +133,7 @@ export function toV1CampaignPlayer(
 ): z.infer<typeof v1CampaignPlayer> {
   const { usersInAccount: user } = player;
   return {
+    archived: player.deletedAt !== null,
     id: player.id,
     invite: toSlotInvite(player.invitesInCampaigns[0]),
     joinedAt: player.joinedAt,
@@ -146,6 +147,7 @@ export function toV1CampaignSummary(
   campaign: Answer<typeof CampaignsService.getCampaigns>["items"][number],
 ): z.infer<typeof v1CampaignSummary> {
   return {
+    archived: campaign.deletedAt !== null,
     description: campaign.description,
     id: campaign.id,
     name: campaign.name,

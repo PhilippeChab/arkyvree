@@ -60,7 +60,7 @@ export default new Hono<ApiKeyContext>()
       status: 200,
       summary:
         "The app's page that shows what an activity or a notification is about: a 404 once it's gone, a 403 once " +
-        "the key's user lost access to it",
+        "the key's user lost access to it. An export has no page: `GET /v1/exports/{id}` reads it",
     }),
     validate("param", targetParams),
     async (c) => {

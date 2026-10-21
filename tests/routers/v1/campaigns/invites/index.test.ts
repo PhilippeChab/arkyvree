@@ -1,5 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
+import { db } from "@/server/database/index.ts";
+import { Players } from "@/server/repositories/index.ts";
 import { createKeyedApi, expectOk, expectStatus } from "@/tests/support/api.ts";
 import { createTestCampaign } from "@/tests/support/campaigns.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
@@ -61,6 +63,23 @@ describe("v1 campaign invites", () => {
         .items,
     ).toEqual([]);
     expect((await expectOk(gmApi.v1.campaigns[":id"].invites.$get({ param, query }))).items).toHaveLength(1);
+  });
+
+  test("shows a Game Master the addresses of a campaign archived with its players, as campaigns once were", async () => {
+    const { user: gm } = await createTestUser("gm");
+    const { user: invitee } = await createTestUser("invitee");
+    const { campaign } = await createTestCampaign(gm.id);
+    const { api } = await createKeyedApi(gm.id);
+    const param = { id: campaign.id };
+    await expectOk(
+      api.v1.campaigns[":id"].players.$post({ param, json: { email: invitee.emailAddress, role: "Player Character" } }),
+    );
+    await Players.archive(db, { userId: gm.id });
+
+    const query = { search: invitee.emailAddress };
+    expect((await expectOk(api.v1.campaigns[":id"].invites.$get({ param, query }))).items).toEqual([
+      expect.objectContaining({ email: invitee.emailAddress }),
+    ]);
   });
 
   test("refuses a stranger, and a campaign that doesn't exist", async () => {
