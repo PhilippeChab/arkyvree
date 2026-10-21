@@ -275,12 +275,13 @@ export default class ItemEntity extends CustomizationPageEntity<
 
   /**
    * The slot a form saves an item with: the one its type sets (the type an edit keeps when its form leaves it out),
-   * else the form's. An edit that changes its type without naming a slot leaves behind the slot the old type placed it
-   * in (a weapon's hand too).
+   * else the form's. An edit that changes its type without naming a slot leaves its slot behind when either type places
+   * its items (a weapon's hand, a necklace retyped a weapon).
    */
   private savedSlotOf(body: ItemBody, item?: Item) {
     const type = this.typeOf(body, item);
-    const leftBehind = item && body.slot === undefined && type !== item.type && ItemPlacement.isLocatedType(item.type);
+    const placed = ItemPlacement.isLocatedType(item?.type ?? null) || ItemPlacement.isLocatedType(type);
+    const leftBehind = item && body.slot === undefined && type !== item.type && placed;
     return this.slotOf({ slot: leftBehind ? null : body.slot, type });
   }
 
