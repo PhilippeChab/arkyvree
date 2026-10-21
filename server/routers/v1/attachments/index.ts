@@ -1,7 +1,6 @@
 import { Hono } from "hono";
 import { z } from "zod";
 
-import { NotFoundError } from "@/server/errors/index.ts";
 import {
   apiAttachmentUploadRateLimit,
   type ApiKeyContext,
@@ -11,7 +10,7 @@ import {
 import { idParam, signedIdParam } from "@/server/routers/api/validation.ts";
 import { v1Attachment, v1DirectUpload } from "@/server/routers/v1/schemas/attachments.ts";
 import { V1 } from "@/server/routers/v1/translators/V1.ts";
-import { AttachmentsService } from "@/server/services/attachments/index.ts";
+import { AttachmentsService, getPublicUrl } from "@/server/services/attachments/index.ts";
 
 /** A record's image slot: the record, and the slot's name. */
 const slot = {
@@ -74,12 +73,9 @@ export default new Hono<ApiKeyContext>()
     validate("param", signedIdParam),
     async (c) => {
       const { signedId } = c.req.valid("param");
-      const { attachment } = await AttachmentsService.attach(c.var.requestSession, signedId);
-      const { name, recordId, recordType } = attachment;
-      const attached = await AttachmentsService.getAttachment(c.var.requestSession, { name, recordId, recordType });
-      // Removed by another request since it was attached
-      if (!attached) throw new NotFoundError("Attachment not found");
-      return c.json(V1.attachment(attached), 200);
+      // What it attached, as its write left it: another request may replace it since
+      const { attachment, blob } = await AttachmentsService.attach(c.var.requestSession, signedId);
+      return c.json(V1.attachment({ id: attachment.id, url: getPublicUrl(blob) }), 200);
     },
   )
   .delete(

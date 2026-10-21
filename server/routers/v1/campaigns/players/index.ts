@@ -7,7 +7,6 @@ import { idParam, orderDirAsc, sanitizedEmail } from "@/server/routers/api/valid
 import { v1CampaignPlayerPage, v1PlayerSlot } from "@/server/routers/v1/schemas/campaigns.ts";
 import { V1 } from "@/server/routers/v1/translators/V1.ts";
 import { PAGE_FILTERS } from "@/server/routers/v1/validation.ts";
-import { CampaignsService } from "@/server/services/campaigns/index.ts";
 import { CampaignPlayersService } from "@/server/services/campaigns/players/index.ts";
 
 /** A player slot as its add and its change take it: its role, and an address to invite into it. */
@@ -36,7 +35,10 @@ export default new Hono<ApiKeyContext>()
         ...PAGE_FILTERS,
         orderBy: z.enum(["createdAt", "updatedAt"]).default("createdAt"),
         orderDir: orderDirAsc,
-        search: z.string().optional().meta({ description: "A part of the user's name or address" }),
+        search: z
+          .string()
+          .optional()
+          .meta({ description: "A part of the user's name, or of their address for the Game Master" }),
       }),
     ),
     async (c) => {
@@ -49,8 +51,7 @@ export default new Hono<ApiKeyContext>()
         { limit, page },
       );
       // An invite's address is its Game Master's to read
-      const { currentUserRole } = await CampaignsService.getCampaign(c.var.requestSession, id);
-      const withEmail = currentUserRole === "Game Master";
+      const withEmail = players.readerRole === "Game Master";
       return c.json(
         V1.page(players, (item) => V1.campaignPlayer(item, withEmail)),
         200,

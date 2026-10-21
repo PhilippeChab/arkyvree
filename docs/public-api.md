@@ -134,7 +134,9 @@ Each write calls the service the app's own route calls, its body a v1 shape tran
   with an address to invite), the invites they sent (`/invites`), and their characters (`/characters`), each as the
   key's user may see it: a character linked `Partial` shows the other players its identity alone (`partial`, its
   `sheet` a `PartialCharacter`), a `Private` one none of them. `/linkable-characters` lists the user's player
-  characters a campaign could link: on its exact ruleset, in no campaign.
+  characters a campaign could link: on its exact ruleset, in no campaign. An invite's address is the Game Master's to
+  read and to search by in `/players` and `/invites`: a player reads whom by their name alone. (The app's own lists
+  search addresses for the Game Master alone too.)
 - **Invites to the key's user**: to play in a campaign (`/v1/campaign-invites`: the latest ten, any status), and to
   contribute to a character or a ruleset (`/v1/character-invites`, `/v1/ruleset-invites`: the pending ones, ten at
   most), each read alone and answered (`/accept`, `/reject`); a campaign's Game Master takes one back

@@ -84,9 +84,12 @@ class CampaignInvitesService {
     const campaign = await Campaigns.findOne(db, { id: campaignId }, Visibility.All);
     if (!campaign) throw new NotFoundError("Campaign not found");
 
-    (await CampaignsPolicy.for(db, session, campaign)).canRead();
+    const reader = (await CampaignsPolicy.for(db, session, campaign)).canRead();
 
-    return await Invites.findPage(db, { campaignId, ...where }, pagination);
+    // An address is its Game Master's to read, and so to search
+    const searchAddresses = reader.role === "Game Master";
+    const page = await Invites.findPage(db, { campaignId, ...where, searchAddresses }, pagination);
+    return { ...page, readerRole: reader.role };
   }
 
   async getUserInvites(userId: string) {
@@ -107,7 +110,10 @@ class CampaignInvitesService {
 
       const campaign = await this.getInviteCampaign(tx, invite);
 
-      (await CampaignsPolicy.for(tx, session, campaign)).canUpdate();
+      const policy = await CampaignsPolicy.for(tx, session, campaign);
+      // Another campaign's invite is unknown to a stranger, as one that doesn't exist; its invitee or a player is refused
+      if (!policy.isMember() && invite.userId !== session.userId) throw new NotFoundError("Invite not found");
+      policy.canUpdate();
 
       if (invite.status !== "Pending") throw new ConflictError("Only pending invites can be revoked");
 

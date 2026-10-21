@@ -11,18 +11,12 @@ import {
   PlayerCharacters,
   Visibility,
 } from "@/server/repositories/index.ts";
-import { toExportJobKey } from "@/server/services/exports/index.ts";
+import { PENDING_EXPORT_TTL_MS, toExportJobKey } from "@/server/services/exports/index.ts";
 import { CampaignsPolicy } from "@/server/services/policies/index.ts";
 import { formatSheetFileName } from "@/shared/exports.ts";
 import type { Character, Session } from "@/shared/relations.ts";
 
 import { findEditableCharacterOrBonded } from "./editableCharacter.ts";
-
-/**
- * How long a queued export waits for its file before the daily cleanup reaps it: far past the worker's run, which
- * keeps a ready file an hour.
- */
-const PENDING_EXPORT_TTL_MS = 24 * 60 * 60 * 1000;
 
 /**
  * Where a PDF export's activity and failure notification link to: the

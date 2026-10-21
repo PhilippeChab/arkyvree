@@ -13,6 +13,7 @@ import {
   getCharacterPdfTargetTable,
   readCharacterInput,
 } from "@/server/services/characters/index.ts";
+import { READY_EXPORT_TTL_MS } from "@/server/services/exports/index.ts";
 import { publishWsEvent } from "@/server/websockets/index.ts";
 import { formatSheetFileName } from "@/shared/exports.ts";
 
@@ -27,7 +28,6 @@ interface GeneratePdfPayload {
 }
 
 const MAX_PDF_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
-const ONE_HOUR_MS = 60 * 60 * 1000;
 
 /**
  * The user's PDF failed: its export marked so, and the user told. An export an earlier attempt stored stays ready, and
@@ -38,7 +38,7 @@ async function failExport({ campaignId, characterId, characterName, exportId, us
     if (exportId) {
       const [failed] = await Exports.update(tx, { status: "failed" }, { id: exportId, status: "pending" });
       // One an earlier attempt stored stays as it is; of one the cleanup deleted (its pending day past) the user hears
-      if (!failed && (await Exports.findOne(tx, { id: exportId, userId }))) return;
+      if (!failed && (await Exports.findStatus(tx, { id: exportId, userId }))) return;
     }
     await Notifications.create(tx, {
       recipientId: userId,
@@ -59,7 +59,7 @@ async function storeExport(tx: Db, { exportId, userId }: GeneratePdfPayload, dat
   const file = {
     data,
     fileName,
-    expiresAt: new Date(Date.now() + ONE_HOUR_MS).toISOString(),
+    expiresAt: new Date(Date.now() + READY_EXPORT_TTL_MS).toISOString(),
     status: "ready" as const,
   };
   const [stored] = exportId ? await Exports.update(tx, file, { id: exportId }) : [];

@@ -63,4 +63,9 @@ export default class CampaignsPolicy extends BasePolicy<PolicyCampaign> {
   isGameMaster() {
     return this.player?.role === "Game Master" && !this.player.deletedAt;
   }
+
+  /** Whether the session's user plays in the campaign, in any role. */
+  isMember() {
+    return this.player !== null;
+  }
 }

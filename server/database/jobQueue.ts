@@ -4,7 +4,10 @@ import type { Db } from "@/drizzle/database.ts";
 
 import { db } from "./connection.ts";
 
-/** Queues a job for the worker (graphile-worker), in `tx`'s transaction when it's one. Ping the worker once committed. */
+/** How long the worker holds a job's lock before taking back a killed worker's: graphile-worker's own four hours. */
+const STALE_LOCK_INTERVAL = "4 hours";
+
+/** Queues a job for the worker (graphile-worker), in `tx`'s transaction if it's one. Ping the worker once committed. */
 export async function addJob(
   tx: Db,
   task: string,
@@ -31,7 +34,7 @@ export async function countJobsToRun(jobKey: string) {
   const jobs = await db.execute<{ count: number }>(sql`
     SELECT count(*)::int AS count
     FROM graphile_worker.jobs
-    WHERE key = ${jobKey} AND (attempts < max_attempts OR locked_at > now() - interval '4 hours')
+    WHERE key = ${jobKey} AND (attempts < max_attempts OR locked_at > now() - ${STALE_LOCK_INTERVAL}::interval)
   `);
   return jobs.rows[0]?.count ?? 0;
 }

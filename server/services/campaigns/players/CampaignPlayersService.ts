@@ -169,9 +169,12 @@ class CampaignPlayersService {
     const campaign = await Campaigns.findOne(db, { id: campaignId }, Visibility.All);
     if (!campaign) throw new NotFoundError("Campaign not found");
 
-    (await CampaignsPolicy.for(db, session, campaign)).canRead();
+    const reader = (await CampaignsPolicy.for(db, session, campaign)).canRead();
 
-    return await Players.findPage(db, { campaignId, ...where }, pagination, Visibility.All);
+    // An address is its Game Master's to read, and so to search
+    const searchAddresses = reader.role === "Game Master";
+    const page = await Players.findPage(db, { campaignId, ...where, searchAddresses }, pagination, Visibility.All);
+    return { ...page, readerRole: reader.role };
   }
 
   async removePlayer(session: Session, campaignId: string, playerId: string) {

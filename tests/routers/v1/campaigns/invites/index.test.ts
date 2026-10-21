@@ -31,7 +31,7 @@ describe("v1 campaign invites", () => {
     });
   });
 
-  test("shows a player the invites a campaign sent, and whom to, without their addresses", async () => {
+  test("shows a player the invites a campaign sent, and whom to, without their addresses, nor finds them by one", async () => {
     const { user: gm } = await createTestUser("gm");
     const { user: player } = await createTestUser("player");
     const { user: invitee } = await createTestUser("invitee");
@@ -52,6 +52,15 @@ describe("v1 campaign invites", () => {
     );
     const players = await expectOk(playerApi.v1.campaigns[":id"].players.$get({ param, query: {} }));
     expect(players.items.flatMap(({ invite }) => (invite ? [invite.email] : []))).toEqual([null]);
+
+    // Nor do they find them by searching one: the Game Master does
+    const query = { search: invitee.emailAddress };
+    expect((await expectOk(playerApi.v1.campaigns[":id"].invites.$get({ param, query }))).items).toEqual([]);
+    expect(
+      (await expectOk(playerApi.v1.campaigns[":id"].players.$get({ param, query: { search: player.emailAddress } })))
+        .items,
+    ).toEqual([]);
+    expect((await expectOk(gmApi.v1.campaigns[":id"].invites.$get({ param, query }))).items).toHaveLength(1);
   });
 
   test("refuses a stranger, and a campaign that doesn't exist", async () => {

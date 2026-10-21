@@ -6,7 +6,6 @@ import { idParam, orderDirDesc } from "@/server/routers/api/validation.ts";
 import { v1CampaignInvitePage } from "@/server/routers/v1/schemas/campaigns.ts";
 import { V1 } from "@/server/routers/v1/translators/V1.ts";
 import { PAGE_FILTERS } from "@/server/routers/v1/validation.ts";
-import { CampaignsService } from "@/server/services/campaigns/index.ts";
 import { CampaignInvitesService } from "@/server/services/campaigns/invites/index.ts";
 
 /** The invites sent for a campaign's player slots, which its members read. */
@@ -24,7 +23,10 @@ export default new Hono<ApiKeyContext>().get(
       ...PAGE_FILTERS,
       orderBy: z.enum(["createdAt", "updatedAt"]).default("createdAt"),
       orderDir: orderDirDesc,
-      search: z.string().optional().meta({ description: "A part of the address, or of the invited user's name" }),
+      search: z
+        .string()
+        .optional()
+        .meta({ description: "A part of the invited user's name, or of the address for the Game Master" }),
     }),
   ),
   async (c) => {
@@ -37,8 +39,7 @@ export default new Hono<ApiKeyContext>().get(
       { limit, page },
     );
     // An invite's address is its Game Master's to read
-    const { currentUserRole } = await CampaignsService.getCampaign(c.var.requestSession, id);
-    const withEmail = currentUserRole === "Game Master";
+    const withEmail = invites.readerRole === "Game Master";
     return c.json(
       V1.page(invites, (item) => V1.campaignInvite(item, withEmail)),
       200,

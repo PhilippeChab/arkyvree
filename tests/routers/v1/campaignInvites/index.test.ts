@@ -62,6 +62,12 @@ describe("v1 campaign invites to the key's user", () => {
     await expectStatus(api.v1["campaign-invites"][":id"].accept.$post({ param: { id } }), 409);
   });
 
+  test("hides another campaign's invite from a stranger who would revoke it", async () => {
+    const { id } = await invite();
+    const { api: strangerApi } = await createKeyedApi((await createTestUser("stranger")).user.id);
+    await expectStatus(strangerApi.v1["campaign-invites"][":id"].revoke.$post({ param: { id } }), 404);
+  });
+
   test("hides another user's invite, and one that doesn't exist", async () => {
     const { gmApi, id } = await invite();
     for (const inviteId of [id, NIL_UUID]) {
