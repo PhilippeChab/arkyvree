@@ -1,7 +1,7 @@
 import { ToggleButton } from "@mui/material";
 import type { ReactNode } from "react";
 
-import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
+import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionProps.ts";
 
 type SectionActionsProps = RulesetSectionProps & {
   /** The section's own toggles, shown before "Local Changes". */

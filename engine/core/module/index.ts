@@ -28,6 +28,7 @@ export {
   type PrivateNotes,
   type RacePickQuery,
   type SheetRequest,
+  type SheetStat,
 } from "./parts/characters/index.ts";
 export { ContentPart } from "./parts/content/index.ts";
 export {
@@ -70,6 +71,7 @@ export {
   type LevelRequest,
   type LevelRows,
   type LevelsPlan,
+  type LevelStepKind,
   LevelUpPart,
   type LevelUpRequest,
   type LevelWrites,
@@ -83,5 +85,15 @@ export {
   type SkillRank,
   type WizardStep,
 } from "./parts/levelUp/index.ts";
-export { RulesetPart } from "./parts/ruleset/index.ts";
+export {
+  type LevelWizardDescription,
+  type ListColumn,
+  type ListDescription,
+  type ProgressionDescription,
+  type ProgressionTable,
+  type ProgressionTrack,
+  type RulesDescription,
+  RulesetPart,
+  type RulesWord,
+} from "./parts/ruleset/index.ts";
 export type { OpenedGroupedPicker, OpenedPicker, PickerOption, PickFilters, PickGroupFilters } from "./pickers.ts";

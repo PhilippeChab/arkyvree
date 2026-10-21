@@ -1,5 +1,6 @@
 import { Typography } from "@mui/material";
 
+import { useRules } from "@/client/src/hooks/index.ts";
 import { formatActivityDetails } from "@/client/src/lib/activityFormatters.ts";
 
 interface ActivityDetailsProps {
@@ -9,9 +10,13 @@ interface ActivityDetailsProps {
   type: string;
 }
 
-/** What an activity or a notification changed, under it: shown inline, since a tooltip never opens on a phone. */
+/**
+ * What an activity or a notification changed, under it, named in its ruleset's rules: shown inline, since a tooltip
+ * never opens on a phone.
+ */
 export function ActivityDetails({ type, data }: ActivityDetailsProps) {
-  const details = formatActivityDetails(type, data);
+  const { all: rules } = useRules();
+  const details = formatActivityDetails(type, data, rules);
   return (
     details && (
       <Typography variant="caption" sx={{ color: "text.secondary", whiteSpace: "pre-line" }}>

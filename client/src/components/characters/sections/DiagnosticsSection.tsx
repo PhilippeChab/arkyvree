@@ -19,7 +19,7 @@ import {
   toggleProps,
 } from "@/client/src/components/common/index.ts";
 import { ExpandMoreIcon } from "@/client/src/components/icons/index.ts";
-import { useToggleSet } from "@/client/src/hooks/index.ts";
+import { useRules, useToggleSet } from "@/client/src/hooks/index.ts";
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
 import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
 import { DURATION } from "@/client/src/theme/animations.ts";
@@ -208,12 +208,13 @@ function GroupedRuleTable({ label, count, columns, groups, lastSlot }: GroupedRu
 }
 
 function InvalidRequirementTable({ baseRules, items }: InvalidRequirementTableProps) {
+  const { rules } = useRules(baseRules);
   return (
     <DiagnosticsGroup label="Invalid" count={items.length} columns={INVALID_COLUMNS}>
       {items.map((item, i) => (
         <DataRow key={i}>
           <DataCell slot="primary">
-            {item.sourceName ?? entityTypeLabel(item.requirement.entityType, baseRules)}
+            {item.sourceName ?? entityTypeLabel(item.requirement.entityType, rules?.words)}
           </DataCell>
           <DataCell slot="labeled" label="Level">
             {item.requirement.level}
@@ -237,12 +238,13 @@ function isShown(cell: ReactNode) {
 }
 
 function ModifierTable({ baseRules, modifiers, label }: ModifierTableProps) {
+  const { rules } = useRules(baseRules);
   const bySource = new Map<string, RuleCells[]>();
   for (const mod of modifiers) {
-    const source = mod.sourceName ?? entityTypeLabel(mod.sourceType, baseRules);
+    const source = mod.sourceName ?? entityTypeLabel(mod.sourceType, rules?.words);
     const cells: RuleCells = [mod.target, formatOperator("modifier", mod.operator), mod.value, mod.valueType];
-    const rules = bySource.get(source);
-    if (rules) rules.push(cells);
+    const sourceRules = bySource.get(source);
+    if (sourceRules) sourceRules.push(cells);
     else bySource.set(source, [cells]);
   }
   const groups = [...bySource].map(([source, rules]) => ({ key: source, source, rules }));
@@ -267,6 +269,7 @@ function phonePath(path: ReactNode) {
 }
 
 function RequirementTable({ baseRules, groups, label }: RequirementTableProps) {
+  const { rules } = useRules(baseRules);
   return (
     <GroupedRuleTable
       label={label}
@@ -275,7 +278,8 @@ function RequirementTable({ baseRules, groups, label }: RequirementTableProps) {
       lastSlot="labeled"
       groups={groups.map((group, index) => ({
         key: String(index),
-        source: group.sourceName ?? (group.sourceType ? entityTypeLabel(group.sourceType, baseRules) : <EmptyValue />),
+        source:
+          group.sourceName ?? (group.sourceType ? entityTypeLabel(group.sourceType, rules?.words) : <EmptyValue />),
         rules: group.requirements.map((req): RuleCells => [
           req.target,
           req.operator && formatOperator("requirement", req.operator),
@@ -331,11 +335,12 @@ function shownCell(cell: ReactNode) {
 }
 
 function SkippedModifierTable({ baseRules, items }: SkippedModifierTableProps) {
+  const { rules } = useRules(baseRules);
   return (
     <DiagnosticsGroup label="Skipped" count={items.length} columns={SKIPPED_COLUMNS}>
       {items.map((item, i) => (
         <DataRow key={i}>
-          <DataCell slot="primary">{entityTypeLabel(item.modifier.sourceType, baseRules)}</DataCell>
+          <DataCell slot="primary">{entityTypeLabel(item.modifier.sourceType, rules?.words)}</DataCell>
           <DataCell slot="inline" phoneChildren={phonePath(item.modifier.target)}>
             {item.modifier.target}
           </DataCell>

@@ -22,7 +22,7 @@ import {
   SectionSearchBar,
 } from "@/client/src/pages/rulesets/components/index.ts";
 import { saveQuery } from "@/client/src/pages/rulesets/details/entities/entityDetailQueries.ts";
-import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
+import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionProps.ts";
 import { savesQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import { type Save, useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";

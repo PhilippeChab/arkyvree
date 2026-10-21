@@ -1,4 +1,6 @@
+export { AddLevelDialog } from "./AddLevelDialog.tsx";
 export { canPlanLevel, hasRoomForLevel, plannedLevel } from "./classPlan.ts";
+export { EditLevelDialog } from "./EditLevelDialog.tsx";
 export { type SpentSkill, withoutPick, withPick } from "./fitPicks.ts";
 export { hpError, type HpLevel } from "./hitPoints.ts";
 export {
@@ -12,7 +14,7 @@ export {
   type PickerLevel,
   type StepAnswer,
 } from "./levelUpQueries.ts";
-export { LevelWizardDialog } from "./LevelWizardDialog.tsx";
+export { type AddLevelDialogProps, LevelWizardDialog } from "./LevelWizardDialog.tsx";
 export { skillPointString } from "./pendingPicks.ts";
 export { useAddLevelPlan } from "./useAddLevelPlan.ts";
 export { useAddLevelWizardBase } from "./useAddLevelWizardBase.ts";

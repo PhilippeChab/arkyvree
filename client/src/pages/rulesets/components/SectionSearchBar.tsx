@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 
 import { SearchBar, type SearchBarProps } from "@/client/src/components/common/index.ts";
 import { useRulesetPermissions } from "@/client/src/hooks/index.ts";
-import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
+import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionProps.ts";
 
 import { SectionActions } from "./SectionActions.tsx";
 

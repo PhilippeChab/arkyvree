@@ -4,8 +4,17 @@ import { z } from "zod";
 
 import { buildPageSchema, v1Id } from "./references.ts";
 
-/** When a form shows a field: while its value at `path` (a field's, `fields.<key>`, or a column's) is in `values`. */
-const v1ShownWhen = z.strictObject({ path: z.string(), values: z.array(z.union([z.boolean(), z.string()])) });
+/**
+ * When a form shows a field: while every condition holds, each the value at its `path` (a field's, `fields.<key>`, or a
+ * column's) in its `values`, or, `except`, not.
+ */
+const v1ShownWhen = z.array(
+  z.strictObject({
+    except: z.boolean().optional(),
+    path: z.string(),
+    values: z.array(z.union([z.boolean(), z.string()])),
+  }),
+);
 
 /** What every declared field has. */
 const v1FieldBase = z.strictObject({

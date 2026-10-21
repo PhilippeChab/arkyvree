@@ -1,4 +1,4 @@
-export type { OpenedLevelChoices, WizardStep } from "./descriptions.ts";
+export type { LevelStepKind, OpenedLevelChoices, WizardStep } from "./descriptions.ts";
 export { default as LevelUpPart } from "./LevelUpPart.ts";
 export type {
   AbilityIncrease,

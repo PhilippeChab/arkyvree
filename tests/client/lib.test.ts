@@ -31,7 +31,12 @@ import {
   wholeNumberRules,
 } from "@/client/src/lib/validation.ts";
 import { ApiError } from "@/client/src/services/ApiError.ts";
+import { Engine } from "@/engine/index.ts";
 import { PASSWORD_MIN_LENGTH } from "@/shared/auth.ts";
+
+/** Every base rules' words, kinds and license, as the engine describes them to the client. */
+const RULES = Engine.rules().describeAll();
+const DND35_WORDS = RULES["Dungeons & Dragons: 3.5"].words;
 
 describe("Numbers shown to the user", () => {
   test("have two decimals, or none when there's no number", () => {
@@ -176,20 +181,20 @@ describe("Form rules", () => {
 
 describe("An entity type", () => {
   test("is named in its ruleset's words, singular or plural, else the engine's", () => {
-    expect(entityTypeLabel("powers", "Dungeons & Dragons: 3.5")).toBe("Spell");
-    expect(entityTypeLabel("powers", "Dungeons & Dragons: 3.5", true)).toBe("Spells");
+    expect(entityTypeLabel("powers", DND35_WORDS)).toBe("Spell");
+    expect(entityTypeLabel("powers", DND35_WORDS, true)).toBe("Spells");
     expect(entityTypeLabel("powers", undefined)).toBe("Power");
-    expect(entityTypeLabel("klasses", "Dungeons & Dragons: 3.5", true)).toBe("Classes");
+    expect(entityTypeLabel("klasses", DND35_WORDS, true)).toBe("Classes");
     // A type with no word keeps its key
-    expect(entityTypeLabel("widgets", "Dungeons & Dragons: 3.5")).toBe("widgets");
+    expect(entityTypeLabel("widgets", DND35_WORDS)).toBe("widgets");
   });
 });
 
 describe("An activity", () => {
   test("is labelled by its type, in its ruleset's words, with its entity", () => {
-    expect(formatActivityType("createPower", { baseRules: "Dungeons & Dragons: 3.5", entityName: "Fireball" })).toBe(
-      "Create Spell: Fireball",
-    );
+    expect(
+      formatActivityType("createPower", { baseRules: "Dungeons & Dragons: 3.5", entityName: "Fireball" }, RULES),
+    ).toBe("Create Spell: Fireball");
     expect(formatActivityType("createPower")).toBe("Create Power");
     // The app's words, never the engine's names
     expect([
@@ -215,34 +220,57 @@ describe("An activity", () => {
     );
     // An entity is named in its ruleset's word: a 3.5 power is a spell, another ruleset's a power
     expect([
+      formatNotificationMessage("deletePower", { baseRules: "Dungeons & Dragons: 3.5", entityName: "Fireball" }, RULES),
       formatNotificationMessage("deletePower", { baseRules: "Dungeons & Dragons: 3.5", entityName: "Fireball" }),
       formatNotificationMessage("updatePower", { entityName: "Blast" }),
       formatNotificationMessage("createKlass", { actorName: "Ann", entityName: "Fighter" }),
-    ]).toEqual(["Someone deleted spell Fireball", "Someone updated power Blast", "Ann created class Fighter"]);
+    ]).toEqual([
+      "Someone deleted spell Fireball",
+      // Before the rules load, the engine's word
+      "Someone deleted power Fireball",
+      "Someone updated power Blast",
+      "Ann created class Fighter",
+    ]);
   });
 
   test("details the fields it changed, its level, modifier and property", () => {
     expect(
-      formatActivityDetails("updateItem", {
-        changedFields: [
-          { field: "name", from: "A", to: "B" },
-          { field: "hd", to: "8" },
-          { field: "costGp", from: "15", to: "20" },
-          { field: "slot", from: "Neck" },
-          { field: "baseSpeed" },
-          {
-            field: "primaryAbilityId",
-            from: "7c0d4b52-0c0e-4b8e-9d7f-1f2a3b4c5d6e",
-            to: "00000000-0000-0000-0000-000000000000",
-          },
-          { field: "sourceItemId", to: "00000000-0000-0000-0000-000000000000" },
-          { bad: true },
-        ],
-        level: 3,
-      }),
+      formatActivityDetails(
+        "updateItem",
+        {
+          baseRules: "Dungeons & Dragons: 3.5",
+          changedFields: [
+            { field: "name", from: "A", to: "B" },
+            { field: "costGp", from: "15", to: "20" },
+            { field: "slot", from: "Neck" },
+            { field: "baseSpeed" },
+            {
+              field: "primaryAbilityId",
+              from: "7c0d4b52-0c0e-4b8e-9d7f-1f2a3b4c5d6e",
+              to: "00000000-0000-0000-0000-000000000000",
+            },
+            { field: "sourceItemId", to: "00000000-0000-0000-0000-000000000000" },
+            { bad: true },
+          ],
+          level: 3,
+        },
+        RULES,
+      ),
     ).toBe(
-      "Name: A → B\nHit Die set to d8\nCost: 15.00 gp → 20.00 gp\nSlot cleared\nBase Speed updated\nPrimary Ability updated\nSource Item updated\nLevel 3",
+      "Name: A → B\nCost: 15.00 gp → 20.00 gp\nSlot cleared\nBase Speed updated\nPrimary Ability updated\nSource Item updated\nLevel 3",
     );
+    // A field reads as its own entity's column, never another's of the same key: a class's hit die, a language's type
+    const baseRules = "Dungeons & Dragons: 3.5";
+    expect(formatActivityDetails("updateKlass", { baseRules, changedFields: [{ field: "hd", to: "8" }] }, RULES)).toBe(
+      "Hit Die set to d8",
+    );
+    expect(
+      formatActivityDetails(
+        "updateLanguage",
+        { baseRules, changedFields: [{ field: "type", from: "Common", to: "Exotic" }] },
+        RULES,
+      ),
+    ).toBe("Type: Common → Exotic");
     expect([
       formatActivityDetails("createModifier", { target: "combat.ac.misc", operator: "add", value: "1" }),
       formatActivityDetails("updateRequirement", { target: "identity.name", operator: "not_empty" }),

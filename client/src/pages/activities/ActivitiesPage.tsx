@@ -18,7 +18,13 @@ import {
 } from "@/client/src/components/common/index.ts";
 import { HistoryIcon } from "@/client/src/components/icons/index.ts";
 import { ActivityDetails } from "@/client/src/components/notifications/index.ts";
-import { useListPageQuery, useListParams, useOpenActivityTarget, usePageTitle } from "@/client/src/hooks/index.ts";
+import {
+  useListPageQuery,
+  useListParams,
+  useOpenActivityTarget,
+  usePageTitle,
+  useRules,
+} from "@/client/src/hooks/index.ts";
 import { formatActivityType } from "@/client/src/lib/activityFormatters.ts";
 import { formatDateTime } from "@/client/src/lib/formatDate.ts";
 import { isNavigableTarget } from "@/shared/activity.ts";
@@ -42,6 +48,7 @@ const ACTIVITY_SORT_OPTIONS: SortOption<SortField>[] = [
 export default function ActivitiesPage() {
   usePageTitle("Activity");
   const openTarget = useOpenActivityTarget();
+  const { all: rules } = useRules();
   const { search, orderBy, orderDir, searchBarProps } = useListParams(["createdAt", "type"], {
     orderBy: "createdAt",
     orderDir: "desc",
@@ -86,7 +93,7 @@ export default function ActivitiesPage() {
                     >
                       <DataCell slot="primary">
                         <Stack spacing={0.5} sx={{ alignItems: "flex-start" }}>
-                          <ValueChip color="default" label={formatActivityType(activity.type, activity.data)} />
+                          <ValueChip color="default" label={formatActivityType(activity.type, activity.data, rules)} />
                           <ActivityDetails type={activity.type} data={activity.data} />
                         </Stack>
                       </DataCell>

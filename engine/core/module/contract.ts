@@ -6,15 +6,15 @@ import type { CharactersPart, DescribedSheet } from "./parts/characters/index.ts
 import type { ContentPart } from "./parts/content/index.ts";
 import type { EntitiesPart, EntityKindsContract } from "./parts/entities/index.ts";
 import type { ImportsPart } from "./parts/imports/index.ts";
-import type { LevelUpPart } from "./parts/levelUp/index.ts";
+import type { LevelStepKind, LevelUpPart } from "./parts/levelUp/index.ts";
 import type { RulesetPart } from "./parts/ruleset/index.ts";
 
 /**
  * What a ruleset describes in its own shape, which the server hands to the client as it is: a character's sheet (as the
  * API answers it, its private notes where every ruleset's holds them; as a member who reads it partly reads it;
  * printed), what an inventory entry shows beside its row, the level-up wizard's steps (any of them, each named for
- * which it is), preview and a saved level's selections, a planned level's steps as a character's choices at its next
- * level describe them all at once, and what each picker adds to an option.
+ * the kind it is, `LevelStepKind`), preview and a saved level's selections, a planned level's steps as a character's
+ * choices at its next level describe them all at once, and what each picker adds to an option.
  */
 export interface Descriptions {
   classOption: object;
@@ -29,7 +29,7 @@ export interface Descriptions {
   raceOption: object;
   sheet: DescribedSheet;
   sheetDocument: unknown;
-  step: { name: string };
+  step: { name: LevelStepKind };
 }
 
 /**

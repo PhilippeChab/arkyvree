@@ -1,10 +1,9 @@
 import { Button, DialogContent, DialogTitle, Stack, Step, StepLabel, Stepper } from "@mui/material";
 import type { ComponentType } from "react";
 
-import { ValidationIssuesAlert } from "@/client/src/components/characters/index.ts";
+import { type EditingLevel, ValidationIssuesAlert } from "@/client/src/components/characters/index.ts";
 import { ConfirmDialog, DialogFooter, LoadError, Modal } from "@/client/src/components/common/index.ts";
 import { useIsMobile } from "@/client/src/hooks/index.ts";
-import type { LevelStepProps } from "@/client/src/pages/characters/details/components/levelUpFactory.ts";
 import type { ApiValidationIssue } from "@/client/src/services/ApiError.ts";
 
 interface LevelWizardDialogProps<N extends string, W extends WizardControls<N>> {
@@ -41,6 +40,35 @@ interface WizardControls<N extends string> {
   setShowCancelConfirm: (show: boolean) => void;
   showCancelConfirm: boolean;
   steps: readonly { label: string; name: N }[];
+}
+
+/** What a character's sheet passes its Add Level dialog: a level dialog's, and the class it opens with planned. */
+export interface AddLevelDialogProps extends LevelDialogProps {
+  /**
+   * The class it plans for the next level as it opens (a class's plus, on the sheet's header), as the class's quick-add
+   * button would: none opens an empty plan
+   */
+  klassId?: string;
+}
+
+/** What a character's sheet passes its Edit Level dialog: a level dialog's, and the level it edits. */
+export interface EditLevelDialogProps extends LevelDialogProps {
+  editingLevel: EditingLevel;
+}
+
+/** What a character's sheet passes a level dialog: the character it levels, and the dialog's own state. */
+export interface LevelDialogProps {
+  characterId: string;
+  onClose: () => void;
+  /** It has faded out: its owner unmounts it. */
+  onExited: () => void;
+  open: boolean;
+}
+
+/** What a level wizard's step takes: the wizard's state, and the character it levels. */
+export interface LevelStepProps<W> {
+  characterId: string;
+  wizard: W;
 }
 
 /**

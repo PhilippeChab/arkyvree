@@ -123,7 +123,7 @@ describe("An entity's fields", () => {
     expect(await ClassLevelsService.getClassLevel(rulesetId, wizard.id, level.id)).toMatchObject({ bab: 0, skills: 4 });
   });
 
-  test("refuse, by field, one their entity type doesn't declare, and a value outside its type's list", async () => {
+  test("refuse, by field, one their entity type doesn't declare, and a value outside its type's list or bounds", async () => {
     const { session, rulesetId, featPool } = await setup();
     const create = (fields: Record<string, unknown>) =>
       FeatsService.createFeat(session, rulesetId, { name: "Odd", aptitudeIds: [featPool], fields: fields as never });
@@ -149,6 +149,13 @@ describe("An entity's fields", () => {
     ).rejects.toMatchObject({ refusal: "invalid", message: `Ability ${NIL_UUID} does not belong to this ruleset` });
     expect(
       ClassLevelsService.createClassLevel(session, rulesetId, wizard.id, { level: 1, fields: { skills: -1 } }),
+    ).rejects.toMatchObject({ refusal: "invalid", issues: [{ category: "fields.skills" }] });
+    // A base attack bonus past the last level's full one, and skill points past a table's most
+    expect(
+      ClassLevelsService.createClassLevel(session, rulesetId, wizard.id, { level: 1, fields: { bab: 21 } }),
+    ).rejects.toMatchObject({ refusal: "invalid", issues: [{ category: "fields.bab" }] });
+    expect(
+      ClassLevelsService.createClassLevel(session, rulesetId, wizard.id, { level: 1, fields: { skills: 100 } }),
     ).rejects.toMatchObject({ refusal: "invalid", issues: [{ category: "fields.skills" }] });
     expect(await Feats.findOne(db, { name: "Odd", rulesetId })).toBeUndefined();
   });

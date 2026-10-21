@@ -8,11 +8,14 @@ import {
   isFieldShown,
   noneLabel,
   ownFieldValues,
+  toColumnsBody,
+  toColumnValues,
   toFieldValues,
   valueAt,
   withEntityFields,
 } from "@/client/src/pages/rulesets/components/forms/entityFields.ts";
 import type { EntityField } from "@/client/src/pages/rulesets/details/rulesetQueries.ts";
+import { Engine } from "@/engine/index.ts";
 
 /** A field's description, but what it's for. */
 const BASE = { help: "" };
@@ -31,14 +34,14 @@ const FIELDS: EntityField[] = [
     input: "number",
     default: 1,
     min: 1,
-    shownWhen: { path: "fields.weighted", values: [true] },
+    shownWhen: [{ path: "fields.weighted", values: [true] }],
   },
   { ...BASE, key: "abilityId", label: "Ability", input: "ref", references: "abilities", required: false },
   {
     key: "weapon",
     label: "Weapon",
     input: "group",
-    shownWhen: { path: "type", values: ["Weapon"] },
+    shownWhen: [{ path: "type", values: ["Weapon"] }],
     fields: [
       { ...BASE, key: "weapon.reach", label: "Reach", input: "number", default: null },
       { ...BASE, key: "weapon.ranged", label: "Ranged", input: "flag", nullable: true },
@@ -136,14 +139,29 @@ describe("an entity's fields in its form", () => {
     expect([noneLabel(["Evocation"]), noneLabel(["Slot", "None"])]).toEqual(["None", "Default"]);
   });
 
-  test("show a field on its condition, off the form's value at its path", () => {
+  test("show a field on its conditions, off the form's values at their paths, each in or, `except`, out of its values", () => {
     const [, , , , , count, , weapon] = FIELDS;
     const values = { type: "Weapon", fields: { weighted: false } };
-    expect(isFieldShown(FIELDS[0], undefined)).toBe(true);
-    expect(isFieldShown(count, valueAt(values, "fields.weighted"))).toBe(false);
-    expect(isFieldShown(count, true)).toBe(true);
-    expect(isFieldShown(weapon, valueAt(values, "type"))).toBe(true);
+    expect(isFieldShown(FIELDS[0], [])).toBe(true);
+    expect(isFieldShown(count, [valueAt(values, "fields.weighted")])).toBe(false);
+    expect(isFieldShown(count, [true])).toBe(true);
+    expect(isFieldShown(weapon, [valueAt(values, "type")])).toBe(true);
     expect(valueAt(values, "fields.weighted.deeper")).toBeUndefined();
+    // Every condition holds: an item's template, while it's of a template's type and isn't one itself
+    const template: EntityField = {
+      ...BASE,
+      key: "sourceItemId",
+      label: "Template",
+      input: "template",
+      typeKey: "type",
+      shownWhen: [
+        { path: "type", values: ["Weapon"] },
+        { path: "isTemplate", values: [true], except: true },
+      ],
+    };
+    expect(isFieldShown(template, ["Weapon", false])).toBe(true);
+    expect(isFieldShown(template, ["Weapon", true])).toBe(false);
+    expect(isFieldShown(template, ["Ring", false])).toBe(false);
   });
 
   test("hold of their own those another entity doesn't hold the same, a group's by each field", () => {
@@ -181,6 +199,50 @@ describe("an entity's fields shown in a group but held at its own level", () => 
       armor: { bonus: 4 },
       maxDex: 6,
       shield: { bonus: null },
+    });
+  });
+});
+
+describe("an entity's columns in its form", () => {
+  /** 3.5's item columns, as the engine describes them: what the item form holds and sends. */
+  const ITEM = Engine.rules().describeAll()["Dungeons & Dragons: 3.5"].columns.items ?? [];
+  /** 3.5's class columns: a hit die among its own, 8 by default. */
+  const CLASS = Engine.rules().describeAll()["Dungeons & Dragons: 3.5"].columns.klasses ?? [];
+
+  test("start empty: a required choice its default, a decimal no text, a template none", () => {
+    expect(toColumnValues(CLASS)).toEqual({ hd: 8 });
+    expect(toColumnValues(ITEM)).toEqual({ costGp: "", slot: "", sourceItemId: "", type: "", weight: "" });
+  });
+
+  test("hold an entity's: a decimal as its text, a type a template couldn't be of, a die it doesn't offer its default", () => {
+    expect(
+      toColumnValues(ITEM, { costGp: 15, weight: "2.5", type: "Ring", slot: "Finger", sourceItemId: null }),
+    ).toEqual({
+      costGp: "15.00",
+      slot: "Finger",
+      sourceItemId: "",
+      type: "Ring",
+      weight: "2.50",
+    });
+    expect(toColumnValues(CLASS, { hd: 7 })).toEqual({ hd: 8 });
+  });
+
+  test("send a decimal's number, none null, and a column the form hides null", () => {
+    const ring = { costGp: "1500", weight: "", type: "Ring", slot: "Finger", sourceItemId: "", isTemplate: false };
+    expect(toColumnsBody(ITEM, ring)).toEqual({
+      costGp: 1500,
+      slot: "Finger",
+      sourceItemId: null,
+      type: "Ring",
+      weight: null,
+    });
+    // A weapon's template shows, its slot doesn't; a template's own template never does
+    const weapon = { ...ring, type: "Weapon", slot: "Finger", sourceItemId: "t1" };
+    expect(toColumnsBody(ITEM, weapon)).toMatchObject({ slot: null, sourceItemId: "t1" });
+    expect(toColumnsBody(ITEM, { ...weapon, isTemplate: true })).toMatchObject({
+      slot: null,
+      sourceItemId: null,
+      type: "Weapon",
     });
   });
 });

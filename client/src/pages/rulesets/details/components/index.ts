@@ -1,3 +1,4 @@
+export { LicenseNotice } from "./LicenseNotice.tsx";
 export { LocalChangesDialog } from "./LocalChangesDialog.tsx";
 export { RulesetContributorsDialog } from "./RulesetContributorsDialog.tsx";
 export {
