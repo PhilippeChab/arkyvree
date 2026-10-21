@@ -87,7 +87,8 @@ export function toInventoryEditRequest(
     force: body.force,
     location,
     quantity: body.quantity ?? before.quantity,
-    weaponSets: body.weaponSets ?? before.weaponSets,
+    // An entry the body moves into a hand from none of its weapon sets takes the first, as a new one does
+    weaponSets: body.weaponSets ?? (before.weaponSets.length > 0 ? before.weaponSets : undefined),
   });
 }
 

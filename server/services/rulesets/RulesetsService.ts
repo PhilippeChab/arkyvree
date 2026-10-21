@@ -12,6 +12,7 @@ import {
   RulesetExtensions,
   Rulesets,
   StarredRulesets,
+  Visibility,
 } from "@/server/repositories/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import type { RulesetKind } from "@/shared/enums.ts";
@@ -31,7 +32,7 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
       (await RulesetsPolicy.for(tx, session, ruleset)).canFork();
 
       // 2. Verify name uniqueness
-      const existing = await Rulesets.findOne(tx, { name: body.name });
+      const existing = await Rulesets.findOne(tx, { name: body.name }, Visibility.All);
       if (existing) throw new ConflictError("A ruleset with this name already exists");
 
       // canFork blocks forks-of-forks, so the parent is always a base —
@@ -185,7 +186,11 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
       (await RulesetsPolicy.for(tx, session, ruleset)).canUpdate();
 
       if (!ruleset.private && body.private) throw new ForbiddenError("Cannot make a public ruleset private");
-      if (body.name !== undefined && body.name !== ruleset.name && (await Rulesets.findOne(tx, { name: body.name })))
+      if (
+        body.name !== undefined &&
+        body.name !== ruleset.name &&
+        (await Rulesets.findOne(tx, { name: body.name }, Visibility.All))
+      )
         throw new ConflictError("A ruleset with this name already exists");
 
       if (body.kind === "extension" && ruleset.kind !== "extension") this.assertCanBeExtension(ruleset);

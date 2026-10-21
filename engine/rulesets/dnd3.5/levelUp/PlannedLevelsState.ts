@@ -209,10 +209,11 @@ export default abstract class PlannedLevelsState extends include(LevelUpState, P
       if (!klassLevel) throw new RulesError("not-found", `Level ${i + 1}: Class level not found`);
 
       // One it has already the save refuses as finalized
-      const next = (maxLevels.get(klassId) ?? 0) + 1;
+      // By the class the view resolves, a copy's when the ruleset copied it, as its levels are
+      const next = (maxLevels.get(klass.id) ?? 0) + 1;
       if (level > next)
         throw new RulesError("invalid", `Level ${i + 1}: The character's next ${klass.name} level is ${next}`);
-      maxLevels.set(klassId, Math.max(next - 1, level));
+      maxLevels.set(klass.id, Math.max(next - 1, level));
 
       return { klass, klassLevel, abilityIncreases };
     });
