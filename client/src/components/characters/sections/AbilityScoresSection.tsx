@@ -2,25 +2,29 @@ import { Stack } from "@mui/material";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 
-import { SheetSection } from "@/client/src/components/characters/sections/SheetSection.tsx";
 import { BlankNote, ConfirmDialog } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import { useDialogState } from "@/client/src/hooks/index.ts";
+import { useDialogState, useRules } from "@/client/src/hooks/index.ts";
 import { type CharacterDetail, characterDetailQuery, invalidateCharacter } from "@/client/src/lib/queries.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
+import type { BaseRules } from "@/shared/enums.ts";
 
 import { AbilityScoreBox } from "./AbilityScoreBox.tsx";
 import { SCORE_ROW_GAP, SCORE_ROW_SX, SCORE_SLOT_SX } from "./scoreRow.ts";
+import { SheetSection } from "./SheetSection.tsx";
 import { useSuppressedWarningsStore } from "./suppressedWarningsStore.ts";
 
 interface AbilityScoresSectionProps {
   /** The character's abilities, in the order its sheet lists them. */
   abilities: CharacterDetail["abilities"];
+  /** The character's base rules, which bound an ability's base */
+  baseRules: BaseRules;
   characterId: string;
   readOnly?: boolean;
 }
 
-export function AbilityScoresSection({ abilities, characterId, readOnly }: AbilityScoresSectionProps) {
+export function AbilityScoresSection({ abilities, baseRules, characterId, readOnly }: AbilityScoresSectionProps) {
+  const bounds = useRules(baseRules).rules?.abilityScores;
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
 
@@ -77,6 +81,7 @@ export function AbilityScoresSection({ abilities, characterId, readOnly }: Abili
               key={abilityData.abilityId}
               sx={SCORE_SLOT_SX}
               ability={abilityData}
+              bounds={bounds}
               onBaseChange={handleBaseChange}
               readOnly={readOnly}
             />

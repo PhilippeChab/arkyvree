@@ -27,6 +27,8 @@ interface SkillRowProps extends SkillPlacement {
   name: string;
   /** Wraps the shown name, e.g. in a description tooltip. */
   renderName?: (label: string) => ReactNode;
+  /** Its name within its family, as its rules give it ("arcana"), which it shows under its group */
+  shortName: string;
 }
 
 const FADE_IN_SX = {
@@ -38,10 +40,10 @@ const FADE_IN_SX = {
 const GROUP_NAME_SX = { fontWeight: { xs: 600 } };
 
 /**
- * A skill table's rows, with the skills that share a prefix ("Knowledge (…)")
- * under a header row whose click shows or hides them.
+ * A skill table's rows, with the skills of a family two or more share, as their rules name it ("Knowledge"), under a
+ * header row whose click shows or hides them.
  */
-export function GroupedSkillRows<S extends { name: string }>({
+export function GroupedSkillRows<S extends { family: string | null }>({
   skills,
   columns,
   renderSkill,
@@ -80,11 +82,18 @@ export function GroupedSkillRows<S extends { name: string }>({
 }
 
 /**
- * A skill's row. A grouped skill's name drops its group's prefix, and its brackets when they hold the rest of it
- * ("Arcana"; "(alchemy) - Masterwork"), and sits indented.
+ * A skill's row. A grouped skill shows its name within its family (`shortName`: "arcana"; "(alchemy) - Masterwork"),
+ * and sits indented.
  */
-export function SkillRow({ name, indented, hidden, renderName = (label) => label, children }: SkillRowProps) {
-  const label = indented ? name.replace(/^.+?\s*\(/, "(").replace(/^\(([^()]*)\)$/, "$1") : name;
+export function SkillRow({
+  name,
+  indented,
+  hidden,
+  renderName = (label) => label,
+  shortName,
+  children,
+}: SkillRowProps) {
+  const label = indented ? shortName : name;
   return (
     <DataRow hidden={hidden} indented={indented} sx={[!hidden && indented && FADE_IN_SX]}>
       <DataCell slot="primary" sx={{ pl: indented ? 5 : undefined }}>

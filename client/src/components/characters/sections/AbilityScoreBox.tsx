@@ -3,7 +3,6 @@ import { IconButton, Stack, type SxProps, type Theme, Typography } from "@mui/ma
 import { AddIcon, RemoveIcon } from "@/client/src/components/icons/index.ts";
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
 import { formatSigned } from "@/shared/text.ts";
-import { MAX_ABILITY_SCORE, MIN_ABILITY_SCORE } from "@/vocabulary/dnd3.5/abilities.ts";
 
 import { ScoreBox } from "./ScoreBox.tsx";
 
@@ -13,6 +12,8 @@ interface AbilityScoreBoxProps {
    * its abbreviation (FOR), which labels the compact one, and its scores.
    */
   ability: CharacterDetail["abilities"][number];
+  /** The bounds of its base, its rules', which its edit keeps it within (none in the compact form, or read only) */
+  bounds?: { max: number; min: number };
   compact?: boolean;
   /** Its base set to `base`, by its owner's edit (none in the compact form, or read only). */
   onBaseChange?: (ability: CharacterDetail["abilities"][number], base: number) => void;
@@ -21,9 +22,14 @@ interface AbilityScoreBoxProps {
   sx?: SxProps<Theme>;
 }
 
-export function AbilityScoreBox({ ability, onBaseChange, readOnly, compact, sx }: AbilityScoreBoxProps) {
-  const { abbreviation, base, level, misc, modifier, name, total } = ability;
-  const edit = !readOnly && !compact ? onBaseChange : undefined;
+/**
+ * An ability's box: its total and modifier, then its base, which its owner raises and lowers within its rules' bounds,
+ * and its other parts as its rules list them (3.5's levels' increases and misc); compact, its abbreviation over its
+ * total and modifier.
+ */
+export function AbilityScoreBox({ ability, bounds, onBaseChange, readOnly, compact, sx }: AbilityScoreBoxProps) {
+  const { abbreviation, base, modifier, name, parts, total } = ability;
+  const edit = !readOnly && !compact && bounds ? onBaseChange : undefined;
 
   return (
     <ScoreBox
@@ -57,7 +63,7 @@ export function AbilityScoreBox({ ability, onBaseChange, readOnly, compact, sx }
               size="small"
               aria-label={`Lower Base ${name}`}
               onClick={() => edit(ability, base - 1)}
-              disabled={base <= MIN_ABILITY_SCORE}
+              disabled={base <= (bounds?.min ?? base)}
               sx={{ p: 0 }}
             >
               <RemoveIcon sx={{ fontSize: 14 }} />
@@ -69,7 +75,7 @@ export function AbilityScoreBox({ ability, onBaseChange, readOnly, compact, sx }
               size="small"
               aria-label={`Raise Base ${name}`}
               onClick={() => edit(ability, base + 1)}
-              disabled={base >= MAX_ABILITY_SCORE}
+              disabled={base >= (bounds?.max ?? base)}
               sx={{ p: 0 }}
             >
               <AddIcon sx={{ fontSize: 14 }} />
@@ -80,7 +86,7 @@ export function AbilityScoreBox({ ability, onBaseChange, readOnly, compact, sx }
       breakdown={
         compact
           ? undefined
-          : [...(edit ? [] : [`Base: ${base}`]), `Level: ${formatSigned(level)}`, `Misc: ${formatSigned(misc)}`]
+          : [...(edit ? [] : [`Base: ${base}`]), ...parts.map(({ label, value }) => `${label}: ${value}`)]
       }
     />
   );

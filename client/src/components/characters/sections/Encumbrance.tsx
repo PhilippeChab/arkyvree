@@ -3,13 +3,12 @@ import { Box, Stack, Typography } from "@mui/material";
 import { StatusChip } from "@/client/src/components/common/index.ts";
 import { formatTrimmed, formatWeight, poundsUnit } from "@/client/src/lib/formatNumeric.ts";
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
-import { capitalize } from "@/shared/text.ts";
 
 import { ScoreBox } from "./ScoreBox.tsx";
 
 interface EncumbranceProps {
-  /** The sheet's carried weight and load thresholds (its combat's `encumbrance`). */
-  encumbrance: CharacterDetail["combat"]["encumbrance"];
+  /** The load the character carries, as its rules describe it: its figures, and its load past light (its combat's). */
+  load: CharacterDetail["combat"]["load"];
 }
 
 /** On a phone, the figures in boxes, four to a row, as the sheet's armor classes */
@@ -25,29 +24,21 @@ const UNIT_SX = { fontSize: "0.6em", fontWeight: 500, pl: 0.25 };
 /** From `sm` up, the figures in a line under the table, at its end */
 const WIDE_LINE_SX = { display: { xs: "none", sm: "block" } };
 
-/** The load a 3.5 character carries, under its equipment: its carried weight, its loads' limits, and a load past light. */
-export function Encumbrance({ encumbrance }: EncumbranceProps) {
-  const boxes = [
-    { label: "Carried", weight: encumbrance.carriedweight },
-    { label: "Light", weight: encumbrance.lightload },
-    { label: "Medium", weight: encumbrance.mediumload },
-    { label: "Heavy", weight: encumbrance.heavyload },
-  ];
-  // A load past light says so: medium, heavy or overloaded
-  const loadChip = encumbrance.load && encumbrance.load !== "light" && (
-    <StatusChip
-      label={capitalize(encumbrance.load)}
-      color={encumbrance.load === "overloaded" ? "error" : encumbrance.load === "heavy" ? "warning" : "info"}
-    />
-  );
+/**
+ * The load a character carries, under its equipment, as its rules give it: its figures (3.5's carried weight and its
+ * loads' limits), in boxes on a phone and a line from `sm` up, and its load past light, as grave as it is.
+ */
+export function Encumbrance({ load }: EncumbranceProps) {
+  const { figures, status } = load;
+  const loadChip = status && <StatusChip label={status.label} color={status.tone} />;
   return (
     <>
       <Stack spacing={1} sx={{ display: { sm: "none" } }}>
         <Box sx={PHONE_BOXES_SX}>
-          {boxes.map(({ label, weight }) => (
+          {figures.map(({ shortLabel, weight }) => (
             <ScoreBox
-              key={label}
-              label={label}
+              key={shortLabel}
+              label={shortLabel}
               compact
               value={
                 <>
@@ -75,18 +66,16 @@ export function Encumbrance({ encumbrance }: EncumbranceProps) {
             whiteSpace: "nowrap",
           }}
         >
-          <Typography variant="body2" sx={{ fontWeight: 500, color: "text.secondary" }}>
-            Carried Weight: {formatWeight(encumbrance.carriedweight ?? 0)}
-          </Typography>
-          <Typography variant="body2" sx={{ color: "text.secondary" }}>
-            Light: {formatWeight(encumbrance.lightload ?? 0)}
-          </Typography>
-          <Typography variant="body2" sx={{ color: "text.secondary" }}>
-            Medium: {formatWeight(encumbrance.mediumload ?? 0)}
-          </Typography>
-          <Typography variant="body2" sx={{ color: "text.secondary" }}>
-            Heavy: {formatWeight(encumbrance.heavyload ?? 0)}
-          </Typography>
+          {figures.map(({ label, weight }, index) => (
+            // Its first figure, what it carries, leads
+            <Typography
+              key={label}
+              variant="body2"
+              sx={[{ color: "text.secondary" }, index === 0 && { fontWeight: 500 }]}
+            >
+              {label}: {formatWeight(weight ?? 0)}
+            </Typography>
+          ))}
           {loadChip}
         </Stack>
       </Box>

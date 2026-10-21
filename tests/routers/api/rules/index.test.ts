@@ -14,6 +14,7 @@ describe("rules", () => {
       { label: "Special Mount", value: "mount" },
     ]);
     expect(dnd35.lastClassLevel).toBe(20);
+    expect(dnd35.abilityScores).toEqual({ max: 100, min: 1 });
     expect(dnd35.powerLevels.at(0)).toEqual({ label: "Cantrips", level: 0 });
     expect(dnd35.powerLevels.at(-1)).toEqual({ label: "Level 9", level: 9 });
     expect(dnd35.license).toMatchObject({ text: "ogl" });

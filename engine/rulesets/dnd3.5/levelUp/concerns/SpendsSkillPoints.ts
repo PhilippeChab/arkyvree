@@ -1,4 +1,5 @@
 import type { LevelUpBase } from "@/engine/core/levelUp/index.ts";
+import SkillNames from "@/engine/rulesets/dnd3.5/characters/description/SkillNames.ts";
 import Dnd35PicksDistribution, {
   type PerLevelDistributionData,
 } from "@/engine/rulesets/dnd3.5/levelUp/Dnd35PicksDistribution.ts";
@@ -6,7 +7,7 @@ import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedChara
 import type { Constructor } from "@/lib/mixins.ts";
 
 /**
- * A skill as a skills step lists it: its rank so far, and whether it's a class skill of the character's classes (its
+ * A skill as a skills step lists it: its name, its rank so far, and whether it's a class skill of the character's classes (its
  * rank cap) and of the step's class (`isCurrentClassSkill`).
  */
 interface StepSkill {
@@ -14,6 +15,7 @@ interface StepSkill {
   id: string;
   isClassSkill: boolean;
   isCurrentClassSkill: boolean;
+  name: string;
 }
 
 /** The levels a step's points go to: each one's class skills and points, after the character's saved levels. */
@@ -60,6 +62,7 @@ export function SpendsSkillPoints<B extends Constructor<LevelUpBase<DetailedChar
         const own = spread.get(skill.id) ?? { points: 0, ranks: 0 };
         return {
           ...skill,
+          ...SkillNames.describe(skill.name),
           classSkill: multiclass ? skill.isClassSkill : skill.isCurrentClassSkill,
           maxPoints: this.ranksByPoints(distribution, skill.id, {}, budget).length - 1,
           points: own.points,

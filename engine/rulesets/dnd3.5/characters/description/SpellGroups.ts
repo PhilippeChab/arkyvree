@@ -1,9 +1,11 @@
+import type { SheetStat } from "@/engine/core/module/index.ts";
 import type { SpellTagLists } from "@/engine/rulesets/dnd3.5/model/spellcasting/SpellcastingState.ts";
 import SpellLists from "@/engine/rulesets/dnd3.5/rules/SpellLists.ts";
+import { formatPropertyType } from "@/shared/customization/properties.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { SPELL_SCHOOL } from "@/vocabulary/dnd3.5/properties/index.ts";
-import { SPELL_LEVELS } from "@/vocabulary/dnd3.5/spells.ts";
+import { SPELL_LEVEL_LABELS, SPELL_LEVELS } from "@/vocabulary/dnd3.5/spells.ts";
 
 /** An aptitude's spells, by spell level. */
 interface AptitudeSpells {
@@ -53,18 +55,23 @@ interface SlotCount {
   uses: number;
 }
 
-/** An aptitude's spells at a spell level, with the uses per day the aptitude allows there. */
+/** An aptitude's spells at a spell level (its name: `label`), with the uses per day the aptitude allows there. */
 interface SpellGroup {
   aptitudeName: string;
+  label: string;
   level: number;
   spells: SpellRow[];
   uses: number | null;
 }
 
-/** A spell as a sheet lists it: its school, save and DC, its description and properties, and its tags. */
+/**
+ * A spell as a sheet lists it: its school, save and DC, its description and properties (and those its details show,
+ * its school aside, labelled: `details`), and its tags.
+ */
 interface SpellRow {
   dc: number | null;
   description: string;
+  details: SheetStat[];
   id: string;
   name: string;
   properties: Record<string, string>;
@@ -117,9 +124,10 @@ interface SpellSource {
 
 /**
  * A character's slots per day, as the summary at the start of its sheets' spells prints them: the spell levels it has
- * slots at, a column each, and a row per spell list giving them, by name.
+ * slots at, a column each (and their names, `labels`), and a row per spell list giving them, by name.
  */
 interface SpellsPerDay {
+  labels: string[];
   levels: number[];
   lists: ListSlots[];
 }
@@ -139,6 +147,13 @@ export default class SpellGroups {
     return Object.values(sheet.spellTagLists)
       .filter((lists) => lists.aptitudeIds.includes(listId))
       .flatMap((lists) => lists.aptitudeIds.filter((id) => !sheet.featListSpells.has(id)));
+  }
+
+  /** A spell's properties as its details show them, labelled, its school aside (its row shows it). */
+  private static detailsOf(properties: Record<string, string>): SheetStat[] {
+    return Object.entries(properties)
+      .filter(([key]) => key !== SPELL_SCHOOL)
+      .map(([key, value]) => ({ label: formatPropertyType(key), value }));
   }
 
   /**
@@ -212,7 +227,7 @@ export default class SpellGroups {
         const uses = SpellGroups.usesPerDay(sheet.aptitudes, aptitudeName, level);
         // A list a feat brings counts no slot where it gives none: a domain's spells known on its own list
         const slotless = uses === 0 && sheet.featListSpells.has(aptitudeId);
-        group = { aptitudeName, level, uses: slotless ? null : uses, spells: [] };
+        group = { aptitudeName, label: SPELL_LEVEL_LABELS[level], level, uses: slotless ? null : uses, spells: [] };
         groupMap.set(key, group);
       }
       return group;
@@ -238,6 +253,7 @@ export default class SpellGroups {
             save: SpellGroups.saveOf(power.saveName, power.saveEffect),
             dc: powerData?.dc?.[SpellLists.toSpellPossessionSlug(group.aptitudeName)]?.total ?? null,
             description: powerData?.power?.description || power.description || "",
+            details: SpellGroups.detailsOf(properties),
             properties,
             tags,
           });
@@ -254,6 +270,7 @@ export default class SpellGroups {
         save: SpellGroups.saveOf(given.saveName, given.saveEffect),
         dc: given.dc ?? null,
         description: given.description || "",
+        details: SpellGroups.detailsOf(properties),
         properties,
       });
     }
@@ -386,6 +403,10 @@ export default class SpellGroups {
         return count ? SpellGroups.writeSlots(count) : null;
       }),
     }));
-    return { levels, lists: lists.sort((a, b) => a.aptitudeName.localeCompare(b.aptitudeName)) };
+    return {
+      labels: levels.map((level) => SPELL_LEVEL_LABELS[level]),
+      levels,
+      lists: lists.sort((a, b) => a.aptitudeName.localeCompare(b.aptitudeName)),
+    };
   }
 }

@@ -28,6 +28,7 @@ export {
   type PrivateNotes,
   type RacePickQuery,
   type SheetRequest,
+  type SheetStat,
 } from "./parts/characters/index.ts";
 export { ContentPart } from "./parts/content/index.ts";
 export {

@@ -1,12 +1,12 @@
 import { Stack } from "@mui/material";
 
-import { SheetSection } from "@/client/src/components/characters/sections/SheetSection.tsx";
 import { BlankNote } from "@/client/src/components/common/index.ts";
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
 import { formatSigned } from "@/shared/text.ts";
 
 import { ScoreBox } from "./ScoreBox.tsx";
 import { SCORE_ROW_GAP, SCORE_ROW_SX, SCORE_SLOT_SX } from "./scoreRow.ts";
+import { SheetSection } from "./SheetSection.tsx";
 
 interface SavingThrowsSectionProps {
   saves: CharacterDetail["saves"];
@@ -14,7 +14,7 @@ interface SavingThrowsSectionProps {
 
 /**
  * The character's saving throws, laid out as the ability scores are: a box each, side by side, with its name, its total
- * and its base, ability and misc parts.
+ * and its parts as its rules list them (3.5's base, ability and misc).
  */
 export function SavingThrowsSection({ saves }: SavingThrowsSectionProps) {
   const entries = Object.entries(saves);
@@ -31,11 +31,7 @@ export function SavingThrowsSection({ saves }: SavingThrowsSectionProps) {
               label={saveData.name}
               value={formatSigned(saveData.total)}
               minHeight={160}
-              breakdown={[
-                `Base: ${formatSigned(saveData.base)}`,
-                `Ability: ${formatSigned(saveData.ability)}`,
-                `Misc: ${formatSigned(saveData.misc)}`,
-              ]}
+              breakdown={saveData.parts.map(({ label, value }) => `${label}: ${value}`)}
             />
           ))}
         </Stack>
