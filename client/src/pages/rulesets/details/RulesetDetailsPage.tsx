@@ -56,7 +56,6 @@ import { rulesetDetailQuery, type RulesWords } from "@/client/src/lib/queries.ts
 import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
 import { RulesetFactChips, RulesetStarButton } from "@/client/src/pages/rulesets/components/index.ts";
 import { useRulesetOperations } from "@/client/src/pages/rulesets/hooks/index.ts";
-import type { BaseRules } from "@/shared/enums.ts";
 
 import {
   ArchiveRulesetDialog,
@@ -70,40 +69,40 @@ import {
   UnsubscribeExtensionDialog,
 } from "./components/index.ts";
 import { rulesetExtensionsQuery } from "./rulesetQueries.ts";
-import { getSections, type RulesetSectionProps } from "./sectionFactory.ts";
+import type { RulesetSectionProps } from "./sectionProps.ts";
 import { prefetchSection, type RulesetSection } from "./sectionQueries.ts";
 import {
   AbilitiesSection,
   AptitudesSection,
+  ClassesSection,
   FeatsSection,
+  ItemsSection,
   LanguagesSection,
   MechanicsSection,
+  PowersSection,
   RacesSection,
   SavesSection,
   SettingsSection,
+  SkillsSection,
 } from "./sections/index.ts";
 
 /** What a ruleset page's tab is: its key, label and icon, and the section it shows. */
 type TabConfig = SectionTab<RulesetSection> & { component: (props: RulesetSectionProps) => ReactNode };
 
-/**
- * The ruleset page's tabs, an entity's section each: its base rules' own among them (`getSections`), named in its
- * rules' words (`words`).
- */
-function rulesetTabs(baseRules: BaseRules, words: RulesWords | undefined): TabConfig[] {
-  const sections = getSections(baseRules);
+/** The ruleset page's tabs, an entity's section each, named in its rules' words (`words`). */
+function rulesetTabs(words: RulesWords | undefined): TabConfig[] {
   return [
     { key: "races", label: "Races", icon: RacesIcon, component: RacesSection },
     { key: "languages", label: "Languages", icon: LanguagesIcon, component: LanguagesSection },
-    { key: "skills", label: "Skills", icon: SkillsIcon, component: sections.SkillsSection },
+    { key: "skills", label: "Skills", icon: SkillsIcon, component: SkillsSection },
     { key: "feats", label: "Feats", icon: FeatsIcon, component: FeatsSection },
     {
       key: "powers",
       label: entityTypeLabel("powers", words, true),
       icon: PowersIcon,
-      component: sections.PowersSection,
+      component: PowersSection,
     },
-    { key: "items", label: "Items", icon: ItemsIcon, component: sections.ItemsSection },
+    { key: "items", label: "Items", icon: ItemsIcon, component: ItemsSection },
     {
       key: "aptitudes",
       label: (
@@ -115,7 +114,7 @@ function rulesetTabs(baseRules: BaseRules, words: RulesWords | undefined): TabCo
       icon: AptitudesIcon,
       component: AptitudesSection,
     },
-    { key: "classes", label: "Classes", icon: ClassesIcon, component: sections.ClassesSection },
+    { key: "classes", label: "Classes", icon: ClassesIcon, component: ClassesSection },
     { key: "saves", label: "Saves", icon: SavesIcon, component: SavesSection },
     { key: "abilities", label: "Abilities", icon: AbilitiesIcon, component: AbilitiesSection },
     {
@@ -225,8 +224,7 @@ export default function RulesetDetailsPage() {
     );
   }
 
-  // Its tabs are its base rules' (`getSections`): the page waits for its ruleset to know them
-  const tabConfig = rulesetTabs(ruleset.baseRules, rules?.words);
+  const tabConfig = rulesetTabs(rules?.words);
   const currentTab = tabConfig.find((tab) => tab.key === section);
 
   // Normalize the URL to a known tab.

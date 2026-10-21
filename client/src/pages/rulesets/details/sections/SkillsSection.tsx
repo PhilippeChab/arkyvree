@@ -1,20 +1,16 @@
-import { Stack, Typography } from "@mui/material";
+import { Stack } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { type InferResponseType, parseResponse } from "hono/client";
 
 import {
   BlankState,
   CreateDialog,
-  EmptyValue,
   LoadError,
   LoadMoreButton,
   SectionContent,
-  StatusChip,
-  type TableColumn,
-  ValueChip,
 } from "@/client/src/components/common/index.ts";
 import { SkillsIcon } from "@/client/src/components/icons/index.ts";
-import { useRulesetAbilities, useSearchText } from "@/client/src/hooks/index.ts";
+import { useSearchText } from "@/client/src/hooks/index.ts";
 import { itemsBeforeLastPage, pageItems } from "@/client/src/lib/pageItems.ts";
 import {
   type SkillFormData,
@@ -25,28 +21,23 @@ import {
 } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import {
   DescriptionCell,
+  ListValue,
   RulesetSectionTable,
   SectionSearchBar,
 } from "@/client/src/pages/rulesets/components/index.ts";
 import { skillQuery } from "@/client/src/pages/rulesets/details/entities/entityDetailQueries.ts";
-import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
+import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionProps.ts";
 import { skillsQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import {
   useEntityColumns,
   useEntityFields,
+  useEntityList,
   useOpenEntity,
   useRulesetSection,
 } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
 type Skill = InferResponseType<(typeof rpc.api.rulesets)[":id"]["skills"]["$get"], 200>["items"][number];
-
-const SKILLS_COLUMNS: TableColumn[] = [
-  { key: "name", label: "Name", width: "25%" },
-  { key: "ability", label: "Primary Ability", width: "15%" },
-  { key: "trainedOnly", label: "Trained Only", width: "15%" },
-  { key: "description", label: "Description", width: "45%", slot: "block" },
-];
 
 export function SkillsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetSectionProps) {
   const openEntity = useOpenEntity(ruleset.id);
@@ -71,7 +62,7 @@ export function SkillsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
     onCreateSuccess: (created) => openEntity(`skills/${created.id}`),
   });
 
-  const { data: rulesetAbilities = [], error: abilitiesError } = useRulesetAbilities(ruleset.id);
+  const { columns, error: listError, list, names } = useEntityList(ruleset.id, "skills");
 
   const { data, isLoading, error, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
     ...skillsQuery(ruleset.id, { search: searchQuery, childOnly }),
@@ -92,22 +83,12 @@ export function SkillsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
     switch (columnKey) {
       case "name":
         return skill.name;
-      case "ability": {
-        const abilityName = rulesetAbilities.find((a) => a.id === skill.primaryAbilityId)?.name;
-        return abilityName ? <ValueChip label={abilityName} /> : <EmptyValue />;
-      }
-      case "trainedOnly":
-        return skill.usableWithoutTraining === false ? (
-          <StatusChip label="Yes" color="warning" />
-        ) : (
-          <Typography variant="body2" sx={{ color: "text.secondary" }}>
-            No
-          </Typography>
-        );
       case "description":
         return <DescriptionCell text={skill.description} />;
-      default:
-        return null;
+      default: {
+        const column = list?.columns.find((own) => own.key === columnKey);
+        return column && <ListValue column={column} entity={skill} names={names} />;
+      }
     }
   };
 
@@ -124,7 +105,7 @@ export function SkillsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
           onAdd={handleCreate}
         />
         <Stack spacing={2}>
-          {!!abilitiesError && rulesetAbilities.length === 0 && <LoadError what="Abilities" error={abilitiesError} />}
+          {!!listError && <LoadError what="References" error={listError} />}
           <RulesetSectionTable
             what="Skills"
             error={error}
@@ -132,7 +113,7 @@ export function SkillsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
             animationOffset={itemsBeforeLastPage(data)}
             search={searchQuery}
             isLoading={isLoading}
-            columns={SKILLS_COLUMNS}
+            columns={columns}
             onRowClick={handleRowClick}
             onRowPrefetch={handleRowPrefetch}
             renderCell={renderCell}

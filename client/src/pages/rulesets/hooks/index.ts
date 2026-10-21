@@ -5,6 +5,7 @@ export { useEntityColumns } from "./useEntityColumns.ts";
 export { useEntityFields } from "./useEntityFields.ts";
 export { useEntityFilters } from "./useEntityFilters.ts";
 export { useEntityForm } from "./useEntityForm.ts";
+export { useEntityList } from "./useEntityList.ts";
 export { useEntitySave } from "./useEntitySave.ts";
 export { useOpenEntity } from "./useOpenEntity.ts";
 export { useRestorableDelete } from "./useRestorableDelete.ts";

@@ -1,20 +1,18 @@
-import { Stack, Typography } from "@mui/material";
+import { Stack } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { type InferResponseType, parseResponse } from "hono/client";
 
 import {
   BlankState,
   CreateDialog,
-  EmptyValue,
+  LoadError,
   LoadMoreButton,
   SectionContent,
-  StatusChip,
-  type TableColumn,
 } from "@/client/src/components/common/index.ts";
 import { ItemsIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useDialogState, useFormWith, useRulesetPermissions, useSearchText } from "@/client/src/hooks/index.ts";
-import { formatCost, formatCount, formatWeight } from "@/client/src/lib/formatNumeric.ts";
+import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { itemsBeforeLastPage, pageItems } from "@/client/src/lib/pageItems.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import {
@@ -28,16 +26,18 @@ import {
 } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import {
   DescriptionCell,
+  ListValue,
   RulesetSectionTable,
   SectionSearchBar,
 } from "@/client/src/pages/rulesets/components/index.ts";
 import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
 import type { EntityField } from "@/client/src/pages/rulesets/details/rulesetQueries.ts";
-import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
+import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionProps.ts";
 import { invalidateRulesetEdit, itemsQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import {
   useEntityColumns,
   useEntityFields,
+  useEntityList,
   useOpenEntity,
   useRulesetSection,
 } from "@/client/src/pages/rulesets/hooks/index.ts";
@@ -51,15 +51,6 @@ type Item = InferResponseType<(typeof rpc.api.rulesets)[":id"]["items"]["$get"],
 
 /** A duplicate's form: a new item that keeps its source's type, slot and template. */
 const DUPLICATE_ITEM: ColumnContext = { locked: ["slot", "sourceItemId", "type"], newEntity: true };
-
-const ITEMS_COLUMNS: TableColumn[] = [
-  { key: "name", label: "Name", width: "25%" },
-  { key: "type", label: "Type", width: "10%", slot: "inline" },
-  { key: "template", label: "Template", width: "8%" },
-  { key: "cost", label: "Cost", width: "10%", slot: "inline" },
-  { key: "weight", label: "Weight", width: "10%", slot: "inline" },
-  { key: "description", label: "Description", width: "37%", slot: "block" },
-];
 
 /** A new item's form, which sends every field: a type change drops the template's values it holds. */
 const NEW_ITEM: ColumnContext = { newEntity: true };
@@ -90,6 +81,7 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
 
   const { fields: itemFields } = useEntityFields(ruleset.id, "items");
   const { columns: itemColumns } = useEntityColumns(ruleset.id, "items");
+  const { columns, error: listError, list, names } = useEntityList(ruleset.id, "items");
   const toItemBody = (data: ItemFormData) => toEntityBody<ItemFormData, ItemBody>(itemColumns, data);
   const { createForm, createDialogProps, duplicateSource, handleCreate, handleDuplicate } = useRulesetSection<
     Item,
@@ -160,30 +152,12 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
     switch (columnKey) {
       case "name":
         return item.name;
-      case "template":
-        if (item.isTemplate) return <StatusChip label="Template" color="info" />;
-        if (item.templateName) {
-          return (
-            <Typography variant="body2" sx={{ color: "text.secondary" }}>
-              {item.templateName}
-            </Typography>
-          );
-        }
-        return <EmptyValue />;
-      case "type":
-        return (
-          <Typography variant="body2" sx={{ color: "text.secondary" }}>
-            {item.type || <EmptyValue />}
-          </Typography>
-        );
-      case "cost":
-        return <Typography variant="body2">{formatCost(item.costGp) ?? <EmptyValue />}</Typography>;
-      case "weight":
-        return <Typography variant="body2">{formatWeight(item.weight) ?? <EmptyValue />}</Typography>;
       case "description":
         return <DescriptionCell text={item.description} />;
-      default:
-        return null;
+      default: {
+        const column = list?.columns.find((own) => own.key === columnKey);
+        return column && <ListValue column={column} entity={item} names={names} />;
+      }
     }
   };
 
@@ -199,6 +173,7 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
           addLabel="Add Item"
           onAdd={handleCreate}
         />
+        {!!listError && <LoadError what="References" error={listError} />}
         <Stack spacing={2}>
           <RulesetSectionTable
             what="Items"
@@ -207,7 +182,7 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
             animationOffset={itemsBeforeLastPage(data)}
             search={searchQuery}
             isLoading={isLoading}
-            columns={ITEMS_COLUMNS}
+            columns={columns}
             canEdit={canEdit}
             onDuplicate={(item) => handleDuplicate(item, duplicateForm(item, itemColumns, itemFields))}
             onCreateVariants={(item) => {
@@ -245,6 +220,7 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
           bulkMutation.mutate({ itemId: bulkDialog.target.id, variants });
         }}
         pending={bulkMutation.isPending}
+        rulesetId={ruleset.id}
       />
     </SectionContent>
   );

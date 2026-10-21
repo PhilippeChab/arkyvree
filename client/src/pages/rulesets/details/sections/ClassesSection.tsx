@@ -5,13 +5,11 @@ import { type InferResponseType, parseResponse } from "hono/client";
 import {
   BlankState,
   CreateDialog,
+  LoadError,
   LoadMoreButton,
   SectionContent,
-  type TableColumn,
-  ValueChip,
 } from "@/client/src/components/common/index.ts";
 import { ClassesIcon } from "@/client/src/components/icons/index.ts";
-import { formatDie } from "@/client/src/lib/formatNumeric.ts";
 import { itemsBeforeLastPage, pageItems } from "@/client/src/lib/pageItems.ts";
 import {
   ClassFormFields,
@@ -21,6 +19,7 @@ import {
 } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import {
   DescriptionCell,
+  ListValue,
   RulesetSectionTable,
   SectionSearchBar,
 } from "@/client/src/pages/rulesets/components/index.ts";
@@ -28,25 +27,20 @@ import {
   classDetailQuery,
   type ClassFormData,
 } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
-import { DND35_CLASS_TABS } from "@/client/src/pages/rulesets/details/classes/sections/dnd3.5/index.ts";
-import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
+import { getClassTabs } from "@/client/src/pages/rulesets/details/classes/classTabs.ts";
+import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionProps.ts";
 import { classesQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import {
   useEntityColumns,
   useEntityFields,
   useEntityFilters,
+  useEntityList,
   useOpenEntity,
   useRulesetSection,
 } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
 type Class = InferResponseType<(typeof rpc.api.rulesets)[":id"]["classes"]["$get"], 200>["items"][number];
-
-const CLASSES_COLUMNS: TableColumn[] = [
-  { key: "name", label: "Name", width: "25%" },
-  { key: "hitDie", label: "Hit Die", width: "15%" },
-  { key: "description", label: "Description", width: "60%", slot: "block" },
-];
 
 export function ClassesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetSectionProps) {
   const openEntity = useOpenEntity(ruleset.id);
@@ -56,6 +50,7 @@ export function ClassesSection({ ruleset, childOnly, onChildOnlyChange }: Rulese
 
   const { fields: classFields } = useEntityFields(ruleset.id, "klasses");
   const { columns: classColumns } = useEntityColumns(ruleset.id, "klasses");
+  const { columns, error: listError, list, names } = useEntityList(ruleset.id, "klasses");
   const { createForm, handleCreate, createDialogProps } = useRulesetSection<Class, ClassFormData>({
     rulesetId: ruleset.id,
     sectionName: "classes",
@@ -68,7 +63,7 @@ export function ClassesSection({ ruleset, childOnly, onChildOnlyChange }: Rulese
           json: toEntityBody<ClassFormData, ClassFormData>(classColumns, data),
         }),
       ),
-    onCreateSuccess: (created) => openEntity(`classes/${created.id}/progression`),
+    onCreateSuccess: (created) => openEntity(`classes/${created.id}`),
   });
 
   const { data, isLoading, error, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
@@ -78,14 +73,15 @@ export function ClassesSection({ ruleset, childOnly, onChildOnlyChange }: Rulese
 
   const classes = pageItems(data);
 
+  // Its page opens on its first tab
   const handleRowClick = (klass: Class) => {
-    openEntity(`classes/${klass.id}/progression`);
+    openEntity(`classes/${klass.id}`);
   };
 
   const handleRowPrefetch = (klass: Class) => {
     void queryClient.prefetchQuery(classDetailQuery(ruleset.id, klass.id));
     // And the tab its page opens on, its first
-    void DND35_CLASS_TABS[0].prefetch?.(queryClient, ruleset.id, klass.id);
+    void getClassTabs(ruleset.baseRules)[0].prefetch?.(queryClient, ruleset.id, klass.id);
   };
 
   const renderCell = (klass: Class, columnKey: string) => {
@@ -96,12 +92,12 @@ export function ClassesSection({ ruleset, childOnly, onChildOnlyChange }: Rulese
             {klass.name}
           </Typography>
         );
-      case "hitDie":
-        return <ValueChip label={formatDie(klass.hd)} />;
       case "description":
         return <DescriptionCell text={klass.description} />;
-      default:
-        return null;
+      default: {
+        const column = list?.columns.find((own) => own.key === columnKey);
+        return column && <ListValue column={column} entity={klass} names={names} />;
+      }
     }
   };
 
@@ -117,6 +113,7 @@ export function ClassesSection({ ruleset, childOnly, onChildOnlyChange }: Rulese
           addLabel="Add Class"
           onAdd={handleCreate}
         />
+        {!!listError && <LoadError what="References" error={listError} />}
         <Stack spacing={2}>
           <RulesetSectionTable
             what="Classes"
@@ -125,7 +122,7 @@ export function ClassesSection({ ruleset, childOnly, onChildOnlyChange }: Rulese
             animationOffset={itemsBeforeLastPage(data)}
             search={search}
             isLoading={isLoading}
-            columns={CLASSES_COLUMNS}
+            columns={columns}
             onRowClick={handleRowClick}
             onRowPrefetch={handleRowPrefetch}
             renderCell={renderCell}

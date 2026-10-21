@@ -1,14 +1,13 @@
-import { Stack, Typography } from "@mui/material";
+import { Stack } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { type InferResponseType, parseResponse } from "hono/client";
 
 import {
   BlankState,
   CreateDialog,
+  LoadError,
   LoadMoreButton,
   SectionContent,
-  type TableColumn,
-  ValueChip,
 } from "@/client/src/components/common/index.ts";
 import { RacesIcon } from "@/client/src/components/icons/index.ts";
 import { itemsBeforeLastPage, pageItems } from "@/client/src/lib/pageItems.ts";
@@ -21,16 +20,18 @@ import {
 } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import {
   DescriptionCell,
+  ListValue,
   RulesetSectionTable,
   SectionSearchBar,
 } from "@/client/src/pages/rulesets/components/index.ts";
 import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
-import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
+import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionProps.ts";
 import { racesQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import {
   useEntityColumns,
   useEntityFields,
   useEntityFilters,
+  useEntityList,
   useOpenEntity,
   useRulesetSection,
 } from "@/client/src/pages/rulesets/hooks/index.ts";
@@ -38,13 +39,6 @@ import { rpc } from "@/client/src/services/rpc.ts";
 import { buildCustomizationPath } from "@/shared/customization/entities.ts";
 
 type Race = InferResponseType<(typeof rpc.api.rulesets)[":id"]["races"]["$get"], 200>["items"][number];
-
-const RACES_COLUMNS: TableColumn[] = [
-  { key: "name", label: "Name", width: "15%" },
-  { key: "size", label: "Size", width: "10%" },
-  { key: "speed", label: "Speed", width: "10%" },
-  { key: "description", label: "Description", width: "65%", slot: "block" },
-];
 
 export function RacesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetSectionProps) {
   const openEntity = useOpenEntity(ruleset.id);
@@ -54,6 +48,7 @@ export function RacesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
 
   const { fields: raceFields } = useEntityFields(ruleset.id, "races");
   const { columns: raceColumns } = useEntityColumns(ruleset.id, "races");
+  const { columns, error: listError, list, names } = useEntityList(ruleset.id, "races");
   const { createForm, handleCreate, createDialogProps } = useRulesetSection<Race, RaceFormData>({
     rulesetId: ruleset.id,
     sectionName: "races",
@@ -88,14 +83,12 @@ export function RacesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
     switch (columnKey) {
       case "name":
         return race.name;
-      case "size":
-        return <ValueChip label={race.size} />;
-      case "speed":
-        return <Typography variant="body2">{race.baseSpeed} ft</Typography>;
       case "description":
         return <DescriptionCell text={race.description} />;
-      default:
-        return null;
+      default: {
+        const column = list?.columns.find((own) => own.key === columnKey);
+        return column && <ListValue column={column} entity={race} names={names} />;
+      }
     }
   };
 
@@ -111,6 +104,7 @@ export function RacesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
           addLabel="Add Race"
           onAdd={handleCreate}
         />
+        {!!listError && <LoadError what="References" error={listError} />}
         <Stack spacing={2}>
           <RulesetSectionTable
             what="Races"
@@ -119,7 +113,7 @@ export function RacesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
             animationOffset={itemsBeforeLastPage(data)}
             search={search}
             isLoading={isLoading}
-            columns={RACES_COLUMNS}
+            columns={columns}
             onRowClick={handleRowClick}
             onRowPrefetch={handleRowPrefetch}
             renderCell={renderCell}

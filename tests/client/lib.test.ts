@@ -235,26 +235,42 @@ describe("An activity", () => {
 
   test("details the fields it changed, its level, modifier and property", () => {
     expect(
-      formatActivityDetails("updateItem", {
-        changedFields: [
-          { field: "name", from: "A", to: "B" },
-          { field: "hd", to: "8" },
-          { field: "costGp", from: "15", to: "20" },
-          { field: "slot", from: "Neck" },
-          { field: "baseSpeed" },
-          {
-            field: "primaryAbilityId",
-            from: "7c0d4b52-0c0e-4b8e-9d7f-1f2a3b4c5d6e",
-            to: "00000000-0000-0000-0000-000000000000",
-          },
-          { field: "sourceItemId", to: "00000000-0000-0000-0000-000000000000" },
-          { bad: true },
-        ],
-        level: 3,
-      }),
+      formatActivityDetails(
+        "updateItem",
+        {
+          baseRules: "Dungeons & Dragons: 3.5",
+          changedFields: [
+            { field: "name", from: "A", to: "B" },
+            { field: "costGp", from: "15", to: "20" },
+            { field: "slot", from: "Neck" },
+            { field: "baseSpeed" },
+            {
+              field: "primaryAbilityId",
+              from: "7c0d4b52-0c0e-4b8e-9d7f-1f2a3b4c5d6e",
+              to: "00000000-0000-0000-0000-000000000000",
+            },
+            { field: "sourceItemId", to: "00000000-0000-0000-0000-000000000000" },
+            { bad: true },
+          ],
+          level: 3,
+        },
+        RULES,
+      ),
     ).toBe(
-      "Name: A → B\nHit Die set to d8\nCost: 15.00 gp → 20.00 gp\nSlot cleared\nBase Speed updated\nPrimary Ability updated\nSource Item updated\nLevel 3",
+      "Name: A → B\nCost: 15.00 gp → 20.00 gp\nSlot cleared\nBase Speed updated\nPrimary Ability updated\nSource Item updated\nLevel 3",
     );
+    // A field reads as its own entity's column, never another's of the same key: a class's hit die, a language's type
+    const baseRules = "Dungeons & Dragons: 3.5";
+    expect(formatActivityDetails("updateKlass", { baseRules, changedFields: [{ field: "hd", to: "8" }] }, RULES)).toBe(
+      "Hit Die set to d8",
+    );
+    expect(
+      formatActivityDetails(
+        "updateLanguage",
+        { baseRules, changedFields: [{ field: "type", from: "Common", to: "Exotic" }] },
+        RULES,
+      ),
+    ).toBe("Type: Common → Exotic");
     expect([
       formatActivityDetails("createModifier", { target: "combat.ac.misc", operator: "add", value: "1" }),
       formatActivityDetails("updateRequirement", { target: "identity.name", operator: "not_empty" }),

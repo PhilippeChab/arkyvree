@@ -5,6 +5,7 @@ export { DescriptionCell } from "./DescriptionCell.tsx";
 export { EntityDeleteDialog } from "./EntityDeleteDialog.tsx";
 export { EntityDetailLayout, EntityPageError } from "./EntityDetailLayout.tsx";
 export { EntityDetailsCard } from "./EntityDetailsCard.tsx";
+export { ListValue } from "./ListValue.tsx";
 export { RulesetFactChips } from "./RulesetFactChips.tsx";
 export { RulesetSectionTable } from "./RulesetSectionTable.tsx";
 export { RulesetStarButton } from "./RulesetStarButton.tsx";
