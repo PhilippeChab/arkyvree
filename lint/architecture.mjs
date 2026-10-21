@@ -658,9 +658,10 @@ function createRulesetFolders(context) {
   if (!ruleset && !home && !genericClient) return {};
   return onImports((node, spec) => {
     const target = targetOf(file, spec);
+    // A client's import of a ruleset's vocabulary is root-folders' to refuse, from any of its folders: it reads none
+    if (file.startsWith("client/") && target?.startsWith("vocabulary/")) return;
     const other = target && rulesetOf(target, rulesets);
-    // A client's import of a ruleset's vocabulary is root-folders' to refuse: the client reads none of it
-    if (genericClient && other && !target.startsWith("vocabulary/")) {
+    if (genericClient && other) {
       context.report({
         node,
         message:
