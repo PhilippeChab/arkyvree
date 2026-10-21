@@ -49,7 +49,7 @@ export default class ClassEntity extends RulesetEntity<
 
   /** A form's columns: the hit die it gives, or the edited class's; a new one's `DEFAULT_HIT_DIE` when it gives none (0 is none). */
   protected override columnsOf({ description, hd, name }: ClassBody, klass?: Klass) {
-    return { description, hd: klass ? (hd ?? klass.hd) : hd || DEFAULT_HIT_DIE, name };
+    return { description, hd: hd || (klass?.hd ?? DEFAULT_HIT_DIE), name };
   }
 
   /**

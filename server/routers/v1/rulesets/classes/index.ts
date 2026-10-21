@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { type ApiKeyContext, describeRoute, validate } from "@/server/middlewares/index.ts";
 import {
+  hitDie,
   levelFeats,
   levelSaves,
   progressionPools,
@@ -31,7 +32,7 @@ import { ClassSkillsService } from "@/server/services/rulesets/classes/skills/in
 const classBody = z.object({
   description: entityDescription,
   fields,
-  hitDie: z.number().int().optional().meta({ description: "Its hit die's sides: `10` a d10" }),
+  hitDie: hitDie.meta({ description: "Its hit die's sides: `10` a d10" }),
   name: z.string().min(1),
 });
 

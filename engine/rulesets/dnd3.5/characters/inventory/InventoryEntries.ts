@@ -63,6 +63,7 @@ export default class InventoryEntries {
     const { equipped, location } = change.request;
     // A hand holds what names no weapon set in the first, as an import does
     const weaponSets = change.request.weaponSets ?? (ItemPlacement.isHand(location) ? [0] : []);
+    const placed = InventoryEntries.placementOf({ equipped, location, weaponSets });
     if (equipped && location) {
       const entry =
         "item" in change
@@ -71,7 +72,8 @@ export default class InventoryEntries {
       if (!entry.item) throw new RulesError("not-found", "Item not found");
       // An entry an edit keeps where it's held met its requirements, or was forced, when it got there
       const held = "entry" in change ? character.rows.inventory.find((row) => row.id === change.entry.id) : undefined;
-      const kept = !!held?.equipped && held.location === location && String(held.weaponSets) === String(weaponSets);
+      const kept =
+        !!held?.equipped && held.location === location && String(held.weaponSets) === String(placed.weaponSets);
       new Equipping(view, character).checkEquip(
         { id: entry.id, item: entry.item },
         location,
@@ -79,6 +81,6 @@ export default class InventoryEntries {
         force || kept,
       );
     }
-    return InventoryEntries.placementOf({ equipped, location, weaponSets });
+    return placed;
   }
 }

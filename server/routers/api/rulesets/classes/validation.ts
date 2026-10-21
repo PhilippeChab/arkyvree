@@ -5,6 +5,9 @@ import { idParam } from "@/server/routers/api/validation.ts";
 /** A class route's `:id` (the ruleset) and `:classId` */
 export const classParams = idParam.extend({ classId: z.string().uuid() });
 
+/** A class's hit die, its create's and its update's: its ruleset's rules check it, none (0) the one it has. */
+export const hitDie = z.number().int().optional();
+
 /** A class level's granted feats, its create's, its update's and its progression's. */
 export const levelFeats = z
   .array(z.object({ featId: z.string().uuid(), aptitudeId: z.string().uuid(), free: z.boolean().optional() }))
