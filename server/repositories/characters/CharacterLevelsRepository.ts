@@ -1,12 +1,10 @@
-import { eq, inArray, type InferInsertModel, isNull, sql } from "drizzle-orm";
+import { and, eq, inArray, type InferInsertModel, isNull, sql } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
 import { levelsInCharacter } from "@/drizzle/schema.ts";
-import { include } from "@/lib/mixins.ts";
 import BaseRepository from "@/server/repositories/BaseRepository.ts";
-import { GuardsStaleEdits } from "@/server/repositories/concerns/GuardsStaleEdits.ts";
 
-class CharacterLevelsRepository extends include(BaseRepository<typeof levelsInCharacter>, GuardsStaleEdits) {
+class CharacterLevelsRepository extends BaseRepository<typeof levelsInCharacter> {
   constructor() {
     super(levelsInCharacter);
   }
@@ -59,21 +57,11 @@ class CharacterLevelsRepository extends include(BaseRepository<typeof levelsInCh
     });
   }
 
-  async update(
-    db: Db,
-    values: Partial<InferInsertModel<typeof levelsInCharacter>>,
-    where: { expectedUpdatedAt?: string; id: string },
-  ) {
+  async update(db: Db, values: Partial<InferInsertModel<typeof levelsInCharacter>>, where: { id: string }) {
     return await db
       .update(this.table)
       .set({ ...values, updatedAt: new Date().toISOString() })
-      .where(
-        this.where([
-          eq(this.table.id, where.id),
-          isNull(this.table.deletedAt),
-          this.casUpdatedAt(where.expectedUpdatedAt),
-        ]),
-      )
+      .where(and(eq(this.table.id, where.id), isNull(this.table.deletedAt)))
       .returning();
   }
 }
