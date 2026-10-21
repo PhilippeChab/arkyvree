@@ -42,8 +42,8 @@ export function Choices<B extends Constructor>(Base: B) {
 
     /**
      * Each pool with room left (`pools`), with every option its picker offers that the character qualifies for, read a
-     * page at a time (`findPage`), one pool after another: a caster's pools, one per spell level, hold no more than one
-     * of the database's connections.
+     * page at a time (`findPage`), one pool after another: a caster's pools, one per spell level, take one of the
+     * database's connections, not one each.
      */
     private async readSlots<P extends { picker: SlotPicker }, R extends { id: string }>(
       pools: P[],
@@ -72,7 +72,7 @@ export function Choices<B extends Constructor>(Base: B) {
           this.readSlots(level?.featPools ?? [], (filters, page) => Feats.findOptionPage(db, filters, page)),
           this.readSlots(level?.powerPools ?? [], (filters, page) => Powers.findOptionPage(db, filters, page)),
         ]);
-        return { classes, level: level && { ...level.steps, featSlots, powerSlots }, levelsLeft };
+        return { classes, level: level && { ...level.steps, featSlots, picked: level.picked, powerSlots }, levelsLeft };
       });
     }
   }

@@ -1,4 +1,4 @@
-import type { FeatPick, LevelChoicesQuery, LevelQuery, PowerPick } from "@/engine/core/module/index.ts";
+import type { LevelChoicesQuery, LevelPickRows, LevelQuery } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type ClassPicker from "@/engine/rulesets/dnd3.5/pickers/ClassPicker.ts";
 import FeatPicker from "@/engine/rulesets/dnd3.5/pickers/FeatPicker.ts";
@@ -8,23 +8,13 @@ import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import LevelUpSteps from "./LevelUpSteps.ts";
 
 /** The feats and powers picked so far that fit in their pools, as a picker's query takes them. */
-interface PickedSoFar {
-  feats: FeatPick[];
-  powers: PowerPick[];
-}
+type PickedSoFar = Pick<LevelPickRows, "feats" | "powers">;
 
 /** The feats and powers steps' answers, described together. */
 type PickSteps = ReturnType<LevelUpSteps["describePickSteps"]>;
 
 /** The level a step or a picker is for: the planned level's class and its next level. */
 type PlannedStep = LevelQuery & { klassId: string; level: number };
-
-/** The picks a step fitted to their pools, each pool's, as a picker's query takes them. */
-function toPicks<K extends "featId" | "powerId">(fitted: Record<string, string[]>, idKey: K) {
-  return Object.entries(fitted).flatMap(([aptitudeId, ids]) =>
-    ids.map((id) => ({ aptitudeId, [idKey]: id }) as { aptitudeId: string } & Record<K, string>),
-  );
-}
 
 /**
  * A character's choices at its next level, opened whole: the class picker, and for a planned level of the class the
@@ -112,12 +102,13 @@ export default class LevelChoices extends LevelUpSteps {
     const abilities = this.readAbilityStep(step);
     const skills = this.describeSkillStep(step);
     const { feats, powers } = this.describePickSteps(step);
-    const picks = { feats: toPicks(feats.fitted, "featId"), powers: toPicks(powers.fitted, "powerId") };
+    const { skills: _skills, ...picks } = this.toPickRows({ feats: feats.fitted, powers: powers.fitted, skills: {} });
     return {
       classPicker,
       levelsLeft,
       level: {
         featPools: this.openFeatPools(step, feats, picks),
+        picked: picks,
         powerPools: this.openPowerPools(step, powers, picks),
         steps: {
           abilities,
