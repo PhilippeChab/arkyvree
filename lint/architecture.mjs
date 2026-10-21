@@ -642,7 +642,8 @@ function createRootFolders(context) {
       message:
         `${root}/ is ${box.role}: it imports ${imports} beside its own modules, never ${target}. A box reaches ` +
         "another only by an edge lint/architecture.mjs's ROOT_FOLDERS declares, with its reason; what several " +
-        "share belongs on a shared surface (the engine, shared/, vocabulary/).",
+        "share belongs on a shared surface it imports (the engine, shared/; vocabulary/, which the client reads as " +
+        "the engine describes it).",
     });
   });
 }
@@ -661,9 +662,11 @@ function createRulesetFolders(context) {
     if (genericClient && other) {
       context.report({
         node,
-        message:
-          `A generic client module reaches ${other}'s code through the registry keyed by base rules ` +
-          "(`getSections`: lint/architecture.mjs `CLIENT_REGISTRIES`), never from its folders.",
+        message: target.startsWith("vocabulary/")
+          ? `A client module reads ${other}'s vocabulary as the engine describes it (\`useRules\`, a sheet's ` +
+            "labels), never from its folder."
+          : `A generic client module reaches ${other}'s code through the registry keyed by base rules ` +
+            "(`getSections`: lint/architecture.mjs `CLIENT_REGISTRIES`), never from its folders.",
       });
     } else if (home && other) {
       context.report({

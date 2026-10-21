@@ -380,12 +380,14 @@ describe("architecture rules", () => {
           "engine/rulesets/dnd3.5/q.ts": imports("@/vocabulary/dnd3.5/spells.ts"),
           "engine/api/r.ts": imports("@/engine/rulesets/pf1/index.ts"),
           "tests/s.test.ts": imports("@/engine/rulesets/pf1/index.ts"),
-          // The client's generic modules reach a ruleset's vocabulary and code through its registries alone
+          // The client's generic modules reach a ruleset's code through its registry alone, and its vocabulary never
           "client/src/pages/rulesets/t.ts": imports("@/vocabulary/dnd3.5/spells.ts"),
           "client/src/components/characters/sections/sectionFactory.ts": imports(
             "@/client/src/components/characters/sections/dnd3.5/index.ts",
           ),
-          "client/src/pages/rulesets/components/dnd3.5/u.ts": imports("@/vocabulary/dnd3.5/spells.ts"),
+          "client/src/pages/rulesets/components/dnd3.5/u.ts": imports(
+            "@/client/src/pages/rulesets/components/dnd3.5/x.ts",
+          ),
           "client/src/pages/rulesets/components/v.ts": imports("@/client/src/pages/rulesets/components/dnd3.5/u.ts"),
           "vocabulary/pf1/w.ts": imports("@/vocabulary/dnd3.5/spells.ts"),
         },
