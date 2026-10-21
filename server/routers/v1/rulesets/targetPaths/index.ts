@@ -10,9 +10,13 @@ import { TargetPathsService } from "@/server/services/rulesets/customization/tar
 
 /** What a target path is for, and the kind of entity whose modifier or requirement takes it. */
 const pathQuery = z.object({
-  entityKind: customizableKind
+  entityKind: z
+    .union([z.literal("characters"), customizableKind])
     .optional()
-    .meta({ description: "Only the paths an entity of this kind's modifiers take: some are a kind's alone" }),
+    .meta({
+      description:
+        "Only the paths an entity of this kind's modifiers take, some a kind's alone: a character's own (`characters`) too",
+    }),
   kind: z
     .enum(["modifier", "requirement"])
     .default("modifier")
