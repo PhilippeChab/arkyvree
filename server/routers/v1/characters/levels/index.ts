@@ -139,7 +139,9 @@ export default new Hono<ApiKeyContext>()
     describeRoute({
       response: v1SavedLevel,
       status: 200,
-      summary: "Changes a level a character took: what the body names of its hit points, ability increases and picks",
+      summary:
+        "Changes a level a character took: what the body names of its hit points, ability increases and picks, " +
+        "refused (409) when it changed while the update read it",
     }),
     validate("param", levelParams),
     validate(
@@ -157,8 +159,9 @@ export default new Hono<ApiKeyContext>()
       const { id, levelId } = c.req.valid("param");
       const body = c.req.valid("json");
       const session = c.var.requestSession;
-      const before = V1.savedLevel(await CharacterLevelsService.getLevel(session, id, levelId));
-      const { abilityIncreases, feats, force, hp, powers, skills } = V1.levelEditRequest(before, body);
+      const stored = await CharacterLevelsService.getLevel(session, id, levelId);
+      const { abilityIncreases, feats, force, hp, powers, skills } = V1.levelEditRequest(V1.savedLevel(stored), body);
+      // What the body leaves out is the level as it was read: a change since then refuses the write
       await CharacterLevelsService.updateLevel(
         session,
         id,
@@ -169,6 +172,7 @@ export default new Hono<ApiKeyContext>()
         feats,
         powers,
         force,
+        stored.updatedAt,
       );
       return c.json(V1.savedLevel(await CharacterLevelsService.getLevel(session, id, levelId)), 200);
     },

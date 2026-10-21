@@ -197,14 +197,15 @@ export default class Equipping {
 
   /**
    * Equipping an entry's item at `location` (in each of `weaponSets`, for a hand): a hand slot needs a weapon set, the
-   * slot must take the item in each of them, and the character must meet its requirements unless `force`d.
+   * slot must take the item in each of them, and the character must meet its requirements unless `force`d, or the entry
+   * is `kept` where it's held (it met them, or was forced, when it got there), and hold it in one hand if it can.
    */
-  checkEquip(entry: EquippedEntry, location: ItemLocation, weaponSets: number[], force: boolean) {
+  checkEquip(entry: EquippedEntry, location: ItemLocation, weaponSets: number[], force: boolean, kept = false) {
     if (ItemPlacement.isHand(location) && weaponSets.length === 0)
       throw new RulesError("invalid", "A weapon set is required when equipping to a hand slot");
     this.checkSlot(entry, location, weaponSets);
     if (force) return;
-    this.checkItemRequirements(entry.item);
+    if (!kept) this.checkItemRequirements(entry.item);
     this.checkWeaponInOneHand(entry.item, location);
   }
 

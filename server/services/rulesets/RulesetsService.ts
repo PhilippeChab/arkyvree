@@ -1,5 +1,6 @@
 import { getTableName } from "drizzle-orm";
 
+import type { Db } from "@/drizzle/database.ts";
 import { rulesetsInRules } from "@/drizzle/schema.ts";
 import { include } from "@/lib/mixins.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
@@ -23,6 +24,12 @@ import { Publishes } from "./concerns/Publishes.ts";
 import { Stars } from "./concerns/Stars.ts";
 
 class RulesetsService extends include(Object, Archives, Publishes, Stars) {
+  /** Refuses a name another ruleset has, archived or another user's private one too: a ruleset's name is unique. */
+  private async checkNameFree(tx: Db, name: string) {
+    if (await Rulesets.findOne(tx, { name }, Visibility.All))
+      throw new ConflictError("A ruleset with this name already exists");
+  }
+
   async forkRuleset(session: Session, id: string, body: { description?: string; name: string; private: boolean }) {
     const result = await withTransaction(async (tx) => {
       // 1. Verify source ruleset exists and is published
@@ -32,8 +39,7 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
       (await RulesetsPolicy.for(tx, session, ruleset)).canFork();
 
       // 2. Verify name uniqueness
-      const existing = await Rulesets.findOne(tx, { name: body.name }, Visibility.All);
-      if (existing) throw new ConflictError("A ruleset with this name already exists");
+      await this.checkNameFree(tx, body.name);
 
       // canFork blocks forks-of-forks, so the parent is always a base —
       // ancestorRulesetIds is always [baseId].
@@ -186,12 +192,7 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
       (await RulesetsPolicy.for(tx, session, ruleset)).canUpdate();
 
       if (!ruleset.private && body.private) throw new ForbiddenError("Cannot make a public ruleset private");
-      if (
-        body.name !== undefined &&
-        body.name !== ruleset.name &&
-        (await Rulesets.findOne(tx, { name: body.name }, Visibility.All))
-      )
-        throw new ConflictError("A ruleset with this name already exists");
+      if (body.name !== undefined && body.name !== ruleset.name) await this.checkNameFree(tx, body.name);
 
       if (body.kind === "extension" && ruleset.kind !== "extension") this.assertCanBeExtension(ruleset);
 

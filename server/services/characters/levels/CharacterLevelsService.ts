@@ -13,6 +13,7 @@ import { type AbilityIncrease, Engine, type LevelRequest, type PreviewRequest } 
 import { include } from "@/lib/mixins.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
+import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import {
   Activities,
   CharacterLevelAbilityIncreases,
@@ -162,6 +163,7 @@ class CharacterLevelsService extends include(Object, Choices, Pickers, Steps) {
     feats: Record<string, string[]>,
     powers: Record<string, string[]>,
     force: boolean = false,
+    expectedUpdatedAt?: string,
   ) {
     return await withTransaction(async (tx) => {
       const characterRecord = await this.lockEditableCharacter(tx, session, characterId);
@@ -174,7 +176,8 @@ class CharacterLevelsService extends include(Object, Choices, Pickers, Steps) {
           .levelUp()
           .planEdit(bonded, characterLevelId, { abilityIncreases, feats, hp, powers, skills }, force);
 
-        await CharacterLevels.update(tx, edit.columns, { id: characterLevelId });
+        const rows = await CharacterLevels.update(tx, edit.columns, { id: characterLevelId, expectedUpdatedAt });
+        if (expectedUpdatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
         await this.deleteLevelRows(tx, characterLevelId);
         await createLevelRows(tx, characterLevelId, edit.rows);
         await writeBondedCreatures(tx, characterRecord, edit.bonded);
