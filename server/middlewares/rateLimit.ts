@@ -6,9 +6,6 @@ const ATTACHMENT_UPLOADS_PER_MINUTE = 20;
 /** The PDFs a minute an export renders: the app's per address, the public API's per user. */
 const EXPORTS_PER_MINUTE = 5;
 
-/** The character files' headers a minute an import's check reads: the app's per address, the public API's per user. */
-const IMPORT_SOURCES_PER_MINUTE = 30;
-
 /** The character files a minute an import reads whole: the app's per address, the public API's per user. */
 const IMPORTS_PER_MINUTE = 10;
 
@@ -36,16 +33,6 @@ export const apiExportRateLimit = limitRatePerKey({ windowMs: MINUTE, limit: EXP
  */
 export const apiImportRateLimit = limitRatePerKey({ windowMs: MINUTE, limit: IMPORTS_PER_MINUTE, per: "user" });
 
-/**
- * What a character file is, as the public API reads its header, counted per user, whatever keys of theirs ask: as many
- * a minute as the app's own allow an address.
- */
-export const apiImportSourceRateLimit = limitRatePerKey({
-  windowMs: MINUTE,
-  limit: IMPORT_SOURCES_PER_MINUTE,
-  per: "user",
-});
-
 /** The public API's requests, counted per key: an agent's run reads a character and its choices a few times a level. */
 export const apiKeyRateLimit = limitRatePerKey({ windowMs: MINUTE, limit: 120 });
 
@@ -68,7 +55,7 @@ export const exportRateLimit = limitRate({ windowMs: MINUTE, limit: EXPORTS_PER_
 export const importRateLimit = limitRate({ windowMs: MINUTE, limit: IMPORTS_PER_MINUTE });
 
 /** What a picked character file is: asked once a file is picked, its header's tags read, nothing built. */
-export const importSourceRateLimit = limitRate({ windowMs: MINUTE, limit: IMPORT_SOURCES_PER_MINUTE });
+export const importSourceRateLimit = limitRate({ windowMs: MINUTE, limit: 30 });
 
 /**
  * A character's choices at its next level, which read every option of each pool: counted per user, whatever keys of
