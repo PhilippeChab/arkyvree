@@ -102,6 +102,13 @@ describe("v1 character inventory", () => {
       quantity: 2,
     });
     await expectStatus(entry.$put({ json: { location: "Head" }, param: { entryId, id } }), 400);
+
+    const shield = (await getSeedCtx()).itemMap["Heavy Steel Shield"]!;
+    const json2 = { force: true, itemId: shield, location: "Off Hand", quantity: 1, weaponSets: [0, 1] } as const;
+    const held = await expectOk(route.$post({ json: { ...json2, weaponSets: [...json2.weaponSets] }, param: { id } }));
+    const reordered = { quantity: 2, weaponSets: [1, 0, 1] };
+    const changed = await expectOk(route[":entryId"].$put({ json: reordered, param: { entryId: held.id, id } }));
+    expect(changed).toMatchObject({ quantity: 2, weaponSets: [0, 1] });
   });
 
   test("says why a place can't take one more item, and refuses an add there", async () => {

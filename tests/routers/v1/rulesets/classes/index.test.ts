@@ -94,6 +94,10 @@ describe("v1 ruleset classes", () => {
     );
     expect(changed).toMatchObject({ hitDie: 12, name: "Warrior" });
     expect(changed.id).not.toBe(classId);
+    const unchanged = await expectOk(
+      classes[":classId"].$put({ json: { hitDie: 0, name: "Warrior" }, param: { classId: changed.id, id } }),
+    );
+    expect(unchanged.hitDie).toBe(12);
 
     await expectStatus(classes[":classId"].$delete({ param: { classId: created.id, id } }), 204);
     await expectStatus(classes[":classId"].$get({ param: { classId: created.id, id } }), 404);

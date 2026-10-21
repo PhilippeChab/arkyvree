@@ -8,10 +8,7 @@ import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
 import classLevels from "./levels/index.ts";
 import classProgression from "./progression/index.ts";
 import classSkills from "./skills/index.ts";
-import { classParams } from "./validation.ts";
-
-/** A class's hit die, its create's and its update's: its ruleset's rules check it. */
-const hitDie = z.number().int().optional();
+import { classParams, hitDie } from "./validation.ts";
 
 export default new Hono<SessionContext>()
   .route("/", classLevels)

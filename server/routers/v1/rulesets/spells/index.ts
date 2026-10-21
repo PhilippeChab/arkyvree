@@ -23,7 +23,7 @@ const spellBody = z.object({
     .nullable()
     .optional()
     .transform((value) => (value === "" ? null : value))
-    .meta({ description: "What a successful save does: `half`, `negates`…" }),
+    .meta({ description: "What a successful save does: `half`, `negates`…; none for a spell without a save" }),
   saveId: z
     .union([z.string().uuid(), z.literal("")])
     .nullable()
