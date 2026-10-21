@@ -29,6 +29,14 @@ export const entityFields = z.custom<EntityFieldValues>(
 /** Ruleset entity sorting (name/createdAt/updatedAt, ascending) */
 export const entityOrderBy = z.enum(["name", "createdAt", "updatedAt"]).default("name");
 
+/** Comma-separated weapon sets in a query string, stored from 0: what isn't one is dropped (an empty string is none). */
+export const heldSetList = z.string().transform((value) =>
+  value
+    .split(",")
+    .filter((set) => /^\d+$/.test(set))
+    .map(Number),
+);
+
 /** Comma-separated ids in a query string: what isn't one is dropped, none when the query leaves it out. */
 export const idList = z
   .string()

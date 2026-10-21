@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import { location } from "@/drizzle/schema.ts";
 import { type ApiKeyContext, describeRoute, validate } from "@/server/middlewares/index.ts";
-import { idParam } from "@/server/routers/api/validation.ts";
+import { heldSetList, idParam } from "@/server/routers/api/validation.ts";
 import { v1Inventory, v1InventoryEntry, v1Placement } from "@/server/routers/v1/schemas/characterParts.ts";
 import { V1 } from "@/server/routers/v1/translators/V1.ts";
 import { CharacterInventoryService } from "@/server/services/characters/inventory/index.ts";
@@ -67,15 +67,8 @@ export default new Hono<ApiKeyContext>()
       z.object({
         entryId: z.string().uuid().optional().meta({ description: "The entry placed, none for a new one" }),
         location: z.enum(location.enumValues),
-        weaponSets: z
-          .string()
-          .default("")
-          .transform((value) =>
-            value
-              .split(",")
-              .filter((set) => /^\d+$/.test(set))
-              .map(Number),
-          )
+        weaponSets: heldSetList
+          .default([])
           .meta({ description: "Comma-separated: the weapon sets a hand holds it in, from 0" }),
       }),
     ),

@@ -185,6 +185,8 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
       (await RulesetsPolicy.for(tx, session, ruleset)).canUpdate();
 
       if (!ruleset.private && body.private) throw new ForbiddenError("Cannot make a public ruleset private");
+      if (body.name !== undefined && body.name !== ruleset.name && (await Rulesets.findOne(tx, { name: body.name })))
+        throw new ConflictError("A ruleset with this name already exists");
 
       if (body.kind === "extension" && ruleset.kind !== "extension") this.assertCanBeExtension(ruleset);
 

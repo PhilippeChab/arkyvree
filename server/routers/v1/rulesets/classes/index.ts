@@ -2,7 +2,12 @@ import { Hono } from "hono";
 import { z } from "zod";
 
 import { type ApiKeyContext, describeRoute, validate } from "@/server/middlewares/index.ts";
-import { levelFeats, levelSaves } from "@/server/routers/api/rulesets/classes/validation.ts";
+import {
+  levelFeats,
+  levelSaves,
+  progressionPools,
+  progressionSpells,
+} from "@/server/routers/api/rulesets/classes/validation.ts";
 import { idParam } from "@/server/routers/api/validation.ts";
 import {
   v1Class,
@@ -255,32 +260,8 @@ export default new Hono<ApiKeyContext>()
           .array(levelBody.extend({ levelId: z.string().uuid() }))
           .optional()
           .meta({ description: "The levels it changes, each by its id" }),
-        pools: z
-          .array(
-            z.object({
-              aptitudeId: z.string().uuid(),
-              picks: z.array(z.object({ count: z.number().int(), levelId: z.string().uuid() })),
-            }),
-          )
-          .optional()
-          .meta({ description: "The picks each level gives in each of its pools" }),
-        spells: z
-          .object({
-            known: z
-              .array(
-                z.object({
-                  counts: z.array(z.union([z.number().int(), z.literal("all")]).nullable()),
-                  levelId: z.string().uuid(),
-                }),
-              )
-              .optional()
-              .meta({ description: "Each level's spells known by spell level, from 0: `all`, or none (null)" }),
-            perDay: z
-              .array(z.object({ counts: z.array(z.number().int().nullable()), levelId: z.string().uuid() }))
-              .optional()
-              .meta({ description: "Each level's spells a day by spell level, from 0: none (null)" }),
-          })
-          .optional(),
+        pools: progressionPools,
+        spells: progressionSpells,
       }),
     ),
     async (c) => {

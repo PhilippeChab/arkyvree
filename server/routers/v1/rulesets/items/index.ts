@@ -11,7 +11,7 @@ import { ItemsService } from "@/server/services/rulesets/items/index.ts";
 
 /**
  * An item, its create's, its duplicate's and its update's: a cost, a weight, a slot or a template cleared with null,
- * and kept when left out.
+ * and kept when left out. Whether it's a template is a new item's alone (`template`): an update leaves it as it is.
  */
 const itemBody = z.object({
   cost: z.number().min(0).nullable().optional().meta({ description: "In gold pieces" }),
@@ -144,7 +144,7 @@ export default new Hono<ApiKeyContext>()
       summary: "Changes an item of a ruleset's: a copy of its own, when it's inherited",
     }),
     validate("param", itemParams),
-    validate("json", itemBody),
+    validate("json", itemBody.omit({ template: true })),
     async (c) => {
       const { id, itemId } = c.req.valid("param");
       const body = c.req.valid("json");
