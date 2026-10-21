@@ -202,13 +202,20 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
       // The issues the level answers for: built without the level and every later one, then with it alone; those the
       // character had as it was saved aren't the edit's (an edit of its hit points alone keeps a forced level's)
       const { before, withLevel } = this.projectLevelContribution(characterLevelId, klassLevel.id, edit);
-      const saved = new Set(
-        this.build()
-          .validate()
-          .issues.map(({ message }) => message),
-      );
       const levelIssues = this.rules.findEditedLevelIssues(issues, this.build(before), this.build(withLevel));
-      RulesError.refuseIssues(levelIssues.filter(({ message }) => !saved.has(message)));
+      if (levelIssues.length > 0) {
+        // Each issue counted by its words: one more of the same words than the saved character had is the edit's
+        const savedCounts = new Map<string, number>();
+        for (const { message } of this.build().validate().issues)
+          savedCounts.set(message, (savedCounts.get(message) ?? 0) + 1);
+        RulesError.refuseIssues(
+          levelIssues.filter(({ message }) => {
+            const left = savedCounts.get(message) ?? 0;
+            savedCounts.set(message, left - 1);
+            return left <= 0;
+          }),
+        );
+      }
     }
     return {
       ...this.planBondedOf(edited, bonded),

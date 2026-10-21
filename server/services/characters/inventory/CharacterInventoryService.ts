@@ -117,6 +117,9 @@ class CharacterInventoryService {
       return await withRulesetScope(tx, characterRecord.rulesetId, async (scope) => {
         const existing = await CharacterInventory.findOne(tx, { characterId, id: entryId });
         if (!existing) throw new NotFoundError("Item not in inventory");
+        // An entry saved since its edit read it is refused before its edit is checked against it
+        if (expectedUpdatedAt && existing.updatedAt !== expectedUpdatedAt)
+          throw new ConflictError(STALE_ENTITY_MESSAGE);
 
         const character = await readCharacterInput(tx, characterRecord);
         const request = { equipped, location, remainingCharges, totalCharges, weaponSets };

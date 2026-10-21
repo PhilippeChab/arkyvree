@@ -213,7 +213,7 @@ export default abstract class PlannedLevelsState extends include(LevelUpState, P
       const next = (maxLevels.get(klass.id) ?? 0) + 1;
       if (level > next)
         throw new RulesError("invalid", `Level ${i + 1}: The character's next ${klass.name} level is ${next}`);
-      maxLevels.set(klass.id, Math.max(next - 1, level));
+      if (level === next) maxLevels.set(klass.id, level);
 
       return { klass, klassLevel, abilityIncreases };
     });
