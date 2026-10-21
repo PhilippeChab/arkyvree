@@ -68,10 +68,14 @@ export default class PowerEntity extends ListedEntity<
    * the one it has when it leaves it out (`power`, the one edited), and no effect without a save.
    */
   protected override columnsOf({ description, name, saveEffect, saveId }: PowerBody, power?: PowerWithAptitudes) {
-    const saved = saveId === undefined ? (power?.saveId ?? null) : saveId;
-    // What an edit leaves out it keeps; a spell left without a save has no effect of one
-    const effect = power && saveEffect === undefined ? undefined : (saveEffect ?? null);
-    return { description, name, saveEffect: saved === null ? null : effect, saveId: power ? saveId : saved };
+    // A spell without a save has no effect of one
+    if (!power) {
+      const saved = saveId ?? null;
+      return { description, name, saveEffect: saved === null ? null : (saveEffect ?? null), saveId: saved };
+    }
+    // An edit keeps what it leaves out
+    const saved = saveId === undefined ? power.saveId : saveId;
+    return { description, name, saveEffect: saved === null ? null : saveEffect, saveId };
   }
 
   /** A power's pool links, as the view composes them. */
