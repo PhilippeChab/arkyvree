@@ -82,7 +82,6 @@ const CLIENT_COMPONENTS = "client/src/components/";
 const CLIENT_REGISTRIES = [
   "client/src/components/characters/sections/sectionFactory.ts",
   "client/src/pages/characters/details/components/levelUpFactory.ts",
-  "client/src/pages/rulesets/details/classes/classSectionFactory.ts",
   "client/src/pages/rulesets/hooks/useEntityFilters.ts",
 ];
 /**

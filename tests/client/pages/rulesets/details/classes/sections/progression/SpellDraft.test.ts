@@ -4,16 +4,20 @@ import {
   NO_SPELL_EDITS,
   SpellDraft,
   type SpellEdits,
-} from "@/client/src/pages/rulesets/details/classes/sections/dnd3.5/SpellDraft.ts";
+} from "@/client/src/pages/rulesets/details/classes/sections/progression/SpellDraft.ts";
+import { PROGRESSION } from "@/engine/rulesets/dnd3.5/entities/classes/progression.ts";
 
 /** Levels 1 to 4 of a class, their ids `l1`… */
 const LEVELS = [1, 2, 3, 4].map((level) => ({ id: `l${level}` }));
+
+/** 3.5's spell tables: spells per day, and spells known, which take All. */
+const { tables: TABLES } = PROGRESSION;
 
 /** A sorcerer-like class's tables as saved: 3 cantrips a day at every level, 2 known from level 1, 3 from level 3. */
 function draft(edits: SpellEdits = NO_SPELL_EDITS) {
   const perDay = new Map(LEVELS.map(({ id }) => [id, { 0: 3 }]));
   const known = new Map(LEVELS.map(({ id }, index) => [id, { 0: index < 2 ? 2 : 3 }]));
-  return new SpellDraft(LEVELS, { perDay, known }, edits);
+  return new SpellDraft(LEVELS, { perDay, known }, edits, TABLES);
 }
 
 describe("A Spells tab's draft", () => {
@@ -49,22 +53,23 @@ describe("A Spells tab's draft", () => {
       ["l3", { 0: 3 }],
       ["l4", { 0: "All" }],
     ]);
-    const saved = new SpellDraft(LEVELS, { perDay: new Map(), known }, NO_SPELL_EDITS);
+    const saved = new SpellDraft(LEVELS, { perDay: new Map(), known }, NO_SPELL_EDITS, TABLES);
     const counted = new SpellDraft(
       LEVELS,
       saved.saved,
       saved.write("known", [{ levelId: "l2", spellLevel: 0, value: 4 }]),
+      TABLES,
     );
     expect(LEVELS.map(({ id }) => counted.cellOf("known", id, 0))).toEqual([2, 4, 3, "all"]);
 
     // A block of counts over it: each level below takes the count written nearest above it
     const allFromOne = new Map(LEVELS.map(({ id }) => [id, { 0: "All" as const }]));
-    const all = new SpellDraft(LEVELS, { perDay: new Map(), known: allFromOne }, NO_SPELL_EDITS);
+    const all = new SpellDraft(LEVELS, { perDay: new Map(), known: allFromOne }, NO_SPELL_EDITS, TABLES);
     const block = all.write("known", [
       { levelId: "l1", spellLevel: 0, value: 2 },
       { levelId: "l2", spellLevel: 0, value: 3 },
     ]);
-    expect(LEVELS.map(({ id }) => new SpellDraft(LEVELS, all.saved, block).cellOf("known", id, 0))).toEqual([
+    expect(LEVELS.map(({ id }) => new SpellDraft(LEVELS, all.saved, block, TABLES).cellOf("known", id, 0))).toEqual([
       2, 3, 3, 3,
     ]);
 

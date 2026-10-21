@@ -13,6 +13,8 @@ interface CustomTrackEditorProps {
   label: string;
   /** The highest value the rules take, which a typed or applied one past it is set back to */
   max: number;
+  /** The lowest value the rules take, which a typed or applied one below it is set back to */
+  min: number;
   onChange: (values: Record<string, number>) => void;
   onClose: () => void;
   values: readonly LevelValue[];
@@ -43,6 +45,7 @@ export function CustomTrackEditor({
   baseControl,
   label,
   max,
+  min,
   onChange,
   onClose,
   values,
@@ -69,7 +72,7 @@ export function CustomTrackEditor({
     const next = (value: number) =>
       range.operation === "set" ? amount : value + (range.operation === "add" ? amount : -amount);
     onChange(
-      Object.fromEntries(changed.map(({ levelId, value }) => [levelId, Math.min(max, Math.max(0, next(value)))])),
+      Object.fromEntries(changed.map(({ levelId, value }) => [levelId, Math.min(max, Math.max(min, next(value)))])),
     );
   };
 
@@ -121,9 +124,9 @@ export function CustomTrackEditor({
                     placeholder={String(base[index])}
                     onBlur={() => setTyping(null)}
                     onChange={(e) => {
-                      // Emptied, it follows its base again; unread, it stays as it was; past the bound, it shows the bound
+                      // Emptied, it follows its base again; unread, it stays as it was; past a bound, it shows the bound
                       const read = e.target.value.trim() === "" ? base[index] : readWholeNumber(e.target.value);
-                      const typed = read === undefined ? undefined : Math.min(read, max);
+                      const typed = read === undefined ? undefined : Math.max(min, Math.min(read, max));
                       setTyping({ levelId, text: typed !== read ? String(typed) : e.target.value });
                       if (typed !== undefined) onChange({ [levelId]: typed });
                     }}

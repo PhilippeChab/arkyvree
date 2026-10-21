@@ -13,18 +13,24 @@ import {
 } from "@/client/src/components/common/index.ts";
 import { SpellUsesIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import { useDebouncedValue, useListboxQuery, useRulesetPermissions, useSearchParam } from "@/client/src/hooks/index.ts";
+import {
+  useDebouncedValue,
+  useListboxQuery,
+  useRules,
+  useRulesetPermissions,
+  useSearchParam,
+} from "@/client/src/hooks/index.ts";
 import { emptyOptionsText } from "@/client/src/lib/errorMessage.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
-import type { ClassSectionProps } from "@/client/src/pages/rulesets/details/classes/classSectionFactory.ts";
+import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
 import {
   classProgressionQuery,
   classSpellsKnownQuery,
   classSpellsPerDayQuery,
 } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
+import type { ClassSectionProps } from "@/client/src/pages/rulesets/details/classes/classTab.ts";
 import { byLevel } from "@/client/src/pages/rulesets/details/classes/sections/byLevel.ts";
 import { classOptionsQuery } from "@/client/src/pages/rulesets/optionQueries.ts";
-import { SPELL_LEVELS } from "@/vocabulary/dnd3.5/spells.ts";
 
 import { ProgressionSaveBar } from "./ProgressionSaveBar.tsx";
 import { NO_SPELL_EDITS, readSpellCell, SpellDraft, type SpellEdits, type SpellTable } from "./SpellDraft.ts";
@@ -41,21 +47,25 @@ interface SpellLevelRow {
   totals: Record<string, number | "All">;
 }
 
-/** Each table's label, as its toggle and its save bar name it. */
-const TABLE_LABELS: Record<SpellTable, string> = { perDay: "Spells per Day", known: "Spells Known" };
-
 /**
- * A class's Spells tab: its spells per day and its spells known (how many spells it picks at each spell level), each
- * a grid of the totals the book prints, edited in place, filled from another class's table or emptied, or from a
- * pasted table; one save writes both. A class with no spell list casts none, which its editor is told how to change.
+ * A class's Spells tab: its spell tables as its rules describe them (3.5's spells per day and spells known, how many
+ * spells it picks at each spell level), each a grid of the totals the book prints, edited in place, filled from
+ * another class's table or emptied, or from a pasted table; one save writes them all. A class with no spell list
+ * casts none, which its editor is told how to change.
  */
 export function ClassSpellsSection({ rulesetId, classId, className, ruleset }: ClassSectionProps) {
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
   const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
-  // The table it shows is its address's, which its old Spells Known tab's opens on
-  const tableParam = useSearchParam("table", "perDay");
-  const table: SpellTable = tableParam.value === "known" ? "known" : "perDay";
+  const { rules } = useRules(ruleset.baseRules);
+  const tables = rules?.progression.tables ?? [];
+  // Its rules' words for a power ("Spell", "Spells")
+  const [one, many] = [entityTypeLabel("powers", rules?.words), entityTypeLabel("powers", rules?.words, true)];
+  const listName = rules?.progression.spellListName?.replaceAll("{class}", className);
+  // The table it shows is its address's (which its old Spells Known tab's opens on), else its first
+  const tableParam = useSearchParam("table", tables[0]?.key ?? "perDay");
+  const shown = tables.find((rules) => rules.key === tableParam.value) ?? tables.at(0);
+  const table: SpellTable = shown?.key ?? "perDay";
   // Its page's state (where Back goes) stays with it
   const location = useLocation();
   const setTable = (which: SpellTable) => tableParam.setValue(which, { replace: true, state: location.state });
@@ -81,7 +91,7 @@ export function ClassSpellsSection({ rulesetId, classId, className, ruleset }: C
     known: knownRows(known.data ?? []),
   };
   const levels = (perDay.data ?? []).toSorted(byLevel);
-  const save = useProgressionSave(rulesetId, classId, "Spells");
+  const save = useProgressionSave(rulesetId, classId, many);
   const saved = {
     perDay: new Map(rowsOf.perDay.map((row) => [row.id, row.totals])),
     known: new Map(rowsOf.known.map((row) => [row.id, row.totals])),
@@ -94,17 +104,17 @@ export function ClassSpellsSection({ rulesetId, classId, className, ruleset }: C
     !perDay.isFetching && !known.isFetching,
     NO_SPELL_EDITS,
     (next) => {
-      const draft = new SpellDraft(levels, saved, next);
-      return draft.countChanged("perDay") + draft.countChanged("known") > 0;
+      const draft = new SpellDraft(levels, saved, next, tables);
+      return tables.some((rules) => draft.countChanged(rules.key) > 0);
     },
   );
-  const spells = new SpellDraft(levels, saved, edits);
+  const spells = new SpellDraft(levels, saved, edits, tables);
   const setCells = (which: SpellTable, cells: PlacedCell[]) =>
-    setEdits((current) => new SpellDraft(levels, spells.saved, current).write(which, cells));
+    setEdits((current) => new SpellDraft(levels, spells.saved, current, tables).write(which, cells));
 
   /** A typed or pasted block's cells, written: those it can't change (under an earlier All, holding a count) are told. */
   const writePasted = (cells: PlacedCell[]) => {
-    const next = new SpellDraft(levels, spells.saved, spells.write(table, cells));
+    const next = new SpellDraft(levels, spells.saved, spells.write(table, cells), tables);
     const unchanged = cells.filter(
       ({ levelId, spellLevel, value }) =>
         next.isKnownAbove(table, levelId, spellLevel) && next.cellOf(table, levelId, spellLevel) !== value,
@@ -134,7 +144,7 @@ export function ClassSpellsSection({ rulesetId, classId, className, ruleset }: C
     setCells(
       table,
       levels.flatMap(({ id, level }) =>
-        SPELL_LEVELS.map((spellLevel) => ({
+        (shown?.columns ?? []).map((_, spellLevel) => ({
           levelId: id,
           spellLevel,
           value: readSpellCell(totalsAt(level)?.[spellLevel]),
@@ -144,9 +154,9 @@ export function ClassSpellsSection({ rulesetId, classId, className, ruleset }: C
   };
 
   // Shown even once the tab can't save them (its class's spell lists changed elsewhere), so its Discard drops them
-  const changes = (["perDay", "known"] as const).flatMap((which) => {
-    const count = spells.countChanged(which);
-    return count > 0 ? [{ key: which, label: `${TABLE_LABELS[which]}: ${formatCount(count, "cell")}` }] : [];
+  const changes = tables.flatMap(({ key, label }) => {
+    const count = spells.countChanged(key);
+    return count > 0 ? [{ key, label: `${label}: ${formatCount(count, "cell")}` }] : [];
   });
 
   // What changes while the save runs stays, for the next save; refused (its levels changed since), it's sent again over
@@ -159,15 +169,19 @@ export function ClassSpellsSection({ rulesetId, classId, className, ruleset }: C
 
   if (perDay.isLoading || known.isLoading) return <DiceSpinner sx={{ py: 4 }} />;
   const failed = (perDay.error && !perDay.data && perDay.error) || (known.error && !known.data && known.error);
-  if (failed) return <LoadError what="Spells" error={failed} />;
-  if (levels.length === 0) {
+  if (failed) return <LoadError what={many} error={failed} />;
+  if (levels.length === 0 || !shown) {
     return (
-      <BlankState icon={SpellUsesIcon} title="No levels" description="Add levels to the class to give it spells." />
+      <BlankState
+        icon={SpellUsesIcon}
+        title="No levels"
+        description={`Add levels to the class to give it ${many.toLowerCase()}.`}
+      />
     );
   }
   const saveBar = (
     <ProgressionSaveBar
-      what="Spells"
+      what={many}
       changes={changes}
       onDiscard={discard}
       onSave={handleSave}
@@ -176,16 +190,18 @@ export function ClassSpellsSection({ rulesetId, classId, className, ruleset }: C
     />
   );
   if (progression && !progression.spellList) {
+    const none = tables.map(({ label }) => label.toLowerCase()).join(" or ");
+    const getsOne = listName ? ` A class that casts gets one from an aptitude named "${listName}".` : "";
     // Edits made before its list went (elsewhere) keep their Discard
     return (
       <Stack spacing={3}>
         <BlankState
           icon={SpellUsesIcon}
-          title="No spells"
+          title={`No ${many.toLowerCase()}`}
           description={
             canEdit
-              ? `${className} has no spell list of its own, so no spells per day or known. A class that casts gets one from an aptitude named "${className} Spells".`
-              : `${className} casts no spells.`
+              ? `${className} has no ${one.toLowerCase()} list of its own, so no ${none}.${getsOne}`
+              : `${className} casts no ${many.toLowerCase()}.`
           }
         />
         {saveBar}
@@ -206,9 +222,9 @@ export function ClassSpellsSection({ rulesetId, classId, className, ruleset }: C
             label="Table"
             value={table}
             onChange={setTable}
-            options={(["perDay", "known"] as const).map((which) => ({
-              label: `${TABLE_LABELS[which]}${spells.countChanged(which) > 0 ? " •" : ""}`,
-              value: which,
+            options={tables.map(({ key, label }) => ({
+              label: `${label}${spells.countChanged(key) > 0 ? " •" : ""}`,
+              value: key,
             }))}
           />
           {editable && (
@@ -236,21 +252,21 @@ export function ClassSpellsSection({ rulesetId, classId, className, ruleset }: C
             </Stack>
           )}
         </Stack>
-        {table === "known" && (
+        {shown.help && (
           <Typography variant="body2" sx={{ color: "text.secondary" }}>
-            How many spells the class picks at each spell level by then: a wizard&apos;s spellbook, a sorcerer&apos;s
-            spells known. &quot;All&quot; is every spell of its list.
+            {shown.help}
           </Typography>
         )}
-        {!!progressionError && !progression && <LoadError what="Spell list" error={progressionError} />}
+        {!!progressionError && !progression && <LoadError what={`${one} list`} error={progressionError} />}
         {canEdit && progression?.severalSpellLists && (
           <Typography variant="body2" sx={{ color: "text.secondary" }}>
-            {className} gives spells in several lists, which these totals add up: edit each level&apos;s modifiers.
+            {className} gives {many.toLowerCase()} in several lists, which these totals add up: edit each level&apos;s
+            modifiers.
           </Typography>
         )}
         {pasting && editable && (
           <SpellPasteBox
-            allowsAll={table === "known"}
+            table={shown}
             levels={levels}
             changesOf={(cells) => spells.changesOf(table, cells)}
             onCancel={() => setPasting(false)}
@@ -261,9 +277,7 @@ export function ClassSpellsSection({ rulesetId, classId, className, ruleset }: C
           />
         )}
         <SpellTableGrid
-          label={TABLE_LABELS[table]}
-          allowsAll={table === "known"}
-          columns={SPELL_LEVELS.length}
+          table={shown}
           levels={levels}
           readOnly={!editable}
           value={(levelId, spellLevel) => spells.cellOf(table, levelId, spellLevel)}
@@ -272,7 +286,7 @@ export function ClassSpellsSection({ rulesetId, classId, className, ruleset }: C
           onCells={(cells) => writePasted(cells)}
           onLockedPaste={() =>
             snackbar.info(
-              "That cell knows every spell from an earlier level: paste into an open cell, or Paste a Table",
+              `That cell knows every ${one.toLowerCase()} from an earlier level: paste into an open cell, or Paste a Table`,
             )
           }
         />

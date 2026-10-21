@@ -65,10 +65,11 @@ function ClassView({ back, classId, ruleset, rulesetId, section }: ClassViewProp
 
   usePageTitle(classData?.name);
 
-  const tabs = getClassTabs(ruleset.baseRules);
+  const { rules } = useRules(ruleset.baseRules);
+  const tabs = getClassTabs(rules);
   const currentTab = tabs.find((tab) => tab.key === section);
   // An address of a tab it had before opens the one that took its place
-  const aliasedTab = getClassTabAlias(ruleset.baseRules, section);
+  const aliasedTab = getClassTabAlias(section);
 
   const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
   // Deleting an inherited class, or what it holds, can be undone
@@ -111,7 +112,7 @@ function ClassView({ back, classId, ruleset, rulesetId, section }: ClassViewProp
     followCopy: copy.followCopy,
   });
 
-  // Normalize the URL to a tab its base rules give: the one an old tab's address names, or its first.
+  // Normalize the URL to a tab its rules give: the one an old tab's address names, or its first.
   if (!currentTab) {
     return (
       <Navigate

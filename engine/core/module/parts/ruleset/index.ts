@@ -1,2 +1,10 @@
-export type { ListColumn, ListDescription, RulesDescription, RulesWord } from "./RulesDescription.ts";
+export type {
+  ListColumn,
+  ListDescription,
+  ProgressionDescription,
+  ProgressionTable,
+  ProgressionTrack,
+  RulesDescription,
+  RulesWord,
+} from "./RulesDescription.ts";
 export { default as RulesetPart } from "./RulesetPart.ts";

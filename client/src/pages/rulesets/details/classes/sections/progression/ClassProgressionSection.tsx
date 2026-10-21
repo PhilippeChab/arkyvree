@@ -14,12 +14,11 @@ import {
   ValueChip,
 } from "@/client/src/components/common/index.ts";
 import { LevelsIcon } from "@/client/src/components/icons/index.ts";
-import { useRulesetPermissions } from "@/client/src/hooks/index.ts";
+import { useRules, useRulesetPermissions } from "@/client/src/hooks/index.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { nextClassLevel, withEntityFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
 import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
-import type { ClassSectionProps } from "@/client/src/pages/rulesets/details/classes/classSectionFactory.ts";
 import {
   classFeatPoolsQuery,
   type ClassLevelFormData,
@@ -27,6 +26,7 @@ import {
   classLevelsQuery,
   classProgressionQuery,
 } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
+import type { ClassSectionProps } from "@/client/src/pages/rulesets/details/classes/classTab.ts";
 import { CreateLevelDialog } from "@/client/src/pages/rulesets/details/classes/components/index.ts";
 import { byLevel } from "@/client/src/pages/rulesets/details/classes/sections/byLevel.ts";
 import { useClassCopy } from "@/client/src/pages/rulesets/details/classes/sections/useClassCopy.ts";
@@ -38,8 +38,6 @@ import {
 } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { buildCustomizationPath } from "@/shared/customization/entities.ts";
-import { formatSigned } from "@/shared/text.ts";
-import { MAX_CLASS_LEVEL, MAX_SAVE_BASE, MAX_TABLE_COUNT } from "@/vocabulary/dnd3.5/classes.ts";
 
 import { CHANGED_CELL_SX } from "./changedCell.ts";
 import { ClassFeaturesCard } from "./ClassFeaturesCard.tsx";
@@ -48,37 +46,42 @@ import {
   describeFeatureRows,
   readEditedTrack,
   readTrack,
+  saveTrackKey,
   type TrackKey,
   withAddedFeatures,
   withAddedPools,
 } from "./progressionDraft.ts";
-import { BAB_PRESETS, detectPreset, formatBab, type ProgressionPreset, SAVE_PRESETS } from "./progressionPresets.ts";
+import { detectPreset, formatTrackValue, presetsOf, type ProgressionTrack } from "./progressionPresets.ts";
 import { ProgressionSaveBar } from "./ProgressionSaveBar.tsx";
 import { ProgressionTrackRow } from "./ProgressionTrackRow.tsx";
 import { useProgressionDraft } from "./useProgressionDraft.ts";
 import { useProgressionSave } from "./useProgressionSave.ts";
 
-/** A track the tab edits: its key, its label, how its values read, and the progressions it can follow. */
+/**
+ * A track the tab edits: its key, its label (a save's name, for a track of the ruleset's saves), and its rules' track:
+ * its bounds, how its values read, and the progressions it can follow.
+ */
 interface Track {
-  format: (value: number) => string;
   key: TrackKey;
   label: string;
-  /** The highest value the rules take, which a value past it is set back to */
-  max: number;
-  presets?: readonly ProgressionPreset[];
+  rules: ProgressionTrack;
 }
 
 /**
- * A class's Progression tab: its table, the levels' base attack bonus, saves, skill points and features at once, which
- * opens a level's page from its row; its progression, each track a preset to follow or its levels to set; and its
- * features and feat pools by level (shown read-only to who can't edit). What it changes waits for its save bar, which
- * writes it all at once.
+ * A class's Progression tab: its table, the levels' tracks (3.5's base attack bonus, saves and skill points) and
+ * features at once, which opens a level's page from its row; its progression, each track a preset to follow or its
+ * levels to set; and its features and feat pools by level (shown read-only to who can't edit). What it changes waits
+ * for its save bar, which writes it all at once.
  */
 export function ClassProgressionSection({ rulesetId, classId, className, ruleset }: ClassSectionProps) {
   const openEntity = useOpenEntity(rulesetId);
   const queryClient = useQueryClient();
   const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
   const { data: rulesetSaves, error: savesError } = useRulesetSaves(rulesetId);
+  // Its tracks, a level's fields and its saves, as its rules describe them
+  const progressionRules = useRules(ruleset.baseRules).rules?.progression;
+  const trackRules = progressionRules?.tracks ?? [];
+  const fieldKeys = trackRules.filter((track) => track.source === "field").map((track) => track.key);
   const { followCopy, queryKeysToInvalidate, tag } = useClassCopy(rulesetId, classId);
 
   const query = classLevelsQuery(rulesetId, classId);
@@ -92,6 +95,7 @@ export function ClassProgressionSection({ rulesetId, classId, className, ruleset
   const draft = useProgressionDraft(classId, levels, !isFetching, (edits) => {
     const body = buildProgressionBody(
       levels,
+      fieldKeys,
       rulesetSaves?.map(({ id }) => id),
       savedFeatures,
       savedPools,
@@ -124,18 +128,11 @@ export function ClassProgressionSection({ rulesetId, classId, className, ruleset
   });
 
   const saves = rulesetSaves ?? [];
-  const tracks: Track[] = [
-    // A base attack bonus never outruns a full one's, its level
-    { key: "bab", label: "Base Attack Bonus", format: formatBab, max: MAX_CLASS_LEVEL, presets: BAB_PRESETS },
-    ...saves.map((save): Track => ({
-      key: `save:${save.id}`,
-      label: save.name,
-      format: formatSigned,
-      max: MAX_SAVE_BASE,
-      presets: SAVE_PRESETS,
-    })),
-    { key: "skills", label: "Skill Points", format: String, max: MAX_TABLE_COUNT },
-  ];
+  const tracks = trackRules.flatMap((rules): Track[] =>
+    rules.source === "saves"
+      ? saves.map((save) => ({ key: saveTrackKey(save.id), label: save.name, rules }))
+      : [{ key: rules.key, label: rules.label, rules }],
+  );
   const valuesOf = (read: (level: ClassLevelRow) => number) =>
     levels.map((level) => ({ level: level.level, levelId: level.id, value: read(level) }));
 
@@ -178,6 +175,7 @@ export function ClassProgressionSection({ rulesetId, classId, className, ruleset
 
   const body = buildProgressionBody(
     levels,
+    fieldKeys,
     rulesetSaves?.map(({ id }) => id),
     savedFeatures,
     savedPools,
@@ -191,12 +189,11 @@ export function ClassProgressionSection({ rulesetId, classId, className, ruleset
       if (changed === 0) return [];
       const constant = (values: typeof before) => values.every(({ value }) => value === values[0].value);
       const plain = constant(before) && constant(after) ? [String(before[0].value), `${after[0].value} a level`] : [];
-      const [from, to] = track.presets
-        ? [
-            detectPreset(track.presets, before)?.label ?? "Custom",
-            detectPreset(track.presets, after)?.label ?? "Custom",
-          ]
-        : plain;
+      const presets = presetsOf(track.rules);
+      const [from, to] =
+        presets.length > 0
+          ? [detectPreset(presets, before)?.label ?? "Custom", detectPreset(presets, after)?.label ?? "Custom"]
+          : plain;
       const how = from !== to ? `${from} → ${to}, ` : "";
       return [{ key: track.key, label: `${track.label}: ${how}${formatCount(changed, "level")}` }];
     }),
@@ -247,10 +244,10 @@ export function ClassProgressionSection({ rulesetId, classId, className, ruleset
   const featuresAt = (levelId: string) => features.filter((row) => row.levelIds.includes(levelId));
   const columns = [
     { key: "level", label: "Level", width: "8%" },
-    ...tracks.map((track) => ({ key: track.key, label: track.key === "bab" ? "BAB" : track.label, width: "9%" })),
+    ...tracks.map((track) => ({ key: track.key, label: track.rules.shortLabel ?? track.label, width: "9%" })),
     ...poolNames.map((name) => ({ key: `pool:${name}`, label: name, width: "7%" })),
     // The rest of the table's width, however many tracks and pools it has
-    { key: "special", label: "Special", slot: "block" as const },
+    { key: "special", label: progressionRules?.grantsLabel ?? "", slot: "block" as const },
   ];
 
   const renderCell = (level: ClassLevelRow, columnKey: string) => {
@@ -297,7 +294,7 @@ export function ClassProgressionSection({ rulesetId, classId, className, ruleset
     const changed = value !== readTrack(level, track.key);
     return (
       <Typography variant="body2" sx={[changed && CHANGED_CELL_SX]}>
-        {track.format(value)}
+        {formatTrackValue(track.rules, value)}
       </Typography>
     );
   };
@@ -340,7 +337,9 @@ export function ClassProgressionSection({ rulesetId, classId, className, ruleset
                 key={track.key}
                 id={`progression-${track.key}`}
                 label={track.label}
-                max={track.max}
+                max={track.rules.max}
+                min={track.rules.min}
+                unitLabel={track.rules.unitLabel}
                 custom={customTracks.includes(track.key)}
                 onCustomChange={(open) =>
                   setCustomTracks((current) => [
@@ -348,8 +347,8 @@ export function ClassProgressionSection({ rulesetId, classId, className, ruleset
                     ...(open ? [track.key] : []),
                   ])
                 }
-                format={track.format}
-                presets={track.presets}
+                format={(value) => formatTrackValue(track.rules, value)}
+                presets={track.rules.presets.length > 0 ? presetsOf(track.rules) : undefined}
                 saved={valuesOf((level) => readTrack(level, track.key))}
                 values={valuesOf((level) => readEditedTrack(level, track.key, draft.edits))}
                 onChange={(values) =>
@@ -360,7 +359,7 @@ export function ClassProgressionSection({ rulesetId, classId, className, ruleset
                       Object.entries(values).map(([levelId, value]) => {
                         const level = levels.find(({ id }) => id === levelId);
                         const saved = level && readTrack(level, track.key);
-                        return [levelId, value === saved ? value : Math.min(value, track.max)];
+                        return [levelId, value === saved ? value : Math.min(value, track.rules.max)];
                       }),
                     ),
                   )

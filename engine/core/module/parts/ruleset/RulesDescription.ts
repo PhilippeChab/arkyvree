@@ -31,6 +31,53 @@ export interface ListDescription {
 }
 
 /**
+ * How a class's levels progress, as its page sets them: its class table's tracks (`tracks`, each a column its
+ * Progression tab sets), the label of its column of what a level grants (`grantsLabel`: its features and feat pools),
+ * and its spell tables (`tables`, which its Spells tab edits: none where its classes cast none), and the name of the
+ * aptitude a class's spell list is, its class's name at `{class}` (`spellListName`).
+ */
+export interface ProgressionDescription {
+  grantsLabel: string;
+  spellListName?: string;
+  tables: ProgressionTable[];
+  tracks: ProgressionTrack[];
+}
+
+/**
+ * A spell table a class's Spells tab edits, by the key its save takes it by (`perDay`, `known`): its label and what
+ * it's for, a cell's most (`max`), the word for every value of a column, which the levels after it keep (`all`: none
+ * for a table without), the table whose opening of a column makes this one's emptied cell read 0 (`zeroWhereOpenedBy`),
+ * and its columns (a spell level each), each with the words a pasted table's header names it by (`aliases`).
+ */
+export interface ProgressionTable {
+  all?: string;
+  columns: { aliases: string[]; key: string; label: string }[];
+  help?: string;
+  key: "known" | "perDay";
+  label: string;
+  max: number;
+  zeroWhereOpenedBy?: "known" | "perDay";
+}
+
+/**
+ * A column of a class's table its Progression tab sets: where a level holds it (`source`: one of its fields, by `key`,
+ * or a base per save of the ruleset, `saves`), its labels (the table's `shortLabel`, the value's `unitLabel` when one
+ * number sets every level), its bounds, each value's label from `min` (`labels[value - min]`: none reads it as it is),
+ * and the progressions it follows (`presets`: each its value at each level, from the first).
+ */
+export interface ProgressionTrack {
+  key: string;
+  label: string;
+  labels?: string[];
+  max: number;
+  min: number;
+  presets: { key: string; label: string; values: number[] }[];
+  shortLabel?: string;
+  source: "field" | "saves";
+  unitLabel?: string;
+}
+
+/**
  * What a base rules' rulesets share, past any ruleset's view: what the app calls their entities, the columns their
  * forms show, the kinds a race or a class is for, a class's last level, a power's levels, and the license a system
  * ruleset's content is under. The client reads it once, for every base rules, and holds none of it.
@@ -56,6 +103,8 @@ export interface RulesDescription {
   maxItemVariants: number;
   /** The levels a power has, each with its name ("Cantrips", "Level 1") */
   powerLevels: { label: string; level: number }[];
+  /** How a class progresses, as its Progression and Spells tabs set it */
+  progression: ProgressionDescription;
   /** Its words for the entity types whose word isn't the engine's, by type: 3.5's powers are spells */
   words: Partial<Record<string, RulesWord>>;
 }

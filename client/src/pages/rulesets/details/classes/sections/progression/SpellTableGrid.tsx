@@ -4,18 +4,17 @@ import { type ClipboardEvent, type KeyboardEvent, useState } from "react";
 import { DataCell, DataRow, DataTable, ValueChip } from "@/client/src/components/common/index.ts";
 
 import { CHANGED_TEXT_SX } from "./changedCell.ts";
-import { spellLevelLabel } from "./spellLevels.ts";
-import { parseSpellCell, type PlacedCell, placeSpellTable, type SpellCell } from "./spellPaste.ts";
+import {
+  parseSpellCell,
+  type PlacedCell,
+  placeSpellTable,
+  type SpellCell,
+  type SpellTableRules,
+} from "./spellPaste.ts";
 
 interface SpellTableGridProps {
-  /** Spells known take "all" (every spell of the list) */
-  allowsAll: boolean;
-  /** The table's columns: its spell levels, from 0 */
-  columns: number;
-  /** A cell whose spells an earlier level knows all of: it shows All, and takes nothing */
+  /** A cell whose spells an earlier level has all of: it shows All, and takes nothing */
   knownAbove: (levelId: string, spellLevel: number) => boolean;
-  /** What the table says it is ("Spells per Day") */
-  label: string;
   levels: readonly { id: string; level: number }[];
   /** Cells a typed value or a paste writes */
   onCells: (cells: PlacedCell[]) => void;
@@ -24,6 +23,8 @@ interface SpellTableGridProps {
   readOnly: boolean;
   /** A cell's value as saved: a changed cell is marked against it */
   saved: (levelId: string, spellLevel: number) => SpellCell;
+  /** The table as its rules describe it: its label, its columns (its spell levels, from 0), its word for every spell */
+  table: SpellTableRules;
   /** A cell's value as the tab holds it */
   value: (levelId: string, spellLevel: number) => SpellCell;
 }
@@ -33,10 +34,10 @@ function cellId(label: string, row: number, column: number) {
   return `${label.replaceAll(" ", "-").toLowerCase()}-${row}-${column}`;
 }
 
-/** A cell as its input shows it: empty for none, "All" for every spell of its list. */
-function displayCell(cell: SpellCell) {
+/** A cell of a table as its input shows it: empty for none, the table's word for every spell of its list ("All"). */
+function displayCell(table: SpellTableRules, cell: SpellCell) {
   if (cell === null) return "";
-  return cell === "all" ? "All" : String(cell);
+  return cell === "all" ? (table.all ?? "") : String(cell);
 }
 
 /**
@@ -46,23 +47,22 @@ function displayCell(cell: SpellCell) {
  * the tab's save.
  */
 export function SpellTableGrid({
-  allowsAll,
-  columns,
   knownAbove,
-  label,
   levels,
   onCells,
   onLockedPaste,
   readOnly,
   saved,
+  table,
   value,
 }: SpellTableGridProps) {
+  const { label } = table;
   // The cell being typed in, and its text, until it's left
   const [typing, setTyping] = useState<{ levelId: string; spellLevel: number; text: string } | null>(null);
 
   const commit = (levelId: string, spellLevel: number, text: string) => {
     setTyping(null);
-    const cell = parseSpellCell(text, allowsAll);
+    const cell = parseSpellCell(text, table);
     if (cell !== undefined && cell !== value(levelId, spellLevel)) onCells([{ levelId, spellLevel, value: cell }]);
   };
 
@@ -87,7 +87,7 @@ export function SpellTableGrid({
     // The paste is the cell's value now, not what was typed before it
     setTyping(null);
     // From the spell level its header names, else the cell's
-    onCells(placeSpellTable(text, allowsAll, levels, row, column, columns));
+    onCells(placeSpellTable(text, table, levels, row, column));
   };
 
   return (
@@ -97,11 +97,7 @@ export function SpellTableGrid({
       minWidth={640}
       columns={[
         { key: "level", label: "Level", width: "9%" },
-        ...Array.from({ length: columns }, (_, spellLevel) => ({
-          key: String(spellLevel),
-          label: spellLevelLabel(String(spellLevel)),
-          align: "center" as const,
-        })),
+        ...table.columns.map((column) => ({ key: column.key, label: column.label, align: "center" as const })),
       ]}
     >
       {levels.map(({ id, level }, row) => (
@@ -109,11 +105,11 @@ export function SpellTableGrid({
           <DataCell slot="primary">
             <ValueChip label={level} color="primary" />
           </DataCell>
-          {Array.from({ length: columns }, (_, spellLevel) => {
+          {table.columns.map((column, spellLevel) => {
             const cell = value(id, spellLevel);
             const before = saved(id, spellLevel);
             const changed = cell !== before;
-            const name = spellLevelLabel(String(spellLevel));
+            const name = column.label;
             return (
               <DataCell
                 key={spellLevel}
@@ -124,14 +120,16 @@ export function SpellTableGrid({
               >
                 <InputBase
                   id={cellId(label, row, spellLevel)}
-                  value={typing?.levelId === id && typing.spellLevel === spellLevel ? typing.text : displayCell(cell)}
+                  value={
+                    typing?.levelId === id && typing.spellLevel === spellLevel ? typing.text : displayCell(table, cell)
+                  }
                   readOnly={readOnly || knownAbove(id, spellLevel)}
                   onChange={(e) => setTyping({ levelId: id, spellLevel, text: e.target.value })}
                   title={
                     knownAbove(id, spellLevel)
                       ? "All Known From an Earlier Level"
                       : changed
-                        ? `Was ${displayCell(before) || "none"}`
+                        ? `Was ${displayCell(table, before) || "none"}`
                         : undefined
                   }
                   onBlur={(e) => {
@@ -141,7 +139,7 @@ export function SpellTableGrid({
                   onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => handleKeyDown(e, row, spellLevel)}
                   onPaste={(e: ClipboardEvent<HTMLInputElement>) => handlePaste(e, row, spellLevel)}
                   inputProps={{
-                    inputMode: allowsAll ? "text" : "numeric",
+                    inputMode: table.all === undefined ? "numeric" : "text",
                     "aria-label": `${label}, Level ${level}, ${name}`,
                   }}
                   sx={[

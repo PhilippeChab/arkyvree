@@ -73,6 +73,9 @@ export type RulesetDetail = InferResponseType<(typeof rpc.api.rulesets)[":id"]["
 
 export type RulesetListItem = InferResponseType<typeof rpc.api.rulesets.$get, 200>["items"][number];
 
+/** How a base rules' classes progress, as a class's Progression and Spells tabs set it: its tracks, its spell tables. */
+export type RulesProgression = RulesDescription["progression"];
+
 /** A ruleset's words for the entity types whose word isn't the engine's, as its rules describe them. */
 export type RulesWords = RulesDescription["words"];
 

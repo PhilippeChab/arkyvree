@@ -10,6 +10,7 @@ import {
   SectionContent,
 } from "@/client/src/components/common/index.ts";
 import { ClassesIcon } from "@/client/src/components/icons/index.ts";
+import { useRules } from "@/client/src/hooks/index.ts";
 import { itemsBeforeLastPage, pageItems } from "@/client/src/lib/pageItems.ts";
 import {
   ClassFormFields,
@@ -47,6 +48,7 @@ export function ClassesSection({ ruleset, childOnly, onChildOnlyChange }: Rulese
   const queryClient = useQueryClient();
 
   const { search, kind, orderBy, orderDir, searchBarProps } = useEntityFilters(ruleset.baseRules);
+  const { rules } = useRules(ruleset.baseRules);
 
   const { fields: classFields } = useEntityFields(ruleset.id, "klasses");
   const { columns: classColumns } = useEntityColumns(ruleset.id, "klasses");
@@ -81,7 +83,7 @@ export function ClassesSection({ ruleset, childOnly, onChildOnlyChange }: Rulese
   const handleRowPrefetch = (klass: Class) => {
     void queryClient.prefetchQuery(classDetailQuery(ruleset.id, klass.id));
     // And the tab its page opens on, its first
-    void getClassTabs(ruleset.baseRules)[0].prefetch?.(queryClient, ruleset.id, klass.id);
+    void getClassTabs(rules)[0].prefetch?.(queryClient, ruleset.id, klass.id);
   };
 
   const renderCell = (klass: Class, columnKey: string) => {
