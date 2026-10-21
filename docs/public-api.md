@@ -119,8 +119,8 @@ Each write calls the service the app's own route calls, its body a v1 shape tran
   their body leaves out, refuse (409) one that changed between that read and their write. A character's private notes,
   which v1 never answers, it never writes either.
 - A modifier's or a requirement's target is a path (`abilities.strength.misc`): `GET /v1/rulesets/{id}/target-paths`
-  completes one a segment at a time, or finds every path whose name has a word, and `…/target-paths/check` says what a
-  path takes, or what it may have meant.
+  completes one a segment at a time, or finds every path whose name has a word, with what each takes. A write refuses
+  a path it can't take, saying why.
 
 ## Not yet
 

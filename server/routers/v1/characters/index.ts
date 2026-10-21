@@ -7,7 +7,6 @@ import {
   v1CharacterCreation,
   v1CharacterLanguages,
   v1ImportedCharacter,
-  v1RaceOptionPage,
 } from "@/server/routers/v1/schemas/characterParts.ts";
 import { v1Character, v1CharacterPage } from "@/server/routers/v1/schemas/characters.ts";
 import { V1 } from "@/server/routers/v1/translators/V1.ts";
@@ -65,34 +64,6 @@ export default new Hono<ApiKeyContext>()
         { limit, page },
       );
       return c.json(V1.characters(characters), 200);
-    },
-  )
-  .get(
-    "/available-races",
-    describeRoute({
-      response: v1RaceOptionPage,
-      status: 200,
-      summary: "The races a new character of a ruleset may be, each saying whether one of its alignment and gender may",
-    }),
-    validate(
-      "query",
-      z.object({
-        ...PAGE_FILTERS,
-        alignment: z.enum(ALIGNMENT_OPTIONS).optional(),
-        gender: z.enum(GENDER_OPTIONS).optional(),
-        rulesetId: z.string().uuid(),
-        search: z.string().optional().meta({ description: "A part of the name" }),
-      }),
-    ),
-    async (c) => {
-      const { alignment, gender, limit, page, rulesetId, search } = c.req.valid("query");
-      const races = await CharactersService.getAvailableRaces(
-        rulesetId,
-        { alignment, gender },
-        { search },
-        { limit, page },
-      );
-      return c.json(V1.page(races, V1.raceOption), 200);
     },
   )
   .get(
@@ -205,7 +176,7 @@ export default new Hono<ApiKeyContext>()
     describeRoute({
       response: v1Character,
       status: 200,
-      summary: "Changes a character's identity, experience and languages: what the body names",
+      summary: "Changes a character's identity and experience: what the body names",
     }),
     validate("param", idParam),
     validate(
@@ -217,10 +188,6 @@ export default new Hono<ApiKeyContext>()
         description: z.string().optional(),
         gender: z.enum(GENDER_OPTIONS).optional(),
         height: z.string().nullable().optional().meta({ description: "Cleared with null" }),
-        languageIds: z
-          .array(z.string().uuid())
-          .optional()
-          .meta({ description: "The languages it picks, past those its race and classes give it: its whole list" }),
         name: z.string().min(1).max(MAX_CHARACTER_NAME_LENGTH).optional(),
         notes: z.string().optional(),
         weight: z.string().nullable().optional().meta({ description: "Cleared with null" }),

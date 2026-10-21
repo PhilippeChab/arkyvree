@@ -9,7 +9,7 @@ import { location } from "@/drizzle/schema.ts";
 
 import { v1Character } from "./characters.ts";
 import { v1Modifier } from "./content.ts";
-import { buildPageSchema, v1Id, v1Named } from "./references.ts";
+import { v1Id, v1Named } from "./references.ts";
 
 /** A way a new character's ability scores are set, as its form runs it by its kind. */
 const v1CreationMethod = z
@@ -119,27 +119,6 @@ export const v1InventoryEntry = z
   .meta({ description: "An item a character carries", id: "InventoryEntry" });
 
 export const v1Inventory = z.array(v1InventoryEntry).meta({ description: "A character's inventory", id: "Inventory" });
-
-export const v1Placement = z
-  .strictObject({
-    warning: z.string().nullable().meta({ description: "Why it can't take one more item, if it can't" }),
-  })
-  .meta({ description: "Whether a place a character carries an item in can take one more", id: "Placement" });
-
-export const v1RaceOption = z
-  .strictObject({
-    description: z.string().nullable(),
-    eligible: z.boolean().meta({ description: "Whether a character of the alignment and gender given may be one" }),
-    id: v1Id,
-    kind: z.string(),
-    name: z.string(),
-    parentId: v1Id.nullable(),
-    size: z.string(),
-    speed: z.number().int(),
-  })
-  .meta({ description: "A race a new character may be", id: "RaceOption" });
-
-export const v1RaceOptionPage = buildPageSchema(v1RaceOption);
 
 export const v1SavedLevel = z
   .strictObject({

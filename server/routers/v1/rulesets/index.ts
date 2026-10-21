@@ -132,16 +132,6 @@ export default new Hono<ApiKeyContext>()
     },
   )
   .post(
-    "/:id/archive",
-    describeRoute({ response: null, status: 204, summary: "Archives a ruleset: its characters keep it" }),
-    validate("param", idParam),
-    async (c) => {
-      const { id } = c.req.valid("param");
-      await RulesetsService.archiveRuleset(c.var.requestSession, id);
-      return c.body(null, 204);
-    },
-  )
-  .post(
     "/:id/extensions",
     describeRoute({
       response: v1RulesetExtensions,
@@ -271,6 +261,20 @@ export default new Hono<ApiKeyContext>()
         V1.rulesetSettings(await RulesetSettingsService.updateSettings(c.var.requestSession, id, body)),
         200,
       );
+    },
+  )
+  .delete(
+    "/:id",
+    describeRoute({
+      response: null,
+      status: 204,
+      summary: "Archives a ruleset: its characters keep it, and `POST /v1/rulesets/{id}/unarchive` restores it",
+    }),
+    validate("param", idParam),
+    async (c) => {
+      const { id } = c.req.valid("param");
+      await RulesetsService.archiveRuleset(c.var.requestSession, id);
+      return c.body(null, 204);
     },
   )
   .delete(

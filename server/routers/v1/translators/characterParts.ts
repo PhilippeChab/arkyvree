@@ -11,8 +11,6 @@ import type {
   v1CharacterLanguages,
   v1ImportedCharacter,
   v1InventoryEntry,
-  v1Placement,
-  v1RaceOption,
   v1SavedLevel,
 } from "@/server/routers/v1/schemas/characterParts.ts";
 import type { CharactersService } from "@/server/services/characters/index.ts";
@@ -110,29 +108,6 @@ export function toV1InventoryEntry(
     locationLabel: entry.slotLabel,
     quantity: entry.quantity,
     weaponSets: entry.weaponSets,
-  };
-}
-
-/** Why a place can't take one more of a character's items, if it can't. */
-export function toV1Placement({
-  warning,
-}: Answer<typeof CharacterInventoryService.getPlacement>): z.infer<typeof v1Placement> {
-  return { warning };
-}
-
-/** A race a new character may be, and whether one of the alignment and gender given may be one. */
-export function toV1RaceOption(
-  race: Answer<typeof CharactersService.getAvailableRaces>["items"][number],
-): z.infer<typeof v1RaceOption> {
-  return {
-    description: race.description,
-    eligible: race.eligible,
-    id: race.id,
-    kind: race.kind,
-    name: race.name,
-    parentId: race.parentId,
-    size: race.size,
-    speed: race.baseSpeed,
   };
 }
 

@@ -29,7 +29,6 @@ import type {
   v1Skill,
   v1Spell,
   v1TargetPath,
-  v1TargetPathCheck,
 } from "@/server/routers/v1/schemas/content.ts";
 import type { ClassesService } from "@/server/services/rulesets/classes/index.ts";
 import type { ClassLevelsService } from "@/server/services/rulesets/classes/levels/index.ts";
@@ -43,7 +42,7 @@ import type { PowersService } from "@/server/services/rulesets/powers/index.ts";
 import type { RacesService } from "@/server/services/rulesets/races/index.ts";
 import type { SavesService } from "@/server/services/rulesets/saves/index.ts";
 import type { SkillsService } from "@/server/services/rulesets/skills/index.ts";
-import type { PathCompletion, PathValidationResult } from "@/shared/customization/target.ts";
+import type { PathCompletion } from "@/shared/customization/target.ts";
 
 import type { Answer } from "./answers.ts";
 
@@ -354,24 +353,5 @@ export function toV1TargetPath(completion: PathCompletion): z.infer<typeof v1Tar
     setValues: completion.setValues ?? [],
     values: completion.possibleValues ?? [],
     valueType: completion.valueType ?? null,
-  };
-}
-
-/** Whether a target path is one a modifier or a requirement may take, and what a valid one takes. */
-export function toV1TargetPathCheck(check: PathValidationResult): z.infer<typeof v1TargetPathCheck> {
-  const { target } = check;
-  return {
-    errors: check.errors.map(({ message, position, severity }) => ({ ...position, message, severity })),
-    suggestions: check.suggestions,
-    target: target
-      ? {
-          operators: target.operators,
-          path: target.path,
-          setValues: target.setValues ?? [],
-          values: target.possibleValues ?? [],
-          valueType: target.valueType,
-        }
-      : null,
-    valid: check.isValid,
   };
 }

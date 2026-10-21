@@ -119,7 +119,7 @@ describe("v1 rulesets", () => {
     const fork = async (name: string) => await expectOk(rulesets.fork.$post({ json: { name }, param: { id: coreId } }));
 
     const archived = await fork("Old Table Rules");
-    await expectStatus(rulesets.archive.$post({ param: { id: archived.id } }), 204);
+    await expectStatus(rulesets.$delete({ param: { id: archived.id } }), 204);
     const { id } = await fork("New Table Rules");
 
     await expectStatus(rulesets.fork.$post({ json: { name: "Old Table Rules" }, param: { id: coreId } }), 409);
@@ -154,7 +154,7 @@ describe("v1 rulesets", () => {
     expect(settings.fields).toMatchObject({ abilityIncreases });
 
     expect(await expectOk(rulesets.publish.$post({ json: {}, param: { id } }))).toMatchObject({ status: "Published" });
-    await expectStatus(rulesets.archive.$post({ param: { id } }), 204);
+    await expectStatus(rulesets.$delete({ param: { id } }), 204);
     expect(await expectOk(rulesets.unarchive.$post({ param: { id } }))).toMatchObject({ id, status: "Draft" });
   });
 

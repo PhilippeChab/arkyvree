@@ -235,33 +235,4 @@ export const v1TargetPath = z
   })
   .meta({ description: "A target path, or a segment of one, that completes the path given", id: "TargetPath" });
 
-export const v1TargetPathCheck = z
-  .strictObject({
-    errors: z.array(
-      z.strictObject({
-        end: z.number().int(),
-        message: z.string(),
-        severity: z.enum(["error", "info", "warning"]),
-        start: z.number().int(),
-      }),
-    ),
-    suggestions: z.array(z.string()).meta({ description: "Paths it may have meant" }),
-    target: z
-      .strictObject({
-        operators: z.array(z.string()),
-        path: z.string(),
-        setValues: z
-          .array(z.strictObject({ label: z.string(), value: z.string() }))
-          .meta({ description: "The values a `set` on it takes, when it takes only those" }),
-        values: z
-          .array(z.strictObject({ label: z.string(), value: z.string() }))
-          .meta({ description: "The values it takes, when it takes a closed list" }),
-        valueType: z.enum(["boolean", "number", "string"]),
-      })
-      .nullable()
-      .meta({ description: "A valid path's: what it takes" }),
-    valid: z.boolean(),
-  })
-  .meta({ description: "Whether a target path is one a modifier or a requirement may take", id: "TargetPathCheck" });
-
 export const v1TargetPathPage = buildPageSchema(v1TargetPath);

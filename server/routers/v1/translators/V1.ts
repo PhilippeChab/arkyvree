@@ -3,8 +3,6 @@ import {
   toV1CharacterLanguages,
   toV1ImportedCharacter,
   toV1InventoryEntry,
-  toV1Placement,
-  toV1RaceOption,
   toV1SavedLevel,
 } from "./characterParts.ts";
 import {
@@ -31,7 +29,6 @@ import {
   toV1Skill,
   toV1Spell,
   toV1TargetPath,
-  toV1TargetPathCheck,
 } from "./content.ts";
 import {
   toClassRequest,
@@ -86,9 +83,7 @@ export const V1 = {
   modifier: toV1Modifier,
   names: toV1Names,
   page: toV1Page,
-  placement: toV1Placement,
   race: toV1Race,
-  raceOption: toV1RaceOption,
   raceRequest: toRaceRequest,
   requirement: toV1Requirement,
   requirementRequest: toRequirementRequest,
@@ -102,6 +97,5 @@ export const V1 = {
   skillRequest: toSkillRequest,
   spell: toV1Spell,
   targetPath: toV1TargetPath,
-  targetPathCheck: toV1TargetPathCheck,
   written: toV1Written,
 };
