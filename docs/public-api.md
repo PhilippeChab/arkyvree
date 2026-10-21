@@ -29,7 +29,7 @@ answers in shapes of its own, which stay fixed.
   option of each pool, a character file's import, which builds the character level by level, and a file's check of its
   source, which parses it, per user, whichever keys of theirs ask (`levelChoicesRateLimit`: 20 a minute;
   `apiImportRateLimit`: 10; `apiImportSourceRateLimit`: 30), as are its PDFs, which each cost a render
-  (`apiExportRateLimit`: 5), and its direct uploads (`apiAttachmentUploadRateLimit`: 20), which the app's own routes
+  (`apiExportRateLimit`: 5), and its image uploads (`apiAttachmentUploadRateLimit`: 20), which the app's own routes
   count per address. A request with a wrong key or none costs a lookup by digest, as a wrong session cookie does the
   app's.
 - A ruleset is read as the app reads it: any ruleset by its id, a private one too, as `/api` answers it to any signed-in
@@ -156,10 +156,13 @@ Each write calls the service the app's own route calls, its body a v1 shape tran
   `spells`, `campaigns`…), and `/v1/activities/targets/{kind}/{targetId}` answers the app's page of it (a 404 once
   it's gone, a 403 once the user lost access to it). An export (`exports`, a PDF's notice) has no page:
   `GET /v1/exports/{id}` reads it.
-- **Attachments** (`/v1/attachments`): a record's image (a user's avatar, a character's portrait), uploaded as the app
-  uploads it, in two steps: `POST /v1/attachments/direct-uploads` answers where to send the file (`uploadUrl`, with
-  `PUT` and its `headers`) and what attaches it; `POST /v1/attachments/{signedId}/attach` then attaches it to its
-  slot, replacing the image there.
+- **Attachments** (`/v1/attachments`): a record's image (a user's avatar, a character's portrait), read, removed, and
+  uploaded in one request: `POST /v1/attachments`, a `multipart/form-data` body with the slot (`recordType`, `recordId`,
+  `name`) and the `file`, replacing the image there. The server reads the image's type from its bytes, then stores the
+  file and attaches it (`AttachmentsService.setAttachment`), or leaves nothing: it records the file pending before it
+  stores it, deletes both when the write or the attach fails, and the hourly sweep of pending files takes one a crash
+  left. The app keeps its own two steps, the browser sending the file straight to the storage (`useDirectUpload`), which
+  a caller outside it would have to sign and send apart.
 - **The dashboard** (`/v1/dashboard/stats`): how many campaigns, characters and rulesets the user has.
 
 ## A PDF, made in the background

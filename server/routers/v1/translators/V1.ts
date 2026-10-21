@@ -1,5 +1,5 @@
 import { toV1Activity, toV1TargetPage } from "./activities.ts";
-import { toV1Attachment, toV1DirectUpload } from "./attachments.ts";
+import { toV1Attachment } from "./attachments.ts";
 import {
   toV1Campaign,
   toV1CampaignCharacter,
@@ -109,7 +109,6 @@ export const V1 = {
   classSpellCounts: toV1ClassSpellCounts,
   contributor: toV1Contributor,
   contributors: toV1Contributors,
-  directUpload: toV1DirectUpload,
   entity: toV1Entity,
   export: toV1Export,
   feat: toV1Feat,

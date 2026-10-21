@@ -1,8 +1,24 @@
 import { describe, expect, test } from "bun:test";
 
+import { db } from "@/server/database/index.ts";
+import { Blobs } from "@/server/repositories/index.ts";
+import ObjectStorage from "@/server/storage/ObjectStorage.ts";
 import { createKeyedApi, expectOk, expectStatus } from "@/tests/support/api.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
+import { fakeStorage } from "@/tests/support/storage.ts";
 import { createTestUser } from "@/tests/support/users.ts";
+
+/** The blob a stored object's key names (`blobs/<id>/<file>`). */
+function blobIdOf(key: string) {
+  return key.split("/")[1]!;
+}
+
+/** A PNG's first bytes, which name its type, then `size` bytes in all. */
+function png(name: string, size = 64) {
+  const bytes = new Uint8Array(size);
+  bytes.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+  return new File([bytes], name, { type: "image/png" });
+}
 
 /** A new user's key, and their avatar's slot. */
 async function setup() {
@@ -12,39 +28,72 @@ async function setup() {
 }
 
 describe("v1 attachments", () => {
-  test("uploads an image to a slot in two steps, reads it, and removes it", async () => {
+  test("uploads an image into a slot in one request, replaces it, reads it, and removes it", async () => {
     const { attachments, avatar } = await setup();
+    const deleted: string[] = [];
+    ObjectStorage.setForTest(fakeStorage({ deleteObject: async (key) => void deleted.push(key) }));
     expect(await expectOk(attachments.$get({ query: avatar }))).toBeNull();
 
-    const upload = await expectOk(
-      attachments["direct-uploads"].$post({
-        json: { ...avatar, byteSize: 1024, contentType: "image/png", filename: "me.png" },
-      }),
-    );
-    expect(upload).toEqual({
-      headers: { "Content-Type": "image/png" },
-      signedId: expect.stringMatching(/^[\w-]+\.[\w-]+$/),
-      uploadUrl: expect.stringContaining("https://fake.example.com"),
-    });
+    const first = await expectOk(attachments.$post({ form: { ...avatar, file: png("me.png") } }));
+    expect(first).toEqual({ id: expect.any(String), url: expect.stringContaining("me.png") });
+    expect(await expectOk(attachments.$get({ query: avatar }))).toEqual(first);
 
-    const attached = await expectOk(attachments[":signedId"].attach.$post({ param: { signedId: upload.signedId } }));
-    expect(attached).toEqual({ id: expect.any(String), url: expect.stringContaining("me.png") });
-    expect(await expectOk(attachments.$get({ query: avatar }))).toEqual(attached);
-    await expectStatus(attachments[":signedId"].attach.$post({ param: { signedId: upload.signedId } }), 409);
+    // The image it replaces is deleted with its blob, nothing else holding it
+    const second = await expectOk(attachments.$post({ form: { ...avatar, file: png("me-too.png") } }));
+    expect(await expectOk(attachments.$get({ query: avatar }))).toEqual(second);
+    expect(deleted).toEqual([expect.stringContaining("me.png")]);
+    expect(await Blobs.findOne(db, { id: blobIdOf(deleted[0]!) })).toBeUndefined();
 
-    await expectStatus(attachments[":id"].$delete({ param: { id: attached.id } }), 204);
+    await expectStatus(attachments[":id"].$delete({ param: { id: second.id } }), 204);
     expect(await expectOk(attachments.$get({ query: avatar }))).toBeNull();
   });
 
-  test("refuses another user's slot, a file past what a slot takes, and a forged signed id", async () => {
+  test("reads an image's type from its bytes, whatever its part declares", async () => {
     const { attachments, avatar } = await setup();
+    const stored: string[] = [];
+    ObjectStorage.setForTest(
+      fakeStorage({ putObject: async (_key, _data, { contentType }) => void stored.push(contentType) }),
+    );
+    const bytes = await png("me.png").arrayBuffer();
+    await expectOk(
+      attachments.$post({ form: { ...avatar, file: new File([bytes], "me.bin", { type: "text/plain" }) } }),
+    );
+    expect(stored).toEqual(["image/png"]);
+  });
+
+  test("refuses another user's slot, a file that isn't an image, and one past what a slot takes, storing none", async () => {
+    const { attachments, avatar } = await setup();
+    const stored: string[] = [];
+    ObjectStorage.setForTest(fakeStorage({ putObject: async (key) => void stored.push(key) }));
     const { user: other } = await createTestUser();
-    const upload = { ...avatar, byteSize: 1024, contentType: "image/png", filename: "me.png" };
-    const directUploads = attachments["direct-uploads"];
-    await expectStatus(directUploads.$post({ json: { ...upload, recordId: other.id } }), 403);
-    await expectStatus(directUploads.$post({ json: { ...upload, contentType: "application/pdf" } }), 400);
-    await expectStatus(directUploads.$post({ json: { ...upload, byteSize: 6 * 1024 * 1024 } }), 400);
-    await expectStatus(attachments[":signedId"].attach.$post({ param: { signedId: "forged.signature" } }), 400);
+
+    await expectStatus(attachments.$post({ form: { ...avatar, recordId: other.id, file: png("me.png") } }), 403);
+    const text = new File(["not an image"], "me.png", { type: "image/png" });
+    await expectStatus(attachments.$post({ form: { ...avatar, file: text } }), 400);
+    // Past the slot's 5 MB, and past what the route reads at all
+    await expectStatus(attachments.$post({ form: { ...avatar, file: png("big.png", 5 * 1024 * 1024 + 1) } }), 400);
+    await expectStatus(attachments.$post({ form: { ...avatar, file: png("huge.png", 6 * 1024 * 1024) } }), 400);
+    expect(stored).toEqual([]);
+
     await expectStatus(attachments[":id"].$delete({ param: { id: NIL_UUID } }), 404);
+  });
+
+  test("leaves no blob behind, nor changes the slot, when storing the file fails", async () => {
+    const { attachments, avatar } = await setup();
+    const kept = await expectOk(attachments.$post({ form: { ...avatar, file: png("me.png") } }));
+    const tried: string[] = [];
+    ObjectStorage.setForTest(
+      fakeStorage({
+        putObject: async (key) => {
+          tried.push(key);
+          throw new Error("storage unavailable");
+        },
+      }),
+    );
+
+    await expectStatus(attachments.$post({ form: { ...avatar, file: png("lost.png") } }), 500);
+    expect(tried).toHaveLength(1);
+    expect(await Blobs.findOne(db, { id: blobIdOf(tried[0]!) })).toBeUndefined();
+    expect(await expectOk(attachments.$get({ query: avatar }))).toEqual(kept);
   });
 });
