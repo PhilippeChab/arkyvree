@@ -29,14 +29,9 @@ export interface V1LevelChoicesQuery {
   spells?: { aptitudeId: string; spellId: string }[];
 }
 
-/** The picks so far that fit in their aptitudes, by aptitude, as the request's own pairs. */
-function toPicked(fitted: Record<string, string[]>) {
-  return Object.entries(fitted).flatMap(([aptitudeId, ids]) => ids.map((id) => ({ aptitudeId, id })));
-}
-
 /** The planned level's offer, step by step. */
 function toPlannedLevel(level: PlannedLevel): NonNullable<V1LevelChoices["level"]> {
-  const { abilities, class: klass, featSlots, feats, powerSlots, powers, skills } = level;
+  const { abilities, class: klass, featSlots, feats, picked, powerSlots, powers, skills } = level;
   return {
     abilityIncrease: {
       abilities: abilities.attributes.map(({ abilityId, name, total }) => ({ id: abilityId, name, score: total })),
@@ -45,7 +40,7 @@ function toPlannedLevel(level: PlannedLevel): NonNullable<V1LevelChoices["level"
     class: klass,
     feats: {
       granted: toV1Names(feats.autoGrantedFeats),
-      picked: toPicked(feats.fitted).map(({ aptitudeId, id }) => ({ aptitudeId, featId: id })),
+      picked: picked.feats.map(({ aptitudeId, featId }) => ({ aptitudeId, featId })),
       slots: featSlots.map(({ options, pool, room, shared }) => ({
         aptitude: pool,
         count: room,
@@ -68,7 +63,7 @@ function toPlannedLevel(level: PlannedLevel): NonNullable<V1LevelChoices["level"
     },
     spells: {
       granted: toV1Names(powers.autoGrantedPowers),
-      picked: toPicked(powers.fitted).map(({ aptitudeId, id }) => ({ aptitudeId, spellId: id })),
+      picked: picked.powers.map(({ aptitudeId, powerId }) => ({ aptitudeId, spellId: powerId })),
       slots: powerSlots.map(({ options, pool, powerLevel, room, shared }) => ({
         aptitude: pool,
         count: room,
