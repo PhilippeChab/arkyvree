@@ -17,6 +17,8 @@ answers in shapes of its own, which stay fixed.
   (`runCleanup`) deletes it.
 - Wherever the user's other sessions are signed out, their keys are revoked too (`signOutEverywhere`): a password
   reset, a password change and the account's deletion.
+- A key is for a caller that keeps it secret, outside a browser: `/v1` answers no cross-origin request (no CORS but
+  the app's own), so a page on another site can't call it.
 - A request sends it as `Authorization: Bearer <token>`. `apiKeyMiddleware` (`server/middlewares/apiKey.ts`) refuses
   one without a key, with a revoked one, or with one whose user is gone (an archived account, a demo), with a 401, and
   marks the key used, at most once a minute.
