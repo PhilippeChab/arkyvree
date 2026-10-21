@@ -16,6 +16,9 @@ type Column = NonNullable<RulesDescription["columns"][string]>[number];
 /** A ruleset entity's change, as its notification says it: its verb, by the type's (`createFeat`) */
 const CONTENT_CHANGES: Record<string, string> = { create: "created", delete: "deleted", update: "updated" };
 
+/** An activity type, its verb and the entity it names as the engine does: `createKlass`, `updateKlassLevel`. */
+const ENTITY_ACTIVITY = /^([a-z]+)([A-Z]\w*)$/;
+
 const NOTIFICATION_MESSAGES: Record<string, (actor: string, d: Record<string, unknown>) => string> = {
   // Campaign invites
   createCampaignInvite: (actor, d) => `${actor} invited you to ${d.campaignName || "a campaign"}`,
@@ -76,7 +79,7 @@ const REFERENCE_FIELD = /^(\w+)Id$/;
  * its type names (`createKlass`), the engine's names (`entityTypeOfCode`).
  */
 function contentChange(type: string, actor: string, d: Record<string, unknown>, rules: RulesDescriptions | undefined) {
-  const [, verb = "", name = ""] = /^([a-z]+)([A-Z]\w*)$/.exec(type) ?? [];
+  const [, verb = "", name = ""] = ENTITY_ACTIVITY.exec(type) ?? [];
   const entityType = entityTypeOfCode(name);
   if (!Object.hasOwn(CONTENT_CHANGES, verb) || !entityType) return undefined;
   const word = entityTypeLabel(entityType, wordsOf(d, rules)).toLowerCase();
@@ -134,14 +137,16 @@ function wordsOf(d: Record<string, unknown>, rules: RulesDescriptions | undefine
 }
 
 /**
- * What an activity of `type` changed: its fields (named as its entities' columns, `rules`: every base rules'), its
- * level, its modifier's or requirement's change, its property.
+ * What an activity of `type` changed: its fields (named as the columns of the entity it names, `rules`: every base
+ * rules'), its level, its modifier's or requirement's change, its property.
  */
 export function formatActivityDetails(type: string, data: unknown, rules?: RulesDescriptions): string | null {
   const d = payload(data);
   const parts: string[] = [];
   const baseRules = oneOf(d.baseRules, BASE_RULES_OPTIONS);
-  const columns = Object.values((baseRules && rules?.[baseRules].columns) ?? {}).flatMap((own) => own ?? []);
+  // The columns of the entity its type names, its own alone: another entity's field of the same key reads its own way
+  const entityType = entityTypeOfCode(ENTITY_ACTIVITY.exec(type)?.[2] ?? "");
+  const columns = (entityType && baseRules && rules?.[baseRules].columns[entityType]) || [];
 
   if (Array.isArray(d.changedFields))
     for (const change of d.changedFields.filter(isChangedField)) parts.push(formatChange(change, columns));
