@@ -215,18 +215,13 @@ describe("v1 characters", () => {
     await expectStatus(api.v1.characters.$post({ json }), 400);
   });
 
-  test("says what a character file is, and imports the character it holds with what it couldn't", async () => {
+  test("imports the character a file holds with what it couldn't, and refuses a file that holds none", async () => {
     const { user } = await createTestUser();
     const { api } = await createKeyedApi(user.id);
     const { rulesetId } = await getSeedCtx();
     const text = await readPcgenFile("brannoc");
 
-    const source = await expectOk(api.v1.characters.import.source.$post({ json: { text } }));
-    expect(source).toEqual({
-      baseRules: ["Dungeons & Dragons: 3.5"],
-      refusal: null,
-      source: { format: "2.0", program: "PCGen", rules: "35e", version: "6.09.08.RC1" },
-    });
+    await expectStatus(api.v1.characters.import.$post({ json: { rulesetId, text: "Not a character" } }), 422);
 
     const { character, report } = await expectOk(api.v1.characters.import.$post({ json: { rulesetId, text } }));
     expect(character).toMatchObject({ level: 8, name: "Brannoc Vale" });

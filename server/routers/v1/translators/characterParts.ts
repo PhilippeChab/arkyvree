@@ -10,7 +10,6 @@ import type {
   v1CharacterCreation,
   v1CharacterLanguages,
   v1ImportedCharacter,
-  v1ImportSource,
   v1InventoryEntry,
   v1Placement,
   v1RaceOption,
@@ -86,21 +85,6 @@ export function toV1ImportedCharacter(
       program,
       unmatched: unmatched.map(({ line, reason, text }) => ({ line, reason, text })),
     },
-  };
-}
-
-/** What a character file another program saved is, before a ruleset is picked. */
-export function toV1ImportSource({
-  baseRules,
-  refusal,
-  source,
-}: ReturnType<typeof CharactersService.getImportSource>): z.infer<typeof v1ImportSource> {
-  return {
-    baseRules,
-    refusal: refusal ?? null,
-    source: source
-      ? { format: source.format, program: source.program, rules: source.rules ?? null, version: source.version }
-      : null,
   };
 }
 

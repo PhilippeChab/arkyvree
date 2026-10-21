@@ -6,7 +6,6 @@ export type { RouteDescription } from "./describeRoute.ts";
 export { default as publishNotified } from "./publishNotified.ts";
 export {
   apiImportRateLimit,
-  apiImportSourceRateLimit,
   apiKeyRateLimit,
   attachmentUploadRateLimit,
   authEmailRateLimit,

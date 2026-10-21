@@ -94,20 +94,6 @@ export const v1ImportedCharacter = z
     id: "ImportedCharacter",
   });
 
-export const v1ImportSource = z
-  .strictObject({
-    baseRules: z.array(z.string()).meta({ description: "The base rules whose rulesets import it" }),
-    refusal: z.string().nullable().meta({ description: "Why none does" }),
-    source: z
-      .strictObject({ format: z.string(), program: z.string(), rules: z.string().nullable(), version: z.string() })
-      .nullable()
-      .meta({ description: "The file, as it says it: the program that saved it, its version and format, its rules" }),
-  })
-  .meta({
-    description: "What a character file another program saved is, before a ruleset is picked",
-    id: "ImportSource",
-  });
-
 export const v1InventoryEntry = z
   .strictObject({
     charges: z

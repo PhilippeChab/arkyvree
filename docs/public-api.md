@@ -26,9 +26,8 @@ answers in shapes of its own, which stay fixed.
   changes only what its user can, by the checks the services already make. A session's cookie signs in nothing under
   `/v1`.
 - Its requests are counted per key (`apiKeyRateLimit`: 120 a minute), and a character's level choices, which read every
-  option of each pool, a character file's import, which builds the character level by level, and a file's check of its
-  source, which parses it, per user, whichever keys of theirs ask (`levelChoicesRateLimit`: 20 a minute;
-  `apiImportRateLimit`: 10; `apiImportSourceRateLimit`: 30). A request with a wrong key or
+  option of each pool, and a character file's import, which builds the character level by level, per user, whichever
+  keys of theirs ask (`levelChoicesRateLimit`: 20 a minute; `apiImportRateLimit`: 10). A request with a wrong key or
   none costs a lookup by digest, as a wrong session cookie does the app's.
 - A ruleset is read as the app reads it: any ruleset by its id, a private one too, as `/api` answers it to any signed-in
   user. The lists (`GET /v1/rulesets`) list what the user's scope does.

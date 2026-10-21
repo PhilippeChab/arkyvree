@@ -1,19 +1,12 @@
 import { Hono } from "hono";
 import { z } from "zod";
 
-import {
-  apiImportRateLimit,
-  apiImportSourceRateLimit,
-  type ApiKeyContext,
-  describeRoute,
-  validate,
-} from "@/server/middlewares/index.ts";
+import { apiImportRateLimit, type ApiKeyContext, describeRoute, validate } from "@/server/middlewares/index.ts";
 import { idList, idParam, orderDirDesc } from "@/server/routers/api/validation.ts";
 import {
   v1CharacterCreation,
   v1CharacterLanguages,
   v1ImportedCharacter,
-  v1ImportSource,
   v1RaceOptionPage,
 } from "@/server/routers/v1/schemas/characterParts.ts";
 import { v1Character, v1CharacterPage } from "@/server/routers/v1/schemas/characters.ts";
@@ -202,20 +195,6 @@ export default new Hono<ApiKeyContext>()
       const { character, report } = await CharactersService.importCharacter(session, rulesetId, text);
       const sheet = await CharactersService.getCharacter(session, character.id);
       return c.json(V1.importedCharacter(sheet, report), 201);
-    },
-  )
-  .post(
-    "/import/source",
-    describeRoute({
-      response: v1ImportSource,
-      status: 200,
-      summary: "What a character file another program saved is, and the base rules whose rulesets import it",
-    }),
-    apiImportSourceRateLimit,
-    validate("json", z.object({ text: fileText })),
-    (c) => {
-      const { text } = c.req.valid("json");
-      return c.json(V1.importSource(CharactersService.getImportSource(text)), 200);
     },
   )
   .post(
