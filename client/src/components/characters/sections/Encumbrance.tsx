@@ -73,7 +73,8 @@ export function Encumbrance({ load }: EncumbranceProps) {
               variant="body2"
               sx={[{ color: "text.secondary" }, index === 0 && { fontWeight: 500 }]}
             >
-              {label}: {formatWeight(weight ?? 0)}
+              {`${label}: `}
+              {formatWeight(weight ?? 0)}
             </Typography>
           ))}
           {loadChip}
