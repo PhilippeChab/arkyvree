@@ -66,7 +66,7 @@ describe("v1 ruleset items", () => {
     await expectStatus(route[":itemId"].$get({ param: { id, itemId: created.id } }), 404);
   });
 
-  test("keeps the slot an item's type sets when its update names another without its type", async () => {
+  test("saves the slot an item's type sets, the type its update keeps or changes without naming a slot", async () => {
     const { api, rulesetId: id } = await createKeyedFork();
     const itemId = (await getSeedCtx()).itemMap["Studded Leather"]!;
     const route = api.v1.rulesets[":id"].items[":itemId"];
@@ -75,6 +75,14 @@ describe("v1 ruleset items", () => {
       route.$put({ json: { name: "Studded Jerkin", slot: "Head" }, param: { id, itemId } }),
     );
     expect(changed).toMatchObject({ slot: "Torso", type: "Armor" });
+    const vest = await expectOk(
+      api.v1.rulesets[":id"].items.$post({ json: { name: "Hide Vest", type: "Armor" }, param: { id } }),
+    );
+    expect(vest).toMatchObject({ slot: "Torso", type: "Armor" });
+    const retyped = await expectOk(
+      route.$put({ json: { name: "Hide Vest", type: "Other" }, param: { id, itemId: vest.id } }),
+    );
+    expect(retyped).toMatchObject({ slot: "Other", type: "Other" });
   });
 
   test("refuses to change a ruleset the key's user can't edit", async () => {

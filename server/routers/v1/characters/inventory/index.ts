@@ -36,7 +36,7 @@ const force = z
 
 /** The weapon sets a hand holds an entry in, as the document describes them. */
 const heldWeaponSets = heldSets.meta({
-  description: "The weapon sets a hand holds it in, from 0: none outside the hands",
+  description: "The weapon sets a hand holds it in, from 0: at least one for a hand, none outside the hands",
 });
 
 /** A character's inventory: what it carries, where, and how many. */

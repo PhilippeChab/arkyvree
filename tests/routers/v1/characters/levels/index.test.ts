@@ -74,6 +74,14 @@ describe("v1 character levels", () => {
     expect(level.skillPoints).toEqual(json.skillPoints);
   });
 
+  test("refuses a level that isn't its class's next, forced or not", async () => {
+    const { id, route } = await planFighterLevel();
+    const { classes } = await expectOk(route["level-choices"].$get({ param: { id }, query: {} }));
+    const wizard = classes.find(({ name }) => name === "Wizard")!;
+    const json = { classId: wizard.id, force: true, hitPoints: 4, level: wizard.nextLevel + 2 };
+    await expectStatus(route.levels.$post({ json, param: { id } }), 400);
+  });
+
   test("refuses a level whose picks the rules refuse, unless it's forced", async () => {
     const { id, json, route } = await planFighterLevel();
     // The level's feat slots left empty

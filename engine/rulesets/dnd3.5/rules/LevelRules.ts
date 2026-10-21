@@ -1,4 +1,4 @@
-import type { RulesetView } from "@/engine/core/view/index.ts";
+import type { RulesetData, RulesetView } from "@/engine/core/view/index.ts";
 import { RULESET_FIELDS, type RulesetFieldValues } from "@/engine/rulesets/dnd3.5/ruleset/fields.ts";
 import { countProgressionAt } from "@/shared/customization/progression.ts";
 import { stripSeparators } from "@/shared/text.ts";
@@ -37,6 +37,20 @@ export default class LevelRules {
    */
   static of({ ruleset, rulesetData }: RulesetView): LevelRules {
     return new LevelRules(RULESET_FIELDS.read(rulesetData.rulesetPropertiesOf(ruleset.id)));
+  }
+
+  /**
+   * A character's highest level in each class it has levels of (`levels`, its levels' rows), by the class's id: its next
+   * level in a class is the one after.
+   */
+  static readMaxKlassLevels(rulesetData: RulesetData, levels: { klassLevelId: string }[]): Map<string, number> {
+    const maxLevels = new Map<string, number>();
+    for (const level of levels) {
+      const klassLevel = rulesetData.klassLevelsById.get(level.klassLevelId);
+      if (klassLevel)
+        maxLevels.set(klassLevel.klassId, Math.max(maxLevels.get(klassLevel.klassId) ?? 0, klassLevel.level));
+    }
+    return maxLevels;
   }
 
   /** The ability increases the level after `totalLevel` levels takes, by its Settings (`abilityIncreases`). */

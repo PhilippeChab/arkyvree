@@ -84,15 +84,15 @@ export default class ItemEntity extends CustomizationPageEntity<
   }
 
   /**
-   * A form's columns: a new item's template, and whether it's one; an edited template keeps no source. Its slot is the
-   * one its type sets, the type an edit keeps when its form leaves it out.
+   * A form's columns: a new item's template, and whether it's one; an edited template keeps no source; its slot, the
+   * one it's saved with (`savedSlotOf`).
    */
   protected override columnsOf(body: ItemBody, item?: Item): ItemColumns {
     const columns = {
       costGp: decimalColumn(body.costGp),
       description: body.description,
       name: body.name,
-      slot: this.slotOf({ slot: body.slot, type: this.typeOf(body, item) }),
+      slot: this.savedSlotOf(body, item),
       type: body.type,
       weight: decimalColumn(body.weight),
     };
@@ -271,6 +271,17 @@ export default class ItemEntity extends CustomizationPageEntity<
       ...(named ? [`"${named.name}"${more}`] : []),
       ...(elsewhere > 0 ? [`${elsewhere} in rulesets built on this one`] : []),
     ].join(", and ");
+  }
+
+  /**
+   * The slot a form saves an item with: the one its type sets (the type an edit keeps when its form leaves it out),
+   * else the form's. An edit that changes its type without naming a slot leaves behind the slot the old type set.
+   */
+  private savedSlotOf(body: ItemBody, item?: Item) {
+    const type = this.typeOf(body, item);
+    const leftBehind =
+      item && body.slot === undefined && type !== item.type && ItemPlacement.slotOfType(item.type) !== undefined;
+    return this.slotOf({ slot: leftBehind ? null : body.slot, type });
   }
 
   /**
