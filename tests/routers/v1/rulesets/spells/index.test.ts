@@ -66,6 +66,14 @@ describe("v1 ruleset spells", () => {
     await expectStatus(route[":spellId"].$get({ param: { id, spellId: created.id } }), 404);
   });
 
+  test("adds a spell without a save with no effect of one", async () => {
+    const { api, rulesetId: id } = await createKeyedFork();
+    const ctx = await getSeedCtx();
+    const json = { aptitudes: [{ id: ctx.aptMap["Wizard Spells"]!, level: 1 }], name: "Dim Glow", saveEffect: "half" };
+    const created = await expectOk(api.v1.rulesets[":id"].spells.$post({ json, param: { id } }));
+    expect(created).toMatchObject({ saveEffect: null, saveId: null });
+  });
+
   test("refuses to change a ruleset the key's user can't edit", async () => {
     const { api } = await createKeyedApi();
     const ctx = await getSeedCtx();

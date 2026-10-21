@@ -52,7 +52,7 @@ export default class InventoryEntries {
   /**
    * Where an entry's add or edit holds its item, from the character's rows. Refused when the item can't be equipped
    * where it's asked to be (`Equipping`: an item already carried takes another entry, a second dagger held in the other
-   * hand; its requirements unless `force`d).
+   * hand; its requirements unless `force`d, or an edit keeps it where it's held).
    */
   static planPlacement(
     view: RulesetView,
@@ -69,7 +69,15 @@ export default class InventoryEntries {
           ? { id: null, item: change.item }
           : { id: change.entry.id, item: view.rulesetData.itemsById.get(change.entry.itemId) };
       if (!entry.item) throw new RulesError("not-found", "Item not found");
-      new Equipping(view, character).checkEquip({ id: entry.id, item: entry.item }, location, weaponSets, force);
+      // An entry an edit keeps where it's held met its requirements, or was forced, when it got there
+      const held = "entry" in change ? character.rows.inventory.find((row) => row.id === change.entry.id) : undefined;
+      const kept = !!held?.equipped && held.location === location && String(held.weaponSets) === String(weaponSets);
+      new Equipping(view, character).checkEquip(
+        { id: entry.id, item: entry.item },
+        location,
+        weaponSets,
+        force || kept,
+      );
     }
     return InventoryEntries.placementOf({ equipped, location, weaponSets });
   }

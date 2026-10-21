@@ -79,7 +79,8 @@ export default class GearImport {
       );
       return CARRIED;
     }
-    return { equipped: true, location, weaponSets: ItemPlacement.isHand(location) ? [0] : [] };
+    // A hand holds it in the first weapon set, as the plan holds what names none
+    return { equipped: true, location };
   }
 
   /**
