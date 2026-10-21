@@ -322,7 +322,9 @@ class CharactersService extends include(Object, Archives, Imports) {
 
   async updateLanguages(session: Session, characterId: string, languageIds: string[]) {
     return await withTransaction(async (tx) => {
-      const characterRecord = await getEditableCharacter(tx, session, characterId);
+      // A bonded creature's too, as its master's editor reads them
+      const characterRecord = await findEditableCharacterOrBonded(tx, characterId, session.userId);
+      if (!characterRecord) throw new NotFoundError("Character not found");
 
       return await withRulesetScope(tx, characterRecord.rulesetId, async (scope) => {
         await this.replaceCharacterLanguages(tx, scope, characterRecord, languageIds);

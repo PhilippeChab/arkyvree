@@ -68,7 +68,7 @@ export default class PowerEntity extends ListedEntity<
    * the one it has when it leaves it out (`power`, the one edited), its effect gone with a save it clears.
    */
   protected override columnsOf({ description, name, saveEffect, saveId }: PowerBody, power?: PowerWithAptitudes) {
-    if (power) return { description, name, saveEffect: saveId === null ? (saveEffect ?? null) : saveEffect, saveId };
+    if (power) return { description, name, saveEffect: saveId === null ? null : saveEffect, saveId };
     return { description, name, saveEffect: saveEffect ?? null, saveId: saveId ?? null };
   }
 

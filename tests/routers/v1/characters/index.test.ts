@@ -106,6 +106,15 @@ describe("v1 characters", () => {
     expect(equipment).toEqual([expect.objectContaining({ itemId, weight: null })]);
   });
 
+  test("changes a bonded creature's languages, as its master's editor does", async () => {
+    const { api } = await createKeyedApi();
+    const { id: masterId } = await findSeededCharacter("Aldric Dawnbringer");
+    const [mount] = (await expectOk(api.v1.characters[":id"].$get({ param: { id: masterId } }))).bonded;
+    const route = api.v1.characters[":id"].languages;
+    const languages = await expectOk(route.$put({ json: { languageIds: [] }, param: { id: mount!.id } }));
+    expect(languages.picks).toEqual([]);
+  });
+
   test("answers what a character speaks, and what the languages it would pick leave it room for", async () => {
     const { api } = await createKeyedApi();
     const { langMap } = await getSeedCtx();

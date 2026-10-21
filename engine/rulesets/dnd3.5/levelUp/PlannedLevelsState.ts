@@ -196,6 +196,8 @@ export default abstract class PlannedLevelsState extends include(LevelUpState, P
     const levelsLeft = LevelRules.countLevelsLeft(this.character.rows.levels.length);
     const message = `A character can't go past level ${RULESET_LIMITS.characterLevel}: ${levelsLeft} level(s) left`;
     RulesError.parse(z.array(PLANNED_LEVEL).max(levelsLeft, message), levels, ["levels"]);
+    // No level past its class's next: after the character's highest in the class and those planned before it
+    const maxLevels = LevelRules.readMaxKlassLevels(this.rulesetData, this.character.rows.levels);
     return levels.map(({ klassId, level, abilityIncreases }, i) => {
       const klass = this.rulesetData.klassesById.get(klassId);
       if (!klass) throw new RulesError("invalid", `Level ${i + 1}: Class does not belong to the character's ruleset`);
@@ -205,6 +207,12 @@ export default abstract class PlannedLevelsState extends include(LevelUpState, P
 
       const klassLevel = this.rulesetData.klassLevelByKlassAndLevel.get(`${klassId}:${level}`);
       if (!klassLevel) throw new RulesError("not-found", `Level ${i + 1}: Class level not found`);
+
+      // One it has already the save refuses as finalized
+      const next = (maxLevels.get(klassId) ?? 0) + 1;
+      if (level > next)
+        throw new RulesError("invalid", `Level ${i + 1}: The character's next ${klass.name} level is ${next}`);
+      maxLevels.set(klassId, Math.max(next - 1, level));
 
       return { klass, klassLevel, abilityIncreases };
     });
