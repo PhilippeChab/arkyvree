@@ -87,6 +87,13 @@ class ClassProgressionService {
     return writtenIds;
   }
 
+  /** A class's whole progression, read at once as its save takes it (`describeFullProgression`). */
+  async getFullProgression(rulesetId: string, classId: string) {
+    return await withRulesetScope(db, rulesetId, async (scope) =>
+      Engine.for(scope).class(classId).describeFullProgression(),
+    );
+  }
+
   /** What a class's progression tabs read beside its levels and tables: its pools' own picks, and its spell list. */
   async getProgression(rulesetId: string, classId: string) {
     return await withRulesetScope(db, rulesetId, async (scope) =>

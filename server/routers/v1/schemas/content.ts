@@ -15,21 +15,6 @@ const v1Fields = z
   .record(z.string(), z.unknown())
   .meta({ description: "Its fields, as its ruleset declares them (`GET /v1/rulesets/{id}/fields`), by key" });
 
-/** A class's levels, each what it gives by spell level (`count`). */
-const v1SpellLevelCounts = z.array(
-  z.strictObject({
-    level: z.number().int(),
-    spells: z.array(
-      z.strictObject({
-        count: z
-          .union([z.number().int(), z.literal("All")])
-          .meta({ description: "How many, or `All`: every spell of the level its lists have" }),
-        spellLevel: z.number().int(),
-      }),
-    ),
-  }),
-);
-
 export const v1Ability = v1Entity.meta({ description: "An ability of a ruleset's (Strength)", id: "Ability" });
 
 export const v1AbilityPage = buildPageSchema(v1Ability);
@@ -51,33 +36,24 @@ export const v1Class = v1Entity
   })
   .meta({ description: "A class of a ruleset's", id: "Class" });
 
-export const v1ClassFeatPools = z
-  .array(
-    z.strictObject({
-      aptitudes: z.array(z.strictObject({ count: z.number().int(), name: z.string() })),
-      level: z.number().int(),
-    }),
-  )
-  .meta({ description: "The feats a class's levels give to pick, each level's by aptitude", id: "ClassFeatPools" });
-
 export const v1ClassLevel = z
   .strictObject({
     feats: z
       .array(
-        v1Named.extend({
-          aptitude: z.strictObject({ id: v1Id, name: z.string().nullable() }),
+        z.strictObject({
+          aptitudeId: v1Id,
+          featId: v1Id,
           free: z.boolean().meta({ description: "Whether it's granted without taking a pick of its aptitude's" }),
+          name: z.string(),
         }),
       )
-      .meta({ description: "The feats the level grants, each with the aptitude it's granted in" }),
+      .meta({ description: "The feats the level grants, each in the aptitude it's granted in" }),
     fields: v1Fields,
     id: v1Id,
     level: z.number().int(),
     saves: z.array(z.strictObject({ base: z.number().int(), saveId: v1Id })),
   })
-  .meta({ description: "A class's level: its base saves and the feats it grants", id: "ClassLevel" });
-
-export const v1ClassLevels = z.array(v1ClassLevel).meta({ description: "A class's levels", id: "ClassLevels" });
+  .meta({ description: "A class's level: its fields, its base saves and the feats it grants", id: "ClassLevel" });
 
 export const v1ClassPage = buildPageSchema(v1Class);
 
@@ -91,31 +67,40 @@ export const v1ClassProgression = z
         }),
       )
       .meta({ description: "The feats a level may grant that give picks of their own, each aptitude's" }),
+    levels: z.array(v1ClassLevel).meta({ description: "Its levels, in order" }),
     pools: z
       .array(
         z.strictObject({
-          aptitude: v1Named,
+          aptitudeId: v1Id,
+          name: z.string(),
           picks: z.array(z.strictObject({ count: z.number().int(), levelId: v1Id })),
         }),
       )
-      .meta({ description: "The class's own pools: the picks each of its levels gives in it" }),
+      .meta({ description: "Its own pools: the picks each of its levels gives in each" }),
     severalSpellLists: z.boolean().meta({ description: "Whether its levels give slots in more than its own list" }),
     spellList: v1Named.nullable().meta({ description: "Its own spell list" }),
+    spells: z
+      .strictObject({
+        known: z
+          .array(
+            z.strictObject({
+              counts: z.array(z.union([z.number().int(), z.literal("all")]).nullable()),
+              levelId: v1Id,
+            }),
+          )
+          .meta({ description: "Each level's spells known by then, by spell level from 0: `all`, or none (null)" }),
+        perDay: z
+          .array(z.strictObject({ counts: z.array(z.number().int().nullable()), levelId: v1Id }))
+          .meta({ description: "Each level's spells a day by then, by spell level from 0: none (null)" }),
+      })
+      .meta({ description: "Its spell tables, the totals each level reaches" }),
   })
   .meta({
-    description: "What a class's progression reads beside its levels and spell tables: its pools' picks by level",
+    description:
+      "A class's whole progression, as `PUT …/progression` takes it back: its levels, its pools' picks by level and " +
+      "its spell tables, with what its levels give that it reads beside them",
     id: "ClassProgression",
   });
-
-export const v1ClassSpellsKnown = v1SpellLevelCounts.meta({
-  description: "The spells a class's levels know, each level's by spell level",
-  id: "ClassSpellsKnown",
-});
-
-export const v1ClassSpellsPerDay = v1SpellLevelCounts.meta({
-  description: "The spells a class's levels cast a day, each level's by spell level",
-  id: "ClassSpellsPerDay",
-});
 
 export const v1Feat = v1Entity
   .extend({

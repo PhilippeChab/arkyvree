@@ -27,26 +27,28 @@ describe("v1 ruleset classes", () => {
     await expectStatus(classes[":classId"].$get({ param: { classId: NIL_UUID, id } }), 404);
   });
 
-  test("answers a class's levels, each with its saves and the feats it grants", async () => {
+  test("answers a class's whole progression: its levels, its pools' picks and its spell tables", async () => {
     const { classId, id, route } = await openWizard();
-    const levels = await expectOk(route.levels.$get({ param: { classId, id } }));
+    const progression = await expectOk(route.progression.$get({ param: { classId, id } }));
+    const { levels } = progression;
     expect(levels.map(({ level }) => level)).toEqual(Array.from({ length: 20 }, (_, index) => index + 1));
     const [first] = levels;
     expect(first?.fields).toEqual({ bab: 0, skills: 2 });
     expect(first?.feats).toContainEqual(
-      expect.objectContaining({
-        aptitude: expect.objectContaining({ name: "Wizard Class Feature" }),
-        name: "Scribe Scroll",
-      }),
+      expect.objectContaining({ aptitudeId: expect.any(String), featId: expect.any(String), name: "Scribe Scroll" }),
     );
     expect(first?.saves).toHaveLength(3);
+    expect(progression.spellList).toMatchObject({ name: "Wizard Spells" });
+    expect(progression.spells.perDay[0]).toEqual({ counts: [3, 1, ...Array(8).fill(null)], levelId: first!.id });
 
-    const levelId = first!.id;
-    expect(await expectOk(route.levels[":levelId"].$get({ param: { classId, id, levelId } }))).toEqual(first);
-    await expectStatus(route.levels[":levelId"].$get({ param: { classId, id, levelId: NIL_UUID } }), 404);
+    // A wizard prepares its spells: a sorcerer knows them
+    const sorcererId = (await getSeedCtx()).klassMap.pc!.Sorcerer!;
+    const sorcerer = await expectOk(route.progression.$get({ param: { classId: sorcererId, id } }));
+    expect(sorcerer.spells.known[0]?.counts.slice(0, 3)).toEqual([4, 2, null]);
+    await expectStatus(route.progression.$get({ param: { classId: NIL_UUID, id } }), 404);
   });
 
-  test("answers a class's skills, spell lists, spells a day and known, and the feats its levels give to pick", async () => {
+  test("answers a class's skills and spell lists", async () => {
     const { classId, id, route } = await openWizard();
     const param = { classId, id };
 
@@ -54,28 +56,6 @@ describe("v1 ruleset classes", () => {
     expect(await expectOk(route["spell-lists"].$get({ param }))).toEqual([
       expect.objectContaining({ name: "Wizard Spells" }),
     ]);
-    const [perDay] = await expectOk(route["spells-per-day"].$get({ param }));
-    expect(perDay).toEqual({
-      level: 1,
-      spells: [
-        { count: 3, spellLevel: 0 },
-        { count: 1, spellLevel: 1 },
-      ],
-    });
-    // A wizard prepares its spells: a sorcerer knows them
-    const sorcererId = (await getSeedCtx()).klassMap.pc!.Sorcerer!;
-    const sorcerer = { classId: sorcererId, id };
-    const [known] = await expectOk(route["spells-known"].$get({ param: sorcerer }));
-    expect(known).toEqual({
-      level: 1,
-      spells: [
-        { count: 4, spellLevel: 0 },
-        { count: 2, spellLevel: 1 },
-      ],
-    });
-    const [pools] = await expectOk(route["feat-pools"].$get({ param }));
-    expect(pools?.level).toBe(1);
-    expect(pools?.aptitudes).toContainEqual({ count: 1, name: "Familiar Bond" });
   });
 
   test("adds a class to a user's ruleset, changes one it inherits on a copy of its own, and deletes one", async () => {
@@ -115,21 +95,17 @@ describe("v1 ruleset classes", () => {
     const json = { feats, fields: { bab: 1, skills: 4 }, level: 1, saves };
     const level = await expectOk(route.levels.$post({ json, param: { classId, id } }));
     expect(level).toMatchObject({
-      feats: [
-        { aptitude: { id: aptMap.General, name: "General" }, free: true, id: featMap.Alertness, name: "Alertness" },
-      ],
+      feats: [{ ...feats[0], name: "Alertness" }],
       fields: { bab: 1, skills: 4 },
       level: 1,
       saves,
     });
 
     const levelId = level.id;
-    const changed = await expectOk(
-      route.levels[":levelId"].$put({ json: { fields: { bab: 0 } }, param: { classId, id, levelId } }),
-    );
-    expect(changed.fields).toMatchObject({ bab: 0 });
+    const progression = route.progression;
+    expect((await expectOk(progression.$get({ param: { classId, id } }))).levels).toEqual([level]);
     await expectStatus(route.levels[":levelId"].$delete({ param: { classId, id, levelId } }), 204);
-    expect(await expectOk(route.levels.$get({ param: { classId, id } }))).toEqual([]);
+    expect((await expectOk(progression.$get({ param: { classId, id } }))).levels).toEqual([]);
 
     const skillId = skillMap.Climb!;
     expect(await expectOk(route.skills.$post({ json: { skillId }, param: { classId, id } }))).toEqual([
@@ -145,37 +121,41 @@ describe("v1 ruleset classes", () => {
     await expectStatus(api.v1.rulesets[":id"].classes.$post({ json: { name: "Warden" }, param: { id } }), 403);
   });
 
-  test("answers a class's progression: its pools' picks by level, and its spell list", async () => {
+  test("answers a class's own pools and its spell list in its progression", async () => {
     const { classId, id, route } = await openWizard();
     const { aptMap } = await getSeedCtx();
     const progression = await expectOk(route.progression.$get({ param: { classId, id } }));
     expect(progression.spellList).toEqual({ id: aptMap["Wizard Spells"], name: "Wizard Spells" });
     expect(progression.severalSpellLists).toBe(false);
     expect(progression.pools).toContainEqual({
-      aptitude: { id: aptMap["Wizard Specialization"], name: "Wizard Specialization" },
+      aptitudeId: aptMap["Wizard Specialization"],
+      name: "Wizard Specialization",
       picks: [{ count: 1, levelId: expect.any(String) }],
     });
   });
 
-  test("saves a class's progression at once, on a copy of its own when it's inherited", async () => {
+  test("saves a class's progression as its read answers it, on a copy of its own when it's inherited", async () => {
     const { api, rulesetId: id } = await createKeyedFork();
     const { aptMap, klassMap } = await getSeedCtx();
     const classId = klassMap.pc!.Wizard!;
     const route = api.v1.rulesets[":id"].classes[":classId"];
-    const [first, second] = await expectOk(route.levels.$get({ param: { classId, id } }));
+    const read = await expectOk(route.progression.$get({ param: { classId, id } }));
+    const [first, second] = read.levels;
     const aptitudeId = aptMap["Wizard Specialization"]!;
 
+    // The read sent back, a level and a pool changed
     const json = {
-      levels: [{ fields: { bab: 1 }, levelId: second!.id }],
+      levels: [{ ...second!, fields: { ...second!.fields, bab: 1 } }],
       pools: [{ aptitudeId, picks: [{ count: 2, levelId: first!.id }] }],
+      spells: read.spells,
     };
-    const levels = await expectOk(route.progression.$put({ json, param: { classId, id } }));
-    expect(levels[1]?.fields).toMatchObject({ bab: 1 });
-    expect(levels[1]?.id).not.toBe(second!.id);
-
-    const progression = await expectOk(route.progression.$get({ param: { classId, id } }));
-    expect(progression.pools.find(({ aptitude }) => aptitude.id === aptitudeId)?.picks).toEqual([
-      { count: 2, levelId: levels[0]!.id },
+    const saved = await expectOk(route.progression.$put({ json, param: { classId, id } }));
+    expect(saved.levels[1]?.fields).toMatchObject({ bab: 1 });
+    expect(saved.levels[1]?.id).not.toBe(second!.id);
+    expect(saved.spells.perDay.map(({ counts }) => counts)).toEqual(read.spells.perDay.map(({ counts }) => counts));
+    expect(saved.pools.find((pool) => pool.aptitudeId === aptitudeId)?.picks).toEqual([
+      { count: 2, levelId: saved.levels[0]!.id },
     ]);
+    expect(await expectOk(route.progression.$get({ param: { classId, id } }))).toEqual(saved);
   });
 });

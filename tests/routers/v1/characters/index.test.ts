@@ -129,13 +129,12 @@ describe("v1 characters", () => {
     expect(languages.picks).toEqual([]);
   });
 
-  test("answers what a character speaks, and what the languages it would pick leave it room for", async () => {
+  test("answers what a character speaks: the languages it picked, those it's given, and those it may add", async () => {
     const { api } = await createKeyedApi();
     const { langMap } = await getSeedCtx();
     const { id } = await findSeededCharacter("Fenn Ashwalker");
-    const route = api.v1.characters[":id"].languages;
-
-    const languages = await expectOk(route.$get({ param: { id }, query: { languageIds: langMap.Goblin! } }));
+    // Fenn picked Goblin
+    const languages = await expectOk(api.v1.characters[":id"].languages.$get({ param: { id } }));
     expect(languages.automatic.map(({ name }) => name)).toEqual(expect.arrayContaining(["Common", "Elven"]));
     expect(languages.picks).toEqual([{ id: langMap.Goblin, name: "Goblin", type: expect.any(String) }]);
     expect(languages.options.map(({ name }) => name)).not.toContain("Goblin");

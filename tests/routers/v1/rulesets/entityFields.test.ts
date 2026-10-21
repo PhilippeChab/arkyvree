@@ -27,7 +27,7 @@ describe("v1 entity fields", () => {
       ...(await expectOk(ruleset.items.$get({ param: { id }, query }))).items,
     ];
     const classId = klassMap.pc!.Wizard!;
-    const levels = await expectOk(ruleset.classes[":classId"].levels.$get({ param: { classId, id } }));
+    const { levels } = await expectOk(ruleset.classes[":classId"].progression.$get({ param: { classId, id } }));
     const classes = [
       await expectOk(ruleset.classes[":classId"].$get({ param: { classId, id } })),
       ...(await expectOk(ruleset.classes.$get({ param: { id }, query }))).items,
