@@ -276,8 +276,10 @@ function FieldsGrid<T extends FieldValues>({ fields, ...props }: FieldsGridProps
       )}
       {fields
         .filter((field) => !isSwitch(field))
-        .map((field) => (
-          <GridField key={field.key} {...props} field={field} />
+        .map((field, index) => (
+          // A key two fields share, each shown on its own conditions (an item's type, a template's or not), keeps them
+          // apart by their place, which never changes
+          <GridField key={`${field.key}:${index}`} {...props} field={field} />
         ))}
     </Box>
   );
