@@ -44,6 +44,7 @@ export function SkillsSection({ skills }: SkillsSectionProps) {
                 <SkillRow
                   key={skill.name}
                   name={skill.name}
+                  shortName={skill.shortName}
                   {...placement}
                   renderName={(label) => `${label}${skill.innate ? " *" : ""}`}
                 >

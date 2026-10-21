@@ -10,6 +10,7 @@ export type {
   LanguagesDescription,
   NotedSheet,
   PlacementDescription,
+  SheetStat,
 } from "./descriptions.ts";
 export type { AbilitiesPlan, AbilityScore, InventoryEntryPlan, LanguagesPlan, NewCharacterPlan } from "./plans.ts";
 export type {

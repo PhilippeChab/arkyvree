@@ -6,6 +6,7 @@ import { POWER_COLUMNS, POWER_LIST } from "@/engine/rulesets/dnd3.5/entities/pow
 import { RACE_COLUMNS, RACE_LIST } from "@/engine/rulesets/dnd3.5/entities/races/columns.ts";
 import { SKILL_COLUMNS, SKILL_LIST } from "@/engine/rulesets/dnd3.5/entities/skills/columns.ts";
 import { LEVEL_WIZARD } from "@/engine/rulesets/dnd3.5/levelUp/wizard.ts";
+import { MAX_ABILITY_SCORE, MIN_ABILITY_SCORE } from "@/vocabulary/dnd3.5/abilities.ts";
 import { BONDED_KINDS } from "@/vocabulary/dnd3.5/bondedKinds.ts";
 import { MAX_CLASS_LEVEL } from "@/vocabulary/dnd3.5/classes.ts";
 import { MAX_ITEM_VARIANTS } from "@/vocabulary/dnd3.5/itemTemplates.ts";
@@ -16,6 +17,7 @@ import { SPELL_LEVEL_LABELS, SPELL_LEVELS } from "@/vocabulary/dnd3.5/spells.ts"
  * bonded to one, a class has 20 levels and a spell 0 to 9, and its system rulesets' SRD content is Open Game Content.
  */
 export const RULES: RulesDescription = {
+  abilityScores: { max: MAX_ABILITY_SCORE, min: MIN_ABILITY_SCORE },
   columns: {
     items: ITEM_COLUMNS,
     klass_levels: CLASS_LEVEL_COLUMNS,

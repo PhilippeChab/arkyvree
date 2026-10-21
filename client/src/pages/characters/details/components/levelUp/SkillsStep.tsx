@@ -71,6 +71,7 @@ const SkillAllocationRow = memo(function SkillAllocationRow({
   return (
     <SkillRow
       name={skill.name}
+      shortName={skill.shortName}
       indented={indented}
       hidden={hidden}
       renderName={(label) =>

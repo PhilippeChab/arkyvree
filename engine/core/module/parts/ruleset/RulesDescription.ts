@@ -95,6 +95,8 @@ export interface ProgressionTrack {
  * ruleset's content is under. The client reads it once, for every base rules, and holds none of it.
  */
 export interface RulesDescription {
+  /** The bounds of an ability's base score, which its sheet's box raises and lowers it within */
+  abilityScores: { max: number; min: number };
   /**
    * The columns each entity type's form shows beside its name and description, by type, as its rules hold them (a
    * class's hit die, an item's cost, type and slot): each keyed where its value goes in the form's body

@@ -17,12 +17,34 @@ type Weapon = NonNullable<Combat["weaponsets"][string]["mainhand"]>;
 /** A weapon set's armor class as the sheet reads it: 10 and a +2 Dexterity bonus, which flat-footed loses. */
 const ARMOR_CLASS: Combat["weaponsets"][string]["ac"] = { total: 12, touch: 12, flatfooted: 10 };
 
+/** A light load: nothing carried, a 100 lb. heavy load. */
+const LIGHT_LOAD: Combat["encumbrance"] = {
+  carriedweight: 0,
+  checkpenalty: 0,
+  heavyload: 100,
+  lightload: 33,
+  load: "light",
+  maxdex: 99,
+  mediumload: 66,
+};
+
 /** A set's off hand holding no shield. */
 const NO_SHIELD = { names: [] };
 
 /** The combat the sheet prints for a character of this base attack bonus, with these weapon sets. */
-function describeCombat(weaponsets: Combat["weaponsets"], bab = 0, speed = 30) {
-  return CombatSheet.describe({ getCombat: () => ({ ac: {}, bab, speed: { total: speed }, weaponsets }) });
+function describeCombat(weaponsets: Combat["weaponsets"], bab = 0, speed = 30, encumbrance = LIGHT_LOAD) {
+  return CombatSheet.describe({
+    getCombat: () => ({
+      ac: {},
+      bab,
+      encumbrance,
+      grapple: { total: 0 },
+      hp: { total: 0 },
+      initiative: { total: 0 },
+      speed: { total: speed },
+      weaponsets,
+    }),
+  });
 }
 
 /** Each row's label, range and increment, as the sheet prints them. */
@@ -265,5 +287,38 @@ describe("a sheet's weapon sets", () => {
       describeCombat({ "0": { ac: ARMOR_CLASS, shield: NO_SHIELD, mainhand: slot, offhand: null, twohanded: null } })
         .hasWeaponSets;
     expect([unarmed(fist), unarmed(bite)]).toEqual([false, false]);
+  });
+});
+
+describe("a sheet's combat line", () => {
+  test("labels its stats in the PDF's order, a bonded creature's summary its HP, BAB and speed", () => {
+    const combat = describeCombat({}, 6, 20);
+    expect(combat.stats.map(({ label, value }) => `${label} ${value}`)).toEqual([
+      "HP 0",
+      "Initiative +0",
+      "Speed 20 ft.",
+      "BAB +6/+1",
+      "Grapple +0",
+    ]);
+    expect(combat.summary.map(({ label }) => label)).toEqual(["HP", "BAB", "Speed"]);
+  });
+
+  test("labels a set's armor class boxes, and a load's figures with a status past light", () => {
+    const set = { ac: ARMOR_CLASS, shield: NO_SHIELD, mainhand: null, offhand: null, twohanded: null };
+    expect(describeCombat({ "0": set }).weaponSets[0].armorClass).toEqual([
+      { label: "AC", value: "12" },
+      { label: "Touch", value: "12" },
+      { label: "Flat-footed", value: "10" },
+    ]);
+    const light = describeCombat({}).load;
+    expect(light.figures.map(({ shortLabel, weight }) => [shortLabel, weight])).toEqual([
+      ["Carried", 0],
+      ["Light", 33],
+      ["Medium", 66],
+      ["Heavy", 100],
+    ]);
+    expect(light.status).toBeNull();
+    const heavy = describeCombat({}, 0, 30, { ...LIGHT_LOAD, carriedweight: 80, load: "heavy" }).load;
+    expect(heavy.status).toEqual({ label: "Heavy", tone: "warning" });
   });
 });

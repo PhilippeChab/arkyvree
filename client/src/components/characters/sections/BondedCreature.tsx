@@ -1,13 +1,13 @@
 import { Box, Link as MuiLink, Stack } from "@mui/material";
 import { Link } from "react-router-dom";
 
-import { EntryTitle } from "@/client/src/components/characters/sections/EntryTitle.tsx";
 import { SubsectionTitle, ValueChip } from "@/client/src/components/common/index.ts";
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
 import { formatSigned } from "@/shared/text.ts";
 
 import { AbilityScoreBox } from "./AbilityScoreBox.tsx";
 import { ArmorClassBoxes } from "./ArmorClassBoxes.tsx";
+import { EntryTitle } from "./EntryTitle.tsx";
 import { StatField } from "./StatField.tsx";
 
 interface BondedCreatureProps {
@@ -26,7 +26,7 @@ function isFeat(entry: FeatEntry): entry is Extract<FeatEntry, { possessed: bool
 export function BondedCreature({ bonded, linkable = false }: BondedCreatureProps) {
   const combat = bonded.combat;
   // A creature has one weapon set, its natural attacks', with no shield: its armor class
-  const armorClass = combat?.weaponSets?.[0]?.ac;
+  const armorClass = combat?.weaponSets?.[0]?.armorClass;
   const saves = bonded.saves;
 
   const featNames = Object.values(bonded.feats)
@@ -72,12 +72,12 @@ export function BondedCreature({ bonded, linkable = false }: BondedCreatureProps
           <Stack spacing={1}>
             <SubsectionTitle component="h5">Combat &amp; Saves</SubsectionTitle>
             <Stack spacing={2}>
-              {armorClass && <ArmorClassBoxes ac={armorClass} />}
+              {armorClass && <ArmorClassBoxes boxes={armorClass} />}
               <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", columnGap: 2, rowGap: 1.5 }}>
                 <Stack spacing={1.5}>
-                  <StatField label="HP" value={combat?.hp?.total ?? 0} />
-                  <StatField label="BAB" value={combat?.babLabel} />
-                  <StatField label="Speed" value={combat?.speedLabel} />
+                  {combat?.summary?.map(({ label, value }) => (
+                    <StatField key={label} label={label} value={value} />
+                  ))}
                 </Stack>
                 <Stack spacing={1.5}>
                   {Object.entries(saves).map(([key, save]) => (
