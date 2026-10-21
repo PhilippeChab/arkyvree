@@ -2,10 +2,9 @@ import { toV1CharacterLanguages, toV1Inventory, toV1SavedLevel } from "./charact
 import { toV1Character, toV1Characters } from "./characters.ts";
 import {
   toV1Class,
-  toV1ClassFeatPools,
   toV1ClassLevel,
+  toV1ClassProgression,
   toV1ClassSkills,
-  toV1ClassSpellCounts,
   toV1Entity,
   toV1Feat,
   toV1Item,
@@ -40,10 +39,9 @@ export const V1 = {
   characterLanguages: toV1CharacterLanguages,
   characters: toV1Characters,
   class: toV1Class,
-  classFeatPools: toV1ClassFeatPools,
   classLevel: toV1ClassLevel,
+  classProgression: toV1ClassProgression,
   classSkills: toV1ClassSkills,
-  classSpellCounts: toV1ClassSpellCounts,
   entity: toV1Entity,
   feat: toV1Feat,
   fieldDeclarations: toV1FieldDeclarations,

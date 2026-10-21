@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import { type ApiKeyContext, describeRoute, levelChoicesRateLimit, validate } from "@/server/middlewares/index.ts";
 import { buildPickPairsSchema } from "@/server/routers/api/schemaBuilders.ts";
-import { idList, idParam, increaseList, orderDirDesc, skillPoints } from "@/server/routers/api/validation.ts";
+import { idParam, increaseList, orderDirDesc, skillPoints } from "@/server/routers/api/validation.ts";
 import {
   v1CharacterLanguages,
   v1CharacterModifiers,
@@ -79,21 +79,13 @@ export default new Hono<ApiKeyContext>()
     describeRoute({
       response: v1CharacterLanguages,
       status: 200,
-      summary: "What a character speaks, and what picking the languages `languageIds` names leaves it room for",
+      summary:
+        "What a character speaks: the languages it picked, those its race and classes give it, and those it may add",
     }),
     validate("param", idParam),
-    validate(
-      "query",
-      z.object({
-        languageIds: idList.meta({
-          description: "Comma-separated: the languages it would pick, whose room the answer checks",
-        }),
-      }),
-    ),
     async (c) => {
       const { id } = c.req.valid("param");
-      const { languageIds = [] } = c.req.valid("query");
-      const languages = await CharactersService.getLanguages(c.var.requestSession, id, languageIds);
+      const languages = await CharactersService.getLanguages(c.var.requestSession, id);
       return c.json(V1.characterLanguages(languages), 200);
     },
   )

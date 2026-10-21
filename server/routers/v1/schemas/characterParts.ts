@@ -39,12 +39,11 @@ export const v1CharacterLanguages = z
     options: z.array(v1TypedLanguage).meta({ description: "The languages it may still pick, besides `picks`" }),
     picks: z
       .array(v1TypedLanguage)
-      .meta({ description: "The languages `languageIds` names: what an edit of its languages would store" }),
+      .meta({ description: "The languages it picked, past those its race and classes give it" }),
   })
   .meta({
     description:
-      "What a character speaks, and what picking the languages `languageIds` names leaves it room for: the languages " +
-      "it picked are its sheet's (`languages`), past those its race and classes give it",
+      "What a character speaks: the languages it picked, those its race and classes give it, and those it may add",
     id: "CharacterLanguages",
   });
 
