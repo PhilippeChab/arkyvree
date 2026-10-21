@@ -18,13 +18,14 @@ import { formatCost, formatCount, formatWeight } from "@/client/src/lib/formatNu
 import { itemsBeforeLastPage, pageItems } from "@/client/src/lib/pageItems.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import {
-  EMPTY_ITEM,
+  type ColumnContext,
+  type ItemBody,
   type ItemFormData,
   ItemFormFields,
-  toItemForm,
-  toItemPayload,
-} from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
-import { withEntityFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
+  toEntityBody,
+  toEntityForm,
+  withEntityFields,
+} from "@/client/src/pages/rulesets/components/forms/index.ts";
 import {
   DescriptionCell,
   RulesetSectionTable,
@@ -34,7 +35,12 @@ import { customizationEntityQuery } from "@/client/src/pages/rulesets/customizat
 import type { EntityField } from "@/client/src/pages/rulesets/details/rulesetQueries.ts";
 import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
 import { invalidateRulesetEdit, itemsQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
-import { useEntityFields, useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
+import {
+  useEntityColumns,
+  useEntityFields,
+  useOpenEntity,
+  useRulesetSection,
+} from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { buildCustomizationPath } from "@/shared/customization/entities.ts";
 
@@ -42,6 +48,9 @@ import { type BulkVariantsFormValues, type VariantRow, variantRow } from "./bulk
 import { BulkVariantsDialog } from "./BulkVariantsDialog.tsx";
 
 type Item = InferResponseType<(typeof rpc.api.rulesets)[":id"]["items"]["$get"], 200>["items"][number];
+
+/** A duplicate's form: a new item that keeps its source's type, slot and template. */
+const DUPLICATE_ITEM: ColumnContext = { locked: ["slot", "sourceItemId", "type"], newEntity: true };
 
 const ITEMS_COLUMNS: TableColumn[] = [
   { key: "name", label: "Name", width: "25%" },
@@ -52,13 +61,20 @@ const ITEMS_COLUMNS: TableColumn[] = [
   { key: "description", label: "Description", width: "37%", slot: "block" },
 ];
 
+/** A new item's form, which sends every field: a type change drops the template's values it holds. */
+const NEW_ITEM: ColumnContext = { newEntity: true };
+
 /**
  * An item's copy, as its duplicate's dialog opens on it: based on the item, or on the item's own template, with its
- * fields (`fields`, its ruleset's)
+ * columns (`columns`, its rules') and its fields (`fields`, its ruleset's)
  */
-function duplicateForm(item: Item, fields: readonly EntityField[] | undefined): ItemFormData {
+function duplicateForm(
+  item: Item,
+  columns: readonly EntityField[],
+  fields: readonly EntityField[] | undefined,
+): ItemFormData {
   const form = {
-    ...toItemForm(item),
+    ...toEntityForm<ItemFormData>(columns, item),
     name: `${item.name} (Copy)`,
     sourceItemId: item.isTemplate ? item.id : (item.sourceItemId ?? ""),
     isTemplate: false,
@@ -73,11 +89,13 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
   const { search: searchQuery, searchBarProps: searchTextProps } = useSearchText("search");
 
   const { fields: itemFields } = useEntityFields(ruleset.id, "items");
+  const { columns: itemColumns } = useEntityColumns(ruleset.id, "items");
+  const toItemBody = (data: ItemFormData) => toEntityBody<ItemFormData, ItemBody>(itemColumns, data);
   const { createForm, createDialogProps, duplicateSource, handleCreate, handleDuplicate } = useRulesetSection<
     Item,
     ItemFormData
   >({
-    createDefaults: withEntityFields(EMPTY_ITEM, itemFields),
+    createDefaults: withEntityFields({ ...toEntityForm<ItemFormData>(itemColumns), isTemplate: false }, itemFields),
     rulesetId: ruleset.id,
     sectionName: "items",
     label: "Item",
@@ -85,14 +103,14 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
       parseResponse(
         rpc.api.rulesets[":id"].items.$post({
           param: { id: ruleset.id },
-          json: toItemPayload(data),
+          json: toItemBody(data),
         }),
       ),
     duplicateFn: async (itemId, data) =>
       parseResponse(
         rpc.api.rulesets[":id"].items[":itemId"].duplicate.$post({
           param: { id: ruleset.id, itemId },
-          json: toItemPayload(data),
+          json: toItemBody(data),
         }),
       ),
     onCreateSuccess: (created) => openEntity(buildCustomizationPath("items", created.id)),
@@ -191,7 +209,7 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
             isLoading={isLoading}
             columns={ITEMS_COLUMNS}
             canEdit={canEdit}
-            onDuplicate={(item) => handleDuplicate(item, duplicateForm(item, itemFields))}
+            onDuplicate={(item) => handleDuplicate(item, duplicateForm(item, itemColumns, itemFields))}
             onCreateVariants={(item) => {
               bulkForm.reset({ variants: [variantRow(item, 1)] });
               bulkDialog.openWith(item);
@@ -210,7 +228,11 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
       </Stack>
       <CreateDialog {...createDialogProps} title="Create New Item" maxWidth="md">
         {/* A duplicate keeps its source's type, while the dialog fades out too */}
-        <ItemFormFields form={createForm} rulesetId={ruleset.id} lockType={!!duplicateSource} newItem />
+        <ItemFormFields
+          form={createForm}
+          rulesetId={ruleset.id}
+          context={duplicateSource ? DUPLICATE_ITEM : NEW_ITEM}
+        />
       </CreateDialog>
       <BulkVariantsDialog
         open={bulkDialog.open}

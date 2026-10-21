@@ -4,23 +4,55 @@ import type { ProgressionValue } from "@/shared/customization/progression.ts";
 interface FormFieldBase {
   /** What it's for, as its ruleset says. */
   help: string;
-  /** Where its value goes in the form's fields: its name, under its group's (`weapon.damage`). */
+  /**
+   * Where its value goes: a field's, in the form's fields, its name under its group's (`weapon.damage`); a column's, in
+   * the form itself (`hd`, `costGp`).
+   */
   key: string;
   label: string;
-  shownWhen?: ShownWhen;
+  /** While every one of them holds: none, always */
+  shownWhen?: readonly ShownWhen[];
 }
 
-/** When a form shows a field: while its value at `path` (a field's, `fields.<name>`, or a column's) is in `values`. */
+/**
+ * When a form shows a field: while its value at `path` (a field's, `fields.<name>`, or a column's) is in `values`, or,
+ * `except`, isn't.
+ */
 interface ShownWhen {
+  except?: boolean;
   path: string;
   values: readonly (boolean | string)[];
 }
 
-/** A choice of one value among its options (a select), or of several (`multiple`). */
+/**
+ * A pool's links, each with a level of its own, none too (a spell's spell lists, each at its spell level): from `min`
+ * to `max`, and at least one when it's `required` on a new entity.
+ */
+export interface AptitudeLevelsFormField extends FormFieldBase {
+  input: "aptitudeLevels";
+  max: number;
+  min: number;
+  required: boolean;
+}
+
+/**
+ * A choice of one value among its options (a select), or of several (`multiple`): each named by its label (`labels`,
+ * by position: a hit die's 8 is "d8"), else as it is. One `required` offers no "None", and an empty form holds its
+ * `default`.
+ */
 export interface ChoiceFormField extends FormFieldBase {
+  default?: number | string;
   input: "choice";
+  labels?: readonly string[];
   multiple: boolean;
-  options: readonly string[];
+  options: readonly (number | string)[];
+  required?: boolean;
+}
+
+/** A decimal, none too (an item's cost, its weight), in its `unit` ("gp"), which its label names. */
+export interface DecimalFormField extends FormFieldBase {
+  input: "decimal";
+  unit?: string;
 }
 
 /** A group's fields' values, by name. */
@@ -39,6 +71,11 @@ export interface FlagFormField extends FormFieldBase {
   nullable: boolean;
 }
 
+/** The feats a class level grants, each through an aptitude (a feat pool) it's taken for. */
+export interface GrantedFeatsFormField extends FormFieldBase {
+  input: "grantedFeats";
+}
+
 /** Fields of their own, which a form shows under their `label`. */
 export interface GroupFormField {
   fields: FormField[];
@@ -46,15 +83,16 @@ export interface GroupFormField {
   /** Where its fields' values go in the form's fields. */
   key: string;
   label: string;
-  shownWhen?: ShownWhen;
+  shownWhen?: readonly ShownWhen[];
 }
 
-/** A whole number in its bounds: none, when it has no `default`. */
+/** A whole number in its bounds, in its `unit` ("feet"), which its label names: none, when it has no `default`. */
 export interface NumberFormField extends FormFieldBase {
   default: number | null;
   input: "number";
   max?: number;
   min?: number;
+  unit?: string;
 }
 
 /**
@@ -73,6 +111,22 @@ export interface RefFormField extends FormFieldBase {
   input: "ref";
   references: string;
   required: boolean;
+}
+
+/** A base bonus a class level gives each of the ruleset's saves, from `min` to `max`. */
+export interface SaveBasesFormField extends FormFieldBase {
+  input: "saveBases";
+  max: number;
+  min: number;
+}
+
+/**
+ * The template an item is made from, by its id: one of its own type (`typeKey`, the column whose value its templates
+ * are of), whose fields an item starts from; none too. A change of its type empties it.
+ */
+export interface TemplateFormField extends FormFieldBase {
+  input: "template";
+  typeKey: string;
 }
 
 /** A free text, or several (`multiple`), with an example of one (`placeholder`). */
@@ -94,10 +148,15 @@ export type EntityFieldValue = boolean | number | string | string[] | null | Ent
  * bounds, a reference's kind).
  */
 export type FormField =
+  | AptitudeLevelsFormField
   | ChoiceFormField
+  | DecimalFormField
   | FlagFormField
+  | GrantedFeatsFormField
   | GroupFormField
   | NumberFormField
   | ProgressionFormField
   | RefFormField
+  | SaveBasesFormField
+  | TemplateFormField
   | TextFormField;

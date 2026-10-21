@@ -128,7 +128,7 @@ function CustomizationView({
       {isEditable(data) && (
         // The same form whoever reads it, its fields read-only for who can't edit the entity
         <ReadOnlyFields readOnly={!canEdit}>
-          {renderEditor(data, ruleset.baseRules, {
+          {renderEditor(data, {
             rulesetId,
             entityId,
             recordKey: copy.key,

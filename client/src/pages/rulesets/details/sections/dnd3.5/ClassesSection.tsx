@@ -13,8 +13,12 @@ import {
 import { ClassesIcon } from "@/client/src/components/icons/index.ts";
 import { formatDie } from "@/client/src/lib/formatNumeric.ts";
 import { itemsBeforeLastPage, pageItems } from "@/client/src/lib/pageItems.ts";
-import { ClassFormFields, EMPTY_CLASS } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
-import { withEntityFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
+import {
+  ClassFormFields,
+  toEntityBody,
+  toEntityForm,
+  withEntityFields,
+} from "@/client/src/pages/rulesets/components/forms/index.ts";
 import {
   DescriptionCell,
   RulesetSectionTable,
@@ -28,6 +32,7 @@ import { DND35_CLASS_TABS } from "@/client/src/pages/rulesets/details/classes/se
 import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
 import { classesQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import {
+  useEntityColumns,
   useEntityFields,
   useEntityFilters,
   useOpenEntity,
@@ -50,16 +55,17 @@ export function ClassesSection({ ruleset, childOnly, onChildOnlyChange }: Rulese
   const { search, kind, orderBy, orderDir, searchBarProps } = useEntityFilters(ruleset.baseRules);
 
   const { fields: classFields } = useEntityFields(ruleset.id, "klasses");
+  const { columns: classColumns } = useEntityColumns(ruleset.id, "klasses");
   const { createForm, handleCreate, createDialogProps } = useRulesetSection<Class, ClassFormData>({
     rulesetId: ruleset.id,
     sectionName: "classes",
     label: "Class",
-    createDefaults: withEntityFields(EMPTY_CLASS, classFields),
+    createDefaults: withEntityFields(toEntityForm<ClassFormData>(classColumns), classFields),
     createFn: async (data) =>
       parseResponse(
         rpc.api.rulesets[":id"].classes.$post({
           param: { id: ruleset.id },
-          json: data,
+          json: toEntityBody<ClassFormData, ClassFormData>(classColumns, data),
         }),
       ),
     onCreateSuccess: (created) => openEntity(`classes/${created.id}/progression`),

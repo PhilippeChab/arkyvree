@@ -16,10 +16,9 @@ import {
 import { LevelsIcon } from "@/client/src/components/icons/index.ts";
 import { useRulesetPermissions } from "@/client/src/hooks/index.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
-import { withEntityFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
+import { nextClassLevel, withEntityFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
 import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
-import { getClassForms } from "@/client/src/pages/rulesets/details/classes/classFormFactory.ts";
 import type { ClassSectionProps } from "@/client/src/pages/rulesets/details/classes/classSectionFactory.ts";
 import {
   classFeatPoolsQuery,
@@ -109,11 +108,7 @@ export function ClassProgressionSection({ rulesetId, classId, className, ruleset
   // Its create opens on the class's next level, its fields the highest's
   const { fields: levelFields } = useEntityFields(rulesetId, "klass_levels");
   const { createDialogProps, handleCreate } = useRulesetSection({
-    createDefaults: withEntityFields(
-      getClassForms(ruleset.baseRules).nextClassLevel(levels),
-      levelFields,
-      levels.at(-1),
-    ),
+    createDefaults: withEntityFields(nextClassLevel(levels), levelFields, levels.at(-1)),
     rulesetId,
     label: "Class level",
     query,
