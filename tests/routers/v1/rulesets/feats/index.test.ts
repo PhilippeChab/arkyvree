@@ -50,6 +50,8 @@ describe("v1 ruleset feats", () => {
 
     const featId = ctx.featMap["Power Attack"]!;
     const changed = await expectOk(route[":featId"].$put({ json: { name: "Mighty Blow" }, param: { id, featId } }));
+    const unpooled = { aptitudeIds: [], name: "Mighty Blow" };
+    await expectStatus(route[":featId"].$put({ json: unpooled, param: { id, featId: changed.id } }), 400);
     expect(changed).toMatchObject({ name: "Mighty Blow" });
     expect(changed.id).not.toBe(featId);
 

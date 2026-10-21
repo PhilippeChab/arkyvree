@@ -8,8 +8,11 @@ import { V1 } from "@/server/routers/v1/translators/V1.ts";
 import { CONTENT_FILTERS, entityDescription, fields } from "@/server/routers/v1/validation.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 
-/** The aptitudes a feat is picked in, which a create names, and an update replaces when it names them. */
-const featAptitudes = z.array(z.string().uuid()).meta({ description: "The aptitudes it's picked in: its whole list" });
+/** The aptitudes a feat is picked in, at least one, which a create names, and an update replaces when it names them. */
+const featAptitudes = z
+  .array(z.string().uuid())
+  .min(1, "At least one aptitude must be selected")
+  .meta({ description: "The aptitudes it's picked in: its whole list, one at least" });
 
 /** A feat, its create's and its update's. */
 const featBody = z.object({ description: entityDescription, fields, name: z.string().min(1) });
@@ -53,7 +56,7 @@ export default new Hono<ApiKeyContext>()
     "/:id/feats",
     describeRoute({ response: v1Feat, status: 201, summary: "Adds a feat to a ruleset" }),
     validate("param", idParam),
-    validate("json", featBody.extend({ aptitudeIds: featAptitudes.min(1, "At least one aptitude must be selected") })),
+    validate("json", featBody.extend({ aptitudeIds: featAptitudes })),
     async (c) => {
       const { id } = c.req.valid("param");
       const body = c.req.valid("json");

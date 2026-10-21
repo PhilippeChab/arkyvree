@@ -6,7 +6,6 @@ import {
   type LevelEditPlan,
   type LevelEditRequest,
   type LevelPicks,
-  type LevelRows,
   type LevelsPlan,
   type LevelUpRequest,
 } from "@/engine/core/module/index.ts";
@@ -77,19 +76,6 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
         powers: keep(level.picks.powers, left.powers),
       },
     }));
-  }
-
-  /** Whether an edit's picks and ability increases are the ones level `characterLevelId` saved, in any order. */
-  private keepsSavedPicks(characterLevelId: string, edit: LevelEditRequest) {
-    const saved = this.getSavedPicks(characterLevelId);
-    const rows = { abilityIncreases: edit.abilityIncreases, ...this.toPickRows(edit) };
-    const keysOf = (picks: LevelRows) => [
-      ...picks.abilityIncreases.map(({ abilityId, amount }) => `increase:${abilityId}:${amount}`),
-      ...picks.feats.map(({ aptitudeId, featId }) => `feat:${aptitudeId}:${featId}`),
-      ...picks.powers.map(({ aptitudeId, powerId }) => `power:${aptitudeId}:${powerId}`),
-      ...picks.skills.filter(({ rank }) => rank > 0).map(({ rank, skillId }) => `skill:${skillId}:${rank}`),
-    ];
-    return keysOf(rows).toSorted().join() === keysOf(saved).toSorted().join();
   }
 
   /** What planned levels write: each its row's columns (its class level and hit points) and its rows under it. */
@@ -212,11 +198,17 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
     const edited = holding(edit);
     this.refuseOverfull(edited, edit);
     const { valid, issues } = edited.validate();
-    // An edit that keeps the level's picks as saved (its hit points alone) adds no issue: it saves what was saved
-    if (!valid && !force && !this.keepsSavedPicks(characterLevelId, edit)) {
-      // The issues the level answers for: built without the level and every later one, then with it alone
+    if (!valid && !force) {
+      // The issues the level answers for: built without the level and every later one, then with it alone; those the
+      // character had as it was saved aren't the edit's (an edit of its hit points alone keeps a forced level's)
       const { before, withLevel } = this.projectLevelContribution(characterLevelId, klassLevel.id, edit);
-      RulesError.refuseIssues(this.rules.findEditedLevelIssues(issues, this.build(before), this.build(withLevel)));
+      const saved = new Set(
+        this.build()
+          .validate()
+          .issues.map(({ message }) => message),
+      );
+      const levelIssues = this.rules.findEditedLevelIssues(issues, this.build(before), this.build(withLevel));
+      RulesError.refuseIssues(levelIssues.filter(({ message }) => !saved.has(message)));
     }
     return {
       ...this.planBondedOf(edited, bonded),

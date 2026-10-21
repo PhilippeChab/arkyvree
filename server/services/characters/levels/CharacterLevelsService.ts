@@ -170,6 +170,10 @@ class CharacterLevelsService extends include(Object, Choices, Pickers, Steps) {
 
       return await withRulesetScope(tx, characterRecord.rulesetId, async (scope) => {
         const character = await readCharacterInput(tx, characterRecord);
+        // A level saved since its edit read it is refused before its edit is checked against it
+        const saved = character.rows.levels.find((level) => level.id === characterLevelId);
+        if (expectedUpdatedAt && saved && saved.updatedAt !== expectedUpdatedAt)
+          throw new ConflictError(STALE_ENTITY_MESSAGE);
         const bonded = await readBondedInputs(tx, character);
         const edit = Engine.for(scope)
           .character(character)

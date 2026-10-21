@@ -93,6 +93,16 @@ describe("v1 ruleset items", () => {
       route.$put({ json: { name: "Oak Staff", type: "Other" }, param: { id, itemId: staff.id } }),
     );
     expect(restyled).toMatchObject({ slot: "Other", type: "Other" });
+    const amulet = await expectOk(
+      api.v1.rulesets[":id"].items.$post({
+        json: { name: "Fang Amulet", slot: "Neck", type: "Wondrous" },
+        param: { id },
+      }),
+    );
+    const armed = await expectOk(
+      route.$put({ json: { name: "Fang Amulet", type: "Weapon" }, param: { id, itemId: amulet.id } }),
+    );
+    expect(armed).toMatchObject({ slot: "Other", type: "Weapon" });
   });
 
   test("refuses to change a ruleset the key's user can't edit", async () => {

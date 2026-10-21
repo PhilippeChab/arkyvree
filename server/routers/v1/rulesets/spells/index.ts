@@ -8,10 +8,11 @@ import { V1 } from "@/server/routers/v1/translators/V1.ts";
 import { CONTENT_FILTERS, entityDescription, fields } from "@/server/routers/v1/validation.ts";
 import { PowersService } from "@/server/services/rulesets/powers/index.ts";
 
-/** The aptitudes (spell lists) a spell is on, each at its level, which an update replaces when it names them. */
+/** The aptitudes (spell lists) a spell is on, each at its level, at least one, which an update replaces when it names them. */
 const spellAptitudes = z
   .array(z.object({ id: z.string().uuid(), level: z.number().int().optional() }))
-  .meta({ description: "The aptitudes (spell lists) it's on, each at its spell level: its whole list" });
+  .min(1, "At least one aptitude must be selected")
+  .meta({ description: "The aptitudes (spell lists) it's on, each at its spell level: its whole list, one at least" });
 
 /** A spell, its create's and its update's. */
 const spellBody = z.object({
@@ -75,7 +76,7 @@ export default new Hono<ApiKeyContext>()
     "/:id/spells",
     describeRoute({ response: v1Spell, status: 201, summary: "Adds a spell to a ruleset" }),
     validate("param", idParam),
-    validate("json", spellBody.extend({ aptitudes: spellAptitudes.min(1, "At least one aptitude must be selected") })),
+    validate("json", spellBody.extend({ aptitudes: spellAptitudes })),
     async (c) => {
       const { id } = c.req.valid("param");
       const body = c.req.valid("json");

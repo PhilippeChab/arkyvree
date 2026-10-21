@@ -79,9 +79,7 @@ export const modifierValue = z
 /** As `customizableParams`, for what owns requirements: a modifier too (`modifiers`). */
 export const requirementOwnerParams = idParam.extend({
   entityId: z.string().uuid(),
-  kind: z
-    .enum(["modifiers", ...customizableKinds.keys()])
-    .transform((kind) => (kind === "modifiers" ? kind : customizableKinds.get(kind)!)),
+  kind: z.union([z.literal("modifiers"), customizableKind]),
 });
 
 /** A fork's entity a restore names: the ruleset (`id`), and the entity by its kind and its id. */
