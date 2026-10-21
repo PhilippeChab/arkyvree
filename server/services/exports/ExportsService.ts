@@ -9,9 +9,9 @@ class ExportsService {
   /**
    * An export as it's read, unless it's none of the session's user's or past its expiry: then it's gone. A pending one
    * whose job is gone reads failed: its job lost it (a worker killed past its last attempt, one deployed past its
-   * payload), which a job that fails marks itself. One still queued behind others, or waiting on a worker, stays pending.
-   * A pending one's jobs are counted before it's read again: the worker stores the export before it deletes the job
-   * that made it, so an export whose job is gone by then reads as that job left it.
+   * payload), which a job that fails marks itself. One still queued behind others, or waiting on a worker, stays
+   * pending. A pending one's jobs are counted before it's read again: the worker stores the export before it deletes
+   * the job that made it, so an export whose job is gone by then reads as that job left it.
    */
   private async readExport<T extends { expiresAt: string; status: string }>(
     exportId: string,

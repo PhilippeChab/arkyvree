@@ -1,6 +1,6 @@
 /**
- * A campaign as v1 answers it: what it is and its ruleset, its players and their invites, and the characters its players
- * link to it, each as the key's user may see it.
+ * A campaign as v1 answers it: what it is and its ruleset, its players and their invites, and the characters its
+ * players link to it, each as the key's user may see it.
  */
 
 import { z } from "zod";
