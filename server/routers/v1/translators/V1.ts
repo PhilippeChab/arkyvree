@@ -1,4 +1,4 @@
-import { toV1Activity, toV1Target, toV1TargetPage } from "./activities.ts";
+import { toV1Activity, toV1TargetPage } from "./activities.ts";
 import { toV1Attachment, toV1DirectUpload } from "./attachments.ts";
 import {
   toV1Campaign,
@@ -155,7 +155,6 @@ export const V1 = {
   skillRequest: toSkillRequest,
   spell: toV1Spell,
   stats: toV1Stats,
-  target: toV1Target,
   targetPage: toV1TargetPage,
   targetPath: toV1TargetPath,
   targetPathCheck: toV1TargetPathCheck,

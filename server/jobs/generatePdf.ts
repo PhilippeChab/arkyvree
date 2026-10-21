@@ -79,6 +79,12 @@ export async function generatePdfTask(payload: unknown, helpers: JobHelpers): Pr
   const job = payload as GeneratePdfPayload;
   const { userId, characterId, characterName, campaignId } = job;
 
+  // A retry of an attempt that stored the PDF, then died before the worker recorded it done: its user was told
+  if (job.exportId && (await Exports.findStatus(db, { id: job.exportId, userId }))?.status === "ready") {
+    helpers.logger.info(`PDF for character ${characterId} already stored as export ${job.exportId}`);
+    return;
+  }
+
   helpers.logger.info(`Generating PDF for character ${characterId}`);
 
   try {

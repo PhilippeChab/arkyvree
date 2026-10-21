@@ -158,6 +158,19 @@ describe("generatePdf", () => {
     expect(await notificationsOf(session.userId, "pdfFailed")).toEqual([]);
   }, 30_000);
 
+  test("stores and tells of a PDF once when its job is retried after an attempt that stored it", async () => {
+    const { session } = await createTestUser();
+    const character = await createCharacterAs(session);
+    const pending = await CharactersService.enqueuePdf(session, character.id);
+    const [job] = await queuedPdfJobs(character.id);
+    await generatePdfTask(job!.payload, silentJobHelpers);
+    const stored = await Exports.findOne(db, { id: pending.id, userId: session.userId });
+
+    await generatePdfTask(job!.payload, silentJobHelpers);
+    expect(await notificationsOf(session.userId, "pdfReady")).toHaveLength(1);
+    expect((await Exports.findOne(db, { id: pending.id, userId: session.userId }))?.expiresAt).toBe(stored!.expiresAt);
+  }, 30_000);
+
   test("tells the user a PDF failed whose pending export the cleanup deleted before its job ran", async () => {
     const { session } = await createTestUser();
     const character = await createCharacterAs(session);
