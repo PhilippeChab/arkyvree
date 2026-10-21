@@ -79,6 +79,18 @@ describe("v1 character inventory", () => {
     await expectStatus(entry.$put({ json: { equipped: false, location: "Torso" }, param: { entryId, id } }), 400);
   });
 
+  test("holds an item in a hand in the first weapon set when the body names none", async () => {
+    const { id, route } = await openInventory();
+    const itemId = (await getSeedCtx()).itemMap.Longsword!;
+    const json = { force: true, itemId, location: "Main Hand", quantity: 1 } as const;
+    expect(await expectOk(route.$post({ json, param: { id } }))).toMatchObject({ weaponSets: [0] });
+
+    const { id: entryId } = await expectOk(route.$post({ json: { itemId, quantity: 1 }, param: { id } }));
+    const json2 = { force: true, location: "Off Hand" } as const;
+    const moved = await expectOk(route[":entryId"].$put({ json: json2, param: { entryId, id } }));
+    expect(moved).toMatchObject({ location: "Off Hand", weaponSets: [0] });
+  });
+
   test("says why a place can't take one more item, and refuses an add there", async () => {
     const { api } = await createKeyedApi();
     const { itemMap } = await getSeedCtx();

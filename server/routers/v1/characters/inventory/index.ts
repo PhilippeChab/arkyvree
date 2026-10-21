@@ -36,7 +36,7 @@ const force = z
 
 /** The weapon sets a hand holds an entry in, as the document describes them. */
 const heldWeaponSets = heldSets.meta({
-  description: "The weapon sets a hand holds it in, from 0: at least one for a hand, none outside the hands",
+  description: "The weapon sets a hand holds it in, from 0: the first when it names none, none outside the hands",
 });
 
 /** A character's inventory: what it carries, where, and how many. */
@@ -99,7 +99,7 @@ export default new Hono<ApiKeyContext>()
         itemId: z.string().uuid(),
         location: entryLocation.default(null),
         quantity: z.number().int().min(1),
-        weaponSets: heldWeaponSets.default([]),
+        weaponSets: heldWeaponSets.optional(),
       }),
     ),
     async (c) => {

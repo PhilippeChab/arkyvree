@@ -1,7 +1,6 @@
 import type {
   CharacterInput,
   HeldInventoryEntry,
-  InventoryEntryRequest,
   PlacementChange,
   PlacementDescription,
   PlacementQuery,
@@ -22,7 +21,7 @@ export default class InventoryEntries {
    * Where an entry is held, as it stores it: only an equipped item has a location, only a held one sets, each once, in
    * order.
    */
-  private static placementOf({ equipped, location, weaponSets }: InventoryEntryRequest): HeldInventoryEntry {
+  private static placementOf({ equipped, location, weaponSets }: HeldInventoryEntry): HeldInventoryEntry {
     const resolvedLocation = equipped ? (location ?? null) : null;
     const resolvedEquipped = !!resolvedLocation;
     const held = resolvedEquipped && ItemPlacement.isHand(resolvedLocation);
@@ -61,8 +60,9 @@ export default class InventoryEntries {
     change: PlacementChange,
     force: boolean,
   ): HeldInventoryEntry {
-    const { request } = change;
-    const { equipped, location, weaponSets } = request;
+    const { equipped, location } = change.request;
+    // A hand holds what names no weapon set in the first, as an import does
+    const weaponSets = change.request.weaponSets ?? (ItemPlacement.isHand(location) ? [0] : []);
     if (equipped && location) {
       const entry =
         "item" in change
@@ -71,6 +71,6 @@ export default class InventoryEntries {
       if (!entry.item) throw new RulesError("not-found", "Item not found");
       new Equipping(view, character).checkEquip({ id: entry.id, item: entry.item }, location, weaponSets, force);
     }
-    return InventoryEntries.placementOf(request);
+    return InventoryEntries.placementOf({ equipped, location, weaponSets });
   }
 }

@@ -237,7 +237,9 @@ export default new Hono<ApiKeyContext>()
     describeRoute({
       response: v1Ruleset,
       status: 200,
-      summary: "Changes a ruleset's name, description and kind: what the body names, the rest kept",
+      summary:
+        "Changes a ruleset's name, description, kind, or makes a private one public, never back: what the body names, " +
+        "the rest kept",
     }),
     validate("param", idParam),
     validate(

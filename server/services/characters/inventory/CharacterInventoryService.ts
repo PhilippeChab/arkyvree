@@ -21,7 +21,7 @@ class CharacterInventoryService {
     location: ItemLocation | null,
     totalCharges: number | null,
     remainingCharges: number | null,
-    weaponSets: number[],
+    weaponSets: number[] | undefined,
     force: boolean = false,
   ) {
     return await withTransaction(async (tx) => {
@@ -107,7 +107,7 @@ class CharacterInventoryService {
     location: ItemLocation | null,
     totalCharges: number | null,
     remainingCharges: number | null,
-    weaponSets: number[],
+    weaponSets: number[] | undefined,
     force: boolean = false,
     expectedUpdatedAt?: string,
   ) {

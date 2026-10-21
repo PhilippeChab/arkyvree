@@ -57,6 +57,10 @@ describe("v1 ruleset spells", () => {
       }),
     );
     expect(cleared).toMatchObject({ saveEffect: null, saveId: null });
+    const unsaved = await expectOk(
+      route[":spellId"].$put({ json: { name: "Fire Burst", saveEffect: "half" }, param: { id, spellId: changed.id } }),
+    );
+    expect(unsaved).toMatchObject({ saveEffect: null, saveId: null });
 
     await expectStatus(route[":spellId"].$delete({ param: { id, spellId: created.id } }), 204);
     await expectStatus(route[":spellId"].$get({ param: { id, spellId: created.id } }), 404);

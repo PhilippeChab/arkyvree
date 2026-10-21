@@ -65,10 +65,14 @@ export default class PowerEntity extends ListedEntity<
 
   /**
    * A form's columns: it names no spell's save but the one it gives, a new spell's none when it gives none, an edit's
-   * the one it has when it leaves it out (`power`, the one edited), its effect gone with a save it clears.
+   * the one it has when it leaves it out (`power`, the one edited), and no effect without a save.
    */
   protected override columnsOf({ description, name, saveEffect, saveId }: PowerBody, power?: PowerWithAptitudes) {
-    if (power) return { description, name, saveEffect: saveId === null ? null : saveEffect, saveId };
+    if (power) {
+      // A spell the edit leaves without a save has no effect of one
+      const saved = saveId === undefined ? power.saveId : saveId;
+      return { description, name, saveEffect: saved === null ? null : saveEffect, saveId };
+    }
     return { description, name, saveEffect: saveEffect ?? null, saveId: saveId ?? null };
   }
 
