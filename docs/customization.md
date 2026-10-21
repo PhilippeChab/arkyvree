@@ -274,8 +274,8 @@ Properties written from a level's form's fields, its create's and its edit's, by
 
 | Property Type              | Description                              |
 |----------------------------|------------------------------------------|
-| `KLASS_LEVEL_BAB`          | BAB for this level, based on progression type (Full/Medium/Poor) |
-| `KLASS_LEVEL_SKILL_POINTS` | Skill points per level from class definition |
+| `KLASS_LEVEL_BAB`          | BAB for this level, based on progression type (Full/Medium/Poor), 0 to `MAX_CLASS_LEVEL` |
+| `KLASS_LEVEL_SKILL_POINTS` | Skill points per level from class definition, 0 to `MAX_TABLE_COUNT` |
 
 Requirement auto-generated for level 2+, when the level is created (`planLevelCreate`'s `requirement`):
 - `classes.<normalized_class_name>.level > N-1` — ensures the character has reached the previous level before gaining the next
