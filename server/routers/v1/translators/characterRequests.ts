@@ -109,18 +109,16 @@ export function toInventoryRequest<
 
 /**
  * A saved level's edit, what its body leaves out kept from the level as it was saved (`before`), as the levels' service
- * takes it: its picks by aptitude, which an edit of its hit points alone keeps past the rules, as they were saved.
+ * takes it: its picks by aptitude.
  */
 export function toLevelEditRequest(
   before: Omit<LevelPicks, "force">,
   body: Partial<Omit<LevelPicks, "force">> & { force: boolean },
 ) {
-  // An edit that keeps every pick as it was saved (its hit points alone) takes them as they were saved, forced or not
-  const picksKept = [body.abilityIncreases, body.feats, body.skillPoints, body.spells].every((v) => v === undefined);
   return toLevelPicks({
     abilityIncreases: body.abilityIncreases ?? before.abilityIncreases,
     feats: body.feats ?? before.feats.map(({ aptitudeId, featId }) => ({ aptitudeId, featId })),
-    force: body.force || picksKept,
+    force: body.force,
     hitPoints: body.hitPoints ?? before.hitPoints,
     skillPoints: body.skillPoints ?? before.skillPoints,
     spells: body.spells ?? before.spells.map(({ aptitudeId, spellId }) => ({ aptitudeId, spellId })),

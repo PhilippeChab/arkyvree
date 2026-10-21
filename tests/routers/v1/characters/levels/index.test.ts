@@ -101,7 +101,8 @@ describe("v1 character levels", () => {
 
     const changed = await expectOk(route.levels[":levelId"].$put({ json: { hitPoints: 6 }, param: { id, levelId } }));
     expect(changed).toMatchObject({ hitPoints: 6, feats: [] });
-    await expectStatus(route.levels[":levelId"].$put({ json: { feats: [] }, param: { id, levelId } }), 400);
+    // A change of its picks is checked: the slots it leaves unspent refused
+    await expectStatus(route.levels[":levelId"].$put({ json: { skillPoints: {} }, param: { id, levelId } }), 400);
   });
 
   test("changes a level a character took, and removes its latest level", async () => {
