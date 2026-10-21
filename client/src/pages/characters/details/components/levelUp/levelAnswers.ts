@@ -1,13 +1,14 @@
 /**
- * 3.5's answers to its level wizards, in its own shape: each of its steps' by the name it lists it by (`abilities`,
- * `skills`, `feats`, `powers`) and its preview of Add Level's plan, as its steps read them; and what of them the
+ * A ruleset's answers to its level wizards: each of its steps' by its kind, the name it lists it by (`abilities`,
+ * `skills`, `feats`, `powers`: `LevelStepKind`), and its preview of Add Level's plan, as its steps read them; and what of them the
  * generic wizards keep their levels and picks by (`previewAnswers`, `stepAnswers`).
  */
 
 import type { UseQueryResult } from "@tanstack/react-query";
 
-import type { LevelPreview, StepAnswer } from "@/client/src/pages/characters/details/components/levelUp/index.ts";
-import type { EditAnswers, PreviewAnswers } from "@/client/src/pages/characters/details/components/levelUpFactory.ts";
+import type { LevelPreview, StepAnswer } from "./levelUpQueries.ts";
+import type { PreviewAnswers } from "./useAddLevelWizardBase.ts";
+import type { EditAnswers } from "./useEditLevelWizardBase.ts";
 
 /** Edit Level's steps whose answers its picks are fitted by and its Next waits for, each asked at the edited level. */
 interface EditedSteps {

@@ -1,14 +1,12 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 
 import type { EditingLevel } from "@/client/src/components/characters/index.ts";
-import {
-  levelStepQuery,
-  skillPointString,
-  useEditedLevel,
-  useEditLevelWizardBase,
-} from "@/client/src/pages/characters/details/components/levelUp/index.ts";
 
 import { stepAnswers } from "./levelAnswers.ts";
+import { levelStepQuery } from "./levelUpQueries.ts";
+import { skillPointString } from "./pendingPicks.ts";
+import { useEditedLevel } from "./useEditedLevel.ts";
+import { useEditLevelWizardBase } from "./useEditLevelWizardBase.ts";
 import { usePickOptions } from "./usePickOptions.ts";
 
 interface UseEditLevelWizardParams {
@@ -23,7 +21,7 @@ interface UseEditLevelWizardParams {
 export type EditLevelWizard = ReturnType<typeof useEditLevelWizard>;
 
 /**
- * 3.5's Edit Level, on the generic wizard: the level it edits, 3.5's steps asked at it by name, what they answer of its
+ * Edit Level, on the generic wizard: the level it edits, its steps asked at it by kind, what they answer of its
  * picks (`stepAnswers`), and what its steps read of them, its feat and spell options among them.
  */
 export function useEditLevelWizard({ open, onClose, characterId, editingLevel }: UseEditLevelWizardParams) {

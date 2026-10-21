@@ -1,9 +1,6 @@
 import { useListboxQuery } from "@/client/src/hooks/index.ts";
-import {
-  availableFeatsGroupedQuery,
-  availablePowersQuery,
-  type PickerLevel,
-} from "@/client/src/pages/characters/details/components/levelUp/index.ts";
+
+import { availableFeatsGroupedQuery, availablePowersQuery, type PickerLevel } from "./levelUpQueries.ts";
 
 /** A level wizard's pickers, as the generic wizards give them: the open pool, the search, and the level they're at. */
 interface PickerState {
@@ -27,7 +24,7 @@ interface PickOptionsParams {
 }
 
 /**
- * The options 3.5's Feats and Spells steps list, Add Level's and Edit Level's alike: the open pool's feats (a family's
+ * The options the Feats and Spells steps list, Add Level's and Edit Level's alike: the open pool's feats (a family's
  * variants in one row) and spells, searched, at the level the wizard's next pick lands on; each asked while its step
  * shows.
  */

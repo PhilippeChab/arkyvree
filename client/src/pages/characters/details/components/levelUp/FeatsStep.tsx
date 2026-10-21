@@ -12,19 +12,14 @@ import {
 } from "@/client/src/components/common/index.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { itemsBeforeLastPage, pageItems } from "@/client/src/lib/pageItems.ts";
-import {
-  availableFeatFamilyQuery,
-  type GroupedFeatRow,
-  type LevelUpFormData,
-  type PickerLevel,
-  type SelectedFeat,
-  withoutPick,
-  withPick,
-} from "@/client/src/pages/characters/details/components/levelUp/index.ts";
 
 import { AutoGrantedPicks } from "./AutoGrantedPicks.tsx";
-import type { FeatsData } from "./levelUp/index.ts";
+import { withoutPick, withPick } from "./fitPicks.ts";
+import type { FeatsData } from "./levelAnswers.ts";
+import { availableFeatFamilyQuery, type GroupedFeatRow, type PickerLevel } from "./levelUpQueries.ts";
 import { PickOption, PoolPicker } from "./PoolPicker.tsx";
+import { useCharacterRules } from "./useCharacterRules.ts";
+import type { LevelUpFormData, SelectedFeat } from "./useLevelWizardBase.ts";
 
 interface FeatFamilyExpansionProps {
   aptitudeId: string;
@@ -124,6 +119,7 @@ function FeatFamilyExpansion({ characterId, aptitudeId, family, picker, onPick }
 }
 
 export function FeatsStep({ wizard, characterId }: FeatsStepProps) {
+  const { rules } = useCharacterRules(characterId);
   const {
     featData,
     isLoadingFeats,
@@ -162,7 +158,12 @@ export function FeatsStep({ wizard, characterId }: FeatsStepProps) {
       what="Feats"
       granted={
         featData.autoGrantedFeats.length > 0 && (
-          <AutoGrantedPicks what="Feats" picks={featData.autoGrantedFeats} defaultCollapsed={openPools.length > 0} />
+          <AutoGrantedPicks
+            what="Feats"
+            note={rules?.levelUp.freeGrantNote}
+            picks={featData.autoGrantedFeats}
+            defaultCollapsed={openPools.length > 0}
+          />
         )
       }
       pools={openPools.map((pool) => ({

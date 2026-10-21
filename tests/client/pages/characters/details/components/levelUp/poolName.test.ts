@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { poolName } from "@/client/src/pages/characters/details/components/dnd3.5/poolName.ts";
+import { poolName } from "@/client/src/pages/characters/details/components/levelUp/poolName.ts";
 
 describe("a pool's name", () => {
   test("adds what it picks to its aptitude's name", () => {

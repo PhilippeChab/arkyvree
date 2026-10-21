@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { pointsAt, ranksAt } from "@/client/src/pages/characters/details/components/dnd3.5/levelUp/skillRanks.ts";
+import { pointsAt, ranksAt } from "@/client/src/pages/characters/details/components/levelUp/skillRanks.ts";
 
 /** As a step answers a skill cross-class at its first level, then a class skill: half a rank, then a rank a point */
 const skill = { ranksByPoints: [0, 0.5, 1, 2, 3] };
