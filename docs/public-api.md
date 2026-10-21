@@ -115,8 +115,8 @@ Each write calls the service the app's own route calls, its body a v1 shape tran
   (`publishNotified`, on `/api` and `/v1` alike).
 - v1 takes no `updatedAt`: a write never refuses an entity another edit changed since the client read it, which the
   app's forms check. An inventory entry's and a saved level's updates, which read the entry or the level to keep what
-  their body leaves out, refuse (409) one that changed between that read and their write. A character's private notes, which v1 never answers, it
-  never writes either.
+  their body leaves out, refuse (409) one that changed between that read and their write. A character's private notes,
+  which v1 never answers, it never writes either.
 - A modifier's or a requirement's target is a path (`abilities.strength.misc`): `GET /v1/rulesets/{id}/target-paths`
   completes one a segment at a time, or finds every path whose name has a word, and `…/target-paths/check` says what a
   path takes, or what it may have meant.

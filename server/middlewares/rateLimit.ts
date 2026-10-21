@@ -15,8 +15,8 @@ const MINUTE = 60 * 1000;
 export const apiImportRateLimit = limitRatePerKey({ windowMs: MINUTE, limit: IMPORTS_PER_MINUTE, per: "user" });
 
 /**
- * What a character file is, as the public API reads its header, counted per user, whatever keys of theirs ask: as many a
- * minute as the app's own allow an address.
+ * What a character file is, as the public API reads its header, counted per user, whatever keys of theirs ask: as many
+ * a minute as the app's own allow an address.
  */
 export const apiImportSourceRateLimit = limitRatePerKey({
   windowMs: MINUTE,

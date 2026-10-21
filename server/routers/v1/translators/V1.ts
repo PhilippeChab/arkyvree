@@ -56,9 +56,9 @@ import { toV1Found, toV1Written } from "./written.ts";
 
 /**
  * Version 1's translators, one per kind: from what a service answers to v1's shape, and from a v1 request to what a
- * service takes (`levelChoicesQuery`, `raceRequest`). Each is typed by the service it reads and by v1's schema of its answer
- * (`schemas/`), so an answer that changes inside the app stops its translator compiling until v1's shape is kept. A
- * page's items are each translated by their kind's (`V1.page(feats, V1.feat)`). A new version copies the last,
+ * service takes (`levelChoicesQuery`, `raceRequest`). Each is typed by the service it reads and by v1's schema of its
+ * answer (`schemas/`), so an answer that changes inside the app stops its translator compiling until v1's shape is
+ * kept. A page's items are each translated by their kind's (`V1.page(feats, V1.feat)`). A new version copies the last,
  * replacing only what changed (`const V2 = { ...V1, character: … }`), and v1 keeps working untouched.
  */
 export const V1 = {

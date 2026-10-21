@@ -11,8 +11,8 @@ import { ItemsService } from "@/server/services/rulesets/items/index.ts";
 
 /**
  * An item, its create's, its duplicate's and its update's: a cost, a weight, a slot or a template cleared with null,
- * and an update's kept when left out (a create's and a copy's are what the body names). Whether it's a template is a new item's alone (`template`): a copy is none, based on its
- * source's template, and an update leaves it as it is.
+ * and an update's kept when left out (a create's and a copy's are what the body names). Whether it's a template is a
+ * new item's alone (`template`): a copy is none, based on its source's template, and an update leaves it as it is.
  */
 const itemBody = z.object({
   cost: z.number().min(0).nullable().optional().meta({ description: "In gold pieces" }),

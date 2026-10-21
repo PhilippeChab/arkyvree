@@ -40,8 +40,8 @@ export default class LevelRules {
   }
 
   /**
-   * A character's highest level in each class it has levels of (`levels`, its levels' rows), by the class's id: its next
-   * level in a class is the one after.
+   * A character's highest level in each class it has levels of (`levels`, its levels' rows), by the class's id: its
+   * next level in a class is the one after.
    */
   static readMaxKlassLevels(rulesetData: RulesetData, levels: { klassLevelId: string }[]): Map<string, number> {
     const maxLevels = new Map<string, number>();

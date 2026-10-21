@@ -49,7 +49,7 @@ export const customizableKind = z
 /** A customization route's entity: the ruleset (`id`), and the entity by its kind and its id. */
 export const customizableParams = idParam.extend({ entityId: z.string().uuid(), kind: customizableKind });
 
-/** An entity's description, its create's and its update's: none when it's empty, kept by an update that leaves it out. */
+/** An entity's description, its create's and its update's: none when empty, kept by an update that leaves it out. */
 export const entityDescription = z
   .string()
   .nullable()
