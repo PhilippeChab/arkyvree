@@ -148,7 +148,10 @@ export default new Hono<ApiKeyContext>()
     validate("param", classParams),
     async (c) => {
       const { classId, id } = c.req.valid("param");
-      return c.json(V1.classSpellCounts(await ClassLevelsService.getClassLevelSpellsKnown(id, classId)), 200);
+      return c.json(
+        V1.classSpellCounts(await ClassLevelsService.getClassLevelSpellsKnown(id, classId), "spellsKnown"),
+        200,
+      );
     },
   )
   .get(
@@ -161,7 +164,10 @@ export default new Hono<ApiKeyContext>()
     validate("param", classParams),
     async (c) => {
       const { classId, id } = c.req.valid("param");
-      return c.json(V1.classSpellCounts(await ClassLevelsService.getClassLevelSpells(id, classId)), 200);
+      return c.json(
+        V1.classSpellCounts(await ClassLevelsService.getClassLevelSpells(id, classId), "spellsPerDay"),
+        200,
+      );
     },
   )
   .post(

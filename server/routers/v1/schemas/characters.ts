@@ -41,7 +41,7 @@ const v1CharacterLevel = z
   .meta({ description: "A level a character has: its class's level, and its hit points", id: "CharacterLevel" });
 
 const v1CharacterSkill = z
-  .strictObject({ name: z.string(), ranks: z.number(), total: z.number().int(), trained: z.boolean() })
+  .strictObject({ name: z.string(), ranks: z.number(), total: z.number(), trained: z.boolean() })
   .meta({ description: "A skill of a character's: its ranks, and its check's total", id: "CharacterSkill" });
 
 const v1Equipment = z
