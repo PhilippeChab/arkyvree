@@ -4,14 +4,14 @@ import { sql } from "drizzle-orm";
 
 import { addJob, db } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError } from "@/server/errors/index.ts";
-import { ExportsService } from "@/server/services/exports/index.ts";
+import { ExportsService, toExportJobKey } from "@/server/services/exports/index.ts";
 import { createExport } from "@/tests/support/files.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 
 /** Queues the job of a pending export, as a PDF's queueing does. */
 async function queueExportJob(exportId: string) {
-  await addJob(db, "generatePdf", { exportId }, { maxAttempts: 2 });
+  await addJob(db, "generatePdf", { exportId }, { jobKey: toExportJobKey(exportId), maxAttempts: 2 });
 }
 
 describe("ExportsService.getExport", () => {
@@ -75,10 +75,14 @@ describe("ExportsService.getExportStatus", () => {
     // Still to run, however long it waits behind the user's other PDFs or for a worker
     expect(await ExportsService.getExportStatus(session, id)).toMatchObject({ id, status: "pending" });
 
-    // Its last attempt spent, as a worker killed mid-render leaves it
-    await db.execute(
-      sql`UPDATE graphile_worker._private_jobs SET attempts = max_attempts WHERE payload->>'exportId' = ${id}`,
-    );
+    // Its last attempt taken, which the worker counts as it takes it: still running
+    const job = sql`graphile_worker._private_jobs`;
+    const key = toExportJobKey(id);
+    await db.execute(sql`UPDATE ${job} SET attempts = max_attempts, locked_at = now() WHERE key = ${key}`);
+    expect(await ExportsService.getExportStatus(session, id)).toMatchObject({ id, status: "pending" });
+
+    // Given up on, its last attempt spent, as a worker killed mid-render leaves it once its lock expires
+    await db.execute(sql`UPDATE ${job} SET locked_at = null WHERE key = ${key}`);
     expect(await ExportsService.getExportStatus(session, id)).toMatchObject({ id, status: "failed" });
     expect(ExportsService.getExport(session, id)).rejects.toThrow("failed");
   });

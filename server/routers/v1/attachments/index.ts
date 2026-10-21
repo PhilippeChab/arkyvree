@@ -8,12 +8,10 @@ import {
   describeRoute,
   validate,
 } from "@/server/middlewares/index.ts";
-import { idParam } from "@/server/routers/api/validation.ts";
+import { idParam, signedIdParam } from "@/server/routers/api/validation.ts";
 import { v1Attachment, v1DirectUpload } from "@/server/routers/v1/schemas/attachments.ts";
 import { V1 } from "@/server/routers/v1/translators/V1.ts";
 import { AttachmentsService } from "@/server/services/attachments/index.ts";
-
-const signedIdParam = z.object({ signedId: z.string().min(1) });
 
 /** A record's image slot: the record, and the slot's name. */
 const slot = {

@@ -9,28 +9,29 @@ export async function addJob(
   db: Db,
   task: string,
   payload: unknown,
-  options: { maxAttempts: number; queueName?: string },
+  options: { jobKey?: string; maxAttempts: number; queueName?: string },
 ) {
   await db.execute(
     sql`SELECT graphile_worker.add_job(
       ${task},
       ${JSON.stringify(payload)}::json,
       max_attempts := ${options.maxAttempts},
-      queue_name := ${options.queueName ?? null}
+      queue_name := ${options.queueName ?? null},
+      job_key := ${options.jobKey ?? null}
     )`,
   );
 }
 
 /**
- * How many jobs of `task` whose payload's `key` is `value` are still to run: queued, running, or failed with an attempt
- * left. The worker deletes a job it finishes, and keeps one it gives up on with none left.
+ * How many jobs keyed `jobKey` (`addJob`'s `jobKey`) are still to run: queued, running (its attempt counted as it's
+ * taken), or failed with an attempt left. The worker deletes a job it finishes, and keeps one it gives up on with none
+ * left.
  */
-export async function countJobsToRun(task: string, key: string, value: string) {
+export async function countJobsToRun(jobKey: string) {
   const jobs = await db.execute<{ count: number }>(sql`
     SELECT count(*)::int AS count
-    FROM graphile_worker._private_jobs j
-    JOIN graphile_worker._private_tasks t ON t.id = j.task_id
-    WHERE t.identifier = ${task} AND j.payload->>${key} = ${value} AND j.attempts < j.max_attempts
+    FROM graphile_worker.jobs
+    WHERE key = ${jobKey} AND (attempts < max_attempts OR locked_at IS NOT NULL)
   `);
   return jobs.rows[0]?.count ?? 0;
 }

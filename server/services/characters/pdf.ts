@@ -11,6 +11,7 @@ import {
   PlayerCharacters,
   Visibility,
 } from "@/server/repositories/index.ts";
+import { toExportJobKey } from "@/server/services/exports/index.ts";
 import { CampaignsPolicy } from "@/server/services/policies/index.ts";
 import { formatSheetFileName } from "@/shared/exports.ts";
 import type { Character, Session } from "@/shared/relations.ts";
@@ -64,7 +65,7 @@ export async function enqueueCharacterPdf(
         campaignId,
         exportId: exportRecord.id,
       },
-      { maxAttempts: 2, queueName: `pdf-${session.userId}` },
+      { jobKey: toExportJobKey(exportRecord.id), maxAttempts: 2, queueName: `pdf-${session.userId}` },
     );
 
     await Activities.create(tx, {

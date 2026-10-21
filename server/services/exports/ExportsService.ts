@@ -3,6 +3,8 @@ import { ConflictError, NotFoundError } from "@/server/errors/index.ts";
 import { Exports } from "@/server/repositories/index.ts";
 import type { Session } from "@/shared/relations.ts";
 
+import { toExportJobKey } from "./exportJobKey.ts";
+
 class ExportsService {
   /**
    * An export as it's read, unless it's none of the session's user's or past its expiry: then it's gone. A pending one
@@ -14,8 +16,7 @@ class ExportsService {
 
     if (new Date(exportRecord.expiresAt) < new Date()) throw new NotFoundError("Export has expired");
 
-    const lost =
-      exportRecord.status === "pending" && (await countJobsToRun("generatePdf", "exportId", exportRecord.id)) === 0;
+    const lost = exportRecord.status === "pending" && (await countJobsToRun(toExportJobKey(exportRecord.id))) === 0;
     return lost ? { ...exportRecord, status: "failed" as const } : exportRecord;
   }
 

@@ -177,4 +177,5 @@ The export is stored as the PDF is queued (`enqueueCharacterPdf`), its file none
 (`generatePdf.ts`) fills its file in and makes it `ready`, or marks it `failed`, and notifies the user as before, the
 notification naming the export (`data.exportId`). A pending export keeps a day, a ready one an hour, and the daily
 cleanup deletes either once it's past. A job queued before exports were stored pending stores a new one, as it did;
-the pending one it never fills reads `failed` once that job is done (`countJobsToRun`, over the worker's queue).
+the pending one it never fills reads `failed` once that job is done: each export's job is queued under its key
+(`toExportJobKey`), which `countJobsToRun` looks up in the worker's queue, a locked job counted as running.

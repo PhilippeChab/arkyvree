@@ -9,12 +9,10 @@ import { InternalError } from "@/server/errors/index.ts";
  * (`response`, none for a 204), or the file it answers instead of JSON, by its media type (`file`: a PDF's
  * `application/pdf`, its `response` none).
  */
-export interface RouteDescription {
-  file?: "application/pdf";
-  response: z.ZodType | null;
-  status: 200 | 201 | 202 | 204;
-  summary: string;
-}
+export type RouteDescription = { status: 200 | 201 | 202 | 204; summary: string } & (
+  | { file: "application/pdf"; response: null }
+  | { file?: never; response: z.ZodType | null }
+);
 
 /** Whether a success answers what its route describes: its file's media type, or a JSON body its schema accepts. */
 async function checkAnswer(response: Response, { file, response: schema }: RouteDescription) {
