@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import { createKeyedApi, expectOk, expectStatus } from "@/tests/support/api.ts";
 import { createTestCharacter } from "@/tests/support/characters.ts";
+import { carry } from "@/tests/support/items.ts";
 import { findPlainItem, findSeededCharacter, getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 
@@ -109,6 +110,15 @@ describe("v1 character inventory", () => {
     const reordered = { quantity: 2, weaponSets: [1, 0, 1] };
     const changed = await expectOk(route[":entryId"].$put({ json: reordered, param: { entryId: held.id, id } }));
     expect(changed).toMatchObject({ quantity: 2, weaponSets: [0, 1] });
+
+    // An older entry held without a weapon set, which a hand reads as the first
+    await carry({ id }, [{ item: "Heavy Steel Shield", location: "Off Hand", weaponSets: [] }]);
+    const [stored] = await expectOk(route.$get({ param: { id } }));
+    const json3 = { quantity: 2 };
+    expect(await expectOk(route[":entryId"].$put({ json: json3, param: { entryId: stored!.id, id } }))).toMatchObject({
+      quantity: 2,
+      weaponSets: [0],
+    });
   });
 
   test("says why a place can't take one more item, and refuses an add there", async () => {
