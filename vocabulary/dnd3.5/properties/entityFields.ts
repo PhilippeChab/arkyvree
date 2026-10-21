@@ -19,7 +19,9 @@ import {
   FIRST_LEVEL_GENERAL_FEATS,
   GENERAL_FEAT_LEVEL_INTERVAL,
   MAX_CHARACTER_LEVEL,
+  MAX_CLASS_LEVEL,
   MAX_GENERAL_FEATS_PER_LEVEL,
+  MAX_TABLE_COUNT,
 } from "@/vocabulary/dnd3.5/classes.ts";
 import { FEAT_FAMILIES } from "@/vocabulary/dnd3.5/feats.ts";
 import { SPELL_COMPONENTS, SPELL_DESCRIPTORS, SPELL_SCHOOLS, SPELL_SUBSCHOOLS } from "@/vocabulary/dnd3.5/spells.ts";
@@ -389,13 +391,18 @@ const KLASS_FIELDS = {
   },
 } as const;
 
-/** A class level's fields: its base attack bonus and its skill points, 0 without their rows, both always written. */
+/**
+ * A class level's fields: its base attack bonus and its skill points, in their bounds, 0 without their rows, both always
+ * written.
+ */
 const KLASS_LEVEL_FIELDS = {
   bab: {
     default: 0,
     description: "Base attack bonus at this class level",
     kind: "number",
     label: "Base Attack Bonus",
+    // A full base attack bonus's at the last level: one never outruns its level
+    max: MAX_CLASS_LEVEL,
     min: 0,
     type: KLASS_LEVEL_BAB,
     write: "always",
@@ -405,6 +412,7 @@ const KLASS_LEVEL_FIELDS = {
     description: "Skill points gained per level",
     kind: "number",
     label: "Skill Points",
+    max: MAX_TABLE_COUNT,
     min: 0,
     type: KLASS_LEVEL_SKILL_POINTS,
     write: "always",
