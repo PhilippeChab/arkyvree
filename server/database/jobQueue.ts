@@ -24,14 +24,14 @@ export async function addJob(
 
 /**
  * How many jobs keyed `jobKey` (`addJob`'s `jobKey`) are still to run: queued, running (its attempt counted as it's
- * taken), or failed with an attempt left. The worker deletes a job it finishes, and keeps one it gives up on with none
- * left.
+ * taken; locked within the worker's four hours, past which a lock is a killed worker's), or failed with an attempt
+ * left. The worker deletes a job it finishes, and keeps one it gives up on with none left.
  */
 export async function countJobsToRun(jobKey: string) {
   const jobs = await db.execute<{ count: number }>(sql`
     SELECT count(*)::int AS count
     FROM graphile_worker.jobs
-    WHERE key = ${jobKey} AND (attempts < max_attempts OR locked_at IS NOT NULL)
+    WHERE key = ${jobKey} AND (attempts < max_attempts OR locked_at > now() - interval '4 hours')
   `);
   return jobs.rows[0]?.count ?? 0;
 }

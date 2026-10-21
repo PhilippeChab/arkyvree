@@ -114,7 +114,8 @@ describe("generatePdf", () => {
     const { session } = await createTestUser();
     const character = await createCharacterAs(session);
     const pending = await CharactersService.enqueuePdf(session, character.id);
-    expect(pending).toMatchObject({ status: "pending", data: null, fileName: `${character.name}-sheet.pdf` });
+    expect(pending).toMatchObject({ status: "pending", fileName: `${character.name}-sheet.pdf` });
+    expect(pending).not.toHaveProperty("data");
 
     const [job] = await queuedPdfJobs(character.id);
     expect(job?.payload).toMatchObject({ exportId: pending.id });

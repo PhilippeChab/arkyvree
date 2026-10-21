@@ -1,8 +1,11 @@
-import { and, eq, type InferInsertModel, lt } from "drizzle-orm";
+import { and, eq, getTableColumns, type InferInsertModel, lt } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
 import { exportsInAccount } from "@/drizzle/schema.ts";
 import BaseRepository from "@/server/repositories/BaseRepository.ts";
+
+/** What a write answers of an export: all but its file, which a caller has already (a PDF up to its size cap). */
+const { data: _data, ...WRITTEN_COLUMNS } = getTableColumns(exportsInAccount);
 
 class ExportsRepository extends BaseRepository<typeof exportsInAccount> {
   constructor() {
@@ -10,7 +13,7 @@ class ExportsRepository extends BaseRepository<typeof exportsInAccount> {
   }
 
   async create(db: Db, values: InferInsertModel<typeof exportsInAccount>) {
-    return await db.insert(this.table).values(values).returning();
+    return await db.insert(this.table).values(values).returning(WRITTEN_COLUMNS);
   }
 
   async delete(db: Db, where: { id: string } | { expiresBefore: string }) {
@@ -40,7 +43,7 @@ class ExportsRepository extends BaseRepository<typeof exportsInAccount> {
   }
 
   async update(db: Db, values: Partial<InferInsertModel<typeof exportsInAccount>>, where: { id: string }) {
-    return await db.update(this.table).set(values).where(eq(this.table.id, where.id)).returning();
+    return await db.update(this.table).set(values).where(eq(this.table.id, where.id)).returning(WRITTEN_COLUMNS);
   }
 }
 

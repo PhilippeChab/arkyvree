@@ -81,8 +81,8 @@ describe("ExportsService.getExportStatus", () => {
     await db.execute(sql`UPDATE ${job} SET attempts = max_attempts, locked_at = now() WHERE key = ${key}`);
     expect(await ExportsService.getExportStatus(session, id)).toMatchObject({ id, status: "pending" });
 
-    // Given up on, its last attempt spent, as a worker killed mid-render leaves it once its lock expires
-    await db.execute(sql`UPDATE ${job} SET locked_at = null WHERE key = ${key}`);
+    // Its last attempt's worker killed mid-render: its lock past the worker's four hours
+    await db.execute(sql`UPDATE ${job} SET locked_at = now() - interval '5 hours' WHERE key = ${key}`);
     expect(await ExportsService.getExportStatus(session, id)).toMatchObject({ id, status: "failed" });
     expect(ExportsService.getExport(session, id)).rejects.toThrow("failed");
   });

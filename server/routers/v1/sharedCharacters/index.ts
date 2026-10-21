@@ -1,14 +1,12 @@
 import { pdf } from "@react-pdf/renderer";
 import { Hono } from "hono";
-import { z } from "zod";
 
 import { apiExportRateLimit, type ApiKeyContext, describeRoute, validate } from "@/server/middlewares/index.ts";
+import { shareTokenParam } from "@/server/routers/api/validation.ts";
 import { buildFileHeaders } from "@/server/routers/fileHeaders.ts";
 import { v1Character } from "@/server/routers/v1/schemas/characters.ts";
 import { V1 } from "@/server/routers/v1/translators/V1.ts";
 import { CharacterSharingService } from "@/server/services/characters/sharing/index.ts";
-
-const shareTokenParam = z.object({ shareToken: z.string().uuid() });
 
 /** A character shared by its owner's link: its sheet, and its PDF, which anyone with the token reads. */
 export default new Hono<ApiKeyContext>()

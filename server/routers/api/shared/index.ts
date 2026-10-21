@@ -1,12 +1,10 @@
 import { pdf } from "@react-pdf/renderer";
 import { Hono } from "hono";
-import { z } from "zod";
 
 import { exportRateLimit, validate } from "@/server/middlewares/index.ts";
+import { shareTokenParam } from "@/server/routers/api/validation.ts";
 import { buildFileHeaders } from "@/server/routers/fileHeaders.ts";
 import { CharacterSharingService } from "@/server/services/characters/sharing/index.ts";
-
-const shareTokenParam = z.object({ shareToken: z.string().uuid() });
 
 export default new Hono()
   // Get shared character data (public, no auth)

@@ -74,6 +74,9 @@ export const sanitizedEmail = z.string().overwrite(sanitizeEmail).email();
 /** Text, sanitized as it's stored: a check chained to it (`sanitizedText.min(3)`) reads the sanitized text. */
 export const sanitizedText = z.string().overwrite(sanitizeText);
 
+/** A shared sheet's `:shareToken`: the token its owner's share link carries. */
+export const shareTokenParam = z.object({ shareToken: z.string().uuid() });
+
 /** A direct upload's `:signedId`: the blob's signed id its upload answered. */
 export const signedIdParam = z.object({ signedId: z.string().min(1) });
 
