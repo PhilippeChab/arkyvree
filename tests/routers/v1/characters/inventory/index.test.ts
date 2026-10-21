@@ -91,6 +91,19 @@ describe("v1 character inventory", () => {
     expect(moved).toMatchObject({ location: "Off Hand", weaponSets: [0] });
   });
 
+  test("changes what an edit names of an item forced on, its requirements checked only when it moves", async () => {
+    const { id, route } = await openInventory();
+    const itemId = (await getSeedCtx()).itemMap["Studded Leather"]!;
+    const json = { force: true, itemId, location: "Torso", quantity: 1 } as const;
+    const { id: entryId } = await expectOk(route.$post({ json, param: { id } }));
+
+    const entry = route[":entryId"];
+    expect(await expectOk(entry.$put({ json: { quantity: 2 }, param: { entryId, id } }))).toMatchObject({
+      quantity: 2,
+    });
+    await expectStatus(entry.$put({ json: { location: "Head" }, param: { entryId, id } }), 400);
+  });
+
   test("says why a place can't take one more item, and refuses an add there", async () => {
     const { api } = await createKeyedApi();
     const { itemMap } = await getSeedCtx();
