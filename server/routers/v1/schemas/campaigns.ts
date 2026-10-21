@@ -17,7 +17,7 @@ const v1CampaignRole = z.enum(role.enumValues);
 
 /** An invite sent for a player slot. */
 const v1SlotInvite = z.strictObject({
-  email: z.string().nullable().meta({ description: "The address it was sent to" }),
+  email: z.string().nullable().meta({ description: "The address it was sent to: none but to the Game Master" }),
   id: v1Id.meta({ description: "`POST /v1/campaign-invites/{id}/revoke` takes it back while it's pending" }),
   status: z.string().meta({ description: "`Pending` until it's answered, then `Accepted`, `Rejected`, or `Revoked`" }),
 });

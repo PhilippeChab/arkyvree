@@ -157,4 +157,16 @@ describe("generatePdf", () => {
     expect((await Exports.findOne(db, { id: pending.id, userId: session.userId }))?.status).toBe("ready");
     expect(await notificationsOf(session.userId, "pdfFailed")).toEqual([]);
   }, 30_000);
+
+  test("tells the user a PDF failed whose pending export the cleanup deleted before its job ran", async () => {
+    const { session } = await createTestUser();
+    const character = await createCharacterAs(session);
+    const pending = await CharactersService.enqueuePdf(session, character.id);
+    await CharactersService.archiveCharacter(session, character.id);
+    await Exports.delete(db, { id: pending.id });
+
+    const [job] = await queuedPdfJobs(character.id);
+    await generatePdfTask(job!.payload, silentJobHelpers);
+    expect(await notificationsOf(session.userId, "pdfFailed")).toMatchObject([{ data: { exportId: pending.id } }]);
+  });
 });

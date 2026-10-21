@@ -31,13 +31,14 @@ const ONE_HOUR_MS = 60 * 60 * 1000;
 
 /**
  * The user's PDF failed: its export marked so, and the user told. An export an earlier attempt stored stays ready, and
- * its user, told it's ready, isn't told it failed.
+ * its user, told it's ready, isn't told it failed. (An attempt can store it and die before the worker records it done.)
  */
 async function failExport({ campaignId, characterId, characterName, exportId, userId }: GeneratePdfPayload) {
   await withTransaction(async (tx) => {
     if (exportId) {
       const [failed] = await Exports.update(tx, { status: "failed" }, { id: exportId, status: "pending" });
-      if (!failed) return;
+      // One an earlier attempt stored stays as it is; of one the cleanup deleted (its pending day past) the user hears
+      if (!failed && (await Exports.findOne(tx, { id: exportId, userId }))) return;
     }
     await Notifications.create(tx, {
       recipientId: userId,

@@ -31,6 +31,29 @@ describe("v1 campaign invites", () => {
     });
   });
 
+  test("shows a player the invites a campaign sent, and whom to, without their addresses", async () => {
+    const { user: gm } = await createTestUser("gm");
+    const { user: player } = await createTestUser("player");
+    const { user: invitee } = await createTestUser("invitee");
+    const { campaign } = await createTestCampaign(gm.id);
+    const { api: gmApi } = await createKeyedApi(gm.id);
+    const { api: playerApi } = await createKeyedApi(player.id);
+    const param = { id: campaign.id };
+    const role = "Player Character" as const;
+    const seat = await expectOk(
+      gmApi.v1.campaigns[":id"].players.$post({ param, json: { email: player.emailAddress, role } }),
+    );
+    await expectOk(playerApi.v1["campaign-invites"][":id"].accept.$post({ param: { id: seat.invite!.id } }));
+    await expectOk(gmApi.v1.campaigns[":id"].players.$post({ param, json: { email: invitee.emailAddress, role } }));
+
+    const { items } = await expectOk(playerApi.v1.campaigns[":id"].invites.$get({ param, query: {} }));
+    expect(items).toContainEqual(
+      expect.objectContaining({ email: null, user: { id: invitee.id, username: invitee.username } }),
+    );
+    const players = await expectOk(playerApi.v1.campaigns[":id"].players.$get({ param, query: {} }));
+    expect(players.items.flatMap(({ invite }) => (invite ? [invite.email] : []))).toEqual([null]);
+  });
+
   test("refuses a stranger, and a campaign that doesn't exist", async () => {
     const { campaign } = await createTestCampaign((await createTestUser()).user.id);
     const { api } = await createKeyedApi((await createTestUser()).user.id);

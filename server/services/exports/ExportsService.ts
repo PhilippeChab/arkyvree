@@ -23,10 +23,10 @@ class ExportsService {
     if (new Date(exportRecord.expiresAt) < new Date()) throw new NotFoundError("Export has expired");
     if (exportRecord.status !== "pending") return exportRecord;
 
-    const jobsToRun = await countJobsToRun(toExportJobKey(exportId));
+    if ((await countJobsToRun(toExportJobKey(exportId))) > 0) return exportRecord;
+    // Its job gone, it was stored by then, or lost
     exportRecord = (await read()) ?? exportRecord;
-    const lost = exportRecord.status === "pending" && jobsToRun === 0;
-    return lost ? { ...exportRecord, status: "failed" as const } : exportRecord;
+    return exportRecord.status === "pending" ? { ...exportRecord, status: "failed" as const } : exportRecord;
   }
 
   /** An export's file, once it's ready: a pending or failed one has none to download. */
