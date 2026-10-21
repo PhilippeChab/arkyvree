@@ -197,6 +197,7 @@ class CharactersService extends include(Object, Archives, Imports) {
             levels: classLevels,
             totalLevel,
             accessRole: char.accessRole,
+            deletedAt: char.deletedAt,
           };
         });
 

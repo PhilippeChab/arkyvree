@@ -155,6 +155,7 @@ export function toV1Character(sheet: CharacterSheet): V1Character {
 /** A page of characters, each as v1 lists it. */
 export function toV1Characters(page: CharacterList) {
   return toV1Page(page, (character): z.infer<typeof v1CharacterSummary> => ({
+    archived: character.deletedAt !== null,
     classes: character.levels.map(({ klass, level }) => ({ level, name: klass })),
     id: character.id,
     level: character.totalLevel,
