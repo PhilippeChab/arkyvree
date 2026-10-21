@@ -126,6 +126,7 @@ export const v1Character = v1Sheet
 
 export const v1CharacterSummary = z
   .strictObject({
+    archived: z.boolean(),
     classes: z.array(z.strictObject({ level: z.number().int(), name: z.string() })),
     id: v1Id,
     level: z.number().int(),
