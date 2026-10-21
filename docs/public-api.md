@@ -118,8 +118,10 @@ Each write calls the service the app's own route calls, its body a v1 shape tran
   under its own id. `POST /v1/rulesets/{id}/{kind}/{entityId}/restore` undoes it, `entityId` the parent's entity.
 - Its writes record activities and notify users as the app's do, and tell them over the websocket
   (`publishNotified`, on `/api` and `/v1` alike).
-- v1 sends no `updatedAt`: a write never refuses an entity another edit changed since it was read, which the app's
-  forms check. A character's private notes, which v1 never answers, it never writes either.
+- v1 takes no `updatedAt`: a write never refuses an entity another edit changed since the client read it, which the
+  app's forms check. An inventory entry's update, which reads the entry to keep what its body leaves out, refuses
+  (409) one that changed between that read and its write. A character's private notes, which v1 never answers, it
+  never writes either.
 - A modifier's or a requirement's target is a path (`abilities.strength.misc`): `GET /v1/rulesets/{id}/target-paths`
   completes one a segment at a time, or finds every path whose name has a word, and `…/target-paths/check` says what a
   path takes, or what it may have meant.

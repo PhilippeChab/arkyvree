@@ -129,7 +129,9 @@ export default new Hono<ApiKeyContext>()
     describeRoute({
       response: v1InventoryEntry,
       status: 200,
-      summary: "Changes an item a character carries: what the body names, the rest kept",
+      summary:
+        "Changes an item a character carries: what the body names, the rest kept, refused (409) when it changed " +
+        "while the update read it",
     }),
     validate("param", entryParams),
     validate(
@@ -147,8 +149,8 @@ export default new Hono<ApiKeyContext>()
       const { entryId, id } = c.req.valid("param");
       const body = c.req.valid("json");
       const session = c.var.requestSession;
-      const before = V1.found(await CharacterInventoryService.getInventory(session, id), entryId, V1.inventoryEntry);
-      const entry = V1.inventoryEditRequest(before, body);
+      const stored = V1.found(await CharacterInventoryService.getInventory(session, id), entryId, (found) => found);
+      const entry = V1.inventoryEditRequest(V1.inventoryEntry(stored), body);
       await CharacterInventoryService.updateItem(
         session,
         id,
@@ -160,6 +162,8 @@ export default new Hono<ApiKeyContext>()
         entry.remainingCharges,
         entry.weaponSets,
         entry.force,
+        // What the body leaves out is the entry as it was read: a change since then refuses the write
+        stored.updatedAt,
       );
       const inventory = await CharacterInventoryService.getInventory(session, id);
       return c.json(V1.written(inventory, entryId, V1.inventoryEntry), 200);
