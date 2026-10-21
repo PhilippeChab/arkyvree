@@ -29,10 +29,16 @@ interface GeneratePdfPayload {
 const MAX_PDF_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
 const ONE_HOUR_MS = 60 * 60 * 1000;
 
-/** The user's PDF failed: its export marked so, and the user told. */
+/**
+ * The user's PDF failed: its export marked so, and the user told. An export an earlier attempt stored stays ready, and
+ * its user, told it's ready, isn't told it failed.
+ */
 async function failExport({ campaignId, characterId, characterName, exportId, userId }: GeneratePdfPayload) {
   await withTransaction(async (tx) => {
-    if (exportId) await Exports.update(tx, { status: "failed" }, { id: exportId });
+    if (exportId) {
+      const [failed] = await Exports.update(tx, { status: "failed" }, { id: exportId, status: "pending" });
+      if (!failed) return;
+    }
     await Notifications.create(tx, {
       recipientId: userId,
       actorId: userId,

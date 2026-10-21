@@ -10,19 +10,21 @@ class ExportsService {
    * An export as it's read, unless it's none of the session's user's or past its expiry: then it's gone. A pending one
    * whose job is gone reads failed: its job lost it (a worker killed past its last attempt, one deployed past its
    * payload), which a job that fails marks itself. One still queued behind others, or waiting on a worker, stays pending.
-   * Its jobs are counted before it's read: the worker stores the export before it deletes the job that made it, so an
-   * export whose job is gone by then reads as that job left it.
+   * A pending one's jobs are counted before it's read again: the worker stores the export before it deletes the job
+   * that made it, so an export whose job is gone by then reads as that job left it.
    */
   private async readExport<T extends { expiresAt: string; status: string }>(
     exportId: string,
     read: () => Promise<T | undefined>,
   ) {
-    const jobsToRun = await countJobsToRun(toExportJobKey(exportId));
-    const exportRecord = await read();
+    let exportRecord = await read();
     if (!exportRecord) throw new NotFoundError("Export not found");
 
     if (new Date(exportRecord.expiresAt) < new Date()) throw new NotFoundError("Export has expired");
+    if (exportRecord.status !== "pending") return exportRecord;
 
+    const jobsToRun = await countJobsToRun(toExportJobKey(exportId));
+    exportRecord = (await read()) ?? exportRecord;
     const lost = exportRecord.status === "pending" && jobsToRun === 0;
     return lost ? { ...exportRecord, status: "failed" as const } : exportRecord;
   }

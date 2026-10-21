@@ -142,4 +142,19 @@ describe("generatePdf", () => {
     });
     expect(await notificationsOf(session.userId, "pdfFailed")).toMatchObject([{ data: { exportId: pending.id } }]);
   });
+
+  test("keeps an export an earlier attempt stored ready when a retry can't export the character anymore", async () => {
+    const { session } = await createTestUser();
+    const character = await createCharacterAs(session);
+    const pending = await CharactersService.enqueuePdf(session, character.id);
+    const [job] = await queuedPdfJobs(character.id);
+    await generatePdfTask(job!.payload, silentJobHelpers);
+
+    // The worker died before the queue heard the job finished: its retry runs after the character's archived
+    await CharactersService.archiveCharacter(session, character.id);
+    await generatePdfTask(job!.payload, silentJobHelpers);
+
+    expect((await Exports.findOne(db, { id: pending.id, userId: session.userId }))?.status).toBe("ready");
+    expect(await notificationsOf(session.userId, "pdfFailed")).toEqual([]);
+  }, 30_000);
 });

@@ -4,14 +4,14 @@ import type { Db } from "@/drizzle/database.ts";
 
 import { db } from "./connection.ts";
 
-/** Queues a job for the worker (graphile-worker), in `db`'s transaction when it's one. Ping the worker once it commits. */
+/** Queues a job for the worker (graphile-worker), in `tx`'s transaction when it's one. Ping the worker once it commits. */
 export async function addJob(
-  db: Db,
+  tx: Db,
   task: string,
   payload: unknown,
   options: { jobKey?: string; maxAttempts: number; queueName?: string },
 ) {
-  await db.execute(
+  await tx.execute(
     sql`SELECT graphile_worker.add_job(
       ${task},
       ${JSON.stringify(payload)}::json,

@@ -1,4 +1,4 @@
-import { and, eq, getTableColumns, type InferInsertModel, lt } from "drizzle-orm";
+import { and, eq, getTableColumns, type InferInsertModel, type InferSelectModel, lt } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
 import { exportsInAccount } from "@/drizzle/schema.ts";
@@ -42,8 +42,17 @@ class ExportsRepository extends BaseRepository<typeof exportsInAccount> {
     });
   }
 
-  async update(db: Db, values: Partial<InferInsertModel<typeof exportsInAccount>>, where: { id: string }) {
-    return await db.update(this.table).set(values).where(eq(this.table.id, where.id)).returning(WRITTEN_COLUMNS);
+  /** Writes an export, one still in `status` when the write names one. */
+  async update(
+    db: Db,
+    values: Partial<InferInsertModel<typeof exportsInAccount>>,
+    where: { id: string; status?: InferSelectModel<typeof exportsInAccount>["status"] },
+  ) {
+    return await db
+      .update(this.table)
+      .set(values)
+      .where(and(eq(this.table.id, where.id), where.status && eq(this.table.status, where.status)))
+      .returning(WRITTEN_COLUMNS);
   }
 }
 
