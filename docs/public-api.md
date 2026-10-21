@@ -24,11 +24,12 @@ answers in shapes of its own, which stay fixed.
   changes only what its user can, by the checks the services already make. A session's cookie signs in nothing under
   `/v1`. No key acts for a demo, so a v1 write needs no `denyDemoUser`, which reads the app's session.
 - Its requests are counted per key (`apiKeyRateLimit`: 120 a minute), and a character's level choices, which read every
-  option of each pool, and a character file's import, which builds the character level by level, per user, whichever
-  keys of theirs ask (`levelChoicesRateLimit`: 20 a minute; `apiImportRateLimit`: 10), as are its PDFs, which each cost a
-  render (`apiExportRateLimit`: 5), and its direct uploads (`apiAttachmentUploadRateLimit`: 20), which the app's own
-  routes count per address. A request with a wrong key or
-  none costs a lookup by digest, as a wrong session cookie does the app's.
+  option of each pool, a character file's import, which builds the character level by level, and a file's check of its
+  source, which parses it, per user, whichever keys of theirs ask (`levelChoicesRateLimit`: 20 a minute;
+  `apiImportRateLimit`: 10; `apiImportSourceRateLimit`: 30), as are its PDFs, which each cost a render
+  (`apiExportRateLimit`: 5), and its direct uploads (`apiAttachmentUploadRateLimit`: 20), which the app's own routes
+  count per address. A request with a wrong key or none costs a lookup by digest, as a wrong session cookie does the
+  app's.
 - A ruleset is read as the app reads it: any ruleset by its id, a private one too, as `/api` answers it to any signed-in
   user. The lists (`GET /v1/rulesets`) list what the user's scope does.
 
@@ -108,9 +109,11 @@ Each write calls the service the app's own route calls, its body a v1 shape tran
   campaign's as `GET /v1/campaigns/{id}` reads it); a removal (an archive, a delete, a contributor's removal, leaving)
   answers nothing (204). An action answers what it acts on (a fork the new ruleset, a publish the ruleset, an invite's
   answer its status), and a queued PDF its export (202).
-- An update keeps what its body leaves out (a description, an item's cost, an inventory entry's place and charges, a
-  saved level's picks: v1 reads the entry or the level first where its service takes it whole); a list it names (a
-  feat's aptitudes, a class level's feats) it replaces whole.
+- An entity's update takes what its create requires (its name; a race's size and speed, a save's or a skill's ability,
+  a language's type), as the document marks them, and keeps the rest its body leaves out (a description, an item's
+  cost, a spell's save); a ruleset's, an inventory entry's and a saved level's require nothing (v1 reads the entry or
+  the level first, where its service takes it whole). A list it names (a feat's aptitudes, a class level's feats) it
+  replaces whole.
 - A fork's change to an entity it inherits is made on a copy of its own, as the app makes it: the answer is the copy,
   under its own id. `POST /v1/rulesets/{id}/{kind}/{entityId}/restore` undoes it, `entityId` the parent's entity.
 - Its writes record activities and notify users as the app's do, and tell them over the websocket

@@ -3,18 +3,10 @@ import { z } from "zod";
 
 import { location } from "@/drizzle/schema.ts";
 import { type SessionContext, validate } from "@/server/middlewares/index.ts";
-import { characterIdParam } from "@/server/routers/api/validation.ts";
+import { characterIdParam, heldSetList } from "@/server/routers/api/validation.ts";
 import { CharacterInventoryService } from "@/server/services/characters/inventory/index.ts";
 
 const entryParams = characterIdParam.extend({ entryId: z.string().uuid() });
-
-/** Comma-separated weapon sets, stored from 0: what isn't one is dropped (an empty string is none). */
-const heldSetList = z.string().transform((value) =>
-  value
-    .split(",")
-    .filter((set) => /^\d+$/.test(set))
-    .map(Number),
-);
 
 /** The weapon sets a hand holds an entry in, stored from 0: none outside the hands. */
 const heldSets = z.array(z.number().int().min(0)).default([]);
