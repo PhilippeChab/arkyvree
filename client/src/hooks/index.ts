@@ -19,6 +19,7 @@ export { useNotificationActions } from "./useNotificationActions.ts";
 export { useOpenActivityTarget } from "./useOpenActivityTarget.ts";
 export { usePageTitle } from "./usePageTitle.ts";
 export { usePdfExport } from "./usePdfExport.ts";
+export { useRules } from "./useRules.ts";
 export { type Ability, useRulesetAbilities } from "./useRulesetAbilities.ts";
 export { useRulesetPermissions } from "./useRulesetPermissions.ts";
 export { useSearchParam } from "./useSearchParam.ts";

@@ -1,25 +1,12 @@
 import { CREATED_SORTS, NAME_SORTS, type SortOption, UPDATED_SORTS } from "@/client/src/components/common/index.ts";
-import { useListParams } from "@/client/src/hooks/index.ts";
+import { useListParams, useRules } from "@/client/src/hooks/index.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
 import type { Direction } from "@/client/src/lib/queries.ts";
 import type { BaseRules } from "@/shared/enums.ts";
 
-import { DND35_ENTITY_KINDS } from "./dnd3.5/entityKinds.ts";
-
-/** A kind a race or a class is for, which its base rules list: its label, and its value, which the URL keeps. */
-interface EntityKindOption {
-  label: string;
-  value: string;
-}
-
-/** What a race or a class is for: a player character ("pc"), or what its base rules list besides. */
-export type EntityKind = (typeof ENTITY_KINDS)[BaseRules][number]["value"];
+/** What a race or a class is for: a player character ("pc"), or what its rules list besides (`entityKinds`). */
+export type EntityKind = string;
 export type EntitySortField = (typeof ENTITY_SORT_FIELDS)[number];
-
-/** The kinds a race or a class is for, by base rules: what the Races and Classes tabs filter by. */
-const ENTITY_KINDS = {
-  "Dungeons & Dragons: 3.5": DND35_ENTITY_KINDS,
-} satisfies Record<BaseRules, EntityKindOption[]>;
 
 const ENTITY_SORT_FIELDS = ["name", "createdAt", "updatedAt"] as const;
 
@@ -34,19 +21,23 @@ export const DEFAULT_ENTITY_FILTERS = {
 
 /**
  * The Races / Classes tab's search, kind and sort, kept in the URL, with the search bar props that change them: the
- * kinds its ruleset's base rules list.
+ * kinds its ruleset's rules list (`entityKinds`). While they load, the kind the URL names stands, so the tab's first
+ * fetch is for it.
  */
 export function useEntityFilters(baseRules: BaseRules) {
   const { searchParams, updateSearchParams, search, orderBy, orderDir, searchBarProps } = useListParams(
     ENTITY_SORT_FIELDS,
     DEFAULT_ENTITY_FILTERS,
   );
-  const kinds = ENTITY_KINDS[baseRules];
-  const kind = oneOf(
-    searchParams.get("kind"),
-    kinds.map((option) => option.value),
-    DEFAULT_ENTITY_FILTERS.kind,
-  );
+  const kinds = useRules(baseRules).rules?.entityKinds;
+  const asked = searchParams.get("kind");
+  const kind = kinds
+    ? oneOf(
+        asked,
+        kinds.map((option) => option.value),
+        DEFAULT_ENTITY_FILTERS.kind,
+      )
+    : asked || DEFAULT_ENTITY_FILTERS.kind;
 
   return {
     search,
@@ -55,7 +46,7 @@ export function useEntityFilters(baseRules: BaseRules) {
     orderDir,
     searchBarProps: {
       ...searchBarProps,
-      filterOptions: kinds,
+      filterOptions: kinds ?? [],
       filterValue: kind,
       onFilterChange: (next: EntityKind | undefined) =>
         updateSearchParams({ kind: next === DEFAULT_ENTITY_FILTERS.kind ? null : next }),

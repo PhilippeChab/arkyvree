@@ -36,6 +36,8 @@ export type {
   PickQuery,
   PlannedSoFar,
   PreviewRequest,
+  RulesDescription,
+  RulesWord,
 } from "./core/module/index.ts";
 export { default as RulesError } from "./core/RulesError.ts";
 export type { EntityCustomizations, RulesetData, RulesetRawData } from "./core/view/index.ts";

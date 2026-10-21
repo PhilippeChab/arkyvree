@@ -81,5 +81,5 @@ export {
   type SkillRank,
   type WizardStep,
 } from "./parts/levelUp/index.ts";
-export { RulesetPart } from "./parts/ruleset/index.ts";
+export { type RulesDescription, RulesetPart, type RulesWord } from "./parts/ruleset/index.ts";
 export type { OpenedGroupedPicker, OpenedPicker, PickerOption, PickFilters, PickGroupFilters } from "./pickers.ts";

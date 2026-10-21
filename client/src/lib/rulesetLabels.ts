@@ -1,4 +1,4 @@
-import type { BaseRules } from "@/shared/enums.ts";
+import type { RulesWords } from "./queries.ts";
 
 interface Words {
   /** How the engine's names spell it (`createKlass`), where that isn't `one` */
@@ -24,18 +24,14 @@ const ENTITY_WORDS: Record<string, Words> = {
   skills: { one: "Skill", many: "Skills" },
 };
 
-/** What a ruleset calls an entity type where its word isn't the engine's, by its base rules: 3.5's powers are spells. */
-const RULESET_WORDS: Record<BaseRules, Partial<Record<string, Words>>> = {
-  "Dungeons & Dragons: 3.5": {
-    powers: { one: "Spell", many: "Spells" },
-  },
-};
-
-/** The ruleset's word for an entity type ("Spell" for a 3.5 power, "Spells" with `many`), else the type itself. */
-export function entityTypeLabel(entityType: string, baseRules: BaseRules | undefined, many = false): string {
-  const words = (baseRules && RULESET_WORDS[baseRules][entityType]) ?? ENTITY_WORDS[entityType];
-  if (!words) return entityType;
-  return many ? words.many : words.one;
+/**
+ * The ruleset's word for an entity type (`words`, its rules': "Spell" for a 3.5 power, "Spells" with `many`), else the
+ * engine's, else the type itself.
+ */
+export function entityTypeLabel(entityType: string, words: RulesWords | undefined, many = false): string {
+  const word = words?.[entityType] ?? ENTITY_WORDS[entityType];
+  if (!word) return entityType;
+  return many ? word.many : word.one;
 }
 
 /**
@@ -48,13 +44,13 @@ export function entityTypeOfCode(code: string): string | undefined {
 
 /**
  * The ruleset's words that replace the engine's names in an activity's type: the app's own ("Create Klass" → "Create
- * Class"), and its base rules' ("Create Power" → "Create Spell").
+ * Class"), and its rules' (`words`: "Create Power" → "Create Spell").
  */
-export function getActivityLabelOverrides(baseRules: BaseRules | undefined): Record<string, string> {
+export function getActivityLabelOverrides(words: RulesWords | undefined): Record<string, string> {
   return Object.fromEntries(
-    Object.entries(ENTITY_WORDS).flatMap(([entityType, words]) => {
-      const code = words.code ?? words.one;
-      const word = entityTypeLabel(entityType, baseRules);
+    Object.entries(ENTITY_WORDS).flatMap(([entityType, engine]) => {
+      const code = engine.code ?? engine.one;
+      const word = entityTypeLabel(entityType, words);
       return code === word ? [] : [[code, word]];
     }),
   );

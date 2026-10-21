@@ -7,6 +7,7 @@ import { isRecord } from "@/shared/isRecord.ts";
 
 import { formatCost, formatDie } from "./formatNumeric.ts";
 import { oneOf } from "./oneOf.ts";
+import type { RulesDescriptions } from "./queries.ts";
 import { entityTypeLabel, entityTypeOfCode, getActivityLabelOverrides } from "./rulesetLabels.ts";
 
 /** A ruleset entity's change, as its notification says it: its verb, by the type's (`createFeat`) */
@@ -79,20 +80,15 @@ const NOTIFICATION_MESSAGES: Record<string, (actor: string, d: Record<string, un
 /** A field that points to another entity by its id (`primaryAbilityId`, `sourceItemId`): its name, then "Id". */
 const REFERENCE_FIELD = /^(\w+)Id$/;
 
-/** The base rules an activity's ruleset follows, when it says */
-function baseRulesOf(d: Record<string, unknown>) {
-  return oneOf(d.baseRules, BASE_RULES_OPTIONS);
-}
-
 /**
  * A ruleset entity's create, update or delete, named in its ruleset's word ("Ann created spell Fireball"): the entity
  * its type names (`createKlass`), the engine's names (`entityTypeOfCode`).
  */
-function contentChange(type: string, actor: string, d: Record<string, unknown>) {
+function contentChange(type: string, actor: string, d: Record<string, unknown>, rules: RulesDescriptions | undefined) {
   const [, verb = "", name = ""] = /^([a-z]+)([A-Z]\w*)$/.exec(type) ?? [];
   const entityType = entityTypeOfCode(name);
   if (!Object.hasOwn(CONTENT_CHANGES, verb) || !entityType) return undefined;
-  const word = entityTypeLabel(entityType, baseRulesOf(d)).toLowerCase();
+  const word = entityTypeLabel(entityType, wordsOf(d, rules)).toLowerCase();
   return `${actor} ${CONTENT_CHANGES[verb]} ${word} ${d.entityName || ""}`.trim();
 }
 
@@ -121,6 +117,12 @@ function payload(data: unknown): Record<string, unknown> {
   return isRecord(data) ? data : {};
 }
 
+/** The words of the base rules an activity's ruleset follows, when it says, as its rules describe them (`rules`). */
+function wordsOf(d: Record<string, unknown>, rules: RulesDescriptions | undefined) {
+  const baseRules = oneOf(d.baseRules, BASE_RULES_OPTIONS);
+  return baseRules && rules?.[baseRules].words;
+}
+
 /** What an activity of `type` changed: its fields, its level, its modifier's or requirement's change, its property. */
 export function formatActivityDetails(type: string, data: unknown): string | null {
   const d = payload(data);
@@ -144,11 +146,14 @@ export function formatActivityDetails(type: string, data: unknown): string | nul
   return parts.length > 0 ? parts.join("\n") : null;
 }
 
-/** An activity's type as a label, in its ruleset's words ("createKlass" → "Create Class"), with the entity it names. */
-export function formatActivityType(type: string, data?: unknown): string {
+/**
+ * An activity's type as a label, in its ruleset's words (`rules`, every base rules': "createKlass" → "Create Class"),
+ * with the entity it names.
+ */
+export function formatActivityType(type: string, data?: unknown, rules?: RulesDescriptions): string {
   const d = payload(data);
   let formatted = formatSegment(type);
-  for (const [code, word] of Object.entries(getActivityLabelOverrides(baseRulesOf(d))))
+  for (const [code, word] of Object.entries(getActivityLabelOverrides(wordsOf(d, rules))))
     formatted = formatted.replace(new RegExp(`\\b${code}\\b`, "g"), word);
 
   if (d.entityName) formatted += `: ${d.entityName}`;
@@ -156,15 +161,16 @@ export function formatActivityType(type: string, data?: unknown): string {
   return formatted;
 }
 
-export function formatNotificationMessage(type: string, data: unknown): string {
+/** A notification's message, its entity named in its ruleset's words (`rules`, every base rules'). */
+export function formatNotificationMessage(type: string, data: unknown, rules?: RulesDescriptions): string {
   const d = payload(data);
   const actorName = typeof d.actorName === "string" && d.actorName ? d.actorName : "Someone";
 
   const formatter = NOTIFICATION_MESSAGES[type];
   if (formatter) return formatter(actorName, d);
-  const change = contentChange(type, actorName, d);
+  const change = contentChange(type, actorName, d, rules);
   if (change) return change;
 
-  const typeFormatted = formatActivityType(type, data).toLowerCase();
+  const typeFormatted = formatActivityType(type, data, rules).toLowerCase();
   return `${actorName}: ${typeFormatted}`;
 }

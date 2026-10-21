@@ -4,7 +4,7 @@ import { parseResponse } from "hono/client";
 import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
 
 import { ConfirmDialog, ReadOnlyFields, SectionTabPanel, SectionTabs } from "@/client/src/components/common/index.ts";
-import { useLeaveGuard, usePageTitle, useRulesetPermissions } from "@/client/src/hooks/index.ts";
+import { useLeaveGuard, usePageTitle, useRules, useRulesetPermissions } from "@/client/src/hooks/index.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { type RulesetDetail, rulesetDetailQuery } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
@@ -228,7 +228,8 @@ export default function ClassDetailsPage() {
     section?: string;
   }>();
   const { data: ruleset, isLoading, error } = useQuery(rulesetDetailQuery(rulesetId));
-  const back = entityPageBack(location.state, `/rulesets/${rulesetId}/classes`, ruleset?.baseRules);
+  const { rules } = useRules(ruleset?.baseRules);
+  const back = entityPageBack(location.state, `/rulesets/${rulesetId}/classes`, rules?.words);
   // The class loads alongside its ruleset, which its page waits for: its forms and its tabs are its base rules'
   useQuery(classDetailQuery(rulesetId, classId));
 
