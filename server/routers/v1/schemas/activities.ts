@@ -30,7 +30,3 @@ export const v1Activity = z
   .meta({ description: "Something the key's user did", id: "Activity" });
 
 export const v1ActivityPage = buildPageSchema(v1Activity);
-
-export const v1TargetPage = z
-  .strictObject({ path: z.string().meta({ description: "A path on the app's origin: `/campaigns/{id}`" }) })
-  .meta({ description: "The app's page that shows a record an activity or a notification is about", id: "TargetPage" });

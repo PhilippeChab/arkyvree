@@ -85,6 +85,19 @@ describe("v1 ruleset customization", () => {
     expect((await expectOk(route.modifiers.$get({ param: owned }))).map(({ value }) => value)).toEqual(["2"]);
   });
 
+  test("refuses a modifier on a path its entity can't take, saying what's wrong", async () => {
+    const { api, rulesetId: id } = await createKeyedFork();
+    const { featMap } = await getSeedCtx();
+    const param = { entityId: featMap["Power Attack"]!, id, kind: "feats" } as const;
+    const json = { operator: "add", target: "abilities.strenght.misc", value: "1" } as const;
+
+    const refused = await expectStatus(
+      api.v1.rulesets[":id"][":kind"][":entityId"].modifiers.$post({ json, param }),
+      400,
+    );
+    expect(await refused.text()).toContain("Invalid modifier path");
+  });
+
   test("adds a requirement group and a check under it, changes the check and deletes it", async () => {
     const { api, rulesetId: id } = await createKeyedFork();
     const route = api.v1.rulesets[":id"][":kind"][":entityId"];

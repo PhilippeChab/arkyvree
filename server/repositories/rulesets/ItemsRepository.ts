@@ -97,7 +97,7 @@ class ItemsRepository extends RulesetEntityRepository<typeof itemsInRules> {
 
   async findPage(
     db: Db,
-    where: RulesetEntityFilters<{ isTemplate?: boolean }>,
+    where: RulesetEntityFilters<{ isTemplate?: boolean; type?: string }>,
     pagination: { limit: number; page: number },
   ) {
     const { search, orderBy = "name", orderDir = "asc" } = where;
@@ -107,12 +107,19 @@ class ItemsRepository extends RulesetEntityRepository<typeof itemsInRules> {
     const rulesetCondition = this.buildRulesetCondition(db, where);
 
     const templateFilter = where.isTemplate !== undefined ? eq(this.table.isTemplate, where.isTemplate) : false;
+    const typeFilter = where.type ? eq(this.table.type, where.type) : false;
 
     return await this.withPagination(
       pagination,
       async ({ limit, offset }) =>
         await db.query.itemsInRules.findMany({
-          where: this.where([rulesetCondition, isNull(this.table.deletedAt), searchConditions, templateFilter]),
+          where: this.where([
+            rulesetCondition,
+            isNull(this.table.deletedAt),
+            searchConditions,
+            templateFilter,
+            typeFilter,
+          ]),
           orderBy: this.pageOrder(
             this.searchOrderBy(search, searchColumns, this.orderBy(this.table[orderBy], orderDir)),
           ),

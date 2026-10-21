@@ -1,4 +1,4 @@
-/** What the key's user is told of, as v1 answers it: a page of their notifications, and their unread ones. */
+/** What the key's user is told of, as v1 answers it: a page of their notifications. */
 
 import { z } from "zod";
 
@@ -28,10 +28,3 @@ export const v1Notification = z
   .meta({ description: "Something the key's user is told of", id: "Notification" });
 
 export const v1NotificationPage = buildPageSchema(v1Notification);
-
-export const v1UnreadNotifications = z
-  .strictObject({
-    count: z.number().int().meta({ description: "How many are unread, from the last three months" }),
-    items: z.array(v1Notification).meta({ description: "The latest ten" }),
-  })
-  .meta({ description: "The key's user's unread notifications", id: "UnreadNotifications" });

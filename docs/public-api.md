@@ -124,8 +124,8 @@ Each write calls the service the app's own route calls, its body a v1 shape tran
   their body leaves out, refuse (409) one that changed between that read and their write. A character's private notes,
   which v1 never answers, it never writes either.
 - A modifier's or a requirement's target is a path (`abilities.strength.misc`): `GET /v1/rulesets/{id}/target-paths`
-  completes one a segment at a time, or finds every path whose name has a word, and `…/target-paths/check` says what a
-  path takes, or what it may have meant.
+  completes one a segment at a time, or finds every path whose name has a word, with what each takes. A write refuses
+  a path it can't take, saying why.
 
 ## Campaigns, contributors and the rest
 
@@ -149,12 +149,10 @@ Each write calls the service the app's own route calls, its body a v1 shape tran
 - **Sharing**: a character's share link (`POST`/`DELETE /v1/characters/{id}/share`), and the character it shares,
   read by its token (`/v1/shared-characters/{shareToken}`, the same `Character` as the user's own, and its PDF, made
   as it's asked for).
-- **Notifications** (`/v1/notifications`) and **activities** (`/v1/activities`), from the last three months: a page of
-  them, the unread notifications' count and latest, a notification marked read, or all of them but the invites, which
-  stay unread until they're answered. Each names what it's about (`target`) by its kind as v1 names it (`classes`,
-  `spells`, `campaigns`…), and `/v1/activities/targets/{kind}/{targetId}` answers the app's page of it (a 404 once
-  it's gone, a 403 once the user lost access to it). An export (`exports`, a PDF's notice) has no page:
-  `GET /v1/exports/{id}` reads it.
+- **Notifications** (`/v1/notifications`, the unread ones alone with `unreadOnly`) and **activities**
+  (`/v1/activities`), from the last three months: a page of them, a notification marked read, or all of them but the
+  invites, which stay unread until they're answered. Each names what it's about (`target`) by its kind as v1 names it
+  (`classes`, `spells`, `campaigns`, `exports`…) and its id, which that kind's routes read.
 - **Attachments** (`/v1/attachments`): a record's image (a user's avatar, a character's portrait), read, removed, and
   uploaded in one request: `POST /v1/attachments`, a `multipart/form-data` body with the slot (`recordType`, `recordId`,
   `name`) and the `file`, replacing the image there. The server reads the image's type from its bytes, then stores the
@@ -162,7 +160,6 @@ Each write calls the service the app's own route calls, its body a v1 shape tran
   stores it, deletes both when the write or the attach fails, and the hourly sweep of pending files takes one a crash
   left. The app keeps its own two steps, the browser sending the file straight to the storage (`useDirectUpload`), which
   a caller outside it would have to sign and send apart.
-- **The dashboard** (`/v1/dashboard/stats`): how many campaigns, characters and rulesets the user has.
 
 ## A PDF, made in the background
 

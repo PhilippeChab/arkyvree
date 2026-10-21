@@ -3,7 +3,7 @@
 import type { z } from "zod";
 
 import { toV1Kind } from "@/server/routers/v1/kinds.ts";
-import type { v1Activity, v1Target, v1TargetPage } from "@/server/routers/v1/schemas/activities.ts";
+import type { v1Activity, v1Target } from "@/server/routers/v1/schemas/activities.ts";
 import type { ActivitiesService } from "@/server/services/activities/index.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 
@@ -26,9 +26,4 @@ export function toV1Target({
   targetTable: string;
 }): z.infer<typeof v1Target> {
   return { id: targetId, kind: toV1Kind(targetTable) };
-}
-
-/** The app's page that shows a target, a path on its origin. */
-export function toV1TargetPage(path: string): z.infer<typeof v1TargetPage> {
-  return { path };
 }

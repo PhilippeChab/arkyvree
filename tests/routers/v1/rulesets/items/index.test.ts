@@ -33,11 +33,10 @@ describe("v1 ruleset items", () => {
   test("lists a ruleset's item templates of a type", async () => {
     const { api } = await createKeyedApi();
     const { rulesetId: id } = await getSeedCtx();
-    const weapons = await expectOk(
-      api.v1.rulesets[":id"]["item-templates"].$get({ param: { id }, query: { type: "Weapon" } }),
-    );
-    expect(weapons.map(({ name }) => name)).toContain("Longsword");
-    expect(weapons.every(({ template, type }) => template && type === "Weapon")).toBe(true);
+    const query = { limit: "100", template: "true", type: "Weapon" } as const;
+    const { items } = await expectOk(api.v1.rulesets[":id"].items.$get({ param: { id }, query }));
+    expect(items.map(({ name }) => name)).toContain("Longsword");
+    expect(items.every(({ template, type }) => template && type === "Weapon")).toBe(true);
   });
 
   test("adds an item to a user's ruleset, changes one it inherits on a copy of its own, and deletes one", async () => {

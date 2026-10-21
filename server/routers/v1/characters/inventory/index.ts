@@ -3,8 +3,8 @@ import { z } from "zod";
 
 import { location } from "@/drizzle/schema.ts";
 import { type ApiKeyContext, describeRoute, validate } from "@/server/middlewares/index.ts";
-import { heldSetList, heldSets, idParam } from "@/server/routers/api/validation.ts";
-import { v1Inventory, v1InventoryEntry, v1Placement } from "@/server/routers/v1/schemas/characterParts.ts";
+import { heldSets, idParam } from "@/server/routers/api/validation.ts";
+import { v1Inventory, v1InventoryEntry } from "@/server/routers/v1/schemas/characterParts.ts";
 import { V1 } from "@/server/routers/v1/translators/V1.ts";
 import { CharacterInventoryService } from "@/server/services/characters/inventory/index.ts";
 
@@ -52,39 +52,6 @@ export default new Hono<ApiKeyContext>()
         (await CharacterInventoryService.getInventory(c.var.requestSession, id)).map(V1.inventoryEntry),
         200,
       );
-    },
-  )
-  .get(
-    "/:id/inventory/placement",
-    describeRoute({
-      response: v1Placement,
-      status: 200,
-      summary:
-        "Why a place can't take one more of a character's items, if it can't: what an add without `force` refuses",
-    }),
-    validate("param", idParam),
-    validate(
-      "query",
-      z.object({
-        entryId: z.string().uuid().optional().meta({ description: "The entry placed, none for a new one" }),
-        location: z.enum(location.enumValues),
-        weaponSets: heldSetList
-          .default([])
-          .meta({ description: "Comma-separated: the weapon sets a hand holds it in, from 0" }),
-      }),
-    ),
-    async (c) => {
-      const { id } = c.req.valid("param");
-      const { entryId, location, weaponSets } = c.req.valid("query");
-      const session = c.var.requestSession;
-      const placement = await CharacterInventoryService.getPlacement(
-        session,
-        id,
-        entryId ?? null,
-        location,
-        weaponSets,
-      );
-      return c.json(V1.placement(placement), 200);
     },
   )
   .post(

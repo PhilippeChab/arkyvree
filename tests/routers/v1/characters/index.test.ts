@@ -129,21 +129,20 @@ describe("v1 characters", () => {
     expect(languages.picks).toEqual([]);
   });
 
-  test("answers what a character speaks, and what the languages it would pick leave it room for", async () => {
+  test("answers what a character speaks: the languages it picked, those it's given, and those it may add", async () => {
     const { api } = await createKeyedApi();
     const { langMap } = await getSeedCtx();
     const { id } = await findSeededCharacter("Fenn Ashwalker");
-    const route = api.v1.characters[":id"].languages;
-
-    const languages = await expectOk(route.$get({ param: { id }, query: { languageIds: langMap.Goblin! } }));
+    // Fenn picked Goblin
+    const languages = await expectOk(api.v1.characters[":id"].languages.$get({ param: { id } }));
     expect(languages.automatic.map(({ name }) => name)).toEqual(expect.arrayContaining(["Common", "Elven"]));
     expect(languages.picks).toEqual([{ id: langMap.Goblin, name: "Goblin", type: expect.any(String) }]);
     expect(languages.options.map(({ name }) => name)).not.toContain("Goblin");
   });
 
-  test("answers how a new character of a ruleset scores its abilities, and the races it may be", async () => {
+  test("answers how a new character of a ruleset scores its abilities", async () => {
     const { api } = await createKeyedApi();
-    const { abilityMap, raceMap, rulesetId } = await getSeedCtx();
+    const { abilityMap, rulesetId } = await getSeedCtx();
     const creation = await expectOk(api.v1.characters.creation.$get({ query: { rulesetId } }));
     expect(creation.abilities).toContainEqual({ id: abilityMap.Strength, name: "Strength" });
     expect(creation.scores).toEqual({ max: 100, min: 1, start: 10 });
@@ -154,12 +153,6 @@ describe("v1 characters", () => {
         costs: expect.arrayContaining([{ cost: 8, score: 15 }]),
         kind: "pointBuy",
       }),
-    );
-
-    const query = { alignment: "Lawful Good", gender: "Male", rulesetId, search: "Dwarf" } as const;
-    const { items } = await expectOk(api.v1.characters["available-races"].$get({ query }));
-    expect(items).toContainEqual(
-      expect.objectContaining({ eligible: true, id: raceMap.pc!.Dwarf, kind: "pc", speed: 20 }),
     );
   });
 

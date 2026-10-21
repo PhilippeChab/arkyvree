@@ -46,17 +46,15 @@ describe("v1 notifications", () => {
     expect((await expectOk(api.v1.notifications.$get({ query: { unreadOnly: "true" } }))).items).toEqual([changed!]);
   });
 
-  test("answers the unread ones' count and latest, and marks one read, which can't be marked again", async () => {
+  test("marks an unread one read, which can't be marked again", async () => {
     const { api } = await setup();
-    const unread = await expectOk(api.v1.notifications.unread.$get());
-    expect(unread).toEqual({
-      count: 1,
-      items: [expect.objectContaining({ read: false, type: "updateContributorRole" })],
-    });
+    const unread = () => api.v1.notifications.$get({ query: { unreadOnly: "true" } });
+    const { items } = await expectOk(unread());
+    expect(items).toEqual([expect.objectContaining({ read: false, type: "updateContributorRole" })]);
 
-    const param = { id: unread.items[0]!.id };
+    const param = { id: items[0]!.id };
     expect(await expectOk(api.v1.notifications[":id"].read.$post({ param }))).toMatchObject({ ...param, read: true });
-    expect(await expectOk(api.v1.notifications.unread.$get())).toEqual({ count: 0, items: [] });
+    expect((await expectOk(unread())).items).toEqual([]);
     await expectStatus(api.v1.notifications[":id"].read.$post({ param }), 404);
   });
 
@@ -67,13 +65,13 @@ describe("v1 notifications", () => {
     await CharacterContributorsService.inviteContributor(owner.session, character.id, user.emailAddress);
 
     await expectStatus(api.v1.notifications["read-all"].$post(), 204);
-    const { items } = await expectOk(api.v1.notifications.unread.$get());
+    const { items } = await expectOk(api.v1.notifications.$get({ query: { unreadOnly: "true" } }));
     expect(items.map(({ type }) => type)).toEqual(["inviteCharacterContributor"]);
   });
 
   test("refuses to mark another user's notification read", async () => {
     const { api } = await setup();
-    const { id } = (await expectOk(api.v1.notifications.unread.$get())).items[0]!;
+    const { id } = (await expectOk(api.v1.notifications.$get({ query: { unreadOnly: "true" } }))).items[0]!;
     const { api: stranger } = await createKeyedApi((await createTestUser()).user.id);
     await expectStatus(stranger.v1.notifications[":id"].read.$post({ param: { id } }), 404);
   });

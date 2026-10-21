@@ -17,10 +17,8 @@ import {
 } from "@/drizzle/schema.ts";
 import type {
   v1Class,
-  v1ClassFeatPools,
   v1ClassLevel,
   v1ClassProgression,
-  v1ClassSpellsPerDay,
   v1Feat,
   v1Item,
   v1Language,
@@ -31,7 +29,6 @@ import type {
   v1Skill,
   v1Spell,
   v1TargetPath,
-  v1TargetPathCheck,
 } from "@/server/routers/v1/schemas/content.ts";
 import type { ClassesService } from "@/server/services/rulesets/classes/index.ts";
 import type { ClassLevelsService } from "@/server/services/rulesets/classes/levels/index.ts";
@@ -45,7 +42,7 @@ import type { PowersService } from "@/server/services/rulesets/powers/index.ts";
 import type { RacesService } from "@/server/services/rulesets/races/index.ts";
 import type { SavesService } from "@/server/services/rulesets/saves/index.ts";
 import type { SkillsService } from "@/server/services/rulesets/skills/index.ts";
-import type { PathCompletion, PathValidationResult } from "@/shared/customization/target.ts";
+import type { PathCompletion } from "@/shared/customization/target.ts";
 
 import type { Answer } from "./answers.ts";
 
@@ -112,11 +109,15 @@ function toFields(row: object, columns: Set<string>) {
   return Object.fromEntries(Object.entries(row).filter(([key]) => !columns.has(key)));
 }
 
-/** A class level's counts by spell level: each spell level, and its count. */
-function toSpellLevelCounts(counts: Record<string, number | "All">) {
-  return Object.entries(counts)
-    .map(([spellLevel, count]) => ({ count, spellLevel: Number(spellLevel) }))
-    .sort((a, b) => a.spellLevel - b.spellLevel);
+/** A spells-known total as a progression's save takes it: `all` for every spell of its level, none (null) for none. */
+function toKnownCount(total: number | "All" | undefined) {
+  if (total === undefined) return null;
+  return total === "All" ? "all" : total;
+}
+
+/** A spells-a-day total as a progression's save takes it: none (null) for none. */
+function toPerDayCount(total: number | "All" | undefined) {
+  return typeof total === "number" ? total : null;
 }
 
 /** A target's segments, each named, in the path's order. */
@@ -137,25 +138,10 @@ export function toV1Class(klass: Answer<typeof ClassesService.getClass>): z.infe
   };
 }
 
-/** The feats a class's levels give to pick, each level's by aptitude. */
-export function toV1ClassFeatPools(
-  levels: Answer<typeof ClassLevelsService.getClassLevelFeatPools>,
-): z.infer<typeof v1ClassFeatPools> {
-  return levels.map(({ featPools, level }) => ({
-    aptitudes: Object.entries(featPools).map(([name, count]) => ({ count, name })),
-    level,
-  }));
-}
-
 /** A class's level: its base saves, the feats it grants and its fields. */
 export function toV1ClassLevel(level: ClassLevel): z.infer<typeof v1ClassLevel> {
   return {
-    feats: level.feats.map((feat) => ({
-      aptitude: { id: feat.aptitudeId, name: feat.aptitudeName },
-      free: feat.free,
-      id: feat.id,
-      name: feat.name,
-    })),
+    feats: level.feats.map(({ aptitudeId, free, id, name }) => ({ aptitudeId, featId: id, free, name })),
     fields: toFields(level, CLASS_LEVEL_COLUMNS),
     id: level.id,
     level: level.level,
@@ -163,41 +149,46 @@ export function toV1ClassLevel(level: ClassLevel): z.infer<typeof v1ClassLevel> 
   };
 }
 
-/** What a class's progression reads beside its levels and spell tables: its pools' picks by level. */
-export function toV1ClassProgression(
-  progression: Answer<typeof ClassProgressionService.getProgression>,
-): z.infer<typeof v1ClassProgression> {
+/** A class's whole progression, as its save takes it back: its levels, its pools' picks and its spell tables. */
+export function toV1ClassProgression({
+  known,
+  levels,
+  perDay,
+  progression,
+}: Answer<typeof ClassProgressionService.getFullProgression>): z.infer<typeof v1ClassProgression> {
+  // Every level's row as wide as the class's highest spell level
+  const totals = [...known.map(({ spellsKnown }) => spellsKnown), ...perDay.map(({ spellsPerDay }) => spellsPerDay)];
+  const width = Math.max(0, ...totals.flatMap((row) => Object.keys(row).map((spellLevel) => Number(spellLevel) + 1)));
+  const spellLevels = Array.from({ length: width }, (_, spellLevel) => spellLevel);
   return {
     featPicks: Object.entries(progression.featPicks).map(([featId, picks]) => ({
       aptitudes: Object.entries(picks).map(([name, count]) => ({ count, name })),
       featId,
     })),
+    levels: levels.map(toV1ClassLevel),
     pools: progression.pools.map(({ aptitudeId, name, picks }) => ({
-      aptitude: { id: aptitudeId, name },
+      aptitudeId,
+      name,
       picks: Object.entries(picks).map(([levelId, count]) => ({ count, levelId })),
     })),
     severalSpellLists: progression.severalSpellLists,
     spellList: progression.spellList ? { id: progression.spellList.id, name: progression.spellList.name } : null,
+    spells: {
+      known: known.map(({ id, spellsKnown }) => ({
+        counts: spellLevels.map((spellLevel) => toKnownCount(spellsKnown[spellLevel])),
+        levelId: id,
+      })),
+      perDay: perDay.map(({ id, spellsPerDay }) => ({
+        counts: spellLevels.map((spellLevel) => toPerDayCount(spellsPerDay[spellLevel])),
+        levelId: id,
+      })),
+    },
   };
 }
 
 /** A class's skills, each named. */
 export function toV1ClassSkills(skills: Answer<typeof ClassSkillsService.getClassSkills>) {
   return skills.map(({ skillsInRule }) => ({ id: skillsInRule.id, name: skillsInRule.name }));
-}
-
-/**
- * What a class's levels give by spell level, each level's: the spells they cast a day (`spellsPerDay`), or know
- * (`spellsKnown`), as the route reads them, since a level's declared fields sit beside them.
- */
-export function toV1ClassSpellCounts<K extends "spellsKnown" | "spellsPerDay">(
-  levels: ({ level: number } & Record<K, Record<string, number | "All">>)[],
-  counts: K,
-): z.infer<typeof v1ClassSpellsPerDay> {
-  return levels.map((row) => ({
-    level: row.level,
-    spells: toSpellLevelCounts(row[counts]),
-  }));
 }
 
 /** An entity that's its name and its description alone: an ability, an aptitude, a mechanic. */
@@ -225,10 +216,7 @@ export function toV1Feat(
 
 /** An item of a ruleset's. */
 export function toV1Item(
-  item:
-    | Answer<typeof ItemsService.getItem>
-    | Answer<typeof ItemsService.getTemplates>[number]
-    | ItemOf<typeof ItemsService.getItems>,
+  item: Answer<typeof ItemsService.getItem> | ItemOf<typeof ItemsService.getItems>,
 ): z.infer<typeof v1Item> {
   return {
     cost: toV1Number(item.costGp),
@@ -365,24 +353,5 @@ export function toV1TargetPath(completion: PathCompletion): z.infer<typeof v1Tar
     setValues: completion.setValues ?? [],
     values: completion.possibleValues ?? [],
     valueType: completion.valueType ?? null,
-  };
-}
-
-/** Whether a target path is one a modifier or a requirement may take, and what a valid one takes. */
-export function toV1TargetPathCheck(check: PathValidationResult): z.infer<typeof v1TargetPathCheck> {
-  const { target } = check;
-  return {
-    errors: check.errors.map(({ message, position, severity }) => ({ ...position, message, severity })),
-    suggestions: check.suggestions,
-    target: target
-      ? {
-          operators: target.operators,
-          path: target.path,
-          setValues: target.setValues ?? [],
-          values: target.possibleValues ?? [],
-          valueType: target.valueType,
-        }
-      : null,
-    valid: check.isValid,
   };
 }

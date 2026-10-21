@@ -1,4 +1,4 @@
-import { toV1Activity, toV1TargetPage } from "./activities.ts";
+import { toV1Activity } from "./activities.ts";
 import { toV1Attachment } from "./attachments.ts";
 import {
   toV1Campaign,
@@ -16,8 +16,6 @@ import {
   toV1CharacterLanguages,
   toV1ImportedCharacter,
   toV1InventoryEntry,
-  toV1Placement,
-  toV1RaceOption,
   toV1SavedLevel,
 } from "./characterParts.ts";
 import {
@@ -29,11 +27,9 @@ import {
 import { toV1Character, toV1Characters } from "./characters.ts";
 import {
   toV1Class,
-  toV1ClassFeatPools,
   toV1ClassLevel,
   toV1ClassProgression,
   toV1ClassSkills,
-  toV1ClassSpellCounts,
   toV1Entity,
   toV1Feat,
   toV1Item,
@@ -46,7 +42,6 @@ import {
   toV1Skill,
   toV1Spell,
   toV1TargetPath,
-  toV1TargetPathCheck,
 } from "./content.ts";
 import {
   toClassRequest,
@@ -56,7 +51,6 @@ import {
   toSkillRequest,
 } from "./contentRequests.ts";
 import { toV1Contributor, toV1Contributors } from "./contributors.ts";
-import { toV1Stats } from "./dashboard.ts";
 import { toV1Export } from "./exports.ts";
 import {
   toV1InviteStatus,
@@ -66,7 +60,7 @@ import {
   toV1ReceivedRulesetInvite,
 } from "./invites.ts";
 import { toLevelChoicesQuery, toV1LevelChoices } from "./levelChoices.ts";
-import { toV1Notification, toV1UnreadNotifications } from "./notifications.ts";
+import { toV1Notification } from "./notifications.ts";
 import { toV1Page } from "./pages.ts";
 import {
   toV1FieldDeclarations,
@@ -100,12 +94,10 @@ export const V1 = {
   characterLanguages: toV1CharacterLanguages,
   characters: toV1Characters,
   class: toV1Class,
-  classFeatPools: toV1ClassFeatPools,
+  classRequest: toClassRequest,
   classLevel: toV1ClassLevel,
   classProgression: toV1ClassProgression,
-  classRequest: toClassRequest,
   classSkills: toV1ClassSkills,
-  classSpellCounts: toV1ClassSpellCounts,
   contributor: toV1Contributor,
   contributors: toV1Contributors,
   entity: toV1Entity,
@@ -130,10 +122,8 @@ export const V1 = {
   names: toV1Names,
   notification: toV1Notification,
   page: toV1Page,
-  placement: toV1Placement,
   playerSlot: toV1PlayerSlot,
   race: toV1Race,
-  raceOption: toV1RaceOption,
   raceRequest: toRaceRequest,
   receivedCampaignInvite: toV1ReceivedCampaignInvite,
   receivedCampaignInvites: toV1ReceivedCampaignInvites,
@@ -151,10 +141,6 @@ export const V1 = {
   skill: toV1Skill,
   skillRequest: toSkillRequest,
   spell: toV1Spell,
-  stats: toV1Stats,
-  targetPage: toV1TargetPage,
   targetPath: toV1TargetPath,
-  targetPathCheck: toV1TargetPathCheck,
-  unreadNotifications: toV1UnreadNotifications,
   written: toV1Written,
 };

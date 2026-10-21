@@ -121,7 +121,7 @@ describe("v1 character inventory", () => {
     });
   });
 
-  test("says why a place can't take one more item, and refuses an add there", async () => {
+  test("refuses an add a place can't take, saying why", async () => {
     const { api } = await createKeyedApi();
     const { itemMap } = await getSeedCtx();
     const { id } = await findSeededCharacter("Fenn Ashwalker");
@@ -129,10 +129,8 @@ describe("v1 character inventory", () => {
     // Fenn already wears studded leather
     const armor = { equipped: true, itemId: itemMap["Studded Leather"]!, location: "Torso", quantity: 1 } as const;
 
-    const placement = await expectOk(route.placement.$get({ param: { id }, query: { location: "Torso" } }));
-    expect(placement.warning).toBe("Torso slot is occupied by Studded Leather");
-    await expectStatus(route.$post({ json: armor, param: { id } }), 400);
-    expect((await expectOk(route.placement.$get({ param: { id }, query: { location: "Head" } }))).warning).toBeNull();
+    const refused = await expectStatus(route.$post({ json: armor, param: { id } }), 400);
+    expect(await refused.text()).toContain("Torso slot is occupied by Studded Leather");
   });
 
   test("equips an item whose requirements the character doesn't meet only when it's forced", async () => {

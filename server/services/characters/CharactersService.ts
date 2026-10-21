@@ -216,17 +216,17 @@ class CharactersService extends include(Object, Archives, Imports) {
   }
 
   /**
-   * What a character the session may edit (or a bonded creature of one) speaks, and what its picked languages
-   * (`languageIds`, as its edit is being made) leave it room for: what its languages picker offers.
+   * What a character the session may edit (or a bonded creature of one) speaks, and what its picked languages leave it
+   * room for: those it has, or those an edit is being made with (`languageIds`), as its languages picker offers.
    */
-  async getLanguages(session: Session, characterId: string, languageIds: string[]) {
+  async getLanguages(session: Session, characterId: string, languageIds?: string[]) {
     const record = await findEditableCharacterOrBonded(db, characterId, session.userId);
     if (!record) throw new NotFoundError("Character not found");
 
+    const input = await readCharacterInput(db, record);
+    const picks = languageIds ?? input.rows.languages.map(({ languageId }) => languageId);
     return await withRulesetScope(db, record.rulesetId, async (scope) =>
-      Engine.for(scope)
-        .character(await readCharacterInput(db, record))
-        .describeLanguages(languageIds),
+      Engine.for(scope).character(input).describeLanguages(picks),
     );
   }
 

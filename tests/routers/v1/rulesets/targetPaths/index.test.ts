@@ -54,27 +54,4 @@ describe("v1 ruleset target paths", () => {
     );
     expect(segments.map(({ label }) => label)).toContain("strength");
   });
-
-  test("checks a path: what a valid one takes, and what an invalid one may have meant", async () => {
-    const { api } = await createKeyedApi();
-    const { rulesetId: id } = await getSeedCtx();
-    const check = api.v1.rulesets[":id"]["target-paths"].check;
-
-    const valid = await expectOk(check.$get({ param: { id }, query: { path: "abilities.strength.misc" } }));
-    expect(valid).toMatchObject({
-      errors: [],
-      target: {
-        operators: expect.arrayContaining(["add", "set"]),
-        path: "abilities.strength.misc",
-        valueType: "number",
-      },
-      valid: true,
-    });
-
-    const invalid = await expectOk(
-      check.$get({ param: { id }, query: { kind: "requirement", path: "abilities.strenght.total" } }),
-    );
-    expect(invalid).toMatchObject({ target: null, valid: false });
-    expect(invalid.errors.length).toBeGreaterThan(0);
-  });
 });

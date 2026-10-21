@@ -3,11 +3,7 @@ import { z } from "zod";
 
 import { type ApiKeyContext, describeRoute, validate } from "@/server/middlewares/index.ts";
 import { idParam, orderDirDesc } from "@/server/routers/api/validation.ts";
-import {
-  v1Notification,
-  v1NotificationPage,
-  v1UnreadNotifications,
-} from "@/server/routers/v1/schemas/notifications.ts";
+import { v1Notification, v1NotificationPage } from "@/server/routers/v1/schemas/notifications.ts";
 import { V1 } from "@/server/routers/v1/translators/V1.ts";
 import { flag, PAGE_FILTERS } from "@/server/routers/v1/validation.ts";
 import { NotificationsService } from "@/server/services/notifications/index.ts";
@@ -42,15 +38,6 @@ export default new Hono<ApiKeyContext>()
       );
       return c.json(V1.page(notifications, V1.notification), 200);
     },
-  )
-  .get(
-    "/unread",
-    describeRoute({
-      response: v1UnreadNotifications,
-      status: 200,
-      summary: "How many of the key's user's notifications are unread, and the latest ten",
-    }),
-    async (c) => c.json(V1.unreadNotifications(await NotificationsService.getUnreadSummary(c.var.requestSession)), 200),
   )
   .post(
     "/read-all",

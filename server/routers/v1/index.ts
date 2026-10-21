@@ -9,7 +9,6 @@ import campaignInvites from "./campaignInvites/index.ts";
 import campaigns from "./campaigns/index.ts";
 import characterInvites from "./characterInvites/index.ts";
 import characters from "./characters/index.ts";
-import dashboard from "./dashboard/index.ts";
 import exports from "./exports/index.ts";
 import notifications from "./notifications/index.ts";
 import rulesetInvites from "./rulesetInvites/index.ts";
@@ -30,7 +29,6 @@ export default new Hono()
   .route("/campaigns", campaigns)
   .route("/character-invites", characterInvites)
   .route("/characters", characters)
-  .route("/dashboard", dashboard)
   .route("/exports", exports)
   .route("/notifications", notifications)
   .route("/ruleset-invites", rulesetInvites)
