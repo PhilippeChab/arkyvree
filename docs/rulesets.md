@@ -739,17 +739,17 @@ engine/rulesets/
     │                                      planBondedCreatures: BondedPlans; and the save's hooks, the issues an
     │                                      edited level answers for, findEditedLevelIssues, its own). A class per
     │                                      3.5 operation on LevelUpState (core's LevelUpBase, with the steps the
-    │                                      wizard and the preview share, the skills step its concern,
+    │                                      plan's answer and its save share, the skills step its concern,
     │                                      SpendsSkillPoints: what the form's skill points come to, as a save
     │                                      spreads them; and a pool's room: the picks fitted to their pools,
     │                                      fitPicks): PlannedLevelsState, the planned levels, what they give (each
     │                                      level's pool slots, its concern PlansAptitudeSlots) and their picks
     │                                      spread over them (Dnd35PicksDistribution, on core's PicksDistribution:
     │                                      the skill points class-skill levels first, within each level's rank
-    │                                      caps), which LevelUpPreview (the wizard's preview) and LevelUpPlan (what
+    │                                      caps), which LevelUpPreview (Add Level's plan's answer) and LevelUpPlan (what
     │                                      core's save asks: the planned levels read, their picks spread, the pools
-    │                                      picks overfill) build on; LevelUpSteps: the wizard's steps, which it
-    │                                      lists (abilities, skills, feats, powers) and answers by name;
+    │                                      picks overfill) build on; LevelUpSteps: an edited level's ability
+    │                                      increase, skills, feats and powers, which an edit's plan answers;
     │                                      Dnd35LevelSelections: a saved level's selections, with each feat's pools
     ├── pickers/                           (the 3.5 pickers, on core's: ClassPicker (a class's next level) on
     │                                      CharacterPicker; Dnd35LevelPicker (FeatPicker, PowerPicker: the level
@@ -809,7 +809,7 @@ server/
 
 ### The type split pattern
 
-The engine's types keep the narrowest surface any level-based system could implement: the module's contract (`engine/core/module/contract.ts`), the rows it takes (`CharacterInputs.ts`), its operations' types by role, and what its machinery reads, each beside its area (`RulesetView` in `core/view/`, `Components` and `TargetPaths` in `core/paths/`). A ruleset's types are its own, each beside what produces it. A part's types sit beside it, in its folder (`engine/core/module/parts/<part>/`: its abstract class, and its index), and sort there by role, as their operations' verbs do: what an operation takes is `requests.ts` (one named type per input: a form's request, `LevelUpRequest`, `NewCharacterRequest`; a step's or a picker's query, `LevelQuery`, `PickQuery`; whether to force the rules is always the operation's last argument, never a request's field), what a `plan…` answers is `plans.ts` (a named plan, never a bare list: `LevelsPlan`, `AbilitiesPlan`, `BondedCreaturesPlan`, `EntityCreatePlan`, and the rows it writes, `FeatPick`, `SkillRank`, `AbilityScore`), what a `describe…` answers in a shape every ruleset shares is `descriptions.ts` (`CharacterCard`, `CharacterCreation`, `WizardStep`), and what an `open…` answers is the module's `pickers.ts`, which every part's pickers share. So a part's folder holds its whole contract: the characters' requests are `parts/characters/requests.ts`, the level-up's `parts/levelUp/requests.ts`, and a type another part reads is imported from its owner's index (a level-up's new bonded creature takes the characters' `AbilityScore`). What a level-up projects is rows (`CharacterProjection.ts`, beside `CharacterInputs.ts`): a ruleset builds a planned character as it builds a saved one, so what a level grants and what a pick carries are read one way.
+The engine's types keep the narrowest surface any level-based system could implement: the module's contract (`engine/core/module/contract.ts`), the rows it takes (`CharacterInputs.ts`), its operations' types by role, and what its machinery reads, each beside its area (`RulesetView` in `core/view/`, `Components` and `TargetPaths` in `core/paths/`). A ruleset's types are its own, each beside what produces it. A part's types sit beside it, in its folder (`engine/core/module/parts/<part>/`: its abstract class, and its index), and sort there by role, as their operations' verbs do: what an operation takes is `requests.ts` (one named type per input: a form's request, `NewCharacterRequest`; a level-up read from a plan, `LevelUpRequest`, and an edit, `LevelEditRequest`; whether to force the rules is always the operation's last argument, never a request's field), what a `plan…` answers is `plans.ts` (a named plan, never a bare list: `LevelsPlan`, `AbilitiesPlan`, `BondedCreaturesPlan`, `EntityCreatePlan`, and the rows it writes, `FeatPick`, `SkillRank`, `AbilityScore`), what a `describe…` answers in a shape every ruleset shares is `descriptions.ts` (`CharacterCard`, `CharacterCreation`; a level step's, by its mechanic, with its plan request and its picker's query, is the level-up's `mechanics.ts`), and what an `open…` answers is the module's `pickers.ts`, which every part's pickers share. So a part's folder holds its whole contract: the characters' requests are `parts/characters/requests.ts`, the level-up's `parts/levelUp/requests.ts`, and a type another part reads is imported from its owner's index (a level-up's new bonded creature takes the characters' `AbilityScore`). What a level-up projects is rows (`CharacterProjection.ts`, beside `CharacterInputs.ts`): a ruleset builds a planned character as it builds a saved one, so what a level grants and what a pick carries are read one way.
 
 ```ts
 // engine/core/module/contract.ts  (universal): each part an abstract class of `parts/<part>/`, which a ruleset extends
@@ -826,11 +826,6 @@ export interface RulesetModule<D extends Descriptions, E extends EntityKindsCont
 // engine/core/module/parts/levelUp/LevelUpPart.ts  (universal): what the server reads is a core type, what it hands the
 // client as it is the ruleset's own (`D`)
 export default abstract class LevelUpPart<D extends Descriptions> {
-  abstract describePreview(view: RulesetView, character: CharacterInput, …): D["preview"];
-  // The wizard's steps are the ruleset's: it lists a level's, and answers one by its name (`D["step"]`, a union of
-  // its steps, each named for which it is)
-  abstract describeStep(view: RulesetView, character: CharacterInput, name: string, query: LevelQuery): D["step"];
-  abstract describeSteps(view: RulesetView, character: CharacterInput, query: LevelQuery): readonly WizardStep<D["step"]["name"]>[];
   abstract planLevels(view: RulesetView, character: CharacterInput, bonded: CharacterInput[], request: LevelUpRequest, force: boolean): LevelsPlan;
   // A level's steps by their mechanics (`mechanics.ts`): the plan's answer, a step's picker, a plan's save and edit
   abstract listSteps(view: RulesetView, character: CharacterInput, edited: boolean): LevelSteps;

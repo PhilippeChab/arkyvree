@@ -102,6 +102,10 @@
  * - `pending-props`: a request in flight is `pending`, a dialog's and a button's alike (`pending={mutation.isPending}`):
  *   never `isLoading`, a query's first load (a table's, a page's skeleton), nor `loading`, which a spinner and MUI's
  *   picker say of themselves.
+ * - `steps-by-mechanic`: the level wizards (`pages/characters/details/components/levelUp/`) tell a step by its
+ *   mechanic, never by its name: no `name` compared with or switched on a string, no step read off `steps` by its name
+ *   (`steps["hp"]`, `steps.hp`, a destructuring, `in`), and no plan written with a step's name. What a ruleset names
+ *   its steps is its module's.
  *
  * Plain JS: oxlint loads its plugins without a TypeScript step.
  */
@@ -119,6 +123,33 @@ import {
   texts,
 } from "./jsx.mjs";
 import { repoPath } from "./paths.mjs";
+
+/** A list's own members, which a read of `steps` may name: its steps are none of them */
+const ARRAY_MEMBERS = new Set([
+  "at",
+  "concat",
+  "entries",
+  "every",
+  "filter",
+  "find",
+  "findIndex",
+  "findLast",
+  "flat",
+  "flatMap",
+  "forEach",
+  "includes",
+  "indexOf",
+  "join",
+  "keys",
+  "lastIndexOf",
+  "length",
+  "map",
+  "reduce",
+  "slice",
+  "some",
+  "toSorted",
+  "values",
+]);
 
 /** The auth pages, which carry the `redirect` that sent the user to sign in from one to another. */
 const AUTH_PAGES = "client/src/pages/auth/";
@@ -193,6 +224,9 @@ const INTL_DATE_FORMATS = new Set(["DateTimeFormat", "RelativeTimeFormat"]);
 
 /** The boxes a dialog's content lays its blocks in, its lead line or its first field first */
 const LAYOUT_ELEMENTS = new Set(["Box", "Stack"]);
+
+/** The level wizards' folder, which reads a level's steps by their mechanics. */
+const LEVEL_WIZARD_FOLDER = "client/src/pages/characters/details/components/levelUp/";
 
 /** The elements whose `loading` is their own word: MUI's picker ("Loading…" in its list), the spinners it shows */
 const LOADING_OWNERS = new Set(["Autocomplete", "DiceSpinner", "NextPageSpinner"]);
@@ -1514,6 +1548,82 @@ function createRowPrefetch(context) {
   };
 }
 
+/**
+ * The level wizards tell a step by its mechanic: a step's name compared with or switched on a string, a step read off
+ * `steps` by its name (indexed, dotted, destructured or tested with `in`), or a plan's `steps` written with a step's
+ * name, would name a ruleset's step.
+ */
+function createStepsByMechanic(context) {
+  if (!repoPath(context.filename).startsWith(LEVEL_WIZARD_FOLDER)) return {};
+  const report = (node) =>
+    context.report({
+      node,
+      message:
+        "The level wizards tell a step by its mechanic (`step.mechanic`), never by its name: what a ruleset names its steps is its module's.",
+    });
+  // What an optional chain or a non-null assertion reads (`step?.name`, `answer.steps!`)
+  const unwrap = (node) =>
+    node?.type === "ChainExpression" || node?.type === "TSNonNullExpression" ? unwrap(node.expression) : node;
+  // A string a step could be named (an empty one names none), written plainly or as a template without a hole
+  const isString = (node) =>
+    (node?.type === "Literal" && typeof node.value === "string" && node.value !== "") ||
+    (node?.type === "TemplateLiteral" && node.expressions.length === 0 && node.quasis[0].value.cooked !== "");
+  const isNamed = (node, name) => {
+    const read = unwrap(node);
+    return (
+      (read?.type === "MemberExpression" && !read.computed && read.property.name === name) ||
+      (read?.type === "Identifier" && read.name === name)
+    );
+  };
+  const keyOf = (property) =>
+    property.computed ? undefined : property.key.type === "Identifier" ? property.key.name : property.key.value;
+  // The steps a destructuring names: its keys but a rest's
+  const reportKeys = (pattern) => {
+    for (const property of pattern.properties)
+      if (property.type === "Property" && !property.computed && !ARRAY_MEMBERS.has(keyOf(property))) report(property);
+  };
+  return {
+    BinaryExpression(node) {
+      if (["===", "!==", "==", "!="].includes(node.operator)) {
+        if (
+          (isNamed(node.left, "name") && isString(node.right)) ||
+          (isNamed(node.right, "name") && isString(node.left))
+        )
+          report(node);
+      }
+      // `"feats" in steps`
+      if (node.operator === "in" && isString(node.left) && isNamed(node.right, "steps")) report(node);
+    },
+    SwitchStatement(node) {
+      if (isNamed(node.discriminant, "name") && node.cases.some((switchCase) => isString(switchCase.test)))
+        report(node);
+    },
+    MemberExpression(node) {
+      if (!isNamed(node.object, "steps")) return;
+      // A step read by its name (`steps["feats"]`, `answer.steps.feats`): a list's own members aren't steps, nor a route's
+      // calls (`rpc…steps.$get`)
+      if (
+        node.computed
+          ? isString(node.property)
+          : !ARRAY_MEMBERS.has(node.property.name) && !node.property.name.startsWith("$")
+      )
+        report(node);
+    },
+    ObjectPattern(node) {
+      const parent = node.parent;
+      // `const { feats } = answer.steps`, or `const { steps: { feats } } = answer`
+      if (parent?.type === "VariableDeclarator" && isNamed(parent.init, "steps")) reportKeys(node);
+      if (parent?.type === "Property" && parent.value === node && keyOf(parent) === "steps") reportKeys(node);
+    },
+    Property(node) {
+      const owner = node.parent?.parent;
+      // A plan written with a step's name (`{ steps: { feats: [] } }`)
+      if (node.parent?.type !== "ObjectExpression" || owner?.type !== "Property") return;
+      if (keyOf(owner) === "steps" && !node.computed && node.kind === "init") report(node);
+    },
+  };
+}
+
 function createTooltips(context) {
   if (!inClient(context)) return {};
   return {
@@ -1945,6 +2055,7 @@ export default {
   "component-files": { meta: { type: "suggestion" }, create: createComponentFiles },
   "hook-files": { meta: { type: "suggestion" }, create: createHookFiles },
   "handler-names": { meta: { type: "suggestion" }, create: createHandlerNames },
+  "steps-by-mechanic": { meta: { type: "problem" }, create: createStepsByMechanic },
   "constant-names": { meta: { type: "suggestion" }, create: createConstantNames },
   queries: { meta: { type: "suggestion" }, create: createQueries },
   "parsed-responses": { meta: { type: "suggestion" }, create: createParsedResponses },

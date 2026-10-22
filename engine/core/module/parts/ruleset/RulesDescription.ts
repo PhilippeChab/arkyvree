@@ -49,18 +49,6 @@ export interface EntityKindDescription {
 }
 
 /**
- * What a level wizard's steps show where the rules have their own words: the ability increase's (`abilityIncrease`: its
- * word, what its picker asks, and what one adds to its ability), the spend of points' (`pointSpend`: what a point buys, the name of a row it's
- * cheaper on and that name's short header, and its review's title), and a grant's note when it takes no slot of its
- * pool (`freeGrantNote`).
- */
-export interface LevelWizardDescription {
-  abilityIncrease: { amount: number; prompt: string; word: RulesWord };
-  freeGrantNote: string;
-  pointSpend: { favored: string; favoredShort: string; review: string; unit: RulesWord };
-}
-
-/**
  * A column of an entity's own value in its type's list, between its name and its description: its key (where its value
  * is in a listed entity, `hd`, `costGp`; or what it shows of it, `template`), its label, its share of the
  * list's width (percent), where a phone shows it (`slot`), and how its value reads (`reads`):
@@ -160,8 +148,6 @@ export interface RulesDescription {
   kinds: EntityKindDescription[];
   /** A class's last level */
   lastClassLevel: number;
-  /** What its level wizard's steps show where its rules have their own words */
-  levelUp: LevelWizardDescription;
   /**
    * What a system ruleset's content is licensed under, under its header (`text`: the license whose text the app
    * serves): none where nothing needs saying

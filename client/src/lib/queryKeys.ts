@@ -99,26 +99,12 @@ export const QUERY_KEYS = {
     /** A level-up read's cache: its key holds the query (or the body) it sends, so no parameter is left out of it. */
     levelUp: {
       all: (characterId: string) => ["characters", "levelUp", characterId] as const,
-      availableClasses: (characterId: string, query?: Record<string, unknown>) =>
-        ["characters", "levelUp", characterId, "availableClasses", query] as const,
-      availableFeatFamily: (characterId: string, query?: Record<string, unknown>) =>
-        ["characters", "levelUp", characterId, "availableFeatFamily", query] as const,
-      availableFeatsGrouped: (characterId: string, query?: Record<string, unknown>) =>
-        ["characters", "levelUp", characterId, "availableFeatsGrouped", query] as const,
-      availablePowers: (characterId: string, query?: Record<string, unknown>) =>
-        ["characters", "levelUp", characterId, "availablePowers", query] as const,
-      levelData: (characterId: string, characterLevelId: string) =>
-        ["characters", "levelUp", characterId, "levelData", characterLevelId] as const,
       plan: (characterId: string, body: Record<string, unknown>) =>
         ["characters", "levelUp", characterId, "plan", body] as const,
       savedPlan: (characterId: string, characterLevelId: string) =>
         ["characters", "levelUp", characterId, "savedPlan", characterLevelId] as const,
       stepOptions: (characterId: string, step: string, query: Record<string, unknown>) =>
         ["characters", "levelUp", characterId, "stepOptions", step, query] as const,
-      preview: (characterId: string, body: Record<string, unknown>) =>
-        ["characters", "levelUp", characterId, "preview", body] as const,
-      step: (characterId: string, name: string, query?: Record<string, unknown>) =>
-        ["characters", "levelUp", characterId, "step", name, query] as const,
       steps: (characterId: string, query?: Record<string, unknown>) =>
         ["characters", "levelUp", characterId, "steps", query] as const,
     },

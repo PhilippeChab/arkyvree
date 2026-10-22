@@ -2,7 +2,6 @@ import {
   type CharacterInput,
   type LevelPlanRequest,
   LevelUpPart,
-  type PlannedSoFar,
   type StepPickerQuery,
 } from "@/engine/core/module/index.ts";
 import type { RulesIssue } from "@/engine/core/RulesError.ts";
@@ -17,16 +16,14 @@ import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import type { Character } from "@/shared/relations.ts";
 
 import BondedPlans from "./BondedPlans.ts";
-import Dnd35LevelSelections from "./Dnd35LevelSelections.ts";
 import LevelPlans from "./LevelPlans.ts";
 import LevelUpPlan from "./LevelUpPlan.ts";
-import LevelUpPreview from "./LevelUpPreview.ts";
-import LevelUpSteps from "./LevelUpSteps.ts";
 
 /**
- * The 3.5 level-up, as the module answers the server's level flows, each from the rows the server read: the preview,
- * the bonded creatures the levels make, the wizard's steps and pickers, and a saved level's selections; and the rules
- * core's flows read, with which it removes a level and checks a save and an edit.
+ * The 3.5 level-up, as the module answers the server's level flows, each from the rows the server read: a level's
+ * steps, the plan's answer and a step's picker, a saved level as an edit's plan, a plan read as a save or an edit, and
+ * the bonded creatures the levels make; and the rules core's flows read, with which it removes a level and checks a save
+ * and an edit.
  */
 export default class Dnd35LevelUp extends LevelUpPart<Dnd35Descriptions, DetailedCharacter> {
   /** The hit points a level counts before they're rolled. */
@@ -37,46 +34,14 @@ export default class Dnd35LevelUp extends LevelUpPart<Dnd35Descriptions, Detaile
     return Dnd35CharacterBuilder.build(view, input);
   }
 
-  /** A saved level's selections, as its edit opens them. */
-  override describeLevel(
-    view: RulesetView,
-    character: CharacterInput,
-    ...args: Parameters<Dnd35LevelSelections["describeLevel"]>
-  ) {
-    return new Dnd35LevelSelections(view, character, this).describeLevel(...args);
-  }
-
   /** The plan's answer: Add Level's plan or Edit Level's level, each step in its mechanic's shape. */
   override describePlan(view: RulesetView, character: CharacterInput, request: LevelPlanRequest) {
     return new LevelPlans(view, character, this).describePlan(request);
   }
 
-  /** The level-up wizard's preview of the levels the character plans, each with its ability increases. */
-  override describePreview(
-    view: RulesetView,
-    character: CharacterInput,
-    ...args: Parameters<LevelUpPreview["describePreview"]>
-  ) {
-    return new LevelUpPreview(view, character, this).describePreview(...args);
-  }
-
   /** A saved level as an edit's plan opens it: each step's payload as the level saved it. */
   override describeSavedPlan(view: RulesetView, character: CharacterInput, characterLevelId: string) {
     return new LevelPlans(view, character, this).describeSavedPlan(characterLevelId);
-  }
-
-  /** The level-up wizard's step `name` of the level the step is for: its abilities, skills, feats or powers. */
-  override describeStep(
-    view: RulesetView,
-    character: CharacterInput,
-    ...args: Parameters<LevelUpSteps["describeStep"]>
-  ) {
-    return new LevelUpSteps(view, character, this).describeStep(...args);
-  }
-
-  /** The level-up wizard's steps of a level, in order: the same four for every level. */
-  override describeSteps(view: RulesetView, character: CharacterInput) {
-    return new LevelUpSteps(view, character, this).describeSteps();
   }
 
   /**
@@ -152,32 +117,6 @@ export default class Dnd35LevelUp extends LevelUpPart<Dnd35Descriptions, Detaile
   }
 
   /**
-   * The class picker for the character, with what the level-up wizard plans so far, its skill points spread over its
-   * planned levels as the save spreads them: its filters, a page described.
-   */
-  override openClassPicker(view: RulesetView, character: CharacterInput, planned: PlannedSoFar) {
-    return new ClassPicker(view, character, planned, new LevelUpPlan(view, character, this));
-  }
-
-  /** A feat picker for the character: what it offers and leaves out, and a page of options described. */
-  override openFeatPicker(
-    view: RulesetView,
-    character: CharacterInput,
-    query: ConstructorParameters<typeof FeatPicker>[2],
-  ) {
-    return new FeatPicker(view, character, query);
-  }
-
-  /** A power picker for the character: what it offers and leaves out, and a page of options described. */
-  override openPowerPicker(
-    view: RulesetView,
-    character: CharacterInput,
-    query: ConstructorParameters<typeof PowerPicker>[2],
-  ) {
-    return new PowerPicker(view, character, query);
-  }
-
-  /**
    * Step `step`'s picker over the plan: the class picker (the class plan's), or a feat or spell pool's at the level its
    * next pick lands on.
    */
@@ -185,11 +124,14 @@ export default class Dnd35LevelUp extends LevelUpPart<Dnd35Descriptions, Detaile
     const read = new LevelPlans(view, character, this).readStepPicker(step, query);
     switch (read.kind) {
       case "feats":
-        return { kind: read.kind, picker: this.openFeatPicker(view, character, read.query) };
-      case "klasses":
-        return { kind: read.kind, picker: this.openClassPicker(view, character, read.planned) };
+        return { kind: read.kind, picker: new FeatPicker(view, character, read.query) };
+      case "klasses": {
+        // Its skill points spread over the planned levels as the save spreads them
+        const plan = new LevelUpPlan(view, character, this);
+        return { kind: read.kind, picker: new ClassPicker(view, character, read.planned, plan) };
+      }
       case "powers":
-        return { kind: read.kind, picker: this.openPowerPicker(view, character, read.query) };
+        return { kind: read.kind, picker: new PowerPicker(view, character, read.query) };
     }
   }
 

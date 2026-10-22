@@ -1,4 +1,3 @@
-export type { LevelStepKind, WizardStep } from "./descriptions.ts";
 export { default as LevelUpPart } from "./LevelUpPart.ts";
 export type {
   AdvancementWords,
