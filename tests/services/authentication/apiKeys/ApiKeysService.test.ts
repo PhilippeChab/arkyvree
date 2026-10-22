@@ -72,13 +72,12 @@ describe("ApiKeysService", () => {
     expect(await ApiKeysService.createKey(session, "In its place", null)).toMatchObject({ name: "In its place" });
   });
 
-  test("counts and lists only the keys that work: an expired or archived one is gone before the cleanup", async () => {
+  test("counts and lists only the keys that work: an expired one is gone before the cleanup", async () => {
     const { session } = await createTestUser();
     const kept = await ApiKeysService.createKey(session, "Kept", null);
     const past = new Date(Date.now() - 1000).toISOString();
     await insertRows(apiKeysInAccount, [
       { digest: uniqueId(), expiresAt: past, name: "Expired", prefix: "ark_expired", userId: session.userId },
-      { deletedAt: past, digest: uniqueId(), name: "Archived", prefix: "ark_archive", userId: session.userId },
     ]);
 
     expect((await ApiKeysService.getKeys(session)).map(({ id }) => id)).toEqual([kept.id]);

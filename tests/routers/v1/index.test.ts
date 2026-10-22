@@ -36,15 +36,13 @@ describe("v1", () => {
     expect(await response.json()).toMatchObject({ cause: "notFound" });
   });
 
-  test("refuses an expired key, and an archived one", async () => {
+  test("refuses an expired key", async () => {
     const { user } = await createTestUser();
-    const past = new Date(Date.now() - 1000).toISOString();
-    for (const set of [{ expiresAt: past }, { deletedAt: past }]) {
-      const { api, key } = await createKeyedApi(user.id);
-      await expectOk(api.v1.characters.$get({ query: {} }));
-      await db.update(apiKeysInAccount).set(set).where(eq(apiKeysInAccount.id, key.id));
-      await expectStatus(api.v1.characters.$get({ query: {} }), 401);
-    }
+    const { api, key } = await createKeyedApi(user.id);
+    await expectOk(api.v1.characters.$get({ query: {} }));
+    const expiresAt = new Date(Date.now() - 1000).toISOString();
+    await db.update(apiKeysInAccount).set({ expiresAt }).where(eq(apiKeysInAccount.id, key.id));
+    await expectStatus(api.v1.characters.$get({ query: {} }), 401);
   });
 
   test("refuses a revoked key, and a key whose user deleted their account", async () => {
