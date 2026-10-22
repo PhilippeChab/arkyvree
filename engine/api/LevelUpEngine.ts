@@ -44,6 +44,11 @@ export default class LevelUpEngine extends CharacterHandle {
     return this.module.levelUp.describePreview(this.view, this.input, this.requests.resolvePreview(request));
   }
 
+  /** A saved level as an edit's plan opens it: each step's payload as the level saved it. */
+  describeSavedPlan(...[characterLevelId]: Args<"describeSavedPlan">) {
+    return this.module.levelUp.describeSavedPlan(this.view, this.input, characterLevelId);
+  }
+
   /** The wizard's step `name` of the level a step is for: refused when the ruleset has no such step. */
   describeStep(...[name, query]: Args<"describeStep">) {
     return this.module.levelUp.describeStep(this.view, this.input, name, this.requests.resolveQuery(query));

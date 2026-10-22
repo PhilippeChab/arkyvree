@@ -18,6 +18,13 @@ interface Pagination {
  */
 export function Plans<B extends Constructor>(Base: B) {
   abstract class WithPlans extends Base {
+    /** A saved level as an edit's plan opens it: each step's payload as the level saved it. */
+    async getLevelPlan(session: Session, characterId: string, characterLevelId: string) {
+      return await withEditableCharacter(db, session, characterId, (scope, character) =>
+        Engine.for(scope).character(character).levelUp().describeSavedPlan(characterLevelId),
+      );
+    }
+
     /** The plan's answer: each step's, in its mechanic's shape, and the plan's advancements. */
     async getPlan(session: Session, characterId: string, request: LevelPlanRequest) {
       return await withEditableCharacter(db, session, characterId, (scope, character) =>

@@ -19,7 +19,9 @@ import {
 import RulesError from "@/engine/core/RulesError.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
+import { SPELL_LEVEL_LABELS, SPELL_LEVELS } from "@/vocabulary/dnd3.5/spells.ts";
 
+import Dnd35LevelSelections from "./Dnd35LevelSelections.ts";
 import LevelUpPreview from "./LevelUpPreview.ts";
 import LevelUpSteps from "./LevelUpSteps.ts";
 import { LEVEL_WIZARD } from "./wizard.ts";
@@ -53,14 +55,49 @@ type StepPickerRead =
   | { kind: "klasses"; planned: PlannedSoFar }
   | { kind: "powers"; query: PowerPickQuery };
 
-/** A 3.5 level's steps, in the wizard's order: an edit's lacks the class plan, its class being the level's. */
+/** A spell's tier by its spell level, named as the sheet names it ("Cantrips", "Level 1"). */
+const SPELL_TIERS = Object.fromEntries(SPELL_LEVELS.map((level) => [String(level), SPELL_LEVEL_LABELS[level]]));
+
+/** A 3.5 level's steps, in the wizard's order, each in its words: an edit's lacks the class plan, its class the level's. */
 const STEPS = [
-  { name: "class-plan", label: "Class Plan", mechanic: "plan", kind: "klasses" },
-  { name: "hp", label: "Select HP", mechanic: "value" },
-  { name: "abilities", label: "Ability Increase", mechanic: "choose", kind: "abilities" },
-  { name: "skills", label: "Select Skills", mechanic: "spend", kind: "skills" },
-  { name: "feats", label: "Select Feats", mechanic: "pick", kind: "feats", pools: "aptitudes" },
-  { name: "powers", label: "Select Spells", mechanic: "pick", kind: "powers", pools: "aptitudes" },
+  {
+    name: "class-plan",
+    label: "Class Plan",
+    mechanic: "plan",
+    kind: "klasses",
+    words: { position: "Level", review: "Class Advancement", unmet: "Requirements not met" },
+  },
+  { name: "hp", label: "Select HP", mechanic: "value", words: { prompt: "Set HP for", unit: "HP Gain" } },
+  {
+    name: "abilities",
+    label: "Ability Increase",
+    mechanic: "choose",
+    kind: "abilities",
+    words: { prompt: LEVEL_WIZARD.abilityIncrease.prompt, word: LEVEL_WIZARD.abilityIncrease.word },
+  },
+  {
+    name: "skills",
+    label: "Select Skills",
+    mechanic: "spend",
+    kind: "skills",
+    words: { budget: "Skill Points to Spend", ...LEVEL_WIZARD.pointSpend },
+  },
+  {
+    name: "feats",
+    label: "Select Feats",
+    mechanic: "pick",
+    kind: "feats",
+    pools: "aptitudes",
+    words: { grantNote: LEVEL_WIZARD.freeGrantNote },
+  },
+  {
+    name: "powers",
+    label: "Select Spells",
+    mechanic: "pick",
+    kind: "powers",
+    pools: "aptitudes",
+    words: { grantNote: LEVEL_WIZARD.freeGrantNote, tiers: SPELL_TIERS },
+  },
 ] as const satisfies readonly LevelStep[];
 
 /** Each step, by its name. */
@@ -144,11 +181,11 @@ export default class LevelPlans extends LevelUpBase<DetailedCharacter> {
         },
         [STEP.skills.name]: this.spendOf(skills, [skills.skillPointsToSpend]),
         [STEP.feats.name]: {
-          ...this.pickOf(feats, true, feats.aptitudePools, atLevel),
+          ...this.pickOf(feats, "feats", feats.aptitudePools, atLevel),
           granted: feats.autoGrantedFeats.map(({ description, id, name }) => ({ description, free: false, id, name })),
         },
         [STEP.powers.name]: {
-          ...this.pickOf(powers, false, powers.aptitudePools, atLevel),
+          ...this.pickOf(powers, "powers", powers.aptitudePools, atLevel),
           granted: powers.autoGrantedPowers.map(({ description, free, id, name }) => ({ description, free, id, name })),
         },
       },
@@ -183,11 +220,11 @@ export default class LevelPlans extends LevelUpBase<DetailedCharacter> {
         },
         [STEP.skills.name]: this.spendOf(skills, perLevelSkillPoints),
         [STEP.feats.name]: {
-          ...this.pickOf(feats, true, nextPickLevels.feats, (id) => ({ "": id })),
+          ...this.pickOf(feats, "feats", nextPickLevels.feats, (id) => ({ "": id })),
           granted: feats.autoGrantedFeats.map(({ description, id, name }) => ({ description, free: false, id, name })),
         },
         [STEP.powers.name]: {
-          ...this.pickOf(powers, false, nextPickLevels.powers, (levels) => levels),
+          ...this.pickOf(powers, "powers", nextPickLevels.powers, (levels) => levels),
           granted: powers.autoGrantedPowers.map(({ description, free, id, name }) => ({ description, free, id, name })),
         },
       },
@@ -216,21 +253,43 @@ export default class LevelPlans extends LevelUpBase<DetailedCharacter> {
     }));
   }
 
+  /** The feats or powers (`kind`) that fit, by pool, each by name, a power at its spell level in its pool. */
+  private pickedOf(kind: "feats" | "powers", fitted: Record<string, string[]>): PickAnswer["picked"] {
+    const { featsById, powersById } = this.rulesetData;
+    const levels = kind === "powers" ? this.buildPowerLevelLookup(Object.values(fitted).flat()) : undefined;
+    return Object.fromEntries(
+      Object.entries(fitted).map(([pool, ids]) => [
+        pool,
+        ids.map((id) => {
+          const entity = kind === "feats" ? featsById.get(id) : powersById.get(id);
+          const level = levels?.get(`${id}:${pool}`);
+          return {
+            description: entity?.description ?? null,
+            id,
+            name: entity?.name ?? id,
+            ...(level !== undefined && level !== null && { tier: String(level) }),
+          };
+        }),
+      ]),
+    );
+  }
+
   /**
    * A pool step's answer as a `pick` step's, but its grants: its pools, what fits, whether its options group, and where
    * each pool's next pick lands (`next`, read by `tiersOf`: a feat pool's at any tier, a power pool's at each).
    */
   private pickOf<N>(
     step: PoolStep,
-    grouped: boolean,
+    kind: "feats" | "powers",
     next: Record<string, N>,
     tiersOf: (next: N) => Record<string, number>,
   ): Omit<PickAnswer, "granted"> {
     return {
       mechanic: "pick",
       fitted: step.fitted,
-      grouped,
+      grouped: kind === "feats",
       next: Object.fromEntries(Object.entries(next).map(([pool, levels]) => [pool, tiersOf(levels)])),
+      picked: this.pickedOf(kind, step.fitted),
       pools: poolsOf(step),
     };
   }
@@ -354,6 +413,33 @@ export default class LevelPlans extends LevelUpBase<DetailedCharacter> {
     return plan.editedLevelId
       ? this.describeLevelEdit({ ...plan, editedLevelId: plan.editedLevelId })
       : this.describeLevelUp(plan);
+  }
+
+  /**
+   * The character's saved level `characterLevelId` as an edit's plan opens it: each step's payload as the level saved
+   * it (its hit points, its ability increases where its rules still give one, its skills' points, its feats and its
+   * spells, each in its pool, a spell at its spell level). Refused when the character has no such level.
+   */
+  describeSavedPlan(characterLevelId: string): LevelPlanRequest {
+    const saved = new Dnd35LevelSelections(this.view, this.character, this.rules).describeLevel(characterLevelId);
+    return {
+      editedLevelId: characterLevelId,
+      steps: {
+        [STEP.hp.name]: [saved.hp],
+        [STEP.abilities.name]: [saved.abilityIncreases.map(({ abilityId, amount }) => ({ amount, id: abilityId }))],
+        [STEP.skills.name]: Object.entries(saved.skills).map(([id, points]) => ({ id, points })),
+        [STEP.feats.name]: Object.entries(saved.feats).flatMap(([pool, feats]) =>
+          feats.map(({ id }) => ({ id, pool })),
+        ),
+        [STEP.powers.name]: Object.entries(saved.powers).flatMap(([pool, powers]) =>
+          powers.map(({ id, powerLevel }) => ({
+            id,
+            pool,
+            ...(powerLevel !== undefined && { tier: String(powerLevel) }),
+          })),
+        ),
+      },
+    };
   }
 
   /** A 3.5 level's steps, in the wizard's order: an edit's without its class plan. */

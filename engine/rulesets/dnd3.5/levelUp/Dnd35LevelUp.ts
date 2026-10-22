@@ -60,6 +60,11 @@ export default class Dnd35LevelUp extends LevelUpPart<Dnd35Descriptions, Detaile
     return new LevelUpPreview(view, character, this).describePreview(...args);
   }
 
+  /** A saved level as an edit's plan opens it: each step's payload as the level saved it. */
+  override describeSavedPlan(view: RulesetView, character: CharacterInput, characterLevelId: string) {
+    return new LevelPlans(view, character, this).describeSavedPlan(characterLevelId);
+  }
+
   /** The level-up wizard's step `name` of the level the step is for: its abilities, skills, feats or powers. */
   override describeStep(
     view: RulesetView,

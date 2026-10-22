@@ -66,6 +66,12 @@ export default abstract class LevelUpPart<
   abstract describePreview(view: RulesetView, character: CharacterInput, request: PreviewRequest): D["preview"];
 
   /**
+   * The character's saved level `characterLevelId` as an edit's plan opens it: each step's payload as the level saved
+   * it. Refused when the character has no such level.
+   */
+  abstract describeSavedPlan(view: RulesetView, character: CharacterInput, characterLevelId: string): LevelPlanRequest;
+
+  /**
    * The wizard's step `name` of the level `query` is for, named for which it is: refused when the ruleset has no such
    * step, or when the step reads the level's class and `query` names none.
    */
