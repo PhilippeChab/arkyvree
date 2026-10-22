@@ -6,6 +6,7 @@ import {
   emptyFieldValues,
   type EntityFieldValues,
   isFieldShown,
+  linkedAptitudes,
   noneLabel,
   ownFieldValues,
   toColumnsBody,
@@ -70,6 +71,11 @@ const WORN_FIELDS: EntityField[] = [
     ],
   },
 ];
+
+/** An aptitude as an entity read's link names it. */
+function aptitude(id: string, name: string) {
+  return { id, name, rulesetId: "r", description: null };
+}
 
 describe("an entity's fields in its form", () => {
   test("start empty: no choice, no text, a flag off (none, a three-state one), a number its default", () => {
@@ -244,5 +250,47 @@ describe("an entity's columns in its form", () => {
       sourceItemId: null,
       type: "Weapon",
     });
+  });
+});
+
+describe("an entity's pools in its form", () => {
+  /** A pool's links, a feat's and a spell's each at its level, which an entity read holds apart from the form's keys. */
+  const POOLS: EntityField[] = [
+    { ...BASE, key: "aptitudeIds", label: "Pools", input: "aptitudes", links: "poolLinks", required: true },
+    {
+      ...BASE,
+      key: "aptitudes",
+      label: "Lists",
+      input: "aptitudeLevels",
+      links: "listLinks",
+      max: 9,
+      min: 0,
+      required: false,
+    },
+  ];
+  const entity = {
+    poolLinks: [{ aptitudesInRule: aptitude("b", "Bonus Feats") }, { aptitudesInRule: aptitude("a", "General") }, {}],
+    listLinks: [
+      { aptitudesInRule: aptitude("w", "Wizard"), level: 3 },
+      { aptitudesInRule: aptitude("c", "Cleric"), level: null },
+    ],
+  };
+
+  test("read them off the entity's links, by their aptitudes' names, a level where one is held, none left without one", () => {
+    expect(toColumnValues(POOLS, entity)).toEqual({
+      aptitudeIds: ["b", "a"],
+      aptitudes: [{ id: "c" }, { id: "w", level: 3 }],
+    });
+    // An entity read without its links holds none
+    expect(toColumnValues(POOLS, {})).toEqual({ aptitudeIds: [], aptitudes: [] });
+  });
+
+  test("name the aptitudes it links, which its pickers show by name", () => {
+    expect(linkedAptitudes(POOLS, entity).map(({ name }) => name)).toEqual([
+      "Bonus Feats",
+      "General",
+      "Cleric",
+      "Wizard",
+    ]);
   });
 });

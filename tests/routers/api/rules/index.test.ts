@@ -49,6 +49,9 @@ describe("rules", () => {
     // A kind that opens a customization page is one such a page shows
     const customized = dnd35.kinds.filter(({ opens }) => opens === "customization").map(({ type }) => type);
     expect(customized.filter((type) => !isOneOf(type, CUSTOMIZATION_PAGE_TYPES))).toEqual([]);
+    // And every kind a customization page edits (but a class's level and a modifier, which no tab lists) is one
+    const edited = CUSTOMIZATION_PAGE_TYPES.filter((type) => type !== "klass_levels" && type !== "modifiers");
+    expect(edited.filter((type) => !customized.includes(type))).toEqual([]);
     // Races and classes narrow by what they're for, abilities take no form, an empty list of saves its own words
     expect(dnd35.kinds.filter((kind) => kind.partitioned).map(({ type }) => type)).toEqual(["races", "klasses"]);
     expect(dnd35.kinds.filter((kind) => kind.readOnly).map(({ type }) => type)).toEqual(["abilities"]);
@@ -91,6 +94,14 @@ describe("rules", () => {
       ["powers", "fixed"],
       ["items", "fluid"],
     ]);
+    expect(kind("feats")?.lockedName).toEqual({ flag: "generated", reason: "A generated feat keeps its name" });
+    // A pool's links column reads its links where an entity read holds them
+    expect(dnd35.columns.feats?.find((column) => column.key === "aptitudeIds")).toMatchObject({
+      links: "featsAptitudesInRules",
+    });
+    expect(dnd35.columns.powers?.find((column) => column.key === "aptitudes")).toMatchObject({
+      links: "powersAptitudesInRules",
+    });
     expect(kind("items")?.copies).toEqual({
       locked: ["slot", "sourceItemId", "type"],
       most: 50,

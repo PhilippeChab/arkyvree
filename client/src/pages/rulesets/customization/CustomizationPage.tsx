@@ -18,6 +18,7 @@ import { type RulesetDetail, rulesetDetailQuery } from "@/client/src/lib/queries
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
 import { EntityDetailLayout, EntityPageError } from "@/client/src/pages/rulesets/components/index.ts";
+import { entitySegment } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import { entityPageBack, entityPageState } from "@/client/src/pages/rulesets/entityPageState.ts";
 import {
   useCopyOnWrite,
@@ -34,6 +35,7 @@ import {
 } from "@/shared/customization/entities.ts";
 import { formatOperator } from "@/shared/customization/operators.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
+import { getUrlSegment } from "@/shared/urlSegments.ts";
 
 import { modifiersQuery, requirementsQuery } from "./customizationSectionQueries.ts";
 import { type EditableEntity, isEditable, renderEditor } from "./editors/index.ts";
@@ -128,7 +130,7 @@ function CustomizationView({
       {isEditable(data) && (
         // The same form whoever reads it, its fields read-only for who can't edit the entity
         <ReadOnlyFields readOnly={!canEdit}>
-          {renderEditor(data, {
+          {renderEditor(data, rules, {
             rulesetId,
             entityId,
             recordKey: copy.key,
@@ -234,29 +236,20 @@ function tabsFor(type: CustomizationPageType) {
 
 async function deleteEntityFn(data: EditableEntity, id: string, entityId: string) {
   const api = rpc.api.rulesets[":id"];
-  switch (data.type) {
-    case "feats":
-      await parseResponse(api.feats[":featId"].$delete({ param: { id, featId: entityId } }));
-      return;
-    case "races":
-      await parseResponse(api.races[":raceId"].$delete({ param: { id, raceId: entityId } }));
-      return;
-    case "items":
-      await parseResponse(api.items[":itemId"].$delete({ param: { id, itemId: entityId } }));
-      return;
-    case "powers":
-      await parseResponse(api.powers[":powerId"].$delete({ param: { id, powerId: entityId } }));
-      return;
-    case "klass_levels":
-      await parseResponse(
-        api.classes[":classId"].levels[":levelId"].$delete({
-          param: { id, classId: data.entity.klassId, levelId: entityId },
-        }),
-      );
-      return;
-    default:
-      return data satisfies never;
+  if (data.type === "klass_levels") {
+    await parseResponse(
+      api.classes[":classId"].levels[":levelId"].$delete({
+        param: { id, classId: data.entity.klassId, levelId: entityId },
+      }),
+    );
+    return;
   }
+  // A kind's entity, through the routes by kind
+  await parseResponse(
+    api.entities[":entityType"][":entityId"].$delete({
+      param: { id, entityType: entitySegment(getUrlSegment(data.type)), entityId },
+    }),
+  );
 }
 
 export default function CustomizationPage() {

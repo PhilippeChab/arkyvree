@@ -87,7 +87,7 @@ test.describe("Customization of a fork", () => {
     await finesse.check();
     await details.getByRole("combobox", { name: "Families" }).click();
     await page.getByRole("option", { name: "Luck", exact: true }).click();
-    const saved = apiResponse(page, "PUT", /\/api\/rulesets\/[a-f0-9-]+\/feats\/[a-f0-9-]+/);
+    const saved = apiResponse(page, "PUT", /\/api\/rulesets\/[a-f0-9-]+\/entities\/feats\/[a-f0-9-]+/);
     await details.getByRole("button", { name: /^Save$/ }).click();
     await saved;
     await page.reload();

@@ -29,6 +29,7 @@ export const POWER_COLUMNS: FormField[] = [
     help: "The spell lists it's on, each at its spell level",
     input: "aptitudeLevels",
     key: "aptitudes",
+    links: "powersAptitudesInRules",
     label: "Aptitudes",
     max: RULESET_LIMITS.spellLevel,
     min: 0,

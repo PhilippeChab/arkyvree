@@ -26,20 +26,24 @@ interface ShownWhen {
 
 /**
  * A pool's links, each with a level of its own, none too (a spell's spell lists, each at its spell level): from `min`
- * to `max`, and at least one when it's `required` on a new entity.
+ * to `max`, and at least one when it's `required` on a new entity. An entity read holds them at `links` (each link its
+ * aptitude, `aptitudesInRule`, and its level), which its form reads them from.
  */
 export interface AptitudeLevelsFormField extends FormFieldBase {
   input: "aptitudeLevels";
+  links?: string;
   max: number;
   min: number;
   required: boolean;
 }
 
 /**
- * A pool's links (a feat's feat pools), none too: at least one when it's `required` on a new entity.
+ * A pool's links (a feat's feat pools), none too: at least one when it's `required` on a new entity. An entity read
+ * holds them at `links` (each link its aptitude, `aptitudesInRule`), which its form reads them from.
  */
 export interface AptitudesFormField extends FormFieldBase {
   input: "aptitudes";
+  links?: string;
   required: boolean;
 }
 

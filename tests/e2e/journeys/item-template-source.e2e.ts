@@ -34,7 +34,7 @@ for (const width of [375, 1280]) {
       await page.locator('textarea[name="description"]').fill("Homebrew heavy mace template");
       const saved = page.waitForResponse(
         (response) =>
-          response.url().includes(`/api/rulesets/${forkId}/items/`) && response.request().method() === "PUT",
+          response.url().includes(`/api/rulesets/${forkId}/entities/items/`) && response.request().method() === "PUT",
       );
       await page.getByRole("button", { name: "Save", exact: true }).click();
       const saveResponse = await saved;

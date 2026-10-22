@@ -40,7 +40,14 @@ export const RULES: RulesDescription = {
     { icon: "face", opens: "customization", partitioned: true, type: "races" },
     { icon: "translate", opens: "page", type: "languages" },
     { icon: "psychology", opens: "page", type: "skills" },
-    { families: true, icon: "spoke", opens: "customization", pools: "feats", type: "feats" },
+    {
+      families: true,
+      icon: "spoke",
+      lockedName: { flag: "generated", reason: "A generated feat keeps its name" },
+      opens: "customization",
+      pools: "feats",
+      type: "feats",
+    },
     { icon: "bolt", levels: true, opens: "customization", pools: "spells", type: "powers", wideForm: "fixed" },
     {
       copies: {

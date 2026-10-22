@@ -1,13 +1,10 @@
 /** The entities the customization page edits, which it can delete too: their editor of their details, and its props. */
 
+import type { RulesDescription } from "@/client/src/lib/queries.ts";
 import type { CustomizationEntity } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
-import { isOneOf } from "@/shared/isOneOf.ts";
 
 import { ClassLevelEditor } from "./ClassLevelEditor.tsx";
-import { FeatEditor } from "./FeatEditor.tsx";
-import { ItemEditor } from "./ItemEditor.tsx";
-import { PowerEditor } from "./PowerEditor.tsx";
-import { RaceEditor } from "./RaceEditor.tsx";
+import { EntityEditor } from "./EntityEditor.tsx";
 
 /** What the customization page passes each editor of an entity's details. */
 export interface EditorProps<T> {
@@ -26,29 +23,23 @@ export interface EditorProps<T> {
   rulesetId: string;
 }
 
-export type EditableEntity = Extract<CustomizationEntity, { type: (typeof EDITABLE_TYPES)[number] }>;
-
-/** The entity types with an editor on the customization page */
-const EDITABLE_TYPES = ["feats", "races", "items", "powers", "klass_levels"] as const;
+/** An entity the customization page edits: a kind's, or a class's level; a modifier has no details to edit. */
+export type EditableEntity = Exclude<CustomizationEntity, { type: "modifiers" }>;
 
 export function isEditable(data: CustomizationEntity): data is EditableEntity {
-  return isOneOf(data.type, EDITABLE_TYPES);
+  return data.type !== "modifiers";
 }
 
-/** An entity's editor, by its type: each reads its rules' columns and words (`useEntityColumns`). */
-export function renderEditor(data: EditableEntity, props: Omit<EditorProps<unknown>, "entity">) {
-  switch (data.type) {
-    case "feats":
-      return <FeatEditor {...props} entity={data.entity} />;
-    case "races":
-      return <RaceEditor {...props} entity={data.entity} />;
-    case "items":
-      return <ItemEditor {...props} entity={data.entity} />;
-    case "powers":
-      return <PowerEditor {...props} entity={data.entity} />;
-    case "klass_levels":
-      return <ClassLevelEditor {...props} entity={data.entity} />;
-    default:
-      return data satisfies never;
-  }
+/**
+ * An entity's editor: a class level's own, else its kind's, as its rules describe it (`rules`, which the app has
+ * loaded: none for a kind they don't list).
+ */
+export function renderEditor(
+  data: EditableEntity,
+  rules: RulesDescription | undefined,
+  props: Omit<EditorProps<unknown>, "entity">,
+) {
+  if (data.type === "klass_levels") return <ClassLevelEditor {...props} entity={data.entity} />;
+  const kind = rules?.kinds.find((each) => each.type === data.type);
+  return kind && <EntityEditor {...props} entity={data.entity} kind={kind} />;
 }
