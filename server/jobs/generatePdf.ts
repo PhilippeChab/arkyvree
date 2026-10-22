@@ -32,11 +32,12 @@ const MAX_PDF_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
 /**
  * The user's PDF failed: its export marked so, and the user told. An export an earlier attempt stored stays ready, and
  * its user, told it's ready, isn't told it failed. (An attempt can store it and die before the worker records it done.)
+ * One a read took for lost while this attempt ran is failed already, of which the user hears now.
  */
 async function failExport({ campaignId, characterId, characterName, exportId, userId }: GeneratePdfPayload) {
   await withTransaction(async (tx) => {
     const [failed] = exportId
-      ? await Exports.update(tx, { status: "failed" }, { id: exportId, status: "pending" })
+      ? await Exports.update(tx, { status: "failed" }, { id: exportId, status: ["pending", "failed"] })
       : [];
     // One an earlier attempt stored stays as it is; of one the cleanup deleted (its pending day past) the user hears,
     // the notification naming no export
@@ -53,10 +54,10 @@ async function failExport({ campaignId, characterId, characterName, exportId, us
 }
 
 /**
- * The character's PDF file stored in its export, ready for an hour: the one its request stored while it's pending, or a
- * new one (a job queued before exports were stored pending, or a pending one the cleanup reaped, kept by its id). None
- * for an export that's no longer pending: an attempt that outlived its lock finds it failed, which stays as its user
- * was told.
+ * The character's PDF file stored in its export, ready for an hour: the one its request stored while it's pending, or
+ * one a read took for lost while this attempt ran (a render past what one takes), or a new one (a job queued before
+ * exports were stored pending, or a pending one the cleanup reaped, kept by its id). None for one an earlier attempt
+ * stored.
  */
 async function storeExport(tx: Db, { exportId, userId }: GeneratePdfPayload, data: Buffer, fileName: string) {
   const file = {
@@ -65,7 +66,7 @@ async function storeExport(tx: Db, { exportId, userId }: GeneratePdfPayload, dat
     expiresAt: new Date(Date.now() + READY_EXPORT_TTL_MS).toISOString(),
     status: "ready" as const,
   };
-  const [stored] = exportId ? await Exports.update(tx, file, { id: exportId, status: "pending" }) : [];
+  const [stored] = exportId ? await Exports.update(tx, file, { id: exportId, status: ["pending", "failed"] }) : [];
   if (stored) return stored;
   if (exportId && (await Exports.findStatus(tx, { id: exportId, userId }))) return null;
   const [created] = await Exports.create(tx, {
@@ -83,11 +84,11 @@ export async function generatePdfTask(payload: unknown, helpers: JobHelpers): Pr
   const { userId, characterId, characterName, campaignId } = job;
 
   try {
-    // An export no longer pending has its answer, which its user was told: a retry of an attempt that stored the PDF
-    // and died before the worker recorded it done, or an attempt that outlived its lock after another gave up on it.
-    // Read in the attempt, whose last one tells the user it failed
+    // An export ready has its answer, which its user was told: a retry of an attempt that stored the PDF and died
+    // before the worker recorded it done. One a read took for lost is made all the same. Read in the attempt, whose
+    // last one tells the user it failed
     const status = job.exportId ? (await Exports.findStatus(db, { id: job.exportId, userId }))?.status : undefined;
-    if (status === "ready" || status === "failed") {
+    if (status === "ready") {
       helpers.logger.info(`PDF for character ${characterId} not made: its export ${job.exportId} is ${status}`);
       return;
     }

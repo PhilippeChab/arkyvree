@@ -7,7 +7,7 @@ import { toExportJobKey } from "./exportJobKey.ts";
 
 /**
  * How long a PDF's last attempt renders before it's taken for lost (its worker killed): a render takes seconds, and one
- * that outlives this finds its export failed, and stores nothing.
+ * that outlives this and finishes stores its PDF all the same, telling the user then.
  */
 const RENDER_LOST_AFTER = "15 minutes";
 
@@ -18,7 +18,8 @@ class ExportsService {
    * payload), which a job that fails marks itself. One still queued behind others, or waiting on a worker, stays
    * pending. A pending one's jobs are counted before it's read again: the worker stores the export before it deletes
    * the job that made it, so an export whose job is gone by then reads as that job left it. One still pending is lost,
-   * and stored failed as it's answered so: an attempt that outlived its lock finds it failed, and stores nothing. One
+   * and stored failed as it's answered so: an attempt that outlived its lock and finishes still stores it, or fails it,
+   * telling the user then. One
    * the cleanup deletes between the reads is gone.
    */
   private async readExport<T extends { expiresAt: string; id: string; status: string }>(
@@ -39,7 +40,7 @@ class ExportsService {
     exportRecord = await readFound();
     if (exportRecord.status !== "pending") return exportRecord;
     const { id } = exportRecord;
-    const [lost] = await withTransaction((tx) => Exports.update(tx, { status: "failed" }, { id, status: "pending" }));
+    const [lost] = await withTransaction((tx) => Exports.update(tx, { status: "failed" }, { id, status: ["pending"] }));
     // Stored between the two reads, it's read as stored
     return lost ? { ...exportRecord, status: "failed" as const } : await readFound();
   }

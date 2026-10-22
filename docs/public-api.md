@@ -26,7 +26,6 @@ answers in shapes of its own, which stay fixed.
   `/v1`. No key acts for a demo, so a v1 write needs no `denyDemoUser`, which reads the app's session.
 - Its requests are counted per user, whichever keys of theirs ask (`apiKeyRateLimit`: 120 a minute), and a
   character's level choices, which read every option of each pool, its level saves, edits and removals, which build
-  character's level choices, which read every option of each pool, its level saves, edits and removals, which build
   the whole character, a character file's import, which builds the character level by level, its PDFs, which each
   cost a render, and its image uploads apart (`levelChoicesRateLimit`: 20 a minute; `apiLevelSaveRateLimit`: 20;
   `apiImportRateLimit`: 10; `apiExportRateLimit`: 5; `apiAttachmentUploadRateLimit`: 20), which the app's own routes

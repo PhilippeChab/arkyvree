@@ -171,20 +171,30 @@ describe("generatePdf", () => {
     expect((await Exports.findOne(db, { id: pending.id, userId: session.userId }))?.expiresAt).toBe(stored!.expiresAt);
   }, 30_000);
 
-  test("leaves an export marked failed as it is when an attempt that outlived its lock finishes after", async () => {
+  test("stores the PDF of an export a read took for lost as it rendered, and tells the user", async () => {
     const { session } = await createTestUser();
     const character = await createCharacterAs(session);
     const pending = await CharactersService.enqueuePdf(session, character.id);
     const [job] = await queuedPdfJobs(character.id);
-    // The retry that took the job over gave up on it: the user was told it failed
+    // Its last attempt locked past a render's time: a status read took it for lost, telling no one
     await Exports.update(db, { status: "failed" }, { id: pending.id });
 
     await generatePdfTask(job!.payload, silentJobHelpers);
-    expect(await Exports.findOne(db, { id: pending.id, userId: session.userId })).toMatchObject({
-      status: "failed",
-      data: null,
-    });
-    expect(await notificationsOf(session.userId, "pdfReady")).toEqual([]);
+    expect(await Exports.findOne(db, { id: pending.id, userId: session.userId })).toMatchObject({ status: "ready" });
+    expect(await notificationsOf(session.userId, "pdfReady")).toHaveLength(1);
+  }, 30_000);
+
+  test("tells the user a PDF failed whose export a read took for lost before its last attempt failed", async () => {
+    const { session } = await createTestUser();
+    const character = await createCharacterAs(session);
+    const pending = await CharactersService.enqueuePdf(session, character.id);
+    const [job] = await queuedPdfJobs(character.id);
+    await Exports.update(db, { status: "failed" }, { id: pending.id });
+    // The character no longer exportable: the attempt fails
+    await CharactersService.archiveCharacter(session, character.id);
+
+    await generatePdfTask(job!.payload, silentJobHelpers);
+    expect(await notificationsOf(session.userId, "pdfFailed")).toHaveLength(1);
   }, 30_000);
 
   test("tells the user a PDF failed whose pending export the cleanup deleted before its job ran", async () => {
