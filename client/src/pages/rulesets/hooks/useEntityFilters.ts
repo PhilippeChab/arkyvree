@@ -20,9 +20,9 @@ export const DEFAULT_ENTITY_FILTERS = {
 } as const satisfies { kind: EntityKind; orderBy: EntitySortField; orderDir: Direction };
 
 /**
- * The Races / Classes tab's search, kind and sort, kept in the URL, with the search bar props that change them: the
- * kinds its ruleset's rules list (`entityKinds`). While they load, the kind the URL names stands, so the tab's first
- * fetch is for it.
+ * An entity kind's tab's search, and a partitioned kind's (the races', the classes') kind and sort, kept in the URL,
+ * with the search bar props that change them: the kinds its ruleset's rules list (`entityKinds`). While they load, the
+ * kind the URL names stands, so the tab's first fetch is for it.
  */
 export function useEntityFilters(baseRules: BaseRules) {
   const { searchParams, updateSearchParams, search, orderBy, orderDir, searchBarProps } = useListParams(

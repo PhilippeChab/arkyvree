@@ -1,5 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
+import { CUSTOMIZATION_PAGE_TYPES } from "@/shared/customization/entities.ts";
+import { isOneOf } from "@/shared/isOneOf.ts";
 import { expectOk, guestApi } from "@/tests/support/api.ts";
 
 describe("rules", () => {
@@ -42,6 +44,9 @@ describe("rules", () => {
       abilities: "page",
       mechanics: "page",
     });
+    // A kind that opens a customization page is one such a page shows
+    const customized = dnd35.kinds.filter(({ opens }) => opens === "customization").map(({ type }) => type);
+    expect(customized.filter((type) => !isOneOf(type, CUSTOMIZATION_PAGE_TYPES))).toEqual([]);
     // Races and classes narrow by what they're for, abilities take no form, an empty list of saves its own words
     expect(dnd35.kinds.filter((kind) => kind.partitioned).map(({ type }) => type)).toEqual(["races", "klasses"]);
     expect(dnd35.kinds.filter((kind) => kind.readOnly).map(({ type }) => type)).toEqual(["abilities"]);

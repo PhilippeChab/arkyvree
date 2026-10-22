@@ -8,8 +8,9 @@ import type { FormField } from "@/engine/core/fields/index.ts";
  * (`partitioned`), whether its entities are the rules' alone, which no form makes, edits or deletes and no search
  * finds (`readOnly`: an ability's), where its row opens (`opens`: its own page, its customization page, or its
  * progression page, a class's), whether its form gives its description room (`longDescription`: a mechanic's), and
- * whether a new one's form says what each of its fields is for (`fieldHelp`: a class's). Its word is its rules' (`RulesDescription.words`), and its URL's segment the app's
- * (`getUrlSegment`: `classes`). Not the kinds a race or a class is for (`entityKinds`).
+ * whether a new one's form says what each of its fields is for (`fieldHelp`: a class's). Its word is its rules'
+ * (`RulesDescription.words`), and its URL's segment the app's (`getUrlSegment`: `classes`). Not the kinds a race or a
+ * class is for (`entityKinds`).
  */
 export interface EntityKindDescription {
   empty?: string;
