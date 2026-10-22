@@ -314,7 +314,7 @@ class AttachmentsService {
   /**
    * Uploads an image through the server into its slot, at once: its type read from its bytes, stored as a pending blob
    * first, so one a crash leaves unattached is swept with its row, then put in storage and attached. A failed write or
-   * attach deletes what it stored.
+   * attach deletes what it stored. Answers the attachment as its read does: its id and its image's URL.
    */
   async setAttachment(session: Session, params: { file: File; name: string; recordId: string; recordType: string }) {
     const { file, ...slot } = params;
@@ -341,7 +341,7 @@ class AttachmentsService {
       throw error;
     }
     await this.purgeOrphan(result.orphan);
-    return { attachment: result.attachment, blob: result.blob };
+    return { id: result.attachment.id, url: getPublicUrl(result.blob) };
   }
 }
 

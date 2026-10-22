@@ -18,25 +18,30 @@ class ExportsService {
    * payload), which a job that fails marks itself. One still queued behind others, or waiting on a worker, stays
    * pending. A pending one's jobs are counted before it's read again: the worker stores the export before it deletes
    * the job that made it, so an export whose job is gone by then reads as that job left it. One still pending is lost,
-   * and stored failed as it's answered so: an attempt that outlived its lock finds it failed, and stores nothing.
+   * and stored failed as it's answered so: an attempt that outlived its lock finds it failed, and stores nothing. One
+   * the cleanup deletes between the reads is gone.
    */
   private async readExport<T extends { expiresAt: string; id: string; status: string }>(
     read: () => Promise<T | undefined>,
   ) {
-    let exportRecord = await read();
-    if (!exportRecord) throw new NotFoundError("Export not found");
+    const readFound = async () => {
+      const found = await read();
+      if (!found) throw new NotFoundError("Export not found");
+      return found;
+    };
+    let exportRecord = await readFound();
 
     if (new Date(exportRecord.expiresAt) < new Date()) throw new NotFoundError("Export has expired");
     if (exportRecord.status !== "pending") return exportRecord;
 
     if ((await countJobsToRun(toExportJobKey(exportRecord.id), RENDER_LOST_AFTER)) > 0) return exportRecord;
     // Its job gone, it was stored by then, or lost
-    exportRecord = (await read()) ?? exportRecord;
+    exportRecord = await readFound();
     if (exportRecord.status !== "pending") return exportRecord;
     const { id } = exportRecord;
     const [lost] = await withTransaction((tx) => Exports.update(tx, { status: "failed" }, { id, status: "pending" }));
     // Stored between the two reads, it's read as stored
-    return lost ? { ...exportRecord, status: "failed" as const } : ((await read()) ?? exportRecord);
+    return lost ? { ...exportRecord, status: "failed" as const } : await readFound();
   }
 
   /** An export's file, once it's ready: a pending or failed one has none to download. */

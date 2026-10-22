@@ -12,7 +12,7 @@ import {
 import { idParam } from "@/server/routers/api/validation.ts";
 import { v1Attachment } from "@/server/routers/v1/schemas/attachments.ts";
 import { V1 } from "@/server/routers/v1/translators/V1.ts";
-import { AttachmentsService, getPublicUrl } from "@/server/services/attachments/index.ts";
+import { AttachmentsService } from "@/server/services/attachments/index.ts";
 import { MAX_UPLOAD_BYTES } from "@/shared/attachments.ts";
 
 /** What a form adds to its file: each part's boundary and headers. */
@@ -72,13 +72,8 @@ export default new Hono<ApiKeyContext>()
       const { file, name, recordId, recordType } = c.req.valid("form");
       const session = c.var.requestSession;
       // What it attached, as its write left it: another request may replace it since
-      const { attachment, blob } = await AttachmentsService.setAttachment(session, {
-        file,
-        name,
-        recordId,
-        recordType,
-      });
-      return c.json(V1.attachment({ id: attachment.id, url: getPublicUrl(blob) }), 201);
+      const attachment = await AttachmentsService.setAttachment(session, { file, name, recordId, recordType });
+      return c.json(V1.attachment(attachment), 201);
     },
   )
   .delete(
