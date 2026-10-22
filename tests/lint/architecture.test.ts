@@ -201,6 +201,8 @@ describe("architecture rules", () => {
         "client/src/q.ts": imports("@/server/routers/application.ts"),
         "client/src/r.ts": imports("@/engine/index.ts"),
         "client/src/s.ts": imports("@/database/packages/registry.ts"),
+        // Nor a ruleset's vocabulary: what it shows of it, the engine describes
+        "client/src/t.ts": imports("@/vocabulary/dnd3.5/spells.ts"),
         // The engine reads nothing itself: the schema for its types alone, none of the server or the content
         "engine/core/t.ts": imports("@/drizzle/schema.ts"),
         "engine/core/u.ts": imports("@/server/database/index.ts"),
@@ -246,6 +248,7 @@ describe("architecture rules", () => {
       "root-folders client/src/q.ts",
       "root-folders client/src/r.ts",
       "root-folders client/src/s.ts",
+      "root-folders client/src/t.ts",
       "root-folders codegen/core/g.ts",
       "root-folders codegen/dnd3.5/tools/h.ts",
       "root-folders codegen/dnd3.5/tools/i.ts",
@@ -377,14 +380,15 @@ describe("architecture rules", () => {
           "engine/rulesets/dnd3.5/q.ts": imports("@/vocabulary/dnd3.5/spells.ts"),
           "engine/api/r.ts": imports("@/engine/rulesets/pf1/index.ts"),
           "tests/s.test.ts": imports("@/engine/rulesets/pf1/index.ts"),
-          // The client's generic modules reach a ruleset's vocabulary and code through its registries alone
-          "client/src/pages/rulesets/t.ts": imports("@/vocabulary/dnd3.5/spells.ts"),
-          "client/src/components/characters/sections/sectionFactory.ts": imports("@/vocabulary/dnd3.5/spells.ts"),
-          "client/src/pages/rulesets/components/dnd3.5/u.ts": imports("@/vocabulary/dnd3.5/spells.ts"),
-          "client/src/pages/rulesets/components/v.ts": imports("@/client/src/pages/rulesets/components/dnd3.5/u.ts"),
-          "client/src/pages/rulesets/hooks/useEntityFilters.ts": imports(
-            "@/client/src/pages/rulesets/components/dnd3.5/u.ts",
+          // The client's generic modules reach a ruleset's code through its registry alone (its vocabulary, never: root-folders)
+          "client/src/pages/rulesets/t.ts": imports("@/client/src/components/characters/sections/dnd3.5/index.ts"),
+          "client/src/components/characters/sections/sectionFactory.ts": imports(
+            "@/client/src/components/characters/sections/dnd3.5/index.ts",
           ),
+          "client/src/pages/rulesets/components/dnd3.5/u.ts": imports(
+            "@/client/src/pages/rulesets/components/dnd3.5/x.ts",
+          ),
+          "client/src/pages/rulesets/components/v.ts": imports("@/client/src/pages/rulesets/components/dnd3.5/u.ts"),
           "vocabulary/pf1/w.ts": imports("@/vocabulary/dnd3.5/spells.ts"),
         },
         ["ruleset-folders"],
