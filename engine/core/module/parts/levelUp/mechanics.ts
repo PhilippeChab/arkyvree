@@ -14,6 +14,15 @@
 import type { RulesWord } from "@/engine/core/module/parts/ruleset/index.ts";
 import type { ViewEntities } from "@/engine/core/view/index.ts";
 
+/**
+ * The words a level's advancements take, whatever step shows them: a position's word on a track ("Level", "Levels":
+ * "Fighter Level 3"), and the review's title for them ("Class Advancement").
+ */
+export interface AdvancementWords {
+  position: RulesWord;
+  review: string;
+}
+
 /** An option a `choose` step raises: its name and short name, and its score and modifier as the plan has them. */
 export interface ChoiceOption {
   abbreviation: string;
@@ -62,6 +71,14 @@ export interface LevelPlanAnswer {
 export interface LevelPlanRequest {
   editedLevelId?: string;
   steps: Record<string, StepPayload>;
+}
+
+/**
+ * A level's steps, as its module lists them: the words its advancements take, and its steps, in the wizard's order.
+ */
+export interface LevelSteps {
+  advancements: AdvancementWords;
+  steps: readonly LevelStep[];
 }
 
 /**
@@ -186,23 +203,6 @@ export interface StepPickerQuery {
   plan: LevelPlanRequest;
   pool?: string;
   tier?: string;
-}
-
-/**
- * The words a level's advancements take, whatever step shows them: a position's word on a track ("Level", "Levels":
- * "Fighter Level 3"), and the review's title for them ("Class Advancement").
- */
-export interface AdvancementWords {
-  position: RulesWord;
-  review: string;
-}
-
-/**
- * A level's steps, as its module lists them: the words its advancements take, and its steps, in the wizard's order.
- */
-export interface LevelSteps {
-  advancements: AdvancementWords;
-  steps: readonly LevelStep[];
 }
 
 /**
