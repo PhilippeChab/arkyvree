@@ -16,16 +16,17 @@ interface NotificationMessageProps {
 /**
  * What a notification says, one way wherever it shows (its page, the dashboard's card, the bell's panel): its message,
  * its details under it, shown inline since a tooltip never opens on a phone, and the unread dot before them. Its
- * message waits for the rules, whose words name the entity it changed (the bell shows outside the pages that wait).
+ * message waits for the rules, whose words name the entity it changed: the bell shows outside the pages that wait
+ * (`AppMain`, which offers a failed load's retry).
  */
 export function NotificationMessage({ notification, unread = false }: NotificationMessageProps) {
-  const { all: rules, isPending } = useRules();
+  const { all: rules } = useRules();
   return (
     <Stack direction="row" spacing={1} sx={{ alignItems: "baseline", minWidth: 0 }}>
       {unread && <CircleIcon titleAccess="Unread" sx={{ fontSize: 8, color: "primary.main", flexShrink: 0 }} />}
       <Stack spacing={0.5} sx={{ minWidth: 0 }}>
         <Typography variant="body2">
-          {isPending ? (
+          {!rules ? (
             <DiceSpinner size="small" />
           ) : (
             formatNotificationMessage(notification.type, notification.data, rules)
