@@ -86,8 +86,8 @@ export function ApiKeysPanel() {
           API Keys
         </PanelLead>
         <Typography variant="body2" sx={{ color: "text.secondary" }}>
-          A key lets a program outside the app, such as a script or an assistant, read your characters and rulesets
-          through the public API. It acts as you: revoke it once nothing uses it. You can keep {MAX_API_KEYS} at most.
+          A key lets a program outside the app, such as a script or an assistant, use the public API as you: it reads
+          and changes what you can. Revoke it once nothing uses it. You can keep {MAX_API_KEYS} at most.
         </Typography>
       </Stack>
       {!keys && !error && <DiceSpinner sx={{ py: 4 }} />}
