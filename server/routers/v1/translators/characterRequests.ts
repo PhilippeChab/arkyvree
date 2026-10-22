@@ -32,9 +32,10 @@ function groupByAptitude<K extends "featId" | "spellId">(
   picks: ({ aptitudeId: string } & Record<K, string>)[],
   key: K,
 ) {
-  const grouped: Record<string, string[]> = {};
-  for (const pick of picks) (grouped[pick.aptitudeId] ??= []).push(pick[key]);
-  return grouped;
+  const grouped = Map.groupBy(picks, (pick) => pick.aptitudeId);
+  return Object.fromEntries(
+    [...grouped].map(([aptitudeId, ofAptitude]) => [aptitudeId, ofAptitude.map((pick) => pick[key])]),
+  );
 }
 
 /** A level's picks, as the levels' saves take them: by aptitude. */

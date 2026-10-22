@@ -306,6 +306,7 @@ export default class SkillsComponent extends CharacterComponent<LoadedCharacterD
       const maxRank = SkillRules.maxRank(characterLevel, skill.innate);
       if (skill.rank > maxRank) {
         issues.push({
+          amount: skill.rank - maxRank,
           category: "skills",
           message: `${skill.name}: rank ${skill.rank} exceeds ${skill.innate ? "class" : "cross-class"} max of ${maxRank}`,
           subject: `${skill.name}: rank`,

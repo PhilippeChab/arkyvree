@@ -2,6 +2,11 @@ import type { z } from "zod";
 
 /** One thing a refusal says a character fails: the kind of check (`category`), what it's about, and why. */
 export interface RulesIssue {
+  /**
+   * How much of its subject it counts (a pool's slots unspent, a skill's ranks past its max), an issue of the same
+   * subject with more being worse. None: one.
+   */
+  amount?: number;
   category: string;
   entityName?: string;
   entityType?: string;
@@ -9,7 +14,7 @@ export interface RulesIssue {
   requirementTree?: string;
   /**
    * What it's about, past the amounts its message counts (a pool's unspent slots, the skill points overspent): an issue
-   * of the same subject is the same issue, whatever it counts. None: its message is its subject.
+   * of the same subject is the same issue, `amount` how much of it there is. None: its message is its subject.
    */
   subject?: string;
 }
