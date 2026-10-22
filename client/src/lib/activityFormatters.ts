@@ -7,7 +7,7 @@ import { isRecord } from "@/shared/isRecord.ts";
 
 import { formatDecimal } from "./formatNumeric.ts";
 import { oneOf } from "./oneOf.ts";
-import type { RulesDescription, RulesDescriptions } from "./queries.ts";
+import type { RulesDescription, RulesDescriptions, RulesWords } from "./queries.ts";
 import { entityTypeLabel, entityTypeOfCode, getActivityLabelOverrides } from "./rulesetLabels.ts";
 
 /** An entity's column, as its rules describe its form's. */
@@ -76,13 +76,14 @@ const REFERENCE_FIELD = /^(\w+)Id$/;
 
 /**
  * A ruleset entity's create, update or delete, named in its ruleset's word ("Ann created spell Fireball"): the entity
- * its type names (`createKlass`), the engine's names (`entityTypeOfCode`).
+ * its type names (`createKlass`), by its rules' words (`entityTypeOfCode`).
  */
 function contentChange(type: string, actor: string, d: Record<string, unknown>, rules: RulesDescriptions | undefined) {
   const [, verb = "", name = ""] = ENTITY_ACTIVITY.exec(type) ?? [];
-  const entityType = entityTypeOfCode(name);
+  const words = wordsOf(d, rules);
+  const entityType = entityTypeOfCode(name, words);
   if (!Object.hasOwn(CONTENT_CHANGES, verb) || !entityType) return undefined;
-  const word = entityTypeLabel(entityType, wordsOf(d, rules)).toLowerCase();
+  const word = entityTypeLabel(entityType, words).toLowerCase();
   return `${actor} ${CONTENT_CHANGES[verb]} ${word} ${d.entityName || ""}`.trim();
 }
 
@@ -130,10 +131,20 @@ function readColumn(column: Column, value: string): string | null {
   return decimal === null ? null : `${decimal}${column.unit ? ` ${column.unit}` : ""}`;
 }
 
-/** The words of the base rules an activity's ruleset follows, when it says, as its rules describe them (`rules`). */
+/**
+ * The words of the base rules an activity's ruleset follows, as its rules describe them (`rules`): when it doesn't say
+ * (an older activity's), every base rules', the first's word of a type winning.
+ */
 function wordsOf(d: Record<string, unknown>, rules: RulesDescriptions | undefined) {
+  if (!rules) return undefined;
   const baseRules = oneOf(d.baseRules, BASE_RULES_OPTIONS);
-  return baseRules && rules?.[baseRules].words;
+  if (baseRules) return rules[baseRules].words;
+  return Object.assign(
+    {},
+    ...Object.values(rules)
+      .reverse()
+      .map((described) => described.words),
+  ) as RulesWords;
 }
 
 /**
@@ -145,7 +156,7 @@ export function formatActivityDetails(type: string, data: unknown, rules?: Rules
   const parts: string[] = [];
   const baseRules = oneOf(d.baseRules, BASE_RULES_OPTIONS);
   // The columns of the entity its type names, its own alone: another entity's field of the same key reads its own way
-  const entityType = entityTypeOfCode(ENTITY_ACTIVITY.exec(type)?.[2] ?? "");
+  const entityType = entityTypeOfCode(ENTITY_ACTIVITY.exec(type)?.[2] ?? "", wordsOf(d, rules));
   const columns = (entityType && baseRules && rules?.[baseRules].columns[entityType]) || [];
 
   if (Array.isArray(d.changedFields))

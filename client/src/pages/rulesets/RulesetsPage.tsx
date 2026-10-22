@@ -16,7 +16,7 @@ import {
   UPDATED_SORTS,
 } from "@/client/src/components/common/index.ts";
 import { RulesetIcon } from "@/client/src/components/icons/index.ts";
-import { useListPageQuery, useListParams, usePageTitle } from "@/client/src/hooks/index.ts";
+import { useListPageQuery, useListParams, usePageTitle, useRules } from "@/client/src/hooks/index.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
 import {
   RULESET_LIST_DEFAULTS,
@@ -65,6 +65,7 @@ export default function RulesetsPage() {
 
   const scope = oneOf(searchParams.get("scope"), SCOPES);
   const rulesets = useListPageQuery(rulesetListQuery({ scope, search, orderBy, orderDir }));
+  const { all: allRules } = useRules();
 
   return (
     <PageTransition>
@@ -100,10 +101,12 @@ export default function RulesetsPage() {
             >
               <ListCardGrid>
                 {rulesets.items.map((ruleset, index) => {
-                  // The page opens on the Races tab, with "Local Changes" on for extensions.
+                  // The page opens on its rules' first tab, with "Local Changes" on for extensions.
                   const prefetch = () => {
                     void queryClient.prefetchQuery(rulesetDetailQuery(ruleset.id));
-                    void prefetchSection(queryClient, ruleset.id, "races", ruleset.kind === "extension");
+                    const first = allRules?.[ruleset.baseRules].kinds[0];
+                    if (first)
+                      void prefetchSection(queryClient, ruleset.id, first.segment, ruleset.kind === "extension");
                   };
                   return (
                     <ListCard

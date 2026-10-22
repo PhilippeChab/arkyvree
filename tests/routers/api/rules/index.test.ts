@@ -6,7 +6,27 @@ describe("rules", () => {
   test("answers what every base rules' rulesets share, to anyone: words, kinds, levels, lists, progression, level wizard and license", async () => {
     const rules = await expectOk(guestApi.api.rules.$get());
     const dnd35 = rules["Dungeons & Dragons: 3.5"];
-    expect(dnd35.words).toEqual({ powers: { many: "Spells", one: "Spell" } });
+    // Its word for every type, the engine's own (modifiers) with its own, and how an activity names one
+    expect(dnd35.words.powers).toEqual({ code: "Power", many: "Spells", one: "Spell" });
+    expect(dnd35.words.klasses).toEqual({ code: "Klass", many: "Classes", one: "Class" });
+    expect(dnd35.words.modifiers).toEqual({ many: "Modifiers", one: "Modifier" });
+    // Its kinds, in its page's order: each its URL segment, its picture, and its tab's help where it has one
+    expect(dnd35.kinds.map(({ segment, type }) => [type, segment])).toEqual([
+      ["races", "races"],
+      ["languages", "languages"],
+      ["skills", "skills"],
+      ["feats", "feats"],
+      ["powers", "powers"],
+      ["items", "items"],
+      ["aptitudes", "aptitudes"],
+      ["klasses", "classes"],
+      ["saves", "saves"],
+      ["abilities", "abilities"],
+      ["mechanics", "mechanics"],
+    ]);
+    expect(dnd35.kinds.filter((kind) => kind.help).map(({ type }) => type)).toEqual(["aptitudes", "mechanics"]);
+    // Every kind has its word
+    for (const { type } of dnd35.kinds) expect(dnd35.words[type]).toBeDefined();
     expect(dnd35.entityKinds).toEqual([
       { label: "Player Character", value: "pc" },
       { label: "Familiar", value: "familiar" },

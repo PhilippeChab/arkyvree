@@ -1,6 +1,18 @@
 import type { FormField } from "@/engine/core/fields/index.ts";
 
 /**
+ * An entity kind a ruleset holds, as its ruleset's page shows it: its type (`klasses`), the segment of its URL
+ * (`classes`), its icon, by the generic name of its picture (`face`, `bolt`: the client's set of them), and what its tab
+ * says of it, when it says anything (`help`). Its word is its rules' (`RulesDescription.words`).
+ */
+export interface EntityKindDescription {
+  help?: string;
+  icon: string;
+  segment: string;
+  type: string;
+}
+
+/**
  * What a level wizard's steps show where the rules have their own words: the ability increase's (`abilityIncrease`: its
  * word, what its picker asks, and what one adds to its ability), the spend of points' (`pointSpend`: what a point buys, the name of a row it's
  * cheaper on and that name's short header, and its review's title), and a grant's note when it takes no slot of its
@@ -104,6 +116,8 @@ export interface RulesDescription {
   columns: Partial<Record<string, FormField[]>>;
   /** The kinds a race or a class is for: a player character (`pc`), and those its rules add (3.5's bonded creatures) */
   entityKinds: { label: string; value: string }[];
+  /** The entity kinds its rulesets hold, in the order their ruleset's page shows them */
+  kinds: EntityKindDescription[];
   /** A class's last level */
   lastClassLevel: number;
   /** What its level wizard's steps show where its rules have their own words */
@@ -121,12 +135,19 @@ export interface RulesDescription {
   powerLevels: { label: string; level: number }[];
   /** How a class progresses, as its Progression and Spells tabs set it */
   progression: ProgressionDescription;
-  /** Its words for the entity types whose word isn't the engine's, by type: 3.5's powers are spells */
+  /**
+   * Its word for every entity type, by type (3.5's powers are spells), the engine's own types' (`modifiers`) included:
+   * every name the app gives an entity's type
+   */
   words: Partial<Record<string, RulesWord>>;
 }
 
-/** A word in its singular and its plural ("Spell", "Spells"). */
+/**
+ * A word in its singular and its plural ("Spell", "Spells"), and how an activity's type names the entity, where that
+ * isn't its singular (`code`: `Klass`, in `createKlass`).
+ */
 export interface RulesWord {
+  code?: string;
   many: string;
   one: string;
 }

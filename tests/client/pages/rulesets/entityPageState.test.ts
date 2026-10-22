@@ -28,16 +28,16 @@ describe("An entity page's way back", () => {
   });
 
   test("goes to the customization tab it was opened from, named for its entity in its ruleset's words", () => {
-    expect(entityPageBack({ from: "/rulesets/r1/feats/f1/customization/modifiers" }, FALLBACK)).toEqual({
+    expect(entityPageBack({ from: "/rulesets/r1/feats/f1/customization/modifiers" }, FALLBACK, DND35_WORDS)).toEqual({
       label: "Back to Feat",
       to: "/rulesets/r1/feats/f1/customization/modifiers",
     });
     expect(entityPageBack({ from: "/rulesets/r1/powers/p1/customization" }, FALLBACK, DND35_WORDS).label).toBe(
       "Back to Spell",
     );
-    expect(entityPageBack({ from: "/rulesets/r1/class-levels/l1/customization/requirements" }, FALLBACK).label).toBe(
-      "Back to Class Level",
-    );
+    expect(
+      entityPageBack({ from: "/rulesets/r1/class-levels/l1/customization/requirements" }, FALLBACK, DND35_WORDS).label,
+    ).toBe("Back to Class Level");
   });
 
   test("goes to its fallback when it was opened from nowhere it knows", () => {

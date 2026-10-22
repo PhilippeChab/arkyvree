@@ -13,7 +13,8 @@ import { MAX_ITEM_VARIANTS } from "@/vocabulary/dnd3.5/itemTemplates.ts";
 import { SPELL_LEVEL_LABELS, SPELL_LEVELS } from "@/vocabulary/dnd3.5/spells.ts";
 
 /**
- * What every 3.5 ruleset shares: its entities' columns (a class's hit die, an item's slot…), its powers are spells, a race or a class is for a player character or a creature
+ * What every 3.5 ruleset shares: its entity kinds, in its page's order, and their words (its powers are spells), its
+ * entities' columns (a class's hit die, an item's slot…), a race or a class is for a player character or a creature
  * bonded to one, a class has 20 levels and a spell 0 to 9, and its system rulesets' SRD content is Open Game Content.
  */
 export const RULES: RulesDescription = {
@@ -30,6 +31,29 @@ export const RULES: RulesDescription = {
     { label: "Player Character", value: "pc" },
     ...BONDED_KINDS.map((kind) => ({ label: kind.label, value: kind.slug })),
   ],
+  kinds: [
+    { icon: "face", segment: "races", type: "races" },
+    { icon: "translate", segment: "languages", type: "languages" },
+    { icon: "psychology", segment: "skills", type: "skills" },
+    { icon: "spoke", segment: "feats", type: "feats" },
+    { icon: "bolt", segment: "powers", type: "powers" },
+    { icon: "construction", segment: "items", type: "items" },
+    {
+      help: "Pools of choosable options at certain class levels (e.g., Fighter Bonus Feats, Rogue Special Abilities).",
+      icon: "stars",
+      segment: "aptitudes",
+      type: "aptitudes",
+    },
+    { icon: "accessibility", segment: "classes", type: "klasses" },
+    { icon: "shield", segment: "saves", type: "saves" },
+    { icon: "fitness", segment: "abilities", type: "abilities" },
+    {
+      help: "Free-form rule entries for base game mechanics the app doesn't enforce (e.g., trip, disarm, grapple). Use them to document or override situational rules for your table.",
+      icon: "gavel",
+      segment: "mechanics",
+      type: "mechanics",
+    },
+  ],
   lastClassLevel: MAX_CLASS_LEVEL,
   levelUp: LEVEL_WIZARD,
   lists: { items: ITEM_LIST, klasses: CLASS_LIST, powers: POWER_LIST, races: RACE_LIST, skills: SKILL_LIST },
@@ -41,5 +65,18 @@ export const RULES: RulesDescription = {
   },
   powerLevels: SPELL_LEVELS.map((level) => ({ label: SPELL_LEVEL_LABELS[level], level })),
   progression: PROGRESSION,
-  words: { powers: { many: "Spells", one: "Spell" } },
+  words: {
+    abilities: { many: "Abilities", one: "Ability" },
+    aptitudes: { many: "Aptitudes", one: "Aptitude" },
+    feats: { many: "Feats", one: "Feat" },
+    items: { many: "Items", one: "Item" },
+    klass_levels: { code: "Klass Level", many: "Class Levels", one: "Class Level" },
+    klasses: { code: "Klass", many: "Classes", one: "Class" },
+    languages: { many: "Languages", one: "Language" },
+    mechanics: { many: "Mechanics", one: "Mechanic" },
+    powers: { code: "Power", many: "Spells", one: "Spell" },
+    races: { many: "Races", one: "Race" },
+    saves: { many: "Saves", one: "Save" },
+    skills: { many: "Skills", one: "Skill" },
+  },
 };

@@ -180,11 +180,14 @@ describe("Form rules", () => {
 });
 
 describe("An entity type", () => {
-  test("is named in its ruleset's words, singular or plural, else the engine's", () => {
+  test("is named in its ruleset's words, singular or plural, the engine's own types' included", () => {
     expect(entityTypeLabel("powers", DND35_WORDS)).toBe("Spell");
     expect(entityTypeLabel("powers", DND35_WORDS, true)).toBe("Spells");
-    expect(entityTypeLabel("powers", undefined)).toBe("Power");
     expect(entityTypeLabel("klasses", DND35_WORDS, true)).toBe("Classes");
+    expect(entityTypeLabel("klass_levels", DND35_WORDS)).toBe("Class Level");
+    expect(entityTypeLabel("modifiers", DND35_WORDS, true)).toBe("Modifiers");
+    // Before the rules load, its key
+    expect(entityTypeLabel("powers", undefined)).toBe("powers");
     // A type with no word keeps its key
     expect(entityTypeLabel("widgets", DND35_WORDS)).toBe("widgets");
   });
@@ -196,11 +199,11 @@ describe("An activity", () => {
       formatActivityType("createPower", { baseRules: "Dungeons & Dragons: 3.5", entityName: "Fireball" }, RULES),
     ).toBe("Create Spell: Fireball");
     expect(formatActivityType("createPower")).toBe("Create Power");
-    // The app's words, never the engine's names
+    // The app's words, never the engine's names, an older activity's (its data names no base rules) by every rules'
     expect([
-      formatActivityType("createKlass", { entityName: "Fighter" }),
-      formatActivityType("updateKlassLevel"),
-      formatActivityType("addKlassSkill"),
+      formatActivityType("createKlass", { entityName: "Fighter" }, RULES),
+      formatActivityType("updateKlassLevel", {}, RULES),
+      formatActivityType("addKlassSkill", {}, RULES),
     ]).toEqual(["Create Class: Fighter", "Update Class Level", "Add Class Skill"]);
   });
 
@@ -208,8 +211,8 @@ describe("An activity", () => {
     expect(formatNotificationMessage("createCampaignInvite", { actorName: "Ann", campaignName: "Tomb" })).toBe(
       "Ann invited you to Tomb",
     );
-    expect(formatNotificationMessage("createFeat", { entityName: "Dodge" })).toBe("Someone created feat Dodge");
-    expect(formatNotificationMessage("createFeat", {})).toBe("Someone created feat");
+    expect(formatNotificationMessage("createFeat", { entityName: "Dodge" }, RULES)).toBe("Someone created feat Dodge");
+    expect(formatNotificationMessage("createFeat", {}, RULES)).toBe("Someone created feat");
     expect(formatNotificationMessage("somethingNew", { actorName: "Ann" })).toBe("Ann: something new");
     // A revoked contributor's names its ruleset; an older one's data has no name, and keeps the old words
     expect(formatNotificationMessage("revokeContributor", { actorName: "Ann", rulesetName: "Homebrew" })).toBe(
@@ -221,16 +224,10 @@ describe("An activity", () => {
     // An entity is named in its ruleset's word: a 3.5 power is a spell, another ruleset's a power
     expect([
       formatNotificationMessage("deletePower", { baseRules: "Dungeons & Dragons: 3.5", entityName: "Fireball" }, RULES),
+      formatNotificationMessage("createKlass", { actorName: "Ann", entityName: "Fighter" }, RULES),
+      // Before the rules load, its type as it is
       formatNotificationMessage("deletePower", { baseRules: "Dungeons & Dragons: 3.5", entityName: "Fireball" }),
-      formatNotificationMessage("updatePower", { entityName: "Blast" }),
-      formatNotificationMessage("createKlass", { actorName: "Ann", entityName: "Fighter" }),
-    ]).toEqual([
-      "Someone deleted spell Fireball",
-      // Before the rules load, the engine's word
-      "Someone deleted power Fireball",
-      "Someone updated power Blast",
-      "Ann created class Fighter",
-    ]);
+    ]).toEqual(["Someone deleted spell Fireball", "Ann created class Fighter", "Someone: delete power: fireball"]);
   });
 
   test("details the fields it changed, its level, modifier and property", () => {

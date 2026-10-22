@@ -1,5 +1,6 @@
 /** The app's icons, named for what each means where it shows; every icon comes from here. */
 
+export { kindIcon } from "./kindIcons.ts";
 export {
   FitnessCenter as AbilitiesIcon,
   AccountCircle as AccountCircleIcon,
