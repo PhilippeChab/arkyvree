@@ -22,11 +22,6 @@ export default class LevelUpEngine extends CharacterHandle {
     return this.module.levelUp.listSteps(this.view, this.input, request.editedLevelId !== undefined).steps;
   }
 
-  /** A saved level's selections, as its edit opens them: refused when the character has no such level. */
-  describeLevel(...args: Args<"describeLevel">) {
-    return this.module.levelUp.describeLevel(this.view, this.input, ...args);
-  }
-
   /**
    * The plan's answer (`request`, read by its level's steps, each id the view's): each step in its mechanic's shape,
    * Add Level's plan and Edit Level's level alike.
@@ -39,24 +34,9 @@ export default class LevelUpEngine extends CharacterHandle {
     );
   }
 
-  /** The wizard's preview of the levels the character plans, each with its ability increase. */
-  describePreview(...[request]: Args<"describePreview">) {
-    return this.module.levelUp.describePreview(this.view, this.input, this.requests.resolvePreview(request));
-  }
-
   /** A saved level as an edit's plan opens it: each step's payload as the level saved it. */
   describeSavedPlan(...[characterLevelId]: Args<"describeSavedPlan">) {
     return this.module.levelUp.describeSavedPlan(this.view, this.input, characterLevelId);
-  }
-
-  /** The wizard's step `name` of the level a step is for: refused when the ruleset has no such step. */
-  describeStep(...[name, query]: Args<"describeStep">) {
-    return this.module.levelUp.describeStep(this.view, this.input, name, this.requests.resolveQuery(query));
-  }
-
-  /** The wizard's steps of the level a step is for, in order: each by the name `describeStep` answers it by. */
-  describeSteps(...[query]: Args<"describeSteps">) {
-    return this.module.levelUp.describeSteps(this.view, this.input, this.requests.resolveQuery(query));
   }
 
   /**
@@ -70,21 +50,6 @@ export default class LevelUpEngine extends CharacterHandle {
     return this.module.levelUp.listSteps(this.view, this.input, editedLevelId !== undefined);
   }
 
-  /** The class picker, with what the wizard plans so far: its filters, and a page of classes described. */
-  openClassPicker(...[planned]: Args<"openClassPicker">) {
-    return this.module.levelUp.openClassPicker(this.view, this.input, this.requests.resolvePlanned(planned));
-  }
-
-  /** A feat picker: what it offers and leaves out, and a page of options described. */
-  openFeatPicker(...[query]: Args<"openFeatPicker">) {
-    return this.module.levelUp.openFeatPicker(this.view, this.input, this.requests.resolvePickQuery(query));
-  }
-
-  /** A power picker: what it offers and leaves out, and a page of options described. */
-  openPowerPicker(...[query]: Args<"openPowerPicker">) {
-    return this.module.levelUp.openPowerPicker(this.view, this.input, this.requests.resolvePickQuery(query));
-  }
-
   /** Step `step`'s picker over the plan: the kind it reads a page of, and its picker. */
   openStepPicker(...[step, query]: Args<"openStepPicker">) {
     const resolved = this.requests.resolveStepPicker(this.stepsOf(query.plan), step, query);
@@ -94,19 +59,6 @@ export default class LevelUpEngine extends CharacterHandle {
   /** What the character's bonded creatures become as its stored levels make them, from their rows (`bonded`). */
   planBonded(...[bonded, ...rest]: Args<"planBonded">) {
     return this.module.levelUp.planBonded(this.view, this.input, this.resolveBonded(bonded), ...rest);
-  }
-
-  /** A saved level's edit: what it writes, checked, and what the bonded creatures become with it. */
-  planEdit(...[bonded, characterLevelId, edit, force]: Args<"planEdit">) {
-    const resolved = this.requests.resolveEdit(edit);
-    return this.module.levelUp.planEdit(
-      this.view,
-      this.input,
-      this.resolveBonded(bonded),
-      characterLevelId,
-      resolved,
-      force,
-    );
   }
 
   /**
@@ -128,15 +80,6 @@ export default class LevelUpEngine extends CharacterHandle {
       edit,
       force,
     );
-  }
-
-  /**
-   * The levels a level-up saves, checked, with the picks spread over them: the rows the save writes, and what the
-   * master's bonded creatures become with them. The character with them is refused with what it fails, unless forced.
-   */
-  planLevels(...[bonded, request, force]: Args<"planLevels">) {
-    const resolved = this.requests.resolveLevelUp(request);
-    return this.module.levelUp.planLevels(this.view, this.input, this.resolveBonded(bonded), resolved, force);
   }
 
   /**

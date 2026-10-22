@@ -1,18 +1,19 @@
 import { describe, expect, test } from "bun:test";
 
-import { Engine, type LevelRequest } from "@/engine/index.ts";
+import { Engine } from "@/engine/index.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Characters } from "@/server/repositories/index.ts";
 import { readCharacterInput } from "@/server/services/characters/characterInputs.ts";
 import { addFighterLevels, createSeedCharacter } from "@/tests/support/dnd3.5/levelFixtures.ts";
+import { levelUpPlan, type PlannedClassLevel } from "@/tests/support/dnd3.5/levelPlans.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
 
 const session = makeSession();
 
 /** The levels a fighter with `saved` levels plans, `levels`, refused as the engine refuses them: its message. */
-async function refusalOf(saved: number, levels: Omit<LevelRequest, "klassId">[]) {
+async function refusalOf(saved: number, levels: Omit<PlannedClassLevel, "klassId">[]) {
   const ctx = await getSeedCtx();
   const characterId = await createSeedCharacter(ctx, "fighter", { xp: 10000 });
   await addFighterLevels(session, ctx, characterId, saved);
@@ -21,12 +22,9 @@ async function refusalOf(saved: number, levels: Omit<LevelRequest, "klassId">[])
   const klassId = ctx.klassMap.pc["Fighter"];
   return await withRulesetScope(db, record.rulesetId, async (scope) => {
     const levelUp = Engine.for(scope).character(input).levelUp();
-    const request = {
-      levels: levels.map((level) => ({ ...level, klassId })),
-      picks: { feats: {}, powers: {}, skills: {} },
-    };
+    const request = levelUpPlan(levels.map((level) => ({ ...level, klassId })));
     try {
-      levelUp.planLevels([], request, true);
+      levelUp.planLevelUp([], request, true);
     } catch (error) {
       return error instanceof Error ? error.message : String(error);
     }
@@ -34,7 +32,7 @@ async function refusalOf(saved: number, levels: Omit<LevelRequest, "klassId">[])
   });
 }
 
-describe("planLevels", () => {
+describe("planLevelUp", () => {
   test("names a refused level by the character's level, not its place in the level-up", async () => {
     // A fighter 3's fourth level, the plan's first, without the increase it takes
     expect(await refusalOf(3, [{ abilityIncreases: [], hp: 6, level: 4 }])).toBe(

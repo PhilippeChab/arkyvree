@@ -1,6 +1,5 @@
 /**
- * A character's levels: the level-up wizard's steps (`Steps`), pickers (`Pickers`) and preview, a saved level's
- * selections, and a level's save, edit and removal. Each reads the character's rows and asks the engine, which answers
+ * A character's levels: the level wizards' steps, plans and pickers (`Plans`), and a level's save, edit and removal. Each reads the character's rows and asks the engine, which answers
  * by the character's ruleset; a save writes what the engine plans, with what the character's bonded creatures become.
  */
 
@@ -8,18 +7,10 @@ import { getTableName } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
 import { levelsInCharacter } from "@/drizzle/schema.ts";
-import {
-  type AbilityIncrease,
-  type CharacterInput,
-  Engine,
-  type LevelPlanRequest,
-  type LevelRequest,
-  type LevelUpEngine,
-  type PreviewRequest,
-} from "@/engine/index.ts";
+import { type CharacterInput, Engine, type LevelPlanRequest, type LevelUpEngine } from "@/engine/index.ts";
 import { include } from "@/lib/mixins.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
-import { db, withTransaction } from "@/server/database/index.ts";
+import { withTransaction } from "@/server/database/index.ts";
 import {
   Activities,
   CharacterLevelAbilityIncreases,
@@ -30,16 +21,14 @@ import {
   Characters,
 } from "@/server/repositories/index.ts";
 import { readBondedInputs, readCharacterInput } from "@/server/services/characters/characterInputs.ts";
-import { getEditableCharacter, withEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
+import { getEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
 import type { Session } from "@/shared/relations.ts";
 
 import { writeBondedCreatures } from "./bondedWrites.ts";
-import { Pickers } from "./concerns/Pickers.ts";
 import { Plans } from "./concerns/Plans.ts";
-import { Steps } from "./concerns/Steps.ts";
 import { createLevelRows } from "./levelRows.ts";
 
-class CharacterLevelsService extends include(Object, Pickers, Plans, Steps) {
+class CharacterLevelsService extends include(Object, Plans) {
   /** Deletes a level's rows in the tables under it, which an edit writes again. */
   private async deleteLevelRows(tx: Db, characterLevelId: string) {
     await CharacterLevelAbilityIncreases.delete(tx, { characterLevelId });
@@ -57,7 +46,7 @@ class CharacterLevelsService extends include(Object, Pickers, Plans, Steps) {
     session: Session,
     characterId: string,
     characterLevelId: string,
-    planOf: (levelUp: LevelUpEngine, bonded: CharacterInput[]) => ReturnType<LevelUpEngine["planEdit"]>,
+    planOf: (levelUp: LevelUpEngine, bonded: CharacterInput[]) => ReturnType<LevelUpEngine["planLevelEdit"]>,
   ) {
     return await withTransaction(async (tx) => {
       const characterRecord = await this.lockEditableCharacter(tx, session, characterId);
@@ -101,7 +90,7 @@ class CharacterLevelsService extends include(Object, Pickers, Plans, Steps) {
   private async saveLevels(
     session: Session,
     characterId: string,
-    planOf: (levelUp: LevelUpEngine, bonded: CharacterInput[]) => ReturnType<LevelUpEngine["planLevels"]>,
+    planOf: (levelUp: LevelUpEngine, bonded: CharacterInput[]) => ReturnType<LevelUpEngine["planLevelUp"]>,
   ) {
     return await withTransaction(async (tx) => {
       const characterRecord = await this.lockEditableCharacter(tx, session, characterId);
@@ -143,50 +132,6 @@ class CharacterLevelsService extends include(Object, Pickers, Plans, Steps) {
   }
 
   /**
-   * Saves a level-up's levels, the character's pooled picks (skills, feats, powers) spread over them, and what its
-   * bonded creatures become: the engine checks each level, and the character with them unless `force`d, and the save
-   * writes what it plans.
-   */
-  async finalizeLevelUp(
-    session: Session,
-    characterId: string,
-    levels: LevelRequest[],
-    skills: Record<string, number>,
-    feats: Record<string, string[]>,
-    powers: Record<string, string[]>,
-    force: boolean = false,
-  ) {
-    return await this.saveLevels(session, characterId, (levelUp, bonded) =>
-      levelUp.planLevels(bonded, { levels, picks: { skills, feats, powers } }, force),
-    );
-  }
-
-  /** A saved level's selections, as its edit opens them: its class level, hit points, ability increases and picks. */
-  async getLevel(session: Session, characterId: string, characterLevelId: string) {
-    return await withEditableCharacter(db, session, characterId, (scope, character) =>
-      Engine.for(scope).character(character).levelUp().describeLevel(characterLevelId),
-    );
-  }
-
-  /**
-   * The level-up wizard's preview of the levels the character plans (`levels`, each with its ability increases): the
-   * pools they merge, each level's skill points, how the picks spread over them, and what the skill points spent so
-   * far (`skills`, by skill, in the form's order) come to.
-   */
-  async getPreview(
-    session: Session,
-    characterId: string,
-    levels: PreviewRequest["levels"],
-    skills: Record<string, number>,
-    feats: Record<string, string[]>,
-    powers: Record<string, string[]>,
-  ) {
-    return await withEditableCharacter(db, session, characterId, (scope, character) =>
-      Engine.for(scope).character(character).levelUp().describePreview({ levels, picks: { feats, powers, skills } }),
-    );
-  }
-
-  /**
    * Removes the character's most recent level, with its rows under it (the database deletes them with it), and what its
    * bonded creatures become without it.
    */
@@ -211,26 +156,6 @@ class CharacterLevelsService extends include(Object, Pickers, Plans, Steps) {
 
       return { success: true };
     });
-  }
-
-  /**
-   * Re-saves a character level with new hit points, ability increases and picks: the engine checks them, and refuses the
-   * issues the level answers for unless `force`d. Answers the level as it was saved before.
-   */
-  async updateLevel(
-    session: Session,
-    characterId: string,
-    characterLevelId: string,
-    hp: number,
-    abilityIncreases: AbilityIncrease[],
-    skills: Record<string, number>,
-    feats: Record<string, string[]>,
-    powers: Record<string, string[]>,
-    force: boolean = false,
-  ) {
-    return await this.editLevel(session, characterId, characterLevelId, (levelUp, bonded) =>
-      levelUp.planEdit(bonded, characterLevelId, { abilityIncreases, feats, hp, powers, skills }, force),
-    );
   }
 
   /**
