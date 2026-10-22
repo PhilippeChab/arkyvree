@@ -36,6 +36,14 @@ export interface AptitudeLevelsFormField extends FormFieldBase {
 }
 
 /**
+ * A pool's links (a feat's feat pools), none too: at least one when it's `required` on a new entity.
+ */
+export interface AptitudesFormField extends FormFieldBase {
+  input: "aptitudes";
+  required: boolean;
+}
+
+/**
  * A choice of one value among its options (a select), or of several (`multiple`): each named by its label (`labels`,
  * by position: a hit die's 8 is "d8"), else as it is. One `required` offers no "None", and an empty form holds its
  * `default`.
@@ -49,9 +57,10 @@ export interface ChoiceFormField extends FormFieldBase {
   required?: boolean;
 }
 
-/** A decimal, none too (an item's cost, its weight), in its `unit` ("gp"), which its label names. */
+/** A decimal, none too (an item's cost, its weight), at least `min`, in its `unit` ("gp"), which its label names. */
 export interface DecimalFormField extends FormFieldBase {
   input: "decimal";
+  min?: number;
   unit?: string;
 }
 
@@ -63,6 +72,17 @@ export interface EntityFieldGroupValues {
 /** An entity's fields' values as its form sends them, by name (one it leaves out, none): what its save reads. */
 export interface EntityFieldValues {
   [key: string]: EntityFieldValue | undefined;
+}
+
+/**
+ * An entity's form as a request carries it: its name, its description and its fields, which its route reads, and its
+ * columns, and what else its kind reads, by key (`RulesetEntity`, which reads them by their descriptions).
+ */
+export interface EntityForm {
+  [key: string]: unknown;
+  description?: string | null;
+  fields?: EntityFieldValues;
+  name?: string;
 }
 
 /** A yes or no: none too, when it's `nullable` (an item's, which none leaves to its template). */
@@ -129,10 +149,14 @@ export interface TemplateFormField extends FormFieldBase {
   typeKey: string;
 }
 
-/** A free text, or several (`multiple`), with an example of one (`placeholder`). */
+/**
+ * A free text, or several (`multiple`), with an example of one (`placeholder`): none too, when it's `nullable` (an
+ * empty one, none), else an empty one (a language's type).
+ */
 export interface TextFormField extends FormFieldBase {
   input: "text";
   multiple: boolean;
+  nullable: boolean;
   placeholder?: string;
 }
 
@@ -149,6 +173,7 @@ export type EntityFieldValue = boolean | number | string | string[] | null | Ent
  */
 export type FormField =
   | AptitudeLevelsFormField
+  | AptitudesFormField
   | ChoiceFormField
   | DecimalFormField
   | FlagFormField

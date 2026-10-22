@@ -1,10 +1,10 @@
 import type { Db } from "@/drizzle/database.ts";
 import { featsInRules } from "@/drizzle/schema.ts";
-import { Engine, type EntityFieldValues } from "@/engine/index.ts";
+import { Engine } from "@/engine/index.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Feats } from "@/server/repositories/index.ts";
-import EntityWriter from "@/server/services/rulesets/EntityWriter.ts";
+import EntityWriter, { type EntityBody } from "@/server/services/rulesets/EntityWriter.ts";
 import type { Session } from "@/shared/relations.ts";
 
 class FeatsService {
@@ -20,25 +20,13 @@ class FeatsService {
     return feat?.generated ?? false;
   }
 
-  async createFeat(
-    session: Session,
-    rulesetId: string,
-    body: {
-      aptitudeIds: string[];
-      description?: string | null;
-      fields?: EntityFieldValues;
-      name: string;
-    },
-  ) {
+  async createFeat(session: Session, rulesetId: string, body: EntityBody) {
     return await this.writer.create(session, rulesetId, body.name, async (scope, { tombstoneAncestorId, tx }) =>
       // Named as an ancestor the fork deleted, the feat stands in for it (`EntityNames.repointTombstone`), checks
       // finding it by that name
       Engine.for(scope)
         .entities("feats")
-        .planCreate({
-          ...body,
-          tombstoneGenerated: tombstoneAncestorId ? await this.wasGenerated(tx, tombstoneAncestorId) : false,
-        }),
+        .planCreate(body, tombstoneAncestorId ? await this.wasGenerated(tx, tombstoneAncestorId) : false),
     );
   }
 
@@ -92,18 +80,7 @@ class FeatsService {
     });
   }
 
-  async updateFeat(
-    session: Session,
-    rulesetId: string,
-    featId: string,
-    body: {
-      aptitudeIds?: string[];
-      description?: string | null;
-      fields?: EntityFieldValues;
-      name: string;
-      updatedAt?: string;
-    },
-  ) {
+  async updateFeat(session: Session, rulesetId: string, featId: string, body: EntityBody) {
     return await this.writer.update(session, rulesetId, body, (scope) =>
       Engine.for(scope).entities("feats").planEdit(featId, body),
     );

@@ -1,17 +1,16 @@
 /** A class as a ruleset's entity: its fields, what its form stores, and its parts: its levels, skills and table. */
 
-import { z } from "zod";
-
 import { RulesetEntity } from "@/engine/core/entities/index.ts";
 import type { EntityFieldValues } from "@/engine/core/fields/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { Klass } from "@/shared/relations.ts";
-import { DEFAULT_HIT_DIE, HIT_DIE_VALUES } from "@/vocabulary/dnd3.5/classes.ts";
+import { DEFAULT_HIT_DIE } from "@/vocabulary/dnd3.5/classes.ts";
 
 import ClassLevelEntity from "./ClassLevelEntity.ts";
 import ClassProgression from "./ClassProgression.ts";
 import ClassSkills from "./ClassSkills.ts";
 import ClassTable from "./ClassTable.ts";
+import { CLASS_COLUMNS } from "./columns.ts";
 import { CLASS_FIELDS, CLASS_LEVEL_FIELDS } from "./fields.ts";
 
 /** A class's form: its name, description and hit die, and its fields (its bonus spell ability, its caster type). */
@@ -21,9 +20,6 @@ interface ClassBody {
   hd?: number;
   name: string;
 }
-
-/** A class's hit die. */
-const HIT_DIE = z.literal(HIT_DIE_VALUES, { error: () => `Hit die must be one of: ${HIT_DIE_VALUES.join(", ")}` });
 
 /**
  * A class as the ruleset describes it, what its form stores, and its parts, each bound to the class as the view has
@@ -35,6 +31,9 @@ export default class ClassEntity extends RulesetEntity<
   { description?: string | null; hd: number; name: string },
   typeof CLASS_FIELDS.fields
 > {
+  /** Its hit die. */
+  protected override readonly columns = CLASS_COLUMNS;
+
   /** The ability its bonus spells use, and the spells it casts. */
   protected override readonly fields = CLASS_FIELDS;
 
@@ -42,14 +41,9 @@ export default class ClassEntity extends RulesetEntity<
 
   override readonly type = "klasses";
 
-  /** Refuses a hit die the rules have no die for (0 is none). */
-  protected override checkForm({ hd }: ClassBody) {
-    RulesError.parse(HIT_DIE.optional(), hd || undefined, ["hd"]);
-  }
-
-  /** A form's columns: the hit die it gives, or the edited class's; a new one's `DEFAULT_HIT_DIE` when it gives none (0 is none). */
+  /** A form's columns: the hit die it gives (a new class's `DEFAULT_HIT_DIE` when it gives none), or the edited class's. */
   protected override columnsOf({ description, hd, name }: ClassBody, klass?: Klass) {
-    return { description, hd: klass ? (hd ?? klass.hd) : hd || DEFAULT_HIT_DIE, name };
+    return { description, hd: hd ?? klass?.hd ?? DEFAULT_HIT_DIE, name };
   }
 
   /**

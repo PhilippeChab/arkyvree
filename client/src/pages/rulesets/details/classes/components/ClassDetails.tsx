@@ -1,9 +1,8 @@
 import type { FormEventHandler } from "react";
 import type { UseFormReturn } from "react-hook-form";
 
-import { ClassFormFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
+import { type EntityFormData, RulesetEntityFormFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { EntityDetailsCard } from "@/client/src/pages/rulesets/components/index.ts";
-import type { ClassFormData } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 
 /**
  * What the class page passes its details card: the class's form and its save, which a viewer who can't edit the class
@@ -18,7 +17,7 @@ interface ClassDetailsProps {
 /** A class's inline form: what the details card's fields bind, and its save. */
 interface ClassEditor {
   canSave: boolean;
-  form: UseFormReturn<ClassFormData>;
+  form: UseFormReturn<EntityFormData>;
   isSaving: boolean;
   onSubmit: FormEventHandler;
 }
@@ -32,7 +31,7 @@ export function ClassDetails({ rulesetId, edit }: ClassDetailsProps) {
     <EntityDetailsCard
       title="Class Details"
       form={{
-        fields: <ClassFormFields form={edit.form} rulesetId={rulesetId} />,
+        fields: <RulesetEntityFormFields form={edit.form} entityType="klasses" rulesetId={rulesetId} help />,
         onSubmit: edit.onSubmit,
         canSave: edit.canSave,
         isSaving: edit.isSaving,

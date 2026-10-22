@@ -1,19 +1,20 @@
-import type { InferRequestType } from "hono/client";
-
 import type {
   ClassLevelFormData,
   ClassLevelRow,
 } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 import type { Save } from "@/client/src/pages/rulesets/hooks/index.ts";
-import type { rpc } from "@/client/src/services/rpc.ts";
 
-type LevelJson = InferRequestType<
-  (typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["levels"][":levelId"]["$put"]
->["json"];
+/** A feat a level grants, through the aptitude it's taken for: what its feats' column (`grantedFeats`) holds of it. */
+export interface LevelFeat {
+  aptitudeId: string;
+  featId: string;
+}
 
-type LevelSave = NonNullable<LevelJson["saves"]>[number];
-
-export type LevelFeat = Pick<NonNullable<LevelJson["feats"]>[number], "featId" | "aptitudeId">;
+/** A save's base bonus at a level: what its saves' column (`saveBases`) holds of it. */
+export interface LevelSave {
+  base: number;
+  saveId: string;
+}
 
 /** A class level's empty form: the first, which saves nothing and grants no feat. */
 export const EMPTY_CLASS_LEVEL: ClassLevelFormData = { level: 1, saves: [], feats: [] };

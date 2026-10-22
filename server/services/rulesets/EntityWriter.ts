@@ -1,7 +1,7 @@
 import { getTableName, type Table } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
-import type { EntityCreatePlan, EntityDeletePlan, EntityEditPlan, EntityWrites } from "@/engine/index.ts";
+import type { EntityCreatePlan, EntityDeletePlan, EntityEditPlan, EntityForm, EntityWrites } from "@/engine/index.ts";
 import {
   CustomizationCopies,
   EntityEdit,
@@ -44,6 +44,12 @@ interface PlannedEntity {
   name: string;
   rulesetId: string;
 }
+
+/**
+ * A ruleset entity's form, as its route carries it (`entityBody`): its name, when it was last read (an update's), and
+ * its columns, which its kind's rules read by their descriptions.
+ */
+export type EntityBody = EntityForm & { name: string; updatedAt?: string };
 
 /**
  * A ruleset entity kind's writer (`type`, its table and repository): the steps every kind's create, update and delete

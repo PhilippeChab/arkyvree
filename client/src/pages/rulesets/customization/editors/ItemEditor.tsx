@@ -2,9 +2,8 @@ import { parseResponse } from "hono/client";
 
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import {
-  type ItemBody,
-  type ItemFormData,
-  ItemFormFields,
+  type EntityFormData,
+  RulesetEntityFormFields,
   toEntityBody,
   toEntityForm,
   withEntityFields,
@@ -17,8 +16,8 @@ import { rpc } from "@/client/src/services/rpc.ts";
 import type { EditorProps } from "./renderEditor.tsx";
 
 /** An item's form: its name, description and columns, and whether it's a template, which no form changes. */
-function toItemForm(columns: Parameters<typeof toEntityForm>[0], item?: Item): ItemFormData {
-  return { ...toEntityForm<ItemFormData>(columns, item), isTemplate: item?.isTemplate ?? false };
+function toItemForm(columns: Parameters<typeof toEntityForm>[0], item?: Item): EntityFormData {
+  return { ...toEntityForm<EntityFormData>(columns, item), isTemplate: item?.isTemplate ?? false };
 }
 
 export function ItemEditor({
@@ -48,11 +47,11 @@ export function ItemEditor({
     label: "Item",
     // Moved to another template, it holds that one's fields: the save sends them all, the server keeping its own
     sendsAllFields: (data, baseline) => !!data.sourceItemId && data.sourceItemId !== baseline?.sourceItemId,
-    saveFn: (data: ItemFormData, updatedAt: string | undefined) =>
+    saveFn: (data: EntityFormData, updatedAt: string | undefined) =>
       parseResponse(
         rpc.api.rulesets[":id"].items[":itemId"].$put({
           param: { id: rulesetId, itemId: entityId },
-          json: { ...toEntityBody<ItemFormData, ItemBody>(columns, data), updatedAt },
+          json: { ...toEntityBody<EntityFormData, EntityFormData>(columns, data), updatedAt },
         }),
       ),
   });
@@ -61,7 +60,15 @@ export function ItemEditor({
     <EntityDetailsCard
       title="Item Details"
       form={{
-        fields: <ItemFormFields form={form} rulesetId={rulesetId} context={{ templateName: item.templateName }} />,
+        fields: (
+          <RulesetEntityFormFields
+            form={form}
+            entityType="items"
+            rulesetId={rulesetId}
+            columns={2}
+            context={{ templateName: item.templateName }}
+          />
+        ),
         ...save,
       }}
     />

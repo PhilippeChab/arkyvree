@@ -1,5 +1,6 @@
 import { FieldCodec } from "@/engine/core/fields/index.ts";
 
+import { SAVE_COLUMNS } from "./columns.ts";
 import RulesetEntity from "./RulesetEntity.ts";
 
 /** A save's form: its name, description and the ability its bonus comes from. */
@@ -11,6 +12,9 @@ interface SaveBody {
 
 /** A save as the ruleset has it: its row, and the ability its bonus comes from. */
 export default class SaveEntity extends RulesetEntity<"saves", SaveBody> {
+  /** The ability its bonus comes from. */
+  protected override readonly columns = SAVE_COLUMNS;
+
   /** None of its own. */
   protected override readonly fields = FieldCodec.NONE;
 

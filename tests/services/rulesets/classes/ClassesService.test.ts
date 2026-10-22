@@ -33,7 +33,7 @@ import { KLASS_BONUS_SPELL_ABILITY_ID } from "@/vocabulary/dnd3.5/properties/ind
 
 // CRUD, ownership and copy-on-write are covered for every entity in EntityServices.test.ts.
 describe("ClassesService", () => {
-  test("stores a class's hit die, a d8 unless one is given", async () => {
+  test("stores a class's hit die, a d8 unless one is given, one of the rules' dice", async () => {
     const { session, ruleset } = await createTestUserAndRuleset();
     const warrior = await ClassesService.createClass(session, ruleset.id, {
       name: "Warrior",
@@ -46,8 +46,10 @@ describe("ClassesService", () => {
     );
 
     expect((await ClassesService.createClass(session, ruleset.id, { name: "Mage" })).hd).toBe(8);
-    // 0 is no hit die: the default applies.
-    expect((await ClassesService.createClass(session, ruleset.id, { name: "Commoner", hd: 0 })).hd).toBe(8);
+    // A hit die the rules have no die for is refused, by its column
+    expect(ClassesService.createClass(session, ruleset.id, { name: "Commoner", hd: 0 })).rejects.toMatchObject({
+      issues: [{ category: "hd", message: "Hit Die must be one of: 4, 6, 8, 10, 12" }],
+    });
   });
 
   test("exposes the ability a class's bonus spells come from", async () => {

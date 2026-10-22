@@ -13,10 +13,17 @@ import { insertRows } from "@/tests/support/database.ts";
 import { addCharacterLevel, createTestKlassLevel } from "@/tests/support/levels.ts";
 import { createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
 
-type SkillBody = Parameters<typeof SkillsService.createSkill>[2];
-
 /** A skill as it reads: its columns, and its fields beside them. */
-type SkillValues = Omit<SkillBody, "fields"> & Required<NonNullable<SkillBody["fields"]>>;
+interface SkillValues {
+  checkPenaltyMultiplier: number;
+  description?: string | null;
+  impactedByWeight: boolean;
+  name: string;
+  primaryAbilityId: string;
+  usableWithoutTraining: boolean;
+}
+
+type SkillBody = Parameters<typeof SkillsService.createSkill>[2];
 
 /** A skill's body (`values`, as it reads): its columns, and its fields under `fields`. */
 function bodyOf({

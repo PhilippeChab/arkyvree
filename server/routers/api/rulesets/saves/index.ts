@@ -2,8 +2,11 @@ import { Hono } from "hono";
 import { z } from "zod";
 
 import { type SessionContext, validate } from "@/server/middlewares/index.ts";
-import { entityOrderBy, idParam, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
+import { entityBody, entityOrderBy, idParam, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
 import { SavesService } from "@/server/services/rulesets/saves/index.ts";
+
+/** A save's body, its create's and its update's: an entity's (`entityBody`), whose columns its rules read. */
+const saveBody = entityBody;
 
 const saveParams = idParam.extend({ saveId: z.string().uuid() });
 
@@ -32,47 +35,16 @@ export default new Hono<SessionContext>()
     const { id, saveId } = c.req.valid("param");
     return c.json(await SavesService.getSave(id, saveId), 200);
   })
-  .post(
-    "/:id/saves",
-    validate("param", idParam),
-    validate(
-      "json",
-      z.object({
-        name: z.string().min(1),
-        description: z
-          .string()
-          .optional()
-          .transform((v) => v || null),
-        abilityId: z.string().uuid(),
-      }),
-    ),
-    async (c) => {
-      const { id } = c.req.valid("param");
-      const body = c.req.valid("json");
-      return c.json(await SavesService.createSave(c.var.requestSession, id, body), 200);
-    },
-  )
-  .put(
-    "/:id/saves/:saveId",
-    validate("param", saveParams),
-    validate(
-      "json",
-      z.object({
-        name: z.string().min(1),
-        description: z
-          .string()
-          .optional()
-          .transform((v) => v || null),
-        abilityId: z.string().uuid(),
-        updatedAt: z.string().optional(),
-      }),
-    ),
-    async (c) => {
-      const { id, saveId } = c.req.valid("param");
-      const body = c.req.valid("json");
-      return c.json(await SavesService.updateSave(c.var.requestSession, id, saveId, body), 200);
-    },
-  )
+  .post("/:id/saves", validate("param", idParam), validate("json", saveBody), async (c) => {
+    const { id } = c.req.valid("param");
+    const body = c.req.valid("json");
+    return c.json(await SavesService.createSave(c.var.requestSession, id, body), 200);
+  })
+  .put("/:id/saves/:saveId", validate("param", saveParams), validate("json", saveBody), async (c) => {
+    const { id, saveId } = c.req.valid("param");
+    const body = c.req.valid("json");
+    return c.json(await SavesService.updateSave(c.var.requestSession, id, saveId, body), 200);
+  })
   .delete("/:id/saves/:saveId", validate("param", saveParams), async (c) => {
     const { id, saveId } = c.req.valid("param");
     return c.json(await SavesService.deleteSave(c.var.requestSession, id, saveId), 200);

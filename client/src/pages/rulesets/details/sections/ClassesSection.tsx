@@ -13,7 +13,8 @@ import { ClassesIcon } from "@/client/src/components/icons/index.ts";
 import { useRules } from "@/client/src/hooks/index.ts";
 import { itemsBeforeLastPage, pageItems } from "@/client/src/lib/pageItems.ts";
 import {
-  ClassFormFields,
+  type EntityFormData,
+  RulesetEntityFormFields,
   toEntityBody,
   toEntityForm,
   withEntityFields,
@@ -24,10 +25,7 @@ import {
   RulesetSectionTable,
   SectionSearchBar,
 } from "@/client/src/pages/rulesets/components/index.ts";
-import {
-  classDetailQuery,
-  type ClassFormData,
-} from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
+import { classDetailQuery } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 import { getClassTabs } from "@/client/src/pages/rulesets/details/classes/classTabs.ts";
 import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionProps.ts";
 import { classesQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
@@ -53,16 +51,16 @@ export function ClassesSection({ ruleset, childOnly, onChildOnlyChange }: Rulese
   const { fields: classFields } = useEntityFields(ruleset.id, "klasses");
   const { columns: classColumns } = useEntityColumns(ruleset.id, "klasses");
   const { columns, error: listError, list, names } = useEntityList(ruleset.id, "klasses");
-  const { createForm, handleCreate, createDialogProps } = useRulesetSection<Class, ClassFormData>({
+  const { createForm, handleCreate, createDialogProps } = useRulesetSection<Class, EntityFormData>({
     rulesetId: ruleset.id,
     sectionName: "classes",
     label: "Class",
-    createDefaults: withEntityFields(toEntityForm<ClassFormData>(classColumns), classFields),
+    createDefaults: withEntityFields(toEntityForm<EntityFormData>(classColumns), classFields),
     createFn: async (data) =>
       parseResponse(
         rpc.api.rulesets[":id"].classes.$post({
           param: { id: ruleset.id },
-          json: toEntityBody<ClassFormData, ClassFormData>(classColumns, data),
+          json: toEntityBody<EntityFormData, EntityFormData>(classColumns, data),
         }),
       ),
     onCreateSuccess: (created) => openEntity(`classes/${created.id}`),
@@ -141,7 +139,7 @@ export function ClassesSection({ ruleset, childOnly, onChildOnlyChange }: Rulese
       </Stack>
 
       <CreateDialog {...createDialogProps} title="Create New Class">
-        <ClassFormFields form={createForm} rulesetId={ruleset.id} />
+        <RulesetEntityFormFields form={createForm} entityType="klasses" rulesetId={ruleset.id} help />
       </CreateDialog>
     </SectionContent>
   );

@@ -15,8 +15,8 @@ import { itemsBeforeLastPage, pageItems } from "@/client/src/lib/pageItems.ts";
 import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
 import {
   type ColumnContext,
-  type PowerFormData,
-  PowerFormFields,
+  type EntityFormData,
+  RulesetEntityFormFields,
   toEntityBody,
   toEntityForm,
   withEntityFields,
@@ -63,8 +63,8 @@ export function PowersSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
   const words = useRulesetRules(ruleset.id).rules?.words;
   const one = entityTypeLabel("powers", words);
   const many = entityTypeLabel("powers", words, true);
-  const { createForm, createDialogProps, handleCreate } = useRulesetSection<Power, PowerFormData>({
-    createDefaults: withEntityFields(toEntityForm<PowerFormData>(powerColumns), powerFields),
+  const { createForm, createDialogProps, handleCreate } = useRulesetSection<Power, EntityFormData>({
+    createDefaults: withEntityFields(toEntityForm<EntityFormData>(powerColumns), powerFields),
     rulesetId: ruleset.id,
     sectionName: "powers",
     label: one,
@@ -72,7 +72,7 @@ export function PowersSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
       parseResponse(
         rpc.api.rulesets[":id"].powers.$post({
           param: { id: ruleset.id },
-          json: toEntityBody<PowerFormData, PowerFormData>(powerColumns, data),
+          json: toEntityBody<EntityFormData, EntityFormData>(powerColumns, data),
         }),
       ),
     onCreateSuccess: (created) => openEntity(buildCustomizationPath("powers", created.id)),
@@ -173,7 +173,13 @@ export function PowersSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
       </Stack>
 
       <CreateDialog {...createDialogProps} title={`Create New ${one}`} maxWidth="md" fixedHeight>
-        <PowerFormFields form={createForm} rulesetId={ruleset.id} context={NEW_POWER} />
+        <RulesetEntityFormFields
+          form={createForm}
+          entityType="powers"
+          rulesetId={ruleset.id}
+          columns={2}
+          context={NEW_POWER}
+        />
       </CreateDialog>
     </SectionContent>
   );

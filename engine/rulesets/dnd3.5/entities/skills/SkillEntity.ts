@@ -8,6 +8,7 @@ import SkillFocusFeats from "@/engine/rulesets/dnd3.5/entities/feats/SkillFocusF
 import type { Skill } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
+import { SKILL_COLUMNS } from "./columns.ts";
 import { SKILL_FIELDS, type SkillFieldValues } from "./fields.ts";
 
 /** A skill's save, as its form sends it: its row's columns, and the fields its properties keep (an edit's, those it changes). */
@@ -27,6 +28,9 @@ export default class SkillEntity extends RulesetEntity<
 > {
   /** The skill's Skill Focus, made and removed with it. */
   private readonly skillFocus = new SkillFocusFeats(this.view);
+
+  /** The ability its checks add. */
+  protected override readonly columns = SKILL_COLUMNS;
 
   /** How armor weighs on it, and whether it's usable untrained. */
   protected override readonly fields = SKILL_FIELDS;

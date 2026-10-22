@@ -1,6 +1,5 @@
 import type { FieldValues, UseFormReturn } from "react-hook-form";
 
-import type { RulesetFields } from "@/client/src/pages/rulesets/details/rulesetQueries.ts";
 import { useEntityColumns } from "@/client/src/pages/rulesets/hooks/index.ts";
 
 import type { ColumnContext } from "./columnContext.ts";
@@ -10,7 +9,7 @@ interface EntityFormFieldsProps<T extends FieldValues> {
   /** Its declared fields two side by side past a phone's width (`EntityFields`'s) */
   columns?: 1 | 2;
   context?: ColumnContext;
-  entityType: keyof RulesetFields;
+  entityType: string;
   form: UseFormReturn<T>;
   /** Its declared fields each say what they're for under them */
   help?: boolean;

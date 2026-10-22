@@ -8,7 +8,12 @@ import { useLeaveGuard, usePageTitle, useRules, useRulesetPermissions } from "@/
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { type RulesetDetail, rulesetDetailQuery } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
-import { toEntityBody, toEntityForm, withEntityFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
+import {
+  type EntityFormData,
+  toEntityBody,
+  toEntityForm,
+  withEntityFields,
+} from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { EntityDetailLayout, EntityPageError } from "@/client/src/pages/rulesets/components/index.ts";
 import { entityPageBack, entityPageState } from "@/client/src/pages/rulesets/entityPageState.ts";
 import {
@@ -22,7 +27,7 @@ import { isStillOpen } from "@/client/src/pages/rulesets/stillOpen.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { useClassDraftsStore } from "@/client/src/stores/classDraftsStore.ts";
 
-import { type ClassDetail, classDetailQuery, type ClassFormData } from "./classSectionQueries.ts";
+import { type ClassDetail, classDetailQuery } from "./classSectionQueries.ts";
 import { getClassTabAlias, getClassTabs } from "./classTabs.ts";
 import { ClassDetails } from "./components/index.ts";
 
@@ -79,12 +84,12 @@ function ClassView({ back, classId, ruleset, rulesetId, section }: ClassViewProp
   const { columns: classColumns } = useEntityColumns(rulesetId, "klasses");
   // Its form of the class: its columns as its rules describe them, and the fields its ruleset declares for classes
   const toClassForm = (klass: Pick<ClassDetail, "description" | "hd" | "name">) =>
-    withEntityFields(toEntityForm<ClassFormData>(classColumns, klass), classFields, klass);
+    withEntityFields(toEntityForm<EntityFormData>(classColumns, klass), classFields, klass);
   const forgetSource = copy.forgetSource(!!classData);
 
   const { form: editForm, save } = useEntityForm({
     // Its rules' empty class until the class loads, which its editor never shows
-    empty: toEntityForm<ClassFormData>(classColumns),
+    empty: toEntityForm<EntityFormData>(classColumns),
     values: classData && toClassForm(classData),
     formKey: copy.key,
     adoptKey: copy.adoptKey,
@@ -93,11 +98,11 @@ function ClassView({ back, classId, ruleset, rulesetId, section }: ClassViewProp
     entityId: classId,
     label: "Class",
     listKey: QUERY_KEYS.rulesets.section(rulesetId, "classes"),
-    saveFn: (data: ClassFormData, updatedAt: string | undefined) =>
+    saveFn: (data: EntityFormData, updatedAt: string | undefined) =>
       parseResponse(
         rpc.api.rulesets[":id"].classes[":classId"].$put({
           param: { id: rulesetId, classId },
-          json: { ...toEntityBody<ClassFormData, ClassFormData>(classColumns, data), updatedAt },
+          json: { ...toEntityBody<EntityFormData, EntityFormData>(classColumns, data), updatedAt },
         }),
       ),
     toFormValues: toClassForm,

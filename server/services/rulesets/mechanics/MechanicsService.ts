@@ -3,21 +3,14 @@ import { Engine } from "@/engine/index.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Mechanics } from "@/server/repositories/index.ts";
-import EntityWriter from "@/server/services/rulesets/EntityWriter.ts";
+import EntityWriter, { type EntityBody } from "@/server/services/rulesets/EntityWriter.ts";
 import type { Session } from "@/shared/relations.ts";
 
 class MechanicsService {
   /** What its creates, updates and deletes write, in one order around the plans its rules give. */
   private readonly writer = new EntityWriter("mechanics", Mechanics, mechanicsInRules);
 
-  async createMechanic(
-    session: Session,
-    rulesetId: string,
-    body: {
-      description?: string | null;
-      name: string;
-    },
-  ) {
+  async createMechanic(session: Session, rulesetId: string, body: EntityBody) {
     return await this.writer.create(session, rulesetId, body.name, (scope) =>
       Engine.for(scope).entities("mechanics").planCreate(body),
     );
@@ -56,16 +49,7 @@ class MechanicsService {
     });
   }
 
-  async updateMechanic(
-    session: Session,
-    rulesetId: string,
-    mechanicId: string,
-    body: {
-      description?: string | null;
-      name: string;
-      updatedAt?: string;
-    },
-  ) {
+  async updateMechanic(session: Session, rulesetId: string, mechanicId: string, body: EntityBody) {
     return await this.writer.update(session, rulesetId, body, (scope) =>
       Engine.for(scope).entities("mechanics").planEdit(mechanicId, body),
     );

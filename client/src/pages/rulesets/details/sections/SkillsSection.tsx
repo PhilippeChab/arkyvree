@@ -13,8 +13,8 @@ import { SkillsIcon } from "@/client/src/components/icons/index.ts";
 import { useSearchText } from "@/client/src/hooks/index.ts";
 import { itemsBeforeLastPage, pageItems } from "@/client/src/lib/pageItems.ts";
 import {
-  type SkillFormData,
-  SkillFormFields,
+  type EntityFormData,
+  RulesetEntityFormFields,
   toEntityBody,
   toEntityForm,
   withEntityFields,
@@ -47,16 +47,16 @@ export function SkillsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
 
   const { fields: skillFields } = useEntityFields(ruleset.id, "skills");
   const { columns: skillColumns } = useEntityColumns(ruleset.id, "skills");
-  const { createForm, handleCreate, createDialogProps } = useRulesetSection<Skill, SkillFormData>({
+  const { createForm, handleCreate, createDialogProps } = useRulesetSection<Skill, EntityFormData>({
     rulesetId: ruleset.id,
     sectionName: "skills",
-    createDefaults: withEntityFields(toEntityForm<SkillFormData>(skillColumns), skillFields),
+    createDefaults: withEntityFields(toEntityForm<EntityFormData>(skillColumns), skillFields),
     label: "Skill",
     createFn: async (data) =>
       parseResponse(
         rpc.api.rulesets[":id"].skills.$post({
           param: { id: ruleset.id },
-          json: toEntityBody<SkillFormData, SkillFormData>(skillColumns, data),
+          json: toEntityBody<EntityFormData, EntityFormData>(skillColumns, data),
         }),
       ),
     onCreateSuccess: (created) => openEntity(`skills/${created.id}`),
@@ -130,7 +130,7 @@ export function SkillsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
       </Stack>
 
       <CreateDialog {...createDialogProps} title="Create New Skill">
-        <SkillFormFields form={createForm} rulesetId={ruleset.id} />
+        <RulesetEntityFormFields form={createForm} entityType="skills" rulesetId={ruleset.id} />
       </CreateDialog>
     </SectionContent>
   );

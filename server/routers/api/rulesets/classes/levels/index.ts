@@ -2,11 +2,18 @@ import { Hono } from "hono";
 import { z } from "zod";
 
 import { type SessionContext, validate } from "@/server/middlewares/index.ts";
-import { classParams, levelFeats, levelSaves } from "@/server/routers/api/rulesets/classes/validation.ts";
+import { classParams } from "@/server/routers/api/rulesets/classes/validation.ts";
 import { entityFields, idParam } from "@/server/routers/api/validation.ts";
 import { ClassLevelsService } from "@/server/services/rulesets/classes/levels/index.ts";
 
 const classLevelParams = idParam.extend({ classLevelId: z.string().uuid() });
+
+/**
+ * A class level's body, its create's and its update's: its fields and when it was last read (an update's), and every
+ * other key as it is, which its class's rules read (a new level's number, its saves' base bonuses, the feats it grants).
+ */
+const levelBody = z.looseObject({ fields: entityFields.optional(), updatedAt: z.string().optional() });
+
 const levelParams = classParams.extend({ levelId: z.string().uuid() });
 
 export default new Hono<SessionContext>()
@@ -38,36 +45,15 @@ export default new Hono<SessionContext>()
     const { id, classId } = c.req.valid("param");
     return c.json(await ClassLevelsService.getClassLevelSpellsKnown(id, classId), 200);
   })
-  .post(
-    "/:id/classes/:classId/levels",
-    validate("param", classParams),
-    validate(
-      "json",
-      z.object({
-        level: z.number().int(),
-        fields: entityFields.optional(),
-        saves: levelSaves,
-        feats: levelFeats,
-      }),
-    ),
-    async (c) => {
-      const { id, classId } = c.req.valid("param");
-      const body = c.req.valid("json");
-      return c.json(await ClassLevelsService.createClassLevel(c.var.requestSession, id, classId, body), 201);
-    },
-  )
+  .post("/:id/classes/:classId/levels", validate("param", classParams), validate("json", levelBody), async (c) => {
+    const { id, classId } = c.req.valid("param");
+    const body = c.req.valid("json");
+    return c.json(await ClassLevelsService.createClassLevel(c.var.requestSession, id, classId, body), 201);
+  })
   .put(
     "/:id/classes/:classId/levels/:levelId",
     validate("param", levelParams),
-    validate(
-      "json",
-      z.object({
-        fields: entityFields.optional(),
-        saves: levelSaves,
-        feats: levelFeats,
-        updatedAt: z.string().optional(),
-      }),
-    ),
+    validate("json", levelBody),
     async (c) => {
       const { id, classId, levelId } = c.req.valid("param");
       const body = c.req.valid("json");

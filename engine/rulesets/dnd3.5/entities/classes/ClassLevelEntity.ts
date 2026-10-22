@@ -3,7 +3,7 @@
 import { z } from "zod";
 
 import { CustomizationPageEntity } from "@/engine/core/entities/index.ts";
-import type { EntityFieldValues } from "@/engine/core/fields/index.ts";
+import type { EntityFieldValues, EntityForm } from "@/engine/core/fields/index.ts";
 import type { EntityWrites } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
@@ -12,6 +12,7 @@ import { RULESET_LIMITS } from "@/engine/rulesets/dnd3.5/limits.ts";
 import ClassesPaths from "@/engine/rulesets/dnd3.5/model/classes/ClassesPaths.ts";
 import type { Klass, KlassLevel } from "@/shared/relations.ts";
 
+import { CLASS_LEVEL_COLUMNS } from "./columns.ts";
 import { CLASS_LEVEL_FIELDS, type ClassLevelFieldValues } from "./fields.ts";
 
 /**
@@ -27,9 +28,6 @@ interface ClassLevelBody {
 
 /** A new level's number: the class's first to its last. */
 const LEVEL = z.number().int().min(1).max(RULESET_LIMITS.classLevel);
-
-/** A level's saves' base bonuses, each within the rules' bounds. */
-const SAVES = z.array(z.object({ base: z.number().int().min(0).max(RULESET_LIMITS.saveBase) })).optional();
 
 /**
  * A class's levels (`klass`, as the view has it) as the ruleset describes them, and what a level's save writes beside
@@ -49,17 +47,22 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
     super(view);
   }
 
+  /** Its saves' base bonuses and the feats it grants. */
+  protected override readonly columns = CLASS_LEVEL_COLUMNS;
+
   /** Its base attack bonus and its skill points. */
   protected override readonly fields = CLASS_LEVEL_FIELDS;
+
+  /** A new level's number, which its class's levels are ordered by. */
+  protected override readonly formKeys = { level: LEVEL.optional() };
 
   protected override readonly label = "Class level";
 
   override readonly type = "klass_levels";
 
-  /** Refuses a new level's number past the class's bounds, and a save's base bonus past the rules'. */
-  protected override checkForm({ level: number, saves }: ClassLevelBody, level?: KlassLevel) {
+  /** Refuses a new level without its number, or past the class's bounds (its columns refuse a save's base bonus past the rules'). */
+  protected override checkForm({ level: number }: ClassLevelBody, level?: KlassLevel) {
     if (!level) RulesError.parse(LEVEL, number, ["level"]);
-    RulesError.parse(SAVES, saves, ["saves"]);
   }
 
   /** A form's columns: none, a level's number is its own (a new one's, its form's: `planCreate`). */
@@ -125,8 +128,15 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
    * A new level of the class: the class as the view has it, the level's row and join rows, what its form writes beside
    * them, and the level it answers once written, with the fields it keeps.
    */
-  override planCreate(body: ClassLevelBody & { level: number }) {
-    return { ...super.planCreate(body), ...this.joinRows(body), columns: { level: body.level }, klass: this.klass };
+  override planCreate(form: EntityForm) {
+    const plan = super.planCreate(form);
+    const body = this.formOf(form);
+    return {
+      ...plan,
+      ...this.joinRows(body),
+      columns: { level: RulesError.parse(LEVEL, body.level) },
+      klass: this.klass,
+    };
   }
 
   /** Deleting one of the class's levels: the class and the level, as the view has them. */
@@ -139,8 +149,9 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
    * sends them, what its form writes against the properties the view composes for it (those a copy of it holds), and the
    * level it answers once written, with the fields it keeps.
    */
-  override planEdit(levelId: string, body: ClassLevelBody) {
-    return { ...super.planEdit(levelId, body), ...this.joinRows(body), klass: this.klass };
+  override planEdit(levelId: string, form: EntityForm) {
+    const plan = super.planEdit(levelId, form);
+    return { ...plan, ...this.joinRows(this.formOf(form, plan.entity)), klass: this.klass };
   }
 
   /** A level's details: the feats it grants (each with its pool's name and whether it's free), its saves' base bonuses. */

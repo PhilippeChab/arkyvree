@@ -3,8 +3,8 @@ import { parseResponse } from "hono/client";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
 import {
-  type PowerFormData,
-  PowerFormFields,
+  type EntityFormData,
+  RulesetEntityFormFields,
   toEntityBody,
   toEntityForm,
   withEntityFields,
@@ -37,9 +37,9 @@ function toPowerForm(
   power: Power,
   columns: readonly EntityField[],
   fields: readonly EntityField[] | undefined,
-): PowerFormData {
-  const values: PowerFormData = {
-    ...toEntityForm<PowerFormData>(columns, power),
+): EntityFormData {
+  const values: EntityFormData = {
+    ...toEntityForm<EntityFormData>(columns, power),
     aptitudes: linkedAptitudes(power).map(({ id, level }) => (level == null ? { id } : { id, level })),
   };
   return withEntityFields(values, fields, power);
@@ -60,7 +60,7 @@ export function PowerEditor({
   const { columns } = useEntityColumns(rulesetId, "powers");
   const label = entityTypeLabel("powers", useRulesetRules(rulesetId).rules?.words);
   const { form, save } = useEntityForm({
-    empty: { ...toEntityForm<PowerFormData>(columns), aptitudes: [] },
+    empty: { ...toEntityForm<EntityFormData>(columns), aptitudes: [] },
     values: toPowerForm(power, columns, fields),
     formKey: recordKey,
     adoptKey,
@@ -72,11 +72,11 @@ export function PowerEditor({
     storeSaved: refetchSaved,
     listKey: QUERY_KEYS.rulesets.section(rulesetId, "powers"),
     label,
-    saveFn: (data: PowerFormData, updatedAt: string | undefined) =>
+    saveFn: (data: EntityFormData, updatedAt: string | undefined) =>
       parseResponse(
         rpc.api.rulesets[":id"].powers[":powerId"].$put({
           param: { id: rulesetId, powerId: entityId },
-          json: { ...toEntityBody<PowerFormData, PowerFormData>(columns, data), updatedAt },
+          json: { ...toEntityBody<EntityFormData, EntityFormData>(columns, data), updatedAt },
         }),
       ),
   });
@@ -86,7 +86,13 @@ export function PowerEditor({
       title={`${label} Details`}
       form={{
         fields: (
-          <PowerFormFields form={form} rulesetId={rulesetId} context={{ knownAptitudes: linkedAptitudes(power) }} />
+          <RulesetEntityFormFields
+            form={form}
+            entityType="powers"
+            rulesetId={rulesetId}
+            columns={2}
+            context={{ knownAptitudes: linkedAptitudes(power) }}
+          />
         ),
         ...save,
       }}

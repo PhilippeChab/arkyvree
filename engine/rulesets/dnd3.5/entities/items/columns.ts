@@ -15,8 +15,8 @@ const OF_TEMPLATE_TYPE = { path: "type", values: TEMPLATE_ITEM_TYPES };
  * sets its slot: `ItemPlacement.slotOfType`).
  */
 export const ITEM_COLUMNS: FormField[] = [
-  { help: "What it costs", input: "decimal", key: "costGp", label: "Cost", unit: "gp" },
-  { help: "What it weighs", input: "decimal", key: "weight", label: "Weight", unit: "lbs" },
+  { help: "What it costs", input: "decimal", key: "costGp", label: "Cost", min: 0, unit: "gp" },
+  { help: "What it weighs", input: "decimal", key: "weight", label: "Weight", min: 0, unit: "lbs" },
   {
     help: "What kind of item it is",
     input: "choice",

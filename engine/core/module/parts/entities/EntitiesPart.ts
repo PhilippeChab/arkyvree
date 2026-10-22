@@ -3,7 +3,7 @@ import type { Fields, FormField } from "@/engine/core/fields/index.ts";
 import type { RulesetView, ViewEntities } from "@/engine/core/view/index.ts";
 
 /** A kind's rules, of its table (`K`): its `RulesetEntity`, whatever form its saves take. */
-type Kind<K extends keyof ViewEntities> = RulesetEntity<K, never, object, Fields>;
+type Kind<K extends keyof ViewEntities> = RulesetEntity<K, object, object, Fields>;
 
 /**
  * The entity kinds a ruleset answers of, by the schema's tables: each its table's `RulesetEntity`, and those whose

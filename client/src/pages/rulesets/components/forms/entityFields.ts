@@ -64,6 +64,7 @@ function emptyValueOf(field: ValueField): ColumnValue {
     case "template":
       return "";
     case "aptitudeLevels":
+    case "aptitudes":
     case "grantedFeats":
     case "saveBases":
       return [];
@@ -82,6 +83,7 @@ function formValueOf(field: ValueField, value: unknown): ColumnValue {
     case "decimal":
       return typeof value === "number" || typeof value === "string" ? (formatDecimal(value) ?? "") : "";
     case "aptitudeLevels":
+    case "aptitudes":
     case "grantedFeats":
     case "saveBases":
       return Array.isArray(value) ? value : [];

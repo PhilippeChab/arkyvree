@@ -6,8 +6,8 @@ import { useRules } from "@/client/src/hooks/index.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { rulesetDetailQuery } from "@/client/src/lib/queries.ts";
 import {
-  type SkillFormData,
-  SkillFormFields,
+  type EntityFormData,
+  RulesetEntityFormFields,
   toEntityBody,
   toEntityForm,
   withEntityFields,
@@ -41,15 +41,18 @@ function SkillDetails({ rulesetId, skillId }: SkillDetailsProps) {
       label="Skill"
       query={(id) => skillQuery(rulesetId, id)}
       editing={{
-        empty: toEntityForm<SkillFormData>(columns),
-        toFormValues: (skill): SkillFormData =>
-          withEntityFields<SkillFormData>(toEntityForm<SkillFormData>(columns, skill), fields, skill),
+        empty: toEntityForm<EntityFormData>(columns),
+        toFormValues: (skill): EntityFormData =>
+          withEntityFields<EntityFormData>(toEntityForm<EntityFormData>(columns, skill), fields, skill),
         updateFn: (data, updatedAt) =>
           parseResponse(
-            endpoint.$put({ param, json: { ...toEntityBody<SkillFormData, SkillFormData>(columns, data), updatedAt } }),
+            endpoint.$put({
+              param,
+              json: { ...toEntityBody<EntityFormData, EntityFormData>(columns, data), updatedAt },
+            }),
           ),
         removeFn: () => parseResponse(endpoint.$delete({ param })),
-        renderFields: (form) => <SkillFormFields form={form} rulesetId={rulesetId} />,
+        renderFields: (form) => <RulesetEntityFormFields form={form} entityType="skills" rulesetId={rulesetId} />,
       }}
     />
   );

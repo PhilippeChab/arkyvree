@@ -17,9 +17,8 @@ import { itemsBeforeLastPage, pageItems } from "@/client/src/lib/pageItems.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import {
   type ColumnContext,
-  type ItemBody,
-  type ItemFormData,
-  ItemFormFields,
+  type EntityFormData,
+  RulesetEntityFormFields,
   toEntityBody,
   toEntityForm,
   withEntityFields,
@@ -63,9 +62,9 @@ function duplicateForm(
   item: Item,
   columns: readonly EntityField[],
   fields: readonly EntityField[] | undefined,
-): ItemFormData {
+): EntityFormData {
   const form = {
-    ...toEntityForm<ItemFormData>(columns, item),
+    ...toEntityForm<EntityFormData>(columns, item),
     name: `${item.name} (Copy)`,
     sourceItemId: item.isTemplate ? item.id : (item.sourceItemId ?? ""),
     isTemplate: false,
@@ -82,12 +81,12 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
   const { fields: itemFields } = useEntityFields(ruleset.id, "items");
   const { columns: itemColumns } = useEntityColumns(ruleset.id, "items");
   const { columns, error: listError, list, names } = useEntityList(ruleset.id, "items");
-  const toItemBody = (data: ItemFormData) => toEntityBody<ItemFormData, ItemBody>(itemColumns, data);
+  const toItemBody = (data: EntityFormData) => toEntityBody<EntityFormData, EntityFormData>(itemColumns, data);
   const { createForm, createDialogProps, duplicateSource, handleCreate, handleDuplicate } = useRulesetSection<
     Item,
-    ItemFormData
+    EntityFormData
   >({
-    createDefaults: withEntityFields({ ...toEntityForm<ItemFormData>(itemColumns), isTemplate: false }, itemFields),
+    createDefaults: withEntityFields({ ...toEntityForm<EntityFormData>(itemColumns), isTemplate: false }, itemFields),
     rulesetId: ruleset.id,
     sectionName: "items",
     label: "Item",
@@ -203,7 +202,9 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
       </Stack>
       <CreateDialog {...createDialogProps} title="Create New Item" maxWidth="md">
         {/* A duplicate keeps its source's type, while the dialog fades out too */}
-        <ItemFormFields
+        <RulesetEntityFormFields
+          entityType="items"
+          columns={2}
           form={createForm}
           rulesetId={ruleset.id}
           context={duplicateSource ? DUPLICATE_ITEM : NEW_ITEM}

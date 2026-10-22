@@ -169,7 +169,9 @@ export function RulesetEntityDetail<TEntity extends EntityBase, TForm extends Fi
       }
       isLoading={isRulesetLoading || isEntityLoading}
     >
+      {/* Its form's columns are its rules', which its ruleset's base rules pick */}
       {entity &&
+        ruleset &&
         (editing ? (
           <ReadOnlyFields readOnly={!canEdit}>
             <FormDetails

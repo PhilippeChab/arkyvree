@@ -27,9 +27,11 @@ import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
 import { itemsBeforeLastPage, pageItems } from "@/client/src/lib/pageItems.ts";
 import {
-  EMPTY_FEAT,
-  type FeatFormData,
-  FeatFormFields,
+  type ColumnContext,
+  type EntityFormData,
+  RulesetEntityFormFields,
+  toEntityBody,
+  toEntityForm,
   withEntityFields,
 } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import {
@@ -47,6 +49,7 @@ import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/se
 import { featFamilyQuery, featsGroupedQuery, featsQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import {
   useAptitudeFilter,
+  useEntityColumns,
   useEntityFields,
   useOpenEntity,
   useRowPrefetch,
@@ -91,7 +94,13 @@ const GROUPED_COLUMNS: TableColumn[] = [
   { key: "variants", label: "Variants", width: "50%" },
 ];
 
-/** What the tab says while it lists no feat, grouped or not */
+/**
+ * What the tab says while it lists no feat, grouped or not
+ *
+ * A new feat's form, which needs a pool.
+ */
+const NEW_FEAT: ColumnContext = { newEntity: true };
+
 const NO_FEATS = { title: "No feats", description: "No feats available for this ruleset." };
 
 /** A family's variants' indent under it, from `sm` up (a phone's is its rows' `indented`) */
@@ -209,13 +218,19 @@ export function FeatsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
   const { keys: expandedFamilies, toggle: toggleFamily, clear: collapseFamilies } = useToggleSet();
 
   const { fields: featFields } = useEntityFields(ruleset.id, "feats");
-  const { createForm, createDialogProps, handleCreate } = useRulesetSection<Feat, FeatFormData>({
-    createDefaults: withEntityFields(EMPTY_FEAT, featFields),
+  const { columns: featColumns } = useEntityColumns(ruleset.id, "feats");
+  const { createForm, createDialogProps, handleCreate } = useRulesetSection<Feat, EntityFormData>({
+    createDefaults: withEntityFields(toEntityForm<EntityFormData>(featColumns), featFields),
     rulesetId: ruleset.id,
     sectionName: "feats",
     label: "Feat",
     createFn: async (data) =>
-      parseResponse(rpc.api.rulesets[":id"].feats.$post({ param: { id: ruleset.id }, json: data })),
+      parseResponse(
+        rpc.api.rulesets[":id"].feats.$post({
+          param: { id: ruleset.id },
+          json: toEntityBody<EntityFormData, EntityFormData>(featColumns, data),
+        }),
+      ),
     onCreateSuccess: (created) => openEntity(buildCustomizationPath("feats", created.id)),
   });
 
@@ -350,7 +365,7 @@ export function FeatsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
       </Stack>
 
       <CreateDialog {...createDialogProps} title="Create New Feat">
-        <FeatFormFields form={createForm} rulesetId={ruleset.id} aptitudesRequired />
+        <RulesetEntityFormFields form={createForm} entityType="feats" rulesetId={ruleset.id} context={NEW_FEAT} />
       </CreateDialog>
     </SectionContent>
   );

@@ -13,9 +13,10 @@ import { AptitudesIcon } from "@/client/src/components/icons/index.ts";
 import { useSearchText } from "@/client/src/hooks/index.ts";
 import { itemsBeforeLastPage, pageItems } from "@/client/src/lib/pageItems.ts";
 import {
-  type AptitudeFormData,
-  AptitudeFormFields,
-  EMPTY_APTITUDE,
+  type EntityFormData,
+  RulesetEntityFormFields,
+  toEntityBody,
+  toEntityForm,
 } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import {
   DescriptionCell,
@@ -25,7 +26,7 @@ import {
 import { aptitudeQuery } from "@/client/src/pages/rulesets/details/entities/entityDetailQueries.ts";
 import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionProps.ts";
 import { type Aptitude, aptitudesQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
-import { useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { useEntityColumns, useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
 const APTITUDES_COLUMNS: TableColumn[] = [
@@ -39,8 +40,9 @@ export function AptitudesSection({ ruleset, childOnly, onChildOnlyChange }: Rule
 
   const { search: searchQuery, searchBarProps: searchTextProps } = useSearchText("search");
 
-  const { createForm, handleCreate, createDialogProps } = useRulesetSection<Aptitude, AptitudeFormData>({
-    createDefaults: EMPTY_APTITUDE,
+  const { columns: formColumns } = useEntityColumns(ruleset.id, "aptitudes");
+  const { createForm, handleCreate, createDialogProps } = useRulesetSection<Aptitude, EntityFormData>({
+    createDefaults: toEntityForm<EntityFormData>(formColumns),
     rulesetId: ruleset.id,
     sectionName: "aptitudes",
     label: "Aptitude",
@@ -48,7 +50,7 @@ export function AptitudesSection({ ruleset, childOnly, onChildOnlyChange }: Rule
       parseResponse(
         rpc.api.rulesets[":id"].aptitudes.$post({
           param: { id: ruleset.id },
-          json: data,
+          json: toEntityBody<EntityFormData, EntityFormData>(formColumns, data),
         }),
       ),
     onCreateSuccess: (created) => openEntity(`aptitudes/${created.id}`),
@@ -121,7 +123,7 @@ export function AptitudesSection({ ruleset, childOnly, onChildOnlyChange }: Rule
       </Stack>
 
       <CreateDialog {...createDialogProps} title="Create New Aptitude">
-        <AptitudeFormFields form={createForm} />
+        <RulesetEntityFormFields form={createForm} entityType="aptitudes" rulesetId={ruleset.id} />
       </CreateDialog>
     </SectionContent>
   );
