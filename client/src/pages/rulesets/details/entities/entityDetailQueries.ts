@@ -6,8 +6,9 @@
 import { type QueryClient, queryOptions, skipToken } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 
+import { entitySegment, readEntityFn } from "@/client/src/lib/entityRequests.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
-import { type Aptitude, entitySegment } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
+import { type Aptitude } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { getUrlSegment } from "@/shared/urlSegments.ts";
 
@@ -17,9 +18,7 @@ const rulesetApi = rpc.api.rulesets[":id"];
 export function aptitudeQuery(rulesetId: string, aptitudeId: string | undefined) {
   return queryOptions({
     queryKey: QUERY_KEYS.rulesets.entity(rulesetId, "aptitudes", aptitudeId ?? ""),
-    queryFn: aptitudeId
-      ? () => parseResponse(rulesetApi.aptitudes[":aptitudeId"].$get({ param: { id: rulesetId, aptitudeId } }))
-      : skipToken,
+    queryFn: aptitudeId ? () => readEntityFn(rulesetId, "aptitudes", aptitudeId) : skipToken,
   });
 }
 

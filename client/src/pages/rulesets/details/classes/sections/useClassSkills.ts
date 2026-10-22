@@ -65,7 +65,25 @@ export function useClassSkills(rulesetId: string, classId: string) {
           const now = new Date().toISOString();
           return [
             ...old,
-            { skillId, klassId: classId, skillsInRule: skill, createdAt: now, updatedAt: now, deletedAt: null },
+            {
+              skillId,
+              klassId: classId,
+              // The skill as its class's row holds it, of the picked option's
+              skillsInRule: {
+                campaignId: null,
+                createdAt: now,
+                deletedAt: null,
+                description: skill.description,
+                id: skill.id,
+                name: skill.name,
+                primaryAbilityId: typeof skill.primaryAbilityId === "string" ? skill.primaryAbilityId : "",
+                rulesetId: skill.rulesetId,
+                updatedAt: skill.updatedAt,
+              },
+              createdAt: now,
+              updatedAt: now,
+              deletedAt: null,
+            },
           ];
         });
       }

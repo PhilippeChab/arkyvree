@@ -13,12 +13,12 @@ import {
 } from "@/client/src/components/common/index.ts";
 import { TargetPathBreadcrumbs } from "@/client/src/components/customization/index.ts";
 import { usePageTitle, useRules, useRulesetPermissions } from "@/client/src/hooks/index.ts";
+import { entitySegment } from "@/client/src/lib/entityRequests.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { type RulesetDetail, rulesetDetailQuery } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
 import { EntityDetailLayout, EntityPageError } from "@/client/src/pages/rulesets/components/index.ts";
-import { entitySegment } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import { entityPageBack, entityPageState } from "@/client/src/pages/rulesets/entityPageState.ts";
 import {
   useCopyOnWrite,

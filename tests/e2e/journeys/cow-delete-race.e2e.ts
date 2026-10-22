@@ -46,7 +46,7 @@ for (const operation of ["delete", "revert"] as const) {
           const [added, removed] = await Promise.all([
             page.request.post(customization(copyId, kind), { data: body }),
             operation === "delete"
-              ? page.request.delete(`/api/rulesets/${forkId}/races/${copyId}`)
+              ? page.request.delete(`/api/rulesets/${forkId}/entities/races/${copyId}`)
               : page.request.post(restore),
           ]);
           expect(removed.ok(), await removed.text()).toBe(true);

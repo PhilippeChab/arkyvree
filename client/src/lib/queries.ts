@@ -15,6 +15,7 @@ import { ATTACHMENT_SLOTS, type AttachmentSlotName } from "@/shared/attachments.
 import type { BaseRules } from "@/shared/enums.ts";
 
 import { FOREVER } from "./durations.ts";
+import { type EntityRow, readEntitiesFn } from "./entityRequests.ts";
 import { nextPage } from "./pageItems.ts";
 import { QUERY_KEYS } from "./queryKeys.ts";
 
@@ -54,8 +55,8 @@ export interface RulesetListFilters {
 }
 /** The lists of a ruleset its pickers, columns and lookups read whole (`rulesetOptionsQuery`): their rows, by name. */
 export interface RulesetOptions {
-  abilities: InferResponseType<(typeof rpc.api.rulesets)[":id"]["abilities"]["$get"], 200>["items"];
-  saves: InferResponseType<(typeof rpc.api.rulesets)[":id"]["saves"]["$get"], 200>["items"];
+  abilities: EntityRow[];
+  saves: EntityRow[];
 }
 
 export type CharacterDetail = InferResponseType<(typeof rpc.api.characters)[":id"]["$get"], 200>;
@@ -89,8 +90,8 @@ export type RulesWords = RulesDescription["words"];
 const FIRST_HUNDRED = { page: "1", limit: "100" };
 
 const RULESET_OPTION_REQUESTS: RulesetOptionRequests = {
-  abilities: (id) => parseResponse(rpc.api.rulesets[":id"].abilities.$get({ param: { id }, query: FIRST_HUNDRED })),
-  saves: (id) => parseResponse(rpc.api.rulesets[":id"].saves.$get({ param: { id }, query: FIRST_HUNDRED })),
+  abilities: (id) => readEntitiesFn(id, "abilities", FIRST_HUNDRED),
+  saves: (id) => readEntitiesFn(id, "saves", FIRST_HUNDRED),
 };
 
 /** How the campaigns list opens: its page reads them as its URL's defaults, and the sidebar warms its first page. */

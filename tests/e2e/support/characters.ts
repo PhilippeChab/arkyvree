@@ -43,7 +43,10 @@ export async function createCharacter(page: Page, name: string, scores: Record<s
   const human = races.items.find((race) => race.name === "Human");
   if (!human) throw new Error("The core rules have no Human");
   const abilities = await parseResponse(
-    api.api.rulesets[":id"].abilities.$get({ param: { id: rulesetId }, query: {} }),
+    api.api.rulesets[":id"].entities[":entityType"].$get({
+      param: { id: rulesetId, entityType: "abilities" },
+      query: {},
+    }),
   );
   const character = await parseResponse(
     api.api.characters.$post({

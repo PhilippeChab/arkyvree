@@ -6,8 +6,8 @@
 import { queryOptions, skipToken } from "@tanstack/react-query";
 import { type InferResponseType, parseResponse } from "hono/client";
 
+import { type EntityRow, entitySegment } from "@/client/src/lib/entityRequests.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
-import { type EntityRow, entitySegment } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import type { CustomizationPageType } from "@/shared/customization/entities.ts";
 import { getUrlSegment } from "@/shared/urlSegments.ts";

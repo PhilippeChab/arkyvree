@@ -3,6 +3,7 @@ import { parseResponse } from "hono/client";
 import { Navigate, useLocation, useParams } from "react-router-dom";
 
 import { useRules } from "@/client/src/hooks/index.ts";
+import { entitySegment } from "@/client/src/lib/entityRequests.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { type EntityKindDescription, rulesetDetailQuery } from "@/client/src/lib/queries.ts";
 import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
@@ -14,7 +15,6 @@ import {
   withEntityFields,
 } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { EntityDetailLayout, EntityPageError } from "@/client/src/pages/rulesets/components/index.ts";
-import { entitySegment } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import { entityPageBack } from "@/client/src/pages/rulesets/entityPageState.ts";
 import { useEntityFields } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";

@@ -5,6 +5,7 @@ import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom"
 
 import { ConfirmDialog, ReadOnlyFields, SectionTabPanel, SectionTabs } from "@/client/src/components/common/index.ts";
 import { useLeaveGuard, usePageTitle, useRules, useRulesetPermissions } from "@/client/src/hooks/index.ts";
+import { entitySegment } from "@/client/src/lib/entityRequests.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { type RulesetDetail, rulesetDetailQuery } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
@@ -83,7 +84,7 @@ function ClassView({ back, classId, ruleset, rulesetId, section }: ClassViewProp
   const { fields: classFields } = useEntityFields(rulesetId, "klasses");
   const { columns: classColumns } = useEntityColumns(rulesetId, "klasses");
   // Its form of the class: its columns as its rules describe them, and the fields its ruleset declares for classes
-  const toClassForm = (klass: Pick<ClassDetail, "description" | "hd" | "name">) =>
+  const toClassForm = (klass: ClassDetail) =>
     withEntityFields(toEntityForm<EntityFormData>(classColumns, klass), classFields, klass);
   const forgetSource = copy.forgetSource(!!classData);
 
@@ -100,8 +101,8 @@ function ClassView({ back, classId, ruleset, rulesetId, section }: ClassViewProp
     listKey: QUERY_KEYS.rulesets.section(rulesetId, "classes"),
     saveFn: (data: EntityFormData, updatedAt: string | undefined) =>
       parseResponse(
-        rpc.api.rulesets[":id"].classes[":classId"].$put({
-          param: { id: rulesetId, classId },
+        rpc.api.rulesets[":id"].entities[":entityType"][":entityId"].$put({
+          param: { id: rulesetId, entityType: entitySegment("classes"), entityId: classId },
           json: { ...toEntityBody<EntityFormData, EntityFormData>(classColumns, data), updatedAt },
         }),
       ),
@@ -147,7 +148,9 @@ function ClassView({ back, classId, ruleset, rulesetId, section }: ClassViewProp
                 rulesetId,
                 deleteFn: () =>
                   parseResponse(
-                    rpc.api.rulesets[":id"].classes[":classId"].$delete({ param: { id: rulesetId, classId } }),
+                    rpc.api.rulesets[":id"].entities[":entityType"][":entityId"].$delete({
+                      param: { id: rulesetId, entityType: entitySegment("classes"), entityId: classId },
+                    }),
                   ),
                 listKeys: [QUERY_KEYS.rulesets.section(rulesetId, "classes")],
                 // With its tabs

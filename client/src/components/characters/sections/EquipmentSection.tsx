@@ -63,6 +63,11 @@ interface EquipmentSectionProps {
   rulesetId: string;
 }
 
+/** An item's cost or weight as its read holds it: a number or a decimal's text, none else. */
+function amountOf(value: unknown) {
+  return typeof value === "number" || typeof value === "string" ? value : null;
+}
+
 export function EquipmentSection({ characterId, rulesetId, readOnly, load }: EquipmentSectionProps) {
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
@@ -351,7 +356,7 @@ export function EquipmentSection({ characterId, rulesetId, readOnly, load }: Equ
           control={addForm.control}
           rules={requiredRules("Item is required")}
           render={({ field, fieldState }) => (
-            <Autocomplete
+            <Autocomplete<RulesetItem>
               options={searchItems}
               filterOptions={(x) => x}
               getOptionLabel={(option) => option.name}
@@ -390,7 +395,7 @@ export function EquipmentSection({ characterId, rulesetId, readOnly, load }: Equ
                   <Box>
                     <Typography variant="body2">{option.name}</Typography>
                     {(() => {
-                      const details = [formatCost(option.costGp), formatWeight(option.weight)]
+                      const details = [formatCost(amountOf(option.costGp)), formatWeight(amountOf(option.weight))]
                         .filter(Boolean)
                         .join(" | ");
                       return (

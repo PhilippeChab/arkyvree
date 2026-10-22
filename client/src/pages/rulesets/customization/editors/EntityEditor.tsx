@@ -1,5 +1,6 @@
 import { parseResponse } from "hono/client";
 
+import { type EntityRow, entitySegment } from "@/client/src/lib/entityRequests.ts";
 import type { EntityKindDescription } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
@@ -12,7 +13,6 @@ import {
   withEntityFields,
 } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { EntityDetailsCard } from "@/client/src/pages/rulesets/components/index.ts";
-import { type EntityRow, entitySegment } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import {
   useEntityColumns,
   useEntityFields,

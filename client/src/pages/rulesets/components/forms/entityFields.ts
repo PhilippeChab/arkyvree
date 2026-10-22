@@ -55,7 +55,7 @@ function columnsByKey(columns: readonly EntityField[]): ValueField[] {
 function columnValueOf(column: ValueField, entity: unknown): unknown {
   const linked = (column.input === "aptitudes" || column.input === "aptitudeLevels") && !!column.links;
   if (!linked) return valueAt(entity, column.key);
-  const links = linksOf(column, entity);
+  const links = linksOf(column, entity).sort((a, b) => byName(a.aptitude, b.aptitude));
   if (column.input === "aptitudes") return links.map(({ aptitude }) => aptitude.id);
   return links.map(({ aptitude, level }) =>
     typeof level === "number" ? { id: aptitude.id, level } : { id: aptitude.id },
@@ -136,14 +136,12 @@ function isProgression(value: unknown): value is ProgressionValue {
   );
 }
 
-/** An entity read's links of a pool's links column (`links`), each its aptitude and its level, by its aptitude's name. */
+/** An entity read's links of a pool's links column (`links`), each its aptitude and its level, as its server sends them. */
 function linksOf(column: LinksField, entity: unknown) {
   const links = column.links ? valueAt(entity, column.links) : undefined;
-  return (Array.isArray(links) ? links : [])
-    .flatMap((link) =>
-      isRecord(link) && isAptitude(link.aptitudesInRule) ? [{ aptitude: link.aptitudesInRule, level: link.level }] : [],
-    )
-    .sort((a, b) => byName(a.aptitude, b.aptitude));
+  return (Array.isArray(links) ? links : []).flatMap((link) =>
+    isRecord(link) && isAptitude(link.aptitudesInRule) ? [{ aptitude: link.aptitudesInRule, level: link.level }] : [],
+  );
 }
 
 /** A decimal's text as its save sends it: its number, null for none (which clears it). */
@@ -208,13 +206,9 @@ export function isFieldShown(field: EntityField, watched: readonly unknown[]) {
   );
 }
 
-/** The aptitudes an entity read links its pools' columns to (`links`), which its form shows by name. */
+/** The aptitudes an entity read links its pools' columns to (`links`), which its form shows by name, in their order. */
 export function linkedAptitudes(columns: readonly EntityField[], entity: unknown): Aptitude[] {
-  return columns.flatMap((column) =>
-    column.input === "aptitudes" || column.input === "aptitudeLevels"
-      ? linksOf(column, entity).map(({ aptitude }) => aptitude)
-      : [],
-  );
+  return poolsOf(columns, entity).sort(byName);
 }
 
 /** The first choice of a select for none: "None", or "Default" when "None" is one of its values. */
@@ -233,6 +227,18 @@ export function ownFieldValues(fields: readonly EntityField[], values: unknown, 
       const same = JSON.stringify(value) === JSON.stringify(formValueOf(field, valueAt(base, field.key)));
       return [field.key, (same ? emptyValueOf(field) : value) as LeafValue];
     }),
+  );
+}
+
+/**
+ * The pools an entity read is linked to through its pools' columns (`links`), as its server lists them: a feat's feat
+ * pools, each a choice its pickers offer it in.
+ */
+export function poolsOf(columns: readonly EntityField[], entity: unknown): Aptitude[] {
+  return columns.flatMap((column) =>
+    column.input === "aptitudes" || column.input === "aptitudeLevels"
+      ? linksOf(column, entity).map(({ aptitude }) => aptitude)
+      : [],
   );
 }
 

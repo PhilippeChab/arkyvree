@@ -4,6 +4,7 @@ import { keepPreviousData, useInfiniteQuery, useQuery, useQueryClient } from "@t
 import { BlankState, LoadMoreButton, SearchBar, type TableColumn } from "@/client/src/components/common/index.ts";
 import { PowersIcon } from "@/client/src/components/icons/index.ts";
 import { useSearchParam, useSearchText } from "@/client/src/hooks/index.ts";
+import type { EntityRow } from "@/client/src/lib/entityRequests.ts";
 import { itemsBeforeLastPage, pageItems } from "@/client/src/lib/pageItems.ts";
 import {
   DescriptionCell,
@@ -16,7 +17,6 @@ import {
   spellListSpellsQuery,
 } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 import type { ClassSectionProps } from "@/client/src/pages/rulesets/details/classes/classTab.ts";
-import type { Power } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import { useOpenEntity, useSpellLevelFilter } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { buildCustomizationPath } from "@/shared/customization/entities.ts";
 
@@ -53,15 +53,15 @@ export function ClassSpellListSection({ rulesetId, classId, ruleset }: ClassSect
   // Without a list the key is the ruleset's own "all lists" one, whose cached spells aren't this class's
   const spells = listId === undefined ? [] : pageItems(data);
 
-  const handleRowClick = (spell: Power) => {
+  const handleRowClick = (spell: EntityRow) => {
     openEntity(buildCustomizationPath("powers", spell.id));
   };
 
-  const handleRowPrefetch = (spell: Power) => {
+  const handleRowPrefetch = (spell: EntityRow) => {
     void queryClient.prefetchQuery(customizationEntityQuery(rulesetId, "powers", spell.id));
   };
 
-  const renderCell = (spell: Power, columnKey: string) => {
+  const renderCell = (spell: EntityRow, columnKey: string) => {
     switch (columnKey) {
       case "name":
         return spell.name;

@@ -8,11 +8,17 @@ import { forkCoreRuleset } from "@/tests/e2e/support/rulesets.ts";
 import { signIn } from "@/tests/e2e/support/signIn.ts";
 
 type DuplicatedItem = InferResponseType<
-  (typeof rpc.api.rulesets)[":id"]["items"][":itemId"]["duplicate"]["$post"],
+  (typeof rpc.api.rulesets)[":id"]["entities"][":entityType"][":entityId"]["duplicate"]["$post"],
+  201
+>;
+type EditedItem = InferResponseType<
+  (typeof rpc.api.rulesets)[":id"]["entities"][":entityType"][":entityId"]["$put"],
   200
 >;
-type EditedItem = InferResponseType<(typeof rpc.api.rulesets)[":id"]["items"][":itemId"]["$put"], 200>;
-type Templates = InferResponseType<(typeof rpc.api.rulesets)[":id"]["templates"]["$get"], 200>;
+type Templates = InferResponseType<
+  (typeof rpc.api.rulesets)[":id"]["entities"][":entityType"]["templates"]["$get"],
+  200
+>;
 
 for (const width of [375, 1280]) {
   test.describe(`Item template editor at ${width}px`, () => {
@@ -22,7 +28,7 @@ for (const width of [375, 1280]) {
       await signIn(page, ownerUser.email, ownerUser.password);
       const forkId = await forkCoreRuleset(page, uniqueName(`Template source ${width}`));
 
-      const templatesResponse = await page.request.get(`/api/rulesets/${forkId}/templates?type=Weapon`);
+      const templatesResponse = await page.request.get(`/api/rulesets/${forkId}/entities/items/templates?type=Weapon`);
       expect(templatesResponse.ok()).toBe(true);
       const templates: Templates = await templatesResponse.json();
       const mace = templates.find((item) => item.name === "Heavy Mace");
@@ -48,9 +54,12 @@ for (const width of [375, 1280]) {
       await expect(page.locator('textarea[name="description"]')).toHaveValue("Homebrew heavy mace template");
       await expect(page.getByText("Weapon Template", { exact: true })).toHaveCount(0);
 
-      const duplicateResponse = await page.request.post(`/api/rulesets/${forkId}/items/${edited.id}/duplicate`, {
-        data: { name: "Heavy Mace +3", type: "Weapon" },
-      });
+      const duplicateResponse = await page.request.post(
+        `/api/rulesets/${forkId}/entities/items/${edited.id}/duplicate`,
+        {
+          data: { name: "Heavy Mace +3", type: "Weapon" },
+        },
+      );
       expect(duplicateResponse.ok()).toBe(true);
       const copy: DuplicatedItem = await duplicateResponse.json();
       expect(copy.isTemplate).toBe(false);

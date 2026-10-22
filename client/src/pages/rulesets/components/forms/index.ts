@@ -13,6 +13,7 @@ export {
   emptyFieldValues,
   type EntityFieldValues,
   linkedAptitudes,
+  poolsOf,
   withEntityFields,
 } from "./entityFields.ts";
 export { EntityColumns, EntityFields } from "./EntityFields.tsx";

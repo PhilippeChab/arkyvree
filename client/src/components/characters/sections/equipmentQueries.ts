@@ -3,12 +3,23 @@
 import { infiniteQueryOptions, queryOptions, skipToken } from "@tanstack/react-query";
 import { type InferResponseType, parseResponse } from "hono/client";
 
+import { readEntitiesFn, readEntityFn } from "@/client/src/lib/entityRequests.ts";
 import { nextPage } from "@/client/src/lib/pageItems.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
+import type { EntityKinds } from "@/engine/index.ts";
 import type { ItemLocation } from "@/shared/enums.ts";
 
 import { storedWeaponSets } from "./weaponSets.ts";
+
+/** A ruleset's item, as the add dialog lists it: its name and description, and its cost and weight as they're read. */
+export interface RulesetItem {
+  costGp?: unknown;
+  description: string | null;
+  id: string;
+  name: string;
+  weight?: unknown;
+}
 
 /** An item the character carries, with where it's placed: an entry of its inventory. */
 export type InventoryEntry = InferResponseType<
@@ -16,11 +27,11 @@ export type InventoryEntry = InferResponseType<
   200
 >[number];
 
-/** A ruleset's item, as the add dialog lists it. */
-export type RulesetItem = InferResponseType<(typeof rpc.api.rulesets)[":id"]["items"]["$get"], 200>["items"][number];
-
-/** A ruleset item's details, which the add dialog places a picked item by. */
-export type RulesetItemDetail = InferResponseType<(typeof rpc.api.rulesets)[":id"]["items"][":itemId"]["$get"], 200>;
+/**
+ * A ruleset item's details, which the add dialog places a picked item by (`placement`): an item's read, as the engine
+ * describes the items kind.
+ */
+export type RulesetItemDetail = ReturnType<EntityKinds["items"]["describe"]>;
 
 /** The items a character carries, with where each is placed. */
 export function characterInventoryQuery(characterId: string) {
@@ -62,12 +73,7 @@ export function itemOptionsQuery(rulesetId: string, search: string) {
   return infiniteQueryOptions({
     queryKey: QUERY_KEYS.rulesets.sectionSearch(rulesetId, "items", search),
     queryFn: ({ pageParam }) =>
-      parseResponse(
-        rpc.api.rulesets[":id"].items.$get({
-          param: { id: rulesetId },
-          query: { page: pageParam.toString(), limit: "10", search: search || undefined },
-        }),
-      ),
+      readEntitiesFn(rulesetId, "items", { page: pageParam.toString(), limit: "10", search: search || undefined }),
     initialPageParam: 1,
     getNextPageParam: nextPage,
   });
@@ -77,8 +83,9 @@ export function itemOptionsQuery(rulesetId: string, search: string) {
 export function rulesetItemQuery(rulesetId: string, itemId: string | undefined) {
   return queryOptions({
     queryKey: QUERY_KEYS.rulesets.item(rulesetId, itemId ?? ""),
+    // The items kind's read is its description: its placement, past the row every kind's read has
     queryFn: itemId
-      ? () => parseResponse(rpc.api.rulesets[":id"].items[":itemId"].$get({ param: { id: rulesetId, itemId } }))
+      ? async () => (await readEntityFn(rulesetId, "items", itemId)) as unknown as RulesetItemDetail
       : skipToken,
   });
 }
