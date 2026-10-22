@@ -6,13 +6,19 @@ const FILE_NAME_LENGTH = 200;
 /** What a file name can't hold, on any system the file is saved to. */
 const FILE_NAME_RESERVED = /[/\\?%*:|"<>]/g;
 
-/** A text's graphemes: what a reader sees as one character. */
-const GRAPHEMES = new Intl.Segmenter(undefined, { granularity: "grapheme" });
+/**
+ * A text's graphemes, what a reader sees as one character each; its code points where the runtime has no segmenter (a
+ * browser before `Intl.Segmenter`), which keep an emoji of one whole. Built on use: the client loads this module too.
+ */
+function splitGraphemes(text: string) {
+  if (typeof Intl.Segmenter !== "function") return Array.from(text);
+  return Array.from(new Intl.Segmenter(undefined, { granularity: "grapheme" }).segment(text), ({ segment }) => segment);
+}
 
 /** A sheet's file name: the character's name ("character" when it has none), what a file name can't hold replaced. */
 export function formatSheetFileName(characterName: string) {
   const name = (characterName || "character").replace(FILE_NAME_RESERVED, "_");
   // Cut between graphemes: a family, a flag or a skin tone is several code points, never cut in two
-  const graphemes = Array.from(GRAPHEMES.segment(name), ({ segment }) => segment);
+  const graphemes = splitGraphemes(name);
   return `${graphemes.slice(0, FILE_NAME_LENGTH).join("")}-sheet.pdf`;
 }

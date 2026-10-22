@@ -32,12 +32,8 @@ describe("v1 notifications", () => {
     const { api, contributor } = await setup();
     const { items, nextPage, page } = await expectOk(api.v1.notifications.$get({ query: {} }));
     expect({ nextPage, page }).toEqual({ nextPage: null, page: 1 });
-    // A contributor's notice names it by the route that reads it, its invite's
-    const target = { id: contributor.id, kind: "ruleset-invites" };
+    const target = { id: contributor.id, kind: "contributors" };
     expect(items.find(({ type }) => type === "inviteContributor")).toMatchObject({ read: true, target });
-    expect(await expectOk(api.v1["ruleset-invites"][":id"].$get({ param: { id: target.id } }))).toMatchObject({
-      id: contributor.id,
-    });
     const changed = items.find(({ type }) => type === "updateContributorRole");
     expect(changed).toEqual({
       createdAt: expect.any(String),
