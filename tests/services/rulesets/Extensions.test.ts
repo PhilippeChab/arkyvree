@@ -51,7 +51,6 @@ import {
   Skills,
 } from "@/server/repositories/index.ts";
 import { CharactersService } from "@/server/services/characters/index.ts";
-import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
 import { AptitudesService } from "@/server/services/rulesets/aptitudes/index.ts";
 import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
 import { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";
@@ -65,13 +64,16 @@ import { expectRefusedWith } from "@/tests/support/api.ts";
 import { createTestCharacter } from "@/tests/support/characters.ts";
 import { STRENGTH_BONUS } from "@/tests/support/customizations.ts";
 import { buildAs } from "@/tests/support/dnd3.5/characters.ts";
+import { levelUpPlan } from "@/tests/support/dnd3.5/levelPlans.ts";
 import {
   addCharacterLevel,
   addOneLevel,
   createTestKlassLevel,
   findKlassLevel,
-  getLevelStep,
+  getPlanAnswer,
+  getStepOptions,
   pickFeat,
+  stepAnswerOf,
 } from "@/tests/support/levels.ts";
 import {
   copyEntity,
@@ -132,6 +134,11 @@ const NAMINGS = [
   ["klass", "skill"],
   ["subclass", "klass"],
 ] as const;
+
+/** Add Level's plan of a first level of class `klassId`. */
+function firstLevelOf(klassId: string) {
+  return levelUpPlan([{ klassId, level: 1, hp: 1 }]);
+}
 
 function unique(keys: string[]) {
   return new Set(keys).size === keys.length;
@@ -221,17 +228,16 @@ async function favoredSoulOnMixedFork() {
   const fork = await forkTaking(DND35_DMG_NAME, DND35_COMPLETE_WARRIOR_NAME, DND35_COMPLETE_DIVINE_NAME);
   const divine = await findSeededRuleset(DND35_COMPLETE_DIVINE_NAME);
   const favoredSoul = (await Klasses.findOne(db, { name: "Favored Soul", rulesetId: divine.id }))!;
-  const { aptitudePools } = await getLevelStep(fork.session, fork.character.id, "powers", {
-    classId: favoredSoul.id,
-    level: 1,
-  });
-  const list = Object.values(aptitudePools).find((pool) => pool.name === "Favored Soul Spells")!;
-  const offer = (where: { powerLevel?: number; search: string }) =>
-    CharacterLevelsService.getAvailablePowers(
+  const pools = await spellPoolsAt(fork.session, fork.character.id, favoredSoul.id);
+  const list = Object.values(pools).find((pool) => pool.name === "Favored Soul Spells")!;
+  const offer = ({ powerLevel, search }: { powerLevel?: number; search: string }) =>
+    getStepOptions(
       fork.session,
       fork.character.id,
-      { aptitudeId: list.id, classId: favoredSoul.id, level: 1, ...where },
-      firstPage,
+      "powers",
+      firstLevelOf(favoredSoul.id),
+      { pool: list.id, ...(powerLevel !== undefined && { tier: String(powerLevel) }) },
+      { ...firstPage, search },
     );
   return { ...fork, favoredSoul, list, offer };
 }
@@ -239,6 +245,14 @@ async function favoredSoulOnMixedFork() {
 /** The fork's visible feats of this name. */
 async function featsNamed(rulesetId: string, name: string) {
   return (await FeatsService.getFeats(rulesetId, { search: name }, firstPage)).items.filter((f) => f.name === name);
+}
+
+/**
+ * A page of the feats Add Level's picker offers a character on a first level of class `klassId`, in pool `pool`,
+ * searched: a family's rows grouped, a family's one match named as its feat.
+ */
+async function featsOffered(session: Session, characterId: string, klassId: string, pool: string, search: string) {
+  return await getStepOptions(session, characterId, "feats", firstLevelOf(klassId), { pool }, { ...firstPage, search });
 }
 
 /** What names what among these entities in a ruleset (`EntityReferences.findMany`), by their ids. */
@@ -346,6 +360,12 @@ async function setupSiblings(entityType: EntityType) {
   const draft = await forkBase(session);
   await RulesetExtensionsService.subscribeExtension(session, draft.id, extensions);
   return { session, draft, baseId, contributions };
+}
+
+/** The spell pools a first level of class `klassId` plans the character, as Add Level's plan answers them. */
+async function spellPoolsAt(session: Session, characterId: string, klassId: string) {
+  const answer = await getPlanAnswer(session, characterId, firstLevelOf(klassId));
+  return stepAnswerOf(answer, "powers", "pick").pools;
 }
 
 /** Complete Warrior's own feat or spell of this name: its copy of a core one, or one only the book has. */
@@ -583,14 +603,15 @@ describe("subscribing to an extension", () => {
       )!;
       const character = await createCharacterOn(user.id, draft.id);
       const favoredSoul = (await Klasses.findOne(db, { name: "Favored Soul", rulesetId: divine.id }))!;
-      const step = { classId: favoredSoul.id, level: 1 };
-      const { aptitudePools } = await getLevelStep(session, character.id, "powers", step);
-      expect(named(Object.values(aptitudePools))).toEqual([own.id]);
-      const offered = await CharacterLevelsService.getAvailablePowers(
+      const pools = await spellPoolsAt(session, character.id, favoredSoul.id);
+      expect(named(Object.values(pools))).toEqual([own.id]);
+      const offered = await getStepOptions(
         session,
         character.id,
-        { aptitudeId: own.id, ...step, search: spell.name },
-        firstPage,
+        "powers",
+        firstLevelOf(favoredSoul.id),
+        { pool: own.id },
+        { ...firstPage, search: spell.name },
       );
       expect(offered.items.map((power) => power.id)).toContain(view.powersById.get(spell.id)!.id);
     });
@@ -1214,12 +1235,7 @@ describe("an extension's content in a fork", () => {
     expect(
       (await FeatsService.getFeatGroups(draft.id, where, firstPage)).items.map((group) => group.displayName),
     ).toContain(search);
-    const offered = await CharacterLevelsService.getAvailableFeats(
-      session,
-      character.id,
-      { aptitudeId: list.id, classId: hexblade.id, level: 1, search },
-      firstPage,
-    );
+    const offered = await featsOffered(session, character.id, hexblade.id, list.id, search);
     expect(offered.items.map((feat) => feat.name)).toContain(search);
   });
 
@@ -1514,12 +1530,7 @@ describe("an extension's entity of a name its subscriber's own has", () => {
       own.id,
     ]);
     const leveling = await createCharacterOn(user.id, draft.id);
-    const offered = await CharacterLevelsService.getAvailableFeats(
-      session,
-      leveling.id,
-      { aptitudeId: general, classId: klassMap.pc["Fighter"], level: 1, search: own.name },
-      firstPage,
-    );
+    const offered = await featsOffered(session, leveling.id, klassMap.pc["Fighter"], general, own.name);
     expect(offered.items.filter((feat) => feat.name === own.name).map((feat) => feat.id)).toEqual([own.id]);
 
     await RulesetExtensionsService.unsubscribeExtension(session, draft.id, book.id);

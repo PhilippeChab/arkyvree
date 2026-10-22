@@ -10,7 +10,8 @@ import { CharacterLevelsService } from "@/server/services/characters/levels/inde
 import { RulesetSettingsService } from "@/server/services/rulesets/settings/index.ts";
 import { activityTypes } from "@/tests/support/activities.ts";
 import { buildAs } from "@/tests/support/dnd3.5/characters.ts";
-import { getLevelStep } from "@/tests/support/levels.ts";
+import { levelEditPlan, levelUpPlan, savedPicksOf } from "@/tests/support/dnd3.5/levelPlans.ts";
+import { getPlanAnswer, stepAnswerOf } from "@/tests/support/levels.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 import { createTestUser, makeSession } from "@/tests/support/users.ts";
@@ -115,8 +116,12 @@ describe("RulesetSettingsService", () => {
     expect(await fighterGeneralFeats(fork.id, 5)).toBe(3);
     // The fighter is the seed user's, whose level-up it is
     const { characterId } = await buildFighter(fork.id);
-    const abilityStep = () => getLevelStep(makeSession(), characterId, "abilities");
-    expect(await abilityStep()).toMatchObject({ isAvailable: false });
+    // Its next level, the second, as Add Level plans it
+    const { klassMap } = await getSeedCtx();
+    const second = levelUpPlan([{ klassId: klassMap.pc["Fighter"], level: 2, hp: 10 }]);
+    const abilityStep = async () =>
+      stepAnswerOf(await getPlanAnswer(makeSession(), characterId, second), "abilities", "choose");
+    expect(await abilityStep()).toMatchObject({ advancements: [] });
 
     // A feat more at levels 3 and 5, and an ability increase at the second level alone, none every so many levels
     const featAdvancement = {
@@ -136,7 +141,7 @@ describe("RulesetSettingsService", () => {
 
     expect(await fighterGeneralFeats(fork.id, 3)).toBe(4);
     expect(await fighterGeneralFeats(fork.id, 5)).toBe(5);
-    expect(await abilityStep()).toMatchObject({ isAvailable: true, picked: false });
+    expect(await abilityStep()).toMatchObject({ advancements: [0], chosen: false });
     // Its source's characters follow the core rules still
     expect(await RulesetSettingsService.getSettings(fork.rulesetId!)).toMatchObject({ fields: CORE_PROGRESSION });
 
@@ -157,23 +162,28 @@ describe("RulesetSettingsService", () => {
     // The seed user's fighter, whose edit opens its level and saves it, its unspent skill points and bonus feat aside
     const seedUser = makeSession();
     const edit = (increases: (typeof strength)[]) =>
-      CharacterLevelsService.updateLevel(seedUser, characterId, fourth, 10, increases, {}, {}, {}, true);
+      CharacterLevelsService.updatePlannedLevel(
+        seedUser,
+        characterId,
+        fourth,
+        levelEditPlan({ hp: 10, abilityIncreases: increases }),
+        true,
+      );
+    // The level as its edit opens it
+    const savedLevel = async () =>
+      savedPicksOf(await CharacterLevelsService.getLevelPlan(seedUser, characterId, fourth));
     // The fighter's Strength, as the fork builds it
     const strengthScore = async () => {
       const row = await Characters.findOne(db, { id: characterId });
       return (await buildAs(DetailedCharacter, row!)).components.abilities.getAbility("Strength")?.total;
     };
-    expect(await CharacterLevelsService.getLevel(seedUser, characterId, fourth)).toMatchObject({
-      abilityIncreases: [strength],
-    });
+    expect(await savedLevel()).toMatchObject({ abilityIncreases: [strength] });
     expect(await strengthScore()).toBe(11);
 
     // The increases move to every fifth level
     const abilityIncreases = { every: 5, extra: [] };
     await RulesetSettingsService.updateSettings(session, fork.id, { fields: { abilityIncreases } });
-    expect(await CharacterLevelsService.getLevel(seedUser, characterId, fourth)).toMatchObject({
-      abilityIncreases: [],
-    });
+    expect(await savedLevel()).toMatchObject({ abilityIncreases: [] });
     expect(await strengthScore()).toBe(10);
     for (const increases of [[strength], [{ ...strength, abilityId: abilityMap["Dexterity"] }]])
       expect(edit(increases)).rejects.toMatchObject({ message: "Ability increase is not available at this level" });

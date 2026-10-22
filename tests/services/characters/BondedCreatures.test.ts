@@ -34,8 +34,9 @@ import {
   SORCERER_1,
   WIZARD_1,
 } from "@/tests/support/dnd3.5/levelFixtures.ts";
+import { levelEditPlan, levelUpPlan } from "@/tests/support/dnd3.5/levelPlans.ts";
 import { queuedPdfJobs } from "@/tests/support/jobs.ts";
-import { addOneLevel, findKlassLevel, getLevelStep } from "@/tests/support/levels.ts";
+import { addOneLevel, findKlassLevel, getPlanAnswer, getStepOptions } from "@/tests/support/levels.ts";
 import { invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 import { createTestUser, makeSession } from "@/tests/support/users.ts";
@@ -174,17 +175,8 @@ describe("Bonded creatures", () => {
     const [level] = await CharacterLevels.findMany(db, { characterId: masterId });
     const pick = (familiar: string[], force = false) => {
       const { skills, feats, powers } = picks(ctx, picking(WIZARD_1, "Familiar Bond", familiar));
-      return CharacterLevelsService.updateLevel(
-        owner,
-        masterId,
-        level.id,
-        WIZARD_1.hp,
-        [],
-        skills,
-        feats,
-        powers,
-        force,
-      );
+      const plan = levelEditPlan({ hp: WIZARD_1.hp }, { skills, feats, powers });
+      return CharacterLevelsService.updatePlannedLevel(owner, masterId, level.id, plan, force);
     };
     await pick(["Owl Familiar"]);
     const owl = (await familiarOf(masterId))!;
@@ -208,7 +200,8 @@ describe("Bonded creatures", () => {
     expect((await familiarOf(masterId))?.raceId).toBe(ctx.raceMap.familiar["Owl"]);
 
     const { skills, feats, powers } = picks(ctx, WIZARD_1);
-    await CharacterLevelsService.updateLevel(owner, masterId, wizardLevel.id, WIZARD_1.hp, [], skills, feats, powers);
+    const plan = levelEditPlan({ hp: WIZARD_1.hp }, { skills, feats, powers });
+    await CharacterLevelsService.updatePlannedLevel(owner, masterId, wizardLevel.id, plan);
     expect((await familiarOf(masterId))?.raceId).toBe(ctx.raceMap.familiar["Owl"]);
     expect((await buildAs(DetailedCharacter, master!)).components.bonded.getBondedRace("familiar")).toBe("Owl");
   });
@@ -331,14 +324,11 @@ describe("CharactersService with bonded creatures", () => {
     ],
     ["leave", (id: string) => CharacterContributorsService.leaveCharacter(owner, id)],
     // Its levels follow its master's, never a pick: the level-up builds a player character
-    [
-      "list the classes for",
-      (id: string) => CharacterLevelsService.getAvailableClasses(owner, id, {}, { limit: 10, page: 1 }),
-    ],
+    ["list the classes for", (id: string) => getStepOptions(owner, id, "class-plan", { steps: {} }, {}, { limit: 10 })],
     [
       "count the feat slots of",
       async (id: string) =>
-        getLevelStep(owner, id, "feats", { classId: (await getSeedCtx()).klassMap.pc.Wizard, level: 2 }),
+        getPlanAnswer(owner, id, levelUpPlan([{ klassId: (await getSeedCtx()).klassMap.pc.Wizard, level: 2, hp: 4 }])),
     ],
     ["level up", async (id: string) => addOneLevel(owner, id, (await getSeedCtx()).klassMap.pc.Wizard, 2, 4, null)],
     ["remove a level from", (id: string) => CharacterLevelsService.removeLevel(owner, id)],
