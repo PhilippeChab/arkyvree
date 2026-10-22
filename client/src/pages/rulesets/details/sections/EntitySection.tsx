@@ -65,9 +65,6 @@ interface EntitySectionProps extends RulesetSectionProps {
   kind: EntityKindDescription;
 }
 
-/** The rows a long description's input takes (a mechanic's), as its page's does. */
-const LONG_DESCRIPTION_ROWS = 10;
-
 /** A new entity's form, which sends every field and needs what a new one needs (a feat's pool). */
 const NEW_ENTITY: ColumnContext = { newEntity: true };
 
@@ -336,7 +333,7 @@ export function EntitySection({ ruleset, childOnly, onChildOnlyChange, kind }: E
             rulesetId={ruleset.id}
             columns={kind.wideForm ? 2 : undefined}
             context={duplicateSource && kind.copies ? { locked: kind.copies.locked, newEntity: true } : NEW_ENTITY}
-            descriptionRows={kind.longDescription ? LONG_DESCRIPTION_ROWS : undefined}
+            longDescription={kind.longDescription}
             help={kind.fieldHelp}
           />
         </CreateDialog>

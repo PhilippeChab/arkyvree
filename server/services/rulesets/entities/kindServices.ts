@@ -33,13 +33,14 @@ export interface EntityGroup {
   variantCount: number;
 }
 
-/** A ruleset entity, any kind's, as its page or its list reads it: its row, with the fields it holds. */
+/** A ruleset entity, any kind's, as its page or its list reads it: its row, with the fields it holds, and its last save. */
 export interface EntityRow {
   [key: string]: unknown;
   description: string | null;
   id: string;
   name: string;
   rulesetId: string;
+  updatedAt: string;
 }
 
 /**
