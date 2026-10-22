@@ -7,7 +7,7 @@
 import { infiniteQueryOptions, type QueryClient, type QueryKey, skipToken } from "@tanstack/react-query";
 import { type InferResponseType, parseResponse } from "hono/client";
 
-import { type EntityRow, entitySegment, givenParams } from "@/client/src/lib/entityRequests.ts";
+import { type EntityRow, entitySegment, givenParams, readEntitiesFn } from "@/client/src/lib/entityRequests.ts";
 import { nextPage } from "@/client/src/lib/pageItems.ts";
 import type { Direction, EntityKindDescription } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
@@ -97,16 +97,9 @@ function sectionKey(rulesetId: string, section: RulesetSection, filters: ListFil
  * pool, a power's level), through the routes by kind, under its tab's key.
  */
 export function entitiesQuery(rulesetId: string, kind: EntityListKind, filters: EntityFilters) {
-  const segment = getUrlSegment(kind.type);
   return infiniteQueryOptions({
     queryKey: entityListKey(rulesetId, kind, filters),
-    queryFn: ({ pageParam }) =>
-      parseResponse(
-        rpc.api.rulesets[":id"].entities[":entityType"].$get({
-          param: { id: rulesetId, entityType: entitySegment(segment) },
-          query: entityListParams(pageParam, kind, filters),
-        }),
-      ),
+    queryFn: ({ pageParam }) => readEntitiesFn(rulesetId, kind.type, entityListParams(pageParam, kind, filters)),
     initialPageParam: 1,
     getNextPageParam: nextPage,
   });
@@ -122,17 +115,12 @@ export function entityFamilyQuery(rulesetId: string, type: string, family: strin
     queryKey: QUERY_KEYS.rulesets.familyVariants(rulesetId, segment, family ?? "", childOnly),
     queryFn: family
       ? ({ pageParam }) =>
-          parseResponse(
-            rpc.api.rulesets[":id"].entities[":entityType"].$get({
-              param: { id: rulesetId, entityType: entitySegment(segment) },
-              query: givenParams({
-                limit: "50",
-                page: pageParam.toString(),
-                family,
-                childOnly: childOnly ? "true" : undefined,
-              }),
-            }),
-          )
+          readEntitiesFn(rulesetId, type, {
+            limit: "50",
+            page: pageParam.toString(),
+            family,
+            childOnly: childOnly ? "true" : undefined,
+          })
       : skipToken,
     initialPageParam: 1,
     getNextPageParam: nextPage,

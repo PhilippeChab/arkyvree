@@ -9,7 +9,9 @@ import { toColumnsBody, toColumnValues } from "./entityFields.ts";
  * A ruleset entity's form, any kind's, its create's and its edit's: its name, its description and its fields, and its
  * columns by key, each as its input holds it (`toEntityForm`), which its save sends as their bodies take them.
  */
-export type EntityFormData = InferRequestType<(typeof rpc.api.rulesets)[":id"]["skills"]["$post"]>["json"];
+export type EntityFormData = InferRequestType<
+  (typeof rpc.api.rulesets)[":id"]["entities"][":entityType"]["$post"]
+>["json"];
 
 /** An entity's form as its save sends it: its columns as their bodies take them (`toColumnsBody`), the rest as it is. */
 export function toEntityBody<D extends object, B>(columns: readonly EntityField[], data: D): B {

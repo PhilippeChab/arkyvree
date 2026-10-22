@@ -31,7 +31,7 @@ type ValueField = Exclude<EntityField, { input: "group" }>;
 
 /** An entity's fields' values as a form holds them and a save sends them, by name. */
 export type EntityFieldValues = NonNullable<
-  InferRequestType<(typeof rpc.api.rulesets)[":id"]["skills"]["$post"]>["json"]["fields"]
+  InferRequestType<(typeof rpc.api.rulesets)[":id"]["entities"][":entityType"]["$post"]>["json"]["fields"]
 >;
 
 /**
@@ -136,7 +136,10 @@ function isProgression(value: unknown): value is ProgressionValue {
   );
 }
 
-/** An entity read's links of a pool's links column (`links`), each its aptitude and its level, as its server sends them. */
+/**
+ * An entity read's links of a pool's links column (`links`), each its aptitude and its level, as its server sends
+ * them.
+ */
 function linksOf(column: LinksField, entity: unknown) {
   const links = column.links ? valueAt(entity, column.links) : undefined;
   return (Array.isArray(links) ? links : []).flatMap((link) =>
@@ -206,7 +209,10 @@ export function isFieldShown(field: EntityField, watched: readonly unknown[]) {
   );
 }
 
-/** The aptitudes an entity read links its pools' columns to (`links`), which its form shows by name, each column's in name order. */
+/**
+ * The aptitudes an entity read links its pools' columns to (`links`), which its form shows by name, each column's in
+ * name order.
+ */
 export function linkedAptitudes(columns: readonly EntityField[], entity: unknown): Aptitude[] {
   return columns.flatMap((column) => poolsOf([column], entity).sort(byName));
 }

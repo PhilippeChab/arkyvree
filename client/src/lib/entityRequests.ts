@@ -14,9 +14,6 @@ type EntitySegment = Parameters<
   (typeof rpc.api.rulesets)[":id"]["entities"][":entityType"]["$get"]
 >[0]["param"]["entityType"];
 
-/** A kind's list's page of entities, by the query it was asked with (`readEntitiesFn`). */
-export type EntityPage = InferResponseType<(typeof rpc.api.rulesets)[":id"]["entities"][":entityType"]["$get"], 200>;
-
 /** An entity of any kind, as its list gives it: its name, its description, and what its kind's list reads of it. */
 export type EntityRow = InferResponseType<
   (typeof rpc.api.rulesets)[":id"]["entities"][":entityType"]["$get"],

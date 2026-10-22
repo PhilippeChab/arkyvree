@@ -31,7 +31,7 @@ export type InventoryEntry = InferResponseType<
  * A ruleset item's details, which the add dialog places a picked item by (`placement`): an item's read, as the engine
  * describes the items kind.
  */
-export type RulesetItemDetail = ReturnType<EntityKinds["items"]["describe"]>;
+export type RulesetItemDetail = Pick<ReturnType<EntityKinds["items"]["describe"]>, "placement">;
 
 /** The items a character carries, with where each is placed. */
 export function characterInventoryQuery(characterId: string) {
