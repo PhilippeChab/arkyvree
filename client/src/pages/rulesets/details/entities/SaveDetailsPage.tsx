@@ -7,7 +7,6 @@ import {
   toEntityBody,
   toEntityForm,
 } from "@/client/src/pages/rulesets/components/forms/index.ts";
-import { useEntityColumns } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
 import { saveQuery } from "./entityDetailQueries.ts";
@@ -18,7 +17,6 @@ export default function SaveDetailsPage() {
   const { id: rulesetId = "", saveId = "" } = useParams<{ id: string; saveId: string }>();
   const param = { id: rulesetId, saveId };
   const endpoint = rpc.api.rulesets[":id"].saves[":saveId"];
-  const { columns } = useEntityColumns(rulesetId, "saves");
 
   return (
     <RulesetEntityDetail
@@ -27,7 +25,7 @@ export default function SaveDetailsPage() {
       section="saves"
       label="Save"
       query={(id) => saveQuery(rulesetId, id)}
-      editing={{
+      editing={(columns) => ({
         empty: toEntityForm<EntityFormData>(columns),
         toFormValues: (save) => toEntityForm<EntityFormData>(columns, save),
         updateFn: (data, updatedAt) =>
@@ -39,7 +37,7 @@ export default function SaveDetailsPage() {
           ),
         removeFn: () => parseResponse(endpoint.$delete({ param })),
         renderFields: (form) => <RulesetEntityFormFields form={form} entityType="saves" rulesetId={rulesetId} />,
-      }}
+      })}
     />
   );
 }

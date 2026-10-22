@@ -7,7 +7,6 @@ import {
   toEntityBody,
   toEntityForm,
 } from "@/client/src/pages/rulesets/components/forms/index.ts";
-import { useEntityColumns } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
 import { aptitudeQuery } from "./entityDetailQueries.ts";
@@ -18,7 +17,6 @@ export default function AptitudeDetailsPage() {
   const { id: rulesetId = "", aptitudeId = "" } = useParams<{ aptitudeId: string; id: string }>();
   const param = { id: rulesetId, aptitudeId };
   const endpoint = rpc.api.rulesets[":id"].aptitudes[":aptitudeId"];
-  const { columns } = useEntityColumns(rulesetId, "aptitudes");
 
   return (
     <RulesetEntityDetail
@@ -27,7 +25,7 @@ export default function AptitudeDetailsPage() {
       section="aptitudes"
       label="Aptitude"
       query={(id) => aptitudeQuery(rulesetId, id)}
-      editing={{
+      editing={(columns) => ({
         empty: toEntityForm<EntityFormData>(columns),
         toFormValues: (aptitude) => toEntityForm<EntityFormData>(columns, aptitude),
         updateFn: (data, updatedAt) =>
@@ -39,7 +37,7 @@ export default function AptitudeDetailsPage() {
           ),
         removeFn: () => parseResponse(endpoint.$delete({ param })),
         renderFields: (form) => <RulesetEntityFormFields form={form} entityType="aptitudes" rulesetId={rulesetId} />,
-      }}
+      })}
     />
   );
 }

@@ -7,7 +7,6 @@ import {
   toEntityBody,
   toEntityForm,
 } from "@/client/src/pages/rulesets/components/forms/index.ts";
-import { useEntityColumns } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
 import { languageQuery } from "./entityDetailQueries.ts";
@@ -18,7 +17,6 @@ export default function LanguageDetailsPage() {
   const { id: rulesetId = "", languageId = "" } = useParams<{ id: string; languageId: string }>();
   const param = { id: rulesetId, languageId };
   const endpoint = rpc.api.rulesets[":id"].languages[":languageId"];
-  const { columns } = useEntityColumns(rulesetId, "languages");
 
   return (
     <RulesetEntityDetail
@@ -27,7 +25,7 @@ export default function LanguageDetailsPage() {
       section="languages"
       label="Language"
       query={(id) => languageQuery(rulesetId, id)}
-      editing={{
+      editing={(columns) => ({
         empty: toEntityForm<EntityFormData>(columns),
         toFormValues: (language) => toEntityForm<EntityFormData>(columns, language),
         updateFn: (data, updatedAt) =>
@@ -39,7 +37,7 @@ export default function LanguageDetailsPage() {
           ),
         removeFn: () => parseResponse(endpoint.$delete({ param })),
         renderFields: (form) => <RulesetEntityFormFields form={form} entityType="languages" rulesetId={rulesetId} />,
-      }}
+      })}
     />
   );
 }

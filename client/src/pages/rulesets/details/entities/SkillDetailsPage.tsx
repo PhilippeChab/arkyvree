@@ -14,7 +14,7 @@ import {
 } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { EntityDetailLayout, EntityPageError } from "@/client/src/pages/rulesets/components/index.ts";
 import { entityPageBack } from "@/client/src/pages/rulesets/entityPageState.ts";
-import { useEntityColumns, useEntityFields } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { useEntityFields } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
 import { skillQuery } from "./entityDetailQueries.ts";
@@ -31,7 +31,6 @@ function SkillDetails({ rulesetId, skillId }: SkillDetailsProps) {
   const param = { id: rulesetId, skillId };
   const endpoint = rpc.api.rulesets[":id"].skills[":skillId"];
   const { fields } = useEntityFields(rulesetId, "skills");
-  const { columns } = useEntityColumns(rulesetId, "skills");
 
   return (
     <RulesetEntityDetail
@@ -40,7 +39,7 @@ function SkillDetails({ rulesetId, skillId }: SkillDetailsProps) {
       section="skills"
       label="Skill"
       query={(id) => skillQuery(rulesetId, id)}
-      editing={{
+      editing={(columns) => ({
         empty: toEntityForm<EntityFormData>(columns),
         toFormValues: (skill): EntityFormData =>
           withEntityFields<EntityFormData>(toEntityForm<EntityFormData>(columns, skill), fields, skill),
@@ -53,7 +52,7 @@ function SkillDetails({ rulesetId, skillId }: SkillDetailsProps) {
           ),
         removeFn: () => parseResponse(endpoint.$delete({ param })),
         renderFields: (form) => <RulesetEntityFormFields form={form} entityType="skills" rulesetId={rulesetId} />,
-      }}
+      })}
     />
   );
 }
