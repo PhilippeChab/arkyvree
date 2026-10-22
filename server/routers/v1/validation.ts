@@ -10,9 +10,6 @@ import { toV1Kind } from "./kinds.ts";
 /** The kinds whose entities have modifiers and requirements, as v1 names them, each its entity type. */
 const customizableKinds = new Map(CUSTOMIZABLE_ENTITY_TYPES.map((entityType) => [toV1Kind(entityType), entityType]));
 
-/** A ruleset route's `:id` (the ruleset) and `:classId`. */
-export const classParams = idParam.extend({ classId: z.string().uuid() });
-
 /** A yes or no in a query string, `true` or `false`: none when the query leaves it out. */
 export const flag = z
   .enum(["true", "false"])
