@@ -63,7 +63,8 @@ export function Diagnoses<B extends Constructor<CharacterState>>(Base: B) {
     protected override findSourceIssues(): RulesIssue[] {
       const unplaced = this.components.aptitudes.getUnplacedGeneralFeats();
       const message = `The ruleset has no ${GENERAL_FEATS_APTITUDE} aptitude: this character's ${unplaced} general feat(s) count toward none`;
-      return [...(unplaced > 0 ? [{ category: "integrity", message }] : []), ...super.findSourceIssues()];
+      const issue = { amount: unplaced, category: "integrity", message, subject: "General feats: unplaced" };
+      return [...(unplaced > 0 ? [issue] : []), ...super.findSourceIssues()];
     }
 
     /** The character's race, classes, skills, feats and powers, which its source chain must hold. */

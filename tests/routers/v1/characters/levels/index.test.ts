@@ -89,7 +89,12 @@ describe("v1 character levels", () => {
     const { id, json, route } = await planFighterLevel();
     // The level's feat slots left empty
     const unpicked = { ...json, feats: [] };
-    await expectStatus(route.levels.$post({ json: unpicked, param: { id } }), 400);
+    const refused = await expectStatus(route.levels.$post({ json: unpicked, param: { id } }), 400);
+    // Each issue as the error answers it: what the rules weigh it by stays theirs
+    const { issues } = (await refused.json()) as unknown as { issues: Record<string, unknown>[] };
+    expect(issues.length).toBeGreaterThan(0);
+    for (const issue of issues)
+      expect(Object.keys(issue).sort()).toEqual(expect.not.arrayContaining(["amount", "subject"]));
     expect((await expectOk(route.levels.$post({ json: { ...unpicked, force: true }, param: { id } }))).level).toBe(6);
   });
 
