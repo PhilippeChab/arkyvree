@@ -12,6 +12,24 @@ interface Track {
 }
 
 /**
+ * Whether an answer's advancements are the planned ones (`slots`): as many, each on its slot's track at its position
+ * (an edit's one slot names neither, its level's). An answer kept while the next one loads may be for another plan,
+ * whose advancements a step can't read by its slots.
+ */
+export function answersSlots(
+  advancements: readonly { position: number; track: { id: string } }[],
+  slots: readonly { position?: number; track?: string }[],
+) {
+  return (
+    advancements.length === slots.length &&
+    slots.every(
+      ({ position, track }, index) =>
+        track === undefined || (advancements[index].track.id === track && advancements[index].position === position),
+    )
+  );
+}
+
+/**
  * Whether a track can take the plan's next advancement, as its quick-add button says: it may (`eligible`), the plan has
  * room for another (`left`, `hasRoom`), and the track has a position left after those of it planned.
  */

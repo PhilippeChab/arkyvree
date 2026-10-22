@@ -83,23 +83,23 @@ export function ChooseStep({ step, wizard }: ChooseStepProps) {
   }
 
   const chosen = field.value[step.name] ?? {};
-  const choiceAt = (index: number) => (
+  // Each advancement that takes a choice, by its slot: the answer is for the planned ones (`isAnswering` waits for it)
+  const choosing = choose.advancements.flatMap((index) => (slots[index] ? [{ index, key: slots[index].key }] : []));
+  const choiceAt = (index: number, key: number) => (
     <ChoiceField
       prompt={step.words.prompt}
       options={choose.options}
       name={`${step.name}-${index}`}
-      value={chosen[slots[index].key] ?? null}
-      onChange={(optionId) =>
-        field.onChange({ ...field.value, [step.name]: { ...chosen, [slots[index].key]: optionId } })
-      }
+      value={chosen[key] ?? null}
+      onChange={(optionId) => field.onChange({ ...field.value, [step.name]: { ...chosen, [key]: optionId } })}
     />
   );
-  // An edit's one advancement: its field alone
-  if (slots.length === 1) return choiceAt(choose.advancements[0]);
+  // An edit's one advancement, its level's (its slot names no track): its field alone
+  if (choosing.length === 1 && slots[0]?.track === undefined) return choiceAt(choosing[0].index, choosing[0].key);
 
   return (
     <Stack spacing={1.5}>
-      {choose.advancements.map((index) => {
+      {choosing.map(({ index, key }) => {
         const advancement = answer.advancements[index];
         return (
           <Stack key={index} spacing={1}>
@@ -109,7 +109,7 @@ export function ChooseStep({ step, wizard }: ChooseStepProps) {
                 : `${position.one} ${index + 1}`}
             </SubsectionTitle>
             {/* The field on a line of its own, under the advancement's title */}
-            <Box>{choiceAt(index)}</Box>
+            <Box>{choiceAt(index, key)}</Box>
           </Stack>
         );
       })}

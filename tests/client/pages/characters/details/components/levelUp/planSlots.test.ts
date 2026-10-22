@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import {
+  answersSlots,
   canPlan,
   hasRoom,
   plannedPosition,
@@ -52,5 +53,28 @@ describe("Add Level's plan", () => {
     expect(valuesOf([FIGHTER, WIZARD], [3, 7])).toEqual([null, 4]);
     expect(valuesOf([WIZARD], [7])).toEqual([4]);
     expect(plannedSlotKeys([], [])).toEqual([]);
+  });
+});
+
+describe("a plan's answer", () => {
+  const answered = [
+    { position: 3, track: { id: "fighter" } },
+    { position: 1, track: { id: "wizard" } },
+  ];
+
+  test("is for the planned advancements: as many, each on its slot's track at its position", () => {
+    const slots = [
+      { key: 0, position: 3, track: "fighter" },
+      { key: 1, position: 1, track: "wizard" },
+    ];
+    expect(answersSlots(answered, slots)).toBe(true);
+    // A slot removed, or another track planned, while the answer for the plan before loads
+    expect(answersSlots(answered, slots.slice(1))).toBe(false);
+    expect(answersSlots(answered, [slots[0], { position: 4, track: "fighter" }])).toBe(false);
+  });
+
+  test("is for an edit's one advancement, whose slot names no track", () => {
+    expect(answersSlots(answered.slice(0, 1), [{}])).toBe(true);
+    expect(answersSlots(answered, [{}])).toBe(false);
   });
 });

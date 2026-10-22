@@ -16,6 +16,7 @@ import {
   type StepOf,
 } from "./levelPlanQueries.ts";
 import { EMPTY_PLAN, type LevelPlanForm, type PlannedSlot, planRequestOf } from "./planRequest.ts";
+import { answersSlots } from "./planSlots.ts";
 import { valuesSet } from "./planValues.ts";
 import { shownStep } from "./wizardNavigation.ts";
 import { REVIEW_STEP } from "./wizardSteps.ts";
@@ -111,6 +112,8 @@ export function useLevelWizard({ answerable, characterId, editedLevelId, open, s
   });
   const answer = answerQuery.data;
   if (answer && answer !== answered) setAnswered(answer);
+  // The answer is for the advancements planned: one kept from another plan (a slot removed since) isn't read by them
+  const answerFits = !!answer && answersSlots(answer.advancements, slots);
   // What fits of the picks and the points, as the answer for them says: while it answers for earlier ones, they stand
   const fittedFor = answerQuery.isPlaceholderData ? undefined : answer;
   const fitted = useMemo(
@@ -130,16 +133,16 @@ export function useLevelWizard({ answerable, characterId, editedLevelId, open, s
   const isAnswered = (shown: WizardStep) => {
     switch (shown.mechanic) {
       case "choose":
-        return !!answer && !answerQuery.isPlaceholderData && (answerOf(answer, shown)?.chosen ?? false);
+        return answerFits && !answerQuery.isPlaceholderData && (answerOf(answer, shown)?.chosen ?? false);
       case "pick":
       case "spend":
         return !!answer;
       case "plan":
         return slots.length > 0;
       case "review":
-        return !!answer;
+        return answerFits;
       case "value":
-        return valuesSet(answerOf(answer, shown)?.advancements, slots, fitted.values[shown.name]);
+        return answerFits && valuesSet(answerOf(answer, shown)?.advancements, slots, fitted.values[shown.name]);
     }
   };
 
@@ -162,7 +165,8 @@ export function useLevelWizard({ answerable, characterId, editedLevelId, open, s
     form,
     handleSaveError,
     isAnswered,
-    isAnswering: answerQuery.isLoading,
+    // Its first answer, or one for the advancements planned, is on its way
+    isAnswering: answerQuery.isLoading || (!!answer && !answerFits),
     isLastStep,
     issues,
     levelSteps,
