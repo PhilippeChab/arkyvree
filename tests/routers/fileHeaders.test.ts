@@ -21,6 +21,12 @@ describe("buildFileHeaders", () => {
         "Content-Disposition"
       ],
     ).toStartWith(`attachment; filename="Zed _.pdf";`);
+    // Half an emoji, which has no UTF-8, is replaced rather than refused
+    expect(
+      buildFileHeaders({ disposition: "attachment", fileName: "Zed \uD83D.pdf", mimeType: "application/pdf" })[
+        "Content-Disposition"
+      ],
+    ).toEndWith(`filename*=UTF-8''Zed%20%EF%BF%BD.pdf`);
     expect(
       buildFileHeaders({ disposition: "inline", fileName: "sheet.pdf", mimeType: "application/pdf" }),
     ).toMatchObject({

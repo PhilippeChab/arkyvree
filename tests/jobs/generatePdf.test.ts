@@ -171,6 +171,22 @@ describe("generatePdf", () => {
     expect((await Exports.findOne(db, { id: pending.id, userId: session.userId }))?.expiresAt).toBe(stored!.expiresAt);
   }, 30_000);
 
+  test("leaves an export marked failed as it is when an attempt that outlived its lock finishes after", async () => {
+    const { session } = await createTestUser();
+    const character = await createCharacterAs(session);
+    const pending = await CharactersService.enqueuePdf(session, character.id);
+    const [job] = await queuedPdfJobs(character.id);
+    // The retry that took the job over gave up on it: the user was told it failed
+    await Exports.update(db, { status: "failed" }, { id: pending.id });
+
+    await generatePdfTask(job!.payload, silentJobHelpers);
+    expect(await Exports.findOne(db, { id: pending.id, userId: session.userId })).toMatchObject({
+      status: "failed",
+      data: null,
+    });
+    expect(await notificationsOf(session.userId, "pdfReady")).toEqual([]);
+  }, 30_000);
+
   test("tells the user a PDF failed whose pending export the cleanup deleted before its job ran", async () => {
     const { session } = await createTestUser();
     const character = await createCharacterAs(session);

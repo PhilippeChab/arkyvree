@@ -23,9 +23,11 @@ function encodeExtValue(name: string) {
  * character's name in any script names its PDF, which a raw header value would refuse.
  */
 export function buildFileHeaders(file: { disposition: "attachment" | "inline"; fileName: string; mimeType: string }) {
-  const fallback = file.fileName.replaceAll(UNQUOTABLE, "_");
+  // A lone surrogate, half an emoji, has no UTF-8: it's replaced, as `encodeURIComponent` would throw on it
+  const fileName = file.fileName.toWellFormed();
+  const fallback = fileName.replaceAll(UNQUOTABLE, "_");
   return {
-    "Content-Disposition": `${file.disposition}; filename="${fallback}"; filename*=UTF-8''${encodeExtValue(file.fileName)}`,
+    "Content-Disposition": `${file.disposition}; filename="${fallback}"; filename*=UTF-8''${encodeExtValue(fileName)}`,
     "Content-Type": file.mimeType,
   };
 }

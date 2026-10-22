@@ -53,8 +53,10 @@ async function failExport({ campaignId, characterId, characterName, exportId, us
 }
 
 /**
- * The character's PDF file stored in its export, ready for an hour: the one its request stored, or a new one (a job
- * queued before exports were stored pending, or a pending one the cleanup reaped, kept by its id).
+ * The character's PDF file stored in its export, ready for an hour: the one its request stored while it's pending, or a
+ * new one (a job queued before exports were stored pending, or a pending one the cleanup reaped, kept by its id). None
+ * for an export that's no longer pending: an attempt that outlived its lock finds it failed, which stays as its user
+ * was told.
  */
 async function storeExport(tx: Db, { exportId, userId }: GeneratePdfPayload, data: Buffer, fileName: string) {
   const file = {
@@ -63,8 +65,9 @@ async function storeExport(tx: Db, { exportId, userId }: GeneratePdfPayload, dat
     expiresAt: new Date(Date.now() + READY_EXPORT_TTL_MS).toISOString(),
     status: "ready" as const,
   };
-  const [stored] = exportId ? await Exports.update(tx, file, { id: exportId }) : [];
+  const [stored] = exportId ? await Exports.update(tx, file, { id: exportId, status: "pending" }) : [];
   if (stored) return stored;
+  if (exportId && (await Exports.findStatus(tx, { id: exportId, userId }))) return null;
   const [created] = await Exports.create(tx, {
     ...file,
     id: exportId,
@@ -124,6 +127,7 @@ export async function generatePdfTask(payload: unknown, helpers: JobHelpers): Pr
 
     const exportId = await withTransaction(async (tx) => {
       const exportRecord = await storeExport(tx, job, pdfBuffer, fileName);
+      if (!exportRecord) return null;
 
       await Notifications.create(tx, {
         recipientId: userId,
@@ -141,6 +145,12 @@ export async function generatePdfTask(payload: unknown, helpers: JobHelpers): Pr
 
       return exportRecord.id;
     });
+    if (!exportId) {
+      helpers.logger.warn(
+        `PDF for character ${characterId} not stored: its export ${job.exportId} is no longer pending`,
+      );
+      return;
+    }
 
     await publishWsEvent(userId, { type: "notifications:updated" }).catch((err) =>
       helpers.logger.warn(`Failed to publish PDF ready notification: ${err}`),
