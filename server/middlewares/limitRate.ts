@@ -17,15 +17,19 @@ function getClientIp(c: { req: { header: (name: string) => string | undefined } 
   return c.req.header("x-forwarded-for")?.split(",")[0]?.trim() || c.req.header("x-real-ip") || "unknown";
 }
 
-/** At most `limit` requests per `windowMs` of those `keyGenerator` counts together; past it, `TooManyRequestsError`. */
+/**
+ * At most `limit` requests per `windowMs` of those `keyGenerator` counts together; past it, `TooManyRequestsError`.
+ * Its count answers in the `RateLimit-*` headers unless `headers` is false: a route's own limit within another's leaves
+ * them to the outer one, whose count a client paces itself by.
+ */
 function limitBy<E extends Env>(
-  { windowMs, limit }: { limit: number; windowMs: number },
+  { headers = true, windowMs, limit }: { headers?: boolean; limit: number; windowMs: number },
   keyGenerator: (c: Context<E>) => Promise<string> | string,
 ) {
   return rateLimiter<E>({
     windowMs,
     limit,
-    standardHeaders: "draft-6",
+    standardHeaders: headers ? "draft-6" : false,
     keyGenerator,
     handler: () => {
       throw new TooManyRequestsError();
@@ -63,7 +67,7 @@ export function limitRate(
  * At most `limit` requests per `windowMs` of each user, whatever API keys of theirs ask: the user the public API's
  * sign-in (`apiKey.ts`) found, which runs before. Past it, `TooManyRequestsError`. Off in the tests.
  */
-export function limitRatePerUser(options: { limit: number; windowMs: number }, enabled = !isTest()) {
+export function limitRatePerUser(options: { headers?: boolean; limit: number; windowMs: number }, enabled = !isTest()) {
   if (!enabled) return noop;
   return limitBy<ApiKeyContext>(options, (c) => {
     // The sign-in sets it: a limit on a route without it is the code's mistake, which the tests' disabled limits miss

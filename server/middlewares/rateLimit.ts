@@ -54,8 +54,8 @@ export const importSourceRateLimit = limitRate({ windowMs: MINUTE, limit: 30 });
 
 /**
  * A character's choices at its next level, which read every option of each pool: counted per user, whatever keys of
- * theirs ask, apart from the keys' other requests.
+ * theirs ask, apart from the keys' other requests. Its headers are the user's limit's, which a client paces itself by.
  */
-export const levelChoicesRateLimit = limitRatePerUser({ windowMs: MINUTE, limit: 20 });
+export const levelChoicesRateLimit = limitRatePerUser({ windowMs: MINUTE, limit: 20, headers: false });
 
 export const publicApiRateLimit = limitRate({ windowMs: MINUTE, limit: 30 });
