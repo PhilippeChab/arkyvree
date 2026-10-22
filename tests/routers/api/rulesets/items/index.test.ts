@@ -58,6 +58,21 @@ describe("rulesets items", () => {
     ).toMatchObject({ slot: "Other" });
   });
 
+  test("keeps an edited item's type, whose template's type sets its slot", async () => {
+    const { id } = await createSeededTestRuleset(SEED_USER_ID);
+    const template = await expectOk(
+      items.$post({ param: { id }, json: { name: "Test Plate Template", type: "Armor", isTemplate: true } }),
+    );
+    const plate = await expectOk(
+      items.$post({ param: { id }, json: { name: "Test Plate", type: "Armor", sourceItemId: template.id } }),
+    );
+    expect(plate).toMatchObject({ type: "Armor", slot: "Torso" });
+    // An edit that leaves its type out keeps it: an armor is worn on the torso, whatever slot the form gives
+    expect(
+      await expectOk(item.$put({ param: { id, itemId: plate.id }, json: { name: "Test Plate", slot: "Head" } })),
+    ).toMatchObject({ type: "Armor", slot: "Torso" });
+  });
+
   test("lists the templates of one type", async () => {
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
     const templates = await expectOk(

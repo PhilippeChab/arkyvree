@@ -138,8 +138,8 @@ export function RulesetEntityDetail<TEntity extends EntityBase, TForm extends Fi
   editing: editingOf,
 }: RulesetEntityDetailProps<TEntity, TForm, TKey>) {
   const location = useLocation();
-  // Read in this render with the ruleset below, so its form is never made before its columns are known
-  const { columns } = useEntityColumns(rulesetId, getEntityTypeOfSegment(section));
+  // Read here, so its form is made off them, once they're known (`loaded`)
+  const { columns, loaded: columnsLoaded } = useEntityColumns(rulesetId, getEntityTypeOfSegment(section));
   const editing = editingOf?.(columns);
   const { data: ruleset, isLoading: isRulesetLoading, error: rulesetError } = useQuery(rulesetDetailQuery(rulesetId));
   const { rules } = useRules(ruleset?.baseRules);
@@ -183,9 +183,9 @@ export function RulesetEntityDetail<TEntity extends EntityBase, TForm extends Fi
       }
       isLoading={isRulesetLoading || isEntityLoading}
     >
-      {/* Its form's columns are its rules', which its ruleset's base rules pick */}
+      {/* Its form waits for its columns, its rules', which its ruleset's base rules pick */}
       {entity &&
-        ruleset &&
+        columnsLoaded &&
         (editing ? (
           <ReadOnlyFields readOnly={!canEdit}>
             <FormDetails

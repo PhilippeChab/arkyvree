@@ -96,7 +96,8 @@ export default class ItemEntity extends CustomizationPageEntity<
       costGp: decimalColumn(body.costGp),
       description: body.description,
       name: body.name,
-      slot: this.slotOf(body),
+      // An edit's type is the one it keeps when it gives none, which sets the slot of a template's type
+      slot: this.slotOf({ slot: body.slot, type: this.typeOf(body, item) }),
       type: body.type,
       weight: decimalColumn(body.weight),
     };

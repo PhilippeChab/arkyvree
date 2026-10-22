@@ -35,7 +35,7 @@ function getGrouping(fields: Partial<PowerFieldValues>) {
 export default class PowerEntity extends ListedEntity<
   "powers",
   PowerBody,
-  { description?: string | null; name: string; saveEffect: string | null; saveId: string | null },
+  { description?: string | null; name: string; saveEffect?: string | null; saveId?: string | null },
   typeof POWER_FIELDS.fields
 > {
   /** The Spell Focus feats a power's school brings. */
@@ -61,9 +61,9 @@ export default class PowerEntity extends ListedEntity<
     this.refuseLists(listIds, this.rulesetData.aptitudeIdsWithFeats, message);
   }
 
-  /** A form's columns: it names no spell's save but the one it gives. */
+  /** A form's columns: the save it gives (none clears it), an edit's that leaves it out kept. */
   protected override columnsOf({ description, name, saveEffect, saveId }: PowerBody) {
-    return { description, name, saveEffect: saveEffect ?? null, saveId: saveId ?? null };
+    return { description, name, saveEffect, saveId };
   }
 
   /** A power's pool links, as the view composes them. */

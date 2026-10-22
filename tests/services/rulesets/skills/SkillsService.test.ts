@@ -1,11 +1,11 @@
 import { describe, expect, test } from "bun:test";
 
-import { eq } from "drizzle-orm";
+import { eq, getTableName } from "drizzle-orm";
 
-import { abilitiesInRules, klassSkillsInRules } from "@/drizzle/schema.ts";
+import { abilitiesInRules, klassSkillsInRules, skillsInRules } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
-import { KlassSkills } from "@/server/repositories/index.ts";
+import { Activities, KlassSkills } from "@/server/repositories/index.ts";
 import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
 import { SkillsService } from "@/server/services/rulesets/skills/index.ts";
 import { createTestCharacter } from "@/tests/support/characters.ts";
@@ -66,6 +66,15 @@ describe("SkillsService", () => {
     expect(await SkillsService.updateSkill(session, ruleset.id, climb.id, { name: "Climbing" })).toMatchObject({
       name: "Climbing",
       primaryAbilityId: abilityMap.Strength,
+    });
+    // Its activity records what it changed, never what it left out
+    const { items } = await Activities.findPage(
+      db,
+      { userId: session.userId, targetTable: getTableName(skillsInRules) },
+      { limit: 10, page: 1 },
+    );
+    expect(items.find((activity) => activity.type === "updateSkill")?.data).toMatchObject({
+      changedFields: [{ field: "name", from: "Climb", to: "Climbing" }],
     });
     expect(
       SkillsService.updateSkill(session, ruleset.id, climb.id, { name: "Climb", primaryAbilityId: "" }),
