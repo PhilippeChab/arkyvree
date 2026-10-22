@@ -97,8 +97,8 @@ export const v1ClassProgression = z
   })
   .meta({
     description:
-      "A class's whole progression, as `PUT …/progression` takes it back: its levels, its pools' picks by level and " +
-      "its spell tables, with what its levels give that it reads beside them",
+      "A class's whole progression: its levels, its pools' picks by level and its spell tables, with what its levels " +
+      "give that it reads beside them",
     id: "ClassProgression",
   });
 

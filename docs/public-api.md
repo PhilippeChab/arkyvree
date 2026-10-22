@@ -27,7 +27,8 @@ answers in shapes of its own, which stay fixed.
 - Its requests are counted per user, whichever keys of theirs ask (`apiKeyRateLimit`: 120 a minute), and a
   character's level choices, which read every option of each pool, apart (`levelChoicesRateLimit`: 20 a minute). An
   address's requests are counted before its key is looked up (`apiAddressRateLimit`: 600 a minute), so a wrong key or
-  none, a lookup by digest each, is bounded too.
+  none, a lookup by digest each, is bounded too, for a client that sends its own address: the address is the first
+  `X-Forwarded-For` entry, as the app's limits read it, which a client can set.
 - A ruleset is read as the app reads it: any ruleset by its id, a private one too, as `/api` answers it to any signed-in
   user. The lists (`GET /v1/rulesets`) list what the user's scope does.
 

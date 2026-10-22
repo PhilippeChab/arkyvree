@@ -52,7 +52,7 @@ export default new Hono<ApiKeyContext>()
       status: 200,
       summary:
         "A class's whole progression: its levels (fields, base saves, granted feats), its pools' picks by level and its " +
-        "spell tables, as `PUT …/progression` takes it back",
+        "spell tables",
     }),
     validate("param", classParams),
     async (c) => {

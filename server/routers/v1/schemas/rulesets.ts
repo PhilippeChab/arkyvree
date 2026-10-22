@@ -68,7 +68,7 @@ const v1FieldDeclaration: z.ZodType<unknown> = z
 export const v1FieldDeclarations = z.record(z.string(), z.array(v1FieldDeclaration)).meta({
   description:
     "The fields a ruleset declares, by entity kind (`classes`, `class-levels`, `feats`, `items`, `races`, " +
-    "`rulesets`, `skills`, `spells`): what an entity's `fields` hold, and what a write sends in them",
+    "`rulesets`, `skills`, `spells`): what an entity's `fields` hold",
   id: "FieldDeclarations",
 });
 

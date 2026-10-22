@@ -4,7 +4,9 @@ const MINUTE = 60 * 1000;
 
 /**
  * The public API's requests from an address, before its key is looked up: a wrong key or none is a lookup by digest,
- * which nothing counted. Past every user's own limit, for a server that calls it for several users.
+ * which nothing counted. Past every user's own limit, for a server that calls it for several users. The address is
+ * read as the app's limits read it, the first `X-Forwarded-For` entry, which a client can set: it bounds a client
+ * that sends its own, not one that names another's.
  */
 export const apiAddressRateLimit = limitRate({ windowMs: MINUTE, limit: 600 });
 
