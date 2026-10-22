@@ -74,11 +74,11 @@ interface PoolAt {
 
 type PickPool = AnswerOf<"pick">["pools"][string];
 
-/** The open pool's options, a page at a time. */
-const OPTIONS_PAGE = 20;
-
 /** A group's members, a page at a time: a family's variants (one per weapon) mostly fit on one. */
 const GROUP_PAGE = 50;
+
+/** The open pool's options, a page at a time. */
+const OPTIONS_PAGE = 20;
 
 /** A group's members, listed under its row once it expands, checked where its row was. */
 function GroupExpansion({ at, characterId, group, onPick, plan, step }: GroupExpansionProps) {
