@@ -6,10 +6,16 @@ import { type SeedContext } from "@/scripts/db/seeds/seedContext.ts";
 import { api, expectOk, expectStatus } from "@/tests/support/api.ts";
 import { postCharacter } from "@/tests/support/characters.ts";
 import { FIGHTER_LEVELS, picks, type Picks, SORCERER_1 } from "@/tests/support/dnd3.5/levelFixtures.ts";
-import { getSeedCtx } from "@/tests/support/seed.ts";
+import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 
 /** A plan's answer, as the API answers it. */
 type PlanAnswer = InferResponseType<(typeof levels)["plan"]["$post"], 200>;
+
+/** A pool step's pools, as today's preview and steps answer them. */
+type PoolsAnswer = Preview["feats"]["aptitudePools"] | Preview["powers"]["aptitudePools"];
+
+/** Add Level's preview, as today's route answers it. */
+type Preview = InferResponseType<(typeof levels)["preview"]["$post"], 200>;
 
 /** A step's answer, any mechanic's. */
 type StepAnswer = PlanAnswer["steps"][string];
@@ -20,12 +26,54 @@ type StepOptions = InferResponseType<(typeof levels)["options"][":step"]["$post"
 const levels = api.api.characters.levels[":characterId"];
 const level = levels[":characterLevelId"];
 
-/** A plan's fighter levels (`count`), from the first, with their hit points. */
+/** Today's pools (`pools`) as a `pick` step's: a shared feat pool optional, a leveled spell pool by its tiers. */
+function expectedPools(pools: PoolsAnswer) {
+  return Object.fromEntries(
+    Object.entries(pools).map(([id, pool]) => [
+      id,
+      {
+        allowed: pool.allowed,
+        available: pool.available,
+        id: pool.id,
+        name: pool.name,
+        optional: "shared" in pool ? pool.shared : false,
+        spent: pool.spent,
+        ...("leveled" in pool && pool.leveled && pool.levels && { tiers: pool.levels }),
+      },
+    ]),
+  );
+}
+
+/** Today's skills step (`skills`) as a `spend` step's, with the points each planned level gives. */
+function expectedSpend(skills: Preview["skills"], perAdvancement: number[]) {
+  return {
+    mechanic: "spend" as const,
+    budget: skills.skillPointsToSpend,
+    perAdvancement,
+    rows: skills.skills.map((skill) => ({
+      current: skill.currentRank,
+      description: skill.description,
+      favored: skill.classSkill,
+      group: skill.family,
+      id: skill.id,
+      maxPoints: skill.maxPoints,
+      name: skill.name,
+      points: skill.points,
+      shortName: skill.shortName,
+      step: skill.rankStep,
+      value: skill.ranks,
+      valuesByPoints: skill.ranksByPoints,
+    })),
+  };
+}
+
+/** A plan's fighter levels (`count`), from the first, with their hit points and no ability increase. */
 function fighterPlan(ctx: SeedContext, count: number) {
   const plans = FIGHTER_LEVELS.slice(0, count);
   return {
     "class-plan": plans.map((_, i) => ({ track: ctx.klassMap.pc["Fighter"], position: i + 1 })),
     hp: plans.map((plan) => plan.hp),
+    abilities: plans.map(() => []),
   };
 }
 
@@ -155,7 +203,7 @@ describe("character level plans", () => {
     const plan = await expectOk(
       levels.plan.$post({
         param: { characterId },
-        json: { editedLevelId: created.id, steps: { hp: [8], ...payloadsOf(fighter1) } },
+        json: { editedLevelId: created.id, steps: { hp: [8], abilities: [[]], ...payloadsOf(fighter1) } },
       }),
     );
     const query = { classId: ctx.klassMap.pc["Fighter"], editedLevelId: created.id, level: "1" };
@@ -290,6 +338,8 @@ describe("character level plans", () => {
 
     const edit = {
       hp: [5],
+      abilities: [[]],
+      powers: [],
       skills: [
         { id: ctx.skillMap["Climb"], points: 4 },
         { id: ctx.skillMap["Swim"], points: 4 },
@@ -316,6 +366,7 @@ describe("character level plans", () => {
     const steps = {
       "class-plan": [{ track: ctx.klassMap.pc["Sorcerer"], position: 1 }],
       hp: [SORCERER_1.hp],
+      abilities: [[]],
       ...payloadsOf(sorcerer1),
     };
     const [created] = await expectOk(levels.$post({ param: { characterId }, json: { steps } }));
@@ -339,5 +390,302 @@ describe("character level plans", () => {
       levels.options[":step"].$post({ param: { characterId, step: "hp" }, query: {}, json: { plan: { steps: plan } } }),
       404,
     );
+  });
+
+  test("answers every step of a level-up's plan as its preview does: a fourth level's increase, a sorcerer's tiers", async () => {
+    const { characterId, ctx } = await createCharacter();
+    const fighter = ctx.klassMap.pc["Fighter"];
+    // Three fighter levels saved, one at a time; the fourth planned, with its increase
+    for (const [i, plan] of FIGHTER_LEVELS.slice(0, 3).entries()) {
+      const steps = {
+        "class-plan": [{ track: fighter, position: i + 1 }],
+        hp: [plan.hp],
+        abilities: [[]],
+        ...payloadsOf(picks(ctx, plan)),
+      };
+      await expectOk(levels.$post({ param: { characterId }, json: { steps } }));
+    }
+    const strength = ctx.abilityMap["Strength"];
+    const fourth = await expectOk(
+      levels.plan.$post({
+        param: { characterId },
+        json: {
+          steps: {
+            "class-plan": [{ track: fighter, position: 4 }],
+            abilities: [[{ id: strength, amount: 1 }]],
+            skills: [{ id: ctx.skillMap["Climb"], points: 1 }],
+          },
+        },
+      }),
+    );
+    const preview: Preview = await expectOk(
+      levels.preview.$post({
+        param: { characterId },
+        json: {
+          levels: [{ klassId: fighter, level: 4, abilityIncreases: [{ abilityId: strength, amount: 1 }] }],
+          skills: { [ctx.skillMap["Climb"]]: 1 },
+        },
+      }),
+    );
+    expect(stepOf(fourth, "abilities", "choose")).toEqual({
+      mechanic: "choose",
+      advancements: [0],
+      amount: 1,
+      chosen: true,
+      options: preview.attributes.attributes.map(({ abbreviation, abilityId, modifier, name, total }) => ({
+        abbreviation,
+        id: abilityId,
+        modifier,
+        name,
+        score: total,
+      })),
+    });
+    expect(stepOf(fourth, "skills", "spend")).toEqual(expectedSpend(preview.skills, preview.perLevelSkillPoints));
+
+    // A sorcerer's first level, two cantrips picked: its pools by spell level, its grants, where each pick lands
+    const sorcerer = await createCharacter(16);
+    const sorcererClass = sorcerer.ctx.klassMap.pc["Sorcerer"];
+    const sorcererSpells = sorcerer.ctx.aptMap["Sorcerer Spells"];
+    const cantrips = ["Detect Magic", "Light"].map((name) => sorcerer.ctx.powerMap[name]);
+    const plan = await expectOk(
+      levels.plan.$post({
+        param: { characterId: sorcerer.characterId },
+        json: {
+          steps: {
+            "class-plan": [{ track: sorcererClass, position: 1 }],
+            powers: cantrips.map((id) => ({ id, pool: sorcererSpells, tier: "0" })),
+          },
+        },
+      }),
+    );
+    const sorcererPreview: Preview = await expectOk(
+      levels.preview.$post({
+        param: { characterId: sorcerer.characterId },
+        json: { levels: [{ klassId: sorcererClass, level: 1 }], powers: { [sorcererSpells]: cantrips } },
+      }),
+    );
+    const { powers } = sorcererPreview;
+    expect(stepOf(plan, "powers", "pick")).toEqual({
+      mechanic: "pick",
+      fitted: powers.fitted,
+      granted: powers.autoGrantedPowers.map(({ description, free, id, name }) => ({ description, free, id, name })),
+      grouped: false,
+      next: sorcererPreview.nextPickLevels.powers,
+      pools: expectedPools(powers.aptitudePools),
+    });
+    expect(stepOf(plan, "powers", "pick").pools[sorcererSpells]?.tiers?.["0"]).toMatchObject({ spent: 0 });
+    expect(stepOf(plan, "feats", "pick")).toEqual({
+      mechanic: "pick",
+      fitted: sorcererPreview.feats.fitted,
+      granted: sorcererPreview.feats.autoGrantedFeats.map(({ description, id, name }) => ({
+        description,
+        free: false,
+        id,
+        name,
+      })),
+      grouped: true,
+      next: Object.fromEntries(
+        Object.entries(sorcererPreview.nextPickLevels.feats).map(([pool, index]) => [pool, { "": index }]),
+      ),
+      pools: expectedPools(sorcererPreview.feats.aptitudePools),
+    });
+  });
+
+  test("answers every step of an edit's level as its steps do, each pool's next pick on the level", async () => {
+    const { characterId, ctx } = await createCharacter(16);
+    const sorcerer1 = picks(ctx, SORCERER_1);
+    const sorcererClass = ctx.klassMap.pc["Sorcerer"];
+    const steps = {
+      "class-plan": [{ track: sorcererClass, position: 1 }],
+      hp: [SORCERER_1.hp],
+      abilities: [[]],
+      ...payloadsOf(sorcerer1),
+    };
+    const [created] = await expectOk(levels.$post({ param: { characterId }, json: { steps } }));
+    const payloads = payloadsOf(sorcerer1);
+    const plan = await expectOk(
+      levels.plan.$post({
+        param: { characterId },
+        json: { editedLevelId: created.id, steps: { hp: [4], abilities: [[]], ...payloads } },
+      }),
+    );
+    const pairs = (picked: { id: string; pool: string }[]) => picked.map(({ id, pool }) => `${id}:${pool}`).join(",");
+    const query = {
+      classId: sorcererClass,
+      editedLevelId: created.id,
+      level: "1",
+      featPicks: pairs(payloads.feats),
+      powerPicks: pairs(payloads.powers),
+      skillPoints: payloads.skills.map(({ id, points }) => `${id}:${points}`).join(","),
+    };
+    const stepAt = (name: string) =>
+      expectOk(levels["level-steps"][":step"].$get({ param: { characterId, step: name }, query }));
+    const [abilities, skills, feats, powers] = await Promise.all(
+      ["abilities", "skills", "feats", "powers"].map(stepAt),
+    );
+    if (
+      abilities.name !== "abilities" ||
+      skills.name !== "skills" ||
+      feats.name !== "feats" ||
+      powers.name !== "powers"
+    )
+      throw new Error("A step answered for another");
+
+    const atLevel = (pools: PoolsAnswer) =>
+      Object.fromEntries(
+        Object.entries(pools).map(([id, pool]) => [
+          id,
+          {
+            "": 0,
+            ...Object.fromEntries(Object.keys(("levels" in pool && pool.levels) || {}).map((tier) => [tier, 0])),
+          },
+        ]),
+      );
+    expect(plan.steps).toEqual({
+      hp: { mechanic: "value", advancements: [{ average: 2, max: 4, min: 1, roll: "d4" }] },
+      abilities: {
+        mechanic: "choose",
+        advancements: [],
+        amount: 1,
+        chosen: abilities.picked,
+        options: [],
+      },
+      skills: expectedSpend(skills, [skills.skillPointsToSpend]),
+      feats: {
+        mechanic: "pick",
+        fitted: feats.fitted,
+        granted: feats.autoGrantedFeats.map(({ description, id, name }) => ({ description, free: false, id, name })),
+        grouped: true,
+        next: atLevel(feats.aptitudePools),
+        pools: expectedPools(feats.aptitudePools),
+      },
+      powers: {
+        mechanic: "pick",
+        fitted: powers.fitted,
+        granted: powers.autoGrantedPowers.map(({ description, free, id, name }) => ({ description, free, id, name })),
+        grouped: false,
+        next: atLevel(powers.aptitudePools),
+        pools: expectedPools(powers.aptitudePools),
+      },
+    });
+    expect(Object.keys(stepOf(plan, "powers", "pick").next[ctx.aptMap["Sorcerer Spells"]] ?? {})).toContain("0");
+  });
+
+  test("opens a pool's picker at the level its pick lands on, the plan's levels before and after it, and an edit's at its level", async () => {
+    const { characterId, ctx } = await createCharacter();
+    const general = ctx.aptMap["General"];
+    const options = levels.options[":step"];
+    const fighterRanger = {
+      ...fighterPlan(ctx, 1),
+      "class-plan": [
+        { track: ctx.klassMap.pc["Fighter"], position: 1 },
+        { track: ctx.klassMap.pc["Ranger"], position: 1 },
+      ],
+    };
+    const track = async (steps: Record<string, unknown>, advancement: number) => {
+      const answer = await expectOk(
+        options.$post({
+          param: { characterId, step: "feats" },
+          query: { search: "Track" },
+          json: { plan: { steps: steps as typeof fighterRanger }, pool: general, advancement },
+        }),
+      );
+      return optionsOf(answer, "feats", true).items.map(({ displayName }) => displayName);
+    };
+    // The ranger's level after it grants Track: the fighter's level leaves it out
+    expect(await track(fighterPlan(ctx, 1), 0)).toEqual(["Track"]);
+    expect(await track(fighterRanger, 0)).toEqual([]);
+
+    // The class plan's picker over a planned fighter level: its options numbered by the saved levels, which the wizard
+    // counts the planned ones past
+    const classes = await expectOk(
+      options.$post({
+        param: { characterId, step: "class-plan" },
+        query: {},
+        json: { plan: { steps: fighterPlan(ctx, 1) } },
+      }),
+    );
+    expect(
+      optionsOf(classes, "klasses", false).items.find(({ id }) => id === ctx.klassMap.pc["Fighter"]),
+    ).toMatchObject({ eligible: true, nextLevel: 1 });
+
+    // An edit's: at its level, Cleave eligible with the level's Power Attack, not without it
+    const fighter1 = picks(ctx, FIGHTER_LEVELS[0]);
+    const [created] = await expectOk(
+      levels.$post({ param: { characterId }, json: { steps: { ...fighterPlan(ctx, 1), ...payloadsOf(fighter1) } } }),
+    );
+    const cleave = async (feats: { id: string; pool: string }[]) => {
+      const answer = await expectOk(
+        options.$post({
+          param: { characterId, step: "feats" },
+          query: { search: "Cleave" },
+          json: { plan: { editedLevelId: created.id, steps: { feats } }, pool: general },
+        }),
+      );
+      return optionsOf(answer, "feats", true).items.find(({ displayName }) => displayName === "Cleave")?.eligible;
+    };
+    expect(await cleave(payloadsOf(fighter1).feats)).toBe(true);
+    expect(await cleave([])).toBe(false);
+  });
+
+  test("saves a level's increase, refuses an unanswered step, and an unmet requirement unless forced", async () => {
+    const { characterId, ctx } = await createCharacter();
+    const fighter = ctx.klassMap.pc["Fighter"];
+    for (const [i, plan] of FIGHTER_LEVELS.slice(0, 3).entries()) {
+      const steps = {
+        "class-plan": [{ track: fighter, position: i + 1 }],
+        hp: [plan.hp],
+        abilities: [[]],
+        ...payloadsOf(picks(ctx, plan)),
+      };
+      await expectOk(levels.$post({ param: { characterId }, json: { steps } }));
+    }
+    const fourth = {
+      "class-plan": [{ track: fighter, position: 4 }],
+      hp: [FIGHTER_LEVELS[3].hp],
+      abilities: [[{ id: ctx.abilityMap["Strength"], amount: 1 }]],
+      ...payloadsOf(picks(ctx, FIGHTER_LEVELS[3])),
+    };
+    // Its spells left unanswered: refused, rather than read as none
+    const { powers: _, ...unanswered } = fourth;
+    await expectStatus(levels.$post({ param: { characterId }, json: { steps: unanswered } }), 400);
+    const [created] = await expectOk(levels.$post({ param: { characterId }, json: { steps: fourth } }));
+    expect(await expectOk(level.$get({ param: { characterId, characterLevelId: created.id } }))).toMatchObject({
+      abilityIncreases: [{ abilityId: ctx.abilityMap["Strength"], amount: 1 }],
+    });
+
+    // A first level picking Cleave without Power Attack: refused, saved when forced
+    const other = await createCharacter();
+    const cleave = {
+      ...fighterPlan(other.ctx, 1),
+      ...payloadsOf(picks(other.ctx, FIGHTER_LEVELS[0])),
+      feats: [
+        { id: other.ctx.featMap["Cleave"], pool: other.ctx.aptMap["General"] },
+        { id: other.ctx.featMap["Great Fortitude"], pool: other.ctx.aptMap["General"] },
+        { id: other.ctx.featMap["Improved Initiative"], pool: other.ctx.aptMap["Fighter Bonus Feat"] },
+      ],
+    };
+    const param = { characterId: other.characterId };
+    await expectStatus(levels.$post({ param, json: { steps: cleave } }), 400);
+    await expectOk(levels.$post({ param, json: { steps: cleave, force: true } }));
+  });
+
+  test("refuses hit points out of the die's bounds, a class plan in an edit, a picker without its pool or with a tier that isn't one, and an edit of no level", async () => {
+    const { characterId, ctx } = await createCharacter();
+    const steps = { ...fighterPlan(ctx, 1), ...payloadsOf(picks(ctx, FIGHTER_LEVELS[0])) };
+    await expectStatus(levels.$post({ param: { characterId }, json: { steps: { ...steps, hp: [0] } } }), 400);
+    const [created] = await expectOk(levels.$post({ param: { characterId }, json: { steps } }));
+    const param = { characterId, characterLevelId: created.id };
+    await expectStatus(level.$put({ param, json: { steps } }), 400);
+
+    const options = levels.options[":step"];
+    const plan = { steps: fighterPlan(ctx, 1) };
+    await expectStatus(options.$post({ param: { characterId, step: "feats" }, query: {}, json: { plan } }), 400);
+    const pool = ctx.aptMap["General"];
+    await expectStatus(
+      options.$post({ param: { characterId, step: "powers" }, query: {}, json: { plan, pool, tier: "abc" } }),
+      400,
+    );
+    await expectStatus(levels.steps.$get({ param: { characterId }, query: { editedLevelId: NIL_UUID } }), 404);
   });
 });

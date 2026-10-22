@@ -153,6 +153,7 @@ export default abstract class LevelUpPart<
     step: string,
     query: StepPickerQuery,
   ): D["stepPicker"];
+
   /**
    * What bonded creatures (`bonded`, their rows) become with their master as `master` builds it, kind by kind, from its
    * row (`record`), which a creature it makes takes after.

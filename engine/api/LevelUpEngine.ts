@@ -1,4 +1,5 @@
 import { type CharacterInput, type LevelPlanRequest, LevelRequests } from "@/engine/core/module/index.ts";
+import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 
 import CharacterHandle from "./CharacterHandle.ts";
@@ -53,9 +54,14 @@ export default class LevelUpEngine extends CharacterHandle {
     return this.module.levelUp.describeSteps(this.view, this.input, this.requests.resolveQuery(query));
   }
 
-  /** A level's steps, in the wizard's order, each its mechanic's: an edit's (`edited`) without its plan step. */
-  listSteps(...[edited]: Args<"listSteps">) {
-    return this.module.levelUp.listSteps(this.view, this.input, edited);
+  /**
+   * A level's steps, in the wizard's order, each its mechanic's: an edit's (of the character's saved level
+   * `editedLevelId`) without its plan step. Refused when the character has no such level.
+   */
+  listSteps(editedLevelId?: string) {
+    if (editedLevelId !== undefined && !this.input.rows.levels.some((level) => level.id === editedLevelId))
+      throw new RulesError("not-found", "Character level not found");
+    return this.stepsOf({ editedLevelId });
   }
 
   /** The class picker, with what the wizard plans so far: its filters, and a page of classes described. */
@@ -106,7 +112,7 @@ export default class LevelUpEngine extends CharacterHandle {
     const edit = this.module.levelUp.readEdit(
       this.view,
       this.input,
-      this.requests.resolvePlan(this.stepsOf(plan), plan),
+      this.requests.resolveSave(this.stepsOf(plan), plan),
     );
     return this.module.levelUp.planEdit(
       this.view,
@@ -128,11 +134,11 @@ export default class LevelUpEngine extends CharacterHandle {
   }
 
   /**
-   * A plan's level-up (`request`, read by its level's steps, each id the view's): the rows its save writes, checked, and
-   * what the master's bonded creatures become with them.
+   * A plan's level-up (`request`, read by its level's steps, each id the view's): the rows its save writes, checked,
+   * and what the master's bonded creatures become with them.
    */
   planLevelUp(bonded: CharacterInput[], request: LevelPlanRequest, force: boolean) {
-    const resolved = this.requests.resolvePlan(this.stepsOf(request), request);
+    const resolved = this.requests.resolveSave(this.stepsOf(request), request);
     const levelUp = this.module.levelUp.readLevelUp(this.view, this.input, resolved);
     return this.module.levelUp.planLevels(this.view, this.input, this.resolveBonded(bonded), levelUp, force);
   }

@@ -7,7 +7,8 @@
  * - `value`: a number per advancement, within bounds (3.5's hit points).
  * - `choose`: options to raise, per advancement that takes a choice, by a described amount (3.5's ability increase).
  * - `spend`: a budget of points over rows, each buying value at its own rate (3.5's skills).
- * - `pick`: entities of a kind into pools, each pool with its room, maybe by tier (3.5's feats, and its spells by level).
+ * - `pick`: entities of a kind into pools, each pool with its room, maybe by tier (3.5's feats, and its spells by
+ *   level).
  */
 
 import type { ViewEntities } from "@/engine/core/view/index.ts";
@@ -115,7 +116,9 @@ export interface PlanAnswer {
   mechanic: "plan";
 }
 
-/** A `plan` step's payload's advancement: the track it takes (3.5's class) and its position on it (the class's level). */
+/**
+ * A `plan` step's payload's advancement: the track it takes (3.5's class) and its position on it (the class's level).
+ */
 export interface PlannedAdvancement {
   position: number;
   track: string;

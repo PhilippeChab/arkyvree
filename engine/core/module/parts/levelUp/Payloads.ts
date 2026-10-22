@@ -32,7 +32,9 @@ function isPayloadItem(mechanic: StepMechanic, item: unknown) {
   }
 }
 
-/** A plan request's payloads, each read by its step's mechanic (`StepPayloads`): in its mechanic's shape, or refused. */
+/**
+ * A plan request's payloads, each read by its step's mechanic (`StepPayloads`): in its mechanic's shape, or refused.
+ */
 export default class Payloads {
   /** A payload (`payload`) read as `step`'s, in its mechanic's shape: refused when it isn't. */
   static read<M extends StepMechanic>(

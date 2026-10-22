@@ -138,7 +138,10 @@ export default class Dnd35LevelUp extends LevelUpPart<Dnd35Descriptions, Detaile
     return { average: Math.ceil(hd / 2), max: hd, min: 1 };
   }
 
-  /** A 3.5 level's steps, in the wizard's order: its class plan (but an edit's), hit points, ability increase, skills, feats and spells. */
+  /**
+   * A 3.5 level's steps, in the wizard's order: its class plan (but an edit's), hit points, ability increase, skills,
+   * feats and spells.
+   */
   override listSteps(view: RulesetView, character: CharacterInput, edited: boolean) {
     return new LevelPlans(view, character, this).listSteps(edited);
   }

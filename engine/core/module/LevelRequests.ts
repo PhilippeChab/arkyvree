@@ -54,15 +54,18 @@ export default class LevelRequests {
     };
   }
 
-  /** An id of `kind` the view's: of an entity of that kind when the step names its kind, any entity's when it doesn't. */
+  /**
+   * An id of `kind` the view's: of an entity of that kind when the step names its kind, any entity's when it doesn't.
+   */
   private resolveOf(kind: LevelStep["kind"], id: string) {
     return kind ? this.ids.resolve(kind, id) : this.resolve(id);
   }
 
   /**
-   * A step's payload (`payload`), read by its mechanic, each id it names the view's: a plan's tracks; the options a
-   * `choose` step raises and the rows a `spend` step spends on, of its kind (a row's points gathered when two of its ids
-   * name it, a row given none kept as it came); and a `pick` step's picks, of its kind, each in a pool of its pools'.
+   * A step's payload (`payload`), read by its mechanic, each id it names the view's: a plan's tracks, by any kind; the
+   * options a `choose` step raises and the rows a `spend` step spends on, of its kind (a row's points gathered when two
+   * of its ids name it, a row given none kept as it came); and a `pick` step's picks, of its kind, each in a pool of
+   * its pools'.
    */
   private resolvePayload(step: LevelStep, payload: unknown): StepPayload {
     switch (step.mechanic) {
@@ -205,8 +208,18 @@ export default class LevelRequests {
   }
 
   /**
-   * Step `name`'s picker, as its level's steps (`steps`) read it: its plan (`resolvePlan`), and the pool it picks in, of
-   * the step's pools' kind. A step the level hasn't is refused.
+   * A plan request a save writes (`resolvePlan`), which answers every one of its level's steps (`steps`): one it leaves
+   * unanswered is refused, so a save never reads a step it skipped as picking nothing.
+   */
+  resolveSave(steps: readonly LevelStep[], request: LevelPlanRequest): LevelPlanRequest {
+    const unanswered = steps.find((step) => request.steps[step.name] === undefined);
+    if (unanswered) throw new RulesError("invalid", `The plan doesn't answer its ${unanswered.name} step`);
+    return this.resolvePlan(steps, request);
+  }
+
+  /**
+   * Step `name`'s picker, as its level's steps (`steps`) read it: its plan (`resolvePlan`), and the pool it picks in,
+   * of the step's pools' kind. A step the level hasn't is refused.
    */
   resolveStepPicker(steps: readonly LevelStep[], name: string, query: StepPickerQuery): StepPickerQuery {
     const step = steps.find((listed) => listed.name === name);

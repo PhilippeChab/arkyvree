@@ -1,6 +1,7 @@
 import { Engine, type LevelPlanRequest, type StepPickerQuery } from "@/engine/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { db } from "@/server/database/index.ts";
+import { NotFoundError } from "@/server/errors/index.ts";
 import { Feats, Klasses, Powers } from "@/server/repositories/index.ts";
 import { withEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
 import type { Session } from "@/shared/relations.ts";
@@ -12,9 +13,10 @@ interface Pagination {
 }
 
 /**
- * The level wizards' plans, by their steps' mechanics: a level's steps, the plan's answer (each step's, Add Level's plan
- * and Edit Level's level alike), and a step's options over the plan, a page at a time, read by the kind its picker
- * opens (a class plan's classes, a pool's feats, a family's, or its spells).
+ * The level wizards' plans, by their steps' mechanics: a level's steps, the plan's answer (each step's, Add Level's
+ * plan and Edit Level's level alike), and a step's options over the plan, a page at a time, read by the kind its picker
+ * opens (a class plan's classes, a pool's feats, a family's, or its spells): a kind none of them reads is refused as
+ * not found.
  */
 export function Plans<B extends Constructor>(Base: B) {
   abstract class WithPlans extends Base {
@@ -25,10 +27,13 @@ export function Plans<B extends Constructor>(Base: B) {
       );
     }
 
-    /** A level's steps, in the wizard's order, each its mechanic's: an edit's (`edited`) without its plan step. */
-    async getPlanSteps(session: Session, characterId: string, edited: boolean) {
+    /**
+     * A level's steps, in the wizard's order, each its mechanic's: an edit's (of saved level `editedLevelId`) without
+     * its plan step, refused when the character has no such level.
+     */
+    async getPlanSteps(session: Session, characterId: string, editedLevelId?: string) {
       return await withEditableCharacter(db, session, characterId, (scope, character) =>
-        Engine.for(scope).character(character).levelUp().listSteps(edited),
+        Engine.for(scope).character(character).levelUp().listSteps(editedLevelId),
       );
     }
 
@@ -76,6 +81,9 @@ export function Plans<B extends Constructor>(Base: B) {
             const items = opened.picker.describe(result.items);
             return { kind: opened.kind, grouped: false as const, items, page: result.page, nextPage: result.nextPage };
           }
+          default:
+            // A kind no page reader here reads: another module's, served once its reader is added
+            throw new NotFoundError(`No options of kind ${(opened as { kind: string }).kind}`);
         }
       });
     }

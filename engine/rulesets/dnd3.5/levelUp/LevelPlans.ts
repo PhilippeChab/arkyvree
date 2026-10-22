@@ -123,8 +123,11 @@ export default class LevelPlans extends LevelUpBase<DetailedCharacter> {
       this.character,
       this.rules,
     ).describeLevelSteps(query);
-    // The level's pools take its next pick, whichever pool and spell level
-    const atLevel = (pools: Record<string, unknown>) => Object.fromEntries(Object.keys(pools).map((id) => [id, 0]));
+    // The level's pools take its next pick, whichever pool and spell level: at any (`""`), and at each a pool has
+    const atLevel = (pool: PoolStep["aptitudePools"][string]) => ({
+      "": 0,
+      ...Object.fromEntries(Object.keys(pool.levels ?? {}).map((tier) => [tier, 0])),
+    });
     return {
       advancements: [{ id: klassLevel.id, position: klassLevel.level, track: { id: klass.id, name: klass.name } }],
       steps: {
@@ -141,11 +144,11 @@ export default class LevelPlans extends LevelUpBase<DetailedCharacter> {
         },
         [STEP.skills.name]: this.spendOf(skills, [skills.skillPointsToSpend]),
         [STEP.feats.name]: {
-          ...this.pickOf(feats, true, atLevel(feats.aptitudePools), (index) => ({ "": index })),
+          ...this.pickOf(feats, true, feats.aptitudePools, atLevel),
           granted: feats.autoGrantedFeats.map(({ description, id, name }) => ({ description, free: false, id, name })),
         },
         [STEP.powers.name]: {
-          ...this.pickOf(powers, false, atLevel(powers.aptitudePools), (index) => ({ "": index })),
+          ...this.pickOf(powers, false, powers.aptitudePools, atLevel),
           granted: powers.autoGrantedPowers.map(({ description, free, id, name }) => ({ description, free, id, name })),
         },
       },
@@ -198,7 +201,9 @@ export default class LevelPlans extends LevelUpBase<DetailedCharacter> {
     return level;
   }
 
-  /** The abilities an ability increase chooses among, as a `choose` step's options: each with its score and modifier. */
+  /**
+   * The abilities an ability increase chooses among, as a `choose` step's options: each with its score and modifier.
+   */
   private optionsOf(
     attributes: { abbreviation: string; abilityId: string; modifier: number; name: string; total: number }[],
   ) {
@@ -258,7 +263,12 @@ export default class LevelPlans extends LevelUpBase<DetailedCharacter> {
       : Payloads.readStep(request, STEP.plan).map(({ position, track }) => ({ klassId: track, level: position }));
     const levels = tracks.map((track, i) => {
       const hp = values[i];
-      if (hp === undefined && needsHp) throw new RulesError("invalid", `Level ${i + 1}'s hit points are required`);
+      if (hp === undefined && needsHp) {
+        const total = request.editedLevelId
+          ? this.character.rows.levels.indexOf(this.findLevel(request.editedLevelId))
+          : this.character.rows.levels.length + i;
+        throw new RulesError("invalid", `Level ${total + 1}: its hit points are required`);
+      }
       return {
         ...track,
         abilityIncreases: (choices[i] ?? []).map(({ amount, id }) => ({ abilityId: id, amount })),
@@ -274,6 +284,16 @@ export default class LevelPlans extends LevelUpBase<DetailedCharacter> {
         skills: Object.fromEntries(Payloads.readStep(request, STEP.skills).map(({ id, points }) => [id, points])),
       },
     };
+  }
+
+  /**
+   * A picker's tier (`tier`) as its spell level: none at any (`""`, or none given), refused when it isn't a whole
+   * number.
+   */
+  private readTier(tier: string | undefined) {
+    if (!tier) return undefined;
+    if (!/^\d+$/.test(tier)) throw new RulesError("invalid", `The tier ${tier} isn't a spell level`);
+    return Number(tier);
   }
 
   /** The skills step's answer as a `spend` step's: its points over the plan, each level's, and each skill's row. */
@@ -377,8 +397,9 @@ export default class LevelPlans extends LevelUpBase<DetailedCharacter> {
         },
       };
     }
-    if ((step !== STEP.feats.name && step !== STEP.powers.name) || !query.pool)
+    if (step !== STEP.feats.name && step !== STEP.powers.name)
       throw new RulesError("not-found", "The step has no picker");
+    if (!query.pool) throw new RulesError("invalid", "The step's picker takes a pool");
     const index = plan.editedLevelId ? 0 : (query.advancement ?? 0);
     const level = plan.levels[index];
     if (!level) throw new RulesError("invalid", "The plan has no such level");
@@ -398,6 +419,6 @@ export default class LevelPlans extends LevelUpBase<DetailedCharacter> {
     };
     return step === STEP.feats.name
       ? { kind: "feats", query: { ...pick, family: query.group } }
-      : { kind: "powers", query: { ...pick, powerLevel: query.tier ? Number(query.tier) : undefined } };
+      : { kind: "powers", query: { ...pick, powerLevel: this.readTier(query.tier) } };
   }
 }
