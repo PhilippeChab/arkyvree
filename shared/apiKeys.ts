@@ -12,5 +12,5 @@ export const MAX_API_KEY_LIFETIME_IN_DAYS = 365;
 /** The longest name an API key takes. */
 export const MAX_API_KEY_NAME_LENGTH = 100;
 
-/** The most API keys a user keeps at once: each key's requests are counted apart, so the keys bound a user's. */
+/** The most API keys a user keeps at once: a settings page's list, each key one place it may leak from. */
 export const MAX_API_KEYS = 10;

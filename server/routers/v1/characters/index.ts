@@ -31,9 +31,9 @@ const abilityScores = z
 const fileText = z.string().min(1).max(MAX_IMPORT_FILE_LENGTH).meta({ description: "The file's text" });
 
 /**
- * The key's user's characters: a page of them, one's sheet, its languages, a new one's form (how it scores its
- * abilities, the races it may be), its create, its import from another program's file, its edits and its archive; and
- * its contributors, inventory, levels, own modifiers, PDF and share link, each a router of its own.
+ * The key's user's characters: a page of them, one's sheet, its languages, how a new one scores its abilities, its
+ * create, its import from another program's file, its edits and its archive; and its contributors, inventory, levels,
+ * own modifiers, PDF and share link, each a router of its own.
  */
 export default new Hono<ApiKeyContext>()
   .route("/", contributors)
@@ -131,7 +131,7 @@ export default new Hono<ApiKeyContext>()
           .transform((value) => value || undefined),
         name: z.string().min(1).max(MAX_CHARACTER_NAME_LENGTH),
         notes: z.string().optional(),
-        raceId: z.string().uuid().meta({ description: "A race it may be (`GET /v1/characters/available-races`)" }),
+        raceId: z.string().uuid().meta({ description: "Its race: a `pc` one its alignment and gender may be" }),
         rulesetId: z.string().uuid(),
         weight: z
           .string()
@@ -235,7 +235,8 @@ export default new Hono<ApiKeyContext>()
       const { languageIds } = c.req.valid("json");
       const session = c.var.requestSession;
       await CharactersService.updateLanguages(session, id, languageIds);
-      return c.json(V1.characterLanguages(await CharactersService.getLanguages(session, id, languageIds)), 200);
+      // What it saved: an id resolved to the view's, past the languages its race and classes give it
+      return c.json(V1.characterLanguages(await CharactersService.getLanguages(session, id)), 200);
     },
   )
   .delete(

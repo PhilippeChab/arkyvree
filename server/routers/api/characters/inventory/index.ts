@@ -3,10 +3,18 @@ import { z } from "zod";
 
 import { location } from "@/drizzle/schema.ts";
 import { type SessionContext, validate } from "@/server/middlewares/index.ts";
-import { characterIdParam, heldSetList, heldSets } from "@/server/routers/api/validation.ts";
+import { characterIdParam, heldSets } from "@/server/routers/api/validation.ts";
 import { CharacterInventoryService } from "@/server/services/characters/inventory/index.ts";
 
 const entryParams = characterIdParam.extend({ entryId: z.string().uuid() });
+
+/** Comma-separated weapon sets, stored from 0: what isn't one is dropped (an empty string is none). */
+const heldSetList = z.string().transform((value) =>
+  value
+    .split(",")
+    .filter((set) => /^\d+$/.test(set))
+    .map(Number),
+);
 
 export default new Hono<SessionContext>()
   .get("/:characterId", validate("param", characterIdParam), async (c) => {

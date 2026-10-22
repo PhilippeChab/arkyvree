@@ -1,7 +1,6 @@
 /**
  * The parts of a character its edits change, as v1 answers them: its inventory, its own modifiers, its languages and
- * a saved level, each what its edit sends back; and what a new character's form reads (how it scores its abilities, the
- * races it may be, a file it's imported from).
+ * a saved level, each what its edit sends back; how a new character scores its abilities, and what an import reports.
  */
 
 import type { z } from "zod";

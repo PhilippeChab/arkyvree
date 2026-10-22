@@ -12,8 +12,14 @@ const IMPORTS_PER_MINUTE = 10;
 const MINUTE = 60 * 1000;
 
 /**
- * The public API's direct uploads, counted per user, whatever keys of theirs ask: as many a minute as the app's own
- * allow an address, each committing a blob the sweep reclaims only later.
+ * The public API's requests from an address, before its key is looked up: a wrong key or none is a lookup by digest,
+ * which nothing counted. Past every user's own limit, for a server that calls it for several users.
+ */
+export const apiAddressRateLimit = limitRate({ windowMs: MINUTE, limit: 600 });
+
+/**
+ * The public API's image uploads, counted per user, whatever keys of theirs ask: as many a minute as the app's own
+ * allow an address, each stored through the server.
  */
 export const apiAttachmentUploadRateLimit = limitRatePerKey({
   windowMs: MINUTE,
@@ -33,8 +39,11 @@ export const apiExportRateLimit = limitRatePerKey({ windowMs: MINUTE, limit: EXP
  */
 export const apiImportRateLimit = limitRatePerKey({ windowMs: MINUTE, limit: IMPORTS_PER_MINUTE, per: "user" });
 
-/** The public API's requests, counted per key: an agent's run reads a character and its choices a few times a level. */
-export const apiKeyRateLimit = limitRatePerKey({ windowMs: MINUTE, limit: 120 });
+/**
+ * The public API's requests, counted per user, whatever keys of theirs ask: an agent's run reads a character and its
+ * choices a few times a level. Per user, a user's ten keys get no more than one.
+ */
+export const apiKeyRateLimit = limitRatePerKey({ windowMs: MINUTE, limit: 120, per: "user" });
 
 /**
  * Each direct-upload commits a blob row + S3 object that the sweep won't reclaim until UNATTACHED_BLOB_TTL_MS

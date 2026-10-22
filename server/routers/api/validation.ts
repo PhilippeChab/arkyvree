@@ -29,14 +29,6 @@ export const entityFields = z.custom<EntityFieldValues>(
 /** Ruleset entity sorting (name/createdAt/updatedAt, ascending) */
 export const entityOrderBy = z.enum(["name", "createdAt", "updatedAt"]).default("name");
 
-/** Comma-separated weapon sets in a query string, from 0: what isn't one is dropped (an empty string is none). */
-export const heldSetList = z.string().transform((value) =>
-  value
-    .split(",")
-    .filter((set) => /^\d+$/.test(set))
-    .map(Number),
-);
-
 /** The weapon sets a hand holds an inventory entry in, stored from 0: none outside the hands. */
 export const heldSets = z.array(z.number().int().min(0));
 

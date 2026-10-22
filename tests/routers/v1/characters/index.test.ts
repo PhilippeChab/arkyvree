@@ -129,6 +129,19 @@ describe("v1 characters", () => {
     expect(languages.picks).toEqual([]);
   });
 
+  test("answers the languages a character's edit saved, which its race and classes don't already give it", async () => {
+    const { api } = await createKeyedApi();
+    const { langMap } = await getSeedCtx();
+    const { id } = await findSeededCharacter("Fenn Ashwalker");
+    const route = api.v1.characters[":id"].languages;
+    // A half-elf speaks Common already
+    const json = { languageIds: [langMap.Common!, langMap.Goblin!] };
+
+    const saved = await expectOk(route.$put({ json, param: { id } }));
+    expect(saved.picks.map(({ name }) => name)).toEqual(["Goblin"]);
+    expect(await expectOk(route.$get({ param: { id } }))).toEqual(saved);
+  });
+
   test("answers what a character speaks: the languages it picked, those it's given, and those it may add", async () => {
     const { api } = await createKeyedApi();
     const { langMap } = await getSeedCtx();
