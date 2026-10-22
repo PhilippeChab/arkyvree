@@ -156,7 +156,7 @@ drizzle/
 
 shared/                 # Types and pure helpers shared by the client, the server and the database packages
 vocabulary/
-  dnd3.5/               # The 3.5 vocabulary, data only: its lists, labels, tables and bounds, which the engine, the client, the content, the codegen and the seeders read
+  dnd3.5/               # The 3.5 vocabulary, data only: its lists, labels, tables and bounds, which the engine, the content, the codegen and the seeders read
 emails/                 # Email templates (React Email)
 scripts/                # Database scripts (reset, migrate, seed; db/seeds/, the dev and test data: users, each base rules' test characters) and ops scripts (prod diff, impersonate, validation)
 docs/                   # Developer docs
