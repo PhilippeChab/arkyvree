@@ -7,12 +7,13 @@ import { infiniteQueryOptions, queryOptions, skipToken } from "@tanstack/react-q
 import { type InferRequestType, type InferResponseType, parseResponse } from "hono/client";
 
 import { NO_TIME } from "@/client/src/lib/durations.ts";
+import { type EntityRow, readEntityFn } from "@/client/src/lib/entityRequests.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import type { LevelFeat, LevelSave } from "@/client/src/pages/rulesets/components/forms/classLevelForm.ts";
 import { powersQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
-export type ClassDetail = InferResponseType<(typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["$get"], 200>;
+export type ClassDetail = EntityRow;
 
 /**
  * A class level's form, its create's body: its number, base attack bonus and skill points, which its create dialog
@@ -47,7 +48,7 @@ function classParam(rulesetId: string, classId: string) {
 export function classDetailQuery(rulesetId: string, classId: string) {
   return queryOptions({
     queryKey: QUERY_KEYS.rulesets.classDetail(rulesetId, classId),
-    queryFn: () => parseResponse(rpc.api.rulesets[":id"].classes[":classId"].$get(classParam(rulesetId, classId))),
+    queryFn: () => readEntityFn(rulesetId, "klasses", classId),
   });
 }
 

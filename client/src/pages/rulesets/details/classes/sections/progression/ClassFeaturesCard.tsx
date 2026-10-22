@@ -4,9 +4,9 @@ import { useState } from "react";
 import { CardTitle, Panel, ScrollSafeListbox } from "@/client/src/components/common/index.ts";
 import { useDebouncedValue } from "@/client/src/hooks/index.ts";
 import { emptyOptionsText } from "@/client/src/lib/errorMessage.ts";
-import { levelFeatLabel } from "@/client/src/pages/rulesets/components/forms/index.ts";
+import { levelFeatLabel, poolsOf } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { useAptitudeOptions } from "@/client/src/pages/rulesets/components/index.ts";
-import { useRulesetFeats } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { useEntityColumns, useRulesetFeats } from "@/client/src/pages/rulesets/hooks/index.ts";
 
 import { LevelToggles } from "./LevelToggles.tsx";
 import { describeFeatureKey, type FeatureRow, type PoolRow } from "./progressionDraft.ts";
@@ -76,12 +76,14 @@ export function ClassFeaturesCard({
     onScroll,
   } = useRulesetFeats(rulesetId, useDebouncedValue(featSearch), !readOnly);
   const { fetchedOptions: aptitudes, autocompleteProps } = useAptitudeOptions(rulesetId, "feats", !readOnly);
+  // A feat's pools, where its rules' columns say a read holds them
+  const { columns: featColumns } = useEntityColumns(rulesetId, "feats");
   const featOptions = feats.flatMap((feat) =>
-    feat.featsAptitudesInRules.map((fa) => ({
-      aptitudeId: fa.aptitudeId,
-      aptitudeName: fa.aptitudesInRule?.name ?? null,
+    poolsOf(featColumns, feat).map((aptitude) => ({
+      aptitudeId: aptitude.id,
+      aptitudeName: aptitude.name,
       featId: feat.id,
-      key: describeFeatureKey({ featId: feat.id, aptitudeId: fa.aptitudeId }),
+      key: describeFeatureKey({ featId: feat.id, aptitudeId: aptitude.id }),
       levelIds: [],
       name: feat.name,
     })),

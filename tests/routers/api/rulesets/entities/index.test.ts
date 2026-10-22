@@ -156,6 +156,11 @@ describe("rulesets entities by kind", () => {
 
     const [shield] = shields;
     const param = { id, entityType: "items" as const, entityId: shield.id };
+    // An item's read says where a character carrying it places it: a shield, in a hand of a weapon set
+    expect(await expectOk(entity.$get({ param }))).toMatchObject({
+      id: shield.id,
+      placement: { hand: false, locations: expect.arrayContaining([expect.objectContaining({ weaponSet: true })]) },
+    });
     const copy = await expectOk(entity.duplicate.$post({ param, json: { name: "Test Buckler", type: "Shield" } }));
     expect(copy).toMatchObject({ name: "Test Buckler", sourceItemId: shield.id, isTemplate: false });
     await expectOk(

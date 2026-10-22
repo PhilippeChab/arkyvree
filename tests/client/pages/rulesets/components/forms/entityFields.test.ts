@@ -9,6 +9,7 @@ import {
   linkedAptitudes,
   noneLabel,
   ownFieldValues,
+  poolsOf,
   toColumnsBody,
   toColumnValues,
   toFieldValues,
@@ -292,5 +293,10 @@ describe("an entity's pools in its form", () => {
       "Cleric",
       "Wizard",
     ]);
+  });
+
+  test("offer the aptitudes it links in its server's order, a link without its aptitude left out", () => {
+    expect(poolsOf(POOLS, entity).map(({ id }) => id)).toEqual(["b", "a", "w", "c"]);
+    expect(poolsOf(POOLS, {})).toEqual([]);
   });
 });

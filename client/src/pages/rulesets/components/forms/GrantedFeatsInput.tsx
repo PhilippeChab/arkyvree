@@ -11,10 +11,11 @@ import {
 import { useDebouncedValue } from "@/client/src/hooks/index.ts";
 import { emptyOptionsText } from "@/client/src/lib/errorMessage.ts";
 import type { EntityField } from "@/client/src/pages/rulesets/details/rulesetQueries.ts";
-import { useRulesetFeats } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { useEntityColumns, useRulesetFeats } from "@/client/src/pages/rulesets/hooks/index.ts";
 
 import { featKey, type LevelFeat, levelFeatLabel, sortLevelFeats } from "./classLevelForm.ts";
 import type { ColumnInputProps } from "./columnContext.ts";
+import { poolsOf } from "./entityFields.ts";
 
 interface FeatOption extends LevelFeat {
   label: string;
@@ -47,15 +48,17 @@ export function GrantedFeatsInput<T extends FieldValues>({
     error: featsError,
     onScroll,
   } = useRulesetFeats(rulesetId, debouncedFeatSearch);
+  // A feat's pools, where its rules' columns say a read holds them
+  const { columns: featColumns } = useEntityColumns(rulesetId, "feats");
   // Labels of the feats picked here, for when neither a later search nor the saved level lists them.
   const [pickedLabels, setPickedLabels] = useState<ReadonlyMap<string, string>>(new Map());
 
   // One option per feat and aptitude it can be taken for.
   const featOptions: FeatOption[] = rulesetFeats.flatMap((feat) =>
-    feat.featsAptitudesInRules.map((fa) => ({
+    poolsOf(featColumns, feat).map((aptitude) => ({
       featId: feat.id,
-      aptitudeId: fa.aptitudeId,
-      label: levelFeatLabel(feat.name, fa.aptitudesInRule?.name),
+      aptitudeId: aptitude.id,
+      label: levelFeatLabel(feat.name, aptitude.name),
     })),
   );
 

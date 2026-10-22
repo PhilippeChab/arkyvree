@@ -81,7 +81,10 @@ test.describe("A class's progression", () => {
     await signIn(page, ownerUser.email, ownerUser.password);
     const forkId = await forkCoreRuleset(page, uniqueName("Progression Fork"));
     const { items } = await parseResponse(
-      apiOf(page).api.rulesets[":id"].classes.$get({ param: { id: forkId }, query: { search: "Monk" } }),
+      apiOf(page).api.rulesets[":id"].entities[":entityType"].$get({
+        param: { id: forkId, entityType: "classes" },
+        query: { search: "Monk" },
+      }),
     );
     const monk = items.find((klass) => klass.name === "Monk")!;
 

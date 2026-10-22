@@ -7,6 +7,7 @@
 import { infiniteQueryOptions, type QueryClient, type QueryKey, skipToken } from "@tanstack/react-query";
 import { type InferResponseType, parseResponse } from "hono/client";
 
+import { type EntityRow, entitySegment, givenParams, readEntitiesFn } from "@/client/src/lib/entityRequests.ts";
 import { nextPage } from "@/client/src/lib/pageItems.ts";
 import type { Direction, EntityKindDescription } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
@@ -42,33 +43,17 @@ interface PowerFilters extends ListFilters {
   level?: number;
 }
 
-type AptitudesApi = (typeof rpc.api.rulesets)[":id"]["aptitudes"];
-
 /** What a kind's list query reads of its kind: its type, and what narrows its list. */
 type EntityListKind = Pick<EntityKindDescription, "levels" | "partitioned" | "pools" | "type">;
 
-/** An entity kind's URL segment, as the routes by kind take it. */
-type EntitySegment = Parameters<
-  (typeof rpc.api.rulesets)[":id"]["entities"][":entityType"]["$get"]
->[0]["param"]["entityType"];
-
 /** A ruleset's aptitude, as its list and its pickers give it. */
-export type Aptitude = InferResponseType<AptitudesApi["$get"], 200>["items"][number];
+export type Aptitude = EntityRow;
 
 /** A group of an entity kind's list (a feat's family), as its grouped list gives it. */
 export type EntityGroup = InferResponseType<
   (typeof rpc.api.rulesets)[":id"]["entities"][":entityType"]["grouped"]["$get"],
   200
 >["items"][number];
-
-/** An entity of any kind, as its list gives it: its name, its description, and what its kind's list reads of it. */
-export type EntityRow = InferResponseType<
-  (typeof rpc.api.rulesets)[":id"]["entities"][":entityType"]["$get"],
-  200
->["items"][number];
-
-/** A ruleset's power (3.5's spell), as its list gives it. */
-export type Power = InferResponseType<(typeof rpc.api.rulesets)[":id"]["powers"]["$get"], 200>["items"][number];
 
 /** A ruleset page's tab: an entity kind's, by its URL segment (`races`, `classes`), or its Settings (`settings`). */
 export type RulesetSection = string;
@@ -85,22 +70,12 @@ function entityListKey(rulesetId: string, kind: EntityListKind, filters: EntityF
 
 /** A kind's list's search params: its page's, and each filter its kind narrows it by. */
 function entityListParams(pageParam: number, kind: EntityListKind, filters: EntityFilters) {
-  return givenParams({
+  return {
     ...pageSearchParams(pageParam, filters),
     ...(kind.partitioned && { kind: filters.kind, orderBy: filters.orderBy, orderDir: filters.orderDir }),
     ...(kind.pools && { aptitudeId: filters.aptitudeId }),
     ...(kind.levels && { level: filters.level?.toString() }),
-  });
-}
-
-/**
- * Search params, those given alone: a list by kind takes its kind's filters past the shared ones, by any key, each a
- * string.
- */
-function givenParams(params: Readonly<Record<string, string | undefined>>) {
-  return Object.fromEntries(
-    Object.entries(params).flatMap(([key, value]): [string, string][] => (value === undefined ? [] : [[key, value]])),
-  );
+  };
 }
 
 /** A tab's search params: its page, ten rows at a time, its search, and whether it lists the ruleset's own only. */
@@ -122,16 +97,9 @@ function sectionKey(rulesetId: string, section: RulesetSection, filters: ListFil
  * pool, a power's level), through the routes by kind, under its tab's key.
  */
 export function entitiesQuery(rulesetId: string, kind: EntityListKind, filters: EntityFilters) {
-  const segment = getUrlSegment(kind.type);
   return infiniteQueryOptions({
     queryKey: entityListKey(rulesetId, kind, filters),
-    queryFn: ({ pageParam }) =>
-      parseResponse(
-        rpc.api.rulesets[":id"].entities[":entityType"].$get({
-          param: { id: rulesetId, entityType: entitySegment(segment) },
-          query: entityListParams(pageParam, kind, filters),
-        }),
-      ),
+    queryFn: ({ pageParam }) => readEntitiesFn(rulesetId, kind.type, entityListParams(pageParam, kind, filters)),
     initialPageParam: 1,
     getNextPageParam: nextPage,
   });
@@ -147,17 +115,12 @@ export function entityFamilyQuery(rulesetId: string, type: string, family: strin
     queryKey: QUERY_KEYS.rulesets.familyVariants(rulesetId, segment, family ?? "", childOnly),
     queryFn: family
       ? ({ pageParam }) =>
-          parseResponse(
-            rpc.api.rulesets[":id"].entities[":entityType"].$get({
-              param: { id: rulesetId, entityType: entitySegment(segment) },
-              query: givenParams({
-                limit: "50",
-                page: pageParam.toString(),
-                family,
-                childOnly: childOnly ? "true" : undefined,
-              }),
-            }),
-          )
+          readEntitiesFn(rulesetId, type, {
+            limit: "50",
+            page: pageParam.toString(),
+            family,
+            childOnly: childOnly ? "true" : undefined,
+          })
       : skipToken,
     initialPageParam: 1,
     getNextPageParam: nextPage,
@@ -189,11 +152,6 @@ export function entityGroupsQuery(rulesetId: string, type: string, filters: List
   });
 }
 
-/** An entity kind's segment as the routes by kind take it: the server refuses one no kind has. */
-export function entitySegment(segment: string) {
-  return segment as EntitySegment;
-}
-
 /**
  * After a write to a ruleset's content: the lists it shows in (a section's, a customization tab's, a class's), and the
  * ruleset's Local Changes, which any write can change. It settles once they're read again, for a write that waits.
@@ -207,24 +165,9 @@ export function invalidateRulesetEdit(
   return Promise.all(all.map((queryKey) => queryClient.invalidateQueries({ queryKey }))).then(() => undefined);
 }
 
-/** A spell list's spells of a level, as a class's Spells tab lists them. */
+/** A spell list's spells of a level, as a class's Spells tab lists them: the powers' list, by pool and level. */
 export function powersQuery(rulesetId: string, filters: PowerFilters) {
-  return infiniteQueryOptions({
-    queryKey: [...sectionKey(rulesetId, "powers", filters), filters.aptitudeId, filters.level],
-    queryFn: ({ pageParam }) =>
-      parseResponse(
-        rpc.api.rulesets[":id"].powers.$get({
-          param: { id: rulesetId },
-          query: {
-            ...pageSearchParams(pageParam, filters),
-            aptitudeId: filters.aptitudeId,
-            level: filters.level?.toString(),
-          },
-        }),
-      ),
-    initialPageParam: 1,
-    getNextPageParam: nextPage,
-  });
+  return entitiesQuery(rulesetId, { levels: true, pools: "spells", type: "powers" }, filters);
 }
 
 /**

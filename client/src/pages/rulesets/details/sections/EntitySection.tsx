@@ -12,6 +12,7 @@ import {
 } from "@/client/src/components/common/index.ts";
 import { kindIcon } from "@/client/src/components/icons/index.ts";
 import { useRules, useRulesetPermissions, useSearchParam } from "@/client/src/hooks/index.ts";
+import { type EntityRow, entitySegment } from "@/client/src/lib/entityRequests.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
 import { itemsBeforeLastPage, pageItems } from "@/client/src/lib/pageItems.ts";
 import type { EntityKindDescription } from "@/client/src/lib/queries.ts";
@@ -39,7 +40,7 @@ import { getClassTabs } from "@/client/src/pages/rulesets/details/classes/classT
 import { entityQuery } from "@/client/src/pages/rulesets/details/entities/entityDetailQueries.ts";
 import type { EntityField } from "@/client/src/pages/rulesets/details/rulesetQueries.ts";
 import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionProps.ts";
-import { entitiesQuery, type EntityRow, entitySegment } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
+import { entitiesQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import {
   useAptitudeFilter,
   useEntityColumns,

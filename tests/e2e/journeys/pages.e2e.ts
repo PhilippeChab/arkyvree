@@ -46,7 +46,10 @@ async function firstOf(
     | "items"
     | "powers",
 ) {
-  const response = await apiOf(page).api.rulesets[":id"][list].$get({ param: { id: rulesetId }, query: {} });
+  const response = await apiOf(page).api.rulesets[":id"].entities[":entityType"].$get({
+    param: { id: rulesetId, entityType: list },
+    query: {},
+  });
   const { items } = await parseResponse(response);
   if (!items[0]) throw new Error(`The ruleset has no ${list}`);
   return items[0];
@@ -107,7 +110,10 @@ test.describe("Every page", () => {
     const rulesetId = await forkCoreRuleset(page, uniqueName("Entity Pages Fork"));
     // The core rules have no mechanics
     await parseResponse(
-      apiOf(page).api.rulesets[":id"].mechanics.$post({ param: { id: rulesetId }, json: { name: "Grapple" } }),
+      apiOf(page).api.rulesets[":id"].entities[":entityType"].$post({
+        param: { id: rulesetId, entityType: "mechanics" },
+        json: { name: "Grapple" },
+      }),
     );
     const errors = watchErrors(page);
     for (const list of ["languages", "skills", "saves", "mechanics", "aptitudes", "abilities"] as const) {
@@ -119,7 +125,10 @@ test.describe("Every page", () => {
   test("of a class loads, each of its sections", async ({ page }) => {
     const rulesetId = await forkCoreRuleset(page, uniqueName("Class Pages Fork"));
     const { items } = await parseResponse(
-      apiOf(page).api.rulesets[":id"].classes.$get({ param: { id: rulesetId }, query: { search: "Wizard" } }),
+      apiOf(page).api.rulesets[":id"].entities[":entityType"].$get({
+        param: { id: rulesetId, entityType: "classes" },
+        query: { search: "Wizard" },
+      }),
     );
     const wizard = items.find((klass) => klass.name === "Wizard")!;
     const errors = watchErrors(page);

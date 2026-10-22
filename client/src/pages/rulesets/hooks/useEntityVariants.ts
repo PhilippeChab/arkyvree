@@ -3,13 +3,10 @@ import { parseResponse } from "hono/client";
 
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useDialogState, useFormWith } from "@/client/src/hooks/index.ts";
+import { type EntityRow, entitySegment } from "@/client/src/lib/entityRequests.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
-import {
-  type EntityRow,
-  entitySegment,
-  invalidateRulesetEdit,
-} from "@/client/src/pages/rulesets/details/sectionQueries.ts";
+import { invalidateRulesetEdit } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import {
   type EntityVariantsFormValues,
   type VariantRow,
