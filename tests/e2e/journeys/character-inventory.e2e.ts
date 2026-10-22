@@ -18,7 +18,7 @@ async function pickItem(page: Page, search: string, option: string | RegExp, rea
   // The item's details choose its slot: create only once they're in.
   const details = ready
     ? null
-    : page.waitForResponse((r) => /\/api\/rulesets\/[^/]+\/items\/[^/]+$/.test(r.url()) && r.ok());
+    : page.waitForResponse((r) => /\/api\/rulesets\/[^/]+\/entities\/items\/[^/]+$/.test(r.url()) && r.ok());
   await page.getByRole("option", { name: option }).first().click();
   if (ready) await expect(ready(dialog)).toBeVisible();
   else await details;

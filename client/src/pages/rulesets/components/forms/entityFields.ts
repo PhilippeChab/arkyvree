@@ -206,9 +206,9 @@ export function isFieldShown(field: EntityField, watched: readonly unknown[]) {
   );
 }
 
-/** The aptitudes an entity read links its pools' columns to (`links`), which its form shows by name, in their order. */
+/** The aptitudes an entity read links its pools' columns to (`links`), which its form shows by name, each column's in name order. */
 export function linkedAptitudes(columns: readonly EntityField[], entity: unknown): Aptitude[] {
-  return poolsOf(columns, entity).sort(byName);
+  return columns.flatMap((column) => poolsOf([column], entity).sort(byName));
 }
 
 /** The first choice of a select for none: "None", or "Default" when "None" is one of its values. */
