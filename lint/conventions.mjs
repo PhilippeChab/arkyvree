@@ -22,8 +22,8 @@
  * - `order-through-repository`: the server's queries sort with a repository's `this.orderBy(column, direction)`, never
  *   drizzle's `asc` / `desc`, and a repository method that reads a page orders it by `this.pageOrder(keys)`, which ends
  *   on a key no two rows share: OFFSET paging repeats or skips rows that tie.
- * - `shared-runtime`: `shared/` and `vocabulary/` run in the client too, and `engine/` computes over the data it's
- *   given, so none uses Bun's APIs (`bun`, the `Bun` global) nor Node's (`node:fs`, `fs`).
+ * - `shared-runtime`: `shared/` runs in the client too, `vocabulary/` is data, and `engine/` computes over the data
+ *   it's given, so none uses Bun's APIs (`bun`, the `Bun` global) nor Node's (`node:fs`, `fs`).
  * - `engine-sync`: `engine/` reads nothing, so nothing it does waits: no `async` function, no `await`, no `Promise`.
  * - `engine-classes`: an operation of `engine/` is a method of its entry's handles (`engine/api/`: `Engine`, and what
  *   `Engine.for(scope)` hands out), and each of its steps a class's method or a module's own function: a module exports
@@ -107,7 +107,7 @@ const RUNTIME_FREE_TREES = [
   ["engine/", "`engine/` computes over the data it's given"],
   ["lib/", "`lib/` is what the engine shares with the server"],
   ["content/", "`content/` is data"],
-  ["vocabulary/", "`vocabulary/` is data, which the client compiles in"],
+  ["vocabulary/", "`vocabulary/` is data"],
 ];
 
 /** Each test area and the source tree it mirrors. */
