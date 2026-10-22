@@ -25,6 +25,19 @@ import {
   type VariantBody,
 } from "./kindServices.ts";
 
+/** What a refusal calls a kind's action it has none of: "No groups for races". */
+const ACTION_WORDS: Readonly<Record<keyof KindServices, string>> = {
+  create: "create",
+  duplicate: "duplicate",
+  get: "page",
+  grouped: "groups",
+  list: "list",
+  remove: "delete",
+  templates: "templates",
+  update: "update",
+  variants: "variants",
+};
+
 /** The kinds a race or a class is for: a list's partition. */
 const KIND_FILTER = { kind: z.string().optional() };
 
@@ -36,13 +49,13 @@ const KINDS: Record<RulesetEntityType, KindServices> = {
   abilities: buildKindServices("abilities", {
     filters: {},
     get: (rulesetId, id) => AbilitiesService.getAbility(rulesetId, id),
-    list: (rulesetId, where, pagination) => AbilitiesService.getAbilities(rulesetId, where, pagination),
+    list: AbilitiesService.getAbilities.bind(AbilitiesService),
   }),
   aptitudes: buildKindServices("aptitudes", {
     create: (session, rulesetId, body) => AptitudesService.createAptitude(session, rulesetId, body),
     filters: { scope: z.enum(["feats", "spells"]).optional() },
     get: (rulesetId, id) => AptitudesService.getAptitude(rulesetId, id),
-    list: (rulesetId, where, pagination) => AptitudesService.getAptitudes(rulesetId, where, pagination),
+    list: AptitudesService.getAptitudes.bind(AptitudesService),
     remove: (session, rulesetId, id) => AptitudesService.deleteAptitude(session, rulesetId, id),
     update: (session, rulesetId, id, body) => AptitudesService.updateAptitude(session, rulesetId, id, body),
   }),
@@ -53,10 +66,9 @@ const KINDS: Record<RulesetEntityType, KindServices> = {
     // Its families, a pool's, in their own order
     grouped: {
       filters: POOL_FILTER,
-      list: (rulesetId, { aptitudeId, childOnly, search }, pagination) =>
-        FeatsService.getFeatGroups(rulesetId, { aptitudeId, childOnly, search }, pagination),
+      list: FeatsService.getFeatGroups.bind(FeatsService),
     },
-    list: (rulesetId, where, pagination) => FeatsService.getFeats(rulesetId, where, pagination),
+    list: FeatsService.getFeats.bind(FeatsService),
     remove: (session, rulesetId, id) => FeatsService.deleteFeat(session, rulesetId, id),
     update: (session, rulesetId, id, body) => FeatsService.updateFeat(session, rulesetId, id, body),
   }),
@@ -70,7 +82,7 @@ const KINDS: Record<RulesetEntityType, KindServices> = {
         .transform((v) => (v === undefined ? undefined : v === "true")),
     },
     get: (rulesetId, id) => ItemsService.getItem(rulesetId, id),
-    list: (rulesetId, where, pagination) => ItemsService.getItems(rulesetId, where, pagination),
+    list: ItemsService.getItems.bind(ItemsService),
     remove: (session, rulesetId, id) => ItemsService.deleteItem(session, rulesetId, id),
     templates: (rulesetId, type) => ItemsService.getTemplates(rulesetId, type),
     update: (session, rulesetId, id, body) => ItemsService.updateItem(session, rulesetId, id, body),
@@ -80,7 +92,7 @@ const KINDS: Record<RulesetEntityType, KindServices> = {
     create: (session, rulesetId, body) => ClassesService.createClass(session, rulesetId, body),
     filters: KIND_FILTER,
     get: (rulesetId, id) => ClassesService.getClass(rulesetId, id),
-    list: (rulesetId, where, pagination) => ClassesService.getClasses(rulesetId, where, pagination),
+    list: ClassesService.getClasses.bind(ClassesService),
     remove: (session, rulesetId, id) => ClassesService.deleteClass(session, rulesetId, id),
     update: (session, rulesetId, id, body) => ClassesService.updateClass(session, rulesetId, id, body),
   }),
@@ -88,7 +100,7 @@ const KINDS: Record<RulesetEntityType, KindServices> = {
     create: (session, rulesetId, body) => LanguagesService.createLanguage(session, rulesetId, body),
     filters: {},
     get: (rulesetId, id) => LanguagesService.getLanguage(rulesetId, id),
-    list: (rulesetId, where, pagination) => LanguagesService.getLanguages(rulesetId, where, pagination),
+    list: LanguagesService.getLanguages.bind(LanguagesService),
     remove: (session, rulesetId, id) => LanguagesService.deleteLanguage(session, rulesetId, id),
     update: (session, rulesetId, id, body) => LanguagesService.updateLanguage(session, rulesetId, id, body),
   }),
@@ -96,7 +108,7 @@ const KINDS: Record<RulesetEntityType, KindServices> = {
     create: (session, rulesetId, body) => MechanicsService.createMechanic(session, rulesetId, body),
     filters: {},
     get: (rulesetId, id) => MechanicsService.getMechanic(rulesetId, id),
-    list: (rulesetId, where, pagination) => MechanicsService.getMechanics(rulesetId, where, pagination),
+    list: MechanicsService.getMechanics.bind(MechanicsService),
     remove: (session, rulesetId, id) => MechanicsService.deleteMechanic(session, rulesetId, id),
     update: (session, rulesetId, id, body) => MechanicsService.updateMechanic(session, rulesetId, id, body),
   }),
@@ -104,7 +116,7 @@ const KINDS: Record<RulesetEntityType, KindServices> = {
     create: (session, rulesetId, body) => PowersService.createPower(session, rulesetId, body),
     filters: { ...POOL_FILTER, level: z.coerce.number().optional() },
     get: (rulesetId, id) => PowersService.getPower(rulesetId, id),
-    list: (rulesetId, where, pagination) => PowersService.getPowers(rulesetId, where, pagination),
+    list: PowersService.getPowers.bind(PowersService),
     remove: (session, rulesetId, id) => PowersService.deletePower(session, rulesetId, id),
     update: (session, rulesetId, id, body) => PowersService.updatePower(session, rulesetId, id, body),
   }),
@@ -112,7 +124,7 @@ const KINDS: Record<RulesetEntityType, KindServices> = {
     create: (session, rulesetId, body) => RacesService.createRace(session, rulesetId, body),
     filters: KIND_FILTER,
     get: (rulesetId, id) => RacesService.getRace(rulesetId, id),
-    list: (rulesetId, where, pagination) => RacesService.getRaces(rulesetId, where, pagination),
+    list: RacesService.getRaces.bind(RacesService),
     remove: (session, rulesetId, id) => RacesService.deleteRace(session, rulesetId, id),
     update: (session, rulesetId, id, body) => RacesService.updateRace(session, rulesetId, id, body),
   }),
@@ -120,7 +132,7 @@ const KINDS: Record<RulesetEntityType, KindServices> = {
     create: (session, rulesetId, body) => SavesService.createSave(session, rulesetId, body),
     filters: {},
     get: (rulesetId, id) => SavesService.getSave(rulesetId, id),
-    list: (rulesetId, where, pagination) => SavesService.getSaves(rulesetId, where, pagination),
+    list: SavesService.getSaves.bind(SavesService),
     remove: (session, rulesetId, id) => SavesService.deleteSave(session, rulesetId, id),
     update: (session, rulesetId, id, body) => SavesService.updateSave(session, rulesetId, id, body),
   }),
@@ -128,7 +140,7 @@ const KINDS: Record<RulesetEntityType, KindServices> = {
     create: (session, rulesetId, body) => SkillsService.createSkill(session, rulesetId, body),
     filters: {},
     get: (rulesetId, id) => SkillsService.getSkill(rulesetId, id),
-    list: (rulesetId, where, pagination) => SkillsService.getSkills(rulesetId, where, pagination),
+    list: SkillsService.getSkills.bind(SkillsService),
     remove: (session, rulesetId, id) => SkillsService.deleteSkill(session, rulesetId, id),
     update: (session, rulesetId, id, body) => SkillsService.updateSkill(session, rulesetId, id, body),
   }),
@@ -146,7 +158,7 @@ class EntitiesService {
   /** A kind's action (`action`): refused as not found when it has none. */
   private actionOf<A extends keyof KindServices>(type: RulesetEntityType, action: A): NonNullable<KindServices[A]> {
     const found = this.kindOf(type)[action];
-    if (!found) throw new NotFoundError(`No ${String(action)} for ${getUrlSegment(type)}`);
+    if (!found) throw new NotFoundError(`No ${ACTION_WORDS[action]} for ${getUrlSegment(type)}`);
     return found;
   }
 

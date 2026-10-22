@@ -7,25 +7,22 @@ import type { Session } from "@/shared/relations.ts";
 import { getUrlSegment } from "@/shared/urlSegments.ts";
 
 /**
- * A kind's services as its own service takes them: its list's filters by their schemas (`filters`, by query key: a
- * race's `kind`, a spell's `aptitudeId` and `level`), which its list takes read, and its groups' alike.
+ * A kind's services as its own service takes them: its list (`list`, whose filters `W` names past the shared ones)
+ * and the schema of each of those filters (`filters`, by query key: a race's `kind`, a spell's `aptitudeId` and
+ * `level`), its groups' alike. The schemas are typed by the service's own filters, so neither can name a filter the
+ * other doesn't, or of another type.
  */
-interface TypedKind<F extends z.ZodRawShape, G extends z.ZodRawShape> extends Omit<KindServices, "grouped" | "list"> {
-  filters: F;
+interface TypedKind<W extends ListShared, G extends ListShared> extends Omit<KindServices, "grouped" | "list"> {
+  filters: NoInfer<FilterSchemas<W>>;
   grouped?: {
-    filters: G;
-    list: (
-      rulesetId: string,
-      where: ListShared & z.output<z.ZodObject<G>>,
-      pagination: Pagination,
-    ) => Promise<Paginated<EntityGroup>>;
+    filters: NoInfer<FilterSchemas<G>>;
+    list: (rulesetId: string, where: G, pagination: Pagination) => Promise<Paginated<EntityGroup>>;
   };
-  list: (
-    rulesetId: string,
-    where: ListShared & z.output<z.ZodObject<F>>,
-    pagination: Pagination,
-  ) => Promise<Paginated<EntityRow>>;
+  list: (rulesetId: string, where: W, pagination: Pagination) => Promise<Paginated<EntityRow>>;
 }
+
+/** The schema of each filter a list takes past the shared ones (`W`'s), of its value's type. */
+type FilterSchemas<W> = { [K in Exclude<keyof W, keyof ListShared>]-?: z.ZodType<W[K]> };
 
 /** A group of a kind's list (a feat's family): its name, its key, how many it holds, and one of them. */
 export interface EntityGroup {
@@ -97,30 +94,35 @@ export interface VariantBody {
  * key, as a route's validation refuses a query, when one isn't the kind's ("races take no level filter") or isn't of
  * its type.
  */
-function readFilters<S extends z.ZodRawShape>(type: RulesetEntityType, shape: S, filters: Record<string, unknown>) {
+function readFilters<W extends ListShared>(
+  type: RulesetEntityType,
+  shape: FilterSchemas<W>,
+  filters: Record<string, unknown>,
+) {
   const unknown = Object.keys(filters).filter((key) => !Object.hasOwn(shape, key));
   if (unknown.length > 0) {
     const issues = unknown.map((key) => ({ category: key, message: `${getUrlSegment(type)} take no ${key} filter` }));
     throw new RulesError("invalid", "Request validation failed", issues);
   }
-  return RulesError.parse(z.object(shape), filters);
+  return RulesError.parse(z.object<z.ZodRawShape>(shape), filters);
 }
 
 /**
- * A kind's services (`kind`, of `type`), each list's filters read by its schemas before its service takes them, typed:
- * what the routes by kind dispatch to.
+ * A kind's services (`kind`, of `type`), each list's filters read by its schemas before its service takes them: what
+ * the routes by kind dispatch to.
  */
-export function buildKindServices<F extends z.ZodRawShape, G extends z.ZodRawShape>(
+export function buildKindServices<W extends ListShared, G extends ListShared>(
   type: RulesetEntityType,
-  { filters, grouped, list, ...actions }: TypedKind<F, G>,
+  { filters, grouped, list, ...actions }: TypedKind<W, G>,
 ): KindServices {
   return {
     ...actions,
+    // Each filter read by its schema, which `FilterSchemas` types as the service takes it
     grouped:
       grouped &&
       ((rulesetId, where, given, pagination) =>
-        grouped.list(rulesetId, { ...where, ...readFilters(type, grouped.filters, given) }, pagination)),
+        grouped.list(rulesetId, { ...where, ...readFilters(type, grouped.filters, given) } as G, pagination)),
     list: (rulesetId, where, given, pagination) =>
-      list(rulesetId, { ...where, ...readFilters(type, filters, given) }, pagination),
+      list(rulesetId, { ...where, ...readFilters(type, filters, given) } as W, pagination),
   };
 }

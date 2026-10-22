@@ -78,20 +78,22 @@ describe("rulesets entities by kind", () => {
 
     // A new pool's feats, and its feats of a family: those alone
     const pool = await expectOk(kinds.$post({ param: { id, entityType: "aptitudes" }, json: { name: "Test Pool" } }));
-    const [focus, plain] = await Promise.all(
-      [{ name: "Test Focus", fields: { families: [FEAT_FAMILIES[0]] } }, { name: "Test Plain" }].map((form) =>
-        expectOk(kinds.$post({ param: { id, entityType: "feats" }, json: { ...form, aptitudeIds: [pool.id] } })),
-      ),
-    );
+    const feat = (form: { fields?: { families: string[] }; name: string }) =>
+      expectOk(kinds.$post({ param: { id, entityType: "feats" }, json: { ...form, aptitudeIds: [pool.id] } }));
+    const focus = await feat({ name: "Test Focus", fields: { families: [FEAT_FAMILIES[0]] } });
+    const plain = await feat({ name: "Test Plain" });
     expect(ids(await list("feats", { aptitudeId: pool.id }))).toEqual([focus.id, plain.id].sort());
     expect(ids(await list("feats", { aptitudeId: pool.id, family: FEAT_FAMILIES[0] }))).toEqual([focus.id]);
-    const groups = await expectOk(grouped.$get({ param: { id, entityType: "feats" }, query: { aptitudeId: pool.id } }));
-    expect(groups.items.map((group) => group.representativeId).sort()).toEqual([focus.id, plain.id].sort());
+    const groups = (query: Record<string, string>) =>
+      expectOk(grouped.$get({ param: { id, entityType: "feats" }, query: { aptitudeId: pool.id, ...query } }));
+    const representatives = (page: { items: { representativeId: string }[] }) =>
+      page.items.map((group) => group.representativeId).sort();
+    expect(representatives(await groups({}))).toEqual([focus.id, plain.id].sort());
+    expect(representatives(await groups({ search: "Test Focus" }))).toEqual([focus.id]);
 
     // A spell list's spells of one level: none of another's
-    const [zero, one] = await Promise.all(
-      ["0", "1"].map(async (level) => ids(await list("powers", { aptitudeId: spellList.id, level }))),
-    );
+    const zero = ids(await list("powers", { aptitudeId: spellList.id, level: "0" }));
+    const one = ids(await list("powers", { aptitudeId: spellList.id, level: "1" }));
     expect(zero.length).toBeGreaterThan(0);
     expect(one.length).toBeGreaterThan(0);
     expect(zero.filter((spellId) => one.includes(spellId))).toEqual([]);
@@ -116,6 +118,33 @@ describe("rulesets entities by kind", () => {
     await expectStatus(kinds.$get({ param: { id, entityType: "powers" }, query: { level: "one" } }), 400);
   });
 
+  test("reads a list's shared query: its order, its page, its own entities alone", async () => {
+    const { id } = await setup();
+    const names = (page: { items: { name: string }[] }) => page.items.map((row) => row.name);
+    const list = (query: Record<string, string>) =>
+      expectOk(kinds.$get({ param: { id, entityType: "languages" }, query }));
+
+    const ascending = names(await list({ orderBy: "name", orderDir: "asc", limit: "100" }));
+    const descending = names(await list({ orderBy: "name", orderDir: "desc", limit: "100" }));
+    expect(ascending.length).toBeGreaterThan(1);
+    expect(descending).toEqual(ascending.toReversed());
+
+    const first = await list({ limit: "1", page: "1" });
+    const second = await list({ limit: "1", page: "2" });
+    expect(first.nextPage).toBe(2);
+    expect(names(first)).toEqual(ascending.slice(0, 1));
+    expect(names(second)).toEqual(ascending.slice(1, 2));
+
+    // A fork's own entities, those it inherits left out; "false" reads as no
+    await expectOk(
+      kinds.$post({ param: { id, entityType: "languages" }, json: { name: "Test Cant", type: "Secret" } }),
+    );
+    expect(names(await list({ childOnly: "true" }))).toEqual(["Test Cant"]);
+    expect(names(await list({ childOnly: "false", limit: "100" }))).toEqual(
+      [...ascending, "Test Cant"].sort((a, b) => a.localeCompare(b)),
+    );
+  });
+
   test("answers a kind's actions: its groups, its templates, a duplicate and variants; refused for a kind without", async () => {
     const { id } = await setup();
     const groups = await expectOk(grouped.$get({ param: { id, entityType: "feats" }, query: {} }));
@@ -128,10 +157,15 @@ describe("rulesets entities by kind", () => {
     const copy = await expectOk(entity.duplicate.$post({ param, json: { name: "Test Buckler", type: "Shield" } }));
     expect(copy).toMatchObject({ name: "Test Buckler", sourceItemId: shield.id, isTemplate: false });
     await expectOk(
-      entity.variants.$post({ param, json: { variants: [{ name: "Test Spiked Buckler" }, { name: "Test Tower" }] } }),
+      entity.variants.$post({
+        param,
+        json: { variants: [{ name: "Test Spiked Buckler", description: "Spiked" }, { name: "Test Tower" }] },
+      }),
     );
     const made = await expectOk(kinds.$get({ param: { id, entityType: "items" }, query: { search: "Test Spiked" } }));
-    expect(made.items).toMatchObject([{ name: "Test Spiked Buckler", type: "Shield", sourceItemId: shield.id }]);
+    expect(made.items).toMatchObject([
+      { name: "Test Spiked Buckler", description: "Spiked", type: "Shield", sourceItemId: shield.id },
+    ]);
 
     await expectStatus(grouped.$get({ param: { id, entityType: "races" }, query: {} }), 404);
     const classTemplates = templates.$get({ param: { id, entityType: "classes" }, query: {} });

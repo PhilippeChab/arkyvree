@@ -33,7 +33,7 @@ export default new Hono<SessionContext>()
         limit,
         page,
         search: z.string().optional(),
-        childOnly: z.coerce.boolean().optional(),
+        childOnly: z.stringbool().optional(),
         orderBy: entityOrderBy,
         orderDir: orderDirAsc,
       }),
@@ -57,7 +57,7 @@ export default new Hono<SessionContext>()
     validate("param", kindParams),
     validate(
       "query",
-      z.looseObject({ limit, page, search: z.string().optional(), childOnly: z.coerce.boolean().optional() }),
+      z.looseObject({ limit, page, search: z.string().optional(), childOnly: z.stringbool().optional() }),
     ),
     async (c) => {
       const { id, entityType } = c.req.valid("param");
