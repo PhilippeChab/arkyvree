@@ -192,7 +192,7 @@ export interface StepPickerQuery {
  * The words a step shows past its label and its kind's word, by its mechanic, its module's:
  * - `choose`: what it asks, and its word ("Ability Increase");
  * - `pick`: the note a free grant takes ("class ability"), and each tier's name ("Cantrips");
- * - `plan`: a position's word ("Level"), the review's title for the advancements, and an option the character can't
+ * - `plan`: a position's word ("Level", "Levels"), the review's title for the advancements, and an option the character can't
  *   take yet's note;
  * - `spend`: the budget's title, a favored row's words (in full, and short), the review's title, and what a point buys;
  * - `value`: what each advancement's value asks, and the value's name.
@@ -200,7 +200,7 @@ export interface StepPickerQuery {
 export interface StepWords {
   choose: { prompt: string; word: RulesWord };
   pick: { grantNote: string; tiers?: Record<string, string> };
-  plan: { position: string; review: string; unmet: string };
+  plan: { position: RulesWord; review: string; unmet: string };
   spend: { budget: string; favored: string; favoredShort: string; review: string; unit: RulesWord };
   value: { prompt: string; unit: string };
 }

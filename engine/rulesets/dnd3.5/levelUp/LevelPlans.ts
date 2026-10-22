@@ -65,7 +65,11 @@ const STEPS = [
     label: "Class Plan",
     mechanic: "plan",
     kind: "klasses",
-    words: { position: "Level", review: "Class Advancement", unmet: "Requirements not met" },
+    words: {
+      position: { many: "Levels", one: "Level" },
+      review: "Class Advancement",
+      unmet: "Requirements not met",
+    },
   },
   { name: "hp", label: "Select HP", mechanic: "value", words: { prompt: "Set HP for", unit: "HP Gain" } },
   {

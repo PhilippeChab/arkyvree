@@ -134,6 +134,9 @@ describe("character level plans", () => {
     const steps = await expectOk(levels.steps.$get({ param: { characterId }, query: {} }));
     // Each in its words: what the wizard shows past its label and its kind's word
     expect(steps.find(({ name }) => name === "hp")?.words).toEqual({ prompt: "Set HP for", unit: "HP Gain" });
+    expect(steps.find(({ name }) => name === "class-plan")?.words).toMatchObject({
+      position: { many: "Levels", one: "Level" },
+    });
     expect(steps.find(({ name }) => name === "powers")?.words).toMatchObject({
       grantNote: "class ability",
       tiers: { "0": "Cantrips", "1": "Level 1" },
