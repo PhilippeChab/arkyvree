@@ -21,17 +21,16 @@ export const apiAddressRateLimit = limitRate({ windowMs: MINUTE, limit: 600 });
  * The public API's image uploads, counted per user, whatever keys of theirs ask: as many a minute as the app's own
  * allow an address, each stored through the server.
  */
-export const apiAttachmentUploadRateLimit = limitRatePerKey({
+export const apiAttachmentUploadRateLimit = limitRatePerUser({
   windowMs: MINUTE,
   limit: ATTACHMENT_UPLOADS_PER_MINUTE,
-  per: "user",
 });
 
 /**
  * The public API's PDFs, rendered or queued, counted per user, whatever keys of theirs ask: as many a minute as the
  * app's own allow an address, each costing a render.
  */
-export const apiExportRateLimit = limitRatePerKey({ windowMs: MINUTE, limit: EXPORTS_PER_MINUTE, per: "user" });
+export const apiExportRateLimit = limitRatePerUser({ windowMs: MINUTE, limit: EXPORTS_PER_MINUTE });
 
 /**
  * The public API's imports of a character file, counted per user, whatever keys of theirs ask: as many a minute as the
