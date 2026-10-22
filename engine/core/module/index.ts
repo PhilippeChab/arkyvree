@@ -55,6 +55,7 @@ export {
 } from "./parts/imports/index.ts";
 export {
   type AbilityIncrease,
+  type AdvancementWords,
   type BondedCreaturesPlan,
   type BondedLevelsPlan,
   type BondedPlan,
@@ -78,6 +79,7 @@ export {
   type LevelsPlan,
   type LevelStep,
   type LevelStepKind,
+  type LevelSteps,
   LevelUpPart,
   type LevelUpRequest,
   type LevelWrites,
@@ -85,6 +87,7 @@ export {
   Payloads,
   type PickAnswer,
   type PickedEntity,
+  type PickedEntityAnswer,
   type PickPool,
   type PickQuery,
   type PlanAnswer,
@@ -103,6 +106,7 @@ export {
   type StepPayload,
   type StepPayloads,
   type StepPickerQuery,
+  type StepWords,
   type TierRoom,
   type ValueAnswer,
   type ValueBounds,

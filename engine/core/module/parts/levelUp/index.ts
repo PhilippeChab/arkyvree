@@ -1,6 +1,7 @@
 export type { LevelStepKind, WizardStep } from "./descriptions.ts";
 export { default as LevelUpPart } from "./LevelUpPart.ts";
 export type {
+  AdvancementWords,
   ChoiceOption,
   ChooseAnswer,
   ChosenOption,
@@ -8,8 +9,10 @@ export type {
   LevelPlanAnswer,
   LevelPlanRequest,
   LevelStep,
+  LevelSteps,
   PickAnswer,
   PickedEntity,
+  PickedEntityAnswer,
   PickPool,
   PlanAnswer,
   PlannedAdvancement,
@@ -22,6 +25,7 @@ export type {
   StepPayload,
   StepPayloads,
   StepPickerQuery,
+  StepWords,
   TierRoom,
   ValueAnswer,
   ValueBounds,

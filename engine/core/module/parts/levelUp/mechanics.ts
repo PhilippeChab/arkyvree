@@ -11,7 +11,17 @@
  *   level).
  */
 
+import type { RulesWord } from "@/engine/core/module/parts/ruleset/index.ts";
 import type { ViewEntities } from "@/engine/core/view/index.ts";
+
+/**
+ * The words a level's advancements take, whatever step shows them: a position's word on a track ("Level", "Levels":
+ * "Fighter Level 3"), and the review's title for them ("Class Advancement").
+ */
+export interface AdvancementWords {
+  position: RulesWord;
+  review: string;
+}
 
 /** An option a `choose` step raises: its name and short name, and its score and modifier as the plan has them. */
 export interface ChoiceOption {
@@ -64,22 +74,17 @@ export interface LevelPlanRequest {
 }
 
 /**
- * A level-up step, as its module lists it: its name (which a plan request's payloads and a plan's answers key it by),
- * its mechanic, the kind of entity it plans, chooses, spends over or picks (`kind`), the kind of entity a `pick` step's
- * pools are (`pools`), and its label.
+ * A level's steps, as its module lists them: the words its advancements take, and its steps, in the wizard's order.
  */
-export interface LevelStep {
-  kind?: keyof ViewEntities;
-  label: string;
-  mechanic: StepMechanic;
-  name: string;
-  pools?: keyof ViewEntities;
+export interface LevelSteps {
+  advancements: AdvancementWords;
+  steps: readonly LevelStep[];
 }
 
 /**
  * A `pick` step's answer: its pools, what the plan's advancements grant, what of the picks fits (by pool, in pick
- * order), the advancement (by its index in the plan) each pool's next pick lands on, at any tier (`""`) and at each,
- * and whether its options group (3.5's feat families).
+ * order: `fitted`'s ids, `picked`'s entities), the advancement (by its index in the plan) each pool's next pick lands
+ * on, at any tier (`""`) and at each, and whether its options group (3.5's feat families).
  */
 export interface PickAnswer {
   fitted: Record<string, string[]>;
@@ -87,6 +92,7 @@ export interface PickAnswer {
   grouped: boolean;
   mechanic: "pick";
   next: Record<string, Record<string, number>>;
+  picked: Record<string, PickedEntityAnswer[]>;
   pools: Record<string, PickPool>;
 }
 
@@ -94,6 +100,14 @@ export interface PickAnswer {
 export interface PickedEntity {
   id: string;
   pool: string;
+  tier?: string;
+}
+
+/** An entity a `pick` step's picks hold, by name, at the tier it's picked at in its pool. */
+export interface PickedEntityAnswer {
+  description: string | null;
+  id: string;
+  name: string;
   tier?: string;
 }
 
@@ -191,6 +205,31 @@ export interface StepPickerQuery {
   tier?: string;
 }
 
+/**
+ * The words a step shows past its label and its kinds' words, by its mechanic, its module's:
+ * - `choose`: what it asks, and its word ("Ability Increase");
+ * - `pick`: the note a free grant takes ("class ability"), a group's word ("variant"), an optional pool's note
+ *   ("optional"), and each tier's name ("Cantrips");
+ * - `plan`: the note on an option the character can't take yet;
+ * - `spend`: the budget's title, what it spends ("point"), a favored row's words (in full, and short), the review's
+ *   title, and what a point buys ("Rank");
+ * - `value`: what each advancement's value asks, what entering it asks, and the value's name.
+ */
+export interface StepWords {
+  choose: { prompt: string; word: RulesWord };
+  pick: { grantNote: string; group?: RulesWord; optional: string; tiers?: Record<string, string> };
+  plan: { unmet: string };
+  spend: {
+    budget: string;
+    currency: RulesWord;
+    favored: string;
+    favoredShort: string;
+    review: string;
+    unit: RulesWord;
+  };
+  value: { entry: string; prompt: string; unit: string };
+}
+
 /** A pool's room at a tier: allowed (`-1` when every entity of the tier is held), spent, and what's left. */
 export interface TierRoom {
   allowed: number;
@@ -211,6 +250,22 @@ export interface ValueBounds {
   min: number;
   roll: string;
 }
+
+/**
+ * A level-up step, as its module lists it: its name (which a plan request's payloads and a plan's answers key it by),
+ * its mechanic, the kind of entity it plans, chooses, spends over or picks (`kind`), the kind of entity a `pick` step's
+ * pools are (`pools`), its label, and its mechanic's words.
+ */
+export type LevelStep = {
+  [M in StepMechanic]: {
+    kind?: keyof ViewEntities;
+    label: string;
+    mechanic: M;
+    name: string;
+    pools?: keyof ViewEntities;
+    words: StepWords[M];
+  };
+}[StepMechanic];
 
 /** A step's answer, by its mechanic. */
 export type StepAnswer = ChooseAnswer | PickAnswer | PlanAnswer | SpendAnswer | ValueAnswer;

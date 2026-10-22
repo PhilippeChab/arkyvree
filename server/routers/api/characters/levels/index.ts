@@ -210,6 +210,10 @@ export default new Hono<SessionContext>()
     const { characterId, characterLevelId } = c.req.valid("param");
     return c.json(await CharacterLevelsService.getLevel(c.var.requestSession, characterId, characterLevelId), 200);
   })
+  .get("/:characterId/:characterLevelId/plan", validate("param", levelParams), async (c) => {
+    const { characterId, characterLevelId } = c.req.valid("param");
+    return c.json(await CharacterLevelsService.getLevelPlan(c.var.requestSession, characterId, characterLevelId), 200);
+  })
   .post(
     "/:characterId",
     validate("param", characterIdParam),
