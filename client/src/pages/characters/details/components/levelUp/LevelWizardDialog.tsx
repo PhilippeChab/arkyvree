@@ -1,54 +1,53 @@
 import { Button, DialogContent, DialogTitle, Stack, Step, StepLabel, Stepper } from "@mui/material";
-import type { ComponentType } from "react";
+import type { ReactNode } from "react";
 
 import { type EditingLevel, ValidationIssuesAlert } from "@/client/src/components/characters/index.ts";
-import { ConfirmDialog, DialogFooter, LoadError, Modal } from "@/client/src/components/common/index.ts";
+import { ConfirmDialog, DialogFooter, DiceSpinner, LoadError, Modal } from "@/client/src/components/common/index.ts";
 import { useIsMobile } from "@/client/src/hooks/index.ts";
-import type { ApiValidationIssue } from "@/client/src/services/ApiError.ts";
 
-interface LevelWizardDialogProps<N extends string, W extends WizardControls<N>> {
+import { ChooseStep } from "./ChooseStep.tsx";
+import type { StepOf } from "./levelPlanQueries.ts";
+import { PickStep } from "./PickStep.tsx";
+import { ReviewStep } from "./ReviewStep.tsx";
+import { SpendStep } from "./SpendStep.tsx";
+import type { LevelWizard } from "./useLevelWizard.ts";
+import { ValueStep } from "./ValueStep.tsx";
+
+interface LevelWizardDialogProps<W extends WizardControls> {
   characterId: string;
   /** The last step's button ("Finish"). */
   finishLabel: string;
   /** It has faded out (`useDialogState`'s `onExited`): its owner unmounts it. */
   onExited: () => void;
   open: boolean;
-  /** Its steps' components, by the name its wizard lists each by: the one it's at shows */
-  steps: Record<N, ComponentType<LevelStepProps<W>>>;
+  /** Its `plan` step, Add Level's own: an edit's level has its plan */
+  renderPlan?: (step: StepOf<"plan">) => ReactNode;
   title: string;
   wizard: W;
 }
 
 /**
- * The part of a level wizard, Add Level's or Edit Level's, the dialog drives: its steps (their names and labels, in
- * order), what failed to load (`loadError`, which it shows in place of the step), cancel, validation, navigation and
- * the save running.
+ * The part of a level wizard, Add Level's or Edit Level's, the dialog drives past the steps' shared state: what failed
+ * to load (`loadError`, which it shows in place of the step), cancel, navigation and the save running.
  */
-interface WizardControls<N extends string> {
-  activeStep: number;
+interface WizardControls extends LevelWizard {
   handleBack: () => void;
   handleCancel: () => void;
   handleConfirmCancel: () => void;
   handleForceSubmit: () => void;
   handleNext: () => void;
-  isLastStep: boolean;
   isNextDisabled: boolean;
   isSaving: boolean;
-  issues: ApiValidationIssue[];
-  loadError: { error: Error; what: string } | undefined;
-  setIssues: (issues: ApiValidationIssue[]) => void;
-  setShowCancelConfirm: (show: boolean) => void;
-  showCancelConfirm: boolean;
-  steps: readonly { label: string; name: N }[];
+  loadError: { error: unknown; what: string } | undefined;
 }
 
 /** What a character's sheet passes its Add Level dialog: a level dialog's, and the class it opens with planned. */
 export interface AddLevelDialogProps extends LevelDialogProps {
   /**
-   * The class it plans for the next level as it opens (a class's plus, on the sheet's header), as the class's quick-add
-   * button would: none opens an empty plan
+   * The track it plans for the next advancement as it opens (a class's plus, on the sheet's header), as the track's
+   * quick-add button would: none opens an empty plan
    */
-  klassId?: string;
+  trackId?: string;
 }
 
 /** What a character's sheet passes its Edit Level dialog: a level dialog's, and the level it edits. */
@@ -65,28 +64,37 @@ export interface LevelDialogProps {
   open: boolean;
 }
 
-/** What a level wizard's step takes: the wizard's state, and the character it levels. */
-export interface LevelStepProps<W> {
-  characterId: string;
-  wizard: W;
-}
-
 /**
- * The Add Level / Edit Level dialog: stepper, the step its wizard is at (`steps`, by its name), cancel confirmation,
- * validation warnings and navigation.
+ * The Add Level / Edit Level dialog, every ruleset's alike: stepper, the step its wizard is at, shown by its mechanic,
+ * cancel confirmation, validation warnings and navigation.
  */
-export function LevelWizardDialog<N extends string, W extends WizardControls<N>>({
+export function LevelWizardDialog<W extends WizardControls>({
   open,
   onExited,
   title,
   wizard,
-  steps,
+  renderPlan,
   finishLabel,
   characterId,
-}: LevelWizardDialogProps<N, W>) {
+}: LevelWizardDialogProps<W>) {
   const isMobile = useIsMobile();
-  const { isSaving } = wizard;
-  const ActiveStep: ComponentType<LevelStepProps<W>> = steps[wizard.steps[wizard.activeStep].name];
+  const { isSaving, step } = wizard;
+  const shownStep = () => {
+    switch (step.mechanic) {
+      case "choose":
+        return <ChooseStep key={step.name} step={step} wizard={wizard} />;
+      case "pick":
+        return <PickStep key={step.name} step={step} wizard={wizard} characterId={characterId} />;
+      case "plan":
+        return renderPlan?.(step) ?? null;
+      case "review":
+        return <ReviewStep wizard={wizard} characterId={characterId} />;
+      case "spend":
+        return <SpendStep key={step.name} step={step} wizard={wizard} characterId={characterId} />;
+      case "value":
+        return <ValueStep key={step.name} step={step} wizard={wizard} />;
+    }
+  };
 
   return (
     <>
@@ -131,8 +139,8 @@ export function LevelWizardDialog<N extends string, W extends WizardControls<N>>
                 isMobile && { "& .MuiStepLabel-label": { fontSize: "0.65rem" } },
               ]}
             >
-              {wizard.steps.map(({ label }) => (
-                <Step key={label}>
+              {wizard.steps.map(({ label, name }) => (
+                <Step key={name}>
                   <StepLabel>{label}</StepLabel>
                 </Step>
               ))}
@@ -143,8 +151,10 @@ export function LevelWizardDialog<N extends string, W extends WizardControls<N>>
             <Stack sx={{ flex: 1, overflow: "auto", minHeight: 0, px: 1.5 }}>
               {wizard.loadError ? (
                 <LoadError what={wizard.loadError.what} error={wizard.loadError.error} />
+              ) : wizard.stepsLoaded ? (
+                shownStep()
               ) : (
-                <ActiveStep wizard={wizard} characterId={characterId} />
+                <DiceSpinner />
               )}
             </Stack>
           </Stack>

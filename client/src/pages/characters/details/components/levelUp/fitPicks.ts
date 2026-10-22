@@ -1,33 +1,66 @@
 /**
- * A level's picks as their pools have room for, and the skill points as their levels take them. The form keeps what
- * was picked; the wizards read it through these, so a pool that shrinks (another class planned, a feat that granted
+ * A level's picks as their pools have room for, and the points as their advancements take them. The form keeps what
+ * was picked; the wizards read it through these, so a pool that shrinks (another track planned, a pick that granted
  * room removed) drops its later picks, and a step's change, made from what it shows, keeps them dropped. Until then they
- * wait unshown: a pool that grows back (the class planned again) shows them again. The ruleset's answers say what fits
+ * wait unshown: a pool that grows back (the track planned again) shows them again. The ruleset's answers say what fits
  * (`fitted`): the engine fits the picks to their pools, as a save would take them.
  */
 
-/** A skill as an answer spends the points on it: its ranks at each count of points, up to the most it keeps. */
-export interface SpentSkill {
+import type { AnswerOf, LevelStep, PlanAnswer } from "./levelPlanQueries.ts";
+import type { LevelPlanForm } from "./planRequest.ts";
+
+/** A row as a `spend` answer spends the points on it: its value at each count of points, up to the most it keeps. */
+export interface SpentRow {
   id: string;
-  ranksByPoints: number[];
+  valuesByPoints: number[];
 }
 
 /**
- * The skill points the form gave each skill, as the answer spends them: each up to the most it keeps whole as the save
- * spreads them (its `ranksByPoints`), in the order they were given. Until the answer loads, the points stand.
+ * The form's picks and points as the plan's answer (`answer`) fits them, by step: each `pick` step's picks its pools
+ * have room for, each `spend` step's points its rows keep. Until an answer is for these picks (none while it's for
+ * earlier ones), they stand.
  */
-export function fitSkillPoints(allocations: Record<string, number>, skills: SpentSkill[] | undefined) {
-  if (!skills) return allocations;
-  const byId = new Map(skills.map((skill) => [skill.id, skill]));
+export function fitPlan(
+  steps: readonly LevelStep[],
+  form: LevelPlanForm,
+  answer: PlanAnswer | undefined,
+): LevelPlanForm {
+  if (!answer) return form;
+  let picks = form.picks;
+  let points = form.points;
+  for (const step of steps) {
+    // A step given nothing yet has nothing to fit
+    const stepAnswer = answer.steps[step.name];
+    const stepPicks = form.picks[step.name];
+    if (step.mechanic === "pick" && stepAnswer?.mechanic === "pick" && stepPicks) {
+      const fitted = keepFitted(stepPicks, stepAnswer.fitted);
+      if (fitted !== stepPicks) picks = { ...picks, [step.name]: fitted };
+    }
+    const stepPoints = form.points[step.name];
+    if (step.mechanic === "spend" && stepAnswer?.mechanic === "spend" && stepPoints) {
+      const fitted = fitPoints(stepPoints, (stepAnswer as AnswerOf<"spend">).rows);
+      if (fitted !== stepPoints) points = { ...points, [step.name]: fitted };
+    }
+  }
+  return picks === form.picks && points === form.points ? form : { ...form, picks, points };
+}
+
+/**
+ * The points the form gave each row, as the answer spends them: each up to the most it keeps whole as the save spreads
+ * them (its `valuesByPoints`), in the order they were given. Until the answer loads, the points stand.
+ */
+export function fitPoints(points: Record<string, number>, rows: SpentRow[] | undefined) {
+  if (!rows) return points;
+  const byId = new Map(rows.map((row) => [row.id, row]));
   let changed = false;
   const fitted: Record<string, number> = {};
-  for (const [skillId, points] of Object.entries(allocations)) {
-    const skill = byId.get(skillId);
-    const kept = skill ? Math.min(points, skill.ranksByPoints.length - 1) : 0;
-    if (kept !== points) changed = true;
-    if (kept > 0) fitted[skillId] = kept;
+  for (const [rowId, spent] of Object.entries(points)) {
+    const row = byId.get(rowId);
+    const kept = row ? Math.min(spent, row.valuesByPoints.length - 1) : 0;
+    if (kept !== spent) changed = true;
+    if (kept > 0) fitted[rowId] = kept;
   }
-  return changed ? fitted : allocations;
+  return changed ? fitted : points;
 }
 
 /**
@@ -56,21 +89,14 @@ export function keepFitted<T extends { id: string }>(
   return changed ? kept : picks;
 }
 
-/** The pool whose feat picker is open, while it has slots: one a removed feat granted closes it. */
-export function openPoolOf(aptitudeId: string | null, pools: Record<string, { available: number }>) {
-  if (!aptitudeId) return null;
-  const available = pools[aptitudeId]?.available;
-  return available !== undefined && available <= 0 ? null : aptitudeId;
-}
-
-/** The picks without one of `id`, its last (a stackable feat picked twice keeps the other): a chip's delete. */
-export function withoutPick<T extends { id: string }>(picks: Record<string, T[]>, aptitudeId: string, id: string) {
-  const poolPicks = picks[aptitudeId] ?? [];
+/** The picks without one of `id`, its last (a stackable pick taken twice keeps the other): a chip's delete. */
+export function withoutPick<T extends { id: string }>(picks: Record<string, T[]>, poolId: string, id: string) {
+  const poolPicks = picks[poolId] ?? [];
   const index = poolPicks.findLastIndex((pick) => pick.id === id);
-  return { ...picks, [aptitudeId]: index === -1 ? poolPicks : poolPicks.toSpliced(index, 1) };
+  return { ...picks, [poolId]: index === -1 ? poolPicks : poolPicks.toSpliced(index, 1) };
 }
 
 /** The picks with one more, last in its pool: an option's click. */
-export function withPick<T>(picks: Record<string, T[]>, aptitudeId: string, pick: T) {
-  return { ...picks, [aptitudeId]: [...(picks[aptitudeId] ?? []), pick] };
+export function withPick<T>(picks: Record<string, T[]>, poolId: string, pick: T) {
+  return { ...picks, [poolId]: [...(picks[poolId] ?? []), pick] };
 }

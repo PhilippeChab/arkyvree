@@ -56,7 +56,7 @@ export default function CharacterDetailsPage() {
   const [isHardDeleteConfirmOpen, setHardDeleteConfirmOpen] = useState(false);
   // A new character arrives with the Add Level wizard open (`openLevelUp`); a class's plus opens it, the class planned
   const { openLevelUp } = characterPageState(location.state);
-  const addLevel = useDialogState<Pick<AddLevelDialogProps, "klassId">>(openLevelUp ? {} : null);
+  const addLevel = useDialogState<Pick<AddLevelDialogProps, "trackId">>(openLevelUp ? {} : null);
   const editLevel = useDialogState<EditingLevel>();
   const [isShareOpen, setShareOpen] = useState(false);
   const [isContributorsOpen, setContributorsOpen] = useState(false);
@@ -162,7 +162,7 @@ export default function CharacterDetailsPage() {
             rulesetId={character.rulesetId}
             rulesetName={character.rulesetName}
             backTo={isBonded && parentCharacterId ? `/characters/${parentCharacterId}` : "/characters"}
-            onAddLevel={canEditLevels ? (klassId) => addLevel.openWith({ klassId }) : undefined}
+            onAddLevel={canEditLevels ? (trackId) => addLevel.openWith({ trackId }) : undefined}
             onEditLevel={canEditLevels ? editLevel.openWith : undefined}
             onMenuOpen={isBonded && (isArchived || !canDownloadPdf) ? undefined : menu.openMenu}
             rename={canEdit ? { characterId: id, updatedAt: character.updatedAt, parentCharacterId } : undefined}
@@ -331,7 +331,7 @@ export default function CharacterDetailsPage() {
               onClose={closeAddLevel}
               onExited={addLevel.onExited}
               characterId={id}
-              klassId={addLevel.target.klassId}
+              trackId={addLevel.target.trackId}
             />
           )}
           {editLevel.target && (

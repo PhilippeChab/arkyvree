@@ -22,6 +22,8 @@ export type {
   SpentPoints,
   StepAnswer,
   StepMechanic,
+  StepOption,
+  StepOptionGroup,
   StepPayload,
   StepPayloads,
   StepPickerQuery,

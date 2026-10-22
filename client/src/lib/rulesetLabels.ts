@@ -20,6 +20,11 @@ export function entityTypeOfActivityName(name: string, words: RulesWords | undef
   return Object.keys(words ?? {}).find((entityType) => getActivityName(entityType) === name);
 }
 
+/** A count in a word its rules give (`word`: "1 level", "3 levels"), lowercase, as a sentence reads it. */
+export function formatWordCount(count: number, word: { many: string; one: string }): string {
+  return `${count} ${(count === 1 ? word.one : word.many).toLowerCase()}`;
+}
+
 /**
  * The ruleset's words that replace the activity names of its types in an activity's type, as a label spells them
  * (`words`, its rules': "Create Klass" → "Create Class", "Create Power" → "Create Spell").

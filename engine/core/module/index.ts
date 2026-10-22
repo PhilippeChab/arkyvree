@@ -103,6 +103,8 @@ export {
   type SpentPoints,
   type StepAnswer,
   type StepMechanic,
+  type StepOption,
+  type StepOptionGroup,
   type StepPayload,
   type StepPayloads,
   type StepPickerQuery,

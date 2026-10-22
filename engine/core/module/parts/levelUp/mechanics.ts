@@ -181,6 +181,35 @@ export interface SpentPoints {
 }
 
 /**
+ * An option a step's picker offers, in no game's nouns: its entity, whether the character may take it and what it
+ * lacks when not (`requirementTree`), and, a `plan` step's, the position it takes next on its track, the track's last,
+ * and how many advancements the character has left (`track`).
+ */
+export interface StepOption {
+  description: string | null;
+  eligible: boolean;
+  id: string;
+  name: string;
+  requirementTree?: string;
+  track?: { last: number; left: number; next: number };
+}
+
+/**
+ * A group of a `pick` step's options (3.5's feat family), one row for all its members: its entity (its one member's,
+ * or the one standing for them), its name, its group (`null` for an option of none), how many it holds, and whether
+ * the character may take it.
+ */
+export interface StepOptionGroup {
+  count: number;
+  description: string | null;
+  eligible: boolean;
+  group: string | null;
+  id: string;
+  name: string;
+  requirementTree?: string;
+}
+
+/**
  * Each mechanic's payload: a plan's advancements; a value per advancement; the options chosen at each advancement; the
  * points spent, in the order spent (it changes how they spread); the entities picked, in pick order (fitting drops the
  * latest).
