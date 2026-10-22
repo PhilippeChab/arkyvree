@@ -25,13 +25,14 @@ import {
   type VariantBody,
 } from "./kindServices.ts";
 
+/** An action a kind may have none of: all but its list and its page. */
+type OptionalAction = Exclude<keyof KindServices, "get" | "list">;
+
 /** What a refusal calls a kind's action it has none of: "No groups for races". */
-const ACTION_WORDS: Readonly<Record<keyof KindServices, string>> = {
+const ACTION_WORDS: Readonly<Record<OptionalAction, string>> = {
   create: "create",
   duplicate: "duplicate",
-  get: "page",
   grouped: "groups",
-  list: "list",
   remove: "delete",
   templates: "templates",
   update: "update",
@@ -76,10 +77,7 @@ const KINDS: Record<RulesetEntityType, KindServices> = {
     create: (session, rulesetId, body) => ItemsService.createItem(session, rulesetId, body),
     duplicate: (session, rulesetId, id, body) => ItemsService.duplicateItem(session, rulesetId, id, body),
     filters: {
-      isTemplate: z
-        .enum(["true", "false"])
-        .optional()
-        .transform((v) => (v === undefined ? undefined : v === "true")),
+      isTemplate: z.stringbool().optional(),
     },
     get: (rulesetId, id) => ItemsService.getItem(rulesetId, id),
     list: ItemsService.getItems.bind(ItemsService),
@@ -156,7 +154,7 @@ export const ENTITY_TYPES: readonly RulesetEntityType[] = RULESET_ENTITY_TYPES;
  */
 class EntitiesService {
   /** A kind's action (`action`): refused as not found when it has none. */
-  private actionOf<A extends keyof KindServices>(type: RulesetEntityType, action: A): NonNullable<KindServices[A]> {
+  private actionOf<A extends OptionalAction>(type: RulesetEntityType, action: A): NonNullable<KindServices[A]> {
     const found = this.kindOf(type)[action];
     if (!found) throw new NotFoundError(`No ${ACTION_WORDS[action]} for ${getUrlSegment(type)}`);
     return found;

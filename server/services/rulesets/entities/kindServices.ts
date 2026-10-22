@@ -9,8 +9,9 @@ import { getUrlSegment } from "@/shared/urlSegments.ts";
 /**
  * A kind's services as its own service takes them: its list (`list`, whose filters `W` names past the shared ones)
  * and the schema of each of those filters (`filters`, by query key: a race's `kind`, a spell's `aptitudeId` and
- * `level`), its groups' alike. The schemas are typed by the service's own filters, so neither can name a filter the
- * other doesn't, or of another type.
+ * `level`), its groups' alike. The schemas are typed by the service's own filters: one it takes that they leave out, or
+ * of another type, fails to compile (an extra one only where it's written in the kind's own object, never through a
+ * shared constant, nor on a kind its service takes none of).
  */
 interface TypedKind<W extends ListShared, G extends ListShared> extends Omit<KindServices, "grouped" | "list"> {
   filters: NoInfer<FilterSchemas<W>>;
@@ -104,7 +105,8 @@ function readFilters<W extends ListShared>(
     const issues = unknown.map((key) => ({ category: key, message: `${getUrlSegment(type)} take no ${key} filter` }));
     throw new RulesError("invalid", "Request validation failed", issues);
   }
-  return RulesError.parse(z.object<z.ZodRawShape>(shape), filters);
+  // Every filter optional, however its schema is written: a list takes none
+  return RulesError.parse(z.object<z.ZodRawShape>(shape).partial(), filters);
 }
 
 /**
