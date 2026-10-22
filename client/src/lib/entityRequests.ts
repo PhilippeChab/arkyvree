@@ -1,7 +1,7 @@
 /**
  * A ruleset's entities of any kind, through the routes by kind (`/rulesets/:id/entities/:entityType`): a kind's list's
  * page, an entity, and the types they answer with. Every request for a kind's entities goes through here or the routes'
- * own client, never a route of its type.
+ * own client.
  */
 
 import { type InferResponseType, parseResponse } from "hono/client";

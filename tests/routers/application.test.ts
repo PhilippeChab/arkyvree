@@ -7,8 +7,11 @@ import { getUrlSegment } from "@/shared/urlSegments.ts";
 /** What a path's parameter stands for in a request: an id, or a file a regex parameter accepts. */
 const PARAM_VALUES = ["00000000-0000-4000-8000-000000000000", "file.js"];
 
-/** A route of a ruleset's own, at its first segment past the ruleset (`skills`), and an entity of it maybe (`:skillId`). */
-const RULESET_ROUTE = /^\/api\/rulesets\/:id\/([^/]+)(?:\/:[A-Za-z]+)?$/;
+/**
+ * A route of a ruleset's own, at its first segment past the ruleset (`skills`): its list or create, an entity of it
+ * (`:skillId`) or an action on it (`grouped`), and an entity's copies (`:itemId/duplicate`, `:itemId/variants`).
+ */
+const RULESET_ROUTE = /^\/api\/rulesets\/:[^/]+\/([^/]+)(?:\/[^/]+)?(?:\/(?:duplicate|variants))?$/;
 
 /** A request path for `path`: each parameter a value it accepts, a wildcard any segment. */
 function requestPath(path: string) {
@@ -36,7 +39,7 @@ describe("application", () => {
     expect(shadowed).toEqual([]);
   });
 
-  // A kind's entities are listed, created, read, updated and deleted through the routes by kind
+  // A kind's entities are listed, created, read, updated, deleted, grouped and copied through the routes by kind
   // (`/rulesets/:id/entities/:entityType`) alone, whatever kinds a module adds: a route of a kind's own would be a
   // client's to call by its type. A kind's own resources sit past its entity (a class's levels).
   test("no route of a kind's own serves its entities: the routes by kind do", () => {
