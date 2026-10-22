@@ -24,6 +24,12 @@ export const apiImportRateLimit = limitRatePerKey({ windowMs: MINUTE, limit: IMP
 export const apiKeyRateLimit = limitRatePerKey({ windowMs: MINUTE, limit: 120, per: "user" });
 
 /**
+ * The public API's level saves and edits, counted per user, whatever keys of theirs ask: each builds and checks the
+ * whole character under its lock, as a character's level choices read every option.
+ */
+export const apiLevelSaveRateLimit = limitRatePerKey({ windowMs: MINUTE, limit: 20, per: "user" });
+
+/**
  * Each direct-upload commits a blob row + S3 object that the sweep won't reclaim until UNATTACHED_BLOB_TTL_MS
  * (server/jobs/sweepPendingBlobs.ts) after creation. Cap per-IP creation rate so a single scripted client can't bloat storage at
  * will.

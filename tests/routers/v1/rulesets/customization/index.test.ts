@@ -127,6 +127,11 @@ describe("v1 ruleset customization", () => {
       route.requirements[":requirementId"].$put({ json: { group: "1.1", value: "17" }, param: requirementParam }),
     );
     expect(raised).toMatchObject({ operator: check.operator, target: check.target, value: "17" });
+    // A check doesn't become a group, nor a group a check
+    const toGroup = { chainingOperator: "or", group: "1.1" } as const;
+    await expectStatus(route.requirements[":requirementId"].$put({ json: toGroup, param: requirementParam }), 400);
+    const groupParam = { ...param, requirementId: group.id };
+    await expectStatus(route.requirements[":requirementId"].$put({ json: check, param: groupParam }), 400);
     await expectStatus(route.requirements[":requirementId"].$delete({ param: requirementParam }), 204);
     expect(await expectOk(route.requirements.$get({ param }))).toEqual([group]);
   });

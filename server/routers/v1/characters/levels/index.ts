@@ -1,7 +1,13 @@
 import { Hono } from "hono";
 import { z } from "zod";
 
-import { type ApiKeyContext, describeRoute, levelChoicesRateLimit, validate } from "@/server/middlewares/index.ts";
+import {
+  type ApiKeyContext,
+  apiLevelSaveRateLimit,
+  describeRoute,
+  levelChoicesRateLimit,
+  validate,
+} from "@/server/middlewares/index.ts";
 import { buildPickPairsSchema } from "@/server/routers/api/schemaBuilders.ts";
 import { idParam, increaseList, skillPoints } from "@/server/routers/api/validation.ts";
 import { v1SavedLevel } from "@/server/routers/v1/schemas/characterParts.ts";
@@ -107,6 +113,7 @@ export default new Hono<ApiKeyContext>()
         "Saves a character's next level whole, as `level-choices` offers it: its class, hit points, ability " +
         "increases, skills, feats and spells. Answers the character's sheet",
     }),
+    apiLevelSaveRateLimit,
     validate("param", idParam),
     validate(
       "json",
@@ -143,6 +150,7 @@ export default new Hono<ApiKeyContext>()
         "Changes a level a character took: what the body names of its hit points, ability increases and picks, " +
         "refused (409) when it changed while the update read it",
     }),
+    apiLevelSaveRateLimit,
     validate("param", levelParams),
     validate(
       "json",

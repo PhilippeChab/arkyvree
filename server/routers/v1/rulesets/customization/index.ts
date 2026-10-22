@@ -25,7 +25,11 @@ const requirementBody = z.object({
   chainingOperator: z.enum(CHAINING_OPERATORS).optional().meta({ description: "A group's: `and`, or `or`" }),
   group: z.string().min(1).meta({ description: "Its place in the tree: `1` the root group, `1.2` its second" }),
   operator: z.enum(REQUIREMENT_OPERATORS).optional(),
-  target: z.string().optional().meta({ description: "The path it checks (`GET /v1/rulesets/{id}/target-paths`)" }),
+  target: z
+    .string()
+    .min(1)
+    .optional()
+    .meta({ description: "The path it checks (`GET /v1/rulesets/{id}/target-paths`): an update keeps the stored one" }),
   value: z.string().optional(),
 });
 
@@ -135,18 +139,13 @@ export default new Hono<ApiKeyContext>()
     async (c) => {
       const { entityId, id, kind, requirementId } = c.req.valid("param");
       const body = c.req.valid("json");
-      // A check's update keeps the target its body leaves out, as its value and operator: without one it'd be a group's
-      const stored = (await RequirementsService.getRequirements(id, kind, entityId)).find(
-        (r) => r.id === requirementId,
-      );
-      const target = body.target ?? stored?.target ?? undefined;
       const updated = await RequirementsService.updateRequirement(
         c.var.requestSession,
         id,
         kind,
         entityId,
         requirementId,
-        V1.requirementRequest({ ...body, target }),
+        V1.requirementRequest(body),
       );
       const requirements = await RequirementsService.getRequirements(id, kind, updated.resolvedEntityId);
       return c.json(V1.written(requirements, updated.id, V1.requirement), 200);
