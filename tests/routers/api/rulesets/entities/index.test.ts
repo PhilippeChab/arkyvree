@@ -182,7 +182,7 @@ describe("rulesets entities by kind", () => {
     await expectStatus(templates.$get({ param: { id, entityType: "feats" }, query: {} }), 404);
   });
 
-  test("answers each kind's actions as its rules describe it: its groups, a duplicate and variants", async () => {
+  test("answers each kind's filters and actions as its rules describe it", async () => {
     const { id } = await setup();
     const rules = await expectOk(api.api.rules.$get());
     /** Whether a refusal says the kind has none of an action ("No variants for races"), not that its entity is missing */
@@ -190,19 +190,31 @@ describe("rulesets entities by kind", () => {
       const body: unknown = await response.json();
       return isRecord(body) && body.message === `No ${words} for ${entityType}`;
     };
-    for (const { copies, families, type } of rules["Dungeons & Dragons: 3.5"].kinds) {
+    for (const { copies, families, levels, pools, type } of rules["Dungeons & Dragons: 3.5"].kinds) {
       const entityType = getUrlSegment(type) as Segment;
+      const list = (query: Record<string, string>) => kinds.$get({ param: { id, entityType }, query });
       const groups = await grouped.$get({ param: { id, entityType }, query: {} });
       // A copy of an entity the ruleset has none of: missing for a kind that copies, refused for any other
       const param = { id, entityType, entityId: NIL_UUID };
       const duplicate = await entity.duplicate.$post({ param, json: { name: "Copy" } });
       const variants = await entity.variants.$post({ param, json: { variants: [{ name: "Copy" }] } });
+      const statuses: number[] = [duplicate.status, variants.status];
+      expect({ type, statuses }).toEqual({ type, statuses: [404, 404] });
       expect({
         type,
+        pools: (await list({ aptitudeId: NIL_UUID })).status === 200,
+        levels: (await list({ level: "1" })).status === 200,
         groups: groups.status === 200,
         duplicate: !(await refusesAction(duplicate, "duplicate", entityType)),
         variants: !(await refusesAction(variants, "variants", entityType)),
-      }).toEqual({ type, groups: !!families, duplicate: !!copies, variants: !!copies });
+      }).toEqual({
+        type,
+        pools: !!pools,
+        levels: !!levels,
+        groups: !!families,
+        duplicate: !!copies,
+        variants: !!copies,
+      });
     }
   });
 
