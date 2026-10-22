@@ -103,8 +103,9 @@
  *   never `isLoading`, a query's first load (a table's, a page's skeleton), nor `loading`, which a spinner and MUI's
  *   picker say of themselves.
  * - `steps-by-mechanic`: the level wizards (`pages/characters/details/components/levelUp/`) tell a step by its
- *   mechanic, never by its name: no `name` compared with or switched on a string, no step read off `steps` by a
- *   string, and no plan written with a step's name. What a ruleset names its steps is its module's.
+ *   mechanic, never by its name: no `name` compared with or switched on a string, no step read off `steps` by its name
+ *   (`steps["hp"]`, `steps.hp`, a destructuring, `in`), and no plan written with a step's name. What a ruleset names
+ *   its steps is its module's.
  *
  * Plain JS: oxlint loads its plugins without a TypeScript step.
  */
@@ -126,18 +127,28 @@ import { repoPath } from "./paths.mjs";
 /** A list's own members, which a read of `steps` may name: its steps are none of them */
 const ARRAY_MEMBERS = new Set([
   "at",
+  "concat",
+  "entries",
   "every",
   "filter",
   "find",
   "findIndex",
+  "findLast",
+  "flat",
   "flatMap",
   "forEach",
   "includes",
   "indexOf",
+  "join",
+  "keys",
+  "lastIndexOf",
   "length",
   "map",
+  "reduce",
   "slice",
   "some",
+  "toSorted",
+  "values",
 ]);
 
 /** The auth pages, which carry the `redirect` that sent the user to sign in from one to another. */
@@ -1539,7 +1550,8 @@ function createRowPrefetch(context) {
 
 /**
  * The level wizards tell a step by its mechanic: a step's name compared with or switched on a string, a step read off
- * `steps` by a string, or a plan's `steps` written with a step's name, would name a ruleset's step.
+ * `steps` by its name (indexed, dotted, destructured or tested with `in`), or a plan's `steps` written with a step's
+ * name, would name a ruleset's step.
  */
 function createStepsByMechanic(context) {
   if (!repoPath(context.filename).startsWith(LEVEL_WIZARD_FOLDER)) return {};
@@ -1567,7 +1579,8 @@ function createStepsByMechanic(context) {
     property.computed ? undefined : property.key.type === "Identifier" ? property.key.name : property.key.value;
   // The steps a destructuring names: its keys but a rest's
   const reportKeys = (pattern) => {
-    for (const property of pattern.properties) if (property.type === "Property" && !property.computed) report(property);
+    for (const property of pattern.properties)
+      if (property.type === "Property" && !property.computed && !ARRAY_MEMBERS.has(keyOf(property))) report(property);
   };
   return {
     BinaryExpression(node) {

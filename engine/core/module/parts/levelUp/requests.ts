@@ -1,7 +1,8 @@
 /**
  * What the level-up part's operations take, past the rows the server read and the view: a level-up and a saved level's
- * edit as the wizard sends them, the preview's levels, a step's and a picker's query, what the wizard plans so far.
- * Whether to force the rules is always an operation's last argument.
+ * edit as a module reads them from a plan (`readLevelUp`, `readEdit`), and the queries a module's own steps and pickers
+ * answer over a plan (a level's, what it plans before it, the levels its plan's answer reads). Whether to force the rules
+ * is always an operation's last argument.
  */
 
 import type { AbilityIncrease, FeatPick, PowerPick } from "./plans.ts";
@@ -14,10 +15,10 @@ export interface LevelPicks {
 }
 
 /**
- * The level a level-up wizard's step or picker is for, as the wizard asks for it: class `klassId`'s `level` (a step that
- * reads the level's class refuses to answer without them) and its ability increases, after the levels the wizard plans
- * before it (`planned`), or in the place of the saved level it edits (`editedLevelId`), and what the wizard picked at
- * it so far (`picks`), which a step says what it comes to.
+ * The level a module's step or picker answers for, read from a plan: class `klassId`'s `level` (a step that reads the
+ * level's class refuses to answer without them) and its ability increases, after the levels the plan takes before it
+ * (`planned`), or in the place of the saved level it edits (`editedLevelId`), and what the plan picked at it so far
+ * (`picks`), which a step says what it comes to.
  */
 export interface LevelQuery {
   abilityIncreases?: AbilityIncrease[];
@@ -28,7 +29,7 @@ export interface LevelQuery {
   planned?: PlannedSoFar;
 }
 
-/** A level a level-up writes, as the wizard sends it: its class's level, hit points and ability increases. */
+/** A level a level-up writes, as a module reads it from a plan: its class's level, hit points and ability increases. */
 export interface LevelRequest {
   abilityIncreases: AbilityIncrease[];
   hp: number;
@@ -36,15 +37,15 @@ export interface LevelRequest {
   level: number;
 }
 
-/** A level-up, as the wizard sends it: its levels, and its picks, which the rules spread over them. */
+/** A level-up, as a module reads it from a plan: its levels, and its picks, which the rules spread over them. */
 export interface LevelUpRequest {
   levels: LevelRequest[];
   picks: LevelPicks;
 }
 
 /**
- * What the level-up wizard plans before the level a step or a picker is for, not saved yet: its levels (their class
- * levels, and their ability increases by place), and the feats, powers and skill points picked over them so far.
+ * What a plan takes before the level a step or a picker is for, not saved yet: its levels (their class levels, and
+ * their ability increases by place), and the feats, powers and skill points picked over them so far.
  */
 export interface PlannedSoFar {
   abilityIncreases?: AbilityIncrease[][];
@@ -54,7 +55,7 @@ export interface PlannedSoFar {
   skillPoints?: Record<string, number>;
 }
 
-/** The level-up wizard's preview: the levels it plans, each with its ability increases, and what it picked so far. */
+/** A plan's levels as its answer reads them: each with its ability increases, and what the plan picked so far. */
 export interface PreviewRequest {
   levels: Omit<LevelRequest, "hp">[];
   picks?: Partial<LevelPicks>;
@@ -68,7 +69,7 @@ export type LevelEditRequest = LevelPicks & { abilityIncreases: AbilityIncrease[
 
 /**
  * A feat's or a power's picker query: a level, its class's, the pool it picks in (`aptitudeId`), and the levels the
- * wizard plans after it (`laterKlassLevelIds`, their class levels), whose grants the level can't pick.
+ * plan takes after it (`laterKlassLevelIds`, their class levels), whose grants the level can't pick.
  */
 export type PickQuery = LevelQuery & {
   aptitudeId: string;
