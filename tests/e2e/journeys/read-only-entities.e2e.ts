@@ -102,8 +102,8 @@ function nameOutlineOf(card: Locator) {
 
 /** The id of the entity of the ruleset's list named `name`. */
 async function entityId(page: Page, rulesetId: string, list: EntityPage["list"], name: string) {
-  const response = await apiOf(page).api.rulesets[":id"][list].$get({
-    param: { id: rulesetId },
+  const response = await apiOf(page).api.rulesets[":id"].entities[":entityType"].$get({
+    param: { id: rulesetId, entityType: list },
     query: { search: name },
   });
   const { items } = await parseResponse(response);

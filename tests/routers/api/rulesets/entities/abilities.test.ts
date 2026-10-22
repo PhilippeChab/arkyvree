@@ -5,14 +5,16 @@ import { api, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 
-const abilities = api.api.rulesets[":id"].abilities;
+const kinds = api.api.rulesets[":id"].entities[":entityType"];
+const entity = kinds[":entityId"];
+const entityType = "abilities" as const;
 
-describe("rulesets abilities", () => {
+describe("rulesets entities: abilities", () => {
   test("lists and reads the abilities a fork inherits", async () => {
     const { abilityMap } = await getSeedCtx();
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
 
-    const list = await expectOk(abilities.$get({ param: { id }, query: { limit: "100" } }));
+    const list = await expectOk(kinds.$get({ param: { id, entityType }, query: { limit: "100" } }));
     expect(list.items.map((a) => a.name).sort()).toEqual([
       "Charisma",
       "Constitution",
@@ -22,18 +24,19 @@ describe("rulesets abilities", () => {
       "Wisdom",
     ]);
 
-    const strength = await expectOk(abilities[":abilityId"].$get({ param: { id, abilityId: abilityMap["Strength"] } }));
+    const strength = await expectOk(entity.$get({ param: { id, entityType, entityId: abilityMap["Strength"] } }));
     expect(strength).toMatchObject({ id: abilityMap["Strength"], name: "Strength" });
   });
 
   test("requires a session", async () => {
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
-    await expectStatus(guestApi.api.rulesets[":id"].abilities.$get({ param: { id }, query: {} }), 401);
+    const guestKinds = guestApi.api.rulesets[":id"].entities[":entityType"];
+    await expectStatus(guestKinds.$get({ param: { id, entityType }, query: {} }), 401);
   });
 
   test("returns 404 for a missing ruleset or ability", async () => {
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
-    await expectStatus(abilities.$get({ param: { id: NIL_UUID }, query: {} }), 404);
-    await expectStatus(abilities[":abilityId"].$get({ param: { id, abilityId: NIL_UUID } }), 404);
+    await expectStatus(kinds.$get({ param: { id: NIL_UUID, entityType }, query: {} }), 404);
+    await expectStatus(entity.$get({ param: { id, entityType, entityId: NIL_UUID } }), 404);
   });
 });

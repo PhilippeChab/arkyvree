@@ -14,7 +14,10 @@ async function userWithActivities() {
     }),
   );
   const aptitude = await expectOk(
-    api.api.rulesets[":id"].aptitudes.$post({ param: { id: fork.id }, json: { name: "Activity Aptitude" } }),
+    api.api.rulesets[":id"].entities[":entityType"].$post({
+      param: { id: fork.id, entityType: "aptitudes" },
+      json: { name: "Activity Aptitude" },
+    }),
   );
   return { activities: api.api.activities, fork, aptitude };
 }

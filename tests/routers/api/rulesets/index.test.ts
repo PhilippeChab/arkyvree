@@ -96,8 +96,8 @@ describe("rulesets", () => {
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
     const entityId = langMap["Draconic"];
     await expectOk(
-      ruleset.languages[":languageId"].$put({
-        param: { id, languageId: entityId },
+      ruleset.entities[":entityType"][":entityId"].$put({
+        param: { id, entityType: "languages", entityId },
         json: { name: "Draconic", description: "Edited", type: "Exotic" },
       }),
     );
@@ -118,8 +118,8 @@ describe("rulesets", () => {
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
     const entityId = klassMap.pc["Fighter"];
     await expectOk(
-      ruleset.classes[":classId"].$put({
-        param: { id, classId: entityId },
+      ruleset.entities[":entityType"][":entityId"].$put({
+        param: { id, entityType: "classes", entityId },
         json: { name: "Fighter", description: "Edited" },
       }),
     );

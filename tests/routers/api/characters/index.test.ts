@@ -286,8 +286,10 @@ describe("characters", () => {
     test("rejects a language its fork deleted, or one sent twice", async () => {
       const { langMap } = await getSeedCtx();
       const fork = await createSeededTestRuleset(SEED_USER_ID);
-      const language = api.api.rulesets[":id"].languages[":languageId"];
-      await expectOk(language.$delete({ param: { id: fork.id, languageId: langMap["Draconic"] } }));
+      const entity = api.api.rulesets[":id"].entities[":entityType"][":entityId"];
+      await expectOk(
+        entity.$delete({ param: { id: fork.id, entityType: "languages", entityId: langMap["Draconic"] } }),
+      );
       const { id } = await postCharacter({ rulesetId: fork.id });
 
       const put = (languageIds: string[]) => character.languages.$put({ param: { id }, json: { languageIds } });
