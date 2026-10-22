@@ -376,7 +376,7 @@ describe("character level plans", () => {
     );
   });
 
-  test("refuses a step the level hasn't, an answer in another mechanic's shape, and a save without hit points", async () => {
+  test("refuses a step the level hasn't, an answer in another mechanic's shape, an unanswered step, and a level without hit points", async () => {
     const { characterId, ctx } = await createCharacter();
     const plan = fighterPlan(ctx, 1);
     await expectStatus(levels.plan.$post({ param: { characterId }, json: { steps: { ...plan, bonus: [1] } } }), 400);
@@ -386,6 +386,14 @@ describe("character level plans", () => {
       levels.$post({ param: { characterId }, json: { steps: { "class-plan": plan["class-plan"] } } }),
       400,
     );
+    // Its hit points answered, but not the level's
+    const noHp = levels.$post({
+      param: { characterId },
+      json: { steps: { ...plan, ...payloadsOf(picks(ctx, FIGHTER_LEVELS[0])), hp: [] } },
+    });
+    expect(await (await expectStatus(noHp, 400)).json()).toMatchObject({
+      message: "Level 1: its hit points are required",
+    });
     await expectStatus(
       levels.options[":step"].$post({ param: { characterId, step: "hp" }, query: {}, json: { plan: { steps: plan } } }),
       404,
@@ -595,6 +603,16 @@ describe("character level plans", () => {
     // The ranger's level after it grants Track: the fighter's level leaves it out
     expect(await track(fighterPlan(ctx, 1), 0)).toEqual(["Track"]);
     expect(await track(fighterRanger, 0)).toEqual([]);
+    // The ranger's own level, after the fighter's: it grants Track, which its picker leaves out too
+    expect(await track(fighterRanger, 1)).toEqual([]);
+    expect(await track({ ...fighterRanger, "class-plan": [fighterRanger["class-plan"][1]] }, 0)).toEqual([]);
+    // A level the plan hasn't
+    const pastPlan = options.$post({
+      param: { characterId, step: "feats" },
+      query: {},
+      json: { plan: { steps: fighterRanger }, pool: general, advancement: 2 },
+    });
+    await expectStatus(pastPlan, 400);
 
     // The class plan's picker over a planned fighter level: its options numbered by the saved levels, which the wizard
     // counts the planned ones past

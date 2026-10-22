@@ -49,8 +49,8 @@ class CharacterLevelsService extends include(Object, Pickers, Plans, Steps) {
   }
 
   /**
-   * Re-saves character level `characterLevelId` as its edit plans it (`planOf`, from the character's level flows and its
-   * bonded creatures): the level's columns, its rows under it in place of those it had, what its bonded creatures
+   * Re-saves character level `characterLevelId` as its edit plans it (`planOf`, from the character's level flows and
+   * its bonded creatures): the level's columns, its rows under it in place of those it had, what its bonded creatures
    * become, and an activity. Answers the level as it was saved before.
    */
   private async editLevel(
