@@ -6,16 +6,17 @@ import { type SeedContext } from "@/scripts/db/seeds/seedContext.ts";
 import { api, expectOk, expectStatus } from "@/tests/support/api.ts";
 import { postCharacter } from "@/tests/support/characters.ts";
 import { FIGHTER_LEVELS, picks, type Picks, SORCERER_1 } from "@/tests/support/dnd3.5/levelFixtures.ts";
+import { savedPicksOf } from "@/tests/support/dnd3.5/levelPlans.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
+
+/** A `pick` step's answer, as the API answers it. */
+type PickStep = Extract<StepAnswer, { mechanic: "pick" }>;
 
 /** A plan's answer, as the API answers it. */
 type PlanAnswer = InferResponseType<(typeof levels)["plan"]["$post"], 200>;
 
-/** A pool step's pools, as today's preview and steps answer them. */
-type PoolsAnswer = Preview["feats"]["aptitudePools"] | Preview["powers"]["aptitudePools"];
-
-/** Add Level's preview, as today's route answers it. */
-type Preview = InferResponseType<(typeof levels)["preview"]["$post"], 200>;
+/** A `spend` step's answer, as the API answers it. */
+type SpendStep = Extract<StepAnswer, { mechanic: "spend" }>;
 
 /** A step's answer, any mechanic's. */
 type StepAnswer = PlanAnswer["steps"][string];
@@ -23,48 +24,72 @@ type StepAnswer = PlanAnswer["steps"][string];
 /** A page of a step's options, as the API answers it: of any kind, its rows groups or not. */
 type StepOptions = InferResponseType<(typeof levels)["options"][":step"]["$post"], 200>;
 
+/** Each spell level a spell pool's next pick lands at, and any (`""`): all on the plan's level `index`. */
+const ALL_TIERS = ["", ..."0123456789"];
+
+/** A sorcerer's and a wizard's cantrips, by name: the spells at a sorcerer's tier 0. */
+const CANTRIPS = [
+  "Acid Splash",
+  "Arcane Mark",
+  "Dancing Lights",
+  "Daze",
+  "Detect Magic",
+  "Detect Poison",
+  "Disrupt Undead",
+  "Flare",
+  "Ghost Sound",
+  "Light",
+  "Mage Hand",
+  "Mending",
+  "Message",
+  "Open/close",
+  "Prestidigitation",
+  "Ray of Frost",
+  "Read Magic",
+  "Resistance",
+  "Touch of Fatigue",
+];
+
+/** A fighter's class skills, as the skills step favors them. */
+const FIGHTER_SKILLS = ["Climb", "Craft", "Handle Animal", "Intimidate", "Jump", "Ride", "Swim"];
+
 const levels = api.api.characters.levels[":characterId"];
 const level = levels[":characterLevelId"];
 
-/** Today's pools (`pools`) as a `pick` step's: a shared feat pool optional, a leveled spell pool by its tiers. */
-function expectedPools(pools: PoolsAnswer) {
+/** A sorcerer's grants at its first level, by name: its class features, none free of a pool's room. */
+const SORCERER_GRANTS = ["Spells (Sorcerer)", "Summon Familiar (Sorcerer)", "Weapon and Armor Proficiency (Sorcerer)"];
+
+/** A sorcerer's class skills, as the skills step favors them. */
+const SORCERER_SKILLS = ["Bluff", "Concentration", "Craft", "Knowledge (Arcana)", "Profession", "Spellcraft"];
+
+/**
+ * A `pick` step's pools, as expected: those `room` names, each with its room, and every other the step lists empty
+ * (`empty` says what else an empty one carries: a spell pool's tiers, none).
+ */
+function expectedPools(step: PickStep, room: Record<string, Partial<PickStep["pools"][string]>>, empty = {}) {
+  expect(Object.values(step.pools).map(({ name }) => name)).toEqual(expect.arrayContaining(Object.keys(room)));
   return Object.fromEntries(
-    Object.entries(pools).map(([id, pool]) => [
+    Object.values(step.pools).map(({ id, name }) => [
       id,
-      {
-        allowed: pool.allowed,
-        available: pool.available,
-        id: pool.id,
-        name: pool.name,
-        optional: "shared" in pool ? pool.shared : false,
-        spent: pool.spent,
-        ...("leveled" in pool && pool.leveled && pool.levels && { tiers: pool.levels }),
-      },
+      { allowed: 0, available: 0, id, name, optional: false, spent: 0, ...empty, ...room[name] },
     ]),
   );
 }
 
-/** Today's skills step (`skills`) as a `spend` step's, with the points each planned level gives. */
-function expectedSpend(skills: Preview["skills"], perAdvancement: number[]) {
-  return {
-    mechanic: "spend" as const,
-    budget: skills.skillPointsToSpend,
-    perAdvancement,
-    rows: skills.skills.map((skill) => ({
-      current: skill.currentRank,
-      description: skill.description,
-      favored: skill.classSkill,
-      group: skill.family,
-      id: skill.id,
-      maxPoints: skill.maxPoints,
-      name: skill.name,
-      points: skill.points,
-      shortName: skill.shortName,
-      step: skill.rankStep,
-      value: skill.ranks,
-      valuesByPoints: skill.ranksByPoints,
-    })),
-  };
+/**
+ * A `spend` step's rows, each by its own numbers: its value moving by its step (a rank for a favored row's point, half
+ * one otherwise), the value its points buy, and the value at each number of points up to the most it keeps of what the
+ * budget has left.
+ */
+function expectRowsConsistent({ budget, rows }: SpendStep, favored: string[]) {
+  const spent = rows.reduce((sum, { points }) => sum + points, 0);
+  expect(rows.filter((row) => row.favored).map(({ name }) => name)).toEqual(favored);
+  for (const row of rows) {
+    expect(row.step).toBe(row.favored ? 1 : 0.5);
+    const most = Math.min(row.maxPoints, budget - spent + row.points);
+    expect(row.valuesByPoints).toEqual(Array.from({ length: most + 1 }, (_, points) => points * row.step));
+    expect(row.value).toBe(row.valuesByPoints[row.points]);
+  }
 }
 
 /** A plan's fighter levels (`count`), from the first, with their hit points and no ability increase. */
@@ -75,6 +100,13 @@ function fighterPlan(ctx: SeedContext, count: number) {
     hp: plans.map((plan) => plan.hp),
     abilities: plans.map(() => []),
   };
+}
+
+/** Each pool's next pick of a `pick` step, at any tier and each of `tiers`, on the plan's level `index`. */
+function nextAt(step: PickStep, index: number, tiers: (id: string) => string[] = () => [""]) {
+  return Object.fromEntries(
+    Object.keys(step.pools).map((id) => [id, Object.fromEntries(tiers(id).map((tier) => [tier, index]))]),
+  );
 }
 
 /** A page of options, its rows groups (`grouped`) or not: refused when they're the other's. */
@@ -104,6 +136,13 @@ function pickedOf(fitted: Record<string, string[]>) {
   );
 }
 
+/** A `spend` step's rows with ranks or points, by name: what's spent on each, and the most it can take. */
+function spentRows({ rows }: SpendStep) {
+  return rows
+    .filter(({ current, points }) => current > 0 || points > 0)
+    .map(({ current, maxPoints, name, points, value }) => ({ name, current, points, value, maxPoints }));
+}
+
 /** The answer of step `name`, of mechanic `mechanic`: refused when the plan answered it by another. */
 function stepOf<M extends StepAnswer["mechanic"]>(answer: PlanAnswer, name: string, mechanic: M) {
   const step = answer.steps[name];
@@ -125,6 +164,15 @@ async function createCharacter(charisma = 8) {
   const abilities = Object.fromEntries(Object.entries(scores).map(([name, score]) => [ctx.abilityMap[name], score]));
   const character = await postCharacter({ abilities, alignment: "Neutral Good" });
   return { characterId: character.id, ctx };
+}
+
+/** A saved level, its plan read back by kind, with the class level its plan takes. */
+async function readLevel(characterId: string, characterLevelId: string) {
+  const plan = await expectOk(level.plan.$get({ param: { characterId, characterLevelId } }));
+  const {
+    advancements: [advancement],
+  } = await expectOk(levels.plan.$post({ param: { characterId }, json: plan }));
+  return { ...savedPicksOf(plan), klassId: advancement.track.id, level: advancement.position };
 }
 
 describe("character level plans", () => {
@@ -171,27 +219,16 @@ describe("character level plans", () => {
     expect(edited.advancements).toEqual(advancements);
   });
 
-  test("answers a level-up's plan as its preview does, each step by its mechanic", async () => {
+  test("answers a level-up's plan, each step by its mechanic: a human fighter 1–2's", async () => {
     const { characterId, ctx } = await createCharacter();
     const fighter = ctx.klassMap.pc["Fighter"];
     const general = ctx.aptMap["General"];
+    const bonus = ctx.aptMap["Fighter Bonus Feat"];
     const powerAttack = ctx.featMap["Power Attack"];
     const plan = await expectOk(
       levels.plan.$post({
         param: { characterId },
         json: { steps: { ...fighterPlan(ctx, 2), feats: [{ id: powerAttack, pool: general }] } },
-      }),
-    );
-    const preview = await expectOk(
-      levels.preview.$post({
-        param: { characterId },
-        json: {
-          levels: [
-            { klassId: fighter, level: 1 },
-            { klassId: fighter, level: 2 },
-          ],
-          feats: { [general]: [powerAttack] },
-        },
       }),
     );
 
@@ -209,22 +246,28 @@ describe("character level plans", () => {
     // Human Fighter 1–2, INT 12: 16 + 4 skill points
     const skills = stepOf(plan, "skills", "spend");
     expect(skills).toMatchObject({ budget: 20, perAdvancement: [16, 4] });
-    expect(skills.rows.map(({ id, value }) => [id, value])).toEqual(
-      preview.skills.skills.map(({ id, ranks }) => [id, ranks]),
-    );
-    // 2 General feats and 2 Fighter Bonus Feats, Power Attack taking one, on the first level
+    // Every skill, none ranked yet: 5 points the most either kind keeps, a class skill's 5 ranks (2 + 3), another's 2.5
+    expect(skills.rows.map(({ id }) => id).sort()).toEqual(Object.values(ctx.skillMap).sort());
+    expect(spentRows(skills)).toEqual([]);
+    expect(new Set(skills.rows.map(({ maxPoints }) => maxPoints))).toEqual(new Set([5]));
+    expectRowsConsistent(skills, FIGHTER_SKILLS);
+    // 2 General feats and 2 Fighter Bonus Feats, Power Attack taking one, on the first level; the fighter's class
+    // features filled by its grants
     const feats = stepOf(plan, "feats", "pick");
     expect(feats).toMatchObject({ fitted: { [general]: [powerAttack] }, grouped: true });
-    expect(Object.values(feats.pools).map(({ available, name }) => [name, available])).toEqual(
-      Object.values(preview.feats.aptitudePools).map(({ available, name }) => [name, available]),
+    expect(feats.pools).toEqual(
+      expectedPools(feats, {
+        "Fighter Bonus Feat": { allowed: 2, available: 2 },
+        "Fighter Class Feature": { allowed: 3, spent: 3 },
+        General: { allowed: 2, available: 2 },
+      }),
     );
-    expect(feats.next).toEqual(
-      Object.fromEntries(Object.entries(preview.nextPickLevels.feats).map(([pool, index]) => [pool, { "": index }])),
-    );
+    // The pools with room take their next pick on the first level; the others, on the plan's last
+    expect(feats.next).toEqual({ ...nextAt(feats, 1), [general]: { "": 0 }, [bonus]: { "": 0 } });
     expect(stepOf(plan, "powers", "pick")).toMatchObject({ grouped: false, pools: {} });
   });
 
-  test("answers an edit's level as its steps do, in the level's place", async () => {
+  test("answers an edit's level in the level's place", async () => {
     const { characterId, ctx } = await createCharacter();
     const fighter1 = picks(ctx, FIGHTER_LEVELS[0]);
     const [created] = await expectOk(
@@ -236,22 +279,15 @@ describe("character level plans", () => {
         json: { editedLevelId: created.id, steps: { hp: [8], abilities: [[]], ...payloadsOf(fighter1) } },
       }),
     );
-    const query = { classId: ctx.klassMap.pc["Fighter"], editedLevelId: created.id, level: "1" };
-    const stepSkills = await expectOk(
-      levels["level-steps"][":step"].$get({ param: { characterId, step: "skills" }, query }),
-    );
 
     expect(plan.advancements).toEqual([
       { id: expect.any(String), position: 1, track: { id: ctx.klassMap.pc["Fighter"], name: "Fighter" } },
     ]);
     expect(plan.steps["class-plan"]).toBeUndefined();
     expect(stepOf(plan, "hp", "value").advancements).toEqual([{ average: 5, max: 10, min: 1, roll: "d10" }]);
-    if (stepSkills.name !== "skills") throw new Error("The skills step answered for another");
-    expect(stepOf(plan, "skills", "spend")).toMatchObject({
-      budget: stepSkills.skillPointsToSpend,
-      perAdvancement: [16],
-    });
-    // The level's own feats stay picked, its pools' room theirs, as its steps count it
+    // A human fighter 1, INT 12: (2 + 1 + 1) x 4 skill points
+    expect(stepOf(plan, "skills", "spend")).toMatchObject({ budget: 16, perAdvancement: [16] });
+    // The level's own feats stay picked, its pools' room theirs
     const feats = stepOf(plan, "feats", "pick");
     expect(feats.fitted).toEqual(fighter1.feats);
     expect(feats.pools[ctx.aptMap["General"]]).toMatchObject({ allowed: 2, available: 2, spent: 0 });
@@ -285,7 +321,7 @@ describe("character level plans", () => {
       eligible: true,
     });
 
-    // A family's members, one row each, as the feats' own picker lists them
+    // A family's members, one row each: as many as its row counts, its row's own among them
     const json = { plan: { steps: fighterPlan(ctx, 1) }, pool: general };
     const focus = await expectOk(
       options.$post({ param: { characterId, step: "feats" }, query: { search: "Weapon Focus" }, json }),
@@ -295,17 +331,15 @@ describe("character level plans", () => {
     const members = await expectOk(
       options.$post({
         param: { characterId, step: "feats" },
-        query: { limit: "50" },
+        query: { limit: "100" },
         json: { ...json, group: family.group },
       }),
     );
-    const listed = await expectOk(
-      levels["available-feats"].$get({
-        param: { characterId },
-        query: { aptitudeId: general, classId: fighter, family: family.group, level: "1", limit: "50" },
-      }),
-    );
-    expect(optionsOf(members, false).items.map(({ id }) => id)).toEqual(listed.items.map(({ id }) => id));
+    const memberIds = optionsOf(members, false).items.map(({ id }) => id);
+    expect(family.count).toBeGreaterThan(1);
+    expect(memberIds).toHaveLength(family.count);
+    expect(new Set(memberIds).size).toBe(family.count);
+    expect(memberIds).toContain(family.id);
 
     // A sorcerer's cantrips, at tier 0
     const sorcerer = await createCharacter(16);
@@ -318,21 +352,20 @@ describe("character level plans", () => {
         json: { plan: sorcererPlan, pool: sorcererSpells, tier: "0" },
       }),
     );
-    const cantripsListed = await expectOk(
-      levels["available-powers"].$get({
-        param: { characterId: sorcerer.characterId },
-        query: {
-          aptitudeId: sorcererSpells,
-          classId: sorcerer.ctx.klassMap.pc["Sorcerer"],
-          level: "1",
-          limit: "50",
-          powerLevel: "0",
-        },
+    const cantripIds = optionsOf(cantrips, false).items.map(({ id }) => id);
+    expect(optionsOf(cantrips, false).items.map(({ name }) => name)).toEqual(CANTRIPS);
+    expect(cantripIds).toEqual(CANTRIPS.map((name) => sorcerer.ctx.powerMap[name]));
+    // Its first-level spells, at tier 1: no cantrip among them
+    const firsts = await expectOk(
+      options.$post({
+        param: { characterId: sorcerer.characterId, step: "powers" },
+        query: { limit: "100" },
+        json: { plan: sorcererPlan, pool: sorcererSpells, tier: "1" },
       }),
     );
-    const cantripIds = optionsOf(cantrips, false).items.map(({ id }) => id);
-    expect(cantripIds).toEqual(cantripsListed.items.map(({ id }) => id));
-    expect(cantripIds).toContain(sorcerer.ctx.powerMap["Detect Magic"]);
+    const firstNames = optionsOf(firsts, false).items.map(({ name }) => name);
+    expect(firstNames).toEqual(expect.arrayContaining(["Magic Missile", "Shield", "Mage Armor"]));
+    expect(firstNames.filter((name) => CANTRIPS.includes(name))).toEqual([]);
     // A plan's spells picked so far stay out
     const withPicked = {
       steps: {
@@ -357,7 +390,7 @@ describe("character level plans", () => {
       levels.$post({ param: { characterId }, json: { steps: { ...fighterPlan(ctx, 1), ...payloadsOf(fighter1) } } }),
     );
     const param = { characterId, characterLevelId: created.id };
-    expect(await expectOk(level.$get({ param }))).toMatchObject({
+    expect(await readLevel(characterId, created.id)).toMatchObject({
       hp: FIGHTER_LEVELS[0].hp,
       klassId: ctx.klassMap.pc["Fighter"],
       level: 1,
@@ -381,11 +414,13 @@ describe("character level plans", () => {
       ],
     };
     await expectOk(level.$put({ param, json: { steps: edit } }));
-    const saved = await expectOk(level.$get({ param }));
-    expect(saved).toMatchObject({ hp: 5, skills: { [ctx.skillMap["Handle Animal"]]: 4 } });
-    expect(saved.feats[ctx.aptMap["Fighter Bonus Feat"]]?.map(({ id }) => id)).toEqual([
-      ctx.featMap["Combat Reflexes"],
-    ]);
+    const saved = await readLevel(characterId, created.id);
+    expect(saved).toMatchObject({ hp: 5, klassId: ctx.klassMap.pc["Fighter"], level: 1, abilityIncreases: [] });
+    expect(saved.skills).toEqual(Object.fromEntries(edit.skills.map(({ id, points }) => [id, points])));
+    expect([...(saved.feats[ctx.aptMap["General"]] ?? [])].sort()).toEqual(
+      [ctx.featMap["Power Attack"], ctx.featMap["Toughness"]].sort(),
+    );
+    expect(saved.feats[ctx.aptMap["Fighter Bonus Feat"]]).toEqual([ctx.featMap["Combat Reflexes"]]);
   });
 
   test("saves a sorcerer's spells picked by tier, each in its pool", async () => {
@@ -398,8 +433,8 @@ describe("character level plans", () => {
       ...payloadsOf(sorcerer1),
     };
     const [created] = await expectOk(levels.$post({ param: { characterId }, json: { steps } }));
-    const saved = await expectOk(level.$get({ param: { characterId, characterLevelId: created.id } }));
-    expect(saved.powers[ctx.aptMap["Sorcerer Spells"]]?.map(({ id }) => id).sort()).toEqual(
+    const saved = await readLevel(characterId, created.id);
+    expect([...(saved.powers[ctx.aptMap["Sorcerer Spells"]] ?? [])].sort()).toEqual(
       [...(sorcerer1.powers[ctx.aptMap["Sorcerer Spells"]] ?? [])].sort(),
     );
   });
@@ -428,7 +463,7 @@ describe("character level plans", () => {
     );
   });
 
-  test("answers every step of a level-up's plan as its preview does: a fourth level's increase, a sorcerer's tiers", async () => {
+  test("answers every step of a level-up's plan: a fourth level's increase, a sorcerer's tiers", async () => {
     const { characterId, ctx } = await createCharacter();
     const fighter = ctx.klassMap.pc["Fighter"];
     // Three fighter levels saved, one at a time; the fourth planned, with its increase
@@ -454,29 +489,42 @@ describe("character level plans", () => {
         },
       }),
     );
-    const preview: Preview = await expectOk(
-      levels.preview.$post({
-        param: { characterId },
-        json: {
-          levels: [{ klassId: fighter, level: 4, abilityIncreases: [{ abilityId: strength, amount: 1 }] }],
-          skills: { [ctx.skillMap["Climb"]]: 1 },
-        },
-      }),
-    );
+    // The six abilities, in a sheet's order, Strength 16 raised to 17 by the level's increase
+    const scores: [string, string, number, number][] = [
+      ["Strength", "STR", 17, 3],
+      ["Dexterity", "DEX", 14, 2],
+      ["Constitution", "CON", 14, 2],
+      ["Intelligence", "INT", 12, 1],
+      ["Wisdom", "WIS", 10, 0],
+      ["Charisma", "CHA", 8, -1],
+    ];
     expect(stepOf(fourth, "abilities", "choose")).toEqual({
       mechanic: "choose",
       advancements: [0],
       amount: 1,
       chosen: true,
-      options: preview.attributes.attributes.map(({ abbreviation, abilityId, modifier, name, total }) => ({
+      options: scores.map(([name, abbreviation, score, modifier]) => ({
         abbreviation,
-        id: abilityId,
+        id: ctx.abilityMap[name],
         modifier,
         name,
-        score: total,
+        score,
       })),
     });
-    expect(stepOf(fourth, "skills", "spend")).toEqual(expectedSpend(preview.skills, preview.perLevelSkillPoints));
+    // A human fighter 4, INT 12: 4 points, over the ranks fighter 1–3 bought; a class skill's capped at 7 (4 + 3), a
+    // cross-class one's at 3.5
+    const skills = stepOf(fourth, "skills", "spend");
+    expect(skills).toEqual({ mechanic: "spend", budget: 4, perAdvancement: [4], rows: expect.any(Array) });
+    expect(skills.rows.map(({ id }) => id).sort()).toEqual(Object.values(ctx.skillMap).sort());
+    expect(spentRows(skills)).toEqual([
+      { name: "Climb", current: 5, points: 1, value: 1, maxPoints: 2 },
+      { name: "Handle Animal", current: 2, points: 0, value: 0, maxPoints: 4 },
+      { name: "Intimidate", current: 5, points: 0, value: 0, maxPoints: 2 },
+      { name: "Jump", current: 5, points: 0, value: 0, maxPoints: 2 },
+      { name: "Spot", current: 0.5, points: 0, value: 0, maxPoints: 4 },
+      { name: "Swim", current: 6, points: 0, value: 0, maxPoints: 1 },
+    ]);
+    expectRowsConsistent(skills, FIGHTER_SKILLS);
 
     // A sorcerer's first level, two cantrips picked: its pools by spell level, its grants, where each pick lands
     const sorcerer = await createCharacter(16);
@@ -494,50 +542,59 @@ describe("character level plans", () => {
         },
       }),
     );
-    const sorcererPreview: Preview = await expectOk(
-      levels.preview.$post({
-        param: { characterId: sorcerer.characterId },
-        json: { levels: [{ klassId: sorcererClass, level: 1 }], powers: { [sorcererSpells]: cantrips } },
-      }),
-    );
-    const { powers } = sorcererPreview;
-    expect(stepOf(plan, "powers", "pick")).toEqual({
+    // A sorcerer 1 knows 4 cantrips and 2 first-level spells: its pool's room, before the plan's picks
+    const powers = stepOf(plan, "powers", "pick");
+    const fitted = { [sorcererSpells]: cantrips };
+    expect(powers).toEqual({
       mechanic: "pick",
-      fitted: powers.fitted,
-      picked: pickedOf(powers.fitted),
-      granted: powers.autoGrantedPowers.map(({ description, free, id, name }) => ({ description, free, id, name })),
+      fitted,
+      picked: pickedOf(fitted),
+      granted: [],
       grouped: false,
-      next: sorcererPreview.nextPickLevels.powers,
-      pools: expectedPools(powers.aptitudePools),
+      next: nextAt(powers, 0, () => ALL_TIERS),
+      pools: expectedPools(
+        powers,
+        {
+          "Sorcerer Spells": {
+            available: 6,
+            tiers: { "0": { allowed: 4, available: 4, spent: 0 }, "1": { allowed: 2, available: 2, spent: 0 } },
+          },
+        },
+        { tiers: {} },
+      ),
     });
-    expect(stepOf(plan, "powers", "pick").pools[sorcererSpells]?.tiers?.["0"]).toMatchObject({ spent: 0 });
     // The cantrips picked, by name, at their tier
-    expect(stepOf(plan, "powers", "pick").picked[sorcererSpells]).toEqual([
+    expect(powers.picked[sorcererSpells]).toEqual([
       expect.objectContaining({ id: cantrips[0], name: "Detect Magic", tier: "0" }),
       expect.objectContaining({ id: cantrips[1], name: "Light", tier: "0" }),
     ]);
-    expect(stepOf(plan, "feats", "pick")).toEqual({
+    // A human sorcerer 1's 2 General feats and its familiar; its class features filled by its grants
+    const feats = stepOf(plan, "feats", "pick");
+    expect(feats).toEqual({
       mechanic: "pick",
-      fitted: sorcererPreview.feats.fitted,
-      picked: pickedOf(sorcererPreview.feats.fitted),
-      granted: sorcererPreview.feats.autoGrantedFeats.map(({ description, id, name }) => ({
-        description,
+      fitted: {},
+      picked: {},
+      granted: SORCERER_GRANTS.map((name) => ({
+        description: expect.any(String),
         free: false,
-        id,
+        id: sorcerer.ctx.featMap[name],
         name,
       })),
       grouped: true,
-      next: Object.fromEntries(
-        Object.entries(sorcererPreview.nextPickLevels.feats).map(([pool, index]) => [pool, { "": index }]),
-      ),
-      pools: expectedPools(sorcererPreview.feats.aptitudePools),
+      next: nextAt(feats, 0),
+      pools: expectedPools(feats, {
+        "Familiar Bond": { allowed: 1, available: 1 },
+        General: { allowed: 2, available: 2 },
+        "Sorcerer Class Feature": { allowed: 3, spent: 3 },
+      }),
     });
   });
 
-  test("answers every step of an edit's level as its steps do, each pool's next pick on the level", async () => {
+  test("answers every step of an edit's level, each pool's next pick on the level", async () => {
     const { characterId, ctx } = await createCharacter(16);
     const sorcerer1 = picks(ctx, SORCERER_1);
     const sorcererClass = ctx.klassMap.pc["Sorcerer"];
+    const sorcererSpells = ctx.aptMap["Sorcerer Spells"];
     const steps = {
       "class-plan": [{ track: sorcererClass, position: 1 }],
       hp: [SORCERER_1.hp],
@@ -552,68 +609,65 @@ describe("character level plans", () => {
         json: { editedLevelId: created.id, steps: { hp: [4], abilities: [[]], ...payloads } },
       }),
     );
-    const pairs = (picked: { id: string; pool: string }[]) => picked.map(({ id, pool }) => `${id}:${pool}`).join(",");
-    const query = {
-      classId: sorcererClass,
-      editedLevelId: created.id,
-      level: "1",
-      featPicks: pairs(payloads.feats),
-      powerPicks: pairs(payloads.powers),
-      skillPoints: payloads.skills.map(({ id, points }) => `${id}:${points}`).join(","),
-    };
-    const stepAt = (name: string) =>
-      expectOk(levels["level-steps"][":step"].$get({ param: { characterId, step: name }, query }));
-    const [abilities, skills, feats, powers] = await Promise.all(
-      ["abilities", "skills", "feats", "powers"].map(stepAt),
-    );
-    if (
-      abilities.name !== "abilities" ||
-      skills.name !== "skills" ||
-      feats.name !== "feats" ||
-      powers.name !== "powers"
-    )
-      throw new Error("A step answered for another");
 
-    const atLevel = (pools: PoolsAnswer) =>
-      Object.fromEntries(
-        Object.entries(pools).map(([id, pool]) => [
-          id,
-          {
-            "": 0,
-            ...Object.fromEntries(Object.keys(("levels" in pool && pool.levels) || {}).map((tier) => [tier, 0])),
-          },
-        ]),
-      );
+    const feats = stepOf(plan, "feats", "pick");
+    const powers = stepOf(plan, "powers", "pick");
+    // The level's own picks free in its pools: their room the level's, as if none were picked
     expect(plan.steps).toEqual({
       hp: { mechanic: "value", advancements: [{ average: 2, max: 4, min: 1, roll: "d4" }] },
-      abilities: {
-        mechanic: "choose",
-        advancements: [],
-        amount: 1,
-        chosen: abilities.picked,
-        options: [],
-      },
-      skills: expectedSpend(skills, [skills.skillPointsToSpend]),
+      // A first level takes no increase
+      abilities: { mechanic: "choose", advancements: [], amount: 1, chosen: true, options: [] },
+      // A human sorcerer 1, INT 12: (2 + 1 + 1) x 4 skill points
+      skills: { mechanic: "spend", budget: 16, perAdvancement: [16], rows: expect.any(Array) },
       feats: {
         mechanic: "pick",
-        fitted: feats.fitted,
-        picked: pickedOf(feats.fitted),
-        granted: feats.autoGrantedFeats.map(({ description, id, name }) => ({ description, free: false, id, name })),
+        fitted: sorcerer1.feats,
+        picked: pickedOf(sorcerer1.feats),
+        granted: SORCERER_GRANTS.map((name) => ({
+          description: expect.any(String),
+          free: false,
+          id: ctx.featMap[name],
+          name,
+        })),
         grouped: true,
-        next: atLevel(feats.aptitudePools),
-        pools: expectedPools(feats.aptitudePools),
+        next: nextAt(feats, 0),
+        pools: expectedPools(feats, {
+          "Familiar Bond": { allowed: 1, available: 1 },
+          General: { allowed: 2, available: 2 },
+          "Sorcerer Class Feature": { allowed: 3, spent: 3 },
+        }),
       },
       powers: {
         mechanic: "pick",
-        fitted: powers.fitted,
-        picked: pickedOf(powers.fitted),
-        granted: powers.autoGrantedPowers.map(({ description, free, id, name }) => ({ description, free, id, name })),
+        fitted: sorcerer1.powers,
+        picked: pickedOf(sorcerer1.powers),
+        granted: [],
         grouped: false,
-        next: atLevel(powers.aptitudePools),
-        pools: expectedPools(powers.aptitudePools),
+        // At any tier, and at each its pool has: a sorcerer 1's cantrips and first-level spells
+        next: nextAt(powers, 0, (id) => (id === sorcererSpells ? ["", "0", "1"] : [""])),
+        pools: expectedPools(
+          powers,
+          {
+            "Sorcerer Spells": {
+              available: 6,
+              tiers: { "0": { allowed: 4, available: 4, spent: 0 }, "1": { allowed: 2, available: 2, spent: 0 } },
+            },
+          },
+          { tiers: {} },
+        ),
       },
     });
-    expect(Object.keys(stepOf(plan, "powers", "pick").next[ctx.aptMap["Sorcerer Spells"]] ?? {})).toContain("0");
+    // Its skills' points, each where the level spent it: a class skill's rank a point, a cross-class one's half; a
+    // first level's capped at 4 ranks, or 2
+    const skills = stepOf(plan, "skills", "spend");
+    expect(skills.rows.map(({ id }) => id).sort()).toEqual(Object.values(ctx.skillMap).sort());
+    expect(spentRows(skills)).toEqual([
+      { name: "Bluff", current: 0, points: 4, value: 4, maxPoints: 4 },
+      { name: "Concentration", current: 0, points: 4, value: 4, maxPoints: 4 },
+      { name: "Spellcraft", current: 0, points: 4, value: 4, maxPoints: 4 },
+      { name: "Use Magic Device", current: 0, points: 4, value: 2, maxPoints: 4 },
+    ]);
+    expectRowsConsistent(skills, SORCERER_SKILLS);
   });
 
   test("opens a pool's picker at the level its pick lands on, the plan's levels before and after it, and an edit's at its level", async () => {
@@ -706,8 +760,10 @@ describe("character level plans", () => {
     const { powers: _, ...unanswered } = fourth;
     await expectStatus(levels.$post({ param: { characterId }, json: { steps: unanswered } }), 400);
     const [created] = await expectOk(levels.$post({ param: { characterId }, json: { steps: fourth } }));
-    expect(await expectOk(level.$get({ param: { characterId, characterLevelId: created.id } }))).toMatchObject({
+    expect(await readLevel(characterId, created.id)).toMatchObject({
       abilityIncreases: [{ abilityId: ctx.abilityMap["Strength"], amount: 1 }],
+      klassId: fighter,
+      level: 4,
     });
 
     // A first level picking Cleave without Power Attack: refused, saved when forced
@@ -773,9 +829,10 @@ describe("character level plans", () => {
     expect(sorted(stepOf(plan, "powers", "pick").fitted)).toEqual(sorted(sorcerer1.powers));
 
     // Saved back as it was, the level is the same
-    const before = await expectOk(level.$get({ param }));
+    const before = await readLevel(characterId, created.id);
     await expectOk(level.$put({ param, json: { steps: saved.steps } }));
-    expect(await expectOk(level.$get({ param }))).toEqual(before);
+    expect(await readLevel(characterId, created.id)).toEqual(before);
+    expect(await expectOk(level.plan.$get({ param }))).toEqual(saved);
     await expectStatus(level.plan.$get({ param: { characterId, characterLevelId: NIL_UUID } }), 404);
   });
 });
