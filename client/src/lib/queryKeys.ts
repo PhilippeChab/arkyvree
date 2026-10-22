@@ -6,6 +6,7 @@ export const QUERY_KEYS = {
     /** Every sign-in, sign-up, verification, reset and sign-out request: whether one is in flight, whichever page sent it. */
     requests: ["auth", "requests"] as const,
     linkedAccounts: ["auth", "linkedAccounts"] as const,
+    apiKeys: ["auth", "apiKeys"] as const,
   },
   rulesets: {
     lists: ["rulesets", "list"] as const,

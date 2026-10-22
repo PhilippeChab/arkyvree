@@ -1,0 +1,100 @@
+# Public API
+
+A caller outside the app (a script, an agent leveling a character) reads what its user can through the public API,
+under `/v1`, signed in with an API key. The app's own API (`/api`) stays the screens', free to change with them; `/v1`
+answers in shapes of its own, which stay fixed.
+
+## Keys
+
+- A user makes and revokes keys on the Settings page (`ApiKeysPanel`, through `/auth/api-keys`). A demo account makes
+  none (`denyDemoUser`).
+- A key's token (`ark_` and 32 random bytes, base64url) is shown once, when it's made: the table (`account.api_keys`)
+  keeps its SHA-256 digest, which a request's token is looked up by, and its start, which names it on the page
+  (`server/apiKeyTokens.ts`). A revoked key is deleted. A user keeps 10 at most (`MAX_API_KEYS`).
+- A key expires when its user chose as they made it: in 30 days, 90 (the form's default) or a year, or never, which its
+  form warns works until it's revoked. An expired key is refused as a revoked one is, and the daily cleanup
+  (`runCleanup`) deletes it.
+- Wherever the user's other sessions are signed out, their keys are revoked too (`signOutEverywhere`): a password
+  reset, a password change and the account's deletion.
+- A key is for a caller that keeps it secret, outside a browser: `/v1` answers no cross-origin request (no CORS but
+  the app's own), so a page on another site can't call it.
+- A request sends it as `Authorization: Bearer <token>`. `apiKeyMiddleware` (`server/middlewares/apiKey.ts`) refuses
+  one without a key, with a revoked one, or with one whose user is gone (an archived account, a demo), with a 401, and
+  marks the key used, at most once a minute.
+- A key acts as its user: `requestSession` is `{ userId }`, the `Session` the services read, so a key sees and
+  changes only what its user can, by the checks the services already make. A session's cookie signs in nothing under
+  `/v1`.
+- Its requests are counted per user, whichever keys of theirs ask (`apiKeyRateLimit`: 120 a minute), and a
+  character's level choices, which read every option of each pool, apart (`levelChoicesRateLimit`: 20 a minute). An
+  address's requests are counted before its key is looked up (`apiAddressRateLimit`: 600 a minute), so a wrong key or
+  none, a lookup by digest each, is bounded too, for a client that sends its own address: the address is the first
+  `X-Forwarded-For` entry, as the app's limits read it, which a client can set.
+- A ruleset is read as the app reads it: any ruleset by its id, a private one too, as `/api` answers it to any signed-in
+  user. The lists (`GET /v1/rulesets`) list what the user's scope does.
+
+## Versions
+
+`server/routers/v1/` is version 1: a router layer over the app's services, each route calling the service the app's
+own route calls, and answering through v1's translators (`translators/V1.ts`), one per kind: from what the service
+returns to v1's shape (`V1.character`), and from a v1 request to what the service takes (`V1.levelChoicesQuery`).
+
+- Each answer's shape is a zod schema (`schemas/`), named for the document (`.meta({ id: "Character" })`), and its
+  translator is typed by the service it reads and by that schema (`z.infer`): an answer that changes inside the app
+  stops its translator compiling, and v1 is kept before anyone outside sees the change.
+- An answer names things: a character's feats are "Power Attack", their ids beside them. Timestamps, the links the
+  screens read and the owner's private notes stay out. A kind is named as the app's screens name it: a class
+  (`classes`, `class-levels`), a spell (`spells`, the code's powers), an aptitude (the pool a feat or a spell is picked
+  in).
+- A ruleset's entity answers its columns, named, and the fields its ruleset declares for it under `fields` (what's left
+  of its row past its table's columns): what a write sends back in `fields`, as `GET /v1/rulesets/{id}/fields`
+  declares them.
+- A new version copies the last, replacing only what changed (`const V2 = { ...V1, character: … }`, mounted at `/v2`),
+  and v1 keeps working untouched.
+
+## The reference
+
+`GET /v1/openapi.json` answers the OpenAPI 3.1 document of every v1 route, without a key, built as the server starts
+(`openApiDocument.ts`) from the routes themselves:
+
+- Each route's `validate` middleware carries its schema (`validation`): its path, its query and its body.
+- Each route says what it does and what it answers on success (`describeRoute({ summary, response, status })`), the
+  answer's schema its `response`. A route without a description stops the server starting.
+- Outside production, `describeRoute` checks each success a route answers against its schema (a strict one: a key it
+  doesn't name fails too), so every test that calls a route checks the document describes its answer.
+
+A page answers `{ items, page, nextPage }`, `nextPage` null on the last. An error answers the app's envelope
+(`{ error, cause, message }`) with its status, a path no route answers a 404.
+
+## A character's choices at its next level
+
+`GET /v1/characters/{id}/level-choices` answers what the level-up wizard reads a step at a time, in one request:
+
+- `classes`: the classes the character can take, each with its next level and its hit die, and the requirements it
+  doesn't meet (`requirements`, `[UNMET]` marked); `eligible` once it meets them and has a level left (`levelsLeft`,
+  whatever their classes).
+- The level is the next one, after the character's levels: none planned before it, none edited. A planned level is
+  refused as the wizard refuses to plan it: a class the character has no next level of (404), or one it doesn't qualify
+  for, or any once it has no level left (422). Ability increases that can't be the level's (at a level that takes none,
+  past what it gives, or raising one twice) are refused (400): the other steps would build the character with them.
+  Those sent so far may fall short of what it gives.
+- With `classId`, the planned level of that class (`level`): whether an ability increase is due, the skill points and
+  each skill's ranks before the level, the most it may reach with the level's points alone, its ranks per point and what
+  the points sent for it come to (`pointsSpent`, `ranksAdded`), each feat slot (`aptitude`, `count`) with the feats that
+  qualify for it, and each spell slot by spell level with the spells that do, with the picks made so far:
+  `abilityIncreases=abilityId:amount;…`, `skillPoints=skillId:points,…`, `feats=featId:aptitudeId,…`,
+  `spells=spellId:aptitudeId,…`. A slot's `count` is its room at the level, the picks so far counted in it, and
+  `picked` lists the picks that fit, a pick past its aptitude's room left out. A shared aptitude's room is one, which a
+  feat or a spell fills: it shows as a feat slot and a spell slot both, each `shared`.
+
+The engine opens the choices whole, in one operation (`levelUp().openLevelChoices`): the class picker, the planned
+level's steps, and a picker for each pool with room left, which checks its options against the character with the picks
+that fit. The levels' service (`CharacterLevelsService.getLevelChoices`) reads the character once, asks it, and reads
+each picker's options, every page of them.
+
+The level is then saved whole, as the app saves one: its class, hit points, ability increases, skills, feats and
+spells (a later stage's route).
+
+## Not yet
+
+The issue's later stages: editing characters and rulesets, campaigns and notifications, and a route that says whether
+a PDF is ready and fetches it.

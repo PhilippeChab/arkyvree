@@ -15,10 +15,11 @@ import type { RulesIssue } from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import type { Character, Klass } from "@/shared/relations.ts";
 
-import type { WizardStep } from "./descriptions.ts";
+import type { OpenedLevelChoices, WizardStep } from "./descriptions.ts";
 import type { BondedCreaturesPlan, LevelEditPlan, LevelRemovalPlan, LevelsPlan } from "./plans.ts";
 import type {
   FeatPickQuery,
+  LevelChoicesQuery,
   LevelEditRequest,
   LevelPicks,
   LevelQuery,
@@ -122,6 +123,19 @@ export default abstract class LevelUpPart<
     character: CharacterInput,
     query: FeatPickQuery,
   ): OpenedGroupedPicker<PickFilters, PickGroupFilters, { id: string }, D["featOption"], D["featGroup"]>;
+
+  /**
+   * The character's choices at its next level, opened whole: the classes it can take, and with the class `query` names
+   * (`klassId`, its next level the planned one), the planned level's steps with the picks made so far, and a picker for
+   * each pool with room left. Refused as the wizard refuses to plan it: a class the character has no next level of
+   * ("not-found"), one it doesn't qualify for or any once it has no level left ("unprocessable"), and ability increases
+   * that aren't the level's ("invalid"), which the steps and pickers would build the character with.
+   */
+  abstract openLevelChoices(
+    view: RulesetView,
+    character: CharacterInput,
+    query: LevelChoicesQuery,
+  ): OpenedLevelChoices<D["plannedLevel"], D["classOption"], D["featOption"], D["powerOption"]>;
 
   /** A power picker at a level, of a spell level when given: the powers it offers, less those picked so far. */
   abstract openPowerPicker(

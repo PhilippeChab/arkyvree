@@ -19,9 +19,9 @@ import {
   Users,
   Visibility,
 } from "@/server/repositories/index.ts";
-import type { Session } from "@/shared/relations.ts";
+import type { Session, SessionRow } from "@/shared/relations.ts";
 
-import { openSession, purgeDemoSessionUser, signInAsGoogleAccount, toSafeUser } from "./accounts.ts";
+import { openSession, purgeDemoSessionUser, signInAsGoogleAccount, signOutEverywhere, toSafeUser } from "./accounts.ts";
 import { compareInConstantTime, generateVerificationCode } from "./codes.ts";
 import { verifyGoogleIdToken } from "./google.ts";
 
@@ -118,7 +118,8 @@ class AuthenticationService {
       const newHash = await hashPassword(newPassword);
       await Users.update(tx, { passwordDigest: newHash }, { id: user.id });
       await PasswordResets.archive(tx, { id: reset.id });
-      await Sessions.archive(tx, { userId: user.id });
+      // A reset is how an account is taken back
+      await signOutEverywhere(tx, user.id);
 
       await Activities.create(tx, {
         userId: user.id,
@@ -166,7 +167,7 @@ class AuthenticationService {
     return await signInAsGoogleAccount(payload, existingSessionId);
   }
 
-  async signOut(session: Session) {
+  async signOut(session: SessionRow) {
     return await withTransaction(async (tx) => {
       const user = await Users.findOne(tx, { id: session.userId });
       if (user?.expiresAt) {

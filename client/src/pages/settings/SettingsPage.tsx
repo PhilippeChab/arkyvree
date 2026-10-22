@@ -7,6 +7,8 @@ import { useThemeMode } from "@/client/src/contexts/useThemeMode.ts";
 import { usePageTitle } from "@/client/src/hooks/index.ts";
 import { APP_NAME } from "@/client/src/lib/brand.ts";
 
+import { ApiKeysPanel } from "./components/index.ts";
+
 const THEME_MODE_OPTIONS = [
   { value: "light", label: "Light", icon: LightModeIcon },
   { value: "dark", label: "Dark", icon: DarkModeIcon },
@@ -40,6 +42,8 @@ export default function SettingsPage() {
               </Stack>
             </Stack>
           </Panel>
+
+          <ApiKeysPanel />
         </Stack>
       </Container>
     </PageTransition>

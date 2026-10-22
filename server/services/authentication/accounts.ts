@@ -6,6 +6,7 @@ import { withTransaction } from "@/server/database/index.ts";
 import { ConflictError, InternalError } from "@/server/errors/index.ts";
 import {
   Activities,
+  ApiKeys,
   CharacterContributors,
   Contributors,
   EmailVerifications,
@@ -126,4 +127,13 @@ export async function signInAsGoogleAccount(payload: { email: string; sub: strin
     const session = await openSession(tx, user, "signUp", { provider: "google" });
     return { session, user: toSafeUser(user) };
   });
+}
+
+/**
+ * Signs a user out everywhere but the session `exceptId` (the one changing their password, when given): their sessions
+ * ended and their API keys revoked, whatever signed in as them before cut off.
+ */
+export async function signOutEverywhere(tx: Db, userId: string, exceptId?: string) {
+  await Sessions.archive(tx, { userId, exceptId });
+  await ApiKeys.delete(tx, { userId });
 }

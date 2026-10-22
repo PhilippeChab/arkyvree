@@ -1,6 +1,20 @@
-import { limitRate } from "./limitRate.ts";
+import { limitRate, limitRatePerUser } from "./limitRate.ts";
 
 const MINUTE = 60 * 1000;
+
+/**
+ * The public API's requests from an address, before its key is looked up: a wrong key or none is a lookup by digest,
+ * which nothing counted. Past every user's own limit, for a server that calls it for several users. The address is
+ * read as the app's limits read it, the first `X-Forwarded-For` entry, which a client can set: it bounds a client
+ * that sends its own, not one that names another's.
+ */
+export const apiAddressRateLimit = limitRate({ windowMs: MINUTE, limit: 600 });
+
+/**
+ * The public API's requests, counted per user, whatever keys of theirs ask: an agent's run reads a character and its
+ * choices a few times a level. Per user, a user's ten keys get no more than one.
+ */
+export const apiKeyRateLimit = limitRatePerUser({ windowMs: MINUTE, limit: 120 });
 
 /**
  * Each direct-upload commits a blob row + S3 object that the sweep won't reclaim until UNATTACHED_BLOB_TTL_MS
@@ -22,5 +36,11 @@ export const importRateLimit = limitRate({ windowMs: MINUTE, limit: 10 });
 
 /** What a picked character file is: asked once a file is picked, its header's tags read, nothing built. */
 export const importSourceRateLimit = limitRate({ windowMs: MINUTE, limit: 30 });
+
+/**
+ * A character's choices at its next level, which read every option of each pool: counted per user, whatever keys of
+ * theirs ask, apart from the keys' other requests. Its headers are the user's limit's, which a client paces itself by.
+ */
+export const levelChoicesRateLimit = limitRatePerUser({ windowMs: MINUTE, limit: 20, headers: false });
 
 export const publicApiRateLimit = limitRate({ windowMs: MINUTE, limit: 30 });

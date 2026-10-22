@@ -1,4 +1,9 @@
-import { type CharacterInput, LevelUpPart, type PlannedSoFar } from "@/engine/core/module/index.ts";
+import {
+  type CharacterInput,
+  type LevelChoicesQuery,
+  LevelUpPart,
+  type PlannedSoFar,
+} from "@/engine/core/module/index.ts";
 import type { RulesIssue } from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import type { Dnd35Descriptions } from "@/engine/rulesets/dnd3.5/descriptions.ts";
@@ -12,6 +17,7 @@ import type { Character } from "@/shared/relations.ts";
 
 import BondedPlans from "./BondedPlans.ts";
 import Dnd35LevelSelections from "./Dnd35LevelSelections.ts";
+import LevelChoices from "./LevelChoices.ts";
 import LevelUpPlan from "./LevelUpPlan.ts";
 import LevelUpPreview from "./LevelUpPreview.ts";
 import LevelUpSteps from "./LevelUpSteps.ts";
@@ -141,6 +147,14 @@ export default class Dnd35LevelUp extends LevelUpPart<Dnd35Descriptions, Detaile
     query: ConstructorParameters<typeof FeatPicker>[2],
   ) {
     return new FeatPicker(view, character, query);
+  }
+
+  /**
+   * The character's choices at its next level, opened whole: the class picker, and for the class the query names, the
+   * planned level's four steps and a picker for each pool with room left.
+   */
+  override openLevelChoices(view: RulesetView, character: CharacterInput, query: LevelChoicesQuery) {
+    return new LevelChoices(view, character, this).openLevelChoices(query, this.openClassPicker(view, character, {}));
   }
 
   /** A power picker for the character: what it offers and leaves out, and a page of options described. */

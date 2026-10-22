@@ -96,16 +96,18 @@ export default class SelectionChecks {
 
   /**
    * What's wrong with the ability increases of the level after `totalLevel` levels: none when they raise its abilities
-   * by what its rules give it (none where they give none), each ability once.
+   * by what its rules give it (none where they give none), each ability once; or, of those picked so far (`soFar`), by
+   * no more than that.
    */
-  private findAbilityIncreaseError(totalLevel: number, increases: AbilityIncrease[]) {
+  private findAbilityIncreaseError(totalLevel: number, increases: AbilityIncrease[], soFar = false) {
     const total = this.rules.getAbilityIncreaseTotal(this.view, totalLevel);
+    const sum = increases.reduce((added, { amount }) => added + amount, 0);
     if (increases.length > 0 && total === 0) return "Ability increase is not available at this level";
-    if (increases.length === 0 && total > 0) return "Ability increase is required at this level";
+    if (!soFar && increases.length === 0 && total > 0) return "Ability increase is required at this level";
     if (new Set(increases.map(({ abilityId }) => abilityId)).size < increases.length)
       return "An ability is increased twice at this level";
-    if (increases.reduce((sum, { amount }) => sum + amount, 0) !== total)
-      return `Ability increases must add up to ${total} at this level`;
+    if (soFar ? sum > total : sum !== total)
+      return `Ability increases must add up to ${soFar ? "at most " : ""}${total} at this level`;
     return undefined;
   }
 
@@ -267,6 +269,15 @@ export default class SelectionChecks {
   checkAbilityIncreases(totalLevel: number, increases: AbilityIncrease[], label = "") {
     const error = this.findAbilityIncreaseError(totalLevel, increases);
     if (error) throw new RulesError("invalid", `${label}${error}`);
+  }
+
+  /**
+   * Throws when the increases picked so far at the level after `totalLevel` levels can't be its own: at a level that
+   * takes none, past what it gives, or raising one twice. They may fall short of what it gives, as picks so far do.
+   */
+  checkAbilityIncreasesSoFar(totalLevel: number, increases: AbilityIncrease[]) {
+    const error = this.findAbilityIncreaseError(totalLevel, increases, true);
+    if (error) throw new RulesError("invalid", error);
   }
 
   /**

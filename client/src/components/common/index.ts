@@ -44,6 +44,7 @@ export { PageHeader } from "./PageHeader.tsx";
 export { PageLoader } from "./PageLoader.tsx";
 export { PageTransition } from "./PageTransition.tsx";
 export { Panel } from "./Panel.tsx";
+export { PanelLead } from "./PanelLead.tsx";
 export { ReadOnlyFields } from "./ReadOnlyFields.tsx";
 export { RowAction, RowActions } from "./RowActions.tsx";
 export { ROW_ACTIONS_HOVER_SX } from "./rowActionStyles.ts";

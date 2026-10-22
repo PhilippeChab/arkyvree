@@ -2,8 +2,8 @@ import { Hono } from "hono";
 import { z } from "zod";
 
 import { type SessionContext, validate } from "@/server/middlewares/index.ts";
-import { buildPickPairsSchema, isUuid, limitDefaultingTo } from "@/server/routers/api/schemaBuilders.ts";
-import { characterIdParam, idList, page } from "@/server/routers/api/validation.ts";
+import { buildPickPairsSchema, limitDefaultingTo } from "@/server/routers/api/schemaBuilders.ts";
+import { characterIdParam, idList, increaseList, page, skillPoints } from "@/server/routers/api/validation.ts";
 import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
 
 /** A class's level, as a level-up plans it: its ruleset bounds it. */
@@ -11,18 +11,6 @@ const classLevel = z.number().int().min(1);
 
 /** Comma-separated `featId:aptitudeId` picks: what isn't one is dropped. */
 const featPicks = buildPickPairsSchema("featId");
-
-/**
- * A level's ability increases in the query string: `abilityId:amount` pairs joined by `;`, what isn't one dropped (an
- * empty string is none).
- */
-const increaseList = z.string().transform((value) =>
-  value
-    .split(";")
-    .map((pair) => pair.split(":"))
-    .filter(([abilityId, amount]) => isUuid(abilityId) && /^[1-9]\d*$/.test(amount ?? ""))
-    .map(([abilityId, amount]) => ({ abilityId, amount: Number(amount) })),
-);
 
 /** The hit points a character's level gives. */
 const levelHp = z.number().int().min(1);
@@ -43,22 +31,6 @@ const plannedIncreaseList = z
   .string()
   .optional()
   .transform((value) => value?.split(",").map((level) => increaseList.parse(level)));
-
-/** Comma-separated `skillId:points` points spent on each skill: what isn't one is dropped. */
-const skillPoints = z
-  .string()
-  .optional()
-  .transform((value) =>
-    value === undefined
-      ? undefined
-      : Object.fromEntries(
-          value
-            .split(",")
-            .map((pair) => pair.split(":"))
-            .filter(([skillId, points]) => isUuid(skillId) && !isNaN(Number(points)))
-            .map(([skillId, points]) => [skillId, Number(points)]),
-        ),
-  );
 
 /**
  * The level a step is for: class `classId`'s `level` (which a step that reads its class requires) with its ability

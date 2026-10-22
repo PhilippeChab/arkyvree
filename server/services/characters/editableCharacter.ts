@@ -7,15 +7,21 @@ import type { Session } from "@/shared/relations.ts";
 
 import { readCharacterInput } from "./characterInputs.ts";
 
-export async function findEditableCharacterOrBonded(tx: Db, characterId: string, userId: string) {
-  const pc = await Characters.findOne(tx, { id: characterId, editorId: userId });
+/**
+ * The character the user edits, or a bonded creature of a character they edit: none when neither, or archived unless
+ * `visibility` reads those too.
+ */
+export async function findEditableCharacterOrBonded(
+  tx: Db,
+  characterId: string,
+  userId: string,
+  visibility: Visibility = Visibility.UnarchivedOnly,
+) {
+  const pc = await Characters.findOne(tx, { id: characterId, editorId: userId }, visibility);
   if (pc) return pc;
-  const bonded = await Characters.findOne(tx, { id: characterId });
+  const bonded = await Characters.findOne(tx, { id: characterId }, visibility);
   if (!bonded || bonded.kind === "pc" || !bonded.parentCharacterId) return null;
-  const master = await Characters.findOne(tx, {
-    id: bonded.parentCharacterId,
-    editorId: userId,
-  });
+  const master = await Characters.findOne(tx, { id: bonded.parentCharacterId, editorId: userId }, visibility);
   return master ? bonded : null;
 }
 
@@ -43,8 +49,9 @@ export async function withEditableCharacter<T>(
   session: Session,
   characterId: string,
   run: (scope: RulesetScope, character: CharacterInput) => T,
+  visibility: Visibility = Visibility.UnarchivedOnly,
 ): Promise<Awaited<T>> {
-  const characterRecord = await getEditableCharacter(database, session, characterId);
+  const characterRecord = await getEditableCharacter(database, session, characterId, visibility);
   return await withRulesetScope(
     database,
     characterRecord.rulesetId,

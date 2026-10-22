@@ -46,6 +46,14 @@ export default class LevelUpEngine extends CharacterHandle {
     return this.module.levelUp.openFeatPicker(this.view, this.input, this.requests.resolvePickQuery(query));
   }
 
+  /**
+   * The character's choices at its next level, opened whole: the class picker, and for the class the query names, the
+   * planned level's steps and a picker for each pool with room left. Refused as the wizard refuses to plan the level.
+   */
+  openLevelChoices(...[query]: Args<"openLevelChoices">) {
+    return this.module.levelUp.openLevelChoices(this.view, this.input, this.requests.resolveQuery(query));
+  }
+
   /** A power picker: what it offers and leaves out, and a page of options described. */
   openPowerPicker(...[query]: Args<"openPowerPicker">) {
     return this.module.levelUp.openPowerPicker(this.view, this.input, this.requests.resolvePickQuery(query));

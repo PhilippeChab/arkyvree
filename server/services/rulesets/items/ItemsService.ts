@@ -80,6 +80,7 @@ class ItemsService extends include(Object, Variants) {
       orderBy?: "name" | "createdAt" | "updatedAt";
       orderDir?: "asc" | "desc";
       search?: string;
+      type?: string;
     },
     pagination: { limit: number; page: number },
   ) {

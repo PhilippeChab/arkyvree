@@ -20,6 +20,7 @@ Rows whose disappearance leaves no observable history a user would expect to fin
 | Internal forking metadata | `EntitySnapshots` |
 | Ruleset entities | `Feats`, `Items`, `Races`, `Klasses`, `KlassLevels`, `Skills`, `Powers`, `Aptitudes`, `Saves`, `Languages`, `Mechanics` |
 | Status-driven lifecycle | `Contributors` (Pending/Active/Rejected/Revoked enum) |
+| Account credentials | `ApiKeys` (a revoked key: nothing names it, and its token must stop working at once; an expired one, which the sign-in refuses, once `runCleanup.ts` reaps it) |
 
 `Abilities` is hard-coded in the schema and never deleted.
 

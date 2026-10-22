@@ -6,11 +6,11 @@ import { db } from "@/server/database/index.ts";
 import { isProduction } from "@/server/environment.ts";
 import { UnauthorizedError } from "@/server/errors/index.ts";
 import { SESSION_TTL_SECONDS, Sessions, Users } from "@/server/repositories/index.ts";
-import type { Session, User } from "@/shared/relations.ts";
+import type { SessionRow, User } from "@/shared/relations.ts";
 
 export interface SessionContext {
   Variables: {
-    requestSession: Session;
+    requestSession: SessionRow;
     requestUser: User;
   };
 }

@@ -38,6 +38,19 @@ export default class ClassEngine {
     return this.classes.table(this.klassId).describeFeatPools();
   }
 
+  /**
+   * The class's whole progression, as its save takes it: its levels, its spell tables' totals by level (spells a day,
+   * `perDay`; spells known, `known`), and what its tabs read beside them (`progression`).
+   */
+  describeFullProgression() {
+    return {
+      known: this.describeSpellsKnown(),
+      levels: this.describeLevels(),
+      perDay: this.describeSpells(),
+      progression: this.describeProgression(),
+    };
+  }
+
   /** One of the class's levels with its details: refused when the level isn't the class's. */
   describeLevel(...args: Parameters<Levels["describe"]>) {
     return this.classes.levels(this.klassId).describe(...args);
