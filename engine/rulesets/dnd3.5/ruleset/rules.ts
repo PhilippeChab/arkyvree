@@ -2,7 +2,7 @@ import { LANGUAGE_COLUMNS, LANGUAGE_LIST, NAMED_LIST, SAVE_COLUMNS, SAVE_LIST } 
 import type { RulesDescription } from "@/engine/core/module/index.ts";
 import { CLASS_COLUMNS, CLASS_LEVEL_COLUMNS, CLASS_LIST } from "@/engine/rulesets/dnd3.5/entities/classes/columns.ts";
 import { PROGRESSION } from "@/engine/rulesets/dnd3.5/entities/classes/progression.ts";
-import { FEAT_COLUMNS } from "@/engine/rulesets/dnd3.5/entities/feats/columns.ts";
+import { FEAT_COLUMNS, FEAT_LIST } from "@/engine/rulesets/dnd3.5/entities/feats/columns.ts";
 import { ITEM_COLUMNS, ITEM_LIST } from "@/engine/rulesets/dnd3.5/entities/items/columns.ts";
 import { POWER_COLUMNS, POWER_LIST } from "@/engine/rulesets/dnd3.5/entities/powers/columns.ts";
 import { RACE_COLUMNS, RACE_LIST } from "@/engine/rulesets/dnd3.5/entities/races/columns.ts";
@@ -40,9 +40,20 @@ export const RULES: RulesDescription = {
     { icon: "face", opens: "customization", partitioned: true, type: "races" },
     { icon: "translate", opens: "page", type: "languages" },
     { icon: "psychology", opens: "page", type: "skills" },
-    { icon: "spoke", opens: "customization", type: "feats" },
-    { icon: "bolt", opens: "customization", type: "powers" },
-    { icon: "construction", opens: "customization", type: "items" },
+    { families: true, icon: "spoke", opens: "customization", pools: "feats", type: "feats" },
+    { icon: "bolt", levels: true, opens: "customization", pools: "spells", type: "powers", wideForm: "fixed" },
+    {
+      copies: {
+        locked: ["slot", "sourceItemId", "type"],
+        most: MAX_ITEM_VARIANTS,
+        source: "sourceItemId",
+        template: "isTemplate",
+      },
+      icon: "construction",
+      opens: "customization",
+      type: "items",
+      wideForm: "fluid",
+    },
     {
       help: "Pools of choosable options at certain class levels (e.g., Fighter Bonus Feats, Rogue Special Abilities).",
       icon: "stars",
@@ -66,6 +77,7 @@ export const RULES: RulesDescription = {
   lists: {
     abilities: NAMED_LIST,
     aptitudes: NAMED_LIST,
+    feats: FEAT_LIST,
     items: ITEM_LIST,
     klasses: CLASS_LIST,
     languages: LANGUAGE_LIST,
@@ -75,7 +87,6 @@ export const RULES: RulesDescription = {
     saves: SAVE_LIST,
     skills: SKILL_LIST,
   },
-  maxItemVariants: MAX_ITEM_VARIANTS,
   license: {
     notice:
       "This notice applies to the SRD-derived Open Game Content in this system source package. It does not license the application code or designate independent user-created content as Open Game Content.",

@@ -11,48 +11,57 @@ import {
 } from "@/client/src/components/common/index.ts";
 import { DeleteIcon } from "@/client/src/components/icons/index.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
+import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
 import { NAME_RULES } from "@/client/src/lib/validation.ts";
 import { useRulesetRules } from "@/client/src/pages/rulesets/hooks/index.ts";
 
-import { type BulkVariantsFormValues, type VariantRow, variantRow } from "./bulkVariants.ts";
+import { type EntityVariantsFormValues, type VariantRow, variantRow } from "./entityVariants.ts";
 
-interface BulkVariantsDialogProps {
-  baseItemDescription?: string | null;
-  baseItemName: string;
-  /** Reset by the caller before opening, with `variantRow(item, 1)`. */
-  form: UseFormReturn<BulkVariantsFormValues>;
+interface EntityVariantsDialogProps {
+  baseDescription?: string | null;
+  baseName: string;
+  /** Its kind's type (`items`), whose word and columns it names */
+  entityType: string;
+  /** Reset by the caller before opening, with `variantRow(entity, 1)`. */
+  form: UseFormReturn<EntityVariantsFormValues>;
+  /** The most variants it makes at once (its kind's `copies.most`) */
+  most: number;
   onClose: () => void;
   onSubmit: (variants: VariantRow[]) => void;
   open: boolean;
   pending: boolean;
-  /** The ruleset's, whose rules bound how many variants a form makes and name what a variant copies */
+  /** The ruleset's, whose rules name its kind and what a variant copies */
   rulesetId: string;
 }
 
 /** A list of words as a sentence names them, "a, b and c". */
 const COPIED_LIST = new Intl.ListFormat("en-GB", { style: "long", type: "conjunction" });
 
-export function BulkVariantsDialog({
+/** A kind's entity's variants' dialog (an item's): their names and descriptions, each copying the entity. */
+export function EntityVariantsDialog({
   open,
   onClose,
-  baseItemName,
-  baseItemDescription,
+  baseName,
+  baseDescription,
+  entityType,
   form,
+  most,
   onSubmit,
   pending,
   rulesetId,
-}: BulkVariantsDialogProps) {
+}: EntityVariantsDialogProps) {
   const { rules } = useRulesetRules(rulesetId);
-  // What a variant copies of its base item: its columns, as its rules name them ("cost, weight, item type…")
+  const one = entityTypeLabel(entityType, rules?.words).toLowerCase();
+  // What a variant copies of its base entity: its columns, as its rules name them ("cost, weight, item type…")
   const copied = COPIED_LIST.format([
-    ...new Set((rules?.columns.items ?? []).map((column) => column.label.toLowerCase())),
+    ...new Set((rules?.columns[entityType] ?? []).map((column) => column.label.toLowerCase())),
   ]);
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: "variants",
   });
 
-  const submit = (values: BulkVariantsFormValues) => {
+  const submit = (values: EntityVariantsFormValues) => {
     onSubmit(
       values.variants.map((v) => ({
         name: v.name.trim(),
@@ -70,12 +79,12 @@ export function BulkVariantsDialog({
       slotProps={{ paper: { sx: { maxHeight: "85vh" } } }}
     >
       <form onSubmit={form.handleSubmit(submit)} noValidate>
-        <DialogTitle>Create Variants of {baseItemName}</DialogTitle>
+        <DialogTitle>Create Variants of {baseName}</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ pt: 1 }}>
             <DialogContentText>
-              Each variant copies the base item's {copied}, and its modifiers and requirements unless the base item is a
-              template itself. You'll be able to customize them individually after.
+              Each variant copies the base {one}'s {copied}, and its modifiers and requirements unless the base {one} is
+              a template itself. You'll be able to customize them individually after.
             </DialogContentText>
             <Stack spacing={3}>
               {fields.map((field, index) => (
@@ -113,10 +122,8 @@ export function BulkVariantsDialog({
             <AddButton
               variant="outlined"
               label="Add Variant"
-              onClick={() =>
-                append(variantRow({ name: baseItemName, description: baseItemDescription }, fields.length + 1))
-              }
-              disabled={fields.length >= (rules?.maxItemVariants ?? 1) || pending}
+              onClick={() => append(variantRow({ name: baseName, description: baseDescription }, fields.length + 1))}
+              disabled={fields.length >= most || pending}
               sx={{ alignSelf: "flex-start" }}
             />
           </Stack>
