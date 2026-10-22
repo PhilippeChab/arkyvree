@@ -33,6 +33,25 @@ async function linkedAptitudes(powerId: string) {
 // CRUD, ownership and copy-on-write are covered for every entity in EntityServices.test.ts,
 // and the spell properties a power generates in GeneratedFeats.test.ts.
 describe("PowersService", () => {
+  test("keeps a power's save effect through an edit that leaves it out, and clears it with an empty one", async () => {
+    const {
+      session,
+      ruleset,
+      aptitudeIds: [wizard],
+    } = await createTestUserAndRuleset(APTITUDES);
+    const power = await PowersService.createPower(session, ruleset.id, {
+      name: "Hold Person",
+      saveEffect: "negates",
+      aptitudes: [{ id: wizard }],
+    });
+    expect(await PowersService.updatePower(session, ruleset.id, power.id, { name: "Hold Person" })).toMatchObject({
+      saveEffect: "negates",
+    });
+    expect(
+      await PowersService.updatePower(session, ruleset.id, power.id, { name: "Hold Person", saveEffect: "" }),
+    ).toMatchObject({ saveEffect: null });
+  });
+
   test("records the columns an edit changes, never what its form sends that it doesn't write", async () => {
     const {
       session,
