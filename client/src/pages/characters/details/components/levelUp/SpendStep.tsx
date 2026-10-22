@@ -1,5 +1,5 @@
 import { Box, Button, Stack, TextField, Typography } from "@mui/material";
-import { memo } from "react";
+import { memo, useCallback } from "react";
 import { type Control, useController } from "react-hook-form";
 
 import { GroupedSkillRows, SkillRow } from "@/client/src/components/characters/index.ts";
@@ -143,26 +143,26 @@ export function SpendStep({ characterId, step, wizard }: SpendStepProps) {
   const { rules } = useCharacterRules(characterId);
   const { answer, answerError, control, fitted, isAnswering } = wizard;
   const spend = answerOf(answer, step);
-  // Changed from the points as they fit, which the wizard reads
   // The form's points, every step's: a step replaces them whole, so the wizard sees a new plan
   const { field } = useController({ control, name: "points" });
   const points = fitted.points[step.name] ?? {};
-  // Read as a row spends, so the callback the memoized rows get stays the same
-  const latestPoints = useLatest(points);
-  const latestForm = useLatest(field.value);
-  const { onChange } = field;
-  const setPoints = (spent: Record<string, number>) => onChange({ ...latestForm.current, [step.name]: spent });
   const budget = spend?.budget ?? 0;
 
-  // The compiler keeps it the same while the budget is: it reads the points as they stand
-  const handleSpend = (rowId: string, wanted: number) => {
+  /** Spends `wanted` points on a row, as many as the budget has left past the other rows', on the points as they fit. */
+  const spendOn = (rowId: string, wanted: number) => {
     if (!budget) return;
-    const spent = latestPoints.current;
     // What the other rows spend
-    const spentElsewhere = pointsSpent(spent) - (spent[rowId] ?? 0);
+    const spentElsewhere = pointsSpent(points) - (points[rowId] ?? 0);
     const clamped = Math.max(0, Math.min(wanted, budget - spentElsewhere));
-    setPoints({ ...spent, [rowId]: clamped });
+    field.onChange({ ...field.value, [step.name]: { ...points, [rowId]: clamped } });
   };
+  // The memoized rows get one callback for as long as the step shows, which spends as the step last rendered
+  const latestSpendOn = useLatest(spendOn);
+  const handleSpend = useCallback(
+    (rowId: string, wanted: number) => latestSpendOn.current(rowId, wanted),
+    [latestSpendOn],
+  );
+  const setPoints = (spent: Record<string, number>) => field.onChange({ ...field.value, [step.name]: spent });
 
   if (isAnswering) return <DiceSpinner />;
   if (answerError && !answer) return <LoadError what={step.label} error={answerError} />;
