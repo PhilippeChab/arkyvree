@@ -220,7 +220,8 @@ class CharactersService extends include(Object, Archives, Imports) {
    * room for: those it has, or those an edit is being made with (`languageIds`), as its languages picker offers.
    */
   async getLanguages(session: Session, characterId: string, languageIds?: string[]) {
-    const record = await findEditableCharacterOrBonded(db, characterId, session.userId);
+    // Visibility.All: an archived character's sheet still reads its languages, read-only
+    const record = await findEditableCharacterOrBonded(db, characterId, session.userId, Visibility.All);
     if (!record) throw new NotFoundError("Character not found");
 
     const input = await readCharacterInput(db, record);

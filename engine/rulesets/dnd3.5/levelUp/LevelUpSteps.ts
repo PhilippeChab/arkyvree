@@ -47,20 +47,18 @@ export default class LevelUpSteps extends LevelUpState {
   }
 
   /**
-   * The feats step of the step's level: the pools the character picks feats in with it, each with its room for the
-   * feats picked at it (`step.picks`), what of them fits (`fitted`), and its grants.
+   * The feats step of a level built with its picks (`buildPicked`): the pools the character picks feats in with it,
+   * each with its room for the feats picked at it, what of them fits (`fitted`), and its grants.
    */
-  private describeFeatStep(step: LevelQuery) {
-    const { klassLevel, picks, pools } = this.buildPicked(step);
+  private describeFeatStep({ klassLevel, picks, pools }: ReturnType<LevelUpSteps["buildPicked"]>) {
     return { ...this.featStep(pools, [klassLevel.id]), fitted: picks.feats };
   }
 
   /**
-   * The powers step of the step's level: the pools the character picks powers in with it, each with its room for the
-   * powers picked at it (`step.picks`), what of them fits (`fitted`), and its grants.
+   * The powers step of a level built with its picks (`buildPicked`): the pools the character picks powers in with it,
+   * each with its room for the powers picked at it, what of them fits (`fitted`), and its grants.
    */
-  private describePowerStep(step: LevelQuery) {
-    const { klassLevel, picks, pools } = this.buildPicked(step);
+  private describePowerStep({ klassLevel, picks, pools }: ReturnType<LevelUpSteps["buildPicked"]>) {
     return { ...this.powerStep(pools, [klassLevel.id]), fitted: picks.powers };
   }
 
@@ -144,11 +142,8 @@ export default class LevelUpSteps extends LevelUpState {
    * (`fitted`), and its grants.
    */
   describePickSteps(step: LevelQuery) {
-    const { klassLevel, picks, pools } = this.buildPicked(step);
-    return {
-      feats: { ...this.featStep(pools, [klassLevel.id]), fitted: picks.feats },
-      powers: { ...this.powerStep(pools, [klassLevel.id]), fitted: picks.powers },
-    };
+    const picked = this.buildPicked(step);
+    return { feats: this.describeFeatStep(picked), powers: this.describePowerStep(picked) };
   }
 
   /**
@@ -160,9 +155,9 @@ export default class LevelUpSteps extends LevelUpState {
       case "abilities":
         return { name, ...this.describeAbilityStep(step) };
       case "feats":
-        return { name, ...this.describeFeatStep(step) };
+        return { name, ...this.describeFeatStep(this.buildPicked(step)) };
       case "powers":
-        return { name, ...this.describePowerStep(step) };
+        return { name, ...this.describePowerStep(this.buildPicked(step)) };
       case "skills":
         return { name, ...this.describeSkillStep(step) };
       default:

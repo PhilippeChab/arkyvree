@@ -5,7 +5,7 @@ import { Engine } from "@/engine/index.ts";
 import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
-import { Activities, Modifiers } from "@/server/repositories/index.ts";
+import { Activities, Modifiers, Visibility } from "@/server/repositories/index.ts";
 import { getEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
 import type { Session } from "@/shared/relations.ts";
 
@@ -79,7 +79,8 @@ class CharacterModifiersService {
   }
 
   async getModifiers(session: Session, characterId: string) {
-    const character = await getEditableCharacter(db, session, characterId);
+    // Visibility.All: an archived character's sheet still reads its modifiers, read-only
+    const character = await getEditableCharacter(db, session, characterId, Visibility.All);
 
     const modifiers = await Modifiers.findMany(db, { sourceIds: [characterId], sourceType: "characters" });
     return await withRulesetScope(db, character.rulesetId, async (scope) =>

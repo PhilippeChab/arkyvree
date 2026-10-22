@@ -217,7 +217,6 @@ export const apiKeysInAccount = account.table(
   {
     createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-    deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
     id: uuid()
       .default(sql`public.gen_random_uuid()`)
       .primaryKey()

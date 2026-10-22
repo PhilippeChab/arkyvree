@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { db } from "@/server/database/index.ts";
-import { Characters } from "@/server/repositories/index.ts";
+import { CharacterLevels, Characters } from "@/server/repositories/index.ts";
 import { createKeyedApi, expectOk, expectStatus } from "@/tests/support/api.ts";
 import { createTestCharacter } from "@/tests/support/characters.ts";
 import { readPcgenFile } from "@/tests/support/dnd3.5/pcgenFiles.ts";
@@ -38,6 +38,19 @@ describe("v1 characters", () => {
     const { items } = await expectOk(api.v1.characters.$get({ query: { visibility: "all" } }));
     const archivedOf = (id: string) => items.find((character) => character.id === id)?.archived;
     expect([archivedOf(active.id), archivedOf(archived.id)]).toEqual([false, true]);
+    // An archived one reads whole, as its sheet does: its parts too
+    const param = { id: archived.id };
+    await expectOk(api.v1.characters[":id"].$get({ param }));
+    await expectOk(api.v1.characters[":id"].inventory.$get({ param }));
+    await expectOk(api.v1.characters[":id"].languages.$get({ param }));
+    await expectOk(api.v1.characters[":id"].modifiers.$get({ param }));
+    const fenn = await findSeededCharacter("Fenn Ashwalker");
+    await Characters.archive(db, { id: fenn.id });
+    const [level] = await CharacterLevels.findMany(db, { characterId: fenn.id });
+    const seeded = await createKeyedApi();
+    await expectOk(
+      seeded.api.v1.characters[":id"].levels[":levelId"].$get({ param: { id: fenn.id, levelId: level!.id } }),
+    );
   });
 
   test("answers a character's sheet, each thing it has named, without what only the app's screens read", async () => {
