@@ -4,7 +4,7 @@ import type { Db } from "@/drizzle/database.ts";
 import { rulesetsInRules } from "@/drizzle/schema.ts";
 import { include } from "@/lib/mixins.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
-import { db, withTransaction } from "@/server/database/index.ts";
+import { db, isUniqueViolation, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import {
   Activities,
@@ -23,11 +23,18 @@ import { Archives } from "./concerns/Archives.ts";
 import { Publishes } from "./concerns/Publishes.ts";
 import { Stars } from "./concerns/Stars.ts";
 
+/** What a write of a name another ruleset has is refused with. */
+const NAME_TAKEN = "A ruleset with this name already exists";
+
+/** A write of a ruleset's name refused as a taken name, when a concurrent write took it first. */
+function refuseTakenName(error: unknown): never {
+  throw isUniqueViolation(error) ? new ConflictError(NAME_TAKEN) : error;
+}
+
 class RulesetsService extends include(Object, Archives, Publishes, Stars) {
   /** Refuses a name another ruleset has, archived or another user's private one too: a ruleset's name is unique. */
   private async checkNameFree(tx: Db, name: string) {
-    if (await Rulesets.findOne(tx, { name }, Visibility.All))
-      throw new ConflictError("A ruleset with this name already exists");
+    if (await Rulesets.findOne(tx, { name }, Visibility.All)) throw new ConflictError(NAME_TAKEN);
   }
 
   async forkRuleset(session: Session, id: string, body: { description?: string; name: string; private: boolean }) {
@@ -56,7 +63,7 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
           extensionRulesetIds: ruleset.extensionRulesetIds,
           baseRules: ruleset.baseRules,
           private: body.private,
-        })
+        }).catch(refuseTakenName)
       )[0];
 
       // Copy extension metadata rows
@@ -197,7 +204,7 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
       if (body.kind === "extension" && ruleset.kind !== "extension") this.assertCanBeExtension(ruleset);
 
       const { updatedAt, ...columns } = body;
-      const rows = await Rulesets.update(tx, columns, { id, expectedUpdatedAt: updatedAt });
+      const rows = await Rulesets.update(tx, columns, { id, expectedUpdatedAt: updatedAt }).catch(refuseTakenName);
       if (updatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
 
       const updatedRuleset = rows[0];

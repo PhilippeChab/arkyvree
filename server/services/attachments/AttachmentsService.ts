@@ -1,7 +1,7 @@
 import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
 
 import type { Db } from "@/drizzle/database.ts";
-import { db, withTransaction } from "@/server/database/index.ts";
+import { db, isUniqueViolation, withTransaction } from "@/server/database/index.ts";
 import { readEnv } from "@/server/environment.ts";
 import { BadRequestError, ConflictError, ForbiddenError, InternalError, NotFoundError } from "@/server/errors/index.ts";
 import { Attachments, Blobs, Characters } from "@/server/repositories/index.ts";
@@ -101,12 +101,6 @@ class AttachmentsService {
     const secret = readEnv("SIGNING_SECRET");
     if (!secret) throw new InternalError("SIGNING_SECRET is not configured");
     return secret;
-  }
-
-  private isUniqueViolation(err: unknown): boolean {
-    if (typeof err !== "object" || err === null) return false;
-    const e = err as { cause?: { code?: string }; code?: string };
-    return e.code === "23505" || e.cause?.code === "23505";
   }
 
   private signToken(payload: Omit<SignedTokenPayload, "iat">): string {
@@ -217,7 +211,7 @@ class AttachmentsService {
         });
         attachment = rows[0];
       } catch (error) {
-        if (this.isUniqueViolation(error)) throw new ConflictError("Slot is already attached by a concurrent request");
+        if (isUniqueViolation(error)) throw new ConflictError("Slot is already attached by a concurrent request");
 
         throw error;
       }

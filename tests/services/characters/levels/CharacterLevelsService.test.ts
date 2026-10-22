@@ -1812,6 +1812,19 @@ describe("LevelsService", () => {
       await edit(true);
     });
 
+    test("takes an edit that leaves a level's pool with fewer slots unspent, which it was saved with", async () => {
+      const ctx = await getSeedCtx();
+      const characterId = await createSeedCharacter(ctx);
+      // Saved without its picks: its pools' slots unspent
+      const [level] = await addClassLevels(db, ctx, characterId, "Fighter", [1], [10]);
+
+      // One of its two General feats picked: one slot left unspent, the issue it had, whatever it counts
+      const feats = { [ctx.aptMap["General"]!]: [ctx.featMap["Great Fortitude"]!] };
+      await CharacterLevelsService.updateLevel(session, characterId, level!, 10, [], {}, feats, {}, false);
+      const { feats: saved } = await CharacterLevelsService.getLevel(session, characterId, level!);
+      expect(saved[ctx.aptMap["General"]!]!.map((feat) => feat.name)).toEqual(["Great Fortitude"]);
+    });
+
     test("lists the level's picks by name", async () => {
       const ctx = await getSeedCtx();
       const characterId = await createSeedCharacter(ctx);

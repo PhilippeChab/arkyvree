@@ -61,7 +61,9 @@ export default new Hono<ApiKeyContext>()
     validate(
       "json",
       z.object({
-        charges: charges.default(null),
+        charges: charges
+          .optional()
+          .meta({ description: "Its charges, for an item that has them: the item's own, all left, when left out" }),
         equipped,
         force,
         itemId: z.string().uuid(),

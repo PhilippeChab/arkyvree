@@ -22,6 +22,11 @@ interface LevelPicks {
   spells: { aptitudeId: string; spellId: string }[];
 }
 
+/** One of an inventory entry's charges, as a write names it: none named only by a body that can leave them out. */
+type NamedCharges<T extends { charges?: Charges | null }> = undefined extends T["charges"]
+  ? number | null | undefined
+  : number | null;
+
 /** Picks grouped by the aptitude they're picked in, as the level saves take them. */
 function groupByAptitude<K extends "featId" | "spellId">(
   picks: ({ aptitudeId: string } & Record<K, string>)[],
@@ -93,8 +98,9 @@ export function toInventoryEditRequest(
 }
 
 /**
- * An inventory entry's write, its charges the service's own two numbers, and whether it's equipped read off its
- * location when the body leaves it out: refused when the two are at odds.
+ * An inventory entry's write, its charges the service's own two numbers (none named when the body leaves them out: an
+ * added item's own), and whether it's equipped read off its location when the body leaves it out: refused when the two
+ * are at odds.
  */
 export function toInventoryRequest<
   T extends { charges?: Charges | null; equipped?: boolean; location: ItemLocation | null },
@@ -102,8 +108,9 @@ export function toInventoryRequest<
   return {
     ...body,
     ...toPlacement(equipped, location),
-    remainingCharges: charges?.remaining ?? null,
-    totalCharges: charges?.total ?? null,
+    // Left out, an added item's own: none named, which only a body that can leave them out names
+    remainingCharges: (charges === undefined ? undefined : (charges?.remaining ?? null)) as NamedCharges<T>,
+    totalCharges: (charges === undefined ? undefined : (charges?.total ?? null)) as NamedCharges<T>,
   };
 }
 

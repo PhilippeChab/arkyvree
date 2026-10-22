@@ -308,6 +308,7 @@ export default class SkillsComponent extends CharacterComponent<LoadedCharacterD
         issues.push({
           category: "skills",
           message: `${skill.name}: rank ${skill.rank} exceeds ${skill.innate ? "class" : "cross-class"} max of ${maxRank}`,
+          subject: `${skill.name}: rank`,
         });
       }
     }

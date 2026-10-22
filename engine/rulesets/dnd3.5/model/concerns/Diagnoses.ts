@@ -38,6 +38,7 @@ export function Diagnoses<B extends Constructor<CharacterState>>(Base: B) {
             available > 0
               ? `${name}: ${available} unspent slot(s) (${spent}/${allowed})`
               : `${name}: overspent by ${Math.abs(available)} (${spent}/${allowed})`,
+          subject: `${name}: ${available > 0 ? "unspent" : "overspent"}`,
         });
       };
       const aptitudes = this.components.aptitudes.getAptitudes();
@@ -168,11 +169,16 @@ export function Diagnoses<B extends Constructor<CharacterState>>(Base: B) {
       const budget: RulesIssue[] = [];
       const { available, spent, total } = this.components.skills.getSkillBudget();
       if (available > 0) {
-        budget.push({ category: "skills", message: `${available} unspent skill point(s) (${spent}/${total})` });
+        budget.push({
+          category: "skills",
+          message: `${available} unspent skill point(s) (${spent}/${total})`,
+          subject: "Skill points: unspent",
+        });
       } else if (available < 0) {
         budget.push({
           category: "skills",
           message: `Overspent by ${Math.abs(available)} skill point(s) (${spent}/${total})`,
+          subject: "Skill points: overspent",
         });
       }
       const characterLevel = this.components.identity.getIdentity().meta.level;

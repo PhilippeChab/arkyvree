@@ -50,12 +50,6 @@ const TWO_HANDED_SIZES = SIZE_OPTIONS.slice(SIZE_OPTIONS.indexOf("Large"));
  * other item to its own slot (or anywhere, for one worn nowhere in particular); and where an entry is worn.
  */
 export default class ItemPlacement {
-  /** The charges an item comes with: its `ITEM_HAS_CHARGES` count (0 when it names none), none without the property. */
-  private static chargesOf(properties: ItemProperty[]) {
-    const charges = properties.find((property) => property.type === ITEM_HAS_CHARGES);
-    return charges ? Number.parseInt(charges.value, 10) || 0 : null;
-  }
-
   /** The locations an item of `type` goes to when its type sets them (a weapon's hands), else none: any. */
   private static locationsOf(type: string | null): readonly ItemLocation[] | undefined {
     return ItemPlacement.isLocatedType(type) ? ITEM_TYPE_LOCATIONS[type] : undefined;
@@ -69,6 +63,12 @@ export default class ItemPlacement {
     const size = properties.find((property) => property.type === WEAPON_SIZE)?.value;
     if (item.type === "Weapon" && ItemPlacement.isTwoHanded(size)) return ["Two Handed"];
     return ItemPlacement.locationsOf(item.type) ?? (item.slot === "Other" ? ["Other"] : LOCATION_OPTIONS);
+  }
+
+  /** The charges an item comes with: its `ITEM_HAS_CHARGES` count (0 when it names none), none without the property. */
+  static chargesOf(properties: ItemProperty[]) {
+    const charges = properties.find((property) => property.type === ITEM_HAS_CHARGES);
+    return charges ? Number.parseInt(charges.value, 10) || 0 : null;
   }
 
   /**

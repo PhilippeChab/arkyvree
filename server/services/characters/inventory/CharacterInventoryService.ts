@@ -19,8 +19,9 @@ class CharacterInventoryService {
     quantity: number,
     equipped: boolean,
     location: ItemLocation | null,
-    totalCharges: number | null,
-    remainingCharges: number | null,
+    // Neither named: the item's own
+    totalCharges: number | null | undefined,
+    remainingCharges: number | null | undefined,
     weaponSets: number[] | undefined,
     force: boolean = false,
   ) {

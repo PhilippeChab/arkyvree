@@ -106,6 +106,8 @@ describe("v1 ruleset customization", () => {
     );
     const param = { entityId, id, kind: "classes" } as const;
 
+    // One naming neither a target nor a chaining operator is neither a check nor a group
+    await expectStatus(route.requirements.$post({ json: { group: "1" }, param }), 400);
     const group = await expectOk(route.requirements.$post({ json: { chainingOperator: "and", group: "1" }, param }));
     expect(group).toMatchObject({ chainingOperator: "and", group: "1", target: null });
     const check = {

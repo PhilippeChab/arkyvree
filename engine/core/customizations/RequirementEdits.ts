@@ -41,6 +41,9 @@ export default class RequirementEdits extends CustomizationEdits<Requirement> {
       throw new RulesError("invalid", "A requirement's kind can't change: delete it and add a check or a group");
     // An update of a check without a target keeps the stored one
     const target = body.target ?? kept?.target;
+    // A new one is a check (its target) or a group (its chaining operator): one with neither is neither
+    if (!kept && !target && body.chainingOperator === undefined)
+      throw new RulesError("invalid", "A requirement is a check (its target) or a group (its chaining operator)");
     if (!target) return { chainingOperator: body.chainingOperator, level: body.level };
     // An update without a value keeps the stored one, checked against the target's type all the same
     const valueType = targetPaths.checkValue(catalogs, {

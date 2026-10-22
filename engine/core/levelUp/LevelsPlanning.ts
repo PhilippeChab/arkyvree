@@ -204,14 +204,16 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
       const { before, withLevel } = this.projectLevelContribution(characterLevelId, klassLevel.id, edit);
       const levelIssues = this.rules.findEditedLevelIssues(issues, this.build(before), this.build(withLevel));
       if (levelIssues.length > 0) {
-        // Each issue counted by its words: one more of the same words than the saved character had is the edit's
+        // Each issue counted by its subject, whatever it counts (a forced level's pool left with fewer slots unspent is
+        // the issue it had): one more of the same subject than the saved character had is the edit's
+        const subjectOf = ({ category, message, subject }: RulesIssue) => `${category}\0${subject ?? message}`;
         const savedCounts = new Map<string, number>();
-        for (const { message } of this.build().validate().issues)
-          savedCounts.set(message, (savedCounts.get(message) ?? 0) + 1);
+        for (const issue of this.build().validate().issues)
+          savedCounts.set(subjectOf(issue), (savedCounts.get(subjectOf(issue)) ?? 0) + 1);
         RulesError.refuseIssues(
-          levelIssues.filter(({ message }) => {
-            const left = savedCounts.get(message) ?? 0;
-            savedCounts.set(message, left - 1);
+          levelIssues.filter((issue) => {
+            const left = savedCounts.get(subjectOf(issue)) ?? 0;
+            savedCounts.set(subjectOf(issue), left - 1);
             return left <= 0;
           }),
         );
