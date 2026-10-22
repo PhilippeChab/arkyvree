@@ -11,6 +11,12 @@ import { Feats, Klasses, Powers } from "@/server/repositories/index.ts";
 import { withEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
 import type { Session } from "@/shared/relations.ts";
 
+/** Which page of a step's options to read: how many a page holds, and its number. */
+interface Pagination {
+  limit: number;
+  page: number;
+}
+
 /** An option described by its picker, as a step's option: its entity, and whether the character may take it. */
 function optionOf(option: {
   description: string | null;
@@ -21,12 +27,6 @@ function optionOf(option: {
 }): StepOption {
   const { description, eligible, id, name, requirementTree } = option;
   return { description, eligible, id, name, ...(requirementTree && { requirementTree }) };
-}
-
-/** Which page of a step's options to read: how many a page holds, and its number. */
-interface Pagination {
-  limit: number;
-  page: number;
 }
 
 /**

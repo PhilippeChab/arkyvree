@@ -74,35 +74,6 @@ export interface LevelPlanRequest {
 }
 
 /**
- * An option a step's picker offers, in no game's nouns: its entity, whether the character may take it and what it
- * lacks when not (`requirementTree`), and, a `plan` step's, the position it takes next on its track, the track's last,
- * and how many advancements the character has left (`track`).
- */
-export interface StepOption {
-  description: string | null;
-  eligible: boolean;
-  id: string;
-  name: string;
-  requirementTree?: string;
-  track?: { last: number; left: number; next: number };
-}
-
-/**
- * A group of a `pick` step's options (3.5's feat family), one row for all its members: its entity (its one member's,
- * or the one standing for them), its name, its group (`null` for an option of none), how many it holds, and whether
- * the character may take it.
- */
-export interface StepOptionGroup {
-  count: number;
-  description: string | null;
-  eligible: boolean;
-  group: string | null;
-  id: string;
-  name: string;
-  requirementTree?: string;
-}
-
-/**
  * A level's steps, as its module lists them: the words its advancements take, and its steps, in the wizard's order.
  */
 export interface LevelSteps {
@@ -207,6 +178,35 @@ export interface SpendRow {
 export interface SpentPoints {
   id: string;
   points: number;
+}
+
+/**
+ * An option a step's picker offers, in no game's nouns: its entity, whether the character may take it and what it
+ * lacks when not (`requirementTree`), and, a `plan` step's, the position it takes next on its track, the track's last,
+ * and how many advancements the character has left (`track`).
+ */
+export interface StepOption {
+  description: string | null;
+  eligible: boolean;
+  id: string;
+  name: string;
+  requirementTree?: string;
+  track?: { last: number; left: number; next: number };
+}
+
+/**
+ * A group of a `pick` step's options (3.5's feat family), one row for all its members: its entity (its one member's,
+ * or the one standing for them), its name, its group (`null` for an option of none), how many it holds, and whether
+ * the character may take it.
+ */
+export interface StepOptionGroup {
+  count: number;
+  description: string | null;
+  eligible: boolean;
+  group: string | null;
+  id: string;
+  name: string;
+  requirementTree?: string;
 }
 
 /**
