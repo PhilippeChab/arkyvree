@@ -138,4 +138,7 @@ export const v1SavedLevel = z
       z.strictObject({ aptitudeId: v1Id, name: z.string(), spellId: v1Id, spellLevel: z.number().int().nullable() }),
     ),
   })
-  .meta({ description: "A level a character took: what it picked, as its edit sends it back", id: "SavedLevel" });
+  .meta({
+    description: "A level a character took: what it picked, as its edit sends it back",
+    id: "SavedLevel",
+  });

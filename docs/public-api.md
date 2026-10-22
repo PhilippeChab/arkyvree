@@ -26,11 +26,13 @@ answers in shapes of its own, which stay fixed.
   `/v1`. No key acts for a demo, so a v1 write needs no `denyDemoUser`, which reads the app's session.
 - Its requests are counted per user, whichever keys of theirs ask (`apiKeyRateLimit`: 120 a minute), and a
   character's level choices, which read every option of each pool, its level saves, edits and removals, which build
+  character's level choices, which read every option of each pool, its level saves, edits and removals, which build
   the whole character, a character file's import, which builds the character level by level, its PDFs, which each
   cost a render, and its image uploads apart (`levelChoicesRateLimit`: 20 a minute; `apiLevelSaveRateLimit`: 20;
   `apiImportRateLimit`: 10; `apiExportRateLimit`: 5; `apiAttachmentUploadRateLimit`: 20), which the app's own routes
   count per address. An address's requests are counted before its key is looked up (`apiAddressRateLimit`: 600 a
-  minute), so a wrong key or none, a lookup by digest each, is bounded too.
+  minute), so a wrong key or none, a lookup by digest each, is bounded too, for a client that sends its own address:
+  the address is the first `X-Forwarded-For` entry, as the app's limits read it, which a client can set.
 - A ruleset is read as the app reads it: any ruleset by its id, a private one too, as `/api` answers it to any signed-in
   user. The lists (`GET /v1/rulesets`) list what the user's scope does.
 
