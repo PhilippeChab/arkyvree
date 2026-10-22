@@ -6,13 +6,13 @@ const FILE_NAME_LENGTH = 200;
 /** What a file name can't hold, on any system the file is saved to. */
 const FILE_NAME_RESERVED = /[/\\?%*:|"<>]/g;
 
+/** A text's graphemes: what a reader sees as one character. */
+const GRAPHEMES = new Intl.Segmenter(undefined, { granularity: "grapheme" });
+
 /** A sheet's file name: the character's name ("character" when it has none), what a file name can't hold replaced. */
 export function formatSheetFileName(characterName: string) {
   const name = (characterName || "character").replace(FILE_NAME_RESERVED, "_");
   // Cut between graphemes: a family, a flag or a skin tone is several code points, never cut in two
-  const graphemes = Array.from(
-    new Intl.Segmenter(undefined, { granularity: "grapheme" }).segment(name),
-    (s) => s.segment,
-  );
+  const graphemes = Array.from(GRAPHEMES.segment(name), ({ segment }) => segment);
   return `${graphemes.slice(0, FILE_NAME_LENGTH).join("")}-sheet.pdf`;
 }

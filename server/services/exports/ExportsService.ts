@@ -1,4 +1,4 @@
-import { countJobsToRun, db } from "@/server/database/index.ts";
+import { countJobsToRun, db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError } from "@/server/errors/index.ts";
 import { Exports } from "@/server/repositories/index.ts";
 import type { Session } from "@/shared/relations.ts";
@@ -11,7 +11,8 @@ class ExportsService {
    * whose job is gone reads failed: its job lost it (a worker killed past its last attempt, one deployed past its
    * payload), which a job that fails marks itself. One still queued behind others, or waiting on a worker, stays
    * pending. A pending one's jobs are counted before it's read again: the worker stores the export before it deletes
-   * the job that made it, so an export whose job is gone by then reads as that job left it.
+   * the job that made it, so an export whose job is gone by then reads as that job left it. One still pending is lost,
+   * and stored failed as it's answered so: an attempt that outlived its lock finds it failed, and stores nothing.
    */
   private async readExport<T extends { expiresAt: string; id: string; status: string }>(
     read: () => Promise<T | undefined>,
@@ -25,7 +26,11 @@ class ExportsService {
     if ((await countJobsToRun(toExportJobKey(exportRecord.id))) > 0) return exportRecord;
     // Its job gone, it was stored by then, or lost
     exportRecord = (await read()) ?? exportRecord;
-    return exportRecord.status === "pending" ? { ...exportRecord, status: "failed" as const } : exportRecord;
+    if (exportRecord.status !== "pending") return exportRecord;
+    const { id } = exportRecord;
+    const [lost] = await withTransaction((tx) => Exports.update(tx, { status: "failed" }, { id, status: "pending" }));
+    // Stored between the two reads, it's read as stored
+    return lost ? { ...exportRecord, status: "failed" as const } : ((await read()) ?? exportRecord);
   }
 
   /** An export's file, once it's ready: a pending or failed one has none to download. */

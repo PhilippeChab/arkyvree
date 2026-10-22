@@ -4,6 +4,7 @@ import { sql } from "drizzle-orm";
 
 import { addJob, db } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError } from "@/server/errors/index.ts";
+import { Exports } from "@/server/repositories/index.ts";
 import { ExportsService, toExportJobKey } from "@/server/services/exports/index.ts";
 import { createExport } from "@/tests/support/files.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
@@ -85,5 +86,7 @@ describe("ExportsService.getExportStatus", () => {
     await db.execute(sql`UPDATE ${job} SET locked_at = now() - interval '5 hours' WHERE key = ${key}`);
     expect(await ExportsService.getExportStatus(session, id)).toMatchObject({ id, status: "failed" });
     expect(ExportsService.getExport(session, id)).rejects.toThrow("failed");
+    // Stored failed as it's answered: the attempt that outlived its lock, if it finishes, finds it failed
+    expect((await Exports.findStatus(db, { id, userId: session.userId }))?.status).toBe("failed");
   });
 });

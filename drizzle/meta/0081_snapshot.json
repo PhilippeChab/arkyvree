@@ -2181,7 +2181,7 @@
           "typeSchema": "public",
           "primaryKey": false,
           "notNull": true,
-          "default": "'pending'"
+          "default": "'ready'"
         }
       },
       "indexes": {
