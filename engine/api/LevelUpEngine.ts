@@ -1,4 +1,4 @@
-import { type CharacterInput, LevelRequests } from "@/engine/core/module/index.ts";
+import { type CharacterInput, type LevelPlanRequest, LevelRequests } from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 
 import CharacterHandle from "./CharacterHandle.ts";
@@ -16,9 +16,26 @@ export default class LevelUpEngine extends CharacterHandle {
   /** The requests the flows take, read as the view reads them. */
   private readonly requests = new LevelRequests(this.view.rulesetData);
 
+  /** The level's steps, each its mechanic's: an edit's (`request.editedLevelId`) without its plan step. */
+  private stepsOf(request: { editedLevelId?: string }) {
+    return this.module.levelUp.listSteps(this.view, this.input, request.editedLevelId !== undefined);
+  }
+
   /** A saved level's selections, as its edit opens them: refused when the character has no such level. */
   describeLevel(...args: Args<"describeLevel">) {
     return this.module.levelUp.describeLevel(this.view, this.input, ...args);
+  }
+
+  /**
+   * The plan's answer (`request`, read by its level's steps, each id the view's): each step in its mechanic's shape,
+   * Add Level's plan and Edit Level's level alike.
+   */
+  describePlan(...[request]: Args<"describePlan">) {
+    return this.module.levelUp.describePlan(
+      this.view,
+      this.input,
+      this.requests.resolvePlan(this.stepsOf(request), request),
+    );
   }
 
   /** The wizard's preview of the levels the character plans, each with its ability increase. */
@@ -36,6 +53,11 @@ export default class LevelUpEngine extends CharacterHandle {
     return this.module.levelUp.describeSteps(this.view, this.input, this.requests.resolveQuery(query));
   }
 
+  /** A level's steps, in the wizard's order, each its mechanic's: an edit's (`edited`) without its plan step. */
+  listSteps(...[edited]: Args<"listSteps">) {
+    return this.module.levelUp.listSteps(this.view, this.input, edited);
+  }
+
   /** The class picker, with what the wizard plans so far: its filters, and a page of classes described. */
   openClassPicker(...[planned]: Args<"openClassPicker">) {
     return this.module.levelUp.openClassPicker(this.view, this.input, this.requests.resolvePlanned(planned));
@@ -49,6 +71,12 @@ export default class LevelUpEngine extends CharacterHandle {
   /** A power picker: what it offers and leaves out, and a page of options described. */
   openPowerPicker(...[query]: Args<"openPowerPicker">) {
     return this.module.levelUp.openPowerPicker(this.view, this.input, this.requests.resolvePickQuery(query));
+  }
+
+  /** Step `step`'s picker over the plan: the kind it reads a page of, and its picker. */
+  openStepPicker(...[step, query]: Args<"openStepPicker">) {
+    const resolved = this.requests.resolveStepPicker(this.stepsOf(query.plan), step, query);
+    return this.module.levelUp.openStepPicker(this.view, this.input, step, resolved);
   }
 
   /** What the character's bonded creatures become as its stored levels make them, from their rows (`bonded`). */
@@ -70,12 +98,43 @@ export default class LevelUpEngine extends CharacterHandle {
   }
 
   /**
+   * A plan's edit of the character's saved level `characterLevelId` (`request`, read by an edit's steps, each id the
+   * view's): what it writes, checked, and what the bonded creatures become with it.
+   */
+  planLevelEdit(bonded: CharacterInput[], characterLevelId: string, request: LevelPlanRequest, force: boolean) {
+    const plan = { ...request, editedLevelId: characterLevelId };
+    const edit = this.module.levelUp.readEdit(
+      this.view,
+      this.input,
+      this.requests.resolvePlan(this.stepsOf(plan), plan),
+    );
+    return this.module.levelUp.planEdit(
+      this.view,
+      this.input,
+      this.resolveBonded(bonded),
+      characterLevelId,
+      edit,
+      force,
+    );
+  }
+
+  /**
    * The levels a level-up saves, checked, with the picks spread over them: the rows the save writes, and what the
    * master's bonded creatures become with them. The character with them is refused with what it fails, unless forced.
    */
   planLevels(...[bonded, request, force]: Args<"planLevels">) {
     const resolved = this.requests.resolveLevelUp(request);
     return this.module.levelUp.planLevels(this.view, this.input, this.resolveBonded(bonded), resolved, force);
+  }
+
+  /**
+   * A plan's level-up (`request`, read by its level's steps, each id the view's): the rows its save writes, checked, and
+   * what the master's bonded creatures become with them.
+   */
+  planLevelUp(bonded: CharacterInput[], request: LevelPlanRequest, force: boolean) {
+    const resolved = this.requests.resolvePlan(this.stepsOf(request), request);
+    const levelUp = this.module.levelUp.readLevelUp(this.view, this.input, resolved);
+    return this.module.levelUp.planLevels(this.view, this.input, this.resolveBonded(bonded), levelUp, force);
   }
 
   /** The character's last level removed: the level that goes, and what its bonded creatures become without it. */

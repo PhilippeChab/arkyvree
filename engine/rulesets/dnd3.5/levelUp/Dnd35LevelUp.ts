@@ -1,4 +1,10 @@
-import { type CharacterInput, LevelUpPart, type PlannedSoFar } from "@/engine/core/module/index.ts";
+import {
+  type CharacterInput,
+  type LevelPlanRequest,
+  LevelUpPart,
+  type PlannedSoFar,
+  type StepPickerQuery,
+} from "@/engine/core/module/index.ts";
 import type { RulesIssue } from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import type { Dnd35Descriptions } from "@/engine/rulesets/dnd3.5/descriptions.ts";
@@ -12,6 +18,7 @@ import type { Character } from "@/shared/relations.ts";
 
 import BondedPlans from "./BondedPlans.ts";
 import Dnd35LevelSelections from "./Dnd35LevelSelections.ts";
+import LevelPlans from "./LevelPlans.ts";
 import LevelUpPlan from "./LevelUpPlan.ts";
 import LevelUpPreview from "./LevelUpPreview.ts";
 import LevelUpSteps from "./LevelUpSteps.ts";
@@ -37,6 +44,11 @@ export default class Dnd35LevelUp extends LevelUpPart<Dnd35Descriptions, Detaile
     ...args: Parameters<Dnd35LevelSelections["describeLevel"]>
   ) {
     return new Dnd35LevelSelections(view, character, this).describeLevel(...args);
+  }
+
+  /** The plan's answer: Add Level's plan or Edit Level's level, each step in its mechanic's shape. */
+  override describePlan(view: RulesetView, character: CharacterInput, request: LevelPlanRequest) {
+    return new LevelPlans(view, character, this).describePlan(request);
   }
 
   /** The level-up wizard's preview of the levels the character plans, each with its ability increases. */
@@ -126,6 +138,11 @@ export default class Dnd35LevelUp extends LevelUpPart<Dnd35Descriptions, Detaile
     return { average: Math.ceil(hd / 2), max: hd, min: 1 };
   }
 
+  /** A 3.5 level's steps, in the wizard's order: its class plan (but an edit's), hit points, ability increase, skills, feats and spells. */
+  override listSteps(view: RulesetView, character: CharacterInput, edited: boolean) {
+    return new LevelPlans(view, character, this).listSteps(edited);
+  }
+
   /**
    * The class picker for the character, with what the level-up wizard plans so far, its skill points spread over its
    * planned levels as the save spreads them: its filters, a page described.
@@ -152,6 +169,22 @@ export default class Dnd35LevelUp extends LevelUpPart<Dnd35Descriptions, Detaile
     return new PowerPicker(view, character, query);
   }
 
+  /**
+   * Step `step`'s picker over the plan: the class picker (the class plan's), or a feat or spell pool's at the level its
+   * next pick lands on.
+   */
+  override openStepPicker(view: RulesetView, character: CharacterInput, step: string, query: StepPickerQuery) {
+    const read = new LevelPlans(view, character, this).readStepPicker(step, query);
+    switch (read.kind) {
+      case "feats":
+        return { kind: read.kind, picker: this.openFeatPicker(view, character, read.query) };
+      case "klasses":
+        return { kind: read.kind, picker: this.openClassPicker(view, character, read.planned) };
+      case "powers":
+        return { kind: read.kind, picker: this.openPowerPicker(view, character, read.query) };
+    }
+  }
+
   /** What a master's bonded creatures become with it: each kind's creature removed, kept or made, at its hit dice. */
   override planBondedCreatures(
     view: RulesetView,
@@ -160,5 +193,15 @@ export default class Dnd35LevelUp extends LevelUpPart<Dnd35Descriptions, Detaile
     bonded: CharacterInput[],
   ) {
     return new BondedPlans(view.rulesetData).planMasterCreatures(master, record, bonded);
+  }
+
+  /** An edit as its save writes it: the edited level's hit points, ability increases and picks. */
+  override readEdit(view: RulesetView, character: CharacterInput, request: LevelPlanRequest) {
+    return new LevelPlans(view, character, this).readEdit(request);
+  }
+
+  /** A level-up as its save writes it: its levels, each with its hit points and ability increases, and its picks. */
+  override readLevelUp(view: RulesetView, character: CharacterInput, request: LevelPlanRequest) {
+    return new LevelPlans(view, character, this).readLevelUp(request);
   }
 }

@@ -138,6 +138,16 @@ export default class LevelUpSteps extends LevelUpState {
     return { ...step, editedLevel };
   }
 
+  /** Every step of the step's level, by its name: its ability increase, its skills, its feats and its powers. */
+  describeLevelSteps(step: LevelQuery) {
+    return {
+      abilities: this.describeAbilityStep(step),
+      feats: this.describeFeatStep(step),
+      powers: this.describePowerStep(step),
+      skills: this.describeSkillStep(step),
+    };
+  }
+
   /**
    * The wizard's step `name` of the step's level, named for which it is: refused when 3.5 has no such step, or when it
    * reads the level's class (its skills, feats and powers) and the step names none.

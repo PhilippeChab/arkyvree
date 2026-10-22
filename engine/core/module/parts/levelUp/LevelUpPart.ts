@@ -16,6 +16,7 @@ import type { RulesetView } from "@/engine/core/view/index.ts";
 import type { Character, Klass } from "@/shared/relations.ts";
 
 import type { WizardStep } from "./descriptions.ts";
+import type { LevelPlanAnswer, LevelPlanRequest, LevelStep, StepPickerQuery } from "./mechanics.ts";
 import type { BondedCreaturesPlan, LevelEditPlan, LevelRemovalPlan, LevelsPlan } from "./plans.ts";
 import type {
   FeatPickQuery,
@@ -51,6 +52,12 @@ export default abstract class LevelUpPart<
 
   /** A saved level's selections, as its edit opens them: refused when the character has no such level. */
   abstract describeLevel(view: RulesetView, character: CharacterInput, characterLevelId: string): D["levelSelections"];
+
+  /**
+   * The plan's answer (`request`, each id the view's): each step's answer in its mechanic's shape, by its name, and the
+   * plan's advancements; Add Level's plan, and Edit Level's level in its place (`request.editedLevelId`) alike.
+   */
+  abstract describePlan(view: RulesetView, character: CharacterInput, request: LevelPlanRequest): LevelPlanAnswer;
 
   /**
    * The wizard's preview of the levels the character plans (`request`), each with its ability increases, and of what the
@@ -109,6 +116,12 @@ export default abstract class LevelUpPart<
   /** The hit points a level of a class with hit die `hd` gains: the least, the most, and the average. */
   abstract hitPointsOf(hd: number): LevelHitPoints;
 
+  /**
+   * A level's steps, in the wizard's order, each its mechanic's: an edit's (`edited`) without the step that plans the
+   * track its level is on, which an edit keeps.
+   */
+  abstract listSteps(view: RulesetView, character: CharacterInput, edited: boolean): readonly LevelStep[];
+
   /** The class picker, with what the wizard plans so far: the classes it offers, each with the level it would take. */
   abstract openClassPicker(
     view: RulesetView,
@@ -129,6 +142,17 @@ export default abstract class LevelUpPart<
     character: CharacterInput,
     query: PowerPickQuery,
   ): OpenedPicker<PickFilters, { id: string }, D["powerOption"]>;
+
+  /**
+   * Step `step`'s picker over the plan (`query`, each id the view's), at the advancement its pick lands on: the kind it
+   * reads a page of, and its picker. Refused for a step that opens none.
+   */
+  abstract openStepPicker(
+    view: RulesetView,
+    character: CharacterInput,
+    step: string,
+    query: StepPickerQuery,
+  ): D["stepPicker"];
   /**
    * What bonded creatures (`bonded`, their rows) become with their master as `master` builds it, kind by kind, from its
    * row (`record`), which a creature it makes takes after.
@@ -139,6 +163,19 @@ export default abstract class LevelUpPart<
     record: Character,
     bonded: CharacterInput[],
   ): BondedCreaturesPlan;
+
+  /**
+   * A plan request's edit (`request`, each id the view's) of the level it edits (`request.editedLevelId`), as its save
+   * writes it: the level's hit points, ability increases and picks.
+   */
+  abstract readEdit(view: RulesetView, character: CharacterInput, request: LevelPlanRequest): LevelEditRequest;
+
+  /**
+   * A plan request's level-up (`request`, each id the view's), as its save writes it: its levels, each with its hit
+   * points and ability increases, and its picks, pooled over them. Refused when an advancement has no value its save
+   * needs.
+   */
+  abstract readLevelUp(view: RulesetView, character: CharacterInput, request: LevelPlanRequest): LevelUpRequest;
 
   /** What a master's bonded creatures (`bonded`, their rows) become as its saved levels make them. */
   planBonded(view: RulesetView, character: CharacterInput, bonded: CharacterInput[]): BondedCreaturesPlan {

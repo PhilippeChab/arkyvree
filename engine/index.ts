@@ -26,6 +26,7 @@ export type {
   ImportPlan,
   ImportReportDescription,
   ImportSource,
+  LevelPlanRequest,
   LevelQuery,
   LevelRequest,
   LevelRows,
@@ -38,6 +39,8 @@ export type {
   PreviewRequest,
   RulesDescription,
   RulesWord,
+  StepPayload,
+  StepPickerQuery,
 } from "./core/module/index.ts";
 export { default as RulesError } from "./core/RulesError.ts";
 export type { EntityCustomizations, RulesetData, RulesetRawData } from "./core/view/index.ts";

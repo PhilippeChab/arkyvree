@@ -1,6 +1,33 @@
 export type { LevelStepKind, WizardStep } from "./descriptions.ts";
 export { default as LevelUpPart } from "./LevelUpPart.ts";
 export type {
+  ChoiceOption,
+  ChooseAnswer,
+  ChosenOption,
+  GrantedEntity,
+  LevelPlanAnswer,
+  LevelPlanRequest,
+  LevelStep,
+  PickAnswer,
+  PickedEntity,
+  PickPool,
+  PlanAnswer,
+  PlannedAdvancement,
+  PlannedAdvancementAnswer,
+  SpendAnswer,
+  SpendRow,
+  SpentPoints,
+  StepAnswer,
+  StepMechanic,
+  StepPayload,
+  StepPayloads,
+  StepPickerQuery,
+  TierRoom,
+  ValueAnswer,
+  ValueBounds,
+} from "./mechanics.ts";
+export { default as Payloads } from "./Payloads.ts";
+export type {
   AbilityIncrease,
   BondedCreaturesPlan,
   BondedLevelsPlan,
