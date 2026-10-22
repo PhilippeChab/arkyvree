@@ -12,7 +12,7 @@ export const v1Target = z
       description:
         "The record's kind, as v1's routes name it (`characters`, `campaigns`, `classes`, `spells`, `exports`…), or " +
         "its table where no v1 route reads it for everyone a notice of it goes to (`invites`, `contributors`, " +
-        "`players`…)",
+        "`player_characters`…), its id then the app's (a campaign character's PDF notice names the character's)",
     }),
   })
   .meta({ description: "A record an activity or a notification is about", id: "Target" });

@@ -153,7 +153,9 @@ Each write calls the service the app's own route calls, its body a v1 shape tran
 - **Notifications** (`/v1/notifications`, the unread ones alone with `unreadOnly`) and **activities**
   (`/v1/activities`), from the last three months: a page of them, a notification marked read, or all of them but the
   invites, which stay unread until they're answered. Each names what it's about (`target`) by its kind as v1 names it
-  (`classes`, `spells`, `campaigns`, `exports`…) and its id, which that kind's routes read.
+  (`classes`, `spells`, `campaigns`, `exports`…) and its id, which that kind's routes read; a record no v1 route reads
+  for everyone its notice goes to keeps its table's name (`invites`, `contributors`, `player_characters`), and its id
+  is the app's (a campaign character's PDF notice names the character's).
 - **Attachments** (`/v1/attachments`): a record's image (a user's avatar, a character's portrait), read, removed, and
   uploaded in one request: `POST /v1/attachments`, a `multipart/form-data` body with the slot (`recordType`, `recordId`,
   `name`) and the `file`, replacing the image there. The server reads the image's type from its bytes, then stores the
@@ -180,7 +182,8 @@ The export is stored as the PDF is queued (`enqueueCharacterPdf`), its file none
 (`account.exports.status`, migration `0081_export-status`), and its id goes in the job's payload: the job
 (`generatePdf.ts`) fills its file in and makes it `ready`, or marks it `failed`, and notifies the user as before, the
 notification naming the export (`data.exportId`). A pending export keeps a day, a ready one an hour, and the daily
-cleanup deletes either once it's past. A job queued before exports were stored pending stores a new one, as it did;
-the pending one it never fills reads `failed` once that job is done: each export's job is queued under its key
+cleanup deletes either once it's past. A job an older worker runs, which reads no `exportId` (in the minutes between
+the web app's deploy and the worker's, `docs/deployment.md`), stores a new export, as it did; the pending one it never
+fills reads `failed` once that job is done: each export's job is queued under its key
 (`toExportJobKey`), which `countJobsToRun` looks up in the worker's queue, a locked job counted as running: a last
 attempt locked for more than 15 minutes, far past what a render takes, is taken for lost, its worker killed.
