@@ -9,7 +9,7 @@ import type { Session } from "@/shared/relations.ts";
 class ApiKeysService {
   /**
    * A new key named `name`, expiring `expiresInDays` from now (`null`: never), with its token: the only time the token
-   * is shown, which the database keeps no copy of. Refused past `MAX_API_KEYS`: each key's requests are counted apart.
+   * is shown, which the database keeps no copy of. Refused past `MAX_API_KEYS`.
    */
   async createKey(session: Session, name: string, expiresInDays: number | null) {
     const expiresAt =

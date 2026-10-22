@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 
 import { NotFoundError } from "@/server/errors/index.ts";
-import { apiKeyMiddleware, apiKeyRateLimit } from "@/server/middlewares/index.ts";
+import { apiAddressRateLimit, apiKeyMiddleware, apiKeyRateLimit } from "@/server/middlewares/index.ts";
 
 import characters from "./characters/index.ts";
 import rulesets from "./rulesets/index.ts";
@@ -12,6 +12,8 @@ import rulesets from "./rulesets/index.ts";
  * API changes with its screens.
  */
 export default new Hono()
+  // Counted before the key's lookup, which a wrong key or none would cost uncounted
+  .use(apiAddressRateLimit)
   .use(apiKeyMiddleware)
   .use(apiKeyRateLimit)
   .route("/characters", characters)
