@@ -4,7 +4,6 @@ import {
   LevelUpPart,
   type PlannedSoFar,
 } from "@/engine/core/module/index.ts";
-import type { RulesIssue } from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import type { Dnd35Descriptions } from "@/engine/rulesets/dnd3.5/descriptions.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
@@ -14,7 +13,6 @@ import FeatPicker from "@/engine/rulesets/dnd3.5/pickers/FeatPicker.ts";
 import PowerPicker from "@/engine/rulesets/dnd3.5/pickers/PowerPicker.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import type { Character } from "@/shared/relations.ts";
-import { MAX_SPELL_LEVEL } from "@/vocabulary/dnd3.5/spells.ts";
 
 import BondedPlans from "./BondedPlans.ts";
 import Dnd35LevelSelections from "./Dnd35LevelSelections.ts";
@@ -29,25 +27,6 @@ import LevelUpSteps from "./LevelUpSteps.ts";
  * core's flows read, with which it removes a level and checks a save and an edit.
  */
 export default class Dnd35LevelUp extends LevelUpPart<Dnd35Descriptions, DetailedCharacter> {
-  /**
-   * The slots a character's pools allow, by name as their issues name them: a pool's own count, and a spell list's at
-   * each spell level (`Wizard Spells (level 1)`), which its tables give and its own count leaves at none.
-   */
-  private static allowedOf(character: DetailedCharacter) {
-    const { aptitudes } = character.components;
-    const allowed = new Map<string, number>();
-    for (const [key, aptitude] of Object.entries(aptitudes.getAptitudes())) {
-      allowed.set(aptitude.name, aptitude.allowed);
-      if (!aptitudes.isLeveledAptitude(key)) continue;
-      const levels = aptitude as unknown as Record<string, { allowed: number } | undefined>;
-      for (let level = 0; level <= MAX_SPELL_LEVEL; level++) {
-        const slots = levels[String(level)];
-        if (slots) allowed.set(`${aptitude.name} (level ${level})`, slots.allowed);
-      }
-    }
-    return allowed;
-  }
-
   /** The hit points a level counts before they're rolled. */
   override readonly unrolledLevelHp = LevelRules.UNROLLED_LEVEL_HP;
 
@@ -98,23 +77,6 @@ export default class Dnd35LevelUp extends LevelUpPart<Dnd35Descriptions, Detaile
     ...args: Parameters<LevelUpPlan["distributePicks"]>
   ) {
     return new LevelUpPlan(view, character, this).distributePicks(...args);
-  }
-
-  /**
-   * The issues an edited level answers for: all the character's (`issues`) but those of the pools the level doesn't add
-   * to, which the levels before it or after it give. A level adds to a pool the character allows more of with it
-   * (`withLevel`) than without it (`before`).
-   */
-  override findEditedLevelIssues(issues: RulesIssue[], before: DetailedCharacter, withLevel: DetailedCharacter) {
-    const allowedBefore = Dnd35LevelUp.allowedOf(before);
-    const owned = new Set<string>();
-    for (const [name, allowed] of Dnd35LevelUp.allowedOf(withLevel))
-      if (allowed > (allowedBefore.get(name) ?? 0)) owned.add(name);
-
-    // A pool's issue names it whole (a leveled one with its level): not a pool its name begins ("Bonus Feats (Wizard)")
-    const isOwned = ({ message, subject = message }: RulesIssue) =>
-      [...owned].some((name) => subject.startsWith(`${name}: `) || subject.startsWith(`${name} (level `));
-    return issues.filter((issue) => issue.category !== "aptitudes" || isOwned(issue));
   }
 
   /** The pools a save's picks overfill, as the character holding them counts them. */

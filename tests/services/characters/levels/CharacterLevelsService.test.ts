@@ -1862,6 +1862,36 @@ describe("LevelsService", () => {
       await edit(true);
     });
 
+    test("refuses an edit leaving a pool overspent by a slot its feat gave that a later level spent", async () => {
+      const { ctx, characterId, levelIds } = await setupMulticlass(2);
+      const [barbarian1, fighter1, fighter2] = levelIds;
+      const general = ctx.aptMap["General"]!;
+      const bonus = ctx.aptMap["Fighter Bonus Feat"]!;
+      // A bonus feat that gives a General slot
+      const [extra] = await insertRows(featsInRules, [{ name: `Extra Slot ${uniqueId()}`, rulesetId: ctx.rulesetId }]);
+      await FeatsAptitudes.create(db, { aptitudeId: bonus, featId: extra!.id });
+      const slot = { operator: "add", target: "aptitudes.general.allowed", value: "1", valueType: "number" } as const;
+      await Modifiers.create(db, { ...slot, sourceId: extra!.id, sourceType: "feats" });
+      invalidateSeededRuleset(ctx.rulesetId);
+      // The first fighter level takes it, the second spends it: General's three slots all spent
+      await insertRows(levelFeatsInCharacter, [
+        { aptitudeId: general, characterLevelId: barbarian1!, featId: ctx.featMap["Toughness"]! },
+        { aptitudeId: bonus, characterLevelId: fighter1!, featId: extra!.id },
+        { aptitudeId: general, characterLevelId: fighter2!, featId: ctx.featMap["Great Fortitude"]! },
+        { aptitudeId: general, characterLevelId: fighter2!, featId: ctx.featMap["Iron Will"]! },
+      ]);
+
+      // The first fighter level swaps it for another: General overspent by one, though that level gives it no slot
+      const feats = { [bonus]: [ctx.featMap["Weapon Focus: Longsword"]!] };
+      const edit = (force: boolean) =>
+        CharacterLevelsService.updateLevel(session, characterId, fighter1!, 8, [], {}, feats, {}, force);
+      expect(await answerTo(() => edit(false))).toMatchObject({
+        status: 400,
+        body: { issues: [expect.objectContaining({ message: expect.stringMatching(/General: overspent by 1/) })] },
+      });
+      await edit(true);
+    });
+
     test("lists the level's picks by name", async () => {
       const ctx = await getSeedCtx();
       const characterId = await createSeedCharacter(ctx);

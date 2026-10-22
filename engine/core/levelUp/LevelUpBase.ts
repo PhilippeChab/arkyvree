@@ -8,7 +8,7 @@ import {
   type LevelRequest,
   type LevelRows,
 } from "@/engine/core/module/index.ts";
-import RulesError, { type RulesIssue } from "@/engine/core/RulesError.ts";
+import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetData, RulesetView } from "@/engine/core/view/index.ts";
 import type { Character, Klass, KlassLevel } from "@/shared/relations.ts";
 
@@ -42,11 +42,6 @@ export interface LevelUpRules<C> {
     levels: PlannedClassLevel[],
     picks: LevelPicks,
   ): LevelPicks[];
-  /**
-   * The issues an edited level answers for, of the character's with it (`issues`): read off the character as it was
-   * before the level (`before`), and with the level alone after that (`withLevel`).
-   */
-  findEditedLevelIssues(issues: RulesIssue[], before: C, withLevel: C): RulesIssue[];
   /** The pools picks (`picks`) overfill in the character holding them (`holder`, built from `input` with them). */
   findOverfullPools(
     view: RulesetView,
