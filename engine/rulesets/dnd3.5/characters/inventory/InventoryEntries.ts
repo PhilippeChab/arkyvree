@@ -78,7 +78,9 @@ export default class InventoryEntries {
       const kept =
         !!held?.equipped &&
         held.location === location &&
-        String(heldSets ?? held.weaponSets) === String(placed.weaponSets);
+        // Its sets as the plan stores them: each once, in order
+        String(InventoryEntries.placementOf({ ...held, weaponSets: heldSets ?? held.weaponSets }).weaponSets) ===
+          String(placed.weaponSets);
       new Equipping(view, character).checkEquip(
         { id: entry.id, item: entry.item },
         location,

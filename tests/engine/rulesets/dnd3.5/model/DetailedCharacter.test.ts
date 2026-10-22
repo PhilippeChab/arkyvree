@@ -2251,8 +2251,11 @@ describe("DetailedCharacter", () => {
         detailed.validate().issues.filter((i) => i.category === "integrity");
       expect(integrityIssues(await build(character))).toEqual([
         {
+          // Measured as a pool's slots are: an edit that leaves fewer of them doesn't bring it
+          amount: 1,
           category: "integrity",
           message: "The ruleset has no General aptitude: this character's 1 general feat(s) count toward none",
+          subject: "General feats: unplaced",
         },
       ]);
 
