@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { type ApiKeyContext, describeRoute, validate } from "@/server/middlewares/index.ts";
 import {
+  classParams,
   hitDie,
   levelFeats,
   levelSaves,
@@ -18,7 +19,7 @@ import {
   v1NamedList,
 } from "@/server/routers/v1/schemas/content.ts";
 import { V1 } from "@/server/routers/v1/translators/V1.ts";
-import { classParams, CONTENT_FILTERS, entityDescription, fields } from "@/server/routers/v1/validation.ts";
+import { CONTENT_FILTERS, entityDescription, fields } from "@/server/routers/v1/validation.ts";
 import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
 import { ClassLevelsService } from "@/server/services/rulesets/classes/levels/index.ts";
 import { ClassProgressionService } from "@/server/services/rulesets/classes/progression/index.ts";

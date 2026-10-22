@@ -60,18 +60,15 @@ export function limitRate(
 }
 
 /**
- * At most `limit` requests per `windowMs` with each API key, or `per` user its keys act as: the key the public API's
+ * At most `limit` requests per `windowMs` of each user, whatever API keys of theirs ask: the user the public API's
  * sign-in (`apiKey.ts`) found, which runs before. Past it, `TooManyRequestsError`. Off in the tests.
  */
-export function limitRatePerKey(
-  { per = "key", ...options }: { limit: number; per?: "key" | "user"; windowMs: number },
-  enabled = !isTest(),
-) {
+export function limitRatePerUser(options: { limit: number; windowMs: number }, enabled = !isTest()) {
   if (!enabled) return noop;
   return limitBy<ApiKeyContext>(options, (c) => {
     // The sign-in sets it: a limit on a route without it is the code's mistake, which the tests' disabled limits miss
-    const key = c.var.requestApiKey;
-    if (!key) throw new InternalError("A per-key rate limit runs after the API key's sign-in");
-    return per === "user" ? `user:${key.userId}` : `key:${key.id}`;
+    const session = c.var.requestSession;
+    if (!session) throw new InternalError("A per-user rate limit runs after the API key's sign-in");
+    return `user:${session.userId}`;
   });
 }

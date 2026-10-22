@@ -1,4 +1,4 @@
-import { limitRate, limitRatePerKey } from "./limitRate.ts";
+import { limitRate, limitRatePerUser } from "./limitRate.ts";
 
 /** The character files a minute an import reads whole: the app's per address, the public API's per user. */
 const IMPORTS_PER_MINUTE = 10;
@@ -15,19 +15,19 @@ export const apiAddressRateLimit = limitRate({ windowMs: MINUTE, limit: 600 });
  * The public API's imports of a character file, counted per user, whatever keys of theirs ask: as many a minute as the
  * app's own allow an address.
  */
-export const apiImportRateLimit = limitRatePerKey({ windowMs: MINUTE, limit: IMPORTS_PER_MINUTE, per: "user" });
+export const apiImportRateLimit = limitRatePerUser({ windowMs: MINUTE, limit: IMPORTS_PER_MINUTE });
 
 /**
  * The public API's requests, counted per user, whatever keys of theirs ask: an agent's run reads a character and its
  * choices a few times a level. Per user, a user's ten keys get no more than one.
  */
-export const apiKeyRateLimit = limitRatePerKey({ windowMs: MINUTE, limit: 120, per: "user" });
+export const apiKeyRateLimit = limitRatePerUser({ windowMs: MINUTE, limit: 120 });
 
 /**
  * The public API's level saves and edits, counted per user, whatever keys of theirs ask: each builds and checks the
  * whole character under its lock, as a character's level choices read every option.
  */
-export const apiLevelSaveRateLimit = limitRatePerKey({ windowMs: MINUTE, limit: 20, per: "user" });
+export const apiLevelSaveRateLimit = limitRatePerUser({ windowMs: MINUTE, limit: 20 });
 
 /**
  * Each direct-upload commits a blob row + S3 object that the sweep won't reclaim until UNATTACHED_BLOB_TTL_MS
@@ -54,6 +54,6 @@ export const importSourceRateLimit = limitRate({ windowMs: MINUTE, limit: 30 });
  * A character's choices at its next level, which read every option of each pool: counted per user, whatever keys of
  * theirs ask, apart from the keys' other requests.
  */
-export const levelChoicesRateLimit = limitRatePerKey({ windowMs: MINUTE, limit: 20, per: "user" });
+export const levelChoicesRateLimit = limitRatePerUser({ windowMs: MINUTE, limit: 20 });
 
 export const publicApiRateLimit = limitRate({ windowMs: MINUTE, limit: 30 });
