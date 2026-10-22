@@ -4,9 +4,6 @@ import type { Db } from "@/drizzle/database.ts";
 
 import { db } from "./connection.ts";
 
-/** How long the worker holds a job's lock before taking back a killed worker's: graphile-worker's own four hours. */
-const STALE_LOCK_INTERVAL = "4 hours";
-
 /** Queues a job for the worker (graphile-worker), in `tx`'s transaction if it's one. Ping the worker once committed. */
 export async function addJob(
   tx: Db,
@@ -27,14 +24,15 @@ export async function addJob(
 
 /**
  * How many jobs keyed `jobKey` (`addJob`'s `jobKey`) are still to run: queued, running (its attempt counted as it's
- * taken; locked within the worker's four hours, past which a lock is a killed worker's), or failed with an attempt
- * left. The worker deletes a job it finishes, and keeps one it gives up on with none left.
+ * taken; its last one locked within `lostAfter`, past which the caller takes its worker for killed, since the worker
+ * itself waits four hours before it retakes a lock and gives a last attempt no other), or failed with an attempt left.
+ * The worker deletes a job it finishes, and keeps one it gives up on with none left.
  */
-export async function countJobsToRun(jobKey: string) {
+export async function countJobsToRun(jobKey: string, lostAfter: string) {
   const jobs = await db.execute<{ count: number }>(sql`
     SELECT count(*)::int AS count
     FROM graphile_worker.jobs
-    WHERE key = ${jobKey} AND (attempts < max_attempts OR locked_at > now() - ${STALE_LOCK_INTERVAL}::interval)
+    WHERE key = ${jobKey} AND (attempts < max_attempts OR locked_at > now() - ${lostAfter}::interval)
   `);
   return jobs.rows[0]?.count ?? 0;
 }

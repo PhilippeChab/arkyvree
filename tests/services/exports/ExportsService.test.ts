@@ -82,8 +82,8 @@ describe("ExportsService.getExportStatus", () => {
     await db.execute(sql`UPDATE ${job} SET attempts = max_attempts, locked_at = now() WHERE key = ${key}`);
     expect(await ExportsService.getExportStatus(session, id)).toMatchObject({ id, status: "pending" });
 
-    // Its last attempt's worker killed mid-render: its lock past the worker's four hours
-    await db.execute(sql`UPDATE ${job} SET locked_at = now() - interval '5 hours' WHERE key = ${key}`);
+    // Its last attempt's worker killed mid-render: locked longer than a render takes, short of the worker's four hours
+    await db.execute(sql`UPDATE ${job} SET locked_at = now() - interval '20 minutes' WHERE key = ${key}`);
     expect(await ExportsService.getExportStatus(session, id)).toMatchObject({ id, status: "failed" });
     expect(ExportsService.getExport(session, id)).rejects.toThrow("failed");
     // Stored failed as it's answered: the attempt that outlived its lock, if it finishes, finds it failed

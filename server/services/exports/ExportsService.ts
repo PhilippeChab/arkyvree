@@ -5,6 +5,12 @@ import type { Session } from "@/shared/relations.ts";
 
 import { toExportJobKey } from "./exportJobKey.ts";
 
+/**
+ * How long a PDF's last attempt renders before it's taken for lost (its worker killed): a render takes seconds, and one
+ * that outlives this finds its export failed, and stores nothing.
+ */
+const RENDER_LOST_AFTER = "15 minutes";
+
 class ExportsService {
   /**
    * An export as it's read, unless it's none of the session's user's or past its expiry: then it's gone. A pending one
@@ -23,7 +29,7 @@ class ExportsService {
     if (new Date(exportRecord.expiresAt) < new Date()) throw new NotFoundError("Export has expired");
     if (exportRecord.status !== "pending") return exportRecord;
 
-    if ((await countJobsToRun(toExportJobKey(exportRecord.id))) > 0) return exportRecord;
+    if ((await countJobsToRun(toExportJobKey(exportRecord.id), RENDER_LOST_AFTER)) > 0) return exportRecord;
     // Its job gone, it was stored by then, or lost
     exportRecord = (await read()) ?? exportRecord;
     if (exportRecord.status !== "pending") return exportRecord;

@@ -181,4 +181,5 @@ The export is stored as the PDF is queued (`enqueueCharacterPdf`), its file none
 notification naming the export (`data.exportId`). A pending export keeps a day, a ready one an hour, and the daily
 cleanup deletes either once it's past. A job queued before exports were stored pending stores a new one, as it did;
 the pending one it never fills reads `failed` once that job is done: each export's job is queued under its key
-(`toExportJobKey`), which `countJobsToRun` looks up in the worker's queue, a locked job counted as running.
+(`toExportJobKey`), which `countJobsToRun` looks up in the worker's queue, a locked job counted as running: a last
+attempt locked for more than 15 minutes, far past what a render takes, is taken for lost, its worker killed.
