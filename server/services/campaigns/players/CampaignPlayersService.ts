@@ -31,10 +31,11 @@ interface InviteEmailData {
 type PlayerRow = Awaited<ReturnType<typeof Players.findPage>>["items"][number];
 
 /**
- * A player slot as a player reads it: its user's and its invites' addresses left out, which its Game Master reads. The
- * row is named whole so its addresses read nullable to the app.
+ * A player slot as a player (`readerId`) reads it: its user's and its invites' addresses left out, which its Game
+ * Master reads, but on their own slot. The row is named whole so its addresses read nullable to the app.
  */
-function hidePlayerAddresses(player: PlayerRow) {
+function hidePlayerAddresses(player: PlayerRow, readerId: string) {
+  if (player.usersInAccount?.id === readerId) return player;
   return {
     ...player,
     invitesInCampaigns: player.invitesInCampaigns.map((invite) => ({
@@ -195,7 +196,9 @@ class CampaignPlayersService {
     const readsAddresses = policy.isAddressReader();
     const query = { campaignId, ...where, searchAddresses: readsAddresses };
     const page = await Players.findPage(db, query, pagination, Visibility.All);
-    return readsAddresses ? page : { ...page, items: page.items.map(hidePlayerAddresses) };
+    return readsAddresses
+      ? page
+      : { ...page, items: page.items.map((player) => hidePlayerAddresses(player, session.userId)) };
   }
 
   async removePlayer(session: Session, campaignId: string, playerId: string) {

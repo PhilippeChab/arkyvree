@@ -95,6 +95,20 @@ describe("CampaignPlayersService", () => {
       expect(CampaignPlayersService.getPlayers(stranger, campaign.id, {}, firstPage)).rejects.toThrow(ForbiddenError);
       expect(CampaignPlayersService.getPlayers(stranger, NIL_UUID, {}, firstPage)).rejects.toThrow(NotFoundError);
     });
+
+    test("hides the addresses a player reads, but their own slot's", async () => {
+      const { user: gm, session, campaign, gmPlayer } = await setup();
+      const { player: slot } = await CampaignPlayersService.addPlayer(session, campaign.id, "Player Character");
+      const { user: player, session: playerSession } = await createTestUser("player");
+      await CampaignInvitesService.acceptInvite(
+        playerSession,
+        (await inviteToSlot(session, slot, player.emailAddress)).id,
+      );
+      const { items } = await CampaignPlayersService.getPlayers(playerSession, campaign.id, {}, firstPage);
+      const byId = new Map(items.map((item) => [item.id, item]));
+      expect(byId.get(gmPlayer.id)?.usersInAccount).toMatchObject({ id: gm.id, emailAddress: null });
+      expect(byId.get(slot.id)?.usersInAccount).toMatchObject({ id: player.id, emailAddress: player.emailAddress });
+    });
   });
 
   describe("addPlayer", () => {
