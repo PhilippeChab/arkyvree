@@ -27,9 +27,11 @@ describe("rules", () => {
       "mechanics",
     ]);
     expect(dnd35.kinds.filter((kind) => kind.help).map(({ type }) => type)).toEqual(["aptitudes", "mechanics"]);
-    // Every kind has its word, and its list but the feats', whose section groups them by their families
-    for (const { type } of dnd35.kinds) expect(dnd35.words[type]).toBeDefined();
-    expect(dnd35.kinds.filter(({ type }) => !dnd35.lists[type]).map(({ type }) => type)).toEqual(["feats"]);
+    // Every kind has its word and its list
+    for (const { type } of dnd35.kinds) {
+      expect(dnd35.words[type]).toBeDefined();
+      expect(dnd35.lists[type]).toBeDefined();
+    }
     // And what its row opens
     expect(Object.fromEntries(dnd35.kinds.map(({ opens, type }) => [type, opens]))).toEqual({
       races: "customization",
@@ -77,7 +79,28 @@ describe("rules", () => {
       ["costGp", "gp"],
       ["weight", "lbs"],
     ]);
-    expect(dnd35.maxItemVariants).toBe(50);
+    // Feats and spells narrow by their pools, spells by their level too; feats group by family; items copy
+    const kind = (type: string) => dnd35.kinds.find((each) => each.type === type);
+    expect(dnd35.kinds.filter((each) => each.pools).map(({ pools, type }) => [type, pools])).toEqual([
+      ["feats", "feats"],
+      ["powers", "spells"],
+    ]);
+    expect(dnd35.kinds.filter((each) => each.levels).map(({ type }) => type)).toEqual(["powers"]);
+    expect(dnd35.kinds.filter((each) => each.families).map(({ type }) => type)).toEqual(["feats"]);
+    expect(dnd35.kinds.filter((each) => each.wideForm).map(({ type, wideForm }) => [type, wideForm])).toEqual([
+      ["powers", "fixed"],
+      ["items", "fluid"],
+    ]);
+    expect(kind("items")?.copies).toEqual({
+      locked: ["slot", "sourceItemId", "type"],
+      most: 50,
+      source: "sourceItemId",
+      template: "isTemplate",
+    });
+    // A pools column reads the links its list's rows hold
+    expect(dnd35.lists.feats?.columns.map(({ key, reads }) => [key, reads])).toEqual([
+      ["featsAptitudesInRules", "aptitudes"],
+    ]);
     // Its classes' progression: a level's base attack bonus and skill points, a base per save, two spell tables
     expect(dnd35.progression.tracks.map(({ key, source }) => [key, source])).toEqual([
       ["bab", "field"],

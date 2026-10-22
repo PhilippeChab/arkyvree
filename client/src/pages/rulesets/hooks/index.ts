@@ -7,6 +7,7 @@ export { useEntityFilters } from "./useEntityFilters.ts";
 export { useEntityForm } from "./useEntityForm.ts";
 export { useEntityList } from "./useEntityList.ts";
 export { useEntitySave } from "./useEntitySave.ts";
+export { useEntityVariants } from "./useEntityVariants.ts";
 export { useOpenEntity } from "./useOpenEntity.ts";
 export { useRestorableDelete } from "./useRestorableDelete.ts";
 export { useRowPrefetch } from "./useRowPrefetch.ts";

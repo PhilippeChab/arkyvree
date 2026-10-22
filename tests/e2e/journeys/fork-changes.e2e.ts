@@ -94,7 +94,8 @@ test.describe("Changes to a fork", () => {
       .first()
       .click();
     await page.keyboard.press("Escape");
-    const created = apiResponse(page, "POST", /\/api\/rulesets\/[a-f0-9-]+\/feats(?:\?|$)/);
+    // Its section creates it through the routes by kind
+    const created = apiResponse(page, "POST", /\/api\/rulesets\/[a-f0-9-]+\/entities\/feats(?:\?|$)/);
     await dialog.getByRole("button", { name: /^Create$/ }).click();
     await created;
     await expect(dialog).toBeHidden({ timeout: 15_000 });

@@ -1,6 +1,19 @@
 import type { FormField } from "@/engine/core/fields/index.ts";
 
 /**
+ * How a kind's row copies an entity (an item's): a duplicate, whose form keeps the columns it can't change (`locked`:
+ * an item's type, slot and template), and variants, the most at once (`most`), each its own name and description. A
+ * copy names the template it's from in its `source` column: a template's own, its `template` column true, or the
+ * entity's own template; a copy is never a template itself.
+ */
+export interface EntityCopiesDescription {
+  locked: string[];
+  most: number;
+  source: string;
+  template: string;
+}
+
+/**
  * An entity kind a ruleset holds (a table of its entities: races, feats), as its ruleset's page shows it: its type
  * (`klasses`), its icon, by the generic name of its picture (`face`, `bolt`: the client's set of them), what its tab
  * says of it, when it says anything (`help`), what its empty list says past its word (`empty`: "No saving throws
@@ -8,20 +21,29 @@ import type { FormField } from "@/engine/core/fields/index.ts";
  * (`partitioned`), whether its entities are the rules' alone, which no form makes, edits or deletes and no search
  * finds (`readOnly`: an ability's), where its row opens (`opens`: its own page, its customization page, or its
  * progression page, a class's), whether its form gives its description room (`longDescription`: a mechanic's), and
- * whether a new one's form says what each of its fields is for (`fieldHelp`: a class's). Its word is its rules'
+ * whether a new one's form says what each of its fields is for (`fieldHelp`: a class's), whether its form shows two
+ * fields side by side in a wide dialog (`wideForm`: `fluid`, an item's; `fixed`, its height kept as its fields change,
+ * a spell's), the pools its list narrows by (`pools`: the scope of the aptitudes it's picked in, a feat's `feats`),
+ * whether its list narrows by a power's level (`levels`: a spell's), whether its list groups an entity's variants under
+ * their family (`families`: a feat's), and how its row copies one (`copies`: an item's). Its word is its rules'
  * (`RulesDescription.words`), and its URL's segment the app's (`getUrlSegment`: `classes`). Not the kinds a race or a
  * class is for (`entityKinds`).
  */
 export interface EntityKindDescription {
+  copies?: EntityCopiesDescription;
   empty?: string;
+  families?: boolean;
   fieldHelp?: boolean;
   help?: string;
   icon: string;
+  levels?: boolean;
   longDescription?: boolean;
   opens: "customization" | "page" | "progression";
   partitioned?: boolean;
+  pools?: "feats" | "spells";
   readOnly?: boolean;
   type: string;
+  wideForm?: "fixed" | "fluid";
 }
 
 /**
@@ -38,7 +60,7 @@ export interface LevelWizardDescription {
 
 /**
  * A column of an entity's own value in its type's list, between its name and its description: its key (where its value
- * is in a listed entity, `hd`, `costGp`; or what it shows of it, `template`, `aptitudes`), its label, its share of the
+ * is in a listed entity, `hd`, `costGp`; or what it shows of it, `template`), its label, its share of the
  * list's width (percent), where a phone shows it (`slot`), and how its value reads (`reads`):
  * - `chip`: a chip of its label (`labels`, by value: a hit die's 10 is "d10"), else of the value;
  * - `muted`: its text, quiet;
@@ -46,7 +68,7 @@ export interface LevelWizardDescription {
  * - `reference`: the name of the entity of the ruleset it names (`references`: its kind, `abilities`);
  * - `flag`: a warning's "Yes" while it's `yesWhen` ("Trained Only" while a skill isn't usable untrained), "No" else;
  * - `template`: an item's template's name, or "Template" for a template itself;
- * - `aptitudes`: a power's pools, as chips;
+ * - `aptitudes`: the pools it's picked in, as chips (its links to them at its key: a spell's `powersAptitudesInRules`);
  * - `text`: its text, as it is (a language's type).
  */
 export interface ListColumn {
@@ -145,8 +167,6 @@ export interface RulesDescription {
   license?: { notice: string; text: "ogl" };
   /** Each entity type's list on its ruleset's page, by type: its columns of the entities' own values */
   lists: Partial<Record<string, ListDescription>>;
-  /** The most variants of an item its form makes at once */
-  maxItemVariants: number;
   /** The levels a power has, each with its name ("Cantrips", "Level 1") */
   powerLevels: { label: string; level: number }[];
   /** How a class progresses, as its Progression and Spells tabs set it */

@@ -1,6 +1,6 @@
 import { Container, Divider, Menu, Popover, Stack } from "@mui/material";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { type MouseEvent, type ReactNode, useState } from "react";
+import { type MouseEvent, useState } from "react";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 
 import {
@@ -60,25 +60,11 @@ import {
   UnsubscribeExtensionDialog,
 } from "./components/index.ts";
 import { rulesetExtensionsQuery } from "./rulesetQueries.ts";
-import type { RulesetSectionProps } from "./sectionProps.ts";
 import { prefetchSection, type RulesetSection } from "./sectionQueries.ts";
-import { EntitySection, FeatsSection, ItemsSection, PowersSection, SettingsSection } from "./sections/index.ts";
+import { EntitySection, SettingsSection } from "./sections/index.ts";
 
-/**
- * What a ruleset page's tab is: its key, label and icon, and what it shows: its kind's section (`kind`), its own where
- * its kind has one (`component`), or its Settings.
- */
-type TabConfig = SectionTab<RulesetSection> & {
-  component?: (props: RulesetSectionProps) => ReactNode;
-  kind: EntityKindDescription | null;
-};
-
-/** The entity types whose section is still their own, by their type: any other kind's is `EntitySection`. */
-const SECTIONS: Readonly<Record<string, (props: RulesetSectionProps) => ReactNode>> = {
-  feats: FeatsSection,
-  items: ItemsSection,
-  powers: PowersSection,
-};
+/** What a ruleset page's tab is: its key, label and icon, and what it shows: its kind's section (`kind`), or Settings. */
+type TabConfig = SectionTab<RulesetSection> & { kind: EntityKindDescription | null };
 
 /**
  * The ruleset page's tabs: an entity kind's section each, in the order its rules list them (`rules`), named in their
@@ -91,7 +77,6 @@ function rulesetTabs(rules: RulesDescription | undefined): TabConfig[] {
       key: getUrlSegment(kind.type),
       label: kind.help ? <HelpLabel label={label} help={kind.help} /> : label,
       icon: kindIcon(kind.icon),
-      component: SECTIONS[kind.type],
       kind,
     };
   });
@@ -106,7 +91,6 @@ function rulesetTabs(rules: RulesDescription | undefined): TabConfig[] {
         />
       ),
       icon: SettingsIcon,
-      component: SettingsSection,
       kind: null,
     },
   ];
@@ -369,23 +353,21 @@ export default function RulesetDetailsPage() {
 
           <SectionTabPanel>
             {/* Keyed by ruleset and tab: a list keeps its previous data while a search loads, never another's. */}
-            {currentTab.component ? (
-              <currentTab.component
+            {currentTab.kind ? (
+              <EntitySection
                 key={`${ruleset.id}:${currentTab.key}`}
                 ruleset={ruleset}
                 childOnly={childOnly}
                 onChildOnlyChange={setChildOnly}
+                kind={currentTab.kind}
               />
             ) : (
-              currentTab.kind && (
-                <EntitySection
-                  key={`${ruleset.id}:${currentTab.key}`}
-                  ruleset={ruleset}
-                  childOnly={childOnly}
-                  onChildOnlyChange={setChildOnly}
-                  kind={currentTab.kind}
-                />
-              )
+              <SettingsSection
+                key={ruleset.id}
+                ruleset={ruleset}
+                childOnly={childOnly}
+                onChildOnlyChange={setChildOnly}
+              />
             )}
           </SectionTabPanel>
         </Stack>

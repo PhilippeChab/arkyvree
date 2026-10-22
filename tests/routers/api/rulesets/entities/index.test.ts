@@ -1,6 +1,8 @@
 import { describe, expect, test } from "bun:test";
 
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
+import { isRecord } from "@/shared/isRecord.ts";
+import { getUrlSegment } from "@/shared/urlSegments.ts";
 import { api, expectOk, expectStatus } from "@/tests/support/api.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
@@ -178,6 +180,42 @@ describe("rulesets entities by kind", () => {
       404,
     );
     await expectStatus(templates.$get({ param: { id, entityType: "feats" }, query: {} }), 404);
+  });
+
+  test("answers each kind's filters and actions as its rules describe it", async () => {
+    const { id } = await setup();
+    const rules = await expectOk(api.api.rules.$get());
+    /** Whether a refusal says the kind has none of an action ("No variants for races"), not that its entity is missing */
+    const refusesAction = async (response: { json: () => Promise<unknown> }, words: string, entityType: string) => {
+      const body: unknown = await response.json();
+      return isRecord(body) && body.message === `No ${words} for ${entityType}`;
+    };
+    for (const { copies, families, levels, pools, type } of rules["Dungeons & Dragons: 3.5"].kinds) {
+      const entityType = getUrlSegment(type) as Segment;
+      const list = (query: Record<string, string>) => kinds.$get({ param: { id, entityType }, query });
+      const groups = await grouped.$get({ param: { id, entityType }, query: {} });
+      // A copy of an entity the ruleset has none of: missing for a kind that copies, refused for any other
+      const param = { id, entityType, entityId: NIL_UUID };
+      const duplicate = await entity.duplicate.$post({ param, json: { name: "Copy" } });
+      const variants = await entity.variants.$post({ param, json: { variants: [{ name: "Copy" }] } });
+      const statuses: number[] = [duplicate.status, variants.status];
+      expect({ type, statuses }).toEqual({ type, statuses: [404, 404] });
+      expect({
+        type,
+        pools: (await list({ aptitudeId: NIL_UUID })).status === 200,
+        levels: (await list({ level: "1" })).status === 200,
+        groups: groups.status === 200,
+        duplicate: !(await refusesAction(duplicate, "duplicate", entityType)),
+        variants: !(await refusesAction(variants, "variants", entityType)),
+      }).toEqual({
+        type,
+        pools: !!pools,
+        levels: !!levels,
+        groups: !!families,
+        duplicate: !!copies,
+        variants: !!copies,
+      });
+    }
   });
 
   test("refuses a kind it doesn't know, and an entity the ruleset has none of", async () => {
