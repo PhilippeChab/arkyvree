@@ -6,10 +6,9 @@ import { UnauthorizedError } from "@/server/errors/index.ts";
 import { ApiKeys } from "@/server/repositories/index.ts";
 import type { Session } from "@/shared/relations.ts";
 
-/** What the public API's routes read of their request: the key it's sent with, and the user it acts as. */
+/** What the public API's routes read of their request: the user its key acts as. */
 export interface ApiKeyContext {
   Variables: {
-    requestApiKey: { id: string; userId: string };
     requestSession: Session;
   };
 }
@@ -32,7 +31,6 @@ export default createMiddleware<ApiKeyContext>(async (c, next) => {
   if (!key.lastUsedAt || new Date(key.lastUsedAt).getTime() < since)
     await withTransaction(async (tx) => ApiKeys.markUsed(tx, { id: key.id, since: new Date(since).toISOString() }));
 
-  c.set("requestApiKey", { id: key.id, userId: key.userId });
   c.set("requestSession", { userId: key.userId });
   await next();
 });

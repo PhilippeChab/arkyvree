@@ -4,8 +4,12 @@ import { Hono, type MiddlewareHandler } from "hono";
 
 import { toJson } from "@/server/errors/index.ts";
 import type { ApiKeyContext } from "@/server/middlewares/apiKey.ts";
-import { limitRate, limitRatePerKey } from "@/server/middlewares/limitRate.ts";
+import { limitRate, limitRatePerUser } from "@/server/middlewares/limitRate.ts";
 import { expectStatus } from "@/tests/support/api.ts";
+
+function asUser(userId: string, ip = "10.0.0.1") {
+  return from(ip, { headers: { "x-user": userId } });
+}
 
 /** An app behind `limiter`, answering errors as the application does. */
 function behind(limiter: MiddlewareHandler) {
@@ -22,27 +26,6 @@ function from(ip: string, init: RequestInit = {}) {
   return { ...init, headers: { ...init.headers, "x-forwarded-for": ip } };
 }
 
-/**
- * An app behind the per-key limit (or per user, `per`), its requests' key the `x-key` header's and its user the
- * `x-user` header's, as the public API's sign-in sets them.
- */
-function limitedPerApiKey(per: "key" | "user" = "key") {
-  return new Hono<ApiKeyContext>()
-    .use(async (c, next) => {
-      const id = c.req.header("x-key") ?? "";
-      const userId = c.req.header("x-user") ?? id;
-      c.set("requestApiKey", { id, userId });
-      c.set("requestSession", { userId });
-      await next();
-    })
-    .use(limitRatePerKey({ windowMs: 60_000, limit: 1, per }, true))
-    .all("/", (c) => c.text("ok"))
-    .onError((err, c) => {
-      const [error, code] = toJson(err);
-      return c.json(error, code);
-    });
-}
-
 function limitedPerEmail() {
   return behind(limitRate({ windowMs: 60_000, limit: 1, per: "email" }, true));
 }
@@ -51,8 +34,19 @@ function limitedPerIp() {
   return behind(limitRate({ windowMs: 60_000, limit: 2 }, true));
 }
 
-function withApiKey(keyId: string, ip = "10.0.0.1") {
-  return from(ip, { headers: { "x-key": keyId } });
+/** An app behind the per-user limit, its requests' user the `x-user` header's, as the public API's sign-in sets it. */
+function limitedPerUser() {
+  return new Hono<ApiKeyContext>()
+    .use(async (c, next) => {
+      c.set("requestSession", { userId: c.req.header("x-user") ?? "" });
+      await next();
+    })
+    .use(limitRatePerUser({ windowMs: 60_000, limit: 1 }, true))
+    .all("/", (c) => c.text("ok"))
+    .onError((err, c) => {
+      const [error, code] = toJson(err);
+      return c.json(error, code);
+    });
 }
 
 function withEmail(emailAddress: unknown) {
@@ -114,20 +108,12 @@ describe("limitRate", () => {
     });
   });
 
-  describe("per API key", () => {
-    test("refuses a key past its limit from any address, and counts each key apart", async () => {
-      const app = limitedPerApiKey();
-      expect((await app.request("/", withApiKey("first", "10.0.0.1"))).status).toBe(200);
-      await expectStatus(app.request("/", withApiKey("first", "10.0.0.2")), 429);
-      expect((await app.request("/", withApiKey("second", "10.0.0.1"))).status).toBe(200);
-    });
-
-    test("counts the keys of one user together, per user", async () => {
-      const app = limitedPerApiKey("user");
-      const as = (key: string, user: string) => ({ headers: { "x-key": key, "x-user": user } });
-      expect((await app.request("/", as("first", "ada"))).status).toBe(200);
-      await expectStatus(app.request("/", as("second", "ada")), 429);
-      expect((await app.request("/", as("third", "grace"))).status).toBe(200);
+  describe("per user", () => {
+    test("refuses a user past their limit from any address and with any key, and counts each user apart", async () => {
+      const app = limitedPerUser();
+      expect((await app.request("/", asUser("ada", "10.0.0.1"))).status).toBe(200);
+      await expectStatus(app.request("/", asUser("ada", "10.0.0.2")), 429);
+      expect((await app.request("/", asUser("grace", "10.0.0.1"))).status).toBe(200);
     });
   });
 });
