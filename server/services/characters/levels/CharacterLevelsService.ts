@@ -21,6 +21,7 @@ import {
   CharacterLevelPowers,
   CharacterLevels,
   CharacterLevelSkills,
+  Visibility,
 } from "@/server/repositories/index.ts";
 import { readBondedInputs, readCharacterInput } from "@/server/services/characters/characterInputs.ts";
 import { lockEditableCharacter, withEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
@@ -88,8 +89,13 @@ class CharacterLevelsService extends include(Object, Choices, Pickers, Steps) {
 
   /** A saved level's selections, as its edit opens them: its class level, hit points, ability increases and picks. */
   async getLevel(session: Session, characterId: string, characterLevelId: string) {
-    return await withEditableCharacter(db, session, characterId, (scope, character) =>
-      Engine.for(scope).character(character).levelUp().describeLevel(characterLevelId),
+    // Visibility.All: an archived character's levels still read, read-only
+    return await withEditableCharacter(
+      db,
+      session,
+      characterId,
+      (scope, character) => Engine.for(scope).character(character).levelUp().describeLevel(characterLevelId),
+      Visibility.All,
     );
   }
 

@@ -12,15 +12,12 @@ class ApiKeysRepository extends BaseRepository<typeof apiKeysInAccount> {
     super(apiKeysInAccount);
   }
 
-  /** A key that works: neither archived nor expired. */
+  /** A key that works: one not expired (a revoked one is deleted). */
   private working() {
-    return and(
-      isNull(this.table.deletedAt),
-      or(isNull(this.table.expiresAt), gt(this.table.expiresAt, new Date().toISOString())),
-    );
+    return or(isNull(this.table.expiresAt), gt(this.table.expiresAt, new Date().toISOString()));
   }
 
-  /** How many keys a user has that work: none archived or expired. */
+  /** How many keys a user has that work: none expired. */
   async count(db: Db, where: { userId: string }) {
     const [row] = await db
       .select({ count: count() })
@@ -63,7 +60,7 @@ class ApiKeysRepository extends BaseRepository<typeof apiKeysInAccount> {
   }
 
   /**
-   * The key a token's digest names, unless it's archived or expired, with whether its user is a demo's
+   * The key a token's digest names, unless it's expired, with whether its user is a demo's
    * (`userExpiresAt`): none when its user's account is deleted.
    */
   async findOneWithUser(db: Db, where: { digest: string }) {

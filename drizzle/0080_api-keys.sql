@@ -6,7 +6,6 @@
 CREATE TABLE "account"."api_keys" (
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
-	"deleted_at" timestamp with time zone,
 	"id" uuid PRIMARY KEY DEFAULT public.gen_random_uuid() NOT NULL,
 	"user_id" uuid NOT NULL,
 	"name" text NOT NULL,
