@@ -10,8 +10,7 @@ answers in shapes of its own, which stay fixed.
   none (`denyDemoUser`).
 - A key's token (`ark_` and 32 random bytes, base64url) is shown once, when it's made: the table (`account.api_keys`)
   keeps its SHA-256 digest, which a request's token is looked up by, and its start, which names it on the page
-  (`server/apiKeyTokens.ts`). A revoked key is deleted. A user keeps 10 at most (`MAX_API_KEYS`), since each key's
-  requests are counted apart.
+  (`server/apiKeyTokens.ts`). A revoked key is deleted. A user keeps 10 at most (`MAX_API_KEYS`).
 - A key expires when its user chose as they made it: in 30 days, 90 (the form's default) or a year, or never, which its
   form warns works until it's revoked. An expired key is refused as a revoked one is, and the daily cleanup
   (`runCleanup`) deletes it.
@@ -25,9 +24,10 @@ answers in shapes of its own, which stay fixed.
 - A key acts as its user: `requestSession` is `{ userId }`, the `Session` the services read, so a key sees and
   changes only what its user can, by the checks the services already make. A session's cookie signs in nothing under
   `/v1`.
-- Its requests are counted per key (`apiKeyRateLimit`: 120 a minute), and a character's level choices, which read every
-  option of each pool, per user, whichever keys of theirs ask (`levelChoicesRateLimit`: 20 a minute). A request with a
-  wrong key or none costs a lookup by digest, as a wrong session cookie does the app's.
+- Its requests are counted per user, whichever keys of theirs ask (`apiKeyRateLimit`: 120 a minute), and a
+  character's level choices, which read every option of each pool, apart (`levelChoicesRateLimit`: 20 a minute). An
+  address's requests are counted before its key is looked up (`apiAddressRateLimit`: 600 a minute), so a wrong key or
+  none, a lookup by digest each, is bounded too.
 - A ruleset is read as the app reads it: any ruleset by its id, a private one too, as `/api` answers it to any signed-in
   user. The lists (`GET /v1/rulesets`) list what the user's scope does.
 

@@ -4,6 +4,7 @@ export { default as denyDemoUser } from "./denyDemoUser.ts";
 export { describeRoute } from "./describeRoute.ts";
 export type { RouteDescription } from "./describeRoute.ts";
 export {
+  apiAddressRateLimit,
   apiKeyRateLimit,
   attachmentUploadRateLimit,
   authEmailRateLimit,
