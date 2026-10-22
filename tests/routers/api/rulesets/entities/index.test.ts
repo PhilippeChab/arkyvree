@@ -218,6 +218,32 @@ describe("rulesets entities by kind", () => {
     }
   });
 
+  test("reads an entity's pools where its kind's columns say its links are", async () => {
+    const { id, featPool, spellList } = await setup();
+    const rules = await expectOk(api.api.rules.$get());
+    const pools: Record<string, string> = { feats: featPool.id, powers: spellList.id };
+    for (const [type, columns] of Object.entries(rules["Dungeons & Dragons: 3.5"].columns)) {
+      for (const column of columns ?? []) {
+        if ((column.input !== "aptitudes" && column.input !== "aptitudeLevels") || !column.links) continue;
+        // An entity of its kind in a pool: its read holds its link to it, its aptitude named
+        const entityType = getUrlSegment(type) as Segment;
+        const query = { aptitudeId: pools[type] ?? "", limit: "1" };
+        const [listed] = (await expectOk(kinds.$get({ param: { id, entityType }, query }))).items;
+        const read: Record<string, unknown> = await expectOk(
+          entity.$get({ param: { id, entityType, entityId: listed.id } }),
+        );
+        expect({ type, links: read[column.links] }).toMatchObject({
+          type,
+          links: expect.arrayContaining([
+            expect.objectContaining({
+              aptitudesInRule: expect.objectContaining({ id: pools[type], name: expect.any(String) }),
+            }),
+          ]),
+        });
+      }
+    }
+  });
+
   test("refuses a kind it doesn't know, and an entity the ruleset has none of", async () => {
     const { id } = await setup();
     await expectStatus(kinds.$get({ param: { id, entityType: "widgets" as never }, query: {} }), 400);

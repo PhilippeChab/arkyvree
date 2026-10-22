@@ -274,8 +274,9 @@ export function toColumnsBody(
 /**
  * An entity's columns, as its form holds them (`columns`, its rules'): a new one's empty values (`entity` none), else
  * those its description holds at their keys (a decimal as its text, "15.00"; one a column must hold but doesn't offer,
- * its default). A column that's a list of links (a spell's aptitudes, a level's saves and feats) reads its description's
- * list at its key, which its owner gives in the form's shape.
+ * its default). A column that's a list of links reads its description's list at its key, in the form's shape (a
+ * level's saves and feats), or, a pool's links column with `links`, off the entity read's links (a feat's pools, a
+ * spell's lists each at its level).
  */
 export function toColumnValues(columns: readonly EntityField[], entity?: unknown): Record<string, unknown> {
   return Object.fromEntries(
