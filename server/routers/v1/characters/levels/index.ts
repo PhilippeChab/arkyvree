@@ -192,6 +192,7 @@ export default new Hono<ApiKeyContext>()
       status: 204,
       summary: "Removes a character's latest level, with what it picked, and what its bonded creatures were with it",
     }),
+    apiLevelSaveRateLimit,
     validate("param", idParam),
     async (c) => {
       const { id } = c.req.valid("param");

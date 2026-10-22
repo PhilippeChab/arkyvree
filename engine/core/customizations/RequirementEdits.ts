@@ -36,8 +36,12 @@ export default class RequirementEdits extends CustomizationEdits<Requirement> {
     body: RequirementBody,
     kept?: { operator: string | null; target: string | null; value: string | null },
   ) {
+    // A check names its target, operator or value, a group its chaining operator: never both
+    const namesCheck = body.target !== undefined || body.operator !== undefined || body.value !== undefined;
+    if (namesCheck && body.chainingOperator !== undefined)
+      throw new RulesError("invalid", "A requirement is a check or a group, not both");
     // A check stays a check, a group a group: the other kind is a new requirement in its place
-    if (kept && (kept.target ? body.chainingOperator !== undefined : body.target !== undefined))
+    if (kept && (kept.target ? body.chainingOperator !== undefined : namesCheck))
       throw new RulesError("invalid", "A requirement's kind can't change: delete it and add a check or a group");
     // An update of a check without a target keeps the stored one
     const target = body.target ?? kept?.target;

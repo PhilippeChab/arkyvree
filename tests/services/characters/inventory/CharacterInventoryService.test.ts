@@ -286,6 +286,16 @@ describe("InventoryService", () => {
       ).toMatchObject({ weaponSets: [] });
     });
 
+    test("keeps an edited entry in the sets it's held in when its edit names none", async () => {
+      const { session, character, newItem } = await setup();
+      const sword = await newItem({ name: "Longsword", type: "Weapon" });
+      const entry = await add(session, character.id, sword.id, { ...equipped("Main Hand", 1), force: true });
+      const edit = (location: ItemLocation) =>
+        CharacterInventoryService.updateItem(session, character.id, entry.id, 2, true, location, null, null, undefined);
+      expect(await edit("Main Hand")).toMatchObject({ quantity: 2, weaponSets: [1] });
+      expect(await edit("Off Hand")).toMatchObject({ location: "Off Hand", weaponSets: [1] });
+    });
+
     test("needs a weapon set in a hand", async () => {
       const { session, character, newItem } = await setup();
       const sword = await newItem({ name: "Longsword", type: "Weapon" });
