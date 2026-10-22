@@ -4,6 +4,7 @@ import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { api, expectOk, expectStatus } from "@/tests/support/api.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
+import { FEAT_FAMILIES } from "@/vocabulary/dnd3.5/feats.ts";
 
 /** An entity kind's URL segment, as the routes by kind take it. */
 type Segment = Parameters<
@@ -12,6 +13,8 @@ type Segment = Parameters<
 
 const kinds = api.api.rulesets[":id"].entities[":entityType"];
 const entity = kinds[":entityId"];
+const grouped = kinds.grouped;
+const templates = kinds.templates;
 
 /** A seeded fork, and the entities a new one names: an ability, a feat pool and a spell list. */
 async function setup() {
@@ -68,40 +71,56 @@ describe("rulesets entities by kind", () => {
   });
 
   test("filters a list by its kind's filters, and refuses one its kind takes none of", async () => {
-    const { id, featPool, spellList } = await setup();
-    const feats = await expectOk(
-      kinds.$get({ param: { id, entityType: "feats" }, query: { aptitudeId: featPool.id, limit: "100" } }),
-    );
-    expect(feats.items.length).toBeGreaterThan(0);
-    const spells = await expectOk(
-      kinds.$get({ param: { id, entityType: "powers" }, query: { aptitudeId: spellList.id, level: "1" } }),
-    );
-    expect(spells.items.length).toBeGreaterThan(0);
-    const templates = await expectOk(kinds.$get({ param: { id, entityType: "items" }, query: { isTemplate: "true" } }));
-    expect(templates.items.every((item) => item.isTemplate)).toBe(true);
+    const { id, spellList } = await setup();
+    const ids = (page: { items: { id: string }[] }) => page.items.map((row) => row.id).sort();
+    const list = (entityType: Segment, query: Record<string, string>) =>
+      expectOk(kinds.$get({ param: { id, entityType }, query: { limit: "100", ...query } }));
 
+    // A new pool's feats, and its feats of a family: those alone
+    const pool = await expectOk(kinds.$post({ param: { id, entityType: "aptitudes" }, json: { name: "Test Pool" } }));
+    const [focus, plain] = await Promise.all(
+      [{ name: "Test Focus", fields: { families: [FEAT_FAMILIES[0]] } }, { name: "Test Plain" }].map((form) =>
+        expectOk(kinds.$post({ param: { id, entityType: "feats" }, json: { ...form, aptitudeIds: [pool.id] } })),
+      ),
+    );
+    expect(ids(await list("feats", { aptitudeId: pool.id }))).toEqual([focus.id, plain.id].sort());
+    expect(ids(await list("feats", { aptitudeId: pool.id, family: FEAT_FAMILIES[0] }))).toEqual([focus.id]);
+    const groups = await expectOk(grouped.$get({ param: { id, entityType: "feats" }, query: { aptitudeId: pool.id } }));
+    expect(groups.items.map((group) => group.representativeId).sort()).toEqual([focus.id, plain.id].sort());
+
+    // A spell list's spells of one level: none of another's
+    const [zero, one] = await Promise.all(
+      ["0", "1"].map(async (level) => ids(await list("powers", { aptitudeId: spellList.id, level }))),
+    );
+    expect(zero.length).toBeGreaterThan(0);
+    expect(one.length).toBeGreaterThan(0);
+    expect(zero.filter((spellId) => one.includes(spellId))).toEqual([]);
+
+    // A player character's races and classes, an item's templates and the items that aren't
+    for (const entityType of ["races", "classes"] as const) {
+      const pcs = (await list(entityType, { kind: "pc" })).items;
+      expect(pcs.length).toBeGreaterThan(0);
+      expect(pcs.every((row) => row.kind === "pc")).toBe(true);
+    }
+    expect((await list("items", { isTemplate: "true" })).items.every((item) => item.isTemplate === true)).toBe(true);
+    expect((await list("items", { isTemplate: "false" })).items.every((item) => item.isTemplate === false)).toBe(true);
+
+    // A filter its kind takes none of, its groups' too, by key, and a filter's value of another type
     const refused = await expectStatus(kinds.$get({ param: { id, entityType: "races" }, query: { level: "1" } }), 400);
     expect(await refused.json()).toMatchObject({
       issues: [{ category: "level", message: "races take no level filter" }],
     });
+    const groupFamily = grouped.$get({ param: { id, entityType: "feats" }, query: { family: FEAT_FAMILIES[0] } });
+    expect(await (await expectStatus(groupFamily, 400)).json()).toMatchObject({ issues: [{ category: "family" }] });
     await expectStatus(kinds.$get({ param: { id, entityType: "feats" }, query: { aptitudeId: "pool" } }), 400);
+    await expectStatus(kinds.$get({ param: { id, entityType: "powers" }, query: { level: "one" } }), 400);
   });
 
   test("answers a kind's actions: its groups, its templates, a duplicate and variants; refused for a kind without", async () => {
     const { id } = await setup();
-    const groups = await expectOk(
-      api.api.rulesets[":id"].entities[":entityType"].grouped.$get({
-        param: { id, entityType: "feats" },
-        query: {},
-      }),
-    );
+    const groups = await expectOk(grouped.$get({ param: { id, entityType: "feats" }, query: {} }));
     expect(groups.items.length).toBeGreaterThan(0);
-    const shields = await expectOk(
-      api.api.rulesets[":id"].entities[":entityType"].templates.$get({
-        param: { id, entityType: "items" },
-        query: { type: "Shield" },
-      }),
-    );
+    const shields = await expectOk(templates.$get({ param: { id, entityType: "items" }, query: { type: "Shield" } }));
     expect(shields.every((item) => item.type === "Shield" && item.isTemplate)).toBe(true);
 
     const [shield] = shields;
@@ -111,15 +130,20 @@ describe("rulesets entities by kind", () => {
     await expectOk(
       entity.variants.$post({ param, json: { variants: [{ name: "Test Spiked Buckler" }, { name: "Test Tower" }] } }),
     );
+    const made = await expectOk(kinds.$get({ param: { id, entityType: "items" }, query: { search: "Test Spiked" } }));
+    expect(made.items).toMatchObject([{ name: "Test Spiked Buckler", type: "Shield", sourceItemId: shield.id }]);
 
+    await expectStatus(grouped.$get({ param: { id, entityType: "races" }, query: {} }), 404);
+    const classTemplates = templates.$get({ param: { id, entityType: "classes" }, query: {} });
+    expect(await (await expectStatus(classTemplates, 404)).json()).toMatchObject({
+      message: "No templates for classes",
+    });
+    const [feat] = (await expectOk(kinds.$get({ param: { id, entityType: "feats" }, query: { limit: "1" } }))).items;
     await expectStatus(
-      api.api.rulesets[":id"].entities[":entityType"].grouped.$get({ param: { id, entityType: "races" }, query: {} }),
+      entity.duplicate.$post({ param: { id, entityType: "feats", entityId: feat.id }, json: { name: "Copy" } }),
       404,
     );
-    await expectStatus(
-      api.api.rulesets[":id"].entities[":entityType"].templates.$get({ param: { id, entityType: "feats" }, query: {} }),
-      404,
-    );
+    await expectStatus(templates.$get({ param: { id, entityType: "feats" }, query: {} }), 404);
   });
 
   test("refuses a kind it doesn't know, and an entity the ruleset has none of", async () => {
