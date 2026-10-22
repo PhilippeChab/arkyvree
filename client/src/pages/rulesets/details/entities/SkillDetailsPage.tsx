@@ -6,15 +6,15 @@ import { useRules } from "@/client/src/hooks/index.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { rulesetDetailQuery } from "@/client/src/lib/queries.ts";
 import {
-  type SkillFormData,
-  SkillFormFields,
+  type EntityFormData,
+  RulesetEntityFormFields,
   toEntityBody,
   toEntityForm,
   withEntityFields,
 } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { EntityDetailLayout, EntityPageError } from "@/client/src/pages/rulesets/components/index.ts";
 import { entityPageBack } from "@/client/src/pages/rulesets/entityPageState.ts";
-import { useEntityColumns, useEntityFields } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { useEntityFields } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
 import { skillQuery } from "./entityDetailQueries.ts";
@@ -31,7 +31,6 @@ function SkillDetails({ rulesetId, skillId }: SkillDetailsProps) {
   const param = { id: rulesetId, skillId };
   const endpoint = rpc.api.rulesets[":id"].skills[":skillId"];
   const { fields } = useEntityFields(rulesetId, "skills");
-  const { columns } = useEntityColumns(rulesetId, "skills");
 
   return (
     <RulesetEntityDetail
@@ -40,17 +39,20 @@ function SkillDetails({ rulesetId, skillId }: SkillDetailsProps) {
       section="skills"
       label="Skill"
       query={(id) => skillQuery(rulesetId, id)}
-      editing={{
-        empty: toEntityForm<SkillFormData>(columns),
-        toFormValues: (skill): SkillFormData =>
-          withEntityFields<SkillFormData>(toEntityForm<SkillFormData>(columns, skill), fields, skill),
+      editing={(columns) => ({
+        empty: toEntityForm<EntityFormData>(columns),
+        toFormValues: (skill): EntityFormData =>
+          withEntityFields<EntityFormData>(toEntityForm<EntityFormData>(columns, skill), fields, skill),
         updateFn: (data, updatedAt) =>
           parseResponse(
-            endpoint.$put({ param, json: { ...toEntityBody<SkillFormData, SkillFormData>(columns, data), updatedAt } }),
+            endpoint.$put({
+              param,
+              json: { ...toEntityBody<EntityFormData, EntityFormData>(columns, data), updatedAt },
+            }),
           ),
         removeFn: () => parseResponse(endpoint.$delete({ param })),
-        renderFields: (form) => <SkillFormFields form={form} rulesetId={rulesetId} />,
-      }}
+        renderFields: (form) => <RulesetEntityFormFields form={form} entityType="skills" rulesetId={rulesetId} />,
+      })}
     />
   );
 }

@@ -12,8 +12,8 @@ import {
 import { RacesIcon } from "@/client/src/components/icons/index.ts";
 import { itemsBeforeLastPage, pageItems } from "@/client/src/lib/pageItems.ts";
 import {
-  type RaceFormData,
-  RaceFormFields,
+  type EntityFormData,
+  RulesetEntityFormFields,
   toEntityBody,
   toEntityForm,
   withEntityFields,
@@ -49,16 +49,16 @@ export function RacesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
   const { fields: raceFields } = useEntityFields(ruleset.id, "races");
   const { columns: raceColumns } = useEntityColumns(ruleset.id, "races");
   const { columns, error: listError, list, names } = useEntityList(ruleset.id, "races");
-  const { createForm, handleCreate, createDialogProps } = useRulesetSection<Race, RaceFormData>({
+  const { createForm, handleCreate, createDialogProps } = useRulesetSection<Race, EntityFormData>({
     rulesetId: ruleset.id,
     sectionName: "races",
-    createDefaults: withEntityFields(toEntityForm<RaceFormData>(raceColumns), raceFields),
+    createDefaults: withEntityFields(toEntityForm<EntityFormData>(raceColumns), raceFields),
     label: "Race",
     createFn: async (data) =>
       parseResponse(
         rpc.api.rulesets[":id"].races.$post({
           param: { id: ruleset.id },
-          json: toEntityBody<RaceFormData, RaceFormData>(raceColumns, data),
+          json: toEntityBody<EntityFormData, EntityFormData>(raceColumns, data),
         }),
       ),
     onCreateSuccess: (created) => openEntity(buildCustomizationPath("races", created.id)),
@@ -128,7 +128,7 @@ export function RacesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
       </Stack>
 
       <CreateDialog {...createDialogProps} title="Create New Race">
-        <RaceFormFields form={createForm} rulesetId={ruleset.id} />
+        <RulesetEntityFormFields form={createForm} entityType="races" rulesetId={ruleset.id} />
       </CreateDialog>
     </SectionContent>
   );

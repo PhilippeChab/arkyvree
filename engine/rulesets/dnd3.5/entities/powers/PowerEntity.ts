@@ -10,6 +10,7 @@ import SpellFocusFeats from "@/engine/rulesets/dnd3.5/entities/feats/SpellFocusF
 import { RULESET_LIMITS } from "@/engine/rulesets/dnd3.5/limits.ts";
 import type { PowerWithAptitudes } from "@/shared/relations.ts";
 
+import { POWER_COLUMNS } from "./columns.ts";
 import { POWER_FIELDS, type PowerFieldValues } from "./fields.ts";
 
 /** A power's save, as its form sends it: its row's columns, its pools (each at its spell level), and its fields. */
@@ -25,9 +26,6 @@ interface PowerBody {
 /** A spell's level: 0 to the rules' last. */
 const SPELL_LEVEL = z.number().int().min(0).max(RULESET_LIMITS.spellLevel);
 
-/** A power's pools, each at its spell level. */
-const POOL_LEVELS = z.array(z.object({ level: SPELL_LEVEL.optional() })).optional();
-
 /** A spell's grouping, which its feats go by: its school, none without one. */
 function getGrouping(fields: Partial<PowerFieldValues>) {
   return typeof fields.school === "string" && fields.school.length > 0 ? fields.school : null;
@@ -37,11 +35,14 @@ function getGrouping(fields: Partial<PowerFieldValues>) {
 export default class PowerEntity extends ListedEntity<
   "powers",
   PowerBody,
-  { description?: string | null; name: string; saveEffect: string | null; saveId: string | null },
+  { description?: string | null; name: string; saveEffect?: string | null; saveId?: string | null },
   typeof POWER_FIELDS.fields
 > {
   /** The Spell Focus feats a power's school brings. */
   private readonly spellFocus = new SpellFocusFeats(this.view);
+
+  /** Its saving throw, what a save does, and its spell lists at their levels. */
+  protected override readonly columns = POWER_COLUMNS;
 
   /** A spell's school, components, range… */
   protected override readonly fields = POWER_FIELDS;
@@ -51,21 +52,18 @@ export default class PowerEntity extends ListedEntity<
   override readonly type = "powers";
 
   /**
-   * Refuses a new power without a pool, a pool's spell level past the rules' bounds, and a power linked to a pool the
-   * view's feats use: a form names no spell's save but the one it gives.
+   * Refuses a power linked to a pool the view's feats use (its columns refuse a new one without a pool, and a pool's
+   * spell level past the rules' bounds).
    */
-  protected override checkForm(body: PowerBody, power?: PowerWithAptitudes) {
-    RulesError.parse(POOL_LEVELS, body.aptitudes, ["aptitudes"]);
-    if (!power && !body.aptitudes?.length)
-      throw new RulesError("invalid", "At least one aptitude must be selected for the power");
+  protected override checkForm(body: PowerBody) {
     const listIds = (body.aptitudes ?? []).map((aptitude) => aptitude.id);
     const message = "Cannot link spell to aptitude(s) already used for feats";
     this.refuseLists(listIds, this.rulesetData.aptitudeIdsWithFeats, message);
   }
 
-  /** A form's columns: it names no spell's save but the one it gives. */
+  /** A form's columns: the save it gives (none clears it), an edit's that leaves it out kept. */
   protected override columnsOf({ description, name, saveEffect, saveId }: PowerBody) {
-    return { description, name, saveEffect: saveEffect ?? null, saveId: saveId ?? null };
+    return { description, name, saveEffect, saveId };
   }
 
   /** A power's pool links, as the view composes them. */

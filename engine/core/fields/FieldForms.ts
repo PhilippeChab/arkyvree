@@ -63,7 +63,7 @@ export default class FieldForms {
       default: {
         const multiple = field.kind === "list";
         if (field.values) return { ...base, input: "choice", multiple, options: field.values };
-        return { ...base, input: "text", multiple, placeholder: field.placeholder };
+        return { ...base, input: "text", multiple, nullable: true, placeholder: field.placeholder };
       }
     }
   }

@@ -13,8 +13,15 @@ import {
   EntityDetailsCard,
   EntityPageError,
 } from "@/client/src/pages/rulesets/components/index.ts";
+import type { EntityField } from "@/client/src/pages/rulesets/details/rulesetQueries.ts";
 import { entityPageBack } from "@/client/src/pages/rulesets/entityPageState.ts";
-import { useCopyOnWrite, useEntityForm, useRestorableDelete } from "@/client/src/pages/rulesets/hooks/index.ts";
+import {
+  useCopyOnWrite,
+  useEntityColumns,
+  useEntityForm,
+  useRestorableDelete,
+} from "@/client/src/pages/rulesets/hooks/index.ts";
+import { getEntityTypeOfSegment } from "@/shared/urlSegments.ts";
 
 interface EntityBase {
   description?: string | null;
@@ -40,8 +47,12 @@ interface EntityEditing<TEntity, TForm extends FieldValues> {
 }
 
 interface RulesetEntityDetailProps<TEntity extends EntityBase, TForm extends FieldValues, TKey extends QueryKey> {
-  /** Its form, its save and its delete; none for an entity no one edits (an ability), which shows its description. */
-  editing?: EntityEditing<TEntity, TForm>;
+  /**
+   * Its form, its save and its delete, off its kind's columns (its rules', which the page looks up with its ruleset, so
+   * a form never holds an entity read without them); none for an entity no one edits (an ability), which shows its
+   * description.
+   */
+  editing?: (columns: readonly EntityField[]) => EntityEditing<TEntity, TForm>;
   entityId: string;
   /** Singular display name, e.g. "Language". */
   label: string;
@@ -52,9 +63,9 @@ interface RulesetEntityDetailProps<TEntity extends EntityBase, TForm extends Fie
   section: string;
 }
 
-type FormDetailsProps<TEntity extends EntityBase, TForm extends FieldValues, TKey extends QueryKey> = Pick<
+type FormDetailsProps<TEntity extends EntityBase, TForm extends FieldValues, TKey extends QueryKey> = Omit<
   RulesetEntityDetailProps<TEntity, TForm, TKey>,
-  "rulesetId" | "entityId" | "section" | "label" | "query"
+  "editing"
 > & {
   editing: EntityEditing<TEntity, TForm>;
   entity: TEntity;
@@ -124,9 +135,12 @@ export function RulesetEntityDetail<TEntity extends EntityBase, TForm extends Fi
   section,
   label,
   query,
-  editing,
+  editing: editingOf,
 }: RulesetEntityDetailProps<TEntity, TForm, TKey>) {
   const location = useLocation();
+  // Read here, so its form is made off them, once they're known (`loaded`)
+  const { columns, loaded: columnsLoaded } = useEntityColumns(rulesetId, getEntityTypeOfSegment(section));
+  const editing = editingOf?.(columns);
   const { data: ruleset, isLoading: isRulesetLoading, error: rulesetError } = useQuery(rulesetDetailQuery(rulesetId));
   const { rules } = useRules(ruleset?.baseRules);
   const back = entityPageBack(location.state, `/rulesets/${rulesetId}/${section}`, rules?.words);
@@ -169,7 +183,9 @@ export function RulesetEntityDetail<TEntity extends EntityBase, TForm extends Fi
       }
       isLoading={isRulesetLoading || isEntityLoading}
     >
+      {/* Its form waits for its columns, its rules', which its ruleset's base rules pick */}
       {entity &&
+        columnsLoaded &&
         (editing ? (
           <ReadOnlyFields readOnly={!canEdit}>
             <FormDetails

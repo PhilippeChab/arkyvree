@@ -28,12 +28,13 @@ import {
 import { DeleteIcon } from "@/client/src/components/icons/index.ts";
 import { rulesetOptionsQuery } from "@/client/src/lib/queries.ts";
 import { DECIMAL_RULES, requiredRules, wholeNumberRules } from "@/client/src/lib/validation.ts";
-import type { EntityField, RulesetFields } from "@/client/src/pages/rulesets/details/rulesetQueries.ts";
+import type { EntityField } from "@/client/src/pages/rulesets/details/rulesetQueries.ts";
 import { useEntityFields } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { countRoomAt, findProgressionIssues } from "@/shared/customization/progression.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
 
 import { AptitudeLevelsInput } from "./AptitudeLevelsInput.tsx";
+import { AptitudesInput } from "./AptitudesInput.tsx";
 import type { ColumnContext } from "./columnContext.ts";
 import { choiceOptions, isFieldShown, noneLabel, valueAt } from "./entityFields.ts";
 import { GrantedFeatsInput } from "./GrantedFeatsInput.tsx";
@@ -56,7 +57,7 @@ interface EntityFieldsProps<T extends FieldValues> {
   /** Two side by side past a phone's width, in a form that lays its own out so (a spell's): one a row otherwise. */
   columns?: 1 | 2;
   /** The entity type whose fields they are (`rulesets`: the ruleset's Settings). */
-  entityType: keyof RulesetFields;
+  entityType: string;
   form: UseFormReturn<T>;
   /** Each says what it's for under it: a class's do, and the Settings'. */
   help?: boolean;
@@ -208,6 +209,8 @@ function FieldInput<T extends FieldValues>({ field, ...props }: FieldInputProps<
       );
     case "aptitudeLevels":
       return <AptitudeLevelsInput {...props} field={field} name={name} />;
+    case "aptitudes":
+      return <AptitudesInput {...props} field={field} name={name} />;
     case "grantedFeats":
       return <GrantedFeatsInput {...props} field={field} name={name} />;
     case "saveBases":
@@ -361,7 +364,7 @@ function isSwitch(field: EntityField) {
 /** Whether a field takes the grid's whole width: a group, several values, a progression, or a column's list. */
 function isWide(field: EntityField) {
   return (
-    isOneOf(field.input, ["aptitudeLevels", "grantedFeats", "group", "progression", "saveBases"]) ||
+    isOneOf(field.input, ["aptitudeLevels", "aptitudes", "grantedFeats", "group", "progression", "saveBases"]) ||
     ((field.input === "choice" || field.input === "text") && field.multiple)
   );
 }

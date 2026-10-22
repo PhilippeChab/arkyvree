@@ -14,9 +14,10 @@ import { LanguagesIcon } from "@/client/src/components/icons/index.ts";
 import { useSearchText } from "@/client/src/hooks/index.ts";
 import { itemsBeforeLastPage, pageItems } from "@/client/src/lib/pageItems.ts";
 import {
-  EMPTY_LANGUAGE,
-  type LanguageFormData,
-  LanguageFormFields,
+  type EntityFormData,
+  RulesetEntityFormFields,
+  toEntityBody,
+  toEntityForm,
 } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import {
   DescriptionCell,
@@ -26,7 +27,7 @@ import {
 import { languageQuery } from "@/client/src/pages/rulesets/details/entities/entityDetailQueries.ts";
 import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionProps.ts";
 import { languagesQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
-import { useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { useEntityColumns, useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
 type Language = InferResponseType<(typeof rpc.api.rulesets)[":id"]["languages"]["$get"], 200>["items"][number];
@@ -43,8 +44,9 @@ export function LanguagesSection({ ruleset, childOnly, onChildOnlyChange }: Rule
 
   const { search: searchQuery, searchBarProps: searchTextProps } = useSearchText("search");
 
-  const { createForm, handleCreate, createDialogProps } = useRulesetSection<Language, LanguageFormData>({
-    createDefaults: EMPTY_LANGUAGE,
+  const { columns: formColumns } = useEntityColumns(ruleset.id, "languages");
+  const { createForm, handleCreate, createDialogProps } = useRulesetSection<Language, EntityFormData>({
+    createDefaults: toEntityForm<EntityFormData>(formColumns),
     rulesetId: ruleset.id,
     sectionName: "languages",
     label: "Language",
@@ -52,7 +54,7 @@ export function LanguagesSection({ ruleset, childOnly, onChildOnlyChange }: Rule
       parseResponse(
         rpc.api.rulesets[":id"].languages.$post({
           param: { id: ruleset.id },
-          json: data,
+          json: toEntityBody<EntityFormData, EntityFormData>(formColumns, data),
         }),
       ),
     onCreateSuccess: (created) => openEntity(`languages/${created.id}`),
@@ -127,7 +129,7 @@ export function LanguagesSection({ ruleset, childOnly, onChildOnlyChange }: Rule
       </Stack>
 
       <CreateDialog {...createDialogProps} title="Create New Language">
-        <LanguageFormFields form={createForm} />
+        <RulesetEntityFormFields form={createForm} entityType="languages" rulesetId={ruleset.id} />
       </CreateDialog>
     </SectionContent>
   );

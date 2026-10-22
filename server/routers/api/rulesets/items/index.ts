@@ -1,31 +1,12 @@
 import { Hono } from "hono";
 import { z } from "zod";
 
-import { location } from "@/drizzle/schema.ts";
 import { type SessionContext, validate } from "@/server/middlewares/index.ts";
-import { entityFields, entityOrderBy, idParam, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
+import { entityBody, entityOrderBy, idParam, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
 import { ItemsService } from "@/server/services/rulesets/items/index.ts";
 
-const itemBody = z.object({
-  name: z.string().min(1),
-  description: z
-    .string()
-    .optional()
-    .transform((v) => v || null),
-  // A cost, a weight, a slot or a template is cleared with null, and kept when left out
-  costGp: z.number().min(0).nullable().optional(),
-  weight: z.number().min(0).nullable().optional(),
-  type: z
-    .string()
-    .nullable()
-    .optional()
-    .transform((v) => v || null),
-  slot: z.enum(location.enumValues).nullable().optional(),
-  sourceItemId: z.string().uuid().nullable().optional(),
-  isTemplate: z.boolean().optional(),
-  fields: entityFields.optional(),
-  updatedAt: z.string().optional(),
-});
+/** An item's body, its create's and its update's: an entity's (`entityBody`), whose columns its rules read. */
+const itemBody = entityBody;
 
 const itemParams = idParam.extend({ itemId: z.string().uuid() });
 

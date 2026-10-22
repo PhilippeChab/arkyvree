@@ -1,27 +1,16 @@
 import { racesInRules } from "@/drizzle/schema.ts";
-import { Engine, type EntityFieldValues } from "@/engine/index.ts";
+import { Engine } from "@/engine/index.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Races } from "@/server/repositories/index.ts";
-import EntityWriter from "@/server/services/rulesets/EntityWriter.ts";
-import type { SizeType } from "@/shared/enums.ts";
+import EntityWriter, { type EntityBody } from "@/server/services/rulesets/EntityWriter.ts";
 import type { Session } from "@/shared/relations.ts";
 
 class RacesService {
   /** What its creates, updates and deletes write, in one order around the plans its rules give. */
   private readonly writer = new EntityWriter("races", Races, racesInRules);
 
-  async createRace(
-    session: Session,
-    rulesetId: string,
-    body: {
-      baseSpeed: number;
-      description?: string | null;
-      fields?: EntityFieldValues;
-      name: string;
-      size: SizeType;
-    },
-  ) {
+  async createRace(session: Session, rulesetId: string, body: EntityBody) {
     return await this.writer.create(session, rulesetId, body.name, (scope) =>
       Engine.for(scope).entities("races").planCreate(body),
     );
@@ -59,19 +48,7 @@ class RacesService {
     });
   }
 
-  async updateRace(
-    session: Session,
-    rulesetId: string,
-    raceId: string,
-    body: {
-      baseSpeed: number;
-      description?: string | null;
-      fields?: EntityFieldValues;
-      name: string;
-      size: SizeType;
-      updatedAt?: string;
-    },
-  ) {
+  async updateRace(session: Session, rulesetId: string, raceId: string, body: EntityBody) {
     return await this.writer.update(session, rulesetId, body, (scope) =>
       Engine.for(scope).entities("races").planEdit(raceId, body),
     );

@@ -16,16 +16,14 @@ import type { Session } from "@/shared/relations.ts";
 import { ListsSpells } from "./concerns/ListsSpells.ts";
 import { writeLevelEdit } from "./levelEdits.ts";
 
-/** A class level's body: the feats it grants, its saves' base bonuses, and its fields (`planClassLevelCreate`). */
-type ClassLevelBody = Omit<Parameters<ClassEngine["planLevelCreate"]>[0], "level">;
+/**
+ * A class level's body: its fields, and what its class's rules read (a new level's number, the feats it grants, its
+ * saves' base bonuses: `planLevelCreate`).
+ */
+type ClassLevelBody = Parameters<ClassEngine["planLevelCreate"]>[0];
 
 class ClassLevelsService extends include(Object, ListsSpells) {
-  async createClassLevel(
-    session: Session,
-    rulesetId: string,
-    classId: string,
-    body: ClassLevelBody & { level: number },
-  ) {
+  async createClassLevel(session: Session, rulesetId: string, classId: string, body: ClassLevelBody) {
     const result = await withTransaction(
       async (tx) =>
         await withRulesetScope(tx, rulesetId, async (scope) => {

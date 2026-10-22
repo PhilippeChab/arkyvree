@@ -2,6 +2,7 @@ import { CustomizationPageEntity } from "@/engine/core/entities/index.ts";
 import type { EntityFieldValues } from "@/engine/core/fields/index.ts";
 import type { SizeType } from "@/shared/enums.ts";
 
+import { RACE_COLUMNS } from "./columns.ts";
 import { RACE_FIELDS } from "./fields.ts";
 
 /** A race's form: its name, description, size and base speed, and its fields (four legs, a speed armor leaves). */
@@ -23,6 +24,9 @@ export default class RaceEntity extends CustomizationPageEntity<
   Omit<RaceBody, "fields">,
   typeof RACE_FIELDS.fields
 > {
+  /** Its size and base speed. */
+  protected override readonly columns = RACE_COLUMNS;
+
   /** Its body's build: four legs, a speed armor leaves. */
   protected override readonly fields = RACE_FIELDS;
 

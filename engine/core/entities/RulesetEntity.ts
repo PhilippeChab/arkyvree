@@ -1,4 +1,14 @@
-import type { FieldCodec, Fields, FieldValues, FormField, NoFields } from "@/engine/core/fields/index.ts";
+import type { z } from "zod";
+
+import {
+  type EntityForm,
+  type FieldCodec,
+  type Fields,
+  type FieldValues,
+  FormColumns,
+  type FormField,
+  type NoFields,
+} from "@/engine/core/fields/index.ts";
 import type {
   EntityCreatePlan,
   EntityDeletePlan,
@@ -19,7 +29,8 @@ import type { Property } from "@/shared/relations.ts";
  * - an entity found by its id (`find`) and described (`describe`): its row as the view resolves it, with the fields its
  *   properties hold (`fields`), as its form shows them (`describeFields`);
  * - a page of its rows (`openList`): what the server reads it with (`filters`), and its rows described alike;
- * - what its form writes (`planCreate`, `planEdit`): the entities it names by id, as the view reads them (`resolveIds`:
+ * - what its form writes (`planCreate`, `planEdit`): its columns read by their descriptions (`columns`, its rules'), and
+ *   what else it carries by its kind's keys (`formKeys`), the entities it names by id, as the view reads them (`resolveIds`:
  *   a copy's for its source's id, refused, naming it, when the view shows none), the fields the form gives, read by its
  *   codec against the ruleset's declarations of them (`FieldCodec.parse`), the form checked (`checkForm`), its row's
  *   columns (`columnsOf`), the lists it's linked to (`linksOf`), what it writes beside them (`writesOf`: its fields,
@@ -35,8 +46,14 @@ export default abstract class RulesetEntity<
 > {
   constructor(protected readonly view: RulesetView) {}
 
+  /** Its form's columns, as its rules describe them (`RulesDescription.columns`): none of its own. */
+  protected readonly columns: readonly FormField[] = [];
+
   /** The fields its properties hold: `FieldCodec.NONE`, none of its own. */
   protected abstract readonly fields: FieldCodec<S>;
+
+  /** What its form carries past its name, its description, its fields and its columns, by key: nothing. */
+  protected readonly formKeys: z.ZodRawShape = {};
 
   /** What a refusal calls one: "Save" in "Save not found in this ruleset". */
   protected abstract readonly label: string;
@@ -103,6 +120,18 @@ export default abstract class RulesetEntity<
   protected formFields(given: Partial<FieldValues<S>>, entity?: ViewEntities[K]) {
     if (this.fields.keys.every((key) => given[key] === undefined)) return undefined;
     return this.fields.merge(entity ? this.fieldsOf(entity) : this.fields.defaults, given);
+  }
+
+  /**
+   * A form as its kind reads it (`entity`: the one edited, none for a new one): its name, its description and its
+   * fields as its route carries them, its columns read by their descriptions (`FormColumns`) and what else it carries
+   * by its kind's keys (`formKeys`), refused as invalid, by key, as a route's validation refuses a body.
+   */
+  protected formOf(form: EntityForm, entity?: ViewEntities[K]): Body {
+    const { description, fields, name } = form;
+    const schema = FormColumns.schema(this.columns, !entity).extend(this.formKeys);
+    // Every key `Body` names is read: its route's, its columns' and its kind's own
+    return { description, fields, name, ...RulesError.parse(schema, form) } as Body;
   }
 
   /** The entities a form names by id, as the view reads them: refused, naming one it shows none of. */
@@ -190,7 +219,8 @@ export default abstract class RulesetEntity<
   }
 
   /** A new entity's row off its form, what it writes beside it, and the fields it keeps once written. */
-  planCreate(body: Body): EntityCreatePlan<Columns, FieldValues<S>> {
+  planCreate(sent: EntityForm): EntityCreatePlan<Columns, FieldValues<S>> {
+    const body = this.formOf(sent);
     const form: Body = { ...body, ...this.resolveIds(body) };
     const given = this.readFields(form);
     this.checkForm(form);
@@ -208,8 +238,9 @@ export default abstract class RulesetEntity<
    * An entity's edit (`id`): the entity as the view has it, its new row off its form (an edit leaves the columns it
    * doesn't give as they are), what it writes beside it, and the fields it keeps once written.
    */
-  planEdit(id: string, body: Body): EntityEditPlan<Columns, FieldValues<S>, ViewEntities[K]> {
+  planEdit(id: string, sent: EntityForm): EntityEditPlan<Columns, FieldValues<S>, ViewEntities[K]> {
     const entity = this.find(id);
+    const body = this.formOf(sent, entity);
     const form: Body = { ...body, ...this.resolveIds(body) };
     const given = this.readFields(form, entity);
     this.checkForm(form, entity);

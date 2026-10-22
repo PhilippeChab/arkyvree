@@ -22,6 +22,7 @@ export const POWER_COLUMNS: FormField[] = [
     key: "saveEffect",
     label: "Save Effect",
     multiple: false,
+    nullable: true,
     placeholder: 'e.g., "negates", "half", "partial"',
   },
   {

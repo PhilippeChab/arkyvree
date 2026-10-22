@@ -15,7 +15,12 @@ import {
 import { SavesIcon } from "@/client/src/components/icons/index.ts";
 import { useRulesetAbilities, useSearchText } from "@/client/src/hooks/index.ts";
 import { itemsBeforeLastPage, pageItems } from "@/client/src/lib/pageItems.ts";
-import { EMPTY_SAVE, type SaveFormData, SaveFormFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
+import {
+  type EntityFormData,
+  RulesetEntityFormFields,
+  toEntityBody,
+  toEntityForm,
+} from "@/client/src/pages/rulesets/components/forms/index.ts";
 import {
   DescriptionCell,
   RulesetSectionTable,
@@ -24,7 +29,12 @@ import {
 import { saveQuery } from "@/client/src/pages/rulesets/details/entities/entityDetailQueries.ts";
 import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionProps.ts";
 import { savesQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
-import { type Save, useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
+import {
+  type Save,
+  useEntityColumns,
+  useOpenEntity,
+  useRulesetSection,
+} from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
 const SAVES_COLUMNS: TableColumn[] = [
@@ -39,8 +49,9 @@ export function SavesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
 
   const { search: searchQuery, searchBarProps: searchTextProps } = useSearchText("search");
 
-  const { createForm, handleCreate, createDialogProps } = useRulesetSection<Save, SaveFormData>({
-    createDefaults: EMPTY_SAVE,
+  const { columns: formColumns } = useEntityColumns(ruleset.id, "saves");
+  const { createForm, handleCreate, createDialogProps } = useRulesetSection<Save, EntityFormData>({
+    createDefaults: toEntityForm<EntityFormData>(formColumns),
     rulesetId: ruleset.id,
     sectionName: "saves",
     label: "Save",
@@ -48,7 +59,7 @@ export function SavesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
       parseResponse(
         rpc.api.rulesets[":id"].saves.$post({
           param: { id: ruleset.id },
-          json: data,
+          json: toEntityBody<EntityFormData, EntityFormData>(formColumns, data),
         }),
       ),
     onCreateSuccess: (created) => openEntity(`saves/${created.id}`),
@@ -129,7 +140,7 @@ export function SavesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
       </Stack>
 
       <CreateDialog {...createDialogProps} title="Create New Save">
-        <SaveFormFields form={createForm} abilities={abilities} abilitiesError={abilitiesError} />
+        <RulesetEntityFormFields form={createForm} entityType="saves" rulesetId={ruleset.id} />
       </CreateDialog>
     </SectionContent>
   );

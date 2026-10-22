@@ -23,7 +23,8 @@ export function getChangedFields(existing: object, body: object): ChangedField[]
   const before = new Map(Object.entries(existing));
   const changes: ChangedField[] = [];
   for (const [field, after] of Object.entries(body)) {
-    if (!before.has(field)) continue;
+    // One it leaves out (undefined) it keeps
+    if (!before.has(field) || after === undefined) continue;
     const old = before.get(field);
     if (old == null && after == null) continue;
     if (normalizeValue(old) === normalizeValue(after)) continue;

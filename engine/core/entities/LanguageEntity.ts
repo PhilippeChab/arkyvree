@@ -1,5 +1,6 @@
 import { FieldCodec } from "@/engine/core/fields/index.ts";
 
+import { LANGUAGE_COLUMNS } from "./columns.ts";
 import RulesetEntity from "./RulesetEntity.ts";
 
 /** A language's form: its name, description and type. */
@@ -11,6 +12,9 @@ interface LanguageBody {
 
 /** A language as the ruleset has it: its row, and its type. */
 export default class LanguageEntity extends RulesetEntity<"languages", LanguageBody> {
+  /** Its type. */
+  protected override readonly columns = LANGUAGE_COLUMNS;
+
   /** None of its own. */
   protected override readonly fields = FieldCodec.NONE;
 

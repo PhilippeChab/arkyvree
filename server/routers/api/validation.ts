@@ -26,6 +26,21 @@ export const entityFields = z.custom<EntityFieldValues>(
   "Expected an object of the entity's fields",
 );
 
+/**
+ * A ruleset entity's form, its create's and its update's: its name, its description (none when it's empty), its fields
+ * and when it was last read (an update's), and every other key as it is, which its kind's rules read by their
+ * descriptions (its columns), refusing as invalid what they don't take.
+ */
+export const entityBody = z.looseObject({
+  name: z.string().min(1),
+  description: z
+    .string()
+    .optional()
+    .transform((v) => v || null),
+  fields: entityFields.optional(),
+  updatedAt: z.string().optional(),
+});
+
 /** Ruleset entity sorting (name/createdAt/updatedAt, ascending) */
 export const entityOrderBy = z.enum(["name", "createdAt", "updatedAt"]).default("name");
 

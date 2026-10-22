@@ -1,7 +1,7 @@
 import { getTableName, type Table } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
-import type { EntityCreatePlan, EntityDeletePlan, EntityEditPlan, EntityWrites } from "@/engine/index.ts";
+import type { EntityCreatePlan, EntityDeletePlan, EntityEditPlan, EntityForm, EntityWrites } from "@/engine/index.ts";
 import {
   CustomizationCopies,
   EntityEdit,
@@ -44,6 +44,12 @@ interface PlannedEntity {
   name: string;
   rulesetId: string;
 }
+
+/**
+ * A ruleset entity's form, as its route carries it (`entityBody`): its name, when it was last read (an update's), and
+ * its columns, which its kind's rules read by their descriptions.
+ */
+export type EntityBody = EntityForm & { name: string; updatedAt?: string };
 
 /**
  * A ruleset entity kind's writer (`type`, its table and repository): the steps every kind's create, update and delete
@@ -180,8 +186,11 @@ export default class EntityWriter<Row extends { id: string; name: string }, Inse
     rulesetId: string,
     body: { name: string; updatedAt?: string },
     plan: (scope: RulesetScope, reads: { tx: Db }) => P | Promise<P>,
-    /** What its activity compares with the entity it was, for its changed fields: the body, unless the row says better. */
-    compare: (row: Row) => object = () => body,
+    /**
+     * What its activity compares with the entity it was, for its changed fields: the columns its plan writes (never the
+     * body, whose other keys it doesn't), unless the row says better.
+     */
+    compare: (row: Row, columns: P["columns"]) => object = (_row, columns) => columns,
   ): Promise<Row & P["fields"]> {
     const result = await withTransaction(
       async (tx) =>
@@ -207,7 +216,7 @@ export default class EntityWriter<Row extends { id: string; name: string }, Inse
           const [row] = rows;
           await this.recordActivity(tx, session, "update", targetId, {
             entityName: body.name,
-            changedFields: getChangedFields(planned.entity, compare(row)),
+            changedFields: getChangedFields(planned.entity, compare(row, planned.columns)),
           });
           return { ...row, ...planned.fields };
         }),

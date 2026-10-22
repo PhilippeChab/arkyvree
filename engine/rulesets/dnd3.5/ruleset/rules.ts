@@ -1,6 +1,8 @@
+import { LANGUAGE_COLUMNS, SAVE_COLUMNS } from "@/engine/core/entities/index.ts";
 import type { RulesDescription } from "@/engine/core/module/index.ts";
 import { CLASS_COLUMNS, CLASS_LEVEL_COLUMNS, CLASS_LIST } from "@/engine/rulesets/dnd3.5/entities/classes/columns.ts";
 import { PROGRESSION } from "@/engine/rulesets/dnd3.5/entities/classes/progression.ts";
+import { FEAT_COLUMNS } from "@/engine/rulesets/dnd3.5/entities/feats/columns.ts";
 import { ITEM_COLUMNS, ITEM_LIST } from "@/engine/rulesets/dnd3.5/entities/items/columns.ts";
 import { POWER_COLUMNS, POWER_LIST } from "@/engine/rulesets/dnd3.5/entities/powers/columns.ts";
 import { RACE_COLUMNS, RACE_LIST } from "@/engine/rulesets/dnd3.5/entities/races/columns.ts";
@@ -20,11 +22,14 @@ import { SPELL_LEVEL_LABELS, SPELL_LEVELS } from "@/vocabulary/dnd3.5/spells.ts"
 export const RULES: RulesDescription = {
   abilityScores: { max: MAX_ABILITY_SCORE, min: MIN_ABILITY_SCORE },
   columns: {
+    feats: FEAT_COLUMNS,
     items: ITEM_COLUMNS,
     klass_levels: CLASS_LEVEL_COLUMNS,
     klasses: CLASS_COLUMNS,
+    languages: LANGUAGE_COLUMNS,
     powers: POWER_COLUMNS,
     races: RACE_COLUMNS,
+    saves: SAVE_COLUMNS,
     skills: SKILL_COLUMNS,
   },
   entityKinds: [

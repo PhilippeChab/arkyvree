@@ -1,10 +1,10 @@
 import { describe, expect, test } from "bun:test";
 
-import { eq } from "drizzle-orm";
+import { eq, getTableName } from "drizzle-orm";
 
-import { klassLevelPowersInRules, powersAptitudesInRules } from "@/drizzle/schema.ts";
+import { klassLevelPowersInRules, powersAptitudesInRules, powersInRules } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
-import { Properties } from "@/server/repositories/index.ts";
+import { Activities, Properties } from "@/server/repositories/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { PowersService } from "@/server/services/rulesets/powers/index.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
@@ -33,6 +33,54 @@ async function linkedAptitudes(powerId: string) {
 // CRUD, ownership and copy-on-write are covered for every entity in EntityServices.test.ts,
 // and the spell properties a power generates in GeneratedFeats.test.ts.
 describe("PowersService", () => {
+  test("keeps a power's save effect through an edit that leaves it out, and clears it with an empty one", async () => {
+    const {
+      session,
+      ruleset,
+      aptitudeIds: [wizard],
+    } = await createTestUserAndRuleset(APTITUDES);
+    const power = await PowersService.createPower(session, ruleset.id, {
+      name: "Hold Person",
+      saveEffect: "negates",
+      aptitudes: [{ id: wizard }],
+    });
+    expect(await PowersService.updatePower(session, ruleset.id, power.id, { name: "Hold Person" })).toMatchObject({
+      saveEffect: "negates",
+    });
+    expect(
+      await PowersService.updatePower(session, ruleset.id, power.id, { name: "Hold Person", saveEffect: "" }),
+    ).toMatchObject({ saveEffect: null });
+  });
+
+  test("records the columns an edit changes, never what its form sends that it doesn't write", async () => {
+    const {
+      session,
+      ruleset,
+      aptitudeIds: [wizard],
+    } = await createTestUserAndRuleset(APTITUDES);
+    const power = await PowersService.createPower(session, ruleset.id, { name: "Shield", aptitudes: [{ id: wizard }] });
+    // A form's empty save effect is none, as the power's is; the feat's mark and the ruleset aren't a form's to write
+    await PowersService.updatePower(session, ruleset.id, power.id, {
+      name: "Shield",
+      saveEffect: "",
+      generated: true,
+      rulesetId: "00000000-0000-0000-0000-000000000000",
+    });
+    await PowersService.updatePower(session, ruleset.id, power.id, { name: "Shield", saveEffect: "negates" });
+    const { items } = await Activities.findPage(
+      db,
+      { userId: session.userId, targetTable: getTableName(powersInRules) },
+      { limit: 10, page: 1 },
+    );
+    const updates = items.filter((activity) => activity.type === "updatePower");
+    expect(
+      updates.map((activity) => activity.data).sort((a, b) => JSON.stringify(a).length - JSON.stringify(b).length),
+    ).toEqual([
+      expect.objectContaining({ changedFields: [] }),
+      expect.objectContaining({ changedFields: [{ field: "saveEffect", to: "negates" }] }),
+    ]);
+  });
+
   describe("aptitudes", () => {
     test("links a power to its aptitudes at a level; an update replaces them, keeps them when it omits them, and can clear them", async () => {
       const {

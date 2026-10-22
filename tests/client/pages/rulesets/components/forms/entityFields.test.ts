@@ -24,8 +24,8 @@ const BASE = { help: "" };
 const FIELDS: EntityField[] = [
   { ...BASE, key: "school", label: "School", input: "choice", multiple: false, options: ["Evocation", "Illusion"] },
   { ...BASE, key: "tags", label: "Tags", input: "choice", multiple: true, options: ["Fire"] },
-  { ...BASE, key: "notes", label: "Notes", input: "text", multiple: true },
-  { ...BASE, key: "target", label: "Target", input: "text", multiple: false },
+  { ...BASE, key: "notes", label: "Notes", input: "text", multiple: true, nullable: true },
+  { ...BASE, key: "target", label: "Target", input: "text", multiple: false, nullable: true },
   { ...BASE, key: "weighted", label: "Weighted", input: "flag", nullable: false },
   {
     ...BASE,

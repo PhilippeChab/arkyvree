@@ -1,22 +1,16 @@
 import { powersInRules } from "@/drizzle/schema.ts";
-import { type Accepted, Engine, type EntityKinds } from "@/engine/index.ts";
+import { Engine } from "@/engine/index.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Powers } from "@/server/repositories/index.ts";
-import EntityWriter from "@/server/services/rulesets/EntityWriter.ts";
+import EntityWriter, { type EntityBody } from "@/server/services/rulesets/EntityWriter.ts";
 import type { Session } from "@/shared/relations.ts";
-
-/**
- * A power's body: its row's columns, its aptitude links, and its fields (`planCreate`), as every registered ruleset's
- * takes it (`Accepted`).
- */
-type PowerBody = Accepted<EntityKinds["powers"]["planCreate"]>[0] & { updatedAt?: string };
 
 class PowersService {
   /** What its creates, updates and deletes write, in one order around the plans its rules give. */
   private readonly writer = new EntityWriter("powers", Powers, powersInRules);
 
-  async createPower(session: Session, rulesetId: string, body: PowerBody) {
+  async createPower(session: Session, rulesetId: string, body: EntityBody) {
     return await this.writer.create(session, rulesetId, body.name, (scope) =>
       Engine.for(scope).entities("powers").planCreate(body),
     );
@@ -59,7 +53,7 @@ class PowersService {
     });
   }
 
-  async updatePower(session: Session, rulesetId: string, powerId: string, body: PowerBody) {
+  async updatePower(session: Session, rulesetId: string, powerId: string, body: EntityBody) {
     return await this.writer.update(session, rulesetId, body, (scope) =>
       Engine.for(scope).entities("powers").planEdit(powerId, body),
     );

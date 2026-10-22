@@ -1,26 +1,25 @@
 /** A feat as a ruleset's entity: what the ruleset describes of it, lists it by, and checks of its form. */
 
 import { ListedEntity } from "@/engine/core/entities/index.ts";
-import type { EntityFieldValues } from "@/engine/core/fields/index.ts";
+import type { EntityFieldValues, EntityForm } from "@/engine/core/fields/index.ts";
 import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import AptitudeTargets from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTargets.ts";
 import type { FeatWithAptitudes } from "@/shared/relations.ts";
 import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/properties/index.ts";
 
+import { FEAT_COLUMNS } from "./columns.ts";
 import { FEAT_FIELDS } from "./fields.ts";
 
 /**
  * A feat's save, as its form sends it: its name and description, the pools it's picked in, and its fields (its
- * families, the weapon rules it changes). A new one named as an ancestor its ruleset deleted stands in for it, and is
- * generated when the ancestor was (`tombstoneGenerated`, what the server reads of the ancestor, which the view hides).
+ * families, the weapon rules it changes).
  */
 interface FeatBody {
   aptitudeIds?: string[];
   description?: string | null;
   fields?: EntityFieldValues;
   name: string;
-  tombstoneGenerated?: boolean;
 }
 
 /** A slot a feat's modifier adds to (or sets on) a pool. */
@@ -37,6 +36,9 @@ export default class FeatEntity extends ListedEntity<
   { description?: string | null; generated?: boolean; name: string },
   typeof FEAT_FIELDS.fields
 > {
+  /** Its feat pools. */
+  protected override readonly columns = FEAT_COLUMNS;
+
   /** Its families, the weapon rules it changes, the schools it forbids. */
   protected override readonly fields = FEAT_FIELDS;
 
@@ -45,21 +47,19 @@ export default class FeatEntity extends ListedEntity<
   override readonly type = "feats";
 
   /**
-   * Refuses a new feat without a pool, renaming a generated feat (its name names its option, `Weapon Focus: Longsword`,
+   * Refuses renaming a generated feat (its name names its option, `Weapon Focus: Longsword`,
    * which checks and generators find it by), and a feat linked to a pool the view's spells use.
    */
   protected override checkForm(body: FeatBody, feat?: FeatWithAptitudes) {
-    if (!feat && !body.aptitudeIds?.length)
-      throw new RulesError("invalid", "At least one aptitude must be selected for the feat");
     if (feat && body.name !== feat.name && feat.generated)
       throw new RulesError("invalid", "Generated feats cannot be renamed");
     const message = "Cannot link feat to aptitude(s) already used for spells";
     this.refuseLists(body.aptitudeIds ?? [], this.rulesetData.aptitudeIdsWithPowers, message);
   }
 
-  /** A form's columns: a new feat's mark of a generated one it stands in for. */
-  protected override columnsOf({ description, name, tombstoneGenerated }: FeatBody, feat?: FeatWithAptitudes) {
-    return { description, name, ...(!feat && { generated: tombstoneGenerated ?? false }) };
+  /** A form's columns: a new feat's not generated (`planCreate` marks one that stands in for a generated one). */
+  protected override columnsOf({ description, name }: FeatBody, feat?: FeatWithAptitudes) {
+    return { description, name, ...(!feat && { generated: false }) };
   }
 
   /** A feat's pool links, as the view composes them. */
@@ -88,6 +88,15 @@ export default class FeatEntity extends ListedEntity<
       filters: { ids, ...(where.family && { family: { type: FEAT_FAMILY, value: where.family } }) },
       groupFilters: { familyType: FEAT_FAMILY, ids },
     };
+  }
+
+  /**
+   * A new feat off its form. Named as an ancestor its ruleset deleted, it stands in for it, and is generated when the
+   * ancestor was (`tombstoneGenerated`: what the server reads of the ancestor, which the view hides, never the form's).
+   */
+  override planCreate(form: EntityForm, tombstoneGenerated = false) {
+    const plan = super.planCreate(form);
+    return { ...plan, columns: { ...plan.columns, generated: tombstoneGenerated } };
   }
 
   /** The pools these feats' modifiers add slots to (`aptitudes.<slug>.allowed`), by feat id. */

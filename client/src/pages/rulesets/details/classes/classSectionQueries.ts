@@ -8,13 +8,11 @@ import { type InferRequestType, type InferResponseType, parseResponse } from "ho
 
 import { NO_TIME } from "@/client/src/lib/durations.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
+import type { LevelFeat, LevelSave } from "@/client/src/pages/rulesets/components/forms/classLevelForm.ts";
 import { powersQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
 export type ClassDetail = InferResponseType<(typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["$get"], 200>;
-
-/** A class's form, its create's body: what its create dialog and its page's editor edit. */
-export type ClassFormData = InferRequestType<(typeof rpc.api.rulesets)[":id"]["classes"]["$post"]>["json"];
 
 /**
  * A class level's form, its create's body: its number, base attack bonus and skill points, which its create dialog
@@ -22,7 +20,7 @@ export type ClassFormData = InferRequestType<(typeof rpc.api.rulesets)[":id"]["c
  */
 export type ClassLevelFormData = InferRequestType<
   (typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["levels"]["$post"]
->["json"];
+>["json"] & { feats: (LevelFeat & { free?: boolean })[]; level: number; saves: LevelSave[] };
 
 /** A class's level as its Progression tab lists it */
 export type ClassLevelRow = InferResponseType<

@@ -3,7 +3,7 @@
 import { z } from "zod";
 
 import { CustomizationPageEntity } from "@/engine/core/entities/index.ts";
-import type { EntityFieldValues } from "@/engine/core/fields/index.ts";
+import type { EntityFieldValues, EntityForm } from "@/engine/core/fields/index.ts";
 import type { EntityWrites, PropertyValue } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import { RULESET_LIMITS } from "@/engine/rulesets/dnd3.5/limits.ts";
@@ -13,6 +13,7 @@ import { isOneOf } from "@/shared/isOneOf.ts";
 import type { Item } from "@/shared/relations.ts";
 import { TEMPLATE_ITEM_TYPES, type TemplateItemType } from "@/vocabulary/dnd3.5/itemTemplates.ts";
 
+import { ITEM_COLUMNS } from "./columns.ts";
 import { ITEM_FIELDS, type ItemFieldValues } from "./fields.ts";
 
 /**
@@ -70,8 +71,14 @@ export default class ItemEntity extends CustomizationPageEntity<
   ItemColumns,
   typeof ITEM_FIELDS.fields
 > {
+  /** Its cost, weight, type, slot and template. */
+  protected override readonly columns = ITEM_COLUMNS;
+
   /** Its armor's, its shield's and its weapon's, its charges, its make. */
   protected override readonly fields = ITEM_FIELDS;
+
+  /** Whether a new item is a template (an edit's is its own: its form doesn't change it). */
+  protected override readonly formKeys = { isTemplate: z.boolean().optional() };
 
   protected override readonly label = "Item";
 
@@ -89,7 +96,8 @@ export default class ItemEntity extends CustomizationPageEntity<
       costGp: decimalColumn(body.costGp),
       description: body.description,
       name: body.name,
-      slot: this.slotOf(body),
+      // An edit's type is the one it keeps when it gives none, which sets the slot of a template's type
+      slot: this.slotOf({ slot: body.slot, type: this.typeOf(body, item) }),
       type: body.type,
       weight: decimalColumn(body.weight),
     };
@@ -195,10 +203,10 @@ export default class ItemEntity extends CustomizationPageEntity<
    * would read the properties and requirements of a template of another type. The refusal names what the view shows
    * alone (`listCopies`).
    */
-  override planEdit(itemId: string, body: ItemBody) {
-    const plan = super.planEdit(itemId, body);
+  override planEdit(itemId: string, form: EntityForm) {
+    const plan = super.planEdit(itemId, form);
     const { entity: item } = plan;
-    const type = this.typeOf(body, item);
+    const type = this.typeOf(this.formOf(form, item), item);
     return {
       ...plan,
       checkCopies: (copies: Pick<Item, "id" | "name" | "type">[]) => {
@@ -321,7 +329,7 @@ export default class ItemEntity extends CustomizationPageEntity<
    * (`copyCustomizationsFrom`). It keeps the fields its form gives, written over those it takes, or, given none, the
    * fields its source's properties hold.
    */
-  planDuplicate(sourceItemId: string, body: ItemBody) {
+  planDuplicate(sourceItemId: string, body: EntityForm) {
     const source = this.findSource(sourceItemId);
     const plan = this.planCreate({ ...body, isTemplate: false, sourceItemId: this.templateOf(source) });
     return {

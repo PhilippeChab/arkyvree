@@ -1,11 +1,11 @@
 import { describe, expect, test } from "bun:test";
 
-import { eq } from "drizzle-orm";
+import { eq, getTableName } from "drizzle-orm";
 
-import { abilitiesInRules, klassSkillsInRules } from "@/drizzle/schema.ts";
+import { abilitiesInRules, klassSkillsInRules, skillsInRules } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
-import { KlassSkills } from "@/server/repositories/index.ts";
+import { Activities, KlassSkills } from "@/server/repositories/index.ts";
 import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
 import { SkillsService } from "@/server/services/rulesets/skills/index.ts";
 import { createTestCharacter } from "@/tests/support/characters.ts";
@@ -13,10 +13,17 @@ import { insertRows } from "@/tests/support/database.ts";
 import { addCharacterLevel, createTestKlassLevel } from "@/tests/support/levels.ts";
 import { createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
 
-type SkillBody = Parameters<typeof SkillsService.createSkill>[2];
-
 /** A skill as it reads: its columns, and its fields beside them. */
-type SkillValues = Omit<SkillBody, "fields"> & Required<NonNullable<SkillBody["fields"]>>;
+interface SkillValues {
+  checkPenaltyMultiplier: number;
+  description?: string | null;
+  impactedByWeight: boolean;
+  name: string;
+  primaryAbilityId: string;
+  usableWithoutTraining: boolean;
+}
+
+type SkillBody = Parameters<typeof SkillsService.createSkill>[2];
 
 /** A skill's body (`values`, as it reads): its columns, and its fields under `fields`. */
 function bodyOf({
@@ -53,6 +60,29 @@ async function setup() {
 
 // CRUD, ownership and copy-on-write are covered for every entity in EntityServices.test.ts.
 describe("SkillsService", () => {
+  test("keeps a skill's ability through an edit that leaves it out, and refuses one it names as none", async () => {
+    const { session, ruleset, abilityMap, body } = await setup();
+    const climb = await SkillsService.createSkill(session, ruleset.id, body());
+    expect(await SkillsService.updateSkill(session, ruleset.id, climb.id, { name: "Climbing" })).toMatchObject({
+      name: "Climbing",
+      primaryAbilityId: abilityMap.Strength,
+    });
+    // Its activity records what it changed, never what it left out
+    const { items } = await Activities.findPage(
+      db,
+      { userId: session.userId, targetTable: getTableName(skillsInRules) },
+      { limit: 10, page: 1 },
+    );
+    expect(items.find((activity) => activity.type === "updateSkill")?.data).toMatchObject({
+      changedFields: [{ field: "name", from: "Climb", to: "Climbing" }],
+    });
+    expect(
+      SkillsService.updateSkill(session, ruleset.id, climb.id, { name: "Climb", primaryAbilityId: "" }),
+    ).rejects.toMatchObject({
+      issues: [{ category: "primaryAbilityId" }],
+    });
+  });
+
   test("stores a skill's ability, weight and training flags, and lists them", async () => {
     const { session, ruleset, abilityMap, body, values } = await setup();
     const spellcraft = values({

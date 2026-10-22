@@ -2,8 +2,8 @@ import { parseResponse } from "hono/client";
 
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import {
-  type RaceFormData,
-  RaceFormFields,
+  type EntityFormData,
+  RulesetEntityFormFields,
   toEntityBody,
   toEntityForm,
   withEntityFields,
@@ -21,8 +21,8 @@ function toRaceForm(
   race: Race,
   columns: readonly EntityField[],
   fields: readonly EntityField[] | undefined,
-): RaceFormData {
-  return withEntityFields(toEntityForm<RaceFormData>(columns, race), fields, race);
+): EntityFormData {
+  return withEntityFields(toEntityForm<EntityFormData>(columns, race), fields, race);
 }
 
 export function RaceEditor({
@@ -38,7 +38,7 @@ export function RaceEditor({
   const { fields } = useEntityFields(rulesetId, "races");
   const { columns } = useEntityColumns(rulesetId, "races");
   const { form, save } = useEntityForm({
-    empty: toEntityForm<RaceFormData>(columns),
+    empty: toEntityForm<EntityFormData>(columns),
     values: toRaceForm(race, columns, fields),
     formKey: recordKey,
     adoptKey,
@@ -50,11 +50,11 @@ export function RaceEditor({
     storeSaved: refetchSaved,
     listKey: QUERY_KEYS.rulesets.section(rulesetId, "races"),
     label: "Race",
-    saveFn: (data: RaceFormData, updatedAt: string | undefined) =>
+    saveFn: (data: EntityFormData, updatedAt: string | undefined) =>
       parseResponse(
         rpc.api.rulesets[":id"].races[":raceId"].$put({
           param: { id: rulesetId, raceId: entityId },
-          json: { ...toEntityBody<RaceFormData, RaceFormData>(columns, data), updatedAt },
+          json: { ...toEntityBody<EntityFormData, EntityFormData>(columns, data), updatedAt },
         }),
       ),
   });
@@ -63,7 +63,7 @@ export function RaceEditor({
     <EntityDetailsCard
       title="Race Details"
       form={{
-        fields: <RaceFormFields form={form} rulesetId={rulesetId} />,
+        fields: <RulesetEntityFormFields form={form} entityType="races" rulesetId={rulesetId} />,
         ...save,
       }}
     />

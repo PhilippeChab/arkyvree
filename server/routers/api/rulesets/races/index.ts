@@ -1,13 +1,12 @@
 import { Hono } from "hono";
 import { z } from "zod";
 
-import { sizeType } from "@/drizzle/schema.ts";
 import { type SessionContext, validate } from "@/server/middlewares/index.ts";
-import { entityFields, entityOrderBy, idParam, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
+import { entityBody, entityOrderBy, idParam, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
 import { RacesService } from "@/server/services/rulesets/races/index.ts";
 
-/** A race's base speed, in feet: a whole number above 0, as its column holds it. */
-const baseSpeed = z.number().int().min(1);
+/** A race's body, its create's and its update's: an entity's (`entityBody`), whose columns its rules read. */
+const raceBody = entityBody;
 
 const raceParams = idParam.extend({ raceId: z.string().uuid() });
 
@@ -40,51 +39,16 @@ export default new Hono<SessionContext>()
     const { id, raceId } = c.req.valid("param");
     return c.json(await RacesService.getRace(id, raceId), 200);
   })
-  .post(
-    "/:id/races",
-    validate("param", idParam),
-    validate(
-      "json",
-      z.object({
-        name: z.string().min(1),
-        description: z
-          .string()
-          .optional()
-          .transform((v) => v || null),
-        size: z.enum(sizeType.enumValues),
-        baseSpeed: baseSpeed,
-        fields: entityFields.optional(),
-      }),
-    ),
-    async (c) => {
-      const { id } = c.req.valid("param");
-      const body = c.req.valid("json");
-      return c.json(await RacesService.createRace(c.var.requestSession, id, body), 200);
-    },
-  )
-  .put(
-    "/:id/races/:raceId",
-    validate("param", raceParams),
-    validate(
-      "json",
-      z.object({
-        name: z.string().min(1),
-        description: z
-          .string()
-          .optional()
-          .transform((v) => v || null),
-        size: z.enum(sizeType.enumValues),
-        baseSpeed: baseSpeed,
-        fields: entityFields.optional(),
-        updatedAt: z.string().optional(),
-      }),
-    ),
-    async (c) => {
-      const { id, raceId } = c.req.valid("param");
-      const body = c.req.valid("json");
-      return c.json(await RacesService.updateRace(c.var.requestSession, id, raceId, body), 200);
-    },
-  )
+  .post("/:id/races", validate("param", idParam), validate("json", raceBody), async (c) => {
+    const { id } = c.req.valid("param");
+    const body = c.req.valid("json");
+    return c.json(await RacesService.createRace(c.var.requestSession, id, body), 200);
+  })
+  .put("/:id/races/:raceId", validate("param", raceParams), validate("json", raceBody), async (c) => {
+    const { id, raceId } = c.req.valid("param");
+    const body = c.req.valid("json");
+    return c.json(await RacesService.updateRace(c.var.requestSession, id, raceId, body), 200);
+  })
   .delete("/:id/races/:raceId", validate("param", raceParams), async (c) => {
     const { id, raceId } = c.req.valid("param");
     return c.json(await RacesService.deleteRace(c.var.requestSession, id, raceId), 200);
