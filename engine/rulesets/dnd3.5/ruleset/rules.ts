@@ -1,4 +1,4 @@
-import { LANGUAGE_COLUMNS, SAVE_COLUMNS } from "@/engine/core/entities/index.ts";
+import { LANGUAGE_COLUMNS, LANGUAGE_LIST, NAMED_LIST, SAVE_COLUMNS, SAVE_LIST } from "@/engine/core/entities/index.ts";
 import type { RulesDescription } from "@/engine/core/module/index.ts";
 import { CLASS_COLUMNS, CLASS_LEVEL_COLUMNS, CLASS_LIST } from "@/engine/rulesets/dnd3.5/entities/classes/columns.ts";
 import { PROGRESSION } from "@/engine/rulesets/dnd3.5/entities/classes/progression.ts";
@@ -37,29 +37,43 @@ export const RULES: RulesDescription = {
     ...BONDED_KINDS.map((kind) => ({ label: kind.label, value: kind.slug })),
   ],
   kinds: [
-    { icon: "face", type: "races" },
-    { icon: "translate", type: "languages" },
-    { icon: "psychology", type: "skills" },
-    { icon: "spoke", type: "feats" },
-    { icon: "bolt", type: "powers" },
-    { icon: "construction", type: "items" },
+    { icon: "face", opens: "customization", partitioned: true, type: "races" },
+    { icon: "translate", opens: "page", type: "languages" },
+    { icon: "psychology", opens: "page", type: "skills" },
+    { icon: "spoke", opens: "customization", type: "feats" },
+    { icon: "bolt", opens: "customization", type: "powers" },
+    { icon: "construction", opens: "customization", type: "items" },
     {
       help: "Pools of choosable options at certain class levels (e.g., Fighter Bonus Feats, Rogue Special Abilities).",
       icon: "stars",
+      opens: "page",
       type: "aptitudes",
     },
-    { icon: "accessibility", type: "klasses" },
-    { icon: "shield", type: "saves" },
-    { icon: "fitness", type: "abilities" },
+    { icon: "accessibility", opens: "progression", partitioned: true, type: "klasses" },
+    { empty: "No saving throws available for this ruleset.", icon: "shield", opens: "page", type: "saves" },
+    { icon: "fitness", opens: "page", readOnly: true, type: "abilities" },
     {
+      empty: "No mechanics documented for this ruleset.",
       help: "Free-form rule entries for base game mechanics the app doesn't enforce (e.g., trip, disarm, grapple). Use them to document or override situational rules for your table.",
       icon: "gavel",
+      opens: "page",
       type: "mechanics",
     },
   ],
   lastClassLevel: MAX_CLASS_LEVEL,
   levelUp: LEVEL_WIZARD,
-  lists: { items: ITEM_LIST, klasses: CLASS_LIST, powers: POWER_LIST, races: RACE_LIST, skills: SKILL_LIST },
+  lists: {
+    abilities: NAMED_LIST,
+    aptitudes: NAMED_LIST,
+    items: ITEM_LIST,
+    klasses: CLASS_LIST,
+    languages: LANGUAGE_LIST,
+    mechanics: NAMED_LIST,
+    powers: POWER_LIST,
+    races: RACE_LIST,
+    saves: SAVE_LIST,
+    skills: SKILL_LIST,
+  },
   maxItemVariants: MAX_ITEM_VARIANTS,
   license: {
     notice:

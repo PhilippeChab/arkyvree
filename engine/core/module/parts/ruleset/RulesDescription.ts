@@ -2,13 +2,21 @@ import type { FormField } from "@/engine/core/fields/index.ts";
 
 /**
  * An entity kind a ruleset holds (a table of its entities: races, feats), as its ruleset's page shows it: its type
- * (`klasses`), its icon, by the generic name of its picture (`face`, `bolt`: the client's set of them), and what its
- * tab says of it, when it says anything (`help`). Its word is its rules' (`RulesDescription.words`), and its URL's
- * segment the app's (`getUrlSegment`: `classes`). Not the kinds a race or a class is for (`entityKinds`).
+ * (`klasses`), its icon, by the generic name of its picture (`face`, `bolt`: the client's set of them), what its tab
+ * says of it, when it says anything (`help`), what its empty list says past its word (`empty`: "No saving throws
+ * available for this ruleset."), whether its list narrows by the kinds a race or a class is for and sorts
+ * (`partitioned`), whether its entities are the rules' alone, which no form makes, edits or deletes and no search
+ * finds (`readOnly`: an ability's), and where its row opens (`opens`: its own page, its customization page, or its
+ * progression page, a class's). Its word is its rules' (`RulesDescription.words`), and its URL's segment the app's
+ * (`getUrlSegment`: `classes`). Not the kinds a race or a class is for (`entityKinds`).
  */
 export interface EntityKindDescription {
+  empty?: string;
   help?: string;
   icon: string;
+  opens: "customization" | "page" | "progression";
+  partitioned?: boolean;
+  readOnly?: boolean;
   type: string;
 }
 
@@ -34,13 +42,14 @@ export interface LevelWizardDescription {
  * - `reference`: the name of the entity of the ruleset it names (`references`: its kind, `abilities`);
  * - `flag`: a warning's "Yes" while it's `yesWhen` ("Trained Only" while a skill isn't usable untrained), "No" else;
  * - `template`: an item's template's name, or "Template" for a template itself;
- * - `aptitudes`: a power's pools, as chips.
+ * - `aptitudes`: a power's pools, as chips;
+ * - `text`: its text, as it is (a language's type).
  */
 export interface ListColumn {
   key: string;
   label: string;
   labels?: Readonly<Record<string, string>>;
-  reads: "aptitudes" | "chip" | "decimal" | "flag" | "muted" | "number" | "reference" | "template";
+  reads: "aptitudes" | "chip" | "decimal" | "flag" | "muted" | "number" | "reference" | "template" | "text";
   references?: string;
   share: number;
   slot?: "block" | "inline";

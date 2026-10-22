@@ -63,6 +63,12 @@ export type CharacterDetail = InferResponseType<(typeof rpc.api.characters)[":id
 /** A list's sort direction, as every list endpoint takes it. */
 export type Direction = NonNullable<RulesetListParams["orderDir"]>;
 
+/**
+ * A kind of entity, as its rules describe it: its type, its picture, what its row opens, and how its list reads (its
+ * blank state's words, whether a race's or a class's kind narrows it, whether a form may write one).
+ */
+export type EntityKindDescription = RulesDescription["kinds"][number];
+
 /** What a base rules' rulesets share: their words, the kinds a race or a class is for, their levels, their license. */
 export type RulesDescription = RulesDescriptions[BaseRules];
 

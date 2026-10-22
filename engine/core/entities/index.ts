@@ -1,5 +1,5 @@
 export { default as AbilityEntity } from "./AbilityEntity.ts";
-export { LANGUAGE_COLUMNS, SAVE_COLUMNS } from "./columns.ts";
+export { LANGUAGE_COLUMNS, LANGUAGE_LIST, NAMED_LIST, SAVE_COLUMNS, SAVE_LIST } from "./columns.ts";
 export { default as CustomizationPageEntity } from "./CustomizationPageEntity.ts";
 export { default as GeneratedFeats } from "./GeneratedFeats.ts";
 export { default as LanguageEntity } from "./LanguageEntity.ts";
