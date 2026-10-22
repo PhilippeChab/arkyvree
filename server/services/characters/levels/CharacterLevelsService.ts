@@ -8,7 +8,15 @@ import { getTableName } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
 import { levelsInCharacter } from "@/drizzle/schema.ts";
-import { type AbilityIncrease, Engine, type LevelRequest, type PreviewRequest } from "@/engine/index.ts";
+import {
+  type AbilityIncrease,
+  type CharacterInput,
+  Engine,
+  type LevelPlanRequest,
+  type LevelRequest,
+  type LevelUpEngine,
+  type PreviewRequest,
+} from "@/engine/index.ts";
 import { include } from "@/lib/mixins.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
@@ -27,16 +35,53 @@ import type { Session } from "@/shared/relations.ts";
 
 import { writeBondedCreatures } from "./bondedWrites.ts";
 import { Pickers } from "./concerns/Pickers.ts";
+import { Plans } from "./concerns/Plans.ts";
 import { Steps } from "./concerns/Steps.ts";
 import { createLevelRows } from "./levelRows.ts";
 
-class CharacterLevelsService extends include(Object, Pickers, Steps) {
+class CharacterLevelsService extends include(Object, Pickers, Plans, Steps) {
   /** Deletes a level's rows in the tables under it, which an edit writes again. */
   private async deleteLevelRows(tx: Db, characterLevelId: string) {
     await CharacterLevelAbilityIncreases.delete(tx, { characterLevelId });
     await CharacterLevelFeats.delete(tx, { characterLevelId });
     await CharacterLevelPowers.delete(tx, { characterLevelId });
     await CharacterLevelSkills.delete(tx, { characterLevelId });
+  }
+
+  /**
+   * Re-saves character level `characterLevelId` as its edit plans it (`planOf`, from the character's level flows and
+   * its bonded creatures): the level's columns, its rows under it in place of those it had, what its bonded creatures
+   * become, and an activity. Answers the level as it was saved before.
+   */
+  private async editLevel(
+    session: Session,
+    characterId: string,
+    characterLevelId: string,
+    planOf: (levelUp: LevelUpEngine, bonded: CharacterInput[]) => ReturnType<LevelUpEngine["planEdit"]>,
+  ) {
+    return await withTransaction(async (tx) => {
+      const characterRecord = await this.lockEditableCharacter(tx, session, characterId);
+
+      return await withRulesetScope(tx, characterRecord.rulesetId, async (scope) => {
+        const character = await readCharacterInput(tx, characterRecord);
+        const bonded = await readBondedInputs(tx, character);
+        const edit = planOf(Engine.for(scope).character(character).levelUp(), bonded);
+
+        await CharacterLevels.update(tx, edit.columns, { id: characterLevelId });
+        await this.deleteLevelRows(tx, characterLevelId);
+        await createLevelRows(tx, characterLevelId, edit.rows);
+        await writeBondedCreatures(tx, characterRecord, edit.bonded);
+
+        await Activities.create(tx, {
+          userId: session.userId,
+          targetId: characterId,
+          targetTable: getTableName(levelsInCharacter),
+          type: "editLevel",
+        });
+
+        return edit.level;
+      });
+    });
   }
 
   /**
@@ -47,6 +92,54 @@ class CharacterLevelsService extends include(Object, Pickers, Steps) {
     const characterRecord = await getEditableCharacter(tx, session, characterId);
     await Characters.lock(tx, { id: characterRecord.id });
     return characterRecord;
+  }
+
+  /**
+   * Saves the levels a level-up plans (`planOf`, from the character's level flows and its bonded creatures): each level
+   * and its rows under it, what the bonded creatures become, and an activity. Answers the levels saved.
+   */
+  private async saveLevels(
+    session: Session,
+    characterId: string,
+    planOf: (levelUp: LevelUpEngine, bonded: CharacterInput[]) => ReturnType<LevelUpEngine["planLevels"]>,
+  ) {
+    return await withTransaction(async (tx) => {
+      const characterRecord = await this.lockEditableCharacter(tx, session, characterId);
+
+      return await withRulesetScope(tx, characterRecord.rulesetId, async (scope) => {
+        const character = await readCharacterInput(tx, characterRecord);
+        const bonded = await readBondedInputs(tx, character);
+        const plan = planOf(Engine.for(scope).character(character).levelUp(), bonded);
+        const createdLevels = [];
+        for (const { columns, rows } of plan.levels) {
+          const [created] = await CharacterLevels.create(tx, { characterId, ...columns });
+          createdLevels.push(created);
+          await createLevelRows(tx, created.id, rows);
+        }
+        await writeBondedCreatures(tx, characterRecord, plan.bonded);
+
+        await Activities.create(tx, {
+          userId: session.userId,
+          targetId: characterId,
+          targetTable: getTableName(levelsInCharacter),
+          type: "addLevel",
+          data: { count: plan.levels.length },
+        });
+
+        return createdLevels;
+      });
+    });
+  }
+
+  /**
+   * Saves a level-up's plan (`request`): its levels, its picks spread over them, and what the character's bonded
+   * creatures become. The engine reads the plan by its steps, checks each level, and the character with them unless
+   * `force`d, and the save writes what it plans.
+   */
+  async addLevels(session: Session, characterId: string, request: LevelPlanRequest, force: boolean = false) {
+    return await this.saveLevels(session, characterId, (levelUp, bonded) =>
+      levelUp.planLevelUp(bonded, request, force),
+    );
   }
 
   /**
@@ -63,35 +156,9 @@ class CharacterLevelsService extends include(Object, Pickers, Steps) {
     powers: Record<string, string[]>,
     force: boolean = false,
   ) {
-    return await withTransaction(async (tx) => {
-      const characterRecord = await this.lockEditableCharacter(tx, session, characterId);
-
-      return await withRulesetScope(tx, characterRecord.rulesetId, async (scope) => {
-        const character = await readCharacterInput(tx, characterRecord);
-        const bonded = await readBondedInputs(tx, character);
-        const plan = Engine.for(scope)
-          .character(character)
-          .levelUp()
-          .planLevels(bonded, { levels, picks: { skills, feats, powers } }, force);
-        const createdLevels = [];
-        for (const { columns, rows } of plan.levels) {
-          const [created] = await CharacterLevels.create(tx, { characterId, ...columns });
-          createdLevels.push(created);
-          await createLevelRows(tx, created.id, rows);
-        }
-        await writeBondedCreatures(tx, characterRecord, plan.bonded);
-
-        await Activities.create(tx, {
-          userId: session.userId,
-          targetId: characterId,
-          targetTable: getTableName(levelsInCharacter),
-          type: "addLevel",
-          data: { count: levels.length },
-        });
-
-        return createdLevels;
-      });
-    });
+    return await this.saveLevels(session, characterId, (levelUp, bonded) =>
+      levelUp.planLevels(bonded, { levels, picks: { skills, feats, powers } }, force),
+    );
   }
 
   /** A saved level's selections, as its edit opens them: its class level, hit points, ability increases and picks. */
@@ -161,32 +228,26 @@ class CharacterLevelsService extends include(Object, Pickers, Steps) {
     powers: Record<string, string[]>,
     force: boolean = false,
   ) {
-    return await withTransaction(async (tx) => {
-      const characterRecord = await this.lockEditableCharacter(tx, session, characterId);
+    return await this.editLevel(session, characterId, characterLevelId, (levelUp, bonded) =>
+      levelUp.planEdit(bonded, characterLevelId, { abilityIncreases, feats, hp, powers, skills }, force),
+    );
+  }
 
-      return await withRulesetScope(tx, characterRecord.rulesetId, async (scope) => {
-        const character = await readCharacterInput(tx, characterRecord);
-        const bonded = await readBondedInputs(tx, character);
-        const edit = Engine.for(scope)
-          .character(character)
-          .levelUp()
-          .planEdit(bonded, characterLevelId, { abilityIncreases, feats, hp, powers, skills }, force);
-
-        await CharacterLevels.update(tx, edit.columns, { id: characterLevelId });
-        await this.deleteLevelRows(tx, characterLevelId);
-        await createLevelRows(tx, characterLevelId, edit.rows);
-        await writeBondedCreatures(tx, characterRecord, edit.bonded);
-
-        await Activities.create(tx, {
-          userId: session.userId,
-          targetId: characterId,
-          targetTable: getTableName(levelsInCharacter),
-          type: "editLevel",
-        });
-
-        return edit.level;
-      });
-    });
+  /**
+   * Re-saves a character level by an edit's plan (`request`): its hit points, ability increases and picks, read by an
+   * edit's steps. The engine checks them, and refuses the issues the level answers for unless `force`d. Answers the
+   * level as it was saved before.
+   */
+  async updatePlannedLevel(
+    session: Session,
+    characterId: string,
+    characterLevelId: string,
+    request: LevelPlanRequest,
+    force: boolean = false,
+  ) {
+    return await this.editLevel(session, characterId, characterLevelId, (levelUp, bonded) =>
+      levelUp.planLevelEdit(bonded, characterLevelId, request, force),
+    );
   }
 }
 

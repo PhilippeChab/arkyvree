@@ -13,7 +13,8 @@ import type { RulesetPart } from "./parts/ruleset/index.ts";
  * What a ruleset describes in its own shape, which the server hands to the client as it is: a character's sheet (as the
  * API answers it, its private notes where every ruleset's holds them; as a member who reads it partly reads it;
  * printed), what an inventory entry shows beside its row, the level-up wizard's steps (any of them, each named for
- * the kind it is, `LevelStepKind`), preview and a saved level's selections, and what each picker adds to an option.
+ * the kind it is, `LevelStepKind`), preview and a saved level's selections, what each picker adds to an option, and a
+ * step's picker (`stepPicker`) by the kind it reads a page of.
  */
 export interface Descriptions {
   classOption: object;
@@ -28,6 +29,7 @@ export interface Descriptions {
   sheet: DescribedSheet;
   sheetDocument: unknown;
   step: { name: LevelStepKind };
+  stepPicker: { kind: string };
 }
 
 /**

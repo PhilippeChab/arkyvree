@@ -833,9 +833,17 @@ export default abstract class LevelUpPart<D extends Descriptions> {
   abstract describeStep(view: RulesetView, character: CharacterInput, name: string, query: LevelQuery): D["step"];
   abstract describeSteps(view: RulesetView, character: CharacterInput, query: LevelQuery): readonly WizardStep<D["step"]["name"]>[];
   abstract planLevels(view: RulesetView, character: CharacterInput, bonded: CharacterInput[], request: LevelUpRequest, force: boolean): LevelsPlan;
+  // A level's steps by their mechanics (`mechanics.ts`): the plan's answer, a step's picker, a plan's save and edit
+  abstract listSteps(view: RulesetView, character: CharacterInput, edited: boolean): readonly LevelStep[];
+  abstract describePlan(view: RulesetView, character: CharacterInput, request: LevelPlanRequest): LevelPlanAnswer;
+  abstract openStepPicker(view: RulesetView, character: CharacterInput, step: string, query: StepPickerQuery): D["stepPicker"];
+  abstract readLevelUp(view: RulesetView, character: CharacterInput, request: LevelPlanRequest): LevelUpRequest;
+  abstract readEdit(view: RulesetView, character: CharacterInput, request: LevelPlanRequest): LevelEditRequest;
   …
 }
 ```
+
+A level's steps are mechanics, which core describes in no game's nouns (`engine/core/module/parts/levelUp/mechanics.ts`): `plan` (which track each advancement takes, at its next position: 3.5's class plan), `value` (a number per advancement within bounds: its hit points), `choose` (options an advancement raises by an amount: its ability increase), `spend` (points over rows, each buying value at its own rate: its skills) and `pick` (entities of a kind into pools, each with its room, maybe by tier: its feats, and its spells by level). The module lists a level's steps (`listSteps`: each its name, mechanic, label, the kind it plans, chooses, spends over or picks, and its pools' kind; an edit's without its plan step), and answers a plan in their shapes (`describePlan`: each step's answer by its name, and the plan's advancements), Add Level's plan and Edit Level's level (`editedLevelId`) alike. A plan request is each step's payload by its name (`LevelPlanRequest`), which the level-up handle reads by the steps' mechanics as it enters (`LevelRequests.resolvePlan`: each payload in its mechanic's shape, `Payloads`, each id it names the view's, by its step's kind; a save's, `resolveSave`, answering every step), and the module reads as its level flows take it (`readLevelUp`, `readEdit`), so a plan's save writes the rows a save writes. A step's picker opens over the plan (`openStepPicker`), naming the kind the server reads a page of. The routes are `GET /api/characters/levels/:characterId/steps`, `POST …/:characterId/plan`, `POST …/:characterId/options/:step`, and a plan's save and edit (`POST …/:characterId`, `PUT …/:characterId/:characterLevelId` with its `steps`).
 
 ```ts
 // engine/rulesets/dnd3.5/levelUp/Dnd35LevelUp.ts  (the 3.5 module's own)
