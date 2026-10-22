@@ -77,10 +77,13 @@ type PickPool = AnswerOf<"pick">["pools"][string];
 /** The open pool's options, a page at a time. */
 const OPTIONS_PAGE = 20;
 
+/** A group's members, a page at a time: a family's variants (one per weapon) mostly fit on one. */
+const GROUP_PAGE = 50;
+
 /** A group's members, listed under its row once it expands, checked where its row was. */
 function GroupExpansion({ at, characterId, group, onPick, plan, step }: GroupExpansionProps) {
   const query = useInfiniteQuery({
-    ...stepOptionsQuery(characterId, step, plan, { ...at, group }, "", OPTIONS_PAGE),
+    ...stepOptionsQuery(characterId, step, plan, { ...at, group }, "", GROUP_PAGE),
     placeholderData: keepPreviousData,
   });
   // A group's members are plain options, never groups
