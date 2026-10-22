@@ -14,6 +14,7 @@ import contributorsRouter from "./contributors/index.ts";
 import modifiers from "./customization/modifiers/index.ts";
 import requirements from "./customization/requirements/index.ts";
 import targetRouter from "./customization/target/index.ts";
+import entities from "./entities/index.ts";
 import extensions from "./extensions/index.ts";
 import feats from "./feats/index.ts";
 import fields from "./fields/index.ts";
@@ -45,6 +46,7 @@ export default new Hono()
   .route("/", modifiers)
   .route("/", requirements)
   .route("/", targetRouter)
+  .route("/", entities)
   .route("/", extensions)
   .route("/", changes)
   .get(

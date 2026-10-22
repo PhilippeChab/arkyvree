@@ -485,10 +485,12 @@ return await withRulesetScope(db, rulesetId, async (scope) => {
 return Engine.for(scope).entities("saves").describe(saveId);
 ```
 
+Every kind is served by one router, by its URL segment (`server/routers/api/rulesets/entities/`: `/rulesets/:id/entities/:entityType`, `classes` for `klasses`): its list, with its kind's filters past the shared ones (a race's or a class's `kind`, a feat's or a spell's `aptitudeId`, a feat's `family`, a spell's `level`, an aptitude's `scope`, an item's `isTemplate`; one its kind takes none of refused, by key), its page, its create (201), update and delete, and its kind's actions (`grouped`, its groups in their own order with their own filters, a feat's pool's; `templates`; `:entityId/duplicate`; `:entityId/variants`). Each kind's filters are typed by their schemas (`buildKindServices`), so the service it dispatches to takes them read. `EntitiesService` (`server/services/rulesets/entities/`) dispatches each to its kind's service through one registry, which says what each kind answers: an action a kind has none of (an ability's create, a race's templates) is refused as not found. The routes by type remain until the client moves to these.
+
 A kind's creates, updates and deletes go through its writer, `EntityWriter` (`server/services/rulesets/EntityWriter.ts`), a field of its service: the service hands it the plan its rules give (`Engine.for(scope).entities(type)`), and it takes every kind's steps around it, in one order:
 
 ```ts
-private readonly writer = new EntityWriter("languages", Languages, languagesInRules, "Language");
+private readonly writer = new EntityWriter("languages", Languages, languagesInRules);
 
 return await this.writer.create(session, rulesetId, body.name, (scope) =>
   Engine.for(scope).entities("languages").planCreate(body),
