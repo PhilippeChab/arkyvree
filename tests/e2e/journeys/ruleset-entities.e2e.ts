@@ -74,4 +74,33 @@ test.describe("A fork's entities", () => {
       await expect(page.getByRole("cell", { name: `${name} renamed`, exact: true })).toHaveCount(0);
     });
   }
+  test("an inherited language saved is copied into the fork, its page following the copy", async ({
+    page,
+    ownerUser,
+  }) => {
+    await signIn(page, ownerUser.email, ownerUser.password);
+    const forkId = await forkCoreRuleset(page, uniqueName("Inherited Fork"));
+    await page.goto(`/rulesets/${forkId}/languages?search=Abyssal`);
+    await page.getByRole("cell", { name: "Abyssal", exact: true }).click();
+    await expect(page.getByText("Language Details")).toBeVisible();
+    const inherited = page.url();
+
+    const name = `Abyssal ${Date.now()}`;
+    await page.getByLabel("Name", { exact: true }).fill(name);
+    const saved = apiResponse(page, "PUT", new RegExp(`/api/rulesets/${forkId}/entities/languages/[a-f0-9-]+`));
+    await page.getByRole("button", { name: /^Save$/ }).click();
+    await saved;
+    // The copy is the fork's own: its page moves to it, and keeps its name after a reload
+    await expect(page).not.toHaveURL(inherited);
+    await expect(page).toHaveURL(new RegExp(`/rulesets/${forkId}/languages/[a-f0-9-]+$`));
+    await page.reload();
+    await expect(page.getByLabel("Name", { exact: true })).toHaveValue(name, { timeout: 10_000 });
+  });
+
+  test("an address no simple kind has goes back to the ruleset", async ({ page, ownerUser }) => {
+    await signIn(page, ownerUser.email, ownerUser.password);
+    const forkId = await forkCoreRuleset(page, uniqueName("Unknown Fork"));
+    await page.goto(`/rulesets/${forkId}/widgets/00000000-0000-4000-8000-000000000000`);
+    await expect(page).toHaveURL(new RegExp(`/rulesets/${forkId}/races$`));
+  });
 });

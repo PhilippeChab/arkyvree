@@ -18,7 +18,7 @@ import { entitySegment } from "@/client/src/pages/rulesets/details/sectionQuerie
 import { entityPageBack } from "@/client/src/pages/rulesets/entityPageState.ts";
 import { useEntityFields } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
-import { getUrlSegment } from "@/shared/urlSegments.ts";
+import { getEntityTypeOfSegment, getUrlSegment } from "@/shared/urlSegments.ts";
 
 import { entityQuery } from "./entityDetailQueries.ts";
 import { RulesetEntityDetail } from "./RulesetEntityDetail.tsx";
@@ -30,9 +30,6 @@ interface EntityDetailsProps {
   label: string;
   rulesetId: string;
 }
-
-/** The rows a long description's input takes (a mechanic's), as its create dialog's does. */
-const LONG_DESCRIPTION_ROWS = 10;
 
 /**
  * An entity's details, any kind's whose row opens its own page: its form of its columns and fields, as its rules
@@ -72,7 +69,7 @@ function EntityDetails({ entityId, kind, label, rulesetId }: EntityDetailsProps)
                   form={form}
                   entityType={kind.type}
                   rulesetId={rulesetId}
-                  descriptionRows={kind.longDescription ? LONG_DESCRIPTION_ROWS : undefined}
+                  longDescription={kind.longDescription}
                 />
               ),
             })
@@ -83,10 +80,10 @@ function EntityDetails({ entityId, kind, label, rulesetId }: EntityDetailsProps)
 
 /**
  * The page of an entity of any kind whose row opens its own page (`opens: "page"`: a language's, a skill's, an
- * ability's), by its kind's URL segment: it waits for its ruleset and its rules to know its kind; a segment no such
- * kind has goes back to the ruleset.
+ * ability's), by its kind's URL segment: it waits for its ruleset and its rules to know its kind, reading the entity
+ * meanwhile; a segment no such kind has goes back to the ruleset, and rules that failed to load say so.
  */
-export default function EntityPage() {
+export default function EntityDetailsPage() {
   const {
     id: rulesetId = "",
     section = "",
@@ -98,14 +95,17 @@ export default function EntityPage() {
   }>();
   const location = useLocation();
   const { data: ruleset, isLoading, error } = useQuery(rulesetDetailQuery(rulesetId));
-  const { rules, isPending: rulesPending } = useRules(ruleset?.baseRules);
+  const { rules, isPending: rulesPending, error: rulesError } = useRules(ruleset?.baseRules);
+  // Read alongside its ruleset and rules, under the key its details read it by: a segment no kind has is refused
+  useQuery(entityQuery(rulesetId, getEntityTypeOfSegment(section), entityId));
   const kind = rules?.kinds.find((each) => each.opens === "page" && getUrlSegment(each.type) === section);
   const label = kind ? entityTypeLabel(kind.type, rules?.words) : "Entity";
   const back = entityPageBack(location.state, `/rulesets/${rulesetId}/${section}`, rules?.words);
 
-  if (ruleset && !rulesPending) {
+  if (ruleset && rules) {
     if (!kind) return <Navigate to={`/rulesets/${rulesetId}`} replace />;
-    return <EntityDetails key={entityId} rulesetId={rulesetId} entityId={entityId} kind={kind} label={label} />;
+    // Keyed by its kind alone: a save that copies an inherited entity moves to the copy on the same page
+    return <EntityDetails key={kind.type} rulesetId={rulesetId} entityId={entityId} kind={kind} label={label} />;
   }
 
   if (isLoading || rulesPending) {
@@ -116,5 +116,6 @@ export default function EntityPage() {
     );
   }
 
-  return <EntityPageError message={loadFailureMessage("Ruleset", error)} backLabel={back.label} backTo={back.to} />;
+  const message = ruleset ? loadFailureMessage("Rules", rulesError) : loadFailureMessage("Ruleset", error);
+  return <EntityPageError message={message} backLabel={back.label} backTo={back.to} />;
 }

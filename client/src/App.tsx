@@ -21,7 +21,7 @@ const CharactersPage = lazy(() => import("./pages/characters/CharactersPage.tsx"
 const ClassDetailsPage = lazy(() => import("./pages/rulesets/details/classes/ClassDetailsPage.tsx"));
 const CustomizationPage = lazy(() => import("./pages/rulesets/customization/CustomizationPage.tsx"));
 const DemoExpiredPage = lazy(() => import("./pages/demo-expired/DemoExpiredPage.tsx"));
-const EntityPage = lazy(() => import("./pages/rulesets/details/entities/EntityPage.tsx"));
+const EntityDetailsPage = lazy(() => import("./pages/rulesets/details/entities/EntityDetailsPage.tsx"));
 const ForgotPasswordPage = lazy(() => import("./pages/auth/ForgotPasswordPage.tsx"));
 const InvitePage = lazy(() => import("./pages/invites/InvitePage.tsx"));
 const LegalPage = lazy(() => import("./pages/legal/LegalPage.tsx"));
@@ -69,7 +69,7 @@ const router = createBrowserRouter(
           <Route path="rulesets/:id/classes/:classId/:section" element={<ClassDetailsPage />} />
 
           {/* A page kind's entity's page, by its kind's URL segment: one without customizations (a language, a skill) */}
-          <Route path="rulesets/:id/:section/:entityId" element={<EntityPage />} />
+          <Route path="rulesets/:id/:section/:entityId" element={<EntityDetailsPage />} />
 
           {/* A customizable entity's page: its details and its customizations' tabs */}
           <Route path="rulesets/:id/:entityType/:entityId/customization" element={<CustomizationPage />} />

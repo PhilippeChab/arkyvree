@@ -1,6 +1,6 @@
 /**
- * The detail queries of the ruleset entities whose row opens their own page, shared by that page and the section rows'
- * hover prefetch so both cache the same response.
+ * The detail queries of the ruleset entities: an entity of any kind (`entityQuery`), shared by its page and the section
+ * rows' hover prefetch so both cache the same response, and an aptitude as a list's aptitude filter reads it.
  */
 
 import { type QueryClient, queryOptions, skipToken } from "@tanstack/react-query";
