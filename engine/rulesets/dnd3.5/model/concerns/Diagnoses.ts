@@ -33,6 +33,7 @@ export function Diagnoses<B extends Constructor<CharacterState>>(Base: B) {
       const slotIssue = (name: string, { allowed, spent, available }: AptitudeSlots) => {
         if (allowed === ALLOWED_ALL || available === 0) return;
         issues.push({
+          amount: Math.abs(available),
           category: "aptitudes",
           message:
             available > 0
@@ -170,12 +171,14 @@ export function Diagnoses<B extends Constructor<CharacterState>>(Base: B) {
       const { available, spent, total } = this.components.skills.getSkillBudget();
       if (available > 0) {
         budget.push({
+          amount: available,
           category: "skills",
           message: `${available} unspent skill point(s) (${spent}/${total})`,
           subject: "Skill points: unspent",
         });
       } else if (available < 0) {
         budget.push({
+          amount: -available,
           category: "skills",
           message: `Overspent by ${Math.abs(available)} skill point(s) (${spent}/${total})`,
           subject: "Skill points: overspent",

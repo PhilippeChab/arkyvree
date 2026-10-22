@@ -26,12 +26,12 @@ import { Stars } from "./concerns/Stars.ts";
 /** What a write of a name another ruleset has is refused with. */
 const NAME_TAKEN = "A ruleset with this name already exists";
 
-/** A write of a ruleset's name refused as a taken name, when a concurrent write took it first. */
-function refuseTakenName(error: unknown): never {
-  throw isUniqueViolation(error) ? new ConflictError(NAME_TAKEN) : error;
-}
-
 class RulesetsService extends include(Object, Archives, Publishes, Stars) {
+  /** A write of a ruleset's name refused as a taken name, when a concurrent write took it first. */
+  private refuseTakenName(error: unknown): never {
+    throw isUniqueViolation(error) ? new ConflictError(NAME_TAKEN) : error;
+  }
+
   /** Refuses a name another ruleset has, archived or another user's private one too: a ruleset's name is unique. */
   private async checkNameFree(tx: Db, name: string) {
     if (await Rulesets.findOne(tx, { name }, Visibility.All)) throw new ConflictError(NAME_TAKEN);
@@ -63,7 +63,7 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
           extensionRulesetIds: ruleset.extensionRulesetIds,
           baseRules: ruleset.baseRules,
           private: body.private,
-        }).catch(refuseTakenName)
+        }).catch((error: unknown) => this.refuseTakenName(error))
       )[0];
 
       // Copy extension metadata rows
@@ -204,7 +204,9 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
       if (body.kind === "extension" && ruleset.kind !== "extension") this.assertCanBeExtension(ruleset);
 
       const { updatedAt, ...columns } = body;
-      const rows = await Rulesets.update(tx, columns, { id, expectedUpdatedAt: updatedAt }).catch(refuseTakenName);
+      const rows = await Rulesets.update(tx, columns, { id, expectedUpdatedAt: updatedAt }).catch((error: unknown) =>
+        this.refuseTakenName(error),
+      );
       if (updatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
 
       const updatedRuleset = rows[0];

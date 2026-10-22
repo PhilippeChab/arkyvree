@@ -1825,6 +1825,23 @@ describe("LevelsService", () => {
       expect(saved[ctx.aptMap["General"]!]!.map((feat) => feat.name)).toEqual(["Great Fortitude"]);
     });
 
+    test("refuses an edit leaving a pool more slots unspent than its level was saved with, unless forced", async () => {
+      const ctx = await getSeedCtx();
+      const characterId = await createSeedCharacter(ctx);
+      // Saved with one of its two General feats: one slot unspent
+      const [level] = await addClassLevels(db, ctx, characterId, "Fighter", [1], [10]);
+      await addFeats(db, ctx, [level!], [{ levelIndex: 0, featName: "Great Fortitude", aptitude: "General" }]);
+
+      // Its feat dropped: two unspent, more of the issue it had
+      const edit = (force: boolean) =>
+        CharacterLevelsService.updateLevel(session, characterId, level!, 10, [], {}, {}, {}, force);
+      expect(await answerTo(() => edit(false))).toMatchObject({
+        status: 400,
+        body: { issues: [expect.objectContaining({ message: expect.stringMatching(/General: 2 unspent/) })] },
+      });
+      await edit(true);
+    });
+
     test("lists the level's picks by name", async () => {
       const ctx = await getSeedCtx();
       const characterId = await createSeedCharacter(ctx);
