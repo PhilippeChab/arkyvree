@@ -1,5 +1,6 @@
 export { default as apiKeyMiddleware } from "./apiKey.ts";
 export type { ApiKeyContext } from "./apiKey.ts";
+export { checkCsrf } from "./csrf.ts";
 export { default as denyDemoUser } from "./denyDemoUser.ts";
 export { describeRoute } from "./describeRoute.ts";
 export type { RouteDescription } from "./describeRoute.ts";
