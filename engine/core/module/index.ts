@@ -84,6 +84,7 @@ export {
   type WizardStep,
 } from "./parts/levelUp/index.ts";
 export {
+  type EntityKindDescription,
   type LevelWizardDescription,
   type ListColumn,
   type ListDescription,

@@ -6,7 +6,27 @@ describe("rules", () => {
   test("answers what every base rules' rulesets share, to anyone: words, kinds, levels, lists, progression, level wizard and license", async () => {
     const rules = await expectOk(guestApi.api.rules.$get());
     const dnd35 = rules["Dungeons & Dragons: 3.5"];
-    expect(dnd35.words).toEqual({ powers: { many: "Spells", one: "Spell" } });
+    // Its word for every type, the engine's own (modifiers) with its own
+    expect(dnd35.words.powers).toEqual({ many: "Spells", one: "Spell" });
+    expect(dnd35.words.klasses).toEqual({ many: "Classes", one: "Class" });
+    expect(dnd35.words.modifiers).toEqual({ many: "Modifiers", one: "Modifier" });
+    // Its kinds, in its page's order: each its picture, and its tab's help where it has one
+    expect(dnd35.kinds.map(({ type }) => type)).toEqual([
+      "races",
+      "languages",
+      "skills",
+      "feats",
+      "powers",
+      "items",
+      "aptitudes",
+      "klasses",
+      "saves",
+      "abilities",
+      "mechanics",
+    ]);
+    expect(dnd35.kinds.filter((kind) => kind.help).map(({ type }) => type)).toEqual(["aptitudes", "mechanics"]);
+    // Every kind has its word
+    for (const { type } of dnd35.kinds) expect(dnd35.words[type]).toBeDefined();
     expect(dnd35.entityKinds).toEqual([
       { label: "Player Character", value: "pc" },
       { label: "Familiar", value: "familiar" },

@@ -26,7 +26,7 @@ interface ItemBody {
 
 class ItemsService extends include(Object, Variants) {
   /** What its creates, updates and deletes write, in one order around the plans its rules give. */
-  private readonly writer = new EntityWriter("items", Items, itemsInRules, "Item");
+  private readonly writer = new EntityWriter("items", Items, itemsInRules);
 
   /**
    * The items made from a template that a change to it in the scope's ruleset reaches (`copiesOf`: the ids they may

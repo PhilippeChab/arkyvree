@@ -4,7 +4,10 @@ import RulesError from "@/engine/core/RulesError.ts";
 import { RequestIds, type RulesetView } from "@/engine/core/view/index.ts";
 import type { RulesetKind } from "@/shared/enums.ts";
 
-import type { RulesDescription } from "./RulesDescription.ts";
+import type { RulesDescription, RulesWord } from "./RulesDescription.ts";
+
+/** The words of the types the engine itself holds, whatever the rules: a customization's modifier. */
+const ENGINE_WORDS: Readonly<Record<string, RulesWord>> = { modifiers: { many: "Modifiers", one: "Modifier" } };
 
 /**
  * What a ruleset answers of a ruleset as a whole, past its entities: what it needs to be published, its own fields, its
@@ -44,9 +47,12 @@ export default abstract class RulesetPart {
     if (missing) throw new RulesError("unprocessable", `Ruleset requires at least one of each: ${missing}`);
   }
 
-  /** What every ruleset of its base rules shares, which the client reads once: its words, its kinds, its license… */
+  /**
+   * What every ruleset of its base rules shares, which the client reads once: its words (the engine's own types' with
+   * its own), its kinds, its license…
+   */
   describeRules(): RulesDescription {
-    return this.rules;
+    return { ...this.rules, words: { ...ENGINE_WORDS, ...this.rules.words } };
   }
 
   /** The ruleset's Settings, by name: what its Settings tab shows. */

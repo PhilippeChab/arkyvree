@@ -1,4 +1,5 @@
 export type {
+  EntityKindDescription,
   LevelWizardDescription,
   ListColumn,
   ListDescription,

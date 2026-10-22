@@ -9,7 +9,7 @@ import type { Session } from "@/shared/relations.ts";
 
 class RacesService {
   /** What its creates, updates and deletes write, in one order around the plans its rules give. */
-  private readonly writer = new EntityWriter("races", Races, racesInRules, "Race");
+  private readonly writer = new EntityWriter("races", Races, racesInRules);
 
   async createRace(
     session: Session,

@@ -8,7 +8,7 @@ import type { Session } from "@/shared/relations.ts";
 
 class AptitudesService {
   /** What its creates, updates and deletes write, in one order around the plans its rules give. */
-  private readonly writer = new EntityWriter("aptitudes", Aptitudes, aptitudesInRules, "Aptitude");
+  private readonly writer = new EntityWriter("aptitudes", Aptitudes, aptitudesInRules);
 
   async createAptitude(
     session: Session,

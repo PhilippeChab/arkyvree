@@ -1,5 +1,6 @@
 /** The app's icons, named for what each means where it shows; every icon comes from here. */
 
+export { kindIcon } from "./kindIcons.ts";
 export {
   FitnessCenter as AbilitiesIcon,
   AccountCircle as AccountCircleIcon,
@@ -29,6 +30,7 @@ export {
   Download as DownloadIcon,
   EditNote as DraftIcon,
   Edit as EditIcon,
+  Category as EntityIcon,
   ExpandMore as ExpandMoreIcon,
   Extension as ExtensionIcon,
   EmojiEvents as FeatPoolsIcon,

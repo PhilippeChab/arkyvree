@@ -46,19 +46,8 @@ export type Aptitude = InferResponseType<AptitudesApi["$get"], 200>["items"][num
 /** A ruleset's power (3.5's spell), as its list gives it. */
 export type Power = InferResponseType<(typeof rpc.api.rulesets)[":id"]["powers"]["$get"], 200>["items"][number];
 
-export type RulesetSection =
-  | "races"
-  | "languages"
-  | "skills"
-  | "feats"
-  | "powers"
-  | "items"
-  | "classes"
-  | "aptitudes"
-  | "saves"
-  | "abilities"
-  | "mechanics"
-  | "settings";
+/** A ruleset page's tab: an entity kind's, by its URL segment (`races`, `classes`), or its Settings (`settings`). */
+export type RulesetSection = string;
 
 /** A tab's search params where an entity's kind and its sort narrow and order its list too (the races, the classes). */
 function entityPageSearchParams(pageParam: number, filters: EntityFilters) {

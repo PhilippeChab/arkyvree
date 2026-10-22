@@ -19,26 +19,16 @@ import {
   ValueChip,
 } from "@/client/src/components/common/index.ts";
 import {
-  AbilitiesIcon,
-  AptitudesIcon,
   ArchiveIcon,
-  ClassesIcon,
   CompareArrowsIcon,
   ContributorsIcon,
   EditIcon,
   ExtensionIcon,
-  FeatsIcon,
   ForkIcon,
   HelpIcon,
-  ItemsIcon,
-  LanguagesIcon,
-  MechanicsIcon,
-  PowersIcon,
+  kindIcon,
   PublishIcon,
-  RacesIcon,
-  SavesIcon,
   SettingsIcon,
-  SkillsIcon,
   UnarchiveIcon,
 } from "@/client/src/components/icons/index.ts";
 import {
@@ -52,10 +42,11 @@ import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { EXTERNAL_LINKS } from "@/client/src/lib/externalLinks.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
-import { rulesetDetailQuery, type RulesWords } from "@/client/src/lib/queries.ts";
+import { type RulesDescription, rulesetDetailQuery } from "@/client/src/lib/queries.ts";
 import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
 import { RulesetFactChips, RulesetStarButton } from "@/client/src/pages/rulesets/components/index.ts";
 import { useRulesetOperations } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { getUrlSegment } from "@/shared/urlSegments.ts";
 
 import {
   ArchiveRulesetDialog,
@@ -89,45 +80,41 @@ import {
 /** What a ruleset page's tab is: its key, label and icon, and the section it shows. */
 type TabConfig = SectionTab<RulesetSection> & { component: (props: RulesetSectionProps) => ReactNode };
 
-/** The ruleset page's tabs, an entity's section each, named in its rules' words (`words`). */
-function rulesetTabs(words: RulesWords | undefined): TabConfig[] {
+/** Each entity type's section, by its type. */
+const SECTIONS: Readonly<Record<string, (props: RulesetSectionProps) => ReactNode>> = {
+  abilities: AbilitiesSection,
+  aptitudes: AptitudesSection,
+  feats: FeatsSection,
+  items: ItemsSection,
+  klasses: ClassesSection,
+  languages: LanguagesSection,
+  mechanics: MechanicsSection,
+  powers: PowersSection,
+  races: RacesSection,
+  saves: SavesSection,
+  skills: SkillsSection,
+};
+
+/**
+ * The ruleset page's tabs: an entity kind's section each, in the order its rules list them (`rules`), named in their
+ * words, with their picture and what their tab says of them, then its Settings.
+ */
+function rulesetTabs(rules: RulesDescription | undefined): TabConfig[] {
+  const kinds: TabConfig[] = (rules?.kinds ?? []).flatMap((kind) => {
+    const component = SECTIONS[kind.type];
+    if (!component) return [];
+    const label = entityTypeLabel(kind.type, rules?.words, true);
+    return [
+      {
+        key: getUrlSegment(kind.type),
+        label: kind.help ? <HelpLabel label={label} help={kind.help} /> : label,
+        icon: kindIcon(kind.icon),
+        component,
+      },
+    ];
+  });
   return [
-    { key: "races", label: "Races", icon: RacesIcon, component: RacesSection },
-    { key: "languages", label: "Languages", icon: LanguagesIcon, component: LanguagesSection },
-    { key: "skills", label: "Skills", icon: SkillsIcon, component: SkillsSection },
-    { key: "feats", label: "Feats", icon: FeatsIcon, component: FeatsSection },
-    {
-      key: "powers",
-      label: entityTypeLabel("powers", words, true),
-      icon: PowersIcon,
-      component: PowersSection,
-    },
-    { key: "items", label: "Items", icon: ItemsIcon, component: ItemsSection },
-    {
-      key: "aptitudes",
-      label: (
-        <HelpLabel
-          label="Aptitudes"
-          help="Pools of choosable options at certain class levels (e.g., Fighter Bonus Feats, Rogue Special Abilities)."
-        />
-      ),
-      icon: AptitudesIcon,
-      component: AptitudesSection,
-    },
-    { key: "classes", label: "Classes", icon: ClassesIcon, component: ClassesSection },
-    { key: "saves", label: "Saves", icon: SavesIcon, component: SavesSection },
-    { key: "abilities", label: "Abilities", icon: AbilitiesIcon, component: AbilitiesSection },
-    {
-      key: "mechanics",
-      label: (
-        <HelpLabel
-          label="Mechanics"
-          help="Free-form rule entries for base game mechanics the app doesn't enforce (e.g., trip, disarm, grapple). Use them to document or override situational rules for your table."
-        />
-      ),
-      icon: MechanicsIcon,
-      component: MechanicsSection,
-    },
+    ...kinds,
     {
       key: "settings",
       label: (
@@ -224,11 +211,11 @@ export default function RulesetDetailsPage() {
     );
   }
 
-  const tabConfig = rulesetTabs(rules?.words);
+  const tabConfig = rulesetTabs(rules);
   const currentTab = tabConfig.find((tab) => tab.key === section);
 
-  // Normalize the URL to a known tab.
-  if (!currentTab) return <Navigate to={`/rulesets/${id}/races`} replace />;
+  // Normalize the URL to a known tab: its rules' first
+  if (!currentTab) return <Navigate to={`/rulesets/${id}/${tabConfig[0]?.key ?? "settings"}`} replace />;
 
   const isActive = ruleset.status !== "Archived";
   // A user's fork that subscribes to none can be an extension: what its edit and its publish offer
