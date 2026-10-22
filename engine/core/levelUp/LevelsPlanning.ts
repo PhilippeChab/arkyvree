@@ -206,7 +206,9 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
       if (levelIssues.length > 0) {
         // Each issue measured by its subject, past the words that count it: more of a subject than the saved character
         // had is the edit's (a forced level's pool left with fewer slots unspent isn't, one with more is)
-        const subjectOf = ({ category, message, subject }: RulesIssue) => `${category}\0${subject ?? message}`;
+        // What it's about, the entity it names too: a prerequisite's of one feat isn't another's of the same words
+        const subjectOf = ({ category, entityName, entityType, message, subject }: RulesIssue) =>
+          [category, entityType, entityName, subject ?? message].join("\0");
         const saved = new Map<string, number>();
         for (const issue of this.build().validate().issues) {
           const subject = subjectOf(issue);

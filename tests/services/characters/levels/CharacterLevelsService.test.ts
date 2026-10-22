@@ -1842,6 +1842,26 @@ describe("LevelsService", () => {
       await edit(true);
     });
 
+    test("refuses an edit dropping the spells a spell list's level gives, unless forced", async () => {
+      const ctx = await getSeedCtx();
+      const characterId = await createSeedCharacter(ctx, "wizard");
+      const level = await levelUp(session, ctx, characterId, "Wizard", 1, WIZARD_1);
+      const { feats, skills } = picks(ctx, WIZARD_1);
+
+      // Its spells dropped: the Wizard Spells' slots at each spell level left unspent, which the level gives
+      const edit = (force: boolean) =>
+        CharacterLevelsService.updateLevel(session, characterId, level.id, 4, [], skills, feats, {}, force);
+      expect(await answerTo(() => edit(false))).toMatchObject({
+        status: 400,
+        body: {
+          issues: expect.arrayContaining([
+            expect.objectContaining({ message: expect.stringMatching(/Wizard Spells \(level/) }),
+          ]),
+        },
+      });
+      await edit(true);
+    });
+
     test("lists the level's picks by name", async () => {
       const ctx = await getSeedCtx();
       const characterId = await createSeedCharacter(ctx);
