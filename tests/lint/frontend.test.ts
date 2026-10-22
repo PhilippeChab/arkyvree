@@ -755,6 +755,20 @@ describe("frontend rules", () => {
           [`${folder}/read.ts`]:
             'export const hpOf = (answer: { steps: Record<string, unknown> }) => answer.steps["hp"];\n',
           [`${folder}/written.ts`]: "export const plan = { steps: { hp: [8] } };\n",
+          // A list's members, a route's call, an empty name and a computed key name no step
+          [`${folder}/lists.ts`]:
+            'export const count = (wizard: { steps: string[] }, rpc: { steps: { $get: () => 1 } }, option: { name: string }) =>\n  wizard.steps.map((s) => s).length + wizard.steps.length + rpc.steps.$get() + (option.name === "" ? 1 : 0);\n',
+          [`${folder}/computed.ts`]:
+            "const key = 'k';\nexport const plan = (k: string) => ({ steps: { [k]: [1] }, [key]: { a: 1 } });\n",
+          // Optional chains, templates, dotted reads, destructurings and `in` name one all the same
+          [`${folder}/optional.ts`]: 'export const isHp = (step?: { name: string }) => step?.name === "hp";\n',
+          [`${folder}/template.ts`]: "export const isHp = (step: { name: string }) => step.name === `hp`;\n",
+          [`${folder}/dotted.ts`]: "export const hpOf = (answer: { steps: { hp: number } }) => answer.steps.hp;\n",
+          [`${folder}/destructured.ts`]:
+            "export const hpOf = (answer: { steps: { hp: number } }) => {\n  const { hp } = answer.steps;\n  return hp;\n};\n",
+          [`${folder}/nested.ts`]:
+            "export const hpOf = (answer: { steps: { hp: number } }) => {\n  const {\n    steps: { hp },\n  } = answer;\n  return hp;\n};\n",
+          [`${folder}/inSteps.ts`]: 'export const hasHp = (steps: Record<string, unknown>) => "hp" in steps;\n',
           // Outside the wizards' folder, a step's name is a test's, a module's
           "client/src/pages/other/named.ts":
             'export const isFeats = (step: { name: string }) => step.name === "feats";\n',
@@ -763,8 +777,14 @@ describe("frontend rules", () => {
       ),
     ).toEqual([
       `steps-by-mechanic ${folder}/compared.ts`,
+      `steps-by-mechanic ${folder}/destructured.ts`,
+      `steps-by-mechanic ${folder}/dotted.ts`,
+      `steps-by-mechanic ${folder}/inSteps.ts`,
+      `steps-by-mechanic ${folder}/nested.ts`,
+      `steps-by-mechanic ${folder}/optional.ts`,
       `steps-by-mechanic ${folder}/read.ts`,
       `steps-by-mechanic ${folder}/switched.ts`,
+      `steps-by-mechanic ${folder}/template.ts`,
       `steps-by-mechanic ${folder}/written.ts`,
     ]);
   });

@@ -20,9 +20,10 @@ import LevelPlans from "./LevelPlans.ts";
 import LevelUpPlan from "./LevelUpPlan.ts";
 
 /**
- * The 3.5 level-up, as the module answers the server's level flows, each from the rows the server read: the preview,
- * the bonded creatures the levels make, the wizard's steps and pickers, and a saved level's selections; and the rules
- * core's flows read, with which it removes a level and checks a save and an edit.
+ * The 3.5 level-up, as the module answers the server's level flows, each from the rows the server read: a level's
+ * steps, the plan's answer and a step's picker, a saved level as an edit's plan, a plan read as a save or an edit, and
+ * the bonded creatures the levels make; and the rules core's flows read, with which it removes a level and checks a save
+ * and an edit.
  */
 export default class Dnd35LevelUp extends LevelUpPart<Dnd35Descriptions, DetailedCharacter> {
   /** The hit points a level counts before they're rolled. */

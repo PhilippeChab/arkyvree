@@ -123,6 +123,23 @@ import {
 } from "./jsx.mjs";
 import { repoPath } from "./paths.mjs";
 
+/** A list's own members, which a read of `steps` may name: its steps are none of them */
+const ARRAY_MEMBERS = new Set([
+  "at",
+  "every",
+  "filter",
+  "find",
+  "findIndex",
+  "flatMap",
+  "forEach",
+  "includes",
+  "indexOf",
+  "length",
+  "map",
+  "slice",
+  "some",
+]);
+
 /** The auth pages, which carry the `redirect` that sent the user to sign in from one to another. */
 const AUTH_PAGES = "client/src/pages/auth/";
 
@@ -1532,30 +1549,64 @@ function createStepsByMechanic(context) {
       message:
         "The level wizards tell a step by its mechanic (`step.mechanic`), never by its name: what a ruleset names its steps is its module's.",
     });
-  const isString = (node) => node?.type === "Literal" && typeof node.value === "string";
-  const isName = (node) =>
-    (node?.type === "MemberExpression" && !node.computed && node.property.name === "name") ||
-    (node?.type === "Identifier" && node.name === "name");
-  const isSteps = (node) =>
-    (node?.type === "MemberExpression" && !node.computed && node.property.name === "steps") ||
-    (node?.type === "Identifier" && node.name === "steps");
+  // What an optional chain or a non-null assertion reads (`step?.name`, `answer.steps!`)
+  const unwrap = (node) =>
+    node?.type === "ChainExpression" || node?.type === "TSNonNullExpression" ? unwrap(node.expression) : node;
+  // A string a step could be named (an empty one names none), written plainly or as a template without a hole
+  const isString = (node) =>
+    (node?.type === "Literal" && typeof node.value === "string" && node.value !== "") ||
+    (node?.type === "TemplateLiteral" && node.expressions.length === 0 && node.quasis[0].value.cooked !== "");
+  const isNamed = (node, name) => {
+    const read = unwrap(node);
+    return (
+      (read?.type === "MemberExpression" && !read.computed && read.property.name === name) ||
+      (read?.type === "Identifier" && read.name === name)
+    );
+  };
+  const keyOf = (property) =>
+    property.computed ? undefined : property.key.type === "Identifier" ? property.key.name : property.key.value;
+  // The steps a destructuring names: its keys but a rest's
+  const reportKeys = (pattern) => {
+    for (const property of pattern.properties) if (property.type === "Property" && !property.computed) report(property);
+  };
   return {
     BinaryExpression(node) {
-      if (!["===", "!==", "==", "!="].includes(node.operator)) return;
-      if ((isName(node.left) && isString(node.right)) || (isName(node.right) && isString(node.left))) report(node);
+      if (["===", "!==", "==", "!="].includes(node.operator)) {
+        if (
+          (isNamed(node.left, "name") && isString(node.right)) ||
+          (isNamed(node.right, "name") && isString(node.left))
+        )
+          report(node);
+      }
+      // `"feats" in steps`
+      if (node.operator === "in" && isString(node.left) && isNamed(node.right, "steps")) report(node);
     },
     SwitchStatement(node) {
-      if (isName(node.discriminant) && node.cases.some((switchCase) => isString(switchCase.test))) report(node);
+      if (isNamed(node.discriminant, "name") && node.cases.some((switchCase) => isString(switchCase.test)))
+        report(node);
     },
     MemberExpression(node) {
-      if (node.computed && isString(node.property) && isSteps(node.object)) report(node);
+      if (!isNamed(node.object, "steps")) return;
+      // A step read by its name (`steps["feats"]`, `answer.steps.feats`): a list's own members aren't steps, nor a route's
+      // calls (`rpc…steps.$get`)
+      if (
+        node.computed
+          ? isString(node.property)
+          : !ARRAY_MEMBERS.has(node.property.name) && !node.property.name.startsWith("$")
+      )
+        report(node);
+    },
+    ObjectPattern(node) {
+      const parent = node.parent;
+      // `const { feats } = answer.steps`, or `const { steps: { feats } } = answer`
+      if (parent?.type === "VariableDeclarator" && isNamed(parent.init, "steps")) reportKeys(node);
+      if (parent?.type === "Property" && parent.value === node && keyOf(parent) === "steps") reportKeys(node);
     },
     Property(node) {
-      const parent = node.parent;
-      const owner = parent?.parent;
-      if (parent?.type !== "ObjectExpression" || owner?.type !== "Property") return;
-      const ownerKey = owner.key.type === "Identifier" ? owner.key.name : owner.key.value;
-      if (ownerKey === "steps" && !node.computed && node.type === "Property" && node.kind === "init") report(node);
+      const owner = node.parent?.parent;
+      // A plan written with a step's name (`{ steps: { feats: [] } }`)
+      if (node.parent?.type !== "ObjectExpression" || owner?.type !== "Property") return;
+      if (keyOf(owner) === "steps" && !node.computed && node.kind === "init") report(node);
     },
   };
 }
