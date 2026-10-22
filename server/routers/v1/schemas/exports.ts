@@ -15,8 +15,10 @@ export const v1Export = z
     id: v1Id.meta({
       description: "`GET /v1/exports/{id}` answers whether it's ready, `GET /v1/exports/{id}/download` its file",
     }),
-    status: z
-      .enum(exportStatus.enumValues)
-      .meta({ description: "`pending` while it's made, `ready` once its file can be downloaded, or `failed`" }),
+    status: z.enum(exportStatus.enumValues).meta({
+      description:
+        "`pending` while it's made, `ready` once its file can be downloaded, or `failed`: one whose render was read " +
+        "as lost may still turn `ready`, which a notification tells",
+    }),
   })
   .meta({ description: "A file the app makes in the background, a character's PDF: where it stands", id: "Export" });

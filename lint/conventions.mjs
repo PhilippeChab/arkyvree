@@ -18,8 +18,7 @@
  *   router is its module's export (`export default new Hono()…`) and names a schema for what it validates (never
  *   `…Schema`), and it lets an error reach `onError` instead of catching it (`server/routers/api/`; a `finally` alone
  *   is fine). A route that renders a PDF or queues one (its path ends in `/pdf`) takes `exportRateLimit` (the public
- *   API's `apiExportRateLimit`, counted per user), signed in or
- *   not: each request costs a render.
+ *   API's `apiExportRateLimit`, counted per user), signed in or not: each request costs a render.
  * - `order-through-repository`: the server's queries sort with a repository's `this.orderBy(column, direction)`, never
  *   drizzle's `asc` / `desc`, and a repository method that reads a page orders it by `this.pageOrder(keys)`, which ends
  *   on a key no two rows share: OFFSET paging repeats or skips rows that tie.
