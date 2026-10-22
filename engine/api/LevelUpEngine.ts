@@ -60,8 +60,9 @@ export default class LevelUpEngine extends CharacterHandle {
   }
 
   /**
-   * A level's steps, in the wizard's order, each its mechanic's: an edit's (of the character's saved level
-   * `editedLevelId`) without its plan step. Refused when the character has no such level.
+   * A level's steps, in the wizard's order, each its mechanic's (an edit's, of the character's saved level
+   * `editedLevelId`, without its plan step), and the words its advancements take. Refused when the character has no
+   * such level.
    */
   listSteps(editedLevelId?: string) {
     if (editedLevelId !== undefined && !this.input.rows.levels.some((level) => level.id === editedLevelId))

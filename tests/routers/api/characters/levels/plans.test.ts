@@ -139,6 +139,10 @@ describe("character level plans", () => {
       prompt: "Set HP for",
       unit: "HP Gain",
     });
+    expect(steps.find(({ name }) => name === "skills")?.words).toMatchObject({
+      budget: "Skill Points to Spend",
+      currency: { many: "points", one: "point" },
+    });
     expect(steps.find(({ name }) => name === "feats")?.words).toMatchObject({
       group: { many: "variants", one: "variant" },
       optional: "optional",

@@ -33,8 +33,8 @@ export function Plans<B extends Constructor>(Base: B) {
     }
 
     /**
-     * A level's steps, in the wizard's order, each its mechanic's: an edit's (of saved level `editedLevelId`) without
-     * its plan step, refused when the character has no such level.
+     * A level's steps, in the wizard's order, each its mechanic's (an edit's, of saved level `editedLevelId`,
+     * without its plan step), and the words its advancements take. Refused when the character has no such level.
      */
     async getPlanSteps(session: Session, characterId: string, editedLevelId?: string) {
       return await withEditableCharacter(db, session, characterId, (scope, character) =>
