@@ -1781,10 +1781,14 @@ describe("LevelsService", () => {
           { levelIndex: 3, skillName: "Intimidate", rank: 4 },
         ]);
         const edit = async (index: number, points: Record<string, number>) => {
-          const { budget } = stepAnswerOf(
+          const { budget, rows } = stepAnswerOf(
             await getPlanAnswer(session, characterId, editPlan(levelIds[index], { hp: 8 })),
             "skills",
             "spend",
+          );
+          // The most points Intimidate and Jump take at the level, the ranks the other levels give them capped
+          const room = Object.fromEntries(
+            rows.filter((row) => ["Intimidate", "Jump"].includes(row.name)).map((row) => [row.name, row.maxPoints]),
           );
           await CharacterLevelsService.updatePlannedLevel(
             session,
@@ -1794,13 +1798,19 @@ describe("LevelsService", () => {
             true,
           );
           const saved = await CharacterLevelSkills.findMany(db, { characterLevelIds: [levelIds[index]] });
-          return { budget, saved: saved.reduce((sum, s) => sum + s.rank, 0) };
+          return { budget, room, saved: saved.reduce((sum, s) => sum + s.rank, 0) };
         };
 
-        // Editing the barbarian level: 22 less the 18 the fighter levels spent.
-        expect(await edit(0, { Climb: 2, Jump: 2 })).toEqual({ budget: 4, saved: 4 });
-        // Editing a middle level: 22 less the 4 + 2 + 8 of the others.
-        expect(await edit(1, { Climb: 4, Intimidate: 4 })).toEqual({ budget: 8, saved: 8 });
+        // Editing the barbarian level: 22 less the 18 the fighter levels spent; Intimidate's 9 ranks elsewhere are past
+        // the cap already
+        expect(await edit(0, { Climb: 2, Jump: 2 })).toEqual({ budget: 4, room: { Intimidate: 0, Jump: 4 }, saved: 4 });
+        // Editing a middle level: 22 less the 4 + 2 + 8 of the others. The rank cap is the whole character's level's
+        // (4 + 3 = 7 ranks), not the level's place: Intimidate's 5 ranks elsewhere leave 2, Jump's 2 leave 5
+        expect(await edit(1, { Climb: 4, Intimidate: 4 })).toEqual({
+          budget: 8,
+          room: { Intimidate: 2, Jump: 5 },
+          saved: 8,
+        });
       });
 
       test("keeps the spells of the character's other levels", async () => {

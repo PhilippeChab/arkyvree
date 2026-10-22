@@ -23,9 +23,12 @@ export async function checkAbilityIncreases(characters: Character[]) {
     await withRulesetScope(db, char.rulesetId, async (scope) => {
       const character = await readCharacterInput(db, char);
       for (const [index, level] of character.rows.levels.entries()) {
-        // Its edit's plan, as it saved it: a `choose` step that takes a choice at the level makes one due
-        const levelUp = Engine.for(scope).character(character).levelUp();
-        const answer = levelUp.describePlan(levelUp.describeSavedPlan(level.id));
+        // Its edit's plan, answering nothing (a pick a reference check flags would refuse the saved one): a `choose`
+        // step that takes a choice at the level makes one due
+        const answer = Engine.for(scope)
+          .character(character)
+          .levelUp()
+          .describePlan({ editedLevelId: level.id, steps: {} });
         const due = Object.values(answer.steps).some(
           (step) => step.mechanic === "choose" && step.advancements.length > 0,
         );
