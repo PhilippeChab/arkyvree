@@ -1,9 +1,10 @@
 import { getTableName } from "drizzle-orm";
 
+import type { Db } from "@/drizzle/database.ts";
 import { rulesetsInRules } from "@/drizzle/schema.ts";
 import { include } from "@/lib/mixins.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
-import { db, withTransaction } from "@/server/database/index.ts";
+import { db, isUniqueViolation, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import {
   Activities,
@@ -12,6 +13,7 @@ import {
   RulesetExtensions,
   Rulesets,
   StarredRulesets,
+  Visibility,
 } from "@/server/repositories/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import type { RulesetKind } from "@/shared/enums.ts";
@@ -21,7 +23,20 @@ import { Archives } from "./concerns/Archives.ts";
 import { Publishes } from "./concerns/Publishes.ts";
 import { Stars } from "./concerns/Stars.ts";
 
+/** What a write of a name another ruleset has is refused with. */
+const NAME_TAKEN = "A ruleset with this name already exists";
+
 class RulesetsService extends include(Object, Archives, Publishes, Stars) {
+  /** A write of a ruleset's name refused as a taken name, when a concurrent write took it first. */
+  private refuseTakenName(error: unknown): never {
+    throw isUniqueViolation(error) ? new ConflictError(NAME_TAKEN) : error;
+  }
+
+  /** Refuses a name another ruleset has, archived or another user's private one too: a ruleset's name is unique. */
+  private async checkNameFree(tx: Db, name: string) {
+    if (await Rulesets.findOne(tx, { name }, Visibility.All)) throw new ConflictError(NAME_TAKEN);
+  }
+
   async forkRuleset(session: Session, id: string, body: { description?: string; name: string; private: boolean }) {
     const result = await withTransaction(async (tx) => {
       // 1. Verify source ruleset exists and is published
@@ -31,8 +46,7 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
       (await RulesetsPolicy.for(tx, session, ruleset)).canFork();
 
       // 2. Verify name uniqueness
-      const existing = await Rulesets.findOne(tx, { name: body.name });
-      if (existing) throw new ConflictError("A ruleset with this name already exists");
+      await this.checkNameFree(tx, body.name);
 
       // canFork blocks forks-of-forks, so the parent is always a base —
       // ancestorRulesetIds is always [baseId].
@@ -49,7 +63,7 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
           extensionRulesetIds: ruleset.extensionRulesetIds,
           baseRules: ruleset.baseRules,
           private: body.private,
-        })
+        }).catch((error: unknown) => this.refuseTakenName(error))
       )[0];
 
       // Copy extension metadata rows
@@ -175,7 +189,7 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
   async updateRuleset(
     session: Session,
     id: string,
-    body: { description: string; kind?: RulesetKind; name: string; private?: boolean; updatedAt?: string },
+    body: { description?: string; kind?: RulesetKind; name?: string; private?: boolean; updatedAt?: string },
   ) {
     const result = await withTransaction(async (tx) => {
       // First verify the ruleset exists
@@ -185,11 +199,14 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
       (await RulesetsPolicy.for(tx, session, ruleset)).canUpdate();
 
       if (!ruleset.private && body.private) throw new ForbiddenError("Cannot make a public ruleset private");
+      if (body.name !== undefined && body.name !== ruleset.name) await this.checkNameFree(tx, body.name);
 
       if (body.kind === "extension" && ruleset.kind !== "extension") this.assertCanBeExtension(ruleset);
 
       const { updatedAt, ...columns } = body;
-      const rows = await Rulesets.update(tx, columns, { id, expectedUpdatedAt: updatedAt });
+      const rows = await Rulesets.update(tx, columns, { id, expectedUpdatedAt: updatedAt }).catch((error: unknown) =>
+        this.refuseTakenName(error),
+      );
       if (updatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
 
       const updatedRuleset = rows[0];

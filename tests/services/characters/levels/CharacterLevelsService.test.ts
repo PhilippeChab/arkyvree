@@ -5,6 +5,7 @@ import {
   abilitiesInRules,
   featsInRules,
   klassLevelPowersInRules,
+  levelFeatsInCharacter,
   powersInRules,
   skillsInRules,
 } from "@/drizzle/schema.ts";
@@ -1783,6 +1784,112 @@ describe("LevelsService", () => {
       // One General feat for the first level, one for being human.
       expect(pool(aptitudePools, "General")).toMatchObject({ allowed: 2 });
       expect(pool(aptitudePools, "Fighter Bonus Feat")).toMatchObject({ allowed: 1 });
+    });
+
+    test("refuses an edit an issue of its own, though another level answers for one of the same words", async () => {
+      const { ctx, characterId, levelIds } = await setupMulticlass(2);
+      const [, fighter1, fighter2] = levelIds;
+      const aptitudeId = ctx.aptMap["Fighter Bonus Feat"]!;
+      // A feat taken more than once, out of reach: each level that picks it answers for its issue
+      const [twinStep] = await insertRows(featsInRules, [
+        { name: "Twin Step", rulesetId: ctx.rulesetId, stackable: true },
+      ]);
+      await FeatsAptitudes.create(db, { aptitudeId, featId: twinStep!.id });
+      const unmet = { level: "1", operator: "greater_than_or_equal", target: "abilities.strength.total", value: "99" };
+      await Requirements.create(db, { ...unmet, entityId: twinStep!.id, entityType: "feats", valueType: "number" });
+      invalidateSeededRuleset(ctx.rulesetId);
+      // The second fighter level picked it, forced
+      await insertRows(levelFeatsInCharacter, [{ aptitudeId, characterLevelId: fighter2!, featId: twinStep!.id }]);
+
+      // The first fighter level picks it too: its own issue, which the later level's of the same words doesn't excuse
+      const feats = { [aptitudeId]: [twinStep!.id] };
+      const edit = (force: boolean) =>
+        CharacterLevelsService.updateLevel(session, characterId, fighter1!, 8, [], {}, feats, {}, force);
+      expect(await answerTo(() => edit(false))).toMatchObject({
+        status: 400,
+        body: { issues: [expect.objectContaining({ message: expect.stringMatching(/Twin Step/) })] },
+      });
+      await edit(true);
+    });
+
+    test("takes an edit that leaves a level's pool with fewer slots unspent, which it was saved with", async () => {
+      const ctx = await getSeedCtx();
+      const characterId = await createSeedCharacter(ctx);
+      // Saved without its picks: its pools' slots unspent
+      const [level] = await addClassLevels(db, ctx, characterId, "Fighter", [1], [10]);
+
+      // One of its two General feats picked: one slot left unspent, the issue it had, whatever it counts
+      const feats = { [ctx.aptMap["General"]!]: [ctx.featMap["Great Fortitude"]!] };
+      await CharacterLevelsService.updateLevel(session, characterId, level!, 10, [], {}, feats, {}, false);
+      const { feats: saved } = await CharacterLevelsService.getLevel(session, characterId, level!);
+      expect(saved[ctx.aptMap["General"]!]!.map((feat) => feat.name)).toEqual(["Great Fortitude"]);
+    });
+
+    test("refuses an edit leaving a pool more slots unspent than its level was saved with, unless forced", async () => {
+      const ctx = await getSeedCtx();
+      const characterId = await createSeedCharacter(ctx);
+      // Saved with one of its two General feats: one slot unspent
+      const [level] = await addClassLevels(db, ctx, characterId, "Fighter", [1], [10]);
+      await addFeats(db, ctx, [level!], [{ levelIndex: 0, featName: "Great Fortitude", aptitude: "General" }]);
+
+      // Its feat dropped: two unspent, more of the issue it had
+      const edit = (force: boolean) =>
+        CharacterLevelsService.updateLevel(session, characterId, level!, 10, [], {}, {}, {}, force);
+      expect(await answerTo(() => edit(false))).toMatchObject({
+        status: 400,
+        body: { issues: [expect.objectContaining({ message: expect.stringMatching(/General: 2 unspent/) })] },
+      });
+      await edit(true);
+    });
+
+    test("refuses an edit dropping the spells a spell list's level gives, unless forced", async () => {
+      const ctx = await getSeedCtx();
+      const characterId = await createSeedCharacter(ctx, "wizard");
+      const level = await levelUp(session, ctx, characterId, "Wizard", 1, WIZARD_1);
+      const { feats, skills } = picks(ctx, WIZARD_1);
+
+      // Its spells dropped: the Wizard Spells' slots at each spell level left unspent, which the level gives
+      const edit = (force: boolean) =>
+        CharacterLevelsService.updateLevel(session, characterId, level.id, 4, [], skills, feats, {}, force);
+      expect(await answerTo(() => edit(false))).toMatchObject({
+        status: 400,
+        body: {
+          issues: expect.arrayContaining([
+            expect.objectContaining({ message: expect.stringMatching(/Wizard Spells \(level/) }),
+          ]),
+        },
+      });
+      await edit(true);
+    });
+
+    test("refuses an edit leaving a pool overspent by a slot its feat gave that a later level spent", async () => {
+      const { ctx, characterId, levelIds } = await setupMulticlass(2);
+      const [barbarian1, fighter1, fighter2] = levelIds;
+      const general = ctx.aptMap["General"]!;
+      const bonus = ctx.aptMap["Fighter Bonus Feat"]!;
+      // A bonus feat that gives a General slot
+      const [extra] = await insertRows(featsInRules, [{ name: `Extra Slot ${uniqueId()}`, rulesetId: ctx.rulesetId }]);
+      await FeatsAptitudes.create(db, { aptitudeId: bonus, featId: extra!.id });
+      const slot = { operator: "add", target: "aptitudes.general.allowed", value: "1", valueType: "number" } as const;
+      await Modifiers.create(db, { ...slot, sourceId: extra!.id, sourceType: "feats" });
+      invalidateSeededRuleset(ctx.rulesetId);
+      // The first fighter level takes it, the second spends it: General's three slots all spent
+      await insertRows(levelFeatsInCharacter, [
+        { aptitudeId: general, characterLevelId: barbarian1!, featId: ctx.featMap["Toughness"]! },
+        { aptitudeId: bonus, characterLevelId: fighter1!, featId: extra!.id },
+        { aptitudeId: general, characterLevelId: fighter2!, featId: ctx.featMap["Great Fortitude"]! },
+        { aptitudeId: general, characterLevelId: fighter2!, featId: ctx.featMap["Iron Will"]! },
+      ]);
+
+      // The first fighter level swaps it for another: General overspent by one, though that level gives it no slot
+      const feats = { [bonus]: [ctx.featMap["Weapon Focus: Longsword"]!] };
+      const edit = (force: boolean) =>
+        CharacterLevelsService.updateLevel(session, characterId, fighter1!, 8, [], {}, feats, {}, force);
+      expect(await answerTo(() => edit(false))).toMatchObject({
+        status: 400,
+        body: { issues: [expect.objectContaining({ message: expect.stringMatching(/General: overspent by 1/) })] },
+      });
+      await edit(true);
     });
 
     test("lists the level's picks by name", async () => {

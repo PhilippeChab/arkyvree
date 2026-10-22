@@ -21,7 +21,7 @@ class BaseError extends Error {
       case "conflict":
         return new ConflictError(message);
       case "invalid":
-        return new BadRequestError(message, { issues });
+        return new BadRequestError(message, { issues: issues?.map(RulesError.toAnswered) });
       case "not-found":
         return new NotFoundError(message);
       case "unprocessable":

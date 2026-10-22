@@ -13,6 +13,7 @@ import { type AbilityIncrease, Engine, type LevelRequest, type PreviewRequest } 
 import { include } from "@/lib/mixins.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
+import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import {
   Activities,
   CharacterLevelAbilityIncreases,
@@ -20,11 +21,10 @@ import {
   CharacterLevelPowers,
   CharacterLevels,
   CharacterLevelSkills,
-  Characters,
   Visibility,
 } from "@/server/repositories/index.ts";
 import { readBondedInputs, readCharacterInput } from "@/server/services/characters/characterInputs.ts";
-import { getEditableCharacter, withEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
+import { lockEditableCharacter, withEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
 import type { Session } from "@/shared/relations.ts";
 
 import { writeBondedCreatures } from "./bondedWrites.ts";
@@ -43,16 +43,6 @@ class CharacterLevelsService extends include(Object, Choices, Pickers, Steps) {
   }
 
   /**
-   * The character the session may edit, locked until the transaction ends: its level flows run one at a time, so each
-   * reads the levels the one before saved, and the level it adds goes after them (`CharacterLevels.create`).
-   */
-  private async lockEditableCharacter(tx: Db, session: Session, characterId: string) {
-    const characterRecord = await getEditableCharacter(tx, session, characterId);
-    await Characters.lock(tx, { id: characterRecord.id });
-    return characterRecord;
-  }
-
-  /**
    * Saves a level-up's levels, the character's pooled picks (skills, feats, powers) spread over them, and what its
    * bonded creatures become: the engine checks each level, and the character with them unless `force`d, and the save
    * writes what it plans.
@@ -67,7 +57,7 @@ class CharacterLevelsService extends include(Object, Choices, Pickers, Steps) {
     force: boolean = false,
   ) {
     return await withTransaction(async (tx) => {
-      const characterRecord = await this.lockEditableCharacter(tx, session, characterId);
+      const characterRecord = await lockEditableCharacter(tx, session, characterId);
 
       return await withRulesetScope(tx, characterRecord.rulesetId, async (scope) => {
         const character = await readCharacterInput(tx, characterRecord);
@@ -133,7 +123,7 @@ class CharacterLevelsService extends include(Object, Choices, Pickers, Steps) {
    */
   async removeLevel(session: Session, characterId: string) {
     return await withTransaction(async (tx) => {
-      const characterRecord = await this.lockEditableCharacter(tx, session, characterId);
+      const characterRecord = await lockEditableCharacter(tx, session, characterId);
 
       await withRulesetScope(tx, characterRecord.rulesetId, async (scope) => {
         const character = await readCharacterInput(tx, characterRecord);
@@ -168,12 +158,18 @@ class CharacterLevelsService extends include(Object, Choices, Pickers, Steps) {
     feats: Record<string, string[]>,
     powers: Record<string, string[]>,
     force: boolean = false,
+    expectedUpdatedAt?: string,
   ) {
     return await withTransaction(async (tx) => {
-      const characterRecord = await this.lockEditableCharacter(tx, session, characterId);
+      const characterRecord = await lockEditableCharacter(tx, session, characterId);
 
       return await withRulesetScope(tx, characterRecord.rulesetId, async (scope) => {
         const character = await readCharacterInput(tx, characterRecord);
+        // A level saved since its edit read it is refused before its edit is checked against it: the character's lock
+        // keeps it as read until the write
+        const saved = character.rows.levels.find((level) => level.id === characterLevelId);
+        if (expectedUpdatedAt && saved && saved.updatedAt !== expectedUpdatedAt)
+          throw new ConflictError(STALE_ENTITY_MESSAGE);
         const bonded = await readBondedInputs(tx, character);
         const edit = Engine.for(scope)
           .character(character)

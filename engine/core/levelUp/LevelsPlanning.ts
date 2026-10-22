@@ -46,8 +46,8 @@ export interface CheckedCharacter extends HoldingCharacter {
  *   possessed or known by a modifier), picked earlier in the level-up, or given by the level's (or the level-up's)
  *   other picks, which stay; an edited level's own saved picks stay;
  * - the picks overfill no pool, forced or not (`findOverfullPools`);
- * - the character with them is valid, unless forced: wholly for a level-up, in the issues the level answers for for an
- *   edit (`findEditedLevelIssues`).
+ * - the character with them is valid, unless forced: wholly for a level-up, in the issues it brings past the character
+ *   as saved for an edit.
  */
 export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpBase<C> {
   /**
@@ -142,21 +142,6 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
   }
 
   /**
-   * The two projections that say which issues an edited level answers for (`findEditedLevelIssues`): the character as
-   * it was before the level (`before`), and with the level alone after that (`withLevel`). Any entity the level brings
-   * can raise a pool (a class level's grant, a feat it picks), so `withLevel` takes its grants and its picks, at the
-   * hit points a level counts before they're rolled.
-   */
-  private projectLevelContribution(characterLevelId: string, klassLevelId: string, picks: LevelPicks) {
-    const before = new CharacterProjection(this.character);
-    before.dropLevelsFrom(characterLevelId);
-    const withLevel = new CharacterProjection(this.character);
-    withLevel.dropLevelsFrom(characterLevelId);
-    withLevel.pick(withLevel.addLevel(klassLevelId, { hp: this.rules.unrolledLevelHp }), this.toPickRows(picks));
-    return { before, withLevel };
-  }
-
-  /**
    * The character as a level-up leaves it: each planned level a fresh level after its saved ones, with its hit points,
    * ability increases and picks, as a level's edit projects it.
    */
@@ -199,9 +184,25 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
     this.refuseOverfull(edited, edit);
     const { valid, issues } = edited.validate();
     if (!valid && !force) {
-      // The issues the level answers for: built without the level and every later one, then with it alone
-      const { before, withLevel } = this.projectLevelContribution(characterLevelId, klassLevel.id, edit);
-      RulesError.refuseIssues(this.rules.findEditedLevelIssues(issues, this.build(before), this.build(withLevel)));
+      // The issues the edit brings, the only change from the character as saved: each measured by its subject (past
+      // the words that count it) and the entity it names, more of one than the saved character had is the edit's (an
+      // edit of a forced level's hit points alone brings none; one leaving a pool with fewer slots unspent neither; one
+      // leaving it more, or overspent past what a later level spent, does)
+      const subjectOf = ({ category, entityName, entityType, message, subject }: RulesIssue) =>
+        [category, entityType, entityName, subject ?? message].join("\0");
+      const saved = new Map<string, number>();
+      for (const issue of this.build().validate().issues) {
+        const subject = subjectOf(issue);
+        saved.set(subject, (saved.get(subject) ?? 0) + (issue.amount ?? 1));
+      }
+      RulesError.refuseIssues(
+        issues.filter((issue) => {
+          const subject = subjectOf(issue);
+          const had = saved.get(subject) ?? 0;
+          saved.set(subject, had - (issue.amount ?? 1));
+          return had < (issue.amount ?? 1);
+        }),
+      );
     }
     return {
       ...this.planBondedOf(edited, bonded),

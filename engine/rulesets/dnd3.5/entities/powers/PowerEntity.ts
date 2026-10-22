@@ -37,7 +37,7 @@ function getGrouping(fields: Partial<PowerFieldValues>) {
 export default class PowerEntity extends ListedEntity<
   "powers",
   PowerBody,
-  { description?: string | null; name: string; saveEffect: string | null; saveId: string | null },
+  { description?: string | null; name: string; saveEffect?: string | null; saveId?: string | null },
   typeof POWER_FIELDS.fields
 > {
   /** The Spell Focus feats a power's school brings. */
@@ -63,9 +63,19 @@ export default class PowerEntity extends ListedEntity<
     this.refuseLists(listIds, this.rulesetData.aptitudeIdsWithFeats, message);
   }
 
-  /** A form's columns: it names no spell's save but the one it gives. */
-  protected override columnsOf({ description, name, saveEffect, saveId }: PowerBody) {
-    return { description, name, saveEffect: saveEffect ?? null, saveId: saveId ?? null };
+  /**
+   * A form's columns: it names no spell's save but the one it gives, a new spell's none when it gives none, an edit's
+   * the one it has when it leaves it out (`power`, the one edited), and no effect without a save.
+   */
+  protected override columnsOf({ description, name, saveEffect, saveId }: PowerBody, power?: PowerWithAptitudes) {
+    // A spell without a save has no effect of one
+    if (!power) {
+      const saved = saveId ?? null;
+      return { description, name, saveEffect: saved === null ? null : (saveEffect ?? null), saveId: saved };
+    }
+    // An edit keeps what it leaves out
+    const saved = saveId === undefined ? power.saveId : saveId;
+    return { description, name, saveEffect: saved === null ? null : saveEffect, saveId };
   }
 
   /** A power's pool links, as the view composes them. */

@@ -197,7 +197,8 @@ export default class Equipping {
 
   /**
    * Equipping an entry's item at `location` (in each of `weaponSets`, for a hand): a hand slot needs a weapon set, the
-   * slot must take the item in each of them, and the character must meet its requirements unless `force`d.
+   * slot must take the item in each of them, and the character must meet its requirements and hold it in one hand if it
+   * can, unless `force`d.
    */
   checkEquip(entry: EquippedEntry, location: ItemLocation, weaponSets: number[], force: boolean) {
     if (ItemPlacement.isHand(location) && weaponSets.length === 0)

@@ -11,7 +11,6 @@ import {
 import type { CharacterInput } from "@/engine/core/module/CharacterInputs.ts";
 import type { Descriptions } from "@/engine/core/module/contract.ts";
 import type { OpenedGroupedPicker, OpenedPicker, PickFilters, PickGroupFilters } from "@/engine/core/module/pickers.ts";
-import type { RulesIssue } from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import type { Character, Klass } from "@/shared/relations.ts";
 
@@ -79,12 +78,6 @@ export default abstract class LevelUpPart<
     levels: PlannedClassLevel[],
     picks: LevelPicks,
   ): LevelPicks[];
-
-  /**
-   * The issues an edited level answers for, of the character's with it (`issues`): read off the character as it was
-   * before the level (`before`), and with the level alone after that (`withLevel`).
-   */
-  abstract findEditedLevelIssues(issues: RulesIssue[], before: C, withLevel: C): RulesIssue[];
 
   /** The pools picks (`picks`) overfill in the character holding them (`holder`), as the ruleset counts them. */
   abstract findOverfullPools(

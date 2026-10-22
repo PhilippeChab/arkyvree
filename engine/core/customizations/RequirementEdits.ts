@@ -1,5 +1,6 @@
 import type { TargetCatalogs, TargetPaths } from "@/engine/core/paths/CategoryPaths.ts";
 import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
+import RulesError from "@/engine/core/RulesError.ts";
 import type { TargetPathCatalog } from "@/shared/customization/target.ts";
 import type { Requirement } from "@/shared/relations.ts";
 
@@ -33,18 +34,30 @@ export default class RequirementEdits extends CustomizationEdits<Requirement> {
     targetPaths: TargetPaths,
     catalogs: TargetCatalogs,
     body: RequirementBody,
-    kept?: { operator: string | null; value: string | null },
+    kept?: { operator: string | null; target: string | null; value: string | null },
   ) {
-    if (!body.target) return { chainingOperator: body.chainingOperator, level: body.level };
+    // A check names its target, operator or value, a group its chaining operator: never both
+    const namesCheck = body.target !== undefined || body.operator !== undefined || body.value !== undefined;
+    if (namesCheck && body.chainingOperator !== undefined)
+      throw new RulesError("invalid", "A requirement is a check or a group, not both");
+    // A check stays a check, a group a group: the other kind is a new requirement in its place
+    if (kept && (kept.target ? body.chainingOperator !== undefined : namesCheck))
+      throw new RulesError("invalid", "A requirement's kind can't change: delete it and add a check or a group");
+    // An update of a check without a target keeps the stored one
+    const target = body.target ?? kept?.target;
+    // A new one is a check (its target) or a group (its chaining operator): one with neither is neither
+    if (!kept && !target && body.chainingOperator === undefined)
+      throw new RulesError("invalid", "A requirement is a check (its target) or a group (its chaining operator)");
+    if (!target) return { chainingOperator: body.chainingOperator, level: body.level };
     // An update without a value keeps the stored one, checked against the target's type all the same
     const valueType = targetPaths.checkValue(catalogs, {
       kind: "requirement",
       operator: body.operator ?? kept?.operator ?? undefined,
-      target: body.target,
+      target,
       value: body.value ?? kept?.value ?? undefined,
     });
     const value = body.value === undefined ? undefined : LiteralValue.normalize(body.value, valueType);
-    return { level: body.level, operator: body.operator, target: body.target, value, valueType };
+    return { level: body.level, operator: body.operator, target, value, valueType };
   }
 
   /** The entity's requirements of its type, as the view composes them, labeled as its page shows them. */

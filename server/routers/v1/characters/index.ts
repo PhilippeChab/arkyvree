@@ -1,31 +1,41 @@
 import { Hono } from "hono";
 import { z } from "zod";
 
-import { type ApiKeyContext, describeRoute, levelChoicesRateLimit, validate } from "@/server/middlewares/index.ts";
-import { buildPickPairsSchema } from "@/server/routers/api/schemaBuilders.ts";
-import { idParam, increaseList, orderDirDesc, skillPoints } from "@/server/routers/api/validation.ts";
+import { apiImportRateLimit, type ApiKeyContext, describeRoute, validate } from "@/server/middlewares/index.ts";
+import { idParam, orderDirDesc } from "@/server/routers/api/validation.ts";
 import {
+  v1CharacterCreation,
   v1CharacterLanguages,
-  v1CharacterModifiers,
-  v1Inventory,
-  v1SavedLevel,
+  v1ImportedCharacter,
 } from "@/server/routers/v1/schemas/characterParts.ts";
 import { v1Character, v1CharacterPage } from "@/server/routers/v1/schemas/characters.ts";
-import { v1LevelChoices } from "@/server/routers/v1/schemas/levelChoices.ts";
 import { V1 } from "@/server/routers/v1/translators/V1.ts";
 import { PAGE_FILTERS } from "@/server/routers/v1/validation.ts";
 import { CharactersService } from "@/server/services/characters/index.ts";
-import { CharacterInventoryService } from "@/server/services/characters/inventory/index.ts";
-import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
-import { CharacterModifiersService } from "@/server/services/characters/modifiers/index.ts";
+import { MAX_CHARACTER_NAME_LENGTH, MAX_IMPORT_FILE_LENGTH } from "@/shared/characters.ts";
+import { ALIGNMENT_OPTIONS, GENDER_OPTIONS } from "@/shared/enums.ts";
 
-const levelParams = idParam.extend({ levelId: z.string().uuid() });
+import inventory from "./inventory/index.ts";
+import levels from "./levels/index.ts";
+import modifiers from "./modifiers/index.ts";
+
+/** A character's ability scores, by ability id: those a new one's form leaves out start at the ruleset's start. */
+const abilityScores = z
+  .record(z.string().uuid(), z.number().int())
+  .meta({ description: "Its ability scores, by ability id (`GET /v1/characters/creation`)" });
+
+/** What a character file another program saved is: its text. */
+const fileText = z.string().min(1).max(MAX_IMPORT_FILE_LENGTH).meta({ description: "The file's text" });
 
 /**
- * The key's user's characters: a page of them, one's sheet, its choices at its next level, and the parts its edits
- * change (its inventory, its own modifiers, its languages, a level it took).
+ * The key's user's characters: a page of them, one's sheet, its languages, how a new one scores its abilities, its
+ * create, its import from another program's file, its edits and its archive; and its inventory, its levels and its own
+ * modifiers, each a router of its own.
  */
 export default new Hono<ApiKeyContext>()
+  .route("/", inventory)
+  .route("/", levels)
+  .route("/", modifiers)
   .get(
     "/",
     describeRoute({ response: v1CharacterPage, status: 200, summary: "The key's user's characters, a page at a time" }),
@@ -57,21 +67,25 @@ export default new Hono<ApiKeyContext>()
     },
   )
   .get(
+    "/creation",
+    describeRoute({
+      response: v1CharacterCreation,
+      status: 200,
+      summary: "How a new character of a ruleset sets its ability scores: its abilities, the ways, and the bounds",
+    }),
+    validate("query", z.object({ rulesetId: z.string().uuid() })),
+    async (c) => {
+      const { rulesetId } = c.req.valid("query");
+      return c.json(V1.characterCreation(await CharactersService.getCreation(rulesetId)), 200);
+    },
+  )
+  .get(
     "/:id",
     describeRoute({ response: v1Character, status: 200, summary: "A character's sheet, with its bonded creatures'" }),
     validate("param", idParam),
     async (c) => {
       const { id } = c.req.valid("param");
       return c.json(V1.character(await CharactersService.getCharacter(c.var.requestSession, id)), 200);
-    },
-  )
-  .get(
-    "/:id/inventory",
-    describeRoute({ response: v1Inventory, status: 200, summary: "A character's inventory" }),
-    validate("param", idParam),
-    async (c) => {
-      const { id } = c.req.valid("param");
-      return c.json(V1.inventory(await CharacterInventoryService.getInventory(c.var.requestSession, id)), 200);
     },
   )
   .get(
@@ -89,69 +103,153 @@ export default new Hono<ApiKeyContext>()
       return c.json(V1.characterLanguages(languages), 200);
     },
   )
-  // A level's choices: the classes the character can take, and for a planned level of `classId`, what each step offers
-  // with its picks so far
-  .get(
-    "/:id/level-choices",
+  .post(
+    "/",
     describeRoute({
-      response: v1LevelChoices,
-      status: 200,
-      summary:
-        "A character's choices at its next level: the classes it can take, and for a planned level of `classId`, " +
-        "what each step offers given the picks so far",
+      response: v1Character,
+      status: 201,
+      summary: "Creates a character of level 0 in a ruleset: its levels are then saved one at a time (`levels`)",
     }),
-    levelChoicesRateLimit,
+    validate(
+      "json",
+      z.object({
+        abilities: abilityScores,
+        age: z.number().int().min(1).optional(),
+        alignment: z.enum(ALIGNMENT_OPTIONS),
+        deity: z.string().optional(),
+        description: z.string().optional(),
+        gender: z.enum(GENDER_OPTIONS),
+        height: z
+          .string()
+          .optional()
+          .transform((value) => value || undefined),
+        name: z.string().min(1).max(MAX_CHARACTER_NAME_LENGTH),
+        notes: z.string().optional(),
+        raceId: z.string().uuid().meta({ description: "Its race: a `pc` one its alignment and gender may be" }),
+        rulesetId: z.string().uuid(),
+        weight: z
+          .string()
+          .optional()
+          .transform((value) => value || undefined),
+        xp: z.number().int().min(0).default(0),
+      }),
+    ),
+    async (c) => {
+      const body = c.req.valid("json");
+      const session = c.var.requestSession;
+      const character = await CharactersService.createCharacter(session, body);
+      return c.json(V1.character(await CharactersService.getCharacter(session, character.id)), 201);
+    },
+  )
+  .post(
+    "/import",
+    describeRoute({
+      response: v1ImportedCharacter,
+      status: 201,
+      summary:
+        "Creates the character another program's file holds (a PCGen file) in a ruleset, with the report of what " +
+        "it imported and what it couldn't",
+    }),
+    apiImportRateLimit,
+    validate("json", z.object({ rulesetId: z.string().uuid(), text: fileText })),
+    async (c) => {
+      const { rulesetId, text } = c.req.valid("json");
+      const session = c.var.requestSession;
+      const { character, report } = await CharactersService.importCharacter(session, rulesetId, text);
+      const sheet = await CharactersService.getCharacter(session, character.id);
+      return c.json(V1.importedCharacter(sheet, report), 201);
+    },
+  )
+  .post(
+    "/:id/unarchive",
+    describeRoute({ response: v1Character, status: 200, summary: "Unarchives a character" }),
+    validate("param", idParam),
+    async (c) => {
+      const { id } = c.req.valid("param");
+      const session = c.var.requestSession;
+      await CharactersService.unarchiveCharacter(session, id);
+      return c.json(V1.character(await CharactersService.getCharacter(session, id)), 200);
+    },
+  )
+  .put(
+    "/:id",
+    describeRoute({
+      response: v1Character,
+      status: 200,
+      summary: "Changes a character's identity and experience: what the body names",
+    }),
     validate("param", idParam),
     validate(
-      "query",
+      "json",
       z.object({
-        abilityIncreases: increaseList
-          .optional()
-          .meta({ description: "The ability increases picked so far: `abilityId:amount;…`" }),
-        classId: z.string().uuid().optional().meta({ description: "The class the planned level is a level of" }),
-        feats: buildPickPairsSchema("featId").meta({
-          description: "The feats picked so far, each in its aptitude: `featId:aptitudeId,…`",
-        }),
-        skillPoints: skillPoints.meta({ description: "The skill points spent so far: `skillId:points,…`" }),
-        spells: buildPickPairsSchema("spellId").meta({
-          description: "The spells picked so far, each in its aptitude: `spellId:aptitudeId,…`",
-        }),
+        age: z.number().int().min(1).nullable().optional().meta({ description: "Cleared with null" }),
+        alignment: z.enum(ALIGNMENT_OPTIONS).optional(),
+        deity: z.string().optional(),
+        description: z.string().optional(),
+        gender: z.enum(GENDER_OPTIONS).optional(),
+        height: z.string().nullable().optional().meta({ description: "Cleared with null" }),
+        name: z.string().min(1).max(MAX_CHARACTER_NAME_LENGTH).optional(),
+        notes: z.string().optional(),
+        weight: z.string().nullable().optional().meta({ description: "Cleared with null" }),
+        xp: z.number().int().min(0).optional(),
       }),
     ),
     async (c) => {
       const { id } = c.req.valid("param");
-      const query = c.req.valid("query");
-      const choices = await CharacterLevelsService.getLevelChoices(
-        c.var.requestSession,
-        id,
-        V1.levelChoicesQuery(query),
-      );
-      return c.json(V1.levelChoices(choices), 200);
+      const body = c.req.valid("json");
+      const session = c.var.requestSession;
+      await CharactersService.updateCharacter(session, id, body);
+      return c.json(V1.character(await CharactersService.getCharacter(session, id)), 200);
     },
   )
-  .get(
-    "/:id/levels/:levelId",
-    describeRoute({
-      response: v1SavedLevel,
-      status: 200,
-      summary: "A level a character took: its class, hit points, ability increases and picks",
-    }),
-    validate("param", levelParams),
+  .put(
+    "/:id/abilities",
+    describeRoute({ response: v1Character, status: 200, summary: "Changes a character's ability scores" }),
+    validate("param", idParam),
+    validate("json", z.object({ scores: abilityScores })),
     async (c) => {
-      const { id, levelId } = c.req.valid("param");
-      return c.json(V1.savedLevel(await CharacterLevelsService.getLevel(c.var.requestSession, id, levelId)), 200);
+      const { id } = c.req.valid("param");
+      const { scores } = c.req.valid("json");
+      const session = c.var.requestSession;
+      await CharactersService.updateAbilities(session, id, scores);
+      return c.json(V1.character(await CharactersService.getCharacter(session, id)), 200);
     },
   )
-  .get(
-    "/:id/modifiers",
+  .put(
+    "/:id/languages",
     describeRoute({
-      response: v1CharacterModifiers,
+      response: v1CharacterLanguages,
       status: 200,
-      summary: "A character's own modifiers, which its owner adds",
+      summary: "Changes the languages a character picks, past those its race and classes give it",
     }),
+    validate("param", idParam),
+    validate("json", z.object({ languageIds: z.array(z.string().uuid()).meta({ description: "Its whole list" }) })),
+    async (c) => {
+      const { id } = c.req.valid("param");
+      const { languageIds } = c.req.valid("json");
+      const session = c.var.requestSession;
+      await CharactersService.updateLanguages(session, id, languageIds);
+      // What it saved: an id resolved to the view's, past the languages its race and classes give it
+      return c.json(V1.characterLanguages(await CharactersService.getLanguages(session, id)), 200);
+    },
+  )
+  .delete(
+    "/:id",
+    describeRoute({ response: null, status: 204, summary: "Archives a character: it can be unarchived" }),
     validate("param", idParam),
     async (c) => {
       const { id } = c.req.valid("param");
-      return c.json((await CharacterModifiersService.getModifiers(c.var.requestSession, id)).map(V1.modifier), 200);
+      await CharactersService.archiveCharacter(c.var.requestSession, id);
+      return c.body(null, 204);
+    },
+  )
+  .delete(
+    "/:id/permanent",
+    describeRoute({ response: null, status: 204, summary: "Deletes an archived character for good" }),
+    validate("param", idParam),
+    async (c) => {
+      const { id } = c.req.valid("param");
+      await CharactersService.hardDeleteCharacter(c.var.requestSession, id);
+      return c.body(null, 204);
     },
   );

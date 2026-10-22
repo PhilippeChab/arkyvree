@@ -88,18 +88,7 @@ export default class ClassPicker extends CharacterPicker<
 
   /** The class's next level for the character: after its highest in the class. */
   private nextLevelOf(klass: Klass): KlassLevel | undefined {
-    this.maxLevels ??= this.readMaxLevels();
+    this.maxLevels ??= LevelRules.readMaxKlassLevels(this.rulesetData, this.input.rows.levels);
     return this.rulesetData.klassLevelByKlassAndLevel.get(`${klass.id}:${(this.maxLevels.get(klass.id) || 0) + 1}`);
-  }
-
-  /** The character's highest level in each class it has levels of, by the class's id. */
-  private readMaxLevels() {
-    const maxLevels = new Map<string, number>();
-    for (const level of this.input.rows.levels) {
-      const klassLevel = this.rulesetData.klassLevelsById.get(level.klassLevelId);
-      if (klassLevel)
-        maxLevels.set(klassLevel.klassId, Math.max(maxLevels.get(klassLevel.klassId) ?? 0, klassLevel.level));
-    }
-    return maxLevels;
   }
 }

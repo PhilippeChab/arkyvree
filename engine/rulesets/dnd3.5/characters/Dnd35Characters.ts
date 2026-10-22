@@ -2,6 +2,8 @@ import { type CharacterInput, CharactersPart, type RacePickQuery } from "@/engin
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import type { Dnd35Descriptions } from "@/engine/rulesets/dnd3.5/descriptions.ts";
 import RacePicker from "@/engine/rulesets/dnd3.5/pickers/RacePicker.ts";
+import ItemPlacement from "@/engine/rulesets/dnd3.5/rules/ItemPlacement.ts";
+import type { Item } from "@/shared/relations.ts";
 
 import CharacterDescription from "./description/CharacterDescription.ts";
 import InventoryEntries from "./inventory/InventoryEntries.ts";
@@ -16,6 +18,11 @@ import CharacterSheet from "./sheet/CharacterSheet.tsx";
  * private notes as the viewer does, and checks an item's ruleset and charges, a language's, and the scores' bounds.
  */
 export default class Dnd35Characters extends CharactersPart<Dnd35Descriptions> {
+  /** The charges an item comes with: its `ITEM_HAS_CHARGES` count, none without the property. */
+  protected override chargesOf(view: RulesetView, item: Item) {
+    return ItemPlacement.chargesOf(view.rulesetData.itemProperties(item));
+  }
+
   /** A character's sheet as the API answers it, with its bonded creatures', or a creature's. */
   protected override describeFull(...args: Parameters<typeof CharacterDescription.describeFull>) {
     return CharacterDescription.describeFull(...args);

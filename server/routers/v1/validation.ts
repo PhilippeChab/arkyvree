@@ -2,13 +2,18 @@
 
 import { z } from "zod";
 
-import { entityOrderBy, idParam, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
+import { entityFields, entityOrderBy, idParam, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
+import { RESTORABLE_ENTITY_TYPES } from "@/server/services/rulesets/changes/index.ts";
 import { CUSTOMIZABLE_ENTITY_TYPES } from "@/shared/customization/entities.ts";
+import { MODIFIER_OPERATORS } from "@/shared/customization/operators.ts";
 
 import { toV1Kind } from "./kinds.ts";
 
 /** The kinds whose entities have modifiers and requirements, as v1 names them, each its entity type. */
 const customizableKinds = new Map(CUSTOMIZABLE_ENTITY_TYPES.map((entityType) => [toV1Kind(entityType), entityType]));
+
+/** The kinds whose entities a fork's change to restores to its parent's, as v1 names them, each its entity type. */
+const restorableKinds = new Map(RESTORABLE_ENTITY_TYPES.map((entityType) => [toV1Kind(entityType), entityType]));
 
 /** A yes or no in a query string, `true` or `false`: none when the query leaves it out. */
 export const flag = z
@@ -33,18 +38,49 @@ export const CONTENT_FILTERS = {
   search: z.string().optional().meta({ description: "A part of the name" }),
 };
 
+/** A kind whose entities have modifiers and requirements, as v1 names it, read back as its entity type. */
+export const customizableKind = z
+  .enum([...customizableKinds.keys()] as [string, ...string[]])
+  .transform((kind) => customizableKinds.get(kind)!);
+
 /** A customization route's entity: the ruleset (`id`), and the entity by its kind and its id. */
-export const customizableParams = idParam.extend({
-  entityId: z.string().uuid(),
-  kind: z
-    .enum([...customizableKinds.keys()] as [string, ...string[]])
-    .transform((kind) => customizableKinds.get(kind)!),
+export const customizableParams = idParam.extend({ entityId: z.string().uuid(), kind: customizableKind });
+
+/** An entity's description, its create's and its update's: none when empty, kept by an update that leaves it out. */
+export const entityDescription = z
+  .string()
+  .nullable()
+  .optional()
+  .transform((value) => (value === "" ? null : value));
+
+/** An entity's fields, as its ruleset declares them (`GET /v1/rulesets/{id}/fields`): those it changes, by key. */
+export const fields = entityFields.optional().meta({
+  description: "Its fields, as its ruleset declares them (`GET /v1/rulesets/{id}/fields`), by key: those it sets",
 });
+
+/** How a modifier applies its value. */
+export const modifierOperator = z.enum(MODIFIER_OPERATORS);
+
+/** The path a modifier changes. */
+export const modifierTarget = z
+  .string()
+  .min(1)
+  .meta({ description: "The path it changes (`GET /v1/rulesets/{id}/target-paths`)" });
+
+/** What a modifier changes its target by, or sets it to. */
+export const modifierValue = z
+  .string()
+  .min(1)
+  .meta({ description: "A number, a text or a flag, as its target takes, or a template" });
 
 /** As `customizableParams`, for what owns requirements: a modifier too (`modifiers`). */
 export const requirementOwnerParams = idParam.extend({
   entityId: z.string().uuid(),
-  kind: z
-    .enum(["modifiers", ...customizableKinds.keys()])
-    .transform((kind) => (kind === "modifiers" ? kind : customizableKinds.get(kind)!)),
+  kind: z.union([z.literal("modifiers"), customizableKind]),
+});
+
+/** A fork's entity a restore names: the ruleset (`id`), and the entity by its kind and its id. */
+export const restorableParams = idParam.extend({
+  entityId: z.string().uuid(),
+  kind: z.enum([...restorableKinds.keys()] as [string, ...string[]]).transform((kind) => restorableKinds.get(kind)!),
 });

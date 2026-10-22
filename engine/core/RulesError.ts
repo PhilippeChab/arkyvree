@@ -2,11 +2,21 @@ import type { z } from "zod";
 
 /** One thing a refusal says a character fails: the kind of check (`category`), what it's about, and why. */
 export interface RulesIssue {
+  /**
+   * How much of its subject it counts (a pool's slots unspent, a skill's ranks past its max), an issue of the same
+   * subject with more being worse. None: one.
+   */
+  amount?: number;
   category: string;
   entityName?: string;
   entityType?: string;
   message: string;
   requirementTree?: string;
+  /**
+   * What it's about, past the amounts its message counts (a pool's unspent slots, the skill points overspent): an issue
+   * of the same subject is the same issue, `amount` how much of it there is. None: its message is its subject.
+   */
+  subject?: string;
 }
 
 /** What a ruleset's rules refuse a request as: the server answers each as it answers its own errors of that kind. */
@@ -45,6 +55,11 @@ export default class RulesError extends Error {
   /** Refuses what a character fails, when it fails anything: its issues, their messages as the refusal's own. */
   static refuseIssues(issues: RulesIssue[]) {
     if (issues.length > 0) throw new RulesError("invalid", issues.map((issue) => issue.message).join("; "), issues);
+  }
+
+  /** An issue as a refusal or a sheet answers it: the rules' own measure of it (`subject`, `amount`) left out. */
+  static toAnswered({ amount: _amount, subject: _subject, ...issue }: RulesIssue) {
+    return issue;
   }
 
   readonly issues?: RulesIssue[];

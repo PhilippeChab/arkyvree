@@ -8,8 +8,13 @@ import { secureHeaders } from "hono/secure-headers";
 import { runWithRequestCache } from "@/server/database/index.ts";
 import { isProduction, readEnv } from "@/server/environment.ts";
 import { toJson } from "@/server/errors/index.ts";
-import { checkCsrf, requestLogger, type SessionContext, wrapNonErrors } from "@/server/middlewares/index.ts";
-import { collectNotified, publishWsEvent } from "@/server/websockets/index.ts";
+import {
+  checkCsrf,
+  publishNotified,
+  requestLogger,
+  type SessionContext,
+  wrapNonErrors,
+} from "@/server/middlewares/index.ts";
 
 import apiRouter from "./api/index.ts";
 import authenticationRouter from "./authentication/index.ts";
@@ -86,17 +91,8 @@ export const application = new Hono<{ Variables: Partial<SessionContext["Variabl
       await next();
     }),
   )
-  // Records whom an API write notified, and tells them over the websocket once it succeeds.
-  .use("/api/*", async (c, next) => {
-    const notified = await collectNotified(next);
-    if (["POST", "PUT", "DELETE"].includes(c.req.method) && c.res.ok) {
-      const publish = (userId: string, type: "activities:updated" | "notifications:updated") =>
-        publishWsEvent(userId, { type }).catch((err) => console.error("[ws] Failed to publish event:", err));
-      for (const userId of notified) publish(userId, "notifications:updated");
-      const session = c.get("requestSession");
-      if (session) publish(session.userId, "activities:updated");
-    }
-  })
+  .use("/api/*", publishNotified)
+  .use("/v1/*", publishNotified)
   // The static router answers what no other route does: it comes last.
   .route("/", wsRouter)
   .route("/", healthRouter)

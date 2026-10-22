@@ -97,8 +97,8 @@ export const v1ClassProgression = z
   })
   .meta({
     description:
-      "A class's whole progression: its levels, its pools' picks by level and its spell tables, with what its levels " +
-      "give that it reads beside them",
+      "A class's whole progression, as `PUT …/progression` takes it back: its levels, its pools' picks by level and " +
+      "its spell tables, with what its levels give that it reads beside them",
     id: "ClassProgression",
   });
 
@@ -215,3 +215,24 @@ export const v1Spell = v1Entity
   .meta({ description: "A spell of a ruleset's", id: "Spell" });
 
 export const v1SpellPage = buildPageSchema(v1Spell);
+
+export const v1TargetPath = z
+  .strictObject({
+    description: z.string(),
+    detail: z.string(),
+    insertText: z.string().meta({ description: "What completes the path given: its next segment, or a whole path" }),
+    kind: z.enum(["category", "group", "operator", "property", "value"]),
+    label: z.string(),
+    operators: z.array(z.string()).meta({ description: "A whole path's: the operators it takes" }),
+    path: z.string().nullable().meta({ description: "A whole path's: itself" }),
+    setValues: z
+      .array(z.strictObject({ label: z.string(), value: z.string() }))
+      .meta({ description: "A whole path's: the values a `set` on it takes, when it takes only those" }),
+    values: z
+      .array(z.strictObject({ label: z.string(), value: z.string() }))
+      .meta({ description: "A whole path's: the values it takes, when it takes a closed list" }),
+    valueType: z.enum(["boolean", "number", "string"]).nullable(),
+  })
+  .meta({ description: "A target path, or a segment of one, that completes the path given", id: "TargetPath" });
+
+export const v1TargetPathPage = buildPageSchema(v1TargetPath);

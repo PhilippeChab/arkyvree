@@ -14,7 +14,7 @@ import { ItemsService } from "@/server/services/rulesets/items/index.ts";
 import type { ItemLocation, SizeType } from "@/shared/enums.ts";
 import type { Session } from "@/shared/relations.ts";
 import { createCharacterAs } from "@/tests/support/characters.ts";
-import { createTestItem } from "@/tests/support/items.ts";
+import { carry, createTestItem } from "@/tests/support/items.ts";
 import { createSeededTestRuleset, createTestRuleset } from "@/tests/support/rulesets.ts";
 import { findPlainItem, findSeededCharacter, getSeedCtx, NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
 import { createTestUser, makeSession } from "@/tests/support/users.ts";
@@ -284,6 +284,16 @@ describe("InventoryService", () => {
       expect(
         await update(session, character.id, shield.id, { equipped: false, location: null, weaponSets: [0, 2] }),
       ).toMatchObject({ weaponSets: [] });
+    });
+
+    test("keeps an edited entry in the sets it's held in when its edit names none", async () => {
+      const { session, character, newItem } = await setup();
+      const sword = await newItem({ name: "Longsword", type: "Weapon" });
+      const entry = await add(session, character.id, sword.id, { ...equipped("Main Hand", 1), force: true });
+      const edit = (location: ItemLocation) =>
+        CharacterInventoryService.updateItem(session, character.id, entry.id, 2, true, location, null, null, undefined);
+      expect(await edit("Main Hand")).toMatchObject({ quantity: 2, weaponSets: [1] });
+      expect(await edit("Off Hand")).toMatchObject({ location: "Off Hand", weaponSets: [1] });
     });
 
     test("needs a weapon set in a hand", async () => {
@@ -621,6 +631,21 @@ describe("InventoryService", () => {
       expect(await add(session, bjorn.id, sword, { ...equipped("Main Hand", 1), force: true })).toMatchObject({
         location: "Main Hand",
       });
+      // Its sets stored out of order (an older row), an edit of its quantity alone keeps it where it's held, unforced
+      await carry(bjorn, [{ item: "Bastard Sword", location: "Main Hand", weaponSets: [1, 0] }]);
+      const [held] = await CharacterInventory.findMany(db, { characterId: bjorn.id });
+      const edit = CharacterInventoryService.updateItem(
+        session,
+        bjorn.id,
+        held!.id,
+        2,
+        true,
+        "Main Hand",
+        null,
+        null,
+        undefined,
+      );
+      expect(await edit).toMatchObject({ quantity: 2, weaponSets: [0, 1] });
       // A dwarf fighter treats the waraxe as a martial weapon, in one hand too
       const kael = await findSeededCharacter("Kael Stormborn");
       expect(await add(session, kael.id, itemMap["Dwarven Waraxe"], equipped("Main Hand", 1))).toMatchObject({

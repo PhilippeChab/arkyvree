@@ -7,7 +7,7 @@ import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Activities, CharacterInventory, Visibility } from "@/server/repositories/index.ts";
 import { readCharacterInput } from "@/server/services/characters/characterInputs.ts";
-import { getEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
+import { getEditableCharacter, lockEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
 import type { ItemLocation } from "@/shared/enums.ts";
 import type { Session } from "@/shared/relations.ts";
 
@@ -19,13 +19,15 @@ class CharacterInventoryService {
     quantity: number,
     equipped: boolean,
     location: ItemLocation | null,
-    totalCharges: number | null,
-    remainingCharges: number | null,
-    weaponSets: number[],
+    // Neither named: the item's own
+    totalCharges: number | null | undefined,
+    remainingCharges: number | null | undefined,
+    weaponSets: number[] | undefined,
     force: boolean = false,
   ) {
     return await withTransaction(async (tx) => {
-      const characterRecord = await getEditableCharacter(tx, session, characterId);
+      // Locked: an entry's place is checked against the others, which a concurrent write could take
+      const characterRecord = await lockEditableCharacter(tx, session, characterId);
 
       return await withRulesetScope(tx, characterRecord.rulesetId, async (scope) => {
         const character = await readCharacterInput(tx, characterRecord);
@@ -105,18 +107,23 @@ class CharacterInventoryService {
     quantity: number,
     equipped: boolean,
     location: ItemLocation | null,
-    totalCharges: number | null,
-    remainingCharges: number | null,
-    weaponSets: number[],
+    // Left out: none, as an edit that names none
+    totalCharges: number | null | undefined,
+    remainingCharges: number | null | undefined,
+    weaponSets: number[] | undefined,
     force: boolean = false,
     expectedUpdatedAt?: string,
   ) {
     return await withTransaction(async (tx) => {
-      const characterRecord = await getEditableCharacter(tx, session, characterId);
+      // Locked: an entry's place is checked against the others, which a concurrent write could take
+      const characterRecord = await lockEditableCharacter(tx, session, characterId);
 
       return await withRulesetScope(tx, characterRecord.rulesetId, async (scope) => {
         const existing = await CharacterInventory.findOne(tx, { characterId, id: entryId });
         if (!existing) throw new NotFoundError("Item not in inventory");
+        // An entry saved since its edit read it is refused before its edit is checked against it
+        if (expectedUpdatedAt && existing.updatedAt !== expectedUpdatedAt)
+          throw new ConflictError(STALE_ENTITY_MESSAGE);
 
         const character = await readCharacterInput(tx, characterRecord);
         const request = { equipped, location, remainingCharges, totalCharges, weaponSets };

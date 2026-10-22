@@ -2,8 +2,9 @@ import { describe, expect, test } from "bun:test";
 
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { createKeyedApi, expectOk, expectStatus } from "@/tests/support/api.ts";
-import { createSeededForkWithAptitude } from "@/tests/support/rulesets.ts";
+import { createKeyedFork, createSeededForkWithAptitude } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
+import { createTestUser } from "@/tests/support/users.ts";
 
 describe("v1 rulesets", () => {
   test("lists rulesets, and answers one, without the database's timestamps", async () => {
@@ -95,5 +96,106 @@ describe("v1 rulesets", () => {
       expect.objectContaining({ entityId: aptitudeId, kind: "aptitudes", sourceId: null, status: "added" }),
     );
     await expectStatus(changes.$get({ param: { id: (await getSeedCtx()).rulesetId } }), 400);
+  });
+
+  test("stars a base ruleset for the key's user, and unstars it", async () => {
+    const { user } = await createTestUser();
+    const { api } = await createKeyedApi(user.id);
+    const { rulesetId: id } = await getSeedCtx();
+    const ruleset = api.v1.rulesets[":id"];
+    const { starCount } = await expectOk(ruleset.$get({ param: { id } }));
+
+    await expectStatus(ruleset.star.$post({ param: { id } }), 204);
+    expect(await expectOk(ruleset.$get({ param: { id } }))).toMatchObject({ starCount: starCount + 1, starred: true });
+    await expectStatus(ruleset.star.$delete({ param: { id } }), 204);
+    expect(await expectOk(ruleset.$get({ param: { id } }))).toMatchObject({ starCount, starred: false });
+  });
+
+  test("refuses a fork's or a rename's name another ruleset has, an archived one's too", async () => {
+    const { user } = await createTestUser();
+    const { api } = await createKeyedApi(user.id);
+    const { rulesetId: coreId } = await getSeedCtx();
+    const rulesets = api.v1.rulesets[":id"];
+    const fork = async (name: string) => await expectOk(rulesets.fork.$post({ json: { name }, param: { id: coreId } }));
+
+    const archived = await fork("Old Table Rules");
+    await expectStatus(rulesets.$delete({ param: { id: archived.id } }), 204);
+    const { id } = await fork("New Table Rules");
+
+    await expectStatus(rulesets.fork.$post({ json: { name: "Old Table Rules" }, param: { id: coreId } }), 409);
+    await expectStatus(rulesets.$put({ json: { name: "Old Table Rules" }, param: { id } }), 409);
+  });
+
+  test("forks a ruleset, changes it and its settings, publishes it, and archives it and unarchives it", async () => {
+    const { user } = await createTestUser();
+    const { api } = await createKeyedApi(user.id);
+    const { rulesetId: coreId } = await getSeedCtx();
+    const rulesets = api.v1.rulesets[":id"];
+
+    const fork = await expectOk(rulesets.fork.$post({ json: { name: "House Rules" }, param: { id: coreId } }));
+    expect(fork).toMatchObject({
+      name: "House Rules",
+      parentId: coreId,
+      private: true,
+      status: "Draft",
+      system: false,
+    });
+    const { id } = fork;
+
+    const changed = await expectOk(
+      rulesets.$put({ json: { description: "Our table's", name: "Table Rules" }, param: { id } }),
+    );
+    expect(changed).toMatchObject({ description: "Our table's", name: "Table Rules" });
+    const renamed = await expectOk(rulesets.$put({ json: { name: "House Rules" }, param: { id } }));
+    expect(renamed).toMatchObject({ description: "Our table's", name: "House Rules" });
+    await expectStatus(rulesets.$put({ json: { name: "Core SRD 3.5" }, param: { id } }), 409);
+    const abilityIncreases = { every: 3, extra: [] };
+    const settings = await expectOk(rulesets.settings.$put({ json: { fields: { abilityIncreases } }, param: { id } }));
+    expect(settings.fields).toMatchObject({ abilityIncreases });
+
+    expect(await expectOk(rulesets.publish.$post({ json: {}, param: { id } }))).toMatchObject({ status: "Published" });
+    await expectStatus(rulesets.$delete({ param: { id } }), 204);
+    expect(await expectOk(rulesets.unarchive.$post({ param: { id } }))).toMatchObject({ id, status: "Draft" });
+  });
+
+  test("subscribes a ruleset to an extension, and unsubscribes it", async () => {
+    const { api, rulesetId: id } = await createKeyedFork();
+    const { rulesetId: coreId } = await getSeedCtx();
+    const [warrior] = await expectOk(api.v1.rulesets[":id"].extensions.$get({ param: { id: coreId } }));
+    const extensionId = warrior!.id;
+    const extensions = api.v1.rulesets[":id"].extensions;
+
+    expect(await expectOk(extensions.$post({ json: { extensionIds: [extensionId] }, param: { id } }))).toEqual([
+      expect.objectContaining({ id: extensionId, name: "Complete Warrior SRD 3.5" }),
+    ]);
+    await expectStatus(extensions[":extensionId"].$delete({ param: { extensionId, id } }), 204);
+    expect(await expectOk(extensions.$get({ param: { id } }))).toEqual([]);
+  });
+
+  test("restores an entity a fork changed to its parent's", async () => {
+    const { api, rulesetId: id } = await createKeyedFork();
+    const { featMap } = await getSeedCtx();
+    const featId = featMap["Power Attack"]!;
+    await expectOk(
+      api.v1.rulesets[":id"].feats[":featId"].$put({ json: { name: "Mighty Blow" }, param: { featId, id } }),
+    );
+    const changes = api.v1.rulesets[":id"].changes;
+    expect(await expectOk(changes.$get({ param: { id } }))).toContainEqual(
+      expect.objectContaining({ kind: "feats", sourceId: featId, status: "modified" }),
+    );
+
+    const restore = api.v1.rulesets[":id"][":kind"][":entityId"].restore;
+    await expectStatus(restore.$post({ param: { entityId: featId, id, kind: "feats" } }), 204);
+    expect(await expectOk(changes.$get({ param: { id } }))).toEqual([]);
+    expect((await expectOk(api.v1.rulesets[":id"].feats[":featId"].$get({ param: { featId, id } }))).name).toBe(
+      "Power Attack",
+    );
+  });
+
+  test("refuses to change a ruleset the key's user can't edit", async () => {
+    const { api } = await createKeyedApi();
+    const { rulesetId: id } = await getSeedCtx();
+    await expectStatus(api.v1.rulesets[":id"].$put({ json: { description: "", name: "Mine" }, param: { id } }), 403);
+    await expectStatus(api.v1.rulesets[":id"].settings.$put({ json: { fields: {} }, param: { id } }), 403);
   });
 });

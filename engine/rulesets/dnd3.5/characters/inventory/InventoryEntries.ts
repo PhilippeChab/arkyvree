@@ -1,7 +1,6 @@
 import type {
   CharacterInput,
   HeldInventoryEntry,
-  InventoryEntryRequest,
   PlacementChange,
   PlacementDescription,
   PlacementQuery,
@@ -22,7 +21,7 @@ export default class InventoryEntries {
    * Where an entry is held, as it stores it: only an equipped item has a location, only a held one sets, each once, in
    * order.
    */
-  private static placementOf({ equipped, location, weaponSets }: InventoryEntryRequest): HeldInventoryEntry {
+  private static placementOf({ equipped, location, weaponSets }: HeldInventoryEntry): HeldInventoryEntry {
     const resolvedLocation = equipped ? (location ?? null) : null;
     const resolvedEquipped = !!resolvedLocation;
     const held = resolvedEquipped && ItemPlacement.isHand(resolvedLocation);
@@ -53,7 +52,8 @@ export default class InventoryEntries {
   /**
    * Where an entry's add or edit holds its item, from the character's rows. Refused when the item can't be equipped
    * where it's asked to be (`Equipping`: an item already carried takes another entry, a second dagger held in the other
-   * hand; its requirements unless `force`d).
+   * hand; its requirements and its one hand unless `force`d, or an edit keeps it where it's held, which met them or was
+   * forced when it got there).
    */
   static planPlacement(
     view: RulesetView,
@@ -61,16 +61,33 @@ export default class InventoryEntries {
     change: PlacementChange,
     force: boolean,
   ): HeldInventoryEntry {
-    const { request } = change;
-    const { equipped, location, weaponSets } = request;
+    const { equipped, location } = change.request;
+    const held = "entry" in change ? character.rows.inventory.find((row) => row.id === change.entry.id) : undefined;
+    // An edited entry's sets as a hand reads them: the first, for one stored without
+    const heldSets = held && ItemPlacement.isHand(held.location) ? ItemPlacement.heldSets(held) : undefined;
+    // A hand holds what names no weapon set in those an edited entry is held in, else in the first, as an import does
+    const inHand = (held?.equipped && heldSets) || [0];
+    const weaponSets = change.request.weaponSets ?? (ItemPlacement.isHand(location) ? inHand : []);
+    const placed = InventoryEntries.placementOf({ equipped, location, weaponSets });
     if (equipped && location) {
       const entry =
         "item" in change
           ? { id: null, item: change.item }
           : { id: change.entry.id, item: view.rulesetData.itemsById.get(change.entry.itemId) };
       if (!entry.item) throw new RulesError("not-found", "Item not found");
-      new Equipping(view, character).checkEquip({ id: entry.id, item: entry.item }, location, weaponSets, force);
+      const kept =
+        !!held?.equipped &&
+        held.location === location &&
+        // Its sets as the plan stores them: each once, in order
+        String(InventoryEntries.placementOf({ ...held, weaponSets: heldSets ?? held.weaponSets }).weaponSets) ===
+          String(placed.weaponSets);
+      new Equipping(view, character).checkEquip(
+        { id: entry.id, item: entry.item },
+        location,
+        weaponSets,
+        force || kept,
+      );
     }
-    return InventoryEntries.placementOf(request);
+    return placed;
   }
 }

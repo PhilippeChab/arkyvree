@@ -25,8 +25,8 @@ Excluded:
 
 The 3.5 data is auto-generated from SRD pages and hand-checked. Errors get fixed in content updates and propagate to every character built on the ruleset — report them with the in-app **Feedback** button.
 
-## Can another program read my characters?
+## Can another program read or change my characters?
 
 Yes, through Arkyvree's public API, with an API key. Make one under **Settings → API Keys**, named for what will use it (a script, an assistant leveling your fighter), and choose when it expires: in 30 days, 90 days or a year, or never. Its key is shown once: copy it then, and give it to the program, which sends it with each request.
 
-A key acts as you: it reads your characters and the rulesets you can read, and a character's choices at its next level (the classes it can take, and the feats and spells it qualifies for). The API's reference, every route and what it answers, is its OpenAPI document, at `/v1/openapi.json` on Arkyvree's site. Revoke it on the same page once nothing uses it: it stops working at once. Changing or resetting your password, or deleting your account, revokes every key too.
+A key acts as you: it reads and changes your characters and the rulesets you can edit, as you would in the app (creating a character, leveling it up with its choices at its next level, editing its inventory, adding a feat to your ruleset), and reads the rulesets you can read. The API's reference, every route and what it answers, is its OpenAPI document, at `/v1/openapi.json` on Arkyvree's site. Revoke it on the same page once nothing uses it: it stops working at once. Changing or resetting your password, or deleting your account, revokes every key too.

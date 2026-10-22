@@ -1,21 +1,63 @@
 /**
  * The parts of a character its edits change, as v1 answers them: its inventory, its own modifiers, its languages and
- * a saved level, each what its edit sends back.
+ * a saved level, each what its edit sends back; how a new character scores its abilities, and what an import reports.
  */
 
 import type { z } from "zod";
 
-import type { v1CharacterLanguages, v1Inventory, v1SavedLevel } from "@/server/routers/v1/schemas/characterParts.ts";
+import type {
+  v1CharacterCreation,
+  v1CharacterLanguages,
+  v1ImportedCharacter,
+  v1InventoryEntry,
+  v1SavedLevel,
+} from "@/server/routers/v1/schemas/characterParts.ts";
 import type { CharactersService } from "@/server/services/characters/index.ts";
 import type { CharacterInventoryService } from "@/server/services/characters/inventory/index.ts";
 import type { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
 
 import type { Answer } from "./answers.ts";
+import { toV1Character } from "./characters.ts";
 import { toV1Number } from "./content.ts";
+
+/** A way a new character's ability scores are set, as the service describes it. */
+type CreationMethod = Answer<typeof CharactersService.getCreation>["methods"][number];
+
+/** A way a new character's ability scores are set, a point buy's costs listed by score. */
+function toCreationMethod(method: CreationMethod): z.infer<typeof v1CharacterCreation>["methods"][number] {
+  if (method.kind === "roll") return { dice: method.dice, id: method.id, kind: method.kind, label: method.label };
+  if (method.kind === "array")
+    return { id: method.id, kind: method.kind, label: method.label, scores: [...method.scores] };
+  const { budget, costs, id, kind, label, max, min } = method;
+  return {
+    budget,
+    costs: Object.entries(costs).map(([score, cost]) => ({ cost, score: Number(score) })),
+    id,
+    kind,
+    label,
+    max,
+    min,
+  };
+}
 
 /** A language a character speaks or may pick, named. */
 function toLanguage({ id, name, type }: { id: string; name: string; type: string | null }) {
   return { id, name, type };
+}
+
+/** How a new character of a ruleset sets its ability scores. */
+export function toV1CharacterCreation({
+  abilities,
+  methods,
+  modifiers,
+  scores,
+}: Answer<typeof CharactersService.getCreation>): z.infer<typeof v1CharacterCreation> {
+  return {
+    abilities: abilities.map(({ id, name }) => ({ id, name })),
+    methods: methods.map(toCreationMethod),
+    modifiers: Object.entries(modifiers).map(([score, modifier]) => ({ modifier, score: Number(score) })),
+    scores: { max: scores.max, min: scores.min, start: scores.start },
+  };
 }
 
 /** What a character speaks, and what it may pick. */
@@ -27,11 +69,27 @@ export function toV1CharacterLanguages({
   return { automatic: automatic.map(toLanguage), options: options.map(toLanguage), picks: picks.map(toLanguage) };
 }
 
-/** A character's inventory: each item it carries, where, and how many. */
-export function toV1Inventory(
-  inventory: Answer<typeof CharacterInventoryService.getInventory>,
-): z.infer<typeof v1Inventory> {
-  return inventory.map((entry) => ({
+/** A character imported from another program's file, its sheet with its import's report. */
+export function toV1ImportedCharacter(
+  sheet: Answer<typeof CharactersService.getCharacter>,
+  { imported, issues, program, unmatched }: Answer<typeof CharactersService.importCharacter>["report"],
+): z.infer<typeof v1ImportedCharacter> {
+  return {
+    character: toV1Character(sheet),
+    report: {
+      imported,
+      issues,
+      program,
+      unmatched: unmatched.map(({ line, reason, text }) => ({ line, reason, text })),
+    },
+  };
+}
+
+/** An item a character carries: where, how many, and its charges. */
+export function toV1InventoryEntry(
+  entry: Answer<typeof CharacterInventoryService.getInventory>[number],
+): z.infer<typeof v1InventoryEntry> {
+  return {
     charges:
       entry.totalCharges === null && entry.remainingCharges === null
         ? null
@@ -49,7 +107,7 @@ export function toV1Inventory(
     locationLabel: entry.slotLabel,
     quantity: entry.quantity,
     weaponSets: entry.weaponSets,
-  }));
+  };
 }
 
 /** A level a character took, what it picked by pool flattened into the picks a save sends. */

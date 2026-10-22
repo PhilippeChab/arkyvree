@@ -48,8 +48,15 @@ export type InventoryEntryChange =
   | { itemId: string; request: InventoryEntryRequest }
   | { entry: { id: string; itemId: string }; request: InventoryEntryRequest };
 
-/** What an inventory entry's add or edit asks: the fields it stores but its item, which the plan answers checked. */
-export type InventoryEntryRequest = Omit<InventoryEntryPlan, "itemId">;
+/**
+ * What an inventory entry's add or edit asks: the fields it stores but its item, which the plan answers checked; its
+ * charges, when an add names none, its item's own; its weapon sets, when it names none, a hand's first.
+ */
+export type InventoryEntryRequest = Omit<
+  InventoryEntryPlan,
+  "itemId" | "remainingCharges" | "totalCharges" | "weaponSets"
+> &
+  Partial<Pick<InventoryEntryPlan, "remainingCharges" | "totalCharges">> & { weaponSets?: number[] };
 
 /** How a campaign member reads a character: partly (`partial`), or its sheet with its private notes shown or blank. */
 export type MemberReading = "blank" | "partial" | "show";

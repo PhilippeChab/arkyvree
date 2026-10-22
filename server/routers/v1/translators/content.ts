@@ -28,6 +28,7 @@ import type {
   v1Save,
   v1Skill,
   v1Spell,
+  v1TargetPath,
 } from "@/server/routers/v1/schemas/content.ts";
 import type { ClassesService } from "@/server/services/rulesets/classes/index.ts";
 import type { ClassLevelsService } from "@/server/services/rulesets/classes/levels/index.ts";
@@ -41,6 +42,7 @@ import type { PowersService } from "@/server/services/rulesets/powers/index.ts";
 import type { RacesService } from "@/server/services/rulesets/races/index.ts";
 import type { SavesService } from "@/server/services/rulesets/saves/index.ts";
 import type { SkillsService } from "@/server/services/rulesets/skills/index.ts";
+import type { PathCompletion } from "@/shared/customization/target.ts";
 
 import type { Answer } from "./answers.ts";
 
@@ -335,5 +337,21 @@ export function toV1Spell(
     name: spell.name,
     saveEffect: spell.saveEffect,
     saveId: spell.saveId,
+  };
+}
+
+/** A target path, or a segment of one, that completes the path given. */
+export function toV1TargetPath(completion: PathCompletion): z.infer<typeof v1TargetPath> {
+  return {
+    description: completion.documentation,
+    detail: completion.detail,
+    insertText: completion.insertText,
+    kind: completion.kind,
+    label: completion.label,
+    operators: completion.operators ?? [],
+    path: completion.path ?? null,
+    setValues: completion.setValues ?? [],
+    values: completion.possibleValues ?? [],
+    valueType: completion.valueType ?? null,
   };
 }

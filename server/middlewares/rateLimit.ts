@@ -1,5 +1,8 @@
 import { limitRate, limitRatePerUser } from "./limitRate.ts";
 
+/** The character files a minute an import reads whole: the app's per address, the public API's per user. */
+const IMPORTS_PER_MINUTE = 10;
+
 const MINUTE = 60 * 1000;
 
 /**
@@ -11,10 +14,22 @@ const MINUTE = 60 * 1000;
 export const apiAddressRateLimit = limitRate({ windowMs: MINUTE, limit: 600 });
 
 /**
+ * The public API's imports of a character file, counted per user, whatever keys of theirs ask: as many a minute as the
+ * app's own allow an address.
+ */
+export const apiImportRateLimit = limitRatePerUser({ windowMs: MINUTE, limit: IMPORTS_PER_MINUTE, headers: false });
+
+/**
  * The public API's requests, counted per user, whatever keys of theirs ask: an agent's run reads a character and its
  * choices a few times a level. Per user, a user's ten keys get no more than one.
  */
 export const apiKeyRateLimit = limitRatePerUser({ windowMs: MINUTE, limit: 120 });
+
+/**
+ * The public API's level saves, edits and removals, counted per user, whatever keys of theirs ask: each builds the
+ * whole character under its lock, as a character's level choices read every option.
+ */
+export const apiLevelSaveRateLimit = limitRatePerUser({ windowMs: MINUTE, limit: 20, headers: false });
 
 /**
  * Each direct-upload commits a blob row + S3 object that the sweep won't reclaim until UNATTACHED_BLOB_TTL_MS
@@ -32,7 +47,7 @@ export const authSessionRateLimit = limitRate({ windowMs: 15 * MINUTE, limit: 60
 export const exportRateLimit = limitRate({ windowMs: MINUTE, limit: 5 });
 
 /** An import reads a whole character file and builds the character level by level: a few a minute is plenty. */
-export const importRateLimit = limitRate({ windowMs: MINUTE, limit: 10 });
+export const importRateLimit = limitRate({ windowMs: MINUTE, limit: IMPORTS_PER_MINUTE });
 
 /** What a picked character file is: asked once a file is picked, its header's tags read, nothing built. */
 export const importSourceRateLimit = limitRate({ windowMs: MINUTE, limit: 30 });

@@ -5,8 +5,35 @@ import { type ApiKeyContext, describeRoute, validate } from "@/server/middleware
 import { idParam } from "@/server/routers/api/validation.ts";
 import { v1Spell, v1SpellPage } from "@/server/routers/v1/schemas/content.ts";
 import { V1 } from "@/server/routers/v1/translators/V1.ts";
-import { CONTENT_FILTERS } from "@/server/routers/v1/validation.ts";
+import { CONTENT_FILTERS, entityDescription, fields } from "@/server/routers/v1/validation.ts";
 import { PowersService } from "@/server/services/rulesets/powers/index.ts";
+
+/** The aptitudes (spell lists) a spell is on, each at its level, one at least, which an update replaces whole. */
+const spellAptitudes = z
+  .array(z.object({ id: z.string().uuid(), level: z.number().int().optional() }))
+  .min(1, "At least one aptitude must be selected")
+  .meta({ description: "The aptitudes (spell lists) it's on, each at its spell level: its whole list, one at least" });
+
+/** A spell, its create's and its update's. */
+const spellBody = z.object({
+  description: entityDescription,
+  fields,
+  name: z.string().min(1),
+  saveEffect: z
+    .string()
+    .nullable()
+    .optional()
+    .transform((value) => (value === "" ? null : value))
+    .meta({
+      description: "What a successful save does: `half`, `negates`…; a spell without a save keeps none",
+    }),
+  saveId: z
+    .union([z.string().uuid(), z.literal("")])
+    .nullable()
+    .optional()
+    .transform((value) => (value === "" ? null : value))
+    .meta({ description: "The saving throw it allows" }),
+});
 
 const spellParams = idParam.extend({ spellId: z.string().uuid() });
 
@@ -47,5 +74,47 @@ export default new Hono<ApiKeyContext>()
     async (c) => {
       const { id, spellId } = c.req.valid("param");
       return c.json(V1.spell(await PowersService.getPower(id, spellId)), 200);
+    },
+  )
+  .post(
+    "/:id/spells",
+    describeRoute({ response: v1Spell, status: 201, summary: "Adds a spell to a ruleset" }),
+    validate("param", idParam),
+    validate("json", spellBody.extend({ aptitudes: spellAptitudes })),
+    async (c) => {
+      const { id } = c.req.valid("param");
+      const body = c.req.valid("json");
+      const created = await PowersService.createPower(c.var.requestSession, id, body);
+      return c.json(V1.spell(await PowersService.getPower(id, created.id)), 201);
+    },
+  )
+  .put(
+    "/:id/spells/:spellId",
+    describeRoute({
+      response: v1Spell,
+      status: 200,
+      summary: "Changes a spell of a ruleset's: a copy of its own, when it's inherited",
+    }),
+    validate("param", spellParams),
+    validate("json", spellBody.extend({ aptitudes: spellAptitudes.optional() })),
+    async (c) => {
+      const { id, spellId } = c.req.valid("param");
+      const body = c.req.valid("json");
+      const updated = await PowersService.updatePower(c.var.requestSession, id, spellId, body);
+      return c.json(V1.spell(await PowersService.getPower(id, updated.id)), 200);
+    },
+  )
+  .delete(
+    "/:id/spells/:spellId",
+    describeRoute({
+      response: null,
+      status: 204,
+      summary: "Deletes a spell of a ruleset's: refused while a character has it",
+    }),
+    validate("param", spellParams),
+    async (c) => {
+      const { id, spellId } = c.req.valid("param");
+      await PowersService.deletePower(c.var.requestSession, id, spellId);
+      return c.body(null, 204);
     },
   );

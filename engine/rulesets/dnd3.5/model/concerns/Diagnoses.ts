@@ -33,11 +33,13 @@ export function Diagnoses<B extends Constructor<CharacterState>>(Base: B) {
       const slotIssue = (name: string, { allowed, spent, available }: AptitudeSlots) => {
         if (allowed === ALLOWED_ALL || available === 0) return;
         issues.push({
+          amount: Math.abs(available),
           category: "aptitudes",
           message:
             available > 0
               ? `${name}: ${available} unspent slot(s) (${spent}/${allowed})`
               : `${name}: overspent by ${Math.abs(available)} (${spent}/${allowed})`,
+          subject: `${name}: ${available > 0 ? "unspent" : "overspent"}`,
         });
       };
       const aptitudes = this.components.aptitudes.getAptitudes();
@@ -61,7 +63,8 @@ export function Diagnoses<B extends Constructor<CharacterState>>(Base: B) {
     protected override findSourceIssues(): RulesIssue[] {
       const unplaced = this.components.aptitudes.getUnplacedGeneralFeats();
       const message = `The ruleset has no ${GENERAL_FEATS_APTITUDE} aptitude: this character's ${unplaced} general feat(s) count toward none`;
-      return [...(unplaced > 0 ? [{ category: "integrity", message }] : []), ...super.findSourceIssues()];
+      const issue = { amount: unplaced, category: "integrity", message, subject: "General feats: unplaced" };
+      return [...(unplaced > 0 ? [issue] : []), ...super.findSourceIssues()];
     }
 
     /** The character's race, classes, skills, feats and powers, which its source chain must hold. */
@@ -168,11 +171,18 @@ export function Diagnoses<B extends Constructor<CharacterState>>(Base: B) {
       const budget: RulesIssue[] = [];
       const { available, spent, total } = this.components.skills.getSkillBudget();
       if (available > 0) {
-        budget.push({ category: "skills", message: `${available} unspent skill point(s) (${spent}/${total})` });
+        budget.push({
+          amount: available,
+          category: "skills",
+          message: `${available} unspent skill point(s) (${spent}/${total})`,
+          subject: "Skill points: unspent",
+        });
       } else if (available < 0) {
         budget.push({
+          amount: -available,
           category: "skills",
           message: `Overspent by ${Math.abs(available)} skill point(s) (${spent}/${total})`,
+          subject: "Skill points: overspent",
         });
       }
       const characterLevel = this.components.identity.getIdentity().meta.level;
