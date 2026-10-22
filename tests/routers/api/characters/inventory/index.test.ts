@@ -14,8 +14,8 @@ async function setup() {
   const ctx = await getSeedCtx();
   const { id: rulesetId } = await createSeededTestRuleset(SEED_USER_ID);
   const item = await expectOk(
-    api.api.rulesets[":id"].items.$post({
-      param: { id: rulesetId },
+    api.api.rulesets[":id"].entities[":entityType"].$post({
+      param: { id: rulesetId, entityType: "items" },
       json: { name: "Inventory Item", weight: 5, costGp: 10 },
     }),
   );

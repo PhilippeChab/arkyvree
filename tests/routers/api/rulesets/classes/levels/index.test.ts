@@ -17,7 +17,10 @@ const requirements = api.api.rulesets[":id"].customization[":entityType"][":enti
 async function setup() {
   const { id } = await createSeededTestRuleset(SEED_USER_ID);
   const created = await expectOk(
-    api.api.rulesets[":id"].classes.$post({ param: { id }, json: { name: "Level Class", hd: 10 } }),
+    api.api.rulesets[":id"].entities[":entityType"].$post({
+      param: { id, entityType: "classes" },
+      json: { name: "Level Class", hd: 10 },
+    }),
   );
   return { id, classId: created.id };
 }

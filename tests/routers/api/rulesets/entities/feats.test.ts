@@ -5,39 +5,40 @@ import { api, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
 import { createSeededForkWithAptitude, createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
 
-const feats = api.api.rulesets[":id"].feats;
-const feat = feats[":featId"];
+const kinds = api.api.rulesets[":id"].entities[":entityType"];
+const entity = kinds[":entityId"];
+const entityType = "feats" as const;
 
-describe("rulesets feats", () => {
+describe("rulesets entities: feats", () => {
   test("creates, reads, lists, updates and deletes a feat", async () => {
     const { id, aptitudeId } = await createSeededForkWithAptitude();
 
     const created = await expectOk(
-      feats.$post({
-        param: { id },
+      kinds.$post({
+        param: { id, entityType },
         json: { name: "Test Feat", description: "A test feat", aptitudeIds: [aptitudeId] },
       }),
     );
     expect(created).toMatchObject({ name: "Test Feat", description: "A test feat" });
-    const param = { id, featId: created.id };
+    const param = { id, entityType, entityId: created.id };
 
-    expect(await expectOk(feat.$get({ param }))).toMatchObject({ id: created.id, name: "Test Feat" });
-    const list = await expectOk(feats.$get({ param: { id }, query: { aptitudeId } }));
+    expect(await expectOk(entity.$get({ param }))).toMatchObject({ id: created.id, name: "Test Feat" });
+    const list = await expectOk(kinds.$get({ param: { id, entityType }, query: { aptitudeId } }));
     expect(list.items.map((f) => f.id)).toEqual([created.id]);
 
     const updated = await expectOk(
-      feat.$put({ param, json: { name: "Renamed Feat", description: "Updated", aptitudeIds: [] } }),
+      entity.$put({ param, json: { name: "Renamed Feat", description: "Updated", aptitudeIds: [] } }),
     );
     expect(updated).toMatchObject({ name: "Renamed Feat", description: "Updated" });
 
-    await expectOk(feat.$delete({ param }));
-    await expectStatus(feat.$get({ param }), 404);
+    await expectOk(entity.$delete({ param }));
+    await expectStatus(entity.$get({ param }), 404);
   });
 
   test("groups a feat family's variants into one row", async () => {
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
     const grouped = await expectOk(
-      feats.grouped.$get({ param: { id }, query: { search: "Weapon Focus", limit: "100" } }),
+      kinds.grouped.$get({ param: { id, entityType }, query: { search: "Weapon Focus", limit: "100" } }),
     );
     const rows = grouped.items.filter((row) => row.family === "Weapon Focus");
     expect(rows).toHaveLength(1);
@@ -47,7 +48,8 @@ describe("rulesets feats", () => {
 
   test("requires a session", async () => {
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
-    await expectStatus(guestApi.api.rulesets[":id"].feats.$get({ param: { id }, query: {} }), 401);
+    const guestKinds = guestApi.api.rulesets[":id"].entities[":entityType"];
+    await expectStatus(guestKinds.$get({ param: { id, entityType }, query: {} }), 401);
   });
 
   test("rejects a feat without a name or an aptitude", async () => {
@@ -57,27 +59,30 @@ describe("rulesets feats", () => {
       { name: "Feat", aptitudeIds: [] },
       { name: "Feat", aptitudeIds: aptitudeId },
     ])
-      await expectStatus(feats.$post({ param: { id }, json: json as never }), 400);
+      await expectStatus(kinds.$post({ param: { id, entityType }, json }), 400);
   });
 
   test("returns 404 for a missing ruleset or feat", async () => {
     const { id } = await createSeededForkWithAptitude();
-    await expectStatus(feats.$get({ param: { id: NIL_UUID }, query: {} }), 404);
-    const param = { id, featId: NIL_UUID };
-    await expectStatus(feat.$get({ param }), 404);
-    await expectStatus(feat.$put({ param, json: { name: "Missing" } }), 404);
-    await expectStatus(feat.$delete({ param }), 404);
+    await expectStatus(kinds.$get({ param: { id: NIL_UUID, entityType }, query: {} }), 404);
+    const param = { id, entityType, entityId: NIL_UUID };
+    await expectStatus(entity.$get({ param }), 404);
+    await expectStatus(entity.$put({ param, json: { name: "Missing" } }), 404);
+    await expectStatus(entity.$delete({ param }), 404);
   });
 
   test("refuses a feat in an aptitude that spells already use", async () => {
     const { id, aptitudeId } = await createSeededForkWithAptitude();
     await expectOk(
-      api.api.rulesets[":id"].powers.$post({
-        param: { id },
+      kinds.$post({
+        param: { id, entityType: "powers" },
         json: { name: "Test Spell", aptitudes: [{ id: aptitudeId }] },
       }),
     );
-    const response = await feats.$post({ param: { id }, json: { name: "Test Feat", aptitudeIds: [aptitudeId] } });
+    const response = await kinds.$post({
+      param: { id, entityType },
+      json: { name: "Test Feat", aptitudeIds: [aptitudeId] },
+    });
     await expectStatus(response, 409);
   });
 });

@@ -356,12 +356,14 @@ describe("character levels", () => {
       // "Blackguard Spells" comes from the extensions (DMG and Complete Divine), not the
       // base. A spell only one extension's copy links to it must still show when another
       // extension's copy of that spell wins the dedup.
-      const ruleset = api.api.rulesets[":id"];
+      const kinds = api.api.rulesets[":id"].entities[":entityType"];
       const [aptitude] = (
-        await expectOk(ruleset.aptitudes.$get({ param: { id: fork.id }, query: { search: "Blackguard Spells" } }))
+        await expectOk(
+          kinds.$get({ param: { id: fork.id, entityType: "aptitudes" }, query: { search: "Blackguard Spells" } }),
+        )
       ).items;
       const [klass] = (
-        await expectOk(ruleset.classes.$get({ param: { id: fork.id }, query: { search: "Blackguard" } }))
+        await expectOk(kinds.$get({ param: { id: fork.id, entityType: "classes" }, query: { search: "Blackguard" } }))
       ).items;
       const blackguard = await listNames(aptitude.id, klass.id);
       expect(blackguard.length).toBeGreaterThan(0);

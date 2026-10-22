@@ -158,7 +158,10 @@ export async function editRuleset<E>(Edit: new (ruleset: RulesetSources, cow: Co
 /** A new aptitude of the ruleset, created through the API as the seed user. */
 export async function postAptitude(rulesetId: string) {
   return await expectOk(
-    api.api.rulesets[":id"].aptitudes.$post({ param: { id: rulesetId }, json: { name: `Aptitude ${uniqueId()}` } }),
+    api.api.rulesets[":id"].entities[":entityType"].$post({
+      param: { id: rulesetId, entityType: "aptitudes" },
+      json: { name: `Aptitude ${uniqueId()}` },
+    }),
   );
 }
 

@@ -16,24 +16,26 @@ export async function createCustomizableFeat() {
  */
 export async function createEntity(rulesetId: string, entityType: CustomizableEntityType): Promise<string> {
   const ruleset = api.api.rulesets[":id"];
-  const param = { id: rulesetId };
+  const kinds = ruleset.entities[":entityType"];
+  const id = rulesetId;
   const name = `Test ${entityType} ${uniqueId()}`;
   switch (entityType) {
     case "feats":
     case "powers": {
       const aptitude = await postAptitude(rulesetId);
-      return entityType === "feats"
-        ? (await expectOk(ruleset.feats.$post({ param, json: { name, aptitudeIds: [aptitude.id] } }))).id
-        : (await expectOk(ruleset.powers.$post({ param, json: { name, aptitudes: [{ id: aptitude.id }] } }))).id;
+      const pool = entityType === "feats" ? { aptitudeIds: [aptitude.id] } : { aptitudes: [{ id: aptitude.id }] };
+      return (await expectOk(kinds.$post({ param: { id, entityType }, json: { name, ...pool } }))).id;
     }
     case "items":
-      return (await expectOk(ruleset.items.$post({ param, json: { name } }))).id;
-    case "races":
-      return (await expectOk(ruleset.races.$post({ param, json: { name, size: "Medium", baseSpeed: 30 } }))).id;
+      return (await expectOk(kinds.$post({ param: { id, entityType }, json: { name } }))).id;
+    case "races": {
+      const json = { name, size: "Medium", baseSpeed: 30 };
+      return (await expectOk(kinds.$post({ param: { id, entityType }, json }))).id;
+    }
     case "klasses":
-      return (await expectOk(ruleset.classes.$post({ param, json: { name } }))).id;
+      return (await expectOk(kinds.$post({ param: { id, entityType: "classes" }, json: { name } }))).id;
     case "klass_levels": {
-      const klass = await expectOk(ruleset.classes.$post({ param, json: { name } }));
+      const klass = await expectOk(kinds.$post({ param: { id, entityType: "classes" }, json: { name } }));
       const level = await expectOk(
         ruleset.classes[":classId"].levels.$post({
           param: { id: rulesetId, classId: klass.id },

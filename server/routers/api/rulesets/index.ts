@@ -6,8 +6,6 @@ import { denyDemoUser, sessionMiddleware, validate } from "@/server/middlewares/
 import { idParam, limit, page } from "@/server/routers/api/validation.ts";
 import { RulesetsService } from "@/server/services/rulesets/index.ts";
 
-import abilities from "./abilities/index.ts";
-import aptitudes from "./aptitudes/index.ts";
 import changes from "./changes/index.ts";
 import classes from "./classes/index.ts";
 import contributorsRouter from "./contributors/index.ts";
@@ -16,33 +14,15 @@ import requirements from "./customization/requirements/index.ts";
 import targetRouter from "./customization/target/index.ts";
 import entities from "./entities/index.ts";
 import extensions from "./extensions/index.ts";
-import feats from "./feats/index.ts";
 import fields from "./fields/index.ts";
-import items from "./items/index.ts";
-import languages from "./languages/index.ts";
-import mechanics from "./mechanics/index.ts";
-import powers from "./powers/index.ts";
-import races from "./races/index.ts";
-import saves from "./saves/index.ts";
 import settings from "./settings/index.ts";
-import skills from "./skills/index.ts";
 
 export default new Hono()
   .use(sessionMiddleware)
   .route("/", contributorsRouter)
-  .route("/", abilities)
-  .route("/", aptitudes)
   .route("/", classes)
-  .route("/", feats)
   .route("/", fields)
-  .route("/", items)
-  .route("/", languages)
-  .route("/", mechanics)
-  .route("/", powers)
-  .route("/", races)
-  .route("/", saves)
   .route("/", settings)
-  .route("/", skills)
   .route("/", modifiers)
   .route("/", requirements)
   .route("/", targetRouter)

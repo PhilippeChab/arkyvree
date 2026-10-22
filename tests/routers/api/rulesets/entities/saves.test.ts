@@ -5,33 +5,35 @@ import { api, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 
-const saves = api.api.rulesets[":id"].saves;
-const save = saves[":saveId"];
+const kinds = api.api.rulesets[":id"].entities[":entityType"];
+const entity = kinds[":entityId"];
+const entityType = "saves" as const;
 
-describe("rulesets saves", () => {
+describe("rulesets entities: saves", () => {
   test("creates, reads, lists, updates and deletes a save", async () => {
     const { abilityMap } = await getSeedCtx();
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
 
     const json = { name: "Test Save", description: "A test save", abilityId: abilityMap["Constitution"] };
-    const created = await expectOk(saves.$post({ param: { id }, json }));
+    const created = await expectOk(kinds.$post({ param: { id, entityType }, json }));
     expect(created).toMatchObject(json);
-    const param = { id, saveId: created.id };
+    const param = { id, entityType, entityId: created.id };
 
-    expect(await expectOk(save.$get({ param }))).toMatchObject({ id: created.id, name: "Test Save" });
-    const list = await expectOk(saves.$get({ param: { id }, query: { search: "Test Save" } }));
+    expect(await expectOk(entity.$get({ param }))).toMatchObject({ id: created.id, name: "Test Save" });
+    const list = await expectOk(kinds.$get({ param: { id, entityType }, query: { search: "Test Save" } }));
     expect(list.items.map((s) => s.id)).toContain(created.id);
 
     const update = { name: "Renamed Save", description: "Updated", abilityId: abilityMap["Wisdom"] };
-    expect(await expectOk(save.$put({ param, json: update }))).toMatchObject(update);
+    expect(await expectOk(entity.$put({ param, json: update }))).toMatchObject(update);
 
-    await expectOk(save.$delete({ param }));
-    await expectStatus(save.$get({ param }), 404);
+    await expectOk(entity.$delete({ param }));
+    await expectStatus(entity.$get({ param }), 404);
   });
 
   test("requires a session", async () => {
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
-    await expectStatus(guestApi.api.rulesets[":id"].saves.$get({ param: { id }, query: {} }), 401);
+    const guestKinds = guestApi.api.rulesets[":id"].entities[":entityType"];
+    await expectStatus(guestKinds.$get({ param: { id, entityType }, query: {} }), 401);
   });
 
   test("rejects a save without a name or a valid ability id", async () => {
@@ -42,15 +44,15 @@ describe("rulesets saves", () => {
       { name: "No ability" },
       { name: "Bad ability", abilityId: "not-a-uuid" },
     ])
-      await expectStatus(saves.$post({ param: { id }, json: json as never }), 400);
+      await expectStatus(kinds.$post({ param: { id, entityType }, json: json as never }), 400);
   });
 
   test("returns 404 for a missing ruleset or save", async () => {
     const { abilityMap } = await getSeedCtx();
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
-    await expectStatus(saves.$get({ param: { id: NIL_UUID }, query: {} }), 404);
-    const param = { id, saveId: NIL_UUID };
-    await expectStatus(save.$put({ param, json: { name: "Missing", abilityId: abilityMap["Wisdom"] } }), 404);
-    await expectStatus(save.$delete({ param }), 404);
+    await expectStatus(kinds.$get({ param: { id: NIL_UUID, entityType }, query: {} }), 404);
+    const param = { id, entityType, entityId: NIL_UUID };
+    await expectStatus(entity.$put({ param, json: { name: "Missing", abilityId: abilityMap["Wisdom"] } }), 404);
+    await expectStatus(entity.$delete({ param }), 404);
   });
 });

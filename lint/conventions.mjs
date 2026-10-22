@@ -11,9 +11,9 @@
  * - `route-conventions`: a route's path params are camelCase (`:modifierId`; `.get`, `.route`, `.on`) and its fixed
  *   segments kebab-case (`/class-levels`; a file's name, `robots.txt`, or `*` too), it answers with its status
  *   (`c.json(body, status)`), its validation is the app's `validate` (`@/server/middlewares/index.ts`, which answers in
- *   the API's error envelope), its params are a named schema (`validate("param", featParams)`: from a `validation.ts`
+ *   the API's error envelope), its params are a named schema (`validate("param", levelParams)`: from a `validation.ts`
  *   when several routers use it, declared at the top of its router otherwise), its body and query are written in it
- *   (or at its router's top, as `itemBody`, when several of its routes take one, as it is or derived), its handler
+ *   (or at its router's top, as `levelBody`, when several of its routes take one, as it is or derived), its handler
  *   reads its input into a const and destructures what it reads of it (`body` or `query` when it reads one whole), a
  *   router is its module's export (`export default new Hono()…`) and names a schema for what it validates (never
  *   `…Schema`), and it lets an error reach `onError` instead of catching it (`server/routers/api/`; a `finally` alone
@@ -88,7 +88,7 @@ const DIRECTIVE = /^\s*(?:eslint|oxlint)-disable(?:-next-line|-line)?\b/;
 const FIXED_SEGMENT = /^([a-z0-9]+(-[a-z0-9]+)*(\.[a-z0-9]+)?|\*)$/;
 /** A module or folder named for no particular thing: `helpers.ts`, `utils/`. */
 const GRAB_BAG = /(^|\/)(helpers|utils?)(\.tsx?$|\/)/;
-/** A route's whole input, named for its target when it's named: `featParams`, `itemBody`, a query's `…Query`. */
+/** A route's whole input, named for its target when it's named: `levelParams`, `levelBody`, a query's `…Query`. */
 const INPUT_NAMES = { param: /Params?$/, json: /Body$/, query: /Query$/ };
 
 /** The variable a handler reads a whole input into: it destructures params, and an input it reads field by field. */
@@ -139,7 +139,7 @@ function* callsIn(node) {
   }
 }
 
-/** What a call or member chain starts from: `itemBody` in `itemBody.partial()`, `z` in `z.object({…})`. */
+/** What a call or member chain starts from: `levelBody` in `levelBody.partial()`, `z` in `z.object({…})`. */
 function chainRootOf(node) {
   let current = node;
   while (current?.type === "CallExpression" || current?.type === "MemberExpression")
@@ -173,7 +173,7 @@ function checkInputRead(context, declarator) {
 
 /**
  * A body or query schema given by name: the router's own, which several of its routes take, as it is or derived
- * (`itemBody.partial()`).
+ * (`levelBody.partial()`).
  */
 function checkNamedInputs(context, named, constants) {
   for (const [name, { bare, derived, targets }] of named) {
@@ -181,7 +181,7 @@ function checkNamedInputs(context, named, constants) {
     if (constants.has(name) && derived.length > 0 && misnamed) {
       context.report({
         node: derived[0],
-        message: `A route's ${misnamed} schema is named for what it validates (\`itemBody\`, a query's \`…Query\`): \`${name}\` isn't.`,
+        message: `A route's ${misnamed} schema is named for what it validates (\`levelBody\`, a query's \`…Query\`): \`${name}\` isn't.`,
       });
     }
     const reported = !constants.has(name) ? bare : bare.length + derived.length > 1 ? [] : [...bare, ...derived];
@@ -212,7 +212,7 @@ function checkRouterTop(context, program, constants) {
         context.report({
           node: declarator.id,
           message:
-            "A router's schema is named for what it validates (`featParams`, `itemBody`, `hitDie`), not `…Schema`.",
+            "A router's schema is named for what it validates (`levelParams`, `levelBody`, `hitDie`), not `…Schema`.",
         });
       }
     }
@@ -221,7 +221,7 @@ function checkRouterTop(context, program, constants) {
 
 /**
  * A route's validated input: its params by a named schema, its body and query written in it or, when several of the
- * router's routes take one, at the router's top (`itemBody`). `named` collects the names given for a body or a query.
+ * router's routes take one, at the router's top (`levelBody`). `named` collects the names given for a body or a query.
  */
 function checkValidation(context, node, named) {
   const [target, schema] = node.arguments;
@@ -231,13 +231,13 @@ function checkValidation(context, node, named) {
     context.report({
       node: schema,
       message:
-        "A route's params are a named schema (`idParam`, `featParams`): from a `validation.ts` when several " +
+        "A route's params are a named schema (`idParam`, `levelParams`): from a `validation.ts` when several " +
         "routers use it, declared at the top of the router otherwise.",
     });
   } else if (schema?.type === "Identifier" && !pattern.test(schema.name)) {
     context.report({
       node: schema,
-      message: `A route's ${target.value} schema is named for what it validates (\`featParams\`, \`idParam\`, \`itemBody\`, a query's \`…Query\`): \`${schema.name}\` isn't.`,
+      message: `A route's ${target.value} schema is named for what it validates (\`levelParams\`, \`idParam\`, \`levelBody\`, a query's \`…Query\`): \`${schema.name}\` isn't.`,
     });
   } else if (target.value !== "param") {
     const root = schema?.type === "Identifier" ? schema : chainRootOf(schema);
@@ -791,7 +791,7 @@ function createRouteConventions(context) {
     CallExpression(node) {
       if (!inRouters) return;
       const callee = node.callee;
-      // validate("param", featParams), validate("json", z.object(…)): a route's input, and the name it's given.
+      // validate("param", levelParams), validate("json", z.object(…)): a route's input, and the name it's given.
       if (callee.type === "Identifier" && callee.name === "validate") {
         checkValidation(context, node, named);
         return;

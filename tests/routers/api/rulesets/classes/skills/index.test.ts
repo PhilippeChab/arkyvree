@@ -11,7 +11,12 @@ const classSkills = api.api.rulesets[":id"].classes[":classId"].skills;
 async function setup() {
   const { skillMap } = await getSeedCtx();
   const { id } = await createSeededTestRuleset(SEED_USER_ID);
-  const klass = await expectOk(api.api.rulesets[":id"].classes.$post({ param: { id }, json: { name: "Skill Class" } }));
+  const klass = await expectOk(
+    api.api.rulesets[":id"].entities[":entityType"].$post({
+      param: { id, entityType: "classes" },
+      json: { name: "Skill Class" },
+    }),
+  );
   return { id, classId: klass.id, skillId: skillMap["Spellcraft"] };
 }
 
