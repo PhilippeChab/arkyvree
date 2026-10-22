@@ -10,29 +10,17 @@ import {
 } from "@/engine/core/levelUp/index.ts";
 import type { CharacterInput } from "@/engine/core/module/CharacterInputs.ts";
 import type { Descriptions } from "@/engine/core/module/contract.ts";
-import type { OpenedGroupedPicker, OpenedPicker, PickFilters, PickGroupFilters } from "@/engine/core/module/pickers.ts";
 import type { RulesIssue } from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
-import type { Character, Klass } from "@/shared/relations.ts";
+import type { Character } from "@/shared/relations.ts";
 
-import type { WizardStep } from "./descriptions.ts";
 import type { LevelPlanAnswer, LevelPlanRequest, LevelSteps, StepPickerQuery } from "./mechanics.ts";
 import type { BondedCreaturesPlan, LevelEditPlan, LevelRemovalPlan, LevelsPlan } from "./plans.ts";
-import type {
-  FeatPickQuery,
-  LevelEditRequest,
-  LevelPicks,
-  LevelQuery,
-  LevelRequest,
-  LevelUpRequest,
-  PlannedSoFar,
-  PowerPickQuery,
-  PreviewRequest,
-} from "./requests.ts";
+import type { LevelEditRequest, LevelPicks, LevelRequest, LevelUpRequest } from "./requests.ts";
 
 /**
- * What a ruleset answers of a character's levels, from the rows the server reads: the level-up wizard's steps (which it
- * lists, and answers by name), preview and pickers, a saved level's selections, and what a save, an edit or a removal
+ * What a ruleset answers of a character's levels, from the rows the server reads: a level's steps by their mechanics,
+ * the plan's answer and a step's picker over it, a saved level as an edit's plan, and what a save, an edit or a removal
  * writes, with what the master's bonded creatures become. Its descriptions are the ruleset's own (`D`); its plans are
  * the rows the server writes. Its level-up rules (`LevelUpRules`: how its character `C` is built, what a level's
  * ability increases add up to and its hit points, what bonded creatures become, a save's planned levels and its picks
@@ -50,9 +38,6 @@ export default abstract class LevelUpPart<
   /** The ruleset's character built from its rows, in the ruleset's view. */
   abstract buildCharacter(view: RulesetView, input: CharacterInput): C;
 
-  /** A saved level's selections, as its edit opens them: refused when the character has no such level. */
-  abstract describeLevel(view: RulesetView, character: CharacterInput, characterLevelId: string): D["levelSelections"];
-
   /**
    * The plan's answer (`request`, each id the view's): each step's answer in its mechanic's shape, by its name, and the
    * plan's advancements; Add Level's plan, and Edit Level's level in its place (`request.editedLevelId`) alike.
@@ -60,29 +45,10 @@ export default abstract class LevelUpPart<
   abstract describePlan(view: RulesetView, character: CharacterInput, request: LevelPlanRequest): LevelPlanAnswer;
 
   /**
-   * The wizard's preview of the levels the character plans (`request`), each with its ability increases, and of what the
-   * wizard picked over them so far, which the preview says what it comes to.
-   */
-  abstract describePreview(view: RulesetView, character: CharacterInput, request: PreviewRequest): D["preview"];
-
-  /**
    * The character's saved level `characterLevelId` as an edit's plan opens it: each step's payload as the level saved
    * it. Refused when the character has no such level.
    */
   abstract describeSavedPlan(view: RulesetView, character: CharacterInput, characterLevelId: string): LevelPlanRequest;
-
-  /**
-   * The wizard's step `name` of the level `query` is for, named for which it is: refused when the ruleset has no such
-   * step, or when the step reads the level's class and `query` names none.
-   */
-  abstract describeStep(view: RulesetView, character: CharacterInput, name: string, query: LevelQuery): D["step"];
-
-  /** The wizard's steps of the level `query` is for, in order: each by the name `describeStep` answers it by. */
-  abstract describeSteps(
-    view: RulesetView,
-    character: CharacterInput,
-    query: LevelQuery,
-  ): readonly WizardStep<D["step"]["name"]>[];
 
   /** A save's pooled picks (`picks`) spread over its planned levels (`levels`, in order), as the ruleset spreads them. */
   abstract distributePicks(
@@ -127,27 +93,6 @@ export default abstract class LevelUpPart<
    * track its level is on, which an edit keeps), and the words its advancements take.
    */
   abstract listSteps(view: RulesetView, character: CharacterInput, edited: boolean): LevelSteps;
-
-  /** The class picker, with what the wizard plans so far: the classes it offers, each with the level it would take. */
-  abstract openClassPicker(
-    view: RulesetView,
-    character: CharacterInput,
-    planned: PlannedSoFar,
-  ): OpenedPicker<{ kind: string }, Klass, D["classOption"]>;
-
-  /** A feat picker at a level, a family's feats when the query names one: the feats it offers, flat or by family. */
-  abstract openFeatPicker(
-    view: RulesetView,
-    character: CharacterInput,
-    query: FeatPickQuery,
-  ): OpenedGroupedPicker<PickFilters, PickGroupFilters, { id: string }, D["featOption"], D["featGroup"]>;
-
-  /** A power picker at a level, of a spell level when given: the powers it offers, less those picked so far. */
-  abstract openPowerPicker(
-    view: RulesetView,
-    character: CharacterInput,
-    query: PowerPickQuery,
-  ): OpenedPicker<PickFilters, { id: string }, D["powerOption"]>;
 
   /**
    * Step `step`'s picker over the plan (`query`, each id the view's), at the advancement its pick lands on: the kind it

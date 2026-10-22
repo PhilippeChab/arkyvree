@@ -13,14 +13,6 @@ type StepProjection = Omit<LevelQuery, "editedLevelId"> & {
   editedLevel?: { id: string; position: number };
 };
 
-/** The steps a 3.5 level has, in the wizard's order: each by its name, which `describeStep` answers it by. */
-const STEPS = [
-  { name: "abilities", label: "Ability Increase" },
-  { name: "skills", label: "Select Skills" },
-  { name: "feats", label: "Select Feats" },
-  { name: "powers", label: "Select Spells" },
-] as const;
-
 /**
  * The level-up wizard's steps for a character, from its rows, in their order: its ability increase, its skill points,
  * and its feat and power pools, each for the character built with the step's level.
@@ -146,29 +138,5 @@ export default class LevelUpSteps extends LevelUpState {
       powers: this.describePowerStep(step),
       skills: this.describeSkillStep(step),
     };
-  }
-
-  /**
-   * The wizard's step `name` of the step's level, named for which it is: refused when 3.5 has no such step, or when it
-   * reads the level's class (its skills, feats and powers) and the step names none.
-   */
-  describeStep(name: string, step: LevelQuery) {
-    switch (name) {
-      case "abilities":
-        return { name, ...this.describeAbilityStep(step) };
-      case "feats":
-        return { name, ...this.describeFeatStep(step) };
-      case "powers":
-        return { name, ...this.describePowerStep(step) };
-      case "skills":
-        return { name, ...this.describeSkillStep(step) };
-      default:
-        throw new RulesError("not-found", "Level step not found");
-    }
-  }
-
-  /** The wizard's steps of a 3.5 level, in order: the same four for every level. */
-  describeSteps() {
-    return STEPS;
   }
 }

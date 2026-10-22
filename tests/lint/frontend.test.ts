@@ -740,6 +740,35 @@ describe("frontend rules", () => {
     ).toEqual(["handler-names client/src/Callback.tsx", "handler-names client/src/Prop.tsx"]);
   });
 
+  test("the level wizards tell a step by its mechanic, never by its name", async () => {
+    const folder = "client/src/pages/characters/details/components/levelUp";
+    expect(
+      await lintRepo(
+        {
+          // By its mechanic, and a step's name passed along as it came: what the wizards do
+          [`${folder}/mechanic.ts`]:
+            'export const isPick = (step: { mechanic: string; name: string }, steps: Record<string, unknown>) =>\n  step.mechanic === "pick" && steps[step.name] !== undefined;\n',
+          // A name compared with a string, switched on, read off `steps`, or written into a plan
+          [`${folder}/compared.ts`]: 'export const isFeats = (step: { name: string }) => step.name === "feats";\n',
+          [`${folder}/switched.ts`]:
+            'export function labelOf(step: { name: string }) {\n  switch (step.name) {\n    case "skills":\n      return 1;\n  }\n  return 0;\n}\n',
+          [`${folder}/read.ts`]:
+            'export const hpOf = (answer: { steps: Record<string, unknown> }) => answer.steps["hp"];\n',
+          [`${folder}/written.ts`]: "export const plan = { steps: { hp: [8] } };\n",
+          // Outside the wizards' folder, a step's name is a test's, a module's
+          "client/src/pages/other/named.ts":
+            'export const isFeats = (step: { name: string }) => step.name === "feats";\n',
+        },
+        ["steps-by-mechanic"],
+      ),
+    ).toEqual([
+      `steps-by-mechanic ${folder}/compared.ts`,
+      `steps-by-mechanic ${folder}/read.ts`,
+      `steps-by-mechanic ${folder}/switched.ts`,
+      `steps-by-mechanic ${folder}/written.ts`,
+    ]);
+  });
+
   test("a constant built from a literal is SCREAMING_CASE, and one sx takes ends in _SX", async () => {
     expect(
       await lintRepo(

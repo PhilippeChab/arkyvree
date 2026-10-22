@@ -78,7 +78,6 @@ export {
   type LevelRows,
   type LevelsPlan,
   type LevelStep,
-  type LevelStepKind,
   type LevelSteps,
   LevelUpPart,
   type LevelUpRequest,
@@ -112,11 +111,9 @@ export {
   type TierRoom,
   type ValueAnswer,
   type ValueBounds,
-  type WizardStep,
 } from "./parts/levelUp/index.ts";
 export {
   type EntityKindDescription,
-  type LevelWizardDescription,
   type ListColumn,
   type ListDescription,
   type ProgressionDescription,

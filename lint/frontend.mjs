@@ -102,6 +102,9 @@
  * - `pending-props`: a request in flight is `pending`, a dialog's and a button's alike (`pending={mutation.isPending}`):
  *   never `isLoading`, a query's first load (a table's, a page's skeleton), nor `loading`, which a spinner and MUI's
  *   picker say of themselves.
+ * - `steps-by-mechanic`: the level wizards (`pages/characters/details/components/levelUp/`) tell a step by its
+ *   mechanic, never by its name: no `name` compared with or switched on a string, no step read off `steps` by a
+ *   string, and no plan written with a step's name. What a ruleset names its steps is its module's.
  *
  * Plain JS: oxlint loads its plugins without a TypeScript step.
  */
@@ -193,6 +196,9 @@ const INTL_DATE_FORMATS = new Set(["DateTimeFormat", "RelativeTimeFormat"]);
 
 /** The boxes a dialog's content lays its blocks in, its lead line or its first field first */
 const LAYOUT_ELEMENTS = new Set(["Box", "Stack"]);
+
+/** The level wizards' folder, which reads a level's steps by their mechanics. */
+const LEVEL_WIZARD_FOLDER = "client/src/pages/characters/details/components/levelUp/";
 
 /** The elements whose `loading` is their own word: MUI's picker ("Loading…" in its list), the spinners it shows */
 const LOADING_OWNERS = new Set(["Autocomplete", "DiceSpinner", "NextPageSpinner"]);
@@ -1514,6 +1520,46 @@ function createRowPrefetch(context) {
   };
 }
 
+/**
+ * The level wizards tell a step by its mechanic: a step's name compared with or switched on a string, a step read off
+ * `steps` by a string, or a plan's `steps` written with a step's name, would name a ruleset's step.
+ */
+function createStepsByMechanic(context) {
+  if (!repoPath(context.filename).startsWith(LEVEL_WIZARD_FOLDER)) return {};
+  const report = (node) =>
+    context.report({
+      node,
+      message:
+        "The level wizards tell a step by its mechanic (`step.mechanic`), never by its name: what a ruleset names its steps is its module's.",
+    });
+  const isString = (node) => node?.type === "Literal" && typeof node.value === "string";
+  const isName = (node) =>
+    (node?.type === "MemberExpression" && !node.computed && node.property.name === "name") ||
+    (node?.type === "Identifier" && node.name === "name");
+  const isSteps = (node) =>
+    (node?.type === "MemberExpression" && !node.computed && node.property.name === "steps") ||
+    (node?.type === "Identifier" && node.name === "steps");
+  return {
+    BinaryExpression(node) {
+      if (!["===", "!==", "==", "!="].includes(node.operator)) return;
+      if ((isName(node.left) && isString(node.right)) || (isName(node.right) && isString(node.left))) report(node);
+    },
+    SwitchStatement(node) {
+      if (isName(node.discriminant) && node.cases.some((switchCase) => isString(switchCase.test))) report(node);
+    },
+    MemberExpression(node) {
+      if (node.computed && isString(node.property) && isSteps(node.object)) report(node);
+    },
+    Property(node) {
+      const parent = node.parent;
+      const owner = parent?.parent;
+      if (parent?.type !== "ObjectExpression" || owner?.type !== "Property") return;
+      const ownerKey = owner.key.type === "Identifier" ? owner.key.name : owner.key.value;
+      if (ownerKey === "steps" && !node.computed && node.type === "Property" && node.kind === "init") report(node);
+    },
+  };
+}
+
 function createTooltips(context) {
   if (!inClient(context)) return {};
   return {
@@ -1945,6 +1991,7 @@ export default {
   "component-files": { meta: { type: "suggestion" }, create: createComponentFiles },
   "hook-files": { meta: { type: "suggestion" }, create: createHookFiles },
   "handler-names": { meta: { type: "suggestion" }, create: createHandlerNames },
+  "steps-by-mechanic": { meta: { type: "problem" }, create: createStepsByMechanic },
   "constant-names": { meta: { type: "suggestion" }, create: createConstantNames },
   queries: { meta: { type: "suggestion" }, create: createQueries },
   "parsed-responses": { meta: { type: "suggestion" }, create: createParsedResponses },

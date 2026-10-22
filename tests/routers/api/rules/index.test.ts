@@ -123,8 +123,7 @@ describe("rules", () => {
       ["perDay", undefined],
       ["known", "All"],
     ]);
-    // Its level wizard's words: an ability increase of 1, skill points buying ranks, class skills cheaper
-    expect(dnd35.levelUp.abilityIncrease).toMatchObject({ amount: 1, word: { one: "Ability Increase" } });
-    expect(dnd35.levelUp.pointSpend).toMatchObject({ favored: "Class Skill", unit: { many: "Ranks", one: "Rank" } });
+    // Its level steps' words are their steps', which a level's steps carry: none in the rules
+    expect(dnd35).not.toHaveProperty("levelUp");
   });
 });

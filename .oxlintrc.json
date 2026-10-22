@@ -128,6 +128,7 @@
     "arkyvree/component-files": "error",
     "arkyvree/hook-files": "error",
     "arkyvree/handler-names": "error",
+    "arkyvree/steps-by-mechanic": "error",
     "arkyvree/constant-names": "error",
     "arkyvree/queries": "error",
     "arkyvree/parsed-responses": "error",
