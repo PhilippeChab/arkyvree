@@ -7,6 +7,7 @@ export const FEAT_COLUMNS: FormField[] = [
     help: "The feat pools it's picked in",
     input: "aptitudes",
     key: "aptitudeIds",
+    links: "featsAptitudesInRules",
     label: "Aptitudes",
     required: true,
   },

@@ -91,6 +91,14 @@ describe("rules", () => {
       ["powers", "fixed"],
       ["items", "fluid"],
     ]);
+    expect(kind("feats")?.lockedName).toEqual({ flag: "generated", reason: "A generated feat keeps its name" });
+    // A pool's links column reads its links where an entity read holds them
+    expect(dnd35.columns.feats?.find((column) => column.key === "aptitudeIds")).toMatchObject({
+      links: "featsAptitudesInRules",
+    });
+    expect(dnd35.columns.powers?.find((column) => column.key === "aptitudes")).toMatchObject({
+      links: "powersAptitudesInRules",
+    });
     expect(kind("items")?.copies).toEqual({
       locked: ["slot", "sourceItemId", "type"],
       most: 50,

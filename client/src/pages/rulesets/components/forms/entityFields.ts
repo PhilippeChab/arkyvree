@@ -6,7 +6,9 @@
 import type { InferRequestType } from "hono/client";
 
 import { formatDecimal } from "@/client/src/lib/formatNumeric.ts";
+import { byName } from "@/client/src/pages/rulesets/components/byName.ts";
 import type { EntityField } from "@/client/src/pages/rulesets/details/rulesetQueries.ts";
+import type { Aptitude } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
 import { copyProgression } from "@/shared/customization/progression.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
@@ -17,6 +19,9 @@ type ColumnValue = LeafValue | unknown[];
 
 /** A field's value, but a group's: a flag's, a number's, a text's, a choice's, a list's, a progression's; null none. */
 type LeafValue = boolean | number | string | string[] | null | ProgressionValue;
+
+/** A column of a pool's links: a feat's feat pools, a spell's spell lists each at its level. */
+type LinksField = Extract<EntityField, { input: "aptitudeLevels" | "aptitudes" }>;
 
 /** What levels give of something, as a progression's field holds it: a frequency, and more at the levels it names. */
 type ProgressionValue = Extract<EntityField, { input: "progression" }>["default"];
@@ -41,6 +46,20 @@ function columnsByKey(columns: readonly EntityField[]): ValueField[] {
     if (!held || (held.input === "choice" && held.required)) byKey.set(column.key, column);
   }
   return [...byKey.values()];
+}
+
+/**
+ * A column's value as an entity read holds it: at its key, or, for a pool's links an entity read holds apart
+ * (`links`), off them: each its aptitude's id, at its level where the column takes one, in its aptitudes' name order.
+ */
+function columnValueOf(column: ValueField, entity: unknown): unknown {
+  const linked = (column.input === "aptitudes" || column.input === "aptitudeLevels") && !!column.links;
+  if (!linked) return valueAt(entity, column.key);
+  const links = linksOf(column, entity);
+  if (column.input === "aptitudes") return links.map(({ aptitude }) => aptitude.id);
+  return links.map(({ aptitude, level }) =>
+    typeof level === "number" ? { id: aptitude.id, level } : { id: aptitude.id },
+  );
 }
 
 /**
@@ -102,6 +121,11 @@ function formValueOf(field: ValueField, value: unknown): ColumnValue {
   }
 }
 
+/** An entity read's link to an aptitude (`aptitudesInRule`), as its server sends it. */
+function isAptitude(value: unknown): value is Aptitude {
+  return isRecord(value) && typeof value.id === "string" && typeof value.name === "string";
+}
+
 /** Whether a value is a progression's: a frequency, and the levels it gives more at, each its level and its amount. */
 function isProgression(value: unknown): value is ProgressionValue {
   return (
@@ -110,6 +134,16 @@ function isProgression(value: unknown): value is ProgressionValue {
     Array.isArray(value.extra) &&
     value.extra.every((given) => isRecord(given) && typeof given.level === "number" && typeof given.amount === "number")
   );
+}
+
+/** An entity read's links of a pool's links column (`links`), each its aptitude and its level, by its aptitude's name. */
+function linksOf(column: LinksField, entity: unknown) {
+  const links = column.links ? valueAt(entity, column.links) : undefined;
+  return (Array.isArray(links) ? links : [])
+    .flatMap((link) =>
+      isRecord(link) && isAptitude(link.aptitudesInRule) ? [{ aptitude: link.aptitudesInRule, level: link.level }] : [],
+    )
+    .sort((a, b) => byName(a.aptitude, b.aptitude));
 }
 
 /** A decimal's text as its save sends it: its number, null for none (which clears it). */
@@ -171,6 +205,15 @@ export function emptyFieldValues(fields: readonly EntityField[]): EntityFieldVal
 export function isFieldShown(field: EntityField, watched: readonly unknown[]) {
   return (field.shownWhen ?? []).every(
     (condition, index) => isOneOf(watched[index], condition.values) !== (condition.except ?? false),
+  );
+}
+
+/** The aptitudes an entity read links its pools' columns to (`links`), which its form shows by name. */
+export function linkedAptitudes(columns: readonly EntityField[], entity: unknown): Aptitude[] {
+  return columns.flatMap((column) =>
+    column.input === "aptitudes" || column.input === "aptitudeLevels"
+      ? linksOf(column, entity).map(({ aptitude }) => aptitude)
+      : [],
   );
 }
 
@@ -238,7 +281,7 @@ export function toColumnValues(columns: readonly EntityField[], entity?: unknown
   return Object.fromEntries(
     columnsByKey(columns).map((column) => [
       column.key,
-      entity === undefined ? emptyValueOf(column) : formValueOf(column, valueAt(entity, column.key)),
+      entity === undefined ? emptyValueOf(column) : formValueOf(column, columnValueOf(column, entity)),
     ]),
   );
 }

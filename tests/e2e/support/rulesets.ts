@@ -74,7 +74,7 @@ export async function openRace(page: Page, name: string) {
 /** Renames the race or feat whose customization page is open, and waits for the save. */
 export async function renameEntity(page: Page, name: string) {
   await page.getByLabel("Name", { exact: true }).first().fill(name);
-  const saved = apiResponse(page, "PUT", /\/api\/rulesets\/[a-f0-9-]+\/(races|feats)\/[a-f0-9-]+/);
+  const saved = apiResponse(page, "PUT", /\/api\/rulesets\/[a-f0-9-]+\/entities\/(races|feats)\/[a-f0-9-]+/);
   await page
     .locator("form")
     .filter({ has: page.getByLabel("Name") })

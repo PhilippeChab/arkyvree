@@ -25,7 +25,8 @@ export interface EntityCopiesDescription {
  * fields side by side in a wide dialog (`wideForm`: `fluid`, an item's; `fixed`, its height kept as its fields change,
  * a spell's), the pools its list narrows by (`pools`: the scope of the aptitudes it's picked in, a feat's `feats`),
  * whether its list narrows by a power's level (`levels`: a spell's), whether its list groups an entity's variants under
- * their family (`families`: a feat's), and how its row copies one (`copies`: an item's). Its word is its rules'
+ * their family (`families`: a feat's), how its row copies one (`copies`: an item's), and when its name can't change
+ * (`lockedName`: while its `flag` column holds, a generated feat's, its form saying why, `reason`). Its word is its rules'
  * (`RulesDescription.words`), and its URL's segment the app's (`getUrlSegment`: `classes`). Not the kinds a race or a
  * class is for (`entityKinds`).
  */
@@ -37,6 +38,7 @@ export interface EntityKindDescription {
   help?: string;
   icon: string;
   levels?: boolean;
+  lockedName?: { flag: string; reason: string };
   longDescription?: boolean;
   opens: "customization" | "page" | "progression";
   partitioned?: boolean;

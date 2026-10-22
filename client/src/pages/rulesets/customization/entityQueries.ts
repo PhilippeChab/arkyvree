@@ -7,6 +7,7 @@ import { queryOptions, skipToken } from "@tanstack/react-query";
 import { type InferResponseType, parseResponse } from "hono/client";
 
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
+import { type EntityRow, entitySegment } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import type { CustomizationPageType } from "@/shared/customization/entities.ts";
 import { getUrlSegment } from "@/shared/urlSegments.ts";
@@ -18,42 +19,17 @@ type CustomizedModifier = InferResponseType<
 
 export type ClassLevel = InferResponseType<(typeof rulesetApi)["class-levels"][":classLevelId"]["$get"], 200>;
 export type CustomizationEntity =
-  | { entity: Feat; type: "feats" }
-  | { entity: Race; type: "races" }
-  | { entity: Item; type: "items" }
-  | { entity: Power; type: "powers" }
+  | { entity: EntityRow; type: CustomizedKind }
   | { entity: ClassLevel; type: "klass_levels" }
   | { entity: CustomizedModifier; type: "modifiers" };
-export type Feat = InferResponseType<(typeof rulesetApi)["feats"][":featId"]["$get"], 200>;
-export type Item = InferResponseType<(typeof rulesetApi)["items"][":itemId"]["$get"], 200>;
-export type Power = InferResponseType<(typeof rulesetApi)["powers"][":powerId"]["$get"], 200>;
 
-export type Race = InferResponseType<(typeof rulesetApi)["races"][":raceId"]["$get"], 200>;
+/** A kind of entity whose row opens its customization page (a feat, a race, an item, a spell): read by its kind. */
+export type CustomizedKind = Exclude<CustomizationPageType, "klass_levels" | "modifiers">;
 
 const rulesetApi = rpc.api.rulesets[":id"];
 
 async function fetchEntity(id: string, type: CustomizationPageType, entityId: string): Promise<CustomizationEntity> {
   switch (type) {
-    case "feats":
-      return {
-        type,
-        entity: await parseResponse(rulesetApi.feats[":featId"].$get({ param: { id, featId: entityId } })),
-      };
-    case "races":
-      return {
-        type,
-        entity: await parseResponse(rulesetApi.races[":raceId"].$get({ param: { id, raceId: entityId } })),
-      };
-    case "items":
-      return {
-        type,
-        entity: await parseResponse(rulesetApi.items[":itemId"].$get({ param: { id, itemId: entityId } })),
-      };
-    case "powers":
-      return {
-        type,
-        entity: await parseResponse(rulesetApi.powers[":powerId"].$get({ param: { id, powerId: entityId } })),
-      };
     case "klass_levels":
       return {
         type,
@@ -67,6 +43,16 @@ async function fetchEntity(id: string, type: CustomizationPageType, entityId: st
         entity: await parseResponse(
           rulesetApi.customization[":entityType"][":entityId"].modifiers[":modifierId"].$get({
             param: { id, entityType: getUrlSegment(type), entityId, modifierId: entityId },
+          }),
+        ),
+      };
+    default:
+      // A kind's entity, through the routes by kind
+      return {
+        type,
+        entity: await parseResponse(
+          rulesetApi.entities[":entityType"][":entityId"].$get({
+            param: { id, entityType: entitySegment(getUrlSegment(type)), entityId },
           }),
         ),
       };
