@@ -6,14 +6,17 @@ import type { FormField } from "@/engine/core/fields/index.ts";
  * says of it, when it says anything (`help`), what its empty list says past its word (`empty`: "No saving throws
  * available for this ruleset."), whether its list narrows by the kinds a race or a class is for and sorts
  * (`partitioned`), whether its entities are the rules' alone, which no form makes, edits or deletes and no search
- * finds (`readOnly`: an ability's), and where its row opens (`opens`: its own page, its customization page, or its
- * progression page, a class's). Its word is its rules' (`RulesDescription.words`), and its URL's segment the app's
+ * finds (`readOnly`: an ability's), where its row opens (`opens`: its own page, its customization page, or its
+ * progression page, a class's), whether its form gives its description room (`longDescription`: a mechanic's), and
+ * whether a new one's form says what each of its fields is for (`fieldHelp`: a class's). Its word is its rules' (`RulesDescription.words`), and its URL's segment the app's
  * (`getUrlSegment`: `classes`). Not the kinds a race or a class is for (`entityKinds`).
  */
 export interface EntityKindDescription {
   empty?: string;
+  fieldHelp?: boolean;
   help?: string;
   icon: string;
+  longDescription?: boolean;
   opens: "customization" | "page" | "progression";
   partitioned?: boolean;
   readOnly?: boolean;

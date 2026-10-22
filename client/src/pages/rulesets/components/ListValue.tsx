@@ -25,8 +25,8 @@ function valueOf(entity: object, key: string): unknown {
 
 /**
  * An entity's value in its type's list, as its column says it reads (`ListColumn.reads`): a chip of its label, its
- * text as it is or quiet, a number or a decimal in its unit, the name of the entity it names, a flag's warning, a template, a
- * power's pools; "—" for none.
+ * text as it is or quiet, a number or a decimal in its unit, the name of the entity it names, a flag's warning, a
+ * template, a power's pools; "—" for none.
  */
 export function ListValue({ column, entity, names }: ListValueProps) {
   const value = valueOf(entity, column.key);

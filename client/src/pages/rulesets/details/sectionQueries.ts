@@ -62,7 +62,7 @@ export type Power = InferResponseType<(typeof rpc.api.rulesets)[":id"]["powers"]
 /** A ruleset page's tab: an entity kind's, by its URL segment (`races`, `classes`), or its Settings (`settings`). */
 export type RulesetSection = string;
 
-/** A tab's search params, and the kind and sort that narrow and order its list where they do (the races, the classes). */
+/** A tab's search params, and the kind and sort that narrow and order its list where they do (races, classes). */
 function entityPageSearchParams(pageParam: number, filters: EntityFilters) {
   return {
     ...pageSearchParams(pageParam, filters),

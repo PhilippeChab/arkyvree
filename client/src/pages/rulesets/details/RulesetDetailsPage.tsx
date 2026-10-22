@@ -368,7 +368,7 @@ export default function RulesetDetailsPage() {
           </Stack>
 
           <SectionTabPanel>
-            {/* Keyed by ruleset and tab: a tab's list keeps its previous data while a search loads, never another's. */}
+            {/* Keyed by ruleset and tab: a list keeps its previous data while a search loads, never another's. */}
             {currentTab.component ? (
               <currentTab.component
                 key={`${ruleset.id}:${currentTab.key}`}

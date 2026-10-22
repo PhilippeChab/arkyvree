@@ -45,6 +45,9 @@ describe("rules", () => {
     // Races and classes narrow by what they're for, abilities take no form, an empty list of saves its own words
     expect(dnd35.kinds.filter((kind) => kind.partitioned).map(({ type }) => type)).toEqual(["races", "klasses"]);
     expect(dnd35.kinds.filter((kind) => kind.readOnly).map(({ type }) => type)).toEqual(["abilities"]);
+    // A class's new one's form says what each field is for, a mechanic's gives its description room
+    expect(dnd35.kinds.filter((kind) => kind.fieldHelp).map(({ type }) => type)).toEqual(["klasses"]);
+    expect(dnd35.kinds.filter((kind) => kind.longDescription).map(({ type }) => type)).toEqual(["mechanics"]);
     expect(dnd35.kinds.find((kind) => kind.type === "saves")?.empty).toBe(
       "No saving throws available for this ruleset.",
     );

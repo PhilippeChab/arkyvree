@@ -53,9 +53,14 @@ interface EntitySectionProps extends RulesetSectionProps {
   kind: EntityKindDescription;
 }
 
-/** The customization page a kind's row opens, if it opens one a customization page shows. */
+/** The rows a long description's input takes (a mechanic's), as its page's does. */
+const LONG_DESCRIPTION_ROWS = 10;
+
+/** The customization page a kind's row opens, if it opens one: a kind no customization page shows is refused. */
 function customizationTypeOf(kind: EntityKindDescription) {
-  return kind.opens === "customization" && isOneOf(kind.type, CUSTOMIZATION_PAGE_TYPES) ? kind.type : undefined;
+  if (kind.opens !== "customization") return undefined;
+  if (!isOneOf(kind.type, CUSTOMIZATION_PAGE_TYPES)) throw new Error(`No customization page shows ${kind.type}`);
+  return kind.type;
 }
 
 /** Where an entity's row opens: its customization page, or its own page (a class's, on its progression). */
@@ -77,13 +82,15 @@ export function EntitySection({ ruleset, childOnly, onChildOnlyChange, kind }: E
   const many = entityTypeLabel(kind.type, rules?.words, true);
   const segment = getUrlSegment(kind.type);
 
-  // A partitioned list narrows by what its race or class is for and sorts; any other searches alone
+  // A partitioned list narrows by what its race or class is for and sorts; any other searches alone, but a read-only
+  // one, which has no search bar to clear the URL's
   const filters = useEntityFilters(ruleset.baseRules);
   const { searchValue, onSearchChange } = filters.searchBarProps;
   const searchBarProps = kind.partitioned ? filters.searchBarProps : { searchValue, onSearchChange };
+  const search = kind.readOnly ? "" : filters.search;
   const where = kind.partitioned
-    ? { search: filters.search, childOnly, kind: filters.kind, orderBy: filters.orderBy, orderDir: filters.orderDir }
-    : { search: filters.search, childOnly };
+    ? { search, childOnly, kind: filters.kind, orderBy: filters.orderBy, orderDir: filters.orderDir }
+    : { search, childOnly };
 
   const { fields } = useEntityFields(ruleset.id, kind.type);
   const { columns: formColumns } = useEntityColumns(ruleset.id, kind.type);
@@ -168,7 +175,7 @@ export function EntitySection({ ruleset, childOnly, onChildOnlyChange, kind }: E
             error={error}
             data={entities}
             animationOffset={itemsBeforeLastPage(data)}
-            search={filters.search}
+            search={search}
             isLoading={isLoading}
             columns={columns}
             onRowClick={handleRowClick}
@@ -192,7 +199,13 @@ export function EntitySection({ ruleset, childOnly, onChildOnlyChange, kind }: E
 
       {!kind.readOnly && (
         <CreateDialog {...createDialogProps} title={`Create New ${one}`}>
-          <RulesetEntityFormFields form={createForm} entityType={kind.type} rulesetId={ruleset.id} help />
+          <RulesetEntityFormFields
+            form={createForm}
+            entityType={kind.type}
+            rulesetId={ruleset.id}
+            descriptionRows={kind.longDescription ? LONG_DESCRIPTION_ROWS : undefined}
+            help={kind.fieldHelp}
+          />
         </CreateDialog>
       )}
     </SectionContent>

@@ -1,6 +1,6 @@
 /**
- * The detail queries of the simple ruleset entities, shared by their page and the section rows' hover prefetch so both
- * cache the same response.
+ * The detail queries of the simple ruleset entities, which their pages read; a section row's hover warms the same key
+ * through the routes by kind (`entityQuery`), whose response is the same.
  */
 
 import { type QueryClient, queryOptions, skipToken } from "@tanstack/react-query";
