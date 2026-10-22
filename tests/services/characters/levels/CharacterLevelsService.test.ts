@@ -5,6 +5,7 @@ import {
   abilitiesInRules,
   featsInRules,
   klassLevelPowersInRules,
+  levelFeatsInCharacter,
   powersInRules,
   skillsInRules,
 } from "@/drizzle/schema.ts";
@@ -1783,6 +1784,32 @@ describe("LevelsService", () => {
       // One General feat for the first level, one for being human.
       expect(pool(aptitudePools, "General")).toMatchObject({ allowed: 2 });
       expect(pool(aptitudePools, "Fighter Bonus Feat")).toMatchObject({ allowed: 1 });
+    });
+
+    test("refuses an edit an issue of its own, though another level answers for one of the same words", async () => {
+      const { ctx, characterId, levelIds } = await setupMulticlass(2);
+      const [, fighter1, fighter2] = levelIds;
+      const aptitudeId = ctx.aptMap["Fighter Bonus Feat"]!;
+      // A feat taken more than once, out of reach: each level that picks it answers for its issue
+      const [twinStep] = await insertRows(featsInRules, [
+        { name: "Twin Step", rulesetId: ctx.rulesetId, stackable: true },
+      ]);
+      await FeatsAptitudes.create(db, { aptitudeId, featId: twinStep!.id });
+      const unmet = { level: "1", operator: "greater_than_or_equal", target: "abilities.strength.total", value: "99" };
+      await Requirements.create(db, { ...unmet, entityId: twinStep!.id, entityType: "feats", valueType: "number" });
+      invalidateSeededRuleset(ctx.rulesetId);
+      // The second fighter level picked it, forced
+      await insertRows(levelFeatsInCharacter, [{ aptitudeId, characterLevelId: fighter2!, featId: twinStep!.id }]);
+
+      // The first fighter level picks it too: its own issue, which the later level's of the same words doesn't excuse
+      const feats = { [aptitudeId]: [twinStep!.id] };
+      const edit = (force: boolean) =>
+        CharacterLevelsService.updateLevel(session, characterId, fighter1!, 8, [], {}, feats, {}, force);
+      expect(await answerTo(() => edit(false))).toMatchObject({
+        status: 400,
+        body: { issues: [expect.objectContaining({ message: expect.stringMatching(/Twin Step/) })] },
+      });
+      await edit(true);
     });
 
     test("lists the level's picks by name", async () => {
