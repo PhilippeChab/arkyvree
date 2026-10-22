@@ -14,7 +14,7 @@ type PowerBody = Accepted<EntityKinds["powers"]["planCreate"]>[0] & { updatedAt?
 
 class PowersService {
   /** What its creates, updates and deletes write, in one order around the plans its rules give. */
-  private readonly writer = new EntityWriter("powers", Powers, powersInRules, "Power");
+  private readonly writer = new EntityWriter("powers", Powers, powersInRules);
 
   async createPower(session: Session, rulesetId: string, body: PowerBody) {
     return await this.writer.create(session, rulesetId, body.name, (scope) =>

@@ -1,14 +1,14 @@
 import type { FormField } from "@/engine/core/fields/index.ts";
 
 /**
- * An entity kind a ruleset holds, as its ruleset's page shows it: its type (`klasses`), the segment of its URL
- * (`classes`), its icon, by the generic name of its picture (`face`, `bolt`: the client's set of them), and what its tab
- * says of it, when it says anything (`help`). Its word is its rules' (`RulesDescription.words`).
+ * An entity kind a ruleset holds (a table of its entities: races, feats), as its ruleset's page shows it: its type
+ * (`klasses`), its icon, by the generic name of its picture (`face`, `bolt`: the client's set of them), and what its
+ * tab says of it, when it says anything (`help`). Its word is its rules' (`RulesDescription.words`), and its URL's
+ * segment the app's (`getUrlSegment`: `classes`). Not the kinds a race or a class is for (`entityKinds`).
  */
 export interface EntityKindDescription {
   help?: string;
   icon: string;
-  segment: string;
   type: string;
 }
 
@@ -116,7 +116,10 @@ export interface RulesDescription {
   columns: Partial<Record<string, FormField[]>>;
   /** The kinds a race or a class is for: a player character (`pc`), and those its rules add (3.5's bonded creatures) */
   entityKinds: { label: string; value: string }[];
-  /** The entity kinds its rulesets hold, in the order their ruleset's page shows them */
+  /**
+   * The entity kinds its rulesets hold (races, feats), in the order their ruleset's page shows them as its tabs; not
+   * the kinds a race or a class is for (`entityKinds`)
+   */
   kinds: EntityKindDescription[];
   /** A class's last level */
   lastClassLevel: number;
@@ -142,12 +145,8 @@ export interface RulesDescription {
   words: Partial<Record<string, RulesWord>>;
 }
 
-/**
- * A word in its singular and its plural ("Spell", "Spells"), and how an activity's type names the entity, where that
- * isn't its singular (`code`: `Klass`, in `createKlass`).
- */
+/** A word in its singular and its plural ("Spell", "Spells"). */
 export interface RulesWord {
-  code?: string;
   many: string;
   one: string;
 }

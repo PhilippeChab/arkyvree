@@ -14,7 +14,7 @@ type SkillBody = Accepted<EntityKinds["skills"]["planCreate"]>[0];
 
 class SkillsService {
   /** What its creates, updates and deletes write, in one order around the plans its rules give. */
-  private readonly writer = new EntityWriter("skills", Skills, skillsInRules, "Skill");
+  private readonly writer = new EntityWriter("skills", Skills, skillsInRules);
 
   async createSkill(session: Session, rulesetId: string, body: SkillBody) {
     return await this.writer.create(session, rulesetId, body.name, (scope) =>

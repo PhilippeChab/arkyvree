@@ -17,10 +17,13 @@ const CLASS_PAGE = /^\/rulesets\/[^/]+\/classes\/[^/?#]+/;
 /** An entity's customization page, on any of its tabs (`/rulesets/:id/feats/:featId/customization/modifiers`): its type's segment. */
 const CUSTOMIZATION_PAGE = /^\/rulesets\/[^/]+\/([^/]+)\/[^/]+\/customization(?:[/?#]|$)/;
 
-/** What a page Back goes to is, named in its ruleset's words (`words`): a class, an entity, else the ruleset. */
+/**
+ * What a page Back goes to is, named in its ruleset's words (`words`): a class, an entity (just "Back" until its
+ * ruleset's words are in), else the ruleset.
+ */
 function backLabel(to: string, words: RulesWords | undefined) {
   const customized = parseCustomizationSegment(CUSTOMIZATION_PAGE.exec(to)?.[1]);
-  if (customized) return `Back to ${entityTypeLabel(customized, words)}`;
+  if (customized) return words?.[customized] ? `Back to ${entityTypeLabel(customized, words)}` : "Back";
   return CLASS_PAGE.test(to) ? "Back to Class" : "Back to Ruleset";
 }
 

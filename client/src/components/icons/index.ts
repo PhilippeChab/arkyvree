@@ -30,6 +30,7 @@ export {
   Download as DownloadIcon,
   EditNote as DraftIcon,
   Edit as EditIcon,
+  Category as EntityIcon,
   ExpandMore as ExpandMoreIcon,
   Extension as ExtensionIcon,
   EmojiEvents as FeatPoolsIcon,

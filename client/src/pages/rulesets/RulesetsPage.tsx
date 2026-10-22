@@ -24,6 +24,7 @@ import {
   type RulesetListFilters,
   rulesetListQuery,
 } from "@/client/src/lib/queries.ts";
+import { getUrlSegment } from "@/shared/urlSegments.ts";
 
 import { RulesetFactChips, RulesetStarButton } from "./components/index.ts";
 import { prefetchSection } from "./details/sectionQueries.ts";
@@ -105,8 +106,13 @@ export default function RulesetsPage() {
                   const prefetch = () => {
                     void queryClient.prefetchQuery(rulesetDetailQuery(ruleset.id));
                     const first = allRules?.[ruleset.baseRules].kinds[0];
-                    if (first)
-                      void prefetchSection(queryClient, ruleset.id, first.segment, ruleset.kind === "extension");
+                    if (!first) return;
+                    void prefetchSection(
+                      queryClient,
+                      ruleset.id,
+                      getUrlSegment(first.type),
+                      ruleset.kind === "extension",
+                    );
                   };
                   return (
                     <ListCard

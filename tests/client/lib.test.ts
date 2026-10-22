@@ -186,10 +186,9 @@ describe("An entity type", () => {
     expect(entityTypeLabel("klasses", DND35_WORDS, true)).toBe("Classes");
     expect(entityTypeLabel("klass_levels", DND35_WORDS)).toBe("Class Level");
     expect(entityTypeLabel("modifiers", DND35_WORDS, true)).toBe("Modifiers");
-    // Before the rules load, its key
-    expect(entityTypeLabel("powers", undefined)).toBe("powers");
-    // A type with no word keeps its key
-    expect(entityTypeLabel("widgets", DND35_WORDS)).toBe("widgets");
+    // Before the rules load, or for a type with no word, a generic word: never its type as the code names it
+    expect(entityTypeLabel("klass_levels", undefined)).toBe("Entity");
+    expect(entityTypeLabel("widgets", DND35_WORDS, true)).toBe("Entities");
   });
 });
 
@@ -198,7 +197,6 @@ describe("An activity", () => {
     expect(
       formatActivityType("createPower", { baseRules: "Dungeons & Dragons: 3.5", entityName: "Fireball" }, RULES),
     ).toBe("Create Spell: Fireball");
-    expect(formatActivityType("createPower")).toBe("Create Power");
     // The app's words, never the engine's names, an older activity's (its data names no base rules) by every rules'
     expect([
       formatActivityType("createKlass", { entityName: "Fighter" }, RULES),
@@ -225,9 +223,9 @@ describe("An activity", () => {
     expect([
       formatNotificationMessage("deletePower", { baseRules: "Dungeons & Dragons: 3.5", entityName: "Fireball" }, RULES),
       formatNotificationMessage("createKlass", { actorName: "Ann", entityName: "Fighter" }, RULES),
-      // Before the rules load, its type as it is
-      formatNotificationMessage("deletePower", { baseRules: "Dungeons & Dragons: 3.5", entityName: "Fireball" }),
-    ]).toEqual(["Someone deleted spell Fireball", "Ann created class Fighter", "Someone: delete power: fireball"]);
+      // An older activity's (its data names no base rules), in every rules' words
+      formatNotificationMessage("updatePower", { entityName: "Blast" }, RULES),
+    ]).toEqual(["Someone deleted spell Fireball", "Ann created class Fighter", "Someone updated spell Blast"]);
   });
 
   test("details the fields it changed, its level, modifier and property", () => {

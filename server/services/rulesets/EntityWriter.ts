@@ -15,6 +15,7 @@ import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import type { RulesetEntityType } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications, getChangedFields } from "@/server/services/activities/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
+import { getActivityName } from "@/shared/activity.ts";
 import { isCustomizableEntityType, PROPERTY_ENTITY_TYPES } from "@/shared/customization/entities.ts";
 import type { Session } from "@/shared/relations.ts";
 
@@ -58,8 +59,6 @@ export default class EntityWriter<Row extends { id: string; name: string }, Inse
     private readonly type: RulesetEntityType,
     private readonly repository: KindRepository<Row, Insert>,
     private readonly table: Table,
-    /** Its activities' name: `Feat` in `createFeat`. */
-    private readonly activityName: string,
   ) {}
 
   /** The entity's customizations, copied onto the new one (`entityId`) from `sourceId`'s. */
@@ -81,7 +80,7 @@ export default class EntityWriter<Row extends { id: string; name: string }, Inse
       userId: session.userId,
       targetId,
       targetTable: getTableName(this.table),
-      type: `${verb}${this.activityName}`,
+      type: `${verb}${getActivityName(this.type)}`,
       data,
     });
   }

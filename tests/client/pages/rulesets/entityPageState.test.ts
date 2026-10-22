@@ -38,6 +38,8 @@ describe("An entity page's way back", () => {
     expect(
       entityPageBack({ from: "/rulesets/r1/class-levels/l1/customization/requirements" }, FALLBACK, DND35_WORDS).label,
     ).toBe("Back to Class Level");
+    // Before its ruleset's words are in, never its type as the code names it
+    expect(entityPageBack({ from: "/rulesets/r1/class-levels/l1/customization" }, FALLBACK).label).toBe("Back");
   });
 
   test("goes to its fallback when it was opened from nowhere it knows", () => {

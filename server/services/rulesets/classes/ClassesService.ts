@@ -8,7 +8,7 @@ import type { Session } from "@/shared/relations.ts";
 
 class ClassesService {
   /** What its creates, updates and deletes write, in one order around the plans its rules give. */
-  private readonly writer = new EntityWriter("klasses", Klasses, klassesInRules, "Klass");
+  private readonly writer = new EntityWriter("klasses", Klasses, klassesInRules);
 
   async createClass(
     session: Session,
