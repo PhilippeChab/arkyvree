@@ -116,6 +116,8 @@ describe("v1 ruleset customization", () => {
       target: "abilities.wisdom.total",
       value: "13",
     } as const;
+    // Nor both
+    await expectStatus(route.requirements.$post({ json: { ...check, chainingOperator: "or" }, param }), 400);
     const created = await expectOk(route.requirements.$post({ json: check, param }));
     expect(created).toMatchObject({ ...check, targetLabels: ["Abilities", "Wisdom", "Total"], valueType: "number" });
 
@@ -134,6 +136,8 @@ describe("v1 ruleset customization", () => {
     await expectStatus(route.requirements[":requirementId"].$put({ json: toGroup, param: requirementParam }), 400);
     const groupParam = { ...param, requirementId: group.id };
     await expectStatus(route.requirements[":requirementId"].$put({ json: check, param: groupParam }), 400);
+    const groupCheck = { group: "1", operator: "greater_than_or_equal" } as const;
+    await expectStatus(route.requirements[":requirementId"].$put({ json: groupCheck, param: groupParam }), 400);
     await expectStatus(route.requirements[":requirementId"].$delete({ param: requirementParam }), 204);
     expect(await expectOk(route.requirements.$get({ param }))).toEqual([group]);
   });

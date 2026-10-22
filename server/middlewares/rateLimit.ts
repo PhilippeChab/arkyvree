@@ -24,7 +24,7 @@ export const apiImportRateLimit = limitRatePerUser({ windowMs: MINUTE, limit: IM
 export const apiKeyRateLimit = limitRatePerUser({ windowMs: MINUTE, limit: 120 });
 
 /**
- * The public API's level saves and edits, counted per user, whatever keys of theirs ask: each builds and checks the
+ * The public API's level saves, edits and removals, counted per user, whatever keys of theirs ask: each builds the
  * whole character under its lock, as a character's level choices read every option.
  */
 export const apiLevelSaveRateLimit = limitRatePerUser({ windowMs: MINUTE, limit: 20 });
