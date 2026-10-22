@@ -86,9 +86,9 @@ A page answers `{ items, page, nextPage }`, `nextPage` null on the last. An erro
   the points sent for it come to (`pointsSpent`, `ranksAdded`), each feat slot (`aptitude`, `count`) with the feats that
   qualify for it, and each spell slot by spell level with the spells that do, with the picks made so far:
   `abilityIncreases=abilityId:amount;…`, `skillPoints=skillId:points,…`, `feats=featId:aptitudeId,…`,
-  `spells=spellId:aptitudeId,…`. A slot's `count` is its room at the level, the picks so far counted in it, and `picked`
-  lists the picks that fit, a pick past its aptitude's room left out. A shared aptitude's room is one, which a feat or a spell
-  fills: it shows as a feat slot and a spell slot both, each `shared`.
+  `spells=spellId:aptitudeId,…`. A slot's `count` is its room at the level, the picks so far counted in it, and
+  `picked` lists the picks that fit, a pick past its aptitude's room left out. A shared aptitude's room is one, which a
+  feat or a spell fills: it shows as a feat slot and a spell slot both, each `shared`.
 
 The engine opens the choices whole, in one operation (`levelUp().openLevelChoices`): the class picker, the planned
 level's steps, and a picker for each pool with room left, which checks its options against the character with the picks
