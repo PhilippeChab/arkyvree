@@ -35,6 +35,16 @@ export async function getEditableCharacter(
 }
 
 /**
+ * The character the session may edit, locked until the transaction ends: the writes that check its rows (a level's
+ * save, an inventory entry's place) run one at a time, so each reads what the one before saved.
+ */
+export async function lockEditableCharacter(tx: Db, session: Session, characterId: string) {
+  const character = await getEditableCharacter(tx, session, characterId);
+  await Characters.lock(tx, { id: character.id });
+  return character;
+}
+
+/**
  * Runs `run` in the ruleset scope of the character the session may edit, with the character's rows: what a level-up's
  * reads ask the engine with.
  */
