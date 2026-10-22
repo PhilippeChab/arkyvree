@@ -7,8 +7,9 @@
  *   role reads, and reaches another domain box (the client, the server, the content, the codegen, the database) only
  *   by an edge its table declares, with its reason: the client takes the server's types (its API's), the codegen
  *   writes in the content's builders and reads the core rules' hand-written feats, the database's seeders and runner
- *   read the content's builders, packages and test data. The tests and the scripts, which run the boxes, import
- *   anything; a root folder the table doesn't declare imports nothing (`ROOT_FOLDERS`).
+ *   read the content's builders, packages and test data. The client reads no ruleset's vocabulary: what it shows of it,
+ *   the engine describes. The tests and the scripts, which run the boxes, import anything; a root folder the table
+ *   doesn't declare imports nothing (`ROOT_FOLDERS`).
  * - `layers`: inside a box, a layer imports only what's below it (database < repositories < copy-on-write's views < its
  *   writes < services < jobs < routers; the middlewares sit on the repositories, beside the services). The cache,
  *   memoization only, imports none of the repositories, copy-on-write or the engine. The engine's machinery
@@ -39,8 +40,8 @@
  *   `database/packages/`, the scripts, the dev and test seeds among them, the server, `shared/`, `lib/`) names none of
  *   them: the runner and the scripts reach a ruleset's packages, seeder and test characters through the content's
  *   registry alone (`CONTENT_REGISTRY`: `RULESET_CONTENT`, keyed by base rules). A client module outside a ruleset's
- *   folder reaches a ruleset's code and vocabulary only through the client's registries, keyed by base rules
- *   (`CLIENT_REGISTRIES`: `getSections`…), never from its folders.
+ *   folder reaches a ruleset's code only through the client's registry, keyed by base rules (`CLIENT_REGISTRIES`:
+ *   `getSections`), never from its folders.
  * - `vocabulary-data`: a ruleset's vocabulary (`vocabulary/<ruleset>/`) is data: its lists, labels, tables and bounds,
  *   never a rule. It declares no function or class, and holds none in a constant (a callback in a constant's value,
  *   `SPELL_LEVELS.map((level) => …)`, builds the data): a rule is the engine's, which the client reads from a response.
@@ -75,14 +76,11 @@ const ANYTHING = "anything";
 /** The client's component folders, which code outside enters at their outermost index */
 const CLIENT_COMPONENTS = "client/src/components/";
 /**
- * The client's registries: each maps the base rules to a ruleset's part of the client (its sheet's sections, its level
- * wizards, its pages' sections and forms, its vocabulary…), whose contract it declares, the one way a generic module
- * reaches a ruleset's folders.
+ * The client's registries: each maps the base rules to a ruleset's part of the client, the layout no description of the
+ * engine's gives (its sheet's sections, in their order and shape), whose contract it declares, the one way a generic
+ * module reaches a ruleset's folders.
  */
-const CLIENT_REGISTRIES = [
-  "client/src/components/characters/sections/sectionFactory.ts",
-  "client/src/pages/rulesets/hooks/useEntityFilters.ts",
-];
+const CLIENT_REGISTRIES = ["client/src/components/characters/sections/sectionFactory.ts"];
 /**
  * The content's registry: each base rules' packages, seeder and test characters (`RULESET_CONTENT`), the one way the
  * runner and the dev and test seeds reach a ruleset's content and seeder.
@@ -176,7 +174,6 @@ const ROOT_FOLDERS = {
     role: "the app's pages, which call the server's API",
     imports: [
       { to: "shared/" },
-      { to: "vocabulary/" },
       { to: "engine/", types: true },
       { to: "drizzle/", types: true },
       {
@@ -645,7 +642,8 @@ function createRootFolders(context) {
       message:
         `${root}/ is ${box.role}: it imports ${imports} beside its own modules, never ${target}. A box reaches ` +
         "another only by an edge lint/architecture.mjs's ROOT_FOLDERS declares, with its reason; what several " +
-        "share belongs on a shared surface (the engine, shared/, vocabulary/).",
+        "share belongs on a shared surface it imports (the engine, shared/; vocabulary/, which the client reads as " +
+        "the engine describes it).",
     });
   });
 }
@@ -660,14 +658,15 @@ function createRulesetFolders(context) {
   if (!ruleset && !home && !genericClient) return {};
   return onImports((node, spec) => {
     const target = targetOf(file, spec);
+    // A client's import of a ruleset's vocabulary is root-folders' to refuse, from any of its folders: it reads none
+    if (file.startsWith("client/") && target?.startsWith("vocabulary/")) return;
     const other = target && rulesetOf(target, rulesets);
     if (genericClient && other) {
       context.report({
         node,
         message:
-          `A generic client module reaches ${other}'s code and vocabulary through a registry keyed by base rules ` +
-          "(`getSections`…: lint/architecture.mjs `CLIENT_REGISTRIES`), never from " +
-          "its folders.",
+          `A generic client module reaches ${other}'s code through the registry keyed by base rules ` +
+          "(`getSections`: lint/architecture.mjs `CLIENT_REGISTRIES`), never from its folders.",
       });
     } else if (home && other) {
       context.report({
