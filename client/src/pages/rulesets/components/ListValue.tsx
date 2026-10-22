@@ -25,8 +25,8 @@ function valueOf(entity: object, key: string): unknown {
 
 /**
  * An entity's value in its type's list, as its column says it reads (`ListColumn.reads`): a chip of its label, its
- * text quiet, a number or a decimal in its unit, the name of the entity it names, a flag's warning, a template, a
- * power's pools; "—" for none.
+ * text as it is or quiet, a number or a decimal in its unit, the name of the entity it names, a flag's warning, a
+ * template, a power's pools; "—" for none.
  */
 export function ListValue({ column, entity, names }: ListValueProps) {
   const value = valueOf(entity, column.key);
@@ -35,6 +35,8 @@ export function ListValue({ column, entity, names }: ListValueProps) {
     case "chip":
       if (value === null || value === undefined || value === "") return <EmptyValue />;
       return <ValueChip label={column.labels?.[String(value)] ?? String(value)} />;
+    case "text":
+      return typeof value === "string" && value ? value : <EmptyValue />;
     case "muted":
       return (
         <Typography variant="body2" sx={{ color: "text.secondary" }}>

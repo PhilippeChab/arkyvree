@@ -16,6 +16,7 @@ import {
   type EntitySortField,
 } from "@/client/src/pages/rulesets/hooks/useEntityFilters.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
+import { getUrlSegment } from "@/shared/urlSegments.ts";
 
 import { rulesetFieldsQuery, rulesetSettingsQuery } from "./rulesetQueries.ts";
 
@@ -23,10 +24,11 @@ interface AptitudeFilters extends ListFilters {
   aptitudeId?: string;
 }
 
+/** A kind's list's filters: past every list's, the kind it's for and its sort, where its kind narrows and sorts it. */
 interface EntityFilters extends ListFilters {
-  kind: EntityKind;
-  orderBy: EntitySortField;
-  orderDir: Direction;
+  kind?: EntityKind;
+  orderBy?: EntitySortField;
+  orderDir?: Direction;
 }
 
 interface ListFilters {
@@ -40,8 +42,19 @@ interface PowerFilters extends AptitudeFilters {
 
 type AptitudesApi = (typeof rpc.api.rulesets)[":id"]["aptitudes"];
 
+/** An entity kind's URL segment, as the routes by kind take it. */
+type EntitySegment = Parameters<
+  (typeof rpc.api.rulesets)[":id"]["entities"][":entityType"]["$get"]
+>[0]["param"]["entityType"];
+
 /** A ruleset's aptitude, as its list and its pickers give it. */
 export type Aptitude = InferResponseType<AptitudesApi["$get"], 200>["items"][number];
+
+/** An entity of any kind, as its list gives it: its name, its description, and what its kind's list reads of it. */
+export type EntityRow = InferResponseType<
+  (typeof rpc.api.rulesets)[":id"]["entities"][":entityType"]["$get"],
+  200
+>["items"][number];
 
 /** A ruleset's power (3.5's spell), as its list gives it. */
 export type Power = InferResponseType<(typeof rpc.api.rulesets)[":id"]["powers"]["$get"], 200>["items"][number];
@@ -49,7 +62,7 @@ export type Power = InferResponseType<(typeof rpc.api.rulesets)[":id"]["powers"]
 /** A ruleset page's tab: an entity kind's, by its URL segment (`races`, `classes`), or its Settings (`settings`). */
 export type RulesetSection = string;
 
-/** A tab's search params where an entity's kind and its sort narrow and order its list too (the races, the classes). */
+/** A tab's search params, and the kind and sort that narrow and order its list where they do (races, classes). */
 function entityPageSearchParams(pageParam: number, filters: EntityFilters) {
   return {
     ...pageSearchParams(pageParam, filters),
@@ -62,6 +75,16 @@ function entityPageSearchParams(pageParam: number, filters: EntityFilters) {
 /** The key of a list an entity's kind and its sort narrow and order. */
 function entitySectionKey(rulesetId: string, section: RulesetSection, filters: EntityFilters) {
   return [...sectionKey(rulesetId, section, filters), filters.kind, filters.orderBy, filters.orderDir] as const;
+}
+
+/**
+ * Search params, those given alone: a list by kind takes its kind's filters past the shared ones, by any key, each a
+ * string.
+ */
+function givenParams(params: Readonly<Record<string, string | undefined>>) {
+  return Object.fromEntries(
+    Object.entries(params).flatMap(([key, value]): [string, string][] => (value === undefined ? [] : [[key, value]])),
+  );
 }
 
 /** A tab's search params: its page, ten rows at a time, its search, and whether it lists the ruleset's own only. */
@@ -78,14 +101,27 @@ function sectionKey(rulesetId: string, section: RulesetSection, filters: ListFil
   return [...QUERY_KEYS.rulesets.section(rulesetId, section), filters.search, filters.childOnly] as const;
 }
 
-export function abilitiesQuery(rulesetId: string, filters: ListFilters) {
+/**
+ * An entity kind's list (`kind`: its type, and whether it narrows by the kind a race or a class is for and sorts),
+ * through the routes by kind, under its tab's key.
+ */
+export function entitiesQuery(
+  rulesetId: string,
+  kind: { partitioned?: boolean; type: string },
+  filters: EntityFilters,
+) {
+  const segment = getUrlSegment(kind.type);
   return infiniteQueryOptions({
-    queryKey: sectionKey(rulesetId, "abilities", filters),
+    queryKey: kind.partitioned
+      ? entitySectionKey(rulesetId, segment, filters)
+      : sectionKey(rulesetId, segment, filters),
     queryFn: ({ pageParam }) =>
       parseResponse(
-        rpc.api.rulesets[":id"].abilities.$get({
-          param: { id: rulesetId },
-          query: pageSearchParams(pageParam, filters),
+        rpc.api.rulesets[":id"].entities[":entityType"].$get({
+          param: { id: rulesetId, entityType: entitySegment(segment) },
+          query: givenParams(
+            kind.partitioned ? entityPageSearchParams(pageParam, filters) : pageSearchParams(pageParam, filters),
+          ),
         }),
       ),
     initialPageParam: 1,
@@ -93,34 +129,9 @@ export function abilitiesQuery(rulesetId: string, filters: ListFilters) {
   });
 }
 
-export function aptitudesQuery(rulesetId: string, filters: ListFilters) {
-  return infiniteQueryOptions({
-    queryKey: sectionKey(rulesetId, "aptitudes", filters),
-    queryFn: ({ pageParam }) =>
-      parseResponse(
-        rpc.api.rulesets[":id"].aptitudes.$get({
-          param: { id: rulesetId },
-          query: pageSearchParams(pageParam, filters),
-        }),
-      ),
-    initialPageParam: 1,
-    getNextPageParam: nextPage,
-  });
-}
-
-export function classesQuery(rulesetId: string, filters: EntityFilters) {
-  return infiniteQueryOptions({
-    queryKey: entitySectionKey(rulesetId, "classes", filters),
-    queryFn: ({ pageParam }) =>
-      parseResponse(
-        rpc.api.rulesets[":id"].classes.$get({
-          param: { id: rulesetId },
-          query: entityPageSearchParams(pageParam, filters),
-        }),
-      ),
-    initialPageParam: 1,
-    getNextPageParam: nextPage,
-  });
+/** An entity kind's segment as the routes by kind take it: the server refuses one no kind has. */
+export function entitySegment(segment: string) {
+  return segment as EntitySegment;
 }
 
 /** The variants of a feat family, which its grouped row lists as it expands; a row of one feat has none to ask for. */
@@ -205,36 +216,6 @@ export function itemsQuery(rulesetId: string, filters: ListFilters) {
   });
 }
 
-export function languagesQuery(rulesetId: string, filters: ListFilters) {
-  return infiniteQueryOptions({
-    queryKey: sectionKey(rulesetId, "languages", filters),
-    queryFn: ({ pageParam }) =>
-      parseResponse(
-        rpc.api.rulesets[":id"].languages.$get({
-          param: { id: rulesetId },
-          query: pageSearchParams(pageParam, filters),
-        }),
-      ),
-    initialPageParam: 1,
-    getNextPageParam: nextPage,
-  });
-}
-
-export function mechanicsQuery(rulesetId: string, filters: ListFilters) {
-  return infiniteQueryOptions({
-    queryKey: sectionKey(rulesetId, "mechanics", filters),
-    queryFn: ({ pageParam }) =>
-      parseResponse(
-        rpc.api.rulesets[":id"].mechanics.$get({
-          param: { id: rulesetId },
-          query: pageSearchParams(pageParam, filters),
-        }),
-      ),
-    initialPageParam: 1,
-    getNextPageParam: nextPage,
-  });
-}
-
 export function powersQuery(rulesetId: string, filters: PowerFilters) {
   return infiniteQueryOptions({
     queryKey: [...sectionKey(rulesetId, "powers", filters), filters.aptitudeId, filters.level],
@@ -255,89 +236,32 @@ export function powersQuery(rulesetId: string, filters: PowerFilters) {
 }
 
 /**
- * Warm the first page of a tab the way it opens: switching tabs clears the
- * URL's filters, so that's no search, the default kind and sort, and the
- * ruleset's default "Local Changes" setting.
+ * Warm the first page of a tab the way it opens: switching tabs clears the URL's filters, so that's no search, the
+ * default kind and sort, and the ruleset's default "Local Changes" setting. An entity kind's tab (`kind`) not past the
+ * feats, the powers and the items lists through the routes by kind.
  */
 export function prefetchSection(
   queryClient: QueryClient,
   rulesetId: string,
   section: RulesetSection,
+  kind: { partitioned?: boolean; type: string } | null,
   childOnly: boolean,
 ) {
   const filters = { search: "", childOnly };
   switch (section) {
-    case "races":
-      return queryClient.prefetchInfiniteQuery(racesQuery(rulesetId, { ...filters, ...DEFAULT_ENTITY_FILTERS }));
-    case "classes":
-      return queryClient.prefetchInfiniteQuery(classesQuery(rulesetId, { ...filters, ...DEFAULT_ENTITY_FILTERS }));
     case "feats":
       return queryClient.prefetchInfiniteQuery(featsGroupedQuery(rulesetId, filters));
     case "powers":
       return queryClient.prefetchInfiniteQuery(powersQuery(rulesetId, filters));
-    case "languages":
-      return queryClient.prefetchInfiniteQuery(languagesQuery(rulesetId, filters));
-    case "skills":
-      return queryClient.prefetchInfiniteQuery(skillsQuery(rulesetId, filters));
     case "items":
       return queryClient.prefetchInfiniteQuery(itemsQuery(rulesetId, filters));
-    case "aptitudes":
-      return queryClient.prefetchInfiniteQuery(aptitudesQuery(rulesetId, filters));
-    case "saves":
-      return queryClient.prefetchInfiniteQuery(savesQuery(rulesetId, filters));
-    case "mechanics":
-      return queryClient.prefetchInfiniteQuery(mechanicsQuery(rulesetId, filters));
-    case "abilities":
-      return queryClient.prefetchInfiniteQuery(abilitiesQuery(rulesetId, filters));
     case "settings":
       return Promise.all([
         queryClient.prefetchQuery(rulesetSettingsQuery(rulesetId)),
         queryClient.prefetchQuery(rulesetFieldsQuery(rulesetId)),
       ]);
   }
-}
-
-export function racesQuery(rulesetId: string, filters: EntityFilters) {
-  return infiniteQueryOptions({
-    queryKey: entitySectionKey(rulesetId, "races", filters),
-    queryFn: ({ pageParam }) =>
-      parseResponse(
-        rpc.api.rulesets[":id"].races.$get({
-          param: { id: rulesetId },
-          query: entityPageSearchParams(pageParam, filters),
-        }),
-      ),
-    initialPageParam: 1,
-    getNextPageParam: nextPage,
-  });
-}
-
-export function savesQuery(rulesetId: string, filters: ListFilters) {
-  return infiniteQueryOptions({
-    queryKey: sectionKey(rulesetId, "saves", filters),
-    queryFn: ({ pageParam }) =>
-      parseResponse(
-        rpc.api.rulesets[":id"].saves.$get({
-          param: { id: rulesetId },
-          query: pageSearchParams(pageParam, filters),
-        }),
-      ),
-    initialPageParam: 1,
-    getNextPageParam: nextPage,
-  });
-}
-
-export function skillsQuery(rulesetId: string, filters: ListFilters) {
-  return infiniteQueryOptions({
-    queryKey: sectionKey(rulesetId, "skills", filters),
-    queryFn: ({ pageParam }) =>
-      parseResponse(
-        rpc.api.rulesets[":id"].skills.$get({
-          param: { id: rulesetId },
-          query: pageSearchParams(pageParam, filters),
-        }),
-      ),
-    initialPageParam: 1,
-    getNextPageParam: nextPage,
-  });
+  if (!kind) return;
+  const where = kind.partitioned ? { ...filters, ...DEFAULT_ENTITY_FILTERS } : filters;
+  return queryClient.prefetchInfiniteQuery(entitiesQuery(rulesetId, kind, where));
 }

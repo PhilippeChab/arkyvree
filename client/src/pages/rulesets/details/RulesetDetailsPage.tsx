@@ -42,7 +42,7 @@ import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { EXTERNAL_LINKS } from "@/client/src/lib/externalLinks.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
-import { type RulesDescription, rulesetDetailQuery } from "@/client/src/lib/queries.ts";
+import { type EntityKindDescription, type RulesDescription, rulesetDetailQuery } from "@/client/src/lib/queries.ts";
 import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
 import { RulesetFactChips, RulesetStarButton } from "@/client/src/pages/rulesets/components/index.ts";
 import { useRulesetOperations } from "@/client/src/pages/rulesets/hooks/index.ts";
@@ -62,37 +62,22 @@ import {
 import { rulesetExtensionsQuery } from "./rulesetQueries.ts";
 import type { RulesetSectionProps } from "./sectionProps.ts";
 import { prefetchSection, type RulesetSection } from "./sectionQueries.ts";
-import {
-  AbilitiesSection,
-  AptitudesSection,
-  ClassesSection,
-  FeatsSection,
-  ItemsSection,
-  LanguagesSection,
-  MechanicsSection,
-  PowersSection,
-  RacesSection,
-  SavesSection,
-  SettingsSection,
-  SkillsSection,
-} from "./sections/index.ts";
+import { EntitySection, FeatsSection, ItemsSection, PowersSection, SettingsSection } from "./sections/index.ts";
 
-/** What a ruleset page's tab is: its key, label and icon, and the section it shows. */
-type TabConfig = SectionTab<RulesetSection> & { component: (props: RulesetSectionProps) => ReactNode };
+/**
+ * What a ruleset page's tab is: its key, label and icon, and what it shows: its kind's section (`kind`), its own where
+ * its kind has one (`component`), or its Settings.
+ */
+type TabConfig = SectionTab<RulesetSection> & {
+  component?: (props: RulesetSectionProps) => ReactNode;
+  kind: EntityKindDescription | null;
+};
 
-/** Each entity type's section, by its type. */
+/** The entity types whose section is still their own, by their type: any other kind's is `EntitySection`. */
 const SECTIONS: Readonly<Record<string, (props: RulesetSectionProps) => ReactNode>> = {
-  abilities: AbilitiesSection,
-  aptitudes: AptitudesSection,
   feats: FeatsSection,
   items: ItemsSection,
-  klasses: ClassesSection,
-  languages: LanguagesSection,
-  mechanics: MechanicsSection,
   powers: PowersSection,
-  races: RacesSection,
-  saves: SavesSection,
-  skills: SkillsSection,
 };
 
 /**
@@ -100,18 +85,15 @@ const SECTIONS: Readonly<Record<string, (props: RulesetSectionProps) => ReactNod
  * words, with their picture and what their tab says of them, then its Settings.
  */
 function rulesetTabs(rules: RulesDescription | undefined): TabConfig[] {
-  const kinds: TabConfig[] = (rules?.kinds ?? []).flatMap((kind) => {
-    const component = SECTIONS[kind.type];
-    if (!component) return [];
+  const kinds: TabConfig[] = (rules?.kinds ?? []).map((kind) => {
     const label = entityTypeLabel(kind.type, rules?.words, true);
-    return [
-      {
-        key: getUrlSegment(kind.type),
-        label: kind.help ? <HelpLabel label={label} help={kind.help} /> : label,
-        icon: kindIcon(kind.icon),
-        component,
-      },
-    ];
+    return {
+      key: getUrlSegment(kind.type),
+      label: kind.help ? <HelpLabel label={label} help={kind.help} /> : label,
+      icon: kindIcon(kind.icon),
+      component: SECTIONS[kind.type],
+      kind,
+    };
   });
   return [
     ...kinds,
@@ -125,6 +107,7 @@ function rulesetTabs(rules: RulesDescription | undefined): TabConfig[] {
       ),
       icon: SettingsIcon,
       component: SettingsSection,
+      kind: null,
     },
   ];
 }
@@ -371,19 +354,39 @@ export default function RulesetDetailsPage() {
               value={currentTab.key}
               onChange={(key) => navigate(`/rulesets/${id}/${key}`)}
               // Changing tab clears the URL's filters, so it opens with the ruleset's default "Local Changes".
-              onTabHover={(key) => void prefetchSection(queryClient, id, key, isExtension)}
+              onTabHover={(key) =>
+                void prefetchSection(
+                  queryClient,
+                  id,
+                  key,
+                  tabConfig.find((tab) => tab.key === key)?.kind ?? null,
+                  isExtension,
+                )
+              }
               aria-label="Ruleset Details Tabs"
             />
           </Stack>
 
           <SectionTabPanel>
-            {/* Keyed by ruleset: a tab's list keeps its previous data while a search loads, never another ruleset's. */}
-            <currentTab.component
-              key={ruleset.id}
-              ruleset={ruleset}
-              childOnly={childOnly}
-              onChildOnlyChange={setChildOnly}
-            />
+            {/* Keyed by ruleset and tab: a list keeps its previous data while a search loads, never another's. */}
+            {currentTab.component ? (
+              <currentTab.component
+                key={`${ruleset.id}:${currentTab.key}`}
+                ruleset={ruleset}
+                childOnly={childOnly}
+                onChildOnlyChange={setChildOnly}
+              />
+            ) : (
+              currentTab.kind && (
+                <EntitySection
+                  key={`${ruleset.id}:${currentTab.key}`}
+                  ruleset={ruleset}
+                  childOnly={childOnly}
+                  onChildOnlyChange={setChildOnly}
+                  kind={currentTab.kind}
+                />
+              )
+            )}
           </SectionTabPanel>
         </Stack>
 

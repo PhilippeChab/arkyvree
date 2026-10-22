@@ -111,6 +111,7 @@ export default function RulesetsPage() {
                       queryClient,
                       ruleset.id,
                       getUrlSegment(first.type),
+                      first,
                       ruleset.kind === "extension",
                     );
                   };

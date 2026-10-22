@@ -1,5 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
+import { CUSTOMIZATION_PAGE_TYPES } from "@/shared/customization/entities.ts";
+import { isOneOf } from "@/shared/isOneOf.ts";
 import { expectOk, guestApi } from "@/tests/support/api.ts";
 
 describe("rules", () => {
@@ -25,8 +27,35 @@ describe("rules", () => {
       "mechanics",
     ]);
     expect(dnd35.kinds.filter((kind) => kind.help).map(({ type }) => type)).toEqual(["aptitudes", "mechanics"]);
-    // Every kind has its word
+    // Every kind has its word, and its list but the feats', whose section groups them by their families
     for (const { type } of dnd35.kinds) expect(dnd35.words[type]).toBeDefined();
+    expect(dnd35.kinds.filter(({ type }) => !dnd35.lists[type]).map(({ type }) => type)).toEqual(["feats"]);
+    // And what its row opens
+    expect(Object.fromEntries(dnd35.kinds.map(({ opens, type }) => [type, opens]))).toEqual({
+      races: "customization",
+      languages: "page",
+      skills: "page",
+      feats: "customization",
+      powers: "customization",
+      items: "customization",
+      aptitudes: "page",
+      klasses: "progression",
+      saves: "page",
+      abilities: "page",
+      mechanics: "page",
+    });
+    // A kind that opens a customization page is one such a page shows
+    const customized = dnd35.kinds.filter(({ opens }) => opens === "customization").map(({ type }) => type);
+    expect(customized.filter((type) => !isOneOf(type, CUSTOMIZATION_PAGE_TYPES))).toEqual([]);
+    // Races and classes narrow by what they're for, abilities take no form, an empty list of saves its own words
+    expect(dnd35.kinds.filter((kind) => kind.partitioned).map(({ type }) => type)).toEqual(["races", "klasses"]);
+    expect(dnd35.kinds.filter((kind) => kind.readOnly).map(({ type }) => type)).toEqual(["abilities"]);
+    // A class's new one's form says what each field is for, a mechanic's gives its description room
+    expect(dnd35.kinds.filter((kind) => kind.fieldHelp).map(({ type }) => type)).toEqual(["klasses"]);
+    expect(dnd35.kinds.filter((kind) => kind.longDescription).map(({ type }) => type)).toEqual(["mechanics"]);
+    expect(dnd35.kinds.find((kind) => kind.type === "saves")?.empty).toBe(
+      "No saving throws available for this ruleset.",
+    );
     expect(dnd35.entityKinds).toEqual([
       { label: "Player Character", value: "pc" },
       { label: "Familiar", value: "familiar" },

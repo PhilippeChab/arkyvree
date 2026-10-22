@@ -32,7 +32,8 @@ test.describe("A fork's entities", () => {
       const dialog = page.getByRole("dialog", { name: `Create New ${label}` });
       await dialog.getByLabel("Name", { exact: true }).fill(name);
       await fill?.(page);
-      const created = apiResponse(page, "POST", new RegExp(`/api/rulesets/${forkId}/${section}$`));
+      // Its section creates it through the routes by kind
+      const created = apiResponse(page, "POST", new RegExp(`/api/rulesets/${forkId}/entities/${section}$`));
       await dialog.getByRole("button", { name: /^Create$/ }).click();
       await created;
       // Creating it opens its page, whose form fills in once the entity has loaded (the closing dialog's has the name too)
