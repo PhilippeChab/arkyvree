@@ -93,9 +93,10 @@ export default class Dnd35LevelUp extends LevelUpPart<Dnd35Descriptions, Detaile
     for (const apt of Object.values(withLevel.components.aptitudes.getAptitudes()))
       if (apt.allowed > (allowedBefore.get(apt.name) ?? 0)) owned.add(apt.name);
 
-    return issues.filter(
-      (issue) => issue.category !== "aptitudes" || [...owned].some((name) => issue.message.startsWith(name)),
-    );
+    // A pool's issue names it whole (a leveled one with its level): not a pool its name begins ("Bonus Feats (Wizard)")
+    const isOwned = ({ message, subject = message }: RulesIssue) =>
+      [...owned].some((name) => subject.startsWith(`${name}: `) || subject.startsWith(`${name} (level `));
+    return issues.filter((issue) => issue.category !== "aptitudes" || isOwned(issue));
   }
 
   /** The pools a save's picks overfill, as the character holding them counts them. */
