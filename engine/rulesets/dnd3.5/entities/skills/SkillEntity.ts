@@ -54,9 +54,9 @@ export default class SkillEntity extends RulesetEntity<
     return { removed: this.skillFocus.remove(skill.name) };
   }
 
-  /** A form's key ability, the view's. */
-  protected override resolveIds({ primaryAbilityId }: SkillBody) {
-    return { primaryAbilityId: this.ids.resolve("abilities", primaryAbilityId) };
+  /** A form's key ability, the view's: none of an edit that leaves it out (its columns keep it). */
+  protected override resolveIds({ primaryAbilityId }: Partial<SkillBody>) {
+    return primaryAbilityId === undefined ? {} : { primaryAbilityId: this.ids.resolve("abilities", primaryAbilityId) };
   }
 
   /**

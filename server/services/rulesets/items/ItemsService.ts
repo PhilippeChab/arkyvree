@@ -91,7 +91,7 @@ class ItemsService extends include(Object, Variants) {
         if (plan.copiesOf) plan.checkCopies(await this.findCopies(tx, scope, plan.copiesOf));
         return plan;
       },
-      (row) => ({ ...body, sourceItemId: row.sourceItemId }),
+      (row, columns) => ({ ...columns, sourceItemId: row.sourceItemId }),
     );
   }
 }

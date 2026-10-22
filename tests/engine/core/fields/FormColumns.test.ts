@@ -88,6 +88,8 @@ describe("A form's columns", () => {
     const schema = FormColumns.schema(shared, true);
     expect(schema.parse({ type: "Ring" })).toEqual({ type: "Ring" });
     expect(schema.parse({})).toEqual({});
-    expect(schema.safeParse({ type: "Armor" }).success).toBe(false);
+    expect(schema.safeParse({ type: "Armor" }).error?.issues.map((issue) => issue.message)).toEqual([
+      "Type must be one of: Ring, Weapon",
+    ]);
   });
 });

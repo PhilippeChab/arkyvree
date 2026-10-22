@@ -5,7 +5,7 @@ import { type SessionContext, validate } from "@/server/middlewares/index.ts";
 import { entityBody, entityOrderBy, idParam, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
 import { ItemsService } from "@/server/services/rulesets/items/index.ts";
 
-/** A item's body, its create's and its update's: an entity's (`entityBody`), whose columns its rules read. */
+/** An item's body, its create's and its update's: an entity's (`entityBody`), whose columns its rules read. */
 const itemBody = entityBody;
 
 const itemParams = idParam.extend({ itemId: z.string().uuid() });

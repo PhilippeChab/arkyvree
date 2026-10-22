@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import type { FormField } from "./FormField.ts";
+import type { ChoiceFormField, FormField } from "./FormField.ts";
 
 /** What a column's input takes: its value, whether none clears it, and whether a new entity's form gives it. */
 interface ColumnValue {
@@ -33,9 +33,24 @@ const ID = z.string().uuid();
  *   least; an edit leaves those it doesn't give as they are.
  *
  * Columns that share a key (an item's type, a template's of its own options) take what any of them takes, required
- * when every one is.
+ * when every one is: choices as one, of all their options, which a refusal names.
  */
 export default class FormColumns {
+  /** Columns that share a key, as one where they're all single choices (an item's type): every option of theirs. */
+  private static joinChoices(shared: FormField[]): FormField[] {
+    const choices = shared.filter((column): column is ChoiceFormField => column.input === "choice" && !column.multiple);
+    if (shared.length < 2 || choices.length < shared.length) return shared;
+    const [first] = choices;
+    return [
+      {
+        ...first,
+        default: choices.find((choice) => choice.default !== undefined)?.default,
+        options: [...new Set(choices.flatMap((choice) => choice.options))],
+        required: choices.every((choice) => choice.required),
+      },
+    ];
+  }
+
   /** A key's columns' values as one: what any of them takes, nullable when one is, required when every one is. */
   private static keySchema(values: ColumnValue[]): z.ZodType {
     const [first, ...rest] = values.map((value) => value.schema);
@@ -133,7 +148,7 @@ export default class FormColumns {
         return { nullable: true, required: false, schema: ID };
       case "text":
         return {
-          default: column.nullable ? undefined : "",
+          default: column.nullable ? undefined : column.multiple ? [] : "",
           nullable: column.nullable,
           required: !column.nullable,
           schema: column.multiple ? z.array(z.string()) : z.string(),
@@ -151,7 +166,9 @@ export default class FormColumns {
       Object.fromEntries(
         [...byKey].map(([key, shared]) => [
           key,
-          FormColumns.keySchema(shared.map((column) => FormColumns.valueGiven(column, creating))),
+          FormColumns.keySchema(
+            FormColumns.joinChoices(shared).map((column) => FormColumns.valueGiven(column, creating)),
+          ),
         ]),
       ),
     );

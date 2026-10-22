@@ -27,8 +27,8 @@ export default class SaveEntity extends RulesetEntity<"saves", SaveBody> {
     return { abilityId, description, name };
   }
 
-  /** A form's ability, the view's. */
-  protected override resolveIds({ abilityId }: SaveBody) {
-    return { abilityId: this.ids.resolve("abilities", abilityId) };
+  /** A form's ability, the view's: none of an edit that leaves it out (its columns keep it). */
+  protected override resolveIds({ abilityId }: Partial<SaveBody>) {
+    return abilityId === undefined ? {} : { abilityId: this.ids.resolve("abilities", abilityId) };
   }
 }

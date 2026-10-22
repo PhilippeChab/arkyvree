@@ -186,8 +186,11 @@ export default class EntityWriter<Row extends { id: string; name: string }, Inse
     rulesetId: string,
     body: { name: string; updatedAt?: string },
     plan: (scope: RulesetScope, reads: { tx: Db }) => P | Promise<P>,
-    /** What its activity compares with the entity it was, for its changed fields: the body, unless the row says better. */
-    compare: (row: Row) => object = () => body,
+    /**
+     * What its activity compares with the entity it was, for its changed fields: the columns its plan writes (never the
+     * body, whose other keys it doesn't), unless the row says better.
+     */
+    compare: (row: Row, columns: P["columns"]) => object = (_row, columns) => columns,
   ): Promise<Row & P["fields"]> {
     const result = await withTransaction(
       async (tx) =>
@@ -213,7 +216,7 @@ export default class EntityWriter<Row extends { id: string; name: string }, Inse
           const [row] = rows;
           await this.recordActivity(tx, session, "update", targetId, {
             entityName: body.name,
-            changedFields: getChangedFields(planned.entity, compare(row)),
+            changedFields: getChangedFields(planned.entity, compare(row, planned.columns)),
           });
           return { ...row, ...planned.fields };
         }),

@@ -60,6 +60,20 @@ async function setup() {
 
 // CRUD, ownership and copy-on-write are covered for every entity in EntityServices.test.ts.
 describe("SkillsService", () => {
+  test("keeps a skill's ability through an edit that leaves it out, and refuses one it names as none", async () => {
+    const { session, ruleset, abilityMap, body } = await setup();
+    const climb = await SkillsService.createSkill(session, ruleset.id, body());
+    expect(await SkillsService.updateSkill(session, ruleset.id, climb.id, { name: "Climbing" })).toMatchObject({
+      name: "Climbing",
+      primaryAbilityId: abilityMap.Strength,
+    });
+    expect(
+      SkillsService.updateSkill(session, ruleset.id, climb.id, { name: "Climb", primaryAbilityId: "" }),
+    ).rejects.toMatchObject({
+      issues: [{ category: "primaryAbilityId" }],
+    });
+  });
+
   test("stores a skill's ability, weight and training flags, and lists them", async () => {
     const { session, ruleset, abilityMap, body, values } = await setup();
     const spellcraft = values({

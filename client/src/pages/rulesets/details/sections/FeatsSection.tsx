@@ -94,13 +94,10 @@ const GROUPED_COLUMNS: TableColumn[] = [
   { key: "variants", label: "Variants", width: "50%" },
 ];
 
-/**
- * What the tab says while it lists no feat, grouped or not
- *
- * A new feat's form, which needs a pool.
- */
+/** A new feat's form, which needs a pool. */
 const NEW_FEAT: ColumnContext = { newEntity: true };
 
+/** What the tab says while it lists no feat, grouped or not */
 const NO_FEATS = { title: "No feats", description: "No feats available for this ruleset." };
 
 /** A family's variants' indent under it, from `sm` up (a phone's is its rows' `indented`) */
