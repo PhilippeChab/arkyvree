@@ -64,6 +64,16 @@ async function setupPrivateRuleset() {
 }
 
 describe("CharactersService", () => {
+  test("answers a sheet's issues as a refusal does, without what the rules measure them by", async () => {
+    const { session } = await createTestUser();
+    const character = await createCharacterAs(session);
+    // A level saved without its picks: its pools' slots unspent
+    await addCharacterLevel(character.id, (await fighterLevel()).id);
+    const { issues } = (await CharactersService.getCharacter(session, character.id)).validation;
+    expect(issues.length).toBeGreaterThan(0);
+    for (const issue of issues) expect(Object.keys(issue)).toEqual(expect.not.arrayContaining(["amount", "subject"]));
+  });
+
   describe("creating a character", () => {
     test("stores its details, and a score of 10 for each ability not given", async () => {
       const { user, session } = await createTestUser();

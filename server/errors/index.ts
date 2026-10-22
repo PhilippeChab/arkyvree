@@ -21,10 +21,7 @@ class BaseError extends Error {
       case "conflict":
         return new ConflictError(message);
       case "invalid":
-        // An issue as the error answers it: what the rules weigh it by (its subject, its amount) stays theirs
-        return new BadRequestError(message, {
-          issues: issues?.map(({ amount: _amount, subject: _subject, ...issue }) => issue),
-        });
+        return new BadRequestError(message, { issues: issues?.map(RulesError.toAnswered) });
       case "not-found":
         return new NotFoundError(message);
       case "unprocessable":

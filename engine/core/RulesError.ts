@@ -57,6 +57,11 @@ export default class RulesError extends Error {
     if (issues.length > 0) throw new RulesError("invalid", issues.map((issue) => issue.message).join("; "), issues);
   }
 
+  /** An issue as a refusal or a sheet answers it: the rules' own measure of it (`subject`, `amount`) left out. */
+  static toAnswered({ amount: _amount, subject: _subject, ...issue }: RulesIssue) {
+    return issue;
+  }
+
   readonly issues?: RulesIssue[];
 
   readonly refusal: Refusal;
