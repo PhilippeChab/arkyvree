@@ -18,16 +18,20 @@ test.describe("A fork's sections", () => {
     await grouped;
 
     // A family's row counts its variants, and lists them as it expands
-    const family = page.getByRole("row", { name: /^Greater Weapon Focus\b.*variants/ });
+    const family = page.getByRole("row", { name: /^Greater Weapon Focus\b.*\d+ variants$/ });
     await expect(family).toBeVisible();
     const variants = apiResponse(page, "GET", new RegExp(`/api/rulesets/${forkId}/entities/feats\\?.*family=`));
     await family.click();
     await variants;
     await expect(page.getByRole("row", { name: /Greater Weapon Focus: Longsword/ })).toBeVisible();
 
-    // Ungrouped, each feat is its own row, ten to a page
+    // Ungrouped, each feat is its own row, ten to a page, its pools beside it: no family's row is left
+    const flat = apiResponse(page, "GET", new RegExp(`/api/rulesets/${forkId}/entities/feats\\?(?!.*family=)`));
     await page.getByRole("button", { name: "Group Families" }).click();
+    await flat;
     await expect(page).toHaveURL(/[?&]grouped=false/);
+    await expect(family).toBeHidden();
+    await expect(page.getByRole("columnheader", { name: "Aptitudes" })).toBeVisible();
     await expect(page.getByRole("cell", { name: "Greater Weapon Focus: Bastard Sword", exact: true })).toBeVisible();
   });
 
