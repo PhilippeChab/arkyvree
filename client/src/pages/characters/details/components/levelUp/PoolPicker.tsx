@@ -17,7 +17,7 @@ import { poolName } from "./poolName.ts";
 
 /** The pool open to pick from: its name, what's picked in it and how many it takes. */
 interface OpenPool {
-  /** A leveled spell pool's spell level, open one level at a time ("Level 1"). */
+  /** A tiered pool's tier, open one tier at a time (a spell level: "Level 1"). */
   level?: string;
   name: string;
   onRemove: (id: string) => void;
@@ -66,6 +66,8 @@ interface PoolPickerProps {
   open: OpenPool | undefined;
   options: PickOptions;
   pools: PoolChip[];
+  /** What its pools are, its rules' word ("Aptitude"). */
+  poolWord: string;
   search: string;
   /** What it picks, plural ("Feats", "Spells"). */
   what: string;
@@ -96,21 +98,33 @@ export function PickOption({
 }
 
 /**
- * A level wizard's picks in their pools, the Feats and the Spells steps alike: the pools' chips, the open pool's picks,
+ * A `pick` step's picks in their pools (3.5's feats and spells alike): the pools' chips, the open pool's picks,
  * and its search over the options it lists.
  */
-export function PoolPicker({ what, granted, pools, open, search, onSearch, options, children }: PoolPickerProps) {
+export function PoolPicker({
+  what,
+  poolWord,
+  granted,
+  pools,
+  open,
+  search,
+  onSearch,
+  options,
+  children,
+}: PoolPickerProps) {
   const openName = open && `${poolName(open.name, what)}${open.level ? ` — ${open.level}` : ""}`;
   return (
     <Stack spacing={3} sx={{ flex: 1, minHeight: 0 }}>
       <Stack spacing={1} sx={{ flexShrink: 0 }}>
-        <SubsectionTitle>Select {what} by Aptitude</SubsectionTitle>
+        <SubsectionTitle>
+          Select {what} by {poolWord}
+        </SubsectionTitle>
         <Stack spacing={1}>
           {granted}
           {pools.length > 0 && (
             <Stack spacing={0.5}>
               <Typography variant="subtitle1" component="p">
-                Choose an aptitude to select {what.toLowerCase()} from:
+                Choose the {poolWord.toLowerCase()} to select {what.toLowerCase()} from:
               </Typography>
               <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
                 {pools.map((pool) => (

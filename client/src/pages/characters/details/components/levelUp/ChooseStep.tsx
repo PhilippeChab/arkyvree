@@ -1,0 +1,112 @@
+import { Box, FormControl, FormControlLabel, FormLabel, Radio, RadioGroup, Stack } from "@mui/material";
+import { useId } from "react";
+import { type Control, useController } from "react-hook-form";
+
+import { BlankNote, DiceSpinner, LoadError, SubsectionTitle } from "@/client/src/components/common/index.ts";
+import { formatSigned } from "@/shared/text.ts";
+
+import { type AnswerOf, answerOf, type PlanAnswer, type StepOf } from "./levelPlanQueries.ts";
+import type { LevelPlanForm, PlannedSlot } from "./planRequest.ts";
+
+interface ChoiceFieldProps {
+  /** Its radios' group, one per field (an advancement's). */
+  name: string;
+  onChange: (optionId: string) => void;
+  /** The options it chooses among, in the order the step gives them. */
+  options: AnswerOf<"choose">["options"];
+  /** What it asks, its step's ("Select an ability to increase") */
+  prompt: string;
+  value: string | null;
+}
+
+/** What a level wizard hands its `choose` step: the plan's answer, its advancements, and the form that holds the choices. */
+interface ChooseState {
+  /** The words its advancements take: a position's ("Level"). */
+  advancementWords: { position: { one: string } } | undefined;
+  answer: PlanAnswer | undefined;
+  answerError: Error | null;
+  control: Control<LevelPlanForm>;
+  isAnswering: boolean;
+  slots: PlannedSlot[];
+}
+
+interface ChooseStepProps {
+  step: StepOf<"choose">;
+  wizard: ChooseState;
+}
+
+/** The option an advancement's choice raises, each with its score and modifier. */
+function ChoiceField({ name, onChange, options, prompt, value }: ChoiceFieldProps) {
+  // The radios are named by the field's label
+  const labelId = useId();
+  return (
+    <FormControl component="fieldset" sx={{ "& .MuiFormLabel-root": { mb: 0.25 } }}>
+      <FormLabel component="legend" id={labelId}>
+        {prompt}
+      </FormLabel>
+      <RadioGroup aria-labelledby={labelId} name={name} value={value ?? ""} onChange={(e) => onChange(e.target.value)}>
+        {options.map((option) => (
+          <FormControlLabel
+            key={option.id}
+            value={option.id}
+            control={<Radio />}
+            label={`${option.name}: ${option.score} (${formatSigned(option.modifier)})`}
+          />
+        ))}
+      </RadioGroup>
+    </FormControl>
+  );
+}
+
+/**
+ * A `choose` step: an option chosen at each advancement that takes a choice (3.5's ability increase), Add Level's
+ * planned ones each under its title, an edit's one alone, or a note that none does.
+ */
+export function ChooseStep({ step, wizard }: ChooseStepProps) {
+  const { advancementWords, answer, answerError, control, isAnswering, slots } = wizard;
+  const { field } = useController({ control, name: `choices.${step.name}` });
+  const choose = answerOf(answer, step);
+  if (isAnswering) return <DiceSpinner />;
+  if (answerError && !answer) return <LoadError what={step.label} error={answerError} />;
+  if (!answer || !choose) return null;
+  const word = step.words.word.one.toLowerCase();
+  if (choose.advancements.length === 0)
+    return (
+      <BlankNote>
+        No {word} at {slots.length > 1 ? "these levels" : "this level"}
+      </BlankNote>
+    );
+
+  const chosen: Record<number, string | null> = field.value ?? {};
+  const choiceAt = (index: number) => (
+    <ChoiceField
+      prompt={step.words.prompt}
+      options={choose.options}
+      name={`${step.name}-${index}`}
+      value={chosen[slots[index].key] ?? null}
+      onChange={(optionId) => field.onChange({ ...field.value, [slots[index].key]: optionId })}
+    />
+  );
+  // An edit's one advancement: its field alone
+  if (slots.length === 1) return choiceAt(choose.advancements[0]);
+
+  const position = advancementWords?.position.one ?? "";
+  return (
+    <Stack spacing={1.5}>
+      {choose.advancements.map((index) => {
+        const advancement = answer.advancements[index];
+        return (
+          <Stack key={index} spacing={1}>
+            <SubsectionTitle>
+              {advancement
+                ? `${advancement.track.name} ${position} ${advancement.position}`
+                : `${position} ${index + 1}`}
+            </SubsectionTitle>
+            {/* The field on a line of its own, under the advancement's title */}
+            <Box>{choiceAt(index)}</Box>
+          </Stack>
+        );
+      })}
+    </Stack>
+  );
+}

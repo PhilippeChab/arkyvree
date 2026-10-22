@@ -1,23 +1,22 @@
 import { describe, expect, test } from "bun:test";
 
 import { navigationOf, shownStep } from "@/client/src/pages/characters/details/components/levelUp/wizardNavigation.ts";
-import {
-  CLASS_PLAN_STEP,
-  HP_STEP,
-  REVIEW_STEP,
-} from "@/client/src/pages/characters/details/components/levelUp/wizardSteps.ts";
+import { REVIEW_STEP } from "@/client/src/pages/characters/details/components/levelUp/wizardSteps.ts";
 
-/** Add Level's steps, its own around those a ruleset lists for a level */
+/** A plan step, as a ruleset lists it first */
+const PLAN_STEP = { name: "class-plan", label: "Class Plan" };
+
+/** Add Level's steps: those a ruleset lists for a level, then its own review */
 const LISTED_STEPS = [
-  CLASS_PLAN_STEP,
-  HP_STEP,
+  PLAN_STEP,
+  { name: "hp", label: "Select HP" },
   { name: "ability-increase", label: "Ability Increase" },
   { name: "feats", label: "Feats" },
   REVIEW_STEP,
 ];
 
-/** Its own steps alone, as it lists them while the ruleset's steps load again */
-const OWN_STEPS = [CLASS_PLAN_STEP, HP_STEP, REVIEW_STEP];
+/** Fewer steps, as it lists them once the save drops some under it */
+const OWN_STEPS = [PLAN_STEP, { name: "hp", label: "Select HP" }, REVIEW_STEP];
 
 /** A wizard at a step, through its navigation: the steps it's moved to, and the saves it sent (forced or not) */
 function wizardAt(activeStep: number, isLastStep = false) {
@@ -40,7 +39,7 @@ function wizardAt(activeStep: number, isLastStep = false) {
 
 describe("a level wizard's steps", () => {
   test("show the step it moved to while its steps list it", () => {
-    expect(LISTED_STEPS[shownStep(LISTED_STEPS, 0)]).toBe(CLASS_PLAN_STEP);
+    expect(LISTED_STEPS[shownStep(LISTED_STEPS, 0)]).toBe(PLAN_STEP);
     expect(LISTED_STEPS[shownStep(LISTED_STEPS, 3)].name).toBe("feats");
   });
 
