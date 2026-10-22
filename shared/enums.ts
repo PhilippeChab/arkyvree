@@ -7,6 +7,7 @@ import type {
   alignment,
   baseRules,
   contributorRole,
+  exportStatus,
   gender,
   location,
   role,
@@ -19,6 +20,8 @@ export type BaseRules = (typeof baseRules.enumValues)[number];
 /** A campaign player's role. */
 export type CampaignRole = (typeof role.enumValues)[number];
 export type ContributorRole = (typeof contributorRole.enumValues)[number];
+/** Where an export stands: queued (`pending`), its file stored (`ready`), or given up on (`failed`). */
+export type ExportStatus = (typeof exportStatus.enumValues)[number];
 export type Gender = (typeof gender.enumValues)[number];
 /** Where an item is worn or held: an inventory entry's location, an item's slot. */
 export type ItemLocation = (typeof location.enumValues)[number];

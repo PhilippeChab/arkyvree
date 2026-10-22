@@ -5,9 +5,10 @@ import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { db } from "@/server/database/index.ts";
 import { generatePdfTask } from "@/server/jobs/generatePdf.ts";
 import { Exports, Modifiers, Notifications, Requirements } from "@/server/repositories/index.ts";
-import { createTestCharacter } from "@/tests/support/characters.ts";
+import { CharactersService } from "@/server/services/characters/index.ts";
+import { createCharacterAs, createTestCharacter } from "@/tests/support/characters.ts";
 import { buildAs } from "@/tests/support/dnd3.5/characters.ts";
-import { silentJobHelpers } from "@/tests/support/jobs.ts";
+import { queuedPdfJobs, silentJobHelpers } from "@/tests/support/jobs.ts";
 import { findSeededCharacter } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 
@@ -33,7 +34,7 @@ describe("generatePdf", () => {
       const pdf = await Exports.findOne(db, { id: ready.targetId, userId: SEED_USER_ID });
       // A file name keeps no path separator or colon.
       expect(pdf).toMatchObject({ type: "pdf", mimeType: "application/pdf", fileName: `${name}_ Draft_1-sheet.pdf` });
-      expect(Buffer.from(pdf!.data).subarray(0, 5).toString()).toBe("%PDF-");
+      expect(Buffer.from(pdf!.data!).subarray(0, 5).toString()).toBe("%PDF-");
       expect(new Date(pdf!.expiresAt).getTime()).toBeGreaterThan(Date.now());
     },
     30_000,
@@ -91,7 +92,7 @@ describe("generatePdf", () => {
     );
     const [ready] = await notificationsOf(user.id, "pdfReady");
     const pdf = await Exports.findOne(db, { id: ready.targetId, userId: user.id });
-    expect(Buffer.from(pdf!.data).subarray(0, 5).toString()).toBe("%PDF-");
+    expect(Buffer.from(pdf!.data!).subarray(0, 5).toString()).toBe("%PDF-");
   }, 30_000);
 
   test("tells the player it failed when the character isn't theirs to export anymore", async () => {
@@ -107,5 +108,105 @@ describe("generatePdf", () => {
       { targetId: character.id, data: { characterName: character.name } },
     ]);
     expect(await notificationsOf(user.id, "pdfReady")).toEqual([]);
+  });
+
+  test("fills in the export its request stored, pending, which then reads ready", async () => {
+    const { session } = await createTestUser();
+    const character = await createCharacterAs(session);
+    const pending = await CharactersService.enqueuePdf(session, character.id);
+    expect(pending).toMatchObject({ status: "pending", fileName: `${character.name}-sheet.pdf` });
+    expect(pending).not.toHaveProperty("data");
+
+    const [job] = await queuedPdfJobs(character.id);
+    expect(job?.payload).toMatchObject({ exportId: pending.id });
+    await generatePdfTask(job!.payload, silentJobHelpers);
+
+    const ready = await Exports.findOne(db, { id: pending.id, userId: session.userId });
+    expect(ready?.status).toBe("ready");
+    expect(Buffer.from(ready!.data!).subarray(0, 5).toString()).toBe("%PDF-");
+    expect(await notificationsOf(session.userId, "pdfReady")).toMatchObject([{ targetId: pending.id }]);
+  }, 30_000);
+
+  test("marks the export its request stored failed when the character can't be exported anymore", async () => {
+    const { session } = await createTestUser();
+    const character = await createCharacterAs(session);
+    const pending = await CharactersService.enqueuePdf(session, character.id);
+    await CharactersService.archiveCharacter(session, character.id);
+
+    const [job] = await queuedPdfJobs(character.id);
+    await generatePdfTask(job!.payload, silentJobHelpers);
+
+    expect(await Exports.findOne(db, { id: pending.id, userId: session.userId })).toMatchObject({
+      status: "failed",
+      data: null,
+    });
+    expect(await notificationsOf(session.userId, "pdfFailed")).toMatchObject([{ data: { exportId: pending.id } }]);
+  });
+
+  test("keeps an export an earlier attempt stored ready when a retry can't export the character anymore", async () => {
+    const { session } = await createTestUser();
+    const character = await createCharacterAs(session);
+    const pending = await CharactersService.enqueuePdf(session, character.id);
+    const [job] = await queuedPdfJobs(character.id);
+    await generatePdfTask(job!.payload, silentJobHelpers);
+
+    // The worker died before the queue heard the job finished: its retry runs after the character's archived
+    await CharactersService.archiveCharacter(session, character.id);
+    await generatePdfTask(job!.payload, silentJobHelpers);
+
+    expect((await Exports.findOne(db, { id: pending.id, userId: session.userId }))?.status).toBe("ready");
+    expect(await notificationsOf(session.userId, "pdfFailed")).toEqual([]);
+  }, 30_000);
+
+  test("stores and tells of a PDF once when its job is retried after an attempt that stored it", async () => {
+    const { session } = await createTestUser();
+    const character = await createCharacterAs(session);
+    const pending = await CharactersService.enqueuePdf(session, character.id);
+    const [job] = await queuedPdfJobs(character.id);
+    await generatePdfTask(job!.payload, silentJobHelpers);
+    const stored = await Exports.findOne(db, { id: pending.id, userId: session.userId });
+
+    await generatePdfTask(job!.payload, silentJobHelpers);
+    expect(await notificationsOf(session.userId, "pdfReady")).toHaveLength(1);
+    expect((await Exports.findOne(db, { id: pending.id, userId: session.userId }))?.expiresAt).toBe(stored!.expiresAt);
+  }, 30_000);
+
+  test("stores the PDF of an export a read took for lost as it rendered, and tells the user", async () => {
+    const { session } = await createTestUser();
+    const character = await createCharacterAs(session);
+    const pending = await CharactersService.enqueuePdf(session, character.id);
+    const [job] = await queuedPdfJobs(character.id);
+    // Its last attempt locked past a render's time: a status read took it for lost, telling no one
+    await Exports.update(db, { status: "failed" }, { id: pending.id });
+
+    await generatePdfTask(job!.payload, silentJobHelpers);
+    expect(await Exports.findOne(db, { id: pending.id, userId: session.userId })).toMatchObject({ status: "ready" });
+    expect(await notificationsOf(session.userId, "pdfReady")).toHaveLength(1);
+  }, 30_000);
+
+  test("tells the user a PDF failed whose export a read took for lost before its last attempt failed", async () => {
+    const { session } = await createTestUser();
+    const character = await createCharacterAs(session);
+    const pending = await CharactersService.enqueuePdf(session, character.id);
+    const [job] = await queuedPdfJobs(character.id);
+    await Exports.update(db, { status: "failed" }, { id: pending.id });
+    // The character no longer exportable: the attempt fails
+    await CharactersService.archiveCharacter(session, character.id);
+
+    await generatePdfTask(job!.payload, silentJobHelpers);
+    expect(await notificationsOf(session.userId, "pdfFailed")).toHaveLength(1);
+  }, 30_000);
+
+  test("tells the user a PDF failed whose pending export the cleanup deleted before its job ran", async () => {
+    const { session } = await createTestUser();
+    const character = await createCharacterAs(session);
+    const pending = await CharactersService.enqueuePdf(session, character.id);
+    await CharactersService.archiveCharacter(session, character.id);
+    await Exports.delete(db, { id: pending.id });
+
+    const [job] = await queuedPdfJobs(character.id);
+    await generatePdfTask(job!.payload, silentJobHelpers);
+    const [notification] = await notificationsOf(session.userId, "pdfFailed");
+    expect(notification?.data).not.toHaveProperty("exportId");
   });
 });

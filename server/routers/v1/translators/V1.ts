@@ -1,3 +1,16 @@
+import { toV1Activity } from "./activities.ts";
+import { toV1Attachment } from "./attachments.ts";
+import {
+  toV1Campaign,
+  toV1CampaignCharacter,
+  toV1CampaignCharacterLink,
+  toV1CampaignCharacterSummary,
+  toV1CampaignInvite,
+  toV1CampaignPlayer,
+  toV1CampaignSummary,
+  toV1LinkableCharacter,
+  toV1PlayerSlot,
+} from "./campaigns.ts";
 import {
   toV1CharacterCreation,
   toV1CharacterLanguages,
@@ -37,7 +50,17 @@ import {
   toRequirementRequest,
   toSkillRequest,
 } from "./contentRequests.ts";
+import { toV1Contributor, toV1Contributors } from "./contributors.ts";
+import { toV1Export } from "./exports.ts";
+import {
+  toV1InviteStatus,
+  toV1ReceivedCampaignInvite,
+  toV1ReceivedCampaignInvites,
+  toV1ReceivedCharacterInvite,
+  toV1ReceivedRulesetInvite,
+} from "./invites.ts";
 import { toLevelChoicesQuery, toV1LevelChoices } from "./levelChoices.ts";
+import { toV1Notification } from "./notifications.ts";
 import { toV1Page } from "./pages.ts";
 import {
   toV1FieldDeclarations,
@@ -46,6 +69,7 @@ import {
   toV1RulesetExtensions,
   toV1RulesetSettings,
 } from "./rulesets.ts";
+import { toV1ShareLink } from "./sharing.ts";
 import { toV1Found, toV1Written } from "./written.ts";
 
 /**
@@ -56,6 +80,15 @@ import { toV1Found, toV1Written } from "./written.ts";
  * replacing only what changed (`const V2 = { ...V1, character: … }`), and v1 keeps working untouched.
  */
 export const V1 = {
+  activity: toV1Activity,
+  attachment: toV1Attachment,
+  campaign: toV1Campaign,
+  campaignCharacter: toV1CampaignCharacter,
+  campaignCharacterLink: toV1CampaignCharacterLink,
+  campaignCharacterSummary: toV1CampaignCharacterSummary,
+  campaignInvite: toV1CampaignInvite,
+  campaignPlayer: toV1CampaignPlayer,
+  campaignSummary: toV1CampaignSummary,
   character: toV1Character,
   characterCreation: toV1CharacterCreation,
   characterLanguages: toV1CharacterLanguages,
@@ -65,14 +98,18 @@ export const V1 = {
   classLevel: toV1ClassLevel,
   classProgression: toV1ClassProgression,
   classSkills: toV1ClassSkills,
+  contributor: toV1Contributor,
+  contributors: toV1Contributors,
   entity: toV1Entity,
+  export: toV1Export,
   feat: toV1Feat,
-  found: toV1Found,
   fieldDeclarations: toV1FieldDeclarations,
+  found: toV1Found,
   importedCharacter: toV1ImportedCharacter,
   inventoryEditRequest: toInventoryEditRequest,
   inventoryEntry: toV1InventoryEntry,
   inventoryRequest: toInventoryRequest,
+  inviteStatus: toV1InviteStatus,
   item: toV1Item,
   itemRequest: toItemRequest,
   language: toV1Language,
@@ -80,11 +117,18 @@ export const V1 = {
   levelChoicesQuery: toLevelChoicesQuery,
   levelEditRequest: toLevelEditRequest,
   levelSaveRequest: toLevelSaveRequest,
+  linkableCharacter: toV1LinkableCharacter,
   modifier: toV1Modifier,
   names: toV1Names,
+  notification: toV1Notification,
   page: toV1Page,
+  playerSlot: toV1PlayerSlot,
   race: toV1Race,
   raceRequest: toRaceRequest,
+  receivedCampaignInvite: toV1ReceivedCampaignInvite,
+  receivedCampaignInvites: toV1ReceivedCampaignInvites,
+  receivedCharacterInvite: toV1ReceivedCharacterInvite,
+  receivedRulesetInvite: toV1ReceivedRulesetInvite,
   requirement: toV1Requirement,
   requirementRequest: toRequirementRequest,
   ruleset: toV1Ruleset,
@@ -93,6 +137,7 @@ export const V1 = {
   rulesetSettings: toV1RulesetSettings,
   save: toV1Save,
   savedLevel: toV1SavedLevel,
+  shareLink: toV1ShareLink,
   skill: toV1Skill,
   skillRequest: toSkillRequest,
   spell: toV1Spell,

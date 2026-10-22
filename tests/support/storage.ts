@@ -16,6 +16,7 @@ export function fakeStorage(overrides: Partial<StorageBackend> = {}): StorageBac
     async objectStats() {
       return { size: 1024, etag: "fake" };
     },
+    async putObject() {},
     ...overrides,
   };
 }

@@ -18,7 +18,7 @@ import {
   Visibility,
   visibilityMap,
 } from "@/server/repositories/index.ts";
-import { RulesetsPolicy } from "@/server/services/policies/index.ts";
+import { CampaignsPolicy, RulesetsPolicy } from "@/server/services/policies/index.ts";
 import type { Alignment, Gender } from "@/shared/enums.ts";
 import type { Character, Session } from "@/shared/relations.ts";
 
@@ -115,7 +115,7 @@ class CharactersService extends include(Object, Archives, Imports) {
     const characterRecord = await findExportableCharacter(session.userId, characterId);
     if (!characterRecord) throw new NotFoundError("Character not found");
 
-    await enqueueCharacterPdf(session, characterRecord);
+    return await enqueueCharacterPdf(session, characterRecord);
   }
 
   async getAvailableRaces(
@@ -239,6 +239,8 @@ class CharactersService extends include(Object, Archives, Imports) {
   ) {
     const campaign = await Campaigns.findOne(db, { id: campaignId });
     if (!campaign) throw new NotFoundError("Campaign not found");
+    // A member's alone: what the campaign is and its ruleset are its players'
+    (await CampaignsPolicy.for(db, session, campaign)).canRead();
 
     return await Characters.findUnlinkedPage(
       db,

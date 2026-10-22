@@ -59,8 +59,18 @@ export default class CampaignsPolicy extends BasePolicy<PolicyCampaign> {
     return true;
   }
 
+  /** Whether the session reads the campaign's addresses: its Game Master, by an archived row too, as `canDelete`. */
+  isAddressReader() {
+    return this.player?.role === "Game Master";
+  }
+
   /** Whether the session is the campaign's Game Master, by an active player row. */
   isGameMaster() {
     return this.player?.role === "Game Master" && !this.player.deletedAt;
+  }
+
+  /** Whether the session's user has a player row in the campaign, an archived one too: what reading it takes. */
+  isMember() {
+    return this.player !== null;
   }
 }

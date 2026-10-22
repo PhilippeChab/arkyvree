@@ -348,9 +348,10 @@ describe("campaigns characters", () => {
         where: (t, { and, eq }) => and(eq(t.recipientId, member.user.id), eq(t.targetId, characterId)),
       });
       expect(notification).toMatchObject({ type: "pdfFailed", targetTable: "player_characters" });
+      // Its export, stored pending as it was queued, failed: it has no file
       expect(
         await db.query.exportsInAccount.findFirst({ where: (t, { eq }) => eq(t.userId, member.user.id) }),
-      ).toBeUndefined();
+      ).toMatchObject({ data: null, status: "failed" });
     });
 
     test("refuses other players and non-members", async () => {

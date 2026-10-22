@@ -6,12 +6,26 @@ import { InternalError } from "@/server/errors/index.ts";
 
 /**
  * What a public API route documents: what it does, and what it answers when it succeeds, its status and its body
- * (`response`, none for a 204).
+ * (`response`, none for a 204), or the file it answers instead of JSON, by its media type (`file`: a PDF's
+ * `application/pdf`, its `response` none).
  */
-export interface RouteDescription {
-  response: z.ZodType | null;
-  status: 200 | 201 | 204;
-  summary: string;
+export type RouteDescription = { status: 200 | 201 | 202 | 204; summary: string } & (
+  | { file: "application/pdf"; response: null }
+  | { file?: never; response: z.ZodType | null }
+);
+
+/** Whether a success answers what its route describes: its file's media type, or a JSON body its schema accepts. */
+async function checkAnswer(response: Response, { file, response: schema }: RouteDescription) {
+  if (file) {
+    const type = response.headers.get("content-type") ?? "";
+    if (!type.startsWith(file))
+      throw new InternalError(`The route answers ${type}, which its description says is ${file}`);
+    return;
+  }
+  if (!schema) return;
+  const checked = schema.safeParse(await response.clone().json());
+  if (!checked.success)
+    throw new InternalError(`The route's answer isn't the one it describes: ${checked.error.message}`);
 }
 
 /**
@@ -25,10 +39,7 @@ export function describeRoute(description: RouteDescription) {
     if (isProduction() || !c.res.ok) return;
     if (c.res.status !== description.status)
       throw new InternalError(`The route answers ${c.res.status}, which its description says is ${description.status}`);
-    if (!description.response) return;
-    const checked = description.response.safeParse(await c.res.clone().json());
-    if (!checked.success)
-      throw new InternalError(`The route's answer isn't the one it describes: ${checked.error.message}`);
+    await checkAnswer(c.res, description);
   });
   return Object.assign(middleware, { description });
 }

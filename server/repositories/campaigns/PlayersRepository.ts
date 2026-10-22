@@ -123,11 +123,20 @@ class PlayersRepository extends include(BaseRepository<typeof playersInCampaign>
 
   async findPage(
     db: Db,
-    where: { campaignId: string; orderBy?: "createdAt" | "updatedAt"; orderDir?: "asc" | "desc"; search?: string },
+    where: {
+      campaignId: string;
+      orderBy?: "createdAt" | "updatedAt";
+      orderDir?: "asc" | "desc";
+      search?: string;
+      searchAddresses?: boolean;
+    },
     pagination: { limit: number; page: number },
     visibility: Visibility = Visibility.UnarchivedOnly,
   ) {
-    const { search, orderBy = "createdAt", orderDir = "asc" } = where;
+    const { search, orderBy = "createdAt", orderDir = "asc", searchAddresses = true } = where;
+    const searched = searchAddresses
+      ? [usersInAccount.username, usersInAccount.emailAddress]
+      : [usersInAccount.username];
     // Not correlated: the relational query aliases the players table, which a
     // subquery referencing `this.table` would miss.
     const searchCondition = search
@@ -136,7 +145,7 @@ class PlayersRepository extends include(BaseRepository<typeof playersInCampaign>
           db
             .select({ id: usersInAccount.id })
             .from(usersInAccount)
-            .where(this.search(search, [usersInAccount.username, usersInAccount.emailAddress]) || undefined),
+            .where(this.search(search, searched) || undefined),
         )
       : false;
 

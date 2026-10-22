@@ -1,5 +1,11 @@
 import { limitRate, limitRatePerUser } from "./limitRate.ts";
 
+/** The direct uploads a minute: the app's per address, the public API's per user. */
+const ATTACHMENT_UPLOADS_PER_MINUTE = 20;
+
+/** The PDFs a minute an export renders: the app's per address, the public API's per user. */
+const EXPORTS_PER_MINUTE = 5;
+
 /** The character files a minute an import reads whole: the app's per address, the public API's per user. */
 const IMPORTS_PER_MINUTE = 10;
 
@@ -12,6 +18,22 @@ const MINUTE = 60 * 1000;
  * that sends its own, not one that names another's.
  */
 export const apiAddressRateLimit = limitRate({ windowMs: MINUTE, limit: 600 });
+
+/**
+ * The public API's image uploads, counted per user, whatever keys of theirs ask: as many a minute as the app's own
+ * allow an address, each stored through the server.
+ */
+export const apiAttachmentUploadRateLimit = limitRatePerUser({
+  windowMs: MINUTE,
+  limit: ATTACHMENT_UPLOADS_PER_MINUTE,
+  headers: false,
+});
+
+/**
+ * The public API's PDFs, rendered or queued, counted per user, whatever keys of theirs ask: as many a minute as the
+ * app's own allow an address, each costing a render.
+ */
+export const apiExportRateLimit = limitRatePerUser({ windowMs: MINUTE, limit: EXPORTS_PER_MINUTE, headers: false });
 
 /**
  * The public API's imports of a character file, counted per user, whatever keys of theirs ask: as many a minute as the
@@ -36,7 +58,7 @@ export const apiLevelSaveRateLimit = limitRatePerUser({ windowMs: MINUTE, limit:
  * (server/jobs/sweepPendingBlobs.ts) after creation. Cap per-IP creation rate so a single scripted client can't bloat storage at
  * will.
  */
-export const attachmentUploadRateLimit = limitRate({ windowMs: MINUTE, limit: 20 });
+export const attachmentUploadRateLimit = limitRate({ windowMs: MINUTE, limit: ATTACHMENT_UPLOADS_PER_MINUTE });
 
 export const authEmailRateLimit = limitRate({ windowMs: 15 * MINUTE, limit: 10, per: "email" });
 
@@ -44,7 +66,7 @@ export const authRateLimit = limitRate({ windowMs: 15 * MINUTE, limit: 15 });
 
 export const authSessionRateLimit = limitRate({ windowMs: 15 * MINUTE, limit: 60 });
 
-export const exportRateLimit = limitRate({ windowMs: MINUTE, limit: 5 });
+export const exportRateLimit = limitRate({ windowMs: MINUTE, limit: EXPORTS_PER_MINUTE });
 
 /** An import reads a whole character file and builds the character level by level: a few a minute is plenty. */
 export const importRateLimit = limitRate({ windowMs: MINUTE, limit: IMPORTS_PER_MINUTE });

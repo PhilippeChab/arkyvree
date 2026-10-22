@@ -25,6 +25,12 @@ function describedAs(body: unknown, status: 200 | 201 = 200) {
     });
 }
 
+/** A route that answers `body` as `type`, described as answering a PDF with 200. */
+function describedAsFile(body: string, type: string) {
+  const description = describeRoute({ file: "application/pdf", response: null, status: 200, summary: "A sheet" });
+  return new Hono().get("/", description, () => new Response(body, { headers: { "Content-Type": type } }));
+}
+
 describe("describeRoute", () => {
   test("carries what its route documents", () => {
     const description = { response: null, status: 204, summary: "Nothing" } as const;
@@ -40,5 +46,11 @@ describe("describeRoute", () => {
     await expectStatus(describedAs({ name: "Dwarf", createdAt: "2026-01-01" }).request("/"), 500);
     await expectStatus(describedAs({ title: "Dwarf" }).request("/"), 500);
     await expectStatus(describedAs({ name: "Dwarf" }, 201).request("/"), 500);
+  });
+
+  test("passes a file of the media type its route describes, and refuses another", async () => {
+    const response = await describedAsFile("%PDF-", "application/pdf").request("/");
+    expect(await response.text()).toBe("%PDF-");
+    await expectStatus(describedAsFile("{}", "application/json").request("/"), 500);
   });
 });

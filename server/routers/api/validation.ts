@@ -52,9 +52,9 @@ export const increaseList = z.string().transform((value) =>
 
 /** Standard limit: 1–100, defaults to 10 */
 export const limit = limitDefaultingTo(10);
+
 /** Standard orderDir */
 export const orderDirAsc = z.enum(["asc", "desc"]).default("asc");
-
 export const orderDirDesc = z.enum(["asc", "desc"]).default("desc");
 
 /** Standard page parameter: positive integer, defaults to 1 */
@@ -65,6 +65,12 @@ export const sanitizedEmail = z.string().overwrite(sanitizeEmail).email();
 
 /** Text, sanitized as it's stored: a check chained to it (`sanitizedText.min(3)`) reads the sanitized text. */
 export const sanitizedText = z.string().overwrite(sanitizeText);
+
+/** A shared sheet's `:shareToken`: the token its owner's share link carries. */
+export const shareTokenParam = z.object({ shareToken: z.string().uuid() });
+
+/** A direct upload's `:signedId`: the blob's signed id its upload answered. */
+export const signedIdParam = z.object({ signedId: z.string().min(1) });
 
 /** Comma-separated `skillId:points` points spent on each skill, a whole number: what isn't one is dropped. */
 export const skillPoints = z

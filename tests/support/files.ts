@@ -1,18 +1,27 @@
 import { db } from "@/server/database/index.ts";
 import { Attachments, Blobs, Exports } from "@/server/repositories/index.ts";
 import { ATTACHMENT_SLOTS, type AttachmentSlotName } from "@/shared/attachments.ts";
+import type { ExportStatus } from "@/shared/enums.ts";
 
 import { uniqueId } from "./seed.ts";
 
-/** A PDF export of `userId`'s, valid for an hour unless `expiresAt` says otherwise. */
-export async function createExport(userId: string, expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString()) {
+/**
+ * A PDF export of `userId`'s, valid for an hour unless `expiresAt` says otherwise: its file, ready, unless `status`
+ * says it's pending (no file yet) or failed.
+ */
+export async function createExport(
+  userId: string,
+  expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+  status: ExportStatus = "ready",
+) {
   const [record] = await Exports.create(db, {
     userId,
     type: "pdf",
     mimeType: "application/pdf",
     fileName: "test-sheet.pdf",
-    data: Buffer.from("fake pdf content"),
+    data: status === "ready" ? Buffer.from("fake pdf content") : null,
     expiresAt,
+    status,
   });
   return record;
 }

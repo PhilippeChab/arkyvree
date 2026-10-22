@@ -11,5 +11,18 @@ describe("a sheet's file name", () => {
   test("names a character without a name, and cuts a long name short", () => {
     expect(formatSheetFileName("")).toBe("character-sheet.pdf");
     expect(formatSheetFileName("a".repeat(300))).toBe(`${"a".repeat(200)}-sheet.pdf`);
+    // An emoji at the cut is kept whole, or left out whole
+    expect(formatSheetFileName(`${"a".repeat(199)}🐉🐉`)).toBe(`${"a".repeat(199)}🐉-sheet.pdf`);
+    expect(formatSheetFileName(`${"a".repeat(199)}👨‍👩‍👧🇫🇷`)).toBe(`${"a".repeat(199)}👨‍👩‍👧-sheet.pdf`);
+  });
+
+  test("cuts by code point where the runtime has no segmenter, an emoji of one kept whole", () => {
+    const { Segmenter } = Intl;
+    Reflect.set(Intl, "Segmenter", undefined);
+    try {
+      expect(formatSheetFileName(`${"a".repeat(199)}🐉🐉`)).toBe(`${"a".repeat(199)}🐉-sheet.pdf`);
+    } finally {
+      Reflect.set(Intl, "Segmenter", Segmenter);
+    }
   });
 });

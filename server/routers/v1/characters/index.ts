@@ -15,9 +15,12 @@ import { CharactersService } from "@/server/services/characters/index.ts";
 import { MAX_CHARACTER_NAME_LENGTH, MAX_IMPORT_FILE_LENGTH } from "@/shared/characters.ts";
 import { ALIGNMENT_OPTIONS, GENDER_OPTIONS } from "@/shared/enums.ts";
 
+import contributors from "./contributors/index.ts";
 import inventory from "./inventory/index.ts";
 import levels from "./levels/index.ts";
 import modifiers from "./modifiers/index.ts";
+import pdf from "./pdf/index.ts";
+import sharing from "./sharing/index.ts";
 
 /** A character's ability scores, by ability id: those a new one's form leaves out start at the ruleset's start. */
 const abilityScores = z
@@ -29,13 +32,16 @@ const fileText = z.string().min(1).max(MAX_IMPORT_FILE_LENGTH).meta({ descriptio
 
 /**
  * The key's user's characters: a page of them, one's sheet, its languages, how a new one scores its abilities, its
- * create, its import from another program's file, its edits and its archive; and its inventory, its levels and its own
- * modifiers, each a router of its own.
+ * create, its import from another program's file, its edits and its archive; and its contributors, inventory, levels,
+ * own modifiers, PDF and share link, each a router of its own.
  */
 export default new Hono<ApiKeyContext>()
+  .route("/", contributors)
   .route("/", inventory)
   .route("/", levels)
   .route("/", modifiers)
+  .route("/", pdf)
+  .route("/", sharing)
   .get(
     "/",
     describeRoute({ response: v1CharacterPage, status: 200, summary: "The key's user's characters, a page at a time" }),

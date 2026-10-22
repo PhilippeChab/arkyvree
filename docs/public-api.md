@@ -23,14 +23,15 @@ answers in shapes of its own, which stay fixed.
   marks the key used, at most once a minute.
 - A key acts as its user: `requestSession` is `{ userId }`, the `Session` the services read, so a key sees and
   changes only what its user can, by the checks the services already make. A session's cookie signs in nothing under
-  `/v1`.
+  `/v1`. No key acts for a demo, so a v1 write needs no `denyDemoUser`, which reads the app's session.
 - Its requests are counted per user, whichever keys of theirs ask (`apiKeyRateLimit`: 120 a minute), and a
   character's level choices, which read every option of each pool, its level saves, edits and removals, which build
-  the whole character, and a character file's import, which builds the character level by level, apart
-  (`levelChoicesRateLimit`: 20 a minute; `apiLevelSaveRateLimit`: 20; `apiImportRateLimit`: 10). An address's requests
-  are counted before its key is looked up (`apiAddressRateLimit`: 600 a minute), so a wrong key or none, a lookup by
-  digest each, is bounded too, for a client that sends its own address: the address is the first `X-Forwarded-For`
-  entry, as the app's limits read it, which a client can set.
+  the whole character, a character file's import, which builds the character level by level, its PDFs, which each
+  cost a render, and its image uploads apart (`levelChoicesRateLimit`: 20 a minute; `apiLevelSaveRateLimit`: 20;
+  `apiImportRateLimit`: 10; `apiExportRateLimit`: 5; `apiAttachmentUploadRateLimit`: 20), which the app's own routes
+  count per address. An address's requests are counted before its key is looked up (`apiAddressRateLimit`: 600 a
+  minute), so a wrong key or none, a lookup by digest each, is bounded too, for a client that sends its own address:
+  the address is the first `X-Forwarded-For` entry, as the app's limits read it, which a client can set.
 - A ruleset is read as the app reads it: any ruleset by its id, a private one too, as `/api` answers it to any signed-in
   user. The lists (`GET /v1/rulesets`) list what the user's scope does.
 
@@ -60,9 +61,11 @@ returns to v1's shape (`V1.character`), and from a v1 request to what the servic
 
 - Each route's `validate` middleware carries its schema (`validation`): its path, its query and its body.
 - Each route says what it does and what it answers on success (`describeRoute({ summary, response, status })`), the
-  answer's schema its `response`. A route without a description stops the server starting.
+  answer's schema its `response`: none for a 204, and none for a file it answers instead of JSON, whose media type
+  (`file: "application/pdf"`) the document gives. A route without a description stops the server starting.
 - Outside production, `describeRoute` checks each success a route answers against its schema (a strict one: a key it
-  doesn't name fails too), so every test that calls a route checks the document describes its answer.
+  doesn't name fails too), or a file's media type, so every test that calls a route checks the document describes its
+  answer.
 
 A page answers `{ items, page, nextPage }`, `nextPage` null on the last. An error answers the app's envelope
 (`{ error, cause, message }`) with its status, a path no route answers a 404.
@@ -104,9 +107,10 @@ Each write calls the service the app's own route calls, its body a v1 shape tran
 (`V1.raceRequest`, `V1.levelSaveRequest`) where v1 names a column apart (a class's `hitDie`, a race's `speed`, a skill's
 `abilityId`, an item's `cost` and `template`, a requirement's `group`).
 
-- A create answers what it made (201), an update what it changed (200), each read back as its read answers it; a removal
-  (an archive, a delete) answers nothing (204), as a star does. An action answers what it acts on (a fork the new
-  ruleset, a publish the ruleset).
+- A create answers what it made (201), an update what it changed (200), each read back as its read answers it (a
+  campaign's as `GET /v1/campaigns/{id}` reads it); a removal (an archive, a delete, a contributor's removal, leaving)
+  answers nothing (204), as a star does. An action answers what it acts on (a fork the new ruleset, a publish the
+  ruleset, an invite's answer its status), and a queued PDF its export (202).
 - An entity's update takes what its create requires (its name; a race's size and speed, a save's or a skill's ability,
   a language's type), as the document marks them, and keeps the rest its body leaves out (a description, an item's
   cost, a spell's save); a ruleset's, an inventory entry's and a saved level's require nothing (v1 reads the entry or
@@ -124,6 +128,63 @@ Each write calls the service the app's own route calls, its body a v1 shape tran
   completes one a segment at a time, or finds every path whose name has a word, with what each takes. A write refuses
   a path it can't take, saying why.
 
-## Not yet
+## Campaigns, contributors and the rest
 
-The issue's last stage: campaigns and notifications, and a route that says whether a PDF is ready and fetches it.
+- **Campaigns** (`/v1/campaigns`): the key's user's, created on a ruleset (they're its Game Master), edited, archived
+  (`DELETE`, every player, invite and link kept), restored (`/unarchive`) and deleted for good once archived
+  (`/permanent`). Their player slots (`/players`: each one's role, its user and its pending invite, added and changed
+  with an address to invite), the invites they sent (`/invites`), and their characters (`/characters`), each as the
+  key's user may see it: a character linked `Partial` shows the other players its identity alone (`partial`, its
+  `sheet` a `PartialCharacter`), a `Private` one none of them. `/linkable-characters` lists the user's player
+  characters a campaign could link: on its exact ruleset, in no campaign. An invite's address is the Game Master's to
+  read and to search by in `/players` and `/invites`, as in the app's own lists: a player reads whom by their name.
+- **Invites to the key's user**: to play in a campaign (`/v1/campaign-invites`: the latest ten, any status), and to
+  contribute to a character or a ruleset (`/v1/character-invites`, `/v1/ruleset-invites`: the pending ones, ten at
+  most), each read alone and answered (`/accept`, `/reject`); a campaign's Game Master takes one back
+  (`/v1/campaign-invites/{id}/revoke`). Another user's invite is a 404, as the app's own invite pages answer it.
+- **Contributors** of a character or a ruleset (`/v1/characters/{id}/contributors`,
+  `/v1/rulesets/{id}/contributors`), each by the address they were invited at, with the record's owner: invited,
+  a ruleset's given another role (`PUT`), removed, and left (`/leave`). A contributor's routes reach it through its own
+  record alone: another record's id in the path is a 404 (`ContributorsService.revokeContributor`,
+  `updateContributorRole` and `CharacterContributorsService.revokeContributor` take the record's id).
+- **Sharing**: a character's share link (`POST`/`DELETE /v1/characters/{id}/share`), and the character it shares,
+  read by its token (`/v1/shared-characters/{shareToken}`, the same `Character` as the user's own, and its PDF, made
+  as it's asked for).
+- **Notifications** (`/v1/notifications`, the unread ones alone with `unreadOnly`) and **activities**
+  (`/v1/activities`), from the last three months: a page of them, a notification marked read, or all of them but the
+  invites, which stay unread until they're answered. Each names what it's about (`target`) by its kind as v1 names it
+  (`classes`, `spells`, `campaigns`, `exports`…) and its id, which that kind's routes read; a record no v1 route reads
+  for everyone its notice goes to keeps its table's name (`invites`, `contributors`, `player_characters`), and its id
+  is the app's (a campaign character's PDF notice names the character's).
+- **Attachments** (`/v1/attachments`): a record's image (a user's avatar, a character's portrait), read, removed, and
+  uploaded in one request: `POST /v1/attachments`, a `multipart/form-data` body with the slot (`recordType`, `recordId`,
+  `name`) and the `file`, replacing the image there. The server reads the image's type from its bytes, then stores the
+  file and attaches it (`AttachmentsService.setAttachment`), or leaves nothing: it records the file pending before it
+  stores it, deletes both when the write or the attach fails, and the hourly sweep of pending files takes one a crash
+  left. The app keeps its own two steps, the browser sending the file straight to the storage (`useDirectUpload`), which
+  a caller outside it would have to sign and send apart.
+
+## A PDF, made in the background
+
+A character's PDF takes a render, which the worker makes: the app's user hears of it through a notification, and a
+caller asks for it by its export.
+
+1. `POST /v1/characters/{id}/pdf` (its owner or a contributor), or
+   `POST /v1/campaigns/{id}/characters/{characterId}/pdf` (its editors or the campaign's Game Master), answers 202 and
+   the export, `pending`. Both count against `apiExportRateLimit`, per user, whatever keys of theirs ask.
+2. `GET /v1/exports/{id}` answers where it stands: `pending` while its job is still to run (queued behind the user's
+   other PDFs, or waiting on a worker), `ready` once its file is stored, or `failed` (the character can't be exported
+   by the time the worker runs, the render failed its last attempt, or its job is gone without storing it). A last
+   attempt read as gone, locked past 15 minutes, may still finish: its export turns `ready`, and the user is told.
+3. `GET /v1/exports/{id}/download` answers the file (`application/pdf`) once it's ready, for the hour it's kept; a
+   pending or failed export is a 409, and one past its expiry, or another user's, a 404.
+
+The export is stored as the PDF is queued (`enqueueCharacterPdf`), its file none and its status `pending`
+(`account.exports.status`, migration `0081_export-status`), and its id goes in the job's payload: the job
+(`generatePdf.ts`) fills its file in and makes it `ready`, or marks it `failed`, and notifies the user as before, the
+notification naming the export (`data.exportId`). A pending export keeps a day, a ready one an hour, and the daily
+cleanup deletes either once it's past. A job an older worker runs, which reads no `exportId` (in the minutes between
+the web app's deploy and the worker's, `docs/deployment.md`), stores a new export, as it did; the pending one it never
+fills reads `failed` once that job is done: each export's job is queued under its key
+(`toExportJobKey`), which `countJobsToRun` looks up in the worker's queue, a locked job counted as running: a last
+attempt locked for more than 15 minutes, far past what a render takes, is taken for lost, its worker killed.

@@ -32,7 +32,7 @@ describe("v1", () => {
   test("answers a path no route answers with the API's error, never the app's page", async () => {
     const { key } = await createKeyedApi();
     const headers = { authorization: `Bearer ${key.token}` };
-    const response = await expectStatus(application.request("/v1/campaigns", { headers }), 404);
+    const response = await expectStatus(application.request("/v1/no-such-route", { headers }), 404);
     expect(await response.json()).toMatchObject({ cause: "notFound" });
   });
 

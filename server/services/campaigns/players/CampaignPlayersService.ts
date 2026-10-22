@@ -27,6 +27,26 @@ interface InviteEmailData {
   inviterName: string;
 }
 
+/** A player slot as its campaign's list reads it. */
+type PlayerRow = Awaited<ReturnType<typeof Players.findPage>>["items"][number];
+
+/**
+ * A player slot as a player (`readerId`) reads it: its user's and its invites' addresses left out, which its Game
+ * Master reads, but on their own slot. The row is named whole so its addresses read nullable to the app.
+ */
+function hidePlayerAddresses(player: PlayerRow, readerId: string) {
+  if (player.usersInAccount?.id === readerId) return player;
+  return {
+    ...player,
+    invitesInCampaigns: player.invitesInCampaigns.map((invite) => ({
+      ...invite,
+      email: null,
+      usersInAccount: invite.usersInAccount && { ...invite.usersInAccount, emailAddress: null },
+    })),
+    usersInAccount: player.usersInAccount && { ...player.usersInAccount, emailAddress: null },
+  };
+}
+
 class CampaignPlayersService {
   /** Send the invite email (fire-and-forget, call after transaction commits). */
   private sendInviteEmail(data: InviteEmailData) {
@@ -169,9 +189,16 @@ class CampaignPlayersService {
     const campaign = await Campaigns.findOne(db, { id: campaignId }, Visibility.All);
     if (!campaign) throw new NotFoundError("Campaign not found");
 
-    (await CampaignsPolicy.for(db, session, campaign)).canRead();
+    const policy = await CampaignsPolicy.for(db, session, campaign);
+    policy.canRead();
 
-    return await Players.findPage(db, { campaignId, ...where }, pagination, Visibility.All);
+    // An address is its Game Master's to read, and so to search
+    const readsAddresses = policy.isAddressReader();
+    const query = { campaignId, ...where, searchAddresses: readsAddresses };
+    const page = await Players.findPage(db, query, pagination, Visibility.All);
+    return readsAddresses
+      ? page
+      : { ...page, items: page.items.map((player) => hidePlayerAddresses(player, session.userId)) };
   }
 
   async removePlayer(session: Session, campaignId: string, playerId: string) {

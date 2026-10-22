@@ -219,10 +219,11 @@ class CharacterContributorsService {
     });
   }
 
-  async revokeContributor(session: Session, contributorId: string) {
+  /** Revokes a contributor of the character (`characterId`), or its pending invite: another character's is a 404. */
+  async revokeContributor(session: Session, characterId: string, contributorId: string) {
     return await withTransaction(async (tx) => {
       const contributor = await CharacterContributors.findOne(tx, { id: contributorId });
-      if (!contributor) throw new NotFoundError("Contributor not found");
+      if (!contributor || contributor.characterId !== characterId) throw new NotFoundError("Contributor not found");
 
       const character = await Characters.findOne(tx, { id: contributor.characterId }, Visibility.All);
       if (!character) throw new NotFoundError("Character not found");

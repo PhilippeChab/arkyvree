@@ -23,6 +23,7 @@ import { RulesetSettingsService } from "@/server/services/rulesets/settings/inde
 import abilities from "./abilities/index.ts";
 import aptitudes from "./aptitudes/index.ts";
 import classes from "./classes/index.ts";
+import contributors from "./contributors/index.ts";
 import customization from "./customization/index.ts";
 import feats from "./feats/index.ts";
 import items from "./items/index.ts";
@@ -38,12 +39,14 @@ const extensionParams = idParam.extend({ extensionId: z.string().uuid() });
 
 /**
  * The rulesets the key's user reads and edits: a page of them, one, its settings, fields, extensions and changes, the
- * actions on it (a fork, a publish, a star, an archive, a restore), and its content, each kind a router of its own.
+ * actions on it (a fork, a publish, a star, an archive, a restore), its contributors, and its content, each kind a
+ * router of its own.
  */
 export default new Hono<ApiKeyContext>()
   .route("/", abilities)
   .route("/", aptitudes)
   .route("/", classes)
+  .route("/", contributors)
   .route("/", feats)
   .route("/", items)
   .route("/", languages)

@@ -8,6 +8,8 @@ export interface StorageBackend {
   objectStats(key: string): Promise<{ etag: string; size: number } | null>;
   presignPut(key: string, opts: { contentType: string; expiresIn?: number }): string;
   publicUrl(key: string): string;
+  /** Stores an object the server holds whole: a file uploaded through it rather than straight to the storage. */
+  putObject(key: string, data: Uint8Array, opts: { contentType: string }): Promise<void>;
 }
 
 /**
@@ -63,6 +65,10 @@ class S3StorageBackend implements StorageBackend {
       if (isNotFound(error)) return null;
       throw error;
     }
+  }
+
+  async putObject(key: string, data: Uint8Array, opts: { contentType: string }): Promise<void> {
+    await Bun.s3.write(key, data, { type: opts.contentType });
   }
 }
 

@@ -9,6 +9,18 @@ import { createActivityWithNotifications } from "@/server/services/activities/in
 import { CampaignsPolicy } from "@/server/services/policies/index.ts";
 import type { Invite, Session } from "@/shared/relations.ts";
 
+/** An invite as its campaign's list reads it. */
+type InviteRow = Awaited<ReturnType<typeof Invites.findPage>>["items"][number];
+
+/** An invite as a player reads it: whom it went to by name, its addresses left out, which its Game Master reads. */
+function hideInviteAddresses(invite: InviteRow) {
+  return {
+    ...invite,
+    invites: { ...invite.invites, email: null },
+    users: invite.users && { ...invite.users, emailAddress: null },
+  };
+}
+
 class CampaignInvitesService {
   /**
    * The invitee's answer: the invite's status, its notification read,
@@ -84,9 +96,13 @@ class CampaignInvitesService {
     const campaign = await Campaigns.findOne(db, { id: campaignId }, Visibility.All);
     if (!campaign) throw new NotFoundError("Campaign not found");
 
-    (await CampaignsPolicy.for(db, session, campaign)).canRead();
+    const policy = await CampaignsPolicy.for(db, session, campaign);
+    policy.canRead();
 
-    return await Invites.findPage(db, { campaignId, ...where }, pagination);
+    // An address is its Game Master's to read, and so to search
+    const readsAddresses = policy.isAddressReader();
+    const page = await Invites.findPage(db, { campaignId, ...where, searchAddresses: readsAddresses }, pagination);
+    return readsAddresses ? page : { ...page, items: page.items.map(hideInviteAddresses) };
   }
 
   async getUserInvites(userId: string) {
@@ -107,7 +123,10 @@ class CampaignInvitesService {
 
       const campaign = await this.getInviteCampaign(tx, invite);
 
-      (await CampaignsPolicy.for(tx, session, campaign)).canUpdate();
+      const policy = await CampaignsPolicy.for(tx, session, campaign);
+      // Another campaign's invite is unknown to a stranger, as one that doesn't exist; its invitee or a player is refused
+      if (!policy.isMember() && invite.userId !== session.userId) throw new NotFoundError("Invite not found");
+      policy.canUpdate();
 
       if (invite.status !== "Pending") throw new ConflictError("Only pending invites can be revoked");
 
