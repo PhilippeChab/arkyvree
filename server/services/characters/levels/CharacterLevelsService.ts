@@ -1,6 +1,7 @@
 /**
- * A character's levels: the level wizards' steps, plans and pickers (`Plans`), and a level's save, edit and removal. Each reads the character's rows and asks the engine, which answers
- * by the character's ruleset; a save writes what the engine plans, with what the character's bonded creatures become.
+ * A character's levels: the level wizards' steps, plans and pickers (`Plans`), and a level's save, edit and removal.
+ * Each reads the character's rows and asks the engine, which answers by the character's ruleset; a save writes what
+ * the engine plans, with what the character's bonded creatures become.
  */
 
 import { getTableName } from "drizzle-orm";

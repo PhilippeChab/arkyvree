@@ -24,14 +24,21 @@ export async function checkAbilityIncreases(characters: Character[]) {
       const character = await readCharacterInput(db, char);
       for (const [index, level] of character.rows.levels.entries()) {
         // Its edit's plan, answering nothing (a pick a reference check flags would refuse the saved one): a `choose`
-        // step that takes a choice at the level makes one due
-        const answer = Engine.for(scope)
-          .character(character)
-          .levelUp()
-          .describePlan({ editedLevelId: level.id, steps: {} });
-        const due = Object.values(answer.steps).some(
-          (step) => step.mechanic === "choose" && step.advancements.length > 0,
-        );
+        // step that takes a choice at the level makes one due. A level the plan can't read (its class level gone, which
+        // the reference check reports) is skipped, and logged
+        let due: boolean;
+        try {
+          const answer = Engine.for(scope)
+            .character(character)
+            .levelUp()
+            .describePlan({ editedLevelId: level.id, steps: {} });
+          due = Object.values(answer.steps).some((step) => step.mechanic === "choose" && step.advancements.length > 0);
+        } catch (error) {
+          console.warn(
+            `    ${char.name}: level ${index + 1} skipped — ${error instanceof Error ? error.message : error}`,
+          );
+          continue;
+        }
         const increased = character.rows.picks.abilityIncreases.some((row) => row.characterLevelId === level.id);
         if (!due || increased) continue;
         issues++;
