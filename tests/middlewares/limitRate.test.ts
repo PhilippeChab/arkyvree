@@ -115,5 +115,18 @@ describe("limitRate", () => {
       await expectStatus(app.request("/", asUser("ada", "10.0.0.2")), 429);
       expect((await app.request("/", asUser("grace", "10.0.0.1"))).status).toBe(200);
     });
+
+    test("answers the outer limit's count in its headers, past a route's own limit within it", async () => {
+      const app = new Hono<ApiKeyContext>()
+        .use(async (c, next) => {
+          c.set("requestSession", { userId: "ada" });
+          await next();
+        })
+        .use(limitRatePerUser({ windowMs: 60_000, limit: 120 }, true))
+        .use(limitRatePerUser({ windowMs: 60_000, limit: 20, headers: false }, true))
+        .all("/", (c) => c.text("ok"));
+      const res = await app.request("/");
+      expect([res.headers.get("ratelimit-limit"), res.headers.get("ratelimit-remaining")]).toEqual(["120", "119"]);
+    });
   });
 });

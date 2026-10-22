@@ -38,7 +38,7 @@ export const apiExportRateLimit = limitRatePerUser({ windowMs: MINUTE, limit: EX
  * The public API's imports of a character file, counted per user, whatever keys of theirs ask: as many a minute as the
  * app's own allow an address.
  */
-export const apiImportRateLimit = limitRatePerUser({ windowMs: MINUTE, limit: IMPORTS_PER_MINUTE });
+export const apiImportRateLimit = limitRatePerUser({ windowMs: MINUTE, limit: IMPORTS_PER_MINUTE, headers: false });
 
 /**
  * The public API's requests, counted per user, whatever keys of theirs ask: an agent's run reads a character and its
@@ -50,7 +50,7 @@ export const apiKeyRateLimit = limitRatePerUser({ windowMs: MINUTE, limit: 120 }
  * The public API's level saves, edits and removals, counted per user, whatever keys of theirs ask: each builds the
  * whole character under its lock, as a character's level choices read every option.
  */
-export const apiLevelSaveRateLimit = limitRatePerUser({ windowMs: MINUTE, limit: 20 });
+export const apiLevelSaveRateLimit = limitRatePerUser({ windowMs: MINUTE, limit: 20, headers: false });
 
 /**
  * Each direct-upload commits a blob row + S3 object that the sweep won't reclaim until UNATTACHED_BLOB_TTL_MS
@@ -75,8 +75,8 @@ export const importSourceRateLimit = limitRate({ windowMs: MINUTE, limit: 30 });
 
 /**
  * A character's choices at its next level, which read every option of each pool: counted per user, whatever keys of
- * theirs ask, apart from the keys' other requests.
+ * theirs ask, apart from the keys' other requests. Its headers are the user's limit's, which a client paces itself by.
  */
-export const levelChoicesRateLimit = limitRatePerUser({ windowMs: MINUTE, limit: 20 });
+export const levelChoicesRateLimit = limitRatePerUser({ windowMs: MINUTE, limit: 20, headers: false });
 
 export const publicApiRateLimit = limitRate({ windowMs: MINUTE, limit: 30 });
