@@ -199,20 +199,20 @@ export default abstract class PlannedLevelsState extends include(LevelUpState, P
     // No level past its class's next: after the character's highest in the class and those planned before it
     const maxLevels = LevelRules.readMaxKlassLevels(this.rulesetData, this.character.rows.levels);
     return levels.map(({ klassId, level, abilityIncreases }, i) => {
+      // Named as the character's level it is, as the save names a finalized one
+      const label = `Level ${this.character.rows.levels.length + i + 1}:`;
       const klass = this.rulesetData.klassesById.get(klassId);
-      if (!klass) throw new RulesError("invalid", `Level ${i + 1}: Class does not belong to the character's ruleset`);
+      if (!klass) throw new RulesError("invalid", `${label} Class does not belong to the character's ruleset`);
 
-      if (klass.kind !== "pc")
-        throw new RulesError("invalid", `Level ${i + 1}: Class is not valid for a player character`);
+      if (klass.kind !== "pc") throw new RulesError("invalid", `${label} Class is not valid for a player character`);
 
       const klassLevel = this.rulesetData.klassLevelByKlassAndLevel.get(`${klassId}:${level}`);
-      if (!klassLevel) throw new RulesError("not-found", `Level ${i + 1}: Class level not found`);
+      if (!klassLevel) throw new RulesError("not-found", `${label} Class level not found`);
 
       // One it has already the save refuses as finalized
       // By the class the view resolves, a copy's when the ruleset copied it, as its levels are
       const next = (maxLevels.get(klass.id) ?? 0) + 1;
-      if (level > next)
-        throw new RulesError("invalid", `Level ${i + 1}: The character's next ${klass.name} level is ${next}`);
+      if (level > next) throw new RulesError("invalid", `${label} The character's next ${klass.name} level is ${next}`);
       if (level === next) maxLevels.set(klass.id, level);
 
       return { klass, klassLevel, abilityIncreases };

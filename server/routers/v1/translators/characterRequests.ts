@@ -22,11 +22,6 @@ interface LevelPicks {
   spells: { aptitudeId: string; spellId: string }[];
 }
 
-/** One of an inventory entry's charges, as a write names it: none named only by a body that can leave them out. */
-type NamedCharges<T extends { charges?: Charges | null }> = undefined extends T["charges"]
-  ? number | null | undefined
-  : number | null;
-
 /** Picks grouped by the aptitude they're picked in, as the level saves take them. */
 function groupByAptitude<K extends "featId" | "spellId">(
   picks: ({ aptitudeId: string } & Record<K, string>)[],
@@ -109,8 +104,8 @@ export function toInventoryRequest<
     ...body,
     ...toPlacement(equipped, location),
     // Left out, an added item's own: none named, which only a body that can leave them out names
-    remainingCharges: (charges === undefined ? undefined : (charges?.remaining ?? null)) as NamedCharges<T>,
-    totalCharges: (charges === undefined ? undefined : (charges?.total ?? null)) as NamedCharges<T>,
+    remainingCharges: charges === undefined ? undefined : (charges?.remaining ?? null),
+    totalCharges: charges === undefined ? undefined : (charges?.total ?? null),
   };
 }
 

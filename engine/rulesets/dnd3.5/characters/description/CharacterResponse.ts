@@ -2,6 +2,7 @@ import type { InferSelectModel } from "drizzle-orm";
 
 import type { charactersInCharacter } from "@/drizzle/schema.ts";
 import type { NotedSheet, SheetStat } from "@/engine/core/module/index.ts";
+import RulesError from "@/engine/core/RulesError.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import ItemPlacement from "@/engine/rulesets/dnd3.5/rules/ItemPlacement.ts";
 import type { Modifier, Requirement } from "@/shared/relations.ts";
@@ -136,7 +137,7 @@ export default class CharacterResponse {
    */
   static buildFull(record: InferSelectModel<typeof charactersInCharacter>, built: DetailedCharacter) {
     const ruleset = built.getRuleset();
-    const validation = built.validate();
+    const { issues, valid } = built.validate();
     const requirements = CharacterResponse.enrichedRequirementsOf(built);
     const modifiers = CharacterResponse.enrichedModifiersOf(built);
 
@@ -168,7 +169,7 @@ export default class CharacterResponse {
       spellsPerDay: SpellGroups.describePerDay(built),
       requirements,
       modifiers,
-      validation,
+      validation: { issues: issues.map(RulesError.toAnswered), valid },
     };
   }
 }
