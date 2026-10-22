@@ -6,24 +6,29 @@ import { filterList, selectOption } from "./page.ts";
 import { coreRulesetId } from "./rulesets.ts";
 
 /**
- * Gives the character its first level, of `klass`, through the API: its hit die's most hit points and no pick, forced
- * past what it leaves unpicked, for a journey that reads a sheet with a class.
+ * Gives the character its first level, of `klass`, through the API as Add Level saves it: its class planned, its hit
+ * die's most hit points, and no pick, forced past what it leaves unpicked, for a journey that reads a sheet with a class.
  */
 export async function addFirstLevel(page: Page, characterId: string, klass: string) {
   const levels = apiOf(page).api.characters.levels[":characterId"];
-  const { items } = await parseResponse(
-    levels["available-classes"].$get({ param: { characterId }, query: { search: klass } }),
+  const options = await parseResponse(
+    levels.options[":step"].$post({
+      param: { characterId, step: "class-plan" },
+      query: { search: klass },
+      json: { plan: { steps: {} } },
+    }),
   );
-  const option = items.find((item) => item.name === klass);
+  const option = options.items.find((item) => item.name === klass);
   if (!option) throw new Error(`The core rules have no ${klass}`);
+  const planned = { "class-plan": [{ track: option.id, position: 1 }] };
+  const answer = await parseResponse(levels.plan.$post({ param: { characterId }, json: { steps: planned } }));
+  const hp = answer.steps.hp;
+  if (hp?.mechanic !== "value") throw new Error("The plan answered no hit points");
   await parseResponse(
-    levels.finalize.$post({
+    levels.$post({
       param: { characterId },
       json: {
-        levels: [{ klassId: option.id, level: 1, hp: option.hd, abilityIncreases: [] }],
-        skills: {},
-        feats: {},
-        powers: {},
+        steps: { ...planned, hp: [hp.advancements[0].max], abilities: [[]], skills: [], feats: [], powers: [] },
         force: true,
       },
     }),

@@ -273,7 +273,7 @@ Paginated / searched / filtered queries (e.g. `Feats.findPage({ search, paginati
 
 Within a single HTTP request, two calls to the same `Repo.findOne(db, ...)` / `Repo.findMany(db, ...)` with the same args return the same `Promise`. The second caller piggybacks on the first's in-flight query — no second round trip.
 
-Why this matters: our read paths have legitimate architectural duplicates. `powerPicks.getAvailablePowers` finds the character the session may edit (`Characters.findOne`), then `readCharacterInput` reads its rows — some the outer function already looked up.
+Why this matters: our read paths have legitimate architectural duplicates. `CharacterLevelsService.getStepOptions` (a level wizard's spells picker) finds the character the session may edit (`Characters.findOne`), then `readCharacterInput` reads its rows — some the outer function already looked up.
 
 ### How it works
 
@@ -355,7 +355,7 @@ Failed promises self-evict so a retry doesn't return the cached rejection.
 The request log line gets a `dedup: N/M` segment whenever dedup activity happened:
 
 ```
-[api] 2026-04-16T... --> GET /api/characters/:id/available-powers 200 220ms (db: 180ms cpu: 40ms q: 8 cache: 4/4 dedup: 6/12)
+[api] 2026-04-16T... --> POST /api/characters/levels/:id/options/powers 200 220ms (db: 180ms cpu: 40ms q: 8 cache: 4/4 dedup: 6/12)
 ```
 
 - `cache: H/T` — ruleset cache hits / total lookups (set by `onCacheHit`/`onCacheMiss` in `MemoryCache`)
@@ -387,7 +387,7 @@ flowchart LR
 - **Sweep**: every 60s, delete expired non-pinned entries. Timer is `unref`d so it doesn't hold the process alive.
 - **Disable knob**: set `DISABLE_CACHE=true` to make every `get` miss and every `set` a no-op (for debugging).
 
-## End-to-end example: `GET /api/characters/:id/available-powers`
+## End-to-end example: `POST /api/characters/levels/:id/options/powers`
 
 With both cache layers warm:
 
@@ -395,13 +395,13 @@ With both cache layers warm:
 sequenceDiagram
     participant Client
     participant Middle as Hono middleware
-    participant Svc as getAvailablePowers
+    participant Svc as getStepOptions
     participant Repo as Repo Proxy
     participant RS as Ruleset Cache
     participant Dedup as Request Dedup
     participant DB
 
-    Client->>Middle: GET /available-powers
+    Client->>Middle: POST /options/powers
     Middle->>Middle: runWithRequestCache(next)
     Middle->>Svc: call
     Svc->>Repo: Characters.findOne(db, {id, userId})

@@ -7,10 +7,10 @@ import type { Character } from "./queries.ts";
 
 /**
  * Phase 3: Ability increases — on the levels the ruleset gives one
- * Saving a level checks it (finalize.ts), but older rows, or a ruleset whose
+ * Saving a level checks it, but older rows, or a ruleset whose
  * Settings since moved its increases, can miss a due one, which
  * DetailedCharacter.validate() doesn't flag. A level is due one when its
- * edit's attributes step offers one. An increase where none is due counts for
+ * edit's plan has a choice to make at it (3.5's ability increase step). An increase where none is due counts for
  * nothing and its level's edit writes it away, so it's no issue.
  */
 export async function checkAbilityIncreases(characters: Character[]) {
@@ -23,11 +23,22 @@ export async function checkAbilityIncreases(characters: Character[]) {
     await withRulesetScope(db, char.rulesetId, async (scope) => {
       const character = await readCharacterInput(db, char);
       for (const [index, level] of character.rows.levels.entries()) {
-        const step = Engine.for(scope)
-          .character(character)
-          .levelUp()
-          .describeStep("abilities", { editedLevelId: level.id });
-        const due = step.name === "abilities" && step.isAvailable;
+        // Its edit's plan, answering nothing (a pick a reference check flags would refuse the saved one): a `choose`
+        // step that takes a choice at the level makes one due. A level the plan can't read (its class level gone, which
+        // the reference check reports) is skipped, and logged
+        let due: boolean;
+        try {
+          const answer = Engine.for(scope)
+            .character(character)
+            .levelUp()
+            .describePlan({ editedLevelId: level.id, steps: {} });
+          due = Object.values(answer.steps).some((step) => step.mechanic === "choose" && step.advancements.length > 0);
+        } catch (error) {
+          console.warn(
+            `    ${char.name}: level ${index + 1} skipped — ${error instanceof Error ? error.message : error}`,
+          );
+          continue;
+        }
         const increased = character.rows.picks.abilityIncreases.some((row) => row.characterLevelId === level.id);
         if (!due || increased) continue;
         issues++;

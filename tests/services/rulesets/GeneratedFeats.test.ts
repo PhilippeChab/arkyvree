@@ -17,12 +17,13 @@ import {
   Rulesets,
   Skills,
 } from "@/server/repositories/index.ts";
-import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { ItemsService } from "@/server/services/rulesets/items/index.ts";
 import { PowersService } from "@/server/services/rulesets/powers/index.ts";
 import { SkillsService } from "@/server/services/rulesets/skills/index.ts";
 import { createSeedCharacter } from "@/tests/support/dnd3.5/levelFixtures.ts";
+import { levelUpPlan } from "@/tests/support/dnd3.5/levelPlans.ts";
+import { getStepOptions } from "@/tests/support/levels.ts";
 import {
   copyEntity,
   createSeededTestRuleset,
@@ -321,11 +322,15 @@ describe("an inherited skill's Skill Focus", () => {
 
       const ctx = await getSeedCtx();
       const characterId = await createSeedCharacter(ctx, "fighter", { rulesetId: fork.id });
-      const available = await CharacterLevelsService.getAvailableFeats(
+      // Its first fighter level's General feats, a family's one match named as its feat
+      const plan = levelUpPlan([{ klassId: ctx.klassMap.pc.Fighter, level: 1, hp: 10 }]);
+      const available = await getStepOptions(
         session,
         characterId,
-        { aptitudeId: ctx.aptMap.General, classId: ctx.klassMap.pc.Fighter, level: 1, search: "Skill Focus: Climb" },
-        { limit: 100, page: 1 },
+        "feats",
+        plan,
+        { pool: ctx.aptMap.General },
+        { search: "Skill Focus: Climb" },
       );
       expect(available.items.some((f) => f.name === "Skill Focus: Climb")).toBe(false);
       // Another fork still has it.

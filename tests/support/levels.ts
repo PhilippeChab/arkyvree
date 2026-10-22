@@ -1,6 +1,8 @@
 import { and, eq, isNull } from "drizzle-orm";
 
 import { klassLevelsInRules } from "@/drizzle/schema.ts";
+import type { LevelPlanAnswer, StepAnswer } from "@/engine/core/module/index.ts";
+import type { LevelPlanRequest, StepPickerQuery } from "@/engine/index.ts";
 import { db } from "@/server/database/index.ts";
 import {
   CharacterLevelFeats,
@@ -14,6 +16,7 @@ import { CharacterLevelsService } from "@/server/services/characters/levels/inde
 import type { Session } from "@/shared/relations.ts";
 
 import { createTestCharacter } from "./characters.ts";
+import { levelUpPlan } from "./dnd3.5/levelPlans.ts";
 import { uniqueId } from "./seed.ts";
 
 interface LevelPicks {
@@ -22,17 +25,16 @@ interface LevelPicks {
   skills?: { rank: number; skillId: string }[];
 }
 
-/** A level-up step, as the service answers it: any of those its ruleset lists, named for which it is. */
-type LevelStep = Awaited<ReturnType<typeof CharacterLevelsService.getStep>>;
-
-/** Whether the service's step is the one asked for, by its name. */
-function isStep<N extends LevelStep["name"]>(step: LevelStep, name: N): step is Extract<LevelStep, { name: N }> {
-  return step.name === name;
-}
-
 /** A level's ability increases as 3.5 gives them: `abilityId` raised by 1, or none. */
 export function increasesOf(abilityId: string | null | undefined) {
   return abilityId ? [{ abilityId, amount: 1 }] : [];
+}
+
+/** Step `name`'s answer in a plan's answer, of mechanic `mechanic`: refused when the plan answered it by another. */
+export function stepAnswerOf<M extends StepAnswer["mechanic"]>(answer: LevelPlanAnswer, name: string, mechanic: M) {
+  const step = answer.steps[name];
+  if (step?.mechanic !== mechanic) throw new Error(`The ${name} step answered as ${step?.mechanic}, not ${mechanic}`);
+  return step as Extract<StepAnswer, { mechanic: M }>;
 }
 
 /** Gives a character a level in a class level, with these picks, straight in the database: no level-up rule applies. */
@@ -55,10 +57,9 @@ export async function addCharacterLevel(characterId: string, klassLevelId: strin
 }
 
 /**
- * Adds a single level to a character via the batch finalizer. Tests used
- * `finalizeLevelUp` for this before batch became the only flow; this wraps
- * `finalizeLevelUp` with one level so call sites stay readable. The level
- * raises `abilityId` by 1 (`increasesOf`), or no ability.
+ * Adds a level of class `klassId` to a character, as Add Level saves it: at `level` in its class, with these hit points
+ * and picks, raising `abilityId` by 1 (`increasesOf`), or no ability. Unless `force`d, the engine refuses what the
+ * character with it fails.
  */
 export async function addOneLevel(
   session: Session,
@@ -72,15 +73,12 @@ export async function addOneLevel(
   powers: Record<string, string[]> = {},
   force = false,
 ) {
-  const createdLevels = await CharacterLevelsService.finalizeLevelUp(
-    session,
-    characterId,
-    [{ klassId, level, hp, abilityIncreases: increasesOf(abilityId) }],
+  const plan = levelUpPlan([{ klassId, level, hp, abilityIncreases: increasesOf(abilityId) }], {
     skills,
     feats,
     powers,
-    force,
-  );
+  });
+  const createdLevels = await CharacterLevelsService.addLevels(session, characterId, plan, force);
   return createdLevels[0];
 }
 
@@ -102,16 +100,30 @@ export async function findKlassLevel(klassId: string, level: number) {
   });
 }
 
-/** The level-up step `name` of the level the query is for (its class's level, the levels planned before it, an edit), as that step. */
-export async function getLevelStep<N extends LevelStep["name"]>(
+/** A plan's answer (`plan`), each step by its mechanic, as the level wizards ask it. */
+export async function getPlanAnswer(session: Session, characterId: string, plan: LevelPlanRequest) {
+  return await CharacterLevelsService.getPlan(session, characterId, plan);
+}
+
+/**
+ * A page of step `step`'s options over a plan (`plan`), as its picker opens them where `at` says (its pool, its tier,
+ * the advancement its pick lands on, a group's members), searched: its rows, groups of them or not.
+ */
+export async function getStepOptions(
   session: Session,
   characterId: string,
-  name: N,
-  query: Parameters<typeof CharacterLevelsService.getStep>[3] = {},
+  step: string,
+  plan: LevelPlanRequest,
+  at: Omit<StepPickerQuery, "plan"> = {},
+  { limit = 100, page = 1, search }: { limit?: number; page?: number; search?: string } = {},
 ) {
-  const step = await CharacterLevelsService.getStep(session, characterId, name, query);
-  if (!isStep(step, name)) throw new Error(`The service answered the ${step.name} step for ${name}`);
-  return step;
+  return await CharacterLevelsService.getStepOptions(
+    session,
+    characterId,
+    step,
+    { ...at, plan, search },
+    { limit, page },
+  );
 }
 
 /** A character of `userId`'s on `rulesetId`, who picked the feat at their first level. */
