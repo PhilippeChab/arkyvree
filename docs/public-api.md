@@ -25,7 +25,7 @@ answers in shapes of its own, which stay fixed.
   changes only what its user can, by the checks the services already make. A session's cookie signs in nothing under
   `/v1`.
 - Its requests are counted per user, whichever keys of theirs ask (`apiKeyRateLimit`: 120 a minute), and a
-  character's level choices, which read every option of each pool, its level saves and edits, which build and check
+  character's level choices, which read every option of each pool, its level saves, edits and removals, which build
   the whole character, and a character file's import, which builds the character level by level, apart
   (`levelChoicesRateLimit`: 20 a minute; `apiLevelSaveRateLimit`: 20; `apiImportRateLimit`: 10). An address's requests
   are counted before its key is looked up (`apiAddressRateLimit`: 600 a minute), so a wrong key or none, a lookup by

@@ -63,9 +63,11 @@ export default class InventoryEntries {
   ): HeldInventoryEntry {
     const { equipped, location } = change.request;
     const held = "entry" in change ? character.rows.inventory.find((row) => row.id === change.entry.id) : undefined;
+    // An edited entry's sets as a hand reads them: the first, for one stored without
+    const heldSets = held && ItemPlacement.isHand(held.location) ? ItemPlacement.heldSets(held) : undefined;
     // A hand holds what names no weapon set in those an edited entry is held in, else in the first, as an import does
-    const heldInHand = held?.equipped && ItemPlacement.isHand(held.location) ? ItemPlacement.heldSets(held) : [0];
-    const weaponSets = change.request.weaponSets ?? (ItemPlacement.isHand(location) ? heldInHand : []);
+    const inHand = (held?.equipped && heldSets) || [0];
+    const weaponSets = change.request.weaponSets ?? (ItemPlacement.isHand(location) ? inHand : []);
     const placed = InventoryEntries.placementOf({ equipped, location, weaponSets });
     if (equipped && location) {
       const entry =
@@ -73,9 +75,10 @@ export default class InventoryEntries {
           ? { id: null, item: change.item }
           : { id: change.entry.id, item: view.rulesetData.itemsById.get(change.entry.itemId) };
       if (!entry.item) throw new RulesError("not-found", "Item not found");
-      // Its sets as a hand reads them: the first, for one stored without
-      const heldSets = held && ItemPlacement.isHand(location) ? ItemPlacement.heldSets(held) : held?.weaponSets;
-      const kept = !!held?.equipped && held.location === location && String(heldSets) === String(placed.weaponSets);
+      const kept =
+        !!held?.equipped &&
+        held.location === location &&
+        String(heldSets ?? held.weaponSets) === String(placed.weaponSets);
       new Equipping(view, character).checkEquip(
         { id: entry.id, item: entry.item },
         location,
