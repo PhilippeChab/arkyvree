@@ -113,16 +113,20 @@ describe("v1 ruleset customization", () => {
       operator: "greater_than_or_equal",
       target: "abilities.wisdom.total",
       value: "13",
-      valueType: "number",
     } as const;
     const created = await expectOk(route.requirements.$post({ json: check, param }));
-    expect(created).toMatchObject({ ...check, targetLabels: ["Abilities", "Wisdom", "Total"] });
+    expect(created).toMatchObject({ ...check, targetLabels: ["Abilities", "Wisdom", "Total"], valueType: "number" });
 
     const requirementParam = { ...param, requirementId: created.id };
     const changed = await expectOk(
       route.requirements[":requirementId"].$put({ json: { ...check, value: "15" }, param: requirementParam }),
     );
     expect(changed).toMatchObject({ id: created.id, value: "15" });
+    // An update keeps the target its body leaves out, and its operator
+    const raised = await expectOk(
+      route.requirements[":requirementId"].$put({ json: { group: "1.1", value: "17" }, param: requirementParam }),
+    );
+    expect(raised).toMatchObject({ operator: check.operator, target: check.target, value: "17" });
     await expectStatus(route.requirements[":requirementId"].$delete({ param: requirementParam }), 204);
     expect(await expectOk(route.requirements.$get({ param }))).toEqual([group]);
   });
