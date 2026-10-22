@@ -2,9 +2,10 @@ import { describe, expect, test } from "bun:test";
 
 import { createKeyedApi, expectOk, expectStatus } from "@/tests/support/api.ts";
 import { createTestCharacter } from "@/tests/support/characters.ts";
-import { carry } from "@/tests/support/items.ts";
+import { carry, createTestItem } from "@/tests/support/items.ts";
 import { findPlainItem, findSeededCharacter, getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
+import { ITEM_HAS_CHARGES } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 /** A new user's character, and the routes of its inventory, as the user's key reads them. */
 async function openInventory() {
@@ -51,6 +52,18 @@ describe("v1 character inventory", () => {
 
     await expectStatus(route[":entryId"].$delete({ param: { entryId, id } }), 204);
     expect(await expectOk(route.$get({ param: { id } }))).toEqual([]);
+  });
+
+  test("gives an added item its own charges, all left, when the body names none", async () => {
+    const { id, route } = await openInventory();
+    const item = await createTestItem({}, { [ITEM_HAS_CHARGES]: "50" });
+
+    const added = await expectOk(route.$post({ json: { itemId: item.id, quantity: 1 }, param: { id } }));
+    expect(added.charges).toEqual({ remaining: 50, total: 50 });
+    const json = { charges: { remaining: 3, total: 10 }, itemId: item.id, quantity: 1 };
+    expect((await expectOk(route.$post({ json, param: { id } }))).charges).toEqual({ remaining: 3, total: 10 });
+    const none = await expectOk(route.$post({ json: { charges: null, itemId: item.id, quantity: 1 }, param: { id } }));
+    expect(none.charges).toBeNull();
   });
 
   test("changes only what an update names of an entry: where it's equipped and its charges are kept", async () => {

@@ -95,6 +95,9 @@ export default abstract class CharactersPart<D extends Descriptions> {
     };
   }
 
+  /** The charges an item comes with, as its ruleset reads them: none for an item without charges. */
+  protected abstract chargesOf(view: RulesetView, item: Item): number | null;
+
   /**
    * A character's sheet as the API answers it, its private notes where every ruleset's holds them (`NotedSheet`), as
    * its rows have them (none when its reader doesn't read them): a player character's with its bonded creatures'
@@ -295,9 +298,9 @@ export default abstract class CharactersPart<D extends Descriptions> {
 
   /**
    * What an inventory entry's add or edit stores, checked: its item (an added one's, as the view has it), its placement
-   * (`planPlacement`: the item equipped where asked, its requirements checked unless `force`d) and its charges. Refused
-   * when an added item isn't one of the ruleset's (unknown, of an unrelated ruleset, or deleted), or its charges
-   * disagree.
+   * (`planPlacement`: the item equipped where asked, its requirements checked unless `force`d) and its charges (an
+   * added item's own, when the request names none). Refused when an added item isn't one of the ruleset's (unknown, of
+   * an unrelated ruleset, or deleted), or its charges disagree.
    */
   planInventoryEntry(
     view: RulesetView,
@@ -308,12 +311,17 @@ export default abstract class CharactersPart<D extends Descriptions> {
     const { request } = change;
     const placed: PlacementChange =
       "itemId" in change ? { item: CharactersPart.idsOf(view).find("items", change.itemId), request } : change;
-    CharactersPart.checkCharges(request.totalCharges, request.remainingCharges);
+    // An added item the request names no charges of comes with its own, all of them left
+    const named = request.totalCharges !== undefined || request.remainingCharges !== undefined;
+    const own = "item" in placed && !named ? this.chargesOf(view, placed.item) : null;
+    const totalCharges = request.totalCharges ?? own;
+    const remainingCharges = request.remainingCharges ?? own;
+    CharactersPart.checkCharges(totalCharges, remainingCharges);
     return {
       ...this.planPlacement(view, character, placed, force),
       itemId: "item" in placed ? placed.item.id : placed.entry.itemId,
-      totalCharges: request.totalCharges ?? null,
-      remainingCharges: request.remainingCharges ?? null,
+      totalCharges,
+      remainingCharges,
     };
   }
 

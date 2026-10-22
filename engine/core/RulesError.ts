@@ -7,6 +7,11 @@ export interface RulesIssue {
   entityType?: string;
   message: string;
   requirementTree?: string;
+  /**
+   * What it's about, past the amounts its message counts (a pool's unspent slots, the skill points overspent): an issue
+   * of the same subject is the same issue, whatever it counts. None: its message is its subject.
+   */
+  subject?: string;
 }
 
 /** What a ruleset's rules refuse a request as: the server answers each as it answers its own errors of that kind. */

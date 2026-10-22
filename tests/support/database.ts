@@ -38,10 +38,16 @@ export async function measure<T>(run: () => Promise<T>) {
 
 /**
  * Runs `call` on the test's connection while another transaction (a connection of `pool`) holds what `lock` takes, and
- * returns its result once that transaction rolls back. `call` must have waited on the lock: PostgreSQL shows it blocked,
- * rather than a sleep guessing it reached its critical section.
+ * returns its result once that transaction rolls back, or commits (`end`: what it wrote then outlives the test, for
+ * the caller to delete). `call` must have waited on the lock: PostgreSQL shows it blocked, rather than a sleep guessing
+ * it reached its critical section.
  */
-export async function runWhileLocked<T>(pool: Pool, lock: (blockerDb: Db) => Promise<unknown>, call: () => Promise<T>) {
+export async function runWhileLocked<T>(
+  pool: Pool,
+  lock: (blockerDb: Db) => Promise<unknown>,
+  call: () => Promise<T>,
+  end: "COMMIT" | "ROLLBACK" = "ROLLBACK",
+) {
   const writer = await db.execute<{ pid: number }>(sql`select pg_backend_pid() as pid`);
   const blocker = await pool.connect();
   let pending: Promise<T> | undefined;
@@ -50,7 +56,7 @@ export async function runWhileLocked<T>(pool: Pool, lock: (blockerDb: Db) => Pro
     await lock(createTestDbFromClient(blocker));
     pending = call();
     if (!(await waitUntilBlocked(blocker, writer.rows[0].pid))) throw new Error("The call never waited on the lock");
-    await blocker.query("ROLLBACK");
+    await blocker.query(end);
     return await pending;
   } finally {
     try {
