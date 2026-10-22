@@ -6,7 +6,7 @@
 import { queryOptions, skipToken } from "@tanstack/react-query";
 import { type InferResponseType, parseResponse } from "hono/client";
 
-import { type EntityRow, entitySegment } from "@/client/src/lib/entityRequests.ts";
+import { type EntityRow, readEntityFn } from "@/client/src/lib/entityRequests.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import type { CustomizationPageType } from "@/shared/customization/entities.ts";
@@ -48,14 +48,7 @@ async function fetchEntity(id: string, type: CustomizationPageType, entityId: st
       };
     default:
       // A kind's entity, through the routes by kind
-      return {
-        type,
-        entity: await parseResponse(
-          rulesetApi.entities[":entityType"][":entityId"].$get({
-            param: { id, entityType: entitySegment(getUrlSegment(type)), entityId },
-          }),
-        ),
-      };
+      return { type, entity: await readEntityFn(id, type, entityId) };
   }
 }
 

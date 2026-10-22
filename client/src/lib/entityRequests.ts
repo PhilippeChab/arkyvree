@@ -36,8 +36,8 @@ export function givenParams(params: Readonly<Record<string, string | undefined>>
 }
 
 /**
- * A page of a kind's list (`type`), narrowed by its query (`query`: its page, its search, its kind's filters): a query's
- * `queryFn`.
+ * A page of a kind's list (`type`), narrowed by its query (`query`: its page, its search, its kind's filters, those
+ * undefined dropped): a query's `queryFn`.
  */
 export function readEntitiesFn(rulesetId: string, type: string, query: Readonly<Record<string, string | undefined>>) {
   return parseResponse(

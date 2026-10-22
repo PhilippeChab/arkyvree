@@ -70,12 +70,12 @@ function entityListKey(rulesetId: string, kind: EntityListKind, filters: EntityF
 
 /** A kind's list's search params: its page's, and each filter its kind narrows it by. */
 function entityListParams(pageParam: number, kind: EntityListKind, filters: EntityFilters) {
-  return givenParams({
+  return {
     ...pageSearchParams(pageParam, filters),
     ...(kind.partitioned && { kind: filters.kind, orderBy: filters.orderBy, orderDir: filters.orderDir }),
     ...(kind.pools && { aptitudeId: filters.aptitudeId }),
     ...(kind.levels && { level: filters.level?.toString() }),
-  });
+  };
 }
 
 /** A tab's search params: its page, ten rows at a time, its search, and whether it lists the ruleset's own only. */
