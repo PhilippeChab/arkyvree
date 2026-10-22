@@ -189,20 +189,45 @@ export interface StepPickerQuery {
 }
 
 /**
- * The words a step shows past its label and its kind's word, by its mechanic, its module's:
+ * The words a level's advancements take, whatever step shows them: a position's word on a track ("Level", "Levels":
+ * "Fighter Level 3"), and the review's title for them ("Class Advancement").
+ */
+export interface AdvancementWords {
+  position: RulesWord;
+  review: string;
+}
+
+/**
+ * A level's steps, as its module lists them: the words its advancements take, and its steps, in the wizard's order.
+ */
+export interface LevelSteps {
+  advancements: AdvancementWords;
+  steps: readonly LevelStep[];
+}
+
+/**
+ * The words a step shows past its label and its kinds' words, by its mechanic, its module's:
  * - `choose`: what it asks, and its word ("Ability Increase");
- * - `pick`: the note a free grant takes ("class ability"), and each tier's name ("Cantrips");
- * - `plan`: a position's word ("Level", "Levels"), the review's title for the advancements, and an option the character can't
- *   take yet's note;
- * - `spend`: the budget's title, a favored row's words (in full, and short), the review's title, and what a point buys;
- * - `value`: what each advancement's value asks, and the value's name.
+ * - `pick`: the note a free grant takes ("class ability"), a group's word ("variant"), an optional pool's note
+ *   ("optional"), and each tier's name ("Cantrips");
+ * - `plan`: the note on an option the character can't take yet;
+ * - `spend`: the budget's title, what it spends ("point"), a favored row's words (in full, and short), the review's
+ *   title, and what a point buys ("Rank");
+ * - `value`: what each advancement's value asks, what entering it asks, and the value's name.
  */
 export interface StepWords {
   choose: { prompt: string; word: RulesWord };
-  pick: { grantNote: string; tiers?: Record<string, string> };
-  plan: { position: RulesWord; review: string; unmet: string };
-  spend: { budget: string; favored: string; favoredShort: string; review: string; unit: RulesWord };
-  value: { prompt: string; unit: string };
+  pick: { grantNote: string; group?: RulesWord; optional: string; tiers?: Record<string, string> };
+  plan: { unmet: string };
+  spend: {
+    budget: string;
+    currency: RulesWord;
+    favored: string;
+    favoredShort: string;
+    review: string;
+    unit: RulesWord;
+  };
+  value: { entry: string; prompt: string; unit: string };
 }
 
 /** A pool's room at a tier: allowed (`-1` when every entity of the tier is held), spent, and what's left. */

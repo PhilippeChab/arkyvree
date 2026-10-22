@@ -16,7 +16,7 @@ import type { RulesetView } from "@/engine/core/view/index.ts";
 import type { Character, Klass } from "@/shared/relations.ts";
 
 import type { WizardStep } from "./descriptions.ts";
-import type { LevelPlanAnswer, LevelPlanRequest, LevelStep, StepPickerQuery } from "./mechanics.ts";
+import type { LevelPlanAnswer, LevelPlanRequest, LevelSteps, StepPickerQuery } from "./mechanics.ts";
 import type { BondedCreaturesPlan, LevelEditPlan, LevelRemovalPlan, LevelsPlan } from "./plans.ts";
 import type {
   FeatPickQuery,
@@ -123,10 +123,10 @@ export default abstract class LevelUpPart<
   abstract hitPointsOf(hd: number): LevelHitPoints;
 
   /**
-   * A level's steps, in the wizard's order, each its mechanic's: an edit's (`edited`) without the step that plans the
-   * track its level is on, which an edit keeps.
+   * A level's steps, in the wizard's order, each its mechanic's (an edit's, `edited`, without the step that plans the
+   * track its level is on, which an edit keeps), and the words its advancements take.
    */
-  abstract listSteps(view: RulesetView, character: CharacterInput, edited: boolean): readonly LevelStep[];
+  abstract listSteps(view: RulesetView, character: CharacterInput, edited: boolean): LevelSteps;
 
   /** The class picker, with what the wizard plans so far: the classes it offers, each with the level it would take. */
   abstract openClassPicker(

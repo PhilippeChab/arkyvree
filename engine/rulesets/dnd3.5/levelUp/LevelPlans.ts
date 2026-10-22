@@ -7,6 +7,7 @@ import {
   type LevelPlanRequest,
   type LevelRequest,
   type LevelStep,
+  type LevelSteps,
   type LevelUpRequest,
   Payloads,
   type PickAnswer,
@@ -58,20 +59,24 @@ type StepPickerRead =
 /** A spell's tier by its spell level, named as the sheet names it ("Cantrips", "Level 1"). */
 const SPELL_TIERS = Object.fromEntries(SPELL_LEVELS.map((level) => [String(level), SPELL_LEVEL_LABELS[level]]));
 
-/** A 3.5 level's steps, in the wizard's order, each in its words: an edit's lacks the class plan, its class the level's. */
+/**
+ * A 3.5 level's steps, in the wizard's order, each in its words: an edit's lacks the class plan, its class the
+ * level's.
+ */
 const STEPS = [
   {
     name: "class-plan",
     label: "Class Plan",
     mechanic: "plan",
     kind: "klasses",
-    words: {
-      position: { many: "Levels", one: "Level" },
-      review: "Class Advancement",
-      unmet: "Requirements not met",
-    },
+    words: { unmet: "Requirements not met" },
   },
-  { name: "hp", label: "Select HP", mechanic: "value", words: { prompt: "Set HP for", unit: "HP Gain" } },
+  {
+    name: "hp",
+    label: "Select HP",
+    mechanic: "value",
+    words: { entry: "Enter HP gain", prompt: "Set HP for", unit: "HP Gain" },
+  },
   {
     name: "abilities",
     label: "Ability Increase",
@@ -84,7 +89,7 @@ const STEPS = [
     label: "Select Skills",
     mechanic: "spend",
     kind: "skills",
-    words: { budget: "Skill Points to Spend", ...LEVEL_WIZARD.pointSpend },
+    words: { budget: "Skill Points to Spend", currency: { many: "points", one: "point" }, ...LEVEL_WIZARD.pointSpend },
   },
   {
     name: "feats",
@@ -92,7 +97,11 @@ const STEPS = [
     mechanic: "pick",
     kind: "feats",
     pools: "aptitudes",
-    words: { grantNote: LEVEL_WIZARD.freeGrantNote },
+    words: {
+      grantNote: LEVEL_WIZARD.freeGrantNote,
+      group: { many: "variants", one: "variant" },
+      optional: "optional",
+    },
   },
   {
     name: "powers",
@@ -100,7 +109,7 @@ const STEPS = [
     mechanic: "pick",
     kind: "powers",
     pools: "aptitudes",
-    words: { grantNote: LEVEL_WIZARD.freeGrantNote, tiers: SPELL_TIERS },
+    words: { grantNote: LEVEL_WIZARD.freeGrantNote, optional: "optional", tiers: SPELL_TIERS },
   },
 ] as const satisfies readonly LevelStep[];
 
@@ -422,7 +431,9 @@ export default class LevelPlans extends LevelUpBase<DetailedCharacter> {
   /**
    * The character's saved level `characterLevelId` as an edit's plan opens it: each step's payload as the level saved
    * it (its hit points, its ability increases where its rules still give one, its skills' points, its feats and its
-   * spells, each in its pool, a spell at its spell level). Refused when the character has no such level.
+   * spells, each in its pool, a spell at its spell level). A pool's picks come in its saved rows' order, by name: a
+   * save keeps no pick order, so a pool its rules shrank since drops its last by name, as Edit Level's always has.
+   * Refused when the character has no such level.
    */
   describeSavedPlan(characterLevelId: string): LevelPlanRequest {
     const saved = new Dnd35LevelSelections(this.view, this.character, this.rules).describeLevel(characterLevelId);
@@ -447,8 +458,11 @@ export default class LevelPlans extends LevelUpBase<DetailedCharacter> {
   }
 
   /** A 3.5 level's steps, in the wizard's order: an edit's without its class plan. */
-  listSteps(edited: boolean): readonly LevelStep[] {
-    return edited ? STEPS.filter((step) => step.mechanic !== "plan") : STEPS;
+  listSteps(edited: boolean): LevelSteps {
+    return {
+      advancements: { position: { many: "Levels", one: "Level" }, review: "Class Advancement" },
+      steps: edited ? STEPS.filter((step) => step.mechanic !== "plan") : STEPS,
+    };
   }
 
   /** An edit as its save writes it: the edited level's hit points, ability increases and picks. */

@@ -131,11 +131,17 @@ async function createCharacter(charisma = 8) {
 describe("character level plans", () => {
   test("lists a level's steps by their mechanics, an edit's without its class plan", async () => {
     const { characterId, ctx } = await createCharacter();
-    const steps = await expectOk(levels.steps.$get({ param: { characterId }, query: {} }));
-    // Each in its words: what the wizard shows past its label and its kind's word
-    expect(steps.find(({ name }) => name === "hp")?.words).toEqual({ prompt: "Set HP for", unit: "HP Gain" });
-    expect(steps.find(({ name }) => name === "class-plan")?.words).toMatchObject({
-      position: { many: "Levels", one: "Level" },
+    const { advancements, steps } = await expectOk(levels.steps.$get({ param: { characterId }, query: {} }));
+    // Each in its words: what the wizard shows past its label and its kinds' words, and its advancements'
+    expect(advancements).toEqual({ position: { many: "Levels", one: "Level" }, review: "Class Advancement" });
+    expect(steps.find(({ name }) => name === "hp")?.words).toEqual({
+      entry: "Enter HP gain",
+      prompt: "Set HP for",
+      unit: "HP Gain",
+    });
+    expect(steps.find(({ name }) => name === "feats")?.words).toMatchObject({
+      group: { many: "variants", one: "variant" },
+      optional: "optional",
     });
     expect(steps.find(({ name }) => name === "powers")?.words).toMatchObject({
       grantNote: "class ability",
@@ -157,7 +163,9 @@ describe("character level plans", () => {
       }),
     );
     const edited = await expectOk(levels.steps.$get({ param: { characterId }, query: { editedLevelId: created.id } }));
-    expect(edited.map(({ name }) => name)).toEqual(["hp", "abilities", "skills", "feats", "powers"]);
+    expect(edited.steps.map(({ name }) => name)).toEqual(["hp", "abilities", "skills", "feats", "powers"]);
+    // Its advancement's words, though it has no class plan
+    expect(edited.advancements).toEqual(advancements);
   });
 
   test("answers a level-up's plan as its preview does, each step by its mechanic", async () => {
@@ -760,6 +768,12 @@ describe("character level plans", () => {
     const sorted = (byPool: Record<string, string[]>) =>
       Object.fromEntries(Object.entries(byPool).map(([pool, ids]) => [pool, [...ids].sort()]));
     expect(sorted(stepOf(plan, "feats", "pick").fitted)).toEqual(sorted(sorcerer1.feats));
+    expect(sorted(stepOf(plan, "powers", "pick").fitted)).toEqual(sorted(sorcerer1.powers));
+
+    // Saved back as it was, the level is the same
+    const before = await expectOk(level.$get({ param }));
+    await expectOk(level.$put({ param, json: { steps: saved.steps } }));
+    expect(await expectOk(level.$get({ param }))).toEqual(before);
     await expectStatus(level.plan.$get({ param: { characterId, characterLevelId: NIL_UUID } }), 404);
   });
 });

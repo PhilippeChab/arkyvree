@@ -19,7 +19,7 @@ export default class LevelUpEngine extends CharacterHandle {
 
   /** The level's steps, each its mechanic's: an edit's (`request.editedLevelId`) without its plan step. */
   private stepsOf(request: { editedLevelId?: string }) {
-    return this.module.levelUp.listSteps(this.view, this.input, request.editedLevelId !== undefined);
+    return this.module.levelUp.listSteps(this.view, this.input, request.editedLevelId !== undefined).steps;
   }
 
   /** A saved level's selections, as its edit opens them: refused when the character has no such level. */
@@ -66,7 +66,7 @@ export default class LevelUpEngine extends CharacterHandle {
   listSteps(editedLevelId?: string) {
     if (editedLevelId !== undefined && !this.input.rows.levels.some((level) => level.id === editedLevelId))
       throw new RulesError("not-found", "Character level not found");
-    return this.stepsOf({ editedLevelId });
+    return this.module.levelUp.listSteps(this.view, this.input, editedLevelId !== undefined);
   }
 
   /** The class picker, with what the wizard plans so far: its filters, and a page of classes described. */
