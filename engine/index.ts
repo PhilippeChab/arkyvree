@@ -39,6 +39,8 @@ export type {
   PreviewRequest,
   RulesDescription,
   RulesWord,
+  StepOption,
+  StepOptionGroup,
   StepPayload,
   StepPickerQuery,
 } from "./core/module/index.ts";

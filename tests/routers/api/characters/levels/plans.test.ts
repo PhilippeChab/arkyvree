@@ -77,11 +77,10 @@ function fighterPlan(ctx: SeedContext, count: number) {
   };
 }
 
-/** A page of options of `kind`, its rows groups (`grouped`) or not: refused when it's another's. */
-function optionsOf<K extends StepOptions["kind"], G extends boolean>(options: StepOptions, kind: K, grouped: G) {
-  if (options.kind !== kind || options.grouped !== grouped)
-    throw new Error(`The options are ${options.kind}'s (grouped: ${options.grouped}), not ${kind}'s`);
-  return options as Extract<StepOptions, { grouped: G; kind: K }>;
+/** A page of options, its rows groups (`grouped`) or not: refused when they're the other's. */
+function optionsOf<G extends boolean>(options: StepOptions, grouped: G) {
+  if (options.grouped !== grouped) throw new Error(`The options are grouped: ${options.grouped}, not ${grouped}`);
+  return options as Extract<StepOptions, { grouped: G }>;
 }
 
 /** A level's picks as a plan's payloads: its skills' points, and its feats and powers, each in its pool. */
@@ -268,8 +267,8 @@ describe("character level plans", () => {
     const classes = await expectOk(
       options.$post({ param: { characterId, step: "class-plan" }, query: {}, json: { plan: empty } }),
     );
-    expect(optionsOf(classes, "klasses", false).items.find((klass) => klass.id === fighter)).toMatchObject({
-      nextLevel: 1,
+    expect(optionsOf(classes, false).items.find((klass) => klass.id === fighter)).toMatchObject({
+      track: { next: 1 },
       eligible: true,
     });
 
@@ -282,7 +281,7 @@ describe("character level plans", () => {
         json: { plan, pool: general },
       }),
     );
-    expect(optionsOf(cleave, "feats", true).items.find((row) => row.displayName === "Cleave")).toMatchObject({
+    expect(optionsOf(cleave, true).items.find((row) => row.name === "Cleave")).toMatchObject({
       eligible: true,
     });
 
@@ -291,22 +290,22 @@ describe("character level plans", () => {
     const focus = await expectOk(
       options.$post({ param: { characterId, step: "feats" }, query: { search: "Weapon Focus" }, json }),
     );
-    const family = optionsOf(focus, "feats", true).items.find((row) => row.family !== null);
-    if (!family?.family) throw new Error("No feat family found");
+    const family = optionsOf(focus, true).items.find((row) => row.group !== null);
+    if (!family?.group) throw new Error("No feat family found");
     const members = await expectOk(
       options.$post({
         param: { characterId, step: "feats" },
         query: { limit: "50" },
-        json: { ...json, group: family.family },
+        json: { ...json, group: family.group },
       }),
     );
     const listed = await expectOk(
       levels["available-feats"].$get({
         param: { characterId },
-        query: { aptitudeId: general, classId: fighter, family: family.family, level: "1", limit: "50" },
+        query: { aptitudeId: general, classId: fighter, family: family.group, level: "1", limit: "50" },
       }),
     );
-    expect(optionsOf(members, "feats", false).items.map(({ id }) => id)).toEqual(listed.items.map(({ id }) => id));
+    expect(optionsOf(members, false).items.map(({ id }) => id)).toEqual(listed.items.map(({ id }) => id));
 
     // A sorcerer's cantrips, at tier 0
     const sorcerer = await createCharacter(16);
@@ -331,7 +330,7 @@ describe("character level plans", () => {
         },
       }),
     );
-    const cantripIds = optionsOf(cantrips, "powers", false).items.map(({ id }) => id);
+    const cantripIds = optionsOf(cantrips, false).items.map(({ id }) => id);
     expect(cantripIds).toEqual(cantripsListed.items.map(({ id }) => id));
     expect(cantripIds).toContain(sorcerer.ctx.powerMap["Detect Magic"]);
     // A plan's spells picked so far stay out
@@ -348,9 +347,7 @@ describe("character level plans", () => {
         json: { plan: withPicked, pool: sorcererSpells, tier: "0" },
       }),
     );
-    expect(optionsOf(rest, "powers", false).items.map(({ id }) => id)).not.toContain(
-      sorcerer.ctx.powerMap["Detect Magic"],
-    );
+    expect(optionsOf(rest, false).items.map(({ id }) => id)).not.toContain(sorcerer.ctx.powerMap["Detect Magic"]);
   });
 
   test("saves a level-up's plan as the levels it writes, and an edit's as the level's", async () => {
@@ -638,7 +635,7 @@ describe("character level plans", () => {
           json: { plan: { steps: steps as typeof fighterRanger }, pool: general, advancement },
         }),
       );
-      return optionsOf(answer, "feats", true).items.map(({ displayName }) => displayName);
+      return optionsOf(answer, true).items.map(({ name }) => name);
     };
     // The ranger's level after it grants Track: the fighter's level leaves it out
     expect(await track(fighterPlan(ctx, 1), 0)).toEqual(["Track"]);
@@ -663,9 +660,10 @@ describe("character level plans", () => {
         json: { plan: { steps: fighterPlan(ctx, 1) } },
       }),
     );
-    expect(
-      optionsOf(classes, "klasses", false).items.find(({ id }) => id === ctx.klassMap.pc["Fighter"]),
-    ).toMatchObject({ eligible: true, nextLevel: 1 });
+    expect(optionsOf(classes, false).items.find(({ id }) => id === ctx.klassMap.pc["Fighter"])).toMatchObject({
+      eligible: true,
+      track: { next: 1 },
+    });
 
     // An edit's: at its level, Cleave eligible with the level's Power Attack, not without it
     const fighter1 = picks(ctx, FIGHTER_LEVELS[0]);
@@ -680,7 +678,7 @@ describe("character level plans", () => {
           json: { plan: { editedLevelId: created.id, steps: { feats } }, pool: general },
         }),
       );
-      return optionsOf(answer, "feats", true).items.find(({ displayName }) => displayName === "Cleave")?.eligible;
+      return optionsOf(answer, true).items.find(({ name }) => name === "Cleave")?.eligible;
     };
     expect(await cleave(payloadsOf(fighter1).feats)).toBe(true);
     expect(await cleave([])).toBe(false);
