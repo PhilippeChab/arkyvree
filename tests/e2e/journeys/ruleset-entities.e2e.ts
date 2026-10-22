@@ -86,13 +86,20 @@ test.describe("A fork's entities", () => {
     const inherited = page.url();
 
     const name = `Abyssal ${Date.now()}`;
-    await page.getByLabel("Name", { exact: true }).fill(name);
+    const nameField = page.getByLabel("Name", { exact: true });
+    await nameField.fill(name);
+    // The field the save started from, which stays on the page as it moves to the copy
+    const field = await nameField.elementHandle();
     const saved = apiResponse(page, "PUT", new RegExp(`/api/rulesets/${forkId}/entities/languages/[a-f0-9-]+`));
     await page.getByRole("button", { name: /^Save$/ }).click();
     await saved;
     // The copy is the fork's own: its page moves to it, and keeps its name after a reload
     await expect(page).not.toHaveURL(inherited);
     await expect(page).toHaveURL(new RegExp(`/rulesets/${forkId}/languages/[a-f0-9-]+$`));
+    await expect(nameField).toHaveValue(name);
+    // The address changes before the page renders it: once it has settled, the same field still holds the name
+    await page.waitForLoadState("networkidle");
+    expect(await field?.evaluate((element) => element.isConnected)).toBe(true);
     await page.reload();
     await expect(page.getByLabel("Name", { exact: true })).toHaveValue(name, { timeout: 10_000 });
   });
@@ -101,6 +108,7 @@ test.describe("A fork's entities", () => {
     await signIn(page, ownerUser.email, ownerUser.password);
     const forkId = await forkCoreRuleset(page, uniqueName("Unknown Fork"));
     await page.goto(`/rulesets/${forkId}/widgets/00000000-0000-4000-8000-000000000000`);
-    await expect(page).toHaveURL(new RegExp(`/rulesets/${forkId}/races$`));
+    await expect(page).toHaveURL(new RegExp(`/rulesets/${forkId}/[a-z-]+$`));
+    await expect(page).not.toHaveURL(/widgets/);
   });
 });

@@ -80,8 +80,8 @@ function EntityDetails({ entityId, kind, label, rulesetId }: EntityDetailsProps)
 
 /**
  * The page of an entity of any kind whose row opens its own page (`opens: "page"`: a language's, a skill's, an
- * ability's), by its kind's URL segment: it waits for its ruleset and its rules to know its kind, reading the entity
- * meanwhile; a segment no such kind has goes back to the ruleset, and rules that failed to load say so.
+ * ability's), by its kind's URL segment: it waits for its ruleset to know its kind by its rules (which the app has
+ * loaded before any page), reading the entity meanwhile; a segment no such kind has goes back to the ruleset.
  */
 export default function EntityDetailsPage() {
   const {
@@ -95,20 +95,20 @@ export default function EntityDetailsPage() {
   }>();
   const location = useLocation();
   const { data: ruleset, isLoading, error } = useQuery(rulesetDetailQuery(rulesetId));
-  const { rules, isPending: rulesPending, error: rulesError } = useRules(ruleset?.baseRules);
-  // Read alongside its ruleset and rules, under the key its details read it by: a segment no kind has is refused
+  const { rules } = useRules(ruleset?.baseRules);
+  // Read alongside its ruleset, under the key its details read it by: a segment no kind has is refused
   useQuery(entityQuery(rulesetId, getEntityTypeOfSegment(section), entityId));
   const kind = rules?.kinds.find((each) => each.opens === "page" && getUrlSegment(each.type) === section);
   const label = kind ? entityTypeLabel(kind.type, rules?.words) : "Entity";
   const back = entityPageBack(location.state, `/rulesets/${rulesetId}/${section}`, rules?.words);
 
-  if (ruleset && rules) {
+  if (ruleset) {
     if (!kind) return <Navigate to={`/rulesets/${rulesetId}`} replace />;
     // Keyed by its kind alone: a save that copies an inherited entity moves to the copy on the same page
     return <EntityDetails key={kind.type} rulesetId={rulesetId} entityId={entityId} kind={kind} label={label} />;
   }
 
-  if (isLoading || rulesPending) {
+  if (isLoading) {
     return (
       <EntityDetailLayout what={label} backTo={back.to} isLoading>
         {null}
@@ -116,6 +116,5 @@ export default function EntityDetailsPage() {
     );
   }
 
-  const message = ruleset ? loadFailureMessage("Rules", rulesError) : loadFailureMessage("Ruleset", error);
-  return <EntityPageError message={message} backLabel={back.label} backTo={back.to} />;
+  return <EntityPageError message={loadFailureMessage("Ruleset", error)} backLabel={back.label} backTo={back.to} />;
 }
