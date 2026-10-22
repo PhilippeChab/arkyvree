@@ -12,9 +12,7 @@ import { createQueryClient } from "./lib/queryClient.ts";
 import SignInPage from "./pages/auth/SignInPage.tsx";
 import DashboardPage from "./pages/dashboard/DashboardPage.tsx";
 
-const AbilityDetailsPage = lazy(() => import("./pages/rulesets/details/entities/AbilityDetailsPage.tsx"));
 const ActivitiesPage = lazy(() => import("./pages/activities/ActivitiesPage.tsx"));
-const AptitudeDetailsPage = lazy(() => import("./pages/rulesets/details/entities/AptitudeDetailsPage.tsx"));
 const CampaignCharacterPage = lazy(() => import("./pages/campaigns/CampaignCharacterPage.tsx"));
 const CampaignDetailsPage = lazy(() => import("./pages/campaigns/details/CampaignDetailsPage.tsx"));
 const CampaignsPage = lazy(() => import("./pages/campaigns/CampaignsPage.tsx"));
@@ -23,22 +21,19 @@ const CharactersPage = lazy(() => import("./pages/characters/CharactersPage.tsx"
 const ClassDetailsPage = lazy(() => import("./pages/rulesets/details/classes/ClassDetailsPage.tsx"));
 const CustomizationPage = lazy(() => import("./pages/rulesets/customization/CustomizationPage.tsx"));
 const DemoExpiredPage = lazy(() => import("./pages/demo-expired/DemoExpiredPage.tsx"));
+const EntityPage = lazy(() => import("./pages/rulesets/details/entities/EntityPage.tsx"));
 const ForgotPasswordPage = lazy(() => import("./pages/auth/ForgotPasswordPage.tsx"));
 const InvitePage = lazy(() => import("./pages/invites/InvitePage.tsx"));
-const LanguageDetailsPage = lazy(() => import("./pages/rulesets/details/entities/LanguageDetailsPage.tsx"));
 const LegalPage = lazy(() => import("./pages/legal/LegalPage.tsx"));
-const MechanicDetailsPage = lazy(() => import("./pages/rulesets/details/entities/MechanicDetailsPage.tsx"));
 const NotificationsPage = lazy(() => import("./pages/notifications/NotificationsPage.tsx"));
 const ProfilePage = lazy(() => import("./pages/profile/ProfilePage.tsx"));
 const queryClient = createQueryClient();
 const ResetPasswordPage = lazy(() => import("./pages/auth/ResetPasswordPage.tsx"));
 const RulesetDetailsPage = lazy(() => import("./pages/rulesets/details/RulesetDetailsPage.tsx"));
 const RulesetsPage = lazy(() => import("./pages/rulesets/RulesetsPage.tsx"));
-const SaveDetailsPage = lazy(() => import("./pages/rulesets/details/entities/SaveDetailsPage.tsx"));
 const SettingsPage = lazy(() => import("./pages/settings/SettingsPage.tsx"));
 const SharedCharacterPage = lazy(() => import("./pages/share/SharedCharacterPage.tsx"));
 const SignUpPage = lazy(() => import("./pages/auth/SignUpPage.tsx"));
-const SkillDetailsPage = lazy(() => import("./pages/rulesets/details/entities/SkillDetailsPage.tsx"));
 const VerifyEmailPage = lazy(() => import("./pages/auth/VerifyEmailPage.tsx"));
 
 /**
@@ -70,16 +65,11 @@ const router = createBrowserRouter(
           <Route path="rulesets/:id" element={<RulesetDetailsPage />} />
           <Route path="rulesets/:id/:section" element={<RulesetDetailsPage />} />
 
-          {/* A simple entity's page: one without customizations */}
-          <Route path="rulesets/:id/languages/:languageId" element={<LanguageDetailsPage />} />
-          <Route path="rulesets/:id/skills/:skillId" element={<SkillDetailsPage />} />
-          <Route path="rulesets/:id/saves/:saveId" element={<SaveDetailsPage />} />
-          <Route path="rulesets/:id/mechanics/:mechanicId" element={<MechanicDetailsPage />} />
-          <Route path="rulesets/:id/aptitudes/:aptitudeId" element={<AptitudeDetailsPage />} />
-          <Route path="rulesets/:id/abilities/:abilityId" element={<AbilityDetailsPage />} />
-
           <Route path="rulesets/:id/classes/:classId" element={<ClassDetailsPage />} />
           <Route path="rulesets/:id/classes/:classId/:section" element={<ClassDetailsPage />} />
+
+          {/* A page kind's entity's page, by its kind's URL segment: one without customizations (a language, a skill) */}
+          <Route path="rulesets/:id/:section/:entityId" element={<EntityPage />} />
 
           {/* A customizable entity's page: its details and its customizations' tabs */}
           <Route path="rulesets/:id/:entityType/:entityId/customization" element={<CustomizationPage />} />

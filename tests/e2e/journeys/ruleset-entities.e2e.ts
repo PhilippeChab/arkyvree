@@ -32,7 +32,7 @@ test.describe("A fork's entities", () => {
       const dialog = page.getByRole("dialog", { name: `Create New ${label}` });
       await dialog.getByLabel("Name", { exact: true }).fill(name);
       await fill?.(page);
-      // Its section creates it through the routes by kind
+      // Its section creates it, and its page saves and deletes it, through the routes by kind
       const created = apiResponse(page, "POST", new RegExp(`/api/rulesets/${forkId}/entities/${section}$`));
       await dialog.getByRole("button", { name: /^Create$/ }).click();
       await created;
@@ -43,7 +43,7 @@ test.describe("A fork's entities", () => {
       await expect(nameField).toHaveValue(name);
 
       await nameField.fill(`${name} renamed`);
-      const saved = apiResponse(page, "PUT", new RegExp(`/api/rulesets/${forkId}/${section}/[a-f0-9-]+`));
+      const saved = apiResponse(page, "PUT", new RegExp(`/api/rulesets/${forkId}/entities/${section}/[a-f0-9-]+`));
       await page.getByRole("button", { name: /^Save$/ }).click();
       await saved;
       await page.reload();
@@ -61,7 +61,7 @@ test.describe("A fork's entities", () => {
       await expect(page.getByText(`${label} Details`)).toBeVisible();
 
       await openActionsMenu(page, /^Delete Permanently$/);
-      const deleted = apiResponse(page, "DELETE", new RegExp(`/api/rulesets/${forkId}/${section}/[a-f0-9-]+`));
+      const deleted = apiResponse(page, "DELETE", new RegExp(`/api/rulesets/${forkId}/entities/${section}/[a-f0-9-]+`));
       await page
         .getByRole("dialog", { name: `Delete ${label}` })
         .getByRole("button", { name: /^Delete$/ })
