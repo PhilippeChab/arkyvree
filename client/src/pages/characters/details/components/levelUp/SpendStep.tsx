@@ -144,11 +144,14 @@ export function SpendStep({ characterId, step, wizard }: SpendStepProps) {
   const { answer, answerError, control, fitted, isAnswering } = wizard;
   const spend = answerOf(answer, step);
   // Changed from the points as they fit, which the wizard reads
-  const { field } = useController({ control, name: `points.${step.name}` });
+  // The form's points, every step's: a step replaces them whole, so the wizard sees a new plan
+  const { field } = useController({ control, name: "points" });
   const points = fitted.points[step.name] ?? {};
   // Read as a row spends, so the callback the memoized rows get stays the same
   const latestPoints = useLatest(points);
-  const setPoints = field.onChange;
+  const latestForm = useLatest(field.value);
+  const { onChange } = field;
+  const setPoints = (spent: Record<string, number>) => onChange({ ...latestForm.current, [step.name]: spent });
   const budget = spend?.budget ?? 0;
 
   // The compiler keeps it the same while the budget is: it reads the points as they stand

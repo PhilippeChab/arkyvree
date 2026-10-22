@@ -22,7 +22,7 @@ interface ChoiceFieldProps {
 /** What a level wizard hands its `choose` step: the plan's answer, its advancements, and the form that holds the choices. */
 interface ChooseState {
   /** The words its advancements take: a position's ("Level"). */
-  advancementWords: { position: { one: string } } | undefined;
+  advancementWords: { position: { many: string; one: string } } | undefined;
   answer: PlanAnswer | undefined;
   answerError: Error | null;
   control: Control<LevelPlanForm>;
@@ -64,33 +64,39 @@ function ChoiceField({ name, onChange, options, prompt, value }: ChoiceFieldProp
  */
 export function ChooseStep({ step, wizard }: ChooseStepProps) {
   const { advancementWords, answer, answerError, control, isAnswering, slots } = wizard;
-  const { field } = useController({ control, name: `choices.${step.name}` });
+  // The form's choices, every step's: a step replaces them whole, so the wizard sees a new plan
+  const { field } = useController({ control, name: "choices" });
   const choose = answerOf(answer, step);
   if (isAnswering) return <DiceSpinner />;
   if (answerError && !answer) return <LoadError what={step.label} error={answerError} />;
   if (!answer || !choose) return null;
+  // Its rules' words: what it chooses ("ability increase"), at what ("these levels")
   const word = step.words.word.one.toLowerCase();
-  if (choose.advancements.length === 0)
+  const position = advancementWords?.position ?? { many: "", one: "" };
+  if (choose.advancements.length === 0) {
+    const at = slots.length > 1 ? `these ${position.many}` : `this ${position.one}`;
     return (
       <BlankNote>
-        No {word} at {slots.length > 1 ? "these levels" : "this level"}
+        No {word} at {at.toLowerCase()}
       </BlankNote>
     );
+  }
 
-  const chosen: Record<number, string | null> = field.value ?? {};
+  const chosen = field.value[step.name] ?? {};
   const choiceAt = (index: number) => (
     <ChoiceField
       prompt={step.words.prompt}
       options={choose.options}
       name={`${step.name}-${index}`}
       value={chosen[slots[index].key] ?? null}
-      onChange={(optionId) => field.onChange({ ...field.value, [slots[index].key]: optionId })}
+      onChange={(optionId) =>
+        field.onChange({ ...field.value, [step.name]: { ...chosen, [slots[index].key]: optionId } })
+      }
     />
   );
   // An edit's one advancement: its field alone
   if (slots.length === 1) return choiceAt(choose.advancements[0]);
 
-  const position = advancementWords?.position.one ?? "";
   return (
     <Stack spacing={1.5}>
       {choose.advancements.map((index) => {
@@ -99,8 +105,8 @@ export function ChooseStep({ step, wizard }: ChooseStepProps) {
           <Stack key={index} spacing={1}>
             <SubsectionTitle>
               {advancement
-                ? `${advancement.track.name} ${position} ${advancement.position}`
-                : `${position} ${index + 1}`}
+                ? `${advancement.track.name} ${position.one} ${advancement.position}`
+                : `${position.one} ${index + 1}`}
             </SubsectionTitle>
             {/* The field on a line of its own, under the advancement's title */}
             <Box>{choiceAt(index)}</Box>

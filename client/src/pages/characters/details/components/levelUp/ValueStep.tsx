@@ -36,7 +36,8 @@ interface ValueStepProps {
  */
 export function ValueStep({ step, wizard }: ValueStepProps) {
   const { advancementWords, answer, answerError, form, isAnswering, slots } = wizard;
-  const { field } = useController({ control: form.control, name: `values.${step.name}` });
+  // The form's values, every step's: a step replaces them whole, so the wizard sees a new plan
+  const { field } = useController({ control: form.control, name: "values" });
   const diceRoll = useDiceRoll();
   const bounds = answerOf(answer, step)?.advancements;
   if (isAnswering) return <DiceSpinner />;
@@ -44,11 +45,12 @@ export function ValueStep({ step, wizard }: ValueStepProps) {
   // An edit's advancement loads with the level it edits
   if (!answer || !bounds || bounds.length === 0) return <DiceSpinner />;
 
-  const values: Record<number, number | null> = field.value ?? {};
+  const values = field.value[step.name] ?? {};
   // Each lands on the values as they stand then, an earlier roll's landing included
   const setValue = (index: number, value: number | null) => {
     const { key } = slots[index];
-    field.onChange({ ...form.getValues(`values.${step.name}`), [key]: value });
+    const all = form.getValues("values");
+    field.onChange({ ...all, [step.name]: { ...all[step.name], [key]: value } });
   };
   const rollAt = (indexes: number[]) =>
     diceRoll.roll(
@@ -69,7 +71,10 @@ export function ValueStep({ step, wizard }: ValueStepProps) {
           onClick={() =>
             field.onChange({
               ...field.value,
-              ...Object.fromEntries(slots.map(({ key }, index) => [key, bounds[index]?.max ?? null])),
+              [step.name]: {
+                ...values,
+                ...Object.fromEntries(slots.map(({ key }, index) => [key, bounds[index]?.max ?? null])),
+              },
             })
           }
           size="small"

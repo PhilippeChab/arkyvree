@@ -142,7 +142,10 @@ export function PickStep({ characterId, step, wizard }: PickStepProps) {
   const { answer, answerError, control, fitted, isAnswering, pickerRequest } = wizard;
   const pick = answerOf(answer, step);
   // Changed from the picks as they fit, which the wizard reads
-  const { field } = useController({ control, name: `picks.${step.name}` });
+  // The form's picks, every step's: a step replaces them whole, so the wizard sees a new plan
+  const { field } = useController({ control, name: "picks" });
+  const setPicks = (stepPicks: Record<string, PlannedPick[]>) =>
+    field.onChange({ ...field.value, [step.name]: stepPicks });
   const picks = fitted.picks[step.name] ?? {};
   const search = wizard.searches[step.name] ?? "";
   const debouncedSearch = useDebouncedValue(search);
@@ -188,7 +191,7 @@ export function PickStep({ characterId, step, wizard }: PickStepProps) {
       name: option.name,
       ...(open.tier !== undefined && { tier: open.tier }),
     };
-    field.onChange(withPick(picks, open.pool.id, planned));
+    setPicks(withPick(picks, open.pool.id, planned));
   };
 
   return (
@@ -221,7 +224,7 @@ export function PickStep({ characterId, step, wizard }: PickStepProps) {
           level: tierName(open.tier),
           picks: picksAt(open.pool.id, open.tier),
           room: roomAt(open.pool, open.tier),
-          onRemove: (id) => field.onChange(withoutPick(picks, open.pool.id, id)),
+          onRemove: (id) => setPicks(withoutPick(picks, open.pool.id, id)),
         }
       }
       search={search}
