@@ -13,5 +13,6 @@ describe("a sheet's file name", () => {
     expect(formatSheetFileName("a".repeat(300))).toBe(`${"a".repeat(200)}-sheet.pdf`);
     // An emoji at the cut is kept whole, or left out whole
     expect(formatSheetFileName(`${"a".repeat(199)}🐉🐉`)).toBe(`${"a".repeat(199)}🐉-sheet.pdf`);
+    expect(formatSheetFileName(`${"a".repeat(199)}👨‍👩‍👧🇫🇷`)).toBe(`${"a".repeat(199)}👨‍👩‍👧-sheet.pdf`);
   });
 });

@@ -10,8 +10,9 @@ export const v1Target = z
     id: v1Id,
     kind: z.string().meta({
       description:
-        "The record's kind, as v1 names a kind (`characters`, `campaigns`, `classes`, `spells`, `exports`…), or its " +
-        "table where v1 has no route for it (`players`, `character_contributors`…)",
+        "The record's kind, as v1's routes name it (`characters`, `campaigns`, `classes`, `spells`, `exports`, " +
+        "`campaign-invites`, `ruleset-invites`, `character-invites`…), or its table where v1 has no route for it " +
+        "(`players`, `player_characters`…)",
     }),
   })
   .meta({ description: "A record an activity or a notification is about", id: "Target" });

@@ -716,7 +716,7 @@ export const exportsInAccount = account.table(
     fileName: text("file_name").notNull(),
     data: bytea("data"),
     expiresAt: timestamp("expires_at", { mode: "string", withTimezone: true }).notNull(),
-    status: exportStatus().default("ready").notNull(),
+    status: exportStatus().default("pending").notNull(),
   },
   (table) => [
     index("exports_user_id_idx").using("btree", table.userId.asc().nullsLast()),

@@ -1,12 +1,20 @@
 /**
  * An entity kind as v1 names it, in a route and in an answer: its URL segment (`classes`, `class-levels`), a power a
- * spell (`spells`), as the app's screens call it.
+ * spell (`spells`), as the app's screens call it, and an invite the route that reads it (`campaign-invites`).
  */
 
 import { getEntityTypeOfSegment, getUrlSegment } from "@/shared/urlSegments.ts";
 
-/** The kinds v1 renames past their URL segment, by entity type: a power is a spell. */
-const V1_SEGMENTS: Readonly<Record<string, string>> = { powers: "spells" };
+/**
+ * The kinds v1 renames past their URL segment, by entity type or table: a power is a spell, and an invite (a
+ * contributor's too, which its invite's route reads, whatever its status) is the route that reads it.
+ */
+const V1_SEGMENTS: Readonly<Record<string, string>> = {
+  character_contributors: "character-invites",
+  contributors: "ruleset-invites",
+  invites: "campaign-invites",
+  powers: "spells",
+};
 
 /** The entity types v1 renames, by the kind it names them. */
 const V1_RENAMED: ReadonlyMap<string, string> = new Map(
