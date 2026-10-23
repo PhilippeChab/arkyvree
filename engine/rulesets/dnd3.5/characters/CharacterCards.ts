@@ -16,7 +16,7 @@ export default class CharacterCards {
   /**
    * The card of a character (`character`, with its levels, `levels`), named as its ruleset's view names its race and
    * classes, a copied or renamed one by its own name: its race's chip, which a partly seen character shows, then each
-   * class at the highest level the character has in it; and its race, its classes and its total level.
+   * class at the highest level the character has in it.
    */
   static describe(view: CardView, character: { raceId: string }, levels: { klassLevelId: string }[]): CharacterCard {
     const { rulesetData } = view;
@@ -38,9 +38,6 @@ export default class CharacterCards {
           tone: "primary" as const,
         })),
       ],
-      levels: classLevels,
-      race,
-      totalLevel: classLevels.reduce((sum, { level }) => sum + level, 0),
     };
   }
 }

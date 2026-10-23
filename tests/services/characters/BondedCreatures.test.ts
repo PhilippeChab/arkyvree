@@ -21,8 +21,9 @@ import { CharacterModifiersService } from "@/server/services/characters/modifier
 import { CharacterSharingService } from "@/server/services/characters/sharing/index.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { createTestCampaign } from "@/tests/support/campaigns.ts";
+import { subsheetsOf } from "@/tests/support/characters.ts";
 import { addCharacterContributor } from "@/tests/support/contributors.ts";
-import { buildAs } from "@/tests/support/dnd3.5/characters.ts";
+import { buildAs, sheetOf } from "@/tests/support/dnd3.5/characters.ts";
 import {
   createDruidWithCompanion,
   createPaladinWithMount,
@@ -101,11 +102,12 @@ describe("Bonded creatures", () => {
       });
       expect(await CharacterLevels.findMany(db, { characterId: bonded.id })).toHaveLength(levels);
       const sheet = await CharactersService.getCharacter(owner, masterId);
-      const bondFeat = Object.values(sheet.classes)
+      const bondFeat = Object.values((await sheetOf(masterId)).classes)
         .flatMap((klass) => klass.levels.flatMap((level) => level.feats))
         .find((feat) => feat.name === bond);
       expect(bondFeat).toBeDefined();
-      expect(sheet.bonded[kind]).toMatchObject({ id: bonded.id, kind, bondFeatId: bondFeat?.id });
+      // In the details of the feat that bonds it
+      expect(subsheetsOf(sheet).map(({ entryId, id }) => [entryId, id])).toEqual([[bondFeat?.id ?? null, bonded.id]]);
     },
   );
 
@@ -263,21 +265,17 @@ describe("CharactersService with bonded creatures", () => {
 
   test("shows a master without a familiar with none, and one whose master is archived with it", async () => {
     const plain = await createSeedCharacter(await getSeedCtx(), "wizard");
-    expect((await CharactersService.getCharacter(owner, plain)).bonded).toEqual({});
+    expect(subsheetsOf(await CharactersService.getCharacter(owner, plain))).toEqual([]);
     const { masterId } = await createWizardWithFamiliar();
     await CharactersService.archiveCharacter(owner, masterId);
-    expect((await CharactersService.getCharacter(owner, masterId)).bonded.familiar).toBeDefined();
+    expect(subsheetsOf(await CharactersService.getCharacter(owner, masterId))).toHaveLength(1);
   });
 
   test("opens a familiar on its own, for its master's player and contributors, even with the master archived", async () => {
     const { masterId, bonded } = await createWizardWithFamiliar();
     const { user, session: contributor } = await createTestUser();
     await addCharacterContributor(masterId, user, SEED_USER_ID);
-    expect(await CharactersService.getCharacter(owner, bonded.id)).toMatchObject({
-      id: bonded.id,
-      kind: "familiar",
-      bonded: {},
-    });
+    expect(await CharactersService.getCharacter(owner, bonded.id)).toMatchObject({ id: bonded.id, kind: "familiar" });
     expect((await CharactersService.getCharacter(contributor, bonded.id)).id).toBe(bonded.id);
     expect(CharactersService.getCharacter((await createTestUser()).session, bonded.id)).rejects.toThrow(NotFoundError);
 
@@ -308,7 +306,7 @@ describe("CharactersService with bonded creatures", () => {
   test("shares a master with their familiar", async () => {
     const { masterId } = await createWizardWithFamiliar();
     const { shareToken } = await CharacterSharingService.generateShareToken(owner, masterId);
-    expect((await CharacterSharingService.getSharedCharacter(shareToken!)).bonded.familiar).toBeDefined();
+    expect(subsheetsOf(await CharacterSharingService.getSharedCharacter(shareToken!))).toHaveLength(1);
   });
 
   test.each([
@@ -353,10 +351,10 @@ describe("CharactersService with bonded creatures", () => {
         await Players.create(db, { userId: user.id, campaignId: campaign.id, role: viewerRole });
         viewer = session;
       }
-      return Object.keys((await CampaignCharactersService.getCharacter(viewer, campaign.id, masterId)).bonded);
+      return subsheetsOf(await CampaignCharactersService.getCharacter(viewer, campaign.id, masterId)).length;
     };
-    expect(await bondedIn("Public")).toEqual(["familiar"]);
-    expect(await bondedIn("Partial", "Player Character")).toEqual([]);
+    expect(await bondedIn("Public")).toBe(1);
+    expect(await bondedIn("Partial", "Player Character")).toBe(0);
   });
 });
 

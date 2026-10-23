@@ -6,8 +6,9 @@ import { db } from "@/server/database/index.ts";
 import { Abilities, Characters } from "@/server/repositories/index.ts";
 import { api, createSignedInUser, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
 import { postCampaign } from "@/tests/support/campaigns.ts";
-import { postCharacter } from "@/tests/support/characters.ts";
+import { notesOf, postCharacter } from "@/tests/support/characters.ts";
 import { addCharacterContributor } from "@/tests/support/contributors.ts";
+import { sheetOf } from "@/tests/support/dnd3.5/characters.ts";
 import { createWizardWithFamiliar } from "@/tests/support/dnd3.5/levelFixtures.ts";
 import { readPcgenFile } from "@/tests/support/dnd3.5/pcgenFiles.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
@@ -30,7 +31,7 @@ const LEVEL_WORDS = {
 const PRIVATE_NOTES = "Plans to betray the party";
 
 async function languageNames(id: string) {
-  return (await expectOk(character.$get({ param: { id } }))).identity.physiology.languages.map((l) => l.name).sort();
+  return (await sheetOf(id)).identity.physiology.languages.map((l) => l.name).sort();
 }
 
 /** Every ability at 10 but `ability`, at `score`: a new character's scores. */
@@ -154,7 +155,7 @@ describe("characters", () => {
   test("tags a caster's spells with the domains the character picked", async () => {
     // Theron, a seeded cleric, picked the Healing and Sun domains.
     const [theron] = (await expectOk(characters.$get({ query: { search: "Theron Lightbringer" } }))).items;
-    const detail = await expectOk(character.$get({ param: { id: theron.id } }));
+    const detail = await sheetOf(theron.id);
 
     const spells = detail.spellGroups.flatMap((list) => list.levels.flatMap((group) => group.spells));
     const tags = [...new Set(spells.flatMap((spell) => spell.tags?.map((tag) => tag.name) ?? []))].sort();
@@ -202,7 +203,7 @@ describe("characters", () => {
       const { id } = await postCharacter();
       await expectOk(character.abilities.$put({ param: { id }, json: { [abilityMap["Strength"]]: 18 } }));
 
-      const detail = await expectOk(character.$get({ param: { id } }));
+      const detail = await sheetOf(id);
       const strength = Object.values(detail.abilities).find((a) => a.abilityId === abilityMap["Strength"]);
       expect(strength).toMatchObject({ base: 18, total: 18, modifier: 4 });
     });
@@ -215,7 +216,7 @@ describe("characters", () => {
       const scores = Object.fromEntries(Object.values(abilityMap).map((abilityId) => [abilityId, 10]));
       const { id } = await postCharacter({ rulesetId: fork.id, abilities: { ...scores, [forcePoints.id]: 12 } });
 
-      const { abilities } = await expectOk(character.$get({ param: { id } }));
+      const { abilities } = await sheetOf(id);
       // The books' six first, then the ruleset's own
       expect(abilities.map((ability) => ability.name)).toEqual([...ABILITY_NAMES, "Force Points"]);
       expect(abilities[0]).toMatchObject({ abilityId: abilityMap["Strength"], key: "strength", abbreviation: "STR" });
@@ -228,9 +229,9 @@ describe("characters", () => {
     });
 
     test("lists a bonded creature's abilities in its master's sheet as its own, each with its abbreviation", async () => {
-      const { masterId } = await createWizardWithFamiliar();
-      const master = await expectOk(character.$get({ param: { id: masterId } }));
-      expect(master.bonded.familiar?.abilities.map((ability) => ability.abbreviation)).toEqual([
+      const { bonded } = await createWizardWithFamiliar();
+      const familiar = await sheetOf(bonded.id);
+      expect(familiar.abilities.map((ability) => ability.abbreviation)).toEqual([
         "STR",
         "DEX",
         "CON",
@@ -258,7 +259,8 @@ describe("characters", () => {
       const { abilityMap } = await getSeedCtx();
       const { id } = await postCharacter({ abilities: await scoresWith("Strength", 18) });
 
-      const { blocks, combat } = await expectOk(character.$get({ param: { id } }));
+      const { blocks } = await expectOk(character.$get({ param: { id } }));
+      const { combat } = await sheetOf(id);
       expect(blocks.map(({ kind, key, title }) => [kind, key, title])).toEqual([
         ["fields", "identity", "Personal Details"],
         ["scores", "abilities", "Ability Scores"],
@@ -306,7 +308,8 @@ describe("characters", () => {
 
     test("sums a character's classes up for its header, each at its level, with its levels and their words", async () => {
       const { masterId } = await createWizardWithFamiliar();
-      const { summary, classes } = await expectOk(character.$get({ param: { id: masterId } }));
+      const { summary } = await expectOk(character.$get({ param: { id: masterId } }));
+      const { classes } = await sheetOf(masterId);
       const [wizard] = Object.values(classes);
       expect(summary).toEqual({
         separator: " · ",
@@ -343,9 +346,9 @@ describe("characters", () => {
     });
 
     test("describes a bonded creature's sheet in the same blocks", async () => {
-      const { masterId } = await createWizardWithFamiliar();
-      const master = await expectOk(character.$get({ param: { id: masterId } }));
-      expect(master.bonded.familiar?.blocks.map(({ key }) => key)).toEqual([
+      const { bonded } = await createWizardWithFamiliar();
+      const familiar = await expectOk(character.$get({ param: { id: bonded.id } }));
+      expect(familiar.blocks.map(({ key }) => key)).toEqual([
         "identity",
         "abilities",
         "saves",
@@ -358,7 +361,8 @@ describe("characters", () => {
 
     test("lists the skills by name, a class skill marked and a family grouped, each with its figures", async () => {
       const { id } = await postCharacter();
-      const { blocks, skills } = await expectOk(character.$get({ param: { id } }));
+      const { blocks } = await expectOk(character.$get({ param: { id } }));
+      const { skills } = await sheetOf(id);
       const block = blocks.find((each) => each.key === "skills");
       if (block?.kind !== "table") throw new Error("no skills table");
       expect(block.note).toBe("* indicates a class skill");
@@ -373,15 +377,15 @@ describe("characters", () => {
     });
 
     test("puts a bonded creature in the details of its master's feat that bonds it, and lists its spells", async () => {
-      const { masterId } = await createWizardWithFamiliar();
+      const { masterId, bonded } = await createWizardWithFamiliar();
       const master = await expectOk(character.$get({ param: { id: masterId } }));
-      const familiar = master.bonded.familiar;
       const feats = master.blocks.find((block) => block.key === "feats");
-      if (feats?.kind !== "entries" || !familiar) throw new Error("no feats or familiar");
-      const bonding = feats.entries.find((entry) => entry.id === familiar.bondFeatId);
+      if (feats?.kind !== "entries") throw new Error("no feats");
+      const bonding = feats.entries.find((entry) => entry.subsheet);
+      expect(bonding?.name).toBe("Cat Familiar");
       expect(bonding?.subsheet).toMatchObject({
-        id: familiar.id,
-        name: familiar.name,
+        id: bonded.id,
+        name: bonded.name,
         scores: { title: "Abilities" },
         stats: { title: "Combat & Saves" },
         chips: { title: "Feats" },
@@ -398,7 +402,9 @@ describe("characters", () => {
       const spells = master.blocks.find((block) => block.key === "spells");
       if (spells?.kind !== "pools") throw new Error("no spells");
       expect(spells).toMatchObject({ title: "Spells", entityType: "powers", counts: { title: "Spells per Day" } });
-      expect(spells.pools.map(({ name }) => name)).toEqual(master.spellGroups.map(({ aptitudeName }) => aptitudeName));
+      expect(spells.pools.map(({ name }) => name)).toEqual(
+        (await sheetOf(masterId)).spellGroups.map(({ aptitudeName }) => aptitudeName),
+      );
     });
   });
 
@@ -546,8 +552,7 @@ describe("characters", () => {
         character.$put({ param: { id }, json: { fields: { deity: "Moradin", age: 0 }, languageIds: [] } }),
         400,
       );
-      const sheet = await expectOk(character.$get({ param: { id } }));
-      expect(sheet.identity.beliefs.deity).toBe("Pelor");
+      expect((await sheetOf(id)).identity.beliefs.deity).toBe("Pelor");
       expect(await languageNames(id)).toContain("Elven");
     });
 
@@ -571,7 +576,7 @@ describe("characters", () => {
       const { id } = await postCharacter({ notes: "Public notes" });
       const saved = await expectOk(character.$put({ param: { id }, json: { privateNotes: PRIVATE_NOTES } }));
       expect(saved).toMatchObject({ notes: "Public notes", privateNotes: PRIVATE_NOTES });
-      expect((await expectOk(character.$get({ param: { id } }))).identity.background).toEqual({
+      expect(notesOf(await expectOk(character.$get({ param: { id } })))).toEqual({
         notes: "Public notes",
         privateNotes: PRIVATE_NOTES,
       });
@@ -580,23 +585,21 @@ describe("characters", () => {
       await addCharacterContributor(id, contributor.user, SEED_USER_ID);
       const theirs = contributor.api.api.characters[":id"];
       await expectOk(theirs.$put({ param: { id }, json: { privateNotes: "Edited by a contributor" } }));
-      expect((await expectOk(theirs.$get({ param: { id } }))).identity.background.privateNotes).toBe(
-        "Edited by a contributor",
-      );
+      expect(notesOf(await expectOk(theirs.$get({ param: { id } })))).toMatchObject({
+        privateNotes: "Edited by a contributor",
+      });
 
       const { api: outsider } = await createSignedInUser("outsider");
       await expectStatus(outsider.api.characters[":id"].$get({ param: { id } }), 404);
       await expectStatus(outsider.api.characters[":id"].$put({ param: { id }, json: { privateNotes: "" } }), 404);
     });
 
-    test("saves a bonded creature's private notes, which its master's sheet holds", async () => {
-      const { masterId, bonded } = await createWizardWithFamiliar();
+    test("saves a bonded creature's private notes, which its own sheet holds", async () => {
+      const { bonded } = await createWizardWithFamiliar();
       await expectOk(character.$put({ param: { id: bonded.id }, json: { privateNotes: PRIVATE_NOTES } }));
 
       const own = await expectOk(character.$get({ param: { id: bonded.id } }));
-      expect(own.identity.background.privateNotes).toBe(PRIVATE_NOTES);
-      const master = await expectOk(character.$get({ param: { id: masterId } }));
-      expect(master.bonded.familiar?.identity.background.privateNotes).toBe(PRIVATE_NOTES);
+      expect(notesOf(own)).toMatchObject({ privateNotes: PRIVATE_NOTES });
     });
   });
 
@@ -611,7 +614,6 @@ describe("characters", () => {
       const shared = guestApi.api.shared.characters[":shareToken"];
       const sheet = await expectOk(shared.$get({ param: { shareToken: shareToken! } }));
       expect(sheet.id).toBe(id);
-      expect(sheet.identity.background).not.toHaveProperty("privateNotes");
       // Its identity's block holds its notes, its private ones not
       const identity = sheet.blocks.find((block) => block.key === "identity");
       expect(identity?.kind === "fields" && identity.notes).toEqual({ notes: "" });
@@ -630,7 +632,6 @@ describe("characters", () => {
       const sheet = await expectOk(
         guestApi.api.shared.characters[":shareToken"].$get({ param: { shareToken: shareToken! } }),
       );
-      expect(sheet.bonded.familiar?.identity.background).not.toHaveProperty("privateNotes");
       expect(JSON.stringify(sheet)).not.toContain(PRIVATE_NOTES);
     });
 

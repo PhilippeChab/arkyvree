@@ -38,7 +38,7 @@ async function findSeededCharacter(rules: BaseRules) {
 }
 
 describe.each(baseRules.enumValues)("The %s module, as core runs its characters' operations", (rules) => {
-  test("reads a character's private notes, its bonded creatures' too, only to a reader who reads them", async () => {
+  test("reads a character's private notes, and each bonded creature's on its own sheet, only to a reader who reads them", async () => {
     const seeded = await findSeededCharacter(rules);
     const [record] = await Characters.update(db, { privateNotes: `${NOTES} ${seeded.id}` }, { id: seeded.id });
     const creatures = await Characters.findMany(db, { parentCharacterId: record.id }, Visibility.All);
@@ -48,15 +48,23 @@ describe.each(baseRules.enumValues)("The %s module, as core runs its characters'
 
     const read = await withRulesetScope(db, record.rulesetId, async (scope) => {
       const character = Engine.for(scope).character(input);
+      // Each creature's own sheet, which holds its notes; its master's shows it without them
+      const creature = (reading: "blank" | "show") =>
+        bonded.map((input) => Engine.for(scope).character(input).describeForMember([], reading));
       return {
-        blank: character.describeForMember(bonded, "blank"),
-        partial: character.describeForMember(bonded, "partial"),
-        shared: character.describe(bonded, "omit"),
+        blank: [character.describeForMember(bonded, "blank"), ...creature("blank")],
+        partial: [character.describeForMember(bonded, "partial")],
+        shared: [character.describe(bonded, "omit")],
         shown: character.describeForMember(bonded, "show"),
+        shownCreatures: creature("show"),
       };
     });
 
-    for (const { id } of [record, ...creatures]) expect(JSON.stringify(read.shown)).toContain(`${NOTES} ${id}`);
+    expect(JSON.stringify(read.shown)).toContain(`${NOTES} ${record.id}`);
+    for (const id of creatures.map((creature) => creature.id)) {
+      expect(JSON.stringify(read.shown)).not.toContain(`${NOTES} ${id}`);
+      expect(JSON.stringify(read.shownCreatures)).toContain(`${NOTES} ${id}`);
+    }
     for (const reading of [read.partial, read.blank, read.shared]) expect(JSON.stringify(reading)).not.toContain(NOTES);
   });
 
@@ -78,11 +86,7 @@ describe.each(baseRules.enumValues)("The %s module, as core runs its characters'
     });
 
     expect(read.card.chips.some((chip) => !chip.partial)).toBe(true);
-    expect(read.partialCard).toMatchObject({
-      chips: read.card.chips.filter((chip) => chip.partial),
-      levels: [],
-      totalLevel: 0,
-    });
+    expect(read.partialCard).toEqual({ chips: read.card.chips.filter((chip) => chip.partial) });
     for (const { name } of read.shown.summary.tracks) expect(JSON.stringify(read.partialCard)).not.toContain(name);
     expect(read.shown.summary.tracks.length).toBeGreaterThan(0);
     expect(read.partial.summary.tracks).toEqual([]);

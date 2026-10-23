@@ -22,14 +22,10 @@ export interface CardChip {
 
 /**
  * A character's card, as a list of characters shows it: its chips, in its ruleset's order (3.5's race, then each class
- * at its highest level), and what its ruleset reads of it, until its lists read its chips alone (3.5's race, its
- * classes at their highest level, its total level), none of its levels for a partly seen character.
+ * at its highest level).
  */
 export interface CharacterCard {
   chips: CardChip[];
-  levels: { klass: string; level: number }[];
-  race: string;
-  totalLevel: number;
 }
 
 /**
@@ -57,14 +53,6 @@ export interface CharacterForm {
 }
 
 /**
- * A character's sheet as the API answers it, in every ruleset's shape: noted (`NotedSheet`), with its bonded creatures'
- * sheets (`bonded`, none for a creature's own), each noted.
- */
-export interface DescribedSheet extends NotedSheet {
-  bonded: Record<string, NotedSheet>;
-}
-
-/**
  * What a character speaks, and what its picked languages (an edit's, as it's made) leave it room for: what its languages
  * picker offers. `automatic`: those it speaks without picking them (a 3.5 race's automatic languages, which its
  * modifiers grant), never stored; `picks`: the picks, past those; `options`: the languages one more pick may add, by
@@ -77,13 +65,12 @@ export interface LanguagesDescription {
 }
 
 /**
- * What a sheet, as the API answers it, holds in every ruleset's: its blocks, in its module's order (`SheetBlock`), and
- * its character's private notes in its identity's background, where the characters part shows them, blanks them or
- * leaves them out as its reader reads them (a `fields` block's, it leaves out for any reader who doesn't read them).
+ * What a sheet, as the API answers it, holds in every ruleset's: its blocks, in its module's order (`SheetBlock`), its
+ * bonded creatures' among them (a `subsheets`' in its entries), and its summary. Its character's private notes are its
+ * `fields` blocks', which the characters part leaves out for a reader who doesn't read them.
  */
 export interface NotedSheet {
   blocks: SheetBlock[];
-  identity: { background: { privateNotes?: string } };
   summary: SheetSummary;
 }
 

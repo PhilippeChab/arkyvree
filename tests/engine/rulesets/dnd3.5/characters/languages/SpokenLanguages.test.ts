@@ -6,9 +6,9 @@ import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { CharacterLanguages, Feats, Modifiers, Races } from "@/server/repositories/index.ts";
 import { readCharacterInput } from "@/server/services/characters/characterInputs.ts";
-import { CharactersService } from "@/server/services/characters/index.ts";
 import type { Character } from "@/shared/relations.ts";
 import { createCharacterAs } from "@/tests/support/characters.ts";
+import { sheetOf } from "@/tests/support/dnd3.5/characters.ts";
 import { addCharacterLevel, createTestKlassLevel, findKlassLevel, pickFeat } from "@/tests/support/levels.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, uniqueId } from "@/tests/support/seed.ts";
@@ -83,7 +83,7 @@ async function roomOf(record: Character) {
 describe("A character's languages", () => {
   test("are those its race's modifiers grant from its creation, which no row stores", async () => {
     const dwarf = await newCharacter("Dwarf");
-    const sheet = await CharactersService.getCharacter(makeSession(), dwarf.id);
+    const sheet = await sheetOf(dwarf.id);
 
     expect(namesOf(sheet.identity.physiology.languages)).toEqual(["Common", "Dwarven"]);
     expect(namesOf((await describeLanguages(dwarf)).automatic)).toEqual(["Common", "Dwarven"]);
@@ -134,7 +134,7 @@ describe("A character's languages", () => {
     const { fork, race } = await createAdjustingRace(adjustment);
     const character = await createOfRace(race.id, { Intelligence: 14 }, fork.id);
 
-    const sheet = await CharactersService.getCharacter(makeSession(), character.id);
+    const sheet = await sheetOf(character.id);
     expect(sheet.abilities.find((ability) => ability.key === "intelligence")?.total).toBe(intelligence);
     expect(await roomOf(character)).toBe(picks);
   });
@@ -215,7 +215,7 @@ describe("A character's languages", () => {
     const character = await pickFeat(SEED_USER_ID, fork.id, feat.id, aptMap["General"]);
 
     expect(namesOf((await describeLanguages(character)).automatic)).toEqual(["Common", "Sylvan"]);
-    const sheet = await CharactersService.getCharacter(makeSession(), character.id);
+    const sheet = await sheetOf(character.id);
     expect(namesOf(sheet.identity.physiology.languages)).toEqual(["Common", "Sylvan"]);
     expect(await planLanguages(character, ["Sylvan"])).toEqual([]);
   });

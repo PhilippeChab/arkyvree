@@ -1,7 +1,7 @@
 import type { InferSelectModel } from "drizzle-orm";
 
 import type { charactersInCharacter } from "@/drizzle/schema.ts";
-import type { NotedSheet, SheetStat } from "@/engine/core/module/index.ts";
+import type { SheetStat } from "@/engine/core/module/index.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import ItemPlacement from "@/engine/rulesets/dnd3.5/rules/ItemPlacement.ts";
 import type { Modifier, Requirement } from "@/shared/relations.ts";
@@ -13,7 +13,11 @@ import SheetSummaries from "./SheetSummaries.ts";
 import SkillNames from "./SkillNames.ts";
 import SpellGroups from "./SpellGroups.ts";
 
-/** A built character as the API answers it. */
+/**
+ * A built character's sheet: every part of it, which its blocks, its summary and its creatures' subsheets are built from
+ * (`buildSheet`); and what the API answers of it (`toResponse`): its row's columns, its ruleset, what its modifiers and
+ * requirements did and its validation, its summary and its blocks.
+ */
 export default class CharacterResponse {
   /** The abilities, each with the parts its box lists beside its base (`parts`: its levels' increases, its misc). */
   private static abilitiesOf(built: DetailedCharacter) {
@@ -69,7 +73,7 @@ export default class CharacterResponse {
   private static identityWithPrivateNotes(built: DetailedCharacter) {
     const { identity } = built.components;
     const data = identity.getIdentity();
-    const background: typeof data.background & NotedSheet["identity"]["background"] = {
+    const background: typeof data.background & { privateNotes?: string } = {
       ...data.background,
       privateNotes: identity.getPrivateNotes(),
     };
@@ -103,19 +107,20 @@ export default class CharacterResponse {
     );
   }
 
-  /** A bonded creature (`record`, built from its rows: `built`) as the API answers it: a sheet, with its feats. */
-  static buildBonded(record: InferSelectModel<typeof charactersInCharacter>, built: DetailedCharacter) {
+  /** A bonded creature's sheet (`record`, built from its rows: `built`), with its feats: what its subsheet reads. */
+  static buildBondedSheet(record: InferSelectModel<typeof charactersInCharacter>, built: DetailedCharacter) {
     return {
-      ...CharacterResponse.buildFull(record, built),
+      ...CharacterResponse.buildSheet(record, built),
       feats: built.components.feats.getFeats(),
     };
   }
 
   /**
-   * A character (`record`, built from its rows: `built`) as the API answers it: its row's columns, its ruleset, and
-   * each part of its sheet, with what its modifiers and requirements did and its validation.
+   * A character's sheet (`record`, built from its rows: `built`): its row's columns, its ruleset, and each part of its
+   * sheet, with what its modifiers and requirements did and its validation; and its summary and its blocks, built from
+   * them.
    */
-  static buildFull(record: InferSelectModel<typeof charactersInCharacter>, built: DetailedCharacter) {
+  static buildSheet(record: InferSelectModel<typeof charactersInCharacter>, built: DetailedCharacter) {
     const ruleset = built.getRuleset();
     const validation = built.validate();
     const requirements = CharacterResponse.enrichedRequirementsOf(built);
@@ -195,5 +200,32 @@ export default class CharacterResponse {
       remainingCharges: entry.remainingCharges,
       updatedAt: entry.updatedAt,
     }));
+  }
+
+  /**
+   * A sheet as the API answers it: its row's columns, its ruleset, what its modifiers and requirements did and its
+   * validation, its summary and its blocks; none of its parts as 3.5 holds them, which its blocks show.
+   */
+  static toResponse(sheet: ReturnType<typeof CharacterResponse.buildSheet>) {
+    return {
+      id: sheet.id,
+      userId: sheet.userId,
+      kind: sheet.kind,
+      parentCharacterId: sheet.parentCharacterId,
+      name: sheet.name,
+      raceId: sheet.raceId,
+      rulesetId: sheet.rulesetId,
+      rulesetName: sheet.rulesetName,
+      baseRules: sheet.baseRules,
+      isCustomRuleset: sheet.isCustomRuleset,
+      deletedAt: sheet.deletedAt,
+      updatedAt: sheet.updatedAt,
+      shareToken: sheet.shareToken,
+      requirements: sheet.requirements,
+      modifiers: sheet.modifiers,
+      validation: sheet.validation,
+      summary: sheet.summary,
+      blocks: sheet.blocks,
+    };
   }
 }

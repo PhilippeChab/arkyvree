@@ -173,14 +173,11 @@ class CharactersService extends include(Object, Archives, Imports) {
         // The user's own characters: every card whole
         const cards = describeCharacterCards(views, charactersList, levels, new Set());
         const enrichedCharacters = charactersList.map((char) => {
-          const { chips, levels: classLevels, race, totalLevel } = cards.get(char.id)!;
+          const { chips } = cards.get(char.id)!;
           return {
             id: char.id,
             name: char.name,
             description: char.description,
-            race,
-            levels: classLevels,
-            totalLevel,
             chips,
             accessRole: char.accessRole,
           };

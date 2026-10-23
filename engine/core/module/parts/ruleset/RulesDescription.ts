@@ -133,8 +133,6 @@ export interface ProgressionTrack {
  * ruleset's content is under. The client reads it once, for every base rules, and holds none of it.
  */
 export interface RulesDescription {
-  /** The bounds of an ability's base score, which its sheet's box raises and lowers it within */
-  abilityScores: { max: number; min: number };
   /** A new character's form, as its rules lay it out: its sections, their fields, its ability scores among them */
   characterForm: CharacterForm;
   /**

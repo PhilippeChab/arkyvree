@@ -7,7 +7,7 @@ import { Characters, PlayerCharacters, Players } from "@/server/repositories/ind
 import type { CampaignRole } from "@/shared/enums.ts";
 import { api, createSignedInUser, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
 import { postCampaign } from "@/tests/support/campaigns.ts";
-import { postCharacter } from "@/tests/support/characters.ts";
+import { notesOf, postCharacter } from "@/tests/support/characters.ts";
 import { addCharacterContributor } from "@/tests/support/contributors.ts";
 import { createWizardWithFamiliar } from "@/tests/support/dnd3.5/levelFixtures.ts";
 import { queuedPdfJobs, silentJobHelpers } from "@/tests/support/jobs.ts";
@@ -175,12 +175,12 @@ describe("campaigns characters", () => {
 
     const body = await sheetOf(viewer.api, campaignId, characterId);
     expect(body.shareToken).toBeNull();
-    expect(body.identity.background?.privateNotes).toBe("");
+    expect(notesOf(body)).toEqual({ notes: "" });
     expect(JSON.stringify(body)).not.toContain(SECRETS.privateNotes);
     expect(JSON.stringify(body)).not.toContain(shareToken);
 
     const own = await sheetOf(api, campaignId, characterId);
-    expect(own.identity.background?.privateNotes).toBe(SECRETS.privateNotes);
+    expect(notesOf(own)).toMatchObject({ privateNotes: SECRETS.privateNotes });
     expect(own.shareToken).toBe(shareToken);
   });
 
@@ -191,32 +191,49 @@ describe("campaigns characters", () => {
     const { campaignId, gm, contributor, player } = await linkWithMembers(characterId, "Partial");
 
     const sheet = await sheetOf(player.api, campaignId, characterId);
-    expect(sheet.identity).toEqual({
-      background: null,
-      beliefs: null,
-      meta: null,
-      physiology: {
-        name: expect.stringMatching(/^Test Character/),
-        race: expect.objectContaining({ name: "Human" }),
-        age: 25,
-        gender: "Male",
-        height: "180",
-        weight: "80",
-        description: null,
-        languages: null,
-      },
+    expect(sheet.name).toMatch(/^Test Character/);
+    const partialIdentity = sheet.blocks.find((block) => block.key === "identity");
+    if (partialIdentity?.kind !== "fields") throw new Error("no identity block");
+    expect(Object.fromEntries(partialIdentity.lines.flat().map((field) => [field.key, field.value]))).toEqual({
+      race: "Human",
+      age: 25,
+      gender: "Male",
+      height: "180",
+      weight: "80",
     });
+    // What it reads, an allowlist: the viewer's rights, the character's columns, its identity's block, no track
+    expect(Object.keys(sheet).sort()).toEqual([
+      "baseRules",
+      "blocks",
+      "canDownloadPdf",
+      "canEdit",
+      "deletedAt",
+      "id",
+      "isCustomRuleset",
+      "isOwner",
+      "isPartial",
+      "kind",
+      "modifiers",
+      "name",
+      "parentCharacterId",
+      "raceId",
+      "requirements",
+      "rulesetId",
+      "rulesetName",
+      "shareToken",
+      "summary",
+      "updatedAt",
+      "userId",
+      "validation",
+      "visibility",
+    ]);
     expect(sheet).toMatchObject({
       isPartial: true,
       shareToken: null,
-      classes: {},
-      equipment: [],
-      virtualFeats: [],
-      spellGroups: [],
-      spellsPerDay: { levels: [], lists: [] },
-      bonded: {},
-      skillBudget: { available: 0, spent: 0, total: 0 },
+      requirements: {},
+      modifiers: {},
       validation: { valid: true, issues: [] },
+      summary: { tracks: [] },
     });
     // Its identity's block, its race and physical traits alone: no other field, no languages, no notes
     expect(sheet.blocks).toEqual([expect.objectContaining({ kind: "fields", key: "identity", fields: [] })]);
@@ -234,11 +251,8 @@ describe("campaigns characters", () => {
     expect(await rosterOf(player.api, campaignId)).toEqual([
       {
         id: characterId,
-        name: sheet.identity.physiology.name,
+        name: sheet.name,
         description: null,
-        race: "Human",
-        levels: [],
-        totalLevel: null,
         // Its race alone: not its classes
         chips: [{ label: "Human", partial: true, tone: "secondary" }],
         visibility: "Partial",
@@ -251,19 +265,19 @@ describe("campaigns characters", () => {
     for (const viewer of [gm, contributor]) {
       const whole = await sheetOf(viewer.api, campaignId, characterId);
       expect(whole.isPartial).toBe(false);
-      expect(whole.identity).toMatchObject({
-        background: { notes: SECRETS.notes, privateNotes: SECRETS.privateNotes },
-        beliefs: { alignment: "Chaotic Good", deity: SECRETS.deity },
-        meta: { level: 1 },
-        physiology: {
-          description: SECRETS.description,
-          languages: [expect.objectContaining({ name: "Common" }), expect.objectContaining({ name: "Draconic" })],
-        },
+      const identity = whole.blocks.find((block) => block.key === "identity");
+      if (identity?.kind !== "fields") throw new Error("no identity block");
+      const values = Object.fromEntries([...identity.lines.flat(), ...identity.fields].map((f) => [f.key, f.value]));
+      expect(values).toMatchObject({
+        alignment: "Chaotic Good",
+        deity: SECRETS.deity,
+        description: SECRETS.description,
       });
+      expect(identity.languages?.picked.map(({ name }) => name)).toEqual(["Common", "Draconic"]);
+      expect(identity.notes).toEqual({ notes: SECRETS.notes, privateNotes: SECRETS.privateNotes });
+      expect(whole.summary.tracks.map(({ label }) => label)).toEqual(["Fighter 1"]);
       expect((await rosterOf(viewer.api, campaignId))[0]).toMatchObject({
         description: SECRETS.description,
-        levels: [expect.objectContaining({ klass: "Fighter", level: 1 })],
-        totalLevel: 1,
         chips: [
           { label: "Human", partial: true, tone: "secondary" },
           { label: "Fighter 1", partial: false, tone: "primary" },
@@ -280,32 +294,25 @@ describe("campaigns characters", () => {
     );
     const { campaignId, gm, contributor, player } = await linkWithMembers(characterId, "Public");
 
-    // The notes, whether the sheet shows their field, and its identity's block's (none for who doesn't read them)
-    const privateNotesOf = async (client: Client) => {
-      const sheet = await sheetOf(client, campaignId, characterId);
-      const identity = sheet.blocks.find((block) => block.key === "identity");
-      const blockNotes = identity?.kind === "fields" ? identity.notes?.privateNotes : "no block";
-      return [sheet.identity.background?.privateNotes, sheet.showPrivateNotes, blockNotes];
-    };
-    expect(await privateNotesOf(api)).toEqual([SECRETS.privateNotes, true, SECRETS.privateNotes]);
-    expect(await privateNotesOf(contributor.api)).toEqual([SECRETS.privateNotes, true, SECRETS.privateNotes]);
-    expect(await privateNotesOf(gm.api)).toEqual([SECRETS.privateNotes, true, SECRETS.privateNotes]);
-    expect(await privateNotesOf(player.api)).toEqual(["", false, undefined]);
+    // Its identity's block's notes: its private ones for who reads them alone
+    const privateNotesOf = async (client: Client) => notesOf(await sheetOf(client, campaignId, characterId));
+    for (const client of [api, contributor.api, gm.api])
+      expect(await privateNotesOf(client)).toEqual({ notes: "", privateNotes: SECRETS.privateNotes });
+    expect(await privateNotesOf(player.api)).toEqual({ notes: "" });
+    expect(JSON.stringify(await sheetOf(player.api, campaignId, characterId))).not.toContain(SECRETS.privateNotes);
   });
 
-  test("shows a bonded creature's private notes to whoever reads its master's", async () => {
+  test("shows a bonded creature in its master's sheet without its private notes, to any reader", async () => {
     const { masterId, bonded } = await createWizardWithFamiliar();
     await Characters.update(db, { privateNotes: SECRETS.privateNotes }, { id: bonded.id });
     const { campaignId, gm, contributor, player } = await linkWithMembers(masterId, "Public");
 
-    const familiarNotesOf = async (client: Client) => {
-      const familiar = Object.values((await sheetOf(client, campaignId, masterId)).bonded)[0];
-      return familiar?.identity.background.privateNotes;
-    };
-    expect(await familiarNotesOf(api)).toBe(SECRETS.privateNotes);
-    expect(await familiarNotesOf(contributor.api)).toBe(SECRETS.privateNotes);
-    expect(await familiarNotesOf(gm.api)).toBe(SECRETS.privateNotes);
-    expect(await familiarNotesOf(player.api)).toBe("");
+    // Its subsheet, in the details of the feat that bonds it, holds its abilities, combat and feats: no notes
+    for (const client of [api, contributor.api, gm.api, player.api]) {
+      const sheet = await sheetOf(client, campaignId, masterId);
+      expect(JSON.stringify(sheet)).toContain(bonded.id);
+      expect(JSON.stringify(sheet)).not.toContain(SECRETS.privateNotes);
+    }
   });
 
   describe("PDF export", () => {

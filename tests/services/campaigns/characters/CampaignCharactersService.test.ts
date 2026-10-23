@@ -117,24 +117,11 @@ describe("CampaignCharactersService", () => {
       for (const { id } of [newcomer, fighter, multiclass]) await link(user.id, campaign.id, id);
 
       const byId = new Map((await list(user.id, campaign.id)).items.map((c) => [c.id, c]));
-      expect(byId.get(newcomer.id)).toMatchObject({
-        name: newcomer.name,
-        description: newcomer.description,
-        race: "Human",
-        levels: [],
-        totalLevel: 0,
-      });
-      expect(byId.get(fighter.id)).toMatchObject({ levels: [{ klass: "Fighter", level: 3 }], totalLevel: 3 });
-      expect(byId.get(multiclass.id)?.totalLevel).toBe(3);
-      expect(
-        byId
-          .get(multiclass.id)
-          ?.levels.map((l) => [l.klass, l.level])
-          .sort(),
-      ).toEqual([
-        ["Fighter", 2],
-        ["Ranger", 1],
-      ]);
+      const labels = (id: string) => byId.get(id)?.chips.map(({ label }) => label);
+      expect(byId.get(newcomer.id)).toMatchObject({ name: newcomer.name, description: newcomer.description });
+      expect(labels(newcomer.id)).toEqual(["Human"]);
+      expect(labels(fighter.id)).toEqual(["Human", "Fighter 3"]);
+      expect(labels(multiclass.id)?.slice(1).sort()).toEqual(["Fighter 2", "Ranger 1"]);
     });
 
     test("leaves out unlinked and archived characters", async () => {
@@ -185,10 +172,8 @@ describe("CampaignCharactersService", () => {
       expect(seen.get(partialOne.character.id)).toMatchObject({
         visibility: "Partial",
         name: partialOne.character.name,
-        race: "Human",
         description: null,
-        levels: [],
-        totalLevel: null,
+        chips: [{ label: "Human", partial: true, tone: "secondary" }],
       });
       expect(seen.has(privateOne.character.id)).toBe(false);
 
@@ -214,10 +199,9 @@ describe("CampaignCharactersService", () => {
       const seen = new Map((await list(viewer.user.id, campaign.id)).items.map((c) => [c.id, c]));
       expect(seen.get(edited.character.id)).toMatchObject({
         description: "A scar runs down her left cheek",
-        totalLevel: 0,
         isPartial: false,
       });
-      expect(seen.get(hidden.character.id)).toMatchObject({ description: null, totalLevel: null, isPartial: true });
+      expect(seen.get(hidden.character.id)).toMatchObject({ description: null, isPartial: true });
 
       // The contributions are read once for the page, whatever its size.
       const { timing: two } = await measure(() => list(viewer.user.id, campaign.id, { limit: 2, page: 1 }));
@@ -259,7 +243,7 @@ describe("CampaignCharactersService", () => {
         const result = await CampaignCharactersService.getCharacter(makeSession(user.id), campaign.id, character.id);
         expect(result).toMatchObject({ visibility, canEdit: true, isPartial: false });
         // The full sheet: its build, not only who it is
-        expect(Object.keys(result.combat)).not.toHaveLength(0);
+        expect(result.blocks.map(({ key }) => key)).toContain("combat");
       }
     });
 
@@ -276,13 +260,15 @@ describe("CampaignCharactersService", () => {
       const { character } = await joinWithCharacter(campaign.id, "Partial");
       const partial = await get(character.id);
       expect(partial).toMatchObject({ visibility: "Partial", isOwner: false, canEdit: false, isPartial: true });
-      expect(partial).toMatchObject({
-        name: character.name,
-        identity: {
-          physiology: { gender: character.gender, height: character.height, weight: character.weight },
-        },
-        abilities: {},
+      expect(partial).toMatchObject({ name: character.name, summary: { tracks: [] } });
+      const identity = partial.blocks.find((block) => block.key === "identity");
+      if (identity?.kind !== "fields") throw new Error("no identity block");
+      expect(Object.fromEntries(identity.lines.flat().map((field) => [field.key, field.value]))).toMatchObject({
+        gender: character.gender,
+        height: character.height,
+        weight: character.weight,
       });
+      expect(partial.blocks).toHaveLength(1);
 
       const privateOne = await joinWithCharacter(campaign.id, "Private");
       expect(get(privateOne.character.id)).rejects.toThrow(NotFoundError);

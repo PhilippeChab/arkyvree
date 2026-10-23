@@ -25,12 +25,12 @@ export default function SharedCharacterPage() {
 
   const { data: character, isLoading, error } = useQuery(sharedCharacterQuery(shareToken));
 
-  usePageTitle(character?.identity?.physiology?.name);
+  usePageTitle(character?.name);
 
   const downloadPdf = useMutation({
     // A file: its body is a blob, never JSON
     mutationFn: async () => (await rpc.api.shared.characters[":shareToken"].pdf.$get({ param: { shareToken } })).blob(),
-    onSuccess: (blob) => saveBlob(blob, formatSheetFileName(character?.identity?.physiology?.name ?? "")),
+    onSuccess: (blob) => saveBlob(blob, formatSheetFileName(character?.name ?? "")),
     onError: (error) => {
       if (rateLimited(error)) snackbar.warning("Too many PDF requests: try again in a minute");
       else snackbar.error(error, "Failed to download PDF");
@@ -55,7 +55,7 @@ export default function SharedCharacterPage() {
       <Container>
         <Stack spacing={4}>
           <CharacterHeader
-            name={character.identity?.physiology?.name ?? ""}
+            name={character.name}
             summary={character.summary}
             rulesetName={character.rulesetName}
             onMenuOpen={menu.openMenu}

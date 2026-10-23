@@ -91,7 +91,7 @@ export default function CharacterDetailsPage() {
     canShare,
   } = useCharacterPermissions(character);
 
-  usePageTitle(character?.identity?.physiology?.name);
+  usePageTitle(character?.name);
 
   // Closing the wizard a new character arrived with clears that from its history entry: a reload or a Back doesn't
   // open it again
@@ -167,7 +167,7 @@ export default function CharacterDetailsPage() {
       <Container>
         <Stack spacing={4}>
           <CharacterHeader
-            name={character.identity?.physiology?.name ?? ""}
+            name={character.name}
             summary={character.summary}
             rulesetId={character.rulesetId}
             rulesetName={character.rulesetName}

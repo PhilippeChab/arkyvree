@@ -75,7 +75,7 @@ interface SheetSkill {
  * the feat of its master's that bonds it.
  */
 type BondedSheet = Pick<
-  ReturnType<typeof CharacterResponse.buildBonded>,
+  ReturnType<typeof CharacterResponse.buildBondedSheet>,
   "blocks" | "combat" | "feats" | "id" | "name"
 > & {
   bondFeatId: string | null;
