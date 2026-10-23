@@ -91,7 +91,7 @@ class CharactersService extends include(Object, Archives, Imports) {
           await CharacterLinks.createMany(
             tx,
             "abilities",
-            plan.abilities.map((ability) => ({ characterId: newCharacter.id, ...ability })),
+            plan.abilities.map((ability) => ({ ...ability, characterId: newCharacter.id })),
           );
 
           // Log the activity

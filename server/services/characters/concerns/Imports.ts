@@ -52,7 +52,7 @@ export function Imports<B extends Constructor>(Base: B) {
             await CharacterLinks.createMany(
               tx,
               "abilities",
-              plan.abilities.map((ability) => ({ characterId, ...ability })),
+              plan.abilities.map((ability) => ({ ...ability, characterId })),
             );
             for (const { columns, rows } of plan.levels) {
               const [level] = await CharacterLevels.create(tx, { ...columns, characterId });
@@ -65,7 +65,7 @@ export function Imports<B extends Constructor>(Base: B) {
             );
             await CharacterInventory.createMany(
               tx,
-              plan.inventory.map((entry) => ({ characterId, ...entry })),
+              plan.inventory.map((entry) => ({ ...entry, characterId })),
             );
             await writeBondedCreatures(tx, character, plan.bonded);
 
