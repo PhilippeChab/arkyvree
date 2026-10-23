@@ -1,4 +1,5 @@
 import type { SheetSectionsProps } from "@/client/src/components/characters/sections/sectionFactory.ts";
+import { openingBlock } from "@/client/src/components/characters/sections/sheetBlocks.ts";
 import { SheetBlockView } from "@/client/src/components/characters/sections/SheetBlockView.tsx";
 
 /**
@@ -14,15 +15,20 @@ export function SheetSections({
   equipmentMode,
   rulesetId,
 }: SheetSectionsProps) {
-  return character.blocks.map((block) => (
-    <SheetBlockView
-      key={block.key}
-      block={block}
-      characterId={characterId}
-      inventoryMode={equipmentMode}
-      readOnly={readOnly}
-      rulesetId={rulesetId}
-      subsheetsLinkable={bondedLinkable}
-    />
-  ));
+  // The block the sheet opens with is over them
+  const opening = openingBlock(character.blocks);
+  return character.blocks
+    .filter((block) => block !== opening)
+    .map((block) => (
+      <SheetBlockView
+        key={block.key}
+        block={block}
+        characterId={characterId}
+        updatedAt={character.updatedAt}
+        inventoryMode={equipmentMode}
+        readOnly={readOnly}
+        rulesetId={rulesetId}
+        subsheetsLinkable={bondedLinkable}
+      />
+    ));
 }

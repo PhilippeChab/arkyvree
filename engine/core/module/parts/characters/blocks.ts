@@ -26,6 +26,25 @@ export interface EntriesBlock extends BlockHead {
 }
 
 /**
+ * The character's own fields (`fields`): its portrait (`portrait`, its label: the block a sheet opens with alone has
+ * one), then lines of fields (`lines`, laid out a line each, side by side), the fields under them, each its own line
+ * (`fields`), the languages it speaks (`languages`: what their picker says, and those it speaks), and its notes, its
+ * private ones only for a reader who reads them. A field's key is the name its edit sends it by (`FieldsRequest`); what
+ * an edit says (`saved`, `failed`). A sheet opens with its first; any other reads as the sheet does. 3.5's identity; a
+ * partly seen character's, its race and physical traits alone.
+ */
+export interface FieldsBlock extends BlockHead {
+  failed: string;
+  fields: SheetField[];
+  kind: "fields";
+  languages?: { label: string; none: string; picked: { id: string; name: string }[] };
+  lines: SheetField[][];
+  notes?: { notes: string; privateNotes?: string };
+  portrait?: string;
+  saved: string;
+}
+
+/**
  * The items a character holds (`inventory`), of a kind (`entityType`, whose pages their names link to): each entry its
  * item's name and description, where it's held (`slot`, none unplaced), how many, its weight and cost in the block's
  * units, whether it's held in use (`held`) and its charges; then the load they make (`load`: its figures, each its
@@ -262,4 +281,24 @@ export type PoolEntry = Pick<SheetEntry, "id" | "key"> & {
 };
 
 /** A block of a character's sheet, by its kind. */
-export type SheetBlock = EntriesBlock | InventoryBlock | PoolsBlock | ScoresBlock | StatsBlock | TableBlock;
+export type SheetBlock =
+  | EntriesBlock
+  | FieldsBlock
+  | InventoryBlock
+  | PoolsBlock
+  | ScoresBlock
+  | StatsBlock
+  | TableBlock;
+
+/**
+ * A field of a `fields` block, by its kind (its key a plain name, none of those its block's form keeps for itself:
+ * `notes`, `privateNotes`, `languageIds`): a line of text (`fixed`: never edited, its value the rules' own: a 3.5
+ * character's race), a whole number at least `min` (`required`: what its edit says without one; else it may be cleared),
+ * one of a select's options (none: not set), or several lines of text (`placeholder`: what it says empty).
+ */
+export type SheetField = { key: string; label: string } & (
+  | { fixed?: boolean; kind: "text"; value: string }
+  | { kind: "number"; min: number; required?: string; value: number | null }
+  | { kind: "select"; options: string[]; value: string | null }
+  | { kind: "textarea"; placeholder: string; value: string }
+);

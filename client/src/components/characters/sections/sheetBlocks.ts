@@ -20,6 +20,9 @@ export type SheetColumn = SheetTable["columns"][number];
 /** An entity an `entries` block lists. */
 export type SheetEntry = BlockOf<"entries">["entries"][number];
 
+/** A field of a `fields` block. */
+export type SheetField = BlockOf<"fields">["lines"][number][number];
+
 /** A row of a block's table. */
 export type SheetRow = SheetTable["rows"][number];
 
@@ -39,6 +42,11 @@ export type SheetTable = NonNullable<BlockOf<"stats">["panels"][number]["table"]
 export function entityPagePath(rulesetId: string | undefined, entityType: string, id: string | null) {
   if (!rulesetId || !id || !isOneOf(entityType, CUSTOMIZATION_PAGE_TYPES)) return undefined;
   return `/rulesets/${rulesetId}/${buildCustomizationPath(entityType, id)}`;
+}
+
+/** The block a sheet opens with: its first `fields` block (3.5's identity), over its others, if it has one. */
+export function openingBlock(blocks: readonly SheetBlock[]) {
+  return blocks.find((block): block is BlockOf<"fields"> => block.kind === "fields");
 }
 
 /**

@@ -17,9 +17,18 @@ import type {
   NotedSheet,
   PlacementDescription,
 } from "./descriptions.ts";
-import type { AbilitiesPlan, InventoryEntryPlan, LanguagesPlan, NewCharacterPlan } from "./plans.ts";
+import type {
+  AbilitiesPlan,
+  CharacterEditPlan,
+  FieldsPlan,
+  InventoryEntryPlan,
+  LanguagesPlan,
+  NewCharacterPlan,
+} from "./plans.ts";
 import type {
   AbilitiesRequest,
+  CharacterEditRequest,
+  FieldsRequest,
   InventoryEntryChange,
   MemberReading,
   NewCharacterRequest,
@@ -72,7 +81,15 @@ export default abstract class CharactersPart<D extends Descriptions> {
    */
   private static redactNotes<S extends NotedSheet>(sheet: S, notes: HiddenNotes): S {
     const privateNotes = notes === "blank" ? "" : undefined;
-    return { ...sheet, identity: { ...sheet.identity, background: { ...sheet.identity.background, privateNotes } } };
+    // Its fields' private notes go: a block shows them to who reads them alone
+    const blocks = sheet.blocks.map((block) =>
+      block.kind === "fields" && block.notes ? { ...block, notes: { notes: block.notes.notes } } : block,
+    );
+    return {
+      ...sheet,
+      blocks,
+      identity: { ...sheet.identity, background: { ...sheet.identity.background, privateNotes } },
+    };
   }
 
   /** A sheet's private notes, and its bonded creatures', as a reader who doesn't read them reads them. */
@@ -134,6 +151,13 @@ export default abstract class CharactersPart<D extends Descriptions> {
    * the ruleset's rules let it speak; one it keeps never is.
    */
   protected abstract fitLanguages(view: RulesetView, character: CharacterInput, languageIds: string[]): string[];
+
+  /**
+   * What an edit of a character's (`character`) fields (`request`, by the keys its sheet's `fields` block gives them)
+   * writes, each checked: refused when it names a field the character hasn't, or a value its field doesn't take
+   * (`planEdit`).
+   */
+  protected abstract planFields(view: RulesetView, character: CharacterInput, request: FieldsRequest): FieldsPlan;
 
   /**
    * Where an inventory entry's add or edit (`change`) holds its item: whether it's equipped, where, and its weapon set
@@ -290,6 +314,17 @@ export default abstract class CharactersPart<D extends Descriptions> {
         score: given.get(ability.id) ?? scores.start,
       })),
       raceId: race.id,
+    };
+  }
+
+  /**
+   * What an edit of a character (`edit`) writes: its fields' columns (`planFields`), each checked, and its languages, when
+   * it sends them (`planLanguages`).
+   */
+  planEdit(view: RulesetView, character: CharacterInput, edit: CharacterEditRequest): CharacterEditPlan {
+    return {
+      columns: edit.fields ? this.planFields(view, character, edit.fields).columns : {},
+      ...(edit.languageIds && { languages: this.planLanguages(view, character, edit.languageIds) }),
     };
   }
 

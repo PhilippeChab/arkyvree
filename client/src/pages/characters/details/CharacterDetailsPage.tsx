@@ -353,7 +353,6 @@ export default function CharacterDetailsPage() {
               identityReadOnly={!canEdit}
               equipmentMode="readonly"
               rulesetId={character.rulesetId}
-              showPrivateNotes
             />
           ) : (
             <CharacterSheetBody
@@ -365,7 +364,6 @@ export default function CharacterDetailsPage() {
               equipmentMode="editable"
               rulesetId={character.rulesetId}
               diagnostics={character}
-              showPrivateNotes
             />
           )}
         </Stack>

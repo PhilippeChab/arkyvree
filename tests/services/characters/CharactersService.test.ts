@@ -201,22 +201,22 @@ describe("CharactersService", () => {
       // Built: its combat, not only who it is
       expect(Object.keys(sheet.combat)).not.toHaveLength(0);
 
-      const changes = {
+      const fields = { age: 35, experience: 5000, alignment: "Chaotic Good", description: "Updated" };
+      expect(
+        await CharactersService.updateCharacter(session, created.id, { fields, notes: "Updated notes" }),
+      ).toMatchObject({
         age: 35,
         xp: 5000,
         alignment: "Chaotic Good",
         description: "Updated",
         notes: "Updated notes",
-      } as const;
-      expect(await CharactersService.updateCharacter(session, created.id, changes)).toMatchObject({
-        ...changes,
         id: created.id,
         deity: "Old Deity",
         name: created.name,
       });
 
       expect(
-        CharactersService.updateCharacter(session, created.id, { age: 40, updatedAt: created.updatedAt }),
+        CharactersService.updateCharacter(session, created.id, { fields: { age: 40 }, updatedAt: created.updatedAt }),
       ).rejects.toThrow(ConflictError);
     });
 
@@ -298,7 +298,7 @@ describe("CharactersService", () => {
       await CharacterSharingService.generateShareToken(owner, character.id);
       const calls = (s: Session, id: string) => [
         () => CharactersService.getCharacter(s, id),
-        () => CharactersService.updateCharacter(s, id, { age: 40 }),
+        () => CharactersService.updateCharacter(s, id, { fields: { age: 40 } }),
         () => CharactersService.enqueuePdf(s, id),
         () => CharactersService.archiveCharacter(s, id),
         () => CharacterSharingService.generateShareToken(s, id),

@@ -1,5 +1,6 @@
 export type {
   EntriesBlock,
+  FieldsBlock,
   InventoryBlock,
   InventoryRow,
   InventoryWords,
@@ -9,6 +10,7 @@ export type {
   SheetBlock,
   SheetColumn,
   SheetEntry,
+  SheetField,
   SheetPool,
   SheetRow,
   SheetScore,
@@ -33,9 +35,19 @@ export type {
   PlacementDescription,
   SheetStat,
 } from "./descriptions.ts";
-export type { AbilitiesPlan, AbilityScore, InventoryEntryPlan, LanguagesPlan, NewCharacterPlan } from "./plans.ts";
+export type {
+  AbilitiesPlan,
+  AbilityScore,
+  CharacterEditPlan,
+  FieldsPlan,
+  InventoryEntryPlan,
+  LanguagesPlan,
+  NewCharacterPlan,
+} from "./plans.ts";
 export type {
   AbilitiesRequest,
+  CharacterEditRequest,
+  FieldsRequest,
   InventoryEntryChange,
   InventoryEntryRequest,
   MemberReading,

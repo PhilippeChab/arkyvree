@@ -1,9 +1,15 @@
-import { type CharacterInput, CharactersPart, type RacePickQuery } from "@/engine/core/module/index.ts";
+import {
+  type CharacterInput,
+  CharactersPart,
+  type FieldsRequest,
+  type RacePickQuery,
+} from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import type { Dnd35Descriptions } from "@/engine/rulesets/dnd3.5/descriptions.ts";
 import RacePicker from "@/engine/rulesets/dnd3.5/pickers/RacePicker.ts";
 
 import CharacterDescription from "./description/CharacterDescription.ts";
+import IdentityFields from "./IdentityFields.ts";
 import InventoryEntries from "./inventory/InventoryEntries.ts";
 import SpokenLanguages from "./languages/SpokenLanguages.ts";
 import NewCharacters from "./NewCharacters.ts";
@@ -39,6 +45,11 @@ export default class Dnd35Characters extends CharactersPart<Dnd35Descriptions> {
   /** The picks a languages edit stores: a new one refused when secret, or past the room its rules give the picks. */
   protected override fitLanguages(view: RulesetView, character: CharacterInput, languageIds: string[]) {
     return new SpokenLanguages(view, character).plan(languageIds);
+  }
+
+  /** What an edit of a character's identity writes: its fields, each checked, into its columns. */
+  protected override planFields(_view: RulesetView, _character: CharacterInput, request: FieldsRequest) {
+    return IdentityFields.plan(request);
   }
 
   /** Where an inventory entry's add or edit holds its item: the item equipped where asked, what equipping it checks. */

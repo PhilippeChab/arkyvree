@@ -2,7 +2,7 @@ import { Stack } from "@mui/material";
 
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
 
-import { type CharacterData, CharacterIdentitySection, DiagnosticsSection, getSections } from "./sections/index.ts";
+import { type CharacterData, DiagnosticsSection, FieldsSection, getSections, openingBlock } from "./sections/index.ts";
 
 interface CharacterSheetBodyProps {
   /** The bonded creatures' names link to their sheets: the owner's view. */
@@ -20,8 +20,6 @@ interface CharacterSheetBodyProps {
   portraitUrl?: string | null;
   readOnly?: boolean;
   rulesetId?: string;
-  /** The viewer receives the private notes: the character's editors, and its campaign's Game Master. */
-  showPrivateNotes?: boolean;
 }
 
 /**
@@ -40,21 +38,24 @@ export function CharacterSheetBody({
   rulesetId,
   diagnostics,
   portraitUrl,
-  showPrivateNotes,
 }: CharacterSheetBodyProps) {
   const { SheetSections } = getSections(character.baseRules);
+  // Its own fields, its identity: what every sheet opens with, a partly seen one's alone
+  const identity = openingBlock(character.blocks);
 
   return (
     <Stack spacing={3}>
-      <CharacterIdentitySection
-        characterId={characterId}
-        character={character}
-        readOnly={identityReadOnly ?? readOnly}
-        portraitReadOnly={portraitReadOnly}
-        partial={partial}
-        portraitUrl={portraitUrl}
-        showPrivateNotes={showPrivateNotes}
-      />
+      {identity && (
+        <FieldsSection
+          block={identity}
+          characterId={characterId}
+          updatedAt={character.updatedAt}
+          readOnly={identityReadOnly ?? readOnly}
+          portraitReadOnly={portraitReadOnly}
+          partial={partial}
+          portraitUrl={portraitUrl}
+        />
+      )}
 
       {!partial && (
         <>

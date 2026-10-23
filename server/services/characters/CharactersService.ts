@@ -2,7 +2,7 @@ import { getTableName } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
 import { charactersInCharacter } from "@/drizzle/schema.ts";
-import { Engine } from "@/engine/index.ts";
+import { Engine, type FieldsRequest, type LanguagesPlan } from "@/engine/index.ts";
 import { include } from "@/lib/mixins.ts";
 import { type RulesetScope, withRulesetScope, withRulesetScopes } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
@@ -44,13 +44,15 @@ class CharactersService extends include(Object, Archives, Imports) {
   ): Promise<void> {
     const character = await readCharacterInput(tx, characterRecord);
     const plan = Engine.for(scope).character(character).planLanguages(languageIds);
+    await this.writeLanguages(tx, characterRecord.id, plan);
+  }
 
-    const existing = await CharacterLanguages.findMany(tx, { characterId: characterRecord.id });
-    for (const lang of existing)
-      await CharacterLanguages.delete(tx, { characterId: characterRecord.id, languageId: lang.languageId });
+  /** A character's languages as a plan has them: its picks replaced. */
+  private async writeLanguages(tx: Db, characterId: string, plan: LanguagesPlan): Promise<void> {
+    const existing = await CharacterLanguages.findMany(tx, { characterId });
+    for (const lang of existing) await CharacterLanguages.delete(tx, { characterId, languageId: lang.languageId });
 
-    for (const languageId of plan.languageIds)
-      await CharacterLanguages.create(tx, { characterId: characterRecord.id, languageId });
+    for (const languageId of plan.languageIds) await CharacterLanguages.create(tx, { characterId, languageId });
   }
 
   async createCharacter(
@@ -272,40 +274,42 @@ class CharactersService extends include(Object, Archives, Imports) {
     session: Session,
     characterId: string,
     updateData: {
-      age?: number | null;
-      alignment?: Alignment;
-      deity?: string;
-      description?: string;
-      gender?: Gender;
-      height?: string | null;
+      fields?: FieldsRequest;
       languageIds?: string[];
       name?: string;
       notes?: string;
       privateNotes?: string;
       updatedAt?: string;
-      weight?: string | null;
-      xp?: number;
     },
   ) {
     return await withTransaction(async (tx) => {
       const characterRecord = await findEditableCharacterOrBonded(tx, characterId, session.userId);
       if (!characterRecord) throw new NotFoundError("Character not found");
 
-      const { languageIds, updatedAt: expectedUpdatedAt, ...characterFields } = updateData;
+      const { fields, languageIds, updatedAt: expectedUpdatedAt, ...characterFields } = updateData;
 
-      const updatedRows = await Characters.update(tx, characterFields, { id: characterId, expectedUpdatedAt });
+      // Its fields, by the keys its sheet sends them, and its languages, as its ruleset writes them: each checked. The
+      // engine reads the language ids as the character's ruleset's view does
+      const planned =
+        fields || languageIds
+          ? await withRulesetScope(tx, characterRecord.rulesetId, async (scope) =>
+              Engine.for(scope)
+                .character(await readCharacterInput(tx, characterRecord))
+                .planEdit({ fields, languageIds }),
+            )
+          : undefined;
+
+      const updatedRows = await Characters.update(
+        tx,
+        { ...characterFields, ...planned?.columns },
+        { id: characterId, expectedUpdatedAt },
+      );
       if (expectedUpdatedAt && updatedRows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
 
       const [updatedCharacter] = updatedRows;
 
-      // Apply languages atomically when present. `undefined` = leave alone;
-      // `[]` = clear all. Wrapped in withRulesetScope: the engine reads the
-      // language ids as the character's ruleset's view does.
-      if (languageIds !== undefined) {
-        await withRulesetScope(tx, characterRecord.rulesetId, async (scope) => {
-          await this.replaceCharacterLanguages(tx, scope, characterRecord, languageIds);
-        });
-      }
+      // Its languages, atomically with it, when it sends them: none sent leaves them alone, `[]` clears them
+      if (planned?.languages) await this.writeLanguages(tx, characterId, planned.languages);
 
       await Activities.create(tx, {
         userId: session.userId,

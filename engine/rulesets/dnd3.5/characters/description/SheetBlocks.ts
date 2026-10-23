@@ -12,6 +12,7 @@ import type {
   Subsheet,
   TableBlock,
 } from "@/engine/core/module/index.ts";
+import IdentityFields from "@/engine/rulesets/dnd3.5/characters/IdentityFields.ts";
 import { RULESET_LIMITS } from "@/engine/rulesets/dnd3.5/limits.ts";
 import { formatSigned } from "@/shared/text.ts";
 import { MIN_ABILITY_SCORE } from "@/vocabulary/dnd3.5/abilities.ts";
@@ -48,6 +49,7 @@ interface SheetParts {
   classes: Record<string, { levels: { feats: SheetFeat[] }[] }>;
   combat: ReturnType<typeof CombatSheet.describe>;
   equipment: ReturnType<typeof CharacterResponse.equipmentOf>;
+  identity: Parameters<typeof IdentityFields.describe>[0];
   saves: Record<string, { name: string; parts: SheetStat[]; total: number }>;
   skills: Record<string, SheetSkill>;
   spellGroups: ReturnType<typeof SpellGroups.describe>;
@@ -471,6 +473,7 @@ export default class SheetBlocks {
   /** The sheet's blocks, from its parts as the API answers them, in its sections' order. */
   static describe(parts: SheetParts): SheetBlock[] {
     return [
+      IdentityFields.describe(parts.identity),
       SheetBlocks.abilities(parts.abilities),
       SheetBlocks.saves(parts.saves),
       SheetBlocks.combat(parts.combat),

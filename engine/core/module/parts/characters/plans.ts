@@ -4,6 +4,9 @@
  * entities it writes by the ids the ruleset's view keys them by, whichever the request sent (`RequestIds`).
  */
 
+import type { InferInsertModel } from "drizzle-orm";
+
+import type { charactersInCharacter } from "@/drizzle/schema.ts";
 import type { ItemLocation } from "@/shared/enums.ts";
 
 /** What a character's ability edit writes: its scores, each checked. */
@@ -15,6 +18,37 @@ export interface AbilitiesPlan {
 export interface AbilityScore {
   abilityId: string;
   score: number;
+}
+
+/** What a character's edit writes: its fields' columns, and its languages when it sends them. */
+export interface CharacterEditPlan extends FieldsPlan {
+  languages?: LanguagesPlan;
+}
+
+/**
+ * What a character's fields edit writes: the columns its ruleset stores its fields in, each checked, past those every
+ * character has (its name, its notes) and those no field writes.
+ */
+export interface FieldsPlan {
+  columns: Partial<
+    Omit<
+      InferInsertModel<typeof charactersInCharacter>,
+      | "createdAt"
+      | "deletedAt"
+      | "id"
+      | "kind"
+      | "lastChangedAt"
+      | "name"
+      | "notes"
+      | "parentCharacterId"
+      | "privateNotes"
+      | "raceId"
+      | "rulesetId"
+      | "shareToken"
+      | "updatedAt"
+      | "userId"
+    >
+  >;
 }
 
 /**
