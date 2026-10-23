@@ -30,12 +30,11 @@
  *   is named `tx`, the name it knows a query by.
  * - `folder-index`: code outside a folder that has an `index.ts` imports it through that index (the service folders,
  *   `cow/`, `policies/`, the client's component folders; code outside a client component folder enters it at its
- *   outermost index, never a subfolder's, but a ruleset's code enters a folder of its own ruleset at that ruleset
- *   folder's index). Files within the folder
- *   import each other directly, and a test may reach a folder's own modules (a pure module's unit test).
+ *   outermost index, never a subfolder's). Files within the folder import each other directly, and a test may reach a
+ *   folder's own modules (a pure module's unit test).
  * - `ruleset-folders`: a ruleset is a folder of `engine/rulesets/`, and a folder of its name, in any tree, is its own
  *   (`content/<ruleset>/`, `codegen/<ruleset>/`, `database/seeders/<ruleset>/`, `vocabulary/<ruleset>/`, the
- *   client's and the tests'): a ruleset's code imports none of another's, and what every ruleset runs on
+ *   tests'): a ruleset's code imports none of another's, and what every ruleset runs on
  *   (`engine/core/`, `content/core/`, `codegen/core/`, `database/seeders/core/`, the content's runner,
  *   `database/packages/`, the scripts, the dev and test seeds among them, the server, `shared/`, `lib/`) names none of
  *   them: the runner and the scripts reach a ruleset's packages, seeder and test characters through the content's
@@ -343,9 +342,7 @@ function createFolderIndex(context) {
     // Code outside a client component folder (`components/characters/`) enters it at its outermost index: a
     // subfolder's index is an entry for the folder's own files, never for the code outside it
     const area = tree + target.slice(tree.length).split("/")[0];
-    // A ruleset's code enters a folder of its own ruleset at that ruleset folder's outermost index, never above it
-    const own = rulesetOf(file, rulesetsOf(root));
-    const top = (own && rulesetFolderOf(folder, own)) || area;
+    const top = area;
     for (
       let dir = path.posix.dirname(folder);
       tree === CLIENT_COMPONENTS && !file.startsWith(area + "/") && (dir + "/").startsWith(top + "/");
@@ -655,7 +652,8 @@ function createRulesetFolders(context) {
     // A client's import of a ruleset's vocabulary is root-folders' to refuse, from any of its folders: it reads none
     if (file.startsWith("client/") && target?.startsWith("vocabulary/")) return;
     const other = target && rulesetOf(target, rulesets);
-    if (client && other) {
+    // A client file in a ruleset's folder is reported once, as a whole; its imports of another ruleset's beside it
+    if (client && other && other !== ruleset) {
       context.report({
         node,
         message: `The client imports none of ${other}'s code: what it shows of a ruleset, the engine describes.`,
@@ -796,13 +794,6 @@ function reExportsFrom(statement) {
   );
 }
 
-/** The folder of `ruleset` a folder is in, or is (`engine/rulesets/dnd3.5`), if any. */
-function rulesetFolderOf(dir, ruleset) {
-  const folders = dir.split("/");
-  const at = folders.indexOf(ruleset);
-  return at === -1 ? undefined : folders.slice(0, at + 1).join("/");
-}
-
 /** The ruleset a path's code is: the first of its folders a ruleset is named for, none for code every ruleset shares. */
 function rulesetOf(file, rulesets) {
   return file
@@ -813,7 +804,7 @@ function rulesetOf(file, rulesets) {
 
 /**
  * A repo's rulesets, by the folders they run from (`engine/rulesets/<ruleset>/`): the names a ruleset's folders go by in
- * every tree (its content, codegen, package, vocabulary, client pages, tests).
+ * every tree (its content, codegen, package, vocabulary, tests).
  */
 function rulesetsOf(root) {
   if (!rulesetsCache.has(root)) {

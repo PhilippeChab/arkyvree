@@ -514,27 +514,6 @@ describe("architecture rules", () => {
     ).toEqual(["folder-index client/src/pages/inner.tsx"]);
   });
 
-  test("a ruleset's code enters a client component folder of its own ruleset at that ruleset folder's index", async () => {
-    expect(
-      await lint({
-        "engine/rulesets/dnd3.5/index.ts": "export const x = 1;\n",
-        "client/src/components/sheet/index.ts": 'export { Row } from "./Row.tsx";\n',
-        "client/src/components/sheet/Row.tsx": "export function Row() {\n  return null;\n}\n",
-        "client/src/components/sheet/dnd3.5/index.ts": 'export { Cell } from "./cells/index.ts";\n',
-        "client/src/components/sheet/dnd3.5/cells/index.ts": 'export { Cell } from "./Cell.tsx";\n',
-        "client/src/components/sheet/dnd3.5/cells/Cell.tsx": "export function Cell() {\n  return null;\n}\n",
-        // Its ruleset folder's index, never a subfolder's, nor the generic folder's around it, which re-exports none of it
-        "client/src/pages/dnd3.5/step.tsx":
-          'import { Cell } from "@/client/src/components/sheet/dnd3.5/index.ts";\nexport const s = Cell;\n',
-        "client/src/pages/dnd3.5/deep.tsx":
-          'import { Cell } from "@/client/src/components/sheet/dnd3.5/cells/index.ts";\nexport const d = Cell;\n',
-        // A generic module still enters at the folder's outermost index
-        "client/src/pages/generic.tsx":
-          'import { Cell } from "@/client/src/components/sheet/dnd3.5/index.ts";\nexport const g = Cell;\n',
-      }),
-    ).toEqual(["folder-index client/src/pages/dnd3.5/deep.tsx", "folder-index client/src/pages/generic.tsx"]);
-  });
-
   test("the middlewares sit above the repositories, and the server reads nothing of database/, content/ or scripts/", async () => {
     expect(
       await lint({

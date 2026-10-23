@@ -29,8 +29,8 @@ interface CharacterSheetBodyProps {
 }
 
 /**
- * A character's sheet, under its header's line: its identity, then the sections its ruleset describes, then its diagnostics
- * (a partial sheet shows its identity alone).
+ * A character's sheet, under its header's line: its identity, then the sections its ruleset describes, then its
+ * diagnostics (a partial sheet shows its identity alone).
  */
 export function CharacterSheetBody({
   character,
