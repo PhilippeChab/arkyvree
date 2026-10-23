@@ -20,9 +20,10 @@
  *   the footer): never written out.
  * - `described-words`: what a character's screens say of its game is its ruleset's, which the engine describes (its
  *   sheet's blocks, its header's summary, its card's chips, its form's fields, its level steps): their modules
- *   (`DESCRIBED_SCREENS`) write none of a ruleset's nouns (`RULESET_NOUNS`: a class, a feat, a spell, an alignment…)
- *   in a string or a text they show, in any case where it reads as words ("No feats yet"). A comment's example, a
- *   module's path, a type and a key may name them. "Level" is the app's: every ruleset's characters advance by levels.
+ *   (`DESCRIBED_SCREENS`) write none of a ruleset's nouns in a string or a text they show: the game's own in any case
+ *   (`GAME_NOUNS`: a feat, a spell, "No feats yet", `formatCount(n, "spell")`), and those English shares as a ruleset
+ *   writes them, capitalized (`RULESET_NOUNS`: a Class, an Alignment, "Max HP"). A comment's example, a module's path,
+ *   a type and a key may name them. "Level" is the app's: every ruleset's characters advance by levels.
  * - `entity-type-labels`: an entity's type shows in its ruleset's words, `entityTypeLabel(type, words)`
  *   (`lib/rulesetLabels.ts`, its rules' words: "Class Level", a 3.5 power a "Spell"), never as the code names it
  *   ("klass_levels"): an `entityType` or a `sourceType` is never rendered as it is.
@@ -61,13 +62,14 @@ const DESCRIBED_SCREENS = [
 const ENTITY_TYPE_MEMBERS = new Set(["entityType", "sourceType"]);
 
 /**
- * The game's own nouns, as 3.5 names its things (its kinds, its identity's fields, its sheet's parts), which a screen
- * that shows what the engine describes never writes, in any case where a text reads as words.
+ * The game's own nouns, as 3.5 names its things (its kinds, its identity's fields, its sheet's parts, its
+ * abbreviations), which a screen that shows what the engine describes never writes, in any case: a count's noun
+ * (`formatCount(n, "feat")`), a key of 3.5's ("spells"), a sentence's word.
  */
 const GAME_NOUNS =
-  /\b(Armou?r\s+Class|Base\s+Attack\s+Bonus|Cantrips?|Caster\s+Levels?|Deit(y|ies)|Experience\s+Points?|Feats?|Hit\s+(Dice|Die|Points?)|Racial|Saving\s+Throws?|Spellbooks?|Spellcast(ers?|ing)|Spells?)\b/;
+  /\b(Armou?r\s+Class|Base\s+Attack\s+Bonus|Cantrips?|Caster\s+Levels?|Deit(y|ies)|Experience\s+Points?|Feats?|Hit\s+(Dice|Die|Points?)|Racial|Saving\s+Throws?|Spellbooks?|Spellcast(ers?|ing)|Spells?|HD|HP|XP)\b/;
 
-/** The game's own nouns in any case, which a text that reads as words (never a key like "spells") can't write either */
+/** The game's own nouns in any case */
 const GAME_NOUNS_ANY_CASE = new RegExp(GAME_NOUNS.source, "i");
 
 /** What lays a label out without being one: its row, its box, its spinner while pending */
@@ -93,12 +95,11 @@ const LABELLED_BY_PROP =
   /^(ActionMenuItem|AddButton|Button|ChoiceChip|Tab|ToggleButton|DescriptionField|EmailField|FormControlLabel|FormTextField|LinkButton|NameField|OptionToggle|PageActionButton|PasswordField|SelectField|SwitchField|TextField|.*Dialog|Modal)$/;
 
 /**
- * A ruleset's nouns as it writes them, capitalized: the game's own, those it shares with English (which a text in
- * lowercase means otherwise: "an item", "a class") and its abbreviations.
+ * The nouns 3.5 shares with English, which a text in lowercase means otherwise ("an item", "a class"), caught as a
+ * ruleset writes them, capitalized; and its abbreviations that read as English in lowercase ("con", "int").
  */
-const RULESET_NOUNS = new RegExp(
-  `${GAME_NOUNS.source}|\\b(Abilit(y|ies)|Alignments?|Class(es)?|Domains?|Equipment|Familiars?|Initiative|Inventory|Items?|Languages?|Races?|Skills?|Weapons?|AC|BAB|CR|DC|HP|XP)\\b`,
-);
+const RULESET_NOUNS =
+  /\b(Abilit(y|ies)|Alignments?|Charisma|Class(es)?|Constitution|Dexterity|Domains?|Equipment|Familiars?|Fortitude|Initiative|Intelligence|Inventory|Items?|Languages?|Races?|Reflex|Skills?|Strength|Weapons?|Wisdom|AC|BAB|CHA|CON|CR|DC|DEX|INT|STR|WIS)\b/;
 
 /** The components whose `label` or `title` is a sentence, not a label: a chip's value, an empty state's */
 const SENTENCE_TITLED = /(Chip|^BlankState|^Tooltip)$/;
@@ -175,12 +176,7 @@ function createDescribedWords(context) {
   const file = repoPath(context.filename);
   if (!DESCRIBED_SCREENS.some((screen) => file.startsWith(screen))) return {};
   const check = (node, text) => {
-    // A text that reads as words (one with a space, or what an element shows), the game's nouns in any case
-    const words = /\s/.test(text) || node.type === "JSXText" || (node.type === "Literal" && rendered(node));
-    const noun = (RULESET_NOUNS.exec(text) ?? (words ? GAME_NOUNS_ANY_CASE.exec(text) : null))?.[0].replace(
-      /\s+/g,
-      " ",
-    );
+    const noun = (GAME_NOUNS_ANY_CASE.exec(text) ?? RULESET_NOUNS.exec(text))?.[0].replace(/\s+/g, " ");
     if (!noun) return;
     context.report({
       node,
@@ -347,7 +343,9 @@ function isModuleSource(node) {
       parent.type,
     ) &&
       parent.source === node) ||
-    parent.type === "TSExternalModuleReference"
+    parent.type === "TSExternalModuleReference" ||
+    parent.type === "TSImportType" ||
+    (parent.type === "TSLiteralType" && parent.parent.type === "TSImportType")
   );
 }
 

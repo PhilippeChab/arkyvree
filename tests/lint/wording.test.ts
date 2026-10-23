@@ -199,7 +199,12 @@ describe("wording rules", () => {
           "client/src/components/characters/add.tsx": 'export const a = <AddButton label="Add Item" />;\n',
           "client/src/components/characters/points.tsx":
             "export const p = <Typography>Max Hit\n  Points</Typography>;\n",
-          // A count's words, a shown string, a term and an abbreviation
+          // A count's words, a shown string, a term and an abbreviation, in any case
+          "client/src/components/characters/formatted.tsx":
+            'export const f = <CountChip label={formatCount(feats.length, "feat")} />;\n',
+          "client/src/components/characters/plural.ts": 'export const p = `${n} ${n === 1 ? one : "spells"}`;\n',
+          "client/src/components/characters/lower.tsx": "export const l = <Typography>Max hp</Typography>;\n",
+          "client/src/components/characters/score.tsx": "export const s = <Typography>Strength</Typography>;\n",
           "client/src/components/characters/count.ts": "export const c = `${count} feats`;\n",
           "client/src/components/characters/shown.tsx": 'export const s = <span>{"spells"}</span>;\n',
           "client/src/components/characters/spaced.ts": 'export const s = " spells";\n',
@@ -212,7 +217,7 @@ describe("wording rules", () => {
           "client/src/pages/characters/details/type.ts":
             'export type K = "Feats" | `${string}Spells`;\nexport const k = { "Spells": 1 };\nexport interface I { "Feats": 1 }\n',
           "client/src/pages/characters/details/key.ts":
-            'export const q = { name: "abilities" };\nexport class C { "Spells" = 1; }\n',
+            'export const q = { name: "abilities" };\nexport class C { "Spells" = 1; }\nexport type T = import("./Spells.ts").X;\n',
           // A generic word is the app's, and an English one the game shares, in lowercase
           "client/src/pages/characters/details/level.tsx": "export const l = <Typography>Add Level</Typography>;\n",
           "client/src/pages/characters/details/english.tsx":
@@ -224,7 +229,11 @@ describe("wording rules", () => {
       "described-words client/src/components/characters/add.tsx",
       "described-words client/src/components/characters/count.ts",
       "described-words client/src/components/characters/empty.tsx",
+      "described-words client/src/components/characters/formatted.tsx",
+      "described-words client/src/components/characters/lower.tsx",
+      "described-words client/src/components/characters/plural.ts",
       "described-words client/src/components/characters/points.tsx",
+      "described-words client/src/components/characters/score.tsx",
       "described-words client/src/components/characters/sections/label.tsx",
       "described-words client/src/components/characters/sections/text.tsx",
       "described-words client/src/components/characters/short.tsx",
