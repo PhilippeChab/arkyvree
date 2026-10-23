@@ -1,5 +1,4 @@
 import type { CharacterDataLoader } from "@/engine/core/character/index.ts";
-import type { CharacterRows } from "@/engine/core/module/index.ts";
 import type {
   CharacterLevel,
   FeatWithAptitudes,
@@ -8,6 +7,7 @@ import type {
   PowerWithAptitudes,
   RulesetData,
 } from "@/engine/core/view/index.ts";
+import type { SavedPickRows } from "@/engine/rulesets/dnd3.5/levelUp/SavedPicks.ts";
 import type {
   LoadedCharacterData,
   Resolve,
@@ -86,7 +86,7 @@ export function LoadsPicks<B extends Constructor<CharacterDataLoader<LoadedChara
   abstract class LoadingPicks extends Base {
     /** The feats: picked and given (deduped), in character-level order; and the given per aptitude. */
     private buildFeats(
-      picks: CharacterRows["picks"],
+      picks: SavedPickRows,
       rulesetData: RulesetData,
       { characterLevels }: CharacterLevels,
       resolve: Resolve,
@@ -133,7 +133,7 @@ export function LoadsPicks<B extends Constructor<CharacterDataLoader<LoadedChara
      * Divine's Bane on Complete Warrior's copy of the favored soul's list) may have no link row of its own.
      */
     private buildPowers(
-      picks: CharacterRows["picks"],
+      picks: SavedPickRows,
       rulesetData: RulesetData,
       { characterLevels }: CharacterLevels,
       resolve: Resolve,
@@ -169,12 +169,7 @@ export function LoadsPicks<B extends Constructor<CharacterDataLoader<LoadedChara
      * The character's skills, feats and powers: what its levels pick and their class levels grant, as the view composes
      * them.
      */
-    protected buildPicks(
-      picks: CharacterRows["picks"],
-      rulesetData: RulesetData,
-      levels: CharacterLevels,
-      resolve: Resolve,
-    ) {
+    protected buildPicks(picks: SavedPickRows, rulesetData: RulesetData, levels: CharacterLevels, resolve: Resolve) {
       const realSkills = pickedAt(resolve(picks.skills), levels.characterLevels, (link) => {
         const skill = rulesetData.skillsById.get(link.skillId);
         return skill && { ...skill, rank: link.rank };

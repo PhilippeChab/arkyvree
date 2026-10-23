@@ -1,14 +1,5 @@
 import type { Db } from "@/drizzle/database.ts";
-import type {
-  CharacterAbility,
-  CharacterInput,
-  CharacterLanguage,
-  CharacterRows,
-  LevelAbilityIncrease,
-  LevelFeat,
-  LevelPower,
-  LevelSkill,
-} from "@/engine/index.ts";
+import type { CharacterAbility, CharacterInput, CharacterLanguage, CharacterRows } from "@/engine/index.ts";
 import {
   Campaigns,
   CharacterInventory,
@@ -26,8 +17,8 @@ import type { Character } from "@/shared/relations.ts";
 
 /**
  * The character's own rows (`CharacterRows`), read through `database` in its ruleset's scope, so their references are
- * the view's: its seat in a campaign, its ability scores, languages, inventory and levels, every saved level's ability
- * increases and picks, and the modifiers set on the character, then their requirements.
+ * the view's: its seat in a campaign, its ability scores, languages, inventory and levels, every saved level's picks,
+ * and the modifiers set on the character, then their requirements.
  */
 async function readCharacterRows(database: Db, character: Character): Promise<CharacterRows> {
   const characterId = character.id;
@@ -39,15 +30,7 @@ async function readCharacterRows(database: Db, character: Character): Promise<Ch
   const inventory = await CharacterInventory.findMany(database, { characterId });
   const levels = await CharacterLevels.findMany(database, { characterId });
   const characterLevelIds = levels.map((level) => level.id);
-  const picks = {
-    abilityIncreases: await Picks.findMany<LevelAbilityIncrease>(database, {
-      pick: "abilityIncreases",
-      characterLevelIds,
-    }),
-    skills: await Picks.findMany<LevelSkill>(database, { pick: "skills", characterLevelIds }),
-    feats: await Picks.findMany<LevelFeat>(database, { pick: "feats", characterLevelIds }),
-    powers: await Picks.findMany<LevelPower>(database, { pick: "powers", characterLevelIds }),
-  };
+  const picks = await Picks.findPerPick(database, { characterLevelIds });
   const modifiers = await Modifiers.findMany(database, { sourceIds: [characterId] });
   const requirements = await Requirements.findMany(database, { entityIds: modifiers.map((modifier) => modifier.id) });
   return { player, campaign, abilities, languages, inventory, levels, picks, modifiers, requirements };

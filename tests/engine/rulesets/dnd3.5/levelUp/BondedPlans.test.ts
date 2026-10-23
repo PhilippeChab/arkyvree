@@ -54,7 +54,12 @@ describe("planBondedCreature", () => {
     if (!("created" in plan)) throw new Error("No creature made");
     const abilityName = new Map(rulesetData.abilities.map((ability) => [ability.id, ability.name]));
     expect(
-      Object.fromEntries(plan.created.abilities.map(({ abilityId, score }) => [abilityName.get(abilityId), score])),
+      Object.fromEntries(
+        (plan.created.links.abilities as { abilityId: string; score: number }[]).map(({ abilityId, score }) => [
+          abilityName.get(abilityId),
+          score,
+        ]),
+      ),
     ).toEqual({ Charisma: 6, Constitution: 15, Dexterity: 15, Intelligence: 2, Strength: 13, Wisdom: 12 });
     // Its row whole: its master's, of its kind, named for its race, of its master's alignment and gender, without xp
     expect(plan).toMatchObject({

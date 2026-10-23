@@ -8,7 +8,7 @@ export async function createLevelRows(tx: Db, characterLevelId: string, rows: Le
     await Picks.createMany(
       tx,
       pick,
-      picked.map((row: object) => ({ characterLevelId, ...row })),
+      picked.map((row: object) => ({ ...row, characterLevelId })),
     );
   }
 }

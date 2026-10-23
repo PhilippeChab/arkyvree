@@ -1,7 +1,7 @@
 import type { SourceLine } from "@/engine/core/imports/index.ts";
-import type { PlannedClassLevel } from "@/engine/core/levelUp/index.ts";
-import type { FeatPick, PowerPick } from "@/engine/core/module/index.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
+import type { PlannedClassLevel } from "@/engine/rulesets/dnd3.5/levelUp/LevelUpBase.ts";
+import type { FeatPick, PowerPick } from "@/engine/rulesets/dnd3.5/levelUp/plans.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import SkillRules from "@/engine/rulesets/dnd3.5/rules/SkillRules.ts";
 

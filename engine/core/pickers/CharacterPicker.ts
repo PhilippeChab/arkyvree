@@ -1,5 +1,5 @@
 import type { BuildsCharacters } from "@/engine/core/character/index.ts";
-import type { CharacterInput, CharacterProjection } from "@/engine/core/module/index.ts";
+import type { CharacterInput } from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import type { Requirement } from "@/shared/relations.ts";
 
@@ -34,7 +34,7 @@ export default abstract class CharacterPicker<
   private built?: C;
 
   /** The character's rows with what the level-up plans before the pick. */
-  protected abstract project(): CharacterProjection;
+  protected abstract project(): CharacterInput;
 
   /** The tree of the requirement groups the character fails, one line a group. */
   protected override describeFailed(groups: Requirement[][]) {
@@ -46,9 +46,9 @@ export default abstract class CharacterPicker<
     return this.character.areRequirementsMet(groups);
   }
 
-  /** The character built from a projection of its rows, by its ruleset's builder. */
-  protected build(projection: CharacterProjection): C {
-    return this.builder.build(this.view, projection.input);
+  /** The character built from its rows (a projection of them), by its ruleset's builder. */
+  protected build(input: CharacterInput): C {
+    return this.builder.build(this.view, input);
   }
 
   /** The character the picker checks options against: built from its projection when first asked. */

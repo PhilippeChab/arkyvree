@@ -2,7 +2,6 @@ import { describe, expect, test } from "bun:test";
 
 import PcgenFile from "@/engine/core/imports/pcgen/PcgenFile.ts";
 import RulesError from "@/engine/core/RulesError.ts";
-import type { ImportPlan } from "@/engine/index.ts";
 import PcgenImport from "@/engine/rulesets/dnd3.5/imports/pcgen/PcgenImport.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
@@ -41,7 +40,7 @@ function totalPoints(levels: Awaited<ReturnType<typeof nameLevels>>) {
  * A plan's levels named: each its class and class level, its ability increases, its feats, and the points it spends on
  * each skill.
  */
-async function nameLevels(plan: ImportPlan) {
+async function nameLevels(plan: Awaited<ReturnType<typeof planImportOf>>) {
   const data = await seededData();
   return plan.levels.map(({ columns, rows }) => {
     const klassLevel = data.klassLevelsById.get(columns.klassLevelId)!;

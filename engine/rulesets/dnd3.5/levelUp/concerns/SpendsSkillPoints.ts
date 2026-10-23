@@ -1,8 +1,8 @@
-import type { LevelUpBase } from "@/engine/core/levelUp/index.ts";
 import SkillNames from "@/engine/rulesets/dnd3.5/characters/description/SkillNames.ts";
-import Dnd35PicksDistribution, {
+import type LevelUpBase from "@/engine/rulesets/dnd3.5/levelUp/LevelUpBase.ts";
+import PicksDistribution, {
   type PerLevelDistributionData,
-} from "@/engine/rulesets/dnd3.5/levelUp/Dnd35PicksDistribution.ts";
+} from "@/engine/rulesets/dnd3.5/levelUp/PicksDistribution.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 
@@ -26,7 +26,7 @@ export type SpentLevels = Pick<
 
 /**
  * A level-up's skills step, the wizard's and the preview's alike: the skill points the character spends, and what the
- * form's points come to over the step's levels, as a save spreads them (`Dnd35PicksDistribution`: class-skill levels
+ * form's points come to over the step's levels, as a save spreads them (`PicksDistribution`: class-skill levels
  * first, within each level's points and each skill's rank cap there, in the order the form gave them).
  */
 export function SpendsSkillPoints<B extends Constructor<LevelUpBase<DetailedCharacter>>>(Base: B) {
@@ -49,11 +49,11 @@ export function SpendsSkillPoints<B extends Constructor<LevelUpBase<DetailedChar
       budget: number,
     ) {
       const { perLevelClassSkillIds } = levels;
-      const distribution = new Dnd35PicksDistribution({
+      const distribution = new PicksDistribution({
         ...levels,
         perLevelFeatSlots: {},
         perLevelPowerSlots: {},
-        skillContexts: Dnd35PicksDistribution.contextsOf(skills),
+        skillContexts: PicksDistribution.contextsOf(skills),
       });
       const spread = distribution.spendSkillPoints(points);
       const spentAll = [...spread.values()].reduce((sum, spent) => sum + spent.points, 0);
@@ -78,7 +78,7 @@ export function SpendsSkillPoints<B extends Constructor<LevelUpBase<DetailedChar
      * as `distribution` spreads them.
      */
     private ranksByPoints(
-      distribution: Dnd35PicksDistribution,
+      distribution: PicksDistribution,
       skillId: string,
       points: Record<string, number>,
       budget: number,

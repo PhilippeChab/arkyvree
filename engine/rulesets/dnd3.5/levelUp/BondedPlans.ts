@@ -42,10 +42,12 @@ function buildCreature(
 ): NewBondedCreature {
   const stats = BondedRaceData.getStats(race.name);
   return {
-    abilities: abilities.map((ability) => ({
-      abilityId: ability.id,
-      score: stats?.abilities[ability.name.toLowerCase() as keyof typeof stats.abilities] ?? STARTING_ABILITY_SCORE,
-    })),
+    links: {
+      abilities: abilities.map((ability) => ({
+        abilityId: ability.id,
+        score: stats?.abilities[ability.name.toLowerCase() as keyof typeof stats.abilities] ?? STARTING_ABILITY_SCORE,
+      })),
+    },
     row: {
       alignment: master.alignment,
       gender: master.gender,

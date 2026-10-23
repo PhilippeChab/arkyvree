@@ -1,6 +1,7 @@
-import { type CharacterInput, CharacterProjection } from "@/engine/core/module/index.ts";
+import { type CharacterInput } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 
+import CharacterProjection from "./CharacterProjection.ts";
 import LevelUpBase from "./LevelUpBase.ts";
 
 /** A character's last level removed, from its rows: the level that goes, and what its bonded creatures become. */

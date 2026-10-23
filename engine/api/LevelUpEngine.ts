@@ -67,17 +67,12 @@ export default class LevelUpEngine extends CharacterHandle {
    */
   planLevelEdit(bonded: CharacterInput[], characterLevelId: string, request: LevelPlanRequest, force: boolean) {
     const plan = { ...request, editedLevelId: characterLevelId };
-    const edit = this.module.levelUp.readEdit(
-      this.view,
-      this.input,
-      this.requests.resolveSave(this.stepsOf(plan), plan),
-    );
-    return this.module.levelUp.planEdit(
+    return this.module.levelUp.planLevelEdit(
       this.view,
       this.input,
       this.resolveBonded(bonded),
       characterLevelId,
-      edit,
+      this.requests.resolveSave(this.stepsOf(plan), plan),
       force,
     );
   }
@@ -88,8 +83,7 @@ export default class LevelUpEngine extends CharacterHandle {
    */
   planLevelUp(bonded: CharacterInput[], request: LevelPlanRequest, force: boolean) {
     const resolved = this.requests.resolveSave(this.stepsOf(request), request);
-    const levelUp = this.module.levelUp.readLevelUp(this.view, this.input, resolved);
-    return this.module.levelUp.planLevels(this.view, this.input, this.resolveBonded(bonded), levelUp, force);
+    return this.module.levelUp.planLevelUp(this.view, this.input, this.resolveBonded(bonded), resolved, force);
   }
 
   /** The character's last level removed: the level that goes, and what its bonded creatures become without it. */

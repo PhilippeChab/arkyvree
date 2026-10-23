@@ -1,5 +1,4 @@
 export { type CharacterInput, default as CharacterInputs, type CharacterRows } from "./CharacterInputs.ts";
-export { default as CharacterProjection } from "./CharacterProjection.ts";
 export type { Descriptions, RulesetModule } from "./contract.ts";
 export { default as LevelRequests } from "./LevelRequests.ts";
 export {
@@ -88,7 +87,6 @@ export {
   ImportsPart,
 } from "./parts/imports/index.ts";
 export {
-  type AbilityIncrease,
   type AdvancementWords,
   type BondedCreaturesPlan,
   type BondedLevelsPlan,
@@ -96,25 +94,17 @@ export {
   type ChoiceOption,
   type ChooseAnswer,
   type ChosenOption,
-  type FeatPick,
-  type FeatPickQuery,
   type GrantedEntity,
   type LevelColumns,
   type LevelEditPlan,
-  type LevelEditRequest,
-  type LevelPickRows,
-  type LevelPicks,
   type LevelPlanAnswer,
   type LevelPlanRequest,
-  type LevelQuery,
   type LevelRemovalPlan,
-  type LevelRequest,
   type LevelRows,
   type LevelsPlan,
   type LevelStep,
   type LevelSteps,
   LevelUpPart,
-  type LevelUpRequest,
   type LevelWrites,
   type NewBondedCreature,
   Payloads,
@@ -122,15 +112,9 @@ export {
   type PickedEntity,
   type PickedEntityAnswer,
   type PickPool,
-  type PickQuery,
   type PlanAnswer,
   type PlannedAdvancement,
   type PlannedAdvancementAnswer,
-  type PlannedSoFar,
-  type PowerPick,
-  type PowerPickQuery,
-  type PreviewRequest,
-  type SkillRank,
   type SpendAnswer,
   type SpendRow,
   type SpentPoints,
@@ -157,7 +141,14 @@ export {
   RulesetPart,
   type RulesWord,
 } from "./parts/ruleset/index.ts";
-export type { OpenedGroupedPicker, OpenedPicker, PickerOption, PickFilters, PickGroupFilters } from "./pickers.ts";
+export type {
+  OpenedGroupedPicker,
+  OpenedPicker,
+  OpenedTrackPicker,
+  PickerOption,
+  PickFilters,
+  PickGroupFilters,
+} from "./pickers.ts";
 export type {
   CharacterRoleDef,
   EntityTypeDef,

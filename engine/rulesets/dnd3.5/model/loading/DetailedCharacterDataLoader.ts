@@ -1,5 +1,5 @@
 import { CharacterDataLoader, type LoadedCharacter, type ModifierSource } from "@/engine/core/character/index.ts";
-import type { AbilityIncrease, CharacterRows } from "@/engine/core/module/index.ts";
+import type { CharacterRows } from "@/engine/core/module/index.ts";
 import {
   type CharacterLevel,
   type Klass,
@@ -10,6 +10,8 @@ import {
   type Skill,
 } from "@/engine/core/view/index.ts";
 import { type SkillFieldValues } from "@/engine/rulesets/dnd3.5/entities/skills/fields.ts";
+import type { AbilityIncrease } from "@/engine/rulesets/dnd3.5/levelUp/plans.ts";
+import SavedPicks, { type SavedPickRows } from "@/engine/rulesets/dnd3.5/levelUp/SavedPicks.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import { include } from "@/lib/mixins.ts";
 import type { Character } from "@/shared/relations.ts";
@@ -128,7 +130,7 @@ export default class DetailedCharacterDataLoader extends include(
       levels.klassLevelIds,
     );
     const { skills, allFeats, klassLevelFeatCountsByAptitudeId, allPowers, klassLevelPowerCountsByAptitudeId } =
-      this.buildPicks(rows.picks, rulesetData, levels, resolve);
+      this.buildPicks(SavedPicks.of(rows), rulesetData, levels, resolve);
 
     // Each entity's customizations: per-entity lookups resolve via the cache's pre-built Maps
     const { klassLevels, klassLevelProperties } = this.toCustomizedKlassLevels(klassLevelsRaw, rulesetData);
@@ -137,7 +139,7 @@ export default class DetailedCharacterDataLoader extends include(
     return {
       characterAbilityScores: resolve(rows.abilities).map((ca) => this.buildAbilityScore(ca, abilityLookup)),
       abilityIncreases: this.readAbilityIncreases(
-        resolve(rows.picks.abilityIncreases),
+        resolve(SavedPicks.of(rows).abilityIncreases),
         levels.characterLevels,
         LevelRules.of(view),
       ),
@@ -192,7 +194,7 @@ export default class DetailedCharacterDataLoader extends include(
    * for nothing, as its level's edit opens it without it (`describeLevel`).
    */
   private readAbilityIncreases(
-    increases: CharacterRows["picks"]["abilityIncreases"],
+    increases: SavedPickRows["abilityIncreases"],
     characterLevels: CharacterLevel[],
     levelRules: LevelRules,
   ) {

@@ -22,8 +22,8 @@ export default abstract class CharacterBuilder<
   protected abstract create(record: Character): C;
 
   /**
-   * A character, built from its rows (`input`: as the server read them, or with what a level-up adds,
-   * `CharacterProjection`) in its ruleset's `view`, of its row's kind: a bonded creature's sheet derived from its
+   * A character, built from its rows (`input`: as the server read them, or with what a level-up adds, its
+   * projection) in its ruleset's `view`, of its row's kind: a bonded creature's sheet derived from its
    * master's, built from its input's unless it comes built (`master`: a sheet's, which its creatures share).
    */
   build(view: RulesetView, input: CharacterInput, { master }: { master?: C } = {}): C {

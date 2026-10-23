@@ -1,7 +1,9 @@
-import { type CharacterInput, CharacterProjection, type PlannedSoFar } from "@/engine/core/module/index.ts";
+import type { CharacterInput, OpenedTrackPicker } from "@/engine/core/module/index.ts";
 import { CharacterPicker } from "@/engine/core/pickers/index.ts";
-import type { Klass, KlassLevel, RulesetView } from "@/engine/core/view/index.ts";
+import type { EntityRow, KlassLevel, RulesetView } from "@/engine/core/view/index.ts";
+import CharacterProjection from "@/engine/rulesets/dnd3.5/levelUp/CharacterProjection.ts";
 import type LevelUpPlan from "@/engine/rulesets/dnd3.5/levelUp/LevelUpPlan.ts";
+import type { PlannedSoFar } from "@/engine/rulesets/dnd3.5/levelUp/requests.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import Dnd35CharacterBuilder from "@/engine/rulesets/dnd3.5/model/Dnd35CharacterBuilder.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
@@ -14,11 +16,10 @@ import { stripSeparators } from "@/shared/text.ts";
  * levels the character has left, and checked with that level added; highest next level first, then by name. The skill
  * points spent so far go on the planned levels as a save would spread them (`plan`).
  */
-export default class ClassPicker extends CharacterPicker<
-  DetailedCharacter,
-  Klass,
-  { levelsLeft: number; maxLevel: number; nextLevel: number }
-> {
+export default class ClassPicker
+  extends CharacterPicker<DetailedCharacter, EntityRow, { track: { last: number; left: number; next: number } }>
+  implements OpenedTrackPicker<{ columns: { kind: string } }, EntityRow>
+{
   constructor(
     view: RulesetView,
     input: CharacterInput,
@@ -31,35 +32,39 @@ export default class ClassPicker extends CharacterPicker<
   /** What the picker offers: a player character's classes. */
   override readonly filters = { columns: { kind: "pc" } };
 
+  /** Its options are classes, each a track. */
+  readonly tracks = true;
+
   /** The character's highest level in each class it has levels of, by the class's id, once read. */
   private maxLevels?: Map<string, number>;
 
   /**
-   * The class's next level, with the class's last, and the levels the character can still take, whatever their classes
-   * (`levelsLeft`, the same for every class): those it has count, not those the wizard plans, which a plan counts.
+   * The class's place on its track: its next level, its last, and the levels the character can still take, whatever
+   * their classes (`left`, the same for every class): those it has count, not those the wizard plans, which a plan
+   * counts.
    */
   protected override detailsOf() {
-    const levelsLeft = LevelRules.countLevelsLeft(this.input.rows.levels.length);
-    return (klass: Klass) => {
+    const left = LevelRules.countLevelsLeft(this.input.rows.levels.length);
+    return (klass: EntityRow) => {
       const next = this.nextLevelOf(klass)!;
       const last = this.rulesetData.klassLevelsByKlass.get(klass.id)?.at(-1)?.level ?? next.level;
-      return { levelsLeft, nextLevel: next.level, maxLevel: last };
+      return { track: { last, left, next: next.level } };
     };
   }
 
   /** Whether the character meets a class's requirement groups with the class's next level added. */
-  protected override meets(groups: Requirement[][], klass: Klass) {
+  protected override meets(groups: Requirement[][], klass: EntityRow) {
     return this.character.meetsWithNextLevel(stripSeparators(klass.name), this.nextLevelOf(klass)!, groups);
   }
 
   /** The classes the character can take another level of. */
-  protected override offer(klasses: Klass[]) {
+  protected override offer(klasses: EntityRow[]) {
     return klasses.filter((klass) => this.nextLevelOf(klass));
   }
 
   /** Highest next level first, then by name. */
-  protected override order<O extends Klass & { nextLevel: number }>(options: O[]) {
-    return options.sort((a, b) => b.nextLevel - a.nextLevel || a.name.localeCompare(b.name));
+  protected override order<O extends EntityRow & { track: { next: number } }>(options: O[]) {
+    return options.sort((a, b) => b.track.next - a.track.next || a.name.localeCompare(b.name));
   }
 
   /**
@@ -76,18 +81,18 @@ export default class ClassPicker extends CharacterPicker<
       projection.pick(levels[i], { skills });
     const pickedAt = levels[0] ?? this.input.rows.levels.toSorted((a, b) => a.position - b.position).at(-1);
     if (pickedAt) projection.pick(pickedAt, { feats: featPicks });
-    return projection;
+    return projection.input;
   }
 
   /** A class's requirement groups: its own and its next level's. */
-  protected override requirementsOf(klass: Klass) {
+  protected override requirementsOf(klass: EntityRow) {
     return [klass.id, this.nextLevelOf(klass)!.id]
       .map((id) => this.rulesetData.requirementsByEntity.get(id) ?? [])
       .filter((requirements) => requirements.length > 0);
   }
 
   /** The class's next level for the character: after its highest in the class. */
-  private nextLevelOf(klass: Klass): KlassLevel | undefined {
+  private nextLevelOf(klass: EntityRow): KlassLevel | undefined {
     this.maxLevels ??= this.readMaxLevels();
     return this.rulesetData.klassLevelByKlassAndLevel.get(`${klass.id}:${(this.maxLevels.get(klass.id) || 0) + 1}`);
   }

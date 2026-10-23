@@ -1,10 +1,10 @@
-import { PicksDistribution } from "@/engine/core/levelUp/index.ts";
-import type { LevelPicks, PreviewRequest } from "@/engine/core/module/index.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import { MAX_SPELL_LEVEL } from "@/vocabulary/dnd3.5/spells.ts";
 
 import type { PoolPicks } from "./LevelUpState.ts";
+import PicksDistribution from "./PicksDistribution.ts";
 import PlannedLevelsState, { type LevelGains, type PlannedLevels } from "./PlannedLevelsState.ts";
+import type { LevelPicks, PreviewRequest } from "./requests.ts";
 
 /** The level-up wizard's preview of the levels a character plans, from its rows: its steps, and each level's details. */
 export default class LevelUpPreview extends PlannedLevelsState {
