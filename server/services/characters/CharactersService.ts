@@ -190,7 +190,7 @@ class CharactersService extends include(Object, Archives, Imports) {
       async (views) => {
         const cards = describeCharacterCards(views, charactersList, levels);
         const enrichedCharacters = charactersList.map((char) => {
-          const { levels: classLevels, race, totalLevel } = cards.get(char.id)!;
+          const { chips, levels: classLevels, race, totalLevel } = cards.get(char.id)!;
           return {
             id: char.id,
             name: char.name,
@@ -198,6 +198,7 @@ class CharactersService extends include(Object, Archives, Imports) {
             race,
             levels: classLevels,
             totalLevel,
+            chips,
             accessRole: char.accessRole,
           };
         });

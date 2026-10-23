@@ -4,7 +4,12 @@ import { Engine } from "@/engine/index.ts";
 import type { RulesetScope } from "@/server/cow/index.ts";
 
 /** What a list shows of a character whose ruleset it didn't read (an archived one's): no race, no classes. */
-const UNREAD_CARD = { levels: [], race: "Unknown", totalLevel: 0 };
+const UNREAD_CARD = {
+  chips: [{ label: "Unknown", partial: true, tone: "secondary" as const }],
+  levels: [],
+  race: "Unknown",
+  totalLevel: 0,
+};
 
 /**
  * The cards of a list of characters (each with its ruleset's view among `views`, `withRulesetScopes`', and its levels

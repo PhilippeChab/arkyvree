@@ -68,7 +68,7 @@ export function CharacterSheetBody({
             rulesetId={rulesetId}
           />
 
-          {diagnostics && Object.values(character.classes).some((cls) => cls.levels.length > 0) && (
+          {diagnostics && character.summary.tracks.some((track) => track.advancements.length > 0) && (
             <DiagnosticsSection
               baseRules={character.baseRules}
               validation={diagnostics.validation}

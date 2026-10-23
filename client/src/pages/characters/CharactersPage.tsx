@@ -166,7 +166,7 @@ export default function CharactersPage() {
                     chips={
                       <>
                         {character.accessRole === "contributor" && <StatusChip label="Shared" color="info" />}
-                        <CharacterBuildChips race={character.race} levels={character.levels} />
+                        <CharacterBuildChips chips={character.chips} />
                       </>
                     }
                   />

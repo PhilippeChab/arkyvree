@@ -172,6 +172,8 @@ class CampaignCharactersService {
             race: card.race,
             levels: isPartial ? [] : card.levels,
             totalLevel: isPartial ? null : card.totalLevel,
+            // A partly seen character's card shows what its partial reading does
+            chips: isPartial ? card.chips.filter((chip) => chip.partial) : card.chips,
             visibility: meta?.visibility ?? "Private",
             isOwn,
             isPartial,

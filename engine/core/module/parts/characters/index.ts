@@ -23,6 +23,7 @@ export type {
 } from "./blocks.ts";
 export { default as CharactersPart } from "./CharactersPart.ts";
 export type {
+  CardChip,
   CharacterCard,
   CharacterCreation,
   CreationMethod,
@@ -34,6 +35,7 @@ export type {
   NotedSheet,
   PlacementDescription,
   SheetStat,
+  SheetSummary,
 } from "./descriptions.ts";
 export type {
   AbilitiesPlan,

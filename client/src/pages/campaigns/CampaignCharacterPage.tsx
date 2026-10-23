@@ -50,7 +50,7 @@ export default function CampaignCharacterPage() {
         <Stack spacing={4}>
           <CharacterHeader
             name={data.identity?.physiology?.name ?? ""}
-            classes={data.classes}
+            summary={data.summary}
             rulesetName={data.rulesetName}
             backTo={backTo}
             onMenuOpen={data.canDownloadPdf && !data.deletedAt ? menu.openMenu : undefined}

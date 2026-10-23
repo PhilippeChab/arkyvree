@@ -107,6 +107,7 @@ export default class CharacterDescription {
       combat: {},
       saves: {},
       classes: {},
+      summary: { tracks: [] },
       skills: {},
       inventory: {},
       equipment: [],

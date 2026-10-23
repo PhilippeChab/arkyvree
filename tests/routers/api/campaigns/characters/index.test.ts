@@ -239,6 +239,8 @@ describe("campaigns characters", () => {
         race: "Human",
         levels: [],
         totalLevel: null,
+        // Its race alone: not its classes
+        chips: [{ label: "Human", partial: true, tone: "secondary" }],
         visibility: "Partial",
         isOwn: false,
         isPartial: true,

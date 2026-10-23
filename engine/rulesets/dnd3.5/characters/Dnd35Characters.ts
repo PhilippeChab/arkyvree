@@ -8,6 +8,7 @@ import type { RulesetView } from "@/engine/core/view/index.ts";
 import type { Dnd35Descriptions } from "@/engine/rulesets/dnd3.5/descriptions.ts";
 import RacePicker from "@/engine/rulesets/dnd3.5/pickers/RacePicker.ts";
 
+import CharacterCards from "./CharacterCards.ts";
 import CharacterDescription from "./description/CharacterDescription.ts";
 import IdentityFields from "./IdentityFields.ts";
 import InventoryEntries from "./inventory/InventoryEntries.ts";
@@ -55,6 +56,11 @@ export default class Dnd35Characters extends CharactersPart<Dnd35Descriptions> {
   /** Where an inventory entry's add or edit holds its item: the item equipped where asked, what equipping it checks. */
   protected override planPlacement(...args: Parameters<typeof InventoryEntries.planPlacement>) {
     return InventoryEntries.planPlacement(...args);
+  }
+
+  /** A character's card: its race and its classes at their highest level. */
+  override describeCard(...args: Parameters<typeof CharacterCards.describe>) {
+    return CharacterCards.describe(...args);
   }
 
   /**

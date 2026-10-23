@@ -158,7 +158,7 @@ export default function CharacterDetailsPage() {
         <Stack spacing={4}>
           <CharacterHeader
             name={character.identity?.physiology?.name ?? ""}
-            classes={character.classes}
+            summary={character.summary}
             rulesetId={character.rulesetId}
             rulesetName={character.rulesetName}
             backTo={isBonded && parentCharacterId ? `/characters/${parentCharacterId}` : "/characters"}
@@ -215,7 +215,7 @@ export default function CharacterDetailsPage() {
                       label="Add Level"
                       onClick={menu.closeMenuAnd(() => addLevel.openWith({}))}
                     />,
-                    Object.keys(character.classes).length > 0 && (
+                    character.summary.tracks.length > 0 && (
                       <ActionMenuItem
                         key="remove-level"
                         icon={DeleteIcon}

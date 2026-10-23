@@ -9,6 +9,7 @@ import { formatSigned } from "@/shared/text.ts";
 
 import CombatSheet from "./CombatSheet.ts";
 import SheetBlocks from "./SheetBlocks.ts";
+import SheetSummaries from "./SheetSummaries.ts";
 import SkillNames from "./SkillNames.ts";
 import SpellGroups from "./SpellGroups.ts";
 
@@ -159,6 +160,7 @@ export default class CharacterResponse {
       requirements,
       modifiers,
       validation,
+      summary: SheetSummaries.describe(classes),
       blocks: SheetBlocks.describe({
         abilities,
         classes,

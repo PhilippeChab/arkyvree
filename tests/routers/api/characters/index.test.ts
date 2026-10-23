@@ -295,6 +295,49 @@ describe("characters", () => {
       expect(stats.kind === "stats" && stats.panels[0]).not.toHaveProperty("heading");
     });
 
+    test("sums a character's classes up for its header, each at its level, with its levels and their words", async () => {
+      const { masterId } = await createWizardWithFamiliar();
+      const { summary, classes } = await expectOk(character.$get({ param: { id: masterId } }));
+      const wizard = Object.values(classes)[0];
+      expect(summary.tracks).toEqual([
+        {
+          id: wizard.klass.id,
+          entityType: "klasses",
+          name: "Wizard",
+          label: `Wizard ${wizard.levels.length}`,
+          words: {
+            open: `Wizard ${wizard.levels.length} Levels`,
+            levels: "Wizard Levels",
+            add: "Add Wizard Level",
+          },
+          advancements: wizard.levels.map(({ characterLevel, klassLevel }) => ({
+            id: characterLevel.id,
+            label: `Level ${klassLevel.level}`,
+            edit: `Edit Wizard Level ${klassLevel.level}`,
+          })),
+        },
+      ]);
+      // A new character has no track yet
+      const { id } = await postCharacter();
+      expect((await expectOk(character.$get({ param: { id } }))).summary).toEqual({ tracks: [] });
+    });
+
+    test("lists each character's card chips: its race, then its classes at their highest level", async () => {
+      const { masterId } = await createWizardWithFamiliar();
+      const { items } = await expectOk(characters.$get({ query: { limit: "100" } }));
+      const card = items.find((item) => item.id === masterId);
+      if (!card) throw new Error("no card");
+      expect(card.chips).toEqual([
+        { label: card.race, partial: true, tone: "secondary" },
+        ...card.levels.map(({ klass, level }) => ({
+          label: `${klass} ${level}`,
+          partial: false,
+          tone: "primary" as const,
+        })),
+      ]);
+      expect(card.chips).toHaveLength(2);
+    });
+
     test("describes a bonded creature's sheet in the same blocks", async () => {
       const { masterId } = await createWizardWithFamiliar();
       const master = await expectOk(character.$get({ param: { id: masterId } }));

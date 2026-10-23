@@ -172,6 +172,16 @@ export default abstract class CharactersPart<D extends Descriptions> {
   ): HeldInventoryEntry;
 
   /**
+   * The card of a character (`character`, with its levels, `levels`), as a list of characters shows it, named as its
+   * ruleset's view names what it shows, a copied or renamed one by its own name.
+   */
+  abstract describeCard(
+    view: RulesetView,
+    character: { raceId: string },
+    levels: { klassLevelId: string }[],
+  ): CharacterCard;
+
+  /**
    * How a new character's ability scores are set: the ruleset's abilities, in its sheet's order, the ways its form
    * offers, run by their kind, the scores' bounds and the one an unset ability shows, and each score's modifier over
    * those bounds. What its creation and an ability edit check their scores by, and start an unset one at.
@@ -210,28 +220,6 @@ export default abstract class CharactersPart<D extends Descriptions> {
     const creatures = bonded.map((input) => CharactersPart.withoutNotes(input));
     const sheet = this.describeFull(view, CharactersPart.withoutNotes(character), creatures);
     return CharactersPart.redactSheet(sheet, notes);
-  }
-
-  /**
-   * The card of a character (`character`, with its levels, `levels`), as a list of characters shows it, named as its
-   * ruleset's view names its race and classes, a copied or renamed one by its own name: each class at the highest
-   * level the character has in it, and its total.
-   */
-  describeCard(view: RulesetView, character: { raceId: string }, levels: { klassLevelId: string }[]): CharacterCard {
-    const { rulesetData } = view;
-    const levelByKlassName = new Map<string, number>();
-    for (const level of levels) {
-      const klassLevel = rulesetData.klassLevelsById.get(level.klassLevelId);
-      if (!klassLevel) continue;
-      const klassName = rulesetData.klassesById.get(klassLevel.klassId)?.name || "Unknown";
-      if (klassLevel.level > (levelByKlassName.get(klassName) || 0)) levelByKlassName.set(klassName, klassLevel.level);
-    }
-    const classLevels = [...levelByKlassName].map(([klass, level]) => ({ klass, level }));
-    return {
-      levels: classLevels,
-      race: rulesetData.racesById.get(character.raceId)?.name ?? "Unknown",
-      totalLevel: classLevels.reduce((sum, { level }) => sum + level, 0),
-    };
   }
 
   /**
