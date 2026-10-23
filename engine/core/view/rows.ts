@@ -18,12 +18,6 @@ interface EntityColumns {
   updatedAt: string;
 }
 
-/**
- * What every ruleset entity's row holds: its scope, its name and its description, and its timestamps. A mapped type, as
- * a row's answer is plain data any record type takes (an interface isn't).
- */
-type EntityRow = Pick<EntityColumns, keyof EntityColumns>;
-
 type FeatAptitude = LinkRow & { aptitudeId: string; featId: string };
 
 /** What a link's row holds: its timestamps (a link is never archived: `deletedAt` is always null). */
@@ -48,6 +42,12 @@ export type CharacterLevel = Pick<EntityRow, "createdAt" | "deletedAt" | "id" | 
   klassLevelId: string;
   position: number;
 };
+/**
+ * What every ruleset entity's row holds: its scope, its name and its description, and its timestamps. A mapped type, as
+ * a row's answer is plain data any record type takes (an interface isn't).
+ */
+export type EntityRow = Pick<EntityColumns, keyof EntityColumns>;
+
 export type Feat = EntityRow & { generated: boolean; selectable: boolean; stackable: boolean };
 export type FeatWithAptitudes = Feat & {
   featsAptitudesInRules: (FeatAptitude & { aptitudesInRule: Aptitude })[];

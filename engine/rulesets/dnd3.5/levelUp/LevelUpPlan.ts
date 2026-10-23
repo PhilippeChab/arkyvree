@@ -1,12 +1,12 @@
-import type { PlannedClassLevel } from "@/engine/core/levelUp/index.ts";
-import type { LevelPicks, PlannedSoFar } from "@/engine/core/module/index.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 
+import type { PlannedClassLevel } from "./LevelUpBase.ts";
 import type { PoolPicks } from "./LevelUpState.ts";
 import PlannedLevelsState from "./PlannedLevelsState.ts";
+import type { LevelPicks, PlannedSoFar } from "./requests.ts";
 
 /**
- * What 3.5 computes of a level's save, from the character's rows, which core's save checks (`LevelsPlanning`): a
+ * What 3.5 computes of a level's save, from the character's rows, which its save checks (`LevelsPlanning`): a
  * level-up's pooled picks spread over its planned levels, the pools a save's picks overfill, and the skill points the
  * wizard has spent so far, spread as a save spreads them.
  */

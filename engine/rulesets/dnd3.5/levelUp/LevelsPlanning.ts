@@ -1,18 +1,12 @@
 import type { ValidationResult } from "@/engine/core/character/index.ts";
-import {
-  type AbilityIncrease,
-  type CharacterInput,
-  CharacterProjection,
-  type LevelEditPlan,
-  type LevelEditRequest,
-  type LevelPicks,
-  type LevelsPlan,
-  type LevelUpRequest,
-} from "@/engine/core/module/index.ts";
+import type { CharacterInput } from "@/engine/core/module/index.ts";
 import RulesError, { type RulesIssue } from "@/engine/core/RulesError.ts";
 
+import CharacterProjection from "./CharacterProjection.ts";
 import LevelUpBase from "./LevelUpBase.ts";
 import PicksDistribution from "./PicksDistribution.ts";
+import type { AbilityIncrease, LevelEditPlan, LevelsPlan } from "./plans.ts";
+import type { LevelEditRequest, LevelPicks, LevelUpRequest } from "./requests.ts";
 import type { HoldingCharacter } from "./SelectionChecks.ts";
 
 /** A planned level checked: its class level, hit points, ability increases and picks. */
@@ -33,8 +27,8 @@ export interface CheckedCharacter extends HoldingCharacter {
 }
 
 /**
- * A character's levels saved, from its rows: a level-up's levels, or a saved level's edit, checked in the order every
- * ruleset's are, over what its ruleset's rules compute (`LevelUpRules`):
+ * A character's levels saved, from its rows: a level-up's levels, or a saved level's edit, checked in one order, over
+ * what the level-up rules compute (`LevelUpRules`):
  * - a level-up's planned levels are the ruleset's classes' (`getPlannedKlassLevels`), and its selections linked to
  *   their pools, before its picks are spread over its levels (`distributePicks`): each is the view's, by the id the view
  *   keys it by, as the request entered (`LevelRequests`);
@@ -167,7 +161,7 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
     return projection;
   }
 
-  /** Refuses picks (`picks`, which `holder` holds) that overfill a pool they're in, as the ruleset counts them. */
+  /** Refuses picks (`picks`, which `holder` holds) that overfill a pool they're in, as the rules count them. */
   private refuseOverfull(holder: C, picks: Pick<LevelPicks, "feats" | "powers">) {
     PicksDistribution.refuseOverfull(this.rules.findOverfullPools(this.view, this.character, holder, picks));
   }
@@ -212,7 +206,7 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
   }
 
   /**
-   * The levels a level-up writes (its request's `levels`, with its `picks` spread over them as the ruleset spreads
+   * The levels a level-up writes (its request's `levels`, with its `picks` spread over them as the rules spread
    * them), and what the master's bonded creatures (`bonded`, their rows) become with them. Each level is checked as the
    * levels before it see it, and refused when it's saved already, raises its abilities by other than its rules give it,
    * or picks what it can't; the picks are refused when they pick a feat that doesn't stack the character has already

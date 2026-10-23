@@ -1,7 +1,8 @@
+import type { CharacterInput } from "@/engine/core/module/index.ts";
 import type { CharacterLevel } from "@/engine/core/view/index.ts";
 
-import type { CharacterInput, CharacterRows } from "./CharacterInputs.ts";
-import type { AbilityIncrease, LevelPickRows } from "./parts/levelUp/index.ts";
+import type { AbilityIncrease, LevelPickRows } from "./plans.ts";
+import SavedPicks, { type SavedPickRows } from "./SavedPicks.ts";
 
 /**
  * A character's rows (`character`) with what a level-up adds before it's saved, as the rows it would save: the levels
@@ -20,7 +21,7 @@ export default class CharacterProjection {
 
   private readonly levels: CharacterLevel[] = [];
 
-  private readonly picks: CharacterRows["picks"] = { abilityIncreases: [], feats: [], powers: [], skills: [] };
+  private readonly picks: SavedPickRows = { abilityIncreases: [], feats: [], powers: [], skills: [] };
 
   /** Where the next level added goes: after every level the character saved, and those added before it. */
   private nextPosition: number;
@@ -87,6 +88,7 @@ export default class CharacterProjection {
   /** The character's rows with the projection: its levels but those left out, then those added, and their picks. */
   get input(): CharacterInput {
     const { rows } = this.character;
+    const saved = SavedPicks.of(rows);
     const levels = [...rows.levels.filter((level) => !this.droppedLevelIds.has(level.id)), ...this.levels];
     const kept = new Set(levels.map((level) => level.id));
     const keep = <P extends { characterLevelId: string }>(saved: P[], added: P[]) =>
@@ -97,10 +99,10 @@ export default class CharacterProjection {
         ...rows,
         levels,
         picks: {
-          abilityIncreases: keep(rows.picks.abilityIncreases, this.picks.abilityIncreases),
-          feats: keep(rows.picks.feats, this.picks.feats),
-          powers: keep(rows.picks.powers, this.picks.powers),
-          skills: keep(rows.picks.skills, this.picks.skills),
+          abilityIncreases: keep(saved.abilityIncreases, this.picks.abilityIncreases),
+          feats: keep(saved.feats, this.picks.feats),
+          powers: keep(saved.powers, this.picks.powers),
+          skills: keep(saved.skills, this.picks.skills),
         },
       },
     };

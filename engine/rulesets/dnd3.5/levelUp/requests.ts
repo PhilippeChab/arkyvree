@@ -1,8 +1,7 @@
 /**
- * What the level-up part's operations take, past the rows the server read and the view: a level-up and a saved level's
- * edit as a module reads them from a plan (`readLevelUp`, `readEdit`), and the queries a module's own steps and pickers
- * answer over a plan (a level's, what it plans before it, the levels its plan's answer reads). Whether to force the rules
- * is always an operation's last argument.
+ * What 3.5's level flows take, past the rows the server read and the view: a level-up and a saved level's edit as it
+ * reads them from a plan (`readLevelUp`, `readEdit`), and the queries its steps and pickers answer over a plan (a
+ * level's, what it plans before it, the levels its plan's answer reads).
  */
 
 import type { AbilityIncrease, FeatPick, PowerPick } from "./plans.ts";

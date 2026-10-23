@@ -11,6 +11,7 @@ export type {
   CharacterAbility,
   CharacterLanguage,
   CharacterLevel,
+  EntityRow,
   Feat,
   FeatWithAptitudes,
   Item,

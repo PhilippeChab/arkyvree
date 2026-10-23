@@ -1,9 +1,10 @@
-import type { CharacterInput, PowerPickQuery } from "@/engine/core/module/index.ts";
+import type { CharacterInput } from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import { FEAT_FIELDS } from "@/engine/rulesets/dnd3.5/entities/feats/fields.ts";
+import type { PowerPickQuery } from "@/engine/rulesets/dnd3.5/levelUp/requests.ts";
 import { SPELL_SCHOOL } from "@/vocabulary/dnd3.5/properties/index.ts";
 
-import Dnd35LevelPicker from "./Dnd35LevelPicker.ts";
+import LevelPicker from "./LevelPicker.ts";
 
 /**
  * A power picker for the character, from its rows: the pool's powers (`filters`: of a spell level, when given), but
@@ -12,7 +13,7 @@ import Dnd35LevelPicker from "./Dnd35LevelPicker.ts";
  * each pool is a list of its own, which knows a power once), those of the schools a wizard's specialization prohibits,
  * and those picked so far, in any pool.
  */
-export default class PowerPicker extends Dnd35LevelPicker {
+export default class PowerPicker extends LevelPicker {
   constructor(view: RulesetView, input: CharacterInput, query: PowerPickQuery) {
     super(view, input, query);
     this.filters = this.buildFilters(query);

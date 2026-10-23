@@ -1,8 +1,9 @@
-import { CharacterProjection, type LevelQuery } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 
+import CharacterProjection from "./CharacterProjection.ts";
 import LevelUpState, { type PoolPicks } from "./LevelUpState.ts";
+import type { LevelQuery } from "./requests.ts";
 
 /**
  * What a level-up step projects: a new level after the levels planned before it (`pendingLevel…`), or an edit of one

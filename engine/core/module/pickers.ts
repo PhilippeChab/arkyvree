@@ -22,6 +22,20 @@ export interface OpenedPicker<Filters, Row extends { id: string }, Details> {
 }
 
 /**
+ * A track picker, as a `plan` step opens it (3.5's classes): the tracks of its kind the character may advance on, read
+ * as its kind's rows in the character's ruleset, those it advanced on first (`filters`), each described with its place
+ * on the track (`StepOption`'s `track`).
+ */
+export interface OpenedTrackPicker<Filters, Row extends { id: string }> extends OpenedPicker<
+  Filters,
+  Row,
+  { track: { last: number; left: number; next: number } }
+> {
+  /** That its options are tracks, read as rows of its kind in the advancements' order. */
+  readonly tracks: true;
+}
+
+/**
  * What a page of a list's entities is read with: those of the list (`ids`), less those left out (`excludeIds`), of the
  * values of `columns` (a feat's selectable) and of `fields` (the options of a group, by the field that names it).
  */

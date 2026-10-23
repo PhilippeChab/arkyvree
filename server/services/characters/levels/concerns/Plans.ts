@@ -1,6 +1,6 @@
 import {
   Engine,
-  type Klass,
+  type EntityRow,
   type LevelPlanRequest,
   type StepOption,
   type StepOptionGroup,
@@ -33,7 +33,7 @@ function optionOf(option: {
 /**
  * The level wizards' plans, by their steps' mechanics: a level's steps, the plan's answer (each step's, Add Level's
  * plan and Edit Level's level alike), and a step's options over the plan, a page at a time, read by the kind its picker
- * opens (a class plan's classes, a pool's feats, a family's, or its spells).
+ * opens (a plan's tracks, a pool's options, or a group's).
  */
 export function Plans<B extends Constructor>(Base: B) {
   abstract class WithPlans extends Base {
@@ -62,8 +62,8 @@ export function Plans<B extends Constructor>(Base: B) {
     }
 
     /**
-     * A page of step `step`'s options over the plan (`query`), searched: the classes the plan can take next, a pool's
-     * feats (their families grouped, a family's own when the query names one) or its spells, each described for the
+     * A page of step `step`'s options over the plan (`query`), searched: the tracks the plan can take next (3.5's
+     * classes), a pool's options (its groups, a group's own when the query names one), each described for the
      * character with the plan, each a step's option in no game's nouns (`StepOption`, `StepOptionGroup`). Answered
      * with whether its rows are groups.
      */
@@ -77,20 +77,20 @@ export function Plans<B extends Constructor>(Base: B) {
       const { search, ...picker } = query;
       return await withEditableCharacter(db, session, characterId, async (scope, character) => {
         const opened = Engine.for(scope).character(character).levelUp().openStepPicker(step, picker);
-        if (opened.kind === "klasses") {
+        // A plan's picker reads tracks: its kind's rows in the character's ruleset, those it advanced on first
+        if ("tracks" in opened.picker) {
           const filters = {
-            entityType: "klasses",
+            entityType: opened.kind,
             rulesetId: character.record.rulesetId,
             ...scope.rulesetData.cow.listFilters,
             orderByAdvancementsOf: characterId,
             ...opened.picker.filters,
             search,
           };
-          const result = await Entities.findPage<Klass>(db, filters, pagination);
-          const items = opened.picker.describe(result.items).map((klass): StepOption => ({
-            ...optionOf(klass),
-            track: { last: klass.maxLevel, left: klass.levelsLeft, next: klass.nextLevel },
-          }));
+          const result = await Entities.findPage<EntityRow>(db, filters, pagination);
+          const items = opened.picker
+            .describe(result.items)
+            .map((row): StepOption => ({ ...optionOf(row), track: row.track }));
           return { grouped: false as const, items, page: result.page, nextPage: result.nextPage };
         }
         // A grouped picker's groups, unless the query names one: its options then, as an ungrouped picker's

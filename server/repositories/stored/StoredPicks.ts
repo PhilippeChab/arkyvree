@@ -2,7 +2,7 @@ import { and, eq, inArray, max, type SQL } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
 import { advancementPicksInCharacter, entitiesInRules } from "@/drizzle/schema.ts";
-import { Engine, type StoredPick } from "@/engine/index.ts";
+import { type CharacterRows, Engine, type StoredPick } from "@/engine/index.ts";
 import BaseRepository from "@/server/repositories/BaseRepository.ts";
 
 /** A pick's row, any step's, as its module's declaration reads it (a level's feat, its skill ranks). */
@@ -41,6 +41,18 @@ class StoredPicks extends BaseRepository<typeof advancementPicksInCharacter> {
   /** Stored picks as their module's rows of `pick`. */
   private static mapRows<R>(pick: string, picks: StoredPick[]): R[] {
     return picks.map((row) => Engine.storage().pickRowOf(pick, row) as R);
+  }
+
+  /** Picks by the picked entity's name, ties broken to a fixed order: a repeated pick at one level by its ordinal. */
+  private pickOrder() {
+    return [
+      this.orderBy(entitiesInRules.name),
+      this.orderBy(this.table.entityId),
+      this.orderBy(this.table.viaId),
+      this.orderBy(this.table.advancementId),
+      this.orderBy(this.table.ordinal),
+      this.orderBy(this.table.id),
+    ];
   }
 
   /**
@@ -94,6 +106,33 @@ class StoredPicks extends BaseRepository<typeof advancementPicksInCharacter> {
   }
 
   /**
+   * Every pick its module declares (`Engine.storage().character().picks`) of these character levels, by its name: each
+   * pick's rows in `findMany`'s order, read in one query.
+   */
+  async findAll(db: Db, where: { characterLevelIds: string[] }): Promise<CharacterRows["picks"]> {
+    const declared = Engine.storage().character().picks;
+    const pickOfStep = new Map(Object.entries(declared).map(([pick, { step }]) => [step, pick]));
+    const picks: CharacterRows["picks"] = Object.fromEntries(Object.keys(declared).map((pick) => [pick, []]));
+    if (where.characterLevelIds.length === 0) return picks;
+    const rows = await db
+      .select({ ...StoredPicks.buildColumns(), step: this.table.step })
+      .from(this.table)
+      .leftJoin(entitiesInRules, eq(entitiesInRules.id, this.table.entityId))
+      .where(
+        and(
+          inArray(this.table.step, [...pickOfStep.keys()]),
+          inArray(this.table.advancementId, where.characterLevelIds),
+        ),
+      )
+      .orderBy(...this.pickOrder());
+    for (const { step, ...row } of rows) {
+      const pick = pickOfStep.get(step)!;
+      picks[pick].push(Engine.storage().pickRowOf(pick, row) as CharacterRows["picks"][string][number]);
+    }
+    return picks;
+  }
+
+  /**
    * The picks of `pick` of these character levels, by the picked entity's name, ties broken to a fixed order: a
    * stackable feat a level picked twice, by its ordinal.
    */
@@ -107,14 +146,7 @@ class StoredPicks extends BaseRepository<typeof advancementPicksInCharacter> {
       .from(this.table)
       .leftJoin(entitiesInRules, eq(entitiesInRules.id, this.table.entityId))
       .where(StoredPicks.buildScope(where.pick, inArray(this.table.advancementId, where.characterLevelIds)))
-      .orderBy(
-        this.orderBy(entitiesInRules.name),
-        this.orderBy(this.table.entityId),
-        this.orderBy(this.table.viaId),
-        this.orderBy(this.table.advancementId),
-        this.orderBy(this.table.ordinal),
-        this.orderBy(this.table.id),
-      );
+      .orderBy(...this.pickOrder());
     return StoredPicks.mapRows<R>(where.pick, rows);
   }
 }

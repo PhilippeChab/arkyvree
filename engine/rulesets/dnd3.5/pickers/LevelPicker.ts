@@ -1,28 +1,29 @@
-import type { BuildsCharacters } from "@/engine/core/character/index.ts";
-import { type CharacterInput, CharacterProjection, type PickQuery } from "@/engine/core/module/index.ts";
+import type { CharacterInput } from "@/engine/core/module/index.ts";
+import { CharacterPicker } from "@/engine/core/pickers/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { KlassLevel, RulesetView } from "@/engine/core/view/index.ts";
-
-import CharacterPicker, { type PickingCharacter } from "./CharacterPicker.ts";
+import CharacterProjection from "@/engine/rulesets/dnd3.5/levelUp/CharacterProjection.ts";
+import type { PickQuery } from "@/engine/rulesets/dnd3.5/levelUp/requests.ts";
+import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
+import Dnd35CharacterBuilder from "@/engine/rulesets/dnd3.5/model/Dnd35CharacterBuilder.ts";
+import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 
 /**
  * A feat or power picker: the level it picks at (`query`), the character projected to it with the feats and powers
  * picked so far, whose requirements an option is checked against, and the character holding what it leaves out
- * (`holder`): with every level it has and plans. Both are built by its ruleset's builder (`builder`), each level they
- * project at the hit points its ruleset counts a level before they're rolled (`unrolledLevelHp`).
+ * (`holder`): with every level it has and plans, each level they project at its unrolled hit points.
  */
-export default abstract class LevelPicker<
-  C extends PickingCharacter,
-  Details extends object = object,
-> extends CharacterPicker<C, { id: string }, Details> {
+export default abstract class LevelPicker<Details extends object = object> extends CharacterPicker<
+  DetailedCharacter,
+  { id: string },
+  Details
+> {
   constructor(
     view: RulesetView,
     input: CharacterInput,
     protected readonly query: PickQuery,
-    builder: BuildsCharacters<C>,
-    private readonly unrolledLevelHp: number,
   ) {
-    super(view, input, builder);
+    super(view, input, Dnd35CharacterBuilder);
     const klassLevel = this.rulesetData.klassLevelByKlassAndLevel.get(`${query.klassId}:${query.level}`);
     if (!klassLevel) throw new RulesError("not-found", "Class level not found");
     this.klassLevel = klassLevel;
@@ -32,7 +33,7 @@ export default abstract class LevelPicker<
   protected readonly klassLevel: KlassLevel;
 
   /** The character holding what the picker leaves out, once built. */
-  private heldBy?: C;
+  private heldBy?: DetailedCharacter;
 
   /**
    * The character a pick is made for: as it was before the edited level (an edit), with the levels planned before this
@@ -42,10 +43,10 @@ export default abstract class LevelPicker<
     const { abilityIncreases, editedLevelId, planned = {} } = this.query;
     const projection = new CharacterProjection(this.input);
     if (editedLevelId) projection.dropLevelsFrom(editedLevelId);
-    const hp = this.unrolledLevelHp;
+    const hp = LevelRules.UNROLLED_LEVEL_HP;
     projection.addLevels(planned.klassLevelIds ?? [], { abilityIncreases: planned.abilityIncreases, hp });
     projection.pick(projection.addLevel(this.klassLevel.id, { abilityIncreases, hp }), this.pickedSoFar);
-    return projection;
+    return projection.input;
   }
 
   /** The feats and powers the wizard picked so far, each in its pool, which the picker's level holds. */
@@ -62,7 +63,7 @@ export default abstract class LevelPicker<
   private projectHolder() {
     const { abilityIncreases, editedLevelId, laterKlassLevelIds = [], planned = {} } = this.query;
     const projection = new CharacterProjection(this.input);
-    const hp = this.unrolledLevelHp;
+    const hp = LevelRules.UNROLLED_LEVEL_HP;
     const replacing = this.input.rows.levels.find((level) => level.id === editedLevelId);
     projection.addLevels(planned.klassLevelIds ?? [], { abilityIncreases: planned.abilityIncreases, hp });
     projection.pick(projection.addLevel(this.klassLevel.id, { abilityIncreases, hp, replacing }), this.pickedSoFar);
@@ -77,10 +78,10 @@ export default abstract class LevelPicker<
    * level's picks against what the character holds with its every other level and the level's other picks
    * (`SelectionChecks.checkPicksNotHeld`).
    */
-  protected get holder(): C {
+  protected get holder(): DetailedCharacter {
     // With no level edited or planned after it, it's the character the pick is made for
     const { editedLevelId, laterKlassLevelIds = [] } = this.query;
     if (!editedLevelId && laterKlassLevelIds.length === 0) return this.character;
-    return (this.heldBy ??= this.build(this.projectHolder()));
+    return (this.heldBy ??= this.build(this.projectHolder().input));
   }
 }

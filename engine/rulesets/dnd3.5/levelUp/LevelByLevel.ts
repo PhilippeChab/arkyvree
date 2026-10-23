@@ -1,16 +1,12 @@
-import {
-  type BondedCreaturesPlan,
-  type CharacterInput,
-  CharacterProjection,
-  type LevelPicks,
-  type LevelRequest,
-  type LevelWrites,
-} from "@/engine/core/module/index.ts";
+import type { BondedCreaturesPlan, CharacterInput } from "@/engine/core/module/index.ts";
 import type { RulesIssue } from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 
+import CharacterProjection from "./CharacterProjection.ts";
 import LevelsPlanning, { type CheckedCharacter } from "./LevelsPlanning.ts";
 import type { LevelUpRules } from "./LevelUpBase.ts";
+import type { LevelWrites } from "./plans.ts";
+import type { LevelPicks, LevelRequest } from "./requests.ts";
 
 /**
  * A character's levels saved one at a time, as if leveled up level by level (an import's): each level a level-up of its

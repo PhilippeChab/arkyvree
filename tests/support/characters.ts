@@ -3,13 +3,9 @@ import type { InferRequestType } from "hono/client";
 
 import type { Db } from "@/drizzle/database.ts";
 import { charactersInCharacter } from "@/drizzle/schema.ts";
-import Modules from "@/engine/api/Modules.ts";
-import {
-  CharacterInputs,
-  CharacterProjection,
-  type FieldsRequest,
-  type SheetBlock,
-} from "@/engine/core/module/index.ts";
+import { CharacterInputs, type FieldsRequest, type SheetBlock } from "@/engine/core/module/index.ts";
+import CharacterProjection from "@/engine/rulesets/dnd3.5/levelUp/CharacterProjection.ts";
+import Dnd35CharacterBuilder from "@/engine/rulesets/dnd3.5/model/Dnd35CharacterBuilder.ts";
 import { type RulesetScope, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Characters } from "@/server/repositories/index.ts";
@@ -84,7 +80,7 @@ export async function backdateLastChange(characterId: string, at = "2000-01-01T0
 }
 
 /**
- * `record`, built the way the engine builds a character (its base rules' module, `Modules.of`: of its row's kind, a
+ * `record`, a 3.5 character, built the way the engine builds one (`Dnd35CharacterBuilder`: of its row's kind, a
  * bonded creature's master built first): its rows read through `database`, in `scope` when it's the character's
  * ruleset's, with what a level-up adds when the test projects some (`project`).
  */
@@ -102,7 +98,7 @@ export async function buildCharacter(
     // With what a level-up adds, when the test projects some
     const projection = new CharacterProjection(read);
     project?.(projection);
-    return Modules.of(view.ruleset.baseRules).levelUp.buildCharacter(view, projection.input);
+    return Dnd35CharacterBuilder.build(view, projection.input);
   };
   if (scope?.ruleset.id !== record.rulesetId) return await withRulesetScope(database, record.rulesetId, build);
   return await build(scope);

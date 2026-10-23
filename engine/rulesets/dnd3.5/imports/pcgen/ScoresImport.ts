@@ -1,7 +1,8 @@
 import type { ImportedCharacter, ImportReport } from "@/engine/core/imports/index.ts";
-import type { AbilityIncrease, CharacterCreation } from "@/engine/core/module/index.ts";
+import type { CharacterCreation } from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import NewCharacters from "@/engine/rulesets/dnd3.5/characters/NewCharacters.ts";
+import type { AbilityIncrease } from "@/engine/rulesets/dnd3.5/levelUp/plans.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import { formatSigned } from "@/shared/text.ts";
 import { ABILITY_NAMES } from "@/vocabulary/dnd3.5/abilities.ts";

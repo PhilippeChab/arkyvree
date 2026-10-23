@@ -1,7 +1,5 @@
 import { z } from "zod";
 
-import type { FeatSlots, GrantedFeatRecords, PlannedClassLevel } from "@/engine/core/levelUp/index.ts";
-import { CharacterProjection, type LevelPicks, type LevelRequest } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import { CLASS_LEVEL_FIELDS } from "@/engine/rulesets/dnd3.5/entities/classes/fields.ts";
 import { RULESET_LIMITS } from "@/engine/rulesets/dnd3.5/limits.ts";
@@ -11,9 +9,13 @@ import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import SkillRules from "@/engine/rulesets/dnd3.5/rules/SkillRules.ts";
 import { include } from "@/lib/mixins.ts";
 
+import CharacterProjection from "./CharacterProjection.ts";
 import { PlansAptitudeSlots } from "./concerns/PlansAptitudeSlots.ts";
-import Dnd35PicksDistribution, { type PerLevelDistributionData } from "./Dnd35PicksDistribution.ts";
+import type { PlannedClassLevel } from "./LevelUpBase.ts";
 import LevelUpState, { type PoolPicks } from "./LevelUpState.ts";
+import PicksDistribution, { type FeatSlots, type PerLevelDistributionData } from "./PicksDistribution.ts";
+import type { LevelPicks, LevelRequest } from "./requests.ts";
+import type { GrantedFeatRecords } from "./SelectionChecks.ts";
 
 /**
  * A level-up's planned levels, built: the character with them (`character`, built with their projection), the
@@ -48,7 +50,7 @@ export default abstract class PlannedLevelsState extends include(LevelUpState, P
       perLevelFeatSlots,
       perLevelPowerSlots,
       savedLevelCount: planned.savedLevelCount,
-      skillContexts: Dnd35PicksDistribution.contextsOf(
+      skillContexts: PicksDistribution.contextsOf(
         planned.character.components.skills.getEnrichedSkills(this.rulesetData.skills, classSkills.merged),
       ),
     };
@@ -160,11 +162,11 @@ export default abstract class PlannedLevelsState extends include(LevelUpState, P
   /**
    * A save's pooled picks (skill ranks, and feats and powers by pool) spread over its planned levels, each level taking
    * what its points and slots allow, in order, and what's past a pool's slots on the level of the feat that gives it
-   * room, or the last (`Dnd35PicksDistribution`). `gains`: what the levels give, when the caller has them.
+   * room, or the last (`PicksDistribution`). `gains`: what the levels give, when the caller has them.
    */
   protected distributePlannedPicks(planned: PlannedLevels, picks: LevelPicks, gains = this.computeLevelGains(planned)) {
     const data = this.buildDistributionData(planned, gains);
-    return new Dnd35PicksDistribution(data).distribute(
+    return new PicksDistribution(data).distribute(
       picks,
       this.buildPowerLevelLookup(Object.values(picks.powers).flat()),
       this.getAptitudeSources(picks.feats, data.perLevelFeatSlots),

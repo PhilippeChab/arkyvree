@@ -1,7 +1,8 @@
-import type { PlannedClassLevel } from "@/engine/core/levelUp/index.ts";
-import { CharacterProjection, type FeatPick } from "@/engine/core/module/index.ts";
-import Dnd35PicksDistribution from "@/engine/rulesets/dnd3.5/levelUp/Dnd35PicksDistribution.ts";
+import CharacterProjection from "@/engine/rulesets/dnd3.5/levelUp/CharacterProjection.ts";
+import type { PlannedClassLevel } from "@/engine/rulesets/dnd3.5/levelUp/LevelUpBase.ts";
+import PicksDistribution from "@/engine/rulesets/dnd3.5/levelUp/PicksDistribution.ts";
 import PlannedLevelsState from "@/engine/rulesets/dnd3.5/levelUp/PlannedLevelsState.ts";
+import type { FeatPick } from "@/engine/rulesets/dnd3.5/levelUp/plans.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 
@@ -18,7 +19,7 @@ export interface LevelGains {
   /** Each spell list's room with the level, by aptitude id, then by spell level: the spells its class learns there */
   powerRoom: Map<string, Map<number, number>>;
   skillPoints: number;
-  skills: ReturnType<typeof Dnd35PicksDistribution.contextsOf>;
+  skills: ReturnType<typeof PicksDistribution.contextsOf>;
 }
 
 /**
@@ -63,7 +64,7 @@ export default class ImportedLevelGains extends PlannedLevelsState {
       featRoom,
       powerRoom,
       skillPoints: gains.perLevelSkillPoints[0] ?? 0,
-      skills: Dnd35PicksDistribution.contextsOf(skills),
+      skills: PicksDistribution.contextsOf(skills),
     };
   }
 }

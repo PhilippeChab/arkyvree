@@ -1,8 +1,9 @@
-import type { AbilityIncrease, FeatPick, LevelPickRows, LevelPicks, PowerPick } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetData, RulesetView } from "@/engine/core/view/index.ts";
 
 import type { LevelUpRules } from "./LevelUpBase.ts";
+import type { AbilityIncrease, FeatPick, LevelPickRows, PowerPick } from "./plans.ts";
+import type { LevelPicks } from "./requests.ts";
 
 /** The level's hit points and selections a check reads, with its class. */
 interface LevelChecked {
@@ -66,7 +67,7 @@ export type Holding = (picks: PoolPicks) => HoldingCharacter;
 /**
  * A level's selections checked against the ruleset's view (`view`): linked to their pools, and not taken twice (a
  * non-stackable feat the character has, a power in a pool it knows it in, the level's other picks' gifts too); and its
- * hit points and ability increases, within what its ruleset's rules give it (`rules`). Each selection is the ruleset's,
+ * hit points and ability increases, within what the level-up rules give it (`rules`). Each selection is the ruleset's,
  * by the id its view keys it by: the level-up handle resolved the request when it entered, and refused a pick the view
  * lacks (`LevelRequests`).
  */

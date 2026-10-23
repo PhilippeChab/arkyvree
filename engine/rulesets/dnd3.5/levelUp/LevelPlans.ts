@@ -1,19 +1,11 @@
-import { LevelUpBase } from "@/engine/core/levelUp/index.ts";
 import {
-  type FeatPickQuery,
-  type LevelEditRequest,
-  type LevelPicks,
   type LevelPlanAnswer,
   type LevelPlanRequest,
-  type LevelRequest,
   type LevelStep,
   type LevelSteps,
-  type LevelUpRequest,
   Payloads,
   type PickAnswer,
   type PickedEntity,
-  type PlannedSoFar,
-  type PowerPickQuery,
   type SpendAnswer,
   type StepPickerQuery,
 } from "@/engine/core/module/index.ts";
@@ -22,9 +14,19 @@ import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedChara
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import { SPELL_LEVEL_LABELS, SPELL_LEVELS } from "@/vocabulary/dnd3.5/spells.ts";
 
-import Dnd35LevelSelections from "./Dnd35LevelSelections.ts";
+import LevelSelections from "./LevelSelections.ts";
+import LevelUpBase from "./LevelUpBase.ts";
 import LevelUpPreview from "./LevelUpPreview.ts";
 import LevelUpSteps from "./LevelUpSteps.ts";
+import type {
+  FeatPickQuery,
+  LevelEditRequest,
+  LevelPicks,
+  LevelRequest,
+  LevelUpRequest,
+  PlannedSoFar,
+  PowerPickQuery,
+} from "./requests.ts";
 import { LEVEL_WIZARD } from "./wizard.ts";
 
 /** The feats step's answer, or the powers', as the preview and the steps answer them. */
@@ -436,7 +438,7 @@ export default class LevelPlans extends LevelUpBase<DetailedCharacter> {
    * Refused when the character has no such level.
    */
   describeSavedPlan(characterLevelId: string): LevelPlanRequest {
-    const saved = new Dnd35LevelSelections(this.view, this.character, this.rules).describeLevel(characterLevelId);
+    const saved = new LevelSelections(this.view, this.character, this.rules).describeLevel(characterLevelId);
     return {
       editedLevelId: characterLevelId,
       steps: {

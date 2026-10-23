@@ -15,7 +15,6 @@ export type { default as StorageEngine } from "./api/StorageEngine.ts";
 export type { CowData, RulesetSources } from "./core/cow/index.ts";
 export type { EntityFieldValues, EntityForm, FormField } from "./core/fields/index.ts";
 export type {
-  AbilityIncrease,
   BondedPlan,
   CharacterCard,
   CharacterInput,
@@ -32,17 +31,12 @@ export type {
   ImportSource,
   LanguagesPlan,
   LevelPlanRequest,
-  LevelQuery,
-  LevelRequest,
   LevelRows,
   LevelWrites,
   LinkPart,
   ListLink,
   MadeEntity,
   NewBondedCreature,
-  PickQuery,
-  PlannedSoFar,
-  PreviewRequest,
   RacePickQuery,
   RulesDescription,
   RulesWord,
@@ -71,6 +65,7 @@ export type {
   CharacterLanguage,
   CharacterLevel,
   EntityCustomizations,
+  EntityRow,
   Feat,
   FeatWithAptitudes,
   Item,

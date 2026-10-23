@@ -1,4 +1,5 @@
 import { Engine } from "@/engine/index.ts";
+import type { LevelWrites } from "@/engine/rulesets/dnd3.5/levelUp/plans.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
@@ -15,9 +16,11 @@ export type PcgenCharacter = "brannoc" | "hilda" | "selene";
 /** What importing a file (`text`) into a ruleset (the seeded one, unless given) plans, as the seed user's. */
 export async function planImportOf(text: string, rulesetId?: string) {
   const id = rulesetId ?? (await getSeedCtx()).rulesetId;
-  return await withRulesetScope(db, id, async (scope) =>
+  const plan = await withRulesetScope(db, id, async (scope) =>
     Engine.for(scope).characters().planImport(text, { characterId: crypto.randomUUID(), userId: SEED_USER_ID }),
   );
+  // Its levels in 3.5's shapes: their class levels and hit points, and their ability increases and picks
+  return { ...plan, levels: plan.levels as LevelWrites[] };
 }
 
 /** A PCGen character's file, as its text. */

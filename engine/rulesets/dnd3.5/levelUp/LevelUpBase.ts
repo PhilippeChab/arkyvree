@@ -1,18 +1,13 @@
-import {
-  type AbilityIncrease,
-  type BondedCreaturesPlan,
-  type CharacterInput,
-  CharacterProjection,
-  type LevelPickRows,
-  type LevelPicks,
-  type LevelRequest,
-  type LevelRows,
-} from "@/engine/core/module/index.ts";
+import { type BondedCreaturesPlan, type CharacterInput } from "@/engine/core/module/index.ts";
 import RulesError, { type RulesIssue } from "@/engine/core/RulesError.ts";
 import type { Klass, KlassLevel, RulesetData, RulesetView } from "@/engine/core/view/index.ts";
 import type { Character } from "@/shared/relations.ts";
 
+import CharacterProjection from "./CharacterProjection.ts";
 import type { OverfullPool } from "./PicksDistribution.ts";
+import type { AbilityIncrease, LevelPickRows, LevelRows } from "./plans.ts";
+import type { LevelPicks, LevelRequest } from "./requests.ts";
+import SavedPicks from "./SavedPicks.ts";
 import SelectionChecks from "./SelectionChecks.ts";
 
 /** The hit points a level of a class gains, as its hit die bounds them: the least, the most, and the average. */
@@ -23,11 +18,10 @@ export interface LevelHitPoints {
 }
 
 /**
- * What a ruleset's level-up rules decide, which every level-up flow reads: how a character is built (`C`, the ruleset's
- * character), what a level's ability increases add up to, the hit points it gains and those it counts before they're
- * rolled, and what a master's bonded creatures become with it; and what a save's checks (`LevelsPlanning`) ask of the
- * ruleset: its planned levels, its picks spread over them, the pools they overfill, the issues an edited level answers
- * for.
+ * What the level-up rules decide (`Dnd35LevelUp`), which every level-up flow reads: how a character is built (`C`),
+ * what a level's ability increases add up to, the hit points it gains and those it counts before they're rolled, and
+ * what a master's bonded creatures become with it; and what a save's checks (`LevelsPlanning`) ask of them: its planned
+ * levels, its picks spread over them, the pools they overfill, the issues an edited level answers for.
  */
 export interface LevelUpRules<C> {
   /** The character built from its rows (as the server read them, or with what a level-up adds), in the ruleset's view. */
@@ -84,7 +78,7 @@ export interface PlannedClassLevel {
 }
 
 /**
- * What every level-up flow reads: the ruleset's view, the character's rows (`character`) and its ruleset's level-up rules
+ * What every level-up flow reads: the ruleset's view, the character's rows (`character`) and the level-up rules
  * (`rules`), and the class levels the levels take, the picks they write.
  */
 export default abstract class LevelUpBase<C> {
@@ -157,7 +151,7 @@ export default abstract class LevelUpBase<C> {
   protected getSavedPicks(characterLevelId: string | undefined): LevelRows {
     const atLevel = <P extends { characterLevelId: string }>(rows: P[]) =>
       rows.filter((pick) => pick.characterLevelId === characterLevelId);
-    const { abilityIncreases, feats, powers, skills } = this.character.rows.picks;
+    const { abilityIncreases, feats, powers, skills } = SavedPicks.of(this.character.rows);
     return {
       abilityIncreases: atLevel(abilityIncreases),
       feats: atLevel(feats),

@@ -1,15 +1,5 @@
 import type { ImportedCharacter, ImportedFeat, ImportedLevel, ImportReport } from "@/engine/core/imports/index.ts";
-import { LevelByLevel, type PlannedClassLevel } from "@/engine/core/levelUp/index.ts";
-import type {
-  AbilityIncrease,
-  BondedPlan,
-  CharacterInput,
-  FeatPick,
-  LevelPicks,
-  LevelRequest,
-  LevelWrites,
-  PowerPick,
-} from "@/engine/core/module/index.ts";
+import type { BondedPlan, CharacterInput } from "@/engine/core/module/index.ts";
 import RulesError, { type RulesIssue } from "@/engine/core/RulesError.ts";
 import type { Klass, KlassLevel, RulesetView } from "@/engine/core/view/index.ts";
 import ImportedLevelGains from "@/engine/rulesets/dnd3.5/imports/ImportedLevelGains.ts";
@@ -19,6 +9,10 @@ import PicksPlacement, {
   type MatchedSkill,
 } from "@/engine/rulesets/dnd3.5/imports/PicksPlacement.ts";
 import Dnd35LevelUp from "@/engine/rulesets/dnd3.5/levelUp/Dnd35LevelUp.ts";
+import LevelByLevel from "@/engine/rulesets/dnd3.5/levelUp/LevelByLevel.ts";
+import type { PlannedClassLevel } from "@/engine/rulesets/dnd3.5/levelUp/LevelUpBase.ts";
+import type { AbilityIncrease, FeatPick, LevelWrites, PowerPick } from "@/engine/rulesets/dnd3.5/levelUp/plans.ts";
+import type { LevelPicks, LevelRequest } from "@/engine/rulesets/dnd3.5/levelUp/requests.ts";
 import { ALLOWED_ALL } from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudesComponent.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";

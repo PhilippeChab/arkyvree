@@ -1,5 +1,6 @@
-import type { FeatSlots, LevelUpBase, PowerSlots } from "@/engine/core/levelUp/index.ts";
 import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
+import type LevelUpBase from "@/engine/rulesets/dnd3.5/levelUp/LevelUpBase.ts";
+import type { FeatSlots, PowerSlots } from "@/engine/rulesets/dnd3.5/levelUp/PicksDistribution.ts";
 import { ALLOWED_ALL } from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudesComponent.ts";
 import AptitudeTargets from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTargets.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";

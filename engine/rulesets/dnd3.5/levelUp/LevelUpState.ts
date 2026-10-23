@@ -1,11 +1,12 @@
-import { LevelUpBase } from "@/engine/core/levelUp/index.ts";
-import type { LevelPickRows, LevelPicks } from "@/engine/core/module/index.ts";
 import type { OwnPicks } from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudesComponent.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import SkillRules from "@/engine/rulesets/dnd3.5/rules/SkillRules.ts";
 import { include } from "@/lib/mixins.ts";
 
 import { SpendsSkillPoints } from "./concerns/SpendsSkillPoints.ts";
+import LevelUpBase from "./LevelUpBase.ts";
+import type { LevelPickRows } from "./plans.ts";
+import type { LevelPicks } from "./requests.ts";
 
 /** The pools a character picks feats and powers in, and how many, with what a level-up plans. */
 type LevelUpPools = ReturnType<DetailedCharacter["components"]["aptitudes"]["getLevelUpPools"]>;
@@ -17,7 +18,7 @@ type OverfullPool = ReturnType<DetailedCharacter["components"]["aptitudes"]["get
 export type PoolPicks = Pick<LevelPicks, "feats" | "powers">;
 
 /**
- * What a 3.5 level-up flow reads past core's (`LevelUpBase`): the steps the wizard and the preview share, a feats step,
+ * What a 3.5 level-up flow reads past every flow's (`LevelUpBase`): the steps the wizard and the preview share, a feats step,
  * a powers step and a skills step (`SpendsSkillPoints`), and which skills a class makes class skills.
  */
 export default abstract class LevelUpState extends include(LevelUpBase<DetailedCharacter>, SpendsSkillPoints) {
