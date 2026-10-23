@@ -58,6 +58,9 @@ export default abstract class RulesetEntity<
   /** What a refusal calls one: "Save" in "Save not found in this ruleset". */
   protected abstract readonly label: string;
 
+  /** The columns its list's query narrows it by, a value each (a race's kind): none. */
+  protected readonly listColumns: readonly string[] = [];
+
   /** The kind's table. */
   abstract readonly type: K;
 
@@ -209,12 +212,20 @@ export default abstract class RulesetEntity<
 
   /**
    * A page of the kind's rows, as its list asks for it: what the server reads it with (`filters`: the ruleset's rows,
-   * unless its kind's list narrows them), and its rows described.
+   * of the values its query gives of its list's columns; a kind's list may narrow them by ids, fields or the join that
+   * links them), and its rows described.
    */
-  openList(_where: { childOnly?: boolean }) {
+  openList(where: { childOnly?: boolean } & Record<string, unknown>) {
+    const named = this.listColumns.filter((name) => where[name] !== undefined);
+    const filters: {
+      columns?: Record<string, unknown>;
+      fields?: Record<string, string>;
+      ids?: string[];
+      joinedBy?: string;
+    } = named.length === 0 ? {} : { columns: Object.fromEntries(named.map((name) => [name, where[name]])) };
     return {
       describe: <T extends Record<string, unknown> & { id: string }>(rows: T[]) => this.describeRows(rows),
-      filters: {},
+      filters,
     };
   }
 

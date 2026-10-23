@@ -1,8 +1,9 @@
 import { describe, expect, test } from "bun:test";
 
+import type { Feat } from "@/engine/index.ts";
 import { CustomizationEdit } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { Feats, Modifiers, Requirements } from "@/server/repositories/index.ts";
+import { Entities, Modifiers, Requirements } from "@/server/repositories/index.ts";
 import { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";
 import { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
@@ -24,7 +25,11 @@ async function setup() {
   const session = makeSession();
   const own = await createSeededTestRuleset(session.userId);
   const foreign = await createSeededTestRuleset(session.userId);
-  const [feat] = await Feats.create(db, { rulesetId: foreign.id, name: "Foreign feat", description: "Untouched" });
+  const [feat] = await Entities.create<Feat>(db, "feats", {
+    rulesetId: foreign.id,
+    name: "Foreign feat",
+    description: "Untouched",
+  });
   return { session, own, feat };
 }
 
@@ -72,7 +77,11 @@ describe("ruleset customization isolation", () => {
 
   test("inherited customizations still copy their source", async () => {
     const { session, own } = await setup();
-    const feat = (await Feats.findOne(db, { rulesetId: own.ancestorRulesetIds[0], name: "Skill Focus: Climb" }))!;
+    const feat = (await Entities.findOne<Feat>(db, {
+      entityType: "feats",
+      rulesetId: own.ancestorRulesetIds[0],
+      name: "Skill Focus: Climb",
+    }))!;
     const modifiers = await Modifiers.findMany(db, { sourceIds: [feat.id], sourceType: "feats" });
     const modifier = await ModifiersService.createModifier(session, own.id, "feats", feat.id, {
       target: "combat.ac.misc",
@@ -80,7 +89,9 @@ describe("ruleset customization isolation", () => {
       value: "1",
     });
     expect(modifier.resolvedEntityId).not.toBe(feat.id);
-    expect((await Feats.findOne(db, { id: modifier.resolvedEntityId }))?.rulesetId).toBe(own.id);
+    expect((await Entities.findOne<Feat>(db, { entityType: "feats", id: modifier.resolvedEntityId }))?.rulesetId).toBe(
+      own.id,
+    );
     expect(await Modifiers.findMany(db, { sourceIds: [feat.id], sourceType: "feats" })).toEqual(modifiers);
   });
 });
@@ -88,7 +99,11 @@ describe("ruleset customization isolation", () => {
 describe("modifier requirement ownership", () => {
   test("creates, updates, and deletes a requirement on a locally owned modifier", async () => {
     const { session, own } = await setup();
-    const [feat] = await Feats.create(db, { rulesetId: own.id, name: "Local feat", description: "Local" });
+    const [feat] = await Entities.create<Feat>(db, "feats", {
+      rulesetId: own.id,
+      name: "Local feat",
+      description: "Local",
+    });
     const modifier = await createModifier(feat.id);
     const requirement = await RequirementsService.createRequirement(session, own.id, "modifiers", modifier.id, {
       level: "1",
@@ -106,7 +121,11 @@ describe("modifier requirement ownership", () => {
 
   test("copies an inherited modifier and its requirements without touching the ancestor", async () => {
     const { session, own } = await setup();
-    const feat = (await Feats.findOne(db, { rulesetId: own.ancestorRulesetIds[0], name: "Skill Focus: Climb" }))!;
+    const feat = (await Entities.findOne<Feat>(db, {
+      entityType: "feats",
+      rulesetId: own.ancestorRulesetIds[0],
+      name: "Skill Focus: Climb",
+    }))!;
     const modifier = await createModifier(feat.id);
     const [original] = await Requirements.create(db, {
       entityType: "modifiers",
@@ -121,7 +140,7 @@ describe("modifier requirement ownership", () => {
     });
     expect(requirement.entityId).not.toBe(modifier.id);
     const copied = (await Modifiers.findOne(db, { id: requirement.entityId }))!;
-    expect((await Feats.findOne(db, { id: copied.sourceId }))?.rulesetId).toBe(own.id);
+    expect((await Entities.findOne<Feat>(db, { entityType: "feats", id: copied.sourceId }))?.rulesetId).toBe(own.id);
     expect(await Requirements.findMany(db, { entityIds: [modifier.id], entityType: "modifiers" })).toEqual([original]);
     const copies = await Requirements.findMany(db, { entityIds: [copied.id], entityType: "modifiers" });
     expect(copies).toHaveLength(2);
@@ -170,7 +189,11 @@ describe("stale ancestor customization IDs", () => {
   for (const action of ["update", "delete"] as const) {
     test(`rejects ${action} through an ancestor requirement ID after the entity was copied`, async () => {
       const { session, own } = await setup();
-      const feat = (await Feats.findOne(db, { rulesetId: own.ancestorRulesetIds[0], name: "Skill Focus: Climb" }))!;
+      const feat = (await Entities.findOne<Feat>(db, {
+        entityType: "feats",
+        rulesetId: own.ancestorRulesetIds[0],
+        name: "Skill Focus: Climb",
+      }))!;
       const [original] = await Requirements.create(db, {
         entityId: feat.id,
         entityType: "feats",
@@ -197,7 +220,11 @@ describe("stale ancestor customization IDs", () => {
 
 test("editing the second identical inherited modifier keeps its own requirements", async () => {
   const { session, own } = await setup();
-  const feat = (await Feats.findOne(db, { rulesetId: own.ancestorRulesetIds[0], name: "Skill Focus: Climb" }))!;
+  const feat = (await Entities.findOne<Feat>(db, {
+    entityType: "feats",
+    rulesetId: own.ancestorRulesetIds[0],
+    name: "Skill Focus: Climb",
+  }))!;
   const [first, second] = await Modifiers.createMany(
     db,
     [1, 2].map(() => ({

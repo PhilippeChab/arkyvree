@@ -4,8 +4,8 @@
  * sheet and what a printed one adds. Whether to force the rules is always an operation's last argument.
  */
 
+import type { Item } from "@/engine/core/view/index.ts";
 import type { ItemLocation } from "@/shared/enums.ts";
-import type { Item } from "@/shared/relations.ts";
 
 import type { InventoryEntryPlan } from "./plans.ts";
 

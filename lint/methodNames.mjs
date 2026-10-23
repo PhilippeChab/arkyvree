@@ -5,7 +5,8 @@
  * - A repository's verbs are `server/repositories/methodVerbs.json`'s, which the request cache classifies its methods
  *   by: reads (`find`, `exists`, `count`), writes (`create`, `update`, …) and `lock`. Its name says what it returns,
  *   never how it filters (`findManyByUser`, `archiveAllForUser`): filters go in its `where`, one method per verb. The
- *   generic tables' adapters (`server/repositories/stored/`), which the cache never wraps, take a function's verbs.
+ *   generic tables' repositories (`server/repositories/stored/`), which the seeders also run outside the cache, take a
+ *   function's verbs: those the cache classifies (`find`, `has`, `create`…) are cached as any repository's.
  * - A service reads with `get`, creates (`create`, `add`, `duplicate`), updates (`update`, `set`, `mark`), deletes
  *   (`delete`, `remove`, `archive`, `unarchive`, `hardDelete`), or takes one of the actions below, on its resource
  *   (`FeatsService.getFeat`): never `ById` (the id is a parameter) or `My` (the session's scope is implied).

@@ -10,7 +10,7 @@ import {
 } from "@/server/cow/index.ts";
 import { withTransaction } from "@/server/database/index.ts";
 import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
-import type { RulesetEntityType } from "@/server/repositories/index.ts";
+import { Entities, type EntityRow, type RulesetEntityType } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications, getChangedFields } from "@/server/services/activities/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import { getActivityName } from "@/shared/activity.ts";
@@ -29,19 +29,15 @@ interface DeleteChecks<P> {
   refuse?: (tx: Db, scope: RulesetScope, plan: P) => Promise<void>;
 }
 
-/** A kind's repository, as its creates, updates and deletes write its rows, each by its columns. */
-interface KindRepository<Row> {
-  create(db: Db, values: Record<string, unknown>): Promise<Row[]>;
-  delete(db: Db, where: { id: string }): Promise<Row[]>;
-  update(db: Db, values: Record<string, unknown>, where: { expectedUpdatedAt?: string; id: string }): Promise<Row[]>;
-}
-
 /** An entity a plan names, as the view has it. */
 interface PlannedEntity {
   id: string;
   name: string;
   rulesetId: string;
 }
+
+/** A kind's row, as a write answers it (`Entities`). */
+type Row = EntityRow & { description: string | null; name: string; rulesetId: string; updatedAt: string };
 
 /**
  * A ruleset entity's form, as its route carries it (`entityBody`): its name, when it was last read (an update's), and
@@ -50,7 +46,7 @@ interface PlannedEntity {
 export type EntityBody = EntityForm & { name: string; updatedAt?: string };
 
 /**
- * A ruleset entity kind's writer (`type`, and its repository): the steps every kind's create, update and delete
+ * A ruleset entity kind's writer (`type`): the steps every kind's create, update and delete
  * take, in one order, around the plan its rules give (`Engine.for(scope).entities(type)`). A create checks access,
  * keeps the name free (taking over a deleted copy's tombstone), writes the row, its list links, the customizations it
  * copies and what the plan writes beside it (its fields, over the copied properties of their types). An update keeps a
@@ -58,11 +54,8 @@ export type EntityBody = EntityForm & { name: string; updatedAt?: string };
  * refused when stale. A delete is refused while the entity is in use. Each records its activity, and the ruleset's
  * views drop what it changed.
  */
-export default class EntityWriter<Row extends { id: string; name: string }> {
-  constructor(
-    private readonly type: RulesetEntityType,
-    private readonly repository: KindRepository<Row>,
-  ) {}
+export default class EntityWriter {
+  constructor(private readonly type: RulesetEntityType) {}
 
   /** The entity's customizations, copied onto the new one (`entityId`) from `sourceId`'s. */
   private async copyCustomizations(tx: Db, entityId: string, sourceId: string) {
@@ -117,7 +110,7 @@ export default class EntityWriter<Row extends { id: string; name: string }> {
           const { tombstoneAncestorId } = await names.assertNameAvailable(tx, this.type, name);
           const planned = await plan(scope, { tombstoneAncestorId, tx });
 
-          const [row] = await this.repository.create(tx, { ...planned.columns, rulesetId });
+          const [row] = await Entities.create<Row>(tx, this.type, { ...planned.columns, rulesetId });
           if (tombstoneAncestorId) await names.repointTombstone(tx, this.type, tombstoneAncestorId, row.id);
           await createListLinks(tx, this.type, row.id, planned.links ?? []);
           // The customizations it copies first: the fields the plan writes replace their properties of their types
@@ -159,7 +152,7 @@ export default class EntityWriter<Row extends { id: string; name: string }> {
           await this.writeBeside(tx, scope, targetId, planned.writes);
 
           // The database deletes its links and customizations with it.
-          const [row] = await this.repository.delete(tx, { id: targetId });
+          const [row] = await Entities.delete<Row>(tx, { entityType: this.type, id: targetId });
           await this.recordActivity(tx, session, "delete", targetId, {
             rulesetId,
             entityName: planned.entity.name,
@@ -203,7 +196,12 @@ export default class EntityWriter<Row extends { id: string; name: string }> {
           );
           const { id: targetId, copied } = await new EntityEdit(ruleset).cowToEdit(tx, this.type, planned.entity);
           const expectedUpdatedAt = copied ? undefined : body.updatedAt;
-          const rows = await this.repository.update(tx, { ...planned.columns }, { id: targetId, expectedUpdatedAt });
+          const rows = await Entities.update<Row>(
+            tx,
+            this.type,
+            { ...planned.columns },
+            { id: targetId, expectedUpdatedAt },
+          );
           if (expectedUpdatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
 
           await setListLinks(tx, this.type, targetId, planned.links);

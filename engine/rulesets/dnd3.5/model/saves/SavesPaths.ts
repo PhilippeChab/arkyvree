@@ -1,9 +1,8 @@
 import type { PathCategory } from "@/engine/core/paths/PathCategory.ts";
-import type { RulesetData } from "@/engine/core/view/index.ts";
+import type { RulesetData, RulesetSave } from "@/engine/core/view/index.ts";
 import { type Dnd35Components } from "@/engine/rulesets/dnd3.5/model/CharacterComponents.ts";
 import { getNumericOperators, getOperators } from "@/shared/customization/operators.ts";
 import { deriveNameLabels, deriveSegmentLabels, isLeafOfKind, type TargetPath } from "@/shared/customization/target.ts";
-import type { RulesetSave } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 const NAVIGATABLE_PATHS = [

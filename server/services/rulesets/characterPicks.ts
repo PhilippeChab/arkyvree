@@ -1,5 +1,6 @@
 import type { Db } from "@/drizzle/database.ts";
-import { EntityReferences, KlassLevels, type ReferencedType } from "@/server/repositories/index.ts";
+import type { KlassLevel } from "@/engine/index.ts";
+import { Entities, EntityReferences, type ReferencedType } from "@/server/repositories/index.ts";
 
 /**
  * Whether a character on `rulesetId`, or on a ruleset built on it (a fork of it, or a ruleset subscribing to it as an
@@ -15,7 +16,7 @@ export async function hasCharacterPicks(
   rulesetId: string,
 ): Promise<boolean> {
   if (entityType !== "klasses") return await EntityReferences.exists(tx, { entityType, ids, rulesetId });
-  const levels = await KlassLevels.findMany(tx, { klassIds: ids });
+  const levels = await Entities.findMany<KlassLevel>(tx, { entityType: "klass_levels", ownerIds: ids });
   return await EntityReferences.exists(tx, {
     entityType: "klass_levels",
     ids: levels.map((level) => level.id),

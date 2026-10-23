@@ -1,12 +1,9 @@
-import { eq } from "drizzle-orm";
-
 import { classSpells, specialistSpells } from "@/content/dnd3.5/builders/aptitudes/names.ts";
 import type { WizardSchoolSeed } from "@/content/dnd3.5/builders/wizardSchools/types.ts";
+import { Joins, Properties } from "@/database/seeders/core/SeederState.ts";
 import type { BaseSeeder } from "@/database/seeders/dnd3.5/BaseSeeder.ts";
 import type { SpellcastingClass } from "@/database/seeders/dnd3.5/spellTable.ts";
 import type { Constructor } from "@/lib/mixins.ts";
-import StoredFields from "@/server/repositories/stored/StoredFields.ts";
-import StoredJoins from "@/server/repositories/stored/StoredJoins.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { SPELL_SCHOOL } from "@/vocabulary/dnd3.5/properties/index.ts";
 
@@ -35,14 +32,13 @@ export function SeedsWizardSchools<B extends Constructor<BaseSeeder>>(Base: B) {
       const wizardSpells = this.ctx.aptMap[classSpells("Wizard")];
       if (!wizardSpells) return;
       // The wizard's list's spells, each with its level there and its school (its property)
-      const listed = await StoredJoins.findRows<{ level: number | null; powerId: string }>(
-        this.db,
-        "powers_aptitudes",
-        eq(StoredJoins.getPart("to"), wizardSpells),
-      );
+      const listed = await Joins.findMany<{ level: number | null; powerId: string }>(this.db, {
+        join: "powers_aptitudes",
+        toIds: [wizardSpells],
+      });
       const schoolOf = new Map(
         (
-          await StoredFields.findMany(this.db, {
+          await Properties.findMany(this.db, {
             entityIds: listed.map((link) => link.powerId),
             entityType: "powers",
             type: SPELL_SCHOOL,

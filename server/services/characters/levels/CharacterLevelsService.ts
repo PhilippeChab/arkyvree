@@ -9,15 +9,7 @@ import { type CharacterInput, Engine, type LevelPlanRequest, type LevelUpEngine 
 import { include } from "@/lib/mixins.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { withTransaction } from "@/server/database/index.ts";
-import {
-  Activities,
-  CharacterLevelAbilityIncreases,
-  CharacterLevelFeats,
-  CharacterLevelPowers,
-  CharacterLevels,
-  CharacterLevelSkills,
-  Characters,
-} from "@/server/repositories/index.ts";
+import { Activities, CharacterLevels, Characters, Picks } from "@/server/repositories/index.ts";
 import { readBondedInputs, readCharacterInput } from "@/server/services/characters/characterInputs.ts";
 import { getEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
 import type { Session } from "@/shared/relations.ts";
@@ -27,12 +19,9 @@ import { Plans } from "./concerns/Plans.ts";
 import { createLevelRows } from "./levelRows.ts";
 
 class CharacterLevelsService extends include(Object, Plans) {
-  /** Deletes a level's rows in the tables under it, which an edit writes again. */
+  /** Deletes a level's picks, which an edit writes again. */
   private async deleteLevelRows(tx: Db, characterLevelId: string) {
-    await CharacterLevelAbilityIncreases.delete(tx, { characterLevelId });
-    await CharacterLevelFeats.delete(tx, { characterLevelId });
-    await CharacterLevelPowers.delete(tx, { characterLevelId });
-    await CharacterLevelSkills.delete(tx, { characterLevelId });
+    await Picks.delete(tx, { characterLevelId });
   }
 
   /**

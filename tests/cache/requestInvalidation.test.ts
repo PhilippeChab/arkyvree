@@ -1,9 +1,10 @@
 import { afterEach, expect, test } from "bun:test";
 
+import type { Feat } from "@/engine/index.ts";
 import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { runWithRequestCache } from "@/server/database/requestCache.ts";
-import { Feats, Rulesets } from "@/server/repositories/index.ts";
+import { Entities, Rulesets } from "@/server/repositories/index.ts";
 import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { createSeededTestRuleset, readTargetPaths } from "@/tests/support/rulesets.ts";
@@ -45,7 +46,7 @@ for (const action of ["subscribe", "unsubscribe"] as const) {
     const host = await createSeededTestRuleset(session.userId);
     const extension = await createSeededTestRuleset(session.userId);
     await Rulesets.update(db, { kind: "extension", status: "Published", private: false }, { id: extension.id });
-    const [feat] = await Feats.create(db, { rulesetId: extension.id, name: "Extension Marker" });
+    const [feat] = await Entities.create<Feat>(db, "feats", { rulesetId: extension.id, name: "Extension Marker" });
     if (action === "unsubscribe") await RulesetExtensionsService.subscribeExtension(session, host.id, [extension.id]);
     RulesetViews.invalidateAll();
     await overlap(
@@ -70,7 +71,11 @@ for (const scenario of ["entity", "cow", "paths"] as const) {
     const session = makeSession();
     const fork = await createSeededTestRuleset(session.userId);
     const seed = await getSeedCtx();
-    const [local] = await Feats.create(db, { rulesetId: fork.id, name: "Before Marker", description: "before" });
+    const [local] = await Entities.create<Feat>(db, "feats", {
+      rulesetId: fork.id,
+      name: "Before Marker",
+      description: "before",
+    });
     RulesetViews.invalidateAll();
     const read = () =>
       scenario === "paths"

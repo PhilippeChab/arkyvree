@@ -1,9 +1,9 @@
 import { describe, expect, test } from "bun:test";
 
-import type { EntityWrites } from "@/engine/index.ts";
+import type { EntityWrites, Power } from "@/engine/index.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { Powers, Properties, Requirements } from "@/server/repositories/index.ts";
+import { Entities, Properties, Requirements } from "@/server/repositories/index.ts";
 import { writeEntityWrites } from "@/server/services/rulesets/entityWrites.ts";
 import { measure } from "@/tests/support/database.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
@@ -18,7 +18,7 @@ function writesOf(writes: Partial<EntityWrites>): EntityWrites {
 /** A power of a fork of its own, with a property its writes don't keep a field in. */
 async function createPower() {
   const ruleset = await createSeededTestRuleset(makeSession().userId);
-  const [power] = await Powers.create(db, { name: "Probe Spell", rulesetId: ruleset.id });
+  const [power] = await Entities.create<Power>(db, "powers", { name: "Probe Spell", rulesetId: ruleset.id });
   await Properties.createMany(db, [
     { entityId: power.id, entityType: "powers", type: SPELL_DURATION, value: "1 round" },
     { entityId: power.id, entityType: "powers", type: SPELL_SCHOOL, value: "Evocation" },

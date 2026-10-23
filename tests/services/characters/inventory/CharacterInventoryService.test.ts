@@ -1,15 +1,16 @@
 import { describe, expect, test } from "bun:test";
 
+import type { Item, Race } from "@/engine/index.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError } from "@/server/errors/index.ts";
-import { CharacterInventory, Modifiers, Properties, Races, Requirements } from "@/server/repositories/index.ts";
+import { CharacterInventory, Entities, Modifiers, Properties, Requirements } from "@/server/repositories/index.ts";
 import { CharactersService } from "@/server/services/characters/index.ts";
 import { CharacterInventoryService } from "@/server/services/characters/inventory/index.ts";
 import { ItemsService } from "@/server/services/rulesets/items/index.ts";
 import type { ItemLocation, SizeType } from "@/shared/enums.ts";
-import type { Item, Session } from "@/shared/relations.ts";
+import type { Session } from "@/shared/relations.ts";
 import { createCharacterAs } from "@/tests/support/characters.ts";
 import { createTestItem } from "@/tests/support/items.ts";
 import { createSeededTestRuleset, createTestRuleset } from "@/tests/support/rulesets.ts";
@@ -101,7 +102,14 @@ async function setup(race?: { size: SizeType }) {
   const ruleset = await createSeededTestRuleset(user.id);
   const raceId =
     race &&
-    (await Races.create(db, { name: `Test Race ${uniqueId()}`, rulesetId: ruleset.id, baseSpeed: 30, ...race }))[0].id;
+    (
+      await Entities.create<Race>(db, "races", {
+        name: `Test Race ${uniqueId()}`,
+        rulesetId: ruleset.id,
+        baseSpeed: 30,
+        ...race,
+      })
+    )[0].id;
   RulesetViews.invalidate(ruleset.id);
   const character = await createCharacterAs(
     session,
@@ -376,7 +384,7 @@ describe("InventoryService", () => {
       const { user, session } = await createTestUser();
       const { user: author } = await createTestUser();
       const grandparent = await createTestRuleset(author.id, { status: "Published" });
-      const [race] = await Races.create(db, {
+      const [race] = await Entities.create<Race>(db, "races", {
         name: "Test Race",
         rulesetId: grandparent.id,
         size: "Medium",

@@ -1,8 +1,9 @@
 import { describe, expect, test } from "bun:test";
 
+import type { KlassSkill, RulesetAbility } from "@/engine/index.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
-import { Abilities, Activities, KlassSkills } from "@/server/repositories/index.ts";
+import { Activities, Entities, Joins } from "@/server/repositories/index.ts";
 import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
 import { SkillsService } from "@/server/services/rulesets/skills/index.ts";
 import { createTestCharacter } from "@/tests/support/characters.ts";
@@ -36,8 +37,9 @@ function bodyOf({
  */
 async function setup() {
   const { user, session, ruleset } = await createTestUserAndRuleset();
-  const abilities = await Abilities.createMany(
+  const abilities = await Entities.createMany<RulesetAbility>(
     db,
+    "abilities",
     ["Strength", "Dexterity", "Intelligence"].map((name) => ({ name, description: name, rulesetId: ruleset.id })),
   );
   const abilityMap = Object.fromEntries(abilities.map((a) => [a.name, a.id]));
@@ -139,10 +141,10 @@ describe("SkillsService", () => {
     const { session, ruleset, body } = await setup();
     const skill = await SkillsService.createSkill(session, ruleset.id, body());
     const klass = await ClassesService.createClass(session, ruleset.id, { name: "Skilled Class" });
-    await KlassSkills.create(db, { klassId: klass.id, skillId: skill.id });
+    await Joins.create<KlassSkill>(db, "klass_skills", { klassId: klass.id, skillId: skill.id });
 
     await SkillsService.deleteSkill(session, ruleset.id, skill.id);
-    expect(await KlassSkills.findMany(db, { klassIds: [klass.id] })).toEqual([]);
+    expect(await Joins.findMany<KlassSkill>(db, { join: "klass_skills", fromIds: [klass.id] })).toEqual([]);
   });
 
   test("refuses to delete a skill a character put ranks in", async () => {

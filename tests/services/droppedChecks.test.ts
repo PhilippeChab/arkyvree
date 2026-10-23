@@ -9,9 +9,10 @@ import { afterAll, describe, expect, test } from "bun:test";
 import { sql } from "drizzle-orm";
 
 import type { FieldsRequest } from "@/engine/core/module/index.ts";
+import type { CharacterAbility, LevelSkill, RulesetAbility } from "@/engine/index.ts";
 import { db } from "@/server/database/index.ts";
 import { createTestPool } from "@/server/database/test.ts";
-import { Abilities, CharacterAbilities, CharacterLevelSkills, Characters } from "@/server/repositories/index.ts";
+import { CharacterLinks, Characters, Entities, Picks } from "@/server/repositories/index.ts";
 import { CharactersService } from "@/server/services/characters/index.ts";
 import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
 import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
@@ -53,7 +54,11 @@ function invalidAt(category: string) {
 async function rulesetWithSave() {
   const { session: owner, ruleset } = await createTestUserAndRuleset();
   const rulesetId = ruleset.id;
-  const [ability] = await Abilities.create(db, { name: "Dexterity", description: "Agility", rulesetId });
+  const [ability] = await Entities.create<RulesetAbility>(db, "abilities", {
+    name: "Dexterity",
+    description: "Agility",
+    rulesetId,
+  });
   const save = await SavesService.createSave(owner, rulesetId, { name: "Reflex", abilityId: ability.id });
   const klass = await ClassesService.createClass(owner, rulesetId, { name: "Rogue", hd: 6 });
   return { abilityId: ability.id, klassId: klass.id, owner, rulesetId, saveId: save.id };
@@ -227,7 +232,11 @@ describe("a ruleset's entities", () => {
 
   test("offers no write of an ability, whose description its rules seed", async () => {
     const { session: owner, ruleset } = await createTestUserAndRuleset();
-    const [ability] = await Abilities.create(db, { name: "Luck", description: "Fortune", rulesetId: ruleset.id });
+    const [ability] = await Entities.create<RulesetAbility>(db, "abilities", {
+      name: "Luck",
+      description: "Fortune",
+      rulesetId: ruleset.id,
+    });
     const form = { name: "Luck", description: null };
     expect(EntitiesService.createEntity(owner, ruleset.id, "abilities", form)).rejects.toThrow("No create");
     expect(EntitiesService.updateEntity(owner, ruleset.id, "abilities", ability.id, form)).rejects.toThrow("No update");
@@ -302,7 +311,7 @@ describe("a character's identity", () => {
       );
     }
     await CharactersService.updateAbilities(session, id, { [strength]: 100 });
-    expect(await CharacterAbilities.findMany(db, { characterId: id })).toContainEqual(
+    expect(await CharacterLinks.findMany<CharacterAbility>(db, { link: "abilities", characterId: id })).toContainEqual(
       expect.objectContaining({ abilityId: strength, score: 100 }),
     );
   });
@@ -366,7 +375,7 @@ describe("a character's levels", () => {
       "The skills step's answer isn't a spend step's",
     );
     const [saved] = await CharacterLevelsService.addLevels(session, characterId, spending({ Spot: 0 }));
-    const ranks = await CharacterLevelSkills.findMany(db, { characterLevelIds: [saved.id] });
+    const ranks = await Picks.findMany<LevelSkill>(db, { pick: "skills", characterLevelIds: [saved.id] });
     expect(ranks.map(({ skillId }) => skillId)).not.toContain(ctx.skillMap["Spot"]);
     expect(ranks.every(({ rank }) => rank > 0)).toBe(true);
   });

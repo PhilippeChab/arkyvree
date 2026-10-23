@@ -1,7 +1,26 @@
 import { afterAll, describe, expect, test } from "bun:test";
 
 import { DND35_DMG_NAME } from "@/content/dnd3.5/rulesetNames.ts";
-import type { LevelPlanRequest, StepOption, StepOptionGroup } from "@/engine/index.ts";
+import type {
+  Aptitude,
+  Feat,
+  Klass,
+  KlassLevel,
+  KlassLevelFeat,
+  KlassLevelPower,
+  KlassSkill,
+  LevelAbilityIncrease,
+  LevelFeat,
+  LevelPlanRequest,
+  LevelPower,
+  LevelSkill,
+  Power,
+  Race,
+  RulesetAbility,
+  Skill,
+  StepOption,
+  StepOptionGroup,
+} from "@/engine/index.ts";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import { addClassLevels, addFeats, addPowers, addSkills } from "@/scripts/db/seeds/seedCharacter.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
@@ -10,28 +29,14 @@ import { db } from "@/server/database/index.ts";
 import { createTestPool } from "@/server/database/test.ts";
 import { toJson } from "@/server/errors/index.ts";
 import {
-  Abilities,
-  Aptitudes,
-  CharacterLevelAbilityIncreases,
-  CharacterLevelFeats,
-  CharacterLevelPowers,
   CharacterLevels,
-  CharacterLevelSkills,
   Characters,
-  Feats,
-  FeatsAptitudes,
-  Klasses,
-  KlassLevelFeats,
-  KlassLevelPowers,
-  KlassLevels,
-  KlassSkills,
+  Entities,
+  Joins,
   Modifiers,
-  Powers,
-  PowersAptitudes,
+  Picks,
   Properties,
-  Races,
   Requirements,
-  Skills,
 } from "@/server/repositories/index.ts";
 import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
 import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
@@ -195,7 +200,11 @@ async function setupCandidate(missing: { bab?: boolean; feat?: string; skill?: s
   });
   const dmg = await findSeededRuleset(DND35_DMG_NAME);
   await RulesetExtensionsService.subscribeExtension(session, fork.id, [dmg.id]);
-  const blackguard = (await Klasses.findOne(db, { name: "Blackguard", rulesetId: dmg.id }))!;
+  const blackguard = (await Entities.findOne<Klass>(db, {
+    entityType: "klasses",
+    name: "Blackguard",
+    rulesetId: dmg.id,
+  }))!;
 
   const characterId = await createSeedCharacter(ctx, "fighter", {
     xp: 36000,
@@ -263,11 +272,16 @@ async function setupRuleset({ fork = false } = {}) {
     : parent;
   const rulesetId = parent.id;
 
-  const [race] = await Races.create(db, { name: "Test Race", rulesetId, size: "Medium", baseSpeed: 30 });
-  const [klass] = await Klasses.create(db, { name: "Test Class", rulesetId, hd: 8 });
+  const [race] = await Entities.create<Race>(db, "races", {
+    name: "Test Race",
+    rulesetId,
+    size: "Medium",
+    baseSpeed: 30,
+  });
+  const [klass] = await Entities.create<Klass>(db, "klasses", { name: "Test Class", rulesetId, hd: 8 });
   const klassLevels = [];
   for (let level = 1; level <= 5; level++) {
-    const [klassLevel] = await KlassLevels.create(db, { klassId: klass.id, level });
+    const [klassLevel] = await Entities.create<KlassLevel>(db, "klass_levels", { klassId: klass.id, level });
     await Properties.createMany(db, [
       { entityId: klassLevel.id, entityType: "klass_levels", type: KLASS_LEVEL_BAB, value: String(level) },
       {
@@ -279,17 +293,19 @@ async function setupRuleset({ fork = false } = {}) {
     ]);
     klassLevels.push(klassLevel);
   }
-  const [generalAptitude] = await Aptitudes.create(db, { name: "general", rulesetId });
+  const [generalAptitude] = await Entities.create<Aptitude>(db, "aptitudes", { name: "general", rulesetId });
   const [[featAptitude], [powerAptitude]] = [
-    await Aptitudes.create(db, { name: "Feat Aptitude", rulesetId }),
-    await Aptitudes.create(db, { name: "Power Aptitude", rulesetId }),
+    await Entities.create<Aptitude>(db, "aptitudes", { name: "Feat Aptitude", rulesetId }),
+    await Entities.create<Aptitude>(db, "aptitudes", { name: "Power Aptitude", rulesetId }),
   ];
-  const abilities = await Abilities.createMany(
+  const abilities = await Entities.createMany<RulesetAbility>(
     db,
+    "abilities",
     ["Charisma", "Dexterity", "Intelligence"].map((name) => ({ name, description: name, rulesetId })),
   );
-  const skillList = await Skills.createMany(
+  const skillList = await Entities.createMany<Skill>(
     db,
+    "skills",
     [
       ["Diplomacy", 0],
       ["Stealth", 1],
@@ -300,21 +316,24 @@ async function setupRuleset({ fork = false } = {}) {
       primaryAbilityId: abilities[ability as number].id,
     })),
   );
-  const featList = await Feats.createMany(db, [
+  const featList = await Entities.createMany<Feat>(db, "feats", [
     { name: "Power Attack", rulesetId, stackable: false },
     { name: "Weapon Focus", rulesetId, stackable: true },
     { name: "Dodge", rulesetId, stackable: false },
   ]);
-  const powerList = await Powers.createMany(
+  const powerList = await Entities.createMany<Power>(
     db,
+    "powers",
     ["Sneak Attack", "Rage", "Uncanny Dodge"].map((name) => ({ name, rulesetId })),
   );
-  await FeatsAptitudes.createMany(
+  await Joins.createMany(
     db,
+    "feats_aptitudes",
     featList.map((f) => ({ featId: f.id, aptitudeId: featAptitude.id })),
   );
-  await PowersAptitudes.createMany(
+  await Joins.createMany(
     db,
+    "powers_aptitudes",
     powerList.map((p) => ({ powerId: p.id, aptitudeId: powerAptitude.id })),
   );
 
@@ -406,8 +425,12 @@ describe("LevelsService", () => {
     test("counts any feat of a family a class requires, and only those", async () => {
       const ctx = await getSeedCtx();
       const fork = await createSeededTestRuleset(SEED_USER_ID);
-      const [klass] = await Klasses.create(db, { name: `Kensai ${uniqueId()}`, rulesetId: fork.id, hd: 10 });
-      const [level] = await KlassLevels.create(db, { klassId: klass.id, level: 1 });
+      const [klass] = await Entities.create<Klass>(db, "klasses", {
+        name: `Kensai ${uniqueId()}`,
+        rulesetId: fork.id,
+        hd: 10,
+      });
+      const [level] = await Entities.create<KlassLevel>(db, "klass_levels", { klassId: klass.id, level: 1 });
       await Requirements.create(db, {
         entityId: level.id,
         entityType: "klass_levels",
@@ -432,8 +455,12 @@ describe("LevelsService", () => {
     test("checks a class's own requirements with its next level's, in the list and on saving", async () => {
       const ctx = await getSeedCtx();
       const fork = await createSeededTestRuleset(SEED_USER_ID);
-      const [klass] = await Klasses.create(db, { name: `Duelist ${uniqueId()}`, rulesetId: fork.id, hd: 10 });
-      const [level] = await KlassLevels.create(db, { klassId: klass.id, level: 1 });
+      const [klass] = await Entities.create<Klass>(db, "klasses", {
+        name: `Duelist ${uniqueId()}`,
+        rulesetId: fork.id,
+        hd: 10,
+      });
+      const [level] = await Entities.create<KlassLevel>(db, "klass_levels", { klassId: klass.id, level: 1 });
       // The class requires Power Attack, its first level a base attack bonus of +1, which a fighter 1 has
       for (const [entityId, entityType, target, operator, value, valueType] of [
         [klass.id, "klasses", "feats.powerattack.possessed", "equal", "true", "boolean"],
@@ -523,15 +550,13 @@ describe("LevelsService", () => {
   describe("skill slots", () => {
     test("list the ruleset's skills with the class's marked and the character's current ranks", async () => {
       const { session, character, klass, klassLevels, skills } = await setupRuleset();
-      await KlassSkills.create(db, { klassId: klass.id, skillId: skills["Diplomacy"].id });
+      await Joins.create<KlassSkill>(db, "klass_skills", { klassId: klass.id, skillId: skills["Diplomacy"].id });
       const [level] = await CharacterLevels.create(db, {
         characterId: character.id,
         klassLevelId: klassLevels[0].id,
         hp: 8,
       });
-      await CharacterLevelSkills.createMany(db, [
-        { characterLevelId: level.id, skillId: skills["Diplomacy"].id, rank: 1 },
-      ]);
+      await Picks.createMany(db, "skills", [{ characterLevelId: level.id, skillId: skills["Diplomacy"].id, rank: 1 }]);
 
       const answer = await getPlanAnswer(session, character.id, levelUpPlan([planned(klass.id, 2)]));
       // The character's second level
@@ -605,10 +630,18 @@ describe("LevelsService", () => {
       const { parent, session, character, klass, abilities } = await setupRuleset({ fork: true });
       const intelligence = abilities.find((a) => a.name === "Intelligence")!;
       const [[craft]] = [
-        await Skills.create(db, { name: "Craft", rulesetId: parent.id, primaryAbilityId: intelligence.id }),
-        await Skills.create(db, { name: "Craft (Alchemy)", rulesetId: parent.id, primaryAbilityId: intelligence.id }),
+        await Entities.create<Skill>(db, "skills", {
+          name: "Craft",
+          rulesetId: parent.id,
+          primaryAbilityId: intelligence.id,
+        }),
+        await Entities.create<Skill>(db, "skills", {
+          name: "Craft (Alchemy)",
+          rulesetId: parent.id,
+          primaryAbilityId: intelligence.id,
+        }),
       ];
-      await KlassSkills.create(db, { klassId: klass.id, skillId: craft.id });
+      await Joins.create<KlassSkill>(db, "klass_skills", { klassId: klass.id, skillId: craft.id });
 
       const { rows } = stepAnswerOf(
         await getPlanAnswer(session, character.id, levelUpPlan([planned(klass.id, 1)])),
@@ -628,7 +661,7 @@ describe("LevelsService", () => {
   describe("feat slots and the feats of a pool", () => {
     test("list a class level's granted feats, and leave them out of the picks unless they stack", async () => {
       const { session, character, klass, klassLevels, featAptitude, feats } = await setupRuleset();
-      await KlassLevelFeats.create(db, {
+      await Joins.create<KlassLevelFeat>(db, "klass_level_feats", {
         klassLevelId: klassLevels[0].id,
         featId: feats["Power Attack"].id,
         aptitudeId: featAptitude.id,
@@ -660,13 +693,13 @@ describe("LevelsService", () => {
     test("count the feats a level grants, free or not, toward the prerequisites of the feats it picks", async () => {
       const { session, character, klass, klassLevels, featAptitude, generalAptitude, feats, skills } =
         await setupRuleset();
-      await KlassLevelFeats.create(db, {
+      await Joins.create<KlassLevelFeat>(db, "klass_level_feats", {
         klassLevelId: klassLevels[0].id,
         featId: feats["Power Attack"].id,
         aptitudeId: featAptitude.id,
         free: false,
       });
-      await FeatsAptitudes.create(db, { featId: feats["Dodge"].id, aptitudeId: generalAptitude.id });
+      await Joins.create(db, "feats_aptitudes", { featId: feats["Dodge"].id, aptitudeId: generalAptitude.id });
       await Requirements.create(db, {
         entityId: feats["Dodge"].id,
         entityType: "feats",
@@ -689,7 +722,7 @@ describe("LevelsService", () => {
       const { session, ruleset, character, klass, klassLevels, featAptitude, feats } = await setupRuleset({
         fork: true,
       });
-      await KlassLevelFeats.create(db, {
+      await Joins.create<KlassLevelFeat>(db, "klass_level_feats", {
         klassLevelId: klassLevels[0].id,
         featId: feats["Power Attack"].id,
         aptitudeId: featAptitude.id,
@@ -700,7 +733,11 @@ describe("LevelsService", () => {
         name: "Test Class",
         description: "Ours",
       });
-      const copy = (await Klasses.findOne(db, { name: "Test Class", rulesetId: ruleset.id }))!;
+      const copy = (await Entities.findOne<Klass>(db, {
+        entityType: "klasses",
+        name: "Test Class",
+        rulesetId: ruleset.id,
+      }))!;
 
       const available = await featGroups(session, character.id, levelUpPlan([planned(copy.id, 2)]), featAptitude.id);
       expect(names(available)).not.toContain("Power Attack");
@@ -725,7 +762,7 @@ describe("LevelsService", () => {
       const { session, ruleset, character, klass, klassLevels, featAptitude, feats } = await setupRuleset({
         fork: true,
       });
-      await KlassLevelFeats.create(db, {
+      await Joins.create<KlassLevelFeat>(db, "klass_level_feats", {
         klassLevelId: klassLevels[0].id,
         featId: feats["Power Attack"].id,
         aptitudeId: featAptitude.id,
@@ -750,7 +787,7 @@ describe("LevelsService", () => {
     test("stop granting a feat the fork deletes", async () => {
       // Deleting an inherited feat in a fork copies it there and deletes the copy: the fork no longer has the feat
       const { session, ruleset, character, klassLevels, featAptitude, feats } = await setupRuleset({ fork: true });
-      await KlassLevelFeats.create(db, {
+      await Joins.create<KlassLevelFeat>(db, "klass_level_feats", {
         klassLevelId: klassLevels[0].id,
         featId: feats["Power Attack"].id,
         aptitudeId: featAptitude.id,
@@ -775,12 +812,12 @@ describe("LevelsService", () => {
 
     test("leave out a feat the character has, unless it stacks, and those that can't be picked", async () => {
       const { session: owner, character, klass, klassLevels, featAptitude, feats } = await setupRuleset();
-      const [classFeature] = await Feats.create(db, {
+      const [classFeature] = await Entities.create<Feat>(db, "feats", {
         name: "Class Feature",
         rulesetId: klass.rulesetId,
         selectable: false,
       });
-      await FeatsAptitudes.create(db, { featId: classFeature.id, aptitudeId: featAptitude.id });
+      await Joins.create(db, "feats_aptitudes", { featId: classFeature.id, aptitudeId: featAptitude.id });
       await addCharacterLevel(character.id, klassLevels[0].id, {
         feats: [feats["Power Attack"], feats["Weapon Focus"]].map((f) => ({
           featId: f.id,
@@ -811,9 +848,12 @@ describe("LevelsService", () => {
 
     test("flag a pool that powers share, optional to the feats step", async () => {
       const { session, character, klass, feats, powers } = await setupRuleset();
-      const [shared] = await Aptitudes.create(db, { name: "Shared Aptitude", rulesetId: klass.rulesetId });
-      await FeatsAptitudes.create(db, { featId: feats["Dodge"].id, aptitudeId: shared.id });
-      await PowersAptitudes.create(db, { powerId: powers["Rage"].id, aptitudeId: shared.id });
+      const [shared] = await Entities.create<Aptitude>(db, "aptitudes", {
+        name: "Shared Aptitude",
+        rulesetId: klass.rulesetId,
+      });
+      await Joins.create(db, "feats_aptitudes", { featId: feats["Dodge"].id, aptitudeId: shared.id });
+      await Joins.create(db, "powers_aptitudes", { powerId: powers["Rage"].id, aptitudeId: shared.id });
 
       const { pools } = stepAnswerOf(
         await getPlanAnswer(session, character.id, levelUpPlan([planned(klass.id, 1)])),
@@ -1182,9 +1222,9 @@ describe("LevelsService", () => {
       });
       await levelUp(session, ctx, other, "Cleric", 1, WAR_CLERIC_1);
       const levels = await CharacterLevels.findMany(db, { characterId: other });
-      const picked = (await CharacterLevelFeats.findMany(db, { characterLevelIds: levels.map((l) => l.id) })).map(
-        (f) => f.featId,
-      );
+      const picked = (
+        await Picks.findMany<LevelFeat>(db, { pick: "feats", characterLevelIds: levels.map((l) => l.id) })
+      ).map((f) => f.featId);
       expect(picked).toEqual(
         expect.arrayContaining([ctx.featMap["Weapon Focus: Greataxe"], ctx.featMap["War Domain Weapon: Longsword"]]),
       );
@@ -1194,7 +1234,7 @@ describe("LevelsService", () => {
   describe("power slots and the powers of a pool", () => {
     test("list a class level's granted powers, and leave them and those the character has out of the picks", async () => {
       const { session, character, klass, klassLevels, powerAptitude, powers } = await setupRuleset();
-      await KlassLevelPowers.createMany(db, [
+      await Joins.createMany<KlassLevelPower>(db, "klass_level_powers", [
         { klassLevelId: klassLevels[1].id, powerId: powers["Rage"].id, aptitudeId: powerAptitude.id },
       ]);
       await addCharacterLevel(character.id, klassLevels[0].id, {
@@ -1214,9 +1254,12 @@ describe("LevelsService", () => {
     test("leave a power the level's class level grants out of its own pool only, as once the level is saved", async () => {
       // Each pool is a list of its own: a power known in one is offered in another that lists it
       const { session, parent, character, klass, klassLevels, powerAptitude, powers } = await setupRuleset();
-      const [otherAptitude] = await Aptitudes.create(db, { name: "Other Power Aptitude", rulesetId: parent.id });
-      await PowersAptitudes.createMany(db, [{ powerId: powers["Rage"].id, aptitudeId: otherAptitude.id }]);
-      await KlassLevelPowers.createMany(db, [
+      const [otherAptitude] = await Entities.create<Aptitude>(db, "aptitudes", {
+        name: "Other Power Aptitude",
+        rulesetId: parent.id,
+      });
+      await Joins.createMany(db, "powers_aptitudes", [{ powerId: powers["Rage"].id, aptitudeId: otherAptitude.id }]);
+      await Joins.createMany<KlassLevelPower>(db, "klass_level_powers", [
         { klassLevelId: klassLevels[1].id, powerId: powers["Rage"].id, aptitudeId: powerAptitude.id },
       ]);
       await addCharacterLevel(character.id, klassLevels[0].id);
@@ -1284,9 +1327,11 @@ describe("LevelsService", () => {
       const ctx = await getSeedCtx();
       const fork = await createSeededTestRuleset(SEED_USER_ID);
       const sorcerer = await copyEntity(db, "klasses", ctx.klassMap.pc["Sorcerer"], fork);
-      const second = (await KlassLevels.findMany(db, { klassId: sorcerer.id })).find(({ level }) => level === 2)!;
+      const second = (
+        await Entities.findMany<KlassLevel>(db, { entityType: "klass_levels", ownerIds: [sorcerer.id] })
+      ).find(({ level }) => level === 2)!;
       const [sorcererSpells, resistance] = [ctx.aptMap["Sorcerer Spells"], ctx.powerMap["Resistance"]];
-      await KlassLevelPowers.createMany(db, [
+      await Joins.createMany<KlassLevelPower>(db, "klass_level_powers", [
         { klassLevelId: second.id, powerId: resistance, aptitudeId: sorcererSpells },
       ]);
       RulesetViews.invalidate(fork.id);
@@ -1330,7 +1375,7 @@ describe("LevelsService", () => {
       const { session, ruleset, character, klass, klassLevels, powerAptitude, powers } = await setupRuleset({
         fork: true,
       });
-      await KlassLevelPowers.createMany(db, [
+      await Joins.createMany<KlassLevelPower>(db, "klass_level_powers", [
         { klassLevelId: klassLevels[0].id, powerId: powers["Rage"].id, aptitudeId: powerAptitude.id },
       ]);
       await addCharacterLevel(character.id, klassLevels[0].id, {
@@ -1357,9 +1402,7 @@ describe("LevelsService", () => {
       });
       const characterId = await createSeedCharacter(ctx, "wizard", { rulesetId: fork.id });
       const [characterLevelId] = await addClassLevels(db, ctx, characterId, "Wizard", [1], [4]);
-      await CharacterLevelPowers.createMany(db, [
-        { characterLevelId, powerId: merged.loserId, aptitudeId: wizardSpells },
-      ]);
+      await Picks.createMany(db, "powers", [{ characterLevelId, powerId: merged.loserId, aptitudeId: wizardSpells }]);
 
       expect(await spellNames(characterId, 2)).not.toContain(merged.name);
     });
@@ -1458,13 +1501,15 @@ describe("LevelsService", () => {
       const characterId = await createSeedCharacter(ctx, "sorcerer");
       const level = await levelUp(session, ctx, characterId, "Sorcerer", 1, SORCERER_1);
       expect(level).toMatchObject({ characterId, hp: 4 });
-      expect(await CharacterLevelAbilityIncreases.findMany(db, { characterLevelIds: [level.id] })).toEqual([]);
+      expect(
+        await Picks.findMany<LevelAbilityIncrease>(db, { pick: "abilityIncreases", characterLevelIds: [level.id] }),
+      ).toEqual([]);
 
       const { skills, feats, powers } = picks(ctx, SORCERER_1);
       const saved = async <T>(rows: Promise<T[]>, key: (row: T) => string) => (await rows).map(key).sort();
       expect(
         await saved(
-          CharacterLevelSkills.findMany(db, { characterLevelIds: [level.id] }),
+          Picks.findMany<LevelSkill>(db, { pick: "skills", characterLevelIds: [level.id] }),
           (s) => `${s.skillId}:${s.rank}`,
         ),
       ).toEqual(
@@ -1474,7 +1519,7 @@ describe("LevelsService", () => {
       );
       expect(
         await saved(
-          CharacterLevelFeats.findMany(db, { characterLevelIds: [level.id] }),
+          Picks.findMany<LevelFeat>(db, { pick: "feats", characterLevelIds: [level.id] }),
           (f) => `${f.aptitudeId}:${f.featId}`,
         ),
       ).toEqual(
@@ -1483,7 +1528,10 @@ describe("LevelsService", () => {
           .sort(),
       );
       expect(
-        await saved(CharacterLevelPowers.findMany(db, { characterLevelIds: [level.id] }), (p) => p.powerId),
+        await saved(
+          Picks.findMany<LevelPower>(db, { pick: "powers", characterLevelIds: [level.id] }),
+          (p) => p.powerId,
+        ),
       ).toEqual(Object.values(powers).flat().sort());
     });
 
@@ -1492,9 +1540,9 @@ describe("LevelsService", () => {
       const characterId = await createSeedCharacter(ctx, "fighter", { xp: 6000 });
       await addFighterLevels(session, ctx, characterId, 3);
       const level = await levelUp(session, ctx, characterId, "Fighter", 4, FIGHTER_LEVELS[3]);
-      expect(await CharacterLevelAbilityIncreases.findMany(db, { characterLevelIds: [level.id] })).toMatchObject([
-        { abilityId: ctx.abilityMap["Strength"], amount: 1 },
-      ]);
+      expect(
+        await Picks.findMany<LevelAbilityIncrease>(db, { pick: "abilityIncreases", characterLevelIds: [level.id] }),
+      ).toMatchObject([{ abilityId: ctx.abilityMap["Strength"], amount: 1 }]);
     });
 
     test("refuses picks the level can't take", async () => {
@@ -1660,7 +1708,7 @@ describe("LevelsService", () => {
       const characterId = await createSeedCharacter(ctx, "fighter", { abilities: { Dexterity: 8 } });
       const level = await levelUp(session, ctx, characterId, "Fighter", 1, plan, true);
       expect(
-        (await CharacterLevelFeats.findMany(db, { characterLevelIds: [level.id] })).map((f) => f.featId),
+        (await Picks.findMany<LevelFeat>(db, { pick: "feats", characterLevelIds: [level.id] })).map((f) => f.featId),
       ).toContain(ctx.featMap["Dodge"]);
     });
 
@@ -1676,9 +1724,9 @@ describe("LevelsService", () => {
 
       const wizard = await createSeedCharacter(ctx, "wizard", { rulesetId: fork.id });
       const level = await levelUp(session, ctx, wizard, "Wizard", 1, WIZARD_1);
-      expect((await CharacterLevelFeats.findMany(db, { characterLevelIds: [level.id] })).map((f) => f.featId)).toEqual(
-        expect.arrayContaining(Object.values(picks(ctx, WIZARD_1).feats).flat()),
-      );
+      expect(
+        (await Picks.findMany<LevelFeat>(db, { pick: "feats", characterLevelIds: [level.id] })).map((f) => f.featId),
+      ).toEqual(expect.arrayContaining(Object.values(picks(ctx, WIZARD_1).feats).flat()));
     });
   });
 
@@ -1758,7 +1806,9 @@ describe("LevelsService", () => {
           true,
         );
         expect(
-          (await CharacterLevelFeats.findMany(db, { characterLevelIds: [fighter1] })).map((f) => f.featId).sort(),
+          (await Picks.findMany<LevelFeat>(db, { pick: "feats", characterLevelIds: [fighter1] }))
+            .map((f) => f.featId)
+            .sort(),
         ).toEqual(Object.values(feats).flat().sort());
       });
 
@@ -1792,7 +1842,7 @@ describe("LevelsService", () => {
             levelEditPlan({ hp: 8 }, { skills: skillPoints(ctx, points) }),
             true,
           );
-          const saved = await CharacterLevelSkills.findMany(db, { characterLevelIds: [levelIds[index]] });
+          const saved = await Picks.findMany<LevelSkill>(db, { pick: "skills", characterLevelIds: [levelIds[index]] });
           return { budget, room, saved: saved.reduce((sum, s) => sum + s.rank, 0) };
         };
 
@@ -1829,10 +1879,12 @@ describe("LevelsService", () => {
           levelEditPlan({ hp: 4 }, { powers: picks(ctx, { powers: { "Sorcerer Spells": ["Magic Missile"] } }).powers }),
           true,
         );
-        expect(await CharacterLevelPowers.findMany(db, { characterLevelIds: [levelIds[2]] })).toMatchObject([
-          { powerId: ctx.powerMap["Magic Missile"] },
-        ]);
-        expect(await CharacterLevelPowers.findMany(db, { characterLevelIds: [levelIds[0]] })).toHaveLength(2);
+        expect(
+          await Picks.findMany<LevelPower>(db, { pick: "powers", characterLevelIds: [levelIds[2]] }),
+        ).toMatchObject([{ powerId: ctx.powerMap["Magic Missile"] }]);
+        expect(await Picks.findMany<LevelPower>(db, { pick: "powers", characterLevelIds: [levelIds[0]] })).toHaveLength(
+          2,
+        );
       });
     });
 
@@ -1958,8 +2010,8 @@ describe("LevelsService", () => {
 
       expect(await CharacterLevelsService.removeLevel(session, characterId)).toMatchObject({ success: true });
       expect(await CharacterLevels.findMany(db, { characterId })).toMatchObject([{ id: fighter2.id }]);
-      expect(await CharacterLevelSkills.findMany(db, { characterLevelIds: [rogue1.id] })).toEqual([]);
-      expect(await CharacterLevelFeats.findMany(db, { characterLevelIds: [rogue1.id] })).toEqual([]);
+      expect(await Picks.findMany<LevelSkill>(db, { pick: "skills", characterLevelIds: [rogue1.id] })).toEqual([]);
+      expect(await Picks.findMany<LevelFeat>(db, { pick: "feats", characterLevelIds: [rogue1.id] })).toEqual([]);
     });
   });
 

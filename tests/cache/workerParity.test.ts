@@ -1,12 +1,13 @@
 import { afterEach, expect, test } from "bun:test";
 
+import type { Feat } from "@/engine/index.ts";
 import CharacterResponse from "@/engine/rulesets/dnd3.5/characters/description/CharacterResponse.ts";
 import DetailedCharacterFamiliar from "@/engine/rulesets/dnd3.5/model/bonded/DetailedCharacterFamiliar.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import MemoryCache from "@/server/cache/MemoryCache.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { Characters, Feats, Modifiers } from "@/server/repositories/index.ts";
+import { Characters, Entities, Modifiers } from "@/server/repositories/index.ts";
 import { buildAs } from "@/tests/support/dnd3.5/characters.ts";
 import { createWizardWithFamiliar, picking, WIZARD_1 } from "@/tests/support/dnd3.5/levelFixtures.ts";
 import { copyEntity, createSeededTestRuleset } from "@/tests/support/rulesets.ts";
@@ -24,7 +25,11 @@ test("worker familiar HP matches web after customizing an inherited master feat"
   const fork = await createSeededTestRuleset(SEED_USER_ID);
   await Characters.update(db, { rulesetId: fork.id }, { id: masterId });
   await Characters.update(db, { rulesetId: fork.id }, { id: familiarId });
-  const source = (await Feats.findOne(db, { rulesetId: fork.ancestorRulesetIds[0], name: "Toughness" }))!;
+  const source = (await Entities.findOne<Feat>(db, {
+    entityType: "feats",
+    rulesetId: fork.ancestorRulesetIds[0],
+    name: "Toughness",
+  }))!;
   const copy = await copyEntity(db, "feats", source.id, fork);
   const [modifier] = await Modifiers.findMany(db, { sourceIds: [copy.id], sourceType: "feats" });
   await Modifiers.update(db, { value: "7" }, { id: modifier.id });

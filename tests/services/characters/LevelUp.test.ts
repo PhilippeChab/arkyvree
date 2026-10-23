@@ -1,21 +1,13 @@
 import { describe, expect, test } from "bun:test";
 
 import type { LevelPlanAnswer } from "@/engine/core/module/index.ts";
-import type { AbilityIncrease } from "@/engine/index.ts";
+import type { AbilityIncrease, LevelAbilityIncrease, LevelFeat, LevelPower, LevelSkill } from "@/engine/index.ts";
 import { type SeedContext } from "@/scripts/db/seeds/seedContext.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
-import {
-  CharacterLevelAbilityIncreases,
-  CharacterLevelFeats,
-  CharacterLevelPowers,
-  CharacterLevelSkills,
-  Characters,
-  FeatsAptitudes,
-  Modifiers,
-} from "@/server/repositories/index.ts";
+import { Characters, Joins, Modifiers, Picks } from "@/server/repositories/index.ts";
 import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { PowersService } from "@/server/services/rulesets/powers/index.ts";
@@ -275,7 +267,7 @@ async function resaveAsRead(characterId: string, levelId: string, powers?: Recor
 /** The names of the feats a character's levels saved, a row each, sorted. */
 async function savedFeatNames(ctx: SeedContext, levelIds: string[]) {
   const names = new Map(Object.entries(ctx.featMap).map(([name, id]) => [id, name]));
-  const rows = await CharacterLevelFeats.findMany(db, { characterLevelIds: levelIds });
+  const rows = await Picks.findMany<LevelFeat>(db, { pick: "feats", characterLevelIds: levelIds });
   return rows.map(({ featId }) => names.get(featId)).sort();
 }
 
@@ -472,12 +464,17 @@ describe("finalizing several levels at once", () => {
     const levelIds = created.map((l) => l.id);
     const { feats, powers } = picks(ctx, plan);
     expect(
-      (await CharacterLevelFeats.findMany(db, { characterLevelIds: levelIds })).map((f) => f.featId).sort(),
+      (await Picks.findMany<LevelFeat>(db, { pick: "feats", characterLevelIds: levelIds })).map((f) => f.featId).sort(),
     ).toEqual(Object.values(feats).flat().sort());
     expect(
-      (await CharacterLevelPowers.findMany(db, { characterLevelIds: levelIds })).map((p) => p.powerId).sort(),
+      (await Picks.findMany<LevelPower>(db, { pick: "powers", characterLevelIds: levelIds }))
+        .map((p) => p.powerId)
+        .sort(),
     ).toEqual(Object.values(powers).flat().sort());
-    const increases = await CharacterLevelAbilityIncreases.findMany(db, { characterLevelIds: levelIds });
+    const increases = await Picks.findMany<LevelAbilityIncrease>(db, {
+      pick: "abilityIncreases",
+      characterLevelIds: levelIds,
+    });
     expect(
       created.map((l) =>
         increases
@@ -496,8 +493,8 @@ describe("finalizing several levels at once", () => {
       feats: { General: ["Power Attack", "Great Fortitude"], "Fighter Bonus Feat": ["Improved Initiative", "Dodge"] },
     });
     const [atFirst, atSecond] = [
-      await CharacterLevelSkills.findMany(db, { characterLevelIds: [first.id] }),
-      await CharacterLevelSkills.findMany(db, { characterLevelIds: [second.id] }),
+      await Picks.findMany<LevelSkill>(db, { pick: "skills", characterLevelIds: [first.id] }),
+      await Picks.findMany<LevelSkill>(db, { pick: "skills", characterLevelIds: [second.id] }),
     ];
     expect(atFirst.every((s) => s.rank <= 4)).toBe(true);
     expect(atSecond.length).toBeGreaterThan(0);
@@ -710,7 +707,7 @@ describe("a pick a level takes twice", () => {
     // A fork whose Toughness is a fighter's bonus feat too
     const fork = await createSeededTestRuleset(SEED_USER_ID);
     const toughness = await copyEntity(db, "feats", ctx.featMap["Toughness"], fork);
-    await FeatsAptitudes.create(db, { featId: toughness.id, aptitudeId: ctx.aptMap["Fighter Bonus Feat"] });
+    await Joins.create(db, "feats_aptitudes", { featId: toughness.id, aptitudeId: ctx.aptMap["Fighter Bonus Feat"] });
     RulesetViews.invalidate(fork.id);
     const characterId = await createSeedCharacter(ctx);
     await Characters.update(db, { rulesetId: fork.id }, { id: characterId });
@@ -726,7 +723,7 @@ describe("a pick a level takes twice", () => {
       characterId,
       levelUpPlan(levels, { skills, feats }),
     );
-    const rows = await CharacterLevelFeats.findMany(db, { characterLevelIds: [level.id] });
+    const rows = await Picks.findMany<LevelFeat>(db, { pick: "feats", characterLevelIds: [level.id] });
     expect(
       rows
         .filter(({ featId }) => featId === toughness.id)
@@ -1113,7 +1110,7 @@ describe("a spell known once in its class list", () => {
     expect(pickSteps(previewed).powers.fitted[wizardSpells]).toEqual([ctx.powerMap["Light"]]);
     // Forced: the wizard level's other picks aren't this test's
     const [level] = await finalizeBatch(ctx, characterId, [["Wizard", 1, 4]], wizardLight, true);
-    const saved = await CharacterLevelPowers.findMany(db, { characterLevelIds: [level.id] });
+    const saved = await Picks.findMany<LevelPower>(db, { pick: "powers", characterLevelIds: [level.id] });
     expect(saved.map(({ aptitudeId, powerId }) => ({ aptitudeId, powerId }))).toEqual([
       { aptitudeId: wizardSpells, powerId: ctx.powerMap["Light"] },
     ]);
@@ -1360,7 +1357,7 @@ describe("a pick the level's other picks give", () => {
       ...SORCERER_1,
       powers: { "Sorcerer Spells": kept },
     });
-    const saved = await CharacterLevelPowers.findMany(db, { characterLevelIds: [level.id] });
+    const saved = await Picks.findMany<LevelPower>(db, { pick: "powers", characterLevelIds: [level.id] });
     expect(saved.map(({ powerId }) => powerId).sort()).toEqual(kept.map((name) => ctx.powerMap[name]).sort());
   });
 
@@ -1516,7 +1513,9 @@ describe("a pick sent by the id of what the fork copied", () => {
     const forkCtx: SeedContext = { ...ctx, powerMap: { ...ctx.powerMap, [name]: copy.id } };
     const known = SORCERER_1.powers!["Sorcerer Spells"].map((spell) => forkCtx.powerMap[spell]);
     const savedSpells = async (levelId: string) =>
-      (await CharacterLevelPowers.findMany(db, { characterLevelIds: [levelId] })).map(({ powerId }) => powerId).sort();
+      (await Picks.findMany<LevelPower>(db, { pick: "powers", characterLevelIds: [levelId] }))
+        .map(({ powerId }) => powerId)
+        .sort();
 
     // Magic Missile is a first-level spell, in the first level's room for two
     const characterId = await createSeedCharacter(ctx, "sorcerer", { rulesetId: fork.id });
@@ -1545,7 +1544,7 @@ describe("a pick sent by the id of what the fork copied", () => {
     const copy = await FeatsService.updateFeat(session, fork.id, ctx.featMap[name], { name, description: "Copied" });
     const characterId = await createSeedCharacter(ctx, "fighter", { rulesetId: fork.id, xp: 1000 });
     const first = await levelUp(session, ctx, characterId, "Fighter", 1, FIGHTER_LEVELS[0]);
-    const rows = await CharacterLevelFeats.findMany(db, { characterLevelIds: [first.id] });
+    const rows = await Picks.findMany<LevelFeat>(db, { pick: "feats", characterLevelIds: [first.id] });
     expect(rows.map(({ featId }) => featId)).toContain(copy.id);
     expect(rows.map(({ featId }) => featId)).not.toContain(ctx.featMap[name]);
 
@@ -1594,13 +1593,13 @@ describe("a pick sent by the id of what the fork copied", () => {
       value: 4,
     });
     const fighterLevel = await levelUp(session, ctx, fighterId, "Fighter", 1, FIGHTER_LEVELS[0]);
-    const ranks = await CharacterLevelSkills.findMany(db, { characterLevelIds: [fighterLevel.id] });
+    const ranks = await Picks.findMany<LevelSkill>(db, { pick: "skills", characterLevelIds: [fighterLevel.id] });
     expect(ranks.find(({ skillId }) => skillId === climb.id)).toMatchObject({ rank: 4 });
 
     // The sorcerer's spells, each known in the copy of the list
     const sorcererId = await createSeedCharacter(ctx, "sorcerer", { rulesetId: fork.id });
     const sorcererLevel = await levelUp(session, ctx, sorcererId, "Sorcerer", 1, SORCERER_1);
-    const spells = await CharacterLevelPowers.findMany(db, { characterLevelIds: [sorcererLevel.id] });
+    const spells = await Picks.findMany<LevelPower>(db, { pick: "powers", characterLevelIds: [sorcererLevel.id] });
     expect(new Set(spells.map(({ aptitudeId }) => aptitudeId))).toEqual(new Set([sorcererSpells.id]));
   });
 });
@@ -1713,7 +1712,7 @@ describe("re-saving a level", () => {
 
     test("saved there before the check existed is refused again, and can be cleared", async () => {
       const { ctx, first, resave } = await setupFighter();
-      await CharacterLevelAbilityIncreases.createMany(db, [
+      await Picks.createMany(db, "abilityIncreases", [
         { characterLevelId: first.id, abilityId: ctx.abilityMap["Strength"], amount: 1 },
       ]);
       // The edit dialog sends the stored increase back.
@@ -1721,7 +1720,9 @@ describe("re-saving a level", () => {
         "Ability increase is not available at this level",
       );
       await resave({ abilityId: null });
-      expect(await CharacterLevelAbilityIncreases.findMany(db, { characterLevelIds: [first.id] })).toEqual([]);
+      expect(
+        await Picks.findMany<LevelAbilityIncrease>(db, { pick: "abilityIncreases", characterLevelIds: [first.id] }),
+      ).toEqual([]);
     });
 
     test("at a level that grants one raises one ability by 1, read back with the level", async () => {

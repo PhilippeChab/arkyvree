@@ -3,12 +3,9 @@
  * copy in `entity_snapshots`, so the ruleset shows the copy in place of the original.
  */
 
-import { eq, inArray } from "drizzle-orm";
-
-import type { SeederState } from "@/database/seeders/core/SeederState.ts";
+import { Joins, type SeederState } from "@/database/seeders/core/SeederState.ts";
+import type { Feat, Power } from "@/engine/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
-import StoredJoins from "@/server/repositories/stored/StoredJoins.ts";
-import type { Feat, Power } from "@/shared/relations.ts";
 
 /** The links to add to a power (`links`), each at its level. */
 interface PowerLinks {
@@ -101,16 +98,12 @@ export function CopiesOnWrite<B extends Constructor<SeederState>>(Base: B) {
     /** The aptitudes feats or powers are listed in (`join`, `ids`), each link with its level (a spell list's). */
     protected async listedIn(join: "feats_aptitudes" | "powers_aptitudes", ids: string[]) {
       if (ids.length === 0) return [];
-      return await StoredJoins.findRows<{
+      return await Joins.findMany<{
         aptitudeId: string;
         featId?: string;
         level?: number | null;
         powerId?: string;
-      }>(
-        this.db,
-        join,
-        ids.length === 1 ? eq(StoredJoins.getPart("from"), ids[0]) : inArray(StoredJoins.getPart("from"), ids),
-      );
+      }>(this.db, { join, fromIds: ids });
     }
 
     /** Adds a power to aptitudes, each at its level: the first link to an aptitude it isn't in yet. */

@@ -1,10 +1,8 @@
 import { describe, expect, test } from "bun:test";
 
-import { eq } from "drizzle-orm";
-
+import type { KlassLevelPower } from "@/engine/index.ts";
 import { db } from "@/server/database/index.ts";
-import { Activities, KlassLevelPowers, PowersAptitudes, Properties } from "@/server/repositories/index.ts";
-import StoredJoins from "@/server/repositories/stored/StoredJoins.ts";
+import { Activities, Joins, Properties } from "@/server/repositories/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { PowersService } from "@/server/services/rulesets/powers/index.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
@@ -23,7 +21,10 @@ function sorted(links: { aptitudeId: string; level: number | null }[]) {
 }
 
 async function linkedAptitudes(powerId: string) {
-  const rows = await PowersAptitudes.findMany(db, { powerIds: [powerId] });
+  const rows = await Joins.findMany<{ aptitudeId: string; level: number | null; powerId: string }>(db, {
+    join: "powers_aptitudes",
+    fromIds: [powerId],
+  });
   return rows
     .map(({ aptitudeId, level }) => ({ aptitudeId, level }))
     .sort((a, b) => a.aptitudeId.localeCompare(b.aptitudeId));
@@ -243,13 +244,17 @@ describe("PowersService", () => {
       aptitudes: [{ id: wizard }],
     });
     const { klassLevel } = await createTestKlassLevel(ruleset.id);
-    await KlassLevelPowers.create(db, { klassLevelId: klassLevel.id, powerId: power.id, aptitudeId: wizard });
+    await Joins.create<KlassLevelPower>(db, "klass_level_powers", {
+      klassLevelId: klassLevel.id,
+      powerId: power.id,
+      aptitudeId: wizard,
+    });
 
     await PowersService.deletePower(session, ruleset.id, power.id);
 
     expect(await linkedAptitudes(power.id)).toEqual([]);
     // A grant's power is its link's to-entity
-    expect(await StoredJoins.findRows(db, "klass_level_powers", eq(StoredJoins.getPart("to"), power.id))).toEqual([]);
+    expect(await Joins.findMany(db, { join: "klass_level_powers", toIds: [power.id] })).toEqual([]);
   });
 
   test("refuses to delete a power a character picked, even through a ruleset using it as an extension", async () => {

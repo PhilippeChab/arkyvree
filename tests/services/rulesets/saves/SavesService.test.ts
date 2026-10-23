@@ -1,16 +1,18 @@
 import { describe, expect, test } from "bun:test";
 
+import type { Klass, KlassLevel, KlassLevelSave, RulesetAbility } from "@/engine/index.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
-import { Abilities, Klasses, KlassLevels, KlassLevelSaves } from "@/server/repositories/index.ts";
+import { Entities, Joins } from "@/server/repositories/index.ts";
 import { SavesService } from "@/server/services/rulesets/saves/index.ts";
 import { createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
 
 /** A new user's empty ruleset with two abilities. */
 async function setup() {
   const { session, ruleset } = await createTestUserAndRuleset();
-  const [constitution, wisdom] = await Abilities.createMany(
+  const [constitution, wisdom] = await Entities.createMany<RulesetAbility>(
     db,
+    "abilities",
     ["Constitution", "Wisdom"].map((name) => ({ name, description: name, rulesetId: ruleset.id })),
   );
   return { session, ruleset, constitution, wisdom };
@@ -41,9 +43,15 @@ describe("SavesService", () => {
       name: "Fortitude",
       abilityId: constitution.id,
     });
-    const [klass] = await Klasses.create(db, { name: "Saving Class", rulesetId: ruleset.id, hd: 10 });
-    const [klassLevel] = await KlassLevels.create(db, { klassId: klass.id, level: 1 });
-    await KlassLevelSaves.createMany(db, [{ klassLevelId: klassLevel.id, saveId: save.id, base: 2 }]);
+    const [klass] = await Entities.create<Klass>(db, "klasses", {
+      name: "Saving Class",
+      rulesetId: ruleset.id,
+      hd: 10,
+    });
+    const [klassLevel] = await Entities.create<KlassLevel>(db, "klass_levels", { klassId: klass.id, level: 1 });
+    await Joins.createMany<KlassLevelSave>(db, "klass_level_saves", [
+      { klassLevelId: klassLevel.id, saveId: save.id, base: 2 },
+    ]);
 
     expect(SavesService.deleteSave(session, ruleset.id, save.id)).rejects.toThrow(ConflictError);
   });

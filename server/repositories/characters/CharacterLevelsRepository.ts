@@ -2,44 +2,41 @@ import { and, eq, inArray, isNull, type SQL, sql } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
 import { advancementPicksInCharacter, advancementsInCharacter } from "@/drizzle/schema.ts";
-import { Engine } from "@/engine/index.ts";
+import { type CharacterLevel, Engine } from "@/engine/index.ts";
 import BaseRepository from "@/server/repositories/BaseRepository.ts";
 import StoredCharacters from "@/server/repositories/stored/StoredCharacters.ts";
 import { toQualified } from "@/server/repositories/stored/toQualified.ts";
-import type { CharacterLevel } from "@/shared/relations.ts";
 
 /**
  * A character's levels: its advancements (`character.advancements`), each in a track (its class level), and the value
- * its module's value step holds of it (`advancement.value`: 3.5's hit points, its `hp` pick).
+ * its module's value step holds of it (`advancement.value`: 3.5's hit points, its `hp` pick), each read as its module's
+ * row (`Engine.storage().advancementRowOf`).
  */
 class CharacterLevelsRepository extends BaseRepository<typeof advancementsInCharacter> {
   constructor() {
     super(advancementsInCharacter);
   }
 
-  /** A level's columns: its advancement's, its track under the module's name, and its value step's amount. */
-  private columns() {
-    const { track, value } = Engine.storage().character().advancement;
-    return {
-      id: advancementsInCharacter.id,
-      characterId: advancementsInCharacter.characterId,
-      [track]: advancementsInCharacter.trackId,
-      [value.column]: sql<number>`(SELECT ${advancementPicksInCharacter.amount} FROM ${advancementPicksInCharacter} WHERE ${advancementPicksInCharacter.advancementId} = ${toQualified(advancementsInCharacter.id)} AND ${advancementPicksInCharacter.step} = ${value.step})`,
-      position: advancementsInCharacter.position,
-      createdAt: advancementsInCharacter.createdAt,
-      updatedAt: advancementsInCharacter.updatedAt,
-      deletedAt: advancementsInCharacter.deletedAt,
-    };
-  }
-
-  /** The levels a condition picks, in the order their characters took them. */
+  /** The levels a condition picks, in the order their characters took them, as the module's rows. */
   private async rows(db: Db, where: SQL | undefined): Promise<CharacterLevel[]> {
+    const { step } = Engine.storage().character().advancement.value;
     const rows = await db
-      .select(this.columns())
+      .select({
+        characterId: this.table.characterId,
+        createdAt: this.table.createdAt,
+        deletedAt: this.table.deletedAt,
+        id: this.table.id,
+        position: this.table.position,
+        trackId: this.table.trackId,
+        updatedAt: this.table.updatedAt,
+        value: sql<
+          number | null
+        >`(SELECT ${advancementPicksInCharacter.amount} FROM ${advancementPicksInCharacter} WHERE ${advancementPicksInCharacter.advancementId} = ${toQualified(this.table.id)} AND ${advancementPicksInCharacter.step} = ${step})`,
+      })
       .from(this.table)
       .where(where)
       .orderBy(this.orderBy(this.table.characterId), this.orderBy(this.table.position));
-    return rows as unknown as CharacterLevel[];
+    return rows.map((row) => Engine.storage().advancementRowOf(row) as CharacterLevel);
   }
 
   /** Writes a level's value (its hit points), replacing the one it held. */
@@ -63,7 +60,8 @@ class CharacterLevelsRepository extends BaseRepository<typeof advancementsInChar
    * character read the same last position unless the first commits before the second reads: a level flow locks the
    * character first (`Characters.lock`), and the unique index refuses a second level at a position.
    */
-  async create(db: Db, values: { characterId: string; hp: number; id?: string; klassLevelId: string }) {
+  async create(db: Db, values: Record<string, unknown> & { characterId: string; id?: string }) {
+    const { trackId, value } = Engine.storage().advancementOf(values);
     const nextPosition = sql<number>`(
       SELECT coalesce(max(${this.table.position}), 0) + 1 FROM ${this.table}
       WHERE ${this.table.characterId} = ${values.characterId} AND ${this.table.deletedAt} IS NULL
@@ -74,11 +72,11 @@ class CharacterLevelsRepository extends BaseRepository<typeof advancementsInChar
         id: values.id,
         characterId: values.characterId,
         position: nextPosition,
-        trackId: values.klassLevelId,
-        trackType: StoredCharacters.buildTypeOf(values.klassLevelId),
+        trackId,
+        trackType: StoredCharacters.buildTypeOf(trackId!),
       })
       .returning({ id: this.table.id });
-    await this.writeValue(db, created.id, values.hp);
+    await this.writeValue(db, created.id, value!);
     return await this.rows(db, eq(this.table.id, created.id));
   }
 
@@ -102,34 +100,24 @@ class CharacterLevelsRepository extends BaseRepository<typeof advancementsInChar
     );
   }
 
-  async findOne(db: Db, where: { id: string } | { characterId: string; klassLevelId: string }) {
-    const [row] = await this.rows(
-      db,
-      this.branchWhere(
-        [
-          "id" in where && eq(this.table.id, where.id),
-          "characterId" in where && eq(this.table.characterId, where.characterId),
-        ],
-        ["klassLevelId" in where && eq(this.table.trackId, where.klassLevelId), isNull(this.table.deletedAt)],
-      ),
-    );
+  async findOne(db: Db, where: { id: string }) {
+    const [row] = await this.rows(db, and(eq(this.table.id, where.id), isNull(this.table.deletedAt)));
     return row;
   }
 
-  /** Writes a change to a live level: its class level, its hit points. */
-  async update(db: Db, values: { hp?: number; klassLevelId?: string }, where: { id: string }) {
+  /** Writes a change to a live level (`values`, by its module's columns): its track (its class level), its value. */
+  async update(db: Db, values: Record<string, unknown>, where: { id: string }) {
+    const { trackId, value } = Engine.storage().advancementOf(values);
     const updated = await db
       .update(this.table)
       .set({
-        ...(values.klassLevelId
-          ? { trackId: values.klassLevelId, trackType: StoredCharacters.buildTypeOf(values.klassLevelId) }
-          : {}),
+        ...(trackId ? { trackId, trackType: StoredCharacters.buildTypeOf(trackId) } : {}),
         updatedAt: new Date().toISOString(),
       })
       .where(and(eq(this.table.id, where.id), isNull(this.table.deletedAt)))
       .returning({ id: this.table.id });
     if (updated.length === 0) return [];
-    if (values.hp !== undefined) await this.writeValue(db, where.id, values.hp);
+    if (value !== undefined) await this.writeValue(db, where.id, value);
     return await this.rows(db, eq(this.table.id, where.id));
   }
 }

@@ -1,13 +1,13 @@
-import { Engine } from "@/engine/index.ts";
+import { Engine, type Race } from "@/engine/index.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { Races } from "@/server/repositories/index.ts";
+import { Entities } from "@/server/repositories/index.ts";
 import EntityWriter, { type EntityBody } from "@/server/services/rulesets/EntityWriter.ts";
 import type { Session } from "@/shared/relations.ts";
 
 class RacesService {
   /** What its creates, updates and deletes write, in one order around the plans its rules give. */
-  private readonly writer = new EntityWriter("races", Races);
+  private readonly writer = new EntityWriter("races");
 
   async createRace(session: Session, rulesetId: string, body: EntityBody) {
     return await this.writer.create(session, rulesetId, body.name, (scope) =>
@@ -38,9 +38,15 @@ class RacesService {
   ) {
     return await withRulesetScope(db, rulesetId, async (scope) => {
       const list = Engine.for(scope).entities("races").openList(where);
-      const result = await Races.findPage(
+      const result = await Entities.findPage<Race>(
         db,
-        { rulesetId, ...scope.rulesetData.cow.listFilters, ...where, ...list.filters },
+        {
+          entityType: "races",
+          rulesetId,
+          ...scope.rulesetData.cow.listFilters,
+          ...where,
+          ...list.filters,
+        },
         pagination,
       );
       return { ...result, items: list.describe(result.items) };

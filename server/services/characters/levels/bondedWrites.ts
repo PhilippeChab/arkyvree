@@ -1,13 +1,14 @@
 import type { Db } from "@/drizzle/database.ts";
 import type { BondedPlan, NewBondedCreature } from "@/engine/index.ts";
-import { CharacterAbilities, CharacterLevels, Characters } from "@/server/repositories/index.ts";
+import { CharacterLevels, CharacterLinks, Characters } from "@/server/repositories/index.ts";
 import type { Character } from "@/shared/relations.ts";
 
 /** A new creature, its row as the engine plans it, with its ability scores. */
 async function createCreature(tx: Db, creature: NewBondedCreature) {
   const [bonded] = await Characters.create(tx, creature.row);
-  await CharacterAbilities.createMany(
+  await CharacterLinks.createMany(
     tx,
+    "abilities",
     creature.abilities.map((ability) => ({ characterId: bonded.id, ...ability })),
   );
   return bonded.id;

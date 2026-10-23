@@ -1,11 +1,11 @@
 import { type CharacterInput, CharacterProjection, type PlannedSoFar } from "@/engine/core/module/index.ts";
 import { CharacterPicker } from "@/engine/core/pickers/index.ts";
-import type { RulesetView } from "@/engine/core/view/index.ts";
+import type { Klass, KlassLevel, RulesetView } from "@/engine/core/view/index.ts";
 import type LevelUpPlan from "@/engine/rulesets/dnd3.5/levelUp/LevelUpPlan.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import Dnd35CharacterBuilder from "@/engine/rulesets/dnd3.5/model/Dnd35CharacterBuilder.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
-import type { Klass, KlassLevel, Requirement } from "@/shared/relations.ts";
+import type { Requirement } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 /**
@@ -29,7 +29,7 @@ export default class ClassPicker extends CharacterPicker<
   }
 
   /** What the picker offers: a player character's classes. */
-  override readonly filters = { kind: "pc" };
+  override readonly filters = { columns: { kind: "pc" } };
 
   /** The character's highest level in each class it has levels of, by the class's id, once read. */
   private maxLevels?: Map<string, number>;

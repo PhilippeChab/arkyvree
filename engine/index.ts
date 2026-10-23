@@ -6,6 +6,7 @@
  */
 
 export type { default as ClassEngine } from "./api/ClassEngine.ts";
+export type { StoredRulesetRows } from "./api/CopyOnWriteEngine.ts";
 export { default as Engine } from "./api/Engine.ts";
 export type { ImportFileDescription } from "./api/ImportsEngine.ts";
 export type { default as LevelUpEngine } from "./api/LevelUpEngine.ts";
@@ -50,8 +51,47 @@ export type {
   StepPayload,
   StepPickerQuery,
   StorageRegistries,
+  StoredAdvancement,
+  StoredCharacterLink,
+  StoredCharacterRow,
+  StoredCharacterWrite,
   StoredColumn,
+  StoredEntity,
+  StoredFieldValue,
+  StoredLink,
+  StoredPick,
+  StoredRuleset,
+  StoredWrite,
   ValueKind,
 } from "./core/module/index.ts";
 export { default as RulesError } from "./core/RulesError.ts";
-export type { EntityCustomizations, RulesetData, RulesetRawData } from "./core/view/index.ts";
+export type {
+  Aptitude,
+  CharacterAbility,
+  CharacterLanguage,
+  CharacterLevel,
+  EntityCustomizations,
+  Feat,
+  FeatWithAptitudes,
+  Item,
+  Klass,
+  KlassLevel,
+  KlassLevelFeat,
+  KlassLevelPower,
+  KlassLevelSave,
+  KlassSkill,
+  Language,
+  LevelAbilityIncrease,
+  LevelFeat,
+  LevelPower,
+  LevelSkill,
+  Mechanic,
+  Power,
+  PowerWithAptitudes,
+  Race,
+  RulesetAbility,
+  RulesetData,
+  RulesetRawData,
+  RulesetSave,
+  Skill,
+} from "./core/view/index.ts";

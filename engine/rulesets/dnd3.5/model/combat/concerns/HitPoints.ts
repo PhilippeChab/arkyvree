@@ -1,6 +1,6 @@
+import type { CharacterLevel } from "@/engine/core/view/index.ts";
 import type CombatState from "@/engine/rulesets/dnd3.5/model/combat/CombatState.ts";
 import type { Constructor } from "@/lib/mixins.ts";
-import { type CharacterLevel } from "@/shared/relations.ts";
 import { MIN_HIT_POINTS_PER_LEVEL } from "@/vocabulary/dnd3.5/classes.ts";
 
 /** A character's hit points: its classes' hit dice and its Constitution. */

@@ -1,8 +1,9 @@
 import { expect, test } from "bun:test";
 
+import type { Aptitude, Feat, Race } from "@/engine/index.ts";
 import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { Aptitudes, EntitySnapshots, Feats, Races, Rulesets } from "@/server/repositories/index.ts";
+import { Entities, EntitySnapshots, Rulesets } from "@/server/repositories/index.ts";
 import { AptitudesService } from "@/server/services/rulesets/aptitudes/index.ts";
 import { RulesetChangesService } from "@/server/services/rulesets/changes/index.ts";
 import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
@@ -36,7 +37,11 @@ const RENAMED_KINDS: Record<"aptitudes" | "feats" | "items" | "powers", RenamedK
   },
   feats: {
     create: async (session, forkId, baseId, name) => {
-      const general = (await Aptitudes.findOne(db, { name: "General", rulesetId: baseId }))!;
+      const general = (await Entities.findOne<Aptitude>(db, {
+        entityType: "aptitudes",
+        name: "General",
+        rulesetId: baseId,
+      }))!;
       return await FeatsService.createFeat(session, forkId, { name, aptitudeIds: [general.id] });
     },
     rename: (session, forkId, id, name) => FeatsService.updateFeat(session, forkId, id, { name }),
@@ -49,7 +54,11 @@ const RENAMED_KINDS: Record<"aptitudes" | "feats" | "items" | "powers", RenamedK
   },
   powers: {
     create: async (session, forkId, baseId, name) => {
-      const wizard = (await Aptitudes.findOne(db, { name: "Wizard Spells", rulesetId: baseId }))!;
+      const wizard = (await Entities.findOne<Aptitude>(db, {
+        entityType: "aptitudes",
+        name: "Wizard Spells",
+        rulesetId: baseId,
+      }))!;
       return await PowersService.createPower(session, forkId, { name, aptitudes: [{ id: wizard.id, level: 1 }] });
     },
     rename: (session, forkId, id, name) => PowersService.updatePower(session, forkId, id, { name }),
@@ -78,8 +87,13 @@ async function setup() {
   const session = makeSession();
   const fork = await createSeededTestRuleset(session.userId);
   const baseId = fork.ancestorRulesetIds[0];
-  const general = (await Aptitudes.findOne(db, { name: "General", rulesetId: baseId }))!;
-  const baseFeat = async (name: string) => (await Feats.findOne(db, { name, rulesetId: baseId }))!;
+  const general = (await Entities.findOne<Aptitude>(db, {
+    entityType: "aptitudes",
+    name: "General",
+    rulesetId: baseId,
+  }))!;
+  const baseFeat = async (name: string) =>
+    (await Entities.findOne<Feat>(db, { entityType: "feats", name, rulesetId: baseId }))!;
   return { session, fork, baseId, general, baseFeat };
 }
 
@@ -217,7 +231,7 @@ test("an edit keeping its entity's name, or giving an inherited one's copy its s
 
 test("a duplicate stored before the rule stays editable under its name, and leaves it for a free one", async () => {
   const { session, fork } = await setup();
-  const [duplicate] = await Feats.create(db, { name: "Toughness", rulesetId: fork.id });
+  const [duplicate] = await Entities.create<Feat>(db, "feats", { name: "Toughness", rulesetId: fork.id });
   RulesetViews.invalidate(fork.id);
 
   expect(
@@ -325,14 +339,20 @@ test("subscribing to an extension that shows a name its view shows twice no more
   const base = await createTestRuleset(null);
   const fork = { rulesetId: base.id, ancestorRulesetIds: [base.id] };
   // A familiar's race and an animal companion's of one name, as the core rules' Hawk
-  const [twin] = await Races.create(db, {
+  const [twin] = await Entities.create<Race>(db, "races", {
     name: "Twin",
     rulesetId: base.id,
     size: "Tiny",
     baseSpeed: 10,
     kind: "familiar",
   });
-  await Races.create(db, { name: "Twin", rulesetId: base.id, size: "Tiny", baseSpeed: 10, kind: "animalcompanion" });
+  await Entities.create<Race>(db, "races", {
+    name: "Twin",
+    rulesetId: base.id,
+    size: "Tiny",
+    baseSpeed: 10,
+    kind: "animalcompanion",
+  });
   const host = await createTestRuleset(session.userId, fork);
   const extension = await createTestRuleset(session.userId, fork);
   await copyEntity(db, "races", twin.id, extension);

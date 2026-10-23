@@ -91,7 +91,7 @@ requirements: [
 
 ## Properties
 
-Properties are key-value pairs of an entity: its fields (`rules.entity_fields`, a ruleset's `rules.ruleset_fields`), or its links when the value names an entity (a class's bonus spell ability), which `StoredFields` (`server/repositories/stored/StoredFields.ts`) reads and writes as properties ([persistence.md](./persistence.md#the-generic-tables)). They store metadata used by the character engine (e.g., weapon damage dice, armor AC bonus, spell school). See [Auto-Generated Customization](#auto-generated-customization) below for all property types.
+Properties are key-value pairs of an entity: its fields (`rules.entity_fields`, a ruleset's `rules.ruleset_fields`), or its links when the value names an entity (a class's bonus spell ability), which `Properties` (`server/repositories/stored/StoredProperties.ts`) reads and writes as properties ([persistence.md](./persistence.md#the-generic-tables)). They store metadata used by the character engine (e.g., weapon damage dice, armor AC bonus, spell school). See [Auto-Generated Customization](#auto-generated-customization) below for all property types.
 
 A property is never edited as one: it's a field of its entity, which its entity's own form shows beside its name and description, and its entity's own save writes. The client never names a property; a ruleset adds, changes or removes a field by its declarations alone, with no client change and no column.
 

@@ -4,6 +4,7 @@ import { and, eq } from "drizzle-orm";
 import { isValidElement } from "react";
 
 import { playerCharactersInCampaign } from "@/drizzle/schema.ts";
+import type { CharacterAbility, CharacterLanguage, LevelFeat, LevelSkill, Race } from "@/engine/index.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
@@ -13,17 +14,15 @@ import {
   Activities,
   Attachments,
   Campaigns,
-  CharacterAbilities,
   CharacterInventory,
-  CharacterLanguages,
-  CharacterLevelFeats,
   CharacterLevels,
-  CharacterLevelSkills,
+  CharacterLinks,
   Characters,
+  Entities,
   Modifiers,
+  Picks,
   PlayerCharacters,
   Players,
-  Races,
   Requirements,
 } from "@/server/repositories/index.ts";
 import { CharactersService } from "@/server/services/characters/index.ts";
@@ -59,7 +58,12 @@ async function fighterLevel() {
 async function setupPrivateRuleset() {
   const { user: owner } = await createTestUser();
   const ruleset = await createTestRuleset(owner.id);
-  const [race] = await Races.create(db, { name: "Private Race", rulesetId: ruleset.id, size: "Medium", baseSpeed: 30 });
+  const [race] = await Entities.create<Race>(db, "races", {
+    name: "Private Race",
+    rulesetId: ruleset.id,
+    size: "Medium",
+    baseSpeed: 30,
+  });
   return { owner, ruleset, race };
 }
 
@@ -85,7 +89,9 @@ describe("CharactersService", () => {
       expect(paladin).toMatchObject({ ...details, userId: user.id });
 
       const abilities = Object.fromEntries(
-        (await CharacterAbilities.findMany(db, { characterId: paladin.id })).map((a) => [a.abilityId, a.score]),
+        (await CharacterLinks.findMany<CharacterAbility>(db, { link: "abilities", characterId: paladin.id })).map(
+          (a) => [a.abilityId, a.score],
+        ),
       );
       expect(Object.keys(abilities)).toHaveLength(6);
       expect(abilities).toMatchObject({ ...scores, [abilityMap["Wisdom"]]: 10 });
@@ -172,7 +178,10 @@ describe("CharactersService", () => {
       };
       const character = await createCharacterAs(session, values);
       expect(character.raceId).toBe(elf.id);
-      const scores = await CharacterAbilities.findMany(db, { characterId: character.id });
+      const scores = await CharacterLinks.findMany<CharacterAbility>(db, {
+        link: "abilities",
+        characterId: character.id,
+      });
       expect(scores.map(({ abilityId }) => abilityId)).not.toContain(ctx.abilityMap["Strength"]);
       expect(scores.find(({ abilityId }) => abilityId === strength.id)?.score).toBe(17);
 
@@ -233,7 +242,10 @@ describe("CharactersService", () => {
       RulesetViews.invalidate(fork.id);
 
       await CharactersService.updateAbilities(session, character.id, { [copy]: 17 });
-      const scores = await CharacterAbilities.findMany(db, { characterId: character.id });
+      const scores = await CharacterLinks.findMany<CharacterAbility>(db, {
+        link: "abilities",
+        characterId: character.id,
+      });
       expect(scores.find((a) => a.abilityId === ctx.abilityMap["Strength"])?.score).toBe(17);
     });
 
@@ -246,7 +258,10 @@ describe("CharactersService", () => {
       RulesetViews.invalidate(fork.id);
 
       await CharactersService.updateAbilities(session, character.id, { [ctx.abilityMap["Strength"]]: 15 });
-      const scores = await CharacterAbilities.findMany(db, { characterId: character.id });
+      const scores = await CharacterLinks.findMany<CharacterAbility>(db, {
+        link: "abilities",
+        characterId: character.id,
+      });
       expect(scores.find(({ abilityId }) => abilityId === ctx.abilityMap["Strength"])?.score).toBe(15);
 
       const twice = { [ctx.abilityMap["Strength"]]: 15, [strength.id]: 16 };
@@ -270,7 +285,9 @@ describe("CharactersService", () => {
       const abilities = { [ctx.abilityMap["Intelligence"]]: 14 };
       const character = await createCharacterAs(session, { rulesetId: fork.id, abilities });
       const spoken = async () =>
-        (await CharacterLanguages.findMany(db, { characterId: character.id })).map(({ languageId }) => languageId);
+        (await CharacterLinks.findMany<CharacterLanguage>(db, { link: "languages", characterId: character.id })).map(
+          ({ languageId }) => languageId,
+        );
 
       await CharactersService.updateLanguages(session, character.id, [ctx.langMap["Draconic"]]);
       expect(await spoken()).toEqual([draconic.id]);
@@ -410,14 +427,15 @@ describe("CharactersService", () => {
         skills: [{ skillId: ctx.skillMap["Climb"], rank: 1 }],
         feats: [{ featId: ctx.featMap["Toughness"], aptitudeId: ctx.aptMap["General"] }],
       });
-      await CharacterLanguages.create(db, { characterId: character.id, languageId: ctx.langMap["Common"] });
+      await CharacterLinks.create(db, "languages", { characterId: character.id, languageId: ctx.langMap["Common"] });
       await CharacterInventory.create(db, { characterId: character.id, itemId: ctx.itemMap["Longsword"], quantity: 1 });
       const children = async () => ({
         levels: (await CharacterLevels.findMany(db, { characterId: character.id })).length,
-        skills: (await CharacterLevelSkills.findMany(db, { characterLevelIds: [level.id] })).length,
-        feats: (await CharacterLevelFeats.findMany(db, { characterLevelIds: [level.id] })).length,
-        languages: (await CharacterLanguages.findMany(db, { characterId: character.id })).filter((l) => !l.deletedAt)
-          .length,
+        skills: (await Picks.findMany<LevelSkill>(db, { pick: "skills", characterLevelIds: [level.id] })).length,
+        feats: (await Picks.findMany<LevelFeat>(db, { pick: "feats", characterLevelIds: [level.id] })).length,
+        languages: (
+          await CharacterLinks.findMany<CharacterLanguage>(db, { link: "languages", characterId: character.id })
+        ).filter((l) => !l.deletedAt).length,
         inventory: (await CharacterInventory.findMany(db, { characterId: character.id })).filter((i) => !i.deletedAt)
           .length,
       });
@@ -570,7 +588,7 @@ describe("CharactersService", () => {
       ["gender", "identity.physiology.gender", "Female", "Male"],
     ] as const)("follow a race's %s requirement, once the form gives one", async (field, target, allowed, other) => {
       const { rulesetId } = await getSeedCtx();
-      const [race] = await Races.create(db, {
+      const [race] = await Entities.create<Race>(db, "races", {
         name: `Restricted Race ${uniqueId()}`,
         rulesetId,
         size: "Medium",
@@ -598,7 +616,7 @@ describe("CharactersService", () => {
 
     test("count what the form doesn't say as met inside an or, as alone", async () => {
       const { rulesetId } = await getSeedCtx();
-      const [race] = await Races.create(db, {
+      const [race] = await Entities.create<Race>(db, "races", {
         name: `Restricted Race ${uniqueId()}`,
         rulesetId,
         size: "Medium",

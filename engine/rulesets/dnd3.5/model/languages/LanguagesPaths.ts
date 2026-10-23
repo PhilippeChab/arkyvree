@@ -1,9 +1,8 @@
 import type { PathCategory } from "@/engine/core/paths/PathCategory.ts";
-import type { RulesetData } from "@/engine/core/view/index.ts";
+import type { Language, RulesetData } from "@/engine/core/view/index.ts";
 import { type Dnd35Components } from "@/engine/rulesets/dnd3.5/model/CharacterComponents.ts";
 import { getOperators } from "@/shared/customization/operators.ts";
 import { deriveNameLabels, deriveSegmentLabels, type TargetPath } from "@/shared/customization/target.ts";
-import type { Language } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 /** A language's paths, under its slug. */

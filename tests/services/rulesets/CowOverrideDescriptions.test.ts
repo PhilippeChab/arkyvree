@@ -1,9 +1,10 @@
 import { describe, expect, test } from "bun:test";
 
+import type { RulesetSave, Skill } from "@/engine/index.ts";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import { addClassLevels, addFeats, addPowers, addSkills } from "@/scripts/db/seeds/seedCharacter.ts";
 import { db } from "@/server/database/index.ts";
-import { Characters, Saves, Skills } from "@/server/repositories/index.ts";
+import { Characters, Entities } from "@/server/repositories/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { PowersService } from "@/server/services/rulesets/powers/index.ts";
 import { SkillsService } from "@/server/services/rulesets/skills/index.ts";
@@ -31,7 +32,7 @@ describe("A fork's own description of an inherited", () => {
     } else if (kind === "spell") {
       await PowersService.updatePower(session, fork.id, ctx.powerMap[name], { name, description });
     } else {
-      const skill = (await Skills.findOne(db, { id: ctx.skillMap[name] }))!;
+      const skill = (await Entities.findOne<Skill>(db, { entityType: "skills", id: ctx.skillMap[name] }))!;
       await SkillsService.updateSkill(session, fork.id, skill.id, {
         name,
         description,
@@ -65,7 +66,11 @@ test("A fork's own saving throw of an inherited spell is on the sheet", async ()
   const fork = await createSeededTestRuleset(session.userId);
   const ctx = await getSeedCtx();
   const forkCtx = { ...ctx, rulesetId: fork.id };
-  const will = (await Saves.findOne(db, { name: "Will", rulesetId: ctx.rulesetId }))!;
+  const will = (await Entities.findOne<RulesetSave>(db, {
+    entityType: "saves",
+    name: "Will",
+    rulesetId: ctx.rulesetId,
+  }))!;
   const name = "Magic Missile";
   await PowersService.updatePower(session, fork.id, ctx.powerMap[name], {
     name,

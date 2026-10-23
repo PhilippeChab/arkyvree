@@ -1,5 +1,5 @@
 import type { Db } from "@/drizzle/database.ts";
-import { type ClassEngine, Engine } from "@/engine/index.ts";
+import { type ClassEngine, Engine, type Klass, type KlassLevel } from "@/engine/index.ts";
 import {
   EntityEdit,
   EntityRepositories,
@@ -9,7 +9,7 @@ import {
 } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
-import { Klasses, KlassLevels, Modifiers } from "@/server/repositories/index.ts";
+import { Entities, Modifiers } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import { writeLevelEdit } from "@/server/services/rulesets/classes/levels/index.ts";
@@ -39,7 +39,7 @@ class ClassProgressionService {
   private async targetClass(tx: Db, scope: RulesetScope, klass: { id: string; rulesetId: string }) {
     const target = await new EntityEdit(scope.ruleset).cowToEdit(tx, "klasses", klass);
     if (!target.copied) await EntityRepositories.lock(tx, "klasses", target.id);
-    const row = await Klasses.findOne(tx, { id: target.id });
+    const row = await Entities.findOne<Klass>(tx, { entityType: "klasses", id: target.id });
     if (!row) throw new NotFoundError("Class no longer exists; refresh the class");
     return { copied: target.copied, copiedIds: target.copiedIds, id: target.id, updatedAt: row.updatedAt };
   }
@@ -57,7 +57,7 @@ class ClassProgressionService {
     levels: PlannedLevels,
     tokens: ReadonlyMap<string, string>,
   ) {
-    const rows = await KlassLevels.findMany(tx, { klassId: target.id });
+    const rows = await Entities.findMany<KlassLevel>(tx, { entityType: "klass_levels", ownerIds: [target.id] });
     const idByNumber = new Map(rows.map((row) => [row.level, row.id]));
     const removedIds: string[] = [];
     const added: Parameters<typeof Modifiers.createMany>[1] = [];
@@ -67,7 +67,7 @@ class ClassProgressionService {
       if (!levelId) throw new NotFoundError("Class level no longer exists; refresh the class");
 
       const expectedUpdatedAt = target.copied ? undefined : tokens.get(level.level.id);
-      const [row] = await KlassLevels.update(tx, {}, { id: levelId, expectedUpdatedAt });
+      const [row] = await Entities.update<KlassLevel>(tx, "klass_levels", {}, { id: levelId, expectedUpdatedAt });
       if (!row) throw new ConflictError(STALE_ENTITY_MESSAGE);
       writtenIds.push(levelId);
       if (level.edit) await writeLevelEdit(tx, scope, levelId, level.edit);

@@ -1,9 +1,9 @@
-import { type ClassEngine, Engine } from "@/engine/index.ts";
+import { type ClassEngine, Engine, type KlassLevel, type KlassLevelFeat, type KlassLevelSave } from "@/engine/index.ts";
 import { include } from "@/lib/mixins.ts";
 import { CustomizationEdit, EntityEdit, RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
-import { KlassLevelFeats, KlassLevels, KlassLevelSaves } from "@/server/repositories/index.ts";
+import { Entities, Joins } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import { hasCharacterPicks } from "@/server/services/rulesets/characterPicks.ts";
@@ -34,14 +34,18 @@ class ClassLevelsService extends include(Object, ListsSpells) {
           const edit = new EntityEdit(ruleset);
           const { id: targetKlassId } = await edit.cowToEdit(tx, "klasses", klass);
 
-          const rows = await KlassLevels.create(tx, { ...plan.columns, klassId: targetKlassId });
+          const rows = await Entities.create<KlassLevel>(tx, "klass_levels", {
+            ...plan.columns,
+            klassId: targetKlassId,
+          });
           const klassLevel = rows[0];
           const entity = { entityId: klassLevel.id, entityType: "klass_levels" } as const;
 
           for (const feat of plan.feats ?? [])
-            await KlassLevelFeats.create(tx, { klassLevelId: klassLevel.id, ...feat });
-          await KlassLevelSaves.createMany(
+            await Joins.create<KlassLevelFeat>(tx, "klass_level_feats", { klassLevelId: klassLevel.id, ...feat });
+          await Joins.createMany<KlassLevelSave>(
             tx,
+            "klass_level_saves",
             (plan.saves ?? []).map((save) => ({ klassLevelId: klassLevel.id, ...save })),
           );
 
@@ -84,10 +88,8 @@ class ClassLevelsService extends include(Object, ListsSpells) {
           const edit = new CustomizationEdit(ruleset, rulesetData.cow);
           const resolvedLevelId = await edit.cowOwner(tx, "klass_levels", level.id);
 
-          // FK CASCADE on klass_level_feats / klass_level_powers / klass_level_saves
-          // wipes those join rows when the level row is deleted.
-          // The database deletes its customizations with it.
-          const rows = await KlassLevels.delete(tx, { id: resolvedLevelId });
+          // The database deletes its links (its grants and saves) and its customizations with it
+          const rows = await Entities.delete<KlassLevel>(tx, { entityType: "klass_levels", id: resolvedLevelId });
           const deletedLevel = rows[0];
 
           await createActivityWithNotifications(tx, {
@@ -148,7 +150,12 @@ class ClassLevelsService extends include(Object, ListsSpells) {
 
           // The edit moves the level's `updatedAt`, refused when stale (a copy's never is: its token is the source's)
           const expectedUpdatedAt = resolvedLevelId === level.id ? updatedAt : undefined;
-          const rows = await KlassLevels.update(tx, {}, { id: resolvedLevelId, expectedUpdatedAt });
+          const rows = await Entities.update<KlassLevel>(
+            tx,
+            "klass_levels",
+            {},
+            { id: resolvedLevelId, expectedUpdatedAt },
+          );
           if (expectedUpdatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
 
           await writeLevelEdit(tx, scope, resolvedLevelId, plan);

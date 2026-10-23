@@ -1,17 +1,8 @@
 import { describe, expect, test } from "bun:test";
 
+import type { Aptitude, Klass, RulesetAbility, Skill } from "@/engine/index.ts";
 import { db } from "@/server/database/index.ts";
-import {
-  Abilities,
-  Activities,
-  Aptitudes,
-  Characters,
-  Klasses,
-  Notifications,
-  Players,
-  Rulesets,
-  Skills,
-} from "@/server/repositories/index.ts";
+import { Activities, Characters, Entities, Notifications, Players, Rulesets } from "@/server/repositories/index.ts";
 import { CampaignInvitesService } from "@/server/services/campaigns/invites/index.ts";
 import { CharacterContributorsService } from "@/server/services/characters/contributors/index.ts";
 import { ClassSkillsService } from "@/server/services/rulesets/classes/skills/index.ts";
@@ -171,7 +162,11 @@ describe("activity notifications", () => {
     const [owner, author, other] = await users(3);
     const ruleset = await createTestRuleset(owner.user.id);
     for (const contributor of [author, other]) await addRulesetContributor(ruleset.id, contributor.user, owner.user.id);
-    const [aptitude] = await Aptitudes.create(db, { name: "General", description: "", rulesetId: ruleset.id });
+    const [aptitude] = await Entities.create<Aptitude>(db, "aptitudes", {
+      name: "General",
+      description: "",
+      rulesetId: ruleset.id,
+    });
     const feat = await FeatsService.createFeat(author.session, ruleset.id, {
       name: "Notified Feat",
       description: "",
@@ -210,9 +205,17 @@ describe("activity notifications", () => {
     const [owner, author] = await users(2);
     const { id: rulesetId } = await createTestRuleset(owner.user.id);
     await addRulesetContributor(rulesetId, author.user, owner.user.id);
-    const [ability] = await Abilities.create(db, { name: "Strength", description: "", rulesetId });
-    const [fighter] = await Klasses.create(db, { name: "Fighter", rulesetId, hd: 10 });
-    const [climb] = await Skills.create(db, { name: "Climb", rulesetId, primaryAbilityId: ability.id });
+    const [ability] = await Entities.create<RulesetAbility>(db, "abilities", {
+      name: "Strength",
+      description: "",
+      rulesetId,
+    });
+    const [fighter] = await Entities.create<Klass>(db, "klasses", { name: "Fighter", rulesetId, hd: 10 });
+    const [climb] = await Entities.create<Skill>(db, "skills", {
+      name: "Climb",
+      rulesetId,
+      primaryAbilityId: ability.id,
+    });
     await ClassSkillsService.addClassSkill(author.session, rulesetId, fighter.id, climb.id);
     await ClassSkillsService.removeClassSkill(author.session, rulesetId, fighter.id, climb.id);
 
@@ -225,7 +228,11 @@ describe("activity notifications", () => {
     const [owner, author] = await users(2);
     const ruleset = await createTestRuleset(owner.user.id);
     await addRulesetContributor(ruleset.id, author.user, owner.user.id);
-    const [aptitude] = await Aptitudes.create(db, { name: "General", description: "", rulesetId: ruleset.id });
+    const [aptitude] = await Entities.create<Aptitude>(db, "aptitudes", {
+      name: "General",
+      description: "",
+      rulesetId: ruleset.id,
+    });
     const feat = await FeatsService.createFeat(author.session, ruleset.id, {
       name: "Worded Feat",
       description: "",
@@ -235,9 +242,17 @@ describe("activity notifications", () => {
       name: "Worded Feat",
       fields: { families: ["Luck"] },
     });
-    const [ability] = await Abilities.create(db, { name: "Strength", description: "", rulesetId: ruleset.id });
-    const [fighter] = await Klasses.create(db, { name: "Fighter", rulesetId: ruleset.id, hd: 10 });
-    const [climb] = await Skills.create(db, { name: "Climb", rulesetId: ruleset.id, primaryAbilityId: ability.id });
+    const [ability] = await Entities.create<RulesetAbility>(db, "abilities", {
+      name: "Strength",
+      description: "",
+      rulesetId: ruleset.id,
+    });
+    const [fighter] = await Entities.create<Klass>(db, "klasses", { name: "Fighter", rulesetId: ruleset.id, hd: 10 });
+    const [climb] = await Entities.create<Skill>(db, "skills", {
+      name: "Climb",
+      rulesetId: ruleset.id,
+      primaryAbilityId: ability.id,
+    });
     await ClassSkillsService.addClassSkill(author.session, ruleset.id, fighter.id, climb.id);
     await FeatsService.deleteFeat(author.session, ruleset.id, feat.id);
 
@@ -254,7 +269,11 @@ describe("activity notifications", () => {
   test("of a ruleset's content go to nobody when its owner works alone", async () => {
     const [owner] = await users(1);
     const ruleset = await createTestRuleset(owner.user.id);
-    const [aptitude] = await Aptitudes.create(db, { name: "General", description: "", rulesetId: ruleset.id });
+    const [aptitude] = await Entities.create<Aptitude>(db, "aptitudes", {
+      name: "General",
+      description: "",
+      rulesetId: ruleset.id,
+    });
     await FeatsService.createFeat(owner.session, ruleset.id, {
       name: "Unnoticed Feat",
       description: "",

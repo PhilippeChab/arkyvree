@@ -1,6 +1,13 @@
 import type { CharacterDataLoader } from "@/engine/core/character/index.ts";
 import type { CharacterRows } from "@/engine/core/module/index.ts";
-import type { RulesetData } from "@/engine/core/view/index.ts";
+import type {
+  CharacterLevel,
+  FeatWithAptitudes,
+  KlassLevelFeat,
+  KlassLevelPower,
+  PowerWithAptitudes,
+  RulesetData,
+} from "@/engine/core/view/index.ts";
 import type {
   LoadedCharacterData,
   Resolve,
@@ -8,13 +15,6 @@ import type {
 import type { CharacterLevels, HeldFeat, HeldPower } from "@/engine/rulesets/dnd3.5/model/loading/loadedEntities.ts";
 import PowersComponent from "@/engine/rulesets/dnd3.5/model/powers/PowersComponent.ts";
 import type { Constructor } from "@/lib/mixins.ts";
-import type {
-  CharacterLevel,
-  FeatWithAptitudes,
-  KlassLevelFeat,
-  KlassLevelPower,
-  PowerWithAptitudes,
-} from "@/shared/relations.ts";
 
 /**
  * What each saved level's class level grants (`grants`, by class level), attached to the level it's granted at. The

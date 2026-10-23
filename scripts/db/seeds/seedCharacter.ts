@@ -5,19 +5,16 @@
 
 import type { CharacterSeed, InventorySeed } from "@/content/core/builders/characters/types.ts";
 import type { Db } from "@/drizzle/database.ts";
-import { Engine } from "@/engine/index.ts";
+import { Engine, type KlassLevel } from "@/engine/index.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import {
-  CharacterAbilities,
   CharacterInventory,
-  CharacterLanguages,
-  CharacterLevelFeats,
-  CharacterLevelPowers,
   CharacterLevels,
-  CharacterLevelSkills,
+  CharacterLinks,
   Characters,
-  KlassLevels,
+  Entities,
+  Picks,
 } from "@/server/repositories/index.ts";
 import { readBondedInputs, readCharacterInput } from "@/server/services/characters/index.ts";
 import { writeBondedCreatures } from "@/server/services/characters/levels/index.ts";
@@ -65,7 +62,7 @@ export async function addClassLevels(
   const klassId = ctx.klassMap.pc[className];
   const levelIds: string[] = [];
 
-  const klassLevels = await KlassLevels.findMany(db, { klassId });
+  const klassLevels = await Entities.findMany<KlassLevel>(db, { entityType: "klass_levels", ownerIds: [klassId] });
   for (let i = 0; i < levels.length; i++) {
     const klassLevel = klassLevels.find((row) => row.level === levels[i])!;
 
@@ -88,8 +85,9 @@ export async function addFeats(
   feats: { aptitude: string; featName: string; levelIndex: number }[],
 ) {
   if (feats.length === 0) return;
-  await CharacterLevelFeats.createMany(
+  await Picks.createMany(
     db,
+    "feats",
     feats.map((f) => ({
       characterLevelId: charLevelIds[f.levelIndex],
       featId: ctx.featMap[f.featName],
@@ -105,8 +103,9 @@ export async function addPowers(
   powers: { aptitude: string; levelIndex: number; powerName: string }[],
 ) {
   if (powers.length === 0) return;
-  await CharacterLevelPowers.createMany(
+  await Picks.createMany(
     db,
+    "powers",
     powers.map((p) => ({
       characterLevelId: charLevelIds[p.levelIndex],
       powerId: ctx.powerMap[p.powerName],
@@ -121,8 +120,9 @@ export async function addSkills(
   charLevelIds: string[],
   skills: { levelIndex: number; rank: number; skillName: string }[],
 ) {
-  await CharacterLevelSkills.createMany(
+  await Picks.createMany(
     db,
+    "skills",
     skills.map((s) => ({
       characterLevelId: charLevelIds[s.levelIndex],
       skillId: ctx.skillMap[s.skillName],
@@ -153,16 +153,18 @@ export async function createCharacter(
     description: data.description,
   });
 
-  await CharacterAbilities.createMany(
+  await CharacterLinks.createMany(
     db,
+    "abilities",
     Object.entries(data.abilities).map(([name, score]) => ({
       characterId: character.id,
       abilityId: ctx.abilityMap[name],
       score,
     })),
   );
-  await CharacterLanguages.createMany(
+  await CharacterLinks.createMany(
     db,
+    "languages",
     data.languages.map((lang) => ({ characterId: character.id, languageId: ctx.langMap[lang] })),
   );
 

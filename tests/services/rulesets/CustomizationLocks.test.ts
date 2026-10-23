@@ -1,9 +1,10 @@
 import { afterAll, afterEach, expect, test } from "bun:test";
 
+import type { Feat } from "@/engine/index.ts";
 import { EntityRepositories, RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { createTestDbFromClient, createTestPool } from "@/server/database/test.ts";
-import { Feats, Modifiers, Requirements } from "@/server/repositories/index.ts";
+import { Entities, Modifiers, Requirements } from "@/server/repositories/index.ts";
 import { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";
 import { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";
 import { runWhileLocked } from "@/tests/support/database.ts";
@@ -20,7 +21,7 @@ const pool = createTestPool();
 async function setupRemovedCustomizations() {
   const session = makeSession();
   const ruleset = await createSeededTestRuleset(session.userId);
-  const [feat] = await Feats.create(db, { name: "Removed Customizations", rulesetId: ruleset.id });
+  const [feat] = await Entities.create<Feat>(db, "feats", { name: "Removed Customizations", rulesetId: ruleset.id });
   const owner = { entityId: feat.id, entityType: "feats" };
   const [modifier] = await Modifiers.createMany(db, [
     {
@@ -46,7 +47,7 @@ test("owner mutation waits for a competing transaction and acquires the row afte
   const seed = await getSeedCtx();
   await runWhileLocked(
     pool,
-    async (blockerDb) => expect(await Feats.lock(blockerDb, { id: seed.featMap.Toughness })).toBe(true),
+    async (blockerDb) => expect(await Entities.lock(blockerDb, { id: seed.featMap.Toughness })).toBe(true),
     () => EntityRepositories.lock(db, "feats", seed.featMap.Toughness),
   );
 });
@@ -55,13 +56,13 @@ test("owner locks leave other entities independent and shared copy reads compati
   const seed = await getSeedCtx();
   const otherId = Object.values(seed.featMap).find((id) => id !== seed.featMap.Toughness)!;
   await EntityRepositories.lock(db, "feats", seed.featMap.Toughness);
-  expect(await Feats.lock(db, { id: otherId }, "share")).toBe(true);
+  expect(await Entities.lock(db, { id: otherId }, "share")).toBe(true);
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
     await client.query("SET LOCAL lock_timeout = '500ms'");
     const other = createTestDbFromClient(client);
-    expect(await Feats.lock(other, { id: otherId }, "share")).toBe(true);
+    expect(await Entities.lock(other, { id: otherId }, "share")).toBe(true);
   } finally {
     await client.query("ROLLBACK");
     client.release();

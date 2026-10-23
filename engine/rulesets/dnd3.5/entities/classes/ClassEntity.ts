@@ -3,7 +3,7 @@
 import { RulesetEntity } from "@/engine/core/entities/index.ts";
 import type { EntityFieldValues } from "@/engine/core/fields/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
-import type { Klass } from "@/shared/relations.ts";
+import type { Klass } from "@/engine/core/view/index.ts";
 import { DEFAULT_HIT_DIE } from "@/vocabulary/dnd3.5/classes.ts";
 
 import ClassLevelEntity from "./ClassLevelEntity.ts";
@@ -38,6 +38,9 @@ export default class ClassEntity extends RulesetEntity<
   protected override readonly fields = CLASS_FIELDS;
 
   protected override readonly label = "Class";
+
+  /** A list of the player classes or of the others', by their kind. */
+  protected override readonly listColumns = ["kind"];
 
   override readonly type = "klasses";
 

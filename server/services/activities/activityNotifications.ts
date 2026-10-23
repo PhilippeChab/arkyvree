@@ -2,14 +2,15 @@ import type { InferInsertModel } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
 import type { activitiesInAccount } from "@/drizzle/schema.ts";
+import type { KlassLevel } from "@/engine/index.ts";
 import { EntityRepositories } from "@/server/cow/index.ts";
 import {
   Activities,
   CharacterContributors,
   Characters,
   Contributors,
+  Entities,
   Invites,
-  KlassLevels,
   Modifiers,
   Notifications,
   Players,
@@ -59,7 +60,7 @@ const CONTENT_OWNERS = new Map<string, (db: Db, id: string) => Promise<ContentRo
   [
     "klass_levels",
     async (db, id) => {
-      const level = await KlassLevels.findOne(db, { id });
+      const level = await Entities.findOne<KlassLevel>(db, { entityType: "klass_levels", id });
       return level && { id: level.klassId, table: "klasses" };
     },
   ],

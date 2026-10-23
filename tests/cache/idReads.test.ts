@@ -1,9 +1,10 @@
 import { expect, test } from "bun:test";
 
+import type { Aptitude, Item, RulesetAbility, RulesetSave } from "@/engine/index.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { Abilities, Aptitudes, CharacterInventory, Items, Saves } from "@/server/repositories/index.ts";
+import { CharacterInventory, Entities } from "@/server/repositories/index.ts";
 import { CharacterInventoryService } from "@/server/services/characters/inventory/index.ts";
 import { AptitudesService } from "@/server/services/rulesets/aptitudes/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
@@ -25,12 +26,20 @@ const PAGE = { limit: 200, page: 1 };
 /** A ruleset with a pool, a spell list and a save, and a fork of it with a feat and a spell of its own on them. */
 async function setupOwnRows() {
   const { user, session, ruleset: parent } = await createTestUserAndRuleset();
-  const [pool, spellList] = await Aptitudes.createMany(db, [
+  const [pool, spellList] = await Entities.createMany<Aptitude>(db, "aptitudes", [
     { name: "Stored Pool", rulesetId: parent.id },
     { name: "Stored Spells", rulesetId: parent.id },
   ]);
-  const [ability] = await Abilities.create(db, { name: "Wits", description: "Wits", rulesetId: parent.id });
-  const [save] = await Saves.create(db, { name: "Stored Save", abilityId: ability.id, rulesetId: parent.id });
+  const [ability] = await Entities.create<RulesetAbility>(db, "abilities", {
+    name: "Wits",
+    description: "Wits",
+    rulesetId: parent.id,
+  });
+  const [save] = await Entities.create<RulesetSave>(db, "saves", {
+    name: "Stored Save",
+    abilityId: ability.id,
+    rulesetId: parent.id,
+  });
   RulesetViews.invalidate(parent.id);
   const fork = await createTestRuleset(user.id, { rulesetId: parent.id, ancestorRulesetIds: [parent.id] });
   const feat = await FeatsService.createFeat(session, fork.id, { name: "Own Feat", aptitudeIds: [pool.id] });
@@ -44,7 +53,11 @@ async function setupOwnRows() {
 
 test("a page's inherited rows name an entity the fork copied by its copy", async () => {
   const fork = await createSeededTestRuleset(SEED_USER_ID);
-  const fortitude = (await Saves.findOne(db, { name: "Fortitude", rulesetId: fork.ancestorRulesetIds[0] }))!;
+  const fortitude = (await Entities.findOne<RulesetSave>(db, {
+    entityType: "saves",
+    name: "Fortitude",
+    rulesetId: fork.ancestorRulesetIds[0],
+  }))!;
   // Constitution, copied in the fork: the core's Fortitude and Concentration still store the core's id
   const constitution = await copyEntity(db, "abilities", fortitude.abilityId, fork);
   RulesetViews.invalidateAll();
@@ -95,7 +108,7 @@ test("a character's inventory entry carries its item as the view has it, and no 
   await CharacterInventory.create(db, { characterId: character.id, itemId: item.id, quantity: 1 });
   // Copied and renamed in the fork: the entry still stores the core's item
   const copy = await copyEntity(db, "items", item.id, fork);
-  await Items.update(db, { name: "Copied Item" }, { id: copy.id });
+  await Entities.update<Item>(db, "items", { name: "Copied Item" }, { id: copy.id });
   RulesetViews.invalidate(fork.id);
 
   const [entry] = await CharacterInventoryService.getInventory(makeSession(), character.id);

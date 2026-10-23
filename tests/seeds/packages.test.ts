@@ -23,9 +23,9 @@ import { CORE, TEMPLATE_ITEMS } from "@/content/dnd3.5/packages/core.ts";
 import { DND35_RULESET_NAME } from "@/content/dnd3.5/rulesetNames.ts";
 import { CONTENT_PACKAGES } from "@/database/packages/registry.ts";
 import { entitiesInRules, entitySnapshotsInRules, rulesetsInRules } from "@/drizzle/schema.ts";
+import type { Item } from "@/engine/index.ts";
 import { db } from "@/server/database/index.ts";
-import StoredEntities from "@/server/repositories/stored/StoredEntities.ts";
-import type { Item } from "@/shared/relations.ts";
+import { Entities } from "@/server/repositories/index.ts";
 import { invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
 
 const BONDS = [FAMILIARS, ANIMAL_COMPANIONS, SPECIAL_MOUNTS];
@@ -71,7 +71,7 @@ test("Every content package seeds into a database without them, its extensions e
     (await db
       .select({ id: entitiesInRules.id, name: entitiesInRules.name })
       .from(entitiesInRules)
-      .where(and(StoredEntities.buildScope(type), eq(entitiesInRules.rulesetId, core.id)))) as {
+      .where(and(eq(entitiesInRules.type, type), eq(entitiesInRules.rulesetId, core.id)))) as {
       id: string;
       name: string;
     }[];
@@ -112,10 +112,7 @@ test("Every content package seeds into a database without them, its extensions e
   const bases = rulesets.filter((ruleset) => ruleset.rulesetId === null);
   expect(bases.map((base) => base.name)).toEqual([DND35_RULESET_NAME]);
   for (const base of bases) {
-    const items = (await db
-      .select(StoredEntities.buildColumns("items"))
-      .from(entitiesInRules)
-      .where(and(StoredEntities.buildScope("items"), eq(entitiesInRules.rulesetId, base.id)))) as unknown as Item[];
+    const items = await Entities.findMany<Item>(db, { entityType: "items", rulesetIds: [base.id] });
     const templates = items.filter((item) => item.isTemplate);
     expect({ base: base.name, templates: sortedNames(templates) }).toEqual({
       base: base.name,

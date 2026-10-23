@@ -1,5 +1,6 @@
 import {
   Engine,
+  type Klass,
   type LevelPlanRequest,
   type StepOption,
   type StepOptionGroup,
@@ -7,7 +8,7 @@ import {
 } from "@/engine/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { db } from "@/server/database/index.ts";
-import { Feats, Klasses, Powers } from "@/server/repositories/index.ts";
+import { Entities } from "@/server/repositories/index.ts";
 import { withEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
 import type { Session } from "@/shared/relations.ts";
 
@@ -76,52 +77,44 @@ export function Plans<B extends Constructor>(Base: B) {
       const { search, ...picker } = query;
       return await withEditableCharacter(db, session, characterId, async (scope, character) => {
         const opened = Engine.for(scope).character(character).levelUp().openStepPicker(step, picker);
-        switch (opened.kind) {
-          case "feats": {
-            if (picker.group === undefined) {
-              const filters = { ...opened.picker.groupFilters, search };
-              const result = await Feats.findOptionGroupPage(db, filters, pagination);
-              const items = opened.picker.describeGroups(result.items).map((row): StepOptionGroup => ({
-                count: row.variantCount,
-                description: row.description,
-                eligible: row.eligible,
-                group: row.family,
-                id: row.representativeId,
-                name: row.displayName,
-                ...(row.requirementTree && { requirementTree: row.requirementTree }),
-              }));
-              return { grouped: true as const, items, page: result.page, nextPage: result.nextPage };
-            }
-            const result = await Feats.findOptionPage(db, { ...opened.picker.filters, search }, pagination);
-            const items = opened.picker.describe(result.items).map(optionOf);
-            return { grouped: false as const, items, page: result.page, nextPage: result.nextPage };
-          }
-          case "klasses": {
-            const filters = {
-              rulesetId: character.record.rulesetId,
-              ...scope.rulesetData.cow.listFilters,
-              characterId,
-              ...opened.picker.filters,
-              search,
-            };
-            const result = await Klasses.findPage(db, filters, pagination);
-            const items = opened.picker.describe(result.items).map((klass): StepOption => ({
-              ...optionOf(klass),
-              track: { last: klass.maxLevel, left: klass.levelsLeft, next: klass.nextLevel },
-            }));
-            return { grouped: false as const, items, page: result.page, nextPage: result.nextPage };
-          }
-          case "powers": {
-            const result = await Powers.findOptionPage(db, { ...opened.picker.filters, search }, pagination);
-            const items = opened.picker.describe(result.items).map(optionOf);
-            return { grouped: false as const, items, page: result.page, nextPage: result.nextPage };
-          }
-          default: {
-            // Every kind the module's pickers open has a page reader here: a new kind fails to compile until it has one
-            const unread: never = opened;
-            throw new Error(`No page reader for options of kind ${(unread as { kind: string }).kind}`);
-          }
+        if (opened.kind === "klasses") {
+          const filters = {
+            entityType: "klasses",
+            rulesetId: character.record.rulesetId,
+            ...scope.rulesetData.cow.listFilters,
+            orderByAdvancementsOf: characterId,
+            ...opened.picker.filters,
+            search,
+          };
+          const result = await Entities.findPage<Klass>(db, filters, pagination);
+          const items = opened.picker.describe(result.items).map((klass): StepOption => ({
+            ...optionOf(klass),
+            track: { last: klass.maxLevel, left: klass.levelsLeft, next: klass.nextLevel },
+          }));
+          return { grouped: false as const, items, page: result.page, nextPage: result.nextPage };
         }
+        // A grouped picker's groups, unless the query names one: its options then, as an ungrouped picker's
+        if ("groupFilters" in opened.picker && picker.group === undefined) {
+          const filters = { ...opened.picker.groupFilters, search };
+          const result = await Entities.findOptionGroupPage(db, { entityType: opened.kind, ...filters }, pagination);
+          const items = opened.picker.describeGroups(result.items).map((row): StepOptionGroup => ({
+            count: row.variantCount,
+            description: row.description,
+            eligible: row.eligible,
+            group: row.family,
+            id: row.representativeId,
+            name: row.displayName,
+            ...(row.requirementTree && { requirementTree: row.requirementTree }),
+          }));
+          return { grouped: true as const, items, page: result.page, nextPage: result.nextPage };
+        }
+        const result = await Entities.findOptionPage(
+          db,
+          { entityType: opened.kind, ...opened.picker.filters, search },
+          pagination,
+        );
+        const items = opened.picker.describe(result.items).map(optionOf);
+        return { grouped: false as const, items, page: result.page, nextPage: result.nextPage };
       });
     }
   }

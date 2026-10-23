@@ -4,8 +4,8 @@ import { ListedEntity } from "@/engine/core/entities/index.ts";
 import type { EntityFieldValues, EntityForm } from "@/engine/core/fields/index.ts";
 import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
 import RulesError from "@/engine/core/RulesError.ts";
+import type { FeatWithAptitudes } from "@/engine/core/view/index.ts";
 import AptitudeTargets from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTargets.ts";
-import type { FeatWithAptitudes } from "@/shared/relations.ts";
 import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 import { FEAT_COLUMNS } from "./columns.ts";
@@ -85,8 +85,8 @@ export default class FeatEntity extends ListedEntity<
     const ids = where.aptitudeId === undefined ? undefined : this.rulesetData.listFeatIds(where.aptitudeId);
     return {
       describe: <T extends Record<string, unknown> & { id: string }>(rows: T[]) => this.describeListed(rows),
-      filters: { ids, ...(where.family && { family: { type: FEAT_FAMILY, value: where.family } }) },
-      groupFilters: { familyType: FEAT_FAMILY, ids },
+      filters: { ids, ...(where.family && { fields: { [FEAT_FAMILY]: where.family } }) },
+      groupFilters: { groupField: FEAT_FAMILY, ids },
     };
   }
 
@@ -127,7 +127,7 @@ export default class FeatEntity extends ListedEntity<
       const feat = this.rulesetData.featsById.get(featId);
       if (!feat) return [];
       const { families } = this.fields.read(this.propertiesOf(feat));
-      return families.filter((family) => feat.name.startsWith(family)).map((family) => ({ family, id: featId }));
+      return families.filter((family) => feat.name.startsWith(family)).map((family) => ({ group: family, id: featId }));
     });
   }
 }

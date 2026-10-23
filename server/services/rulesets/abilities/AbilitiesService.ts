@@ -1,7 +1,7 @@
-import { Engine } from "@/engine/index.ts";
+import { Engine, type RulesetAbility } from "@/engine/index.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { Abilities } from "@/server/repositories/index.ts";
+import { Entities } from "@/server/repositories/index.ts";
 
 class AbilitiesService {
   async getAbilities(
@@ -16,9 +16,9 @@ class AbilitiesService {
   ) {
     return await withRulesetScope(db, rulesetId, async (scope) => {
       const list = Engine.for(scope).entities("abilities").openList(where);
-      const result = await Abilities.findPage(
+      const result = await Entities.findPage<RulesetAbility>(
         db,
-        { rulesetId, ...scope.rulesetData.cow.listFilters, ...where, ...list.filters },
+        { entityType: "abilities", rulesetId, ...scope.rulesetData.cow.listFilters, ...where, ...list.filters },
         pagination,
       );
       return { ...result, items: list.describe(result.items) };

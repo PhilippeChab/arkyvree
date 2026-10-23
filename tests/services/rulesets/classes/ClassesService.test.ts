@@ -1,23 +1,21 @@
 import { describe, expect, test } from "bun:test";
 
+import type {
+  Aptitude,
+  Feat,
+  KlassLevel,
+  KlassLevelFeat,
+  KlassLevelPower,
+  KlassLevelSave,
+  KlassSkill,
+  Power,
+  RulesetAbility,
+  RulesetSave,
+  Skill,
+} from "@/engine/index.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
-import {
-  Abilities,
-  Aptitudes,
-  Feats,
-  KlassLevelFeats,
-  KlassLevelPowers,
-  KlassLevels,
-  KlassLevelSaves,
-  KlassSkills,
-  Modifiers,
-  Powers,
-  Properties,
-  Requirements,
-  Saves,
-  Skills,
-} from "@/server/repositories/index.ts";
+import { Entities, Joins, Modifiers, Properties, Requirements } from "@/server/repositories/index.ts";
 import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
 import { ClassLevelsService } from "@/server/services/rulesets/classes/levels/index.ts";
 import { createTestCharacter } from "@/tests/support/characters.ts";
@@ -52,7 +50,7 @@ describe("ClassesService", () => {
     expect(await ClassesService.getClass(ruleset.id, fighter.id)).toMatchObject({ bonusSpellAbilityId: null });
 
     const wizard = await ClassesService.createClass(session, ruleset.id, { name: "Wizard", hd: 4 });
-    const [intelligence] = await Abilities.create(db, {
+    const [intelligence] = await Entities.create<RulesetAbility>(db, "abilities", {
       name: "Intelligence",
       description: "Intelligence",
       rulesetId: ruleset.id,
@@ -72,22 +70,38 @@ describe("ClassesService", () => {
   test("deletes a class's levels with their feats, powers, saves and modifiers, and its class skills", async () => {
     const { session, ruleset } = await createTestUserAndRuleset();
     const rulesetId = ruleset.id;
-    const [ability] = await Abilities.create(db, { name: "Strength", description: "Strength", rulesetId });
-    const [aptitude] = await Aptitudes.create(db, { name: "Class Aptitude", rulesetId });
-    const [feat] = await Feats.create(db, { name: "Class Feat", rulesetId });
-    const [power] = await Powers.create(db, { name: "Class Power", rulesetId });
-    const [save] = await Saves.create(db, { name: "Class Save", abilityId: ability.id, rulesetId });
-    const [skill] = await Skills.create(db, { name: "Class Skill", primaryAbilityId: ability.id, rulesetId });
+    const [ability] = await Entities.create<RulesetAbility>(db, "abilities", {
+      name: "Strength",
+      description: "Strength",
+      rulesetId,
+    });
+    const [aptitude] = await Entities.create<Aptitude>(db, "aptitudes", { name: "Class Aptitude", rulesetId });
+    const [feat] = await Entities.create<Feat>(db, "feats", { name: "Class Feat", rulesetId });
+    const [power] = await Entities.create<Power>(db, "powers", { name: "Class Power", rulesetId });
+    const [save] = await Entities.create<RulesetSave>(db, "saves", {
+      name: "Class Save",
+      abilityId: ability.id,
+      rulesetId,
+    });
+    const [skill] = await Entities.create<Skill>(db, "skills", {
+      name: "Class Skill",
+      primaryAbilityId: ability.id,
+      rulesetId,
+    });
 
     const klass = await ClassesService.createClass(session, rulesetId, { name: "Doomed Class" });
-    await KlassSkills.create(db, { klassId: klass.id, skillId: skill.id });
+    await Joins.create<KlassSkill>(db, "klass_skills", { klassId: klass.id, skillId: skill.id });
     const level = await ClassLevelsService.createClassLevel(session, rulesetId, klass.id, {
       level: 1,
       fields: { bab: 1, skills: 4 },
       feats: [{ featId: feat.id, aptitudeId: aptitude.id }],
       saves: [{ saveId: save.id, base: 2 }],
     });
-    await KlassLevelPowers.create(db, { klassLevelId: level.id, powerId: power.id, aptitudeId: aptitude.id });
+    await Joins.create<KlassLevelPower>(db, "klass_level_powers", {
+      klassLevelId: level.id,
+      powerId: power.id,
+      aptitudeId: aptitude.id,
+    });
     await Modifiers.create(db, {
       sourceId: level.id,
       sourceType: "klass_levels",
@@ -99,11 +113,11 @@ describe("ClassesService", () => {
 
     await ClassesService.deleteClass(session, rulesetId, klass.id);
 
-    expect(await KlassLevels.findOne(db, { id: level.id })).toBeUndefined();
-    expect(await KlassLevelFeats.findMany(db, { klassLevelIds: [level.id] })).toEqual([]);
-    expect(await KlassLevelPowers.findMany(db, { klassLevelIds: [level.id] })).toEqual([]);
-    expect(await KlassLevelSaves.findMany(db, { klassLevelIds: [level.id] })).toEqual([]);
-    expect(await KlassSkills.findMany(db, { klassIds: [klass.id] })).toEqual([]);
+    expect(await Entities.findOne<KlassLevel>(db, { entityType: "klass_levels", id: level.id })).toBeUndefined();
+    expect(await Joins.findMany<KlassLevelFeat>(db, { join: "klass_level_feats", fromIds: [level.id] })).toEqual([]);
+    expect(await Joins.findMany<KlassLevelPower>(db, { join: "klass_level_powers", fromIds: [level.id] })).toEqual([]);
+    expect(await Joins.findMany<KlassLevelSave>(db, { join: "klass_level_saves", fromIds: [level.id] })).toEqual([]);
+    expect(await Joins.findMany<KlassSkill>(db, { join: "klass_skills", fromIds: [klass.id] })).toEqual([]);
     expect(await Modifiers.findMany(db, { sourceIds: [level.id], sourceType: "klass_levels" })).toEqual([]);
   });
 
@@ -135,7 +149,7 @@ describe("ClassesService", () => {
       description: "Forked",
     });
 
-    const [copiedLevel] = await KlassLevels.findMany(db, { klassId: copy.id });
+    const [copiedLevel] = await Entities.findMany<KlassLevel>(db, { entityType: "klass_levels", ownerIds: [copy.id] });
     expect(copiedLevel).toMatchObject({ level: 1 });
     const [copiedModifier] = await Modifiers.findMany(db, {
       sourceIds: [copiedLevel.id],

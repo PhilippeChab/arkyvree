@@ -1,8 +1,9 @@
 import { describe, expect, test } from "bun:test";
 
+import type { Item } from "@/engine/index.ts";
 import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { Items, Properties } from "@/server/repositories/index.ts";
+import { Entities, Properties } from "@/server/repositories/index.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
@@ -14,7 +15,7 @@ describe("An item's properties", () => {
     const longsword = await withRulesetScope(db, ruleset.id, async ({ rulesetData }) =>
       rulesetData.items.find((item) => item.isTemplate && item.name === "Longsword"),
     );
-    const [variant] = await Items.createMany(db, [
+    const [variant] = await Entities.createMany<Item>(db, "items", [
       { name: "Probe Blade", rulesetId: ruleset.id, sourceItemId: longsword!.id, type: "Weapon" },
     ]);
     await Properties.createMany(db, [

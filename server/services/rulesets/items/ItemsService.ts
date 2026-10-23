@@ -1,9 +1,9 @@
 import type { Db } from "@/drizzle/database.ts";
-import { Engine } from "@/engine/index.ts";
+import { Engine, type Item } from "@/engine/index.ts";
 import { include } from "@/lib/mixins.ts";
 import { type RulesetScope, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { Items } from "@/server/repositories/index.ts";
+import { Entities } from "@/server/repositories/index.ts";
 import EntityWriter, { type EntityBody } from "@/server/services/rulesets/EntityWriter.ts";
 import type { Session } from "@/shared/relations.ts";
 
@@ -11,7 +11,7 @@ import { Variants } from "./concerns/Variants.ts";
 
 class ItemsService extends include(Object, Variants) {
   /** What its creates, updates and deletes write, in one order around the plans its rules give. */
-  private readonly writer = new EntityWriter("items", Items);
+  private readonly writer = new EntityWriter("items");
 
   /**
    * The items made from a template that a change to it in the scope's ruleset reaches (`copiesOf`: the ids they may
@@ -19,7 +19,14 @@ class ItemsService extends include(Object, Variants) {
    * the original.
    */
   private async findCopies(tx: Db, { ruleset, rulesetData }: RulesetScope, copiesOf: string[]) {
-    return await Items.findMany(tx, { rulesetId: ruleset.id, ...rulesetData.cow.listFilters, sourceItemIds: copiesOf });
+    return await Entities.findList<Item>(tx, {
+      entityType: "items",
+      rulesetId: ruleset.id,
+      ...rulesetData.cow.listFilters,
+      columns: { sourceItemId: copiesOf },
+      lineage: true,
+      order: "id",
+    });
   }
 
   async createItem(session: Session, rulesetId: string, body: EntityBody) {
@@ -70,9 +77,15 @@ class ItemsService extends include(Object, Variants) {
   ) {
     return await withRulesetScope(db, rulesetId, async (scope) => {
       const list = Engine.for(scope).entities("items").openList(where);
-      const result = await Items.findPage(
+      const result = await Entities.findPage<Item>(
         db,
-        { rulesetId, ...scope.rulesetData.cow.listFilters, ...where, ...list.filters },
+        {
+          entityType: "items",
+          rulesetId,
+          ...scope.rulesetData.cow.listFilters,
+          ...where,
+          ...list.filters,
+        },
         pagination,
       );
       return { ...result, items: list.describe(result.items) };

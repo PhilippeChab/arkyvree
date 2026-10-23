@@ -26,7 +26,7 @@ describe("method-names", () => {
 }
 `,
         "server/repositories/concerns/Bad.ts":
-          "export function Concern(Base) {\n  abstract class Concerned extends Base {\n    hasRows() {}\n  }\n  return Concerned;\n}\n",
+          "export function Concern(Base) {\n  abstract class Concerned extends Base {\n    holdsRows() {}\n  }\n  return Concerned;\n}\n",
         "server/repositories/Get.ts": "export class Get {\n  get = async () => 1;\n}\n",
       }),
     ).toEqual(["method-names server/repositories/Get.ts", "method-names server/repositories/concerns/Bad.ts"]);

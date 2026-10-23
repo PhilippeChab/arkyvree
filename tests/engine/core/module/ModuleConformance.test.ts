@@ -4,10 +4,10 @@ import { and, asc, eq, isNull } from "drizzle-orm";
 
 import { charactersInCharacter, rulesetsInRules } from "@/drizzle/schema.ts";
 import type { PrivateNotes } from "@/engine/core/module/index.ts";
-import { Engine } from "@/engine/index.ts";
+import { Engine, type Language } from "@/engine/index.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { CharacterLevels, Characters, Languages, Visibility } from "@/server/repositories/index.ts";
+import { CharacterLevels, Characters, Entities, Visibility } from "@/server/repositories/index.ts";
 import { readBondedInputs, readCharacterInput } from "@/server/services/characters/characterInputs.ts";
 import { BASE_RULES_OPTIONS, type BaseRules } from "@/shared/enums.ts";
 import { createTestItem } from "@/tests/support/items.ts";
@@ -142,7 +142,7 @@ describe.each([...BASE_RULES_OPTIONS])("The %s module, as core runs its characte
     const input = await readCharacterInput(db, record);
     const kept = input.rows.languages.map(({ languageId }) => languageId);
     const otherRuleset = await createTestRuleset(null, { baseRules: rules });
-    const [{ id: foreign }] = await Languages.create(db, {
+    const [{ id: foreign }] = await Entities.create<Language>(db, "languages", {
       rulesetId: otherRuleset.id,
       name: "Foreign",
       type: "Common",

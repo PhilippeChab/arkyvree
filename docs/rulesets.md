@@ -102,7 +102,7 @@ A template is of a type an item can be based on a template of
 create and on an edit that changes its type, and an item made from one is of its
 type. A template's edit that changes its type, and its delete, read the items made
 from it by every id they may hold (its own and those it stands for:
-`cow.getEquivalentIds`), where the change reaches them (`Items.findMany`): the
+`cow.getEquivalentIds`), where the change reaches them (`Entities.findList`): the
 ruleset's view (its own items, and those of its source chain it shows, which read
 its copy in place of what it copied) and the rulesets built on it
 (`buildLineageCondition`: an extension's subscribers), never another fork's, whose
@@ -320,7 +320,7 @@ User's Fork (subscribed to A, then B)
 
 1. `CowDataBuilder` detects when multiple extension snapshots share the same `sourceEntityId`. It pairs the winner's `forkedEntityId` with the sibling `forkedEntityId`s (`CowData.getSiblings(winnerId)`, `getWinner(loserId)`). Feats and powers that several rulesets in the source chain define natively under the same name (reprints, `NAME_FALLBACK_ENTITY_TYPES`) are paired the same way, closest ruleset first. A winner the fork's own entity of its name hides is overridden by it, its siblings with it (see [Names of entities](#names-of-entities)). A winner's siblings are listed in the order they were paired (the snapshot pass's, then the name pass's), each once, under the winner it resolves to: the order both merges below take them in.
 
-2. **Entity list filtering**: Sibling entities are left out of every ruleset entity's list in its query (only the winner is returned), so the user never sees duplicate feats and a page keeps its size: `ScopesToRuleset.buildRulesetCondition` excludes the `hiddenIds` it's given (`rulesetData.cow.listFilters`, with the source chain: the sibling losers, and the books' entities the fork's own of their names hide) from the inherited rows. A list read without them sees them.
+2. **Entity list filtering**: Sibling entities are left out of every ruleset entity's list in its query (only the winner is returned), so the user never sees duplicate feats and a page keeps its size: `StoredEntities.buildRulesetCondition` excludes the `hiddenIds` it's given (`rulesetData.cow.listFilters`, with the source chain: the sibling losers, and the books' entities the fork's own of their names hide) from the inherited rows. A list read without them sees them.
 
 3. **Read-time merging** (built into the compose step, the engine's `copyOnWrite().buildView`: `RulesetComposition` in `engine/core/view/RulesetComposition.ts`): `RulesetViews.getData` folds sibling contributions into the winner's buckets before the engine's operations read them. Consumers read `rulesetData.featsById` / `rulesetData.powersById` / `rulesetData.modifiersBySource` / `rulesetData.requirementsByEntity` / `rulesetData.propertiesByEntity` and get pre-merged rows — no sibling helpers needed at call sites. The rules are one class, `SiblingMerge` (`engine/core/view/SiblingMerge.ts`), which `EntityCopy` writes by too, through the engine (`copyOnWrite().mergeCustomizations`, `mergeAptitudeLinks`): each takes the winner's own rows and each sibling's, in `getSiblings` order, and returns the siblings' rows the winner takes. Of two equal rows (by the kind's key), the winner's, then the earlier sibling's, is kept: its requirements, its description, its level.
    - **Aptitudes** (`mergeAptitudeLinks`): sibling feats' and powers' `listedIn` links are merged into the winner's inline array, deduped by resolved `aptitudeId` after FK remap.
@@ -473,9 +473,9 @@ Every entity service works in the ruleset's scope (`withRulesetScope`): reads co
 // list narrows them to (`filters`); the engine describes the rows as the view does
 return await withRulesetScope(db, rulesetId, async (scope) => {
   const list = Engine.for(scope).entities("saves").openList(where);
-  const result = await Saves.findPage(
+  const result = await Entities.findPage<RulesetSave>(
     db,
-    { rulesetId, ...scope.rulesetData.cow.listFilters, ...where, ...list.filters },
+    { entityType: "saves", rulesetId, ...scope.rulesetData.cow.listFilters, ...where, ...list.filters },
     pagination,
   );
   return { ...result, items: list.describe(result.items) };
@@ -490,7 +490,7 @@ Every kind is served by one router, by its URL segment (`server/routers/api/rule
 A kind's creates, updates and deletes go through its writer, `EntityWriter` (`server/services/rulesets/EntityWriter.ts`), a field of its service: the service hands it the plan its rules give (`Engine.for(scope).entities(type)`), and it takes every kind's steps around it, in one order:
 
 ```ts
-private readonly writer = new EntityWriter("languages", Languages);
+private readonly writer = new EntityWriter("languages");
 
 return await this.writer.create(session, rulesetId, body.name, (scope) =>
   Engine.for(scope).entities("languages").planCreate(body),

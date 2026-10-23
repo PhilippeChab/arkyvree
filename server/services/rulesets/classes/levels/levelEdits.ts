@@ -1,9 +1,9 @@
 /** What a class level's edit writes on its row, whichever save edits it: its own form's, or its class's progression's. */
 
 import type { Db } from "@/drizzle/database.ts";
-import type { ClassEngine } from "@/engine/index.ts";
+import type { ClassEngine, KlassLevelFeat, KlassLevelSave } from "@/engine/index.ts";
 import type { RulesetScope } from "@/server/cow/index.ts";
-import { KlassLevelFeats, KlassLevelSaves } from "@/server/repositories/index.ts";
+import { Joins } from "@/server/repositories/index.ts";
 import { writeEntityWrites } from "@/server/services/rulesets/entityWrites.ts";
 
 /** A class level's edit, as the engine plans it. */
@@ -18,17 +18,19 @@ export async function writeLevelEdit(tx: Db, scope: RulesetScope, levelId: strin
   if (plan.writes) await writeEntityWrites(tx, scope, { entityId: levelId, entityType: "klass_levels" }, plan.writes);
 
   if (plan.feats !== undefined) {
-    await KlassLevelFeats.delete(tx, { klassLevelId: levelId });
-    await KlassLevelFeats.createMany(
+    await Joins.delete<KlassLevelFeat>(tx, { join: "klass_level_feats", fromId: levelId });
+    await Joins.createMany<KlassLevelFeat>(
       tx,
+      "klass_level_feats",
       plan.feats.map((feat) => ({ klassLevelId: levelId, ...feat })),
     );
   }
 
   if (plan.saves !== undefined) {
-    await KlassLevelSaves.delete(tx, { klassLevelId: levelId });
-    await KlassLevelSaves.createMany(
+    await Joins.delete<KlassLevelSave>(tx, { join: "klass_level_saves", fromId: levelId });
+    await Joins.createMany<KlassLevelSave>(
       tx,
+      "klass_level_saves",
       plan.saves.map((save) => ({ klassLevelId: levelId, ...save })),
     );
   }

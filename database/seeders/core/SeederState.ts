@@ -1,4 +1,4 @@
-import { and, inArray } from "drizzle-orm";
+import { inArray } from "drizzle-orm";
 import type { PgTable } from "drizzle-orm/pg-core";
 
 import type {
@@ -8,15 +8,11 @@ import type {
   RequirementEntry,
 } from "@/content/core/builders/customization/types.ts";
 import type { Db } from "@/drizzle/database.ts";
-import {
-  entitiesInRules,
-  entitySnapshotsInRules,
-  modifiersInCustomization,
-  requirementsInCustomization,
-} from "@/drizzle/schema.ts";
-import StoredEntities, { type StoredValues } from "@/server/repositories/stored/StoredEntities.ts";
-import StoredFields, { type FieldValues } from "@/server/repositories/stored/StoredFields.ts";
-import StoredJoins, { type JoinValues } from "@/server/repositories/stored/StoredJoins.ts";
+import { entitySnapshotsInRules, modifiersInCustomization, requirementsInCustomization } from "@/drizzle/schema.ts";
+import { Engine } from "@/engine/index.ts";
+import StoredEntities from "@/server/repositories/stored/StoredEntities.ts";
+import StoredJoins, { type JoinRow } from "@/server/repositories/stored/StoredJoins.ts";
+import StoredProperties, { type FieldValues } from "@/server/repositories/stored/StoredProperties.ts";
 
 type Ids = Record<string, string>;
 
@@ -42,12 +38,17 @@ export interface SeedContext {
   skillMap: Ids;
 }
 
+/** The generic tables' repositories a seeder writes through, as the server does (no request's cache: no request). */
+export const Entities = new StoredEntities();
+export const Joins = new StoredJoins();
+export const Properties = new StoredProperties();
+
 /**
  * A seeder's state, which every seeding step builds on (`concerns/`, and a ruleset's): the database it writes to, the
  * context it names rows by (`ctx`, its ruleset's id and the ids its steps add), and what the steps write with: the
- * entities' rows, their joins and their properties as the generic tables store them (`StoredEntities`, `StoredJoins`,
- * `StoredFields`, by what the module declares), the customizations' rows and their inserts, and the copies an extension
- * makes of what it changes.
+ * entities' rows, their joins and their properties as the generic tables store them (`Entities`, `Joins`, `Properties`,
+ * by what the module declares), the customizations' rows and their inserts, and the copies an extension makes of what
+ * it changes.
  */
 export abstract class SeederState {
   constructor(
@@ -160,7 +161,7 @@ export abstract class SeederState {
       })),
     );
     await this.copyRequirements(modifierCopies);
-    const properties = await StoredFields.findMany(this.db, { entityIds: [...copies.keys()], entityType: type });
+    const properties = await Properties.findMany(this.db, { entityIds: [...copies.keys()], entityType: type });
     await this.insertProperties(
       properties.map(({ entityId, entityType, type: propertyType, value }) => ({
         entityId: copies.get(entityId)!,
@@ -173,11 +174,8 @@ export abstract class SeederState {
 
   /** A kind's rows of entities (`type`, `ids`), by their columns. */
   protected async entityRows<R>(type: string, ids: string[]): Promise<R[]> {
-    if (ids.length === 0) return [];
-    return (await this.db
-      .select(StoredEntities.buildColumns(type))
-      .from(entitiesInRules)
-      .where(and(StoredEntities.buildScope(type), inArray(entitiesInRules.id, ids)))) as R[];
+    const stored = await Entities.findStored(this.db, { ids });
+    return stored.filter((entity) => entity.type === type).map((entity) => Engine.storage().rowOf(entity) as R);
   }
 
   /** Inserts the rows, if there are any. */
@@ -186,14 +184,14 @@ export abstract class SeederState {
   }
 
   /** Inserts a kind's rows (`type`), each by its columns: answers their ids by name. */
-  protected async insertEntities(type: string, rows: StoredValues[]): Promise<Ids> {
+  protected async insertEntities(type: string, rows: Record<string, unknown>[]): Promise<Ids> {
     const ids = await this.insertRows(type, rows);
     return Object.fromEntries(rows.map((row, i) => [row.name as string, ids[i]]));
   }
 
   /** Inserts a join's rows (`join`: a feat's pools, a class level's grants), each by its columns. */
-  protected async insertJoins(join: string, rows: JoinValues[]) {
-    await StoredJoins.insert(this.db, join, rows);
+  protected async insertJoins(join: string, rows: JoinRow[]) {
+    await Joins.createIds(this.db, join, rows);
   }
 
   /**
@@ -220,12 +218,12 @@ export abstract class SeederState {
 
   /** Inserts properties: each an entity's or a ruleset's field, or the link its value names. */
   protected async insertProperties(rows: FieldValues[]) {
-    await StoredFields.createMany(this.db, rows);
+    await Properties.createMany(this.db, rows);
   }
 
   /** Inserts a kind's rows (`type`), each by its columns (an owned kind's, which has no name): answers their ids. */
-  protected async insertRows(type: string, rows: StoredValues[]): Promise<string[]> {
-    return await StoredEntities.insert(this.db, type, rows);
+  protected async insertRows(type: string, rows: Record<string, unknown>[]): Promise<string[]> {
+    return await Entities.createIds(this.db, type, rows);
   }
 
   /** Records copies (`copies`: each entity's copy, by its id) in `entity_snapshots`: the ruleset shows each in place of its original. */

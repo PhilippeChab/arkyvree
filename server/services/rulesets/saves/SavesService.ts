@@ -1,13 +1,13 @@
-import { Engine } from "@/engine/index.ts";
+import { Engine, type RulesetSave } from "@/engine/index.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { KlassLevelSaves, Saves } from "@/server/repositories/index.ts";
+import { Entities, Joins } from "@/server/repositories/index.ts";
 import EntityWriter, { type EntityBody } from "@/server/services/rulesets/EntityWriter.ts";
 import type { Session } from "@/shared/relations.ts";
 
 class SavesService {
   /** What its creates, updates and deletes write, in one order around the plans its rules give. */
-  private readonly writer = new EntityWriter("saves", Saves);
+  private readonly writer = new EntityWriter("saves");
 
   async createSave(session: Session, rulesetId: string, body: EntityBody) {
     return await this.writer.create(session, rulesetId, body.name, (scope) =>
@@ -23,7 +23,7 @@ class SavesService {
       (scope) => Engine.for(scope).entities("saves").planDelete(saveId),
       {
         // A save is in use while a class level grants it: the database refuses its delete, this answers why
-        inUse: (tx, scope) => KlassLevelSaves.exists(tx, { saveId: scope.rulesetData.cow.resolve(saveId) }),
+        inUse: (tx, scope) => Joins.has(tx, { join: "klass_level_saves", toId: scope.rulesetData.cow.resolve(saveId) }),
       },
     );
   }
@@ -44,9 +44,9 @@ class SavesService {
   ) {
     return await withRulesetScope(db, rulesetId, async (scope) => {
       const list = Engine.for(scope).entities("saves").openList(where);
-      const result = await Saves.findPage(
+      const result = await Entities.findPage<RulesetSave>(
         db,
-        { rulesetId, ...scope.rulesetData.cow.listFilters, ...where, ...list.filters },
+        { entityType: "saves", rulesetId, ...scope.rulesetData.cow.listFilters, ...where, ...list.filters },
         pagination,
       );
       return { ...result, items: list.describe(result.items) };

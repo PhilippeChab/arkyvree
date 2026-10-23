@@ -1,9 +1,10 @@
 import { describe, expect, test } from "bun:test";
 
+import type { Klass, KlassLevel, KlassSkill, RulesetAbility, Skill } from "@/engine/index.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError } from "@/server/errors/index.ts";
-import { Abilities, EntitySnapshots, Klasses, KlassLevels, KlassSkills, Skills } from "@/server/repositories/index.ts";
+import { Entities, EntitySnapshots, Joins } from "@/server/repositories/index.ts";
 import { ClassSkillsService } from "@/server/services/rulesets/classes/skills/index.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
 import { createTestCharacter } from "@/tests/support/characters.ts";
@@ -14,11 +15,19 @@ import { createTestRuleset, createTestUserAndRuleset } from "@/tests/support/rul
 async function setup() {
   const { user, session, ruleset } = await createTestUserAndRuleset();
   const rulesetId = ruleset.id;
-  const [ability] = await Abilities.create(db, { name: "Strength", description: "Strength", rulesetId });
-  const [fighter] = await Klasses.create(db, { name: "Fighter", rulesetId, hd: 8 });
-  const [rogue] = await Klasses.create(db, { name: "Rogue", rulesetId, hd: 8 });
-  const [climb] = await Skills.create(db, { name: "Climb", rulesetId, primaryAbilityId: ability.id });
-  const [swim] = await Skills.create(db, { name: "Swim", rulesetId, primaryAbilityId: ability.id });
+  const [ability] = await Entities.create<RulesetAbility>(db, "abilities", {
+    name: "Strength",
+    description: "Strength",
+    rulesetId,
+  });
+  const [fighter] = await Entities.create<Klass>(db, "klasses", { name: "Fighter", rulesetId, hd: 8 });
+  const [rogue] = await Entities.create<Klass>(db, "klasses", { name: "Rogue", rulesetId, hd: 8 });
+  const [climb] = await Entities.create<Skill>(db, "skills", {
+    name: "Climb",
+    rulesetId,
+    primaryAbilityId: ability.id,
+  });
+  const [swim] = await Entities.create<Skill>(db, "skills", { name: "Swim", rulesetId, primaryAbilityId: ability.id });
   return { user, session, ruleset, fighter, rogue, climb, swim };
 }
 
@@ -68,7 +77,7 @@ describe("ClassSkillsService", () => {
   test("refuses to remove a class skill while a character has a level in the class", async () => {
     const { user, session, ruleset, fighter, climb } = await setup();
     await ClassSkillsService.addClassSkill(session, ruleset.id, fighter.id, climb.id);
-    const [klassLevel] = await KlassLevels.create(db, { klassId: fighter.id, level: 1 });
+    const [klassLevel] = await Entities.create<KlassLevel>(db, "klass_levels", { klassId: fighter.id, level: 1 });
     const character = await createTestCharacter(user.id, { rulesetId: ruleset.id });
     await addCharacterLevel(character.id, klassLevel.id);
 
@@ -95,6 +104,8 @@ describe("ClassSkillsService", () => {
     expect([added.klassId, removed.klassId]).toEqual([snapshot!.forkedEntityId, snapshot!.forkedEntityId]);
 
     expect(await skillIdsOf(fork.id, fighter.id)).toEqual([swim.id]);
-    expect((await KlassSkills.findMany(db, { klassIds: [fighter.id] })).map((ks) => ks.skillId)).toEqual([climb.id]);
+    expect(
+      (await Joins.findMany<KlassSkill>(db, { join: "klass_skills", fromIds: [fighter.id] })).map((ks) => ks.skillId),
+    ).toEqual([climb.id]);
   });
 });

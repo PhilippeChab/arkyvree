@@ -1,6 +1,6 @@
 import type { CharacterRows } from "@/engine/core/module/index.ts";
-import type { RulesetData, RulesetView } from "@/engine/core/view/index.ts";
-import type { Character, CharacterInventory, Item, Modifier, Property, Requirement } from "@/shared/relations.ts";
+import type { Item, RulesetData, RulesetView } from "@/engine/core/view/index.ts";
+import type { Character, CharacterInventory, Modifier, Property, Requirement } from "@/shared/relations.ts";
 
 /**
  * What a character's build loads of its rows and its ruleset's view (`CharacterDataLoader`), as every ruleset's build

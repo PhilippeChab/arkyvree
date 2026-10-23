@@ -3,7 +3,7 @@ import { describe, expect, test } from "bun:test";
 import { sql } from "drizzle-orm";
 
 import { db } from "@/server/database/index.ts";
-import { CharacterLevelFeats, EntityReferences } from "@/server/repositories/index.ts";
+import { EntityReferences, Picks } from "@/server/repositories/index.ts";
 
 describe("A repoint of what names an entity, an unsubscribe's or a revert's", () => {
   test("numbers a level's repeated picks of the entity after those of the one it points them at", async () => {
@@ -16,7 +16,7 @@ describe("A repoint of what names an entity, an unsubscribe's or a revert's", ()
       await db.execute<{ id: string }>(sql`SELECT id FROM rules.entities WHERE type = 'feats' ORDER BY id LIMIT 2`)
     ).rows.map((feat) => feat.id);
     // The level picked `from` twice (a stackable feat), and `to` once
-    await CharacterLevelFeats.createMany(db, [
+    await Picks.createMany(db, "feats", [
       { characterLevelId: pick.advancement_id, featId: from, aptitudeId: pick.via_id },
       { characterLevelId: pick.advancement_id, featId: from, aptitudeId: pick.via_id },
       { characterLevelId: pick.advancement_id, featId: to, aptitudeId: pick.via_id },

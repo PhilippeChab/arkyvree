@@ -10,46 +10,50 @@ import {
   DND35_DMG_NAME,
 } from "@/content/dnd3.5/rulesetNames.ts";
 import { entitySnapshotsInRules, type rulesetsInRules } from "@/drizzle/schema.ts";
+import type {
+  Aptitude,
+  CharacterLanguage,
+  Feat,
+  FeatWithAptitudes,
+  Item,
+  Klass,
+  KlassLevel,
+  KlassLevelFeat,
+  KlassLevelPower,
+  KlassLevelSave,
+  KlassSkill,
+  Language,
+  LevelFeat,
+  LevelPower,
+  LevelSkill,
+  Mechanic,
+  Power,
+  Race,
+  RulesetAbility,
+  RulesetSave,
+  Skill,
+} from "@/engine/index.ts";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import { EntityEdit, RulesetViews } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
 import { fetchEveryPage } from "@/server/repositories/concerns/Paginates.ts";
 import {
-  Abilities,
-  Aptitudes,
-  CharacterAbilities,
   CharacterInventory,
-  CharacterLanguages,
-  CharacterLevelFeats,
-  CharacterLevelPowers,
   CharacterLevels,
-  CharacterLevelSkills,
+  CharacterLinks,
   Characters,
+  Entities,
   EntityReferences,
   EntitySnapshots,
-  Feats,
-  FeatsAptitudes,
-  Items,
-  Klasses,
-  KlassLevelFeats,
-  KlassLevelPowers,
-  KlassLevels,
-  KlassLevelSaves,
-  KlassSkills,
-  Languages,
-  Mechanics,
+  Joins,
   Modifiers,
-  Powers,
-  PowersAptitudes,
-  Races,
+  Picks,
   Requirements,
   RulesetEntities,
   type RulesetEntityType,
   RulesetExtensions,
   Rulesets,
-  Saves,
-  Skills,
 } from "@/server/repositories/index.ts";
 import { CharactersService } from "@/server/services/characters/index.ts";
 import { AptitudesService } from "@/server/services/rulesets/aptitudes/index.ts";
@@ -93,8 +97,9 @@ const firstPage = { limit: 50, page: 1 };
 const ENTITIES = {
   feats: {
     name: "Toughness",
-    links: (id: string) => FeatsAptitudes.findMany(db, { featId: id }),
-    link: (id: string, aptitudeId: string) => FeatsAptitudes.create(db, { featId: id, aptitudeId }),
+    links: (id: string) =>
+      Joins.findMany<{ aptitudeId: string; featId: string }>(db, { join: "feats_aptitudes", fromIds: [id] }),
+    link: (id: string, aptitudeId: string) => Joins.create(db, "feats_aptitudes", { featId: id, aptitudeId }),
     get: async (rulesetId: string, id: string) => {
       const { featsAptitudesInRules, ...rest } = await FeatsService.getFeat(rulesetId, id);
       return { ...rest, links: featsAptitudesInRules };
@@ -108,8 +113,13 @@ const ENTITIES = {
   },
   powers: {
     name: "Cure Light Wounds",
-    links: (id: string) => PowersAptitudes.findMany(db, { powerId: id }),
-    link: (id: string, aptitudeId: string) => PowersAptitudes.create(db, { powerId: id, aptitudeId, level: 1 }),
+    links: (id: string) =>
+      Joins.findMany<{ aptitudeId: string; level: number | null; powerId: string }>(db, {
+        join: "powers_aptitudes",
+        fromIds: [id],
+      }),
+    link: (id: string, aptitudeId: string) =>
+      Joins.create(db, "powers_aptitudes", { powerId: id, aptitudeId, level: 1 }),
     get: async (rulesetId: string, id: string) => {
       const { powersAptitudesInRules, ...rest } = await PowersService.getPower(rulesetId, id);
       return { ...rest, links: powersAptitudesInRules };
@@ -149,8 +159,9 @@ function unique(keys: string[]) {
 async function createCharacterOn(userId: string, rulesetId: string) {
   const { abilityMap } = await getSeedCtx();
   const character = await createTestCharacter(userId, { rulesetId });
-  await CharacterAbilities.createMany(
+  await CharacterLinks.createMany(
     db,
+    "abilities",
     Object.values(abilityMap).map((abilityId) => ({ characterId: character.id, abilityId, score: 16 })),
   );
   return character;
@@ -177,36 +188,61 @@ async function createExtension(userId: string | null = null, values: RulesetValu
 async function createNamingEntities(rulesetId: string) {
   const { abilityMap } = await getSeedCtx();
   const name = (kind: string) => `${kind} ${uniqueId()}`;
-  const [template] = await Items.create(db, { name: name("Blade"), type: "Weapon", isTemplate: true, rulesetId });
-  const [item] = await Items.create(db, {
+  const [template] = await Entities.create<Item>(db, "items", {
+    name: name("Blade"),
+    type: "Weapon",
+    isTemplate: true,
+    rulesetId,
+  });
+  const [item] = await Entities.create<Item>(db, "items", {
     name: name("Flame Blade"),
     type: "Weapon",
     sourceItemId: template.id,
     rulesetId,
   });
-  const [race] = await Races.create(db, { name: name("Kin"), size: "Small", baseSpeed: 20, rulesetId });
-  const [subrace] = await Races.create(db, {
+  const [race] = await Entities.create<Race>(db, "races", {
+    name: name("Kin"),
+    size: "Small",
+    baseSpeed: 20,
+    rulesetId,
+  });
+  const [subrace] = await Entities.create<Race>(db, "races", {
     name: name("Deep Kin"),
     size: "Small",
     baseSpeed: 20,
     parentId: race.id,
     rulesetId,
   });
-  const [save] = await Saves.create(db, { name: name("Luck Save"), abilityId: abilityMap["Charisma"], rulesetId });
-  const [spell] = await Powers.create(db, { name: name("Fortune"), saveId: save.id, rulesetId });
-  const [skill] = await Skills.create(db, {
+  const [save] = await Entities.create<RulesetSave>(db, "saves", {
+    name: name("Luck Save"),
+    abilityId: abilityMap["Charisma"],
+    rulesetId,
+  });
+  const [spell] = await Entities.create<Power>(db, "powers", { name: name("Fortune"), saveId: save.id, rulesetId });
+  const [skill] = await Entities.create<Skill>(db, "skills", {
     name: name("Gambling"),
     primaryAbilityId: abilityMap["Charisma"],
     rulesetId,
   });
-  const [list] = await Aptitudes.create(db, { name: name("Luck Feats"), rulesetId });
-  const [feat] = await Feats.create(db, { name: name("Lucky"), rulesetId });
-  await FeatsAptitudes.create(db, { featId: feat.id, aptitudeId: list.id });
+  const [list] = await Entities.create<Aptitude>(db, "aptitudes", { name: name("Luck Feats"), rulesetId });
+  const [feat] = await Entities.create<Feat>(db, "feats", { name: name("Lucky"), rulesetId });
+  await Joins.create(db, "feats_aptitudes", { featId: feat.id, aptitudeId: list.id });
   const { klass, klassLevel } = await createTestKlassLevel(rulesetId);
-  await KlassLevelSaves.createMany(db, [{ klassLevelId: klassLevel.id, saveId: save.id, base: 2 }]);
-  await KlassLevelFeats.create(db, { klassLevelId: klassLevel.id, featId: feat.id, aptitudeId: list.id });
-  await KlassSkills.createMany(db, [{ klassId: klass.id, skillId: skill.id }]);
-  const [subclass] = await Klasses.create(db, { name: name("Gambler"), hd: 6, parentId: klass.id, rulesetId });
+  await Joins.createMany<KlassLevelSave>(db, "klass_level_saves", [
+    { klassLevelId: klassLevel.id, saveId: save.id, base: 2 },
+  ]);
+  await Joins.create<KlassLevelFeat>(db, "klass_level_feats", {
+    klassLevelId: klassLevel.id,
+    featId: feat.id,
+    aptitudeId: list.id,
+  });
+  await Joins.createMany<KlassSkill>(db, "klass_skills", [{ klassId: klass.id, skillId: skill.id }]);
+  const [subclass] = await Entities.create<Klass>(db, "klasses", {
+    name: name("Gambler"),
+    hd: 6,
+    parentId: klass.id,
+    rulesetId,
+  });
   return {
     template: ["items", template.id],
     item: ["items", item.id],
@@ -229,7 +265,11 @@ async function createNamingEntities(rulesetId: string) {
 async function favoredSoulOnMixedFork() {
   const fork = await forkTaking(DND35_DMG_NAME, DND35_COMPLETE_WARRIOR_NAME, DND35_COMPLETE_DIVINE_NAME);
   const divine = await findSeededRuleset(DND35_COMPLETE_DIVINE_NAME);
-  const favoredSoul = (await Klasses.findOne(db, { name: "Favored Soul", rulesetId: divine.id }))!;
+  const favoredSoul = (await Entities.findOne<Klass>(db, {
+    entityType: "klasses",
+    name: "Favored Soul",
+    rulesetId: divine.id,
+  }))!;
   const pools = await spellPoolsAt(fork.session, fork.character.id, favoredSoul.id);
   const list = Object.values(pools).find((pool) => pool.name === "Favored Soul Spells")!;
   const offer = ({ powerLevel, search }: { powerLevel?: number; search: string }) =>
@@ -297,12 +337,12 @@ async function levelPicking(userId: string, rulesetId: string, type: EntityType,
 async function picksOf(type: EntityType, characterLevelId: string) {
   const where = { characterLevelIds: [characterLevelId] };
   if (type === "feats") {
-    return (await CharacterLevelFeats.findMany(db, where)).map(({ featId, aptitudeId }) => ({
+    return (await Picks.findMany<LevelFeat>(db, { pick: "feats", ...where })).map(({ featId, aptitudeId }) => ({
       entityId: featId,
       aptitudeId,
     }));
   }
-  return (await CharacterLevelPowers.findMany(db, where)).map(({ powerId, aptitudeId }) => ({
+  return (await Picks.findMany<LevelPower>(db, { pick: "powers", ...where })).map(({ powerId, aptitudeId }) => ({
     entityId: powerId,
     aptitudeId,
   }));
@@ -329,7 +369,7 @@ async function setupSiblings(entityType: EntityType) {
   for (const ability of ["strength", "wisdom"]) {
     const extension = await createExtension();
     const copyId = (await copyEntity(db, entityType, baseId, extension)).id as string;
-    const [aptitude] = await Aptitudes.create(db, {
+    const [aptitude] = await Entities.create<Aptitude>(db, "aptitudes", {
       name: `${ability} aptitude ${uniqueId()}`,
       rulesetId: extension.id,
     });
@@ -374,15 +414,20 @@ async function spellPoolsAt(session: Session, characterId: string, klassId: stri
 async function warriorEntity(type: EntityType, name: string) {
   const { id: rulesetId } = await findSeededRuleset(DND35_COMPLETE_WARRIOR_NAME);
   const entity =
-    type === "feats" ? await Feats.findOne(db, { name, rulesetId }) : await Powers.findOne(db, { name, rulesetId });
+    type === "feats"
+      ? await Entities.findOne<Feat>(db, { entityType: "feats", name, rulesetId })
+      : await Entities.findOne<Power>(db, { entityType: "powers", name, rulesetId });
   return entity!.id;
 }
 
 /** A seeded Complete Warrior feat, with the aptitude it's picked through. */
 async function warriorFeat(name: string) {
   const extension = await findSeededRuleset(DND35_COMPLETE_WARRIOR_NAME);
-  const feat = (await Feats.findOne(db, { name, rulesetId: extension.id }))!;
-  const [link] = await FeatsAptitudes.findMany(db, { featId: feat.id });
+  const feat = (await Entities.findOne<Feat>(db, { entityType: "feats", name, rulesetId: extension.id }))!;
+  const [link] = await Joins.findMany<{ aptitudeId: string; featId: string }>(db, {
+    join: "feats_aptitudes",
+    fromIds: [feat.id],
+  });
   return { ...feat, aptitudeId: link.aptitudeId };
 }
 
@@ -414,7 +459,11 @@ describe("subscribing to an extension", () => {
       const sourceChain = [...extensionRulesetIds, ...ancestorRulesetIds];
       return (
         await fetchEveryPage((page) =>
-          Feats.findPage(db, { rulesetId: draft.id, ancestorRulesetIds: sourceChain }, page),
+          Entities.findPage<FeatWithAptitudes>(
+            db,
+            { entityType: "feats", rulesetId: draft.id, ancestorRulesetIds: sourceChain },
+            page,
+          ),
         )
       ).length;
     };
@@ -427,7 +476,7 @@ describe("subscribing to an extension", () => {
   test("takes several extensions, system or published by users, on a draft or a published fork", async () => {
     const { user, session, extension, draft } = await setupFork();
     const [systemExtension, homebrew] = [await createExtension(), await createExtension(user.id)];
-    await Feats.create(db, { name: "Homebrew Feat", rulesetId: homebrew.id });
+    await Entities.create<Feat>(db, "feats", { name: "Homebrew Feat", rulesetId: homebrew.id });
     await RulesetExtensionsService.subscribeExtension(session, draft.id, [extension.id]);
     await RulesetsService.publishRuleset(session, draft.id);
     await RulesetExtensionsService.subscribeExtension(session, draft.id, [systemExtension.id, homebrew.id]);
@@ -523,8 +572,8 @@ describe("subscribing to an extension", () => {
     test("refuses a name the fork already uses, or that two extensions share in content that can't be merged", async () => {
       const { user, session, draft } = await setupFork();
       const extension = await createExtension(user.id);
-      await Feats.create(db, { name: "Clash", rulesetId: extension.id });
-      await Feats.create(db, { name: "Clash", rulesetId: draft.id });
+      await Entities.create<Feat>(db, "feats", { name: "Clash", rulesetId: extension.id });
+      await Entities.create<Feat>(db, "feats", { name: "Clash", rulesetId: draft.id });
       expect(RulesetExtensionsService.subscribeExtension(session, draft.id, [extension.id])).rejects.toThrow(
         'Cannot subscribe: feats "Clash" already exists in this ruleset or another subscribed extension',
       );
@@ -532,7 +581,7 @@ describe("subscribing to an extension", () => {
       // Only feats and powers merge; two races of one name would show twice.
       const [raceA, raceB] = [await createExtension(), await createExtension()];
       for (const { id } of [raceA, raceB])
-        await Races.create(db, { name: "Tiefling", rulesetId: id, size: "Medium", baseSpeed: 30 });
+        await Entities.create<Race>(db, "races", { name: "Tiefling", rulesetId: id, size: "Medium", baseSpeed: 30 });
       await expectRefusedWith(
         RulesetExtensionsService.subscribeExtension(session, draft.id, [raceA.id, raceB.id]),
         409,
@@ -549,8 +598,8 @@ describe("subscribing to an extension", () => {
         await createExtension(user.id),
       ];
       for (const { id } of [a, b]) {
-        await Feats.create(db, { name: "Shared Feat", rulesetId: id });
-        await Aptitudes.create(db, { name: "Shared Aptitude", rulesetId: id });
+        await Entities.create<Feat>(db, "feats", { name: "Shared Feat", rulesetId: id });
+        await Entities.create<Aptitude>(db, "aptitudes", { name: "Shared Aptitude", rulesetId: id });
       }
       // A copy of a base feat has the base feat's name.
       await copyEntity(db, "feats", featMap["Toughness"], c);
@@ -566,10 +615,10 @@ describe("subscribing to an extension", () => {
       const { rulesetId } = await getSeedCtx();
       const [a, b] = [await createExtension(), await createExtension()];
       const [[spellA], [spellB], [basePower], [reprint]] = [
-        await Powers.create(db, { name: "Forestfold", rulesetId: a.id }),
-        await Powers.create(db, { name: "Forestfold", rulesetId: b.id }),
-        await Powers.create(db, { name: "Reprint", rulesetId }),
-        await Powers.create(db, { name: "Reprint", rulesetId: a.id }),
+        await Entities.create<Power>(db, "powers", { name: "Forestfold", rulesetId: a.id }),
+        await Entities.create<Power>(db, "powers", { name: "Forestfold", rulesetId: b.id }),
+        await Entities.create<Power>(db, "powers", { name: "Reprint", rulesetId }),
+        await Entities.create<Power>(db, "powers", { name: "Reprint", rulesetId: a.id }),
       ];
       await RulesetExtensionsService.subscribeExtension(session, draft.id, [a.id, b.id]);
       RulesetViews.invalidate(draft.id);
@@ -587,11 +636,18 @@ describe("subscribing to an extension", () => {
 
     test("pairs the fork's own list with its books' lists of its name: the fork's shows, its books' classes drawing on it", async () => {
       const { user, session, draft } = await setupFork();
-      const [own] = await Aptitudes.create(db, { name: "Favored Soul Spells", rulesetId: draft.id });
+      const [own] = await Entities.create<Aptitude>(db, "aptitudes", {
+        name: "Favored Soul Spells",
+        rulesetId: draft.id,
+      });
       const divine = await findSeededRuleset(DND35_COMPLETE_DIVINE_NAME);
       await RulesetExtensionsService.subscribeExtension(session, draft.id, [divine.id]);
       const view = await RulesetViews.getData((await Rulesets.findOne(db, { id: draft.id }))!);
-      const divineList = (await Aptitudes.findOne(db, { name: own.name, rulesetId: divine.id }))!;
+      const divineList = (await Entities.findOne<Aptitude>(db, {
+        entityType: "aptitudes",
+        name: own.name,
+        rulesetId: divine.id,
+      }))!;
       const named = (lists: { id: string; name: string }[]) =>
         lists.filter((list) => list.name === own.name).map((list) => list.id);
       expect(named([...view.aptitudesById.values()])).toEqual([own.id]);
@@ -604,7 +660,11 @@ describe("subscribing to an extension", () => {
         power.powersAptitudesInRules.some((link) => link.aptitudeId === divineList.id && link.level === 1),
       )!;
       const character = await createCharacterOn(user.id, draft.id);
-      const favoredSoul = (await Klasses.findOne(db, { name: "Favored Soul", rulesetId: divine.id }))!;
+      const favoredSoul = (await Entities.findOne<Klass>(db, {
+        entityType: "klasses",
+        name: "Favored Soul",
+        rulesetId: divine.id,
+      }))!;
       const pools = await spellPoolsAt(session, character.id, favoredSoul.id);
       expect(named(Object.values(pools))).toEqual([own.id]);
       const offered = await getStepOptions(
@@ -699,11 +759,11 @@ describe("unsubscribing from an extension", () => {
     const warriorAssassin = lists.find((list) => list.name === "Assassin Spells")!;
     expect(warriorAssassin.rulesetId).toBe(warrior.id);
     const wizard = lists.find((list) => list.name === "Wizard Spells")!;
-    const [spell] = await Powers.create(db, { name: `Probe ${uniqueId()}`, rulesetId: draft.id });
-    await PowersAptitudes.create(db, { powerId: spell.id, aptitudeId: warriorAssassin.id, level: 2 });
-    await PowersAptitudes.create(db, { powerId: spell.id, aptitudeId: wizard.id, level: 3 });
+    const [spell] = await Entities.create<Power>(db, "powers", { name: `Probe ${uniqueId()}`, rulesetId: draft.id });
+    await Joins.create(db, "powers_aptitudes", { powerId: spell.id, aptitudeId: warriorAssassin.id, level: 2 });
+    await Joins.create(db, "powers_aptitudes", { powerId: spell.id, aptitudeId: wizard.id, level: 3 });
     const { klassLevel } = await createTestKlassLevel(draft.id);
-    await KlassLevelPowers.createMany(db, [
+    await Joins.createMany<KlassLevelPower>(db, "klass_level_powers", [
       { klassLevelId: klassLevel.id, powerId: spell.id, aptitudeId: warriorAssassin.id, free: false },
     ]);
     RulesetViews.invalidate(draft.id);
@@ -713,7 +773,12 @@ describe("unsubscribing from an extension", () => {
     const dmgAssassin = [...after.aptitudesById.values()].find((list) => list.name === "Assassin Spells")!;
     expect(dmgAssassin.rulesetId).toBe(dmg.id);
     expect(
-      (await PowersAptitudes.findMany(db, { powerId: spell.id })).map(({ aptitudeId, level }) => ({
+      (
+        await Joins.findMany<{ aptitudeId: string; level: number | null; powerId: string }>(db, {
+          join: "powers_aptitudes",
+          fromIds: [spell.id],
+        })
+      ).map(({ aptitudeId, level }) => ({
         aptitudeId,
         level,
       })),
@@ -724,9 +789,9 @@ describe("unsubscribing from an extension", () => {
       ]),
     );
     expect(after.listPowerIds({ aptitudeId: dmgAssassin.id })).toContain(spell.id);
-    expect(await KlassLevelPowers.findMany(db, { klassLevelIds: [klassLevel.id] })).toMatchObject([
-      { powerId: spell.id, aptitudeId: dmgAssassin.id },
-    ]);
+    expect(
+      await Joins.findMany<KlassLevelPower>(db, { join: "klass_level_powers", fromIds: [klassLevel.id] }),
+    ).toMatchObject([{ powerId: spell.id, aptitudeId: dmgAssassin.id }]);
   });
 
   test("repoints a copied spell's merged links to the lists of their names the fork's other books have", async () => {
@@ -742,7 +807,10 @@ describe("unsubscribing from an extension", () => {
 
     await RulesetExtensionsService.unsubscribeExtension(session, fork.id, warrior.id);
     const after = await RulesetViews.getData((await Rulesets.findOne(db, { id: fork.id }))!);
-    const links = await PowersAptitudes.findMany(db, { powerId: copyId });
+    const links = await Joins.findMany<{ aptitudeId: string; level: number | null; powerId: string }>(db, {
+      join: "powers_aptitudes",
+      fromIds: [copyId],
+    });
     expect(links.filter((link) => !after.aptitudesById.has(link.aptitudeId))).toEqual([]);
     const assassin = [...after.aptitudesById.values()].find((list) => list.name === "Assassin Spells")!;
     expect(assassin.rulesetId).not.toBe(warrior.id);
@@ -757,30 +825,44 @@ describe("unsubscribing from an extension", () => {
     const warriorOnly = lists.find(
       (list) => list.rulesetId === warrior.id && !lists.some((other) => other !== list && other.name === list.name),
     )!;
-    const [spell] = await Powers.create(db, { name: `Probe ${uniqueId()}`, rulesetId: draft.id });
-    await PowersAptitudes.create(db, { powerId: spell.id, aptitudeId: warriorOnly.id, level: 1 });
+    const [spell] = await Entities.create<Power>(db, "powers", { name: `Probe ${uniqueId()}`, rulesetId: draft.id });
+    await Joins.create(db, "powers_aptitudes", { powerId: spell.id, aptitudeId: warriorOnly.id, level: 1 });
 
     expect(RulesetExtensionsService.unsubscribeExtension(session, draft.id, warrior.id)).rejects.toThrow(
       `${warriorOnly.name}, a list no other book of this ruleset has`,
     );
     expect((await Rulesets.findOne(db, { id: draft.id }))!.extensionRulesetIds).toEqual([warrior.id]);
-    expect(await PowersAptitudes.findMany(db, { powerId: spell.id })).toMatchObject([{ aptitudeId: warriorOnly.id }]);
+    expect(
+      await Joins.findMany<{ aptitudeId: string; level: number | null; powerId: string }>(db, {
+        join: "powers_aptitudes",
+        fromIds: [spell.id],
+      }),
+    ).toMatchObject([{ aptitudeId: warriorOnly.id }]);
   });
 
   test("points the fork's links and its characters' picks from its list at the fork's own list of its name", async () => {
     const { user, session, extension: warrior, draft } = await setupFork();
-    const [own] = await Aptitudes.create(db, { name: "Assassin Spells", rulesetId: draft.id });
+    const [own] = await Entities.create<Aptitude>(db, "aptitudes", { name: "Assassin Spells", rulesetId: draft.id });
     await RulesetExtensionsService.subscribeExtension(session, draft.id, [warrior.id]);
-    const warriorList = (await Aptitudes.findOne(db, { name: own.name, rulesetId: warrior.id }))!;
+    const warriorList = (await Entities.findOne<Aptitude>(db, {
+      entityType: "aptitudes",
+      name: own.name,
+      rulesetId: warrior.id,
+    }))!;
     // Rows naming the book's list, as a fork's spell and a character's pick could name it while both lists showed
-    const [spell] = await Powers.create(db, { name: `Probe ${uniqueId()}`, rulesetId: draft.id });
-    await PowersAptitudes.create(db, { powerId: spell.id, aptitudeId: warriorList.id, level: 1 });
+    const [spell] = await Entities.create<Power>(db, "powers", { name: `Probe ${uniqueId()}`, rulesetId: draft.id });
+    await Joins.create(db, "powers_aptitudes", { powerId: spell.id, aptitudeId: warriorList.id, level: 1 });
     const level = await levelPicking(user.id, draft.id, "powers", spell.id, warriorList.id);
 
     expect(await RulesetExtensionsService.unsubscribeExtension(session, draft.id, warrior.id)).toEqual({
       unsubscribed: true,
     });
-    expect(await PowersAptitudes.findMany(db, { powerId: spell.id })).toMatchObject([{ aptitudeId: own.id }]);
+    expect(
+      await Joins.findMany<{ aptitudeId: string; level: number | null; powerId: string }>(db, {
+        join: "powers_aptitudes",
+        fromIds: [spell.id],
+      }),
+    ).toMatchObject([{ aptitudeId: own.id }]);
     expect(await picksOf("powers", level.id)).toEqual([{ entityId: spell.id, aptitudeId: own.id }]);
   });
 
@@ -789,8 +871,16 @@ describe("unsubscribing from an extension", () => {
     await RulesetExtensionsService.subscribeExtension(session, draft.id, [warrior.id]);
     const monkeyGrip = await warriorFeat("Monkey Grip");
     const { klassLevel } = await createTestKlassLevel(draft.id);
-    const general = (await Aptitudes.findOne(db, { rulesetId: draft.ancestorRulesetIds[0], name: "General" }))!;
-    await KlassLevelFeats.create(db, { klassLevelId: klassLevel.id, featId: monkeyGrip.id, aptitudeId: general.id });
+    const general = (await Entities.findOne<Aptitude>(db, {
+      entityType: "aptitudes",
+      rulesetId: draft.ancestorRulesetIds[0],
+      name: "General",
+    }))!;
+    await Joins.create<KlassLevelFeat>(db, "klass_level_feats", {
+      klassLevelId: klassLevel.id,
+      featId: monkeyGrip.id,
+      aptitudeId: general.id,
+    });
 
     expect(RulesetExtensionsService.unsubscribeExtension(session, draft.id, warrior.id)).rejects.toThrow(
       /, which uses Monkey Grip/,
@@ -800,15 +890,23 @@ describe("unsubscribing from an extension", () => {
   test("refuses to leave a row naming another of the extension's entities: a class's skill", async () => {
     const { user, session, draft } = await setupFork();
     const extension = await createExtension(user.id);
-    const strength = (await Abilities.findOne(db, { rulesetId: draft.ancestorRulesetIds[0], name: "Strength" }))!;
-    const [skill] = await Skills.create(db, {
+    const strength = (await Entities.findOne<RulesetAbility>(db, {
+      entityType: "abilities",
+      rulesetId: draft.ancestorRulesetIds[0],
+      name: "Strength",
+    }))!;
+    const [skill] = await Entities.create<Skill>(db, "skills", {
       name: `Probe Skill ${uniqueId()}`,
       rulesetId: extension.id,
       primaryAbilityId: strength.id,
     });
     await RulesetExtensionsService.subscribeExtension(session, draft.id, [extension.id]);
-    const [klass] = await Klasses.create(db, { name: `Probe Class ${uniqueId()}`, rulesetId: draft.id, hd: 8 });
-    await KlassSkills.createMany(db, [{ klassId: klass.id, skillId: skill.id }]);
+    const [klass] = await Entities.create<Klass>(db, "klasses", {
+      name: `Probe Class ${uniqueId()}`,
+      rulesetId: draft.id,
+      hd: 8,
+    });
+    await Joins.createMany<KlassSkill>(db, "klass_skills", [{ klassId: klass.id, skillId: skill.id }]);
 
     expect(RulesetExtensionsService.unsubscribeExtension(session, draft.id, extension.id)).rejects.toThrow(
       `${klass.name}, which uses ${skill.name}`,
@@ -818,7 +916,7 @@ describe("unsubscribing from an extension", () => {
   test("keeps the other extensions and the fork's copies of theirs", async () => {
     const { session, extension, draft } = await setupFork();
     const other = await createExtension();
-    const [otherFeat] = await Feats.create(db, { name: "Other Feat", rulesetId: other.id });
+    const [otherFeat] = await Entities.create<Feat>(db, "feats", { name: "Other Feat", rulesetId: other.id });
     await RulesetExtensionsService.subscribeExtension(session, draft.id, [extension.id, other.id]);
     const copy = await FeatsService.updateFeat(session, draft.id, otherFeat.id, {
       name: "Other Feat",
@@ -837,7 +935,10 @@ describe("unsubscribing from an extension", () => {
     const ctx = await getSeedCtx();
     const name = (kind: string) => `${kind} ${uniqueId()}`;
     // The core rules have no mechanics: one of the base's own
-    const [baseMechanic] = await Mechanics.create(db, { name: name("Grapple"), rulesetId: ctx.rulesetId });
+    const [baseMechanic] = await Entities.create<Mechanic>(db, "mechanics", {
+      name: name("Grapple"),
+      rulesetId: ctx.rulesetId,
+    });
     invalidateSeededRuleset(ctx.rulesetId);
     const fromBase = [
       ["abilities", ctx.abilityMap["Strength"]],
@@ -857,19 +958,39 @@ describe("unsubscribing from an extension", () => {
     const rulesetId = extension.id;
     const charisma = ctx.abilityMap["Charisma"];
     const fromExtension = [
-      ["saves", (await Saves.create(db, { name: name("Luck Save"), abilityId: charisma, rulesetId }))[0].id],
-      ["skills", (await Skills.create(db, { name: name("Gambling"), primaryAbilityId: charisma, rulesetId }))[0].id],
-      ["feats", (await Feats.create(db, { name: name("Lucky"), rulesetId }))[0].id],
-      ["powers", (await Powers.create(db, { name: name("Fortune"), rulesetId }))[0].id],
-      ["items", (await Items.create(db, { name: name("Charm"), slot: "Neck", rulesetId }))[0].id],
+      [
+        "saves",
+        (
+          await Entities.create<RulesetSave>(db, "saves", { name: name("Luck Save"), abilityId: charisma, rulesetId })
+        )[0].id,
+      ],
+      [
+        "skills",
+        (
+          await Entities.create<Skill>(db, "skills", { name: name("Gambling"), primaryAbilityId: charisma, rulesetId })
+        )[0].id,
+      ],
+      ["feats", (await Entities.create<Feat>(db, "feats", { name: name("Lucky"), rulesetId }))[0].id],
+      ["powers", (await Entities.create<Power>(db, "powers", { name: name("Fortune"), rulesetId }))[0].id],
+      ["items", (await Entities.create<Item>(db, "items", { name: name("Charm"), slot: "Neck", rulesetId }))[0].id],
       [
         "races",
-        (await Races.create(db, { name: name("Halfling Kin"), size: "Small", baseSpeed: 20, rulesetId }))[0].id,
+        (
+          await Entities.create<Race>(db, "races", {
+            name: name("Halfling Kin"),
+            size: "Small",
+            baseSpeed: 20,
+            rulesetId,
+          })
+        )[0].id,
       ],
-      ["languages", (await Languages.create(db, { name: name("Cant"), type: "Secret", rulesetId }))[0].id],
-      ["klasses", (await Klasses.create(db, { name: name("Gambler"), hd: 6, rulesetId }))[0].id],
-      ["aptitudes", (await Aptitudes.create(db, { name: name("Luck Feats"), rulesetId }))[0].id],
-      ["mechanics", (await Mechanics.create(db, { name: name("Wager"), rulesetId }))[0].id],
+      [
+        "languages",
+        (await Entities.create<Language>(db, "languages", { name: name("Cant"), type: "Secret", rulesetId }))[0].id,
+      ],
+      ["klasses", (await Entities.create<Klass>(db, "klasses", { name: name("Gambler"), hd: 6, rulesetId }))[0].id],
+      ["aptitudes", (await Entities.create<Aptitude>(db, "aptitudes", { name: name("Luck Feats"), rulesetId }))[0].id],
+      ["mechanics", (await Entities.create<Mechanic>(db, "mechanics", { name: name("Wager"), rulesetId }))[0].id],
     ] as const;
 
     for (const [type, id] of [...fromBase, ...fromExtension])
@@ -976,8 +1097,11 @@ describe("unsubscribing from an extension", () => {
     const { user, session, extension: warrior, draft } = await setupFork();
     await RulesetExtensionsService.subscribeExtension(session, draft.id, [warrior.id]);
     const aptitude =
-      (await Aptitudes.findOne(db, { name: list, rulesetId: draft.ancestorRulesetIds[0] })) ??
-      (await Aptitudes.findOne(db, { name: list, rulesetId: warrior.id }))!;
+      (await Entities.findOne<Aptitude>(db, {
+        entityType: "aptitudes",
+        name: list,
+        rulesetId: draft.ancestorRulesetIds[0],
+      })) ?? (await Entities.findOne<Aptitude>(db, { entityType: "aptitudes", name: list, rulesetId: warrior.id }))!;
     const level = await levelPicking(user.id, draft.id, type, await warriorEntity(type, name), aptitude.id);
 
     expect(RulesetExtensionsService.unsubscribeExtension(session, draft.id, warrior.id)).rejects.toThrow(
@@ -992,12 +1116,12 @@ describe("unsubscribing from an extension", () => {
     const { aptMap, featMap } = await getSeedCtx();
     const { klassLevel } = await createTestKlassLevel(draft.id);
     const grant = { featId: await warriorEntity("feats", "Spirited Charge"), aptitudeId: aptMap["General"] };
-    await KlassLevelFeats.create(db, { klassLevelId: klassLevel.id, ...grant });
+    await Joins.create<KlassLevelFeat>(db, "klass_level_feats", { klassLevelId: klassLevel.id, ...grant });
 
     await RulesetExtensionsService.unsubscribeExtension(session, draft.id, warrior.id);
-    expect(await KlassLevelFeats.findMany(db, { klassLevelIds: [klassLevel.id] })).toMatchObject([
-      { featId: featMap["Spirited Charge"], aptitudeId: aptMap["General"] },
-    ]);
+    expect(
+      await Joins.findMany<KlassLevelFeat>(db, { join: "klass_level_feats", fromIds: [klassLevel.id] }),
+    ).toMatchObject([{ featId: featMap["Spirited Charge"], aptitudeId: aptMap["General"] }]);
   });
 
   test("points what the fork and its characters keep naming a core race, item, language or skill it overrides at the core one, and no other ruleset's", async () => {
@@ -1020,7 +1144,7 @@ describe("unsubscribing from an extension", () => {
     // another fork of the user's taking the extension
     const subraceOf = async (rulesetId: string) =>
       (
-        await Races.create(db, {
+        await Entities.create<Race>(db, "races", {
           name: `Deep Kin ${uniqueId()}`,
           size: "Small",
           baseSpeed: 20,
@@ -1031,7 +1155,7 @@ describe("unsubscribing from an extension", () => {
     const characterOn = async (rulesetId: string) => {
       const character = await createTestCharacter(user.id, { rulesetId, raceId: copies.race });
       await CharacterInventory.create(db, { characterId: character.id, itemId: copies.item, quantity: 1 });
-      await CharacterLanguages.create(db, { characterId: character.id, languageId: copies.language });
+      await CharacterLinks.create(db, "languages", { characterId: character.id, languageId: copies.language });
       const { klassLevel } = await createTestKlassLevel(rulesetId);
       const level = await addCharacterLevel(character.id, klassLevel.id, {
         skills: [{ skillId: copies.skill, rank: 2 }],
@@ -1041,8 +1165,10 @@ describe("unsubscribing from an extension", () => {
     const named = async ({ character, level }: Awaited<ReturnType<typeof characterOn>>) => ({
       race: (await Characters.findOne(db, { id: character.id }))!.raceId,
       item: (await CharacterInventory.findMany(db, { characterId: character.id }))[0].itemId,
-      language: (await CharacterLanguages.findMany(db, { characterId: character.id }))[0].languageId,
-      skill: (await CharacterLevelSkills.findMany(db, { characterLevelIds: [level.id] }))[0].skillId,
+      language: (
+        await CharacterLinks.findMany<CharacterLanguage>(db, { link: "languages", characterId: character.id })
+      )[0].languageId,
+      skill: (await Picks.findMany<LevelSkill>(db, { pick: "skills", characterLevelIds: [level.id] }))[0].skillId,
     });
     const other = await forkBase(session);
     for (const fork of [draft, other])
@@ -1052,9 +1178,13 @@ describe("unsubscribing from an extension", () => {
 
     await RulesetExtensionsService.unsubscribeExtension(session, draft.id, extension.id);
     expect(await named(mine)).toEqual(core);
-    expect(await Races.findOne(db, { id: ownSubrace.id })).toMatchObject({ parentId: core.race });
+    expect(await Entities.findOne<Race>(db, { entityType: "races", id: ownSubrace.id })).toMatchObject({
+      parentId: core.race,
+    });
     expect(await named(theirs)).toEqual(copies);
-    expect(await Races.findOne(db, { id: extensionSubrace.id })).toMatchObject({ parentId: copies.race });
+    expect(await Entities.findOne<Race>(db, { entityType: "races", id: extensionSubrace.id })).toMatchObject({
+      parentId: copies.race,
+    });
   });
 
   test("points a pick of the fork's copy of a core feat it overrides at the core feat, the copy going", async () => {
@@ -1071,7 +1201,7 @@ describe("unsubscribing from an extension", () => {
     expect(await picksOf("feats", level.id)).toEqual([
       { entityId: featMap["Spirited Charge"], aptitudeId: aptMap["General"] },
     ]);
-    expect(await Feats.findOne(db, { id: mine.id })).toBeUndefined();
+    expect(await Entities.findOne<Feat>(db, { entityType: "feats", id: mine.id })).toBeUndefined();
     expect(await featsNamed(draft.id, "Spirited Charge")).toMatchObject([{ id: featMap["Spirited Charge"] }]);
   });
 
@@ -1086,7 +1216,7 @@ describe("unsubscribing from an extension", () => {
     await RulesetExtensionsService.unsubscribeExtension(
       session,
       draft.id,
-      (await Feats.findOne(db, { id: winner }))!.rulesetId,
+      (await Entities.findOne<Feat>(db, { entityType: "feats", id: winner }))!.rulesetId,
     );
     expect(await picksOf("feats", level.id)).toEqual([{ entityId: other.copyId, aptitudeId: general }]);
   });
@@ -1096,8 +1226,12 @@ describe("unsubscribing from an extension", () => {
     const dmg = await findSeededRuleset(DND35_DMG_NAME);
     await RulesetExtensionsService.subscribeExtension(session, draft.id, [warrior.id, dmg.id]);
     const [warriorAssassin, dmgAssassin] = [
-      (await Aptitudes.findOne(db, { name: "Assassin Spells", rulesetId: warrior.id }))!,
-      (await Aptitudes.findOne(db, { name: "Assassin Spells", rulesetId: dmg.id }))!,
+      (await Entities.findOne<Aptitude>(db, {
+        entityType: "aptitudes",
+        name: "Assassin Spells",
+        rulesetId: warrior.id,
+      }))!,
+      (await Entities.findOne<Aptitude>(db, { entityType: "aptitudes", name: "Assassin Spells", rulesetId: dmg.id }))!,
     ];
     const spell = (await getSeedCtx()).powerMap["Magic Missile"];
     const level = await levelPicking(user.id, draft.id, "powers", spell, warriorAssassin.id);
@@ -1118,11 +1252,15 @@ describe("unsubscribing from an extension", () => {
     });
     const draft = await createTestRuleset(user.id, fork);
     // A class of the parent's with one level, which the extension copied and gave a second, and a class of its own
-    const [source] = await Klasses.create(db, { name: `Parent Class ${uniqueId()}`, rulesetId: parent.id, hd: 8 });
-    const [sourceLevel] = await KlassLevels.create(db, { klassId: source.id, level: 1 });
+    const [source] = await Entities.create<Klass>(db, "klasses", {
+      name: `Parent Class ${uniqueId()}`,
+      rulesetId: parent.id,
+      hd: 8,
+    });
+    const [sourceLevel] = await Entities.create<KlassLevel>(db, "klass_levels", { klassId: source.id, level: 1 });
     const copy = await copyEntity(db, "klasses", source.id, extension);
-    const [copyLevel] = await KlassLevels.findMany(db, { klassId: copy.id });
-    const [added] = await KlassLevels.create(db, { klassId: copy.id, level: 2 });
+    const [copyLevel] = await Entities.findMany<KlassLevel>(db, { entityType: "klass_levels", ownerIds: [copy.id] });
+    const [added] = await Entities.create<KlassLevel>(db, "klass_levels", { klassId: copy.id, level: 2 });
     const { klassLevel: own } = await createTestKlassLevel(extension.id);
     await RulesetExtensionsService.subscribeExtension(session, draft.id, [extension.id]);
     const character = await createTestCharacter(user.id, { rulesetId: draft.id });
@@ -1166,7 +1304,7 @@ describe("an extension's content in a fork", () => {
     const { session: author } = await createTestUser();
     const { user, session } = await createTestUser();
     const [book, draft] = [await forkBase(author), await forkBase(session)];
-    const coreCleric = (await Klasses.findOne(db, { name: "Cleric", rulesetId }))!;
+    const coreCleric = (await Entities.findOne<Klass>(db, { entityType: "klasses", name: "Cleric", rulesetId }))!;
     const character = await createCharacterOn(user.id, draft.id);
     await addOneLevel(session, character.id, coreCleric.id, 1, 8, null, {}, {}, {}, true);
     const levelRead = async () => {
@@ -1175,7 +1313,10 @@ describe("an extension's content in a fork", () => {
       return classes["cleric"].levels.map((level) => level.klassLevel.id);
     };
     const firstLevelOf = async (klassRulesetId: string) =>
-      (await findKlassLevel((await Klasses.findOne(db, { name: "Cleric", rulesetId: klassRulesetId }))!.id, 1))!.id;
+      (await findKlassLevel(
+        (await Entities.findOne<Klass>(db, { entityType: "klasses", name: "Cleric", rulesetId: klassRulesetId }))!.id,
+        1,
+      ))!.id;
     expect(await levelRead()).toEqual([await firstLevelOf(rulesetId)]);
 
     await ClassesService.updateClass(author, book.id, coreCleric.id, { name: "Cleric", description: "The book's" });
@@ -1183,7 +1324,11 @@ describe("an extension's content in a fork", () => {
     await RulesetExtensionsService.subscribeExtension(session, draft.id, [book.id]);
     expect(await levelRead()).toEqual([await firstLevelOf(book.id)]);
 
-    const bookCleric = (await Klasses.findOne(db, { name: "Cleric", rulesetId: book.id }))!;
+    const bookCleric = (await Entities.findOne<Klass>(db, {
+      entityType: "klasses",
+      name: "Cleric",
+      rulesetId: book.id,
+    }))!;
     await ClassesService.updateClass(session, draft.id, bookCleric.id, { name: "Cleric", description: "The fork's" });
     expect(await levelRead()).toEqual([await firstLevelOf(draft.id)]);
   });
@@ -1204,7 +1349,11 @@ describe("an extension's content in a fork", () => {
       await findSeededRuleset(book),
       await findSeededRuleset(DND35_COMPLETE_ADVENTURER_NAME),
     ];
-    const aptitude = (await Aptitudes.findOne(db, { name: list, rulesetId: owner.id }))!;
+    const aptitude = (await Entities.findOne<Aptitude>(db, {
+      entityType: "aptitudes",
+      name: list,
+      rulesetId: owner.id,
+    }))!;
     const spellsOnList = async () =>
       (await PowersService.getPowers(draft.id, { aptitudeId: aptitude.id }, { limit: 1000, page: 1 })).items.map(
         (power) => power.name,
@@ -1229,8 +1378,16 @@ describe("an extension's content in a fork", () => {
     // Complete Warrior's puts it on the hexblade's bonus feats
     const { session, draft, character } = await forkTaking(DND35_COMPLETE_ADVENTURER_NAME, DND35_COMPLETE_WARRIOR_NAME);
     const warrior = await findSeededRuleset(DND35_COMPLETE_WARRIOR_NAME);
-    const hexblade = (await Klasses.findOne(db, { name: "Hexblade", rulesetId: warrior.id }))!;
-    const list = (await Aptitudes.findOne(db, { name: "Hexblade Bonus Feat", rulesetId: warrior.id }))!;
+    const hexblade = (await Entities.findOne<Klass>(db, {
+      entityType: "klasses",
+      name: "Hexblade",
+      rulesetId: warrior.id,
+    }))!;
+    const list = (await Entities.findOne<Aptitude>(db, {
+      entityType: "aptitudes",
+      name: "Hexblade Bonus Feat",
+      rulesetId: warrior.id,
+    }))!;
     const search = "Combat Casting";
     const where = { aptitudeId: list.id, search };
     expect((await FeatsService.getFeats(draft.id, where, firstPage)).items.map((feat) => feat.name)).toContain(search);
@@ -1245,12 +1402,24 @@ describe("an extension's content in a fork", () => {
     // Complete Divine's rows link Bane and Bless Water to its own list; Bless Water composes as Complete Warrior's copy
     const { character, favoredSoul, list, offer } = await favoredSoulOnMixedFork();
     const warrior = await findSeededRuleset(DND35_COMPLETE_WARRIOR_NAME);
-    expect(list.id).toBe((await Aptitudes.findOne(db, { name: "Favored Soul Spells", rulesetId: warrior.id }))!.id);
+    expect(list.id).toBe(
+      (await Entities.findOne<Aptitude>(db, {
+        entityType: "aptitudes",
+        name: "Favored Soul Spells",
+        rulesetId: warrior.id,
+      }))!.id,
+    );
 
     // Bane as the level-up offers it, and Bless Water as the fork composes it, on the composed list
     const bane = (await offer({ search: "Bane", powerLevel: 1 })).items.find((power) => power.name === "Bane")!;
-    const blessWater = (await Powers.findOne(db, { name: "Bless Water", rulesetId: warrior.id }))!;
-    const [first] = (await KlassLevels.findMany(db, { klassId: favoredSoul.id })).filter((level) => level.level === 1);
+    const blessWater = (await Entities.findOne<Power>(db, {
+      entityType: "powers",
+      name: "Bless Water",
+      rulesetId: warrior.id,
+    }))!;
+    const [first] = (
+      await Entities.findMany<KlassLevel>(db, { entityType: "klass_levels", ownerIds: [favoredSoul.id] })
+    ).filter((level) => level.level === 1);
     await addCharacterLevel(character.id, first.id, {
       powers: [
         { powerId: bane.id, aptitudeId: list.id },
@@ -1282,7 +1451,9 @@ describe("an extension's content in a fork", () => {
 
     await FeatsService.deleteFeat(session, draft.id, buckler.id);
     expect(await featsNamed(draft.id, "Improved Buckler Defense")).toEqual([]);
-    expect(await Feats.findOne(db, { id: buckler.id })).toMatchObject({ deletedAt: null });
+    expect(await Entities.findOne<Feat>(db, { entityType: "feats", id: buckler.id })).toMatchObject({
+      deletedAt: null,
+    });
   });
 
   test("keeps its names: a new feat can't take one, even once the fork copied it", async () => {
@@ -1331,11 +1502,14 @@ describe("an extension's content in a fork", () => {
       (await findSeededRuleset(DND35_COMPLETE_DIVINE_NAME)).id,
     ]);
     const character = await createTestCharacter(user.id, { rulesetId: draft.id, xp: 21000 });
-    await CharacterAbilities.createMany(
+    await CharacterLinks.createMany(
       db,
+      "abilities",
       Object.values(abilityMap).map((abilityId) => ({ characterId: character.id, abilityId, score: 10 })),
     );
-    const barbarianLevels = (await KlassLevels.findMany(db, { klassId: klassMap.pc["Barbarian"] }))
+    const barbarianLevels = (
+      await Entities.findMany<KlassLevel>(db, { entityType: "klass_levels", ownerIds: [klassMap.pc["Barbarian"]] })
+    )
       .filter((l) => l.level <= 7)
       .sort((a, b) => a.level - b.level);
     for (const level of barbarianLevels) {
@@ -1417,7 +1591,7 @@ describe("two extensions overriding the same base entity", () => {
     // Find which extension's copy wins, then undo that trial copy.
     await ENTITIES.feats.edit(session, draft.id, baseId);
     const [trial] = await EntitySnapshots.findMany(db, { rulesetId: draft.id });
-    await Feats.delete(db, { id: trial.forkedEntityId });
+    await Entities.delete<Feat>(db, { entityType: "feats", id: trial.forkedEntityId });
     await EntitySnapshots.delete(db, { sourceEntityId: trial.sourceEntityId, rulesetId: draft.id });
     const loser = contributions.find((c) => c.copyId !== trial.sourceEntityId)!;
     const either = ["abilities.constitution.total", "abilities.intelligence.total"];
@@ -1500,10 +1674,13 @@ describe("an extension's entity of a name its subscriber's own has", () => {
     const own = await FeatsService.createFeat(session, draft.id, { name: "Homebrew Feat", aptitudeIds: [general] });
     await Modifiers.create(db, { ...STRENGTH_BONUS, sourceType: "feats", sourceId: own.id });
     // The book's, added since: on a list of the book's and on the general feats, a class of the book's granting it
-    const [bookFeat] = await Feats.create(db, { name: own.name, rulesetId: book.id });
-    const [bookList] = await Aptitudes.create(db, { name: `Probe Book Feats ${uniqueId()}`, rulesetId: book.id });
-    await FeatsAptitudes.create(db, { featId: bookFeat.id, aptitudeId: bookList.id });
-    await FeatsAptitudes.create(db, { featId: bookFeat.id, aptitudeId: general });
+    const [bookFeat] = await Entities.create<Feat>(db, "feats", { name: own.name, rulesetId: book.id });
+    const [bookList] = await Entities.create<Aptitude>(db, "aptitudes", {
+      name: `Probe Book Feats ${uniqueId()}`,
+      rulesetId: book.id,
+    });
+    await Joins.create(db, "feats_aptitudes", { featId: bookFeat.id, aptitudeId: bookList.id });
+    await Joins.create(db, "feats_aptitudes", { featId: bookFeat.id, aptitudeId: general });
     await Modifiers.create(db, {
       ...STRENGTH_BONUS,
       target: "abilities.wisdom.misc",
@@ -1511,7 +1688,11 @@ describe("an extension's entity of a name its subscriber's own has", () => {
       sourceId: bookFeat.id,
     });
     const { klassLevel } = await createTestKlassLevel(book.id);
-    await KlassLevelFeats.create(db, { klassLevelId: klassLevel.id, featId: bookFeat.id, aptitudeId: bookList.id });
+    await Joins.create<KlassLevelFeat>(db, "klass_level_feats", {
+      klassLevelId: klassLevel.id,
+      featId: bookFeat.id,
+      aptitudeId: bookList.id,
+    });
     RulesetViews.invalidate(book.id);
     // A pick of the book's, as one made while both showed is stored
     const character = await createCharacterOn(user.id, draft.id);

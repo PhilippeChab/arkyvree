@@ -1,6 +1,6 @@
 import type { BuiltCharacter } from "@/engine/core/character/index.ts";
 import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
-import type { RulesetData } from "@/engine/core/view/index.ts";
+import type { CharacterLevel, Klass, KlassLevel, RulesetData } from "@/engine/core/view/index.ts";
 import { ALLOWED_ALL, type AptitudeLevelData } from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudesComponent.ts";
 import AptitudesPaths from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudesPaths.ts";
 import AptitudeTargets from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTargets.ts";
@@ -8,7 +8,7 @@ import ClassesPaths from "@/engine/rulesets/dnd3.5/model/classes/ClassesPaths.ts
 import type { CustomizedClassLevel, CustomizedFeat } from "@/engine/rulesets/dnd3.5/model/loading/loadedEntities.ts";
 import type SpellcastingState from "@/engine/rulesets/dnd3.5/model/spellcasting/SpellcastingState.ts";
 import type { Constructor } from "@/lib/mixins.ts";
-import type { CharacterLevel, Klass, KlassLevel, Modifier } from "@/shared/relations.ts";
+import type { Modifier } from "@/shared/relations.ts";
 import { MAX_SPELL_LEVEL } from "@/vocabulary/dnd3.5/spells.ts";
 
 /** A character level's key in the index of the class levels the character took. */

@@ -1,15 +1,9 @@
 import type { Db } from "@/drizzle/database.ts";
 import { type RulesetData } from "@/engine/core/view/index.ts";
+import type { KlassLevel, KlassLevelFeat, KlassLevelPower } from "@/engine/index.ts";
 import { EntityEdit, RulesetViews } from "@/server/cow/index.ts";
 import { withTransaction } from "@/server/database/index.ts";
-import {
-  FeatsAptitudes,
-  KlassLevelFeats,
-  KlassLevelPowers,
-  KlassLevels,
-  PowersAptitudes,
-  type RulesetEntityType,
-} from "@/server/repositories/index.ts";
+import { Entities, Joins, type RulesetEntityType } from "@/server/repositories/index.ts";
 
 type Fork = Parameters<typeof RulesetViews.getData>[0];
 
@@ -32,13 +26,19 @@ async function findStaleAptitudeIds(tx: Db, view: RulesetData, type: RulesetEnti
 
 /** A copy's links to lists as stored: a feat's or a power's lists, a class's levels' granted feats' and powers'. */
 async function readAptitudeLinks(tx: Db, type: RulesetEntityType, copyId: string) {
-  if (type === "feats") return await FeatsAptitudes.findMany(tx, { featId: copyId });
-  if (type === "powers") return await PowersAptitudes.findMany(tx, { powerId: copyId });
+  if (type === "feats" || type === "powers") {
+    return await Joins.findMany<{ aptitudeId: string }>(tx, {
+      join: type === "feats" ? "feats_aptitudes" : "powers_aptitudes",
+      fromIds: [copyId],
+    });
+  }
   if (type !== "klasses") return [];
-  const klassLevelIds = (await KlassLevels.findMany(tx, { klassId: copyId })).map((level) => level.id);
+  const klassLevelIds = (
+    await Entities.findMany<KlassLevel>(tx, { entityType: "klass_levels", ownerIds: [copyId] })
+  ).map((level) => level.id);
   return [
-    ...(await KlassLevelFeats.findMany(tx, { klassLevelIds })),
-    ...(await KlassLevelPowers.findMany(tx, { klassLevelIds })),
+    ...(await Joins.findMany<KlassLevelFeat>(tx, { join: "klass_level_feats", fromIds: klassLevelIds })),
+    ...(await Joins.findMany<KlassLevelPower>(tx, { join: "klass_level_powers", fromIds: klassLevelIds })),
   ];
 }
 

@@ -7,10 +7,9 @@ import { withRulesetScope } from "@/server/cow/index.ts";
 import { withTransaction } from "@/server/database/index.ts";
 import {
   Activities,
-  CharacterAbilities,
   CharacterInventory,
-  CharacterLanguages,
   CharacterLevels,
+  CharacterLinks,
   Characters,
 } from "@/server/repositories/index.ts";
 import { createLevelRows, writeBondedCreatures } from "@/server/services/characters/levels/index.ts";
@@ -50,16 +49,18 @@ export function Imports<B extends Constructor>(Base: B) {
               rulesetId,
               userId: session.userId,
             });
-            await CharacterAbilities.createMany(
+            await CharacterLinks.createMany(
               tx,
+              "abilities",
               plan.abilities.map((ability) => ({ characterId, ...ability })),
             );
             for (const { columns, rows } of plan.levels) {
               const [level] = await CharacterLevels.create(tx, { characterId, ...columns });
               await createLevelRows(tx, level.id, rows);
             }
-            await CharacterLanguages.createMany(
+            await CharacterLinks.createMany(
               tx,
+              "languages",
               plan.languageIds.map((languageId) => ({ characterId, languageId })),
             );
             await CharacterInventory.createMany(

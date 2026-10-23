@@ -7,9 +7,9 @@ import type {
   PlacementQuery,
 } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
-import type { RulesetView } from "@/engine/core/view/index.ts";
+import type { Item, RulesetView } from "@/engine/core/view/index.ts";
 import ItemPlacement from "@/engine/rulesets/dnd3.5/rules/ItemPlacement.ts";
-import type { Item, Property } from "@/shared/relations.ts";
+import type { Property } from "@/shared/relations.ts";
 
 import Equipping from "./Equipping.ts";
 

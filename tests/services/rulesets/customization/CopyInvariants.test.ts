@@ -1,16 +1,18 @@
 import { expect, test } from "bun:test";
 
+import type { Feat } from "@/engine/index.ts";
 import { CustomizationCopies } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { Feats, Modifiers, Requirements } from "@/server/repositories/index.ts";
+import { Entities, Modifiers, Requirements } from "@/server/repositories/index.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { makeSession } from "@/tests/support/users.ts";
 
 async function setup() {
   const session = makeSession();
   const ruleset = await createSeededTestRuleset(session.userId);
-  const [source, ...targets] = await Feats.createMany(
+  const [source, ...targets] = await Entities.createMany<Feat>(
     db,
+    "feats",
     ["Source", "Target A", "Target B"].map((name) => ({ name: `Copy ${name}`, rulesetId: ruleset.id })),
   );
   const [modifier] = await Modifiers.createMany(db, [

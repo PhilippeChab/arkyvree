@@ -33,8 +33,7 @@ abstract class BaseRepository<T extends Table> {
 
   /**
    * The table's column `name`, one every table a concern reads has (`deletedAt`, `updatedAt`, `id`, `rulesetId`,
-   * `campaignId`), which the table's generic type can't promise: a table without it throws. A repository whose rows
-   * are read from the generic tables answers what holds it (`RulesetEntityRepository`).
+   * `campaignId`), which the table's generic type can't promise: a table without it throws.
    */
   protected column(name: string): SQL {
     const column: Column | undefined = getTableColumns(this.table)[name];

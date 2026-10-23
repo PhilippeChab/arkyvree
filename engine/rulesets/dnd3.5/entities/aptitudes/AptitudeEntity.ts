@@ -3,8 +3,8 @@
 import { RulesetEntity } from "@/engine/core/entities/index.ts";
 import { FieldCodec } from "@/engine/core/fields/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
+import type { Aptitude } from "@/engine/core/view/index.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
-import type { Aptitude } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 /** An aptitude's form: its name and description. */
@@ -35,6 +35,13 @@ export default class AptitudeEntity extends RulesetEntity<"aptitudes", AptitudeB
   /** A form's columns. */
   protected override columnsOf({ description, name }: AptitudeBody) {
     return { description, name };
+  }
+
+  /** A page of the ruleset's aptitudes: a kind's pools when its query says (`scope`: the feats', the spells' lists). */
+  override openList(where: { childOnly?: boolean; scope?: "feats" | "spells" }) {
+    const joins = { feats: "feats_aptitudes", spells: "powers_aptitudes" } as const;
+    const list = super.openList(where);
+    return { ...list, filters: where.scope ? { ...list.filters, joinedBy: joins[where.scope] } : list.filters };
   }
 
   /**

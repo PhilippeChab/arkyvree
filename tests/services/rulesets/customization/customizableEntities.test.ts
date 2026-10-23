@@ -1,8 +1,9 @@
 import { describe, expect, test } from "bun:test";
 
+import type { Feat } from "@/engine/index.ts";
 import { db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
-import { Feats } from "@/server/repositories/index.ts";
+import { Entities } from "@/server/repositories/index.ts";
 import { checkCustomizedEntity } from "@/server/services/rulesets/customization/customizableEntities.ts";
 import type { Modifier, Property } from "@/shared/relations.ts";
 import { createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
@@ -41,7 +42,7 @@ function propertyOn(entityId: string, entityType: string): Property {
 describe("customizableEntities", () => {
   test("checkCustomizedEntity needs the entity a customization is made on to exist", async () => {
     const { ruleset } = await createTestUserAndRuleset();
-    const [feat] = await Feats.create(db, { rulesetId: ruleset.id, name: "Test Feat" });
+    const [feat] = await Entities.create<Feat>(db, "feats", { rulesetId: ruleset.id, name: "Test Feat" });
 
     for (const customization of [modifierOn(feat.id, "feats"), propertyOn(feat.id, "feats")])
       expect(await checkCustomizedEntity(customization)).toBeUndefined();

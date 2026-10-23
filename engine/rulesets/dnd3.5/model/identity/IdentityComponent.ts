@@ -1,9 +1,9 @@
 import { CharacterComponent } from "@/engine/core/character/index.ts";
+import type { Language } from "@/engine/core/view/index.ts";
 import type ClassesComponent from "@/engine/rulesets/dnd3.5/model/classes/ClassesComponent.ts";
 import type LanguagesComponent from "@/engine/rulesets/dnd3.5/model/languages/LanguagesComponent.ts";
 import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
 import type { CustomizedRace } from "@/engine/rulesets/dnd3.5/model/loading/loadedEntities.ts";
-import { type Language } from "@/shared/relations.ts";
 
 interface IdentityData {
   background: {

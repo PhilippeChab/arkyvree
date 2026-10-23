@@ -5,6 +5,7 @@ import {
   CowSources,
   type RulesetSources,
 } from "@/engine/core/cow/index.ts";
+import type { StoredEntity, StoredRuleset } from "@/engine/core/module/index.ts";
 import {
   type EntityCustomizations,
   RulesetComposition,
@@ -13,9 +14,30 @@ import {
   SiblingMerge,
 } from "@/engine/core/view/index.ts";
 import type { BaseRules } from "@/shared/enums.ts";
+import type { Modifier, Requirement } from "@/shared/relations.ts";
 
 import Modules from "./Modules.ts";
 import StorageEngine from "./StorageEngine.ts";
+
+/** A ruleset's own stored rows, as the server reads them for its view (`buildRawData`). */
+export interface StoredRulesetRows {
+  /** Its live entities, every kind's, by name then id */
+  entities: StoredEntity[];
+  /** Of `targets`, those a link of a join with a tier points at, from any ruleset (a spell list's at a level) */
+  leveledAptitudeIds: Set<string>;
+  /** Every modifier whose source is one of its entities, every requirement of them or of those modifiers */
+  modifiers: Modifier[];
+  requirements: Requirement[];
+  /** Its own settings, none for a campaign's rows */
+  ruleset?: StoredRuleset;
+  /** The entities its entities' lists name (a feat's pools' aptitudes), wherever they're from */
+  targets: StoredEntity[];
+}
+
+/** A name in camelCase (`klass_level_feats`'s `klassLevelFeats`): a ruleset's raw rows' key of a kind's or a join's. */
+function camelCase(name: string) {
+  return name.replace(/_([a-z])/g, (_, letter: string) => letter.toUpperCase());
+}
 
 /**
  * Whether a property type holds a single value, as every module stores it: a field that isn't a set, or a property a
@@ -39,6 +61,45 @@ export default class CopyOnWriteEngine {
   /** A ruleset's copy-on-write data, from the rows read for it (`getReads`, `getPairedKlassIds`). */
   buildData(ruleset: RulesetSources, rows: CowRows): CowData {
     return CowDataBuilder.build(ruleset, rows);
+  }
+
+  /**
+   * A ruleset's own rows as its view composes them, off its stored rows (`stored`): each kind's rows by its type, as its
+   * module's declaration reads them (a list's with its lists), an owned kind's by position and owner, and only those
+   * whose owner it holds; each join's rows of its entities but those a kind's list carries; their properties and its
+   * own settings', its modifiers and requirements.
+   */
+  buildRawData(stored: StoredRulesetRows): RulesetRawData {
+    const storage = StorageEngine.shared();
+    const targets = new Map(stored.targets.map((target) => [target.id, target]));
+    const types = storage.registries().entityTypes;
+    const ids = new Set(stored.entities.map((entity) => entity.id));
+    const live = stored.entities.filter((entity) => entity.ownerId === null || ids.has(entity.ownerId));
+    const raw: Record<string, unknown> = {};
+    for (const { ownerType, type } of types) {
+      const ofType = live.filter((entity) => entity.type === type);
+      if (ownerType) {
+        ofType.sort(
+          (a, b) => a.position! - b.position! || (a.ownerId! < b.ownerId! ? -1 : a.ownerId! > b.ownerId! ? 1 : 0),
+        );
+      }
+      raw[camelCase(type)] = ofType.map((entity) => storage.rowOf(entity, { targets }));
+    }
+    const listed = new Set(
+      types.flatMap(({ type }) => Object.values(storage.kind(type).lists ?? {}).map((list) => list.join)),
+    );
+    for (const join of storage.joinNames().filter((name) => !listed.has(name)))
+      raw[camelCase(join)] = storage.joinRowsOf(join, live);
+    return {
+      ...(raw as Omit<RulesetRawData, "leveledAptitudeIds" | "modifiers" | "properties" | "requirements">),
+      leveledAptitudeIds: stored.leveledAptitudeIds,
+      modifiers: stored.modifiers,
+      properties: storage.propertiesOf({
+        entities: live,
+        rulesets: stored.ruleset ? [stored.ruleset] : [],
+      }) as RulesetRawData["properties"],
+      requirements: stored.requirements,
+    };
   }
 
   /** A ruleset's source chain: its extensions first (their new entities are visible), then its ancestors. */

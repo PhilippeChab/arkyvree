@@ -1,10 +1,9 @@
 import type { GetterOf, PathCategory } from "@/engine/core/paths/PathCategory.ts";
 import PathTraverser, { type Components, type TraversePathResult } from "@/engine/core/paths/PathTraverser.ts";
-import type { RulesetData } from "@/engine/core/view/index.ts";
+import type { RulesetData, Skill } from "@/engine/core/view/index.ts";
 import { type Dnd35Components } from "@/engine/rulesets/dnd3.5/model/CharacterComponents.ts";
 import { getNumericOperators, getOperators } from "@/shared/customization/operators.ts";
 import { deriveNameLabels, deriveSegmentLabels, isLeafOfKind, type TargetPath } from "@/shared/customization/target.ts";
-import type { Skill } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 import type SkillsComponent from "./SkillsComponent.ts";

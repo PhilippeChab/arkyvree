@@ -1,3 +1,4 @@
+import type { Klass, KlassLevel } from "@/engine/index.ts";
 import { EntityRepositories } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import {
@@ -6,9 +7,8 @@ import {
   CharacterContributors,
   Characters,
   Contributors,
+  Entities,
   Invites,
-  Klasses,
-  KlassLevels,
   Modifiers,
   PlayerCharacters,
   Players,
@@ -53,7 +53,7 @@ class ActivitiesService {
 
   /** A class's page (on its skills, `section`; else its first tab, its base rules'), or null when the class is gone. */
   private async klassSectionUrl(klassId: string, section?: "skills") {
-    const klass = await Klasses.findOne(db, { id: klassId });
+    const klass = await Entities.findOne<Klass>(db, { entityType: "klasses", id: klassId });
     if (!klass) return null;
     return classPageUrl(klass.rulesetId, klass.id, section);
   }
@@ -70,7 +70,7 @@ class ActivitiesService {
       return await this.ownerRulesetId(modifier.sourceId, modifier.sourceType);
     }
     if (entityType === "klass_levels") {
-      const klassLevel = await KlassLevels.findOne(db, { id: entityId });
+      const klassLevel = await Entities.findOne<KlassLevel>(db, { entityType: "klass_levels", id: entityId });
       return klassLevel ? await this.ownerRulesetId(klassLevel.klassId, "klasses") : null;
     }
     if (!isOneOf(entityType, RULESET_ENTITY_TYPES)) return null;
@@ -148,7 +148,7 @@ class ActivitiesService {
 
       // Class sub-entities
       case "klass_levels": {
-        const klassLevel = await KlassLevels.findOne(db, { id: targetId });
+        const klassLevel = await Entities.findOne<KlassLevel>(db, { entityType: "klass_levels", id: targetId });
         return klassLevel ? await this.klassSectionUrl(klassLevel.klassId) : null;
       }
       // targetId is klassId for klassSkills activities

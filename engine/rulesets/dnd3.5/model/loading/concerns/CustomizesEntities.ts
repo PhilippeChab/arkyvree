@@ -1,5 +1,5 @@
 import type { CharacterDataLoader } from "@/engine/core/character/index.ts";
-import type { RulesetData } from "@/engine/core/view/index.ts";
+import type { KlassLevel, Race, RulesetData } from "@/engine/core/view/index.ts";
 import { CLASS_LEVEL_FIELDS } from "@/engine/rulesets/dnd3.5/entities/classes/fields.ts";
 import { RACE_FIELDS } from "@/engine/rulesets/dnd3.5/entities/races/fields.ts";
 import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
@@ -12,7 +12,6 @@ import type {
   HeldPower,
 } from "@/engine/rulesets/dnd3.5/model/loading/loadedEntities.ts";
 import type { Constructor } from "@/lib/mixins.ts";
-import type { KlassLevel, Race } from "@/shared/relations.ts";
 
 /** The customizations a character's entities carry, from the view: their modifiers, properties and requirements. */
 export function CustomizesEntities<B extends Constructor<CharacterDataLoader<LoadedCharacterData>>>(Base: B) {

@@ -5,17 +5,11 @@
 
 import { describe, expect, test } from "bun:test";
 
+import type { RulesetAbility, RulesetSave, Skill } from "@/engine/index.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { ForbiddenError } from "@/server/errors/index.ts";
-import {
-  Abilities,
-  FeatsAptitudes,
-  PowersAptitudes,
-  Requirements,
-  Saves,
-  Skills,
-} from "@/server/repositories/index.ts";
+import { Entities, Joins, Requirements } from "@/server/repositories/index.ts";
 import { AptitudesService } from "@/server/services/rulesets/aptitudes/index.ts";
 import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
@@ -184,25 +178,34 @@ const FORM_REFS: Record<
     kind: "aptitudes",
     label: "Aptitude",
     ref: "featAptitudeId",
-    stored: async (id) => (await FeatsAptitudes.findMany(db, { featIds: [id] })).map(({ aptitudeId }) => aptitudeId),
+    stored: async (id) =>
+      (
+        await Joins.findMany<{ aptitudeId: string; featId: string }>(db, { join: "feats_aptitudes", fromIds: [id] })
+      ).map(({ aptitudeId }) => aptitudeId),
   },
   powers: {
     kind: "aptitudes",
     label: "Aptitude",
     ref: "powerAptitudeId",
-    stored: async (id) => (await PowersAptitudes.findMany(db, { powerIds: [id] })).map(({ aptitudeId }) => aptitudeId),
+    stored: async (id) =>
+      (
+        await Joins.findMany<{ aptitudeId: string; level: number | null; powerId: string }>(db, {
+          join: "powers_aptitudes",
+          fromIds: [id],
+        })
+      ).map(({ aptitudeId }) => aptitudeId),
   },
   saves: {
     kind: "abilities",
     label: "Ability",
     ref: "abilityId",
-    stored: async (id) => [(await Saves.findOne(db, { id }))?.abilityId],
+    stored: async (id) => [(await Entities.findOne<RulesetSave>(db, { entityType: "saves", id }))?.abilityId],
   },
   skills: {
     kind: "abilities",
     label: "Ability",
     ref: "abilityId",
-    stored: async (id) => [(await Skills.findOne(db, { id }))?.primaryAbilityId],
+    stored: async (id) => [(await Entities.findOne<Skill>(db, { entityType: "skills", id }))?.primaryAbilityId],
   },
 };
 
@@ -230,7 +233,11 @@ async function remaining(ids: string[]) {
 /** A new user's empty ruleset, holding the rows entity bodies refer to. */
 async function setup() {
   const { user, session, ruleset } = await createTestUserAndRuleset();
-  const [ability] = await Abilities.create(db, { rulesetId: ruleset.id, name: "Strength", description: "Strength" });
+  const [ability] = await Entities.create<RulesetAbility>(db, "abilities", {
+    rulesetId: ruleset.id,
+    name: "Strength",
+    description: "Strength",
+  });
   const featAptitude = await AptitudesService.createAptitude(session, ruleset.id, { name: "Feat Aptitude" });
   const powerAptitude = await AptitudesService.createAptitude(session, ruleset.id, { name: "Power Aptitude" });
   const refs: Refs = { abilityId: ability.id, featAptitudeId: featAptitude.id, powerAptitudeId: powerAptitude.id };

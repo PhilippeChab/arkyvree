@@ -18,6 +18,7 @@ export const DND35_STORAGE: StorageDeclaration = {
         selectable: { kind: "flag", field: "FEAT_SELECTABLE", default: true },
         generated: { kind: "flag", field: "FEAT_GENERATED", default: false },
       },
+      lists: { featsAptitudesInRules: { join: "feats_aptitudes", target: "aptitudesInRule" } },
     },
     items: {
       columns: {
@@ -48,6 +49,7 @@ export const DND35_STORAGE: StorageDeclaration = {
         saveId: { kind: "link", role: "resistedBy" },
         saveEffect: { kind: "text", field: "POWER_SAVE_EFFECT" },
       },
+      lists: { powersAptitudesInRules: { join: "powers_aptitudes", target: "aptitudesInRule" } },
     },
     races: {
       columns: {

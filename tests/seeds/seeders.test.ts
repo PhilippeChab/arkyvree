@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { and, eq, type SQL } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
 import * as r from "@/content/core/builders/customization/requirements.ts";
 import type { ItemSeed } from "@/content/core/builders/items/types.ts";
@@ -11,18 +11,20 @@ import type { SpellSeed } from "@/content/dnd3.5/builders/spells/types.ts";
 import { ALL_CLASSES as SRD_CLASSES } from "@/content/dnd3.5/generated/srd/classes/index.ts";
 import type { SeedContext } from "@/database/seeders/core/SeederState.ts";
 import { findSpellcastingClass } from "@/database/seeders/dnd3.5/spellTable.ts";
-import { entitiesInRules, entitySnapshotsInRules, requirementsInCustomization } from "@/drizzle/schema.ts";
-import { db } from "@/server/database/index.ts";
+import { entitySnapshotsInRules, requirementsInCustomization } from "@/drizzle/schema.ts";
 import {
-  FeatsAptitudes,
-  KlassLevelFeats,
-  KlassLevelSaves,
-  KlassSkills,
-  PowersAptitudes,
-} from "@/server/repositories/index.ts";
-import StoredEntities from "@/server/repositories/stored/StoredEntities.ts";
-import StoredJoins from "@/server/repositories/stored/StoredJoins.ts";
-import type { Feat, Item, Klass, KlassLevelFeat, Power, Race } from "@/shared/relations.ts";
+  Engine,
+  type Feat,
+  type Item,
+  type Klass,
+  type KlassLevelFeat,
+  type KlassLevelSave,
+  type KlassSkill,
+  type Power,
+  type Race,
+} from "@/engine/index.ts";
+import { db } from "@/server/database/index.ts";
+import { Entities, Joins } from "@/server/repositories/index.ts";
 import {
   FEAT_FAMILY,
   KLASS_BONUS_SPELL_ABILITY_ID,
@@ -126,7 +128,9 @@ function spell(name: string, level: number, fields: Partial<SpellSeed> = {}): Sp
 
 async function aptitudesOfFeat(ctx: SeedContext, featId: string) {
   const aptitudes = namesOf(ctx.aptMap);
-  return (await FeatsAptitudes.findMany(db, { featId })).map((link) => aptitudes[link.aptitudeId]).sort();
+  return (await Joins.findMany<{ aptitudeId: string }>(db, { join: "feats_aptitudes", fromIds: [featId] }))
+    .map((link) => aptitudes[link.aptitudeId])
+    .sort();
 }
 
 /** Each level's properties (base attack, skill points), saves, modifiers, requirements and granted feats. */
@@ -135,8 +139,8 @@ async function levelsOf(ctx: SeedContext, levelIds: Record<number, string>) {
   const feats = namesOf(ctx.featMap);
   const aptitudes = namesOf(ctx.aptMap);
   const ids = Object.values(levelIds);
-  const levelSaves = await KlassLevelSaves.findMany(db, { klassLevelIds: ids });
-  const granted = await KlassLevelFeats.findMany(db, { klassLevelIds: ids });
+  const levelSaves = await Joins.findMany<KlassLevelSave>(db, { join: "klass_level_saves", fromIds: ids });
+  const granted = await Joins.findMany<KlassLevelFeat>(db, { join: "klass_level_feats", fromIds: ids });
   const levels = [];
   for (const [level, id] of Object.entries(levelIds)) {
     const { properties, modifiers, requirements } = await describeCustomizations(id);
@@ -155,18 +159,21 @@ async function levelsOf(ctx: SeedContext, levelIds: Record<number, string>) {
   return levels;
 }
 
-/** A kind's rows (`type`), as its repository reads them, that `where` picks among its entities. */
-async function rowsOf<R>(type: string, where: SQL) {
-  return (await db
-    .select(StoredEntities.buildColumns(type))
-    .from(entitiesInRules)
-    .where(and(StoredEntities.buildScope(type), where))) as unknown as R[];
+/** A kind's rows (`type`), as its repository reads them: an entity's (`id`), or a ruleset's own (`rulesetId`). */
+async function rowsOf<R>(type: string, where: { id: string } | { rulesetId: string }) {
+  const stored = await Entities.findStored(db, "id" in where ? { ids: [where.id] } : where);
+  return stored.filter((entity) => entity.type === type).map((entity) => Engine.storage().rowOf(entity) as R);
 }
 
 /** The spell lists a power is in, "aptitude level" each. */
 async function spellListsOf(ctx: SeedContext, powerId: string) {
   const aptitudes = namesOf(ctx.aptMap);
-  return (await PowersAptitudes.findMany(db, { powerId }))
+  return (
+    await Joins.findMany<{ aptitudeId: string; level: number | null }>(db, {
+      join: "powers_aptitudes",
+      fromIds: [powerId],
+    })
+  )
     .map((link) => `${aptitudes[link.aptitudeId]} ${link.level}`)
     .sort();
 }
@@ -253,7 +260,7 @@ describe("Seeding", () => {
         { name: "Test Toughness", description: "", aptitudes: [], stackable: true, selectable: false },
       ]);
 
-      const rows = await rowsOf<Feat>("feats", eq(entitiesInRules.rulesetId, ctx.rulesetId));
+      const rows = await rowsOf<Feat>("feats", { rulesetId: ctx.rulesetId });
       expect(
         rows
           .map(({ id, name, description, stackable, selectable }) => ({
@@ -333,7 +340,7 @@ describe("Seeding", () => {
         }),
       );
 
-      const [row] = await rowsOf<Klass>("klasses", eq(entitiesInRules.id, klassId));
+      const [row] = await rowsOf<Klass>("klasses", { id: klassId });
       expect(row).toMatchObject({
         rulesetId: ctx.rulesetId,
         name: "Test Mage",
@@ -350,10 +357,11 @@ describe("Seeding", () => {
         ].sort(),
       });
       const skills = namesOf(ctx.skillMap);
-      expect((await KlassSkills.findMany(db, { klassIds: [klassId] })).map((s) => skills[s.skillId]).sort()).toEqual([
-        "Climb",
-        "Spot",
-      ]);
+      expect(
+        (await Joins.findMany<KlassSkill>(db, { join: "klass_skills", fromIds: [klassId] }))
+          .map((s) => skills[s.skillId])
+          .sort(),
+      ).toEqual(["Climb", "Spot"]);
 
       const slot = (spellLevel: number, kind: string, operator: string, value: number) =>
         `aptitudes.testmagespells.${spellLevel}.${kind} ${operator} ${value} number`;
@@ -418,7 +426,7 @@ describe("Seeding", () => {
           spells: { slug: "testhealerspells", perDay: [[1], [2], [2, 1]], knowAll: true, noCantrips: true },
         }),
       );
-      expect((await rowsOf<Klass>("klasses", eq(entitiesInRules.id, klassId)))[0].kind).toBe("npc");
+      expect((await rowsOf<Klass>("klasses", { id: klassId }))[0].kind).toBe("npc");
       expect(await describeCustomizations(klassId)).toEqual({ requirements: [], modifiers: [], properties: [] });
       const levels = await levelsOf(ctx, levelIds);
       expect(levels.map(({ level, properties, modifiers }) => ({ level, properties, modifiers }))).toEqual([
@@ -488,7 +496,7 @@ describe("Seeding", () => {
     );
 
     const names = namesOf({ ...templates, ...made });
-    const rows = await rowsOf<Item>("items", eq(entitiesInRules.rulesetId, ctx.rulesetId));
+    const rows = await rowsOf<Item>("items", { rulesetId: ctx.rulesetId });
     expect(
       rows
         .map(({ name, isTemplate, slot, sourceItemId }) => ({
@@ -534,7 +542,7 @@ describe("Seeding", () => {
     ]);
 
     const saves = namesOf(ctx.saveMap);
-    const powers = await rowsOf<Power>("powers", eq(entitiesInRules.rulesetId, ctx.rulesetId));
+    const powers = await rowsOf<Power>("powers", { rulesetId: ctx.rulesetId });
     expect(
       powers
         .map(({ id, name, saveId, saveEffect }) => ({
@@ -579,7 +587,7 @@ describe("Seeding", () => {
       "familiar",
     );
 
-    const rows = await rowsOf<Race>("races", eq(entitiesInRules.rulesetId, ctx.rulesetId));
+    const rows = await rowsOf<Race>("races", { rulesetId: ctx.rulesetId });
     expect(
       rows
         .map(({ name, size, baseSpeed, kind }) => ({ name, size, baseSpeed, kind }))
@@ -618,7 +626,7 @@ describe("Seeding", () => {
     );
 
     const featId = ctx.featMap["Test Luck Domain"];
-    const [feat] = await rowsOf<Feat>("feats", eq(entitiesInRules.id, featId));
+    const [feat] = await rowsOf<Feat>("feats", { id: featId });
     expect(feat.description).toBe("Luck");
     expect(await aptitudesOfFeat(ctx, featId)).toEqual(["Cleric Domain"]);
     expect(await describeCustomizations(featId)).toEqual({
@@ -691,18 +699,14 @@ describe("Seeding", () => {
     });
 
     expect(await aptitudesOfFeat(ctx, ctx.featMap["Test Alertness"])).toEqual(["Test Familiar Feature"]);
-    expect(await rowsOf<Race>("races", eq(entitiesInRules.rulesetId, ctx.rulesetId))).toMatchObject([
+    expect(await rowsOf<Race>("races", { rulesetId: ctx.rulesetId })).toMatchObject([
       { name: "Test Cat", kind: "familiar" },
     ]);
-    expect(await rowsOf<Klass>("klasses", eq(entitiesInRules.rulesetId, ctx.rulesetId))).toMatchObject([
+    expect(await rowsOf<Klass>("klasses", { rulesetId: ctx.rulesetId })).toMatchObject([
       { name: "Test Familiar", kind: "familiar" },
     ]);
     expect(
-      await StoredJoins.findRows<KlassLevelFeat>(
-        db,
-        "klass_level_feats",
-        eq(StoredJoins.getPart("to"), ctx.featMap["Test Alertness"]),
-      ),
+      await Joins.findMany<KlassLevelFeat>(db, { join: "klass_level_feats", toIds: [ctx.featMap["Test Alertness"]] }),
     ).toMatchObject([{ aptitudeId: ctx.aptMap["Test Familiar Feature"], free: true }]);
   });
 
@@ -746,7 +750,7 @@ describe("Seeding", () => {
         { feat: "Test Unseeded", requirements: [{ className: "ranger", level: 2 }], aptitudes: [] },
       ]);
 
-      const copies = await rowsOf<Feat>("feats", eq(entitiesInRules.rulesetId, ctx.rulesetId));
+      const copies = await rowsOf<Feat>("feats", { rulesetId: ctx.rulesetId });
       expect(
         copies
           .map(({ id, name }) => ({ named: ctx.featMap[name] === id, name }))
@@ -839,7 +843,7 @@ describe("Seeding", () => {
       ]);
 
       const boltId = ctx.powerMap["Test Bolt"];
-      const [bolt] = await rowsOf<Power>("powers", eq(entitiesInRules.id, boltId));
+      const [bolt] = await rowsOf<Power>("powers", { id: boltId });
       expect(bolt).toMatchObject({ rulesetId: ctx.rulesetId, name: "Test Bolt", saveEffect: "See text" });
       expect(await spellListsOf(ctx, boltId)).toEqual(["Arcane Spells 2", "Wizard Spells 3"]);
       expect((await describeCustomizations(boltId)).properties).toEqual([`${SPELL_SCHOOL} Evocation`]);
@@ -867,7 +871,7 @@ describe("Seeding", () => {
       ]);
       const light = grandchild.powerMap["Test Light"];
       expect(light).not.toBe(core.powerMap["Test Light"]);
-      expect((await rowsOf<Power>("powers", eq(entitiesInRules.id, light)))[0]).toMatchObject({
+      expect((await rowsOf<Power>("powers", { id: light }))[0]).toMatchObject({
         rulesetId: grandchild.rulesetId,
         name: "Test Light",
       });

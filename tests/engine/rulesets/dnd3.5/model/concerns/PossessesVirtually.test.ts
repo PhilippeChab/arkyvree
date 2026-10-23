@@ -1,11 +1,12 @@
 import { describe, expect, test } from "bun:test";
 
 import { DND35_COMPLETE_ADVENTURER_NAME } from "@/content/dnd3.5/rulesetNames.ts";
+import type { Aptitude, Feat, Klass } from "@/engine/index.ts";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import { addClassLevels, createCharacter } from "@/scripts/db/seeds/seedCharacter.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { db } from "@/server/database/index.ts";
-import { Aptitudes, Characters, Feats, Klasses, Modifiers, Requirements } from "@/server/repositories/index.ts";
+import { Characters, Entities, Modifiers, Requirements } from "@/server/repositories/index.ts";
 import type { Requirement } from "@/shared/relations.ts";
 import { buildAs } from "@/tests/support/dnd3.5/characters.ts";
 import { addCharacterLevel, findKlassLevel } from "@/tests/support/levels.ts";
@@ -275,9 +276,21 @@ describe("A grant", () => {
         extensionRulesetIds: [book.id],
       });
       const characterId = await seedHuman("Catlord", { rulesetId: fork.id });
-      const animalLord = (await Klasses.findOne(db, { name: "Animal Lord", rulesetId: book.id }))!;
-      const catlord = (await Feats.findOne(db, { name: "Catlord (Animal Lord)", rulesetId: book.id }))!;
-      const bond = (await Aptitudes.findOne(db, { name: "Animal Lord Animal Bond", rulesetId: book.id }))!;
+      const animalLord = (await Entities.findOne<Klass>(db, {
+        entityType: "klasses",
+        name: "Animal Lord",
+        rulesetId: book.id,
+      }))!;
+      const catlord = (await Entities.findOne<Feat>(db, {
+        entityType: "feats",
+        name: "Catlord (Animal Lord)",
+        rulesetId: book.id,
+      }))!;
+      const bond = (await Entities.findOne<Aptitude>(db, {
+        entityType: "aptitudes",
+        name: "Animal Lord Animal Bond",
+        rulesetId: book.id,
+      }))!;
       for (let level = 1; level <= 6; level++) {
         const picks = level === 1 ? { feats: [{ featId: catlord.id, aptitudeId: bond.id }] } : {};
         await addCharacterLevel(characterId, (await findKlassLevel(animalLord.id, level))!.id, picks);

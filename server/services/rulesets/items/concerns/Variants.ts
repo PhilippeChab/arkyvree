@@ -1,8 +1,8 @@
-import { Engine } from "@/engine/index.ts";
+import { Engine, type Item } from "@/engine/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { CustomizationCopies, EntityNames, RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
-import { Items } from "@/server/repositories/index.ts";
+import { Entities } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import type { Session } from "@/shared/relations.ts";
@@ -38,7 +38,7 @@ export function Variants<B extends Constructor>(Base: B) {
 
             const created = [];
             for (const row of plan.rows) {
-              const [item] = await Items.create(tx, { ...row, rulesetId });
+              const [item] = await Entities.create<Item>(tx, "items", { ...row, rulesetId });
               const tombstoneAncestorId = tombstones.get(item.name);
               if (tombstoneAncestorId) await names.repointTombstone(tx, "items", tombstoneAncestorId, item.id);
 
@@ -73,7 +73,13 @@ export function Variants<B extends Constructor>(Base: B) {
       return await withRulesetScope(db, rulesetId, async (scope) => {
         const { rulesetData } = scope;
         const { filters } = Engine.for(scope).entities("items").openTemplates(type);
-        return await Items.findMany(db, { rulesetId, ...rulesetData.cow.listFilters, ...filters });
+        return await Entities.findList<Item>(db, {
+          entityType: "items",
+          rulesetId,
+          ...rulesetData.cow.listFilters,
+          ...filters,
+          order: "name",
+        });
       });
     }
   }

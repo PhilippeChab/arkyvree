@@ -1,12 +1,12 @@
 import CategoryPaths from "@/engine/core/paths/CategoryPaths.ts";
 import type { PathCategory } from "@/engine/core/paths/PathCategory.ts";
-import type { RulesetData } from "@/engine/core/view/index.ts";
+import type { PowerWithAptitudes, RulesetData } from "@/engine/core/view/index.ts";
 import { type Dnd35Components } from "@/engine/rulesets/dnd3.5/model/CharacterComponents.ts";
 import SpellLists from "@/engine/rulesets/dnd3.5/rules/SpellLists.ts";
 import { getOperators } from "@/shared/customization/operators.ts";
 import { formatPropertyType } from "@/shared/customization/properties.ts";
 import { deriveNameLabels, deriveSegmentLabels, isLeafOfKind, type TargetPath } from "@/shared/customization/target.ts";
-import type { PowerWithAptitudes, Property } from "@/shared/relations.ts";
+import type { Property } from "@/shared/relations.ts";
 import { capitalize, stripSeparators } from "@/shared/text.ts";
 import { SPELL_DESCRIPTOR, SPELL_SCHOOL } from "@/vocabulary/dnd3.5/properties/index.ts";
 

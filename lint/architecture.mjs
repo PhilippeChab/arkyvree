@@ -29,7 +29,7 @@
  *   itself: the job queue, a channel's notifications, its health), nowhere else in the server. A transaction's handle
  *   is named `tx`, the name it knows a query by.
  * - `generic-rows`: the generic tables' raw rows (an entity's fields and links, a ruleset's, a character's fields) are read
- *   and written in `server/repositories/` alone, where the stored rows' adapters (`server/repositories/stored/`) give
+ *   and written in `server/repositories/` alone, where the generic repositories (`server/repositories/stored/`) give
  *   them their meaning by what each module declares: everything else reads a kind's rows, a join's, properties.
  * - `folder-index`: code outside a folder that has an `index.ts` imports it through that index (the service folders,
  *   `cow/`, `policies/`, the client's component folders; code outside a client component folder enters it at its

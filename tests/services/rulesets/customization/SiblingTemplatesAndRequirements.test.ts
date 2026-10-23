@@ -1,8 +1,9 @@
 import { expect, test } from "bun:test";
 
+import type { Feat, Item } from "@/engine/index.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { Feats, Items, Properties, Requirements, Rulesets } from "@/server/repositories/index.ts";
+import { Entities, Properties, Requirements, Rulesets } from "@/server/repositories/index.ts";
 import { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";
 import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
 import { ItemsService } from "@/server/services/rulesets/items/index.ts";
@@ -32,14 +33,18 @@ async function setup(
   const source =
     entityType === "items"
       ? (
-          await Items.create(db, {
+          await Entities.create<Item>(db, "items", {
             rulesetId: host.ancestorRulesetIds[0],
             name: "Audit Template",
             type: "Weapon",
             isTemplate: true,
           })
         )[0]
-      : (await Feats.findOne(db, { rulesetId: host.ancestorRulesetIds[0], name: "Toughness" }))!;
+      : (await Entities.findOne<Feat>(db, {
+          entityType: "feats",
+          rulesetId: host.ancestorRulesetIds[0],
+          name: "Toughness",
+        }))!;
   if (entityType === "items") invalidateSeededRuleset(host.ancestorRulesetIds[0]);
   const copies: string[] = [];
   const extensionIds: string[] = [];

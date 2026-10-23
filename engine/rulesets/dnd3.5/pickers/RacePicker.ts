@@ -35,7 +35,7 @@ export default class RacePicker extends Picker<{ id: string }> {
   private readonly targetPaths = new Dnd35TargetPaths();
 
   /** What the picker offers: a player character's races. */
-  override readonly filters = { kind: "pc" };
+  override readonly filters = { columns: { kind: "pc" } };
 
   /** No tree: the form has no character to word it for. */
   protected override describeFailed() {

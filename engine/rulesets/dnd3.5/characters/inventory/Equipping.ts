@@ -2,14 +2,13 @@
 
 import type { CharacterInput } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
-import type { RulesetView } from "@/engine/core/view/index.ts";
+import type { Item, RulesetView } from "@/engine/core/view/index.ts";
 import { ITEM_FIELDS } from "@/engine/rulesets/dnd3.5/entities/items/fields.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import Dnd35CharacterBuilder from "@/engine/rulesets/dnd3.5/model/Dnd35CharacterBuilder.ts";
 import ItemPlacement from "@/engine/rulesets/dnd3.5/rules/ItemPlacement.ts";
 import type { ItemLocation } from "@/shared/enums.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
-import type { Item } from "@/shared/relations.ts";
 import { ITEM_TYPE_LOCATIONS, MAX_FINGER_ITEMS, SINGLE_OCCUPANCY_LOCATIONS } from "@/vocabulary/dnd3.5/equipment.ts";
 
 /** An inventory entry an item is equipped from: the entry (null for a new one), and its item. */

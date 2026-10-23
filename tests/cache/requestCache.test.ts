@@ -12,10 +12,11 @@
 
 import { beforeAll, describe, expect, test } from "bun:test";
 
+import type { Feat } from "@/engine/index.ts";
 import { type SeedContext } from "@/scripts/db/seeds/seedContext.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { clearRequestCache, memoizeRequest, runWithRequestCache } from "@/server/database/requestCache.ts";
-import { Characters, Feats, Notifications, Rulesets } from "@/server/repositories/index.ts";
+import { Characters, Entities, Notifications, Rulesets } from "@/server/repositories/index.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 
 describe("requestCache — repository Proxy memoization", () => {
@@ -52,8 +53,8 @@ describe("requestCache — repository Proxy memoization", () => {
   test("findOne and findMany are keyed separately even if args overlap", async () => {
     await runWithRequestCache(async () => {
       const featId = Object.values(ctx.featMap)[0];
-      const p1 = Feats.findOne(db, { id: featId });
-      const p2 = Feats.findMany(db, { ids: [featId] });
+      const p1 = Entities.findOne<Feat>(db, { entityType: "feats", id: featId });
+      const p2 = Entities.findMany<Feat>(db, { entityType: "feats", ids: [featId] });
       expect(p1).not.toBe(p2);
       await Promise.all([p1, p2]);
     });

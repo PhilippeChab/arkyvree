@@ -1,13 +1,13 @@
-import { Engine } from "@/engine/index.ts";
+import { Engine, type Skill } from "@/engine/index.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { Skills } from "@/server/repositories/index.ts";
+import { Entities } from "@/server/repositories/index.ts";
 import EntityWriter, { type EntityBody } from "@/server/services/rulesets/EntityWriter.ts";
 import type { Session } from "@/shared/relations.ts";
 
 class SkillsService {
   /** What its creates, updates and deletes write, in one order around the plans its rules give. */
-  private readonly writer = new EntityWriter("skills", Skills);
+  private readonly writer = new EntityWriter("skills");
 
   async createSkill(session: Session, rulesetId: string, body: EntityBody) {
     return await this.writer.create(session, rulesetId, body.name, (scope) =>
@@ -39,9 +39,9 @@ class SkillsService {
   ) {
     return await withRulesetScope(db, rulesetId, async (scope) => {
       const list = Engine.for(scope).entities("skills").openList(where);
-      const result = await Skills.findPage(
+      const result = await Entities.findPage<Skill>(
         db,
-        { rulesetId, ...scope.rulesetData.cow.listFilters, ...where, ...list.filters },
+        { entityType: "skills", rulesetId, ...scope.rulesetData.cow.listFilters, ...where, ...list.filters },
         pagination,
       );
       return { ...result, items: list.describe(result.items) };

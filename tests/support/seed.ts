@@ -1,8 +1,9 @@
+import type { Item } from "@/engine/index.ts";
 import { getSeedContext, type SeedContext } from "@/scripts/db/seeds/seedContext.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { db } from "@/server/database/index.ts";
 import { Visibility } from "@/server/repositories/BaseRepository.ts";
-import { Characters, fetchEveryPage, Items, Rulesets } from "@/server/repositories/index.ts";
+import { Characters, Entities, fetchEveryPage, Rulesets } from "@/server/repositories/index.ts";
 import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 
 let seedContext: Promise<SeedContext> | undefined;
@@ -24,7 +25,11 @@ export function uniqueId() {
 /** An item of the ruleset's own that is neither a template nor a variant: one of type "Other". */
 export async function findPlainItem(rulesetId: string) {
   const items = await fetchEveryPage((pagination) =>
-    Items.findPage(db, { rulesetId, childOnly: true, isTemplate: false }, pagination),
+    Entities.findPage<Item>(
+      db,
+      { entityType: "items", rulesetId, childOnly: true, columns: { isTemplate: false } },
+      pagination,
+    ),
   );
   const item = items.find((candidate) => candidate.sourceItemId === null && candidate.type === "Other");
   if (!item) throw new Error(`The ruleset ${rulesetId} has no plain item`);

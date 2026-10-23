@@ -1,9 +1,10 @@
 import { Validates } from "@/engine/core/character/index.ts";
+import type { KlassLevel } from "@/engine/core/view/index.ts";
 import Dnd35TargetPaths from "@/engine/rulesets/dnd3.5/Dnd35TargetPaths.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import SpellLists from "@/engine/rulesets/dnd3.5/rules/SpellLists.ts";
 import { include } from "@/lib/mixins.ts";
-import type { Character, KlassLevel, Requirement } from "@/shared/relations.ts";
+import type { Character, Requirement } from "@/shared/relations.ts";
 
 import CharacterComponents, { type Dnd35Components } from "./CharacterComponents.ts";
 import CharacterState from "./CharacterState.ts";

@@ -1,8 +1,9 @@
 import { describe, expect, test } from "bun:test";
 
+import type { Feat, Klass, RulesetAbility } from "@/engine/index.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { Abilities, Feats, Klasses, Properties } from "@/server/repositories/index.ts";
+import { Entities, Properties } from "@/server/repositories/index.ts";
 import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
 import { ClassLevelsService } from "@/server/services/rulesets/classes/levels/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
@@ -50,7 +51,7 @@ const WEAPON = {
 async function setup() {
   const { session, ruleset, aptitudeIds } = await createTestUserAndRuleset(["General", "Wizard Spells"]);
   const [featPool, spellList] = aptitudeIds;
-  const [intelligence] = await Abilities.create(db, {
+  const [intelligence] = await Entities.create<RulesetAbility>(db, "abilities", {
     name: "Intelligence",
     description: "Intelligence",
     rulesetId: ruleset.id,
@@ -157,7 +158,7 @@ describe("An entity's fields", () => {
     expect(
       ClassLevelsService.createClassLevel(session, rulesetId, wizard.id, { level: 1, fields: { skills: 100 } }),
     ).rejects.toMatchObject({ refusal: "invalid", issues: [{ category: "fields.skills" }] });
-    expect(await Feats.findOne(db, { name: "Odd", rulesetId })).toBeUndefined();
+    expect(await Entities.findOne<Feat>(db, { entityType: "feats", name: "Odd", rulesetId })).toBeUndefined();
   });
 
   test("hold a spell's school to its ruleset's, a new one bringing its Spell Focus feats", async () => {
@@ -219,7 +220,11 @@ describe("An entity's fields", () => {
     const { abilityMap } = await getSeedCtx();
     const wisdom = await copyEntity(db, "abilities", abilityMap["Wisdom"], fork);
     RulesetViews.invalidate(fork.id);
-    const fighter = await Klasses.findOne(db, { name: "Fighter", rulesetId: fork.rulesetId! });
+    const fighter = await Entities.findOne<Klass>(db, {
+      entityType: "klasses",
+      name: "Fighter",
+      rulesetId: fork.rulesetId!,
+    });
 
     // The seed's ids are the sources': the API takes them, and stores the fork's copy's
     const saved = await ClassesService.updateClass(session, fork.id, fighter!.id, {

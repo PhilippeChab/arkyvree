@@ -1,17 +1,11 @@
 import { describe, expect, test } from "bun:test";
 
 import { charactersInCharacter } from "@/drizzle/schema.ts";
+import type { CharacterLanguage, LevelFeat, LevelPower } from "@/engine/index.ts";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import { db } from "@/server/database/index.ts";
 import { ForbiddenError } from "@/server/errors/index.ts";
-import {
-  CharacterInventory,
-  CharacterLanguages,
-  CharacterLevelFeats,
-  CharacterLevelPowers,
-  CharacterLevels,
-  Characters,
-} from "@/server/repositories/index.ts";
+import { CharacterInventory, CharacterLevels, CharacterLinks, Characters, Picks } from "@/server/repositories/index.ts";
 import { CharactersService } from "@/server/services/characters/index.ts";
 import { activityTypes } from "@/tests/support/activities.ts";
 import { buildAs } from "@/tests/support/dnd3.5/characters.ts";
@@ -36,9 +30,14 @@ describe("Imports", () => {
 
     const levels = await CharacterLevels.findMany(db, { characterId: character.id });
     expect(levels).toHaveLength(8);
-    const feats = await CharacterLevelFeats.findMany(db, { characterLevelIds: levels.map((level) => level.id) });
+    const feats = await Picks.findMany<LevelFeat>(db, {
+      pick: "feats",
+      characterLevelIds: levels.map((level) => level.id),
+    });
     expect(feats).toHaveLength(8);
-    expect(await CharacterLanguages.findMany(db, { characterId: character.id })).toHaveLength(1);
+    expect(
+      await CharacterLinks.findMany<CharacterLanguage>(db, { link: "languages", characterId: character.id }),
+    ).toHaveLength(1);
     expect(await CharacterInventory.findMany(db, { characterId: character.id })).toHaveLength(12);
 
     // Built as the app builds it, it passes every check a level-up runs
@@ -51,7 +50,10 @@ describe("Imports", () => {
   test("writes the spells a sorcerer chose on her levels, which pass every check a level-up runs", async () => {
     const { imported } = await importAsNewUser("selene");
     const levels = await CharacterLevels.findMany(db, { characterId: imported.character.id });
-    const powers = await CharacterLevelPowers.findMany(db, { characterLevelIds: levels.map(({ id }) => id) });
+    const powers = await Picks.findMany<LevelPower>(db, {
+      pick: "powers",
+      characterLevelIds: levels.map(({ id }) => id),
+    });
     expect(powers).toHaveLength(10);
     // Her spells pass; the familiar her file has none of is hers to pick in the app, which the report says
     const built = await buildAs(DetailedCharacter, (await Characters.findOne(db, { id: imported.character.id }))!);
