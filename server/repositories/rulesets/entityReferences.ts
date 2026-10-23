@@ -11,6 +11,12 @@ import {
 
 import type { RulesetEntityType } from "./entityTables.ts";
 
+/** A row naming an entity: the column holding the entity's id, and what the row belongs to. */
+export interface EntityReference {
+  column: PgColumn;
+  owner: ReferenceOwner;
+}
+
 /** What a row names: a ruleset's entity, or a class's level, which a character's level names. */
 export type ReferencedType = RulesetEntityType | "klass_levels";
 
@@ -25,12 +31,6 @@ export type ReferenceOwner =
   | { characterId: PgColumn }
   | { fromId: PgColumn }
   | { rulesetId: PgColumn };
-
-/** A row naming an entity: the column holding the entity's id, and what the row belongs to. */
-export interface EntityReference {
-  column: PgColumn;
-  owner: ReferenceOwner;
-}
 
 /**
  * Every row that names an entity, whatever its type, in the generic tables: an entity's links, to it or through it (a

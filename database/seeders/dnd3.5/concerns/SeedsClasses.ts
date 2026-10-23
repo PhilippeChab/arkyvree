@@ -83,6 +83,31 @@ function tableGains(table: number[][]) {
 /** Seeding classes. */
 export function SeedsClasses<B extends Constructor<BaseSeeder>>(Base: B) {
   abstract class SeedingClasses extends Base {
+    /** Its properties and its levels': its bonus spell ability and caster type, each level's base attack and points. */
+    private async insertClassProperties(def: ClassSeed, klassId: string, levels: Levels) {
+      const bonusSpellAbilityId = (def.bonusSpellAbility && this.ctx.abilityMap[def.bonusSpellAbility]) || null;
+      await this.insertProperties([
+        ...this.propertyRows(
+          klassId,
+          "klasses",
+          Engine.forRules(DND35_BASE_RULES).toEntityProperties("klasses", {
+            bonusSpellAbilityId,
+            casterType: def.casterType ?? null,
+          }),
+        ),
+        ...levels.flatMap(({ id, level }) =>
+          this.propertyRows(
+            id,
+            "klass_levels",
+            Engine.forRules(DND35_BASE_RULES).toEntityProperties("klassLevels", {
+              bab: babAt(def.bab, level),
+              skills: def.skillPoints,
+            }),
+          ),
+        ),
+      ]);
+    }
+
     /** The feats its levels grant: its class features, its proficiencies and its free feats. */
     private async insertGrantedFeats(def: ClassSeed, levelIds: Record<number, string>) {
       const granted = (level: number, feat: string, aptitude: string, what: string) => ({
@@ -142,31 +167,6 @@ export function SeedsClasses<B extends Constructor<BaseSeeder>>(Base: B) {
             ...gt(`classes.${classSlug}.level`, level - 1),
           })),
         ...this.requirementRows(levelIds[1], "klass_levels", def.requirements),
-      ]);
-    }
-
-    /** Its properties and its levels': its bonus spell ability and caster type, each level's base attack and points. */
-    private async insertClassProperties(def: ClassSeed, klassId: string, levels: Levels) {
-      const bonusSpellAbilityId = (def.bonusSpellAbility && this.ctx.abilityMap[def.bonusSpellAbility]) || null;
-      await this.insertProperties([
-        ...this.propertyRows(
-          klassId,
-          "klasses",
-          Engine.forRules(DND35_BASE_RULES).toEntityProperties("klasses", {
-            bonusSpellAbilityId,
-            casterType: def.casterType ?? null,
-          }),
-        ),
-        ...levels.flatMap(({ id, level }) =>
-          this.propertyRows(
-            id,
-            "klass_levels",
-            Engine.forRules(DND35_BASE_RULES).toEntityProperties("klassLevels", {
-              bab: babAt(def.bab, level),
-              skills: def.skillPoints,
-            }),
-          ),
-        ),
       ]);
     }
 

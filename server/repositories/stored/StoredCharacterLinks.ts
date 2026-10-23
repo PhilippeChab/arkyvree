@@ -11,7 +11,7 @@ import { Engine } from "@/engine/index.ts";
  */
 export default class StoredCharacterLinks {
   /** The links' row columns: the character, the entity and the amount by their names, and the timestamps. */
-  static columns(name: string): Record<string, PgColumn | SQL> {
+  static buildColumns(name: string): Record<string, PgColumn | SQL> {
     const link = Engine.storage().character().links[name];
     return {
       characterId: linksInCharacter.characterId,
@@ -24,12 +24,12 @@ export default class StoredCharacterLinks {
   }
 
   /** The condition that picks the links of `name`'s role, and `where`. */
-  static scope(name: string, where?: SQL): SQL {
+  static buildScope(name: string, where?: SQL): SQL {
     return and(eq(linksInCharacter.role, Engine.storage().character().links[name].role), where)!;
   }
 
   /** A link's row to write, from a row by its columns: its role, its entity and its type, its amount. */
-  static values(name: string, row: Record<string, unknown>): typeof linksInCharacter.$inferInsert {
+  static buildValues(name: string, row: Record<string, unknown>): typeof linksInCharacter.$inferInsert {
     const storage = Engine.storage();
     const link = storage.character().links[name];
     const role = storage.registries().characterRoles.find((def) => def.role === link.role)!;

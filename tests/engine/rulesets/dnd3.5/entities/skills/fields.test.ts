@@ -2,9 +2,10 @@ import { describe, expect, test } from "bun:test";
 
 import { eq } from "drizzle-orm";
 
-import { propertiesInCustomization } from "@/drizzle/schema.ts";
+import { entitiesInRules } from "@/drizzle/schema.ts";
 import { SKILL_FIELDS } from "@/engine/rulesets/dnd3.5/entities/skills/fields.ts";
 import { db } from "@/server/database/index.ts";
+import { Properties } from "@/server/repositories/index.ts";
 import {
   SKILL_CHECK_PENALTY_MULTIPLIER,
   SKILL_IMPACTED_BY_WEIGHT,
@@ -42,10 +43,11 @@ describe("A skill's fields", () => {
   });
 
   test("of every seeded skill rebuild its rows", async () => {
-    const rows = await db
-      .select()
-      .from(propertiesInCustomization)
-      .where(eq(propertiesInCustomization.entityType, "skills"));
+    const skills = await db
+      .select({ id: entitiesInRules.id })
+      .from(entitiesInRules)
+      .where(eq(entitiesInRules.type, "skills"));
+    const rows = await Properties.findMany(db, { entityIds: skills.map(({ id }) => id), entityType: "skills" });
     const rowsBySkill = Map.groupBy(rows, (row) => row.entityId);
     expect(rows.every((row) => SKILL_FIELDS.types.includes(row.type))).toBe(true);
     expect(rowsBySkill.size).toBeGreaterThan(20);

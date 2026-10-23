@@ -1,8 +1,8 @@
 import { describe, expect, test } from "bun:test";
 
-import { languagesInCharacter } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
+import { CharacterLanguages } from "@/server/repositories/index.ts";
 import { LanguagesService } from "@/server/services/rulesets/languages/index.ts";
 import { createTestCharacter } from "@/tests/support/characters.ts";
 import { createTestRuleset, createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
@@ -34,7 +34,7 @@ describe("LanguagesService", () => {
     });
     const host = await createTestRuleset(user.id, { extensionRulesetIds: [extension.id] });
     const character = await createTestCharacter(user.id, { rulesetId: host.id });
-    await db.insert(languagesInCharacter).values({ characterId: character.id, languageId: language.id });
+    await CharacterLanguages.create(db, { characterId: character.id, languageId: language.id });
 
     expect(LanguagesService.deleteLanguage(session, extension.id, language.id)).rejects.toThrow(ConflictError);
   });

@@ -1,6 +1,8 @@
 import { sql } from "drizzle-orm";
 
-import { ACTIVE_ADVANCEMENTS, ACTIVE_CHARACTERS, type Character, query } from "./queries.ts";
+import type { Character } from "@/shared/relations.ts";
+
+import { ACTIVE_ADVANCEMENTS, ACTIVE_CHARACTERS, query } from "./queries.ts";
 
 /** Prints how many rows the active characters hold: their levels, their picks by step, their links by role, items. */
 export async function printCharacterData(characters: Character[]) {

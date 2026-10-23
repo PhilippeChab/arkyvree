@@ -1,16 +1,14 @@
 import { describe, expect, test } from "bun:test";
 
-import { abilitiesInRules, propertiesInCustomization } from "@/drizzle/schema.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { Feats, Klasses, Properties } from "@/server/repositories/index.ts";
+import { Abilities, Feats, Klasses, Properties } from "@/server/repositories/index.ts";
 import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
 import { ClassLevelsService } from "@/server/services/rulesets/classes/levels/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { ItemsService } from "@/server/services/rulesets/items/index.ts";
 import { PowersService } from "@/server/services/rulesets/powers/index.ts";
 import { RacesService } from "@/server/services/rulesets/races/index.ts";
-import { insertRows } from "@/tests/support/database.ts";
 import { copyEntity, createSeededTestRuleset, createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
@@ -52,9 +50,11 @@ const WEAPON = {
 async function setup() {
   const { session, ruleset, aptitudeIds } = await createTestUserAndRuleset(["General", "Wizard Spells"]);
   const [featPool, spellList] = aptitudeIds;
-  const [intelligence] = await insertRows(abilitiesInRules, [
-    { name: "Intelligence", description: "Intelligence", rulesetId: ruleset.id },
-  ]);
+  const [intelligence] = await Abilities.create(db, {
+    name: "Intelligence",
+    description: "Intelligence",
+    rulesetId: ruleset.id,
+  });
   return { session, rulesetId: ruleset.id, featPool, spellList, intelligence };
 }
 
@@ -194,7 +194,7 @@ describe("An entity's fields", () => {
     const { session, rulesetId, spellList } = await setup();
     const spell = { name: "Bolt", aptitudes: [{ id: spellList, level: 1 }] };
     const bolt = await PowersService.createPower(session, rulesetId, { ...spell, fields: { school: "Conjuration" } });
-    await insertRows(propertiesInCustomization, [
+    await Properties.createMany(db, [
       { entityId: bolt.id, entityType: "powers", type: SPELL_SUBSCHOOL, value: "Creation or Calling" },
     ]);
     RulesetViews.invalidate(rulesetId);
@@ -285,9 +285,7 @@ describe("An entity's fields", () => {
   test("of a feat refuse a family past its ruleset's, though its rows may hold one", async () => {
     const { session, rulesetId, featPool } = await setup();
     const feat = await FeatsService.createFeat(session, rulesetId, { name: "Lucky", aptitudeIds: [featPool] });
-    await insertRows(propertiesInCustomization, [
-      { entityId: feat.id, entityType: "feats", type: FEAT_FAMILY, value: "homebrew" },
-    ]);
+    await Properties.createMany(db, [{ entityId: feat.id, entityType: "feats", type: FEAT_FAMILY, value: "homebrew" }]);
     RulesetViews.invalidate(rulesetId);
     expect(await FeatsService.getFeat(rulesetId, feat.id)).toMatchObject({ families: ["homebrew"] });
     expect(

@@ -22,16 +22,10 @@ import { ALL_SPELLS } from "@/content/dnd3.5/generated/srd/spells/index.ts";
 import { CORE, TEMPLATE_ITEMS } from "@/content/dnd3.5/packages/core.ts";
 import { DND35_RULESET_NAME } from "@/content/dnd3.5/rulesetNames.ts";
 import { CONTENT_PACKAGES } from "@/database/packages/registry.ts";
-import {
-  entitySnapshotsInRules,
-  featsInRules,
-  itemsInRules,
-  klassesInRules,
-  powersInRules,
-  racesInRules,
-  rulesetsInRules,
-} from "@/drizzle/schema.ts";
+import { entitiesInRules, entitySnapshotsInRules, rulesetsInRules } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
+import StoredEntities from "@/server/repositories/stored/StoredEntities.ts";
+import type { Item } from "@/shared/relations.ts";
 import { invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
 
 const BONDS = [FAMILIARS, ANIMAL_COMPANIONS, SPECIAL_MOUNTS];
@@ -73,16 +67,16 @@ test("Every content package seeds into a database without them, its extensions e
     expect({ name: extension.name, base: extension.rulesetId }).toEqual({ name: extension.name, base: core.id });
 
   // The core rules have all their content
-  const own = (
-    table:
-      | typeof featsInRules
-      | typeof klassesInRules
-      | typeof powersInRules
-      | typeof racesInRules
-      | typeof itemsInRules,
-  ) => db.select({ id: table.id, name: table.name }).from(table).where(eq(table.rulesetId, core.id));
-  const coreFeats = await own(featsInRules);
-  const corePowers = await own(powersInRules);
+  const own = async (type: string) =>
+    (await db
+      .select({ id: entitiesInRules.id, name: entitiesInRules.name })
+      .from(entitiesInRules)
+      .where(and(StoredEntities.buildScope(type), eq(entitiesInRules.rulesetId, core.id)))) as {
+      id: string;
+      name: string;
+    }[];
+  const coreFeats = await own("feats");
+  const corePowers = await own("powers");
   expect(sortedNames(coreFeats)).toEqual(
     [
       ...CORE.feats.map((feat) => feat.name),
@@ -90,14 +84,14 @@ test("Every content package seeds into a database without them, its extensions e
       ...BONDS.flatMap((bond) => bond.feats.map((feat) => feat.name)),
     ].sort(),
   );
-  expect(sortedNames(await own(klassesInRules))).toEqual(
+  expect(sortedNames(await own("klasses"))).toEqual(
     [...ALL_CLASSES, ...BONDS.map((bond) => bond.klass)].map((klass) => klass.name).sort(),
   );
   expect(sortedNames(corePowers)).toEqual(ALL_SPELLS.map((spell) => spell.name).sort());
-  expect(sortedNames(await own(racesInRules))).toEqual(
+  expect(sortedNames(await own("races"))).toEqual(
     [...ALL_RACES, ...BONDS.flatMap((bond) => bond.races)].map((race) => race.name).sort(),
   );
-  expect(sortedNames(await own(itemsInRules))).toEqual(
+  expect(sortedNames(await own("items"))).toEqual(
     [
       ...TEMPLATE_ITEMS,
       ...GOODS,
@@ -118,10 +112,11 @@ test("Every content package seeds into a database without them, its extensions e
   const bases = rulesets.filter((ruleset) => ruleset.rulesetId === null);
   expect(bases.map((base) => base.name)).toEqual([DND35_RULESET_NAME]);
   for (const base of bases) {
-    const templates = await db
-      .select({ name: itemsInRules.name })
-      .from(itemsInRules)
-      .where(and(eq(itemsInRules.rulesetId, base.id), eq(itemsInRules.isTemplate, true)));
+    const items = (await db
+      .select(StoredEntities.buildColumns("items"))
+      .from(entitiesInRules)
+      .where(and(StoredEntities.buildScope("items"), eq(entitiesInRules.rulesetId, base.id)))) as unknown as Item[];
+    const templates = items.filter((item) => item.isTemplate);
     expect({ base: base.name, templates: sortedNames(templates) }).toEqual({
       base: base.name,
       templates: expect.arrayContaining(sortedNames(TEMPLATE_ITEMS)),

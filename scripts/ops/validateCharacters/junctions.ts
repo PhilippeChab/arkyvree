@@ -31,7 +31,10 @@ export async function checkJunctions() {
     return 0;
   }
   console.error(`✗ pick+pool: ${badCombos.length} invalid combo(s)`);
-  for (const row of badCombos)
-    console.error(`    ${row.charName}: ${row.step} "${row.entityName}" (${row.entityRuleset}) + pool "${row.poolName}"`);
+  for (const row of badCombos) {
+    console.error(
+      `    ${row.charName}: ${row.step} "${row.entityName}" (${row.entityRuleset}) + pool "${row.poolName}"`,
+    );
+  }
   return badCombos.length;
 }

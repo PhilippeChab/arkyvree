@@ -1,9 +1,8 @@
 import { describe, expect, test } from "bun:test";
 
-import { inventoryInCharacter } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { ForbiddenError } from "@/server/errors/index.ts";
-import { EntitySnapshots } from "@/server/repositories/index.ts";
+import { CharacterInventory, EntitySnapshots } from "@/server/repositories/index.ts";
 import { ItemsService } from "@/server/services/rulesets/items/index.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
 import { createTestCharacter } from "@/tests/support/characters.ts";
@@ -306,7 +305,7 @@ describe("ItemsService", () => {
     const item = await ItemsService.createItem(session, extension.id, { name: "Extension Item" });
     const host = await createTestRuleset(user.id, { extensionRulesetIds: [extension.id] });
     const character = await createTestCharacter(user.id, { rulesetId: host.id });
-    await db.insert(inventoryInCharacter).values({ characterId: character.id, itemId: item.id, quantity: 1 });
+    await CharacterInventory.create(db, { characterId: character.id, itemId: item.id, quantity: 1 });
 
     await expectRefusedWith(ItemsService.deleteItem(session, extension.id, item.id), 409);
   });

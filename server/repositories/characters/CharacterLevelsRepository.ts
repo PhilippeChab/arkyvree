@@ -4,8 +4,8 @@ import type { Db } from "@/drizzle/database.ts";
 import { advancementPicksInCharacter, advancementsInCharacter } from "@/drizzle/schema.ts";
 import { Engine } from "@/engine/index.ts";
 import BaseRepository from "@/server/repositories/BaseRepository.ts";
-import { qualified } from "@/server/repositories/stored/qualified.ts";
 import StoredCharacters from "@/server/repositories/stored/StoredCharacters.ts";
+import { toQualified } from "@/server/repositories/stored/toQualified.ts";
 import type { CharacterLevel } from "@/shared/relations.ts";
 
 /**
@@ -24,7 +24,7 @@ class CharacterLevelsRepository extends BaseRepository<typeof advancementsInChar
       id: advancementsInCharacter.id,
       characterId: advancementsInCharacter.characterId,
       [track]: advancementsInCharacter.trackId,
-      [value.column]: sql<number>`(SELECT ${advancementPicksInCharacter.amount} FROM ${advancementPicksInCharacter} WHERE ${advancementPicksInCharacter.advancementId} = ${qualified(advancementsInCharacter.id)} AND ${advancementPicksInCharacter.step} = ${value.step})`,
+      [value.column]: sql<number>`(SELECT ${advancementPicksInCharacter.amount} FROM ${advancementPicksInCharacter} WHERE ${advancementPicksInCharacter.advancementId} = ${toQualified(advancementsInCharacter.id)} AND ${advancementPicksInCharacter.step} = ${value.step})`,
       position: advancementsInCharacter.position,
       createdAt: advancementsInCharacter.createdAt,
       updatedAt: advancementsInCharacter.updatedAt,
@@ -47,7 +47,9 @@ class CharacterLevelsRepository extends BaseRepository<typeof advancementsInChar
     const { step } = Engine.storage().character().advancement.value;
     await db
       .delete(advancementPicksInCharacter)
-      .where(and(eq(advancementPicksInCharacter.advancementId, advancementId), eq(advancementPicksInCharacter.step, step)));
+      .where(
+        and(eq(advancementPicksInCharacter.advancementId, advancementId), eq(advancementPicksInCharacter.step, step)),
+      );
     await db.insert(advancementPicksInCharacter).values({
       advancementId,
       step,
@@ -73,7 +75,7 @@ class CharacterLevelsRepository extends BaseRepository<typeof advancementsInChar
         characterId: values.characterId,
         position: nextPosition,
         trackId: values.klassLevelId,
-        trackType: StoredCharacters.typeOf(values.klassLevelId),
+        trackType: StoredCharacters.buildTypeOf(values.klassLevelId),
       })
       .returning({ id: this.table.id });
     await this.writeValue(db, created.id, values.hp);
@@ -120,7 +122,7 @@ class CharacterLevelsRepository extends BaseRepository<typeof advancementsInChar
       .update(this.table)
       .set({
         ...(values.klassLevelId
-          ? { trackId: values.klassLevelId, trackType: StoredCharacters.typeOf(values.klassLevelId) }
+          ? { trackId: values.klassLevelId, trackType: StoredCharacters.buildTypeOf(values.klassLevelId) }
           : {}),
         updatedAt: new Date().toISOString(),
       })

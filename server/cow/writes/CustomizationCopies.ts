@@ -103,7 +103,12 @@ export default class CustomizationCopies {
     await Properties.createMany(
       tx,
       targetEntityIds.flatMap((entityId) =>
-        properties.map(({ entityType: type, type: field, value }) => ({ entityId, entityType: type, type: field, value })),
+        properties.map(({ entityType: type, type: field, value }) => ({
+          entityId,
+          entityType: type,
+          type: field,
+          value,
+        })),
       ),
     );
     await CustomizationCopies.copyRows(

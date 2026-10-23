@@ -170,6 +170,8 @@ CREATE TABLE rules.entity_fields (
 -- No value twice in a set, whatever its length (a btree key holds at most 2704 bytes: `value_key` hashes a text)
 CREATE UNIQUE INDEX entity_fields_set_value_idx ON rules.entity_fields (entity_id, field, value_key) WHERE multiple;
 CREATE INDEX entity_fields_text_idx ON rules.entity_fields USING hash (text_value);
+-- One field's rows across entities: a feat's family, a list grouped or filtered by a field
+CREATE INDEX entity_fields_field_idx ON rules.entity_fields (field, entity_id);
 
 CREATE TABLE rules.ruleset_fields (
   ruleset_id uuid NOT NULL REFERENCES rules.rulesets(id) ON DELETE CASCADE,

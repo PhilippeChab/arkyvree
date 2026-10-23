@@ -1,28 +1,20 @@
 /**
- * A customization names what it belongs to by type and id, with no foreign key. The database deletes it with that row,
- * whatever deletes the row: a service, or a foreign key's cascade (drizzle/0070_customization_cleanup.sql).
+ * A modifier or a requirement names what it belongs to by type and id, with no foreign key. The database deletes it with
+ * that row, whatever deletes the row: a service, or a foreign key's cascade (drizzle/0070_customization_cleanup.sql, and
+ * drizzle/0080_generic-tables.sql's for an entity). A property is a field or a link, which its foreign key deletes.
  */
 
 import { describe, expect, test } from "bun:test";
 
 import { sql } from "drizzle-orm";
+import type { PgTable } from "drizzle-orm/pg-core";
 
 import {
-  aptitudesInRules,
   charactersInCharacter,
-  featsInRules,
-  itemsInRules,
-  klassesInRules,
-  klassLevelsInRules,
-  languagesInRules,
+  entitiesInRules,
   modifiersInCustomization,
-  powersInRules,
-  propertiesInCustomization,
-  racesInRules,
   requirementsInCustomization,
   rulesetsInRules,
-  savesInRules,
-  skillsInRules,
 } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import {
@@ -46,24 +38,34 @@ import { customize, STRENGTH_BONUS } from "@/tests/support/customizations.ts";
 import { createTestKlassLevel } from "@/tests/support/levels.ts";
 import { createSeededTestRuleset, createTestRuleset, createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
 import { makeSession } from "@/tests/support/users.ts";
+import { RULESET_FEAT_ADVANCEMENT } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 type OwnerType = keyof typeof OWNERS;
 
-/** The tables whose rows a customization can belong to, by the type it names them with. */
+/** The tables whose rows a customization can belong to, by the type it names them with: an entity's, every kind's. */
 const OWNERS = {
-  aptitudes: aptitudesInRules,
+  aptitudes: entitiesInRules,
   characters: charactersInCharacter,
-  feats: featsInRules,
-  items: itemsInRules,
-  klass_levels: klassLevelsInRules,
-  klasses: klassesInRules,
-  languages: languagesInRules,
+  feats: entitiesInRules,
+  items: entitiesInRules,
+  klass_levels: entitiesInRules,
+  klasses: entitiesInRules,
+  languages: entitiesInRules,
   modifiers: modifiersInCustomization,
-  powers: powersInRules,
-  races: racesInRules,
+  powers: entitiesInRules,
+  races: entitiesInRules,
   rulesets: rulesetsInRules,
-  saves: savesInRules,
-  skills: skillsInRules,
+  saves: entitiesInRules,
+  skills: entitiesInRules,
+} satisfies Record<string, PgTable>;
+
+/**
+ * The property given a row that isn't an entity, which `customize` picks one for only of an entity's kind: a ruleset a
+ * setting of its own, a character none (its fields are the character's, which no property holds).
+ */
+const PROPERTIES: Record<string, { type: string; value: string } | null> = {
+  characters: null,
+  rulesets: { type: RULESET_FEAT_ADVANCEMENT, value: "doomed" },
 };
 
 /** A new row of the type, in a ruleset of `userId`'s. */
@@ -103,10 +105,19 @@ async function createOwner(type: OwnerType, userId: string, rulesetId: string): 
   }
 }
 
+/** Customizes a row of the type (`customize`), with its type's property. */
+async function customizeOwner(type: string, id: string) {
+  return await customize(type, id, type in PROPERTIES ? { property: PROPERTIES[type] } : {});
+}
+
 /** The customizations whose owner is gone, or of a type no table above holds. */
 async function orphans() {
   const owners = sql.join(
-    Object.entries(OWNERS).map(([type, table]) => sql`SELECT ${type}::text AS type, id FROM ${table}`),
+    Object.entries(OWNERS).map(([type, table]) =>
+      table === entitiesInRules
+        ? sql`SELECT type, id FROM ${table} WHERE type = ${type}`
+        : sql`SELECT ${type}::text AS type, id FROM ${table}`,
+    ),
     sql` UNION ALL `,
   );
   const { rows } = await db.execute(sql`
@@ -114,7 +125,6 @@ async function orphans() {
     customizations AS (
       SELECT 'modifiers' AS kind, id, source_type AS type, source_id AS owner_id FROM ${modifiersInCustomization}
       UNION ALL SELECT 'requirements', id, entity_type, entity_id FROM ${requirementsInCustomization}
-      UNION ALL SELECT 'properties', id, entity_type, entity_id FROM ${propertiesInCustomization}
     )
     SELECT kind, type, id FROM customizations c
     WHERE NOT EXISTS (SELECT FROM owners o WHERE o.type = c.type AND o.id = c.owner_id)
@@ -130,7 +140,7 @@ describe("customization cleanup", () => {
   test.each(Object.keys(OWNERS) as OwnerType[])("deletes a deleted %s row's customizations", async (type) => {
     const { user, ruleset } = await createTestUserAndRuleset();
     const id = await createOwner(type, user.id, ruleset.id);
-    await customize(type, id);
+    await customizeOwner(type, id);
 
     await db.execute(sql`DELETE FROM ${OWNERS[type]} WHERE id = ${id}`);
     expect(await orphans()).toEqual([]);
@@ -142,7 +152,7 @@ describe("customization cleanup", () => {
     await customize("klass_levels", klassLevel.id);
 
     // The class's levels go through their foreign key's cascade
-    await db.execute(sql`DELETE FROM ${klassesInRules} WHERE id = ${klass.id}`);
+    await db.execute(sql`DELETE FROM ${entitiesInRules} WHERE id = ${klass.id}`);
     expect(await orphans()).toEqual([]);
   });
 
@@ -154,7 +164,7 @@ describe("customization cleanup", () => {
     const character = await createTestCharacter(user.id, { rulesetId: fork.id });
     await customize("feats", await createOwner("feats", user.id, fork.id));
     await customize("klass_levels", klassLevel.id);
-    await customize("characters", character.id);
+    await customizeOwner("characters", character.id);
     expect(await Properties.findMany(db, { entityIds: [fork.id], entityType: "rulesets" })).not.toEqual([]);
 
     // Signing out purges a demo account, and the foreign keys' cascades its rulesets and characters

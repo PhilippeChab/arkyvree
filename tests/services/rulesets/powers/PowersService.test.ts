@@ -1,20 +1,19 @@
 import { describe, expect, test } from "bun:test";
 
-import { eq, getTableName } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
-import { klassLevelPowersInRules, powersAptitudesInRules, powersInRules } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
-import { Activities, Properties } from "@/server/repositories/index.ts";
+import { Activities, KlassLevelPowers, PowersAptitudes, Properties } from "@/server/repositories/index.ts";
+import StoredJoins from "@/server/repositories/stored/StoredJoins.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { PowersService } from "@/server/services/rulesets/powers/index.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
 import { createTestCharacter } from "@/tests/support/characters.ts";
-import { insertRows } from "@/tests/support/database.ts";
 import { addCharacterLevel, createTestKlassLevel } from "@/tests/support/levels.ts";
 import { createSeededTestRuleset, createTestRuleset, createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
-import { SPELL_CASTING_TIME, SPELL_SCHOOL } from "@/vocabulary/dnd3.5/properties/index.ts";
+import { SPELL_CASTING_TIME, SPELL_DESCRIPTOR, SPELL_SCHOOL } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 /** The aptitudes of the test's ruleset. */
 const APTITUDES = ["Wizard", "Cleric", "Druid"];
@@ -24,7 +23,7 @@ function sorted(links: { aptitudeId: string; level: number | null }[]) {
 }
 
 async function linkedAptitudes(powerId: string) {
-  const rows = await db.select().from(powersAptitudesInRules).where(eq(powersAptitudesInRules.powerId, powerId));
+  const rows = await PowersAptitudes.findMany(db, { powerIds: [powerId] });
   return rows
     .map(({ aptitudeId, level }) => ({ aptitudeId, level }))
     .sort((a, b) => a.aptitudeId.localeCompare(b.aptitudeId));
@@ -69,7 +68,7 @@ describe("PowersService", () => {
     await PowersService.updatePower(session, ruleset.id, power.id, { name: "Shield", saveEffect: "negates" });
     const { items } = await Activities.findPage(
       db,
-      { userId: session.userId, targetTable: getTableName(powersInRules) },
+      { userId: session.userId, targetTable: "powers" },
       { limit: 10, page: 1 },
     );
     const updates = items.filter((activity) => activity.type === "updatePower");
@@ -214,7 +213,9 @@ describe("PowersService", () => {
       aptitudes: [{ id: wizard }],
       fields: { school: "Evocation", castingTime: "1 round" },
     });
-    await Properties.create(db, { entityId: power.id, entityType: "powers", type: "SIGNATURE_SPELL", value: "true" });
+    await Properties.createMany(db, [
+      { entityId: power.id, entityType: "powers", type: SPELL_DESCRIPTOR, value: "Fire" },
+    ]);
 
     await PowersService.updatePower(session, ruleset.id, power.id, {
       name: "Fireball",
@@ -224,8 +225,8 @@ describe("PowersService", () => {
     const properties = await Properties.findMany(db, { entityIds: [power.id], entityType: "powers" });
     expect(properties.map(({ type, value }) => ({ type, value })).sort((a, b) => a.type.localeCompare(b.type))).toEqual(
       [
-        { type: "SIGNATURE_SPELL", value: "true" },
         { type: SPELL_CASTING_TIME, value: "1 round" },
+        { type: SPELL_DESCRIPTOR, value: "Fire" },
         { type: SPELL_SCHOOL, value: "Conjuration" },
       ],
     );
@@ -242,14 +243,13 @@ describe("PowersService", () => {
       aptitudes: [{ id: wizard }],
     });
     const { klassLevel } = await createTestKlassLevel(ruleset.id);
-    await insertRows(klassLevelPowersInRules, [{ klassLevelId: klassLevel.id, powerId: power.id, aptitudeId: wizard }]);
+    await KlassLevelPowers.create(db, { klassLevelId: klassLevel.id, powerId: power.id, aptitudeId: wizard });
 
     await PowersService.deletePower(session, ruleset.id, power.id);
 
     expect(await linkedAptitudes(power.id)).toEqual([]);
-    expect(
-      await db.select().from(klassLevelPowersInRules).where(eq(klassLevelPowersInRules.powerId, power.id)),
-    ).toEqual([]);
+    // A grant's power is its link's to-entity
+    expect(await StoredJoins.findRows(db, "klass_level_powers", eq(StoredJoins.getPart("to"), power.id))).toEqual([]);
   });
 
   test("refuses to delete a power a character picked, even through a ruleset using it as an extension", async () => {

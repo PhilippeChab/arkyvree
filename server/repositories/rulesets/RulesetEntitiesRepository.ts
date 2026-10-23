@@ -1,4 +1,4 @@
-import { and, asc, eq, exists, inArray, isNull, sql } from "drizzle-orm";
+import { and, eq, exists, inArray, isNull, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 
 import type { Db } from "@/drizzle/database.ts";
@@ -78,7 +78,7 @@ class RulesetEntitiesRepository {
           isNull(entitiesInRules.campaignId),
         ),
       )
-      .orderBy(asc(entitiesInRules.type), asc(entitiesInRules.name), asc(entitiesInRules.id));
+      .orderBy(entitiesInRules.type, entitiesInRules.name, entitiesInRules.id);
   }
 
   /**
@@ -119,7 +119,7 @@ class RulesetEntitiesRepository {
           namedIn(where.rulesetIds),
         ),
       )
-      .orderBy(asc(entitiesInRules.type), asc(entitiesInRules.name), asc(entitiesInRules.id));
+      .orderBy(entitiesInRules.type, entitiesInRules.name, entitiesInRules.id);
   }
 }
 

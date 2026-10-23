@@ -21,6 +21,33 @@ class ItemsRepository extends RulesetEntityRepository<Item> {
   protected override readonly entityType = "items";
 
   /**
+   * Items by id, the items made from an item that a ruleset's change to it reaches (`sourceItemIds`: the ids they may
+   * hold, in `rulesetId`'s view and the rulesets built on it), or a ruleset's templates.
+   */
+  override async findMany(
+    db: Db,
+    where:
+      | { ids: string[] }
+      | CopiesWhere
+      | { ancestorRulesetIds?: string[]; isTemplate: true; rulesetId: string; type?: string },
+  ) {
+    if ("ids" in where) return await super.findMany(db, where);
+    if ("sourceItemIds" in where) return await this.findCopies(db, where);
+    return await this.findTemplates(db, where);
+  }
+
+  /** A ruleset's list of items: its templates or the rest, if `isTemplate` says. */
+  override async findPage(
+    db: Db,
+    where: RulesetEntityFilters<{ isTemplate?: boolean }>,
+    pagination: { limit: number; page: number },
+  ) {
+    return await super.findPage(db, where, pagination, [
+      where.isTemplate !== undefined && eq(this.column("isTemplate"), where.isTemplate),
+    ]);
+  }
+
+  /**
    * The items made from an item, by the ids they may hold (`sourceItemIds`), that a change to it in `rulesetId` reaches:
    * those of its view (its own, and those its source chain makes that it shows, as its list reads them: an inherited
    * item made from what its copy stands for reads the copy), and those of the rulesets built on it, whose views read it
@@ -53,33 +80,6 @@ class ItemsRepository extends RulesetEntityRepository<Item> {
       ],
       [this.orderBy(this.column("name")), this.orderBy(this.column("id"))],
     );
-  }
-
-  /**
-   * Items by id, the items made from an item that a ruleset's change to it reaches (`sourceItemIds`: the ids they may
-   * hold, in `rulesetId`'s view and the rulesets built on it), or a ruleset's templates.
-   */
-  override async findMany(
-    db: Db,
-    where:
-      | { ids: string[] }
-      | CopiesWhere
-      | { ancestorRulesetIds?: string[]; isTemplate: true; rulesetId: string; type?: string },
-  ) {
-    if ("ids" in where) return await super.findMany(db, where);
-    if ("sourceItemIds" in where) return await this.findCopies(db, where);
-    return await this.findTemplates(db, where);
-  }
-
-  /** A ruleset's list of items: its templates or the rest, if `isTemplate` says. */
-  override async findPage(
-    db: Db,
-    where: RulesetEntityFilters<{ isTemplate?: boolean }>,
-    pagination: { limit: number; page: number },
-  ) {
-    return await super.findPage(db, where, pagination, [
-      where.isTemplate !== undefined && eq(this.column("isTemplate"), where.isTemplate),
-    ]);
   }
 }
 

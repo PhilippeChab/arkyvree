@@ -1,10 +1,10 @@
 import { Hono } from "hono";
 import { z } from "zod";
 
-import { LOCATION_OPTIONS } from "@/shared/enums.ts";
 import { type SessionContext, validate } from "@/server/middlewares/index.ts";
 import { characterIdParam } from "@/server/routers/api/validation.ts";
 import { CharacterInventoryService } from "@/server/services/characters/inventory/index.ts";
+import { LOCATION_OPTIONS } from "@/shared/enums.ts";
 
 const entryParams = characterIdParam.extend({ entryId: z.string().uuid() });
 

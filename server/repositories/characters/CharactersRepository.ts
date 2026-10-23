@@ -27,6 +27,23 @@ class CharactersRepository extends include(
     super(charactersInCharacter);
   }
 
+  /** The condition that a user actively contributes to the character. */
+  private contributesTo(db: Db, userId: string) {
+    return exists(
+      db
+        .select({ one: sql`1` })
+        .from(contributorsInCharacter)
+        .where(
+          and(
+            eq(contributorsInCharacter.characterId, charactersInCharacter.id),
+            eq(contributorsInCharacter.userId, userId),
+            eq(contributorsInCharacter.status, "Active"),
+            isNull(contributorsInCharacter.deletedAt),
+          ),
+        ),
+    );
+  }
+
   /** A character the user may edit: theirs, or one they contribute to. */
   private async findEditable(
     db: Db,
@@ -45,23 +62,6 @@ class CharactersRepository extends include(
     return row;
   }
 
-  /** The condition that a user actively contributes to the character. */
-  private contributesTo(db: Db, userId: string) {
-    return exists(
-      db
-        .select({ one: sql`1` })
-        .from(contributorsInCharacter)
-        .where(
-          and(
-            eq(contributorsInCharacter.characterId, charactersInCharacter.id),
-            eq(contributorsInCharacter.userId, userId),
-            eq(contributorsInCharacter.status, "Active"),
-            isNull(contributorsInCharacter.deletedAt),
-          ),
-        ),
-    );
-  }
-
   /** The characters a condition picks, each with its stored columns, in `order`, a page of them if `page` says. */
   private async rows(
     db: Db,
@@ -70,7 +70,7 @@ class CharactersRepository extends include(
     page?: { limit: number; offset: number },
   ): Promise<Character[]> {
     const query = db
-      .select(StoredCharacters.columns())
+      .select(StoredCharacters.buildColumns())
       .from(charactersInCharacter)
       .where(where)
       .orderBy(...order);
@@ -239,7 +239,7 @@ class CharactersRepository extends include(
     return await this.withPagination(pagination, async ({ limit, offset }) => {
       const rows = await db
         .select({
-          ...StoredCharacters.columns(),
+          ...StoredCharacters.buildColumns(),
           accessRole: sql<
             "owner" | "contributor"
           >`CASE WHEN ${this.table.userId} = ${where.userId} THEN 'owner' ELSE 'contributor' END`,
@@ -261,7 +261,7 @@ class CharactersRepository extends include(
   ) {
     return await this.withPagination(pagination, async ({ limit, offset }) => {
       const results = await db
-        .select(StoredCharacters.columns())
+        .select(StoredCharacters.buildColumns())
         .from(charactersInCharacter)
         .leftJoin(
           playerCharactersInCampaign,

@@ -1,6 +1,5 @@
 import { describe, expect, test } from "bun:test";
 
-import { levelAbilityIncreasesInCharacter } from "@/drizzle/schema.ts";
 import type { LevelPlanAnswer } from "@/engine/core/module/index.ts";
 import type { AbilityIncrease } from "@/engine/index.ts";
 import { type SeedContext } from "@/scripts/db/seeds/seedContext.ts";
@@ -1714,9 +1713,9 @@ describe("re-saving a level", () => {
 
     test("saved there before the check existed is refused again, and can be cleared", async () => {
       const { ctx, first, resave } = await setupFighter();
-      await db
-        .insert(levelAbilityIncreasesInCharacter)
-        .values({ characterLevelId: first.id, abilityId: ctx.abilityMap["Strength"], amount: 1 });
+      await CharacterLevelAbilityIncreases.createMany(db, [
+        { characterLevelId: first.id, abilityId: ctx.abilityMap["Strength"], amount: 1 },
+      ]);
       // The edit dialog sends the stored increase back.
       expect(resave({ abilityId: ctx.abilityMap["Strength"] })).rejects.toThrow(
         "Ability increase is not available at this level",

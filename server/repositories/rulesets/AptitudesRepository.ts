@@ -11,20 +11,6 @@ import type { Aptitude } from "@/shared/relations.ts";
 class AptitudesRepository extends RulesetEntityRepository<Aptitude> {
   protected override readonly entityType = "aptitudes";
 
-  /** The aptitudes of `aptitudeIds` that list a spell at a level: a spell list's, not a feat pool's. */
-  async findLeveledIds(db: Db, where: { aptitudeIds: string[] }) {
-    if (where.aptitudeIds.length === 0) return new Set<string>();
-    const to = StoredJoins.part("to");
-    const rows = await db
-      .selectDistinct({ aptitudeId: to })
-      .from(entityLinksInRules)
-      .where(
-        StoredJoins.scope("powers_aptitudes", and(inArray(to, where.aptitudeIds), isNotNull(StoredJoins.part("tier")))),
-      )
-      .orderBy(this.orderBy(to));
-    return new Set(rows.map((row) => row.aptitudeId));
-  }
-
   /** Aptitudes by id, or the lists of rulesets, as their views show them: none of a campaign's. */
   override async findMany(db: Db, where: { ids: string[] } | { rulesetIds: string[] }) {
     if ("ids" in where) return await super.findMany(db, where);
@@ -49,8 +35,25 @@ class AptitudesRepository extends RulesetEntityRepository<Aptitude> {
     const join = where.scope === "feats" ? "feats_aptitudes" : where.scope === "spells" ? "powers_aptitudes" : null;
     const listed =
       join &&
-      sql`${entitiesInRules.id} IN (SELECT ${StoredJoins.part("to")} FROM ${entityLinksInRules} WHERE ${StoredJoins.scope(join)})`;
+      sql`${entitiesInRules.id} IN (SELECT ${StoredJoins.getPart("to")} FROM ${entityLinksInRules} WHERE ${StoredJoins.buildScope(join)})`;
     return await super.findPage(db, where, pagination, [listed ?? false]);
+  }
+
+  /** The aptitudes of `aptitudeIds` that list a spell at a level: a spell list's, not a feat pool's. */
+  async findLeveledIds(db: Db, where: { aptitudeIds: string[] }) {
+    if (where.aptitudeIds.length === 0) return new Set<string>();
+    const to = StoredJoins.getPart("to");
+    const rows = await db
+      .selectDistinct({ aptitudeId: to })
+      .from(entityLinksInRules)
+      .where(
+        StoredJoins.buildScope(
+          "powers_aptitudes",
+          and(inArray(to, where.aptitudeIds), isNotNull(StoredJoins.getPart("tier"))),
+        ),
+      )
+      .orderBy(this.orderBy(to));
+    return new Set(rows.map((row) => row.aptitudeId));
   }
 }
 

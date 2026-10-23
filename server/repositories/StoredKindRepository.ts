@@ -1,4 +1,4 @@
-import { asc, eq, inArray, isNull, type SQL, sql } from "drizzle-orm";
+import { eq, inArray, isNull, type SQL, sql } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
 import { entitiesInRules } from "@/drizzle/schema.ts";
@@ -16,41 +16,60 @@ import StoredEntities, { type StoredValues } from "./stored/StoredEntities.ts";
 abstract class StoredKindRepository<R extends { id: string }> extends include(BaseRepository, GuardsStaleEdits)<
   typeof entitiesInRules
 > {
-  protected abstract readonly entityType: string;
-
   constructor() {
     super(entitiesInRules);
   }
 
-  /** The kind's rows a condition picks (`where`, over its columns), in `order`, a page of them if `page` says. */
+  protected abstract readonly entityType: string;
+
+  /** What holds a column of the kind's row: an entity's own column, or what its field or its link holds. */
+  protected override column(name: string) {
+    const column = StoredEntities.buildColumns(this.entityType)[name];
+    if (!column) throw new Error(`${this.constructor.name}: its rows have no ${name} column`);
+    return sql`${column}`;
+  }
+
+  /**
+   * The kind's rows a condition picks (`where`, over its columns), in `order`, a page of them if `page` says. A page is
+   * picked by its ids first: an offset's rows would read every column of the rows it skips, each a field's or a link's
+   * subquery, and the page's rows read theirs alone.
+   */
   protected async rows(
     db: Db,
     where: (SQL | boolean | undefined)[],
     order: SQL[] = [this.orderBy(this.column("id"))],
     page?: { limit: number; offset: number },
   ): Promise<R[]> {
-    const query = db
-      .select(StoredEntities.columns(this.entityType))
+    const scope = this.where([
+      StoredEntities.buildScope(this.entityType),
+      ...where.map((condition) => condition ?? false),
+    ]);
+    const picked = page
+      ? inArray(
+          entitiesInRules.id,
+          db
+            .select({ id: entitiesInRules.id })
+            .from(entitiesInRules)
+            .where(scope)
+            .orderBy(...order)
+            .limit(page.limit)
+            .offset(page.offset),
+        )
+      : scope;
+    const rows = await db
+      .select(StoredEntities.buildColumns(this.entityType))
       .from(entitiesInRules)
-      .where(this.where([StoredEntities.scope(this.entityType), ...where.map((condition) => condition ?? false)]))
+      .where(picked)
       .orderBy(...order);
-    const rows = page ? await query.limit(page.limit).offset(page.offset) : await query;
     return rows as unknown as R[];
   }
 
   /** The kind's rows by id, in the order of `ids`. */
   protected async rowsById(db: Db, ids: string[]): Promise<R[]> {
     if (ids.length === 0) return [];
-    const rows = await this.rows(db, [inArray(entitiesInRules.id, ids)], [asc(entitiesInRules.id)]);
+    const rows = await this.rows(db, [inArray(entitiesInRules.id, ids)], [this.orderBy(entitiesInRules.id)]);
     const byId = new Map(rows.map((row) => [row.id, row]));
     return ids.map((id) => byId.get(id)).filter((row): row is R => row !== undefined);
-  }
-
-  /** What holds a column of the kind's row: an entity's own column, or what its field or its link holds. */
-  protected override column(name: string) {
-    const column = StoredEntities.columns(this.entityType)[name];
-    if (!column) throw new Error(`${this.constructor.name}: its rows have no ${name} column`);
-    return sql`${column}`;
   }
 
   async create(db: Db, values: StoredValues) {
@@ -67,7 +86,7 @@ abstract class StoredKindRepository<R extends { id: string }> extends include(Ba
     const rows = await this.rowsById(db, [where.id]);
     await db
       .delete(entitiesInRules)
-      .where(this.where([StoredEntities.scope(this.entityType), eq(entitiesInRules.id, where.id)]));
+      .where(this.where([StoredEntities.buildScope(this.entityType), eq(entitiesInRules.id, where.id)]));
     return rows;
   }
 

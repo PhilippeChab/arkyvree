@@ -12,7 +12,7 @@ import {
   rulesetLinksInRules,
   rulesetsInRules,
 } from "@/drizzle/schema.ts";
-import { qualified } from "@/server/repositories/stored/qualified.ts";
+import { toQualified } from "@/server/repositories/stored/toQualified.ts";
 
 import {
   ENTITY_REFERENCES,
@@ -25,6 +25,11 @@ import { buildLineageCondition } from "./rulesetLineage.ts";
 
 /** What a character's row naming an entity belongs to: the character, or one of its levels. */
 type CharacterOwner = Extract<ReferenceOwner, { advancementId: PgColumn } | { characterId: PgColumn }>;
+
+/** The property a table's column is under (`entityId` for `entity_id`): what an update sets. */
+function columnKey(column: Column) {
+  return column.name.replace(/_(\w)/g, (_, letter: string) => letter.toUpperCase());
+}
 
 /** Whether a row naming an entity is a character's: the character itself, or one of its levels. */
 function isCharacters(owner: ReferenceOwner): owner is CharacterOwner {
@@ -46,6 +51,37 @@ class EntityReferencesRepository {
       .innerJoin(rulesetsInRules, this.rulesetOrDescendant(charactersInCharacter.rulesetId, rulesetId));
   }
 
+  /**
+   * Whether a row belongs to `rulesetId`, by what it belongs to: one of the ruleset's entities (an owned one, a class
+   * level, is in its class's ruleset), the ruleset itself, or a character on the ruleset or on a ruleset built on it.
+   */
+  private ownedBy(db: Db, owner: ReferenceOwner, rulesetId: string): SQL {
+    if ("fromId" in owner) {
+      return inArray(
+        owner.fromId,
+        db.select({ id: entitiesInRules.id }).from(entitiesInRules).where(eq(entitiesInRules.rulesetId, rulesetId)),
+      );
+    }
+    if ("rulesetId" in owner) return eq(owner.rulesetId, rulesetId);
+    const characters = this.charactersOf(db, rulesetId);
+    if ("characterId" in owner) return inArray(owner.characterId, characters);
+    return inArray(
+      owner.advancementId,
+      db
+        .select({ id: advancementsInCharacter.id })
+        .from(advancementsInCharacter)
+        .where(inArray(advancementsInCharacter.characterId, characters)),
+    );
+  }
+
+  /**
+   * The ruleset's join when it's `rulesetId` or a ruleset built on it, by `rulesetIdColumn` (a character's ruleset): a
+   * fork of it, or a ruleset subscribing to it as an extension. What an in-use check counts.
+   */
+  private rulesetOrDescendant(rulesetIdColumn: Column, rulesetId: string): SQL {
+    return and(eq(rulesetsInRules.id, rulesetIdColumn), buildLineageCondition(rulesetId))!;
+  }
+
   /** Whether a character on `rulesetId`, or on a ruleset built on it, names one of `ids` in `column`. */
   private async existsPick(
     db: Db,
@@ -59,28 +95,6 @@ class EntityReferencesRepository {
       .where(and(inArray(column, where.ids), this.ownedBy(db, owner, where.rulesetId)))
       .limit(1);
     return rows.length > 0;
-  }
-
-  /**
-   * Whether a row belongs to `rulesetId`, by what it belongs to: one of the ruleset's entities (an owned one, a class
-   * level, is in its class's ruleset), the ruleset itself, or a character on the ruleset or on a ruleset built on it.
-   */
-  private ownedBy(db: Db, owner: ReferenceOwner, rulesetId: string): SQL {
-    if ("fromId" in owner)
-      return inArray(
-        owner.fromId,
-        db.select({ id: entitiesInRules.id }).from(entitiesInRules).where(eq(entitiesInRules.rulesetId, rulesetId)),
-      );
-    if ("rulesetId" in owner) return eq(owner.rulesetId, rulesetId);
-    const characters = this.charactersOf(db, rulesetId);
-    if ("characterId" in owner) return inArray(owner.characterId, characters);
-    return inArray(
-      owner.advancementId,
-      db
-        .select({ id: advancementsInCharacter.id })
-        .from(advancementsInCharacter)
-        .where(inArray(advancementsInCharacter.characterId, characters)),
-    );
   }
 
   /**
@@ -138,7 +152,7 @@ class EntityReferencesRepository {
       await db
         .update(picks)
         .set({
-          ordinal: sql`${qualified(picks.ordinal)} + (SELECT coalesce(max(twin.ordinal), -1) + 1 FROM ${picks} twin WHERE twin.advancement_id = ${qualified(picks.advancementId)} AND twin.step = ${qualified(picks.step)} AND twin.entity_id = ${to})`,
+          ordinal: sql`${toQualified(picks.ordinal)} + (SELECT coalesce(max(twin.ordinal), -1) + 1 FROM ${picks} twin WHERE twin.advancement_id = ${toQualified(picks.advancementId)} AND twin.step = ${toQualified(picks.step)} AND twin.entity_id = ${to})`,
         })
         .where(and(named, eq(picks.repeats, true)));
       await db.delete(picks).where(
@@ -165,14 +179,6 @@ class EntityReferencesRepository {
       .update(column.table)
       .set({ [columnKey(column)]: to })
       .where(named);
-  }
-
-  /**
-   * The ruleset's join when it's `rulesetId` or a ruleset built on it, by `rulesetIdColumn` (a character's ruleset): a
-   * fork of it, or a ruleset subscribing to it as an extension. What an in-use check counts.
-   */
-  private rulesetOrDescendant(rulesetIdColumn: Column, rulesetId: string): SQL {
-    return and(eq(rulesetsInRules.id, rulesetIdColumn), buildLineageCondition(rulesetId))!;
   }
 
   /**
@@ -268,11 +274,6 @@ class EntityReferencesRepository {
     for (const reference of ENTITY_REFERENCES)
       await this.repoint(db, reference, where.entityId, values.entityId, rulesetId);
   }
-}
-
-/** The property a table's column is under (`entityId` for `entity_id`): what an update sets. */
-function columnKey(column: Column) {
-  return column.name.replace(/_(\w)/g, (_, letter: string) => letter.toUpperCase());
 }
 
 export default EntityReferencesRepository;

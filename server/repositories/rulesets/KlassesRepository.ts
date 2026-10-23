@@ -4,7 +4,7 @@ import type { Db } from "@/drizzle/database.ts";
 import { advancementsInCharacter, entitiesInRules } from "@/drizzle/schema.ts";
 import { type RulesetEntityFilters } from "@/server/repositories/concerns/ScopesToRuleset.ts";
 import RulesetEntityRepository from "@/server/repositories/RulesetEntityRepository.ts";
-import { qualified } from "@/server/repositories/stored/qualified.ts";
+import { toQualified } from "@/server/repositories/stored/toQualified.ts";
 import type { Klass } from "@/shared/relations.ts";
 
 /**
@@ -29,7 +29,7 @@ class KlassesRepository extends RulesetEntityRepository<Klass> {
               SELECT MAX(kl.position)
               FROM ${levels} kl
               JOIN ${advancementsInCharacter} ON ${advancementsInCharacter.trackId} = kl.id
-              WHERE kl.owner_id = ${qualified(entitiesInRules.id)}
+              WHERE kl.owner_id = ${toQualified(entitiesInRules.id)}
               AND ${advancementsInCharacter.characterId} = ${characterId}
               AND ${advancementsInCharacter.deletedAt} IS NULL
             ), 0)`,

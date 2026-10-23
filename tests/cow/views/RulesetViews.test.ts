@@ -1,19 +1,21 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 
-import {
-  aptitudesInRules,
-  featsInRules,
-  itemsInRules,
-  klassesInRules,
-  klassLevelsInRules,
-  modifiersInCustomization,
-  propertiesInCustomization,
-} from "@/drizzle/schema.ts";
+import { modifiersInCustomization } from "@/drizzle/schema.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { fetchEveryPage } from "@/server/repositories/concerns/Paginates.ts";
-import { Feats, Items, Klasses, Modifiers, Requirements, Rulesets } from "@/server/repositories/index.ts";
+import {
+  Aptitudes,
+  Feats,
+  Items,
+  Klasses,
+  KlassLevels,
+  Modifiers,
+  Properties,
+  Requirements,
+  Rulesets,
+} from "@/server/repositories/index.ts";
 import { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { createTestCampaign } from "@/tests/support/campaigns.ts";
@@ -144,11 +146,11 @@ describe("RulesetViews", () => {
 
   test("lists an entity's modifiers in the order they were made, a tie by target, and its properties as its stat block shows them", async () => {
     const ruleset = await createTestRuleset(SEED_USER_ID);
-    const [feat] = await insertRows(featsInRules, [{ rulesetId: ruleset.id, name: `Ordered ${uniqueId()}` }]);
+    const [item] = await Items.createMany(db, [{ rulesetId: ruleset.id, name: `Ordered ${uniqueId()}` }]);
     // Each inserted out of that order, as a read in the plan's order would return them
     const modifier = (target: string, createdAt: string) => ({
-      sourceId: feat.id,
-      sourceType: "feats",
+      sourceId: item.id,
+      sourceType: "items",
       target,
       value: "1",
       valueType: "number",
@@ -159,18 +161,18 @@ describe("RulesetViews", () => {
       modifier("abilities.str.score", "2026-01-02T00:00:00Z"),
       modifier("abilities.dex.score", "2026-01-01T00:00:00Z"),
     ]);
-    await insertRows(propertiesInCustomization, [
-      { entityId: feat.id, entityType: "feats", type: "DAMAGE_TYPE", value: "Piercing" },
-      { entityId: feat.id, entityType: "feats", type: "DAMAGE_TYPE", value: "Slashing" },
+    await Properties.createMany(db, [
+      { entityId: item.id, entityType: "items", type: "DAMAGE_TYPE", value: "Piercing" },
+      { entityId: item.id, entityType: "items", type: "DAMAGE_TYPE", value: "Slashing" },
     ]);
 
     const data = await RulesetViews.getData(ruleset);
-    expect(data.modifiersBySource.get(feat.id)?.map((m) => m.target)).toEqual([
+    expect(data.modifiersBySource.get(item.id)?.map((m) => m.target)).toEqual([
       "abilities.dex.score",
       "abilities.str.score",
     ]);
     // A damage type's options are Slashing, Piercing, Bludgeoning
-    expect(data.propertiesByEntity.get(feat.id)?.map((p) => p.value)).toEqual(["Slashing", "Piercing"]);
+    expect(data.propertiesByEntity.get(item.id)?.map((p) => p.value)).toEqual(["Slashing", "Piercing"]);
   });
 
   test("system-seeded rulesets are pinned; user forks (and orphaned forks) are not", async () => {
@@ -382,7 +384,7 @@ describe("RulesetViews", () => {
       const seedRawBefore = await RulesetViews.getRawData(seed.id);
       const forkBefore = await composeFork(fork);
 
-      await insertRows(featsInRules, [
+      await Feats.createMany(db, [
         {
           name: `Fork-only Feat ${uniqueId()}`,
           description: "Created directly in the fork",
@@ -404,7 +406,7 @@ describe("RulesetViews", () => {
       const seed = await getRuleset();
 
       // Create a fresh base feat with a modifier, property, and modifier-level requirement.
-      const [baseFeat] = await insertRows(featsInRules, [
+      const [baseFeat] = await Feats.createMany(db, [
         {
           name: `Cascade Feat ${uniqueId()}`,
           description: "For cascade test",
@@ -539,7 +541,7 @@ describe("RulesetViews", () => {
       const featCountBefore = forkBefore.feats.length;
 
       // Add a new feat directly to the seed (simulating external mutation).
-      await insertRows(featsInRules, [
+      await Feats.createMany(db, [
         {
           name: `Seed-added Feat ${uniqueId()}`,
           description: "Added to seed after fork composed",
@@ -584,7 +586,7 @@ describe("RulesetViews", () => {
       const seed = await getRuleset();
 
       // Create a throwaway base feat + two system-owned extensions that each COW it.
-      const [baseFeat] = await insertRows(featsInRules, [
+      const [baseFeat] = await Feats.createMany(db, [
         {
           name: `Sibling Base Feat ${uniqueId()}`,
           description: "To be COW'd by two extensions",
@@ -628,7 +630,7 @@ describe("RulesetViews", () => {
       // Same sibling scenario as above, but on an item to prove compose's
       // exclusion logic works uniformly across entity types (races, items,
       // languages, klasses — all go through the same hidden-row filter, CowData.isHidden).
-      const [baseItem] = await insertRows(itemsInRules, [
+      const [baseItem] = await Items.createMany(db, [
         {
           name: `Sibling Base Item ${uniqueId()}`,
           description: "To be COW'd by two extensions",
@@ -672,11 +674,11 @@ describe("RulesetViews", () => {
       const featName = `Homebrew Feat ${uniqueId()}`;
       const itemName = `Homebrew Item ${uniqueId()}`;
       // Two books' feats of a name pair, the first's winning; the first's copy of a core item, renamed
-      const [firstFeat, secondFeat] = await insertRows(featsInRules, [
+      const [firstFeat, secondFeat] = await Feats.createMany(db, [
         { name: featName, rulesetId: first.id },
         { name: featName, rulesetId: second.id },
       ]);
-      const [baseItem] = await insertRows(itemsInRules, [
+      const [baseItem] = await Items.createMany(db, [
         { name: `Probe Item ${uniqueId()}`, rulesetId: seed.id, weight: "1", costGp: "1" },
       ]);
       const bookItem = await copyEntity(db, "items", baseItem.id, first);
@@ -686,10 +688,8 @@ describe("RulesetViews", () => {
         ancestorRulesetIds: [seed.id],
         extensionRulesetIds: [first.id, second.id],
       });
-      const [ownFeat] = await insertRows(featsInRules, [{ name: featName, rulesetId: fork.id }]);
-      const [ownItem] = await insertRows(itemsInRules, [
-        { name: itemName, rulesetId: fork.id, weight: "1", costGp: "1" },
-      ]);
+      const [ownFeat] = await Feats.createMany(db, [{ name: featName, rulesetId: fork.id }]);
+      const [ownItem] = await Items.createMany(db, [{ name: itemName, rulesetId: fork.id, weight: "1", costGp: "1" }]);
       await insertRows(modifiersInCustomization, [{ ...STRENGTH_BONUS, sourceType: "feats", sourceId: firstFeat.id }]);
 
       const cow = await RulesetViews.getCowData(fork);
@@ -718,8 +718,8 @@ describe("RulesetViews", () => {
       const seed = await getRuleset();
       const book = await createBook(seed.id);
       const name = `Homebrew Class ${uniqueId()}`;
-      const [bookClass] = await insertRows(klassesInRules, [{ name, rulesetId: book.id, hd: 8 }]);
-      const [bookFirst, bookSecond] = await insertRows(klassLevelsInRules, [
+      const [bookClass] = await Klasses.createMany(db, [{ name, rulesetId: book.id, hd: 8 }]);
+      const [bookFirst, bookSecond] = await KlassLevels.createMany(db, [
         { klassId: bookClass.id, level: 1 },
         { klassId: bookClass.id, level: 2 },
       ]);
@@ -728,8 +728,8 @@ describe("RulesetViews", () => {
         ancestorRulesetIds: [seed.id],
         extensionRulesetIds: [book.id],
       });
-      const [ownClass] = await insertRows(klassesInRules, [{ name, rulesetId: fork.id, hd: 10 }]);
-      const [ownFirst] = await insertRows(klassLevelsInRules, [{ klassId: ownClass.id, level: 1 }]);
+      const [ownClass] = await Klasses.createMany(db, [{ name, rulesetId: fork.id, hd: 10 }]);
+      const [ownFirst] = await KlassLevels.createMany(db, [{ klassId: ownClass.id, level: 1 }]);
 
       const view = await RulesetViews.getData(fork);
       expect(view.klasses.filter((klass) => klass.name === name).map((klass) => klass.id)).toEqual([ownClass.id]);
@@ -753,8 +753,8 @@ describe("RulesetViews", () => {
         ancestorRulesetIds: [seed.id],
         extensionRulesetIds: [book.id],
       });
-      const [ownClass] = await insertRows(klassesInRules, [{ name: "Cleric", rulesetId: fork.id, hd: 8 }]);
-      const [ownFirst] = await insertRows(klassLevelsInRules, [{ klassId: ownClass.id, level: 1 }]);
+      const [ownClass] = await Klasses.createMany(db, [{ name: "Cleric", rulesetId: fork.id, hd: 8 }]);
+      const [ownFirst] = await KlassLevels.createMany(db, [{ klassId: ownClass.id, level: 1 }]);
 
       const view = await RulesetViews.getData(fork);
       expect(view.cow.resolve(coreFirst.id)).toBe(ownFirst.id);
@@ -765,14 +765,14 @@ describe("RulesetViews", () => {
       const seed = await getRuleset();
       const book = await createBook(seed.id);
       const name = `Homebrew Feat ${uniqueId()}`;
-      const [bookFeat] = await insertRows(featsInRules, [{ name, rulesetId: book.id }]);
+      const [bookFeat] = await Feats.createMany(db, [{ name, rulesetId: book.id }]);
       const fork = await createTestRuleset(SEED_USER_ID, {
         rulesetId: seed.id,
         ancestorRulesetIds: [seed.id],
         extensionRulesetIds: [book.id],
       });
       const { campaign } = await createTestCampaign(SEED_USER_ID, fork.id);
-      await insertRows(featsInRules, [{ name, rulesetId: fork.id, campaignId: campaign.id }]);
+      await Feats.createMany(db, [{ name, rulesetId: fork.id, campaignId: campaign.id }]);
 
       const view = await RulesetViews.getData(fork);
       expect(view.feats.filter((feat) => feat.name === name).map((feat) => feat.id)).toEqual([bookFeat.id]);
@@ -784,14 +784,14 @@ describe("RulesetViews", () => {
       const seed = await getRuleset();
       const [first, second] = [await createBook(seed.id), await createBook(seed.id)];
       const name = `Shared Spells ${uniqueId()}`;
-      const [secondList] = await insertRows(aptitudesInRules, [{ name, rulesetId: second.id }]);
+      const [secondList] = await Aptitudes.createMany(db, [{ name, rulesetId: second.id }]);
       const fork = await createTestRuleset(SEED_USER_ID, {
         rulesetId: seed.id,
         ancestorRulesetIds: [seed.id],
         extensionRulesetIds: [first.id, second.id],
       });
       const copy = await copyEntity(db, "aptitudes", secondList.id, fork);
-      const [firstList] = await insertRows(aptitudesInRules, [{ name, rulesetId: first.id }]);
+      const [firstList] = await Aptitudes.createMany(db, [{ name, rulesetId: first.id }]);
 
       const view = await RulesetViews.getData(fork);
       expect(view.aptitudes.filter((list) => list.name === name).map((list) => list.id)).toEqual([copy.id]);
@@ -802,14 +802,14 @@ describe("RulesetViews", () => {
       const seed = await getRuleset();
       const book = await createBook(seed.id);
       const name = `Shared Spells ${uniqueId()}`;
-      const [bookList] = await insertRows(aptitudesInRules, [{ name, rulesetId: book.id }]);
+      const [bookList] = await Aptitudes.createMany(db, [{ name, rulesetId: book.id }]);
       const fork = await createTestRuleset(SEED_USER_ID, {
         rulesetId: seed.id,
         ancestorRulesetIds: [seed.id],
         extensionRulesetIds: [book.id],
       });
       const { campaign } = await createTestCampaign(SEED_USER_ID, fork.id);
-      await insertRows(aptitudesInRules, [{ name, rulesetId: fork.id, campaignId: campaign.id }]);
+      await Aptitudes.createMany(db, [{ name, rulesetId: fork.id, campaignId: campaign.id }]);
 
       const view = await RulesetViews.getData(fork);
       expect(view.aptitudes.filter((list) => list.name === name).map((list) => list.id)).toEqual([bookList.id]);

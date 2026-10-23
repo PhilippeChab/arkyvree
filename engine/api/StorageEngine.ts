@@ -15,11 +15,12 @@ import Modules from "./Modules.ts";
 /** The entries of every module's record (`pick`), one per name: a name two modules declare is refused. */
 function mergeRecords<T>(modules: [BaseRules, RulesetModule][], pick: (module: RulesetModule) => Record<string, T>) {
   const merged: Record<string, T> = {};
-  for (const [baseRules, module] of modules)
+  for (const [baseRules, module] of modules) {
     for (const [name, value] of Object.entries(pick(module))) {
       if (name in merged) throw new Error(`${baseRules} declares ${name}, which another module stores`);
       merged[name] = value;
     }
+  }
   return merged;
 }
 
@@ -30,17 +31,8 @@ function mergeRecords<T>(modules: [BaseRules, RulesetModule][], pick: (module: R
  * refused, as the registries' keys refuse it.
  */
 export default class StorageEngine {
-  /** Every module's storage, merged once: the modules never change. */
-  private static instance: StorageEngine | undefined;
-
-  private readonly characterDeclaration: StoredCharacter;
-  private readonly joins: Record<string, StoredJoin>;
-  private readonly kinds: Record<string, StoredKind>;
-  private readonly linkedEntityProperties: Record<string, Record<string, string>>;
-  private readonly linkedRulesetProperties: Record<string, string>;
-  private readonly merged: StorageRegistries;
-
   constructor(modules: [BaseRules, RulesetModule][]) {
+    this.baseRules = modules.map(([baseRules]) => baseRules);
     this.kinds = mergeRecords(modules, (module) => module.storage.kinds);
     this.joins = mergeRecords(modules, (module) => module.storage.joins);
     this.linkedEntityProperties = mergeRecords(modules, (module) => module.storage.linkedProperties.entities);
@@ -64,11 +56,22 @@ export default class StorageEngine {
     };
   }
 
+  /** Every module's storage, merged once: the modules never change. */
+  private static instance: StorageEngine | undefined;
   /** Every registered module's storage, merged: one instance, built on its first read. */
   static shared(): StorageEngine {
     StorageEngine.instance ??= new StorageEngine(Modules.all());
     return StorageEngine.instance;
   }
+  private readonly baseRules: BaseRules[];
+  private readonly characterDeclaration: StoredCharacter;
+  private readonly joins: Record<string, StoredJoin>;
+  private readonly kinds: Record<string, StoredKind>;
+  private readonly linkedEntityProperties: Record<string, Record<string, string>>;
+
+  private readonly linkedRulesetProperties: Record<string, string>;
+
+  private readonly merged: StorageRegistries;
 
   /** A character's data, as every module stores it: its columns, its links and its advancements' picks. */
   character(): StoredCharacter {
@@ -94,6 +97,13 @@ export default class StorageEngine {
     return kind;
   }
 
+  /** The property types a link holds, an owner type's: each with its role. */
+  linkedProperties(ownerType: string): [propertyType: string, role: string][] {
+    return Object.entries(
+      ownerType === "rulesets" ? this.linkedRulesetProperties : (this.linkedEntityProperties[ownerType] ?? {}),
+    );
+  }
+
   /**
    * The role of the link a property type of an owner's type holds (a class's bonus spell ability, a ruleset's skill
    * point ability), if it holds one: an entity's link role, or a ruleset's ruleset role.
@@ -103,11 +113,9 @@ export default class StorageEngine {
     return this.linkedEntityProperties[ownerType]?.[propertyType];
   }
 
-  /** The property types a link holds, an owner type's: each with its role. */
-  linkedProperties(ownerType: string): [propertyType: string, role: string][] {
-    return Object.entries(
-      ownerType === "rulesets" ? this.linkedRulesetProperties : (this.linkedEntityProperties[ownerType] ?? {}),
-    );
+  /** The base rules of every registered module: what a ruleset's `base_rules` may name (`rules.modules`). */
+  modules(): BaseRules[] {
+    return this.baseRules;
   }
 
   /** What every module's registries hold. */

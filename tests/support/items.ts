@@ -38,10 +38,7 @@ export async function carry(character: Pick<Character, "id">, carried: Carried[]
  * A new item of the seeded ruleset (or `values.rulesetId`), with these properties. Its ruleset's cached rules are
  * dropped, so what it reads next sees the item.
  */
-export async function createTestItem(
-  values: Partial<Item> = {},
-  properties: Record<string, string> = {},
-) {
+export async function createTestItem(values: Partial<Item> = {}, properties: Record<string, string> = {}) {
   const rulesetId = values.rulesetId ?? (await getSeedCtx()).rulesetId;
   const [item] = await Items.create(db, { name: `Test Item ${uniqueId()}`, ...values, rulesetId });
   const entries = Object.entries(properties);

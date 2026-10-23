@@ -7,20 +7,44 @@ import {
   DND35_COMPLETE_WARRIOR_NAME,
   DND35_RULESET_NAME,
 } from "@/content/dnd3.5/rulesetNames.ts";
-import {
-  aptitudesInRules,
-  featsAptitudesInRules,
-  featsInRules,
-  powersInRules,
-  rulesetsInRules,
-} from "@/drizzle/schema.ts";
+import { entitiesInRules, rulesetsInRules } from "@/drizzle/schema.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
+import { FeatsAptitudes } from "@/server/repositories/index.ts";
 import { AptitudesService } from "@/server/services/rulesets/aptitudes/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { PowersService } from "@/server/services/rulesets/powers/index.ts";
 import { createSeededTestRulesetWithExtensions } from "@/tests/support/rulesets.ts";
+
+/** The entities of `type` named `name` (`names`), with their rulesets' names, in the rulesets of `rulesetIds`. */
+async function namedEntities(type: string, names: string[], rulesetIds?: string[]) {
+  return await db
+    .select({
+      id: entitiesInRules.id,
+      name: entitiesInRules.name,
+      rulesetId: entitiesInRules.rulesetId,
+      rulesetName: rulesetsInRules.name,
+    })
+    .from(entitiesInRules)
+    .innerJoin(rulesetsInRules, eq(rulesetsInRules.id, entitiesInRules.rulesetId))
+    .where(
+      and(
+        eq(entitiesInRules.type, type),
+        inArray(entitiesInRules.name, names),
+        rulesetIds ? inArray(entitiesInRules.rulesetId, rulesetIds) : undefined,
+      ),
+    );
+}
+
+/** The ruleset named `name`'s id. */
+async function rulesetIdOf(name: string) {
+  const [ruleset] = await db
+    .select({ id: rulesetsInRules.id })
+    .from(rulesetsInRules)
+    .where(eq(rulesetsInRules.name, name));
+  return ruleset.id;
+}
 
 /**
  * A seeded fork that uses every extension of its base, so the COW layer sees
@@ -58,14 +82,11 @@ describe("aptitude deduplication across sibling extensions", () => {
     expect(winningApt).toBeDefined();
 
     // Find CD's "Visage of the Deity, Lesser" — it's on the Blackguard spell list.
-    const [cdRuleset] = await db
-      .select({ id: rulesetsInRules.id })
-      .from(rulesetsInRules)
-      .where(eq(rulesetsInRules.name, DND35_COMPLETE_DIVINE_NAME));
-    const [spell] = await db
-      .select({ id: powersInRules.id })
-      .from(powersInRules)
-      .where(and(eq(powersInRules.rulesetId, cdRuleset.id), eq(powersInRules.name, "Visage of the Deity, Lesser")));
+    const [spell] = await namedEntities(
+      "powers",
+      ["Visage of the Deity, Lesser"],
+      [await rulesetIdOf(DND35_COMPLETE_DIVINE_NAME)],
+    );
     expect(spell).toBeDefined();
 
     // Composed rulesetData already has sibling-merged + FK-remapped aptitude links.
@@ -90,10 +111,7 @@ describe("aptitude deduplication across sibling extensions", () => {
     const { ruleset, cowData, rulesetData } = await setup();
     // Fetch all raw "Assassin Spells" aptitudes across extensions
     const extIds = ruleset.extensionRulesetIds;
-    const allAssassinApts = await db
-      .select({ id: aptitudesInRules.id, rulesetId: aptitudesInRules.rulesetId })
-      .from(aptitudesInRules)
-      .where(and(eq(aptitudesInRules.name, "Assassin Spells"), inArray(aptitudesInRules.rulesetId, extIds)));
+    const allAssassinApts = await namedEntities("aptitudes", ["Assassin Spells"], extIds);
 
     expect(allAssassinApts.length).toBeGreaterThan(1);
     const winnerApt = rulesetData.aptitudes.find((a) => a.name === "Assassin Spells");
@@ -126,14 +144,11 @@ describe("aptitude deduplication across sibling extensions", () => {
 
   test("PowersService detail returns no duplicate aptitude names", async () => {
     const { ruleset } = await setup();
-    const [cdRuleset] = await db
-      .select({ id: rulesetsInRules.id })
-      .from(rulesetsInRules)
-      .where(eq(rulesetsInRules.name, DND35_COMPLETE_DIVINE_NAME));
-    const [spell] = await db
-      .select({ id: powersInRules.id })
-      .from(powersInRules)
-      .where(and(eq(powersInRules.rulesetId, cdRuleset.id), eq(powersInRules.name, "Visage of the Deity, Lesser")));
+    const [spell] = await namedEntities(
+      "powers",
+      ["Visage of the Deity, Lesser"],
+      [await rulesetIdOf(DND35_COMPLETE_DIVINE_NAME)],
+    );
 
     const power = await PowersService.getPower(ruleset.id, spell.id);
     const aptNames = power.powersAptitudesInRules.map((pa) => pa.aptitudesInRule.name);
@@ -182,34 +197,20 @@ describe("aptitude ownership (seed-level invariants)", () => {
   const SIBLING_SHARED_NAMES = ["Assassin Spells", "Hexblade Spells", "Blackguard Spells"];
 
   test("base-inherited aptitude names have exactly one row, owned by base", async () => {
-    const rows = await db
-      .select({
-        aptName: aptitudesInRules.name,
-        rulesetName: rulesetsInRules.name,
-      })
-      .from(aptitudesInRules)
-      .innerJoin(rulesetsInRules, eq(rulesetsInRules.id, aptitudesInRules.rulesetId))
-      .where(inArray(aptitudesInRules.name, BASE_INHERITED_NAMES));
+    const rows = await namedEntities("aptitudes", BASE_INHERITED_NAMES);
 
     for (const name of BASE_INHERITED_NAMES) {
-      const matches = rows.filter((r) => r.aptName === name);
+      const matches = rows.filter((r) => r.name === name);
       expect(matches).toHaveLength(1);
       expect(matches[0].rulesetName).toBe(DND35_RULESET_NAME);
     }
   });
 
   test("sibling-shared aptitude names have one row per owning extension, none in base", async () => {
-    const rows = await db
-      .select({
-        aptName: aptitudesInRules.name,
-        rulesetName: rulesetsInRules.name,
-      })
-      .from(aptitudesInRules)
-      .innerJoin(rulesetsInRules, eq(rulesetsInRules.id, aptitudesInRules.rulesetId))
-      .where(inArray(aptitudesInRules.name, SIBLING_SHARED_NAMES));
+    const rows = await namedEntities("aptitudes", SIBLING_SHARED_NAMES);
 
     for (const name of SIBLING_SHARED_NAMES) {
-      const matches = rows.filter((r) => r.aptName === name);
+      const matches = rows.filter((r) => r.name === name);
       expect(matches.length).toBeGreaterThan(1);
       for (const m of matches) expect(m.rulesetName).not.toBe(DND35_RULESET_NAME);
     }
@@ -219,65 +220,35 @@ describe("aptitude ownership (seed-level invariants)", () => {
     // Manyshot is seeded in SRD and COW'd into Complete Warrior (which adds
     // a CW:Ronin Bonus Feat link). The inherited General link on CW's copy
     // must point at SRD:General, since CW has no "General" row of its own.
-    const [srd] = await db
-      .select({ id: rulesetsInRules.id })
-      .from(rulesetsInRules)
-      .where(eq(rulesetsInRules.name, DND35_RULESET_NAME));
-    const [cw] = await db
-      .select({ id: rulesetsInRules.id })
-      .from(rulesetsInRules)
-      .where(eq(rulesetsInRules.name, DND35_COMPLETE_WARRIOR_NAME));
+    const srdId = await rulesetIdOf(DND35_RULESET_NAME);
+    const cwId = await rulesetIdOf(DND35_COMPLETE_WARRIOR_NAME);
 
-    const [srdGeneral] = await db
-      .select({ id: aptitudesInRules.id })
-      .from(aptitudesInRules)
-      .where(and(eq(aptitudesInRules.rulesetId, srd.id), eq(aptitudesInRules.name, "General")));
+    const [srdGeneral] = await namedEntities("aptitudes", ["General"], [srdId]);
 
-    const [cwManyshot] = await db
-      .select({ id: featsInRules.id })
-      .from(featsInRules)
-      .where(and(eq(featsInRules.rulesetId, cw.id), eq(featsInRules.name, "Manyshot")));
+    const [cwManyshot] = await namedEntities("feats", ["Manyshot"], [cwId]);
     expect(cwManyshot).toBeDefined();
 
-    const links = await db
-      .select({ aptitudeId: featsAptitudesInRules.aptitudeId })
-      .from(featsAptitudesInRules)
-      .where(eq(featsAptitudesInRules.featId, cwManyshot.id));
+    const links = await FeatsAptitudes.findMany(db, { featId: cwManyshot.id });
     const aptIds = new Set(links.map((l) => l.aptitudeId));
 
     expect(aptIds.has(srdGeneral.id)).toBe(true);
 
     // No CW-scoped "General" row should exist at all.
-    const cwGeneral = await db
-      .select({ id: aptitudesInRules.id })
-      .from(aptitudesInRules)
-      .where(and(eq(aptitudesInRules.rulesetId, cw.id), eq(aptitudesInRules.name, "General")));
+    const cwGeneral = await namedEntities("aptitudes", ["General"], [cwId]);
     expect(cwGeneral).toHaveLength(0);
   });
 
   test("extension feat links to extension's own aptitude for extension-private names", async () => {
     // "Ronin Bonus Feat" is CW-private. Manyshot is COW'd into CW and
     // given a link to CW's Ronin Bonus Feat via cowFeatsIntoExtension.
-    const [cw] = await db
-      .select({ id: rulesetsInRules.id })
-      .from(rulesetsInRules)
-      .where(eq(rulesetsInRules.name, DND35_COMPLETE_WARRIOR_NAME));
+    const cwId = await rulesetIdOf(DND35_COMPLETE_WARRIOR_NAME);
 
-    const [cwRonin] = await db
-      .select({ id: aptitudesInRules.id })
-      .from(aptitudesInRules)
-      .where(and(eq(aptitudesInRules.rulesetId, cw.id), eq(aptitudesInRules.name, "Ronin Bonus Feat")));
+    const [cwRonin] = await namedEntities("aptitudes", ["Ronin Bonus Feat"], [cwId]);
     expect(cwRonin).toBeDefined();
 
-    const [cwManyshot] = await db
-      .select({ id: featsInRules.id })
-      .from(featsInRules)
-      .where(and(eq(featsInRules.rulesetId, cw.id), eq(featsInRules.name, "Manyshot")));
+    const [cwManyshot] = await namedEntities("feats", ["Manyshot"], [cwId]);
 
-    const links = await db
-      .select({ aptitudeId: featsAptitudesInRules.aptitudeId })
-      .from(featsAptitudesInRules)
-      .where(eq(featsAptitudesInRules.featId, cwManyshot.id));
+    const links = await FeatsAptitudes.findMany(db, { featId: cwManyshot.id });
 
     expect(links.some((l) => l.aptitudeId === cwRonin.id)).toBe(true);
   });

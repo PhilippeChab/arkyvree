@@ -35,10 +35,10 @@ export function SeedsWizardSchools<B extends Constructor<BaseSeeder>>(Base: B) {
       const wizardSpells = this.ctx.aptMap[classSpells("Wizard")];
       if (!wizardSpells) return;
       // The wizard's list's spells, each with its level there and its school (its property)
-      const listed = await StoredJoins.rows<{ level: number | null; powerId: string }>(
+      const listed = await StoredJoins.findRows<{ level: number | null; powerId: string }>(
         this.db,
         "powers_aptitudes",
-        eq(StoredJoins.part("to"), wizardSpells),
+        eq(StoredJoins.getPart("to"), wizardSpells),
       );
       const schoolOf = new Map(
         (

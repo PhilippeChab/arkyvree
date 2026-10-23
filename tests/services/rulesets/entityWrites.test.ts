@@ -1,14 +1,14 @@
 import { describe, expect, test } from "bun:test";
 
-import { powersInRules } from "@/drizzle/schema.ts";
 import type { EntityWrites } from "@/engine/index.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { Properties, Requirements } from "@/server/repositories/index.ts";
+import { Powers, Properties, Requirements } from "@/server/repositories/index.ts";
 import { writeEntityWrites } from "@/server/services/rulesets/entityWrites.ts";
-import { insertRows, measure } from "@/tests/support/database.ts";
+import { measure } from "@/tests/support/database.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { makeSession } from "@/tests/support/users.ts";
+import { SPELL_DURATION, SPELL_SCHOOL, SPELL_SUBSCHOOL } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 /** Writes that write nothing but what's given. */
 function writesOf(writes: Partial<EntityWrites>): EntityWrites {
@@ -18,10 +18,10 @@ function writesOf(writes: Partial<EntityWrites>): EntityWrites {
 /** A power of a fork of its own, with a property its writes don't keep a field in. */
 async function createPower() {
   const ruleset = await createSeededTestRuleset(makeSession().userId);
-  const [power] = await insertRows(powersInRules, [{ name: "Probe Spell", rulesetId: ruleset.id }]);
+  const [power] = await Powers.create(db, { name: "Probe Spell", rulesetId: ruleset.id });
   await Properties.createMany(db, [
-    { entityId: power.id, entityType: "powers", type: "KEPT", value: "1" },
-    { entityId: power.id, entityType: "powers", type: "FIELD", value: "old" },
+    { entityId: power.id, entityType: "powers", type: SPELL_DURATION, value: "1 round" },
+    { entityId: power.id, entityType: "powers", type: SPELL_SCHOOL, value: "Evocation" },
   ]);
   return { entity: { entityId: power.id, entityType: "powers" } as const, rulesetId: ruleset.id };
 }
@@ -29,15 +29,21 @@ async function createPower() {
 describe("An entity's writes", () => {
   test("keep its fields in its properties: those of their types give way, its others stay", async () => {
     const { entity, rulesetId } = await createPower();
-    const properties = { types: ["FIELD", "OTHER_FIELD"], values: [{ type: "FIELD", value: "new" }] };
+    const properties = {
+      types: [SPELL_SCHOOL, SPELL_SUBSCHOOL],
+      values: [{ type: SPELL_SCHOOL, value: "Conjuration" }],
+    };
 
     const written = await withRulesetScope(db, rulesetId, async (scope) =>
       writeEntityWrites(db, scope, entity, writesOf({ properties })),
     );
 
-    expect(written).toEqual([{ ...entity, type: "FIELD", value: "new" }]);
+    expect(written).toEqual([{ ...entity, type: SPELL_SCHOOL, value: "Conjuration" }]);
     const stored = await Properties.findMany(db, { entityIds: [entity.entityId], entityType: "powers" });
-    expect(stored.map(({ type, value }) => `${type}=${value}`).toSorted()).toEqual(["FIELD=new", "KEPT=1"]);
+    expect(stored.map(({ type, value }) => `${type}=${value}`).toSorted()).toEqual([
+      `${SPELL_DURATION}=1 round`,
+      `${SPELL_SCHOOL}=Conjuration`,
+    ]);
   });
 
   test("set the requirement they plan on the entity", async () => {

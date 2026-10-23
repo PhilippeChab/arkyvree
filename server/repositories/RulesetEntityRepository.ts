@@ -52,16 +52,17 @@ abstract class RulesetEntityRepository<R extends { id: string }> extends include
   }
 
   /**
-   * A page of a ruleset's list of the kind (`where`: its scope, its search, its order), narrowed by the kind's own
-   * conditions (`conditions`), or ordered by its own (`order`).
+   * A page of a ruleset's list of the kind (`where`: its scope, its search, its order, those of `ids` if given), narrowed
+   * by the kind's own conditions (`conditions`), or ordered by its own (`order`).
    */
   async findPage(
     db: Db,
-    where: RulesetEntityFilters,
+    where: RulesetEntityFilters<{ ids?: string[] }>,
     pagination: { limit: number; page: number },
     conditions: (SQL | boolean | undefined)[] = [],
     order?: SQL[],
   ) {
+    if (where.ids !== undefined && where.ids.length === 0) return this.paginated<R>([], pagination);
     const { search, orderBy = "name", orderDir = "asc" } = where;
     const searchColumns = [this.column("name"), this.column("description")];
     return await this.withPagination(
@@ -73,6 +74,7 @@ abstract class RulesetEntityRepository<R extends { id: string }> extends include
             this.buildRulesetCondition(db, where),
             isNull(entitiesInRules.deletedAt),
             this.fuzzySearch(search, searchColumns),
+            where.ids !== undefined && inArray(entitiesInRules.id, where.ids),
             ...conditions,
           ],
           this.pageOrder(

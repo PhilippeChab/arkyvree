@@ -2,23 +2,25 @@ import { describe, expect, test } from "bun:test";
 
 import { eq } from "drizzle-orm";
 
-import {
-  featsAptitudesInRules,
-  klassLevelFeatsInRules,
-  klassLevelPowersInRules,
-  powersAptitudesInRules,
-} from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
-import { Feats, Klasses, Powers } from "@/server/repositories/index.ts";
+import { Feats, Klasses, KlassLevelPowers, Powers } from "@/server/repositories/index.ts";
+import StoredJoins from "@/server/repositories/stored/StoredJoins.ts";
 import { AptitudesService } from "@/server/services/rulesets/aptitudes/index.ts";
 import { ClassLevelsService } from "@/server/services/rulesets/classes/levels/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { PowersService } from "@/server/services/rulesets/powers/index.ts";
 import { createTestCharacter } from "@/tests/support/characters.ts";
-import { insertRows } from "@/tests/support/database.ts";
 import { addCharacterLevel, createTestKlassLevel } from "@/tests/support/levels.ts";
 import { createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
+
+/**
+ * A join's rows that name the aptitude by a part of their links: as the list a feat or a power is in (`to`), or the one
+ * a grant is through (`via`).
+ */
+async function linksOf(join: string, part: "to" | "via", aptitudeId: string) {
+  return await StoredJoins.findRows(db, join, eq(StoredJoins.getPart(part), aptitudeId));
+}
 
 // CRUD, ownership and copy-on-write are covered for every entity in EntityServices.test.ts.
 describe("AptitudesService", () => {
@@ -79,25 +81,15 @@ describe("AptitudesService", () => {
       fields: { bab: 1, skills: 2 },
       feats: [{ featId: feat.id, aptitudeId: featAptitude.id }],
     });
-    await insertRows(klassLevelPowersInRules, [
-      { klassLevelId: level.id, powerId: power.id, aptitudeId: powerAptitude.id },
-    ]);
+    await KlassLevelPowers.create(db, { klassLevelId: level.id, powerId: power.id, aptitudeId: powerAptitude.id });
 
     await AptitudesService.deleteAptitude(session, ruleset.id, featAptitude.id);
     await AptitudesService.deleteAptitude(session, ruleset.id, powerAptitude.id);
 
-    expect(
-      await db.select().from(featsAptitudesInRules).where(eq(featsAptitudesInRules.aptitudeId, featAptitude.id)),
-    ).toEqual([]);
-    expect(
-      await db.select().from(powersAptitudesInRules).where(eq(powersAptitudesInRules.aptitudeId, powerAptitude.id)),
-    ).toEqual([]);
-    expect(
-      await db.select().from(klassLevelFeatsInRules).where(eq(klassLevelFeatsInRules.aptitudeId, featAptitude.id)),
-    ).toEqual([]);
-    expect(
-      await db.select().from(klassLevelPowersInRules).where(eq(klassLevelPowersInRules.aptitudeId, powerAptitude.id)),
-    ).toEqual([]);
+    expect(await linksOf("feats_aptitudes", "to", featAptitude.id)).toEqual([]);
+    expect(await linksOf("powers_aptitudes", "to", powerAptitude.id)).toEqual([]);
+    expect(await linksOf("klass_level_feats", "via", featAptitude.id)).toEqual([]);
+    expect(await linksOf("klass_level_powers", "via", powerAptitude.id)).toEqual([]);
   });
 
   test("refuses to delete an aptitude a character picked a feat or a power through", async () => {

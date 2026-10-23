@@ -20,8 +20,8 @@ class CharacterLanguagesRepository extends BaseRepository<typeof linksInCharacte
     if (values.length === 0) return [];
     const rows = await db
       .insert(this.table)
-      .values(values.map((row) => StoredCharacterLinks.values("languages", row)))
-      .returning(StoredCharacterLinks.columns("languages"));
+      .values(values.map((row) => StoredCharacterLinks.buildValues("languages", row)))
+      .returning(StoredCharacterLinks.buildColumns("languages"));
     return rows as unknown as CharacterLanguage[];
   }
 
@@ -30,7 +30,7 @@ class CharacterLanguagesRepository extends BaseRepository<typeof linksInCharacte
     return await db
       .delete(this.table)
       .where(
-        StoredCharacterLinks.scope(
+        StoredCharacterLinks.buildScope(
           "languages",
           and(eq(this.table.characterId, where.characterId), eq(this.table.entityId, where.languageId)),
         ),
@@ -39,9 +39,9 @@ class CharacterLanguagesRepository extends BaseRepository<typeof linksInCharacte
 
   async findMany(db: Db, where: { characterId: string }) {
     const rows = await db
-      .select(StoredCharacterLinks.columns("languages"))
+      .select(StoredCharacterLinks.buildColumns("languages"))
       .from(this.table)
-      .where(StoredCharacterLinks.scope("languages", eq(this.table.characterId, where.characterId)))
+      .where(StoredCharacterLinks.buildScope("languages", eq(this.table.characterId, where.characterId)))
       .orderBy(this.orderBy(this.table.createdAt), this.orderBy(this.table.id));
     return rows as unknown as CharacterLanguage[];
   }

@@ -206,14 +206,14 @@ const FORM_REFS: Record<
   },
 };
 
-/** How many of each an entity has: its notes, of its properties. */
+/** How many of each an entity has: the one `customize` gives it, of its properties. */
 async function counts(entityType: (typeof ENTITY_TYPES)[number], id: string) {
   const { modifiers, modifierRequirements, requirements, properties } = await findCustomizations(entityType, id);
   return {
     modifiers: modifiers.length,
     modifierRequirements: modifierRequirements.length,
     requirements: requirements.length,
-    properties: properties.filter((p) => p.type === "NOTE").length,
+    properties: properties.filter((p) => p.value === "doomed").length,
   };
 }
 
@@ -398,12 +398,7 @@ describe.each(ENTITY_TYPES.filter((type) => type !== "mechanics"))("customized %
   const ownsModifiers = isCustomizableEntityType(entityType);
 
   const none = { modifiers: 0, modifierRequirements: 0, requirements: 0, properties: 0 };
-  const one = {
-    modifiers: Number(ownsModifiers),
-    modifierRequirements: Number(ownsModifiers),
-    requirements: 1,
-    properties: 1,
-  };
+  const one = { modifiers: Number(ownsModifiers), modifierRequirements: Number(ownsModifiers), requirements: 1 };
 
   test("deletes the entity's modifiers, requirements and properties with it", async () => {
     const { session, ruleset, refs } = await setup();
@@ -425,9 +420,11 @@ describe.each(ENTITY_TYPES.filter((type) => type !== "mechanics"))("customized %
     const fork = await createTestRuleset(user.id, { rulesetId: parent.id, ancestorRulesetIds: [parent.id] });
 
     const source = await findCustomizations(entityType, inherited.id);
+    const sourceCounts = await counts(entityType, inherited.id);
+    expect(sourceCounts).toMatchObject(one);
 
     const copy = await service.update(session, fork.id, inherited.id, "Forked Entity", refs);
-    expect(await counts(entityType, copy.id)).toEqual(one);
+    expect(await counts(entityType, copy.id)).toEqual(sourceCounts);
     const sourceIds = source.modifierRequirements.map((r) => r.id);
     const copiedIds = (await findCustomizations(entityType, copy.id)).modifierRequirements.map((r) => r.id);
     // The copy's modifier has its own copy of the modifier's requirements.

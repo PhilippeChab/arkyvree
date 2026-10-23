@@ -1,10 +1,9 @@
 import { describe, expect, test } from "bun:test";
 
-import { eq } from "drizzle-orm";
-
-import { propertiesInCustomization } from "@/drizzle/schema.ts";
+import { rulesetsInRules } from "@/drizzle/schema.ts";
 import { RULESET_FIELDS } from "@/engine/rulesets/dnd3.5/ruleset/fields.ts";
 import { db } from "@/server/database/index.ts";
+import { Properties } from "@/server/repositories/index.ts";
 import {
   RULESET_ABILITY_INCREASES,
   RULESET_FEAT_ADVANCEMENT,
@@ -55,10 +54,8 @@ describe("A ruleset's own fields", () => {
   });
 
   test("of every seeded ruleset rebuild its rows", async () => {
-    const rows = await db
-      .select()
-      .from(propertiesInCustomization)
-      .where(eq(propertiesInCustomization.entityType, "rulesets"));
+    const rulesets = await db.select({ id: rulesetsInRules.id }).from(rulesetsInRules);
+    const rows = await Properties.findMany(db, { entityIds: rulesets.map(({ id }) => id), entityType: "rulesets" });
     expect(rows.every((row) => RULESET_FIELDS.types.includes(row.type))).toBe(true);
     expect(rows.length).toBeGreaterThan(0);
     for (const stored of Map.groupBy(rows, (row) => row.entityId).values()) {

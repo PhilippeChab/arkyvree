@@ -1,10 +1,10 @@
 import { type Column, ilike, or, sql, type SQL, type Table } from "drizzle-orm";
 
-/** A searched column: a table's, or what holds an entity's (`StoredKindRepository.column`). */
-type Searched = Column | SQL;
-
 import type { Constructor } from "@/lib/mixins.ts";
 import type BaseRepository from "@/server/repositories/BaseRepository.ts";
+
+/** A searched column: a table's, or what holds an entity's (`StoredKindRepository.column`). */
+type Searched = Column | SQL;
 
 /**
  * How close a search must come to a name's words to find it by a typo ("Magic Missle"): their strict word similarity

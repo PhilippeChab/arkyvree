@@ -2,8 +2,6 @@ import { sql, type SQL } from "drizzle-orm";
 
 import { db } from "@/server/database/index.ts";
 
-export type { Character } from "@/shared/relations.ts";
-
 /** The active characters' rows, which every check below reads */
 export const ACTIVE_CHARACTERS = sql`(SELECT id FROM character.characters WHERE deleted_at IS NULL)`;
 

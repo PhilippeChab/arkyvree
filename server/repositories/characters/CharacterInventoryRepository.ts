@@ -13,6 +13,9 @@ type InventoryValues = Partial<Omit<CharacterInventory, "createdAt" | "deletedAt
 
 /** An entry's columns: its own, its location as the module's value, and its groups as its weapon sets. */
 const COLUMNS = {
+  createdAt: inventoryInCharacter.createdAt,
+  updatedAt: inventoryInCharacter.updatedAt,
+  deletedAt: inventoryInCharacter.deletedAt,
   id: inventoryInCharacter.id,
   characterId: inventoryInCharacter.characterId,
   itemId: inventoryInCharacter.itemId,
@@ -22,9 +25,6 @@ const COLUMNS = {
   equipped: inventoryInCharacter.equipped,
   location: inventoryInCharacter.location,
   weaponSets: inventoryInCharacter.groups,
-  createdAt: inventoryInCharacter.createdAt,
-  updatedAt: inventoryInCharacter.updatedAt,
-  deletedAt: inventoryInCharacter.deletedAt,
 };
 
 /** An entry's row to write: its weapon sets as its groups, its item's type its item's own. */
@@ -33,7 +33,7 @@ function stored(values: InventoryValues) {
   return {
     ...rest,
     ...(weaponSets !== undefined ? { groups: weaponSets } : {}),
-    ...(values.itemId !== undefined ? { itemType: StoredCharacters.typeOf(values.itemId) } : {}),
+    ...(values.itemId !== undefined ? { itemType: StoredCharacters.buildTypeOf(values.itemId) } : {}),
   };
 }
 
@@ -65,11 +65,7 @@ class CharacterInventoryRepository extends include(BaseRepository<typeof invento
 
   /** A character's inventory entries, each naming its item by its id: the engine takes the item from the view. */
   async findMany(db: Db, where: { characterId: string }) {
-    const rows = await db
-      .select(COLUMNS)
-      .from(this.table)
-      .where(eq(this.table.characterId, where.characterId))
-      .orderBy(this.orderBy(this.table.createdAt), this.orderBy(this.table.id));
+    const rows = await db.select(COLUMNS).from(this.table).where(eq(this.table.characterId, where.characterId));
     return rows as unknown as CharacterInventory[];
   }
 
@@ -82,10 +78,17 @@ class CharacterInventoryRepository extends include(BaseRepository<typeof invento
     return row as unknown as CharacterInventory | undefined;
   }
 
-  async update(db: Db, values: InventoryValues, where: { characterId: string; expectedUpdatedAt?: string; id: string }) {
+  async update(
+    db: Db,
+    values: InventoryValues,
+    where: { characterId: string; expectedUpdatedAt?: string; id: string },
+  ) {
     const rows = await db
       .update(this.table)
-      .set({ ...(stored(values) as Partial<typeof inventoryInCharacter.$inferInsert>), updatedAt: new Date().toISOString() })
+      .set({
+        ...(stored(values) as Partial<typeof inventoryInCharacter.$inferInsert>),
+        updatedAt: new Date().toISOString(),
+      })
       .where(
         this.where([
           eq(this.table.characterId, where.characterId),

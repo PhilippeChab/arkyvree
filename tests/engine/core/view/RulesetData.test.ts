@@ -1,10 +1,8 @@
 import { describe, expect, test } from "bun:test";
 
-import { itemsInRules } from "@/drizzle/schema.ts";
 import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { Properties } from "@/server/repositories/index.ts";
-import { insertRows } from "@/tests/support/database.ts";
+import { Items, Properties } from "@/server/repositories/index.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
@@ -16,7 +14,7 @@ describe("An item's properties", () => {
     const longsword = await withRulesetScope(db, ruleset.id, async ({ rulesetData }) =>
       rulesetData.items.find((item) => item.isTemplate && item.name === "Longsword"),
     );
-    const [variant] = await insertRows(itemsInRules, [
+    const [variant] = await Items.createMany(db, [
       { name: "Probe Blade", rulesetId: ruleset.id, sourceItemId: longsword!.id, type: "Weapon" },
     ]);
     await Properties.createMany(db, [

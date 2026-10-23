@@ -132,10 +132,19 @@ jobs:
       - run: bun install --frozen-lockfile
       - name: Add the rows the seeds lack
         run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f tests/fixtures/db/0080-edge-cases.sql
+      # The test data has issues of its own (two characters miss an ability increase): what's checked is that the
+      # migrated characters build as they did, each issue the same
+      - name: Validate every character before migrating
+        run: |
+          cd ../before && bun --env-file=.env.test scripts/ops/validate-characters.ts > ../validate-before.log 2>&1 || true
+          grep -E "pass all checks|issue\(s\) found" ../validate-before.log
       - name: Migrate, checking every row it copies
         run: bun --env-file=.env.test scripts/db/migrate.ts
-      - name: Every character builds on the migrated data
-        run: bun --env-file=.env.test scripts/ops/validate-characters.ts
+      - name: Every character builds on the migrated data as it did before
+        run: |
+          bun --env-file=.env.test scripts/ops/validate-characters.ts > ../validate-after.log 2>&1 || true
+          grep -E "pass all checks|issue\(s\) found" ../validate-after.log
+          diff <(grep "^    " ../validate-before.log | sort) <(grep "^    " ../validate-after.log | sort)
 
   # The check branch protection requires by name: green once every shard is
   changed-result:

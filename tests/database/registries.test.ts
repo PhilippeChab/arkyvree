@@ -4,15 +4,27 @@ import { sql } from "drizzle-orm";
 
 import { Engine } from "@/engine/index.ts";
 import { db } from "@/server/database/index.ts";
+import StoredRegistries, { type DeclaredRegistries } from "@/server/repositories/stored/StoredRegistries.ts";
 
-/** A registry's rows, each as one line of its columns, sorted: what's compared, whatever order either keeps. */
-async function rowsOf(query: ReturnType<typeof sql>) {
-  return (await db.execute<Record<string, unknown>>(query)).rows.map((row) => JSON.stringify(row)).sort();
+/** Every module's declarations, as the sync writes them by default. */
+function declared(): DeclaredRegistries {
+  return { modules: Engine.storage().modules(), registries: structuredClone(Engine.storage().registries()) };
 }
 
 /** Declared rows as the database's would read: each as one line of its columns, sorted. */
 function linesOf(rows: Record<string, unknown>[]) {
   return rows.map((row) => JSON.stringify(row)).sort();
+}
+
+/** The count a query answers (its `n`). */
+async function countOf(query: ReturnType<typeof sql>) {
+  const [row] = (await db.execute<{ n: number }>(query)).rows;
+  return Number(row.n);
+}
+
+/** A registry's rows, each as one line of its columns, sorted: what's compared, whatever order either keeps. */
+async function rowsOf(query: ReturnType<typeof sql>) {
+  return (await db.execute<Record<string, unknown>>(query)).rows.map((row) => JSON.stringify(row)).sort();
 }
 
 describe("The registries, which the generic tables' rows are checked against", () => {
@@ -71,9 +83,9 @@ describe("The registries, which the generic tables' rows are checked against", (
   });
 
   test("hold the ruleset and character roles, the steps and the item types every module declares", async () => {
-    expect(await rowsOf(sql`SELECT role, to_type AS "toType", on_delete AS "onDelete" FROM rules.ruleset_roles`)).toEqual(
-      linesOf(registries.rulesetRoles.map(({ role, toType, onDelete }) => ({ role, toType, onDelete }))),
-    );
+    expect(
+      await rowsOf(sql`SELECT role, to_type AS "toType", on_delete AS "onDelete" FROM rules.ruleset_roles`),
+    ).toEqual(linesOf(registries.rulesetRoles.map(({ role, toType, onDelete }) => ({ role, toType, onDelete }))));
     expect(
       await rowsOf(sql`SELECT role, entity_type AS "entityType", single, on_delete AS "onDelete"
         FROM character.character_roles`),
@@ -137,5 +149,82 @@ describe("The keys drizzle-kit doesn't record, which a generated migration would
       "entities_owner_id_owner_type_fkey",
       "entity_links_via_id_via_type_fkey",
     ]);
+  });
+});
+
+describe("The registry sync, which every migrate runs", () => {
+  test("leaves registries that already hold every declaration as they are", async () => {
+    const before = await rowsOf(sql`SELECT owner_type, field, value_kind, multiple, merge FROM rules.field_defs`);
+    await StoredRegistries.reconcile(db);
+    expect(await rowsOf(sql`SELECT owner_type, field, value_kind, multiple, merge FROM rules.field_defs`)).toEqual(
+      before,
+    );
+  });
+
+  test("writes a new declaration, and removes it once no module declares it", async () => {
+    const withField = declared();
+    withField.registries.fieldDefs.push({
+      ownerType: "feats",
+      ownerKind: "entity",
+      field: "FEAT_SYNC_TEST",
+      valueKind: "text",
+      multiple: false,
+      merge: "fallback",
+      inheritsVia: null,
+    });
+    await StoredRegistries.reconcile(db, withField);
+    expect(await countOf(sql`SELECT count(*) AS n FROM rules.field_defs WHERE field = 'FEAT_SYNC_TEST'`)).toBe(1);
+
+    await StoredRegistries.reconcile(db);
+    expect(await countOf(sql`SELECT count(*) AS n FROM rules.field_defs WHERE field = 'FEAT_SYNC_TEST'`)).toBe(0);
+  });
+
+  test("rewrites the rows a changed declaration carries", async () => {
+    const many = declared();
+    for (const def of many.registries.linkRoles) if (def.role === "resistedBy") def.single = false;
+    await StoredRegistries.reconcile(db, many);
+    expect(await countOf(sql`SELECT count(*) AS n FROM rules.entity_links WHERE role = 'resistedBy' AND single`)).toBe(
+      0,
+    );
+    expect(await countOf(sql`SELECT count(*) AS n FROM rules.entity_links WHERE role = 'resistedBy'`)).toBeGreaterThan(
+      0,
+    );
+
+    await StoredRegistries.reconcile(db);
+    expect(
+      await countOf(sql`SELECT count(*) AS n FROM rules.entity_links WHERE role = 'resistedBy' AND NOT single`),
+    ).toBe(0);
+  });
+
+  test("refuses to remove a declaration rows still use, naming it", async () => {
+    const without = declared();
+    without.registries.fieldDefs = without.registries.fieldDefs.filter((def) => def.field !== "SPELL_SCHOOL");
+    expect(StoredRegistries.reconcile(db, without)).rejects.toThrow(
+      "No module declares the field SPELL_SCHOOL of powers any more, but rows still use it",
+    );
+    expect(await countOf(sql`SELECT count(*) AS n FROM rules.field_defs WHERE field = 'SPELL_SCHOOL'`)).toBe(1);
+  });
+
+  test("keeps a character's last change when a declaration rewrites its rows", async () => {
+    const [character] = (
+      await db.execute<{ id: string; last_changed_at: string }>(sql`
+        SELECT c.id, c.last_changed_at::text FROM character.characters c
+        JOIN character.advancements a ON a.character_id = c.id
+        JOIN character.advancement_picks p ON p.advancement_id = a.id AND p.step = 'hp'
+        LIMIT 1`)
+    ).rows;
+    expect(character).toBeDefined();
+    const repeating = declared();
+    for (const def of repeating.registries.steps) if (def.step === "hp") def.repeats = true;
+    await StoredRegistries.reconcile(db, repeating);
+    expect(
+      await countOf(sql`SELECT count(*) AS n FROM character.advancement_picks WHERE step = 'hp' AND NOT repeats`),
+    ).toBe(0);
+    const [after] = (
+      await db.execute<{ last_changed_at: string }>(
+        sql`SELECT last_changed_at::text FROM character.characters WHERE id = ${character.id}`,
+      )
+    ).rows;
+    expect(after.last_changed_at).toBe(character.last_changed_at);
   });
 });

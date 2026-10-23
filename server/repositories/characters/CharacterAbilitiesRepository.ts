@@ -18,16 +18,16 @@ class CharacterAbilitiesRepository extends include(BaseRepository<typeof linksIn
     if (values.length === 0) return [];
     const rows = await db
       .insert(this.table)
-      .values(values.map((row) => StoredCharacterLinks.values("abilities", row)))
-      .returning(StoredCharacterLinks.columns("abilities"));
+      .values(values.map((row) => StoredCharacterLinks.buildValues("abilities", row)))
+      .returning(StoredCharacterLinks.buildColumns("abilities"));
     return rows as unknown as CharacterAbility[];
   }
 
   async findMany(db: Db, where: { characterId: string }) {
     const rows = await db
-      .select(StoredCharacterLinks.columns("abilities"))
+      .select(StoredCharacterLinks.buildColumns("abilities"))
       .from(this.table)
-      .where(StoredCharacterLinks.scope("abilities", eq(this.table.characterId, where.characterId)))
+      .where(StoredCharacterLinks.buildScope("abilities", eq(this.table.characterId, where.characterId)))
       .orderBy(this.orderBy(this.table.createdAt), this.orderBy(this.table.id));
     return rows as unknown as CharacterAbility[];
   }
@@ -38,12 +38,12 @@ class CharacterAbilitiesRepository extends include(BaseRepository<typeof linksIn
       .update(this.table)
       .set({ amount: values.score, updatedAt: new Date().toISOString() })
       .where(
-        StoredCharacterLinks.scope(
+        StoredCharacterLinks.buildScope(
           "abilities",
           and(eq(this.table.characterId, where.characterId), this.idMatches(this.table.entityId, where.abilityIds)),
         ),
       )
-      .returning(StoredCharacterLinks.columns("abilities"));
+      .returning(StoredCharacterLinks.buildColumns("abilities"));
     return rows as unknown as CharacterAbility[];
   }
 }

@@ -15,11 +15,11 @@ A ruleset's entities and a character's build are stored in tables no game names 
 - **Fields:** `rules.entity_fields`, one typed value a row (`text_value`, `number_value` or `flag_value`, as its field's `value_kind` says), a set one row per value by ordinal (a key, not an order). A ruleset's settings are `rules.ruleset_fields`, a character's `character.fields`. A missing row is no value.
 - **Links:** `rules.entity_links`: an entity's link of a role to another (a feat listed in an aptitude, a class level's grant through a pool, a save's key ability), with a tier, an amount and whether it's free, in its from-entity's order (`ordinal`). A ruleset's are `rules.ruleset_links`, a character's `character.links` (its race, its scores, its languages).
 - **Advancement:** a character's levels are `character.advancements`, each in a track (its class level), and their picks `character.advancement_picks`, by step (its hit points, its feats through their pools, its skills' ranks).
-- **Registries:** what the modules declare, each row's foreign keys check it against: `rules.modules` (a ruleset's base rules), `entity_types`, `field_defs`, `link_roles` and `link_role_kinds`, `ruleset_roles`, `character.character_roles`, `steps` and `item_types`. The migration writes 3.5's, and `tests/database/registries.test.ts` checks they hold what the modules declare: a module that declares more needs a migration that writes it.
+- **Registries:** what the modules declare, each row's foreign keys check it against: `rules.modules` (a ruleset's base rules), `entity_types`, `field_defs`, `link_roles` and `link_role_kinds`, `ruleset_roles`, `character.character_roles`, `steps` and `item_types`. Every migrate writes them from the modules' declarations (`StoredRegistries.reconcile`, run by `scripts/db/migrate.ts` and the test databases' reset), so a module's new type, field, role or step is a code change only: it adds what's new, updates what changed (a field that becomes a set, a role that becomes single: the foreign keys cascade into the rows that carry it, and the database refuses a change its rows can't take), and removes what no module declares any more, refusing, by its name, a row that rows still use. Its rewrites leave characters' last change alone (`arkyvree.registry_sync`). `tests/database/registries.test.ts` checks they hold what the modules declare, and what a sync does.
 
 How the server reads them as a kind's rows (`server/repositories/stored/`):
 
-- **A kind's row** is read as its old shape, every column under its name: an entity's own, and each of its fields and single links its declaration names (`StoredEntities.columns`, a subquery a column). A write splits a row back into them (`StoredEntities.insert`, `update`), a column a write leaves out written with its declared default. Each kind's repository is one `RulesetEntityRepository` over it (`StoredKindRepository` for an owned kind: a class's levels).
+- **A kind's row** is read as its old shape, every column under its name: an entity's own, and each of its fields and single links its declaration names (`StoredEntities.buildColumns`, a subquery a column). A write splits a row back into them (`StoredEntities.insert`, `update`), a column a write leaves out written with its declared default. Each kind's repository is one `RulesetEntityRepository` over it (`StoredKindRepository` for an owned kind: a class's levels).
 - **A join's row** is a link of its role (`StoredJoins`: a feat's pools, a class level's grants, saves and skills), a new one after its from-entity's last.
 - **A property** is a field the kind's columns don't hold, or a link when its value names an entity (a class's bonus spell ability, a ruleset's skill point ability): `StoredFields`, read and written as properties (`Property`), which the engine reads.
 - **A character's row** reads its stored columns from its fields and its race link (`StoredCharacters`), its scores and languages from its links (`StoredCharacterLinks`), its levels from its advancements and their hit points' picks, and its picks by step (`LevelPicksRepository`).
@@ -43,7 +43,7 @@ Rows whose disappearance leaves no observable history a user would expect to fin
 | Ruleset entities | `Feats`, `Items`, `Races`, `Klasses`, `KlassLevels`, `Skills`, `Powers`, `Aptitudes`, `Saves`, `Languages`, `Mechanics` |
 | Status-driven lifecycle | `Contributors` (Pending/Active/Rejected/Revoked enum) |
 
-`Abilities` is hard-coded in the schema and never deleted.
+`Abilities` are seeded and never deleted: their service reads them alone.
 
 Repos in this category have no `archive`, so future code can't mistakenly soft-archive into dead state: the call wouldn't compile.
 
@@ -72,7 +72,7 @@ Archiving preserves content for later restoration.
 
 - `Characters` and `Campaigns` have a hard-delete path on **archived rows**:
   - `DELETE /api/characters/:id/permanent` — owner only, must be archived, must not be linked to a campaign that is itself active (an archived campaign no longer "uses" the character). Its bonded children go through FK CASCADE, and the database deletes every deleted character's attachments and modifiers (see *Polymorphic rows* below).
-  - `DELETE /api/campaigns/:id/permanent` — GM only, must be archived. Every FK to `campaigns.id` is `ON DELETE CASCADE`, so the row delete wipes membership rows (`players`, `invites`, `player_characters`) **and** every campaign-scoped ruleset entity (`aptitudes`, `abilities`, `feats`, `items`, `klasses` → `klass_levels` → level-feats/powers/saves, `languages`, `mechanics`, `powers`, `races`, `saves`, `skills`) in one shot.
+  - `DELETE /api/campaigns/:id/permanent` — GM only, must be archived. Every FK to `campaigns.id` is `ON DELETE CASCADE`, so the row delete wipes membership rows (`players`, `invites`, `player_characters`) **and** every campaign-scoped ruleset entity (its `rules.entities` rows, whatever their type: a class with its levels, their fields and their links) in one shot.
   - Both endpoints enforce ownership and archive-state checks through `CharactersPolicy.canHardDelete` / `CampaignsPolicy.canHardDelete`.
 - `Rulesets` has no hard-delete path. Archive is the only terminal state.
 
@@ -168,7 +168,7 @@ Hard-deleted via `Users.delete` (gated on `expiresAt` / `@demo.invalid`). Demo d
 - Every row naming the copy is pointed at the extension's entity (`EntityReferences.update`, by the list of what names each type, `ENTITY_REFERENCES`). By then, those rows are the other copies' only.
 - The copy goes, then its snapshot. The database deletes the copy's own rows with it (FK CASCADE: its links, a class's levels and skills) and the customizations of every row it deletes (see *Polymorphic rows* above).
 
-A copy naming another, once pointed at the extension's entity, never blocks the other's delete, whatever order the copies go in. Two foreign keys among ruleset entities restrict: an item's template (`items.source_item_id`) and a class level's save (`klass_level_saves.save_id`). Nor is a subrace's or a subclass's copy cascaded away with its parent's (`races.parent_id`, `klasses.parent_id`) before its own turn.
+A copy naming another, once pointed at the extension's entity, never blocks the other's delete, whatever order the copies go in. Two roles among ruleset entities refuse: an item's template (`madeFrom`) and a class level's save (`baseBonus`). Nor is a subrace's or a subclass's copy deleted with its parent's (`subraceOf`, `subclassOf`, which delete) before its own turn.
 
 Restoring an override reverts one copy the same way, characters' picks included (see [rulesets.md](./rulesets.md#restoring-an-override)).
 

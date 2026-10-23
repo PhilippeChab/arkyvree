@@ -2,9 +2,16 @@ import { describe, expect, test } from "bun:test";
 
 import { eq } from "drizzle-orm";
 
-import { featsAptitudesInRules, klassLevelFeatsInRules } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
-import { Aptitudes, Characters, EntitySnapshots, Klasses, Properties } from "@/server/repositories/index.ts";
+import {
+  Aptitudes,
+  Characters,
+  EntitySnapshots,
+  FeatsAptitudes,
+  Klasses,
+  Properties,
+} from "@/server/repositories/index.ts";
+import StoredJoins from "@/server/repositories/stored/StoredJoins.ts";
 import { ClassLevelsService } from "@/server/services/rulesets/classes/levels/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { PowersService } from "@/server/services/rulesets/powers/index.ts";
@@ -19,7 +26,7 @@ import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/properties/index.ts";
 const APTITUDES = ["Combat", "Metamagic", "General"];
 
 async function linkedAptitudeIds(featId: string) {
-  const rows = await db.select().from(featsAptitudesInRules).where(eq(featsAptitudesInRules.featId, featId));
+  const rows = await FeatsAptitudes.findMany(db, { featIds: [featId] });
   return rows.map((row) => row.aptitudeId).sort();
 }
 
@@ -118,7 +125,7 @@ describe("FeatsService", () => {
     } = await createTestUserAndRuleset(APTITUDES);
     for (const name of ["Focus: Axe", "Focus: Sword"]) {
       const feat = await FeatsService.createFeat(session, ruleset.id, { name, aptitudeIds: [combat] });
-      await Properties.create(db, { entityId: feat.id, entityType: "feats", type: FEAT_FAMILY, value: "Focus" });
+      await Properties.createMany(db, [{ entityId: feat.id, entityType: "feats", type: FEAT_FAMILY, value: "Focus" }]);
     }
     await FeatsService.createFeat(session, ruleset.id, { name: "Cleave", aptitudeIds: [combat] });
     await FeatsService.createFeat(session, ruleset.id, { name: "Alertness", aptitudeIds: [general] });
@@ -150,9 +157,8 @@ describe("FeatsService", () => {
     await FeatsService.deleteFeat(session, ruleset.id, feat.id);
 
     expect(await linkedAptitudeIds(feat.id)).toEqual([]);
-    expect(await db.select().from(klassLevelFeatsInRules).where(eq(klassLevelFeatsInRules.featId, feat.id))).toEqual(
-      [],
-    );
+    // A grant's feat is its link's to-entity
+    expect(await StoredJoins.findRows(db, "klass_level_feats", eq(StoredJoins.getPart("to"), feat.id))).toEqual([]);
   });
 
   describe("deleting a feat characters picked", () => {

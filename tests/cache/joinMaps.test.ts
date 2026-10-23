@@ -7,19 +7,35 @@
 
 import { beforeAll, describe, expect, test } from "bun:test";
 
-import { and, eq, isNull } from "drizzle-orm";
-
-import { klassLevelFeatsInRules, klassLevelPowersInRules, klassSkillsInRules } from "@/drizzle/schema.ts";
 import { type RulesetData } from "@/engine/core/view/index.ts";
 import { type SeedContext } from "@/scripts/db/seeds/seedContext.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { Rulesets } from "@/server/repositories/index.ts";
+import {
+  Feats,
+  KlassLevelFeats,
+  KlassLevelPowers,
+  KlassSkills,
+  Powers,
+  Rulesets,
+  Skills,
+} from "@/server/repositories/index.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 import { SPELL_SCHOOL } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 function sortById<T extends { id: string }>(xs: T[]) {
   return [...xs].sort((a, b) => a.id.localeCompare(b.id));
+}
+
+/** Each row with what its `key` names, of the rows `find` reads by id, under `as`. */
+async function withRows<T, K extends keyof T & string, A extends string, E extends { id: string }>(
+  rows: T[],
+  key: K,
+  as: A,
+  find: (ids: string[]) => Promise<E[]>,
+) {
+  const found = new Map((await find(rows.map((row) => String(row[key])))).map((entity) => [entity.id, entity]));
+  return rows.map((row) => ({ ...row, [as]: found.get(String(row[key]))! }) as T & Record<A, E>);
 }
 
 describe("cache join-maps — parity with repository queries", () => {
@@ -39,10 +55,12 @@ describe("cache join-maps — parity with repository queries", () => {
     expect(klassLevel).toBeDefined();
 
     const fromCache = rulesetData.klassLevelFeatsWithFeatsByKlassLevel.get(klassLevel!.id) ?? [];
-    const fromDb = await db.query.klassLevelFeatsInRules.findMany({
-      where: and(eq(klassLevelFeatsInRules.klassLevelId, klassLevel!.id), isNull(klassLevelFeatsInRules.deletedAt)),
-      with: { featsInRule: true },
-    });
+    const fromDb = await withRows(
+      await KlassLevelFeats.findMany(db, { klassLevelIds: [klassLevel!.id] }),
+      "featId",
+      "featsInRule",
+      async (ids) => await Feats.findMany(db, { ids }),
+    );
 
     expect(fromCache.length).toBe(fromDb.length);
     const mapRow = (r: (typeof fromDb)[number]) => ({
@@ -63,10 +81,12 @@ describe("cache join-maps — parity with repository queries", () => {
     if (!klassLevel) return; // seed doesn't have Wizard at this level — skip
 
     const fromCache = rulesetData.klassLevelPowersWithPowersByKlassLevel.get(klassLevel.id) ?? [];
-    const fromDb = await db.query.klassLevelPowersInRules.findMany({
-      where: and(eq(klassLevelPowersInRules.klassLevelId, klassLevel.id), isNull(klassLevelPowersInRules.deletedAt)),
-      with: { powersInRule: true },
-    });
+    const fromDb = await withRows(
+      await KlassLevelPowers.findMany(db, { klassLevelIds: [klassLevel.id] }),
+      "powerId",
+      "powersInRule",
+      async (ids) => await Powers.findMany(db, { ids }),
+    );
 
     expect(fromCache.length).toBe(fromDb.length);
     // klass_level_powers has no `id` column — sort by (powerId, aptitudeId).
@@ -87,13 +107,15 @@ describe("cache join-maps — parity with repository queries", () => {
     const fighterId = ctx.klassMap.pc["Fighter"];
 
     const fromCache = rulesetData.klassSkillsWithSkillsByKlass.get(fighterId) ?? [];
-    const fromDb = await db.query.klassSkillsInRules.findMany({
-      where: and(eq(klassSkillsInRules.klassId, fighterId), isNull(klassSkillsInRules.deletedAt)),
-      with: { skillsInRule: true },
-    });
+    const fromDb = await withRows(
+      await KlassSkills.findMany(db, { klassIds: [fighterId] }),
+      "skillId",
+      "skillsInRule",
+      async (ids) => await Skills.findMany(db, { ids }),
+    );
 
     expect(fromCache.length).toBe(fromDb.length);
-    // klassSkillsInRules has no `id` column — sort by skillId (composite key).
+    // A class's skill has no `id` column — sort by skillId (composite key).
     const sortBySkillId = <T extends { skillId: string }>(xs: T[]) =>
       [...xs].sort((a, b) => a.skillId.localeCompare(b.skillId));
     const mapRow = (r: (typeof fromDb)[number]) => ({

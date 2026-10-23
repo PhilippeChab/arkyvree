@@ -1,10 +1,9 @@
 import { expect, test } from "bun:test";
 
-import { aptitudesInRules, inventoryInCharacter } from "@/drizzle/schema.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { Abilities, Items, Saves } from "@/server/repositories/index.ts";
+import { Abilities, Aptitudes, CharacterInventory, Items, Saves } from "@/server/repositories/index.ts";
 import { CharacterInventoryService } from "@/server/services/characters/inventory/index.ts";
 import { AptitudesService } from "@/server/services/rulesets/aptitudes/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
@@ -12,7 +11,6 @@ import { PowersService } from "@/server/services/rulesets/powers/index.ts";
 import { SavesService } from "@/server/services/rulesets/saves/index.ts";
 import { SkillsService } from "@/server/services/rulesets/skills/index.ts";
 import { createTestCharacter } from "@/tests/support/characters.ts";
-import { insertRows } from "@/tests/support/database.ts";
 import {
   copyEntity,
   createSeededTestRuleset,
@@ -27,7 +25,7 @@ const PAGE = { limit: 200, page: 1 };
 /** A ruleset with a pool, a spell list and a save, and a fork of it with a feat and a spell of its own on them. */
 async function setupOwnRows() {
   const { user, session, ruleset: parent } = await createTestUserAndRuleset();
-  const [pool, spellList] = await insertRows(aptitudesInRules, [
+  const [pool, spellList] = await Aptitudes.createMany(db, [
     { name: "Stored Pool", rulesetId: parent.id },
     { name: "Stored Spells", rulesetId: parent.id },
   ]);
@@ -94,7 +92,7 @@ test("a character's inventory entry carries its item as the view has it, and no 
   const fork = await createSeededTestRuleset(SEED_USER_ID);
   const item = await findPlainItem(fork.ancestorRulesetIds[0]);
   const character = await createTestCharacter(SEED_USER_ID, { rulesetId: fork.id });
-  await insertRows(inventoryInCharacter, [{ characterId: character.id, itemId: item.id, quantity: 1 }]);
+  await CharacterInventory.create(db, { characterId: character.id, itemId: item.id, quantity: 1 });
   // Copied and renamed in the fork: the entry still stores the core's item
   const copy = await copyEntity(db, "items", item.id, fork);
   await Items.update(db, { name: "Copied Item" }, { id: copy.id });

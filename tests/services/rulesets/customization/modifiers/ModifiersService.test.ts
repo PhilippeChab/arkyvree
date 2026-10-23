@@ -1,14 +1,22 @@
 import { describe, expect, test } from "bun:test";
 
-import { modifiersInCustomization, powersAptitudesInRules, requirementsInCustomization } from "@/drizzle/schema.ts";
+import { modifiersInCustomization, requirementsInCustomization } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { ForbiddenError } from "@/server/errors/index.ts";
-import { Abilities, Aptitudes, Feats, Items, Powers, Races, Requirements } from "@/server/repositories/index.ts";
+import {
+  Abilities,
+  Aptitudes,
+  Feats,
+  Items,
+  Powers,
+  PowersAptitudes,
+  Races,
+  Requirements,
+} from "@/server/repositories/index.ts";
 import { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";
 import { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";
 import { activityTypes } from "@/tests/support/activities.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
-import { insertRows } from "@/tests/support/database.ts";
 import { createTestKlassLevel } from "@/tests/support/levels.ts";
 import { createSeededTestRuleset, createTestUserAndRuleset, readTargetPaths } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
@@ -65,7 +73,7 @@ describe("ModifiersService", () => {
     const { session, rulesetId, feat } = await setup();
     const [list] = await Aptitudes.create(db, { name: "Test Light Spells", rulesetId });
     const [spell] = await Powers.create(db, { name: "Test Glow", rulesetId });
-    await insertRows(powersAptitudesInRules, [{ powerId: spell.id, aptitudeId: list.id, level: 1 }]);
+    await PowersAptitudes.create(db, { powerId: spell.id, aptitudeId: list.id, level: 1 });
     const knownPath = async () =>
       (await readTargetPaths(rulesetId, "requirement")).paths.some(
         (path) => path.path === "powers.testglow.testlight.known",

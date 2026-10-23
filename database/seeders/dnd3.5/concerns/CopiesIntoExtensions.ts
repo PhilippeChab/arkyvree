@@ -8,6 +8,7 @@ import { and, eq, inArray, like } from "drizzle-orm";
 
 import { gte } from "@/content/core/builders/customization/requirements.ts";
 import type { CowFeatEntry, CowSpellEntry } from "@/content/dnd3.5/builders/rulesets/types.ts";
+import type { PowerLink } from "@/database/seeders/core/concerns/CopiesOnWrite.ts";
 import type { BaseSeeder } from "@/database/seeders/dnd3.5/BaseSeeder.ts";
 import { entitiesInRules, requirementsInCustomization } from "@/drizzle/schema.ts";
 import type { Constructor } from "@/lib/mixins.ts";
@@ -15,10 +16,13 @@ import type { Constructor } from "@/lib/mixins.ts";
 /** Copying the core's feats and spells into an extension that changes them. */
 export function CopiesIntoExtensions<B extends Constructor<BaseSeeder>>(Base: B) {
   abstract class CopyingIntoExtensions extends Base {
-    /** A power's copy keeps its spell lists ("X Spells" aptitudes), at the same levels. */
-    protected override async copyPowerLinks(fromId: string, toId: string) {
-      const links = await this.listedIn("powers_aptitudes", fromId);
-      const aptitudeIds = links.map((link) => link.aptitudeId);
+    /**
+     * The links each power's copy keeps of its original's (`fromIds`), by the original's id: its spell lists ("X Spells"
+     * aptitudes), at their levels.
+     */
+    protected override async keptPowerLinks(fromIds: string[]) {
+      const links = await this.listedIn("powers_aptitudes", fromIds);
+      const aptitudeIds = [...new Set(links.map((link) => link.aptitudeId))];
       const names = new Map(
         aptitudeIds.length === 0
           ? []
@@ -29,12 +33,12 @@ export function CopiesIntoExtensions<B extends Constructor<BaseSeeder>>(Base: B)
                 .where(inArray(entitiesInRules.id, aptitudeIds))
             ).map((aptitude) => [aptitude.id, aptitude.name ?? ""]),
       );
-      await this.linkPower(
-        toId,
-        links
-          .filter(({ aptitudeId }) => /^(\w[\w ]*) Spells$/.test(names.get(aptitudeId) ?? ""))
-          .map(({ aptitudeId, level }) => ({ aptitudeId, level: level ?? null })),
-      );
+      const kept = new Map<string, PowerLink[]>();
+      for (const { aptitudeId, level, powerId } of links) {
+        if (!/^(\w[\w ]*) Spells$/.test(names.get(aptitudeId) ?? "")) continue;
+        kept.set(powerId!, [...(kept.get(powerId!) ?? []), { aptitudeId, level: level ?? null }]);
+      }
+      return kept;
     }
 
     /**
@@ -113,20 +117,34 @@ export function CopiesIntoExtensions<B extends Constructor<BaseSeeder>>(Base: B)
      * has its own of, it adds as is), keeping the original's spell lists.
      */
     async cowSpellsIntoExtension(entries: CowSpellEntry[]) {
+      // Each spell's lists, an entry's after the one before it of the same spell
+      const bySpell = new Map<string, PowerLink[]>();
       for (const entry of entries) {
-        // A power of its own keeps the inherited one's spell lists too, as a copy does.
-        const inheritedId = this.ctx.inheritedPowerMap[entry.spell];
-        if (this.ctx.powerMap[entry.spell] && inheritedId)
-          await this.copyPowerLinks(inheritedId, this.ctx.powerMap[entry.spell]);
-        const powerId = await this.ownPower(entry.spell);
-        if (!powerId) continue;
-        await this.linkPower(
-          powerId,
-          entry.aptitudes
-            .filter(({ aptitude }) => this.ctx.aptMap[aptitude])
-            .map(({ aptitude, level }) => ({ aptitudeId: this.ctx.aptMap[aptitude], level })),
-        );
+        const links = entry.aptitudes
+          .filter(({ aptitude }) => this.ctx.aptMap[aptitude])
+          .map(({ aptitude, level }) => ({ aptitudeId: this.ctx.aptMap[aptitude], level }));
+        bySpell.set(entry.spell, [...(bySpell.get(entry.spell) ?? []), ...links]);
       }
+      const spells = [...bySpell].map(([spell, links]) => ({
+        spell,
+        links,
+        inheritedId: this.ctx.inheritedPowerMap[spell] as string | undefined,
+        ownId: this.ctx.powerMap[spell] as string | undefined,
+      }));
+      // A power of its own keeps the inherited one's spell lists too, as a copy does
+      const owned = spells.filter((spell) => spell.ownId);
+      const kept = await this.keptPowerLinks(owned.flatMap(({ inheritedId }) => (inheritedId ? [inheritedId] : [])));
+      await this.linkPowers(
+        owned.map(({ inheritedId, links, ownId }) => ({
+          powerId: ownId!,
+          links: [...((inheritedId && kept.get(inheritedId)) || []), ...links],
+        })),
+      );
+      const inherited = spells.filter((spell) => !spell.ownId && spell.inheritedId);
+      const copies = await this.cowPowers(
+        inherited.map(({ inheritedId, links }) => ({ powerId: inheritedId!, links })),
+      );
+      for (const { inheritedId, spell } of inherited) this.ctx.powerMap[spell] = copies.get(inheritedId!)!;
     }
   }
   return CopyingIntoExtensions;

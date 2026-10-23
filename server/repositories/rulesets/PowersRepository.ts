@@ -6,12 +6,33 @@ import { include } from "@/lib/mixins.ts";
 import { ResolvesCopies } from "@/server/repositories/concerns/ResolvesCopies.ts";
 import { type RulesetEntityFilters } from "@/server/repositories/concerns/ScopesToRuleset.ts";
 import RulesetEntityRepository from "@/server/repositories/RulesetEntityRepository.ts";
-import { listedAptitudes } from "@/server/repositories/stored/listedAptitudes.ts";
+import { findListedAptitudes } from "@/server/repositories/stored/findListedAptitudes.ts";
 import type { Power, PowerWithAptitudes } from "@/shared/relations.ts";
 
 /** The spells: a ruleset's list of them, each with the lists it's on, and a picker's page of them. */
 class PowersRepository extends include(RulesetEntityRepository, ResolvesCopies)<Power> {
   protected override readonly entityType = "powers";
+
+  /** A ruleset's list of spells (those of `ids`, if given), each with the lists it's on, in their order. */
+  override async findPage(
+    db: Db,
+    where: RulesetEntityFilters<{ ids?: string[] }>,
+    pagination: { limit: number; page: number },
+  ) {
+    const page = await super.findPage(db, where, pagination);
+    const lists = await findListedAptitudes<PowerWithAptitudes["powersAptitudesInRules"][number]>(
+      db,
+      "powers_aptitudes",
+      page.items.map((power) => power.id),
+    );
+    return {
+      ...page,
+      items: page.items.map((power): PowerWithAptitudes => ({
+        ...power,
+        powersAptitudesInRules: lists.get(power.id) ?? [],
+      })),
+    };
+  }
 
   /** A picker's page of these spells (a list's, as the ruleset composes it), by name. */
   async findOptionPage(
@@ -35,30 +56,6 @@ class PowersRepository extends include(RulesetEntityRepository, ResolvesCopies)<
       rows.map(({ id, name, description }) => ({ id, name, description })),
       pagination,
     );
-  }
-
-  /** A ruleset's list of spells (those of `ids`, if given), each with the lists it's on, in their order. */
-  override async findPage(
-    db: Db,
-    where: RulesetEntityFilters<{ ids?: string[] }>,
-    pagination: { limit: number; page: number },
-  ) {
-    if (where.ids !== undefined && where.ids.length === 0) return this.paginated<PowerWithAptitudes>([], pagination);
-    const page = await super.findPage(db, where, pagination, [
-      where.ids !== undefined && inArray(entitiesInRules.id, where.ids),
-    ]);
-    const lists = await listedAptitudes<PowerWithAptitudes["powersAptitudesInRules"][number]>(
-      db,
-      "powers_aptitudes",
-      page.items.map((power) => power.id),
-    );
-    return {
-      ...page,
-      items: page.items.map((power): PowerWithAptitudes => ({
-        ...power,
-        powersAptitudesInRules: lists.get(power.id) ?? [],
-      })),
-    };
   }
 }
 

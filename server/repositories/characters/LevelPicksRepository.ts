@@ -12,16 +12,11 @@ import BaseRepository from "@/server/repositories/BaseRepository.ts";
  * list of every row naming one (`EntityReferences.exists`).
  */
 abstract class LevelPicksRepository<R> extends BaseRepository<typeof advancementPicksInCharacter> {
-  protected abstract readonly pick: string;
-
   constructor() {
     super(advancementPicksInCharacter);
   }
 
-  /** The step's declaration: its step, and its pick's columns. */
-  private declared() {
-    return Engine.storage().character().picks[this.pick];
-  }
+  protected abstract readonly pick: string;
 
   /** A pick's row columns: its level, its entity, its pool and its amount by their names, its id if it names it. */
   private columns() {
@@ -36,6 +31,11 @@ abstract class LevelPicksRepository<R> extends BaseRepository<typeof advancement
       updatedAt: advancementPicksInCharacter.updatedAt,
       deletedAt: sql<string | null>`NULL::timestamptz`,
     };
+  }
+
+  /** The step's declaration: its step, and its pick's columns. */
+  private declared() {
+    return Engine.storage().character().picks[this.pick];
   }
 
   /** The condition that picks the step's picks, and `where`. */

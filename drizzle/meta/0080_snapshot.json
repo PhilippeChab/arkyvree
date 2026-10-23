@@ -1,5 +1,5 @@
 {
-  "id": "b81a92f9-2310-4677-a7ec-48df9162a3a8",
+  "id": "f791ca59-01ad-4637-9aab-2b7888bca564",
   "prevId": "8a64933e-22bd-469d-923b-f8c0c6c7208d",
   "version": "7",
   "dialect": "postgresql",
@@ -67,22 +67,6 @@
         }
       },
       "indexes": {
-        "activities_created_at_idx": {
-          "name": "activities_created_at_idx",
-          "columns": [
-            {
-              "expression": "created_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last",
-              "opclass": "timestamptz_ops"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
         "activities_target_id_target_table": {
           "name": "activities_target_id_target_table",
           "columns": [
@@ -90,15 +74,13 @@
               "expression": "target_id",
               "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops"
+              "nulls": "last"
             },
             {
               "expression": "target_table",
               "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "uuid_ops"
+              "nulls": "last"
             }
           ],
           "isUnique": false,
@@ -106,26 +88,47 @@
           "method": "btree",
           "with": {}
         },
-        "activities_user_id_created_at_idx": {
-          "name": "activities_user_id_created_at_idx",
+        "activities_type": {
+          "name": "activities_type",
+          "columns": [
+            {
+              "expression": "type",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "activities_user_id": {
+          "name": "activities_user_id",
           "columns": [
             {
               "expression": "user_id",
               "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "timestamptz_ops"
-            },
-            {
-              "expression": "created_at",
-              "isExpression": false,
-              "asc": false,
-              "nulls": "first",
-              "opclass": "timestamptz_ops"
+              "nulls": "last"
             }
           ],
           "isUnique": false,
-          "where": "(deleted_at IS NULL)",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "activities_created_at_idx": {
+          "name": "activities_created_at_idx",
+          "columns": [
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
           "concurrently": false,
           "method": "btree",
           "with": {}
@@ -702,18 +705,29 @@
         }
       },
       "indexes": {
-        "attachments_blob_id_idx": {
-          "name": "attachments_blob_id_idx",
+        "attachments_record_name_unique_idx": {
+          "name": "attachments_record_name_unique_idx",
           "columns": [
             {
-              "expression": "blob_id",
+              "expression": "record_type",
               "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "uuid_ops"
+              "nulls": "last"
+            },
+            {
+              "expression": "record_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "name",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
             }
           ],
-          "isUnique": false,
+          "isUnique": true,
           "concurrently": false,
           "method": "btree",
           "with": {}
@@ -725,15 +739,13 @@
               "expression": "record_type",
               "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops"
+              "nulls": "last"
             },
             {
               "expression": "record_id",
               "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops"
+              "nulls": "last"
             }
           ],
           "isUnique": false,
@@ -741,32 +753,17 @@
           "method": "btree",
           "with": {}
         },
-        "attachments_record_name_unique_idx": {
-          "name": "attachments_record_name_unique_idx",
+        "attachments_blob_id_idx": {
+          "name": "attachments_blob_id_idx",
           "columns": [
             {
-              "expression": "record_type",
+              "expression": "blob_id",
               "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops"
-            },
-            {
-              "expression": "record_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops"
-            },
-            {
-              "expression": "name",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops"
+              "nulls": "last"
             }
           ],
-          "isUnique": true,
+          "isUnique": false,
           "concurrently": false,
           "method": "btree",
           "with": {}
@@ -858,23 +855,6 @@
         }
       },
       "indexes": {
-        "blobs_attached_idx": {
-          "name": "blobs_attached_idx",
-          "columns": [
-            {
-              "expression": "created_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last",
-              "opclass": "timestamptz_ops"
-            }
-          ],
-          "isUnique": false,
-          "where": "(attached_at IS NOT NULL)",
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
         "blobs_key_unique_idx": {
           "name": "blobs_key_unique_idx",
           "columns": [
@@ -882,8 +862,7 @@
               "expression": "key",
               "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops"
+              "nulls": "last"
             }
           ],
           "isUnique": true,
@@ -898,12 +877,27 @@
               "expression": "created_at",
               "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "timestamptz_ops"
+              "nulls": "last"
             }
           ],
           "isUnique": false,
           "where": "(attached_at IS NULL)",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "blobs_attached_idx": {
+          "name": "blobs_attached_idx",
+          "columns": [
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "where": "(attached_at IS NOT NULL)",
           "concurrently": false,
           "method": "btree",
           "with": {}
@@ -974,8 +968,7 @@
               "expression": "ruleset_id",
               "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "text_pattern_ops"
+              "nulls": "last"
             },
             {
               "expression": "name",
@@ -988,29 +981,6 @@
           "isUnique": false,
           "concurrently": false,
           "method": "btree",
-          "with": {}
-        },
-        "campaigns_search_trgm_idx": {
-          "name": "campaigns_search_trgm_idx",
-          "columns": [
-            {
-              "expression": "name",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last",
-              "opclass": "gin_trgm_ops"
-            },
-            {
-              "expression": "description",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last",
-              "opclass": "gin_trgm_ops"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "gin",
           "with": {}
         }
       },
@@ -1146,6 +1116,19 @@
           "primaryKey": false,
           "notNull": true
         },
+        "kind": {
+          "name": "kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'pc'"
+        },
+        "parent_character_id": {
+          "name": "parent_character_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
         "name": {
           "name": "name",
           "type": "text",
@@ -1176,19 +1159,6 @@
           "primaryKey": false,
           "notNull": false
         },
-        "kind": {
-          "name": "kind",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'pc'"
-        },
-        "parent_character_id": {
-          "name": "parent_character_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
         "last_changed_at": {
           "name": "last_changed_at",
           "type": "timestamp with time zone",
@@ -1205,54 +1175,13 @@
               "expression": "parent_character_id",
               "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "uuid_ops"
+              "nulls": "last"
             }
           ],
           "isUnique": false,
           "where": "(parent_character_id IS NOT NULL)",
           "concurrently": false,
           "method": "btree",
-          "with": {}
-        },
-        "characters_ruleset_id_idx": {
-          "name": "characters_ruleset_id_idx",
-          "columns": [
-            {
-              "expression": "ruleset_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last",
-              "opclass": "uuid_ops"
-            }
-          ],
-          "isUnique": false,
-          "where": "(deleted_at IS NULL)",
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "characters_search_trgm_idx": {
-          "name": "characters_search_trgm_idx",
-          "columns": [
-            {
-              "expression": "name",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last",
-              "opclass": "gin_trgm_ops"
-            },
-            {
-              "expression": "description",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last",
-              "opclass": "gin_trgm_ops"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "gin",
           "with": {}
         },
         "characters_share_token_unique_idx": {
@@ -1262,8 +1191,7 @@
               "expression": "share_token",
               "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops"
+              "nulls": "last"
             }
           ],
           "isUnique": true,
@@ -1271,33 +1199,16 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
-        },
-        "characters_user_id_idx": {
-          "name": "characters_user_id_idx",
-          "columns": [
-            {
-              "expression": "user_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last",
-              "opclass": "uuid_ops"
-            }
-          ],
-          "isUnique": false,
-          "where": "(deleted_at IS NULL)",
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
         }
       },
       "foreignKeys": {
-        "characters_parent_character_id_fkey": {
-          "name": "characters_parent_character_id_fkey",
+        "characters_user_id_fkey": {
+          "name": "characters_user_id_fkey",
           "tableFrom": "characters",
-          "tableTo": "characters",
-          "schemaTo": "character",
+          "tableTo": "users",
+          "schemaTo": "account",
           "columnsFrom": [
-            "parent_character_id"
+            "user_id"
           ],
           "columnsTo": [
             "id"
@@ -1319,13 +1230,13 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "characters_user_id_fkey": {
-          "name": "characters_user_id_fkey",
+        "characters_parent_character_id_fkey": {
+          "name": "characters_parent_character_id_fkey",
           "tableFrom": "characters",
-          "tableTo": "users",
-          "schemaTo": "account",
+          "tableTo": "characters",
+          "schemaTo": "character",
           "columnsFrom": [
-            "user_id"
+            "parent_character_id"
           ],
           "columnsTo": [
             "id"
@@ -1455,30 +1366,6 @@
         }
       },
       "indexes": {
-        "character_contributors_character_email_unique": {
-          "name": "character_contributors_character_email_unique",
-          "columns": [
-            {
-              "expression": "character_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops"
-            },
-            {
-              "expression": "email",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops"
-            }
-          ],
-          "isUnique": true,
-          "where": "((user_id IS NULL) AND (status = ANY (ARRAY['Pending'::text, 'Active'::text])) AND (deleted_at IS NULL))",
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
         "character_contributors_character_status_idx": {
           "name": "character_contributors_character_status_idx",
           "columns": [
@@ -1486,15 +1373,34 @@
               "expression": "character_id",
               "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "uuid_ops"
+              "nulls": "last"
             },
             {
               "expression": "status",
               "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops"
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "character_contributors_user_status_idx": {
+          "name": "character_contributors_user_status_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
             }
           ],
           "isUnique": false,
@@ -1509,42 +1415,39 @@
               "expression": "character_id",
               "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "uuid_ops"
+              "nulls": "last"
             },
             {
               "expression": "user_id",
               "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "uuid_ops"
+              "nulls": "last"
             }
           ],
           "isUnique": true,
-          "where": "((status = ANY (ARRAY['Pending'::text, 'Active'::text])) AND (deleted_at IS NULL))",
+          "where": "status IN ('Pending', 'Active') AND deleted_at IS NULL",
           "concurrently": false,
           "method": "btree",
           "with": {}
         },
-        "character_contributors_user_status_idx": {
-          "name": "character_contributors_user_status_idx",
+        "character_contributors_character_email_unique": {
+          "name": "character_contributors_character_email_unique",
           "columns": [
             {
-              "expression": "user_id",
+              "expression": "character_id",
               "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops"
+              "nulls": "last"
             },
             {
-              "expression": "status",
+              "expression": "email",
               "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops"
+              "nulls": "last"
             }
           ],
-          "isUnique": false,
+          "isUnique": true,
+          "where": "user_id IS NULL AND status IN ('Pending', 'Active') AND deleted_at IS NULL",
           "concurrently": false,
           "method": "btree",
           "with": {}
@@ -1565,20 +1468,6 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "character_contributors_invited_by_fk": {
-          "name": "character_contributors_invited_by_fk",
-          "tableFrom": "character_contributors",
-          "tableTo": "users",
-          "schemaTo": "account",
-          "columnsFrom": [
-            "invited_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
         "character_contributors_user_id_fk": {
           "name": "character_contributors_user_id_fk",
           "tableFrom": "character_contributors",
@@ -1592,19 +1481,33 @@
           ],
           "onDelete": "cascade",
           "onUpdate": "no action"
+        },
+        "character_contributors_invited_by_fk": {
+          "name": "character_contributors_invited_by_fk",
+          "tableFrom": "character_contributors",
+          "tableTo": "users",
+          "schemaTo": "account",
+          "columnsFrom": [
+            "invited_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {
+        "character_contributors_status_check": {
+          "name": "character_contributors_status_check",
+          "value": "status = ANY (ARRAY['Pending', 'Active', 'Rejected', 'Revoked'])"
+        },
         "character_contributors_email_or_user": {
           "name": "character_contributors_email_or_user",
           "value": "(user_id IS NOT NULL) OR (email IS NOT NULL)"
-        },
-        "character_contributors_status_check": {
-          "name": "character_contributors_status_check",
-          "value": "status = ANY (ARRAY['Pending'::text, 'Active'::text, 'Rejected'::text, 'Revoked'::text])"
         }
       },
       "isRLSEnabled": false
@@ -1681,46 +1584,6 @@
         }
       },
       "indexes": {
-        "contributors_email_trgm_idx": {
-          "name": "contributors_email_trgm_idx",
-          "columns": [
-            {
-              "expression": "email",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last",
-              "opclass": "gin_trgm_ops"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "gin",
-          "with": {}
-        },
-        "contributors_ruleset_email_unique": {
-          "name": "contributors_ruleset_email_unique",
-          "columns": [
-            {
-              "expression": "ruleset_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops"
-            },
-            {
-              "expression": "email",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops"
-            }
-          ],
-          "isUnique": true,
-          "where": "((user_id IS NULL) AND (status = ANY (ARRAY['Pending'::text, 'Active'::text])) AND (deleted_at IS NULL))",
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
         "contributors_ruleset_status_idx": {
           "name": "contributors_ruleset_status_idx",
           "columns": [
@@ -1728,15 +1591,34 @@
               "expression": "ruleset_id",
               "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops"
+              "nulls": "last"
             },
             {
               "expression": "status",
               "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops"
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "contributors_user_status_idx": {
+          "name": "contributors_user_status_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
             }
           ],
           "isUnique": false,
@@ -1751,62 +1633,45 @@
               "expression": "ruleset_id",
               "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "uuid_ops"
+              "nulls": "last"
             },
             {
               "expression": "user_id",
               "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "uuid_ops"
+              "nulls": "last"
             }
           ],
           "isUnique": true,
-          "where": "((status = ANY (ARRAY['Pending'::text, 'Active'::text])) AND (deleted_at IS NULL))",
+          "where": "status IN ('Pending', 'Active') AND deleted_at IS NULL",
           "concurrently": false,
           "method": "btree",
           "with": {}
         },
-        "contributors_user_status_idx": {
-          "name": "contributors_user_status_idx",
+        "contributors_ruleset_email_unique": {
+          "name": "contributors_ruleset_email_unique",
           "columns": [
             {
-              "expression": "user_id",
+              "expression": "ruleset_id",
               "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops"
+              "nulls": "last"
             },
             {
-              "expression": "status",
+              "expression": "email",
               "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops"
+              "nulls": "last"
             }
           ],
-          "isUnique": false,
+          "isUnique": true,
+          "where": "user_id IS NULL AND status IN ('Pending', 'Active') AND deleted_at IS NULL",
           "concurrently": false,
           "method": "btree",
           "with": {}
         }
       },
       "foreignKeys": {
-        "contributors_invited_by_fk": {
-          "name": "contributors_invited_by_fk",
-          "tableFrom": "contributors",
-          "tableTo": "users",
-          "schemaTo": "account",
-          "columnsFrom": [
-            "invited_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
         "contributors_ruleset_id_fk": {
           "name": "contributors_ruleset_id_fk",
           "tableFrom": "contributors",
@@ -1834,19 +1699,33 @@
           ],
           "onDelete": "cascade",
           "onUpdate": "no action"
+        },
+        "contributors_invited_by_fk": {
+          "name": "contributors_invited_by_fk",
+          "tableFrom": "contributors",
+          "tableTo": "users",
+          "schemaTo": "account",
+          "columnsFrom": [
+            "invited_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {
+        "contributors_status_check": {
+          "name": "contributors_status_check",
+          "value": "status = ANY (ARRAY['Pending', 'Active', 'Rejected', 'Revoked'])"
+        },
         "contributors_email_or_user": {
           "name": "contributors_email_or_user",
           "value": "(user_id IS NOT NULL) OR (email IS NOT NULL)"
-        },
-        "contributors_status_check": {
-          "name": "contributors_status_check",
-          "value": "status = ANY (ARRAY['Pending'::text, 'Active'::text, 'Rejected'::text, 'Revoked'::text])"
         }
       },
       "isRLSEnabled": false
@@ -1902,22 +1781,6 @@
         }
       },
       "indexes": {
-        "email_verifications_expires_at_idx": {
-          "name": "email_verifications_expires_at_idx",
-          "columns": [
-            {
-              "expression": "expires_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last",
-              "opclass": "timestamptz_ops"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
         "email_verifications_user_id": {
           "name": "email_verifications_user_id",
           "columns": [
@@ -1925,8 +1788,22 @@
               "expression": "user_id",
               "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "uuid_ops"
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "email_verifications_expires_at_idx": {
+          "name": "email_verifications_expires_at_idx",
+          "columns": [
+            {
+              "expression": "expires_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
             }
           ],
           "isUnique": false,
@@ -2483,6 +2360,29 @@
           "method": "btree",
           "with": {}
         },
+        "entity_fields_field_idx": {
+          "name": "entity_fields_field_idx",
+          "columns": [
+            {
+              "expression": "field",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "text_ops"
+            },
+            {
+              "expression": "entity_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "uuid_ops"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
         "entity_fields_text_idx": {
           "name": "entity_fields_text_idx",
           "columns": [
@@ -2928,15 +2828,13 @@
               "expression": "ruleset_id",
               "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "uuid_ops"
+              "nulls": "last"
             },
             {
               "expression": "entity_type",
               "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "uuid_ops"
+              "nulls": "last"
             }
           ],
           "isUnique": false,
@@ -2951,22 +2849,19 @@
               "expression": "ruleset_id",
               "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops"
+              "nulls": "last"
             },
             {
               "expression": "entity_type",
               "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops"
+              "nulls": "last"
             },
             {
               "expression": "source_entity_id",
               "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "uuid_ops"
+              "nulls": "last"
             }
           ],
           "isUnique": false,
@@ -3130,22 +3025,6 @@
         }
       },
       "indexes": {
-        "exports_expires_at_idx": {
-          "name": "exports_expires_at_idx",
-          "columns": [
-            {
-              "expression": "expires_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last",
-              "opclass": "timestamptz_ops"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
         "exports_user_id_idx": {
           "name": "exports_user_id_idx",
           "columns": [
@@ -3153,8 +3032,22 @@
               "expression": "user_id",
               "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "uuid_ops"
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "exports_expires_at_idx": {
+          "name": "exports_expires_at_idx",
+          "columns": [
+            {
+              "expression": "expires_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
             }
           ],
           "isUnique": false,
@@ -3553,6 +3446,13 @@
           "primaryKey": false,
           "notNull": false
         },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "public.gen_random_uuid()"
+        },
         "character_id": {
           "name": "character_id",
           "type": "uuid",
@@ -3590,13 +3490,6 @@
           "notNull": true,
           "default": false
         },
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "public.gen_random_uuid()"
-        },
         "item_type": {
           "name": "item_type",
           "type": "text",
@@ -3625,8 +3518,7 @@
               "expression": "character_id",
               "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "uuid_ops"
+              "nulls": "last"
             }
           ],
           "isUnique": false,
@@ -3641,8 +3533,7 @@
               "expression": "item_id",
               "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "uuid_ops"
+              "nulls": "last"
             }
           ],
           "isUnique": false,
@@ -3701,6 +3592,10 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {
+        "inventory_quantity_check": {
+          "name": "inventory_quantity_check",
+          "value": "quantity > 0"
+        },
         "inventory_check": {
           "name": "inventory_check",
           "value": "(total_charges IS NULL) OR ((total_charges >= 0) AND (remaining_charges IS NOT NULL))"
@@ -3708,10 +3603,6 @@
         "inventory_check1": {
           "name": "inventory_check1",
           "value": "(remaining_charges IS NULL) OR ((remaining_charges >= 0) AND (total_charges IS NOT NULL))"
-        },
-        "inventory_quantity_check": {
-          "name": "inventory_quantity_check",
-          "value": "quantity > 0"
         }
       },
       "isRLSEnabled": false
@@ -3781,36 +3672,64 @@
               "expression": "email",
               "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops"
+              "nulls": "last"
             },
             {
               "expression": "status",
               "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops"
+              "nulls": "last"
             }
           ],
           "isUnique": false,
-          "where": "(deleted_at IS NULL)",
           "concurrently": false,
           "method": "btree",
           "with": {}
         },
-        "invites_player_id_idx": {
-          "name": "invites_player_id_idx",
+        "invites_player_id_status_idx": {
+          "name": "invites_player_id_status_idx",
           "columns": [
             {
               "expression": "player_id",
               "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "uuid_ops"
+              "nulls": "last"
+            },
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
             }
           ],
           "isUnique": false,
-          "where": "(deleted_at IS NULL)",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "invites_user_id_player_id_status_idx": {
+          "name": "invites_user_id_player_id_status_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "player_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
           "concurrently": false,
           "method": "btree",
           "with": {}
@@ -3822,19 +3741,16 @@
               "expression": "user_id",
               "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops"
+              "nulls": "last"
             },
             {
               "expression": "status",
               "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops"
+              "nulls": "last"
             }
           ],
           "isUnique": false,
-          "where": "(deleted_at IS NULL)",
           "concurrently": false,
           "method": "btree",
           "with": {}
@@ -4431,15 +4347,13 @@
               "expression": "source_id",
               "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops"
+              "nulls": "last"
             },
             {
               "expression": "source_type",
               "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops"
+              "nulls": "last"
             }
           ],
           "isUnique": false,
@@ -4453,13 +4367,13 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {
-        "modifiers_operator_check": {
-          "name": "modifiers_operator_check",
-          "value": "operator = ANY (ARRAY['add'::text, 'subtract'::text, 'multiply'::text, 'divide'::text, 'set'::text])"
-        },
         "modifiers_value_type_check": {
           "name": "modifiers_value_type_check",
           "value": "value_type = ANY (ARRAY['number'::text, 'string'::text, 'boolean'::text])"
+        },
+        "modifiers_operator_check": {
+          "name": "modifiers_operator_check",
+          "value": "operator = ANY (ARRAY['add'::text, 'subtract'::text, 'multiply'::text, 'divide'::text, 'set'::text])"
         }
       },
       "isRLSEnabled": false
@@ -4551,6 +4465,49 @@
         }
       },
       "indexes": {
+        "notifications_recipient_unread_idx": {
+          "name": "notifications_recipient_unread_idx",
+          "columns": [
+            {
+              "expression": "recipient_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "where": "read_at IS NULL",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "notifications_recipient_id_created_at_idx": {
+          "name": "notifications_recipient_id_created_at_idx",
+          "columns": [
+            {
+              "expression": "recipient_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
         "notifications_activity_id_idx": {
           "name": "notifications_activity_id_idx",
           "columns": [
@@ -4558,8 +4515,7 @@
               "expression": "activity_id",
               "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "uuid_ops"
+              "nulls": "last"
             }
           ],
           "isUnique": false,
@@ -4574,76 +4530,28 @@
               "expression": "created_at",
               "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "timestamptz_ops"
+              "nulls": "last"
             }
           ],
           "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "notifications_recipient_id_created_at_idx": {
-          "name": "notifications_recipient_id_created_at_idx",
-          "columns": [
-            {
-              "expression": "recipient_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last",
-              "opclass": "timestamptz_ops"
-            },
-            {
-              "expression": "created_at",
-              "isExpression": false,
-              "asc": false,
-              "nulls": "last",
-              "opclass": "timestamptz_ops"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "notifications_recipient_unread_idx": {
-          "name": "notifications_recipient_unread_idx",
-          "columns": [
-            {
-              "expression": "recipient_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last",
-              "opclass": "timestamptz_ops"
-            },
-            {
-              "expression": "created_at",
-              "isExpression": false,
-              "asc": false,
-              "nulls": "last",
-              "opclass": "timestamptz_ops"
-            }
-          ],
-          "isUnique": false,
-          "where": "(read_at IS NULL)",
           "concurrently": false,
           "method": "btree",
           "with": {}
         }
       },
       "foreignKeys": {
-        "notifications_activity_id_fkey": {
-          "name": "notifications_activity_id_fkey",
+        "notifications_recipient_id_fkey": {
+          "name": "notifications_recipient_id_fkey",
           "tableFrom": "notifications",
-          "tableTo": "activities",
+          "tableTo": "users",
           "schemaTo": "account",
           "columnsFrom": [
-            "activity_id"
+            "recipient_id"
           ],
           "columnsTo": [
             "id"
           ],
-          "onDelete": "set null",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         },
         "notifications_actor_id_fkey": {
@@ -4660,18 +4568,18 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "notifications_recipient_id_fkey": {
-          "name": "notifications_recipient_id_fkey",
+        "notifications_activity_id_fkey": {
+          "name": "notifications_activity_id_fkey",
           "tableFrom": "notifications",
-          "tableTo": "users",
+          "tableTo": "activities",
           "schemaTo": "account",
           "columnsFrom": [
-            "recipient_id"
+            "activity_id"
           ],
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
+          "onDelete": "set null",
           "onUpdate": "no action"
         }
       },
@@ -4732,30 +4640,6 @@
         }
       },
       "indexes": {
-        "oauth_accounts_provider_provider_account_id": {
-          "name": "oauth_accounts_provider_provider_account_id",
-          "columns": [
-            {
-              "expression": "provider",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops"
-            },
-            {
-              "expression": "provider_account_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops"
-            }
-          ],
-          "isUnique": true,
-          "where": "(deleted_at IS NULL)",
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
         "oauth_accounts_user_id": {
           "name": "oauth_accounts_user_id",
           "columns": [
@@ -4763,11 +4647,32 @@
               "expression": "user_id",
               "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "uuid_ops"
+              "nulls": "last"
             }
           ],
           "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "oauth_accounts_provider_provider_account_id": {
+          "name": "oauth_accounts_provider_provider_account_id",
+          "columns": [
+            {
+              "expression": "provider",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "provider_account_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "(deleted_at IS NULL)",
           "concurrently": false,
           "method": "btree",
           "with": {}
@@ -4846,22 +4751,6 @@
         }
       },
       "indexes": {
-        "password_resets_expires_at_idx": {
-          "name": "password_resets_expires_at_idx",
-          "columns": [
-            {
-              "expression": "expires_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last",
-              "opclass": "timestamptz_ops"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
         "password_resets_user_id": {
           "name": "password_resets_user_id",
           "columns": [
@@ -4869,8 +4758,22 @@
               "expression": "user_id",
               "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "uuid_ops"
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "password_resets_expires_at_idx": {
+          "name": "password_resets_expires_at_idx",
+          "columns": [
+            {
+              "expression": "expires_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
             }
           ],
           "isUnique": false,
@@ -4946,40 +4849,6 @@
         }
       },
       "indexes": {
-        "player_characters_character_id_active_idx": {
-          "name": "player_characters_character_id_active_idx",
-          "columns": [
-            {
-              "expression": "character_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last",
-              "opclass": "uuid_ops"
-            }
-          ],
-          "isUnique": true,
-          "where": "(deleted_at IS NULL)",
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "player_characters_character_id_idx": {
-          "name": "player_characters_character_id_idx",
-          "columns": [
-            {
-              "expression": "character_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last",
-              "opclass": "uuid_ops"
-            }
-          ],
-          "isUnique": false,
-          "where": "(deleted_at IS NULL)",
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
         "player_characters_player_id_character_id_idx": {
           "name": "player_characters_player_id_character_id_idx",
           "columns": [
@@ -4987,15 +4856,13 @@
               "expression": "player_id",
               "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "uuid_ops"
+              "nulls": "last"
             },
             {
               "expression": "character_id",
               "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "uuid_ops"
+              "nulls": "last"
             }
           ],
           "isUnique": false,
@@ -5003,18 +4870,17 @@
           "method": "btree",
           "with": {}
         },
-        "player_characters_player_id_idx": {
-          "name": "player_characters_player_id_idx",
+        "player_characters_character_id_active_idx": {
+          "name": "player_characters_character_id_active_idx",
           "columns": [
             {
-              "expression": "player_id",
+              "expression": "character_id",
               "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "uuid_ops"
+              "nulls": "last"
             }
           ],
-          "isUnique": false,
+          "isUnique": true,
           "where": "(deleted_at IS NULL)",
           "concurrently": false,
           "method": "btree",
@@ -5022,20 +4888,6 @@
         }
       },
       "foreignKeys": {
-        "player_characters_character_id_fkey": {
-          "name": "player_characters_character_id_fkey",
-          "tableFrom": "player_characters",
-          "tableTo": "characters",
-          "schemaTo": "character",
-          "columnsFrom": [
-            "character_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
         "player_characters_player_id_fkey": {
           "name": "player_characters_player_id_fkey",
           "tableFrom": "player_characters",
@@ -5043,6 +4895,20 @@
           "schemaTo": "campaign",
           "columnsFrom": [
             "player_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "player_characters_character_id_fkey": {
+          "name": "player_characters_character_id_fkey",
+          "tableFrom": "player_characters",
+          "tableTo": "characters",
+          "schemaTo": "character",
+          "columnsFrom": [
+            "character_id"
           ],
           "columnsTo": [
             "id"
@@ -5114,63 +4980,38 @@
         }
       },
       "indexes": {
-        "players_campaign_id_idx": {
-          "name": "players_campaign_id_idx",
+        "players_campaign_id": {
+          "name": "players_campaign_id",
           "columns": [
             {
               "expression": "campaign_id",
               "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "uuid_ops"
+              "nulls": "last"
             }
           ],
           "isUnique": false,
-          "where": "(deleted_at IS NULL)",
           "concurrently": false,
           "method": "btree",
           "with": {}
         },
-        "players_user_id_campaign_id_idx": {
-          "name": "players_user_id_campaign_id_idx",
+        "players_user_id": {
+          "name": "players_user_id",
           "columns": [
             {
               "expression": "user_id",
               "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "uuid_ops"
-            },
-            {
-              "expression": "campaign_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last",
-              "opclass": "uuid_ops"
+              "nulls": "last"
             }
           ],
           "isUnique": false,
-          "where": "(deleted_at IS NULL)",
           "concurrently": false,
           "method": "btree",
           "with": {}
         }
       },
       "foreignKeys": {
-        "players_campaign_id_fkey": {
-          "name": "players_campaign_id_fkey",
-          "tableFrom": "players",
-          "tableTo": "campaigns",
-          "schemaTo": "campaign",
-          "columnsFrom": [
-            "campaign_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
         "players_user_id_fkey": {
           "name": "players_user_id_fkey",
           "tableFrom": "players",
@@ -5183,6 +5024,20 @@
             "id"
           ],
           "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "players_campaign_id_fkey": {
+          "name": "players_campaign_id_fkey",
+          "tableFrom": "players",
+          "tableTo": "campaigns",
+          "schemaTo": "campaign",
+          "columnsFrom": [
+            "campaign_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
@@ -5273,26 +5128,32 @@
         }
       },
       "indexes": {
-        "requirements_entity_id_entity_type_idx": {
-          "name": "requirements_entity_id_entity_type_idx",
+        "requirements_entity_id_idx": {
+          "name": "requirements_entity_id_idx",
           "columns": [
             {
               "expression": "entity_id",
               "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "uuid_ops"
-            },
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "requirements_entity_type_idx": {
+          "name": "requirements_entity_type_idx",
+          "columns": [
             {
               "expression": "entity_type",
               "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "uuid_ops"
+              "nulls": "last"
             }
           ],
           "isUnique": false,
-          "where": "(deleted_at IS NULL)",
           "concurrently": false,
           "method": "btree",
           "with": {}
@@ -5313,17 +5174,17 @@
       },
       "policies": {},
       "checkConstraints": {
-        "requirements_check": {
-          "name": "requirements_check",
-          "value": "(chaining_operator = ANY (ARRAY['and'::text, 'or'::text])) AND (((chaining_operator IS NULL) AND (operator IS NOT NULL) AND (value IS NOT NULL) AND (value_type IS NOT NULL) AND (target IS NOT NULL)) OR ((chaining_operator IS NOT NULL) AND (operator IS NULL) AND (value IS NULL) AND (value_type IS NULL) AND (target IS NULL)))"
+        "requirements_value_type_check": {
+          "name": "requirements_value_type_check",
+          "value": "value_type = ANY (ARRAY['number'::text, 'string'::text, 'boolean'::text])"
         },
         "requirements_operator_check": {
           "name": "requirements_operator_check",
           "value": "operator = ANY (ARRAY['equal'::text, 'not_equal'::text, 'greater_than'::text, 'less_than'::text, 'greater_than_or_equal'::text, 'less_than_or_equal'::text, 'contains'::text, 'not_contains'::text, 'starts_with'::text, 'ends_with'::text, 'matches_regex'::text, 'not_matches_regex'::text, 'is_empty'::text, 'not_empty'::text])"
         },
-        "requirements_value_type_check": {
-          "name": "requirements_value_type_check",
-          "value": "value_type = ANY (ARRAY['number'::text, 'string'::text, 'boolean'::text])"
+        "requirements_check": {
+          "name": "requirements_check",
+          "value": "(chaining_operator = ANY (ARRAY['and'::text, 'or'::text])) AND (((chaining_operator IS NULL) AND (operator IS NOT NULL) AND (value IS NOT NULL) AND (value_type IS NOT NULL) AND (target IS NOT NULL)) OR ((chaining_operator IS NOT NULL) AND (operator IS NULL) AND (value IS NULL) AND (value_type IS NULL) AND (target IS NULL)))"
         }
       },
       "isRLSEnabled": false
@@ -5367,20 +5228,6 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "ruleset_extensions_extension_id_fkey": {
-          "name": "ruleset_extensions_extension_id_fkey",
-          "tableFrom": "ruleset_extensions",
-          "tableTo": "rulesets",
-          "schemaTo": "rules",
-          "columnsFrom": [
-            "extension_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
         "ruleset_extensions_ruleset_id_fkey": {
           "name": "ruleset_extensions_ruleset_id_fkey",
           "tableFrom": "ruleset_extensions",
@@ -5388,6 +5235,20 @@
           "schemaTo": "rules",
           "columnsFrom": [
             "ruleset_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "ruleset_extensions_extension_id_fkey": {
+          "name": "ruleset_extensions_extension_id_fkey",
+          "tableFrom": "ruleset_extensions",
+          "tableTo": "rulesets",
+          "schemaTo": "rules",
+          "columnsFrom": [
+            "extension_id"
           ],
           "columnsTo": [
             "id"
@@ -5826,6 +5687,20 @@
           "primaryKey": false,
           "notNull": false
         },
+        "ancestor_ruleset_ids": {
+          "name": "ancestor_ruleset_ids",
+          "type": "uuid[]",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'"
+        },
+        "extension_ruleset_ids": {
+          "name": "extension_ruleset_ids",
+          "type": "uuid[]",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'"
+        },
         "description": {
           "name": "description",
           "type": "text",
@@ -5837,6 +5712,13 @@
           "type": "uuid",
           "primaryKey": false,
           "notNull": false
+        },
+        "system": {
+          "name": "system",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
         },
         "private": {
           "name": "private",
@@ -5853,33 +5735,6 @@
           "notNull": true,
           "default": "'Draft'"
         },
-        "base_rules": {
-          "name": "base_rules",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "ancestor_ruleset_ids": {
-          "name": "ancestor_ruleset_ids",
-          "type": "uuid[]",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'{\"\"}'"
-        },
-        "extension_ruleset_ids": {
-          "name": "extension_ruleset_ids",
-          "type": "uuid[]",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'{\"\"}'"
-        },
-        "system": {
-          "name": "system",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
         "kind": {
           "name": "kind",
           "type": "ruleset_kind",
@@ -5887,6 +5742,12 @@
           "primaryKey": false,
           "notNull": true,
           "default": "'ruleset'"
+        },
+        "base_rules": {
+          "name": "base_rules",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
         }
       },
       "indexes": {
@@ -5897,8 +5758,7 @@
               "expression": "name",
               "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops"
+              "nulls": "last"
             }
           ],
           "isUnique": true,
@@ -5906,66 +5766,23 @@
           "method": "btree",
           "with": {}
         },
-        "rulesets_search_trgm_idx": {
-          "name": "rulesets_search_trgm_idx",
-          "columns": [
-            {
-              "expression": "name",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last",
-              "opclass": "gin_trgm_ops"
-            },
-            {
-              "expression": "description",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last",
-              "opclass": "gin_trgm_ops"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "gin",
-          "with": {}
-        },
-        "rulesets_status_idx": {
-          "name": "rulesets_status_idx",
-          "columns": [
-            {
-              "expression": "status",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last",
-              "opclass": "enum_ops"
-            }
-          ],
-          "isUnique": false,
-          "where": "(deleted_at IS NULL)",
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "rulesets_user_id_status_idx": {
-          "name": "rulesets_user_id_status_idx",
+        "rulesets_user_id_private_idx": {
+          "name": "rulesets_user_id_private_idx",
           "columns": [
             {
               "expression": "user_id",
               "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "uuid_ops"
+              "nulls": "last"
             },
             {
-              "expression": "status",
+              "expression": "private",
               "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "uuid_ops"
+              "nulls": "last"
             }
           ],
           "isUnique": false,
-          "where": "(deleted_at IS NULL)",
           "concurrently": false,
           "method": "btree",
           "with": {}
@@ -6062,27 +5879,10 @@
           "name": "expires_at",
           "type": "timestamp with time zone",
           "primaryKey": false,
-          "notNull": true,
-          "default": "(now() + '7 days'::interval)"
+          "notNull": true
         }
       },
       "indexes": {
-        "sessions_expires_at_idx": {
-          "name": "sessions_expires_at_idx",
-          "columns": [
-            {
-              "expression": "expires_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last",
-              "opclass": "timestamptz_ops"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
         "sessions_user_id": {
           "name": "sessions_user_id",
           "columns": [
@@ -6090,8 +5890,22 @@
               "expression": "user_id",
               "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "uuid_ops"
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "sessions_expires_at_idx": {
+          "name": "sessions_expires_at_idx",
+          "columns": [
+            {
+              "expression": "expires_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
             }
           ],
           "isUnique": false,
@@ -6133,18 +5947,6 @@
           "notNull": true,
           "default": "now()"
         },
-        "user_id": {
-          "name": "user_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "ruleset_id": {
-          "name": "ruleset_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
         "updated_at": {
           "name": "updated_at",
           "type": "timestamp with time zone",
@@ -6157,6 +5959,18 @@
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ruleset_id": {
+          "name": "ruleset_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
         }
       },
       "indexes": {
@@ -6167,8 +5981,7 @@
               "expression": "user_id",
               "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "uuid_ops"
+              "nulls": "last"
             }
           ],
           "isUnique": false,
@@ -6178,20 +5991,6 @@
         }
       },
       "foreignKeys": {
-        "starred_rulesets_ruleset_id_fkey": {
-          "name": "starred_rulesets_ruleset_id_fkey",
-          "tableFrom": "starred_rulesets",
-          "tableTo": "rulesets",
-          "schemaTo": "rules",
-          "columnsFrom": [
-            "ruleset_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
         "starred_rulesets_user_id_fkey": {
           "name": "starred_rulesets_user_id_fkey",
           "tableFrom": "starred_rulesets",
@@ -6199,6 +5998,20 @@
           "schemaTo": "account",
           "columnsFrom": [
             "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "starred_rulesets_ruleset_id_fkey": {
+          "name": "starred_rulesets_ruleset_id_fkey",
+          "tableFrom": "starred_rulesets",
+          "tableTo": "rulesets",
+          "schemaTo": "rules",
+          "columnsFrom": [
+            "ruleset_id"
           ],
           "columnsTo": [
             "id"
@@ -6434,8 +6247,22 @@
               "expression": "email_address",
               "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops"
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "users_username": {
+          "name": "users_username",
+          "columns": [
+            {
+              "expression": "username",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
             }
           ],
           "isUnique": true,
@@ -6450,50 +6277,10 @@
               "expression": "expires_at",
               "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "timestamptz_ops"
+              "nulls": "last"
             }
           ],
           "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "users_search_trgm_idx": {
-          "name": "users_search_trgm_idx",
-          "columns": [
-            {
-              "expression": "username",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last",
-              "opclass": "gin_trgm_ops"
-            },
-            {
-              "expression": "email_address",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last",
-              "opclass": "gin_trgm_ops"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "gin",
-          "with": {}
-        },
-        "users_username": {
-          "name": "users_username",
-          "columns": [
-            {
-              "expression": "username",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops"
-            }
-          ],
-          "isUnique": true,
           "concurrently": false,
           "method": "btree",
           "with": {}

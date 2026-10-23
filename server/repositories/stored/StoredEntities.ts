@@ -1,37 +1,38 @@
 import { and, eq, inArray, type SQL, sql } from "drizzle-orm";
-import type { PgColumn } from "drizzle-orm/pg-core";
+import type { PgColumn, PgInsertValue } from "drizzle-orm/pg-core";
 
 import type { Db } from "@/drizzle/database.ts";
 import { entitiesInRules, entityFieldsInRules, entityLinksInRules } from "@/drizzle/schema.ts";
 import { Engine, type StoredColumn } from "@/engine/index.ts";
 
-import { qualified } from "./qualified.ts";
+import { sortColumns } from "./sortColumns.ts";
+import { toQualified } from "./toQualified.ts";
 
 /** A kind's row, as a write gives it: its columns by their names. */
 export type StoredValues = Record<string, unknown>;
 
-/** The columns every entity's row holds, which `rules.entities` keeps as they are. */
+/**
+ * The columns every entity's row holds, which `rules.entities` keeps as they are: in the order a row's answer gives
+ * them, its timestamps first.
+ */
 const ENTITY_COLUMNS = {
+  createdAt: entitiesInRules.createdAt,
+  updatedAt: entitiesInRules.updatedAt,
+  deletedAt: entitiesInRules.deletedAt,
   id: entitiesInRules.id,
   rulesetId: entitiesInRules.rulesetId,
   campaignId: entitiesInRules.campaignId,
   name: entitiesInRules.name,
   description: entitiesInRules.description,
-  createdAt: entitiesInRules.createdAt,
-  updatedAt: entitiesInRules.updatedAt,
-  deletedAt: entitiesInRules.deletedAt,
 };
 
 /** The columns an owned entity's row holds (a class level's), whose scope and name are its owner's and its position. */
 const OWNED_COLUMNS = {
-  id: entitiesInRules.id,
   createdAt: entitiesInRules.createdAt,
   updatedAt: entitiesInRules.updatedAt,
   deletedAt: entitiesInRules.deletedAt,
+  id: entitiesInRules.id,
 };
-
-/** The most rows one insert writes: a statement holds at most 65,535 parameters. */
-const WRITE_BATCH = 2000;
 
 /** A field's typed value column, by its kind. */
 const VALUE_COLUMNS = {
@@ -40,19 +41,30 @@ const VALUE_COLUMNS = {
   text: entityFieldsInRules.textValue,
 } as const;
 
-/** What a column a field holds reads: its single value, the row of ordinal 0, cast as the column was typed. */
-function readField(column: Extract<StoredColumn, { field: string }>): SQL {
-  const value = sql`(SELECT ${VALUE_COLUMNS[column.kind]} FROM ${entityFieldsInRules} WHERE ${entityFieldsInRules.entityId} = ${qualified(entitiesInRules.id)} AND ${entityFieldsInRules.field} = ${column.field} AND ${entityFieldsInRules.ordinal} = 0)`;
-  if (column.kind !== "number") return value;
-  if ("integer" in column) return sql`${value}::integer`;
-  return sql`round(${value}, ${sql.raw(String(column.scale))})::text`;
+/** The most rows one insert writes: a statement holds at most 65,535 parameters. */
+const WRITE_BATCH = 2000;
+
+/** A field's value as its typed column holds it. */
+function fieldValue(kind: "flag" | "number" | "text", value: unknown, scale?: number) {
+  return {
+    valueKind: kind,
+    textValue: kind === "text" ? String(value) : null,
+    // A decimal kept to `scale` places is rounded as it's written, as a numeric column of that scale rounds it
+    numberValue:
+      kind !== "number"
+        ? null
+        : scale === undefined
+          ? String(value)
+          : sql<string>`round(${String(value)}::numeric, ${sql.raw(String(scale))})`,
+    flagValue: kind === "flag" ? Boolean(value) : null,
+  };
 }
 
 /** What a stored column reads, over the entity's row (`rules.entities`). */
 function readColumn(column: StoredColumn): PgColumn | SQL {
   switch (column.kind) {
     case "link":
-      return sql`(SELECT ${entityLinksInRules.toId} FROM ${entityLinksInRules} WHERE ${entityLinksInRules.fromId} = ${qualified(entitiesInRules.id)} AND ${entityLinksInRules.role} = ${column.role})`;
+      return sql`(SELECT ${entityLinksInRules.toId} FROM ${entityLinksInRules} WHERE ${entityLinksInRules.fromId} = ${toQualified(entitiesInRules.id)} AND ${entityLinksInRules.role} = ${column.role})`;
     case "owner":
       return entitiesInRules.ownerId;
     case "partition":
@@ -64,14 +76,12 @@ function readColumn(column: StoredColumn): PgColumn | SQL {
   }
 }
 
-/** A field's value as its typed column holds it. */
-function fieldValue(kind: "flag" | "number" | "text", value: unknown) {
-  return {
-    valueKind: kind,
-    textValue: kind === "text" ? String(value) : null,
-    numberValue: kind === "number" ? String(value) : null,
-    flagValue: kind === "flag" ? Boolean(value) : null,
-  };
+/** What a column a field holds reads: its single value, the row of ordinal 0, cast as the column was typed. */
+function readField(column: Extract<StoredColumn, { field: string }>): SQL {
+  const value = sql`(SELECT ${VALUE_COLUMNS[column.kind]} FROM ${entityFieldsInRules} WHERE ${entityFieldsInRules.entityId} = ${toQualified(entitiesInRules.id)} AND ${entityFieldsInRules.field} = ${column.field} AND ${entityFieldsInRules.ordinal} = 0)`;
+  if (column.kind !== "number") return value;
+  if ("integer" in column) return sql`${value}::integer`;
+  return sql`round(${value}, ${sql.raw(String(column.scale))})::text`;
 }
 
 /**
@@ -100,14 +110,20 @@ export default class StoredEntities {
    * as it is, as an update leaves a column it's given undefined.
    */
   private static parts(type: string, values: StoredValues, creating: boolean) {
-    const fields: { field: string; kind: "flag" | "number" | "text"; value: unknown }[] = [];
+    const fields: { field: string; kind: "flag" | "number" | "text"; scale?: number; value: unknown }[] = [];
     const links: { role: string; toId: unknown }[] = [];
     for (const [name, column] of StoredEntities.declared(type)) {
       if (!creating && values[name] === undefined) continue;
-      if (column.kind === "link") links.push({ role: column.role, toId: values[name] ?? null });
-      else if (column.kind === "flag" || column.kind === "number" || column.kind === "text") {
+      if (column.kind === "link") {
+        links.push({ role: column.role, toId: values[name] ?? null });
+      } else if (column.kind === "flag" || column.kind === "number" || column.kind === "text") {
         const value = values[name] ?? ("default" in column ? column.default : undefined) ?? null;
-        fields.push({ field: column.field, kind: column.kind, value });
+        fields.push({
+          field: column.field,
+          kind: column.kind,
+          scale: "scale" in column ? column.scale : undefined,
+          value,
+        });
       }
     }
     return { fields, links };
@@ -124,12 +140,12 @@ export default class StoredEntities {
     creating: boolean,
   ) {
     const storage = Engine.storage();
-    const fieldRows: (typeof entityFieldsInRules.$inferInsert)[] = [];
+    const fieldRows: PgInsertValue<typeof entityFieldsInRules>[] = [];
     const linkRows: (typeof entityLinksInRules.$inferInsert)[] = [];
     for (const { ids, values } of writes) {
       if (ids.length === 0) continue;
       const { fields, links } = StoredEntities.parts(type, values, creating);
-      if (!creating && fields.length > 0)
+      if (!creating && fields.length > 0) {
         await db.delete(entityFieldsInRules).where(
           and(
             inArray(entityFieldsInRules.entityId, ids),
@@ -139,7 +155,8 @@ export default class StoredEntities {
             ),
           ),
         );
-      if (!creating && links.length > 0)
+      }
+      if (!creating && links.length > 0) {
         await db.delete(entityLinksInRules).where(
           and(
             inArray(entityLinksInRules.fromId, ids),
@@ -149,20 +166,24 @@ export default class StoredEntities {
             ),
           ),
         );
-      for (const field of fields)
-        if (field.value !== null)
-          for (const entityId of ids)
+      }
+      for (const field of fields) {
+        if (field.value !== null) {
+          for (const entityId of ids) {
             fieldRows.push({
               entityId,
               entityType: type,
               field: field.field,
               multiple: false,
-              ...fieldValue(field.kind, field.value),
+              ...fieldValue(field.kind, field.value, field.scale),
             });
+          }
+        }
+      }
       for (const link of links) {
         if (link.toId === null) continue;
         const role = storage.registries().linkRoles.find((def) => def.role === link.role && def.fromType === type)!;
-        for (const fromId of ids)
+        for (const fromId of ids) {
           linkRows.push({
             fromId,
             fromType: type,
@@ -171,6 +192,7 @@ export default class StoredEntities {
             toId: String(link.toId),
             toType: role.toType,
           });
+        }
       }
     }
     for (let i = 0; i < fieldRows.length; i += WRITE_BATCH)
@@ -183,12 +205,18 @@ export default class StoredEntities {
    * The columns a kind's row reads (`type`), each a column of `rules.entities` or what its fields and links hold, by
    * its name: what a query of its rows selects, filters and orders by.
    */
-  static columns(type: string): Record<string, PgColumn | SQL> {
+  static buildColumns(type: string): Record<string, PgColumn | SQL> {
     const own = StoredEntities.ownerTypeOf(type) ? OWNED_COLUMNS : ENTITY_COLUMNS;
-    return {
+    const columns = {
       ...own,
       ...Object.fromEntries(StoredEntities.declared(type).map(([name, column]) => [name, readColumn(column)])),
     };
+    return sortColumns(columns, Engine.storage().kind(type).order);
+  }
+
+  /** The condition that picks a kind's entities among every kind's: their type. */
+  static buildScope(type: string): SQL {
+    return eq(entitiesInRules.type, type);
   }
 
   /**
@@ -242,13 +270,14 @@ export default class StoredEntities {
       };
     });
     const inserted: { id: string }[] = [];
-    for (let i = 0; i < entityRows.length; i += WRITE_BATCH)
+    for (let i = 0; i < entityRows.length; i += WRITE_BATCH) {
       inserted.push(
         ...(await db
           .insert(entitiesInRules)
           .values(entityRows.slice(i, i + WRITE_BATCH))
           .returning({ id: entitiesInRules.id })),
       );
+    }
 
     await StoredEntities.writeParts(
       db,
@@ -257,11 +286,6 @@ export default class StoredEntities {
       true,
     );
     return inserted.map((row) => row.id);
-  }
-
-  /** The condition that picks a kind's entities among every kind's: their type. */
-  static scope(type: string): SQL {
-    return eq(entitiesInRules.type, type);
   }
 
   /**
@@ -283,7 +307,7 @@ export default class StoredEntities {
         ...(position && position in values ? { position: values[position] as number } : {}),
         updatedAt: (values.updatedAt as string | undefined) ?? new Date().toISOString(),
       })
-      .where(and(StoredEntities.scope(type), where))
+      .where(and(StoredEntities.buildScope(type), where))
       .returning({ id: entitiesInRules.id });
     const ids = updated.map((row) => row.id);
     await StoredEntities.writeParts(db, type, [{ ids, values }], false);

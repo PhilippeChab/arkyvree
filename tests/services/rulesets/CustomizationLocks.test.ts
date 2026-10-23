@@ -1,13 +1,12 @@
 import { afterAll, afterEach, expect, test } from "bun:test";
 
-import { featsInRules } from "@/drizzle/schema.ts";
 import { EntityRepositories, RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { createTestDbFromClient, createTestPool } from "@/server/database/test.ts";
 import { Feats, Modifiers, Requirements } from "@/server/repositories/index.ts";
 import { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";
 import { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";
-import { insertRows, runWhileLocked } from "@/tests/support/database.ts";
+import { runWhileLocked } from "@/tests/support/database.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
@@ -21,7 +20,7 @@ const pool = createTestPool();
 async function setupRemovedCustomizations() {
   const session = makeSession();
   const ruleset = await createSeededTestRuleset(session.userId);
-  const [feat] = await insertRows(featsInRules, [{ name: "Removed Customizations", rulesetId: ruleset.id }]);
+  const [feat] = await Feats.create(db, { name: "Removed Customizations", rulesetId: ruleset.id });
   const owner = { entityId: feat.id, entityType: "feats" };
   const [modifier] = await Modifiers.createMany(db, [
     {

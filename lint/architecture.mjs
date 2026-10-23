@@ -96,12 +96,21 @@ const FUNCTION_TYPES = new Set(["ArrowFunctionExpression", "FunctionDeclaration"
 /** The values that are a function or a class, which a vocabulary's constant never holds. */
 const FUNCTION_VALUES = new Set(["ArrowFunctionExpression", "ClassExpression", "FunctionExpression"]);
 
+/** The generic tables' raw rows, as the schema names them: what only `server/repositories/` reads (`generic-rows`). */
+const GENERIC_ROWS = new Set([
+  "entityFieldsInRules",
+  "entityLinksInRules",
+  "fieldsInCharacter",
+  "rulesetFieldsInRules",
+  "rulesetLinksInRules",
+]);
 const indexCache = new Map();
 /**
  * The trees whose folders are entered through their `index.ts`: the server's, but its routers (a route folder's
  * `index.ts` is its routes, not its folder's entry), the engine's, and the client's components.
  */
 const INDEXED_TREES = ["server/", "engine/", CLIENT_COMPONENTS];
+
 /** Each layer inside a box, and what it must not import: the server's, the content's and the engine's. */
 const LAYERS = [
   { layer: "server/database/", deny: ["server/repositories/", ...ABOVE_REPOSITORIES] },
@@ -147,15 +156,6 @@ const MODULE_EXPORTS_ITS_OWN =
 
 /** Where a query may be built: the repositories, and the database layer (what talks to Postgres itself). */
 const QUERY_HOMES = ["server/repositories/", "server/database/"];
-
-/** The generic tables' raw rows, as the schema names them: what only `server/repositories/` reads (`generic-rows`). */
-const GENERIC_ROWS = new Set([
-  "entityFieldsInRules",
-  "entityLinksInRules",
-  "fieldsInCharacter",
-  "rulesetFieldsInRules",
-  "rulesetLinksInRules",
-]);
 
 const QUERY_METHODS = new Set(["select", "selectDistinct", "insert", "update", "delete", "execute"]);
 
@@ -377,6 +377,26 @@ function createFolderIndex(context) {
   });
 }
 
+function createGenericRows(context) {
+  const file = repoPath(context.filename);
+  if (["server/repositories/", "drizzle/", "tests/"].some((home) => file.startsWith(home))) return {};
+  return {
+    ImportDeclaration(node) {
+      if (node.source.value !== "@/drizzle/schema.ts") return;
+      for (const specifier of node.specifiers) {
+        if (specifier.type === "ImportSpecifier" && GENERIC_ROWS.has(specifier.imported.name)) {
+          context.report({
+            node: specifier,
+            message:
+              `${specifier.imported.name} is a generic table's raw rows, which only server/repositories/ reads: ` +
+              "read a kind's rows, a join's or properties through their repository (server/repositories/stored/).",
+          });
+        }
+      }
+    },
+  };
+}
+
 function createLayers(context) {
   const file = repoPath(context.filename);
   const rules = LAYERS.map((rule) => ({ rule, layer: layerPrefixOf(file, rule.layer) })).filter(({ layer }) => layer);
@@ -540,24 +560,6 @@ function createOpaqueView(context) {
         value.type === "ObjectPattern" &&
         value.properties.every((p) => p.type === "Property" && !p.computed && p.key.name === "cow");
       if (!takesCow) context.report({ node, message });
-    },
-  };
-}
-
-function createGenericRows(context) {
-  const file = repoPath(context.filename);
-  if (["server/repositories/", "drizzle/", "tests/"].some((home) => file.startsWith(home))) return {};
-  return {
-    ImportDeclaration(node) {
-      if (node.source.value !== "@/drizzle/schema.ts") return;
-      for (const specifier of node.specifiers)
-        if (specifier.type === "ImportSpecifier" && GENERIC_ROWS.has(specifier.imported.name))
-          context.report({
-            node: specifier,
-            message:
-              `${specifier.imported.name} is a generic table's raw rows, which only server/repositories/ reads: ` +
-              "read a kind's rows, a join's or properties through their repository (server/repositories/stored/).",
-          });
     },
   };
 }

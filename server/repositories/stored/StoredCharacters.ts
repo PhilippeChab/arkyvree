@@ -5,7 +5,8 @@ import type { Db } from "@/drizzle/database.ts";
 import { charactersInCharacter, entitiesInRules, fieldsInCharacter, linksInCharacter } from "@/drizzle/schema.ts";
 import { Engine } from "@/engine/index.ts";
 
-import { qualified } from "./qualified.ts";
+import { sortColumns } from "./sortColumns.ts";
+import { toQualified } from "./toQualified.ts";
 
 /** A field's typed value column on a character, by its kind. */
 const VALUE_COLUMNS = { number: fieldsInCharacter.numberValue, text: fieldsInCharacter.textValue } as const;
@@ -17,21 +18,29 @@ const VALUE_COLUMNS = { number: fieldsInCharacter.numberValue, text: fieldsInCha
  */
 export default class StoredCharacters {
   /** The columns a character's row reads, each a column of its own or what its field or its link holds. */
-  static columns(): Record<string, PgColumn | SQL> {
-    const declared = Engine.storage().character().columns;
-    return {
-      ...getTableColumns(charactersInCharacter),
-      ...Object.fromEntries(
-        Object.entries(declared).map(([name, column]) => [
-          name,
-          column.kind === "link"
-            ? sql`(SELECT ${linksInCharacter.entityId} FROM ${linksInCharacter} WHERE ${linksInCharacter.characterId} = ${qualified(charactersInCharacter.id)} AND ${linksInCharacter.role} = ${column.role})`
-            : column.kind === "number"
-              ? sql`(SELECT ${VALUE_COLUMNS.number} FROM ${fieldsInCharacter} WHERE ${fieldsInCharacter.characterId} = ${qualified(charactersInCharacter.id)} AND ${fieldsInCharacter.field} = ${column.field} AND ${fieldsInCharacter.ordinal} = 0)::integer`
-              : sql`(SELECT ${VALUE_COLUMNS.text} FROM ${fieldsInCharacter} WHERE ${fieldsInCharacter.characterId} = ${qualified(charactersInCharacter.id)} AND ${fieldsInCharacter.field} = ${column.field} AND ${fieldsInCharacter.ordinal} = 0)`,
-        ]),
-      ),
-    };
+  static buildColumns(): Record<string, PgColumn | SQL> {
+    const { columns: declared, order } = Engine.storage().character();
+    return sortColumns<PgColumn | SQL>(
+      {
+        ...getTableColumns(charactersInCharacter),
+        ...Object.fromEntries(
+          Object.entries(declared).map(([name, column]) => [
+            name,
+            column.kind === "link"
+              ? sql`(SELECT ${linksInCharacter.entityId} FROM ${linksInCharacter} WHERE ${linksInCharacter.characterId} = ${toQualified(charactersInCharacter.id)} AND ${linksInCharacter.role} = ${column.role})`
+              : column.kind === "number"
+                ? sql`(SELECT ${VALUE_COLUMNS.number} FROM ${fieldsInCharacter} WHERE ${fieldsInCharacter.characterId} = ${toQualified(charactersInCharacter.id)} AND ${fieldsInCharacter.field} = ${column.field} AND ${fieldsInCharacter.ordinal} = 0)::integer`
+                : sql`(SELECT ${VALUE_COLUMNS.text} FROM ${fieldsInCharacter} WHERE ${fieldsInCharacter.characterId} = ${toQualified(charactersInCharacter.id)} AND ${fieldsInCharacter.field} = ${column.field} AND ${fieldsInCharacter.ordinal} = 0)`,
+          ]),
+        ),
+      },
+      order,
+    );
+  }
+
+  /** The type of an entity a character's row names (its item's), read where it's written: its own. */
+  static buildTypeOf(entityId: string): SQL<string> {
+    return sql<string>`(SELECT ${entitiesInRules.type} FROM ${entitiesInRules} WHERE ${entitiesInRules.id} = ${entityId})`;
   }
 
   /** A write's values (`values`) split into the character row's own columns and those its module stores elsewhere. */
@@ -85,10 +94,5 @@ export default class StoredCharacters {
         })),
       );
     }
-  }
-
-  /** The type of an entity a character's row names (its item's), read where it's written: its own. */
-  static typeOf(entityId: string): SQL<string> {
-    return sql<string>`(SELECT ${entitiesInRules.type} FROM ${entitiesInRules} WHERE ${entitiesInRules.id} = ${entityId})`;
   }
 }

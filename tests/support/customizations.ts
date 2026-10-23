@@ -6,6 +6,12 @@ import type { Character } from "@/shared/relations.ts";
 import { invalidateSeededRuleset } from "./rulesets.ts";
 import { getSeedCtx } from "./seed.ts";
 
+/** A property's type and value, as a test gives one. */
+interface Property {
+  type: string;
+  value: string;
+}
+
 /** A requirement's values: a base attack bonus of 5 or more. */
 const BAB_AT_LEAST_5 = {
   level: "1",
@@ -22,6 +28,27 @@ export const STRENGTH_BONUS = {
   valueType: "number",
   operator: "add",
 } as const;
+
+/**
+ * A property of `type`'s a module declares, a text field: a value a test sets ("doomed"), or none when the type keeps
+ * no property of text (an ability, a save).
+ */
+function textProperty(type: string): Property | null {
+  const storage = Engine.storage();
+  // The columns its row stores as fields, which aren't properties: a kind's, a character's; none of another owner's
+  const isKind = storage.registries().entityTypes.some((def) => def.type === type);
+  const columns = type === "characters" ? storage.character().columns : isKind ? storage.kind(type).columns : {};
+  const def = storage
+    .registries()
+    .fieldDefs.find(
+      (field) =>
+        field.ownerType === type &&
+        field.valueKind === "text" &&
+        !storage.linkedProperty(type, field.field) &&
+        !Object.values(columns).some((column) => "field" in column && column.field === field.field),
+    );
+  return def ? { type: def.field, value: "doomed" } : null;
+}
 
 /**
  * A modifier of the character's race (a number added, unless `modifier` says otherwise), gated by `requirements` when
@@ -66,26 +93,6 @@ export async function customize(
   await Requirements.create(db, { ...BAB_AT_LEAST_5, entityId: id, entityType: type });
   if (property) await Properties.createMany(db, [{ ...property, entityId: id, entityType: type }]);
   return bonus;
-}
-
-/** A property's type and value, as a test gives one. */
-type Property = { type: string; value: string };
-
-/**
- * A property of `type`'s a module declares, a text field: a value a test sets ("doomed"), or none when the type keeps
- * no property of text (an ability, a save).
- */
-function textProperty(type: string): Property | null {
-  const def = Engine.storage()
-    .registries()
-    .fieldDefs.find(
-      (field) =>
-        field.ownerType === type &&
-        field.valueKind === "text" &&
-        !Engine.storage().linkedProperty(type, field.field) &&
-        !Object.values(Engine.storage().kind(type).columns).some((column) => "field" in column && column.field === field.field),
-    );
-  return def ? { type: def.field, value: "doomed" } : null;
 }
 
 /** A row's customizations: its modifiers and their own requirements, its requirements and its properties. */

@@ -25,9 +25,19 @@ import { STRENGTH_BONUS } from "@/tests/support/customizations.ts";
 import { measure } from "@/tests/support/database.ts";
 import { copyEntity, createSeededTestRuleset, invalidateTestRulesets } from "@/tests/support/rulesets.ts";
 import { makeSession } from "@/tests/support/users.ts";
+import { FEAT_FAMILY, FEAT_WEAPON_FINESSE, SPELL_SUBSCHOOL } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 type EntityType = "feats" | "powers";
 type Pairing = "snapshot" | "name";
+
+/**
+ * A single-valued property the seeded Toughness and Magic Missile hold none of, and its value in each extension that
+ * gives it one: the copy that wins it shows the first of them in display order.
+ */
+const PRECEDENCE: Record<EntityType, { type: string; valueOf: (index: number) => string }> = {
+  feats: { type: FEAT_WEAPON_FINESSE, valueOf: (index) => String(index === 1) },
+  powers: { type: SPELL_SUBSCHOOL, valueOf: (index) => `Extension ${index}` },
+};
 
 async function setup(entityType: EntityType, pairing: Pairing, extensionCount = 2) {
   const session = makeSession();
@@ -292,12 +302,11 @@ test("copying sibling modifiers and their requirements stays batched", async () 
 
 test("installing another extension preserves the local override and exposes unrelated content", async () => {
   const { session, host, winnerId, loser, loserRulesetId, rulesetIds } = await setup("feats", "snapshot");
-  const [property] = await Properties.create(db, {
-    entityId: loser.id,
-    entityType: "feats",
-    type: "NEW_EXTENSION",
-    value: "1",
-  });
+  // A family of the losing copy's own: a set, which a winner's view unions with its siblings'
+  const family = { type: FEAT_FAMILY, value: "New Extension" };
+  await Properties.createMany(db, [{ ...family, entityId: loser.id, entityType: "feats" }]);
+  const holds = (properties: { type: string; value: string }[]) =>
+    properties.some((p) => p.type === family.type && p.value === family.value);
   invalidateTestRulesets(...rulesetIds);
   await RulesetExtensionsService.unsubscribeExtension(session, host.id, loserRulesetId);
   const local = await FeatsService.updateFeat(session, host.id, winnerId, {
@@ -307,13 +316,13 @@ test("installing another extension preserves the local override and exposes unre
   const [unrelated] = await Feats.create(db, { name: "Unrelated extension feat", rulesetId: loserRulesetId });
   await RulesetExtensionsService.subscribeExtension(session, host.id, [loserRulesetId]);
   await withRulesetScope(db, host.id, async ({ rulesetData }) => {
-    expect((rulesetData.propertiesByEntity.get(local.id) ?? []).some((p) => p.id === property.id)).toBe(false);
+    expect(holds(rulesetData.propertiesByEntity.get(local.id) ?? [])).toBe(false);
     expect(rulesetData.featsById.has(unrelated.id)).toBe(true);
     expect(rulesetData.canonicalize(loser.id)).toBe(local.id);
   });
   await RulesetChangesService.revertOverride(session, host.id, "feats", winnerId);
   await withRulesetScope(db, host.id, async ({ rulesetData }) => {
-    expect((rulesetData.propertiesByEntity.get(winnerId) ?? []).some((p) => p.id === property.id)).toBe(true);
+    expect(holds(rulesetData.propertiesByEntity.get(winnerId) ?? [])).toBe(true);
   });
 });
 
@@ -321,15 +330,12 @@ for (const entityType of ["feats", "powers"] as const) {
   for (const pairing of ["snapshot", "name"] as const) {
     test(`${pairing} ${entityType}: copying follows display precedence across three extensions`, async () => {
       const { session, extensions, rulesetIds } = await setup(entityType, pairing, 3);
+      const precedence = PRECEDENCE[entityType];
       for (const [index, { copy }] of extensions.entries()) {
         if (index === 0) continue;
-        await Properties.create(db, {
-          entityId: copy.id,
-          entityType,
-          type: "PRECEDENCE",
-          value: "same",
-          description: `Extension ${index}`,
-        });
+        await Properties.createMany(db, [
+          { entityId: copy.id, entityType, type: precedence.type, value: precedence.valueOf(index) },
+        ]);
         const [modifier] = await Modifiers.create(db, {
           ...STRENGTH_BONUS,
           sourceId: copy.id,
@@ -356,11 +362,13 @@ for (const entityType of ["feats", "powers"] as const) {
         invalidateTestRulesets(fork.id, ...rulesetIds);
         const winnerId = extensions[0].copy.id;
         const visible = await withRulesetScope(db, fork.id, async ({ rulesetData }) => ({
-          property: rulesetData.propertiesByEntity.get(winnerId)!.find((p) => p.type === "PRECEDENCE")!,
+          property: rulesetData.propertiesByEntity.get(winnerId)!.find((p) => p.type === precedence.type)!,
           modifier: rulesetData.modifiersBySource.get(winnerId)!.find((m) => m.target === STRENGTH_BONUS.target)!,
         }));
-        expect(visible.property.description).toBe(`Extension ${order[1]}`);
-        const sourceProperty = await Properties.findOne(db, { id: visible.property.id });
+        expect(visible.property.value).toBe(precedence.valueOf(order[1]));
+        const sourceProperties = () =>
+          Properties.findMany(db, { entityIds: [extensions[order[1]].copy.id], entityType, type: precedence.type });
+        const shownProperties = await sourceProperties();
         const sourceRequirements = await Requirements.findMany(db, {
           entityIds: [visible.modifier.id],
           entityType: "modifiers",
@@ -385,10 +393,10 @@ for (const entityType of ["feats", "powers"] as const) {
         // The entity copied with its modifier holds the property the view showed, its source's left as it was
         const { sourceId: copyId } = (await Modifiers.findOne(db, { id: added.resolvedEntityId }))!;
         const copiedProperties = await Properties.findMany(db, { entityIds: [copyId], entityType });
-        expect(copiedProperties.filter((p) => p.type === "PRECEDENCE").map((p) => p.description)).toEqual([
-          visible.property.description,
+        expect(copiedProperties.filter((p) => p.type === precedence.type).map((p) => p.value)).toEqual([
+          visible.property.value,
         ]);
-        expect(await Properties.findOne(db, { id: visible.property.id })).toEqual(sourceProperty);
+        expect(await sourceProperties()).toEqual(shownProperties);
       }
     });
   }

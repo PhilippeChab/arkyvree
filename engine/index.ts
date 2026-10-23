@@ -49,6 +49,7 @@ export type {
   StepOptionGroup,
   StepPayload,
   StepPickerQuery,
+  StorageRegistries,
   StoredColumn,
   ValueKind,
 } from "./core/module/index.ts";

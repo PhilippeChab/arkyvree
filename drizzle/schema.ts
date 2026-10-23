@@ -26,12 +26,13 @@ const bytea = customType<{ data: Buffer }>({
 });
 
 export const account = pgSchema("account");
+
 export const usersInAccount = account.table(
   "users",
   {
-    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
-    deletedAt: timestamp("deleted_at", { withTimezone: true, mode: "string" }),
+    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
     id: uuid()
       .default(sql`public.gen_random_uuid()`)
       .primaryKey()
@@ -39,28 +40,24 @@ export const usersInAccount = account.table(
     emailAddress: text("email_address").notNull(),
     passwordDigest: text("password_digest"),
     username: text(),
-    emailVerifiedAt: timestamp("email_verified_at", { withTimezone: true, mode: "string" }),
+    emailVerifiedAt: timestamp("email_verified_at", { mode: "string", withTimezone: true }),
     pendingEmailAddress: text("pending_email_address"),
-    onboardingCompletedAt: timestamp("onboarding_completed_at", { withTimezone: true, mode: "string" }),
-    expiresAt: timestamp("expires_at", { withTimezone: true, mode: "string" }),
+    onboardingCompletedAt: timestamp("onboarding_completed_at", { mode: "string", withTimezone: true }),
+    expiresAt: timestamp("expires_at", { mode: "string", withTimezone: true }),
   },
   (table) => [
-    uniqueIndex("users_email").using("btree", table.emailAddress.asc().nullsLast().op("text_ops")),
-    index("users_expires_at_idx").using("btree", table.expiresAt.asc().nullsLast().op("timestamptz_ops")),
-    index("users_search_trgm_idx").using(
-      "gin",
-      table.username.asc().nullsLast().op("gin_trgm_ops"),
-      table.emailAddress.asc().nullsLast().op("gin_trgm_ops"),
-    ),
-    uniqueIndex("users_username").using("btree", table.username.asc().nullsLast().op("text_ops")),
+    uniqueIndex("users_email").using("btree", table.emailAddress.asc().nullsLast()),
+    uniqueIndex("users_username").using("btree", table.username.asc().nullsLast()),
+    index("users_expires_at_idx").using("btree", table.expiresAt.asc().nullsLast()),
   ],
 );
+
 export const activitiesInAccount = account.table(
   "activities",
   {
-    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
-    deletedAt: timestamp("deleted_at", { withTimezone: true, mode: "string" }),
+    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
     id: uuid()
       .default(sql`public.gen_random_uuid()`)
       .primaryKey()
@@ -72,19 +69,14 @@ export const activitiesInAccount = account.table(
     data: json(),
   },
   (table) => [
-    index("activities_created_at_idx").using("btree", table.createdAt.asc().nullsLast().op("timestamptz_ops")),
     index("activities_target_id_target_table").using(
       "btree",
-      table.targetId.asc().nullsLast().op("text_ops"),
-      table.targetTable.asc().nullsLast().op("uuid_ops"),
+      table.targetId.asc().nullsLast(),
+      table.targetTable.asc().nullsLast(),
     ),
-    index("activities_user_id_created_at_idx")
-      .using(
-        "btree",
-        table.userId.asc().nullsLast().op("timestamptz_ops"),
-        table.createdAt.desc().nullsFirst().op("timestamptz_ops"),
-      )
-      .where(sql`(deleted_at IS NULL)`),
+    index("activities_type").using("btree", table.type.asc().nullsLast()),
+    index("activities_user_id").using("btree", table.userId.asc().nullsLast()),
+    index("activities_created_at_idx").using("btree", table.createdAt.asc().nullsLast()),
     foreignKey({
       columns: [table.userId],
       foreignColumns: [usersInAccount.id],
@@ -92,53 +84,54 @@ export const activitiesInAccount = account.table(
     }).onDelete("cascade"),
   ],
 );
+
 export const character = pgSchema("character");
+
 export const rules = pgSchema("rules");
+
 export const modulesInRules = rules.table("modules", {
   baseRules: text("base_rules").primaryKey().notNull(),
 });
+
 export const rulesetKind = pgEnum("ruleset_kind", ["ruleset", "extension"]);
+
 export const rulesetStatus = pgEnum("ruleset_status", ["Draft", "Published", "Archived"]);
+
 export const rulesetsInRules = rules.table(
   "rulesets",
   {
-    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
-    deletedAt: timestamp("deleted_at", { withTimezone: true, mode: "string" }),
+    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
     id: uuid()
       .default(sql`public.gen_random_uuid()`)
       .primaryKey()
       .notNull(),
     name: text().notNull(),
     rulesetId: uuid("ruleset_id"),
+    ancestorRulesetIds: uuid("ancestor_ruleset_ids").array().default([]).notNull(),
+    extensionRulesetIds: uuid("extension_ruleset_ids").array().default([]).notNull(),
     description: text().notNull(),
     userId: uuid("user_id"),
+    /** True for system-seeded bases and extensions; false for user forks (including orphaned ones). */
+    system: boolean().default(false).notNull(),
     private: boolean().default(false).notNull(),
     status: rulesetStatus().default("Draft").notNull(),
-    baseRules: text("base_rules").notNull().$type<"Dungeons & Dragons: 3.5">(),
-    ancestorRulesetIds: uuid("ancestor_ruleset_ids").array().default([""]).notNull(),
-    extensionRulesetIds: uuid("extension_ruleset_ids").array().default([""]).notNull(),
-    system: boolean().default(false).notNull(),
     kind: rulesetKind().default("ruleset").notNull(),
+    baseRules: text("base_rules").notNull().$type<"Dungeons & Dragons: 3.5">(),
   },
   (table) => [
-    uniqueIndex("rulesets_name_unique_idx").using("btree", table.name.asc().nullsLast().op("text_ops")),
-    index("rulesets_search_trgm_idx").using(
-      "gin",
-      table.name.asc().nullsLast().op("gin_trgm_ops"),
-      table.description.asc().nullsLast().op("gin_trgm_ops"),
-    ),
-    index("rulesets_status_idx")
-      .using("btree", table.status.asc().nullsLast().op("enum_ops"))
-      .where(sql`(deleted_at IS NULL)`),
-    index("rulesets_user_id_status_idx")
-      .using("btree", table.userId.asc().nullsLast().op("uuid_ops"), table.status.asc().nullsLast().op("uuid_ops"))
-      .where(sql`(deleted_at IS NULL)`),
     foreignKey({
       columns: [table.baseRules],
       foreignColumns: [modulesInRules.baseRules],
       name: "rulesets_base_rules_fkey",
     }),
+    uniqueIndex("rulesets_name_unique_idx").using("btree", table.name.asc().nullsLast()),
+    index("rulesets_user_id_private_idx").using(
+      "btree",
+      table.userId.asc().nullsLast(),
+      table.private.asc().nullsLast(),
+    ),
     foreignKey({
       columns: [table.rulesetId],
       foreignColumns: [table.id],
@@ -151,49 +144,33 @@ export const rulesetsInRules = rules.table(
     }).onDelete("cascade"),
   ],
 );
+
 export const charactersInCharacter = character.table(
   "characters",
   {
-    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
-    deletedAt: timestamp("deleted_at", { withTimezone: true, mode: "string" }),
+    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
     id: uuid()
       .default(sql`public.gen_random_uuid()`)
       .primaryKey()
       .notNull(),
     userId: uuid("user_id").notNull(),
     rulesetId: uuid("ruleset_id").notNull(),
+    kind: text().notNull().default("pc"),
+    parentCharacterId: uuid("parent_character_id"),
     name: text().notNull(),
     description: text(),
     notes: text(),
     privateNotes: text("private_notes"),
     shareToken: text("share_token"),
-    kind: text().default("pc").notNull(),
-    parentCharacterId: uuid("parent_character_id"),
-    lastChangedAt: timestamp("last_changed_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
+    lastChangedAt: timestamp("last_changed_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [
-    index("characters_parent_character_id_idx")
-      .using("btree", table.parentCharacterId.asc().nullsLast().op("uuid_ops"))
-      .where(sql`(parent_character_id IS NOT NULL)`),
-    index("characters_ruleset_id_idx")
-      .using("btree", table.rulesetId.asc().nullsLast().op("uuid_ops"))
-      .where(sql`(deleted_at IS NULL)`),
-    index("characters_search_trgm_idx").using(
-      "gin",
-      table.name.asc().nullsLast().op("gin_trgm_ops"),
-      table.description.asc().nullsLast().op("gin_trgm_ops"),
-    ),
-    uniqueIndex("characters_share_token_unique_idx")
-      .using("btree", table.shareToken.asc().nullsLast().op("text_ops"))
-      .where(sql`(share_token IS NOT NULL)`),
-    index("characters_user_id_idx")
-      .using("btree", table.userId.asc().nullsLast().op("uuid_ops"))
-      .where(sql`(deleted_at IS NULL)`),
     foreignKey({
-      columns: [table.parentCharacterId],
-      foreignColumns: [table.id],
-      name: "characters_parent_character_id_fkey",
+      columns: [table.userId],
+      foreignColumns: [usersInAccount.id],
+      name: "characters_user_id_fkey",
     }).onDelete("cascade"),
     foreignKey({
       columns: [table.rulesetId],
@@ -201,10 +178,16 @@ export const charactersInCharacter = character.table(
       name: "characters_ruleset_id_fkey",
     }).onDelete("cascade"),
     foreignKey({
-      columns: [table.userId],
-      foreignColumns: [usersInAccount.id],
-      name: "characters_user_id_fkey",
+      columns: [table.parentCharacterId],
+      foreignColumns: [table.id],
+      name: "characters_parent_character_id_fkey",
     }).onDelete("cascade"),
+    index("characters_parent_character_id_idx")
+      .using("btree", table.parentCharacterId.asc().nullsLast())
+      .where(sql`(parent_character_id IS NOT NULL)`),
+    uniqueIndex("characters_share_token_unique_idx")
+      .using("btree", table.shareToken.asc().nullsLast())
+      .where(sql`(share_token IS NOT NULL)`),
     check("characters_no_self_parent_check", sql`id <> parent_character_id`),
   ],
 );
@@ -214,9 +197,9 @@ export const campaign = pgSchema("campaign");
 export const campaignsInCampaign = campaign.table(
   "campaigns",
   {
-    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
-    deletedAt: timestamp("deleted_at", { withTimezone: true, mode: "string" }),
+    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
     id: uuid()
       .default(sql`public.gen_random_uuid()`)
       .primaryKey()
@@ -228,13 +211,8 @@ export const campaignsInCampaign = campaign.table(
   (table) => [
     index("campaigns_ruleset_id_name_idx").using(
       "btree",
-      table.rulesetId.asc().nullsLast().op("text_pattern_ops"),
+      table.rulesetId.asc().nullsLast(),
       table.name.asc().nullsLast().op("text_pattern_ops"),
-    ),
-    index("campaigns_search_trgm_idx").using(
-      "gin",
-      table.name.asc().nullsLast().op("gin_trgm_ops"),
-      table.description.asc().nullsLast().op("gin_trgm_ops"),
     ),
     foreignKey({
       columns: [table.rulesetId],
@@ -513,8 +491,8 @@ export const storage = pgSchema("storage");
 export const blobsInStorage = storage.table(
   "blobs",
   {
-    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
+    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
     id: uuid()
       .default(sql`public.gen_random_uuid()`)
       .primaryKey()
@@ -524,24 +502,24 @@ export const blobsInStorage = storage.table(
     contentType: text("content_type").notNull(),
     byteSize: integer("byte_size").notNull(),
     metadata: json().default({}).notNull(),
-    attachedAt: timestamp("attached_at", { withTimezone: true, mode: "string" }),
+    attachedAt: timestamp("attached_at", { mode: "string", withTimezone: true }),
   },
   (table) => [
-    index("blobs_attached_idx")
-      .using("btree", table.createdAt.asc().nullsLast().op("timestamptz_ops"))
-      .where(sql`(attached_at IS NOT NULL)`),
-    uniqueIndex("blobs_key_unique_idx").using("btree", table.key.asc().nullsLast().op("text_ops")),
+    uniqueIndex("blobs_key_unique_idx").using("btree", table.key.asc().nullsLast()),
     index("blobs_pending_idx")
-      .using("btree", table.createdAt.asc().nullsLast().op("timestamptz_ops"))
+      .using("btree", table.createdAt.asc().nullsLast())
       .where(sql`(attached_at IS NULL)`),
+    index("blobs_attached_idx")
+      .using("btree", table.createdAt.asc().nullsLast())
+      .where(sql`(attached_at IS NOT NULL)`),
   ],
 );
 
 export const attachmentsInStorage = storage.table(
   "attachments",
   {
-    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
+    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
     id: uuid()
       .default(sql`public.gen_random_uuid()`)
       .primaryKey()
@@ -552,84 +530,23 @@ export const attachmentsInStorage = storage.table(
     blobId: uuid("blob_id").notNull(),
   },
   (table) => [
-    index("attachments_blob_id_idx").using("btree", table.blobId.asc().nullsLast().op("uuid_ops")),
-    index("attachments_record_idx").using(
-      "btree",
-      table.recordType.asc().nullsLast().op("text_ops"),
-      table.recordId.asc().nullsLast().op("text_ops"),
-    ),
     uniqueIndex("attachments_record_name_unique_idx").using(
       "btree",
-      table.recordType.asc().nullsLast().op("text_ops"),
-      table.recordId.asc().nullsLast().op("text_ops"),
-      table.name.asc().nullsLast().op("text_ops"),
+      table.recordType.asc().nullsLast(),
+      table.recordId.asc().nullsLast(),
+      table.name.asc().nullsLast(),
     ),
+    index("attachments_record_idx").using(
+      "btree",
+      table.recordType.asc().nullsLast(),
+      table.recordId.asc().nullsLast(),
+    ),
+    index("attachments_blob_id_idx").using("btree", table.blobId.asc().nullsLast()),
     foreignKey({
       columns: [table.blobId],
       foreignColumns: [blobsInStorage.id],
       name: "attachments_blob_id_fkey",
     }).onDelete("cascade"),
-  ],
-);
-
-export const contributorRole = pgEnum("contributor_role", ["Admin", "Editor", "Viewer"]);
-
-export const contributorsInCharacter = character.table(
-  "character_contributors",
-  {
-    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
-    deletedAt: timestamp("deleted_at", { withTimezone: true, mode: "string" }),
-    id: uuid()
-      .default(sql`public.gen_random_uuid()`)
-      .primaryKey()
-      .notNull(),
-    characterId: uuid("character_id").notNull(),
-    userId: uuid("user_id"),
-    email: text().notNull(),
-    role: contributorRole().default("Editor").notNull(),
-    status: text().default("Pending").notNull(),
-    invitedBy: uuid("invited_by").notNull(),
-  },
-  (table) => [
-    uniqueIndex("character_contributors_character_email_unique")
-      .using("btree", table.characterId.asc().nullsLast().op("text_ops"), table.email.asc().nullsLast().op("text_ops"))
-      .where(
-        sql`((user_id IS NULL) AND (status = ANY (ARRAY['Pending'::text, 'Active'::text])) AND (deleted_at IS NULL))`,
-      ),
-    index("character_contributors_character_status_idx").using(
-      "btree",
-      table.characterId.asc().nullsLast().op("uuid_ops"),
-      table.status.asc().nullsLast().op("text_ops"),
-    ),
-    uniqueIndex("character_contributors_character_user_unique")
-      .using("btree", table.characterId.asc().nullsLast().op("uuid_ops"), table.userId.asc().nullsLast().op("uuid_ops"))
-      .where(sql`((status = ANY (ARRAY['Pending'::text, 'Active'::text])) AND (deleted_at IS NULL))`),
-    index("character_contributors_user_status_idx").using(
-      "btree",
-      table.userId.asc().nullsLast().op("text_ops"),
-      table.status.asc().nullsLast().op("text_ops"),
-    ),
-    foreignKey({
-      columns: [table.characterId],
-      foreignColumns: [charactersInCharacter.id],
-      name: "character_contributors_character_id_fk",
-    }).onDelete("cascade"),
-    foreignKey({
-      columns: [table.invitedBy],
-      foreignColumns: [usersInAccount.id],
-      name: "character_contributors_invited_by_fk",
-    }).onDelete("cascade"),
-    foreignKey({
-      columns: [table.userId],
-      foreignColumns: [usersInAccount.id],
-      name: "character_contributors_user_id_fk",
-    }).onDelete("cascade"),
-    check("character_contributors_email_or_user", sql`(user_id IS NOT NULL) OR (email IS NOT NULL)`),
-    check(
-      "character_contributors_status_check",
-      sql`status = ANY (ARRAY['Pending'::text, 'Active'::text, 'Rejected'::text, 'Revoked'::text])`,
-    ),
   ],
 );
 
@@ -659,12 +576,68 @@ export const contentPackagesInRules = rules.table("content_packages", {
   appliedAt: timestamp("applied_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
+export const contributorRole = pgEnum("contributor_role", ["Admin", "Editor", "Viewer"]);
+
+export const contributorsInCharacter = character.table(
+  "character_contributors",
+  {
+    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
+    id: uuid()
+      .default(sql`public.gen_random_uuid()`)
+      .primaryKey()
+      .notNull(),
+    characterId: uuid("character_id").notNull(),
+    userId: uuid("user_id"),
+    email: text().notNull(),
+    role: contributorRole().notNull().default("Editor"),
+    status: text().notNull().default("Pending"),
+    invitedBy: uuid("invited_by").notNull(),
+  },
+  (table) => [
+    index("character_contributors_character_status_idx").using(
+      "btree",
+      table.characterId.asc().nullsLast(),
+      table.status.asc().nullsLast(),
+    ),
+    index("character_contributors_user_status_idx").using(
+      "btree",
+      table.userId.asc().nullsLast(),
+      table.status.asc().nullsLast(),
+    ),
+    uniqueIndex("character_contributors_character_user_unique")
+      .using("btree", table.characterId.asc().nullsLast(), table.userId.asc().nullsLast())
+      .where(sql`status IN ('Pending', 'Active') AND deleted_at IS NULL`),
+    uniqueIndex("character_contributors_character_email_unique")
+      .using("btree", table.characterId.asc().nullsLast(), table.email.asc().nullsLast())
+      .where(sql`user_id IS NULL AND status IN ('Pending', 'Active') AND deleted_at IS NULL`),
+    foreignKey({
+      columns: [table.characterId],
+      foreignColumns: [charactersInCharacter.id],
+      name: "character_contributors_character_id_fk",
+    }).onDelete("cascade"),
+    foreignKey({
+      columns: [table.userId],
+      foreignColumns: [usersInAccount.id],
+      name: "character_contributors_user_id_fk",
+    }).onDelete("cascade"),
+    foreignKey({
+      columns: [table.invitedBy],
+      foreignColumns: [usersInAccount.id],
+      name: "character_contributors_invited_by_fk",
+    }).onDelete("cascade"),
+    check("character_contributors_status_check", sql`status = ANY (ARRAY['Pending', 'Active', 'Rejected', 'Revoked'])`),
+    check("character_contributors_email_or_user", sql`(user_id IS NOT NULL) OR (email IS NOT NULL)`),
+  ],
+);
+
 export const contributorsInRules = rules.table(
   "contributors",
   {
-    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
-    deletedAt: timestamp("deleted_at", { withTimezone: true, mode: "string" }),
+    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
     id: uuid()
       .default(sql`public.gen_random_uuid()`)
       .primaryKey()
@@ -672,35 +645,27 @@ export const contributorsInRules = rules.table(
     rulesetId: uuid("ruleset_id").notNull(),
     userId: uuid("user_id"),
     email: text().notNull(),
-    role: contributorRole().default("Editor").notNull(),
-    status: text().default("Pending").notNull(),
+    role: contributorRole().notNull().default("Editor"),
+    status: text().notNull().default("Pending"),
     invitedBy: uuid("invited_by").notNull(),
   },
   (table) => [
-    index("contributors_email_trgm_idx").using("gin", table.email.asc().nullsLast().op("gin_trgm_ops")),
-    uniqueIndex("contributors_ruleset_email_unique")
-      .using("btree", table.rulesetId.asc().nullsLast().op("text_ops"), table.email.asc().nullsLast().op("text_ops"))
-      .where(
-        sql`((user_id IS NULL) AND (status = ANY (ARRAY['Pending'::text, 'Active'::text])) AND (deleted_at IS NULL))`,
-      ),
     index("contributors_ruleset_status_idx").using(
       "btree",
-      table.rulesetId.asc().nullsLast().op("text_ops"),
-      table.status.asc().nullsLast().op("text_ops"),
+      table.rulesetId.asc().nullsLast(),
+      table.status.asc().nullsLast(),
     ),
-    uniqueIndex("contributors_ruleset_user_unique")
-      .using("btree", table.rulesetId.asc().nullsLast().op("uuid_ops"), table.userId.asc().nullsLast().op("uuid_ops"))
-      .where(sql`((status = ANY (ARRAY['Pending'::text, 'Active'::text])) AND (deleted_at IS NULL))`),
     index("contributors_user_status_idx").using(
       "btree",
-      table.userId.asc().nullsLast().op("text_ops"),
-      table.status.asc().nullsLast().op("text_ops"),
+      table.userId.asc().nullsLast(),
+      table.status.asc().nullsLast(),
     ),
-    foreignKey({
-      columns: [table.invitedBy],
-      foreignColumns: [usersInAccount.id],
-      name: "contributors_invited_by_fk",
-    }).onDelete("cascade"),
+    uniqueIndex("contributors_ruleset_user_unique")
+      .using("btree", table.rulesetId.asc().nullsLast(), table.userId.asc().nullsLast())
+      .where(sql`status IN ('Pending', 'Active') AND deleted_at IS NULL`),
+    uniqueIndex("contributors_ruleset_email_unique")
+      .using("btree", table.rulesetId.asc().nullsLast(), table.email.asc().nullsLast())
+      .where(sql`user_id IS NULL AND status IN ('Pending', 'Active') AND deleted_at IS NULL`),
     foreignKey({
       columns: [table.rulesetId],
       foreignColumns: [rulesetsInRules.id],
@@ -711,11 +676,13 @@ export const contributorsInRules = rules.table(
       foreignColumns: [usersInAccount.id],
       name: "contributors_user_id_fk",
     }).onDelete("cascade"),
+    foreignKey({
+      columns: [table.invitedBy],
+      foreignColumns: [usersInAccount.id],
+      name: "contributors_invited_by_fk",
+    }).onDelete("cascade"),
+    check("contributors_status_check", sql`status = ANY (ARRAY['Pending', 'Active', 'Rejected', 'Revoked'])`),
     check("contributors_email_or_user", sql`(user_id IS NOT NULL) OR (email IS NOT NULL)`),
-    check(
-      "contributors_status_check",
-      sql`status = ANY (ARRAY['Pending'::text, 'Active'::text, 'Rejected'::text, 'Revoked'::text])`,
-    ),
   ],
 );
 
@@ -724,20 +691,20 @@ export const customization = pgSchema("customization");
 export const emailVerificationsInAccount = account.table(
   "email_verifications",
   {
-    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
-    deletedAt: timestamp("deleted_at", { withTimezone: true, mode: "string" }),
+    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
     id: uuid()
       .default(sql`public.gen_random_uuid()`)
       .primaryKey()
       .notNull(),
     userId: uuid("user_id").notNull(),
     code: text().notNull(),
-    expiresAt: timestamp("expires_at", { withTimezone: true, mode: "string" }).notNull(),
+    expiresAt: timestamp("expires_at", { mode: "string", withTimezone: true }).notNull(),
   },
   (table) => [
-    index("email_verifications_expires_at_idx").using("btree", table.expiresAt.asc().nullsLast().op("timestamptz_ops")),
-    index("email_verifications_user_id").using("btree", table.userId.asc().nullsLast().op("uuid_ops")),
+    index("email_verifications_user_id").using("btree", table.userId.asc().nullsLast()),
+    index("email_verifications_expires_at_idx").using("btree", table.expiresAt.asc().nullsLast()),
     foreignKey({
       columns: [table.userId],
       foreignColumns: [usersInAccount.id],
@@ -900,6 +867,11 @@ export const entityFieldsInRules = rules.table(
         table.valueKey.asc().nullsLast().op("text_ops"),
       )
       .where(sql`multiple`),
+    index("entity_fields_field_idx").using(
+      "btree",
+      table.field.asc().nullsLast().op("text_ops"),
+      table.entityId.asc().nullsLast().op("uuid_ops"),
+    ),
     index("entity_fields_text_idx").using("hash", table.textValue.asc().nullsLast().op("text_ops")),
     foreignKey({
       columns: [table.entityId, table.entityType],
@@ -1023,26 +995,26 @@ export const entitySnapshotsInRules = rules.table(
     entityType: text("entity_type").notNull(),
     sourceEntityId: uuid("source_entity_id").notNull(),
     forkedEntityId: uuid("forked_entity_id").notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
+    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [
     index("entity_snapshots_ruleset_id_entity_type").using(
       "btree",
-      table.rulesetId.asc().nullsLast().op("uuid_ops"),
-      table.entityType.asc().nullsLast().op("uuid_ops"),
+      table.rulesetId.asc().nullsLast(),
+      table.entityType.asc().nullsLast(),
     ),
     index("entity_snapshots_ruleset_type_source").using(
       "btree",
-      table.rulesetId.asc().nullsLast().op("text_ops"),
-      table.entityType.asc().nullsLast().op("text_ops"),
-      table.sourceEntityId.asc().nullsLast().op("uuid_ops"),
+      table.rulesetId.asc().nullsLast(),
+      table.entityType.asc().nullsLast(),
+      table.sourceEntityId.asc().nullsLast(),
     ),
+    unique("entity_snapshots_ruleset_type_source_unique").on(table.rulesetId, table.entityType, table.sourceEntityId),
     foreignKey({
       columns: [table.rulesetId],
       foreignColumns: [rulesetsInRules.id],
       name: "entity_snapshots_ruleset_id_fkey",
     }).onDelete("cascade"),
-    unique("entity_snapshots_ruleset_type_source_unique").on(table.rulesetId, table.entityType, table.sourceEntityId),
   ],
 );
 
@@ -1053,17 +1025,17 @@ export const exportsInAccount = account.table(
       .default(sql`public.gen_random_uuid()`)
       .primaryKey()
       .notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
+    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
     userId: uuid("user_id").notNull(),
     type: text().notNull(),
     mimeType: text("mime_type").notNull(),
     fileName: text("file_name").notNull(),
     data: bytea("data").notNull(),
-    expiresAt: timestamp("expires_at", { withTimezone: true, mode: "string" }).notNull(),
+    expiresAt: timestamp("expires_at", { mode: "string", withTimezone: true }).notNull(),
   },
   (table) => [
-    index("exports_expires_at_idx").using("btree", table.expiresAt.asc().nullsLast().op("timestamptz_ops")),
-    index("exports_user_id_idx").using("btree", table.userId.asc().nullsLast().op("uuid_ops")),
+    index("exports_user_id_idx").using("btree", table.userId.asc().nullsLast()),
+    index("exports_expires_at_idx").using("btree", table.expiresAt.asc().nullsLast()),
     foreignKey({
       columns: [table.userId],
       foreignColumns: [usersInAccount.id],
@@ -1146,26 +1118,26 @@ export const itemTypesInCharacter = character.table(
 export const inventoryInCharacter = character.table(
   "inventory",
   {
-    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
-    deletedAt: timestamp("deleted_at", { withTimezone: true, mode: "string" }),
+    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
+    id: uuid()
+      .default(sql`public.gen_random_uuid()`)
+      .primaryKey()
+      .notNull(),
     characterId: uuid("character_id").notNull(),
     itemId: uuid("item_id").notNull(),
     quantity: integer().notNull(),
     totalCharges: integer("total_charges"),
     remainingCharges: integer("remaining_charges"),
     equipped: boolean().default(false).notNull(),
-    id: uuid()
-      .default(sql`public.gen_random_uuid()`)
-      .primaryKey()
-      .notNull(),
     itemType: text("item_type").notNull(),
     location: text(),
     groups: smallint().array().default([]).notNull(),
   },
   (table) => [
-    index("character_inventory_character_id").using("btree", table.characterId.asc().nullsLast().op("uuid_ops")),
-    index("character_inventory_item_id").using("btree", table.itemId.asc().nullsLast().op("uuid_ops")),
+    index("character_inventory_character_id").using("btree", table.characterId.asc().nullsLast()),
+    index("character_inventory_item_id").using("btree", table.itemId.asc().nullsLast()),
     foreignKey({
       columns: [table.characterId],
       foreignColumns: [charactersInCharacter.id],
@@ -1181,6 +1153,7 @@ export const inventoryInCharacter = character.table(
       foreignColumns: [itemTypesInCharacter.entityType],
       name: "inventory_item_type_fkey",
     }),
+    check("inventory_quantity_check", sql`quantity > 0`),
     check(
       "inventory_check",
       sql`(total_charges IS NULL) OR ((total_charges >= 0) AND (remaining_charges IS NOT NULL))`,
@@ -1189,7 +1162,6 @@ export const inventoryInCharacter = character.table(
       "inventory_check1",
       sql`(remaining_charges IS NULL) OR ((remaining_charges >= 0) AND (total_charges IS NOT NULL))`,
     ),
-    check("inventory_quantity_check", sql`quantity > 0`),
   ],
 );
 
@@ -1198,9 +1170,9 @@ export const role = pgEnum("role", ["Game Master", "Player Character"]);
 export const playersInCampaign = campaign.table(
   "players",
   {
-    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
-    deletedAt: timestamp("deleted_at", { withTimezone: true, mode: "string" }),
+    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
     id: uuid()
       .default(sql`public.gen_random_uuid()`)
       .primaryKey()
@@ -1210,31 +1182,27 @@ export const playersInCampaign = campaign.table(
     role: role().notNull(),
   },
   (table) => [
-    index("players_campaign_id_idx")
-      .using("btree", table.campaignId.asc().nullsLast().op("uuid_ops"))
-      .where(sql`(deleted_at IS NULL)`),
-    index("players_user_id_campaign_id_idx")
-      .using("btree", table.userId.asc().nullsLast().op("uuid_ops"), table.campaignId.asc().nullsLast().op("uuid_ops"))
-      .where(sql`(deleted_at IS NULL)`),
-    foreignKey({
-      columns: [table.campaignId],
-      foreignColumns: [campaignsInCampaign.id],
-      name: "players_campaign_id_fkey",
-    }).onDelete("cascade"),
+    index("players_campaign_id").using("btree", table.campaignId.asc().nullsLast()),
+    index("players_user_id").using("btree", table.userId.asc().nullsLast()),
     foreignKey({
       columns: [table.userId],
       foreignColumns: [usersInAccount.id],
       name: "players_user_id_fkey",
     }).onDelete("set null"),
+    foreignKey({
+      columns: [table.campaignId],
+      foreignColumns: [campaignsInCampaign.id],
+      name: "players_campaign_id_fkey",
+    }).onDelete("cascade"),
   ],
 );
 
 export const invitesInCampaign = campaign.table(
   "invites",
   {
-    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
-    deletedAt: timestamp("deleted_at", { withTimezone: true, mode: "string" }),
+    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
     id: uuid()
       .default(sql`public.gen_random_uuid()`)
       .primaryKey()
@@ -1245,15 +1213,19 @@ export const invitesInCampaign = campaign.table(
     status: text().default("Pending").notNull(),
   },
   (table) => [
-    index("invites_email_status_idx")
-      .using("btree", table.email.asc().nullsLast().op("text_ops"), table.status.asc().nullsLast().op("text_ops"))
-      .where(sql`(deleted_at IS NULL)`),
-    index("invites_player_id_idx")
-      .using("btree", table.playerId.asc().nullsLast().op("uuid_ops"))
-      .where(sql`(deleted_at IS NULL)`),
-    index("invites_user_id_status_idx")
-      .using("btree", table.userId.asc().nullsLast().op("text_ops"), table.status.asc().nullsLast().op("text_ops"))
-      .where(sql`(deleted_at IS NULL)`),
+    index("invites_email_status_idx").using("btree", table.email.asc().nullsLast(), table.status.asc().nullsLast()),
+    index("invites_player_id_status_idx").using(
+      "btree",
+      table.playerId.asc().nullsLast(),
+      table.status.asc().nullsLast(),
+    ),
+    index("invites_user_id_player_id_status_idx").using(
+      "btree",
+      table.userId.asc().nullsLast(),
+      table.playerId.asc().nullsLast(),
+      table.status.asc().nullsLast(),
+    ),
+    index("invites_user_id_status_idx").using("btree", table.userId.asc().nullsLast(), table.status.asc().nullsLast()),
     foreignKey({
       columns: [table.playerId],
       foreignColumns: [playersInCampaign.id],
@@ -1323,9 +1295,9 @@ export const linksInCharacter = character.table(
 export const modifiersInCustomization = customization.table(
   "modifiers",
   {
-    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
-    deletedAt: timestamp("deleted_at", { withTimezone: true, mode: "string" }),
+    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
     id: uuid()
       .default(sql`public.gen_random_uuid()`)
       .primaryKey()
@@ -1338,23 +1310,19 @@ export const modifiersInCustomization = customization.table(
     operator: text().notNull(),
   },
   (table) => [
-    index("modifiers_source_idx").using(
-      "btree",
-      table.sourceId.asc().nullsLast().op("text_ops"),
-      table.sourceType.asc().nullsLast().op("text_ops"),
-    ),
+    index("modifiers_source_idx").using("btree", table.sourceId.asc().nullsLast(), table.sourceType.asc().nullsLast()),
+    check("modifiers_value_type_check", sql`value_type = ANY (ARRAY['number'::text, 'string'::text, 'boolean'::text])`),
     check(
       "modifiers_operator_check",
       sql`operator = ANY (ARRAY['add'::text, 'subtract'::text, 'multiply'::text, 'divide'::text, 'set'::text])`,
     ),
-    check("modifiers_value_type_check", sql`value_type = ANY (ARRAY['number'::text, 'string'::text, 'boolean'::text])`),
   ],
 );
 
 export const notificationsInAccount = account.table(
   "notifications",
   {
-    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
+    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
     id: uuid()
       .default(sql`public.gen_random_uuid()`)
       .primaryKey()
@@ -1366,47 +1334,43 @@ export const notificationsInAccount = account.table(
     targetId: uuid("target_id").notNull(),
     targetTable: text("target_table").notNull(),
     data: json(),
-    readAt: timestamp("read_at", { withTimezone: true, mode: "string" }),
+    readAt: timestamp("read_at", { mode: "string", withTimezone: true }),
   },
   (table) => [
-    index("notifications_activity_id_idx").using("btree", table.activityId.asc().nullsLast().op("uuid_ops")),
-    index("notifications_created_at_idx").using("btree", table.createdAt.asc().nullsLast().op("timestamptz_ops")),
+    index("notifications_recipient_unread_idx")
+      .using("btree", table.recipientId.asc().nullsLast(), table.createdAt.desc().nullsLast())
+      .where(sql`read_at IS NULL`),
     index("notifications_recipient_id_created_at_idx").using(
       "btree",
-      table.recipientId.asc().nullsLast().op("timestamptz_ops"),
-      table.createdAt.desc().nullsLast().op("timestamptz_ops"),
+      table.recipientId.asc().nullsLast(),
+      table.createdAt.desc().nullsLast(),
     ),
-    index("notifications_recipient_unread_idx")
-      .using(
-        "btree",
-        table.recipientId.asc().nullsLast().op("timestamptz_ops"),
-        table.createdAt.desc().nullsLast().op("timestamptz_ops"),
-      )
-      .where(sql`(read_at IS NULL)`),
+    index("notifications_activity_id_idx").using("btree", table.activityId.asc().nullsLast()),
+    index("notifications_created_at_idx").using("btree", table.createdAt.asc().nullsLast()),
     foreignKey({
-      columns: [table.activityId],
-      foreignColumns: [activitiesInAccount.id],
-      name: "notifications_activity_id_fkey",
-    }).onDelete("set null"),
+      columns: [table.recipientId],
+      foreignColumns: [usersInAccount.id],
+      name: "notifications_recipient_id_fkey",
+    }).onDelete("cascade"),
     foreignKey({
       columns: [table.actorId],
       foreignColumns: [usersInAccount.id],
       name: "notifications_actor_id_fkey",
     }).onDelete("cascade"),
     foreignKey({
-      columns: [table.recipientId],
-      foreignColumns: [usersInAccount.id],
-      name: "notifications_recipient_id_fkey",
-    }).onDelete("cascade"),
+      columns: [table.activityId],
+      foreignColumns: [activitiesInAccount.id],
+      name: "notifications_activity_id_fkey",
+    }).onDelete("set null"),
   ],
 );
 
 export const oauthAccountsInAccount = account.table(
   "oauth_accounts",
   {
-    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
-    deletedAt: timestamp("deleted_at", { withTimezone: true, mode: "string" }),
+    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
     id: uuid()
       .default(sql`public.gen_random_uuid()`)
       .primaryKey()
@@ -1416,14 +1380,10 @@ export const oauthAccountsInAccount = account.table(
     providerAccountId: text("provider_account_id").notNull(),
   },
   (table) => [
+    index("oauth_accounts_user_id").using("btree", table.userId.asc().nullsLast()),
     uniqueIndex("oauth_accounts_provider_provider_account_id")
-      .using(
-        "btree",
-        table.provider.asc().nullsLast().op("text_ops"),
-        table.providerAccountId.asc().nullsLast().op("text_ops"),
-      )
+      .using("btree", table.provider.asc().nullsLast(), table.providerAccountId.asc().nullsLast())
       .where(sql`(deleted_at IS NULL)`),
-    index("oauth_accounts_user_id").using("btree", table.userId.asc().nullsLast().op("uuid_ops")),
     foreignKey({
       columns: [table.userId],
       foreignColumns: [usersInAccount.id],
@@ -1435,20 +1395,20 @@ export const oauthAccountsInAccount = account.table(
 export const passwordResetsInAccount = account.table(
   "password_resets",
   {
-    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
-    deletedAt: timestamp("deleted_at", { withTimezone: true, mode: "string" }),
+    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
     id: uuid()
       .default(sql`public.gen_random_uuid()`)
       .primaryKey()
       .notNull(),
     userId: uuid("user_id").notNull(),
     code: text().notNull(),
-    expiresAt: timestamp("expires_at", { withTimezone: true, mode: "string" }).notNull(),
+    expiresAt: timestamp("expires_at", { mode: "string", withTimezone: true }).notNull(),
   },
   (table) => [
-    index("password_resets_expires_at_idx").using("btree", table.expiresAt.asc().nullsLast().op("timestamptz_ops")),
-    index("password_resets_user_id").using("btree", table.userId.asc().nullsLast().op("uuid_ops")),
+    index("password_resets_user_id").using("btree", table.userId.asc().nullsLast()),
+    index("password_resets_expires_at_idx").using("btree", table.expiresAt.asc().nullsLast()),
     foreignKey({
       columns: [table.userId],
       foreignColumns: [usersInAccount.id],
@@ -1460,37 +1420,31 @@ export const passwordResetsInAccount = account.table(
 export const playerCharactersInCampaign = campaign.table(
   "player_characters",
   {
-    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
-    deletedAt: timestamp("deleted_at", { withTimezone: true, mode: "string" }),
+    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
     playerId: uuid("player_id").notNull(),
     characterId: uuid("character_id").notNull(),
     visibility: text().default("Private").notNull(),
   },
   (table) => [
-    uniqueIndex("player_characters_character_id_active_idx")
-      .using("btree", table.characterId.asc().nullsLast().op("uuid_ops"))
-      .where(sql`(deleted_at IS NULL)`),
-    index("player_characters_character_id_idx")
-      .using("btree", table.characterId.asc().nullsLast().op("uuid_ops"))
-      .where(sql`(deleted_at IS NULL)`),
     index("player_characters_player_id_character_id_idx").using(
       "btree",
-      table.playerId.asc().nullsLast().op("uuid_ops"),
-      table.characterId.asc().nullsLast().op("uuid_ops"),
+      table.playerId.asc().nullsLast(),
+      table.characterId.asc().nullsLast(),
     ),
-    index("player_characters_player_id_idx")
-      .using("btree", table.playerId.asc().nullsLast().op("uuid_ops"))
+    uniqueIndex("player_characters_character_id_active_idx")
+      .using("btree", table.characterId.asc().nullsLast())
       .where(sql`(deleted_at IS NULL)`),
-    foreignKey({
-      columns: [table.characterId],
-      foreignColumns: [charactersInCharacter.id],
-      name: "player_characters_character_id_fkey",
-    }).onDelete("cascade"),
     foreignKey({
       columns: [table.playerId],
       foreignColumns: [playersInCampaign.id],
       name: "player_characters_player_id_fkey",
+    }).onDelete("cascade"),
+    foreignKey({
+      columns: [table.characterId],
+      foreignColumns: [charactersInCharacter.id],
+      name: "player_characters_character_id_fkey",
     }).onDelete("cascade"),
     check(
       "player_characters_visibility_check",
@@ -1502,9 +1456,9 @@ export const playerCharactersInCampaign = campaign.table(
 export const requirementsInCustomization = customization.table(
   "requirements",
   {
-    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
-    deletedAt: timestamp("deleted_at", { withTimezone: true, mode: "string" }),
+    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
     id: uuid()
       .default(sql`public.gen_random_uuid()`)
       .primaryKey()
@@ -1519,25 +1473,20 @@ export const requirementsInCustomization = customization.table(
     chainingOperator: text("chaining_operator"),
   },
   (table) => [
-    index("requirements_entity_id_entity_type_idx")
-      .using(
-        "btree",
-        table.entityId.asc().nullsLast().op("uuid_ops"),
-        table.entityType.asc().nullsLast().op("uuid_ops"),
-      )
-      .where(sql`(deleted_at IS NULL)`),
+    index("requirements_entity_id_idx").using("btree", table.entityId.asc().nullsLast()),
+    index("requirements_entity_type_idx").using("btree", table.entityType.asc().nullsLast()),
     unique("requirements_entity_id_entity_type_level_key").on(table.entityId, table.entityType, table.level),
     check(
-      "requirements_check",
-      sql`(chaining_operator = ANY (ARRAY['and'::text, 'or'::text])) AND (((chaining_operator IS NULL) AND (operator IS NOT NULL) AND (value IS NOT NULL) AND (value_type IS NOT NULL) AND (target IS NOT NULL)) OR ((chaining_operator IS NOT NULL) AND (operator IS NULL) AND (value IS NULL) AND (value_type IS NULL) AND (target IS NULL)))`,
+      "requirements_value_type_check",
+      sql`value_type = ANY (ARRAY['number'::text, 'string'::text, 'boolean'::text])`,
     ),
     check(
       "requirements_operator_check",
       sql`operator = ANY (ARRAY['equal'::text, 'not_equal'::text, 'greater_than'::text, 'less_than'::text, 'greater_than_or_equal'::text, 'less_than_or_equal'::text, 'contains'::text, 'not_contains'::text, 'starts_with'::text, 'ends_with'::text, 'matches_regex'::text, 'not_matches_regex'::text, 'is_empty'::text, 'not_empty'::text])`,
     ),
     check(
-      "requirements_value_type_check",
-      sql`value_type = ANY (ARRAY['number'::text, 'string'::text, 'boolean'::text])`,
+      "requirements_check",
+      sql`(chaining_operator = ANY (ARRAY['and'::text, 'or'::text])) AND (((chaining_operator IS NULL) AND (operator IS NOT NULL) AND (value IS NOT NULL) AND (value_type IS NOT NULL) AND (target IS NOT NULL)) OR ((chaining_operator IS NOT NULL) AND (operator IS NULL) AND (value IS NULL) AND (value_type IS NULL) AND (target IS NULL)))`,
     ),
   ],
 );
@@ -1545,22 +1494,22 @@ export const requirementsInCustomization = customization.table(
 export const rulesetExtensionsInRules = rules.table(
   "ruleset_extensions",
   {
-    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
-    deletedAt: timestamp("deleted_at", { withTimezone: true, mode: "string" }),
+    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
     rulesetId: uuid("ruleset_id").notNull(),
     extensionId: uuid("extension_id").notNull(),
   },
   (table) => [
     foreignKey({
-      columns: [table.extensionId],
-      foreignColumns: [rulesetsInRules.id],
-      name: "ruleset_extensions_extension_id_fkey",
-    }).onDelete("cascade"),
-    foreignKey({
       columns: [table.rulesetId],
       foreignColumns: [rulesetsInRules.id],
       name: "ruleset_extensions_ruleset_id_fkey",
+    }).onDelete("cascade"),
+    foreignKey({
+      columns: [table.extensionId],
+      foreignColumns: [rulesetsInRules.id],
+      name: "ruleset_extensions_extension_id_fkey",
     }).onDelete("cascade"),
     primaryKey({ columns: [table.rulesetId, table.extensionId], name: "ruleset_extensions_pkey" }),
   ],
@@ -1675,21 +1624,19 @@ export const rulesetLinksInRules = rules.table(
 export const sessionsInAccount = account.table(
   "sessions",
   {
-    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
-    deletedAt: timestamp("deleted_at", { withTimezone: true, mode: "string" }),
+    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
     id: uuid()
       .default(sql`public.gen_random_uuid()`)
       .primaryKey()
       .notNull(),
     userId: uuid("user_id").notNull(),
-    expiresAt: timestamp("expires_at", { withTimezone: true, mode: "string" })
-      .default(sql`(now() + '7 days'::interval)`)
-      .notNull(),
+    expiresAt: timestamp("expires_at", { mode: "string", withTimezone: true }).notNull(),
   },
   (table) => [
-    index("sessions_expires_at_idx").using("btree", table.expiresAt.asc().nullsLast().op("timestamptz_ops")),
-    index("sessions_user_id").using("btree", table.userId.asc().nullsLast().op("uuid_ops")),
+    index("sessions_user_id").using("btree", table.userId.asc().nullsLast()),
+    index("sessions_expires_at_idx").using("btree", table.expiresAt.asc().nullsLast()),
     foreignKey({
       columns: [table.userId],
       foreignColumns: [usersInAccount.id],
@@ -1701,23 +1648,23 @@ export const sessionsInAccount = account.table(
 export const starredRulesetsInAccount = account.table(
   "starred_rulesets",
   {
-    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
+    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
     userId: uuid("user_id").notNull(),
     rulesetId: uuid("ruleset_id").notNull(),
-    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
-    deletedAt: timestamp("deleted_at", { withTimezone: true, mode: "string" }),
   },
   (table) => [
-    index("starred_rulesets_user_id").using("btree", table.userId.asc().nullsLast().op("uuid_ops")),
-    foreignKey({
-      columns: [table.rulesetId],
-      foreignColumns: [rulesetsInRules.id],
-      name: "starred_rulesets_ruleset_id_fkey",
-    }).onDelete("cascade"),
+    index("starred_rulesets_user_id").using("btree", table.userId.asc().nullsLast()),
     foreignKey({
       columns: [table.userId],
       foreignColumns: [usersInAccount.id],
       name: "starred_rulesets_user_id_fkey",
+    }).onDelete("cascade"),
+    foreignKey({
+      columns: [table.rulesetId],
+      foreignColumns: [rulesetsInRules.id],
+      name: "starred_rulesets_ruleset_id_fkey",
     }).onDelete("cascade"),
     primaryKey({ columns: [table.userId, table.rulesetId], name: "starred_rulesets_pkey" }),
   ],

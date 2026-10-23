@@ -1,13 +1,6 @@
 import { afterAll, describe, expect, test } from "bun:test";
 
 import { DND35_DMG_NAME } from "@/content/dnd3.5/rulesetNames.ts";
-import {
-  abilitiesInRules,
-  featsInRules,
-  klassLevelPowersInRules,
-  powersInRules,
-  skillsInRules,
-} from "@/drizzle/schema.ts";
 import type { LevelPlanRequest, StepOption, StepOptionGroup } from "@/engine/index.ts";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import { addClassLevels, addFeats, addPowers, addSkills } from "@/scripts/db/seeds/seedCharacter.ts";
@@ -17,6 +10,7 @@ import { db } from "@/server/database/index.ts";
 import { createTestPool } from "@/server/database/test.ts";
 import { toJson } from "@/server/errors/index.ts";
 import {
+  Abilities,
   Aptitudes,
   CharacterLevelAbilityIncreases,
   CharacterLevelFeats,
@@ -32,6 +26,7 @@ import {
   KlassLevels,
   KlassSkills,
   Modifiers,
+  Powers,
   PowersAptitudes,
   Properties,
   Races,
@@ -46,7 +41,7 @@ import { RulesetsService } from "@/server/services/rulesets/index.ts";
 import { PowersService } from "@/server/services/rulesets/powers/index.ts";
 import type { Session } from "@/shared/relations.ts";
 import { createTestCharacter } from "@/tests/support/characters.ts";
-import { insertRows, measure, runWhileLocked } from "@/tests/support/database.ts";
+import { measure, runWhileLocked } from "@/tests/support/database.ts";
 import { buildAs } from "@/tests/support/dnd3.5/characters.ts";
 import {
   addFighterLevels,
@@ -289,12 +284,12 @@ async function setupRuleset({ fork = false } = {}) {
     await Aptitudes.create(db, { name: "Feat Aptitude", rulesetId }),
     await Aptitudes.create(db, { name: "Power Aptitude", rulesetId }),
   ];
-  const abilities = await insertRows(
-    abilitiesInRules,
+  const abilities = await Abilities.createMany(
+    db,
     ["Charisma", "Dexterity", "Intelligence"].map((name) => ({ name, description: name, rulesetId })),
   );
-  const skillList = await insertRows(
-    skillsInRules,
+  const skillList = await Skills.createMany(
+    db,
     [
       ["Diplomacy", 0],
       ["Stealth", 1],
@@ -305,13 +300,13 @@ async function setupRuleset({ fork = false } = {}) {
       primaryAbilityId: abilities[ability as number].id,
     })),
   );
-  const featList = await insertRows(featsInRules, [
+  const featList = await Feats.createMany(db, [
     { name: "Power Attack", rulesetId, stackable: false },
     { name: "Weapon Focus", rulesetId, stackable: true },
     { name: "Dodge", rulesetId, stackable: false },
   ]);
-  const powerList = await insertRows(
-    powersInRules,
+  const powerList = await Powers.createMany(
+    db,
     ["Sneak Attack", "Rage", "Uncanny Dodge"].map((name) => ({ name, rulesetId })),
   );
   await FeatsAptitudes.createMany(
@@ -1199,7 +1194,7 @@ describe("LevelsService", () => {
   describe("power slots and the powers of a pool", () => {
     test("list a class level's granted powers, and leave them and those the character has out of the picks", async () => {
       const { session, character, klass, klassLevels, powerAptitude, powers } = await setupRuleset();
-      await insertRows(klassLevelPowersInRules, [
+      await KlassLevelPowers.createMany(db, [
         { klassLevelId: klassLevels[1].id, powerId: powers["Rage"].id, aptitudeId: powerAptitude.id },
       ]);
       await addCharacterLevel(character.id, klassLevels[0].id, {
@@ -1221,7 +1216,7 @@ describe("LevelsService", () => {
       const { session, parent, character, klass, klassLevels, powerAptitude, powers } = await setupRuleset();
       const [otherAptitude] = await Aptitudes.create(db, { name: "Other Power Aptitude", rulesetId: parent.id });
       await PowersAptitudes.createMany(db, [{ powerId: powers["Rage"].id, aptitudeId: otherAptitude.id }]);
-      await insertRows(klassLevelPowersInRules, [
+      await KlassLevelPowers.createMany(db, [
         { klassLevelId: klassLevels[1].id, powerId: powers["Rage"].id, aptitudeId: powerAptitude.id },
       ]);
       await addCharacterLevel(character.id, klassLevels[0].id);
@@ -1335,7 +1330,7 @@ describe("LevelsService", () => {
       const { session, ruleset, character, klass, klassLevels, powerAptitude, powers } = await setupRuleset({
         fork: true,
       });
-      await insertRows(klassLevelPowersInRules, [
+      await KlassLevelPowers.createMany(db, [
         { klassLevelId: klassLevels[0].id, powerId: powers["Rage"].id, aptitudeId: powerAptitude.id },
       ]);
       await addCharacterLevel(character.id, klassLevels[0].id, {

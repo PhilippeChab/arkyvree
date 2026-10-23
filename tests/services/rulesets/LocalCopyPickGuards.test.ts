@@ -1,11 +1,8 @@
 import { afterEach, expect, test } from "bun:test";
 
-import { and, eq } from "drizzle-orm";
-
-import { languagesInRules, racesInRules } from "@/drizzle/schema.ts";
 import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { CharacterInventory, CharacterLanguages, Characters } from "@/server/repositories/index.ts";
+import { CharacterInventory, CharacterLanguages, Characters, Languages, Races } from "@/server/repositories/index.ts";
 import { RulesetChangesService } from "@/server/services/rulesets/changes/index.ts";
 import { ItemsService } from "@/server/services/rulesets/items/index.ts";
 import { LanguagesService } from "@/server/services/rulesets/languages/index.ts";
@@ -22,9 +19,7 @@ async function setup() {
   const session = makeSession();
   const fork = await createSeededTestRuleset(session.userId);
   const baseId = fork.ancestorRulesetIds[0];
-  const human = (await db.query.racesInRules.findFirst({
-    where: and(eq(racesInRules.rulesetId, baseId), eq(racesInRules.name, "Human")),
-  }))!;
+  const human = (await Races.findOne(db, { name: "Human", rulesetId: baseId }))!;
   const [character] = await Characters.create(db, {
     userId: session.userId,
     rulesetId: fork.id,
@@ -65,7 +60,9 @@ test("a race picked before the fork copied it blocks deleting the copy, but not 
 
 test("a language picked before the fork copied it blocks deleting the copy", async () => {
   const { session, fork, baseId, character } = await setup();
-  const language = (await db.query.languagesInRules.findFirst({ where: eq(languagesInRules.rulesetId, baseId) }))!;
+  const {
+    items: [language],
+  } = await Languages.findPage(db, { rulesetId: baseId, childOnly: true }, { limit: 1, page: 1 });
   await CharacterLanguages.create(db, { characterId: character.id, languageId: language.id });
   const local = await LanguagesService.updateLanguage(session, fork.id, language.id, {
     name: language.name,

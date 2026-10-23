@@ -6,7 +6,7 @@ import { include } from "@/lib/mixins.ts";
 import { ResolvesCopies } from "@/server/repositories/concerns/ResolvesCopies.ts";
 import { type RulesetEntityFilters } from "@/server/repositories/concerns/ScopesToRuleset.ts";
 import RulesetEntityRepository from "@/server/repositories/RulesetEntityRepository.ts";
-import { listedAptitudes } from "@/server/repositories/stored/listedAptitudes.ts";
+import { findListedAptitudes } from "@/server/repositories/stored/findListedAptitudes.ts";
 import StoredEntities from "@/server/repositories/stored/StoredEntities.ts";
 import type { Feat, FeatWithAptitudes } from "@/shared/relations.ts";
 
@@ -16,6 +16,30 @@ import type { Feat, FeatWithAptitudes } from "@/shared/relations.ts";
  */
 class FeatsRepository extends include(RulesetEntityRepository, ResolvesCopies)<Feat> {
   protected override readonly entityType = "feats";
+
+  /**
+   * A ruleset's list of feats (those of `ids`, of a family if one is given), each with the pools it's in, in their
+   * order.
+   */
+  override async findPage(
+    db: Db,
+    where: RulesetEntityFilters<{ family?: { type: string; value: string }; ids?: string[] }>,
+    pagination: { limit: number; page: number },
+  ) {
+    const page = await super.findPage(db, where, pagination, [this.familyCondition(where.family)]);
+    const pools = await findListedAptitudes<FeatWithAptitudes["featsAptitudesInRules"][number]>(
+      db,
+      "feats_aptitudes",
+      page.items.map((feat) => feat.id),
+    );
+    return {
+      ...page,
+      items: page.items.map((feat): FeatWithAptitudes => ({
+        ...feat,
+        featsAptitudesInRules: pools.get(feat.id) ?? [],
+      })),
+    };
+  }
 
   /** The condition that a feat holds a family (`family`: the field that holds one, and its value). */
   private familyCondition(family: { type: string; value: string } | undefined): SQL | false {
@@ -54,7 +78,7 @@ class FeatsRepository extends include(RulesetEntityRepository, ResolvesCopies)<F
       .leftJoin(family, and(eq(family.entityId, entitiesInRules.id), eq(family.field, where.familyType)))
       .where(
         this.where([
-          StoredEntities.scope(this.entityType),
+          StoredEntities.buildScope(this.entityType),
           rulesetCondition,
           isNull(entitiesInRules.deletedAt),
           searchCondition,
@@ -107,7 +131,7 @@ class FeatsRepository extends include(RulesetEntityRepository, ResolvesCopies)<F
       .leftJoin(family, sql`family.id = ${entitiesInRules.id}`)
       .where(
         this.where([
-          StoredEntities.scope(this.entityType),
+          StoredEntities.buildScope(this.entityType),
           inArray(entitiesInRules.id, ids),
           isNull(entitiesInRules.deletedAt),
           eq(this.column("selectable"), true),
@@ -156,34 +180,6 @@ class FeatsRepository extends include(RulesetEntityRepository, ResolvesCopies)<F
       rows.map(({ id, name, description }) => ({ id, name, description })),
       pagination,
     );
-  }
-
-  /**
-   * A ruleset's list of feats (those of `ids`, of a family if one is given), each with the pools it's in, in their
-   * order.
-   */
-  override async findPage(
-    db: Db,
-    where: RulesetEntityFilters<{ family?: { type: string; value: string }; ids?: string[] }>,
-    pagination: { limit: number; page: number },
-  ) {
-    if (where.ids !== undefined && where.ids.length === 0) return this.paginated<FeatWithAptitudes>([], pagination);
-    const page = await super.findPage(db, where, pagination, [
-      where.ids !== undefined && inArray(entitiesInRules.id, where.ids),
-      this.familyCondition(where.family),
-    ]);
-    const pools = await listedAptitudes<FeatWithAptitudes["featsAptitudesInRules"][number]>(
-      db,
-      "feats_aptitudes",
-      page.items.map((feat) => feat.id),
-    );
-    return {
-      ...page,
-      items: page.items.map((feat): FeatWithAptitudes => ({
-        ...feat,
-        featsAptitudesInRules: pools.get(feat.id) ?? [],
-      })),
-    };
   }
 }
 

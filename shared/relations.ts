@@ -1,6 +1,15 @@
+/**
+ * The rows a ruleset's entities and a character's build are read as: today's shapes, which the generic tables
+ * (`rules.entities`, `entity_fields`, `entity_links`; `character.fields`, `links`, `advancements`, `advancement_picks`)
+ * are read into by what each module declares of them (its storage, `RulesetModule.storage`).
+ */
+
 import type {
+  advancementsInCharacter,
   campaignsInCampaign,
   charactersInCharacter,
+  entitiesInRules,
+  inventoryInCharacter,
   invitesInCampaign,
   modifiersInCustomization,
   playersInCampaign,
@@ -9,39 +18,24 @@ import type {
   sessionsInAccount,
   usersInAccount,
 } from "@/drizzle/schema.ts";
-import type { Alignment, BaseRules, Gender, ItemLocation, SizeType } from "@/shared/enums.ts";
 
-/**
- * The rows a ruleset's entities and a character's build are read as: today's shapes, which the generic tables
- * (`rules.entities`, `entity_fields`, `entity_links`; `character.fields`, `links`, `advancements`, `advancement_picks`)
- * are read into by what each module declares of them (its storage, `RulesetModule.storage`).
- */
+import type { Alignment, BaseRules, Gender, ItemLocation, SizeType } from "./enums.ts";
 
 /** What every ruleset entity's row holds: its scope, its name and its description, and its timestamps. */
-type EntityRow = {
-  campaignId: string | null;
-  createdAt: string;
-  deletedAt: string | null;
-  description: string | null;
-  id: string;
-  name: string;
-  rulesetId: string;
-  updatedAt: string;
-};
+type EntityRow = Pick<
+  typeof entitiesInRules.$inferSelect,
+  "campaignId" | "createdAt" | "deletedAt" | "description" | "id" | "rulesetId" | "updatedAt"
+> & { name: string };
+
+type FeatAptitude = LinkRow & { aptitudeId: string; featId: string };
 
 /** What a link's row holds: its timestamps (a link is never archived: `deletedAt` is always null). */
-type LinkRow = {
-  createdAt: string;
-  deletedAt: string | null;
-  updatedAt: string;
-};
+type LinkRow = Pick<EntityRow, "createdAt" | "deletedAt" | "updatedAt">;
 
 /** A pick's row, which the pick tables held: its level, and its timestamps. */
 type PickRow = LinkRow & {
   characterLevelId: string;
 };
-
-type FeatAptitude = LinkRow & { aptitudeId: string; featId: string };
 
 type PowerAptitude = LinkRow & { aptitudeId: string; level: number | null; powerId: string };
 
@@ -61,33 +55,17 @@ export type Character = typeof charactersInCharacter.$inferSelect & {
 /** A character's score in an ability. */
 export type CharacterAbility = LinkRow & { abilityId: string; characterId: string; score: number };
 /** An inventory entry: an item a character holds, where, in which weapon sets, and its charges. */
-export type CharacterInventory = {
-  characterId: string;
-  createdAt: string;
-  deletedAt: string | null;
-  equipped: boolean;
-  id: string;
-  itemId: string;
+export type CharacterInventory = Omit<typeof inventoryInCharacter.$inferSelect, "groups" | "itemType" | "location"> & {
   location: ItemLocation | null;
-  quantity: number;
-  remainingCharges: number | null;
-  totalCharges: number | null;
-  updatedAt: string;
   weaponSets: number[];
 };
 /** A language a character speaks. */
 export type CharacterLanguage = LinkRow & { characterId: string; languageId: string };
 /** A character's level: an advancement in a class level, with the hit points it rolled. */
-export type CharacterLevel = {
-  characterId: string;
-  createdAt: string;
-  deletedAt: string | null;
-  hp: number;
-  id: string;
-  klassLevelId: string;
-  position: number;
-  updatedAt: string;
-};
+export type CharacterLevel = Pick<
+  typeof advancementsInCharacter.$inferSelect,
+  "characterId" | "createdAt" | "deletedAt" | "id" | "position" | "updatedAt"
+> & { hp: number; klassLevelId: string };
 export type Feat = EntityRow & { generated: boolean; selectable: boolean; stackable: boolean };
 export type FeatWithAptitudes = Feat & {
   featsAptitudesInRules: (FeatAptitude & { aptitudesInRule: Aptitude })[];
@@ -102,13 +80,9 @@ export type Item = EntityRow & {
   weight: string | null;
 };
 export type Klass = EntityRow & { hd: number; kind: string; parentId: string | null };
-export type KlassLevel = {
-  createdAt: string;
-  deletedAt: string | null;
-  id: string;
+export type KlassLevel = Pick<EntityRow, "createdAt" | "deletedAt" | "id" | "updatedAt"> & {
   klassId: string;
   level: number;
-  updatedAt: string;
 };
 export type KlassLevelFeat = LinkRow & {
   aptitudeId: string;
@@ -140,15 +114,12 @@ export type PowerWithAptitudes = Power & {
  * An entity's or a ruleset's field, as its property was: its owner, its type (the field) and its value as text, a set
  * one row per value. `id` names it by its owner, its field and its value's key, which no other row shares.
  */
-export type Property = {
-  createdAt: string;
-  deletedAt: string | null;
+export type Property = LinkRow & {
   description: string | null;
   entityId: string;
   entityType: string;
   id: string;
   type: string;
-  updatedAt: string;
   value: string;
 };
 export type Race = EntityRow & { baseSpeed: number; kind: string; parentId: string | null; size: SizeType };

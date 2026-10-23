@@ -1,18 +1,16 @@
 import { expect, test } from "bun:test";
 
-import { featsInRules } from "@/drizzle/schema.ts";
 import { CustomizationCopies } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { Modifiers, Requirements } from "@/server/repositories/index.ts";
-import { insertRows } from "@/tests/support/database.ts";
+import { Feats, Modifiers, Requirements } from "@/server/repositories/index.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { makeSession } from "@/tests/support/users.ts";
 
 async function setup() {
   const session = makeSession();
   const ruleset = await createSeededTestRuleset(session.userId);
-  const [source, ...targets] = await insertRows(
-    featsInRules,
+  const [source, ...targets] = await Feats.createMany(
+    db,
     ["Source", "Target A", "Target B"].map((name) => ({ name: `Copy ${name}`, rulesetId: ruleset.id })),
   );
   const [modifier] = await Modifiers.createMany(db, [
