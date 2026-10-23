@@ -42,11 +42,11 @@ class ClassLevelsService extends include(Object, ListsSpells) {
           const entity = { entityId: klassLevel.id, entityType: "klass_levels" } as const;
 
           for (const feat of plan.feats ?? [])
-            await Joins.create<KlassLevelFeat>(tx, "klass_level_feats", { klassLevelId: klassLevel.id, ...feat });
+            await Joins.create<KlassLevelFeat>(tx, "klass_level_feats", { ...feat, klassLevelId: klassLevel.id });
           await Joins.createMany<KlassLevelSave>(
             tx,
             "klass_level_saves",
-            (plan.saves ?? []).map((save) => ({ klassLevelId: klassLevel.id, ...save })),
+            (plan.saves ?? []).map((save) => ({ ...save, klassLevelId: klassLevel.id })),
           );
 
           if (plan.writes) await writeEntityWrites(tx, scope, entity, plan.writes);

@@ -22,7 +22,7 @@ export async function writeLevelEdit(tx: Db, scope: RulesetScope, levelId: strin
     await Joins.createMany<KlassLevelFeat>(
       tx,
       "klass_level_feats",
-      plan.feats.map((feat) => ({ klassLevelId: levelId, ...feat })),
+      plan.feats.map((feat) => ({ ...feat, klassLevelId: levelId })),
     );
   }
 
@@ -31,7 +31,7 @@ export async function writeLevelEdit(tx: Db, scope: RulesetScope, levelId: strin
     await Joins.createMany<KlassLevelSave>(
       tx,
       "klass_level_saves",
-      plan.saves.map((save) => ({ klassLevelId: levelId, ...save })),
+      plan.saves.map((save) => ({ ...save, klassLevelId: levelId })),
     );
   }
 }

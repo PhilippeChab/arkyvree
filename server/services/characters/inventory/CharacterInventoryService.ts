@@ -32,7 +32,7 @@ class CharacterInventoryService {
         const request = { equipped, location, remainingCharges, totalCharges, weaponSets };
         // The item the view shows for the id sent (a copy's, when the ruleset copied it), refused when it shows none
         const fields = Engine.for(scope).character(character).planInventoryEntry({ itemId, request }, force);
-        const rows = await CharacterInventory.create(tx, { characterId, quantity, ...fields });
+        const rows = await CharacterInventory.create(tx, { ...fields, characterId, quantity });
 
         await Activities.create(tx, {
           userId: session.userId,
