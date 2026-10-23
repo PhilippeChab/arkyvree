@@ -70,7 +70,8 @@ function NameCell({ row, value }: NameCellProps) {
  */
 export function BlockCell({ column, value }: BlockCellProps) {
   const hidden = column.hideEmpty && !value;
-  const sx = column.noWrap ? NO_WRAP_SX : column.strong ? STRONG_SX : undefined;
+  const styles = [column.noWrap && NO_WRAP_SX, column.strong && STRONG_SX].filter((style) => !!style);
+  const sx = styles.length > 1 ? { ...styles[0], ...styles[1] } : styles[0];
   return (
     <DataCell
       slot={hidden ? "hidden" : column.slot}
@@ -89,7 +90,8 @@ export function BlockCell({ column, value }: BlockCellProps) {
  */
 export function BlockTable({ table }: BlockTableProps) {
   const columns = table.columns.map(({ key, label, width, align }) => ({ key, label, width, align }));
-  const [nameColumn, ...others] = table.columns;
+  const nameColumn = table.columns.find((column) => column.slot === "primary") ?? table.columns[0];
+  const others = table.columns.filter((column) => column !== nameColumn);
   const cellsOf = (row: SheetRow) =>
     others.map((column) => <BlockCell key={column.key} column={column} value={row.cells[column.key] ?? ""} />);
 

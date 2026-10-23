@@ -57,8 +57,8 @@ export function SubsheetView({ subsheet, linkable = false }: SubsheetViewProps) 
             <Stack spacing={2}>
               {stats.boxes && <StatBoxes boxes={stats.boxes} />}
               <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", columnGap: 2, rowGap: 1.5 }}>
-                {stats.columns.map((lines) => (
-                  <Stack key={lines.map(({ label }) => label).join()} spacing={1.5}>
+                {stats.columns.map(({ key, lines }) => (
+                  <Stack key={key} spacing={1.5}>
                     {lines.map(({ label, value }) => (
                       <StatField key={label} label={label} value={value} />
                     ))}

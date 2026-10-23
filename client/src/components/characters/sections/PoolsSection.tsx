@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 
 import {
+  BlankNote,
   CLICKABLE_ROW_SX,
   DataCell,
   DataRow,
@@ -142,7 +143,8 @@ function CountsTable({ counts }: CountsTableProps) {
  */
 function PoolEntryRow({ columns, entityType, entry, rulesetId }: PoolEntryRowProps) {
   const [open, setOpen] = useState(false);
-  const [nameColumn, ...others] = columns;
+  const nameColumn = columns.find((column) => column.slot === "primary") ?? columns[0];
+  const others = columns.filter((column) => column !== nameColumn);
   const name = entry.cells[nameColumn.key] ?? "";
   const link = entityPagePath(rulesetId, entityType, entry.id);
 
@@ -269,22 +271,29 @@ function PoolView({ columns, entityType, pool, rulesetId }: PoolViewProps) {
   );
 }
 
-/** A `pools` block: the counts its pools' tiers allow, then each pool (3.5's spells, per day and known). */
+/**
+ * A `pools` block: the counts its pools' tiers allow, then each pool (3.5's spells, per day and known); with neither,
+ * what it says of none.
+ */
 export function PoolsSection({ block, rulesetId }: PoolsSectionProps) {
   return (
     <SheetSection title={block.title}>
-      <Stack spacing={3}>
-        {block.counts && <CountsTable counts={block.counts} />}
-        {block.pools.map((pool) => (
-          <PoolView
-            key={pool.key}
-            columns={block.columns}
-            entityType={block.entityType}
-            pool={pool}
-            rulesetId={rulesetId}
-          />
-        ))}
-      </Stack>
+      {!block.counts && block.pools.length === 0 ? (
+        <BlankNote>{block.empty}</BlankNote>
+      ) : (
+        <Stack spacing={3}>
+          {block.counts && <CountsTable counts={block.counts} />}
+          {block.pools.map((pool) => (
+            <PoolView
+              key={pool.key}
+              columns={block.columns}
+              entityType={block.entityType}
+              pool={pool}
+              rulesetId={rulesetId}
+            />
+          ))}
+        </Stack>
+      )}
     </SheetSection>
   );
 }

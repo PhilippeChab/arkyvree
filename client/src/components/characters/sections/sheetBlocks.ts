@@ -26,11 +26,6 @@ export type SheetSubsheet = NonNullable<BlockOf<"entries">["entries"][number]["s
 /** A table a block holds: a `stats` block's panel's. */
 export type SheetTable = NonNullable<BlockOf<"stats">["panels"][number]["table"]>;
 
-/** The sheet's block of a kind under its key, if it has one. */
-export function blockOf<K extends SheetBlock["kind"]>(blocks: readonly SheetBlock[], kind: K, key: string) {
-  return blocks.find((block): block is BlockOf<K> => block.kind === kind && block.key === key);
-}
-
 /**
  * An entity's page in its ruleset, which a block's entry links to (`entityType`, its block's kind of entity): none
  * without a ruleset to read it in, an id, or a page of its kind.

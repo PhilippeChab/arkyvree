@@ -14,18 +14,9 @@ import { RULESET_LIMITS } from "@/engine/rulesets/dnd3.5/limits.ts";
 import { formatSigned } from "@/shared/text.ts";
 import { MIN_ABILITY_SCORE } from "@/vocabulary/dnd3.5/abilities.ts";
 
+import type CharacterResponse from "./CharacterResponse.ts";
 import type CombatSheet from "./CombatSheet.ts";
 import type SpellGroups from "./SpellGroups.ts";
-
-/** A bonded creature's sheet, as the API answers it, which its subsheet reads: its blocks, its combat, its feats. */
-interface BondedSheet {
-  blocks: SheetBlock[];
-  bondFeatId: string | null;
-  combat: { summary: SheetStat[] };
-  feats: Record<string, { name?: unknown; possessed?: unknown }>;
-  id: string;
-  name: string;
-}
 
 /** An ability as its box reads it: its names, its total and modifier, its base, and its other parts. */
 interface SheetAbility {
@@ -72,6 +63,17 @@ interface SheetSkill {
   total: number;
   weight?: number;
 }
+
+/**
+ * A bonded creature's sheet, as the API answers it, which its subsheet reads (its blocks, its combat, its feats), with
+ * the feat of its master's that bonds it.
+ */
+type BondedSheet = Pick<
+  ReturnType<typeof CharacterResponse.buildBonded>,
+  "blocks" | "combat" | "feats" | "id" | "name"
+> & {
+  bondFeatId: string | null;
+};
 
 /**
  * An attack's columns. On a phone, its weapon leads, its attack bonus at the line's end, and the rest under them
@@ -345,7 +347,7 @@ export default class SheetBlocks {
       bonded.blocks.find((block): block is ScoresBlock => block.kind === "scores" && block.key === key)?.scores ?? [];
     const combat = bonded.blocks.find((block) => block.kind === "stats" && block.key === "combat");
     const featNames = Object.values(bonded.feats)
-      .filter((feat) => typeof feat.possessed === "boolean" && feat.possessed && typeof feat.name === "string")
+      .filter((feat) => "possessed" in feat && feat.possessed === true)
       .map((feat) => String(feat.name))
       .sort();
     return {
@@ -357,8 +359,8 @@ export default class SheetBlocks {
         // A creature has one weapon set, its natural attacks', with no shield: its armor class
         ...(combat?.kind === "stats" && combat.panels[0]?.boxes && { boxes: combat.panels[0].boxes }),
         columns: [
-          bonded.combat.summary,
-          scoresOf("saves").map(({ label, value }) => ({ label, value: formatSigned(value) })),
+          { key: "summary", lines: bonded.combat.summary },
+          { key: "saves", lines: scoresOf("saves").map(({ label, value }) => ({ label, value: formatSigned(value) })) },
         ],
       },
       chips: { title: "Feats", names: featNames },

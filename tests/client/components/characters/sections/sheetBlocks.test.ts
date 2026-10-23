@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { blockOf, type SheetBlock, withBase } from "@/client/src/components/characters/sections/sheetBlocks.ts";
+import { entityPagePath, type SheetBlock, withBase } from "@/client/src/components/characters/sections/sheetBlocks.ts";
 
 /** A sheet's blocks: two abilities with their bases, saves without, and a combat line. */
 const BLOCKS: SheetBlock[] = [
@@ -41,10 +41,14 @@ const BLOCKS: SheetBlock[] = [
 ];
 
 describe("A sheet's blocks", () => {
-  test("finds a block by its kind and key", () => {
-    expect(blockOf(BLOCKS, "scores", "saves")?.title).toBe("Saving Throws");
-    expect(blockOf(BLOCKS, "stats", "combat")?.title).toBe("Combat");
-    expect(blockOf(BLOCKS, "stats", "saves")).toBeUndefined();
+  test("links an entry to its page in its ruleset, where its kind has one", () => {
+    expect(entityPagePath("r1", "feats", "f1")).toBe("/rulesets/r1/feats/f1/customization");
+    expect(entityPagePath("r1", "powers", "p1")).toBe("/rulesets/r1/powers/p1/customization");
+    // No ruleset to read it in, no id, or a kind without a page of its own
+    expect(entityPagePath(undefined, "feats", "f1")).toBeUndefined();
+    expect(entityPagePath("r1", "feats", null)).toBeUndefined();
+    expect(entityPagePath("r1", "klasses", "k1")).toBeUndefined();
+    expect(entityPagePath("r1", "nonsense", "x")).toBeUndefined();
   });
 
   test("moves a score's value by its base's change, its badge kept, until the server answers", () => {

@@ -123,7 +123,8 @@ export interface SheetScore {
 /**
  * A table on a sheet: its columns and rows, and what it says with no rows (`empty`). `minWidth`: the least width it
  * scrolls within from `sm` up; `fixed`: its columns sized as given, its number columns' headers smaller; `grouped`: the
- * rows of a family two or more share under a header that shows or hides them (`SheetRow.group`).
+ * rows of a family two or more share under a header that shows or hides them (`SheetRow.group`), a family's rows next
+ * to one another, and none with a caption or an alert. Its name is its `primary` column's.
  */
 export interface SheetTable {
   columns: SheetColumn[];
@@ -163,7 +164,7 @@ export interface Subsheet {
   id: string;
   name: string;
   scores: { scores: SheetScore[]; title: string };
-  stats: { boxes?: SheetStat[]; columns: SheetStat[][]; title: string };
+  stats: { boxes?: SheetStat[]; columns: { key: string; lines: SheetStat[] }[]; title: string };
 }
 
 /** A table block (`table`): a note above its table. 3.5's skills. */

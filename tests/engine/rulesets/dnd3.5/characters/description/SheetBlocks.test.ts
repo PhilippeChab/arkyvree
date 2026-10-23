@@ -68,19 +68,8 @@ function longsword(proficient: boolean): NonNullable<WeaponSetSlots["mainhand"]>
   };
 }
 
-/** A set holding `mainhand` and a shield named `shield`, its armor class 15. */
-function set(mainhand: WeaponSetSlots["mainhand"], shield: string[] = []): WeaponSetSlots {
-  return {
-    ac: { total: 15, touch: 11, flatfooted: 13 },
-    shield: { names: shield },
-    mainhand,
-    offhand: null,
-    twohanded: null,
-  };
-}
-
-/** The blocks of a sheet with only these feats, at levels in this order, and these spells. */
-function sheetWith(
+/** The parts of a sheet with only these feats, at levels in this order, and these spells. */
+function partsWith(
   levelFeats: ReturnType<typeof feat>[][],
   virtualFeats: ReturnType<typeof feat>[] = [],
   spells: Pick<Parameters<typeof SheetBlocks.describe>[0], "spellGroups" | "spellsPerDay"> = {
@@ -88,7 +77,7 @@ function sheetWith(
     spellsPerDay: { labels: [], levels: [], lists: [] },
   },
 ) {
-  return SheetBlocks.describe({
+  return {
     abilities: [],
     classes: { fighter: { levels: levelFeats.map((feats) => ({ feats })) } },
     combat: CombatSheet.describe({
@@ -115,7 +104,23 @@ function sheetWith(
     skills: {},
     virtualFeats,
     ...spells,
-  });
+  };
+}
+
+/** A set holding `mainhand` and a shield named `shield`, its armor class 15. */
+function set(mainhand: WeaponSetSlots["mainhand"], shield: string[] = []): WeaponSetSlots {
+  return {
+    ac: { total: 15, touch: 11, flatfooted: 13 },
+    shield: { names: shield },
+    mainhand,
+    offhand: null,
+    twohanded: null,
+  };
+}
+
+/** The blocks of a sheet with only these feats, at levels in this order, and these spells. */
+function sheetWith(...args: Parameters<typeof partsWith>) {
+  return SheetBlocks.describe(partsWith(...args));
 }
 
 describe("SheetBlocks", () => {
@@ -140,13 +145,90 @@ describe("SheetBlocks", () => {
     expect(plain).not.toHaveProperty("granted");
   });
 
+  test("counts no stackable feat held once", () => {
+    const feats = sheetWith([[feat("toughness", "Toughness", true)]]).find((block) => block.key === "feats");
+    expect(feats?.kind === "entries" && feats.entries[0]).not.toHaveProperty("count");
+  });
+
+  test("puts each bonded creature on the feat that bonds it, the last one where two share it, none on a granted feat", () => {
+    const bonding = feat("summon", "Summon Familiar");
+    const blocks = sheetWith([[bonding, feat("focus", "Weapon Focus")]], [feat("summon2", "Summon Familiar")]);
+    const creature = (id: string, bondFeatId: string | null) => ({
+      blocks: [],
+      bondFeatId,
+      combat: { summary: [{ label: "HP", value: "4" }] },
+      feats: {
+        alertness: { count: 1, name: "Alertness", possessed: true },
+        dodge: { count: 0, name: "Dodge", possessed: false },
+      },
+      id,
+      name: `Creature ${id}`,
+    });
+    const bonded = SheetBlocks.bond(blocks, [
+      creature("a", "summon"),
+      creature("b", "summon"),
+      creature("c", null),
+    ] as never);
+    const feats = bonded.find((block) => block.key === "feats");
+    if (feats?.kind !== "entries") throw new Error("no feats");
+    expect(feats.entries.map(({ name, subsheet }) => [name, subsheet?.id])).toEqual([
+      ["Summon Familiar", "b"],
+      ["Weapon Focus", undefined],
+    ]);
+    expect(feats.entries[0].subsheet).toMatchObject({
+      chips: { title: "Feats", names: ["Alertness"] },
+      stats: {
+        columns: [
+          { key: "summary", lines: [{ label: "HP", value: "4" }] },
+          { key: "saves", lines: [] },
+        ],
+      },
+    });
+    expect(feats.granted?.entries[0]).not.toHaveProperty("subsheet");
+    // Every other block as it was
+    expect(bonded.filter((block) => block.key !== "feats")).toEqual(blocks.filter((block) => block.key !== "feats"));
+  });
+
+  test("writes a skill's figures as its row shows them, a class skill marked on its name and its short name", () => {
+    const skills = {
+      jump: {
+        ability: 2,
+        family: null,
+        misc: 0,
+        name: "Jump",
+        shortName: "Jump",
+        total: 6,
+        rank: 4,
+        weight: 3,
+        innate: true,
+      },
+      lore: { ability: -1, family: "Knowledge", misc: 2, name: "Knowledge (lore)", shortName: "lore", total: 1 },
+    };
+    const blocks = SheetBlocks.describe({ ...partsWith([]), skills });
+    const table = blocks.find((block) => block.key === "skills");
+    if (table?.kind !== "table") throw new Error("no skills");
+    expect(table.table.rows).toEqual([
+      {
+        key: "Jump",
+        cells: { skill: "Jump *", rank: "4", ability: "+2", misc: "", weight: "-3", total: "+6" },
+        short: "Jump *",
+      },
+      {
+        key: "Knowledge (lore)",
+        cells: { skill: "Knowledge (lore)", rank: "0", ability: "-1", misc: "+2", weight: "", total: "+1" },
+        group: "Knowledge",
+        short: "lore",
+      },
+    ]);
+  });
+
   test("lists no spells for a character with neither spells nor slots", () => {
     expect(sheetWith([]).map(({ key }) => key)).toEqual(["abilities", "saves", "combat", "skills", "feats"]);
   });
 
   test("lists the spells by list and level, each level's uses, and the slots per day", () => {
     const spell = {
-      dc: null,
+      dc: 0,
       description: "",
       details: [],
       id: "light",
@@ -175,7 +257,7 @@ describe("SheetBlocks", () => {
     });
     expect(spells.pools[0].tiers[0]).toMatchObject({ label: "Level 0", note: "3/day" });
     expect(spells.pools[0].tiers[0].entries[0]).toMatchObject({
-      cells: { name: "Light", school: "Evocation", save: "", dc: "" },
+      cells: { name: "Light", school: "Evocation", save: "", dc: "0" },
       tags: [{ name: "Sun", tone: "secondary" }],
     });
   });
