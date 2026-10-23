@@ -9,6 +9,22 @@ type Combat = ReturnType<Parameters<typeof CombatSheet.describe>[0]["getCombat"]
 /** A weapon set's slots, as the sheet reads them. */
 type WeaponSetSlots = Combat["weaponsets"][string];
 
+/** A character's identity, as its sheet reads it: who it is, its beliefs, its experience, its notes. */
+const IDENTITY = {
+  background: { notes: "", privateNotes: "" },
+  beliefs: { alignment: "True Neutral", deity: "" },
+  meta: { xp: 0 },
+  physiology: {
+    age: 20,
+    description: "",
+    gender: "Male",
+    height: "",
+    languages: [],
+    race: { name: "Human" },
+    weight: "",
+  },
+};
+
 /** The combat block of a character with these weapon sets. */
 function combatBlock(weaponsets: Combat["weaponsets"]) {
   const combat = CombatSheet.describe({
@@ -31,18 +47,19 @@ function combatBlock(weaponsets: Combat["weaponsets"]) {
       weaponsets,
     }),
   });
-  const [, , block] = SheetBlocks.describe({
+  const block = SheetBlocks.describe({
     abilities: [],
     classes: {},
     combat,
     equipment: [],
+    identity: IDENTITY,
     saves: {},
     skills: {},
     spellGroups: [],
     spellsPerDay: { labels: [], levels: [], lists: [] },
     virtualFeats: [],
-  });
-  if (block.kind !== "stats") throw new Error("no combat block");
+  }).find(({ key }) => key === "combat");
+  if (block?.kind !== "stats") throw new Error("no combat block");
   return block;
 }
 
@@ -102,6 +119,7 @@ function partsWith(
       }),
     }),
     equipment: [],
+    identity: IDENTITY,
     saves: {},
     skills: {},
     virtualFeats,
@@ -226,6 +244,7 @@ describe("SheetBlocks", () => {
 
   test("lists no spells for a character with neither spells nor slots", () => {
     expect(sheetWith([]).map(({ key }) => key)).toEqual([
+      "identity",
       "abilities",
       "saves",
       "combat",

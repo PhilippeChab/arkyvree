@@ -209,7 +209,6 @@ describe("campaigns characters", () => {
     expect(sheet).toMatchObject({
       isPartial: true,
       shareToken: null,
-      blocks: [],
       classes: {},
       equipment: [],
       virtualFeats: [],
@@ -219,6 +218,15 @@ describe("campaigns characters", () => {
       skillBudget: { available: 0, spent: 0, total: 0 },
       validation: { valid: true, issues: [] },
     });
+    // Its identity's block, its race and physical traits alone: no other field, no languages, no notes
+    expect(sheet.blocks).toEqual([expect.objectContaining({ kind: "fields", key: "identity", fields: [] })]);
+    const [identity] = sheet.blocks;
+    expect(identity.kind === "fields" && identity.lines.map((line) => line.map(({ key }) => key))).toEqual([
+      ["race"],
+      ["age", "gender", "height", "weight"],
+    ]);
+    expect(identity).not.toHaveProperty("notes");
+    expect(identity).not.toHaveProperty("languages");
     const text = JSON.stringify(sheet);
     for (const hidden of [...Object.values(SECRETS), "Chaotic Good", "Draconic", "Fighter", shareToken])
       expect(text).not.toContain(hidden);
@@ -266,15 +274,17 @@ describe("campaigns characters", () => {
     );
     const { campaignId, gm, contributor, player } = await linkWithMembers(characterId, "Public");
 
-    // The notes, and whether the sheet shows their field
+    // The notes, whether the sheet shows their field, and its identity's block's (none for who doesn't read them)
     const privateNotesOf = async (client: Client) => {
       const sheet = await sheetOf(client, campaignId, characterId);
-      return [sheet.identity.background?.privateNotes, sheet.showPrivateNotes];
+      const identity = sheet.blocks.find((block) => block.key === "identity");
+      const blockNotes = identity?.kind === "fields" ? identity.notes?.privateNotes : "no block";
+      return [sheet.identity.background?.privateNotes, sheet.showPrivateNotes, blockNotes];
     };
-    expect(await privateNotesOf(api)).toEqual([SECRETS.privateNotes, true]);
-    expect(await privateNotesOf(contributor.api)).toEqual([SECRETS.privateNotes, true]);
-    expect(await privateNotesOf(gm.api)).toEqual([SECRETS.privateNotes, true]);
-    expect(await privateNotesOf(player.api)).toEqual(["", false]);
+    expect(await privateNotesOf(api)).toEqual([SECRETS.privateNotes, true, SECRETS.privateNotes]);
+    expect(await privateNotesOf(contributor.api)).toEqual([SECRETS.privateNotes, true, SECRETS.privateNotes]);
+    expect(await privateNotesOf(gm.api)).toEqual([SECRETS.privateNotes, true, SECRETS.privateNotes]);
+    expect(await privateNotesOf(player.api)).toEqual(["", false, undefined]);
   });
 
   test("shows a bonded creature's private notes to whoever reads its master's", async () => {

@@ -52,7 +52,7 @@ export interface LanguagesDescription {
 /**
  * What a sheet, as the API answers it, holds in every ruleset's: its blocks, in its module's order (`SheetBlock`), and
  * its character's private notes in its identity's background, where the characters part shows them, blanks them or
- * leaves them out as its reader reads them.
+ * leaves them out as its reader reads them (a `fields` block's, it leaves out for any reader who doesn't read them).
  */
 export interface NotedSheet {
   blocks: SheetBlock[];

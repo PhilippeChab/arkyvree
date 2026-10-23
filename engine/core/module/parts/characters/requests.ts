@@ -9,6 +9,12 @@ import type { Item } from "@/shared/relations.ts";
 
 import type { InventoryEntryPlan } from "./plans.ts";
 
+/** A character's edit, as its sheet sends it: its fields by their keys, and its languages, each when it sends them. */
+export interface CharacterEditRequest {
+  fields?: FieldsRequest;
+  languageIds?: string[];
+}
+
 /** A new character, as its form sends it: its race, and its ability scores. */
 export interface NewCharacterRequest {
   abilities: AbilitiesRequest;
@@ -39,6 +45,12 @@ export interface SheetRequest {
 
 /** A form's ability scores, by ability id. */
 export type AbilitiesRequest = Record<string, number>;
+
+/**
+ * A character's fields edit, as its sheet's `fields` block sends it: each field's value by its key (null: cleared, or
+ * left as it is where it can't be).
+ */
+export type FieldsRequest = Record<string, number | string | null>;
 
 /**
  * What an inventory entry's add (a new entry of the ruleset's item `itemId`) or edit (an `entry` of the character's)

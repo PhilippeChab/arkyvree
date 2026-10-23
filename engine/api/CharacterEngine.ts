@@ -60,6 +60,14 @@ export default class CharacterEngine extends CharacterHandle {
   }
 
   /**
+   * What an edit of the character writes: its fields' columns, by the keys its sheet's fields block gives them, and its
+   * languages when it sends them, each checked.
+   */
+  planEdit(...args: Args<"planEdit">) {
+    return this.module.characters.planEdit(this.view, this.input, ...args);
+  }
+
+  /**
    * What an inventory entry's add or edit stores: its item (an added one by the view's id), its placement and charges,
    * refused when the item isn't the ruleset's, its charges disagree, or it can't be equipped where the request asks.
    */

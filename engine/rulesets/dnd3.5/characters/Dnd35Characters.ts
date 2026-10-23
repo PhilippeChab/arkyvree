@@ -1,9 +1,15 @@
-import { type CharacterInput, CharactersPart, type RacePickQuery } from "@/engine/core/module/index.ts";
+import {
+  type CharacterInput,
+  CharactersPart,
+  type FieldsRequest,
+  type RacePickQuery,
+} from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import type { Dnd35Descriptions } from "@/engine/rulesets/dnd3.5/descriptions.ts";
 import RacePicker from "@/engine/rulesets/dnd3.5/pickers/RacePicker.ts";
 
 import CharacterDescription from "./description/CharacterDescription.ts";
+import IdentityFields from "./IdentityFields.ts";
 import InventoryEntries from "./inventory/InventoryEntries.ts";
 import SpokenLanguages from "./languages/SpokenLanguages.ts";
 import NewCharacters from "./NewCharacters.ts";
@@ -42,6 +48,10 @@ export default class Dnd35Characters extends CharactersPart<Dnd35Descriptions> {
   }
 
   /** Where an inventory entry's add or edit holds its item: the item equipped where asked, what equipping it checks. */
+  protected override planFields(_view: RulesetView, request: FieldsRequest) {
+    return IdentityFields.plan(request);
+  }
+
   protected override planPlacement(...args: Parameters<typeof InventoryEntries.planPlacement>) {
     return InventoryEntries.planPlacement(...args);
   }
@@ -64,8 +74,9 @@ export default class Dnd35Characters extends CharactersPart<Dnd35Descriptions> {
     return CharacterSheet.describeSheet(...args);
   }
 
-  /** The race picker of a new character: the races it offers, and whether each is eligible. */
   override openRacePicker(view: RulesetView, query: RacePickQuery) {
     return new RacePicker(view, query);
   }
+
+  /** The race picker of a new character: the races it offers, and whether each is eligible. */
 }

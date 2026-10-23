@@ -202,6 +202,8 @@ export default new Hono()
       "json",
       z.object({
         name: z.string().min(1).max(MAX_CHARACTER_NAME_LENGTH).optional(),
+        // Its fields, by the keys its sheet's fields block gives them, which its ruleset reads (`planFields`)
+        fields: z.record(z.string(), z.union([z.string(), z.number(), z.null()])).optional(),
         // An age, a height or a weight is cleared with null
         age: z.number().int().min(1).nullable().optional(),
         gender: z.enum(GENDER_OPTIONS).optional(),

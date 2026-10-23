@@ -124,6 +124,7 @@ export default class CharacterResponse {
     const saves = CharacterResponse.savesOf(built);
     const classes = built.components.classes.getCharacterClasses();
     const equipment = CharacterResponse.equipmentOf(built);
+    const identity = CharacterResponse.identityWithPrivateNotes(built);
     const skills = CharacterResponse.skillsOf(built);
     const virtualFeats = built.getVirtualFeats();
     const spellGroups = SpellGroups.describe(built);
@@ -143,7 +144,7 @@ export default class CharacterResponse {
       deletedAt: record.deletedAt,
       updatedAt: record.updatedAt,
       shareToken: record.shareToken ?? null,
-      identity: CharacterResponse.identityWithPrivateNotes(built),
+      identity,
       skillBudget: built.components.skills.getSkillBudget(),
       abilities,
       combat,
@@ -163,6 +164,7 @@ export default class CharacterResponse {
         classes,
         combat,
         equipment,
+        identity,
         saves,
         skills,
         spellGroups,

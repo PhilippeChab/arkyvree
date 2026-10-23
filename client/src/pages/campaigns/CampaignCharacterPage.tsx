@@ -76,7 +76,6 @@ export default function CampaignCharacterPage() {
             readOnly
             partial={data.isPartial}
             equipmentMode="readonly"
-            showPrivateNotes={data.showPrivateNotes}
           />
         </Stack>
       </Container>

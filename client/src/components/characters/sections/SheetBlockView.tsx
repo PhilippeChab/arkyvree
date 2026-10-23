@@ -30,6 +30,9 @@ export function SheetBlockView({
   subsheetsLinkable,
 }: SheetBlockViewProps) {
   switch (block.kind) {
+    // The identity's fields, which open the sheet, above its blocks
+    case "fields":
+      return null;
     case "entries":
       return <EntriesSection block={block} rulesetId={rulesetId} subsheetsLinkable={subsheetsLinkable} />;
     case "inventory": {

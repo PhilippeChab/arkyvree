@@ -1,5 +1,6 @@
 import type { CharacterInput } from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
+import IdentityFields from "@/engine/rulesets/dnd3.5/characters/IdentityFields.ts";
 import BondedPaths from "@/engine/rulesets/dnd3.5/model/bonded/BondedPaths.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import Dnd35CharacterBuilder from "@/engine/rulesets/dnd3.5/model/Dnd35CharacterBuilder.ts";
@@ -115,7 +116,7 @@ export default class CharacterDescription {
       requirements: {},
       modifiers: {},
       validation: { valid: true, issues: [] },
-      blocks: [],
+      blocks: [IdentityFields.describe(response.identity, true)],
       bonded: CharacterDescription.noBonded(),
     } satisfies Record<keyof typeof response | "bonded", unknown>;
   }

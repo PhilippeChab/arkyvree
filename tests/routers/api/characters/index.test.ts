@@ -242,6 +242,7 @@ describe("characters", () => {
 
       const { blocks, combat } = await expectOk(character.$get({ param: { id } }));
       expect(blocks.map(({ kind, key, title }) => [kind, key, title])).toEqual([
+        ["fields", "identity", "Personal Details"],
         ["scores", "abilities", "Ability Scores"],
         ["scores", "saves", "Saving Throws"],
         ["stats", "combat", "Combat"],
@@ -249,7 +250,7 @@ describe("characters", () => {
         ["entries", "feats", "Feats & Special Abilities"],
         ["inventory", "equipment", "Equipment & Inventory"],
       ]);
-      const [abilities, saves, stats] = blocks;
+      const [, abilities, saves, stats] = blocks;
       // An ability's total over its modifier, its base its owner sets within the rules' bounds
       expect(abilities).toMatchObject({ kind: "scores", edit: { lower: { confirm: "Decrease Ability Score" } } });
       expect(abilities.kind === "scores" && abilities.scores[0]).toEqual({
@@ -289,6 +290,7 @@ describe("characters", () => {
       const { masterId } = await createWizardWithFamiliar();
       const master = await expectOk(character.$get({ param: { id: masterId } }));
       expect(master.bonded.familiar?.blocks.map(({ key }) => key)).toEqual([
+        "identity",
         "abilities",
         "saves",
         "combat",
@@ -422,6 +424,67 @@ describe("characters", () => {
     });
   });
 
+  describe("fields", () => {
+    test("describes the identity's fields, each by the key its edit sends it, its value as the character has it", async () => {
+      const { id } = await postCharacter({ notes: "Public notes" });
+      const { blocks } = await expectOk(character.$get({ param: { id } }));
+      const identity = blocks.find((block) => block.key === "identity");
+      if (identity?.kind !== "fields") throw new Error("no identity");
+      expect(identity.lines.map((line) => line.map(({ key, kind }) => `${key}:${kind}`))).toEqual([
+        ["race:text", "alignment:select", "experience:number", "deity:text"],
+        ["age:number", "gender:select", "height:text", "weight:text"],
+      ]);
+      expect(identity.lines[0][0]).toMatchObject({ value: "Human", fixed: true });
+      expect(identity.fields.map(({ key }) => key)).toEqual(["description"]);
+      expect(identity.notes).toEqual({ notes: "Public notes", privateNotes: "" });
+      expect(identity.languages?.label).toBe("Languages");
+    });
+
+    test("saves the fields an edit sends by their keys, each as its ruleset writes it", async () => {
+      const { id } = await postCharacter();
+      const saved = await expectOk(
+        character.$put({
+          param: { id },
+          json: {
+            fields: {
+              alignment: "Chaotic Good",
+              experience: 1200,
+              deity: "Pelor",
+              age: null,
+              gender: null,
+              height: "",
+              weight: "75",
+              description: "Tall",
+            },
+          },
+        }),
+      );
+      // An age cleared, an empty height cleared, an unset gender left as it is, experience its xp
+      expect(saved).toMatchObject({
+        alignment: "Chaotic Good",
+        xp: 1200,
+        deity: "Pelor",
+        age: null,
+        gender: "Male",
+        height: null,
+        weight: "75",
+        description: "Tall",
+      });
+    });
+
+    test("refuses a field the identity hasn't, its race, or a value its field doesn't take", async () => {
+      const { id } = await postCharacter();
+      const refused: Record<string, number | string>[] = [
+        { nonsense: "x" },
+        { race: "Elf" },
+        { alignment: "Evil-ish" },
+        { experience: -1 },
+        { age: 0 },
+      ];
+      for (const fields of refused) await expectStatus(character.$put({ param: { id }, json: { fields } }), 400);
+    });
+  });
+
   describe("private notes", () => {
     test("saves a character's private notes, which its editors read and no one else", async () => {
       const { id } = await postCharacter({ notes: "Public notes" });
@@ -468,6 +531,9 @@ describe("characters", () => {
       const sheet = await expectOk(shared.$get({ param: { shareToken: shareToken! } }));
       expect(sheet.id).toBe(id);
       expect(sheet.identity.background).not.toHaveProperty("privateNotes");
+      // Its identity's block holds its notes, its private ones not
+      const identity = sheet.blocks.find((block) => block.key === "identity");
+      expect(identity?.kind === "fields" && identity.notes).toEqual({ notes: "" });
       expect(JSON.stringify(sheet)).not.toContain(PRIVATE_NOTES);
 
       const pdf = await shared.pdf.$get({ param: { shareToken: shareToken! } });
