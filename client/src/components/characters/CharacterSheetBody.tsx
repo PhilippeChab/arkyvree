@@ -2,7 +2,13 @@ import { Stack } from "@mui/material";
 
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
 
-import { type CharacterData, DiagnosticsSection, FieldsSection, getSections, openingBlock } from "./sections/index.ts";
+import {
+  type CharacterData,
+  DiagnosticsSection,
+  FieldsSection,
+  openingBlock,
+  SheetSections,
+} from "./sections/index.ts";
 
 interface CharacterSheetBodyProps {
   /** The bonded creatures' names link to their sheets: the owner's view. */
@@ -23,8 +29,8 @@ interface CharacterSheetBodyProps {
 }
 
 /**
- * A character's sheet, under its header's classes: its identity, then its base rules' sections, then its diagnostics
- * (a partial sheet shows its identity alone).
+ * A character's sheet, under its header's line: its identity, then the sections its ruleset describes, then its
+ * diagnostics (a partial sheet shows its identity alone).
  */
 export function CharacterSheetBody({
   character,
@@ -39,7 +45,6 @@ export function CharacterSheetBody({
   diagnostics,
   portraitUrl,
 }: CharacterSheetBodyProps) {
-  const { SheetSections } = getSections(character.baseRules);
   // Its own fields, its identity: what every sheet opens with, a partly seen one's alone
   const identity = openingBlock(character.blocks);
 
