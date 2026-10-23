@@ -174,4 +174,32 @@ describe("wording rules", () => {
       "entity-type-labels client/src/template.tsx",
     ]);
   });
+
+  test("a character's screens write none of a ruleset's nouns: what they show of its game, the engine describes", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/components/characters/sections/text.tsx":
+            "export const t = <Typography>Spells per Day</Typography>;\n",
+          "client/src/components/characters/sections/label.tsx": 'export const l = <Button label="Add Feat" />;\n',
+          "client/src/pages/characters/details/template.ts": "export const t = `Edit ${name} Class`;\n",
+          "client/src/pages/share/word.ts": 'export const w = "Alignment";\n',
+          // Its comments and its imports may name them; another screen isn't one the engine describes yet
+          "client/src/components/characters/sections/comment.tsx":
+            '/** A block\'s title, as its ruleset words it ("Feats") */\nexport const c = <Typography>{block.title}</Typography>;\n',
+          "client/src/pages/characters/details/imported.ts": 'export { x } from "./Spells.ts";\n',
+          "client/src/pages/characters/details/Spells.ts": "export const x = 1;\n",
+          "client/src/pages/rulesets/page.tsx": "export const p = <Typography>Spells</Typography>;\n",
+          // A generic word is the app's
+          "client/src/pages/characters/details/level.tsx": "export const l = <Typography>Add Level</Typography>;\n",
+        },
+        ["described-words"],
+      ),
+    ).toEqual([
+      "described-words client/src/components/characters/sections/label.tsx",
+      "described-words client/src/components/characters/sections/text.tsx",
+      "described-words client/src/pages/characters/details/template.ts",
+      "described-words client/src/pages/share/word.ts",
+    ]);
+  });
 });
