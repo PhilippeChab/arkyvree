@@ -34,7 +34,7 @@ const NEW_FIELDS = { age: 25, alignment: "True Neutral", gender: "Male", height:
  * A new character's request split: its fields (3.5's form's, by their keys: a True Neutral man of 25, 180 tall and 80
  * heavy, with no experience, unless given), sent under `fields`, and the rest as it is.
  */
-export function splitFields<T extends NewFields & { fields?: FieldsRequest }>(values: T) {
+function splitFields<T extends NewFields & { fields?: FieldsRequest }>(values: T) {
   const { age, alignment, deity, description, fields, gender, height, weight, xp, ...rest } = values;
   const given = { age, alignment, deity, description, gender, height, weight, xp };
   return {

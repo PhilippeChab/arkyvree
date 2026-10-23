@@ -30,12 +30,6 @@ export interface PlacementQuery {
   weaponSets: number[];
 }
 
-/** The race picker's query: what a new character's form says so far. */
-export interface RacePickQuery {
-  alignment?: string;
-  gender?: string;
-}
-
 /** A printed sheet's request: whether it adds the diagnostics page, and the character's portrait. */
 export interface SheetRequest {
   diagnostics: boolean;
@@ -52,8 +46,8 @@ export interface StartRequest {
 export type AbilitiesRequest = Record<string, number>;
 
 /**
- * A character's fields edit, as its sheet's `fields` block sends it: each field's value by its key (null: cleared, or
- * left as it is where it can't be).
+ * A character's fields, by their keys: a `fields` block's edit (null: cleared, or left as it is where it can't be), or
+ * a new character's form's (null: none).
  */
 export type FieldsRequest = Record<string, number | string | null>;
 
@@ -81,3 +75,9 @@ export type PlacementChange =
 
 /** What a viewer reads of a character's private notes: all of it, a blank, or no field at all. */
 export type PrivateNotes = "blank" | "omit" | "show";
+
+/**
+ * The race picker's query: what a new character's form says so far, in the fields that narrow its races (`racePick`),
+ * by their keys.
+ */
+export type RacePickQuery = Record<string, string | undefined>;

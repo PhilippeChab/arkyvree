@@ -4,7 +4,8 @@ import { ALIGNMENT_OPTIONS, GENDER_OPTIONS } from "@/shared/enums.ts";
 /**
  * A new 3.5 character's form: its name and experience, its ruleset and race, its alignment and gender (which narrow the
  * races it can pick, and are required); its ability scores; its physical details; and its deity, description and notes,
- * all optional. Its fields are the identity's, keyed as its create sends them (`NewCharacters.planFields`).
+ * all optional. Its fields are the identity's columns, each keyed as its create sends it (`NewCharacters.planFields`):
+ * its experience by its column's name, `xp`, which the identity's edit keys `experience`.
  */
 export const CHARACTER_FORM: CharacterForm = {
   sections: [

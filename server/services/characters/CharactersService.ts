@@ -2,7 +2,7 @@ import { getTableName } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
 import { charactersInCharacter } from "@/drizzle/schema.ts";
-import { Engine, type FieldsRequest, type LanguagesPlan } from "@/engine/index.ts";
+import { Engine, type FieldsRequest, type LanguagesPlan, type RacePickQuery } from "@/engine/index.ts";
 import { include } from "@/lib/mixins.ts";
 import { type RulesetScope, withRulesetScope, withRulesetScopes } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
@@ -107,10 +107,7 @@ class CharactersService extends include(Object, Archives, Imports) {
 
   async getAvailableRaces(
     rulesetId: string,
-    formData: {
-      alignment?: string;
-      gender?: string;
-    },
+    formData: RacePickQuery,
     where: { search?: string },
     pagination: { limit: number; page: number },
   ) {

@@ -24,6 +24,9 @@ const abilityScore = z.number().int();
 
 const campaignIdParam = z.object({ campaignId: z.string().uuid() });
 
+/** A character's fields, by their keys, which its ruleset reads and checks: a text, a number, or none. */
+const characterFields = z.record(z.string(), z.union([z.string(), z.number(), z.null()]));
+
 export default new Hono()
   .use(sessionMiddleware)
   .route("/", contributors)
@@ -69,21 +72,12 @@ export default new Hono()
     "/available-races",
     validate(
       "query",
-      z.object({
-        rulesetId: z.string().uuid(),
-        alignment: z.string().optional(),
-        gender: z.string().optional(),
-        limit,
-        page,
-        search: z.string().optional(),
-      }),
+      // Past its ruleset and its page, what the form's fields that narrow its races hold, by their keys (`racePick`)
+      z.object({ rulesetId: z.string().uuid(), limit, page, search: z.string().optional() }).catchall(z.string()),
     ),
     async (c) => {
-      const { rulesetId, alignment, gender, limit, page, search } = c.req.valid("query");
-      return c.json(
-        await CharactersService.getAvailableRaces(rulesetId, { alignment, gender }, { search }, { limit, page }),
-        200,
-      );
+      const { rulesetId, limit, page, search, ...picks } = c.req.valid("query");
+      return c.json(await CharactersService.getAvailableRaces(rulesetId, picks, { search }, { limit, page }), 200);
     },
   )
   // How a new character of a ruleset sets its ability scores
@@ -137,7 +131,7 @@ export default new Hono()
         name: z.string().min(1).max(MAX_CHARACTER_NAME_LENGTH),
         abilities: z.record(z.string().uuid(), abilityScore),
         // Its fields, by the keys its rules' form gives them, which its ruleset reads and checks (`planCreate`)
-        fields: z.record(z.string(), z.union([z.string(), z.number(), z.null()])),
+        fields: characterFields,
         notes: z.string().optional(),
       }),
     ),
@@ -190,7 +184,7 @@ export default new Hono()
       z.object({
         name: z.string().min(1).max(MAX_CHARACTER_NAME_LENGTH).optional(),
         // Its fields, by the keys its sheet's fields block gives them, which its ruleset reads and checks (`planEdit`)
-        fields: z.record(z.string(), z.union([z.string(), z.number(), z.null()])).optional(),
+        fields: characterFields.optional(),
         notes: z.string().optional(),
         // Read by the character's editors and its campaign's Game Master only
         privateNotes: z.string().optional(),

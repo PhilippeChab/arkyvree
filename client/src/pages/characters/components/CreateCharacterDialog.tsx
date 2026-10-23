@@ -1,7 +1,7 @@
 import { IconButton, MenuItem, Paper, Stack, TextField, Typography } from "@mui/material";
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { type Control, Controller, useController } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 
@@ -50,6 +50,7 @@ import {
   type CreateCharacterRequest,
   type CreationItem,
   emptyNewCharacter,
+  racePickKeysOf,
   racePicksOf,
   sentCreationFieldsOf,
 } from "./newCharacter.ts";
@@ -334,7 +335,7 @@ export function CreateCharacterDialog({ open, onClose, onExited }: CreateCharact
     (allRules && Object.values(allRules)[0]?.characterForm);
   // Its fields start once its form is known, and the user's own ruleset is picked once it's known, unless the user
   // picked one already
-  const started = characterForm && emptyNewCharacter(characterForm);
+  const started = useMemo(() => characterForm && emptyNewCharacter(characterForm), [characterForm]);
   const form = useFormWith<CreateCharacterFormData>(NO_CHARACTER_YET, {
     values: started && { ...started, ...(preselected && { rulesetId: preselected.id }) },
     resetOptions: { keepDirtyValues: true },
@@ -346,7 +347,8 @@ export function CreateCharacterDialog({ open, onClose, onExited }: CreateCharact
   const selectedRuleset = pickedRuleset ?? (preselected?.id === selectedRulesetId ? preselected : null);
 
   // Fetch races for selected ruleset, annotated with eligibility for what the fields that narrow them say
-  const racePicks = characterForm ? racePicksOf(characterForm, watch()) : {};
+  const racePickKeys = characterForm ? racePickKeysOf(characterForm) : [];
+  const racePicks = racePicksOf(racePickKeys, watch(racePickKeys));
   const {
     items: races,
     isPending: isRacesPending,
@@ -595,6 +597,8 @@ export function CreateCharacterDialog({ open, onClose, onExited }: CreateCharact
       pending={createCharacterMutation.isPending}
       maxWidth="md"
       onExited={onExited}
+      // Nothing to create until its form shows
+      submitDisabled={!characterForm}
     >
       <BaseRulesetAlert ruleset={selectedRuleset} />
       {characterForm ? (

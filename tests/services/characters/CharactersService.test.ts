@@ -589,7 +589,7 @@ describe("CharactersService", () => {
         valueType: "string",
       });
       invalidateSeededRuleset(rulesetId);
-      const eligible = async (form: object) =>
+      const eligible = async (form: Record<string, string>) =>
         (await CharactersService.getAvailableRaces(rulesetId, form, {}, page)).items.find((r) => r.id === race.id)!
           .eligible;
 
@@ -614,7 +614,7 @@ describe("CharactersService", () => {
         { ...owner, level: "1.2", target: "identity.physiology.gender", value: "Male" },
       ]);
       invalidateSeededRuleset(rulesetId);
-      const eligible = async (form: object) =>
+      const eligible = async (form: Record<string, string>) =>
         (await CharactersService.getAvailableRaces(rulesetId, form, {}, page)).items.find((r) => r.id === race.id)!
           .eligible;
 

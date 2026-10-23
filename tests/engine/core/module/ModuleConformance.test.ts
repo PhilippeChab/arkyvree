@@ -161,28 +161,38 @@ describe.each(baseRules.enumValues)("The %s module, as core runs its characters'
     });
   });
 
-  test("plans a new character from every field its form describes, and refuses one it doesn't", async () => {
+  test("plans a new character from every field its form describes, an optional one left out, none it doesn't", async () => {
     const record = await findSeededCharacter(rules);
-    const { characterForm } = Engine.rules().describeAll()[rules];
-    const fields = Object.fromEntries(
-      characterForm.sections
-        .flatMap((section) => (section.kind === "fields" ? section.lines.flat() : []))
-        .flatMap((item): [string, number | string][] => {
-          if (!("key" in item)) return [];
-          if (item.kind === "number") return [[item.key, item.start ?? item.min]];
-          if (item.kind === "select") return [[item.key, item.options[0]]];
-          return [[item.key, "Given"]];
-        }),
+    const formFields = Engine.rules()
+      .describeAll()
+      [rules].characterForm.sections.flatMap((section) => (section.kind === "fields" ? section.lines.flat() : []))
+      .filter((item) => "key" in item);
+    // Its keys are its form's values' names, beside the form's own, and an RHF path: one each, no dot
+    const keys = formFields.map(({ key }) => key);
+    expect(new Set(keys).size).toBe(keys.length);
+    for (const key of keys) {
+      expect(["abilities", "name", "notes", "raceId", "rulesetId"]).not.toContain(key);
+      expect(key).not.toContain(".");
+    }
+    const given = (field: (typeof formFields)[number]): number | string => {
+      if (field.kind === "number") return field.start ?? field.min;
+      if (field.kind === "select") return field.options[0];
+      return `Given ${field.key}`;
+    };
+    const fields = Object.fromEntries(formFields.map((field) => [field.key, given(field)]));
+    const required = Object.fromEntries(
+      formFields.filter((field) => "required" in field && field.required).map((field) => [field.key, given(field)]),
     );
     const refusal = expect.objectContaining({ refusal: "invalid" });
 
     await withRulesetScope(db, record.rulesetId, async (scope) => {
       const characters = Engine.for(scope).characters();
-      const plan = characters.planCreate({ abilities: {}, fields, raceId: record.raceId });
-      expect(Object.keys(plan.columns).length).toBeGreaterThan(0);
-      expect(() =>
-        characters.planCreate({ abilities: {}, fields: { ...fields, unknownField: 1 }, raceId: record.raceId }),
-      ).toThrow(refusal);
+      const start = { abilities: {}, raceId: record.raceId };
+      const written = Object.values(characters.planCreate({ ...start, fields }).columns);
+      for (const value of Object.values(fields)) expect(written).toContain(value);
+      // A field its form doesn't require can be left out
+      expect(() => characters.planCreate({ ...start, fields: required })).not.toThrow();
+      expect(() => characters.planCreate({ ...start, fields: { ...fields, unknownField: 1 } })).toThrow(refusal);
     });
   });
 });

@@ -4,6 +4,7 @@ import {
   type CharacterForm,
   creationFieldsOf,
   emptyNewCharacter,
+  racePickKeysOf,
   racePicksOf,
   sentCreationFieldsOf,
 } from "@/client/src/pages/characters/components/newCharacter.ts";
@@ -59,8 +60,10 @@ describe("A new character's form", () => {
   });
 
   test('narrows the race picker by the fields that do, "" while unpicked', () => {
-    expect(racePicksOf(FORM, emptyNewCharacter(FORM))).toEqual({ alignment: "" });
-    expect(racePicksOf(FORM, { alignment: "Lawful Good" })).toEqual({ alignment: "Lawful Good" });
+    expect(racePickKeysOf(FORM)).toEqual(["alignment"]);
+    expect(racePicksOf(["alignment"], [""])).toEqual({ alignment: "" });
+    expect(racePicksOf(["alignment"], [undefined])).toEqual({ alignment: "" });
+    expect(racePicksOf(["alignment"], ["Lawful Good"])).toEqual({ alignment: "Lawful Good" });
   });
 
   test("sends its fields by their keys, an empty number or an unset select as none", () => {

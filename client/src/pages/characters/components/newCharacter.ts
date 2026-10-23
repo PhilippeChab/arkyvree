@@ -50,13 +50,16 @@ export function emptyNewCharacter(form: CharacterForm): CreateCharacterFormData 
   };
 }
 
-/** What the fields that narrow the race picker hold (`racePick`), by their keys: "" while unpicked. */
-export function racePicksOf(form: CharacterForm, values: Record<string, unknown>) {
-  return Object.fromEntries(
-    creationFieldsOf(form)
-      .filter((field) => field.racePick)
-      .map((field) => [field.key, typeof values[field.key] === "string" ? String(values[field.key]) : ""]),
-  );
+/** The keys of the fields that narrow the race picker (`racePick`), in the form's order. */
+export function racePickKeysOf(form: CharacterForm) {
+  return creationFieldsOf(form)
+    .filter((field) => field.racePick)
+    .map((field) => field.key);
+}
+
+/** What the fields that narrow the race picker hold (`values`, each of `keys` in order), by their keys: "" unpicked. */
+export function racePicksOf(keys: string[], values: unknown[]) {
+  return Object.fromEntries(keys.map((key, index) => [key, typeof values[index] === "string" ? values[index] : ""]));
 }
 
 /** A form's rules' fields as its create sends them, by their keys: an empty number or an unset select, none. */
