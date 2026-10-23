@@ -3,24 +3,22 @@
  * creatures.
  */
 
-import { and, eq } from "drizzle-orm";
-
 import type { CharacterSeed, InventorySeed } from "@/content/core/builders/characters/types.ts";
 import type { Db } from "@/drizzle/database.ts";
-import {
-  characterAbilitiesInCharacter,
-  charactersInCharacter,
-  inventoryInCharacter,
-  klassLevelsInRules,
-  languagesInCharacter,
-  levelFeatsInCharacter,
-  levelPowersInCharacter,
-  levelSkillsInCharacter,
-} from "@/drizzle/schema.ts";
 import { Engine } from "@/engine/index.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
-import { CharacterLevels, Characters } from "@/server/repositories/index.ts";
+import {
+  CharacterAbilities,
+  CharacterInventory,
+  CharacterLanguages,
+  CharacterLevelFeats,
+  CharacterLevelPowers,
+  CharacterLevels,
+  CharacterLevelSkills,
+  Characters,
+  KlassLevels,
+} from "@/server/repositories/index.ts";
 import { readBondedInputs, readCharacterInput } from "@/server/services/characters/index.ts";
 import { writeBondedCreatures } from "@/server/services/characters/levels/index.ts";
 
@@ -29,7 +27,8 @@ import { SEED_USER_ID } from "./users.ts";
 
 async function addInventory(db: Db, ctx: SeedContext, characterId: string, items: InventorySeed[]) {
   if (items.length === 0) return;
-  await db.insert(inventoryInCharacter).values(
+  await CharacterInventory.createMany(
+    db,
     items.map((item) => ({
       characterId,
       itemId: ctx.itemMap[item.name],
@@ -66,11 +65,9 @@ export async function addClassLevels(
   const klassId = ctx.klassMap.pc[className];
   const levelIds: string[] = [];
 
+  const klassLevels = await KlassLevels.findMany(db, { klassId });
   for (let i = 0; i < levels.length; i++) {
-    const [klassLevel] = await db
-      .select({ id: klassLevelsInRules.id })
-      .from(klassLevelsInRules)
-      .where(and(eq(klassLevelsInRules.klassId, klassId), eq(klassLevelsInRules.level, levels[i])));
+    const klassLevel = klassLevels.find((row) => row.level === levels[i])!;
 
     const [charLevel] = await CharacterLevels.create(db, {
       characterId,
@@ -91,7 +88,8 @@ export async function addFeats(
   feats: { aptitude: string; featName: string; levelIndex: number }[],
 ) {
   if (feats.length === 0) return;
-  await db.insert(levelFeatsInCharacter).values(
+  await CharacterLevelFeats.createMany(
+    db,
     feats.map((f) => ({
       characterLevelId: charLevelIds[f.levelIndex],
       featId: ctx.featMap[f.featName],
@@ -107,7 +105,8 @@ export async function addPowers(
   powers: { aptitude: string; levelIndex: number; powerName: string }[],
 ) {
   if (powers.length === 0) return;
-  await db.insert(levelPowersInCharacter).values(
+  await CharacterLevelPowers.createMany(
+    db,
     powers.map((p) => ({
       characterLevelId: charLevelIds[p.levelIndex],
       powerId: ctx.powerMap[p.powerName],
@@ -122,13 +121,14 @@ export async function addSkills(
   charLevelIds: string[],
   skills: { levelIndex: number; rank: number; skillName: string }[],
 ) {
-  for (const s of skills) {
-    await db.insert(levelSkillsInCharacter).values({
+  await CharacterLevelSkills.createMany(
+    db,
+    skills.map((s) => ({
       characterLevelId: charLevelIds[s.levelIndex],
       skillId: ctx.skillMap[s.skillName],
       rank: s.rank,
-    });
-  }
+    })),
+  );
 }
 
 export async function createCharacter(
@@ -139,37 +139,32 @@ export async function createCharacter(
     rulesetId?: string;
   },
 ) {
-  const [character] = await db
-    .insert(charactersInCharacter)
-    .values({
-      userId: SEED_USER_ID,
-      rulesetId: data.rulesetId ?? ctx.rulesetId,
-      raceId: ctx.raceMap.pc[data.raceName],
-      name: data.name,
-      xp: data.xp,
-      alignment: data.alignment,
-      age: data.age,
-      gender: data.gender,
-      height: data.height,
-      weight: data.weight,
-      description: data.description,
-    })
-    .returning({ id: charactersInCharacter.id });
+  const [character] = await Characters.create(db, {
+    userId: SEED_USER_ID,
+    rulesetId: data.rulesetId ?? ctx.rulesetId,
+    raceId: ctx.raceMap.pc[data.raceName],
+    name: data.name,
+    xp: data.xp,
+    alignment: data.alignment,
+    age: data.age,
+    gender: data.gender,
+    height: data.height,
+    weight: data.weight,
+    description: data.description,
+  });
 
-  await db.insert(characterAbilitiesInCharacter).values(
+  await CharacterAbilities.createMany(
+    db,
     Object.entries(data.abilities).map(([name, score]) => ({
       characterId: character.id,
       abilityId: ctx.abilityMap[name],
       score,
     })),
   );
-
-  for (const lang of data.languages) {
-    await db.insert(languagesInCharacter).values({
-      characterId: character.id,
-      languageId: ctx.langMap[lang],
-    });
-  }
+  await CharacterLanguages.createMany(
+    db,
+    data.languages.map((lang) => ({ characterId: character.id, languageId: ctx.langMap[lang] })),
+  );
 
   return character.id;
 }

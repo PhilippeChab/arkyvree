@@ -1,3 +1,4 @@
+import { Engine } from "@/engine/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Modifiers, Properties, Requirements } from "@/server/repositories/index.ts";
 import type { Character } from "@/shared/relations.ts";
@@ -58,13 +59,33 @@ export async function createRaceModifier(
 export async function customize(
   type: string,
   id: string,
-  { modifier = true, property = { type: "NOTE", value: "doomed" } } = {},
+  { modifier = true, property = textProperty(type) }: { modifier?: boolean; property?: Property | null } = {},
 ) {
   const [bonus] = modifier ? await Modifiers.create(db, { ...STRENGTH_BONUS, sourceId: id, sourceType: type }) : [];
   if (bonus) await Requirements.create(db, { ...BAB_AT_LEAST_5, entityId: bonus.id, entityType: "modifiers" });
   await Requirements.create(db, { ...BAB_AT_LEAST_5, entityId: id, entityType: type });
-  await Properties.create(db, { ...property, entityId: id, entityType: type });
+  if (property) await Properties.createMany(db, [{ ...property, entityId: id, entityType: type }]);
   return bonus;
+}
+
+/** A property's type and value, as a test gives one. */
+type Property = { type: string; value: string };
+
+/**
+ * A property of `type`'s a module declares, a text field: a value a test sets ("doomed"), or none when the type keeps
+ * no property of text (an ability, a save).
+ */
+function textProperty(type: string): Property | null {
+  const def = Engine.storage()
+    .registries()
+    .fieldDefs.find(
+      (field) =>
+        field.ownerType === type &&
+        field.valueKind === "text" &&
+        !Engine.storage().linkedProperty(type, field.field) &&
+        !Object.values(Engine.storage().kind(type).columns).some((column) => "field" in column && column.field === field.field),
+    );
+  return def ? { type: def.field, value: "doomed" } : null;
 }
 
 /** A row's customizations: its modifiers and their own requirements, its requirements and its properties. */

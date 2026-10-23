@@ -1,5 +1,8 @@
 import { type Column, ilike, or, sql, type SQL, type Table } from "drizzle-orm";
 
+/** A searched column: a table's, or what holds an entity's (`StoredKindRepository.column`). */
+type Searched = Column | SQL;
+
 import type { Constructor } from "@/lib/mixins.ts";
 import type BaseRepository from "@/server/repositories/BaseRepository.ts";
 
@@ -17,7 +20,7 @@ export function Searches<B extends Constructor<BaseRepository<Table>>>(Base: B) 
      * A search over a list's columns, its first its name: what holds the text, or a name the text is a typo of
      * (`NAME_SIMILARITY`).
      */
-    protected fuzzySearch(search: string | undefined, columns: Column[]): SQL | false {
+    protected fuzzySearch(search: string | undefined, columns: Searched[]): SQL | false {
       if (!search) return false;
       return or(
         ...columns.map((column) => ilike(column, `%${search}%`)),
@@ -25,7 +28,7 @@ export function Searches<B extends Constructor<BaseRepository<Table>>>(Base: B) 
       )!;
     }
 
-    protected search(search: string | undefined, columns: Column[]): SQL | false {
+    protected search(search: string | undefined, columns: Searched[]): SQL | false {
       if (!search) return false;
       return or(...columns.map((column) => ilike(column, `%${search}%`)))!;
     }
@@ -34,7 +37,7 @@ export function Searches<B extends Constructor<BaseRepository<Table>>>(Base: B) 
      * A searched list's order: what holds the text first, a name that does before a description, then the names closest
      * to it, then the list's own order (`fallback`).
      */
-    protected searchOrderBy(search: string | undefined, columns: Column[], fallback: SQL): SQL {
+    protected searchOrderBy(search: string | undefined, columns: Searched[], fallback: SQL): SQL {
       if (!search) return fallback;
       const ilikeMatch = or(...columns.map((c) => ilike(c, `%${search}%`)))!;
       const nameIlikeMatch = ilike(columns[0], `%${search}%`);

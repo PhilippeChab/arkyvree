@@ -1,12 +1,11 @@
-import { eq, type InferInsertModel } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
-import { inventoryInCharacter, type itemsInRules } from "@/drizzle/schema.ts";
+import { inventoryInCharacter } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
-import { Items, Properties } from "@/server/repositories/index.ts";
+import { CharacterInventory, Items, Properties } from "@/server/repositories/index.ts";
 import type { ItemLocation } from "@/shared/enums.ts";
-import type { Character } from "@/shared/relations.ts";
+import type { Character, Item } from "@/shared/relations.ts";
 
-import { insertRows } from "./database.ts";
 import { invalidateSeededRuleset } from "./rulesets.ts";
 import { getSeedCtx, uniqueId } from "./seed.ts";
 
@@ -23,8 +22,8 @@ export interface Carried {
 export async function carry(character: Pick<Character, "id">, carried: Carried[]) {
   const { itemMap } = await getSeedCtx();
   await db.delete(inventoryInCharacter).where(eq(inventoryInCharacter.characterId, character.id));
-  await insertRows(
-    inventoryInCharacter,
+  await CharacterInventory.createMany(
+    db,
     carried.map(({ item, equipped = true, quantity = 1, ...rest }) => ({
       characterId: character.id,
       itemId: itemMap[item] ?? item,
@@ -40,7 +39,7 @@ export async function carry(character: Pick<Character, "id">, carried: Carried[]
  * dropped, so what it reads next sees the item.
  */
 export async function createTestItem(
-  values: Partial<InferInsertModel<typeof itemsInRules>> = {},
+  values: Partial<Item> = {},
   properties: Record<string, string> = {},
 ) {
   const rulesetId = values.rulesetId ?? (await getSeedCtx()).rulesetId;

@@ -1,7 +1,4 @@
-import { getTableName } from "drizzle-orm";
-
 import type { Db } from "@/drizzle/database.ts";
-import { klassesInRules } from "@/drizzle/schema.ts";
 import { type ClassEngine, Engine } from "@/engine/index.ts";
 import {
   EntityEdit,
@@ -122,7 +119,7 @@ class ClassProgressionService {
           await createActivityWithNotifications(tx, {
             userId: session.userId,
             targetId: target.id,
-            targetTable: getTableName(klassesInRules),
+            targetTable: "klasses",
             type: "updateKlassProgression",
             data: { entityName: plan.klass.name, levels: plan.levels.length },
           });

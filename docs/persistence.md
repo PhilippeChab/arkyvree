@@ -5,7 +5,29 @@ Two row-removal primitives:
 - `repo.archive(...)` — `UPDATE … SET deletedAt = now()`. Default queries filter via `Visibility.UnarchivedOnly`. Every table has a `deletedAt` column, but only the repositories of tables that archive define `archive`: on the others it doesn't exist, so a call is a type error.
 - `repo.delete(...)` — real `db.delete(this.table)`. Hard delete; FK CASCADE fires. Implemented per-repo where used.
 
-This doc categorizes every table by which primitive its services use, and what's load-bearing vs convention.
+This doc categorizes every table by which primitive its services use, and what's load-bearing vs convention. It opens with how a ruleset's and a character's data is stored: the generic tables, which every module's data shares.
+
+## The generic tables
+
+A ruleset's entities and a character's build are stored in tables no game names (migration `drizzle/0080_generic-tables.sql`). What a module's data is, each module declares (`RulesetModule.storage`, `StorageDeclaration`: 3.5's `engine/rulesets/dnd3.5/storage/Dnd35Storage.ts`), and the server reads and writes the tables by those declarations (`Engine.storage()`), holding no game's mapping.
+
+- **Entities:** `rules.entities`: an entity's type, scope (its ruleset, its campaign), name and description, its partition (a name is unique within it: a class's or a race's kind), and, for an entity another owns (a class level), its owner and its position (its level).
+- **Fields:** `rules.entity_fields`, one typed value a row (`text_value`, `number_value` or `flag_value`, as its field's `value_kind` says), a set one row per value by ordinal (a key, not an order). A ruleset's settings are `rules.ruleset_fields`, a character's `character.fields`. A missing row is no value.
+- **Links:** `rules.entity_links`: an entity's link of a role to another (a feat listed in an aptitude, a class level's grant through a pool, a save's key ability), with a tier, an amount and whether it's free, in its from-entity's order (`ordinal`). A ruleset's are `rules.ruleset_links`, a character's `character.links` (its race, its scores, its languages).
+- **Advancement:** a character's levels are `character.advancements`, each in a track (its class level), and their picks `character.advancement_picks`, by step (its hit points, its feats through their pools, its skills' ranks).
+- **Registries:** what the modules declare, each row's foreign keys check it against: `rules.modules` (a ruleset's base rules), `entity_types`, `field_defs`, `link_roles` and `link_role_kinds`, `ruleset_roles`, `character.character_roles`, `steps` and `item_types`. The migration writes 3.5's, and `tests/database/registries.test.ts` checks they hold what the modules declare: a module that declares more needs a migration that writes it.
+
+How the server reads them as a kind's rows (`server/repositories/stored/`):
+
+- **A kind's row** is read as its old shape, every column under its name: an entity's own, and each of its fields and single links its declaration names (`StoredEntities.columns`, a subquery a column). A write splits a row back into them (`StoredEntities.insert`, `update`), a column a write leaves out written with its declared default. Each kind's repository is one `RulesetEntityRepository` over it (`StoredKindRepository` for an owned kind: a class's levels).
+- **A join's row** is a link of its role (`StoredJoins`: a feat's pools, a class level's grants, saves and skills), a new one after its from-entity's last.
+- **A property** is a field the kind's columns don't hold, or a link when its value names an entity (a class's bonus spell ability, a ruleset's skill point ability): `StoredFields`, read and written as properties (`Property`), which the engine reads.
+- **A character's row** reads its stored columns from its fields and its race link (`StoredCharacters`), its scores and languages from its links (`StoredCharacterLinks`), its levels from its advancements and their hit points' picks, and its picks by step (`LevelPicksRepository`).
+- A subquery reaching its query's own table names the column in full (`qualified`): Drizzle names a selected column bare, which a subquery's table of that column name would answer.
+
+What deleting an entity does to what names it is each role's or step's rule, on every path (a service's delete, an owner's or a ruleset's cascade, a purge): a trigger on `rules.entities` (`apply_delete_rules`) deletes what a role deletes with it (a save with its key ability) and unlinks what a role unlinks; a role that refuses leaves its link, which the deferred foreign key refuses at commit. Every reference that doesn't own its row is `DEFERRABLE INITIALLY DEFERRED`, and an optional pair (an id and its type) is `MATCH FULL`. drizzle-kit records neither: `tests/database/registries.test.ts` checks the database keeps them, and `drizzle/schema.ts`'s hand fixes are listed there (its `bytea` type, a ruleset's base rules typed as the modules', a field's inheritance key, which names its type twice).
+
+A rule the database checked of 3.5's columns (a hit die's values, a score's bounds, an alignment's) is the 3.5 module's now, which refuses what breaks it before a write.
 
 ## Hard-delete
 
@@ -13,7 +35,7 @@ Rows whose disappearance leaves no observable history a user would expect to fin
 
 | Category | Tables |
 |---|---|
-| Customizations | `Modifiers`, `Properties`, `Requirements` |
+| Customizations | `Modifiers`, `Requirements`; `Properties`, an entity's fields |
 | Aptitude links | `FeatsAptitudes`, `PowersAptitudes` |
 | Class structure | `KlassSkills`, `KlassLevelFeats`, `KlassLevelPowers`, `KlassLevelSaves` |
 | Character state | `CharacterLevels`, `CharacterLevelAbilityIncreases`, `CharacterLevelFeats`, `CharacterLevelPowers`, `CharacterLevelSkills`, `CharacterInventory`, `CharacterLanguages`, `CharacterAbilities` |
@@ -27,7 +49,7 @@ Repos in this category have no `archive`, so future code can't mistakenly soft-a
 
 ### Why ruleset entities are hard-delete
 
-User-initiated deletion of a ruleset entity in a draft hard-deletes the row. FK CASCADE removes the entity's junctions and class-structure references. Character feat picks use RESTRICT, so deleting a selected feat fails and rolls back rather than erasing the pick. The protections live one layer up:
+User-initiated deletion of a ruleset entity in a draft hard-deletes the row. Its fields, its links and the entities it owns go with it, and each role's rule says what goes of the links to it (`apply_delete_rules`). A character's pick refuses its feat's delete, at commit, so deleting a selected feat fails and rolls back rather than erasing the pick. The protections live one layer up:
 
 - `canDeleteEntity({ inUse })` blocks deletion when a character on the **current ruleset** has picked the entity (see `RulesetsPolicy.canDeleteEntity` and the section in [rulesets.md](./rulesets.md)).
 - COW + tombstone snapshots handle the inherited-entity-in-a-fork case: deleting an inherited entity creates a COW first, then hard-deletes it; the snapshot stays as a tombstone so the source is hidden in the fork's view.
@@ -91,9 +113,9 @@ These are intentionally archived. Don't flip them — the restore-by-recreate be
 
 ### Polymorphic rows: customizations and attachments
 
-Customizations (`Modifiers`, `Requirements`, `Properties`) and `Attachments` name what they belong to by type and id (`source_type` / `source_id`, `entity_type` / `entity_id`, `record_type` / `record_id`), with no foreign key. Triggers delete them with their owner, whatever deletes it: a service, or a foreign key's cascade (a demo account's purge deletes its rulesets, their entities and its characters).
+Customizations (`Modifiers`, `Requirements`) and `Attachments` name what they belong to by type and id (`source_type` / `source_id`, `entity_type` / `entity_id`, `record_type` / `record_id`), with no foreign key. Triggers delete them with their owner, whatever deletes it: a service, or a foreign key's cascade (a demo account's purge deletes its rulesets, their entities and its characters).
 
-- **Customizations:** a trigger on each table a customization can belong to (`drizzle/0070_customization_cleanup.sql`). Deleting a modifier deletes its requirements the same way. A new type of owner needs the trigger too, and a row in `OWNERS` of `tests/services/rulesets/customization/CustomizationCleanup.test.ts`, which deletes a row of each type and finds no customization left without its owner.
+- **Customizations:** a trigger on each table a customization can belong to (`drizzle/0070_customization_cleanup.sql`; an entity's, `delete_customizations` on `rules.entities`, `drizzle/0080_generic-tables.sql`). Deleting a modifier deletes its requirements the same way. A new type of owner needs the trigger too, and a row in `OWNERS` of `tests/services/rulesets/customization/CustomizationCleanup.test.ts`, which deletes a row of each type and finds no customization left without its owner.
 - **Attachments:** a trigger on users and characters (`drizzle/0071_attachment_cleanup.sql`); the blob sweep then reclaims their files. Archiving keeps them: account deletion, which archives the user and its characters, purges their attachments itself (`purgeAttachmentsForRecords`).
 
 Others name their row the same way, and stay when it's deleted, on purpose:
@@ -106,7 +128,7 @@ Others name their row the same way, and stay when it's deleted, on purpose:
 A character's `updated_at` moves only when its own row is written (its details, its share link, its archive), and it's the details form's stale-edit check (`expectedUpdatedAt`, `GuardsStaleEdits`). Its last change is a column of its own, `last_changed_at`, which the characters list's Recently Updated order reads (`CharactersRepository.findPage`). The database moves it, whatever writes, through triggers (`drizzle/0078_last-changed.sql`), so no service writes it:
 
 - A write that changes the character's row moves it (`touch_own_row`, before the update). One that writes `last_changed_at` alone keeps what it writes (the triggers' own, a backfill, a test's `backdateLastChange`).
-- Every insert, update and delete of the rows that belong to the character moves it, a foreign key's cascade included: its abilities, inventory, languages, levels and their picks (feats, powers, skills, ability increases), its customizations (its modifiers and their requirements, its requirements and properties) and its portrait. One statement trigger per table and event (`touch_characters_on_insert` / `_update` / `_delete`) finds the characters of the rows it wrote and moves each once (`character.touch_characters`).
+- Every insert, update and delete of the rows that belong to the character moves it, a foreign key's cascade included: its fields, its links (its race, scores and languages), its inventory, its advancements and their picks (feats, powers, skills, ability increases, hit points), its customizations (its modifiers and their requirements, its requirements and properties) and its portrait. One statement trigger per table and event (`touch_characters_on_insert` / `_update` / `_delete`) finds the characters of the rows it wrote and moves each once (`character.touch_characters`).
 - A bonded creature's change moves its master's too: the list shows only the master, whose sheet the creature is part of. A creature added or deleted, or whose last change moved, moves its master's (`touch_masters`); a master moves before its creature, as a level-up locks them.
 - It moves to the transaction's start (`now()`), once a transaction: a character the transaction already moved isn't written again, and a transaction that started earlier never moves it back. Nothing moves `updated_at`, so an open details form still saves after a level-up in another tab.
 
@@ -116,14 +138,15 @@ A new table of a character's rows takes the three triggers, in a migration of it
 
 ### A level's rows
 
-A level's rows are its character's state, rewritten whole when the level is edited (`delete({ characterLevelId })`, then `createMany`), so none keeps its identity across an edit. Each table is keyed by what a level holds once:
+A level's rows are its character's state, rewritten whole when the level is edited (`delete({ characterLevelId })`, then `createMany`), so none keeps its identity across an edit. Each is a pick of its advancement (`character.advancement_picks`), keyed by its step, its entity and its ordinal: a step that repeats (`character.steps.repeats`) numbers an entity picked again, and one that doesn't refuses a second pick.
 
-| Table | Key | Why |
+| Step | Repeats | Why |
 |---|---|---|
-| `CharacterLevelFeats` (`level_feats`) | its own `id` | A pick is a row: a level can take a stackable feat twice, in one pool or two (Toughness in both of a human fighter 1's General slots), two rows of the same level and feat. The engine refuses what can't repeat (`SelectionChecks`) |
-| `CharacterLevelPowers` (`level_powers`) | (level, power) | A level knows a spell once |
-| `CharacterLevelSkills` (`level_skills`) | (level, skill) | A skill's ranks are a quantity, its `rank` |
-| `CharacterLevelAbilityIncreases` (`level_ability_increases`) | (level, ability) | An increase's size is its `amount` |
+| `feats` (`CharacterLevelFeats`) | yes | A pick is a row: a level can take a stackable feat twice, in one pool or two (Toughness in both of a human fighter 1's General slots), two picks of the same level and feat. The engine refuses what can't repeat (`SelectionChecks`) |
+| `powers` (`CharacterLevelPowers`) | no | A level knows a spell once |
+| `skills` (`CharacterLevelSkills`) | no | A skill's ranks are a quantity, its `amount` |
+| `abilities` (`CharacterLevelAbilityIncreases`) | no | An increase's size is its `amount` |
+| `hp` (`CharacterLevels`) | no | A level's hit points, a value: no entity |
 
 A stackable feat taken twice is two picks, not a count: the picks may be in two pools, and every reader (the character's build, a level's edit, the in-use checks) reads a row as one pick.
 

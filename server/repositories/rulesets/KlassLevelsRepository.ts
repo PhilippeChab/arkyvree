@@ -1,68 +1,41 @@
-import { eq, inArray, type InferInsertModel, isNull } from "drizzle-orm";
+import { eq, inArray, isNull } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
-import { klassLevelsInRules } from "@/drizzle/schema.ts";
-import { include } from "@/lib/mixins.ts";
-import BaseRepository from "@/server/repositories/BaseRepository.ts";
-import { GuardsStaleEdits } from "@/server/repositories/concerns/GuardsStaleEdits.ts";
+import { entitiesInRules } from "@/drizzle/schema.ts";
+import StoredKindRepository from "@/server/repositories/StoredKindRepository.ts";
+import type { KlassLevel } from "@/shared/relations.ts";
 
-class KlassLevelsRepository extends include(BaseRepository<typeof klassLevelsInRules>, GuardsStaleEdits) {
-  constructor() {
-    super(klassLevelsInRules);
-  }
+/** A class's levels: entities its class owns, each at its level. */
+class KlassLevelsRepository extends StoredKindRepository<KlassLevel> {
+  protected override readonly entityType = "klass_levels";
 
-  async create(db: Db, values: InferInsertModel<typeof klassLevelsInRules>) {
-    return await db.insert(this.table).values(values).returning();
-  }
-
-  async createMany(db: Db, values: InferInsertModel<typeof klassLevelsInRules>[]) {
-    if (values.length === 0) return [];
-    return await db.insert(this.table).values(values).returning();
-  }
-
-  async delete(db: Db, where: { id: string }) {
-    return await db.delete(this.table).where(eq(this.table.id, where.id)).returning();
-  }
-
+  /** A class's levels, or several classes', by level. */
   async findMany(db: Db, where: { klassId: string } | { klassIds: string[] }) {
     if ("klassIds" in where && where.klassIds.length === 0) return [];
-    return await db.query.klassLevelsInRules.findMany({
-      where: this.branchWhere(
-        [
-          "klassId" in where && eq(this.table.klassId, where.klassId),
-          "klassIds" in where && inArray(this.table.klassId, where.klassIds),
-        ],
-        [isNull(this.table.deletedAt)],
-      ),
-      orderBy: [this.orderBy(this.table.level), this.orderBy(this.table.klassId)],
-    });
+    return await this.rows(
+      db,
+      [
+        this.branchWhere(
+          [
+            "klassId" in where && eq(entitiesInRules.ownerId, where.klassId),
+            "klassIds" in where && inArray(entitiesInRules.ownerId, where.klassIds),
+          ],
+          [isNull(entitiesInRules.deletedAt)],
+        ),
+      ],
+      [this.orderBy(this.column("level")), this.orderBy(this.column("klassId"))],
+    );
   }
 
+  /** A live class level, by id, of a class if `klassId` says. */
   async findOne(db: Db, where: { id: string } | { id: string; klassId: string }) {
-    return await db.query.klassLevelsInRules.findFirst({
-      where: this.branchWhere(
-        [eq(this.table.id, where.id)],
-        ["klassId" in where && eq(this.table.klassId, where.klassId), isNull(this.table.deletedAt)],
+    const [row] = await this.rows(db, [
+      this.branchWhere(
+        [eq(entitiesInRules.id, where.id)],
+        ["klassId" in where && eq(entitiesInRules.ownerId, where.klassId), isNull(entitiesInRules.deletedAt)],
       ),
-    });
-  }
-
-  async update(
-    db: Db,
-    values: Partial<InferInsertModel<typeof klassLevelsInRules>>,
-    where: { expectedUpdatedAt?: string; id: string },
-  ) {
-    return await db
-      .update(this.table)
-      .set({ ...values, updatedAt: new Date().toISOString() })
-      .where(
-        this.where([
-          eq(this.table.id, where.id),
-          isNull(this.table.deletedAt),
-          this.casUpdatedAt(where.expectedUpdatedAt),
-        ]),
-      )
-      .returning();
+    ]);
+    return row;
   }
 }
 

@@ -1,4 +1,3 @@
-import { languagesInRules } from "@/drizzle/schema.ts";
 import { Engine } from "@/engine/index.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
@@ -8,7 +7,7 @@ import type { Session } from "@/shared/relations.ts";
 
 class LanguagesService {
   /** What its creates, updates and deletes write, in one order around the plans its rules give. */
-  private readonly writer = new EntityWriter("languages", Languages, languagesInRules);
+  private readonly writer = new EntityWriter("languages", Languages);
 
   async createLanguage(session: Session, rulesetId: string, body: EntityBody) {
     return await this.writer.create(session, rulesetId, body.name, (scope) =>

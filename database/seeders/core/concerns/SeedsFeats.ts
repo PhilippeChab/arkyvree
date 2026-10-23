@@ -1,11 +1,6 @@
 import type { FeatSeed } from "@/content/core/builders/feats/types.ts";
-import { SeederState } from "@/database/seeders/core/SeederState.ts";
-import {
-  featsAptitudesInRules,
-  featsInRules,
-  propertiesInCustomization,
-  requirementsInCustomization,
-} from "@/drizzle/schema.ts";
+import type { SeederState } from "@/database/seeders/core/SeederState.ts";
+import { requirementsInCustomization } from "@/drizzle/schema.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 
 /** Seeding feats. */
@@ -15,25 +10,21 @@ export function SeedsFeats<B extends Constructor<SeederState>>(Base: B) {
     async seedFeats(feats: FeatSeed[]) {
       if (feats.length === 0) return;
 
-      const ids = SeederState.idsByName(
-        await this.db
-          .insert(featsInRules)
-          .values(
-            feats.map((f) => ({
-              rulesetId: this.ctx.rulesetId,
-              name: f.name,
-              description: f.description,
-              stackable: f.stackable ?? false,
-              selectable: f.selectable ?? true,
-              generated: f.generated ?? false,
-            })),
-          )
-          .returning({ id: featsInRules.id, name: featsInRules.name }),
+      const ids = await this.insertEntities(
+        "feats",
+        feats.map((f) => ({
+          rulesetId: this.ctx.rulesetId,
+          name: f.name,
+          description: f.description,
+          stackable: f.stackable ?? false,
+          selectable: f.selectable ?? true,
+          generated: f.generated ?? false,
+        })),
       );
       Object.assign(this.ctx.featMap, ids);
 
-      await this.insertAll(
-        featsAptitudesInRules,
+      await this.insertJoins(
+        "feats_aptitudes",
         feats.flatMap((f) =>
           f.aptitudes.map((aptitude) => ({
             featId: ids[f.name],
@@ -45,10 +36,7 @@ export function SeedsFeats<B extends Constructor<SeederState>>(Base: B) {
         requirementsInCustomization,
         feats.flatMap((f) => this.requirementRows(ids[f.name], "feats", f.requirements)),
       );
-      await this.insertAll(
-        propertiesInCustomization,
-        feats.flatMap((f) => this.propertyRows(ids[f.name], "feats", f.properties)),
-      );
+      await this.insertProperties(feats.flatMap((f) => this.propertyRows(ids[f.name], "feats", f.properties)));
 
       await this.insertModifiers(
         "feats",

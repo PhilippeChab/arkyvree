@@ -1,5 +1,4 @@
 import type { Db } from "@/drizzle/database.ts";
-import { featsInRules } from "@/drizzle/schema.ts";
 import { Engine } from "@/engine/index.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
@@ -9,7 +8,7 @@ import type { Session } from "@/shared/relations.ts";
 
 class FeatsService {
   /** What its creates, updates and deletes write, in one order around the plans its rules give. */
-  private readonly writer = new EntityWriter("feats", Feats, featsInRules);
+  private readonly writer = new EntityWriter("feats", Feats);
 
   /**
    * Whether the ancestor feat a fork deleted was generated, read by its stored id: a new feat with its name stands in

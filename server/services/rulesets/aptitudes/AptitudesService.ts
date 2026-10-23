@@ -1,4 +1,3 @@
-import { aptitudesInRules } from "@/drizzle/schema.ts";
 import { Engine } from "@/engine/index.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
@@ -8,7 +7,7 @@ import type { Session } from "@/shared/relations.ts";
 
 class AptitudesService {
   /** What its creates, updates and deletes write, in one order around the plans its rules give. */
-  private readonly writer = new EntityWriter("aptitudes", Aptitudes, aptitudesInRules);
+  private readonly writer = new EntityWriter("aptitudes", Aptitudes);
 
   async createAptitude(session: Session, rulesetId: string, body: EntityBody) {
     return await this.writer.create(session, rulesetId, body.name, (scope) =>

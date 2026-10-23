@@ -28,6 +28,9 @@
  * - `queries-in-repositories`: a query is built in `server/repositories/` or `server/database/` (what talks to Postgres
  *   itself: the job queue, a channel's notifications, its health), nowhere else in the server. A transaction's handle
  *   is named `tx`, the name it knows a query by.
+ * - `generic-rows`: the generic tables' raw rows (an entity's fields and links, a ruleset's, a character's fields) are read
+ *   and written in `server/repositories/` alone, where the stored rows' adapters (`server/repositories/stored/`) give
+ *   them their meaning by what each module declares: everything else reads a kind's rows, a join's, properties.
  * - `folder-index`: code outside a folder that has an `index.ts` imports it through that index (the service folders,
  *   `cow/`, `policies/`, the client's component folders; code outside a client component folder enters it at its
  *   outermost index, never a subfolder's). Files within the folder import each other directly, and a test may reach a
@@ -145,6 +148,15 @@ const MODULE_EXPORTS_ITS_OWN =
 /** Where a query may be built: the repositories, and the database layer (what talks to Postgres itself). */
 const QUERY_HOMES = ["server/repositories/", "server/database/"];
 
+/** The generic tables' raw rows, as the schema names them: what only `server/repositories/` reads (`generic-rows`). */
+const GENERIC_ROWS = new Set([
+  "entityFieldsInRules",
+  "entityLinksInRules",
+  "fieldsInCharacter",
+  "rulesetFieldsInRules",
+  "rulesetLinksInRules",
+]);
+
 const QUERY_METHODS = new Set(["select", "selectDistinct", "insert", "update", "delete", "execute"]);
 
 /**
@@ -205,6 +217,10 @@ const ROOT_FOLDERS = {
       { to: "content/*/builders/", why: "a seeder writes the content's seed types, with its builders" },
       { to: "content/*/packages/", why: "the runner applies the packages, and a seeder writes what one gathers" },
       { to: "content/*/testData/", why: "the registry names each base rules' test characters" },
+      {
+        to: "server/repositories/stored/",
+        why: "a seeder writes an entity's rows, its joins and its properties as the server does: the generic tables, by what each module declares",
+      },
     ],
   },
   drizzle: { role: "the database's schema", imports: [] },
@@ -528,6 +544,24 @@ function createOpaqueView(context) {
   };
 }
 
+function createGenericRows(context) {
+  const file = repoPath(context.filename);
+  if (["server/repositories/", "drizzle/", "tests/"].some((home) => file.startsWith(home))) return {};
+  return {
+    ImportDeclaration(node) {
+      if (node.source.value !== "@/drizzle/schema.ts") return;
+      for (const specifier of node.specifiers)
+        if (specifier.type === "ImportSpecifier" && GENERIC_ROWS.has(specifier.imported.name))
+          context.report({
+            node: specifier,
+            message:
+              `${specifier.imported.name} is a generic table's raw rows, which only server/repositories/ reads: ` +
+              "read a kind's rows, a join's or properties through their repository (server/repositories/stored/).",
+          });
+    },
+  };
+}
+
 function createQueriesInRepositories(context) {
   const file = repoPath(context.filename);
   if (!file.startsWith("server/") || QUERY_HOMES.some((h) => file.startsWith(h))) return {};
@@ -827,6 +861,7 @@ export default {
   "one-engine-op": { meta: { type: "problem" }, create: createOneEngineOp },
   "opaque-view": { meta: { type: "problem" }, create: createOpaqueView },
   layers: { meta: { type: "problem" }, create: createLayers },
+  "generic-rows": { meta: { type: "problem" }, create: createGenericRows },
   "queries-in-repositories": { meta: { type: "problem" }, create: createQueriesInRepositories },
   "folder-index": { meta: { type: "problem" }, create: createFolderIndex },
   "re-exports": { meta: { type: "problem" }, create: createReExports },

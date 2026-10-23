@@ -6,8 +6,9 @@
 import { eq } from "drizzle-orm";
 
 import type { SeederState } from "@/database/seeders/core/SeederState.ts";
-import { featsAptitudesInRules, featsInRules, powersAptitudesInRules, powersInRules } from "@/drizzle/schema.ts";
 import type { Constructor } from "@/lib/mixins.ts";
+import StoredJoins from "@/server/repositories/stored/StoredJoins.ts";
+import type { Feat, Power } from "@/shared/relations.ts";
 
 /** Copying inherited feats and powers into the ruleset, and adding powers to aptitudes. */
 export function CopiesOnWrite<B extends Constructor<SeederState>>(Base: B) {
@@ -18,65 +19,61 @@ export function CopiesOnWrite<B extends Constructor<SeederState>>(Base: B) {
      */
     protected abstract copyPowerLinks(fromId: string, toId: string): Promise<void>;
 
+    /** The aptitudes a feat or a power is listed in (`join`), each with its level (a spell list's). */
+    protected async listedIn(join: "feats_aptitudes" | "powers_aptitudes", id: string) {
+      return await StoredJoins.rows<{ aptitudeId: string; level?: number | null }>(
+        this.db,
+        join,
+        eq(StoredJoins.part("from"), id),
+      );
+    }
+
     /** Copies an inherited feat into the ruleset, with its aptitudes and customizations. */
     protected async cowFeat(featId: string) {
-      const [feat] = await this.db.select().from(featsInRules).where(eq(featsInRules.id, featId));
-      const [copy] = await this.db
-        .insert(featsInRules)
-        .values({
+      const feat = await this.entityRow<Feat>("feats", featId);
+      const { [feat.name]: copyId } = await this.insertEntities("feats", [
+        {
           rulesetId: this.ctx.rulesetId,
           name: feat.name,
           description: feat.description,
           stackable: feat.stackable,
           selectable: feat.selectable,
           generated: feat.generated,
-        })
-        .returning({ id: featsInRules.id });
-      const aptitudes = await this.db
-        .select()
-        .from(featsAptitudesInRules)
-        .where(eq(featsAptitudesInRules.featId, featId));
-      await this.insertAll(
-        featsAptitudesInRules,
-        aptitudes.map(({ aptitudeId }) => ({ featId: copy.id, aptitudeId })),
+        },
+      ]);
+      await this.insertJoins(
+        "feats_aptitudes",
+        (await this.listedIn("feats_aptitudes", featId)).map(({ aptitudeId }) => ({ featId: copyId, aptitudeId })),
       );
-      await this.copyCustomizations(featId, copy.id);
-      await this.recordCopy("feats", featId, copy.id);
-      return copy.id;
+      await this.copyCustomizations(featId, copyId);
+      await this.recordCopy("feats", featId, copyId);
+      return copyId;
     }
 
     /** Copies an inherited power into the ruleset, with its customizations and the links its copy keeps. */
     protected async cowPower(powerId: string) {
-      const [power] = await this.db.select().from(powersInRules).where(eq(powersInRules.id, powerId));
-      const [copy] = await this.db
-        .insert(powersInRules)
-        .values({
+      const power = await this.entityRow<Power>("powers", powerId);
+      const { [power.name]: copyId } = await this.insertEntities("powers", [
+        {
           rulesetId: this.ctx.rulesetId,
           name: power.name,
           description: power.description,
           saveId: power.saveId,
           saveEffect: power.saveEffect,
-        })
-        .returning({ id: powersInRules.id });
-      await this.copyCustomizations(powerId, copy.id);
-      await this.recordCopy("powers", powerId, copy.id);
-      await this.copyPowerLinks(powerId, copy.id);
-      return copy.id;
+        },
+      ]);
+      await this.copyCustomizations(powerId, copyId);
+      await this.recordCopy("powers", powerId, copyId);
+      await this.copyPowerLinks(powerId, copyId);
+      return copyId;
     }
 
     /** Adds a power to aptitudes, each at its level: the first link to an aptitude it isn't in yet. */
     async linkPower(powerId: string, links: { aptitudeId: string; level: number | null }[]) {
-      const linked = new Set(
-        (
-          await this.db
-            .select({ aptitudeId: powersAptitudesInRules.aptitudeId })
-            .from(powersAptitudesInRules)
-            .where(eq(powersAptitudesInRules.powerId, powerId))
-        ).map((link) => link.aptitudeId),
-      );
+      const linked = new Set((await this.listedIn("powers_aptitudes", powerId)).map((link) => link.aptitudeId));
       const added = links.filter(({ aptitudeId }) => !linked.has(aptitudeId) && linked.add(aptitudeId));
-      await this.insertAll(
-        powersAptitudesInRules,
+      await this.insertJoins(
+        "powers_aptitudes",
         added.map((link) => ({ powerId, ...link })),
       );
     }

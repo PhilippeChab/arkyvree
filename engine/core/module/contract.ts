@@ -8,6 +8,7 @@ import type { EntitiesPart, EntityKindsContract } from "./parts/entities/index.t
 import type { ImportsPart } from "./parts/imports/index.ts";
 import type { LevelUpPart } from "./parts/levelUp/index.ts";
 import type { RulesetPart } from "./parts/ruleset/index.ts";
+import type { StorageDeclaration } from "./storage.ts";
 
 /**
  * What a ruleset describes in its own shape, which the server hands to the client as it is: a character's sheet (as the
@@ -26,8 +27,8 @@ export interface Descriptions {
 
 /**
  * A base rules' module: the parts the engine's handles ask what its rules answer, each an abstract class of
- * `engine/core/module/parts/` a ruleset extends (the compiler lists what a part lacks), and its paths and property
- * types. `D` is what it describes in its own shape, `E` its entity kinds by table, `F` the fields its content seeds, by entity.
+ * `engine/core/module/parts/` a ruleset extends (the compiler lists what a part lacks), its paths and property
+ * types, and its storage. `D` is what it describes in its own shape, `E` its entity kinds by table, `F` the fields its content seeds, by entity.
  */
 export interface RulesetModule<
   D extends Descriptions = Descriptions,
@@ -49,4 +50,6 @@ export interface RulesetModule<
   propertyTypes: PropertyTypesProvider;
   /** What the ruleset answers of a ruleset as a whole, past its entities: what it needs to be published */
   ruleset: RulesetPart;
+  /** How its rulesets' and characters' data is stored in the generic tables, and what their registries hold of it */
+  storage: StorageDeclaration;
 }

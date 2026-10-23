@@ -115,7 +115,7 @@ export const rulesetsInRules = rules.table(
     userId: uuid("user_id"),
     private: boolean().default(false).notNull(),
     status: rulesetStatus().default("Draft").notNull(),
-    baseRules: text("base_rules").notNull(),
+    baseRules: text("base_rules").notNull().$type<"Dungeons & Dragons: 3.5">(),
     ancestorRulesetIds: uuid("ancestor_ruleset_ids").array().default([""]).notNull(),
     extensionRulesetIds: uuid("extension_ruleset_ids").array().default([""]).notNull(),
     system: boolean().default(false).notNull(),
@@ -656,7 +656,7 @@ export const contentPackagesInRules = rules.table("content_packages", {
   name: text().primaryKey().notNull(),
   type: text().notNull(),
   version: integer().notNull(),
-  appliedAt: timestamp("applied_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
+  appliedAt: timestamp("applied_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
 export const contributorsInRules = rules.table(
@@ -842,7 +842,7 @@ END`),
       name: "field_defs_entity_type_fkey",
     }),
     foreignKey({
-      columns: [table.entityType, table.inheritsVia, table.inheritsSingle],
+      columns: [table.inheritsVia, table.entityType, table.entityType, table.inheritsSingle],
       foreignColumns: [
         linkRolesInRules.role,
         linkRolesInRules.fromType,

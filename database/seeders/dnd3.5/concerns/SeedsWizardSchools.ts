@@ -1,11 +1,12 @@
-import { and, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
 import { classSpells, specialistSpells } from "@/content/dnd3.5/builders/aptitudes/names.ts";
 import type { WizardSchoolSeed } from "@/content/dnd3.5/builders/wizardSchools/types.ts";
 import type { BaseSeeder } from "@/database/seeders/dnd3.5/BaseSeeder.ts";
 import type { SpellcastingClass } from "@/database/seeders/dnd3.5/spellTable.ts";
-import { powersAptitudesInRules, propertiesInCustomization } from "@/drizzle/schema.ts";
 import type { Constructor } from "@/lib/mixins.ts";
+import StoredFields from "@/server/repositories/stored/StoredFields.ts";
+import StoredJoins from "@/server/repositories/stored/StoredJoins.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { SPELL_SCHOOL } from "@/vocabulary/dnd3.5/properties/index.ts";
 
@@ -33,24 +34,27 @@ export function SeedsWizardSchools<B extends Constructor<BaseSeeder>>(Base: B) {
 
       const wizardSpells = this.ctx.aptMap[classSpells("Wizard")];
       if (!wizardSpells) return;
-      const spells = await this.db
-        .select({
-          powerId: powersAptitudesInRules.powerId,
-          level: powersAptitudesInRules.level,
-          school: propertiesInCustomization.value,
-        })
-        .from(powersAptitudesInRules)
-        .innerJoin(
-          propertiesInCustomization,
-          and(
-            eq(propertiesInCustomization.entityId, powersAptitudesInRules.powerId),
-            eq(propertiesInCustomization.entityType, "powers"),
-            eq(propertiesInCustomization.type, SPELL_SCHOOL),
-          ),
-        )
-        .where(eq(powersAptitudesInRules.aptitudeId, wizardSpells));
-      await this.insertAll(
-        powersAptitudesInRules,
+      // The wizard's list's spells, each with its level there and its school (its property)
+      const listed = await StoredJoins.rows<{ level: number | null; powerId: string }>(
+        this.db,
+        "powers_aptitudes",
+        eq(StoredJoins.part("to"), wizardSpells),
+      );
+      const schoolOf = new Map(
+        (
+          await StoredFields.findMany(this.db, {
+            entityIds: listed.map((link) => link.powerId),
+            entityType: "powers",
+            type: SPELL_SCHOOL,
+          })
+        ).map((property) => [property.entityId, property.value]),
+      );
+      const spells = listed.flatMap(({ powerId, level }) => {
+        const school = schoolOf.get(powerId);
+        return school === undefined ? [] : [{ powerId, level, school }];
+      });
+      await this.insertJoins(
+        "powers_aptitudes",
         spells.flatMap(({ powerId, level, school }) => {
           const aptitudeId = this.ctx.aptMap[specialistSpells(school)];
           if (school === "Universal" || !aptitudeId || level === null) return [];

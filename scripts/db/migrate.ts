@@ -15,6 +15,9 @@ async function main() {
   }
 
   const pool = new Pool({ connectionString });
+  // A migration says what it checked and what it found (0080's checks, the descriptions it drops): node-postgres drops
+  // a notice nothing listens for
+  pool.on("connect", (client) => client.on("notice", (notice) => console.log(`  ${notice.message}`)));
 
   try {
     const migrationDb = drizzle(pool);

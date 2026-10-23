@@ -1,30 +1,21 @@
-import { inArray, type InferInsertModel, isNull } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
-import { klassLevelPowersInRules } from "@/drizzle/schema.ts";
-import BaseRepository from "@/server/repositories/BaseRepository.ts";
+import StoredJoinRepository from "@/server/repositories/StoredJoinRepository.ts";
+import type { KlassLevelPower } from "@/shared/relations.ts";
 
-class KlassLevelPowersRepository extends BaseRepository<typeof klassLevelPowersInRules> {
-  constructor() {
-    super(klassLevelPowersInRules);
-  }
+/** A class level's spells: those it grants, each through a list, free or not. */
+class KlassLevelPowersRepository extends StoredJoinRepository<KlassLevelPower> {
+  protected override readonly join = "klass_level_powers";
 
-  async createMany(db: Db, values: InferInsertModel<typeof klassLevelPowersInRules>[]) {
-    if (values.length === 0) return [];
-    return await db.insert(this.table).values(values).returning();
+  async delete(db: Db, where: { klassLevelId: string }) {
+    return await this.remove(db, eq(this.column("klassLevelId"), where.klassLevelId));
   }
 
   /** Levels' grants. */
   async findMany(db: Db, where: { klassLevelIds: string[] }) {
     if (where.klassLevelIds.length === 0) return [];
-    return await db.query.klassLevelPowersInRules.findMany({
-      where: this.branchWhere([inArray(this.table.klassLevelId, where.klassLevelIds)], [isNull(this.table.deletedAt)]),
-      orderBy: [
-        this.orderBy(this.table.createdAt),
-        this.orderBy(this.table.klassLevelId),
-        this.orderBy(this.table.powerId),
-      ],
-    });
+    return await this.rows(db, [inArray(this.column("klassLevelId"), where.klassLevelIds)]);
   }
 }
 

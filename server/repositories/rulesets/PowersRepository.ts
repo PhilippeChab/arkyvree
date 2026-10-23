@@ -1,38 +1,17 @@
-import { and, eq, inArray, isNull } from "drizzle-orm";
+import { inArray, isNull } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
-import { powersInRules } from "@/drizzle/schema.ts";
+import { entitiesInRules } from "@/drizzle/schema.ts";
 import { include } from "@/lib/mixins.ts";
 import { ResolvesCopies } from "@/server/repositories/concerns/ResolvesCopies.ts";
 import { type RulesetEntityFilters } from "@/server/repositories/concerns/ScopesToRuleset.ts";
 import RulesetEntityRepository from "@/server/repositories/RulesetEntityRepository.ts";
+import { listedAptitudes } from "@/server/repositories/stored/listedAptitudes.ts";
+import type { Power, PowerWithAptitudes } from "@/shared/relations.ts";
 
-class PowersRepository extends include(RulesetEntityRepository<typeof powersInRules>, ResolvesCopies) {
-  constructor() {
-    super(powersInRules);
-  }
-
+/** The spells: a ruleset's list of them, each with the lists it's on, and a picker's page of them. */
+class PowersRepository extends include(RulesetEntityRepository, ResolvesCopies)<Power> {
   protected override readonly entityType = "powers";
-
-  async findMany(db: Db, where: { ids: string[] }) {
-    if (where.ids.length === 0) return [];
-    return await db.query.powersInRules.findMany({
-      where: and(inArray(this.table.id, where.ids), isNull(this.table.deletedAt)),
-      orderBy: [this.orderBy(this.table.name)],
-    });
-  }
-
-  async findOne(
-    db: Db,
-    where: { id: string } | { id: string; rulesetId: string } | { name: string; rulesetId: string },
-  ) {
-    return await db.query.powersInRules.findFirst({
-      where: this.branchWhere(
-        ["id" in where && eq(this.table.id, where.id), "name" in where && eq(this.table.name, where.name)],
-        ["rulesetId" in where && eq(this.table.rulesetId, where.rulesetId), isNull(this.table.deletedAt)],
-      ),
-    });
-  }
 
   /** A picker's page of these spells (a list's, as the ruleset composes it), by name. */
   async findOptionPage(
@@ -41,62 +20,44 @@ class PowersRepository extends include(RulesetEntityRepository<typeof powersInRu
     pagination: { limit: number; page: number },
   ) {
     const { ids, excludeIds, search } = where;
-    const { limit, offset } = this.paginate(pagination);
-    const rows = await db
-      .select({
-        id: powersInRules.id,
-        name: powersInRules.name,
-        description: powersInRules.description,
-      })
-      .from(powersInRules)
-      .where(
-        this.where([
-          inArray(powersInRules.id, ids),
-          isNull(powersInRules.deletedAt),
-          this.search(search, [powersInRules.name]),
-          this.excludeIds(excludeIds),
-        ]),
-      )
-      .orderBy(...this.pageOrder(this.orderBy(powersInRules.name)))
-      .limit(limit)
-      .offset(offset);
-
-    return this.paginated(rows, pagination);
+    const rows = await this.rows(
+      db,
+      [
+        inArray(entitiesInRules.id, ids),
+        isNull(entitiesInRules.deletedAt),
+        this.search(search, [this.column("name")]),
+        this.excludeIds(excludeIds),
+      ],
+      this.pageOrder(this.orderBy(this.column("name"))),
+      this.paginate(pagination),
+    );
+    return this.paginated(
+      rows.map(({ id, name, description }) => ({ id, name, description })),
+      pagination,
+    );
   }
 
-  async findPage(db: Db, where: RulesetEntityFilters<{ ids?: string[] }>, pagination: { limit: number; page: number }) {
-    if (where.ids !== undefined && where.ids.length === 0) return this.paginated([], pagination);
-    const { search, orderBy = "name", orderDir = "asc" } = where;
-    const searchColumns = [this.table.name, this.table.description];
-    const searchConditions = this.fuzzySearch(search, searchColumns);
-
-    const rulesetCondition = this.buildRulesetCondition(db, where);
-
-    return await this.withPagination(
-      pagination,
-      async ({ limit, offset }) =>
-        await db.query.powersInRules.findMany({
-          where: this.where([
-            rulesetCondition,
-            isNull(this.table.deletedAt),
-            searchConditions,
-            where.ids !== undefined && inArray(this.table.id, where.ids),
-          ]),
-          orderBy: this.pageOrder(
-            this.searchOrderBy(search, searchColumns, this.orderBy(this.table[orderBy], orderDir)),
-          ),
-          with: {
-            powersAptitudesInRules: {
-              orderBy: (links) => [this.orderBy(links.createdAt), this.orderBy(links.aptitudeId)],
-              with: {
-                aptitudesInRule: true,
-              },
-            },
-          },
-          limit,
-          offset,
-        }),
+  /** A ruleset's list of spells (those of `ids`, if given), each with the lists it's on, in their order. */
+  override async findPage(
+    db: Db,
+    where: RulesetEntityFilters<{ ids?: string[] }>,
+    pagination: { limit: number; page: number },
+  ) {
+    if (where.ids !== undefined && where.ids.length === 0) return this.paginated<PowerWithAptitudes>([], pagination);
+    const page = await super.findPage(db, where, pagination, [
+      where.ids !== undefined && inArray(entitiesInRules.id, where.ids),
+    ]);
+    const lists = await listedAptitudes<PowerWithAptitudes["powersAptitudesInRules"][number]>(
+      db,
+      "powers_aptitudes",
+      page.items.map((power) => power.id),
     );
+    return {
+      ...page,
+      items: page.items.map(
+        (power): PowerWithAptitudes => ({ ...power, powersAptitudesInRules: lists.get(power.id) ?? [] }),
+      ),
+    };
   }
 }
 

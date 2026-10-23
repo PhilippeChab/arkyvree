@@ -75,6 +75,7 @@
     "arkyvree/one-engine-op": "error",
     "arkyvree/opaque-view": "error",
     "arkyvree/queries-in-repositories": "error",
+    "arkyvree/generic-rows": "error",
     "arkyvree/folder-index": "error",
     // Each ruleset's folders are its own, and what every ruleset runs on (the core's folders, the content's runner and
     // seeds, the scripts, the server, shared/) names none of them; the runner and the seeds read a ruleset's content

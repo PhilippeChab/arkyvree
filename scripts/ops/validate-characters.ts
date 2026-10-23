@@ -1,7 +1,7 @@
 /**
  * Validates every active character:
- *  1. Reference integrity — every FK points to an existing, non-deleted entity
- *  2. Junction validity  — feat+aptitude and power+aptitude combos exist in junction tables
+ *  1. Reference integrity — every entity a character names is live
+ *  2. Junction validity  — a pick through a pool names an entity the pool lists
  *  3. Ability increases  — on the levels its ruleset gives one, and only there
  *  4. Build integrity    — DetailedCharacter.build() + validate()
  *
@@ -12,15 +12,20 @@ import { isNull } from "drizzle-orm";
 
 import { charactersInCharacter } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
+import StoredCharacters from "@/server/repositories/stored/StoredCharacters.ts";
 
 import { checkAbilityIncreases } from "./validateCharacters/abilityIncreases.ts";
 import { checkBuilds } from "./validateCharacters/builds.ts";
 import { printCharacterData } from "./validateCharacters/characterData.ts";
 import { checkJunctions } from "./validateCharacters/junctions.ts";
+import type { Character } from "./validateCharacters/queries.ts";
 import { checkReferences } from "./validateCharacters/references.ts";
 
 async function main() {
-  const characters = await db.select().from(charactersInCharacter).where(isNull(charactersInCharacter.deletedAt));
+  const characters = (await db
+    .select(StoredCharacters.columns())
+    .from(charactersInCharacter)
+    .where(isNull(charactersInCharacter.deletedAt))) as unknown as Character[];
   if (characters.length === 0) {
     console.log("No characters to validate.");
     process.exit(0);

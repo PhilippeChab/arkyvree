@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import type { PgTable } from "drizzle-orm/pg-core";
 
 import type {
@@ -9,16 +9,18 @@ import type {
 } from "@/content/core/builders/customization/types.ts";
 import type { Db } from "@/drizzle/database.ts";
 import {
+  entitiesInRules,
   entitySnapshotsInRules,
   modifiersInCustomization,
-  propertiesInCustomization,
   requirementsInCustomization,
 } from "@/drizzle/schema.ts";
+import StoredEntities, { type StoredValues } from "@/server/repositories/stored/StoredEntities.ts";
+import StoredFields, { type FieldValues } from "@/server/repositories/stored/StoredFields.ts";
+import StoredJoins, { type JoinValues } from "@/server/repositories/stored/StoredJoins.ts";
 
 type Ids = Record<string, string>;
 
 type ModifierRow = typeof modifiersInCustomization.$inferInsert;
-type PropertyRow = typeof propertiesInCustomization.$inferInsert;
 type RequirementRow = typeof requirementsInCustomization.$inferInsert;
 
 /**
@@ -43,7 +45,9 @@ export interface SeedContext {
 /**
  * A seeder's state, which every seeding step builds on (`concerns/`, and a ruleset's): the database it writes to, the
  * context it names rows by (`ctx`, its ruleset's id and the ids its steps add), and what the steps write with: the
- * customizations' rows and their inserts, and the copies an extension makes of what it changes.
+ * entities' rows, their joins and their properties as the generic tables store them (`StoredEntities`, `StoredJoins`,
+ * `StoredFields`, by what the module declares), the customizations' rows and their inserts, and the copies an extension
+ * makes of what it changes.
  */
 export abstract class SeederState {
   constructor(
@@ -101,7 +105,7 @@ export abstract class SeederState {
   }
 
   /** An entity's properties as rows. */
-  protected propertyRows(entityId: string, entityType: string, properties: Property[] = []): PropertyRow[] {
+  protected propertyRows(entityId: string, entityType: string, properties: Property[] = []): FieldValues[] {
     return properties.map(({ type, value }) => ({ entityId, entityType, type, value }));
   }
 
@@ -143,20 +147,40 @@ export abstract class SeederState {
         .returning({ id: modifiersInCustomization.id });
       await this.copyRequirements(modifier.id, copy.id);
     }
-    const properties = await this.db
-      .select()
-      .from(propertiesInCustomization)
-      .where(eq(propertiesInCustomization.entityId, fromId));
-    await this.insertAll(
-      propertiesInCustomization,
-      properties.map(({ entityType, type, value, description }) => ({
-        entityId: toId,
-        entityType,
-        type,
-        value,
-        description,
-      })),
+    const properties = await StoredFields.findMany(this.db, { entityIds: [fromId] });
+    await this.insertProperties(
+      properties.map(({ entityType, type, value }) => ({ entityId: toId, entityType, type, value })),
     );
+  }
+
+  /** A kind's row of an entity (`type`, `id`), by its columns. */
+  protected async entityRow<R>(type: string, id: string): Promise<R> {
+    const [row] = await this.db
+      .select(StoredEntities.columns(type))
+      .from(entitiesInRules)
+      .where(and(StoredEntities.scope(type), eq(entitiesInRules.id, id)));
+    return row as R;
+  }
+
+  /** Inserts a kind's rows (`type`), each by its columns: answers their ids by name. */
+  protected async insertEntities(type: string, rows: StoredValues[]): Promise<Ids> {
+    const ids = await this.insertRows(type, rows);
+    return Object.fromEntries(rows.map((row, i) => [row.name as string, ids[i]]));
+  }
+
+  /** Inserts a kind's rows (`type`), each by its columns (an owned kind's, which has no name): answers their ids. */
+  protected async insertRows(type: string, rows: StoredValues[]): Promise<string[]> {
+    return await StoredEntities.insert(this.db, type, rows);
+  }
+
+  /** Inserts a join's rows (`join`: a feat's pools, a class level's grants), each by its columns. */
+  protected async insertJoins(join: string, rows: JoinValues[]) {
+    await StoredJoins.insert(this.db, join, rows);
+  }
+
+  /** Inserts properties: each an entity's or a ruleset's field, or the link its value names. */
+  protected async insertProperties(rows: FieldValues[]) {
+    await StoredFields.createMany(this.db, rows);
   }
 
   /** Inserts the rows, if there are any. */

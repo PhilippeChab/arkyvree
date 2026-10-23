@@ -1,5 +1,5 @@
 {
-  "id": "36a6c6b9-e711-4f9d-95ac-e38ff7b88d52",
+  "id": "b81a92f9-2310-4677-a7ec-48df9162a3a8",
   "prevId": "8a64933e-22bd-469d-923b-f8c0c6c7208d",
   "version": "7",
   "dialect": "postgresql",
@@ -3274,8 +3274,9 @@
           "tableTo": "link_roles",
           "schemaTo": "rules",
           "columnsFrom": [
-            "entity_type",
             "inherits_via",
+            "entity_type",
+            "entity_type",
             "inherits_single"
           ],
           "columnsTo": [

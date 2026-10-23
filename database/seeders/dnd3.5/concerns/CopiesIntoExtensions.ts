@@ -4,17 +4,12 @@
  * spell on more spell lists.
  */
 
-import { and, eq, like } from "drizzle-orm";
+import { and, eq, inArray, like } from "drizzle-orm";
 
 import { gte } from "@/content/core/builders/customization/requirements.ts";
 import type { CowFeatEntry, CowSpellEntry } from "@/content/dnd3.5/builders/rulesets/types.ts";
 import type { BaseSeeder } from "@/database/seeders/dnd3.5/BaseSeeder.ts";
-import {
-  aptitudesInRules,
-  featsAptitudesInRules,
-  powersAptitudesInRules,
-  requirementsInCustomization,
-} from "@/drizzle/schema.ts";
+import { entitiesInRules, requirementsInCustomization } from "@/drizzle/schema.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 
 /** Copying the core's feats and spells into an extension that changes them. */
@@ -22,18 +17,23 @@ export function CopiesIntoExtensions<B extends Constructor<BaseSeeder>>(Base: B)
   abstract class CopyingIntoExtensions extends Base {
     /** A power's copy keeps its spell lists ("X Spells" aptitudes), at the same levels. */
     protected override async copyPowerLinks(fromId: string, toId: string) {
-      const links = await this.db
-        .select({
-          aptitudeId: powersAptitudesInRules.aptitudeId,
-          level: powersAptitudesInRules.level,
-          aptitude: aptitudesInRules.name,
-        })
-        .from(powersAptitudesInRules)
-        .innerJoin(aptitudesInRules, eq(aptitudesInRules.id, powersAptitudesInRules.aptitudeId))
-        .where(eq(powersAptitudesInRules.powerId, fromId));
+      const links = await this.listedIn("powers_aptitudes", fromId);
+      const aptitudeIds = links.map((link) => link.aptitudeId);
+      const names = new Map(
+        aptitudeIds.length === 0
+          ? []
+          : (
+              await this.db
+                .select({ id: entitiesInRules.id, name: entitiesInRules.name })
+                .from(entitiesInRules)
+                .where(inArray(entitiesInRules.id, aptitudeIds))
+            ).map((aptitude) => [aptitude.id, aptitude.name ?? ""]),
+      );
       await this.linkPower(
         toId,
-        links.filter(({ aptitude }) => /^(\w[\w ]*) Spells$/.test(aptitude)),
+        links
+          .filter(({ aptitudeId }) => /^(\w[\w ]*) Spells$/.test(names.get(aptitudeId) ?? ""))
+          .map(({ aptitudeId, level }) => ({ aptitudeId, level: level ?? null })),
       );
     }
 
@@ -99,8 +99,8 @@ export function CopiesIntoExtensions<B extends Constructor<BaseSeeder>>(Base: B)
         const copyId = await this.cowFeat(featId);
         this.ctx.featMap[entry.feat] = copyId;
         await this.addClassLevelAlternatives(copyId, entry.requirements);
-        await this.insertAll(
-          featsAptitudesInRules,
+        await this.insertJoins(
+          "feats_aptitudes",
           entry.aptitudes
             .filter((aptitude) => this.ctx.aptMap[aptitude])
             .map((aptitude) => ({ featId: copyId, aptitudeId: this.ctx.aptMap[aptitude] })),

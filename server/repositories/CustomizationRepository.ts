@@ -1,27 +1,20 @@
 import { eq, type InferInsertModel, isNull } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
-import type {
-  modifiersInCustomization,
-  propertiesInCustomization,
-  requirementsInCustomization,
-} from "@/drizzle/schema.ts";
+import type { modifiersInCustomization, requirementsInCustomization } from "@/drizzle/schema.ts";
 import { include } from "@/lib/mixins.ts";
 
 import BaseRepository from "./BaseRepository.ts";
 import { ChecksExistence } from "./concerns/ChecksExistence.ts";
 import { GuardsStaleEdits } from "./concerns/GuardsStaleEdits.ts";
 
-type CustomizationTable =
-  | typeof modifiersInCustomization
-  | typeof propertiesInCustomization
-  | typeof requirementsInCustomization;
+type CustomizationTable = typeof modifiersInCustomization | typeof requirementsInCustomization;
 
 /** What every customization's repository includes: `exists`, and its edits' stale guard. */
 const CustomizationBase = include(BaseRepository, ChecksExistence, GuardsStaleEdits);
 
 /**
- * A customization's repository (a modifier's, a property's, a requirement's): the writes every customization's service
+ * A customization's repository (a modifier's, a requirement's): the writes every customization's service
  * makes the same way, on its own table. Each reads its own way, and deletes its own (a modifier takes its requirements).
  */
 abstract class CustomizationRepository<T extends CustomizationTable> extends CustomizationBase<T> {

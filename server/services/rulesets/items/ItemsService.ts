@@ -1,5 +1,4 @@
 import type { Db } from "@/drizzle/database.ts";
-import { itemsInRules } from "@/drizzle/schema.ts";
 import { Engine } from "@/engine/index.ts";
 import { include } from "@/lib/mixins.ts";
 import { type RulesetScope, withRulesetScope } from "@/server/cow/index.ts";
@@ -12,7 +11,7 @@ import { Variants } from "./concerns/Variants.ts";
 
 class ItemsService extends include(Object, Variants) {
   /** What its creates, updates and deletes write, in one order around the plans its rules give. */
-  private readonly writer = new EntityWriter("items", Items, itemsInRules);
+  private readonly writer = new EntityWriter("items", Items);
 
   /**
    * The items made from a template that a change to it in the scope's ruleset reaches (`copiesOf`: the ids they may
