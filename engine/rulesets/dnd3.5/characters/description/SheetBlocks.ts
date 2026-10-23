@@ -1,5 +1,7 @@
 import type {
   EntriesBlock,
+  InventoryBlock,
+  InventoryWords,
   PoolsBlock,
   ScoresBlock,
   SheetBlock,
@@ -37,13 +39,15 @@ interface SheetFeat {
 }
 
 /**
- * What a 3.5 sheet's blocks read of its sheet, as the API answers it: its abilities, saves, combat, skills, classes
- * (their levels' feats), the feats it has without a pick, and its spells, known and per day.
+ * What a 3.5 sheet's blocks read of its sheet, as the API answers it: its abilities, saves, combat (its load among
+ * it), skills, classes (their levels' feats), the feats it has without a pick, its spells, known and per day, and its
+ * equipment.
  */
 interface SheetParts {
   abilities: (SheetAbility & { abilityId: string })[];
   classes: Record<string, { levels: { feats: SheetFeat[] }[] }>;
   combat: ReturnType<typeof CombatSheet.describe>;
+  equipment: ReturnType<typeof CharacterResponse.equipmentOf>;
   saves: Record<string, { name: string; parts: SheetStat[]; total: number }>;
   skills: Record<string, SheetSkill>;
   spellGroups: ReturnType<typeof SpellGroups.describe>;
@@ -96,6 +100,51 @@ const ATTACK_COLUMNS: SheetColumn[] = [
   },
   { key: "type", label: "Type", width: "16%", align: "center", slot: "inline", hideEmpty: true },
 ];
+
+/** What the equipment's table, its add, edit and remove dialogs, their fields and their toasts say. */
+const INVENTORY_WORDS: InventoryWords = {
+  add: "Add Item",
+  added: "Item added to inventory",
+  addTitle: "Add Item to Inventory",
+  charges: "Charges",
+  columns: {
+    item: "Item",
+    slot: "Slot",
+    quantity: "Quantity",
+    weight: "Weight",
+    value: "Value",
+    description: "Description",
+  },
+  create: "Create Item",
+  createHint: "Opens the ruleset's Items tab in a new browser tab",
+  editTitle: "Edit Inventory Item",
+  handSlot: "Hand Slot",
+  inventory: "Inventory",
+  item: "Item",
+  itemRequired: "Item is required",
+  items: "Items",
+  notEquipped: "Not Equipped",
+  quantityRequired: "Quantity is required",
+  remainingCharges: "Remaining Charges",
+  remove: {
+    title: "Remove Item",
+    message: "Are you sure you want to remove this item from the inventory? This action cannot be undone.",
+    confirm: "Remove Item",
+  },
+  removed: "Item removed from inventory",
+  removeFailed: "Failed to remove item",
+  saveFailed: "Failed to save item",
+  search: "Search Item",
+  slot: "Equipment Slot",
+  slotWarning: "Slot warning",
+  totalCharges: "Total Charges",
+  unknown: "Unknown Item",
+  updated: "Item updated",
+  warnings: "Equipment Warnings",
+  weaponSet: "Set",
+  weaponSetRequired: "Weapon set is required",
+  weaponSets: "Weapon Sets",
+};
 
 /** What a weapon set with no weapon says, and a sheet with no weapon set. */
 const NO_WEAPONS = "No weapons equipped";
@@ -231,6 +280,40 @@ export default class SheetBlocks {
     };
   }
 
+  /**
+   * The equipment: each entry its item's name (an item gone, "Unknown Item"), where it's worn, how many, its weight in
+   * pounds and its cost in gold pieces, whether it's equipped, and its charges; then the load it makes, in pounds.
+   */
+  private static inventory(equipment: SheetParts["equipment"], load: SheetParts["combat"]["load"]): InventoryBlock {
+    return {
+      kind: "inventory",
+      key: "equipment",
+      title: "Equipment & Inventory",
+      empty: "No equipment",
+      entityType: "items",
+      rows: equipment.map((entry) => ({
+        key: entry.id,
+        id: entry.itemId,
+        name: entry.name,
+        description: entry.description,
+        slot: entry.slotLabel,
+        quantity: entry.quantity,
+        weight: entry.weight,
+        cost: entry.costGp,
+        held: entry.equipped,
+        ...(entry.totalCharges != null && {
+          charges: { remaining: entry.remainingCharges, total: entry.totalCharges },
+        }),
+      })),
+      load: {
+        figures: load.figures.map(({ label, shortLabel, weight }) => ({ label, short: shortLabel, weight })),
+        status: load.status,
+      },
+      units: { cost: { one: "gp", many: "gp" }, weight: { one: "lb", many: "lbs" } },
+      words: INVENTORY_WORDS,
+    };
+  }
+
   /** The saving throws: each its total, signed, and its parts (its base, its ability's, its misc). */
   private static saves(saves: SheetParts["saves"]): ScoresBlock {
     return {
@@ -347,8 +430,9 @@ export default class SheetBlocks {
       bonded.blocks.find((block): block is ScoresBlock => block.kind === "scores" && block.key === key)?.scores ?? [];
     const combat = bonded.blocks.find((block) => block.kind === "stats" && block.key === "combat");
     const featNames = Object.values(bonded.feats)
-      .filter((feat) => "possessed" in feat && feat.possessed === true)
-      .map((feat) => String(feat.name))
+      .filter((feat): feat is Extract<typeof feat, { possessed: boolean }> => typeof feat.possessed === "boolean")
+      .filter((feat) => feat.possessed)
+      .map((feat) => feat.name)
       .sort();
     return {
       id: bonded.id,
@@ -392,6 +476,7 @@ export default class SheetBlocks {
       SheetBlocks.skills(parts.skills),
       SheetBlocks.feats(parts.classes, parts.virtualFeats),
       ...SheetBlocks.spells(parts.spellGroups, parts.spellsPerDay),
+      SheetBlocks.inventory(parts.equipment, parts.combat.load),
     ];
   }
 }

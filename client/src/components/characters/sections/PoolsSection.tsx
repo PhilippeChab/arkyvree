@@ -19,7 +19,7 @@ import { DURATION } from "@/client/src/theme/animations.ts";
 
 import { BlockCell } from "./BlockTable.tsx";
 import { ScoreBox } from "./ScoreBox.tsx";
-import { type BlockOf, entityPagePath, type SheetColumn } from "./sheetBlocks.ts";
+import { type BlockOf, entityPagePath, type SheetColumn, splitNameColumn } from "./sheetBlocks.ts";
 import { SheetSection } from "./SheetSection.tsx";
 
 interface CountsTableProps {
@@ -143,8 +143,7 @@ function CountsTable({ counts }: CountsTableProps) {
  */
 function PoolEntryRow({ columns, entityType, entry, rulesetId }: PoolEntryRowProps) {
   const [open, setOpen] = useState(false);
-  const nameColumn = columns.find((column) => column.slot === "primary") ?? columns[0];
-  const others = columns.filter((column) => column !== nameColumn);
+  const { name: nameColumn, others } = splitNameColumn(columns);
   const name = entry.cells[nameColumn.key] ?? "";
   const link = entityPagePath(rulesetId, entityType, entry.id);
 
@@ -213,6 +212,8 @@ function PoolEntryRow({ columns, entityType, entry, rulesetId }: PoolEntryRowPro
 /** A tier of a pool, to open: its label and its entries' count, its note after it ("3/day"), then its entries. */
 function PoolTierView({ columns, entityType, rulesetId, tier }: PoolTierProps) {
   const [open, setOpen] = useState(false);
+  const { name, others } = splitNameColumn(columns);
+  const laidOut = [name, ...others];
 
   return (
     // The last tier, closed, keeps the space its title has to its entries
@@ -231,7 +232,7 @@ function PoolTierView({ columns, entityType, rulesetId, tier }: PoolTierProps) {
         )}
       </Stack>
       <Collapse in={open} timeout={DURATION.normal} unmountOnExit>
-        <DataTable size="small" columns={columns.map(({ key, label, width, align }) => ({ key, label, width, align }))}>
+        <DataTable size="small" columns={laidOut.map(({ key, label, width, align }) => ({ key, label, width, align }))}>
           {tier.entries.map((entry) => (
             <PoolEntryRow
               key={entry.key}

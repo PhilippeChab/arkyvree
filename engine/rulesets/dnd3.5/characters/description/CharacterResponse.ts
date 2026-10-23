@@ -61,27 +61,6 @@ export default class CharacterResponse {
     };
   }
 
-  /** The inventory as a flat list of entries, each with its item's fields and where it's worn (`slotLabel`). */
-  private static equipmentOf(built: DetailedCharacter) {
-    return built.components.inventory.getFlatInventory().map((entry) => ({
-      id: entry.id,
-      itemId: entry.itemId,
-      name: entry.item.name,
-      type: entry.item.type,
-      description: entry.item.description,
-      weight: entry.item.weight,
-      costGp: entry.item.costGp,
-      quantity: entry.quantity,
-      equipped: entry.equipped,
-      location: entry.location,
-      weaponSets: entry.weaponSets,
-      slotLabel: ItemPlacement.describeSlot(entry),
-      totalCharges: entry.totalCharges,
-      remainingCharges: entry.remainingCharges,
-      updatedAt: entry.updatedAt,
-    }));
-  }
-
   /**
    * The character's identity, with the GM's notes in its background, where every ruleset's sheet holds them: which a
    * reader who doesn't read them reads blank or not at all (`CharactersPart.describe`).
@@ -144,6 +123,7 @@ export default class CharacterResponse {
     const combat = CombatSheet.describe(built.components.combat);
     const saves = CharacterResponse.savesOf(built);
     const classes = built.components.classes.getCharacterClasses();
+    const equipment = CharacterResponse.equipmentOf(built);
     const skills = CharacterResponse.skillsOf(built);
     const virtualFeats = built.getVirtualFeats();
     const spellGroups = SpellGroups.describe(built);
@@ -170,7 +150,7 @@ export default class CharacterResponse {
       saves,
       classes,
       inventory: built.components.inventory.getInventory(),
-      equipment: CharacterResponse.equipmentOf(built),
+      equipment,
       skills,
       virtualFeats,
       spellGroups,
@@ -182,6 +162,7 @@ export default class CharacterResponse {
         abilities,
         classes,
         combat,
+        equipment,
         saves,
         skills,
         spellGroups,
@@ -189,5 +170,26 @@ export default class CharacterResponse {
         virtualFeats,
       }),
     };
+  }
+
+  /** The inventory as a flat list of entries, each with its item's fields and where it's worn (`slotLabel`). */
+  static equipmentOf(built: DetailedCharacter) {
+    return built.components.inventory.getFlatInventory().map((entry) => ({
+      id: entry.id,
+      itemId: entry.itemId,
+      name: entry.item.name,
+      type: entry.item.type,
+      description: entry.item.description,
+      weight: entry.item.weight,
+      costGp: entry.item.costGp,
+      quantity: entry.quantity,
+      equipped: entry.equipped,
+      location: entry.location,
+      weaponSets: entry.weaponSets,
+      slotLabel: ItemPlacement.describeSlot(entry),
+      totalCharges: entry.totalCharges,
+      remainingCharges: entry.remainingCharges,
+      updatedAt: entry.updatedAt,
+    }));
   }
 }

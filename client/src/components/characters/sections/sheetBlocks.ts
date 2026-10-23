@@ -5,6 +5,9 @@ import { isOneOf } from "@/shared/isOneOf.ts";
 /** A sheet's block of a kind. */
 export type BlockOf<K extends SheetBlock["kind"]> = Extract<SheetBlock, { kind: K }>;
 
+/** An entry of an `inventory` block. */
+export type InventoryRow = BlockOf<"inventory">["rows"][number];
+
 /** A block of a character's sheet, as the engine describes it, in its module's order. */
 export type SheetBlock = CharacterDetail["blocks"][number];
 
@@ -33,6 +36,15 @@ export type SheetTable = NonNullable<BlockOf<"stats">["panels"][number]["table"]
 export function entityPagePath(rulesetId: string | undefined, entityType: string, id: string | null) {
   if (!rulesetId || !id || !isOneOf(entityType, CUSTOMIZATION_PAGE_TYPES)) return undefined;
   return `/rulesets/${rulesetId}/${buildCustomizationPath(entityType, id)}`;
+}
+
+/**
+ * A table's columns, its name's first (its `primary` column's, else its first's), then the others in their order: as
+ * its header and its rows lay them out, whatever order its block lists them in.
+ */
+export function splitNameColumn<C extends { slot: string }>(columns: readonly C[]) {
+  const name = columns.find((column) => column.slot === "primary") ?? columns[0];
+  return { name, others: columns.filter((column) => column !== name) };
 }
 
 /**

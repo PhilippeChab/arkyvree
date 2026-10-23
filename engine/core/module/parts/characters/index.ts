@@ -1,5 +1,8 @@
 export type {
   EntriesBlock,
+  InventoryBlock,
+  InventoryRow,
+  InventoryWords,
   PoolEntry,
   PoolsBlock,
   ScoresBlock,
@@ -10,6 +13,7 @@ export type {
   SheetRow,
   SheetScore,
   SheetTable,
+  SheetUnit,
   StatsBlock,
   StatsPanel,
   Subsheet,

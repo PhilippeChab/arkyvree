@@ -35,6 +35,7 @@ function combatBlock(weaponsets: Combat["weaponsets"]) {
     abilities: [],
     classes: {},
     combat,
+    equipment: [],
     saves: {},
     skills: {},
     spellGroups: [],
@@ -100,6 +101,7 @@ function partsWith(
         weaponsets: {},
       }),
     }),
+    equipment: [],
     saves: {},
     skills: {},
     virtualFeats,
@@ -223,7 +225,14 @@ describe("SheetBlocks", () => {
   });
 
   test("lists no spells for a character with neither spells nor slots", () => {
-    expect(sheetWith([]).map(({ key }) => key)).toEqual(["abilities", "saves", "combat", "skills", "feats"]);
+    expect(sheetWith([]).map(({ key }) => key)).toEqual([
+      "abilities",
+      "saves",
+      "combat",
+      "skills",
+      "feats",
+      "equipment",
+    ]);
   });
 
   test("lists the spells by list and level, each level's uses, and the slots per day", () => {
@@ -242,7 +251,16 @@ describe("SheetBlocks", () => {
       spellGroups: [
         {
           aptitudeName: "Wizard",
-          levels: [{ aptitudeName: "Wizard", label: "Level 0", level: 0, spells: [spell], uses: 3 }],
+          levels: [
+            { aptitudeName: "Wizard", label: "Level 0", level: 0, spells: [spell], uses: 3 },
+            {
+              aptitudeName: "Wizard",
+              label: "Level 1",
+              level: 1,
+              spells: [{ ...spell, dc: null, id: "sleep", name: "Sleep", tags: undefined }],
+              uses: null,
+            },
+          ],
         },
       ],
       spellsPerDay: { labels: ["0"], levels: [0], lists: [{ aptitudeName: "Wizard", slots: ["3+1"] }] },
@@ -260,6 +278,9 @@ describe("SheetBlocks", () => {
       cells: { name: "Light", school: "Evocation", save: "", dc: "0" },
       tags: [{ name: "Sun", tone: "secondary" }],
     });
+    // No DC: an empty cell; no uses a day: no note; no tags: none
+    expect(spells.pools[0].tiers[1]).not.toHaveProperty("note");
+    expect(spells.pools[0].tiers[1].entries[0]).toMatchObject({ cells: { dc: "" }, tags: [] });
   });
 
   test("heads each weapon set with its number and what its hands hold, and lists its attacks", () => {

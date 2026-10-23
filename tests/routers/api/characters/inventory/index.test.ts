@@ -78,6 +78,54 @@ describe("character inventory", () => {
     expect(charged).toMatchObject({ totalCharges: 50, remainingCharges: 50 });
   });
 
+  test("lists the items in the sheet's inventory block, each in its units, with the load they make", async () => {
+    const { characterId, itemId } = await setup();
+    const worn = await expectOk(
+      inventory.$post({ param: { characterId }, json: { ...unequipped, itemId, equipped: true, location: "Trinket" } }),
+    );
+    const charged = await expectOk(
+      inventory.$post({
+        param: { characterId },
+        json: { ...unequipped, itemId, quantity: 2, totalCharges: 5, remainingCharges: 3 },
+      }),
+    );
+
+    const { blocks } = await expectOk(api.api.characters[":id"].$get({ param: { id: characterId } }));
+    const block = blocks.find((each) => each.key === "equipment");
+    if (block?.kind !== "inventory") throw new Error("no inventory");
+    expect(block).toMatchObject({
+      title: "Equipment & Inventory",
+      entityType: "items",
+      units: { cost: { one: "gp", many: "gp" }, weight: { one: "lb", many: "lbs" } },
+      words: { add: "Add Item", remove: { title: "Remove Item" } },
+    });
+    expect(block.rows.find((row) => row.key === worn.id)).toEqual({
+      key: worn.id,
+      id: itemId,
+      name: "Inventory Item",
+      description: null,
+      slot: "Trinket",
+      quantity: 1,
+      weight: expect.anything(),
+      cost: expect.anything(),
+      held: true,
+    });
+    expect(block.rows.find((row) => row.key === charged.id)).toMatchObject({
+      quantity: 2,
+      held: false,
+      slot: null,
+      charges: { remaining: 3, total: 5 },
+    });
+    expect(block.load?.figures.map(({ label, short }) => [label, short])).toEqual([
+      ["Carried Weight", "Carried"],
+      ["Light", "Light"],
+      ["Medium", "Medium"],
+      ["Heavy", "Heavy"],
+    ]);
+    // Three of a 5 lb. item
+    expect(Number(block.load?.figures[0].weight)).toBe(15);
+  });
+
   test("adds an item the character already carries as another entry: a second one, placed apart", async () => {
     const { characterId, itemId } = await setup();
     const first = await expectOk(inventory.$post({ param: { characterId }, json: { ...unequipped, itemId } }));

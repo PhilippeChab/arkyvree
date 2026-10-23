@@ -5,6 +5,7 @@ import { FormTextField, SelectField, ValueChip } from "@/client/src/components/c
 import { requiredRules, wholeNumberRules } from "@/client/src/lib/validation.ts";
 
 import { type InventoryFormData, type PlacementProfile } from "./equipment.ts";
+import type { BlockOf } from "./sheetBlocks.ts";
 
 interface InventoryPlacementFieldsProps {
   form: UseFormReturn<InventoryFormData>;
@@ -12,19 +13,25 @@ interface InventoryPlacementFieldsProps {
   profile: PlacementProfile | null;
   /** The weapon sets a held item can be in, as shown, from 1: the character's, and a new one (`weaponSetChoices`). */
   setChoices: number[];
+  /** What the fields say: their inventory block's words. */
+  words: InventoryWords;
 }
 
 interface WeaponSetsFieldProps {
   choices: number[];
   form: UseFormReturn<InventoryFormData>;
+  words: InventoryWords;
 }
 
+/** What an inventory's fields say. */
+type InventoryWords = BlockOf<"inventory">["words"];
+
 /** The weapon sets a held item is in, one or more, as chips ("Set 1", "Set 2"): the character's, or a new one. */
-function WeaponSetsField({ choices, form }: WeaponSetsFieldProps) {
+function WeaponSetsField({ choices, form, words }: WeaponSetsFieldProps) {
   const {
     field: { ref, value, onChange, ...bound },
     fieldState: { error },
-  } = useController({ control: form.control, name: "weaponSets", rules: requiredRules("Weapon set is required") });
+  } = useController({ control: form.control, name: "weaponSets", rules: requiredRules(words.weaponSetRequired) });
   return (
     <Autocomplete
       {...bound}
@@ -32,23 +39,23 @@ function WeaponSetsField({ choices, form }: WeaponSetsFieldProps) {
       disableCloseOnSelect
       options={choices}
       value={value}
-      getOptionLabel={(set) => `Set ${set}`}
+      getOptionLabel={(set) => `${words.weaponSet} ${set}`}
       onChange={(_, next) => onChange([...next].sort((a, b) => a - b))}
       renderValue={(selected, getItemProps) =>
         selected.map((set, index) => {
           const { key, ...chipProps } = getItemProps({ index });
-          return <ValueChip color="default" key={key} label={`Set ${set}`} {...chipProps} />;
+          return <ValueChip color="default" key={key} label={`${words.weaponSet} ${set}`} {...chipProps} />;
         })
       }
       renderInput={(params) => (
-        <TextField {...params} inputRef={ref} label="Weapon Sets" error={!!error} helperText={error?.message} />
+        <TextField {...params} inputRef={ref} label={words.weaponSets} error={!!error} helperText={error?.message} />
       )}
     />
   );
 }
 
 /** How many of the item, where it's worn, its weapon sets, and its charges: the add and edit dialogs' fields. */
-export function InventoryPlacementFields({ form, profile, setChoices }: InventoryPlacementFieldsProps) {
+export function InventoryPlacementFields({ form, profile, setChoices, words }: InventoryPlacementFieldsProps) {
   const location = form.watch("location");
   // The form asks for a weapon set where the item's placement says one applies: a weapon's or a shield's hand
   const asksWeaponSet = !!profile?.locations.some((option) => option.location === location && option.weaponSet);
@@ -58,9 +65,9 @@ export function InventoryPlacementFields({ form, profile, setChoices }: Inventor
       <FormTextField
         control={form.control}
         name="quantity"
-        rules={wholeNumberRules(1, "Quantity is required")}
+        rules={wholeNumberRules(1, words.quantityRequired)}
         number
-        label="Quantity"
+        label={words.columns.quantity}
         fullWidth
       />
       {profile && (
@@ -68,10 +75,13 @@ export function InventoryPlacementFields({ form, profile, setChoices }: Inventor
           <SelectField
             control={form.control}
             name="location"
-            label={profile.hand ? "Hand Slot" : "Equipment Slot"}
-            options={[{ value: "none", label: "Not Equipped" }, ...profile.locations.map((option) => option.location)]}
+            label={profile.hand ? words.handSlot : words.slot}
+            options={[
+              { value: "none", label: words.notEquipped },
+              ...profile.locations.map((option) => option.location),
+            ]}
           />
-          {asksWeaponSet && <WeaponSetsField form={form} choices={setChoices} />}
+          {asksWeaponSet && <WeaponSetsField form={form} choices={setChoices} words={words} />}
           {profile.charges !== null && (
             <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
               <FormTextField
@@ -79,7 +89,7 @@ export function InventoryPlacementFields({ form, profile, setChoices }: Inventor
                 name="totalCharges"
                 rules={wholeNumberRules(0, false)}
                 number
-                label="Total Charges"
+                label={words.totalCharges}
                 fullWidth
               />
               <FormTextField
@@ -87,7 +97,7 @@ export function InventoryPlacementFields({ form, profile, setChoices }: Inventor
                 name="remainingCharges"
                 rules={wholeNumberRules(0, false)}
                 number
-                label="Remaining Charges"
+                label={words.remainingCharges}
                 fullWidth
               />
             </Stack>
