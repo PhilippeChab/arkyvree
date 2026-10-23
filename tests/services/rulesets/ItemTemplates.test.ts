@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import type { Item } from "@/engine/index.ts";
 import { db } from "@/server/database/index.ts";
-import { Entities, EntitySnapshots, Properties } from "@/server/repositories/index.ts";
+import { Activities, Entities, EntitySnapshots, Properties } from "@/server/repositories/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
 import { RulesetsService } from "@/server/services/rulesets/index.ts";
@@ -178,6 +178,29 @@ describe("Item templates", () => {
       message: `Item ${NIL_UUID} does not belong to this ruleset`,
       refusal: "invalid",
     });
+  });
+
+  test("an instance's edit records no template change when its fork copies the template it was made from", async () => {
+    const { session, ruleset, template, instance } = await setup();
+    const sword = await template("Longsword");
+    const mine = await instance("Longsword");
+    await EntitiesService.updateEntity(session, ruleset.id, "items", sword.id, {
+      name: sword.name,
+      description: "Ours",
+    });
+    // Its stored template is the original, which its view reads as the fork's copy: neither its edit's
+    await EntitiesService.updateEntity(session, ruleset.id, "items", mine.id, {
+      name: mine.name,
+      type: "Weapon",
+      weight: 5,
+    });
+    const { items } = await Activities.findPage(
+      db,
+      { userId: session.userId, targetTable: "items" },
+      { limit: 10, page: 1 },
+    );
+    const edit = items.find((activity) => activity.targetId === mine.id && activity.type === "updateItem");
+    expect(edit?.data).toMatchObject({ changedFields: [{ field: "weight", to: "5" }] });
   });
 
   describe("have no template of their own", () => {

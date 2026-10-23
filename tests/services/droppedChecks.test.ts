@@ -19,7 +19,7 @@ import { ClassLevelsService } from "@/server/services/rulesets/classes/levels/in
 import { ClassProgressionService } from "@/server/services/rulesets/classes/progression/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { api, expectOk, expectStatus } from "@/tests/support/api.ts";
-import { createCharacterAs, postCharacter } from "@/tests/support/characters.ts";
+import { createCharacterAs, createTestCharacter, postCharacter } from "@/tests/support/characters.ts";
 import { runWhileLocked } from "@/tests/support/database.ts";
 import {
   createSeedCharacter,
@@ -261,11 +261,11 @@ describe("a ruleset's entities", () => {
       description: "Fortune",
       rulesetId: ruleset.id,
     });
+    // A character's score in it, which would make it in use: refused first, as a write its kind has none of
+    const character = await createTestCharacter(owner.userId, { rulesetId: ruleset.id });
+    await CharacterLinks.create(db, "abilities", { characterId: character.id, abilityId: ability.id, score: 12 });
     const form = { name: "Luck", description: null };
-    // A new one's name kept free first, as every kind's
-    expect(EntitiesService.createEntity(owner, ruleset.id, "abilities", { ...form, name: "Fate" })).rejects.toThrow(
-      "No create",
-    );
+    expect(EntitiesService.createEntity(owner, ruleset.id, "abilities", form)).rejects.toThrow("No create");
     expect(EntitiesService.updateEntity(owner, ruleset.id, "abilities", ability.id, form)).rejects.toThrow("No update");
     expect(EntitiesService.deleteEntity(owner, ruleset.id, "abilities", ability.id)).rejects.toThrow("No delete");
   });

@@ -595,14 +595,6 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
     return this.paginated(rows as { description: string | null; id: string; name: string }[], pagination);
   }
 
-  /** The live entities of every kind a kind owns (`ownerType`: a class's levels), of its owners (`ownerIds`). */
-  async findOwned(db: Db, where: { ownerIds: string[]; ownerType: string }) {
-    const owned = [];
-    for (const entityType of Engine.storage().ownedKinds(where.ownerType))
-      owned.push(...(await this.findMany(db, { entityType, ownerIds: where.ownerIds })));
-    return owned;
-  }
-
   /**
    * A page of a ruleset's list of a kind (`where`), each as its kind's row with its lists (a feat's pools, each with its
    * aptitude).
@@ -632,6 +624,18 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
     return await this.withPagination(pagination, async (page) =>
       this.rowsWithLists<R>(db, await this.read(db, this.where(conditions), this.pageOrder(order), { page })),
     );
+  }
+
+  /**
+   * The ids a character names entities of a kind by (`entityType`, `ids`): their own, or, of a kind that owns others,
+   * those of the live entities they own (a class's levels, which a character advances in).
+   */
+  async findPickedIds(db: Db, where: { entityType: string; ids: string[] }): Promise<string[]> {
+    const ownedKinds = Engine.storage().ownedKinds(where.entityType);
+    if (ownedKinds.length === 0) return where.ids;
+    const owned = [];
+    for (const entityType of ownedKinds) owned.push(...(await this.findMany(db, { entityType, ownerIds: where.ids })));
+    return owned.map((entity) => entity.id);
   }
 
   /**

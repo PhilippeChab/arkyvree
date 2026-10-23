@@ -195,7 +195,7 @@ describe("rulesets entities by kind", () => {
       const body: unknown = await response.json();
       return isRecord(body) && body.message === `No ${words} for ${entityType}`;
     };
-    for (const { copies, families, levels, pools, type } of rules["Dungeons & Dragons: 3.5"].kinds) {
+    for (const { copies, families, levels, pools, readOnly, type } of rules["Dungeons & Dragons: 3.5"].kinds) {
       const entityType = getUrlSegment(type) as Segment;
       const list = (query: Record<string, string>) => kinds.$get({ param: { id, entityType }, query });
       const groups = await grouped.$get({ param: { id, entityType }, query: {} });
@@ -203,8 +203,10 @@ describe("rulesets entities by kind", () => {
       const param = { id, entityType, entityId: NIL_UUID };
       const duplicate = await entity.duplicate.$post({ param, json: { name: "Copy" } });
       const variants = await entity.variants.$post({ param, json: { variants: [{ name: "Copy" }] } });
-      const statuses: number[] = [duplicate.status, variants.status];
-      expect({ type, statuses }).toEqual({ type, statuses: [404, 404] });
+      // A delete of one it has none of: missing for a kind it writes, refused for a read-only one
+      const remove = await entity.$delete({ param });
+      const statuses: number[] = [duplicate.status, variants.status, remove.status];
+      expect({ type, statuses }).toEqual({ type, statuses: [404, 404, 404] });
       expect({
         type,
         pools: (await list({ aptitudeId: NIL_UUID })).status === 200,
@@ -212,6 +214,7 @@ describe("rulesets entities by kind", () => {
         groups: groups.status === 200,
         duplicate: !(await refusesAction(duplicate, "duplicate", entityType)),
         variants: !(await refusesAction(variants, "variants", entityType)),
+        writes: !(await refusesAction(remove, "delete", entityType)),
       }).toEqual({
         type,
         pools: !!pools,
@@ -219,6 +222,7 @@ describe("rulesets entities by kind", () => {
         groups: !!families,
         duplicate: !!copies,
         variants: !!copies,
+        writes: !readOnly,
       });
     }
   });

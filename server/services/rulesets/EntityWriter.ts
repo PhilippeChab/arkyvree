@@ -43,11 +43,18 @@ export type EntityBody = EntityForm & { name: string; updatedAt?: string };
  * keeps the name free (taking over a deleted copy's tombstone), writes the row, its list links, the customizations it
  * copies and what the plan writes beside it (its fields, over the copied properties of their types). An update keeps a
  * new name free as a create does, and writes the row the view's entity resolves to (its copy, made on its first edit),
- * refused when stale. A delete is refused while the entity is in use. Each records its activity, and the ruleset's
- * views drop what it changed.
+ * refused when stale. A delete is refused while the entity is in use. Each first opens the kind's rules for its action
+ * (`open`), records its activity, and the ruleset's views drop what it changed.
  */
 export default class EntityWriter {
-  constructor(private readonly type: RulesetEntityType) {}
+  constructor(
+    private readonly type: RulesetEntityType,
+    /**
+     * Opens the kind's rules for the action, first of all its steps: an action the kind has none of (an ability's
+     * create) refused before its access, name and in-use checks.
+     */
+    private readonly open: (scope: RulesetScope) => unknown = () => undefined,
+  ) {}
 
   /** The entity's customizations, copied onto the new one (`entityId`) from `sourceId`'s. */
   private async copyCustomizations(tx: Db, entityId: string, sourceId: string) {
@@ -105,6 +112,7 @@ export default class EntityWriter {
       async (tx) =>
         await withRulesetScope(tx, rulesetId, async (scope) => {
           const { ruleset, rulesetData } = scope;
+          this.open(scope);
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
           const names = new EntityNames(ruleset, rulesetData.cow);
@@ -141,6 +149,7 @@ export default class EntityWriter {
       async (tx) =>
         await withRulesetScope(tx, rulesetId, async (scope) => {
           const { ruleset } = scope;
+          this.open(scope);
           const inUse = await this.inUse(tx, scope, entityId);
           (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
 
@@ -177,6 +186,7 @@ export default class EntityWriter {
       async (tx) =>
         await withRulesetScope(tx, rulesetId, async (scope) => {
           const { ruleset, rulesetData } = scope;
+          this.open(scope);
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
           const planned = await plan(scope, { tx });

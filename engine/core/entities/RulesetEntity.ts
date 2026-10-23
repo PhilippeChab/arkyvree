@@ -25,6 +25,12 @@ import { isOneOf } from "@/shared/isOneOf.ts";
 import type { Property } from "@/shared/relations.ts";
 import { getUrlSegment } from "@/shared/urlSegments.ts";
 
+/** An action a kind may have none of: its writes, its groups, its copies. */
+export type EntityAction = "create" | "delete" | "duplicate" | "groups" | "templates" | "update" | "variants";
+
+/** The actions of a kind's copies. */
+const COPY_ACTIONS: readonly EntityAction[] = ["duplicate", "templates", "variants"];
+
 /**
  * A ruleset's entity kind (its table, `type`), as its rules answer the server of it in a ruleset's view. Every kind
  * takes the same steps, and adds its rules to the ones they name:
@@ -41,8 +47,9 @@ import { getUrlSegment } from "@/shared/urlSegments.ts";
  *   the feats it makes), and the fields it keeps once written (`fields`, which a create or an edit answers with its
  *   row);
  * - what deleting one writes (`planDelete`): checked (`checkDelete`), and what it writes with it (`deleteWritesOf`).
- * A kind its ruleset reads but never writes refuses its writes (`readOnly`), and one that makes no copies refuses a
- * duplicate, variants and templates, each as not found: "No create for abilities".
+ * An action a kind has none of it refuses as not found (`checkAction`): a read-only kind's writes (`readOnly`: "No
+ * create for abilities"), the groups of a kind that lists none, a duplicate, variants and templates of a kind that makes
+ * no copies (`copies`: "No templates for races").
  */
 export default abstract class RulesetEntity<
   K extends keyof ViewEntities,
@@ -54,6 +61,9 @@ export default abstract class RulesetEntity<
 
   /** Its form's columns, as its rules describe them (`RulesDescription.columns`): none of its own. */
   protected readonly columns: readonly FormField[] = [];
+
+  /** Whether it makes copies of its entities: their templates, a duplicate, variants (an item's). */
+  protected readonly copies: boolean = false;
 
   /** The fields its properties hold: `FieldCodec.NONE`, none of its own. */
   protected abstract readonly fields: FieldCodec<S>;
@@ -73,8 +83,14 @@ export default abstract class RulesetEntity<
   /** Its list's filters past the shared ones, by query key, each its value's schema (a pool's, a level's): none. */
   protected readonly listFilters: z.ZodRawShape = {};
 
-  /** Whether its ruleset reads it but never writes it (3.5's abilities), which refuses a create, an edit, a delete. */
+  /** Whether its ruleset reads it but never writes it (its rules seed it: an ability), which refuses its writes. */
   protected readonly readOnly: boolean = false;
+
+  /**
+   * Whether a new entity standing in for an ancestor its ruleset deleted takes after the ancestor's stored row (a feat
+   * its mark), which the server then reads for `planCreate`.
+   */
+  readonly takesAfterAncestor: boolean = false;
 
   /** The kind's table. */
   abstract readonly type: K;
@@ -127,7 +143,7 @@ export default abstract class RulesetEntity<
   }
 
   /** Refuses an action the kind has none of (`words`, what it's called): "No templates for classes". */
-  private refuseAction(words: string): never {
+  private refuseAction(words: EntityAction): never {
     throw new RulesError("not-found", `No ${words} for ${getUrlSegment(this.type)}`);
   }
 
@@ -253,6 +269,21 @@ export default abstract class RulesetEntity<
     return written ?? this.keptProperties(columns, entity);
   }
 
+  /**
+   * Refuses an action the kind has none of, as not found ("No create for abilities"): a read-only kind's create, edit
+   * and delete, the groups of a kind that lists none, a duplicate, variants and templates of a kind that makes no copies.
+   * What the server opens a kind with for an action, before its access and name checks.
+   */
+  checkAction(action: EntityAction) {
+    const has =
+      action === "groups"
+        ? this.groupFilters !== undefined
+        : COPY_ACTIONS.includes(action)
+          ? this.copies
+          : !this.readOnly;
+    if (!has) this.refuseAction(action);
+  }
+
   /** An entity as its page shows it: its row as the view resolves it, with the fields its properties hold. */
   describe(id: string) {
     return this.describeRows([this.find(id)])[0];
@@ -276,8 +307,8 @@ export default abstract class RulesetEntity<
    * server reads it with (`groupFilters`). Refused as not found for a kind that lists no groups.
    */
   openGroups({ childOnly, ...given }: { childOnly?: boolean } & Record<string, unknown>) {
-    if (!this.groupFilters) this.refuseAction("groups");
-    return this.groupsOf({ childOnly, ...this.readFilters(this.groupFilters, given) });
+    this.checkAction("groups");
+    return this.groupsOf({ childOnly, ...this.readFilters(this.groupFilters ?? {}, given) });
   }
 
   /**
@@ -302,7 +333,7 @@ export default abstract class RulesetEntity<
    * take after it.
    */
   planCreate(sent: EntityForm, _ancestor?: Record<string, unknown>): EntityCreatePlan<Columns, FieldValues<S>> {
-    if (this.readOnly) this.refuseAction("create");
+    this.checkAction("create");
     const body = this.formOf(sent);
     const form: Body = { ...body, ...this.resolveIds(body) };
     const given = this.readFields(form);
@@ -312,7 +343,7 @@ export default abstract class RulesetEntity<
 
   /** Deleting an entity (`id`): the entity as the view has it, and what its delete writes with it. */
   planDelete(id: string): EntityDeletePlan<ViewEntities[K]> {
-    if (this.readOnly) this.refuseAction("delete");
+    this.checkAction("delete");
     const entity = this.find(id);
     this.checkDelete(entity);
     return { entity, writes: this.deleteWritesOf(entity) };
@@ -328,7 +359,7 @@ export default abstract class RulesetEntity<
    * doesn't give as they are), what it writes beside it, and the fields it keeps once written.
    */
   planEdit(id: string, sent: EntityForm): EntityEditPlan<Columns, FieldValues<S>, ViewEntities[K]> {
-    if (this.readOnly) this.refuseAction("update");
+    this.checkAction("update");
     const entity = this.find(id);
     const body = this.formOf(sent, entity);
     const form: Body = { ...body, ...this.resolveIds(body) };

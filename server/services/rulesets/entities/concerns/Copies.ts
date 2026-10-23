@@ -39,8 +39,10 @@ export function Copies<B extends Constructor>(Base: B) {
           await withRulesetScope(tx, rulesetId, async (scope) => {
             const { ruleset, rulesetData } = scope;
 
+            // Refused first, for a kind that makes no copies
+            const kind = Engine.for(scope).entities(type, "variants");
             (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
-            const plan = Engine.for(scope).entities(type).planVariants(sourceId, variants);
+            const plan = kind.planVariants(sourceId, variants);
             // Every variant's name kept free, as a create's is, in one read: the tombstones they take over, by name
             const names = new EntityNames(ruleset, rulesetData.cow);
             const tombstones = await names.assertNamesAvailable(

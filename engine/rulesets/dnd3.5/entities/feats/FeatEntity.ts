@@ -52,6 +52,9 @@ export default class FeatEntity extends ListedEntity<
   /** Its list's filters: a pool's feats, a family's. */
   protected override readonly listFilters = { aptitudeId: z.string().uuid(), family: z.string() };
 
+  /** A new feat standing in for a generated ancestor is generated. */
+  override readonly takesAfterAncestor = true;
+
   override readonly type = "feats";
 
   /**

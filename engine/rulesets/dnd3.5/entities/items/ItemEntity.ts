@@ -74,6 +74,9 @@ export default class ItemEntity extends CustomizationPageEntity<
   /** Its cost, weight, type, slot and template. */
   protected override readonly columns = ITEM_COLUMNS;
 
+  /** Its templates, a duplicate, variants. */
+  protected override readonly copies = true;
+
   /** Its armor's, its shield's and its weapon's, its charges, its make. */
   protected override readonly fields = ITEM_FIELDS;
 

@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import { db } from "@/server/database/index.ts";
 import { ForbiddenError } from "@/server/errors/index.ts";
-import { CharacterInventory, EntitySnapshots } from "@/server/repositories/index.ts";
+import { Activities, CharacterInventory, EntitySnapshots } from "@/server/repositories/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import type { Session } from "@/shared/relations.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
@@ -257,6 +257,16 @@ describe("EntitiesService: items", () => {
       expect(first).toMatchObject(copiedCustomizations);
       expect(second).toMatchObject(copiedCustomizations);
       expect(first.modifiers[0].id).not.toBe(second.modifiers[0].id);
+      // Each a new item's activity
+      const { items } = await Activities.findPage(
+        db,
+        { userId: session.userId, targetTable: "items" },
+        { limit: 10, page: 1 },
+      );
+      expect(variants.map((variant) => items.find((activity) => activity.targetId === variant.id))).toMatchObject([
+        { type: "createItem", data: { entityName: "Scroll of Healing" } },
+        { type: "createItem", data: { entityName: "Scroll of Light" } },
+      ]);
     });
 
     test("of a template, or of an instance of one, are instances of that template", async () => {

@@ -1,5 +1,5 @@
 import type { Db } from "@/drizzle/database.ts";
-import { Engine, type EntityCopies } from "@/engine/index.ts";
+import { Engine, type EntityAction, type EntityCopies } from "@/engine/index.ts";
 import { include } from "@/lib/mixins.ts";
 import { type RulesetScope, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
@@ -20,6 +20,11 @@ export const ENTITY_TYPES: readonly RulesetEntityType[] = RULESET_ENTITY_TYPES;
  * ability's create, a race's templates) its rules refuse as not found. Its copies (`Copies`): its templates, variants.
  */
 class EntitiesService extends include(Object, Copies) {
+  /** A kind's writer for an action (`action`), which opens its rules for it first: refused when it has none of it. */
+  private writerOf(type: RulesetEntityType, action: EntityAction) {
+    return new EntityWriter(type, (scope) => Engine.for(scope).entities(type, action));
+  }
+
   /** The copies a plan reaches (`copies`: a template's, in its view and the rulesets built on it), by its check. */
   private async checkCopies(
     tx: Db,
@@ -41,25 +46,28 @@ class EntitiesService extends include(Object, Copies) {
 
   /**
    * A new entity of a kind off its form. Named as an ancestor its ruleset deleted, it stands in for it
-   * (`EntityNames.repointTombstone`), and its kind's rules read the ancestor's stored row (a feat takes its mark).
+   * (`EntityNames.repointTombstone`), and its kind's rules read the ancestor's stored row when they take after it (a
+   * feat takes its mark).
    */
   async createEntity<R = EntityRow>(session: Session, rulesetId: string, type: RulesetEntityType, body: EntityBody) {
-    const created = await new EntityWriter(type).create(
+    const created = await this.writerOf(type, "create").create(
       session,
       rulesetId,
       body.name,
       async (scope, { tombstoneAncestorId, tx }) => {
-        const ancestor = tombstoneAncestorId
-          ? await Entities.findOne(tx, { entityType: type, id: tombstoneAncestorId })
-          : undefined;
-        return Engine.for(scope).entities(type).planCreate(body, ancestor);
+        const kind = Engine.for(scope).entities(type);
+        const ancestor =
+          tombstoneAncestorId && kind.takesAfterAncestor
+            ? await Entities.findOne(tx, { entityType: type, id: tombstoneAncestorId })
+            : undefined;
+        return kind.planCreate(body, ancestor);
       },
     );
     return created as R;
   }
 
   async deleteEntity<R = EntityRow>(session: Session, rulesetId: string, type: RulesetEntityType, entityId: string) {
-    const deleted = await new EntityWriter(type).delete(session, rulesetId, entityId, async (scope, { tx }) => {
+    const deleted = await this.writerOf(type, "delete").delete(session, rulesetId, entityId, async (scope, { tx }) => {
       const plan = Engine.for(scope).entities(type).planDelete(entityId);
       await this.checkCopies(tx, scope, type, plan.copies);
       return plan;
@@ -78,7 +86,7 @@ class EntitiesService extends include(Object, Copies) {
     sourceId: string,
     body: EntityBody,
   ) {
-    const created = await new EntityWriter(type).create(session, rulesetId, body.name, (scope) =>
+    const created = await this.writerOf(type, "duplicate").create(session, rulesetId, body.name, (scope) =>
       Engine.for(scope).entities(type).planDuplicate(sourceId, body),
     );
     return created as R;
@@ -155,7 +163,7 @@ class EntitiesService extends include(Object, Copies) {
     entityId: string,
     body: EntityBody,
   ) {
-    const updated = await new EntityWriter(type).update(session, rulesetId, body, async (scope, { tx }) => {
+    const updated = await this.writerOf(type, "update").update(session, rulesetId, body, async (scope, { tx }) => {
       const plan = Engine.for(scope).entities(type).planEdit(entityId, body);
       await this.checkCopies(tx, scope, type, plan.copies);
       return plan;
