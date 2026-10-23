@@ -74,8 +74,16 @@ export {
   type EntityKindsContract,
   type EntityRemoval,
   type EntityWrites,
+  type JoinRows,
+  type LinkAddPlan,
+  type LinkRemovePlan,
   type ListLink,
   type MadeEntity,
+  type OwnedCreatePlan,
+  type OwnedDeletePlan,
+  type OwnedEditPlan,
+  type PlanOwner,
+  type ProgressionPlan,
   type PropertyValue,
 } from "./parts/entities/index.ts";
 export {

@@ -5,7 +5,6 @@ import { db } from "@/server/database/index.ts";
 import { Activities, Characters, Entities, Notifications, Players, Rulesets } from "@/server/repositories/index.ts";
 import { CampaignInvitesService } from "@/server/services/campaigns/invites/index.ts";
 import { CharacterContributorsService } from "@/server/services/characters/contributors/index.ts";
-import { ClassSkillsService } from "@/server/services/rulesets/classes/skills/index.ts";
 import { ContributorsService } from "@/server/services/rulesets/contributors/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { collectNotified } from "@/server/websockets/index.ts";
@@ -217,8 +216,8 @@ describe("activity notifications", () => {
       rulesetId,
       primaryAbilityId: ability.id,
     });
-    await ClassSkillsService.addClassSkill(author.session, rulesetId, fighter.id, climb.id);
-    await ClassSkillsService.removeClassSkill(author.session, rulesetId, fighter.id, climb.id);
+    await EntitiesService.addEntityLink(author.session, rulesetId, "klasses", fighter.id, climb.id);
+    await EntitiesService.removeEntityLink(author.session, rulesetId, "klasses", fighter.id, climb.id);
 
     expect(await inbox(owner)).toEqual([note("addKlassSkill", author), note("removeKlassSkill", author)]);
   });
@@ -254,7 +253,7 @@ describe("activity notifications", () => {
       rulesetId: ruleset.id,
       primaryAbilityId: ability.id,
     });
-    await ClassSkillsService.addClassSkill(author.session, ruleset.id, fighter.id, climb.id);
+    await EntitiesService.addEntityLink(author.session, ruleset.id, "klasses", fighter.id, climb.id);
     await EntitiesService.deleteEntity(author.session, ruleset.id, "feats", feat.id);
 
     const page = { limit: 50, page: 1 };

@@ -1,43 +1,15 @@
 import type { RulesetEntity } from "@/engine/core/entities/index.ts";
-import type { Fields, FormField } from "@/engine/core/fields/index.ts";
+import type { Fields } from "@/engine/core/fields/index.ts";
 import type { RulesetView, ViewEntities } from "@/engine/core/view/index.ts";
 
 /** A kind's rules, of its table (`K`): its `RulesetEntity`, whatever form its saves take. */
 type Kind<K extends keyof ViewEntities> = RulesetEntity<K, object, object, Fields>;
 
 /**
- * The entity kinds a ruleset answers of, by the schema's tables: each its table's `RulesetEntity`, and those whose
- * pages read more than an entity have it: a class's parts (its levels, its class skills, its table, a level by its id
- * alone, its progression).
+ * The entity kinds a ruleset answers of, by the schema's tables: each its table's `RulesetEntity`, whose parts a kind
+ * has or refuses (the entities it owns, the join it edits, its progression and its tables: a class's).
  */
-export type EntityKindsContract = { [K in Exclude<keyof ViewEntities, "klass_levels">]: Kind<K> } & {
-  klasses: {
-    describeLevel(levelId: string): unknown;
-    describeLevelFields(): FormField[];
-    levels(klassId: string): {
-      describe(levelId: string): unknown;
-      describeAll(): unknown;
-      planCreate(body: never): unknown;
-      planDelete(levelId: string): unknown;
-      planEdit(levelId: string, body: never): unknown;
-    };
-    progression(klassId: string): {
-      describe(): unknown;
-      plan(body: never): unknown;
-    };
-    skills(klassId: string): {
-      describe(): unknown;
-      planAdd(skillId: string): unknown;
-      planRemove(skillId: string): unknown;
-    };
-    table(klassId: string): {
-      describeFeatPools(): unknown;
-      describeSpellLists(): unknown;
-      describeSpells(): unknown;
-      describeSpellsKnown(): unknown;
-    };
-  };
-};
+export type EntityKindsContract = { [K in Exclude<keyof ViewEntities, "klass_levels">]: Kind<K> };
 
 /** What a ruleset answers of its entities: each kind's rules (`E`), bound to a ruleset's view. */
 export default abstract class EntitiesPart<E extends EntityKindsContract> {

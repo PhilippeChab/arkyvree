@@ -4,8 +4,6 @@ import type { Item, Klass, KlassLevel, Race } from "@/engine/index.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Entities, Modifiers, Properties, Rulesets } from "@/server/repositories/index.ts";
-import { ClassLevelsService } from "@/server/services/rulesets/classes/levels/index.ts";
-import { ClassSkillsService } from "@/server/services/rulesets/classes/skills/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
 import {
@@ -62,7 +60,7 @@ async function setup(entityType: EntityType, omitLastLevel = false) {
       const last = (await Entities.findMany<KlassLevel>(db, { entityType: "klass_levels", ownerIds: [copy.id] })).find(
         (level) => level.level === 20,
       )!;
-      await ClassLevelsService.deleteClassLevel(session, extension.id, copy.id, last.id);
+      await EntitiesService.deleteOwnedEntity(session, extension.id, "klasses", copy.id, last.id);
     }
     await Rulesets.update(
       db,
@@ -149,18 +147,20 @@ for (const action of ["add skill", "remove skill", "create level", "update level
       };
     });
     if (action === "add skill") {
-      await ClassSkillsService.addClassSkill(session, host.id, source.id, otherSkill);
+      await EntitiesService.addEntityLink(session, host.id, "klasses", source.id, otherSkill);
     } else if (action === "remove skill") {
-      await ClassSkillsService.removeClassSkill(session, host.id, source.id, assignedSkill);
+      await EntitiesService.removeEntityLink(session, host.id, "klasses", source.id, assignedSkill);
     } else if (action === "create level") {
-      await ClassLevelsService.createClassLevel(session, host.id, source.id, {
+      await EntitiesService.createOwnedEntity(session, host.id, "klasses", source.id, {
         level: 20,
         fields: { bab: 20, skills: 2 },
       });
     } else if (action === "update level") {
-      await ClassLevelsService.updateClassLevel(session, host.id, source.id, levelId, { fields: { skills: 3 } });
+      await EntitiesService.updateOwnedEntity(session, host.id, "klasses", source.id, levelId, {
+        fields: { skills: 3 },
+      });
     } else {
-      await ClassLevelsService.deleteClassLevel(session, host.id, source.id, levelId);
+      await EntitiesService.deleteOwnedEntity(session, host.id, "klasses", source.id, levelId);
     }
     await assertCopied();
   });

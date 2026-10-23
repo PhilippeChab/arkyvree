@@ -400,6 +400,16 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
     return await this.readRows<R>(db, await this.createIds(db, entityType, values));
   }
 
+  /** Writes an owned kind's new row (`values`, by its columns) under its owner (`ownerId`): its owner's column filled. */
+  async createOwned<R extends EntityRow = EntityRow>(
+    db: Db,
+    entityType: string,
+    ownerId: string,
+    values: Record<string, unknown>,
+  ) {
+    return await this.create<R>(db, entityType, { ...values, [Engine.storage().ownerColumn(entityType)]: ownerId });
+  }
+
   /**
    * Deletes an entity of a kind: its fields and links go with it, and what deleting it does to others' its roles say.
    * Answers it as it was.
@@ -636,6 +646,21 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
     const owned = [];
     for (const entityType of ownedKinds) owned.push(...(await this.findMany(db, { entityType, ownerIds: where.ids })));
     return owned.map((entity) => entity.id);
+  }
+
+  /** The ids of an owner's live entities of an owned kind (`ownerId`), by their place on its track (a level's number). */
+  async findPositions(db: Db, where: { entityType: string; ownerId: string }): Promise<Map<number, string>> {
+    const rows = await db
+      .select({ id: entitiesInRules.id, position: entitiesInRules.position })
+      .from(entitiesInRules)
+      .where(
+        and(
+          eq(entitiesInRules.type, where.entityType),
+          eq(entitiesInRules.ownerId, where.ownerId),
+          isNull(entitiesInRules.deletedAt),
+        ),
+      );
+    return new Map(rows.flatMap((row) => (row.position === null ? [] : [[row.position, row.id]])));
   }
 
   /**

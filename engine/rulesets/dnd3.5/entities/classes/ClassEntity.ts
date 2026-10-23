@@ -58,20 +58,25 @@ export default class ClassEntity extends RulesetEntity<
    * A class level by its id alone, with its details, its class's name, which its page shows, and the ruleset that holds
    * its class: an inherited one's level is inherited too. Refused when the view has no such level.
    */
-  describeLevel(levelId: string) {
+  describeOwned(levelId: string) {
     const level = this.rulesetData.klassLevelsById.get(levelId);
     if (!level) throw new RulesError("not-found", "Class level not found in this ruleset");
     const klass = this.find(level.klassId);
-    return { ...this.levels(klass.id).describe(level.id), name: klass.name, rulesetId: klass.rulesetId };
+    return { ...this.owned(klass.id).describe(level.id), name: klass.name, rulesetId: klass.rulesetId };
   }
 
   /** The fields a class level's form shows, as the ruleset declares them: its base attack bonus, its skill points. */
-  describeLevelFields() {
+  describeOwnedFields() {
     return CLASS_LEVEL_FIELDS.describe();
   }
 
+  /** A class's class skills (`klassId`): described, and what adding or removing one takes. Refused without the class. */
+  links(klassId: string) {
+    return new ClassSkills(this.view, this.find(klassId));
+  }
+
   /** A class's levels (`klassId`): described, and what saving or deleting one writes. Refused without the class. */
-  levels(klassId: string) {
+  owned(klassId: string) {
     return new ClassLevelEntity(this.view, this.find(klassId));
   }
 
@@ -89,13 +94,8 @@ export default class ClassEntity extends RulesetEntity<
     );
   }
 
-  /** A class's class skills (`klassId`): described, and what adding or removing one takes. Refused without the class. */
-  skills(klassId: string) {
-    return new ClassSkills(this.view, this.find(klassId));
-  }
-
   /** A class's table (`klassId`): its feat pools, spell lists and spells by level. Refused without the class. */
-  table(klassId: string) {
+  tables(klassId: string) {
     return new ClassTable(this.view, this.find(klassId));
   }
 }

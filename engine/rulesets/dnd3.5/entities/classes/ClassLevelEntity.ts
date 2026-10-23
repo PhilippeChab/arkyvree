@@ -130,17 +130,21 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
   override planCreate(form: EntityForm) {
     const plan = super.planCreate(form);
     const body = this.formOf(form);
+    const level = RulesError.parse(LEVEL, body.level);
     return {
       ...plan,
-      ...this.joinRows(body),
-      columns: { level: RulesError.parse(LEVEL, body.level) },
-      klass: this.klass,
+      activity: { entityName: this.klass.name, level },
+      columns: { level },
+      joins: this.joinRows(body),
+      owner: this.klass,
     };
   }
 
   /** Deleting one of the class's levels: the class and the level, as the view has them. */
   override planDelete(levelId: string) {
-    return { ...super.planDelete(levelId), klass: this.klass };
+    const plan = super.planDelete(levelId);
+    const activity = { rulesetId: this.view.ruleset.id, entityName: this.klass.name, level: plan.entity.level };
+    return { ...plan, activity, owner: this.klass };
   }
 
   /**
@@ -150,7 +154,12 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
    */
   override planEdit(levelId: string, form: EntityForm) {
     const plan = super.planEdit(levelId, form);
-    return { ...plan, ...this.joinRows(this.formOf(form, plan.entity)), klass: this.klass };
+    return {
+      ...plan,
+      activity: { entityName: this.klass.name, level: plan.entity.level },
+      joins: this.joinRows(this.formOf(form, plan.entity)),
+      owner: this.klass,
+    };
   }
 
   /** A level's details: the feats it grants (each with its pool's name and whether it's free), its saves' base bonuses. */
@@ -178,14 +187,18 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
   }
 
   /**
-   * A form's join rows: the feats it grants (free unless it says), and its saves' base bonuses, each entity the view's
-   * (`resolveIds`).
+   * A form's join rows, by join: the feats it grants (free unless it says), and its saves' base bonuses, each entity the
+   * view's (`resolveIds`). One the form leaves out it keeps.
    */
   private joinRows(body: ClassLevelBody) {
     const { feats, saves } = { ...body, ...this.resolveIds(body) };
     return {
-      feats: feats?.map((feat) => ({ aptitudeId: feat.aptitudeId, featId: feat.featId, free: feat.free ?? true })),
-      saves: saves?.map((save) => ({ base: save.base, saveId: save.saveId })),
+      klass_level_feats: feats?.map((feat) => ({
+        aptitudeId: feat.aptitudeId,
+        featId: feat.featId,
+        free: feat.free ?? true,
+      })),
+      klass_level_saves: saves?.map((save) => ({ base: save.base, saveId: save.saveId })),
     };
   }
 

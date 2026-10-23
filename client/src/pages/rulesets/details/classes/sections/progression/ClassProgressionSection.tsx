@@ -121,7 +121,10 @@ export function ClassProgressionSection({ rulesetId, classId, className, ruleset
     createFn: async (level: ClassLevelFormData) =>
       tag(
         parseResponse(
-          rpc.api.rulesets[":id"].classes[":classId"].levels.$post({ param: { id: rulesetId, classId }, json: level }),
+          rpc.api.rulesets[":id"].entities[":entityType"][":entityId"].owned.$post({
+            param: { id: rulesetId, entityType: "classes", entityId: classId },
+            json: level,
+          }),
         ),
       ),
     onCreateSuccess: (created) => followCopy(created.klassId, created.sourceEntityId),

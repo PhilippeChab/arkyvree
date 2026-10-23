@@ -5,7 +5,6 @@
  * ruleset the caller hands it: nothing outside the engine imports anything else of it, but the handles' types.
  */
 
-export type { default as ClassEngine } from "./api/ClassEngine.ts";
 export type { StoredRulesetRows } from "./api/CopyOnWriteEngine.ts";
 export { default as Engine } from "./api/Engine.ts";
 export type { ImportFileDescription } from "./api/ImportsEngine.ts";
@@ -31,14 +30,19 @@ export type {
   ImportPlan,
   ImportReportDescription,
   ImportSource,
+  JoinRows,
   LanguagesPlan,
   LevelPlanRequest,
   LevelRows,
   LevelWrites,
+  LinkAddPlan,
   LinkPart,
+  LinkRemovePlan,
   ListLink,
   MadeEntity,
   NewBondedCreature,
+  OwnedEditPlan,
+  ProgressionPlan,
   RacePickQuery,
   RulesDescription,
   RulesWord,

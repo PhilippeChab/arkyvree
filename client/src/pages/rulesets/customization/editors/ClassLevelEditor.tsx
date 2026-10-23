@@ -65,8 +65,8 @@ export function ClassLevelEditor({
     label: "Class level",
     saveFn: (data: ClassLevelFormData, updatedAt: string | undefined) =>
       parseResponse(
-        rpc.api.rulesets[":id"].classes[":classId"].levels[":levelId"].$put({
-          param: { id: rulesetId, classId: level.klassId, levelId: entityId },
+        rpc.api.rulesets[":id"].entities[":entityType"][":entityId"].owned[":ownedId"].$put({
+          param: { id: rulesetId, entityType: "classes", entityId: level.klassId, ownedId: entityId },
           json: {
             fields: data.fields,
             saves: withAllSaves(data.saves ?? []),

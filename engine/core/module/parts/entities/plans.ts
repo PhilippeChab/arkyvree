@@ -94,6 +94,25 @@ export interface EntityWrites {
   requirement?: RequirementWrite;
 }
 
+/**
+ * Adding a link from an entity through the join its owner edits (`join`: a class's skills): the owner as the view has
+ * it, the join's row but its from-column (`row`), and what its activity records (`activity`).
+ */
+export interface LinkAddPlan {
+  activity: Record<string, unknown>;
+  join: string;
+  owner: PlanOwner;
+  row: Record<string, unknown>;
+}
+
+/** Removing a link through the join its owner edits (`join`): the owner, the link's target, and what its activity records. */
+export interface LinkRemovePlan {
+  activity: Record<string, unknown>;
+  join: string;
+  owner: PlanOwner;
+  toId: string;
+}
+
 /** A list an entity is linked to (`aptitudeId`), and its level on it (a power's spell level on a class's list). */
 export interface ListLink {
   aptitudeId: string;
@@ -113,8 +132,63 @@ export interface MadeEntity {
   type: string;
 }
 
+/** What an owned entity's create writes past an entity's: its joins' rows, its owner, and what its activity records. */
+export interface OwnedCreatePlan<C = Record<string, unknown>, F = object> extends EntityCreatePlan<C, F> {
+  activity: Record<string, unknown>;
+  joins: JoinRows;
+  owner: PlanOwner;
+}
+
+/** What an owned entity's delete writes past an entity's: its owner, and what its activity records. */
+export interface OwnedDeletePlan<E = { id: string; name: string }> extends EntityDeletePlan<E> {
+  activity: Record<string, unknown>;
+  owner: PlanOwner;
+}
+
+/** What an owned entity's edit writes past an entity's: its joins' rows, its owner, and what its activity records. */
+export interface OwnedEditPlan<
+  C = Record<string, unknown>,
+  F = object,
+  E = { id: string; name: string },
+> extends EntityEditPlan<C, F, E> {
+  activity: Record<string, unknown>;
+  joins: JoinRows;
+  owner: PlanOwner;
+}
+
+/** The entity that owns the ones a plan writes (a level's class), as the view has it. */
+export interface PlanOwner {
+  id: string;
+  name: string;
+  rulesetId: string;
+}
+
+/**
+ * One save of an owner's progression (a class's levels at once): the owner as the view has it, the kind it owns
+ * (`ownedType`), each owned entity it changes, by its place on the owner's track (`position`), with its edit and the
+ * modifiers it adds and removes, and what its activity records.
+ */
+export interface ProgressionPlan {
+  activity: Record<string, unknown>;
+  owned: {
+    added: { operator: string; target: string; value: string; valueType: "number" }[];
+    edit?: OwnedEditPlan<object, object, { id: string }>;
+    entity: { id: string };
+    position: number;
+    removedIds: string[];
+  }[];
+  ownedType: string;
+  owner: PlanOwner;
+}
+
 /** A property a plan keeps a field in: its type and value, on the entity it writes. */
 export interface PropertyValue {
   type: string;
   value: string;
 }
+
+/**
+ * The rows of the joins from an entity a plan writes, by the join's name (a class level's granted feats), each row by
+ * its join's columns but the one it's from, which the server fills: a join the plan leaves out it keeps.
+ */
+export type JoinRows = Record<string, Record<string, unknown>[] | undefined>;

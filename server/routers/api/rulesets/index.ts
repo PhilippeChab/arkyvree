@@ -7,7 +7,6 @@ import { idParam, limit, page } from "@/server/routers/api/validation.ts";
 import { RulesetsService } from "@/server/services/rulesets/index.ts";
 
 import changes from "./changes/index.ts";
-import classes from "./classes/index.ts";
 import contributorsRouter from "./contributors/index.ts";
 import modifiers from "./customization/modifiers/index.ts";
 import requirements from "./customization/requirements/index.ts";
@@ -20,7 +19,6 @@ import settings from "./settings/index.ts";
 export default new Hono()
   .use(sessionMiddleware)
   .route("/", contributorsRouter)
-  .route("/", classes)
   .route("/", fields)
   .route("/", settings)
   .route("/", modifiers)

@@ -1,21 +1,43 @@
-import type { EntityAction } from "@/engine/core/entities/index.ts";
+import type {
+  EntityAction,
+  EntityLinks,
+  EntityProgression,
+  EntityTables,
+  OwnedEntities,
+} from "@/engine/core/entities/index.ts";
 import type { EntityFieldValues, FormField } from "@/engine/core/fields/index.ts";
 import type { CharacterInput } from "@/engine/core/module/index.ts";
+import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import type { PropertyEntityType } from "@/shared/customization/entities.ts";
 import type { RulesetKind } from "@/shared/enums.ts";
+import { getUrlSegment } from "@/shared/urlSegments.ts";
 
 import CharacterEngine from "./CharacterEngine.ts";
 import CharactersEngine from "./CharactersEngine.ts";
-import ClassEngine from "./ClassEngine.ts";
 import ModifiersEngine from "./ModifiersEngine.ts";
-import Modules, { type EntityType, type Module } from "./Modules.ts";
+import Modules, { type EntityKinds, type EntityType, type Module } from "./Modules.ts";
 import RequirementsEngine from "./RequirementsEngine.ts";
 import TargetPathsEngine from "./TargetPathsEngine.ts";
 
+/** A part of an entity a kind may have, by its method: the entities it owns, one of them by its id alone, the links it edits, its progression and its tables. */
+type EntityPart = "describeOwned" | "links" | "owned" | "progression" | "tables";
+
+/** What a kind (`T`, its rules) answers of a part (`P`), if it has it: none of a kind that hasn't, of each of a union. */
+type PartOf<T, P extends EntityPart> = T extends Record<P, (id: string) => infer R> ? R : never;
+
+/** What a refusal calls a part a kind has none of: "No links for races". */
+const PART_WORDS: Readonly<Record<EntityPart, string>> = {
+  describeOwned: "owned entities",
+  links: "links",
+  owned: "owned entities",
+  progression: "progression",
+  tables: "tables",
+};
+
 /**
  * The engine bound to a ruleset's view (`Engine.for(scope)`): what its rules answer, by what they're about, each a
- * handle bound to it (a character's rows, a class, an entity's customizations). Its module, which its base rules pick,
+ * handle bound to it (a character's rows, an entity kind, an entity's customizations). Its module, which its base rules pick,
  * is read once.
  */
 export default class RulesetEngine {
@@ -24,6 +46,18 @@ export default class RulesetEngine {
   }
 
   private readonly module: Module;
+
+  /**
+   * A part of an entity of a kind (`type`, `ownerId`), by its method (`part`): refused as not found when its kind has
+   * none of it ("No links for races").
+   */
+  private part<K extends EntityType, P extends EntityPart>(type: K, part: P, id: string): PartOf<EntityKinds[K], P> {
+    const kind = this.entities(type) as unknown as Partial<Record<P, (id: string) => PartOf<EntityKinds[K], P>>>;
+    const method = kind[part];
+    if (typeof method !== "function")
+      throw new RulesError("not-found", `No ${PART_WORDS[part]} for ${getUrlSegment(type)}`);
+    return method.call(kind, id);
+  }
 
   /** A character of the ruleset, from its rows (`input`): its sheets, its inventory and its level flows. */
   character(input: CharacterInput) {
@@ -43,11 +77,6 @@ export default class RulesetEngine {
     this.module.ruleset.checkPublishable(this.view, kind);
   }
 
-  /** A class of the ruleset (`klassId`): its table, its levels and its skills. */
-  class(klassId: string) {
-    return new ClassEngine(this.view, this.module, klassId);
-  }
-
   /**
    * The fields each entity's form shows, by its type, and the ruleset's Settings' (`rulesets`), as the ruleset declares
    * them: what a form lays out and what its save holds each to.
@@ -56,13 +85,18 @@ export default class RulesetEngine {
     return {
       feats: this.entities("feats").describeFields(),
       items: this.entities("items").describeFields(),
-      klass_levels: this.entities("klasses").describeLevelFields(),
+      klass_levels: this.entities("klasses").describeOwnedFields(),
       klasses: this.entities("klasses").describeFields(),
       powers: this.entities("powers").describeFields(),
       races: this.entities("races").describeFields(),
       rulesets: this.module.ruleset.describeSettingsFields(),
       skills: this.entities("skills").describeFields(),
     };
+  }
+
+  /** An owned entity by its id alone (`type`, its owner's kind; `ownedId`), as its page shows it, with its owner's name. */
+  describeOwned<K extends EntityType>(type: K, ownedId: string) {
+    return this.part(type, "describeOwned", ownedId);
   }
 
   /** The ruleset's Settings, its own fields (3.5's skill points' ability), as its chain composes them. */
@@ -81,9 +115,19 @@ export default class RulesetEngine {
     return kind;
   }
 
+  /** An entity's links it edits through a join (`type`, `ownerId`: a class's skills): refused for a kind without. */
+  links<K extends EntityType>(type: K, ownerId: string) {
+    return this.part(type, "links", ownerId) as Extract<PartOf<EntityKinds[K], "links">, EntityLinks>;
+  }
+
   /** An entity's modifiers (`entityType`, `entityId`). */
   modifiers(entityType: string, entityId: string) {
     return new ModifiersEngine(this.view, this.module, entityType, entityId);
+  }
+
+  /** The entities an entity owns (`type`, `ownerId`: a class's levels): refused for a kind that owns none. */
+  owned<K extends EntityType>(type: K, ownerId: string) {
+    return this.part(type, "owned", ownerId) as Extract<PartOf<EntityKinds[K], "owned">, OwnedEntities>;
   }
 
   /** A save of the ruleset's Settings (`body.fields`): checked, the values it keeps, and the properties it writes. */
@@ -91,9 +135,19 @@ export default class RulesetEngine {
     return this.module.ruleset.planSettings(this.view, body);
   }
 
+  /** An entity's progression (`type`, `ownerId`: a class's levels at once): refused for a kind without one. */
+  progression<K extends EntityType>(type: K, ownerId: string) {
+    return this.part(type, "progression", ownerId) as Extract<PartOf<EntityKinds[K], "progression">, EntityProgression>;
+  }
+
   /** An entity's requirements (`entityType`, `entityId`). */
   requirements(entityType: string, entityId: string) {
     return new RequirementsEngine(this.view, this.module, entityType, entityId);
+  }
+
+  /** An entity's tables (`type`, `ownerId`: a class's spells per day): refused for a kind without them. */
+  tables<K extends EntityType>(type: K, ownerId: string) {
+    return this.part(type, "tables", ownerId) as Extract<PartOf<EntityKinds[K], "tables">, EntityTables>;
   }
 
   /** The ruleset's target paths. */

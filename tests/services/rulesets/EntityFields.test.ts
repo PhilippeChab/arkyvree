@@ -4,7 +4,6 @@ import type { Feat, Klass, RulesetAbility } from "@/engine/index.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Entities, Properties } from "@/server/repositories/index.ts";
-import { ClassLevelsService } from "@/server/services/rulesets/classes/levels/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { copyEntity, createSeededTestRuleset, createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
@@ -121,12 +120,17 @@ describe("An entity's fields", () => {
     });
     expect(await storedProperties(wizard.id)).toEqual([`${KLASS_BONUS_SPELL_ABILITY_ID}=${intelligence.id}`]);
 
-    const level = await ClassLevelsService.createClassLevel(session, rulesetId, wizard.id, {
+    const level = await EntitiesService.createOwnedEntity(session, rulesetId, "klasses", wizard.id, {
       level: 1,
       fields: { bab: 0, skills: 2 },
     });
-    await ClassLevelsService.updateClassLevel(session, rulesetId, wizard.id, level.id, { fields: { skills: 4 } });
-    expect(await ClassLevelsService.getClassLevel(rulesetId, wizard.id, level.id)).toMatchObject({ bab: 0, skills: 4 });
+    await EntitiesService.updateOwnedEntity(session, rulesetId, "klasses", wizard.id, level.id, {
+      fields: { skills: 4 },
+    });
+    expect(await EntitiesService.getOwnedEntity(rulesetId, "klasses", wizard.id, level.id)).toMatchObject({
+      bab: 0,
+      skills: 4,
+    });
   });
 
   test("refuse, by field, one their entity type doesn't declare, and a value outside its type's list or bounds", async () => {
@@ -161,14 +165,17 @@ describe("An entity's fields", () => {
       }),
     ).rejects.toMatchObject({ refusal: "invalid", message: `Ability ${NIL_UUID} does not belong to this ruleset` });
     expect(
-      ClassLevelsService.createClassLevel(session, rulesetId, wizard.id, { level: 1, fields: { skills: -1 } }),
+      EntitiesService.createOwnedEntity(session, rulesetId, "klasses", wizard.id, { level: 1, fields: { skills: -1 } }),
     ).rejects.toMatchObject({ refusal: "invalid", issues: [{ category: "fields.skills" }] });
     // A base attack bonus past the last level's full one, and skill points past a table's most
     expect(
-      ClassLevelsService.createClassLevel(session, rulesetId, wizard.id, { level: 1, fields: { bab: 21 } }),
+      EntitiesService.createOwnedEntity(session, rulesetId, "klasses", wizard.id, { level: 1, fields: { bab: 21 } }),
     ).rejects.toMatchObject({ refusal: "invalid", issues: [{ category: "fields.bab" }] });
     expect(
-      ClassLevelsService.createClassLevel(session, rulesetId, wizard.id, { level: 1, fields: { skills: 100 } }),
+      EntitiesService.createOwnedEntity(session, rulesetId, "klasses", wizard.id, {
+        level: 1,
+        fields: { skills: 100 },
+      }),
     ).rejects.toMatchObject({ refusal: "invalid", issues: [{ category: "fields.skills" }] });
     expect(await Entities.findOne<Feat>(db, { entityType: "feats", name: "Odd", rulesetId })).toBeUndefined();
   });
