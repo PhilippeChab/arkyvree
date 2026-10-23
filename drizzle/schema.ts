@@ -354,6 +354,11 @@ export const advancementsInCharacter = character.table(
         table.position.asc().nullsLast().op("int4_ops"),
       )
       .where(sql`(deleted_at IS NULL)`),
+    uniqueIndex("advancements_character_track_idx").using(
+      "btree",
+      table.characterId.asc().nullsLast().op("uuid_ops"),
+      table.trackId.asc().nullsLast().op("uuid_ops"),
+    ),
     index("advancements_track_idx")
       .using("btree", table.trackId.asc().nullsLast().op("uuid_ops"))
       .where(sql`(track_id IS NOT NULL)`),

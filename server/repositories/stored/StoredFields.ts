@@ -45,6 +45,11 @@ function columnFields(): string[] {
   );
 }
 
+/** How two texts sort by their characters' codes: negative when `a` goes first, positive when `b` does. */
+function compareText(a: string, b: string) {
+  return a < b ? -1 : a > b ? 1 : 0;
+}
+
 /** A property's row, as its field's or its link's row reads. */
 function propertyOf(row: PropertyRow): Property {
   // In the order a property's answer gives its columns
@@ -335,7 +340,7 @@ export default class StoredFields {
 
   /**
    * The properties of entities (`entityIds`, of `entityType` if given, of `type` if given), a ruleset's among them, in
-   * the order they were written: their fields' values, a set's in its order, and the entities their links name.
+   * the order they were written: their fields' values, a set's by value, and the entities their links name.
    */
   static async findMany(db: Db, where: PropertiesWhere): Promise<Property[]> {
     if (where.entityIds.length === 0) return [];
@@ -344,14 +349,15 @@ export default class StoredFields {
       ...(!where.entityType || where.entityType === "rulesets" ? await StoredFields.findRulesetRows(db, where) : []),
     ];
 
-    // As properties were read: by when they were written, their owner, their type and their value (a set by its order)
+    // As properties were read: by when they were written, their owner, their type and their value, each compared by
+    // its characters' codes, as the database's collation (C) orders text
     return rows
       .sort(
         (a, b) =>
-          a.createdAt.localeCompare(b.createdAt) ||
-          a.entityId.localeCompare(b.entityId) ||
-          a.type.localeCompare(b.type) ||
-          a.ordinal - b.ordinal,
+          compareText(a.createdAt, b.createdAt) ||
+          compareText(a.entityId, b.entityId) ||
+          compareText(a.type, b.type) ||
+          compareText(a.value, b.value),
       )
       .map(propertyOf);
   }

@@ -22,6 +22,25 @@ async function countOf(query: ReturnType<typeof sql>) {
   return Number(row.n);
 }
 
+/** Every registry's rows, each as one line of its table and columns, sorted. */
+async function registriesRows() {
+  const tables = [
+    "rules.modules",
+    "rules.entity_types",
+    "rules.link_role_kinds",
+    "rules.link_roles",
+    "rules.field_defs",
+    "rules.ruleset_roles",
+    "character.character_roles",
+    "character.steps",
+    "character.item_types",
+  ];
+  const rows = await Promise.all(
+    tables.map(async (table) => (await rowsOf(sql`SELECT * FROM ${sql.raw(table)}`)).map((row) => `${table} ${row}`)),
+  );
+  return rows.flat().sort();
+}
+
 /** A registry's rows, each as one line of its columns, sorted: what's compared, whatever order either keeps. */
 async function rowsOf(query: ReturnType<typeof sql>) {
   return (await db.execute<Record<string, unknown>>(query)).rows.map((row) => JSON.stringify(row)).sort();
@@ -154,10 +173,26 @@ describe("The keys drizzle-kit doesn't record, which a generated migration would
 
 describe("The registry sync, which every migrate runs", () => {
   test("leaves registries that already hold every declaration as they are", async () => {
-    const before = await rowsOf(sql`SELECT owner_type, field, value_kind, multiple, merge FROM rules.field_defs`);
+    const before = await registriesRows();
+    expect(before.length).toBeGreaterThan(0);
     await StoredRegistries.reconcile(db);
-    expect(await rowsOf(sql`SELECT owner_type, field, value_kind, multiple, merge FROM rules.field_defs`)).toEqual(
-      before,
+    expect(await registriesRows()).toEqual(before);
+  });
+
+  test("writes a role that stops being single as the fields that inherited through it stop", async () => {
+    const changed = declared();
+    for (const def of changed.registries.linkRoles) if (def.role === "madeFrom") def.single = false;
+    for (const def of changed.registries.fieldDefs) if (def.inheritsVia === "madeFrom") def.inheritsVia = null;
+    await StoredRegistries.reconcile(db, changed);
+    expect(await countOf(sql`SELECT count(*) AS n FROM rules.field_defs WHERE inherits_via = 'madeFrom'`)).toBe(0);
+    expect(await countOf(sql`SELECT count(*) AS n FROM rules.link_roles WHERE role = 'madeFrom' AND single`)).toBe(0);
+
+    await StoredRegistries.reconcile(db);
+    expect(
+      await countOf(sql`SELECT count(*) AS n FROM rules.field_defs WHERE inherits_via = 'madeFrom'`),
+    ).toBeGreaterThan(0);
+    expect(await countOf(sql`SELECT count(*) AS n FROM rules.link_roles WHERE role = 'madeFrom' AND NOT single`)).toBe(
+      0,
     );
   });
 

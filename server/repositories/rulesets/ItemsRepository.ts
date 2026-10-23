@@ -4,6 +4,7 @@ import type { Db } from "@/drizzle/database.ts";
 import { entitiesInRules, rulesetsInRules } from "@/drizzle/schema.ts";
 import { type RulesetEntityFilters } from "@/server/repositories/concerns/ScopesToRuleset.ts";
 import RulesetEntityRepository from "@/server/repositories/RulesetEntityRepository.ts";
+import StoredEntities from "@/server/repositories/stored/StoredEntities.ts";
 import type { Item } from "@/shared/relations.ts";
 
 import { buildLineageCondition } from "./rulesetLineage.ts";
@@ -60,7 +61,7 @@ class ItemsRepository extends RulesetEntityRepository<Item> {
       .from(rulesetsInRules)
       .where(buildLineageCondition(where.rulesetId));
     return await this.rows(db, [
-      inArray(this.column("sourceItemId"), where.sourceItemIds),
+      StoredEntities.buildLinkedTo(this.entityType, "sourceItemId", where.sourceItemIds),
       isNull(entitiesInRules.deletedAt),
       or(this.buildRulesetCondition(db, where), inArray(entitiesInRules.rulesetId, lineage)),
     ]);

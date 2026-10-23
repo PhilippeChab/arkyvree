@@ -148,10 +148,12 @@ class EntityReferencesRepository {
     if (column === advancementPicksInCharacter.entityId) {
       const picks = advancementPicksInCharacter;
       const twin = alias(picks, "twin");
-      // A repeated pick follows `to`'s at its advancement: its ordinal after theirs
+      // A repeated pick follows `to`'s at its advancement, its ordinal after theirs: one write, so that no row's new key
+      // meets one still naming `from` (the unique index checks each row as it's written)
       await db
         .update(picks)
         .set({
+          entityId: to,
           ordinal: sql`${toQualified(picks.ordinal)} + (SELECT coalesce(max(twin.ordinal), -1) + 1 FROM ${picks} twin WHERE twin.advancement_id = ${toQualified(picks.advancementId)} AND twin.step = ${toQualified(picks.step)} AND twin.entity_id = ${to})`,
         })
         .where(and(named, eq(picks.repeats, true)));

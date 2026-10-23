@@ -133,6 +133,9 @@ describe("a ruleset's entities", () => {
     expect(RacesService.createRace(owner, ruleset.id, { ...elf, baseSpeed: 0 })).rejects.toMatchObject(
       invalidAt("baseSpeed"),
     );
+    expect(RacesService.createRace(owner, ruleset.id, { ...elf, size: "Gigantic" })).rejects.toMatchObject(
+      invalidAt("size"),
+    );
     // A new race left without them takes their defaults: a medium one, of 30 feet
     const created = await RacesService.createRace(owner, ruleset.id, { name: "Elf" });
     expect(created).toMatchObject({ size: "Medium", baseSpeed: 30 });
@@ -260,7 +263,8 @@ describe("a character's identity", () => {
     const abilities = Object.fromEntries(Object.values(abilityMap).map((id) => [id, 10]));
     const fields = { xp: 0, alignment: "Lawful Good", gender: "Male" };
     const json = { abilities, fields, name: "Nameless", rulesetId };
-    await expectStatus(api.api.characters.$post({ json: json as never }), 400);
+    const refused = await expectStatus(api.api.characters.$post({ json: json as never }), 400);
+    expect(await refused.text()).toContain('"raceId"');
   });
 
   test("refuses an edit's negative experience, an age under 1, an alignment or a gender not among their options", async () => {
@@ -367,7 +371,7 @@ describe("a character's levels", () => {
     expect(ranks.every(({ rank }) => rank > 0)).toBe(true);
   });
 
-  test("refuses an ability increase of 0, forced too, on a level-up and an edit", async () => {
+  test("refuses an ability increase of 0, forced or not, on a level-up and an edit", async () => {
     const ctx = await getSeedCtx();
     const characterId = await createSeedCharacter(ctx, "fighter", { xp: 6000 });
     for (const [index, plan] of FIGHTER_LEVELS.slice(0, 3).entries())
@@ -380,16 +384,20 @@ describe("a character's levels", () => {
         [{ klassId: ctx.klassMap.pc["Fighter"], level: 4, hp: 8, abilityIncreases: at(amount) }],
         picks(ctx, fourth),
       );
-    for (const amount of [0, -1]) {
-      expect(CharacterLevelsService.addLevels(session, characterId, plan(amount), true)).rejects.toThrow(
-        "The abilities step's answer isn't a choose step's",
-      );
+    for (const force of [false, true]) {
+      for (const amount of [0, -1]) {
+        expect(CharacterLevelsService.addLevels(session, characterId, plan(amount), force)).rejects.toThrow(
+          "The abilities step's answer isn't a choose step's",
+        );
+      }
     }
     const [saved] = await CharacterLevelsService.addLevels(session, characterId, plan(1));
     const edit = levelEditPlan({ hp: 8, abilityIncreases: at(0) }, picks(ctx, fourth));
-    expect(CharacterLevelsService.updatePlannedLevel(session, characterId, saved.id, edit, true)).rejects.toThrow(
-      "The abilities step's answer isn't a choose step's",
-    );
+    for (const force of [false, true]) {
+      expect(CharacterLevelsService.updatePlannedLevel(session, characterId, saved.id, edit, force)).rejects.toThrow(
+        "The abilities step's answer isn't a choose step's",
+      );
+    }
   });
 });
 
@@ -406,7 +414,7 @@ describe("a character's bonded creatures", () => {
     expect(await Characters.findOne(db, { id })).toMatchObject({ kind: "pc", parentCharacterId: null });
   });
 
-  test("a master keeps one creature of a kind: a level flow waits on the master's lock, and keeps the one it has", async () => {
+  test("a level flow on a master waits on the master's lock, which it takes before reading its creatures", async () => {
     const master = await findSeededCharacter("Vex Flamecaller");
     const [familiar] = await Characters.findMany(db, { parentCharacterId: master.id });
     expect(familiar).toMatchObject({ kind: "familiar" });
@@ -428,20 +436,22 @@ describe("a character's inventory", () => {
     const { id: itemId } = await findPlainItem(rulesetId);
     const inventory = api.api.characters.inventory[":characterId"];
     const entry = { quantity: 1, equipped: true, totalCharges: null, remainingCharges: null };
-    await expectStatus(
+    const refusedAdd = await expectStatus(
       inventory.$post({ param: { characterId }, json: { ...entry, itemId, location: "Pocket" as never } }),
       400,
     );
+    expect(await refusedAdd.text()).toContain('"location"');
     const added = await expectOk(
       inventory.$post({ param: { characterId }, json: { ...entry, itemId, location: "Trinket" } }),
     );
     expect(added).toMatchObject({ location: "Trinket" });
-    await expectStatus(
+    const refusedEdit = await expectStatus(
       inventory[":entryId"].$put({
         param: { characterId, entryId: added.id },
         json: { ...entry, location: "Pocket" as never },
       }),
       400,
     );
+    expect(await refusedEdit.text()).toContain('"location"');
   });
 });

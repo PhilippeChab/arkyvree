@@ -214,6 +214,16 @@ export default class StoredEntities {
     return sortColumns(columns, Engine.storage().kind(type).order);
   }
 
+  /**
+   * The condition that picks the entities whose link column (`name`, of a kind's `type`) names one of `ids`: read off
+   * the links, by their index, where the column's own subquery would run for every entity.
+   */
+  static buildLinkedTo(type: string, name: string, ids: string[]): SQL {
+    const column = Engine.storage().kind(type).columns[name];
+    if (column?.kind !== "link") throw new Error(`The ${type}' ${name} column isn't a link`);
+    return sql`${toQualified(entitiesInRules.id)} IN (SELECT ${entityLinksInRules.fromId} FROM ${entityLinksInRules} WHERE ${entityLinksInRules.role} = ${column.role} AND ${inArray(entityLinksInRules.toId, ids)})`;
+  }
+
   /** The condition that picks a kind's entities among every kind's: their type. */
   static buildScope(type: string): SQL {
     return eq(entitiesInRules.type, type);

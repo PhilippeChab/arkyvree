@@ -67,7 +67,7 @@ export default class RulesetComposition {
     chain: RulesetRawData[],
     cow: CowData,
     propertyTypes: PropertyTypesProvider,
-    isSingle: (type: string) => boolean,
+    isSingle: (entityType: string, type: string) => boolean,
   ) {
     this.chain = chain;
     this.cow = cow;
@@ -80,7 +80,7 @@ export default class RulesetComposition {
   private readonly cow: CowData;
 
   /** Whether a property type holds a single value, which a sibling merge takes one of (`SiblingMerge`) */
-  private readonly isSingle: (type: string) => boolean;
+  private readonly isSingle: (entityType: string, type: string) => boolean;
   private readonly propertyTypes: PropertyTypesProvider;
 
   /**

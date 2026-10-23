@@ -1,5 +1,5 @@
 {
-  "id": "f791ca59-01ad-4637-9aab-2b7888bca564",
+  "id": "e63c5b82-e83c-4a42-8961-55fe917df4ff",
   "prevId": "8a64933e-22bd-469d-923b-f8c0c6c7208d",
   "version": "7",
   "dialect": "postgresql",
@@ -589,6 +589,29 @@
           ],
           "isUnique": true,
           "where": "(deleted_at IS NULL)",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "advancements_character_track_idx": {
+          "name": "advancements_character_track_idx",
+          "columns": [
+            {
+              "expression": "character_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "uuid_ops"
+            },
+            {
+              "expression": "track_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "uuid_ops"
+            }
+          ],
+          "isUnique": true,
           "concurrently": false,
           "method": "btree",
           "with": {}

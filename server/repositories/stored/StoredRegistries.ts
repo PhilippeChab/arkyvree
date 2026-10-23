@@ -1,4 +1,4 @@
-import { and, eq, type SQL, sql } from "drizzle-orm";
+import { and, eq, isNotNull, type SQL, sql } from "drizzle-orm";
 import type { PgColumn, PgTable } from "drizzle-orm/pg-core";
 
 import type { Db } from "@/drizzle/database.ts";
@@ -122,6 +122,29 @@ function registriesOf({ modules, registries }: DeclaredRegistries): Registry[] {
  * it. Two modules can't declare one name: `StorageEngine` refuses it before anything is written.
  */
 export default class StoredRegistries {
+  /**
+   * Lets go of the roles that fields no longer inherit through, before the roles are written: a role that stops being
+   * single would otherwise be refused while a field still inherits through it.
+   */
+  private static async releaseInheritances(db: Db, { registries }: DeclaredRegistries) {
+    const kept = new Set(registries.fieldDefs.map((def) => keyOf([def.ownerType, def.field, def.inheritsVia])));
+    const inheriting = await db
+      .select({
+        field: fieldDefsInRules.field,
+        inheritsVia: fieldDefsInRules.inheritsVia,
+        ownerType: fieldDefsInRules.ownerType,
+      })
+      .from(fieldDefsInRules)
+      .where(isNotNull(fieldDefsInRules.inheritsVia));
+    for (const { field, inheritsVia, ownerType } of inheriting) {
+      if (kept.has(keyOf([ownerType, field, inheritsVia]))) continue;
+      await db
+        .update(fieldDefsInRules)
+        .set({ inheritsVia: null })
+        .where(and(eq(fieldDefsInRules.ownerType, ownerType), eq(fieldDefsInRules.field, field)));
+    }
+  }
+
   /** Removes what no module declares any more, refusing, by its name, a row that rows still use. */
   private static async removeUndeclared(db: Db, declared: DeclaredRegistries) {
     for (const { columns, declared: keys, name, order, table } of registriesOf(declared)) {
@@ -255,6 +278,7 @@ export default class StoredRegistries {
     await db.transaction(async (tx) => {
       await tx.execute(sql`SELECT set_config('arkyvree.registry_sync', 'on', true)`);
       await StoredRegistries.writeEntityTypes(tx, declared);
+      await StoredRegistries.releaseInheritances(tx, declared);
       await StoredRegistries.writeLinkRoles(tx, declared);
       await StoredRegistries.writeFields(tx, declared);
       await StoredRegistries.writeOwnersRoles(tx, declared);

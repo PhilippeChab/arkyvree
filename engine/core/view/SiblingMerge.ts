@@ -16,7 +16,7 @@ import type { Modifier, Property, Requirement } from "@/shared/relations.ts";
 
 type ModifierKey = Pick<Modifier, "target" | "value" | "operator" | "valueType">;
 
-type PropertyKey = Pick<Property, "type" | "value">;
+type PropertyKey = Pick<Property, "entityType" | "type" | "value">;
 
 /** An entity's customizations: its modifiers, with their requirements apart, its properties and its requirements. */
 export interface EntityCustomizations {
@@ -82,7 +82,7 @@ export default class SiblingMerge {
     own: EntityCustomizations,
     siblings: EntityCustomizations[],
     targetEntityId: string,
-    isSingle: (type: string) => boolean,
+    isSingle: (entityType: string, type: string) => boolean,
   ): EntityCustomizations {
     const modifiers = SiblingMerge.mergeModifiers(
       own.modifiers,
@@ -122,9 +122,11 @@ export default class SiblingMerge {
   static mergeProperties<T extends PropertyKey>(
     own: readonly T[],
     siblings: Iterable<readonly T[]>,
-    isSingle: (type: string) => boolean,
+    isSingle: (entityType: string, type: string) => boolean,
   ): T[] {
-    return SiblingMerge.takeNewRows(own, siblings, (p) => (isSingle(p.type) ? p.type : `${p.type}|${p.value}`));
+    return SiblingMerge.takeNewRows(own, siblings, (p) =>
+      isSingle(p.entityType, p.type) ? p.type : `${p.type}|${p.value}`,
+    );
   }
 
   /** The siblings' requirements, merged into the winner's trees: the rows on the winner (`entityId`), source ids kept. */

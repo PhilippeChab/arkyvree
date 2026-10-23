@@ -299,6 +299,8 @@ CREATE TABLE character.advancements (
 -- A live advancement per position, as today's levels: an archived character's levels don't hold theirs
 CREATE UNIQUE INDEX advancements_character_position_idx ON character.advancements (character_id, position)
   WHERE deleted_at IS NULL;
+-- A track a character takes once, as today's class level: archived levels too, as today
+CREATE UNIQUE INDEX advancements_character_track_idx ON character.advancements (character_id, track_id);
 CREATE INDEX advancements_track_idx ON character.advancements (track_id) WHERE track_id IS NOT NULL;
 
 CREATE TABLE character.advancement_picks (

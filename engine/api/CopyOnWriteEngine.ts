@@ -21,12 +21,13 @@ import StorageEngine from "./StorageEngine.ts";
  * Whether a property type holds a single value, as every module stores it: a field that isn't a set, or a property a
  * single link holds (a class's bonus spell ability). A sibling merge takes one of it (`SiblingMerge`).
  */
-function singleValued(type: string) {
+function singleValued(entityType: string, type: string) {
   const storage = StorageEngine.shared();
   return (
-    storage.registries().fieldDefs.some((field) => field.field === type && !field.multiple) ||
-    storage.registries().entityTypes.some((def) => storage.linkedProperty(def.type, type) !== undefined) ||
-    storage.linkedProperty("rulesets", type) !== undefined
+    storage
+      .registries()
+      .fieldDefs.some((field) => field.ownerType === entityType && field.field === type && !field.multiple) ||
+    storage.linkedProperty(entityType, type) !== undefined
   );
 }
 

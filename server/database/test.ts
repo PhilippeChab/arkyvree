@@ -4,6 +4,7 @@
  * tests, and the run's pool otherwise (a server on a test database: the e2e run's).
  */
 
+import { sql } from "drizzle-orm";
 import { drizzle as drizzlePg, type NodePgClient } from "drizzle-orm/node-postgres";
 import type { PoolClient, QueryConfig, QueryResult } from "pg";
 
@@ -44,6 +45,12 @@ export const db = new Proxy(poolDb, {
     return ((globalThis.__testDb ?? poolDb) as unknown as Record<string | symbol, unknown>)[prop];
   },
 });
+
+/** Whether an error is Postgres refusing a write that breaks a constraint (its codes' class 23). */
+function isIntegrityViolation(error: unknown): boolean {
+  const code = (error as { code?: string } | undefined)?.code;
+  return typeof code === "string" && code.startsWith("23");
+}
 
 /** A database on `client` whose queries run through `queries`, one at a time. */
 function serialDb(client: PoolClient, queries: SerialQueries) {
@@ -133,7 +140,13 @@ export async function startTestTransaction(client: PoolClient) {
     tx: await started.promise,
     async end() {
       try {
+        // Its commit's deferred checks, which its rollback skips: a test that leaves a deferred foreign key broken fails
+        const unchecked = await queries.run({ text: "SET CONSTRAINTS ALL IMMEDIATE" }).then(
+          () => undefined,
+          (error: unknown) => (isIntegrityViolation(error) ? error : undefined),
+        );
         await queries.end("ROLLBACK");
+        if (unchecked) throw unchecked;
       } finally {
         ended.resolve();
         await settled;
@@ -144,7 +157,16 @@ export async function startTestTransaction(client: PoolClient) {
 
 export async function withTransaction<T>(callback: (tx: Transaction) => Promise<T>): Promise<T> {
   // In a test, the test's own transaction: this one is a savepoint in it, which a failure rolls back as in production.
-  const result = await (globalThis.__testDb ?? poolDb).transaction(callback);
+  const testDb = globalThis.__testDb;
+  const result = await (testDb ?? poolDb).transaction(async (tx) => {
+    const answer = await callback(tx);
+    // And which checks the deferred foreign keys as a commit would: a savepoint's release skips them
+    if (testDb) {
+      await tx.execute(sql`SET CONSTRAINTS ALL IMMEDIATE`);
+      await tx.execute(sql`SET CONSTRAINTS ALL DEFERRED`);
+    }
+    return answer;
+  });
   clearRequestCache();
   return result;
 }
