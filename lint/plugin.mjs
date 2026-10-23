@@ -15,6 +15,7 @@ import layout from "./layout.mjs";
 import memberOrder from "./memberOrder.mjs";
 import methodNames from "./methodNames.mjs";
 import moduleState from "./moduleState.mjs";
+import nouns from "./nouns.mjs";
 import overrides from "./overrides.mjs";
 import size from "./size.mjs";
 import styles from "./styles.mjs";
@@ -39,6 +40,7 @@ export default {
     ...testing,
     ...size,
     ...moduleState,
+    ...nouns,
     ...overrides,
   },
 };
