@@ -287,7 +287,7 @@ describe("campaigns characters", () => {
     }
   });
 
-  test("shows a character's private notes to its editors and the Game Master, and blank to the other players", async () => {
+  test("shows a character's private notes to its editors and the Game Master, and leaves them out for the other players", async () => {
     const characterId = (await postCharacter()).id;
     await expectOk(
       api.api.characters[":id"].$put({ param: { id: characterId }, json: { privateNotes: SECRETS.privateNotes } }),

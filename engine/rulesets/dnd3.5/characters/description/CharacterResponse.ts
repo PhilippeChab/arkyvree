@@ -14,9 +14,9 @@ import SkillNames from "./SkillNames.ts";
 import SpellGroups from "./SpellGroups.ts";
 
 /**
- * A built character's sheet: every part of it, which its blocks, its summary and its creatures' subsheets are built from
- * (`buildSheet`); and what the API answers of it (`toResponse`): its row's columns, its ruleset, what its modifiers and
- * requirements did and its validation, its summary and its blocks.
+ * A built character's sheet: every part of it, which its blocks, its summary and its creatures' subsheets are built
+ * from (`buildSheet`); and what the API answers of it (`toResponse`): its row's columns, its ruleset, what its
+ * modifiers and requirements did and its validation, its summary and its blocks.
  */
 export default class CharacterResponse {
   /** The abilities, each with the parts its box lists beside its base (`parts`: its levels' increases, its misc). */

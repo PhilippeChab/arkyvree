@@ -3,6 +3,7 @@ import { describe, expect, test } from "bun:test";
 import { and, asc, eq, getTableColumns, isNull } from "drizzle-orm";
 
 import { baseRules, charactersInCharacter, rulesetsInRules } from "@/drizzle/schema.ts";
+import type { PrivateNotes } from "@/engine/core/module/index.ts";
 import { Engine } from "@/engine/index.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
@@ -49,7 +50,7 @@ describe.each(baseRules.enumValues)("The %s module, as core runs its characters'
     const read = await withRulesetScope(db, record.rulesetId, async (scope) => {
       const character = Engine.for(scope).character(input);
       // Each creature's own sheet, which holds its notes; its master's shows it without them
-      const creature = (reading: "hide" | "show") =>
+      const creature = (reading: PrivateNotes) =>
         bonded.map((input) => Engine.for(scope).character(input).describeForMember([], reading));
       return {
         hidden: [character.describeForMember(bonded, "hide"), ...creature("hide")],

@@ -43,6 +43,8 @@ class OversharingCharacters extends Dnd35Characters {
         { label: "Elf", partial: true, tone: "secondary" as const },
         { label: "Fighter 1", partial: false, tone: "primary" as const },
       ],
+      // What the core never shows a partly seen character's reader, whatever its ruleset adds
+      levels: [{ klass: "Fighter", level: 1 }],
     };
   }
 

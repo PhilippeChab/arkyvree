@@ -230,15 +230,10 @@ describe("characters", () => {
 
     test("lists a bonded creature's abilities on its own sheet, each with its abbreviation", async () => {
       const { bonded } = await createWizardWithFamiliar();
-      const familiar = await sheetOf(bonded.id);
-      expect(familiar.abilities.map((ability) => ability.abbreviation)).toEqual([
-        "STR",
-        "DEX",
-        "CON",
-        "INT",
-        "WIS",
-        "CHA",
-      ]);
+      const familiar = await expectOk(character.$get({ param: { id: bonded.id } }));
+      const abilities = familiar.blocks.find((block) => block.key === "abilities");
+      if (abilities?.kind !== "scores") throw new Error("no abilities block");
+      expect(abilities.scores.map(({ short }) => short)).toEqual(["STR", "DEX", "CON", "INT", "WIS", "CHA"]);
     });
 
     test("refuses an ability the ruleset doesn't have", async () => {

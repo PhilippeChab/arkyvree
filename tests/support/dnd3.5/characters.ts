@@ -22,7 +22,8 @@ export async function buildAs<C extends DetailedCharacter>(
 
 /**
  * A 3.5 character's sheet (`characterId`'s, a bonded creature's built with its master), every part of it as its module
- * builds it (`CharacterResponse.buildSheet`): what its blocks show, as the rules hold it, which the API answers none of.
+ * builds it (`CharacterResponse.buildSheet`): what its blocks show, as the rules hold it, which the API answers none
+ * of.
  */
 export async function sheetOf(characterId: string) {
   const record = await Characters.findOne(db, { id: characterId }, Visibility.All);
