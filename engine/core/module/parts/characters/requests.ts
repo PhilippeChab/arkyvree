@@ -15,10 +15,9 @@ export interface CharacterEditRequest {
   languageIds?: string[];
 }
 
-/** A new character, as its form sends it: its race, and its ability scores. */
-export interface NewCharacterRequest {
-  abilities: AbilitiesRequest;
-  raceId: string;
+/** A new character, as its form sends it: what it starts with, and its ruleset's fields by their keys (`CharacterForm`'s). */
+export interface NewCharacterRequest extends StartRequest {
+  fields: FieldsRequest;
 }
 
 /**
@@ -41,6 +40,12 @@ export interface RacePickQuery {
 export interface SheetRequest {
   diagnostics: boolean;
   portraitUrl?: string | null;
+}
+
+/** What a new character starts with, as its form or its import gives it: its race, and its ability scores. */
+export interface StartRequest {
+  abilities: AbilitiesRequest;
+  raceId: string;
 }
 
 /** A form's ability scores, by ability id. */

@@ -12,7 +12,6 @@ import {
 import { characterIdParam, idList, idParam, limit, orderDirDesc, page } from "@/server/routers/api/validation.ts";
 import { CharactersService } from "@/server/services/characters/index.ts";
 import { MAX_CHARACTER_NAME_LENGTH, MAX_IMPORT_FILE_LENGTH } from "@/shared/characters.ts";
-import { ALIGNMENT_OPTIONS, GENDER_OPTIONS } from "@/shared/enums.ts";
 
 import contributors from "./contributors/index.ts";
 import inventory from "./inventory/index.ts";
@@ -136,21 +135,9 @@ export default new Hono()
         rulesetId: z.string().uuid(),
         raceId: z.string().uuid(),
         name: z.string().min(1).max(MAX_CHARACTER_NAME_LENGTH),
-        xp: z.number().int().min(0),
-        alignment: z.enum(ALIGNMENT_OPTIONS),
         abilities: z.record(z.string().uuid(), abilityScore),
-        age: z.number().int().min(1).optional(),
-        gender: z.enum(GENDER_OPTIONS),
-        height: z
-          .string()
-          .optional()
-          .transform((v) => v || undefined),
-        weight: z
-          .string()
-          .optional()
-          .transform((v) => v || undefined),
-        deity: z.string().optional(),
-        description: z.string().optional(),
+        // Its fields, by the keys its rules' form gives them, which its ruleset reads and checks (`planCreate`)
+        fields: z.record(z.string(), z.union([z.string(), z.number(), z.null()])),
         notes: z.string().optional(),
       }),
     ),

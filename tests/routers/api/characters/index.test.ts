@@ -3,7 +3,7 @@ import { describe, expect, test } from "bun:test";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { Abilities } from "@/server/repositories/index.ts";
+import { Abilities, Characters } from "@/server/repositories/index.ts";
 import { api, createSignedInUser, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
 import { postCampaign } from "@/tests/support/campaigns.ts";
 import { postCharacter } from "@/tests/support/characters.ts";
@@ -657,22 +657,45 @@ describe("characters", () => {
     await expectStatus(guestApi.api.characters[":id"].abilities.$put({ param: { id }, json: {} }), 401);
   });
 
-  test("rejects a character without a name, or with an unknown alignment or gender", async () => {
+  test("rejects a character without a name or fields, or with a field its form refuses", async () => {
     const ctx = await getSeedCtx();
-    const valid = {
-      rulesetId: ctx.rulesetId,
-      raceId: ctx.raceMap.pc["Human"],
-      name: "Test",
-      xp: 0,
-      alignment: "True Neutral",
-      abilities: {},
-      age: 25,
-      gender: "Male",
-      height: "5'10\"",
-      weight: "170 lbs",
-    };
-    for (const json of [{ xp: 0 }, { ...valid, alignment: "Invalid Alignment" }, { ...valid, gender: "InvalidGender" }])
+    const fields = { xp: 0, alignment: "True Neutral", age: 25, gender: "Male", height: "5'10\"", weight: "170 lbs" };
+    const valid = { rulesetId: ctx.rulesetId, raceId: ctx.raceMap.pc["Human"], name: "Test", abilities: {}, fields };
+    const { alignment: _alignment, ...withoutAlignment } = fields;
+    for (const json of [
+      { fields },
+      { ...valid, fields: undefined },
+      { ...valid, fields: { ...fields, alignment: "Invalid Alignment" } },
+      { ...valid, fields: { ...fields, gender: "InvalidGender" } },
+      { ...valid, fields: { ...fields, xp: -1 } },
+      { ...valid, fields: { ...fields, age: 0 } },
+      { ...valid, fields: withoutAlignment },
+      { ...valid, fields: { ...fields, strength: 18 } },
+    ])
       await expectStatus(characters.$post({ json: json as never }), 400);
+  });
+
+  test("writes a new character's fields, an empty one left at its column's default", async () => {
+    const { id } = await postCharacter({
+      xp: 1500,
+      alignment: "Lawful Good",
+      gender: "Female",
+      age: null,
+      height: "",
+      weight: "60",
+      deity: "",
+      description: "Tall",
+    });
+    expect(await Characters.findOne(db, { id })).toMatchObject({
+      xp: 1500,
+      alignment: "Lawful Good",
+      gender: "Female",
+      age: null,
+      height: null,
+      weight: "60",
+      deity: null,
+      description: "Tall",
+    });
   });
 
   test("returns 404 for a missing character", async () => {

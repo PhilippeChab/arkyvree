@@ -244,13 +244,15 @@ describe("CharactersService with bonded creatures", () => {
         rulesetId: ctx.rulesetId,
         raceId: ctx.raceMap.familiar["Cat"],
         name: "Cat PC",
-        xp: 0,
-        alignment: "True Neutral",
+        fields: {
+          xp: 0,
+          alignment: "True Neutral",
+          age: 1,
+          gender: "Other",
+          height: "0.3 m",
+          weight: "5 kg",
+        },
         abilities: {},
-        age: 1,
-        gender: "Other",
-        height: "0.3 m",
-        weight: "5 kg",
       }),
     ).rejects.toMatchObject({ refusal: "invalid" });
     const wizardId = await createSeedCharacter(ctx, "wizard");

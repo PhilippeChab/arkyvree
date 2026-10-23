@@ -19,11 +19,13 @@ import type {
 } from "./descriptions.ts";
 import type {
   AbilitiesPlan,
+  CharacterColumns,
   CharacterEditPlan,
   FieldsPlan,
   InventoryEntryPlan,
   LanguagesPlan,
   NewCharacterPlan,
+  StartPlan,
 } from "./plans.ts";
 import type {
   AbilitiesRequest,
@@ -37,6 +39,7 @@ import type {
   PrivateNotes,
   RacePickQuery,
   SheetRequest,
+  StartRequest,
 } from "./requests.ts";
 
 /** How a reader who doesn't read a character's private notes reads them: blank, or no field at all. */
@@ -168,6 +171,12 @@ export default abstract class CharactersPart<D extends Descriptions> {
    * (`planEdit`).
    */
   protected abstract planFields(view: RulesetView, character: CharacterInput, request: FieldsRequest): FieldsPlan;
+
+  /**
+   * What a new character's fields (`fields`, its form's, by their keys) write: their columns, each checked, refused when
+   * one its form requires is missing or a value is one its field doesn't take.
+   */
+  protected abstract planNewFields(fields: FieldsRequest): { columns: CharacterColumns };
 
   /**
    * Where an inventory entry's add or edit (`change`) holds its item: whether it's equipped, where, and its weapon set
@@ -303,25 +312,12 @@ export default abstract class CharactersPart<D extends Descriptions> {
   }
 
   /**
-   * What a new character stores: its race, and a score for each of the ruleset's abilities, the one its form gives
-   * (`abilities`, by ability id) or the one an unset ability starts at (`describeCreation`), each by the id the view
-   * keys it by. Refused when a score is past the ruleset's bounds, its race or an ability isn't one of the ruleset's, two
-   * scores name one ability, or its race isn't a player character's (of kind `pc`).
+   * What a new character stores: what it starts with (`planStart`), and its fields' columns (`planNewFields`). Refused as
+   * its start is, or when a field is.
    */
   planCreate(view: RulesetView, request: NewCharacterRequest): NewCharacterPlan {
-    const { scores } = this.describeCreation(view);
-    RulesError.parse(CharactersPart.boundedScores(scores), request.abilities, ["abilities"]);
-    const ids = CharactersPart.idsOf(view);
-    const race = ids.find("races", request.raceId);
-    if (race.kind !== "pc") throw new RulesError("invalid", "Race is not valid for a player character");
-    const given = ids.resolveKeys("abilities", request.abilities);
-    return {
-      abilities: view.rulesetData.abilities.map((ability) => ({
-        abilityId: ability.id,
-        score: given.get(ability.id) ?? scores.start,
-      })),
-      raceId: race.id,
-    };
+    const { fields, ...start } = request;
+    return { ...this.planStart(view, start), columns: this.planNewFields(fields).columns };
   }
 
   /**
@@ -368,5 +364,28 @@ export default abstract class CharactersPart<D extends Descriptions> {
   planLanguages(view: RulesetView, character: CharacterInput, languageIds: string[]): LanguagesPlan {
     const picks = CharactersPart.idsOf(view).resolveAll("languages", languageIds);
     return { languageIds: this.fitLanguages(view, character, picks) };
+  }
+
+  /**
+   * What a new character starts with, as its form or its import gives it: its race, and a score for each of the
+   * ruleset's abilities, the one given (`abilities`, by ability id) or the one an unset ability starts at
+   * (`describeCreation`), each by the id the view keys it by. Refused when a score is past the ruleset's bounds, its race
+   * or an ability isn't one of the ruleset's, two scores name one ability, or its race isn't a player character's (of
+   * kind `pc`).
+   */
+  planStart(view: RulesetView, request: StartRequest): StartPlan {
+    const { scores } = this.describeCreation(view);
+    RulesError.parse(CharactersPart.boundedScores(scores), request.abilities, ["abilities"]);
+    const ids = CharactersPart.idsOf(view);
+    const race = ids.find("races", request.raceId);
+    if (race.kind !== "pc") throw new RulesError("invalid", "Race is not valid for a player character");
+    const given = ids.resolveKeys("abilities", request.abilities);
+    return {
+      abilities: view.rulesetData.abilities.map((ability) => ({
+        abilityId: ability.id,
+        score: given.get(ability.id) ?? scores.start,
+      })),
+      raceId: race.id,
+    };
   }
 }

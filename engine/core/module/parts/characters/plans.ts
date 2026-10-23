@@ -26,29 +26,11 @@ export interface CharacterEditPlan extends FieldsPlan {
 }
 
 /**
- * What a character's fields edit writes: the columns its ruleset stores its fields in, each checked, past those every
- * character has (its name, its notes) and those no field writes.
+ * What a character's fields edit writes: the columns its ruleset stores its fields in (`CharacterColumns`), each
+ * checked.
  */
 export interface FieldsPlan {
-  columns: Partial<
-    Omit<
-      InferInsertModel<typeof charactersInCharacter>,
-      | "createdAt"
-      | "deletedAt"
-      | "id"
-      | "kind"
-      | "lastChangedAt"
-      | "name"
-      | "notes"
-      | "parentCharacterId"
-      | "privateNotes"
-      | "raceId"
-      | "rulesetId"
-      | "shareToken"
-      | "updatedAt"
-      | "userId"
-    >
-  >;
+  columns: Partial<CharacterColumns>;
 }
 
 /**
@@ -70,8 +52,38 @@ export interface LanguagesPlan {
   languageIds: string[];
 }
 
-/** What a new character stores: its race, and a score for each of the ruleset's abilities. */
-export interface NewCharacterPlan {
+/**
+ * What a new character stores: what it starts with (`StartPlan`), and the columns its fields write, those its row
+ * requires among them.
+ */
+export interface NewCharacterPlan extends StartPlan {
+  columns: CharacterColumns;
+}
+
+/** What a new character starts with: its race, and a score for each of the ruleset's abilities. */
+export interface StartPlan {
   abilities: AbilityScore[];
   raceId: string;
 }
+
+/**
+ * The columns of a character's row its ruleset writes, from its fields: those past the ones every character has (its
+ * name, its notes) and those no field writes, the ones a new row requires among them.
+ */
+export type CharacterColumns = Omit<
+  InferInsertModel<typeof charactersInCharacter>,
+  | "createdAt"
+  | "deletedAt"
+  | "id"
+  | "kind"
+  | "lastChangedAt"
+  | "name"
+  | "notes"
+  | "parentCharacterId"
+  | "privateNotes"
+  | "raceId"
+  | "rulesetId"
+  | "shareToken"
+  | "updatedAt"
+  | "userId"
+>;

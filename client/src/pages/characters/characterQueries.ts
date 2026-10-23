@@ -30,20 +30,19 @@ export type CreationMethod = CharacterCreation["methods"][number];
 export type ImportFileDescription = InferResponseType<typeof rpc.api.characters.import.source.$post, 200>;
 
 /**
- * The races a ruleset offers a new character, each marked eligible or not for its alignment and gender (`""` while
- * unpicked); skipped until a ruleset is picked.
+ * The races a ruleset offers a new character, each marked eligible or not for what the fields that narrow them hold
+ * (`picks`, by their keys: `""` while unpicked); skipped until a ruleset is picked.
  */
-export function availableRacesQuery(rulesetId: string, alignment: string, gender: string) {
+export function availableRacesQuery(rulesetId: string, picks: Record<string, string>) {
   return infiniteQueryOptions({
-    queryKey: QUERY_KEYS.characters.availableRaces(rulesetId, { alignment, gender }),
+    queryKey: QUERY_KEYS.characters.availableRaces(rulesetId, picks),
     queryFn: rulesetId
       ? ({ pageParam }) =>
           parseResponse(
             rpc.api.characters["available-races"].$get({
               query: {
                 rulesetId,
-                alignment: alignment || undefined,
-                gender: gender || undefined,
+                ...Object.fromEntries(Object.entries(picks).map(([key, value]) => [key, value || undefined])),
                 limit: "100",
                 page: pageParam.toString(),
               },

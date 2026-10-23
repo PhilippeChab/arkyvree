@@ -150,14 +150,39 @@ describe.each(baseRules.enumValues)("The %s module, as core runs its characters'
       const { max, min } = characters.describeCreation().scores;
       for (const score of [min - 1, max + 1]) {
         expect(() => characters.planAbilities({ [abilityId]: score })).toThrow(refusal);
-        expect(() => characters.planCreate({ abilities: { [abilityId]: score }, raceId: record.raceId })).toThrow(
+        expect(() => characters.planStart({ abilities: { [abilityId]: score }, raceId: record.raceId })).toThrow(
           refusal,
         );
       }
       expect(characters.planAbilities({ [abilityId]: max }).abilities).toEqual([{ abilityId, score: max }]);
-      expect(
-        characters.planCreate({ abilities: { [abilityId]: min }, raceId: record.raceId }).abilities,
-      ).toContainEqual({ abilityId, score: min });
+      expect(characters.planStart({ abilities: { [abilityId]: min }, raceId: record.raceId }).abilities).toContainEqual(
+        { abilityId, score: min },
+      );
+    });
+  });
+
+  test("plans a new character from every field its form describes, and refuses one it doesn't", async () => {
+    const record = await findSeededCharacter(rules);
+    const { characterForm } = Engine.rules().describeAll()[rules];
+    const fields = Object.fromEntries(
+      characterForm.sections
+        .flatMap((section) => (section.kind === "fields" ? section.lines.flat() : []))
+        .flatMap((item): [string, number | string][] => {
+          if (!("key" in item)) return [];
+          if (item.kind === "number") return [[item.key, item.start ?? item.min]];
+          if (item.kind === "select") return [[item.key, item.options[0]]];
+          return [[item.key, "Given"]];
+        }),
+    );
+    const refusal = expect.objectContaining({ refusal: "invalid" });
+
+    await withRulesetScope(db, record.rulesetId, async (scope) => {
+      const characters = Engine.for(scope).characters();
+      const plan = characters.planCreate({ abilities: {}, fields, raceId: record.raceId });
+      expect(Object.keys(plan.columns).length).toBeGreaterThan(0);
+      expect(() =>
+        characters.planCreate({ abilities: {}, fields: { ...fields, unknownField: 1 }, raceId: record.raceId }),
+      ).toThrow(refusal);
     });
   });
 });

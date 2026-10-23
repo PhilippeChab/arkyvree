@@ -26,7 +26,11 @@ export type {
   CardChip,
   CharacterCard,
   CharacterCreation,
+  CharacterForm,
+  CreationField,
+  CreationItem,
   CreationMethod,
+  CreationSection,
   DescribedInventoryEntry,
   DescribedLanguage,
   DescribedSheet,
@@ -40,11 +44,13 @@ export type {
 export type {
   AbilitiesPlan,
   AbilityScore,
+  CharacterColumns,
   CharacterEditPlan,
   FieldsPlan,
   InventoryEntryPlan,
   LanguagesPlan,
   NewCharacterPlan,
+  StartPlan,
 } from "./plans.ts";
 export type {
   AbilitiesRequest,
@@ -59,4 +65,5 @@ export type {
   PrivateNotes,
   RacePickQuery,
   SheetRequest,
+  StartRequest,
 } from "./requests.ts";

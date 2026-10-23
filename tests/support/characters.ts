@@ -4,15 +4,48 @@ import type { InferRequestType } from "hono/client";
 import type { Db } from "@/drizzle/database.ts";
 import { charactersInCharacter } from "@/drizzle/schema.ts";
 import Modules from "@/engine/api/Modules.ts";
-import { CharacterInputs, CharacterProjection } from "@/engine/core/module/index.ts";
+import { CharacterInputs, CharacterProjection, type FieldsRequest } from "@/engine/core/module/index.ts";
 import { type RulesetScope, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Characters } from "@/server/repositories/index.ts";
 import { CharactersService, readCharacterInput } from "@/server/services/characters/index.ts";
+import type { Alignment, Gender } from "@/shared/enums.ts";
 import type { Character, Session } from "@/shared/relations.ts";
 
 import { api, expectOk } from "./api.ts";
 import { getSeedCtx, uniqueId } from "./seed.ts";
+
+/** A new character's fields, past those every character has, as the seeded ruleset's form sends them (3.5's). */
+interface NewFields {
+  age?: number | null;
+  alignment?: Alignment;
+  deity?: string;
+  description?: string;
+  gender?: Gender;
+  height?: string;
+  weight?: string;
+  xp?: number;
+}
+
+/** A test character's fields, unless it's given its own: a True Neutral man of 25, 180 tall and 80 heavy, with no experience. */
+const NEW_FIELDS = { age: 25, alignment: "True Neutral", gender: "Male", height: "180", weight: "80", xp: 0 };
+
+/**
+ * A new character's request split: its fields (3.5's form's, by their keys: a True Neutral man of 25, 180 tall and 80
+ * heavy, with no experience, unless given), sent under `fields`, and the rest as it is.
+ */
+export function splitFields<T extends NewFields & { fields?: FieldsRequest }>(values: T) {
+  const { age, alignment, deity, description, fields, gender, height, weight, xp, ...rest } = values;
+  const given = { age, alignment, deity, description, gender, height, weight, xp };
+  return {
+    fields: {
+      ...NEW_FIELDS,
+      ...Object.fromEntries(Object.entries(given).filter(([, value]) => value !== undefined)),
+      ...fields,
+    } as FieldsRequest,
+    rest,
+  };
+}
 
 /**
  * Moves a character's last change, and its bonded creatures', back to `at`, long before any test, writing it alone
@@ -57,21 +90,17 @@ export async function buildCharacter(
  */
 export async function createCharacterAs(
   session: Session,
-  values: Partial<Parameters<typeof CharactersService.createCharacter>[1]> = {},
+  values: Partial<Parameters<typeof CharactersService.createCharacter>[1]> & NewFields = {},
 ) {
   const { rulesetId, raceMap } = await getSeedCtx();
+  const { fields, rest } = splitFields(values);
   return await CharactersService.createCharacter(session, {
     rulesetId,
     raceId: raceMap.pc["Human"],
     name: `Test Character ${uniqueId()}`,
-    xp: 0,
-    alignment: "True Neutral",
     abilities: {},
-    age: 25,
-    gender: "Male",
-    height: "180",
-    weight: "80",
-    ...values,
+    ...rest,
+    fields,
   });
 }
 
@@ -105,21 +134,19 @@ export async function createTestCharacter(
  * A new character of the seed user's, created through the API: a Human on the seeded ruleset with every ability at 10,
  * unless `json` says otherwise.
  */
-export async function postCharacter(json: Partial<InferRequestType<typeof api.api.characters.$post>["json"]> = {}) {
+export async function postCharacter(
+  json: Partial<InferRequestType<typeof api.api.characters.$post>["json"]> & NewFields = {},
+) {
   const ctx = await getSeedCtx();
-  const { rulesetId = ctx.rulesetId, name = `Test Character ${uniqueId()}`, ...rest } = json;
+  const { fields, rest } = splitFields(json);
+  const { rulesetId = ctx.rulesetId, name = `Test Character ${uniqueId()}`, ...others } = rest;
   return await expectOk(
     api.api.characters.$post({
       json: {
         raceId: ctx.raceMap.pc["Human"],
-        xp: 0,
-        alignment: "True Neutral",
         abilities: Object.fromEntries(Object.values(ctx.abilityMap).map((id) => [id, 10])),
-        age: 25,
-        gender: "Male",
-        height: "180",
-        weight: "80",
-        ...rest,
+        ...others,
+        fields,
         rulesetId,
         name,
       },

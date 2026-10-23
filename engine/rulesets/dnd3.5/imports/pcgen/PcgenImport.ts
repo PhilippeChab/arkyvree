@@ -183,7 +183,7 @@ export default class PcgenImport {
     const row = this.readRow();
     const levelsImport = new LevelsImport(this.view, this.imported, this.names, this.report, this.stop);
     const scores = new ScoresImport(this.view, this.imported, this.report).planScores(levelsImport.levelCount);
-    const { abilities } = this.characters.planCreate(this.view, { abilities: scores.starting, raceId: row.raceId });
+    const { abilities } = this.characters.planStart(this.view, { abilities: scores.starting, raceId: row.raceId });
     const leveled = levelsImport.planLevels(this.newInput(row, abilities), scores.increases);
     if ("refused" in leveled) return leveled;
     const languageIds = this.planLanguages(leveled.character);

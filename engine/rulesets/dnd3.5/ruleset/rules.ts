@@ -1,5 +1,6 @@
 import { LANGUAGE_COLUMNS, LANGUAGE_LIST, NAMED_LIST, SAVE_COLUMNS, SAVE_LIST } from "@/engine/core/entities/index.ts";
 import type { RulesDescription } from "@/engine/core/module/index.ts";
+import { CHARACTER_FORM } from "@/engine/rulesets/dnd3.5/characters/form.ts";
 import { CLASS_COLUMNS, CLASS_LEVEL_COLUMNS, CLASS_LIST } from "@/engine/rulesets/dnd3.5/entities/classes/columns.ts";
 import { PROGRESSION } from "@/engine/rulesets/dnd3.5/entities/classes/progression.ts";
 import { FEAT_COLUMNS, FEAT_LIST } from "@/engine/rulesets/dnd3.5/entities/feats/columns.ts";
@@ -16,10 +17,12 @@ import { SPELL_LEVEL_LABELS, SPELL_LEVELS } from "@/vocabulary/dnd3.5/spells.ts"
 /**
  * What every 3.5 ruleset shares: its entity kinds, in its page's order, and their words (its powers are spells), its
  * entities' columns (a class's hit die, an item's slot…), a race or a class is for a player character or a creature
- * bonded to one, a class has 20 levels and a spell 0 to 9, and its system rulesets' SRD content is Open Game Content.
+ * bonded to one, a class has 20 levels and a spell 0 to 9, its system rulesets' SRD content is Open Game Content, and a
+ * new character's form.
  */
 export const RULES: RulesDescription = {
   abilityScores: { max: MAX_ABILITY_SCORE, min: MIN_ABILITY_SCORE },
+  characterForm: CHARACTER_FORM,
   columns: {
     feats: FEAT_COLUMNS,
     items: ITEM_COLUMNS,

@@ -5,7 +5,7 @@ import { isOneOf } from "@/shared/isOneOf.ts";
 import { expectOk, guestApi } from "@/tests/support/api.ts";
 
 describe("rules", () => {
-  test("answers what every base rules' rulesets share, to anyone: words, kinds, levels, lists, progression, level wizard and license", async () => {
+  test("answers what every base rules' rulesets share, to anyone: words, kinds, levels, lists, progression, level wizard, a new character's form and license", async () => {
     const rules = await expectOk(guestApi.api.rules.$get());
     const dnd35 = rules["Dungeons & Dragons: 3.5"];
     // Its word for every type, the engine's own (modifiers) with its own
@@ -32,6 +32,31 @@ describe("rules", () => {
       expect(dnd35.words[type]).toBeDefined();
       expect(dnd35.lists[type]).toBeDefined();
     }
+    // A new character's form: its sections, and its fields by the keys its create sends them
+    expect(dnd35.characterForm.sections.map(({ title }) => title)).toEqual([
+      "Basic Information",
+      "Ability Scores",
+      "Physical Details",
+      "Optional Details",
+    ]);
+    expect(
+      dnd35.characterForm.sections.flatMap((section) =>
+        section.kind === "fields" ? section.lines.flat().map((item) => ("key" in item ? item.key : item.kind)) : [],
+      ),
+    ).toEqual([
+      "name",
+      "xp",
+      "ruleset",
+      "race",
+      "alignment",
+      "gender",
+      "age",
+      "height",
+      "weight",
+      "deity",
+      "description",
+      "notes",
+    ]);
     // And what its row opens
     expect(Object.fromEntries(dnd35.kinds.map(({ opens, type }) => [type, opens]))).toEqual({
       races: "customization",
