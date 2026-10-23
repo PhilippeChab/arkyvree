@@ -2,10 +2,10 @@ import { Stack, Typography } from "@mui/material";
 
 import { BlankNote, SubsectionTitle } from "@/client/src/components/common/index.ts";
 
-import { ArmorClassBoxes } from "./ArmorClassBoxes.tsx";
 import { BlockTable } from "./BlockTable.tsx";
 import type { BlockOf } from "./sheetBlocks.ts";
 import { SheetSection } from "./SheetSection.tsx";
+import { StatBoxes } from "./StatBoxes.tsx";
 import { StatField } from "./StatField.tsx";
 
 interface StatsSectionProps {
@@ -48,8 +48,9 @@ export function StatsSection({ block }: StatsSectionProps) {
                   </SubsectionTitle>
                 )}
                 <Stack spacing={2}>
-                  <ArmorClassBoxes boxes={boxes} />
-                  {table.rows.length > 0 ? <BlockTable table={table} /> : <BlankNote>{table.empty}</BlankNote>}
+                  {boxes && boxes.length > 0 && <StatBoxes boxes={boxes} />}
+                  {table &&
+                    (table.rows.length > 0 ? <BlockTable table={table} /> : <BlankNote>{table.empty}</BlankNote>)}
                 </Stack>
               </Stack>
             ))}

@@ -1,5 +1,6 @@
 import type { ScoresBlock, SheetBlock, SheetColumn, SheetStat, StatsBlock } from "@/engine/core/module/index.ts";
-import { MAX_ABILITY_SCORE, MIN_ABILITY_SCORE } from "@/vocabulary/dnd3.5/abilities.ts";
+import { RULESET_LIMITS } from "@/engine/rulesets/dnd3.5/limits.ts";
+import { MIN_ABILITY_SCORE } from "@/vocabulary/dnd3.5/abilities.ts";
 
 import type CombatSheet from "./CombatSheet.ts";
 
@@ -72,7 +73,7 @@ export default class SheetBlocks {
         short: ability.abbreviation,
         value: ability.total,
         badge: ability.modifier,
-        base: { label: "Base", value: ability.base, min: MIN_ABILITY_SCORE, max: MAX_ABILITY_SCORE },
+        base: { label: "Base", value: ability.base, min: MIN_ABILITY_SCORE, max: RULESET_LIMITS.abilityScore },
         parts: ability.parts,
       })),
     };

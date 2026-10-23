@@ -10,7 +10,7 @@ import { rpc } from "@/client/src/services/rpc.ts";
 
 import { SCORE_ROW_GAP, SCORE_ROW_SX, SCORE_SLOT_SX } from "./scoreRow.ts";
 import { ScoreTile } from "./ScoreTile.tsx";
-import type { BlockOf, SheetScore } from "./sheetBlocks.ts";
+import { type BlockOf, type SheetScore, withBase } from "./sheetBlocks.ts";
 import { SheetSection } from "./SheetSection.tsx";
 import { useSuppressedWarningsStore } from "./suppressedWarningsStore.ts";
 
@@ -40,8 +40,7 @@ interface ScoresSectionProps {
 
 /**
  * A block's scores as their owner edits them: a base raised at once, a lower one asked first (it may break what the
- * character took), unless its warning is off for the session. Until the server answers, a score's value moves by its
- * base's change, whatever else adds to it, and its badge stays the one it gave.
+ * character took), unless its warning is off for the session; shown changed until the server answers (`withBase`).
  */
 function EditableScores({ block, characterId, edit }: EditableScoresProps) {
   const queryClient = useQueryClient();
@@ -63,16 +62,7 @@ function EditableScores({ block, characterId, edit }: EditableScoresProps) {
 
       queryClient.setQueryData(queryKey, (old) => {
         if (!old) return old;
-        const moved = (score: SheetScore) =>
-          score.key === key && score.base
-            ? { ...score, base: { ...score.base, value: base }, value: score.value + base - score.base.value }
-            : score;
-        const blocks = old.blocks.map((sheetBlock) =>
-          sheetBlock.kind === "scores" && sheetBlock.key === block.key
-            ? { ...sheetBlock, scores: sheetBlock.scores.map(moved) }
-            : sheetBlock,
-        );
-        return { ...old, blocks };
+        return { ...old, blocks: withBase(old.blocks, block.key, key, base) };
       });
 
       return { previous };

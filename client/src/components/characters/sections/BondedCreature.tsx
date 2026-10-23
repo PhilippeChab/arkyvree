@@ -5,9 +5,10 @@ import { SubsectionTitle, ValueChip } from "@/client/src/components/common/index
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
 import { formatSigned } from "@/shared/text.ts";
 
-import { AbilityScoreBox } from "./AbilityScoreBox.tsx";
-import { ArmorClassBoxes } from "./ArmorClassBoxes.tsx";
 import { EntryTitle } from "./EntryTitle.tsx";
+import { ScoreTile } from "./ScoreTile.tsx";
+import { blockOf } from "./sheetBlocks.ts";
+import { StatBoxes } from "./StatBoxes.tsx";
 import { StatField } from "./StatField.tsx";
 
 interface BondedCreatureProps {
@@ -25,9 +26,10 @@ function isFeat(entry: FeatEntry): entry is Extract<FeatEntry, { possessed: bool
 
 export function BondedCreature({ bonded, linkable = false }: BondedCreatureProps) {
   const combat = bonded.combat;
+  const abilities = blockOf(bonded.blocks, "scores", "abilities")?.scores ?? [];
   // A creature has one weapon set, its natural attacks', with no shield: its armor class
-  const armorClass = combat?.weaponSets?.[0]?.armorClass;
-  const saves = bonded.saves;
+  const armorClass = blockOf(bonded.blocks, "stats", "combat")?.panels[0]?.boxes;
+  const saves = blockOf(bonded.blocks, "scores", "saves")?.scores ?? [];
 
   const featNames = Object.values(bonded.feats)
     .filter(isFeat)
@@ -62,8 +64,8 @@ export function BondedCreature({ bonded, linkable = false }: BondedCreatureProps
               gap: 1,
             }}
           >
-            {bonded.abilities.map((ability) => (
-              <AbilityScoreBox key={ability.abilityId} ability={ability} compact />
+            {abilities.map((score) => (
+              <ScoreTile key={score.key} score={score} compact />
             ))}
           </Box>
         </Stack>
@@ -72,7 +74,7 @@ export function BondedCreature({ bonded, linkable = false }: BondedCreatureProps
           <Stack spacing={1}>
             <SubsectionTitle component="h5">Combat &amp; Saves</SubsectionTitle>
             <Stack spacing={2}>
-              {armorClass && <ArmorClassBoxes boxes={armorClass} />}
+              {armorClass && <StatBoxes boxes={armorClass} />}
               <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", columnGap: 2, rowGap: 1.5 }}>
                 <Stack spacing={1.5}>
                   {combat?.summary?.map(({ label, value }) => (
@@ -80,8 +82,8 @@ export function BondedCreature({ bonded, linkable = false }: BondedCreatureProps
                   ))}
                 </Stack>
                 <Stack spacing={1.5}>
-                  {Object.entries(saves).map(([key, save]) => (
-                    <StatField key={key} label={save.name} value={formatSigned(save.total)} />
+                  {saves.map(({ key, label, value }) => (
+                    <StatField key={key} label={label} value={formatSigned(value)} />
                   ))}
                 </Stack>
               </Box>

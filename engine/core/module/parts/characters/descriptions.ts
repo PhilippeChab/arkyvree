@@ -7,6 +7,7 @@
 
 import type { Item, Language, Modifier, Property, Requirement } from "@/shared/relations.ts";
 
+import type { SheetBlock } from "./blocks.ts";
 import type { InventoryEntryPlan } from "./plans.ts";
 
 /** A character's card, as a list of characters shows it: its race, its classes at their highest level, its total. */
@@ -49,10 +50,12 @@ export interface LanguagesDescription {
 }
 
 /**
- * Where a sheet, as the API answers it, holds its character's private notes, in every ruleset's: its identity's
- * background, where the characters part shows them, blanks them or leaves them out as its reader reads them.
+ * What a sheet, as the API answers it, holds in every ruleset's: its blocks, in its module's order (`SheetBlock`), and
+ * its character's private notes in its identity's background, where the characters part shows them, blanks them or
+ * leaves them out as its reader reads them.
  */
 export interface NotedSheet {
+  blocks: SheetBlock[];
   identity: { background: { privateNotes?: string } };
 }
 

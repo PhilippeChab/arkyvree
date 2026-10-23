@@ -15,8 +15,9 @@ interface BlockHead {
 
 /**
  * A block of scores in boxes, side by side (`scores`): each its label over its value, and the lines that make it up.
- * `edit`: its bases are the character's own, which its owner raises and lowers within their bounds, with the words the
- * edit says: a lower base's confirmation (it may break what the character took) and its failure.
+ * `edit`: its bases are the character's own, which its owner raises and lowers within their bounds, each written under
+ * its score's key, with the words the edit says: a lower base's confirmation (it may break what the character took) and
+ * its failure. (Its write is the character's ability scores' today, which a later step names by its block.)
  */
 export interface ScoresBlock extends BlockHead {
   edit?: { failed: string; lower: { confirm: string; message: string; title: string } };
@@ -27,7 +28,7 @@ export interface ScoresBlock extends BlockHead {
 /**
  * A table's column, as a sheet's table lays it out: its label and width, its alignment, and where a phone shows its
  * cells (`slot`: the row's name, its end, under them, or under them labeled). `hideEmpty`: an empty cell shows nothing
- * on a phone, and a dash from `sm` up; `noWrap`: its cells keep to one line; `strong`: its cells in bold (a total's).
+ * on a phone, and a dash from `sm` up; `noWrap`: its cells keep to one line.
  */
 export interface SheetColumn {
   align?: "center" | "right";
@@ -36,7 +37,6 @@ export interface SheetColumn {
   label: string;
   noWrap?: boolean;
   slot: "inline" | "labeled" | "primary" | "trailing";
-  strong?: boolean;
   width?: string;
 }
 
@@ -70,13 +70,12 @@ export interface SheetScore {
 
 /**
  * A table on a sheet: its columns and rows, and what it says with no rows (`empty`). `minWidth`: the least width it
- * scrolls within from `sm` up; `narrow`: its columns sized as given, its number columns' headers smaller.
+ * scrolls within from `sm` up.
  */
 export interface SheetTable {
   columns: SheetColumn[];
   empty: string;
   minWidth: number;
-  narrow?: boolean;
   rows: SheetRow[];
 }
 
@@ -91,12 +90,12 @@ export interface StatsBlock extends BlockHead {
   stats: SheetStat[];
 }
 
-/** A panel of a `stats` block: its heading (none for a block's one panel), its boxes, and its table. */
+/** A panel of a `stats` block: its heading (none for a block's one panel), its compact boxes, and its table. */
 export interface StatsPanel {
-  boxes: SheetStat[];
+  boxes?: SheetStat[];
   heading?: { label: string; note?: string };
   key: string;
-  table: SheetTable;
+  table?: SheetTable;
 }
 
 /** A block of a character's sheet, by its kind. */

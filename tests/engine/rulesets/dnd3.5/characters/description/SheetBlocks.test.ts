@@ -79,7 +79,7 @@ describe("SheetBlocks", () => {
       { label: "Touch", value: "11" },
       { label: "Flat-footed", value: "13" },
     ]);
-    expect(block.panels[0].table.rows).toEqual([
+    expect(block.panels[0].table?.rows).toEqual([
       {
         key: "Main Hand",
         caption: "Main Hand",
@@ -100,7 +100,7 @@ describe("SheetBlocks", () => {
 
   test("flags an attack with a weapon its wielder isn't proficient with", () => {
     const block = combatBlock({ "0": set(longsword(false)) });
-    expect(block.panels[0].table.rows[0].alert).toBe("Not Proficient (-4)");
+    expect(block.panels[0].table?.rows[0].alert).toBe("Not Proficient (-4)");
   });
 
   test("gives a character whose hands hold nothing its one loadout with no heading", () => {
@@ -110,7 +110,7 @@ describe("SheetBlocks", () => {
   });
 
   test("puts each table column where a phone shows it, its empty cells hidden where they may be", () => {
-    const { columns } = combatBlock({ "0": set(longsword(true)) }).panels[0].table;
+    const columns = combatBlock({ "0": set(longsword(true)) }).panels[0].table?.columns ?? [];
     expect(columns.map(({ key, slot, hideEmpty }) => [key, slot, !!hideEmpty])).toEqual([
       ["weapon", "primary", false],
       ["attack", "trailing", false],
