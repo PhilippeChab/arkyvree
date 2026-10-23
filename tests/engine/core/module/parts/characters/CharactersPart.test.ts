@@ -25,6 +25,7 @@ const SUMMARY = {
     removeFailed: "Failed to remove",
     removeLast: "Remove",
     removeLastMessage: "Sure?",
+    deleteMessage: "Sure to delete?",
     removed: "Removed",
   },
 };

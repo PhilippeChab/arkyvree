@@ -51,7 +51,7 @@ import {
 } from "./components/index.ts";
 import { useCharacterPermissions } from "./useCharacterPermissions.ts";
 
-/** The words of the page's own level actions, its summary's: the removal's toasts among them. */
+/** The words of the page's own actions on its levels and its character, its summary's: the removal's toasts among them. */
 type SheetSummaryWords = CharacterDetail["summary"]["words"];
 
 export default function CharacterDetailsPage() {
@@ -303,7 +303,8 @@ export default function CharacterDetailsPage() {
             onClose={() => setHardDeleteConfirmOpen(false)}
             onConfirm={() => hardDeleteMutation.mutate()}
             title="Delete Permanently"
-            message="Are you sure you want to permanently delete this character? Its levels, abilities, inventory, attachments and customizations go with it. This action cannot be undone."
+            // What goes with it is its ruleset's to say
+            message={character.summary.words.deleteMessage}
             pending={hardDeleteMutation.isPending}
             confirmLabel="Delete Permanently"
           />
