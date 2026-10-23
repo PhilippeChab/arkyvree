@@ -1,3 +1,13 @@
+export type {
+  ScoresBlock,
+  SheetBlock,
+  SheetColumn,
+  SheetRow,
+  SheetScore,
+  SheetTable,
+  StatsBlock,
+  StatsPanel,
+} from "./blocks.ts";
 export { default as CharactersPart } from "./CharactersPart.ts";
 export type {
   CharacterCard,

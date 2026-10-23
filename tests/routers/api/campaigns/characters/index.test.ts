@@ -209,6 +209,7 @@ describe("campaigns characters", () => {
     expect(sheet).toMatchObject({
       isPartial: true,
       shareToken: null,
+      blocks: [],
       classes: {},
       equipment: [],
       virtualFeats: [],

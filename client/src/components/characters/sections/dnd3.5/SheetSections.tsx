@@ -1,16 +1,16 @@
-import { AbilityScoresSection } from "@/client/src/components/characters/sections/AbilityScoresSection.tsx";
 import { BondedCreature } from "@/client/src/components/characters/sections/BondedCreature.tsx";
-import { CombatSection, type SheetCombat } from "@/client/src/components/characters/sections/CombatSection.tsx";
 import { Encumbrance } from "@/client/src/components/characters/sections/Encumbrance.tsx";
 import { EquipmentSection } from "@/client/src/components/characters/sections/EquipmentSection.tsx";
 import { FeatsSection } from "@/client/src/components/characters/sections/FeatsSection.tsx";
 import { ReadOnlyEquipmentSection } from "@/client/src/components/characters/sections/ReadOnlyEquipmentSection.tsx";
-import { SavingThrowsSection } from "@/client/src/components/characters/sections/SavingThrowsSection.tsx";
+import { ScoresSection } from "@/client/src/components/characters/sections/ScoresSection.tsx";
 import type { SheetSectionsProps } from "@/client/src/components/characters/sections/sectionFactory.ts";
+import { blockOf } from "@/client/src/components/characters/sections/sheetBlocks.ts";
+import { StatsSection } from "@/client/src/components/characters/sections/StatsSection.tsx";
+import type { CharacterDetail } from "@/client/src/lib/queries.ts";
 
 import { SkillsSection } from "./SkillsSection.tsx";
 import { SpellsSection } from "./SpellsSection.tsx";
-import { WeaponSets } from "./WeaponSets.tsx";
 
 /**
  * A 3.5 sheet's sections, under its identity: its abilities, its saving throws, its combat (its weapon sets in it), its
@@ -25,25 +25,21 @@ export function SheetSections({
   rulesetId,
 }: SheetSectionsProps) {
   // A partial sheet carries no combat
-  const combat: SheetCombat = character.combat;
+  const combat: Partial<CharacterDetail["combat"]> = character.combat;
   const load = combat.load && <Encumbrance load={combat.load} />;
   // The bonded creatures, by the feat that bonds each
   const bondedByFeat = new Map(Object.values(character.bonded).map((creature) => [creature.bondFeatId, creature]));
+  const abilities = blockOf(character.blocks, "scores", "abilities");
+  const saves = blockOf(character.blocks, "scores", "saves");
+  const combatBlock = blockOf(character.blocks, "stats", "combat");
 
   return (
     <>
-      <AbilityScoresSection
-        abilities={character.abilities}
-        baseRules={character.baseRules}
-        characterId={characterId}
-        readOnly={readOnly}
-      />
+      {abilities && <ScoresSection block={abilities} characterId={characterId} readOnly={readOnly} />}
 
-      <SavingThrowsSection saves={character.saves} />
+      {saves && <ScoresSection block={saves} characterId={characterId} readOnly={readOnly} />}
 
-      <CombatSection combat={combat}>
-        <WeaponSets combat={combat} />
-      </CombatSection>
+      {combatBlock && <StatsSection block={combatBlock} />}
 
       <SkillsSection skills={character.skills} />
 

@@ -27,8 +27,16 @@ export {
   type PlacementQuery,
   type PrivateNotes,
   type RacePickQuery,
+  type ScoresBlock,
+  type SheetBlock,
+  type SheetColumn,
   type SheetRequest,
+  type SheetRow,
+  type SheetScore,
   type SheetStat,
+  type SheetTable,
+  type StatsBlock,
+  type StatsPanel,
 } from "./parts/characters/index.ts";
 export { ContentPart } from "./parts/content/index.ts";
 export {
