@@ -58,6 +58,11 @@ export default class Dnd35Characters extends CharactersPart<Dnd35Descriptions> {
     return IdentityFields.plan(request);
   }
 
+  /** What a new character's fields write: its alignment, gender and experience, and its optional details. */
+  protected override planNewFields(...args: Parameters<typeof NewCharacters.planFields>) {
+    return NewCharacters.planFields(...args);
+  }
+
   /** Where an inventory entry's add or edit holds its item: the item equipped where asked, what equipping it checks. */
   protected override planPlacement(...args: Parameters<typeof InventoryEntries.planPlacement>) {
     return InventoryEntries.planPlacement(...args);

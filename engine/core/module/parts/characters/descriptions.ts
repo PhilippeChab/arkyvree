@@ -45,6 +45,18 @@ export interface CharacterCreation {
 }
 
 /**
+ * A new character's form, as its rules lay it out: its sections in order, each under its title, its ability scores
+ * (`abilities`: set the ways its ruleset's creation offers, what it says without abilities to set, `none`, and before
+ * a ruleset is picked, `pick`) or its lines (`fields`). A line of one item stands alone, of several side by side from a
+ * tablet's width. An item is the form's own (`name`, under its label; the picks every character is made from, its
+ * `ruleset` and its `race`, under its label, which the fields marked `racePick` narrow, what's said without one,
+ * `required`, and of one they rule out, `ineligible`; its `notes`) or one of its ruleset's fields (`CreationField`).
+ */
+export interface CharacterForm {
+  sections: CreationSection[];
+}
+
+/**
  * A character's sheet as the API answers it, in every ruleset's shape: noted (`NotedSheet`), with its bonded creatures'
  * sheets (`bonded`, none for a creature's own), each noted.
  */
@@ -110,6 +122,28 @@ export interface SheetSummary {
 }
 
 /**
+ * A field of a new character's form, by its kind, keyed as its create sends it (`fields`): a whole number at least
+ * `min` (`required`: what's said without one, else it may be left empty; `start`: its first value, else empty;
+ * `stepped`: its input's own arrows stop at `min`), one of a select's options (`required`: what's said without one), a
+ * line of text or several (`placeholder`: what it says empty). `racePick`: a select the race picker narrows its races
+ * by. Its key is a plain name (letters, digits and `_`), none of the form's own values' nor the race picker's query's.
+ */
+export type CreationField = { key: string; label: string } & (
+  | { kind: "number"; min: number; required?: string; start?: number; stepped?: boolean }
+  | { kind: "select"; options: string[]; racePick?: boolean; required?: string }
+  | { kind: "text"; placeholder?: string }
+  | { kind: "textarea"; placeholder: string }
+);
+
+/** An item of a new character's form's line: one of the form's own, or one of its ruleset's fields. */
+export type CreationItem =
+  | CreationField
+  | { kind: "name"; label: string }
+  | { kind: "notes" }
+  | { ineligible: string; kind: "race"; label: string; required: string }
+  | { kind: "ruleset" };
+
+/**
  * A way a new character's ability scores are set, which its form runs by its kind: rolled (`dice`: `count` dice of
  * `sides`, the highest `keep` summed), taken from an array (`scores`, each to one ability), or bought (`costs`, each
  * score's from `min` to `max`, out of `budget`).
@@ -118,6 +152,12 @@ export type CreationMethod = { id: string; label: string } & (
   | { dice: { count: number; keep: number; sides: number }; kind: "roll" }
   | { kind: "array"; scores: readonly number[] }
   | { budget: number; costs: Readonly<Record<number, number>>; kind: "pointBuy"; max: number; min: number }
+);
+
+/** A section of a new character's form, under its title: its ability scores, or its lines of items. */
+export type CreationSection = { title: string } & (
+  | { kind: "abilities"; none: string; pick: string }
+  | { kind: "fields"; lines: CreationItem[][] }
 );
 
 /**

@@ -52,7 +52,7 @@ export default class CharactersEngine {
 
   /**
    * What a new character stores: its race and ability scores, by the view's ids, refused when its race isn't a player's
-   * or one isn't the ruleset's.
+   * or one isn't the ruleset's, and its fields' columns, refused when one is.
    */
   planCreate(...args: Args<"planCreate">) {
     return this.module.characters.planCreate(this.view, ...args);
@@ -65,5 +65,10 @@ export default class CharactersEngine {
    */
   planImport(text: string, owner: ImportOwner) {
     return this.module.imports.planImport(this.view, text, owner);
+  }
+
+  /** What a new character starts with: its race and ability scores, checked as a create checks them. */
+  planStart(...args: Args<"planStart">) {
+    return this.module.characters.planStart(this.view, ...args);
   }
 }

@@ -1,7 +1,7 @@
 import { IconButton, MenuItem, Paper, Stack, TextField, Typography } from "@mui/material";
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { type Control, Controller, useController } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 
@@ -10,13 +10,13 @@ import {
   BlankNote,
   CountChip,
   CreateDialog,
-  DescriptionField,
   DiceSpinner,
   FormTextField,
   LoadError,
   NameField,
   SelectField,
   SubsectionTitle,
+  TextAreaField,
 } from "@/client/src/components/common/index.ts";
 import { AddIcon, RemoveIcon } from "@/client/src/components/icons/index.ts";
 import {
@@ -26,7 +26,7 @@ import {
   useRulesetPickerOptions,
 } from "@/client/src/components/rulesets/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import { useFormWith, useListboxQuery } from "@/client/src/hooks/index.ts";
+import { useFormWith, useListboxQuery, useRules } from "@/client/src/hooks/index.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { requiredRules, wholeNumberRules } from "@/client/src/lib/validation.ts";
 import type { CharacterPageState } from "@/client/src/pages/characters/characterPageState.ts";
@@ -42,10 +42,18 @@ import { RollAllButton } from "@/client/src/pages/characters/RollAllButton.tsx";
 import { type DiceRoll, useDiceRoll } from "@/client/src/pages/characters/useDiceRoll.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { PREFERS_REDUCED_MOTION, settleAnimation } from "@/client/src/theme/animations.ts";
-import { ALIGNMENT_OPTIONS, GENDER_OPTIONS } from "@/shared/enums.ts";
 import { formatSigned } from "@/shared/text.ts";
 
-import { type CreateCharacterFormData, type CreateCharacterRequest, EMPTY_NEW_CHARACTER } from "./newCharacter.ts";
+import {
+  type CharacterForm,
+  type CreateCharacterFormData,
+  type CreateCharacterRequest,
+  type CreationItem,
+  emptyNewCharacter,
+  racePickKeysOf,
+  racePicksOf,
+  sentCreationFieldsOf,
+} from "./newCharacter.ts";
 
 interface AbilityCardProps {
   bottomInfo: string;
@@ -104,6 +112,9 @@ type PointBuyMethod = Extract<CreationMethod, { kind: "pointBuy" }>;
 
 /** The scores rolled with dice. */
 type RollMethod = Extract<CreationMethod, { kind: "roll" }>;
+
+/** A new character's form before its rules' fields are known: nothing picked, no score set. */
+const NO_CHARACTER_YET: CreateCharacterFormData = { rulesetId: "", raceId: "", name: "", abilities: {}, notes: "" };
 
 function AbilityCard({
   name,
@@ -208,6 +219,11 @@ function defaultScore(method: CreationMethod, index: number, start: number) {
   return start;
 }
 
+/** A line's item's React key: its field's key, else its kind (the form's own are one each). */
+function itemKeyOf(item: CreationItem) {
+  return "key" in item ? item.key : item.kind;
+}
+
 /** What a point buy's scores cost: each score's price, summed. */
 function pointBuyCost(method: PointBuyMethod, scores: number[]) {
   return pointsSpent(scores.map((score) => method.costs[score] ?? 0));
@@ -298,8 +314,9 @@ function StandardArrayScores({ abilities, abilityValues, method, modifiers, onCh
 }
 
 /**
- * A new character: its ruleset, race and details, and its ability scores by the roll method picked. Mounted while it's
- * open, its form, its pickers and its roll method start clean at each opening.
+ * A new character: its ruleset, race and details, and its ability scores by the roll method picked, laid out as its
+ * rules' form describes it (the picked ruleset's base rules', the first's until one is picked). Mounted while it's open,
+ * its form, its pickers and its roll method start clean at each opening.
  */
 export function CreateCharacterDialog({ open, onClose, onExited }: CreateCharacterDialogProps) {
   const navigate = useNavigate();
@@ -309,22 +326,37 @@ export function CreateCharacterDialog({ open, onClose, onExited }: CreateCharact
   const [methodId, setMethodId] = useState("");
   const rulesetOptions = useRulesetPickerOptions("character", open);
   const { preselected } = rulesetOptions;
-  // The user's own ruleset is picked once it's known, unless the user picked one already
-  const form = useFormWith<CreateCharacterFormData>(EMPTY_NEW_CHARACTER, {
-    values: preselected ? { ...EMPTY_NEW_CHARACTER, rulesetId: preselected.id } : undefined,
+  const { all: allRules, error: rulesError } = useRules();
+  const [pickedRuleset, setPickedRuleset] = useState<RulesetOption | null>(null);
+  // Its rules' form: the picked ruleset's base rules', else the user's own ruleset's, else the first's
+  const formRuleset = pickedRuleset ?? preselected;
+  const characterForm =
+    (formRuleset && allRules?.[formRuleset.baseRules]?.characterForm) ??
+    (allRules && Object.values(allRules)[0]?.characterForm);
+  // Its fields start once its form is known, and the user's own ruleset is picked once it's known, unless the user
+  // picked one already
+  const preselectedId = preselected?.id;
+  const values = useMemo(
+    () =>
+      characterForm && {
+        ...emptyNewCharacter(characterForm),
+        ...(preselectedId && { rulesetId: preselectedId }),
+      },
+    [characterForm, preselectedId],
+  );
+  const form = useFormWith<CreateCharacterFormData>(NO_CHARACTER_YET, {
+    values,
     resetOptions: { keepDirtyValues: true },
   });
   const { control, getValues, watch, setValue } = form;
 
   const selectedRulesetId = watch("rulesetId");
-  const selectedAlignment = watch("alignment");
-  const selectedGender = watch("gender");
-
-  const [pickedRuleset, setPickedRuleset] = useState<RulesetOption | null>(null);
   // The ruleset the form holds: the one picked, else the user's own the dialog started on
   const selectedRuleset = pickedRuleset ?? (preselected?.id === selectedRulesetId ? preselected : null);
 
-  // Fetch races for selected ruleset, annotated with eligibility
+  // Fetch races for selected ruleset, annotated with eligibility for what the fields that narrow them say
+  const racePickKeys = characterForm ? racePickKeysOf(characterForm) : [];
+  const racePicks = racePicksOf(racePickKeys, watch(racePickKeys));
   const {
     items: races,
     isPending: isRacesPending,
@@ -332,19 +364,19 @@ export function CreateCharacterDialog({ open, onClose, onExited }: CreateCharact
     error: racesError,
     onScroll: handleRacesScroll,
   } = useListboxQuery({
-    ...availableRacesQuery(selectedRulesetId, selectedAlignment, selectedGender),
+    ...availableRacesQuery(selectedRulesetId, racePicks),
     placeholderData: keepPreviousData,
   });
 
-  // A race the list for the current ruleset, alignment and gender doesn't offer, once it has loaded, is refused, and
-  // the field says why. While a new list loads, the previous one is still shown, and a failed load says nothing.
+  // A race the list for the current ruleset and picks doesn't offer, once it has loaded, is refused, and the field says
+  // why. While a new list loads, the previous one is still shown, and a failed load says nothing.
   const selectedRaceId = watch("raceId");
   const racesSettled = !!selectedRulesetId && !isRacesPending && !isRacesPlaceholder && !racesError;
-  const raceIssue = (raceId: string) => {
+  const raceIssue = (raceId: string, ineligible: string) => {
     if (!raceId || !racesSettled) return undefined;
     const race = races.find((r) => r.id === raceId);
     if (!race) return "Not in this ruleset: pick another";
-    return race.eligible ? undefined : "Not open to this alignment or gender: pick another";
+    return race.eligible ? undefined : ineligible;
   };
 
   // How the ruleset sets its scores, its abilities in its sheets' order, and the method picked: its first until one is
@@ -376,26 +408,7 @@ export function CreateCharacterDialog({ open, onClose, onExited }: CreateCharact
   };
 
   const createCharacterMutation = useMutation({
-    mutationFn: async (data: CreateCharacterRequest) =>
-      parseResponse(
-        rpc.api.characters.$post({
-          json: {
-            rulesetId: data.rulesetId,
-            raceId: data.raceId,
-            name: data.name,
-            xp: data.xp,
-            alignment: data.alignment,
-            abilities: data.abilities,
-            age: data.age || undefined,
-            gender: data.gender,
-            height: data.height || undefined,
-            weight: data.weight || undefined,
-            deity: data.deity || undefined,
-            description: data.description || undefined,
-            notes: data.notes || undefined,
-          },
-        }),
-      ),
+    mutationFn: async (json: CreateCharacterRequest) => parseResponse(rpc.api.characters.$post({ json })),
     onSuccess: (data) => {
       snackbar.success("Character created");
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.characters.lists });
@@ -407,19 +420,180 @@ export function CreateCharacterDialog({ open, onClose, onExited }: CreateCharact
     },
   });
 
-  // The alignment and gender are required: a submit always has them. The scores not set yet are their method's defaults
-  const handleCreate = ({ alignment, gender, ...data }: CreateCharacterFormData) => {
-    if (!alignment || !gender) return;
+  // Its fields as its rules' form keys them; the scores not set yet are their method's defaults
+  const handleCreate = (data: CreateCharacterFormData) => {
+    if (!characterForm) return;
     const abilities =
       creation && method ? scoresOf(rulesetAbilities, data.abilities, method, creation.scores.start) : data.abilities;
-    createCharacterMutation.mutate({ ...data, alignment, gender, abilities });
+    createCharacterMutation.mutate({
+      rulesetId: data.rulesetId,
+      raceId: data.raceId,
+      name: data.name,
+      abilities,
+      notes: data.notes || undefined,
+      fields: sentCreationFieldsOf(characterForm, data),
+    });
   };
 
   // A race the ruleset's list no longer offers is refused, with why
-  const raceRules = {
-    required: "Race is required",
-    validate: (raceId: unknown) => (typeof raceId === "string" && raceIssue(raceId)) || true,
+  const raceRulesOf = (item: Extract<CreationItem, { kind: "race" }>) => ({
+    required: item.required,
+    validate: (raceId: unknown) => (typeof raceId === "string" && raceIssue(raceId, item.ineligible)) || true,
+  });
+
+  /** An item of a line of the form: one of the form's own, or one of its rules' fields, by its kind. */
+  const renderItem = (item: CreationItem) => {
+    switch (item.kind) {
+      case "name":
+        return <NameField key="name" control={control} name="name" label={item.label} />;
+      case "notes":
+        return <NotesField key="notes" control={control} name="notes" />;
+      case "ruleset":
+        return (
+          <Controller
+            key="ruleset"
+            name="rulesetId"
+            control={control}
+            rules={requiredRules("Ruleset is required")}
+            render={({ field, fieldState }) => (
+              <RulesetPicker
+                options={rulesetOptions}
+                value={selectedRuleset}
+                // Another ruleset's abilities start from their defaults
+                onChange={(ruleset) => {
+                  setPickedRuleset(ruleset);
+                  field.onChange(ruleset?.id ?? "");
+                  setValue("abilities", {}, { shouldDirty: true });
+                  if (!ruleset) setValue("raceId", "", { shouldDirty: true });
+                }}
+                error={fieldState.error}
+                inputRef={field.ref}
+              />
+            )}
+          />
+        );
+      case "race":
+        return (
+          <SelectField
+            key="race"
+            control={control}
+            name="raceId"
+            label={item.label}
+            rules={raceRulesOf(item)}
+            helperText={raceIssue(selectedRaceId, item.ineligible)}
+            loadError={racesError}
+            options={races.map((race) => ({ value: race.id, label: race.name, disabled: !race.eligible }))}
+            disabled={!selectedRulesetId}
+            onMenuScroll={handleRacesScroll}
+          />
+        );
+      case "number":
+        return (
+          <FormTextField
+            key={item.key}
+            control={control}
+            name={item.key}
+            rules={wholeNumberRules(item.min, item.required ?? false)}
+            number
+            label={item.label}
+            // Its input's own arrows stop at its least
+            {...(item.stepped && { slotProps: { htmlInput: { min: item.min } } })}
+            fullWidth
+          />
+        );
+      case "select":
+        return (
+          <SelectField
+            key={item.key}
+            control={control}
+            name={item.key}
+            label={item.label}
+            rules={item.required ? requiredRules(item.required) : undefined}
+            options={item.options}
+          />
+        );
+      case "text":
+        return (
+          <FormTextField
+            key={item.key}
+            control={control}
+            name={item.key}
+            label={item.label}
+            placeholder={item.placeholder}
+            fullWidth
+          />
+        );
+      case "textarea":
+        return (
+          <TextAreaField
+            key={item.key}
+            control={control}
+            name={item.key}
+            label={item.label}
+            placeholder={item.placeholder}
+          />
+        );
+    }
   };
+
+  /** The form's ability scores, under their section's title, set the way the method picked sets them. */
+  const renderAbilities = (section: Extract<CharacterForm["sections"][number], { kind: "abilities" }>) => (
+    <Stack key={section.title} spacing={1}>
+      <SubsectionTitle>{section.title}</SubsectionTitle>
+      <Stack spacing={3}>
+        {creation && method && (
+          <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+            <TextField
+              select
+              label="Method"
+              value={method.id}
+              onChange={(e) => {
+                // Another method's scores start from its defaults
+                setMethodId(e.target.value);
+                setValue("abilities", {}, { shouldDirty: true });
+              }}
+              size="small"
+              sx={{ minWidth: 200 }}
+            >
+              {creation.methods.map((m) => (
+                <MenuItem key={m.id} value={m.id}>
+                  {m.label}
+                </MenuItem>
+              ))}
+            </TextField>
+            {method.kind === "roll" && (
+              <RollAllButton
+                onClick={() => handleRollAll(method, creation.scores.start)}
+                disabled={!rulesetAbilities.length || diceRoll.rolling}
+              />
+            )}
+            {method.kind === "pointBuy" && (
+              <CountChip
+                label={formatPointsSpent(pointBuyPoints, method.budget)}
+                // Its increases stop at its budget: spent whole, or not yet
+                color={pointBuyPoints === method.budget ? "success" : "default"}
+              />
+            )}
+          </Stack>
+        )}
+        {rulesetAbilities.length > 0 && creation && method ? (
+          <AbilityScoresField
+            abilities={rulesetAbilities}
+            control={control}
+            creation={creation}
+            diceRoll={diceRoll}
+            method={method}
+          />
+        ) : creationError ? (
+          <LoadError what={section.title} error={creationError} />
+        ) : creationLoading ? (
+          <DiceSpinner sx={{ py: 4 }} />
+        ) : (
+          <BlankNote>{selectedRulesetId ? section.none : section.pick}</BlankNote>
+        )}
+      </Stack>
+    </Stack>
+  );
 
   return (
     <CreateDialog
@@ -431,172 +605,37 @@ export function CreateCharacterDialog({ open, onClose, onExited }: CreateCharact
       pending={createCharacterMutation.isPending}
       maxWidth="md"
       onExited={onExited}
+      // Nothing to create until its form shows
+      submitDisabled={!characterForm}
     >
       <BaseRulesetAlert ruleset={selectedRuleset} />
-      <Stack spacing={1}>
-        <SubsectionTitle>Basic Information</SubsectionTitle>
-        <Stack spacing={3}>
-          <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-            <NameField control={control} name="name" label="Character Name" />
-            <FormTextField
-              control={control}
-              name="xp"
-              rules={wholeNumberRules(0, "Experience points are required")}
-              number
-              label="Experience Points"
-              fullWidth
-            />
-          </Stack>
-
-          <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-            <Controller
-              name="rulesetId"
-              control={control}
-              rules={requiredRules("Ruleset is required")}
-              render={({ field, fieldState }) => (
-                <RulesetPicker
-                  options={rulesetOptions}
-                  value={selectedRuleset}
-                  // Another ruleset's abilities start from their defaults
-                  onChange={(ruleset) => {
-                    setPickedRuleset(ruleset);
-                    field.onChange(ruleset?.id ?? "");
-                    setValue("abilities", {}, { shouldDirty: true });
-                    if (!ruleset) setValue("raceId", "", { shouldDirty: true });
-                  }}
-                  error={fieldState.error}
-                  inputRef={field.ref}
-                />
-              )}
-            />
-
-            <SelectField
-              control={control}
-              name="raceId"
-              label="Race"
-              rules={raceRules}
-              helperText={raceIssue(selectedRaceId)}
-              loadError={racesError}
-              options={races.map((race) => ({ value: race.id, label: race.name, disabled: !race.eligible }))}
-              disabled={!selectedRulesetId}
-              onMenuScroll={handleRacesScroll}
-            />
-          </Stack>
-
-          <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-            <SelectField
-              control={control}
-              name="alignment"
-              label="Alignment"
-              rules={requiredRules("Alignment is required")}
-              options={ALIGNMENT_OPTIONS}
-            />
-            <SelectField
-              control={control}
-              name="gender"
-              label="Gender"
-              rules={requiredRules("Gender is required")}
-              options={GENDER_OPTIONS}
-            />
-          </Stack>
-        </Stack>
-      </Stack>
-
-      <Stack spacing={1}>
-        <SubsectionTitle>Ability Scores</SubsectionTitle>
-        <Stack spacing={3}>
-          {creation && method && (
-            <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-              <TextField
-                select
-                label="Method"
-                value={method.id}
-                onChange={(e) => {
-                  // Another method's scores start from its defaults
-                  setMethodId(e.target.value);
-                  setValue("abilities", {}, { shouldDirty: true });
-                }}
-                size="small"
-                sx={{ minWidth: 200 }}
-              >
-                {creation.methods.map((m) => (
-                  <MenuItem key={m.id} value={m.id}>
-                    {m.label}
-                  </MenuItem>
-                ))}
-              </TextField>
-              {method.kind === "roll" && (
-                <RollAllButton
-                  onClick={() => handleRollAll(method, creation.scores.start)}
-                  disabled={!rulesetAbilities.length || diceRoll.rolling}
-                />
-              )}
-              {method.kind === "pointBuy" && (
-                <CountChip
-                  label={formatPointsSpent(pointBuyPoints, method.budget)}
-                  // Its increases stop at its budget: spent whole, or not yet
-                  color={pointBuyPoints === method.budget ? "success" : "default"}
-                />
-              )}
-            </Stack>
-          )}
-          {rulesetAbilities.length > 0 && creation && method ? (
-            <AbilityScoresField
-              abilities={rulesetAbilities}
-              control={control}
-              creation={creation}
-              diceRoll={diceRoll}
-              method={method}
-            />
-          ) : creationError ? (
-            <LoadError what="Ability Scores" error={creationError} />
-          ) : creationLoading ? (
-            <DiceSpinner sx={{ py: 4 }} />
+      {characterForm ? (
+        characterForm.sections.map((section) =>
+          section.kind === "abilities" ? (
+            renderAbilities(section)
           ) : (
-            <BlankNote>
-              {selectedRulesetId ? "No abilities in this ruleset" : "Pick a ruleset to see its abilities"}
-            </BlankNote>
-          )}
-        </Stack>
-      </Stack>
-
-      <Stack spacing={1}>
-        <SubsectionTitle>Physical Details</SubsectionTitle>
-        <Stack spacing={3}>
-          <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-            <FormTextField
-              control={control}
-              name="age"
-              rules={wholeNumberRules(1, false)}
-              number
-              label="Age"
-              slotProps={{ htmlInput: { min: 1 } }}
-              fullWidth
-            />
-            <FormTextField
-              control={control}
-              name="height"
-              label="Height"
-              placeholder="e.g., 5 feet 8 inches"
-              fullWidth
-            />
-            <FormTextField control={control} name="weight" label="Weight" placeholder="e.g., 150 lbs, 68kg" fullWidth />
-          </Stack>
-        </Stack>
-      </Stack>
-
-      <Stack spacing={1}>
-        <SubsectionTitle>Optional Details</SubsectionTitle>
-        <Stack spacing={3}>
-          <FormTextField control={control} name="deity" label="Deity" fullWidth />
-          <DescriptionField
-            control={control}
-            name="description"
-            placeholder="Character appearance, personality, or background…"
-          />
-          <NotesField control={control} name="notes" />
-        </Stack>
-      </Stack>
+            <Stack key={section.title} spacing={1}>
+              <SubsectionTitle>{section.title}</SubsectionTitle>
+              <Stack spacing={3}>
+                {section.lines.map((line) =>
+                  // A line of one item stands alone; of several, side by side from a tablet's width
+                  line.length === 1 ? (
+                    renderItem(line[0])
+                  ) : (
+                    <Stack key={line.map(itemKeyOf).join(" ")} direction={{ xs: "column", sm: "row" }} spacing={2}>
+                      {line.map(renderItem)}
+                    </Stack>
+                  ),
+                )}
+              </Stack>
+            </Stack>
+          ),
+        )
+      ) : rulesError ? (
+        <LoadError what="Character Form" error={rulesError} />
+      ) : (
+        <DiceSpinner sx={{ py: 4 }} />
+      )}
     </CreateDialog>
   );
 }

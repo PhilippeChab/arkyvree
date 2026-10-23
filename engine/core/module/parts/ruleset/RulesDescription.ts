@@ -1,4 +1,5 @@
 import type { FormField } from "@/engine/core/fields/index.ts";
+import type { CharacterForm } from "@/engine/core/module/parts/characters/index.ts";
 
 /**
  * How a kind's row copies an entity (an item's): a duplicate, whose form keeps the columns it can't change (`locked`:
@@ -134,6 +135,8 @@ export interface ProgressionTrack {
 export interface RulesDescription {
   /** The bounds of an ability's base score, which its sheet's box raises and lowers it within */
   abilityScores: { max: number; min: number };
+  /** A new character's form, as its rules lay it out: its sections, their fields, its ability scores among them */
+  characterForm: CharacterForm;
   /**
    * The columns each entity type's form shows beside its name and description, by type, as its rules hold them (a
    * class's hit die, an item's cost, type and slot): each keyed where its value goes in the form's body

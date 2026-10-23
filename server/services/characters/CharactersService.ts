@@ -2,7 +2,7 @@ import { getTableName } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
 import { charactersInCharacter } from "@/drizzle/schema.ts";
-import { Engine, type FieldsRequest, type LanguagesPlan } from "@/engine/index.ts";
+import { Engine, type FieldsRequest, type LanguagesPlan, type RacePickQuery } from "@/engine/index.ts";
 import { include } from "@/lib/mixins.ts";
 import { type RulesetScope, withRulesetScope, withRulesetScopes } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
@@ -19,7 +19,6 @@ import {
   visibilityMap,
 } from "@/server/repositories/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
-import type { Alignment, Gender } from "@/shared/enums.ts";
 import type { Character, Session } from "@/shared/relations.ts";
 
 import { describeCharacterCards } from "./characterCards.ts";
@@ -59,18 +58,11 @@ class CharactersService extends include(Object, Archives, Imports) {
     session: Session,
     characterData: {
       abilities: Record<string, number>;
-      age?: number;
-      alignment: Alignment;
-      deity?: string;
-      description?: string;
-      gender: Gender;
-      height?: string;
+      fields: FieldsRequest;
       name: string;
       notes?: string;
       raceId: string;
       rulesetId: string;
-      weight?: string;
-      xp: number;
     },
   ) {
     return await withTransaction(
@@ -80,18 +72,11 @@ class CharactersService extends include(Object, Archives, Imports) {
           const plan = Engine.for(scope).characters().planCreate(characterData);
 
           const [newCharacter] = await Characters.create(tx, {
+            ...plan.columns,
             userId: session.userId,
             rulesetId: characterData.rulesetId,
             raceId: plan.raceId,
             name: characterData.name,
-            xp: characterData.xp,
-            alignment: characterData.alignment,
-            age: characterData.age,
-            gender: characterData.gender,
-            height: characterData.height,
-            weight: characterData.weight,
-            deity: characterData.deity,
-            description: characterData.description,
             notes: characterData.notes,
           });
 
@@ -122,10 +107,7 @@ class CharactersService extends include(Object, Archives, Imports) {
 
   async getAvailableRaces(
     rulesetId: string,
-    formData: {
-      alignment?: string;
-      gender?: string;
-    },
+    formData: RacePickQuery,
     where: { search?: string },
     pagination: { limit: number; page: number },
   ) {

@@ -48,4 +48,37 @@ describe("A new 3.5 character's creation", () => {
     for (let score = scores.min; score <= scores.max; score++)
       expect(modifiers[score]).toBe(AbilityRules.computeModifier(score));
   });
+
+  test("writes a new character's fields into their columns, an empty or a missing optional one left out", () => {
+    expect(
+      NewCharacters.planFields({
+        xp: 0,
+        alignment: "Lawful Good",
+        gender: "Female",
+        age: null,
+        height: "",
+        weight: "60",
+        deity: null,
+        description: "Tall",
+      }),
+    ).toEqual({ columns: { alignment: "Lawful Good", gender: "Female", xp: 0, weight: "60", description: "Tall" } });
+    expect(NewCharacters.planFields({ xp: 300, alignment: "True Neutral", gender: "Male", age: 30 })).toEqual({
+      columns: { alignment: "True Neutral", gender: "Male", xp: 300, age: 30 },
+    });
+  });
+
+  test("refuses a required field missing or unset, a value its field doesn't take, or a field its form hasn't", () => {
+    const fields = { xp: 0, alignment: "Lawful Good", gender: "Female" };
+    const { xp: _xp, ...withoutXp } = fields;
+    for (const sent of [
+      withoutXp,
+      { ...fields, alignment: "" },
+      { ...fields, gender: null },
+      { ...fields, xp: -1 },
+      { ...fields, age: 0 },
+      { ...fields, alignment: "Lawful Awesome" },
+      { ...fields, strength: 18 },
+    ])
+      expect(() => NewCharacters.planFields(sent)).toThrow(expect.objectContaining({ refusal: "invalid" }));
+  });
 });

@@ -40,6 +40,7 @@ export type {
   PickQuery,
   PlannedSoFar,
   PreviewRequest,
+  RacePickQuery,
   RulesDescription,
   RulesWord,
   StepOption,

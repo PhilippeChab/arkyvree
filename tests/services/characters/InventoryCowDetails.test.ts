@@ -24,13 +24,15 @@ async function setup() {
     rulesetId: ruleset.id,
     raceId: seed.raceMap.pc["Human"],
     name: "Inventory override regression",
-    xp: 0,
-    alignment: "Lawful Good",
+    fields: {
+      xp: 0,
+      alignment: "Lawful Good",
+      age: 25,
+      gender: "Male",
+      height: "180 cm",
+      weight: "80 kg",
+    },
     abilities: {},
-    age: 25,
-    gender: "Male",
-    height: "180 cm",
-    weight: "80 kg",
   });
   await CharacterInventoryService.addItem(session, character.id, item.id, 2, true, "Main Hand", null, null, [0]);
   return { session, ruleset, item, character };
