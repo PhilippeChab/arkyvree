@@ -473,9 +473,9 @@ Every entity service works in the ruleset's scope (`withRulesetScope`): reads co
 // list narrows them to (`filters`); the engine describes the rows as the view does
 return await withRulesetScope(db, rulesetId, async (scope) => {
   const list = Engine.for(scope).entities("saves").openList(where);
-  const result = await Saves.findPage(
+  const result = await Entities.findPage<RulesetSave>(
     db,
-    { rulesetId, ...scope.rulesetData.cow.listFilters, ...where, ...list.filters },
+    { entityType: "saves", rulesetId, ...scope.rulesetData.cow.listFilters, ...where, ...list.filters },
     pagination,
   );
   return { ...result, items: list.describe(result.items) };
@@ -490,7 +490,7 @@ Every kind is served by one router, by its URL segment (`server/routers/api/rule
 A kind's creates, updates and deletes go through its writer, `EntityWriter` (`server/services/rulesets/EntityWriter.ts`), a field of its service: the service hands it the plan its rules give (`Engine.for(scope).entities(type)`), and it takes every kind's steps around it, in one order:
 
 ```ts
-private readonly writer = new EntityWriter("languages", Languages);
+private readonly writer = new EntityWriter("languages");
 
 return await this.writer.create(session, rulesetId, body.name, (scope) =>
   Engine.for(scope).entities("languages").planCreate(body),
