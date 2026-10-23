@@ -1,15 +1,13 @@
 import { expect, test } from "bun:test";
 
+import type { Aptitude, Feat } from "@/engine/index.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import {
-  Aptitudes,
+  Entities,
   EntitySnapshots,
-  Feats,
-  FeatsAptitudes,
+  Joins,
   Modifiers,
-  Powers,
-  PowersAptitudes,
   Properties,
   Requirements,
   Rulesets,
@@ -42,8 +40,8 @@ const PRECEDENCE: Record<EntityType, { type: string; valueOf: (index: number) =>
 async function setup(entityType: EntityType, pairing: Pairing, extensionCount = 2) {
   const session = makeSession();
   const host = await createSeededTestRuleset(session.userId);
-  const repo = entityType === "feats" ? Feats : Powers;
-  const base = (await repo.findOne(db, {
+  const base = (await Entities.findOne(db, {
+    entityType,
     rulesetId: host.ancestorRulesetIds[0],
     name: entityType === "feats" ? "Toughness" : "Magic Missile",
   }))!;
@@ -59,7 +57,7 @@ async function setup(entityType: EntityType, pairing: Pairing, extensionCount = 
     const copy =
       pairing === "snapshot"
         ? await copyEntity(db, entityType, base.id, extension)
-        : (await repo.create(db, { name: "Sibling write fixture", rulesetId: extension.id }))[0];
+        : (await Entities.create(db, entityType, { name: "Sibling write fixture", rulesetId: extension.id }))[0];
     extensions.push({ extension, copy });
   }
   await RulesetExtensionsService.subscribeExtension(
@@ -95,9 +93,13 @@ for (const entityType of ["feats", "powers"] as const) {
         valueType: "number",
         operator: "greater_than_or_equal",
       });
-      const [aptitude] = await Aptitudes.create(db, { name: "Sibling aptitude fixture", rulesetId: loserRulesetId });
-      if (entityType === "feats") await FeatsAptitudes.create(db, { featId: loser.id, aptitudeId: aptitude.id });
-      else await PowersAptitudes.create(db, { powerId: loser.id, aptitudeId: aptitude.id });
+      const [aptitude] = await Entities.create<Aptitude>(db, "aptitudes", {
+        name: "Sibling aptitude fixture",
+        rulesetId: loserRulesetId,
+      });
+      if (entityType === "feats")
+        await Joins.create(db, "feats_aptitudes", { featId: loser.id, aptitudeId: aptitude.id });
+      else await Joins.create(db, "powers_aptitudes", { powerId: loser.id, aptitudeId: aptitude.id });
 
       invalidateTestRulesets(...rulesetIds);
       const local = await ModifiersService.createModifier(session, host.id, entityType, winnerId, STRENGTH_BONUS);
@@ -313,7 +315,10 @@ test("installing another extension preserves the local override and exposes unre
     name: "Toughness",
     fields: { families: ["Luck"] },
   });
-  const [unrelated] = await Feats.create(db, { name: "Unrelated extension feat", rulesetId: loserRulesetId });
+  const [unrelated] = await Entities.create<Feat>(db, "feats", {
+    name: "Unrelated extension feat",
+    rulesetId: loserRulesetId,
+  });
   await RulesetExtensionsService.subscribeExtension(session, host.id, [loserRulesetId]);
   await withRulesetScope(db, host.id, async ({ rulesetData }) => {
     expect(holds(rulesetData.propertiesByEntity.get(local.id) ?? [])).toBe(false);

@@ -11,12 +11,12 @@
  */
 
 import type { Db } from "@/drizzle/database.ts";
-import type { RulesetSources } from "@/engine/index.ts";
+import type { KlassLevel, RulesetSources } from "@/engine/index.ts";
 import { CowDataReader } from "@/server/cow/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
 import {
+  Entities,
   EntityReferences,
-  KlassLevels,
   type ReferencedType,
   RULESET_ENTITY_TYPES,
   RulesetEntities,
@@ -42,7 +42,10 @@ const NAMED_LOSSES = 10;
  */
 async function findLevelFallbacks(tx: Db, klasses: ReadonlyMap<string, string | undefined>) {
   const fallbackIds = [...klasses.values()].filter((id) => id !== undefined);
-  const levels = await KlassLevels.findMany(tx, { klassIds: [...klasses.keys(), ...fallbackIds] });
+  const levels = await Entities.findMany<KlassLevel>(tx, {
+    entityType: "klass_levels",
+    ownerIds: [...klasses.keys(), ...fallbackIds],
+  });
   const levelsOf = Map.groupBy(levels, (level) => level.klassId);
   const fallbacks = new Map<string, string | undefined>();
   for (const [klassId, fallbackId] of klasses) {

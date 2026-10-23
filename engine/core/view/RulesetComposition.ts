@@ -1,5 +1,7 @@
 import type { CowData } from "@/engine/core/cow/index.ts";
 import type { PropertyTypesProvider } from "@/engine/core/customizations/index.ts";
+import type { Modifier, Property, Requirement } from "@/shared/relations.ts";
+
 import type {
   Aptitude,
   FeatWithAptitudes,
@@ -12,16 +14,12 @@ import type {
   KlassSkill,
   Language,
   Mechanic,
-  Modifier,
   PowerWithAptitudes,
-  Property,
   Race,
-  Requirement,
   RulesetAbility,
   RulesetSave,
   Skill,
-} from "@/shared/relations.ts";
-
+} from "./rows.ts";
 import RulesetData, { type RulesetLists } from "./RulesetData.ts";
 import SiblingMerge from "./SiblingMerge.ts";
 import SiblingRows from "./SiblingRows.ts";

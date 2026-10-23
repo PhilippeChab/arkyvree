@@ -1,8 +1,7 @@
 import type { BuildsCharacters } from "@/engine/core/character/index.ts";
 import { type CharacterInput, CharacterProjection, type PickQuery } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
-import type { RulesetView } from "@/engine/core/view/index.ts";
-import type { KlassLevel } from "@/shared/relations.ts";
+import type { KlassLevel, RulesetView } from "@/engine/core/view/index.ts";
 
 import CharacterPicker, { type PickingCharacter } from "./CharacterPicker.ts";
 

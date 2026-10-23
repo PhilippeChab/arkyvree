@@ -3,8 +3,8 @@
 import { RulesetEntity } from "@/engine/core/entities/index.ts";
 import { FieldCodec } from "@/engine/core/fields/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
+import type { Aptitude } from "@/engine/core/view/index.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
-import type { Aptitude } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 /** An aptitude's form: its name and description. */

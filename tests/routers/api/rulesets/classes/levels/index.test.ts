@@ -1,9 +1,10 @@
 import { describe, expect, test } from "bun:test";
 
 import { DND35_COMPLETE_DIVINE_NAME } from "@/content/dnd3.5/rulesetNames.ts";
+import type { Klass } from "@/engine/index.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { db } from "@/server/database/index.ts";
-import { Klasses } from "@/server/repositories/index.ts";
+import { Entities } from "@/server/repositories/index.ts";
 import { api, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { findSeededRuleset, getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
@@ -94,7 +95,11 @@ describe("rulesets class levels", () => {
 
   test("lists every spell list a class casts from, its own first: the Pious Templar's and its blackguard one", async () => {
     const divine = await findSeededRuleset(DND35_COMPLETE_DIVINE_NAME);
-    const templar = (await Klasses.findOne(db, { name: "Pious Templar", rulesetId: divine.id }))!;
+    const templar = (await Entities.findOne<Klass>(db, {
+      entityType: "klasses",
+      name: "Pious Templar",
+      rulesetId: divine.id,
+    }))!;
     const lists = await expectOk(klass["spell-lists"].$get({ param: { id: divine.id, classId: templar.id } }));
     expect(lists.map((list) => list.name)).toEqual(["Pious Templar Spells", "Pious Templar Blackguard Spells"]);
   });

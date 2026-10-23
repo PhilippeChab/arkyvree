@@ -1,9 +1,10 @@
 import { describe, expect, test } from "bun:test";
 
+import type { RulesetAbility } from "@/engine/index.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { Abilities, Characters } from "@/server/repositories/index.ts";
+import { Characters, Entities } from "@/server/repositories/index.ts";
 import { api, createSignedInUser, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
 import { postCampaign } from "@/tests/support/campaigns.ts";
 import { notesOf, postCharacter } from "@/tests/support/characters.ts";
@@ -212,7 +213,11 @@ describe("characters", () => {
 
     test("lists the abilities in the order a sheet does, each named as its ruleset names it", async () => {
       const fork = await createSeededTestRuleset(SEED_USER_ID);
-      const [forcePoints] = await Abilities.create(db, { name: "Force Points", description: "", rulesetId: fork.id });
+      const [forcePoints] = await Entities.create<RulesetAbility>(db, "abilities", {
+        name: "Force Points",
+        description: "",
+        rulesetId: fork.id,
+      });
       RulesetViews.invalidate(fork.id);
       const { abilityMap } = await getSeedCtx();
       const scores = Object.fromEntries(Object.values(abilityMap).map((abilityId) => [abilityId, 10]));

@@ -1,9 +1,10 @@
 import { afterEach, expect, test } from "bun:test";
 
+import type { Feat } from "@/engine/index.ts";
 import DependentCache from "@/server/cache/DependentCache.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { Feats, Rulesets } from "@/server/repositories/index.ts";
+import { Entities, Rulesets } from "@/server/repositories/index.ts";
 import { measure } from "@/tests/support/database.ts";
 import { createSeededTestRuleset, readTargetPaths } from "@/tests/support/rulesets.ts";
 import { makeSession } from "@/tests/support/users.ts";
@@ -44,12 +45,16 @@ test("target-path service invalidates extension subscribers but retains an unrel
   const host = await createSeededTestRuleset(session.userId);
   await Rulesets.update(db, { kind: "extension", status: "Published" }, { id: edited.id });
   await Rulesets.update(db, { extensionRulesetIds: [edited.id] }, { id: host.id });
-  const [feat] = await Feats.create(db, { rulesetId: edited.id, name: "Performance Marker", description: "Before" });
+  const [feat] = await Entities.create<Feat>(db, "feats", {
+    rulesetId: edited.id,
+    name: "Performance Marker",
+    description: "Before",
+  });
   RulesetViews.invalidateAll();
   const before = await readTargetPaths(host.id, "requirement");
   const untouched = await readTargetPaths(unrelated.id, "requirement");
   expect(before.paths.some((path) => path.path === "feats.performancemarker.possessed")).toBe(true);
-  await Feats.update(db, { name: "Updated Marker" }, { id: feat.id });
+  await Entities.update<Feat>(db, "feats", { name: "Updated Marker" }, { id: feat.id });
   RulesetViews.invalidate(edited.id);
   const next = await readTargetPaths(host.id, "requirement");
   expect(next.paths.some((path) => path.path === "feats.performancemarker.possessed")).toBe(false);

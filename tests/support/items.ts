@@ -1,10 +1,11 @@
 import { eq } from "drizzle-orm";
 
 import { inventoryInCharacter } from "@/drizzle/schema.ts";
+import type { Item } from "@/engine/index.ts";
 import { db } from "@/server/database/index.ts";
-import { CharacterInventory, Items, Properties } from "@/server/repositories/index.ts";
+import { CharacterInventory, Entities, Properties } from "@/server/repositories/index.ts";
 import type { ItemLocation } from "@/shared/enums.ts";
-import type { Character, Item } from "@/shared/relations.ts";
+import type { Character } from "@/shared/relations.ts";
 
 import { invalidateSeededRuleset } from "./rulesets.ts";
 import { getSeedCtx, uniqueId } from "./seed.ts";
@@ -40,7 +41,7 @@ export async function carry(character: Pick<Character, "id">, carried: Carried[]
  */
 export async function createTestItem(values: Partial<Item> = {}, properties: Record<string, string> = {}) {
   const rulesetId = values.rulesetId ?? (await getSeedCtx()).rulesetId;
-  const [item] = await Items.create(db, { name: `Test Item ${uniqueId()}`, ...values, rulesetId });
+  const [item] = await Entities.create<Item>(db, "items", { name: `Test Item ${uniqueId()}`, ...values, rulesetId });
   const entries = Object.entries(properties);
   if (entries.length > 0) {
     await Properties.createMany(

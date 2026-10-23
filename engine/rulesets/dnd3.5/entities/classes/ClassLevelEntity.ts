@@ -6,11 +6,10 @@ import { CustomizationPageEntity } from "@/engine/core/entities/index.ts";
 import type { EntityFieldValues, EntityForm } from "@/engine/core/fields/index.ts";
 import type { EntityWrites } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
-import type { RulesetView } from "@/engine/core/view/index.ts";
+import type { Klass, KlassLevel, RulesetView } from "@/engine/core/view/index.ts";
 import CombatSheet from "@/engine/rulesets/dnd3.5/characters/description/CombatSheet.ts";
 import { RULESET_LIMITS } from "@/engine/rulesets/dnd3.5/limits.ts";
 import ClassesPaths from "@/engine/rulesets/dnd3.5/model/classes/ClassesPaths.ts";
-import type { Klass, KlassLevel } from "@/shared/relations.ts";
 
 import { CLASS_LEVEL_COLUMNS } from "./columns.ts";
 import { CLASS_LEVEL_FIELDS, type ClassLevelFieldValues } from "./fields.ts";

@@ -1,15 +1,17 @@
 import { expect, test } from "bun:test";
 
+import type { Language } from "@/engine/index.ts";
 import { db } from "@/server/database/index.ts";
-import { Languages } from "@/server/repositories/index.ts";
+import { Entities } from "@/server/repositories/index.ts";
 import { LanguagesService } from "@/server/services/rulesets/languages/index.ts";
 import { createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
 
 test("rows that tie on a list's sort come in one order, by id, each on one page", async () => {
   const { ruleset } = await createTestUserAndRuleset();
   const createdAt = new Date().toISOString();
-  const rows = await Languages.createMany(
+  const rows = await Entities.createMany<Language>(
     db,
+    "languages",
     ["Aquan", "Ignan", "Terran", "Auran", "Sylvan", "Druidic"].map((name) => ({
       rulesetId: ruleset.id,
       name,

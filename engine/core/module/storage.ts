@@ -96,6 +96,18 @@ export interface StorageRegistries {
   steps: StepDef[];
 }
 
+/** A character's advancement as stored (`character.advancements`): its track, and its value step's amount. */
+export interface StoredAdvancement {
+  characterId: string;
+  createdAt: string;
+  deletedAt: string | null;
+  id: string;
+  position: number;
+  trackId: string | null;
+  updatedAt: string;
+  value: number | null;
+}
+
 /**
  * A character's data, as the module's rows name it: its columns stored as fields or as a single link (its race), its
  * links of a role with an amount (its scores) or none (its languages), and its advancements' picks by step.
@@ -113,6 +125,66 @@ export interface StoredCharacter {
   picks: Record<string, { amount?: string; entity: string; id?: true; step: string; via?: string }>;
 }
 
+/** A character's link of a role (`character.links`): its entity, and its amount if it holds one. */
+export interface StoredCharacterLink {
+  amount: number | null;
+  characterId: string;
+  createdAt: string;
+  entityId: string;
+  updatedAt: string;
+}
+
+/**
+ * A character as the generic tables store it: its own columns (`character.characters`), and the values of its fields
+ * (`character.fields`, as text) and the entities of its single links (`character.links`), which its row reads by its
+ * module's declaration (`StorageEngine.characterRowOf`).
+ */
+export interface StoredCharacterRow extends Record<string, unknown> {
+  fields: { field: string; value: string }[];
+  links: { role: string; toId: string }[];
+}
+
+/**
+ * What a write of a character's row stores (`StorageEngine.characterWriteOf`): its own columns it gives, and the fields
+ * and single links of each column its module stores it gives, as text, or null to clear it.
+ */
+export interface StoredCharacterWrite {
+  fields: { field: string; kind: "number" | "text"; value: string | null }[];
+  links: { entityType: string; role: string; single: boolean; toId: string | null }[];
+  own: Record<string, unknown>;
+}
+
+/**
+ * An entity as the generic tables store it: its own columns (`rules.entities`), its fields' values (`entity_fields`,
+ * a set's one a row) and its links (`entity_links`, from it, in their order), which its kind's row reads by its module's
+ * declaration (`StorageEngine.rowOf`). Timestamps are Postgres's text.
+ */
+export interface StoredEntity {
+  campaignId: string | null;
+  createdAt: string;
+  deletedAt: string | null;
+  description: string | null;
+  fields: StoredFieldValue[];
+  id: string;
+  links: StoredLink[];
+  name: string | null;
+  ownerId: string | null;
+  partition: string;
+  position: number | null;
+  rulesetId: string;
+  type: string;
+  updatedAt: string;
+}
+
+/** A field's value as its row holds it, as text: a number's as it was written, a flag's `true` or `false`. */
+export interface StoredFieldValue {
+  createdAt: string;
+  field: string;
+  ordinal: number;
+  updatedAt: string;
+  value: string;
+}
+
 /** A join's rows: the links of a role from one kind to another, each part under its column's name. */
 export interface StoredJoin {
   columns: Record<string, LinkPart>;
@@ -124,8 +196,57 @@ export interface StoredJoin {
 /** An entity kind's row: its columns past an entity's own (id, scope, name, description, timestamps), by their names. */
 export interface StoredKind {
   columns: Record<string, StoredColumn>;
+  /**
+   * The lists its row carries past its columns, by their names: a join's rows from the entity, each with its target's
+   * row (`target`, its name), as a relational read nested them (a feat's pools, each with its aptitude)
+   */
+  lists?: Record<string, { join: string; target: string }>;
   /** The row's columns in the order its answers give them, when it isn't an entity's own then `columns` */
   order?: string[];
+}
+
+/** A link from an entity, of a role, to another entity (`toId`), through a pool (`viaId`), in its entity's order. */
+export interface StoredLink {
+  amount: number | null;
+  createdAt: string;
+  free: boolean;
+  id: string;
+  ordinal: number;
+  role: string;
+  tier: number | null;
+  toId: string;
+  toType: string;
+  updatedAt: string;
+  viaId: string | null;
+}
+
+/** An advancement's pick of a step (`character.advancement_picks`): its entity, its pool, its amount. */
+export interface StoredPick {
+  advancementId: string;
+  amount: number | null;
+  createdAt: string;
+  entityId: string | null;
+  id: string;
+  updatedAt: string;
+  viaId: string | null;
+}
+
+/** A ruleset's own settings as stored: its fields' values (`ruleset_fields`) and its links (`ruleset_links`). */
+export interface StoredRuleset {
+  fields: StoredFieldValue[];
+  id: string;
+  links: { createdAt: string; role: string; toId: string; updatedAt: string }[];
+}
+
+/**
+ * What a write of a kind's row stores (`StorageEngine.writeOf`): its entity's own columns it gives (`own`: its id,
+ * scope, name, description, timestamps, owner, position and partition), and the fields and single links it sets, each
+ * as text, or null to clear it.
+ */
+export interface StoredWrite {
+  fields: { field: string; kind: ValueKind; value: string | null }[];
+  links: { role: string; single: boolean; toId: string | null; toType: string }[];
+  own: Partial<Omit<StoredEntity, "fields" | "links" | "type">>;
 }
 
 /** A link's parts, as a join's row names them. */

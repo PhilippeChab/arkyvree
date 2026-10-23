@@ -1,6 +1,5 @@
 import RulesError from "@/engine/core/RulesError.ts";
-import { RequestIds, type RulesetView } from "@/engine/core/view/index.ts";
-import type { Klass } from "@/shared/relations.ts";
+import { type Klass, RequestIds, type RulesetView } from "@/engine/core/view/index.ts";
 
 /** A class's class skills (`klass`, as the view has it): what it lists, and what assigning or removing one takes. */
 export default class ClassSkills {

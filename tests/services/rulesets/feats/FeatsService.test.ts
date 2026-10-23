@@ -1,17 +1,8 @@
 import { describe, expect, test } from "bun:test";
 
-import { eq } from "drizzle-orm";
-
+import type { Aptitude, Klass } from "@/engine/index.ts";
 import { db } from "@/server/database/index.ts";
-import {
-  Aptitudes,
-  Characters,
-  EntitySnapshots,
-  FeatsAptitudes,
-  Klasses,
-  Properties,
-} from "@/server/repositories/index.ts";
-import StoredJoins from "@/server/repositories/stored/StoredJoins.ts";
+import { Characters, Entities, EntitySnapshots, Joins, Properties } from "@/server/repositories/index.ts";
 import { ClassLevelsService } from "@/server/services/rulesets/classes/levels/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { PowersService } from "@/server/services/rulesets/powers/index.ts";
@@ -26,7 +17,10 @@ import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/properties/index.ts";
 const APTITUDES = ["Combat", "Metamagic", "General"];
 
 async function linkedAptitudeIds(featId: string) {
-  const rows = await FeatsAptitudes.findMany(db, { featIds: [featId] });
+  const rows = await Joins.findMany<{ aptitudeId: string; featId: string }>(db, {
+    join: "feats_aptitudes",
+    fromIds: [featId],
+  });
   return rows.map((row) => row.aptitudeId).sort();
 }
 
@@ -97,7 +91,7 @@ describe("FeatsService", () => {
     test("counts the spells its own ruleset's view links to an aptitude, not a sibling fork's", async () => {
       const { user: author } = await createTestUser();
       const base = await createTestRuleset(author.id, { status: "Published" });
-      const [list] = await Aptitudes.create(db, { name: "Shared List", rulesetId: base.id });
+      const [list] = await Entities.create<Aptitude>(db, "aptitudes", { name: "Shared List", rulesetId: base.id });
       const forkOf = async () => {
         const { user, session } = await createTestUser();
         const fork = await createTestRuleset(user.id, { rulesetId: base.id, ancestorRulesetIds: [base.id] });
@@ -147,7 +141,11 @@ describe("FeatsService", () => {
       name: "Doomed Feat",
       aptitudeIds: [combat],
     });
-    const [klass] = await Klasses.create(db, { name: "Granting Class", rulesetId: ruleset.id, hd: 10 });
+    const [klass] = await Entities.create<Klass>(db, "klasses", {
+      name: "Granting Class",
+      rulesetId: ruleset.id,
+      hd: 10,
+    });
     await ClassLevelsService.createClassLevel(session, ruleset.id, klass.id, {
       level: 1,
       fields: { bab: 1, skills: 2 },
@@ -158,7 +156,7 @@ describe("FeatsService", () => {
 
     expect(await linkedAptitudeIds(feat.id)).toEqual([]);
     // A grant's feat is its link's to-entity
-    expect(await StoredJoins.findRows(db, "klass_level_feats", eq(StoredJoins.getPart("to"), feat.id))).toEqual([]);
+    expect(await Joins.findMany(db, { join: "klass_level_feats", toIds: [feat.id] })).toEqual([]);
   });
 
   describe("deleting a feat characters picked", () => {

@@ -1,11 +1,10 @@
 import { CharacterComponent } from "@/engine/core/character/index.ts";
-import type { RulesetData, RulesetView } from "@/engine/core/view/index.ts";
+import type { Aptitude, RulesetData, RulesetView } from "@/engine/core/view/index.ts";
 import type ClassesComponent from "@/engine/rulesets/dnd3.5/model/classes/ClassesComponent.ts";
 import type IdentityComponent from "@/engine/rulesets/dnd3.5/model/identity/IdentityComponent.ts";
 import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import SpellLists from "@/engine/rulesets/dnd3.5/rules/SpellLists.ts";
-import { type Aptitude } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { MAX_SPELL_LEVEL } from "@/vocabulary/dnd3.5/spells.ts";
 

@@ -1,10 +1,11 @@
 import { describe, expect, test } from "bun:test";
 
+import type { Feat } from "@/engine/index.ts";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { CharacterLanguages, Feats, Modifiers, Requirements } from "@/server/repositories/index.ts";
+import { CharacterLinks, Entities, Modifiers, Requirements } from "@/server/repositories/index.ts";
 import type { Character, Requirement } from "@/shared/relations.ts";
 import { createTestCharacter } from "@/tests/support/characters.ts";
 import { buildAs } from "@/tests/support/dnd3.5/characters.ts";
@@ -44,7 +45,7 @@ async function bluffMisc(record: Character) {
 async function pickDraconicGatedFeat() {
   const { aptMap } = await getSeedCtx();
   const fork = await createSeededTestRuleset(SEED_USER_ID);
-  const [feat] = await Feats.create(db, { name: `Wyrm Tongue ${uniqueId()}`, rulesetId: fork.id });
+  const [feat] = await Entities.create<Feat>(db, "feats", { name: `Wyrm Tongue ${uniqueId()}`, rulesetId: fork.id });
   const [modifier] = await Modifiers.create(db, {
     sourceId: feat.id,
     sourceType: "feats",
@@ -77,7 +78,7 @@ describe("A character's languages, as its requirements read them", () => {
     const human = await createTestCharacter(SEED_USER_ID);
     expect(await speaks(human, "draconic")).toBe(false);
 
-    await CharacterLanguages.create(db, { characterId: human.id, languageId: langMap["Draconic"] });
+    await CharacterLinks.create(db, "languages", { characterId: human.id, languageId: langMap["Draconic"] });
     expect(await speaks(human, "draconic")).toBe(true);
   });
 
@@ -104,7 +105,7 @@ describe("A character's languages, as its requirements read them", () => {
     const { langMap } = await getSeedCtx();
     const picker = await pickDraconicGatedFeat();
     expect(await bluffMisc(picker)).toBe(0);
-    await CharacterLanguages.create(db, { characterId: picker.id, languageId: langMap["Draconic"] });
+    await CharacterLinks.create(db, "languages", { characterId: picker.id, languageId: langMap["Draconic"] });
     expect(await bluffMisc(picker)).toBe(2);
 
     const granted = await pickDraconicGatedFeat();

@@ -1,28 +1,32 @@
 import { afterEach, describe, expect, test } from "bun:test";
 
+import type {
+  CharacterLanguage,
+  Feat,
+  Klass,
+  KlassLevel,
+  KlassLevelFeat,
+  KlassLevelPower,
+  KlassLevelSave,
+  KlassSkill,
+  LevelFeat,
+  LevelPower,
+  LevelSkill,
+  Power,
+  Race,
+} from "@/engine/index.ts";
 import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
 import {
   CharacterInventory,
-  CharacterLanguages,
-  CharacterLevelFeats,
-  CharacterLevelPowers,
   CharacterLevels,
-  CharacterLevelSkills,
+  CharacterLinks,
   Characters,
+  Entities,
   EntitySnapshots,
-  Feats,
-  FeatsAptitudes,
-  Klasses,
-  KlassLevelFeats,
-  KlassLevelPowers,
-  KlassLevels,
-  KlassLevelSaves,
-  KlassSkills,
-  Powers,
-  PowersAptitudes,
-  Races,
+  Joins,
+  Picks,
   Rulesets,
 } from "@/server/repositories/index.ts";
 import { RulesetChangesService } from "@/server/services/rulesets/changes/index.ts";
@@ -48,8 +52,8 @@ async function createExtensionAndHost(userId: string, coreId: string) {
 
 /** A fork's own feat and power, each named uniquely. */
 async function createOwnFeatAndPower(rulesetId: string) {
-  const [feat] = await Feats.create(db, { name: `Own Feat ${uniqueId()}`, rulesetId });
-  const [power] = await Powers.create(db, { name: `Own Power ${uniqueId()}`, rulesetId });
+  const [feat] = await Entities.create<Feat>(db, "feats", { name: `Own Feat ${uniqueId()}`, rulesetId });
+  const [power] = await Entities.create<Power>(db, "powers", { name: `Own Power ${uniqueId()}`, rulesetId });
   return { feat, power };
 }
 
@@ -68,11 +72,17 @@ describe("reverting a fork's copy", () => {
     const general = ctx.aptMap.General;
     const copy = await copyEntity(db, "aptitudes", general, fork);
     const { feat, power } = await createOwnFeatAndPower(fork.id);
-    await FeatsAptitudes.create(db, { featId: feat.id, aptitudeId: copy.id });
-    await PowersAptitudes.create(db, { powerId: power.id, aptitudeId: copy.id, level: 1 });
+    await Joins.create(db, "feats_aptitudes", { featId: feat.id, aptitudeId: copy.id });
+    await Joins.create(db, "powers_aptitudes", { powerId: power.id, aptitudeId: copy.id, level: 1 });
     const { klassLevel } = await createTestKlassLevel(fork.id);
-    await KlassLevelFeats.create(db, { klassLevelId: klassLevel.id, featId: feat.id, aptitudeId: copy.id });
-    await KlassLevelPowers.createMany(db, [{ klassLevelId: klassLevel.id, powerId: power.id, aptitudeId: copy.id }]);
+    await Joins.create<KlassLevelFeat>(db, "klass_level_feats", {
+      klassLevelId: klassLevel.id,
+      featId: feat.id,
+      aptitudeId: copy.id,
+    });
+    await Joins.createMany<KlassLevelPower>(db, "klass_level_powers", [
+      { klassLevelId: klassLevel.id, powerId: power.id, aptitudeId: copy.id },
+    ]);
     const character = await createTestCharacter(user.id, { rulesetId: fork.id });
     const level = await addCharacterLevel(character.id, klassLevel.id, {
       feats: [{ featId: feat.id, aptitudeId: copy.id }],
@@ -81,19 +91,26 @@ describe("reverting a fork's copy", () => {
 
     await RulesetChangesService.revertOverride(session, fork.id, "aptitudes", general);
 
-    expect(await FeatsAptitudes.findMany(db, { featId: feat.id })).toMatchObject([{ aptitudeId: general }]);
-    expect(await PowersAptitudes.findMany(db, { powerId: power.id })).toMatchObject([
-      { aptitudeId: general, level: 1 },
-    ]);
-    expect(await KlassLevelFeats.findMany(db, { klassLevelIds: [klassLevel.id] })).toMatchObject([
+    expect(
+      await Joins.findMany<{ aptitudeId: string; featId: string }>(db, { join: "feats_aptitudes", fromIds: [feat.id] }),
+    ).toMatchObject([{ aptitudeId: general }]);
+    expect(
+      await Joins.findMany<{ aptitudeId: string; level: number | null; powerId: string }>(db, {
+        join: "powers_aptitudes",
+        fromIds: [power.id],
+      }),
+    ).toMatchObject([{ aptitudeId: general, level: 1 }]);
+    expect(
+      await Joins.findMany<KlassLevelFeat>(db, { join: "klass_level_feats", fromIds: [klassLevel.id] }),
+    ).toMatchObject([{ featId: feat.id, aptitudeId: general }]);
+    expect(
+      await Joins.findMany<KlassLevelPower>(db, { join: "klass_level_powers", fromIds: [klassLevel.id] }),
+    ).toMatchObject([{ powerId: power.id, aptitudeId: general }]);
+    const levelIds = { characterLevelIds: [level.id] };
+    expect(await Picks.findMany<LevelFeat>(db, { pick: "feats", ...levelIds })).toMatchObject([
       { featId: feat.id, aptitudeId: general },
     ]);
-    expect(await KlassLevelPowers.findMany(db, { klassLevelIds: [klassLevel.id] })).toMatchObject([
-      { powerId: power.id, aptitudeId: general },
-    ]);
-    const levelIds = { characterLevelIds: [level.id] };
-    expect(await CharacterLevelFeats.findMany(db, levelIds)).toMatchObject([{ featId: feat.id, aptitudeId: general }]);
-    expect(await CharacterLevelPowers.findMany(db, levelIds)).toMatchObject([
+    expect(await Picks.findMany<LevelPower>(db, { pick: "powers", ...levelIds })).toMatchObject([
       { powerId: power.id, aptitudeId: general },
     ]);
     expect(
@@ -110,36 +127,48 @@ describe("reverting a fork's copy", () => {
     const feat = await copyEntity(db, "feats", dodge, fork);
     const power = await copyEntity(db, "powers", spellId, fork);
     const { klassLevel } = await createTestKlassLevel(fork.id);
-    await KlassLevelFeats.create(db, { klassLevelId: klassLevel.id, featId: feat.id, aptitudeId: ctx.aptMap.General });
-    await KlassLevelPowers.createMany(db, [
+    await Joins.create<KlassLevelFeat>(db, "klass_level_feats", {
+      klassLevelId: klassLevel.id,
+      featId: feat.id,
+      aptitudeId: ctx.aptMap.General,
+    });
+    await Joins.createMany<KlassLevelPower>(db, "klass_level_powers", [
       { klassLevelId: klassLevel.id, powerId: power.id, aptitudeId: ctx.aptMap.General },
     ]);
 
     await RulesetChangesService.revertOverride(session, fork.id, "feats", dodge);
     await RulesetChangesService.revertOverride(session, fork.id, "powers", spellId);
 
-    expect(await KlassLevelFeats.findMany(db, { klassLevelIds: [klassLevel.id] })).toMatchObject([{ featId: dodge }]);
-    expect(await KlassLevelPowers.findMany(db, { klassLevelIds: [klassLevel.id] })).toMatchObject([
-      { powerId: spellId },
-    ]);
-    expect(await Feats.findOne(db, { id: feat.id })).toBeUndefined();
-    expect(await Powers.findOne(db, { id: power.id })).toBeUndefined();
+    expect(
+      await Joins.findMany<KlassLevelFeat>(db, { join: "klass_level_feats", fromIds: [klassLevel.id] }),
+    ).toMatchObject([{ featId: dodge }]);
+    expect(
+      await Joins.findMany<KlassLevelPower>(db, { join: "klass_level_powers", fromIds: [klassLevel.id] }),
+    ).toMatchObject([{ powerId: spellId }]);
+    expect(await Entities.findOne<Feat>(db, { entityType: "feats", id: feat.id })).toBeUndefined();
+    expect(await Entities.findOne<Power>(db, { entityType: "powers", id: power.id })).toBeUndefined();
   });
 
   test("points a spell's save and a class level's saves at the source save", async () => {
     const { session, fork, ctx } = await setup();
     const reflex = ctx.saveMap.Reflex;
     const copy = await copyEntity(db, "saves", reflex, fork);
-    const [power] = await Powers.create(db, { name: `Own Power ${uniqueId()}`, rulesetId: fork.id, saveId: copy.id });
+    const [power] = await Entities.create<Power>(db, "powers", {
+      name: `Own Power ${uniqueId()}`,
+      rulesetId: fork.id,
+      saveId: copy.id,
+    });
     const { klassLevel } = await createTestKlassLevel(fork.id);
-    await KlassLevelSaves.createMany(db, [{ klassLevelId: klassLevel.id, saveId: copy.id, base: 2 }]);
+    await Joins.createMany<KlassLevelSave>(db, "klass_level_saves", [
+      { klassLevelId: klassLevel.id, saveId: copy.id, base: 2 },
+    ]);
 
     await RulesetChangesService.revertOverride(session, fork.id, "saves", reflex);
 
-    expect(await Powers.findOne(db, { id: power.id })).toMatchObject({ saveId: reflex });
-    expect(await KlassLevelSaves.findMany(db, { klassLevelIds: [klassLevel.id] })).toMatchObject([
-      { saveId: reflex, base: 2 },
-    ]);
+    expect(await Entities.findOne<Power>(db, { entityType: "powers", id: power.id })).toMatchObject({ saveId: reflex });
+    expect(
+      await Joins.findMany<KlassLevelSave>(db, { join: "klass_level_saves", fromIds: [klassLevel.id] }),
+    ).toMatchObject([{ saveId: reflex, base: 2 }]);
   });
 
   test("points a class's skills and a race's or a class's parent at the source", async () => {
@@ -151,9 +180,9 @@ describe("reverting a fork's copy", () => {
     const race = await copyEntity(db, "races", human, fork);
     const parentClass = await copyEntity(db, "klasses", fighter, fork);
     const { klass } = await createTestKlassLevel(fork.id);
-    await KlassSkills.create(db, { klassId: klass.id, skillId: skill.id });
-    await Klasses.update(db, { parentId: parentClass.id }, { id: klass.id });
-    const [subrace] = await Races.create(db, {
+    await Joins.create<KlassSkill>(db, "klass_skills", { klassId: klass.id, skillId: skill.id });
+    await Entities.update<Klass>(db, "klasses", { parentId: parentClass.id }, { id: klass.id });
+    const [subrace] = await Entities.create<Race>(db, "races", {
       name: `Own Subrace ${uniqueId()}`,
       rulesetId: fork.id,
       size: "Medium",
@@ -165,9 +194,15 @@ describe("reverting a fork's copy", () => {
     await RulesetChangesService.revertOverride(session, fork.id, "races", human);
     await RulesetChangesService.revertOverride(session, fork.id, "klasses", fighter);
 
-    expect(await KlassSkills.findMany(db, { klassIds: [klass.id] })).toMatchObject([{ skillId: climb }]);
-    expect(await Races.findOne(db, { id: subrace.id })).toMatchObject({ parentId: human });
-    expect(await Klasses.findOne(db, { id: klass.id })).toMatchObject({ parentId: fighter });
+    expect(await Joins.findMany<KlassSkill>(db, { join: "klass_skills", fromIds: [klass.id] })).toMatchObject([
+      { skillId: climb },
+    ]);
+    expect(await Entities.findOne<Race>(db, { entityType: "races", id: subrace.id })).toMatchObject({
+      parentId: human,
+    });
+    expect(await Entities.findOne<Klass>(db, { entityType: "klasses", id: klass.id })).toMatchObject({
+      parentId: fighter,
+    });
   });
 
   test("points the picks of the fork's characters at the source instead of refusing", async () => {
@@ -191,7 +226,7 @@ describe("reverting a fork's copy", () => {
       skills: [{ skillId: skill.id, rank: 2 }],
     });
     await CharacterInventory.create(db, { characterId: character.id, itemId: itemCopy.id, quantity: 1 });
-    await CharacterLanguages.create(db, { characterId: character.id, languageId: languageCopy.id });
+    await CharacterLinks.create(db, "languages", { characterId: character.id, languageId: languageCopy.id });
 
     await RulesetChangesService.revertOverride(session, fork.id, "feats", dodge);
     await RulesetChangesService.revertOverride(session, fork.id, "skills", climb);
@@ -200,30 +235,32 @@ describe("reverting a fork's copy", () => {
     await RulesetChangesService.revertOverride(session, fork.id, "languages", language);
 
     const levelIds = { characterLevelIds: [level.id] };
-    expect(await CharacterLevelFeats.findMany(db, levelIds)).toMatchObject([{ featId: dodge }]);
-    expect(await CharacterLevelSkills.findMany(db, levelIds)).toMatchObject([{ skillId: climb, rank: 2 }]);
+    expect(await Picks.findMany<LevelFeat>(db, { pick: "feats", ...levelIds })).toMatchObject([{ featId: dodge }]);
+    expect(await Picks.findMany<LevelSkill>(db, { pick: "skills", ...levelIds })).toMatchObject([
+      { skillId: climb, rank: 2 },
+    ]);
     expect(await Characters.findOne(db, { id: character.id })).toMatchObject({ raceId: human });
     expect(await CharacterInventory.findMany(db, { characterId: character.id })).toMatchObject([{ itemId: item.id }]);
-    expect(await CharacterLanguages.findMany(db, { characterId: character.id })).toMatchObject([
-      { languageId: language },
-    ]);
+    expect(
+      await CharacterLinks.findMany<CharacterLanguage>(db, { link: "languages", characterId: character.id }),
+    ).toMatchObject([{ languageId: language }]);
   });
 
   test("moves a character's levels in a copied class to the source's levels of the same number", async () => {
     const { user, session, fork, ctx } = await setup();
     const fighter = ctx.klassMap.pc.Fighter;
     const copy = await copyEntity(db, "klasses", fighter, fork);
-    const [copyLevel] = await KlassLevels.findMany(db, { klassId: copy.id });
-    const [sourceLevel] = (await KlassLevels.findMany(db, { klassId: fighter })).filter(
-      (level) => level.level === copyLevel.level,
-    );
+    const [copyLevel] = await Entities.findMany<KlassLevel>(db, { entityType: "klass_levels", ownerIds: [copy.id] });
+    const [sourceLevel] = (
+      await Entities.findMany<KlassLevel>(db, { entityType: "klass_levels", ownerIds: [fighter] })
+    ).filter((level) => level.level === copyLevel.level);
     const character = await createTestCharacter(user.id, { rulesetId: fork.id });
     const level = await addCharacterLevel(character.id, copyLevel.id);
 
     await RulesetChangesService.revertOverride(session, fork.id, "klasses", fighter);
 
     expect(await CharacterLevels.findOne(db, { id: level.id })).toMatchObject({ klassLevelId: sourceLevel.id });
-    expect(await Klasses.findOne(db, { id: copy.id })).toBeUndefined();
+    expect(await Entities.findOne<Klass>(db, { entityType: "klasses", id: copy.id })).toBeUndefined();
   });
 
   test("is refused while a character took a level the copied class added", async () => {
@@ -231,15 +268,19 @@ describe("reverting a fork's copy", () => {
     const parent = await createTestRuleset(null, { private: false, status: "Published" });
     const fork = await createTestRuleset(user.id, { rulesetId: parent.id, ancestorRulesetIds: [parent.id] });
     // A class of the parent's, with one level, which the fork copied and gave a second
-    const [source] = await Klasses.create(db, { name: `Parent Class ${uniqueId()}`, rulesetId: parent.id, hd: 8 });
-    await KlassLevels.create(db, { klassId: source.id, level: 1 });
+    const [source] = await Entities.create<Klass>(db, "klasses", {
+      name: `Parent Class ${uniqueId()}`,
+      rulesetId: parent.id,
+      hd: 8,
+    });
+    await Entities.create<KlassLevel>(db, "klass_levels", { klassId: source.id, level: 1 });
     const copy = await copyEntity(db, "klasses", source.id, fork);
-    const [added] = await KlassLevels.create(db, { klassId: copy.id, level: 2 });
+    const [added] = await Entities.create<KlassLevel>(db, "klass_levels", { klassId: copy.id, level: 2 });
     const character = await createTestCharacter(user.id, { rulesetId: fork.id });
     await addCharacterLevel(character.id, added.id);
 
     expect(RulesetChangesService.revertOverride(session, fork.id, "klasses", source.id)).rejects.toThrow(ConflictError);
-    expect(await Klasses.findOne(db, { id: copy.id })).toMatchObject({ id: copy.id });
+    expect(await Entities.findOne<Klass>(db, { entityType: "klasses", id: copy.id })).toMatchObject({ id: copy.id });
   });
 
   test("keeps one link where the fork links to the list and to its copy", async () => {
@@ -247,12 +288,14 @@ describe("reverting a fork's copy", () => {
     const general = ctx.aptMap.General;
     const copy = await copyEntity(db, "aptitudes", general, fork);
     const { feat } = await createOwnFeatAndPower(fork.id);
-    await FeatsAptitudes.create(db, { featId: feat.id, aptitudeId: general });
-    await FeatsAptitudes.create(db, { featId: feat.id, aptitudeId: copy.id });
+    await Joins.create(db, "feats_aptitudes", { featId: feat.id, aptitudeId: general });
+    await Joins.create(db, "feats_aptitudes", { featId: feat.id, aptitudeId: copy.id });
 
     await RulesetChangesService.revertOverride(session, fork.id, "aptitudes", general);
 
-    expect(await FeatsAptitudes.findMany(db, { featId: feat.id })).toMatchObject([{ aptitudeId: general }]);
+    expect(
+      await Joins.findMany<{ aptitudeId: string; featId: string }>(db, { join: "feats_aptitudes", fromIds: [feat.id] }),
+    ).toMatchObject([{ aptitudeId: general }]);
   });
 
   test("points a host's rows, its characters' picks and its copies at the source when an extension reverts", async () => {
@@ -264,7 +307,7 @@ describe("reverting a fork's copy", () => {
     const dodgeCopy = await copyEntity(db, "feats", dodge, extension);
     // What the host writes by the ids its view shows: the extension's copies
     const { feat } = await createOwnFeatAndPower(host.id);
-    await FeatsAptitudes.create(db, { featId: feat.id, aptitudeId: listCopy.id });
+    await Joins.create(db, "feats_aptitudes", { featId: feat.id, aptitudeId: listCopy.id });
     const hostCopy = await copyEntity(db, "feats", dodgeCopy.id, host);
     const character = await createTestCharacter(user.id, { rulesetId: host.id });
     const { klassLevel } = await createTestKlassLevel(host.id);
@@ -281,8 +324,10 @@ describe("reverting a fork's copy", () => {
     await RulesetChangesService.revertOverride(session, extension.id, "aptitudes", general);
     await RulesetChangesService.revertOverride(session, extension.id, "feats", dodge);
 
-    expect(await FeatsAptitudes.findMany(db, { featId: feat.id })).toMatchObject([{ aptitudeId: general }]);
-    expect(await CharacterLevelFeats.findMany(db, { characterLevelIds: [level.id] })).toMatchObject([
+    expect(
+      await Joins.findMany<{ aptitudeId: string; featId: string }>(db, { join: "feats_aptitudes", fromIds: [feat.id] }),
+    ).toMatchObject([{ aptitudeId: general }]);
+    expect(await Picks.findMany<LevelFeat>(db, { pick: "feats", characterLevelIds: [level.id] })).toMatchObject([
       { featId: dodge, aptitudeId: general },
     ]);
     expect(await EntitySnapshots.findMany(db, { rulesetId: host.id })).toMatchObject([

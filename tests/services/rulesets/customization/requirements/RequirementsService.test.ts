@@ -1,9 +1,10 @@
 import { describe, expect, test } from "bun:test";
 
 import { requirementsInCustomization } from "@/drizzle/schema.ts";
+import type { Feat, Race } from "@/engine/index.ts";
 import { db } from "@/server/database/index.ts";
 import { ForbiddenError } from "@/server/errors/index.ts";
-import { Feats, Races, Requirements } from "@/server/repositories/index.ts";
+import { Entities, Requirements } from "@/server/repositories/index.ts";
 import { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";
 import { activityTypes } from "@/tests/support/activities.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
@@ -16,8 +17,8 @@ const chain = { level: "1", chainingOperator: "and" };
 /** A new user's ruleset with a feat and a race of its own. */
 async function setup() {
   const { session, ruleset } = await createTestUserAndRuleset();
-  const [feat] = await Feats.create(db, { rulesetId: ruleset.id, name: `Test Feat ${uniqueId()}` });
-  const [race] = await Races.create(db, {
+  const [feat] = await Entities.create<Feat>(db, "feats", { rulesetId: ruleset.id, name: `Test Feat ${uniqueId()}` });
+  const [race] = await Entities.create<Race>(db, "races", {
     rulesetId: ruleset.id,
     name: `Test Race ${uniqueId()}`,
     size: "Medium",
@@ -158,7 +159,7 @@ describe("RequirementsService", () => {
 
     test("refuses a missing ruleset or requirement, another entity's requirement and another user", async () => {
       const { session, rulesetId, feat } = await setup();
-      const [otherFeat] = await Feats.create(db, { rulesetId, name: `Other Feat ${uniqueId()}` });
+      const [otherFeat] = await Entities.create<Feat>(db, "feats", { rulesetId, name: `Other Feat ${uniqueId()}` });
       const { session: other } = await createTestUserAndRuleset();
       const created = await RequirementsService.createRequirement(session, rulesetId, "feats", feat.id, chain);
       const update = { level: "2", chainingOperator: "or" };
@@ -202,7 +203,7 @@ describe("RequirementsService", () => {
 
     test("refuses a missing ruleset or requirement, another entity's requirement and another user", async () => {
       const { session, rulesetId, feat } = await setup();
-      const [otherFeat] = await Feats.create(db, { rulesetId, name: `Other Feat ${uniqueId()}` });
+      const [otherFeat] = await Entities.create<Feat>(db, "feats", { rulesetId, name: `Other Feat ${uniqueId()}` });
       const { session: other } = await createTestUserAndRuleset();
       const created = await RequirementsService.createRequirement(session, rulesetId, "feats", feat.id, chain);
 

@@ -1,7 +1,7 @@
-import { Engine } from "@/engine/index.ts";
+import { Engine, type KlassSkill } from "@/engine/index.ts";
 import { EntityEdit, RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
-import { KlassSkills } from "@/server/repositories/index.ts";
+import { Joins } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import { hasCharacterPicks } from "@/server/services/rulesets/characterPicks.ts";
@@ -22,7 +22,7 @@ class ClassSkillsService {
           const edit = new EntityEdit(ruleset);
           const { id: targetKlassId } = await edit.cowToEdit(tx, "klasses", klass);
 
-          const rows = await KlassSkills.create(tx, {
+          const rows = await Joins.create<KlassSkill>(tx, "klass_skills", {
             klassId: targetKlassId,
             skillId: skill.id,
           });
@@ -67,7 +67,11 @@ class ClassSkillsService {
           const edit = new EntityEdit(ruleset);
           const { id: targetKlassId } = await edit.cowToEdit(tx, "klasses", klass);
 
-          const rows = await KlassSkills.delete(tx, { klassId: targetKlassId, skillId: klassSkill.skillId });
+          const rows = (await Joins.delete(tx, {
+            join: "klass_skills",
+            fromId: targetKlassId,
+            toId: klassSkill.skillId,
+          })) as KlassSkill[];
           const removedKlassSkill = rows[0];
 
           await createActivityWithNotifications(tx, {

@@ -1,4 +1,4 @@
-import type { CharacterInput, FeatPickQuery } from "@/engine/core/module/index.ts";
+import type { CharacterInput, FeatPickQuery, PickFilters, PickGroupFilters } from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import FeatEntity, { type PoolModifier } from "@/engine/rulesets/dnd3.5/entities/feats/FeatEntity.ts";
 import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/properties/index.ts";
@@ -26,24 +26,26 @@ export default class FeatPicker extends Dnd35LevelPicker<{ aptitudeModifiers: Po
   constructor(view: RulesetView, input: CharacterInput, query: FeatPickQuery) {
     super(view, input, query);
     const offered = {
+      // A feat a character picks is a selectable one
+      columns: { selectable: true },
       ids: this.rulesetData.listFeatIds(query.aptitudeId),
       excludeIds: this.holder
         .getHeldFeats()
         .filter((feat) => !feat.stackable)
         .map((feat) => feat.id),
     };
-    this.filters = { ...offered, ...(query.family && { family: { type: FEAT_FAMILY, value: query.family } }) };
-    this.groupFilters = { ...offered, families: this.feats.groupByFamily(offered.ids) };
+    this.filters = { ...offered, ...(query.family && { fields: { [FEAT_FAMILY]: query.family } }) };
+    this.groupFilters = { ...offered, groups: this.feats.groupByFamily(offered.ids) };
   }
 
   /** The feats' rules: the pools a feat's modifiers add slots to. */
   private readonly feats = new FeatEntity(this.view);
 
   /** What the picker offers, a family's feats when the query names one, and what it leaves out. */
-  override readonly filters: { excludeIds: string[]; family?: { type: string; value: string }; ids: string[] };
+  override readonly filters: PickFilters;
 
   /** What the picker offers grouped by family: its feats, and the family each of them is grouped in. */
-  readonly groupFilters: { excludeIds: string[]; families: { family: string; id: string }[]; ids: string[] };
+  readonly groupFilters: PickGroupFilters;
 
   /** The pools each feat's modifiers add slots to. */
   protected override detailsOf(rows: { id: string }[]) {

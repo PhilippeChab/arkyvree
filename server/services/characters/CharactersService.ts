@@ -2,7 +2,14 @@ import { getTableName } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
 import { charactersInCharacter } from "@/drizzle/schema.ts";
-import { Engine, type FieldsRequest, type LanguagesPlan, type RacePickQuery } from "@/engine/index.ts";
+import {
+  type CharacterLanguage,
+  Engine,
+  type FieldsRequest,
+  type LanguagesPlan,
+  type Race,
+  type RacePickQuery,
+} from "@/engine/index.ts";
 import { include } from "@/lib/mixins.ts";
 import { type RulesetScope, withRulesetScope, withRulesetScopes } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
@@ -10,11 +17,10 @@ import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/err
 import {
   Activities,
   Campaigns,
-  CharacterAbilities,
-  CharacterLanguages,
   CharacterLevels,
+  CharacterLinks,
   Characters,
-  Races,
+  Entities,
   Visibility,
   visibilityMap,
 } from "@/server/repositories/index.ts";
@@ -48,10 +54,12 @@ class CharactersService extends include(Object, Archives, Imports) {
 
   /** A character's languages as a plan has them: its picks replaced. */
   private async writeLanguages(tx: Db, characterId: string, plan: LanguagesPlan): Promise<void> {
-    const existing = await CharacterLanguages.findMany(tx, { characterId });
-    for (const lang of existing) await CharacterLanguages.delete(tx, { characterId, languageId: lang.languageId });
+    const existing = await CharacterLinks.findMany<CharacterLanguage>(tx, { link: "languages", characterId });
+    for (const lang of existing)
+      await CharacterLinks.delete(tx, { link: "languages", characterId, entityId: lang.languageId });
 
-    for (const languageId of plan.languageIds) await CharacterLanguages.create(tx, { characterId, languageId });
+    for (const languageId of plan.languageIds)
+      await CharacterLinks.create(tx, "languages", { characterId, languageId });
   }
 
   async createCharacter(
@@ -80,8 +88,9 @@ class CharactersService extends include(Object, Archives, Imports) {
             notes: characterData.notes,
           });
 
-          await CharacterAbilities.createMany(
+          await CharacterLinks.createMany(
             tx,
+            "abilities",
             plan.abilities.map((ability) => ({ characterId: newCharacter.id, ...ability })),
           );
 
@@ -113,9 +122,15 @@ class CharactersService extends include(Object, Archives, Imports) {
   ) {
     return await withRulesetScope(db, rulesetId, async (scope) => {
       const picker = Engine.for(scope).characters().openRacePicker(formData);
-      const result = await Races.findPage(
+      const result = await Entities.findPage<Race>(
         db,
-        { rulesetId, ...scope.rulesetData.cow.listFilters, ...picker.filters, search: where.search },
+        {
+          entityType: "races",
+          rulesetId,
+          ...scope.rulesetData.cow.listFilters,
+          ...picker.filters,
+          search: where.search,
+        },
         pagination,
       );
 
@@ -237,7 +252,11 @@ class CharactersService extends include(Object, Archives, Imports) {
         // A score stored before its ability was copied names the source: the copy's id the client sends matches it
         for (const { abilityId, score } of plan.abilities) {
           const abilityIds = scope.rulesetData.cow.getEquivalentIds(abilityId);
-          const rows = await CharacterAbilities.update(tx, { score }, { abilityIds, characterId });
+          const rows = await CharacterLinks.update(
+            tx,
+            { amount: score },
+            { link: "abilities", characterId, entityIds: abilityIds },
+          );
           if (rows.length === 0) throw new NotFoundError("Ability not found");
         }
 

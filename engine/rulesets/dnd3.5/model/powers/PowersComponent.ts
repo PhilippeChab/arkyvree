@@ -1,11 +1,11 @@
 import { CharacterComponent } from "@/engine/core/character/index.ts";
-import type { RulesetData, RulesetView } from "@/engine/core/view/index.ts";
+import type { Power, PowerWithAptitudes, RulesetData, RulesetView } from "@/engine/core/view/index.ts";
 import Dnd35PropertyTypes from "@/engine/rulesets/dnd3.5/Dnd35PropertyTypes.ts";
 import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
 import type { CustomizedPower } from "@/engine/rulesets/dnd3.5/model/loading/loadedEntities.ts";
 import SpellLists from "@/engine/rulesets/dnd3.5/rules/SpellLists.ts";
 import { formatPropertyValues, groupPropertyValues } from "@/shared/customization/properties.ts";
-import { type Power, type PowerWithAptitudes, type Property } from "@/shared/relations.ts";
+import type { Property } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 import type PowerGroupingsComponent from "./PowerGroupingsComponent.ts";

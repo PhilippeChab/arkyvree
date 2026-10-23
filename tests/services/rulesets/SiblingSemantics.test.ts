@@ -1,23 +1,13 @@
 import { expect, test } from "bun:test";
 
 import RequirementEvaluator from "@/engine/core/requirements/RequirementEvaluator.ts";
+import type { Aptitude, Feat, Power, RulesetAbility } from "@/engine/index.ts";
 import Dnd35TargetPaths from "@/engine/rulesets/dnd3.5/Dnd35TargetPaths.ts";
 import AbilitiesComponent from "@/engine/rulesets/dnd3.5/model/abilities/AbilitiesComponent.ts";
 import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { fetchEveryPage } from "@/server/repositories/concerns/Paginates.ts";
-import {
-  Abilities,
-  Aptitudes,
-  Feats,
-  FeatsAptitudes,
-  Modifiers,
-  Powers,
-  PowersAptitudes,
-  Properties,
-  Requirements,
-  Rulesets,
-} from "@/server/repositories/index.ts";
+import { Entities, Joins, Modifiers, Properties, Requirements, Rulesets } from "@/server/repositories/index.ts";
 import { AptitudesService } from "@/server/services/rulesets/aptitudes/index.ts";
 import { RulesetChangesService } from "@/server/services/rulesets/changes/index.ts";
 import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
@@ -96,9 +86,9 @@ test("editing a shared aptitude preserves references from both extensions", asyn
   const aptitudeIds: string[] = [];
   const featIds: string[] = [];
   const { session, host, rulesetIds } = await setup(async (rulesetId, _baseId, index) => {
-    const [aptitude] = await Aptitudes.create(db, { rulesetId, name: "Audit Shared Pool" });
-    const [feat] = await Feats.create(db, { rulesetId, name: `Audit Pool Feat ${index}` });
-    await FeatsAptitudes.create(db, { featId: feat.id, aptitudeId: aptitude.id });
+    const [aptitude] = await Entities.create<Aptitude>(db, "aptitudes", { rulesetId, name: "Audit Shared Pool" });
+    const [feat] = await Entities.create<Feat>(db, "feats", { rulesetId, name: `Audit Pool Feat ${index}` });
+    await Joins.create(db, "feats_aptitudes", { featId: feat.id, aptitudeId: aptitude.id });
     aptitudeIds.push(aptitude.id);
     featIds.push(feat.id);
   });
@@ -120,7 +110,8 @@ test("editing a shared aptitude preserves references from both extensions", asyn
   });
   await AptitudesService.updateAptitude(session, host.id, local.id, { name: "Renamed Local Pool" });
   expect(await read()).toEqual({ resolved: [local.id, local.id], links: [local.id, local.id] });
-  for (const id of aptitudeIds) expect((await Aptitudes.findOne(db, { id }))?.name).toBe("Audit Shared Pool");
+  for (const id of aptitudeIds)
+    expect((await Entities.findOne<Aptitude>(db, { entityType: "aptitudes", id }))?.name).toBe("Audit Shared Pool");
   await RulesetChangesService.revertOverride(session, host.id, "aptitudes", aptitudeIds[0]);
   expect(await read()).toEqual({ resolved: [aptitudeIds[0], aptitudeIds[0]], links: [aptitudeIds[0], aptitudeIds[0]] });
 });
@@ -133,7 +124,7 @@ for (const [chainingOperator, reverseOrder] of [
   test(`merging A with (${chainingOperator === "or" ? "A OR B" : "A AND B"}) preserves eligibility before and after COW (reverse=${reverseOrder})`, async () => {
     const copies: string[] = [];
     const { session, host, rulesetIds } = await setup(async (rulesetId, baseId, index) => {
-      const source = (await Feats.findOne(db, { rulesetId: baseId, name: "Toughness" }))!;
+      const source = (await Entities.findOne<Feat>(db, { entityType: "feats", rulesetId: baseId, name: "Toughness" }))!;
       const copy = await copyEntity(db, "feats", source.id, {
         id: rulesetId,
         extensionRulesetIds: [],
@@ -159,7 +150,11 @@ for (const [chainingOperator, reverseOrder] of [
     }, reverseOrder);
     const abilities = new AbilitiesComponent();
     const rows = await fetchEveryPage((pagination) =>
-      Abilities.findPage(db, { rulesetId: host.ancestorRulesetIds[0], ancestorRulesetIds: [] }, pagination),
+      Entities.findPage<RulesetAbility>(
+        db,
+        { entityType: "abilities", rulesetId: host.ancestorRulesetIds[0], ancestorRulesetIds: [] },
+        pagination,
+      ),
     );
     abilities.initialize({
       abilityIncreases: [],
@@ -205,8 +200,8 @@ test("a sibling winner takes, of equal rows, the first sibling's, and so does it
   const condition = { operator: "greater_than_or_equal", valueType: "number" };
   const { host } = await setup(
     async (rulesetId, baseId, index) => {
-      const feat = (await Feats.findOne(db, { rulesetId: baseId, name: "Toughness" }))!;
-      const power = (await Powers.findOne(db, { rulesetId: baseId, name: "Fireball" }))!;
+      const feat = (await Entities.findOne<Feat>(db, { entityType: "feats", rulesetId: baseId, name: "Toughness" }))!;
+      const power = (await Entities.findOne<Power>(db, { entityType: "powers", rulesetId: baseId, name: "Fireball" }))!;
       const featCopy = await copyEntity(db, "feats", feat.id, {
         id: rulesetId,
         extensionRulesetIds: [],
@@ -237,8 +232,16 @@ test("a sibling winner takes, of equal rows, the first sibling's, and so does it
         { ...owner, ...condition, level: "2.2", target: "abilities.constitution.total", value: String(10 + index) },
       ]);
       await Properties.createMany(db, [{ ...owner, type: FEAT_FAMILY, value: "sibling" }]);
-      const clericSpells = (await Aptitudes.findOne(db, { rulesetId: baseId, name: "Cleric Spells" }))!;
-      await PowersAptitudes.create(db, { powerId: powerCopy.id, aptitudeId: clericSpells.id, level: 3 + index });
+      const clericSpells = (await Entities.findOne<Aptitude>(db, {
+        entityType: "aptitudes",
+        rulesetId: baseId,
+        name: "Cleric Spells",
+      }))!;
+      await Joins.create(db, "powers_aptitudes", {
+        powerId: powerCopy.id,
+        aptitudeId: clericSpells.id,
+        level: 3 + index,
+      });
     },
     false,
     3,
@@ -246,9 +249,17 @@ test("a sibling winner takes, of equal rows, the first sibling's, and so does it
   const baseId = host.ancestorRulesetIds[0];
   const fork = (await Rulesets.findOne(db, { id: host.id }))!;
   const view = await RulesetViews.getData(fork);
-  const featId = view.cow.resolve((await Feats.findOne(db, { rulesetId: baseId, name: "Toughness" }))!.id);
-  const powerId = view.cow.resolve((await Powers.findOne(db, { rulesetId: baseId, name: "Fireball" }))!.id);
-  const clericSpells = (await Aptitudes.findOne(db, { rulesetId: baseId, name: "Cleric Spells" }))!;
+  const featId = view.cow.resolve(
+    (await Entities.findOne<Feat>(db, { entityType: "feats", rulesetId: baseId, name: "Toughness" }))!.id,
+  );
+  const powerId = view.cow.resolve(
+    (await Entities.findOne<Power>(db, { entityType: "powers", rulesetId: baseId, name: "Fireball" }))!.id,
+  );
+  const clericSpells = (await Entities.findOne<Aptitude>(db, {
+    entityType: "aptitudes",
+    rulesetId: baseId,
+    name: "Cleric Spells",
+  }))!;
   const feat = customizationsOf(view, featId);
   expect(feat.modifiers.filter((m) => m.startsWith("abilities.dexterity"))).toEqual([
     "abilities.dexterity.misc|add|2|number|1||abilities.wisdom.total|greater_than_or_equal|11|number",

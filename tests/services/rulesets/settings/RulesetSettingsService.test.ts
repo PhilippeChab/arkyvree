@@ -1,11 +1,12 @@
 import { describe, expect, test } from "bun:test";
 
 import { rulesetsInRules } from "@/drizzle/schema.ts";
+import type { LevelAbilityIncrease } from "@/engine/index.ts";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import { addClassLevels, createCharacter } from "@/scripts/db/seeds/seedCharacter.ts";
 import { db } from "@/server/database/index.ts";
 import { ForbiddenError } from "@/server/errors/index.ts";
-import { CharacterLevelAbilityIncreases, Characters, Properties } from "@/server/repositories/index.ts";
+import { Characters, Picks, Properties } from "@/server/repositories/index.ts";
 import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
 import { RulesetSettingsService } from "@/server/services/rulesets/settings/index.ts";
 import { activityTypes } from "@/tests/support/activities.ts";
@@ -158,7 +159,7 @@ describe("RulesetSettingsService", () => {
     const { characterId, levelIds } = await buildFighter(fork.id, 4);
     const fourth = levelIds[3];
     const strength = { abilityId: abilityMap["Strength"], amount: 1 };
-    await CharacterLevelAbilityIncreases.createMany(db, [{ characterLevelId: fourth, ...strength }]);
+    await Picks.createMany(db, "abilityIncreases", [{ characterLevelId: fourth, ...strength }]);
     // The seed user's fighter, whose edit opens its level and saves it, its unspent skill points and bonus feat aside
     const seedUser = makeSession();
     const edit = (increases: (typeof strength)[]) =>
@@ -188,7 +189,9 @@ describe("RulesetSettingsService", () => {
     for (const increases of [[strength], [{ ...strength, abilityId: abilityMap["Dexterity"] }]])
       expect(edit(increases)).rejects.toMatchObject({ message: "Ability increase is not available at this level" });
     await edit([]);
-    expect(await CharacterLevelAbilityIncreases.findMany(db, { characterLevelIds: [fourth] })).toEqual([]);
+    expect(
+      await Picks.findMany<LevelAbilityIncrease>(db, { pick: "abilityIncreases", characterLevelIds: [fourth] }),
+    ).toEqual([]);
   });
 
   test("refuses a setting its rules don't take: an ability the ruleset lacks, none, another field", async () => {

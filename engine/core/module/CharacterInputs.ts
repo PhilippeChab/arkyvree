@@ -1,15 +1,17 @@
 import type { CowData } from "@/engine/core/cow/index.ts";
 import type {
-  Campaign,
   CharacterAbility,
-  CharacterInventory,
   CharacterLanguage,
   CharacterLevel,
-  Character as CharacterRecord,
   LevelAbilityIncrease,
   LevelFeat,
   LevelPower,
   LevelSkill,
+} from "@/engine/core/view/index.ts";
+import type {
+  Campaign,
+  CharacterInventory,
+  Character as CharacterRecord,
   Modifier,
   Player,
   Requirement,

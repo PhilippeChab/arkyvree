@@ -4,8 +4,8 @@ import type { CharacterInput } from "@/engine/core/module/CharacterInputs.ts";
 import type { Descriptions } from "@/engine/core/module/contract.ts";
 import type { OpenedPicker } from "@/engine/core/module/pickers.ts";
 import RulesError from "@/engine/core/RulesError.ts";
-import { RequestIds, type RulesetView } from "@/engine/core/view/index.ts";
-import type { Item, Property } from "@/shared/relations.ts";
+import { type Item, RequestIds, type RulesetView } from "@/engine/core/view/index.ts";
+import type { Property } from "@/shared/relations.ts";
 
 import type {
   CharacterCard,
@@ -194,7 +194,7 @@ export default abstract class CharactersPart<D extends Descriptions> {
   abstract openRacePicker(
     view: RulesetView,
     query: RacePickQuery,
-  ): OpenedPicker<{ kind: string }, { id: string }, D["raceOption"]>;
+  ): OpenedPicker<{ columns: { kind: string } }, { id: string }, D["raceOption"]>;
 
   /**
    * A character's sheet as the API answers it (`describeFull`): a player character's, its bonded creatures (`bonded`)

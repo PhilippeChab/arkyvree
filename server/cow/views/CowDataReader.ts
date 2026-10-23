@@ -1,6 +1,6 @@
 import type { Db } from "@/drizzle/database.ts";
-import { type CowData, Engine, type RulesetSources } from "@/engine/index.ts";
-import { Aptitudes, EntitySnapshots, KlassLevels, RulesetEntities } from "@/server/repositories/index.ts";
+import { type Aptitude, type CowData, Engine, type KlassLevel, type RulesetSources } from "@/engine/index.ts";
+import { Entities, EntitySnapshots, RulesetEntities } from "@/server/repositories/index.ts";
 
 /**
  * A ruleset's `CowData`: the rows the engine builds it from (`copyOnWrite().getReads`: the chain's snapshots, the levels
@@ -15,10 +15,14 @@ export default class CowDataReader {
     const snapshots = await EntitySnapshots.findMany(database, { rulesetIds: reads.snapshotRulesetIds });
     const namesakes = await RulesetEntities.findNativeNames(database, reads.namesakes);
     const ownNamesakes = await RulesetEntities.findOwnNamesakes(database, reads.ownNamesakes);
-    const klassLevels = await KlassLevels.findMany(database, {
-      klassIds: Engine.copyOnWrite().getPairedKlassIds({ ownNamesakes, snapshots }),
+    const klassLevels = await Entities.findMany<KlassLevel>(database, {
+      entityType: "klass_levels",
+      ownerIds: Engine.copyOnWrite().getPairedKlassIds({ ownNamesakes, snapshots }),
     });
-    const aptitudes = await Aptitudes.findMany(database, { rulesetIds: reads.aptitudeRulesetIds });
+    const aptitudes = await Entities.findMany<Aptitude>(database, {
+      entityType: "aptitudes",
+      rulesetIds: reads.aptitudeRulesetIds,
+    });
     return Engine.copyOnWrite().buildData(ruleset, { aptitudes, klassLevels, namesakes, ownNamesakes, snapshots });
   }
 }

@@ -1,7 +1,6 @@
 import { CharacterComponent } from "@/engine/core/character/index.ts";
-import type { RulesetView } from "@/engine/core/view/index.ts";
+import type { Language, RulesetView } from "@/engine/core/view/index.ts";
 import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
-import type { Language } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 /** A language as the character's target paths read it: whether the character speaks it, picked or granted. */

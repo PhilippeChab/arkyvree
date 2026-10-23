@@ -1,18 +1,10 @@
 import { describe, expect, test } from "bun:test";
 
 import { modifiersInCustomization, requirementsInCustomization } from "@/drizzle/schema.ts";
+import type { Aptitude, Feat, Item, Power, Race, RulesetAbility } from "@/engine/index.ts";
 import { db } from "@/server/database/index.ts";
 import { ForbiddenError } from "@/server/errors/index.ts";
-import {
-  Abilities,
-  Aptitudes,
-  Feats,
-  Items,
-  Powers,
-  PowersAptitudes,
-  Races,
-  Requirements,
-} from "@/server/repositories/index.ts";
+import { Entities, Joins, Requirements } from "@/server/repositories/index.ts";
 import { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";
 import { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";
 import { activityTypes } from "@/tests/support/activities.ts";
@@ -28,11 +20,16 @@ const strengthBonus = { target: "abilities.strength.misc", value: "2", operator:
 async function setup() {
   const { session, ruleset } = await createTestUserAndRuleset();
   const rulesetId = ruleset.id;
-  await Abilities.create(db, { name: "Strength", description: "Strength", rulesetId });
-  const [feat] = await Feats.create(db, { name: "Test Feat", rulesetId });
-  const [item] = await Items.create(db, { name: "Test Item", rulesetId });
-  const [power] = await Powers.create(db, { name: "Test Power", rulesetId });
-  const [race] = await Races.create(db, { name: "Test Race", rulesetId, size: "Medium", baseSpeed: 30 });
+  await Entities.create<RulesetAbility>(db, "abilities", { name: "Strength", description: "Strength", rulesetId });
+  const [feat] = await Entities.create<Feat>(db, "feats", { name: "Test Feat", rulesetId });
+  const [item] = await Entities.create<Item>(db, "items", { name: "Test Item", rulesetId });
+  const [power] = await Entities.create<Power>(db, "powers", { name: "Test Power", rulesetId });
+  const [race] = await Entities.create<Race>(db, "races", {
+    name: "Test Race",
+    rulesetId,
+    size: "Medium",
+    baseSpeed: 30,
+  });
   const { klassLevel } = await createTestKlassLevel(rulesetId);
   const owners = { feats: feat.id, items: item.id, powers: power.id, races: race.id, klass_levels: klassLevel.id };
   return { session, rulesetId, feat, item, owners };
@@ -71,9 +68,9 @@ describe("ModifiersService", () => {
   test("refreshes the target paths a list's slots decide: a feat's list has no known paths", async () => {
     // A spell list with a spell; a feat giving it slots makes it the feat's, its spells no longer learned
     const { session, rulesetId, feat } = await setup();
-    const [list] = await Aptitudes.create(db, { name: "Test Light Spells", rulesetId });
-    const [spell] = await Powers.create(db, { name: "Test Glow", rulesetId });
-    await PowersAptitudes.create(db, { powerId: spell.id, aptitudeId: list.id, level: 1 });
+    const [list] = await Entities.create<Aptitude>(db, "aptitudes", { name: "Test Light Spells", rulesetId });
+    const [spell] = await Entities.create<Power>(db, "powers", { name: "Test Glow", rulesetId });
+    await Joins.create(db, "powers_aptitudes", { powerId: spell.id, aptitudeId: list.id, level: 1 });
     const knownPath = async () =>
       (await readTargetPaths(rulesetId, "requirement")).paths.some(
         (path) => path.path === "powers.testglow.testlight.known",
@@ -130,7 +127,11 @@ describe("ModifiersService", () => {
     // A grant gives what it names in the build's rounds: a template applies after them, and a wildcard names no one feat
     const { user, session } = await createTestUser();
     const fork = await createSeededTestRuleset(user.id);
-    const toughness = (await Feats.findOne(db, { name: "Toughness", rulesetId: (await getSeedCtx()).rulesetId }))!;
+    const toughness = (await Entities.findOne<Feat>(db, {
+      entityType: "feats",
+      name: "Toughness",
+      rulesetId: (await getSeedCtx()).rulesetId,
+    }))!;
     const save = (target: string, value: string) =>
       ModifiersService.createModifier(session, fork.id, "feats", toughness.id, { operator: "set", target, value });
     const condition = "{{ [languages.common.known] }}";

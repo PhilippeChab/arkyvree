@@ -1,12 +1,12 @@
 import { describe, expect, test } from "bun:test";
 
+import type { KlassLevel, Mechanic } from "@/engine/index.ts";
 import { db } from "@/server/database/index.ts";
 import {
   CharacterContributors,
   Contributors,
+  Entities,
   Invites,
-  KlassLevels,
-  Mechanics,
   Modifiers,
   Properties,
   Requirements,
@@ -68,8 +68,8 @@ describe("ActivitiesService.getActivityUrl", () => {
       abilityMap,
     } = await getSeedCtx();
     const fighter = klassMap.pc["Fighter"];
-    const [mechanic] = await Mechanics.create(db, { name: "Linked Mechanic", rulesetId: r });
-    const [level] = await KlassLevels.findMany(db, { klassId: fighter });
+    const [mechanic] = await Entities.create<Mechanic>(db, "mechanics", { name: "Linked Mechanic", rulesetId: r });
+    const [level] = await Entities.findMany<KlassLevel>(db, { entityType: "klass_levels", ownerIds: [fighter] });
     for (const [table, id, url] of [
       ["feats", featMap["Toughness"], `/rulesets/${r}/feats/${featMap["Toughness"]}/customization`],
       ["powers", powerMap["Magic Missile"], `/rulesets/${r}/powers/${powerMap["Magic Missile"]}/customization`],
@@ -89,7 +89,10 @@ describe("ActivitiesService.getActivityUrl", () => {
 
   test("links a customization to its entity's customization page, on its tab", async () => {
     const { rulesetId: r, featMap, itemMap, klassMap } = await getSeedCtx();
-    const [clericLevel] = await KlassLevels.findMany(db, { klassId: klassMap.pc["Cleric"] });
+    const [clericLevel] = await Entities.findMany<KlassLevel>(db, {
+      entityType: "klass_levels",
+      ownerIds: [klassMap.pc["Cleric"]],
+    });
     const [featModifier] = await Modifiers.findMany(db, {
       sourceIds: [featMap["Toughness"]],
       sourceType: "feats",

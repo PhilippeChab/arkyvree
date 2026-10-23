@@ -1,16 +1,51 @@
 import type {
+  CharacterRoleDef,
   FieldDef,
+  LinkPart,
   LinkRoleDef,
   RulesetModule,
   StepDef,
   StorageRegistries,
+  StoredAdvancement,
   StoredCharacter,
+  StoredCharacterLink,
+  StoredCharacterRow,
+  StoredCharacterWrite,
+  StoredColumn,
+  StoredEntity,
   StoredJoin,
   StoredKind,
+  StoredLink,
+  StoredPick,
+  StoredRuleset,
+  StoredWrite,
 } from "@/engine/core/module/index.ts";
 import type { BaseRules } from "@/shared/enums.ts";
 
 import Modules from "./Modules.ts";
+
+/** A row, any kind's or join's: its columns by their names, in the order its answers give them. */
+type Row = Record<string, unknown>;
+
+/** The columns of an entity's own that a kind's row starts with, in their order, and an owned kind's (a class level's). */
+const ENTITY_COLUMNS = ["createdAt", "updatedAt", "deletedAt", "id", "rulesetId", "campaignId", "name", "description"];
+/** The columns of an entity's own a write may give, past its kind's (its owner's, position and partition among those). */
+const OWN_WRITES = ["id", "rulesetId", "campaignId", "name", "description", "createdAt", "updatedAt", "deletedAt"];
+
+const OWNED_COLUMNS = ["createdAt", "updatedAt", "deletedAt", "id"];
+
+/** How two texts sort by their characters' codes, as the database's collation (C) orders text. */
+function compareText(a: string, b: string) {
+  return a < b ? -1 : a > b ? 1 : 0;
+}
+
+/** Postgres's text of a timestamp (`2026-01-01 00:00:00.5+00`) as JSON gives it (`2026-01-01T00:00:00.5+00:00`). */
+function jsonTimestamp(text: string): string;
+function jsonTimestamp(text: string | null): string | null;
+function jsonTimestamp(text: string | null): string | null {
+  if (text === null) return null;
+  return text.replace(" ", "T").replace(/([+-]\d\d)$/, "$1:00");
+}
 
 /** The entries of every module's record (`pick`), one per name: a name two modules declare is refused. */
 function mergeRecords<T>(modules: [BaseRules, RulesetModule][], pick: (module: RulesetModule) => Record<string, T>) {
@@ -22,6 +57,20 @@ function mergeRecords<T>(modules: [BaseRules, RulesetModule][], pick: (module: R
     }
   }
   return merged;
+}
+
+/**
+ * A number's text rounded to `scale` places, half away from zero, as Postgres's `round(numeric, scale)` writes it: its
+ * places always shown (`5` to 2 places is `5.00`).
+ */
+function roundDecimal(text: string, scale: number): string {
+  const negative = text.startsWith("-");
+  const [whole, fraction = ""] = (negative || text.startsWith("+") ? text.slice(1) : text).split(".");
+  let units = BigInt(whole + fraction.padEnd(scale, "0").slice(0, scale));
+  if ((fraction[scale] ?? "0") >= "5") units += 1n;
+  const digits = units.toString().padStart(scale + 1, "0");
+  const rounded = scale === 0 ? digits : `${digits.slice(0, -scale)}.${digits.slice(-scale)}`;
+  return negative && units !== 0n ? `-${rounded}` : rounded;
 }
 
 /**
@@ -58,24 +107,190 @@ export default class StorageEngine {
 
   /** Every module's storage, merged once: the modules never change. */
   private static instance: StorageEngine | undefined;
+
   /** Every registered module's storage, merged: one instance, built on its first read. */
   static shared(): StorageEngine {
     StorageEngine.instance ??= new StorageEngine(Modules.all());
     return StorageEngine.instance;
   }
+
   private readonly baseRules: BaseRules[];
+
   private readonly characterDeclaration: StoredCharacter;
+
+  /** Each kind's row's columns, in their order: an entity's own (an owned kind's fewer), then its kind's. */
+  private readonly columnOrders = new Map<string, string[]>();
+
   private readonly joins: Record<string, StoredJoin>;
+
   private readonly kinds: Record<string, StoredKind>;
+
   private readonly linkedEntityProperties: Record<string, Record<string, string>>;
 
   private readonly linkedRulesetProperties: Record<string, string>;
 
   private readonly merged: StorageRegistries;
 
+  private columnFieldNames: Set<string> | undefined;
+
+  private rowReads: { fields: string[]; roles: string[] } | undefined;
+
+  /** A character link role. */
+  private characterRole(role: string): CharacterRoleDef {
+    return this.merged.characterRoles.find((def) => def.role === role)!;
+  }
+
+  /** The fields every kind's columns hold, which its row reads: not properties. */
+  private columnFields(): Set<string> {
+    this.columnFieldNames ??= new Set(
+      Object.values(this.kinds).flatMap((kind) =>
+        Object.values(kind.columns).flatMap((column) => ("field" in column ? [column.field] : [])),
+      ),
+    );
+    return this.columnFieldNames;
+  }
+
+  /** A kind's row's columns, in the order its answers give them. */
+  private columnOrder(type: string): string[] {
+    let order = this.columnOrders.get(type);
+    if (!order) {
+      const kind = this.kind(type);
+      const own = this.merged.entityTypes.find((def) => def.type === type)?.ownerType ? OWNED_COLUMNS : ENTITY_COLUMNS;
+      order = kind.order ?? [...new Set([...own, ...Object.keys(kind.columns)])];
+      this.columnOrders.set(type, order);
+    }
+    return order;
+  }
+
+  /** The value of a stored column of an entity: its field's (a single value), its single link's, or its own. */
+  private columnValue(entity: StoredEntity, column: StoredColumn): unknown {
+    switch (column.kind) {
+      case "link":
+        return entity.links.find((link) => link.role === column.role)?.toId ?? null;
+      case "owner":
+        return entity.ownerId;
+      case "partition":
+        return entity.partition;
+      case "position":
+        return entity.position;
+      default: {
+        const value = entity.fields.find((field) => field.field === column.field && field.ordinal === 0)?.value;
+        if (value === undefined) return null;
+        if (column.kind === "flag") return value === "true";
+        if (column.kind === "text") return value;
+        return "integer" in column ? Number(roundDecimal(value, 0)) : roundDecimal(value, column.scale);
+      }
+    }
+  }
+
+  /** A join's row of a link from an entity: its timestamps, then each part under its column's name. */
+  private joinRow(join: StoredJoin, fromId: string, link: StoredLink, json: boolean): Row {
+    const parts: Record<LinkPart, unknown> = {
+      amount: link.amount,
+      free: link.free,
+      from: fromId,
+      id: link.id,
+      tier: link.tier,
+      to: link.toId,
+      via: link.viaId,
+    };
+    const row: Row = {
+      createdAt: json ? jsonTimestamp(link.createdAt) : link.createdAt,
+      updatedAt: json ? jsonTimestamp(link.updatedAt) : link.updatedAt,
+      deletedAt: null,
+    };
+    for (const column in join.columns) row[column] = parts[join.columns[column]];
+    return row;
+  }
+
+  /** An advancement as its module's level row: its track and its value step's amount under their names. */
+  advancementRowOf(advancement: StoredAdvancement): Row {
+    const { track, value } = this.characterDeclaration.advancement;
+    return {
+      id: advancement.id,
+      characterId: advancement.characterId,
+      [track]: advancement.trackId,
+      [value.column]: advancement.value,
+      position: advancement.position,
+      createdAt: advancement.createdAt,
+      updatedAt: advancement.updatedAt,
+      deletedAt: advancement.deletedAt,
+    };
+  }
+
   /** A character's data, as every module stores it: its columns, its links and its advancements' picks. */
   character(): StoredCharacter {
     return this.characterDeclaration;
+  }
+
+  /** A character link's row (`row`, by its columns), of a link's (`name`), as what a write of it stores. */
+  characterLinkOf(name: string, row: Row) {
+    const link = this.characterDeclaration.links[name];
+    const role = this.characterRole(link.role);
+    return {
+      characterId: row.characterId as string,
+      role: link.role,
+      single: role.single,
+      entityId: row[link.entity] as string,
+      entityType: role.entityType,
+      amount: link.amount ? (row[link.amount] as number) : null,
+      createdAt: row.createdAt as string | undefined,
+      updatedAt: row.updatedAt as string | undefined,
+    };
+  }
+
+  /** A character's link as its module's row of `name` (its scores, its languages): its entity, its amount. */
+  characterLinkRowOf(name: string, link: StoredCharacterLink): Row {
+    const declared = this.characterDeclaration.links[name];
+    return {
+      characterId: link.characterId,
+      [declared.entity]: link.entityId,
+      ...(declared.amount ? { [declared.amount]: link.amount } : {}),
+      createdAt: link.createdAt,
+      updatedAt: link.updatedAt,
+      deletedAt: null,
+    };
+  }
+
+  /**
+   * A stored character as its module's row: its own columns, then what its fields and single links hold (a number's
+   * rounded to a whole one), in its declared order.
+   */
+  characterRowOf({ fields, links, ...own }: StoredCharacterRow): Row {
+    const { columns, order } = this.characterDeclaration;
+    const row: Row = { ...own };
+    for (const [name, column] of Object.entries(columns)) {
+      if (column.kind === "link") {
+        row[name] = links.find((link) => link.role === column.role)?.toId ?? null;
+        continue;
+      }
+      const value = fields.find((field) => field.field === column.field)?.value ?? null;
+      row[name] = value !== null && column.kind === "number" ? Number(roundDecimal(value, 0)) : value;
+    }
+    return order ? Object.fromEntries(order.map((name) => [name, row[name]])) : row;
+  }
+
+  /** What a write of a character's row stores (`values`, by its columns). */
+  characterWriteOf(values: Row): StoredCharacterWrite {
+    const { columns } = this.characterDeclaration;
+    const write: StoredCharacterWrite = {
+      own: Object.fromEntries(Object.entries(values).filter(([name]) => !(name in columns))),
+      fields: [],
+      links: [],
+    };
+    for (const [name, column] of Object.entries(columns)) {
+      const value = values[name];
+      // A value left undefined is left as it is, as an update leaves a column it's given undefined
+      if (value === undefined) continue;
+      const text = value === null ? null : String(value);
+      if (column.kind !== "link") {
+        write.fields.push({ field: column.field, kind: column.kind, value: text });
+        continue;
+      }
+      const role = this.characterRole(column.role);
+      write.links.push({ role: column.role, single: role.single, entityType: role.entityType, toId: text });
+    }
+    return write;
   }
 
   /** A field of an owner's type (an entity type, `rulesets` or `characters`), if a module declares it. */
@@ -90,11 +305,58 @@ export default class StorageEngine {
     return join;
   }
 
+  /** Every join's name. */
+  joinNames(): string[] {
+    return Object.keys(this.joins);
+  }
+
+  /**
+   * A join's rows (`name`) of entities' links (`entities`, of its from-kind): its role's to its to-kind, in their order
+   * (as they were made, each entity's in its order). `json`: their timestamps as JSON gives them (a nested row's).
+   */
+  joinRowsOf(name: string, entities: Pick<StoredEntity, "id" | "links" | "type">[], json = false): Row[] {
+    const join = this.join(name);
+    const links = entities.flatMap((entity) =>
+      entity.type !== join.from
+        ? []
+        : entity.links
+            .filter((link) => link.role === join.role && link.toType === join.to)
+            .map((link) => ({ fromId: entity.id, link })),
+    );
+    links.sort(
+      (a, b) =>
+        compareText(a.link.createdAt, b.link.createdAt) ||
+        compareText(a.fromId, b.fromId) ||
+        a.link.ordinal - b.link.ordinal ||
+        compareText(a.link.toId, b.link.toId),
+    );
+    return links.map(({ fromId, link }) => this.joinRow(join, fromId, link, json));
+  }
+
   /** An entity kind's row, by its type (`feats`): its columns past an entity's own. */
   kind(type: string): StoredKind {
     const kind = this.kinds[type];
     if (!kind) throw new Error(`No module stores the kind ${type}`);
     return kind;
+  }
+
+  /**
+   * What every kind's row reads of its entity past its own columns: its columns' fields (their single value, ordinal
+   * 0), and its single links' and lists' roles. A read of rows alone reads no more (a property's fields it leaves).
+   */
+  kindReads(): { fields: string[]; roles: string[] } {
+    this.rowReads ??= {
+      fields: [...this.columnFields()],
+      roles: [
+        ...new Set(
+          Object.values(this.kinds).flatMap((kind) => [
+            ...Object.values(kind.columns).flatMap((column) => (column.kind === "link" ? [column.role] : [])),
+            ...Object.values(kind.lists ?? {}).map((list) => this.join(list.join).role),
+          ]),
+        ),
+      ],
+    };
+    return this.rowReads;
   }
 
   /** The property types a link holds, an owner type's: each with its role. */
@@ -113,9 +375,134 @@ export default class StorageEngine {
     return this.linkedEntityProperties[ownerType]?.[propertyType];
   }
 
+  /**
+   * A join's row (`values`, by its columns' names) as its link's parts: what a write of it stores, a part it leaves out
+   * its default (no pool, no tier, no amount, not free). Its timestamps and id when it gives them (a copy's).
+   */
+  linkOf(name: string, values: Row) {
+    const join = this.join(name);
+    const part = (wanted: LinkPart) => {
+      const column = Object.keys(join.columns).find((key) => join.columns[key] === wanted);
+      return column === undefined ? undefined : values[column];
+    };
+    return {
+      id: part("id") as string | undefined,
+      fromId: String(part("from")),
+      toId: String(part("to")),
+      viaId: (part("via") as string | null | undefined) ?? null,
+      tier: (part("tier") as number | null | undefined) ?? null,
+      amount: (part("amount") as number | null | undefined) ?? null,
+      free: (part("free") as boolean | undefined) ?? false,
+      createdAt: values.createdAt as string | undefined,
+      updatedAt: values.updatedAt as string | undefined,
+    };
+  }
+
+  /** The ids of the entities stored entities' lists name (a feat's pools' aptitudes): what their rows nest. */
+  listTargetIds(entities: StoredEntity[]): string[] {
+    const ids = new Set<string>();
+    for (const entity of entities) {
+      for (const list of Object.values(this.kind(entity.type).lists ?? {})) {
+        const join = this.join(list.join);
+        for (const link of entity.links) if (link.role === join.role && link.toType === join.to) ids.add(link.toId);
+      }
+    }
+    return [...ids];
+  }
+
   /** The base rules of every registered module: what a ruleset's `base_rules` may name (`rules.modules`). */
   modules(): BaseRules[] {
     return this.baseRules;
+  }
+
+  /** A pick's row (`row`, by its columns), of a step's (`name`), as what a write of it stores past its ordinal. */
+  pickOf(name: string, row: Row) {
+    const pick = this.characterDeclaration.picks[name];
+    const step = this.step(pick.step);
+    const viaId = pick.via ? ((row[pick.via] as string | null | undefined) ?? null) : null;
+    return {
+      id: pick.id ? (row.id as string | undefined) : undefined,
+      advancementId: row.characterLevelId as string,
+      step: pick.step,
+      entityId: row[pick.entity] as string,
+      entityType: step.entityType,
+      viaId,
+      viaType: viaId ? step.viaType : null,
+      amount: pick.amount ? (row[pick.amount] as number) : null,
+      repeats: step.repeats,
+    };
+  }
+
+  /** An advancement's pick as its module's row of `name` (its feats, its skills): its entity, its pool, its amount. */
+  pickRowOf(name: string, pick: StoredPick): Row {
+    const declared = this.characterDeclaration.picks[name];
+    return {
+      ...(declared.id ? { id: pick.id } : {}),
+      characterLevelId: pick.advancementId,
+      [declared.entity]: pick.entityId,
+      ...(declared.via ? { [declared.via]: pick.viaId } : {}),
+      ...(declared.amount ? { [declared.amount]: pick.amount } : {}),
+      createdAt: pick.createdAt,
+      updatedAt: pick.updatedAt,
+      deletedAt: null,
+    };
+  }
+
+  /**
+   * The properties of stored entities and rulesets, as the engine reads them (`Property`): their fields past their
+   * kinds' columns (a feat's family), each value as text, and the entities the properties a link holds name (a class's
+   * bonus spell ability). In the order they were written, by owner, type and value; of `entityType` and of `type`
+   * when given.
+   */
+  propertiesOf(
+    owners: { entities?: StoredEntity[]; rulesets?: StoredRuleset[] },
+    where: { entityType?: string; type?: string } = {},
+  ): Row[] {
+    const columnFields = this.columnFields();
+    const rows: {
+      createdAt: string;
+      entityId: string;
+      entityType: string;
+      ordinal: number;
+      type: string;
+      updatedAt: string;
+      value: string;
+    }[] = [];
+    const owned = [
+      ...(owners.entities ?? []).map((entity) => ({ ...entity, ownerType: entity.type })),
+      ...(owners.rulesets ?? []).map((ruleset) => ({ ...ruleset, ownerType: "rulesets" })),
+    ];
+    for (const { fields, id: entityId, links, ownerType: entityType } of owned) {
+      const own = fields.filter((field) => entityType === "rulesets" || !columnFields.has(field.field));
+      rows.push(...own.map((field) => ({ ...field, entityId, entityType, type: field.field })));
+      for (const [type, role] of this.linkedProperties(entityType)) {
+        const linked = links.filter((link: { role: string }) => link.role === role);
+        rows.push(...linked.map((link) => ({ ...link, entityId, entityType, ordinal: 0, type, value: link.toId })));
+      }
+    }
+    return rows
+      .filter(
+        (row) => (!where.entityType || row.entityType === where.entityType) && (!where.type || row.type === where.type),
+      )
+      .sort(
+        (a, b) =>
+          compareText(a.createdAt, b.createdAt) ||
+          compareText(a.entityId, b.entityId) ||
+          compareText(a.type, b.type) ||
+          compareText(a.value, b.value),
+      )
+      .map((row) => ({
+        // In the order a property's answer gives its columns
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
+        deletedAt: null,
+        id: `${row.entityId}:${row.type}:${row.ordinal}`,
+        entityId: row.entityId,
+        entityType: row.entityType,
+        value: row.value,
+        type: row.type,
+        description: null,
+      }));
   }
 
   /** What every module's registries hold. */
@@ -132,10 +519,84 @@ export default class StorageEngine {
     return found;
   }
 
+  /**
+   * A stored entity as its kind's row (its type's declaration): an entity's own columns (an owned kind's fewer), then
+   * what its fields and single links hold, in its declared order; then, given the entities its lists' links name
+   * (`targets`, by id), its lists, each join row with its target's row (a link to one it lacks left out), as a list's
+   * read nests them. `json`: its timestamps as JSON gives them (a nested row's).
+   */
+  rowOf(
+    entity: StoredEntity,
+    { json = false, targets }: { json?: boolean; targets?: ReadonlyMap<string, StoredEntity> } = {},
+  ): Row {
+    const kind = this.kind(entity.type);
+    // Written into one object in its order, no row built on the way: a view's rows are many, and kept
+    const row: Row = {};
+    for (const name of this.columnOrder(entity.type)) {
+      const column = kind.columns[name];
+      if (column) row[name] = this.columnValue(entity, column);
+      else if (json && (name === "createdAt" || name === "updatedAt" || name === "deletedAt"))
+        row[name] = jsonTimestamp(entity[name]);
+      else row[name] = entity[name as keyof StoredEntity];
+    }
+    for (const [name, list] of Object.entries(targets ? (kind.lists ?? {}) : {})) {
+      const join = this.join(list.join);
+      row[name] = this.joinRowsOf(list.join, [entity], true).flatMap((joined) => {
+        const target = targets!.get(
+          String(joined[Object.keys(join.columns).find((column) => join.columns[column] === "to")!]),
+        );
+        return target ? [{ ...joined, [list.target]: this.rowOf(target, { json: true }) }] : [];
+      });
+    }
+    return row;
+  }
+
   /** An advancement's step. */
   step(step: string): StepDef {
     const found = this.merged.steps.find((def) => def.step === step);
     if (!found) throw new Error(`No module declares the step ${step}`);
     return found;
+  }
+
+  /**
+   * What a write of a kind's row stores (`values`: its columns by name): the entity's own columns it gives, and the
+   * fields and single links of each column it gives, as text (a decimal rounded to its scale), or null to clear it.
+   * `creating`: a new row's, whose every column is written, one it leaves out its default (its partition's too).
+   */
+  writeOf(type: string, values: Row, creating: boolean): StoredWrite {
+    const own: StoredWrite["own"] = Object.fromEntries(
+      OWN_WRITES.filter((name) => values[name] !== undefined).map((name) => [name, values[name]]),
+    );
+    const write: StoredWrite = { own, fields: [], links: [] };
+    for (const [name, column] of Object.entries(this.kind(type).columns)) {
+      const value = values[name];
+      if (column.kind === "owner" || column.kind === "position") {
+        if (value !== undefined) own[column.kind === "owner" ? "ownerId" : "position"] = value as never;
+      } else if (column.kind === "partition") {
+        if (value !== undefined || creating) own.partition = (value as string | undefined) ?? column.default;
+      } else if (value !== undefined || creating) {
+        if (column.kind === "link") {
+          const role = this.merged.linkRoles.find((def) => def.role === column.role && def.fromType === type)!;
+          write.links.push({
+            role: column.role,
+            single: role.single,
+            toId: (value as string | null) ?? null,
+            toType: role.toType,
+          });
+        } else {
+          const held = value ?? ("default" in column ? column.default : undefined) ?? null;
+          const text =
+            held === null
+              ? null
+              : column.kind === "flag"
+                ? String(Boolean(held))
+                : column.kind === "number" && "scale" in column
+                  ? roundDecimal(String(held), column.scale)
+                  : String(held);
+          write.fields.push({ field: column.field, kind: column.kind, value: text });
+        }
+      }
+    }
+    return write;
   }
 }

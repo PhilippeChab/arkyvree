@@ -5,20 +5,25 @@ import { eq } from "drizzle-orm";
 import type { CharacterSeed } from "@/content/core/builders/characters/types.ts";
 import { CHARACTERS } from "@/content/dnd3.5/testData/characters.ts";
 import { charactersInCharacter } from "@/drizzle/schema.ts";
+import type {
+  CharacterAbility,
+  CharacterLanguage,
+  KlassLevel,
+  LevelFeat,
+  LevelPower,
+  LevelSkill,
+} from "@/engine/index.ts";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import seedCharacters from "@/scripts/db/seeds/characters.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { db } from "@/server/database/index.ts";
 import {
-  CharacterAbilities,
   CharacterInventory,
-  CharacterLanguages,
-  CharacterLevelFeats,
-  CharacterLevelPowers,
   CharacterLevels,
-  CharacterLevelSkills,
+  CharacterLinks,
   Characters,
-  KlassLevels,
+  Entities,
+  Picks,
   Visibility,
 } from "@/server/repositories/index.ts";
 import type { Character } from "@/shared/relations.ts";
@@ -86,7 +91,10 @@ async function written(character: Character) {
   const levels = await CharacterLevels.findMany(db, { characterId: character.id });
   const levelNames: Record<string, string> = {};
   for (const level of levels) {
-    const klassLevel = (await KlassLevels.findOne(db, { id: level.klassLevelId }))!;
+    const klassLevel = (await Entities.findOne<KlassLevel>(db, {
+      entityType: "klass_levels",
+      id: level.klassLevelId,
+    }))!;
     levelNames[level.id] = `${klasses[klassLevel.klassId]} ${klassLevel.level}`;
   }
   const levelIds = levels.map(({ id }) => id);
@@ -104,22 +112,21 @@ async function written(character: Character) {
       description: character.description,
     },
     abilities: Object.fromEntries(
-      (await CharacterAbilities.findMany(db, { characterId: character.id })).map((ability) => [
-        abilities[ability.abilityId],
-        ability.score,
-      ]),
+      (await CharacterLinks.findMany<CharacterAbility>(db, { link: "abilities", characterId: character.id })).map(
+        (ability) => [abilities[ability.abilityId], ability.score],
+      ),
     ),
-    languages: (await CharacterLanguages.findMany(db, { characterId: character.id }))
+    languages: (await CharacterLinks.findMany<CharacterLanguage>(db, { link: "languages", characterId: character.id }))
       .map((language) => languages[language.languageId])
       .sort(),
     levels: levels.map((level) => `${levelNames[level.id]}: ${level.hp} hp`).sort(),
-    skills: (await CharacterLevelSkills.findMany(db, { characterLevelIds: levelIds }))
+    skills: (await Picks.findMany<LevelSkill>(db, { pick: "skills", characterLevelIds: levelIds }))
       .map((s) => `${levelNames[s.characterLevelId]}: ${skills[s.skillId]} ${s.rank}`)
       .sort(),
-    feats: (await CharacterLevelFeats.findMany(db, { characterLevelIds: levelIds }))
+    feats: (await Picks.findMany<LevelFeat>(db, { pick: "feats", characterLevelIds: levelIds }))
       .map((f) => `${levelNames[f.characterLevelId]}: ${feats[f.featId]} in ${aptitudes[f.aptitudeId]}`)
       .sort(),
-    powers: (await CharacterLevelPowers.findMany(db, { characterLevelIds: levelIds }))
+    powers: (await Picks.findMany<LevelPower>(db, { pick: "powers", characterLevelIds: levelIds }))
       .map((p) => `${levelNames[p.characterLevelId]}: ${powers[p.powerId]} in ${aptitudes[p.aptitudeId]}`)
       .sort(),
     inventory: (await CharacterInventory.findMany(db, { characterId: character.id }))

@@ -1,8 +1,9 @@
 import { describe, expect, test } from "bun:test";
 
+import type { RulesetAbility } from "@/engine/index.ts";
 import { db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
-import { Abilities } from "@/server/repositories/index.ts";
+import { Entities } from "@/server/repositories/index.ts";
 import { AbilitiesService } from "@/server/services/rulesets/abilities/index.ts";
 import { createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
@@ -20,7 +21,7 @@ describe("AbilitiesService", () => {
     test("should return abilities for a ruleset", async () => {
       const { ruleset } = await createTestUserAndRuleset();
 
-      await Abilities.createMany(db, [
+      await Entities.createMany<RulesetAbility>(db, "abilities", [
         { name: "Strength", description: "Physical power", rulesetId: ruleset.id },
         { name: "Dexterity", description: "Agility", rulesetId: ruleset.id },
         { name: "Constitution", description: "Endurance", rulesetId: ruleset.id },
@@ -34,7 +35,7 @@ describe("AbilitiesService", () => {
     test("should support search filtering", async () => {
       const { ruleset } = await createTestUserAndRuleset();
 
-      await Abilities.createMany(db, [
+      await Entities.createMany<RulesetAbility>(db, "abilities", [
         { name: "Strength", description: "Physical power", rulesetId: ruleset.id },
         { name: "Dexterity", description: "Agility", rulesetId: ruleset.id },
       ]);
@@ -48,7 +49,7 @@ describe("AbilitiesService", () => {
     test("should support pagination", async () => {
       const { ruleset } = await createTestUserAndRuleset();
 
-      await Abilities.createMany(db, [
+      await Entities.createMany<RulesetAbility>(db, "abilities", [
         { name: "Strength", description: "Physical power", rulesetId: ruleset.id },
         { name: "Dexterity", description: "Agility", rulesetId: ruleset.id },
         { name: "Constitution", description: "Endurance", rulesetId: ruleset.id },

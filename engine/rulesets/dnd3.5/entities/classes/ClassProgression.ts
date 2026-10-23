@@ -7,11 +7,16 @@ import { z } from "zod";
 
 import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
 import RulesError from "@/engine/core/RulesError.ts";
-import { RequestIds, type RulesetData, type RulesetView } from "@/engine/core/view/index.ts";
+import {
+  type Klass,
+  type KlassLevel,
+  RequestIds,
+  type RulesetData,
+  type RulesetView,
+} from "@/engine/core/view/index.ts";
 import { RULESET_LIMITS } from "@/engine/rulesets/dnd3.5/limits.ts";
 import AptitudeTargets from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTargets.ts";
 import SpellLists from "@/engine/rulesets/dnd3.5/rules/SpellLists.ts";
-import type { Klass, KlassLevel } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { SPELL_LEVELS } from "@/vocabulary/dnd3.5/spells.ts";
 

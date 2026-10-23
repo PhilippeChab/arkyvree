@@ -1,5 +1,5 @@
 import { CharacterComponent } from "@/engine/core/character/index.ts";
-import type { RulesetView } from "@/engine/core/view/index.ts";
+import type { CharacterLevel, Klass, KlassLevel, KlassSkill, RulesetView } from "@/engine/core/view/index.ts";
 import type {
   LoadedCharacterData,
   SkillWithRank,
@@ -9,7 +9,6 @@ import type {
   CustomizedFeat,
   CustomizedPower,
 } from "@/engine/rulesets/dnd3.5/model/loading/loadedEntities.ts";
-import type { CharacterLevel, Klass, KlassLevel, KlassSkill } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 interface ClassesData {

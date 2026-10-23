@@ -1,6 +1,6 @@
 import { CharacterComponent } from "@/engine/core/character/index.ts";
 import type { RulesIssue } from "@/engine/core/RulesError.ts";
-import type { RulesetView } from "@/engine/core/view/index.ts";
+import type { RulesetView, Skill } from "@/engine/core/view/index.ts";
 import { SKILL_FIELDS, type SkillFieldValues } from "@/engine/rulesets/dnd3.5/entities/skills/fields.ts";
 import type AbilitiesComponent from "@/engine/rulesets/dnd3.5/model/abilities/AbilitiesComponent.ts";
 import type ClassesComponent from "@/engine/rulesets/dnd3.5/model/classes/ClassesComponent.ts";
@@ -10,7 +10,6 @@ import type ShieldsComponent from "@/engine/rulesets/dnd3.5/model/combat/Shields
 import type IdentityComponent from "@/engine/rulesets/dnd3.5/model/identity/IdentityComponent.ts";
 import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
 import SkillRules from "@/engine/rulesets/dnd3.5/rules/SkillRules.ts";
-import { type Skill } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { SIZE_HIDE_MOD } from "@/vocabulary/dnd3.5/sizes.ts";
 

@@ -1,6 +1,7 @@
 import type { Db } from "@/drizzle/database.ts";
+import type { KlassLevel } from "@/engine/index.ts";
 import { ConflictError, NotFoundError } from "@/server/errors/index.ts";
-import { EntityReferences, EntitySnapshots, KlassLevels, type RulesetEntityType } from "@/server/repositories/index.ts";
+import { Entities, EntityReferences, EntitySnapshots, type RulesetEntityType } from "@/server/repositories/index.ts";
 
 import type EntityNames from "./EntityNames.ts";
 import EntityRepositories from "./EntityRepositories.ts";
@@ -22,8 +23,13 @@ export default class EntityRevert {
    * views pair them. Refused while a character took a level the source doesn't have.
    */
   private static async repointKlassLevels(tx: Db, copyId: string, sourceId: string, rulesetId: string) {
-    const sourceLevels = new Map((await KlassLevels.findMany(tx, { klassId: sourceId })).map((l) => [l.level, l.id]));
-    const copyLevels = await KlassLevels.findMany(tx, { klassId: copyId });
+    const sourceLevels = new Map(
+      (await Entities.findMany<KlassLevel>(tx, { entityType: "klass_levels", ownerIds: [sourceId] })).map((l) => [
+        l.level,
+        l.id,
+      ]),
+    );
+    const copyLevels = await Entities.findMany<KlassLevel>(tx, { entityType: "klass_levels", ownerIds: [copyId] });
     const unpaired = copyLevels.filter((level) => !sourceLevels.has(level.level)).map((level) => level.id);
     if (await EntityReferences.exists(tx, { entityType: "klass_levels", ids: unpaired, rulesetId }))
       throw new ConflictError("Cannot restore: characters took levels its parent's class doesn't have");

@@ -1,21 +1,21 @@
 import type { Db } from "@/drizzle/database.ts";
-import { Engine } from "@/engine/index.ts";
+import { Engine, type Feat, type FeatWithAptitudes } from "@/engine/index.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { Feats } from "@/server/repositories/index.ts";
+import { Entities } from "@/server/repositories/index.ts";
 import EntityWriter, { type EntityBody } from "@/server/services/rulesets/EntityWriter.ts";
 import type { Session } from "@/shared/relations.ts";
 
 class FeatsService {
   /** What its creates, updates and deletes write, in one order around the plans its rules give. */
-  private readonly writer = new EntityWriter("feats", Feats);
+  private readonly writer = new EntityWriter("feats");
 
   /**
    * Whether the ancestor feat a fork deleted was generated, read by its stored id: a new feat with its name stands in
    * for it (`EntityNames.repointTombstone`), and takes its mark.
    */
   private async wasGenerated(tx: Db, ancestorFeatId: string): Promise<boolean> {
-    const feat = await Feats.findOne(tx, { id: ancestorFeatId });
+    const feat = await Entities.findOne<Feat>(tx, { entityType: "feats", id: ancestorFeatId });
     return feat?.generated ?? false;
   }
 
@@ -47,9 +47,9 @@ class FeatsService {
     return await withRulesetScope(db, rulesetId, async (scope) => {
       const { aptitudeId, ...filters } = where;
       const list = Engine.for(scope).entities("feats").openList({ aptitudeId });
-      return await Feats.findGroupPage(
+      return await Entities.findGroupPage(
         db,
-        { rulesetId, ...scope.rulesetData.cow.listFilters, ...list.groupFilters, ...filters },
+        { entityType: "feats", rulesetId, ...scope.rulesetData.cow.listFilters, ...list.groupFilters, ...filters },
         pagination,
       );
     });
@@ -70,9 +70,9 @@ class FeatsService {
     return await withRulesetScope(db, rulesetId, async (scope) => {
       const { aptitudeId, family, ...filters } = where;
       const list = Engine.for(scope).entities("feats").openList({ aptitudeId, childOnly: where.childOnly, family });
-      const result = await Feats.findPage(
+      const result = await Entities.findPage<FeatWithAptitudes>(
         db,
-        { rulesetId, ...scope.rulesetData.cow.listFilters, ...filters, ...list.filters },
+        { entityType: "feats", rulesetId, ...scope.rulesetData.cow.listFilters, ...filters, ...list.filters },
         pagination,
       );
       return { ...result, items: list.describe(result.items) };

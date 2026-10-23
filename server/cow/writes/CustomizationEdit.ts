@@ -1,7 +1,7 @@
 import type { Db } from "@/drizzle/database.ts";
-import type { CowData, RulesetSources } from "@/engine/index.ts";
+import type { CowData, Klass, KlassLevel, RulesetSources } from "@/engine/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
-import { Klasses, KlassLevels, Modifiers, Requirements, type RulesetEntityType } from "@/server/repositories/index.ts";
+import { Entities, Modifiers, Requirements, type RulesetEntityType } from "@/server/repositories/index.ts";
 
 import EntityCopy from "./EntityCopy.ts";
 import EntityRepositories from "./EntityRepositories.ts";
@@ -75,15 +75,15 @@ export default class CustomizationEdit {
   /** A class level as the owner of customizations: its class's own, locked, or the class copied and the level mapped. */
   private async cowKlassLevelOwner(tx: Db, levelId: string): Promise<Owner> {
     // The level the view shows for the id, and its class
-    const level = await KlassLevels.findOne(tx, { id: this.cow.resolve(levelId) });
+    const level = await Entities.findOne<KlassLevel>(tx, { entityType: "klass_levels", id: this.cow.resolve(levelId) });
     if (!level) throw new NotFoundError("Customization source not found in this ruleset");
 
-    const klass = await Klasses.findOne(tx, { id: this.cow.resolve(level.klassId) });
+    const klass = await Entities.findOne<Klass>(tx, { entityType: "klasses", id: this.cow.resolve(level.klassId) });
     if (!klass) throw new NotFoundError("Customization source not found in this ruleset");
 
     if (klass.rulesetId === this.ruleset.id) {
       await EntityRepositories.lock(tx, "klasses", klass.id);
-      if (!(await KlassLevels.findOne(tx, { id: level.id })))
+      if (!(await Entities.findOne<KlassLevel>(tx, { entityType: "klass_levels", id: level.id })))
         throw new NotFoundError("Customization source no longer exists; refresh the entity");
 
       return { id: level.id };
@@ -94,7 +94,10 @@ export default class CustomizationEdit {
     // COW the klass (copies all levels)
     const copy = await EntityCopy.create(tx, "klasses", klass.id, this.ruleset);
     // Find the new level by matching level number (levels aren't individually snapshotted)
-    const newLevels = await KlassLevels.findMany(tx, { klassId: copy.entity.id });
+    const newLevels = await Entities.findMany<KlassLevel>(tx, {
+      entityType: "klass_levels",
+      ownerIds: [copy.entity.id],
+    });
     const newLevel = newLevels.find((l) => l.level === level.level);
     if (!newLevel) throw new NotFoundError("Copied class level not found");
     return { id: newLevel.id, copiedIds: copy.copiedIds };

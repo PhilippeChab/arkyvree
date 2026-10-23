@@ -17,13 +17,13 @@ A ruleset's entities and a character's build are stored in tables no game names 
 - **Advancement:** a character's levels are `character.advancements`, each in a track (its class level), and their picks `character.advancement_picks`, by step (its hit points, its feats through their pools, its skills' ranks).
 - **Registries:** what the modules declare, each row's foreign keys check it against: `rules.modules` (a ruleset's base rules), `entity_types`, `field_defs`, `link_roles` and `link_role_kinds`, `ruleset_roles`, `character.character_roles`, `steps` and `item_types`. Every migrate writes them from the modules' declarations (`StoredRegistries.reconcile`, run by `scripts/db/migrate.ts` and the test databases' reset), so a module's new type, field, role or step is a code change only: it adds what's new, updates what changed (a field that becomes a set, a role that becomes single: the foreign keys cascade into the rows that carry it, and the database refuses a change its rows can't take), and removes what no module declares any more, refusing, by its name, a row that rows still use. Its rewrites leave characters' last change alone (`arkyvree.registry_sync`). `tests/database/registries.test.ts` checks they hold what the modules declare, and what a sync does.
 
-How the server reads them as a kind's rows (`server/repositories/stored/`):
+How the server reads them: one generic repository a table, which reads the stored rows as they are and hands them to the engine, which maps them to its module's rows by its declaration (`Engine.storage()`, `engine/api/StorageEngine.ts`). No repository names a kind (`server/repositories/stored/`):
 
-- **A kind's row** is read as its old shape, every column under its name: an entity's own, and each of its fields and single links its declaration names (`StoredEntities.buildColumns`, a subquery a column). A write splits a row back into them (`StoredEntities.insert`, `update`), a column a write leaves out written with its declared default. Each kind's repository is one `RulesetEntityRepository` over it (`StoredKindRepository` for an owned kind: a class's levels).
-- **A join's row** is a link of its role (`StoredJoins`: a feat's pools, a class level's grants, saves and skills), a new one after its from-entity's last.
-- **A property** is a field the kind's columns don't hold, or a link when its value names an entity (a class's bonus spell ability, a ruleset's skill point ability): `StoredFields`, read and written as properties (`Property`), which the engine reads.
-- **A character's row** reads its stored columns from its fields and its race link (`StoredCharacters`), its scores and languages from its links (`StoredCharacterLinks`), its levels from its advancements and their hit points' picks, and its picks by step (`LevelPicksRepository`).
-- A subquery reaching its query's own table names the column in full (`qualified`): Drizzle names a selected column bare, which a subquery's table of that column name would answer.
+- **Entities** (`Entities`, `StoredEntities`): an entity's own columns, its fields and its links, read in one query and mapped to its kind's row (`rowOf`): every column under its name, each of its fields and single links its declaration names. A write is split back into them (`writeOf`), a column a write leaves out written with its declared default. A kind's list, page, picker options and lookups are the same methods for every kind (`findList`, `findPage`, `findOptionPage`, `findOne`), and a ruleset's view reads its stored entities whole (`findStored`), which the engine builds its raw data from (`CopyOnWriteEngine.buildRawData`).
+- **A join's row** is a link of its role (`Joins`, `StoredJoins`: a feat's pools, a class level's grants, saves and skills), mapped by `joinRowsOf`, a new one after its from-entity's last.
+- **A property** is a field the kind's columns don't hold, or a link when its value names an entity (a class's bonus spell ability, a ruleset's skill point ability): `Properties` (`StoredProperties`), read and written as properties (`Property`, `propertiesOf`).
+- **A character's row** is its own columns with its fields' values and its single links (its race), read in one query (`StoredCharacters`) and mapped by `characterRowOf`. Its links of a role (`CharacterLinks`: its scores, its languages) map by `characterLinkRowOf`, its advancements' picks by step (`Picks`: its feats, its skills) by `pickRowOf`, and its levels (`CharacterLevels`, its advancements with their hit points' picks) by `advancementRowOf`.
+- A subquery reaching its query's own table names the column in full (`toQualified`): Drizzle names a selected column bare, which a subquery's table of that column name would answer.
 
 What deleting an entity does to what names it is each role's or step's rule, on every path (a service's delete, an owner's or a ruleset's cascade, a purge): a trigger on `rules.entities` (`apply_delete_rules`) deletes what a role deletes with it (a save with its key ability) and unlinks what a role unlinks; a role that refuses leaves its link, which the deferred foreign key refuses at commit. Every reference that doesn't own its row is `DEFERRABLE INITIALLY DEFERRED`, and an optional pair (an id and its type) is `MATCH FULL`. drizzle-kit records neither: `tests/database/registries.test.ts` checks the database keeps them, and `drizzle/schema.ts`'s hand fixes are listed there (its `bytea` type, a ruleset's base rules typed as the modules', a field's inheritance key, which names its type twice).
 
@@ -36,11 +36,10 @@ Rows whose disappearance leaves no observable history a user would expect to fin
 | Category | Tables |
 |---|---|
 | Customizations | `Modifiers`, `Requirements`; `Properties`, an entity's fields |
-| Aptitude links | `FeatsAptitudes`, `PowersAptitudes` |
-| Class structure | `KlassSkills`, `KlassLevelFeats`, `KlassLevelPowers`, `KlassLevelSaves` |
-| Character state | `CharacterLevels`, `CharacterLevelAbilityIncreases`, `CharacterLevelFeats`, `CharacterLevelPowers`, `CharacterLevelSkills`, `CharacterInventory`, `CharacterLanguages`, `CharacterAbilities` |
+| Joins (a feat's pools, a class's skills, a class level's grants and saves) | `Joins` |
+| Character state | `CharacterLevels`, `Picks`, `CharacterInventory`, `CharacterLinks` |
 | Internal forking metadata | `EntitySnapshots` |
-| Ruleset entities | `Feats`, `Items`, `Races`, `Klasses`, `KlassLevels`, `Skills`, `Powers`, `Aptitudes`, `Saves`, `Languages`, `Mechanics` |
+| Ruleset entities, every kind's | `Entities` |
 | Status-driven lifecycle | `Contributors` (Pending/Active/Rejected/Revoked enum) |
 
 `Abilities` are seeded and never deleted: their service reads them alone.

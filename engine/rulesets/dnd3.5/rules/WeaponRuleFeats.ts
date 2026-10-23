@@ -1,6 +1,5 @@
-import type { RulesetData } from "@/engine/core/view/index.ts";
+import type { FeatWithAptitudes, RulesetData } from "@/engine/core/view/index.ts";
 import { FEAT_FIELDS, type FeatFieldValues } from "@/engine/rulesets/dnd3.5/entities/feats/fields.ts";
-import type { FeatWithAptitudes } from "@/shared/relations.ts";
 
 /** A weapon rule a feat changes, by its field: Weapon Finesse's, Oversized Two-Weapon Fighting's. */
 export type WeaponRule = keyof Pick<FeatFieldValues, "oversizedTwoWeaponFighting" | "weaponFinesse">;

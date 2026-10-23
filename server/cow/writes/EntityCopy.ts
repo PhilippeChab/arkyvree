@@ -1,22 +1,33 @@
 import type { Db } from "@/drizzle/database.ts";
-import { type CowData, Engine, type EntityCustomizations, type RulesetSources } from "@/engine/index.ts";
+import {
+  type CowData,
+  Engine,
+  type EntityCustomizations,
+  type KlassLevel,
+  type KlassLevelFeat,
+  type KlassLevelPower,
+  type KlassLevelSave,
+  type KlassSkill,
+  type RulesetSources,
+} from "@/engine/index.ts";
 import CowDataReader from "@/server/cow/views/CowDataReader.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
-import {
-  EntitySnapshots,
-  FeatsAptitudes,
-  KlassLevelFeats,
-  KlassLevelPowers,
-  KlassLevels,
-  KlassLevelSaves,
-  KlassSkills,
-  PowersAptitudes,
-  type RulesetEntityType,
-} from "@/server/repositories/index.ts";
+import { Entities, EntitySnapshots, Joins, type RulesetEntityType } from "@/server/repositories/index.ts";
 import { isCustomizableEntityType } from "@/shared/customization/entities.ts";
 
 import CustomizationCopies from "./CustomizationCopies.ts";
 import EntityRepositories, { type EntityWithId } from "./EntityRepositories.ts";
+
+/** A feat's pool, a spell's list at its level: their joins' rows. */
+interface FeatAptitude {
+  aptitudeId: string;
+  featId: string;
+}
+interface PowerAptitude {
+  aptitudeId: string;
+  level: number | null;
+  powerId: string;
+}
 
 /**
  * A copy made: the copied entity, and each customization it copied, by its source's id (equal values don't make the
@@ -142,11 +153,12 @@ export default class EntityCopy {
 
   /** Copies a class's levels onto the target class, with their saves, granted feats and powers, and customizations. */
   private async copyKlassLevels(tx: Db, targetKlassId: string, cow: CowData) {
-    const levels = await KlassLevels.findMany(tx, { klassId: this.entityId });
+    const levels = await Entities.findMany<KlassLevel>(tx, { entityType: "klass_levels", ownerIds: [this.entityId] });
     if (levels.length === 0) return;
 
-    const newLevels = await KlassLevels.createMany(
+    const newLevels = await Entities.createMany<KlassLevel>(
       tx,
+      "klass_levels",
       levels.map((l) => ({ ...l, id: undefined, klassId: targetKlassId })),
     );
 
@@ -155,9 +167,9 @@ export default class EntityCopy {
     for (let i = 0; i < levels.length; i++) levelIdMapLocal[levels[i].id] = newLevels[i].id;
 
     const oldLevelIds = levels.map((l) => l.id);
-    const levelSaves = await KlassLevelSaves.findMany(tx, { klassLevelIds: oldLevelIds });
-    const levelFeats = await KlassLevelFeats.findMany(tx, { klassLevelIds: oldLevelIds });
-    const levelPowers = await KlassLevelPowers.findMany(tx, { klassLevelIds: oldLevelIds });
+    const levelSaves = await Joins.findMany<KlassLevelSave>(tx, { join: "klass_level_saves", fromIds: oldLevelIds });
+    const levelFeats = await Joins.findMany<KlassLevelFeat>(tx, { join: "klass_level_feats", fromIds: oldLevelIds });
+    const levelPowers = await Joins.findMany<KlassLevelPower>(tx, { join: "klass_level_powers", fromIds: oldLevelIds });
 
     // Copy level customizations (modifiers, properties, requirements)
     const levelCusts = await CustomizationCopies.read(tx, oldLevelIds, "klass_levels", "klass_levels");
@@ -167,16 +179,18 @@ export default class EntityCopy {
       if (cust && newLevelId) await CustomizationCopies.copy(tx, newLevelId, "klass_levels", cust, this.copiedIds);
     }
 
-    await KlassLevelSaves.createMany(
+    await Joins.createMany<KlassLevelSave>(
       tx,
+      "klass_level_saves",
       levelSaves.map((ls) => ({
         klassLevelId: levelIdMapLocal[ls.klassLevelId],
         saveId: cow.resolve(ls.saveId),
         base: ls.base,
       })),
     );
-    await KlassLevelFeats.createMany(
+    await Joins.createMany<KlassLevelFeat>(
       tx,
+      "klass_level_feats",
       levelFeats.map((lf) => ({
         klassLevelId: levelIdMapLocal[lf.klassLevelId],
         featId: cow.resolve(lf.featId),
@@ -184,8 +198,9 @@ export default class EntityCopy {
         free: lf.free,
       })),
     );
-    await KlassLevelPowers.createMany(
+    await Joins.createMany<KlassLevelPower>(
       tx,
+      "klass_level_powers",
       levelPowers.map((lp) => ({
         klassLevelId: levelIdMapLocal[lp.klassLevelId],
         powerId: cow.resolve(lp.powerId),
@@ -202,10 +217,14 @@ export default class EntityCopy {
    */
   private async copyRelationships(tx: Db, targetEntityId: string, cow: CowData) {
     if (this.entityType === "feats") {
-      const featsAptitudes = await FeatsAptitudes.findMany(tx, { featId: this.entityId });
+      const featsAptitudes = await Joins.findMany<FeatAptitude>(tx, {
+        join: "feats_aptitudes",
+        fromIds: [this.entityId],
+      });
       if (featsAptitudes.length > 0) {
-        await FeatsAptitudes.createMany(
+        await Joins.createMany(
           tx,
+          "feats_aptitudes",
           featsAptitudes.map((fa) => ({
             featId: targetEntityId,
             aptitudeId: cow.resolve(fa.aptitudeId),
@@ -213,10 +232,14 @@ export default class EntityCopy {
         );
       }
     } else if (this.entityType === "powers") {
-      const powersAptitudes = await PowersAptitudes.findMany(tx, { powerId: this.entityId });
+      const powersAptitudes = await Joins.findMany<PowerAptitude>(tx, {
+        join: "powers_aptitudes",
+        fromIds: [this.entityId],
+      });
       if (powersAptitudes.length > 0) {
-        await PowersAptitudes.createMany(
+        await Joins.createMany(
           tx,
+          "powers_aptitudes",
           powersAptitudes.map((pa) => ({
             powerId: targetEntityId,
             aptitudeId: cow.resolve(pa.aptitudeId),
@@ -225,10 +248,11 @@ export default class EntityCopy {
         );
       }
     } else if (this.entityType === "klasses") {
-      const klassSkills = await KlassSkills.findMany(tx, { klassIds: [this.entityId] });
+      const klassSkills = await Joins.findMany<KlassSkill>(tx, { join: "klass_skills", fromIds: [this.entityId] });
       if (klassSkills.length > 0) {
-        await KlassSkills.createMany(
+        await Joins.createMany<KlassSkill>(
           tx,
+          "klass_skills",
           klassSkills.map((ks) => ({
             klassId: targetEntityId,
             skillId: cow.resolve(ks.skillId),
@@ -247,30 +271,32 @@ export default class EntityCopy {
   private async mergeAptitudeLinks(tx: Db, targetEntityId: string, siblingIds: string[], cow: CowData) {
     const resolve = (id: string) => cow.resolve(id);
     if (this.entityType === "feats") {
-      const own = await FeatsAptitudes.findMany(tx, { featId: targetEntityId });
+      const own = await Joins.findMany<FeatAptitude>(tx, { join: "feats_aptitudes", fromIds: [targetEntityId] });
       const siblingLinks = Map.groupBy(
-        await FeatsAptitudes.findMany(tx, { featIds: siblingIds }),
+        await Joins.findMany<FeatAptitude>(tx, { join: "feats_aptitudes", fromIds: siblingIds }),
         (link) => link.featId,
       );
       const siblings = siblingIds.map((id) => siblingLinks.get(id) ?? []);
       const links = Engine.copyOnWrite().mergeAptitudeLinks(own, siblings, resolve);
       if (links.length > 0) {
-        await FeatsAptitudes.createMany(
+        await Joins.createMany(
           tx,
+          "feats_aptitudes",
           links.map((link) => ({ featId: targetEntityId, aptitudeId: resolve(link.aptitudeId) })),
         );
       }
     } else if (this.entityType === "powers") {
-      const own = await PowersAptitudes.findMany(tx, { powerId: targetEntityId });
+      const own = await Joins.findMany<PowerAptitude>(tx, { join: "powers_aptitudes", fromIds: [targetEntityId] });
       const siblingLinks = Map.groupBy(
-        await PowersAptitudes.findMany(tx, { powerIds: siblingIds }),
+        await Joins.findMany<PowerAptitude>(tx, { join: "powers_aptitudes", fromIds: siblingIds }),
         (link) => link.powerId,
       );
       const siblings = siblingIds.map((id) => siblingLinks.get(id) ?? []);
       const links = Engine.copyOnWrite().mergeAptitudeLinks(own, siblings, resolve);
       if (links.length > 0) {
-        await PowersAptitudes.createMany(
+        await Joins.createMany(
           tx,
+          "powers_aptitudes",
           links.map((link) => ({ powerId: targetEntityId, aptitudeId: resolve(link.aptitudeId), level: link.level })),
         );
       }

@@ -1,9 +1,10 @@
 import { afterAll, expect, test } from "bun:test";
 
+import type { Feat } from "@/engine/index.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { db } from "@/server/database/index.ts";
 import { createTestDbFromClient, createTestPool } from "@/server/database/test.ts";
-import { EntitySnapshots, Feats } from "@/server/repositories/index.ts";
+import { Entities, EntitySnapshots } from "@/server/repositories/index.ts";
 import { runWhileLocked } from "@/tests/support/database.ts";
 import { copyEntity, createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
@@ -23,7 +24,7 @@ test("COW waits for a competing copy transaction and continues after rollback", 
   expect(copied.id).not.toBe(sourceId);
   expect((await copyEntity(db, "feats", sourceId, fork)).id).toBe(copied.id);
   expect(await EntitySnapshots.findMany(db, { rulesetId: fork.id })).toHaveLength(1);
-  expect((await Feats.findOne(db, { id: sourceId }))?.rulesetId).toBe(seed.rulesetId);
+  expect((await Entities.findOne<Feat>(db, { entityType: "feats", id: sourceId }))?.rulesetId).toBe(seed.rulesetId);
 });
 
 test("copy locks do not block other sources or other forks", async () => {
@@ -48,7 +49,7 @@ test("a tombstoned copy can be recreated without duplicating snapshots", async (
   const fork = await createSeededTestRuleset(SEED_USER_ID);
   const sourceId = seed.featMap.Toughness;
   const first = await copyEntity(db, "feats", sourceId, fork);
-  await Feats.delete(db, { id: first.id });
+  await Entities.delete<Feat>(db, { entityType: "feats", id: first.id });
   const second = await copyEntity(db, "feats", sourceId, fork);
   expect(second.id).not.toBe(first.id);
   const snapshots = await EntitySnapshots.findMany(db, { rulesetId: fork.id });

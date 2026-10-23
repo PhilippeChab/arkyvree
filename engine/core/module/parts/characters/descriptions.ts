@@ -5,7 +5,8 @@
  * its `Descriptions` (`contract.ts`).
  */
 
-import type { Item, Language, Modifier, Property, Requirement } from "@/shared/relations.ts";
+import type { Item, Language } from "@/engine/core/view/index.ts";
+import type { Modifier, Property, Requirement } from "@/shared/relations.ts";
 
 import type { SheetBlock } from "./blocks.ts";
 import type { InventoryEntryPlan } from "./plans.ts";

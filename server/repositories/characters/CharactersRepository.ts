@@ -2,6 +2,7 @@ import { and, count, eq, exists, inArray, isNull, not, or, type SQL, sql } from 
 
 import type { Db } from "@/drizzle/database.ts";
 import { charactersInCharacter, contributorsInCharacter, playerCharactersInCampaign } from "@/drizzle/schema.ts";
+import { Engine } from "@/engine/index.ts";
 import { include } from "@/lib/mixins.ts";
 import BaseRepository, { Visibility } from "@/server/repositories/BaseRepository.ts";
 import { GuardsStaleEdits } from "@/server/repositories/concerns/GuardsStaleEdits.ts";
@@ -15,7 +16,7 @@ type CharacterValues = Partial<Character>;
 
 /**
  * The characters: each one's row, with what its module stores of it as its fields and links (`StoredCharacters`: 3.5's
- * race, alignment, XP), read as its columns.
+ * race, alignment, XP), read as its module's row.
  */
 class CharactersRepository extends include(
   BaseRepository<typeof charactersInCharacter>,
@@ -74,8 +75,7 @@ class CharactersRepository extends include(
       .from(charactersInCharacter)
       .where(where)
       .orderBy(...order);
-    const rows = page ? await query.limit(page.limit).offset(page.offset) : await query;
-    return rows as unknown as Character[];
+    return StoredCharacters.mapRows<Character>(page ? await query.limit(page.limit).offset(page.offset) : await query);
   }
 
   /** Archives a character and its children (`{ id }`), or every character a user owns (`{ userId }`). */
@@ -122,7 +122,7 @@ class CharactersRepository extends include(
 
   /** Writes a new character: its row, and what its module stores of it as its fields and links. */
   async create(db: Db, values: CharacterValues & Pick<Character, "name" | "rulesetId" | "userId">) {
-    const { own, stored } = StoredCharacters.split(values);
+    const { own, ...stored } = Engine.storage().characterWriteOf(values);
     const [created] = await db
       .insert(this.table)
       .values(own as typeof charactersInCharacter.$inferInsert)
@@ -249,7 +249,10 @@ class CharactersRepository extends include(
         .orderBy(...this.pageOrder(this.orderBy(this.table[orderBy], orderDir)))
         .limit(limit)
         .offset(offset);
-      return rows as unknown as (Character & { accessRole: "owner" | "contributor" })[];
+      return rows.map(({ accessRole, ...row }) => ({
+        ...StoredCharacters.mapRows<Character>([row])[0],
+        accessRole,
+      }));
     });
   }
 
@@ -284,7 +287,7 @@ class CharactersRepository extends include(
         .limit(limit)
         .offset(offset);
 
-      return results as unknown as Character[];
+      return StoredCharacters.mapRows<Character>(results);
     });
   }
 
@@ -308,7 +311,7 @@ class CharactersRepository extends include(
    * written, or nothing.
    */
   async update(db: Db, values: CharacterValues, where: { expectedUpdatedAt?: string; id: string }) {
-    const { own, stored } = StoredCharacters.split(values);
+    const { own, ...stored } = Engine.storage().characterWriteOf(values);
     const updated = await db
       .update(this.table)
       .set({ ...(own as Partial<typeof charactersInCharacter.$inferInsert>), updatedAt: new Date().toISOString() })

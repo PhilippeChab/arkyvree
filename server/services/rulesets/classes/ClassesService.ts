@@ -1,13 +1,13 @@
-import { Engine } from "@/engine/index.ts";
+import { Engine, type Klass } from "@/engine/index.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { Klasses } from "@/server/repositories/index.ts";
+import { Entities } from "@/server/repositories/index.ts";
 import EntityWriter, { type EntityBody } from "@/server/services/rulesets/EntityWriter.ts";
 import type { Session } from "@/shared/relations.ts";
 
 class ClassesService {
   /** What its creates, updates and deletes write, in one order around the plans its rules give. */
-  private readonly writer = new EntityWriter("klasses", Klasses);
+  private readonly writer = new EntityWriter("klasses");
 
   async createClass(session: Session, rulesetId: string, body: EntityBody) {
     return await this.writer.create(session, rulesetId, body.name, (scope) =>
@@ -38,9 +38,16 @@ class ClassesService {
   ) {
     return await withRulesetScope(db, rulesetId, async (scope) => {
       const list = Engine.for(scope).entities("klasses").openList(where);
-      const result = await Klasses.findPage(
+      const result = await Entities.findPage<Klass>(
         db,
-        { rulesetId, ...scope.rulesetData.cow.listFilters, ...where, ...list.filters },
+        {
+          entityType: "klasses",
+          columns: where.kind === undefined ? undefined : { kind: where.kind },
+          rulesetId,
+          ...scope.rulesetData.cow.listFilters,
+          ...where,
+          ...list.filters,
+        },
         pagination,
       );
       return { ...result, items: list.describe(result.items) };

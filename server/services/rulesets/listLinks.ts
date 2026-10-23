@@ -2,7 +2,7 @@
 
 import type { Db } from "@/drizzle/database.ts";
 import type { ListLink } from "@/engine/index.ts";
-import { FeatsAptitudes, PowersAptitudes, type RulesetEntityType } from "@/server/repositories/index.ts";
+import { Joins, type RulesetEntityType } from "@/server/repositories/index.ts";
 
 /** A kind's list links' table: its links written, and its entity's removed. */
 interface LinkTable {
@@ -14,19 +14,21 @@ interface LinkTable {
 const LINK_TABLES: Partial<Record<RulesetEntityType, LinkTable>> = {
   feats: {
     link: (tx, featId, links) =>
-      FeatsAptitudes.createMany(
+      Joins.createMany(
         tx,
+        "feats_aptitudes",
         links.map(({ aptitudeId }) => ({ aptitudeId, featId })),
       ),
-    unlink: (tx, featId) => FeatsAptitudes.delete(tx, { featId }),
+    unlink: (tx, featId) => Joins.delete(tx, { join: "feats_aptitudes", fromId: featId }),
   },
   powers: {
     link: (tx, powerId, links) =>
-      PowersAptitudes.createMany(
+      Joins.createMany(
         tx,
+        "powers_aptitudes",
         links.map(({ aptitudeId, level }) => ({ aptitudeId, level: level ?? null, powerId })),
       ),
-    unlink: (tx, powerId) => PowersAptitudes.delete(tx, { powerId }),
+    unlink: (tx, powerId) => Joins.delete(tx, { join: "powers_aptitudes", fromId: powerId }),
   },
 };
 

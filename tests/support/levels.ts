@@ -1,14 +1,7 @@
 import type { LevelPlanAnswer, StepAnswer } from "@/engine/core/module/index.ts";
-import type { LevelPlanRequest, StepPickerQuery } from "@/engine/index.ts";
+import type { Klass, KlassLevel, LevelPlanRequest, StepPickerQuery } from "@/engine/index.ts";
 import { db } from "@/server/database/index.ts";
-import {
-  CharacterLevelFeats,
-  CharacterLevelPowers,
-  CharacterLevels,
-  CharacterLevelSkills,
-  Klasses,
-  KlassLevels,
-} from "@/server/repositories/index.ts";
+import { CharacterLevels, Entities, Picks } from "@/server/repositories/index.ts";
 import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
 import type { Session } from "@/shared/relations.ts";
 
@@ -38,16 +31,19 @@ export function stepAnswerOf<M extends StepAnswer["mechanic"]>(answer: LevelPlan
 export async function addCharacterLevel(characterId: string, klassLevelId: string, picks: LevelPicks = {}) {
   const [level] = await CharacterLevels.create(db, { characterId, klassLevelId, hp: 1 });
   const characterLevelId = level.id;
-  await CharacterLevelFeats.createMany(
+  await Picks.createMany(
     db,
+    "feats",
     (picks.feats ?? []).map((pick) => ({ ...pick, characterLevelId })),
   );
-  await CharacterLevelPowers.createMany(
+  await Picks.createMany(
     db,
+    "powers",
     (picks.powers ?? []).map((pick) => ({ ...pick, characterLevelId })),
   );
-  await CharacterLevelSkills.createMany(
+  await Picks.createMany(
     db,
+    "skills",
     (picks.skills ?? []).map((pick) => ({ ...pick, characterLevelId })),
   );
   return level;
@@ -81,14 +77,16 @@ export async function addOneLevel(
 
 /** A new class of the ruleset, with its first level. */
 export async function createTestKlassLevel(rulesetId: string) {
-  const [klass] = await Klasses.create(db, { name: `Test Class ${uniqueId()}`, rulesetId, hd: 8 });
-  const [klassLevel] = await KlassLevels.create(db, { klassId: klass.id, level: 1 });
+  const [klass] = await Entities.create<Klass>(db, "klasses", { name: `Test Class ${uniqueId()}`, rulesetId, hd: 8 });
+  const [klassLevel] = await Entities.create<KlassLevel>(db, "klass_levels", { klassId: klass.id, level: 1 });
   return { klass, klassLevel };
 }
 
 /** A class's level `level`. */
 export async function findKlassLevel(klassId: string, level: number) {
-  return (await KlassLevels.findMany(db, { klassId })).find((klassLevel) => klassLevel.level === level);
+  return (await Entities.findMany<KlassLevel>(db, { entityType: "klass_levels", ownerIds: [klassId] })).find(
+    (klassLevel) => klassLevel.level === level,
+  );
 }
 
 /** A plan's answer (`plan`), each step by its mechanic, as the level wizards ask it. */

@@ -1,5 +1,8 @@
 import type { CowData } from "@/engine/core/cow/index.ts";
 import { PropertyOrder, type PropertyTypesProvider } from "@/engine/core/customizations/index.ts";
+import type { Modifier, Property, Requirement, Ruleset } from "@/shared/relations.ts";
+import { stripSeparators } from "@/shared/text.ts";
+
 import type {
   Aptitude,
   FeatWithAptitudes,
@@ -12,17 +15,12 @@ import type {
   KlassSkill,
   Language,
   Mechanic,
-  Modifier,
   PowerWithAptitudes,
-  Property,
   Race,
-  Requirement,
-  Ruleset,
   RulesetAbility,
   RulesetSave,
   Skill,
-} from "@/shared/relations.ts";
-import { stripSeparators } from "@/shared/text.ts";
+} from "./rows.ts";
 
 /** Each index a ruleset's view builds on first read, and keeps. */
 interface Indices {

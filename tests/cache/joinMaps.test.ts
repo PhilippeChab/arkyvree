@@ -8,18 +8,11 @@
 import { beforeAll, describe, expect, test } from "bun:test";
 
 import { type RulesetData } from "@/engine/core/view/index.ts";
+import type { Feat, KlassLevelFeat, KlassLevelPower, KlassSkill, Power, Skill } from "@/engine/index.ts";
 import { type SeedContext } from "@/scripts/db/seeds/seedContext.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import {
-  Feats,
-  KlassLevelFeats,
-  KlassLevelPowers,
-  KlassSkills,
-  Powers,
-  Rulesets,
-  Skills,
-} from "@/server/repositories/index.ts";
+import { Entities, Joins, Rulesets } from "@/server/repositories/index.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 import { SPELL_SCHOOL } from "@/vocabulary/dnd3.5/properties/index.ts";
 
@@ -56,10 +49,10 @@ describe("cache join-maps — parity with repository queries", () => {
 
     const fromCache = rulesetData.klassLevelFeatsWithFeatsByKlassLevel.get(klassLevel!.id) ?? [];
     const fromDb = await withRows(
-      await KlassLevelFeats.findMany(db, { klassLevelIds: [klassLevel!.id] }),
+      await Joins.findMany<KlassLevelFeat>(db, { join: "klass_level_feats", fromIds: [klassLevel!.id] }),
       "featId",
       "featsInRule",
-      async (ids) => await Feats.findMany(db, { ids }),
+      async (ids) => await Entities.findMany<Feat>(db, { entityType: "feats", ids }),
     );
 
     expect(fromCache.length).toBe(fromDb.length);
@@ -82,10 +75,10 @@ describe("cache join-maps — parity with repository queries", () => {
 
     const fromCache = rulesetData.klassLevelPowersWithPowersByKlassLevel.get(klassLevel.id) ?? [];
     const fromDb = await withRows(
-      await KlassLevelPowers.findMany(db, { klassLevelIds: [klassLevel.id] }),
+      await Joins.findMany<KlassLevelPower>(db, { join: "klass_level_powers", fromIds: [klassLevel.id] }),
       "powerId",
       "powersInRule",
-      async (ids) => await Powers.findMany(db, { ids }),
+      async (ids) => await Entities.findMany<Power>(db, { entityType: "powers", ids }),
     );
 
     expect(fromCache.length).toBe(fromDb.length);
@@ -108,10 +101,10 @@ describe("cache join-maps — parity with repository queries", () => {
 
     const fromCache = rulesetData.klassSkillsWithSkillsByKlass.get(fighterId) ?? [];
     const fromDb = await withRows(
-      await KlassSkills.findMany(db, { klassIds: [fighterId] }),
+      await Joins.findMany<KlassSkill>(db, { join: "klass_skills", fromIds: [fighterId] }),
       "skillId",
       "skillsInRule",
-      async (ids) => await Skills.findMany(db, { ids }),
+      async (ids) => await Entities.findMany<Skill>(db, { entityType: "skills", ids }),
     );
 
     expect(fromCache.length).toBe(fromDb.length);

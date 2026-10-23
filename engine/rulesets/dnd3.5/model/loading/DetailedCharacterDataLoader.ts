@@ -1,18 +1,18 @@
 import { CharacterDataLoader, type LoadedCharacter, type ModifierSource } from "@/engine/core/character/index.ts";
 import type { AbilityIncrease, CharacterRows } from "@/engine/core/module/index.ts";
-import { type RulesetView } from "@/engine/core/view/index.ts";
+import {
+  type CharacterLevel,
+  type Klass,
+  type KlassLevelSave,
+  type KlassSkill,
+  type Language,
+  type RulesetView,
+  type Skill,
+} from "@/engine/core/view/index.ts";
 import { type SkillFieldValues } from "@/engine/rulesets/dnd3.5/entities/skills/fields.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import { include } from "@/lib/mixins.ts";
-import type {
-  Character,
-  CharacterLevel,
-  Klass,
-  KlassLevelSave,
-  KlassSkill,
-  Language,
-  Skill,
-} from "@/shared/relations.ts";
+import type { Character } from "@/shared/relations.ts";
 import type { CasterType } from "@/vocabulary/dnd3.5/classes.ts";
 
 import { CustomizesEntities } from "./concerns/CustomizesEntities.ts";

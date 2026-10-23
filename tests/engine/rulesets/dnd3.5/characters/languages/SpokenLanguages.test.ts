@@ -1,10 +1,10 @@
 import { describe, expect, test } from "bun:test";
 
-import { Engine } from "@/engine/index.ts";
+import { type CharacterLanguage, Engine, type Feat, type Race } from "@/engine/index.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { CharacterLanguages, Feats, Modifiers, Races } from "@/server/repositories/index.ts";
+import { CharacterLinks, Entities, Modifiers } from "@/server/repositories/index.ts";
 import { readCharacterInput } from "@/server/services/characters/characterInputs.ts";
 import type { Character } from "@/shared/relations.ts";
 import { createCharacterAs } from "@/tests/support/characters.ts";
@@ -25,7 +25,7 @@ function namesOf(languages: { name: string }[]) {
 /** A new race of a new fork of the seed user's, whose one modifier on an ability is `adjustment`. */
 async function createAdjustingRace(adjustment: { operator: string; target: string; value: string }) {
   const fork = await createSeededTestRuleset(SEED_USER_ID);
-  const [race] = await Races.create(db, {
+  const [race] = await Entities.create<Race>(db, "races", {
     name: `Kin ${uniqueId()}`,
     size: "Medium",
     baseSpeed: 30,
@@ -87,7 +87,9 @@ describe("A character's languages", () => {
 
     expect(namesOf(sheet.identity.physiology.languages)).toEqual(["Common", "Dwarven"]);
     expect(namesOf((await describeLanguages(dwarf)).automatic)).toEqual(["Common", "Dwarven"]);
-    expect(await CharacterLanguages.findMany(db, { characterId: dwarf.id })).toEqual([]);
+    expect(await CharacterLinks.findMany<CharacterLanguage>(db, { link: "languages", characterId: dwarf.id })).toEqual(
+      [],
+    );
   });
 
   test("take any language but a secret one, a pick per point of the permanent Intelligence modifier", async () => {
@@ -202,7 +204,7 @@ describe("A character's languages", () => {
   test("are a feat's too, which its modifier grants without a pick", async () => {
     const { aptMap } = await getSeedCtx();
     const fork = await createSeededTestRuleset(SEED_USER_ID);
-    const [feat] = await Feats.create(db, { name: `Sylvan Lore ${uniqueId()}`, rulesetId: fork.id });
+    const [feat] = await Entities.create<Feat>(db, "feats", { name: `Sylvan Lore ${uniqueId()}`, rulesetId: fork.id });
     await Modifiers.create(db, {
       sourceId: feat.id,
       sourceType: "feats",
@@ -224,7 +226,7 @@ describe("A character's languages", () => {
     const { langMap } = await getSeedCtx();
     const human = await newCharacter("Human");
     for (const name of ["Abyssal", "Aquan"])
-      await CharacterLanguages.create(db, { characterId: human.id, languageId: langMap[name] });
+      await CharacterLinks.create(db, "languages", { characterId: human.id, languageId: langMap[name] });
 
     // Its picks stand, and the picker offers none more
     const described = await describeLanguages(human, ["Abyssal", "Aquan"]);

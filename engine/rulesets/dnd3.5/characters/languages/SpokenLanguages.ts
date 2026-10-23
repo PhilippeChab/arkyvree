@@ -1,10 +1,9 @@
 import type { CharacterInput, DescribedLanguage, LanguagesDescription } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
-import type { RulesetView } from "@/engine/core/view/index.ts";
+import type { Language, RulesetView } from "@/engine/core/view/index.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import Dnd35CharacterBuilder from "@/engine/rulesets/dnd3.5/model/Dnd35CharacterBuilder.ts";
 import LanguageRules from "@/engine/rulesets/dnd3.5/rules/LanguageRules.ts";
-import type { Language } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { LANGUAGE_PICK_ABILITY, SPEAK_LANGUAGE_SKILL } from "@/vocabulary/dnd3.5/languages.ts";
 

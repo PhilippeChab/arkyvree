@@ -1,10 +1,10 @@
 /** A class's table, as its page shows it: each level's feat pools, spells per day and spells known, and its spell lists. */
 
 import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
-import type { RulesetData, RulesetView } from "@/engine/core/view/index.ts";
+import type { Klass, RulesetData, RulesetView } from "@/engine/core/view/index.ts";
 import AptitudeTargets from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTargets.ts";
 import SpellLists from "@/engine/rulesets/dnd3.5/rules/SpellLists.ts";
-import type { Klass, Modifier } from "@/shared/relations.ts";
+import type { Modifier } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 import LevelTotals from "./LevelTotals.ts";

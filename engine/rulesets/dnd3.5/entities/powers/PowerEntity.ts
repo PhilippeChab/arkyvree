@@ -6,9 +6,9 @@ import { ListedEntity } from "@/engine/core/entities/index.ts";
 import type { EntityFieldValues } from "@/engine/core/fields/index.ts";
 import type { EntityWrites } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
+import type { PowerWithAptitudes } from "@/engine/core/view/index.ts";
 import SpellFocusFeats from "@/engine/rulesets/dnd3.5/entities/feats/SpellFocusFeats.ts";
 import { RULESET_LIMITS } from "@/engine/rulesets/dnd3.5/limits.ts";
-import type { PowerWithAptitudes } from "@/shared/relations.ts";
 
 import { POWER_COLUMNS } from "./columns.ts";
 import { POWER_FIELDS, type PowerFieldValues } from "./fields.ts";

@@ -1,4 +1,5 @@
 import { CharacterComponent } from "@/engine/core/character/index.ts";
+import type { KlassLevel, Power } from "@/engine/core/view/index.ts";
 import type AbilitiesComponent from "@/engine/rulesets/dnd3.5/model/abilities/AbilitiesComponent.ts";
 import type AptitudesComponent from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudesComponent.ts";
 import { ALLOWED_ALL, type AptitudeLevelData } from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudesComponent.ts";
@@ -7,7 +8,7 @@ import type ClassesComponent from "@/engine/rulesets/dnd3.5/model/classes/Classe
 import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
 import type PowerGroupingsComponent from "@/engine/rulesets/dnd3.5/model/powers/PowerGroupingsComponent.ts";
 import type PowersComponent from "@/engine/rulesets/dnd3.5/model/powers/PowersComponent.ts";
-import type { KlassLevel, Modifier, Power, Property } from "@/shared/relations.ts";
+import type { Modifier, Property } from "@/shared/relations.ts";
 import { type CasterType, MAX_CLASS_LEVEL } from "@/vocabulary/dnd3.5/classes.ts";
 import { MAX_SPELL_LEVEL } from "@/vocabulary/dnd3.5/spells.ts";
 

@@ -1,7 +1,8 @@
 import { describe, expect, test } from "bun:test";
 
+import type { Item } from "@/engine/index.ts";
 import { db } from "@/server/database/index.ts";
-import { EntitySnapshots, Items, Properties } from "@/server/repositories/index.ts";
+import { Entities, EntitySnapshots, Properties } from "@/server/repositories/index.ts";
 import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
 import { RulesetsService } from "@/server/services/rulesets/index.ts";
 import { ItemsService } from "@/server/services/rulesets/items/index.ts";
@@ -169,7 +170,9 @@ describe("Item templates", () => {
         }),
         422,
       );
-      expect(await Items.findOne(db, { rulesetId: ruleset.id, name: "Invalid template" })).toBeUndefined();
+      expect(
+        await Entities.findOne<Item>(db, { entityType: "items", rulesetId: ruleset.id, name: "Invalid template" }),
+      ).toBeUndefined();
 
       expect(
         await ItemsService.createItem(session, ruleset.id, {
@@ -205,14 +208,17 @@ describe("Item templates", () => {
         }),
         422,
       );
-      expect(await Items.findOne(db, { id: local.id })).toMatchObject({ isTemplate: true, sourceItemId: null });
+      expect(await Entities.findOne<Item>(db, { entityType: "items", id: local.id })).toMatchObject({
+        isTemplate: true,
+        sourceItemId: null,
+      });
     });
 
     test("and an old self-reference is cleared on save", async () => {
       const { session, ruleset, template } = await setup();
       const mace = await template("Heavy Mace");
       const local = await ItemsService.updateItem(session, ruleset.id, mace.id, { name: mace.name });
-      await Items.update(db, { sourceItemId: local.id }, { id: local.id });
+      await Entities.update<Item>(db, "items", { sourceItemId: local.id }, { id: local.id });
 
       expect(
         await ItemsService.updateItem(session, ruleset.id, local.id, {
@@ -235,7 +241,9 @@ describe("Item templates", () => {
         ItemsService.createItem(session, ruleset.id, { name: "Mismatched", type, sourceItemId: sword.id }),
         422,
       );
-      expect(await Items.findOne(db, { rulesetId: ruleset.id, name: "Mismatched" })).toBeUndefined();
+      expect(
+        await Entities.findOne<Item>(db, { entityType: "items", rulesetId: ruleset.id, name: "Mismatched" }),
+      ).toBeUndefined();
     });
 
     test("refused when the source isn't a template", async () => {
@@ -262,7 +270,7 @@ describe("Item templates", () => {
         }),
         422,
       );
-      expect(await Items.findOne(db, { id: sword.id })).toMatchObject({ type: "Weapon" });
+      expect(await Entities.findOne<Item>(db, { entityType: "items", id: sword.id })).toMatchObject({ type: "Weapon" });
     });
 
     test("refused when an edit gives a template of another type", async () => {
@@ -273,7 +281,9 @@ describe("Item templates", () => {
         ItemsService.updateItem(session, ruleset.id, sword.id, { name: sword.name, sourceItemId: mail.id }),
         422,
       );
-      expect(await Items.findOne(db, { id: sword.id })).toMatchObject({ sourceItemId: sword.sourceItemId });
+      expect(await Entities.findOne<Item>(db, { entityType: "items", id: sword.id })).toMatchObject({
+        sourceItemId: sword.sourceItemId,
+      });
     });
 
     test("kept when an edit changes the type with a template of it, or none", async () => {
@@ -333,7 +343,7 @@ describe("Item templates", () => {
         ItemsService.updateItem(session, ruleset.id, local.id, { name: local.name, type: "Armor" }),
         422,
       );
-      expect(await Items.findOne(db, { id: local.id })).toMatchObject({ type: "Weapon" });
+      expect(await Entities.findOne<Item>(db, { entityType: "items", id: local.id })).toMatchObject({ type: "Weapon" });
     });
 
     test("changed while another user's fork makes items from the original its copy stands for", async () => {
@@ -371,7 +381,7 @@ describe("Item templates", () => {
       expect(ItemsService.updateItem(session, ruleset.id, local.id, edit)).rejects.toMatchObject({
         message: `${refusal}: "Public Blade", and 1 in rulesets built on this one`,
       });
-      expect(await Items.findOne(db, { id: local.id })).toMatchObject({ type: "Weapon" });
+      expect(await Entities.findOne<Item>(db, { entityType: "items", id: local.id })).toMatchObject({ type: "Weapon" });
     });
 
     test("changed when no item is made from it", async () => {
@@ -385,7 +395,12 @@ describe("Item templates", () => {
     test("changed to the type the items made from it already are", async () => {
       const { session, ruleset } = await setup();
       const old = await ItemsService.createItem(session, ruleset.id, { name: "Old", type: "Weapon", isTemplate: true });
-      await Items.create(db, { rulesetId: ruleset.id, name: "Old Mail", type: "Armor", sourceItemId: old.id });
+      await Entities.create<Item>(db, "items", {
+        rulesetId: ruleset.id,
+        name: "Old Mail",
+        type: "Armor",
+        sourceItemId: old.id,
+      });
       expect(
         await ItemsService.updateItem(session, ruleset.id, old.id, { name: old.name, type: "Armor" }),
       ).toMatchObject({ type: "Armor" });
@@ -405,7 +420,9 @@ describe("Item templates", () => {
         ItemsService.createItem(session, ruleset.id, { name: "Odd Template", type, isTemplate: true }),
         422,
       );
-      expect(await Items.findOne(db, { rulesetId: ruleset.id, name: "Odd Template" })).toBeUndefined();
+      expect(
+        await Entities.findOne<Item>(db, { entityType: "items", rulesetId: ruleset.id, name: "Odd Template" }),
+      ).toBeUndefined();
     });
 
     test("refused when an edit changes one to another", async () => {
@@ -423,7 +440,7 @@ describe("Item templates", () => {
 
     test("kept by an edit of one stored with another, which can change it to one", async () => {
       const { session, ruleset } = await setup();
-      const [ring] = await Items.create(db, {
+      const [ring] = await Entities.create<Item>(db, "items", {
         rulesetId: ruleset.id,
         name: "Old Ring",
         type: "Ring",
@@ -459,7 +476,7 @@ describe("Item templates", () => {
       weight: "10.00",
       description: "Heavier homebrew mace",
     });
-    expect((await Items.findOne(db, { id: mace.id }))?.weight).toBe(mace.weight);
+    expect((await Entities.findOne<Item>(db, { entityType: "items", id: mace.id }))?.weight).toBe(mace.weight);
   });
 
   test("can't be deleted while an item is made from them", async () => {

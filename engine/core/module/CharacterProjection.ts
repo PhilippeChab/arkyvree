@@ -1,4 +1,4 @@
-import type { CharacterLevel } from "@/shared/relations.ts";
+import type { CharacterLevel } from "@/engine/core/view/index.ts";
 
 import type { CharacterInput, CharacterRows } from "./CharacterInputs.ts";
 import type { AbilityIncrease, LevelPickRows } from "./parts/levelUp/index.ts";

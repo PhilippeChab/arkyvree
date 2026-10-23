@@ -6,6 +6,33 @@
 
 export { KIND_LABELS } from "./kindLabels.ts";
 export { default as RequestIds } from "./RequestIds.ts";
+export type {
+  Aptitude,
+  CharacterAbility,
+  CharacterLanguage,
+  CharacterLevel,
+  Feat,
+  FeatWithAptitudes,
+  Item,
+  Klass,
+  KlassLevel,
+  KlassLevelFeat,
+  KlassLevelPower,
+  KlassLevelSave,
+  KlassSkill,
+  Language,
+  LevelAbilityIncrease,
+  LevelFeat,
+  LevelPower,
+  LevelSkill,
+  Mechanic,
+  Power,
+  PowerWithAptitudes,
+  Race,
+  RulesetAbility,
+  RulesetSave,
+  Skill,
+} from "./rows.ts";
 export { default as RulesetComposition, type RulesetRawData } from "./RulesetComposition.ts";
 export { default as RulesetData, type ViewEntities } from "./RulesetData.ts";
 export type { RulesetView } from "./RulesetData.ts";

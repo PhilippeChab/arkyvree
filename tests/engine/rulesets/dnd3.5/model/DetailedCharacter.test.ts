@@ -13,6 +13,7 @@ import { RulesetSeeder } from "@/database/seeders/dnd3.5/RulesetSeeder.ts";
 import { charactersInCharacter, modifiersInCustomization, requirementsInCustomization } from "@/drizzle/schema.ts";
 import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
 import RequirementEvaluator from "@/engine/core/requirements/RequirementEvaluator.ts";
+import type { Aptitude, Feat, Klass, Power, Race } from "@/engine/index.ts";
 import CharacterResponse from "@/engine/rulesets/dnd3.5/characters/description/CharacterResponse.ts";
 import Dnd35TargetPaths from "@/engine/rulesets/dnd3.5/Dnd35TargetPaths.ts";
 import { ALLOWED_ALL, type AptitudeLevelData } from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudesComponent.ts";
@@ -23,19 +24,14 @@ import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import {
-  Aptitudes,
-  CharacterAbilities,
-  CharacterLevelFeats,
   CharacterLevels,
+  CharacterLinks,
   Characters,
-  Feats,
-  FeatsAptitudes,
-  Klasses,
+  Entities,
+  Joins,
   Modifiers,
-  Powers,
-  PowersAptitudes,
+  Picks,
   Properties,
-  Races,
   Requirements,
 } from "@/server/repositories/index.ts";
 import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
@@ -155,7 +151,11 @@ function weaponSet(detailed: Detailed, set = "0") {
 /** The seeded character, now a halfling. */
 async function asHalfling(name: string) {
   const character = await findSeededCharacter(name);
-  const halfling = (await Races.findOne(db, { name: "Halfling", rulesetId: character.rulesetId }))!;
+  const halfling = (await Entities.findOne<Race>(db, {
+    entityType: "races",
+    name: "Halfling",
+    rulesetId: character.rulesetId,
+  }))!;
   await Characters.update(db, { raceId: halfling.id }, { id: character.id });
   return { ...character, raceId: halfling.id };
 }
@@ -398,18 +398,18 @@ async function setupUncannyBlow(location: "Main Hand" | "Two Handed") {
   const fork = await forkWith(DND35_COMPLETE_WARRIOR_NAME);
   await db.update(charactersInCharacter).set({ rulesetId: fork.id }).where(eq(charactersInCharacter.id, bjorn.id));
   const extension = await findSeededRuleset(DND35_COMPLETE_WARRIOR_NAME);
-  const uncannyBlow = (await Feats.findOne(db, {
+  const uncannyBlow = (await Entities.findOne<Feat>(db, {
+    entityType: "feats",
     name: "Uncanny Blow (Exotic Weapon Master Exotic Weapon Stunt)",
     rulesetId: extension.id,
   }))!;
-  const stunt = (await Aptitudes.findOne(db, {
+  const stunt = (await Entities.findOne<Aptitude>(db, {
+    entityType: "aptitudes",
     name: "Exotic Weapon Master Exotic Weapon Stunt",
     rulesetId: extension.id,
   }))!;
   const [level] = await CharacterLevels.findMany(db, { characterId: bjorn.id });
-  await CharacterLevelFeats.createMany(db, [
-    { characterLevelId: level.id, featId: uncannyBlow.id, aptitudeId: stunt.id },
-  ]);
+  await Picks.createMany(db, "feats", [{ characterLevelId: level.id, featId: uncannyBlow.id, aptitudeId: stunt.id }]);
   const character = { ...bjorn, rulesetId: fork.id };
   await carry(character, [{ item: "Bastard Sword", location, weaponSets: [0] }]);
   return build(character);
@@ -429,12 +429,21 @@ async function setupWeaponTrick(intelligence: number) {
     { xp: 28000, rulesetId: fork.id },
   );
   await addClassLevels(db, ctx, characterId, "Wizard", [1, 2, 3, 4, 5, 6, 7], [4, 4, 4, 4, 4, 4, 4]);
-  const loremaster = (await Klasses.findOne(db, { name: "Loremaster", rulesetId: dmg.id }))!;
-  const weaponTrick = (await Feats.findOne(db, {
+  const loremaster = (await Entities.findOne<Klass>(db, {
+    entityType: "klasses",
+    name: "Loremaster",
+    rulesetId: dmg.id,
+  }))!;
+  const weaponTrick = (await Entities.findOne<Feat>(db, {
+    entityType: "feats",
     name: "Secret: Weapon Trick (Loremaster Secret)",
     rulesetId: dmg.id,
   }))!;
-  const secret = (await Aptitudes.findOne(db, { name: "Loremaster Secret", rulesetId: dmg.id }))!;
+  const secret = (await Entities.findOne<Aptitude>(db, {
+    entityType: "aptitudes",
+    name: "Loremaster Secret",
+    rulesetId: dmg.id,
+  }))!;
   await addCharacterLevel(characterId, (await findKlassLevel(loremaster.id, 1))!.id, {
     feats: [{ featId: weaponTrick.id, aptitudeId: secret.id }],
   });
@@ -1717,7 +1726,8 @@ describe("DetailedCharacter", () => {
     test("gives a duelist its Intelligence bonus as a dodge bonus, up to its duelist level, and never a penalty", async () => {
       const ctx = await getSeedCtx();
       const fork = await forkWith(DND35_DMG_NAME);
-      const duelist = (await Klasses.findOne(db, {
+      const duelist = (await Entities.findOne<Klass>(db, {
+        entityType: "klasses",
         name: "Duelist",
         rulesetId: (await findSeededRuleset(DND35_DMG_NAME)).id,
       }))!;
@@ -1741,7 +1751,8 @@ describe("DetailedCharacter", () => {
     test("gives a duelist Canny Defense in each set with no armor or shield bonus, never split between two sets", async () => {
       const ctx = await getSeedCtx();
       const fork = await forkWith(DND35_DMG_NAME);
-      const duelist = (await Klasses.findOne(db, {
+      const duelist = (await Entities.findOne<Klass>(db, {
+        entityType: "klasses",
         name: "Duelist",
         rulesetId: (await findSeededRuleset(DND35_DMG_NAME)).id,
       }))!;
@@ -1986,7 +1997,8 @@ describe("DetailedCharacter", () => {
         const fork = await forkWith(book);
         const characterId = await seedHuman(`${className} ${levels}`, WIZARD_SCORES, { rulesetId: fork.id });
         await addClassLevels(db, ctx, characterId, "Fighter", [1], [10]);
-        const klass = (await Klasses.findOne(db, {
+        const klass = (await Entities.findOne<Klass>(db, {
+          entityType: "klasses",
           name: className,
           rulesetId: (await findSeededRuleset(book)).id,
         }))!;
@@ -2094,7 +2106,10 @@ describe("DetailedCharacter", () => {
       const bjorn = await buildSeeded("Bjorn Ironhand");
       expect(bjorn.components.abilities.getAbilities().strength.total).toBe(14);
       expect(bjorn.components.combat.getCombat().hp.misc).toBe(5);
-      const race = (await Races.findOne(db, { id: (await findSeededCharacter("Bjorn Ironhand")).raceId }))!.name;
+      const race = (await Entities.findOne<Race>(db, {
+        entityType: "races",
+        id: (await findSeededCharacter("Bjorn Ironhand")).raceId,
+      }))!.name;
       expect(
         bjorn
           .validate()
@@ -2120,7 +2135,10 @@ describe("DetailedCharacter", () => {
         [{ ...strength, valueType: "number" }],
       );
       const bjorn = await buildSeeded("Bjorn Ironhand");
-      const race = (await Races.findOne(db, { id: (await findSeededCharacter("Bjorn Ironhand")).raceId }))!.name;
+      const race = (await Entities.findOne<Race>(db, {
+        entityType: "races",
+        id: (await findSeededCharacter("Bjorn Ironhand")).raceId,
+      }))!.name;
       expect(
         bjorn
           .validate()
@@ -2193,10 +2211,10 @@ describe("DetailedCharacter", () => {
       // Power Attack and Cleave need STR 13.
       const bjorn = await findSeededCharacter("Bjorn Ironhand");
       const { abilityMap } = await getSeedCtx();
-      await CharacterAbilities.update(
+      await CharacterLinks.update(
         db,
-        { score: 10 },
-        { characterId: bjorn.id, abilityIds: [abilityMap["Strength"]] },
+        { amount: 10 },
+        { link: "abilities", characterId: bjorn.id, entityIds: [abilityMap["Strength"]] },
       );
       expect((await build(bjorn)).requirementEvaluator.getRequirements().unmetRequirementGroups.length).toBeGreaterThan(
         0,
@@ -2229,7 +2247,7 @@ describe("DetailedCharacter", () => {
   describe("feats", () => {
     test("count a level's general feats toward General, and report them when the ruleset has none", async () => {
       const ruleset = await createTestRuleset(SEED_USER_ID);
-      const [race] = await Races.create(db, {
+      const [race] = await Entities.create<Race>(db, "races", {
         name: "Test Race",
         rulesetId: ruleset.id,
         size: "Medium",
@@ -2248,7 +2266,7 @@ describe("DetailedCharacter", () => {
         },
       ]);
 
-      await Aptitudes.create(db, { name: "General", rulesetId: ruleset.id });
+      await Entities.create<Aptitude>(db, "aptitudes", { name: "General", rulesetId: ruleset.id });
       RulesetViews.invalidate(ruleset.id);
       const withGeneral = await build(character);
       expect(withGeneral.components.aptitudes.getAptitudes().general.allowed).toBe(1);
@@ -2257,7 +2275,11 @@ describe("DetailedCharacter", () => {
 
     test("give none by a family's name, which names no feat: the modifier is reported, and the sheet still builds", async () => {
       const ctx = await getSeedCtx();
-      const dodge = (await Feats.findOne(db, { name: "Dodge", rulesetId: ctx.rulesetId }))!;
+      const dodge = (await Entities.findOne<Feat>(db, {
+        entityType: "feats",
+        name: "Dodge",
+        rulesetId: ctx.rulesetId,
+      }))!;
       await Modifiers.create(db, {
         sourceId: dodge.id,
         sourceType: "feats",
@@ -2380,10 +2402,22 @@ describe("DetailedCharacter", () => {
         { Strength: 8, Dexterity: 14, Constitution: 12, Intelligence: 18, Wisdom: 10, Charisma: 10 },
         { rulesetId: fork.id },
       );
-      const archmage = (await Klasses.findOne(db, { name: "Archmage", rulesetId: dmgId }))!;
-      const highArcana = (await Aptitudes.findOne(db, { name: "Archmage High Arcana", rulesetId: dmgId }))!;
+      const archmage = (await Entities.findOne<Klass>(db, {
+        entityType: "klasses",
+        name: "Archmage",
+        rulesetId: dmgId,
+      }))!;
+      const highArcana = (await Entities.findOne<Aptitude>(db, {
+        entityType: "aptitudes",
+        name: "Archmage High Arcana",
+        rulesetId: dmgId,
+      }))!;
       for (const [index, option] of ["Arcane Reach", "Spell Power"].entries()) {
-        const feat = (await Feats.findOne(db, { name: `${option} (Archmage High Arcana)`, rulesetId: dmgId }))!;
+        const feat = (await Entities.findOne<Feat>(db, {
+          entityType: "feats",
+          name: `${option} (Archmage High Arcana)`,
+          rulesetId: dmgId,
+        }))!;
         await addCharacterLevel(characterId, (await findKlassLevel(archmage.id, index + 1))!.id, {
           feats: [{ featId: feat.id, aptitudeId: highArcana.id }],
         });
@@ -2405,7 +2439,9 @@ describe("DetailedCharacter", () => {
         description: "Ours",
       });
       RulesetViews.invalidate(fork.id);
-      expect(await Klasses.findOne(db, { name: "Archmage", rulesetId: fork.id })).toBeDefined();
+      expect(
+        await Entities.findOne<Klass>(db, { entityType: "klasses", name: "Archmage", rulesetId: fork.id }),
+      ).toBeDefined();
       expect(await highArcanaPicks()).toEqual({ allowed: 2, spent: 2, granted: 2 });
     });
   });
@@ -2436,7 +2472,11 @@ describe("DetailedCharacter", () => {
       const scores = { Strength: 10, Dexterity: 10, Constitution: 10, Intelligence: 10, Wisdom: 10, Charisma: 10 };
       const characterId = await seedHuman("Spellthief", scores, { rulesetId: fork.id });
       const adventurerId = (await findSeededRuleset(DND35_COMPLETE_ADVENTURER_NAME)).id;
-      const spellthief = (await Klasses.findOne(db, { name: "Spellthief", rulesetId: adventurerId }))!;
+      const spellthief = (await Entities.findOne<Klass>(db, {
+        entityType: "klasses",
+        name: "Spellthief",
+        rulesetId: adventurerId,
+      }))!;
       for (let level = 1; level <= 6; level++)
         await addCharacterLevel(characterId, (await findKlassLevel(spellthief.id, level))!.id);
 
@@ -2668,20 +2708,34 @@ describe("DetailedCharacter", () => {
           [8, 6, 7, 6, 8, 6, 7],
         );
         await addFeats(db, ctx, clericLevels, [{ levelIndex: 0, featName: "War Domain", aptitude: "Cleric Domain" }]);
-        await CharacterLevelFeats.createMany(db, [
+        await Picks.createMany(db, "feats", [
           {
             characterLevelId: clericLevels[0],
             featId: divine.feat("Weather Domain").id,
             aptitudeId: ctx.aptMap["Cleric Domain"],
           },
         ]);
-        const stormlord = (await Klasses.findOne(db, { name: "Stormlord", rulesetId: extension.id }))!;
+        const stormlord = (await Entities.findOne<Klass>(db, {
+          entityType: "klasses",
+          name: "Stormlord",
+          rulesetId: extension.id,
+        }))!;
         const advance =
-          (await Feats.findOne(db, { name: "Advance Cleric Spellcasting", rulesetId: extension.id }))?.id ??
-          ctx.featMap["Advance Cleric Spellcasting"];
+          (
+            await Entities.findOne<Feat>(db, {
+              entityType: "feats",
+              name: "Advance Cleric Spellcasting",
+              rulesetId: extension.id,
+            })
+          )?.id ?? ctx.featMap["Advance Cleric Spellcasting"];
         const bonusLevel =
-          (await Aptitudes.findOne(db, { name: "Bonus Divine Caster Level", rulesetId: extension.id }))?.id ??
-          ctx.aptMap["Bonus Divine Caster Level"];
+          (
+            await Entities.findOne<Aptitude>(db, {
+              entityType: "aptitudes",
+              name: "Bonus Divine Caster Level",
+              rulesetId: extension.id,
+            })
+          )?.id ?? ctx.aptMap["Bonus Divine Caster Level"];
         for (let level = 1; level <= 5; level++) {
           const klassLevel = (await findKlassLevel(stormlord.id, level))!;
           await addCharacterLevel(characterId, klassLevel.id, { feats: [{ featId: advance, aptitudeId: bonusLevel }] });
@@ -2712,16 +2766,20 @@ describe("DetailedCharacter", () => {
         const ctx = await getSeedCtx();
         const extension = await findSeededRuleset(DND35_COMPLETE_DIVINE_NAME);
         const fork = await forkWith(DND35_COMPLETE_DIVINE_NAME);
-        const [order] = await Aptitudes.createMany(db, [{ name: "Order Prayers", rulesetId: fork.id }]);
-        const [fifth, sixth] = await Powers.createMany(db, [
+        const [order] = await Entities.createMany<Aptitude>(db, "aptitudes", [
+          { name: "Order Prayers", rulesetId: fork.id },
+        ]);
+        const [fifth, sixth] = await Entities.createMany<Power>(db, "powers", [
           { name: "Fifth Order Hymn", rulesetId: fork.id },
           { name: "Sixth Order Hymn", rulesetId: fork.id },
         ]);
-        await PowersAptitudes.createMany(db, [
+        await Joins.createMany(db, "powers_aptitudes", [
           { powerId: fifth.id, aptitudeId: order.id, level: 5 },
           { powerId: sixth.id, aptitudeId: order.id, level: 6 },
         ]);
-        const [orderDomain] = await Feats.createMany(db, [{ name: "Order Domain", rulesetId: fork.id }]);
+        const [orderDomain] = await Entities.createMany<Feat>(db, "feats", [
+          { name: "Order Domain", rulesetId: fork.id },
+        ]);
         const modifier = (target: string, value: string, operator: string, valueType = "number") => ({
           sourceId: orderDomain.id,
           sourceType: "feats",
@@ -2782,16 +2840,30 @@ describe("DetailedCharacter", () => {
           [1, 2, 3, 4, 5, 6, 7],
           [8, 6, 7, 6, 8, 6, 7],
         );
-        await CharacterLevelFeats.createMany(db, [
+        await Picks.createMany(db, "feats", [
           { characterLevelId: clericLevels[0], featId: orderDomain.id, aptitudeId: ctx.aptMap["Cleric Domain"] },
         ]);
-        const stormlord = (await Klasses.findOne(db, { name: "Stormlord", rulesetId: extension.id }))!;
+        const stormlord = (await Entities.findOne<Klass>(db, {
+          entityType: "klasses",
+          name: "Stormlord",
+          rulesetId: extension.id,
+        }))!;
         const advance =
-          (await Feats.findOne(db, { name: "Advance Cleric Spellcasting", rulesetId: extension.id }))?.id ??
-          ctx.featMap["Advance Cleric Spellcasting"];
+          (
+            await Entities.findOne<Feat>(db, {
+              entityType: "feats",
+              name: "Advance Cleric Spellcasting",
+              rulesetId: extension.id,
+            })
+          )?.id ?? ctx.featMap["Advance Cleric Spellcasting"];
         const bonusLevel =
-          (await Aptitudes.findOne(db, { name: "Bonus Divine Caster Level", rulesetId: extension.id }))?.id ??
-          ctx.aptMap["Bonus Divine Caster Level"];
+          (
+            await Entities.findOne<Aptitude>(db, {
+              entityType: "aptitudes",
+              name: "Bonus Divine Caster Level",
+              rulesetId: extension.id,
+            })
+          )?.id ?? ctx.aptMap["Bonus Divine Caster Level"];
         for (let level = 1; level <= 5; level++) {
           const klassLevel = (await findKlassLevel(stormlord.id, level))!;
           await addCharacterLevel(characterId, klassLevel.id, { feats: [{ featId: advance, aptitudeId: bonusLevel }] });
@@ -2871,7 +2943,11 @@ describe("DetailedCharacter", () => {
           { ...WIZARD_SCORES, Wisdom: 14 },
           CRUSADER_PREREQUISITES,
         );
-        const cleric = (await Klasses.findOne(db, { name: "Cleric", rulesetId: ctx.rulesetId }))!;
+        const cleric = (await Entities.findOne<Klass>(db, {
+          entityType: "klasses",
+          name: "Cleric",
+          rulesetId: ctx.rulesetId,
+        }))!;
         for (let level = 1; level <= 3; level++) {
           const picks = { feats: [{ featId: ctx.featMap["Fire Domain"], aptitudeId: ctx.aptMap["Cleric Domain"] }] };
           await addCharacterLevel(characterId, (await findKlassLevel(cleric.id, level))!.id, level === 1 ? picks : {});
@@ -2919,14 +2995,16 @@ describe("DetailedCharacter", () => {
       test("join the Luck domain's spells to a class's list at the level a class feature of it brings them", async () => {
         // A homebrew class whose second level's feature joins the Luck domain's list to its own
         const ctx = await getSeedCtx();
-        const [feature, raiderSpells] = await Aptitudes.createMany(db, [
+        const [feature, raiderSpells] = await Entities.createMany<Aptitude>(db, "aptitudes", [
           { name: "Test Raider Class Feature", rulesetId: ctx.rulesetId },
           { name: "Test Raider Spells", rulesetId: ctx.rulesetId },
         ]);
-        await PowersAptitudes.createMany(db, [
+        await Joins.createMany(db, "powers_aptitudes", [
           { powerId: ctx.powerMap["Bless"], aptitudeId: raiderSpells.id, level: 1 },
         ]);
-        const [luck] = await Feats.createMany(db, [{ name: "Test Raider Luck", rulesetId: ctx.rulesetId }]);
+        const [luck] = await Entities.createMany<Feat>(db, "feats", [
+          { name: "Test Raider Luck", rulesetId: ctx.rulesetId },
+        ]);
         await insertRows(modifiersInCustomization, [
           {
             sourceId: luck.id,
@@ -2974,10 +3052,10 @@ describe("DetailedCharacter", () => {
       test("join the list of each class that brings them, a class level's as well as a feat's", async () => {
         // A homebrew class whose first level joins the fire domain to its list, taken by a fire cleric
         const ctx = await getSeedCtx();
-        const [sunPriestSpells] = await Aptitudes.createMany(db, [
+        const [sunPriestSpells] = await Entities.createMany<Aptitude>(db, "aptitudes", [
           { name: "Test Sun Priest Spells", rulesetId: ctx.rulesetId },
         ]);
-        await PowersAptitudes.createMany(db, [
+        await Joins.createMany(db, "powers_aptitudes", [
           { powerId: ctx.powerMap["Bless"], aptitudeId: sunPriestSpells.id, level: 1 },
         ]);
         const { levelIds } = await new RulesetSeeder(db, ctx).seedClass({
@@ -3003,7 +3081,11 @@ describe("DetailedCharacter", () => {
         invalidateSeededRuleset(ctx.rulesetId);
 
         const characterId = await seedHuman("Sun Priest", { ...WIZARD_SCORES, Wisdom: 16 });
-        const cleric = (await Klasses.findOne(db, { name: "Cleric", rulesetId: ctx.rulesetId }))!;
+        const cleric = (await Entities.findOne<Klass>(db, {
+          entityType: "klasses",
+          name: "Cleric",
+          rulesetId: ctx.rulesetId,
+        }))!;
         await addCharacterLevel(characterId, (await findKlassLevel(cleric.id, 1))!.id, {
           feats: [{ featId: ctx.featMap["Fire Domain"], aptitudeId: ctx.aptMap["Cleric Domain"] }],
         });
@@ -3026,7 +3108,11 @@ describe("DetailedCharacter", () => {
         // its own, though no domain slot: that's a cleric's
         const ctx = await getSeedCtx();
         const characterId = await seedHuman("Sun Fighter", { ...WIZARD_SCORES, Wisdom: 16 });
-        const fighter = (await Klasses.findOne(db, { name: "Fighter", rulesetId: ctx.rulesetId }))!;
+        const fighter = (await Entities.findOne<Klass>(db, {
+          entityType: "klasses",
+          name: "Fighter",
+          rulesetId: ctx.rulesetId,
+        }))!;
         await addCharacterLevel(characterId, (await findKlassLevel(fighter.id, 1))!.id, {
           feats: [{ featId: ctx.featMap["Sun Domain"], aptitudeId: ctx.aptMap["Cleric Domain"] }],
         });
@@ -3044,8 +3130,10 @@ describe("DetailedCharacter", () => {
       test("keep a feat's extra slot in a class's own list the class's: no tag, its spells still learned", async () => {
         const ctx = await getSeedCtx();
         const fork = await forkWith();
-        const [reserve] = await Feats.createMany(db, [{ name: "Test Arcane Reserve", rulesetId: fork.id }]);
-        await FeatsAptitudes.createMany(db, [{ featId: reserve.id, aptitudeId: ctx.aptMap["General"] }]);
+        const [reserve] = await Entities.createMany<Feat>(db, "feats", [
+          { name: "Test Arcane Reserve", rulesetId: fork.id },
+        ]);
+        await Joins.createMany(db, "feats_aptitudes", [{ featId: reserve.id, aptitudeId: ctx.aptMap["General"] }]);
         await insertRows(modifiersInCustomization, [
           {
             sourceId: reserve.id,
@@ -3059,7 +3147,11 @@ describe("DetailedCharacter", () => {
         RulesetViews.invalidate(fork.id);
 
         const characterId = await seedHuman("Reserve Wizard", WIZARD_SCORES, { rulesetId: fork.id });
-        const wizard = (await Klasses.findOne(db, { name: "Wizard", rulesetId: ctx.rulesetId }))!;
+        const wizard = (await Entities.findOne<Klass>(db, {
+          entityType: "klasses",
+          name: "Wizard",
+          rulesetId: ctx.rulesetId,
+        }))!;
         await addCharacterLevel(characterId, (await findKlassLevel(wizard.id, 1))!.id, {
           feats: [{ featId: reserve.id, aptitudeId: ctx.aptMap["General"] }],
         });
@@ -3090,7 +3182,11 @@ describe("DetailedCharacter", () => {
           { levelIndex: 0, featName: "Evocation Specialist", aptitude: "Wizard Specialization" },
         ]);
         const dmg = await findSeededRuleset(DND35_DMG_NAME);
-        const loremaster = (await Klasses.findOne(db, { name: "Loremaster", rulesetId: dmg.id }))!;
+        const loremaster = (await Entities.findOne<Klass>(db, {
+          entityType: "klasses",
+          name: "Loremaster",
+          rulesetId: dmg.id,
+        }))!;
         const advance = {
           featId: ctx.featMap["Advance Wizard Spellcasting"],
           aptitudeId: ctx.aptMap["Bonus Arcane Caster Level"],
@@ -3111,27 +3207,27 @@ describe("DetailedCharacter", () => {
         // A homebrew domain whose list isn't named "… Domain Spells" and joins the cleric's, and one named so that doesn't
         const ctx = await getSeedCtx();
         const fork = await forkWith();
-        const [prayers, moon, litany] = await Aptitudes.createMany(db, [
+        const [prayers, moon, litany] = await Entities.createMany<Aptitude>(db, "aptitudes", [
           { name: "Sun Prayers", rulesetId: fork.id },
           { name: "Moon Domain Spells", rulesetId: fork.id },
           { name: "Sun Litany", rulesetId: fork.id },
         ]);
-        const [dawn, dusk, noon] = await Powers.createMany(db, [
+        const [dawn, dusk, noon] = await Entities.createMany<Power>(db, "powers", [
           { name: "Dawn Hymn", rulesetId: fork.id },
           { name: "Dusk Hymn", rulesetId: fork.id },
           { name: "Noon Hymn", rulesetId: fork.id },
         ]);
-        await PowersAptitudes.createMany(db, [
+        await Joins.createMany(db, "powers_aptitudes", [
           { powerId: dawn.id, aptitudeId: prayers.id, level: 1 },
           { powerId: dusk.id, aptitudeId: moon.id, level: 1 },
           { powerId: noon.id, aptitudeId: litany.id, level: 1 },
         ]);
-        const [sun, moonDomain] = await Feats.createMany(db, [
+        const [sun, moonDomain] = await Entities.createMany<Feat>(db, "feats", [
           { name: "Prayers of the Sun", rulesetId: fork.id },
           { name: "Moon Domain", rulesetId: fork.id },
         ]);
         const clericDomain = ctx.aptMap["Cleric Domain"];
-        await FeatsAptitudes.createMany(db, [
+        await Joins.createMany(db, "feats_aptitudes", [
           { featId: sun.id, aptitudeId: clericDomain },
           { featId: moonDomain.id, aptitudeId: clericDomain },
         ]);
@@ -3169,7 +3265,11 @@ describe("DetailedCharacter", () => {
         RulesetViews.invalidate(fork.id);
 
         const characterId = await seedHuman("Sun Cleric", WIZARD_SCORES, { rulesetId: fork.id });
-        const clericClass = (await Klasses.findOne(db, { name: "Cleric", rulesetId: ctx.rulesetId }))!;
+        const clericClass = (await Entities.findOne<Klass>(db, {
+          entityType: "klasses",
+          name: "Cleric",
+          rulesetId: ctx.rulesetId,
+        }))!;
         const cleric = (await findKlassLevel(clericClass.id, 1))!;
         await addCharacterLevel(characterId, cleric.id, {
           feats: [
@@ -3468,7 +3568,8 @@ describe("DetailedCharacter", () => {
           { levelIndex: 0, featName: "Sun Domain", aptitude: "Cleric Domain" },
           { levelIndex: 2, featName: "Toughness", aptitude: "General" },
         ]);
-        const thaumaturgist = (await Klasses.findOne(db, {
+        const thaumaturgist = (await Entities.findOne<Klass>(db, {
+          entityType: "klasses",
           name: "Thaumaturgist",
           rulesetId: (await findSeededRuleset(DND35_DMG_NAME)).id,
         }))!;
@@ -3503,7 +3604,11 @@ describe("DetailedCharacter", () => {
         const extension = await findSeededRuleset(DND35_COMPLETE_DIVINE_NAME);
         const fork = await forkWith(DND35_COMPLETE_DIVINE_NAME);
         const characterId = await seedCaster("Cleric 3 / Stormlord 2", [["Cleric", 3]], fork.id);
-        const stormlord = (await Klasses.findOne(db, { name: "Stormlord", rulesetId: extension.id }))!;
+        const stormlord = (await Entities.findOne<Klass>(db, {
+          entityType: "klasses",
+          name: "Stormlord",
+          rulesetId: extension.id,
+        }))!;
         // Each stormlord level advances his cleric spellcasting
         const advance = {
           featId: featMap["Advance Cleric Spellcasting"],
@@ -3724,7 +3829,8 @@ describe("DetailedCharacter", () => {
       const fork = await forkWith(DND35_DMG_NAME);
       const characterId = await seedHuman("Dragon Blooded", { ...WIZARD_SCORES, Strength: 12 }, { rulesetId: fork.id });
       await addClassLevels(db, ctx, characterId, "Sorcerer", [1], [4]);
-      const dragonDisciple = (await Klasses.findOne(db, {
+      const dragonDisciple = (await Entities.findOne<Klass>(db, {
+        entityType: "klasses",
         name: "Dragon Disciple",
         rulesetId: (await findSeededRuleset(DND35_DMG_NAME)).id,
       }))!;
@@ -3814,7 +3920,8 @@ describe("DetailedCharacter", () => {
         { rulesetId: fork.id },
       );
       await addClassLevels(db, ctx, characterId, "Rogue", [1, 2, 3], [6, 4, 4]);
-      const assassin = (await Klasses.findOne(db, {
+      const assassin = (await Entities.findOne<Klass>(db, {
+        entityType: "klasses",
         name: "Assassin",
         rulesetId: (await findSeededRuleset(DND35_DMG_NAME)).id,
       }))!;

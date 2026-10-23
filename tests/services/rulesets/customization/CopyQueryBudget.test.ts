@@ -1,8 +1,9 @@
 import { expect, test } from "bun:test";
 
+import type { Feat } from "@/engine/index.ts";
 import { CustomizationCopies } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { Feats, Modifiers, Requirements } from "@/server/repositories/index.ts";
+import { Entities, Modifiers, Requirements } from "@/server/repositories/index.ts";
 import { measure } from "@/tests/support/database.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { makeSession } from "@/tests/support/users.ts";
@@ -12,8 +13,9 @@ test("modifier and requirement copies stay batched as modifier count grows", asy
   const ruleset = await createSeededTestRuleset(session.userId);
   const counts: number[] = [];
   for (const width of [1, 12]) {
-    const [source, target] = await Feats.createMany(
+    const [source, target] = await Entities.createMany<Feat>(
       db,
+      "feats",
       ["Source", "Target"].map((name) => ({
         name: `${name} ${width}`,
         description: "Copy budget",

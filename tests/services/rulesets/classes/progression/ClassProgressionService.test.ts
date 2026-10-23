@@ -1,9 +1,10 @@
 import { describe, expect, test } from "bun:test";
 
+import type { Aptitude, Klass, RulesetSave } from "@/engine/index.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
-import { Aptitudes, Klasses, Modifiers, Requirements, Saves } from "@/server/repositories/index.ts";
+import { Entities, Modifiers, Requirements } from "@/server/repositories/index.ts";
 import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
 import { ClassLevelsService } from "@/server/services/rulesets/classes/levels/index.ts";
 import { ClassProgressionService } from "@/server/services/rulesets/classes/progression/index.ts";
@@ -17,7 +18,11 @@ type Body = Parameters<typeof ClassProgressionService.updateProgression>[3];
 async function forkWithClass(name: string) {
   const session = makeSession();
   const fork = await createSeededTestRuleset(session.userId);
-  const klass = (await Klasses.findOne(db, { name, rulesetId: fork.ancestorRulesetIds[0] }))!;
+  const klass = (await Entities.findOne<Klass>(db, {
+    entityType: "klasses",
+    name,
+    rulesetId: fork.ancestorRulesetIds[0],
+  }))!;
   const levels = await ClassLevelsService.getClassLevels(fork.id, klass.id);
   return { session, fork, klass, levelId: (level: number) => levels.find((l) => l.level === level)!.id };
 }
@@ -60,7 +65,11 @@ describe("ClassProgressionService", () => {
 
   test("writes a level's saves and granted feats as its own form does", async () => {
     const { session, fork, klass, levelId } = await forkWithClass("Monk");
-    const fortitude = (await Saves.findOne(db, { name: "Fortitude", rulesetId: fork.ancestorRulesetIds[0] }))!;
+    const fortitude = (await Entities.findOne<RulesetSave>(db, {
+      entityType: "saves",
+      name: "Fortitude",
+      rulesetId: fork.ancestorRulesetIds[0],
+    }))!;
     const before = await ClassLevelsService.getClassLevels(fork.id, klass.id);
     const first = before.find((level) => level.level === 1)!;
     const saves = first.saves.map((s) => (s.saveId === fortitude.id ? { ...s, base: 0 } : s));
@@ -238,7 +247,7 @@ describe("ClassProgressionService", () => {
     const { saved } = await save(session, fork.id, klass.id, {
       levels: [{ levelId: levelId(1), fields: { bab: 1, skills: 4 } }],
     });
-    const own = (await Klasses.findOne(db, { id: saved.klassId }))!;
+    const own = (await Entities.findOne<Klass>(db, { entityType: "klasses", id: saved.klassId }))!;
     const ownLevels = await ClassLevelsService.getClassLevels(fork.id, own.id);
     const first = ownLevels.find((level) => level.level === 1)!.id;
 
@@ -250,7 +259,10 @@ describe("ClassProgressionService", () => {
         levelTokens: [{ levelId: first, updatedAt: stale }],
       }),
     ).rejects.toBeInstanceOf(ConflictError);
-    const [aptitude] = await Aptitudes.create(db, { name: "Fighter Bonus Feat Two", rulesetId: fork.id });
+    const [aptitude] = await Entities.create<Aptitude>(db, "aptitudes", {
+      name: "Fighter Bonus Feat Two",
+      rulesetId: fork.id,
+    });
     await expectRefusedWith(
       ClassProgressionService.updateProgression(session, fork.id, own.id, {
         pools: [{ aptitudeId: aptitude.id, picks: [{ levelId: first, count: 100 }] }],
@@ -277,6 +289,8 @@ describe("ClassProgressionService", () => {
     });
 
     expect(saved.klassId).toBe(klass.id);
-    expect(await Klasses.findOne(db, { name: "Wizard", rulesetId: fork.id })).toBeUndefined();
+    expect(
+      await Entities.findOne<Klass>(db, { entityType: "klasses", name: "Wizard", rulesetId: fork.id }),
+    ).toBeUndefined();
   });
 });

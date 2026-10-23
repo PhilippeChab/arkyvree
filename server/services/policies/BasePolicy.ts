@@ -1,4 +1,4 @@
-import { type Session } from "@/shared/relations.ts";
+import type { Session } from "@/shared/relations.ts";
 
 /**
  * A session's rights on one entity: each policy has the checks its services make. A service builds one with its

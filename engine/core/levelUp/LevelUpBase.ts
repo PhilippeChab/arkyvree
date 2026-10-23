@@ -9,8 +9,8 @@ import {
   type LevelRows,
 } from "@/engine/core/module/index.ts";
 import RulesError, { type RulesIssue } from "@/engine/core/RulesError.ts";
-import type { RulesetData, RulesetView } from "@/engine/core/view/index.ts";
-import type { Character, Klass, KlassLevel } from "@/shared/relations.ts";
+import type { Klass, KlassLevel, RulesetData, RulesetView } from "@/engine/core/view/index.ts";
+import type { Character } from "@/shared/relations.ts";
 
 import type { OverfullPool } from "./PicksDistribution.ts";
 import SelectionChecks from "./SelectionChecks.ts";

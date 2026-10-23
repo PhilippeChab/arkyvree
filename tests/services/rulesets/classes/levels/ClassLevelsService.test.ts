@@ -1,25 +1,22 @@
 import { describe, expect, test } from "bun:test";
 
 import { DND35_COMPLETE_DIVINE_NAME, DND35_RULESET_NAME } from "@/content/dnd3.5/rulesetNames.ts";
+import type {
+  Aptitude,
+  Feat,
+  Klass,
+  KlassLevel,
+  KlassLevelFeat,
+  KlassLevelPower,
+  KlassLevelSave,
+  Power,
+  RulesetAbility,
+  RulesetSave,
+} from "@/engine/index.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, toJson } from "@/server/errors/index.ts";
-import {
-  Abilities,
-  Aptitudes,
-  EntitySnapshots,
-  Feats,
-  Klasses,
-  KlassLevelFeats,
-  KlassLevelPowers,
-  KlassLevels,
-  KlassLevelSaves,
-  Modifiers,
-  Powers,
-  Properties,
-  Requirements,
-  Saves,
-} from "@/server/repositories/index.ts";
+import { Entities, EntitySnapshots, Joins, Modifiers, Properties, Requirements } from "@/server/repositories/index.ts";
 import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
 import { ClassLevelsService } from "@/server/services/rulesets/classes/levels/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
@@ -53,8 +50,12 @@ function modifier(sourceId: string, target: string, value: string) {
 }
 
 async function createSave(rulesetId: string, name: string) {
-  const [ability] = await Abilities.create(db, { name: `${name} Ability`, description: name, rulesetId });
-  const [save] = await Saves.create(db, { name, abilityId: ability.id, rulesetId });
+  const [ability] = await Entities.create<RulesetAbility>(db, "abilities", {
+    name: `${name} Ability`,
+    description: name,
+    rulesetId,
+  });
+  const [save] = await Entities.create<RulesetSave>(db, "saves", { name, abilityId: ability.id, rulesetId });
   return save;
 }
 
@@ -62,7 +63,10 @@ async function createSave(rulesetId: string, name: string) {
 async function setup() {
   const { user, session, ruleset } = await createTestUserAndRuleset();
   const klass = await ClassesService.createClass(session, ruleset.id, { name: "Test Class" });
-  const [aptitude] = await Aptitudes.create(db, { name: "Fighter Bonus Feat", rulesetId: ruleset.id });
+  const [aptitude] = await Entities.create<Aptitude>(db, "aptitudes", {
+    name: "Fighter Bonus Feat",
+    rulesetId: ruleset.id,
+  });
   return { user, session, ruleset, klass, aptitude, poolTarget: `aptitudes.${stripSeparators(aptitude.name)}.allowed` };
 }
 
@@ -133,8 +137,8 @@ describe("ClassLevelsService", () => {
       };
       RulesetViews.invalidate(fork.id);
       const grantsOf = async (levelId: string) => ({
-        feats: await KlassLevelFeats.findMany(db, { klassLevelIds: [levelId] }),
-        saves: await KlassLevelSaves.findMany(db, { klassLevelIds: [levelId] }),
+        feats: await Joins.findMany<KlassLevelFeat>(db, { join: "klass_level_feats", fromIds: [levelId] }),
+        saves: await Joins.findMany<KlassLevelSave>(db, { join: "klass_level_saves", fromIds: [levelId] }),
       });
       const copied = {
         feats: [{ aptitudeId: copies.aptitude, featId: copies.feat }],
@@ -167,7 +171,7 @@ describe("ClassLevelsService", () => {
 
     test("an update replaces them, keeps them when it omits them, and clears them", async () => {
       const { session, ruleset, klass, aptitude } = await setup();
-      const [cleave, dodge] = await Feats.createMany(db, [
+      const [cleave, dodge] = await Entities.createMany<Feat>(db, "feats", [
         { name: "Cleave", rulesetId: ruleset.id },
         { name: "Dodge", rulesetId: ruleset.id },
       ]);
@@ -179,8 +183,12 @@ describe("ClassLevelsService", () => {
       const update = (body: Partial<LevelBody>) =>
         ClassLevelsService.updateClassLevel(session, ruleset.id, klass.id, level.id, body);
       const links = async () => ({
-        feats: (await KlassLevelFeats.findMany(db, { klassLevelIds: [level.id] })).map((f) => f.featId),
-        saves: (await KlassLevelSaves.findMany(db, { klassLevelIds: [level.id] })).map((s) => s.saveId),
+        feats: (await Joins.findMany<KlassLevelFeat>(db, { join: "klass_level_feats", fromIds: [level.id] })).map(
+          (f) => f.featId,
+        ),
+        saves: (await Joins.findMany<KlassLevelSave>(db, { join: "klass_level_saves", fromIds: [level.id] })).map(
+          (s) => s.saveId,
+        ),
       });
 
       await update({ feats: [{ featId: dodge.id, aptitudeId: aptitude.id }], saves: [{ saveId: reflex.id, base: 2 }] });
@@ -262,11 +270,15 @@ describe("ClassLevelsService", () => {
     test("count a stackable feat's picks at every level that grants it", async () => {
       // Regression: only the levels' own modifiers were read, so a pool granted through a feat was missing.
       const { session, ruleset, klass, aptitude, poolTarget } = await setup();
-      const [bonusFeat] = await Feats.create(db, { name: "Bonus Feat", rulesetId: ruleset.id, stackable: true });
+      const [bonusFeat] = await Entities.create<Feat>(db, "feats", {
+        name: "Bonus Feat",
+        rulesetId: ruleset.id,
+        stackable: true,
+      });
       await Modifiers.create(db, { ...modifier(bonusFeat.id, poolTarget, "1"), sourceType: "feats" });
       for (const level of [1, 2]) {
         const created = await createLevel(session, ruleset.id, klass.id, level);
-        await KlassLevelFeats.create(db, {
+        await Joins.create<KlassLevelFeat>(db, "klass_level_feats", {
           klassLevelId: created.id,
           featId: bonusFeat.id,
           aptitudeId: aptitude.id,
@@ -303,7 +315,11 @@ describe("ClassLevelsService", () => {
 
   test("writes 0 spells a day at a spell level the class casts but gives no uses at yet, as the SRD: a paladin's", async () => {
     const core = await findSeededRuleset(DND35_RULESET_NAME);
-    const paladin = (await Klasses.findOne(db, { name: "Paladin", rulesetId: core.id }))!;
+    const paladin = (await Entities.findOne<Klass>(db, {
+      entityType: "klasses",
+      name: "Paladin",
+      rulesetId: core.id,
+    }))!;
     const perDay = (await ClassLevelsService.getClassLevelSpells(core.id, paladin.id)).map((l) => l.spellsPerDay);
     // None before the 4th level, its 1st-level spells its bonus spells alone fill at the 4th and 5th, one at the 6th
     expect(perDay.slice(2, 6)).toEqual([{}, { 1: 0 }, { 1: 0 }, { 1: 1 }]);
@@ -311,7 +327,11 @@ describe("ClassLevelsService", () => {
 
   test("reads a spell list's slots whatever its class's name holds: the Ur-priest's", async () => {
     const divine = await findSeededRuleset(DND35_COMPLETE_DIVINE_NAME);
-    const urPriest = (await Klasses.findOne(db, { name: "Ur-priest", rulesetId: divine.id }))!;
+    const urPriest = (await Entities.findOne<Klass>(db, {
+      entityType: "klasses",
+      name: "Ur-priest",
+      rulesetId: divine.id,
+    }))!;
     const perDay = (await ClassLevelsService.getClassLevelSpells(divine.id, urPriest.id)).map((l) => l.spellsPerDay);
     // Complete Divine's table: 4 and 2 at the 1st level; at the 4th, 6/3/2/1/0 (its 4th-level spells its bonus spells
     // alone fill)
@@ -380,22 +400,26 @@ describe("ClassLevelsService", () => {
   describe("deleting a level", () => {
     test("deletes its feats, powers, saves and customizations", async () => {
       const { session, ruleset, klass, aptitude } = await setup();
-      const [feat] = await Feats.create(db, { name: "Cleave", rulesetId: ruleset.id });
-      const [power] = await Powers.create(db, { name: "Rage", rulesetId: ruleset.id });
+      const [feat] = await Entities.create<Feat>(db, "feats", { name: "Cleave", rulesetId: ruleset.id });
+      const [power] = await Entities.create<Power>(db, "powers", { name: "Rage", rulesetId: ruleset.id });
       const save = await createSave(ruleset.id, "Fortitude");
       await createLevel(session, ruleset.id, klass.id, 1);
       const level = await createLevel(session, ruleset.id, klass.id, 2, {
         feats: [{ featId: feat.id, aptitudeId: aptitude.id }],
         saves: [{ saveId: save.id, base: 2 }],
       });
-      await KlassLevelPowers.create(db, { klassLevelId: level.id, powerId: power.id, aptitudeId: aptitude.id });
+      await Joins.create<KlassLevelPower>(db, "klass_level_powers", {
+        klassLevelId: level.id,
+        powerId: power.id,
+        aptitudeId: aptitude.id,
+      });
       await Modifiers.create(db, modifier(level.id, "combat.bab", "1"));
 
       await ClassLevelsService.deleteClassLevel(session, ruleset.id, klass.id, level.id);
 
-      expect(await KlassLevels.findOne(db, { id: level.id })).toBeUndefined();
-      for (const join of [KlassLevelFeats, KlassLevelPowers, KlassLevelSaves])
-        expect(await join.findMany(db, { klassLevelIds: [level.id] })).toEqual([]);
+      expect(await Entities.findOne<KlassLevel>(db, { entityType: "klass_levels", id: level.id })).toBeUndefined();
+      for (const join of ["klass_level_feats", "klass_level_powers", "klass_level_saves"])
+        expect(await Joins.findMany(db, { join, fromIds: [level.id] })).toEqual([]);
 
       expect(await Modifiers.findMany(db, { sourceIds: [level.id], sourceType: "klass_levels" })).toEqual([]);
       expect(await Requirements.findMany(db, { entityIds: [level.id], entityType: "klass_levels" })).toEqual([]);
@@ -443,7 +467,11 @@ describe("ClassLevelsService", () => {
         rulesetId: fork.id,
       });
       expect(created.klassId).toBe(snapshot!.forkedEntityId);
-      expect((await KlassLevels.findMany(db, { klassId: klass.id })).map((l) => l.level)).toEqual([1]);
+      expect(
+        (await Entities.findMany<KlassLevel>(db, { entityType: "klass_levels", ownerIds: [klass.id] })).map(
+          (l) => l.level,
+        ),
+      ).toEqual([1]);
     });
 
     test("edits and deletes the fork's copy of an inherited level, leaving the parent's", async () => {

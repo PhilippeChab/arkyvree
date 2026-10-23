@@ -1,17 +1,22 @@
 import type { Db } from "@/drizzle/database.ts";
-import type { CharacterInput, CharacterRows } from "@/engine/index.ts";
+import type {
+  CharacterAbility,
+  CharacterInput,
+  CharacterLanguage,
+  CharacterRows,
+  LevelAbilityIncrease,
+  LevelFeat,
+  LevelPower,
+  LevelSkill,
+} from "@/engine/index.ts";
 import {
   Campaigns,
-  CharacterAbilities,
   CharacterInventory,
-  CharacterLanguages,
-  CharacterLevelAbilityIncreases,
-  CharacterLevelFeats,
-  CharacterLevelPowers,
   CharacterLevels,
-  CharacterLevelSkills,
+  CharacterLinks,
   Characters,
   Modifiers,
+  Picks,
   PlayerCharacters,
   Players,
   Requirements,
@@ -29,16 +34,19 @@ async function readCharacterRows(database: Db, character: Character): Promise<Ch
   const playerCharacter = await PlayerCharacters.findOne(database, { characterId });
   const player = playerCharacter ? await Players.findOne(database, { id: playerCharacter.playerId }) : undefined;
   const campaign = player ? await Campaigns.findOne(database, { id: player.campaignId }) : undefined;
-  const abilities = await CharacterAbilities.findMany(database, { characterId });
-  const languages = await CharacterLanguages.findMany(database, { characterId });
+  const abilities = await CharacterLinks.findMany<CharacterAbility>(database, { link: "abilities", characterId });
+  const languages = await CharacterLinks.findMany<CharacterLanguage>(database, { link: "languages", characterId });
   const inventory = await CharacterInventory.findMany(database, { characterId });
   const levels = await CharacterLevels.findMany(database, { characterId });
   const characterLevelIds = levels.map((level) => level.id);
   const picks = {
-    abilityIncreases: await CharacterLevelAbilityIncreases.findMany(database, { characterLevelIds }),
-    skills: await CharacterLevelSkills.findMany(database, { characterLevelIds }),
-    feats: await CharacterLevelFeats.findMany(database, { characterLevelIds }),
-    powers: await CharacterLevelPowers.findMany(database, { characterLevelIds }),
+    abilityIncreases: await Picks.findMany<LevelAbilityIncrease>(database, {
+      pick: "abilityIncreases",
+      characterLevelIds,
+    }),
+    skills: await Picks.findMany<LevelSkill>(database, { pick: "skills", characterLevelIds }),
+    feats: await Picks.findMany<LevelFeat>(database, { pick: "feats", characterLevelIds }),
+    powers: await Picks.findMany<LevelPower>(database, { pick: "powers", characterLevelIds }),
   };
   const modifiers = await Modifiers.findMany(database, { sourceIds: [characterId] });
   const requirements = await Requirements.findMany(database, { entityIds: modifiers.map((modifier) => modifier.id) });

@@ -1,5 +1,6 @@
 import {
   Engine,
+  type Klass,
   type LevelPlanRequest,
   type StepOption,
   type StepOptionGroup,
@@ -7,7 +8,7 @@ import {
 } from "@/engine/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { db } from "@/server/database/index.ts";
-import { Feats, Klasses, Powers } from "@/server/repositories/index.ts";
+import { Entities } from "@/server/repositories/index.ts";
 import { withEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
 import type { Session } from "@/shared/relations.ts";
 
@@ -80,7 +81,7 @@ export function Plans<B extends Constructor>(Base: B) {
           case "feats": {
             if (picker.group === undefined) {
               const filters = { ...opened.picker.groupFilters, search };
-              const result = await Feats.findOptionGroupPage(db, filters, pagination);
+              const result = await Entities.findOptionGroupPage(db, { entityType: "feats", ...filters }, pagination);
               const items = opened.picker.describeGroups(result.items).map((row): StepOptionGroup => ({
                 count: row.variantCount,
                 description: row.description,
@@ -92,19 +93,24 @@ export function Plans<B extends Constructor>(Base: B) {
               }));
               return { grouped: true as const, items, page: result.page, nextPage: result.nextPage };
             }
-            const result = await Feats.findOptionPage(db, { ...opened.picker.filters, search }, pagination);
+            const result = await Entities.findOptionPage(
+              db,
+              { entityType: "feats", ...opened.picker.filters, search },
+              pagination,
+            );
             const items = opened.picker.describe(result.items).map(optionOf);
             return { grouped: false as const, items, page: result.page, nextPage: result.nextPage };
           }
           case "klasses": {
             const filters = {
+              entityType: "klasses",
               rulesetId: character.record.rulesetId,
               ...scope.rulesetData.cow.listFilters,
-              characterId,
+              orderByAdvancementsOf: characterId,
               ...opened.picker.filters,
               search,
             };
-            const result = await Klasses.findPage(db, filters, pagination);
+            const result = await Entities.findPage<Klass>(db, filters, pagination);
             const items = opened.picker.describe(result.items).map((klass): StepOption => ({
               ...optionOf(klass),
               track: { last: klass.maxLevel, left: klass.levelsLeft, next: klass.nextLevel },
@@ -112,7 +118,11 @@ export function Plans<B extends Constructor>(Base: B) {
             return { grouped: false as const, items, page: result.page, nextPage: result.nextPage };
           }
           case "powers": {
-            const result = await Powers.findOptionPage(db, { ...opened.picker.filters, search }, pagination);
+            const result = await Entities.findOptionPage(
+              db,
+              { entityType: "powers", ...opened.picker.filters, search },
+              pagination,
+            );
             const items = opened.picker.describe(result.items).map(optionOf);
             return { grouped: false as const, items, page: result.page, nextPage: result.nextPage };
           }

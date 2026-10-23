@@ -1,11 +1,9 @@
 import { describe, expect, test } from "bun:test";
 
-import { eq } from "drizzle-orm";
-
+import type { Feat, Klass, KlassLevelPower, Power } from "@/engine/index.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
-import { Feats, Klasses, KlassLevelPowers, Powers } from "@/server/repositories/index.ts";
-import StoredJoins from "@/server/repositories/stored/StoredJoins.ts";
+import { Entities, Joins } from "@/server/repositories/index.ts";
 import { AptitudesService } from "@/server/services/rulesets/aptitudes/index.ts";
 import { ClassLevelsService } from "@/server/services/rulesets/classes/levels/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
@@ -19,7 +17,7 @@ import { createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
  * a grant is through (`via`).
  */
 async function linksOf(join: string, part: "to" | "via", aptitudeId: string) {
-  return await StoredJoins.findRows(db, join, eq(StoredJoins.getPart(part), aptitudeId));
+  return await Joins.findMany(db, { join, ...(part === "to" ? { toIds: [aptitudeId] } : { viaIds: [aptitudeId] }) });
 }
 
 // CRUD, ownership and copy-on-write are covered for every entity in EntityServices.test.ts.
@@ -73,15 +71,23 @@ describe("AptitudesService", () => {
       aptitudes: [{ id: powerAptitude.id }],
     });
 
-    const [feat] = await Feats.create(db, { name: "Granted Feat", rulesetId: ruleset.id });
-    const [power] = await Powers.create(db, { name: "Granted Power", rulesetId: ruleset.id });
-    const [klass] = await Klasses.create(db, { name: "Granting Class", rulesetId: ruleset.id, hd: 10 });
+    const [feat] = await Entities.create<Feat>(db, "feats", { name: "Granted Feat", rulesetId: ruleset.id });
+    const [power] = await Entities.create<Power>(db, "powers", { name: "Granted Power", rulesetId: ruleset.id });
+    const [klass] = await Entities.create<Klass>(db, "klasses", {
+      name: "Granting Class",
+      rulesetId: ruleset.id,
+      hd: 10,
+    });
     const level = await ClassLevelsService.createClassLevel(session, ruleset.id, klass.id, {
       level: 1,
       fields: { bab: 1, skills: 2 },
       feats: [{ featId: feat.id, aptitudeId: featAptitude.id }],
     });
-    await KlassLevelPowers.create(db, { klassLevelId: level.id, powerId: power.id, aptitudeId: powerAptitude.id });
+    await Joins.create<KlassLevelPower>(db, "klass_level_powers", {
+      klassLevelId: level.id,
+      powerId: power.id,
+      aptitudeId: powerAptitude.id,
+    });
 
     await AptitudesService.deleteAptitude(session, ruleset.id, featAptitude.id);
     await AptitudesService.deleteAptitude(session, ruleset.id, powerAptitude.id);

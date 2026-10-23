@@ -3,9 +3,10 @@ import { describe, expect, test } from "bun:test";
 import { and, eq, isNull } from "drizzle-orm";
 
 import { entitiesInRules } from "@/drizzle/schema.ts";
+import type { Item } from "@/engine/index.ts";
 import { ITEM_FIELDS } from "@/engine/rulesets/dnd3.5/entities/items/fields.ts";
 import { db } from "@/server/database/index.ts";
-import { Items, Properties } from "@/server/repositories/index.ts";
+import { Entities, Properties } from "@/server/repositories/index.ts";
 import {
   DAMAGE_TYPE,
   ITEM_HAS_CHARGES,
@@ -40,7 +41,9 @@ describe("An item's fields", () => {
       .from(entitiesInRules)
       .where(and(eq(entitiesInRules.type, "items"), isNull(entitiesInRules.deletedAt)));
     const ids = itemIds.map(({ id }) => id);
-    const sources = new Map((await Items.findMany(db, { ids })).map((item) => [item.id, item.sourceItemId]));
+    const sources = new Map(
+      (await Entities.findMany<Item>(db, { entityType: "items", ids })).map((item) => [item.id, item.sourceItemId]),
+    );
     const rows = (await Properties.findMany(db, { entityIds: ids, entityType: "items" })).map((property) => ({
       itemId: property.entityId,
       sourceItemId: sources.get(property.entityId) ?? null,

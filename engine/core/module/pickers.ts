@@ -21,21 +21,25 @@ export interface OpenedPicker<Filters, Row extends { id: string }, Details> {
   readonly filters: Filters;
 }
 
-/** What a page of a list's entities is read with: those of the list (`ids`), less those left out (`excludeIds`). */
+/**
+ * What a page of a list's entities is read with: those of the list (`ids`), less those left out (`excludeIds`), of the
+ * values of `columns` (a feat's selectable) and of `fields` (the options of a group, by the field that names it).
+ */
 export interface PickFilters {
+  columns?: Record<string, unknown>;
   excludeIds: string[];
-  /** The options of a group, by the property that names it. */
-  family?: { type: string; value: string };
+  fields?: Record<string, string>;
   ids: string[];
 }
 
 /**
- * What a page of a list's groups is read with: the list's entities, less those left out, and the group each one is in
- * (`families`, as the ruleset groups them): an entity in none stands alone.
+ * What a page of a list's groups is read with: the list's entities, less those left out, of the values of `columns`,
+ * and the group each one is in (`groups`, as the ruleset groups them): an entity in none stands alone.
  */
 export interface PickGroupFilters {
+  columns?: Record<string, unknown>;
   excludeIds: string[];
-  families: { family: string; id: string }[];
+  groups: { family: string; id: string }[];
   ids: string[];
 }
 

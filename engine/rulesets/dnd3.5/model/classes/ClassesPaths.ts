@@ -1,9 +1,8 @@
 import type { PathCategory } from "@/engine/core/paths/PathCategory.ts";
-import type { RulesetData } from "@/engine/core/view/index.ts";
+import type { Klass, RulesetData } from "@/engine/core/view/index.ts";
 import { type Dnd35Components } from "@/engine/rulesets/dnd3.5/model/CharacterComponents.ts";
 import { getOperators, LEVEL_MODIFIER_OPERATORS } from "@/shared/customization/operators.ts";
 import { deriveNameLabels, deriveSegmentLabels, isLeafOfKind, type TargetPath } from "@/shared/customization/target.ts";
-import type { Klass } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 /** A class's paths, `{name}` its name: its levels, and the caster levels prestige classes add to it (a modifier's). */

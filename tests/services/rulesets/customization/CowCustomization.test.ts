@@ -5,17 +5,9 @@
 
 import { describe, expect, test } from "bun:test";
 
+import type { Feat, Klass, KlassLevel, RulesetAbility } from "@/engine/index.ts";
 import { db } from "@/server/database/index.ts";
-import {
-  Abilities,
-  EntitySnapshots,
-  Feats,
-  Klasses,
-  KlassLevels,
-  Modifiers,
-  Properties,
-  Requirements,
-} from "@/server/repositories/index.ts";
+import { Entities, EntitySnapshots, Modifiers, Properties, Requirements } from "@/server/repositories/index.ts";
 import { RulesetChangesService } from "@/server/services/rulesets/changes/index.ts";
 import { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";
 import { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";
@@ -93,12 +85,17 @@ async function setup() {
   const { session } = await createTestUser();
   const parent = await createTestRuleset(owner.id, { private: false, status: "Published" });
   const rulesetId = parent.id;
-  await Abilities.createMany(
+  await Entities.createMany<RulesetAbility>(
     db,
+    "abilities",
     ["Strength", "Dexterity"].map((name) => ({ name, description: name, rulesetId })),
   );
 
-  const [feat] = await Feats.create(db, { name: "Power Attack", description: "Parent feat", rulesetId });
+  const [feat] = await Entities.create<Feat>(db, "feats", {
+    name: "Power Attack",
+    description: "Parent feat",
+    rulesetId,
+  });
   const [modifier] = await Modifiers.create(db, {
     sourceId: feat.id,
     sourceType: "feats",
@@ -122,8 +119,8 @@ async function setup() {
     value: "13",
   });
 
-  const [klass] = await Klasses.create(db, { name: "Fighter", rulesetId, hd: 10 });
-  const [level] = await KlassLevels.create(db, { klassId: klass.id, level: 1 });
+  const [klass] = await Entities.create<Klass>(db, "klasses", { name: "Fighter", rulesetId, hd: 10 });
+  const [level] = await Entities.create<KlassLevel>(db, "klass_levels", { klassId: klass.id, level: 1 });
   for (const [sourceId, sourceType] of [
     [level.id, "klass_levels"],
     [klass.id, "klasses"],
@@ -248,11 +245,12 @@ describe("customizing an inherited feat", () => {
   test("copies nothing when the ruleset owns the feat", async () => {
     const { user, session } = await createTestUser();
     const ruleset = await createTestRuleset(user.id);
-    await Abilities.createMany(
+    await Entities.createMany<RulesetAbility>(
       db,
+      "abilities",
       ["Strength", "Dexterity"].map((name) => ({ name, description: name, rulesetId: ruleset.id })),
     );
-    const [feat] = await Feats.create(db, { name: "Owned Feat", rulesetId: ruleset.id });
+    const [feat] = await Entities.create<Feat>(db, "feats", { name: "Owned Feat", rulesetId: ruleset.id });
     const modifier = await ModifiersService.createModifier(session, ruleset.id, "feats", feat.id, dexterityBonus);
 
     expect(

@@ -1,13 +1,13 @@
-import { Engine } from "@/engine/index.ts";
+import { Engine, type PowerWithAptitudes } from "@/engine/index.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { Powers } from "@/server/repositories/index.ts";
+import { Entities } from "@/server/repositories/index.ts";
 import EntityWriter, { type EntityBody } from "@/server/services/rulesets/EntityWriter.ts";
 import type { Session } from "@/shared/relations.ts";
 
 class PowersService {
   /** What its creates, updates and deletes write, in one order around the plans its rules give. */
-  private readonly writer = new EntityWriter("powers", Powers);
+  private readonly writer = new EntityWriter("powers");
 
   async createPower(session: Session, rulesetId: string, body: EntityBody) {
     return await this.writer.create(session, rulesetId, body.name, (scope) =>
@@ -43,9 +43,9 @@ class PowersService {
     return await withRulesetScope(db, rulesetId, async (scope) => {
       const { aptitudeId, level, ...filters } = where;
       const list = Engine.for(scope).entities("powers").openList({ aptitudeId, childOnly: where.childOnly, level });
-      const result = await Powers.findPage(
+      const result = await Entities.findPage<PowerWithAptitudes>(
         db,
-        { rulesetId, ...scope.rulesetData.cow.listFilters, ...filters, ...list.filters },
+        { entityType: "powers", rulesetId, ...scope.rulesetData.cow.listFilters, ...filters, ...list.filters },
         pagination,
       );
       return { ...result, items: list.describe(result.items) };

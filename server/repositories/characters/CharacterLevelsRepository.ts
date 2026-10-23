@@ -2,44 +2,41 @@ import { and, eq, inArray, isNull, type SQL, sql } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
 import { advancementPicksInCharacter, advancementsInCharacter } from "@/drizzle/schema.ts";
-import { Engine } from "@/engine/index.ts";
+import { type CharacterLevel, Engine } from "@/engine/index.ts";
 import BaseRepository from "@/server/repositories/BaseRepository.ts";
 import StoredCharacters from "@/server/repositories/stored/StoredCharacters.ts";
 import { toQualified } from "@/server/repositories/stored/toQualified.ts";
-import type { CharacterLevel } from "@/shared/relations.ts";
 
 /**
  * A character's levels: its advancements (`character.advancements`), each in a track (its class level), and the value
- * its module's value step holds of it (`advancement.value`: 3.5's hit points, its `hp` pick).
+ * its module's value step holds of it (`advancement.value`: 3.5's hit points, its `hp` pick), each read as its module's
+ * row (`Engine.storage().advancementRowOf`).
  */
 class CharacterLevelsRepository extends BaseRepository<typeof advancementsInCharacter> {
   constructor() {
     super(advancementsInCharacter);
   }
 
-  /** A level's columns: its advancement's, its track under the module's name, and its value step's amount. */
-  private columns() {
-    const { track, value } = Engine.storage().character().advancement;
-    return {
-      id: advancementsInCharacter.id,
-      characterId: advancementsInCharacter.characterId,
-      [track]: advancementsInCharacter.trackId,
-      [value.column]: sql<number>`(SELECT ${advancementPicksInCharacter.amount} FROM ${advancementPicksInCharacter} WHERE ${advancementPicksInCharacter.advancementId} = ${toQualified(advancementsInCharacter.id)} AND ${advancementPicksInCharacter.step} = ${value.step})`,
-      position: advancementsInCharacter.position,
-      createdAt: advancementsInCharacter.createdAt,
-      updatedAt: advancementsInCharacter.updatedAt,
-      deletedAt: advancementsInCharacter.deletedAt,
-    };
-  }
-
-  /** The levels a condition picks, in the order their characters took them. */
+  /** The levels a condition picks, in the order their characters took them, as the module's rows. */
   private async rows(db: Db, where: SQL | undefined): Promise<CharacterLevel[]> {
+    const { step } = Engine.storage().character().advancement.value;
     const rows = await db
-      .select(this.columns())
+      .select({
+        characterId: this.table.characterId,
+        createdAt: this.table.createdAt,
+        deletedAt: this.table.deletedAt,
+        id: this.table.id,
+        position: this.table.position,
+        trackId: this.table.trackId,
+        updatedAt: this.table.updatedAt,
+        value: sql<
+          number | null
+        >`(SELECT ${advancementPicksInCharacter.amount} FROM ${advancementPicksInCharacter} WHERE ${advancementPicksInCharacter.advancementId} = ${toQualified(this.table.id)} AND ${advancementPicksInCharacter.step} = ${step})`,
+      })
       .from(this.table)
       .where(where)
       .orderBy(this.orderBy(this.table.characterId), this.orderBy(this.table.position));
-    return rows as unknown as CharacterLevel[];
+    return rows.map((row) => Engine.storage().advancementRowOf(row) as CharacterLevel);
   }
 
   /** Writes a level's value (its hit points), replacing the one it held. */

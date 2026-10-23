@@ -6,11 +6,11 @@ import { CustomizationPageEntity } from "@/engine/core/entities/index.ts";
 import type { EntityFieldValues, EntityForm } from "@/engine/core/fields/index.ts";
 import type { EntityWrites, PropertyValue } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
+import type { Item } from "@/engine/core/view/index.ts";
 import { RULESET_LIMITS } from "@/engine/rulesets/dnd3.5/limits.ts";
 import ItemPlacement from "@/engine/rulesets/dnd3.5/rules/ItemPlacement.ts";
 import type { ItemLocation } from "@/shared/enums.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
-import type { Item } from "@/shared/relations.ts";
 import { TEMPLATE_ITEM_TYPES, type TemplateItemType } from "@/vocabulary/dnd3.5/itemTemplates.ts";
 
 import { ITEM_COLUMNS } from "./columns.ts";
@@ -319,8 +319,9 @@ export default class ItemEntity extends CustomizationPageEntity<
    * The ruleset's templates of a type (`type`; every type's without one), as the server reads them (`filters`): refused
    * for a type no item can be based on a template of.
    */
-  openTemplates(type?: string): { filters: { isTemplate: true; type?: TemplateItemType } } {
-    return { filters: { isTemplate: true, type: RulesError.parse(TEMPLATE_TYPE.optional(), type, ["type"]) } };
+  openTemplates(type?: string): { filters: { columns: { isTemplate: true; type?: TemplateItemType } } } {
+    const parsed = RulesError.parse(TEMPLATE_TYPE.optional(), type, ["type"]);
+    return { filters: { columns: { isTemplate: true, ...(parsed && { type: parsed }) } } };
   }
 
   /**

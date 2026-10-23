@@ -11,7 +11,7 @@ import { entitiesInRules, rulesetsInRules } from "@/drizzle/schema.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { FeatsAptitudes } from "@/server/repositories/index.ts";
+import { Joins } from "@/server/repositories/index.ts";
 import { AptitudesService } from "@/server/services/rulesets/aptitudes/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { PowersService } from "@/server/services/rulesets/powers/index.ts";
@@ -228,7 +228,10 @@ describe("aptitude ownership (seed-level invariants)", () => {
     const [cwManyshot] = await namedEntities("feats", ["Manyshot"], [cwId]);
     expect(cwManyshot).toBeDefined();
 
-    const links = await FeatsAptitudes.findMany(db, { featId: cwManyshot.id });
+    const links = await Joins.findMany<{ aptitudeId: string; featId: string }>(db, {
+      join: "feats_aptitudes",
+      fromIds: [cwManyshot.id],
+    });
     const aptIds = new Set(links.map((l) => l.aptitudeId));
 
     expect(aptIds.has(srdGeneral.id)).toBe(true);
@@ -248,7 +251,10 @@ describe("aptitude ownership (seed-level invariants)", () => {
 
     const [cwManyshot] = await namedEntities("feats", ["Manyshot"], [cwId]);
 
-    const links = await FeatsAptitudes.findMany(db, { featId: cwManyshot.id });
+    const links = await Joins.findMany<{ aptitudeId: string; featId: string }>(db, {
+      join: "feats_aptitudes",
+      fromIds: [cwManyshot.id],
+    });
 
     expect(links.some((l) => l.aptitudeId === cwRonin.id)).toBe(true);
   });

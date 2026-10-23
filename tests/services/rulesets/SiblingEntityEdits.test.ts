@@ -1,8 +1,9 @@
 import { expect, test } from "bun:test";
 
+import type { Item, Klass, KlassLevel, Race } from "@/engine/index.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { Items, Klasses, KlassLevels, Modifiers, Properties, Races, Rulesets } from "@/server/repositories/index.ts";
+import { Entities, Modifiers, Properties, Rulesets } from "@/server/repositories/index.ts";
 import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
 import { ClassLevelsService } from "@/server/services/rulesets/classes/levels/index.ts";
 import { ClassSkillsService } from "@/server/services/rulesets/classes/skills/index.ts";
@@ -36,10 +37,10 @@ async function setup(entityType: EntityType, omitLastLevel = false) {
   const baseId = host.ancestorRulesetIds[0];
   const source =
     entityType === "races"
-      ? (await Races.findOne(db, { rulesetId: baseId, name: "Human" }))!
+      ? (await Entities.findOne<Race>(db, { entityType: "races", rulesetId: baseId, name: "Human" }))!
       : entityType === "klasses"
-        ? (await Klasses.findOne(db, { rulesetId: baseId, name: "Fighter" }))!
-        : (await Items.create(db, { rulesetId: baseId, name: "Sibling item fixture" }))[0];
+        ? (await Entities.findOne<Klass>(db, { entityType: "klasses", rulesetId: baseId, name: "Fighter" }))!
+        : (await Entities.create<Item>(db, "items", { rulesetId: baseId, name: "Sibling item fixture" }))[0];
   if (entityType === "items") invalidateSeededRuleset(baseId);
   const marker = MARKERS[entityType];
   const extensions: string[] = [];
@@ -60,7 +61,9 @@ async function setup(entityType: EntityType, omitLastLevel = false) {
       });
     }
     if (omitLastLevel) {
-      const last = (await KlassLevels.findMany(db, { klassId: copy.id })).find((level) => level.level === 20)!;
+      const last = (await Entities.findMany<KlassLevel>(db, { entityType: "klass_levels", ownerIds: [copy.id] })).find(
+        (level) => level.level === 20,
+      )!;
       await ClassLevelsService.deleteClassLevel(session, extension.id, copy.id, last.id);
     }
     await Rulesets.update(

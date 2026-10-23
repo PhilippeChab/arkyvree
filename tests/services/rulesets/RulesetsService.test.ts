@@ -4,6 +4,19 @@ import type { InferInsertModel } from "drizzle-orm";
 
 import { DND35_COMPLETE_WARRIOR_NAME } from "@/content/dnd3.5/rulesetNames.ts";
 import { type rulesetsInRules, starredRulesetsInAccount } from "@/drizzle/schema.ts";
+import type {
+  Aptitude,
+  Feat,
+  FeatWithAptitudes,
+  Item,
+  Klass,
+  KlassLevel,
+  KlassSkill,
+  LevelFeat,
+  Race,
+  RulesetAbility,
+  Skill,
+} from "@/engine/index.ts";
 import { db } from "@/server/database/index.ts";
 import {
   BadRequestError,
@@ -13,23 +26,15 @@ import {
   UnprocessableEntityError,
 } from "@/server/errors/index.ts";
 import {
-  Abilities,
-  Aptitudes,
-  CharacterLevelFeats,
+  Entities,
   EntitySnapshots,
-  Feats,
-  FeatsAptitudes,
-  Items,
-  Klasses,
-  KlassLevels,
-  KlassSkills,
+  Joins,
   Modifiers,
+  Picks,
   Players,
   Properties,
-  Races,
   Requirements,
   Rulesets,
-  Skills,
   StarredRulesets,
 } from "@/server/repositories/index.ts";
 import { RulesetChangesService } from "@/server/services/rulesets/changes/index.ts";
@@ -61,18 +66,26 @@ function fork(
 
 /** A race, a class, a skill and a feat: what a ruleset needs to be published. */
 async function addPlayableContent(rulesetId: string) {
-  const [ability] = await Abilities.create(db, { name: "Strength", description: "Strength", rulesetId });
-  const [race] = await Races.create(db, { name: "Human", rulesetId, size: "Medium", baseSpeed: 30 });
-  const [klass] = await Klasses.create(db, { name: "Fighter", rulesetId, hd: 10 });
-  const [skill] = await Skills.create(db, { name: "Climb", rulesetId, primaryAbilityId: ability.id });
-  const [feat] = await Feats.create(db, { name: "Toughness", rulesetId });
+  const [ability] = await Entities.create<RulesetAbility>(db, "abilities", {
+    name: "Strength",
+    description: "Strength",
+    rulesetId,
+  });
+  const [race] = await Entities.create<Race>(db, "races", { name: "Human", rulesetId, size: "Medium", baseSpeed: 30 });
+  const [klass] = await Entities.create<Klass>(db, "klasses", { name: "Fighter", rulesetId, hd: 10 });
+  const [skill] = await Entities.create<Skill>(db, "skills", {
+    name: "Climb",
+    rulesetId,
+    primaryAbilityId: ability.id,
+  });
+  const [feat] = await Entities.create<Feat>(db, "feats", { name: "Toughness", rulesetId });
   return { race, klass, skill, feat };
 }
 
 /** A published ruleset of `userId` (a system one when null), with a template item so forking it doesn't seed the engine's. */
 async function createParent(userId: string | null = null, values: RulesetValues = {}) {
   const ruleset = await createTestRuleset(userId, { private: false, status: "Published", ...values });
-  await Items.create(db, { name: "Template", rulesetId: ruleset.id, isTemplate: true });
+  await Entities.create<Item>(db, "items", { name: "Template", rulesetId: ruleset.id, isTemplate: true });
   return ruleset;
 }
 
@@ -81,12 +94,13 @@ async function setupChanges(values: { private?: boolean } = {}) {
   const { user: owner } = await createTestUser();
   const { user, session } = await createTestUser();
   const parent = await createParent(owner.id);
-  const [aptitude] = await Aptitudes.create(db, { name: "General", rulesetId: parent.id });
-  const [modified, deleted, untouched] = await Feats.createMany(
+  const [aptitude] = await Entities.create<Aptitude>(db, "aptitudes", { name: "General", rulesetId: parent.id });
+  const [modified, deleted, untouched] = await Entities.createMany<Feat>(
     db,
+    "feats",
     ["Power Attack", "Cleave", "Dodge"].map((name) => ({ name, rulesetId: parent.id })),
   );
-  await FeatsAptitudes.create(db, { featId: modified.id, aptitudeId: aptitude.id });
+  await Joins.create(db, "feats_aptitudes", { featId: modified.id, aptitudeId: aptitude.id });
   const forked = await fork(session, parent, values);
   return { user, session, owner, parent, fork: forked, aptitude, modified, deleted, untouched };
 }
@@ -215,12 +229,15 @@ describe("RulesetsService", () => {
         description: "Parent description",
         extensionRulesetIds: [extension.id],
       });
-      const [aptitude] = await Aptitudes.create(db, { name: "General", rulesetId: parent.id });
+      const [aptitude] = await Entities.create<Aptitude>(db, "aptitudes", { name: "General", rulesetId: parent.id });
       const feat = await FeatsService.createFeat({ ...session, userId: owner.id }, parent.id, {
         name: "Toughness",
         aptitudeIds: [aptitude.id],
       });
-      const [intelligence] = await Abilities.create(db, { name: "Intelligence", rulesetId: parent.id });
+      const [intelligence] = await Entities.create<RulesetAbility>(db, "abilities", {
+        name: "Intelligence",
+        rulesetId: parent.id,
+      });
       await Properties.createMany(db, [
         { entityId: parent.id, entityType: "rulesets", type: RULESET_SKILL_POINT_ABILITY_ID, value: intelligence.id },
       ]);
@@ -237,7 +254,10 @@ describe("RulesetsService", () => {
         extensionRulesetIds: [extension.id],
         baseRules: parent.baseRules,
       });
-      expect((await Feats.findPage(db, { rulesetId: created.id }, firstPage)).items).toEqual([]);
+      expect(
+        (await Entities.findPage<FeatWithAptitudes>(db, { entityType: "feats", rulesetId: created.id }, firstPage))
+          .items,
+      ).toEqual([]);
       expect(await EntitySnapshots.findMany(db, { rulesetId: created.id })).toEqual([]);
       expect(await FeatsService.getFeat(created.id, feat.id)).toMatchObject({
         id: feat.id,
@@ -254,7 +274,14 @@ describe("RulesetsService", () => {
     test("gives the fork no template items of its own: it reads its base's through its chain", async () => {
       const { session } = await createTestUser();
       const parent = await createParent();
-      expect(await Items.findMany(db, { rulesetId: (await fork(session, parent)).id, isTemplate: true })).toEqual([]);
+      expect(
+        await Entities.findList<Item>(db, {
+          entityType: "items",
+          rulesetId: (await fork(session, parent)).id,
+          columns: { isTemplate: true },
+          order: "name",
+        }),
+      ).toEqual([]);
     });
 
     test("refuses a fork of a fork, of a draft, of a missing ruleset, or under a taken name", async () => {
@@ -275,7 +302,11 @@ describe("RulesetsService", () => {
       const { session } = await createTestUser();
       const { rulesetId } = await getSeedCtx();
       const created = await fork(session, { id: rulesetId }, { private: true });
-      const feats = await Feats.findPage(db, { rulesetId }, { limit: 26, page: 1 });
+      const feats = await Entities.findPage<FeatWithAptitudes>(
+        db,
+        { entityType: "feats", rulesetId },
+        { limit: 26, page: 1 },
+      );
       for (const feat of feats.items) expect((await copyEntity(db, "feats", feat.id, created)).id).not.toBe(feat.id);
 
       expect(await EntitySnapshots.findMany(db, { rulesetId: created.id })).toHaveLength(26);
@@ -292,7 +323,7 @@ describe("RulesetsService", () => {
       await createTestCharacter(user.id, { rulesetId: ruleset.id, raceId: race.id });
 
       expect(await RulesetsService.archiveRuleset(session, ruleset.id)).toMatchObject({ status: "Archived" });
-      expect(await Feats.findOne(db, { id: feat.id })).toMatchObject({ deletedAt: null });
+      expect(await Entities.findOne<Feat>(db, { entityType: "feats", id: feat.id })).toMatchObject({ deletedAt: null });
       expect(await Properties.findMany(db, { entityIds: [feat.id], entityType: "feats" })).toHaveLength(1);
 
       expect(await RulesetsService.unarchiveRuleset(session, ruleset.id)).toMatchObject({ status: "Draft" });
@@ -337,8 +368,8 @@ describe("RulesetsService", () => {
 
       const partial = await createTestRuleset(user.id);
       const { race, klass } = await addPlayableContent(partial.id);
-      await Races.delete(db, { id: race.id });
-      await Klasses.delete(db, { id: klass.id });
+      await Entities.delete<Race>(db, { entityType: "races", id: race.id });
+      await Entities.delete<Klass>(db, { entityType: "klasses", id: klass.id });
       expect(RulesetsService.publishRuleset(session, partial.id)).rejects.toMatchObject({
         refusal: "unprocessable",
         message: "Ruleset requires at least one of each: race, class",
@@ -476,7 +507,7 @@ describe("RulesetsService", () => {
         description: "Changed",
       });
       await FeatsService.deleteFeat(session, fork.id, deleted.id);
-      const [added] = await Feats.create(db, { name: "Homebrew", rulesetId: fork.id });
+      const [added] = await Entities.create<Feat>(db, "feats", { name: "Homebrew", rulesetId: fork.id });
 
       const changes = await RulesetChangesService.getChanges(session, fork.id);
       expect([...changes].sort((a, b) => a.name.localeCompare(b.name))).toEqual([
@@ -533,7 +564,12 @@ describe("RulesetsService", () => {
         expect(await Modifiers.findMany(db, { sourceIds: [copy.id], sourceType: "feats" })).toEqual([]);
         expect(await Properties.findMany(db, { entityIds: [copy.id], entityType: "feats" })).toEqual([]);
         expect(await Requirements.findMany(db, { entityIds: [copy.id], entityType: "feats" })).toEqual([]);
-        expect(await FeatsAptitudes.findMany(db, { featIds: [copy.id] })).toEqual([]);
+        expect(
+          await Joins.findMany<{ aptitudeId: string; featId: string }>(db, {
+            join: "feats_aptitudes",
+            fromIds: [copy.id],
+          }),
+        ).toEqual([]);
       });
 
       test("brings back an inherited feat the fork deleted", async () => {
@@ -547,28 +583,38 @@ describe("RulesetsService", () => {
       test("deletes a copied class's levels and class skills", async () => {
         const { session, parent, fork } = await setupChanges();
         const { klass, skill } = await addPlayableContent(parent.id);
-        await KlassLevels.create(db, { klassId: klass.id, level: 1 });
-        await KlassSkills.create(db, { klassId: klass.id, skillId: skill.id });
+        await Entities.create<KlassLevel>(db, "klass_levels", { klassId: klass.id, level: 1 });
+        await Joins.create<KlassSkill>(db, "klass_skills", { klassId: klass.id, skillId: skill.id });
         const copy = await copyEntity(db, "klasses", klass.id, fork);
 
         await RulesetChangesService.revertOverride(session, fork.id, "klasses", klass.id);
 
-        expect(await KlassLevels.findMany(db, { klassId: copy.id as string })).toEqual([]);
-        expect(await KlassSkills.findMany(db, { klassIds: [copy.id as string] })).toEqual([]);
+        expect(
+          await Entities.findMany<KlassLevel>(db, { entityType: "klass_levels", ownerIds: [copy.id as string] }),
+        ).toEqual([]);
+        expect(await Joins.findMany<KlassSkill>(db, { join: "klass_skills", fromIds: [copy.id as string] })).toEqual(
+          [],
+        );
       });
 
       test("points the items made from a copied template back at the original", async () => {
         const { session, parent, fork } = await setupChanges();
-        const [template] = await Items.create(db, { name: "Longsword", rulesetId: parent.id, isTemplate: true });
+        const [template] = await Entities.create<Item>(db, "items", {
+          name: "Longsword",
+          rulesetId: parent.id,
+          isTemplate: true,
+        });
         const copy = await copyEntity(db, "items", template.id, fork);
-        const [made] = await Items.create(db, {
+        const [made] = await Entities.create<Item>(db, "items", {
           name: "Longsword +1",
           rulesetId: fork.id,
           sourceItemId: copy.id as string,
         });
 
         await RulesetChangesService.revertOverride(session, fork.id, "items", template.id);
-        expect(await Items.findOne(db, { id: made.id })).toMatchObject({ sourceItemId: template.id });
+        expect(await Entities.findOne<Item>(db, { entityType: "items", id: made.id })).toMatchObject({
+          sourceItemId: template.id,
+        });
       });
 
       test("points a character's pick of the copy at the parent's, and is refused for an entity the fork didn't change", async () => {
@@ -581,7 +627,7 @@ describe("RulesetsService", () => {
         });
 
         await RulesetChangesService.revertOverride(session, fork.id, "feats", modified.id);
-        expect(await CharacterLevelFeats.findMany(db, { characterLevelIds: [level.id] })).toMatchObject([
+        expect(await Picks.findMany<LevelFeat>(db, { pick: "feats", characterLevelIds: [level.id] })).toMatchObject([
           { featId: modified.id },
         ]);
         expect(RulesetChangesService.revertOverride(session, fork.id, "feats", untouched.id)).rejects.toThrow(

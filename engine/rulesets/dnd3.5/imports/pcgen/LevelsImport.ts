@@ -11,7 +11,7 @@ import type {
   PowerPick,
 } from "@/engine/core/module/index.ts";
 import RulesError, { type RulesIssue } from "@/engine/core/RulesError.ts";
-import type { RulesetView } from "@/engine/core/view/index.ts";
+import type { Klass, KlassLevel, RulesetView } from "@/engine/core/view/index.ts";
 import ImportedLevelGains from "@/engine/rulesets/dnd3.5/imports/ImportedLevelGains.ts";
 import PicksPlacement, {
   type MatchedFeat,
@@ -23,7 +23,6 @@ import { ALLOWED_ALL } from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudesC
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import SpellLists from "@/engine/rulesets/dnd3.5/rules/SpellLists.ts";
-import type { Klass, KlassLevel } from "@/shared/relations.ts";
 import { formatSigned } from "@/shared/text.ts";
 
 import { PCGEN_POOLS } from "./names.ts";

@@ -1,21 +1,19 @@
 import { describe, expect, test } from "bun:test";
 
+import type { Aptitude, Feat, RulesetAbility, Skill } from "@/engine/index.ts";
 import SkillFocusFeats from "@/engine/rulesets/dnd3.5/entities/feats/SkillFocusFeats.ts";
 import { addClassLevels } from "@/scripts/db/seeds/seedCharacter.ts";
 import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import {
-  Abilities,
-  Aptitudes,
-  CharacterLevelFeats,
+  Entities,
   EntitySnapshots,
-  Feats,
-  FeatsAptitudes,
+  Joins,
   Modifiers,
+  Picks,
   Properties,
   Requirements,
   Rulesets,
-  Skills,
 } from "@/server/repositories/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { ItemsService } from "@/server/services/rulesets/items/index.ts";
@@ -51,10 +49,18 @@ function spell(aptitudeId: string, name: string, school?: string, fields: Record
 /** A ruleset of its own with Strength, a spell list and, unless left out, the General aptitude generated feats go in. */
 async function bareRuleset({ general = true } = {}) {
   const { session, ruleset } = await createTestUserAndRuleset();
-  const [strength] = await Abilities.create(db, { name: "Strength", description: "", rulesetId: ruleset.id });
-  const [spells] = await Aptitudes.create(db, { name: "Wizard Spells", description: "", rulesetId: ruleset.id });
+  const [strength] = await Entities.create<RulesetAbility>(db, "abilities", {
+    name: "Strength",
+    description: "",
+    rulesetId: ruleset.id,
+  });
+  const [spells] = await Entities.create<Aptitude>(db, "aptitudes", {
+    name: "Wizard Spells",
+    description: "",
+    rulesetId: ruleset.id,
+  });
   const [generalAptitude] = general
-    ? await Aptitudes.create(db, { name: "General", description: "", rulesetId: ruleset.id })
+    ? await Entities.create<Aptitude>(db, "aptitudes", { name: "General", description: "", rulesetId: ruleset.id })
     : [];
   return { session, ruleset, strength, spells, general: generalAptitude };
 }
@@ -70,7 +76,7 @@ async function featNames(rulesetId: string, search?: string) {
 
 /** What a feat is made of, ids aside: its description, its properties, its modifiers and its requirements. */
 async function featShape(featId: string) {
-  const feat = (await Feats.findOne(db, { id: featId }))!;
+  const feat = (await Entities.findOne<Feat>(db, { entityType: "feats", id: featId }))!;
   const strip = <T extends object>(rows: T[]) =>
     rows.map((row) => Object.fromEntries(Object.entries(row).filter(([key]) => !/(^id$|Id$|At$)/.test(key))));
   return {
@@ -83,7 +89,7 @@ async function featShape(featId: string) {
 }
 
 async function findFeat(rulesetId: string, name: string) {
-  return (await Feats.findOne(db, { rulesetId, name }))!;
+  return (await Entities.findOne<Feat>(db, { entityType: "feats", rulesetId, name }))!;
 }
 
 async function forkWithExtensions() {
@@ -100,7 +106,11 @@ async function seededFork() {
 async function seededForkWithClimb() {
   const session = makeSession();
   const fork = await createSeededTestRuleset(session.userId);
-  const climb = (await Skills.findOne(db, { rulesetId: fork.ancestorRulesetIds[0], name: "Climb" }))!;
+  const climb = (await Entities.findOne<Skill>(db, {
+    entityType: "skills",
+    rulesetId: fork.ancestorRulesetIds[0],
+    name: "Climb",
+  }))!;
   const climbBody = {
     name: "Climb",
     primaryAbilityId: climb.primaryAbilityId,
@@ -225,7 +235,9 @@ describe("Skill Focus", () => {
     const feat = await findFeat(ruleset.id, "Skill Focus: Knowledge (Arcana)");
 
     expect(feat.description).toBe("You get a +3 bonus on all Knowledge (Arcana) checks.");
-    expect(await FeatsAptitudes.findMany(db, { featId: feat.id })).toMatchObject([{ aptitudeId: general!.id }]);
+    expect(
+      await Joins.findMany<{ aptitudeId: string; featId: string }>(db, { join: "feats_aptitudes", fromIds: [feat.id] }),
+    ).toMatchObject([{ aptitudeId: general!.id }]);
     expect(await Modifiers.findMany(db, { sourceIds: [feat.id], sourceType: "feats" })).toMatchObject([
       { target: "skills.knowledgearcana.misc", operator: "add", value: "3", valueType: "number" },
     ]);
@@ -244,7 +256,11 @@ describe("Skill Focus", () => {
 
   test("isn't made again when the ruleset has a feat of its name", async () => {
     const { session, ruleset, strength } = await bareRuleset();
-    await Feats.create(db, { name: "Skill Focus: Climb", description: "Mine", rulesetId: ruleset.id });
+    await Entities.create<Feat>(db, "feats", {
+      name: "Skill Focus: Climb",
+      description: "Mine",
+      rulesetId: ruleset.id,
+    });
     await SkillsService.createSkill(session, ruleset.id, skill(strength.id, "Climb"));
     expect(await featNames(ruleset.id)).toEqual(["Skill Focus: Climb"]);
     expect((await findFeat(ruleset.id, "Skill Focus: Climb")).description).toBe("Mine");
@@ -295,7 +311,9 @@ test("a fork's new skills and spells put their feats in the General aptitude it 
   for (const name of ["Skill Focus: Swim", "Spell Focus: Evocation", "Greater Spell Focus: Evocation"]) {
     const feat = await findFeat(fork.id, name);
     expect(feat.generated).toBe(true);
-    expect(await FeatsAptitudes.findMany(db, { featId: feat.id })).toMatchObject([{ aptitudeId: parent.general!.id }]);
+    expect(
+      await Joins.findMany<{ aptitudeId: string; featId: string }>(db, { join: "feats_aptitudes", fromIds: [feat.id] }),
+    ).toMatchObject([{ aptitudeId: parent.general!.id }]);
   }
 });
 
@@ -309,9 +327,9 @@ describe("an inherited skill's Skill Focus", () => {
         await SkillsService.updateSkill(session, fork.id, climb.id, { ...climbBody, name: "Mountaineering" });
       else await SkillsService.deleteSkill(session, fork.id, climb.id);
 
-      expect(await Feats.findOne(db, { id: feat.id })).toEqual(feat);
+      expect(await Entities.findOne<Feat>(db, { entityType: "feats", id: feat.id })).toEqual(feat);
       expect(await Modifiers.findMany(db, { sourceIds: [feat.id], sourceType: "feats" })).toEqual(modifiers);
-      expect(await Skills.findOne(db, { id: climb.id })).toEqual(climb);
+      expect(await Entities.findOne<Skill>(db, { entityType: "skills", id: climb.id })).toEqual(climb);
       expect(await featNames(fork.id, "Skill Focus: Climb")).toEqual([]);
       expect(await featNames(fork.id, "Skill Focus: Mountaineering")).toEqual(
         operation === "rename" ? ["Skill Focus: Mountaineering"] : [],
@@ -351,7 +369,7 @@ describe("an inherited skill's Skill Focus", () => {
     const characterId = await createSeedCharacter(ctx, "fighter", { rulesetId: fork.id });
     const [levelId] = await addClassLevels(db, ctx, characterId, "Fighter", [1], [10]);
     // A pick stays under the ancestor's id after the fork copies the feat.
-    await CharacterLevelFeats.createMany(db, [
+    await Picks.createMany(db, "feats", [
       { characterLevelId: levelId, aptitudeId: ctx.aptMap.General, featId: feat.id },
     ]);
     const copy = picked === "inherited" ? undefined : await copyEntity(db, "feats", feat.id, fork);
@@ -361,8 +379,8 @@ describe("an inherited skill's Skill Focus", () => {
         ? SkillsService.deleteSkill(session, fork.id, climb.id)
         : SkillsService.updateSkill(session, fork.id, climb.id, { ...climbBody, name: "Mountaineering" });
     expect(mutation).rejects.toThrow("Skill Focus feat in use");
-    expect(await Feats.findOne(db, { id: copy?.id ?? feat.id })).toBeDefined();
-    expect(await Feats.findOne(db, { id: feat.id })).toEqual(feat);
+    expect(await Entities.findOne<Feat>(db, { entityType: "feats", id: copy?.id ?? feat.id })).toBeDefined();
+    expect(await Entities.findOne<Feat>(db, { entityType: "feats", id: feat.id })).toEqual(feat);
   });
 
   test.each(["delete and recreate", "rename and rename back"] as const)(
@@ -388,7 +406,7 @@ describe("an inherited skill's Skill Focus", () => {
 
       await SkillsService.deleteSkill(session, fork.id, restored.id);
       expect(await featNames(fork.id, "Skill Focus: Climb")).toEqual([]);
-      expect(await Feats.findOne(db, { id: feat.id })).toEqual(feat);
+      expect(await Entities.findOne<Feat>(db, { entityType: "feats", id: feat.id })).toEqual(feat);
     },
   );
 
@@ -438,12 +456,19 @@ describe("generated feats", () => {
     expect(FeatsService.updateFeat(session, fork.id, local.id, { name: "Another name" })).rejects.toThrow(
       "Generated feats cannot be renamed",
     );
-    expect(await Feats.findOne(db, { id: feat.id })).toMatchObject({ name: feat.name, description: feat.description });
+    expect(await Entities.findOne<Feat>(db, { entityType: "feats", id: feat.id })).toMatchObject({
+      name: feat.name,
+      description: feat.description,
+    });
   });
 
   test("keep their names when the fork generated them; other feats can be renamed", async () => {
     const { session, fork } = await seededFork();
-    const climb = (await Skills.findOne(db, { rulesetId: fork.ancestorRulesetIds[0], name: "Climb" }))!;
+    const climb = (await Entities.findOne<Skill>(db, {
+      entityType: "skills",
+      rulesetId: fork.ancestorRulesetIds[0],
+      name: "Climb",
+    }))!;
     await SkillsService.createSkill(
       session,
       fork.id,
@@ -493,7 +518,11 @@ describe("generated feats", () => {
 
   test("follow a skill renamed again and again, one at a time, dropping the customizations of a local copy", async () => {
     const { session, fork } = await seededFork();
-    const climb = (await Skills.findOne(db, { rulesetId: fork.ancestorRulesetIds[0], name: "Climb" }))!;
+    const climb = (await Entities.findOne<Skill>(db, {
+      entityType: "skills",
+      rulesetId: fork.ancestorRulesetIds[0],
+      name: "Climb",
+    }))!;
     const feat = await findFeat(climb.rulesetId, "Skill Focus: Climb");
     const local = await FeatsService.updateFeat(session, fork.id, feat.id, {
       name: feat.name,
@@ -528,11 +557,11 @@ describe("generated feats", () => {
         ).toEqual([[`Skill Focus: ${name}`, [`skills.${name.toLowerCase()}.misc`]]]);
       });
     }
-    expect(await Feats.findOne(db, { id: local.id })).toBeUndefined();
+    expect(await Entities.findOne<Feat>(db, { entityType: "feats", id: local.id })).toBeUndefined();
     expect(await Modifiers.findMany(db, { sourceIds: [local.id], sourceType: "feats" })).toEqual([]);
     expect(await Requirements.findMany(db, { entityIds: [local.id, modifier.id] })).toEqual([]);
     expect(await Properties.findMany(db, { entityIds: [local.id], entityType: "feats" })).toEqual([]);
-    expect(await Feats.findOne(db, { id: feat.id })).toEqual(feat);
+    expect(await Entities.findOne<Feat>(db, { entityType: "feats", id: feat.id })).toEqual(feat);
   });
 
   test("of a weapon type outlive its last item", async () => {
@@ -543,12 +572,15 @@ describe("generated feats", () => {
       { entityId: weapon.id, entityType: "items", type: WEAPON_TYPE, value: "Unique Weapon" },
     ]);
     RulesetViews.invalidate(fork.id);
-    const [feat] = await Feats.create(db, {
+    const [feat] = await Entities.create<Feat>(db, "feats", {
       rulesetId: fork.id,
       name: "Weapon Focus: Unique Weapon",
       description: "Group content",
     });
     await ItemsService.deleteItem(session, fork.id, weapon.id);
-    expect(await Feats.findOne(db, { id: feat.id })).toMatchObject({ name: feat.name, description: feat.description });
+    expect(await Entities.findOne<Feat>(db, { entityType: "feats", id: feat.id })).toMatchObject({
+      name: feat.name,
+      description: feat.description,
+    });
   });
 });

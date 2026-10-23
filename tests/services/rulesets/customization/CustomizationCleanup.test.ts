@@ -16,22 +16,20 @@ import {
   requirementsInCustomization,
   rulesetsInRules,
 } from "@/drizzle/schema.ts";
+import type {
+  Aptitude,
+  Feat,
+  Item,
+  Klass,
+  Language,
+  Power,
+  Race,
+  RulesetAbility,
+  RulesetSave,
+  Skill,
+} from "@/engine/index.ts";
 import { db } from "@/server/database/index.ts";
-import {
-  Abilities,
-  Aptitudes,
-  Feats,
-  Items,
-  Klasses,
-  Languages,
-  Modifiers,
-  Powers,
-  Properties,
-  Races,
-  Saves,
-  Skills,
-  Users,
-} from "@/server/repositories/index.ts";
+import { Entities, Modifiers, Properties, Users } from "@/server/repositories/index.ts";
 import { AuthenticationService } from "@/server/services/authentication/index.ts";
 import { createTestCharacter } from "@/tests/support/characters.ts";
 import { customize, STRENGTH_BONUS } from "@/tests/support/customizations.ts";
@@ -73,34 +71,39 @@ async function createOwner(type: OwnerType, userId: string, rulesetId: string): 
   const name = "Doomed";
   switch (type) {
     case "aptitudes":
-      return (await Aptitudes.create(db, { name, rulesetId }))[0].id;
+      return (await Entities.create<Aptitude>(db, "aptitudes", { name, rulesetId }))[0].id;
     case "characters":
       return (await createTestCharacter(userId)).id;
     case "feats":
-      return (await Feats.create(db, { name, rulesetId }))[0].id;
+      return (await Entities.create<Feat>(db, "feats", { name, rulesetId }))[0].id;
     case "items":
-      return (await Items.create(db, { name, rulesetId }))[0].id;
+      return (await Entities.create<Item>(db, "items", { name, rulesetId }))[0].id;
     case "klass_levels":
       return (await createTestKlassLevel(rulesetId)).klassLevel.id;
     case "klasses":
-      return (await Klasses.create(db, { name, rulesetId, hd: 8 }))[0].id;
+      return (await Entities.create<Klass>(db, "klasses", { name, rulesetId, hd: 8 }))[0].id;
     case "languages":
-      return (await Languages.create(db, { name, rulesetId, type: "Standard" }))[0].id;
+      return (await Entities.create<Language>(db, "languages", { name, rulesetId, type: "Standard" }))[0].id;
     case "modifiers": {
-      const [feat] = await Feats.create(db, { name, rulesetId });
+      const [feat] = await Entities.create<Feat>(db, "feats", { name, rulesetId });
       return (await Modifiers.create(db, { ...STRENGTH_BONUS, sourceId: feat.id, sourceType: "feats" }))[0].id;
     }
     case "powers":
-      return (await Powers.create(db, { name, rulesetId }))[0].id;
+      return (await Entities.create<Power>(db, "powers", { name, rulesetId }))[0].id;
     case "races":
-      return (await Races.create(db, { name, rulesetId, size: "Medium", baseSpeed: 30 }))[0].id;
+      return (await Entities.create<Race>(db, "races", { name, rulesetId, size: "Medium", baseSpeed: 30 }))[0].id;
     case "rulesets":
       return (await createTestRuleset(userId)).id;
     case "saves":
     case "skills": {
-      const [ability] = await Abilities.create(db, { name: "Strength", description: "Strength", rulesetId });
-      if (type === "saves") return (await Saves.create(db, { name, rulesetId, abilityId: ability.id }))[0].id;
-      return (await Skills.create(db, { name, rulesetId, primaryAbilityId: ability.id }))[0].id;
+      const [ability] = await Entities.create<RulesetAbility>(db, "abilities", {
+        name: "Strength",
+        description: "Strength",
+        rulesetId,
+      });
+      if (type === "saves")
+        return (await Entities.create<RulesetSave>(db, "saves", { name, rulesetId, abilityId: ability.id }))[0].id;
+      return (await Entities.create<Skill>(db, "skills", { name, rulesetId, primaryAbilityId: ability.id }))[0].id;
     }
   }
 }

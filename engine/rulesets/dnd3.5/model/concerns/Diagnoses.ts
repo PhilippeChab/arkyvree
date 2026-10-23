@@ -1,4 +1,5 @@
 import type { RulesIssue } from "@/engine/core/RulesError.ts";
+import type { Klass } from "@/engine/core/view/index.ts";
 import { ALLOWED_ALL } from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudesComponent.ts";
 import type CharacterState from "@/engine/rulesets/dnd3.5/model/CharacterState.ts";
 import type {
@@ -7,7 +8,7 @@ import type {
   CustomizedPower,
 } from "@/engine/rulesets/dnd3.5/model/loading/loadedEntities.ts";
 import type { Constructor } from "@/lib/mixins.ts";
-import type { Klass, Modifier } from "@/shared/relations.ts";
+import type { Modifier } from "@/shared/relations.ts";
 import { GENERAL_FEATS_APTITUDE } from "@/vocabulary/dnd3.5/feats.ts";
 import { MAX_SPELL_LEVEL } from "@/vocabulary/dnd3.5/spells.ts";
 

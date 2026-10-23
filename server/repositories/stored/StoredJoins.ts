@@ -1,134 +1,163 @@
-import { and, eq, inArray, max, type SQL, sql } from "drizzle-orm";
-import type { PgColumn } from "drizzle-orm/pg-core";
+import { and, eq, inArray, max, type SQL } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
 import { entityLinksInRules } from "@/drizzle/schema.ts";
-import { Engine, type LinkPart } from "@/engine/index.ts";
+import { Engine, type StoredLink } from "@/engine/index.ts";
+import BaseRepository from "@/server/repositories/BaseRepository.ts";
 
-/** A join's row, as a write gives it: its columns by their names. */
-export type JoinValues = Record<string, unknown>;
+/** A join's row, any join's, as its module's declaration reads a link (a class level's grant, a feat's pool). */
+export type JoinRow = Record<string, unknown>;
 
-/** A link's column for each of its parts. */
-const LINK_PARTS: Record<LinkPart, PgColumn> = {
-  amount: entityLinksInRules.amount,
-  free: entityLinksInRules.free,
-  from: entityLinksInRules.fromId,
-  id: entityLinksInRules.id,
-  tier: entityLinksInRules.tier,
-  to: entityLinksInRules.toId,
-  via: entityLinksInRules.viaId,
-};
+/** The most rows one insert writes: a statement holds at most 65,535 parameters. */
+const WRITE_BATCH = 2000;
 
 /**
- * A join's rows (a feat's pools, a class level's grants), as the generic tables store them, links of a role from a kind
- * to another (`rules.entity_links`), and its module declares them (`Engine.storage().join(name)`): read as one row each,
- * every part under its column's name (`columns`), in each from-entity's order (`order`), and written from one
- * (`insert`, after the from-entity's last of the role).
+ * Every module's joins (a feat's pools, a class level's grants), as the generic tables store them: links of a role
+ * from one kind to another (`rules.entity_links`), by the join's name (`join`), each row as its module's declaration
+ * reads a link (`Engine.storage().joinRowsOf`), each write as it splits one (`linkOf`). New links come after their
+ * from-entity's last of the join, which keeps their order.
  */
-export default class StoredJoins {
-  /** The join's columns, each a link's part by its name, and its timestamps (a link is never archived). */
-  static buildColumns(name: string): Record<string, PgColumn | SQL> {
-    const join = Engine.storage().join(name);
-    return {
-      createdAt: entityLinksInRules.createdAt,
-      updatedAt: entityLinksInRules.updatedAt,
-      deletedAt: sql<string | null>`NULL::timestamptz`,
-      ...Object.fromEntries(Object.entries(join.columns).map(([column, part]) => [column, LINK_PARTS[part]])),
-    };
-  }
-
-  /**
-   * A join's rows' order: as they were made, each from-entity's in its order (its ordinal, which the migration kept
-   * from its join table's order and a new link takes after its from-entity's last).
-   */
-  static buildOrder(): PgColumn[] {
-    return [
-      entityLinksInRules.createdAt,
-      StoredJoins.getPart("from"),
-      entityLinksInRules.ordinal,
-      StoredJoins.getPart("to"),
-    ];
+class StoredJoins extends BaseRepository<typeof entityLinksInRules> {
+  constructor() {
+    super(entityLinksInRules);
   }
 
   /** The condition that picks a join's links among every link (its role, from its kind to its other), and `where`. */
-  static buildScope(name: string, where?: SQL): SQL {
-    const join = Engine.storage().join(name);
+  private static buildScope(join: string, where?: SQL): SQL {
+    const { from, role, to } = Engine.storage().join(join);
     return and(
-      eq(entityLinksInRules.role, join.role),
-      eq(entityLinksInRules.fromType, join.from),
-      eq(entityLinksInRules.toType, join.to),
+      eq(entityLinksInRules.role, role),
+      eq(entityLinksInRules.fromType, from),
+      eq(entityLinksInRules.toType, to),
       where,
     )!;
   }
 
-  /** The column of a link's part: its from-entity's, its to-entity's. */
-  static getPart(part: LinkPart): PgColumn {
-    return LINK_PARTS[part];
-  }
-
-  /** A join's rows (`name`) a condition over its links picks (`where`), in their order: each by its columns. */
-  static async findRows<R>(db: Db, name: string, where?: SQL): Promise<R[]> {
-    return (await db
-      .select(StoredJoins.buildColumns(name))
+  /** The links a condition picks, each with its from-entity's id. */
+  private async links(db: Db, where: SQL) {
+    return await db
+      .select({
+        fromId: entityLinksInRules.fromId,
+        id: entityLinksInRules.id,
+        role: entityLinksInRules.role,
+        toId: entityLinksInRules.toId,
+        toType: entityLinksInRules.toType,
+        viaId: entityLinksInRules.viaId,
+        tier: entityLinksInRules.tier,
+        amount: entityLinksInRules.amount,
+        free: entityLinksInRules.free,
+        ordinal: entityLinksInRules.ordinal,
+        createdAt: entityLinksInRules.createdAt,
+        updatedAt: entityLinksInRules.updatedAt,
+      })
       .from(entityLinksInRules)
-      .where(StoredJoins.buildScope(name, where))
-      .orderBy(...StoredJoins.buildOrder())) as unknown as R[];
+      .where(where);
   }
 
-  /**
-   * Writes a join's rows (`rows`, each by its columns): each a link of its role, after its from-entity's last one of
-   * the role to that kind (its ordinal, which keeps their order). Answers the links' ids, in order.
-   */
-  static async insert(db: Db, name: string, rows: JoinValues[]): Promise<string[]> {
-    if (rows.length === 0) return [];
-    const join = Engine.storage().join(name);
-    const role = Engine.storage().role(join.role, join.from, join.to);
-    const columnOf = (part: LinkPart) => Object.entries(join.columns).find(([, value]) => value === part)?.[0];
-    const fromColumn = columnOf("from")!;
-    const fromIds = [...new Set(rows.map((row) => String(row[fromColumn])))];
+  /** A join's rows a condition over its links picks, in their order. */
+  private async rows(db: Db, join: string, where: SQL): Promise<JoinRow[]> {
+    const links = await this.links(db, StoredJoins.buildScope(join, where));
+    const fromType = Engine.storage().join(join).from;
+    const byFrom = new Map<string, StoredLink[]>();
+    for (const { fromId, ...link } of links) byFrom.set(fromId, [...(byFrom.get(fromId) ?? []), link]);
+    return Engine.storage().joinRowsOf(
+      join,
+      [...byFrom].map(([id, held]) => ({ id, links: held, type: fromType })),
+    );
+  }
+
+  async create<R extends object = JoinRow>(db: Db, join: string, values: JoinRow) {
+    return await this.createMany<R>(db, join, [values]);
+  }
+
+  /** Writes a join's new rows, each a link after its from-entity's last: answers their links' ids, in order. */
+  async createIds(db: Db, join: string, values: JoinRow[]): Promise<string[]> {
+    if (values.length === 0) return [];
+    const storage = Engine.storage();
+    const declared = storage.join(join);
+    const role = storage.role(declared.role, declared.from, declared.to);
+    const links = values.map((row) => storage.linkOf(join, row));
+    const fromIds = [...new Set(links.map((link) => link.fromId))];
     const last = await db
       .select({ fromId: entityLinksInRules.fromId, ordinal: max(entityLinksInRules.ordinal) })
       .from(entityLinksInRules)
-      .where(StoredJoins.buildScope(name, inArray(entityLinksInRules.fromId, fromIds)))
+      .where(StoredJoins.buildScope(join, inArray(entityLinksInRules.fromId, fromIds)))
       .groupBy(entityLinksInRules.fromId);
     const next = new Map(last.map((row) => [row.fromId, (row.ordinal ?? -1) + 1]));
-
-    const value = (row: JoinValues, part: LinkPart) => {
-      const column = columnOf(part);
-      return column === undefined ? undefined : row[column];
-    };
-    const links = rows.map((row) => {
-      const fromId = String(value(row, "from"));
-      const ordinal = next.get(fromId) ?? 0;
-      next.set(fromId, ordinal + 1);
-      const viaId = (value(row, "via") as string | null | undefined) ?? null;
+    const rows = links.map((link) => {
+      const ordinal = next.get(link.fromId) ?? 0;
+      next.set(link.fromId, ordinal + 1);
       return {
-        id: value(row, "id") as string | undefined,
-        fromId,
-        fromType: join.from,
-        role: join.role,
+        ...link,
+        fromType: declared.from,
+        role: declared.role,
         single: role.single,
-        toId: String(value(row, "to")),
-        toType: join.to,
-        viaId,
-        viaType: viaId ? role.viaType : null,
-        tier: (value(row, "tier") as number | null | undefined) ?? null,
-        amount: (value(row, "amount") as number | null | undefined) ?? null,
-        free: (value(row, "free") as boolean | undefined) ?? false,
+        toType: declared.to,
+        viaType: link.viaId ? role.viaType : null,
         ordinal,
-        createdAt: row.createdAt as string | undefined,
-        updatedAt: row.updatedAt as string | undefined,
       };
     });
-    const inserted: { id: string }[] = [];
-    for (let i = 0; i < links.length; i += 2000) {
-      inserted.push(
-        ...(await db
-          .insert(entityLinksInRules)
-          .values(links.slice(i, i + 2000))
-          .returning({ id: entityLinksInRules.id })),
-      );
+    const ids: string[] = [];
+    for (let i = 0; i < rows.length; i += WRITE_BATCH) {
+      const inserted = await db
+        .insert(entityLinksInRules)
+        .values(rows.slice(i, i + WRITE_BATCH))
+        .returning({ id: entityLinksInRules.id });
+      ids.push(...inserted.map((row) => row.id));
     }
-    return inserted.map((row) => row.id);
+    return ids;
+  }
+
+  /** Writes a join's new rows, each a link after its from-entity's last: answers them, in order. */
+  async createMany<R extends object = JoinRow>(db: Db, join: string, values: JoinRow[]): Promise<R[]> {
+    const ids = await this.createIds(db, join, values);
+    if (ids.length === 0) return [];
+    const storage = Engine.storage();
+    const declared = storage.join(join);
+    const written = await this.links(db, inArray(entityLinksInRules.id, ids));
+    const byId = new Map(written.map((link) => [link.id, link]));
+    return ids.map((id) => {
+      const { fromId, ...link } = byId.get(id)!;
+      return storage.joinRowsOf(join, [{ id: fromId, links: [link], type: declared.from }])[0] as R;
+    });
+  }
+
+  /** Removes an entity's links of a join (`fromId`), those to `toId` if given: answers them as they were. */
+  async delete<R extends object = JoinRow>(db: Db, where: { fromId: string; join: string; toId?: string }) {
+    const picked = this.branchWhere(
+      [where.fromId !== undefined && eq(entityLinksInRules.fromId, where.fromId)],
+      [where.toId !== undefined && eq(entityLinksInRules.toId, where.toId)],
+    )!;
+    const rows = (await this.rows(db, where.join, picked)) as R[];
+    await db.delete(entityLinksInRules).where(StoredJoins.buildScope(where.join, picked));
+    return rows;
+  }
+
+  /** A join's rows from entities (`fromIds`), to entities (`toIds`) or through them (`viaIds`), in their order. */
+  async findMany<R extends object = JoinRow>(
+    db: Db,
+    where: { fromIds: string[]; join: string } | { join: string; toIds: string[] } | { join: string; viaIds: string[] },
+  ): Promise<R[]> {
+    const ids = "fromIds" in where ? where.fromIds : "toIds" in where ? where.toIds : where.viaIds;
+    if (ids.length === 0) return [];
+    const column =
+      "fromIds" in where
+        ? entityLinksInRules.fromId
+        : "toIds" in where
+          ? entityLinksInRules.toId
+          : entityLinksInRules.viaId;
+    return (await this.rows(db, where.join, inArray(column, ids))) as R[];
+  }
+
+  /** Whether a link of a join points at an entity (`toId`): an in-use check. */
+  async has(db: Db, where: { join: string; toId: string }) {
+    const [link] = await db
+      .select({ id: entityLinksInRules.id })
+      .from(entityLinksInRules)
+      .where(StoredJoins.buildScope(where.join, eq(entityLinksInRules.toId, where.toId)))
+      .limit(1);
+    return link !== undefined;
   }
 }
+
+export default StoredJoins;
