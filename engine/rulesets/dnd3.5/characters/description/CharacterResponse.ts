@@ -8,6 +8,7 @@ import type { Modifier, Requirement } from "@/shared/relations.ts";
 import { formatSigned } from "@/shared/text.ts";
 
 import CombatSheet from "./CombatSheet.ts";
+import SheetBlocks from "./SheetBlocks.ts";
 import SkillNames from "./SkillNames.ts";
 import SpellGroups from "./SpellGroups.ts";
 
@@ -139,6 +140,9 @@ export default class CharacterResponse {
     const validation = built.validate();
     const requirements = CharacterResponse.enrichedRequirementsOf(built);
     const modifiers = CharacterResponse.enrichedModifiersOf(built);
+    const abilities = CharacterResponse.abilitiesOf(built);
+    const combat = CombatSheet.describe(built.components.combat);
+    const saves = CharacterResponse.savesOf(built);
 
     return {
       id: record.id,
@@ -156,9 +160,9 @@ export default class CharacterResponse {
       shareToken: record.shareToken ?? null,
       identity: CharacterResponse.identityWithPrivateNotes(built),
       skillBudget: built.components.skills.getSkillBudget(),
-      abilities: CharacterResponse.abilitiesOf(built),
-      combat: CombatSheet.describe(built.components.combat),
-      saves: CharacterResponse.savesOf(built),
+      abilities,
+      combat,
+      saves,
       classes: built.components.classes.getCharacterClasses(),
       inventory: built.components.inventory.getInventory(),
       equipment: CharacterResponse.equipmentOf(built),
@@ -169,6 +173,7 @@ export default class CharacterResponse {
       requirements,
       modifiers,
       validation,
+      blocks: SheetBlocks.describe({ abilities, combat, saves }),
     };
   }
 }

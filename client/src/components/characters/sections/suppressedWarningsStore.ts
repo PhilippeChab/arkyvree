@@ -7,11 +7,11 @@ interface SuppressedWarningsState {
   suppressWarningForSession: (key: WarningKey) => void;
 }
 
-/** A confirmation the user can stop for the session: lowering an ability score. */
-type WarningKey = "abilityDecrease";
+/** A confirmation the user can stop for the session: a lowered base of a sheet's block, by the block's key. */
+type WarningKey = string;
 
 /**
- * The confirmations the user turned off for the session (a lowered ability score's): kept in memory alone, none in the
+ * The confirmations the user turned off for the session (a lowered score's base): kept in memory alone, none in the
  * browser, so a reload asks again.
  */
 export const useSuppressedWarningsStore = create<SuppressedWarningsState>()((set, get) => ({

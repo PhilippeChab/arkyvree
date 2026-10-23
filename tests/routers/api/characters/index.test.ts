@@ -235,6 +235,60 @@ describe("characters", () => {
     });
   });
 
+  describe("sheet blocks", () => {
+    test("describes the sheet's scores and its combat as blocks, in its order, each titled in its words", async () => {
+      const { abilityMap } = await getSeedCtx();
+      const { id } = await postCharacter({ abilities: await scoresWith("Strength", 18) });
+
+      const { blocks, combat } = await expectOk(character.$get({ param: { id } }));
+      expect(blocks.map(({ kind, key, title }) => [kind, key, title])).toEqual([
+        ["scores", "abilities", "Ability Scores"],
+        ["scores", "saves", "Saving Throws"],
+        ["stats", "combat", "Combat"],
+      ]);
+      const [abilities, saves, stats] = blocks;
+      // An ability's total over its modifier, its base its owner sets within the rules' bounds
+      expect(abilities).toMatchObject({ kind: "scores", edit: { lower: { confirm: "Decrease Ability Score" } } });
+      expect(abilities.kind === "scores" && abilities.scores[0]).toEqual({
+        key: abilityMap["Strength"],
+        label: "Strength",
+        short: "STR",
+        value: 18,
+        badge: 4,
+        base: { label: "Base", value: 18, min: 1, max: 100 },
+        parts: [
+          { label: "Level", value: "+0" },
+          { label: "Misc", value: "+0" },
+        ],
+      });
+      // A save's total, signed, with no base of the character's own to edit
+      expect(saves).not.toHaveProperty("edit");
+      expect(saves.kind === "scores" && saves.scores.map(({ label, signed, base }) => [label, signed, base])).toEqual([
+        ["Fortitude", true, undefined],
+        ["Reflex", true, undefined],
+        ["Will", true, undefined],
+      ]);
+      // Its line, then its one loadout, striking unarmed, with no set's heading
+      expect(stats.kind === "stats" && stats.stats).toEqual(combat.stats);
+      expect(stats.kind === "stats" && stats.panels).toEqual([
+        expect.objectContaining({
+          boxes: [
+            { label: "AC", value: "10" },
+            { label: "Touch", value: "10" },
+            { label: "Flat-footed", value: "10" },
+          ],
+        }),
+      ]);
+      expect(stats.kind === "stats" && stats.panels[0]).not.toHaveProperty("heading");
+    });
+
+    test("describes a bonded creature's sheet in the same blocks", async () => {
+      const { masterId } = await createWizardWithFamiliar();
+      const master = await expectOk(character.$get({ param: { id: masterId } }));
+      expect(master.bonded.familiar?.blocks.map(({ key }) => key)).toEqual(["abilities", "saves", "combat"]);
+    });
+  });
+
   describe("languages", () => {
     test("sets, replaces and clears a character's picks, beside the languages its race gives it", async () => {
       const { langMap } = await getSeedCtx();

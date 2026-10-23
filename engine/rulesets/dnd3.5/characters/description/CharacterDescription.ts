@@ -110,6 +110,7 @@ export default class CharacterDescription {
       requirements: {},
       modifiers: {},
       validation: { valid: true, issues: [] },
+      blocks: [],
       bonded: CharacterDescription.noBonded(),
     } satisfies Record<keyof typeof response | "bonded", unknown>;
   }
