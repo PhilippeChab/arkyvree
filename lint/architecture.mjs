@@ -31,7 +31,7 @@
  * - `folder-index`: code outside a folder that has an `index.ts` imports it through that index (the service folders,
  *   `cow/`, `policies/`, the client's component folders; code outside a client component folder enters it at its
  *   outermost index, never a subfolder's, but a ruleset's code enters a folder of its own ruleset at that ruleset
- *   folder's index: `sections/dnd3.5/`, which the generic folder around it re-exports none of). Files within the folder
+ *   folder's index). Files within the folder
  *   import each other directly, and a test may reach a folder's own modules (a pure module's unit test).
  * - `ruleset-folders`: a ruleset is a folder of `engine/rulesets/`, and a folder of its name, in any tree, is its own
  *   (`content/<ruleset>/`, `codegen/<ruleset>/`, `database/seeders/<ruleset>/`, `vocabulary/<ruleset>/`, the
@@ -39,9 +39,9 @@
  *   (`engine/core/`, `content/core/`, `codegen/core/`, `database/seeders/core/`, the content's runner,
  *   `database/packages/`, the scripts, the dev and test seeds among them, the server, `shared/`, `lib/`) names none of
  *   them: the runner and the scripts reach a ruleset's packages, seeder and test characters through the content's
- *   registry alone (`CONTENT_REGISTRY`: `RULESET_CONTENT`, keyed by base rules). A client module outside a ruleset's
- *   folder reaches a ruleset's code only through the client's registry, keyed by base rules (`CLIENT_REGISTRIES`:
- *   `getSections`), never from its folders.
+ *   registry alone (`CONTENT_REGISTRY`: `RULESET_CONTENT`, keyed by base rules). The client holds no ruleset's code:
+ *   what it shows of a ruleset, the engine describes (its sheet's blocks, its forms, its words), so it has no folder of
+ *   a ruleset's name and imports none of a ruleset's folders.
  * - `vocabulary-data`: a ruleset's vocabulary (`vocabulary/<ruleset>/`) is data: its lists, labels, tables and bounds,
  *   never a rule. It declares no function or class, and holds none in a constant (a callback in a constant's value,
  *   `SPELL_LEVELS.map((level) => …)`, builds the data): a rule is the engine's, which the client reads from a response.
@@ -75,12 +75,6 @@ const ACTION_LAYERS = ["server/services/", "server/jobs/"];
 const ANYTHING = "anything";
 /** The client's component folders, which code outside enters at their outermost index */
 const CLIENT_COMPONENTS = "client/src/components/";
-/**
- * The client's registries: each maps the base rules to a ruleset's part of the client, the layout no description of the
- * engine's gives (its sheet's sections, in their order and shape), whose contract it declares, the one way a generic
- * module reaches a ruleset's folders.
- */
-const CLIENT_REGISTRIES = ["client/src/components/characters/sections/sectionFactory.ts"];
 /**
  * The content's registry: each base rules' packages, seeder and test characters (`RULESET_CONTENT`), the one way the
  * runner and the dev and test seeds reach a ruleset's content and seeder.
@@ -654,19 +648,17 @@ function createRulesetFolders(context) {
   const ruleset = rulesetOf(file, rulesets);
   const home =
     ruleset || file === CONTENT_REGISTRY ? undefined : SHARED_HOMES.find((prefix) => file.startsWith(prefix));
-  const genericClient = !ruleset && file.startsWith("client/") && !CLIENT_REGISTRIES.includes(file);
-  if (!ruleset && !home && !genericClient) return {};
-  return onImports((node, spec) => {
+  const client = file.startsWith("client/");
+  if (!ruleset && !home && !client) return {};
+  const imports = onImports((node, spec) => {
     const target = targetOf(file, spec);
     // A client's import of a ruleset's vocabulary is root-folders' to refuse, from any of its folders: it reads none
     if (file.startsWith("client/") && target?.startsWith("vocabulary/")) return;
     const other = target && rulesetOf(target, rulesets);
-    if (genericClient && other) {
+    if (client && other) {
       context.report({
         node,
-        message:
-          `A generic client module reaches ${other}'s code through the registry keyed by base rules ` +
-          "(`getSections`: lint/architecture.mjs `CLIENT_REGISTRIES`), never from its folders.",
+        message: `The client imports none of ${other}'s code: what it shows of a ruleset, the engine describes.`,
       });
     } else if (home && other) {
       context.report({
@@ -687,6 +679,19 @@ function createRulesetFolders(context) {
       });
     }
   });
+  // A client module in a ruleset's folder is that ruleset's code, which the client holds none of
+  if (!(client && ruleset)) return imports;
+  return {
+    ...imports,
+    Program(node) {
+      context.report({
+        node,
+        message:
+          `The client holds no ruleset's code: ${file} is ${ruleset}'s. What it shows of a ruleset, the engine ` +
+          "describes (its sheet's blocks, its forms, its words).",
+      });
+    },
+  };
 }
 
 function createVocabularyData(context) {
@@ -791,7 +796,7 @@ function reExportsFrom(statement) {
   );
 }
 
-/** The folder of `ruleset` a folder is in, or is (`client/src/components/characters/sections/dnd3.5`), if any. */
+/** The folder of `ruleset` a folder is in, or is (`engine/rulesets/dnd3.5`), if any. */
 function rulesetFolderOf(dir, ruleset) {
   const folders = dir.split("/");
   const at = folders.indexOf(ruleset);
