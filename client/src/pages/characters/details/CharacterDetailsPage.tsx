@@ -54,7 +54,7 @@ export default function CharacterDetailsPage() {
   const [isRemoveLevelOpen, setRemoveLevelOpen] = useState(false);
   const [isArchiveConfirmOpen, setArchiveConfirmOpen] = useState(false);
   const [isHardDeleteConfirmOpen, setHardDeleteConfirmOpen] = useState(false);
-  // A new character arrives with the Add Level wizard open (`openLevelUp`); a class's plus opens it, the class planned
+  // A new character arrives with the Add Level wizard open (`openLevelUp`); a track's plus opens it, the track planned
   const { openLevelUp } = characterPageState(location.state);
   const addLevel = useDialogState<Pick<AddLevelDialogProps, "trackId">>(openLevelUp ? {} : null);
   const editLevel = useDialogState<EditingLevel>();
@@ -92,15 +92,17 @@ export default function CharacterDetailsPage() {
     if (openLevelUp) navigate(location.pathname, { replace: true, state: {} });
   };
 
+  // Its toasts in its summary's words: its menu, which opens its confirmation, shows once the character has loaded
+  const removeLevelWords = character?.summary.words;
   const removeLevelMutation = useMutation({
     mutationFn: () => parseResponse(rpc.api.characters.levels[":characterId"].$delete({ param: { characterId: id } })),
     onSuccess: async () => {
-      snackbar.success("Level removed");
+      if (removeLevelWords) snackbar.success(removeLevelWords.removed);
       void invalidateCharacterListings(queryClient);
       await invalidateCharacter(queryClient, id);
       setRemoveLevelOpen(false);
     },
-    onError: (error) => snackbar.error(error, "Failed to remove level"),
+    onError: (error) => snackbar.error(error, removeLevelWords?.removeFailed ?? "Failed to remove level"),
   });
 
   const archiveMutation = useMutation({
@@ -207,8 +209,8 @@ export default function CharacterDetailsPage() {
                     ),
                   ]
                 : [
-                    // Add Level, as a class's popover's plus offers for its class (a character with no level adds its first
-                    // here), and Remove Last Level, the menu's alone
+                    // Add Level, as a track's popover's plus offers for its track (a character with no level adds its first
+                    // here), and Remove Last Level, the menu's alone, in its summary's words
                     <ActionMenuItem
                       key="add-level"
                       icon={AddIcon}

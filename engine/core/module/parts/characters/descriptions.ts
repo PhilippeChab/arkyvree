@@ -94,7 +94,7 @@ export interface SheetStat {
  * name, its label at its position ("Fighter 3"), its page (`entityType`, by its `id`), what its advancements' popover
  * says (`words`: its button's, the popover's, its add's), and its advancements, each its id (an edit opens it), its
  * label and its edit's; what stands between two tracks on the line (`separator`), and the words of the page's own
- * level actions (`words`: adding one, removing the last, and the removal's confirmation).
+ * level actions (`words`: adding one, removing the last, the removal's confirmation and its toasts).
  */
 export interface SheetSummary {
   separator: string;
@@ -106,7 +106,7 @@ export interface SheetSummary {
     name: string;
     words: { add: string; levels: string; open: string };
   }[];
-  words: { add: string; removeLast: string; removeLastMessage: string };
+  words: { add: string; removed: string; removeFailed: string; removeLast: string; removeLastMessage: string };
 }
 
 /**

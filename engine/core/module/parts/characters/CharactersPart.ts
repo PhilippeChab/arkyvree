@@ -47,11 +47,12 @@ type HiddenNotes = Exclude<PrivateNotes, "show">;
  * a member reads them, printed), their cards, languages and inventories, how a new one's ability scores are set, what
  * it stores and the races it can pick, a languages edit, and an inventory entry's add or edit. Its descriptions are the
  * ruleset's own (`D`). What reads the schema's rows alone is every ruleset's: what a character takes from its ruleset,
- * its card, its inventory. So are the checks that guard a character's privacy and integrity, which no ruleset can skip:
- * a reader reads the private notes the reading gives them, an entity a request names is one its ruleset's view shows (a
+ * its inventory. So are the checks that guard a character's privacy and integrity, which no ruleset can skip:
+ * a reader reads the private notes the reading gives them, a partly seen character's card and summary name none of its
+ * build, an entity a request names is one its ruleset's view shows (a
  * race, an ability, a language, an item: `RequestIds`, which reads a source's id as its copy's), an entry's charges
  * agree, a score is within the ruleset's bounds and a new character's race is a player's. Their operations are this
- * part's, over hooks for what a ruleset describes or checks its own way (`describeFull`, `describePartial`,
+ * part's, over hooks for what a ruleset describes or checks its own way (`describeFull`, `describePartial`, `describeFullCard`,
  * `planPlacement`, `describeCreation`, and the languages a character speaks and may pick: `describeLanguageRoom`,
  * `fitLanguages`).
  */
@@ -224,7 +225,7 @@ export default abstract class CharactersPart<D extends Descriptions> {
 
   /**
    * The card of a character (`character`, with its levels, `levels`), as a list of characters shows it: a partly seen
-   * one's (`partial`) holds the chips its ruleset marks as its partial reading's alone.
+   * one's (`partial`) holds the chips its ruleset marks as its partial reading's alone, and no levels.
    */
   describeCard(
     view: RulesetView,
@@ -233,12 +234,14 @@ export default abstract class CharactersPart<D extends Descriptions> {
     partial: boolean,
   ): CharacterCard {
     const card = this.describeFullCard(view, character, levels);
-    return partial ? { ...card, chips: card.chips.filter((chip) => chip.partial) } : card;
+    if (!partial) return card;
+    return { ...card, chips: card.chips.filter((chip) => chip.partial), levels: [], totalLevel: 0 };
   }
 
   /**
    * A character as a campaign member reads it (`reading`): partly, from its rows without its private notes nor its
-   * bonded creatures (`describePartial`), or its sheet with its bonded creatures', their private notes shown or blank.
+   * bonded creatures (`describePartial`), its summary with no tracks, or its sheet with its bonded creatures', their
+   * private notes shown or blank.
    */
   describeForMember(
     view: RulesetView,
@@ -246,7 +249,10 @@ export default abstract class CharactersPart<D extends Descriptions> {
     bonded: CharacterInput[],
     reading: MemberReading,
   ): D["partialSheet"] | D["sheet"] {
-    if (reading === "partial") return this.describePartial(view, CharactersPart.withoutNotes(character));
+    if (reading === "partial") {
+      const sheet = this.describePartial(view, CharactersPart.withoutNotes(character));
+      return { ...sheet, summary: { ...sheet.summary, tracks: [] } };
+    }
     return this.describe(view, character, bonded, reading);
   }
 

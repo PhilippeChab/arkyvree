@@ -264,6 +264,10 @@ describe("campaigns characters", () => {
         description: SECRETS.description,
         levels: [expect.objectContaining({ klass: "Fighter", level: 1 })],
         totalLevel: 1,
+        chips: [
+          { label: "Human", partial: true, tone: "secondary" },
+          { label: "Fighter 1", partial: false, tone: "primary" },
+        ],
         isPartial: false,
       });
     }

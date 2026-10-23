@@ -24,6 +24,8 @@ export default class SheetSummaries {
         add: "Add Level",
         removeLast: "Remove Last Level",
         removeLastMessage: "Are you sure you want to remove the last level? This action cannot be undone.",
+        removed: "Level removed",
+        removeFailed: "Failed to remove level",
       },
       tracks: Object.values(classes).map(({ klass, levels }) => {
         const label = ClassLevels.format(klass.name, levels.length);

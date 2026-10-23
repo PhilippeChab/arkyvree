@@ -7,6 +7,8 @@ const LEVEL_WORDS = {
   add: "Add Level",
   removeLast: "Remove Last Level",
   removeLastMessage: "Are you sure you want to remove the last level? This action cannot be undone.",
+  removed: "Level removed",
+  removeFailed: "Failed to remove level",
 };
 
 /** A class the character has `levels` of, each its level of the class, its character level's id `<class>-<level>`. */
