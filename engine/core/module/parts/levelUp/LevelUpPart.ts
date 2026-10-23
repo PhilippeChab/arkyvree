@@ -31,8 +31,8 @@ export default abstract class LevelUpPart<D extends Descriptions> {
   abstract listSteps(view: RulesetView, character: CharacterInput, edited: boolean): LevelSteps;
 
   /**
-   * Step `step`'s picker over the plan (`query`), at the advancement its pick lands on: the kind it reads a page of, and
-   * its picker. Refused for a step that opens none.
+   * Step `step`'s picker over the plan (`query`), at the advancement its pick lands on: the kind it reads a page of,
+   * and its picker. Refused for a step that opens none.
    */
   abstract openStepPicker(
     view: RulesetView,

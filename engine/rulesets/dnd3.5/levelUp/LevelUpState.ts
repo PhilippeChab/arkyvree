@@ -18,8 +18,8 @@ type OverfullPool = ReturnType<DetailedCharacter["components"]["aptitudes"]["get
 export type PoolPicks = Pick<LevelPicks, "feats" | "powers">;
 
 /**
- * What a 3.5 level-up flow reads past every flow's (`LevelUpBase`): the steps the wizard and the preview share, a feats step,
- * a powers step and a skills step (`SpendsSkillPoints`), and which skills a class makes class skills.
+ * What a 3.5 level-up flow reads past every flow's (`LevelUpBase`): the steps the wizard and the preview share, a feats
+ * step, a powers step and a skills step (`SpendsSkillPoints`), and which skills a class makes class skills.
  */
 export default abstract class LevelUpState extends include(LevelUpBase<DetailedCharacter>, SpendsSkillPoints) {
   /**

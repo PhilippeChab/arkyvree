@@ -6,7 +6,7 @@ import SavedPicks, { type SavedPickRows } from "./SavedPicks.ts";
 
 /**
  * A character's rows (`character`) with what a level-up adds before it's saved, as the rows it would save: the levels
- * it adds, replaces or leaves out, and their ability increases and picks. A ruleset builds the character from them as
+ * it adds, replaces or leaves out, and their ability increases and picks. The flows build the character from them as
  * from saved rows (`input`), so what a level grants, what a pick carries and where a level stands are read one way. It
  * says which character it projects: the character as it was before a level (`dropLevelsFrom`, what a level's
  * prerequisites read), or with a level replaced where it stands (`addLevel`'s `replacing`, what its slots and points

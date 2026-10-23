@@ -37,7 +37,10 @@ export interface LevelsPlan extends BondedCreaturesPlan {
   levels: LevelWrites[];
 }
 
-/** What a level-up writes of a level: its row's columns, and its rows under it, by pick. The server writes each as it is. */
+/**
+ * What a level-up writes of a level: its row's columns, and its rows under it, by pick. The server writes each as it
+ * is.
+ */
 export interface LevelWrites {
   columns: LevelColumns;
   rows: LevelRows;
@@ -67,7 +70,10 @@ export type BondedPlan = { kind: string; removedId?: string } & (
   | { levels: undefined }
 );
 
-/** A level's row's columns, as its module's storage declaration writes an advancement (3.5's class level and hit points). */
+/**
+ * A level's row's columns, as its module's storage declaration writes an advancement (3.5's class level and hit
+ * points).
+ */
 export type LevelColumns = Record<string, unknown>;
 
 /** A level's rows under it, by the name of the pick its module declares each under: what a save writes under it. */

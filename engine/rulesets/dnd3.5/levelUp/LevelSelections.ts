@@ -11,8 +11,8 @@ import type { LevelPickRows } from "./plans.ts";
  */
 export default class LevelSelections extends LevelUpBase<DetailedCharacter> {
   /**
-   * A saved level's selections: its skill ranks, its feats by pool (each with the pools its modifiers add slots to) and its powers
-   * by pool (each with its spell level in the pool when it has one).
+   * A saved level's selections: its skill ranks, its feats by pool (each with the pools its modifiers add slots to) and
+   * its powers by pool (each with its spell level in the pool when it has one).
    */
   private buildLevelSelections({ feats: levelFeats, powers: levelPowers, skills: levelSkills }: LevelPickRows) {
     const skills: Record<string, number> = {};

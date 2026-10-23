@@ -10,7 +10,7 @@ export interface OverfullPool {
   room: number;
 }
 
-/** What a save spreads its pooled picks over its planned levels by: each level's pool slots, points and class skills. */
+/** What a save spreads its pooled picks over its planned levels by: each level's slots, points and class skills. */
 export interface PerLevelDistributionData extends PoolSlots {
   perLevelClassSkillIds: string[][];
   perLevelSkillPoints: number[];
