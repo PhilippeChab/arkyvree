@@ -94,6 +94,23 @@ describe.each(baseRules.enumValues)("The %s module, as core runs its characters'
     expect(read.partial.summary.tracks).toEqual([]);
   });
 
+  test("asks its summary's confirmations as the client's own ask theirs: what follows, then that it's for good", async () => {
+    const seeded = await findSeededCharacter(rules);
+    const input = await readCharacterInput(db, seeded);
+    const bonded = await readBondedInputs(db, input, Visibility.All);
+
+    const { words } = await withRulesetScope(
+      db,
+      seeded.rulesetId,
+      async (scope) => Engine.for(scope).character(input).describeForMember(bonded, "show").summary,
+    );
+
+    for (const message of [words.deleteMessage, words.removeLastMessage]) {
+      expect(message).toMatch(/^Are you sure you want to [^?]+\?/);
+      expect(message).toEndWith("This action cannot be undone.");
+    }
+  });
+
   test("refuses an item of another ruleset in a character's inventory", async () => {
     const record = await findSeededCharacter(rules);
     const input = await readCharacterInput(db, record);

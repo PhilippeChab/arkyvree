@@ -60,6 +60,16 @@ const DESCRIBED_SCREENS = [
 /** The members that hold an entity's type as the code names it ("klass_levels"), which a reader sees in words */
 const ENTITY_TYPE_MEMBERS = new Set(["entityType", "sourceType"]);
 
+/**
+ * The game's own nouns, as 3.5 names its things (its kinds, its identity's fields, its sheet's parts), which a screen
+ * that shows what the engine describes never writes, in any case where a text reads as words.
+ */
+const GAME_NOUNS =
+  /\b(Armou?r\s+Class|Base\s+Attack\s+Bonus|Cantrips?|Caster\s+Levels?|Deit(y|ies)|Experience\s+Points?|Feats?|Hit\s+(Dice|Die|Points?)|Racial|Saving\s+Throws?|Spellbooks?|Spellcast(ers?|ing)|Spells?)\b/;
+
+/** The game's own nouns in any case, which a text that reads as words (never a key like "spells") can't write either */
+const GAME_NOUNS_ANY_CASE = new RegExp(GAME_NOUNS.source, "i");
+
 /** What lays a label out without being one: its row, its box, its spinner while pending */
 const LABEL_LAYOUT = new Set(["Box", "DiceSpinner", "Stack", "Typography", "span"]);
 
@@ -83,14 +93,12 @@ const LABELLED_BY_PROP =
   /^(ActionMenuItem|AddButton|Button|ChoiceChip|Tab|ToggleButton|DescriptionField|EmailField|FormControlLabel|FormTextField|LinkButton|NameField|OptionToggle|PageActionButton|PasswordField|SelectField|SwitchField|TextField|.*Dialog|Modal)$/;
 
 /**
- * A ruleset's nouns, as 3.5 names its things, which a screen that shows what the engine describes never writes: its
- * kinds, its identity's fields, its sheet's parts.
+ * A ruleset's nouns as it writes them, capitalized: the game's own, those it shares with English (which a text in
+ * lowercase means otherwise: "an item", "a class") and its abbreviations.
  */
-const RULESET_NOUNS =
-  /\b(Abilit(y|ies)|Alignments?|Cantrips?|Class(es)?|Deit(y|ies)|Domains?|Equipment|Experience|Familiars?|Feats?|Hit\s+(Dice|Die|Points?)|Initiative|Inventory|Items?|Languages?|Races?|Racial|Saving\s+Throws?|Skills?|Spellbooks?|Spellcast(ers?|ing)|Spells?|Weapons?)\b/;
-
-/** A ruleset's nouns in any case, in a text that reads as words (one with a space, never a key like "abilities") */
-const RULESET_NOUNS_ANY_CASE = new RegExp(RULESET_NOUNS.source, "i");
+const RULESET_NOUNS = new RegExp(
+  `${GAME_NOUNS.source}|\\b(Abilit(y|ies)|Alignments?|Class(es)?|Domains?|Equipment|Familiars?|Initiative|Inventory|Items?|Languages?|Races?|Skills?|Weapons?|AC|BAB|CR|DC|HP|XP)\\b`,
+);
 
 /** The components whose `label` or `title` is a sentence, not a label: a chip's value, an empty state's */
 const SENTENCE_TITLED = /(Chip|^BlankState|^Tooltip)$/;
@@ -167,9 +175,12 @@ function createDescribedWords(context) {
   const file = repoPath(context.filename);
   if (!DESCRIBED_SCREENS.some((screen) => file.startsWith(screen))) return {};
   const check = (node, text) => {
-    // A text that reads as words, in any case; a key-shaped string, as a label writes it
-    const words = /\s/.test(text.trim()) || node.type === "JSXText";
-    const noun = (words ? RULESET_NOUNS_ANY_CASE : RULESET_NOUNS).exec(text)?.[0].replace(/\s+/g, " ");
+    // A text that reads as words (one with a space, or what an element shows), the game's nouns in any case
+    const words = /\s/.test(text) || node.type === "JSXText" || (node.type === "Literal" && rendered(node));
+    const noun = (RULESET_NOUNS.exec(text) ?? (words ? GAME_NOUNS_ANY_CASE.exec(text) : null))?.[0].replace(
+      /\s+/g,
+      " ",
+    );
     if (!noun) return;
     context.report({
       node,
@@ -186,7 +197,7 @@ function createDescribedWords(context) {
       if (typeof node.value === "string" && !isModuleSource(node) && !isUnshown(node)) check(node, node.value);
     },
     TemplateElement(node) {
-      check(node, node.value.cooked ?? node.value.raw);
+      if (node.parent.type !== "TSTemplateLiteralType") check(node, node.value.cooked ?? node.value.raw);
     },
   };
 }
@@ -340,13 +351,15 @@ function isModuleSource(node) {
   );
 }
 
-/** Whether a string is never shown: a type's, an enum member's, or an object's key. */
+/** Whether a string is never shown: a type's, an enum member's name, or a key shaped as one (an object's, a type's). */
 function isUnshown(node) {
   const { parent } = node;
   return (
     parent.type === "TSLiteralType" ||
-    parent.type === "TSEnumMember" ||
-    ((parent.type === "Property" || parent.type === "PropertyDefinition") && parent.key === node)
+    (parent.type === "TSEnumMember" && parent.id === node) ||
+    (["Property", "PropertyDefinition", "TSPropertySignature"].includes(parent.type) &&
+      parent.key === node &&
+      !/\s/.test(node.value))
   );
 }
 

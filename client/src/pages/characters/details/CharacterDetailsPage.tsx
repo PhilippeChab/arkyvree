@@ -51,7 +51,7 @@ import {
 } from "./components/index.ts";
 import { useCharacterPermissions } from "./useCharacterPermissions.ts";
 
-/** The words of the page's own level actions, its summary's: the removal's toasts among them. */
+/** The words of the page's own actions on its levels and its character, its summary's: the removal's toasts among them. */
 type SheetSummaryWords = CharacterDetail["summary"]["words"];
 
 export default function CharacterDetailsPage() {

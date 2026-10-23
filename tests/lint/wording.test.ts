@@ -125,6 +125,8 @@ describe("wording rules", () => {
           "client/src/entity.tsx": "export const n = <Typography>&#x1F480;</Typography>;\n",
           "client/src/symbols.tsx": 'export const y = <Button>{"×"} − ÷ © 2026</Button>;\n',
           "client/src/components/common/DiceSpinner.tsx": "export const z = <Typography>🎲</Typography>;\n",
+          // A module's path is no text
+          "client/src/module.ts": 'export * from "./notes - draft.ts";\nexport const m = import("./more....ts");\n',
         },
         ["typography-marks"],
       ),
@@ -147,6 +149,8 @@ describe("wording rules", () => {
           "client/src/template.ts": "export const t = `${title} | Arkyvree`;\n",
           "client/src/named.tsx": "export const n = <Typography>Welcome to {APP_NAME}</Typography>;\n",
           "client/src/lib/brand.ts": 'export const APP_NAME = "Arkyvree";\n',
+          // A module's path is no text
+          "client/src/logo.ts": 'export { default as logo } from "./Arkyvree.svg";\nimport "./Arkyvree.css";\n',
         },
         ["app-name"],
       ),
@@ -195,21 +199,40 @@ describe("wording rules", () => {
           "client/src/components/characters/add.tsx": 'export const a = <AddButton label="Add Item" />;\n',
           "client/src/components/characters/points.tsx":
             "export const p = <Typography>Max Hit\n  Points</Typography>;\n",
+          // A count's words, a shown string, a term and an abbreviation
+          "client/src/components/characters/count.ts": "export const c = `${count} feats`;\n",
+          "client/src/components/characters/shown.tsx": 'export const s = <span>{"spells"}</span>;\n',
+          "client/src/components/characters/spaced.ts": 'export const s = " spells";\n',
+          "client/src/components/characters/term.tsx": "export const t = <Typography>base attack bonus</Typography>;\n",
+          "client/src/components/characters/short.tsx": "export const s = <Typography>Max HP</Typography>;\n",
+          // An enum member's value is a string like any, its name never shown, nor a key's that reads as one
+          "client/src/pages/characters/details/member.ts": 'export enum E { Feats = "Feats" }\n',
+          "client/src/pages/characters/details/spacedKey.ts": 'export const k = { "Add Spell": 1 };\n',
           // A type, a key, and a string shaped as one are never shown
           "client/src/pages/characters/details/type.ts":
-            'export type K = "Feats" | "other";\nexport const k = { "Spells": 1 };\n',
-          "client/src/pages/characters/details/key.ts": 'export const q = { name: "abilities" };\n',
-          // A generic word is the app's
+            'export type K = "Feats" | `${string}Spells`;\nexport const k = { "Spells": 1 };\nexport interface I { "Feats": 1 }\n',
+          "client/src/pages/characters/details/key.ts":
+            'export const q = { name: "abilities" };\nexport class C { "Spells" = 1; }\n',
+          // A generic word is the app's, and an English one the game shares, in lowercase
           "client/src/pages/characters/details/level.tsx": "export const l = <Typography>Add Level</Typography>;\n",
+          "client/src/pages/characters/details/english.tsx":
+            "export const e = <Typography>Pick an item in the list or a class of your own</Typography>;\n",
         },
         ["described-words"],
       ),
     ).toEqual([
       "described-words client/src/components/characters/add.tsx",
+      "described-words client/src/components/characters/count.ts",
       "described-words client/src/components/characters/empty.tsx",
       "described-words client/src/components/characters/points.tsx",
       "described-words client/src/components/characters/sections/label.tsx",
       "described-words client/src/components/characters/sections/text.tsx",
+      "described-words client/src/components/characters/short.tsx",
+      "described-words client/src/components/characters/shown.tsx",
+      "described-words client/src/components/characters/spaced.ts",
+      "described-words client/src/components/characters/term.tsx",
+      "described-words client/src/pages/characters/details/member.ts",
+      "described-words client/src/pages/characters/details/spacedKey.ts",
       "described-words client/src/pages/characters/details/template.ts",
       "described-words client/src/pages/share/word.ts",
     ]);
