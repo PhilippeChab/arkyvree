@@ -8,7 +8,6 @@ import { ITEM_COLUMNS, ITEM_LIST } from "@/engine/rulesets/dnd3.5/entities/items
 import { POWER_COLUMNS, POWER_LIST } from "@/engine/rulesets/dnd3.5/entities/powers/columns.ts";
 import { RACE_COLUMNS, RACE_LIST } from "@/engine/rulesets/dnd3.5/entities/races/columns.ts";
 import { SKILL_COLUMNS, SKILL_LIST } from "@/engine/rulesets/dnd3.5/entities/skills/columns.ts";
-import { MAX_ABILITY_SCORE, MIN_ABILITY_SCORE } from "@/vocabulary/dnd3.5/abilities.ts";
 import { BONDED_KINDS } from "@/vocabulary/dnd3.5/bondedKinds.ts";
 import { MAX_CLASS_LEVEL } from "@/vocabulary/dnd3.5/classes.ts";
 import { MAX_ITEM_VARIANTS } from "@/vocabulary/dnd3.5/itemTemplates.ts";
@@ -21,7 +20,6 @@ import { SPELL_LEVEL_LABELS, SPELL_LEVELS } from "@/vocabulary/dnd3.5/spells.ts"
  * new character's form.
  */
 export const RULES: RulesDescription = {
-  abilityScores: { max: MAX_ABILITY_SCORE, min: MIN_ABILITY_SCORE },
   characterForm: CHARACTER_FORM,
   columns: {
     feats: FEAT_COLUMNS,

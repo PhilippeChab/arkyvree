@@ -1,4 +1,7 @@
-import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
+import CharacterResponse from "@/engine/rulesets/dnd3.5/characters/description/CharacterResponse.ts";
+import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
+import { db } from "@/server/database/index.ts";
+import { Characters, Visibility } from "@/server/repositories/index.ts";
 import type { Character } from "@/shared/relations.ts";
 import { buildCharacter } from "@/tests/support/characters.ts";
 
@@ -15,4 +18,17 @@ export async function buildAs<C extends DetailedCharacter>(
   if (!(character instanceof Kind) || character.constructor !== Kind)
     throw new Error(`${record.name} builds as a ${character.constructor.name}, not a ${Kind.name}`);
   return character;
+}
+
+/**
+ * A 3.5 character's sheet (`characterId`'s, a bonded creature's built with its master), every part of it as its module
+ * builds it (`CharacterResponse.buildSheet`): what its blocks show, as the rules hold it, which the API answers none
+ * of.
+ */
+export async function sheetOf(characterId: string) {
+  const record = await Characters.findOne(db, { id: characterId }, Visibility.All);
+  if (!record) throw new Error(`No character ${characterId}`);
+  const built = await buildCharacter(record);
+  if (!(built instanceof DetailedCharacter)) throw new Error(`${record.name} doesn't build as a 3.5 character`);
+  return CharacterResponse.buildBondedSheet(record, built);
 }

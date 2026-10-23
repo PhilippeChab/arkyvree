@@ -83,14 +83,14 @@ class CampaignCharactersService {
       canEdit,
       canDownloadPdf: canEdit || isGM,
       isPartial,
-      // Its editors and the Game Master read its private notes, which the others' sheet blanks
-      showPrivateNotes: canEdit || isGM,
     };
+    // Its editors and the Game Master read its private notes, which the others' sheet holds none of
+    const readsPrivateNotes = canEdit || isGM;
     return await withRulesetScope(db, character.rulesetId, async (scope) => {
       const input = await readCharacterInput(db, character);
       // A partial reading shows none of the character's bonded creatures
       const bonded = isPartial ? [] : await readBondedInputs(db, input, Visibility.All);
-      const reading = isPartial ? "partial" : viewer.showPrivateNotes ? "show" : "blank";
+      const reading = isPartial ? "partial" : readsPrivateNotes ? "show" : "hide";
       const described = Engine.for(scope).character(input).describeForMember(bonded, reading);
       return { ...viewer, ...described, shareToken: canEdit ? described.shareToken : null };
     });
@@ -180,11 +180,6 @@ class CampaignCharactersService {
             id: char.id,
             name: char.name,
             description: isPartial ? null : char.description,
-            race: card.race,
-            // The engine's partial card has no levels already: the response's own shape says none, until its lists read
-            // its chips alone
-            levels: isPartial ? [] : card.levels,
-            totalLevel: isPartial ? null : card.totalLevel,
             chips: card.chips,
             visibility: meta?.visibility ?? "Private",
             isOwn,

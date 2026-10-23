@@ -10,8 +10,8 @@ import CharacterResponse from "./CharacterResponse.ts";
 import SheetBlocks from "./SheetBlocks.ts";
 import SheetSummaries from "./SheetSummaries.ts";
 
-/** A bonded creature's sheet, as the API answers it, with the feat of its master's that bonds it (`bondFeatId`). */
-type BondedDescription = ReturnType<typeof CharacterResponse.buildBonded> & { bondFeatId: string | null };
+/** A bonded creature's sheet, which its subsheet reads, with the feat of its master's that bonds it (`bondFeatId`). */
+type BondedDescription = ReturnType<typeof CharacterResponse.buildBondedSheet> & { bondFeatId: string | null };
 
 /**
  * A character described from the rows the server read: its sheet, a creature's, or its public part. Its private notes
@@ -35,7 +35,7 @@ export default class CharacterDescription {
       const input = byKind.get(kind);
       if (input) {
         described[kind] = {
-          ...CharacterResponse.buildBonded(input.record, Dnd35CharacterBuilder.build(view, input, { master })),
+          ...CharacterResponse.buildBondedSheet(input.record, Dnd35CharacterBuilder.build(view, input, { master })),
           bondFeatId: CharacterDescription.bondFeatOf(master, kind),
         };
       }
@@ -43,37 +43,27 @@ export default class CharacterDescription {
     return described;
   }
 
-  /** The bonded creatures of a sheet that shows none: a creature's own, or a partly seen character's. */
-  private static noBonded(): Record<string, BondedDescription> {
-    return {};
-  }
-
   /**
-   * A character's sheet, as the API answers it: a player character's with its bonded creatures' (`bonded`), each built
-   * with it; or a bonded creature's, from its master's, which has no creatures of its own.
+   * A character's sheet, as the API answers it: a player character's, its bonded creatures (`bonded`), each built with
+   * it, in the details of the feats that bond them; or a bonded creature's, from its master's.
    */
   static describeFull(view: RulesetView, character: CharacterInput, bonded: CharacterInput[]) {
     const built = Dnd35CharacterBuilder.build(view, character);
-    if (character.master)
-      return { ...CharacterResponse.buildBonded(character.record, built), bonded: CharacterDescription.noBonded() };
-    const sheet = CharacterResponse.buildFull(character.record, built);
+    if (character.master) return CharacterResponse.toResponse(CharacterResponse.buildSheet(character.record, built));
+    const sheet = CharacterResponse.buildSheet(character.record, built);
     const described = CharacterDescription.describeBonded(view, built, bonded);
-    return {
-      ...sheet,
-      // Each creature in the details of the feat that bonds it
-      blocks: SheetBlocks.bond(sheet.blocks, Object.values(described)),
-      bonded: described,
-    };
+    // Each creature in the details of the feat that bonds it
+    return CharacterResponse.toResponse({ ...sheet, blocks: SheetBlocks.bond(sheet.blocks, Object.values(described)) });
   }
 
   /**
    * What a campaign member who only sees a character partly reads of it: who it is, its name and physical traits (race,
-   * age, gender, height, weight), and nothing else. An allowlist: a new field of the full sheet, or of its identity, must
-   * be considered here.
+   * age, gender, height, weight, its identity's block alone), and nothing else: no summary's tracks, no diagnostics. An
+   * allowlist: a new key of the response must be considered here.
    */
   static describePartial(view: RulesetView, character: CharacterInput) {
-    const response = CharacterResponse.buildFull(character.record, Dnd35CharacterBuilder.build(view, character));
-    const { physiology } = response.identity;
+    const sheet = CharacterResponse.buildSheet(character.record, Dnd35CharacterBuilder.build(view, character));
+    const response = CharacterResponse.toResponse(sheet);
     return {
       id: response.id,
       userId: response.userId,
@@ -88,38 +78,11 @@ export default class CharacterDescription {
       deletedAt: response.deletedAt,
       updatedAt: response.updatedAt,
       shareToken: null,
-      identity: {
-        background: null,
-        beliefs: null,
-        meta: null,
-        physiology: {
-          age: physiology.age,
-          description: null,
-          gender: physiology.gender,
-          height: physiology.height,
-          languages: null,
-          name: physiology.name,
-          race: physiology.race,
-          weight: physiology.weight,
-        } satisfies Record<keyof typeof physiology, unknown>,
-      } satisfies Record<keyof typeof response.identity, unknown>,
-      skillBudget: { available: 0, spent: 0, total: 0 },
-      abilities: [],
-      combat: {},
-      saves: {},
-      classes: {},
-      summary: SheetSummaries.describe({}),
-      skills: {},
-      inventory: {},
-      equipment: [],
-      virtualFeats: [],
-      spellGroups: [],
-      spellsPerDay: { levels: [], lists: [] },
       requirements: {},
       modifiers: {},
       validation: { valid: true, issues: [] },
-      blocks: [IdentityFields.describe(response.identity, true)],
-      bonded: CharacterDescription.noBonded(),
-    } satisfies Record<keyof typeof response | "bonded", unknown>;
+      summary: SheetSummaries.describe({}),
+      blocks: [IdentityFields.describe(sheet.identity, true)],
+    } satisfies Record<keyof typeof response, unknown>;
   }
 }

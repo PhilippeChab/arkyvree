@@ -4,7 +4,12 @@ import type { InferRequestType } from "hono/client";
 import type { Db } from "@/drizzle/database.ts";
 import { charactersInCharacter } from "@/drizzle/schema.ts";
 import Modules from "@/engine/api/Modules.ts";
-import { CharacterInputs, CharacterProjection, type FieldsRequest } from "@/engine/core/module/index.ts";
+import {
+  CharacterInputs,
+  CharacterProjection,
+  type FieldsRequest,
+  type SheetBlock,
+} from "@/engine/core/module/index.ts";
 import { type RulesetScope, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Characters } from "@/server/repositories/index.ts";
@@ -48,6 +53,22 @@ function splitFields<T extends NewFields & { fields?: FieldsRequest }>(values: T
     } as FieldsRequest,
     rest,
   };
+}
+
+/** The notes a sheet's identity block holds: its public ones, and its private ones for a reader who reads them. */
+export function notesOf(sheet: { blocks: SheetBlock[] }) {
+  const identity = sheet.blocks.find((block) => block.key === "identity");
+  if (identity?.kind !== "fields") throw new Error("no identity block");
+  return identity.notes;
+}
+
+/** The subsheets a sheet's entries hold: its bonded creatures', each in the details of the entry that bonds it. */
+export function subsheetsOf(sheet: { blocks: SheetBlock[] }) {
+  return sheet.blocks.flatMap((block) =>
+    block.kind === "entries"
+      ? block.entries.flatMap((entry) => (entry.subsheet ? [{ entryId: entry.id, id: entry.subsheet.id }] : []))
+      : [],
+  );
 }
 
 /**

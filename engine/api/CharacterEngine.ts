@@ -18,8 +18,8 @@ export default class CharacterEngine extends CharacterHandle {
   }
 
   /**
-   * The character's sheet, as the API answers it: a player character's with its bonded creatures', their private notes
-   * as the viewer reads them (all of them, blank, or no field); or a bonded creature's, from its master's.
+   * The character's sheet, as the API answers it: a player character's, its bonded creatures' subsheets among its
+   * blocks, or a bonded creature's, from its master's; its private notes shown or left out (`notes`).
    */
   describe(...[bonded, ...rest]: Args<"describe">) {
     return this.module.characters.describe(this.view, this.input, this.resolveBonded(bonded), ...rest);
@@ -27,7 +27,7 @@ export default class CharacterEngine extends CharacterHandle {
 
   /**
    * The character as a campaign member reads it (`reading`): partly, who it is and what it looks like (`partial`), or
-   * its sheet with its bonded creatures', their private notes shown or blank.
+   * its sheet, its private notes shown or left out.
    */
   describeForMember(...[bonded, ...rest]: Args<"describeForMember">) {
     return this.module.characters.describeForMember(this.view, this.input, this.resolveBonded(bonded), ...rest);

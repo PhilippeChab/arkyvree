@@ -8,6 +8,7 @@ import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { db } from "@/server/database/index.ts";
 import { api, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
 import { postCharacter } from "@/tests/support/characters.ts";
+import { sheetOf } from "@/tests/support/dnd3.5/characters.ts";
 import { FIGHTER_LEVELS, picks, type Picks } from "@/tests/support/dnd3.5/levelFixtures.ts";
 import {
   levelEditPlan,
@@ -203,8 +204,7 @@ describe("character levels", () => {
         feats: { General: ["Power Attack"], "Fighter Bonus Feat": ["Improved Initiative"] },
       });
       await addLevelOk(character.id, fighter, 1, 10, levelPicks);
-      const detail = await expectOk(api.api.characters[":id"].$get({ param: { id: character.id } }));
-      expect(detail).toMatchObject({ skillBudget: { total: 8, spent: 8, available: 0 } });
+      expect((await sheetOf(character.id)).skillBudget).toMatchObject({ total: 8, spent: 8, available: 0 });
     });
 
     test("counts the plan's levels in the character's total, which caps a rank", async () => {

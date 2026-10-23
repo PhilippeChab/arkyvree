@@ -2,7 +2,7 @@ import type { PropertyTypesProvider } from "@/engine/core/customizations/index.t
 import type { Fields } from "@/engine/core/fields/index.ts";
 import type { TargetPaths } from "@/engine/core/paths/CategoryPaths.ts";
 
-import type { CharactersPart, DescribedSheet, SheetSummary } from "./parts/characters/index.ts";
+import type { CharactersPart, NotedSheet, SheetSummary } from "./parts/characters/index.ts";
 import type { ContentPart } from "./parts/content/index.ts";
 import type { EntitiesPart, EntityKindsContract } from "./parts/entities/index.ts";
 import type { ImportsPart } from "./parts/imports/index.ts";
@@ -19,7 +19,7 @@ export interface Descriptions {
   inventoryEntry: object;
   partialSheet: { summary: SheetSummary };
   raceOption: object;
-  sheet: DescribedSheet;
+  sheet: NotedSheet;
   sheetDocument: unknown;
   stepPicker: { kind: string };
 }

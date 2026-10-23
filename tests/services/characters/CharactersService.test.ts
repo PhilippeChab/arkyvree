@@ -199,7 +199,7 @@ describe("CharactersService", () => {
       const sheet = await CharactersService.getCharacter(session, created.id);
       expect(sheet).toMatchObject({ id: created.id, name: created.name });
       // Built: its combat, not only who it is
-      expect(Object.keys(sheet.combat)).not.toHaveLength(0);
+      expect(sheet.blocks.map(({ key }) => key)).toContain("combat");
 
       const fields = { age: 35, experience: 5000, alignment: "Chaotic Good", description: "Updated" };
       expect(
@@ -319,16 +319,15 @@ describe("CharactersService", () => {
   });
 
   describe("listing a user's characters", () => {
-    test("lists only theirs, with race and levels, searched and sorted", async () => {
+    test("lists only theirs, each its card's chips, searched and sorted", async () => {
       const { session } = await createTestUser();
       const { session: other } = await createTestUser();
       await createCharacterAs(other, { name: "Someone Else" });
       const list = async (where: Parameters<typeof CharactersService.getCharacters>[1] = {}) =>
         (await CharactersService.getCharacters(session, where, page)).items as {
+          chips: { label: string }[];
           id: string;
-          levels?: unknown[];
           name: string;
-          race?: unknown;
         }[];
       expect(await list()).toEqual([]);
 
@@ -336,10 +335,11 @@ describe("CharactersService", () => {
       await createCharacterAs(session, { name: "Aiden Mage" });
       await addCharacterLevel(zephyr.id, (await fighterLevel()).id);
 
-      expect((await list()).find((c) => c.id === zephyr.id)).toMatchObject({
-        race: expect.anything(),
-        levels: [expect.anything()],
-      });
+      // Its card: its race, then its class at its level
+      expect((await list()).find((c) => c.id === zephyr.id)?.chips.map(({ label }) => label)).toEqual([
+        "Human",
+        "Fighter 1",
+      ]);
       expect((await list({ search: "Zephyr" })).map((c) => c.name)).toEqual(["Zephyr Warrior"]);
       expect((await list({ orderBy: "name", orderDir: "asc" })).map((c) => c.name)).toEqual([
         "Aiden Mage",
@@ -543,7 +543,7 @@ describe("CharactersService", () => {
       const first = (await CharacterSharingService.generateShareToken(session, character.id)).shareToken!;
       const shared = await CharacterSharingService.getSharedCharacter(first);
       expect(shared).toMatchObject({ id: character.id, name: character.name });
-      expect(Object.keys(shared.combat)).not.toHaveLength(0);
+      expect(shared.blocks.map(({ key }) => key)).toContain("combat");
       // The printed sheet: the document the route renders
       expect(isValidElement(await CharacterSharingService.generateSharedPdf(first))).toBe(true);
 

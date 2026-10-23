@@ -11,7 +11,6 @@ import type {
   CharacterCard,
   CharacterCreation,
   DescribedInventoryEntry,
-  DescribedSheet,
   HeldInventoryEntry,
   LanguagesDescription,
   NotedSheet,
@@ -41,9 +40,6 @@ import type {
   SheetRequest,
   StartRequest,
 } from "./requests.ts";
-
-/** How a reader who doesn't read a character's private notes reads them: blank, or no field at all. */
-type HiddenNotes = Exclude<PrivateNotes, "show">;
 
 /**
  * What a ruleset answers of its characters, from the rows the server reads: their sheets (as the API answers them, as a
@@ -79,28 +75,15 @@ export default abstract class CharactersPart<D extends Descriptions> {
   }
 
   /**
-   * A sheet's private notes as a reader who doesn't read them reads them: a copy with them blank or left out, so the
-   * response keeps its shape.
+   * A sheet as a reader who doesn't read its private notes reads it: a copy whose `fields` blocks hold none, since a
+   * block holds them for who reads them alone.
    */
-  private static redactNotes<S extends NotedSheet>(sheet: S, notes: HiddenNotes): S {
-    const privateNotes = notes === "blank" ? "" : undefined;
+  private static redactNotes<S extends NotedSheet>(sheet: S): S {
     // Its fields' private notes go: a block shows them to who reads them alone
     const blocks = sheet.blocks.map((block) =>
       block.kind === "fields" && block.notes ? { ...block, notes: { notes: block.notes.notes } } : block,
     );
-    return {
-      ...sheet,
-      blocks,
-      identity: { ...sheet.identity, background: { ...sheet.identity.background, privateNotes } },
-    };
-  }
-
-  /** A sheet's private notes, and its bonded creatures', as a reader who doesn't read them reads them. */
-  private static redactSheet<S extends DescribedSheet>(sheet: S, notes: HiddenNotes): S {
-    const bonded = Object.fromEntries(
-      Object.entries(sheet.bonded).map(([kind, creature]) => [kind, CharactersPart.redactNotes(creature, notes)]),
-    );
-    return { ...CharactersPart.redactNotes(sheet, notes), bonded };
+    return { ...sheet, blocks };
   }
 
   /**
@@ -116,9 +99,9 @@ export default abstract class CharactersPart<D extends Descriptions> {
   }
 
   /**
-   * A character's sheet as the API answers it, its private notes where every ruleset's holds them (`NotedSheet`), as
-   * its rows have them (none when its reader doesn't read them): a player character's with its bonded creatures'
-   * (`bonded`), each noted; or a bonded creature's, from its master's.
+   * A character's sheet as the API answers it (`NotedSheet`), its private notes as its rows have them (none when its
+   * reader doesn't read them): a player character's, its bonded creatures (`bonded`) as its blocks show them; or a
+   * bonded creature's, from its master's.
    */
   protected abstract describeFull(view: RulesetView, character: CharacterInput, bonded: CharacterInput[]): D["sheet"];
 
@@ -173,8 +156,8 @@ export default abstract class CharactersPart<D extends Descriptions> {
   protected abstract planFields(view: RulesetView, character: CharacterInput, request: FieldsRequest): FieldsPlan;
 
   /**
-   * What a new character's fields (`fields`, its form's, by their keys) write: their columns, each checked, refused when
-   * one its form requires is missing or a value is one its field doesn't take.
+   * What a new character's fields (`fields`, its form's, by their keys) write: their columns, each checked, refused
+   * when one its form requires is missing or a value is one its field doesn't take.
    */
   protected abstract planNewFields(fields: FieldsRequest): { columns: CharacterColumns };
 
@@ -214,10 +197,10 @@ export default abstract class CharactersPart<D extends Descriptions> {
   ): OpenedPicker<{ kind: string }, { id: string }, D["raceOption"]>;
 
   /**
-   * A character's sheet as the API answers it (`describeFull`): a player character's with its bonded creatures'
-   * (`bonded`), or a bonded creature's, from its master's; their private notes as the viewer reads them (`notes`): all
-   * of them, a blank, or no field. A viewer who doesn't read them reads none: the ruleset describes rows without them,
-   * and the sheet's, its creatures' too, are blanked or left out where every ruleset's holds them (`NotedSheet`).
+   * A character's sheet as the API answers it (`describeFull`): a player character's, its bonded creatures (`bonded`)
+   * among its blocks, or a bonded creature's, from its master's; its private notes shown or left out (`notes`). A
+   * viewer who doesn't read them reads none: the ruleset describes rows without them, and the sheet's `fields` blocks
+   * hold none (`NotedSheet`).
    */
   describe(
     view: RulesetView,
@@ -228,12 +211,12 @@ export default abstract class CharactersPart<D extends Descriptions> {
     if (notes === "show") return this.describeFull(view, character, bonded);
     const creatures = bonded.map((input) => CharactersPart.withoutNotes(input));
     const sheet = this.describeFull(view, CharactersPart.withoutNotes(character), creatures);
-    return CharactersPart.redactSheet(sheet, notes);
+    return CharactersPart.redactNotes(sheet);
   }
 
   /**
    * The card of a character (`character`, with its levels, `levels`), as a list of characters shows it: a partly seen
-   * one's (`partial`) holds the chips its ruleset marks as its partial reading's alone, and no levels.
+   * one's (`partial`) holds the chips its ruleset marks as its partial reading's alone.
    */
   describeCard(
     view: RulesetView,
@@ -243,13 +226,13 @@ export default abstract class CharactersPart<D extends Descriptions> {
   ): CharacterCard {
     const card = this.describeFullCard(view, character, levels);
     if (!partial) return card;
-    return { ...card, chips: card.chips.filter((chip) => chip.partial), levels: [], totalLevel: 0 };
+    return { chips: card.chips.filter((chip) => chip.partial) };
   }
 
   /**
    * A character as a campaign member reads it (`reading`): partly, from its rows without its private notes nor its
-   * bonded creatures (`describePartial`), its summary with no tracks, or its sheet with its bonded creatures', their
-   * private notes shown or blank.
+   * bonded creatures (`describePartial`), its summary with no tracks, or its sheet, its private notes shown or left
+   * out.
    */
   describeForMember(
     view: RulesetView,
@@ -292,8 +275,8 @@ export default abstract class CharactersPart<D extends Descriptions> {
 
   /**
    * What a character speaks, and what its picked languages (`languageIds`, as an edit is being made) leave it room for
-   * (`describeLanguageRoom`), each language by the id the view keys it by. Refused, naming it, when one isn't a language
-   * of the character's ruleset, or is sent twice.
+   * (`describeLanguageRoom`), each language by the id the view keys it by. Refused, naming it, when one isn't a
+   * language of the character's ruleset, or is sent twice.
    */
   describeLanguages(view: RulesetView, character: CharacterInput, languageIds: string[]): LanguagesDescription {
     const picks = CharactersPart.idsOf(view).resolveAll("languages", languageIds);
@@ -312,8 +295,8 @@ export default abstract class CharactersPart<D extends Descriptions> {
   }
 
   /**
-   * What a new character stores: what it starts with (`planStart`), and its fields' columns (`planNewFields`). Refused as
-   * its start is, or when a field is.
+   * What a new character stores: what it starts with (`planStart`), and its fields' columns (`planNewFields`). Refused
+   * as its start is, or when a field is.
    */
   planCreate(view: RulesetView, request: NewCharacterRequest): NewCharacterPlan {
     const { fields, ...start } = request;
@@ -321,8 +304,8 @@ export default abstract class CharactersPart<D extends Descriptions> {
   }
 
   /**
-   * What an edit of a character (`edit`) writes: its fields' columns (`planFields`), each checked, and its languages, when
-   * it sends them (`planLanguages`).
+   * What an edit of a character (`edit`) writes: its fields' columns (`planFields`), each checked, and its languages,
+   * when it sends them (`planLanguages`).
    */
   planEdit(view: RulesetView, character: CharacterInput, edit: CharacterEditRequest): CharacterEditPlan {
     return {
@@ -369,9 +352,9 @@ export default abstract class CharactersPart<D extends Descriptions> {
   /**
    * What a new character starts with, as its form or its import gives it: its race, and a score for each of the
    * ruleset's abilities, the one given (`abilities`, by ability id) or the one an unset ability starts at
-   * (`describeCreation`), each by the id the view keys it by. Refused when a score is past the ruleset's bounds, its race
-   * or an ability isn't one of the ruleset's, two scores name one ability, or its race isn't a player character's (of
-   * kind `pc`).
+   * (`describeCreation`), each by the id the view keys it by. Refused when a score is past the ruleset's bounds, its
+   * race or an ability isn't one of the ruleset's, two scores name one ability, or its race isn't a player character's
+   * (of kind `pc`).
    */
   planStart(view: RulesetView, request: StartRequest): StartPlan {
     const { scores } = this.describeCreation(view);

@@ -477,7 +477,7 @@ describe("DetailedCharacter", () => {
       await withRulesetScope(db, bjorn.rulesetId, async (scope) => {
         const built = await measure(() => buildAs(DetailedCharacter, bjorn, { scope }));
         expect(built.timing.cacheHits + built.timing.cacheMisses).toBe(0);
-        expect(CharacterResponse.buildFull(bjorn, built.result)).toEqual(CharacterResponse.buildFull(bjorn, own));
+        expect(CharacterResponse.buildSheet(bjorn, built.result)).toEqual(CharacterResponse.buildSheet(bjorn, own));
       });
     });
 
@@ -527,7 +527,7 @@ describe("DetailedCharacter", () => {
       expect(read("identity.background.notes")).toEqual(["A wandering smith"]);
       expect(read("identity.background.privateNotes")).toEqual(["Element not found: privateNotes"]);
       expect(detailed.components.identity.getIdentity().background).toEqual({ notes: "A wandering smith" });
-      expect(CharacterResponse.buildFull(bjorn, detailed).identity.background).toEqual({
+      expect(CharacterResponse.buildSheet(bjorn, detailed).identity.background).toEqual({
         notes: "A wandering smith",
         privateNotes: "Owes the thieves' guild",
       });
@@ -3276,7 +3276,7 @@ describe("DetailedCharacter", () => {
         bard: 10 + 2 + 1 + 1,
       });
       // The sheet's spell lists show each class's
-      const lists = CharacterResponse.buildFull(record, detailed).spellGroups;
+      const lists = CharacterResponse.buildSheet(record, detailed).spellGroups;
       const holdPerson = (list: string, level: number) =>
         lists
           .find((apt) => apt.aptitudeName === list)
@@ -3301,7 +3301,7 @@ describe("DetailedCharacter", () => {
         { levelIndex: 4, powerName: "Dispel Magic", aptitude: "Wizard Spells" },
       ]);
       const record = (await Characters.findOne(db, { id: characterId }))!;
-      const lists = CharacterResponse.buildFull(record, await build(record)).spellGroups;
+      const lists = CharacterResponse.buildSheet(record, await build(record)).spellGroups;
       const rowOf = (list: string, level: number, name: string) => {
         const row = lists
           .find((apt) => apt.aptitudeName === list)
@@ -3379,7 +3379,7 @@ describe("DetailedCharacter", () => {
           .map((power) => power.aptitudeId);
         expect(listsKnowing.sort()).toEqual([ctx.aptMap["Sorcerer Spells"], ctx.aptMap["Wizard Spells"]].sort());
         const cantrips = (list: string) =>
-          CharacterResponse.buildFull(record, detailed)
+          CharacterResponse.buildSheet(record, detailed)
             .spellGroups.find((apt) => apt.aptitudeName === list)
             ?.levels.find((group) => group.level === 0)
             ?.spells.map((spell) => spell.name);

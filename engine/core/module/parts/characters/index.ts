@@ -33,7 +33,6 @@ export type {
   CreationSection,
   DescribedInventoryEntry,
   DescribedLanguage,
-  DescribedSheet,
   HeldInventoryEntry,
   LanguagesDescription,
   NotedSheet,

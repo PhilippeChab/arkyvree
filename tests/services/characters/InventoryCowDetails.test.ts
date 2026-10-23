@@ -90,7 +90,7 @@ describe("COW inventory item details", () => {
     });
     const detailedCharacter = await buildAs(DetailedCharacter, character);
 
-    const response = CharacterResponse.buildFull(character, detailedCharacter);
+    const response = CharacterResponse.buildSheet(character, detailedCharacter);
     expect(response.equipment[0]).toMatchObject({
       itemId: updated.id,
       name: updated.name,

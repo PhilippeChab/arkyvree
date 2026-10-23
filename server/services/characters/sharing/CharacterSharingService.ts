@@ -60,7 +60,7 @@ class CharacterSharingService {
     return await withRulesetScope(db, characterRecord.rulesetId, async (scope) => {
       const character = await readCharacterInput(db, characterRecord);
       const bonded = await readBondedInputs(db, character, Visibility.All);
-      return { ...Engine.for(scope).character(character).describe(bonded, "omit"), portraitUrl };
+      return { ...Engine.for(scope).character(character).describe(bonded, "hide"), portraitUrl };
     });
   }
 

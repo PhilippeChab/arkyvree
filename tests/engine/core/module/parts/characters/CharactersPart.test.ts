@@ -34,7 +34,7 @@ const VIEW = {} as RulesetView;
 
 /**
  * A ruleset that describes too much of a partly seen character: its partial reading's summary with its tracks, its card
- * with its levels and a chip that isn't its partial reading's. What the core keeps of them is its own.
+ * with a chip that isn't its partial reading's. What the core keeps of them is its own.
  */
 class OversharingCharacters extends Dnd35Characters {
   protected override describeFullCard() {
@@ -43,9 +43,8 @@ class OversharingCharacters extends Dnd35Characters {
         { label: "Elf", partial: true, tone: "secondary" as const },
         { label: "Fighter 1", partial: false, tone: "primary" as const },
       ],
+      // What the core never shows a partly seen character's reader, whatever its ruleset adds
       levels: [{ klass: "Fighter", level: 1 }],
-      race: "Elf",
-      totalLevel: 1,
     };
   }
 
@@ -55,13 +54,10 @@ class OversharingCharacters extends Dnd35Characters {
 }
 
 describe("The characters part, whatever its ruleset describes", () => {
-  test("keeps a partly seen character's card to its partial chips, with no levels", () => {
+  test("keeps a partly seen character's card to its partial chips", () => {
     const characters = new OversharingCharacters();
     expect(characters.describeCard(VIEW, { raceId: "elf" }, [], true)).toEqual({
       chips: [{ label: "Elf", partial: true, tone: "secondary" }],
-      levels: [],
-      race: "Elf",
-      totalLevel: 0,
     });
     expect(characters.describeCard(VIEW, { raceId: "elf" }, [], false).chips).toHaveLength(2);
   });

@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import { api, createSignedInUser, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
 import { postCharacter } from "@/tests/support/characters.ts";
+import { sheetOf } from "@/tests/support/dnd3.5/characters.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 
 const modifiers = api.api.characters.modifiers[":characterId"].modifiers;
@@ -38,8 +39,7 @@ describe("character modifiers", () => {
     const characterId = (await postCharacter()).id;
     await expectOk(modifiers.$post({ param: { characterId }, json: strengthBonus }));
 
-    const detail = await expectOk(api.api.characters[":id"].$get({ param: { id: characterId } }));
-    const strength = Object.values(detail.abilities).find((a) => a.abilityId === abilityMap["Strength"]);
+    const strength = (await sheetOf(characterId)).abilities.find((a) => a.abilityId === abilityMap["Strength"]);
     expect(strength).toMatchObject({ base: 10, total: 12 });
   });
 

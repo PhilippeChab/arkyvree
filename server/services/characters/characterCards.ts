@@ -3,18 +3,15 @@
 import { type CharacterCard, Engine } from "@/engine/index.ts";
 import type { RulesetScope } from "@/server/cow/index.ts";
 
-/** What a list shows of a character whose ruleset it didn't read (an archived one's): no race, no classes. */
+/** What a list shows of a character whose ruleset it didn't read (an archived one's): an unknown race's chip alone. */
 const UNREAD_CARD = {
   chips: [{ label: "Unknown", partial: true, tone: "secondary" }],
-  levels: [],
-  race: "Unknown",
-  totalLevel: 0,
 } satisfies CharacterCard;
 
 /**
  * The cards of a list of characters (each with its ruleset's view among `views`, `withRulesetScopes`', and its levels
  * among `levels`), as the engine describes each: its chips (a partly seen one's, among `partialIds`, its partial
- * reading's), its race, its classes at their highest level, its total level.
+ * reading's): its race, then its classes at their highest level.
  */
 export function describeCharacterCards(
   views: Map<string, RulesetScope>,

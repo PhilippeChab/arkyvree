@@ -31,21 +31,12 @@ describe("A 3.5 character's card", () => {
         { label: "Fighter 2", partial: false, tone: "primary" },
         { label: "Rogue 1", partial: false, tone: "primary" },
       ],
-      levels: [
-        { klass: "Fighter", level: 2 },
-        { klass: "Rogue", level: 1 },
-      ],
-      race: "Elf",
-      totalLevel: 3,
     });
   });
 
   test("names a race it doesn't read Unknown, skips a level it doesn't read, and has no class without levels", () => {
     expect(CharacterCards.describe(VIEW, { raceId: "gone" }, [{ klassLevelId: "gone-1" }])).toEqual({
       chips: [{ label: "Unknown", partial: true, tone: "secondary" }],
-      levels: [],
-      race: "Unknown",
-      totalLevel: 0,
     });
   });
 });

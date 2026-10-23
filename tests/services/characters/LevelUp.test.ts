@@ -17,10 +17,10 @@ import {
   FeatsAptitudes,
   Modifiers,
 } from "@/server/repositories/index.ts";
-import { CharactersService } from "@/server/services/characters/index.ts";
 import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { PowersService } from "@/server/services/rulesets/powers/index.ts";
+import { sheetOf } from "@/tests/support/dnd3.5/characters.ts";
 import {
   addFighterLevels,
   type BUILDS,
@@ -702,7 +702,7 @@ describe("a pick a level takes twice", () => {
       const saved = await savedLevel(characterId, level.id);
       expect(saved.feats[general]).toEqual([ctx.featMap["Toughness"], ctx.featMap["Toughness"]]);
       // 10 rolled, 2 for Constitution 14, and 3 for each Toughness
-      expect((await CharactersService.getCharacter(session, characterId)).combat.hp.total).toBe(18);
+      expect((await sheetOf(characterId)).combat.hp.total).toBe(18);
     }
   });
 
@@ -1151,7 +1151,7 @@ describe("a spell known once in its class list", () => {
     await levelUp(session, ctx, characterId, "Wizard", 1, spellbook, true);
     await levelUp(session, ctx, characterId, "Cleric", 1, WAR_CLERIC_1, true);
 
-    const { spellGroups } = await CharactersService.getCharacter(session, characterId);
+    const { spellGroups } = await sheetOf(characterId);
     const protection = (list: string) =>
       spellGroups
         .find((apt) => apt.aptitudeName === list)

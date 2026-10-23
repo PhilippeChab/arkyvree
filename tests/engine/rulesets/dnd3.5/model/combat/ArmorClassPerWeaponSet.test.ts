@@ -4,14 +4,12 @@ import CombatSheet from "@/engine/rulesets/dnd3.5/characters/description/CombatS
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import { db } from "@/server/database/index.ts";
 import { Modifiers, Requirements } from "@/server/repositories/index.ts";
-import { CharactersService } from "@/server/services/characters/index.ts";
 import type { Requirement } from "@/shared/relations.ts";
 import { createRaceModifier } from "@/tests/support/customizations.ts";
-import { buildAs } from "@/tests/support/dnd3.5/characters.ts";
+import { buildAs, sheetOf } from "@/tests/support/dnd3.5/characters.ts";
 import { type Carried, carry, createTestItem } from "@/tests/support/items.ts";
 import { invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
 import { findSeededCharacter, getSeedCtx } from "@/tests/support/seed.ts";
-import { makeSession } from "@/tests/support/users.ts";
 
 /** A requirement's values: the shield held, by the set in an armor class's gate, by any set elsewhere, is none. */
 const NO_SHIELD_HELD = { target: "combat.shield.held", operator: "equal", value: "false", valueType: "boolean" };
@@ -330,10 +328,10 @@ describe("the sheet", () => {
     ]);
   });
 
-  test("answers each weapon set's armor class in the character's description", async () => {
+  test("answers each weapon set's armor class in the character's sheet", async () => {
     const bjorn = await findSeededCharacter("Bjorn Ironhand");
     await carry(bjorn, SWORD_AND_BOARD);
-    const { combat } = await CharactersService.getCharacter(makeSession(), bjorn.id);
+    const { combat } = await sheetOf(bjorn.id);
     expect(combat.weaponSets.map(({ set, ac, held }) => [set, ac, held])).toEqual([
       [0, { total: 14, touch: 12, flatfooted: 12 }, ["Longsword", "Heavy Steel Shield"]],
       [1, { total: 12, touch: 12, flatfooted: 10 }, ["Greatsword"]],

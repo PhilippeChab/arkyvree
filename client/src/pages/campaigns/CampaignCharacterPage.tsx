@@ -30,7 +30,7 @@ export default function CampaignCharacterPage() {
     );
   const pdfExport = usePdfExport(exportFn);
 
-  usePageTitle(data?.identity?.physiology?.name);
+  usePageTitle(data?.name);
 
   if (isLoading) return <CharacterDetailSkeleton />;
 
@@ -49,7 +49,7 @@ export default function CampaignCharacterPage() {
       <Container>
         <Stack spacing={4}>
           <CharacterHeader
-            name={data.identity?.physiology?.name ?? ""}
+            name={data.name}
             summary={data.summary}
             rulesetName={data.rulesetName}
             backTo={backTo}

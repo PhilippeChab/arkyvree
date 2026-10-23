@@ -62,8 +62,8 @@ export type InventoryEntryChange =
 /** What an inventory entry's add or edit asks: the fields it stores but its item, which the plan answers checked. */
 export type InventoryEntryRequest = Omit<InventoryEntryPlan, "itemId">;
 
-/** How a campaign member reads a character: partly (`partial`), or its sheet with its private notes shown or blank. */
-export type MemberReading = "blank" | "partial" | "show";
+/** How a campaign member reads a character: partly (`partial`), or its sheet with its private notes or without. */
+export type MemberReading = "partial" | PrivateNotes;
 
 /**
  * Where an inventory entry's add or edit places its item, as a ruleset checks it: a new entry's item as the view has it
@@ -73,8 +73,8 @@ export type PlacementChange =
   | { item: Item; request: InventoryEntryRequest }
   | { entry: { id: string; itemId: string }; request: InventoryEntryRequest };
 
-/** What a viewer reads of a character's private notes: all of it, a blank, or no field at all. */
-export type PrivateNotes = "blank" | "omit" | "show";
+/** Whether a viewer reads a character's private notes: shown, or left out of its sheet (`hide`). */
+export type PrivateNotes = "hide" | "show";
 
 /**
  * The race picker's query: what a new character's form says so far, in the fields that narrow its races (`racePick`),
