@@ -61,7 +61,11 @@ test.describe("Customization of a fork", () => {
     await proficiency.first().locator(".MuiChip-deleteIcon").click();
     await expect(proficiency).toHaveCount(0);
 
-    const saved = apiResponse(page, "PUT", /\/api\/rulesets\/[a-f0-9-]+\/classes\/[a-f0-9-]+\/levels\/[a-f0-9-]+/);
+    const saved = apiResponse(
+      page,
+      "PUT",
+      /\/api\/rulesets\/[a-f0-9-]+\/entities\/classes\/[a-f0-9-]+\/owned\/[a-f0-9-]+/,
+    );
     await page
       .locator("form")
       .filter({ has: fortitude })
