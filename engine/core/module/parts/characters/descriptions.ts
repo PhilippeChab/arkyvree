@@ -23,7 +23,7 @@ export interface CardChip {
 /**
  * A character's card, as a list of characters shows it: its chips, in its ruleset's order (3.5's race, then each class
  * at its highest level), and what its ruleset reads of it, until its lists read its chips alone (3.5's race, its
- * classes at their highest level, its total level).
+ * classes at their highest level, its total level), none of its levels for a partly seen character.
  */
 export interface CharacterCard {
   chips: CardChip[];

@@ -20,7 +20,7 @@ export function describeCharacterCards(
   views: Map<string, RulesetScope>,
   characters: { id: string; raceId: string; rulesetId: string }[],
   levels: { characterId: string; klassLevelId: string }[],
-  partialIds: Set<string> = new Set(),
+  partialIds: ReadonlySet<string>,
 ) {
   const levelsByCharacter = Map.groupBy(levels, (level) => level.characterId);
   return new Map(

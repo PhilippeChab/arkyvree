@@ -43,18 +43,17 @@ import type {
 type HiddenNotes = Exclude<PrivateNotes, "show">;
 
 /**
- * What a ruleset answers of its characters, from the rows the server reads: their sheets (as the API answers them, as
- * a member reads them, printed), their cards, languages and inventories, how a new one's ability scores are set, what
- * it stores and the races it can pick, a languages edit, and an inventory entry's add or edit. Its descriptions are the
+ * What a ruleset answers of its characters, from the rows the server reads: their sheets (as the API answers them, as a
+ * member reads them, printed), their cards, languages and inventories, how a new one's ability scores are set, what it
+ * stores and the races it can pick, a languages edit, and an inventory entry's add or edit. Its descriptions are the
  * ruleset's own (`D`). What reads the schema's rows alone is every ruleset's: what a character takes from its ruleset,
- * its inventory. So are the checks that guard a character's privacy and integrity, which no ruleset can skip:
- * a reader reads the private notes the reading gives them, a partly seen character's card and summary name none of its
- * build, an entity a request names is one its ruleset's view shows (a
- * race, an ability, a language, an item: `RequestIds`, which reads a source's id as its copy's), an entry's charges
- * agree, a score is within the ruleset's bounds and a new character's race is a player's. Their operations are this
- * part's, over hooks for what a ruleset describes or checks its own way (`describeFull`, `describePartial`, `describeFullCard`,
- * `planPlacement`, `describeCreation`, and the languages a character speaks and may pick: `describeLanguageRoom`,
- * `fitLanguages`).
+ * its inventory. So are the checks that guard a character's privacy and integrity, which no ruleset can skip: a reader
+ * reads the private notes the reading gives them, a partly seen character's card and summary name none of its build, an
+ * entity a request names is one its ruleset's view shows (a race, an ability, a language, an item: `RequestIds`, which
+ * reads a source's id as its copy's), an entry's charges agree, a score is within the ruleset's bounds and a new
+ * character's race is a player's. Their operations are this part's, over hooks for what a ruleset describes or checks
+ * its own way (`describeFull`, `describePartial`, `describeFullCard`, `planPlacement`, `describeCreation`, and the
+ * languages a character speaks and may pick: `describeLanguageRoom`, `fitLanguages`).
  */
 export default abstract class CharactersPart<D extends Descriptions> {
   /** A form's ability scores, by ability id: each a whole number within the ruleset's bounds (`scores`). */

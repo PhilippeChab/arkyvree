@@ -78,7 +78,12 @@ describe.each(baseRules.enumValues)("The %s module, as core runs its characters'
     });
 
     expect(read.card.chips.some((chip) => !chip.partial)).toBe(true);
-    expect(read.partialCard).toMatchObject({ chips: read.card.chips.filter((chip) => chip.partial), levels: [] });
+    expect(read.partialCard).toMatchObject({
+      chips: read.card.chips.filter((chip) => chip.partial),
+      levels: [],
+      totalLevel: 0,
+    });
+    for (const { name } of read.shown.summary.tracks) expect(JSON.stringify(read.partialCard)).not.toContain(name);
     expect(read.shown.summary.tracks.length).toBeGreaterThan(0);
     expect(read.partial.summary.tracks).toEqual([]);
   });

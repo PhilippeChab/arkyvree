@@ -181,6 +181,8 @@ class CampaignCharactersService {
             name: char.name,
             description: isPartial ? null : char.description,
             race: card.race,
+            // The engine's partial card has no levels already: the response's own shape says none, until its lists read
+            // its chips alone
             levels: isPartial ? [] : card.levels,
             totalLevel: isPartial ? null : card.totalLevel,
             chips: card.chips,

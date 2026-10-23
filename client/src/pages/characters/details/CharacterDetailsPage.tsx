@@ -32,7 +32,12 @@ import {
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useAnchorMenu, useDialogState, usePageTitle, usePdfExport } from "@/client/src/hooks/index.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
-import { characterDetailQuery, invalidateCharacter, invalidateCharacterListings } from "@/client/src/lib/queries.ts";
+import {
+  type CharacterDetail,
+  characterDetailQuery,
+  invalidateCharacter,
+  invalidateCharacterListings,
+} from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { characterPageState } from "@/client/src/pages/characters/characterPageState.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
@@ -45,6 +50,9 @@ import {
   ShareDialog,
 } from "./components/index.ts";
 import { useCharacterPermissions } from "./useCharacterPermissions.ts";
+
+/** The words of the page's own level actions, its summary's: the removal's toasts among them. */
+type SheetSummaryWords = CharacterDetail["summary"]["words"];
 
 export default function CharacterDetailsPage() {
   const navigate = useNavigate();
@@ -92,17 +100,17 @@ export default function CharacterDetailsPage() {
     if (openLevelUp) navigate(location.pathname, { replace: true, state: {} });
   };
 
-  // Its toasts in its summary's words: its menu, which opens its confirmation, shows once the character has loaded
-  const removeLevelWords = character?.summary.words;
+  // Its toasts in the words of the summary its confirmation was opened from
   const removeLevelMutation = useMutation({
-    mutationFn: () => parseResponse(rpc.api.characters.levels[":characterId"].$delete({ param: { characterId: id } })),
-    onSuccess: async () => {
-      if (removeLevelWords) snackbar.success(removeLevelWords.removed);
+    mutationFn: (_words: SheetSummaryWords) =>
+      parseResponse(rpc.api.characters.levels[":characterId"].$delete({ param: { characterId: id } })),
+    onSuccess: async (_, words) => {
+      snackbar.success(words.removed);
       void invalidateCharacterListings(queryClient);
       await invalidateCharacter(queryClient, id);
       setRemoveLevelOpen(false);
     },
-    onError: (error) => snackbar.error(error, removeLevelWords?.removeFailed ?? "Failed to remove level"),
+    onError: (error, words) => snackbar.error(error, words.removeFailed),
   });
 
   const archiveMutation = useMutation({
@@ -271,7 +279,7 @@ export default function CharacterDetailsPage() {
           <DeleteDialog
             open={isRemoveLevelOpen}
             onClose={() => setRemoveLevelOpen(false)}
-            onConfirm={() => removeLevelMutation.mutate()}
+            onConfirm={() => removeLevelMutation.mutate(character.summary.words)}
             title={character.summary.words.removeLast}
             message={character.summary.words.removeLastMessage}
             pending={removeLevelMutation.isPending}
