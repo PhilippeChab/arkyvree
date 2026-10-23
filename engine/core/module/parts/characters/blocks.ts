@@ -26,11 +26,12 @@ export interface EntriesBlock extends BlockHead {
 }
 
 /**
- * The character's own fields (`fields`): its portrait (`portrait`, its label: the block that has one), then lines of fields (`lines`, laid out a line each, side by
- * side), the fields under them, each its own line (`fields`), the languages it speaks (`languages`: what their picker
- * says, and those it speaks), and its notes, its private ones only for a reader who reads them. A field's key is the
- * name its edit sends it by (`FieldsRequest`); what an edit says (`saved`, `failed`). 3.5's identity; a partly seen
- * character's, its race and physical traits alone.
+ * The character's own fields (`fields`): its portrait (`portrait`, its label: the block a sheet opens with alone has
+ * one), then lines of fields (`lines`, laid out a line each, side by side), the fields under them, each its own line
+ * (`fields`), the languages it speaks (`languages`: what their picker says, and those it speaks), and its notes, its
+ * private ones only for a reader who reads them. A field's key is the name its edit sends it by (`FieldsRequest`); what
+ * an edit says (`saved`, `failed`). A sheet opens with its first; any other reads as the sheet does. 3.5's identity; a
+ * partly seen character's, its race and physical traits alone.
  */
 export interface FieldsBlock extends BlockHead {
   failed: string;

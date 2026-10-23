@@ -51,5 +51,10 @@ describe("A fields block's form", () => {
     });
     const noted = { ...BLOCK, notes: { notes: "Public", privateNotes: "" }, languages: undefined };
     expect(sentFieldsOf(noted, form)).toMatchObject({ privateNotes: "Leaked?", languageIds: undefined });
+    // A block without notes leaves them, and its private ones, as they are
+    expect(sentFieldsOf({ ...BLOCK, notes: undefined }, form)).toMatchObject({
+      notes: undefined,
+      privateNotes: undefined,
+    });
   });
 });

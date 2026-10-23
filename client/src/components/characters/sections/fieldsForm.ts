@@ -22,7 +22,7 @@ export function formValueOf(field: SheetField) {
 
 /**
  * A form's values as the block's edit sends them: each field by its key but a fixed one (an empty number or an unset
- * select, none), its notes (its private ones only where the block holds them), and its languages where it has them.
+ * select, none), its notes and its private ones and its languages, each only where the block holds them.
  */
 export function sentFieldsOf(block: BlockOf<"fields">, formData: FieldsFormData) {
   return {
@@ -31,7 +31,8 @@ export function sentFieldsOf(block: BlockOf<"fields">, formData: FieldsFormData)
         .filter((field) => !(field.kind === "text" && field.fixed))
         .map((field) => [field.key, sentValueOf(field, formData[field.key])]),
     ),
-    notes: String(formData.notes),
+    // A block without notes leaves them as they are
+    notes: block.notes ? String(formData.notes) : undefined,
     privateNotes: block.notes?.privateNotes !== undefined ? String(formData.privateNotes) : undefined,
     languageIds: block.languages ? (formData.languageIds as string[]) : undefined,
   };
