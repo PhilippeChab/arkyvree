@@ -53,6 +53,13 @@ async function linkWithMembers(characterId: string, visibility: "Partial" | "Pub
   };
 }
 
+/** The campaign character's sheet as `client` sees it. */
+async function memberSheetOf(client: Client, campaignId: string, characterId: string) {
+  return await expectOk(
+    client.api.campaigns[":id"].characters[":characterId"].$get({ param: { id: campaignId, characterId } }),
+  );
+}
+
 /** The seeded user's character with a description, notes, private notes, a deity, an alignment, a language and a level. */
 async function postFilledCharacter() {
   const { abilityMap, klassMap, langMap } = await getSeedCtx();
@@ -92,13 +99,6 @@ async function setupExport(role: CampaignRole) {
   await Players.update(db, { role: "Player Character" }, { id: owner.id });
   await PlayerCharacters.create(db, { playerId: owner.id, characterId, visibility: "Private" });
   return { campaignId, characterId, member: await join(campaignId, role) };
-}
-
-/** The campaign character's sheet as `client` sees it. */
-async function sheetOf(client: Client, campaignId: string, characterId: string) {
-  return await expectOk(
-    client.api.campaigns[":id"].characters[":characterId"].$get({ param: { id: campaignId, characterId } }),
-  );
 }
 
 describe("campaigns characters", () => {
@@ -173,13 +173,13 @@ describe("campaigns characters", () => {
     await expectOk(characters.$post({ param: { id: campaignId }, json: { characterId, visibility: "Public" } }));
     const viewer = await join(campaignId, "Player Character");
 
-    const body = await sheetOf(viewer.api, campaignId, characterId);
+    const body = await memberSheetOf(viewer.api, campaignId, characterId);
     expect(body.shareToken).toBeNull();
     expect(notesOf(body)).toEqual({ notes: "" });
     expect(JSON.stringify(body)).not.toContain(SECRETS.privateNotes);
     expect(JSON.stringify(body)).not.toContain(shareToken);
 
-    const own = await sheetOf(api, campaignId, characterId);
+    const own = await memberSheetOf(api, campaignId, characterId);
     expect(notesOf(own)).toMatchObject({ privateNotes: SECRETS.privateNotes });
     expect(own.shareToken).toBe(shareToken);
   });
@@ -190,7 +190,7 @@ describe("campaigns characters", () => {
     await Characters.update(db, { shareToken }, { id: characterId });
     const { campaignId, gm, contributor, player } = await linkWithMembers(characterId, "Partial");
 
-    const sheet = await sheetOf(player.api, campaignId, characterId);
+    const sheet = await memberSheetOf(player.api, campaignId, characterId);
     expect(sheet.name).toMatch(/^Test Character/);
     const partialIdentity = sheet.blocks.find((block) => block.key === "identity");
     if (partialIdentity?.kind !== "fields") throw new Error("no identity block");
@@ -263,7 +263,7 @@ describe("campaigns characters", () => {
 
     // The Game Master and the character's contributor see it whole, on its sheet and on its card alike.
     for (const viewer of [gm, contributor]) {
-      const whole = await sheetOf(viewer.api, campaignId, characterId);
+      const whole = await memberSheetOf(viewer.api, campaignId, characterId);
       expect(whole.isPartial).toBe(false);
       const identity = whole.blocks.find((block) => block.key === "identity");
       if (identity?.kind !== "fields") throw new Error("no identity block");
@@ -295,11 +295,13 @@ describe("campaigns characters", () => {
     const { campaignId, gm, contributor, player } = await linkWithMembers(characterId, "Public");
 
     // Its identity's block's notes: its private ones for who reads them alone
-    const privateNotesOf = async (client: Client) => notesOf(await sheetOf(client, campaignId, characterId));
+    const privateNotesOf = async (client: Client) => notesOf(await memberSheetOf(client, campaignId, characterId));
     for (const client of [api, contributor.api, gm.api])
       expect(await privateNotesOf(client)).toEqual({ notes: "", privateNotes: SECRETS.privateNotes });
     expect(await privateNotesOf(player.api)).toEqual({ notes: "" });
-    expect(JSON.stringify(await sheetOf(player.api, campaignId, characterId))).not.toContain(SECRETS.privateNotes);
+    expect(JSON.stringify(await memberSheetOf(player.api, campaignId, characterId))).not.toContain(
+      SECRETS.privateNotes,
+    );
   });
 
   test("shows a bonded creature in its master's sheet without its private notes, to any reader", async () => {
@@ -309,7 +311,7 @@ describe("campaigns characters", () => {
 
     // Its subsheet, in the details of the feat that bonds it, holds its abilities, combat and feats: no notes
     for (const client of [api, contributor.api, gm.api, player.api]) {
-      const sheet = await sheetOf(client, campaignId, masterId);
+      const sheet = await memberSheetOf(client, campaignId, masterId);
       expect(JSON.stringify(sheet)).toContain(bonded.id);
       expect(JSON.stringify(sheet)).not.toContain(SECRETS.privateNotes);
     }

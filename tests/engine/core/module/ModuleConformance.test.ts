@@ -49,12 +49,12 @@ describe.each(baseRules.enumValues)("The %s module, as core runs its characters'
     const read = await withRulesetScope(db, record.rulesetId, async (scope) => {
       const character = Engine.for(scope).character(input);
       // Each creature's own sheet, which holds its notes; its master's shows it without them
-      const creature = (reading: "blank" | "show") =>
+      const creature = (reading: "hide" | "show") =>
         bonded.map((input) => Engine.for(scope).character(input).describeForMember([], reading));
       return {
-        blank: [character.describeForMember(bonded, "blank"), ...creature("blank")],
+        hidden: [character.describeForMember(bonded, "hide"), ...creature("hide")],
         partial: [character.describeForMember(bonded, "partial")],
-        shared: [character.describe(bonded, "omit")],
+        shared: [character.describe(bonded, "hide")],
         shown: character.describeForMember(bonded, "show"),
         shownCreatures: creature("show"),
       };
@@ -65,7 +65,8 @@ describe.each(baseRules.enumValues)("The %s module, as core runs its characters'
       expect(JSON.stringify(read.shown)).not.toContain(`${NOTES} ${id}`);
       expect(JSON.stringify(read.shownCreatures)).toContain(`${NOTES} ${id}`);
     }
-    for (const reading of [read.partial, read.blank, read.shared]) expect(JSON.stringify(reading)).not.toContain(NOTES);
+    for (const reading of [read.partial, read.hidden, read.shared])
+      expect(JSON.stringify(reading)).not.toContain(NOTES);
   });
 
   test("names none of a partly seen character's build: its card's chips its partial ones, its summary no tracks", async () => {

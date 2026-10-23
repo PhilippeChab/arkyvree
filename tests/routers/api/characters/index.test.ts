@@ -228,7 +228,7 @@ describe("characters", () => {
       });
     });
 
-    test("lists a bonded creature's abilities in its master's sheet as its own, each with its abbreviation", async () => {
+    test("lists a bonded creature's abilities on its own sheet, each with its abbreviation", async () => {
       const { bonded } = await createWizardWithFamiliar();
       const familiar = await sheetOf(bonded.id);
       expect(familiar.abilities.map((ability) => ability.abbreviation)).toEqual([

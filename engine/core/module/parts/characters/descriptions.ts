@@ -66,7 +66,7 @@ export interface LanguagesDescription {
 
 /**
  * What a sheet, as the API answers it, holds in every ruleset's: its blocks, in its module's order (`SheetBlock`), its
- * bonded creatures' among them (a `subsheets`' in its entries), and its summary. Its character's private notes are its
+ * bonded creatures' among them (an entry's `subsheet`), and its summary. Its character's private notes are its
  * `fields` blocks', which the characters part leaves out for a reader who doesn't read them.
  */
 export interface NotedSheet {

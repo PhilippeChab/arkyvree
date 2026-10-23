@@ -71,8 +71,8 @@ interface SheetSkill {
 }
 
 /**
- * A bonded creature's sheet, as the API answers it, which its subsheet reads (its blocks, its combat, its feats), with
- * the feat of its master's that bonds it.
+ * A bonded creature's sheet (`CharacterResponse.buildBondedSheet`), which its subsheet reads (its blocks, its combat,
+ * its feats), with the feat of its master's that bonds it.
  */
 type BondedSheet = Pick<
   ReturnType<typeof CharacterResponse.buildBondedSheet>,

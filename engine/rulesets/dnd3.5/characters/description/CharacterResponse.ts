@@ -67,8 +67,8 @@ export default class CharacterResponse {
   }
 
   /**
-   * The character's identity, with the GM's notes in its background, where every ruleset's sheet holds them: which a
-   * reader who doesn't read them reads blank or not at all (`CharactersPart.describe`).
+   * The character's identity, with the GM's notes in its background, which its identity's block shows to who reads them
+   * (a reader who doesn't is described from rows without them: `CharactersPart.describe`).
    */
   private static identityWithPrivateNotes(built: DetailedCharacter) {
     const { identity } = built.components;

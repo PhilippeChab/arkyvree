@@ -90,7 +90,7 @@ class CampaignCharactersService {
       const input = await readCharacterInput(db, character);
       // A partial reading shows none of the character's bonded creatures
       const bonded = isPartial ? [] : await readBondedInputs(db, input, Visibility.All);
-      const reading = isPartial ? "partial" : readsPrivateNotes ? "show" : "blank";
+      const reading = isPartial ? "partial" : readsPrivateNotes ? "show" : "hide";
       const described = Engine.for(scope).character(input).describeForMember(bonded, reading);
       return { ...viewer, ...described, shareToken: canEdit ? described.shareToken : null };
     });
