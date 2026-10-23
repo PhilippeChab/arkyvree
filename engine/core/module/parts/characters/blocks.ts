@@ -14,6 +14,32 @@ interface BlockHead {
 }
 
 /**
+ * A block of entities the character holds, of a kind (`entityType`, whose pages their names link to): each its name, a
+ * count when it's held more than once, its description and its details (a creature it bonds: `subsheet`); and those
+ * granted apart (`granted`, under its label). 3.5's feats and special abilities.
+ */
+export interface EntriesBlock extends BlockHead {
+  entityType: string;
+  entries: SheetEntry[];
+  granted?: { entries: SheetEntry[]; label: string };
+  kind: "entries";
+}
+
+/**
+ * A block of entities by pool and tier (`pools`), of a kind (`entityType`, whose pages their names link to): each pool
+ * its name and its tiers, each tier its label, a note after it (what it allows: "3/day") and its entries, laid out by
+ * `columns`; and the counts each pool's tiers allow (`counts`: its title, the head of its pools' column, the tiers it
+ * counts and each pool's counts, none where a tier has none). 3.5's spells, known and per day.
+ */
+export interface PoolsBlock extends BlockHead {
+  columns: SheetColumn[];
+  counts?: { corner: string; lists: { counts: (string | null)[]; name: string }[]; tiers: string[]; title: string };
+  entityType: string;
+  kind: "pools";
+  pools: SheetPool[];
+}
+
+/**
  * A block of scores in boxes, side by side (`scores`): each its label over its value, and the lines that make it up.
  * `edit`: its bases are the character's own, which its owner raises and lowers within their bounds, each written under
  * its score's key, with the words the edit says: a lower base's confirmation (it may break what the character took) and
@@ -28,28 +54,54 @@ export interface ScoresBlock extends BlockHead {
 /**
  * A table's column, as a sheet's table lays it out: its label and width, its alignment, and where a phone shows its
  * cells (`slot`: the row's name, its end, under them, or under them labeled). `hideEmpty`: an empty cell shows nothing
- * on a phone, and a dash from `sm` up; `noWrap`: its cells keep to one line.
+ * on a phone, and a dash from `sm` up (`noDash`: nothing there either); `noWrap`: its cells keep to one line; `strong`:
+ * its cells in bold (a total's).
  */
 export interface SheetColumn {
   align?: "center" | "right";
   hideEmpty?: boolean;
   key: string;
   label: string;
+  noDash?: boolean;
   noWrap?: boolean;
   slot: "inline" | "labeled" | "primary" | "trailing";
+  strong?: boolean;
   width?: string;
+}
+
+/**
+ * An entity a block lists: its id (none for one its page can't open), its name, how many the character holds when it
+ * counts more than one, its description, and the creature it bonds (`subsheet`), shown in its details.
+ */
+export interface SheetEntry {
+  count?: number;
+  description: string | null;
+  id: string | null;
+  key: string;
+  name: string;
+  subsheet?: Subsheet;
+}
+
+/** A pool of a `pools` block: its name and its tiers, each its label, its note and its entries. */
+export interface SheetPool {
+  key: string;
+  name: string;
+  tiers: { entries: PoolEntry[]; key: string; label: string; note?: string }[];
 }
 
 /**
  * A table's row: its cells by their columns' keys, as the rules write them (an empty one, `""`, is none). Its name's
  * cell (its `primary` column's) may carry a caption, in parentheses under it, and an alert under that ("Not
- * Proficient (-4)").
+ * Proficient (-4)"). In a grouped table, the family it may share with others (`group`), and its name within it
+ * (`short`), which it shows under its group's header.
  */
 export interface SheetRow {
   alert?: string;
   caption?: string;
   cells: Record<string, string>;
+  group?: string;
   key: string;
+  short?: string;
 }
 
 /**
@@ -70,11 +122,15 @@ export interface SheetScore {
 
 /**
  * A table on a sheet: its columns and rows, and what it says with no rows (`empty`). `minWidth`: the least width it
- * scrolls within from `sm` up.
+ * scrolls within from `sm` up; `fixed`: its columns sized as given, its number columns' headers smaller; `grouped`: the
+ * rows of a family two or more share under a header that shows or hides them (`SheetRow.group`), a family's rows next
+ * to one another, and none with a caption or an alert. Its name is its `primary` column's.
  */
 export interface SheetTable {
   columns: SheetColumn[];
   empty: string;
+  fixed?: boolean;
+  grouped?: boolean;
   minWidth: number;
   rows: SheetRow[];
 }
@@ -98,5 +154,36 @@ export interface StatsPanel {
   table?: SheetTable;
 }
 
+/**
+ * A creature the character bonds, as its entry's details show it: its id and name, its scores in compact boxes, its
+ * stats (compact boxes, then columns of label/value lines), and its entries' names as chips (none: no chips' heading),
+ * each under its title.
+ */
+export interface Subsheet {
+  chips: { names: string[]; title: string };
+  id: string;
+  name: string;
+  scores: { scores: SheetScore[]; title: string };
+  stats: { boxes?: SheetStat[]; columns: { key: string; lines: SheetStat[] }[]; title: string };
+}
+
+/** A table block (`table`): a note above its table. 3.5's skills. */
+export interface TableBlock extends BlockHead {
+  kind: "table";
+  note?: string;
+  table: SheetTable;
+}
+
+/**
+ * An entry of a pool's tier: its id, its cells by the block's columns' keys, its tags (each its name and tone), and its
+ * details, shown under it once opened: label/value lines, and its description.
+ */
+export type PoolEntry = Pick<SheetEntry, "id" | "key"> & {
+  cells: Record<string, string>;
+  description: string;
+  details: SheetStat[];
+  tags: { name: string; tone: "primary" | "secondary" }[];
+};
+
 /** A block of a character's sheet, by its kind. */
-export type SheetBlock = ScoresBlock | StatsBlock;
+export type SheetBlock = EntriesBlock | PoolsBlock | ScoresBlock | StatsBlock | TableBlock;

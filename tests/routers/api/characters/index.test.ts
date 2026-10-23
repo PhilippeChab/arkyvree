@@ -245,6 +245,8 @@ describe("characters", () => {
         ["scores", "abilities", "Ability Scores"],
         ["scores", "saves", "Saving Throws"],
         ["stats", "combat", "Combat"],
+        ["table", "skills", "Skills"],
+        ["entries", "feats", "Feats & Special Abilities"],
       ]);
       const [abilities, saves, stats] = blocks;
       // An ability's total over its modifier, its base its owner sets within the rules' bounds
@@ -285,7 +287,58 @@ describe("characters", () => {
     test("describes a bonded creature's sheet in the same blocks", async () => {
       const { masterId } = await createWizardWithFamiliar();
       const master = await expectOk(character.$get({ param: { id: masterId } }));
-      expect(master.bonded.familiar?.blocks.map(({ key }) => key)).toEqual(["abilities", "saves", "combat"]);
+      expect(master.bonded.familiar?.blocks.map(({ key }) => key)).toEqual([
+        "abilities",
+        "saves",
+        "combat",
+        "skills",
+        "feats",
+      ]);
+    });
+
+    test("lists the skills by name, a class skill marked and a family grouped, each with its figures", async () => {
+      const { id } = await postCharacter();
+      const { blocks, skills } = await expectOk(character.$get({ param: { id } }));
+      const block = blocks.find((each) => each.key === "skills");
+      if (block?.kind !== "table") throw new Error("no skills table");
+      expect(block.note).toBe("* indicates a class skill");
+      expect(block.table.rows).toHaveLength(Object.keys(skills).length);
+      const arcana = block.table.rows.find((row) => row.key === "Knowledge (Arcana)");
+      expect(arcana).toMatchObject({ group: "Knowledge", short: "Arcana", cells: { rank: "0", total: "+0" } });
+      expect(block.table.rows.map((row) => row.key)).toEqual(
+        Object.values(skills)
+          .map((skill) => skill.name)
+          .sort((a, b) => a.localeCompare(b)),
+      );
+    });
+
+    test("puts a bonded creature in the details of its master's feat that bonds it, and lists its spells", async () => {
+      const { masterId } = await createWizardWithFamiliar();
+      const master = await expectOk(character.$get({ param: { id: masterId } }));
+      const familiar = master.bonded.familiar;
+      const feats = master.blocks.find((block) => block.key === "feats");
+      if (feats?.kind !== "entries" || !familiar) throw new Error("no feats or familiar");
+      const bonding = feats.entries.find((entry) => entry.id === familiar.bondFeatId);
+      expect(bonding?.subsheet).toMatchObject({
+        id: familiar.id,
+        name: familiar.name,
+        scores: { title: "Abilities" },
+        stats: { title: "Combat & Saves" },
+        chips: { title: "Feats" },
+      });
+      expect(bonding?.subsheet?.scores.scores.map(({ short }) => short)).toEqual([
+        "STR",
+        "DEX",
+        "CON",
+        "INT",
+        "WIS",
+        "CHA",
+      ]);
+      // A wizard's spells, by list and level, and its slots per day
+      const spells = master.blocks.find((block) => block.key === "spells");
+      if (spells?.kind !== "pools") throw new Error("no spells");
+      expect(spells).toMatchObject({ title: "Spells", entityType: "powers", counts: { title: "Spells per Day" } });
+      expect(spells.pools.map(({ name }) => name)).toEqual(master.spellGroups.map(({ aptitudeName }) => aptitudeName));
     });
   });
 
