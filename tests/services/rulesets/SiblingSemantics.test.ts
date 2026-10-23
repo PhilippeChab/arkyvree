@@ -33,6 +33,7 @@ import {
 } from "@/tests/support/rulesets.ts";
 import { compareCopies, customizationsOf } from "@/tests/support/siblingCopies.ts";
 import { makeSession } from "@/tests/support/users.ts";
+import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 /** Every page of a list, by its size and its ids. */
 async function readPages(getPage: (page: number) => Promise<{ items: { id: string }[]; nextPage?: number }>) {
@@ -198,8 +199,8 @@ for (const [chainingOperator, reverseOrder] of [
 }
 
 // Three books copy Toughness and Fireball: the first's copies win; the other two give theirs equal rows that differ
-// otherwise: a modifier with a requirement of its own, a property with a description of its own, a condition and a
-// group of conditions, and Fireball's link to Cleric Spells at a level of its own
+// otherwise: a modifier with a requirement of its own, a condition and a group of conditions, and Fireball's link to
+// Cleric Spells at a level of its own. Toughness's families are a set: the host reads every book's, once each
 test("a sibling winner takes, of equal rows, the first sibling's, and so does its copy", async () => {
   const condition = { operator: "greater_than_or_equal", valueType: "number" };
   const { host } = await setup(
@@ -217,8 +218,7 @@ test("a sibling winner takes, of equal rows, the first sibling's, and so does it
         ancestorRulesetIds: [baseId],
       });
       const owner = { entityId: featCopy.id, entityType: "feats" };
-      const description = index === 0 ? "the winner's" : `sibling ${index}'s`;
-      await Properties.create(db, { ...owner, type: "AUDIT", value: "shared", description });
+      await Properties.createMany(db, [{ ...owner, type: FEAT_FAMILY, value: "shared" }]);
       if (index === 0) return;
       const [modifier] = await Modifiers.create(db, {
         sourceId: featCopy.id,
@@ -236,7 +236,7 @@ test("a sibling winner takes, of equal rows, the first sibling's, and so does it
         { ...owner, ...condition, level: "2.1", target: "abilities.dexterity.total", value: String(10 + index) },
         { ...owner, ...condition, level: "2.2", target: "abilities.constitution.total", value: String(10 + index) },
       ]);
-      await Properties.create(db, { ...owner, type: "AUDIT", value: "sibling", description });
+      await Properties.createMany(db, [{ ...owner, type: FEAT_FAMILY, value: "sibling" }]);
       const clericSpells = (await Aptitudes.findOne(db, { rulesetId: baseId, name: "Cleric Spells" }))!;
       await PowersAptitudes.create(db, { powerId: powerCopy.id, aptitudeId: clericSpells.id, level: 3 + index });
     },
@@ -253,9 +253,9 @@ test("a sibling winner takes, of equal rows, the first sibling's, and so does it
   expect(feat.modifiers.filter((m) => m.startsWith("abilities.dexterity"))).toEqual([
     "abilities.dexterity.misc|add|2|number|1||abilities.wisdom.total|greater_than_or_equal|11|number",
   ]);
-  expect(feat.properties.filter((p) => p.startsWith("AUDIT"))).toEqual([
-    "AUDIT|shared|the winner's",
-    "AUDIT|sibling|sibling 1's",
+  expect(feat.properties.filter((p) => p.startsWith(FEAT_FAMILY))).toEqual([
+    `${FEAT_FAMILY}|shared|`,
+    `${FEAT_FAMILY}|sibling|`,
   ]);
   expect(feat.requirements.filter((r) => r.includes("strength"))).toHaveLength(1);
   expect(feat.requirements.filter((r) => r.includes("|or|"))).toHaveLength(2);

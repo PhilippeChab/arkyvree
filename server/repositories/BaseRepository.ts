@@ -33,12 +33,13 @@ abstract class BaseRepository<T extends Table> {
 
   /**
    * The table's column `name`, one every table a concern reads has (`deletedAt`, `updatedAt`, `id`, `rulesetId`,
-   * `campaignId`), which the table's generic type can't promise: a table without it throws.
+   * `campaignId`), which the table's generic type can't promise: a table without it throws. A repository whose rows
+   * are read from the generic tables answers what holds it (`RulesetEntityRepository`).
    */
-  protected column(name: string): Column {
+  protected column(name: string): SQL {
     const column: Column | undefined = getTableColumns(this.table)[name];
     if (!column) throw new Error(`${this.constructor.name}: its table has no ${name} column`);
-    return column;
+    return sql`${column}`;
   }
 
   protected orderBy(column: Column | SQL, direction: "asc" | "desc" = "asc"): SQL {
@@ -72,7 +73,7 @@ abstract class BaseRepository<T extends Table> {
     const rows = await db
       .select({ locked: sql<number>`1` })
       .from(sql`${this.table}`)
-      .where(and(eq(this.column("id"), where.id), deletedAt ? isNull(deletedAt) : undefined))
+      .where(and(eq(getTableColumns(this.table).id, where.id), deletedAt ? isNull(deletedAt) : undefined))
       .for(mode, skipLocked ? { skipLocked: true } : {});
     return rows.length > 0;
   }

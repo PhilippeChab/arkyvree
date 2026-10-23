@@ -1,17 +1,15 @@
-import type {
-  characterAbilitiesInCharacter,
-  languagesInCharacter,
-  levelAbilityIncreasesInCharacter,
-  levelFeatsInCharacter,
-  levelPowersInCharacter,
-  levelSkillsInCharacter,
-} from "@/drizzle/schema.ts";
 import type { CowData } from "@/engine/core/cow/index.ts";
 import type {
   Campaign,
+  CharacterAbility,
   CharacterInventory,
+  CharacterLanguage,
   CharacterLevel,
   Character as CharacterRecord,
+  LevelAbilityIncrease,
+  LevelFeat,
+  LevelPower,
+  LevelSkill,
   Modifier,
   Player,
   Requirement,
@@ -38,17 +36,17 @@ export interface CharacterInput {
  * they enter it (`CharacterInputs`).
  */
 export interface CharacterRows {
-  abilities: (typeof characterAbilitiesInCharacter.$inferSelect)[];
+  abilities: CharacterAbility[];
   campaign: Campaign | undefined;
   inventory: CharacterInventory[];
-  languages: (typeof languagesInCharacter.$inferSelect)[];
+  languages: CharacterLanguage[];
   levels: CharacterLevel[];
   modifiers: Modifier[];
   picks: {
-    abilityIncreases: (typeof levelAbilityIncreasesInCharacter.$inferSelect)[];
-    feats: (typeof levelFeatsInCharacter.$inferSelect)[];
-    powers: (typeof levelPowersInCharacter.$inferSelect)[];
-    skills: (typeof levelSkillsInCharacter.$inferSelect)[];
+    abilityIncreases: LevelAbilityIncrease[];
+    feats: LevelFeat[];
+    powers: LevelPower[];
+    skills: LevelSkill[];
   };
   player: Player | undefined;
   requirements: Requirement[];

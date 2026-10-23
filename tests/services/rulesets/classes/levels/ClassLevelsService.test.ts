@@ -1,14 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { eq } from "drizzle-orm";
-
 import { DND35_COMPLETE_DIVINE_NAME, DND35_RULESET_NAME } from "@/content/dnd3.5/rulesetNames.ts";
-import {
-  featsInRules,
-  klassLevelFeatsInRules,
-  klassLevelPowersInRules,
-  klassLevelSavesInRules,
-} from "@/drizzle/schema.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, toJson } from "@/server/errors/index.ts";
@@ -19,6 +11,7 @@ import {
   Feats,
   Klasses,
   KlassLevelFeats,
+  KlassLevelPowers,
   KlassLevels,
   KlassLevelSaves,
   Modifiers,
@@ -34,7 +27,6 @@ import type { Session } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
 import { createTestCharacter } from "@/tests/support/characters.ts";
-import { insertRows } from "@/tests/support/database.ts";
 import { addCharacterLevel } from "@/tests/support/levels.ts";
 import { copyEntity, createTestRuleset, createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
 import { findSeededRuleset, NIL_UUID } from "@/tests/support/seed.ts";
@@ -175,7 +167,7 @@ describe("ClassLevelsService", () => {
 
     test("an update replaces them, keeps them when it omits them, and clears them", async () => {
       const { session, ruleset, klass, aptitude } = await setup();
-      const [cleave, dodge] = await insertRows(featsInRules, [
+      const [cleave, dodge] = await Feats.createMany(db, [
         { name: "Cleave", rulesetId: ruleset.id },
         { name: "Dodge", rulesetId: ruleset.id },
       ]);
@@ -187,12 +179,8 @@ describe("ClassLevelsService", () => {
       const update = (body: Partial<LevelBody>) =>
         ClassLevelsService.updateClassLevel(session, ruleset.id, klass.id, level.id, body);
       const links = async () => ({
-        feats: (
-          await db.select().from(klassLevelFeatsInRules).where(eq(klassLevelFeatsInRules.klassLevelId, level.id))
-        ).map((f) => f.featId),
-        saves: (
-          await db.select().from(klassLevelSavesInRules).where(eq(klassLevelSavesInRules.klassLevelId, level.id))
-        ).map((s) => s.saveId),
+        feats: (await KlassLevelFeats.findMany(db, { klassLevelIds: [level.id] })).map((f) => f.featId),
+        saves: (await KlassLevelSaves.findMany(db, { klassLevelIds: [level.id] })).map((s) => s.saveId),
       });
 
       await update({ feats: [{ featId: dodge.id, aptitudeId: aptitude.id }], saves: [{ saveId: reflex.id, base: 2 }] });
@@ -225,22 +213,16 @@ describe("ClassLevelsService", () => {
     });
   });
 
-  test("keeps the properties a user added when the level's BAB changes", async () => {
+  test("keeps the level's other properties when its BAB changes", async () => {
     // Regression: saving BAB or skill points once replaced every property of the level.
     const { session, ruleset, klass } = await setup();
     const level = await createLevel(session, ruleset.id, klass.id, 1);
-    await Properties.create(db, {
-      entityId: level.id,
-      entityType: "klass_levels",
-      type: "CLASS_FEATURE",
-      value: "Rage",
-    });
 
     expect(
       await ClassLevelsService.updateClassLevel(session, ruleset.id, klass.id, level.id, { fields: { bab: 3 } }),
     ).toMatchObject({ bab: 3, skills: 4 });
     const properties = await Properties.findMany(db, { entityIds: [level.id], entityType: "klass_levels" });
-    expect(properties.map((p) => p.type).sort()).toEqual(["CLASS_FEATURE", KLASS_LEVEL_BAB, KLASS_LEVEL_SKILL_POINTS]);
+    expect(properties.map((p) => p.type).sort()).toEqual([KLASS_LEVEL_BAB, KLASS_LEVEL_SKILL_POINTS]);
   });
 
   test("refuses an edit started from a stale level, unless it sends no token", async () => {
@@ -406,16 +388,14 @@ describe("ClassLevelsService", () => {
         feats: [{ featId: feat.id, aptitudeId: aptitude.id }],
         saves: [{ saveId: save.id, base: 2 }],
       });
-      await insertRows(klassLevelPowersInRules, [
-        { klassLevelId: level.id, powerId: power.id, aptitudeId: aptitude.id },
-      ]);
+      await KlassLevelPowers.create(db, { klassLevelId: level.id, powerId: power.id, aptitudeId: aptitude.id });
       await Modifiers.create(db, modifier(level.id, "combat.bab", "1"));
 
       await ClassLevelsService.deleteClassLevel(session, ruleset.id, klass.id, level.id);
 
       expect(await KlassLevels.findOne(db, { id: level.id })).toBeUndefined();
-      for (const table of [klassLevelFeatsInRules, klassLevelPowersInRules, klassLevelSavesInRules])
-        expect(await db.select().from(table).where(eq(table.klassLevelId, level.id))).toEqual([]);
+      for (const join of [KlassLevelFeats, KlassLevelPowers, KlassLevelSaves])
+        expect(await join.findMany(db, { klassLevelIds: [level.id] })).toEqual([]);
 
       expect(await Modifiers.findMany(db, { sourceIds: [level.id], sourceType: "klass_levels" })).toEqual([]);
       expect(await Requirements.findMany(db, { entityIds: [level.id], entityType: "klass_levels" })).toEqual([]);

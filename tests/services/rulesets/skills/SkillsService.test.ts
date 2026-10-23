@@ -1,15 +1,11 @@
 import { describe, expect, test } from "bun:test";
 
-import { eq, getTableName } from "drizzle-orm";
-
-import { abilitiesInRules, klassSkillsInRules, skillsInRules } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
-import { Activities, KlassSkills } from "@/server/repositories/index.ts";
+import { Abilities, Activities, KlassSkills } from "@/server/repositories/index.ts";
 import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
 import { SkillsService } from "@/server/services/rulesets/skills/index.ts";
 import { createTestCharacter } from "@/tests/support/characters.ts";
-import { insertRows } from "@/tests/support/database.ts";
 import { addCharacterLevel, createTestKlassLevel } from "@/tests/support/levels.ts";
 import { createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
 
@@ -40,8 +36,8 @@ function bodyOf({
  */
 async function setup() {
   const { user, session, ruleset } = await createTestUserAndRuleset();
-  const abilities = await insertRows(
-    abilitiesInRules,
+  const abilities = await Abilities.createMany(
+    db,
     ["Strength", "Dexterity", "Intelligence"].map((name) => ({ name, description: name, rulesetId: ruleset.id })),
   );
   const abilityMap = Object.fromEntries(abilities.map((a) => [a.name, a.id]));
@@ -70,7 +66,7 @@ describe("SkillsService", () => {
     // Its activity records what it changed, never what it left out
     const { items } = await Activities.findPage(
       db,
-      { userId: session.userId, targetTable: getTableName(skillsInRules) },
+      { userId: session.userId, targetTable: "skills" },
       { limit: 10, page: 1 },
     );
     expect(items.find((activity) => activity.type === "updateSkill")?.data).toMatchObject({
@@ -146,7 +142,7 @@ describe("SkillsService", () => {
     await KlassSkills.create(db, { klassId: klass.id, skillId: skill.id });
 
     await SkillsService.deleteSkill(session, ruleset.id, skill.id);
-    expect(await db.select().from(klassSkillsInRules).where(eq(klassSkillsInRules.skillId, skill.id))).toEqual([]);
+    expect(await KlassSkills.findMany(db, { klassIds: [klass.id] })).toEqual([]);
   });
 
   test("refuses to delete a skill a character put ranks in", async () => {

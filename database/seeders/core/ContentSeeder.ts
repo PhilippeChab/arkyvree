@@ -2,16 +2,7 @@ import { and, eq, isNull } from "drizzle-orm";
 
 import type { CorePackageDefinition } from "@/content/core/builders/packages/types.ts";
 import type { Db } from "@/drizzle/database.ts";
-import {
-  abilitiesInRules,
-  aptitudesInRules,
-  featsInRules,
-  powersInRules,
-  rulesetExtensionsInRules,
-  rulesetsInRules,
-  savesInRules,
-  skillsInRules,
-} from "@/drizzle/schema.ts";
+import { entitiesInRules, rulesetExtensionsInRules, rulesetsInRules } from "@/drizzle/schema.ts";
 import { include } from "@/lib/mixins.ts";
 import type { BaseRules } from "@/shared/enums.ts";
 
@@ -126,29 +117,27 @@ export abstract class ContentSeeder<Core = unknown, Book = unknown> extends incl
   /** The context of a seeded ruleset: the ids of its unarchived rows. */
   static async loadContext(db: Db, rulesetId: string): Promise<SeedContext> {
     // One after the other: a transaction runs one query at a time.
-    const names = async (
-      table:
-        | typeof abilitiesInRules
-        | typeof savesInRules
-        | typeof skillsInRules
-        | typeof aptitudesInRules
-        | typeof featsInRules
-        | typeof powersInRules,
-    ) =>
+    const names = async (type: string) =>
       SeederState.idsByName(
-        await db
-          .select({ id: table.id, name: table.name })
-          .from(table)
-          .where(and(eq(table.rulesetId, rulesetId), isNull(table.deletedAt))),
+        (await db
+          .select({ id: entitiesInRules.id, name: entitiesInRules.name })
+          .from(entitiesInRules)
+          .where(
+            and(
+              eq(entitiesInRules.type, type),
+              eq(entitiesInRules.rulesetId, rulesetId),
+              isNull(entitiesInRules.deletedAt),
+            ),
+          )) as { id: string; name: string }[],
       );
     return {
       rulesetId,
-      abilityMap: await names(abilitiesInRules),
-      saveMap: await names(savesInRules),
-      skillMap: await names(skillsInRules),
-      aptMap: await names(aptitudesInRules),
-      featMap: await names(featsInRules),
-      powerMap: await names(powersInRules),
+      abilityMap: await names("abilities"),
+      saveMap: await names("saves"),
+      skillMap: await names("skills"),
+      aptMap: await names("aptitudes"),
+      featMap: await names("feats"),
+      powerMap: await names("powers"),
       inheritedPowerMap: {},
     };
   }

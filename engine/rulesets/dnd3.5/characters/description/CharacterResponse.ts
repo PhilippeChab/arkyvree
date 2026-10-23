@@ -1,10 +1,7 @@
-import type { InferSelectModel } from "drizzle-orm";
-
-import type { charactersInCharacter } from "@/drizzle/schema.ts";
 import type { SheetStat } from "@/engine/core/module/index.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import ItemPlacement from "@/engine/rulesets/dnd3.5/rules/ItemPlacement.ts";
-import type { Modifier, Requirement } from "@/shared/relations.ts";
+import type { Character, Modifier, Requirement } from "@/shared/relations.ts";
 import { formatSigned } from "@/shared/text.ts";
 
 import CombatSheet from "./CombatSheet.ts";
@@ -108,7 +105,7 @@ export default class CharacterResponse {
   }
 
   /** A bonded creature's sheet (`record`, built from its rows: `built`), with its feats: what its subsheet reads. */
-  static buildBondedSheet(record: InferSelectModel<typeof charactersInCharacter>, built: DetailedCharacter) {
+  static buildBondedSheet(record: Character, built: DetailedCharacter) {
     return {
       ...CharacterResponse.buildSheet(record, built),
       feats: built.components.feats.getFeats(),
@@ -120,7 +117,7 @@ export default class CharacterResponse {
    * sheet, with what its modifiers and requirements did and its validation; and its summary and its blocks, built from
    * them.
    */
-  static buildSheet(record: InferSelectModel<typeof charactersInCharacter>, built: DetailedCharacter) {
+  static buildSheet(record: Character, built: DetailedCharacter) {
     const ruleset = built.getRuleset();
     const validation = built.validate();
     const requirements = CharacterResponse.enrichedRequirementsOf(built);

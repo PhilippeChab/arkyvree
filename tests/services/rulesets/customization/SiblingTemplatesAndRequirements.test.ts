@@ -51,7 +51,7 @@ async function setup(
     if (configure) {
       await configure(copy.id, i);
     } else if (entityType === "items") {
-      await Properties.create(db, { ...TEMPLATE_PROPERTIES[i], entityId: copy.id, entityType });
+      await Properties.createMany(db, [{ ...TEMPLATE_PROPERTIES[i], entityId: copy.id, entityType }]);
     } else if (i === 1) {
       await Requirements.create(db, {
         entityId: copy.id,

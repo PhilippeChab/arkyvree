@@ -51,7 +51,7 @@ flowchart LR
 
 ### The problem
 
-Ruleset entities can be [Copy-On-Write'd](./rulesets.md) in a fork. A COW creates a new entity with a new id; the ruleset's `CowData` (`engine/core/cow/CowData.ts`) records `preCowId → postCowId`. Characters saved **before** a COW store pre-COW ids in their rows (`level_feats.feat_id`, `character_abilities.ability_id`, ...). The composed ruleset cache is keyed by **post-COW ids**.
+Ruleset entities can be [Copy-On-Write'd](./rulesets.md) in a fork. A COW creates a new entity with a new id; the ruleset's `CowData` (`engine/core/cow/CowData.ts`) records `preCowId → postCowId`. Characters saved **before** a COW store pre-COW ids in their rows (a feat pick's `character.advancement_picks.entity_id`, a score's `character.links.entity_id`, ...). The composed ruleset cache is keyed by **post-COW ids**.
 
 Without intervention, every lookup site had to remember to do `rulesetData.featsById.get(cow.resolve(storedId))`. Missing a call produced a silent cache miss. The view's maps close the gap for lookups, and the engine for the rows it's handed; a query on stored rows asks for an entity's equivalent ids.
 
@@ -86,7 +86,7 @@ A row stored before its entity was copied names the source, so a query that find
 
 Rare but real:
 
-- **Character-scoped composite-key stored rows.** A repository whose `where` names an entity on stored rows takes the entity's equivalent ids (`{ abilityIds }`, from `rulesetData.cow.getEquivalentIds(abilityId)`) and matches them with `this.idMatches(this.table.abilityId, where.abilityIds)` (`ResolvesCopies`; see `CharacterAbilitiesRepository`).
+- **Character-scoped composite-key stored rows.** A repository whose `where` names an entity on stored rows takes the entity's equivalent ids (`{ abilityIds }`, from `rulesetData.cow.getEquivalentIds(abilityId)`) and matches them with `this.idMatches(this.table.entityId, where.abilityIds)` (`ResolvesCopies`; see `CharacterAbilitiesRepository`).
 
 - **Lineage checks that touch `rulesetId` fields.** `rulesetData.cow.sourceChain` is the ancestor chain. For validating that a stored row's entity belongs to the character's ruleset or one of its ancestors, build `new Set([characterRecord.rulesetId, ...rulesetData.cow.sourceChain])` and check `.has(entity.rulesetId)` (or use `sourceChain.includes(entity.rulesetId)` when the self id isn't relevant). A request's ids need none: the view shows only the ruleset's and its chain's entities, so `RequestIds` refuses an entity of an unrelated ruleset as it refuses an unknown one (`character(input).planInventoryEntry` an added item, `characters().planLanguages` a language).
 
@@ -263,7 +263,7 @@ The flat `properties` / `modifiers` / `requirements` arrays were removed from `R
 
 ### What's not in the ruleset cache (and why)
 
-Character-scoped tables (the `character` schema): `characters`, `levels`, `character_abilities`, `languages`, `inventory`, `level_ability_increases` / `level_feats` / `level_powers` / `level_skills`, character-sourced modifiers. These change per character per mutation; cross-request cache hit rate would be ~0%. They're served by the request-scoped dedup layer when the same query fires twice in one request.
+Character-scoped tables (the `character` schema): `characters`, `fields`, `links` (a character's race, scores and languages), `advancements` (its levels) and `advancement_picks` (their picks), `inventory`, character-sourced modifiers. These change per character per mutation; cross-request cache hit rate would be ~0%. They're served by the request-scoped dedup layer when the same query fires twice in one request.
 
 Paginated / searched / filtered queries (e.g. `Feats.findPage({ search, pagination })`): too many unique keys to make a shared cache useful. These go straight to Postgres.
 

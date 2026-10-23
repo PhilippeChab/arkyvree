@@ -1,6 +1,3 @@
-import { getTableName } from "drizzle-orm";
-
-import { klassSkillsInRules } from "@/drizzle/schema.ts";
 import { Engine } from "@/engine/index.ts";
 import { EntityEdit, RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
@@ -34,7 +31,7 @@ class ClassSkillsService {
           await createActivityWithNotifications(tx, {
             userId: session.userId,
             targetId: klassSkill.klassId,
-            targetTable: getTableName(klassSkillsInRules),
+            targetTable: "klass_skills",
             type: "addKlassSkill",
             data: { skillId: klassSkill.skillId, entityName: klass.name, skillName: skill.name },
           });
@@ -76,7 +73,7 @@ class ClassSkillsService {
           await createActivityWithNotifications(tx, {
             userId: session.userId,
             targetId: removedKlassSkill.klassId,
-            targetTable: getTableName(klassSkillsInRules),
+            targetTable: "klass_skills",
             type: "removeKlassSkill",
             data: { skillId: removedKlassSkill.skillId, rulesetId, entityName: klass.name, skillName: skill?.name },
           });

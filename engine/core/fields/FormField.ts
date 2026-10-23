@@ -61,9 +61,13 @@ export interface ChoiceFormField extends FormFieldBase {
   required?: boolean;
 }
 
-/** A decimal, none too (an item's cost, its weight), at least `min`, in its `unit` ("gp"), which its label names. */
+/**
+ * A decimal, none too (an item's cost, its weight), at least `min` and at most `max`, in its `unit` ("gp"), which its
+ * label names.
+ */
 export interface DecimalFormField extends FormFieldBase {
   input: "decimal";
+  max?: number;
   min?: number;
   unit?: string;
 }

@@ -32,6 +32,16 @@ describe("method-names", () => {
     ).toEqual(["method-names server/repositories/Get.ts", "method-names server/repositories/concerns/Bad.ts"]);
   });
 
+  test("a stored adapter's public methods start with a function's verb, not a repository's", async () => {
+    expect(
+      await lint({
+        "server/repositories/stored/Good.ts":
+          "export class Good {\n  static buildColumns() {}\n  static insert() {}\n  static findRows() {}\n}\n",
+        "server/repositories/stored/Bad.ts": "export class Bad {\n  static columns() {}\n}\n",
+      }),
+    ).toEqual(["method-names server/repositories/stored/Bad.ts"]);
+  });
+
   test("a repository method never names a filter: filters go in its where", async () => {
     expect(
       await lint({

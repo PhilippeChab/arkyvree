@@ -1,10 +1,10 @@
 import { Hono } from "hono";
 import { z } from "zod";
 
-import { location } from "@/drizzle/schema.ts";
 import { type SessionContext, validate } from "@/server/middlewares/index.ts";
 import { characterIdParam } from "@/server/routers/api/validation.ts";
 import { CharacterInventoryService } from "@/server/services/characters/inventory/index.ts";
+import { LOCATION_OPTIONS } from "@/shared/enums.ts";
 
 const entryParams = characterIdParam.extend({ entryId: z.string().uuid() });
 
@@ -31,7 +31,7 @@ export default new Hono<SessionContext>()
       "query",
       z.object({
         entryId: z.string().uuid().optional(),
-        location: z.enum(location.enumValues),
+        location: z.enum(LOCATION_OPTIONS),
         weaponSets: heldSetList,
       }),
     ),
@@ -59,7 +59,7 @@ export default new Hono<SessionContext>()
         itemId: z.string().uuid(),
         quantity: z.number().int().min(1),
         equipped: z.boolean().default(false),
-        location: z.enum(location.enumValues).nullable().default(null),
+        location: z.enum(LOCATION_OPTIONS).nullable().default(null),
         totalCharges: z.number().int().min(0).nullable().default(null),
         remainingCharges: z.number().int().min(0).nullable().default(null),
         weaponSets: heldSets,
@@ -95,7 +95,7 @@ export default new Hono<SessionContext>()
       z.object({
         quantity: z.number().int().min(1),
         equipped: z.boolean(),
-        location: z.enum(location.enumValues).nullable().default(null),
+        location: z.enum(LOCATION_OPTIONS).nullable().default(null),
         totalCharges: z.number().int().min(0).nullable().default(null),
         remainingCharges: z.number().int().min(0).nullable().default(null),
         weaponSets: heldSets,

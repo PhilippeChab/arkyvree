@@ -7,6 +7,7 @@ import ImportsEngine from "./ImportsEngine.ts";
 import Modules from "./Modules.ts";
 import RulesEngine from "./RulesEngine.ts";
 import RulesetEngine from "./RulesetEngine.ts";
+import StorageEngine from "./StorageEngine.ts";
 
 /**
  * The engine's entry: what code outside it asks the rules, as the client asks the server through its API. A ruleset's
@@ -45,5 +46,10 @@ export default class Engine {
   /** The engine asked of what every base rules' rulesets share, before any ruleset: their words, kinds and license. */
   static rules() {
     return new RulesEngine(Modules.all());
+  }
+
+  /** How every module stores its data in the generic tables, which the server reads and writes them by. */
+  static storage() {
+    return StorageEngine.shared();
   }
 }

@@ -4,10 +4,8 @@
  * entities it writes by the ids the ruleset's view keys them by, whichever the request sent (`RequestIds`).
  */
 
-import type { InferInsertModel } from "drizzle-orm";
-
-import type { charactersInCharacter } from "@/drizzle/schema.ts";
 import type { ItemLocation } from "@/shared/enums.ts";
+import type { Character } from "@/shared/relations.ts";
 
 /** What a character's ability edit writes: its scores, each checked. */
 export interface AbilitiesPlan {
@@ -70,20 +68,5 @@ export interface StartPlan {
  * The columns of a character's row its ruleset writes, from its fields: those past the ones every character has (its
  * name, its notes) and those no field writes, the ones a new row requires among them.
  */
-export type CharacterColumns = Omit<
-  InferInsertModel<typeof charactersInCharacter>,
-  | "createdAt"
-  | "deletedAt"
-  | "id"
-  | "kind"
-  | "lastChangedAt"
-  | "name"
-  | "notes"
-  | "parentCharacterId"
-  | "privateNotes"
-  | "raceId"
-  | "rulesetId"
-  | "shareToken"
-  | "updatedAt"
-  | "userId"
->;
+export type CharacterColumns = Pick<Character, "alignment" | "gender" | "xp"> &
+  Partial<Pick<Character, "age" | "deity" | "description" | "height" | "weight">>;

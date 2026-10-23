@@ -1,33 +1,10 @@
-import {
-  abilitiesInRules,
-  aptitudesInRules,
-  featsInRules,
-  itemsInRules,
-  klassesInRules,
-  languagesInRules,
-  mechanicsInRules,
-  powersInRules,
-  racesInRules,
-  savesInRules,
-  skillsInRules,
-} from "@/drizzle/schema.ts";
+import { Engine, type EntityKinds } from "@/engine/index.ts";
 
-export type RulesetEntityType = keyof typeof ENTITY_TABLES;
+/** A ruleset entity type: a kind a module declares, which no other entity owns. */
+export type RulesetEntityType = keyof EntityKinds;
 
-/** Each ruleset entity type's table. */
-export const ENTITY_TABLES = {
-  abilities: abilitiesInRules,
-  saves: savesInRules,
-  skills: skillsInRules,
-  feats: featsInRules,
-  powers: powersInRules,
-  items: itemsInRules,
-  races: racesInRules,
-  languages: languagesInRules,
-  klasses: klassesInRules,
-  aptitudes: aptitudesInRules,
-  mechanics: mechanicsInRules,
-} as const;
-
-/** Every ruleset entity type, in the tables' order. */
-export const RULESET_ENTITY_TYPES = Object.keys(ENTITY_TABLES) as RulesetEntityType[];
+/** Every ruleset entity type, in the order the modules declare them: those no other type owns. */
+export const RULESET_ENTITY_TYPES = Engine.storage()
+  .registries()
+  .entityTypes.filter((def) => def.ownerType === null)
+  .map((def) => def.type as RulesetEntityType);

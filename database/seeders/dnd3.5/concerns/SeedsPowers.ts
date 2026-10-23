@@ -1,6 +1,5 @@
 import type { SpellSeed } from "@/content/dnd3.5/builders/spells/types.ts";
-import { BaseSeeder } from "@/database/seeders/dnd3.5/BaseSeeder.ts";
-import { powersAptitudesInRules, powersInRules, propertiesInCustomization } from "@/drizzle/schema.ts";
+import type { BaseSeeder } from "@/database/seeders/dnd3.5/BaseSeeder.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 
 /** A saving throw as its save and effect: "Will negates" is Will, "negates". Text that names no save is all effect. */
@@ -21,18 +20,14 @@ export function SeedsPowers<B extends Constructor<BaseSeeder>>(Base: B) {
     async seedPowers(spells: SpellSeed[]) {
       if (spells.length === 0) return;
 
-      const ids = BaseSeeder.idsByName(
-        await this.db
-          .insert(powersInRules)
-          .values(
-            spells.map((spell) => ({
-              rulesetId: this.ctx.rulesetId,
-              name: spell.name,
-              description: spell.description,
-              ...parseSavingThrow(spell.savingThrow, this.ctx.saveMap),
-            })),
-          )
-          .returning({ id: powersInRules.id, name: powersInRules.name }),
+      const ids = await this.insertEntities(
+        "powers",
+        spells.map((spell) => ({
+          rulesetId: this.ctx.rulesetId,
+          name: spell.name,
+          description: spell.description,
+          ...parseSavingThrow(spell.savingThrow, this.ctx.saveMap),
+        })),
       );
       Object.assign(this.ctx.powerMap, ids);
 
@@ -45,12 +40,11 @@ export function SeedsPowers<B extends Constructor<BaseSeeder>>(Base: B) {
             level: spell.aptitudeLevels?.[aptitude] ?? spell.level,
           })),
       );
-      await this.insertAll(
-        powersAptitudesInRules,
+      await this.insertJoins(
+        "powers_aptitudes",
         this.uniqueBy(links, (l) => `${l.powerId}:${l.aptitudeId}`),
       );
-      await this.insertAll(
-        propertiesInCustomization,
+      await this.insertProperties(
         this.uniqueBy(
           spells.flatMap((spell) => this.propertyRows(ids[spell.name], "powers", spell.properties)),
           (p) => `${p.entityId}:${p.type}:${p.value}`,

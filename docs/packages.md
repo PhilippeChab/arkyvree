@@ -132,7 +132,7 @@ export const DND35_CORE_PACKAGE: CorePackage = {
 };
 ```
 
-The registry (`database/packages/registry.ts`) has a row for each base rules (`RULESET_CONTENT`, which `satisfies Record<BaseRules, RulesetContent>`: a base rules the database's enum gains doesn't compile until it has its row): its core rules' package, its extensions', in the order they're applied, the seeder that writes them, and its test characters. The runner applies the packages in that order (`CONTENT_PACKAGES`, by `listContentPackages`), each base rules' core rules first:
+The registry (`database/packages/registry.ts`) has a row for each base rules (`RULESET_CONTENT`, which `satisfies Record<BaseRules, RulesetContent>`: a base rules `BaseRules` gains (`BASE_RULES_OPTIONS`, `shared/enums.ts`, a row of `rules.modules`) doesn't compile until it has its row): its core rules' package, its extensions', in the order they're applied, the seeder that writes them, and its test characters. The runner applies the packages in that order (`CONTENT_PACKAGES`, by `listContentPackages`), each base rules' core rules first:
 
 - A core package creates the core ruleset of its base rules (`createCore`), and the seeder seeds the core rules' content there (`seedCore`).
 - An extension's finds that core ruleset by its package (`findCoreRulesetId`, by the name the core package gives it), creates an extension of it with its context (`loadContext`, `createExtension`), and the seeder seeds the extension's book there, beside the core rules' content (`seedExtension`).
@@ -211,13 +211,13 @@ Aptitudes are named pools with no per-ruleset content of their own — just a `n
 - **Already in the core** (e.g. `General`, `Fighter Bonus Feat`, `Cleric Domain`) — skipped; the extension references the core's row. Same pattern a user fork uses when adding a new feat tagged `General`.
 - **Not in the core** — inserted as a new row in the extension. Covers both extension-private names (e.g. `Ronin Bonus Feat`) and sibling-shared class spell lists (e.g. `Assassin Spells`, which multiple extensions independently create because siblings can't FK to each other: a book copies each list of another book its spells are on, a class's by their level line or one drawing on others' lists, `Sublime Chord Spells`).
 
-Consequences for link rows (`feats_aptitudes`, `powers_aptitudes`, `klass_level_feats`, `klass_level_powers`):
+Consequences for links (a feat's or a power's `listedIn` link, whose `to_id` is the aptitude, and a class level's `grants` link, whose `via_id` is):
 
-- Links targeting a core name point at the core's `aptitude_id`.
-- Links targeting an extension-owned name point at the extension's own `aptitude_id`.
+- Links targeting a core name point at the core's aptitude.
+- Links targeting an extension-owned name point at the extension's own aptitude.
 - Every raw row satisfies the invariant: *the aptitude's ruleset is on the entity's source chain.* No cross-sibling FKs in the raw data; the runtime sibling mechanism handles cross-extension visibility.
 
-A copy keeps the original's aptitude links, with the core's `aptitude_id`.
+A copy keeps the original's aptitude links, to the core's aptitude.
 
 ## Registry
 

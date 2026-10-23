@@ -1,10 +1,10 @@
-import { and, eq, inArray, isNull, sql } from "drizzle-orm";
-import { unionAll } from "drizzle-orm/pg-core";
+import { and, eq, exists, inArray, isNull, sql } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 
 import type { Db } from "@/drizzle/database.ts";
-import { entitySnapshotsInRules } from "@/drizzle/schema.ts";
+import { entitiesInRules, entitySnapshotsInRules } from "@/drizzle/schema.ts";
 
-import { ENTITY_TABLES, RULESET_ENTITY_TYPES, type RulesetEntityType } from "./entityTables.ts";
+import { RULESET_ENTITY_TYPES, type RulesetEntityType } from "./entityTables.ts";
 
 /**
  * The rows `findNames` reads: a ruleset's own, those with these ids, or the live rows of these rulesets themselves (not a
@@ -12,31 +12,42 @@ import { ENTITY_TABLES, RULESET_ENTITY_TYPES, type RulesetEntityType } from "./e
  */
 type NamesWhere = { rulesetId: string } | { ids: string[] } | { names?: string[]; rulesetIds: string[] };
 
-/** Queries across every ruleset entity's table, an entity type at a time or all together. */
+/** An entity's id and name, with its type and its ruleset: what the name queries answer. */
+const NAMED = {
+  entityType: sql<RulesetEntityType>`${entitiesInRules.type}`.as("entity_type"),
+  id: entitiesInRules.id,
+  name: sql<string>`${entitiesInRules.name}`.as("name"),
+  rulesetId: entitiesInRules.rulesetId,
+};
+
+/** Queries across every ruleset entity type, a type at a time or all together: one table holds them all. */
 class RulesetEntitiesRepository {
   /** What `findNames` reads an entity type's rows by: its `where`'s branch. */
-  private namesCondition(table: (typeof ENTITY_TABLES)[RulesetEntityType], where: NamesWhere) {
+  private namesCondition(where: NamesWhere) {
     if ("rulesetIds" in where) {
       return and(
-        inArray(table.rulesetId, where.rulesetIds),
-        where.names && inArray(table.name, where.names),
-        isNull(table.deletedAt),
-        isNull(table.campaignId),
+        inArray(entitiesInRules.rulesetId, where.rulesetIds),
+        where.names && inArray(entitiesInRules.name, where.names),
+        isNull(entitiesInRules.deletedAt),
+        isNull(entitiesInRules.campaignId),
       );
     }
-    if ("ids" in where) return inArray(table.id, where.ids);
-    return eq(table.rulesetId, where.rulesetId);
+    if ("ids" in where) return inArray(entitiesInRules.id, where.ids);
+    return eq(entitiesInRules.rulesetId, where.rulesetId);
   }
 
   /** An entity type's ids and names, each with its ruleset (`where`: which rows). */
   async findNames(db: Db, entityType: RulesetEntityType, where: NamesWhere) {
     if ("ids" in where && where.ids.length === 0) return [];
     if ("rulesetIds" in where && (where.rulesetIds.length === 0 || where.names?.length === 0)) return [];
-    const table = ENTITY_TABLES[entityType];
     return await db
-      .select({ id: table.id, name: table.name, rulesetId: table.rulesetId })
-      .from(table)
-      .where(this.namesCondition(table, where));
+      .select({
+        id: entitiesInRules.id,
+        name: sql<string>`${entitiesInRules.name}`,
+        rulesetId: entitiesInRules.rulesetId,
+      })
+      .from(entitiesInRules)
+      .where(and(eq(entitiesInRules.type, entityType), this.namesCondition(where)));
   }
 
   /**
@@ -46,36 +57,28 @@ class RulesetEntitiesRepository {
   async findNativeNames(db: Db, where: { entityTypes: RulesetEntityType[]; rulesetIds: string[] }) {
     if (where.rulesetIds.length === 0) return [];
     if (where.entityTypes.length === 0) return [];
-    const subqueries = where.entityTypes.map((entityType) => {
-      const table = ENTITY_TABLES[entityType];
-      return db
-        .select({
-          entityType: sql<RulesetEntityType>`${entityType}::text`.as("entity_type"),
-          id: table.id,
-          name: table.name,
-          rulesetId: table.rulesetId,
-        })
-        .from(table)
-        .leftJoin(
-          entitySnapshotsInRules,
-          and(
-            eq(entitySnapshotsInRules.forkedEntityId, table.id),
-            eq(entitySnapshotsInRules.rulesetId, table.rulesetId),
-            eq(entitySnapshotsInRules.entityType, entityType),
-          ),
-        )
-        .where(
-          and(
-            inArray(table.rulesetId, where.rulesetIds),
-            isNull(entitySnapshotsInRules.id),
-            isNull(table.deletedAt),
-            isNull(table.campaignId),
-          ),
-        );
-    });
-    const [first, second, ...rest] = subqueries;
-    // One order, whatever the plan: the name pass meets its groups in it (the union's own columns)
-    return await unionAll(first, second, ...rest).orderBy(sql`entity_type, name, id`);
+    // One order, whatever the plan: the name pass meets its groups in it
+    return await db
+      .select(NAMED)
+      .from(entitiesInRules)
+      .leftJoin(
+        entitySnapshotsInRules,
+        and(
+          eq(entitySnapshotsInRules.forkedEntityId, entitiesInRules.id),
+          eq(entitySnapshotsInRules.rulesetId, entitiesInRules.rulesetId),
+          eq(entitySnapshotsInRules.entityType, entitiesInRules.type),
+        ),
+      )
+      .where(
+        and(
+          inArray(entitiesInRules.type, where.entityTypes),
+          inArray(entitiesInRules.rulesetId, where.rulesetIds),
+          isNull(entitySnapshotsInRules.id),
+          isNull(entitiesInRules.deletedAt),
+          isNull(entitiesInRules.campaignId),
+        ),
+      )
+      .orderBy(entitiesInRules.type, entitiesInRules.name, entitiesInRules.id);
   }
 
   /**
@@ -85,34 +88,38 @@ class RulesetEntitiesRepository {
    */
   async findOwnNamesakes(db: Db, where: { rulesetId: string; rulesetIds: string[] }) {
     if (where.rulesetIds.length === 0) return [];
-    const subqueries = RULESET_ENTITY_TYPES.map((entityType) => {
-      const table = ENTITY_TABLES[entityType];
-      const live = and(isNull(table.deletedAt), isNull(table.campaignId));
-      const namesOf = (rulesetIds: string[]) =>
+    const namesake = alias(entitiesInRules, "namesake");
+    const live = and(isNull(entitiesInRules.deletedAt), isNull(entitiesInRules.campaignId));
+    // An entity of the same type and name, live, in one of `rulesetIds`
+    const namedIn = (rulesetIds: string[]) =>
+      exists(
         db
-          .select({ name: table.name })
-          .from(table)
-          .where(and(inArray(table.rulesetId, rulesetIds), live));
-      return db
-        .select({
-          entityType: sql<RulesetEntityType>`${entityType}::text`.as("entity_type"),
-          id: table.id,
-          name: table.name,
-          rulesetId: table.rulesetId,
-        })
-        .from(table)
-        .where(
-          and(
-            inArray(table.rulesetId, [where.rulesetId, ...where.rulesetIds]),
-            live,
-            inArray(table.name, namesOf([where.rulesetId])),
-            inArray(table.name, namesOf(where.rulesetIds)),
+          .select({ one: sql`1` })
+          .from(namesake)
+          .where(
+            and(
+              eq(namesake.type, entitiesInRules.type),
+              eq(namesake.name, entitiesInRules.name),
+              inArray(namesake.rulesetId, rulesetIds),
+              isNull(namesake.deletedAt),
+              isNull(namesake.campaignId),
+            ),
           ),
-        );
-    });
-    const [first, second, ...rest] = subqueries;
-    // One order, whatever the plan: the pass meets its groups in it (the union's own columns)
-    return await unionAll(first, second, ...rest).orderBy(sql`entity_type, name, id`);
+      );
+    // One order, whatever the plan: the pass meets its groups in it
+    return await db
+      .select(NAMED)
+      .from(entitiesInRules)
+      .where(
+        and(
+          inArray(entitiesInRules.type, RULESET_ENTITY_TYPES),
+          inArray(entitiesInRules.rulesetId, [where.rulesetId, ...where.rulesetIds]),
+          live,
+          namedIn([where.rulesetId]),
+          namedIn(where.rulesetIds),
+        ),
+      )
+      .orderBy(entitiesInRules.type, entitiesInRules.name, entitiesInRules.id);
   }
 }
 

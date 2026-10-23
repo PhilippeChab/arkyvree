@@ -1,20 +1,15 @@
 import { describe, expect, test } from "bun:test";
 
-import { eq } from "drizzle-orm";
-
-import {
-  abilitiesInRules,
-  klassLevelFeatsInRules,
-  klassLevelPowersInRules,
-  klassLevelSavesInRules,
-  klassSkillsInRules,
-} from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
 import {
+  Abilities,
   Aptitudes,
   Feats,
+  KlassLevelFeats,
+  KlassLevelPowers,
   KlassLevels,
+  KlassLevelSaves,
   KlassSkills,
   Modifiers,
   Powers,
@@ -26,7 +21,6 @@ import {
 import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
 import { ClassLevelsService } from "@/server/services/rulesets/classes/levels/index.ts";
 import { createTestCharacter } from "@/tests/support/characters.ts";
-import { insertRows } from "@/tests/support/database.ts";
 import { addCharacterLevel } from "@/tests/support/levels.ts";
 import { createTestRuleset, createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
 import { KLASS_BONUS_SPELL_ABILITY_ID } from "@/vocabulary/dnd3.5/properties/index.ts";
@@ -58,9 +52,11 @@ describe("ClassesService", () => {
     expect(await ClassesService.getClass(ruleset.id, fighter.id)).toMatchObject({ bonusSpellAbilityId: null });
 
     const wizard = await ClassesService.createClass(session, ruleset.id, { name: "Wizard", hd: 4 });
-    const [intelligence] = await insertRows(abilitiesInRules, [
-      { name: "Intelligence", description: "Intelligence", rulesetId: ruleset.id },
-    ]);
+    const [intelligence] = await Abilities.create(db, {
+      name: "Intelligence",
+      description: "Intelligence",
+      rulesetId: ruleset.id,
+    });
     await ClassesService.updateClass(session, ruleset.id, wizard.id, {
       name: "Wizard",
       fields: { bonusSpellAbilityId: intelligence.id },
@@ -76,7 +72,7 @@ describe("ClassesService", () => {
   test("deletes a class's levels with their feats, powers, saves and modifiers, and its class skills", async () => {
     const { session, ruleset } = await createTestUserAndRuleset();
     const rulesetId = ruleset.id;
-    const [ability] = await insertRows(abilitiesInRules, [{ name: "Strength", description: "Strength", rulesetId }]);
+    const [ability] = await Abilities.create(db, { name: "Strength", description: "Strength", rulesetId });
     const [aptitude] = await Aptitudes.create(db, { name: "Class Aptitude", rulesetId });
     const [feat] = await Feats.create(db, { name: "Class Feat", rulesetId });
     const [power] = await Powers.create(db, { name: "Class Power", rulesetId });
@@ -91,7 +87,7 @@ describe("ClassesService", () => {
       feats: [{ featId: feat.id, aptitudeId: aptitude.id }],
       saves: [{ saveId: save.id, base: 2 }],
     });
-    await insertRows(klassLevelPowersInRules, [{ klassLevelId: level.id, powerId: power.id, aptitudeId: aptitude.id }]);
+    await KlassLevelPowers.create(db, { klassLevelId: level.id, powerId: power.id, aptitudeId: aptitude.id });
     await Modifiers.create(db, {
       sourceId: level.id,
       sourceType: "klass_levels",
@@ -104,16 +100,10 @@ describe("ClassesService", () => {
     await ClassesService.deleteClass(session, rulesetId, klass.id);
 
     expect(await KlassLevels.findOne(db, { id: level.id })).toBeUndefined();
-    expect(
-      await db.select().from(klassLevelFeatsInRules).where(eq(klassLevelFeatsInRules.klassLevelId, level.id)),
-    ).toEqual([]);
-    expect(
-      await db.select().from(klassLevelPowersInRules).where(eq(klassLevelPowersInRules.klassLevelId, level.id)),
-    ).toEqual([]);
-    expect(
-      await db.select().from(klassLevelSavesInRules).where(eq(klassLevelSavesInRules.klassLevelId, level.id)),
-    ).toEqual([]);
-    expect(await db.select().from(klassSkillsInRules).where(eq(klassSkillsInRules.klassId, klass.id))).toEqual([]);
+    expect(await KlassLevelFeats.findMany(db, { klassLevelIds: [level.id] })).toEqual([]);
+    expect(await KlassLevelPowers.findMany(db, { klassLevelIds: [level.id] })).toEqual([]);
+    expect(await KlassLevelSaves.findMany(db, { klassLevelIds: [level.id] })).toEqual([]);
+    expect(await KlassSkills.findMany(db, { klassIds: [klass.id] })).toEqual([]);
     expect(await Modifiers.findMany(db, { sourceIds: [level.id], sourceType: "klass_levels" })).toEqual([]);
   });
 

@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { and, inArray } from "drizzle-orm";
 import type { PgTable } from "drizzle-orm/pg-core";
 
 import type {
@@ -9,16 +9,18 @@ import type {
 } from "@/content/core/builders/customization/types.ts";
 import type { Db } from "@/drizzle/database.ts";
 import {
+  entitiesInRules,
   entitySnapshotsInRules,
   modifiersInCustomization,
-  propertiesInCustomization,
   requirementsInCustomization,
 } from "@/drizzle/schema.ts";
+import StoredEntities, { type StoredValues } from "@/server/repositories/stored/StoredEntities.ts";
+import StoredFields, { type FieldValues } from "@/server/repositories/stored/StoredFields.ts";
+import StoredJoins, { type JoinValues } from "@/server/repositories/stored/StoredJoins.ts";
 
 type Ids = Record<string, string>;
 
 type ModifierRow = typeof modifiersInCustomization.$inferInsert;
-type PropertyRow = typeof propertiesInCustomization.$inferInsert;
 type RequirementRow = typeof requirementsInCustomization.$inferInsert;
 
 /**
@@ -43,7 +45,9 @@ export interface SeedContext {
 /**
  * A seeder's state, which every seeding step builds on (`concerns/`, and a ruleset's): the database it writes to, the
  * context it names rows by (`ctx`, its ruleset's id and the ids its steps add), and what the steps write with: the
- * customizations' rows and their inserts, and the copies an extension makes of what it changes.
+ * entities' rows, their joins and their properties as the generic tables store them (`StoredEntities`, `StoredJoins`,
+ * `StoredFields`, by what the module declares), the customizations' rows and their inserts, and the copies an extension
+ * makes of what it changes.
  */
 export abstract class SeederState {
   constructor(
@@ -56,16 +60,17 @@ export abstract class SeederState {
     return Object.fromEntries(rows.map((row) => [row.name, row.id]));
   }
 
-  /** Copies an entity's requirements onto its copy. */
-  private async copyRequirements(fromId: string, toId: string) {
+  /** Copies entities' requirements onto their copies (`copies`: each entity's copy, by its id), in one write. */
+  private async copyRequirements(copies: Map<string, string>) {
+    if (copies.size === 0) return;
     const rows = await this.db
       .select()
       .from(requirementsInCustomization)
-      .where(eq(requirementsInCustomization.entityId, fromId));
+      .where(inArray(requirementsInCustomization.entityId, [...copies.keys()]));
     await this.insertAll(
       requirementsInCustomization,
-      rows.map(({ entityType, level, target, operator, value, valueType, chainingOperator }) => ({
-        entityId: toId,
+      rows.map(({ entityId, entityType, level, target, operator, value, valueType, chainingOperator }) => ({
+        entityId: copies.get(entityId)!,
         entityType,
         level,
         target,
@@ -101,7 +106,7 @@ export abstract class SeederState {
   }
 
   /** An entity's properties as rows. */
-  protected propertyRows(entityId: string, entityType: string, properties: Property[] = []): PropertyRow[] {
+  protected propertyRows(entityId: string, entityType: string, properties: Property[] = []): FieldValues[] {
     return properties.map(({ type, value }) => ({ entityId, entityType, type, value }));
   }
 
@@ -129,39 +134,66 @@ export abstract class SeederState {
     return rows.filter((row) => !seen.has(key(row)) && seen.add(key(row)));
   }
 
-  /** Copies an entity's requirements, modifiers (with theirs) and properties onto its copy. */
-  protected async copyCustomizations(fromId: string, toId: string) {
-    await this.copyRequirements(fromId, toId);
-    for (const modifier of await this.db
+  /**
+   * Copies entities' requirements, modifiers (with theirs) and properties onto their copies (`copies`: each entity's
+   * copy, by its id), of a type: a few writes, however many copies.
+   */
+  protected async copyCustomizations(type: string, copies: Map<string, string>) {
+    if (copies.size === 0) return;
+    await this.copyRequirements(copies);
+    const modifiers = await this.db
       .select()
       .from(modifiersInCustomization)
-      .where(eq(modifiersInCustomization.sourceId, fromId))) {
-      const { sourceType, target, value, valueType, operator } = modifier;
-      const [copy] = await this.db
-        .insert(modifiersInCustomization)
-        .values({ sourceId: toId, sourceType, target, value, valueType, operator })
-        .returning({ id: modifiersInCustomization.id });
-      await this.copyRequirements(modifier.id, copy.id);
-    }
-    const properties = await this.db
-      .select()
-      .from(propertiesInCustomization)
-      .where(eq(propertiesInCustomization.entityId, fromId));
+      .where(inArray(modifiersInCustomization.sourceId, [...copies.keys()]));
+    // Each modifier's copy has its id before it's written, which its requirements' copies name
+    const modifierCopies = new Map(modifiers.map((modifier) => [modifier.id, crypto.randomUUID()]));
     await this.insertAll(
-      propertiesInCustomization,
-      properties.map(({ entityType, type, value, description }) => ({
-        entityId: toId,
-        entityType,
-        type,
+      modifiersInCustomization,
+      modifiers.map(({ id, sourceId, sourceType, target, value, valueType, operator }) => ({
+        id: modifierCopies.get(id)!,
+        sourceId: copies.get(sourceId)!,
+        sourceType,
+        target,
         value,
-        description,
+        valueType,
+        operator,
       })),
     );
+    await this.copyRequirements(modifierCopies);
+    const properties = await StoredFields.findMany(this.db, { entityIds: [...copies.keys()], entityType: type });
+    await this.insertProperties(
+      properties.map(({ entityId, entityType, type: propertyType, value }) => ({
+        entityId: copies.get(entityId)!,
+        entityType,
+        type: propertyType,
+        value,
+      })),
+    );
+  }
+
+  /** A kind's rows of entities (`type`, `ids`), by their columns. */
+  protected async entityRows<R>(type: string, ids: string[]): Promise<R[]> {
+    if (ids.length === 0) return [];
+    return (await this.db
+      .select(StoredEntities.buildColumns(type))
+      .from(entitiesInRules)
+      .where(and(StoredEntities.buildScope(type), inArray(entitiesInRules.id, ids)))) as R[];
   }
 
   /** Inserts the rows, if there are any. */
   protected async insertAll<T extends PgTable>(table: T, rows: T["$inferInsert"][]) {
     if (rows.length > 0) await this.db.insert(table).values(rows);
+  }
+
+  /** Inserts a kind's rows (`type`), each by its columns: answers their ids by name. */
+  protected async insertEntities(type: string, rows: StoredValues[]): Promise<Ids> {
+    const ids = await this.insertRows(type, rows);
+    return Object.fromEntries(rows.map((row, i) => [row.name as string, ids[i]]));
+  }
+
+  /** Inserts a join's rows (`join`: a feat's pools, a class level's grants), each by its columns. */
+  protected async insertJoins(join: string, rows: JoinValues[]) {
+    await StoredJoins.insert(this.db, join, rows);
   }
 
   /**
@@ -186,13 +218,26 @@ export abstract class SeederState {
     }
   }
 
-  /** Records a copy in `entity_snapshots`, so the ruleset shows it in place of the original. */
-  protected async recordCopy(entityType: string, sourceEntityId: string, forkedEntityId: string) {
-    await this.db.insert(entitySnapshotsInRules).values({
-      rulesetId: this.ctx.rulesetId,
-      entityType,
-      sourceEntityId,
-      forkedEntityId,
-    });
+  /** Inserts properties: each an entity's or a ruleset's field, or the link its value names. */
+  protected async insertProperties(rows: FieldValues[]) {
+    await StoredFields.createMany(this.db, rows);
+  }
+
+  /** Inserts a kind's rows (`type`), each by its columns (an owned kind's, which has no name): answers their ids. */
+  protected async insertRows(type: string, rows: StoredValues[]): Promise<string[]> {
+    return await StoredEntities.insert(this.db, type, rows);
+  }
+
+  /** Records copies (`copies`: each entity's copy, by its id) in `entity_snapshots`: the ruleset shows each in place of its original. */
+  protected async recordCopies(entityType: string, copies: Map<string, string>) {
+    await this.insertAll(
+      entitySnapshotsInRules,
+      [...copies].map(([sourceEntityId, forkedEntityId]) => ({
+        rulesetId: this.ctx.rulesetId,
+        entityType,
+        sourceEntityId,
+        forkedEntityId,
+      })),
+    );
   }
 }

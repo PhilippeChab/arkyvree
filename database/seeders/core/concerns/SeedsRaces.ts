@@ -1,6 +1,6 @@
 import type { RaceSeed } from "@/content/core/builders/races/types.ts";
-import { SeederState } from "@/database/seeders/core/SeederState.ts";
-import { modifiersInCustomization, propertiesInCustomization, racesInRules } from "@/drizzle/schema.ts";
+import type { SeederState } from "@/database/seeders/core/SeederState.ts";
+import { modifiersInCustomization } from "@/drizzle/schema.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 
 /** Seeding races. */
@@ -11,29 +11,22 @@ export function SeedsRaces<B extends Constructor<SeederState>>(Base: B) {
      * one).
      */
     async seedRaces(races: RaceSeed[], kind?: string) {
-      const ids = SeederState.idsByName(
-        await this.db
-          .insert(racesInRules)
-          .values(
-            races.map((race) => ({
-              rulesetId: this.ctx.rulesetId,
-              name: race.name,
-              description: race.description,
-              size: race.size,
-              baseSpeed: race.baseSpeed,
-              kind: race.kind ?? kind,
-            })),
-          )
-          .returning({ id: racesInRules.id, name: racesInRules.name }),
+      const ids = await this.insertEntities(
+        "races",
+        races.map((race) => ({
+          rulesetId: this.ctx.rulesetId,
+          name: race.name,
+          description: race.description,
+          size: race.size,
+          baseSpeed: race.baseSpeed,
+          kind: race.kind ?? kind,
+        })),
       );
       await this.insertAll(
         modifiersInCustomization,
         races.flatMap((race) => this.modifierRows(ids[race.name], "races", race.modifiers)),
       );
-      await this.insertAll(
-        propertiesInCustomization,
-        races.flatMap((race) => this.propertyRows(ids[race.name], "races", race.properties)),
-      );
+      await this.insertProperties(races.flatMap((race) => this.propertyRows(ids[race.name], "races", race.properties)));
     }
   }
   return SeedingRaces;

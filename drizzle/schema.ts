@@ -25,12 +25,8 @@ const bytea = customType<{ data: Buffer }>({
   },
 });
 
-export const campaign = pgSchema("campaign");
-export const baseRules = pgEnum("base_rules", ["Dungeons & Dragons: 3.5"]);
-export const rules = pgSchema("rules");
-export const rulesetKind = pgEnum("ruleset_kind", ["ruleset", "extension"]);
-export const rulesetStatus = pgEnum("ruleset_status", ["Draft", "Published", "Archived"]);
 export const account = pgSchema("account");
+
 export const usersInAccount = account.table(
   "users",
   {
@@ -55,119 +51,7 @@ export const usersInAccount = account.table(
     index("users_expires_at_idx").using("btree", table.expiresAt.asc().nullsLast()),
   ],
 );
-export const rulesetsInRules = rules.table(
-  "rulesets",
-  {
-    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-    deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
-    id: uuid()
-      .default(sql`public.gen_random_uuid()`)
-      .primaryKey()
-      .notNull(),
-    name: text().notNull(),
-    rulesetId: uuid("ruleset_id"),
-    ancestorRulesetIds: uuid("ancestor_ruleset_ids").array().default([]).notNull(),
-    extensionRulesetIds: uuid("extension_ruleset_ids").array().default([]).notNull(),
-    description: text().notNull(),
-    userId: uuid("user_id"),
-    /** True for system-seeded bases and extensions; false for user forks (including orphaned ones). */
-    system: boolean().default(false).notNull(),
-    private: boolean().default(false).notNull(),
-    status: rulesetStatus().default("Draft").notNull(),
-    kind: rulesetKind().default("ruleset").notNull(),
-    baseRules: baseRules("base_rules").notNull(),
-  },
-  (table) => [
-    uniqueIndex("rulesets_name_unique_idx").using("btree", table.name.asc().nullsLast()),
-    index("rulesets_user_id_private_idx").using(
-      "btree",
-      table.userId.asc().nullsLast(),
-      table.private.asc().nullsLast(),
-    ),
-    foreignKey({
-      columns: [table.rulesetId],
-      foreignColumns: [table.id],
-      name: "rulesets_ruleset_id_fkey",
-    }).onDelete("cascade"),
-    foreignKey({
-      columns: [table.userId],
-      foreignColumns: [usersInAccount.id],
-      name: "rulesets_user_id_fkey",
-    }).onDelete("cascade"),
-  ],
-);
-export const campaignsInCampaign = campaign.table(
-  "campaigns",
-  {
-    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-    deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
-    id: uuid()
-      .default(sql`public.gen_random_uuid()`)
-      .primaryKey()
-      .notNull(),
-    rulesetId: uuid("ruleset_id").notNull(),
-    name: text().notNull(),
-    description: text(),
-  },
-  (table) => [
-    index("campaigns_ruleset_id_name_idx").using(
-      "btree",
-      table.rulesetId.asc().nullsLast(),
-      table.name.asc().nullsLast().op("text_pattern_ops"),
-    ),
-    foreignKey({
-      columns: [table.rulesetId],
-      foreignColumns: [rulesetsInRules.id],
-      name: "campaigns_ruleset_id_fkey",
-    }).onDelete("cascade"),
-  ],
-);
-export const abilitiesInRules = rules.table(
-  "abilities",
-  {
-    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-    deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
-    id: uuid()
-      .default(sql`public.gen_random_uuid()`)
-      .primaryKey()
-      .notNull(),
-    rulesetId: uuid("ruleset_id").notNull(),
-    campaignId: uuid("campaign_id"),
-    name: text().notNull(),
-    description: text().notNull(),
-  },
-  (table) => [
-    index("abilities_ruleset_id_campaign_id").using(
-      "btree",
-      table.rulesetId.asc().nullsLast(),
-      table.campaignId.asc().nullsLast(),
-    ),
-    uniqueIndex("abilities_with_campaign_unique_idx")
-      .using(
-        "btree",
-        table.rulesetId.asc().nullsLast(),
-        table.campaignId.asc().nullsLast(),
-        table.name.asc().nullsLast(),
-      )
-      .where(sql`(campaign_id IS NOT NULL)`),
-    uniqueIndex("abilities_without_campaign_unique_idx")
-      .using("btree", table.rulesetId.asc().nullsLast(), table.name.asc().nullsLast())
-      .where(sql`(campaign_id IS NULL)`),
-    foreignKey({
-      columns: [table.rulesetId],
-      foreignColumns: [rulesetsInRules.id],
-      name: "abilities_ruleset_id_fkey",
-    }).onDelete("cascade"),
-    foreignKey({
-      columns: [table.campaignId],
-      foreignColumns: [campaignsInCampaign.id],
-      name: "abilities_campaign_id_fkey",
-    }).onDelete("cascade"),
-  ],
-);
+
 export const activitiesInAccount = account.table(
   "activities",
   {
@@ -200,19 +84,118 @@ export const activitiesInAccount = account.table(
     }).onDelete("cascade"),
   ],
 );
-export const alignment = pgEnum("alignment", [
-  "Lawful Good",
-  "Neutral Good",
-  "Chaotic Good",
-  "Lawful Neutral",
-  "True Neutral",
-  "Chaotic Neutral",
-  "Lawful Evil",
-  "Neutral Evil",
-  "Chaotic Evil",
-]);
-export const aptitudesInRules = rules.table(
-  "aptitudes",
+
+export const character = pgSchema("character");
+
+export const rules = pgSchema("rules");
+
+export const modulesInRules = rules.table("modules", {
+  baseRules: text("base_rules").primaryKey().notNull(),
+});
+
+export const rulesetKind = pgEnum("ruleset_kind", ["ruleset", "extension"]);
+
+export const rulesetStatus = pgEnum("ruleset_status", ["Draft", "Published", "Archived"]);
+
+export const rulesetsInRules = rules.table(
+  "rulesets",
+  {
+    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
+    id: uuid()
+      .default(sql`public.gen_random_uuid()`)
+      .primaryKey()
+      .notNull(),
+    name: text().notNull(),
+    rulesetId: uuid("ruleset_id"),
+    ancestorRulesetIds: uuid("ancestor_ruleset_ids").array().default([]).notNull(),
+    extensionRulesetIds: uuid("extension_ruleset_ids").array().default([]).notNull(),
+    description: text().notNull(),
+    userId: uuid("user_id"),
+    /** True for system-seeded bases and extensions; false for user forks (including orphaned ones). */
+    system: boolean().default(false).notNull(),
+    private: boolean().default(false).notNull(),
+    status: rulesetStatus().default("Draft").notNull(),
+    kind: rulesetKind().default("ruleset").notNull(),
+    baseRules: text("base_rules").notNull().$type<"Dungeons & Dragons: 3.5">(),
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.baseRules],
+      foreignColumns: [modulesInRules.baseRules],
+      name: "rulesets_base_rules_fkey",
+    }),
+    uniqueIndex("rulesets_name_unique_idx").using("btree", table.name.asc().nullsLast()),
+    index("rulesets_user_id_private_idx").using(
+      "btree",
+      table.userId.asc().nullsLast(),
+      table.private.asc().nullsLast(),
+    ),
+    foreignKey({
+      columns: [table.rulesetId],
+      foreignColumns: [table.id],
+      name: "rulesets_ruleset_id_fkey",
+    }).onDelete("cascade"),
+    foreignKey({
+      columns: [table.userId],
+      foreignColumns: [usersInAccount.id],
+      name: "rulesets_user_id_fkey",
+    }).onDelete("cascade"),
+  ],
+);
+
+export const charactersInCharacter = character.table(
+  "characters",
+  {
+    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
+    id: uuid()
+      .default(sql`public.gen_random_uuid()`)
+      .primaryKey()
+      .notNull(),
+    userId: uuid("user_id").notNull(),
+    rulesetId: uuid("ruleset_id").notNull(),
+    kind: text().notNull().default("pc"),
+    parentCharacterId: uuid("parent_character_id"),
+    name: text().notNull(),
+    description: text(),
+    notes: text(),
+    privateNotes: text("private_notes"),
+    shareToken: text("share_token"),
+    lastChangedAt: timestamp("last_changed_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.userId],
+      foreignColumns: [usersInAccount.id],
+      name: "characters_user_id_fkey",
+    }).onDelete("cascade"),
+    foreignKey({
+      columns: [table.rulesetId],
+      foreignColumns: [rulesetsInRules.id],
+      name: "characters_ruleset_id_fkey",
+    }).onDelete("cascade"),
+    foreignKey({
+      columns: [table.parentCharacterId],
+      foreignColumns: [table.id],
+      name: "characters_parent_character_id_fkey",
+    }).onDelete("cascade"),
+    index("characters_parent_character_id_idx")
+      .using("btree", table.parentCharacterId.asc().nullsLast())
+      .where(sql`(parent_character_id IS NOT NULL)`),
+    uniqueIndex("characters_share_token_unique_idx")
+      .using("btree", table.shareToken.asc().nullsLast())
+      .where(sql`(share_token IS NOT NULL)`),
+    check("characters_no_self_parent_check", sql`id <> parent_character_id`),
+  ],
+);
+
+export const campaign = pgSchema("campaign");
+
+export const campaignsInCampaign = campaign.table(
+  "campaigns",
   {
     createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
@@ -222,43 +205,294 @@ export const aptitudesInRules = rules.table(
       .primaryKey()
       .notNull(),
     rulesetId: uuid("ruleset_id").notNull(),
-    campaignId: uuid("campaign_id"),
     name: text().notNull(),
     description: text(),
   },
   (table) => [
-    index("aptitudes_ruleset_id_campaign_id").using(
+    index("campaigns_ruleset_id_name_idx").using(
       "btree",
       table.rulesetId.asc().nullsLast(),
-      table.campaignId.asc().nullsLast(),
+      table.name.asc().nullsLast().op("text_pattern_ops"),
     ),
-    uniqueIndex("aptitudes_with_campaign_unique_idx")
-      .using(
-        "btree",
-        table.rulesetId.asc().nullsLast(),
-        table.campaignId.asc().nullsLast(),
-        table.name.asc().nullsLast(),
-      )
-      .where(sql`(campaign_id IS NOT NULL)`),
-    uniqueIndex("aptitudes_without_campaign_unique_idx")
-      .using("btree", table.rulesetId.asc().nullsLast(), table.name.asc().nullsLast())
-      .where(sql`(campaign_id IS NULL)`),
-    index("aptitudes_ruleset_id_name_idx")
-      .using("btree", table.rulesetId.asc().nullsLast(), table.name.asc().nullsLast())
-      .where(sql`(deleted_at IS NULL)`),
     foreignKey({
       columns: [table.rulesetId],
       foreignColumns: [rulesetsInRules.id],
-      name: "aptitudes_ruleset_id_fkey",
-    }).onDelete("cascade"),
-    foreignKey({
-      columns: [table.campaignId],
-      foreignColumns: [campaignsInCampaign.id],
-      name: "aptitudes_campaign_id_fkey",
+      name: "campaigns_ruleset_id_fkey",
     }).onDelete("cascade"),
   ],
 );
+
+export const entityTypesInRules = rules.table(
+  "entity_types",
+  {
+    type: text().primaryKey().notNull(),
+    ownerType: text("owner_type"),
+    owned: boolean().generatedAlwaysAs(sql`(owner_type IS NOT NULL)`),
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.ownerType],
+      foreignColumns: [table.type],
+      name: "entity_types_owner_type_fkey",
+    }),
+    unique("entity_types_type_owner_type_key").on(table.type, table.ownerType),
+    unique("entity_types_type_owned_key").on(table.type, table.owned),
+  ],
+);
+
+export const entitiesInRules = rules.table(
+  "entities",
+  {
+    id: uuid().defaultRandom().primaryKey().notNull(),
+    rulesetId: uuid("ruleset_id").notNull(),
+    campaignId: uuid("campaign_id"),
+    campaignKey: uuid("campaign_key").generatedAlwaysAs(
+      sql`COALESCE(campaign_id, '00000000-0000-0000-0000-000000000000'::uuid)`,
+    ),
+    type: text().notNull(),
+    name: text(),
+    description: text(),
+    ownerId: uuid("owner_id"),
+    ownerType: text("owner_type"),
+    owned: boolean().generatedAlwaysAs(sql`(owner_id IS NOT NULL)`),
+    position: integer(),
+    partition: text().notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
+    deletedAt: timestamp("deleted_at", { withTimezone: true, mode: "string" }),
+  },
+  (table) => [
+    index("entities_campaign_idx")
+      .using("btree", table.campaignId.asc().nullsLast().op("uuid_ops"))
+      .where(sql`(campaign_id IS NOT NULL)`),
+    uniqueIndex("entities_owner_position_unique_idx")
+      .using("btree", table.ownerId.asc().nullsLast().op("uuid_ops"), table.position.asc().nullsLast().op("int4_ops"))
+      .where(sql`(owner_id IS NOT NULL)`),
+    index("entities_ruleset_type_campaign_idx").using(
+      "btree",
+      table.rulesetId.asc().nullsLast().op("uuid_ops"),
+      table.type.asc().nullsLast().op("uuid_ops"),
+      table.campaignId.asc().nullsLast().op("text_ops"),
+    ),
+    index("entities_search_idx").using(
+      "gin",
+      table.name.asc().nullsLast().op("gin_trgm_ops"),
+      table.description.asc().nullsLast().op("gin_trgm_ops"),
+    ),
+    uniqueIndex("entities_with_campaign_unique_idx")
+      .using(
+        "btree",
+        table.rulesetId.asc().nullsLast().op("text_ops"),
+        table.campaignId.asc().nullsLast().op("uuid_ops"),
+        table.type.asc().nullsLast().op("uuid_ops"),
+        table.partition.asc().nullsLast().op("uuid_ops"),
+        table.name.asc().nullsLast().op("uuid_ops"),
+      )
+      .where(sql`((campaign_id IS NOT NULL) AND (name IS NOT NULL))`),
+    uniqueIndex("entities_without_campaign_unique_idx")
+      .using(
+        "btree",
+        table.rulesetId.asc().nullsLast().op("text_ops"),
+        table.type.asc().nullsLast().op("uuid_ops"),
+        table.partition.asc().nullsLast().op("uuid_ops"),
+        table.name.asc().nullsLast().op("uuid_ops"),
+      )
+      .where(sql`((campaign_id IS NULL) AND (name IS NOT NULL))`),
+    foreignKey({
+      columns: [table.campaignId],
+      foreignColumns: [campaignsInCampaign.id],
+      name: "entities_campaign_id_fkey",
+    }).onDelete("cascade"),
+    foreignKey({
+      columns: [table.ownerId, table.ownerType],
+      foreignColumns: [table.id, table.type],
+      name: "entities_owner_id_owner_type_fkey",
+    }).onDelete("cascade"),
+    foreignKey({
+      columns: [table.rulesetId, table.campaignKey, table.ownerId],
+      foreignColumns: [table.id, table.rulesetId, table.campaignKey],
+      name: "entities_owner_id_ruleset_id_campaign_key_fkey",
+    }).onDelete("cascade"),
+    foreignKey({
+      columns: [table.rulesetId],
+      foreignColumns: [rulesetsInRules.id],
+      name: "entities_ruleset_id_fkey",
+    }).onDelete("cascade"),
+    foreignKey({
+      columns: [table.type, table.owned],
+      foreignColumns: [entityTypesInRules.type, entityTypesInRules.owned],
+      name: "entities_type_owned_fkey",
+    }),
+    foreignKey({
+      columns: [table.type, table.ownerType],
+      foreignColumns: [entityTypesInRules.type, entityTypesInRules.ownerType],
+      name: "entities_type_owner_type_fkey",
+    }),
+    unique("entities_id_type_key").on(table.id, table.type),
+    unique("entities_id_ruleset_id_campaign_key_key").on(table.id, table.rulesetId, table.campaignKey),
+    check("entities_check", sql`(name IS NOT NULL) OR ((owner_id IS NOT NULL) AND ("position" IS NOT NULL))`),
+  ],
+);
+
+export const advancementsInCharacter = character.table(
+  "advancements",
+  {
+    id: uuid().defaultRandom().primaryKey().notNull(),
+    characterId: uuid("character_id").notNull(),
+    position: integer().notNull(),
+    trackId: uuid("track_id"),
+    trackType: text("track_type"),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
+    deletedAt: timestamp("deleted_at", { withTimezone: true, mode: "string" }),
+  },
+  (table) => [
+    uniqueIndex("advancements_character_position_idx")
+      .using(
+        "btree",
+        table.characterId.asc().nullsLast().op("int4_ops"),
+        table.position.asc().nullsLast().op("int4_ops"),
+      )
+      .where(sql`(deleted_at IS NULL)`),
+    uniqueIndex("advancements_character_track_idx").using(
+      "btree",
+      table.characterId.asc().nullsLast().op("uuid_ops"),
+      table.trackId.asc().nullsLast().op("uuid_ops"),
+    ),
+    index("advancements_track_idx")
+      .using("btree", table.trackId.asc().nullsLast().op("uuid_ops"))
+      .where(sql`(track_id IS NOT NULL)`),
+    foreignKey({
+      columns: [table.characterId],
+      foreignColumns: [charactersInCharacter.id],
+      name: "advancements_character_id_fkey",
+    }).onDelete("cascade"),
+    foreignKey({
+      columns: [table.trackId, table.trackType],
+      foreignColumns: [entitiesInRules.id, entitiesInRules.type],
+      name: "advancements_track_id_track_type_fkey",
+    }),
+    check("advancements_position_check", sql`"position" > 0`),
+  ],
+);
+
+export const stepsInCharacter = character.table(
+  "steps",
+  {
+    step: text().primaryKey().notNull(),
+    entityType: text("entity_type"),
+    viaType: text("via_type"),
+    hasEntity: boolean("has_entity").generatedAlwaysAs(sql`(entity_type IS NOT NULL)`),
+    hasVia: boolean("has_via").generatedAlwaysAs(sql`(via_type IS NOT NULL)`),
+    onDelete: text("on_delete").notNull(),
+    repeats: boolean().notNull(),
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.entityType],
+      foreignColumns: [entityTypesInRules.type],
+      name: "steps_entity_type_fkey",
+    }),
+    foreignKey({
+      columns: [table.viaType],
+      foreignColumns: [entityTypesInRules.type],
+      name: "steps_via_type_fkey",
+    }),
+    unique("steps_step_has_entity_has_via_key").on(table.step, table.hasEntity, table.hasVia),
+    unique("steps_step_repeats_key").on(table.step, table.repeats),
+    unique("steps_step_entity_type_key").on(table.step, table.entityType),
+    unique("steps_step_via_type_key").on(table.step, table.viaType),
+    check("steps_on_delete_check", sql`on_delete = ANY (ARRAY['refuse'::text, 'delete'::text])`),
+  ],
+);
+
+export const advancementPicksInCharacter = character.table(
+  "advancement_picks",
+  {
+    id: uuid().defaultRandom().primaryKey().notNull(),
+    advancementId: uuid("advancement_id").notNull(),
+    step: text().notNull(),
+    entityId: uuid("entity_id"),
+    entityType: text("entity_type"),
+    viaId: uuid("via_id"),
+    viaType: text("via_type"),
+    hasEntity: boolean("has_entity").generatedAlwaysAs(sql`(entity_id IS NOT NULL)`),
+    hasVia: boolean("has_via").generatedAlwaysAs(sql`(via_id IS NOT NULL)`),
+    entityKey: uuid("entity_key").generatedAlwaysAs(
+      sql`COALESCE(entity_id, '00000000-0000-0000-0000-000000000000'::uuid)`,
+    ),
+    amount: integer(),
+    ordinal: smallint().default(0).notNull(),
+    repeats: boolean().notNull(),
+    tier: integer(),
+    parentPickId: uuid("parent_pick_id"),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
+  },
+  (table) => [
+    index("advancement_picks_entity_idx")
+      .using("btree", table.entityId.asc().nullsLast().op("uuid_ops"))
+      .where(sql`(entity_id IS NOT NULL)`),
+    index("advancement_picks_parent_idx")
+      .using("btree", table.parentPickId.asc().nullsLast().op("uuid_ops"))
+      .where(sql`(parent_pick_id IS NOT NULL)`),
+    uniqueIndex("advancement_picks_unique_idx").using(
+      "btree",
+      table.advancementId.asc().nullsLast().op("uuid_ops"),
+      table.step.asc().nullsLast().op("uuid_ops"),
+      table.entityKey.asc().nullsLast().op("uuid_ops"),
+      table.ordinal.asc().nullsLast().op("uuid_ops"),
+    ),
+    index("advancement_picks_via_idx")
+      .using("btree", table.viaId.asc().nullsLast().op("uuid_ops"))
+      .where(sql`(via_id IS NOT NULL)`),
+    foreignKey({
+      columns: [table.advancementId],
+      foreignColumns: [advancementsInCharacter.id],
+      name: "advancement_picks_advancement_id_fkey",
+    }).onDelete("cascade"),
+    foreignKey({
+      columns: [table.entityId, table.entityType],
+      foreignColumns: [entitiesInRules.id, entitiesInRules.type],
+      name: "advancement_picks_entity_id_entity_type_fkey",
+    }),
+    foreignKey({
+      columns: [table.parentPickId],
+      foreignColumns: [table.id],
+      name: "advancement_picks_parent_pick_id_fkey",
+    }).onDelete("cascade"),
+    foreignKey({
+      columns: [table.step, table.entityType],
+      foreignColumns: [stepsInCharacter.step, stepsInCharacter.entityType],
+      name: "advancement_picks_step_entity_type_fkey",
+    }),
+    foreignKey({
+      columns: [table.step, table.hasEntity, table.hasVia],
+      foreignColumns: [stepsInCharacter.step, stepsInCharacter.hasEntity, stepsInCharacter.hasVia],
+      name: "advancement_picks_step_has_entity_has_via_fkey",
+    }),
+    foreignKey({
+      columns: [table.step, table.repeats],
+      foreignColumns: [stepsInCharacter.step, stepsInCharacter.repeats],
+      name: "advancement_picks_step_repeats_fkey",
+    }).onUpdate("cascade"),
+    foreignKey({
+      columns: [table.step, table.viaType],
+      foreignColumns: [stepsInCharacter.step, stepsInCharacter.viaType],
+      name: "advancement_picks_step_via_type_fkey",
+    }),
+    foreignKey({
+      columns: [table.viaId, table.viaType],
+      foreignColumns: [entitiesInRules.id, entitiesInRules.type],
+      name: "advancement_picks_via_id_via_type_fkey",
+    }),
+    check("advancement_picks_check", sql`repeats OR (ordinal = 0)`),
+    check("advancement_picks_ordinal_check", sql`ordinal >= 0`),
+  ],
+);
+
 export const storage = pgSchema("storage");
+
 export const blobsInStorage = storage.table(
   "blobs",
   {
@@ -321,172 +555,22 @@ export const attachmentsInStorage = storage.table(
   ],
 );
 
-export const character = pgSchema("character");
-
-export const gender = pgEnum("gender", ["Male", "Female", "Other"]);
-
-export const sizeType = pgEnum("size_type", [
-  "Fine",
-  "Diminutive",
-  "Tiny",
-  "Small",
-  "Medium",
-  "Large",
-  "Huge",
-  "Gargantuan",
-  "Colossal",
-]);
-
-export const racesInRules = rules.table(
-  "races",
+export const characterRolesInCharacter = character.table(
+  "character_roles",
   {
-    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-    deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
-    id: uuid()
-      .default(sql`public.gen_random_uuid()`)
-      .primaryKey()
-      .notNull(),
-    rulesetId: uuid("ruleset_id").notNull(),
-    campaignId: uuid("campaign_id"),
-    name: text().notNull(),
-    description: text(),
-    size: sizeType().notNull(),
-    baseSpeed: integer("base_speed").notNull(),
-    parentId: uuid("parent_id"),
-    kind: text().notNull().default("pc"),
-  },
-  (table) => [
-    index("races_ruleset_id_campaign_id").using(
-      "btree",
-      table.rulesetId.asc().nullsLast(),
-      table.campaignId.asc().nullsLast(),
-    ),
-    uniqueIndex("races_with_campaign_unique_idx")
-      .using(
-        "btree",
-        table.rulesetId.asc().nullsLast(),
-        table.campaignId.asc().nullsLast(),
-        table.name.asc().nullsLast(),
-        table.kind.asc().nullsLast(),
-      )
-      .where(sql`(campaign_id IS NOT NULL)`),
-    uniqueIndex("races_without_campaign_unique_idx")
-      .using("btree", table.rulesetId.asc().nullsLast(), table.name.asc().nullsLast(), table.kind.asc().nullsLast())
-      .where(sql`(campaign_id IS NULL)`),
-    foreignKey({
-      columns: [table.rulesetId],
-      foreignColumns: [rulesetsInRules.id],
-      name: "races_ruleset_id_fkey",
-    }).onDelete("cascade"),
-    foreignKey({
-      columns: [table.campaignId],
-      foreignColumns: [campaignsInCampaign.id],
-      name: "races_campaign_id_fkey",
-    }).onDelete("cascade"),
-    foreignKey({
-      columns: [table.parentId],
-      foreignColumns: [table.id],
-      name: "races_parent_id_fkey",
-    }).onDelete("cascade"),
-    check("races_base_speed_check", sql`base_speed > 0`),
-  ],
-);
-
-export const charactersInCharacter = character.table(
-  "characters",
-  {
-    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-    deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
-    id: uuid()
-      .default(sql`public.gen_random_uuid()`)
-      .primaryKey()
-      .notNull(),
-    userId: uuid("user_id").notNull(),
-    rulesetId: uuid("ruleset_id").notNull(),
-    raceId: uuid("race_id").notNull(),
-    kind: text().notNull().default("pc"),
-    parentCharacterId: uuid("parent_character_id"),
-    xp: integer().notNull(),
-    name: text().notNull(),
-    alignment: alignment().notNull(),
-    age: integer(),
-    gender: gender().notNull(),
-    height: text(),
-    weight: text(),
-    deity: text(),
-    description: text(),
-    notes: text(),
-    privateNotes: text("private_notes"),
-    shareToken: text("share_token"),
-    lastChangedAt: timestamp("last_changed_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    role: text().primaryKey().notNull(),
+    entityType: text("entity_type").notNull(),
+    single: boolean().notNull(),
+    onDelete: text("on_delete").notNull(),
   },
   (table) => [
     foreignKey({
-      columns: [table.userId],
-      foreignColumns: [usersInAccount.id],
-      name: "characters_user_id_fkey",
-    }).onDelete("cascade"),
-    foreignKey({
-      columns: [table.rulesetId],
-      foreignColumns: [rulesetsInRules.id],
-      name: "characters_ruleset_id_fkey",
-    }).onDelete("cascade"),
-    foreignKey({
-      columns: [table.raceId],
-      foreignColumns: [racesInRules.id],
-      name: "characters_race_id_fkey",
-    }).onDelete("restrict"),
-    foreignKey({
-      columns: [table.parentCharacterId],
-      foreignColumns: [table.id],
-      name: "characters_parent_character_id_fkey",
-    }).onDelete("cascade"),
-    index("characters_parent_character_id_idx")
-      .using("btree", table.parentCharacterId.asc().nullsLast())
-      .where(sql`(parent_character_id IS NOT NULL)`),
-    uniqueIndex("characters_one_bonded_per_kind_per_master_idx")
-      .using("btree", table.parentCharacterId.asc().nullsLast(), table.kind.asc().nullsLast())
-      .where(sql`(deleted_at IS NULL AND parent_character_id IS NOT NULL)`),
-    uniqueIndex("characters_share_token_unique_idx")
-      .using("btree", table.shareToken.asc().nullsLast())
-      .where(sql`(share_token IS NOT NULL)`),
-    check("characters_xp_check", sql`xp >= 0`),
-    check("characters_age_check", sql`age IS NULL OR age > 0`),
-    check("characters_kind_parent_check", sql`(kind = 'pc') = (parent_character_id IS NULL)`),
-    check("characters_no_self_parent_check", sql`id <> parent_character_id`),
-  ],
-);
-
-export const characterAbilitiesInCharacter = character.table(
-  "character_abilities",
-  {
-    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-    deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
-    characterId: uuid("character_id").notNull(),
-    abilityId: uuid("ability_id").notNull(),
-    score: integer().notNull(),
-  },
-  (table) => [
-    index("character_abilities_ability_id").using("btree", table.abilityId.asc().nullsLast()),
-    index("character_abilities_character_id").using("btree", table.characterId.asc().nullsLast()),
-    index("character_abilities_character_id_alive_idx")
-      .using("btree", table.characterId.asc().nullsLast())
-      .where(sql`(deleted_at IS NULL)`),
-    foreignKey({
-      columns: [table.characterId],
-      foreignColumns: [charactersInCharacter.id],
-      name: "character_abilities_character_id_fkey",
-    }).onDelete("cascade"),
-    foreignKey({
-      columns: [table.abilityId],
-      foreignColumns: [abilitiesInRules.id],
-      name: "character_abilities_ability_id_fkey",
-    }).onDelete("cascade"),
-    primaryKey({ columns: [table.characterId, table.abilityId], name: "character_abilities_pkey" }),
-    check("character_abilities_score_check", sql`(score >= 1) AND (score <= 100)`),
+      columns: [table.entityType],
+      foreignColumns: [entityTypesInRules.type],
+      name: "character_roles_entity_type_fkey",
+    }),
+    unique("character_roles_role_entity_type_single_key").on(table.role, table.entityType, table.single),
+    check("character_roles_on_delete_check", sql`on_delete = ANY (ARRAY['refuse'::text, 'delete'::text])`),
   ],
 );
 
@@ -634,6 +718,277 @@ export const emailVerificationsInAccount = account.table(
   ],
 );
 
+export const linkRoleKindsInRules = rules.table(
+  "link_role_kinds",
+  {
+    role: text().notNull(),
+    fromType: text("from_type").notNull(),
+    single: boolean().notNull(),
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.fromType],
+      foreignColumns: [entityTypesInRules.type],
+      name: "link_role_kinds_from_type_fkey",
+    }),
+    primaryKey({ columns: [table.role, table.fromType], name: "link_role_kinds_pkey" }),
+    unique("link_role_kinds_role_from_type_single_key").on(table.role, table.fromType, table.single),
+  ],
+);
+
+export const linkRolesInRules = rules.table(
+  "link_roles",
+  {
+    role: text().notNull(),
+    fromType: text("from_type").notNull(),
+    toType: text("to_type").notNull(),
+    viaType: text("via_type"),
+    hasVia: boolean("has_via").generatedAlwaysAs(sql`(via_type IS NOT NULL)`),
+    single: boolean().notNull(),
+    onDelete: text("on_delete").notNull(),
+    viaOnDelete: text("via_on_delete").notNull(),
+    merge: text().notNull(),
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.fromType],
+      foreignColumns: [entityTypesInRules.type],
+      name: "link_roles_from_type_fkey",
+    }),
+    foreignKey({
+      columns: [table.role, table.fromType, table.single],
+      foreignColumns: [linkRoleKindsInRules.role, linkRoleKindsInRules.fromType, linkRoleKindsInRules.single],
+      name: "link_roles_role_from_type_single_fkey",
+    }).onUpdate("cascade"),
+    foreignKey({
+      columns: [table.toType],
+      foreignColumns: [entityTypesInRules.type],
+      name: "link_roles_to_type_fkey",
+    }),
+    foreignKey({
+      columns: [table.viaType],
+      foreignColumns: [entityTypesInRules.type],
+      name: "link_roles_via_type_fkey",
+    }),
+    primaryKey({ columns: [table.role, table.fromType, table.toType], name: "link_roles_pkey" }),
+    unique("link_roles_role_from_type_to_type_single_key").on(table.role, table.fromType, table.toType, table.single),
+    unique("link_roles_role_from_type_to_type_has_via_key").on(table.role, table.fromType, table.toType, table.hasVia),
+    unique("link_roles_role_from_type_to_type_via_type_key").on(
+      table.role,
+      table.fromType,
+      table.toType,
+      table.viaType,
+    ),
+    check("link_roles_check", sql`(NOT single) OR (merge <> 'union'::text)`),
+    check("link_roles_merge_check", sql`merge = ANY (ARRAY['winner'::text, 'fallback'::text, 'union'::text])`),
+    check("link_roles_on_delete_check", sql`on_delete = ANY (ARRAY['refuse'::text, 'unlink'::text, 'delete'::text])`),
+    check("link_roles_via_on_delete_check", sql`via_on_delete = ANY (ARRAY['refuse'::text, 'unlink'::text])`),
+  ],
+);
+
+export const fieldDefsInRules = rules.table(
+  "field_defs",
+  {
+    ownerKind: text("owner_kind").notNull(),
+    ownerType: text("owner_type").notNull(),
+    entityType: text("entity_type").generatedAlwaysAs(sql`
+CASE
+    WHEN (owner_kind = 'entity'::text) THEN owner_type
+    ELSE NULL::text
+END`),
+    field: text().notNull(),
+    valueKind: text("value_kind").notNull(),
+    multiple: boolean().notNull(),
+    merge: text().notNull(),
+    inheritsVia: text("inherits_via"),
+    inheritsSingle: boolean("inherits_single").generatedAlwaysAs(sql`
+CASE
+    WHEN (inherits_via IS NOT NULL) THEN true
+    ELSE NULL::boolean
+END`),
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.entityType],
+      foreignColumns: [entityTypesInRules.type],
+      name: "field_defs_entity_type_fkey",
+    }),
+    foreignKey({
+      columns: [table.inheritsVia, table.entityType, table.entityType, table.inheritsSingle],
+      foreignColumns: [
+        linkRolesInRules.role,
+        linkRolesInRules.fromType,
+        linkRolesInRules.toType,
+        linkRolesInRules.single,
+      ],
+      name: "field_defs_inherits_via_entity_type_entity_type_inherits_s_fkey",
+    }),
+    primaryKey({ columns: [table.ownerType, table.field], name: "field_defs_pkey" }),
+    unique("field_defs_owner_type_field_value_kind_multiple_key").on(
+      table.ownerType,
+      table.field,
+      table.valueKind,
+      table.multiple,
+    ),
+    check(
+      "field_defs_check",
+      sql`((owner_kind = 'ruleset'::text) = (owner_type = 'rulesets'::text)) AND ((owner_kind = 'character'::text) = (owner_type = 'characters'::text))`,
+    ),
+    check("field_defs_check1", sql`multiple OR (merge <> 'union'::text)`),
+    check("field_defs_check2", sql`(owner_kind = 'entity'::text) OR (inherits_via IS NULL)`),
+    check("field_defs_merge_check", sql`merge = ANY (ARRAY['winner'::text, 'fallback'::text, 'union'::text])`),
+    check(
+      "field_defs_owner_kind_check",
+      sql`owner_kind = ANY (ARRAY['entity'::text, 'ruleset'::text, 'character'::text])`,
+    ),
+    check("field_defs_value_kind_check", sql`value_kind = ANY (ARRAY['text'::text, 'number'::text, 'flag'::text])`),
+  ],
+);
+
+export const entityFieldsInRules = rules.table(
+  "entity_fields",
+  {
+    entityId: uuid("entity_id").notNull(),
+    entityType: text("entity_type").notNull(),
+    field: text().notNull(),
+    ordinal: smallint().default(0).notNull(),
+    valueKind: text("value_kind").notNull(),
+    multiple: boolean().notNull(),
+    textValue: text("text_value"),
+    numberValue: numeric("number_value"),
+    flagValue: boolean("flag_value"),
+    valueKey: text("value_key").generatedAlwaysAs(
+      sql`COALESCE(md5(text_value), (trim_scale(number_value))::text, (flag_value)::text)`,
+    ),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex("entity_fields_set_value_idx")
+      .using(
+        "btree",
+        table.entityId.asc().nullsLast().op("text_ops"),
+        table.field.asc().nullsLast().op("text_ops"),
+        table.valueKey.asc().nullsLast().op("text_ops"),
+      )
+      .where(sql`multiple`),
+    index("entity_fields_field_idx").using(
+      "btree",
+      table.field.asc().nullsLast().op("text_ops"),
+      table.entityId.asc().nullsLast().op("uuid_ops"),
+    ),
+    index("entity_fields_text_idx").using("hash", table.textValue.asc().nullsLast().op("text_ops")),
+    foreignKey({
+      columns: [table.entityId, table.entityType],
+      foreignColumns: [entitiesInRules.id, entitiesInRules.type],
+      name: "entity_fields_entity_id_entity_type_fkey",
+    }).onDelete("cascade"),
+    foreignKey({
+      columns: [table.entityType, table.field, table.valueKind, table.multiple],
+      foreignColumns: [
+        fieldDefsInRules.ownerType,
+        fieldDefsInRules.field,
+        fieldDefsInRules.valueKind,
+        fieldDefsInRules.multiple,
+      ],
+      name: "entity_fields_entity_type_field_value_kind_multiple_fkey",
+    }).onUpdate("cascade"),
+    primaryKey({ columns: [table.entityId, table.field, table.ordinal], name: "entity_fields_pkey" }),
+    check("entity_fields_check", sql`multiple OR (ordinal = 0)`),
+    check(
+      "entity_fields_check1",
+      sql`((text_value IS NOT NULL) = (value_kind = 'text'::text)) AND ((number_value IS NOT NULL) = (value_kind = 'number'::text)) AND ((flag_value IS NOT NULL) = (value_kind = 'flag'::text))`,
+    ),
+    check(
+      "entity_fields_number_value_check",
+      sql`number_value <> ALL (ARRAY['NaN'::numeric, 'Infinity'::numeric, '-Infinity'::numeric])`,
+    ),
+    check("entity_fields_ordinal_check", sql`ordinal >= 0`),
+  ],
+);
+
+export const entityLinksInRules = rules.table(
+  "entity_links",
+  {
+    id: uuid().defaultRandom().primaryKey().notNull(),
+    fromId: uuid("from_id").notNull(),
+    fromType: text("from_type").notNull(),
+    role: text().notNull(),
+    single: boolean().notNull(),
+    toId: uuid("to_id").notNull(),
+    toType: text("to_type").notNull(),
+    viaId: uuid("via_id"),
+    viaType: text("via_type"),
+    hasVia: boolean("has_via").generatedAlwaysAs(sql`(via_id IS NOT NULL)`),
+    tier: integer(),
+    amount: integer(),
+    free: boolean().default(false).notNull(),
+    ordinal: integer().default(0).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex("entity_links_single_idx")
+      .using("btree", table.fromId.asc().nullsLast().op("uuid_ops"), table.role.asc().nullsLast().op("text_ops"))
+      .where(sql`single`),
+    index("entity_links_to_idx").using(
+      "btree",
+      table.toId.asc().nullsLast().op("text_ops"),
+      table.role.asc().nullsLast().op("text_ops"),
+    ),
+    index("entity_links_via_idx")
+      .using("btree", table.viaId.asc().nullsLast().op("uuid_ops"))
+      .where(sql`(via_id IS NOT NULL)`),
+    foreignKey({
+      columns: [table.fromId, table.fromType],
+      foreignColumns: [entitiesInRules.id, entitiesInRules.type],
+      name: "entity_links_from_id_from_type_fkey",
+    }).onDelete("cascade"),
+    foreignKey({
+      columns: [table.fromType, table.role, table.toType, table.hasVia],
+      foreignColumns: [
+        linkRolesInRules.role,
+        linkRolesInRules.fromType,
+        linkRolesInRules.toType,
+        linkRolesInRules.hasVia,
+      ],
+      name: "entity_links_role_from_type_to_type_has_via_fkey",
+    }),
+    foreignKey({
+      columns: [table.fromType, table.role, table.single, table.toType],
+      foreignColumns: [
+        linkRolesInRules.role,
+        linkRolesInRules.fromType,
+        linkRolesInRules.toType,
+        linkRolesInRules.single,
+      ],
+      name: "entity_links_role_from_type_to_type_single_fkey",
+    }).onUpdate("cascade"),
+    foreignKey({
+      columns: [table.fromType, table.role, table.toType, table.viaType],
+      foreignColumns: [
+        linkRolesInRules.role,
+        linkRolesInRules.fromType,
+        linkRolesInRules.toType,
+        linkRolesInRules.viaType,
+      ],
+      name: "entity_links_role_from_type_to_type_via_type_fkey",
+    }).onUpdate("cascade"),
+    foreignKey({
+      columns: [table.toId, table.toType],
+      foreignColumns: [entitiesInRules.id, entitiesInRules.type],
+      name: "entity_links_to_id_to_type_fkey",
+    }),
+    foreignKey({
+      columns: [table.viaId, table.viaType],
+      foreignColumns: [entitiesInRules.id, entitiesInRules.type],
+      name: "entity_links_via_id_via_type_fkey",
+    }),
+    unique("entity_links_from_id_role_to_id_key").on(table.fromId, table.role, table.toId),
+    check("entity_links_ordinal_check", sql`ordinal >= 0`),
+  ],
+);
+
 export const entitySnapshotsInRules = rules.table(
   "entity_snapshots",
   {
@@ -694,156 +1049,74 @@ export const exportsInAccount = account.table(
   ],
 );
 
-export const featsInRules = rules.table(
-  "feats",
+export const fieldsInCharacter = character.table(
+  "fields",
   {
-    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-    deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
-    id: uuid()
-      .default(sql`public.gen_random_uuid()`)
-      .primaryKey()
-      .notNull(),
-    rulesetId: uuid("ruleset_id").notNull(),
-    campaignId: uuid("campaign_id"),
-    name: text().notNull(),
-    description: text(),
-    stackable: boolean().default(false).notNull(),
-    selectable: boolean().default(true).notNull(),
-    generated: boolean().default(false).notNull(),
+    characterId: uuid("character_id").notNull(),
+    ownerType: text("owner_type").default("characters").notNull(),
+    field: text().notNull(),
+    ordinal: smallint().default(0).notNull(),
+    valueKind: text("value_kind").notNull(),
+    multiple: boolean().notNull(),
+    textValue: text("text_value"),
+    numberValue: numeric("number_value"),
+    flagValue: boolean("flag_value"),
+    valueKey: text("value_key").generatedAlwaysAs(
+      sql`COALESCE(md5(text_value), (trim_scale(number_value))::text, (flag_value)::text)`,
+    ),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
   },
   (table) => [
-    index("feats_ruleset_id_campaign_id").using(
-      "btree",
-      table.rulesetId.asc().nullsLast(),
-      table.campaignId.asc().nullsLast(),
-    ),
-    uniqueIndex("feats_with_campaign_unique_idx")
+    uniqueIndex("fields_set_value_idx")
       .using(
         "btree",
-        table.rulesetId.asc().nullsLast(),
-        table.campaignId.asc().nullsLast(),
-        table.name.asc().nullsLast(),
+        table.characterId.asc().nullsLast().op("text_ops"),
+        table.field.asc().nullsLast().op("text_ops"),
+        table.valueKey.asc().nullsLast().op("text_ops"),
       )
-      .where(sql`(campaign_id IS NOT NULL)`),
-    uniqueIndex("feats_without_campaign_unique_idx")
-      .using("btree", table.rulesetId.asc().nullsLast(), table.name.asc().nullsLast())
-      .where(sql`(campaign_id IS NULL)`),
-    index("feats_ruleset_id_deleted_at_idx")
-      .using("btree", table.rulesetId.asc().nullsLast())
-      .where(sql`(deleted_at IS NULL)`),
+      .where(sql`multiple`),
     foreignKey({
-      columns: [table.rulesetId],
-      foreignColumns: [rulesetsInRules.id],
-      name: "feats_ruleset_id_fkey",
+      columns: [table.characterId],
+      foreignColumns: [charactersInCharacter.id],
+      name: "fields_character_id_fkey",
     }).onDelete("cascade"),
     foreignKey({
-      columns: [table.campaignId],
-      foreignColumns: [campaignsInCampaign.id],
-      name: "feats_campaign_id_fkey",
-    }).onDelete("cascade"),
+      columns: [table.ownerType, table.field, table.valueKind, table.multiple],
+      foreignColumns: [
+        fieldDefsInRules.ownerType,
+        fieldDefsInRules.field,
+        fieldDefsInRules.valueKind,
+        fieldDefsInRules.multiple,
+      ],
+      name: "fields_owner_type_field_value_kind_multiple_fkey",
+    }).onUpdate("cascade"),
+    primaryKey({ columns: [table.characterId, table.field, table.ordinal], name: "fields_pkey" }),
+    check("fields_check", sql`multiple OR (ordinal = 0)`),
+    check(
+      "fields_check1",
+      sql`((text_value IS NOT NULL) = (value_kind = 'text'::text)) AND ((number_value IS NOT NULL) = (value_kind = 'number'::text)) AND ((flag_value IS NOT NULL) = (value_kind = 'flag'::text))`,
+    ),
+    check(
+      "fields_number_value_check",
+      sql`number_value <> ALL (ARRAY['NaN'::numeric, 'Infinity'::numeric, '-Infinity'::numeric])`,
+    ),
+    check("fields_ordinal_check", sql`ordinal >= 0`),
+    check("fields_owner_type_check", sql`owner_type = 'characters'::text`),
   ],
 );
 
-export const featsAptitudesInRules = rules.table(
-  "feats_aptitudes",
+export const itemTypesInCharacter = character.table(
+  "item_types",
   {
-    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-    deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
-    featId: uuid("feat_id").notNull(),
-    aptitudeId: uuid("aptitude_id").notNull(),
+    entityType: text("entity_type").primaryKey().notNull(),
   },
   (table) => [
     foreignKey({
-      columns: [table.featId],
-      foreignColumns: [featsInRules.id],
-      name: "feats_aptitudes_feat_id_fkey",
-    }).onDelete("cascade"),
-    foreignKey({
-      columns: [table.aptitudeId],
-      foreignColumns: [aptitudesInRules.id],
-      name: "feats_aptitudes_aptitude_id_fkey",
-    }).onDelete("cascade"),
-    primaryKey({ columns: [table.featId, table.aptitudeId], name: "feats_aptitudes_pkey" }),
-  ],
-);
-
-export const location = pgEnum("location", [
-  "Head",
-  "Neck",
-  "Shoulders",
-  "Torso",
-  "Wrists",
-  "Hands",
-  "Waist",
-  "Finger",
-  "Trinket",
-  "Main Hand",
-  "Off Hand",
-  "Two Handed",
-  "Other",
-]);
-
-export const itemsInRules = rules.table(
-  "items",
-  {
-    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-    deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
-    id: uuid()
-      .default(sql`public.gen_random_uuid()`)
-      .primaryKey()
-      .notNull(),
-    rulesetId: uuid("ruleset_id").notNull(),
-    campaignId: uuid("campaign_id"),
-    sourceItemId: uuid("source_item_id"),
-    isTemplate: boolean("is_template").default(false).notNull(),
-    name: text().notNull(),
-    description: text(),
-    weight: numeric({ precision: 6, scale: 2 }),
-    costGp: numeric("cost_gp", { precision: 10, scale: 2 }),
-    type: text("type"),
-    slot: location().default("Other").notNull(),
-  },
-  (table) => [
-    index("items_ruleset_id_campaign_id").using(
-      "btree",
-      table.rulesetId.asc().nullsLast(),
-      table.campaignId.asc().nullsLast(),
-    ),
-    index("items_source_item_id").using("btree", table.sourceItemId.asc().nullsLast()),
-    uniqueIndex("items_with_campaign_unique_idx")
-      .using(
-        "btree",
-        table.rulesetId.asc().nullsLast(),
-        table.campaignId.asc().nullsLast(),
-        table.name.asc().nullsLast(),
-      )
-      .where(sql`(campaign_id IS NOT NULL)`),
-    uniqueIndex("items_without_campaign_unique_idx")
-      .using("btree", table.rulesetId.asc().nullsLast(), table.name.asc().nullsLast())
-      .where(sql`(campaign_id IS NULL)`),
-    index("items_ruleset_id_is_template_idx")
-      .using("btree", table.rulesetId.asc().nullsLast(), table.isTemplate.asc().nullsLast())
-      .where(sql`(deleted_at IS NULL)`),
-    foreignKey({
-      columns: [table.rulesetId],
-      foreignColumns: [rulesetsInRules.id],
-      name: "items_ruleset_id_fkey",
-    }).onDelete("cascade"),
-    foreignKey({
-      columns: [table.campaignId],
-      foreignColumns: [campaignsInCampaign.id],
-      name: "items_campaign_id_fkey",
-    }).onDelete("cascade"),
-    foreignKey({
-      columns: [table.sourceItemId],
-      foreignColumns: [table.id],
-      name: "items_source_item_id_fkey",
-    }).onDelete("restrict"),
-    check("items_weight_check", sql`weight >= (0)::numeric`),
-    check("items_cost_gp_check", sql`cost_gp >= (0)::numeric`),
+      columns: [table.entityType],
+      foreignColumns: [entityTypesInRules.type],
+      name: "item_types_entity_type_fkey",
+    }),
   ],
 );
 
@@ -863,8 +1136,9 @@ export const inventoryInCharacter = character.table(
     totalCharges: integer("total_charges"),
     remainingCharges: integer("remaining_charges"),
     equipped: boolean().default(false).notNull(),
-    location: location(),
-    weaponSets: smallint("weapon_sets").array().default([]).notNull(),
+    itemType: text("item_type").notNull(),
+    location: text(),
+    groups: smallint().array().default([]).notNull(),
   },
   (table) => [
     index("character_inventory_character_id").using("btree", table.characterId.asc().nullsLast()),
@@ -875,10 +1149,15 @@ export const inventoryInCharacter = character.table(
       name: "inventory_character_id_fkey",
     }).onDelete("cascade"),
     foreignKey({
-      columns: [table.itemId],
-      foreignColumns: [itemsInRules.id],
-      name: "inventory_item_id_fkey",
-    }).onDelete("restrict"),
+      columns: [table.itemId, table.itemType],
+      foreignColumns: [entitiesInRules.id, entitiesInRules.type],
+      name: "inventory_item_entity_fkey",
+    }),
+    foreignKey({
+      columns: [table.itemType],
+      foreignColumns: [itemTypesInCharacter.entityType],
+      name: "inventory_item_type_fkey",
+    }),
     check("inventory_quantity_check", sql`quantity > 0`),
     check(
       "inventory_check",
@@ -970,652 +1249,51 @@ export const invitesInCampaign = campaign.table(
   ],
 );
 
-export const klassesInRules = rules.table(
-  "klasses",
+export const linksInCharacter = character.table(
+  "links",
   {
-    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-    deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
-    id: uuid()
-      .default(sql`public.gen_random_uuid()`)
-      .primaryKey()
-      .notNull(),
-    rulesetId: uuid("ruleset_id").notNull(),
-    campaignId: uuid("campaign_id"),
-    name: text().notNull(),
-    description: text(),
-    hd: integer().notNull(),
-    parentId: uuid("parent_id"),
-    kind: text().notNull().default("pc"),
-  },
-  (table) => [
-    index("klasses_ruleset_id_campaign_id").using(
-      "btree",
-      table.rulesetId.asc().nullsLast(),
-      table.campaignId.asc().nullsLast(),
-    ),
-    uniqueIndex("klasses_with_campaign_unique_idx")
-      .using(
-        "btree",
-        table.rulesetId.asc().nullsLast(),
-        table.campaignId.asc().nullsLast(),
-        table.name.asc().nullsLast(),
-        table.kind.asc().nullsLast(),
-      )
-      .where(sql`(campaign_id IS NOT NULL)`),
-    uniqueIndex("klasses_without_campaign_unique_idx")
-      .using("btree", table.rulesetId.asc().nullsLast(), table.name.asc().nullsLast(), table.kind.asc().nullsLast())
-      .where(sql`(campaign_id IS NULL)`),
-    index("klasses_ruleset_id_deleted_at_idx")
-      .using("btree", table.rulesetId.asc().nullsLast())
-      .where(sql`(deleted_at IS NULL)`),
-    foreignKey({
-      columns: [table.rulesetId],
-      foreignColumns: [rulesetsInRules.id],
-      name: "klasses_ruleset_id_fkey",
-    }).onDelete("cascade"),
-    foreignKey({
-      columns: [table.campaignId],
-      foreignColumns: [campaignsInCampaign.id],
-      name: "klasses_campaign_id_fkey",
-    }).onDelete("cascade"),
-    foreignKey({
-      columns: [table.parentId],
-      foreignColumns: [table.id],
-      name: "klasses_parent_id_fkey",
-    }).onDelete("cascade"),
-    check("klasses_hd_check", sql`hd = ANY (ARRAY[4, 6, 8, 10, 12])`),
-  ],
-);
-
-export const klassLevelsInRules = rules.table(
-  "klass_levels",
-  {
-    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-    deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
-    id: uuid()
-      .default(sql`public.gen_random_uuid()`)
-      .primaryKey()
-      .notNull(),
-    klassId: uuid("klass_id").notNull(),
-    level: integer().notNull(),
-  },
-  (table) => [
-    index("klass_levels_klass_id").using("btree", table.klassId.asc().nullsLast()),
-    uniqueIndex("klass_levels_klass_id_level").using(
-      "btree",
-      table.klassId.asc().nullsLast(),
-      table.level.asc().nullsLast(),
-    ),
-    foreignKey({
-      columns: [table.klassId],
-      foreignColumns: [klassesInRules.id],
-      name: "klass_levels_klass_id_fkey",
-    }).onDelete("cascade"),
-    unique("klass_levels_klass_id_level_key").on(table.klassId, table.level),
-    check("klass_levels_level_check", sql`(level >= 1) AND (level <= 20)`),
-  ],
-);
-
-export const klassLevelFeatsInRules = rules.table(
-  "klass_level_feats",
-  {
-    id: uuid()
-      .default(sql`public.gen_random_uuid()`)
-      .notNull(),
-    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-    deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
-    klassLevelId: uuid("klass_level_id").notNull(),
-    featId: uuid("feat_id").notNull(),
-    aptitudeId: uuid("aptitude_id").notNull(),
-    free: boolean().default(false).notNull(),
-  },
-  (table) => [
-    uniqueIndex("klass_level_feats_id_key").using("btree", table.id.asc().nullsLast()),
-    index("klass_level_feats_feat_id").using("btree", table.featId.asc().nullsLast()),
-    index("klass_level_feats_klass_level_id").using("btree", table.klassLevelId.asc().nullsLast()),
-    foreignKey({
-      columns: [table.klassLevelId],
-      foreignColumns: [klassLevelsInRules.id],
-      name: "klass_level_feats_klass_level_id_fkey",
-    }).onDelete("cascade"),
-    foreignKey({
-      columns: [table.featId],
-      foreignColumns: [featsInRules.id],
-      name: "klass_level_feats_feat_id_fkey",
-    }).onDelete("cascade"),
-    foreignKey({
-      columns: [table.aptitudeId],
-      foreignColumns: [aptitudesInRules.id],
-      name: "klass_level_feats_aptitude_id_fkey",
-    }).onDelete("cascade"),
-    primaryKey({ columns: [table.klassLevelId, table.featId], name: "klass_level_feats_pkey" }),
-  ],
-);
-
-export const savesInRules = rules.table(
-  "saves",
-  {
-    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-    deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
-    id: uuid()
-      .default(sql`public.gen_random_uuid()`)
-      .primaryKey()
-      .notNull(),
-    rulesetId: uuid("ruleset_id").notNull(),
-    campaignId: uuid("campaign_id"),
-    name: text().notNull(),
-    description: text(),
-    abilityId: uuid("ability_id").notNull(),
-  },
-  (table) => [
-    index("saves_ruleset_id_campaign_id").using(
-      "btree",
-      table.rulesetId.asc().nullsLast(),
-      table.campaignId.asc().nullsLast(),
-    ),
-    uniqueIndex("saves_with_campaign_unique_idx")
-      .using(
-        "btree",
-        table.rulesetId.asc().nullsLast(),
-        table.campaignId.asc().nullsLast(),
-        table.name.asc().nullsLast(),
-      )
-      .where(sql`(campaign_id IS NOT NULL)`),
-    uniqueIndex("saves_without_campaign_unique_idx")
-      .using("btree", table.rulesetId.asc().nullsLast(), table.name.asc().nullsLast())
-      .where(sql`(campaign_id IS NULL)`),
-    foreignKey({
-      columns: [table.rulesetId],
-      foreignColumns: [rulesetsInRules.id],
-      name: "saves_ruleset_id_fkey",
-    }).onDelete("cascade"),
-    foreignKey({
-      columns: [table.campaignId],
-      foreignColumns: [campaignsInCampaign.id],
-      name: "saves_campaign_id_fkey",
-    }).onDelete("cascade"),
-    foreignKey({
-      columns: [table.abilityId],
-      foreignColumns: [abilitiesInRules.id],
-      name: "saves_ability_id_fkey",
-    }).onDelete("cascade"),
-  ],
-);
-
-export const powersInRules = rules.table(
-  "powers",
-  {
-    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-    deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
-    id: uuid()
-      .default(sql`public.gen_random_uuid()`)
-      .primaryKey()
-      .notNull(),
-    rulesetId: uuid("ruleset_id").notNull(),
-    campaignId: uuid("campaign_id"),
-    name: text().notNull(),
-    description: text(),
-    saveId: uuid("save_id"),
-    saveEffect: text("save_effect"),
-  },
-  (table) => [
-    index("powers_ruleset_id_campaign_id").using(
-      "btree",
-      table.rulesetId.asc().nullsLast(),
-      table.campaignId.asc().nullsLast(),
-    ),
-    uniqueIndex("powers_with_campaign_unique_idx")
-      .using(
-        "btree",
-        table.rulesetId.asc().nullsLast(),
-        table.campaignId.asc().nullsLast(),
-        table.name.asc().nullsLast(),
-      )
-      .where(sql`(campaign_id IS NOT NULL)`),
-    uniqueIndex("powers_without_campaign_unique_idx")
-      .using("btree", table.rulesetId.asc().nullsLast(), table.name.asc().nullsLast())
-      .where(sql`(campaign_id IS NULL)`),
-    foreignKey({
-      columns: [table.rulesetId],
-      foreignColumns: [rulesetsInRules.id],
-      name: "powers_ruleset_id_fkey",
-    }).onDelete("cascade"),
-    foreignKey({
-      columns: [table.campaignId],
-      foreignColumns: [campaignsInCampaign.id],
-      name: "powers_campaign_id_fkey",
-    }).onDelete("cascade"),
-    foreignKey({
-      columns: [table.saveId],
-      foreignColumns: [savesInRules.id],
-      name: "powers_save_id_fkey",
-    }).onDelete("set null"),
-  ],
-);
-
-export const klassLevelPowersInRules = rules.table(
-  "klass_level_powers",
-  {
-    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-    deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
-    klassLevelId: uuid("klass_level_id").notNull(),
-    powerId: uuid("power_id").notNull(),
-    aptitudeId: uuid("aptitude_id").notNull(),
-    free: boolean().default(false).notNull(),
-  },
-  (table) => [
-    index("klass_level_powers_power_id").using("btree", table.powerId.asc().nullsLast()),
-    index("klass_level_powers_klass_level_id").using("btree", table.klassLevelId.asc().nullsLast()),
-    foreignKey({
-      columns: [table.klassLevelId],
-      foreignColumns: [klassLevelsInRules.id],
-      name: "klass_level_powers_klass_level_id_fkey",
-    }).onDelete("cascade"),
-    foreignKey({
-      columns: [table.powerId],
-      foreignColumns: [powersInRules.id],
-      name: "klass_level_powers_power_id_fkey",
-    }).onDelete("cascade"),
-    foreignKey({
-      columns: [table.aptitudeId],
-      foreignColumns: [aptitudesInRules.id],
-      name: "klass_level_powers_aptitude_id_fkey",
-    }).onDelete("cascade"),
-    primaryKey({ columns: [table.klassLevelId, table.powerId], name: "klass_level_powers_pkey" }),
-  ],
-);
-
-export const klassLevelSavesInRules = rules.table(
-  "klass_level_saves",
-  {
-    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-    deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
-    klassLevelId: uuid("klass_level_id").notNull(),
-    saveId: uuid("save_id").notNull(),
-    base: integer().notNull(),
-  },
-  (table) => [
-    index("klass_level_saves_klass_level_id").using("btree", table.klassLevelId.asc().nullsLast()),
-    index("klass_level_saves_save_id").using("btree", table.saveId.asc().nullsLast()),
-    foreignKey({
-      columns: [table.klassLevelId],
-      foreignColumns: [klassLevelsInRules.id],
-      name: "klass_level_saves_klass_level_id_fkey",
-    }).onDelete("cascade"),
-    foreignKey({
-      columns: [table.saveId],
-      foreignColumns: [savesInRules.id],
-      name: "klass_level_saves_save_id_fkey",
-    }).onDelete("restrict"),
-    primaryKey({ columns: [table.klassLevelId, table.saveId], name: "klass_level_saves_pkey" }),
-    check("klass_level_saves_base_check", sql`(base >= 0) AND (base <= 12)`),
-  ],
-);
-
-export const skillsInRules = rules.table(
-  "skills",
-  {
-    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-    deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
-    id: uuid()
-      .default(sql`public.gen_random_uuid()`)
-      .primaryKey()
-      .notNull(),
-    rulesetId: uuid("ruleset_id").notNull(),
-    campaignId: uuid("campaign_id"),
-    name: text().notNull(),
-    description: text(),
-    primaryAbilityId: uuid("primary_ability_id").notNull(),
-  },
-  (table) => [
-    index("skills_ruleset_id_campaign_id").using(
-      "btree",
-      table.rulesetId.asc().nullsLast(),
-      table.campaignId.asc().nullsLast(),
-    ),
-    uniqueIndex("skills_with_campaign_unique_idx")
-      .using(
-        "btree",
-        table.rulesetId.asc().nullsLast(),
-        table.campaignId.asc().nullsLast(),
-        table.name.asc().nullsLast(),
-      )
-      .where(sql`(campaign_id IS NOT NULL)`),
-    uniqueIndex("skills_without_campaign_unique_idx")
-      .using("btree", table.rulesetId.asc().nullsLast(), table.name.asc().nullsLast())
-      .where(sql`(campaign_id IS NULL)`),
-    foreignKey({
-      columns: [table.rulesetId],
-      foreignColumns: [rulesetsInRules.id],
-      name: "skills_ruleset_id_fkey",
-    }).onDelete("cascade"),
-    foreignKey({
-      columns: [table.campaignId],
-      foreignColumns: [campaignsInCampaign.id],
-      name: "skills_campaign_id_fkey",
-    }).onDelete("cascade"),
-    foreignKey({
-      columns: [table.primaryAbilityId],
-      foreignColumns: [abilitiesInRules.id],
-      name: "skills_primary_ability_id_fkey",
-    }).onDelete("cascade"),
-  ],
-);
-
-export const klassSkillsInRules = rules.table(
-  "klass_skills",
-  {
-    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-    deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
-    klassId: uuid("klass_id").notNull(),
-    skillId: uuid("skill_id").notNull(),
-  },
-  (table) => [
-    index("klass_skills_klass_id").using("btree", table.klassId.asc().nullsLast()),
-    index("klass_skills_skill_id").using("btree", table.skillId.asc().nullsLast()),
-    foreignKey({
-      columns: [table.klassId],
-      foreignColumns: [klassesInRules.id],
-      name: "klass_skills_klass_id_fkey",
-    }).onDelete("cascade"),
-    foreignKey({
-      columns: [table.skillId],
-      foreignColumns: [skillsInRules.id],
-      name: "klass_skills_skill_id_fkey",
-    }).onDelete("cascade"),
-    primaryKey({ columns: [table.klassId, table.skillId], name: "klass_skills_pkey" }),
-  ],
-);
-
-export const languagesInRules = rules.table(
-  "languages",
-  {
-    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-    deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
-    id: uuid()
-      .default(sql`public.gen_random_uuid()`)
-      .primaryKey()
-      .notNull(),
-    rulesetId: uuid("ruleset_id").notNull(),
-    campaignId: uuid("campaign_id"),
-    name: text().notNull(),
-    description: text(),
-    type: text().notNull(),
-  },
-  (table) => [
-    index("languages_ruleset_id_campaign_id").using(
-      "btree",
-      table.rulesetId.asc().nullsLast(),
-      table.campaignId.asc().nullsLast(),
-    ),
-    uniqueIndex("languages_with_campaign_unique_idx")
-      .using(
-        "btree",
-        table.rulesetId.asc().nullsLast(),
-        table.campaignId.asc().nullsLast(),
-        table.name.asc().nullsLast(),
-      )
-      .where(sql`(campaign_id IS NOT NULL)`),
-    uniqueIndex("languages_without_campaign_unique_idx")
-      .using("btree", table.rulesetId.asc().nullsLast(), table.name.asc().nullsLast())
-      .where(sql`(campaign_id IS NULL)`),
-    foreignKey({
-      columns: [table.rulesetId],
-      foreignColumns: [rulesetsInRules.id],
-      name: "languages_ruleset_id_fkey",
-    }).onDelete("cascade"),
-    foreignKey({
-      columns: [table.campaignId],
-      foreignColumns: [campaignsInCampaign.id],
-      name: "languages_campaign_id_fkey",
-    }).onDelete("cascade"),
-  ],
-);
-
-export const languagesInCharacter = character.table(
-  "languages",
-  {
-    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-    deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
+    id: uuid().defaultRandom().primaryKey().notNull(),
     characterId: uuid("character_id").notNull(),
-    languageId: uuid("language_id").notNull(),
+    role: text().notNull(),
+    single: boolean().notNull(),
+    entityId: uuid("entity_id").notNull(),
+    entityType: text("entity_type").notNull(),
+    amount: integer(),
+    ordinal: smallint().default(0).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
   },
   (table) => [
-    index("character_languages_character_id").using("btree", table.characterId.asc().nullsLast()),
-    index("character_languages_language_id").using("btree", table.languageId.asc().nullsLast()),
+    index("links_entity_idx").using("btree", table.entityId.asc().nullsLast().op("uuid_ops")),
+    uniqueIndex("links_single_idx")
+      .using("btree", table.characterId.asc().nullsLast().op("text_ops"), table.role.asc().nullsLast().op("text_ops"))
+      .where(sql`single`),
     foreignKey({
       columns: [table.characterId],
       foreignColumns: [charactersInCharacter.id],
-      name: "languages_character_id_fkey",
+      name: "links_character_id_fkey",
     }).onDelete("cascade"),
     foreignKey({
-      columns: [table.languageId],
-      foreignColumns: [languagesInRules.id],
-      name: "languages_language_id_fkey",
-    }).onDelete("restrict"),
-    primaryKey({ columns: [table.characterId, table.languageId], name: "languages_pkey" }),
-  ],
-);
-
-export const levelsInCharacter = character.table(
-  "levels",
-  {
-    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-    deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
-    id: uuid()
-      .default(sql`public.gen_random_uuid()`)
-      .primaryKey()
-      .notNull(),
-    characterId: uuid("character_id").notNull(),
-    klassLevelId: uuid("klass_level_id").notNull(),
-    hp: integer().notNull(),
-    position: integer().notNull(),
-  },
-  (table) => [
-    index("character_levels_character_id").using("btree", table.characterId.asc().nullsLast()),
-    uniqueIndex("character_levels_character_id_position")
-      .using("btree", table.characterId.asc().nullsLast(), table.position.asc().nullsLast())
-      .where(sql`(deleted_at IS NULL)`),
-    index("character_levels_klass_level_id").using("btree", table.klassLevelId.asc().nullsLast()),
+      columns: [table.entityId, table.entityType],
+      foreignColumns: [entitiesInRules.id, entitiesInRules.type],
+      name: "links_entity_id_entity_type_fkey",
+    }),
     foreignKey({
-      columns: [table.characterId],
-      foreignColumns: [charactersInCharacter.id],
-      name: "levels_character_id_fkey",
-    }).onDelete("cascade"),
-    foreignKey({
-      columns: [table.klassLevelId],
-      foreignColumns: [klassLevelsInRules.id],
-      name: "levels_klass_level_id_fkey",
-    }).onDelete("restrict"),
-    unique("levels_character_id_klass_level_id_key").on(table.characterId, table.klassLevelId),
-    check("levels_hp_check", sql`hp > 0`),
-    check("levels_position_check", sql`"position" > 0`),
-  ],
-);
-
-export const levelAbilityIncreasesInCharacter = character.table(
-  "level_ability_increases",
-  {
-    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-    deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
-    characterLevelId: uuid("character_level_id").notNull(),
-    abilityId: uuid("ability_id").notNull(),
-    amount: integer().notNull(),
-  },
-  (table) => [
-    index("character_level_ability_increases_ability_id").using("btree", table.abilityId.asc().nullsLast()),
-    index("character_level_ability_increases_character_level_id").using(
-      "btree",
-      table.characterLevelId.asc().nullsLast(),
+      columns: [table.role, table.single, table.entityType],
+      foreignColumns: [
+        characterRolesInCharacter.role,
+        characterRolesInCharacter.entityType,
+        characterRolesInCharacter.single,
+      ],
+      name: "links_role_entity_type_single_fkey",
+    }).onUpdate("cascade"),
+    unique("links_character_id_role_entity_id_ordinal_key").on(
+      table.characterId,
+      table.role,
+      table.entityId,
+      table.ordinal,
     ),
-    foreignKey({
-      columns: [table.characterLevelId],
-      foreignColumns: [levelsInCharacter.id],
-      name: "level_ability_increases_character_level_id_fkey",
-    }).onDelete("cascade"),
-    foreignKey({
-      columns: [table.abilityId],
-      foreignColumns: [abilitiesInRules.id],
-      name: "level_ability_increases_ability_id_fkey",
-    }).onDelete("cascade"),
-    primaryKey({ columns: [table.characterLevelId, table.abilityId], name: "level_ability_increases_pkey" }),
-    check("level_ability_increases_amount_check", sql`amount > 0`),
-  ],
-);
-
-export const levelFeatsInCharacter = character.table(
-  "level_feats",
-  {
-    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-    deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
-    id: uuid()
-      .default(sql`public.gen_random_uuid()`)
-      .primaryKey()
-      .notNull(),
-    characterLevelId: uuid("character_level_id").notNull(),
-    featId: uuid("feat_id").notNull(),
-    aptitudeId: uuid("aptitude_id").notNull(),
-  },
-  (table) => [
-    index("character_level_feats_character_level_id").using("btree", table.characterLevelId.asc().nullsLast()),
-    index("character_level_feats_feat_id").using("btree", table.featId.asc().nullsLast()),
-    foreignKey({
-      columns: [table.characterLevelId],
-      foreignColumns: [levelsInCharacter.id],
-      name: "level_feats_character_level_id_fkey",
-    }).onDelete("cascade"),
-    foreignKey({
-      columns: [table.featId],
-      foreignColumns: [featsInRules.id],
-      name: "level_feats_feat_id_fkey",
-    }).onDelete("restrict"),
-    foreignKey({
-      columns: [table.aptitudeId],
-      foreignColumns: [aptitudesInRules.id],
-      name: "level_feats_aptitude_id_fkey",
-    }).onDelete("restrict"),
-  ],
-);
-
-export const levelPowersInCharacter = character.table(
-  "level_powers",
-  {
-    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-    deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
-    characterLevelId: uuid("character_level_id").notNull(),
-    powerId: uuid("power_id").notNull(),
-    aptitudeId: uuid("aptitude_id").notNull(),
-  },
-  (table) => [
-    index("character_level_powers_character_level_id").using("btree", table.characterLevelId.asc().nullsLast()),
-    index("character_level_powers_power_id").using("btree", table.powerId.asc().nullsLast()),
-    foreignKey({
-      columns: [table.characterLevelId],
-      foreignColumns: [levelsInCharacter.id],
-      name: "level_powers_character_level_id_fkey",
-    }).onDelete("cascade"),
-    foreignKey({
-      columns: [table.powerId],
-      foreignColumns: [powersInRules.id],
-      name: "level_powers_power_id_fkey",
-    }).onDelete("restrict"),
-    foreignKey({
-      columns: [table.aptitudeId],
-      foreignColumns: [aptitudesInRules.id],
-      name: "level_powers_aptitude_id_fkey",
-    }).onDelete("restrict"),
-    primaryKey({ columns: [table.characterLevelId, table.powerId], name: "level_powers_pkey" }),
-  ],
-);
-
-export const levelSkillsInCharacter = character.table(
-  "level_skills",
-  {
-    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-    deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
-    characterLevelId: uuid("character_level_id").notNull(),
-    skillId: uuid("skill_id").notNull(),
-    rank: integer().notNull(),
-  },
-  (table) => [
-    index("character_level_skills_character_level_id").using("btree", table.characterLevelId.asc().nullsLast()),
-    index("character_level_skills_skill_id").using("btree", table.skillId.asc().nullsLast()),
-    index("character_level_skills_level_id_alive_idx")
-      .using("btree", table.characterLevelId.asc().nullsLast())
-      .where(sql`(deleted_at IS NULL)`),
-    foreignKey({
-      columns: [table.characterLevelId],
-      foreignColumns: [levelsInCharacter.id],
-      name: "level_skills_character_level_id_fkey",
-    }).onDelete("cascade"),
-    foreignKey({
-      columns: [table.skillId],
-      foreignColumns: [skillsInRules.id],
-      name: "level_skills_skill_id_fkey",
-    }).onDelete("restrict"),
-    primaryKey({ columns: [table.characterLevelId, table.skillId], name: "level_skills_pkey" }),
-    check("level_skills_rank_check", sql`rank > 0`),
-  ],
-);
-
-export const mechanicsInRules = rules.table(
-  "mechanics",
-  {
-    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-    deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
-    id: uuid()
-      .default(sql`public.gen_random_uuid()`)
-      .primaryKey()
-      .notNull(),
-    rulesetId: uuid("ruleset_id").notNull(),
-    campaignId: uuid("campaign_id"),
-    name: text().notNull(),
-    description: text(),
-  },
-  (table) => [
-    index("mechanics_ruleset_id_campaign_id").using(
-      "btree",
-      table.rulesetId.asc().nullsLast(),
-      table.campaignId.asc().nullsLast(),
-    ),
-    uniqueIndex("mechanics_with_campaign_unique_idx")
-      .using(
-        "btree",
-        table.rulesetId.asc().nullsLast(),
-        table.campaignId.asc().nullsLast(),
-        table.name.asc().nullsLast(),
-      )
-      .where(sql`(campaign_id IS NOT NULL)`),
-    uniqueIndex("mechanics_without_campaign_unique_idx")
-      .using("btree", table.rulesetId.asc().nullsLast(), table.name.asc().nullsLast())
-      .where(sql`(campaign_id IS NULL)`),
-    foreignKey({
-      columns: [table.rulesetId],
-      foreignColumns: [rulesetsInRules.id],
-      name: "mechanics_ruleset_id_fkey",
-    }).onDelete("cascade"),
-    foreignKey({
-      columns: [table.campaignId],
-      foreignColumns: [campaignsInCampaign.id],
-      name: "mechanics_campaign_id_fkey",
-    }).onDelete("cascade"),
+    check("links_ordinal_check", sql`ordinal >= 0`),
   ],
 );
 
@@ -1637,8 +1315,7 @@ export const modifiersInCustomization = customization.table(
     operator: text().notNull(),
   },
   (table) => [
-    index("modifiers_source_id_idx").using("btree", table.sourceId.asc().nullsLast()),
-    index("modifiers_source_type_idx").using("btree", table.sourceType.asc().nullsLast()),
+    index("modifiers_source_idx").using("btree", table.sourceId.asc().nullsLast(), table.sourceType.asc().nullsLast()),
     check("modifiers_value_type_check", sql`value_type = ANY (ARRAY['number'::text, 'string'::text, 'boolean'::text])`),
     check(
       "modifiers_operator_check",
@@ -1781,64 +1458,6 @@ export const playerCharactersInCampaign = campaign.table(
   ],
 );
 
-export const powersAptitudesInRules = rules.table(
-  "powers_aptitudes",
-  {
-    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-    deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
-    powerId: uuid("power_id").notNull(),
-    aptitudeId: uuid("aptitude_id").notNull(),
-    level: integer(),
-  },
-  (table) => [
-    foreignKey({
-      columns: [table.powerId],
-      foreignColumns: [powersInRules.id],
-      name: "powers_aptitudes_power_id_fkey",
-    }).onDelete("cascade"),
-    foreignKey({
-      columns: [table.aptitudeId],
-      foreignColumns: [aptitudesInRules.id],
-      name: "powers_aptitudes_aptitude_id_fkey",
-    }).onDelete("cascade"),
-    primaryKey({ columns: [table.powerId, table.aptitudeId], name: "powers_aptitudes_pkey" }),
-  ],
-);
-
-export const propertiesInCustomization = customization.table(
-  "properties",
-  {
-    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-    deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
-    id: uuid()
-      .default(sql`public.gen_random_uuid()`)
-      .primaryKey()
-      .notNull(),
-    entityId: uuid("entity_id").notNull(),
-    entityType: text("entity_type").notNull(),
-    value: text().notNull(),
-    type: text().notNull(),
-    description: text(),
-  },
-  (table) => [
-    index("properties_entity_id_idx").using("btree", table.entityId.asc().nullsLast()),
-    unique("properties_entity_id_entity_type_type_value_key").on(
-      table.entityId,
-      table.entityType,
-      table.type,
-      table.value,
-    ),
-    index("properties_type_entity_type_idx")
-      .using("btree", table.type.asc().nullsLast(), table.entityType.asc().nullsLast())
-      .where(sql`(deleted_at IS NULL)`),
-    index("properties_type_value_idx")
-      .using("btree", table.type.asc().nullsLast(), table.value.asc().nullsLast())
-      .where(sql`(deleted_at IS NULL)`),
-  ],
-);
-
 export const requirementsInCustomization = customization.table(
   "requirements",
   {
@@ -1898,6 +1517,112 @@ export const rulesetExtensionsInRules = rules.table(
       name: "ruleset_extensions_extension_id_fkey",
     }).onDelete("cascade"),
     primaryKey({ columns: [table.rulesetId, table.extensionId], name: "ruleset_extensions_pkey" }),
+  ],
+);
+
+export const rulesetFieldsInRules = rules.table(
+  "ruleset_fields",
+  {
+    rulesetId: uuid("ruleset_id").notNull(),
+    ownerType: text("owner_type").default("rulesets").notNull(),
+    field: text().notNull(),
+    ordinal: smallint().default(0).notNull(),
+    valueKind: text("value_kind").notNull(),
+    multiple: boolean().notNull(),
+    textValue: text("text_value"),
+    numberValue: numeric("number_value"),
+    flagValue: boolean("flag_value"),
+    valueKey: text("value_key").generatedAlwaysAs(
+      sql`COALESCE(md5(text_value), (trim_scale(number_value))::text, (flag_value)::text)`,
+    ),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex("ruleset_fields_set_value_idx")
+      .using(
+        "btree",
+        table.rulesetId.asc().nullsLast().op("text_ops"),
+        table.field.asc().nullsLast().op("text_ops"),
+        table.valueKey.asc().nullsLast().op("text_ops"),
+      )
+      .where(sql`multiple`),
+    foreignKey({
+      columns: [table.ownerType, table.field, table.valueKind, table.multiple],
+      foreignColumns: [
+        fieldDefsInRules.ownerType,
+        fieldDefsInRules.field,
+        fieldDefsInRules.valueKind,
+        fieldDefsInRules.multiple,
+      ],
+      name: "ruleset_fields_owner_type_field_value_kind_multiple_fkey",
+    }).onUpdate("cascade"),
+    foreignKey({
+      columns: [table.rulesetId],
+      foreignColumns: [rulesetsInRules.id],
+      name: "ruleset_fields_ruleset_id_fkey",
+    }).onDelete("cascade"),
+    primaryKey({ columns: [table.rulesetId, table.field, table.ordinal], name: "ruleset_fields_pkey" }),
+    check("ruleset_fields_check", sql`multiple OR (ordinal = 0)`),
+    check(
+      "ruleset_fields_check1",
+      sql`((text_value IS NOT NULL) = (value_kind = 'text'::text)) AND ((number_value IS NOT NULL) = (value_kind = 'number'::text)) AND ((flag_value IS NOT NULL) = (value_kind = 'flag'::text))`,
+    ),
+    check(
+      "ruleset_fields_number_value_check",
+      sql`number_value <> ALL (ARRAY['NaN'::numeric, 'Infinity'::numeric, '-Infinity'::numeric])`,
+    ),
+    check("ruleset_fields_ordinal_check", sql`ordinal >= 0`),
+    check("ruleset_fields_owner_type_check", sql`owner_type = 'rulesets'::text`),
+  ],
+);
+
+export const rulesetRolesInRules = rules.table(
+  "ruleset_roles",
+  {
+    role: text().primaryKey().notNull(),
+    toType: text("to_type").notNull(),
+    onDelete: text("on_delete").notNull(),
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.toType],
+      foreignColumns: [entityTypesInRules.type],
+      name: "ruleset_roles_to_type_fkey",
+    }),
+    unique("ruleset_roles_role_to_type_key").on(table.role, table.toType),
+    check("ruleset_roles_on_delete_check", sql`on_delete = ANY (ARRAY['refuse'::text, 'unlink'::text])`),
+  ],
+);
+
+export const rulesetLinksInRules = rules.table(
+  "ruleset_links",
+  {
+    rulesetId: uuid("ruleset_id").notNull(),
+    role: text().notNull(),
+    toId: uuid("to_id").notNull(),
+    toType: text("to_type").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
+  },
+  (table) => [
+    index("ruleset_links_to_idx").using("btree", table.toId.asc().nullsLast().op("uuid_ops")),
+    foreignKey({
+      columns: [table.role, table.toType],
+      foreignColumns: [rulesetRolesInRules.role, rulesetRolesInRules.toType],
+      name: "ruleset_links_role_to_type_fkey",
+    }),
+    foreignKey({
+      columns: [table.rulesetId],
+      foreignColumns: [rulesetsInRules.id],
+      name: "ruleset_links_ruleset_id_fkey",
+    }).onDelete("cascade"),
+    foreignKey({
+      columns: [table.toId, table.toType],
+      foreignColumns: [entitiesInRules.id, entitiesInRules.type],
+      name: "ruleset_links_to_id_to_type_fkey",
+    }),
+    primaryKey({ columns: [table.rulesetId, table.role], name: "ruleset_links_pkey" }),
   ],
 );
 

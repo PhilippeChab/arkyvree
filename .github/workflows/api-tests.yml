@@ -97,6 +97,55 @@ jobs:
       - name: Run API Tests (changed vs ${{ github.base_ref }}, shard ${{ matrix.shard }}/3)
         run: bun --env-file=.env.test test --changed=origin/${{ github.base_ref }} --shard=${{ matrix.shard }}/3 tests
 
+  # Migration 0080 moves every row to the generic tables: run on data seeded by the schema before it, with the rows the
+  # seeds lack (tests/fixtures/db/0080-edge-cases.sql), its own row-for-row checks abort on any difference
+  migration:
+    name: Migration to the generic tables
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: mirror.gcr.io/library/postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: arkyvree_test
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # the commit before migration 0080, which seeds the database
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: Seed the database as the schema before migration 0080 does
+        run: |
+          base=$(git log -1 --format=%H --diff-filter=A -- drizzle/0080_generic-tables.sql)
+          git worktree add ../before "$base^"
+          cd ../before && bun install --frozen-lockfile && bun --env-file=.env.test scripts/db/reset.ts --with-test-data
+      - run: bun install --frozen-lockfile
+      - name: Add the rows the seeds lack
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f tests/fixtures/db/0080-edge-cases.sql
+      # The test data has issues of its own (two characters miss an ability increase): what's checked is that the
+      # migrated characters build as they did, each issue the same
+      - name: Validate every character before migrating
+        run: |
+          cd ../before && bun --env-file=.env.test scripts/ops/validate-characters.ts > ../validate-before.log 2>&1 || true
+          grep -E "pass all checks|issue\(s\) found" ../validate-before.log
+      - name: Migrate, checking every row it copies
+        run: bun --env-file=.env.test scripts/db/migrate.ts
+      - name: Every character builds on the migrated data as it did before
+        run: |
+          bun --env-file=.env.test scripts/ops/validate-characters.ts > ../validate-after.log 2>&1 || true
+          grep -E "pass all checks|issue\(s\) found" ../validate-after.log
+          diff <(grep "^    " ../validate-before.log | sort) <(grep "^    " ../validate-after.log | sort)
+
   # The check branch protection requires by name: green once every shard is
   changed-result:
     name: API Tests (changed)

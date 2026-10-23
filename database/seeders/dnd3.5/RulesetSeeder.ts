@@ -2,7 +2,6 @@ import { CLERIC_DOMAIN, domainFeat, domainSpells } from "@/content/dnd3.5/builde
 import type { BondContent } from "@/content/dnd3.5/builders/bonds/types.ts";
 import type { DomainSeed } from "@/content/dnd3.5/builders/domains/types.ts";
 import type { BookContent, CoreContent } from "@/content/dnd3.5/builders/rulesets/types.ts";
-import { powersAptitudesInRules } from "@/drizzle/schema.ts";
 import { include } from "@/lib/mixins.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
@@ -117,8 +116,8 @@ export class RulesetSeeder extends include(
         links.push({ powerId, aptitudeId: this.ctx.aptMap[domainSpells(d.name)], level: spell.level });
       }
     }
-    await this.insertAll(
-      powersAptitudesInRules,
+    await this.insertJoins(
+      "powers_aptitudes",
       this.uniqueBy(links, (l) => `${l.powerId}:${l.aptitudeId}`),
     );
   }

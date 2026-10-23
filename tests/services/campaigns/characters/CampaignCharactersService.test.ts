@@ -1,8 +1,8 @@
 import { describe, expect, test } from "bun:test";
 
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
-import { klassLevelsInRules, playerCharactersInCampaign } from "@/drizzle/schema.ts";
+import { playerCharactersInCampaign } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
 import { Campaigns, CharacterLevels, Characters, Players } from "@/server/repositories/index.ts";
@@ -11,6 +11,7 @@ import { createTestCampaign } from "@/tests/support/campaigns.ts";
 import { createTestCharacter } from "@/tests/support/characters.ts";
 import { addCharacterContributor } from "@/tests/support/contributors.ts";
 import { measure } from "@/tests/support/database.ts";
+import { findKlassLevel } from "@/tests/support/levels.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 import { createTestUser, makeSession } from "@/tests/support/users.ts";
 
@@ -28,10 +29,7 @@ function list(userId: string, campaignId: string, pagination = { limit: 10, page
 async function addLevels(characterId: string, levels: [string, number][]) {
   const ctx = await getSeedCtx();
   for (const [klass, level] of levels) {
-    const [klassLevel] = await db
-      .select({ id: klassLevelsInRules.id })
-      .from(klassLevelsInRules)
-      .where(and(eq(klassLevelsInRules.klassId, ctx.klassMap.pc[klass]), inArray(klassLevelsInRules.level, [level])));
+    const klassLevel = (await findKlassLevel(ctx.klassMap.pc[klass], level))!;
     await CharacterLevels.create(db, { characterId, klassLevelId: klassLevel.id, hp: 8 });
   }
 }

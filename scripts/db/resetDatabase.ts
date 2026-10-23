@@ -4,6 +4,7 @@ import { runMigrations } from "graphile-worker";
 import { Pool } from "pg";
 
 import { db } from "@/server/database/index.ts";
+import StoredRegistries from "@/server/repositories/stored/StoredRegistries.ts";
 
 import { assertLocalDatabase, databaseOf } from "./databases.ts";
 import seedDatabase from "./seed.ts";
@@ -52,6 +53,7 @@ export default async function resetDatabase(includeTestSeeds: boolean) {
   try {
     await migrate(drizzle(pool), { migrationsFolder: "./drizzle" });
     await runMigrations({ pgPool: pool });
+    await StoredRegistries.reconcile(db);
   } finally {
     await pool.end();
   }

@@ -120,7 +120,8 @@ describe("ActivitiesService.getActivityUrl", () => {
     expect(await resolve("requirements", requirement.id)).toBe(
       `/rulesets/${r}/feats/${featMap["Weapon Focus: Longsword"]}/customization/requirements`,
     );
-    expect(await resolve("properties", property.id)).toBe(`/rulesets/${r}/items/${itemMap["Longsword"]}/customization`);
+    // A property is its entity's field, no row of its own: an old activity of one names a row that's gone
+    expect(await resolve("properties", property.id)).toBeNull();
   });
 
   test("links a class's customizations to its class page's tab, and a modifier's requirements to the modifier's page", async () => {

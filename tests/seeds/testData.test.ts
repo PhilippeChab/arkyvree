@@ -1,30 +1,31 @@
 import { expect, test } from "bun:test";
 
-import { eq, inArray } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
 import type { CharacterSeed } from "@/content/core/builders/characters/types.ts";
 import { CHARACTERS } from "@/content/dnd3.5/testData/characters.ts";
-import {
-  characterAbilitiesInCharacter,
-  charactersInCharacter,
-  inventoryInCharacter,
-  klassLevelsInRules,
-  languagesInCharacter,
-  levelFeatsInCharacter,
-  levelPowersInCharacter,
-  levelsInCharacter,
-  levelSkillsInCharacter,
-} from "@/drizzle/schema.ts";
+import { charactersInCharacter } from "@/drizzle/schema.ts";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import seedCharacters from "@/scripts/db/seeds/characters.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { db } from "@/server/database/index.ts";
+import {
+  CharacterAbilities,
+  CharacterInventory,
+  CharacterLanguages,
+  CharacterLevelFeats,
+  CharacterLevelPowers,
+  CharacterLevels,
+  CharacterLevelSkills,
+  Characters,
+  KlassLevels,
+  Visibility,
+} from "@/server/repositories/index.ts";
+import type { Character } from "@/shared/relations.ts";
 import { buildAs } from "@/tests/support/dnd3.5/characters.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 
 import { namesOf } from "./freshSeed.ts";
-
-type Character = typeof charactersInCharacter.$inferSelect;
 
 function inventoryLine(item: {
   equipped?: boolean;
@@ -82,22 +83,12 @@ async function written(character: Character) {
     ctx.powerMap,
     ctx.itemMap,
   ].map(namesOf);
-  const levels = await db.select().from(levelsInCharacter).where(eq(levelsInCharacter.characterId, character.id));
-  const klassLevels = await db
-    .select()
-    .from(klassLevelsInRules)
-    .where(
-      inArray(
-        klassLevelsInRules.id,
-        levels.map((level) => level.klassLevelId),
-      ),
-    );
-  const levelNames = Object.fromEntries(
-    levels.map((level) => {
-      const klassLevel = klassLevels.find(({ id }) => id === level.klassLevelId)!;
-      return [level.id, `${klasses[klassLevel.klassId]} ${klassLevel.level}`];
-    }),
-  );
+  const levels = await CharacterLevels.findMany(db, { characterId: character.id });
+  const levelNames: Record<string, string> = {};
+  for (const level of levels) {
+    const klassLevel = (await KlassLevels.findOne(db, { id: level.klassLevelId }))!;
+    levelNames[level.id] = `${klasses[klassLevel.klassId]} ${klassLevel.level}`;
+  }
   const levelIds = levels.map(({ id }) => id);
   return {
     identity: {
@@ -113,33 +104,25 @@ async function written(character: Character) {
       description: character.description,
     },
     abilities: Object.fromEntries(
-      (
-        await db
-          .select()
-          .from(characterAbilitiesInCharacter)
-          .where(eq(characterAbilitiesInCharacter.characterId, character.id))
-      ).map((ability) => [abilities[ability.abilityId], ability.score]),
+      (await CharacterAbilities.findMany(db, { characterId: character.id })).map((ability) => [
+        abilities[ability.abilityId],
+        ability.score,
+      ]),
     ),
-    languages: (await db.select().from(languagesInCharacter).where(eq(languagesInCharacter.characterId, character.id)))
+    languages: (await CharacterLanguages.findMany(db, { characterId: character.id }))
       .map((language) => languages[language.languageId])
       .sort(),
     levels: levels.map((level) => `${levelNames[level.id]}: ${level.hp} hp`).sort(),
-    skills: (
-      await db.select().from(levelSkillsInCharacter).where(inArray(levelSkillsInCharacter.characterLevelId, levelIds))
-    )
+    skills: (await CharacterLevelSkills.findMany(db, { characterLevelIds: levelIds }))
       .map((s) => `${levelNames[s.characterLevelId]}: ${skills[s.skillId]} ${s.rank}`)
       .sort(),
-    feats: (
-      await db.select().from(levelFeatsInCharacter).where(inArray(levelFeatsInCharacter.characterLevelId, levelIds))
-    )
+    feats: (await CharacterLevelFeats.findMany(db, { characterLevelIds: levelIds }))
       .map((f) => `${levelNames[f.characterLevelId]}: ${feats[f.featId]} in ${aptitudes[f.aptitudeId]}`)
       .sort(),
-    powers: (
-      await db.select().from(levelPowersInCharacter).where(inArray(levelPowersInCharacter.characterLevelId, levelIds))
-    )
+    powers: (await CharacterLevelPowers.findMany(db, { characterLevelIds: levelIds }))
       .map((p) => `${levelNames[p.characterLevelId]}: ${powers[p.powerId]} in ${aptitudes[p.aptitudeId]}`)
       .sort(),
-    inventory: (await db.select().from(inventoryInCharacter).where(eq(inventoryInCharacter.characterId, character.id)))
+    inventory: (await CharacterInventory.findMany(db, { characterId: character.id }))
       .map((item) => inventoryLine({ ...item, name: items[item.itemId] }))
       .sort(),
   };
@@ -150,9 +133,13 @@ test("The test data seeds the seed user's characters as written, each valid, wit
     (await db.select({ id: charactersInCharacter.id }).from(charactersInCharacter)).map(({ id }) => id),
   );
   await seedCharacters(db);
-  const created = (
-    await db.select().from(charactersInCharacter).where(eq(charactersInCharacter.userId, SEED_USER_ID))
-  ).filter(({ id }) => !before.has(id));
+  const ids = (
+    await db
+      .select({ id: charactersInCharacter.id })
+      .from(charactersInCharacter)
+      .where(eq(charactersInCharacter.userId, SEED_USER_ID))
+  ).map(({ id }) => id);
+  const created = await Characters.findMany(db, { ids: ids.filter((id) => !before.has(id)) }, Visibility.All);
 
   const masters = created.filter((character) => character.kind === "pc");
   expect(masters.map(({ name }) => name).sort()).toEqual(CHARACTERS.map(({ name }) => name).sort());

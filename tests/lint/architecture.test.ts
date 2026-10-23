@@ -463,6 +463,24 @@ describe("architecture rules", () => {
     ]);
   });
 
+  test("a generic table's raw rows are read in server/repositories/ alone", async () => {
+    expect(
+      await lintRepo(
+        {
+          "server/repositories/stored/a.ts":
+            'import { entityFieldsInRules } from "@/drizzle/schema.ts";\nexport const a = entityFieldsInRules;\n',
+          "server/services/b.ts":
+            'import { entityLinksInRules } from "@/drizzle/schema.ts";\nexport const b = entityLinksInRules;\n',
+          "database/seeders/c.ts":
+            'import { entitiesInRules, fieldsInCharacter } from "@/drizzle/schema.ts";\nexport const c = [entitiesInRules, fieldsInCharacter];\n',
+          "tests/d.test.ts":
+            'import { rulesetLinksInRules } from "@/drizzle/schema.ts";\nexport const d = rulesetLinksInRules;\n',
+        },
+        ["generic-rows"],
+      ),
+    ).toEqual(["generic-rows database/seeders/c.ts", "generic-rows server/services/b.ts"]);
+  });
+
   test("code outside a folder with an index enters it through the index; inside it, and tests, import directly", async () => {
     expect(
       await lint({

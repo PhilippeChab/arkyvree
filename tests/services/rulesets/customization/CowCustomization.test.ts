@@ -5,9 +5,9 @@
 
 import { describe, expect, test } from "bun:test";
 
-import { abilitiesInRules } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import {
+  Abilities,
   EntitySnapshots,
   Feats,
   Klasses,
@@ -23,9 +23,9 @@ import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { RulesetsService } from "@/server/services/rulesets/index.ts";
 import type { Session } from "@/shared/relations.ts";
 import { STRENGTH_BONUS } from "@/tests/support/customizations.ts";
-import { insertRows } from "@/tests/support/database.ts";
 import { createTestRuleset } from "@/tests/support/rulesets.ts";
 import { createTestUser } from "@/tests/support/users.ts";
+import { FEAT_FAMILY, KLASS_CASTER_TYPE } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 interface Kind {
   create: (session: Session, rulesetId: string, ownerType: string, ownerId: string) => Promise<Written>;
@@ -93,8 +93,8 @@ async function setup() {
   const { session } = await createTestUser();
   const parent = await createTestRuleset(owner.id, { private: false, status: "Published" });
   const rulesetId = parent.id;
-  await insertRows(
-    abilitiesInRules,
+  await Abilities.createMany(
+    db,
     ["Strength", "Dexterity"].map((name) => ({ name, description: name, rulesetId })),
   );
 
@@ -112,7 +112,7 @@ async function setup() {
     target: "abilities.strength.misc",
     value: "15",
   });
-  await Properties.create(db, { entityId: feat.id, entityType: "feats", type: "tag", value: "combat" });
+  await Properties.createMany(db, [{ entityId: feat.id, entityType: "feats", type: FEAT_FAMILY, value: "combat" }]);
   await Requirements.create(db, {
     ...requirement,
     entityId: feat.id,
@@ -137,7 +137,9 @@ async function setup() {
       operator: "add",
     });
   }
-  await Properties.create(db, { entityId: klass.id, entityType: "klasses", type: "tag", value: "martial" });
+  await Properties.createMany(db, [
+    { entityId: klass.id, entityType: "klasses", type: KLASS_CASTER_TYPE, value: "Arcane" },
+  ]);
   await Requirements.create(db, {
     ...requirement,
     entityId: klass.id,
@@ -246,8 +248,8 @@ describe("customizing an inherited feat", () => {
   test("copies nothing when the ruleset owns the feat", async () => {
     const { user, session } = await createTestUser();
     const ruleset = await createTestRuleset(user.id);
-    await insertRows(
-      abilitiesInRules,
+    await Abilities.createMany(
+      db,
       ["Strength", "Dexterity"].map((name) => ({ name, description: name, rulesetId: ruleset.id })),
     );
     const [feat] = await Feats.create(db, { name: "Owned Feat", rulesetId: ruleset.id });

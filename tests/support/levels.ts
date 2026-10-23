@@ -1,6 +1,3 @@
-import { and, eq, isNull } from "drizzle-orm";
-
-import { klassLevelsInRules } from "@/drizzle/schema.ts";
 import type { LevelPlanAnswer, StepAnswer } from "@/engine/core/module/index.ts";
 import type { LevelPlanRequest, StepPickerQuery } from "@/engine/index.ts";
 import { db } from "@/server/database/index.ts";
@@ -91,13 +88,7 @@ export async function createTestKlassLevel(rulesetId: string) {
 
 /** A class's level `level`. */
 export async function findKlassLevel(klassId: string, level: number) {
-  return await db.query.klassLevelsInRules.findFirst({
-    where: and(
-      eq(klassLevelsInRules.klassId, klassId),
-      eq(klassLevelsInRules.level, level),
-      isNull(klassLevelsInRules.deletedAt),
-    ),
-  });
+  return (await KlassLevels.findMany(db, { klassId })).find((klassLevel) => klassLevel.level === level);
 }
 
 /** A plan's answer (`plan`), each step by its mechanic, as the level wizards ask it. */

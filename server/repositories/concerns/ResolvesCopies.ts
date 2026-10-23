@@ -1,4 +1,4 @@
-import { type Column, eq, inArray, notInArray, type SQL, type Table } from "drizzle-orm";
+import { type Column, eq, inArray, notInArray, type SQL, sql, type Table } from "drizzle-orm";
 
 import type { Constructor } from "@/lib/mixins.ts";
 import type BaseRepository from "@/server/repositories/BaseRepository.ts";
@@ -21,8 +21,9 @@ export function ResolvesCopies<B extends Constructor<BaseRepository<Table>>>(Bas
      * An entity id column matching any of `ids`: an entity's copies and originals, as its ruleset's copy-on-write data
      * gives them (`CowData.getEquivalentIds`), since a stored row may hold any of them.
      */
-    protected idMatches(column: Column, ids: string[]): SQL {
-      return ids.length === 1 ? eq(column, ids[0]) : inArray(column, ids);
+    protected idMatches(column: Column | SQL, ids: string[]): SQL {
+      const held = sql`${column}`;
+      return ids.length === 1 ? eq(held, ids[0]) : inArray(held, ids);
     }
   }
   return ResolvingCopies;

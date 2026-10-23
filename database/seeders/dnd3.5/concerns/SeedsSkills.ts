@@ -1,6 +1,5 @@
 import type { SkillSeed } from "@/content/dnd3.5/builders/skills/types.ts";
-import { BaseSeeder } from "@/database/seeders/dnd3.5/BaseSeeder.ts";
-import { propertiesInCustomization, skillsInRules } from "@/drizzle/schema.ts";
+import type { BaseSeeder } from "@/database/seeders/dnd3.5/BaseSeeder.ts";
 import { Engine } from "@/engine/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
@@ -10,7 +9,7 @@ export function SeedsSkills<B extends Constructor<BaseSeeder>>(Base: B) {
   abstract class SeedingSkills extends Base {
     /** Intelligence, as the one ability skill points come from: a property of the ruleset's. */
     async seedSkillPointAbility() {
-      await this.db.insert(propertiesInCustomization).values(
+      await this.insertProperties(
         this.propertyRows(
           this.ctx.rulesetId,
           "rulesets",
@@ -25,22 +24,17 @@ export function SeedsSkills<B extends Constructor<BaseSeeder>>(Base: B) {
     async seedSkills(skills: SkillSeed[]) {
       Object.assign(
         this.ctx.skillMap,
-        BaseSeeder.idsByName(
-          await this.db
-            .insert(skillsInRules)
-            .values(
-              skills.map(({ name, description, ability }) => ({
-                rulesetId: this.ctx.rulesetId,
-                name,
-                description,
-                primaryAbilityId: this.ctx.abilityMap[ability],
-              })),
-            )
-            .returning({ id: skillsInRules.id, name: skillsInRules.name }),
+        await this.insertEntities(
+          "skills",
+          skills.map(({ name, description, ability }) => ({
+            rulesetId: this.ctx.rulesetId,
+            name,
+            description,
+            primaryAbilityId: this.ctx.abilityMap[ability],
+          })),
         ),
       );
-      await this.insertAll(
-        propertiesInCustomization,
+      await this.insertProperties(
         skills.flatMap(({ name, impactedByWeight, checkPenaltyMultiplier, usableWithoutTraining }) =>
           this.propertyRows(
             this.ctx.skillMap[name],

@@ -16,8 +16,19 @@ import {
   invalidateTestRulesets,
 } from "@/tests/support/rulesets.ts";
 import { makeSession } from "@/tests/support/users.ts";
+import { DAMAGE_TYPE, KLASS_CASTER_TYPE, RACE_QUADRUPED } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 type EntityType = "races" | "klasses" | "items";
+
+/**
+ * The property each sibling copy is marked with (its first's value, its second's), and what the host reads of them
+ * merged: an item's damage types are a set, every sibling's; a race's and a class's one value, the winning copy's.
+ */
+const MARKERS: Record<EntityType, { merged: string[]; type: string; values: [string, string] }> = {
+  races: { type: RACE_QUADRUPED, values: ["true", "false"], merged: ["true"] },
+  klasses: { type: KLASS_CASTER_TYPE, values: ["Arcane", "Divine"], merged: ["Arcane"] },
+  items: { type: DAMAGE_TYPE, values: ["Bludgeoning", "Piercing"], merged: ["Bludgeoning", "Piercing"] },
+};
 
 async function setup(entityType: EntityType, omitLastLevel = false) {
   const session = makeSession();
@@ -30,12 +41,13 @@ async function setup(entityType: EntityType, omitLastLevel = false) {
         ? (await Klasses.findOne(db, { rulesetId: baseId, name: "Fighter" }))!
         : (await Items.create(db, { rulesetId: baseId, name: "Sibling item fixture" }))[0];
   if (entityType === "items") invalidateSeededRuleset(baseId);
+  const marker = MARKERS[entityType];
   const extensions: string[] = [];
   const sourceIds: string[] = [];
   for (let i = 0; i < 2; i++) {
     const extension = await createSeededTestRuleset(session.userId);
     const copy = await copyEntity(db, entityType, source.id, extension);
-    await Properties.create(db, { entityId: copy.id, entityType, type: "SIBLING_MARKER", value: String(i) });
+    await Properties.createMany(db, [{ entityId: copy.id, entityType, type: marker.type, value: marker.values[i] }]);
     // Classes have modifiers on their levels, not directly on the class.
     if (entityType !== "klasses") {
       await Modifiers.create(db, {
@@ -65,7 +77,7 @@ async function setup(entityType: EntityType, omitLastLevel = false) {
       const id = rulesetData.canonicalize(source.id);
       return {
         properties: (rulesetData.propertiesByEntity.get(id) ?? [])
-          .filter((p) => p.type === "SIBLING_MARKER")
+          .filter((p) => p.type === marker.type)
           .map((p) => p.value)
           .sort(),
         modifiers: (rulesetData.modifiersBySource.get(id) ?? [])
@@ -75,7 +87,7 @@ async function setup(entityType: EntityType, omitLastLevel = false) {
       };
     });
   const before = await read();
-  expect(before).toEqual({ properties: ["0", "1"], modifiers: entityType === "klasses" ? [] : ["10", "11"] });
+  expect(before).toEqual({ properties: marker.merged, modifiers: entityType === "klasses" ? [] : ["10", "11"] });
   const originals = await Properties.findMany(db, { entityIds: sourceIds });
   const assertCopied = async () => {
     for (const cold of [false, true]) {
@@ -88,7 +100,7 @@ async function setup(entityType: EntityType, omitLastLevel = false) {
     const stored = await Properties.findMany(db, { entityIds: [id], entityType });
     expect(
       stored
-        .filter((p) => p.type === "SIBLING_MARKER")
+        .filter((p) => p.type === marker.type)
         .map((p) => p.value)
         .sort(),
     ).toEqual(before.properties);

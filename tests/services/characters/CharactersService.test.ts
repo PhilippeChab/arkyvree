@@ -3,7 +3,7 @@ import { describe, expect, test } from "bun:test";
 import { and, eq } from "drizzle-orm";
 import { isValidElement } from "react";
 
-import { charactersInCharacter, playerCharactersInCampaign } from "@/drizzle/schema.ts";
+import { playerCharactersInCampaign } from "@/drizzle/schema.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
@@ -447,20 +447,17 @@ describe("CharactersService", () => {
           valueType: "number",
           operator: "add",
         });
-        const [familiar] = await db
-          .insert(charactersInCharacter)
-          .values({
-            userId: session.userId,
-            rulesetId,
-            raceId: raceMap.pc["Human"],
-            parentCharacterId: character.id,
-            kind: "familiar",
-            xp: 0,
-            name: "Whiskers",
-            alignment: "True Neutral",
-            gender: "Male",
-          })
-          .returning();
+        const [familiar] = await Characters.create(db, {
+          userId: session.userId,
+          rulesetId,
+          raceId: raceMap.pc["Human"],
+          parentCharacterId: character.id,
+          kind: "familiar",
+          xp: 0,
+          name: "Whiskers",
+          alignment: "True Neutral",
+          gender: "Male",
+        });
 
         const portraits = [
           await createTestAttachment("portrait", character.id),

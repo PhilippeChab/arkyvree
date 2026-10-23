@@ -99,13 +99,17 @@ export default class CustomizationCopies {
       (_, targetId) => ({ sourceId: targetId }),
       copiedIds,
     );
-    await CustomizationCopies.copyRows(
+    // A property is its owner's field or link: copied as a value, which no row's id names
+    await Properties.createMany(
       tx,
-      Properties,
-      properties,
-      targetEntityIds,
-      (_, targetId) => ({ entityId: targetId }),
-      copiedIds,
+      targetEntityIds.flatMap((entityId) =>
+        properties.map(({ entityType: type, type: field, value }) => ({
+          entityId,
+          entityType: type,
+          type: field,
+          value,
+        })),
+      ),
     );
     await CustomizationCopies.copyRows(
       tx,

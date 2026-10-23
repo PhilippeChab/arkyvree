@@ -1,15 +1,15 @@
 import { describe, expect, test } from "bun:test";
 
-import { and, asc, eq, getTableColumns, isNull } from "drizzle-orm";
+import { and, asc, eq, isNull } from "drizzle-orm";
 
-import { baseRules, charactersInCharacter, rulesetsInRules } from "@/drizzle/schema.ts";
+import { charactersInCharacter, rulesetsInRules } from "@/drizzle/schema.ts";
 import type { PrivateNotes } from "@/engine/core/module/index.ts";
 import { Engine } from "@/engine/index.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { CharacterLevels, Characters, Languages, Visibility } from "@/server/repositories/index.ts";
 import { readBondedInputs, readCharacterInput } from "@/server/services/characters/characterInputs.ts";
-import type { BaseRules } from "@/shared/enums.ts";
+import { BASE_RULES_OPTIONS, type BaseRules } from "@/shared/enums.ts";
 import { createTestItem } from "@/tests/support/items.ts";
 import { createTestRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
 
@@ -25,7 +25,11 @@ const NOTES = "Read by its editors and its Game Master alone:";
  */
 async function findSeededCharacter(rules: BaseRules) {
   const characters = await db
-    .select(getTableColumns(charactersInCharacter))
+    .select({
+      id: charactersInCharacter.id,
+      kind: charactersInCharacter.kind,
+      parentCharacterId: charactersInCharacter.parentCharacterId,
+    })
     .from(charactersInCharacter)
     .innerJoin(rulesetsInRules, eq(rulesetsInRules.id, charactersInCharacter.rulesetId))
     .where(and(eq(rulesetsInRules.baseRules, rules), isNull(charactersInCharacter.deletedAt)))
@@ -35,10 +39,10 @@ async function findSeededCharacter(rules: BaseRules) {
     characters.find((candidate) => masterIds.has(candidate.id)) ??
     characters.find((candidate) => candidate.kind === "pc");
   if (!character) throw new Error(`No seeded character of ${rules}`);
-  return character;
+  return (await Characters.findOne(db, { id: character.id }, Visibility.All))!;
 }
 
-describe.each(baseRules.enumValues)("The %s module, as core runs its characters' operations", (rules) => {
+describe.each([...BASE_RULES_OPTIONS])("The %s module, as core runs its characters' operations", (rules) => {
   test("reads a character's private notes, and each bonded creature's on its own sheet, only to a reader who reads them", async () => {
     const seeded = await findSeededCharacter(rules);
     const [record] = await Characters.update(db, { privateNotes: `${NOTES} ${seeded.id}` }, { id: seeded.id });

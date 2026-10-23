@@ -1,12 +1,12 @@
 /** What a seeder reads from a base rules' core ruleset: its entities' ids by name, its races' and classes' by kind too. */
 
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
 import { RULESET_CONTENT } from "@/database/packages/registry.ts";
 import { ContentSeeder } from "@/database/seeders/core/ContentSeeder.ts";
 import type { SeedContext as RulesetSeedContext } from "@/database/seeders/core/SeederState.ts";
 import type { Db } from "@/drizzle/database.ts";
-import { itemsInRules, klassesInRules, languagesInRules, racesInRules } from "@/drizzle/schema.ts";
+import { entitiesInRules } from "@/drizzle/schema.ts";
 import type { BaseRules } from "@/shared/enums.ts";
 
 /** The seeded core rules' ids by name: its seed context, and the languages, races, classes and items characters name. */
@@ -37,22 +37,20 @@ export async function getSeedContext(db: Db, baseRules: BaseRules): Promise<Seed
   const rulesetId = await ContentSeeder.findCoreRulesetId(db, RULESET_CONTENT[baseRules].core, "The test data");
   // One after the other: a transaction runs one query at a time.
   const names = await ContentSeeder.loadContext(db, rulesetId);
-  const langs = await db
-    .select({ id: languagesInRules.id, name: languagesInRules.name })
-    .from(languagesInRules)
-    .where(eq(languagesInRules.rulesetId, rulesetId));
-  const races = await db
-    .select({ id: racesInRules.id, name: racesInRules.name, kind: racesInRules.kind })
-    .from(racesInRules)
-    .where(eq(racesInRules.rulesetId, rulesetId));
-  const klasses = await db
-    .select({ id: klassesInRules.id, name: klassesInRules.name, kind: klassesInRules.kind })
-    .from(klassesInRules)
-    .where(eq(klassesInRules.rulesetId, rulesetId));
-  const items = await db
-    .select({ id: itemsInRules.id, name: itemsInRules.name })
-    .from(itemsInRules)
-    .where(eq(itemsInRules.rulesetId, rulesetId));
+  // Each type's entities, by name and by their partition (a race's or a class's kind)
+  const named = async (type: string) =>
+    (await db
+      .select({ id: entitiesInRules.id, name: entitiesInRules.name, kind: entitiesInRules.partition })
+      .from(entitiesInRules)
+      .where(and(eq(entitiesInRules.type, type), eq(entitiesInRules.rulesetId, rulesetId)))) as {
+      id: string;
+      kind: string;
+      name: string;
+    }[];
+  const langs = await named("languages");
+  const races = await named("races");
+  const klasses = await named("klasses");
+  const items = await named("items");
   return {
     ...names,
     langMap: ContentSeeder.idsByName(langs),

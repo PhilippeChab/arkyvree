@@ -1,11 +1,6 @@
 import type { ItemSeed } from "@/content/core/builders/items/types.ts";
-import { SeederState } from "@/database/seeders/core/SeederState.ts";
-import {
-  itemsInRules,
-  modifiersInCustomization,
-  propertiesInCustomization,
-  requirementsInCustomization,
-} from "@/drizzle/schema.ts";
+import type { SeederState } from "@/database/seeders/core/SeederState.ts";
+import { modifiersInCustomization, requirementsInCustomization } from "@/drizzle/schema.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 
 /** Seeding items. */
@@ -17,29 +12,22 @@ export function SeedsItems<B extends Constructor<SeederState>>(Base: B) {
      */
     async seedItems(items: ItemSeed[], options: { isTemplate?: boolean; templateMap?: Record<string, string> } = {}) {
       if (items.length === 0) return {};
-      const ids = SeederState.idsByName(
-        await this.db
-          .insert(itemsInRules)
-          .values(
-            items.map((item) => ({
-              rulesetId: this.ctx.rulesetId,
-              name: item.name,
-              description: item.description,
-              weight: item.weight,
-              costGp: item.costGp,
-              type: item.type,
-              isTemplate: options.isTemplate ?? false,
-              slot: item.slot || undefined,
-              sourceItemId: item.sourceItem ? options.templateMap?.[item.sourceItem] : undefined,
-            })),
-          )
-          .returning({ id: itemsInRules.id, name: itemsInRules.name }),
+      const ids = await this.insertEntities(
+        "items",
+        items.map((item) => ({
+          rulesetId: this.ctx.rulesetId,
+          name: item.name,
+          description: item.description,
+          weight: item.weight,
+          costGp: item.costGp,
+          type: item.type,
+          isTemplate: options.isTemplate ?? false,
+          slot: item.slot || undefined,
+          sourceItemId: item.sourceItem ? options.templateMap?.[item.sourceItem] : undefined,
+        })),
       );
 
-      await this.insertAll(
-        propertiesInCustomization,
-        items.flatMap((item) => this.propertyRows(ids[item.name], "items", item.properties)),
-      );
+      await this.insertProperties(items.flatMap((item) => this.propertyRows(ids[item.name], "items", item.properties)));
       await this.insertAll(
         requirementsInCustomization,
         items.flatMap((item) => this.requirementRows(ids[item.name], "items", item.requirements)),

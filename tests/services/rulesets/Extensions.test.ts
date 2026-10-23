@@ -9,7 +9,7 @@ import {
   DND35_COMPLETE_WARRIOR_NAME,
   DND35_DMG_NAME,
 } from "@/content/dnd3.5/rulesetNames.ts";
-import { characterAbilitiesInCharacter, entitySnapshotsInRules, type rulesetsInRules } from "@/drizzle/schema.ts";
+import { entitySnapshotsInRules, type rulesetsInRules } from "@/drizzle/schema.ts";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import { EntityEdit, RulesetViews } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
@@ -18,6 +18,7 @@ import { fetchEveryPage } from "@/server/repositories/concerns/Paginates.ts";
 import {
   Abilities,
   Aptitudes,
+  CharacterAbilities,
   CharacterInventory,
   CharacterLanguages,
   CharacterLevelFeats,
@@ -148,9 +149,10 @@ function unique(keys: string[]) {
 async function createCharacterOn(userId: string, rulesetId: string) {
   const { abilityMap } = await getSeedCtx();
   const character = await createTestCharacter(userId, { rulesetId });
-  await db
-    .insert(characterAbilitiesInCharacter)
-    .values(Object.values(abilityMap).map((abilityId) => ({ characterId: character.id, abilityId, score: 16 })));
+  await CharacterAbilities.createMany(
+    db,
+    Object.values(abilityMap).map((abilityId) => ({ characterId: character.id, abilityId, score: 16 })),
+  );
   return character;
 }
 
@@ -1329,9 +1331,10 @@ describe("an extension's content in a fork", () => {
       (await findSeededRuleset(DND35_COMPLETE_DIVINE_NAME)).id,
     ]);
     const character = await createTestCharacter(user.id, { rulesetId: draft.id, xp: 21000 });
-    await db
-      .insert(characterAbilitiesInCharacter)
-      .values(Object.values(abilityMap).map((abilityId) => ({ characterId: character.id, abilityId, score: 10 })));
+    await CharacterAbilities.createMany(
+      db,
+      Object.values(abilityMap).map((abilityId) => ({ characterId: character.id, abilityId, score: 10 })),
+    );
     const barbarianLevels = (await KlassLevels.findMany(db, { klassId: klassMap.pc["Barbarian"] }))
       .filter((l) => l.level <= 7)
       .sort((a, b) => a.level - b.level);

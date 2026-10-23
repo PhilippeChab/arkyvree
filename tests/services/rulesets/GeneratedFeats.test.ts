@@ -33,7 +33,7 @@ import {
 } from "@/tests/support/rulesets.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 import { createTestUser, makeSession } from "@/tests/support/users.ts";
-import { WEAPON_TYPE } from "@/vocabulary/dnd3.5/properties/index.ts";
+import { FEAT_FAMILY, WEAPON_TYPE } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 function skill(abilityId: string, name: string, fields: Record<string, unknown> = {}) {
   return {
@@ -514,7 +514,9 @@ describe("generated feats", () => {
         valueType: "number",
       });
     }
-    await Properties.create(db, { entityId: local.id, entityType: "feats", type: "NOTE", value: "Remove with feat" });
+    await Properties.createMany(db, [
+      { entityId: local.id, entityType: "feats", type: FEAT_FAMILY, value: "Remove with feat" },
+    ]);
 
     const names = ["Mountaineering", "Scaling", "Climb"];
     for (const name of names) {
@@ -537,12 +539,9 @@ describe("generated feats", () => {
     const { session, fork } = await seededFork();
     const weapon = await ItemsService.createItem(session, fork.id, { name: "Unique Weapon", type: "Weapon" });
     // A weapon type of its own, outside the catalog an item's fields offer
-    await Properties.create(db, {
-      entityId: weapon.id,
-      entityType: "items",
-      type: WEAPON_TYPE,
-      value: "Unique Weapon",
-    });
+    await Properties.createMany(db, [
+      { entityId: weapon.id, entityType: "items", type: WEAPON_TYPE, value: "Unique Weapon" },
+    ]);
     RulesetViews.invalidate(fork.id);
     const [feat] = await Feats.create(db, {
       rulesetId: fork.id,

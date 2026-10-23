@@ -2,16 +2,14 @@ import { describe, expect, test } from "bun:test";
 
 import { isValidElement, type ReactElement, type ReactNode } from "react";
 
-import { characterAbilitiesInCharacter } from "@/drizzle/schema.ts";
 import CombatSheet from "@/engine/rulesets/dnd3.5/characters/description/CombatSheet.ts";
 import InfoPage from "@/engine/rulesets/dnd3.5/characters/sheet/InfoPage.tsx";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { Abilities } from "@/server/repositories/index.ts";
+import { Abilities, CharacterAbilities } from "@/server/repositories/index.ts";
 import { createTestCharacter } from "@/tests/support/characters.ts";
-import { insertRows } from "@/tests/support/database.ts";
 import { buildAs } from "@/tests/support/dnd3.5/characters.ts";
 import { carry } from "@/tests/support/items.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
@@ -59,7 +57,7 @@ describe("InfoPage", () => {
     const { abilityMap } = await getSeedCtx();
     // Written out of order: the page orders them, not the rows
     const score = (abilityId: string, value: number) => ({ characterId: character.id, abilityId, score: value });
-    await insertRows(characterAbilitiesInCharacter, [
+    await CharacterAbilities.createMany(db, [
       score(sanity.id, 9),
       score(forcePoints.id, 14),
       ...Object.values(abilityMap).map((abilityId) => score(abilityId, 12)),

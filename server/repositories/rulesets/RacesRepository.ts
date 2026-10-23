@@ -1,61 +1,22 @@
-import { and, eq, inArray, isNull } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
-import { racesInRules } from "@/drizzle/schema.ts";
 import { type RulesetEntityFilters } from "@/server/repositories/concerns/ScopesToRuleset.ts";
 import RulesetEntityRepository from "@/server/repositories/RulesetEntityRepository.ts";
+import type { Race } from "@/shared/relations.ts";
 
-class RacesRepository extends RulesetEntityRepository<typeof racesInRules> {
-  constructor() {
-    super(racesInRules);
-  }
-
+/** The races: a ruleset's list of them, of a kind (a player character's, a bonded creature's) if one is given. */
+class RacesRepository extends RulesetEntityRepository<Race> {
   protected override readonly entityType = "races";
 
-  async findMany(db: Db, where: { ids: string[] }) {
-    if (where.ids.length === 0) return [];
-    return await db.query.racesInRules.findMany({
-      where: and(inArray(this.table.id, where.ids), isNull(this.table.deletedAt)),
-      orderBy: [this.orderBy(this.table.name)],
-    });
-  }
-
-  async findOne(
+  override async findPage(
     db: Db,
-    where: { id: string } | { id: string; rulesetId: string } | { name: string; rulesetId: string },
+    where: RulesetEntityFilters<{ kind?: string }>,
+    pagination: { limit: number; page: number },
   ) {
-    return await db.query.racesInRules.findFirst({
-      where: this.branchWhere(
-        ["id" in where && eq(this.table.id, where.id), "name" in where && eq(this.table.name, where.name)],
-        ["rulesetId" in where && eq(this.table.rulesetId, where.rulesetId), isNull(this.table.deletedAt)],
-      ),
-    });
-  }
-
-  async findPage(db: Db, where: RulesetEntityFilters<{ kind?: string }>, pagination: { limit: number; page: number }) {
-    const { search, kind, orderBy = "name", orderDir = "asc" } = where;
-    const searchColumns = [this.table.name, this.table.description];
-    const searchConditions = this.fuzzySearch(search, searchColumns);
-
-    const rulesetCondition = this.buildRulesetCondition(db, where);
-
-    return await this.withPagination(
-      pagination,
-      async ({ limit, offset }) =>
-        await db.query.racesInRules.findMany({
-          where: this.where([
-            rulesetCondition,
-            isNull(this.table.deletedAt),
-            kind !== undefined && eq(this.table.kind, kind),
-            searchConditions,
-          ]),
-          orderBy: this.pageOrder(
-            this.searchOrderBy(search, searchColumns, this.orderBy(this.table[orderBy], orderDir)),
-          ),
-          limit,
-          offset,
-        }),
-    );
+    return await super.findPage(db, where, pagination, [
+      where.kind !== undefined && eq(this.column("kind"), where.kind),
+    ]);
   }
 }
 

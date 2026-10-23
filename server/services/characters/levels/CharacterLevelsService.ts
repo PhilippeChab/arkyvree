@@ -4,10 +4,7 @@
  * the engine plans, with what the character's bonded creatures become.
  */
 
-import { getTableName } from "drizzle-orm";
-
 import type { Db } from "@/drizzle/database.ts";
-import { levelsInCharacter } from "@/drizzle/schema.ts";
 import { type CharacterInput, Engine, type LevelPlanRequest, type LevelUpEngine } from "@/engine/index.ts";
 import { include } from "@/lib/mixins.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
@@ -65,7 +62,7 @@ class CharacterLevelsService extends include(Object, Plans) {
         await Activities.create(tx, {
           userId: session.userId,
           targetId: characterId,
-          targetTable: getTableName(levelsInCharacter),
+          targetTable: "levels",
           type: "editLevel",
         });
 
@@ -111,7 +108,7 @@ class CharacterLevelsService extends include(Object, Plans) {
         await Activities.create(tx, {
           userId: session.userId,
           targetId: characterId,
-          targetTable: getTableName(levelsInCharacter),
+          targetTable: "levels",
           type: "addLevel",
           data: { count: plan.levels.length },
         });
@@ -151,7 +148,7 @@ class CharacterLevelsService extends include(Object, Plans) {
       await Activities.create(tx, {
         userId: session.userId,
         targetId: characterId,
-        targetTable: getTableName(levelsInCharacter),
+        targetTable: "levels",
         type: "removeLevel",
       });
 

@@ -1,28 +1,25 @@
 import { sql } from "drizzle-orm";
 
-import { ACTIVE_CHARACTERS, ACTIVE_LEVELS, type Character, query } from "./queries.ts";
+import type { Character } from "@/shared/relations.ts";
 
-/** Prints how many rows the active characters hold, by kind. */
+import { ACTIVE_ADVANCEMENTS, ACTIVE_CHARACTERS, query } from "./queries.ts";
+
+/** Prints how many rows the active characters hold: their levels, their picks by step, their links by role, items. */
 export async function printCharacterData(characters: Character[]) {
-  const [counts] = await query<{
-    abilities: string;
-    feats: string;
-    inventory: string;
-    languages: string;
-    levels: string;
-    powers: string;
-    skills: string;
-  }>(sql`SELECT
-       (SELECT count(*) FROM character.levels WHERE character_id IN ${ACTIVE_CHARACTERS} AND deleted_at IS NULL)::text AS levels,
-       (SELECT count(*) FROM character.level_feats WHERE character_level_id IN ${ACTIVE_LEVELS} AND deleted_at IS NULL)::text AS feats,
-       (SELECT count(*) FROM character.level_skills WHERE character_level_id IN ${ACTIVE_LEVELS} AND deleted_at IS NULL)::text AS skills,
-       (SELECT count(*) FROM character.level_powers WHERE character_level_id IN ${ACTIVE_LEVELS} AND deleted_at IS NULL)::text AS powers,
-       (SELECT count(*) FROM character.character_abilities WHERE character_id IN ${ACTIVE_CHARACTERS} AND deleted_at IS NULL)::text AS abilities,
-       (SELECT count(*) FROM character.languages WHERE character_id IN ${ACTIVE_CHARACTERS} AND deleted_at IS NULL)::text AS languages,
+  const [counts] = await query<{ inventory: string; levels: string }>(sql`SELECT
+       (SELECT count(*) FROM character.advancements WHERE id IN ${ACTIVE_ADVANCEMENTS})::text AS levels,
        (SELECT count(*) FROM character.inventory WHERE character_id IN ${ACTIVE_CHARACTERS} AND deleted_at IS NULL)::text AS inventory`);
+  const picks = await query<{ count: string; step: string }>(
+    sql`SELECT step, count(*)::text AS count FROM character.advancement_picks
+        WHERE advancement_id IN ${ACTIVE_ADVANCEMENTS} GROUP BY step ORDER BY step`,
+  );
+  const links = await query<{ count: string; role: string }>(
+    sql`SELECT role, count(*)::text AS count FROM character.links
+        WHERE character_id IN ${ACTIVE_CHARACTERS} GROUP BY role ORDER BY role`,
+  );
 
   console.log("Character data:");
-  console.log(`  characters: ${characters.length}, levels: ${counts.levels}, feats: ${counts.feats}`);
-  console.log(`  skills: ${counts.skills}, powers: ${counts.powers}, inventory: ${counts.inventory}`);
-  console.log(`  abilities: ${counts.abilities}, languages: ${counts.languages}\n`);
+  console.log(`  characters: ${characters.length}, levels: ${counts.levels}, inventory: ${counts.inventory}`);
+  console.log(`  picks: ${picks.map((row) => `${row.step} ${row.count}`).join(", ")}`);
+  console.log(`  links: ${links.map((row) => `${row.role} ${row.count}`).join(", ")}\n`);
 }

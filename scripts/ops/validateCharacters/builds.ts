@@ -3,8 +3,7 @@ import { Engine } from "@/engine/index.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { readCharacterInput } from "@/server/services/characters/index.ts";
-
-import type { Character } from "./queries.ts";
+import type { Character } from "@/shared/relations.ts";
 
 /** Phase 4: every character builds and validates. Returns the integrity issues found. */
 export async function checkBuilds(characters: Character[]) {

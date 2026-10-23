@@ -3,8 +3,9 @@ import { asc, eq } from "drizzle-orm";
 import { DND35_CORE_PACKAGE } from "@/content/dnd3.5/packages/core.ts";
 import type { SeedContext } from "@/database/seeders/core/SeederState.ts";
 import { RulesetSeeder } from "@/database/seeders/dnd3.5/RulesetSeeder.ts";
-import { modifiersInCustomization, propertiesInCustomization, requirementsInCustomization } from "@/drizzle/schema.ts";
+import { modifiersInCustomization, requirementsInCustomization } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
+import { Properties } from "@/server/repositories/index.ts";
 import { uniqueId } from "@/tests/support/seed.ts";
 import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 
@@ -52,10 +53,7 @@ export async function describeCustomizations(entityId: string) {
     const requirements = await requirementsOf(modifier.id);
     modifierLines.push([describeModifier(modifier), ...requirements.map((r) => `  if ${r}`)].join("\n"));
   }
-  const properties = await db
-    .select()
-    .from(propertiesInCustomization)
-    .where(eq(propertiesInCustomization.entityId, entityId));
+  const properties = await Properties.findMany(db, { entityIds: [entityId] });
   return {
     requirements: await requirementsOf(entityId),
     modifiers: modifierLines.sort(),

@@ -1,8 +1,5 @@
 import { describe, expect, test } from "bun:test";
 
-import type { InferInsertModel } from "drizzle-orm";
-
-import type { itemsInRules } from "@/drizzle/schema.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
@@ -12,7 +9,7 @@ import { CharactersService } from "@/server/services/characters/index.ts";
 import { CharacterInventoryService } from "@/server/services/characters/inventory/index.ts";
 import { ItemsService } from "@/server/services/rulesets/items/index.ts";
 import type { ItemLocation, SizeType } from "@/shared/enums.ts";
-import type { Session } from "@/shared/relations.ts";
+import type { Item, Session } from "@/shared/relations.ts";
 import { createCharacterAs } from "@/tests/support/characters.ts";
 import { createTestItem } from "@/tests/support/items.ts";
 import { createSeededTestRuleset, createTestRuleset } from "@/tests/support/rulesets.ts";
@@ -110,7 +107,7 @@ async function setup(race?: { size: SizeType }) {
     session,
     raceId ? { rulesetId: ruleset.id, raceId } : { rulesetId: ruleset.id },
   );
-  const newItem = (values?: Partial<InferInsertModel<typeof itemsInRules>>, properties?: Record<string, string>) =>
+  const newItem = (values?: Partial<Item>, properties?: Record<string, string>) =>
     createTestItem({ rulesetId: ruleset.id, ...ITEM_VALUES, ...values }, properties);
   return { session, character, newItem, item: await newItem() };
 }
@@ -148,12 +145,9 @@ describe("InventoryService", () => {
   test("lists what the character carries with each item's customizations, removed items gone, archived characters included", async () => {
     const { session, character, item, newItem } = await setup();
     expect(await CharacterInventoryService.getInventory(session, character.id)).toEqual([]);
-    await Properties.create(db, {
-      entityId: item.id,
-      entityType: "items",
-      type: WEAPON_PROFICIENCY,
-      value: "Martial",
-    });
+    await Properties.createMany(db, [
+      { entityId: item.id, entityType: "items", type: WEAPON_PROFICIENCY, value: "Martial" },
+    ]);
     await Modifiers.create(db, {
       sourceId: item.id,
       sourceType: "items",

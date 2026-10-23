@@ -1,4 +1,4 @@
-import { eq, type InferInsertModel, or } from "drizzle-orm";
+import { eq, or } from "drizzle-orm";
 import type { InferRequestType } from "hono/client";
 
 import type { Db } from "@/drizzle/database.ts";
@@ -133,10 +133,7 @@ export async function createCharacterAs(
  * the database: no abilities, levels or activity. Create one with
  * `createCharacterAs` when the test needs those.
  */
-export async function createTestCharacter(
-  userId: string,
-  values: Partial<InferInsertModel<typeof charactersInCharacter>> = {},
-) {
+export async function createTestCharacter(userId: string, values: Partial<Character> = {}) {
   const ctx = await getSeedCtx();
   const [character] = await Characters.create(db, {
     userId,

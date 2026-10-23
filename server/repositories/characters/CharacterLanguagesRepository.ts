@@ -1,34 +1,49 @@
-import { and, eq, type InferInsertModel } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
-import { languagesInCharacter } from "@/drizzle/schema.ts";
+import { linksInCharacter } from "@/drizzle/schema.ts";
 import BaseRepository from "@/server/repositories/BaseRepository.ts";
+import StoredCharacterLinks from "@/server/repositories/stored/StoredCharacterLinks.ts";
+import type { CharacterLanguage } from "@/shared/relations.ts";
 
-class CharacterLanguagesRepository extends BaseRepository<typeof languagesInCharacter> {
+/** The languages a character speaks: its links to them. */
+class CharacterLanguagesRepository extends BaseRepository<typeof linksInCharacter> {
   constructor() {
-    super(languagesInCharacter);
+    super(linksInCharacter);
   }
 
-  async create(db: Db, values: InferInsertModel<typeof languagesInCharacter>) {
-    return await db.insert(this.table).values(values).returning();
+  async create(db: Db, values: { characterId: string; languageId: string }) {
+    return await this.createMany(db, [values]);
   }
 
-  async createMany(db: Db, values: InferInsertModel<typeof languagesInCharacter>[]) {
+  async createMany(db: Db, values: { characterId: string; languageId: string }[]) {
     if (values.length === 0) return [];
-    return await db.insert(this.table).values(values).returning();
+    const rows = await db
+      .insert(this.table)
+      .values(values.map((row) => StoredCharacterLinks.buildValues("languages", row)))
+      .returning(StoredCharacterLinks.buildColumns("languages"));
+    return rows as unknown as CharacterLanguage[];
   }
 
   // Exception to soft-delete: character languages are disposable reference data
   async delete(db: Db, where: { characterId: string; languageId: string }) {
     return await db
       .delete(this.table)
-      .where(and(eq(this.table.characterId, where.characterId), eq(this.table.languageId, where.languageId)));
+      .where(
+        StoredCharacterLinks.buildScope(
+          "languages",
+          and(eq(this.table.characterId, where.characterId), eq(this.table.entityId, where.languageId)),
+        ),
+      );
   }
 
   async findMany(db: Db, where: { characterId: string }) {
-    return await db.query.languagesInCharacter.findMany({
-      where: eq(this.table.characterId, where.characterId),
-    });
+    const rows = await db
+      .select(StoredCharacterLinks.buildColumns("languages"))
+      .from(this.table)
+      .where(StoredCharacterLinks.buildScope("languages", eq(this.table.characterId, where.characterId)))
+      .orderBy(this.orderBy(this.table.createdAt), this.orderBy(this.table.id));
+    return rows as unknown as CharacterLanguage[];
   }
 }
 

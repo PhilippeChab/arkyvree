@@ -4,15 +4,7 @@ import type { ModifierSeed, RequirementEntry } from "@/content/core/builders/cus
 import type { BabType, CasterLevelAdvancement, ClassSeed, SaveType } from "@/content/dnd3.5/builders/classes/types.ts";
 import type { BaseSeeder } from "@/database/seeders/dnd3.5/BaseSeeder.ts";
 import { getSpellLevelOpenings } from "@/database/seeders/dnd3.5/spellTable.ts";
-import {
-  klassesInRules,
-  klassLevelFeatsInRules,
-  klassLevelSavesInRules,
-  klassLevelsInRules,
-  klassSkillsInRules,
-  propertiesInCustomization,
-  requirementsInCustomization,
-} from "@/drizzle/schema.ts";
+import { requirementsInCustomization } from "@/drizzle/schema.ts";
 import { Engine } from "@/engine/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { stripSeparators } from "@/shared/text.ts";
@@ -91,6 +83,31 @@ function tableGains(table: number[][]) {
 /** Seeding classes. */
 export function SeedsClasses<B extends Constructor<BaseSeeder>>(Base: B) {
   abstract class SeedingClasses extends Base {
+    /** Its properties and its levels': its bonus spell ability and caster type, each level's base attack and points. */
+    private async insertClassProperties(def: ClassSeed, klassId: string, levels: Levels) {
+      const bonusSpellAbilityId = (def.bonusSpellAbility && this.ctx.abilityMap[def.bonusSpellAbility]) || null;
+      await this.insertProperties([
+        ...this.propertyRows(
+          klassId,
+          "klasses",
+          Engine.forRules(DND35_BASE_RULES).toEntityProperties("klasses", {
+            bonusSpellAbilityId,
+            casterType: def.casterType ?? null,
+          }),
+        ),
+        ...levels.flatMap(({ id, level }) =>
+          this.propertyRows(
+            id,
+            "klass_levels",
+            Engine.forRules(DND35_BASE_RULES).toEntityProperties("klassLevels", {
+              bab: babAt(def.bab, level),
+              skills: def.skillPoints,
+            }),
+          ),
+        ),
+      ]);
+    }
+
     /** The feats its levels grant: its class features, its proficiencies and its free feats. */
     private async insertGrantedFeats(def: ClassSeed, levelIds: Record<number, string>) {
       const granted = (level: number, feat: string, aptitude: string, what: string) => ({
@@ -100,7 +117,7 @@ export function SeedsClasses<B extends Constructor<BaseSeeder>>(Base: B) {
         free: true,
       });
       const featureAptitude = def.classFeatureAptitude;
-      await this.insertAll(klassLevelFeatsInRules, [
+      await this.insertJoins("klass_level_feats", [
         ...(featureAptitude
           ? (def.classFeatures ?? []).map(([level, feat]) =>
               granted(level, feat, featureAptitude, `class feature at level ${level}`),
@@ -153,35 +170,10 @@ export function SeedsClasses<B extends Constructor<BaseSeeder>>(Base: B) {
       ]);
     }
 
-    /** Its properties and its levels': its bonus spell ability and caster type, each level's base attack and points. */
-    private async insertProperties(def: ClassSeed, klassId: string, levels: Levels) {
-      const bonusSpellAbilityId = (def.bonusSpellAbility && this.ctx.abilityMap[def.bonusSpellAbility]) || null;
-      await this.insertAll(propertiesInCustomization, [
-        ...this.propertyRows(
-          klassId,
-          "klasses",
-          Engine.forRules(DND35_BASE_RULES).toEntityProperties("klasses", {
-            bonusSpellAbilityId,
-            casterType: def.casterType ?? null,
-          }),
-        ),
-        ...levels.flatMap(({ id, level }) =>
-          this.propertyRows(
-            id,
-            "klass_levels",
-            Engine.forRules(DND35_BASE_RULES).toEntityProperties("klassLevels", {
-              bab: babAt(def.bab, level),
-              skills: def.skillPoints,
-            }),
-          ),
-        ),
-      ]);
-    }
-
     /** Each level's base saves. */
     private async insertSaves(def: ClassSeed, levels: Levels) {
-      await this.insertAll(
-        klassLevelSavesInRules,
+      await this.insertJoins(
+        "klass_level_saves",
         levels.flatMap(({ id, level }) => [
           { klassLevelId: id, saveId: this.ctx.saveMap["Fortitude"], base: saveAt(def.saves.fortitude, level) },
           { klassLevelId: id, saveId: this.ctx.saveMap["Reflex"], base: saveAt(def.saves.reflex, level) },
@@ -192,8 +184,8 @@ export function SeedsClasses<B extends Constructor<BaseSeeder>>(Base: B) {
 
     /** Its class skills. */
     private async insertSkills(def: ClassSeed, klassId: string) {
-      await this.insertAll(
-        klassSkillsInRules,
+      await this.insertJoins(
+        "klass_skills",
         def.classSkills.map((name) => ({
           klassId,
           skillId: this.idOf(this.ctx.skillMap, name, `${def.name}'s class skill`),
@@ -206,23 +198,25 @@ export function SeedsClasses<B extends Constructor<BaseSeeder>>(Base: B) {
      * and what it takes to reach each. The class's skills and feats must be seeded.
      */
     async seedClass(def: ClassSeed) {
-      const [klass] = await this.db
-        .insert(klassesInRules)
-        .values({
+      const [klassId] = await this.insertRows("klasses", [
+        {
           rulesetId: this.ctx.rulesetId,
           name: def.name,
           description: def.description,
           hd: def.hd,
           kind: def.kind ?? "pc",
-        })
-        .returning({ id: klassesInRules.id });
-      const levels = await this.db
-        .insert(klassLevelsInRules)
-        .values(Array.from({ length: def.levels }, (_, i) => ({ klassId: klass.id, level: i + 1 })))
-        .returning({ id: klassLevelsInRules.id, level: klassLevelsInRules.level });
+        },
+      ]);
+      const klass = { id: klassId };
+      const numbers = Array.from({ length: def.levels }, (_, i) => i + 1);
+      const levelRowIds = await this.insertRows(
+        "klass_levels",
+        numbers.map((level) => ({ klassId, level })),
+      );
+      const levels = numbers.map((level, i) => ({ id: levelRowIds[i], level }));
       const levelIds: Record<number, string> = Object.fromEntries(levels.map((l) => [l.level, l.id]));
 
-      await this.insertProperties(def, klass.id, levels);
+      await this.insertClassProperties(def, klass.id, levels);
       await this.insertSaves(def, levels);
       await this.insertLevelModifiers(def, levels);
       await this.insertLevelRequirements(def, levels, levelIds);

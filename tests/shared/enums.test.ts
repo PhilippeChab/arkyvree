@@ -2,30 +2,11 @@ import { expect, test } from "bun:test";
 
 import { sql } from "drizzle-orm";
 
-import { alignment, baseRules, gender, location, sizeType } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
-import {
-  ALIGNMENT_OPTIONS,
-  BASE_RULES_OPTIONS,
-  GENDER_OPTIONS,
-  LOCATION_OPTIONS,
-  SIZE_OPTIONS,
-} from "@/shared/enums.ts";
+import { BASE_RULES_OPTIONS } from "@/shared/enums.ts";
 
-// The option lists are written out so the client doesn't load the schema: they must stay the database's enums, in order
-for (const [options, enumeration] of [
-  [ALIGNMENT_OPTIONS, alignment],
-  [BASE_RULES_OPTIONS, baseRules],
-  [GENDER_OPTIONS, gender],
-  [LOCATION_OPTIONS, location],
-  [SIZE_OPTIONS, sizeType],
-] as const) {
-  test(`${enumeration.enumName}'s options are the generated schema's and the migrated database's`, async () => {
-    expect([...options]).toEqual([...enumeration.enumValues]);
-    const live = await db.execute<{ label: string }>(sql`
-      SELECT enumlabel AS label FROM pg_enum
-      WHERE enumtypid = ${enumeration.enumName}::regtype ORDER BY enumsortorder
-    `);
-    expect(live.rows.map((row) => row.label)).toEqual([...options]);
-  });
-}
+// The base rules are written out so the client doesn't load the schema: they must stay the registered modules'
+test("the base rules are the modules the migrated database registers", async () => {
+  const live = await db.execute<{ base_rules: string }>(sql`SELECT base_rules FROM rules.modules ORDER BY base_rules`);
+  expect(live.rows.map((row) => row.base_rules)).toEqual([...BASE_RULES_OPTIONS].sort());
+});

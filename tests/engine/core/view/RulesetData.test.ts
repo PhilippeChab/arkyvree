@@ -1,12 +1,10 @@
 import { describe, expect, test } from "bun:test";
 
-import { itemsInRules } from "@/drizzle/schema.ts";
 import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { Properties } from "@/server/repositories/index.ts";
-import { insertRows } from "@/tests/support/database.ts";
+import { Items, Properties } from "@/server/repositories/index.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
-import { NIL_UUID } from "@/tests/support/seed.ts";
+import { getSeedCtx } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
 import { RULESET_SKILL_POINT_ABILITY_ID } from "@/vocabulary/dnd3.5/properties/index.ts";
 
@@ -16,7 +14,7 @@ describe("An item's properties", () => {
     const longsword = await withRulesetScope(db, ruleset.id, async ({ rulesetData }) =>
       rulesetData.items.find((item) => item.isTemplate && item.name === "Longsword"),
     );
-    const [variant] = await insertRows(itemsInRules, [
+    const [variant] = await Items.createMany(db, [
       { name: "Probe Blade", rulesetId: ruleset.id, sourceItemId: longsword!.id, type: "Weapon" },
     ]);
     await Properties.createMany(db, [
@@ -48,8 +46,9 @@ describe("An item's properties", () => {
 
 describe("A ruleset's own properties", () => {
   test("are each type's of the nearest ruleset of its chain that holds it, the fork's whatever its value", async () => {
-    // Values that sort before and after the source's: the view sorts every property by its value
-    for (const value of [NIL_UUID, "ffffffff-ffff-ffff-ffff-ffffffffffff"]) {
+    // Abilities whose ids sort first and last, before and after the source's: the view sorts every property by its value
+    const abilityIds = Object.values((await getSeedCtx()).abilityMap).toSorted();
+    for (const value of [abilityIds[0], abilityIds.at(-1)!]) {
       const fork = await createSeededTestRuleset(makeSession().userId);
       // A fork holds a copy of its source's as it's made: without it, it reads its chain's
       const type = RULESET_SKILL_POINT_ABILITY_ID;

@@ -1,6 +1,3 @@
-import { getTableName } from "drizzle-orm";
-
-import { klassLevelsInRules } from "@/drizzle/schema.ts";
 import { type ClassEngine, Engine } from "@/engine/index.ts";
 import { include } from "@/lib/mixins.ts";
 import { CustomizationEdit, EntityEdit, RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
@@ -53,7 +50,7 @@ class ClassLevelsService extends include(Object, ListsSpells) {
           await createActivityWithNotifications(tx, {
             userId: session.userId,
             targetId: klassLevel.id,
-            targetTable: getTableName(klassLevelsInRules),
+            targetTable: "klass_levels",
             type: "createKlassLevel",
             data: { entityName: klass.name, level: klassLevel.level },
           });
@@ -96,7 +93,7 @@ class ClassLevelsService extends include(Object, ListsSpells) {
           await createActivityWithNotifications(tx, {
             userId: session.userId,
             targetId: deletedLevel.id,
-            targetTable: getTableName(klassLevelsInRules),
+            targetTable: "klass_levels",
             type: "deleteKlassLevel",
             data: { rulesetId, entityName: klass.name, level: deletedLevel.level },
           });
@@ -159,7 +156,7 @@ class ClassLevelsService extends include(Object, ListsSpells) {
           await createActivityWithNotifications(tx, {
             userId: session.userId,
             targetId: resolvedLevelId,
-            targetTable: getTableName(klassLevelsInRules),
+            targetTable: "klass_levels",
             type: "updateKlassLevel",
             data: { entityName: klass.name, level: level.level },
           });

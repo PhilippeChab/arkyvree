@@ -89,16 +89,16 @@ describe("Item templates", () => {
     test("current fields, next to their own", async () => {
       const { ruleset, template, instance } = await setup();
       const sword = await instance("Longsword");
-      await Properties.create(db, {
-        entityId: sword.id,
+      await Properties.createMany(db, [
+        { entityId: sword.id, entityType: "items", type: ITEM_MADE_OF, value: "Adamantine" },
+      ]);
+      const longsword = { entityId: (await template("Longsword")).id, entityType: "items" };
+      await Properties.delete(db, {
+        entityIds: [longsword.entityId],
         entityType: "items",
-        type: ITEM_MADE_OF,
-        value: "Adamantine",
+        types: [WEAPON_BASE_DAMAGE],
       });
-      const damage = (
-        await Properties.findMany(db, { entityIds: [(await template("Longsword")).id], entityType: "items" })
-      ).find((p) => p.type === WEAPON_BASE_DAMAGE);
-      await Properties.update(db, { value: "2d6" }, { id: damage!.id });
+      await Properties.createMany(db, [{ ...longsword, type: WEAPON_BASE_DAMAGE, value: "2d6" }]);
       invalidateSeededRuleset(ruleset.rulesetId!);
 
       expect(await ItemsService.getItem(ruleset.id, sword.id)).toMatchObject({

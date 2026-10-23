@@ -2,7 +2,7 @@
 
 ## Overview
 
-Entities (`CUSTOMIZABLE_ENTITY_TYPES` in `shared/customization/entities.ts`: feats, powers, items, races, classes, class levels) can have **modifiers**, **requirements**, and **properties** attached via junction tables in the `customization` schema. A user edits an entity's modifiers and requirements in its page's tabs; its properties are its fields, which its own form edits and its own save writes ([Properties](#properties)).
+Entities (`CUSTOMIZABLE_ENTITY_TYPES` in `shared/customization/entities.ts`: feats, powers, items, races, classes, class levels) can have **modifiers** and **requirements** attached via junction tables in the `customization` schema, and **properties**, its fields ([persistence.md](./persistence.md#the-generic-tables)). A user edits an entity's modifiers and requirements in its page's tabs; its properties are its fields, which its own form edits and its own save writes ([Properties](#properties)).
 
 A class's own modifiers apply once to a character with any level of it, and its requirements are checked to take any level of it, with that level's own (the level-up wizard's class list), and on a character who has it. The class page's Modifiers and Requirements tabs are the sections every entity's customization page has (`ClassCustomizationSections`).
 
@@ -91,7 +91,7 @@ requirements: [
 
 ## Properties
 
-Properties are key-value pairs attached to entities via `customization.properties`. They store metadata used by the character engine (e.g., weapon damage dice, armor AC bonus, spell school). See [Auto-Generated Customization](#auto-generated-customization) below for all property types.
+Properties are key-value pairs of an entity: its fields (`rules.entity_fields`, a ruleset's `rules.ruleset_fields`), or its links when the value names an entity (a class's bonus spell ability), which `StoredFields` (`server/repositories/stored/StoredFields.ts`) reads and writes as properties ([persistence.md](./persistence.md#the-generic-tables)). They store metadata used by the character engine (e.g., weapon damage dice, armor AC bonus, spell school). See [Auto-Generated Customization](#auto-generated-customization) below for all property types.
 
 A property is never edited as one: it's a field of its entity, which its entity's own form shows beside its name and description, and its entity's own save writes. The client never names a property; a ruleset adds, changes or removes a field by its declarations alone, with no client change and no column.
 
@@ -321,7 +321,7 @@ Properties written from the spell form's fields by `entities("powers").planCreat
 |---|---|
 | `SPELL_SCHOOL` | School of magic (required) |
 | `SPELL_SUBSCHOOL` | Subschool (optional) |
-| `SPELL_DESCRIPTOR` | Spell descriptor(s) — one property row per value (optional, multi) |
+| `SPELL_DESCRIPTOR` | Spell descriptor(s) — one field row per value (optional, multi) |
 | `SPELL_CASTING_TIME` | Casting time (optional) |
 | `SPELL_RANGE_TYPE` | Range, as the book writes it: "Touch", "60 ft.", "Close (25 ft. + 5 ft./2 levels)" (optional, free text) |
 | `SPELL_TARGET` | Target description (optional) |
@@ -329,7 +329,7 @@ Properties written from the spell form's fields by `entities("powers").planCreat
 | `SPELL_AREA_OF_EFFECT` | Area of effect description (optional) |
 | `SPELL_DURATION` | Duration description (optional) |
 | `SPELL_RESISTANCE` | Whether spell resistance applies, as the book writes it: "Yes", "No", "Yes (harmless)" (optional, free text) |
-| `SPELL_COMPONENT` | Required components — one property row per value (optional, multi) |
+| `SPELL_COMPONENT` | Required components — one field row per value (optional, multi) |
 
 On create: with a school, generates the properties from the form's fields, and the school's Spell Focus feats unless they're there (`entities("powers").planCreate`'s `made`).
 On update: replaces the generated property types (the spell's fields) with the form's, none without a school, and creates the feats of a school that's new. The spell's other properties remain, and so do existing school feats.

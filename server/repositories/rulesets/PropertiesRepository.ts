@@ -1,35 +1,25 @@
-import { eq, inArray, isNull } from "drizzle-orm";
-
 import type { Db } from "@/drizzle/database.ts";
-import { propertiesInCustomization } from "@/drizzle/schema.ts";
-import CustomizationRepository from "@/server/repositories/CustomizationRepository.ts";
+import StoredFields, { type FieldValues } from "@/server/repositories/stored/StoredFields.ts";
 
-class PropertiesRepository extends CustomizationRepository<typeof propertiesInCustomization> {
-  constructor() {
-    super(propertiesInCustomization);
+/**
+ * An entity's and a ruleset's properties: the fields their module declares beside their kind's columns (a feat's family,
+ * a spell's school, a ruleset's feat advancement), and those whose value names an entity, which are links. Read and
+ * written as properties (`StoredFields`), which the engine reads.
+ */
+class PropertiesRepository {
+  /** A `where` that names no entities would pick every one's properties: it throws instead, as a repository's does. */
+  private static named(where: { entityIds?: string[] }) {
+    if (!where.entityIds) throw new Error("PropertiesRepository: a where that matches none of its branches");
   }
 
-  // Exception to soft-delete: disposable configuration data — intentional removal
-  async delete(
-    db: Db,
-    where: { id: string } | { ids: string[] } | { entityIds: string[]; entityType: string; types?: readonly string[] },
-  ) {
-    return await db
-      .delete(this.table)
-      .where(
-        this.branchWhere(
-          [
-            "id" in where && eq(this.table.id, where.id),
-            "ids" in where && inArray(this.table.id, where.ids),
-            "entityIds" in where && inArray(this.table.entityId, where.entityIds),
-          ],
-          [
-            "entityType" in where && eq(this.table.entityType, where.entityType),
-            "types" in where && where.types !== undefined && inArray(this.table.type, where.types),
-          ],
-        ),
-      )
-      .returning();
+  async createMany(db: Db, values: FieldValues[]) {
+    await StoredFields.createMany(db, values);
+  }
+
+  /** Removes the properties of entities of a type: those of `types`, or every one. */
+  async delete(db: Db, where: { entityIds: string[]; entityType: string; types?: readonly string[] }) {
+    PropertiesRepository.named(where);
+    await StoredFields.delete(db, where);
   }
 
   async findMany(
@@ -39,37 +29,9 @@ class PropertiesRepository extends CustomizationRepository<typeof propertiesInCu
       | { entityIds: string[]; entityType: string; type: string }
       | { entityIds: string[] },
   ) {
-    if (where.entityIds.length === 0) return [];
-    return await db.query.propertiesInCustomization.findMany({
-      where: this.where([
-        "type" in where && eq(this.table.type, where.type),
-        inArray(this.table.entityId, where.entityIds),
-        "entityType" in where && eq(this.table.entityType, where.entityType),
-        isNull(this.table.deletedAt),
-      ]),
-      orderBy: [
-        this.orderBy(this.table.createdAt),
-        this.orderBy(this.table.entityId),
-        this.orderBy(this.table.type),
-        this.orderBy(this.table.value),
-      ],
-    });
+    PropertiesRepository.named(where);
+    return await StoredFields.findMany(db, where);
   }
-
-  async findOne(db: Db, where: { id: string } | { entityId: string; entityType: string; id: string }) {
-    return await db.query.propertiesInCustomization.findFirst({
-      where: this.branchWhere(
-        [eq(this.table.id, where.id)],
-        [
-          "entityId" in where && eq(this.table.entityId, where.entityId),
-          "entityType" in where && eq(this.table.entityType, where.entityType),
-          isNull(this.table.deletedAt),
-        ],
-      ),
-    });
-  }
-
-  // Exception to soft-delete: disposable configuration data — intentional removal
 }
 
 export default PropertiesRepository;

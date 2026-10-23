@@ -15,9 +15,11 @@ async function createCreature(tx: Db, creature: NewBondedCreature) {
 
 /**
  * Writes what a master's bonded creatures become (`plans`, the engine's): each kind's creature removed, made (its row
- * as the engine plans it, with its ability scores) or kept, and the levels the one it keeps or makes takes or loses. A level save plans them from the creatures it read with the master locked, so two
- * saves can't both see no creature and both make one (the partial unique index on its kind is the backstop). An
- * archived master's creatures are left as they are: an archive that ran before the lock archived them with it.
+ * as the engine plans it, with its ability scores) or kept, and the levels the one it keeps or makes takes or loses. A
+ * level save plans them from the creatures it read with the master locked, so two saves can't both see no creature and
+ * both make one: the lock alone keeps a master to one live creature of a kind, since migration 0080 dropped the
+ * database's index of it (`characters_one_bonded_per_kind_per_master_idx`). An archived master's creatures are left as
+ * they are: an archive that ran before the lock archived them with it.
  */
 export async function writeBondedCreatures(tx: Db, master: Character, plans: BondedPlan[]): Promise<void> {
   if (!(await Characters.lock(tx, { id: master.id }))) return;

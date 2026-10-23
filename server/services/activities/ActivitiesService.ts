@@ -12,7 +12,6 @@ import {
   Modifiers,
   PlayerCharacters,
   Players,
-  Properties,
   Requirements,
   RULESET_ENTITY_TYPES,
   Rulesets,
@@ -196,10 +195,9 @@ class ActivitiesService {
           ? await this.resolveCustomizationUrl(requirement.entityId, requirement.entityType, "requirements")
           : null;
       }
-      case "properties": {
-        const property = await Properties.findOne(db, { id: targetId });
-        return property ? await this.resolveCustomizationUrl(property.entityId, property.entityType) : null;
-      }
+      // A property's activity names a row the generic fields replaced, which no longer has an address
+      case "properties":
+        return null;
 
       // Rules sub-entities (entity has rulesetId)
       default:

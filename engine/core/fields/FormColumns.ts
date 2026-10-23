@@ -116,7 +116,10 @@ export default class FormColumns {
         return {
           nullable: true,
           required: false,
-          schema: column.min === undefined ? z.number() : z.number().min(column.min),
+          schema: z
+            .number()
+            .min(column.min ?? Number.NEGATIVE_INFINITY)
+            .max(column.max ?? Number.POSITIVE_INFINITY),
         };
       case "flag":
         return { nullable: column.nullable, required: !column.nullable, schema: z.boolean() };

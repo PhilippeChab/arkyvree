@@ -1,6 +1,3 @@
-import { getTableName } from "drizzle-orm";
-
-import { itemsInRules } from "@/drizzle/schema.ts";
 import { Engine } from "@/engine/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { CustomizationCopies, EntityNames, RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
@@ -48,7 +45,7 @@ export function Variants<B extends Constructor>(Base: B) {
               await createActivityWithNotifications(tx, {
                 userId: session.userId,
                 targetId: item.id,
-                targetTable: getTableName(itemsInRules),
+                targetTable: "items",
                 type: "createItem",
                 data: { entityName: item.name },
               });

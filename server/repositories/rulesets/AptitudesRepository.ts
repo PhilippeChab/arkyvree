@@ -1,87 +1,59 @@
-import { and, eq, inArray, isNotNull, isNull } from "drizzle-orm";
+import { and, inArray, isNotNull, isNull, sql } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
-import { aptitudesInRules, featsAptitudesInRules, powersAptitudesInRules } from "@/drizzle/schema.ts";
+import { entitiesInRules, entityLinksInRules } from "@/drizzle/schema.ts";
 import { type RulesetEntityFilters } from "@/server/repositories/concerns/ScopesToRuleset.ts";
 import RulesetEntityRepository from "@/server/repositories/RulesetEntityRepository.ts";
+import StoredJoins from "@/server/repositories/stored/StoredJoins.ts";
+import type { Aptitude } from "@/shared/relations.ts";
 
-class AptitudesRepository extends RulesetEntityRepository<typeof aptitudesInRules> {
-  constructor() {
-    super(aptitudesInRules);
-  }
-
+/** The aptitudes: the pools a feat or a spell is listed in, a spell's by its level in it. */
+class AptitudesRepository extends RulesetEntityRepository<Aptitude> {
   protected override readonly entityType = "aptitudes";
 
-  async findLeveledIds(db: Db, where: { aptitudeIds: string[] }) {
-    if (where.aptitudeIds.length === 0) return new Set<string>();
-    const rows = await db
-      .selectDistinct({ aptitudeId: powersAptitudesInRules.aptitudeId })
-      .from(powersAptitudesInRules)
-      .where(
-        and(inArray(powersAptitudesInRules.aptitudeId, where.aptitudeIds), isNotNull(powersAptitudesInRules.level)),
-      )
-      .orderBy(this.orderBy(powersAptitudesInRules.aptitudeId));
-    return new Set(rows.map((r) => r.aptitudeId));
-  }
-
   /** Aptitudes by id, or the lists of rulesets, as their views show them: none of a campaign's. */
-  async findMany(db: Db, where: { ids: string[] } | { rulesetIds: string[] }) {
-    if ("ids" in where && where.ids.length === 0) return [];
-    if ("rulesetIds" in where && where.rulesetIds.length === 0) return [];
-    return await db.query.aptitudesInRules.findMany({
-      where: this.branchWhere(
-        [
-          "ids" in where && inArray(this.table.id, where.ids),
-          "rulesetIds" in where && inArray(this.table.rulesetId, where.rulesetIds),
-        ],
-        [isNull(this.table.deletedAt), "rulesetIds" in where && isNull(this.table.campaignId)],
-      ),
-      orderBy: [this.orderBy(this.table.name)],
-    });
+  override async findMany(db: Db, where: { ids: string[] } | { rulesetIds: string[] }) {
+    if ("ids" in where) return await super.findMany(db, where);
+    if (where.rulesetIds.length === 0) return [];
+    return await this.rows(
+      db,
+      [
+        inArray(entitiesInRules.rulesetId, where.rulesetIds),
+        isNull(entitiesInRules.deletedAt),
+        isNull(entitiesInRules.campaignId),
+      ],
+      [this.orderBy(this.column("name")), this.orderBy(this.column("id"))],
+    );
   }
 
-  async findOne(
-    db: Db,
-    where: { id: string } | { id: string; rulesetId: string } | { name: string } | { name: string; rulesetId: string },
-  ) {
-    return await db.query.aptitudesInRules.findFirst({
-      where: this.branchWhere(
-        ["name" in where && eq(this.table.name, where.name), "id" in where && eq(this.table.id, where.id)],
-        ["rulesetId" in where && eq(this.table.rulesetId, where.rulesetId), isNull(this.table.deletedAt)],
-      ),
-    });
-  }
-
-  async findPage(
+  /** A ruleset's list of aptitudes: a feat pool's or a spell list's, if `scope` says. */
+  override async findPage(
     db: Db,
     where: RulesetEntityFilters<{ scope?: "feats" | "spells" }>,
     pagination: { limit: number; page: number },
   ) {
-    const { search, orderBy = "name", orderDir = "asc", scope } = where;
-    const searchColumns = [this.table.name, this.table.description];
-    const searchConditions = this.fuzzySearch(search, searchColumns);
+    const join = where.scope === "feats" ? "feats_aptitudes" : where.scope === "spells" ? "powers_aptitudes" : null;
+    const listed =
+      join &&
+      sql`${entitiesInRules.id} IN (SELECT ${StoredJoins.getPart("to")} FROM ${entityLinksInRules} WHERE ${StoredJoins.buildScope(join)})`;
+    return await super.findPage(db, where, pagination, [listed ?? false]);
+  }
 
-    const scopeCondition =
-      scope === "feats"
-        ? inArray(this.table.id, db.select({ id: featsAptitudesInRules.aptitudeId }).from(featsAptitudesInRules))
-        : scope === "spells"
-          ? inArray(this.table.id, db.select({ id: powersAptitudesInRules.aptitudeId }).from(powersAptitudesInRules))
-          : false;
-
-    const rulesetCondition = this.buildRulesetCondition(db, where);
-
-    return await this.withPagination(
-      pagination,
-      async ({ limit, offset }) =>
-        await db.query.aptitudesInRules.findMany({
-          where: this.where([rulesetCondition, isNull(this.table.deletedAt), searchConditions, scopeCondition]),
-          orderBy: this.pageOrder(
-            this.searchOrderBy(search, searchColumns, this.orderBy(this.table[orderBy], orderDir)),
-          ),
-          limit,
-          offset,
-        }),
-    );
+  /** The aptitudes of `aptitudeIds` that list a spell at a level: a spell list's, not a feat pool's. */
+  async findLeveledIds(db: Db, where: { aptitudeIds: string[] }) {
+    if (where.aptitudeIds.length === 0) return new Set<string>();
+    const to = StoredJoins.getPart("to");
+    const rows = await db
+      .selectDistinct({ aptitudeId: to })
+      .from(entityLinksInRules)
+      .where(
+        StoredJoins.buildScope(
+          "powers_aptitudes",
+          and(inArray(to, where.aptitudeIds), isNotNull(StoredJoins.getPart("tier"))),
+        ),
+      )
+      .orderBy(this.orderBy(to));
+    return new Set(rows.map((row) => row.aptitudeId));
   }
 }
 

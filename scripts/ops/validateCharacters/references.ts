@@ -2,123 +2,56 @@ import { sql, type SQL } from "drizzle-orm";
 
 import { query } from "./queries.ts";
 
+/**
+ * Each row a character holds that names an entity, by what it is (its role, its step, its track, its item): the
+ * database refuses a dangling one, so what's checked is that it names a live entity, not an archived one.
+ */
 const refChecks: { label: string; sql: SQL }[] = [
   {
-    label: "character → race",
-    sql: sql`SELECT c.id, c.name, c.race_id as "entityId"
-          FROM character.characters c
-          LEFT JOIN rules.races r ON r.id = c.race_id AND r.deleted_at IS NULL
-          WHERE c.deleted_at IS NULL
-            AND c.race_id IS NOT NULL AND r.id IS NULL`,
-  },
-  {
-    label: "level → klass_level",
-    sql: sql`SELECT c.id, c.name, l.klass_level_id as "entityId"
-          FROM character.levels l
+    label: "character link → entity",
+    sql: sql`SELECT c.id, c.name, l.role AS "what", l.entity_id AS "entityId"
+          FROM character.links l
           JOIN character.characters c ON c.id = l.character_id
-          LEFT JOIN rules.klass_levels kl ON kl.id = l.klass_level_id AND kl.deleted_at IS NULL
-          WHERE c.deleted_at IS NULL AND l.deleted_at IS NULL
-            AND kl.id IS NULL`,
+          JOIN rules.entities e ON e.id = l.entity_id
+          WHERE c.deleted_at IS NULL AND e.deleted_at IS NOT NULL`,
   },
   {
-    label: "level_ability_increase → ability",
-    sql: sql`SELECT c.id, c.name, li.ability_id as "entityId"
-          FROM character.level_ability_increases li
-          JOIN character.levels l ON l.id = li.character_level_id
-          JOIN character.characters c ON c.id = l.character_id
-          LEFT JOIN rules.abilities a ON a.id = li.ability_id AND a.deleted_at IS NULL
-          WHERE c.deleted_at IS NULL AND l.deleted_at IS NULL AND li.deleted_at IS NULL
-            AND a.id IS NULL`,
+    label: "advancement → track",
+    sql: sql`SELECT c.id, c.name, a.track_type AS "what", a.track_id AS "entityId"
+          FROM character.advancements a
+          JOIN character.characters c ON c.id = a.character_id
+          JOIN rules.entities e ON e.id = a.track_id
+          WHERE c.deleted_at IS NULL AND a.deleted_at IS NULL AND e.deleted_at IS NOT NULL`,
   },
   {
-    label: "level_feat → feat",
-    sql: sql`SELECT c.id, c.name, lf.feat_id as "entityId"
-          FROM character.level_feats lf
-          JOIN character.levels l ON l.id = lf.character_level_id
-          JOIN character.characters c ON c.id = l.character_id
-          LEFT JOIN rules.feats f ON f.id = lf.feat_id AND f.deleted_at IS NULL
-          WHERE c.deleted_at IS NULL AND lf.deleted_at IS NULL
-            AND f.id IS NULL`,
-  },
-  {
-    label: "level_feat → aptitude",
-    sql: sql`SELECT c.id, c.name, lf.aptitude_id as "entityId"
-          FROM character.level_feats lf
-          JOIN character.levels l ON l.id = lf.character_level_id
-          JOIN character.characters c ON c.id = l.character_id
-          LEFT JOIN rules.aptitudes apt ON apt.id = lf.aptitude_id AND apt.deleted_at IS NULL
-          WHERE c.deleted_at IS NULL AND lf.deleted_at IS NULL
-            AND apt.id IS NULL`,
-  },
-  {
-    label: "level_skill → skill",
-    sql: sql`SELECT c.id, c.name, ls.skill_id as "entityId"
-          FROM character.level_skills ls
-          JOIN character.levels l ON l.id = ls.character_level_id
-          JOIN character.characters c ON c.id = l.character_id
-          LEFT JOIN rules.skills s ON s.id = ls.skill_id AND s.deleted_at IS NULL
-          WHERE c.deleted_at IS NULL AND ls.deleted_at IS NULL
-            AND s.id IS NULL`,
-  },
-  {
-    label: "level_power → power",
-    sql: sql`SELECT c.id, c.name, lp.power_id as "entityId"
-          FROM character.level_powers lp
-          JOIN character.levels l ON l.id = lp.character_level_id
-          JOIN character.characters c ON c.id = l.character_id
-          LEFT JOIN rules.powers p ON p.id = lp.power_id AND p.deleted_at IS NULL
-          WHERE c.deleted_at IS NULL AND lp.deleted_at IS NULL
-            AND p.id IS NULL`,
-  },
-  {
-    label: "level_power → aptitude",
-    sql: sql`SELECT c.id, c.name, lp.aptitude_id as "entityId"
-          FROM character.level_powers lp
-          JOIN character.levels l ON l.id = lp.character_level_id
-          JOIN character.characters c ON c.id = l.character_id
-          LEFT JOIN rules.aptitudes apt ON apt.id = lp.aptitude_id AND apt.deleted_at IS NULL
-          WHERE c.deleted_at IS NULL AND lp.deleted_at IS NULL
-            AND apt.id IS NULL`,
-  },
-  {
-    label: "character_ability → ability",
-    sql: sql`SELECT c.id, c.name, ca.ability_id as "entityId"
-          FROM character.character_abilities ca
-          JOIN character.characters c ON c.id = ca.character_id
-          LEFT JOIN rules.abilities a ON a.id = ca.ability_id AND a.deleted_at IS NULL
-          WHERE c.deleted_at IS NULL AND ca.deleted_at IS NULL
-            AND a.id IS NULL`,
-  },
-  {
-    label: "language → language",
-    sql: sql`SELECT c.id, c.name, cl.language_id as "entityId"
-          FROM character.languages cl
-          JOIN character.characters c ON c.id = cl.character_id
-          LEFT JOIN rules.languages l ON l.id = cl.language_id AND l.deleted_at IS NULL
-          WHERE c.deleted_at IS NULL AND cl.deleted_at IS NULL
-            AND l.id IS NULL`,
+    label: "pick → entity or pool",
+    sql: sql`SELECT c.id, c.name, p.step AS "what", e.id AS "entityId"
+          FROM character.advancement_picks p
+          JOIN character.advancements a ON a.id = p.advancement_id
+          JOIN character.characters c ON c.id = a.character_id
+          JOIN rules.entities e ON e.id IN (p.entity_id, p.via_id)
+          WHERE c.deleted_at IS NULL AND a.deleted_at IS NULL AND e.deleted_at IS NOT NULL`,
   },
   {
     label: "inventory → item",
-    sql: sql`SELECT c.id, c.name, inv.item_id as "entityId"
+    sql: sql`SELECT c.id, c.name, inv.item_type AS "what", inv.item_id AS "entityId"
           FROM character.inventory inv
           JOIN character.characters c ON c.id = inv.character_id
-          LEFT JOIN rules.items i ON i.id = inv.item_id AND i.deleted_at IS NULL
-          WHERE c.deleted_at IS NULL AND inv.deleted_at IS NULL
-            AND i.id IS NULL`,
+          JOIN rules.entities e ON e.id = inv.item_id
+          WHERE c.deleted_at IS NULL AND inv.deleted_at IS NULL AND e.deleted_at IS NOT NULL`,
   },
 ];
 
-/** Phase 1: every reference a character holds points to an existing, non-deleted row. Returns the issues found. */
+/** Phase 1: every reference a character holds points to a live entity. Returns the issues found. */
 export async function checkReferences() {
   console.log("═══ Phase 1: Reference Integrity ═══\n");
   let issues = 0;
   for (const check of refChecks) {
-    const broken = await query<{ entityId: string; id: string; name: string }>(check.sql);
+    const broken = await query<{ entityId: string; id: string; name: string; what: string }>(check.sql);
     if (broken.length > 0) {
       issues += broken.length;
-      console.error(`✗ ${check.label}: ${broken.length} dangling reference(s)`);
-      for (const row of broken) console.error(`    ${row.name}: ${row.entityId}`);
+      console.error(`✗ ${check.label}: ${broken.length} archived reference(s)`);
+      for (const row of broken) console.error(`    ${row.name}: ${row.what} ${row.entityId}`);
     } else {
       console.log(`✓ ${check.label}`);
     }

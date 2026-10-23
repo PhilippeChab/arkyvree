@@ -1,8 +1,5 @@
 import { expect, test } from "bun:test";
 
-import { and, eq } from "drizzle-orm";
-
-import { aptitudesInRules, featsInRules } from "@/drizzle/schema.ts";
 import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Aptitudes, EntitySnapshots, Feats, Races, Rulesets } from "@/server/repositories/index.ts";
@@ -81,13 +78,8 @@ async function setup() {
   const session = makeSession();
   const fork = await createSeededTestRuleset(session.userId);
   const baseId = fork.ancestorRulesetIds[0];
-  const general = (await db.query.aptitudesInRules.findFirst({
-    where: and(eq(aptitudesInRules.rulesetId, baseId), eq(aptitudesInRules.name, "General")),
-  }))!;
-  const baseFeat = async (name: string) =>
-    (await db.query.featsInRules.findFirst({
-      where: and(eq(featsInRules.rulesetId, baseId), eq(featsInRules.name, name)),
-    }))!;
+  const general = (await Aptitudes.findOne(db, { name: "General", rulesetId: baseId }))!;
+  const baseFeat = async (name: string) => (await Feats.findOne(db, { name, rulesetId: baseId }))!;
   return { session, fork, baseId, general, baseFeat };
 }
 
