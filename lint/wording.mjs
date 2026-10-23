@@ -22,7 +22,7 @@
  *   sheet's blocks, its header's summary, its card's chips, its form's fields, its level steps): their modules
  *   (`DESCRIBED_SCREENS`) write none of a ruleset's nouns in a string or a text they show: the game's own in any case
  *   (`GAME_NOUNS`: a feat, a spell, "No feats yet", `formatCount(n, "spell")`), and those English shares as a ruleset
- *   writes them, capitalized (`RULESET_NOUNS`: a Class, an Alignment, "Max HP"). A comment's example, a module's path,
+ *   writes them, capitalized (`RULESET_NOUNS`: a Class, an Alignment, "Strength", "AC"). A comment's example, a module's path,
  *   a type and a key may name them. "Level" is the app's: every ruleset's characters advance by levels.
  * - `entity-type-labels`: an entity's type shows in its ruleset's words, `entityTypeLabel(type, words)`
  *   (`lib/rulesetLabels.ts`, its rules' words: "Class Level", a 3.5 power a "Spell"), never as the code names it
@@ -64,10 +64,10 @@ const ENTITY_TYPE_MEMBERS = new Set(["entityType", "sourceType"]);
 /**
  * The game's own nouns, as 3.5 names its things (its kinds, its identity's fields, its sheet's parts, its
  * abbreviations), which a screen that shows what the engine describes never writes, in any case: a count's noun
- * (`formatCount(n, "feat")`), a key of 3.5's ("spells"), a sentence's word.
+ * (`formatCount(n, "feat")`), a string naming a 3.5 key (`kind === "spells"`), a sentence's word.
  */
 const GAME_NOUNS =
-  /\b(Armou?r\s+Class|Base\s+Attack\s+Bonus|Cantrips?|Caster\s+Levels?|Deit(y|ies)|Experience\s+Points?|Feats?|Hit\s+(Dice|Die|Points?)|Racial|Saving\s+Throws?|Spellbooks?|Spellcast(ers?|ing)|Spells?|HD|HP|XP)\b/;
+  /\b(Armou?r\s+Class|Base\s+Attack\s+Bonus|Cantrips?|Caster\s+Levels?|Deit(y|ies)|Experience\s+Points?|Feats?|Hit\s+(Dice|Die|Points?)|Racial|Saving\s+Throws?|Spellbooks?|Spellcast(ers?|ing)|Spells?|BAB|CHA|DEX|HD|HP|STR|WIS|XP)\b/;
 
 /** The game's own nouns in any case */
 const GAME_NOUNS_ANY_CASE = new RegExp(GAME_NOUNS.source, "i");
@@ -96,10 +96,10 @@ const LABELLED_BY_PROP =
 
 /**
  * The nouns 3.5 shares with English, which a text in lowercase means otherwise ("an item", "a class"), caught as a
- * ruleset writes them, capitalized; and its abbreviations that read as English in lowercase ("con", "int").
+ * ruleset writes them, capitalized; and its abbreviations that read as English in lowercase ("con", "int", "ac").
  */
 const RULESET_NOUNS =
-  /\b(Abilit(y|ies)|Alignments?|Charisma|Class(es)?|Constitution|Dexterity|Domains?|Equipment|Familiars?|Fortitude|Initiative|Intelligence|Inventory|Items?|Languages?|Races?|Reflex|Skills?|Strength|Weapons?|Wisdom|AC|BAB|CHA|CON|CR|DC|DEX|INT|STR|WIS)\b/;
+  /\b(Abilit(y|ies)|Alignments?|Charisma|Class(es)?|Constitution|Dexterity|Domains?|Equipment|Experience|Familiars?|Fortitude|Initiative|Intelligence|Inventory|Items?|Languages?|Races?|Reflex|Skills?|Strength|Weapons?|Wisdom|AC|Con|CON|CR|DC|Int|INT)\b/;
 
 /** The components whose `label` or `title` is a sentence, not a label: a chip's value, an empty state's */
 const SENTENCE_TITLED = /(Chip|^BlankState|^Tooltip)$/;
