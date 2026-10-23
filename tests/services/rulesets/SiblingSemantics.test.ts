@@ -8,12 +8,9 @@ import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { fetchEveryPage } from "@/server/repositories/concerns/Paginates.ts";
 import { Entities, Joins, Modifiers, Properties, Requirements, Rulesets } from "@/server/repositories/index.ts";
-import { AptitudesService } from "@/server/services/rulesets/aptitudes/index.ts";
 import { RulesetChangesService } from "@/server/services/rulesets/changes/index.ts";
-import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
+import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
-import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
-import { PowersService } from "@/server/services/rulesets/powers/index.ts";
 import type { Requirement } from "@/shared/relations.ts";
 import {
   copyEntity,
@@ -71,10 +68,10 @@ test("a list leaves out a book's copy that lost to another book's in its query: 
   });
   const pagination = (page: number) => ({ limit: 100, page });
   for (const getPage of [
-    (page: number) => PowersService.getPowers(fork.id, {}, pagination(page)),
-    (page: number) => FeatsService.getFeats(fork.id, {}, pagination(page)),
-    (page: number) => ClassesService.getClasses(fork.id, {}, pagination(page)),
-    (page: number) => AptitudesService.getAptitudes(fork.id, {}, pagination(page)),
+    (page: number) => EntitiesService.getEntities(fork.id, "powers", {}, pagination(page)),
+    (page: number) => EntitiesService.getEntities(fork.id, "feats", {}, pagination(page)),
+    (page: number) => EntitiesService.getEntities(fork.id, "klasses", {}, pagination(page)),
+    (page: number) => EntitiesService.getEntities(fork.id, "aptitudes", {}, pagination(page)),
   ]) {
     const pages = await readPages(getPage);
     expect(pages.slice(0, -1).every((ids) => ids.length === 100)).toBe(true);
@@ -98,7 +95,7 @@ test("editing a shared aptitude preserves references from both extensions", asyn
       links: featIds.map((id) => rulesetData.featsById.get(id)!.featsAptitudesInRules[0].aptitudeId),
     }));
   expect(await read()).toEqual({ resolved: [aptitudeIds[0], aptitudeIds[0]], links: [aptitudeIds[0], aptitudeIds[0]] });
-  const local = await AptitudesService.updateAptitude(session, host.id, aptitudeIds[0], {
+  const local = await EntitiesService.updateEntity(session, host.id, "aptitudes", aptitudeIds[0], {
     name: "Audit Local Pool",
   });
   const warm = await read();
@@ -108,7 +105,7 @@ test("editing a shared aptitude preserves references from both extensions", asyn
     warm: { resolved: [local.id, local.id], links: [local.id, local.id] },
     cold: { resolved: [local.id, local.id], links: [local.id, local.id] },
   });
-  await AptitudesService.updateAptitude(session, host.id, local.id, { name: "Renamed Local Pool" });
+  await EntitiesService.updateEntity(session, host.id, "aptitudes", local.id, { name: "Renamed Local Pool" });
   expect(await read()).toEqual({ resolved: [local.id, local.id], links: [local.id, local.id] });
   for (const id of aptitudeIds)
     expect((await Entities.findOne<Aptitude>(db, { entityType: "aptitudes", id }))?.name).toBe("Audit Shared Pool");
@@ -184,7 +181,10 @@ for (const [chainingOperator, reverseOrder] of [
     const read = () =>
       withRulesetScope(db, host.id, async ({ rulesetData }) => rulesetData.requirementsByEntity.get(copies[0]) ?? []);
     const before = evaluate([await read()]);
-    await FeatsService.updateFeat(session, host.id, copies[0], { name: "Toughness", fields: { families: ["Luck"] } });
+    await EntitiesService.updateEntity(session, host.id, "feats", copies[0], {
+      name: "Toughness",
+      fields: { families: ["Luck"] },
+    });
     const after = evaluate([await read()]);
     invalidateTestRulesets(...rulesetIds);
     const cold = evaluate([await read()]);

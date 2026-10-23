@@ -3,7 +3,8 @@ import { describe, expect, test } from "bun:test";
 import { db } from "@/server/database/index.ts";
 import { ForbiddenError } from "@/server/errors/index.ts";
 import { CharacterInventory, EntitySnapshots } from "@/server/repositories/index.ts";
-import { ItemsService } from "@/server/services/rulesets/items/index.ts";
+import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
+import type { Session } from "@/shared/relations.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
 import { createTestCharacter } from "@/tests/support/characters.ts";
 import { customize, findCustomizations } from "@/tests/support/customizations.ts";
@@ -22,8 +23,8 @@ const copiedCustomizations = {
 const noCustomizations = { modifiers: [], properties: [], requirements: [] };
 
 /** A weapon template with a property and a requirement, which its instances read, and a modifier, which they don't. */
-async function createTemplate(session: Parameters<typeof ItemsService.createItem>[0], rulesetId: string) {
-  const template = await ItemsService.createItem(session, rulesetId, {
+async function createTemplate(session: Session, rulesetId: string) {
+  const template = await EntitiesService.createEntity(session, rulesetId, "items", {
     name: "Sword Template",
     type: "Weapon",
     isTemplate: true,
@@ -48,7 +49,7 @@ async function customizationsOf(itemId: string) {
 
 async function expectTemplateInstance(rulesetId: string, itemId: string, templateId: string) {
   expect(await customizationsOf(itemId)).toEqual(noCustomizations);
-  const view = await ItemsService.getItem(rulesetId, itemId);
+  const view = await EntitiesService.getEntity(rulesetId, "items", itemId);
   expect(view).toMatchObject({
     sourceItemId: templateId,
     isTemplate: false,
@@ -60,80 +61,97 @@ async function expectTemplateInstance(rulesetId: string, itemId: string, templat
 
 // CRUD, ownership and copy-on-write are covered for every entity in EntityServices.test.ts,
 // and templates' own rules in ItemTemplates.test.ts.
-describe("ItemsService", () => {
+describe("EntitiesService: items", () => {
   test("stores weight and cost to the hundredth, and nothing when they're left out", async () => {
     const { session, ruleset } = await createTestUserAndRuleset();
-    const scroll = await ItemsService.createItem(session, ruleset.id, {
+    const scroll = await EntitiesService.createEntity(session, ruleset.id, "items", {
       name: "Scroll",
       weight: 0.5,
       costGp: 2.25,
     });
     expect(scroll).toMatchObject({ weight: "0.50", costGp: "2.25" });
-    expect(await ItemsService.createItem(session, ruleset.id, { name: "Feather", weight: 0, costGp: 0 })).toMatchObject(
-      { weight: "0.00", costGp: "0.00" },
-    );
-    expect(await ItemsService.createItem(session, ruleset.id, { name: "Rock" })).toMatchObject({
+    expect(
+      await EntitiesService.createEntity(session, ruleset.id, "items", { name: "Feather", weight: 0, costGp: 0 }),
+    ).toMatchObject({ weight: "0.00", costGp: "0.00" });
+    expect(await EntitiesService.createEntity(session, ruleset.id, "items", { name: "Rock" })).toMatchObject({
       weight: null,
       costGp: null,
     });
 
     expect(
-      await ItemsService.updateItem(session, ruleset.id, scroll.id, { name: "Scroll", weight: 10, costGp: 100 }),
+      await EntitiesService.updateEntity(session, ruleset.id, "items", scroll.id, {
+        name: "Scroll",
+        weight: 10,
+        costGp: 100,
+      }),
     ).toMatchObject({ weight: "10.00", costGp: "100.00" });
   });
 
   test("clears its slot, weight and cost when an edit gives none, and keeps them when it leaves them out", async () => {
     const { session, ruleset } = await createTestUserAndRuleset();
-    const hat = await ItemsService.createItem(session, ruleset.id, {
+    const hat = await EntitiesService.createEntity(session, ruleset.id, "items", {
       name: "Hat",
       slot: "Head",
       weight: 5,
       costGp: 10,
     });
 
-    const kept = await ItemsService.updateItem(session, ruleset.id, hat.id, { name: "Hat", description: "Floppy" });
+    const kept = await EntitiesService.updateEntity(session, ruleset.id, "items", hat.id, {
+      name: "Hat",
+      description: "Floppy",
+    });
     expect(kept).toMatchObject({ slot: "Head", weight: "5.00", costGp: "10.00" });
 
     // A slot's none is "Other", the slot of an item worn nowhere in particular
-    const cleared = await ItemsService.updateItem(session, ruleset.id, hat.id, {
+    const cleared = await EntitiesService.updateEntity(session, ruleset.id, "items", hat.id, {
       name: "Hat",
       slot: null,
       weight: null,
       costGp: null,
     });
     expect(cleared).toMatchObject({ slot: "Other", weight: null, costGp: null });
-    expect(await ItemsService.getItem(ruleset.id, hat.id)).toMatchObject({ slot: "Other", weight: null, costGp: null });
+    expect(await EntitiesService.getEntity(ruleset.id, "items", hat.id)).toMatchObject({
+      slot: "Other",
+      weight: null,
+      costGp: null,
+    });
   });
 
   test("clears its template when an edit gives none, and keeps it when it leaves it out", async () => {
     const { session, ruleset } = await createTestUserAndRuleset();
     const template = await createTemplate(session, ruleset.id);
-    const sword = await ItemsService.createItem(session, ruleset.id, {
+    const sword = await EntitiesService.createEntity(session, ruleset.id, "items", {
       name: "Sword",
       type: "Weapon",
       sourceItemId: template.id,
     });
 
     expect(
-      await ItemsService.updateItem(session, ruleset.id, sword.id, { name: "Sword", type: "Weapon" }),
+      await EntitiesService.updateEntity(session, ruleset.id, "items", sword.id, { name: "Sword", type: "Weapon" }),
     ).toMatchObject({ sourceItemId: template.id });
     expect(
-      await ItemsService.updateItem(session, ruleset.id, sword.id, {
+      await EntitiesService.updateEntity(session, ruleset.id, "items", sword.id, {
         name: "Sword",
         type: "Weapon",
         sourceItemId: null,
       }),
     ).toMatchObject({ sourceItemId: null });
     // Its template's properties went with it
-    expect(await ItemsService.getItem(ruleset.id, sword.id)).toMatchObject({ sourceItemId: null, madeOf: null });
+    expect(await EntitiesService.getEntity(ruleset.id, "items", sword.id)).toMatchObject({
+      sourceItemId: null,
+      madeOf: null,
+    });
   });
 
   test("describes where a character carrying it can place it", async () => {
     const { session, ruleset } = await createTestUserAndRuleset();
-    const sword = await ItemsService.createItem(session, ruleset.id, { name: "Sword", type: "Weapon" });
-    const ring = await ItemsService.createItem(session, ruleset.id, { name: "Ring", slot: "Finger" });
-    expect((await ItemsService.getItem(ruleset.id, sword.id)).placement).toMatchObject({ hand: true, slot: null });
-    expect((await ItemsService.getItem(ruleset.id, ring.id)).placement).toMatchObject({
+    const sword = await EntitiesService.createEntity(session, ruleset.id, "items", { name: "Sword", type: "Weapon" });
+    const ring = await EntitiesService.createEntity(session, ruleset.id, "items", { name: "Ring", slot: "Finger" });
+    expect((await EntitiesService.getEntity(ruleset.id, "items", sword.id)).placement).toMatchObject({
+      hand: true,
+      slot: null,
+    });
+    expect((await EntitiesService.getEntity(ruleset.id, "items", ring.id)).placement).toMatchObject({
       charges: null,
       hand: false,
       slot: "Finger",
@@ -143,15 +161,24 @@ describe("ItemsService", () => {
   test("puts armor on the torso and shields in the off hand, whatever slot is asked for", async () => {
     const { session, ruleset } = await createTestUserAndRuleset();
     expect(
-      await ItemsService.createItem(session, ruleset.id, { name: "Chainmail", type: "Armor", slot: "Other" }),
+      await EntitiesService.createEntity(session, ruleset.id, "items", {
+        name: "Chainmail",
+        type: "Armor",
+        slot: "Other",
+      }),
     ).toMatchObject({ slot: "Torso" });
-    expect(await ItemsService.createItem(session, ruleset.id, { name: "Ring", slot: "Finger" })).toMatchObject({
+    expect(
+      await EntitiesService.createEntity(session, ruleset.id, "items", { name: "Ring", slot: "Finger" }),
+    ).toMatchObject({
       slot: "Finger",
     });
 
-    const buckler = await ItemsService.createItem(session, ruleset.id, { name: "Buckler", slot: "Other" });
+    const buckler = await EntitiesService.createEntity(session, ruleset.id, "items", {
+      name: "Buckler",
+      slot: "Other",
+    });
     expect(
-      await ItemsService.updateItem(session, ruleset.id, buckler.id, {
+      await EntitiesService.updateEntity(session, ruleset.id, "items", buckler.id, {
         name: "Buckler",
         type: "Shield",
         slot: "Other",
@@ -162,10 +189,12 @@ describe("ItemsService", () => {
   describe("duplicating", () => {
     test("copies the item's customizations, each modifier with its own requirements", async () => {
       const { session, ruleset } = await createTestUserAndRuleset();
-      const source = await ItemsService.createItem(session, ruleset.id, { name: "Cloak" });
+      const source = await EntitiesService.createEntity(session, ruleset.id, "items", { name: "Cloak" });
       const modifier = await customize("items", source.id, { property: COLD_IRON });
 
-      const copy = await ItemsService.duplicateItem(session, ruleset.id, source.id, { name: "Cloak Copy" });
+      const copy = await EntitiesService.duplicateEntity(session, ruleset.id, "items", source.id, {
+        name: "Cloak Copy",
+      });
       const copied = await customizationsOf(copy.id);
       expect(copied).toMatchObject(copiedCustomizations);
       expect(copied.modifiers[0].id).not.toBe(modifier.id);
@@ -175,7 +204,7 @@ describe("ItemsService", () => {
     test("makes a template's copy an instance of it, with no customizations of its own", async () => {
       const { session, ruleset } = await createTestUserAndRuleset();
       const template = await createTemplate(session, ruleset.id);
-      const copy = await ItemsService.duplicateItem(session, ruleset.id, template.id, {
+      const copy = await EntitiesService.duplicateEntity(session, ruleset.id, "items", template.id, {
         name: "Sword",
         type: "Weapon",
       });
@@ -184,14 +213,17 @@ describe("ItemsService", () => {
 
     test("doesn't find a source outside the ruleset", async () => {
       const { session, ruleset } = await createTestUserAndRuleset();
-      await expectRefusedWith(ItemsService.duplicateItem(session, ruleset.id, NIL_UUID, { name: "No Source" }), 404);
+      await expectRefusedWith(
+        EntitiesService.duplicateEntity(session, ruleset.id, "items", NIL_UUID, { name: "No Source" }),
+        404,
+      );
     });
   });
 
   describe("variants", () => {
     test("copy the source's type, slot, weight, cost and customizations, and take their own names and descriptions", async () => {
       const { session, ruleset } = await createTestUserAndRuleset();
-      const source = await ItemsService.createItem(session, ruleset.id, {
+      const source = await EntitiesService.createEntity(session, ruleset.id, "items", {
         name: "Scroll",
         description: "Blank",
         type: "Other",
@@ -201,7 +233,7 @@ describe("ItemsService", () => {
       });
       await customize("items", source.id, { property: COLD_IRON });
 
-      const variants = await ItemsService.createVariants(session, ruleset.id, source.id, [
+      const variants = await EntitiesService.createVariants(session, ruleset.id, "items", source.id, [
         { name: "Scroll of Healing", description: "Heals 1d8" },
         { name: "Scroll of Light" },
       ]);
@@ -230,14 +262,16 @@ describe("ItemsService", () => {
     test("of a template, or of an instance of one, are instances of that template", async () => {
       const { session, ruleset } = await createTestUserAndRuleset();
       const template = await createTemplate(session, ruleset.id);
-      const instance = await ItemsService.createItem(session, ruleset.id, {
+      const instance = await EntitiesService.createEntity(session, ruleset.id, "items", {
         name: "Longsword",
         type: "Weapon",
         sourceItemId: template.id,
       });
 
-      const [ofTemplate] = await ItemsService.createVariants(session, ruleset.id, template.id, [{ name: "Sword +1" }]);
-      const [ofInstance] = await ItemsService.createVariants(session, ruleset.id, instance.id, [
+      const [ofTemplate] = await EntitiesService.createVariants(session, ruleset.id, "items", template.id, [
+        { name: "Sword +1" },
+      ]);
+      const [ofInstance] = await EntitiesService.createVariants(session, ruleset.id, "items", instance.id, [
         { name: "Longsword +1" },
       ]);
       await expectTemplateInstance(ruleset.id, ofTemplate.id, template.id);
@@ -246,54 +280,70 @@ describe("ItemsService", () => {
 
     test("can come from an item the ruleset inherits", async () => {
       const { user, session, ruleset: parent } = await createTestUserAndRuleset();
-      const source = await ItemsService.createItem(session, parent.id, { name: "Parent Scroll", weight: 0.1 });
+      const source = await EntitiesService.createEntity(session, parent.id, "items", {
+        name: "Parent Scroll",
+        weight: 0.1,
+      });
       const fork = await createTestRuleset(user.id, { rulesetId: parent.id, ancestorRulesetIds: [parent.id] });
 
-      const variants = await ItemsService.createVariants(session, fork.id, source.id, [{ name: "Forked Scroll" }]);
+      const variants = await EntitiesService.createVariants(session, fork.id, "items", source.id, [
+        { name: "Forked Scroll" },
+      ]);
       expect(variants).toMatchObject([{ name: "Forked Scroll", rulesetId: fork.id, weight: "0.10" }]);
     });
 
     test("are refused to anyone but the owner", async () => {
       const { session, ruleset } = await createTestUserAndRuleset();
-      const source = await ItemsService.createItem(session, ruleset.id, { name: "Scroll" });
+      const source = await EntitiesService.createEntity(session, ruleset.id, "items", { name: "Scroll" });
       const { session: other } = await createTestUserAndRuleset();
-      expect(ItemsService.createVariants(other, ruleset.id, source.id, [{ name: "Stolen Scroll" }])).rejects.toThrow(
-        ForbiddenError,
-      );
+      expect(
+        EntitiesService.createVariants(other, ruleset.id, "items", source.id, [{ name: "Stolen Scroll" }]),
+      ).rejects.toThrow(ForbiddenError);
     });
 
     test("are refused all together when a name repeats or is taken", async () => {
       const { session, ruleset } = await createTestUserAndRuleset();
-      const source = await ItemsService.createItem(session, ruleset.id, { name: "Scroll" });
-      await ItemsService.createItem(session, ruleset.id, { name: "Taken Name" });
+      const source = await EntitiesService.createEntity(session, ruleset.id, "items", { name: "Scroll" });
+      await EntitiesService.createEntity(session, ruleset.id, "items", { name: "Taken Name" });
       const create = (names: string[]) =>
-        ItemsService.createVariants(
+        EntitiesService.createVariants(
           session,
           ruleset.id,
+          "items",
           source.id,
           names.map((name) => ({ name })),
         );
 
       await expectRefusedWith(create(["Probe", "Probe"]), 409);
       await expectRefusedWith(create(["Probe Alpha", "Taken Name", "Probe Beta"]), 409);
-      await expectRefusedWith(ItemsService.createVariants(session, ruleset.id, NIL_UUID, [{ name: "Orphan" }]), 404);
+      await expectRefusedWith(
+        EntitiesService.createVariants(session, ruleset.id, "items", NIL_UUID, [{ name: "Orphan" }]),
+        404,
+      );
 
-      const { items } = await ItemsService.getItems(ruleset.id, { search: "Probe" }, { limit: 10, page: 1 });
+      const { items } = await EntitiesService.getEntities(
+        ruleset.id,
+        "items",
+        { search: "Probe" },
+        { limit: 10, page: 1 },
+      );
       expect(items).toEqual([]);
     });
 
     test("point the fork's tombstone at a variant named after a deleted copy", async () => {
       const { user, session, ruleset: parent } = await createTestUserAndRuleset();
-      const inherited = await ItemsService.createItem(session, parent.id, { name: "Ghostly Scroll" });
-      const source = await ItemsService.createItem(session, parent.id, { name: "Bulk Source" });
+      const inherited = await EntitiesService.createEntity(session, parent.id, "items", { name: "Ghostly Scroll" });
+      const source = await EntitiesService.createEntity(session, parent.id, "items", { name: "Bulk Source" });
       const fork = await createTestRuleset(user.id, { rulesetId: parent.id, ancestorRulesetIds: [parent.id] });
 
-      const copy = await ItemsService.updateItem(session, fork.id, inherited.id, {
+      const copy = await EntitiesService.updateEntity(session, fork.id, "items", inherited.id, {
         name: "Ghostly Scroll",
         description: "Edited in fork",
       });
-      await ItemsService.deleteItem(session, fork.id, copy.id);
-      const [variant] = await ItemsService.createVariants(session, fork.id, source.id, [{ name: "Ghostly Scroll" }]);
+      await EntitiesService.deleteEntity(session, fork.id, "items", copy.id);
+      const [variant] = await EntitiesService.createVariants(session, fork.id, "items", source.id, [
+        { name: "Ghostly Scroll" },
+      ]);
 
       const snapshots = await EntitySnapshots.findMany(db, { rulesetId: fork.id, entityType: "items" });
       expect(snapshots).toMatchObject([{ sourceEntityId: inherited.id, forkedEntityId: variant.id }]);
@@ -302,11 +352,11 @@ describe("ItemsService", () => {
 
   test("refuses to delete an item in a character's inventory, even through a ruleset using it as an extension", async () => {
     const { user, session, ruleset: extension } = await createTestUserAndRuleset();
-    const item = await ItemsService.createItem(session, extension.id, { name: "Extension Item" });
+    const item = await EntitiesService.createEntity(session, extension.id, "items", { name: "Extension Item" });
     const host = await createTestRuleset(user.id, { extensionRulesetIds: [extension.id] });
     const character = await createTestCharacter(user.id, { rulesetId: host.id });
     await CharacterInventory.create(db, { characterId: character.id, itemId: item.id, quantity: 1 });
 
-    await expectRefusedWith(ItemsService.deleteItem(session, extension.id, item.id), 409);
+    await expectRefusedWith(EntitiesService.deleteEntity(session, extension.id, "items", item.id), 409);
   });
 });

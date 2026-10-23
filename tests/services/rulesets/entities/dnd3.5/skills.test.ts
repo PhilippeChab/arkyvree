@@ -4,8 +4,7 @@ import type { KlassSkill, RulesetAbility } from "@/engine/index.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
 import { Activities, Entities, Joins } from "@/server/repositories/index.ts";
-import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
-import { SkillsService } from "@/server/services/rulesets/skills/index.ts";
+import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { createTestCharacter } from "@/tests/support/characters.ts";
 import { addCharacterLevel, createTestKlassLevel } from "@/tests/support/levels.ts";
 import { createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
@@ -20,7 +19,7 @@ interface SkillValues {
   usableWithoutTraining: boolean;
 }
 
-type SkillBody = Parameters<typeof SkillsService.createSkill>[2];
+type SkillBody = Parameters<typeof EntitiesService.createEntity>[3];
 
 /** A skill's body (`values`, as it reads): its columns, and its fields under `fields`. */
 function bodyOf({
@@ -57,11 +56,13 @@ async function setup() {
 }
 
 // CRUD, ownership and copy-on-write are covered for every entity in EntityServices.test.ts.
-describe("SkillsService", () => {
+describe("EntitiesService: skills", () => {
   test("keeps a skill's ability through an edit that leaves it out, and refuses one it names as none", async () => {
     const { session, ruleset, abilityMap, body } = await setup();
-    const climb = await SkillsService.createSkill(session, ruleset.id, body());
-    expect(await SkillsService.updateSkill(session, ruleset.id, climb.id, { name: "Climbing" })).toMatchObject({
+    const climb = await EntitiesService.createEntity(session, ruleset.id, "skills", body());
+    expect(
+      await EntitiesService.updateEntity(session, ruleset.id, "skills", climb.id, { name: "Climbing" }),
+    ).toMatchObject({
       name: "Climbing",
       primaryAbilityId: abilityMap.Strength,
     });
@@ -75,7 +76,7 @@ describe("SkillsService", () => {
       changedFields: [{ field: "name", from: "Climb", to: "Climbing" }],
     });
     expect(
-      SkillsService.updateSkill(session, ruleset.id, climb.id, { name: "Climb", primaryAbilityId: "" }),
+      EntitiesService.updateEntity(session, ruleset.id, "skills", climb.id, { name: "Climb", primaryAbilityId: "" }),
     ).rejects.toMatchObject({
       issues: [{ category: "primaryAbilityId" }],
     });
@@ -89,10 +90,12 @@ describe("SkillsService", () => {
       impactedByWeight: false,
       usableWithoutTraining: false,
     });
-    expect(await SkillsService.createSkill(session, ruleset.id, body())).toMatchObject(values());
-    expect(await SkillsService.createSkill(session, ruleset.id, bodyOf(spellcraft))).toMatchObject(spellcraft);
+    expect(await EntitiesService.createEntity(session, ruleset.id, "skills", body())).toMatchObject(values());
+    expect(await EntitiesService.createEntity(session, ruleset.id, "skills", bodyOf(spellcraft))).toMatchObject(
+      spellcraft,
+    );
 
-    const { items } = await SkillsService.getSkills(ruleset.id, {}, { limit: 10, page: 1 });
+    const { items } = await EntitiesService.getEntities(ruleset.id, "skills", {}, { limit: 10, page: 1 });
     expect(items).toMatchObject([
       { name: "Climb", impactedByWeight: true, usableWithoutTraining: true },
       { name: "Spellcraft", impactedByWeight: false, usableWithoutTraining: false },
@@ -101,27 +104,34 @@ describe("SkillsService", () => {
 
   test("keeps how many times over armor weighs on a skill, and drops it once armor doesn't", async () => {
     const { session, ruleset, body } = await setup();
-    const swim = await SkillsService.createSkill(
+    const swim = await EntitiesService.createEntity(
       session,
       ruleset.id,
+      "skills",
       body({ name: "Swim", checkPenaltyMultiplier: 2 }),
     );
     expect(swim).toMatchObject({ impactedByWeight: true, checkPenaltyMultiplier: 2 });
-    const listed = async () => (await SkillsService.getSkills(ruleset.id, {}, { limit: 10, page: 1 })).items[0];
+    const listed = async () =>
+      (await EntitiesService.getEntities(ruleset.id, "skills", {}, { limit: 10, page: 1 })).items[0];
     expect(await listed()).toMatchObject({ name: "Swim", impactedByWeight: true, checkPenaltyMultiplier: 2 });
 
     // The save answers the flags as stored: a multiplier counts only while armor weighs on the skill.
     const unweighed = body({ name: "Swim", impactedByWeight: false, checkPenaltyMultiplier: 3 });
-    const updated = await SkillsService.updateSkill(session, ruleset.id, swim.id, unweighed);
+    const updated = await EntitiesService.updateEntity(session, ruleset.id, "skills", swim.id, unweighed);
     expect(updated).toMatchObject({ impactedByWeight: false, checkPenaltyMultiplier: 1 });
     expect(await listed()).toMatchObject({ impactedByWeight: false, checkPenaltyMultiplier: 1 });
   });
 
   test("updates every field, and the cached list shows the change", async () => {
     const { session, ruleset, abilityMap, body, values } = await setup();
-    const created = await SkillsService.createSkill(session, ruleset.id, body({ impactedByWeight: false }));
+    const created = await EntitiesService.createEntity(
+      session,
+      ruleset.id,
+      "skills",
+      body({ impactedByWeight: false }),
+    );
     // Read the list once so the ruleset's cache holds the old values.
-    await SkillsService.getSkills(ruleset.id, {}, { limit: 10, page: 1 });
+    await EntitiesService.getEntities(ruleset.id, "skills", {}, { limit: 10, page: 1 });
 
     const update = values({
       name: "Jump",
@@ -130,8 +140,10 @@ describe("SkillsService", () => {
       impactedByWeight: true,
       usableWithoutTraining: false,
     });
-    expect(await SkillsService.updateSkill(session, ruleset.id, created.id, bodyOf(update))).toMatchObject(update);
-    const after = await SkillsService.getSkills(ruleset.id, {}, { limit: 10, page: 1 });
+    expect(await EntitiesService.updateEntity(session, ruleset.id, "skills", created.id, bodyOf(update))).toMatchObject(
+      update,
+    );
+    const after = await EntitiesService.getEntities(ruleset.id, "skills", {}, { limit: 10, page: 1 });
     expect(after.items).toMatchObject([
       { id: created.id, name: "Jump", impactedByWeight: true, usableWithoutTraining: false },
     ]);
@@ -139,21 +151,21 @@ describe("SkillsService", () => {
 
   test("deletes the class skills that point at a deleted skill", async () => {
     const { session, ruleset, body } = await setup();
-    const skill = await SkillsService.createSkill(session, ruleset.id, body());
-    const klass = await ClassesService.createClass(session, ruleset.id, { name: "Skilled Class" });
+    const skill = await EntitiesService.createEntity(session, ruleset.id, "skills", body());
+    const klass = await EntitiesService.createEntity(session, ruleset.id, "klasses", { name: "Skilled Class" });
     await Joins.create<KlassSkill>(db, "klass_skills", { klassId: klass.id, skillId: skill.id });
 
-    await SkillsService.deleteSkill(session, ruleset.id, skill.id);
+    await EntitiesService.deleteEntity(session, ruleset.id, "skills", skill.id);
     expect(await Joins.findMany<KlassSkill>(db, { join: "klass_skills", fromIds: [klass.id] })).toEqual([]);
   });
 
   test("refuses to delete a skill a character put ranks in", async () => {
     const { user, session, ruleset, body } = await setup();
-    const skill = await SkillsService.createSkill(session, ruleset.id, body());
+    const skill = await EntitiesService.createEntity(session, ruleset.id, "skills", body());
     const character = await createTestCharacter(user.id, { rulesetId: ruleset.id });
     const { klassLevel } = await createTestKlassLevel(ruleset.id);
     await addCharacterLevel(character.id, klassLevel.id, { skills: [{ skillId: skill.id, rank: 1 }] });
 
-    expect(SkillsService.deleteSkill(session, ruleset.id, skill.id)).rejects.toThrow(ConflictError);
+    expect(EntitiesService.deleteEntity(session, ruleset.id, "skills", skill.id)).rejects.toThrow(ConflictError);
   });
 });

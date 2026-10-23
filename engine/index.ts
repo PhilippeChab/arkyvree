@@ -19,6 +19,7 @@ export type {
   CharacterCard,
   CharacterInput,
   CharacterRows,
+  EntityCopies,
   EntityCreatePlan,
   EntityDeletePlan,
   EntityEditPlan,

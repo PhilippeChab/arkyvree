@@ -6,11 +6,7 @@ import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { CharacterInventory, Entities } from "@/server/repositories/index.ts";
 import { CharacterInventoryService } from "@/server/services/characters/inventory/index.ts";
-import { AptitudesService } from "@/server/services/rulesets/aptitudes/index.ts";
-import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
-import { PowersService } from "@/server/services/rulesets/powers/index.ts";
-import { SavesService } from "@/server/services/rulesets/saves/index.ts";
-import { SkillsService } from "@/server/services/rulesets/skills/index.ts";
+import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { createTestCharacter } from "@/tests/support/characters.ts";
 import {
   copyEntity,
@@ -42,8 +38,11 @@ async function setupOwnRows() {
   });
   RulesetViews.invalidate(parent.id);
   const fork = await createTestRuleset(user.id, { rulesetId: parent.id, ancestorRulesetIds: [parent.id] });
-  const feat = await FeatsService.createFeat(session, fork.id, { name: "Own Feat", aptitudeIds: [pool.id] });
-  const spell = await PowersService.createPower(session, fork.id, {
+  const feat = await EntitiesService.createEntity(session, fork.id, "feats", {
+    name: "Own Feat",
+    aptitudeIds: [pool.id],
+  });
+  const spell = await EntitiesService.createEntity(session, fork.id, "powers", {
     name: "Own Spell",
     saveId: save.id,
     aptitudes: [{ id: spellList.id, level: 1 }],
@@ -62,24 +61,26 @@ test("a page's inherited rows name an entity the fork copied by its copy", async
   const constitution = await copyEntity(db, "abilities", fortitude.abilityId, fork);
   RulesetViews.invalidateAll();
 
-  const saves = await SavesService.getSaves(fork.id, {}, PAGE);
+  const saves = await EntitiesService.getEntities(fork.id, "saves", {}, PAGE);
   expect(saves.items.find((save) => save.id === fortitude.id)?.abilityId).toBe(constitution.id);
-  const skills = await SkillsService.getSkills(fork.id, { search: "Concentration" }, PAGE);
+  const skills = await EntitiesService.getEntities(fork.id, "skills", { search: "Concentration" }, PAGE);
   expect(skills.items.map((skill) => skill.primaryAbilityId)).toEqual([constitution.id]);
 });
 
 test("a fork's own feats and spells, listed alone, name a list the fork copied by its copy", async () => {
   const { session, fork, pool, spellList, feat, spell } = await setupOwnRows();
   // Renamed in the fork: its own feat's and spell's links still store the parent's lists
-  const poolCopy = await AptitudesService.updateAptitude(session, fork.id, pool.id, { name: "Copied Pool" });
-  const listCopy = await AptitudesService.updateAptitude(session, fork.id, spellList.id, { name: "Copied Spells" });
+  const poolCopy = await EntitiesService.updateEntity(session, fork.id, "aptitudes", pool.id, { name: "Copied Pool" });
+  const listCopy = await EntitiesService.updateEntity(session, fork.id, "aptitudes", spellList.id, {
+    name: "Copied Spells",
+  });
 
   for (const childOnly of [false, true]) {
-    const feats = await FeatsService.getFeats(fork.id, { childOnly }, PAGE);
+    const feats = await EntitiesService.getEntities(fork.id, "feats", { childOnly }, PAGE);
     expect(feats.items.find((row) => row.id === feat.id)?.featsAptitudesInRules).toMatchObject([
       { aptitudeId: poolCopy.id, aptitudesInRule: { id: poolCopy.id, name: "Copied Pool" } },
     ]);
-    const spells = await PowersService.getPowers(fork.id, { childOnly }, PAGE);
+    const spells = await EntitiesService.getEntities(fork.id, "powers", { childOnly }, PAGE);
     expect(spells.items.find((row) => row.id === spell.id)?.powersAptitudesInRules).toMatchObject([
       { aptitudeId: listCopy.id, level: 1, aptitudesInRule: { id: listCopy.id, name: "Copied Spells" } },
     ]);
@@ -88,13 +89,15 @@ test("a fork's own feats and spells, listed alone, name a list the fork copied b
 
 test("a spell names its save by the view's id, and carries no stored save row", async () => {
   const { session, fork, ability, save, spell } = await setupOwnRows();
-  const saveCopy = await SavesService.updateSave(session, fork.id, save.id, {
+  const saveCopy = await EntitiesService.updateEntity(session, fork.id, "saves", save.id, {
     name: "Copied Save",
     abilityId: ability.id,
   });
 
-  const listed = (await PowersService.getPowers(fork.id, {}, PAGE)).items.find((row) => row.id === spell.id)!;
-  const page = await PowersService.getPower(fork.id, spell.id);
+  const listed = (await EntitiesService.getEntities(fork.id, "powers", {}, PAGE)).items.find(
+    (row) => row.id === spell.id,
+  )!;
+  const page = await EntitiesService.getEntity(fork.id, "powers", spell.id);
   for (const read of [listed, page]) {
     expect(read.saveId).toBe(saveCopy.id);
     expect(read).not.toHaveProperty("savesInRule");

@@ -66,6 +66,8 @@ export {
 export { ContentPart } from "./parts/content/index.ts";
 export {
   EntitiesPart,
+  type EntityCopies,
+  type EntityCopiesPlan,
   type EntityCreatePlan,
   type EntityDeletePlan,
   type EntityEditPlan,

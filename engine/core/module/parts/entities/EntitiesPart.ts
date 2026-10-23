@@ -8,20 +8,9 @@ type Kind<K extends keyof ViewEntities> = RulesetEntity<K, object, object, Field
 /**
  * The entity kinds a ruleset answers of, by the schema's tables: each its table's `RulesetEntity`, and those whose
  * pages read more than an entity have it: a class's parts (its levels, its class skills, its table, a level by its id
- * alone, its progression), an item's duplicates and variants, and the feats' and powers' lists by pool.
+ * alone, its progression).
  */
 export type EntityKindsContract = { [K in Exclude<keyof ViewEntities, "klass_levels">]: Kind<K> } & {
-  feats: {
-    openList(where: { aptitudeId?: string; childOnly?: boolean; family?: string }): {
-      describe<T extends Record<string, unknown> & { id: string }>(rows: T[]): unknown[];
-      filters: object;
-      groupFilters: object;
-    };
-  };
-  items: {
-    planDuplicate(sourceItemId: string, body: never): unknown;
-    planVariants(sourceItemId: string, variants: { description?: string | null; name: string }[]): unknown;
-  };
   klasses: {
     describeLevel(levelId: string): unknown;
     describeLevelFields(): FormField[];
@@ -46,12 +35,6 @@ export type EntityKindsContract = { [K in Exclude<keyof ViewEntities, "klass_lev
       describeSpellLists(): unknown;
       describeSpells(): unknown;
       describeSpellsKnown(): unknown;
-    };
-  };
-  powers: {
-    openList(where: { aptitudeId?: string; childOnly?: boolean; level?: number }): {
-      describe<T extends Record<string, unknown> & { id: string }>(rows: T[]): unknown[];
-      filters: object;
     };
   };
 };

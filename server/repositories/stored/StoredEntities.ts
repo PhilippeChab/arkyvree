@@ -595,6 +595,14 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
     return this.paginated(rows as { description: string | null; id: string; name: string }[], pagination);
   }
 
+  /** The live entities of every kind a kind owns (`ownerType`: a class's levels), of its owners (`ownerIds`). */
+  async findOwned(db: Db, where: { ownerIds: string[]; ownerType: string }) {
+    const owned = [];
+    for (const entityType of Engine.storage().ownedKinds(where.ownerType))
+      owned.push(...(await this.findMany(db, { entityType, ownerIds: where.ownerIds })));
+    return owned;
+  }
+
   /**
    * A page of a ruleset's list of a kind (`where`), each as its kind's row with its lists (a feat's pools, each with its
    * aptitude).

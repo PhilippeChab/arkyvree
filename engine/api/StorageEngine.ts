@@ -480,6 +480,11 @@ export default class StorageEngine {
     return this.baseRules;
   }
 
+  /** The kinds a kind owns (`type`: a class's levels), whose entities go with its own. */
+  ownedKinds(type: string): string[] {
+    return this.merged.entityTypes.filter((def) => def.ownerType === type).map((def) => def.type);
+  }
+
   /** A pick's row (`row`, by its columns), of a step's (`name`), as what a write of it stores past its ordinal. */
   pickOf(name: string, row: Row) {
     const pick = this.characterDeclaration.picks[name];
@@ -568,6 +573,16 @@ export default class StorageEngine {
         type: row.type,
         description: null,
       }));
+  }
+
+  /**
+   * The joins whose links to an entity of a kind (`type`) refuse its delete, by their names (a class level's base bonus
+   * to a save): an entity one links to is in use.
+   */
+  refusingJoins(type: string): string[] {
+    return Object.entries(this.joins)
+      .filter(([, join]) => join.to === type && this.role(join.role, join.from, join.to).onDelete === "refuse")
+      .map(([name]) => name);
   }
 
   /** What every module's registries hold. */

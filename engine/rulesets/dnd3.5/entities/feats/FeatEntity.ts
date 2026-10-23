@@ -1,5 +1,7 @@
 /** A feat as a ruleset's entity: what the ruleset describes of it, lists it by, and checks of its form. */
 
+import { z } from "zod";
+
 import { ListedEntity } from "@/engine/core/entities/index.ts";
 import type { EntityFieldValues, EntityForm } from "@/engine/core/fields/index.ts";
 import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
@@ -42,7 +44,13 @@ export default class FeatEntity extends ListedEntity<
   /** Its families, the weapon rules it changes, the schools it forbids. */
   protected override readonly fields = FEAT_FIELDS;
 
+  /** Its groups' filters: a pool's families. */
+  protected override readonly groupFilters = { aptitudeId: z.string().uuid() };
+
   protected override readonly label = "Feat";
+
+  /** Its list's filters: a pool's feats, a family's. */
+  protected override readonly listFilters = { aptitudeId: z.string().uuid(), family: z.string() };
 
   override readonly type = "feats";
 
@@ -62,6 +70,16 @@ export default class FeatEntity extends ListedEntity<
     return { description, name, ...(!feat && { generated: false }) };
   }
 
+  /** A page of the ruleset's feats' families, of a pool's feats when its query says (`aptitudeId`). */
+  protected override groupsOf(where: { aptitudeId?: string }) {
+    return {
+      groupFilters: {
+        groupField: FEAT_FAMILY,
+        ids: this.poolFeatIds(where.aptitudeId),
+      },
+    };
+  }
+
   /** A feat's pool links, as the view composes them. */
   protected override linksIn({ featsAptitudesInRules }: FeatWithAptitudes) {
     return { featsAptitudesInRules };
@@ -72,31 +90,40 @@ export default class FeatEntity extends ListedEntity<
     return aptitudeIds?.map((aptitudeId) => ({ aptitudeId }));
   }
 
+  /**
+   * A page of the ruleset's feats, as its query asks for it: what it's read with (`filters`: a pool's feats, a
+   * family's), and its rows described, with their pools as the ruleset composes them.
+   */
+  protected override listOf(where: { aptitudeId?: string; family?: string }) {
+    return {
+      describe: <T extends Record<string, unknown> & { id: string }>(rows: T[]) => this.describeListed(rows),
+      filters: {
+        ids: this.poolFeatIds(where.aptitudeId),
+        ...(where.family && { fields: { [FEAT_FAMILY]: where.family } }),
+      },
+    };
+  }
+
   /** A form's pools, the view's: refused when it names one twice (by its source's id and its copy's). */
   protected override resolveIds({ aptitudeIds }: FeatBody) {
     return aptitudeIds ? { aptitudeIds: this.ids.resolveAll("aptitudes", aptitudeIds) } : {};
   }
 
   /**
-   * A page of the ruleset's feats, as its form asks for it: what it's read with (`filters`: a pool's feats, a family's;
-   * `groupFilters`: grouped by family), and its rows described, with their pools as the ruleset composes them.
+   * A new feat off its form. Named as an ancestor its ruleset deleted, it stands in for it, and is generated when the
+   * ancestor was (`ancestor`: its stored row, which the server reads and the view hides, never the form's).
    */
-  override openList(where: { aptitudeId?: string; childOnly?: boolean; family?: string }) {
-    const ids = where.aptitudeId === undefined ? undefined : this.rulesetData.listFeatIds(where.aptitudeId);
+  override planCreate(form: EntityForm, ancestor?: Record<string, unknown>) {
+    const plan = super.planCreate(form);
     return {
-      describe: <T extends Record<string, unknown> & { id: string }>(rows: T[]) => this.describeListed(rows),
-      filters: { ids, ...(where.family && { fields: { [FEAT_FAMILY]: where.family } }) },
-      groupFilters: { groupField: FEAT_FAMILY, ids },
+      ...plan,
+      columns: { ...plan.columns, generated: ancestor?.generated === true },
     };
   }
 
-  /**
-   * A new feat off its form. Named as an ancestor its ruleset deleted, it stands in for it, and is generated when the
-   * ancestor was (`tombstoneGenerated`: what the server reads of the ancestor, which the view hides, never the form's).
-   */
-  override planCreate(form: EntityForm, tombstoneGenerated = false) {
-    const plan = super.planCreate(form);
-    return { ...plan, columns: { ...plan.columns, generated: tombstoneGenerated } };
+  /** A pool's feats' ids (`aptitudeId`), as the ruleset composes them: every feat's (`undefined`) without one. */
+  private poolFeatIds(aptitudeId: string | undefined) {
+    return aptitudeId === undefined ? undefined : this.rulesetData.listFeatIds(aptitudeId);
   }
 
   /** The pools these feats' modifiers add slots to (`aptitudes.<slug>.allowed`), by feat id. */

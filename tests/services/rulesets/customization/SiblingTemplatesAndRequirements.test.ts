@@ -5,12 +5,13 @@ import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Entities, Properties, Requirements, Rulesets } from "@/server/repositories/index.ts";
 import { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";
+import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
-import { ItemsService } from "@/server/services/rulesets/items/index.ts";
 import { api, expectRefusedWith, expectStatus } from "@/tests/support/api.ts";
 import {
   copyEntity,
   createSeededTestRuleset,
+  type Described,
   invalidateSeededRuleset,
   invalidateTestRulesets,
 } from "@/tests/support/rulesets.ts";
@@ -83,15 +84,15 @@ test.each([
   [1, { criticalRange: 3 }, [WEAPON_CRITICAL_RANGE, "3"]],
 ])("derived item can override template field from extension %i", async (_, override, row) => {
   const { session, host, source, copies } = await setup("items");
-  const item = await ItemsService.duplicateItem(session, host.id, source.id, {
+  const item = await EntitiesService.duplicateEntity(session, host.id, "items", source.id, {
     name: "Audit Derived Item",
     type: "Weapon",
   });
   const templateRows = await Properties.findMany(db, { entityIds: copies, entityType: "items" });
   // Its template's fields, each extension's copy's own, as the view merges them
-  const { weapon } = await ItemsService.getItem(host.id, item.id);
+  const { weapon } = await EntitiesService.getEntity<Described<"items">>(host.id, "items", item.id);
   expect(weapon).toMatchObject({ baseDamage: "1d6", criticalRange: 2 });
-  await ItemsService.updateItem(session, host.id, item.id, {
+  await EntitiesService.updateEntity(session, host.id, "items", item.id, {
     name: item.name,
     type: "Weapon",
     fields: { weapon: { ...weapon, ...override } },
@@ -100,7 +101,10 @@ test.each([
   // The item stores only the field it overrides, and reads the other off its template
   const own = await Properties.findMany(db, { entityIds: [item.id], entityType: "items" });
   expect(own.map((p) => [p.type, p.value])).toEqual([row]);
-  expect((await ItemsService.getItem(host.id, item.id)).weapon).toMatchObject({ ...weapon, ...override });
+  expect((await EntitiesService.getEntity<Described<"items">>(host.id, "items", item.id)).weapon).toMatchObject({
+    ...weapon,
+    ...override,
+  });
 });
 
 for (const action of ["update", "delete"] as const) {

@@ -455,65 +455,68 @@ See [docs/access.md](./access.md) for the full policy matrix across rulesets, ch
   unlinks the grant and the author can fix it. Class-granted feats that a
   character actually picked are recorded on the character (a `feats` pick's
   `entity_id`, `character.advancement_picks`), so the character-side check
-  already covers that case.
+  already covers that case. A join whose role refuses its target's delete is the
+  exception (a class level's base bonus to a save, `baseBonus`): the database
+  would refuse the delete, and the check answers why first
+  (`Joins.hasRefusing`, by the joins the modules declare: `StorageEngine.refusingJoins`).
 
 The principle: only protect what the user *invested* in (their character
 picks). Author-owned data that breaks via cascade is recoverable by the author.
 
 The shared check lives in `services/rulesets/characterPicks.ts` as `hasCharacterPicks(tx, entityType,
-ids, rulesetId)` (a class by its levels) and is reused by every entity-delete service and
-a class level's or a class skill's removal. One helper, one scoping rule, one source of truth.
+ids, rulesetId)` (an entity with the ones it owns, which go with it: a class with its levels,
+`Entities.findOwned`) and is reused by every entity delete (`EntityWriter.delete`) and a class
+level's or a class skill's removal. One helper, one scoping rule, one source of truth.
 
 ## Entity Services Pattern
 
-Every entity service works in the ruleset's scope (`withRulesetScope`): reads come from its composed view, which the service binds the engine to whole (`Engine.for(scope)`), and writes to an inherited entity go to the fork's copy, made on its first edit (`EntityEdit`, `EntityCopy`: `server/cow/writes/`):
+One service answers every kind's entities (`EntitiesService`, `server/services/rulesets/entities/`), in the ruleset's scope (`withRulesetScope`): reads come from its composed view, which the service binds the engine to whole (`Engine.for(scope)`), and writes to an inherited entity go to the fork's copy, made on its first edit (`EntityEdit`, `EntityCopy`: `server/cow/writes/`). It names no kind: what each answers, its kind's rules say (`Engine.for(scope).entities(type)`):
 
 ```ts
-// Read (list): the repository reads the ruleset and its source chain, less the sibling losers, with what the kind's
-// list narrows them to (`filters`); the engine describes the rows as the view does
+// Read (list): the kind's rules read the query's filters past the shared ones, by their schemas, and give what the
+// repository narrows the ruleset's rows to (`filters`), its source chain's less the sibling losers; they describe the
+// rows as the view does
 return await withRulesetScope(db, rulesetId, async (scope) => {
-  const list = Engine.for(scope).entities("saves").openList(where);
-  const result = await Entities.findPage<RulesetSave>(
+  const list = Engine.for(scope).entities(type).openList({ childOnly, ...filters });
+  const result = await Entities.findPage(
     db,
-    { entityType: "saves", rulesetId, ...scope.rulesetData.cow.listFilters, ...where, ...list.filters },
+    { entityType: type, rulesetId, ...scope.rulesetData.cow.listFilters, childOnly, orderBy, orderDir, search, ...list.filters },
     pagination,
   );
   return { ...result, items: list.describe(result.items) };
 });
 
 // Read (one): the entity as its page shows it, or the engine's not-found refusal (a 404)
-return Engine.for(scope).entities("saves").describe(saveId);
+return Engine.for(scope).entities(type).describe(entityId);
 ```
 
-Every kind is served by one router, by its URL segment (`server/routers/api/rulesets/entities/`: `/rulesets/:id/entities/:entityType`, `classes` for `klasses`): its list, with its kind's filters past the shared ones (a race's or a class's `kind`, a feat's or a spell's `aptitudeId`, a feat's `family`, a spell's `level`, an aptitude's `scope`, an item's `isTemplate`; one its kind takes none of refused, by key), its page, its create (201), update and delete, and its kind's actions (`grouped`, its groups in their own order with their own filters, a feat's pool's; `templates`; `:entityId/duplicate`; `:entityId/variants`). Each kind's filters are typed by their schemas (`buildKindServices`), so the service it dispatches to takes them read. `EntitiesService` (`server/services/rulesets/entities/`) dispatches each to its kind's service through one registry, which says what each kind answers: an action a kind has none of (an ability's create, a race's templates) is refused as not found. The client reads and writes every kind through these, its reads of a kind's list and of an entity through `client/src/lib/entityRequests.ts` (`readEntitiesFn`, `readEntityFn`); a class's own resources (its levels, skills, feat pools, progression, spell lists, spells known and spells) keep their routes, which are a class's, not a kind's. No kind has routes of its own for its entities: a module's new kind is served by these as it is (`tests/routers/application.test.ts` checks no route of a kind's own lists, creates, reads, updates, deletes, groups or copies its entities, or answers its templates).
+Every kind is served by one router, by its URL segment (`server/routers/api/rulesets/entities/`: `/rulesets/:id/entities/:entityType`, `classes` for `klasses`): its list, with its kind's filters past the shared ones (a race's or a class's `kind`, a feat's or a spell's `aptitudeId`, a feat's `family`, a spell's `level`, an aptitude's `scope`, an item's `isTemplate`), its page, its create (201), update and delete, and its kind's actions (`grouped`, its groups in their own order with their own filters, a feat's pool's; `templates`; `:entityId/duplicate`; `:entityId/variants`). A kind declares its filters (`listFilters`, `groupFilters`: each a schema, by its query key), which its rules read: one it takes none of is refused, by key ("races take no level filter"), as a route's validation refuses a query. An action a kind has none of its rules refuse as not found: a read-only kind's create, update and delete (`readOnly`: an ability's), and the groups, templates, duplicate and variants of a kind that has none ("No templates for races"). The client reads and writes every kind through these, its reads of a kind's list and of an entity through `client/src/lib/entityRequests.ts` (`readEntitiesFn`, `readEntityFn`); a class's own resources (its levels, skills, feat pools, progression, spell lists, spells known and spells) keep their routes, which are a class's, not a kind's. No kind has routes of its own for its entities: a module's new kind is served by these as it is (`tests/routers/application.test.ts` checks no route of a kind's own lists, creates, reads, updates, deletes, groups or copies its entities, or answers its templates).
 
-A kind's creates, updates and deletes go through its writer, `EntityWriter` (`server/services/rulesets/EntityWriter.ts`), a field of its service: the service hands it the plan its rules give (`Engine.for(scope).entities(type)`), and it takes every kind's steps around it, in one order:
+A kind's creates, updates and deletes go through a writer, `EntityWriter` (`server/services/rulesets/EntityWriter.ts`), of its type: the service hands it the plan the kind's rules give, and it takes every kind's steps around it, in one order:
 
 ```ts
-private readonly writer = new EntityWriter("languages");
-
-return await this.writer.create(session, rulesetId, body.name, (scope) =>
-  Engine.for(scope).entities("languages").planCreate(body),
+return await new EntityWriter(type).create(session, rulesetId, body.name, (scope, { tombstoneAncestorId, tx }) =>
+  Engine.for(scope).entities(type).planCreate(body, ancestor),
 );
-return await this.writer.update(session, rulesetId, body, (scope) =>
-  Engine.for(scope).entities("languages").planEdit(languageId, body),
+return await new EntityWriter(type).update(session, rulesetId, body, (scope) =>
+  Engine.for(scope).entities(type).planEdit(entityId, body),
 );
-return await this.writer.delete(session, rulesetId, languageId, (scope) =>
-  Engine.for(scope).entities("languages").planDelete(languageId),
+return await new EntityWriter(type).delete(session, rulesetId, entityId, (scope) =>
+  Engine.for(scope).entities(type).planDelete(entityId),
 );
 ```
 
-- **A create** checks access, then the name against the composed view (`EntityNames.assertNameAvailable`), plans, writes the row, points a tombstone the name hides at it (`repointTombstone`), and writes its list links (`listLinks.ts`), what its plan writes beside it (`writeEntityWrites`) and the customizations it copies (an item's duplicate's).
+- **A create** checks access, then the name against the composed view (`EntityNames.assertNameAvailable`), plans, writes the row, points a tombstone the name hides at it (`repointTombstone`), and writes its list links (`listLinks.ts`), what its plan writes beside it (`writeEntityWrites`) and the customizations it copies (an item's duplicate's). Named as an ancestor the ruleset deleted, the new entity stands in for it, and its kind's rules read the ancestor's stored row, which the view hides (`planCreate(body, ancestor)`: a feat is generated when its ancestor was).
 - **An update** checks access, plans, checks a new name as a create does (`EntityNames.assertRenameAvailable`), and writes the row the view's entity resolves to: the fork's own, or the copy of an inherited one (`EntityEdit.cowToEdit`), refused when stale (a copy's `updatedAt` isn't the client's). It replaces its list links when the plan gives them.
-- **A delete** is refused while the entity is in use: picked by a character, unless the kind says otherwise (a saving throw a class level grants, `inUse`). It deletes the row the entity resolves to (`EntityEdit.cowToDelete`), the fork's own locked first, with what its plan removes.
+- **A delete** is refused while the entity is in use (see [What `inUse` means](#what-inuse-means-in-entity-delete-services)). It deletes the row the entity resolves to (`EntityEdit.cowToDelete`), the fork's own locked first, with what its plan removes.
 
-Each records its activity (`createLanguage`, `updateLanguage`, `deleteLanguage`: the writer's activity name), which carries the ruleset's base rules, as every change to a ruleset's content does (`createActivityWithNotifications` reads them off the ruleset it notifies the stakeholders of: the client names the change in the ruleset's words, a 3.5 power a spell), and drops the ruleset's views. A kind adds what's its own: what its plan reads (a feat's tombstone ancestor, whether it was generated, an item template's copies when its edit changes its type), what refuses its delete (`refuse`: an item template's copies) and what it compares to the entity it was (an item's template, from the row).
+Each records its activity (`createLanguage`, `updateLanguage`, `deleteLanguage`: the writer's activity name, of its type), which carries the ruleset's base rules, as every change to a ruleset's content does (`createActivityWithNotifications` reads them off the ruleset it notifies the stakeholders of: the client names the change in the ruleset's words, a 3.5 power a spell), and drops the ruleset's views. An edit's or a delete's plan may name the copies it reaches (`copies`: an item template's, whose type change or delete its copies refuse), which the service reads where the plan reaches them (the ruleset's view and the rulesets built on it) for the plan's check. A kind's copies (`Copies`: its templates, a duplicate, its variants) are planned by its rules alike (`openTemplates`, `planDuplicate`, `planVariants`).
 
 A create or an edit answers its row with the fields the entity keeps once written (its plan's `fields`: a skill's, a race's, none of an ability's), as a page describes its rows, and a class's levels, class skills and table keep their handle (`class(klassId).planLevelDelete`, `describeLevel`).
 
 Every kind's rules are a class on one base (`engine/core/entities/RulesetEntity.ts`), whose steps every kind takes, a kind adding its rules to the ones they name:
 - **Described** (`describe(id)`): the entity found (`find`, refused as not found), its row as the view resolves it, with the fields its properties hold (the kind's `fields`, a codec: `FieldCodec.NONE` for a kind without; a reference the id the view keys its entity by, `fieldsOf`). A kind whose page shows its customizations adds its modifiers and its requirements (`CustomizationPageEntity`: a race, a feat, a power, an item, a class level); an item's fields read its properties merged with its template's (`propertiesOf`, `requirementsOf`), and it names its template (`templateName`). Its form's fields are described as the ruleset declares them (`describeFields`: `FieldCodec.describe`).
-- **Listed** (`openList(where)`): what the server reads a page with (`filters`) and its rows described alike. A feat's and a power's list narrows them to a list's, and gives its rows their lists as the ruleset composes them (`ListedEntity`, which also refuses a feat in a spell list and a spell in a feat pool); an item's gives its rows their template's name.
+- **Listed** (`openList(where)`): its query's filters read by their schemas (`listFilters`), what the server reads a page with (`filters`, `listOf`) and its rows described alike; its groups' alike (`openGroups`, `groupFilters`, `groupsOf`: a feat's families). A feat's and a power's list narrows them to a list's, and gives its rows their lists as the ruleset composes them (`ListedEntity`, which also refuses a feat in a spell list and a spell in a feat pool); an item's gives its rows their template's name.
 - **Written** (`planCreate(body)`, `planEdit(id, body)`): the entities the form names by id read as the view reads them (`resolveIds`, by `RequestIds`: a copy's for its source's id, one the view lacks refused by name), its fields read by its codec against the ruleset's declarations (`FieldCodec.parse`: refused as invalid, by field, a key no declared field, a value outside its type's closed list), the form checked (`checkForm`), its row's columns (`columnsOf`), its list links (`linksOf`), what it writes beside them (`writesOf`: by default its fields, the ones it gives over those it keeps, which its kind's rules build on: a skill's Skill Focus, a power's school's Spell Focus, a class level's requirement of the previous level, an item's fields as the overrides of its template's), and the fields it keeps once written (`fields`, read off what it writes: `writtenProperties`).
 - **Deleted** (`planDelete(id)`): checked (`checkDelete`: the aptitude the general feats count toward), and what it writes with it (`deleteWritesOf`: a skill's Skill Focus).
 

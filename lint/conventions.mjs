@@ -60,7 +60,7 @@
  *   on the entity (its role on it), never with `new`; a policy's only static is `for`, and its only async method: a
  *   check reads that standing and what the service passes it (`canDeleteEntity({ inUse })`), and throws or answers.
  * - `class-file-names`: a module that declares a class and exports it, or its shared instance (`export default new
- *   X()`), is named after the class: `X.ts` (`FeatsService.ts`, `References.ts`). A module of several classes is
+ *   X()`), is named after the class: `X.ts` (`EntitiesService.ts`, `References.ts`). A module of several classes is
  *   named for what groups them (`server/errors/`), and a router's `new Hono()` is another module's class.
  * - `concern-shape`: a concern (`function X<B extends Constructor>(Base: B)`) sits in `X.ts`, its class is named for
  *   what it adds (a verb's `-ing`, `Archives` → `Archiving`, or `With` a noun, `ArmorClass` → `WithArmorClass`), and
@@ -1177,7 +1177,7 @@ function mentions(node, name) {
 }
 
 /**
- * Every module under `tree` (a repo path), by its name without the extension: `FeatsService` → its paths. Read again
+ * Every module under `tree` (a repo path), by its name without the extension: `EntitiesService` → its paths. Read again
  * for each test file, not cached: an editor's language server lints for as long as it runs, and a module added since
  * must count.
  */

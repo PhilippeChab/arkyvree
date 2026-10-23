@@ -4,12 +4,10 @@ import type { Item, Klass, KlassLevel, Race } from "@/engine/index.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Entities, Modifiers, Properties, Rulesets } from "@/server/repositories/index.ts";
-import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
 import { ClassLevelsService } from "@/server/services/rulesets/classes/levels/index.ts";
 import { ClassSkillsService } from "@/server/services/rulesets/classes/skills/index.ts";
+import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
-import { ItemsService } from "@/server/services/rulesets/items/index.ts";
-import { RacesService } from "@/server/services/rulesets/races/index.ts";
 import {
   copyEntity,
   createSeededTestRuleset,
@@ -116,19 +114,19 @@ for (const entityType of ["races", "klasses", "items"] as const) {
   test(`${entityType}: ordinary edit copies all visible sibling customizations`, async () => {
     const { session, host, source, assertCopied } = await setup(entityType);
     if (entityType === "races") {
-      await RacesService.updateRace(session, host.id, source.id, {
+      await EntitiesService.updateEntity(session, host.id, "races", source.id, {
         name: source.name,
         description: "edited description",
         size: "Medium",
         baseSpeed: 30,
       });
     } else if (entityType === "klasses") {
-      await ClassesService.updateClass(session, host.id, source.id, {
+      await EntitiesService.updateEntity(session, host.id, "klasses", source.id, {
         name: source.name,
         description: "edited description",
       });
     } else {
-      await ItemsService.updateItem(session, host.id, source.id, {
+      await EntitiesService.updateEntity(session, host.id, "items", source.id, {
         name: source.name,
         description: "edited description",
       });

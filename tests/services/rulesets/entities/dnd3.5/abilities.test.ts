@@ -4,16 +4,16 @@ import type { RulesetAbility } from "@/engine/index.ts";
 import { db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { Entities } from "@/server/repositories/index.ts";
-import { AbilitiesService } from "@/server/services/rulesets/abilities/index.ts";
+import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
 
-describe("AbilitiesService", () => {
+describe("EntitiesService: abilities", () => {
   describe("getAbilities", () => {
     test("should return empty paginated result when no abilities exist", async () => {
       const { ruleset } = await createTestUserAndRuleset();
 
-      const result = await AbilitiesService.getAbilities(ruleset.id, {}, { limit: 10, page: 1 });
+      const result = await EntitiesService.getEntities(ruleset.id, "abilities", {}, { limit: 10, page: 1 });
 
       expect(result.items).toEqual([]);
     });
@@ -27,7 +27,7 @@ describe("AbilitiesService", () => {
         { name: "Constitution", description: "Endurance", rulesetId: ruleset.id },
       ]);
 
-      const result = await AbilitiesService.getAbilities(ruleset.id, {}, { limit: 10, page: 1 });
+      const result = await EntitiesService.getEntities(ruleset.id, "abilities", {}, { limit: 10, page: 1 });
 
       expect(result.items.length).toBe(3);
     });
@@ -40,7 +40,12 @@ describe("AbilitiesService", () => {
         { name: "Dexterity", description: "Agility", rulesetId: ruleset.id },
       ]);
 
-      const result = await AbilitiesService.getAbilities(ruleset.id, { search: "Strength" }, { limit: 10, page: 1 });
+      const result = await EntitiesService.getEntities(
+        ruleset.id,
+        "abilities",
+        { search: "Strength" },
+        { limit: 10, page: 1 },
+      );
 
       expect(result.items.length).toBe(1);
       expect(result.items[0].name).toBe("Strength");
@@ -55,14 +60,16 @@ describe("AbilitiesService", () => {
         { name: "Constitution", description: "Endurance", rulesetId: ruleset.id },
       ]);
 
-      const result = await AbilitiesService.getAbilities(ruleset.id, {}, { limit: 2, page: 1 });
+      const result = await EntitiesService.getEntities(ruleset.id, "abilities", {}, { limit: 2, page: 1 });
 
       expect(result.items.length).toBe(2);
       expect(result.nextPage).toBe(2);
     });
 
     test("should throw NotFoundError for non-existent ruleset", async () => {
-      expect(AbilitiesService.getAbilities(NIL_UUID, {}, { limit: 10, page: 1 })).rejects.toThrow(NotFoundError);
+      expect(EntitiesService.getEntities(NIL_UUID, "abilities", {}, { limit: 10, page: 1 })).rejects.toThrow(
+        NotFoundError,
+      );
     });
   });
 });

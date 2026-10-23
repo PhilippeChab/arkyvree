@@ -11,7 +11,7 @@ import { Entities, EntitySnapshots, Modifiers, Properties, Requirements } from "
 import { RulesetChangesService } from "@/server/services/rulesets/changes/index.ts";
 import { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";
 import { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";
-import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
+import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { RulesetsService } from "@/server/services/rulesets/index.ts";
 import type { Session } from "@/shared/relations.ts";
 import { STRENGTH_BONUS } from "@/tests/support/customizations.ts";
@@ -206,7 +206,7 @@ describe.each(["modifiers", "requirements"])("the %s of a feat the fork already 
     const { session, fork, feat } = await setup();
     const parentRows = await kind.rowsOf("feats", feat.id);
     // The URL keeps the source's id after an edit copied the feat.
-    await FeatsService.updateFeat(session, fork.id, feat.id, { name: feat.name, description: "Copied" });
+    await EntitiesService.updateEntity(session, fork.id, "feats", feat.id, { name: feat.name, description: "Copied" });
     const copyId = (await EntitySnapshots.findOne(db, { sourceEntityId: feat.id, rulesetId: fork.id }))!.forkedEntityId;
     const [copied] = await kind.rowsOf("feats", copyId);
 

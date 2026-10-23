@@ -3,7 +3,7 @@ import { expect, test } from "bun:test";
 import type { Language } from "@/engine/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Entities } from "@/server/repositories/index.ts";
-import { LanguagesService } from "@/server/services/rulesets/languages/index.ts";
+import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
 
 test("rows that tie on a list's sort come in one order, by id, each on one page", async () => {
@@ -21,8 +21,9 @@ test("rows that tie on a list's sort come in one order, by id, each on one page"
   );
   const ids: string[] = [];
   for (let page = 1; page <= 3; page++) {
-    const result = await LanguagesService.getLanguages(
+    const result = await EntitiesService.getEntities(
       ruleset.id,
+      "languages",
       { childOnly: true, orderBy: "createdAt" },
       { limit: 2, page },
     );

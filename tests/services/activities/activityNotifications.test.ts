@@ -7,8 +7,7 @@ import { CampaignInvitesService } from "@/server/services/campaigns/invites/inde
 import { CharacterContributorsService } from "@/server/services/characters/contributors/index.ts";
 import { ClassSkillsService } from "@/server/services/rulesets/classes/skills/index.ts";
 import { ContributorsService } from "@/server/services/rulesets/contributors/index.ts";
-import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
-import { MechanicsService } from "@/server/services/rulesets/mechanics/index.ts";
+import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { collectNotified } from "@/server/websockets/index.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 import { createTestCampaign, inviteToSlot } from "@/tests/support/campaigns.ts";
@@ -167,16 +166,16 @@ describe("activity notifications", () => {
       description: "",
       rulesetId: ruleset.id,
     });
-    const feat = await FeatsService.createFeat(author.session, ruleset.id, {
+    const feat = await EntitiesService.createEntity(author.session, ruleset.id, "feats", {
       name: "Notified Feat",
       description: "",
       aptitudeIds: [aptitude.id],
     });
-    await FeatsService.updateFeat(author.session, ruleset.id, feat.id, {
+    await EntitiesService.updateEntity(author.session, ruleset.id, "feats", feat.id, {
       name: "Notified Feat",
       fields: { families: ["Luck"] },
     });
-    await FeatsService.deleteFeat(author.session, ruleset.id, feat.id);
+    await EntitiesService.deleteEntity(author.session, ruleset.id, "feats", feat.id);
 
     const changes = [note("createFeat", author), note("deleteFeat", author), note("updateFeat", author)];
     expect(await inbox(owner)).toEqual(changes);
@@ -189,9 +188,11 @@ describe("activity notifications", () => {
     const [owner, author] = await users(2);
     const ruleset = await createTestRuleset(owner.user.id);
     await addRulesetContributor(ruleset.id, author.user, owner.user.id);
-    const { id } = await MechanicsService.createMechanic(author.session, ruleset.id, { name: "Notified Mechanic" });
-    await MechanicsService.updateMechanic(author.session, ruleset.id, id, { name: "Renamed Mechanic" });
-    await MechanicsService.deleteMechanic(author.session, ruleset.id, id);
+    const { id } = await EntitiesService.createEntity(author.session, ruleset.id, "mechanics", {
+      name: "Notified Mechanic",
+    });
+    await EntitiesService.updateEntity(author.session, ruleset.id, "mechanics", id, { name: "Renamed Mechanic" });
+    await EntitiesService.deleteEntity(author.session, ruleset.id, "mechanics", id);
 
     expect(await inbox(owner)).toEqual([
       note("createMechanic", author),
@@ -233,12 +234,12 @@ describe("activity notifications", () => {
       description: "",
       rulesetId: ruleset.id,
     });
-    const feat = await FeatsService.createFeat(author.session, ruleset.id, {
+    const feat = await EntitiesService.createEntity(author.session, ruleset.id, "feats", {
       name: "Worded Feat",
       description: "",
       aptitudeIds: [aptitude.id],
     });
-    await FeatsService.updateFeat(author.session, ruleset.id, feat.id, {
+    await EntitiesService.updateEntity(author.session, ruleset.id, "feats", feat.id, {
       name: "Worded Feat",
       fields: { families: ["Luck"] },
     });
@@ -254,7 +255,7 @@ describe("activity notifications", () => {
       primaryAbilityId: ability.id,
     });
     await ClassSkillsService.addClassSkill(author.session, ruleset.id, fighter.id, climb.id);
-    await FeatsService.deleteFeat(author.session, ruleset.id, feat.id);
+    await EntitiesService.deleteEntity(author.session, ruleset.id, "feats", feat.id);
 
     const page = { limit: 50, page: 1 };
     const activities = (await Activities.findPage(db, { userId: author.user.id }, page)).items;
@@ -274,7 +275,7 @@ describe("activity notifications", () => {
       description: "",
       rulesetId: ruleset.id,
     });
-    await FeatsService.createFeat(owner.session, ruleset.id, {
+    await EntitiesService.createEntity(owner.session, ruleset.id, "feats", {
       name: "Unnoticed Feat",
       description: "",
       aptitudeIds: [aptitude.id],

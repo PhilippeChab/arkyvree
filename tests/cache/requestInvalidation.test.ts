@@ -5,8 +5,8 @@ import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { runWithRequestCache } from "@/server/database/requestCache.ts";
 import { Entities, Rulesets } from "@/server/repositories/index.ts";
+import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
-import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { createSeededTestRuleset, readTargetPaths } from "@/tests/support/rulesets.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
@@ -84,13 +84,13 @@ for (const scenario of ["entity", "cow", "paths"] as const) {
     let copyId: string | undefined;
     await overlap(read, async () => {
       if (scenario === "cow") {
-        const copy = await FeatsService.updateFeat(session, fork.id, seed.featMap.Toughness, {
+        const copy = await EntitiesService.updateEntity(session, fork.id, "feats", seed.featMap.Toughness, {
           name: "Toughness",
           fields: { families: ["Luck"] },
         });
         copyId = copy.id;
       } else {
-        await FeatsService.updateFeat(session, fork.id, local.id, {
+        await EntitiesService.updateEntity(session, fork.id, "feats", local.id, {
           name: "After Marker",
           description: "after",
         });

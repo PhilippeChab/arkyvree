@@ -1,226 +1,166 @@
-import { z } from "zod";
-
-import { NotFoundError } from "@/server/errors/index.ts";
-import { RULESET_ENTITY_TYPES, type RulesetEntityType } from "@/server/repositories/index.ts";
-import { AbilitiesService } from "@/server/services/rulesets/abilities/index.ts";
-import { AptitudesService } from "@/server/services/rulesets/aptitudes/index.ts";
-import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
-import type { EntityBody } from "@/server/services/rulesets/EntityWriter.ts";
-import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
-import { ItemsService } from "@/server/services/rulesets/items/index.ts";
-import { LanguagesService } from "@/server/services/rulesets/languages/index.ts";
-import { MechanicsService } from "@/server/services/rulesets/mechanics/index.ts";
-import { PowersService } from "@/server/services/rulesets/powers/index.ts";
-import { RacesService } from "@/server/services/rulesets/races/index.ts";
-import { SavesService } from "@/server/services/rulesets/saves/index.ts";
-import { SkillsService } from "@/server/services/rulesets/skills/index.ts";
+import type { Db } from "@/drizzle/database.ts";
+import { Engine, type EntityCopies } from "@/engine/index.ts";
+import { include } from "@/lib/mixins.ts";
+import { type RulesetScope, withRulesetScope } from "@/server/cow/index.ts";
+import { db } from "@/server/database/index.ts";
+import { Entities, RULESET_ENTITY_TYPES, type RulesetEntityType } from "@/server/repositories/index.ts";
+import EntityWriter, { type EntityBody } from "@/server/services/rulesets/EntityWriter.ts";
 import type { Session } from "@/shared/relations.ts";
-import { getUrlSegment } from "@/shared/urlSegments.ts";
 
-import {
-  buildKindServices,
-  type KindServices,
-  type ListShared,
-  type Pagination,
-  type VariantBody,
-} from "./kindServices.ts";
-
-/** An action a kind may have none of: all but its list and its page. */
-type OptionalAction = Exclude<keyof KindServices, "get" | "list">;
-
-/** What a refusal calls a kind's action it has none of: "No groups for races". */
-const ACTION_WORDS: Readonly<Record<OptionalAction, string>> = {
-  create: "create",
-  duplicate: "duplicate",
-  grouped: "groups",
-  remove: "delete",
-  templates: "templates",
-  update: "update",
-  variants: "variants",
-};
-
-/** The kinds a race or a class is for: a list's partition. */
-const KIND_FILTER = { kind: z.string().optional() };
-
-/** A pool's entities: a list's pool. */
-const POOL_FILTER = { aptitudeId: z.string().uuid().optional() };
-
-/** Each entity kind's services, by its type: today's, one per kind, which the routes by kind dispatch to. */
-const KINDS: Record<RulesetEntityType, KindServices> = {
-  abilities: buildKindServices("abilities", {
-    filters: {},
-    get: (rulesetId, id) => AbilitiesService.getAbility(rulesetId, id),
-    list: AbilitiesService.getAbilities.bind(AbilitiesService),
-  }),
-  aptitudes: buildKindServices("aptitudes", {
-    create: (session, rulesetId, body) => AptitudesService.createAptitude(session, rulesetId, body),
-    filters: { scope: z.enum(["feats", "spells"]).optional() },
-    get: (rulesetId, id) => AptitudesService.getAptitude(rulesetId, id),
-    list: AptitudesService.getAptitudes.bind(AptitudesService),
-    remove: (session, rulesetId, id) => AptitudesService.deleteAptitude(session, rulesetId, id),
-    update: (session, rulesetId, id, body) => AptitudesService.updateAptitude(session, rulesetId, id, body),
-  }),
-  feats: buildKindServices("feats", {
-    create: (session, rulesetId, body) => FeatsService.createFeat(session, rulesetId, body),
-    filters: { ...POOL_FILTER, family: z.string().optional() },
-    get: (rulesetId, id) => FeatsService.getFeat(rulesetId, id),
-    // Its families, a pool's, in their own order
-    grouped: {
-      filters: POOL_FILTER,
-      list: FeatsService.getFeatGroups.bind(FeatsService),
-    },
-    list: FeatsService.getFeats.bind(FeatsService),
-    remove: (session, rulesetId, id) => FeatsService.deleteFeat(session, rulesetId, id),
-    update: (session, rulesetId, id, body) => FeatsService.updateFeat(session, rulesetId, id, body),
-  }),
-  items: buildKindServices("items", {
-    create: (session, rulesetId, body) => ItemsService.createItem(session, rulesetId, body),
-    duplicate: (session, rulesetId, id, body) => ItemsService.duplicateItem(session, rulesetId, id, body),
-    filters: {
-      isTemplate: z.stringbool().optional(),
-    },
-    get: (rulesetId, id) => ItemsService.getItem(rulesetId, id),
-    list: ItemsService.getItems.bind(ItemsService),
-    remove: (session, rulesetId, id) => ItemsService.deleteItem(session, rulesetId, id),
-    templates: (rulesetId, type) => ItemsService.getTemplates(rulesetId, type),
-    update: (session, rulesetId, id, body) => ItemsService.updateItem(session, rulesetId, id, body),
-    variants: (session, rulesetId, id, variants) => ItemsService.createVariants(session, rulesetId, id, variants),
-  }),
-  klasses: buildKindServices("klasses", {
-    create: (session, rulesetId, body) => ClassesService.createClass(session, rulesetId, body),
-    filters: KIND_FILTER,
-    get: (rulesetId, id) => ClassesService.getClass(rulesetId, id),
-    list: ClassesService.getClasses.bind(ClassesService),
-    remove: (session, rulesetId, id) => ClassesService.deleteClass(session, rulesetId, id),
-    update: (session, rulesetId, id, body) => ClassesService.updateClass(session, rulesetId, id, body),
-  }),
-  languages: buildKindServices("languages", {
-    create: (session, rulesetId, body) => LanguagesService.createLanguage(session, rulesetId, body),
-    filters: {},
-    get: (rulesetId, id) => LanguagesService.getLanguage(rulesetId, id),
-    list: LanguagesService.getLanguages.bind(LanguagesService),
-    remove: (session, rulesetId, id) => LanguagesService.deleteLanguage(session, rulesetId, id),
-    update: (session, rulesetId, id, body) => LanguagesService.updateLanguage(session, rulesetId, id, body),
-  }),
-  mechanics: buildKindServices("mechanics", {
-    create: (session, rulesetId, body) => MechanicsService.createMechanic(session, rulesetId, body),
-    filters: {},
-    get: (rulesetId, id) => MechanicsService.getMechanic(rulesetId, id),
-    list: MechanicsService.getMechanics.bind(MechanicsService),
-    remove: (session, rulesetId, id) => MechanicsService.deleteMechanic(session, rulesetId, id),
-    update: (session, rulesetId, id, body) => MechanicsService.updateMechanic(session, rulesetId, id, body),
-  }),
-  powers: buildKindServices("powers", {
-    create: (session, rulesetId, body) => PowersService.createPower(session, rulesetId, body),
-    filters: { ...POOL_FILTER, level: z.coerce.number().optional() },
-    get: (rulesetId, id) => PowersService.getPower(rulesetId, id),
-    list: PowersService.getPowers.bind(PowersService),
-    remove: (session, rulesetId, id) => PowersService.deletePower(session, rulesetId, id),
-    update: (session, rulesetId, id, body) => PowersService.updatePower(session, rulesetId, id, body),
-  }),
-  races: buildKindServices("races", {
-    create: (session, rulesetId, body) => RacesService.createRace(session, rulesetId, body),
-    filters: KIND_FILTER,
-    get: (rulesetId, id) => RacesService.getRace(rulesetId, id),
-    list: RacesService.getRaces.bind(RacesService),
-    remove: (session, rulesetId, id) => RacesService.deleteRace(session, rulesetId, id),
-    update: (session, rulesetId, id, body) => RacesService.updateRace(session, rulesetId, id, body),
-  }),
-  saves: buildKindServices("saves", {
-    create: (session, rulesetId, body) => SavesService.createSave(session, rulesetId, body),
-    filters: {},
-    get: (rulesetId, id) => SavesService.getSave(rulesetId, id),
-    list: SavesService.getSaves.bind(SavesService),
-    remove: (session, rulesetId, id) => SavesService.deleteSave(session, rulesetId, id),
-    update: (session, rulesetId, id, body) => SavesService.updateSave(session, rulesetId, id, body),
-  }),
-  skills: buildKindServices("skills", {
-    create: (session, rulesetId, body) => SkillsService.createSkill(session, rulesetId, body),
-    filters: {},
-    get: (rulesetId, id) => SkillsService.getSkill(rulesetId, id),
-    list: SkillsService.getSkills.bind(SkillsService),
-    remove: (session, rulesetId, id) => SkillsService.deleteSkill(session, rulesetId, id),
-    update: (session, rulesetId, id, body) => SkillsService.updateSkill(session, rulesetId, id, body),
-  }),
-};
+import { Copies } from "./concerns/Copies.ts";
+import type { EntityRow, ListWhere, Pagination } from "./rows.ts";
 
 /** Every entity kind's type, which the routes by kind take. */
 export const ENTITY_TYPES: readonly RulesetEntityType[] = RULESET_ENTITY_TYPES;
 
 /**
- * A ruleset's entities by their kind (`type`, its table), whatever it is: each answered by its kind's service, its
- * list's filters read by its kind's schemas (`buildKindServices`). An action a kind has none of (an ability's create, a
- * race's templates) is refused as not found.
+ * A ruleset's entities by their kind (`type`, its table), whatever it is, as its kind's rules answer them
+ * (`Engine.for(scope).entities(type)`): its list, read by the filters its rules take, and its groups, its page, and
+ * what its form writes (`EntityWriter`), checked against the copies a plan reaches. An action a kind has none of (an
+ * ability's create, a race's templates) its rules refuse as not found. Its copies (`Copies`): its templates, variants.
  */
-class EntitiesService {
-  /** A kind's action (`action`): refused as not found when it has none. */
-  private actionOf<A extends OptionalAction>(type: RulesetEntityType, action: A): NonNullable<KindServices[A]> {
-    const found = this.kindOf(type)[action];
-    if (!found) throw new NotFoundError(`No ${ACTION_WORDS[action]} for ${getUrlSegment(type)}`);
-    return found;
-  }
-
-  /** A kind's services. */
-  private kindOf(type: RulesetEntityType) {
-    return KINDS[type];
-  }
-
-  async createEntity(session: Session, rulesetId: string, type: RulesetEntityType, body: EntityBody) {
-    return await this.actionOf(type, "create")(session, rulesetId, body);
-  }
-
-  async createVariants(
-    session: Session,
-    rulesetId: string,
+class EntitiesService extends include(Object, Copies) {
+  /** The copies a plan reaches (`copies`: a template's, in its view and the rulesets built on it), by its check. */
+  private async checkCopies(
+    tx: Db,
+    { ruleset, rulesetData }: RulesetScope,
     type: RulesetEntityType,
-    sourceId: string,
-    variants: VariantBody[],
+    copies: EntityCopies | undefined,
   ) {
-    return await this.actionOf(type, "variants")(session, rulesetId, sourceId, variants);
+    if (!copies) return;
+    const rows = await Entities.findList<EntityRow>(tx, {
+      entityType: type,
+      rulesetId: ruleset.id,
+      ...rulesetData.cow.listFilters,
+      ...copies.filters,
+      lineage: true,
+      order: "id",
+    });
+    copies.check(rows);
   }
 
-  async deleteEntity(session: Session, rulesetId: string, type: RulesetEntityType, entityId: string) {
-    return await this.actionOf(type, "remove")(session, rulesetId, entityId);
+  /**
+   * A new entity of a kind off its form. Named as an ancestor its ruleset deleted, it stands in for it
+   * (`EntityNames.repointTombstone`), and its kind's rules read the ancestor's stored row (a feat takes its mark).
+   */
+  async createEntity<R = EntityRow>(session: Session, rulesetId: string, type: RulesetEntityType, body: EntityBody) {
+    const created = await new EntityWriter(type).create(
+      session,
+      rulesetId,
+      body.name,
+      async (scope, { tombstoneAncestorId, tx }) => {
+        const ancestor = tombstoneAncestorId
+          ? await Entities.findOne(tx, { entityType: type, id: tombstoneAncestorId })
+          : undefined;
+        return Engine.for(scope).entities(type).planCreate(body, ancestor);
+      },
+    );
+    return created as R;
   }
 
-  async duplicateEntity(
+  async deleteEntity<R = EntityRow>(session: Session, rulesetId: string, type: RulesetEntityType, entityId: string) {
+    const deleted = await new EntityWriter(type).delete(session, rulesetId, entityId, async (scope, { tx }) => {
+      const plan = Engine.for(scope).entities(type).planDelete(entityId);
+      await this.checkCopies(tx, scope, type, plan.copies);
+      return plan;
+    });
+    return deleted as R;
+  }
+
+  /**
+   * A duplicate of an entity (`sourceId`), as its kind's rules plan it (an item points at the same template, and takes
+   * its source's customizations when its source isn't one).
+   */
+  async duplicateEntity<R = EntityRow>(
     session: Session,
     rulesetId: string,
     type: RulesetEntityType,
     sourceId: string,
     body: EntityBody,
   ) {
-    return await this.actionOf(type, "duplicate")(session, rulesetId, sourceId, body);
+    const created = await new EntityWriter(type).create(session, rulesetId, body.name, (scope) =>
+      Engine.for(scope).entities(type).planDuplicate(sourceId, body),
+    );
+    return created as R;
   }
 
-  async getEntities(
+  /** A page of a kind's list, as its query asks for it (`where`), each row as its kind's rules describe it. */
+  async getEntities<R = EntityRow>(
     rulesetId: string,
     type: RulesetEntityType,
-    { filters, ...where }: ListShared & { filters: Record<string, unknown> },
+    { childOnly, orderBy, orderDir, search, ...filters }: ListWhere,
     pagination: Pagination,
   ) {
-    return await this.kindOf(type).list(rulesetId, where, filters, pagination);
+    return await withRulesetScope(db, rulesetId, async (scope) => {
+      const list = Engine.for(scope)
+        .entities(type)
+        .openList({ childOnly, ...filters });
+      const result = await Entities.findPage(
+        db,
+        {
+          entityType: type,
+          rulesetId,
+          ...scope.rulesetData.cow.listFilters,
+          childOnly,
+          orderBy,
+          orderDir,
+          search,
+          ...list.filters,
+        },
+        pagination,
+      );
+      return { ...result, items: list.describe(result.items) as R[] };
+    });
   }
 
-  async getEntity(rulesetId: string, type: RulesetEntityType, entityId: string) {
-    return await this.kindOf(type).get(rulesetId, entityId);
+  async getEntity<R = EntityRow>(rulesetId: string, type: RulesetEntityType, entityId: string) {
+    return await withRulesetScope(
+      db,
+      rulesetId,
+      async (scope) => Engine.for(scope).entities(type).describe(entityId) as unknown as R,
+    );
   }
 
+  /** A page of a kind's groups (a feat's families), as its query asks for it (`where`): refused for a kind without. */
   async getEntityGroups(
     rulesetId: string,
     type: RulesetEntityType,
-    { filters, ...where }: ListShared & { filters: Record<string, unknown> },
+    { childOnly, search, ...filters }: Pick<ListWhere, "childOnly" | "search"> & Record<string, unknown>,
     pagination: Pagination,
   ) {
-    return await this.actionOf(type, "grouped")(rulesetId, where, filters, pagination);
+    return await withRulesetScope(db, rulesetId, async (scope) => {
+      const { groupFilters } = Engine.for(scope)
+        .entities(type)
+        .openGroups({ childOnly, ...filters });
+      return await Entities.findGroupPage(
+        db,
+        {
+          entityType: type,
+          rulesetId,
+          ...scope.rulesetData.cow.listFilters,
+          ...groupFilters,
+          childOnly,
+          search,
+        },
+        pagination,
+      );
+    });
   }
 
-  async getTemplates(rulesetId: string, type: RulesetEntityType, templateType: string | undefined) {
-    return await this.actionOf(type, "templates")(rulesetId, templateType);
-  }
-
-  async updateEntity(session: Session, rulesetId: string, type: RulesetEntityType, entityId: string, body: EntityBody) {
-    return await this.actionOf(type, "update")(session, rulesetId, entityId, body);
+  /** An entity's update off its form, checked against the copies its plan reaches (a template's type change). */
+  async updateEntity<R = EntityRow>(
+    session: Session,
+    rulesetId: string,
+    type: RulesetEntityType,
+    entityId: string,
+    body: EntityBody,
+  ) {
+    const updated = await new EntityWriter(type).update(session, rulesetId, body, async (scope, { tx }) => {
+      const plan = Engine.for(scope).entities(type).planEdit(entityId, body);
+      await this.checkCopies(tx, scope, type, plan.copies);
+      return plan;
+    });
+    return updated as R;
   }
 }
 

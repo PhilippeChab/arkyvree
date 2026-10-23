@@ -5,9 +5,9 @@ import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
 import { Entities, Modifiers, Requirements } from "@/server/repositories/index.ts";
-import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
 import { ClassLevelsService } from "@/server/services/rulesets/classes/levels/index.ts";
 import { ClassProgressionService } from "@/server/services/rulesets/classes/progression/index.ts";
+import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { makeSession } from "@/tests/support/users.ts";
@@ -275,7 +275,7 @@ describe("ClassProgressionService", () => {
       }),
       400,
     );
-    expect((await ClassesService.getClass(fork.id, own.id)).updatedAt).toBe(saved.updatedAt);
+    expect((await EntitiesService.getEntity(fork.id, "klasses", own.id)).updatedAt).toBe(saved.updatedAt);
   });
 
   test("writes nothing for a save that changes nothing, not even a copy of an inherited class", async () => {

@@ -38,8 +38,8 @@ import {
   StarredRulesets,
 } from "@/server/repositories/index.ts";
 import { RulesetChangesService } from "@/server/services/rulesets/changes/index.ts";
+import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
-import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { RulesetsService } from "@/server/services/rulesets/index.ts";
 import type { Session } from "@/shared/relations.ts";
 import { createTestCampaign } from "@/tests/support/campaigns.ts";
@@ -230,7 +230,7 @@ describe("RulesetsService", () => {
         extensionRulesetIds: [extension.id],
       });
       const [aptitude] = await Entities.create<Aptitude>(db, "aptitudes", { name: "General", rulesetId: parent.id });
-      const feat = await FeatsService.createFeat({ ...session, userId: owner.id }, parent.id, {
+      const feat = await EntitiesService.createEntity({ ...session, userId: owner.id }, parent.id, "feats", {
         name: "Toughness",
         aptitudeIds: [aptitude.id],
       });
@@ -259,7 +259,7 @@ describe("RulesetsService", () => {
           .items,
       ).toEqual([]);
       expect(await EntitySnapshots.findMany(db, { rulesetId: created.id })).toEqual([]);
-      expect(await FeatsService.getFeat(created.id, feat.id)).toMatchObject({
+      expect(await EntitiesService.getEntity(created.id, "feats", feat.id)).toMatchObject({
         id: feat.id,
         featsAptitudesInRules: [{ aptitudeId: aptitude.id }],
       });
@@ -502,11 +502,11 @@ describe("RulesetsService", () => {
       const { session, fork, modified, deleted } = await setupChanges();
       expect(await RulesetChangesService.getChanges(session, fork.id)).toEqual([]);
 
-      const copy = await FeatsService.updateFeat(session, fork.id, modified.id, {
+      const copy = await EntitiesService.updateEntity(session, fork.id, "feats", modified.id, {
         name: "Power Attack",
         description: "Changed",
       });
-      await FeatsService.deleteFeat(session, fork.id, deleted.id);
+      await EntitiesService.deleteEntity(session, fork.id, "feats", deleted.id);
       const [added] = await Entities.create<Feat>(db, "feats", { name: "Homebrew", rulesetId: fork.id });
 
       const changes = await RulesetChangesService.getChanges(session, fork.id);
@@ -537,7 +537,7 @@ describe("RulesetsService", () => {
     describe("reverting", () => {
       test("deletes a modified feat's copy with its customizations and aptitude links, showing the parent's again", async () => {
         const { session, fork, modified } = await setupChanges();
-        const copy = await FeatsService.updateFeat(session, fork.id, modified.id, {
+        const copy = await EntitiesService.updateEntity(session, fork.id, "feats", modified.id, {
           name: "Power Attack",
           description: "Changed",
         });
@@ -557,7 +557,7 @@ describe("RulesetsService", () => {
         await RulesetChangesService.revertOverride(session, fork.id, "feats", modified.id);
 
         expect(await RulesetChangesService.getChanges(session, fork.id)).toEqual([]);
-        expect(await FeatsService.getFeat(fork.id, modified.id)).toMatchObject({
+        expect(await EntitiesService.getEntity(fork.id, "feats", modified.id)).toMatchObject({
           id: modified.id,
           description: null,
         });
@@ -574,10 +574,10 @@ describe("RulesetsService", () => {
 
       test("brings back an inherited feat the fork deleted", async () => {
         const { session, fork, deleted } = await setupChanges();
-        await FeatsService.deleteFeat(session, fork.id, deleted.id);
+        await EntitiesService.deleteEntity(session, fork.id, "feats", deleted.id);
         await RulesetChangesService.revertOverride(session, fork.id, "feats", deleted.id);
         expect(await EntitySnapshots.findMany(db, { rulesetId: fork.id })).toEqual([]);
-        expect(await FeatsService.getFeat(fork.id, deleted.id)).toMatchObject({ id: deleted.id });
+        expect(await EntitiesService.getEntity(fork.id, "feats", deleted.id)).toMatchObject({ id: deleted.id });
       });
 
       test("deletes a copied class's levels and class skills", async () => {

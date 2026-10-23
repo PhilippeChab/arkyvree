@@ -8,7 +8,7 @@ import { db } from "@/server/database/index.ts";
 import { fetchEveryPage } from "@/server/repositories/concerns/Paginates.ts";
 import { Entities, Modifiers, Properties, Requirements, Rulesets } from "@/server/repositories/index.ts";
 import { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";
-import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
+import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { createTestCampaign } from "@/tests/support/campaigns.ts";
 import { STRENGTH_BONUS } from "@/tests/support/customizations.ts";
 import { insertRows } from "@/tests/support/database.ts";
@@ -446,7 +446,7 @@ describe("RulesetViews", () => {
       // Fork the seed and COW the feat through the service.
       const fork = await createFork(seed.id);
       const forkSession = makeSession();
-      await FeatsService.updateFeat(forkSession, fork.id, baseFeat.id, {
+      await EntitiesService.updateEntity(forkSession, fork.id, "feats", baseFeat.id, {
         name: baseFeat.name,
         description: "COW'd",
       });
@@ -489,7 +489,7 @@ describe("RulesetViews", () => {
       expect(sampleFeat).toBeDefined();
 
       const forkSession = makeSession();
-      await FeatsService.updateFeat(forkSession, fork.id, sampleFeat.id, {
+      await EntitiesService.updateEntity(forkSession, fork.id, "feats", sampleFeat.id, {
         name: sampleFeat.name,
         description: "Edited by fork (COW)",
       });
@@ -522,7 +522,7 @@ describe("RulesetViews", () => {
       const sampleFeat = sampleFeats[0];
 
       const forkSession = makeSession();
-      await FeatsService.deleteFeat(forkSession, fork.id, sampleFeat.id);
+      await EntitiesService.deleteEntity(forkSession, fork.id, "feats", sampleFeat.id);
 
       const forkData = await composeFork(fork);
       const seedData = await RulesetViews.getData(seed);
