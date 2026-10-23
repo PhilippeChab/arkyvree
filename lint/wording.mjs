@@ -21,7 +21,8 @@
  * - `described-words`: what a character's screens say of its game is its ruleset's, which the engine describes (its
  *   sheet's blocks, its header's summary, its card's chips, its form's fields, its level steps): their modules
  *   (`DESCRIBED_SCREENS`) write none of a ruleset's nouns (`RULESET_NOUNS`: a class, a feat, a spell, an alignment…)
- *   in a string or a text they show. A comment's example may name them.
+ *   in a string or a text they show, in any case where it reads as words ("No feats yet"). A comment's example, a
+ *   module's path, a type and a key may name them. "Level" is the app's: every ruleset's characters advance by levels.
  * - `entity-type-labels`: an entity's type shows in its ruleset's words, `entityTypeLabel(type, words)`
  *   (`lib/rulesetLabels.ts`, its rules' words: "Class Level", a 3.5 power a "Spell"), never as the code names it
  *   ("klass_levels"): an `entityType` or a `sourceType` is never rendered as it is.
@@ -86,7 +87,10 @@ const LABELLED_BY_PROP =
  * kinds, its identity's fields, its sheet's parts.
  */
 const RULESET_NOUNS =
-  /\b(Abilit(y|ies)|Alignments?|Cantrips?|Class(es)?|Deit(y|ies)|Domains?|Familiars?|Feats?|Hit (Dice|Die|Points)|Races?|Saving Throws?|Skills?|Spellbooks?|Spells?)\b/;
+  /\b(Abilit(y|ies)|Alignments?|Cantrips?|Class(es)?|Deit(y|ies)|Domains?|Equipment|Experience|Familiars?|Feats?|Hit\s+(Dice|Die|Points?)|Initiative|Inventory|Items?|Languages?|Races?|Racial|Saving\s+Throws?|Skills?|Spellbooks?|Spellcast(ers?|ing)|Spells?|Weapons?)\b/;
+
+/** A ruleset's nouns in any case, in a text that reads as words (one with a space, never a key like "abilities") */
+const RULESET_NOUNS_ANY_CASE = new RegExp(RULESET_NOUNS.source, "i");
 
 /** The components whose `label` or `title` is a sentence, not a label: a chip's value, an empty state's */
 const SENTENCE_TITLED = /(Chip|^BlankState|^Tooltip)$/;
@@ -123,7 +127,7 @@ function createAppName(context) {
       check(node, node.value);
     },
     Literal(node) {
-      if (typeof node.value === "string" && node.parent.type !== "ImportDeclaration") check(node, node.value);
+      if (typeof node.value === "string" && !isModuleSource(node)) check(node, node.value);
     },
     TemplateElement(node) {
       check(node, node.value.cooked ?? "");
@@ -163,7 +167,9 @@ function createDescribedWords(context) {
   const file = repoPath(context.filename);
   if (!DESCRIBED_SCREENS.some((screen) => file.startsWith(screen))) return {};
   const check = (node, text) => {
-    const noun = RULESET_NOUNS.exec(text)?.[0];
+    // A text that reads as words, in any case; a key-shaped string, as a label writes it
+    const words = /\s/.test(text.trim()) || node.type === "JSXText";
+    const noun = (words ? RULESET_NOUNS_ANY_CASE : RULESET_NOUNS).exec(text)?.[0].replace(/\s+/g, " ");
     if (!noun) return;
     context.report({
       node,
@@ -177,7 +183,7 @@ function createDescribedWords(context) {
       check(node, node.value);
     },
     Literal(node) {
-      if (typeof node.value === "string" && !isModuleSource(node)) check(node, node.value);
+      if (typeof node.value === "string" && !isModuleSource(node) && !isUnshown(node)) check(node, node.value);
     },
     TemplateElement(node) {
       check(node, node.value.cooked ?? node.value.raw);
@@ -280,7 +286,7 @@ function createTypographyMarks(context) {
       check(node, decodedText(node.value));
     },
     Literal(node) {
-      if (typeof node.value === "string" && node.parent.type !== "ImportDeclaration") check(node, node.value);
+      if (typeof node.value === "string" && !isModuleSource(node)) check(node, node.value);
     },
     TemplateLiteral(node) {
       const quasis = node.quasis.map((quasi) => quasi.value.cooked ?? "");
@@ -331,6 +337,16 @@ function isModuleSource(node) {
     ) &&
       parent.source === node) ||
     parent.type === "TSExternalModuleReference"
+  );
+}
+
+/** Whether a string is never shown: a type's, an enum member's, or an object's key. */
+function isUnshown(node) {
+  const { parent } = node;
+  return (
+    parent.type === "TSLiteralType" ||
+    parent.type === "TSEnumMember" ||
+    ((parent.type === "Property" || parent.type === "PropertyDefinition") && parent.key === node)
   );
 }
 

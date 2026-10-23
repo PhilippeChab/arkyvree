@@ -190,12 +190,24 @@ describe("wording rules", () => {
           "client/src/pages/characters/details/imported.ts": 'export { x } from "./Spells.ts";\n',
           "client/src/pages/characters/details/Spells.ts": "export const x = 1;\n",
           "client/src/pages/rulesets/page.tsx": "export const p = <Typography>Spells</Typography>;\n",
+          // In any case where it reads as words, the words the engine supplies, and a noun across a line
+          "client/src/components/characters/empty.tsx": 'export const e = <BlankState title="No feats yet" />;\n',
+          "client/src/components/characters/add.tsx": 'export const a = <AddButton label="Add Item" />;\n',
+          "client/src/components/characters/points.tsx":
+            "export const p = <Typography>Max Hit\n  Points</Typography>;\n",
+          // A type, a key, and a string shaped as one are never shown
+          "client/src/pages/characters/details/type.ts":
+            'export type K = "Feats" | "other";\nexport const k = { "Spells": 1 };\n',
+          "client/src/pages/characters/details/key.ts": 'export const q = { name: "abilities" };\n',
           // A generic word is the app's
           "client/src/pages/characters/details/level.tsx": "export const l = <Typography>Add Level</Typography>;\n",
         },
         ["described-words"],
       ),
     ).toEqual([
+      "described-words client/src/components/characters/add.tsx",
+      "described-words client/src/components/characters/empty.tsx",
+      "described-words client/src/components/characters/points.tsx",
       "described-words client/src/components/characters/sections/label.tsx",
       "described-words client/src/components/characters/sections/text.tsx",
       "described-words client/src/pages/characters/details/template.ts",

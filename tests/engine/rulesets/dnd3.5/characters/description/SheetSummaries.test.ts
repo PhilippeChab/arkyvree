@@ -7,6 +7,8 @@ const LEVEL_WORDS = {
   add: "Add Level",
   removeLast: "Remove Last Level",
   removeLastMessage: "Are you sure you want to remove the last level? This action cannot be undone.",
+  deleteMessage:
+    "Are you sure you want to permanently delete this character? Its levels, abilities, inventory, attachments and customizations go with it. This action cannot be undone.",
   removed: "Level removed",
   removeFailed: "Failed to remove level",
 };
