@@ -2,7 +2,7 @@ import type { PropertyTypesProvider } from "@/engine/core/customizations/index.t
 import type { Fields } from "@/engine/core/fields/index.ts";
 import type { TargetPaths } from "@/engine/core/paths/CategoryPaths.ts";
 
-import type { CharactersPart, DescribedSheet } from "./parts/characters/index.ts";
+import type { CharactersPart, DescribedSheet, SheetSummary } from "./parts/characters/index.ts";
 import type { ContentPart } from "./parts/content/index.ts";
 import type { EntitiesPart, EntityKindsContract } from "./parts/entities/index.ts";
 import type { ImportsPart } from "./parts/imports/index.ts";
@@ -11,13 +11,13 @@ import type { RulesetPart } from "./parts/ruleset/index.ts";
 
 /**
  * What a ruleset describes in its own shape, which the server hands to the client as it is: a character's sheet (as the
- * API answers it, its private notes where every ruleset's holds them; as a member who reads it partly reads it;
- * printed), what an inventory entry shows beside its row, what the race picker adds to an option, and a level step's
- * picker (`stepPicker`) by the kind it reads a page of.
+ * API answers it, its private notes where every ruleset's holds them; as a member who reads it partly reads it, its
+ * summary as every ruleset's holds it; printed), what an inventory entry shows beside its row, what the race picker
+ * adds to an option, and a level step's picker (`stepPicker`) by the kind it reads a page of.
  */
 export interface Descriptions {
   inventoryEntry: object;
-  partialSheet: unknown;
+  partialSheet: { summary: SheetSummary };
   raceOption: object;
   sheet: DescribedSheet;
   sheetDocument: unknown;

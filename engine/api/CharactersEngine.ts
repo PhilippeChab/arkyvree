@@ -13,7 +13,10 @@ export default class CharactersEngine {
     private readonly module: Module,
   ) {}
 
-  /** A character's card, as a list shows it: its race, its classes at their highest level, its total level. */
+  /**
+   * A character's card, as a list shows it, as its ruleset describes it: its chips; a partly seen one's, those its
+   * ruleset marks as its partial reading's alone.
+   */
   describeCard(...args: Args<"describeCard">) {
     return this.module.characters.describeCard(this.view, ...args);
   }

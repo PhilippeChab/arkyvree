@@ -148,7 +148,7 @@ function CharacterCard({
           <StatusChip icon={<VisibilityIcon />} label={character.visibility} />
         )
       }
-      chips={<CharacterBuildChips race={character.race} levels={character.levels} />}
+      chips={<CharacterBuildChips chips={character.chips} />}
     />
   );
 }

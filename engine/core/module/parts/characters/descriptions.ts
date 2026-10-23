@@ -10,8 +10,23 @@ import type { Item, Language, Modifier, Property, Requirement } from "@/shared/r
 import type { SheetBlock } from "./blocks.ts";
 import type { InventoryEntryPlan } from "./plans.ts";
 
-/** A character's card, as a list of characters shows it: its race, its classes at their highest level, its total. */
+/**
+ * A chip of a character's card: its label, its tone, and whether a campaign member who reads the character partly sees
+ * it (`partial`: who it is, not what it took).
+ */
+export interface CardChip {
+  label: string;
+  partial: boolean;
+  tone: "primary" | "secondary";
+}
+
+/**
+ * A character's card, as a list of characters shows it: its chips, in its ruleset's order (3.5's race, then each class
+ * at its highest level), and what its ruleset reads of it, until its lists read its chips alone (3.5's race, its
+ * classes at their highest level, its total level), none of its levels for a partly seen character.
+ */
 export interface CharacterCard {
+  chips: CardChip[];
   levels: { klass: string; level: number }[];
   race: string;
   totalLevel: number;
@@ -57,6 +72,7 @@ export interface LanguagesDescription {
 export interface NotedSheet {
   blocks: SheetBlock[];
   identity: { background: { privateNotes?: string } };
+  summary: SheetSummary;
 }
 
 /** Why a placement can't take one more item, if it can't: what the inventory dialogs warn of, and an add refuses. */
@@ -71,6 +87,26 @@ export interface PlacementDescription {
 export interface SheetStat {
   label: string;
   value: string;
+}
+
+/**
+ * A sheet's summary, its header's line: the tracks its character advances on (3.5's classes), in its order, each its
+ * name, its label at its position ("Fighter 3"), its page (`entityType`, by its `id`), what its advancements' popover
+ * says (`words`: its button's, the popover's, its add's), and its advancements, each its id (an edit opens it), its
+ * label and its edit's; what stands between two tracks on the line (`separator`), and the words of the page's own
+ * level actions (`words`: adding one, removing the last, the removal's confirmation and its toasts).
+ */
+export interface SheetSummary {
+  separator: string;
+  tracks: {
+    advancements: { edit: string; id: string; label: string }[];
+    entityType: string;
+    id: string;
+    label: string;
+    name: string;
+    words: { add: string; levels: string; open: string };
+  }[];
+  words: { add: string; removed: string; removeFailed: string; removeLast: string; removeLastMessage: string };
 }
 
 /**

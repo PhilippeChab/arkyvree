@@ -1,20 +1,13 @@
 import { ValueChip } from "@/client/src/components/common/index.ts";
-import { formatClassLevel } from "@/shared/characterClasses.ts";
+import type { CharacterListItem } from "@/client/src/lib/queries.ts";
 
 interface CharacterBuildChipsProps {
-  /** Its classes, each at the highest level it reached. */
-  levels: readonly { klass: string; level: number }[];
-  race: string;
+  /** Its card's chips, in its ruleset's order: 3.5's race, in the secondary color, then each class at its level. */
+  chips: CharacterListItem["chips"];
 }
 
-/** A character card's build, among its chips: its race, gold, then each of its classes and its level. */
-export function CharacterBuildChips({ levels, race }: CharacterBuildChipsProps) {
-  return (
-    <>
-      <ValueChip label={race} color="secondary" />
-      {levels.map((level) => (
-        <ValueChip key={level.klass} label={formatClassLevel(level.klass, level.level)} />
-      ))}
-    </>
-  );
+/** A character card's build, among its chips, as its ruleset describes it. */
+export function CharacterBuildChips({ chips }: CharacterBuildChipsProps) {
+  // A race and a class may share a name: their tone tells them apart
+  return chips.map((chip) => <ValueChip key={`${chip.tone} ${chip.label}`} label={chip.label} color={chip.tone} />);
 }

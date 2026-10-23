@@ -8,6 +8,7 @@ import type { RulesetView } from "@/engine/core/view/index.ts";
 import type { Dnd35Descriptions } from "@/engine/rulesets/dnd3.5/descriptions.ts";
 import RacePicker from "@/engine/rulesets/dnd3.5/pickers/RacePicker.ts";
 
+import CharacterCards from "./CharacterCards.ts";
 import CharacterDescription from "./description/CharacterDescription.ts";
 import IdentityFields from "./IdentityFields.ts";
 import InventoryEntries from "./inventory/InventoryEntries.ts";
@@ -25,6 +26,11 @@ export default class Dnd35Characters extends CharactersPart<Dnd35Descriptions> {
   /** A character's sheet as the API answers it, with its bonded creatures', or a creature's. */
   protected override describeFull(...args: Parameters<typeof CharacterDescription.describeFull>) {
     return CharacterDescription.describeFull(...args);
+  }
+
+  /** A character's card: its race and its classes at their highest level. */
+  protected override describeFullCard(...args: Parameters<typeof CharacterCards.describe>) {
+    return CharacterCards.describe(...args);
   }
 
   /** An inventory entry beside its row: where its item can go, and where it's worn. */

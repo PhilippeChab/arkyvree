@@ -32,7 +32,12 @@ import {
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useAnchorMenu, useDialogState, usePageTitle, usePdfExport } from "@/client/src/hooks/index.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
-import { characterDetailQuery, invalidateCharacter, invalidateCharacterListings } from "@/client/src/lib/queries.ts";
+import {
+  type CharacterDetail,
+  characterDetailQuery,
+  invalidateCharacter,
+  invalidateCharacterListings,
+} from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { characterPageState } from "@/client/src/pages/characters/characterPageState.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
@@ -46,6 +51,9 @@ import {
 } from "./components/index.ts";
 import { useCharacterPermissions } from "./useCharacterPermissions.ts";
 
+/** The words of the page's own level actions, its summary's: the removal's toasts among them. */
+type SheetSummaryWords = CharacterDetail["summary"]["words"];
+
 export default function CharacterDetailsPage() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -54,7 +62,7 @@ export default function CharacterDetailsPage() {
   const [isRemoveLevelOpen, setRemoveLevelOpen] = useState(false);
   const [isArchiveConfirmOpen, setArchiveConfirmOpen] = useState(false);
   const [isHardDeleteConfirmOpen, setHardDeleteConfirmOpen] = useState(false);
-  // A new character arrives with the Add Level wizard open (`openLevelUp`); a class's plus opens it, the class planned
+  // A new character arrives with the Add Level wizard open (`openLevelUp`); a track's plus opens it, the track planned
   const { openLevelUp } = characterPageState(location.state);
   const addLevel = useDialogState<Pick<AddLevelDialogProps, "trackId">>(openLevelUp ? {} : null);
   const editLevel = useDialogState<EditingLevel>();
@@ -92,15 +100,17 @@ export default function CharacterDetailsPage() {
     if (openLevelUp) navigate(location.pathname, { replace: true, state: {} });
   };
 
+  // Its toasts in the words of the summary its confirmation was opened from
   const removeLevelMutation = useMutation({
-    mutationFn: () => parseResponse(rpc.api.characters.levels[":characterId"].$delete({ param: { characterId: id } })),
-    onSuccess: async () => {
-      snackbar.success("Level removed");
+    mutationFn: (_words: SheetSummaryWords) =>
+      parseResponse(rpc.api.characters.levels[":characterId"].$delete({ param: { characterId: id } })),
+    onSuccess: async (_, words) => {
+      snackbar.success(words.removed);
       void invalidateCharacterListings(queryClient);
       await invalidateCharacter(queryClient, id);
       setRemoveLevelOpen(false);
     },
-    onError: (error) => snackbar.error(error, "Failed to remove level"),
+    onError: (error, words) => snackbar.error(error, words.removeFailed),
   });
 
   const archiveMutation = useMutation({
@@ -158,7 +168,7 @@ export default function CharacterDetailsPage() {
         <Stack spacing={4}>
           <CharacterHeader
             name={character.identity?.physiology?.name ?? ""}
-            classes={character.classes}
+            summary={character.summary}
             rulesetId={character.rulesetId}
             rulesetName={character.rulesetName}
             backTo={isBonded && parentCharacterId ? `/characters/${parentCharacterId}` : "/characters"}
@@ -207,19 +217,19 @@ export default function CharacterDetailsPage() {
                     ),
                   ]
                 : [
-                    // Add Level, as a class's popover's plus offers for its class (a character with no level adds its first
-                    // here), and Remove Last Level, the menu's alone
+                    // Add Level, as a track's popover's plus offers for its track (a character with no level adds its first
+                    // here), and Remove Last Level, the menu's alone, in its summary's words
                     <ActionMenuItem
                       key="add-level"
                       icon={AddIcon}
-                      label="Add Level"
+                      label={character.summary.words.add}
                       onClick={menu.closeMenuAnd(() => addLevel.openWith({}))}
                     />,
-                    Object.keys(character.classes).length > 0 && (
+                    character.summary.tracks.length > 0 && (
                       <ActionMenuItem
                         key="remove-level"
                         icon={DeleteIcon}
-                        label="Remove Last Level"
+                        label={character.summary.words.removeLast}
                         intent="destructive"
                         onClick={menu.closeMenuAnd(() => setRemoveLevelOpen(true))}
                       />
@@ -269,11 +279,11 @@ export default function CharacterDetailsPage() {
           <DeleteDialog
             open={isRemoveLevelOpen}
             onClose={() => setRemoveLevelOpen(false)}
-            onConfirm={() => removeLevelMutation.mutate()}
-            title="Remove Last Level"
-            message="Are you sure you want to remove the last level? This action cannot be undone."
+            onConfirm={() => removeLevelMutation.mutate(character.summary.words)}
+            title={character.summary.words.removeLast}
+            message={character.summary.words.removeLastMessage}
             pending={removeLevelMutation.isPending}
-            confirmLabel="Remove Last Level"
+            confirmLabel={character.summary.words.removeLast}
           />
 
           <ConfirmDialog

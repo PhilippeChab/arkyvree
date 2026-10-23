@@ -22,7 +22,7 @@ import { navigationOf } from "./wizardNavigation.ts";
 interface UseEditLevelWizardParams {
   characterId: string;
   /** The level it edits, as the sheet lists it. */
-  editingLevel: Pick<EditingLevel, "characterLevelId">;
+  editingLevel: EditingLevel;
   onClose: () => void;
   open: boolean;
 }

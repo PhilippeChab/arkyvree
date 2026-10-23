@@ -8,6 +8,7 @@ import { BONDED_KIND_SLUGS } from "@/vocabulary/dnd3.5/bondedKinds.ts";
 
 import CharacterResponse from "./CharacterResponse.ts";
 import SheetBlocks from "./SheetBlocks.ts";
+import SheetSummaries from "./SheetSummaries.ts";
 
 /** A bonded creature's sheet, as the API answers it, with the feat of its master's that bonds it (`bondFeatId`). */
 type BondedDescription = ReturnType<typeof CharacterResponse.buildBonded> & { bondFeatId: string | null };
@@ -107,6 +108,7 @@ export default class CharacterDescription {
       combat: {},
       saves: {},
       classes: {},
+      summary: SheetSummaries.describe({}),
       skills: {},
       inventory: {},
       equipment: [],

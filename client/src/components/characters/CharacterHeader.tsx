@@ -9,26 +9,26 @@ import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useFormWith } from "@/client/src/hooks/index.ts";
 import { type CharacterDetail, invalidateCharacter, invalidateCharacterListings } from "@/client/src/lib/queries.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
-import { CLASS_SEPARATOR } from "@/shared/characterClasses.ts";
+import { getUrlSegment } from "@/shared/urlSegments.ts";
 
-import { ClassLevels, type EditingLevel } from "./ClassLevels.tsx";
+import { type EditingLevel, TrackLevels } from "./TrackLevels.tsx";
 
 interface CharacterHeaderProps {
   /** Where Back goes; a shared sheet's viewer has nowhere to go back to */
   backTo?: string;
-  /** Its classes, by name, which its line under its name shows: those it has levels in (a Partial one's none) */
-  classes: CharacterDetail["classes"];
   name: string;
-  /** Opens Add Level with a class planned, from the class's popover: an editor's, while it takes levels of its own */
-  onAddLevel?: (klassId: string) => void;
-  /** Opens Edit Level on one of a class's levels; a read-only viewer sees the levels without it. */
+  /** Opens Add Level with a track planned, from the track's popover: an editor's, while it takes levels of its own */
+  onAddLevel?: (trackId: string) => void;
+  /** Opens Edit Level on one of a track's advancements; a read-only viewer sees them without it. */
   onEditLevel?: (editingLevel: EditingLevel) => void;
   onMenuOpen?: (event: MouseEvent<HTMLElement>) => void;
   /** Given when the viewer can rename the character: clicking its name edits it */
   rename?: CharacterRename;
-  /** Its ruleset, whose class pages its classes' levels link to; a viewer outside it gets no link */
+  /** Its ruleset, whose pages its tracks link to; a viewer outside it gets no link */
   rulesetId?: string;
   rulesetName?: string | null;
+  /** Its summary, which its line under its name shows: the tracks it advances on (a Partial one's none) */
+  summary: CharacterDetail["summary"];
 }
 
 interface CharacterNameEditorProps extends CharacterRename {
@@ -103,13 +103,13 @@ function CharacterNameEditor({ characterId, updatedAt, parentCharacterId, name, 
 }
 
 /**
- * A character page's header: the character's name, which an editor renames in place, over its line: its classes with
- * their levels ("Fighter 3 · Rogue 1", as its PDF's first page names them), each opening its levels, where an editor
- * adds a level of the class, or text for a viewer with nothing to do there; then its ruleset.
+ * A character page's header: the character's name, which an editor renames in place, over its line: its summary's
+ * tracks (3.5's classes with their levels, "Fighter 3 · Rogue 1"), each opening its advancements, where an editor adds
+ * one to the track, or text for a viewer with nothing to do there; then its ruleset.
  */
 export function CharacterHeader({
   name,
-  classes,
+  summary,
   rulesetId,
   rulesetName,
   backTo,
@@ -120,7 +120,6 @@ export function CharacterHeader({
 }: CharacterHeaderProps) {
   const [renaming, setRenaming] = useState(false);
   const shown = name || "Unnamed Character";
-  const classList = Object.values(classes);
 
   return (
     <DetailPageHeader
@@ -152,20 +151,19 @@ export function CharacterHeader({
           direction="row"
           sx={{ justifyContent: "center", alignItems: "center", flexWrap: "wrap", columnGap: 2, rowGap: 1 }}
         >
-          {classList.length > 0 && (
-            // A line of text, which wraps between its classes alone
+          {summary.tracks.length > 0 && (
+            // A line of text, which wraps between its tracks alone
             <Box component="span" sx={{ whiteSpace: "nowrap" }}>
-              {classList.map(({ klass, levels }, index) => (
-                <Fragment key={klass.id}>
+              {summary.tracks.map((track, index) => (
+                <Fragment key={track.id}>
                   {index > 0 && (
                     <Box component="span" sx={{ whiteSpace: "normal" }}>
-                      {CLASS_SEPARATOR}
+                      {summary.separator}
                     </Box>
                   )}
-                  <ClassLevels
-                    klass={klass}
-                    levels={levels}
-                    classLink={rulesetId && `/rulesets/${rulesetId}/classes/${klass.id}`}
+                  <TrackLevels
+                    track={track}
+                    trackLink={rulesetId && `/rulesets/${rulesetId}/${getUrlSegment(track.entityType)}/${track.id}`}
                     onAddLevel={onAddLevel}
                     onEditLevel={onEditLevel}
                   />

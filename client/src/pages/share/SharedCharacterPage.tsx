@@ -56,7 +56,7 @@ export default function SharedCharacterPage() {
         <Stack spacing={4}>
           <CharacterHeader
             name={character.identity?.physiology?.name ?? ""}
-            classes={character.classes}
+            summary={character.summary}
             rulesetName={character.rulesetName}
             onMenuOpen={menu.openMenu}
           />

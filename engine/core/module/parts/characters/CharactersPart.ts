@@ -43,17 +43,17 @@ import type {
 type HiddenNotes = Exclude<PrivateNotes, "show">;
 
 /**
- * What a ruleset answers of its characters, from the rows the server reads: their sheets (as the API answers them, as
- * a member reads them, printed), their cards, languages and inventories, how a new one's ability scores are set, what
- * it stores and the races it can pick, a languages edit, and an inventory entry's add or edit. Its descriptions are the
+ * What a ruleset answers of its characters, from the rows the server reads: their sheets (as the API answers them, as a
+ * member reads them, printed), their cards, languages and inventories, how a new one's ability scores are set, what it
+ * stores and the races it can pick, a languages edit, and an inventory entry's add or edit. Its descriptions are the
  * ruleset's own (`D`). What reads the schema's rows alone is every ruleset's: what a character takes from its ruleset,
- * its card, its inventory. So are the checks that guard a character's privacy and integrity, which no ruleset can skip:
- * a reader reads the private notes the reading gives them, an entity a request names is one its ruleset's view shows (a
- * race, an ability, a language, an item: `RequestIds`, which reads a source's id as its copy's), an entry's charges
- * agree, a score is within the ruleset's bounds and a new character's race is a player's. Their operations are this
- * part's, over hooks for what a ruleset describes or checks its own way (`describeFull`, `describePartial`,
- * `planPlacement`, `describeCreation`, and the languages a character speaks and may pick: `describeLanguageRoom`,
- * `fitLanguages`).
+ * its inventory. So are the checks that guard a character's privacy and integrity, which no ruleset can skip: a reader
+ * reads the private notes the reading gives them, a partly seen character's card and summary name none of its build, an
+ * entity a request names is one its ruleset's view shows (a race, an ability, a language, an item: `RequestIds`, which
+ * reads a source's id as its copy's), an entry's charges agree, a score is within the ruleset's bounds and a new
+ * character's race is a player's. Their operations are this part's, over hooks for what a ruleset describes or checks
+ * its own way (`describeFull`, `describePartial`, `describeFullCard`, `planPlacement`, `describeCreation`, and the
+ * languages a character speaks and may pick: `describeLanguageRoom`, `fitLanguages`).
  */
 export default abstract class CharactersPart<D extends Descriptions> {
   /** A form's ability scores, by ability id: each a whole number within the ruleset's bounds (`scores`). */
@@ -118,6 +118,16 @@ export default abstract class CharactersPart<D extends Descriptions> {
    * (`bonded`), each noted; or a bonded creature's, from its master's.
    */
   protected abstract describeFull(view: RulesetView, character: CharacterInput, bonded: CharacterInput[]): D["sheet"];
+
+  /**
+   * The card of a character (`character`, with its levels, `levels`), as a list of characters shows it to a reader who
+   * sees all of it, named as its ruleset's view names what it shows, a copied or renamed one by its own name.
+   */
+  protected abstract describeFullCard(
+    view: RulesetView,
+    character: { raceId: string },
+    levels: { klassLevelId: string }[],
+  ): CharacterCard;
 
   /**
    * What the ruleset shows of an inventory entry (`entry`, of `item`, with its `properties`) beside its row: where its
@@ -213,30 +223,24 @@ export default abstract class CharactersPart<D extends Descriptions> {
   }
 
   /**
-   * The card of a character (`character`, with its levels, `levels`), as a list of characters shows it, named as its
-   * ruleset's view names its race and classes, a copied or renamed one by its own name: each class at the highest
-   * level the character has in it, and its total.
+   * The card of a character (`character`, with its levels, `levels`), as a list of characters shows it: a partly seen
+   * one's (`partial`) holds the chips its ruleset marks as its partial reading's alone, and no levels.
    */
-  describeCard(view: RulesetView, character: { raceId: string }, levels: { klassLevelId: string }[]): CharacterCard {
-    const { rulesetData } = view;
-    const levelByKlassName = new Map<string, number>();
-    for (const level of levels) {
-      const klassLevel = rulesetData.klassLevelsById.get(level.klassLevelId);
-      if (!klassLevel) continue;
-      const klassName = rulesetData.klassesById.get(klassLevel.klassId)?.name || "Unknown";
-      if (klassLevel.level > (levelByKlassName.get(klassName) || 0)) levelByKlassName.set(klassName, klassLevel.level);
-    }
-    const classLevels = [...levelByKlassName].map(([klass, level]) => ({ klass, level }));
-    return {
-      levels: classLevels,
-      race: rulesetData.racesById.get(character.raceId)?.name ?? "Unknown",
-      totalLevel: classLevels.reduce((sum, { level }) => sum + level, 0),
-    };
+  describeCard(
+    view: RulesetView,
+    character: { raceId: string },
+    levels: { klassLevelId: string }[],
+    partial: boolean,
+  ): CharacterCard {
+    const card = this.describeFullCard(view, character, levels);
+    if (!partial) return card;
+    return { ...card, chips: card.chips.filter((chip) => chip.partial), levels: [], totalLevel: 0 };
   }
 
   /**
    * A character as a campaign member reads it (`reading`): partly, from its rows without its private notes nor its
-   * bonded creatures (`describePartial`), or its sheet with its bonded creatures', their private notes shown or blank.
+   * bonded creatures (`describePartial`), its summary with no tracks, or its sheet with its bonded creatures', their
+   * private notes shown or blank.
    */
   describeForMember(
     view: RulesetView,
@@ -244,7 +248,10 @@ export default abstract class CharactersPart<D extends Descriptions> {
     bonded: CharacterInput[],
     reading: MemberReading,
   ): D["partialSheet"] | D["sheet"] {
-    if (reading === "partial") return this.describePartial(view, CharactersPart.withoutNotes(character));
+    if (reading === "partial") {
+      const sheet = this.describePartial(view, CharactersPart.withoutNotes(character));
+      return { ...sheet, summary: { ...sheet.summary, tracks: [] } };
+    }
     return this.describe(view, character, bonded, reading);
   }
 

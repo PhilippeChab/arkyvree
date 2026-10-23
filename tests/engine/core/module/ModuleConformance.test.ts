@@ -6,7 +6,7 @@ import { baseRules, charactersInCharacter, rulesetsInRules } from "@/drizzle/sch
 import { Engine } from "@/engine/index.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { Characters, Languages, Visibility } from "@/server/repositories/index.ts";
+import { CharacterLevels, Characters, Languages, Visibility } from "@/server/repositories/index.ts";
 import { readBondedInputs, readCharacterInput } from "@/server/services/characters/characterInputs.ts";
 import type { BaseRules } from "@/shared/enums.ts";
 import { createTestItem } from "@/tests/support/items.ts";
@@ -58,6 +58,34 @@ describe.each(baseRules.enumValues)("The %s module, as core runs its characters'
 
     for (const { id } of [record, ...creatures]) expect(JSON.stringify(read.shown)).toContain(`${NOTES} ${id}`);
     for (const reading of [read.partial, read.blank, read.shared]) expect(JSON.stringify(reading)).not.toContain(NOTES);
+  });
+
+  test("names none of a partly seen character's build: its card's chips its partial ones, its summary no tracks", async () => {
+    const seeded = await findSeededCharacter(rules);
+    const input = await readCharacterInput(db, seeded);
+    const bonded = await readBondedInputs(db, input, Visibility.All);
+    const levels = await CharacterLevels.findMany(db, { characterIds: [seeded.id] });
+
+    const read = await withRulesetScope(db, seeded.rulesetId, async (scope) => {
+      const engine = Engine.for(scope);
+      const character = engine.character(input);
+      return {
+        card: engine.characters().describeCard(seeded, levels, false),
+        partialCard: engine.characters().describeCard(seeded, levels, true),
+        partial: character.describeForMember(bonded, "partial"),
+        shown: character.describeForMember(bonded, "show"),
+      };
+    });
+
+    expect(read.card.chips.some((chip) => !chip.partial)).toBe(true);
+    expect(read.partialCard).toMatchObject({
+      chips: read.card.chips.filter((chip) => chip.partial),
+      levels: [],
+      totalLevel: 0,
+    });
+    for (const { name } of read.shown.summary.tracks) expect(JSON.stringify(read.partialCard)).not.toContain(name);
+    expect(read.shown.summary.tracks.length).toBeGreaterThan(0);
+    expect(read.partial.summary.tracks).toEqual([]);
   });
 
   test("refuses an item of another ruleset in a character's inventory", async () => {
