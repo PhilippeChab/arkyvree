@@ -5,9 +5,7 @@ import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { CharacterInventory, CharacterLinks, Characters, Entities } from "@/server/repositories/index.ts";
 import { RulesetChangesService } from "@/server/services/rulesets/changes/index.ts";
-import { ItemsService } from "@/server/services/rulesets/items/index.ts";
-import { LanguagesService } from "@/server/services/rulesets/languages/index.ts";
-import { RacesService } from "@/server/services/rulesets/races/index.ts";
+import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { findPlainItem } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
@@ -40,14 +38,14 @@ afterEach(() => RulesetViews.invalidateAll());
 
 test("a race picked before the fork copied it blocks deleting the copy, but not restoring the source", async () => {
   const { session, fork, human, character } = await setup();
-  const local = await RacesService.updateRace(session, fork.id, human.id, {
+  const local = await EntitiesService.updateEntity(session, fork.id, "races", human.id, {
     name: human.name,
     description: "Local",
     size: human.size,
     baseSpeed: human.baseSpeed,
   });
 
-  expect(RacesService.deleteRace(session, fork.id, local.id)).rejects.toThrow("in use by characters");
+  expect(EntitiesService.deleteEntity(session, fork.id, "races", local.id)).rejects.toThrow("in use by characters");
   expect(
     await withRulesetScope(db, fork.id, async ({ rulesetData }) => rulesetData.racesById.get(character.raceId)?.id),
   ).toBe(local.id);
@@ -69,20 +67,20 @@ test("a language picked before the fork copied it blocks deleting the copy", asy
     { limit: 1, page: 1 },
   );
   await CharacterLinks.create(db, "languages", { characterId: character.id, languageId: language.id });
-  const local = await LanguagesService.updateLanguage(session, fork.id, language.id, {
+  const local = await EntitiesService.updateEntity(session, fork.id, "languages", language.id, {
     name: language.name,
     description: "Local",
     type: language.type,
   });
 
-  expect(LanguagesService.deleteLanguage(session, fork.id, local.id)).rejects.toThrow("in use by characters");
+  expect(EntitiesService.deleteEntity(session, fork.id, "languages", local.id)).rejects.toThrow("in use by characters");
 });
 
 test("an item picked before the fork copied it blocks deleting the copy", async () => {
   const { session, fork, baseId, character } = await setup();
   const item = await findPlainItem(baseId);
   await CharacterInventory.create(db, { characterId: character.id, itemId: item.id, quantity: 1 });
-  const local = await ItemsService.updateItem(session, fork.id, item.id, {
+  const local = await EntitiesService.updateEntity(session, fork.id, "items", item.id, {
     name: item.name,
     description: "Local",
     type: item.type,
@@ -91,5 +89,5 @@ test("an item picked before the fork copied it blocks deleting the copy", async 
     costGp: Number(item.costGp),
   });
 
-  expect(ItemsService.deleteItem(session, fork.id, local.id)).rejects.toThrow("in use by characters");
+  expect(EntitiesService.deleteEntity(session, fork.id, "items", local.id)).rejects.toThrow("in use by characters");
 });

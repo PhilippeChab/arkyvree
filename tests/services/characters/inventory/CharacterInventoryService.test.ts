@@ -8,7 +8,7 @@ import { ConflictError, NotFoundError } from "@/server/errors/index.ts";
 import { CharacterInventory, Entities, Modifiers, Properties, Requirements } from "@/server/repositories/index.ts";
 import { CharactersService } from "@/server/services/characters/index.ts";
 import { CharacterInventoryService } from "@/server/services/characters/inventory/index.ts";
-import { ItemsService } from "@/server/services/rulesets/items/index.ts";
+import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import type { ItemLocation, SizeType } from "@/shared/enums.ts";
 import type { Session } from "@/shared/relations.ts";
 import { createCharacterAs } from "@/tests/support/characters.ts";
@@ -418,7 +418,10 @@ describe("InventoryService", () => {
       const plain = await findPlainItem((await getSeedCtx()).rulesetId);
       // The fork makes the item a weapon: a hand holds it, the torso no longer does
       const fork = await createSeededTestRuleset(SEED_USER_ID);
-      const copy = await ItemsService.updateItem(session, fork.id, plain.id, { name: plain.name, type: "Weapon" });
+      const copy = await EntitiesService.updateEntity(session, fork.id, "items", plain.id, {
+        name: plain.name,
+        type: "Weapon",
+      });
       const character = await createCharacterAs(session, { rulesetId: fork.id });
       expect(add(session, character.id, plain.id, equipped("Torso"))).rejects.toThrow(
         "Weapons can only be equipped in hand slots",
@@ -427,7 +430,7 @@ describe("InventoryService", () => {
 
       // A fork that deleted it shows none of it: its entry would be listed nowhere
       const deleting = await createSeededTestRuleset(SEED_USER_ID);
-      await ItemsService.deleteItem(session, deleting.id, plain.id);
+      await EntitiesService.deleteEntity(session, deleting.id, "items", plain.id);
       const onDeleting = await createCharacterAs(session, { rulesetId: deleting.id });
       expect(add(session, onDeleting.id, plain.id)).rejects.toMatchObject({
         message: `Item ${plain.id} does not belong to the character's ruleset`,

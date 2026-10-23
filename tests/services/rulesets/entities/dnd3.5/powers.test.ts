@@ -3,8 +3,7 @@ import { describe, expect, test } from "bun:test";
 import type { KlassLevelPower } from "@/engine/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Activities, Joins, Properties } from "@/server/repositories/index.ts";
-import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
-import { PowersService } from "@/server/services/rulesets/powers/index.ts";
+import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
 import { createTestCharacter } from "@/tests/support/characters.ts";
 import { addCharacterLevel, createTestKlassLevel } from "@/tests/support/levels.ts";
@@ -32,23 +31,28 @@ async function linkedAptitudes(powerId: string) {
 
 // CRUD, ownership and copy-on-write are covered for every entity in EntityServices.test.ts,
 // and the spell properties a power generates in GeneratedFeats.test.ts.
-describe("PowersService", () => {
+describe("EntitiesService: powers", () => {
   test("keeps a power's save effect through an edit that leaves it out, and clears it with an empty one", async () => {
     const {
       session,
       ruleset,
       aptitudeIds: [wizard],
     } = await createTestUserAndRuleset(APTITUDES);
-    const power = await PowersService.createPower(session, ruleset.id, {
+    const power = await EntitiesService.createEntity(session, ruleset.id, "powers", {
       name: "Hold Person",
       saveEffect: "negates",
       aptitudes: [{ id: wizard }],
     });
-    expect(await PowersService.updatePower(session, ruleset.id, power.id, { name: "Hold Person" })).toMatchObject({
+    expect(
+      await EntitiesService.updateEntity(session, ruleset.id, "powers", power.id, { name: "Hold Person" }),
+    ).toMatchObject({
       saveEffect: "negates",
     });
     expect(
-      await PowersService.updatePower(session, ruleset.id, power.id, { name: "Hold Person", saveEffect: "" }),
+      await EntitiesService.updateEntity(session, ruleset.id, "powers", power.id, {
+        name: "Hold Person",
+        saveEffect: "",
+      }),
     ).toMatchObject({ saveEffect: null });
   });
 
@@ -58,15 +62,21 @@ describe("PowersService", () => {
       ruleset,
       aptitudeIds: [wizard],
     } = await createTestUserAndRuleset(APTITUDES);
-    const power = await PowersService.createPower(session, ruleset.id, { name: "Shield", aptitudes: [{ id: wizard }] });
+    const power = await EntitiesService.createEntity(session, ruleset.id, "powers", {
+      name: "Shield",
+      aptitudes: [{ id: wizard }],
+    });
     // A form's empty save effect is none, as the power's is; the feat's mark and the ruleset aren't a form's to write
-    await PowersService.updatePower(session, ruleset.id, power.id, {
+    await EntitiesService.updateEntity(session, ruleset.id, "powers", power.id, {
       name: "Shield",
       saveEffect: "",
       generated: true,
       rulesetId: "00000000-0000-0000-0000-000000000000",
     });
-    await PowersService.updatePower(session, ruleset.id, power.id, { name: "Shield", saveEffect: "negates" });
+    await EntitiesService.updateEntity(session, ruleset.id, "powers", power.id, {
+      name: "Shield",
+      saveEffect: "negates",
+    });
     const { items } = await Activities.findPage(
       db,
       { userId: session.userId, targetTable: "powers" },
@@ -88,7 +98,7 @@ describe("PowersService", () => {
         ruleset,
         aptitudeIds: [wizard, cleric, druid],
       } = await createTestUserAndRuleset(APTITUDES);
-      const power = await PowersService.createPower(session, ruleset.id, {
+      const power = await EntitiesService.createEntity(session, ruleset.id, "powers", {
         name: "Fireball",
         aptitudes: [{ id: wizard, level: 3 }, { id: cleric }],
       });
@@ -99,19 +109,19 @@ describe("PowersService", () => {
         ]),
       );
 
-      await PowersService.updatePower(session, ruleset.id, power.id, {
+      await EntitiesService.updateEntity(session, ruleset.id, "powers", power.id, {
         name: "Fireball",
         aptitudes: [{ id: druid, level: 4 }],
       });
       expect(await linkedAptitudes(power.id)).toEqual([{ aptitudeId: druid, level: 4 }]);
 
-      await PowersService.updatePower(session, ruleset.id, power.id, {
+      await EntitiesService.updateEntity(session, ruleset.id, "powers", power.id, {
         name: "Fireball",
         description: "Renamed only",
       });
       expect(await linkedAptitudes(power.id)).toEqual([{ aptitudeId: druid, level: 4 }]);
 
-      await PowersService.updatePower(session, ruleset.id, power.id, { name: "Fireball", aptitudes: [] });
+      await EntitiesService.updateEntity(session, ruleset.id, "powers", power.id, { name: "Fireball", aptitudes: [] });
       expect(await linkedAptitudes(power.id)).toEqual([]);
     });
 
@@ -121,14 +131,14 @@ describe("PowersService", () => {
       const fork = await createSeededTestRuleset(user.id);
       const { aptMap } = await getSeedCtx();
       const [wizard, specialist] = [aptMap["Wizard Spells"], aptMap["Evocation Specialist Spells"]];
-      const wizardOnly = await PowersService.createPower(session, fork.id, {
+      const wizardOnly = await EntitiesService.createEntity(session, fork.id, "powers", {
         name: "Test Bolt",
         fields: { school: "Evocation" },
         aptitudes: [{ id: wizard, level: 3 }],
       });
       expect(await linkedAptitudes(wizardOnly.id)).toEqual([{ aptitudeId: wizard, level: 3 }]);
 
-      const both = await PowersService.createPower(session, fork.id, {
+      const both = await EntitiesService.createEntity(session, fork.id, "powers", {
         name: "Test Blast",
         fields: { school: "Evocation" },
         aptitudes: [
@@ -147,7 +157,7 @@ describe("PowersService", () => {
     test("refuses a new power without an aptitude", async () => {
       const { session, ruleset } = await createTestUserAndRuleset(APTITUDES);
       await expectRefusedWith(
-        PowersService.createPower(session, ruleset.id, { name: "Orphan Spell", aptitudes: [] }),
+        EntitiesService.createEntity(session, ruleset.id, "powers", { name: "Orphan Spell", aptitudes: [] }),
         400,
       );
     });
@@ -158,18 +168,18 @@ describe("PowersService", () => {
         ruleset,
         aptitudeIds: [wizard, feats],
       } = await createTestUserAndRuleset(APTITUDES);
-      await FeatsService.createFeat(session, ruleset.id, { name: "Power Attack", aptitudeIds: [feats] });
+      await EntitiesService.createEntity(session, ruleset.id, "feats", { name: "Power Attack", aptitudeIds: [feats] });
       await expectRefusedWith(
-        PowersService.createPower(session, ruleset.id, { name: "Feat Spell", aptitudes: [{ id: feats }] }),
+        EntitiesService.createEntity(session, ruleset.id, "powers", { name: "Feat Spell", aptitudes: [{ id: feats }] }),
         409,
       );
 
-      const power = await PowersService.createPower(session, ruleset.id, {
+      const power = await EntitiesService.createEntity(session, ruleset.id, "powers", {
         name: "Wizard Spell",
         aptitudes: [{ id: wizard }],
       });
       await expectRefusedWith(
-        PowersService.updatePower(session, ruleset.id, power.id, {
+        EntitiesService.updateEntity(session, ruleset.id, "powers", power.id, {
           name: "Wizard Spell",
           aptitudes: [{ id: feats }],
         }),
@@ -184,16 +194,16 @@ describe("PowersService", () => {
         ruleset: parent,
         aptitudeIds: [wizard, cleric],
       } = await createTestUserAndRuleset(APTITUDES);
-      const source = await PowersService.createPower(session, parent.id, {
+      const source = await EntitiesService.createEntity(session, parent.id, "powers", {
         name: "Fireball",
         aptitudes: [{ id: wizard, level: 3 }],
       });
       const fork = await createTestRuleset(user.id, { rulesetId: parent.id, ancestorRulesetIds: [parent.id] });
-      expect((await PowersService.getPower(fork.id, source.id)).powersAptitudesInRules).toMatchObject([
+      expect((await EntitiesService.getEntity(fork.id, "powers", source.id)).powersAptitudesInRules).toMatchObject([
         { aptitudeId: wizard, level: 3 },
       ]);
 
-      const copy = await PowersService.updatePower(session, fork.id, source.id, {
+      const copy = await EntitiesService.updateEntity(session, fork.id, "powers", source.id, {
         name: "Fireball",
         aptitudes: [{ id: cleric, level: 2 }],
       });
@@ -209,7 +219,7 @@ describe("PowersService", () => {
       ruleset,
       aptitudeIds: [wizard],
     } = await createTestUserAndRuleset(APTITUDES);
-    const power = await PowersService.createPower(session, ruleset.id, {
+    const power = await EntitiesService.createEntity(session, ruleset.id, "powers", {
       name: "Fireball",
       aptitudes: [{ id: wizard }],
       fields: { school: "Evocation", castingTime: "1 round" },
@@ -218,7 +228,7 @@ describe("PowersService", () => {
       { entityId: power.id, entityType: "powers", type: SPELL_DESCRIPTOR, value: "Fire" },
     ]);
 
-    await PowersService.updatePower(session, ruleset.id, power.id, {
+    await EntitiesService.updateEntity(session, ruleset.id, "powers", power.id, {
       name: "Fireball",
       fields: { school: "Conjuration" },
     });
@@ -239,7 +249,7 @@ describe("PowersService", () => {
       ruleset,
       aptitudeIds: [wizard],
     } = await createTestUserAndRuleset(APTITUDES);
-    const power = await PowersService.createPower(session, ruleset.id, {
+    const power = await EntitiesService.createEntity(session, ruleset.id, "powers", {
       name: "Doomed Spell",
       aptitudes: [{ id: wizard }],
     });
@@ -250,7 +260,7 @@ describe("PowersService", () => {
       aptitudeId: wizard,
     });
 
-    await PowersService.deletePower(session, ruleset.id, power.id);
+    await EntitiesService.deleteEntity(session, ruleset.id, "powers", power.id);
 
     expect(await linkedAptitudes(power.id)).toEqual([]);
     // A grant's power is its link's to-entity
@@ -264,7 +274,7 @@ describe("PowersService", () => {
       ruleset: extension,
       aptitudeIds: [wizard],
     } = await createTestUserAndRuleset(APTITUDES);
-    const power = await PowersService.createPower(session, extension.id, {
+    const power = await EntitiesService.createEntity(session, extension.id, "powers", {
       name: "Extension Spell",
       aptitudes: [{ id: wizard }],
     });
@@ -274,6 +284,6 @@ describe("PowersService", () => {
     const { klassLevel } = await createTestKlassLevel(host.id);
     await addCharacterLevel(character.id, klassLevel.id, { powers: [{ powerId: power.id, aptitudeId: wizard }] });
 
-    await expectRefusedWith(PowersService.deletePower(session, extension.id, power.id), 409);
+    await expectRefusedWith(EntitiesService.deleteEntity(session, extension.id, "powers", power.id), 409);
   });
 });

@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 import { CustomizationPageEntity } from "@/engine/core/entities/index.ts";
 import type { EntityFieldValues } from "@/engine/core/fields/index.ts";
 import type { SizeType } from "@/shared/enums.ts";
@@ -34,6 +36,9 @@ export default class RaceEntity extends CustomizationPageEntity<
 
   /** A list of the player races or of the monsters', by their kind. */
   protected override readonly listColumns = ["kind"];
+
+  /** Its list's filters: the kind it's for. */
+  protected override readonly listFilters = { kind: z.string() };
 
   override readonly type = "races";
 

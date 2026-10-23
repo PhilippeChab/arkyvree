@@ -4,10 +4,8 @@ import type { Feat, Klass, KlassLevelPower, Power } from "@/engine/index.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
 import { Entities, Joins } from "@/server/repositories/index.ts";
-import { AptitudesService } from "@/server/services/rulesets/aptitudes/index.ts";
 import { ClassLevelsService } from "@/server/services/rulesets/classes/levels/index.ts";
-import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
-import { PowersService } from "@/server/services/rulesets/powers/index.ts";
+import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { createTestCharacter } from "@/tests/support/characters.ts";
 import { addCharacterLevel, createTestKlassLevel } from "@/tests/support/levels.ts";
 import { createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
@@ -21,15 +19,15 @@ async function linksOf(join: string, part: "to" | "via", aptitudeId: string) {
 }
 
 // CRUD, ownership and copy-on-write are covered for every entity in EntityServices.test.ts.
-describe("AptitudesService", () => {
+describe("EntitiesService: aptitudes", () => {
   test("stores an aptitude's description", async () => {
     const { session, ruleset } = await createTestUserAndRuleset();
-    const created = await AptitudesService.createAptitude(session, ruleset.id, {
+    const created = await EntitiesService.createEntity(session, ruleset.id, "aptitudes", {
       name: "Arcane Spells",
       description: "Wizard and sorcerer spells",
     });
     expect(created).toMatchObject({ name: "Arcane Spells", description: "Wizard and sorcerer spells" });
-    const updated = await AptitudesService.updateAptitude(session, ruleset.id, created.id, {
+    const updated = await EntitiesService.updateEntity(session, ruleset.id, "aptitudes", created.id, {
       name: "Arcane Spells",
       description: "Updated",
     });
@@ -43,30 +41,39 @@ describe("AptitudesService", () => {
       aptitudeIds: [generalId],
     } = await createTestUserAndRuleset(["General"]);
     expect(
-      AptitudesService.updateAptitude(session, ruleset.id, generalId, { name: "General Feats" }),
+      EntitiesService.updateEntity(session, ruleset.id, "aptitudes", generalId, { name: "General Feats" }),
     ).rejects.toMatchObject({ refusal: "unprocessable" });
-    expect(AptitudesService.deleteAptitude(session, ruleset.id, generalId)).rejects.toMatchObject({
+    expect(EntitiesService.deleteEntity(session, ruleset.id, "aptitudes", generalId)).rejects.toMatchObject({
       refusal: "unprocessable",
     });
-    const described = await AptitudesService.updateAptitude(session, ruleset.id, generalId, {
+    const described = await EntitiesService.updateEntity(session, ruleset.id, "aptitudes", generalId, {
       name: "General",
       description: "Any feat",
     });
     expect(described.description).toBe("Any feat");
     // By its slug, which the engine and the target paths know it by: a new case is no change to them
-    const recased = await AptitudesService.updateAptitude(session, ruleset.id, generalId, { name: "GENERAL" });
+    const recased = await EntitiesService.updateEntity(session, ruleset.id, "aptitudes", generalId, {
+      name: "GENERAL",
+    });
     expect(recased.name).toBe("GENERAL");
-    expect(AptitudesService.deleteAptitude(session, ruleset.id, generalId)).rejects.toMatchObject({
+    expect(EntitiesService.deleteEntity(session, ruleset.id, "aptitudes", generalId)).rejects.toMatchObject({
       refusal: "unprocessable",
     });
   });
 
   test("deletes the feat, power and class-level links of a deleted aptitude", async () => {
     const { session, ruleset } = await createTestUserAndRuleset();
-    const featAptitude = await AptitudesService.createAptitude(session, ruleset.id, { name: "Feat Aptitude" });
-    const powerAptitude = await AptitudesService.createAptitude(session, ruleset.id, { name: "Power Aptitude" });
-    await FeatsService.createFeat(session, ruleset.id, { name: "Linked Feat", aptitudeIds: [featAptitude.id] });
-    await PowersService.createPower(session, ruleset.id, {
+    const featAptitude = await EntitiesService.createEntity(session, ruleset.id, "aptitudes", {
+      name: "Feat Aptitude",
+    });
+    const powerAptitude = await EntitiesService.createEntity(session, ruleset.id, "aptitudes", {
+      name: "Power Aptitude",
+    });
+    await EntitiesService.createEntity(session, ruleset.id, "feats", {
+      name: "Linked Feat",
+      aptitudeIds: [featAptitude.id],
+    });
+    await EntitiesService.createEntity(session, ruleset.id, "powers", {
       name: "Linked Power",
       aptitudes: [{ id: powerAptitude.id }],
     });
@@ -89,8 +96,8 @@ describe("AptitudesService", () => {
       aptitudeId: powerAptitude.id,
     });
 
-    await AptitudesService.deleteAptitude(session, ruleset.id, featAptitude.id);
-    await AptitudesService.deleteAptitude(session, ruleset.id, powerAptitude.id);
+    await EntitiesService.deleteEntity(session, ruleset.id, "aptitudes", featAptitude.id);
+    await EntitiesService.deleteEntity(session, ruleset.id, "aptitudes", powerAptitude.id);
 
     expect(await linksOf("feats_aptitudes", "to", featAptitude.id)).toEqual([]);
     expect(await linksOf("powers_aptitudes", "to", powerAptitude.id)).toEqual([]);
@@ -100,13 +107,17 @@ describe("AptitudesService", () => {
 
   test("refuses to delete an aptitude a character picked a feat or a power through", async () => {
     const { user, session, ruleset } = await createTestUserAndRuleset();
-    const featAptitude = await AptitudesService.createAptitude(session, ruleset.id, { name: "Feat Aptitude" });
-    const powerAptitude = await AptitudesService.createAptitude(session, ruleset.id, { name: "Power Aptitude" });
-    const feat = await FeatsService.createFeat(session, ruleset.id, {
+    const featAptitude = await EntitiesService.createEntity(session, ruleset.id, "aptitudes", {
+      name: "Feat Aptitude",
+    });
+    const powerAptitude = await EntitiesService.createEntity(session, ruleset.id, "aptitudes", {
+      name: "Power Aptitude",
+    });
+    const feat = await EntitiesService.createEntity(session, ruleset.id, "feats", {
       name: "Picked Feat",
       aptitudeIds: [featAptitude.id],
     });
-    const power = await PowersService.createPower(session, ruleset.id, {
+    const power = await EntitiesService.createEntity(session, ruleset.id, "powers", {
       name: "Picked Power",
       aptitudes: [{ id: powerAptitude.id }],
     });
@@ -117,7 +128,11 @@ describe("AptitudesService", () => {
       powers: [{ powerId: power.id, aptitudeId: powerAptitude.id }],
     });
 
-    expect(AptitudesService.deleteAptitude(session, ruleset.id, featAptitude.id)).rejects.toThrow(ConflictError);
-    expect(AptitudesService.deleteAptitude(session, ruleset.id, powerAptitude.id)).rejects.toThrow(ConflictError);
+    expect(EntitiesService.deleteEntity(session, ruleset.id, "aptitudes", featAptitude.id)).rejects.toThrow(
+      ConflictError,
+    );
+    expect(EntitiesService.deleteEntity(session, ruleset.id, "aptitudes", powerAptitude.id)).rejects.toThrow(
+      ConflictError,
+    );
   });
 });

@@ -19,8 +19,8 @@ const entityParams = kindParams.extend({ entityId: z.string().uuid() });
 const kindEntityBody = entityBody;
 
 /**
- * Every ruleset entity kind's routes, by its URL segment (`/rulesets/:id/entities/races`), each dispatched to its kind's
- * service: its list, with its kind's filters past the shared ones (`kind`, `aptitudeId`…, which its service reads), its
+ * Every ruleset entity kind's routes, by its URL segment (`/rulesets/:id/entities/races`), each answered by its kind's
+ * rules: its list, with its kind's filters past the shared ones (`kind`, `aptitudeId`…, which its rules read), its
  * page, its create, update and delete, and its kind's actions (its groups, its templates, a duplicate, variants).
  */
 export default new Hono<SessionContext>()
@@ -45,7 +45,7 @@ export default new Hono<SessionContext>()
         await EntitiesService.getEntities(
           id,
           entityType,
-          { search, childOnly, orderBy, orderDir, filters },
+          { search, childOnly, orderBy, orderDir, ...filters },
           { limit, page },
         ),
         200,
@@ -63,7 +63,7 @@ export default new Hono<SessionContext>()
       const { id, entityType } = c.req.valid("param");
       const { limit, page, search, childOnly, ...filters } = c.req.valid("query");
       return c.json(
-        await EntitiesService.getEntityGroups(id, entityType, { search, childOnly, filters }, { limit, page }),
+        await EntitiesService.getEntityGroups(id, entityType, { search, childOnly, ...filters }, { limit, page }),
         200,
       );
     },

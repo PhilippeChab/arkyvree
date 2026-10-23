@@ -15,13 +15,17 @@ import {
 import { RulesetChangesService } from "@/server/services/rulesets/changes/index.ts";
 import { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";
 import { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";
+import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
-import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
-import { PowersService } from "@/server/services/rulesets/powers/index.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
 import { STRENGTH_BONUS } from "@/tests/support/customizations.ts";
 import { measure } from "@/tests/support/database.ts";
-import { copyEntity, createSeededTestRuleset, invalidateTestRulesets } from "@/tests/support/rulesets.ts";
+import {
+  copyEntity,
+  createSeededTestRuleset,
+  type Described,
+  invalidateTestRulesets,
+} from "@/tests/support/rulesets.ts";
 import { makeSession } from "@/tests/support/users.ts";
 import { FEAT_FAMILY, FEAT_WEAPON_FINESSE, SPELL_SUBSCHOOL } from "@/vocabulary/dnd3.5/properties/index.ts";
 
@@ -114,25 +118,33 @@ for (const entityType of ["feats", "powers"] as const) {
         copiedRequirement.id,
       );
       if (entityType === "feats") {
-        const feat = await FeatsService.getFeat(host.id, local.resolvedEntityId);
+        const feat = await EntitiesService.getEntity<Described<"feats">>(host.id, "feats", local.resolvedEntityId);
         expect(feat.featsAptitudesInRules.some((a) => a.aptitudeId === aptitude.id)).toBe(true);
-        await FeatsService.updateFeat(session, host.id, feat.id, { name: feat.name, aptitudeIds: [] });
+        await EntitiesService.updateEntity(session, host.id, "feats", feat.id, { name: feat.name, aptitudeIds: [] });
       } else {
-        const power = await PowersService.getPower(host.id, local.resolvedEntityId);
+        const power = await EntitiesService.getEntity<Described<"powers">>(host.id, "powers", local.resolvedEntityId);
         expect(power.powersAptitudesInRules.some((a) => a.aptitudeId === aptitude.id)).toBe(true);
-        await PowersService.updatePower(session, host.id, power.id, { name: power.name, aptitudes: [] });
+        await EntitiesService.updateEntity(session, host.id, "powers", power.id, { name: power.name, aptitudes: [] });
       }
       for (const cold of [false, true]) {
         if (cold) invalidateTestRulesets(...rulesetIds);
         const requirements = await RequirementsService.getRequirements(host.id, entityType, local.resolvedEntityId);
         expect(requirements.some((r) => r.target === requirement.target)).toBe(false);
-        if (entityType === "feats")
-          expect((await FeatsService.getFeat(host.id, local.resolvedEntityId)).featsAptitudesInRules).toEqual([]);
-        else expect((await PowersService.getPower(host.id, local.resolvedEntityId)).powersAptitudesInRules).toEqual([]);
+        if (entityType === "feats") {
+          expect(
+            (await EntitiesService.getEntity<Described<"feats">>(host.id, "feats", local.resolvedEntityId))
+              .featsAptitudesInRules,
+          ).toEqual([]);
+        } else {
+          expect(
+            (await EntitiesService.getEntity<Described<"powers">>(host.id, "powers", local.resolvedEntityId))
+              .powersAptitudesInRules,
+          ).toEqual([]);
+        }
       }
       expect(await Requirements.findOne(db, { id: requirement.id })).toEqual(requirement);
-      if (entityType === "feats") await FeatsService.deleteFeat(session, host.id, local.resolvedEntityId);
-      else await PowersService.deletePower(session, host.id, local.resolvedEntityId);
+      if (entityType === "feats") await EntitiesService.deleteEntity(session, host.id, "feats", local.resolvedEntityId);
+      else await EntitiesService.deleteEntity(session, host.id, "powers", local.resolvedEntityId);
 
       invalidateTestRulesets(...rulesetIds);
       await withRulesetScope(db, host.id, async ({ rulesetData }) => {
@@ -147,15 +159,15 @@ for (const entityType of ["feats", "powers"] as const) {
       ]);
       if (entityType === "feats") {
         expect(
-          (await FeatsService.getFeat(host.id, winnerId)).featsAptitudesInRules.some(
+          (await EntitiesService.getEntity<Described<"feats">>(host.id, "feats", winnerId)).featsAptitudesInRules.some(
             (a) => a.aptitudeId === aptitude.id,
           ),
         ).toBe(true);
       } else {
         expect(
-          (await PowersService.getPower(host.id, winnerId)).powersAptitudesInRules.some(
-            (a) => a.aptitudeId === aptitude.id,
-          ),
+          (
+            await EntitiesService.getEntity<Described<"powers">>(host.id, "powers", winnerId)
+          ).powersAptitudesInRules.some((a) => a.aptitudeId === aptitude.id),
         ).toBe(true);
       }
     });
@@ -311,7 +323,7 @@ test("installing another extension preserves the local override and exposes unre
     properties.some((p) => p.type === family.type && p.value === family.value);
   invalidateTestRulesets(...rulesetIds);
   await RulesetExtensionsService.unsubscribeExtension(session, host.id, loserRulesetId);
-  const local = await FeatsService.updateFeat(session, host.id, winnerId, {
+  const local = await EntitiesService.updateEntity(session, host.id, "feats", winnerId, {
     name: "Toughness",
     fields: { families: ["Luck"] },
   });

@@ -5,7 +5,7 @@ import { RulesetSeeder } from "@/database/seeders/dnd3.5/RulesetSeeder.ts";
 import type { Db } from "@/drizzle/database.ts";
 import { rulesetExtensionsInRules, type rulesetsInRules } from "@/drizzle/schema.ts";
 import type { CowData, RulesetSources } from "@/engine/core/cow/index.ts";
-import type { Aptitude } from "@/engine/index.ts";
+import type { Aptitude, EntityKinds } from "@/engine/index.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { EntityCopy, RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
@@ -16,6 +16,9 @@ import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import { api, expectOk } from "./api.ts";
 import { uniqueId } from "./seed.ts";
 import { createTestUser } from "./users.ts";
+
+/** An entity as its kind's page describes it (`K`, its table): what `EntitiesService.getEntity` answers of it. */
+export type Described<K extends keyof EntityKinds> = ReturnType<EntityKinds[K]["describe"]>;
 
 const writtenSeededRulesets = new Set<string>();
 

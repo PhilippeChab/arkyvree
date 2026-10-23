@@ -49,6 +49,9 @@ export default class PowerEntity extends ListedEntity<
 
   protected override readonly label = "Power";
 
+  /** Its list's filters: a list's powers (`aptitudeId`), at a level. */
+  protected override readonly listFilters = { aptitudeId: z.string().uuid(), level: z.coerce.number() };
+
   override readonly type = "powers";
 
   /**
@@ -74,6 +77,21 @@ export default class PowerEntity extends ListedEntity<
   /** The pools a form links the power to, each at its spell level (none: an edit's kept). */
   protected override linksOf({ aptitudes }: PowerBody) {
     return aptitudes?.map((aptitude) => ({ aptitudeId: aptitude.id, level: aptitude.level ?? null }));
+  }
+
+  /**
+   * A page of the ruleset's powers, as its query asks for it: what it's read with (`filters`: a list's powers, at a level
+   * when one is given), and its rows described, with their lists as the ruleset composes them. Refused at a level past
+   * the rules' bounds.
+   */
+  protected override listOf(where: { aptitudeId?: string; level?: number }) {
+    const { aptitudeId, level } = where;
+    RulesError.parse(SPELL_LEVEL.optional(), level, ["level"]);
+    const listed = aptitudeId !== undefined || level != null;
+    return {
+      describe: <T extends Record<string, unknown> & { id: string }>(rows: T[]) => this.describeListed(rows),
+      filters: { ids: listed ? this.rulesetData.listPowerIds({ aptitudeId, level }) : undefined },
+    };
   }
 
   /**
@@ -104,21 +122,6 @@ export default class PowerEntity extends ListedEntity<
     return {
       ...super.writesOf(body, given, power),
       made: grouping !== null && grouping !== before ? this.spellFocus.make(grouping) : [],
-    };
-  }
-
-  /**
-   * A page of the ruleset's powers, as its form asks for it: what it's read with (`filters`: a list's powers, at a level
-   * when one is given), and its rows described, with their lists as the ruleset composes them. Refused at a level past
-   * the rules' bounds.
-   */
-  override openList(where: { aptitudeId?: string; childOnly?: boolean; level?: number }) {
-    const { aptitudeId, level } = where;
-    RulesError.parse(SPELL_LEVEL.optional(), level, ["level"]);
-    const listed = aptitudeId !== undefined || level != null;
-    return {
-      describe: <T extends Record<string, unknown> & { id: string }>(rows: T[]) => this.describeListed(rows),
-      filters: { ids: listed ? this.rulesetData.listPowerIds({ aptitudeId, level }) : undefined },
     };
   }
 }

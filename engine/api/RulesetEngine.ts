@@ -1,3 +1,4 @@
+import type { EntityAction } from "@/engine/core/entities/index.ts";
 import type { EntityFieldValues, FormField } from "@/engine/core/fields/index.ts";
 import type { CharacterInput } from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
@@ -71,10 +72,13 @@ export default class RulesetEngine {
 
   /**
    * An entity kind of the ruleset (`type`, its table): one found by its id and described, a page of its rows opened
-   * (`openList`), and what saving or deleting one writes, by its kind's rules.
+   * (`openList`), and what saving or deleting one writes, by its kind's rules. Opened for an action it may have none of
+   * (`action`: an ability's create, a race's templates), refused as not found when it has none.
    */
-  entities<K extends EntityType>(type: K) {
-    return this.module.entities.of(this.view, type);
+  entities<K extends EntityType>(type: K, action?: EntityAction) {
+    const kind = this.module.entities.of(this.view, type);
+    if (action) kind.checkAction(action);
+    return kind;
   }
 
   /** An entity's modifiers (`entityType`, `entityId`). */

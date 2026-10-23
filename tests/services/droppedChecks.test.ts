@@ -15,17 +15,11 @@ import { createTestPool } from "@/server/database/test.ts";
 import { CharacterLinks, Characters, Entities, Picks } from "@/server/repositories/index.ts";
 import { CharactersService } from "@/server/services/characters/index.ts";
 import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
-import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
 import { ClassLevelsService } from "@/server/services/rulesets/classes/levels/index.ts";
 import { ClassProgressionService } from "@/server/services/rulesets/classes/progression/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
-import { ItemsService } from "@/server/services/rulesets/items/index.ts";
-import { LanguagesService } from "@/server/services/rulesets/languages/index.ts";
-import { RacesService } from "@/server/services/rulesets/races/index.ts";
-import { SavesService } from "@/server/services/rulesets/saves/index.ts";
-import { SkillsService } from "@/server/services/rulesets/skills/index.ts";
 import { api, expectOk, expectStatus } from "@/tests/support/api.ts";
-import { createCharacterAs, postCharacter } from "@/tests/support/characters.ts";
+import { createCharacterAs, createTestCharacter, postCharacter } from "@/tests/support/characters.ts";
 import { runWhileLocked } from "@/tests/support/database.ts";
 import {
   createSeedCharacter,
@@ -59,8 +53,8 @@ async function rulesetWithSave() {
     description: "Agility",
     rulesetId,
   });
-  const save = await SavesService.createSave(owner, rulesetId, { name: "Reflex", abilityId: ability.id });
-  const klass = await ClassesService.createClass(owner, rulesetId, { name: "Rogue", hd: 6 });
+  const save = await EntitiesService.createEntity(owner, rulesetId, "saves", { name: "Reflex", abilityId: ability.id });
+  const klass = await EntitiesService.createEntity(owner, rulesetId, "klasses", { name: "Rogue", hd: 6 });
   return { abilityId: ability.id, klassId: klass.id, owner, rulesetId, saveId: save.id };
 }
 
@@ -70,16 +64,20 @@ describe("a ruleset's entities", () => {
   test("refuses a hit die of 7, on a new class and an edit, and an edit that clears it", async () => {
     const { session: owner, ruleset } = await createTestUserAndRuleset();
     const refusal = invalidAt("hd");
-    expect(ClassesService.createClass(owner, ruleset.id, { name: "Commoner", hd: 7 })).rejects.toMatchObject(refusal);
-    const fighter = await ClassesService.createClass(owner, ruleset.id, { name: "Fighter", hd: 12 });
-    expect(fighter.hd).toBe(12);
-    expect(ClassesService.updateClass(owner, ruleset.id, fighter.id, { name: "Fighter", hd: 7 })).rejects.toMatchObject(
-      refusal,
-    );
     expect(
-      ClassesService.updateClass(owner, ruleset.id, fighter.id, { name: "Fighter", hd: null }),
+      EntitiesService.createEntity(owner, ruleset.id, "klasses", { name: "Commoner", hd: 7 }),
     ).rejects.toMatchObject(refusal);
-    expect((await ClassesService.updateClass(owner, ruleset.id, fighter.id, { name: "Fighter", hd: 4 })).hd).toBe(4);
+    const fighter = await EntitiesService.createEntity(owner, ruleset.id, "klasses", { name: "Fighter", hd: 12 });
+    expect(fighter.hd).toBe(12);
+    expect(
+      EntitiesService.updateEntity(owner, ruleset.id, "klasses", fighter.id, { name: "Fighter", hd: 7 }),
+    ).rejects.toMatchObject(refusal);
+    expect(
+      EntitiesService.updateEntity(owner, ruleset.id, "klasses", fighter.id, { name: "Fighter", hd: null }),
+    ).rejects.toMatchObject(refusal);
+    expect(
+      (await EntitiesService.updateEntity(owner, ruleset.id, "klasses", fighter.id, { name: "Fighter", hd: 4 })).hd,
+    ).toBe(4);
   });
 
   test("refuses a class level of 0, 21 or 1.5, and one without its number", async () => {
@@ -135,14 +133,14 @@ describe("a ruleset's entities", () => {
   test("refuses a race's base speed of 0, a size not among its options, and an edit that clears either", async () => {
     const { session: owner, ruleset } = await createTestUserAndRuleset();
     const elf = { name: "Elf", size: "Medium", baseSpeed: 30 };
-    expect(RacesService.createRace(owner, ruleset.id, { ...elf, baseSpeed: 0 })).rejects.toMatchObject(
+    expect(EntitiesService.createEntity(owner, ruleset.id, "races", { ...elf, baseSpeed: 0 })).rejects.toMatchObject(
       invalidAt("baseSpeed"),
     );
-    expect(RacesService.createRace(owner, ruleset.id, { ...elf, size: "Gigantic" })).rejects.toMatchObject(
-      invalidAt("size"),
-    );
+    expect(
+      EntitiesService.createEntity(owner, ruleset.id, "races", { ...elf, size: "Gigantic" }),
+    ).rejects.toMatchObject(invalidAt("size"));
     // A new race left without them takes their defaults: a medium one, of 30 feet
-    const created = await RacesService.createRace(owner, ruleset.id, { name: "Elf" });
+    const created = await EntitiesService.createEntity(owner, ruleset.id, "races", { name: "Elf" });
     expect(created).toMatchObject({ size: "Medium", baseSpeed: 30 });
     const edits: [string, Record<string, unknown>][] = [
       ["baseSpeed", { baseSpeed: 0 }],
@@ -152,44 +150,62 @@ describe("a ruleset's entities", () => {
       ["size", { size: "Gigantic" }],
     ];
     for (const [key, edit] of edits) {
-      expect(RacesService.updateRace(owner, ruleset.id, created.id, { ...elf, ...edit })).rejects.toMatchObject(
-        invalidAt(key),
-      );
+      expect(
+        EntitiesService.updateEntity(owner, ruleset.id, "races", created.id, { ...elf, ...edit }),
+      ).rejects.toMatchObject(invalidAt(key));
     }
     expect(
-      await RacesService.updateRace(owner, ruleset.id, created.id, { ...elf, size: "Tiny", baseSpeed: 1 }),
+      await EntitiesService.updateEntity(owner, ruleset.id, "races", created.id, {
+        ...elf,
+        size: "Tiny",
+        baseSpeed: 1,
+      }),
     ).toMatchObject({ size: "Tiny", baseSpeed: 1 });
   });
 
   test("refuses an item's weight or cost past its numeric(…, 2) columns' range, and keeps them to two decimals", async () => {
     const { session: owner, ruleset } = await createTestUserAndRuleset();
     for (const key of ["weight", "costGp"]) {
-      expect(ItemsService.createItem(owner, ruleset.id, { name: "Gem", [key]: -0.01 })).rejects.toMatchObject(
-        invalidAt(key),
-      );
+      expect(
+        EntitiesService.createEntity(owner, ruleset.id, "items", { name: "Gem", [key]: -0.01 }),
+      ).rejects.toMatchObject(invalidAt(key));
     }
-    const gem = await ItemsService.createItem(owner, ruleset.id, { name: "Gem", weight: 0, costGp: 0 });
+    const gem = await EntitiesService.createEntity(owner, ruleset.id, "items", { name: "Gem", weight: 0, costGp: 0 });
     expect(gem).toMatchObject({ weight: "0.00", costGp: "0.00" });
     for (const key of ["weight", "costGp"]) {
-      expect(ItemsService.updateItem(owner, ruleset.id, gem.id, { name: "Gem", [key]: -1 })).rejects.toMatchObject(
-        invalidAt(key),
-      );
       expect(
-        ItemsService.duplicateItem(owner, ruleset.id, gem.id, { name: "Other Gem", [key]: -1 }),
+        EntitiesService.updateEntity(owner, ruleset.id, "items", gem.id, { name: "Gem", [key]: -1 }),
+      ).rejects.toMatchObject(invalidAt(key));
+      expect(
+        EntitiesService.duplicateEntity(owner, ruleset.id, "items", gem.id, { name: "Other Gem", [key]: -1 }),
       ).rejects.toMatchObject(invalidAt(key));
     }
     // Past numeric(6, 2) and numeric(10, 2): a weight of 10,000 lbs, a cost of 100,000,000 gp
-    expect(ItemsService.updateItem(owner, ruleset.id, gem.id, { name: "Gem", weight: 10_000 })).rejects.toMatchObject(
-      invalidAt("weight"),
-    );
     expect(
-      ItemsService.updateItem(owner, ruleset.id, gem.id, { name: "Gem", costGp: 100_000_000 }),
+      EntitiesService.updateEntity(owner, ruleset.id, "items", gem.id, { name: "Gem", weight: 10_000 }),
+    ).rejects.toMatchObject(invalidAt("weight"));
+    expect(
+      EntitiesService.updateEntity(owner, ruleset.id, "items", gem.id, { name: "Gem", costGp: 100_000_000 }),
     ).rejects.toMatchObject(invalidAt("costGp"));
-    await ItemsService.updateItem(owner, ruleset.id, gem.id, { name: "Gem", weight: 9_999.99, costGp: 99_999_999.99 });
-    expect(await ItemsService.getItem(ruleset.id, gem.id)).toMatchObject({ weight: "9999.99", costGp: "99999999.99" });
+    await EntitiesService.updateEntity(owner, ruleset.id, "items", gem.id, {
+      name: "Gem",
+      weight: 9_999.99,
+      costGp: 99_999_999.99,
+    });
+    expect(await EntitiesService.getEntity(ruleset.id, "items", gem.id)).toMatchObject({
+      weight: "9999.99",
+      costGp: "99999999.99",
+    });
     // A third decimal is rounded off as it's written, half away from zero, as the numeric(…, 2) columns did
-    await ItemsService.updateItem(owner, ruleset.id, gem.id, { name: "Gem", weight: 0.125, costGp: 1.005 });
-    expect(await ItemsService.getItem(ruleset.id, gem.id)).toMatchObject({ weight: "0.13", costGp: "1.01" });
+    await EntitiesService.updateEntity(owner, ruleset.id, "items", gem.id, {
+      name: "Gem",
+      weight: 0.125,
+      costGp: 1.005,
+    });
+    expect(await EntitiesService.getEntity(ruleset.id, "items", gem.id)).toMatchObject({
+      weight: "0.13",
+      costGp: "1.01",
+    });
     const [stored] = (
       await db.execute<{ number_value: string }>(
         sql`SELECT number_value::text FROM rules.entity_fields WHERE entity_id = ${gem.id} AND field = 'ITEM_COST_GP'`,
@@ -200,33 +216,41 @@ describe("a ruleset's entities", () => {
 
   test("refuses a save or a skill without its key ability", async () => {
     const { abilityId, owner, rulesetId, saveId } = await rulesetWithSave();
-    expect(SavesService.createSave(owner, rulesetId, { name: "Will" })).rejects.toMatchObject(invalidAt("abilityId"));
+    expect(EntitiesService.createEntity(owner, rulesetId, "saves", { name: "Will" })).rejects.toMatchObject(
+      invalidAt("abilityId"),
+    );
     expect(
-      SavesService.updateSave(owner, rulesetId, saveId, { name: "Reflex", abilityId: null }),
+      EntitiesService.updateEntity(owner, rulesetId, "saves", saveId, { name: "Reflex", abilityId: null }),
     ).rejects.toMatchObject(invalidAt("abilityId"));
-    expect(SkillsService.createSkill(owner, rulesetId, { name: "Tumble" })).rejects.toMatchObject(
+    expect(EntitiesService.createEntity(owner, rulesetId, "skills", { name: "Tumble" })).rejects.toMatchObject(
       invalidAt("primaryAbilityId"),
     );
-    const tumble = await SkillsService.createSkill(owner, rulesetId, { name: "Tumble", primaryAbilityId: abilityId });
+    const tumble = await EntitiesService.createEntity(owner, rulesetId, "skills", {
+      name: "Tumble",
+      primaryAbilityId: abilityId,
+    });
     expect(tumble).toMatchObject({ primaryAbilityId: abilityId });
     expect(
-      SkillsService.updateSkill(owner, rulesetId, tumble.id, { name: "Tumble", primaryAbilityId: "" }),
+      EntitiesService.updateEntity(owner, rulesetId, "skills", tumble.id, { name: "Tumble", primaryAbilityId: "" }),
     ).rejects.toMatchObject(invalidAt("primaryAbilityId"));
     // One the ruleset hasn't is refused too
     expect(
-      SkillsService.updateSkill(owner, rulesetId, tumble.id, { name: "Tumble", primaryAbilityId: NIL_UUID }),
+      EntitiesService.updateEntity(owner, rulesetId, "skills", tumble.id, {
+        name: "Tumble",
+        primaryAbilityId: NIL_UUID,
+      }),
     ).rejects.toThrow(`Ability ${NIL_UUID} does not belong to this ruleset`);
   });
 
   test("refuses a language without its type, and keeps an empty one", async () => {
     const { session: owner, ruleset } = await createTestUserAndRuleset();
-    const common = await LanguagesService.createLanguage(owner, ruleset.id, { name: "Common" });
+    const common = await EntitiesService.createEntity(owner, ruleset.id, "languages", { name: "Common" });
     expect(common).toMatchObject({ type: "" });
     expect(
-      LanguagesService.updateLanguage(owner, ruleset.id, common.id, { name: "Common", type: null }),
+      EntitiesService.updateEntity(owner, ruleset.id, "languages", common.id, { name: "Common", type: null }),
     ).rejects.toMatchObject(invalidAt("type"));
     expect(
-      await LanguagesService.updateLanguage(owner, ruleset.id, common.id, { name: "Common", type: "Spoken" }),
+      await EntitiesService.updateEntity(owner, ruleset.id, "languages", common.id, { name: "Common", type: "Spoken" }),
     ).toMatchObject({ type: "Spoken" });
   });
 
@@ -237,9 +261,13 @@ describe("a ruleset's entities", () => {
       description: "Fortune",
       rulesetId: ruleset.id,
     });
+    // A character's score in it, which would make it in use: refused first, as a write its kind has none of
+    const character = await createTestCharacter(owner.userId, { rulesetId: ruleset.id });
+    await CharacterLinks.create(db, "abilities", { characterId: character.id, abilityId: ability.id, score: 12 });
     const form = { name: "Luck", description: null };
     expect(EntitiesService.createEntity(owner, ruleset.id, "abilities", form)).rejects.toThrow("No create");
     expect(EntitiesService.updateEntity(owner, ruleset.id, "abilities", ability.id, form)).rejects.toThrow("No update");
+    expect(EntitiesService.deleteEntity(owner, ruleset.id, "abilities", ability.id)).rejects.toThrow("No delete");
   });
 });
 

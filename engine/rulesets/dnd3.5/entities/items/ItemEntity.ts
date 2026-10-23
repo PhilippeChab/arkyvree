@@ -74,6 +74,9 @@ export default class ItemEntity extends CustomizationPageEntity<
   /** Its cost, weight, type, slot and template. */
   protected override readonly columns = ITEM_COLUMNS;
 
+  /** Its templates, a duplicate, variants. */
+  protected override readonly copies = true;
+
   /** Its armor's, its shield's and its weapon's, its charges, its make. */
   protected override readonly fields = ITEM_FIELDS;
 
@@ -84,6 +87,9 @@ export default class ItemEntity extends CustomizationPageEntity<
 
   /** A list of the templates or of the other items. */
   protected override readonly listColumns = ["isTemplate"];
+
+  /** Its list's filters: templates, or the items that aren't. */
+  protected override readonly listFilters = { isTemplate: z.stringbool() };
 
   override readonly type = "items";
 
@@ -116,6 +122,16 @@ export default class ItemEntity extends CustomizationPageEntity<
     const sourceItemId = this.templateIdOf(columns, item);
     if (item) return this.propertiesOf({ id: item.id, sourceItemId });
     return sourceItemId ? this.templatePropertiesOf(sourceItemId) : [];
+  }
+
+  /** A page of the ruleset's items, each with its template's name. */
+  protected override listOf(where: { childOnly?: boolean; isTemplate?: boolean }) {
+    const list = super.listOf(where);
+    return {
+      ...list,
+      describe: <T extends Record<string, unknown> & { id: string }>(rows: T[]) =>
+        list.describe(rows).map((item) => ({ ...item, templateName: this.templateNameOf(item.sourceItemId) })),
+    };
   }
 
   /** An item's properties: its template's of each type it doesn't set, then its own. */
@@ -172,37 +188,56 @@ export default class ItemEntity extends CustomizationPageEntity<
     };
   }
 
-  /** A page of the ruleset's items, each with its template's name. */
-  override openList(where: { childOnly?: boolean; isTemplate?: boolean }) {
-    const list = super.openList(where);
+  /**
+   * The ruleset's templates of a type (`type`; every type's without one), as the server reads them (`filters`): refused
+   * for a type no item can be based on a template of.
+   */
+  override openTemplates(type?: string): { filters: { columns: { isTemplate: true; type?: TemplateItemType } } } {
+    const parsed = RulesError.parse(TEMPLATE_TYPE.optional(), type, ["type"]);
     return {
-      ...list,
-      describe: <T extends Record<string, unknown> & { id: string }>(rows: T[]) =>
-        list.describe(rows).map((item) => ({ ...item, templateName: this.templateNameOf(item.sourceItemId) })),
+      filters: { columns: { isTemplate: true, ...(parsed && { type: parsed }) } },
     };
   }
 
   /**
-   * Deleting an item: the item as the view has it, and, a template, the ids the items made from it hold (`copiesOf`:
-   * its own, and those it stands for), which the server reads where the delete reaches them (the ruleset's view, and
-   * the rulesets built on it) for `checkCopies`, which refuses deleting a template that has any.
+   * Deleting an item: the item as the view has it, and, a template, the items made from it (`copies`: those naming it
+   * by its id or by one it stands for), which the server reads where the delete reaches them (the ruleset's view, and
+   * the rulesets built on it) for their check, which refuses deleting a template that has any.
    */
   override planDelete(itemId: string) {
     const plan = super.planDelete(itemId);
+    const copies = plan.entity.isTemplate
+      ? {
+          check(made: unknown[]) {
+            if (made.length > 0)
+              throw new RulesError("conflict", "Cannot delete a template item that has copies referencing it");
+          },
+          filters: this.copiesOf(plan.entity),
+        }
+      : undefined;
+    return { ...plan, copies };
+  }
+
+  /**
+   * A duplicate of an item (`sourceItemId`), from its form: it points at the same template, isn't one itself, and takes
+   * its source's customizations unless its source is a template, whose copies read the template's
+   * (`copyCustomizationsFrom`). It keeps the fields its form gives, written over those it takes, or, given none, the
+   * fields its source's properties hold.
+   */
+  override planDuplicate(sourceItemId: string, body: EntityForm) {
+    const source = this.findSource(sourceItemId);
+    const plan = this.planCreate({ ...body, isTemplate: false, sourceItemId: this.templateOf(source) });
     return {
       ...plan,
-      checkCopies(copies: unknown[]) {
-        if (copies.length > 0)
-          throw new RulesError("conflict", "Cannot delete a template item that has copies referencing it");
-      },
-      copiesOf: plan.entity.isTemplate ? this.rulesetData.cow.getEquivalentIds(plan.entity.id) : undefined,
+      copyCustomizationsFrom: source.isTemplate ? undefined : source.id,
+      fields: plan.writes ? plan.fields : this.fieldsOf(source),
     };
   }
 
   /**
-   * An item's edit, and, a template's that changes its type, the ids the items made from it hold (`copiesOf`: its own,
-   * and those it stands for), which the server reads where the change reaches them (the ruleset's view, and the
-   * rulesets built on it) for `checkCopies`, which refuses the change while any is of another type than the new one: it
+   * An item's edit, and, a template's that changes its type, the items made from it (`copies`: those naming it by its
+   * id or by one it stands for), which the server reads where the change reaches them (the ruleset's view, and the
+   * rulesets built on it) for their check, which refuses the change while any is of another type than the new one: it
    * would read the properties and requirements of a template of another type. The refusal names what the view shows
    * alone (`listCopies`).
    */
@@ -210,18 +245,50 @@ export default class ItemEntity extends CustomizationPageEntity<
     const plan = super.planEdit(itemId, form);
     const { entity: item } = plan;
     const type = this.typeOf(this.formOf(form, item), item);
+    const copies =
+      item.isTemplate && type !== item.type
+        ? {
+            check: (copies: Pick<Item, "id" | "name" | "type">[]) => {
+              const made = copies.filter((copy) => copy.type !== type);
+              if (made.length === 0) return;
+              const template = `the ${item.type ?? "None"} template "${item.name}"`;
+              throw new RulesError(
+                "unprocessable",
+                `Can't change ${template} to ${type ?? "None"} while items are made from it: ${this.listCopies(made)}`,
+              );
+            },
+            filters: this.copiesOf(item),
+          }
+        : undefined;
+    return { ...plan, copies };
+  }
+
+  /**
+   * An item's variants (`variants`, of `sourceItemId`): each a copy of its source's type, slot, weight and cost,
+   * pointing at its template, and taking its customizations unless it's a template (`copyCustomizationsFrom`). Refused
+   * with more than the rules make at once, or two of a name.
+   */
+  override planVariants(sourceItemId: string, variants: VariantBody[]) {
+    RulesError.parse(VARIANTS, variants, ["variants"]);
+    const names = variants.map((variant) => variant.name);
+    if (new Set(names).size !== names.length)
+      throw new RulesError("conflict", "Duplicate names within the variants list");
+
+    const source = this.findSource(sourceItemId);
+    const slot = this.slotOf(source);
     return {
-      ...plan,
-      checkCopies: (copies: Pick<Item, "id" | "name" | "type">[]) => {
-        const made = copies.filter((copy) => copy.type !== type);
-        if (made.length === 0) return;
-        const template = `the ${item.type ?? "None"} template "${item.name}"`;
-        throw new RulesError(
-          "unprocessable",
-          `Can't change ${template} to ${type ?? "None"} while items are made from it: ${this.listCopies(made)}`,
-        );
-      },
-      copiesOf: item.isTemplate && type !== item.type ? this.rulesetData.cow.getEquivalentIds(item.id) : undefined,
+      copyCustomizationsFrom: source.isTemplate ? undefined : source.id,
+      rows: variants.map((variant) => ({
+        name: variant.name,
+        description: variant.description,
+        type: source.type,
+        slot,
+        weight: source.weight,
+        costGp: source.costGp,
+        sourceItemId: this.templateOf(source),
+        isTemplate: false,
+      })),
+      source,
     };
   }
 
@@ -257,6 +324,15 @@ export default class ItemEntity extends CustomizationPageEntity<
         `Item type ${type ?? "None"} can't be based on the ${template.type ?? "None"} template "${template.name}"`,
       );
     }
+  }
+
+  /** What the server reads a template's copies with: the items naming it by its id, or by one it stands for. */
+  private copiesOf(template: Item) {
+    return {
+      columns: {
+        sourceItemId: this.rulesetData.cow.getEquivalentIds(template.id),
+      },
+    };
   }
 
   /** The item a duplicate or variants are made from, as the view has it: refused when there's none of its id. */
@@ -316,59 +392,5 @@ export default class ItemEntity extends CustomizationPageEntity<
   /** The type a form saves an item with: the form's (null: none), or the one the edited item keeps. */
   private typeOf(body: ItemBody, item?: Item) {
     return body.type === undefined ? (item?.type ?? null) : body.type;
-  }
-
-  /**
-   * The ruleset's templates of a type (`type`; every type's without one), as the server reads them (`filters`): refused
-   * for a type no item can be based on a template of.
-   */
-  openTemplates(type?: string): { filters: { columns: { isTemplate: true; type?: TemplateItemType } } } {
-    const parsed = RulesError.parse(TEMPLATE_TYPE.optional(), type, ["type"]);
-    return { filters: { columns: { isTemplate: true, ...(parsed && { type: parsed }) } } };
-  }
-
-  /**
-   * A duplicate of an item (`sourceItemId`), from its form: it points at the same template, isn't one itself, and takes
-   * its source's customizations unless its source is a template, whose copies read the template's
-   * (`copyCustomizationsFrom`). It keeps the fields its form gives, written over those it takes, or, given none, the
-   * fields its source's properties hold.
-   */
-  planDuplicate(sourceItemId: string, body: EntityForm) {
-    const source = this.findSource(sourceItemId);
-    const plan = this.planCreate({ ...body, isTemplate: false, sourceItemId: this.templateOf(source) });
-    return {
-      ...plan,
-      copyCustomizationsFrom: source.isTemplate ? undefined : source.id,
-      fields: plan.writes ? plan.fields : this.fieldsOf(source),
-    };
-  }
-
-  /**
-   * An item's variants (`variants`, of `sourceItemId`): each a copy of its source's type, slot, weight and cost,
-   * pointing at its template, and taking its customizations unless it's a template (`copyCustomizationsFrom`). Refused
-   * with more than the rules make at once, or two of a name.
-   */
-  planVariants(sourceItemId: string, variants: VariantBody[]) {
-    RulesError.parse(VARIANTS, variants, ["variants"]);
-    const names = variants.map((variant) => variant.name);
-    if (new Set(names).size !== names.length)
-      throw new RulesError("conflict", "Duplicate names within the variants list");
-
-    const source = this.findSource(sourceItemId);
-    const slot = this.slotOf(source);
-    return {
-      copyCustomizationsFrom: source.isTemplate ? undefined : source.id,
-      rows: variants.map((variant) => ({
-        name: variant.name,
-        description: variant.description,
-        type: source.type,
-        slot,
-        weight: source.weight,
-        costGp: source.costGp,
-        sourceItemId: this.templateOf(source),
-        isTemplate: false,
-      })),
-      source,
-    };
   }
 }

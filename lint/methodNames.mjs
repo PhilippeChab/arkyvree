@@ -9,7 +9,7 @@
  *   function's verbs: those the cache classifies (`find`, `has`, `create`…) are cached as any repository's.
  * - A service reads with `get`, creates (`create`, `add`, `duplicate`), updates (`update`, `set`, `mark`), deletes
  *   (`delete`, `remove`, `archive`, `unarchive`, `hardDelete`), or takes one of the actions below, on its resource
- *   (`FeatsService.getFeat`): never `ById` (the id is a parameter) or `My` (the session's scope is implied).
+ *   (`EntitiesService.getEntity`): never `ById` (the id is a parameter) or `My` (the session's scope is implied).
  * - A policy checks: `can` (it throws, or returns what it checked) or `is` (a yes or no). `for` builds one.
  *
  * Private and protected methods are the class's own business: any name.
@@ -96,7 +96,7 @@ const VOCABULARIES = [
     // `getCampaignById` is `getCampaign(id)`; `getMyStats` is `getStats(session)`.
     filters: {
       words: /(?<=[a-z0-9])(By|My)(?=[A-Z0-9]|$)/,
-      why: "a service method is its verb and its service's resource (`FeatsService.getFeat`): an id is a parameter, and the session's scope is implied",
+      why: "a service method is its verb and its service's resource (`EntitiesService.getEntity`): an id is a parameter, and the session's scope is implied",
     },
   },
 ];

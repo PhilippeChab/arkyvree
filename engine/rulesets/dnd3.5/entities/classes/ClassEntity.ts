@@ -1,5 +1,7 @@
 /** A class as a ruleset's entity: its fields, what its form stores, and its parts: its levels, skills and table. */
 
+import { z } from "zod";
+
 import { RulesetEntity } from "@/engine/core/entities/index.ts";
 import type { EntityFieldValues } from "@/engine/core/fields/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
@@ -41,6 +43,9 @@ export default class ClassEntity extends RulesetEntity<
 
   /** A list of the player classes or of the others', by their kind. */
   protected override readonly listColumns = ["kind"];
+
+  /** Its list's filters: the kind it's for. */
+  protected override readonly listFilters = { kind: z.string() };
 
   override readonly type = "klasses";
 

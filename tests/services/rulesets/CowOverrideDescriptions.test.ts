@@ -5,9 +5,7 @@ import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.
 import { addClassLevels, addFeats, addPowers, addSkills } from "@/scripts/db/seeds/seedCharacter.ts";
 import { db } from "@/server/database/index.ts";
 import { Characters, Entities } from "@/server/repositories/index.ts";
-import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
-import { PowersService } from "@/server/services/rulesets/powers/index.ts";
-import { SkillsService } from "@/server/services/rulesets/skills/index.ts";
+import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { buildAs } from "@/tests/support/dnd3.5/characters.ts";
 import { createSeedCharacter } from "@/tests/support/dnd3.5/levelFixtures.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
@@ -28,12 +26,12 @@ describe("A fork's own description of an inherited", () => {
     const description = `Overridden in the fork ${fork.id}`;
     const name = { feat: "Toughness", spell: "Magic Missile", skill: "Climb" }[kind];
     if (kind === "feat") {
-      await FeatsService.updateFeat(session, fork.id, ctx.featMap[name], { name, description });
+      await EntitiesService.updateEntity(session, fork.id, "feats", ctx.featMap[name], { name, description });
     } else if (kind === "spell") {
-      await PowersService.updatePower(session, fork.id, ctx.powerMap[name], { name, description });
+      await EntitiesService.updateEntity(session, fork.id, "powers", ctx.powerMap[name], { name, description });
     } else {
       const skill = (await Entities.findOne<Skill>(db, { entityType: "skills", id: ctx.skillMap[name] }))!;
-      await SkillsService.updateSkill(session, fork.id, skill.id, {
+      await EntitiesService.updateEntity(session, fork.id, "skills", skill.id, {
         name,
         description,
         primaryAbilityId: skill.primaryAbilityId,
@@ -72,7 +70,7 @@ test("A fork's own saving throw of an inherited spell is on the sheet", async ()
     rulesetId: ctx.rulesetId,
   }))!;
   const name = "Magic Missile";
-  await PowersService.updatePower(session, fork.id, ctx.powerMap[name], {
+  await EntitiesService.updateEntity(session, fork.id, "powers", ctx.powerMap[name], {
     name,
     saveId: will.id,
     saveEffect: "negates",

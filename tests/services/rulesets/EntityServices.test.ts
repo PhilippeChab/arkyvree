@@ -9,17 +9,8 @@ import type { RulesetAbility, RulesetSave, Skill } from "@/engine/index.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { ForbiddenError } from "@/server/errors/index.ts";
-import { Entities, Joins, Requirements } from "@/server/repositories/index.ts";
-import { AptitudesService } from "@/server/services/rulesets/aptitudes/index.ts";
-import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
-import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
-import { ItemsService } from "@/server/services/rulesets/items/index.ts";
-import { LanguagesService } from "@/server/services/rulesets/languages/index.ts";
-import { MechanicsService } from "@/server/services/rulesets/mechanics/index.ts";
-import { PowersService } from "@/server/services/rulesets/powers/index.ts";
-import { RacesService } from "@/server/services/rulesets/races/index.ts";
-import { SavesService } from "@/server/services/rulesets/saves/index.ts";
-import { SkillsService } from "@/server/services/rulesets/skills/index.ts";
+import { Entities, Joins, Requirements, type RulesetEntityType } from "@/server/repositories/index.ts";
+import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { isCustomizableEntityType } from "@/shared/customization/entities.ts";
 import type { Session } from "@/shared/relations.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
@@ -60,109 +51,41 @@ interface Service {
   ) => Promise<Row>;
 }
 
+/** What each kind's form gives past its name, of the entities it names by id (`Refs`). */
+const BODIES: Partial<Record<RulesetEntityType, (refs: Refs) => Record<string, unknown>>> = {
+  aptitudes: () => ({}),
+  feats: (refs) => ({ aptitudeIds: [refs.featAptitudeId] }),
+  items: () => ({}),
+  klasses: () => ({}),
+  languages: () => ({ type: "Standard" }),
+  mechanics: () => ({}),
+  powers: (refs) => ({ aptitudes: [{ id: refs.powerAptitudeId }] }),
+  races: () => ({ size: "Medium", baseSpeed: 30 }),
+  saves: (refs) => ({ abilityId: refs.abilityId }),
+  skills: (refs) => ({
+    primaryAbilityId: refs.abilityId,
+    fields: { impactedByWeight: false, checkPenaltyMultiplier: 1, usableWithoutTraining: true },
+  }),
+};
+
 const firstPage = { limit: 100, page: 1 };
 
-const SERVICES: Record<string, Service> = {
-  aptitudes: {
-    list: (rulesetId, search) => AptitudesService.getAptitudes(rulesetId, { search }, firstPage),
-    get: AptitudesService.getAptitude.bind(AptitudesService),
-    create: (session, rulesetId, name) => AptitudesService.createAptitude(session, rulesetId, { name }),
-    update: (session, rulesetId, id, name, _refs, updatedAt) =>
-      AptitudesService.updateAptitude(session, rulesetId, id, { name, updatedAt }),
-    remove: AptitudesService.deleteAptitude.bind(AptitudesService),
-  },
-  feats: {
-    list: (rulesetId, search) => FeatsService.getFeats(rulesetId, { search }, firstPage),
-    get: FeatsService.getFeat.bind(FeatsService),
-    create: (session, rulesetId, name, refs) =>
-      FeatsService.createFeat(session, rulesetId, { name, aptitudeIds: [refs.featAptitudeId] }),
-    update: (session, rulesetId, id, name, refs, updatedAt) =>
-      FeatsService.updateFeat(session, rulesetId, id, { name, aptitudeIds: [refs.featAptitudeId], updatedAt }),
-    remove: FeatsService.deleteFeat.bind(FeatsService),
-  },
-  items: {
-    list: (rulesetId, search) => ItemsService.getItems(rulesetId, { search }, firstPage),
-    get: ItemsService.getItem.bind(ItemsService),
-    create: (session, rulesetId, name) => ItemsService.createItem(session, rulesetId, { name }),
-    update: (session, rulesetId, id, name, _refs, updatedAt) =>
-      ItemsService.updateItem(session, rulesetId, id, { name, updatedAt }),
-    remove: ItemsService.deleteItem.bind(ItemsService),
-  },
-  klasses: {
-    list: (rulesetId, search) => ClassesService.getClasses(rulesetId, { search }, firstPage),
-    get: ClassesService.getClass.bind(ClassesService),
-    create: (session, rulesetId, name) => ClassesService.createClass(session, rulesetId, { name }),
-    update: (session, rulesetId, id, name, _refs, updatedAt) =>
-      ClassesService.updateClass(session, rulesetId, id, { name, updatedAt }),
-    remove: ClassesService.deleteClass.bind(ClassesService),
-  },
-  languages: {
-    list: (rulesetId, search) => LanguagesService.getLanguages(rulesetId, { search }, firstPage),
-    get: LanguagesService.getLanguage.bind(LanguagesService),
-    create: (session, rulesetId, name) =>
-      LanguagesService.createLanguage(session, rulesetId, { name, type: "Standard" }),
-    update: (session, rulesetId, id, name, _refs, updatedAt) =>
-      LanguagesService.updateLanguage(session, rulesetId, id, { name, type: "Standard", updatedAt }),
-    remove: LanguagesService.deleteLanguage.bind(LanguagesService),
-  },
-  mechanics: {
-    list: (rulesetId, search) => MechanicsService.getMechanics(rulesetId, { search }, firstPage),
-    get: MechanicsService.getMechanic.bind(MechanicsService),
-    create: (session, rulesetId, name) => MechanicsService.createMechanic(session, rulesetId, { name }),
-    update: (session, rulesetId, id, name, _refs, updatedAt) =>
-      MechanicsService.updateMechanic(session, rulesetId, id, { name, updatedAt }),
-    remove: MechanicsService.deleteMechanic.bind(MechanicsService),
-  },
-  powers: {
-    list: (rulesetId, search) => PowersService.getPowers(rulesetId, { search }, firstPage),
-    get: PowersService.getPower.bind(PowersService),
-    create: (session, rulesetId, name, refs) =>
-      PowersService.createPower(session, rulesetId, { name, aptitudes: [{ id: refs.powerAptitudeId }] }),
-    update: (session, rulesetId, id, name, refs, updatedAt) =>
-      PowersService.updatePower(session, rulesetId, id, {
-        name,
-        aptitudes: [{ id: refs.powerAptitudeId }],
-        updatedAt,
-      }),
-    remove: PowersService.deletePower.bind(PowersService),
-  },
-  races: {
-    list: (rulesetId, search) => RacesService.getRaces(rulesetId, { search }, firstPage),
-    get: RacesService.getRace.bind(RacesService),
-    create: (session, rulesetId, name) =>
-      RacesService.createRace(session, rulesetId, { name, size: "Medium", baseSpeed: 30 }),
-    update: (session, rulesetId, id, name, _refs, updatedAt) =>
-      RacesService.updateRace(session, rulesetId, id, { name, size: "Medium", baseSpeed: 30, updatedAt }),
-    remove: RacesService.deleteRace.bind(RacesService),
-  },
-  saves: {
-    list: (rulesetId, search) => SavesService.getSaves(rulesetId, { search }, firstPage),
-    get: SavesService.getSave.bind(SavesService),
-    create: (session, rulesetId, name, refs) =>
-      SavesService.createSave(session, rulesetId, { name, abilityId: refs.abilityId }),
-    update: (session, rulesetId, id, name, refs, updatedAt) =>
-      SavesService.updateSave(session, rulesetId, id, { name, abilityId: refs.abilityId, updatedAt }),
-    remove: SavesService.deleteSave.bind(SavesService),
-  },
-  skills: {
-    list: (rulesetId, search) => SkillsService.getSkills(rulesetId, { search }, firstPage),
-    get: SkillsService.getSkill.bind(SkillsService),
-    create: (session, rulesetId, name, refs) =>
-      SkillsService.createSkill(session, rulesetId, {
-        name,
-        primaryAbilityId: refs.abilityId,
-        fields: { impactedByWeight: false, checkPenaltyMultiplier: 1, usableWithoutTraining: true },
-      }),
-    update: (session, rulesetId, id, name, refs, updatedAt) =>
-      SkillsService.updateSkill(session, rulesetId, id, {
-        name,
-        primaryAbilityId: refs.abilityId,
-        fields: { impactedByWeight: false, checkPenaltyMultiplier: 1, usableWithoutTraining: true },
-        updatedAt,
-      }),
-    remove: SkillsService.deleteSkill.bind(SkillsService),
-  },
-};
+/** Each kind's service, as the generic one answers it: its form, its name and what it names past it. */
+const SERVICES: Record<string, Service> = Object.fromEntries(
+  Object.entries(BODIES).map(([kind, body]) => {
+    const type = kind as RulesetEntityType;
+    const service: Service = {
+      list: (rulesetId, search) => EntitiesService.getEntities(rulesetId, type, { search }, firstPage),
+      get: (rulesetId, id) => EntitiesService.getEntity(rulesetId, type, id),
+      create: (session, rulesetId, name, refs) =>
+        EntitiesService.createEntity(session, rulesetId, type, { name, ...body(refs) }),
+      update: (session, rulesetId, id, name, refs, updatedAt) =>
+        EntitiesService.updateEntity(session, rulesetId, type, id, { name, ...body(refs), updatedAt }),
+      remove: (session, rulesetId, id) => EntitiesService.deleteEntity(session, rulesetId, type, id),
+    };
+    return [type, service];
+  }),
+);
 
 const ENTITY_TYPES = Object.keys(SERVICES);
 
@@ -238,8 +161,10 @@ async function setup() {
     name: "Strength",
     description: "Strength",
   });
-  const featAptitude = await AptitudesService.createAptitude(session, ruleset.id, { name: "Feat Aptitude" });
-  const powerAptitude = await AptitudesService.createAptitude(session, ruleset.id, { name: "Power Aptitude" });
+  const featAptitude = await EntitiesService.createEntity(session, ruleset.id, "aptitudes", { name: "Feat Aptitude" });
+  const powerAptitude = await EntitiesService.createEntity(session, ruleset.id, "aptitudes", {
+    name: "Power Aptitude",
+  });
   const refs: Refs = { abilityId: ability.id, featAptitudeId: featAptitude.id, powerAptitudeId: powerAptitude.id };
   return { user, session, ruleset, refs };
 }
@@ -393,7 +318,9 @@ test("refuses a form naming one list twice: by its source's id and its copy's", 
   RulesetViews.invalidate(fork.id);
 
   const aptitudeIds = [refs.featAptitudeId, copy.id];
-  expect(FeatsService.createFeat(session, fork.id, { name: "Listed Twice", aptitudeIds })).rejects.toMatchObject({
+  expect(
+    EntitiesService.createEntity(session, fork.id, "feats", { name: "Listed Twice", aptitudeIds }),
+  ).rejects.toMatchObject({
     message: `Aptitude ${copy.id} is given more than once`,
     refusal: "invalid",
   });

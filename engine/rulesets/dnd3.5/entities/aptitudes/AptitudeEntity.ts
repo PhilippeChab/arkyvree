@@ -1,5 +1,7 @@
 /** An aptitude as a ruleset's entity: what its rules refuse of an edit. */
 
+import { z } from "zod";
+
 import { RulesetEntity } from "@/engine/core/entities/index.ts";
 import { FieldCodec } from "@/engine/core/fields/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
@@ -20,6 +22,9 @@ export default class AptitudeEntity extends RulesetEntity<"aptitudes", AptitudeB
 
   protected override readonly label = "Aptitude";
 
+  /** Its list's filters: a kind's pools (`scope`: the feats', the spells' lists). */
+  protected override readonly listFilters = { scope: z.enum(["feats", "spells"]) };
+
   override readonly type = "aptitudes";
 
   /** Refuses deleting an aptitude the rules count on by name. */
@@ -38,9 +43,9 @@ export default class AptitudeEntity extends RulesetEntity<"aptitudes", AptitudeB
   }
 
   /** A page of the ruleset's aptitudes: a kind's pools when its query says (`scope`: the feats', the spells' lists). */
-  override openList(where: { childOnly?: boolean; scope?: "feats" | "spells" }) {
+  protected override listOf(where: { childOnly?: boolean; scope?: "feats" | "spells" }) {
     const joins = { feats: "feats_aptitudes", spells: "powers_aptitudes" } as const;
-    const list = super.openList(where);
+    const list = super.listOf(where);
     return { ...list, filters: where.scope ? { ...list.filters, joinedBy: joins[where.scope] } : list.filters };
   }
 

@@ -10,8 +10,7 @@ import { db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { Characters, Joins, Modifiers, Picks } from "@/server/repositories/index.ts";
 import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
-import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
-import { PowersService } from "@/server/services/rulesets/powers/index.ts";
+import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { sheetOf } from "@/tests/support/dnd3.5/characters.ts";
 import {
   addFighterLevels,
@@ -1510,7 +1509,10 @@ describe("a pick sent by the id of what the fork copied", () => {
     const ctx = await getSeedCtx();
     const fork = await createSeededTestRuleset(SEED_USER_ID);
     const name = "Magic Missile";
-    const copy = await PowersService.updatePower(session, fork.id, ctx.powerMap[name], { name, description: "Copied" });
+    const copy = await EntitiesService.updateEntity(session, fork.id, "powers", ctx.powerMap[name], {
+      name,
+      description: "Copied",
+    });
     const forkCtx: SeedContext = { ...ctx, powerMap: { ...ctx.powerMap, [name]: copy.id } };
     const known = SORCERER_1.powers!["Sorcerer Spells"].map((spell) => forkCtx.powerMap[spell]);
     const savedSpells = async (levelId: string) =>
@@ -1542,7 +1544,10 @@ describe("a pick sent by the id of what the fork copied", () => {
     const ctx = await getSeedCtx();
     const fork = await createSeededTestRuleset(SEED_USER_ID);
     const name = "Power Attack";
-    const copy = await FeatsService.updateFeat(session, fork.id, ctx.featMap[name], { name, description: "Copied" });
+    const copy = await EntitiesService.updateEntity(session, fork.id, "feats", ctx.featMap[name], {
+      name,
+      description: "Copied",
+    });
     const characterId = await createSeedCharacter(ctx, "fighter", { rulesetId: fork.id, xp: 1000 });
     const first = await levelUp(session, ctx, characterId, "Fighter", 1, FIGHTER_LEVELS[0]);
     const rows = await Picks.findMany<LevelFeat>(db, { pick: "feats", characterLevelIds: [first.id] });

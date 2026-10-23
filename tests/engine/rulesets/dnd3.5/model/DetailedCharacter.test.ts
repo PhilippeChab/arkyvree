@@ -34,7 +34,7 @@ import {
   Properties,
   Requirements,
 } from "@/server/repositories/index.ts";
-import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
+import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import type { ItemLocation } from "@/shared/enums.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 import type { Character, Requirement } from "@/shared/relations.ts";
@@ -2434,7 +2434,7 @@ describe("DetailedCharacter", () => {
       };
       expect(await highArcanaPicks()).toEqual({ allowed: 2, spent: 2, granted: 2 });
 
-      await ClassesService.updateClass(makeSession(), fork.id, archmage.id, {
+      await EntitiesService.updateEntity(makeSession(), fork.id, "klasses", archmage.id, {
         name: "Archmage",
         description: "Ours",
       });

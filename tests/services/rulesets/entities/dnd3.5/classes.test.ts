@@ -16,50 +16,54 @@ import type {
 import { db } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
 import { Entities, Joins, Modifiers, Properties, Requirements } from "@/server/repositories/index.ts";
-import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
 import { ClassLevelsService } from "@/server/services/rulesets/classes/levels/index.ts";
+import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { createTestCharacter } from "@/tests/support/characters.ts";
 import { addCharacterLevel } from "@/tests/support/levels.ts";
 import { createTestRuleset, createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
 import { KLASS_BONUS_SPELL_ABILITY_ID } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 // CRUD, ownership and copy-on-write are covered for every entity in EntityServices.test.ts.
-describe("ClassesService", () => {
+describe("EntitiesService: classes", () => {
   test("stores a class's hit die, a d8 unless one is given, one of the rules' dice", async () => {
     const { session, ruleset } = await createTestUserAndRuleset();
-    const warrior = await ClassesService.createClass(session, ruleset.id, {
+    const warrior = await EntitiesService.createEntity(session, ruleset.id, "klasses", {
       name: "Warrior",
       description: "A mighty warrior",
       hd: 12,
     });
     expect(warrior).toMatchObject({ name: "Warrior", description: "A mighty warrior", hd: 12 });
-    expect((await ClassesService.updateClass(session, ruleset.id, warrior.id, { name: "Warrior", hd: 10 })).hd).toBe(
-      10,
-    );
+    expect(
+      (await EntitiesService.updateEntity(session, ruleset.id, "klasses", warrior.id, { name: "Warrior", hd: 10 })).hd,
+    ).toBe(10);
 
-    expect((await ClassesService.createClass(session, ruleset.id, { name: "Mage" })).hd).toBe(8);
+    expect((await EntitiesService.createEntity(session, ruleset.id, "klasses", { name: "Mage" })).hd).toBe(8);
     // A hit die the rules have no die for is refused, by its column
-    expect(ClassesService.createClass(session, ruleset.id, { name: "Commoner", hd: 0 })).rejects.toMatchObject({
+    expect(
+      EntitiesService.createEntity(session, ruleset.id, "klasses", { name: "Commoner", hd: 0 }),
+    ).rejects.toMatchObject({
       issues: [{ category: "hd", message: "Hit Die must be one of: 4, 6, 8, 10, 12" }],
     });
   });
 
   test("exposes the ability a class's bonus spells come from", async () => {
     const { session, ruleset } = await createTestUserAndRuleset();
-    const fighter = await ClassesService.createClass(session, ruleset.id, { name: "Fighter" });
-    expect(await ClassesService.getClass(ruleset.id, fighter.id)).toMatchObject({ bonusSpellAbilityId: null });
+    const fighter = await EntitiesService.createEntity(session, ruleset.id, "klasses", { name: "Fighter" });
+    expect(await EntitiesService.getEntity(ruleset.id, "klasses", fighter.id)).toMatchObject({
+      bonusSpellAbilityId: null,
+    });
 
-    const wizard = await ClassesService.createClass(session, ruleset.id, { name: "Wizard", hd: 4 });
+    const wizard = await EntitiesService.createEntity(session, ruleset.id, "klasses", { name: "Wizard", hd: 4 });
     const [intelligence] = await Entities.create<RulesetAbility>(db, "abilities", {
       name: "Intelligence",
       description: "Intelligence",
       rulesetId: ruleset.id,
     });
-    await ClassesService.updateClass(session, ruleset.id, wizard.id, {
+    await EntitiesService.updateEntity(session, ruleset.id, "klasses", wizard.id, {
       name: "Wizard",
       fields: { bonusSpellAbilityId: intelligence.id },
     });
-    expect(await ClassesService.getClass(ruleset.id, wizard.id)).toMatchObject({
+    expect(await EntitiesService.getEntity(ruleset.id, "klasses", wizard.id)).toMatchObject({
       bonusSpellAbilityId: intelligence.id,
     });
     expect(await Properties.findMany(db, { entityIds: [wizard.id], entityType: "klasses" })).toMatchObject([
@@ -89,7 +93,7 @@ describe("ClassesService", () => {
       rulesetId,
     });
 
-    const klass = await ClassesService.createClass(session, rulesetId, { name: "Doomed Class" });
+    const klass = await EntitiesService.createEntity(session, rulesetId, "klasses", { name: "Doomed Class" });
     await Joins.create<KlassSkill>(db, "klass_skills", { klassId: klass.id, skillId: skill.id });
     const level = await ClassLevelsService.createClassLevel(session, rulesetId, klass.id, {
       level: 1,
@@ -111,7 +115,7 @@ describe("ClassesService", () => {
       operator: "add",
     });
 
-    await ClassesService.deleteClass(session, rulesetId, klass.id);
+    await EntitiesService.deleteEntity(session, rulesetId, "klasses", klass.id);
 
     expect(await Entities.findOne<KlassLevel>(db, { entityType: "klass_levels", id: level.id })).toBeUndefined();
     expect(await Joins.findMany<KlassLevelFeat>(db, { join: "klass_level_feats", fromIds: [level.id] })).toEqual([]);
@@ -123,7 +127,7 @@ describe("ClassesService", () => {
 
   test("copies an inherited class into a fork with its levels, their modifiers and those modifiers' requirements", async () => {
     const { user, session, ruleset: parent } = await createTestUserAndRuleset();
-    const klass = await ClassesService.createClass(session, parent.id, { name: "Cleric" });
+    const klass = await EntitiesService.createEntity(session, parent.id, "klasses", { name: "Cleric" });
     const level = await ClassLevelsService.createClassLevel(session, parent.id, klass.id, {
       level: 1,
       fields: { bab: 0, skills: 2 },
@@ -144,7 +148,7 @@ describe("ClassesService", () => {
     });
     const fork = await createTestRuleset(user.id, { rulesetId: parent.id, ancestorRulesetIds: [parent.id] });
 
-    const copy = await ClassesService.updateClass(session, fork.id, klass.id, {
+    const copy = await EntitiesService.updateEntity(session, fork.id, "klasses", klass.id, {
       name: "Cleric",
       description: "Forked",
     });
@@ -166,7 +170,7 @@ describe("ClassesService", () => {
 
   test("refuses to delete a class a character has a level in", async () => {
     const { user, session, ruleset } = await createTestUserAndRuleset();
-    const klass = await ClassesService.createClass(session, ruleset.id, { name: "Taken Class" });
+    const klass = await EntitiesService.createEntity(session, ruleset.id, "klasses", { name: "Taken Class" });
     const level = await ClassLevelsService.createClassLevel(session, ruleset.id, klass.id, {
       level: 1,
       fields: { bab: 1, skills: 2 },
@@ -174,6 +178,6 @@ describe("ClassesService", () => {
     const character = await createTestCharacter(user.id, { rulesetId: ruleset.id });
     await addCharacterLevel(character.id, level.id);
 
-    expect(ClassesService.deleteClass(session, ruleset.id, klass.id)).rejects.toThrow(ConflictError);
+    expect(EntitiesService.deleteEntity(session, ruleset.id, "klasses", klass.id)).rejects.toThrow(ConflictError);
   });
 });

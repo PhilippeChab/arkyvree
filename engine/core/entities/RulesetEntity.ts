@@ -1,4 +1,4 @@
-import type { z } from "zod";
+import { z } from "zod";
 
 import {
   type EntityForm,
@@ -10,6 +10,7 @@ import {
   type NoFields,
 } from "@/engine/core/fields/index.ts";
 import type {
+  EntityCopiesPlan,
   EntityCreatePlan,
   EntityDeletePlan,
   EntityEditPlan,
@@ -22,13 +23,22 @@ import { RequestIds, type RulesetData, type RulesetView, type ViewEntities } fro
 import { PROPERTY_ENTITY_TYPES } from "@/shared/customization/entities.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
 import type { Property } from "@/shared/relations.ts";
+import { getUrlSegment } from "@/shared/urlSegments.ts";
+
+/** An action a kind may have none of: its writes, its groups, its copies. */
+export type EntityAction = "create" | "delete" | "duplicate" | "groups" | "templates" | "update" | "variants";
+
+/** The actions of a kind's copies. */
+const COPY_ACTIONS: readonly EntityAction[] = ["duplicate", "templates", "variants"];
 
 /**
  * A ruleset's entity kind (its table, `type`), as its rules answer the server of it in a ruleset's view. Every kind
  * takes the same steps, and adds its rules to the ones they name:
  * - an entity found by its id (`find`) and described (`describe`): its row as the view resolves it, with the fields its
  *   properties hold (`fields`), as its form shows them (`describeFields`);
- * - a page of its rows (`openList`): what the server reads it with (`filters`), and its rows described alike;
+ * - a page of its rows (`openList`): its query's filters read by their schemas (`listFilters`), what the server reads
+ *   it with (`filters`, `listOf`), and its rows described alike; its groups, a kind's that lists by group
+ *   (`openGroups`: `groupFilters`, `groupsOf`);
  * - what its form writes (`planCreate`, `planEdit`): its columns read by their descriptions (`columns`, its rules'), and
  *   what else it carries by its kind's keys (`formKeys`), the entities it names by id, as the view reads them (`resolveIds`:
  *   a copy's for its source's id, refused, naming it, when the view shows none), the fields the form gives, read by its
@@ -37,6 +47,9 @@ import type { Property } from "@/shared/relations.ts";
  *   the feats it makes), and the fields it keeps once written (`fields`, which a create or an edit answers with its
  *   row);
  * - what deleting one writes (`planDelete`): checked (`checkDelete`), and what it writes with it (`deleteWritesOf`).
+ * An action a kind has none of it refuses as not found (`checkAction`): a read-only kind's writes (`readOnly`: "No
+ * create for abilities"), the groups of a kind that lists none, a duplicate, variants and templates of a kind that makes
+ * no copies (`copies`: "No templates for races").
  */
 export default abstract class RulesetEntity<
   K extends keyof ViewEntities,
@@ -49,17 +62,35 @@ export default abstract class RulesetEntity<
   /** Its form's columns, as its rules describe them (`RulesDescription.columns`): none of its own. */
   protected readonly columns: readonly FormField[] = [];
 
+  /** Whether it makes copies of its entities: their templates, a duplicate, variants (an item's). */
+  protected readonly copies: boolean = false;
+
   /** The fields its properties hold: `FieldCodec.NONE`, none of its own. */
   protected abstract readonly fields: FieldCodec<S>;
 
   /** What its form carries past its name, its description, its fields and its columns, by key: nothing. */
   protected readonly formKeys: z.ZodRawShape = {};
 
+  /** Its groups' filters, by query key: none, a kind that lists by group alone has them (a feat's pool). */
+  protected readonly groupFilters?: z.ZodRawShape;
+
   /** What a refusal calls one: "Save" in "Save not found in this ruleset". */
   protected abstract readonly label: string;
 
   /** The columns its list's query narrows it by, a value each (a race's kind): none. */
   protected readonly listColumns: readonly string[] = [];
+
+  /** Its list's filters past the shared ones, by query key, each its value's schema (a pool's, a level's): none. */
+  protected readonly listFilters: z.ZodRawShape = {};
+
+  /** Whether its ruleset reads it but never writes it (its rules seed it: an ability), which refuses its writes. */
+  protected readonly readOnly: boolean = false;
+
+  /**
+   * Whether a new entity standing in for an ancestor its ruleset deleted takes after the ancestor's stored row (a feat
+   * its mark), which the server then reads for `planCreate`.
+   */
+  readonly takesAfterAncestor: boolean = false;
 
   /** The kind's table. */
   abstract readonly type: K;
@@ -92,6 +123,28 @@ export default abstract class RulesetEntity<
       kept: entity && this.fieldsOf(entity),
       resolve: (type, id) => this.ids.resolve(type, id),
     });
+  }
+
+  /**
+   * A query's filters (`given`) read by their schemas (`shape`, the list's or the groups'): refused as invalid, by key,
+   * as a route's validation refuses a query, when one isn't the kind's ("races take no level filter") or isn't of its
+   * type. Every filter is optional: a list takes none.
+   */
+  private readFilters(shape: z.ZodRawShape, given: Record<string, unknown>): Record<string, unknown> {
+    const unknown = Object.keys(given).filter((key) => !Object.hasOwn(shape, key));
+    if (unknown.length > 0) {
+      const issues = unknown.map((key) => ({
+        category: key,
+        message: `${getUrlSegment(this.type)} take no ${key} filter`,
+      }));
+      throw new RulesError("invalid", "Request validation failed", issues);
+    }
+    return RulesError.parse(z.object(shape).partial(), given);
+  }
+
+  /** Refuses an action the kind has none of (`words`, what it's called): "No templates for classes". */
+  private refuseAction(words: EntityAction): never {
+    throw new RulesError("not-found", `No ${words} for ${getUrlSegment(this.type)}`);
   }
 
   /** Refuses deleting an entity: nothing does, unless its kind's rules say. */
@@ -137,6 +190,11 @@ export default abstract class RulesetEntity<
     return { description, fields, name, ...RulesError.parse(schema, form) } as Body;
   }
 
+  /** A page of its groups, of the filters the query gives (`where`, read): what the server reads it with. */
+  protected groupsOf(_where: Record<string, unknown>): { groupFilters: { groupField: string; ids?: string[] } } {
+    return this.refuseAction("groups");
+  }
+
   /** The entities a form names by id, as the view reads them: refused, naming one it shows none of. */
   protected get ids(): RequestIds {
     return new RequestIds(this.rulesetData, "this ruleset");
@@ -153,6 +211,25 @@ export default abstract class RulesetEntity<
   /** The lists a form links the entity to: none (`undefined`, an edit's kept), unless its kind is listed. */
   protected linksOf(_body: Body): ListLink[] | undefined {
     return undefined;
+  }
+
+  /**
+   * A page of the kind's rows, of the filters its query gives (`where`, read): what the server reads it with
+   * (`filters`: the ruleset's rows, of the values its query gives of its list's columns; a kind's list may narrow them
+   * by ids, fields or the join that links them), and its rows described.
+   */
+  protected listOf(where: { childOnly?: boolean } & Record<string, unknown>) {
+    const named = this.listColumns.filter((name) => where[name] !== undefined);
+    const filters: {
+      columns?: Record<string, unknown>;
+      fields?: Record<string, string>;
+      ids?: string[];
+      joinedBy?: string;
+    } = named.length === 0 ? {} : { columns: Object.fromEntries(named.map((name) => [name, where[name]])) };
+    return {
+      describe: <T extends Record<string, unknown> & { id: string }>(rows: T[]) => this.describeRows(rows),
+      filters,
+    };
   }
 
   /** The properties an entity's fields are read off: its own (an item's, merged with its template's). */
@@ -192,6 +269,21 @@ export default abstract class RulesetEntity<
     return written ?? this.keptProperties(columns, entity);
   }
 
+  /**
+   * Refuses an action the kind has none of, as not found ("No create for abilities"): a read-only kind's create, edit
+   * and delete, the groups of a kind that lists none, a duplicate, variants and templates of a kind that makes no copies.
+   * What the server opens a kind with for an action, before its access and name checks.
+   */
+  checkAction(action: EntityAction) {
+    const has =
+      action === "groups"
+        ? this.groupFilters !== undefined
+        : COPY_ACTIONS.includes(action)
+          ? this.copies
+          : !this.readOnly;
+    if (!has) this.refuseAction(action);
+  }
+
   /** An entity as its page shows it: its row as the view resolves it, with the fields its properties hold. */
   describe(id: string) {
     return this.describeRows([this.find(id)])[0];
@@ -211,26 +303,37 @@ export default abstract class RulesetEntity<
   }
 
   /**
-   * A page of the kind's rows, as its list asks for it: what the server reads it with (`filters`: the ruleset's rows,
-   * of the values its query gives of its list's columns; a kind's list may narrow them by ids, fields or the join that
-   * links them), and its rows described.
+   * A page of the kind's groups, as its query asks for it (`given`: its filters, read by `groupFilters`): what the
+   * server reads it with (`groupFilters`). Refused as not found for a kind that lists no groups.
    */
-  openList(where: { childOnly?: boolean } & Record<string, unknown>) {
-    const named = this.listColumns.filter((name) => where[name] !== undefined);
-    const filters: {
-      columns?: Record<string, unknown>;
-      fields?: Record<string, string>;
-      ids?: string[];
-      joinedBy?: string;
-    } = named.length === 0 ? {} : { columns: Object.fromEntries(named.map((name) => [name, where[name]])) };
-    return {
-      describe: <T extends Record<string, unknown> & { id: string }>(rows: T[]) => this.describeRows(rows),
-      filters,
-    };
+  openGroups({ childOnly, ...given }: { childOnly?: boolean } & Record<string, unknown>) {
+    this.checkAction("groups");
+    return this.groupsOf({ childOnly, ...this.readFilters(this.groupFilters ?? {}, given) });
   }
 
-  /** A new entity's row off its form, what it writes beside it, and the fields it keeps once written. */
-  planCreate(sent: EntityForm): EntityCreatePlan<Columns, FieldValues<S>> {
+  /**
+   * A page of the kind's rows, as its query asks for it (`given`: its filters past the shared ones, read by
+   * `listFilters`): what the server reads it with (`filters`), and its rows described (`listOf`).
+   */
+  openList({ childOnly, ...given }: { childOnly?: boolean } & Record<string, unknown>) {
+    return this.listOf({ childOnly, ...this.readFilters(this.listFilters, given) });
+  }
+
+  /**
+   * The entities of a type others are made from (an item's templates of a type), as the server reads them (`filters`):
+   * none, unless its kind makes copies.
+   */
+  openTemplates(_type?: string): { filters: { columns: Record<string, unknown> } } {
+    return this.refuseAction("templates");
+  }
+
+  /**
+   * A new entity's row off its form, what it writes beside it, and the fields it keeps once written. Named as an
+   * ancestor its ruleset deleted (`ancestor`, its stored row, which the view hides), it stands in for it: its kind may
+   * take after it.
+   */
+  planCreate(sent: EntityForm, _ancestor?: Record<string, unknown>): EntityCreatePlan<Columns, FieldValues<S>> {
+    this.checkAction("create");
     const body = this.formOf(sent);
     const form: Body = { ...body, ...this.resolveIds(body) };
     const given = this.readFields(form);
@@ -240,9 +343,15 @@ export default abstract class RulesetEntity<
 
   /** Deleting an entity (`id`): the entity as the view has it, and what its delete writes with it. */
   planDelete(id: string): EntityDeletePlan<ViewEntities[K]> {
+    this.checkAction("delete");
     const entity = this.find(id);
     this.checkDelete(entity);
     return { entity, writes: this.deleteWritesOf(entity) };
+  }
+
+  /** A copy of an entity (`sourceId`) off its form: none, unless its kind makes copies. */
+  planDuplicate(_sourceId: string, _sent: EntityForm): EntityCreatePlan<Columns, FieldValues<S>> {
+    return this.refuseAction("duplicate");
   }
 
   /**
@@ -250,11 +359,20 @@ export default abstract class RulesetEntity<
    * doesn't give as they are), what it writes beside it, and the fields it keeps once written.
    */
   planEdit(id: string, sent: EntityForm): EntityEditPlan<Columns, FieldValues<S>, ViewEntities[K]> {
+    this.checkAction("update");
     const entity = this.find(id);
     const body = this.formOf(sent, entity);
     const form: Body = { ...body, ...this.resolveIds(body) };
     const given = this.readFields(form, entity);
     this.checkForm(form, entity);
     return { ...this.planWrite(form, given, entity), entity };
+  }
+
+  /** Copies of an entity (`sourceId`), each its own name and description: none, unless its kind makes copies. */
+  planVariants(
+    _sourceId: string,
+    _variants: { description?: string | null; name: string }[],
+  ): EntityCopiesPlan<Columns> {
+    return this.refuseAction("variants");
   }
 }

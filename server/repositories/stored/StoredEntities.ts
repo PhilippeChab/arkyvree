@@ -627,6 +627,18 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
   }
 
   /**
+   * The ids a character names entities of a kind by (`entityType`, `ids`): their own, or, of a kind that owns others,
+   * those of the live entities they own (a class's levels, which a character advances in).
+   */
+  async findPickedIds(db: Db, where: { entityType: string; ids: string[] }): Promise<string[]> {
+    const ownedKinds = Engine.storage().ownedKinds(where.entityType);
+    if (ownedKinds.length === 0) return where.ids;
+    const owned = [];
+    for (const entityType of ownedKinds) owned.push(...(await this.findMany(db, { entityType, ownerIds: where.ids })));
+    return owned.map((entity) => entity.id);
+  }
+
+  /**
    * Entities as stored, each with its fields and links: by id (`ids`, archived or not, in no order), or a ruleset's own
    * live ones, every kind's (a campaign's too, with one), none of its sources', by name then id.
    */

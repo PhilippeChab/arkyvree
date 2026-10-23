@@ -7,7 +7,7 @@ import { db } from "@/server/database/index.ts";
 import { CharacterInventory, Entities, Sessions, Users } from "@/server/repositories/index.ts";
 import { CharactersService } from "@/server/services/characters/index.ts";
 import { CharacterInventoryService } from "@/server/services/characters/inventory/index.ts";
-import { ItemsService } from "@/server/services/rulesets/items/index.ts";
+import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { buildAs } from "@/tests/support/dnd3.5/characters.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
@@ -51,7 +51,7 @@ describe("COW inventory item details", () => {
       };
 
       expect((await readInventory())[0].item.name).toBe(item.name);
-      const updated = await ItemsService.updateItem(session, ruleset.id, item.id, {
+      const updated = await EntitiesService.updateEntity(session, ruleset.id, "items", item.id, {
         name: "Forked war mace",
         description: "A renamed mace in this fork.",
         type: "Weapon",
@@ -76,7 +76,7 @@ describe("COW inventory item details", () => {
       // Reading a fork does not rewrite the pick or change the parent item.
       const [stored] = await CharacterInventory.findMany(db, { characterId: character.id });
       expect(stored?.itemId).toBe(item.id);
-      const parent = await ItemsService.getItem(item.rulesetId, item.id);
+      const parent = await EntitiesService.getEntity(item.rulesetId, "items", item.id);
       expect(parent.name).toBe(item.name);
       expect(parent.description).toBe(item.description);
     });
@@ -84,7 +84,7 @@ describe("COW inventory item details", () => {
 
   test("campaign/shared character equipment uses the override's name and description", async () => {
     const { session, ruleset, item, character } = await setup();
-    const updated = await ItemsService.updateItem(session, ruleset.id, item.id, {
+    const updated = await EntitiesService.updateEntity(session, ruleset.id, "items", item.id, {
       name: "Campaign war mace",
       description: "Campaign-specific equipment description.",
       type: "Weapon",

@@ -28,6 +28,7 @@ import type {
   LevelSkill,
   Mechanic,
   Power,
+  PowerWithAptitudes,
   Race,
   RulesetAbility,
   RulesetSave,
@@ -56,14 +57,11 @@ import {
   Rulesets,
 } from "@/server/repositories/index.ts";
 import { CharactersService } from "@/server/services/characters/index.ts";
-import { AptitudesService } from "@/server/services/rulesets/aptitudes/index.ts";
-import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
 import { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";
 import { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";
+import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
-import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { RulesetsService } from "@/server/services/rulesets/index.ts";
-import { PowersService } from "@/server/services/rulesets/powers/index.ts";
 import type { Session } from "@/shared/relations.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
 import { createTestCharacter } from "@/tests/support/characters.ts";
@@ -84,6 +82,7 @@ import {
   copyEntity,
   createSeededTestRulesetWithExtensions,
   createTestRuleset,
+  type Described,
   editRuleset,
   invalidateSeededRuleset,
 } from "@/tests/support/rulesets.ts";
@@ -101,15 +100,19 @@ const ENTITIES = {
       Joins.findMany<{ aptitudeId: string; featId: string }>(db, { join: "feats_aptitudes", fromIds: [id] }),
     link: (id: string, aptitudeId: string) => Joins.create(db, "feats_aptitudes", { featId: id, aptitudeId }),
     get: async (rulesetId: string, id: string) => {
-      const { featsAptitudesInRules, ...rest } = await FeatsService.getFeat(rulesetId, id);
+      const { featsAptitudesInRules, ...rest } = await EntitiesService.getEntity<Described<"feats">>(
+        rulesetId,
+        "feats",
+        id,
+      );
       return { ...rest, links: featsAptitudesInRules };
     },
     list: async (rulesetId: string, search: string) =>
-      (await FeatsService.getFeats(rulesetId, { search }, firstPage)).items.map(
+      (await EntitiesService.getEntities<FeatWithAptitudes>(rulesetId, "feats", { search }, firstPage)).items.map(
         ({ featsAptitudesInRules, ...rest }) => ({ ...rest, links: featsAptitudesInRules }),
       ),
     edit: (session: Session, rulesetId: string, id: string) =>
-      FeatsService.updateFeat(session, rulesetId, id, { name: "Toughness", description: "Mine" }),
+      EntitiesService.updateEntity(session, rulesetId, "feats", id, { name: "Toughness", description: "Mine" }),
   },
   powers: {
     name: "Cure Light Wounds",
@@ -121,15 +124,22 @@ const ENTITIES = {
     link: (id: string, aptitudeId: string) =>
       Joins.create(db, "powers_aptitudes", { powerId: id, aptitudeId, level: 1 }),
     get: async (rulesetId: string, id: string) => {
-      const { powersAptitudesInRules, ...rest } = await PowersService.getPower(rulesetId, id);
+      const { powersAptitudesInRules, ...rest } = await EntitiesService.getEntity<Described<"powers">>(
+        rulesetId,
+        "powers",
+        id,
+      );
       return { ...rest, links: powersAptitudesInRules };
     },
     list: async (rulesetId: string, search: string) =>
-      (await PowersService.getPowers(rulesetId, { search }, firstPage)).items.map(
+      (await EntitiesService.getEntities<PowerWithAptitudes>(rulesetId, "powers", { search }, firstPage)).items.map(
         ({ powersAptitudesInRules, ...rest }) => ({ ...rest, links: powersAptitudesInRules }),
       ),
     edit: (session: Session, rulesetId: string, id: string) =>
-      PowersService.updatePower(session, rulesetId, id, { name: "Cure Light Wounds", description: "Mine" }),
+      EntitiesService.updateEntity(session, rulesetId, "powers", id, {
+        name: "Cure Light Wounds",
+        description: "Mine",
+      }),
   },
 };
 
@@ -286,7 +296,9 @@ async function favoredSoulOnMixedFork() {
 
 /** The fork's visible feats of this name. */
 async function featsNamed(rulesetId: string, name: string) {
-  return (await FeatsService.getFeats(rulesetId, { search: name }, firstPage)).items.filter((f) => f.name === name);
+  return (
+    await EntitiesService.getEntities<FeatWithAptitudes>(rulesetId, "feats", { search: name }, firstPage)
+  ).items.filter((f) => f.name === name);
 }
 
 /**
@@ -438,7 +450,7 @@ describe("subscribing to an extension", () => {
 
     expect((await Rulesets.findOne(db, { id: draft.id }))!.extensionRulesetIds).toEqual([extension.id]);
     const trooper = await warriorFeat("Shock Trooper");
-    expect(await FeatsService.getFeat(draft.id, trooper.id)).toMatchObject({
+    expect(await EntitiesService.getEntity<Described<"feats">>(draft.id, "feats", trooper.id)).toMatchObject({
       id: trooper.id,
       rulesetId: extension.id,
     });
@@ -652,7 +664,7 @@ describe("subscribing to an extension", () => {
         lists.filter((list) => list.name === own.name).map((list) => list.id);
       expect(named([...view.aptitudesById.values()])).toEqual([own.id]);
       expect(view.aptitudesById.get(divineList.id)?.id).toBe(own.id);
-      const { items } = await AptitudesService.getAptitudes(draft.id, { search: own.name }, firstPage);
+      const { items } = await EntitiesService.getEntities(draft.id, "aptitudes", { search: own.name }, firstPage);
       expect(named(items)).toEqual([own.id]);
 
       // The book's favored soul casts from the fork's list, which offers the spells on the book's
@@ -696,7 +708,7 @@ describe("subscribing to an extension", () => {
         operator: "add",
       });
 
-      const copy = await FeatsService.updateFeat(session, draft.id, toughness, {
+      const copy = await EntitiesService.updateEntity(session, draft.id, "feats", toughness, {
         name: "Toughness",
         description: "Mine",
       });
@@ -704,7 +716,7 @@ describe("subscribing to an extension", () => {
 
       expect(await featsNamed(draft.id, "Toughness")).toHaveLength(1);
       // A pick saved with the extension's copy reaches the fork's, whose customizations stay its own.
-      const reached = await FeatsService.getFeat(draft.id, extensionCopy);
+      const reached = await EntitiesService.getEntity<Described<"feats">>(draft.id, "feats", extensionCopy);
       expect(reached.id).toBe(copy.id);
       expect(reached.modifiers.map((m) => m.target)).not.toContain("abilities.constitution.total");
     });
@@ -715,7 +727,7 @@ describe("subscribing to an extension", () => {
       const [a, b] = [await createExtension(user.id), await createExtension(user.id)];
       for (const extension of [a, b]) await copyEntity(db, "feats", featMap["Toughness"], extension);
       await RulesetExtensionsService.subscribeExtension(session, draft.id, [a.id, b.id]);
-      await FeatsService.updateFeat(session, draft.id, featMap["Toughness"], {
+      await EntitiesService.updateEntity(session, draft.id, "feats", featMap["Toughness"], {
         name: "Toughness",
         description: "Mine",
       });
@@ -729,7 +741,7 @@ describe("unsubscribing from an extension", () => {
     const { session, extension, draft } = await setupFork();
     await RulesetExtensionsService.subscribeExtension(session, draft.id, [extension.id]);
     const monkeyGrip = await warriorFeat("Monkey Grip");
-    await FeatsService.updateFeat(session, draft.id, monkeyGrip.id, {
+    await EntitiesService.updateEntity(session, draft.id, "feats", monkeyGrip.id, {
       name: "Monkey Grip",
       description: "Mine",
     });
@@ -739,14 +751,15 @@ describe("unsubscribing from an extension", () => {
     });
     expect((await Rulesets.findOne(db, { id: draft.id }))!.extensionRulesetIds).toEqual([]);
     expect(await featsNamed(draft.id, "Monkey Grip")).toEqual([]);
-    await expectRefusedWith(FeatsService.getFeat(draft.id, monkeyGrip.id), 404);
+    await expectRefusedWith(EntitiesService.getEntity<Described<"feats">>(draft.id, "feats", monkeyGrip.id), 404);
     expect(await EntitySnapshots.findMany(db, { rulesetId: draft.id })).toEqual([]);
     expect(await RulesetExtensions.findMany(db, { rulesetId: draft.id })).toEqual([]);
 
     await RulesetExtensionsService.subscribeExtension(session, draft.id, [extension.id]);
-    expect((await FeatsService.getFeats(draft.id, { search: "Monkey Grip" }, firstPage)).items).toMatchObject([
-      { id: monkeyGrip.id, rulesetId: extension.id },
-    ]);
+    expect(
+      (await EntitiesService.getEntities<FeatWithAptitudes>(draft.id, "feats", { search: "Monkey Grip" }, firstPage))
+        .items,
+    ).toMatchObject([{ id: monkeyGrip.id, rulesetId: extension.id }]);
     expect(await RulesetExtensions.findMany(db, { rulesetId: draft.id })).toHaveLength(1);
   });
 
@@ -918,7 +931,7 @@ describe("unsubscribing from an extension", () => {
     const other = await createExtension();
     const [otherFeat] = await Entities.create<Feat>(db, "feats", { name: "Other Feat", rulesetId: other.id });
     await RulesetExtensionsService.subscribeExtension(session, draft.id, [extension.id, other.id]);
-    const copy = await FeatsService.updateFeat(session, draft.id, otherFeat.id, {
+    const copy = await EntitiesService.updateEntity(session, draft.id, "feats", otherFeat.id, {
       name: "Other Feat",
       description: "Mine",
     });
@@ -1054,7 +1067,7 @@ describe("unsubscribing from an extension", () => {
     );
     await Characters.delete(db, { id: direct.id });
 
-    const copy = await FeatsService.updateFeat(session, draft.id, trooper.id, {
+    const copy = await EntitiesService.updateEntity(session, draft.id, "feats", trooper.id, {
       name: "Shock Trooper",
       description: "Mine",
     });
@@ -1191,10 +1204,16 @@ describe("unsubscribing from an extension", () => {
     const { user, session, extension: warrior, draft } = await setupFork();
     await RulesetExtensionsService.subscribeExtension(session, draft.id, [warrior.id]);
     const { aptMap, featMap } = await getSeedCtx();
-    const mine = await FeatsService.updateFeat(session, draft.id, await warriorEntity("feats", "Spirited Charge"), {
-      name: "Spirited Charge",
-      description: "Mine",
-    });
+    const mine = await EntitiesService.updateEntity(
+      session,
+      draft.id,
+      "feats",
+      await warriorEntity("feats", "Spirited Charge"),
+      {
+        name: "Spirited Charge",
+        description: "Mine",
+      },
+    );
     const level = await levelPicking(user.id, draft.id, "feats", mine.id, aptMap["General"]);
 
     await RulesetExtensionsService.unsubscribeExtension(session, draft.id, warrior.id);
@@ -1319,7 +1338,10 @@ describe("an extension's content in a fork", () => {
       ))!.id;
     expect(await levelRead()).toEqual([await firstLevelOf(rulesetId)]);
 
-    await ClassesService.updateClass(author, book.id, coreCleric.id, { name: "Cleric", description: "The book's" });
+    await EntitiesService.updateEntity(author, book.id, "klasses", coreCleric.id, {
+      name: "Cleric",
+      description: "The book's",
+    });
     await RulesetsService.publishRuleset(author, book.id, { kind: "extension" });
     await RulesetExtensionsService.subscribeExtension(session, draft.id, [book.id]);
     expect(await levelRead()).toEqual([await firstLevelOf(book.id)]);
@@ -1329,7 +1351,10 @@ describe("an extension's content in a fork", () => {
       name: "Cleric",
       rulesetId: book.id,
     }))!;
-    await ClassesService.updateClass(session, draft.id, bookCleric.id, { name: "Cleric", description: "The fork's" });
+    await EntitiesService.updateEntity(session, draft.id, "klasses", bookCleric.id, {
+      name: "Cleric",
+      description: "The fork's",
+    });
     expect(await levelRead()).toEqual([await firstLevelOf(draft.id)]);
   });
 
@@ -1355,9 +1380,14 @@ describe("an extension's content in a fork", () => {
       rulesetId: owner.id,
     }))!;
     const spellsOnList = async () =>
-      (await PowersService.getPowers(draft.id, { aptitudeId: aptitude.id }, { limit: 1000, page: 1 })).items.map(
-        (power) => power.name,
-      );
+      (
+        await EntitiesService.getEntities<PowerWithAptitudes>(
+          draft.id,
+          "powers",
+          { aptitudeId: aptitude.id },
+          { limit: 1000, page: 1 },
+        )
+      ).items.map((power) => power.name);
     await RulesetExtensionsService.subscribeExtension(session, draft.id, [owner.id]);
     expect(await spellsOnList()).not.toContain(spell);
     await RulesetExtensionsService.subscribeExtension(session, draft.id, [adventurer.id]);
@@ -1368,7 +1398,12 @@ describe("an extension's content in a fork", () => {
     // Bull's Strength composes as Complete Warrior's copy, while Complete Divine's puts it on the favored soul's list
     const { draft, list, offer } = await favoredSoulOnMixedFork();
     const search = "Bull's Strength";
-    const listed = await PowersService.getPowers(draft.id, { aptitudeId: list.id, search }, firstPage);
+    const listed = await EntitiesService.getEntities<PowerWithAptitudes>(
+      draft.id,
+      "powers",
+      { aptitudeId: list.id, search },
+      firstPage,
+    );
     expect(listed.items.map((power) => power.name)).toContain(search);
     expect((await offer({ search })).items.map((power) => power.name)).toContain(search);
   });
@@ -1390,9 +1425,15 @@ describe("an extension's content in a fork", () => {
     }))!;
     const search = "Combat Casting";
     const where = { aptitudeId: list.id, search };
-    expect((await FeatsService.getFeats(draft.id, where, firstPage)).items.map((feat) => feat.name)).toContain(search);
     expect(
-      (await FeatsService.getFeatGroups(draft.id, where, firstPage)).items.map((group) => group.displayName),
+      (await EntitiesService.getEntities<FeatWithAptitudes>(draft.id, "feats", where, firstPage)).items.map(
+        (feat) => feat.name,
+      ),
+    ).toContain(search);
+    expect(
+      (await EntitiesService.getEntityGroups(draft.id, "feats", where, firstPage)).items.map(
+        (group) => group.displayName,
+      ),
     ).toContain(search);
     const offered = await featsOffered(session, character.id, hexblade.id, list.id, search);
     expect(offered.items.map((feat) => feat.name)).toContain(search);
@@ -1440,16 +1481,16 @@ describe("an extension's content in a fork", () => {
     await RulesetExtensionsService.subscribeExtension(session, draft.id, [extension.id]);
     const [monkeyGrip, buckler] = [await warriorFeat("Monkey Grip"), await warriorFeat("Improved Buckler Defense")];
 
-    const copy = await FeatsService.updateFeat(session, draft.id, monkeyGrip.id, {
+    const copy = await EntitiesService.updateEntity(session, draft.id, "feats", monkeyGrip.id, {
       name: "Monkey Grip",
       description: "Mine",
     });
-    expect(await FeatsService.getFeat(draft.id, copy.id)).toMatchObject({
+    expect(await EntitiesService.getEntity<Described<"feats">>(draft.id, "feats", copy.id)).toMatchObject({
       rulesetId: draft.id,
       description: "Mine",
     });
 
-    await FeatsService.deleteFeat(session, draft.id, buckler.id);
+    await EntitiesService.deleteEntity(session, draft.id, "feats", buckler.id);
     expect(await featsNamed(draft.id, "Improved Buckler Defense")).toEqual([]);
     expect(await Entities.findOne<Feat>(db, { entityType: "feats", id: buckler.id })).toMatchObject({
       deletedAt: null,
@@ -1461,10 +1502,10 @@ describe("an extension's content in a fork", () => {
     const { aptMap } = await getSeedCtx();
     await RulesetExtensionsService.subscribeExtension(session, draft.id, [extension.id]);
     const create = (name: string) =>
-      FeatsService.createFeat(session, draft.id, { name, aptitudeIds: [aptMap["General"]] });
+      EntitiesService.createEntity(session, draft.id, "feats", { name, aptitudeIds: [aptMap["General"]] });
 
     await expectRefusedWith(create("Monkey Grip"), 409);
-    await FeatsService.updateFeat(session, draft.id, (await warriorFeat("Monkey Grip")).id, {
+    await EntitiesService.updateEntity(session, draft.id, "feats", (await warriorFeat("Monkey Grip")).id, {
       name: "Monkey Grip",
       description: "Mine",
     });
@@ -1478,8 +1519,9 @@ describe("an extension's content in a fork", () => {
     const { aptMap } = await getSeedCtx();
     await RulesetExtensionsService.subscribeExtension(session, draft.id, [extension.id]);
 
-    const deathDomain = await PowersService.getPowers(
+    const deathDomain = await EntitiesService.getEntities<PowerWithAptitudes>(
       draft.id,
+      "powers",
       { aptitudeId: aptMap["Death Domain Spells"] },
       firstPage,
     );
@@ -1487,7 +1529,9 @@ describe("an extension's content in a fork", () => {
       expect.arrayContaining(["Cause Fear", "Death Knell", "Animate Dead", "Wail of the Banshee"]),
     );
 
-    const [animateDead] = (await PowersService.getPowers(draft.id, { search: "Animate Dead" }, firstPage)).items;
+    const [animateDead] = (
+      await EntitiesService.getEntities<PowerWithAptitudes>(draft.id, "powers", { search: "Animate Dead" }, firstPage)
+    ).items;
     expect(animateDead.powersAptitudesInRules.map((link) => link.aptitudesInRule?.name)).toContain(
       "Death Domain Spells",
     );
@@ -1643,14 +1687,20 @@ describe("an extension's entity of a name its subscriber's own has", () => {
     const { session, draft } = await setupFork();
     const book = await createExtension(author.user.id);
     const general = { aptitudeIds: [(await getSeedCtx()).aptMap["General"]] };
-    const later = await FeatsService.createFeat(author.session, book.id, { name: "Probe Book Feat", ...general });
+    const later = await EntitiesService.createEntity(author.session, book.id, "feats", {
+      name: "Probe Book Feat",
+      ...general,
+    });
     await RulesetExtensionsService.subscribeExtension(session, draft.id, [book.id]);
-    const own = await FeatsService.createFeat(session, draft.id, { name: "Homebrew Feat", ...general });
-    const ownRenamed = await FeatsService.createFeat(session, draft.id, { name: "Homebrew Renamed", ...general });
+    const own = await EntitiesService.createEntity(session, draft.id, "feats", { name: "Homebrew Feat", ...general });
+    const ownRenamed = await EntitiesService.createEntity(session, draft.id, "feats", {
+      name: "Homebrew Renamed",
+      ...general,
+    });
 
     // The author adds a feat of the subscriber's feat's name, and renames another to the other's: neither is refused
-    const added = await FeatsService.createFeat(author.session, book.id, { name: own.name, ...general });
-    await FeatsService.updateFeat(author.session, book.id, later.id, { name: ownRenamed.name });
+    const added = await EntitiesService.createEntity(author.session, book.id, "feats", { name: own.name, ...general });
+    await EntitiesService.updateEntity(author.session, book.id, "feats", later.id, { name: ownRenamed.name });
 
     expect(await featsNamed(draft.id, own.name)).toMatchObject([{ id: own.id }]);
     expect(await featsNamed(draft.id, ownRenamed.name)).toMatchObject([{ id: ownRenamed.id }]);
@@ -1658,10 +1708,13 @@ describe("an extension's entity of a name its subscriber's own has", () => {
     const shown = view.feats.filter((feat) => [own.name, ownRenamed.name].includes(feat.name)).map((feat) => feat.id);
     expect(shown.toSorted()).toEqual([own.id, ownRenamed.id].toSorted());
     expect(await featsNamed(book.id, own.name)).toMatchObject([{ id: added.id }]);
-    await expectRefusedWith(FeatsService.createFeat(session, draft.id, { name: own.name, ...general }), 409);
+    await expectRefusedWith(
+      EntitiesService.createEntity(session, draft.id, "feats", { name: own.name, ...general }),
+      409,
+    );
 
     // The subscriber's own renamed, the book's shows under its name
-    await FeatsService.updateFeat(session, draft.id, own.id, { name: "Homebrew Feat (Mine)" });
+    await EntitiesService.updateEntity(session, draft.id, "feats", own.id, { name: "Homebrew Feat (Mine)" });
     expect(await featsNamed(draft.id, own.name)).toMatchObject([{ id: added.id }]);
   });
 
@@ -1671,7 +1724,10 @@ describe("an extension's entity of a name its subscriber's own has", () => {
     const { aptMap, klassMap } = await getSeedCtx();
     const general = aptMap["General"];
     await RulesetExtensionsService.subscribeExtension(session, draft.id, [book.id]);
-    const own = await FeatsService.createFeat(session, draft.id, { name: "Homebrew Feat", aptitudeIds: [general] });
+    const own = await EntitiesService.createEntity(session, draft.id, "feats", {
+      name: "Homebrew Feat",
+      aptitudeIds: [general],
+    });
     await Modifiers.create(db, { ...STRENGTH_BONUS, sourceType: "feats", sourceId: own.id });
     // The book's, added since: on a list of the book's and on the general feats, a class of the book's granting it
     const [bookFeat] = await Entities.create<Feat>(db, "feats", { name: own.name, rulesetId: book.id });
@@ -1705,7 +1761,7 @@ describe("an extension's entity of a name its subscriber's own has", () => {
     expect(view.klassLevelFeatsByKlassLevel.get(klassLevel.id)).toMatchObject([{ featId: own.id }]);
     expect(view.listFeatIds(bookList.id)).toEqual([]);
     expect(view.listFeatIds(general).filter((id) => [own.id, bookFeat.id].includes(id))).toEqual([own.id]);
-    const described = await FeatsService.getFeat(draft.id, bookFeat.id);
+    const described = await EntitiesService.getEntity<Described<"feats">>(draft.id, "feats", bookFeat.id);
     expect(described.id).toBe(own.id);
     expect(described.modifiers.map((modifier) => modifier.target)).toEqual([STRENGTH_BONUS.target]);
 

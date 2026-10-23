@@ -15,6 +15,9 @@ export default class AbilityEntity extends RulesetEntity<"abilities", AbilityBod
 
   protected override readonly label = "Ability";
 
+  /** Its rules seed it: a ruleset never writes one. */
+  protected override readonly readOnly = true;
+
   override readonly type = "abilities";
 
   /** A form's columns. */

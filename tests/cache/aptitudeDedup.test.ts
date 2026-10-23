@@ -8,14 +8,13 @@ import {
   DND35_RULESET_NAME,
 } from "@/content/dnd3.5/rulesetNames.ts";
 import { entitiesInRules, rulesetsInRules } from "@/drizzle/schema.ts";
+import type { FeatWithAptitudes, PowerWithAptitudes } from "@/engine/index.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Joins } from "@/server/repositories/index.ts";
-import { AptitudesService } from "@/server/services/rulesets/aptitudes/index.ts";
-import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
-import { PowersService } from "@/server/services/rulesets/powers/index.ts";
-import { createSeededTestRulesetWithExtensions } from "@/tests/support/rulesets.ts";
+import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
+import { createSeededTestRulesetWithExtensions, type Described } from "@/tests/support/rulesets.ts";
 
 /** The entities of `type` named `name` (`names`), with their rulesets' names, in the rulesets of `rulesetIds`. */
 async function namedEntities(type: string, names: string[], rulesetIds?: string[]) {
@@ -124,12 +123,13 @@ describe("aptitude deduplication across sibling extensions", () => {
     }
   });
 
-  test("PowersService returns no duplicate aptitude names on CD spell with Blackguard Spells", async () => {
+  test("the powers list returns no duplicate aptitude names on CD spell with Blackguard Spells", async () => {
     const { ruleset } = await setup();
     // "Visage of the Deity, Lesser" is a CD spell with "Blackguard Spells" aptitude
     // Both DMG and CD create this aptitude — service should dedup
-    const { items } = await PowersService.getPowers(
+    const { items } = await EntitiesService.getEntities<PowerWithAptitudes>(
       ruleset.id,
+      "powers",
       { search: "Visage of the Deity, Lesser" },
       { limit: 10, page: 1 },
     );
@@ -142,7 +142,7 @@ describe("aptitude deduplication across sibling extensions", () => {
     expect(aptNames).toContain("Blackguard Spells");
   });
 
-  test("PowersService detail returns no duplicate aptitude names", async () => {
+  test("a power's page returns no duplicate aptitude names", async () => {
     const { ruleset } = await setup();
     const [spell] = await namedEntities(
       "powers",
@@ -150,15 +150,20 @@ describe("aptitude deduplication across sibling extensions", () => {
       [await rulesetIdOf(DND35_COMPLETE_DIVINE_NAME)],
     );
 
-    const power = await PowersService.getPower(ruleset.id, spell.id);
+    const power = await EntitiesService.getEntity<Described<"powers">>(ruleset.id, "powers", spell.id);
     const aptNames = power.powersAptitudesInRules.map((pa) => pa.aptitudesInRule.name);
     const uniqueNames = new Set(aptNames);
     expect(aptNames.length).toBe(uniqueNames.size);
   });
 
-  test("AptitudesService returns no duplicate aptitude names in list", async () => {
+  test("the aptitudes list returns no duplicate aptitude names in list", async () => {
     const { ruleset } = await setup();
-    const { items } = await AptitudesService.getAptitudes(ruleset.id, { scope: "spells" }, { limit: 500, page: 1 });
+    const { items } = await EntitiesService.getEntities(
+      ruleset.id,
+      "aptitudes",
+      { scope: "spells" },
+      { limit: 500, page: 1 },
+    );
     const names = items.map((a) => a.name);
     const uniqueNames = new Set(names);
     expect(names.length).toBe(uniqueNames.size);
@@ -167,13 +172,18 @@ describe("aptitude deduplication across sibling extensions", () => {
     expect(items.filter((a) => a.name === "Blackguard Spells")).toHaveLength(1);
   });
 
-  test("FeatsService returns no duplicate aptitude names on feats with sibling aptitudes", async () => {
+  test("the feats list returns no duplicate aptitude names on feats with sibling aptitudes", async () => {
     const { ruleset, rulesetData } = await setup();
     // Find a feat that has an aptitude created by multiple extensions (e.g. "Blackguard Spells")
     const winningApt = rulesetData.aptitudes.find((a) => a.name === "Blackguard Spells");
     expect(winningApt).toBeDefined();
 
-    const { items } = await FeatsService.getFeats(ruleset.id, { aptitudeId: winningApt!.id }, { limit: 100, page: 1 });
+    const { items } = await EntitiesService.getEntities<FeatWithAptitudes>(
+      ruleset.id,
+      "feats",
+      { aptitudeId: winningApt!.id },
+      { limit: 100, page: 1 },
+    );
 
     for (const feat of items) {
       const aptNames = feat.featsAptitudesInRules.map((fa) => fa.aptitudesInRule.name);

@@ -10,7 +10,7 @@ import {
 } from "@/server/cow/index.ts";
 import { withTransaction } from "@/server/database/index.ts";
 import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
-import { Entities, type EntityRow, type RulesetEntityType } from "@/server/repositories/index.ts";
+import { Entities, type EntityRow, Joins, type RulesetEntityType } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications, getChangedFields } from "@/server/services/activities/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import { getActivityName } from "@/shared/activity.ts";
@@ -20,14 +20,6 @@ import type { Session } from "@/shared/relations.ts";
 import { hasCharacterPicks } from "./characterPicks.ts";
 import { writeEntityWrites } from "./entityWrites.ts";
 import { createListLinks, setListLinks } from "./listLinks.ts";
-
-/** What a delete adds of its kind's: what else uses an entity, and what else refuses its delete. */
-interface DeleteChecks<P> {
-  /** Whether the entity is in use, which refuses its delete: picked by a character, unless the kind says otherwise. */
-  inUse?: (tx: Db, scope: RulesetScope) => Promise<boolean>;
-  /** Refuses the delete the plan plans, by what the kind reads of it in the ruleset's scope (an item template's copies). */
-  refuse?: (tx: Db, scope: RulesetScope, plan: P) => Promise<void>;
-}
 
 /** An entity a plan names, as the view has it. */
 interface PlannedEntity {
@@ -51,17 +43,33 @@ export type EntityBody = EntityForm & { name: string; updatedAt?: string };
  * keeps the name free (taking over a deleted copy's tombstone), writes the row, its list links, the customizations it
  * copies and what the plan writes beside it (its fields, over the copied properties of their types). An update keeps a
  * new name free as a create does, and writes the row the view's entity resolves to (its copy, made on its first edit),
- * refused when stale. A delete is refused while the entity is in use. Each records its activity, and the ruleset's
- * views drop what it changed.
+ * refused when stale. A delete is refused while the entity is in use. Each first opens the kind's rules for its action
+ * (`open`), records its activity, and the ruleset's views drop what it changed.
  */
 export default class EntityWriter {
-  constructor(private readonly type: RulesetEntityType) {}
+  constructor(
+    private readonly type: RulesetEntityType,
+    /**
+     * Opens the kind's rules for the action, first of all its steps: an action the kind has none of (an ability's
+     * create) refused before its access, name and in-use checks.
+     */
+    private readonly open: (scope: RulesetScope) => unknown = () => undefined,
+  ) {}
 
   /** The entity's customizations, copied onto the new one (`entityId`) from `sourceId`'s. */
   private async copyCustomizations(tx: Db, entityId: string, sourceId: string) {
     const sourceType = isCustomizableEntityType(this.type) ? this.type : undefined;
     const customizations = (await CustomizationCopies.read(tx, [sourceId], this.type, sourceType)).get(sourceId);
     if (customizations) await CustomizationCopies.copy(tx, entityId, this.type, customizations);
+  }
+
+  /**
+   * Whether an entity (`entityId`) is in use, which refuses its delete: linked to by a join that refuses its delete (a
+   * class level's base bonus to a save: the database would refuse it, this answers why), or picked by a character.
+   */
+  private async inUse(tx: Db, { ruleset, rulesetData }: RulesetScope, entityId: string) {
+    if (await Joins.hasRefusing(tx, { toId: rulesetData.cow.resolve(entityId), toType: this.type })) return true;
+    return await hasCharacterPicks(tx, this.type, rulesetData.cow.getEquivalentIds(entityId), ruleset.id);
   }
 
   /** Records what a create, an update or a delete did to the entity (`verb`), with what the activity carries. */
@@ -104,6 +112,7 @@ export default class EntityWriter {
       async (tx) =>
         await withRulesetScope(tx, rulesetId, async (scope) => {
           const { ruleset, rulesetData } = scope;
+          this.open(scope);
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
           const names = new EntityNames(ruleset, rulesetData.cow);
@@ -126,28 +135,25 @@ export default class EntityWriter {
   }
 
   /**
-   * An entity's delete (`entityId`), as its rules plan it (`plan`): refused while it's in use (picked by a character,
-   * unless its kind says otherwise: `checks`), the row the view's entity resolves to deleted, and what the plan writes
-   * with it (the entities it removes). Answers the deleted row.
+   * An entity's delete (`entityId`), as its rules plan it (`plan`, given the transaction to read what the plan needs):
+   * refused while it's in use (`inUse`), the row the view's entity resolves to deleted, and what the plan writes with
+   * it (the entities it removes). Answers the deleted row.
    */
   async delete<P extends EntityDeletePlan<PlannedEntity>>(
     session: Session,
     rulesetId: string,
     entityId: string,
-    plan: (scope: RulesetScope) => P,
-    checks: DeleteChecks<P> = {},
+    plan: (scope: RulesetScope, reads: { tx: Db }) => P | Promise<P>,
   ): Promise<Row> {
     const result = await withTransaction(
       async (tx) =>
         await withRulesetScope(tx, rulesetId, async (scope) => {
-          const { ruleset, rulesetData } = scope;
-          const inUse = checks.inUse
-            ? await checks.inUse(tx, scope)
-            : await hasCharacterPicks(tx, this.type, rulesetData.cow.getEquivalentIds(entityId), rulesetId);
+          const { ruleset } = scope;
+          this.open(scope);
+          const inUse = await this.inUse(tx, scope, entityId);
           (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
 
-          const planned = plan(scope);
-          await checks.refuse?.(tx, scope, planned);
+          const planned = await plan(scope, { tx });
           const targetId = await new EntityEdit(ruleset).cowToDelete(tx, this.type, planned.entity);
           await this.writeBeside(tx, scope, targetId, planned.writes);
 
@@ -175,16 +181,12 @@ export default class EntityWriter {
     rulesetId: string,
     body: { name: string; updatedAt?: string },
     plan: (scope: RulesetScope, reads: { tx: Db }) => P | Promise<P>,
-    /**
-     * What its activity compares with the entity it was, for its changed fields: the columns its plan writes (never the
-     * body, whose other keys it doesn't), unless the row says better.
-     */
-    compare: (row: Row, columns: P["columns"]) => object = (_row, columns) => columns,
   ): Promise<Row & P["fields"]> {
     const result = await withTransaction(
       async (tx) =>
         await withRulesetScope(tx, rulesetId, async (scope) => {
           const { ruleset, rulesetData } = scope;
+          this.open(scope);
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
           const planned = await plan(scope, { tx });
@@ -210,7 +212,8 @@ export default class EntityWriter {
           const [row] = rows;
           await this.recordActivity(tx, session, "update", targetId, {
             entityName: body.name,
-            changedFields: getChangedFields(planned.entity, compare(row, planned.columns)),
+            // The columns its plan writes, never the body, whose other keys it doesn't
+            changedFields: getChangedFields(planned.entity, planned.columns),
           });
           return { ...row, ...planned.fields };
         }),

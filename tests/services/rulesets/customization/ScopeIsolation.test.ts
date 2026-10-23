@@ -6,7 +6,7 @@ import { db } from "@/server/database/index.ts";
 import { Entities, Modifiers, Requirements } from "@/server/repositories/index.ts";
 import { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";
 import { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";
-import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
+import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
 import { STRENGTH_BONUS } from "@/tests/support/customizations.ts";
 import { createSeededTestRuleset, editRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
@@ -201,7 +201,7 @@ describe("stale ancestor customization IDs", () => {
         chainingOperator: "and",
       });
       invalidateSeededRuleset(feat.rulesetId);
-      const local = await FeatsService.updateFeat(session, own.id, feat.id, {
+      const local = await EntitiesService.updateEntity(session, own.id, "feats", feat.id, {
         name: feat.name,
         fields: { families: ["Skill Focus"] },
       });

@@ -39,11 +39,9 @@ import {
   Requirements,
 } from "@/server/repositories/index.ts";
 import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
-import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
+import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
-import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { RulesetsService } from "@/server/services/rulesets/index.ts";
-import { PowersService } from "@/server/services/rulesets/powers/index.ts";
 import type { Session } from "@/shared/relations.ts";
 import { createTestCharacter } from "@/tests/support/characters.ts";
 import { measure, runWhileLocked } from "@/tests/support/database.ts";
@@ -729,7 +727,7 @@ describe("LevelsService", () => {
         free: true,
       });
       await addOneLevel(session, character.id, klass.id, 1, 8, null, {}, {}, {}, true);
-      await ClassesService.updateClass(session, ruleset.id, klass.id, {
+      await EntitiesService.updateEntity(session, ruleset.id, "klasses", klass.id, {
         name: "Test Class",
         description: "Ours",
       });
@@ -772,8 +770,14 @@ describe("LevelsService", () => {
         feats: [{ featId: feats["Dodge"].id, aptitudeId: featAptitude.id }],
       });
       const copies = [];
-      for (const name of ["Dodge", "Power Attack"])
-        copies.push(await FeatsService.updateFeat(session, ruleset.id, feats[name].id, { name, description: "Ours" }));
+      for (const name of ["Dodge", "Power Attack"]) {
+        copies.push(
+          await EntitiesService.updateEntity(session, ruleset.id, "feats", feats[name].id, {
+            name,
+            description: "Ours",
+          }),
+        );
+      }
 
       const available = await featGroups(session, character.id, levelUpPlan([planned(klass.id, 2)]), featAptitude.id);
       expect(names(available)).toEqual(["Weapon Focus"]);
@@ -806,7 +810,7 @@ describe("LevelsService", () => {
       };
       expect(await held()).toEqual([feats["Power Attack"].id]);
 
-      await FeatsService.deleteFeat(session, ruleset.id, feats["Power Attack"].id);
+      await EntitiesService.deleteEntity(session, ruleset.id, "feats", feats["Power Attack"].id);
       expect(await held()).toEqual([]);
     });
 
@@ -1381,8 +1385,12 @@ describe("LevelsService", () => {
       await addCharacterLevel(character.id, klassLevels[0].id, {
         powers: [{ powerId: powers["Sneak Attack"].id, aptitudeId: powerAptitude.id }],
       });
-      for (const name of ["Rage", "Sneak Attack"])
-        await PowersService.updatePower(session, ruleset.id, powers[name].id, { name, description: "Ours" });
+      for (const name of ["Rage", "Sneak Attack"]) {
+        await EntitiesService.updateEntity(session, ruleset.id, "powers", powers[name].id, {
+          name,
+          description: "Ours",
+        });
+      }
 
       const items = await powerOptions(session, character.id, levelUpPlan([planned(klass.id, 2)]), powerAptitude.id);
       expect(names(items)).toEqual(["Uncanny Dodge"]);
@@ -1482,7 +1490,7 @@ describe("LevelsService", () => {
         });
         const characterId = await createSeedCharacter(ctx, "wizard", { xp: 3000, rulesetId: fork.id });
         await levelUp(session, ctx, characterId, "Wizard", 1, WIZARD_1);
-        await FeatsService.updateFeat(session, fork.id, ctx.featMap["Prohibit Illusion"], {
+        await EntitiesService.updateEntity(session, fork.id, "feats", ctx.featMap["Prohibit Illusion"], {
           name: "Prohibit Illusion",
           description: "Copied",
         });

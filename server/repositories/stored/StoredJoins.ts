@@ -158,6 +158,16 @@ class StoredJoins extends BaseRepository<typeof entityLinksInRules> {
       .limit(1);
     return link !== undefined;
   }
+
+  /**
+   * Whether a link of a join that refuses its target's delete points at an entity of a kind (`toType`, `toId`): an
+   * in-use check (a class level's base bonus to a save, whose delete the database would refuse).
+   */
+  async hasRefusing(db: Db, where: { toId: string; toType: string }) {
+    for (const join of Engine.storage().refusingJoins(where.toType))
+      if (await this.has(db, { join, toId: where.toId })) return true;
+    return false;
+  }
 }
 
 export default StoredJoins;

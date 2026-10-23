@@ -17,9 +17,8 @@ import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, toJson } from "@/server/errors/index.ts";
 import { Entities, EntitySnapshots, Joins, Modifiers, Properties, Requirements } from "@/server/repositories/index.ts";
-import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
 import { ClassLevelsService } from "@/server/services/rulesets/classes/levels/index.ts";
-import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
+import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import type { Session } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
@@ -62,7 +61,7 @@ async function createSave(rulesetId: string, name: string) {
 /** A new user's empty ruleset with a class and an aptitude. */
 async function setup() {
   const { user, session, ruleset } = await createTestUserAndRuleset();
-  const klass = await ClassesService.createClass(session, ruleset.id, { name: "Test Class" });
+  const klass = await EntitiesService.createEntity(session, ruleset.id, "klasses", { name: "Test Class" });
   const [aptitude] = await Entities.create<Aptitude>(db, "aptitudes", {
     name: "Fighter Bonus Feat",
     rulesetId: ruleset.id,
@@ -86,7 +85,7 @@ describe("ClassLevelsService", () => {
   describe("feats and saves", () => {
     test("lists a class's levels in order, with the feats they grant through an aptitude and their base saves", async () => {
       const { session, ruleset, klass, aptitude } = await setup();
-      const feat = await FeatsService.createFeat(session, ruleset.id, {
+      const feat = await EntitiesService.createEntity(session, ruleset.id, "feats", {
         name: "Cleave",
         aptitudeIds: [aptitude.id],
       });
@@ -127,7 +126,10 @@ describe("ClassLevelsService", () => {
 
     test("names what its fork copied as the copy, sent by its source's id, and refuses one it lacks by name", async () => {
       const { user, session, ruleset, klass, aptitude } = await setup();
-      const feat = await FeatsService.createFeat(session, ruleset.id, { name: "Cleave", aptitudeIds: [aptitude.id] });
+      const feat = await EntitiesService.createEntity(session, ruleset.id, "feats", {
+        name: "Cleave",
+        aptitudeIds: [aptitude.id],
+      });
       const fortitude = await createSave(ruleset.id, "Fortitude");
       const fork = await createTestRuleset(user.id, { rulesetId: ruleset.id, ancestorRulesetIds: [ruleset.id] });
       const copies = {

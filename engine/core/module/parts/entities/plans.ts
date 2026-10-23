@@ -25,23 +25,50 @@ interface PropertiesWrite {
 /** A requirement a plan sets on an entity: what it asks of the character. */
 type RequirementWrite = Pick<Requirement, "level" | "operator" | "target" | "value" | "valueType">;
 
+/**
+ * The entities made from the one a plan writes, which the plan reaches (a template's copies): what the server reads
+ * them with (`filters`), where the plan reaches them (the ruleset's view, and the rulesets built on it), and what
+ * refuses the plan by them (`check`).
+ */
+export interface EntityCopies {
+  check(copies: (Record<string, unknown> & { id: string; name: string })[]): void;
+  filters: { columns: Record<string, unknown> };
+}
+
+/**
+ * What copies of an entity write (an item's variants): each copy's row's columns (`C`), and whose customizations they
+ * copy (`copyCustomizationsFrom`).
+ */
+export interface EntityCopiesPlan<C = Record<string, unknown>> {
+  copyCustomizationsFrom?: string;
+  rows: C[];
+}
+
 /** What an entity's create writes, and whose customizations the new entity copies (`copyCustomizationsFrom`). */
 export interface EntityCreatePlan<C = Record<string, unknown>, F = object> extends EntityWrite<C, F> {
   copyCustomizationsFrom?: string;
 }
 
-/** What an entity's delete writes: the entity as the view has it (`E`), and what goes with it. */
+/**
+ * What an entity's delete writes: the entity as the view has it (`E`), what goes with it, and the copies that may
+ * refuse it.
+ */
 export interface EntityDeletePlan<E = { id: string; name: string }> {
+  copies?: EntityCopies;
   entity: E;
   writes?: EntityWrites;
 }
 
-/** What an entity's edit writes: the entity as the view has it (`E`), and its new row and what goes beside it. */
+/**
+ * What an entity's edit writes: the entity as the view has it (`E`), its new row and what goes beside it, and the
+ * copies that may refuse it.
+ */
 export interface EntityEditPlan<
   C = Record<string, unknown>,
   F = object,
   E = { id: string; name: string },
 > extends EntityWrite<C, F> {
+  copies?: EntityCopies;
   entity: E;
 }
 
