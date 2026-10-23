@@ -9,9 +9,9 @@ import Dnd35TargetPaths from "@/engine/rulesets/dnd3.5/Dnd35TargetPaths.ts";
 import type { Requirement } from "@/shared/relations.ts";
 
 /**
- * The race picker of a new character of what its form says (`identity`: its alignment and gender, by their keys, when given): a player
- * character's races (`filters`), each checked against the form. A requirement on what the form doesn't say counts as
- * met, and the form says no tree of what a race fails: there's no character yet to word it for.
+ * The race picker of a new character of what its form says (`identity`: its form's `alignment` and `gender`, when
+ * given): a player character's races (`filters`), each checked against the form. A requirement on what the form doesn't
+ * say counts as met, and the form says no tree of what a race fails: there's no character yet to word it for.
  */
 export default class RacePicker extends Picker<{ id: string }> {
   constructor(view: RulesetView, identity: RacePickQuery) {

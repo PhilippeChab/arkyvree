@@ -53,7 +53,7 @@ export function emptyNewCharacter(form: CharacterForm): CreateCharacterFormData 
 /** The keys of the fields that narrow the race picker (`racePick`), in the form's order. */
 export function racePickKeysOf(form: CharacterForm) {
   return creationFieldsOf(form)
-    .filter((field) => field.racePick)
+    .filter((field) => field.kind === "select" && field.racePick)
     .map((field) => field.key);
 }
 
@@ -63,9 +63,12 @@ export function racePicksOf(keys: string[], values: unknown[]) {
 }
 
 /** A form's rules' fields as its create sends them, by their keys: an empty number or an unset select, none. */
-export function sentCreationFieldsOf(form: CharacterForm, values: Record<string, unknown>) {
+export function sentCreationFieldsOf(
+  form: CharacterForm,
+  values: Record<string, unknown>,
+): CreateCharacterRequest["fields"] {
   return Object.fromEntries(
-    creationFieldsOf(form).map((field) => {
+    creationFieldsOf(form).map((field): [string, number | string | null] => {
       const value = values[field.key];
       if (field.kind === "number")
         return [field.key, typeof value === "number" && Number.isFinite(value) ? value : null];

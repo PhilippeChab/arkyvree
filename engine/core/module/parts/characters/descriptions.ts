@@ -125,11 +125,12 @@ export interface SheetSummary {
  * A field of a new character's form, by its kind, keyed as its create sends it (`fields`): a whole number at least
  * `min` (`required`: what's said without one, else it may be left empty; `start`: its first value, else empty;
  * `stepped`: its input's own arrows stop at `min`), one of a select's options (`required`: what's said without one), a
- * line of text or several (`placeholder`: what it says empty). `racePick`: the race picker narrows its races by it.
+ * line of text or several (`placeholder`: what it says empty). `racePick`: a select the race picker narrows its races
+ * by. Its key is a plain name (letters, digits and `_`), none of the form's own values' nor the race picker's query's.
  */
-export type CreationField = { key: string; label: string; racePick?: boolean } & (
+export type CreationField = { key: string; label: string } & (
   | { kind: "number"; min: number; required?: string; start?: number; stepped?: boolean }
-  | { kind: "select"; options: string[]; required?: string }
+  | { kind: "select"; options: string[]; racePick?: boolean; required?: string }
   | { kind: "text"; placeholder?: string }
   | { kind: "textarea"; placeholder: string }
 );

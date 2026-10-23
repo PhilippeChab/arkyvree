@@ -42,7 +42,8 @@ export function availableRacesQuery(rulesetId: string, picks: Record<string, str
             rpc.api.characters["available-races"].$get({
               query: {
                 rulesetId,
-                ...Object.fromEntries(Object.entries(picks).map(([key, value]) => [key, value || undefined])),
+                // A pick not made yet narrows nothing
+                ...Object.fromEntries(Object.entries(picks).filter(([, value]) => value)),
                 limit: "100",
                 page: pageParam.toString(),
               },

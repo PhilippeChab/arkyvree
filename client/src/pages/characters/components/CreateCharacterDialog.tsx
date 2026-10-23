@@ -335,9 +335,17 @@ export function CreateCharacterDialog({ open, onClose, onExited }: CreateCharact
     (allRules && Object.values(allRules)[0]?.characterForm);
   // Its fields start once its form is known, and the user's own ruleset is picked once it's known, unless the user
   // picked one already
-  const started = useMemo(() => characterForm && emptyNewCharacter(characterForm), [characterForm]);
+  const preselectedId = preselected?.id;
+  const values = useMemo(
+    () =>
+      characterForm && {
+        ...emptyNewCharacter(characterForm),
+        ...(preselectedId && { rulesetId: preselectedId }),
+      },
+    [characterForm, preselectedId],
+  );
   const form = useFormWith<CreateCharacterFormData>(NO_CHARACTER_YET, {
-    values: started && { ...started, ...(preselected && { rulesetId: preselected.id }) },
+    values,
     resetOptions: { keepDirtyValues: true },
   });
   const { control, getValues, watch, setValue } = form;

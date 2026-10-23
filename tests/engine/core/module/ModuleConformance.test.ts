@@ -167,12 +167,13 @@ describe.each(baseRules.enumValues)("The %s module, as core runs its characters'
       .describeAll()
       [rules].characterForm.sections.flatMap((section) => (section.kind === "fields" ? section.lines.flat() : []))
       .filter((item) => "key" in item);
-    // Its keys are its form's values' names, beside the form's own, and an RHF path: one each, no dot
+    // Its keys are its form's values' names, beside the form's own and the race picker's query's: one each, a plain
+    // name, which the form's paths read as it is
     const keys = formFields.map(({ key }) => key);
     expect(new Set(keys).size).toBe(keys.length);
     for (const key of keys) {
-      expect(["abilities", "name", "notes", "raceId", "rulesetId"]).not.toContain(key);
-      expect(key).not.toContain(".");
+      expect(["abilities", "limit", "name", "notes", "page", "raceId", "rulesetId", "search"]).not.toContain(key);
+      expect(key).toMatch(/^\w+$/);
     }
     const given = (field: (typeof formFields)[number]): number | string => {
       if (field.kind === "number") return field.start ?? field.min;

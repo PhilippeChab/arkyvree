@@ -27,7 +27,10 @@ interface NewFields {
   xp?: number;
 }
 
-/** A test character's fields, unless it's given its own: a True Neutral man of 25, 180 tall and 80 heavy, with no experience. */
+/**
+ * A test character's fields, unless it's given its own: a True Neutral man of 25, 180 tall and 80 heavy, with no
+ * experience.
+ */
 const NEW_FIELDS = { age: 25, alignment: "True Neutral", gender: "Male", height: "180", weight: "80", xp: 0 };
 
 /**
