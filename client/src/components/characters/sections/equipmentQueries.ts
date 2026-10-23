@@ -79,10 +79,12 @@ export function itemOptionsQuery(rulesetId: string, kind: string, search: string
   });
 }
 
-/** A ruleset item's details (of its inventory's kind, `kind`), which say how it's placed; skipped until one is picked. */
+/**
+ * A ruleset item's details (of its inventory's kind, `kind`), which say how it's placed; skipped until one is picked.
+ */
 export function rulesetItemQuery(rulesetId: string, kind: string, itemId: string | undefined) {
   return queryOptions({
-    queryKey: QUERY_KEYS.rulesets.item(rulesetId, itemId ?? ""),
+    queryKey: QUERY_KEYS.rulesets.item(rulesetId, kind, itemId ?? ""),
     // The items kind's read is its description: its placement, past the row every kind's read has
     queryFn: itemId
       ? async () => (await readEntityFn(rulesetId, kind, itemId)) as unknown as RulesetItemDetail

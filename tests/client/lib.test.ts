@@ -312,7 +312,7 @@ describe("Query keys", () => {
   test("of a ruleset's items, as a character's add dialog reads them, nest under its Items section", () => {
     const section = QUERY_KEYS.rulesets.section("r", "items");
     expect([
-      partialMatchKey(QUERY_KEYS.rulesets.item("r", "i"), section),
+      partialMatchKey(QUERY_KEYS.rulesets.item("r", "items", "i"), section),
       partialMatchKey(QUERY_KEYS.rulesets.sectionSearch("r", "items", "sword"), section),
     ]).toEqual([true, true]);
   });
