@@ -1,7 +1,16 @@
-/** An item's cost ("15.00 gp"), or null when it has none. */
-export function formatCost(costGp: string | number | null | undefined): string | null {
-  const formatted = formatDecimal(costGp);
-  return formatted === null ? null : `${formatted} gp`;
+/** A unit an amount reads in, as the engine describes it: its word after one ("lb"), and after any other ("lbs"). */
+export interface AmountUnit {
+  many: string;
+  one: string;
+}
+
+/**
+ * An amount in its unit, its two decimals kept ("5.00 lbs", "15.00 gp": its unit's word after any amount, `many`), or
+ * null when it has none.
+ */
+export function formatAmount(value: string | number | null | undefined, unit: AmountUnit): string | null {
+  const formatted = formatDecimal(value);
+  return formatted === null ? null : `${formatted} ${unit.many}`;
 }
 
 /** A count with its noun ("1 player", "3 players"). */
@@ -27,13 +36,16 @@ export function formatTrimmed(value: string | number | null | undefined): string
   return formatted === null ? null : String(Number(formatted));
 }
 
-/** An item's weight ("5.00 lbs"), or null when it has none. */
-export function formatWeight(weight: string | number | null | undefined): string | null {
-  const formatted = formatDecimal(weight);
-  return formatted === null ? null : `${formatted} lbs`;
+/**
+ * An amount in its unit as a phone or a box shows it, without the zeros its decimals end with, its unit's word after one
+ * (`one`: "1 lb") or any other amount (`many`: "2 lbs", "0.5 lbs"), or null when it has none.
+ */
+export function formatTrimmedAmount(value: string | number | null | undefined, unit: AmountUnit): string | null {
+  const trimmed = formatTrimmed(value);
+  return trimmed === null ? null : `${trimmed} ${unitAfter(trimmed, unit)}`;
 }
 
-/** The unit after a weight as `formatTrimmed` writes it: "lb" after a single pound ("1"), "lbs" after any other. */
-export function poundsUnit(pounds: string | null): string {
-  return pounds === "1" ? "lb" : "lbs";
+/** An amount's unit's word after it as `formatTrimmed` writes it: `one` after "1", `many` after any other. */
+export function unitAfter(trimmed: string | null, unit: AmountUnit): string {
+  return trimmed === "1" ? unit.one : unit.many;
 }

@@ -26,6 +26,76 @@ export interface EntriesBlock extends BlockHead {
 }
 
 /**
+ * The items a character holds (`inventory`), of a kind (`entityType`, whose pages their names link to): each entry its
+ * item's name and description, where it's held (`slot`, none unplaced), how many, its weight and cost in the block's
+ * units, whether it's held in use (`held`) and its charges; then the load they make (`load`: its figures, each its
+ * label, its short one for a box and its weight, and its status past what's light, as grave as it is). `units`: how
+ * its figures read ("5.00 lbs", a box's "1 lb"); `words`: what its table, its dialogs and its toasts say.
+ */
+export interface InventoryBlock extends BlockHead {
+  entityType: string;
+  kind: "inventory";
+  load?: {
+    figures: { label: string; short: string; weight: number | null }[];
+    status: { label: string; tone: "error" | "info" | "warning" } | null;
+  };
+  rows: InventoryRow[];
+  units: { cost: SheetUnit; weight: SheetUnit };
+  words: InventoryWords;
+}
+
+/**
+ * An entry of an `inventory` block: its key (the entry's), its item's id, name and description, where it's held, how
+ * many, its weight and cost as its item gives them, whether it's held in use, and its charges, if it has any.
+ */
+export interface InventoryRow {
+  charges?: { remaining: number | null; total: number };
+  cost: number | string | null;
+  description: string | null;
+  held: boolean;
+  id: string;
+  key: string;
+  name: string;
+  quantity: number | null;
+  slot: string | null;
+  weight: number | string | null;
+}
+
+/** What an `inventory` block's table, its add, edit and remove dialogs, their fields and their toasts say. */
+export interface InventoryWords {
+  add: string;
+  added: string;
+  addTitle: string;
+  charges: string;
+  columns: { description: string; item: string; quantity: string; slot: string; value: string; weight: string };
+  create: string;
+  createHint: string;
+  editTitle: string;
+  handSlot: string;
+  inventory: string;
+  item: string;
+  itemRequired: string;
+  items: string;
+  notEquipped: string;
+  quantityRequired: string;
+  remainingCharges: string;
+  remove: { confirm: string; message: string; title: string };
+  removed: string;
+  removeFailed: string;
+  saveFailed: string;
+  search: string;
+  slot: string;
+  slotWarning: string;
+  totalCharges: string;
+  unknown: string;
+  updated: string;
+  warnings: string;
+  weaponSet: string;
+  weaponSetRequired: string;
+  weaponSets: string;
+}
+
+/**
  * A block of entities by pool and tier (`pools`), of a kind (`entityType`, whose pages their names link to): each pool
  * its name and its tiers, each tier its label, a note after it (what it allows: "3/day") and its entries, laid out by
  * `columns`; and the counts each pool's tiers allow (`counts`: its title, the head of its pools' column, the tiers it
@@ -135,6 +205,12 @@ export interface SheetTable {
   rows: SheetRow[];
 }
 
+/** A unit a figure reads in: its word after one ("lb") and after any other amount ("lbs"). */
+export interface SheetUnit {
+  many: string;
+  one: string;
+}
+
 /**
  * A line of stats, then panels under it (`stats`). A panel has a heading (and a note after it), compact boxes, and a
  * table. 3.5's combat line, then its weapon sets, each with its armor class and its attacks. `empty`: what it says with
@@ -186,4 +262,4 @@ export type PoolEntry = Pick<SheetEntry, "id" | "key"> & {
 };
 
 /** A block of a character's sheet, by its kind. */
-export type SheetBlock = EntriesBlock | PoolsBlock | ScoresBlock | StatsBlock | TableBlock;
+export type SheetBlock = EntriesBlock | InventoryBlock | PoolsBlock | ScoresBlock | StatsBlock | TableBlock;

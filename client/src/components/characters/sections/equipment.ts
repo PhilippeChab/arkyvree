@@ -1,7 +1,6 @@
-import type { CharacterDetail } from "@/client/src/lib/queries.ts";
 import { type ItemLocation, LOCATION_OPTIONS } from "@/shared/enums.ts";
 
-import type { RulesetItem, RulesetItemDetail } from "./equipmentQueries.ts";
+import type { InventoryEntry, RulesetItem, RulesetItemDetail } from "./equipmentQueries.ts";
 import { shownWeaponSet, storedWeaponSets } from "./weaponSets.ts";
 
 /** The add and edit inventory dialogs' form: the item (add only) and where and how it's carried. */
@@ -14,9 +13,6 @@ export interface InventoryFormData {
   /** The weapon sets a hand holds it in, as shown, from 1 (see `shownWeaponSet`). */
   weaponSets: number[];
 }
-
-/** A sheet's equipment row: the inventory entry with its item's fields. */
-export type EquipmentRow = CharacterDetail["equipment"][number];
 
 /**
  * How an item is placed, as its ruleset says: the location it goes to once picked, the locations it can take (each
@@ -66,7 +62,7 @@ export function placementPayload(data: InventoryFormData, profile: PlacementProf
  * The weapon sets the form offers a held item, as shown, from 1: those the character's inventory holds something in and
  * those the form holds, in order, then a new one past them all.
  */
-export function weaponSetChoices(entries: Pick<EquipmentRow, "weaponSets">[], picked: number[]) {
+export function weaponSetChoices(entries: Pick<InventoryEntry, "weaponSets">[], picked: number[]) {
   const sets = new Set([...entries.flatMap((entry) => entry.weaponSets.map(shownWeaponSet)), ...picked]);
   const ordered = [...sets].sort((a, b) => a - b);
   return [...ordered, (ordered.at(-1) ?? 0) + 1];

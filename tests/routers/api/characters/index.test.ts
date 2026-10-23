@@ -247,6 +247,7 @@ describe("characters", () => {
         ["stats", "combat", "Combat"],
         ["table", "skills", "Skills"],
         ["entries", "feats", "Feats & Special Abilities"],
+        ["inventory", "equipment", "Equipment & Inventory"],
       ]);
       const [abilities, saves, stats] = blocks;
       // An ability's total over its modifier, its base its owner sets within the rules' bounds
@@ -293,6 +294,7 @@ describe("characters", () => {
         "combat",
         "skills",
         "feats",
+        "equipment",
       ]);
     });
 

@@ -3,7 +3,7 @@ import { Typography } from "@mui/material";
 import { DataCell, DataRow, DataTable, EmptyValue } from "@/client/src/components/common/index.ts";
 
 import { GroupedSkillRows, SkillRow } from "./GroupedSkillRows.tsx";
-import type { SheetColumn, SheetRow, SheetTable } from "./sheetBlocks.ts";
+import { type SheetColumn, type SheetRow, type SheetTable, splitNameColumn } from "./sheetBlocks.ts";
 
 interface BlockCellProps {
   column: SheetColumn;
@@ -89,9 +89,8 @@ export function BlockCell({ column, value }: BlockCellProps) {
  * rows of a family two or more share go under its header, which shows or hides them, each by its name within it.
  */
 export function BlockTable({ table }: BlockTableProps) {
-  const columns = table.columns.map(({ key, label, width, align }) => ({ key, label, width, align }));
-  const nameColumn = table.columns.find((column) => column.slot === "primary") ?? table.columns[0];
-  const others = table.columns.filter((column) => column !== nameColumn);
+  const { name: nameColumn, others } = splitNameColumn(table.columns);
+  const columns = [nameColumn, ...others].map(({ key, label, width, align }) => ({ key, label, width, align }));
   const cellsOf = (row: SheetRow) =>
     others.map((column) => <BlockCell key={column.key} column={column} value={row.cells[column.key] ?? ""} />);
 

@@ -10,13 +10,12 @@ import {
 import { accessLost, errorMessage, loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { formatRelativeTime } from "@/client/src/lib/formatDate.ts";
 import {
-  formatCost,
+  formatAmount,
   formatCount,
   formatDecimal,
   formatDie,
   formatTrimmed,
-  formatWeight,
-  poundsUnit,
+  formatTrimmedAmount,
 } from "@/client/src/lib/formatNumeric.ts";
 import { createListboxScrollHandler } from "@/client/src/lib/listboxScroll.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
@@ -38,6 +37,12 @@ import { PASSWORD_MIN_LENGTH } from "@/shared/auth.ts";
 const RULES = Engine.rules().describeAll();
 const DND35_WORDS = RULES["Dungeons & Dragons: 3.5"].words;
 
+/** Gold pieces, as 3.5 describes its costs' unit */
+const GOLD = { one: "gp", many: "gp" };
+
+/** Pounds, as 3.5 describes its weights' unit */
+const POUNDS = { one: "lb", many: "lbs" };
+
 describe("Numbers shown to the user", () => {
   test("have two decimals, or none when there's no number", () => {
     expect([
@@ -47,12 +52,12 @@ describe("Numbers shown to the user", () => {
       formatDecimal(null),
       formatDecimal("abc"),
     ]).toEqual(["5.00", "1.50", null, null, null]);
-    expect([formatWeight("5"), formatWeight(undefined), formatCost(15), formatCost("")]).toEqual([
-      "5.00 lbs",
-      null,
-      "15.00 gp",
-      null,
-    ]);
+    expect([
+      formatAmount("5", POUNDS),
+      formatAmount(undefined, POUNDS),
+      formatAmount(15, GOLD),
+      formatAmount("", GOLD),
+    ]).toEqual(["5.00 lbs", null, "15.00 gp", null]);
   });
 
   test("drop the zeros their decimals end with, where a phone shows them shorter", () => {
@@ -65,8 +70,21 @@ describe("Numbers shown to the user", () => {
     ]).toEqual(["5", "1.5", "0.25", null, null]);
   });
 
-  test("take a pound's unit, singular for a single pound alone", () => {
-    expect(["1", "2", "0.5", "1.5"].map(poundsUnit)).toEqual(["lb", "lbs", "lbs", "lbs"]);
+  test("take their unit's word, its singular after a single one alone", () => {
+    expect(["1", "2", "0.5", "1.50", null].map((value) => formatTrimmedAmount(value, POUNDS))).toEqual([
+      "1 lb",
+      "2 lbs",
+      "0.5 lbs",
+      "1.5 lbs",
+      null,
+    ]);
+    expect(formatTrimmedAmount(1, GOLD)).toBe("1 gp");
+    // A decimal's text, as an item's weight reads, and none at all
+    expect([formatTrimmedAmount("1.00", POUNDS), formatTrimmedAmount(0, POUNDS), formatAmount(0, POUNDS)]).toEqual([
+      "1 lb",
+      "0 lbs",
+      "0.00 lbs",
+    ]);
   });
 
   test("write a die in dice notation, as the books write a hit die", () => {
@@ -294,7 +312,7 @@ describe("Query keys", () => {
   test("of a ruleset's items, as a character's add dialog reads them, nest under its Items section", () => {
     const section = QUERY_KEYS.rulesets.section("r", "items");
     expect([
-      partialMatchKey(QUERY_KEYS.rulesets.item("r", "i"), section),
+      partialMatchKey(QUERY_KEYS.rulesets.item("r", "items", "i"), section),
       partialMatchKey(QUERY_KEYS.rulesets.sectionSearch("r", "items", "sword"), section),
     ]).toEqual([true, true]);
   });

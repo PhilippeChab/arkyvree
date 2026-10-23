@@ -33,7 +33,7 @@ export const QUERY_KEYS = {
      */
     itemTemplates: (id: string, type: string) => ["rulesets", "detail", id, "items", "templates", type] as const,
     /** One item's details, as a character's add dialog reads them; nested like `itemTemplates`. */
-    item: (id: string, itemId: string) => ["rulesets", "detail", id, "items", "item", itemId] as const,
+    item: (id: string, kind: string, itemId: string) => ["rulesets", "detail", id, kind, "item", itemId] as const,
     classDetail: (id: string, classId: string) => ["rulesets", "detail", id, "class", classId] as const,
     classLevels: (id: string, classId: string) => ["rulesets", "detail", id, "class", classId, "levels"] as const,
     classSkills: (id: string, classId: string) => ["rulesets", "detail", id, "class", classId, "skills"] as const,

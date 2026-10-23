@@ -28,11 +28,12 @@ import {
   useRulesetPermissions,
 } from "@/client/src/hooks/index.ts";
 import { emptyOptionsText, loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
-import { formatCost, formatWeight } from "@/client/src/lib/formatNumeric.ts";
+import { formatAmount } from "@/client/src/lib/formatNumeric.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
 import { invalidateCharacter, rulesetDetailQuery } from "@/client/src/lib/queries.ts";
 import { requiredRules } from "@/client/src/lib/validation.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
+import { getUrlSegment } from "@/shared/urlSegments.ts";
 
 import {
   EMPTY_INVENTORY_FORM,
@@ -50,14 +51,16 @@ import {
   type RulesetItem,
   rulesetItemQuery,
 } from "./equipmentQueries.ts";
-import { EquipmentTable } from "./EquipmentTable.tsx";
 import { InventoryPlacementFields } from "./InventoryPlacementFields.tsx";
+import { InventoryTable } from "./InventoryTable.tsx";
+import type { BlockOf, InventoryRow } from "./sheetBlocks.ts";
 import { SheetSection } from "./SheetSection.tsx";
 import { shownWeaponSet } from "./weaponSets.ts";
 
-interface EquipmentSectionProps {
+interface InventorySectionProps {
+  block: BlockOf<"inventory">;
   characterId: string;
-  /** What the sheet's base rules say of the load the character carries, under its table. */
+  /** The load the character carries, under its table. */
   load?: ReactNode;
   readOnly: boolean;
   rulesetId: string;
@@ -68,7 +71,13 @@ function amountOf(value: unknown) {
   return typeof value === "number" || typeof value === "string" ? value : null;
 }
 
-export function EquipmentSection({ characterId, rulesetId, readOnly, load }: EquipmentSectionProps) {
+/**
+ * An `inventory` block, as its owner changes it: its items, each edited and removed, an item added from the ruleset's
+ * (its kind's, `entityType`), placed as its placement says, and created in the ruleset's tab by who may edit its items.
+ * Its words are its block's.
+ */
+export function InventorySection({ block, characterId, rulesetId, readOnly, load }: InventorySectionProps) {
+  const { words } = block;
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
 
@@ -85,7 +94,7 @@ export function EquipmentSection({ characterId, rulesetId, readOnly, load }: Equ
   const inventoryItems = inventory ?? [];
 
   const addDialog = useDialogState();
-  const { issues, setIssues, handleSaveError } = useValidationIssues("Failed to save item");
+  const { issues, setIssues, handleSaveError } = useValidationIssues(words.saveFailed);
   // An entry's edit and remove dialogs keep it while they fade out
   const editDialog = useDialogState<InventoryEntry>();
   const removeDialog = useDialogState<string>();
@@ -103,13 +112,15 @@ export function EquipmentSection({ characterId, rulesetId, readOnly, load }: Equ
   const editWeaponSets = editForm.watch("weaponSets");
 
   // The picked item's details (add dialog): how it's placed
-  const { data: itemDetail, error: itemDetailError } = useQuery(rulesetItemQuery(rulesetId, selectedItem?.id));
+  const { data: itemDetail, error: itemDetailError } = useQuery(
+    rulesetItemQuery(rulesetId, block.entityType, selectedItem?.id),
+  );
   const addProfile = itemDetail?.placement ?? null;
   const itemLoadFailed = !!selectedItem && !!itemDetailError && !itemDetail;
 
   // An item picked in the add dialog fills its slot and charges once its details arrive, unless another was picked since
   const fillPlacement = (itemId: string) => {
-    queryClient.fetchQuery(rulesetItemQuery(rulesetId, itemId)).then(
+    queryClient.fetchQuery(rulesetItemQuery(rulesetId, block.entityType, itemId)).then(
       ({ placement }) => {
         if (addForm.getValues("selectedItem")?.id !== itemId) return;
         addForm.setValue("location", pickedLocation(addForm.getValues("location"), placement), { shouldDirty: true });
@@ -145,7 +156,10 @@ export function EquipmentSection({ characterId, rulesetId, readOnly, load }: Equ
     isLoading: isLoadingSearch,
     error: searchError,
     onScroll: handleItemsScroll,
-  } = useListboxQuery({ ...itemOptionsQuery(rulesetId, debouncedItemSearch), enabled: addDialog.open });
+  } = useListboxQuery({
+    ...itemOptionsQuery(rulesetId, block.entityType, debouncedItemSearch),
+    enabled: addDialog.open,
+  });
 
   const addMutation = useMutation({
     mutationFn: async ({
@@ -164,7 +178,7 @@ export function EquipmentSection({ characterId, rulesetId, readOnly, load }: Equ
         }),
       ),
     onSuccess: () => {
-      snackbar.success("Item added to inventory");
+      snackbar.success(words.added);
       invalidateCharacter(queryClient, characterId);
       addDialog.close();
       setIssues([]);
@@ -189,7 +203,7 @@ export function EquipmentSection({ characterId, rulesetId, readOnly, load }: Equ
         }),
       ),
     onSuccess: () => {
-      snackbar.success("Item updated");
+      snackbar.success(words.updated);
       invalidateCharacter(queryClient, characterId);
       editDialog.close();
       setIssues([]);
@@ -205,12 +219,12 @@ export function EquipmentSection({ characterId, rulesetId, readOnly, load }: Equ
         }),
       ),
     onSuccess: () => {
-      snackbar.success("Item removed from inventory");
+      snackbar.success(words.removed);
       invalidateCharacter(queryClient, characterId);
       removeDialog.close();
     },
     onError: (error) => {
-      snackbar.error(error, "Failed to remove item");
+      snackbar.error(error, words.removeFailed);
     },
   });
 
@@ -244,36 +258,38 @@ export function EquipmentSection({ characterId, rulesetId, readOnly, load }: Equ
     visible && (
       <ValidationIssuesAlert
         issues={issues}
-        title="Equipment Warnings"
+        title={words.warnings}
         onClose={() => setIssues([])}
         onProceed={onForce}
         pending={addMutation.isPending || updateMutation.isPending}
       />
     );
 
-  const hasItems = inventoryItems.length > 0;
+  const hasItems = block.rows.length > 0;
+  // An entry's row, its edit's entry the inventory's
+  const entryOf = (row: InventoryRow) => inventoryItems.find((entry) => entry.id === row.key);
 
   return (
     <SheetSection
-      title="Equipment & Inventory"
+      title={block.title}
       action={
         !readOnly && (
           <Stack direction="row" spacing={1}>
             {canCreateItems && (
-              <Tooltip describeChild title="Opens the ruleset's Items tab in a new browser tab">
+              <Tooltip describeChild title={words.createHint}>
                 <Button
                   variant="outlined"
                   size="small"
                   component={Link}
-                  to={`/rulesets/${rulesetId}/items`}
+                  to={`/rulesets/${rulesetId}/${getUrlSegment(block.entityType)}`}
                   target="_blank"
                 >
-                  Create Item
+                  {words.create}
                 </Button>
               </Tooltip>
             )}
             {/* An empty inventory offers its Add Item under its note */}
-            {hasItems && <AddButton label="Add Item" size="small" onClick={handleAddItem} />}
+            {inventory && hasItems && <AddButton label={words.add} size="small" onClick={handleAddItem} />}
           </Stack>
         )
       }
@@ -284,40 +300,41 @@ export function EquipmentSection({ characterId, rulesetId, readOnly, load }: Equ
         {/* Loading, or waiting for the connection (offline, the query pauses): only a failure says so */}
         {!inventory && !inventoryError && <DiceSpinner sx={{ py: 4 }} />}
         {!inventory && !!inventoryError && (
-          <LoadError what="Inventory" error={inventoryError} onRetry={() => void refetchInventory()} />
+          <LoadError what={words.inventory} error={inventoryError} onRetry={() => void refetchInventory()} />
         )}
         {inventory && hasItems && (
-          <EquipmentTable
-            rows={inventoryItems.map((entry) => ({
-              ...entry,
-              name: entry.item.name,
-              description: entry.item.description,
-              weight: entry.item.weight,
-              costGp: entry.item.costGp,
-            }))}
+          <InventoryTable
+            block={block}
             load={load}
             rulesetId={rulesetId}
             renderActions={
               readOnly
                 ? undefined
-                : (entry) => (
-                    <>
-                      <RowAction icon={EditIcon} label={`Edit ${entry.name}`} onClick={() => handleEditItem(entry)} />
-                      <RowAction
-                        icon={DeleteIcon}
-                        label={`Remove ${entry.name}`}
-                        intent="destructive"
-                        onClick={() => handleRemoveItem(entry.id)}
-                      />
-                    </>
-                  )
+                : (row) => {
+                    // Its edit reads its entry, the inventory's: a row the sheet lists before the inventory has it
+                    // waits for it to edit
+                    const entry = entryOf(row);
+                    return (
+                      <>
+                        {entry && (
+                          <RowAction icon={EditIcon} label={`Edit ${row.name}`} onClick={() => handleEditItem(entry)} />
+                        )}
+                        <RowAction
+                          icon={DeleteIcon}
+                          label={`Remove ${row.name}`}
+                          intent="destructive"
+                          onClick={() => handleRemoveItem(row.key)}
+                        />
+                      </>
+                    );
+                  }
             }
           />
         )}
         {inventory && !hasItems && (
           <Stack spacing={2} sx={{ alignItems: "flex-start" }}>
-            <BlankNote>No equipment</BlankNote>
-            {!readOnly && <AddButton label="Add Item" onClick={handleAddItem} />}
+            <BlankNote>{block.empty}</BlankNote>
+            {!readOnly && <AddButton label={words.add} onClick={handleAddItem} />}
           </Stack>
         )}
       </Stack>
@@ -327,11 +344,11 @@ export function EquipmentSection({ characterId, rulesetId, readOnly, load }: Equ
           addDialog.close();
           setIssues([]);
         }}
-        title="Add Item to Inventory"
+        title={words.addTitle}
         form={addForm}
         onSubmit={(data) => handleAddSubmit(data)}
         pending={addMutation.isPending}
-        submitLabel="Add Item"
+        submitLabel={words.add}
         submitDisabled={!!addSlotWarning}
         maxWidth="md"
       >
@@ -344,8 +361,8 @@ export function EquipmentSection({ characterId, rulesetId, readOnly, load }: Equ
               handleAddSubmit(data, true);
             })(),
         )}
-        {!!inventoryError && <LoadError what="Inventory" error={inventoryError} />}
-        {!!addPlacementError && <LoadError what="Slot warning" error={addPlacementError} />}
+        {!!inventoryError && <LoadError what={words.inventory} error={inventoryError} />}
+        {!!addPlacementError && <LoadError what={words.slotWarning} error={addPlacementError} />}
         {addSlotWarning && (
           <AnimatedAlert in severity="warning">
             {addSlotWarning}
@@ -354,7 +371,7 @@ export function EquipmentSection({ characterId, rulesetId, readOnly, load }: Equ
         <Controller
           name="selectedItem"
           control={addForm.control}
-          rules={requiredRules("Item is required")}
+          rules={requiredRules(words.itemRequired)}
           render={({ field, fieldState }) => (
             <Autocomplete<RulesetItem>
               options={searchItems}
@@ -376,17 +393,17 @@ export function EquipmentSection({ characterId, rulesetId, readOnly, load }: Equ
                 if (reason === "input") setItemSearch(value);
               }}
               loading={isLoadingSearch}
-              noOptionsText={emptyOptionsText("Items", searchError)}
+              noOptionsText={emptyOptionsText(words.items, searchError)}
               renderInput={(params) => (
                 <TextField
                   {...params}
                   inputRef={field.ref}
-                  label="Search Item"
+                  label={words.search}
                   // The picked item's details, which place it, said under it when they fail to load
                   error={!!fieldState.error || itemLoadFailed}
                   helperText={
                     fieldState.error?.message ??
-                    (itemLoadFailed ? loadFailureMessage("Item", itemDetailError) : undefined)
+                    (itemLoadFailed ? loadFailureMessage(words.item, itemDetailError) : undefined)
                   }
                 />
               )}
@@ -395,7 +412,10 @@ export function EquipmentSection({ characterId, rulesetId, readOnly, load }: Equ
                   <Box>
                     <Typography variant="body2">{option.name}</Typography>
                     {(() => {
-                      const details = [formatCost(amountOf(option.costGp)), formatWeight(amountOf(option.weight))]
+                      const details = [
+                        formatAmount(amountOf(option.costGp), block.units.cost),
+                        formatAmount(amountOf(option.weight), block.units.weight),
+                      ]
                         .filter(Boolean)
                         .join(" | ");
                       return (
@@ -423,6 +443,7 @@ export function EquipmentSection({ characterId, rulesetId, readOnly, load }: Equ
           form={addForm}
           profile={selectedItem ? addProfile : null}
           setChoices={weaponSetChoices(inventoryItems, addWeaponSets)}
+          words={words}
         />
       </CreateDialog>
       <EditDialog
@@ -431,7 +452,7 @@ export function EquipmentSection({ characterId, rulesetId, readOnly, load }: Equ
           editDialog.close();
           setIssues([]);
         }}
-        title="Edit Inventory Item"
+        title={words.editTitle}
         form={editForm}
         onSubmit={(data) => editingEntry && updateMutation.mutate({ entryId: editingEntry.id, data })}
         pending={updateMutation.isPending}
@@ -446,15 +467,15 @@ export function EquipmentSection({ characterId, rulesetId, readOnly, load }: Equ
               if (editingEntry) updateMutation.mutate({ entryId: editingEntry.id, data, force: true });
             })(),
         )}
-        {!!inventoryError && <LoadError what="Inventory" error={inventoryError} />}
-        {!!editPlacementError && <LoadError what="Slot warning" error={editPlacementError} />}
+        {!!inventoryError && <LoadError what={words.inventory} error={inventoryError} />}
+        {!!editPlacementError && <LoadError what={words.slotWarning} error={editPlacementError} />}
         {editSlotWarning && (
           <AnimatedAlert in severity="warning">
             {editSlotWarning}
           </AnimatedAlert>
         )}
         <TextField
-          label="Item"
+          label={words.item}
           value={editingEntry?.item.name ?? ""}
           fullWidth
           slotProps={{ input: { readOnly: true } }}
@@ -463,14 +484,15 @@ export function EquipmentSection({ characterId, rulesetId, readOnly, load }: Equ
           form={editForm}
           profile={editProfile}
           setChoices={weaponSetChoices(inventoryItems, editWeaponSets)}
+          words={words}
         />
       </EditDialog>
       <DeleteDialog
         open={removeDialog.open}
         onClose={removeDialog.close}
-        title="Remove Item"
-        message="Are you sure you want to remove this item from the inventory? This action cannot be undone."
-        confirmLabel="Remove Item"
+        title={words.remove.title}
+        message={words.remove.message}
+        confirmLabel={words.remove.confirm}
         onConfirm={() => removeDialog.target && removeMutation.mutate(removeDialog.target)}
         pending={removeMutation.isPending}
       />

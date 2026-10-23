@@ -1,14 +1,16 @@
 import { Box, Stack, Typography } from "@mui/material";
 
 import { StatusChip } from "@/client/src/components/common/index.ts";
-import { formatTrimmed, formatWeight, poundsUnit } from "@/client/src/lib/formatNumeric.ts";
-import type { CharacterDetail } from "@/client/src/lib/queries.ts";
+import { type AmountUnit, formatAmount, formatTrimmed, unitAfter } from "@/client/src/lib/formatNumeric.ts";
 
 import { ScoreBox } from "./ScoreBox.tsx";
+import type { BlockOf } from "./sheetBlocks.ts";
 
-interface EncumbranceProps {
-  /** The load the character carries, as its rules describe it: its figures, and its load past light (its combat's). */
-  load: CharacterDetail["combat"]["load"];
+interface LoadFiguresProps {
+  /** The load the character carries, as its rules describe it: its figures, and its status past light. */
+  load: NonNullable<BlockOf<"inventory">["load"]>;
+  /** The unit its weights read in. */
+  unit: AmountUnit;
 }
 
 /** On a phone, the figures in boxes, four to a row, as the sheet's armor classes */
@@ -25,26 +27,26 @@ const UNIT_SX = { fontSize: "0.6em", fontWeight: 500, pl: 0.25 };
 const WIDE_LINE_SX = { display: { xs: "none", sm: "block" } };
 
 /**
- * The load a character carries, under its equipment, as its rules give it: its figures (3.5's carried weight and its
- * loads' limits), in boxes on a phone and a line from `sm` up, and its load past light, as grave as it is.
+ * The load a character carries, under its inventory, as its rules give it: its figures (3.5's carried weight and its
+ * loads' limits), in boxes on a phone and a line from `sm` up, and its status past light, as grave as it is.
  */
-export function Encumbrance({ load }: EncumbranceProps) {
+export function LoadFigures({ load, unit }: LoadFiguresProps) {
   const { figures, status } = load;
   const loadChip = status && <StatusChip label={status.label} color={status.tone} />;
   return (
     <>
       <Stack spacing={1} sx={{ display: { sm: "none" } }}>
         <Box sx={PHONE_BOXES_SX}>
-          {figures.map(({ shortLabel, weight }) => (
+          {figures.map(({ short, weight }) => (
             <ScoreBox
-              key={shortLabel}
-              label={shortLabel}
+              key={short}
+              label={short}
               compact
               value={
                 <>
                   {formatTrimmed(weight ?? 0)}
                   <Box component="span" sx={UNIT_SX}>
-                    {poundsUnit(formatTrimmed(weight ?? 0))}
+                    {unitAfter(formatTrimmed(weight ?? 0), unit)}
                   </Box>
                 </>
               }
@@ -74,7 +76,7 @@ export function Encumbrance({ load }: EncumbranceProps) {
               sx={[{ color: "text.secondary" }, index === 0 && { fontWeight: 500 }]}
             >
               {`${label}: `}
-              {formatWeight(weight ?? 0)}
+              {formatAmount(weight ?? 0, unit)}
             </Typography>
           ))}
           {loadChip}
