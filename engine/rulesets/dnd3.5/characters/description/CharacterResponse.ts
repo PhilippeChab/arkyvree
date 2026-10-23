@@ -143,6 +143,11 @@ export default class CharacterResponse {
     const abilities = CharacterResponse.abilitiesOf(built);
     const combat = CombatSheet.describe(built.components.combat);
     const saves = CharacterResponse.savesOf(built);
+    const classes = built.components.classes.getCharacterClasses();
+    const skills = CharacterResponse.skillsOf(built);
+    const virtualFeats = built.getVirtualFeats();
+    const spellGroups = SpellGroups.describe(built);
+    const spellsPerDay = SpellGroups.describePerDay(built);
 
     return {
       id: record.id,
@@ -163,17 +168,26 @@ export default class CharacterResponse {
       abilities,
       combat,
       saves,
-      classes: built.components.classes.getCharacterClasses(),
+      classes,
       inventory: built.components.inventory.getInventory(),
       equipment: CharacterResponse.equipmentOf(built),
-      skills: CharacterResponse.skillsOf(built),
-      virtualFeats: built.getVirtualFeats(),
-      spellGroups: SpellGroups.describe(built),
-      spellsPerDay: SpellGroups.describePerDay(built),
+      skills,
+      virtualFeats,
+      spellGroups,
+      spellsPerDay,
       requirements,
       modifiers,
       validation,
-      blocks: SheetBlocks.describe({ abilities, combat, saves }),
+      blocks: SheetBlocks.describe({
+        abilities,
+        classes,
+        combat,
+        saves,
+        skills,
+        spellGroups,
+        spellsPerDay,
+        virtualFeats,
+      }),
     };
   }
 }

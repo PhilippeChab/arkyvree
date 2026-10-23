@@ -6,6 +6,7 @@ import Dnd35CharacterBuilder from "@/engine/rulesets/dnd3.5/model/Dnd35Character
 import { BONDED_KIND_SLUGS } from "@/vocabulary/dnd3.5/bondedKinds.ts";
 
 import CharacterResponse from "./CharacterResponse.ts";
+import SheetBlocks from "./SheetBlocks.ts";
 
 /** A bonded creature's sheet, as the API answers it, with the feat of its master's that bonds it (`bondFeatId`). */
 type BondedDescription = ReturnType<typeof CharacterResponse.buildBonded> & { bondFeatId: string | null };
@@ -53,9 +54,13 @@ export default class CharacterDescription {
     const built = Dnd35CharacterBuilder.build(view, character);
     if (character.master)
       return { ...CharacterResponse.buildBonded(character.record, built), bonded: CharacterDescription.noBonded() };
+    const sheet = CharacterResponse.buildFull(character.record, built);
+    const described = CharacterDescription.describeBonded(view, built, bonded);
     return {
-      ...CharacterResponse.buildFull(character.record, built),
-      bonded: CharacterDescription.describeBonded(view, built, bonded),
+      ...sheet,
+      // Each creature in the details of the feat that bonds it
+      blocks: SheetBlocks.bond(sheet.blocks, Object.values(described)),
+      bonded: described,
     };
   }
 

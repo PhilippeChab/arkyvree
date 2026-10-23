@@ -1,12 +1,19 @@
 export type {
+  EntriesBlock,
+  PoolEntry,
+  PoolsBlock,
   ScoresBlock,
   SheetBlock,
   SheetColumn,
+  SheetEntry,
+  SheetPool,
   SheetRow,
   SheetScore,
   SheetTable,
   StatsBlock,
   StatsPanel,
+  Subsheet,
+  TableBlock,
 } from "./blocks.ts";
 export { default as CharactersPart } from "./CharactersPart.ts";
 export type {

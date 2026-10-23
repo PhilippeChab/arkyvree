@@ -12,6 +12,7 @@ export {
   type CreationMethod,
   type DescribedInventoryEntry,
   type DescribedLanguage,
+  type EntriesBlock,
   type HeldInventoryEntry,
   type InventoryEntryChange,
   type InventoryEntryPlan,
@@ -25,11 +26,15 @@ export {
   type PlacementChange,
   type PlacementDescription,
   type PlacementQuery,
+  type PoolEntry,
+  type PoolsBlock,
   type PrivateNotes,
   type RacePickQuery,
   type ScoresBlock,
   type SheetBlock,
   type SheetColumn,
+  type SheetEntry,
+  type SheetPool,
   type SheetRequest,
   type SheetRow,
   type SheetScore,
@@ -37,6 +42,8 @@ export {
   type SheetTable,
   type StatsBlock,
   type StatsPanel,
+  type Subsheet,
+  type TableBlock,
 } from "./parts/characters/index.ts";
 export { ContentPart } from "./parts/content/index.ts";
 export {

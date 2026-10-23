@@ -1,4 +1,6 @@
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
+import { buildCustomizationPath, CUSTOMIZATION_PAGE_TYPES } from "@/shared/customization/entities.ts";
+import { isOneOf } from "@/shared/isOneOf.ts";
 
 /** A sheet's block of a kind. */
 export type BlockOf<K extends SheetBlock["kind"]> = Extract<SheetBlock, { kind: K }>;
@@ -6,8 +8,20 @@ export type BlockOf<K extends SheetBlock["kind"]> = Extract<SheetBlock, { kind: 
 /** A block of a character's sheet, as the engine describes it, in its module's order. */
 export type SheetBlock = CharacterDetail["blocks"][number];
 
+/** A column of a block's table. */
+export type SheetColumn = SheetTable["columns"][number];
+
+/** An entity an `entries` block lists. */
+export type SheetEntry = BlockOf<"entries">["entries"][number];
+
+/** A row of a block's table. */
+export type SheetRow = SheetTable["rows"][number];
+
 /** A score in a `scores` block. */
 export type SheetScore = BlockOf<"scores">["scores"][number];
+
+/** A creature an entry bonds, as its details show it. */
+export type SheetSubsheet = NonNullable<BlockOf<"entries">["entries"][number]["subsheet"]>;
 
 /** A table a block holds: a `stats` block's panel's. */
 export type SheetTable = NonNullable<BlockOf<"stats">["panels"][number]["table"]>;
@@ -15,6 +29,15 @@ export type SheetTable = NonNullable<BlockOf<"stats">["panels"][number]["table"]
 /** The sheet's block of a kind under its key, if it has one. */
 export function blockOf<K extends SheetBlock["kind"]>(blocks: readonly SheetBlock[], kind: K, key: string) {
   return blocks.find((block): block is BlockOf<K> => block.kind === kind && block.key === key);
+}
+
+/**
+ * An entity's page in its ruleset, which a block's entry links to (`entityType`, its block's kind of entity): none
+ * without a ruleset to read it in, an id, or a page of its kind.
+ */
+export function entityPagePath(rulesetId: string | undefined, entityType: string, id: string | null) {
+  if (!rulesetId || !id || !isOneOf(entityType, CUSTOMIZATION_PAGE_TYPES)) return undefined;
+  return `/rulesets/${rulesetId}/${buildCustomizationPath(entityType, id)}`;
 }
 
 /**
