@@ -106,10 +106,28 @@ class StoredPicks extends BaseRepository<typeof advancementPicksInCharacter> {
   }
 
   /**
+   * The picks of `pick` of these character levels, by the picked entity's name, ties broken to a fixed order: a
+   * stackable feat a level picked twice, by its ordinal.
+   */
+  async findMany<R extends object = PickRow>(
+    db: Db,
+    where: { characterLevelIds: string[]; pick: string },
+  ): Promise<R[]> {
+    if (where.characterLevelIds.length === 0) return [];
+    const rows = await db
+      .select(StoredPicks.buildColumns())
+      .from(this.table)
+      .leftJoin(entitiesInRules, eq(entitiesInRules.id, this.table.entityId))
+      .where(StoredPicks.buildScope(where.pick, inArray(this.table.advancementId, where.characterLevelIds)))
+      .orderBy(...this.pickOrder());
+    return StoredPicks.mapRows<R>(where.pick, rows);
+  }
+
+  /**
    * Every pick its module declares (`Engine.storage().character().picks`) of these character levels, by its name: each
    * pick's rows in `findMany`'s order, read in one query.
    */
-  async findAll(db: Db, where: { characterLevelIds: string[] }): Promise<CharacterRows["picks"]> {
+  async findPerPick(db: Db, where: { characterLevelIds: string[] }): Promise<CharacterRows["picks"]> {
     const declared = Engine.storage().character().picks;
     const pickOfStep = new Map(Object.entries(declared).map(([pick, { step }]) => [step, pick]));
     const picks: CharacterRows["picks"] = Object.fromEntries(Object.keys(declared).map((pick) => [pick, []]));
@@ -130,24 +148,6 @@ class StoredPicks extends BaseRepository<typeof advancementPicksInCharacter> {
       picks[pick].push(Engine.storage().pickRowOf(pick, row) as CharacterRows["picks"][string][number]);
     }
     return picks;
-  }
-
-  /**
-   * The picks of `pick` of these character levels, by the picked entity's name, ties broken to a fixed order: a
-   * stackable feat a level picked twice, by its ordinal.
-   */
-  async findMany<R extends object = PickRow>(
-    db: Db,
-    where: { characterLevelIds: string[]; pick: string },
-  ): Promise<R[]> {
-    if (where.characterLevelIds.length === 0) return [];
-    const rows = await db
-      .select(StoredPicks.buildColumns())
-      .from(this.table)
-      .leftJoin(entitiesInRules, eq(entitiesInRules.id, this.table.entityId))
-      .where(StoredPicks.buildScope(where.pick, inArray(this.table.advancementId, where.characterLevelIds)))
-      .orderBy(...this.pickOrder());
-    return StoredPicks.mapRows<R>(where.pick, rows);
   }
 }
 

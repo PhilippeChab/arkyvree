@@ -30,7 +30,7 @@ async function readCharacterRows(database: Db, character: Character): Promise<Ch
   const inventory = await CharacterInventory.findMany(database, { characterId });
   const levels = await CharacterLevels.findMany(database, { characterId });
   const characterLevelIds = levels.map((level) => level.id);
-  const picks = await Picks.findAll(database, { characterLevelIds });
+  const picks = await Picks.findPerPick(database, { characterLevelIds });
   const modifiers = await Modifiers.findMany(database, { sourceIds: [characterId] });
   const requirements = await Requirements.findMany(database, { entityIds: modifiers.map((modifier) => modifier.id) });
   return { player, campaign, abilities, languages, inventory, levels, picks, modifiers, requirements };

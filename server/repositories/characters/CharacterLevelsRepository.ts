@@ -105,15 +105,15 @@ class CharacterLevelsRepository extends BaseRepository<typeof advancementsInChar
     return row;
   }
 
-  /** Writes a change to a live level (`values`, by its module's columns): its track (its class level), its value. */
+  /**
+   * Writes an edit of a live level (`values`, by its module's columns): its value (its hit points). A level keeps its
+   * track (its class level): a track its columns name isn't written.
+   */
   async update(db: Db, values: Record<string, unknown>, where: { id: string }) {
-    const { trackId, value } = Engine.storage().advancementOf(values);
+    const { value } = Engine.storage().advancementOf(values);
     const updated = await db
       .update(this.table)
-      .set({
-        ...(trackId ? { trackId, trackType: StoredCharacters.buildTypeOf(trackId) } : {}),
-        updatedAt: new Date().toISOString(),
-      })
+      .set({ updatedAt: new Date().toISOString() })
       .where(and(eq(this.table.id, where.id), isNull(this.table.deletedAt)))
       .returning({ id: this.table.id });
     if (updated.length === 0) return [];

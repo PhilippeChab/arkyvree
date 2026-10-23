@@ -10,7 +10,7 @@ async function createCreature(tx: Db, creature: NewBondedCreature) {
     await CharacterLinks.createMany(
       tx,
       link,
-      rows.map((row) => ({ characterId: bonded.id, ...row })),
+      rows.map((row) => ({ ...row, characterId: bonded.id })),
     );
   }
   return bonded.id;
@@ -30,7 +30,7 @@ export async function writeBondedCreatures(tx: Db, master: Character, plans: Bon
     if (plan.removedId) await Characters.delete(tx, { id: plan.removedId });
     if (!plan.levels) continue;
     const creatureId = "created" in plan ? await createCreature(tx, plan.created) : plan.keptId;
-    for (const level of plan.levels.added) await CharacterLevels.create(tx, { characterId: creatureId, ...level });
+    for (const level of plan.levels.added) await CharacterLevels.create(tx, { ...level, characterId: creatureId });
     for (const id of plan.levels.removedIds) await CharacterLevels.delete(tx, { id });
   }
 }

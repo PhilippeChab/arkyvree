@@ -20,8 +20,8 @@ export interface BondedLevelsPlan {
 }
 
 /**
- * What a saved level's edit writes, checked: the level as saved (`level`), its row's new columns and its rows under it
- * in place of those it had, and what the bonded creatures become.
+ * What a saved level's edit writes, checked: the level as saved (`level`), its row's new columns (its value: a level
+ * keeps its track) and its rows under it in place of those it had, and what the bonded creatures become.
  */
 export interface LevelEditPlan extends BondedCreaturesPlan, LevelWrites {
   level: CharacterRows["levels"][number];

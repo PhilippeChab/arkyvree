@@ -88,7 +88,7 @@ class CharacterLevelsService extends include(Object, Plans) {
         const plan = planOf(Engine.for(scope).character(character).levelUp(), bonded);
         const createdLevels = [];
         for (const { columns, rows } of plan.levels) {
-          const [created] = await CharacterLevels.create(tx, { characterId, ...columns });
+          const [created] = await CharacterLevels.create(tx, { ...columns, characterId });
           createdLevels.push(created);
           await createLevelRows(tx, created.id, rows);
         }

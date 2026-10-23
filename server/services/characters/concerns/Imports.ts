@@ -55,7 +55,7 @@ export function Imports<B extends Constructor>(Base: B) {
               plan.abilities.map((ability) => ({ characterId, ...ability })),
             );
             for (const { columns, rows } of plan.levels) {
-              const [level] = await CharacterLevels.create(tx, { characterId, ...columns });
+              const [level] = await CharacterLevels.create(tx, { ...columns, characterId });
               await createLevelRows(tx, level.id, rows);
             }
             await CharacterLinks.createMany(
