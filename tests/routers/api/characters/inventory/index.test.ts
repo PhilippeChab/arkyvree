@@ -106,8 +106,8 @@ describe("character inventory", () => {
       description: null,
       slot: "Trinket",
       quantity: 1,
-      weight: expect.anything(),
-      cost: expect.anything(),
+      weight: "5.00",
+      cost: "10.00",
       held: true,
     });
     expect(block.rows.find((row) => row.key === charged.id)).toMatchObject({

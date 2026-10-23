@@ -281,7 +281,7 @@ export default class SheetBlocks {
   }
 
   /**
-   * The equipment: each entry its item's name (an item gone, "Unknown Item"), where it's worn, how many, its weight in
+   * The equipment: each entry its item's name (none for an item gone: its words name it), where it's worn, how many, its weight in
    * pounds and its cost in gold pieces, whether it's equipped, and its charges; then the load it makes, in pounds.
    */
   private static inventory(equipment: SheetParts["equipment"], load: SheetParts["combat"]["load"]): InventoryBlock {

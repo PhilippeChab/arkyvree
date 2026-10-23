@@ -79,6 +79,12 @@ describe("Numbers shown to the user", () => {
       null,
     ]);
     expect(formatTrimmedAmount(1, GOLD)).toBe("1 gp");
+    // A decimal's text, as an item's weight reads, and none at all
+    expect([formatTrimmedAmount("1.00", POUNDS), formatTrimmedAmount(0, POUNDS), formatAmount(0, POUNDS)]).toEqual([
+      "1 lb",
+      "0 lbs",
+      "0.00 lbs",
+    ]);
   });
 
   test("write a die in dice notation, as the books write a hit die", () => {

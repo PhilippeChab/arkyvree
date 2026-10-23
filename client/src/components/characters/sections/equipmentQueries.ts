@@ -68,24 +68,24 @@ export function inventoryPlacementQuery(
   });
 }
 
-/** The ruleset's items the add dialog offers, filtered by what's typed. */
-export function itemOptionsQuery(rulesetId: string, search: string) {
+/** The ruleset's items (of its inventory's kind, `kind`) the add dialog offers, filtered by what's typed. */
+export function itemOptionsQuery(rulesetId: string, kind: string, search: string) {
   return infiniteQueryOptions({
-    queryKey: QUERY_KEYS.rulesets.sectionSearch(rulesetId, "items", search),
+    queryKey: QUERY_KEYS.rulesets.sectionSearch(rulesetId, kind, search),
     queryFn: ({ pageParam }) =>
-      readEntitiesFn(rulesetId, "items", { page: pageParam.toString(), limit: "10", search: search || undefined }),
+      readEntitiesFn(rulesetId, kind, { page: pageParam.toString(), limit: "10", search: search || undefined }),
     initialPageParam: 1,
     getNextPageParam: nextPage,
   });
 }
 
-/** A ruleset item's details, which say how it's placed; skipped until an item is picked. */
-export function rulesetItemQuery(rulesetId: string, itemId: string | undefined) {
+/** A ruleset item's details (of its inventory's kind, `kind`), which say how it's placed; skipped until one is picked. */
+export function rulesetItemQuery(rulesetId: string, kind: string, itemId: string | undefined) {
   return queryOptions({
     queryKey: QUERY_KEYS.rulesets.item(rulesetId, itemId ?? ""),
     // The items kind's read is its description: its placement, past the row every kind's read has
     queryFn: itemId
-      ? async () => (await readEntityFn(rulesetId, "items", itemId)) as unknown as RulesetItemDetail
+      ? async () => (await readEntityFn(rulesetId, kind, itemId)) as unknown as RulesetItemDetail
       : skipToken,
   });
 }

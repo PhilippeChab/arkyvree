@@ -8,6 +8,9 @@ export type BlockOf<K extends SheetBlock["kind"]> = Extract<SheetBlock, { kind: 
 /** An entry of an `inventory` block. */
 export type InventoryRow = BlockOf<"inventory">["rows"][number];
 
+/** What an `inventory` block's table, dialogs, fields and toasts say. */
+export type InventoryWords = BlockOf<"inventory">["words"];
+
 /** A block of a character's sheet, as the engine describes it, in its module's order. */
 export type SheetBlock = CharacterDetail["blocks"][number];
 

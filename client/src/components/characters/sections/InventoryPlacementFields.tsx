@@ -5,7 +5,7 @@ import { FormTextField, SelectField, ValueChip } from "@/client/src/components/c
 import { requiredRules, wholeNumberRules } from "@/client/src/lib/validation.ts";
 
 import { type InventoryFormData, type PlacementProfile } from "./equipment.ts";
-import type { BlockOf } from "./sheetBlocks.ts";
+import type { InventoryWords } from "./sheetBlocks.ts";
 
 interface InventoryPlacementFieldsProps {
   form: UseFormReturn<InventoryFormData>;
@@ -22,9 +22,6 @@ interface WeaponSetsFieldProps {
   form: UseFormReturn<InventoryFormData>;
   words: InventoryWords;
 }
-
-/** What an inventory's fields say. */
-type InventoryWords = BlockOf<"inventory">["words"];
 
 /** The weapon sets a held item is in, one or more, as chips ("Set 1", "Set 2"): the character's, or a new one. */
 function WeaponSetsField({ choices, form, words }: WeaponSetsFieldProps) {

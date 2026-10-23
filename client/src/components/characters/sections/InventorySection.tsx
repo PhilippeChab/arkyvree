@@ -112,13 +112,15 @@ export function InventorySection({ block, characterId, rulesetId, readOnly, load
   const editWeaponSets = editForm.watch("weaponSets");
 
   // The picked item's details (add dialog): how it's placed
-  const { data: itemDetail, error: itemDetailError } = useQuery(rulesetItemQuery(rulesetId, selectedItem?.id));
+  const { data: itemDetail, error: itemDetailError } = useQuery(
+    rulesetItemQuery(rulesetId, block.entityType, selectedItem?.id),
+  );
   const addProfile = itemDetail?.placement ?? null;
   const itemLoadFailed = !!selectedItem && !!itemDetailError && !itemDetail;
 
   // An item picked in the add dialog fills its slot and charges once its details arrive, unless another was picked since
   const fillPlacement = (itemId: string) => {
-    queryClient.fetchQuery(rulesetItemQuery(rulesetId, itemId)).then(
+    queryClient.fetchQuery(rulesetItemQuery(rulesetId, block.entityType, itemId)).then(
       ({ placement }) => {
         if (addForm.getValues("selectedItem")?.id !== itemId) return;
         addForm.setValue("location", pickedLocation(addForm.getValues("location"), placement), { shouldDirty: true });
@@ -154,7 +156,10 @@ export function InventorySection({ block, characterId, rulesetId, readOnly, load
     isLoading: isLoadingSearch,
     error: searchError,
     onScroll: handleItemsScroll,
-  } = useListboxQuery({ ...itemOptionsQuery(rulesetId, debouncedItemSearch), enabled: addDialog.open });
+  } = useListboxQuery({
+    ...itemOptionsQuery(rulesetId, block.entityType, debouncedItemSearch),
+    enabled: addDialog.open,
+  });
 
   const addMutation = useMutation({
     mutationFn: async ({
@@ -284,7 +289,7 @@ export function InventorySection({ block, characterId, rulesetId, readOnly, load
               </Tooltip>
             )}
             {/* An empty inventory offers its Add Item under its note */}
-            {hasItems && <AddButton label={words.add} size="small" onClick={handleAddItem} />}
+            {inventory && hasItems && <AddButton label={words.add} size="small" onClick={handleAddItem} />}
           </Stack>
         )
       }
@@ -306,19 +311,21 @@ export function InventorySection({ block, characterId, rulesetId, readOnly, load
               readOnly
                 ? undefined
                 : (row) => {
+                    // Its edit reads its entry, the inventory's: a row the sheet lists before the inventory has it
+                    // waits for it to edit
                     const entry = entryOf(row);
                     return (
-                      entry && (
-                        <>
+                      <>
+                        {entry && (
                           <RowAction icon={EditIcon} label={`Edit ${row.name}`} onClick={() => handleEditItem(entry)} />
-                          <RowAction
-                            icon={DeleteIcon}
-                            label={`Remove ${row.name}`}
-                            intent="destructive"
-                            onClick={() => handleRemoveItem(entry.id)}
-                          />
-                        </>
-                      )
+                        )}
+                        <RowAction
+                          icon={DeleteIcon}
+                          label={`Remove ${row.name}`}
+                          intent="destructive"
+                          onClick={() => handleRemoveItem(row.key)}
+                        />
+                      </>
                     );
                   }
             }

@@ -4,13 +4,13 @@ The frontend uses MUI Buttons + MenuItems for actions. Color and variant carry *
 
 ## Intent palette
 
-| Intent | Examples | Button | MenuItem |
-|---|---|---|---|
-| **Default action** | Create, Update, Save, Send Invite, Invite, Generate Link, Subscribe, Link Character | `variant="contained"` (default color) | n/a |
-| **Destructive** | Delete, Remove, Reject, Unsubscribe from Extension, Unlink (a Google account), Revoke Link, Delete Account | `variant="contained" color="error"` | `sx={{ color: "error.main" }}` |
-| **Caution** (reversible self-action) | Archive, Leave (ruleset/character/campaign), Proceed Anyway | `variant="contained" color="warning"` | `sx={{ color: "warning.main" }}` |
-| **Positive** | Publish, Accept, Unarchive | `variant="contained" color="success"` | `sx={{ color: "success.main" }}` |
-| **Cancel / Close** | Cancel, Close (in dialogs) | `variant="outlined" color="inherit"` | n/a |
+| Intent                               | Examples                                                                                                   | Button                                | MenuItem                         |
+| ------------------------------------ | ---------------------------------------------------------------------------------------------------------- | ------------------------------------- | -------------------------------- |
+| **Default action**                   | Create, Update, Save, Send Invite, Invite, Generate Link, Subscribe, Link Character                        | `variant="contained"` (default color) | n/a                              |
+| **Destructive**                      | Delete, Remove, Reject, Unsubscribe from Extension, Unlink (a Google account), Revoke Link, Delete Account | `variant="contained" color="error"`   | `sx={{ color: "error.main" }}`   |
+| **Caution** (reversible self-action) | Archive, Leave (ruleset/character/campaign), Proceed Anyway                                                | `variant="contained" color="warning"` | `sx={{ color: "warning.main" }}` |
+| **Positive**                         | Publish, Accept, Unarchive                                                                                 | `variant="contained" color="success"` | `sx={{ color: "success.main" }}` |
+| **Cancel / Close**                   | Cancel, Close (in dialogs)                                                                                 | `variant="outlined" color="inherit"`  | n/a                              |
 
 Page action menus use `ActionMenuItem` (`components/common`), whose `intent` (`destructive` / `caution` / `positive`) applies the MenuItem column, and a row's actions `RowAction`, whose `intent` colors its icon: grey otherwise, Edit included.
 
@@ -51,7 +51,9 @@ Pair the action's `color` with `<DiceSpinner>` in wrapper mode so the button doe
 
 ```tsx
 <Button onClick={onConfirm} variant="contained" color="error" disabled={isPending}>
-  <DiceSpinner size="small" loading={isPending}>Delete</DiceSpinner>
+  <DiceSpinner size="small" loading={isPending}>
+    Delete
+  </DiceSpinner>
 </Button>
 ```
 

@@ -14,10 +14,10 @@ Most content is generated from scraped SRD pages. A reference file stores what t
 
 ## Package types
 
-| Type | `type` | Purpose |
-|------|--------|---------|
+| Type         | `type`           | Purpose                                                      |
+| ------------ | ---------------- | ------------------------------------------------------------ |
 | Base ruleset | `"base_ruleset"` | Full game system (abilities, skills, classes, feats, spells) |
-| Extension | `"extension"` | Supplement that adds content to the base ruleset |
+| Extension    | `"extension"`    | Supplement that adds content to the base ruleset             |
 
 ## Structure
 
@@ -193,6 +193,7 @@ A reference file (`codegen/dnd3.5/reference/<book>/…json`) has three parts:
 What the generator reads is derived from the two each time a reference is loaded (`References`, which derives them with the detectors in `tools/detect/`): `detected` (BAB, saves, requirements, modifiers… parsed from `raw`; wizard schools have none) and `mapping` (each entity as the seeds make it, its overrides applied, which win over both). The seeds read the mapping, never the overrides. So a correction takes effect at the next `parser:dnd3.5:generate`, and can't be lost to a re-scrape. See `reference/README.md` for a class reference's shape.
 
 `bun run parser:dnd3.5:validate` lists:
+
 - unresolved detections, and items without a definition (the generator leaves them out), not yet listed in `overrides.reviewed`; and entries of `overrides.reviewed` that cover none of them, or repeat one;
 - a class's bonus feat list entries that name no feat (the seeds leave them out), not yet listed in its `overrides.reviewed`;
 - classes the generator refuses;
@@ -206,7 +207,7 @@ When an extension changes a core entity (a feat its classes take in more aptitud
 
 ### Aptitude ownership rules
 
-Aptitudes are named pools with no per-ruleset content of their own — just a `name`. So the seed only creates an aptitude row in the ruleset that *introduces* the name. `seedExtension` splits the book's aptitudes into:
+Aptitudes are named pools with no per-ruleset content of their own — just a `name`. So the seed only creates an aptitude row in the ruleset that _introduces_ the name. `seedExtension` splits the book's aptitudes into:
 
 - **Already in the core** (e.g. `General`, `Fighter Bonus Feat`, `Cleric Domain`) — skipped; the extension references the core's row. Same pattern a user fork uses when adding a new feat tagged `General`.
 - **Not in the core** — inserted as a new row in the extension. Covers both extension-private names (e.g. `Ronin Bonus Feat`) and sibling-shared class spell lists (e.g. `Assassin Spells`, which multiple extensions independently create because siblings can't FK to each other: a book copies each list of another book its spells are on, a class's by their level line or one drawing on others' lists, `Sublime Chord Spells`).
@@ -215,7 +216,7 @@ Consequences for link rows (`feats_aptitudes`, `powers_aptitudes`, `klass_level_
 
 - Links targeting a core name point at the core's `aptitude_id`.
 - Links targeting an extension-owned name point at the extension's own `aptitude_id`.
-- Every raw row satisfies the invariant: *the aptitude's ruleset is on the entity's source chain.* No cross-sibling FKs in the raw data; the runtime sibling mechanism handles cross-extension visibility.
+- Every raw row satisfies the invariant: _the aptitude's ruleset is on the entity's source chain._ No cross-sibling FKs in the raw data; the runtime sibling mechanism handles cross-extension visibility.
 
 A copy keeps the original's aptitude links, with the core's `aptitude_id`.
 
