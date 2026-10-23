@@ -47,11 +47,12 @@ export default class Dnd35Characters extends CharactersPart<Dnd35Descriptions> {
     return new SpokenLanguages(view, character).plan(languageIds);
   }
 
-  /** Where an inventory entry's add or edit holds its item: the item equipped where asked, what equipping it checks. */
-  protected override planFields(_view: RulesetView, request: FieldsRequest) {
+  /** What an edit of a character's identity writes: its fields, each checked, into its columns. */
+  protected override planFields(_view: RulesetView, _character: CharacterInput, request: FieldsRequest) {
     return IdentityFields.plan(request);
   }
 
+  /** Where an inventory entry's add or edit holds its item: the item equipped where asked, what equipping it checks. */
   protected override planPlacement(...args: Parameters<typeof InventoryEntries.planPlacement>) {
     return InventoryEntries.planPlacement(...args);
   }
@@ -74,9 +75,8 @@ export default class Dnd35Characters extends CharactersPart<Dnd35Descriptions> {
     return CharacterSheet.describeSheet(...args);
   }
 
+  /** The race picker of a new character: the races it offers, and whether each is eligible. */
   override openRacePicker(view: RulesetView, query: RacePickQuery) {
     return new RacePicker(view, query);
   }
-
-  /** The race picker of a new character: the races it offers, and whether each is eligible. */
 }

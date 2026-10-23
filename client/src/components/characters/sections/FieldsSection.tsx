@@ -21,6 +21,7 @@ import { invalidateCharacter, invalidateCharacterListings } from "@/client/src/l
 import { wholeNumberRules } from "@/client/src/lib/validation.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
+import { type FieldsFormData, sentFieldsOf, toFieldsForm } from "./fieldsForm.ts";
 import { type CharacterLanguage, type CharacterLanguages, characterLanguagesQuery } from "./languageQueries.ts";
 import { NotesField, PrivateNotesField } from "./NotesFields.tsx";
 import type { BlockOf, SheetField } from "./sheetBlocks.ts";
@@ -44,12 +45,6 @@ interface FieldsSectionProps {
   readOnly?: boolean;
   updatedAt: string;
 }
-
-/**
- * A `fields` block as its form holds it: each field's value by its key (a number's NaN while it's empty, a select's
- * "" while it's unset), its languages' ids, and its notes.
- */
-type FieldsFormData = Record<string, number | string | string[]>;
 
 /** A language as the picker shows it: one the character speaks, or one its rules let it pick. */
 type LanguageOption = Pick<CharacterLanguage, "id" | "name">;
@@ -135,39 +130,6 @@ function FieldInput({ control, field, readOnly }: FieldInputProps) {
   }
 }
 
-/** A block's fields, wherever it lays them out. */
-function fieldsOf(block: BlockOf<"fields">) {
-  return [...block.lines.flat(), ...block.fields];
-}
-
-/** A field's value as its form holds it: a number's NaN while it's empty, a select's "" while it's unset. */
-function formValueOf(field: SheetField) {
-  if (field.kind === "number") return field.value ?? Number.NaN;
-  if (field.kind === "select") return field.value ?? "";
-  return field.value;
-}
-
-/** A field's value as its edit sends it: an empty number or an unset select, none. */
-function sentValueOf(field: SheetField, value: FieldsFormData[string]) {
-  if (field.kind === "number") return typeof value === "number" && Number.isFinite(value) ? value : null;
-  if (field.kind === "select") return typeof value === "string" && value ? value : null;
-  return typeof value === "string" ? value : String(value);
-}
-
-/** A block's values as its form holds them (`block` none: before the character's are in, each field empty). */
-function toFieldsForm(block: BlockOf<"fields">, filled: boolean): FieldsFormData {
-  const empty = (field: SheetField) => {
-    if (field.kind === "number") return field.required ? field.min : Number.NaN;
-    return "";
-  };
-  return {
-    ...Object.fromEntries(fieldsOf(block).map((field) => [field.key, filled ? formValueOf(field) : empty(field)])),
-    notes: filled ? (block.notes?.notes ?? "") : "",
-    privateNotes: filled ? (block.notes?.privateNotes ?? "") : "",
-    languageIds: filled ? (block.languages?.picked ?? []).map(({ id }) => id) : [],
-  };
-}
-
 /**
  * A `fields` block: the character's portrait, then its fields' lines and the fields under them, the languages it
  * speaks, and its notes (its private ones where the block gives them: who reads them alone), saved together. A partly
@@ -194,18 +156,8 @@ export function FieldsSection({
       parseResponse(
         rpc.api.characters[":id"].$put({
           param: { id: characterId },
-          json: {
-            fields: Object.fromEntries(
-              fieldsOf(block)
-                .filter((field) => !(field.kind === "text" && field.fixed))
-                .map((field) => [field.key, sentValueOf(field, formData[field.key])]),
-            ),
-            notes: String(formData.notes),
-            // Only who reads them saves them: a form without the field leaves them as they are
-            privateNotes: privateNotes ? String(formData.privateNotes) : undefined,
-            languageIds: block.languages ? (formData.languageIds as string[]) : undefined,
-            updatedAt: sync.updatedAt(),
-          },
+          // Only who reads the private notes saves them: a form without their field leaves them as they are
+          json: { ...sentFieldsOf(block, formData), updatedAt: sync.updatedAt() },
         }),
       ),
     onSuccess: async (saved, formData) => {
@@ -253,13 +205,15 @@ export function FieldsSection({
           spacing={{ xs: 2, sm: 4 }}
           sx={{ alignItems: { xs: "center", sm: "flex-start" } }}
         >
-          <AttachmentField
-            name="portrait"
-            label={block.portrait}
-            recordId={characterId}
-            readOnly={portraitReadOnly}
-            url={portraitUrl}
-          />
+          {block.portrait && (
+            <AttachmentField
+              name="portrait"
+              label={block.portrait}
+              recordId={characterId}
+              readOnly={portraitReadOnly}
+              url={portraitUrl}
+            />
+          )}
 
           {/* Its fields' lines, 24px apart as the fields in a line are */}
           <Stack spacing={3} sx={{ flex: 1, width: "100%", minWidth: 0 }}>

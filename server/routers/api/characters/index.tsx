@@ -202,17 +202,8 @@ export default new Hono()
       "json",
       z.object({
         name: z.string().min(1).max(MAX_CHARACTER_NAME_LENGTH).optional(),
-        // Its fields, by the keys its sheet's fields block gives them, which its ruleset reads (`planFields`)
+        // Its fields, by the keys its sheet's fields block gives them, which its ruleset reads and checks (`planEdit`)
         fields: z.record(z.string(), z.union([z.string(), z.number(), z.null()])).optional(),
-        // An age, a height or a weight is cleared with null
-        age: z.number().int().min(1).nullable().optional(),
-        gender: z.enum(GENDER_OPTIONS).optional(),
-        height: z.string().nullable().optional(),
-        weight: z.string().nullable().optional(),
-        deity: z.string().optional(),
-        xp: z.number().int().min(0).optional(),
-        alignment: z.enum(ALIGNMENT_OPTIONS).optional(),
-        description: z.string().optional(),
         notes: z.string().optional(),
         // Read by the character's editors and its campaign's Game Master only
         privateNotes: z.string().optional(),

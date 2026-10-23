@@ -2,7 +2,7 @@ import { Stack } from "@mui/material";
 
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
 
-import { blockOf, type CharacterData, DiagnosticsSection, FieldsSection, getSections } from "./sections/index.ts";
+import { type CharacterData, DiagnosticsSection, FieldsSection, getSections, openingBlock } from "./sections/index.ts";
 
 interface CharacterSheetBodyProps {
   /** The bonded creatures' names link to their sheets: the owner's view. */
@@ -40,8 +40,8 @@ export function CharacterSheetBody({
   portraitUrl,
 }: CharacterSheetBodyProps) {
   const { SheetSections } = getSections(character.baseRules);
-  // Its identity, its own fields: what every sheet opens with, a partly seen one's alone
-  const identity = blockOf(character.blocks, "fields", "identity");
+  // Its own fields, its identity: what every sheet opens with, a partly seen one's alone
+  const identity = openingBlock(character.blocks);
 
   return (
     <Stack spacing={3}>

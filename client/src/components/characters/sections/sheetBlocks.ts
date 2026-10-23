@@ -35,11 +35,6 @@ export type SheetSubsheet = NonNullable<BlockOf<"entries">["entries"][number]["s
 /** A table a block holds: a `stats` block's panel's. */
 export type SheetTable = NonNullable<BlockOf<"stats">["panels"][number]["table"]>;
 
-/** The sheet's block of a kind under its key, if it has one: its identity, which opens it, the others under it. */
-export function blockOf<K extends SheetBlock["kind"]>(blocks: readonly SheetBlock[], kind: K, key: string) {
-  return blocks.find((block): block is BlockOf<K> => block.kind === kind && block.key === key);
-}
-
 /**
  * An entity's page in its ruleset, which a block's entry links to (`entityType`, its block's kind of entity): none
  * without a ruleset to read it in, an id, or a page of its kind.
@@ -47,6 +42,11 @@ export function blockOf<K extends SheetBlock["kind"]>(blocks: readonly SheetBloc
 export function entityPagePath(rulesetId: string | undefined, entityType: string, id: string | null) {
   if (!rulesetId || !id || !isOneOf(entityType, CUSTOMIZATION_PAGE_TYPES)) return undefined;
   return `/rulesets/${rulesetId}/${buildCustomizationPath(entityType, id)}`;
+}
+
+/** The block a sheet opens with: its first `fields` block (3.5's identity), over its others, if it has one. */
+export function openingBlock(blocks: readonly SheetBlock[]) {
+  return blocks.find((block): block is BlockOf<"fields"> => block.kind === "fields");
 }
 
 /**

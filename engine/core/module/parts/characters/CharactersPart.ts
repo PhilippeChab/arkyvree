@@ -153,10 +153,11 @@ export default abstract class CharactersPart<D extends Descriptions> {
   protected abstract fitLanguages(view: RulesetView, character: CharacterInput, languageIds: string[]): string[];
 
   /**
-   * What an edit of a character's fields (`request`, by the keys its sheet's `fields` block gives them) writes, each
-   * checked: refused when it names a field the character hasn't, or a value its field doesn't take (`planEdit`).
+   * What an edit of a character's (`character`) fields (`request`, by the keys its sheet's `fields` block gives them)
+   * writes, each checked: refused when it names a field the character hasn't, or a value its field doesn't take
+   * (`planEdit`).
    */
-  protected abstract planFields(view: RulesetView, request: FieldsRequest): FieldsPlan;
+  protected abstract planFields(view: RulesetView, character: CharacterInput, request: FieldsRequest): FieldsPlan;
 
   /**
    * Where an inventory entry's add or edit (`change`) holds its item: whether it's equipped, where, and its weapon set
@@ -322,7 +323,7 @@ export default abstract class CharactersPart<D extends Descriptions> {
    */
   planEdit(view: RulesetView, character: CharacterInput, edit: CharacterEditRequest): CharacterEditPlan {
     return {
-      columns: edit.fields ? this.planFields(view, edit.fields).columns : {},
+      columns: edit.fields ? this.planFields(view, character, edit.fields).columns : {},
       ...(edit.languageIds && { languages: this.planLanguages(view, character, edit.languageIds) }),
     };
   }

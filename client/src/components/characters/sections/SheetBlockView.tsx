@@ -1,4 +1,5 @@
 import { EntriesSection } from "./EntriesSection.tsx";
+import { FieldsSection } from "./FieldsSection.tsx";
 import { InventorySection } from "./InventorySection.tsx";
 import { LoadFigures } from "./LoadFigures.tsx";
 import { PoolsSection } from "./PoolsSection.tsx";
@@ -18,6 +19,8 @@ interface SheetBlockViewProps {
   rulesetId?: string;
   /** A creature an entry bonds links to its sheet: the owner's view. */
   subsheetsLinkable: boolean;
+  /** The character's version, which a `fields` block's edit saves against. */
+  updatedAt: string;
 }
 
 /** A sheet's block, in its kind's section. */
@@ -28,11 +31,12 @@ export function SheetBlockView({
   readOnly,
   rulesetId,
   subsheetsLinkable,
+  updatedAt,
 }: SheetBlockViewProps) {
   switch (block.kind) {
-    // The identity's fields, which open the sheet, above its blocks
+    // Its fields past those the sheet opens with
     case "fields":
-      return null;
+      return <FieldsSection block={block} characterId={characterId} readOnly={readOnly} updatedAt={updatedAt} />;
     case "entries":
       return <EntriesSection block={block} rulesetId={rulesetId} subsheetsLinkable={subsheetsLinkable} />;
     case "inventory": {

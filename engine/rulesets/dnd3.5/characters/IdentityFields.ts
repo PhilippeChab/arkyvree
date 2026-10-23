@@ -42,7 +42,7 @@ const FIELDS_REQUEST = z
 /**
  * A 3.5 character's identity as its sheet's `fields` block: its race (its creation's), alignment, experience and deity
  * on a line, its age, gender, height and weight on the next, its description under them, the languages it speaks, and
- * its notes; a partly seen character's name and physical traits alone. And what an edit of its fields writes.
+ * its notes; a partly seen character's race and physical traits alone. And what an edit of its fields writes.
  */
 export default class IdentityFields {
   /** A value the select offers, else none: a value its options don't hold reads as not set. */

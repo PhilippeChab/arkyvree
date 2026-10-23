@@ -274,20 +274,12 @@ class CharactersService extends include(Object, Archives, Imports) {
     session: Session,
     characterId: string,
     updateData: {
-      age?: number | null;
-      alignment?: Alignment;
-      deity?: string;
-      description?: string;
       fields?: FieldsRequest;
-      gender?: Gender;
-      height?: string | null;
       languageIds?: string[];
       name?: string;
       notes?: string;
       privateNotes?: string;
       updatedAt?: string;
-      weight?: string | null;
-      xp?: number;
     },
   ) {
     return await withTransaction(async (tx) => {
