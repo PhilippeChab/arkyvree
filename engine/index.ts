@@ -15,6 +15,7 @@ export type { EntityFieldValues, EntityForm, FormField } from "./core/fields/ind
 export type {
   AbilityIncrease,
   BondedPlan,
+  CharacterCard,
   CharacterInput,
   CharacterRows,
   EntityCreatePlan,

@@ -212,14 +212,14 @@ export default function CharacterDetailsPage() {
                     <ActionMenuItem
                       key="add-level"
                       icon={AddIcon}
-                      label="Add Level"
+                      label={character.summary.words.add}
                       onClick={menu.closeMenuAnd(() => addLevel.openWith({}))}
                     />,
                     character.summary.tracks.length > 0 && (
                       <ActionMenuItem
                         key="remove-level"
                         icon={DeleteIcon}
-                        label="Remove Last Level"
+                        label={character.summary.words.removeLast}
                         intent="destructive"
                         onClick={menu.closeMenuAnd(() => setRemoveLevelOpen(true))}
                       />
@@ -270,10 +270,10 @@ export default function CharacterDetailsPage() {
             open={isRemoveLevelOpen}
             onClose={() => setRemoveLevelOpen(false)}
             onConfirm={() => removeLevelMutation.mutate()}
-            title="Remove Last Level"
-            message="Are you sure you want to remove the last level? This action cannot be undone."
+            title={character.summary.words.removeLast}
+            message={character.summary.words.removeLastMessage}
             pending={removeLevelMutation.isPending}
-            confirmLabel="Remove Last Level"
+            confirmLabel={character.summary.words.removeLast}
           />
 
           <ConfirmDialog

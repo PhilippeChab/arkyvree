@@ -1,5 +1,5 @@
 import type { SheetSummary } from "@/engine/core/module/index.ts";
-import { formatClassLevel } from "@/shared/characterClasses.ts";
+import ClassLevels from "@/engine/rulesets/dnd3.5/characters/ClassLevels.ts";
 
 /** A 3.5 character's classes, as its sheet reads them: each its class, and its levels in it, in the order it took them. */
 type SheetClasses = Record<
@@ -7,16 +7,26 @@ type SheetClasses = Record<
   { klass: { id: string; name: string }; levels: { characterLevel: { id: string }; klassLevel: { level: number } }[] }
 >;
 
-/** A 3.5 sheet's summary, its header's line: its classes, each at its level ("Fighter 3"), and its levels in each. */
+/**
+ * A 3.5 sheet's summary, its header's line: its classes, each at its level ("Fighter 3"), and its levels in each; and
+ * the words of its page's level actions.
+ */
 export default class SheetSummaries {
   /**
    * The summary of a character's classes (`classes`, those it has levels in): each a track of the class's page, its
-   * label its class at its level, its popover's words, and each of its levels, its edit's word naming its class.
+   * label its class at its level, its popover's words, and each of its levels, its edit's word naming its class. A
+   * partly seen character's has none (`{}`).
    */
   static describe(classes: SheetClasses): SheetSummary {
     return {
+      separator: ClassLevels.SEPARATOR,
+      words: {
+        add: "Add Level",
+        removeLast: "Remove Last Level",
+        removeLastMessage: "Are you sure you want to remove the last level? This action cannot be undone.",
+      },
       tracks: Object.values(classes).map(({ klass, levels }) => {
-        const label = formatClassLevel(klass.name, levels.length);
+        const label = ClassLevels.format(klass.name, levels.length);
         return {
           id: klass.id,
           entityType: "klasses",

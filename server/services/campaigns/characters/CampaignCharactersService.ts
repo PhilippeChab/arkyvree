@@ -142,13 +142,25 @@ class CampaignCharactersService {
     });
     const contributedIds = new Set(contributions.map((contribution) => contribution.characterId));
 
+    // A Partial character shows the other players its name and race, and none of its build
+    const partialIds = new Set(
+      characters
+        .filter((char) => {
+          const meta = characterMeta.get(char.id);
+          const canEdit = char.userId === session.userId || contributedIds.has(char.id);
+          const isOwner = meta?.playerId === member.id;
+          return this.isPartial(meta?.visibility ?? "Private", { canEdit, isGM, isOwner });
+        })
+        .map((char) => char.id),
+    );
+
     // Resolve race / klass names via each character's composed ruleset cache
     // so COW'd or renamed entities render their post-COW names.
     return await withRulesetScopes(
       db,
       characters.map((c) => c.rulesetId),
       async (views) => {
-        const cards = describeCharacterCards(views, characters, levels);
+        const cards = describeCharacterCards(views, characters, levels, partialIds);
 
         // Maintain order from linkedCharacters (which is already sorted by createdAt desc)
         const characterMap = new Map(characters.map((c) => [c.id, c]));
@@ -156,12 +168,11 @@ class CampaignCharactersService {
           .map((id) => characterMap.get(id))
           .filter((char): char is NonNullable<typeof char> => char !== undefined);
 
-        // Map to final format: a Partial character shows the other players its name and race, and none of its build
+        // Map to final format, a Partial character's card its partial reading's
         const enrichedCharacters = orderedCharacters.map((char) => {
           const meta = characterMeta.get(char.id);
           const isOwn = meta?.playerId === member.id;
-          const canEdit = char.userId === session.userId || contributedIds.has(char.id);
-          const isPartial = this.isPartial(meta?.visibility ?? "Private", { canEdit, isGM, isOwner: isOwn });
+          const isPartial = partialIds.has(char.id);
 
           const card = cards.get(char.id)!;
 
@@ -172,8 +183,7 @@ class CampaignCharactersService {
             race: card.race,
             levels: isPartial ? [] : card.levels,
             totalLevel: isPartial ? null : card.totalLevel,
-            // A partly seen character's card shows what its partial reading does
-            chips: isPartial ? card.chips.filter((chip) => chip.partial) : card.chips,
+            chips: card.chips,
             visibility: meta?.visibility ?? "Private",
             isOwn,
             isPartial,

@@ -61,6 +61,9 @@ export interface RulesetOptions {
 
 export type CharacterDetail = InferResponseType<(typeof rpc.api.characters)[":id"]["$get"], 200>;
 
+/** A character as a list of characters shows it: its card. */
+export type CharacterListItem = InferResponseType<typeof rpc.api.characters.$get, 200>["items"][number];
+
 /** A list's sort direction, as every list endpoint takes it. */
 export type Direction = NonNullable<RulesetListParams["orderDir"]>;
 

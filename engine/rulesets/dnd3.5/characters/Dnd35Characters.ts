@@ -28,6 +28,11 @@ export default class Dnd35Characters extends CharactersPart<Dnd35Descriptions> {
     return CharacterDescription.describeFull(...args);
   }
 
+  /** A character's card: its race and its classes at their highest level. */
+  protected override describeFullCard(...args: Parameters<typeof CharacterCards.describe>) {
+    return CharacterCards.describe(...args);
+  }
+
   /** An inventory entry beside its row: where its item can go, and where it's worn. */
   protected override describeInventoryEntry(...args: Parameters<typeof InventoryEntries.describeInventoryEntry>) {
     return InventoryEntries.describeInventoryEntry(...args);
@@ -56,11 +61,6 @@ export default class Dnd35Characters extends CharactersPart<Dnd35Descriptions> {
   /** Where an inventory entry's add or edit holds its item: the item equipped where asked, what equipping it checks. */
   protected override planPlacement(...args: Parameters<typeof InventoryEntries.planPlacement>) {
     return InventoryEntries.planPlacement(...args);
-  }
-
-  /** A character's card: its race and its classes at their highest level. */
-  override describeCard(...args: Parameters<typeof CharacterCards.describe>) {
-    return CharacterCards.describe(...args);
   }
 
   /**

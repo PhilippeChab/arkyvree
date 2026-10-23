@@ -13,7 +13,10 @@ export default class CharactersEngine {
     private readonly module: Module,
   ) {}
 
-  /** A character's card, as a list shows it: its race, its classes at their highest level, its total level. */
+  /**
+   * A character's card, as a list shows it: its race, its classes at their highest level, its total level; a partly
+   * seen one's, its race alone.
+   */
   describeCard(...args: Args<"describeCard">) {
     return this.module.characters.describeCard(this.view, ...args);
   }

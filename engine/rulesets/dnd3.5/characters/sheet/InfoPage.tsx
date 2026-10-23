@@ -1,8 +1,8 @@
 import { Image, Page, Text, View } from "@react-pdf/renderer";
 
+import ClassLevels from "@/engine/rulesets/dnd3.5/characters/ClassLevels.ts";
 import CombatSheet from "@/engine/rulesets/dnd3.5/characters/description/CombatSheet.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
-import { CLASS_SEPARATOR, formatClassLevel } from "@/shared/characterClasses.ts";
 
 import AbilityScores from "./AbilityScores.tsx";
 import SheetFormat from "./SheetFormat.ts";
@@ -36,8 +36,8 @@ function InfoPage({
           {/* Its classes, in the web sheet's words: Personal Details gives its race */}
           <Text style={styles.subtitle}>
             {Object.values(classData)
-              .map((cl) => formatClassLevel(cl.klass.name, cl.levels.length))
-              .join(CLASS_SEPARATOR)}
+              .map((cl) => ClassLevels.format(cl.klass.name, cl.levels.length))
+              .join(ClassLevels.SEPARATOR)}
           </Text>
           <Text style={styles.subtitle}>{ruleset?.name ?? "D&D 3.5e"}</Text>
         </View>

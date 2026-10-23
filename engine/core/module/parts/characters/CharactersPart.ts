@@ -120,6 +120,16 @@ export default abstract class CharactersPart<D extends Descriptions> {
   protected abstract describeFull(view: RulesetView, character: CharacterInput, bonded: CharacterInput[]): D["sheet"];
 
   /**
+   * The card of a character (`character`, with its levels, `levels`), as a list of characters shows it to a reader who
+   * sees all of it, named as its ruleset's view names what it shows, a copied or renamed one by its own name.
+   */
+  protected abstract describeFullCard(
+    view: RulesetView,
+    character: { raceId: string },
+    levels: { klassLevelId: string }[],
+  ): CharacterCard;
+
+  /**
    * What the ruleset shows of an inventory entry (`entry`, of `item`, with its `properties`) beside its row: where its
    * item can go, where it's worn.
    */
@@ -172,16 +182,6 @@ export default abstract class CharactersPart<D extends Descriptions> {
   ): HeldInventoryEntry;
 
   /**
-   * The card of a character (`character`, with its levels, `levels`), as a list of characters shows it, named as its
-   * ruleset's view names what it shows, a copied or renamed one by its own name.
-   */
-  abstract describeCard(
-    view: RulesetView,
-    character: { raceId: string },
-    levels: { klassLevelId: string }[],
-  ): CharacterCard;
-
-  /**
    * How a new character's ability scores are set: the ruleset's abilities, in its sheet's order, the ways its form
    * offers, run by their kind, the scores' bounds and the one an unset ability shows, and each score's modifier over
    * those bounds. What its creation and an ability edit check their scores by, and start an unset one at.
@@ -220,6 +220,20 @@ export default abstract class CharactersPart<D extends Descriptions> {
     const creatures = bonded.map((input) => CharactersPart.withoutNotes(input));
     const sheet = this.describeFull(view, CharactersPart.withoutNotes(character), creatures);
     return CharactersPart.redactSheet(sheet, notes);
+  }
+
+  /**
+   * The card of a character (`character`, with its levels, `levels`), as a list of characters shows it: a partly seen
+   * one's (`partial`) holds the chips its ruleset marks as its partial reading's alone.
+   */
+  describeCard(
+    view: RulesetView,
+    character: { raceId: string },
+    levels: { klassLevelId: string }[],
+    partial: boolean,
+  ): CharacterCard {
+    const card = this.describeFullCard(view, character, levels);
+    return partial ? { ...card, chips: card.chips.filter((chip) => chip.partial) } : card;
   }
 
   /**

@@ -17,6 +17,13 @@ import { ABILITY_NAMES } from "@/vocabulary/dnd3.5/abilities.ts";
 const characters = api.api.characters;
 const character = characters[":id"];
 
+/** The words of a 3.5 character page's own level actions, its summary's. */
+const LEVEL_WORDS = {
+  add: "Add Level",
+  removeLast: "Remove Last Level",
+  removeLastMessage: "Are you sure you want to remove the last level? This action cannot be undone.",
+};
+
 /** What only a character's editors read, and its campaign's Game Master. */
 const PRIVATE_NOTES = "Plans to betray the party";
 
@@ -298,28 +305,28 @@ describe("characters", () => {
     test("sums a character's classes up for its header, each at its level, with its levels and their words", async () => {
       const { masterId } = await createWizardWithFamiliar();
       const { summary, classes } = await expectOk(character.$get({ param: { id: masterId } }));
-      const wizard = Object.values(classes)[0];
-      expect(summary.tracks).toEqual([
-        {
-          id: wizard.klass.id,
-          entityType: "klasses",
-          name: "Wizard",
-          label: `Wizard ${wizard.levels.length}`,
-          words: {
-            open: `Wizard ${wizard.levels.length} Levels`,
-            levels: "Wizard Levels",
-            add: "Add Wizard Level",
+      const [wizard] = Object.values(classes);
+      expect(summary).toEqual({
+        separator: " · ",
+        tracks: [
+          {
+            id: wizard.klass.id,
+            entityType: "klasses",
+            name: "Wizard",
+            label: "Wizard 1",
+            words: { open: "Wizard 1 Levels", levels: "Wizard Levels", add: "Add Wizard Level" },
+            advancements: [{ id: wizard.levels[0].characterLevel.id, label: "Level 1", edit: "Edit Wizard Level 1" }],
           },
-          advancements: wizard.levels.map(({ characterLevel, klassLevel }) => ({
-            id: characterLevel.id,
-            label: `Level ${klassLevel.level}`,
-            edit: `Edit Wizard Level ${klassLevel.level}`,
-          })),
-        },
-      ]);
+        ],
+        words: LEVEL_WORDS,
+      });
       // A new character has no track yet
       const { id } = await postCharacter();
-      expect((await expectOk(character.$get({ param: { id } }))).summary).toEqual({ tracks: [] });
+      expect((await expectOk(character.$get({ param: { id } }))).summary).toEqual({
+        separator: " · ",
+        tracks: [],
+        words: LEVEL_WORDS,
+      });
     });
 
     test("lists each character's card chips: its race, then its classes at their highest level", async () => {
@@ -328,14 +335,9 @@ describe("characters", () => {
       const card = items.find((item) => item.id === masterId);
       if (!card) throw new Error("no card");
       expect(card.chips).toEqual([
-        { label: card.race, partial: true, tone: "secondary" },
-        ...card.levels.map(({ klass, level }) => ({
-          label: `${klass} ${level}`,
-          partial: false,
-          tone: "primary" as const,
-        })),
+        { label: "Elf", partial: true, tone: "secondary" },
+        { label: "Wizard 1", partial: false, tone: "primary" },
       ]);
-      expect(card.chips).toHaveLength(2);
     });
 
     test("describes a bonded creature's sheet in the same blocks", async () => {

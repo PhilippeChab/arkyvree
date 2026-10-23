@@ -93,9 +93,11 @@ export interface SheetStat {
  * A sheet's summary, its header's line: the tracks its character advances on (3.5's classes), in its order, each its
  * name, its label at its position ("Fighter 3"), its page (`entityType`, by its `id`), what its advancements' popover
  * says (`words`: its button's, the popover's, its add's), and its advancements, each its id (an edit opens it), its
- * label and its edit's.
+ * label and its edit's; what stands between two tracks on the line (`separator`), and the words of the page's own
+ * level actions (`words`: adding one, removing the last, and the removal's confirmation).
  */
 export interface SheetSummary {
+  separator: string;
   tracks: {
     advancements: { edit: string; id: string; label: string }[];
     entityType: string;
@@ -104,6 +106,7 @@ export interface SheetSummary {
     name: string;
     words: { add: string; levels: string; open: string };
   }[];
+  words: { add: string; removeLast: string; removeLastMessage: string };
 }
 
 /**

@@ -1,6 +1,15 @@
 import type { CharacterCard } from "@/engine/core/module/index.ts";
-import type { RulesetView } from "@/engine/core/view/index.ts";
-import { formatClassLevel } from "@/shared/characterClasses.ts";
+
+import ClassLevels from "./ClassLevels.ts";
+
+/** A ruleset's view as a card reads it: the names of its races and classes, and its classes' levels. */
+interface CardView {
+  rulesetData: {
+    klassesById: ReadonlyMap<string, { name: string }>;
+    klassLevelsById: ReadonlyMap<string, { klassId: string; level: number }>;
+    racesById: ReadonlyMap<string, { name: string }>;
+  };
+}
 
 /** A 3.5 character's card, as a list of characters shows it. */
 export default class CharacterCards {
@@ -9,7 +18,7 @@ export default class CharacterCards {
    * classes, a copied or renamed one by its own name: its race's chip, which a partly seen character shows, then each
    * class at the highest level the character has in it; and its race, its classes and its total level.
    */
-  static describe(view: RulesetView, character: { raceId: string }, levels: { klassLevelId: string }[]): CharacterCard {
+  static describe(view: CardView, character: { raceId: string }, levels: { klassLevelId: string }[]): CharacterCard {
     const { rulesetData } = view;
     const levelByKlassName = new Map<string, number>();
     for (const level of levels) {
@@ -24,7 +33,7 @@ export default class CharacterCards {
       chips: [
         { label: race, partial: true, tone: "secondary" },
         ...classLevels.map(({ klass, level }) => ({
-          label: formatClassLevel(klass, level),
+          label: ClassLevels.format(klass, level),
           partial: false,
           tone: "primary" as const,
         })),

@@ -9,7 +9,6 @@ import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useFormWith } from "@/client/src/hooks/index.ts";
 import { type CharacterDetail, invalidateCharacter, invalidateCharacterListings } from "@/client/src/lib/queries.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
-import { CLASS_SEPARATOR } from "@/shared/characterClasses.ts";
 import { getUrlSegment } from "@/shared/urlSegments.ts";
 
 import { type EditingLevel, TrackLevels } from "./TrackLevels.tsx";
@@ -159,7 +158,7 @@ export function CharacterHeader({
                 <Fragment key={track.id}>
                   {index > 0 && (
                     <Box component="span" sx={{ whiteSpace: "normal" }}>
-                      {CLASS_SEPARATOR}
+                      {summary.separator}
                     </Box>
                   )}
                   <TrackLevels
