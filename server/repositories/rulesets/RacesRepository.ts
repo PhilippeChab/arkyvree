@@ -14,7 +14,9 @@ class RacesRepository extends RulesetEntityRepository<Race> {
     where: RulesetEntityFilters<{ kind?: string }>,
     pagination: { limit: number; page: number },
   ) {
-    return await super.findPage(db, where, pagination, [where.kind !== undefined && eq(this.column("kind"), where.kind)]);
+    return await super.findPage(db, where, pagination, [
+      where.kind !== undefined && eq(this.column("kind"), where.kind),
+    ]);
   }
 }
 

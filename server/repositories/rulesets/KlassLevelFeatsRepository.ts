@@ -9,7 +9,10 @@ class KlassLevelFeatsRepository extends StoredJoinRepository<KlassLevelFeat> {
   protected override readonly join = "klass_level_feats";
 
   async delete(db: Db, where: { klassLevelId: string }) {
-    return await this.remove(db, eq(this.column("klassLevelId"), where.klassLevelId));
+    return await this.remove(
+      db,
+      this.branchWhere(["klassLevelId" in where && eq(this.column("klassLevelId"), where.klassLevelId)])!,
+    );
   }
 
   /** Levels' grants. */

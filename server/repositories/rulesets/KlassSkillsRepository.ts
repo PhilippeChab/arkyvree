@@ -1,4 +1,4 @@
-import { and, eq, inArray } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
 import StoredJoinRepository from "@/server/repositories/StoredJoinRepository.ts";
@@ -11,7 +11,10 @@ class KlassSkillsRepository extends StoredJoinRepository<KlassSkill> {
   async delete(db: Db, where: { klassId: string; skillId: string }) {
     return await this.remove(
       db,
-      and(eq(this.column("klassId"), where.klassId), eq(this.column("skillId"), where.skillId))!,
+      this.branchWhere([
+        "klassId" in where && eq(this.column("klassId"), where.klassId),
+        "skillId" in where && eq(this.column("skillId"), where.skillId),
+      ])!,
     );
   }
 

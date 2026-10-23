@@ -51,7 +51,8 @@ export default class StoredCharacters {
     const declared = storage.character().columns;
     for (const [name, value] of Object.entries(values)) {
       const column = declared[name];
-      if (!column) continue;
+      // A value left undefined is left as it is, as an update leaves a column it's given undefined
+      if (!column || value === undefined) continue;
       if (column.kind === "link") {
         await db
           .delete(linksInCharacter)

@@ -12,6 +12,7 @@ import {
   rulesetLinksInRules,
   rulesetsInRules,
 } from "@/drizzle/schema.ts";
+import { qualified } from "@/server/repositories/stored/qualified.ts";
 
 import {
   ENTITY_REFERENCES,
@@ -19,8 +20,6 @@ import {
   type ReferencedType,
   type ReferenceOwner,
 } from "./entityReferences.ts";
-import { qualified } from "@/server/repositories/stored/qualified.ts";
-
 import type { RulesetEntityType } from "./entityTables.ts";
 import { buildLineageCondition } from "./rulesetLineage.ts";
 
@@ -139,7 +138,7 @@ class EntityReferencesRepository {
       await db
         .update(picks)
         .set({
-          ordinal: sql`${picks.ordinal} + (SELECT coalesce(max(${twin.ordinal}), -1) + 1 FROM ${twin} WHERE ${twin.advancementId} = ${qualified(picks.advancementId)} AND ${twin.step} = ${qualified(picks.step)} AND ${twin.entityId} = ${to})`,
+          ordinal: sql`${qualified(picks.ordinal)} + (SELECT coalesce(max(twin.ordinal), -1) + 1 FROM ${picks} twin WHERE twin.advancement_id = ${qualified(picks.advancementId)} AND twin.step = ${qualified(picks.step)} AND twin.entity_id = ${to})`,
         })
         .where(and(named, eq(picks.repeats, true)));
       await db.delete(picks).where(
@@ -244,7 +243,9 @@ class EntityReferencesRepository {
       })
       .from(rulesetLinksInRules)
       .innerJoin(rulesetsInRules, eq(rulesetsInRules.id, rulesetLinksInRules.rulesetId))
-      .where(and(inArray(rulesetLinksInRules.toId, where.entityIds), eq(rulesetLinksInRules.rulesetId, where.rulesetId)));
+      .where(
+        and(inArray(rulesetLinksInRules.toId, where.entityIds), eq(rulesetLinksInRules.rulesetId, where.rulesetId)),
+      );
     return await unionAll(linked(entityLinksInRules.toId), linked(entityLinksInRules.viaId), ruleset).orderBy(
       sql`entity_type, name, id, target_id`,
     );

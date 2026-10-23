@@ -41,7 +41,11 @@ class RulesetEntitiesRepository {
     if ("ids" in where && where.ids.length === 0) return [];
     if ("rulesetIds" in where && (where.rulesetIds.length === 0 || where.names?.length === 0)) return [];
     return await db
-      .select({ id: entitiesInRules.id, name: sql<string>`${entitiesInRules.name}`, rulesetId: entitiesInRules.rulesetId })
+      .select({
+        id: entitiesInRules.id,
+        name: sql<string>`${entitiesInRules.name}`,
+        rulesetId: entitiesInRules.rulesetId,
+      })
       .from(entitiesInRules)
       .where(and(eq(entitiesInRules.type, entityType), this.namesCondition(where)));
   }

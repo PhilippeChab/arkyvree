@@ -7,12 +7,18 @@ import StoredFields, { type FieldValues } from "@/server/repositories/stored/Sto
  * written as properties (`StoredFields`), which the engine reads.
  */
 class PropertiesRepository {
+  /** A `where` that names no entities would pick every one's properties: it throws instead, as a repository's does. */
+  private static named(where: { entityIds?: string[] }) {
+    if (!where.entityIds) throw new Error("PropertiesRepository: a where that matches none of its branches");
+  }
+
   async createMany(db: Db, values: FieldValues[]) {
     await StoredFields.createMany(db, values);
   }
 
   /** Removes the properties of entities of a type: those of `types`, or every one. */
   async delete(db: Db, where: { entityIds: string[]; entityType: string; types?: readonly string[] }) {
+    PropertiesRepository.named(where);
     await StoredFields.delete(db, where);
   }
 
@@ -23,6 +29,7 @@ class PropertiesRepository {
       | { entityIds: string[]; entityType: string; type: string }
       | { entityIds: string[] },
   ) {
+    PropertiesRepository.named(where);
     return await StoredFields.findMany(db, where);
   }
 }

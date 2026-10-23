@@ -96,13 +96,14 @@ export default class StoredEntities {
 
   /**
    * The fields and single links a write's values (`values`, a kind's row by its columns) set on an entity: each one the
-   * values name (or, on a create, every one, defaulted), with its value or null (none).
+   * values give (or, on a create, every one, defaulted), with its value or null (none). A value left undefined is left
+   * as it is, as an update leaves a column it's given undefined.
    */
   private static parts(type: string, values: StoredValues, creating: boolean) {
     const fields: { field: string; kind: "flag" | "number" | "text"; value: unknown }[] = [];
     const links: { role: string; toId: unknown }[] = [];
     for (const [name, column] of StoredEntities.declared(type)) {
-      if (!creating && !(name in values)) continue;
+      if (!creating && values[name] === undefined) continue;
       if (column.kind === "link") links.push({ role: column.role, toId: values[name] ?? null });
       else if (column.kind === "flag" || column.kind === "number" || column.kind === "text") {
         const value = values[name] ?? ("default" in column ? column.default : undefined) ?? null;

@@ -90,13 +90,20 @@ class CharactersRepository extends include(
         ),
       )
       .returning({ id: this.table.id });
-    if ("id" in where && archived.length > 0) {
+    if (archived.length === 0) return [];
+    if ("id" in where) {
       await db
         .update(this.table)
         .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
         .where(and(eq(this.table.parentCharacterId, where.id), isNull(this.table.deletedAt)));
     }
-    return archived;
+    return await this.rows(
+      db,
+      inArray(
+        this.table.id,
+        archived.map((row) => row.id),
+      ),
+    );
   }
 
   async count(db: Db, where: { userId: string }) {
@@ -287,13 +294,12 @@ class CharactersRepository extends include(
       .set({ deletedAt: null, updatedAt: new Date().toISOString() })
       .where(and(eq(this.table.id, where.id), not(isNull(this.table.deletedAt))))
       .returning({ id: this.table.id });
-    if (unarchived.length > 0) {
-      await db
-        .update(this.table)
-        .set({ deletedAt: null, updatedAt: new Date().toISOString() })
-        .where(and(eq(this.table.parentCharacterId, where.id), not(isNull(this.table.deletedAt))));
-    }
-    return unarchived;
+    if (unarchived.length === 0) return [];
+    await db
+      .update(this.table)
+      .set({ deletedAt: null, updatedAt: new Date().toISOString() })
+      .where(and(eq(this.table.parentCharacterId, where.id), not(isNull(this.table.deletedAt))));
+    return await this.rows(db, eq(this.table.id, where.id));
   }
 
   /**

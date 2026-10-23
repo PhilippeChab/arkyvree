@@ -11,7 +11,7 @@ class PowersAptitudesRepository extends StoredJoinRepository<PowerAptitude> {
   protected override readonly join = "powers_aptitudes";
 
   async delete(db: Db, where: { powerId: string }) {
-    return await this.remove(db, eq(this.column("powerId"), where.powerId));
+    return await this.remove(db, this.branchWhere(["powerId" in where && eq(this.column("powerId"), where.powerId)])!);
   }
 
   /** Links of powers. */

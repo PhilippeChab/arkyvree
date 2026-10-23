@@ -19,10 +19,7 @@ class AptitudesRepository extends RulesetEntityRepository<Aptitude> {
       .selectDistinct({ aptitudeId: to })
       .from(entityLinksInRules)
       .where(
-        StoredJoins.scope(
-          "powers_aptitudes",
-          and(inArray(to, where.aptitudeIds), isNotNull(StoredJoins.part("tier"))),
-        ),
+        StoredJoins.scope("powers_aptitudes", and(inArray(to, where.aptitudeIds), isNotNull(StoredJoins.part("tier")))),
       )
       .orderBy(this.orderBy(to));
     return new Set(rows.map((row) => row.aptitudeId));

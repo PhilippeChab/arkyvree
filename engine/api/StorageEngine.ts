@@ -10,6 +10,8 @@ import type {
 } from "@/engine/core/module/index.ts";
 import type { BaseRules } from "@/shared/enums.ts";
 
+import Modules from "./Modules.ts";
+
 /** The entries of every module's record (`pick`), one per name: a name two modules declare is refused. */
 function mergeRecords<T>(modules: [BaseRules, RulesetModule][], pick: (module: RulesetModule) => Record<string, T>) {
   const merged: Record<string, T> = {};
@@ -28,6 +30,9 @@ function mergeRecords<T>(modules: [BaseRules, RulesetModule][], pick: (module: R
  * refused, as the registries' keys refuse it.
  */
 export default class StorageEngine {
+  /** Every module's storage, merged once: the modules never change. */
+  private static instance: StorageEngine | undefined;
+
   private readonly characterDeclaration: StoredCharacter;
   private readonly joins: Record<string, StoredJoin>;
   private readonly kinds: Record<string, StoredKind>;
@@ -57,6 +62,12 @@ export default class StorageEngine {
       steps: registries.flatMap((registry) => registry.steps),
       itemTypes: registries.flatMap((registry) => registry.itemTypes),
     };
+  }
+
+  /** Every registered module's storage, merged: one instance, built on its first read. */
+  static shared(): StorageEngine {
+    StorageEngine.instance ??= new StorageEngine(Modules.all());
+    return StorageEngine.instance;
   }
 
   /** A character's data, as every module stores it: its columns, its links and its advancements' picks. */

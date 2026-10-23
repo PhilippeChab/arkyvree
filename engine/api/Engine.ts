@@ -9,9 +9,6 @@ import RulesEngine from "./RulesEngine.ts";
 import RulesetEngine from "./RulesetEngine.ts";
 import StorageEngine from "./StorageEngine.ts";
 
-/** Every module's storage, merged once: the modules never change. */
-const STORAGE = new StorageEngine(Modules.all());
-
 /**
  * The engine's entry: what code outside it asks the rules, as the client asks the server through its API. A ruleset's
  * rules answer through a handle bound to its view (`Engine.for(scope)`), and through it to what they're about
@@ -53,6 +50,6 @@ export default class Engine {
 
   /** How every module stores its data in the generic tables, which the server reads and writes them by. */
   static storage() {
-    return STORAGE;
+    return StorageEngine.shared();
   }
 }

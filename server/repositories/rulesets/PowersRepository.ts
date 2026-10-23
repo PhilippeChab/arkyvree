@@ -54,9 +54,10 @@ class PowersRepository extends include(RulesetEntityRepository, ResolvesCopies)<
     );
     return {
       ...page,
-      items: page.items.map(
-        (power): PowerWithAptitudes => ({ ...power, powersAptitudesInRules: lists.get(power.id) ?? [] }),
-      ),
+      items: page.items.map((power): PowerWithAptitudes => ({
+        ...power,
+        powersAptitudesInRules: lists.get(power.id) ?? [],
+      })),
     };
   }
 }

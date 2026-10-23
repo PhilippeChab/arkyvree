@@ -2,8 +2,9 @@
  * How sibling copies' customizations merge into their winner's: one rule per kind, which a ruleset's view composes
  * (`RulesetComposition`) and a copy of the winner writes (`EntityCopy`), the same both ways: the engine's, which both
  * ask. Each rule takes the winner's own rows and each sibling's, in the order its `CowData` pairs
- * them (`getSiblings`), and returns the siblings' rows the winner takes, in that order. A modifier, a property or an
- * aptitude link whose key the winner or an earlier sibling has is left out. Requirements merge as trees
+ * them (`getSiblings`), and returns the siblings' rows the winner takes, in that order. A modifier, a property of a set or
+ * an aptitude link whose key the winner or an earlier sibling has is left out. A single-valued property is the winner's,
+ * else the first sibling's that holds it (its field's `fallback`), whose stores keep one value of it. Requirements merge as trees
  * (`RequirementTree`), whose top-level rows are AND'd: merging the winner with N siblings is `AND(winner, sibling 1, …)`,
  * each sibling's tree kept as it is, appended at the top level. A sibling's group gets a fresh top-level number, its
  * rows renumbered under it; a sibling's top-level condition keeps its level (suffixed `-2`, `-3`… when the winner has
@@ -81,6 +82,7 @@ export default class SiblingMerge {
     own: EntityCustomizations,
     siblings: EntityCustomizations[],
     targetEntityId: string,
+    isSingle: (type: string) => boolean,
   ): EntityCustomizations {
     const modifiers = SiblingMerge.mergeModifiers(
       own.modifiers,
@@ -95,6 +97,7 @@ export default class SiblingMerge {
       properties: SiblingMerge.mergeProperties(
         own.properties,
         siblings.map((customizations) => customizations.properties),
+        isSingle,
       ),
       requirements: SiblingMerge.mergeRequirements(
         own.requirements,
@@ -112,9 +115,16 @@ export default class SiblingMerge {
     return SiblingMerge.takeNewRows(own, siblings, (m) => `${m.target}|${m.value}|${m.operator}|${m.valueType}`);
   }
 
-  /** The siblings' properties the winner doesn't have, by type and value. */
-  static mergeProperties<T extends PropertyKey>(own: readonly T[], siblings: Iterable<readonly T[]>): T[] {
-    return SiblingMerge.takeNewRows(own, siblings, (p) => `${p.type}|${p.value}`);
+  /**
+   * The siblings' properties the winner doesn't have: a set's values it lacks, by type and value, and a single-valued
+   * type's (`isSingle`) value, the first sibling's, when it has none of it.
+   */
+  static mergeProperties<T extends PropertyKey>(
+    own: readonly T[],
+    siblings: Iterable<readonly T[]>,
+    isSingle: (type: string) => boolean,
+  ): T[] {
+    return SiblingMerge.takeNewRows(own, siblings, (p) => (isSingle(p.type) ? p.type : `${p.type}|${p.value}`));
   }
 
   /** The siblings' requirements, merged into the winner's trees: the rows on the winner (`entityId`), source ids kept. */

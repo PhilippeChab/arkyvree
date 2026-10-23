@@ -179,9 +179,10 @@ class FeatsRepository extends include(RulesetEntityRepository, ResolvesCopies)<F
     );
     return {
       ...page,
-      items: page.items.map(
-        (feat): FeatWithAptitudes => ({ ...feat, featsAptitudesInRules: pools.get(feat.id) ?? [] }),
-      ),
+      items: page.items.map((feat): FeatWithAptitudes => ({
+        ...feat,
+        featsAptitudesInRules: pools.get(feat.id) ?? [],
+      })),
     };
   }
 }

@@ -63,16 +63,24 @@ export default class RulesetComposition {
    * `propertyTypes`: the ruleset's property types, as its rules read them, which its view orders its entities'
    * properties by.
    */
-  constructor(chain: RulesetRawData[], cow: CowData, propertyTypes: PropertyTypesProvider) {
+  constructor(
+    chain: RulesetRawData[],
+    cow: CowData,
+    propertyTypes: PropertyTypesProvider,
+    isSingle: (type: string) => boolean,
+  ) {
     this.chain = chain;
     this.cow = cow;
     this.propertyTypes = propertyTypes;
+    this.isSingle = isSingle;
   }
 
   private readonly chain: RulesetRawData[];
 
   private readonly cow: CowData;
 
+  /** Whether a property type holds a single value, which a sibling merge takes one of (`SiblingMerge`) */
+  private readonly isSingle: (type: string) => boolean;
   private readonly propertyTypes: PropertyTypesProvider;
 
   /**
@@ -214,7 +222,9 @@ export default class RulesetComposition {
       }
     }
     const taken = new Set(
-      siblingRows.getGroups().flatMap(({ own, siblings }) => SiblingMerge.mergeProperties(own, siblings)),
+      siblingRows
+        .getGroups()
+        .flatMap(({ own, siblings }) => SiblingMerge.mergeProperties(own, siblings, this.isSingle)),
     );
     return siblingRows.moveTaken(taken, (p, entityId) => ({ ...p, entityId }));
   }
