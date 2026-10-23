@@ -549,13 +549,13 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
    */
   async findOptionGroupPage(
     db: Db,
-    where: OptionWhere & { groups: { family: string; id: string }[] },
+    where: OptionWhere & { groups: { group: string; id: string }[] },
     pagination: { limit: number; page: number },
   ) {
     const { limit, offset } = this.paginate(pagination);
     // Each entity's group, as one parameter: a row per entity and group
-    const groups = sql`jsonb_to_recordset(${JSON.stringify(where.groups)}::jsonb) AS family(id uuid, family text)`;
-    const groupName = sql<string | null>`family.family`;
+    const groups = sql`jsonb_to_recordset(${JSON.stringify(where.groups)}::jsonb) AS member(id uuid, "group" text)`;
+    const groupName = sql<string | null>`member."group"`;
     const rows = await db
       .select({
         displayName:
@@ -568,7 +568,7 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
         description: sql<string>`min(${entitiesInRules.description})`.as("description"),
       })
       .from(entitiesInRules)
-      .leftJoin(groups, sql`family.id = ${entitiesInRules.id}`)
+      .leftJoin(groups, sql`member.id = ${entitiesInRules.id}`)
       .where(this.where(this.buildOptionConditions(where)))
       .groupBy(sql`coalesce(${groupName}, ${entitiesInRules.id}::text)`)
       // A group is a value or an entity alone: its smallest id is its own
@@ -675,7 +675,18 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
 
   /** Whether a live entity of a kind has the id. */
   async has(db: Db, where: { entityType: string; id: string }) {
-    return (await this.findOne(db, where)) !== undefined;
+    const [entity] = await db
+      .select({ id: entitiesInRules.id })
+      .from(entitiesInRules)
+      .where(
+        and(
+          eq(entitiesInRules.type, where.entityType),
+          eq(entitiesInRules.id, where.id),
+          isNull(entitiesInRules.deletedAt),
+        ),
+      )
+      .limit(1);
+    return entity !== undefined;
   }
 
   /**

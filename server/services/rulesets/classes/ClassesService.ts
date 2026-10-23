@@ -42,7 +42,6 @@ class ClassesService {
         db,
         {
           entityType: "klasses",
-          columns: where.kind === undefined ? undefined : { kind: where.kind },
           rulesetId,
           ...scope.rulesetData.cow.listFilters,
           ...where,

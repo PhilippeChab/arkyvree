@@ -254,7 +254,7 @@ class CharactersService extends include(Object, Archives, Imports) {
           const abilityIds = scope.rulesetData.cow.getEquivalentIds(abilityId);
           const rows = await CharacterLinks.update(
             tx,
-            { amount: score },
+            { score },
             { link: "abilities", characterId, entityIds: abilityIds },
           );
           if (rows.length === 0) throw new NotFoundError("Ability not found");

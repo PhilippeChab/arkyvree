@@ -81,7 +81,6 @@ class ItemsService extends include(Object, Variants) {
         db,
         {
           entityType: "items",
-          columns: where.isTemplate === undefined ? undefined : { isTemplate: where.isTemplate },
           rulesetId,
           ...scope.rulesetData.cow.listFilters,
           ...where,

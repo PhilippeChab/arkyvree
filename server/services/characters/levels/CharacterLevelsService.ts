@@ -21,8 +21,7 @@ import { createLevelRows } from "./levelRows.ts";
 class CharacterLevelsService extends include(Object, Plans) {
   /** Deletes a level's picks, which an edit writes again. */
   private async deleteLevelRows(tx: Db, characterLevelId: string) {
-    for (const pick of Object.keys(Engine.storage().character().picks))
-      await Picks.delete(tx, { pick, characterLevelId });
+    await Picks.delete(tx, { characterLevelId });
   }
 
   /**

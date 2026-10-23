@@ -38,7 +38,7 @@ export function Variants<B extends Constructor>(Base: B) {
 
             const created = [];
             for (const row of plan.rows) {
-              const [item] = (await Entities.create(tx, "items", { ...row, rulesetId })) as Item[];
+              const [item] = await Entities.create<Item>(tx, "items", { ...row, rulesetId });
               const tombstoneAncestorId = tombstones.get(item.name);
               if (tombstoneAncestorId) await names.repointTombstone(tx, "items", tombstoneAncestorId, item.id);
 

@@ -88,9 +88,7 @@ class ClassLevelsService extends include(Object, ListsSpells) {
           const edit = new CustomizationEdit(ruleset, rulesetData.cow);
           const resolvedLevelId = await edit.cowOwner(tx, "klass_levels", level.id);
 
-          // FK CASCADE on klass_level_feats / klass_level_powers / klass_level_saves
-          // wipes those join rows when the level row is deleted.
-          // The database deletes its customizations with it.
+          // The database deletes its links (its grants and saves) and its customizations with it
           const rows = await Entities.delete<KlassLevel>(tx, { entityType: "klass_levels", id: resolvedLevelId });
           const deletedLevel = rows[0];
 

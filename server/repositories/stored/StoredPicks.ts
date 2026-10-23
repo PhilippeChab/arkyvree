@@ -81,11 +81,16 @@ class StoredPicks extends BaseRepository<typeof advancementPicksInCharacter> {
     return StoredPicks.mapRows<R>(pick, await db.insert(this.table).values(rows).returning(StoredPicks.buildColumns()));
   }
 
-  // Exception to soft-delete: old picks are disposable when re-finalizing a level
-  async delete(db: Db, where: { characterLevelId: string; pick: string }) {
+  /**
+   * Deletes a level's picks of `pick`, or of every step its module declares picks of (its value, its hit points, is
+   * its level's). Exception to soft-delete: old picks are disposable when re-finalizing a level.
+   */
+  async delete(db: Db, where: { characterLevelId: string; pick?: string }) {
+    const picks = where.pick === undefined ? Object.keys(Engine.storage().character().picks) : [where.pick];
+    const steps = picks.map((pick) => Engine.storage().character().picks[pick].step);
     return await db
       .delete(this.table)
-      .where(StoredPicks.buildScope(where.pick, eq(this.table.advancementId, where.characterLevelId)));
+      .where(and(eq(this.table.advancementId, where.characterLevelId), inArray(this.table.step, steps)));
   }
 
   /**

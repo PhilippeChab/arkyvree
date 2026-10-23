@@ -82,6 +82,9 @@ export default class ItemEntity extends CustomizationPageEntity<
 
   protected override readonly label = "Item";
 
+  /** A list of the templates or of the other items. */
+  protected override readonly listColumns = ["isTemplate"];
+
   override readonly type = "items";
 
   /** Refuses a template's form (`checkTemplate`), or an item's based on a template (`checkTemplateOf`). */
@@ -170,7 +173,7 @@ export default class ItemEntity extends CustomizationPageEntity<
   }
 
   /** A page of the ruleset's items, each with its template's name. */
-  override openList(where: { childOnly?: boolean }) {
+  override openList(where: { childOnly?: boolean; isTemplate?: boolean }) {
     const list = super.openList(where);
     return {
       ...list,

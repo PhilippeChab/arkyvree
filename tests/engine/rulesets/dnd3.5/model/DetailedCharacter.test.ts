@@ -2213,7 +2213,7 @@ describe("DetailedCharacter", () => {
       const { abilityMap } = await getSeedCtx();
       await CharacterLinks.update(
         db,
-        { amount: 10 },
+        { score: 10 },
         { link: "abilities", characterId: bjorn.id, entityIds: [abilityMap["Strength"]] },
       );
       expect((await build(bjorn)).requirementEvaluator.getRequirements().unmetRequirementGroups.length).toBeGreaterThan(

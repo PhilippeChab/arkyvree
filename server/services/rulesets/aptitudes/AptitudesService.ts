@@ -44,8 +44,6 @@ class AptitudesService {
         db,
         {
           entityType: "aptitudes",
-          joinedBy:
-            where.scope === "feats" ? "feats_aptitudes" : where.scope === "spells" ? "powers_aptitudes" : undefined,
           rulesetId,
           ...scope.rulesetData.cow.listFilters,
           ...where,

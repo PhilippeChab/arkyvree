@@ -80,13 +80,13 @@ return Engine.for(scope).character(character).describe(await readBondedInputs(db
 
 ### Layer 3 — a query on stored rows asks for equivalent ids
 
-A row stored before its entity was copied names the source, so a query that finds stored rows by an entity's id matches every id that stands for it: `rulesetData.cow.getEquivalentIds(id)` (the id it resolves to and every stale id resolving there), which a repository matches with `idMatches` (the `ResolvesCopies` concern: `CharacterAbilities.update(tx, values, { abilityIds, characterId })`), as an entity's in-use check does (`hasCharacterPicks`, `EntityReferences.exists`). A query for the entity itself takes the id it resolves to (`rulesetData.cow.resolve(id)`: `CustomizationEdit`'s owner lookups, the languages a character picks). A ruleset entity's list leaves out its scope's sibling losers in SQL (`ScopesToRuleset`, from `rulesetData.cow.listFilters`).
+A row stored before its entity was copied names the source, so a query that finds stored rows by an entity's id matches every id that stands for it: `rulesetData.cow.getEquivalentIds(id)` (the id it resolves to and every stale id resolving there), which a repository matches with `inArray` (`CharacterLinks.update(tx, values, { link: "abilities", characterId, entityIds })`), as an entity's in-use check does (`hasCharacterPicks`, `EntityReferences.exists`). A query for the entity itself takes the id it resolves to (`rulesetData.cow.resolve(id)`: `CustomizationEdit`'s owner lookups, the languages a character picks). A ruleset entity's list leaves out its scope's sibling losers in SQL (`Entities`, from `rulesetData.cow.listFilters`).
 
 ### When you DO need to think about COW
 
 Rare but real:
 
-- **Character-scoped composite-key stored rows.** A repository whose `where` names an entity on stored rows takes the entity's equivalent ids (`{ abilityIds }`, from `rulesetData.cow.getEquivalentIds(abilityId)`) and matches them with `this.idMatches(this.table.entityId, where.abilityIds)` (`ResolvesCopies`; see `CharacterAbilitiesRepository`).
+- **Character-scoped composite-key stored rows.** A repository whose `where` names an entity on stored rows takes the entity's equivalent ids (`{ entityIds }`, from `rulesetData.cow.getEquivalentIds(abilityId)`) and matches them with `inArray(this.table.entityId, where.entityIds)` (see `StoredCharacterLinks.update`).
 
 - **Lineage checks that touch `rulesetId` fields.** `rulesetData.cow.sourceChain` is the ancestor chain. For validating that a stored row's entity belongs to the character's ruleset or one of its ancestors, build `new Set([characterRecord.rulesetId, ...rulesetData.cow.sourceChain])` and check `.has(entity.rulesetId)` (or use `sourceChain.includes(entity.rulesetId)` when the self id isn't relevant). A request's ids need none: the view shows only the ruleset's and its chain's entities, so `RequestIds` refuses an entity of an unrelated ruleset as it refuses an unknown one (`character(input).planInventoryEntry` an added item, `characters().planLanguages` a language).
 
@@ -265,7 +265,7 @@ The flat `properties` / `modifiers` / `requirements` arrays were removed from `R
 
 Character-scoped tables (the `character` schema): `characters`, `fields`, `links` (a character's race, scores and languages), `advancements` (its levels) and `advancement_picks` (their picks), `inventory`, character-sourced modifiers. These change per character per mutation; cross-request cache hit rate would be ~0%. They're served by the request-scoped dedup layer when the same query fires twice in one request.
 
-Paginated / searched / filtered queries (e.g. `Feats.findPage({ search, pagination })`): too many unique keys to make a shared cache useful. These go straight to Postgres.
+Paginated / searched / filtered queries (e.g. `Entities.findPage({ entityType: "feats", search }, pagination)`): too many unique keys to make a shared cache useful. These go straight to Postgres.
 
 ## Request-Scoped Query Dedup
 
@@ -439,7 +439,7 @@ sequenceDiagram
 
     Note over Svc: ...more reads, some hit dedup
 
-    Svc->>Repo: Powers.findOptionPage(db, ...)
+    Svc->>Repo: Entities.findOptionPage(db, ...)
     Note over Repo: paginated — not cached
     Repo->>DB: SELECT ... LIMIT 20
     DB-->>Repo: rows
@@ -449,8 +449,8 @@ sequenceDiagram
 
 ## Adding a new entity to the ruleset cache
 
-1. Add the entity's type + an array field to `RulesetRawData` in `engine/core/view/RulesetComposition.ts`, and its fetch to `server/cow/views/RawDataReader.ts`.
-2. Fetch it in the appropriate round of `RawDataReader.read` (rounds gate on dependencies — klass-level fetches need `klasses` first, customizations need all entity IDs).
+1. Declare the kind in its module's storage (`RulesetModule.storage`), and add an array field to `RulesetRawData` in `engine/core/view/RulesetComposition.ts` under its name: `RawDataReader` reads every kind's stored entities alike, and the engine builds the raw data from them (`CopyOnWriteEngine.buildRawData`).
+2. A join's rows join it the same way, by the join's declared name.
 3. Add the composed array to `RulesetLists` and to `RulesetData` (`engine/core/view/RulesetData.ts`).
 4. Extend the compose step (`RulesetComposition`): concat across chain without the hidden rows (`this.composeRows`, which filters `cow.isHidden(id)`) → `cow.resolveRows` if it has FKs.
 5. Add a `<entity>ById` getter to `RulesetData`, like `featsById`: built on first read (`this.built.<entity>ById ??= …`) from `buildById(this.<entities>)` **and** wrapped with `this.resolvingIds(map)` so `.get` auto-resolves stored pre-COW ids.
@@ -461,7 +461,7 @@ sequenceDiagram
 
 ## A repository method's verb
 
-The Proxy classifies a method by its verb, its first camelCase word (`find` in `findOneWithBlob`, `mark` in `markRead`), against `server/repositories/methodVerbs.json`: a `read` (`find`, `exists`, `count`) is memoized, a `write` (`create`, `update`, `upsert`, `delete`, `archive`, `unarchive`, `mark`, `backfill`, `orphan`, `publish`) clears the cache before and after, and a `lock` does neither. Lint (`arkyvree/method-names`) holds every public repository method to one of these verbs, so a new method is classified by its name, with nothing to update here.
+The Proxy classifies a method by its verb, its first camelCase word (`find` in `findOneWithBlob`, `mark` in `markRead`), against `server/repositories/methodVerbs.json`: a `read` (`find`, `exists`, `has`, `count`) is memoized, a `write` (`create`, `update`, `upsert`, `delete`, `archive`, `unarchive`, `mark`, `backfill`, `orphan`, `publish`) clears the cache before and after, and a `lock` does neither. Lint (`arkyvree/method-names`) holds every public repository method to one of these verbs, so a new method is classified by its name, with nothing to update here.
 
 A new kind of write takes an existing verb (`updateStatus`, not `setStatus`). A verb added to `methodVerbs.json` joins its class for every repository at once: a read verb would memoize, a write verb would clear.
 
@@ -475,7 +475,6 @@ A new kind of write takes an existing verb (`updateStatus`, not `setStatus`). A 
 - `engine/core/cow/` — a ruleset's copy-on-write state (`CowData.ts`: what an id resolves to, and whether it's overridden or a sibling loser), its build from rows (`CowDataBuilder.ts`: the snapshot, sibling, name, class-level and aptitude passes), and what it's read from (`CowSources.ts`: `buildSourceChain`, `getReads`, `getPairedKlassIds`, `NAME_FALLBACK_ENTITY_TYPES`)
 - `server/database/requestCache.ts` — AsyncLocalStorage-backed dedup
 - `server/repositories/withRequestCache.ts` — Proxy wrapping every repo (its shared instance in `server/repositories/index.ts`) with dedup + write invalidation
-- `server/repositories/concerns/ResolvesCopies.ts` — `idMatches()`: an entity id column matching the equivalent ids a query is given (`CowData.getEquivalentIds`)
 - `server/services/characters/characterInputs.ts` — `readCharacterInput` reads a character's rows as stored, and a bonded creature's master's with them, which the engine's character handle resolves (`CharacterInputs`): what the engine builds the character from (`CharacterBuilder.build`, `engine/rulesets/dnd3.5/model/CharacterBuilder.ts`), its master first
 - `engine/core/character/CharacterBase.ts` — `build(rows, view, master)` reads nothing: the ruleset's data loader assembles the character's data from the rows and the view
 - `server/timing.ts` — hit/miss counters surfaced in request logs

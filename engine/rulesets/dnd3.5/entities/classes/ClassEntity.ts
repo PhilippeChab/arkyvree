@@ -39,6 +39,9 @@ export default class ClassEntity extends RulesetEntity<
 
   protected override readonly label = "Class";
 
+  /** A list of the player classes or of the others', by their kind. */
+  protected override readonly listColumns = ["kind"];
+
   override readonly type = "klasses";
 
   /** A form's columns: the hit die it gives (a new class's `DEFAULT_HIT_DIE` when it gives none), or the edited class's. */

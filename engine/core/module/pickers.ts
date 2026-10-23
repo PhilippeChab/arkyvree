@@ -39,7 +39,7 @@ export interface PickFilters {
 export interface PickGroupFilters {
   columns?: Record<string, unknown>;
   excludeIds: string[];
-  groups: { family: string; id: string }[];
+  groups: { group: string; id: string }[];
   ids: string[];
 }
 

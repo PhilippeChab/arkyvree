@@ -1,15 +1,5 @@
 import type { Db } from "@/drizzle/database.ts";
-import {
-  type CowData,
-  Engine,
-  type EntityCustomizations,
-  type KlassLevel,
-  type KlassLevelFeat,
-  type KlassLevelPower,
-  type KlassLevelSave,
-  type KlassSkill,
-  type RulesetSources,
-} from "@/engine/index.ts";
+import { type CowData, Engine, type EntityCustomizations, type RulesetSources } from "@/engine/index.ts";
 import CowDataReader from "@/server/cow/views/CowDataReader.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { Entities, EntitySnapshots, Joins, type RulesetEntityType } from "@/server/repositories/index.ts";
@@ -17,17 +7,6 @@ import { isCustomizableEntityType } from "@/shared/customization/entities.ts";
 
 import CustomizationCopies from "./CustomizationCopies.ts";
 import EntityRepositories, { type EntityWithId } from "./EntityRepositories.ts";
-
-/** A feat's pool, a spell's list at its level: their joins' rows. */
-interface FeatAptitude {
-  aptitudeId: string;
-  featId: string;
-}
-interface PowerAptitude {
-  aptitudeId: string;
-  level: number | null;
-  powerId: string;
-}
 
 /**
  * A copy made: the copied entity, and each customization it copied, by its source's id (equal values don't make the
@@ -151,156 +130,82 @@ export default class EntityCopy {
     return newEntity;
   }
 
-  /** Copies a class's levels onto the target class, with their saves, granted feats and powers, and customizations. */
-  private async copyKlassLevels(tx: Db, targetKlassId: string, cow: CowData) {
-    const levels = await Entities.findMany<KlassLevel>(tx, { entityType: "klass_levels", ownerIds: [this.entityId] });
-    if (levels.length === 0) return;
-
-    const newLevels = await Entities.createMany<KlassLevel>(
-      tx,
-      "klass_levels",
-      levels.map((l) => ({ ...l, id: undefined, klassId: targetKlassId })),
-    );
-
-    // Build level ID map (old -> new)
-    const levelIdMapLocal: Record<string, string> = {};
-    for (let i = 0; i < levels.length; i++) levelIdMapLocal[levels[i].id] = newLevels[i].id;
-
-    const oldLevelIds = levels.map((l) => l.id);
-    const levelSaves = await Joins.findMany<KlassLevelSave>(tx, { join: "klass_level_saves", fromIds: oldLevelIds });
-    const levelFeats = await Joins.findMany<KlassLevelFeat>(tx, { join: "klass_level_feats", fromIds: oldLevelIds });
-    const levelPowers = await Joins.findMany<KlassLevelPower>(tx, { join: "klass_level_powers", fromIds: oldLevelIds });
-
-    // Copy level customizations (modifiers, properties, requirements)
-    const levelCusts = await CustomizationCopies.read(tx, oldLevelIds, "klass_levels", "klass_levels");
-    for (const oldLevelId of oldLevelIds) {
-      const newLevelId = levelIdMapLocal[oldLevelId];
-      const cust = levelCusts.get(oldLevelId);
-      if (cust && newLevelId) await CustomizationCopies.copy(tx, newLevelId, "klass_levels", cust, this.copiedIds);
+  /** Copies the join rows from entities of a kind (`ids`: each one's copy, by its id) onto their copies. */
+  private async copyJoins(tx: Db, type: string, ids: ReadonlyMap<string, string>, resolve: (id: string) => string) {
+    const storage = Engine.storage();
+    for (const join of storage.joinNames()) {
+      if (storage.join(join).from !== type) continue;
+      const from = Object.keys(storage.join(join).columns).find((name) => storage.join(join).columns[name] === "from")!;
+      const rows = await Joins.findMany(tx, { join, fromIds: [...ids.keys()] });
+      await Joins.createIds(
+        tx,
+        join,
+        rows.map((row) => storage.joinCopyOf(join, row, ids.get(String(row[from]))!, resolve)),
+      );
     }
-
-    await Joins.createMany<KlassLevelSave>(
-      tx,
-      "klass_level_saves",
-      levelSaves.map((ls) => ({
-        klassLevelId: levelIdMapLocal[ls.klassLevelId],
-        saveId: cow.resolve(ls.saveId),
-        base: ls.base,
-      })),
-    );
-    await Joins.createMany<KlassLevelFeat>(
-      tx,
-      "klass_level_feats",
-      levelFeats.map((lf) => ({
-        klassLevelId: levelIdMapLocal[lf.klassLevelId],
-        featId: cow.resolve(lf.featId),
-        aptitudeId: cow.resolve(lf.aptitudeId),
-        free: lf.free,
-      })),
-    );
-    await Joins.createMany<KlassLevelPower>(
-      tx,
-      "klass_level_powers",
-      levelPowers.map((lp) => ({
-        klassLevelId: levelIdMapLocal[lp.klassLevelId],
-        powerId: cow.resolve(lp.powerId),
-        aptitudeId: cow.resolve(lp.aptitudeId),
-        free: lp.free,
-      })),
-    );
   }
 
   /**
-   * Copy relationship data (join tables) onto the copy: a feat's or a power's aptitudes, a class's skills and levels.
-   * Resolved through the copy's CowData (true overrides + sibling-loser aliases) — a child copy's references should
-   * always point at the canonical winner, never at a stale loser.
+   * Copies the join rows of every join from the entity's kind (a feat's pools, a class's skills) onto the copy, then
+   * the entities it owns (a class's levels), with their customizations and their join rows (a level's grants and
+   * saves). Each names what the copy's CowData resolves it to (true overrides and sibling-loser aliases): a copy's
+   * references point at the canonical winner, never at a stale loser.
    */
   private async copyRelationships(tx: Db, targetEntityId: string, cow: CowData) {
-    if (this.entityType === "feats") {
-      const featsAptitudes = await Joins.findMany<FeatAptitude>(tx, {
-        join: "feats_aptitudes",
-        fromIds: [this.entityId],
-      });
-      if (featsAptitudes.length > 0) {
-        await Joins.createMany(
-          tx,
-          "feats_aptitudes",
-          featsAptitudes.map((fa) => ({
-            featId: targetEntityId,
-            aptitudeId: cow.resolve(fa.aptitudeId),
-          })),
-        );
+    const resolve = (id: string) => cow.resolve(id);
+    await this.copyJoins(tx, this.entityType, new Map([[this.entityId, targetEntityId]]), resolve);
+    const storage = Engine.storage();
+    for (const { ownerType, type } of storage.registries().entityTypes) {
+      if (ownerType !== this.entityType) continue;
+      const owner = Object.keys(storage.kind(type).columns).find(
+        (name) => storage.kind(type).columns[name].kind === "owner",
+      )!;
+      const owned = await Entities.findMany(tx, { entityType: type, ownerIds: [this.entityId] });
+      if (owned.length === 0) continue;
+      const copies = await Entities.createMany(
+        tx,
+        type,
+        owned.map((row) => ({ ...row, id: undefined, [owner]: targetEntityId })),
+      );
+      const ids = new Map(owned.map((row, index) => [row.id, copies[index].id]));
+      const customizable = isCustomizableEntityType(type) ? type : undefined;
+      const customizations = await CustomizationCopies.read(tx, [...ids.keys()], type, customizable);
+      for (const [id, copyId] of ids) {
+        const own = customizations.get(id);
+        if (own) await CustomizationCopies.copy(tx, copyId, type, own, this.copiedIds);
       }
-    } else if (this.entityType === "powers") {
-      const powersAptitudes = await Joins.findMany<PowerAptitude>(tx, {
-        join: "powers_aptitudes",
-        fromIds: [this.entityId],
-      });
-      if (powersAptitudes.length > 0) {
-        await Joins.createMany(
-          tx,
-          "powers_aptitudes",
-          powersAptitudes.map((pa) => ({
-            powerId: targetEntityId,
-            aptitudeId: cow.resolve(pa.aptitudeId),
-            level: pa.level,
-          })),
-        );
-      }
-    } else if (this.entityType === "klasses") {
-      const klassSkills = await Joins.findMany<KlassSkill>(tx, { join: "klass_skills", fromIds: [this.entityId] });
-      if (klassSkills.length > 0) {
-        await Joins.createMany<KlassSkill>(
-          tx,
-          "klass_skills",
-          klassSkills.map((ks) => ({
-            klassId: targetEntityId,
-            skillId: cow.resolve(ks.skillId),
-          })),
-        );
-      }
-
-      await this.copyKlassLevels(tx, targetEntityId, cow);
+      await this.copyJoins(tx, type, ids, resolve);
     }
   }
 
   /**
-   * Merges sibling aptitude links of a feat or a power (`copyOnWrite().mergeAptitudeLinks`), each to the aptitude that
+   * Merges sibling list links of a feat or a power (`copyOnWrite().mergeAptitudeLinks`), each to the aptitude that
    * stands for it, as the copy's own (`copyRelationships`): the losers' links, read by their stored ids.
    */
-  private async mergeAptitudeLinks(tx: Db, targetEntityId: string, siblingIds: string[], cow: CowData) {
+  private async mergeListLinks(tx: Db, targetEntityId: string, siblingIds: string[], cow: CowData) {
+    const storage = Engine.storage();
+    const list = storage.listRowsOf(this.entityType, targetEntityId, []);
+    if (!list) return;
     const resolve = (id: string) => cow.resolve(id);
-    if (this.entityType === "feats") {
-      const own = await Joins.findMany<FeatAptitude>(tx, { join: "feats_aptitudes", fromIds: [targetEntityId] });
-      const siblingLinks = Map.groupBy(
-        await Joins.findMany<FeatAptitude>(tx, { join: "feats_aptitudes", fromIds: siblingIds }),
-        (link) => link.featId,
-      );
-      const siblings = siblingIds.map((id) => siblingLinks.get(id) ?? []);
-      const links = Engine.copyOnWrite().mergeAptitudeLinks(own, siblings, resolve);
-      if (links.length > 0) {
-        await Joins.createMany(
-          tx,
-          "feats_aptitudes",
-          links.map((link) => ({ featId: targetEntityId, aptitudeId: resolve(link.aptitudeId) })),
-        );
-      }
-    } else if (this.entityType === "powers") {
-      const own = await Joins.findMany<PowerAptitude>(tx, { join: "powers_aptitudes", fromIds: [targetEntityId] });
-      const siblingLinks = Map.groupBy(
-        await Joins.findMany<PowerAptitude>(tx, { join: "powers_aptitudes", fromIds: siblingIds }),
-        (link) => link.powerId,
-      );
-      const siblings = siblingIds.map((id) => siblingLinks.get(id) ?? []);
-      const links = Engine.copyOnWrite().mergeAptitudeLinks(own, siblings, resolve);
-      if (links.length > 0) {
-        await Joins.createMany(
-          tx,
-          "powers_aptitudes",
-          links.map((link) => ({ powerId: targetEntityId, aptitudeId: resolve(link.aptitudeId), level: link.level })),
-        );
-      }
-    }
+    const own = storage.listLinksOf(
+      this.entityType,
+      await Joins.findMany(tx, { join: list.join, fromIds: [targetEntityId] }),
+    );
+    const siblingLinks = Map.groupBy(
+      storage.listLinksOf(this.entityType, await Joins.findMany(tx, { join: list.join, fromIds: siblingIds })),
+      (link) => link.fromId,
+    );
+    const links = Engine.copyOnWrite().mergeAptitudeLinks(
+      own,
+      siblingIds.map((id) => siblingLinks.get(id) ?? []),
+      resolve,
+    );
+    const rows = storage.listRowsOf(
+      this.entityType,
+      targetEntityId,
+      links.map((link) => ({ ...link, aptitudeId: resolve(link.aptitudeId) })),
+    )!.rows;
+    await Joins.createIds(tx, list.join, rows);
   }
 
   /**
@@ -321,6 +226,6 @@ export default class EntityCopy {
     const siblings = siblingIds.flatMap((id) => siblingCusts.get(id) ?? []);
     const merged = Engine.copyOnWrite().mergeCustomizations(own, siblings, targetEntityId);
     await CustomizationCopies.copy(tx, targetEntityId, this.entityType, merged, this.copiedIds);
-    await this.mergeAptitudeLinks(tx, targetEntityId, siblingIds, cow);
+    await this.mergeListLinks(tx, targetEntityId, siblingIds, cow);
   }
 }

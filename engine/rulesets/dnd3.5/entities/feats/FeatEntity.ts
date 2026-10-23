@@ -127,7 +127,7 @@ export default class FeatEntity extends ListedEntity<
       const feat = this.rulesetData.featsById.get(featId);
       if (!feat) return [];
       const { families } = this.fields.read(this.propertiesOf(feat));
-      return families.filter((family) => feat.name.startsWith(family)).map((family) => ({ family, id: featId }));
+      return families.filter((family) => feat.name.startsWith(family)).map((family) => ({ group: family, id: featId }));
     });
   }
 }

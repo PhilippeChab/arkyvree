@@ -27,11 +27,13 @@ import Modules from "./Modules.ts";
 /** A row, any kind's or join's: its columns by their names, in the order its answers give them. */
 type Row = Record<string, unknown>;
 
-/** The columns of an entity's own that a kind's row starts with, in their order, and an owned kind's (a class level's). */
+/**
+ * The columns of an entity's own that a kind's row starts with, in their order: those a write may give past its kind's
+ * (its owner's, position and partition among those).
+ */
 const ENTITY_COLUMNS = ["createdAt", "updatedAt", "deletedAt", "id", "rulesetId", "campaignId", "name", "description"];
-/** The columns of an entity's own a write may give, past its kind's (its owner's, position and partition among those). */
-const OWN_WRITES = ["id", "rulesetId", "campaignId", "name", "description", "createdAt", "updatedAt", "deletedAt"];
 
+/** Those an owned kind's row starts with (a class level's): its owner's scope, name and text are none of its own. */
 const OWNED_COLUMNS = ["createdAt", "updatedAt", "deletedAt", "id"];
 
 /** How two texts sort by their characters' codes, as the database's collation (C) orders text. */
@@ -63,7 +65,9 @@ function mergeRecords<T>(modules: [BaseRules, RulesetModule][], pick: (module: R
  * A number's text rounded to `scale` places, half away from zero, as Postgres's `round(numeric, scale)` writes it: its
  * places always shown (`5` to 2 places is `5.00`).
  */
-function roundDecimal(text: string, scale: number): string {
+function roundDecimal(given: string, scale: number): string {
+  // A number's text in exponent form (JavaScript's below 1e-6: `1e-7`) written out, as Postgres reads either
+  const text = /e/i.test(given) ? Number(given).toFixed(20) : given;
   const negative = text.startsWith("-");
   const [whole, fraction = ""] = (negative || text.startsWith("+") ? text.slice(1) : text).split(".");
   let units = BigInt(whole + fraction.padEnd(scale, "0").slice(0, scale));
@@ -203,6 +207,12 @@ export default class StorageEngine {
     return row;
   }
 
+  /** A level's row (`values`, by its module's columns), as what a write of its advancement stores: its track, its value. */
+  advancementOf(values: Row): { trackId?: string; value?: number } {
+    const { track, value } = this.characterDeclaration.advancement;
+    return { trackId: values[track] as string | undefined, value: values[value.column] as number | undefined };
+  }
+
   /** An advancement as its module's level row: its track and its value step's amount under their names. */
   advancementRowOf(advancement: StoredAdvancement): Row {
     const { track, value } = this.characterDeclaration.advancement;
@@ -305,6 +315,23 @@ export default class StorageEngine {
     return join;
   }
 
+  /**
+   * A join's row (`row`, by its columns) as a copy of its from-entity holds it: from the copy (`fromId`), the entities
+   * it names resolved (`resolve`: to what stands for them), its other parts kept; a new link, no id of its own.
+   */
+  joinCopyOf(name: string, row: Row, fromId: string, resolve: (id: string) => string): Row {
+    const { columns } = this.join(name);
+    const copy: Row = {};
+    for (const column in columns) {
+      const part = columns[column];
+      if (part === "from") copy[column] = fromId;
+      else if (part === "to" || part === "via")
+        copy[column] = row[column] === null ? null : resolve(String(row[column]));
+      else if (part !== "id") copy[column] = row[column];
+    }
+    return copy;
+  }
+
   /** Every join's name. */
   joinNames(): string[] {
     return Object.keys(this.joins);
@@ -395,6 +422,44 @@ export default class StorageEngine {
       free: (part("free") as boolean | undefined) ?? false,
       createdAt: values.createdAt as string | undefined,
       updatedAt: values.updatedAt as string | undefined,
+    };
+  }
+
+  /** A kind's list's join rows (`rows`, by its columns) as list links, each with the entity it's from. */
+  listLinksOf(type: string, rows: Row[]): { aptitudeId: string; fromId: string; level: number | null }[] {
+    const [list] = Object.values(this.kind(type).lists ?? {});
+    if (!list) return [];
+    const { columns } = this.join(list.join);
+    const column = (part: LinkPart) => Object.keys(columns).find((name) => columns[name] === part);
+    const [from, to, tier] = [column("from")!, column("to")!, column("tier")];
+    return rows.map((row) => ({
+      fromId: String(row[from]),
+      aptitudeId: String(row[to]),
+      level: tier ? ((row[tier] as number | null) ?? null) : null,
+    }));
+  }
+
+  /**
+   * An entity's list links (`links`: the lists it's in, at a tier if they rank it: a spell's level) as its kind's
+   * list's join rows (`join`, its name), none for a kind without a list.
+   */
+  listRowsOf(type: string, entityId: string, links: { aptitudeId: string; level?: number | null }[]) {
+    const [list] = Object.values(this.kind(type).lists ?? {});
+    if (!list) return undefined;
+    const { columns } = this.join(list.join);
+    const parts = (link: (typeof links)[number]): Partial<Record<LinkPart, unknown>> => ({
+      from: entityId,
+      to: link.aptitudeId,
+      tier: link.level ?? null,
+    });
+    return {
+      join: list.join,
+      rows: links.map((link) => {
+        const values = parts(link);
+        const row: Row = {};
+        for (const column in columns) if (columns[column] in values) row[column] = values[columns[column]];
+        return row;
+      }),
     };
   }
 
@@ -565,7 +630,7 @@ export default class StorageEngine {
    */
   writeOf(type: string, values: Row, creating: boolean): StoredWrite {
     const own: StoredWrite["own"] = Object.fromEntries(
-      OWN_WRITES.filter((name) => values[name] !== undefined).map((name) => [name, values[name]]),
+      ENTITY_COLUMNS.filter((name) => values[name] !== undefined).map((name) => [name, values[name]]),
     );
     const write: StoredWrite = { own, fields: [], links: [] };
     for (const [name, column] of Object.entries(this.kind(type).columns)) {

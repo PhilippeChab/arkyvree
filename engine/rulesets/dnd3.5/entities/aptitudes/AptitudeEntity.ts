@@ -37,6 +37,13 @@ export default class AptitudeEntity extends RulesetEntity<"aptitudes", AptitudeB
     return { description, name };
   }
 
+  /** A page of the ruleset's aptitudes: a kind's pools when its query says (`scope`: the feats', the spells' lists). */
+  override openList(where: { childOnly?: boolean; scope?: "feats" | "spells" }) {
+    const joins = { feats: "feats_aptitudes", spells: "powers_aptitudes" } as const;
+    const list = super.openList(where);
+    return { ...list, filters: where.scope ? { ...list.filters, joinedBy: joins[where.scope] } : list.filters };
+  }
+
   /**
    * Refuses renaming the aptitude to `name`, or deleting it without one, when the ruleset's characters count on it by
    * name: the one the general feats count toward, by its slug. A rename that keeps the slug ("general") changes nothing

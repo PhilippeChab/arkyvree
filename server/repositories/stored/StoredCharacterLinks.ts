@@ -74,16 +74,19 @@ class StoredCharacterLinks extends BaseRepository<typeof linksInCharacter> {
     return StoredCharacterLinks.mapRows<R>(where.link, rows);
   }
 
-  /** Sets a character's amount in its links of `link` to entities (`entityIds`: an entity's copies and original). */
+  /**
+   * Sets what a character's links of `link` to entities hold (`values`, by its row's columns: a score), the entities by
+   * every id they may hold (`entityIds`: an entity's copies and original).
+   */
   async update<R extends object = LinkRow>(
     db: Db,
-    values: { amount: number },
+    values: LinkRow,
     where: { characterId: string; entityIds: string[]; link: string },
   ): Promise<R[]> {
     if (where.entityIds.length === 0) return [];
     const rows = await db
       .update(this.table)
-      .set({ amount: values.amount, updatedAt: new Date().toISOString() })
+      .set({ amount: Engine.storage().characterLinkOf(where.link, values).amount, updatedAt: new Date().toISOString() })
       .where(
         StoredCharacterLinks.buildScope(
           where.link,

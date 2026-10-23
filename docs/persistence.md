@@ -141,10 +141,10 @@ A level's rows are its character's state, rewritten whole when the level is edit
 
 | Step | Repeats | Why |
 |---|---|---|
-| `feats` (`CharacterLevelFeats`) | yes | A pick is a row: a level can take a stackable feat twice, in one pool or two (Toughness in both of a human fighter 1's General slots), two picks of the same level and feat. The engine refuses what can't repeat (`SelectionChecks`) |
-| `powers` (`CharacterLevelPowers`) | no | A level knows a spell once |
-| `skills` (`CharacterLevelSkills`) | no | A skill's ranks are a quantity, its `amount` |
-| `abilities` (`CharacterLevelAbilityIncreases`) | no | An increase's size is its `amount` |
+| `feats` (`Picks`, `feats`) | yes | A pick is a row: a level can take a stackable feat twice, in one pool or two (Toughness in both of a human fighter 1's General slots), two picks of the same level and feat. The engine refuses what can't repeat (`SelectionChecks`) |
+| `powers` (`Picks`, `powers`) | no | A level knows a spell once |
+| `skills` (`Picks`, `skills`) | no | A skill's ranks are a quantity, its `amount` |
+| `abilities` (`Picks`, `abilityIncreases`) | no | An increase's size is its `amount` |
 | `hp` (`CharacterLevels`) | no | A level's hit points, a value: no entity |
 
 A stackable feat taken twice is two picks, not a count: the picks may be in two pools, and every reader (the character's build, a level's edit, the in-use checks) reads a row as one pick.

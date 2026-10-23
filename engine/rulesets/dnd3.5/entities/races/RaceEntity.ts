@@ -32,6 +32,9 @@ export default class RaceEntity extends CustomizationPageEntity<
 
   protected override readonly label = "Race";
 
+  /** A list of the player races or of the monsters', by their kind. */
+  protected override readonly listColumns = ["kind"];
+
   override readonly type = "races";
 
   /** A form's columns. */

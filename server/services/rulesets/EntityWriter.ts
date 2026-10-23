@@ -110,7 +110,7 @@ export default class EntityWriter {
           const { tombstoneAncestorId } = await names.assertNameAvailable(tx, this.type, name);
           const planned = await plan(scope, { tombstoneAncestorId, tx });
 
-          const [row] = (await Entities.create(tx, this.type, { ...planned.columns, rulesetId })) as Row[];
+          const [row] = await Entities.create<Row>(tx, this.type, { ...planned.columns, rulesetId });
           if (tombstoneAncestorId) await names.repointTombstone(tx, this.type, tombstoneAncestorId, row.id);
           await createListLinks(tx, this.type, row.id, planned.links ?? []);
           // The customizations it copies first: the fields the plan writes replace their properties of their types
@@ -152,7 +152,7 @@ export default class EntityWriter {
           await this.writeBeside(tx, scope, targetId, planned.writes);
 
           // The database deletes its links and customizations with it.
-          const [row] = (await Entities.delete(tx, { entityType: this.type, id: targetId })) as Row[];
+          const [row] = await Entities.delete<Row>(tx, { entityType: this.type, id: targetId });
           await this.recordActivity(tx, session, "delete", targetId, {
             rulesetId,
             entityName: planned.entity.name,
@@ -196,12 +196,12 @@ export default class EntityWriter {
           );
           const { id: targetId, copied } = await new EntityEdit(ruleset).cowToEdit(tx, this.type, planned.entity);
           const expectedUpdatedAt = copied ? undefined : body.updatedAt;
-          const rows = (await Entities.update(
+          const rows = await Entities.update<Row>(
             tx,
             this.type,
             { ...planned.columns },
             { id: targetId, expectedUpdatedAt },
-          )) as Row[];
+          );
           if (expectedUpdatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
 
           await setListLinks(tx, this.type, targetId, planned.links);
