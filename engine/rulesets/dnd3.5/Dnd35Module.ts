@@ -21,7 +21,7 @@ export default class Dnd35Module {
    */
   static create(): RulesetModule<Dnd35Descriptions, Dnd35EntityKinds, SeededFields> {
     return {
-      characters: new Dnd35Characters(),
+      characters: new Dnd35Characters(DND35_STORAGE),
       content: new Dnd35Content(),
       entities: new Dnd35Entities(),
       imports: new Dnd35Imports(),

@@ -1,4 +1,4 @@
-import type { BondedCreaturesPlan, CharacterInput } from "@/engine/core/module/index.ts";
+import type { CharacterInput, ChildrenPlan } from "@/engine/core/module/index.ts";
 import type { RulesIssue } from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 
@@ -41,7 +41,7 @@ export default class LevelByLevel<C extends CheckedCharacter> {
    * What the character's bonded creatures become with its levels saved so far: those its levels make it, read off the
    * character with them (`character`, its caller's when it built it already).
    */
-  planBonded(character: C = this.buildCharacter()): BondedCreaturesPlan {
+  planBonded(character: C = this.buildCharacter()): ChildrenPlan {
     return this.rules.planBondedCreatures(this.view, character, this.input.record, []);
   }
 

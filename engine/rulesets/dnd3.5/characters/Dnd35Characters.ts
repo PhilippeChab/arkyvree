@@ -1,13 +1,16 @@
 import {
   type CharacterInput,
   CharactersPart,
+  type CreationPickQuery,
   type FieldsRequest,
-  type RacePickQuery,
 } from "@/engine/core/module/index.ts";
+import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import type { Dnd35Descriptions } from "@/engine/rulesets/dnd3.5/descriptions.ts";
 import RacePicker from "@/engine/rulesets/dnd3.5/pickers/RacePicker.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
+import type { CharacterLevel, Race } from "@/engine/rulesets/dnd3.5/view/rows.ts";
+import type { Character } from "@/shared/relations.ts";
 
 import CharacterCards from "./CharacterCards.ts";
 import CharacterDescription from "./description/CharacterDescription.ts";
@@ -19,22 +22,24 @@ import CharacterSheet from "./sheet/CharacterSheet.tsx";
 
 /**
  * The 3.5 characters, as the module answers the server of them: their sheets, as the API answers them, as a member who
- * reads one partly reads it, and printed; the languages they speak and may pick; where an item goes and what equipping
- * one checks, and how a new one's ability scores are set and the races it can pick. The characters part reads the
- * private notes as the viewer does, and checks an item's ruleset and charges, a language's, and the scores' bounds.
+ * reads one partly reads it, and printed; the languages they speak and may pick (their `languages` link); where an
+ * item goes and what equipping one checks, and how a new one's ability scores are set (their `abilities` link) and the
+ * races it can pick (its `raceId`), a player character's alone. The characters part reads the private notes as the
+ * viewer does, and checks an item's ruleset and charges, a language's, and the scores' bounds.
  */
 export default class Dnd35Characters extends CharactersPart<Dnd35Descriptions> {
+  /** A new character's race: a player character's (of kind `pc`), not a monster's or a bonded creature's. */
+  protected override checkCreationPick(_column: string, race: Race) {
+    if (race.kind !== "pc") throw new RulesError("invalid", "Race is not valid for a player character");
+  }
+
   /** A character's sheet as the API answers it, with its bonded creatures', or a creature's. */
   protected override describeFull(...args: Parameters<typeof CharacterDescription.describeFull>) {
     return CharacterDescription.describeFull(...args);
   }
 
   /** A character's card: its race and its classes at their highest level. */
-  protected override describeFullCard(
-    view: RulesetView,
-    character: { raceId: string },
-    levels: { klassLevelId: string }[],
-  ) {
+  protected override describeFullCard(view: RulesetView, character: Character, levels: CharacterLevel[]) {
     return CharacterCards.describe(Dnd35View.of(view.rulesetData), character, levels);
   }
 
@@ -43,9 +48,9 @@ export default class Dnd35Characters extends CharactersPart<Dnd35Descriptions> {
     return InventoryEntries.describeInventoryEntry(...args);
   }
 
-  /** What a character speaks without picking it, its picks, and what one more may add. */
-  protected override describeLanguageRoom(view: RulesetView, character: CharacterInput, languageIds: string[]) {
-    return new SpokenLanguages(view, character).describe(languageIds);
+  /** What a character speaks without picking it, its picked languages, and what one more may add. */
+  protected override describeLinkRoom(view: RulesetView, character: CharacterInput, _link: string, picks: string[]) {
+    return new SpokenLanguages(view, character).describe(picks);
   }
 
   /** A character as a campaign member who reads it partly reads it: who it is and what it looks like. */
@@ -53,9 +58,14 @@ export default class Dnd35Characters extends CharactersPart<Dnd35Descriptions> {
     return CharacterDescription.describePartial(...args);
   }
 
-  /** The picks a languages edit stores: a new one refused when secret, or past the room its rules give the picks. */
-  protected override fitLanguages(view: RulesetView, character: CharacterInput, languageIds: string[]) {
-    return new SpokenLanguages(view, character).plan(languageIds);
+  /** An ability score's bounds: the SRD's lowest and highest, and the one an unset ability starts at. */
+  protected override describeScores(view: RulesetView) {
+    return this.describeCreation(view).scores;
+  }
+
+  /** The languages an edit stores: a new one refused when secret, or past the room its rules give the picks. */
+  protected override fitLinks(view: RulesetView, character: CharacterInput, _link: string, picks: string[]) {
+    return new SpokenLanguages(view, character).plan(picks);
   }
 
   /** What an edit of a character's identity writes: its fields, each checked, into its columns. */
@@ -92,7 +102,7 @@ export default class Dnd35Characters extends CharactersPart<Dnd35Descriptions> {
   }
 
   /** The race picker of a new character: the races it offers, and whether each is eligible. */
-  override openRacePicker(view: RulesetView, query: RacePickQuery) {
+  override openCreationPicker(view: RulesetView, _column: string, query: CreationPickQuery) {
     return new RacePicker(view, query);
   }
 }

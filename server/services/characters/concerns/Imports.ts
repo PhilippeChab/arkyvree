@@ -49,25 +49,17 @@ export function Imports<B extends Constructor>(Base: B) {
               rulesetId,
               userId: session.userId,
             });
-            await CharacterLinks.createMany(
-              tx,
-              "abilities",
-              plan.abilities.map((ability) => ({ ...ability, characterId })),
-            );
+            for (const [link, links] of Object.entries(plan.links))
+              await CharacterLinks.createPlanned(tx, link, characterId, links);
             for (const { columns, rows } of plan.levels) {
               const [level] = await CharacterLevels.create(tx, { ...columns, characterId });
               await createLevelRows(tx, level.id, rows);
             }
-            await CharacterLinks.createMany(
-              tx,
-              "languages",
-              plan.languageIds.map((languageId) => ({ characterId, languageId })),
-            );
             await CharacterInventory.createMany(
               tx,
               plan.inventory.map((entry) => ({ ...entry, characterId })),
             );
-            await writeBondedCreatures(tx, character, plan.bonded);
+            await writeBondedCreatures(tx, character, plan.children);
 
             await Activities.create(tx, {
               userId: session.userId,

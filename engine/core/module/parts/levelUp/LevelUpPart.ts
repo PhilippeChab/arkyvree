@@ -3,13 +3,14 @@ import type { Descriptions } from "@/engine/core/module/contract.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 
 import type { LevelPlanAnswer, LevelPlanRequest, LevelSteps, StepPickerQuery } from "./mechanics.ts";
-import type { BondedCreaturesPlan, LevelEditPlan, LevelRemovalPlan, LevelsPlan } from "./plans.ts";
+import type { ChildrenPlan, LevelEditPlan, LevelRemovalPlan, LevelsPlan } from "./plans.ts";
 
 /**
  * What a ruleset answers of a character's levels, from the rows the server reads: a level's steps by their mechanics,
  * the plan's answer and a step's picker over it, a saved level as an edit's plan, and what a save, an edit or a removal
- * writes, with what the master's bonded creatures become. Its descriptions are the ruleset's own (`D`); its plans are
- * the rows the server writes. A plan the server hands it is read by the level's steps, each id the view's.
+ * writes, with what the character's children (3.5's bonded creatures) become. Its descriptions are the ruleset's own
+ * (`D`); its plans are the rows the server writes. A plan the server hands it is read by the level's steps, each id the
+ * view's.
  */
 export default abstract class LevelUpPart<D extends Descriptions> {
   /**
@@ -41,17 +42,17 @@ export default abstract class LevelUpPart<D extends Descriptions> {
     query: StepPickerQuery,
   ): D["stepPicker"];
 
-  /** What a master's bonded creatures (`bonded`, their rows) become as its saved levels make them. */
-  abstract planBonded(view: RulesetView, character: CharacterInput, bonded: CharacterInput[]): BondedCreaturesPlan;
+  /** What a character's children (`children`, their rows) become as its saved levels make them. */
+  abstract planChildren(view: RulesetView, character: CharacterInput, children: CharacterInput[]): ChildrenPlan;
 
   /**
    * A plan's edit (`request`) of the character's saved level `characterLevelId`: what it writes, checked unless
-   * `force`d, and what the bonded creatures become with it.
+   * `force`d, and what the children become with it.
    */
   abstract planLevelEdit(
     view: RulesetView,
     character: CharacterInput,
-    bonded: CharacterInput[],
+    children: CharacterInput[],
     characterLevelId: string,
     request: LevelPlanRequest,
     force: boolean,
@@ -59,16 +60,16 @@ export default abstract class LevelUpPart<D extends Descriptions> {
 
   /**
    * A plan's level-up (`request`): the levels it writes with their rows, each checked and the character with them
-   * refused with what it fails unless `force`d, and what the master's bonded creatures become.
+   * refused with what it fails unless `force`d, and what the character's children become.
    */
   abstract planLevelUp(
     view: RulesetView,
     character: CharacterInput,
-    bonded: CharacterInput[],
+    children: CharacterInput[],
     request: LevelPlanRequest,
     force: boolean,
   ): LevelsPlan;
 
-  /** The character's last level removed: the level that goes, and what its bonded creatures become without it. */
-  abstract planRemoval(view: RulesetView, character: CharacterInput, bonded: CharacterInput[]): LevelRemovalPlan;
+  /** The character's last level removed: the level that goes, and what its children become without it. */
+  abstract planRemoval(view: RulesetView, character: CharacterInput, children: CharacterInput[]): LevelRemovalPlan;
 }

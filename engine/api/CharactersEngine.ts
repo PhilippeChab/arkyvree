@@ -21,10 +21,7 @@ export default class CharactersEngine {
     return this.module.characters.describeCard(this.view, ...args);
   }
 
-  /**
-   * How a new character's ability scores are set: the ruleset's abilities in its sheets' order, the ways its form
-   * offers, their bounds, each score's modifier.
-   */
+  /** How a new character's scores are set, as its ruleset's form offers it (3.5's abilities, rolled or bought). */
   describeCreation(...args: Args<"describeCreation">) {
     return this.module.characters.describeCreation(this.view, ...args);
   }
@@ -37,22 +34,17 @@ export default class CharactersEngine {
     return this.module.characters.describeInventory(this.view, this.view.rulesetData.cow.resolveRows(entries));
   }
 
-  /** The race picker for a new character of what its form says: each race of a page, with whether it can pick it. */
-  openRacePicker(...args: Args<"openRacePicker">) {
-    return this.module.characters.openRacePicker(this.view, ...args);
-  }
-
   /**
-   * The ability scores a character's edit stores, each by the view's id of its ability: refused when one isn't the
-   * ruleset's or is past its bounds.
+   * The picker of a new character's creation pick (a single link's column) of what its form says: each entity of a
+   * page, with whether it can pick it.
    */
-  planAbilities(...args: Args<"planAbilities">) {
-    return this.module.characters.planAbilities(this.view, ...args);
+  openCreationPicker(...args: Args<"openCreationPicker">) {
+    return this.module.characters.openCreationPicker(this.view, ...args);
   }
 
   /**
-   * What a new character stores: its race and ability scores, by the view's ids, refused when its race isn't a player's
-   * or one isn't the ruleset's, and its fields' columns, refused when one is.
+   * What a new character stores: its creation's picks and its scored links' amounts, by the view's ids, refused when a
+   * pick is one its rules refuse or one isn't the ruleset's, and its fields' columns, refused when one is.
    */
   planCreate(...args: Args<"planCreate">) {
     return this.module.characters.planCreate(this.view, ...args);
@@ -67,7 +59,15 @@ export default class CharactersEngine {
     return this.module.imports.planImport(this.view, text, owner);
   }
 
-  /** What a new character starts with: its race and ability scores, checked as a create checks them. */
+  /**
+   * The amounts a scored link's edit stores, each by the view's id of its entity: refused when one isn't the ruleset's
+   * or is past its bounds.
+   */
+  planScores(...args: Args<"planScores">) {
+    return this.module.characters.planScores(this.view, ...args);
+  }
+
+  /** What a new character starts with: its creation's picks and scored links, checked as a create checks them. */
   planStart(...args: Args<"planStart">) {
     return this.module.characters.planStart(this.view, ...args);
   }

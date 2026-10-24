@@ -1,9 +1,11 @@
-import type { ImportedGear, ImportReport } from "@/engine/core/imports/index.ts";
+import type { ImportReport } from "@/engine/core/imports/index.ts";
 import type { CharacterInput, InventoryEntryPlan, InventoryEntryRequest } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import Dnd35Characters from "@/engine/rulesets/dnd3.5/characters/Dnd35Characters.ts";
+import type { ImportedGear } from "@/engine/rulesets/dnd3.5/imports/imported.ts";
 import ItemPlacement, { type ItemPlacementDescription } from "@/engine/rulesets/dnd3.5/rules/ItemPlacement.ts";
+import { DND35_STORAGE } from "@/engine/rulesets/dnd3.5/storage/Dnd35Storage.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type { Item } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import { MAX_CHARACTER_NUMBER } from "@/shared/characters.ts";
@@ -46,7 +48,7 @@ export default class GearImport {
     ];
   }
 
-  private readonly characters = new Dnd35Characters();
+  private readonly characters = new Dnd35Characters(DND35_STORAGE);
 
   /**
    * The item a piece of gear is: by its name, or a plain custom item's by its base item's, which the report says (what

@@ -3,8 +3,13 @@
  * file, and the report of what it imported and couldn't.
  */
 
-import type { AbilityScore, InventoryEntryPlan } from "@/engine/core/module/parts/characters/index.ts";
-import type { BondedCreaturesPlan, LevelWrites } from "@/engine/core/module/parts/levelUp/index.ts";
+import type {
+  CharacterColumns,
+  CreationColumns,
+  InventoryEntryPlan,
+  LinkPlan,
+} from "@/engine/core/module/parts/characters/index.ts";
+import type { ChildrenPlan, LevelWrites } from "@/engine/core/module/parts/levelUp/index.ts";
 import type { Character } from "@/shared/relations.ts";
 
 /**
@@ -16,23 +21,22 @@ export interface ImportDetection {
   source: ImportSource;
 }
 
-/** Who an imported character is: its row's id, which its rows under it and its bonded creatures name, and its owner. */
+/** Who an imported character is: its row's id, which its rows under it and its children name, and its owner. */
 export interface ImportOwner {
   characterId: string;
   userId: string;
 }
 
 /**
- * What an import writes: a new character's row (its owner and ruleset aside), its ability scores, the languages it
- * picked, its levels as if leveled up one at a time (their rows' columns and the rows under them, in order), its
- * inventory entries, and what its bonded creatures become; and the report of what it did.
+ * What an import writes: a new character's row (its owner and ruleset aside), its levels as if leveled up one at a
+ * time (their rows' columns and the rows under them, in order), its links by name (each scored link's amounts, each
+ * picked link's picks), its inventory entries, and what its children become; and the report of what it did.
  */
-export interface ImportPlan extends BondedCreaturesPlan {
-  abilities: AbilityScore[];
+export interface ImportPlan extends ChildrenPlan {
   character: ImportedRow;
   inventory: (InventoryEntryPlan & { quantity: number })[];
-  languageIds: string[];
   levels: LevelWrites[];
+  links: Record<string, LinkPlan[]>;
   report: ImportReportDescription;
 }
 
@@ -59,19 +63,5 @@ export interface ImportSource {
   version: string;
 }
 
-/** A new character's row, as an import fills it. */
-export type ImportedRow = Pick<
-  Character,
-  | "age"
-  | "alignment"
-  | "deity"
-  | "description"
-  | "gender"
-  | "height"
-  | "name"
-  | "notes"
-  | "privateNotes"
-  | "raceId"
-  | "weight"
-  | "xp"
->;
+/** A new character's row, as an import fills it: its name and notes, and the columns its module stores of it. */
+export type ImportedRow = CharacterColumns & CreationColumns & Pick<Character, "name" | "notes" | "privateNotes">;

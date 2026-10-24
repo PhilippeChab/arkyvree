@@ -1,4 +1,4 @@
-import { type BondedCreaturesPlan, type CharacterInput } from "@/engine/core/module/index.ts";
+import { type CharacterInput, type ChildrenPlan } from "@/engine/core/module/index.ts";
 import RulesError, { type RulesIssue } from "@/engine/core/RulesError.ts";
 import type { RulesetData, RulesetView } from "@/engine/core/view/index.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
@@ -67,7 +67,7 @@ export interface LevelUpRules<C> {
    * What the bonded creatures (`bonded`, their rows) become with their master as `master` builds it, from its row
    * (`record`), which a creature it makes takes after.
    */
-  planBondedCreatures(view: RulesetView, master: C, record: Character, bonded: CharacterInput[]): BondedCreaturesPlan;
+  planBondedCreatures(view: RulesetView, master: C, record: Character, bonded: CharacterInput[]): ChildrenPlan;
   /** The hit points a level counts before they're rolled: a level a flow projects, whose hit points its save sets. */
   readonly unrolledLevelHp: number;
 }

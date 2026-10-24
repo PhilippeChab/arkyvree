@@ -389,10 +389,10 @@ export default abstract class CharacterBase<
   }
 
   /**
-   * Builds the character from its rows (`rows`) in its ruleset's `view`: it reads nothing. A creature bonded to a
-   * master is given its `master` built; a character of its own needs none.
+   * Builds the character from its rows (`rows`) in its ruleset's `view`: it reads nothing. A child (3.5's bonded
+   * creature) is given its `parent` built; a character of its own needs none.
    */
-  build(rows: CharacterRows, view: RulesetView, _master?: CharacterBase<C, D>) {
+  build(rows: CharacterRows, view: RulesetView, _parent?: CharacterBase<C, D>) {
     // 1. Assemble the data from the rows and the view
     this.view = view;
     this.data = this.createDataLoader().load(rows, view);

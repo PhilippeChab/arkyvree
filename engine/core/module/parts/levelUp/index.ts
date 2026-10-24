@@ -33,14 +33,14 @@ export type {
 } from "./mechanics.ts";
 export { default as Payloads } from "./Payloads.ts";
 export type {
-  BondedCreaturesPlan,
-  BondedLevelsPlan,
-  BondedPlan,
+  ChildLevelsPlan,
+  ChildPlan,
+  ChildrenPlan,
   LevelColumns,
   LevelEditPlan,
   LevelRemovalPlan,
   LevelRows,
   LevelsPlan,
   LevelWrites,
-  NewBondedCreature,
+  NewChild,
 } from "./plans.ts";

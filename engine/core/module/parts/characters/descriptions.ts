@@ -1,8 +1,7 @@
 /**
- * What the characters part's `describe*` operations answer in a shape every ruleset shares: a character's card, how a
- * new one's ability scores are set, an inventory entry with its item, a placement's warning, a character's languages
- * and those one more pick may add, and where a sheet holds its private notes. What a ruleset describes in its own shape is
- * its `Descriptions` (`contract.ts`).
+ * What the characters part's `describe*` operations answer in a shape every ruleset shares: a character's card, a new
+ * character's form, a scored link's bounds, an inventory entry with its item, a placement's warning, and where a sheet
+ * holds its private notes. What a ruleset describes in its own shape is its `Descriptions` (`contract.ts`).
  */
 
 import type { ViewEntities } from "@/engine/core/view/index.ts";
@@ -30,18 +29,6 @@ export interface CharacterCard {
 }
 
 /**
- * How a new character's ability scores are set: the ruleset's abilities, in the order its sheet lists them
- * (`abilities`), the ways its form offers (`methods`), the scores' bounds and the one an ability shows before it's
- * rolled or set (`scores`), and each score's modifier over those bounds (`modifiers`).
- */
-export interface CharacterCreation {
-  abilities: { id: string; name: string }[];
-  methods: CreationMethod[];
-  modifiers: Record<number, number>;
-  scores: { max: number; min: number; start: number };
-}
-
-/**
  * A new character's form, as its rules lay it out: its sections in order, each under its title, its ability scores
  * (`abilities`: set the ways its ruleset's creation offers, what it says without abilities to set, `none`, and before
  * a ruleset is picked, `pick`) or its lines (`fields`). A line of one item stands alone, of several side by side from a
@@ -51,18 +38,6 @@ export interface CharacterCreation {
  */
 export interface CharacterForm {
   sections: CreationSection[];
-}
-
-/**
- * What a character speaks, and what its picked languages (an edit's, as it's made) leave it room for: what its languages
- * picker offers. `automatic`: those it speaks without picking them (a 3.5 race's automatic languages, which its
- * modifiers grant), never stored; `picks`: the picks, past those; `options`: the languages one more pick may add, by
- * name, none once the picks fill the room its rules give them.
- */
-export interface LanguagesDescription {
-  automatic: DescribedLanguage[];
-  options: DescribedLanguage[];
-  picks: DescribedLanguage[];
 }
 
 /**
@@ -78,6 +53,16 @@ export interface NotedSheet {
 /** Why a placement can't take one more item, if it can't: what the inventory dialogs warn of, and an add refuses. */
 export interface PlacementDescription {
   warning: string | null;
+}
+
+/**
+ * A scored link's bounds (3.5's ability scores): the lowest and highest amount, and the one an entity starts at when a
+ * new character's form doesn't set it.
+ */
+export interface ScoreBounds {
+  max: number;
+  min: number;
+  start: number;
 }
 
 /**
@@ -139,17 +124,6 @@ export type CreationItem =
   | { ineligible: string; kind: "race"; label: string; required: string }
   | { kind: "ruleset" };
 
-/**
- * A way a new character's ability scores are set, which its form runs by its kind: rolled (`dice`: `count` dice of
- * `sides`, the highest `keep` summed), taken from an array (`scores`, each to one ability), or bought (`costs`, each
- * score's from `min` to `max`, out of `budget`).
- */
-export type CreationMethod = { id: string; label: string } & (
-  | { dice: { count: number; keep: number; sides: number }; kind: "roll" }
-  | { kind: "array"; scores: readonly number[] }
-  | { budget: number; costs: Readonly<Record<number, number>>; kind: "pointBuy"; max: number; min: number }
-);
-
 /** A section of a new character's form, under its title: its ability scores, or its lines of items. */
 export type CreationSection = { title: string } & (
   | { kind: "abilities"; none: string; pick: string }
@@ -164,9 +138,6 @@ export type DescribedInventoryEntry<T, X = unknown> = T &
   X & {
     item: ViewEntities["items"] & { modifiers: Modifier[]; properties: Property[]; requirements: Requirement[] };
   };
-
-/** A language, as a character's languages name it. */
-export type DescribedLanguage = Pick<ViewEntities["languages"], "id" | "name" | "type">;
 
 /** An inventory entry, as where it's held reads it: whether it's equipped, where, and its weapon sets in a hand. */
 export type HeldInventoryEntry = Pick<InventoryEntryPlan, "equipped" | "location" | "weaponSets">;

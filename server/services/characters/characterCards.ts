@@ -1,7 +1,8 @@
 /** A list's cards of characters from several rulesets, each described in its own ruleset's view. */
 
-import { type CharacterCard, Engine } from "@/engine/index.ts";
+import { type CharacterCard, type CharacterLevel, Engine } from "@/engine/index.ts";
 import type { RulesetScope } from "@/server/cow/index.ts";
+import type { Character } from "@/shared/relations.ts";
 
 /** What a list shows of a character whose ruleset it didn't read (an archived one's): an unknown race's chip alone. */
 const UNREAD_CARD = {
@@ -15,8 +16,8 @@ const UNREAD_CARD = {
  */
 export function describeCharacterCards(
   views: Map<string, RulesetScope>,
-  characters: { id: string; raceId: string; rulesetId: string }[],
-  levels: { characterId: string; klassLevelId: string }[],
+  characters: Character[],
+  levels: CharacterLevel[],
   partialIds: ReadonlySet<string>,
 ) {
   const levelsByCharacter = Map.groupBy(levels, (level) => level.characterId);

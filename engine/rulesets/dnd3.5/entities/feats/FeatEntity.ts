@@ -2,10 +2,10 @@
 
 import { z } from "zod";
 
-import { ListedEntity } from "@/engine/core/entities/index.ts";
 import type { EntityFieldValues, EntityForm } from "@/engine/core/fields/index.ts";
 import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
 import RulesError from "@/engine/core/RulesError.ts";
+import ListedEntity from "@/engine/rulesets/dnd3.5/entities/ListedEntity.ts";
 import AptitudeTargets from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTargets.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type { FeatWithAptitudes } from "@/engine/rulesets/dnd3.5/view/rows.ts";

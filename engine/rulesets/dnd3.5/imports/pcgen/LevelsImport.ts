@@ -1,7 +1,8 @@
-import type { ImportedCharacter, ImportedFeat, ImportedLevel, ImportReport } from "@/engine/core/imports/index.ts";
-import type { BondedPlan, CharacterInput } from "@/engine/core/module/index.ts";
+import type { ImportReport } from "@/engine/core/imports/index.ts";
+import type { CharacterInput, ChildPlan } from "@/engine/core/module/index.ts";
 import RulesError, { type RulesIssue } from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
+import type { ImportedCharacter, ImportedFeat, ImportedLevel } from "@/engine/rulesets/dnd3.5/imports/imported.ts";
 import ImportedLevelGains from "@/engine/rulesets/dnd3.5/imports/ImportedLevelGains.ts";
 import PicksPlacement, {
   type MatchedFeat,
@@ -298,7 +299,7 @@ export default class LevelsImport {
   planLevels(
     character: CharacterInput,
     increases: AbilityIncrease[][],
-  ): { refused: LevelStop } | { bonded: BondedPlan[]; character: CharacterInput; levels: LevelWrites[] } {
+  ): { refused: LevelStop } | { character: CharacterInput; children: ChildPlan[]; levels: LevelWrites[] } {
     const { levels } = this;
     const placement = new PicksPlacement(
       this.view.rulesetData,
@@ -349,6 +350,6 @@ export default class LevelsImport {
     }
     const leveled = leveling.buildCharacter();
     this.reportLeft(placement, leveled, writes);
-    return { bonded: leveling.planBonded(leveled).bonded, character: leveling.character, levels: writes };
+    return { character: leveling.character, children: leveling.planBonded(leveled).children, levels: writes };
   }
 }

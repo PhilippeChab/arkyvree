@@ -1,6 +1,6 @@
 import type { ImportReportDescription } from "@/engine/core/module/index.ts";
 
-import type { SourceLine } from "./imported.ts";
+import type SourceLine from "./SourceLine.ts";
 
 /**
  * What an import says it did, as it goes: what it imported, each line of the file it couldn't match and why, and what

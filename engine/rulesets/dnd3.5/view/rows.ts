@@ -6,6 +6,7 @@
 
 import type { EntityRow, LinkRow } from "@/engine/core/view/index.ts";
 import type { ItemLocation, SizeType } from "@/shared/enums.ts";
+import type { Character } from "@/shared/relations.ts";
 
 type FeatAptitude = LinkRow & { aptitudeId: string; featId: string };
 
@@ -17,12 +18,30 @@ type PickRow = LinkRow & {
 type PowerAptitude = LinkRow & { aptitudeId: string; level: number | null; powerId: string };
 
 declare module "@/engine/core/module/CharacterInputs.ts" {
-  /** A 3.5 character's link rows and levels. */
-  interface CharacterRowTypes {
+  /** A 3.5 character's links' rows: its ability scores and its picked languages. */
+  interface CharacterLinkTypes {
     abilities: CharacterAbility;
     languages: CharacterLanguage;
+  }
+
+  /** A 3.5 character's levels. */
+  interface CharacterRowTypes {
     levels: CharacterLevel;
   }
+}
+
+declare module "@/engine/core/module/parts/characters/plans.ts" {
+  /**
+   * The columns of a 3.5 character's row its fields write: its alignment, gender and experience, which a new row
+   * requires, and its details.
+   */
+  interface CharacterColumns
+    extends
+      Pick<Character, "alignment" | "gender" | "xp">,
+      Partial<Pick<Character, "age" | "deity" | "description" | "height" | "weight">> {}
+
+  /** The column of a 3.5 character's row its creation's pick writes: its race. */
+  interface CreationColumns extends Pick<Character, "raceId"> {}
 }
 
 declare module "@/engine/core/view/rows.ts" {

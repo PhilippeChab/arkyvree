@@ -139,7 +139,7 @@ export default class DetailedCharacterDataLoader extends include(
     const klassProperties = this.readKlassProperties(klassEntityIds, rulesetData, abilityLookup);
     const dcAbilities = { klassBonusSpellAbilityMap: klassProperties.klassBonusSpellAbilityMap, klassLevels };
     return {
-      characterAbilityScores: resolve(rows.abilities).map((ca) => this.buildAbilityScore(ca, abilityLookup)),
+      characterAbilityScores: resolve(rows.links.abilities).map((ca) => this.buildAbilityScore(ca, abilityLookup)),
       abilityIncreases: this.readAbilityIncreases(
         resolve(SavedPicks.of(rows).abilityIncreases),
         levels.characterLevels,

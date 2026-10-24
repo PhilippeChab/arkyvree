@@ -1,27 +1,27 @@
 /**
- * What the characters part's `plan*` operations answer: what the server writes of a character, each a named plan: a new
- * character's race and ability scores, an ability edit's, its languages, an inventory entry's fields. Each names the
+ * What the characters part's `plan*` operations answer: what the server writes of a character, each a named plan: what
+ * a new character starts with, a scored link's edit, a picked link's, an inventory entry's fields. Each names the
  * entities it writes by the ids the ruleset's view keys them by, whichever the request sent (`RequestIds`).
  */
 
 import type { ItemLocation } from "@/shared/enums.ts";
-import type { Character } from "@/shared/relations.ts";
 
-/** What a character's ability edit writes: its scores, each checked. */
-export interface AbilitiesPlan {
-  abilities: AbilityScore[];
-}
+/**
+ * The columns of a character's row its module stores as its fields and single links (`StoredCharacter.columns`), as
+ * it writes them: its module declares its own into it (`declare module`).
+ */
+export interface CharacterColumns {}
 
-/** A character's score in one of its ruleset's abilities, as it stores it. */
-export interface AbilityScore {
-  abilityId: string;
-  score: number;
-}
-
-/** What a character's edit writes: its fields' columns, and its languages when it sends them. */
+/** What a character's edit writes: its fields' columns, and each picked link's picks it sends (`links`, by name). */
 export interface CharacterEditPlan extends FieldsPlan {
-  languages?: LanguagesPlan;
+  links?: Record<string, LinkPicksPlan>;
 }
+
+/**
+ * The columns of a character's row its creation's picks write (each single link's entity: 3.5's race), which every
+ * character has: its module declares its own into it (`declare module`).
+ */
+export interface CreationColumns {}
 
 /**
  * What a character's fields edit writes: the columns its ruleset stores its fields in (`CharacterColumns`), each
@@ -45,9 +45,15 @@ export interface InventoryEntryPlan {
   weaponSets: number[];
 }
 
-/** What a character's languages edit writes: the languages it picked, past those it speaks without picking them. */
-export interface LanguagesPlan {
-  languageIds: string[];
+/** What a picked link's edit writes: the entities picked, past those the character has without picking them. */
+export interface LinkPicksPlan {
+  entityIds: string[];
+}
+
+/** A character's link to an entity, as a write stores it: the entity, and its amount when its link holds one. */
+export interface LinkPlan {
+  amount?: number;
+  entityId: string;
 }
 
 /**
@@ -55,18 +61,24 @@ export interface LanguagesPlan {
  * requires among them.
  */
 export interface NewCharacterPlan extends StartPlan {
-  columns: CharacterColumns;
+  columns: CharacterColumns & CreationColumns;
 }
 
-/** What a new character starts with: its race, and a score for each of the ruleset's abilities. */
-export interface StartPlan {
-  abilities: AbilityScore[];
-  raceId: string;
+/** A character's scored link to an entity, as a write stores it: the entity, and its amount. */
+export interface ScorePlan extends LinkPlan {
+  amount: number;
+}
+
+/** What a scored link's edit writes: the character's amount for each entity it sends. */
+export interface ScoresPlan {
+  links: ScorePlan[];
 }
 
 /**
- * The columns of a character's row its ruleset writes, from its fields: those past the ones every character has (its
- * name, its notes) and those no field writes, the ones a new row requires among them.
+ * What a new character starts with: the columns its creation's picks write (each single link's entity), and each
+ * scored link's rows, by name: an amount for each entity of its kind.
  */
-export type CharacterColumns = Pick<Character, "alignment" | "gender" | "xp"> &
-  Partial<Pick<Character, "age" | "deity" | "description" | "height" | "weight">>;
+export interface StartPlan {
+  columns: CreationColumns;
+  links: Record<string, ScorePlan[]>;
+}

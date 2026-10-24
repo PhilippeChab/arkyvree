@@ -3,9 +3,14 @@ import { describe, expect, test } from "bun:test";
 import type { CharacterInput } from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import Dnd35Characters from "@/engine/rulesets/dnd3.5/characters/Dnd35Characters.ts";
+import { DND35_STORAGE } from "@/engine/rulesets/dnd3.5/storage/Dnd35Storage.ts";
+import type { Character } from "@/shared/relations.ts";
 
 /** A character as its rows give it: none of them read here. */
 const CHARACTER = { record: { privateNotes: null } } as unknown as CharacterInput;
+
+/** A character's row: none of it read here. */
+const RECORD = {} as Character;
 
 /** A summary that names a character's build: a track it advances on. */
 const SUMMARY = {
@@ -56,15 +61,15 @@ class OversharingCharacters extends Dnd35Characters {
 
 describe("The characters part, whatever its ruleset describes", () => {
   test("keeps a partly seen character's card to its partial chips", () => {
-    const characters = new OversharingCharacters();
-    expect(characters.describeCard(VIEW, { raceId: "elf" }, [], true)).toEqual({
+    const characters = new OversharingCharacters(DND35_STORAGE);
+    expect(characters.describeCard(VIEW, RECORD, [], true)).toEqual({
       chips: [{ label: "Elf", partial: true, tone: "secondary" }],
     });
-    expect(characters.describeCard(VIEW, { raceId: "elf" }, [], false).chips).toHaveLength(2);
+    expect(characters.describeCard(VIEW, RECORD, [], false).chips).toHaveLength(2);
   });
 
   test("gives a partial reading's summary no tracks", () => {
-    const sheet = new OversharingCharacters().describeForMember(VIEW, CHARACTER, [], "partial");
+    const sheet = new OversharingCharacters(DND35_STORAGE).describeForMember(VIEW, CHARACTER, [], "partial");
     expect(sheet.summary).toEqual({ ...SUMMARY, tracks: [] });
   });
 });

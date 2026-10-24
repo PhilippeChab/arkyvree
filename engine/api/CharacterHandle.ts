@@ -5,7 +5,7 @@ import type { Module } from "./Modules.ts";
 
 /**
  * A handle bound to a character (`input`, its rows as the view reads them): the character's own, and its level flows'.
- * Its bonded creatures' rows are read as the view reads them too (`resolveBonded`).
+ * Its children's rows are read as the view reads them too (`resolveChildren`).
  */
 export default abstract class CharacterHandle {
   constructor(
@@ -14,8 +14,8 @@ export default abstract class CharacterHandle {
     protected readonly input: CharacterInput,
   ) {}
 
-  /** Bonded creatures' inputs, read as the view reads them. */
-  protected resolveBonded(bonded: CharacterInput[]) {
-    return CharacterInputs.resolveAll(bonded, this.view.rulesetData.cow);
+  /** Its children's inputs, read as the view reads them. */
+  protected resolveChildren(children: CharacterInput[]) {
+    return CharacterInputs.resolveAll(children, this.view.rulesetData.cow);
   }
 }

@@ -12,7 +12,7 @@ export interface BuildsCharacters<C> {
 
 /**
  * A ruleset's characters (`C`, on core's `CharacterBase`) built from the rows the server read, each of its row's kind
- * (`create`: a player character, a creature bonded to one), a bonded creature's master built first.
+ * (`create`: a player character, a child of one: 3.5's bonded creature), a child's parent built first.
  */
 export default abstract class CharacterBuilder<
   // Its ruleset's character, whatever its components (`object`: `CharacterBase` checks each is one of its data)
@@ -23,12 +23,12 @@ export default abstract class CharacterBuilder<
 
   /**
    * A character, built from its rows (`input`: as the server read them, or with what a level-up adds, its
-   * projection) in its ruleset's `view`, of its row's kind: a bonded creature's sheet derived from its
-   * master's, built from its input's unless it comes built (`master`: a sheet's, which its creatures share).
+   * projection) in its ruleset's `view`, of its row's kind: a child's sheet derived from its parent's, built
+   * from its input's unless it comes built (`parent`: a sheet's, which its children share).
    */
-  build(view: RulesetView, input: CharacterInput, { master }: { master?: C } = {}): C {
+  build(view: RulesetView, input: CharacterInput, { parent }: { parent?: C } = {}): C {
     const character = this.create(input.record);
-    character.build(input.rows, view, master ?? (input.master && this.build(view, input.master)));
+    character.build(input.rows, view, parent ?? (input.parent && this.build(view, input.parent)));
     return character;
   }
 }

@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import PcgenFile from "@/engine/core/imports/pcgen/PcgenFile.ts";
+import PcgenFile from "@/engine/rulesets/dnd3.5/imports/pcgen/file/PcgenFile.ts";
 import { readPcgenFile } from "@/tests/support/dnd3.5/pcgenFiles.ts";
 
 describe("PcgFormat2", () => {

@@ -1,7 +1,8 @@
-import type { ImportedCharacter, ImportReport } from "@/engine/core/imports/index.ts";
-import type { CharacterCreation } from "@/engine/core/module/index.ts";
+import type { ImportReport } from "@/engine/core/imports/index.ts";
+import type { ScoreBounds } from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import NewCharacters from "@/engine/rulesets/dnd3.5/characters/NewCharacters.ts";
+import type { ImportedCharacter } from "@/engine/rulesets/dnd3.5/imports/imported.ts";
 import type { AbilityIncrease } from "@/engine/rulesets/dnd3.5/levelUp/plans.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
@@ -48,7 +49,7 @@ export default class ScoresImport {
    * A starting score (`score`, of PCGen's key `key`) within the bounds a new character's are (`max`, `min`): one past
    * them is brought to the bound, which the report says.
    */
-  private bounded(key: string, score: number, { max, min }: CharacterCreation["scores"]) {
+  private bounded(key: string, score: number, { max, min }: ScoreBounds) {
     const kept = Math.min(max, Math.max(min, score));
     if (kept !== score) {
       const name = PCGEN_ABILITIES.get(key) ?? key;

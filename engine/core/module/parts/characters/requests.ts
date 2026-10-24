@@ -1,7 +1,7 @@
 /**
- * What the characters part's operations take, past the rows the server read and the view: a new character's form, an
- * ability edit, an inventory entry's add or edit and a placement's query, the race picker's query, how a reader reads a
- * sheet and what a printed one adds. Whether to force the rules is always an operation's last argument.
+ * What the characters part's operations take, past the rows the server read and the view: a new character's form, a
+ * scored link's edit, an inventory entry's add or edit and a placement's query, a creation pick's picker query, how a
+ * reader reads a sheet and what a printed one adds. Whether to force the rules is always an operation's last argument.
  */
 
 import type { ViewEntities } from "@/engine/core/view/index.ts";
@@ -9,20 +9,26 @@ import type { ItemLocation } from "@/shared/enums.ts";
 
 import type { InventoryEntryPlan } from "./plans.ts";
 
-/** A character's edit, as its sheet sends it: its fields by their keys, and its languages, each when it sends them. */
+/**
+ * A character's edit, as its sheet sends it: its fields by their keys, and each picked link's picks by its name, each
+ * when it sends them.
+ */
 export interface CharacterEditRequest {
   fields?: FieldsRequest;
-  languageIds?: string[];
+  links?: Record<string, string[]>;
 }
 
-/** A new character, as its form sends it: what it starts with, and its ruleset's fields by their keys (`CharacterForm`'s). */
+/**
+ * A new character, as its form sends it: what it starts with, and its ruleset's fields by their keys (its
+ * `CharacterForm`'s).
+ */
 export interface NewCharacterRequest extends StartRequest {
   fields: FieldsRequest;
 }
 
 /**
- * Where an inventory dialog places an item: `location`, in each of `weaponSets` for a hand, the entry placed (`entryId`)
- * aside.
+ * Where an inventory dialog places an item: `location`, in each of `weaponSets` for a hand, the entry placed
+ * (`entryId`) aside.
  */
 export interface PlacementQuery {
   entryId: string | null;
@@ -36,14 +42,20 @@ export interface SheetRequest {
   portraitUrl?: string | null;
 }
 
-/** What a new character starts with, as its form or its import gives it: its race, and its ability scores. */
+/**
+ * What a new character starts with, as its form or its import gives it: the entity each of its creation's picks names
+ * (`picks`, by the column of its single link), and each scored link's amounts (`scores`, by the link's name).
+ */
 export interface StartRequest {
-  abilities: AbilitiesRequest;
-  raceId: string;
+  picks: Record<string, string>;
+  scores: Record<string, ScoresRequest>;
 }
 
-/** A form's ability scores, by ability id. */
-export type AbilitiesRequest = Record<string, number>;
+/**
+ * A creation pick's picker query: what a new character's form says so far, in the fields that narrow its options, by
+ * their keys.
+ */
+export type CreationPickQuery = Record<string, string | undefined>;
 
 /**
  * A character's fields, by their keys: a `fields` block's edit (null: cleared, or left as it is where it can't be), or
@@ -76,8 +88,5 @@ export type PlacementChange =
 /** Whether a viewer reads a character's private notes: shown, or left out of its sheet (`hide`). */
 export type PrivateNotes = "hide" | "show";
 
-/**
- * The race picker's query: what a new character's form says so far, in the fields that narrow its races (`racePick`),
- * by their keys.
- */
-export type RacePickQuery = Record<string, string | undefined>;
+/** A scored link's amounts, by the id of each entity it scores. */
+export type ScoresRequest = Record<string, number>;

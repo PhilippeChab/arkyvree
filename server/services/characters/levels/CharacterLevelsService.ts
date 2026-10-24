@@ -46,7 +46,7 @@ class CharacterLevelsService extends include(Object, Plans) {
         await CharacterLevels.update(tx, edit.columns, { id: characterLevelId });
         await this.deleteLevelRows(tx, characterLevelId);
         await createLevelRows(tx, characterLevelId, edit.rows);
-        await writeBondedCreatures(tx, characterRecord, edit.bonded);
+        await writeBondedCreatures(tx, characterRecord, edit.children);
 
         await Activities.create(tx, {
           userId: session.userId,
@@ -92,7 +92,7 @@ class CharacterLevelsService extends include(Object, Plans) {
           createdLevels.push(created);
           await createLevelRows(tx, created.id, rows);
         }
-        await writeBondedCreatures(tx, characterRecord, plan.bonded);
+        await writeBondedCreatures(tx, characterRecord, plan.children);
 
         await Activities.create(tx, {
           userId: session.userId,
@@ -131,7 +131,7 @@ class CharacterLevelsService extends include(Object, Plans) {
         const bonded = await readBondedInputs(tx, character);
         const removal = Engine.for(scope).character(character).levelUp().planRemoval(bonded);
         await CharacterLevels.delete(tx, { id: removal.level.id });
-        await writeBondedCreatures(tx, characterRecord, removal.bonded);
+        await writeBondedCreatures(tx, characterRecord, removal.children);
       });
 
       await Activities.create(tx, {

@@ -1,11 +1,11 @@
+import type { SourceLine } from "@/engine/core/imports/index.ts";
 import type {
   ImportedCharacter,
   ImportedFeat,
   ImportedGear,
   ImportedLevel,
   ImportedSkill,
-  SourceLine,
-} from "@/engine/core/imports/imported.ts";
+} from "@/engine/rulesets/dnd3.5/imports/imported.ts";
 
 import PcgLine from "./PcgLine.ts";
 

@@ -72,7 +72,7 @@ export default class Dnd35LevelUp extends LevelUpPart<Dnd35Descriptions> impleme
   }
 
   /** What a master's bonded creatures become as its saved levels make them. */
-  override planBonded(view: RulesetView, character: CharacterInput, bonded: CharacterInput[]) {
+  override planChildren(view: RulesetView, character: CharacterInput, bonded: CharacterInput[]) {
     return new BondedCreatures(view, character, this).planBonded(bonded);
   }
 

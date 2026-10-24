@@ -1,6 +1,7 @@
-import type { CharacterInput, DescribedLanguage, LanguagesDescription } from "@/engine/core/module/index.ts";
+import type { CharacterInput } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
+import type { DescribedLanguage, LanguagesDescription } from "@/engine/rulesets/dnd3.5/descriptions.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import Dnd35CharacterBuilder from "@/engine/rulesets/dnd3.5/model/Dnd35CharacterBuilder.ts";
 import LanguageRules from "@/engine/rulesets/dnd3.5/rules/LanguageRules.ts";
@@ -99,7 +100,7 @@ export default class SpokenLanguages {
    */
   plan(languageIds: string[]): string[] {
     const picks = this.picksOf(languageIds);
-    const keptIds = new Set(this.input.rows.languages.map(({ languageId }) => languageId));
+    const keptIds = new Set(this.input.rows.links.languages.map(({ languageId }) => languageId));
     let taken = picks.filter(({ id }) => keptIds.has(id)).length;
     const refusals: string[] = [];
     for (const pick of picks.filter(({ id }) => !keptIds.has(id))) {
