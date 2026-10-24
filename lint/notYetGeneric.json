@@ -47,7 +47,6 @@
   "engine/core/module/parts/imports",
   "engine/core/module/parts/levelUp",
   "engine/core/module/parts/ruleset",
-  "engine/core/view",
   "scripts/db/seeds",
   "scripts/ops",
   "scripts/ops/validateCharacters",

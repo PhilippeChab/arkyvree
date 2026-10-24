@@ -3,6 +3,7 @@ import { describe, expect, test } from "bun:test";
 import RulesError from "@/engine/core/RulesError.ts";
 import BondedPlans from "@/engine/rulesets/dnd3.5/levelUp/BondedPlans.ts";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { CharacterLevels, Characters, Rulesets } from "@/server/repositories/index.ts";
@@ -32,7 +33,7 @@ async function masterOf(create: () => ReturnType<typeof createDruidWithCompanion
   const { ctx, masterId, bonded } = await create();
   const record = (await Characters.findOne(db, { id: masterId }))!;
   const master = await buildAs(DetailedCharacter, record);
-  const rulesetData = await RulesetViews.getData((await Rulesets.findOne(db, { id: ctx.rulesetId }))!);
+  const rulesetData = Dnd35View.of(await RulesetViews.getData((await Rulesets.findOne(db, { id: ctx.rulesetId }))!));
   return { bonded, ctx, master, record, rulesetData };
 }
 
@@ -100,7 +101,8 @@ describe("planBondedCreature", () => {
     expect(
       refusalOf(() =>
         new BondedPlans({
-          ...rulesetData,
+          abilities: rulesetData.abilities,
+          klasses: rulesetData.klasses,
           klassLevelsByKlass: rulesetData.klassLevelsByKlass,
           races: withoutCompanions(rulesetData.races),
         }).planBondedCreature(master, record, "animalcompanion", undefined),
@@ -109,9 +111,10 @@ describe("planBondedCreature", () => {
     expect(
       refusalOf(() =>
         new BondedPlans({
-          ...rulesetData,
+          abilities: rulesetData.abilities,
           klasses: withoutCompanions(rulesetData.klasses),
           klassLevelsByKlass: rulesetData.klassLevelsByKlass,
+          races: rulesetData.races,
         }).planBondedCreature(master, record, "animalcompanion", undefined),
       ),
     ).toEqual({ message: "Animal Companion class not found in ruleset — content seed missing", refusal: "invalid" });

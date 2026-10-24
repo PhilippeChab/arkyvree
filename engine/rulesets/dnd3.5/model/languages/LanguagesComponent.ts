@@ -1,6 +1,8 @@
 import { CharacterComponent } from "@/engine/core/character/index.ts";
-import type { Language, RulesetView } from "@/engine/core/view/index.ts";
+import type { RulesetView } from "@/engine/core/view/index.ts";
 import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
+import type { Language } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 /** A language as the character's target paths read it: whether the character speaks it, picked or granted. */
@@ -45,7 +47,7 @@ export default class LanguagesComponent extends CharacterComponent<LoadedCharact
    */
   override initialize({ languages }: Pick<LoadedCharacterData, "languages">, { rulesetData }: RulesetView) {
     const pickedIds = new Set(languages.map(({ id }) => id));
-    for (const language of rulesetData.languages) {
+    for (const language of Dnd35View.of(rulesetData).languages) {
       const slug = stripSeparators(language.name);
       if (slug in this.data) continue;
       this.languages.set(slug, language);

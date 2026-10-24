@@ -1,5 +1,5 @@
 import type { CharacterInput } from "@/engine/core/module/index.ts";
-import type { CharacterLevel } from "@/engine/core/view/index.ts";
+import type { CharacterLevel } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 
 import type { AbilityIncrease, LevelPickRows } from "./plans.ts";
 import SavedPicks, { type SavedPickRows } from "./SavedPicks.ts";

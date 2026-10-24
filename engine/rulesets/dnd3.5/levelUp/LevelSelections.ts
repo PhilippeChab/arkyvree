@@ -1,6 +1,7 @@
 import RulesError from "@/engine/core/RulesError.ts";
 import FeatEntity, { type PoolModifier } from "@/engine/rulesets/dnd3.5/entities/feats/FeatEntity.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 
 import LevelUpBase from "./LevelUpBase.ts";
 import type { LevelPickRows } from "./plans.ts";
@@ -24,7 +25,7 @@ export default class LevelSelections extends LevelUpBase<DetailedCharacter> {
       { aptitudeModifiers: PoolModifier[]; description?: string; id: string; name: string }[]
     > = {};
     for (const f of levelFeats) {
-      const feat = this.rulesetData.featsById.get(f.featId);
+      const feat = Dnd35View.of(this.rulesetData).featsById.get(f.featId);
       (feats[f.aptitudeId] ??= []).push({
         id: f.featId,
         name: feat?.name ?? f.featId,
@@ -38,7 +39,7 @@ export default class LevelSelections extends LevelUpBase<DetailedCharacter> {
     const powers: Record<string, { description?: string; id: string; name: string; powerLevel?: number }[]> = {};
     for (const p of levelPowers) {
       const level = powerLevelMap.get(`${p.powerId}:${p.aptitudeId}`);
-      const power = this.rulesetData.powersById.get(p.powerId);
+      const power = Dnd35View.of(this.rulesetData).powersById.get(p.powerId);
       (powers[p.aptitudeId] ??= []).push({
         id: p.powerId,
         name: power?.name ?? p.powerId,

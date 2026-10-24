@@ -1,5 +1,7 @@
 import RulesError from "@/engine/core/RulesError.ts";
-import { type Klass, RequestIds, type RulesetView } from "@/engine/core/view/index.ts";
+import { RequestIds, type RulesetView } from "@/engine/core/view/index.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
+import type { Klass } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 
 /** A class's class skills (`klass`, as the view has it): what it lists, and what assigning or removing one takes. */
 export default class ClassSkills {
@@ -10,7 +12,7 @@ export default class ClassSkills {
 
   /** The class's class skills, each with its skill. */
   describe() {
-    return this.view.rulesetData.klassSkillsWithSkillsByKlass.get(this.klass.id) ?? [];
+    return Dnd35View.of(this.view.rulesetData).klassSkillsWithSkillsByKlass.get(this.klass.id) ?? [];
   }
 
   /**
@@ -20,7 +22,11 @@ export default class ClassSkills {
    */
   planAdd(skillId: string) {
     const skill = new RequestIds(this.view.rulesetData, "this ruleset").find("skills", skillId);
-    if (this.view.rulesetData.klassSkillsByKlass.get(this.klass.id)?.some((ks) => ks.skillId === skill.id))
+    if (
+      Dnd35View.of(this.view.rulesetData)
+        .klassSkillsByKlass.get(this.klass.id)
+        ?.some((ks) => ks.skillId === skill.id)
+    )
       throw new RulesError("conflict", "Skill is already assigned to this class");
     return {
       activity: { skillId: skill.id, entityName: this.klass.name, skillName: skill.name },
@@ -36,9 +42,11 @@ export default class ClassSkills {
    */
   planRemove(skillId: string) {
     const { rulesetData } = this.view;
-    const klassSkill = rulesetData.klassSkillsByKlass.get(this.klass.id)?.find((ks) => ks.skillId === skillId);
+    const klassSkill = Dnd35View.of(rulesetData)
+      .klassSkillsByKlass.get(this.klass.id)
+      ?.find((ks) => ks.skillId === skillId);
     if (!klassSkill) throw new RulesError("not-found", "Skill is not assigned to this class");
-    const skill = rulesetData.skillsById.get(skillId);
+    const skill = Dnd35View.of(rulesetData).skillsById.get(skillId);
     return {
       activity: {
         skillId: klassSkill.skillId,

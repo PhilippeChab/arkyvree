@@ -1,4 +1,3 @@
-import { GeneratedFeats } from "@/engine/core/entities/index.ts";
 import FeatsPaths from "@/engine/rulesets/dnd3.5/model/feats/FeatsPaths.ts";
 import PowersPaths from "@/engine/rulesets/dnd3.5/model/powers/PowersPaths.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
@@ -6,6 +5,7 @@ import { stripSeparators } from "@/shared/text.ts";
 import { SPELL_FOCUS_DC_BONUS } from "@/vocabulary/dnd3.5/feats.ts";
 
 import { FEAT_FIELDS } from "./fields.ts";
+import GeneratedFeats from "./GeneratedFeats.ts";
 
 /**
  * The feats a spell's grouping makes: a school's Spell Focus. A school's feats stay once made: nothing removes them.

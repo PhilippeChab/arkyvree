@@ -1,12 +1,14 @@
 import type { CharacterInput, OpenedTrackPicker } from "@/engine/core/module/index.ts";
 import { CharacterPicker } from "@/engine/core/pickers/index.ts";
-import type { EntityRow, KlassLevel, RulesetView } from "@/engine/core/view/index.ts";
+import type { EntityRow, RulesetView } from "@/engine/core/view/index.ts";
 import CharacterProjection from "@/engine/rulesets/dnd3.5/levelUp/CharacterProjection.ts";
 import type LevelUpPlan from "@/engine/rulesets/dnd3.5/levelUp/LevelUpPlan.ts";
 import type { PlannedSoFar } from "@/engine/rulesets/dnd3.5/levelUp/requests.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import Dnd35CharacterBuilder from "@/engine/rulesets/dnd3.5/model/Dnd35CharacterBuilder.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
+import type { KlassLevel } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import type { Requirement } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
@@ -47,7 +49,7 @@ export default class ClassPicker
     const left = LevelRules.countLevelsLeft(this.input.rows.levels.length);
     return (klass: EntityRow) => {
       const next = this.nextLevelOf(klass)!;
-      const last = this.rulesetData.klassLevelsByKlass.get(klass.id)?.at(-1)?.level ?? next.level;
+      const last = Dnd35View.of(this.rulesetData).klassLevelsByKlass.get(klass.id)?.at(-1)?.level ?? next.level;
       return { track: { last, left, next: next.level } };
     };
   }
@@ -94,14 +96,16 @@ export default class ClassPicker
   /** The class's next level for the character: after its highest in the class. */
   private nextLevelOf(klass: EntityRow): KlassLevel | undefined {
     this.maxLevels ??= this.readMaxLevels();
-    return this.rulesetData.klassLevelByKlassAndLevel.get(`${klass.id}:${(this.maxLevels.get(klass.id) || 0) + 1}`);
+    return Dnd35View.of(this.rulesetData).klassLevelByKlassAndLevel.get(
+      `${klass.id}:${(this.maxLevels.get(klass.id) || 0) + 1}`,
+    );
   }
 
   /** The character's highest level in each class it has levels of, by the class's id. */
   private readMaxLevels() {
     const maxLevels = new Map<string, number>();
     for (const level of this.input.rows.levels) {
-      const klassLevel = this.rulesetData.klassLevelsById.get(level.klassLevelId);
+      const klassLevel = Dnd35View.of(this.rulesetData).klassLevelsById.get(level.klassLevelId);
       if (klassLevel)
         maxLevels.set(klassLevel.klassId, Math.max(maxLevels.get(klassLevel.klassId) ?? 0, klassLevel.level));
     }

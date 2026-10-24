@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import FeatGroupingsComponent from "@/engine/rulesets/dnd3.5/model/feats/FeatGroupingsComponent.ts";
 import FeatsComponent from "@/engine/rulesets/dnd3.5/model/feats/FeatsComponent.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Properties, Rulesets } from "@/server/repositories/index.ts";
@@ -13,7 +14,7 @@ describe("FeatsComponent.injectGroupings", () => {
     const { rulesetId } = await getSeedCtx();
     const ruleset = (await Rulesets.findOne(db, { id: rulesetId }))!;
     const rulesetData = await RulesetViews.getData(ruleset);
-    const named = (name: string) => rulesetData.feats.find((feat) => feat.name === name)!;
+    const named = (name: string) => Dnd35View.of(rulesetData).feats.find((feat) => feat.name === name)!;
     const generic = named("Martial Weapon Proficiency");
     const rapier = named("Martial Weapon Proficiency: Rapier");
     const family = await Properties.findMany(db, { entityIds: [rapier.id], entityType: "feats", type: FEAT_FAMILY });

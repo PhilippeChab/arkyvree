@@ -1,5 +1,6 @@
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import AptitudeTargets from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTargets.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 /**
@@ -51,7 +52,7 @@ export default class SpellLists {
   get classListIds(): Set<string> {
     return (this.built.classListIds ??= new Set(
       [...this.classListsByKlass.values()].flatMap((lists) =>
-        [...lists].flatMap((list) => this.rulesetData.aptitudeIdBySlug.get(list) ?? []),
+        [...lists].flatMap((list) => Dnd35View.of(this.rulesetData).aptitudeIdBySlug.get(list) ?? []),
       ),
     ));
   }
@@ -63,7 +64,8 @@ export default class SpellLists {
    */
   get classListsByKlass(): Map<string, Set<string>> {
     if (this.built.classListsByKlass) return this.built.classListsByKlass;
-    const { klassLevels, modifiersBySource } = this.rulesetData;
+    const { klassLevels } = Dnd35View.of(this.rulesetData);
+    const { modifiersBySource } = this.rulesetData;
     const classListsByKlass = new Map<string, Set<string>>();
     for (const klassLevel of klassLevels.toSorted((a, b) => a.level - b.level)) {
       for (const modifier of modifiersBySource.get(klassLevel.id) ?? []) {
@@ -84,7 +86,8 @@ export default class SpellLists {
    */
   get featListIds(): Set<string> {
     if (this.built.featListIds) return this.built.featListIds;
-    const { aptitudeIdBySlug, feats, modifiersBySource } = this.rulesetData;
+    const { aptitudeIdBySlug, feats } = Dnd35View.of(this.rulesetData);
+    const { modifiersBySource } = this.rulesetData;
     const featListIds = new Set<string>();
     for (const feat of feats) {
       for (const modifier of modifiersBySource.get(feat.id) ?? []) {
@@ -104,7 +107,7 @@ export default class SpellLists {
   get featListSpells(): Map<string, Map<number, Set<string>>> {
     if (this.built.featListSpells) return this.built.featListSpells;
     const featListSpells = new Map([...this.featListIds].map((id) => [id, new Map<number, Set<string>>()]));
-    for (const power of this.rulesetData.powers) {
+    for (const power of Dnd35View.of(this.rulesetData).powers) {
       for (const { aptitudeId, level } of power.powersAptitudesInRules) {
         const levels = featListSpells.get(aptitudeId);
         if (level == null || !levels) continue;
@@ -121,7 +124,7 @@ export default class SpellLists {
   get leveledAptitudeIds(): Set<string> {
     if (this.built.leveledAptitudeIds) return this.built.leveledAptitudeIds;
     const leveledAptitudeIds = new Set([...this.classListIds, ...this.featListIds]);
-    for (const power of this.rulesetData.powers)
+    for (const power of Dnd35View.of(this.rulesetData).powers)
       for (const link of power.powersAptitudesInRules) if (link.level != null) leveledAptitudeIds.add(link.aptitudeId);
     return (this.built.leveledAptitudeIds = leveledAptitudeIds);
   }
@@ -129,7 +132,10 @@ export default class SpellLists {
   /** Each list's spell-possession slug (`powers.<spell>.<slug>.known`), by its aptitude id. */
   get spellSlugByAptitudeId(): Map<string, string> {
     return (this.built.spellSlugByAptitudeId ??= new Map(
-      this.rulesetData.aptitudes.map((aptitude) => [aptitude.id, SpellLists.toSpellPossessionSlug(aptitude.name)]),
+      Dnd35View.of(this.rulesetData).aptitudes.map((aptitude) => [
+        aptitude.id,
+        SpellLists.toSpellPossessionSlug(aptitude.name),
+      ]),
     ));
   }
 }

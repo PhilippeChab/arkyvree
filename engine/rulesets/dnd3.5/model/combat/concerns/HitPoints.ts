@@ -1,5 +1,5 @@
-import type { CharacterLevel } from "@/engine/core/view/index.ts";
 import type CombatState from "@/engine/rulesets/dnd3.5/model/combat/CombatState.ts";
+import type { CharacterLevel } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { MIN_HIT_POINTS_PER_LEVEL } from "@/vocabulary/dnd3.5/classes.ts";
 

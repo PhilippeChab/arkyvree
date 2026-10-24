@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import type { Item } from "@/engine/index.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Entities, Properties } from "@/server/repositories/index.ts";
@@ -13,7 +14,7 @@ describe("An item's properties", () => {
   test("are its template's of each type it doesn't set, then its own: its damage types replace all the template's", async () => {
     const ruleset = await createSeededTestRuleset(makeSession().userId);
     const longsword = await withRulesetScope(db, ruleset.id, async ({ rulesetData }) =>
-      rulesetData.items.find((item) => item.isTemplate && item.name === "Longsword"),
+      Dnd35View.of(rulesetData).items.find((item) => item.isTemplate && item.name === "Longsword"),
     );
     const [variant] = await Entities.createMany<Item>(db, "items", [
       { name: "Probe Blade", rulesetId: ruleset.id, sourceItemId: longsword!.id, type: "Weapon" },

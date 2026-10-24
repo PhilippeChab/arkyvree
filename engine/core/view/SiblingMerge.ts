@@ -62,18 +62,6 @@ export default class SiblingMerge {
   }
 
   /**
-   * The siblings' links to aptitudes the winner doesn't link to: an aptitude is the one `resolve` gives (a stale id's
-   * copy or winner). The first link to an aptitude wins, a power's with its level.
-   */
-  static mergeAptitudeLinks<T extends { aptitudeId: string }>(
-    own: readonly T[],
-    siblings: Iterable<readonly T[]>,
-    resolve: (id: string) => string,
-  ): T[] {
-    return SiblingMerge.takeNewRows(own, siblings, (link) => resolve(link.aptitudeId));
-  }
-
-  /**
    * What a copy of a sibling winner takes of its siblings' customizations (`siblings`, in the order its `CowData` pairs
    * them) beside its own (`own`, which the copy holds): their modifiers, each with its requirements, their properties and
    * their requirements, merged as the view merges them, a requirement onto the copy (`targetEntityId`).
@@ -105,6 +93,19 @@ export default class SiblingMerge {
         targetEntityId,
       ),
     };
+  }
+
+  /**
+   * The siblings' links of a list to targets the winner doesn't link to (`to`: the column naming a link's target): a
+   * target is the one `resolve` gives (a stale id's copy or winner). The first link to a target wins, with its tier.
+   */
+  static mergeListLinks<T extends object>(
+    own: readonly T[],
+    siblings: Iterable<readonly T[]>,
+    resolve: (id: string) => string,
+    to: string,
+  ): T[] {
+    return SiblingMerge.takeNewRows(own, siblings, (link) => resolve((link as Record<string, string>)[to]));
   }
 
   /**

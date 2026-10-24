@@ -5,6 +5,7 @@ import { ALLOWED_ALL } from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudesC
 import AptitudeTargets from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTargets.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 import type { Modifier } from "@/shared/relations.ts";
@@ -31,7 +32,7 @@ export function PlansAptitudeSlots<B extends Constructor<LevelUpBase<DetailedCha
      * (a power pool's spell level) give a level. Setting a spell level's to -1, "all spells known", counts as all of them.
      */
     private addModifierDeltas(deltas: SlotDeltas, modifiers: Modifier[], featSlots: FeatSlots, powerSlots: PowerSlots) {
-      const aptitudeSlugToId = this.rulesetData.aptitudeIdBySlug;
+      const aptitudeSlugToId = Dnd35View.of(this.rulesetData).aptitudeIdBySlug;
       for (const mod of modifiers) {
         // A pool's slots take a literal: an add, or a spell level's set to -1 (the paths allow nothing else)
         const value = LiteralValue.parse(mod.value, "number");
@@ -80,7 +81,8 @@ export function PlansAptitudeSlots<B extends Constructor<LevelUpBase<DetailedCha
       powerSlots: PowerSlots,
     ): SlotDeltas {
       const deltas: SlotDeltas = { feats: {}, powers: {} };
-      const { aptitudeIdBySlug, modifiersBySource } = this.rulesetData;
+      const { aptitudeIdBySlug } = Dnd35View.of(this.rulesetData);
+      const { modifiersBySource } = this.rulesetData;
       const add = (modifiers: Modifier[]) => this.addModifierDeltas(deltas, modifiers, featSlots, powerSlots);
 
       add(modifiersBySource.get(klassLevelId) ?? []);

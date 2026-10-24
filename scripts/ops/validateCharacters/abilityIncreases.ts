@@ -41,8 +41,8 @@ export async function checkAbilityIncreases(characters: Character[]) {
         const increased = character.rows.picks.abilityIncreases.some((row) => row.characterLevelId === level.id);
         if (!due || increased) continue;
         issues++;
-        const klassLevel = scope.rulesetData.klassLevelsById.get(level.klassLevelId);
-        const klass = klassLevel && scope.rulesetData.klassesById.get(klassLevel.klassId);
+        const klassLevel = scope.rulesetData.find("klass_levels", level.klassLevelId);
+        const klass = klassLevel && scope.rulesetData.find("klasses", klassLevel.klassId);
         const which = `level ${index + 1} (${klass?.name} ${klassLevel?.level})`;
         console.error(`    ${char.name}: ${which} misses its ability increase`);
       }

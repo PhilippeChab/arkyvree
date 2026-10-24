@@ -2,11 +2,13 @@
 
 import type { CharacterInput } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
-import type { Item, RulesetView } from "@/engine/core/view/index.ts";
+import type { RulesetView } from "@/engine/core/view/index.ts";
 import { ITEM_FIELDS } from "@/engine/rulesets/dnd3.5/entities/items/fields.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import Dnd35CharacterBuilder from "@/engine/rulesets/dnd3.5/model/Dnd35CharacterBuilder.ts";
 import ItemPlacement from "@/engine/rulesets/dnd3.5/rules/ItemPlacement.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
+import type { Item } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import type { ItemLocation } from "@/shared/enums.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
 import { ITEM_TYPE_LOCATIONS, MAX_FINGER_ITEMS, SINGLE_OCCUPANCY_LOCATIONS } from "@/vocabulary/dnd3.5/equipment.ts";
@@ -150,7 +152,7 @@ export default class Equipping {
 
     if (!this.character.areRequirementsMet([proficiency], { sourceId: null })) {
       // An issue, as an unmet requirement is: the form shows it, and can equip it anyway (`force`)
-      const entityName = rulesetData.itemsById.get(item.id)?.name;
+      const entityName = Dnd35View.of(rulesetData).itemsById.get(item.id)?.name;
       const message = `${entityName ?? "This weapon"} is too large to use in one hand without its proficiency`;
       throw new RulesError("invalid", message, [
         { category: "requirements", message, entityName, entityType: "items" },
@@ -190,7 +192,7 @@ export default class Equipping {
   /** The weapon fields of an item, its own merged with its template's. */
   private weaponFields(itemId: string) {
     const { rulesetData } = this.view;
-    const item = rulesetData.itemsById.get(itemId) ?? { id: itemId, sourceItemId: null };
+    const item = Dnd35View.of(rulesetData).itemsById.get(itemId) ?? { id: itemId, sourceItemId: null };
     return ITEM_FIELDS.read(rulesetData.itemProperties(item)).weapon;
   }
 

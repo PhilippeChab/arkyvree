@@ -1,7 +1,9 @@
 import type { PathCategory } from "@/engine/core/paths/PathCategory.ts";
-import type { Aptitude, RulesetData } from "@/engine/core/view/index.ts";
+import type { RulesetData } from "@/engine/core/view/index.ts";
 import { type Dnd35Components } from "@/engine/rulesets/dnd3.5/model/CharacterComponents.ts";
 import SpellLists from "@/engine/rulesets/dnd3.5/rules/SpellLists.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
+import type { Aptitude } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import { getOperators } from "@/shared/customization/operators.ts";
 import { deriveNameLabels, deriveSegmentLabels, type TargetPath } from "@/shared/customization/target.ts";
 import { stripSeparators } from "@/shared/text.ts";
@@ -131,7 +133,7 @@ export default class AptitudesPaths implements PathCategory<Dnd35Components> {
 
   generate(rulesetData: RulesetData, kind: "modifier" | "requirement"): TargetPath[] {
     return AptitudesPaths.generateAptitudePaths(
-      rulesetData.aptitudes,
+      Dnd35View.of(rulesetData).aptitudes,
       kind,
       SpellLists.of(rulesetData).leveledAptitudeIds,
     );
@@ -143,6 +145,6 @@ export default class AptitudesPaths implements PathCategory<Dnd35Components> {
 
   /** The ruleset's aptitudes, labeled by their names. */
   labelNames(rulesetData: RulesetData) {
-    return { names: deriveNameLabels(rulesetData.aptitudes.map(({ name }) => name)) };
+    return { names: deriveNameLabels(Dnd35View.of(rulesetData).aptitudes.map(({ name }) => name)) };
   }
 }

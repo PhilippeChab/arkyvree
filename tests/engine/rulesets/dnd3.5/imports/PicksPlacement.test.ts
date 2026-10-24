@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import PicksPlacement from "@/engine/rulesets/dnd3.5/imports/PicksPlacement.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Rulesets } from "@/server/repositories/index.ts";
@@ -26,7 +27,7 @@ async function getSeededData() {
 /** A placement of a skill's ranks bought as a fighter, in the seeded ruleset's view. */
 async function placementOf(ranks: number) {
   const data = await getSeededData();
-  const skill = data.skills.find(({ name }) => name === "Climb")!;
+  const skill = Dnd35View.of(data).skills.find(({ name }) => name === "Climb")!;
   const line = { number: 1, text: "SKILL:Climb" };
   const matched = { className: "Fighter", line, name: skill.name, ranks, skillId: skill.id };
   return { placement: new PicksPlacement(data, [], [matched], []), skillId: skill.id };
@@ -93,13 +94,13 @@ describe("PicksPlacement", () => {
 
   test("places a spell its class's list has room for at its spell level, never one known already there", async () => {
     const data = await getSeededData();
-    const sorcerer = data.aptitudes.find(({ name }) => name === "Sorcerer Spells")!;
+    const sorcerer = Dnd35View.of(data).aptitudes.find(({ name }) => name === "Sorcerer Spells")!;
     const spell = (name: string, level: number, number: number) => ({
       aptitudeId: sorcerer.id,
       level,
       line: { number, text: `SPELLNAME:${name}` },
       name,
-      powerId: data.powers.find((power) => power.name === name)!.id,
+      powerId: Dnd35View.of(data).powers.find((power) => power.name === name)!.id,
     });
     const placement = new PicksPlacement(
       data,
@@ -107,7 +108,7 @@ describe("PicksPlacement", () => {
       [],
       [spell("Light", 0, 1), spell("Magic Missile", 1, 2), spell("Scorching Ray", 2, 3), spell("Shield", 1, 4)],
     );
-    const shield = data.powers.find((power) => power.name === "Shield")!.id;
+    const shield = Dnd35View.of(data).powers.find((power) => power.name === "Shield")!.id;
     const placed = placement.placePowers({
       held: [{ aptitudeId: sorcerer.id, id: shield }],
       room: new Map([
@@ -120,7 +121,10 @@ describe("PicksPlacement", () => {
         ],
       ]),
     });
-    expect(placed.map(({ powerId }) => data.powersById.get(powerId)?.name)).toEqual(["Light", "Magic Missile"]);
+    expect(placed.map(({ powerId }) => Dnd35View.of(data).powersById.get(powerId)?.name)).toEqual([
+      "Light",
+      "Magic Missile",
+    ]);
     // No room at the 2nd level yet, and Shield known already: both left for a later level, or the report
     expect(placement.leftPowers().map(({ name }) => name)).toEqual(["Scorching Ray", "Shield"]);
   });

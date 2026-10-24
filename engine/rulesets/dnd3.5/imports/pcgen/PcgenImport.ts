@@ -3,6 +3,7 @@ import type { AbilityScore, CharacterInput, ImportedRow, ImportOwner, ImportPlan
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import Dnd35Characters from "@/engine/rulesets/dnd3.5/characters/Dnd35Characters.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { MAX_CHARACTER_NAME_LENGTH, MAX_CHARACTER_NUMBER } from "@/shared/characters.ts";
 import { type Gender, GENDER_OPTIONS } from "@/shared/enums.ts";
 
@@ -132,7 +133,7 @@ export default class PcgenImport {
       }
     }
     const { languageIds } = planned;
-    const { languagesById } = this.view.rulesetData;
+    const { languagesById } = Dnd35View.of(this.view.rulesetData);
     const spoken = kept.map((id) => languagesById.get(id)?.name).join(", ");
     if (spoken) this.report.import(`Languages: ${spoken}`);
     return languageIds;

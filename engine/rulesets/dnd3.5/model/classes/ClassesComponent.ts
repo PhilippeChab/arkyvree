@@ -1,5 +1,5 @@
 import { CharacterComponent } from "@/engine/core/character/index.ts";
-import type { CharacterLevel, Klass, KlassLevel, KlassSkill, RulesetView } from "@/engine/core/view/index.ts";
+import type { RulesetView } from "@/engine/core/view/index.ts";
 import type {
   LoadedCharacterData,
   SkillWithRank,
@@ -9,6 +9,8 @@ import type {
   CustomizedFeat,
   CustomizedPower,
 } from "@/engine/rulesets/dnd3.5/model/loading/loadedEntities.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
+import type { CharacterLevel, Klass, KlassLevel, KlassSkill } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 interface ClassesData {
@@ -110,7 +112,7 @@ export default class ClassesComponent extends CharacterComponent<LoadedCharacter
     }
 
     // Add level-0 entries for ruleset classes the character doesn't have
-    for (const klass of rulesetData.klasses) {
+    for (const klass of Dnd35View.of(rulesetData).klasses) {
       const klassName = stripSeparators(klass.name);
       if (!this.classes[klassName]) {
         this.classes[klassName] = {

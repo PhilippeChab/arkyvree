@@ -1,6 +1,8 @@
 import { type BondedCreaturesPlan, type CharacterInput } from "@/engine/core/module/index.ts";
 import RulesError, { type RulesIssue } from "@/engine/core/RulesError.ts";
-import type { Klass, KlassLevel, RulesetData, RulesetView } from "@/engine/core/view/index.ts";
+import type { RulesetData, RulesetView } from "@/engine/core/view/index.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
+import type { Klass, KlassLevel } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import type { Character } from "@/shared/relations.ts";
 
 import CharacterProjection from "./CharacterProjection.ts";
@@ -114,7 +116,7 @@ export default abstract class LevelUpBase<C> {
   protected buildPowerLevelLookup(powerIds: string[]) {
     const lookup = new Map<string, number | null>();
     for (const powerId of powerIds) {
-      const power = this.rulesetData.powersById.get(powerId);
+      const power = Dnd35View.of(this.rulesetData).powersById.get(powerId);
       if (!power) continue;
       for (const pa of power.powersAptitudesInRules) lookup.set(`${pa.powerId}:${pa.aptitudeId}`, pa.level);
     }
@@ -128,17 +130,17 @@ export default abstract class LevelUpBase<C> {
 
   /** The class's level `level`, in the composed ruleset, or a 404. */
   protected getKlassLevel(klassId: string, level: number) {
-    const klassLevel = this.rulesetData.klassLevelByKlassAndLevel.get(`${klassId}:${level}`);
+    const klassLevel = Dnd35View.of(this.rulesetData).klassLevelByKlassAndLevel.get(`${klassId}:${level}`);
     if (!klassLevel) throw new RulesError("not-found", "Class level not found");
     return klassLevel;
   }
 
   /** A saved character level's class level and class, in the composed ruleset, or a 404. */
   protected getSavedKlassLevel(characterLevel: { klassLevelId: string }) {
-    const klassLevel = this.rulesetData.klassLevelsById.get(characterLevel.klassLevelId);
+    const klassLevel = Dnd35View.of(this.rulesetData).klassLevelsById.get(characterLevel.klassLevelId);
     if (!klassLevel) throw new RulesError("not-found", "Class level not found");
 
-    const klass = this.rulesetData.klassesById.get(klassLevel.klassId);
+    const klass = Dnd35View.of(this.rulesetData).klassesById.get(klassLevel.klassId);
     if (!klass) throw new RulesError("not-found", "Class not found");
 
     return { klassLevel, klass };

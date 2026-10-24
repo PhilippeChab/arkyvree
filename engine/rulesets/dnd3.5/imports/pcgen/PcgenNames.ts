@@ -1,4 +1,5 @@
 import type { RulesetData } from "@/engine/core/view/index.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 
 import { PCGEN_FEATS, PCGEN_ITEMS } from "./names.ts";
 
@@ -78,7 +79,7 @@ export default class PcgenNames {
   private comparedOf(list: List): Compared {
     const cached = this.compares.get(list);
     if (cached) return cached;
-    const entities: Named[] = this.rulesetData[list];
+    const entities: Named[] = Dnd35View.of(this.rulesetData)[list];
     const players = PLAYER_LISTS.has(list) ? entities.filter((entity) => entity.kind === "pc") : entities;
     const compared = players.map((entity) => ({ compared: PcgenNames.compared(entity.name), entity }));
     this.compares.set(list, compared);
@@ -126,7 +127,7 @@ export default class PcgenNames {
   /** The class PCGen names `name`, a player's. */
   findClass(name: string) {
     const found = this.findFirst("klasses", [name]);
-    return found && this.rulesetData.klassesById.get(found.id);
+    return found && Dnd35View.of(this.rulesetData).klassesById.get(found.id);
   }
 
   /**

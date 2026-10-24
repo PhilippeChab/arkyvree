@@ -1,6 +1,7 @@
 import type { OwnPicks } from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudesComponent.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import SkillRules from "@/engine/rulesets/dnd3.5/rules/SkillRules.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { include } from "@/lib/mixins.ts";
 
 import { SpendsSkillPoints } from "./concerns/SpendsSkillPoints.ts";
@@ -59,7 +60,7 @@ export default abstract class LevelUpState extends include(LevelUpBase<DetailedC
    */
   private keepTakenPicks({ feats = {}, powers = {} }: Partial<PoolPicks>): PoolPicks {
     return {
-      feats: this.dropRepeats(feats, (id) => this.rulesetData.featsById.get(id)?.stackable === true),
+      feats: this.dropRepeats(feats, (id) => Dnd35View.of(this.rulesetData).featsById.get(id)?.stackable === true),
       powers: this.dropRepeats(powers, () => false),
     };
   }
@@ -89,7 +90,7 @@ export default abstract class LevelUpState extends include(LevelUpBase<DetailedC
    * (`pools`), in which pools, and the feats the class levels (`klassLevelIds`) grant.
    */
   protected featStep(pools: LevelUpPools, klassLevelIds: string[]) {
-    const { klassLevelFeatsWithFeatsByKlassLevel } = this.rulesetData;
+    const { klassLevelFeatsWithFeatsByKlassLevel } = Dnd35View.of(this.rulesetData);
     return {
       featsToSelect: pools.featsToSelect,
       autoGrantedFeats: klassLevelIds.flatMap((id) =>
@@ -126,7 +127,8 @@ export default abstract class LevelUpState extends include(LevelUpBase<DetailedC
   protected getClassSkillIds(records: { skillId: string; skillsInRule: { name: string } }[]): Set<string> {
     const ids = new Set(records.map((record) => record.skillId));
     const names = new Set(records.map((record) => record.skillsInRule.name));
-    for (const skill of this.rulesetData.skills) if (SkillRules.isSubtypeOf(skill.name, names)) ids.add(skill.id);
+    for (const skill of Dnd35View.of(this.rulesetData).skills)
+      if (SkillRules.isSubtypeOf(skill.name, names)) ids.add(skill.id);
 
     return ids;
   }
@@ -136,7 +138,7 @@ export default abstract class LevelUpState extends include(LevelUpBase<DetailedC
    * (`pools`), in which pools, and the powers the class levels (`klassLevelIds`) grant, each saying whether it's free.
    */
   protected powerStep(pools: LevelUpPools, klassLevelIds: string[]) {
-    const { klassLevelPowersWithPowersByKlassLevel } = this.rulesetData;
+    const { klassLevelPowersWithPowersByKlassLevel } = Dnd35View.of(this.rulesetData);
     return {
       powersToSelect: pools.powersToSelect,
       autoGrantedPowers: klassLevelIds.flatMap((id) =>

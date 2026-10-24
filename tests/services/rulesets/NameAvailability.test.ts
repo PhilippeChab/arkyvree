@@ -1,6 +1,7 @@
 import { expect, test } from "bun:test";
 
 import type { Aptitude, Feat, Race } from "@/engine/index.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Entities, EntitySnapshots, Rulesets } from "@/server/repositories/index.ts";
@@ -69,7 +70,7 @@ const RENAMED_KINDS: Record<"aptitudes" | "feats" | "items" | "powers", RenamedK
 /** How many entities of a kind its view shows under a name. */
 async function countNamed(rulesetId: string, kind: keyof typeof RENAMED_KINDS | "races", name: string) {
   return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
-    const entities: { name: string }[] = rulesetData[kind];
+    const entities: { name: string }[] = Dnd35View.of(rulesetData)[kind];
     return entities.filter((entity) => entity.name === name).length;
   });
 }
@@ -115,8 +116,8 @@ test("creating a feat with a renamed override's original name keeps the override
   const snapshot = await EntitySnapshots.findOne(db, { sourceEntityId: source.id, rulesetId: fork.id });
   expect(snapshot?.forkedEntityId).toBe(renamed.id);
   const names = await withRulesetScope(db, fork.id, async ({ rulesetData }) => ({
-    source: rulesetData.featsById.get(source.id)?.name,
-    created: rulesetData.featsById.get(created.id)?.name,
+    source: Dnd35View.of(rulesetData).featsById.get(source.id)?.name,
+    created: Dnd35View.of(rulesetData).featsById.get(created.id)?.name,
   }));
   expect(names).toEqual({ source: "Alertness (Local)", created: "Alertness" });
 });
@@ -167,7 +168,11 @@ test("the original name of a renamed extension copy is available", async () => {
   });
   expect(snapshot?.forkedEntityId).toBe(renamed.id);
   expect(
-    await withRulesetScope(db, fork.id, async ({ rulesetData }) => rulesetData.featsById.get(source.id)?.name),
+    await withRulesetScope(
+      db,
+      fork.id,
+      async ({ rulesetData }) => Dnd35View.of(rulesetData).featsById.get(source.id)?.name,
+    ),
   ).toBe("Toughness (Local)");
   expect(created.name).toBe("Toughness");
 });

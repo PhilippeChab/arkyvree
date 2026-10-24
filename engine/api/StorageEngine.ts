@@ -20,6 +20,7 @@ import type {
   StoredRuleset,
   StoredWrite,
 } from "@/engine/core/module/index.ts";
+import type { ViewSchema } from "@/engine/core/view/index.ts";
 import type { BaseRules } from "@/shared/enums.ts";
 
 import Modules from "./Modules.ts";
@@ -138,6 +139,9 @@ export default class StorageEngine {
   private columnFieldNames: Set<string> | undefined;
 
   private rowReads: { fields: string[]; roles: string[] } | undefined;
+
+  /** What every module declares of a view's kinds and joins, once read (`viewSchema`). */
+  private schema?: ViewSchema;
 
   /** A character link role. */
   private characterRole(role: string): CharacterRoleDef {
@@ -650,6 +654,37 @@ export default class StorageEngine {
     const found = this.merged.steps.find((def) => def.step === step);
     if (!found) throw new Error(`No module declares the step ${step}`);
     return found;
+  }
+
+  /**
+   * What a ruleset's view is composed by, of every module's declaration (`ViewSchema`): each kind's owner and the lists
+   * its rows nest, each join its kinds' lists don't nest. Read once.
+   */
+  viewSchema(): ViewSchema {
+    if (this.schema) return this.schema;
+    const types = this.merged.entityTypes;
+    const columnOf = (join: string, part: LinkPart) => {
+      const { columns } = this.join(join);
+      return Object.keys(columns).find((name) => columns[name] === part)!;
+    };
+    const listed = new Set(types.flatMap(({ type }) => Object.values(this.kind(type).lists ?? {}).map((l) => l.join)));
+    this.schema = {
+      kinds: types.map(({ ownerType, type }) => ({
+        type,
+        ...(ownerType ? { owner: { column: this.ownerColumn(type), type: ownerType } } : {}),
+        lists: Object.entries(this.kind(type).lists ?? {}).map(([name, list]) => ({
+          name,
+          target: list.target,
+          from: columnOf(list.join, "from"),
+          to: columnOf(list.join, "to"),
+          toType: this.join(list.join).to,
+        })),
+      })),
+      joins: this.joinNames()
+        .filter((name) => !listed.has(name))
+        .map((name) => ({ name, from: this.join(name).from, fromColumn: columnOf(name, "from") })),
+    };
+    return this.schema;
   }
 
   /**

@@ -5,9 +5,9 @@ import type {
   NewBondedCreature,
 } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
-import type { RulesetData } from "@/engine/core/view/index.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import BondedRaceData from "@/engine/rulesets/dnd3.5/rules/BondedRaceData.ts";
+import type Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type { Character } from "@/shared/relations.ts";
 import { STARTING_ABILITY_SCORE } from "@/vocabulary/dnd3.5/abilities.ts";
 import { BONDED_KIND_BY_SLUG, BONDED_KIND_SLUGS, type BondedKind } from "@/vocabulary/dnd3.5/bondedKinds.ts";
@@ -38,7 +38,7 @@ function buildCreature(
   master: Character,
   kind: BondedKind,
   race: { id: string; name: string },
-  abilities: RulesetData["abilities"],
+  abilities: Dnd35View["abilities"],
 ): NewBondedCreature {
   const stats = BondedRaceData.getStats(race.name);
   return {
@@ -65,7 +65,7 @@ function buildCreature(
 /** What a master's bonded creatures become as its levels make them. */
 export default class BondedPlans {
   constructor(
-    private readonly rulesetData: Pick<RulesetData, "abilities" | "klasses" | "klassLevelsByKlass" | "races">,
+    private readonly rulesetData: Pick<Dnd35View, "abilities" | "klasses" | "klassLevelsByKlass" | "races">,
   ) {}
 
   /**
@@ -91,7 +91,11 @@ export default class BondedPlans {
     // `{{ floor([classes.ranger.level] / 2) }}`): a class that gives a creature needs only a feat with its template
     const levels = { hitDice: Math.max(1, master.components.bonded.getBondedLevel(kind)), klassId: klass.id };
     if (existing?.raceId === race.id) return { keptId: existing.id, levels };
-    return { created: buildCreature(record, kind, race, rulesetData.abilities), levels, removedId: existing?.id };
+    return {
+      created: buildCreature(record, kind, race, rulesetData.abilities),
+      levels,
+      removedId: existing?.id,
+    };
   }
 
   /**

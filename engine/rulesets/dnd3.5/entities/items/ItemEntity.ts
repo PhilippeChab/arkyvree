@@ -6,9 +6,10 @@ import { CustomizationPageEntity } from "@/engine/core/entities/index.ts";
 import type { EntityFieldValues, EntityForm } from "@/engine/core/fields/index.ts";
 import type { EntityWrites, PropertyValue } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
-import type { Item } from "@/engine/core/view/index.ts";
 import { RULESET_LIMITS } from "@/engine/rulesets/dnd3.5/limits.ts";
 import ItemPlacement from "@/engine/rulesets/dnd3.5/rules/ItemPlacement.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
+import type { Item } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import type { ItemLocation } from "@/shared/enums.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
 import { TEMPLATE_ITEM_TYPES, type TemplateItemType } from "@/vocabulary/dnd3.5/itemTemplates.ts";
@@ -348,7 +349,7 @@ export default class ItemEntity extends CustomizationPageEntity<
    * which the session can't read.
    */
   private listCopies(copies: Pick<Item, "id" | "name">[]) {
-    const [named, ...shown] = copies.filter((copy) => this.rulesetData.itemsById.has(copy.id));
+    const [named, ...shown] = copies.filter((copy) => Dnd35View.of(this.rulesetData).itemsById.has(copy.id));
     const elsewhere = copies.length - shown.length - (named ? 1 : 0);
     const more = shown.length > 0 ? ` and ${shown.length} more` : "";
     return [
@@ -376,7 +377,9 @@ export default class ItemEntity extends CustomizationPageEntity<
 
   /** The name of an item's template (`sourceItemId`, as the view resolves it): null for none. */
   private templateNameOf(sourceItemId: unknown) {
-    return typeof sourceItemId === "string" ? (this.rulesetData.itemsById.get(sourceItemId)?.name ?? null) : null;
+    return typeof sourceItemId === "string"
+      ? (Dnd35View.of(this.rulesetData).itemsById.get(sourceItemId)?.name ?? null)
+      : null;
   }
 
   /** The template an item made from `item` points at: `item` itself when it's a template, or its own template. */

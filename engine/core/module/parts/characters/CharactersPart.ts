@@ -4,7 +4,7 @@ import type { CharacterInput } from "@/engine/core/module/CharacterInputs.ts";
 import type { Descriptions } from "@/engine/core/module/contract.ts";
 import type { OpenedPicker } from "@/engine/core/module/pickers.ts";
 import RulesError from "@/engine/core/RulesError.ts";
-import { type Item, RequestIds, type RulesetView } from "@/engine/core/view/index.ts";
+import { RequestIds, type RulesetView, type ViewEntities } from "@/engine/core/view/index.ts";
 import type { Property } from "@/shared/relations.ts";
 
 import type {
@@ -121,7 +121,7 @@ export default abstract class CharactersPart<D extends Descriptions> {
    */
   protected abstract describeInventoryEntry(
     entry: HeldInventoryEntry,
-    item: Item,
+    item: ViewEntities["items"],
     properties: Property[],
   ): D["inventoryEntry"];
 
@@ -364,7 +364,7 @@ export default abstract class CharactersPart<D extends Descriptions> {
     if (race.kind !== "pc") throw new RulesError("invalid", "Race is not valid for a player character");
     const given = ids.resolveKeys("abilities", request.abilities);
     return {
-      abilities: view.rulesetData.abilities.map((ability) => ({
+      abilities: view.rulesetData.rows("abilities").map((ability) => ({
         abilityId: ability.id,
         score: given.get(ability.id) ?? scores.start,
       })),

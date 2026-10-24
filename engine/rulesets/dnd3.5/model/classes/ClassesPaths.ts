@@ -1,6 +1,8 @@
 import type { PathCategory } from "@/engine/core/paths/PathCategory.ts";
-import type { Klass, RulesetData } from "@/engine/core/view/index.ts";
+import type { RulesetData } from "@/engine/core/view/index.ts";
 import { type Dnd35Components } from "@/engine/rulesets/dnd3.5/model/CharacterComponents.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
+import type { Klass } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import { getOperators, LEVEL_MODIFIER_OPERATORS } from "@/shared/customization/operators.ts";
 import { deriveNameLabels, deriveSegmentLabels, isLeafOfKind, type TargetPath } from "@/shared/customization/target.ts";
 import { stripSeparators } from "@/shared/text.ts";
@@ -60,7 +62,7 @@ export default class ClassesPaths implements PathCategory<Dnd35Components> {
   readonly name = "classes";
 
   generate(rulesetData: RulesetData, kind: "modifier" | "requirement"): TargetPath[] {
-    return ClassesPaths.generateClassPaths(rulesetData.klasses, kind);
+    return ClassesPaths.generateClassPaths(Dnd35View.of(rulesetData).klasses, kind);
   }
 
   getSegmentLabels(): Record<string, string> {
@@ -69,6 +71,6 @@ export default class ClassesPaths implements PathCategory<Dnd35Components> {
 
   /** The ruleset's classes, labeled by their names. */
   labelNames(rulesetData: RulesetData) {
-    return { names: deriveNameLabels(rulesetData.klasses.map(({ name }) => name)) };
+    return { names: deriveNameLabels(Dnd35View.of(rulesetData).klasses.map(({ name }) => name)) };
   }
 }

@@ -1,10 +1,12 @@
 import { CharacterComponent } from "@/engine/core/character/index.ts";
-import type { Aptitude, RulesetData, RulesetView } from "@/engine/core/view/index.ts";
+import type { RulesetView } from "@/engine/core/view/index.ts";
 import type ClassesComponent from "@/engine/rulesets/dnd3.5/model/classes/ClassesComponent.ts";
 import type IdentityComponent from "@/engine/rulesets/dnd3.5/model/identity/IdentityComponent.ts";
 import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import SpellLists from "@/engine/rulesets/dnd3.5/rules/SpellLists.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
+import type { Aptitude } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { MAX_SPELL_LEVEL } from "@/vocabulary/dnd3.5/spells.ts";
 
@@ -121,7 +123,7 @@ export default class AptitudesComponent extends CharacterComponent<LoadedCharact
     }: Pick<LoadedCharacterData, "klassLevelFeatCountsByAptitudeId" | "klassLevelPowerCountsByAptitudeId">,
     { rulesetData }: RulesetView,
   ) {
-    this.buildEntries(rulesetData.aptitudes, SpellLists.of(rulesetData).leveledAptitudeIds);
+    this.buildEntries(Dnd35View.of(rulesetData).aptitudes, SpellLists.of(rulesetData).leveledAptitudeIds);
     const aptitudeById: AptitudesById = new Map(
       Object.values(this.aptitudes).map((aptitude) => [aptitude.id, aptitude]),
     );
@@ -292,7 +294,7 @@ export default class AptitudesComponent extends CharacterComponent<LoadedCharact
    * level-up's own picks of its kind (`own`, which the character holds) adds them back to what it has left: a shared
    * pool's feats take room from its powers, and its powers from its feats.
    */
-  getLevelUpPools(rulesetData: Pick<RulesetData, "aptitudeIdsWithPowers">, own: OwnPicks = NO_OWN_PICKS) {
+  getLevelUpPools(rulesetData: Pick<Dnd35View, "aptitudeIdsWithPowers">, own: OwnPicks = NO_OWN_PICKS) {
     const featPools: Record<string, FeatPool> = {};
     const powerPools: Record<string, PowerPool> = {};
     for (const [key, aptitude] of Object.entries(this.aptitudes)) {

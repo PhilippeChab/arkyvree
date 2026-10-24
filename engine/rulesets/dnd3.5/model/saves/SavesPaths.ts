@@ -1,6 +1,8 @@
 import type { PathCategory } from "@/engine/core/paths/PathCategory.ts";
-import type { RulesetData, RulesetSave } from "@/engine/core/view/index.ts";
+import type { RulesetData } from "@/engine/core/view/index.ts";
 import { type Dnd35Components } from "@/engine/rulesets/dnd3.5/model/CharacterComponents.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
+import type { RulesetSave } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import { getNumericOperators, getOperators } from "@/shared/customization/operators.ts";
 import { deriveNameLabels, deriveSegmentLabels, isLeafOfKind, type TargetPath } from "@/shared/customization/target.ts";
 import { stripSeparators } from "@/shared/text.ts";
@@ -55,7 +57,7 @@ export default class SavesPaths implements PathCategory<Dnd35Components> {
   readonly name = "saves";
 
   generate(rulesetData: RulesetData, kind: "modifier" | "requirement"): TargetPath[] {
-    return SavesPaths.generateSavePaths(rulesetData.saves, kind);
+    return SavesPaths.generateSavePaths(Dnd35View.of(rulesetData).saves, kind);
   }
 
   getSegmentLabels(): Record<string, string> {
@@ -64,6 +66,6 @@ export default class SavesPaths implements PathCategory<Dnd35Components> {
 
   /** The ruleset's saves, labeled by their names. */
   labelNames(rulesetData: RulesetData) {
-    return { names: deriveNameLabels(rulesetData.saves.map(({ name }) => name)) };
+    return { names: deriveNameLabels(Dnd35View.of(rulesetData).saves.map(({ name }) => name)) };
   }
 }

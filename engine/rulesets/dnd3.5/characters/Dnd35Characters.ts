@@ -7,6 +7,7 @@ import {
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import type { Dnd35Descriptions } from "@/engine/rulesets/dnd3.5/descriptions.ts";
 import RacePicker from "@/engine/rulesets/dnd3.5/pickers/RacePicker.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 
 import CharacterCards from "./CharacterCards.ts";
 import CharacterDescription from "./description/CharacterDescription.ts";
@@ -29,8 +30,12 @@ export default class Dnd35Characters extends CharactersPart<Dnd35Descriptions> {
   }
 
   /** A character's card: its race and its classes at their highest level. */
-  protected override describeFullCard(...args: Parameters<typeof CharacterCards.describe>) {
-    return CharacterCards.describe(...args);
+  protected override describeFullCard(
+    view: RulesetView,
+    character: { raceId: string },
+    levels: { klassLevelId: string }[],
+  ) {
+    return CharacterCards.describe(Dnd35View.of(view.rulesetData), character, levels);
   }
 
   /** An inventory entry beside its row: where its item can go, and where it's worn. */
@@ -72,8 +77,8 @@ export default class Dnd35Characters extends CharactersPart<Dnd35Descriptions> {
    * How a new character's ability scores are set: the ruleset's abilities, the SRD's methods, the scores' bounds, each
    * score's modifier.
    */
-  override describeCreation(...args: Parameters<typeof NewCharacters.describeCreation>) {
-    return NewCharacters.describeCreation(...args);
+  override describeCreation(view: RulesetView) {
+    return NewCharacters.describeCreation(Dnd35View.of(view.rulesetData));
   }
 
   /** Why a location can't take one more item of the character's, if it can't: what the inventory dialogs warn of. */

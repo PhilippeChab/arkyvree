@@ -44,6 +44,11 @@ export interface RulesetModule<
   entities: EntitiesPart<E>;
   /** What the ruleset answers of a character imported from another program's file: which importers it offers */
   imports: ImportsPart;
+  /**
+   * What its refusals and issues call an entity of each of its kinds and its other types ("Feat <id> does not belong to
+   * this ruleset", "Bjorn (Character)"), which its view answers (`RulesetData.labelOf`)
+   */
+  kindLabels: Readonly<Record<string, string>>;
   /** What the ruleset answers a character's level-up, from the rows the server reads */
   levelUp: LevelUpPart<D>;
   /** The property types its entities' fields are stored in, their order and values: one instance nothing changes */

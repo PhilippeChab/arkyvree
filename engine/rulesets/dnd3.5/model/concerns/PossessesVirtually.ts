@@ -6,6 +6,7 @@ import LanguagesPaths from "@/engine/rulesets/dnd3.5/model/languages/LanguagesPa
 import PowersComponent from "@/engine/rulesets/dnd3.5/model/powers/PowersComponent.ts";
 import PowersPaths from "@/engine/rulesets/dnd3.5/model/powers/PowersPaths.ts";
 import SpellLists from "@/engine/rulesets/dnd3.5/rules/SpellLists.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { formatPropertyValues, groupPropertyValues } from "@/shared/customization/properties.ts";
 import type { Modifier } from "@/shared/relations.ts";
@@ -23,7 +24,7 @@ export function PossessesVirtually<B extends Constructor<CharacterState>>(Base: 
      */
     protected override grantsOf(modifier: Modifier): Modifier[] {
       if (!this.isGrant(modifier)) return [];
-      const { featIdBySlug, languageIdBySlug } = this.rulesetData;
+      const { featIdBySlug, languageIdBySlug } = Dnd35View.of(this.rulesetData);
       const featSlug = FeatsPaths.parsePossessed(modifier.target);
       const featId = featSlug === undefined ? undefined : featIdBySlug.get(featSlug);
       if (featId) return this.possessFeat(featId, true);
@@ -42,7 +43,7 @@ export function PossessesVirtually<B extends Constructor<CharacterState>>(Base: 
      * joining the build once however many lists know it. Its modifiers, when they join.
      */
     private knowPower(spellSlug: string, listSlug: string): Modifier[] {
-      const { powerIdsBySlug, powersById } = this.rulesetData;
+      const { powerIdsBySlug, powersById } = Dnd35View.of(this.rulesetData);
       const aptitudeId = SpellLists.of(this.rulesetData).aptitudeIdBySpellSlug.get(listSlug);
       const powerRow = powerIdsBySlug
         .get(spellSlug)
@@ -74,7 +75,7 @@ export function PossessesVirtually<B extends Constructor<CharacterState>>(Base: 
     protected possessFeat(featId: string, given: boolean): Modifier[] {
       const held = this.data.feats.filter((feat) => feat.id === featId);
       if (given) for (const feat of held) feat.given = true;
-      const featRow = this.rulesetData.featsById.get(featId);
+      const featRow = Dnd35View.of(this.rulesetData).featsById.get(featId);
       if (held.length > 0 || !featRow) return [];
       this.components.feats.grant(featRow.name);
       const feat = { ...FeatsComponent.toVirtualFeat(featRow, this.rulesetData), given };

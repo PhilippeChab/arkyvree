@@ -1,6 +1,7 @@
 import { afterEach, expect, test } from "bun:test";
 
 import type { Language, Race } from "@/engine/index.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { CharacterInventory, CharacterLinks, Characters, Entities } from "@/server/repositories/index.ts";
@@ -47,13 +48,21 @@ test("a race picked before the fork copied it blocks deleting the copy, but not 
 
   expect(EntitiesService.deleteEntity(session, fork.id, "races", local.id)).rejects.toThrow("in use by characters");
   expect(
-    await withRulesetScope(db, fork.id, async ({ rulesetData }) => rulesetData.racesById.get(character.raceId)?.id),
+    await withRulesetScope(
+      db,
+      fork.id,
+      async ({ rulesetData }) => Dnd35View.of(rulesetData).racesById.get(character.raceId)?.id,
+    ),
   ).toBe(local.id);
 
   // Restoring the source keeps the stored pick valid, so it stays allowed.
   await RulesetChangesService.revertOverride(session, fork.id, "races", human.id);
   expect(
-    await withRulesetScope(db, fork.id, async ({ rulesetData }) => rulesetData.racesById.get(character.raceId)?.id),
+    await withRulesetScope(
+      db,
+      fork.id,
+      async ({ rulesetData }) => Dnd35View.of(rulesetData).racesById.get(character.raceId)?.id,
+    ),
   ).toBe(human.id);
 });
 

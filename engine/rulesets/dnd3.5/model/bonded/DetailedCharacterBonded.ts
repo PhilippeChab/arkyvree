@@ -3,6 +3,7 @@ import type { RulesIssue } from "@/engine/core/RulesError.ts";
 import { type RulesetView } from "@/engine/core/view/index.ts";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import BondedRaceData from "@/engine/rulesets/dnd3.5/rules/BondedRaceData.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { type BondedRaceStatBlock, STAT_BLOCK_FEAT_SKILL_BONUSES } from "@/vocabulary/dnd3.5/bondedCreatures.ts";
 
@@ -61,7 +62,7 @@ export default abstract class DetailedCharacterBonded extends DetailedCharacter 
    */
   protected applyGrantedFeats(featNames: string[]): void {
     for (const featName of featNames) {
-      const featId = this.rulesetData.featIdBySlug.get(stripSeparators(featName));
+      const featId = Dnd35View.of(this.rulesetData).featIdBySlug.get(stripSeparators(featName));
       if (featId) this.joinModifiers(this.possessFeat(featId, false));
     }
   }

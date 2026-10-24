@@ -1,5 +1,6 @@
 import type { EntityRemoval, MadeEntity } from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 
 /** A feat a plan makes with an entity: its name and description, its customizations. */
 export type GeneratedFeat = Pick<MadeEntity, "modifiers" | "properties" | "requirements"> & {
@@ -23,7 +24,7 @@ export default abstract class GeneratedFeats {
 
   /** The generated feat named `featName` a plan removes, refused (`inUse`) while picked: none when the view has none. */
   protected removeFeat(featName: string, inUse: string) {
-    const feat = this.view.rulesetData.feats.find((f) => f.name === featName);
+    const feat = Dnd35View.of(this.view.rulesetData).feats.find((f) => f.name === featName);
     const removal: EntityRemoval[] = feat ? [{ id: feat.id, inUse, type: "feats" }] : [];
     return removal;
   }
@@ -35,8 +36,8 @@ export default abstract class GeneratedFeats {
   make(name: string): MadeEntity[] {
     const { rulesetData } = this.view;
     const feats = this.featsOf(name);
-    const aptitudeId = rulesetData.aptitudeIdBySlug.get(this.poolSlug);
-    if (!aptitudeId || rulesetData.feats.some((feat) => feat.name === feats[0]?.name)) return [];
+    const aptitudeId = Dnd35View.of(rulesetData).aptitudeIdBySlug.get(this.poolSlug);
+    if (!aptitudeId || Dnd35View.of(rulesetData).feats.some((feat) => feat.name === feats[0]?.name)) return [];
     return feats.map(({ description, modifiers, name: featName, properties, requirements }) => ({
       columns: { description, generated: true, name: featName },
       links: [{ aptitudeId }],

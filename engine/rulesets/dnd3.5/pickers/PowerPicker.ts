@@ -2,6 +2,7 @@ import type { CharacterInput } from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import { FEAT_FIELDS } from "@/engine/rulesets/dnd3.5/entities/feats/fields.ts";
 import type { PowerPickQuery } from "@/engine/rulesets/dnd3.5/levelUp/requests.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { SPELL_SCHOOL } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 import LevelPicker from "./LevelPicker.ts";
@@ -31,12 +32,12 @@ export default class PowerPicker extends LevelPicker {
       ...this.getProhibitedPowerIds(aptitudeId),
       ...(planned.powerPicks ?? []).map((pick) => pick.powerId),
     ];
-    return { ids: this.rulesetData.listPowerIds({ aptitudeId, level: powerLevel }), excludeIds };
+    return { ids: Dnd35View.of(this.rulesetData).listPowerIds({ aptitudeId, level: powerLevel }), excludeIds };
   }
 
   /** The wizard's spells of the schools its specialization prohibits: none for another pool. */
   private getProhibitedPowerIds(aptitudeId: string): string[] {
-    const aptitude = this.rulesetData.aptitudesById.get(aptitudeId);
+    const aptitude = Dnd35View.of(this.rulesetData).aptitudesById.get(aptitudeId);
     if (aptitude?.name !== "Wizard Spells") return [];
 
     const prohibitedSchools = new Set(

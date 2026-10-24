@@ -1,12 +1,5 @@
 import type { CharacterDataLoader } from "@/engine/core/character/index.ts";
-import type {
-  CharacterLevel,
-  FeatWithAptitudes,
-  KlassLevelFeat,
-  KlassLevelPower,
-  PowerWithAptitudes,
-  RulesetData,
-} from "@/engine/core/view/index.ts";
+import type { RulesetData } from "@/engine/core/view/index.ts";
 import type { SavedPickRows } from "@/engine/rulesets/dnd3.5/levelUp/SavedPicks.ts";
 import type {
   LoadedCharacterData,
@@ -14,6 +7,14 @@ import type {
 } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
 import type { CharacterLevels, HeldFeat, HeldPower } from "@/engine/rulesets/dnd3.5/model/loading/loadedEntities.ts";
 import PowersComponent from "@/engine/rulesets/dnd3.5/model/powers/PowersComponent.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
+import type {
+  CharacterLevel,
+  FeatWithAptitudes,
+  KlassLevelFeat,
+  KlassLevelPower,
+  PowerWithAptitudes,
+} from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 
 /**
@@ -92,10 +93,14 @@ export function LoadsPicks<B extends Constructor<CharacterDataLoader<LoadedChara
       resolve: Resolve,
     ) {
       const pickedFeats = pickedAt(resolve(picks.feats), characterLevels, (link) => {
-        const feat = rulesetData.featsById.get(link.featId);
+        const feat = Dnd35View.of(rulesetData).featsById.get(link.featId);
         return feat && { ...toFeatRow(feat), aptitudeId: link.aptitudeId };
       });
-      const givenFeats = grantedAt(characterLevels, rulesetData.klassLevelFeatsWithFeatsByKlassLevel, toGrantedFeat);
+      const givenFeats = grantedAt(
+        characterLevels,
+        Dnd35View.of(rulesetData).klassLevelFeatsWithFeatsByKlassLevel,
+        toGrantedFeat,
+      );
 
       const pickedFeatIds = new Set(pickedFeats.filter((f) => !f.stackable).map((f) => f.id));
       const seenGivenFeatIds = new Set<string>();
@@ -141,16 +146,18 @@ export function LoadsPicks<B extends Constructor<CharacterDataLoader<LoadedChara
       const withLevel = <T extends { aptitudeId: string; id: string }>(power: T) => ({
         ...power,
         powerLevel:
-          rulesetData.powersById
-            .get(power.id)
+          Dnd35View.of(rulesetData)
+            .powersById.get(power.id)
             ?.powersAptitudesInRules.find((link) => link.aptitudeId === power.aptitudeId)?.level ?? null,
       });
       const pickedPowers = pickedAt(resolve(picks.powers), characterLevels, (link) => {
-        const power = rulesetData.powersById.get(link.powerId);
+        const power = Dnd35View.of(rulesetData).powersById.get(link.powerId);
         return power && { ...toPowerRow(power, rulesetData), aptitudeId: link.aptitudeId };
       }).map(withLevel);
-      const givenPowers = grantedAt(characterLevels, rulesetData.klassLevelPowersWithPowersByKlassLevel, (grant) =>
-        toGrantedPower(grant, rulesetData),
+      const givenPowers = grantedAt(
+        characterLevels,
+        Dnd35View.of(rulesetData).klassLevelPowersWithPowersByKlassLevel,
+        (grant) => toGrantedPower(grant, rulesetData),
       ).map(withLevel);
 
       const klassLevelPowerCountsByAptitudeId = givenPowers.reduce(
@@ -171,7 +178,7 @@ export function LoadsPicks<B extends Constructor<CharacterDataLoader<LoadedChara
      */
     protected buildPicks(picks: SavedPickRows, rulesetData: RulesetData, levels: CharacterLevels, resolve: Resolve) {
       const realSkills = pickedAt(resolve(picks.skills), levels.characterLevels, (link) => {
-        const skill = rulesetData.skillsById.get(link.skillId);
+        const skill = Dnd35View.of(rulesetData).skillsById.get(link.skillId);
         return skill && { ...skill, rank: link.rank };
       });
       return {

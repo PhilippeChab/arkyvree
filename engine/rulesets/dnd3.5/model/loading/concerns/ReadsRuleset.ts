@@ -6,6 +6,7 @@ import { SKILL_FIELDS } from "@/engine/rulesets/dnd3.5/entities/skills/fields.ts
 import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import { RULESET_FIELDS } from "@/engine/rulesets/dnd3.5/ruleset/fields.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import type { CasterType } from "@/vocabulary/dnd3.5/classes.ts";
 
@@ -30,14 +31,16 @@ export function ReadsRuleset<B extends Constructor<CharacterDataLoader<LoadedCha
      * pre-COW language ids auto-resolve on lookup.
      */
     protected readCachedRows(rows: CharacterRows, rulesetData: RulesetData, klassLevelIds: string[]) {
-      const klassLevelsRaw = klassLevelIds.flatMap((id) => rulesetData.klassLevelsById.get(id) ?? []);
+      const klassLevelsRaw = klassLevelIds.flatMap((id) => Dnd35View.of(rulesetData).klassLevelsById.get(id) ?? []);
       const klassEntityIds = [...new Set(klassLevelsRaw.map((level) => level.klassId))];
       return {
-        languages: rows.languages.flatMap((l) => rulesetData.languagesById.get(l.languageId) ?? []),
+        languages: rows.languages.flatMap((l) => Dnd35View.of(rulesetData).languagesById.get(l.languageId) ?? []),
         klassLevelsRaw,
-        klassLevelSaves: klassLevelIds.flatMap((id) => rulesetData.klassLevelSavesByKlassLevel.get(id) ?? []),
-        klasses: klassEntityIds.flatMap((id) => rulesetData.klassesById.get(id) ?? []),
-        klassSkills: klassEntityIds.flatMap((id) => rulesetData.klassSkillsByKlass.get(id) ?? []),
+        klassLevelSaves: klassLevelIds.flatMap(
+          (id) => Dnd35View.of(rulesetData).klassLevelSavesByKlassLevel.get(id) ?? [],
+        ),
+        klasses: klassEntityIds.flatMap((id) => Dnd35View.of(rulesetData).klassesById.get(id) ?? []),
+        klassSkills: klassEntityIds.flatMap((id) => Dnd35View.of(rulesetData).klassSkillsByKlass.get(id) ?? []),
         klassEntityIds,
       };
     }

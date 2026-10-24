@@ -22,6 +22,7 @@ import type {
   StepOptionGroup,
 } from "@/engine/index.ts";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { addClassLevels, addFeats, addPowers, addSkills } from "@/scripts/db/seeds/seedCharacter.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
@@ -1402,11 +1403,11 @@ describe("LevelsService", () => {
       const fork = await createSeededTestRulesetWithExtensions(SEED_USER_ID);
       const wizardSpells = ctx.aptMap["Wizard Spells"];
       const merged = await withRulesetScope(db, fork.id, async ({ rulesetData }) => {
-        const listed = new Set(rulesetData.listPowerIds({ aptitudeId: wizardSpells, level: 1 }));
+        const listed = new Set(Dnd35View.of(rulesetData).listPowerIds({ aptitudeId: wizardSpells, level: 1 }));
         const loserId = [...rulesetData.cow.siblingIds].find(
           (id) => rulesetData.cow.resolve(id) !== id && listed.has(rulesetData.cow.resolve(id)),
         )!;
-        return { loserId, name: rulesetData.powersById.get(loserId)!.name };
+        return { loserId, name: Dnd35View.of(rulesetData).powersById.get(loserId)!.name };
       });
       const characterId = await createSeedCharacter(ctx, "wizard", { rulesetId: fork.id });
       const [characterLevelId] = await addClassLevels(db, ctx, characterId, "Wizard", [1], [4]);

@@ -1,5 +1,4 @@
 import type { CowData } from "@/engine/core/cow/index.ts";
-import type { CharacterAbility, CharacterLanguage, CharacterLevel } from "@/engine/core/view/index.ts";
 import type {
   Campaign,
   CharacterInventory,
@@ -8,6 +7,11 @@ import type {
   Player,
   Requirement,
 } from "@/shared/relations.ts";
+
+/** A character's rows of a key (`K`), as its module declares them, or any row for a key it declares none of. */
+type CharacterRowOf<K extends string> = K extends keyof CharacterRowTypes
+  ? CharacterRowTypes[K]
+  : Record<string, unknown>;
 
 /**
  * A character's row and the rows it's built from, as the server reads them in its ruleset's scope: a bonded creature's
@@ -27,16 +31,22 @@ export interface CharacterInput {
  * (`CharacterInputs`).
  */
 export interface CharacterRows {
-  abilities: CharacterAbility[];
+  abilities: CharacterRowOf<"abilities">[];
   campaign: Campaign | undefined;
   inventory: CharacterInventory[];
-  languages: CharacterLanguage[];
-  levels: CharacterLevel[];
+  languages: CharacterRowOf<"languages">[];
+  levels: CharacterRowOf<"levels">[];
   modifiers: Modifier[];
   picks: CharacterPicks;
   player: Player | undefined;
   requirements: Requirement[];
 }
+
+/**
+ * Each of a character's link rows and advancements as the view holds them, by its rows' key: its module declares its
+ * own into it (`declare module`), as its kinds' rows (`ViewEntities`).
+ */
+export interface CharacterRowTypes {}
 
 /**
  * A character's saved levels' rows under them, by the name of the pick its module declares each under (3.5's feats, its

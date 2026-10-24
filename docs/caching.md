@@ -53,7 +53,7 @@ flowchart LR
 
 Ruleset entities can be [Copy-On-Write'd](./rulesets.md) in a fork. A COW creates a new entity with a new id; the ruleset's `CowData` (`engine/core/cow/CowData.ts`) records `preCowId → postCowId`. Characters saved **before** a COW store pre-COW ids in their rows (a feat pick's `character.advancement_picks.entity_id`, a score's `character.links.entity_id`, ...). The composed ruleset cache is keyed by **post-COW ids**.
 
-Without intervention, every lookup site had to remember to do `rulesetData.featsById.get(cow.resolve(storedId))`. Missing a call produced a silent cache miss. The view's maps close the gap for lookups, and the engine for the rows it's handed; a query on stored rows asks for an entity's equivalent ids.
+Without intervention, every lookup site had to remember to do `rulesetData.byId(type).get(cow.resolve(storedId))`. Missing a call produced a silent cache miss. The view's maps close the gap for lookups, and the engine for the rows it's handed; a query on stored rows asks for an entity's equivalent ids.
 
 ### Layer 1 — cache id Maps auto-resolve on get/has
 
@@ -61,7 +61,7 @@ Every `*ById` / `*BySource` / `*ByEntity` Map returned by `RulesetViews.getData`
 
 ```ts
 // storedFeatId may be pre-COW or post-COW; both land on the post-COW entity.
-const feat = rulesetData.featsById.get(storedFeatId);
+const feat = rulesetData.find("feats", storedFeatId);
 ```
 
 This covers ~30 lookup sites. Zero caller changes after the rollout. When the ruleset has no overrides (e.g. the base itself), the Proxy is skipped and the underlying Map is returned directly — zero overhead.
@@ -115,7 +115,7 @@ From `server/cow/views/` (the scopes) and `server/cow/` (the copies):
 | `EntityRevert.revert`                   | Revert a fork's copy to its source: what names the copy (the fork's rows, its subscribers', their characters' picks) repointed, then the copy and its snapshot deleted. A restore's, and an unsubscribe's for each copy of the extension's entities. |
 | `EntityRepositories.lock`               | Lock an already-local owner before deleting its customizations.                                                                                                                 |
 
-The entity an id names in the composed view (the ruleset's own, or inherited through its source chain) is the engine's to find: `Engine.for(scope).entities(type).find(id)` (`describe()`, with its customizations), refused as not found otherwise (a 404). A service binds the engine to its scope and reads of its view only the copy-on-write data (`rulesetData.cow`; `arkyvree/opaque-view`). The engine's operations canonicalize an id (pre-COW → post-COW, `rulesetData.canonicalize(id)`), and read sibling merging (aptitude links, modifiers, properties, requirements) pre-baked into `rulesetData` by the compose step: they only read `rulesetData.featsById`, `rulesetData.modifiersBySource`, etc. — never merge siblings themselves.
+The entity an id names in the composed view (the ruleset's own, or inherited through its source chain) is the engine's to find: `Engine.for(scope).entities(type).find(id)` (`describe()`, with its customizations), refused as not found otherwise (a 404). A service binds the engine to its scope and reads of its view only the copy-on-write data (`rulesetData.cow`; `arkyvree/opaque-view`). The engine's operations canonicalize an id (pre-COW → post-COW, `rulesetData.canonicalize(id)`), and read sibling merging (aptitude links, modifiers, properties, requirements) pre-baked into `rulesetData` by the compose step: they only read `rulesetData.byId(type)`, `rulesetData.modifiersBySource`, a module's derived view (3.5's `Dnd35View.of(rulesetData).featsById`), etc. — never merge siblings themselves.
 
 From `server/cow/index.ts`: `RulesetViews`, the class that holds the cache (`RulesetViews.ts`). The view a read gets, `RulesetData` (`engine/core/view/`), is the engine's: `engine/index.ts` exports its type and composes it (`Engine.copyOnWrite().buildView`).
 
@@ -138,7 +138,7 @@ Used by the copy flows, `RulesetExtensionsService`, `RulesetChangesService` (rev
 - **Copy-on-write data**: the engine builds a `CowData` (`Engine.copyOnWrite().buildData`, by its `CowDataBuilder`, `engine/core/cow/CowDataBuilder.ts`) from the rows its passes take, which the server reads as the engine's `copyOnWrite().getReads` says (`CowDataReader.read(database, ruleset)`), one way, through the handle it's given: the shared `db` for its read side, which `RulesetViews.getCowData` caches, and a copy's transaction for its write side, which `EntityCopy` remaps a copy's references and merges its siblings by, seeing the transaction's own copies. It reads stored ids.
 - **Source-chain construction**: `Engine.copyOnWrite().buildSourceChain` (the engine's: `CowSources`, `engine/core/cow/CowSources.ts`), shared by the COW data's cache key (`RulesetViews.getCowData`), the target paths' (`RulesetViews.getTargetPaths`, which takes the ruleset's row and derives its chain) and the chain an unsubscribe leaves, whose view says what stands in place of what leaves (`extensions/departingReferences.ts`, through `CowDataReader.read`).
 - **Scope internals** (`withRulesetScope` wiring): `RulesetViews.getData`, which gets its `CowData` (`RulesetViews.getCowData`); `RulesetViews.invalidate*` drop it with the rest.
-- **Row-level remaps** (the engine, on the rows it's handed: `CharacterInputs`, the describing handles and pickers): `CowData.resolveRows`. The entities they name are the view's (`rulesetData.featsById`…), never a joined row's.
+- **Row-level remaps** (the engine, on the rows it's handed: `CharacterInputs`, the describing handles and pickers): `CowData.resolveRows`. The entities they name are the view's (`rulesetData.find(type, id)`…), never a joined row's.
 - **Raw-tier test probes** (`tests/cow/views/RulesetViews.test.ts`): `RulesetViews.getRawData`, `RulesetViews.isRawDataPinned`.
 
 ## Ruleset Cache
@@ -150,22 +150,9 @@ One tier: per-ruleset **raw** entities, keyed by `rulesetId[:campaignId]`. The c
 ```ts
 interface RulesetRawData {
   // Entities owned by this ruleset only — no ancestor merging.
-  abilities: RulesetAbility[];
-  saves: RulesetSave[];
-  skills: Skill[];
-  feats: Feat[];
-  powers: PowerWithAptitudes[];
-  aptitudes: Aptitude[];
-  klasses: Klass[];
-  races: Race[];
-  languages: Language[];
-  items: Item[];
-  klassLevels: KlassLevel[];
-  klassSkills: KlassSkill[];
-  klassLevelFeats: KlassLevelFeat[];
-  klassLevelPowers: KlassLevelPower[];
-  klassLevelSaves: KlassLevelSave[];
-  leveledAptitudeIds: Set<string>;
+  entities: Record<string, Row[]>; // each kind's rows, by its type (3.5's "feats", "klass_levels"…)
+  joins: Record<string, Row[]>; // each join's rows its kinds' lists don't nest, by its name ("klass_skills"…)
+  tieredIds: Set<string>; // the entities a link of a tiered join points at (3.5's spell lists at a level)
   properties: Property[];
   modifiers: Modifier[];
   requirements: Requirement[];
@@ -191,7 +178,7 @@ flowchart TD
     ExtRaw --> Concat
     Concat --> Exclude[Drop ids CowData.isHidden<br/>overridden or sibling losers]
     Exclude --> FKRemap[CowData.resolveRows<br/>remap FK fields]
-    FKRemap --> Out([RulesetData<br/>its lookup indices built on first read:<br/>featsById, powersById,<br/>klassLevelByKlassAndLevel, ...])
+    FKRemap --> Out([RulesetData<br/>its lookup indices built on first read:<br/>byId(type), modifiersBySource, ...<br/>a module's derived view's: Dnd35View])
 ```
 
 Roughly: concat arrays from fork+ancestors → drop COW'd ids and sibling ids → apply FK remap. The id-indexed Maps for O(1) lookups are `RulesetData`'s getters, each built the first time it's read.
@@ -236,28 +223,38 @@ In tests, the cache reads through the test's transaction and outlives its rollba
 
 Services used to query the DB for single rows even after the cache was warm. The composed view now exposes pre-built Maps over the arrays so consumers do O(1) lookups without round-tripping Postgres:
 
-| Index                                                                                                                                                                                | Holds                                                                                                                                                      |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `featsById`, `powersById`, `skillsById`, `aptitudesById`, `abilitiesById`, `savesById`, `klassesById`, `racesById`, `languagesById`, `itemsById`, `mechanicsById`, `klassLevelsById` | Each entity of the composed view by id (a stored pre-COW id resolves to its copy)                                                                          |
-| `klassLevelByKlassAndLevel` (key `${klassId}:${level}`)                                                                                                                              | A class's level                                                                                                                                            |
-| `klassLevelsByKlass`                                                                                                                                                               | A class's levels, sorted: the last its highest                                                                                                             |
-| `propertiesByEntity`                                                                                                                                                                 | An entity's properties                                                                                                                                     |
-| `propertiesByEntityType` (key `"items"` / `"powers"` / `"rulesets"` / ...)                                                                                                           | Every property of one entity type                                                                                                                          |
-| `klassLevelFeatsWithFeatsByKlassLevel`, `klassLevelPowersWithPowersByKlassLevel`                                                                                                     | A class level's feats and powers, each with its entity                                                                                                     |
-| `klassSkillsWithSkillsByKlass`, `klassSkillsByKlass`                                                                                                                               | A class's skills, with or without each skill                                                                                                               |
-| `klassLevelSavesByKlassLevel`                                                                                                                                                      | A class level's saves                                                                                                                                      |
-| `aptitudeIdsWithPowers`                                                                                                                                                          | The aptitudes some power belongs to                                                                                                                        |
-| `modifiersBySource`                                                                                                                                                                  | A source's modifiers                                                                                                                                       |
-| `requirementsByEntity`                                                                                                                                                               | An entity's requirements                                                                                                                                   |
-| `entityIdsByProperty` (key `${entityType}:${type}:${value}`)                                                                                                                   | The entities with a property value                                                                                                                         |
-| `klassLevelFeatsByKlassLevel`                                                                                                                                                        | A class level's feat rows, without their feats                                                                                                             |
-| `modifiersById`                                                                                                                                                                      | Each modifier by id                                                                                                                                        |
-| `leveledAptitudeIds`                                                                                                                                                                 | The aptitudes counted by spell level (spell pools)                                                                                                         |
-| `aptitudeIdBySlug`, `featIdBySlug`, `powerIdsBySlug`                                                                                                                                 | An aptitude, feat or powers by the slug a target path names them by (the modifier scans for `feats.<slug>.possessed` and `powers.<slug>.<aptitude>.known`) |
+The view's own, by kind (`RulesetData`, `engine/core/view/RulesetData.ts`):
 
-Each is a getter of `RulesetData` (`engine/core/view/RulesetData.ts`), built from the composed lists the first time it's read and kept with the view: a request pays for the indices it reads. Building every one costs about 2.5 ms on the core ruleset and 10 ms on a fork using every extension, on top of composing its lists (under 1 ms and about 14 ms).
+| Index | Holds |
+| --- | --- |
+| `byId(type)`, `find(type, id)` | Each entity of a kind by id (a stored pre-COW id resolves to its copy) |
+| `rows(type)`, `joinRows(join)` | A kind's rows, a join's rows, as the view composes them |
+| `propertiesByEntity` | An entity's properties |
+| `propertiesByEntityType` (key `"items"` / `"rulesets"` / ...) | Every property of one entity type |
+| `modifiersBySource` | A source's modifiers |
+| `requirementsByEntity` | An entity's requirements |
+| `entityIdsByProperty` (key `${entityType}:${type}:${value}`) | The entities with a property value |
+| `modifiersById` | Each modifier by id |
+| `tieredIds` | The entities a tiered join's links point at |
 
-Every id-keyed Map in this table is wrapped by `RulesetData.resolvingIds` — `.get(key)` / `.has(key)` auto-resolve `key` through `CowData.resolve`. Callers can pass stored pre-COW ids directly. `RulesetData.find(type, id)` reads an entity of a table through its `*ById` Map (the engine's `entities(type).find(id)`), and `customizationsOf(id)` an entity's modifiers, properties and requirements (`entities(type).describe(id)`).
+3.5's, which its module derives of the view once (`Dnd35View.of(rulesetData)`, `engine/rulesets/dnd3.5/view/Dnd35View.ts`, kept with the view by `RulesetData.derive`):
+
+| Index | Holds |
+| --- | --- |
+| `featsById`, `powersById`, `skillsById`, `aptitudesById`, `abilitiesById`, `savesById`, `klassesById`, `racesById`, `languagesById`, `itemsById`, `mechanicsById`, `klassLevelsById` | Each of its kinds' entities by id: the view's `byId(type)` |
+| `klassLevelByKlassAndLevel` (key `${klassId}:${level}`) | A class's level |
+| `klassLevelsByKlass` | A class's levels, sorted: the last its highest |
+| `klassLevelFeatsWithFeatsByKlassLevel`, `klassLevelPowersWithPowersByKlassLevel` | A class level's feats and powers, each with its entity |
+| `klassSkillsWithSkillsByKlass`, `klassSkillsByKlass` | A class's skills, with or without each skill |
+| `klassLevelSavesByKlassLevel` | A class level's saves |
+| `klassLevelFeatsByKlassLevel` | A class level's feat rows, without their feats |
+| `aptitudeIdsWithPowers` | The aptitudes some power belongs to |
+| `leveledAptitudeIds` | The aptitudes counted by spell level (spell pools): the view's `tieredIds` |
+| `aptitudeIdBySlug`, `featIdBySlug`, `powerIdsBySlug` | An aptitude, feat or powers by the slug a target path names them by (the modifier scans for `feats.<slug>.possessed` and `powers.<slug>.<aptitude>.known`) |
+
+Each is built from the composed lists the first time it's read and kept with the view: a request pays for the indices it reads. Building every one costs about 2.5 ms on the core ruleset and 10 ms on a fork using every extension, on top of composing its lists (under 1 ms and about 14 ms).
+
+Every id-keyed Map in these tables is wrapped by `RulesetData.resolvingIds` — `.get(key)` / `.has(key)` auto-resolve `key` through `CowData.resolve`. Callers can pass stored pre-COW ids directly. `RulesetData.find(type, id)` reads an entity of a table through its `byId(type)` Map (the engine's `entities(type).find(id)`), and `customizationsOf(id)` an entity's modifiers, properties and requirements (`entities(type).describe(id)`).
 
 The flat `properties` / `modifiers` / `requirements` arrays were removed from `RulesetData` — they encouraged scans (`arr.filter(p => set.has(p.entityId))`) that were all replaced with one of the Maps above. Sibling-sourced rows are pre-merged by the compose step into the winner's bucket (sourceId / entityId remapped, deduped), so every index above already reflects the full multi-extension view — consumers never see sibling-loser rows.
 
@@ -420,7 +417,7 @@ sequenceDiagram
     RS->>RS: compose
     RS-->>Svc: RulesetData
 
-    Svc->>Svc: klassLevel = rulesetData.klassLevelByKlassAndLevel.get(...)
+    Svc->>Svc: level = Engine.for(scope).entities(type).find(...)
     Svc->>Svc: autoGrantedPowers = rulesetData.klassLevelPowersWithPowersByKlassLevel.get(...)
 
     Svc->>Repo: CharacterLevels.findMany(db, {characterId})
@@ -449,15 +446,11 @@ sequenceDiagram
 
 ## Adding a new entity to the ruleset cache
 
-1. Declare the kind in its module's storage (`RulesetModule.storage`), and add an array field to `RulesetRawData` in `engine/core/view/RulesetComposition.ts` under its name: `RawDataReader` reads every kind's stored entities alike, and the engine builds the raw data from them (`CopyOnWriteEngine.buildRawData`).
-2. A join's rows join it the same way, by the join's declared name.
-3. Add the composed array to `RulesetLists` and to `RulesetData` (`engine/core/view/RulesetData.ts`).
-4. Extend the compose step (`RulesetComposition`): concat across chain without the hidden rows (`this.composeRows`, which filters `cow.isHidden(id)`) → `cow.resolveRows` if it has FKs.
-5. Add a `<entity>ById` getter to `RulesetData`, like `featsById`: built on first read (`this.built.<entity>ById ??= …`) from `buildById(this.<entities>)` **and** wrapped with `this.resolvingIds(map)` so `.get` auto-resolves stored pre-COW ids.
-6. If callers need a filter like "X by Y", add that index as a getter too, wrapped the same way.
-7. If the entity carries inline join arrays (like `powersAptitudesInRules`), remap the nested ids in the compose step too — `CowData.resolveRows` only touches top-level fields.
-8. Update `tests/cow/views/RulesetViews.test.ts` with a smoke test (the existing compose+invalidation patterns are copy-paste templates); include a COW-fork assertion so regressions in the auto-resolve path are caught.
-9. Migrate callers: `Repo.findOne(db, { id })` inside a `withRulesetScope` → `rulesetData.<entity>ById.get(id)`. No canonicalize needed — the wrapper handles it. Either access pattern works; the cache Map is preferred when you already have `rulesetData` in scope.
+1. Declare the kind in its module's storage (`RulesetModule.storage`), and its row's type in the view's registry (`ViewEntities`, `declare module` from the module's `view/rows.ts`; a join's, `ViewJoins`): `RawDataReader` reads every kind's stored entities alike, the engine builds the raw data from them by the declaration (`CopyOnWriteEngine.buildRawData`), and the compose step composes every declared kind and join alike (`RulesetComposition`, by `StorageEngine.viewSchema`: an owned kind's rows follow their owners', a join's the entities it's from, a kind's lists' links resolve to their targets).
+2. Read it through the view by kind: `rulesetData.rows(type)`, `byId(type)` (built on first read, a stored pre-COW id resolving), `find(type, id)`.
+3. An index past those (a kind's rows by another key, a join's by its owner) is its module's: a getter of the view it derives (3.5's `Dnd35View`), built on first read and wrapped with `rulesetData.resolvingIds(map)` so `.get` auto-resolves stored pre-COW ids.
+4. Update `tests/cow/views/RulesetViews.test.ts` with a smoke test (the existing compose+invalidation patterns are copy-paste templates); include a COW-fork assertion so regressions in the auto-resolve path are caught.
+5. Migrate callers: `Repo.findOne(db, { id })` inside a `withRulesetScope` → `rulesetData.find(type, id)`. No canonicalize needed — the wrapper handles it.
 
 ## A repository method's verb
 

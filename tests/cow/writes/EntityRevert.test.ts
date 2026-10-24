@@ -15,6 +15,7 @@ import type {
   Power,
   Race,
 } from "@/engine/index.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
@@ -115,7 +116,9 @@ describe("reverting a fork's copy", () => {
     ]);
     expect(
       await withRulesetScope(db, fork.id, async ({ rulesetData }) =>
-        rulesetData.featsById.get(feat.id)?.featsAptitudesInRules.map((link) => link.aptitudeId),
+        Dnd35View.of(rulesetData)
+          .featsById.get(feat.id)
+          ?.featsAptitudesInRules.map((link) => link.aptitudeId),
       ),
     ).toEqual([general]);
   });
@@ -316,7 +319,9 @@ describe("reverting a fork's copy", () => {
     });
     const readHost = () =>
       withRulesetScope(db, host.id, async ({ rulesetData }) => ({
-        links: rulesetData.featsById.get(feat.id)?.featsAptitudesInRules.map((link) => link.aptitudeId),
+        links: Dnd35View.of(rulesetData)
+          .featsById.get(feat.id)
+          ?.featsAptitudesInRules.map((link) => link.aptitudeId),
         dodge: rulesetData.cow.resolve(dodge),
       }));
     expect(await readHost()).toEqual({ links: [listCopy.id], dodge: hostCopy.id });

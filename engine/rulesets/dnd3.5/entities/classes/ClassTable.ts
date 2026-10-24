@@ -2,9 +2,11 @@
 
 import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
 import RulesError from "@/engine/core/RulesError.ts";
-import type { Klass, RulesetData, RulesetView } from "@/engine/core/view/index.ts";
+import type { RulesetData, RulesetView } from "@/engine/core/view/index.ts";
 import AptitudeTargets from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTargets.ts";
 import SpellLists from "@/engine/rulesets/dnd3.5/rules/SpellLists.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
+import type { Klass } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import type { Modifier } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
@@ -24,7 +26,7 @@ function getSpellListIds(rulesetData: RulesetData, klass: Klass): string[] {
   // A class casting from one of several lists (a pious templar's own, or its blackguard one) opens on its own
   const own = `${stripSeparators(klass.name)}spells`;
   return [...lists.filter((list) => list === own), ...lists.filter((list) => list !== own)].flatMap(
-    (list) => rulesetData.aptitudeIdBySlug.get(list) ?? [],
+    (list) => Dnd35View.of(rulesetData).aptitudeIdBySlug.get(list) ?? [],
   );
 }
 
@@ -40,7 +42,7 @@ export default class ClassTable {
 
   /** The class's levels, as the view has them. */
   private get levels() {
-    return this.view.rulesetData.klassLevelsByKlass.get(this.klass.id) ?? [];
+    return Dnd35View.of(this.view.rulesetData).klassLevelsByKlass.get(this.klass.id) ?? [];
   }
 
   /**
@@ -64,14 +66,14 @@ export default class ClassTable {
     const { rulesetData } = this.view;
     const { levels } = this;
     const featModifiers: Modifier[] = levels.flatMap((level) =>
-      (rulesetData.klassLevelFeatsByKlassLevel.get(level.id) ?? []).flatMap((levelFeat) =>
+      (Dnd35View.of(rulesetData).klassLevelFeatsByKlassLevel.get(level.id) ?? []).flatMap((levelFeat) =>
         (rulesetData.modifiersBySource.get(levelFeat.featId) ?? [])
           .filter((modifier) => modifier.sourceType === "feats")
           .map((modifier) => ({ ...modifier, sourceId: levelFeat.klassLevelId })),
       ),
     );
     const nameBySlug = new Map(
-      rulesetData.aptitudes.map((aptitude) => [stripSeparators(aptitude.name), aptitude.name]),
+      Dnd35View.of(rulesetData).aptitudes.map((aptitude) => [stripSeparators(aptitude.name), aptitude.name]),
     );
     const totals = LevelTotals.computeRunning<number>(
       levels,
@@ -91,7 +93,7 @@ export default class ClassTable {
   describeSpellLists() {
     const { rulesetData } = this.view;
     return getSpellListIds(rulesetData, this.klass).flatMap((listId) => {
-      const list = rulesetData.aptitudesById.get(listId);
+      const list = Dnd35View.of(rulesetData).aptitudesById.get(listId);
       return list ? [{ id: list.id, name: list.name }] : [];
     });
   }

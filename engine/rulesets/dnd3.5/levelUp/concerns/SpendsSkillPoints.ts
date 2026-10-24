@@ -4,6 +4,7 @@ import PicksDistribution, {
   type PerLevelDistributionData,
 } from "@/engine/rulesets/dnd3.5/levelUp/PicksDistribution.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 
 /**
@@ -110,7 +111,10 @@ export function SpendsSkillPoints<B extends Constructor<LevelUpBase<DetailedChar
       points: Record<string, number>,
     ) {
       const skillPointsToSpend = this.getSkillPointsToSpend(character);
-      const stepSkills = character.components.skills.getEnrichedSkills(this.rulesetData.skills, classSkillIds);
+      const stepSkills = character.components.skills.getEnrichedSkills(
+        Dnd35View.of(this.rulesetData).skills,
+        classSkillIds,
+      );
       return {
         skillPointsToSpend,
         totalCharacterLevel: levels.savedLevelCount + levels.perLevelSkillPoints.length,

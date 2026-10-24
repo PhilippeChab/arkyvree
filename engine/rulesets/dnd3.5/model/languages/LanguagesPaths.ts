@@ -1,6 +1,8 @@
 import type { PathCategory } from "@/engine/core/paths/PathCategory.ts";
-import type { Language, RulesetData } from "@/engine/core/view/index.ts";
+import type { RulesetData } from "@/engine/core/view/index.ts";
 import { type Dnd35Components } from "@/engine/rulesets/dnd3.5/model/CharacterComponents.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
+import type { Language } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import { getOperators } from "@/shared/customization/operators.ts";
 import { deriveNameLabels, deriveSegmentLabels, type TargetPath } from "@/shared/customization/target.ts";
 import { stripSeparators } from "@/shared/text.ts";
@@ -57,7 +59,7 @@ export default class LanguagesPaths implements PathCategory<Dnd35Components> {
   readonly name = "languages";
 
   generate(rulesetData: RulesetData, kind: "modifier" | "requirement"): TargetPath[] {
-    return LanguagesPaths.generateLanguagePaths(rulesetData.languages, kind);
+    return LanguagesPaths.generateLanguagePaths(Dnd35View.of(rulesetData).languages, kind);
   }
 
   getSegmentLabels(): Record<string, string> {
@@ -66,6 +68,6 @@ export default class LanguagesPaths implements PathCategory<Dnd35Components> {
 
   /** The ruleset's languages, labeled by their names. */
   labelNames(rulesetData: RulesetData) {
-    return { names: deriveNameLabels(rulesetData.languages.map(({ name }) => name)) };
+    return { names: deriveNameLabels(Dnd35View.of(rulesetData).languages.map(({ name }) => name)) };
   }
 }

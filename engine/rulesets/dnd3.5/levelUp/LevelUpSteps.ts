@@ -1,5 +1,6 @@
 import RulesError from "@/engine/core/RulesError.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 
 import CharacterProjection from "./CharacterProjection.ts";
 import LevelUpState, { type PoolPicks } from "./LevelUpState.ts";
@@ -33,7 +34,7 @@ export default class LevelUpSteps extends LevelUpState {
       this.getSavedPicks(projected.editedLevel?.id),
     );
     const pools = fitted.character.components.aptitudes.getLevelUpPools(
-      this.rulesetData,
+      Dnd35View.of(this.rulesetData),
       this.countOwnPicks(fitted.picks),
     );
     return { klassLevel, picks: fitted.picks, pools };
@@ -92,10 +93,14 @@ export default class LevelUpSteps extends LevelUpState {
     // A skill's class status is any of the character's classes' (its max rank, `isClassSkill`) and the leveled class's
     // (its cost, `isCurrentClassSkill`)
     const classSkillIds = this.getClassSkillIds(
-      this.rulesetData.klassSkillsWithSkillsByKlass.get(klassLevel.klassId) ?? [],
+      Dnd35View.of(this.rulesetData).klassSkillsWithSkillsByKlass.get(klassLevel.klassId) ?? [],
     );
     const levels = {
-      perLevelClassSkillIds: [this.rulesetData.skills.filter(({ id }) => classSkillIds.has(id)).map(({ id }) => id)],
+      perLevelClassSkillIds: [
+        Dnd35View.of(this.rulesetData)
+          .skills.filter(({ id }) => classSkillIds.has(id))
+          .map(({ id }) => id),
+      ],
       perLevelSkillPoints: [this.getSkillPointsToSpend(character)],
       savedLevelCount: projection.input.rows.levels.length - 1,
     };

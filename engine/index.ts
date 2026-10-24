@@ -64,12 +64,18 @@ export type {
 } from "./core/module/index.ts";
 export { default as RulesError } from "./core/RulesError.ts";
 export type {
+  EntityCustomizations,
+  EntityRow,
+  RulesetData,
+  RulesetRawData,
+  ViewEntities,
+  ViewJoins,
+} from "./core/view/index.ts";
+export type {
   Aptitude,
   CharacterAbility,
   CharacterLanguage,
   CharacterLevel,
-  EntityCustomizations,
-  EntityRow,
   Feat,
   FeatWithAptitudes,
   Item,
@@ -89,8 +95,6 @@ export type {
   PowerWithAptitudes,
   Race,
   RulesetAbility,
-  RulesetData,
-  RulesetRawData,
   RulesetSave,
   Skill,
-} from "./core/view/index.ts";
+} from "./rulesets/dnd3.5/index.ts";
