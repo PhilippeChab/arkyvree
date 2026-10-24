@@ -5,7 +5,7 @@ import { formatDecimal } from "@/client/src/lib/formatNumeric.ts";
 import type { RulesDescription } from "@/client/src/lib/queries.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 
-import { AptitudeChipsCell } from "./AptitudeChipsCell.tsx";
+import { LinkChipsCell } from "./LinkChipsCell.tsx";
 
 interface ListValueProps {
   column: ListColumn;
@@ -75,7 +75,7 @@ export function ListValue({ column, entity, names }: ListValueProps) {
     }
     case "pools": {
       const links = valueOf(entity, column.key);
-      return <AptitudeChipsCell links={Array.isArray(links) ? links : undefined} />;
+      return <LinkChipsCell links={Array.isArray(links) ? links : undefined} target={column.target} />;
     }
   }
 }

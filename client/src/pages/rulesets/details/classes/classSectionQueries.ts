@@ -136,6 +136,6 @@ export function classSpellsPerDayQuery(rulesetId: string, classId: string) {
  * class's lists have loaded and it has one (`listId`).
  */
 export function spellListSpellsQuery(rulesetId: string, listId: string | undefined, level: number, search: string) {
-  const spells = powersQuery(rulesetId, { search, childOnly: false, aptitudeId: listId, level });
+  const spells = powersQuery(rulesetId, { search, childOnly: false, pool: listId, level });
   return infiniteQueryOptions({ ...spells, queryFn: listId === undefined ? skipToken : spells.queryFn });
 }

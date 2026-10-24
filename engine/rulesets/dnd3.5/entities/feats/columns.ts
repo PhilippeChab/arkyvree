@@ -19,5 +19,14 @@ export const FEAT_COLUMNS: FormField[] = [
 /** A 3.5 feat's list: its name, its feat pools, its description. */
 export const FEAT_LIST: ListDescription = {
   nameShare: 25,
-  columns: [{ key: "featsAptitudesInRules", label: "Aptitudes", reads: "pools", share: 15, slot: "inline" }],
+  columns: [
+    {
+      key: "featsAptitudesInRules",
+      label: "Aptitudes",
+      reads: "pools",
+      share: 15,
+      slot: "inline",
+      target: "aptitudesInRule",
+    },
+  ],
 };

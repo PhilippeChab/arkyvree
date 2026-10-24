@@ -32,13 +32,13 @@ import {
   withEntityFields,
 } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import {
-  AptitudeAutocomplete,
   DescriptionCell,
   ListValue,
+  PoolAutocomplete,
   RulesetSectionTable,
   SectionActions,
   SectionSearchBar,
-  SpellLevelFilter,
+  TierFilter,
 } from "@/client/src/pages/rulesets/components/index.ts";
 import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
 import { classDetailQuery } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
@@ -48,15 +48,15 @@ import type { EntityField } from "@/client/src/pages/rulesets/details/rulesetQue
 import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionProps.ts";
 import { entitiesQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import {
-  useAptitudeFilter,
   useEntityColumns,
   useEntityFields,
   useEntityFilters,
   useEntityList,
   useEntityVariants,
   useOpenEntity,
+  usePoolFilter,
   useRulesetSection,
-  useSpellLevelFilter,
+  useTierFilter,
 } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { buildCustomizationPath } from "@/shared/customization/entities.ts";
@@ -115,10 +115,10 @@ function entityPath(kind: EntityKindDescription, id: string, pages: ReadonlyMap<
 
 /**
  * Any entity kind's tab (`kind`), as its rules describe it: its list's columns (`lists`), named in its words, narrowed
- * by what a race or a class is for and sorted where its kind is partitioned, by a pool and a power's level where its
- * kind is, its variants grouped under their family where its kind groups them (a toggle undoes it), its rows' copies
- * where its kind copies (a duplicate, variants), and a new one's form, unless its kind is read-only (an ability's: no
- * search, no create). Each row opens what its kind opens (`opens`).
+ * by what a race or a class is for and sorted where its kind is partitioned, by a pool and a tier where its kind is,
+ * its variants grouped under their family where its kind groups them (a toggle undoes it), its rows' copies where its
+ * kind copies (a duplicate, variants), and a new one's form, unless its kind is read-only (an ability's: no search, no
+ * create). Each row opens what its kind opens (`opens`).
  */
 export function EntitySection({ ruleset, childOnly, onChildOnlyChange, kind }: EntitySectionProps) {
   const openEntity = useOpenEntity(ruleset.id);
@@ -136,14 +136,14 @@ export function EntitySection({ ruleset, childOnly, onChildOnlyChange, kind }: E
   const { searchValue, onSearchChange } = filters.searchBarProps;
   const searchBarProps = kind.partitioned ? filters.searchBarProps : { searchValue, onSearchChange };
   const search = kind.readOnly ? "" : filters.search;
-  const pool = useAptitudeFilter(ruleset.id);
-  const levelFilter = useSpellLevelFilter(ruleset.baseRules, true);
-  const aptitudeId = kind.pools ? pool.aptitudeId : undefined;
-  const level = kind.levels && levelFilter.level !== "" ? levelFilter.level : undefined;
+  const poolFilter = usePoolFilter(ruleset.id, kind.pools);
+  const tierFilter = useTierFilter(ruleset.baseRules, true);
+  const pool = poolFilter.poolId;
+  const level = kind.levels && tierFilter.level !== "" ? tierFilter.level : undefined;
   const where = {
     search,
     childOnly,
-    aptitudeId,
+    pool,
     level,
     ...(kind.partitioned && { kind: filters.kind, orderBy: filters.orderBy, orderDir: filters.orderDir }),
   };
@@ -234,22 +234,18 @@ export function EntitySection({ ruleset, childOnly, onChildOnlyChange, kind }: E
     <>
       {kind.pools && (
         <Box sx={{ width: { xs: "100%", md: 200 } }}>
-          <AptitudeAutocomplete
+          <PoolAutocomplete
             rulesetId={ruleset.id}
-            value={pool.aptitude}
-            loadError={pool.aptitudeError}
-            onChange={pool.setAptitude}
-            scope={kind.pools}
+            value={poolFilter.pool}
+            loadError={poolFilter.poolError}
+            onChange={poolFilter.setPool}
+            pools={kind.pools}
+            words={rules?.words}
           />
         </Box>
       )}
       {kind.levels && (
-        <SpellLevelFilter
-          baseRules={ruleset.baseRules}
-          value={levelFilter.level}
-          onChange={levelFilter.setLevel}
-          allowAll
-        />
+        <TierFilter baseRules={ruleset.baseRules} value={tierFilter.level} onChange={tierFilter.setLevel} allowAll />
       )}
     </>
   );
@@ -269,7 +265,7 @@ export function EntitySection({ ruleset, childOnly, onChildOnlyChange, kind }: E
             {...searchBarProps}
             searchPlaceholder={`Search ${many.toLowerCase()}…`}
             filters={listFilters}
-            filtered={aptitudeId !== undefined || level !== undefined}
+            filtered={pool !== undefined || level !== undefined}
             ruleset={ruleset}
             childOnly={childOnly}
             onChildOnlyChange={onChildOnlyChange}
@@ -292,10 +288,10 @@ export function EntitySection({ ruleset, childOnly, onChildOnlyChange, kind }: E
         {grouped ? (
           <EntityGroupsTable
             rulesetId={ruleset.id}
-            entityType={kind.type}
+            kind={kind}
             search={search}
             childOnly={childOnly}
-            aptitudeId={aptitudeId}
+            pool={pool}
             what={many}
             empty={empty}
             onRowClick={handleRowClick}

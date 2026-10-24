@@ -117,9 +117,11 @@ describe("rules", () => {
     ]);
     // Feats and spells narrow by their pools, spells by their level too; feats group by family; items copy
     const kind = (type: string) => dnd35.kinds.find((each) => each.type === type);
+    // Each by its aptitudes, at their query key and the URL's, those of its own scope
+    const aptitudes = { key: "aptitudeId", param: "aptitude", type: "aptitudes" };
     expect(dnd35.kinds.filter((each) => each.pools).map(({ pools, type }) => [type, pools])).toEqual([
-      ["feats", "feats"],
-      ["powers", "spells"],
+      ["feats", { ...aptitudes, scope: "feats" }],
+      ["powers", { ...aptitudes, scope: "spells" }],
     ]);
     expect(dnd35.kinds.filter((each) => each.levels).map(({ type }) => type)).toEqual(["powers"]);
     expect(dnd35.kinds.filter((each) => each.families).map(({ type }) => type)).toEqual(["feats"]);
@@ -141,9 +143,9 @@ describe("rules", () => {
       source: "sourceItemId",
       template: "isTemplate",
     });
-    // A pools column reads the links its list's rows hold
-    expect(dnd35.lists.feats?.columns.map(({ key, reads }) => [key, reads])).toEqual([
-      ["featsAptitudesInRules", "pools"],
+    // A pools column reads the links its list's rows hold, each its pool where the column says
+    expect(dnd35.lists.feats?.columns.map(({ key, reads, target }) => [key, reads, target])).toEqual([
+      ["featsAptitudesInRules", "pools", "aptitudesInRule"],
     ]);
     // Its classes' progression: a level's base attack bonus and skill points, a base per save, two spell tables
     expect(dnd35.progression.tracks.map(({ key, source }) => [key, source])).toEqual([

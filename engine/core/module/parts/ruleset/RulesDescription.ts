@@ -24,12 +24,11 @@ export interface EntityCopiesDescription {
  * page, a class's), whether its form gives its description room (`longDescription`: a mechanic's), and whether a new
  * one's form says what each of its fields is for (`fieldHelp`: a class's), whether its form shows two fields side by
  * side in a wide dialog (`wideForm`: `fluid`, an item's; `fixed`, its height kept as its fields change, a spell's), the
- * pools its list narrows by (`pools`: the scope of the pools it's picked in, a feat's `feats`), whether its list
- * narrows by a tier (`levels`: a spell's, by its level, `RulesDescription.tiers`), whether its list groups an entity's
- * variants under their family (`families`: a feat's), how its row copies one (`copies`: an item's), and when its name
- * can't change (`lockedName`: while its `flag` column holds, a generated feat's, its form saying why, `reason`). Its
- * word is its rules' (`RulesDescription.words`), and its URL's segment the app's (`getUrlSegment`: `classes`). Not the
- * kinds a race or a class is for (`entityKinds`).
+ * pools its list narrows by (`pools`), whether its list narrows by a tier (`levels`: a spell's, by its level,
+ * `RulesDescription.tiers`), whether its list groups an entity's variants under their family (`families`: a feat's),
+ * how its row copies one (`copies`: an item's), and when its name can't change (`lockedName`: while its `flag` column
+ * holds, a generated feat's, its form saying why, `reason`). Its word is its rules' (`RulesDescription.words`), and its
+ * URL's segment the app's (`getUrlSegment`: `classes`). Not the kinds a race or a class is for (`entityKinds`).
  */
 export interface EntityKindDescription {
   copies?: EntityCopiesDescription;
@@ -43,10 +42,22 @@ export interface EntityKindDescription {
   longDescription?: boolean;
   opens: "customization" | "page" | "progression";
   partitioned?: boolean;
-  pools?: string;
+  pools?: EntityPoolsDescription;
   readOnly?: boolean;
   type: string;
   wideForm?: "fixed" | "fluid";
+}
+
+/**
+ * The pools a kind's list narrows by, one at a time: their kind (`type`: 3.5's `aptitudes`), those of them its entities
+ * are picked in (`scope`, which its list's picker searches: a feat's `feats`, a spell's `spells`), the key its list's
+ * query takes one by (`key`: `aptitudeId`), and the URL's (`param`: `aptitude`).
+ */
+export interface EntityPoolsDescription {
+  key: string;
+  param: string;
+  scope: string;
+  type: string;
 }
 
 /**
@@ -59,7 +70,8 @@ export interface EntityKindDescription {
  * - `reference`: the name of the entity of the ruleset it names (`references`: its kind, `abilities`);
  * - `flag`: a warning's "Yes" while it's `yesWhen` ("Trained Only" while a skill isn't usable untrained), "No" else;
  * - `template`: an item's template's name, or "Template" for a template itself;
- * - `pools`: the pools it's picked in, as chips (its links to them at its key: a spell's `powersAptitudesInRules`);
+ * - `pools`: the pools it's picked in, as chips by name (its links to them at its key, each its pool at `target`: a
+ *   spell's `powersAptitudesInRules`, each at `aptitudesInRule`);
  * - `text`: its text, as it is (a language's type).
  */
 export interface ListColumn {
@@ -70,6 +82,7 @@ export interface ListColumn {
   references?: string;
   share: number;
   slot?: "block" | "inline";
+  target?: string;
   unit?: string;
   yesWhen?: boolean;
 }
