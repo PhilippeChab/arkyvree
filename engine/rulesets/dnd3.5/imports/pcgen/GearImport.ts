@@ -18,7 +18,7 @@ import type PcgenNames from "./PcgenNames.ts";
 export type ImportedEntry = InventoryEntryPlan & { quantity: number };
 
 /** An entry's request to carry its item, unequipped. */
-const CARRIED = { equipped: false, location: null, weaponSets: [] };
+const CARRIED = { equipped: false, groups: [], location: null };
 
 /**
  * The gear a file holds, as inventory entries of the character with its levels: each item found in the ruleset by its
@@ -70,7 +70,7 @@ export default class GearImport {
   private placementOf(
     gear: ImportedGear,
     placement: ItemPlacementDescription,
-  ): Pick<InventoryEntryRequest, "equipped" | "location" | "weaponSets"> {
+  ): Pick<InventoryEntryRequest, "equipped" | "groups" | "location"> {
     if (gear.location === undefined) return CARRIED;
     const mapped = PCGEN_LOCATIONS.get(gear.location);
     const offered = placement.locations.map(({ location }) => location);
@@ -82,7 +82,7 @@ export default class GearImport {
       );
       return CARRIED;
     }
-    return { equipped: true, location, weaponSets: ItemPlacement.isHand(location) ? [0] : [] };
+    return { equipped: true, groups: ItemPlacement.isHand(location) ? [0] : [], location };
   }
 
   /**

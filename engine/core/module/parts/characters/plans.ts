@@ -37,12 +37,12 @@ export interface FieldsPlan {
  */
 export interface InventoryEntryPlan {
   equipped: boolean;
+  /** The groups it's held in, stored from 0 (3.5's weapon sets a hand holds it in): none outside them */
+  groups: number[];
   itemId: string;
   location: ItemLocation | null;
   remainingCharges: number | null;
   totalCharges: number | null;
-  /** The weapon sets a hand holds it in, stored from 0: none outside the hands */
-  weaponSets: number[];
 }
 
 /** What a picked link's edit writes: the entities picked, past those the character has without picking them. */

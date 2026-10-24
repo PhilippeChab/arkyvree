@@ -90,6 +90,9 @@ export interface InventoryWords {
   create: string;
   createHint: string;
   editTitle: string;
+  group: string;
+  groupRequired: string;
+  groups: string;
   handSlot: string;
   inventory: string;
   item: string;
@@ -109,9 +112,6 @@ export interface InventoryWords {
   unknown: string;
   updated: string;
   warnings: string;
-  weaponSet: string;
-  weaponSetRequired: string;
-  weaponSets: string;
 }
 
 /**

@@ -37,7 +37,6 @@
   "engine/core/cow",
   "engine/core/customizations",
   "engine/core/fields",
-  "engine/core/module/parts/characters",
   "engine/core/module/parts/content",
   "engine/core/module/parts/entities",
   "engine/core/module/parts/ruleset",

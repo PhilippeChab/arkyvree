@@ -192,9 +192,9 @@ export default abstract class CharactersPart<D extends Descriptions> {
   protected abstract planNewFields(fields: FieldsRequest): { columns: CharacterColumns };
 
   /**
-   * Where an inventory entry's add or edit (`change`) holds its item: whether it's equipped, where, and its weapon set
-   * in a hand. Refused when the item can't be equipped where it's asked to be, its requirements checked unless
-   * `force`d.
+   * Where an inventory entry's add or edit (`change`) holds its item: whether it's equipped, where, and its groups
+   * (3.5's weapon sets, in a hand). Refused when the item can't be equipped where it's asked to be, its requirements
+   * checked unless `force`d.
    */
   protected abstract planPlacement(
     view: RulesetView,
@@ -211,9 +211,9 @@ export default abstract class CharactersPart<D extends Descriptions> {
   abstract describeCreation(view: RulesetView, link: string): ScoresCreation;
 
   /**
-   * Why a placement (`query`: its location, in its weapon set for a hand) can't take one more item of the character's,
-   * if it can't: the entry in the way, the entry placed (none for a new one) aside. What the inventory dialogs warn of,
-   * and an add refuses.
+   * Why a placement (`query`: its location, in its groups: 3.5's weapon sets, for a hand) can't take one more item of
+   * the character's, if it can't: the entry in the way, the entry placed (none for a new one) aside. What the inventory
+   * dialogs warn of, and an add refuses.
    */
   abstract describePlacement(view: RulesetView, character: CharacterInput, query: PlacementQuery): PlacementDescription;
 

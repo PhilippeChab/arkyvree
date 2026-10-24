@@ -191,5 +191,5 @@ export type DescribedInventoryEntry<T, X = unknown> = T &
     item: ViewEntities["items"] & { modifiers: Modifier[]; properties: Property[]; requirements: Requirement[] };
   };
 
-/** An inventory entry, as where it's held reads it: whether it's equipped, where, and its weapon sets in a hand. */
-export type HeldInventoryEntry = Pick<InventoryEntryPlan, "equipped" | "location" | "weaponSets">;
+/** An inventory entry, as where it's held reads it: whether it's equipped, where, and its groups (3.5's weapon sets). */
+export type HeldInventoryEntry = Pick<InventoryEntryPlan, "equipped" | "groups" | "location">;

@@ -70,7 +70,7 @@ describe("COW inventory item details", () => {
         costGp: "30.00",
         type: "Weapon",
       });
-      expect(entry).toMatchObject({ quantity: 2, equipped: true, location: "Main Hand", weaponSets: [0] });
+      expect(entry).toMatchObject({ quantity: 2, equipped: true, location: "Main Hand", groups: [0] });
       expect(entry.item.properties.length).toBeGreaterThan(0);
 
       // Reading a fork does not rewrite the pick or change the parent item.

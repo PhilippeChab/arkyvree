@@ -1,23 +1,23 @@
 import { describe, expect, test } from "bun:test";
 
 import {
+  groupChoices,
   pickedLocation,
   placementPayload,
   type PlacementProfile,
-  weaponSetChoices,
 } from "@/client/src/components/characters/sections/equipment.ts";
 
 /** An item's placement, as its ruleset says: one that comes with `charges` (none for an item without charges). */
 function profile(charges: number | null): PlacementProfile {
-  return { charges, hand: false, locations: [{ location: "Neck", weaponSet: false }], slot: "Neck" };
+  return { charges, hand: false, locations: [{ location: "Neck", grouped: false }], slot: "Neck" };
 }
 
 describe("An inventory placement", () => {
-  const form = { selectedItem: null, quantity: 2, weaponSets: [2], totalCharges: 5, remainingCharges: 3 };
+  const form = { selectedItem: null, quantity: 2, groups: [2], totalCharges: 5, remainingCharges: 3 };
 
   test("sends each of its weapon sets stored from 0", () => {
-    expect(placementPayload({ ...form, location: "Off Hand", weaponSets: [1, 2] }, null)).toMatchObject({
-      weaponSets: [0, 1],
+    expect(placementPayload({ ...form, location: "Off Hand", groups: [1, 2] }, null)).toMatchObject({
+      groups: [0, 1],
     });
   });
 
@@ -28,7 +28,7 @@ describe("An inventory placement", () => {
       location: "Main Hand",
       totalCharges: null,
       remainingCharges: null,
-      weaponSets: [1],
+      groups: [1],
     });
     expect(placementPayload({ ...form, location: "none" }, null)).toMatchObject({ equipped: false, location: null });
   });
@@ -47,10 +47,10 @@ describe("An inventory placement", () => {
 
 describe("The weapon sets a held item is offered", () => {
   test("are the sets the inventory and the form hold, as shown from 1, then a new one past them", () => {
-    const entries = [{ weaponSets: [0] }, { weaponSets: [] }, { weaponSets: [0, 2] }];
-    expect(weaponSetChoices(entries, [1])).toEqual([1, 3, 4]);
-    expect(weaponSetChoices(entries, [5])).toEqual([1, 3, 5, 6]);
-    expect(weaponSetChoices([], [])).toEqual([1]);
+    const entries = [{ groups: [0] }, { groups: [] }, { groups: [0, 2] }];
+    expect(groupChoices(entries, [1])).toEqual([1, 3, 4]);
+    expect(groupChoices(entries, [5])).toEqual([1, 3, 5, 6]);
+    expect(groupChoices([], [])).toEqual([1]);
   });
 });
 
@@ -59,8 +59,8 @@ describe("A picked item's location", () => {
     charges: null,
     hand: true,
     locations: [
-      { location: "Main Hand", weaponSet: true },
-      { location: "Off Hand", weaponSet: true },
+      { location: "Main Hand", grouped: true },
+      { location: "Off Hand", grouped: true },
     ],
     slot: null,
   };

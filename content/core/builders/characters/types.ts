@@ -29,9 +29,9 @@ export interface CharacterSeed {
 /** An item in a seeded character's inventory, by name: how many, and where it's equipped. */
 export interface InventorySeed {
   equipped?: boolean;
+  /** The groups it's held in (3.5's weapon sets a hand holds it in), from 0 */
+  groups?: number[];
   location?: ItemLocation;
   name: string;
   quantity: number;
-  /** The weapon sets a hand holds it in, from 0 */
-  weaponSets?: number[];
 }

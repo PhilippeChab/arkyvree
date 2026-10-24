@@ -143,9 +143,9 @@ const INVENTORY_WORDS: InventoryWords = {
   unknown: "Unknown Item",
   updated: "Item updated",
   warnings: "Equipment Warnings",
-  weaponSet: "Set",
-  weaponSetRequired: "Weapon set is required",
-  weaponSets: "Weapon Sets",
+  group: "Set",
+  groupRequired: "Weapon set is required",
+  groups: "Weapon Sets",
 };
 
 /** What a weapon set with no weapon says, and a sheet with no weapon set. */

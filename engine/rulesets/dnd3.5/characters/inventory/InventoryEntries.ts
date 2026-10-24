@@ -24,14 +24,14 @@ export default class InventoryEntries {
    * Where an entry is held, as it stores it: only an equipped item has a location, only a held one sets, each once, in
    * order.
    */
-  private static placementOf({ equipped, location, weaponSets }: InventoryEntryRequest): HeldInventoryEntry {
+  private static placementOf({ equipped, groups, location }: InventoryEntryRequest): HeldInventoryEntry {
     const resolvedLocation = equipped ? (location ?? null) : null;
     const resolvedEquipped = !!resolvedLocation;
     const held = resolvedEquipped && ItemPlacement.isHand(resolvedLocation);
     return {
       equipped: resolvedEquipped,
       location: resolvedLocation,
-      weaponSets: held ? [...new Set(weaponSets)].sort((a, b) => a - b) : [],
+      groups: held ? [...new Set(groups)].sort((a, b) => a - b) : [],
     };
   }
 
@@ -41,13 +41,13 @@ export default class InventoryEntries {
   }
 
   /**
-   * Why `location` (in each of `weaponSets`, stored from 0, for a hand) can't take one more item of the character's, if
+   * Why `location` (in each of its `groups`, 3.5's weapon sets, stored from 0, for a hand) can't take one more item of the character's, if
    * it can't: the entry in the way, named with its set, the entry placed (`entryId`, none for a new one) aside.
    */
   static describePlacement(
     view: RulesetView,
     character: CharacterInput,
-    { entryId, location, weaponSets }: PlacementQuery,
+    { entryId, groups: weaponSets, location }: PlacementQuery,
   ): PlacementDescription {
     return { warning: new Equipping(view, character).describeConflict(entryId, location, weaponSets) };
   }
@@ -64,7 +64,7 @@ export default class InventoryEntries {
     force: boolean,
   ): HeldInventoryEntry {
     const { request } = change;
-    const { equipped, location, weaponSets } = request;
+    const { equipped, groups: weaponSets, location } = request;
     if (equipped && location) {
       const entry =
         "item" in change

@@ -191,7 +191,7 @@ export default class CharacterResponse {
       quantity: entry.quantity,
       equipped: entry.equipped,
       location: entry.location,
-      weaponSets: entry.weaponSets,
+      groups: entry.groups,
       slotLabel: ItemPlacement.describeSlot(entry),
       totalCharges: entry.totalCharges,
       remainingCharges: entry.remainingCharges,

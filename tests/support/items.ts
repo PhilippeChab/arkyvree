@@ -13,10 +13,10 @@ import { getSeedCtx, uniqueId } from "./seed.ts";
 /** An inventory entry a test gives a character: a seeded item by its name, or an item's id, equipped by default. */
 export interface Carried {
   equipped?: boolean;
+  groups?: number[];
   item: string;
   location?: ItemLocation;
   quantity?: number;
-  weaponSets?: number[];
 }
 
 /** Replaces the character's inventory with these entries (`Carried`): seeded items by name, or item ids. */

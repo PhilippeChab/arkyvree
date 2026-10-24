@@ -45,8 +45,8 @@ export default {
   ],
   // Druids know all spells on their list — no spell picks needed
   inventory: [
-    { name: "Scimitar", quantity: 1, equipped: true, location: "Main Hand", weaponSets: [0] },
+    { name: "Scimitar", quantity: 1, equipped: true, location: "Main Hand", groups: [0] },
     { name: "Hide Armor", quantity: 1, equipped: true, location: "Torso" },
-    { name: "Light Wooden Shield", quantity: 1, equipped: true, location: "Off Hand", weaponSets: [0] },
+    { name: "Light Wooden Shield", quantity: 1, equipped: true, location: "Off Hand", groups: [0] },
   ],
 } satisfies CharacterSeed;

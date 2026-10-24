@@ -10,7 +10,7 @@ import { rpc } from "@/client/src/services/rpc.ts";
 import type { EntityKinds } from "@/engine/index.ts";
 import type { ItemLocation } from "@/shared/enums.ts";
 
-import { storedWeaponSets } from "./weaponSets.ts";
+import { storedGroups } from "./groups.ts";
 
 /** A ruleset's item, as the add dialog lists it: its name and description, and its cost and weight as they're read. */
 export interface RulesetItem {
@@ -42,17 +42,17 @@ export function characterInventoryQuery(characterId: string) {
 }
 
 /**
- * Why a slot (`location`, in each of `weaponSets` as the form shows them, from 1) can't take one more of the
+ * Why a slot (`location`, in each of `groups` as the form shows them, from 1) can't take one more of the
  * character's items, the entry edited (`entryId`) aside: the warning an inventory dialog shows, or null. Skipped while
  * no slot is picked.
  */
 export function inventoryPlacementQuery(
   characterId: string,
   location: ItemLocation | "none",
-  weaponSets: number[],
+  groups: number[],
   entryId?: string,
 ) {
-  const query = { entryId, location, weaponSets: storedWeaponSets(weaponSets).join(",") };
+  const query = { entryId, location, groups: storedGroups(groups).join(",") };
   return queryOptions({
     queryKey: QUERY_KEYS.characters.inventoryPlacement(characterId, query),
     queryFn:

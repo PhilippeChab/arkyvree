@@ -16,9 +16,9 @@ const NO_SHIELD_HELD = { target: "combat.shield.held", operator: "equal", value:
 
 /** The loadouts of the issue (#236): a longsword and a heavy steel shield in the first set, a greatsword in the second. */
 const SWORD_AND_BOARD: Carried[] = [
-  { item: "Longsword", location: "Main Hand", weaponSets: [0] },
-  { item: "Heavy Steel Shield", location: "Off Hand", weaponSets: [0] },
-  { item: "Greatsword", location: "Two Handed", weaponSets: [1] },
+  { item: "Longsword", location: "Main Hand", groups: [0] },
+  { item: "Heavy Steel Shield", location: "Off Hand", groups: [0] },
+  { item: "Greatsword", location: "Two Handed", groups: [1] },
 ];
 
 /** Each weapon set's armor class totals, by the set's key (stored from 0). */
@@ -73,7 +73,7 @@ describe("a weapon set's armor class", () => {
 
   test("is a set's of a shield held alone, and one loadout's, with no shield, for a character with no weapon set", async () => {
     const shieldAlone = await buildCarrying("Bjorn Ironhand", [
-      { item: "Heavy Steel Shield", location: "Off Hand", weaponSets: [1] },
+      { item: "Heavy Steel Shield", location: "Off Hand", groups: [1] },
     ]);
     // The first set strikes unarmed; the second holds the shield and no weapon
     expect(armorClasses(shieldAlone)).toEqual({
@@ -88,8 +88,8 @@ describe("a weapon set's armor class", () => {
   test("takes a magic shield's enhancement in the set that holds it alone", async () => {
     // A +1 heavy steel shield, whose +1 is its item's modifier on the shield bonus
     const bjorn = await buildCarrying("Bjorn Ironhand", [
-      { item: "Absorbing Shield", location: "Off Hand", weaponSets: [0] },
-      { item: "Greatsword", location: "Two Handed", weaponSets: [1] },
+      { item: "Absorbing Shield", location: "Off Hand", groups: [0] },
+      { item: "Greatsword", location: "Two Handed", groups: [1] },
     ]);
     const { weaponsets } = bjorn.components.combat.getCombat();
     expect([weaponsets["0"].ac.shield, weaponsets["1"].ac.shield]).toEqual([3, 0]);
@@ -103,8 +103,8 @@ describe("a weapon set's armor class", () => {
     });
     // The same shield carried in two sets: an entry each
     const bjorn = await buildCarrying("Bjorn Ironhand", [
-      { item: "Heavy Steel Shield", location: "Off Hand", weaponSets: [0] },
-      { item: "Heavy Steel Shield", location: "Off Hand", weaponSets: [1] },
+      { item: "Heavy Steel Shield", location: "Off Hand", groups: [0] },
+      { item: "Heavy Steel Shield", location: "Off Hand", groups: [1] },
     ]);
     const { weaponsets } = bjorn.components.combat.getCombat();
     expect([weaponsets["0"].ac.shield, weaponsets["1"].ac.shield]).toEqual([3, 3]);
@@ -112,8 +112,8 @@ describe("a weapon set's armor class", () => {
 
   test("gives what reads the shield bonus outside a set the greatest set's, a magic shield's enhancement included", async () => {
     const bjorn = await buildCarrying("Bjorn Ironhand", [
-      { item: "Absorbing Shield", location: "Off Hand", weaponSets: [0] },
-      { item: "Greatsword", location: "Two Handed", weaponSets: [1] },
+      { item: "Absorbing Shield", location: "Off Hand", groups: [0] },
+      { item: "Greatsword", location: "Two Handed", groups: [1] },
     ]);
     expect(bjorn.components.combat.getCombat().ac.shield).toBe(3);
     expect(bjorn.areRequirementsMet(atLeast("combat.ac.shield", 3))).toBe(true);
@@ -154,7 +154,7 @@ describe("a weapon set's armor class", () => {
   test("gives a monk his AC bonus in each set holding no shield, though another set holds one", async () => {
     // Monk 3: DEX 16 (+3), WIS 16 (+3); a light steel shield, +1, in the second set
     const zen = await buildCarrying("Zen Whitepetal", [
-      { item: "Light Steel Shield", location: "Off Hand", weaponSets: [1] },
+      { item: "Light Steel Shield", location: "Off Hand", groups: [1] },
     ]);
     const { weaponsets } = zen.components.combat.getCombat();
     expect(weaponsets["0"].ac).toMatchObject({ misc: 3, shield: 0, total: 16 });
@@ -169,8 +169,8 @@ describe("a weapon set's armor class", () => {
     await createRaceModifier(row, { target: "combat.ac.deflection", value: "1" }, [NO_SHIELD_HELD]);
     await createRaceModifier(row, { target: "combat.speed.base", value: "10" }, [NO_SHIELD_HELD]);
     const bjorn = await buildCarrying("Bjorn Ironhand", [
-      { item: "Longsword", location: "Main Hand", weaponSets: [0] },
-      { item: "Heavy Steel Shield", location: "Off Hand", weaponSets: [1] },
+      { item: "Longsword", location: "Main Hand", groups: [0] },
+      { item: "Heavy Steel Shield", location: "Off Hand", groups: [1] },
     ]);
     const { weaponsets, speed } = bjorn.components.combat.getCombat();
     expect([weaponsets["0"].ac.deflection, weaponsets["1"].ac.deflection]).toEqual([1, 0]);
@@ -204,9 +204,9 @@ describe("a weapon set's attacks", () => {
     const gear = async (name: string) => {
       const { weaponsets } = (
         await buildCarrying(name, [
-          { item: "Dagger", location: "Main Hand", weaponSets: [0] },
-          { item: "Dagger", location: "Main Hand", weaponSets: [1] },
-          { item: "Tower Shield", location: "Off Hand", weaponSets: [1] },
+          { item: "Dagger", location: "Main Hand", groups: [0] },
+          { item: "Dagger", location: "Main Hand", groups: [1] },
+          { item: "Tower Shield", location: "Off Hand", groups: [1] },
         ])
       ).components.combat.getCombat();
       return [weaponsets["0"].mainhand!.tohit.gearpenalty, weaponsets["1"].mainhand!.tohit.gearpenalty];
@@ -232,9 +232,9 @@ describe("a weapon set's attacks", () => {
     invalidateSeededRuleset((await getSeedCtx()).rulesetId);
     const lyra = await buildCarrying("Lyra Shadowstep", [
       { item: charm.id, location: "Neck" },
-      { item: "Rapier", location: "Main Hand", weaponSets: [0] },
-      { item: "Heavy Steel Shield", location: "Off Hand", weaponSets: [0] },
-      { item: "Rapier", location: "Main Hand", weaponSets: [1] },
+      { item: "Rapier", location: "Main Hand", groups: [0] },
+      { item: "Heavy Steel Shield", location: "Off Hand", groups: [0] },
+      { item: "Rapier", location: "Main Hand", groups: [1] },
     ]);
     const { weaponsets } = lyra.components.combat.getCombat();
     expect([weaponsets["0"].mainhand!.tohit.strength, weaponsets["1"].mainhand!.tohit.strength]).toEqual([3, 5]);
@@ -245,8 +245,8 @@ describe("the skills", () => {
   test("take the check penalty of the worst set's shield, a shield in any set weighing on them", async () => {
     // A heavy steel shield (-2) in the first set, a tower shield (-10) in the second: Climb takes the tower's alone
     const bjorn = await buildCarrying("Bjorn Ironhand", [
-      { item: "Heavy Steel Shield", location: "Off Hand", weaponSets: [0] },
-      { item: "Tower Shield", location: "Off Hand", weaponSets: [1] },
+      { item: "Heavy Steel Shield", location: "Off Hand", groups: [0] },
+      { item: "Tower Shield", location: "Off Hand", groups: [1] },
     ]);
     expect(bjorn.components.skills.getSkills().climb.weight).toBe(10);
   });
@@ -255,9 +255,9 @@ describe("the skills", () => {
 describe("an entry held in several weapon sets", () => {
   /** A longsword in the first set, a heavy mace in the second, one heavy steel shield in both, a dagger off hand in the first. */
   const SHARED_SHIELD: Carried[] = [
-    { item: "Longsword", location: "Main Hand", weaponSets: [0] },
-    { item: "Heavy Mace", location: "Main Hand", weaponSets: [1] },
-    { item: "Heavy Steel Shield", location: "Off Hand", weaponSets: [0, 1] },
+    { item: "Longsword", location: "Main Hand", groups: [0] },
+    { item: "Heavy Mace", location: "Main Hand", groups: [1] },
+    { item: "Heavy Steel Shield", location: "Off Hand", groups: [0, 1] },
   ];
 
   test("counts in each set's AC, touch and flat-footed, and its attacks", async () => {
@@ -279,8 +279,8 @@ describe("an entry held in several weapon sets", () => {
 
   test("is a weapon in each set's hand, which fights two-weapon in the set that holds another", async () => {
     const bjorn = await buildCarrying("Bjorn Ironhand", [
-      { item: "Longsword", location: "Main Hand", weaponSets: [0, 1] },
-      { item: "Dagger", location: "Off Hand", weaponSets: [0] },
+      { item: "Longsword", location: "Main Hand", groups: [0, 1] },
+      { item: "Dagger", location: "Off Hand", groups: [0] },
     ]);
     const { weaponsets } = bjorn.components.combat.getCombat();
     expect([weaponsets["0"].mainhand!.name, weaponsets["1"].mainhand!.name]).toEqual(["Longsword", "Longsword"]);
@@ -301,7 +301,7 @@ describe("the sheet", () => {
   test("lists each weapon set's AC, touch and flat-footed beside what it holds and its attacks, a shield alone too", async () => {
     const bjorn = await buildCarrying("Bjorn Ironhand", [
       ...SWORD_AND_BOARD,
-      { item: "Light Wooden Shield", location: "Off Hand", weaponSets: [2] },
+      { item: "Light Wooden Shield", location: "Off Hand", groups: [2] },
     ]);
     const { weaponSets, hasWeaponSets } = CombatSheet.describe(bjorn.components.combat);
     expect(hasWeaponSets).toBe(true);

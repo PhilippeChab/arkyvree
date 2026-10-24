@@ -8,16 +8,16 @@ import { LOCATION_OPTIONS } from "@/shared/enums.ts";
 
 const entryParams = characterIdParam.extend({ entryId: z.string().uuid() });
 
-/** Comma-separated weapon sets, stored from 0: what isn't one is dropped (an empty string is none). */
-const heldSetList = z.string().transform((value) =>
+/** The groups an entry is held in, stored from 0 (3.5's weapon sets a hand holds it in): none outside them. */
+const groupIndexes = z.array(z.number().int().min(0)).default([]);
+
+/** Comma-separated groups (3.5's weapon sets), stored from 0: what isn't one is dropped (an empty string is none). */
+const groupIndexList = z.string().transform((value) =>
   value
     .split(",")
     .filter((set) => /^\d+$/.test(set))
     .map(Number),
 );
-
-/** The weapon sets a hand holds an entry in, stored from 0: none outside the hands. */
-const heldSets = z.array(z.number().int().min(0)).default([]);
 
 export default new Hono<SessionContext>()
   .get("/:characterId", validate("param", characterIdParam), async (c) => {
@@ -32,19 +32,19 @@ export default new Hono<SessionContext>()
       z.object({
         entryId: z.string().uuid().optional(),
         location: z.enum(LOCATION_OPTIONS),
-        weaponSets: heldSetList,
+        groups: groupIndexList,
       }),
     ),
     async (c) => {
       const { characterId } = c.req.valid("param");
-      const { entryId, location, weaponSets } = c.req.valid("query");
+      const { entryId, location, groups } = c.req.valid("query");
       return c.json(
         await CharacterInventoryService.getPlacement(
           c.var.requestSession,
           characterId,
           entryId ?? null,
           location,
-          weaponSets,
+          groups,
         ),
         200,
       );
@@ -62,13 +62,13 @@ export default new Hono<SessionContext>()
         location: z.enum(LOCATION_OPTIONS).nullable().default(null),
         totalCharges: z.number().int().min(0).nullable().default(null),
         remainingCharges: z.number().int().min(0).nullable().default(null),
-        weaponSets: heldSets,
+        groups: groupIndexes,
         force: z.boolean().default(false),
       }),
     ),
     async (c) => {
       const { characterId } = c.req.valid("param");
-      const { itemId, quantity, equipped, location, totalCharges, remainingCharges, weaponSets, force } =
+      const { itemId, quantity, equipped, location, totalCharges, remainingCharges, groups, force } =
         c.req.valid("json");
       return c.json(
         await CharacterInventoryService.addItem(
@@ -80,7 +80,7 @@ export default new Hono<SessionContext>()
           location,
           totalCharges,
           remainingCharges,
-          weaponSets,
+          groups,
           force,
         ),
         201,
@@ -98,14 +98,14 @@ export default new Hono<SessionContext>()
         location: z.enum(LOCATION_OPTIONS).nullable().default(null),
         totalCharges: z.number().int().min(0).nullable().default(null),
         remainingCharges: z.number().int().min(0).nullable().default(null),
-        weaponSets: heldSets,
+        groups: groupIndexes,
         force: z.boolean().default(false),
         updatedAt: z.string().optional(),
       }),
     ),
     async (c) => {
       const { characterId, entryId } = c.req.valid("param");
-      const { quantity, equipped, location, totalCharges, remainingCharges, weaponSets, force, updatedAt } =
+      const { quantity, equipped, location, totalCharges, remainingCharges, groups, force, updatedAt } =
         c.req.valid("json");
       return c.json(
         await CharacterInventoryService.updateItem(
@@ -117,7 +117,7 @@ export default new Hono<SessionContext>()
           location,
           totalCharges,
           remainingCharges,
-          weaponSets,
+          groups,
           force,
           updatedAt,
         ),

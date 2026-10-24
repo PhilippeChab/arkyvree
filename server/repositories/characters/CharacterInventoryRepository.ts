@@ -11,7 +11,7 @@ import type { CharacterInventory } from "@/shared/relations.ts";
 /** An inventory entry as a write gives it: its item, where it's held, its weapon sets, its charges. */
 type InventoryValues = Partial<Omit<CharacterInventory, "createdAt" | "deletedAt" | "updatedAt">>;
 
-/** An entry's columns: its own, its location as the module's value, and its groups as its weapon sets. */
+/** An entry's columns: its own, its location as the module's value, and its groups. */
 const COLUMNS = {
   createdAt: inventoryInCharacter.createdAt,
   updatedAt: inventoryInCharacter.updatedAt,
@@ -24,20 +24,18 @@ const COLUMNS = {
   remainingCharges: inventoryInCharacter.remainingCharges,
   equipped: inventoryInCharacter.equipped,
   location: inventoryInCharacter.location,
-  weaponSets: inventoryInCharacter.groups,
+  groups: inventoryInCharacter.groups,
 };
 
-/** An entry's row to write: its weapon sets as its groups, its item's type its item's own. */
+/** An entry's row to write: its item's type its item's own. */
 function stored(values: InventoryValues) {
-  const { weaponSets, ...rest } = values;
   return {
-    ...rest,
-    ...(weaponSets !== undefined ? { groups: weaponSets } : {}),
+    ...values,
     ...(values.itemId !== undefined ? { itemType: StoredCharacters.buildTypeOf(values.itemId) } : {}),
   };
 }
 
-/** A character's inventory: the items it holds, each entry where it's worn or held, in its weapon sets. */
+/** A character's inventory: the items it holds, each entry where it's worn or held, in its groups (3.5's weapon sets). */
 class CharacterInventoryRepository extends include(BaseRepository<typeof inventoryInCharacter>, GuardsStaleEdits) {
   constructor() {
     super(inventoryInCharacter);
