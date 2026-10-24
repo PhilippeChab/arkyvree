@@ -133,11 +133,13 @@ describe("rules", () => {
       ["powers", "fixed"],
       ["items", "fluid"],
     ]);
-    // A class's page links it to its class skills
+    // A class's page links it to its class skills, through the join their activities name
     expect(kind("klasses")?.links).toEqual({
+      join: "klass_skills",
       key: "skillId",
       owner: "klassId",
       target: "skillsInRule",
+      targetName: "skillName",
       type: "skills",
     });
     expect(kind("feats")?.lockedName).toEqual({ flag: "generated", reason: "A generated feat keeps its name" });

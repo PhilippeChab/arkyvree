@@ -244,6 +244,23 @@ describe("An activity", () => {
       // An older activity's (its data names no base rules), in every rules' words
       formatNotificationMessage("updatePower", { entityName: "Blast" }, RULES),
     ]).toEqual(["Someone deleted spell Fireball", "Ann created class Fighter", "Someone updated spell Blast"]);
+    // What an entity holds, in its rules' terms: its levels, its progression, its links, an older one's by every rules'
+    const dnd35 = { baseRules: "Dungeons & Dragons: 3.5", actorName: "Ann", entityName: "Fighter" };
+    expect([
+      formatNotificationMessage("createKlassLevel", dnd35, RULES),
+      formatNotificationMessage("updateKlassLevel", { actorName: "Ann" }, RULES),
+      formatNotificationMessage("deleteKlassLevel", dnd35, RULES),
+      formatNotificationMessage("updateKlassProgression", dnd35, RULES),
+      formatNotificationMessage("addKlassSkill", { ...dnd35, skillName: "Climb" }, RULES),
+      formatNotificationMessage("removeKlassSkill", { actorName: "Ann" }, RULES),
+    ]).toEqual([
+      "Ann added a level to Fighter",
+      "Ann updated a level of a class",
+      "Ann removed a level from Fighter",
+      "Ann updated the progression of Fighter",
+      "Ann added Climb to Fighter",
+      "Ann removed a skill from a class",
+    ]);
   });
 
   test("details the fields it changed, its level, modifier and property", () => {

@@ -95,7 +95,14 @@ export const RULES: RulesDeclaration = {
     {
       fieldHelp: true,
       icon: "accessibility",
-      links: { key: "skillId", owner: "klassId", target: "skillsInRule", type: "skills" },
+      links: {
+        join: "klass_skills",
+        key: "skillId",
+        owner: "klassId",
+        target: "skillsInRule",
+        targetName: "skillName",
+        type: "skills",
+      },
       opens: "progression",
       partitioned: true,
       type: "klasses",

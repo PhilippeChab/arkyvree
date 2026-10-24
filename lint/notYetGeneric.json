@@ -1,5 +1,4 @@
 [
-  "client/src/lib",
   "codegen/core/code",
   "content/core/builders/abilities",
   "content/core/builders/characters",

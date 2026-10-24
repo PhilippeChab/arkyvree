@@ -54,12 +54,15 @@ export interface EntityKindDescription {
  * The entities an entity's page links it to through the join it edits (`/links`: a class's skills), on a tab of their
  * own: their kind (`type`: 3.5's `skills`), the key a link holds one by (`key`: `skillId`) and where it holds it whole
  * (`target`: `skillsInRule`), and the key it holds the entity it links by (`owner`: `klassId`, a copy's where an edit of
- * an inherited one copied it).
+ * an inherited one copied it); the join its links are (`join`: `klass_skills`, which names their activities:
+ * `addKlassSkill`), and where an activity of one holds the linked entity's name (`targetName`: `skillName`).
  */
 export interface EntityLinksDescription {
+  join: string;
   key: string;
   owner: string;
   target: string;
+  targetName: string;
   type: string;
 }
 
