@@ -1,6 +1,5 @@
+import { useRulesetRules } from "@/client/src/hooks/index.ts";
 import type { EntityField } from "@/client/src/pages/rulesets/details/rulesetQueries.ts";
-
-import { useRulesetRules } from "./useRulesetRules.ts";
 
 /** No columns: an entity type its rules give none of its own (an ability, a feat), or while its rules load. */
 const NO_COLUMNS: readonly EntityField[] = [];

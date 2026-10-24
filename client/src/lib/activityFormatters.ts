@@ -1,4 +1,4 @@
-import type { ChangedField } from "@/shared/activity.ts";
+import { type ChangedField, getActivityName } from "@/shared/activity.ts";
 import { formatOperator } from "@/shared/customization/operators.ts";
 import { formatPropertyType } from "@/shared/customization/properties.ts";
 import { formatSegment } from "@/shared/customization/target.ts";
@@ -45,23 +45,18 @@ const NOTIFICATION_MESSAGES: Record<string, (actor: string, d: Record<string, un
   revokeCharacterContributor: (actor, d) => `${actor} revoked your access to ${d.characterName || "a character"}`,
   leaveCharacter: (actor, d) => `${actor} stopped contributing to ${d.characterName || "your character"}`,
 
-  // Ruleset content beside an entity's own change (`contentChange`): class levels and skills, customizations — create
-  createKlassLevel: (actor, d) => `${actor} added a level to ${d.entityName || "a class"}`,
-  addKlassSkill: (actor, d) => `${actor} added ${d.skillName || "a skill"} to ${d.entityName || "a class"}`,
+  // Ruleset content beside an entity's own change (`contentChange`) and what it holds (`heldChange`): customizations —
+  // create
   createModifier: (actor, d) => `${actor} added a modifier to ${d.entityName || "an entity"}`,
   createRequirement: (actor, d) => `${actor} added a requirement to ${d.entityName || "an entity"}`,
   createProperty: (actor, d) => `${actor} added a property to ${d.entityName || "an entity"}`,
 
   // Ruleset content — update
-  updateKlassLevel: (actor, d) => `${actor} updated a level of ${d.entityName || "a class"}`,
-  updateKlassProgression: (actor, d) => `${actor} updated the progression of ${d.entityName || "a class"}`,
   updateModifier: (actor, d) => `${actor} updated a modifier on ${d.entityName || "an entity"}`,
   updateRequirement: (actor, d) => `${actor} updated a requirement on ${d.entityName || "an entity"}`,
   updateProperty: (actor, d) => `${actor} updated a property on ${d.entityName || "an entity"}`,
 
   // Ruleset content — delete
-  deleteKlassLevel: (actor, d) => `${actor} removed a level from ${d.entityName || "a class"}`,
-  removeKlassSkill: (actor, d) => `${actor} removed ${d.skillName || "a skill"} from ${d.entityName || "a class"}`,
   deleteModifier: (actor, d) => `${actor} removed a modifier from ${d.entityName || "an entity"}`,
   deleteRequirement: (actor, d) => `${actor} removed a requirement from ${d.entityName || "an entity"}`,
   deleteProperty: (actor, d) => `${actor} removed a property from ${d.entityName || "an entity"}`,
@@ -106,6 +101,41 @@ function formatChange(change: ChangedField, columns: readonly Column[]): string 
   if (change.to) return `${label} set to ${shown(change.to)}`;
 
   return `${label} cleared`;
+}
+
+/**
+ * A ruleset's change to what one of its entities holds, as its notification says it, by its type, as its rules describe
+ * it (`rules`, its base rules', else every base rules'): a level of a kind another owns, an owned entity being its
+ * owner's level (3.5's `createKlassLevel`: "Ann added a level to Fighter"), the progression of a kind whose row opens it
+ * (3.5's `updateKlassProgression`), a link through a kind's join (3.5's `addKlassSkill`: "Ann added Climb to Fighter");
+ * none for another type.
+ */
+function heldChange(type: string, actor: string, d: Record<string, unknown>, rules: RulesDescriptions | undefined) {
+  const baseRules = oneOf(d.baseRules, BASE_RULES_OPTIONS);
+  const described = baseRules ? [rules?.[baseRules]] : Object.values(rules ?? {});
+  for (const each of described) {
+    if (!each) continue;
+    // What it's of: its entity's name, else its kind's word
+    const of = (kind: string) => String(d.entityName || `a ${entityTypeLabel(kind, each.words).toLowerCase()}`);
+    for (const { owner, type: owned } of each.customizationPages) {
+      if (!owner) continue;
+      const name = getActivityName(owned);
+      if (type === `create${name}`) return `${actor} added a level to ${of(owner)}`;
+      if (type === `update${name}`) return `${actor} updated a level of ${of(owner)}`;
+      if (type === `delete${name}`) return `${actor} removed a level from ${of(owner)}`;
+    }
+    for (const kind of each.kinds) {
+      if (kind.opens === "progression" && type === `update${getActivityName(kind.type)}Progression`)
+        return `${actor} updated the progression of ${of(kind.type)}`;
+      const { links } = kind;
+      if (!links) continue;
+      const target = d[links.targetName] || `a ${entityTypeLabel(links.type, each.words).toLowerCase()}`;
+      if (type === `add${getActivityName(links.join)}`) return `${actor} added ${String(target)} to ${of(kind.type)}`;
+      if (type === `remove${getActivityName(links.join)}`)
+        return `${actor} removed ${String(target)} from ${of(kind.type)}`;
+    }
+  }
+  return undefined;
 }
 
 function isChangedField(value: unknown): value is ChangedField {
@@ -194,6 +224,8 @@ export function formatNotificationMessage(type: string, data: unknown, rules?: R
 
   const formatter = NOTIFICATION_MESSAGES[type];
   if (formatter) return formatter(actorName, d);
+  const held = heldChange(type, actorName, d, rules);
+  if (held) return held;
   const change = contentChange(type, actorName, d, rules);
   if (change) return change;
 

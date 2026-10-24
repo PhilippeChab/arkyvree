@@ -1,6 +1,7 @@
 import { NAMED_LIST } from "@/engine/core/entities/index.ts";
 import type { EntityPoolsDescription, RulesDeclaration } from "@/engine/core/module/index.ts";
 import { CHARACTER_FORM } from "@/engine/rulesets/dnd3.5/characters/form.ts";
+import { CLASS_SKILL_LINKS } from "@/engine/rulesets/dnd3.5/entities/classes/classSkillLinks.ts";
 import { CLASS_COLUMNS, CLASS_LEVEL_COLUMNS, CLASS_LIST } from "@/engine/rulesets/dnd3.5/entities/classes/columns.ts";
 import { PROGRESSION } from "@/engine/rulesets/dnd3.5/entities/classes/progression.ts";
 import { FEAT_COLUMNS, FEAT_LIST } from "@/engine/rulesets/dnd3.5/entities/feats/columns.ts";
@@ -44,6 +45,16 @@ export const RULES: RulesDeclaration = {
     { label: "Player Character", value: "pc" },
     ...BONDED_KINDS.map((kind) => ({ label: kind.label, value: kind.slug })),
   ],
+  help: {
+    modifiers:
+      "Modifiers affect character attributes with operations like add, subtract, multiply. They can modify things like strength, AC, skills, etc.",
+    requirements:
+      "Requirements are conditions that entities must meet to be usable/available. Examples include character level requirements, feat prerequisites, etc.",
+    settings:
+      "The ruleset's own rules, such as the ability a character's skill points come from. A fork starts from its source's and can change them.",
+    templateExamples:
+      "[abilities.charisma.modifier], floor([classes.ranger.level] / 2), max(0, [classes.beastmaster.level] + 3)",
+  },
   kinds: [
     { icon: "face", opens: "customization", partitioned: true, type: "races" },
     { icon: "translate", opens: "page", type: "languages" },
@@ -85,7 +96,14 @@ export const RULES: RulesDeclaration = {
     {
       fieldHelp: true,
       icon: "accessibility",
-      links: { key: "skillId", owner: "klassId", target: "skillsInRule", type: "skills" },
+      links: {
+        join: CLASS_SKILL_LINKS.join,
+        key: "skillId",
+        owner: "klassId",
+        target: "skillsInRule",
+        targetName: CLASS_SKILL_LINKS.targetName,
+        type: "skills",
+      },
       opens: "progression",
       partitioned: true,
       type: "klasses",

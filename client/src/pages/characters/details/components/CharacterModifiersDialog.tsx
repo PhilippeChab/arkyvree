@@ -28,7 +28,6 @@ import {
   type ModifierFormData,
   ModifierFormFields,
   ModifierOperatorCell,
-  MODIFIERS_HELP,
   ModifierTargetCell,
   ModifierValueCell,
 } from "@/client/src/components/customization/index.ts";
@@ -39,6 +38,7 @@ import { invalidateCharacter } from "@/client/src/lib/queries.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
 import { characterModifiersQuery } from "./characterModifierQueries.ts";
+import { useCharacterRules } from "./levelUp/useCharacterRules.ts";
 
 interface CharacterModifiersDialogProps {
   characterId: string;
@@ -64,6 +64,7 @@ const MODIFIER_COLUMNS: TableColumn[] = [
 export function CharacterModifiersDialog({ open, onClose, characterId, rulesetId }: CharacterModifiersDialogProps) {
   const snackbar = useSnackbar();
   const queryClient = useQueryClient();
+  const { rules } = useCharacterRules(characterId);
 
   const [createOpen, setCreateOpen] = useState(false);
   // The modifier an edit or a delete is about, kept while its dialog fades out
@@ -164,7 +165,7 @@ export function CharacterModifiersDialog({ open, onClose, characterId, rulesetId
         }}
       >
         <DialogTitle>
-          <HelpLabel label="Manage Modifiers" help={MODIFIERS_HELP} />
+          <HelpLabel label="Manage Modifiers" help={rules?.help.modifiers ?? ""} />
         </DialogTitle>
         <DialogContent sx={{ overflowY: "auto", scrollbarGutter: "stable" }}>
           <Stack spacing={3}>

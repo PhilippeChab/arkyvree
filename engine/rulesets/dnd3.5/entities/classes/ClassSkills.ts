@@ -3,6 +3,8 @@ import { RequestIds, type RulesetView } from "@/engine/core/view/index.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type { Klass } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 
+import { CLASS_SKILL_LINKS } from "./classSkillLinks.ts";
+
 /** A class's class skills (`klass`, as the view has it): what it lists, and what assigning or removing one takes. */
 export default class ClassSkills {
   constructor(
@@ -30,8 +32,8 @@ export default class ClassSkills {
     if (this.dnd35.klassSkillsByKlass.get(this.klass.id)?.some((ks) => ks.skillId === skill.id))
       throw new RulesError("conflict", "Skill is already assigned to this class");
     return {
-      activity: { skillId: skill.id, entityName: this.klass.name, skillName: skill.name },
-      join: "klass_skills",
+      activity: { skillId: skill.id, entityName: this.klass.name, [CLASS_SKILL_LINKS.targetName]: skill.name },
+      join: CLASS_SKILL_LINKS.join,
       owner: this.klass,
       row: { skillId: skill.id },
     };
@@ -52,9 +54,9 @@ export default class ClassSkills {
         skillId: klassSkill.skillId,
         rulesetId: this.view.ruleset.id,
         entityName: this.klass.name,
-        skillName: skill?.name,
+        [CLASS_SKILL_LINKS.targetName]: skill?.name,
       },
-      join: "klass_skills",
+      join: CLASS_SKILL_LINKS.join,
       owner: this.klass,
       toId: klassSkill.skillId,
     };

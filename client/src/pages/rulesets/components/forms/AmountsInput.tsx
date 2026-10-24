@@ -3,11 +3,11 @@ import { useQuery } from "@tanstack/react-query";
 import { type FieldValues, useController } from "react-hook-form";
 
 import { LoadError, useReadOnlyFields } from "@/client/src/components/common/index.ts";
+import { useRulesetRules } from "@/client/src/hooks/index.ts";
 import { rulesetOptionsQuery } from "@/client/src/lib/queries.ts";
 import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
 import { readNumberInput, wholeNumberError } from "@/client/src/lib/validation.ts";
 import type { EntityField } from "@/client/src/pages/rulesets/details/rulesetQueries.ts";
-import { useRulesetRules } from "@/client/src/pages/rulesets/hooks/index.ts";
 
 import type { ColumnInputProps } from "./columnContext.ts";
 

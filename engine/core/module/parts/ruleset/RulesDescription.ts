@@ -54,12 +54,15 @@ export interface EntityKindDescription {
  * The entities an entity's page links it to through the join it edits (`/links`: a class's skills), on a tab of their
  * own: their kind (`type`: 3.5's `skills`), the key a link holds one by (`key`: `skillId`) and where it holds it whole
  * (`target`: `skillsInRule`), and the key it holds the entity it links by (`owner`: `klassId`, a copy's where an edit of
- * an inherited one copied it).
+ * an inherited one copied it); the join its links are (`join`: `klass_skills`, which names their activities:
+ * `addKlassSkill`), and where an activity of one holds the linked entity's name (`targetName`: `skillName`).
  */
 export interface EntityLinksDescription {
+  join: string;
   key: string;
   owner: string;
   target: string;
+  targetName: string;
   type: string;
 }
 
@@ -230,6 +233,12 @@ export interface RulesDescription {
   customizationPages: { owner?: string; ownerKey?: string; type: string }[];
   /** The kinds a race or a class is for: a player character (`pc`), and those its rules add (3.5's bonded creatures) */
   entityKinds: { label: string; value: string }[];
+  /**
+   * The help its pages give in its own terms, which name what its characters have (3.5's strength, skills, feats): a
+   * customization's tabs' (`modifiers`, `requirements`), its ruleset's Settings tab's (`settings`), and a condition's
+   * template's examples of paths (`templateExamples`)
+   */
+  help: { modifiers: string; requirements: string; settings: string; templateExamples: string };
   /**
    * The entity kinds its rulesets hold (races, feats), in the order their ruleset's page shows them as its tabs; not
    * the kinds a race or a class is for (`entityKinds`)

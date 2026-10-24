@@ -2,8 +2,8 @@ import { LevelsIcon, UsesIcon } from "@/client/src/components/icons/index.ts";
 import type { EntityLinksDescription, ProgressionCounts, RulesDescription } from "@/client/src/lib/queries.ts";
 import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
 import {
-  CUSTOMIZATION_TABS,
   type CustomizationSection,
+  describeCustomizationTabs,
 } from "@/client/src/pages/rulesets/customization/sections/index.ts";
 import { classKindOf, kindIconOf } from "@/client/src/pages/rulesets/details/classes/classKind.ts";
 import {
@@ -28,11 +28,13 @@ const CUSTOMIZATION_SECTIONS: Record<CustomizationSection, ClassTab["Section"]> 
   requirements: ClassRequirementsSection,
 };
 
-/** The tabs that customize a class, its page's last: `CUSTOMIZATION_TABS`, each showing the class's own. */
-export const CLASS_CUSTOMIZATION_TABS: ClassTab[] = CUSTOMIZATION_TABS.map((tab) => ({
-  ...tab,
-  Section: CUSTOMIZATION_SECTIONS[tab.key],
-}));
+/**
+ * The tabs that customize a class, its page's last, their help its rules' (`rules`): `describeCustomizationTabs`'s,
+ * each showing the class's own.
+ */
+export function describeClassCustomizationTabs(rules: RulesDescription | undefined): ClassTab[] {
+  return describeCustomizationTabs(rules).map((tab) => ({ ...tab, Section: CUSTOMIZATION_SECTIONS[tab.key] }));
+}
 
 /**
  * The tabs of a class whose levels count entities on its tables (`counts`, its rules' progression's: 3.5's spells),

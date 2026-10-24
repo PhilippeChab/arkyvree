@@ -14,6 +14,5 @@ export { usePoolFilter } from "./usePoolFilter.ts";
 export { useRestorableDelete } from "./useRestorableDelete.ts";
 export { useRowPrefetch } from "./useRowPrefetch.ts";
 export { type PublishKind, useRulesetOperations } from "./useRulesetOperations.ts";
-export { useRulesetRules } from "./useRulesetRules.ts";
 export { useRulesetSection } from "./useRulesetSection.ts";
 export { useTierFilter } from "./useTierFilter.ts";

@@ -3,11 +3,12 @@ import { useRef, useState } from "react";
 import type { FieldError, RefCallBack } from "react-hook-form";
 
 import { HelpLabel } from "@/client/src/components/common/index.ts";
+import { useRulesetRules } from "@/client/src/hooks/index.ts";
 import { isValuelessOperator, type OperatorKind } from "@/shared/customization/operators.ts";
 import { extractTemplateExpression, isTemplateValue } from "@/shared/customization/templateExpression.ts";
 
 import { Crossfade } from "./Crossfade.tsx";
-import { TEMPLATE_HELP } from "./customizationHelp.ts";
+import { templateHelp } from "./customizationHelp.ts";
 import type { TargetPathOwner } from "./customizationQueries.ts";
 import { OperatorSelect } from "./OperatorSelect.tsx";
 import { PathValueInput } from "./PathValueInput.tsx";
@@ -57,6 +58,7 @@ export function ConditionFields({ kind, rulesetId, entityType, mode, fields }: C
   const { value } = values;
 
   const { target: pathInfo } = useTargetPath(rulesetId, kind, entityType, values.target);
+  const { rules } = useRulesetRules(rulesetId);
   const [templateMode, setTemplateMode] = useState(() => isTemplateValue(value));
   const [templateExpression, setTemplateExpression] = useState(() =>
     isTemplateValue(value) ? (extractTemplateExpression(value) ?? "") : "",
@@ -154,7 +156,7 @@ export function ConditionFields({ kind, rulesetId, entityType, mode, fields }: C
               onChange={(_, checked) => handleToggleTemplate(checked)}
             />
           }
-          label={<HelpLabel label="Template" help={TEMPLATE_HELP} />}
+          label={<HelpLabel label="Template" help={templateHelp(rules?.help.templateExamples)} />}
         />
         {templateMode && <TemplateExpressionToolbar expressionRef={expressionInputRef} />}
       </Stack>

@@ -1,7 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 
-import { useRules } from "@/client/src/hooks/index.ts";
 import { rulesetDetailQuery } from "@/client/src/lib/queries.ts";
+
+import { useRules } from "./useRules.ts";
 
 /**
  * What a ruleset's base rules share, as the engine describes them (its words, its entities' columns, its kinds…): none
