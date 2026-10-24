@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
-import PcgenFile from "@/engine/core/imports/pcgen/PcgenFile.ts";
 import RulesError from "@/engine/core/RulesError.ts";
+import PcgenFile from "@/engine/rulesets/dnd3.5/imports/pcgen/file/PcgenFile.ts";
 import PcgenImport from "@/engine/rulesets/dnd3.5/imports/pcgen/PcgenImport.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";

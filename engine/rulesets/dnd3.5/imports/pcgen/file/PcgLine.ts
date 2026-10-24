@@ -1,4 +1,4 @@
-import type { SourceLine } from "@/engine/core/imports/imported.ts";
+import type { SourceLine } from "@/engine/core/imports/index.ts";
 
 /** A tag of a PCGen line and its value: `CLASS:Fighter` is the tag `CLASS` of the value `Fighter`. */
 export interface PcgTag {

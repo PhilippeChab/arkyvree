@@ -1,8 +1,9 @@
-import type { ImportedGear, ImportReport } from "@/engine/core/imports/index.ts";
+import type { ImportReport } from "@/engine/core/imports/index.ts";
 import type { CharacterInput, InventoryEntryPlan, InventoryEntryRequest } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import Dnd35Characters from "@/engine/rulesets/dnd3.5/characters/Dnd35Characters.ts";
+import type { ImportedGear } from "@/engine/rulesets/dnd3.5/imports/imported.ts";
 import ItemPlacement, { type ItemPlacementDescription } from "@/engine/rulesets/dnd3.5/rules/ItemPlacement.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type { Item } from "@/engine/rulesets/dnd3.5/view/rows.ts";

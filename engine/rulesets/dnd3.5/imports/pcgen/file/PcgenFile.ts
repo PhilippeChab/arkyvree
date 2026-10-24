@@ -1,5 +1,5 @@
-import type { ImportedCharacter } from "@/engine/core/imports/imported.ts";
 import RulesError from "@/engine/core/RulesError.ts";
+import type { ImportedCharacter } from "@/engine/rulesets/dnd3.5/imports/imported.ts";
 
 import PcgFormat2 from "./PcgFormat2.ts";
 import PcgLine from "./PcgLine.ts";

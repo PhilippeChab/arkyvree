@@ -1,7 +1,8 @@
-import type { ImportedCharacter, ImportedFeat, ImportedLevel, ImportReport } from "@/engine/core/imports/index.ts";
+import type { ImportReport } from "@/engine/core/imports/index.ts";
 import type { BondedPlan, CharacterInput } from "@/engine/core/module/index.ts";
 import RulesError, { type RulesIssue } from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
+import type { ImportedCharacter, ImportedFeat, ImportedLevel } from "@/engine/rulesets/dnd3.5/imports/imported.ts";
 import ImportedLevelGains from "@/engine/rulesets/dnd3.5/imports/ImportedLevelGains.ts";
 import PicksPlacement, {
   type MatchedFeat,

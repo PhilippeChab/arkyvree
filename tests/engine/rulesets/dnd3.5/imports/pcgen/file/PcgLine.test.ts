@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import PcgLine from "@/engine/core/imports/pcgen/PcgLine.ts";
+import PcgLine from "@/engine/rulesets/dnd3.5/imports/pcgen/file/PcgLine.ts";
 
 /** A line of a file, its first. */
 function lineOf(text: string) {

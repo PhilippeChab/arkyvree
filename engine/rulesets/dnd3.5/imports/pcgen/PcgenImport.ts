@@ -1,8 +1,9 @@
-import { type ImportedCharacter, ImportReport } from "@/engine/core/imports/index.ts";
+import { ImportReport } from "@/engine/core/imports/index.ts";
 import type { AbilityScore, CharacterInput, ImportedRow, ImportOwner, ImportPlan } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import Dnd35Characters from "@/engine/rulesets/dnd3.5/characters/Dnd35Characters.ts";
+import type { ImportedCharacter } from "@/engine/rulesets/dnd3.5/imports/imported.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { MAX_CHARACTER_NAME_LENGTH, MAX_CHARACTER_NUMBER } from "@/shared/characters.ts";
 import { type Gender, GENDER_OPTIONS } from "@/shared/enums.ts";

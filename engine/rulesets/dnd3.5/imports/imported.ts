@@ -1,8 +1,10 @@
 /**
- * A character as another program's file holds it, read line by line before any ruleset matches it: what a program's
- * reader answers (`PcgenFile`'s), in the program's own names, each part with the line of the file it was read from, so
- * the import's report names what it couldn't match.
+ * A character as another program's file holds it, read line by line before the ruleset's entities match it: what a
+ * program's reader answers (`PcgenFile`'s), in the program's own names, each part with the line of the file it was read
+ * from, so the import's report names what it couldn't match.
  */
+
+import type { SourceLine } from "@/engine/core/imports/index.ts";
 
 /** An ability score as the file holds it: the program's key for the ability (`STR`) and its score. */
 export interface ImportedAbility extends SourcedPart {
@@ -122,10 +124,4 @@ export interface SourcedPart {
 /** A value the file holds, with the line it was read from. */
 export interface SourcedValue extends SourcedPart {
   value: string;
-}
-
-/** A line of the file: its number, from 1, and its text. */
-export interface SourceLine {
-  number: number;
-  text: string;
 }

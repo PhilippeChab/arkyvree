@@ -1,8 +1,8 @@
-import { PcgenFile } from "@/engine/core/imports/index.ts";
 import type { CharacterImporter, ImportDetection, ImportOwner, ImportPlan } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 
+import PcgenFile from "./file/PcgenFile.ts";
 import PcgenImport from "./PcgenImport.ts";
 
 /** PCGen's game mode of the 3.5 rules, which a file of the 3.5 rules names (`GAMEMODE:35e`). */
