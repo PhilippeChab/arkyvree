@@ -9,7 +9,7 @@ import type { Language } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { LANGUAGE_PICK_ABILITY, SPEAK_LANGUAGE_SKILL } from "@/vocabulary/dnd3.5/languages.ts";
 
-/** A language as a character's languages name it: its id, name and type. */
+/** A language as a character's languages name it: its id and name. */
 function describeLanguage({ id, name }: Language): DescribedLink {
   return { id, name };
 }

@@ -343,7 +343,8 @@ export default abstract class CharactersPart<D extends Descriptions> {
    * (`entityType`). Refused as not found when the column is no single link of the character's.
    */
   openCreationPicker(view: RulesetView, column: string, query: CreationPickQuery) {
-    const declared = this.storage.character.columns[column];
+    const { columns } = this.storage.character;
+    const declared = Object.hasOwn(columns, column) ? columns[column] : undefined;
     if (declared?.kind !== "link") throw new RulesError("not-found", `No creation pick ${column}`);
     const picker = this.openPicker(view, column, query);
     return {

@@ -85,7 +85,7 @@ export async function fillNewCharacter(page: Page, name: string) {
   // own ruleset, whose races load first).
   const rulesetId = await coreRulesetId(page);
   const races = page.waitForResponse(
-    (r) => r.url().includes("/api/characters/available-races") && r.url().includes(`rulesetId=${rulesetId}`) && r.ok(),
+    (r) => r.url().includes("/api/characters/creation/raceId") && r.url().includes(`rulesetId=${rulesetId}`) && r.ok(),
     { timeout: 10_000 },
   );
   await selectOption(page, "Ruleset", "Core SRD 3.5");

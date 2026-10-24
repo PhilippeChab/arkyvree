@@ -8,7 +8,7 @@ import { GuardsStaleEdits } from "@/server/repositories/concerns/GuardsStaleEdit
 import StoredCharacters from "@/server/repositories/stored/StoredCharacters.ts";
 import type { CharacterInventory } from "@/shared/relations.ts";
 
-/** An inventory entry as a write gives it: its item, where it's held, its weapon sets, its charges. */
+/** An inventory entry as a write gives it: its item, where it's held, its groups, its charges. */
 type InventoryValues = Partial<Omit<CharacterInventory, "createdAt" | "deletedAt" | "updatedAt">>;
 
 /** An entry's columns: its own, its location as the module's value, and its groups. */
