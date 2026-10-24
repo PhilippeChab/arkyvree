@@ -58,7 +58,7 @@ export default class RulesetData {
     cow: CowData,
     propertyTypes: PropertyTypesProvider,
     labels: Readonly<Record<string, string>>,
-    positions: Readonly<Record<string, string>> = {},
+    positions: Readonly<Record<string, string>>,
   ) {
     this.labels = labels;
     this.positions = positions;

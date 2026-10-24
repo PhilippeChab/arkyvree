@@ -13,14 +13,14 @@ export interface CowKinds {
 /**
  * The rows a ruleset's `CowData` is built from (`CowDataBuilder.build`), as stored, which the server reads as
  * `CowSources.getReads` says: its snapshots, and its source chain's, the owned entities of the owners it copied or its
- * own entities hide (`owned`: each its owner and its position in it), the chain's native namesakes of the kinds a book
+ * own entities hide (`owned`: each its kind, its owner and its position in it), the chain's native namesakes of the kinds a book
  * reprints, the ruleset's entities and its extensions' of a name both have, and the entities of the kinds a name is the
  * identity of, its own and the chain's (`identities`).
  */
 export interface CowRows {
   identities: { entityType: string; id: string; name: string; rulesetId: string }[];
   namesakes: { entityType: string; id: string; name: string; rulesetId: string }[];
-  owned: { id: string; ownerId: string; position: number }[];
+  owned: { entityType: string; id: string; ownerId: string; position: number }[];
   ownNamesakes: { entityType: string; id: string; name: string; rulesetId: string }[];
   snapshots: { entityType: string; forkedEntityId: string; rulesetId: string; sourceEntityId: string }[];
 }

@@ -18,6 +18,10 @@ export interface CharacterRoleDef {
 
 /** An entity type, and the type that owns its entities (a class level's class). */
 export interface EntityTypeDef {
+  /**
+   * The kind that owns its entities (a class level's class), none for a kind no entity owns. An owned kind's row names
+   * its owner (an `owner` column) and its position in it (a `position` column), by which its copies pair
+   */
   ownerType: string | null;
   type: string;
 }

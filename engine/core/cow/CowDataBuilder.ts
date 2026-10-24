@@ -98,7 +98,7 @@ export default class CowDataBuilder {
     if (!this.aliases.has(staleId)) this.aliases.set(staleId, id);
   }
 
-  /** The snapshot and name passes, in order. */
+  /** The snapshot, sibling and reprint passes, in order. */
   private load(rows: CowRows) {
     const allRulesetIds = [this.rulesetId, ...this.sourceChain];
 
@@ -205,16 +205,18 @@ export default class CowDataBuilder {
 
   /**
    * Owned entities' id pairs: owned entities aren't individually snapshotted, so those of each owner another stands
-   * for in the view pair by position with that owner's (3.5's class levels, by level), as overrides, so that a stored
+   * for in the view pair by position with that owner's of their kind (3.5's class levels, by level), as overrides, so that a stored
    * owned id resolves to the one the view shows: an owner a copy of the source chain overrides (an extension's copy of
    * a core class), followed to the last copy as an entity id is (the ruleset's copy of that copy), and an extension's
    * owner the ruleset's own of its name hides. One the owner standing for its owner doesn't have pairs with none.
    */
   private pairOwned(rows: CowRows) {
-    const byOwner = Map.groupBy(rows.owned, (owned) => owned.ownerId);
-    for (const [ownerId, owned] of byOwner) {
+    const key = (entityType: string, ownerId: string) => `${entityType}|${ownerId}`;
+    const byOwner = Map.groupBy(rows.owned, (owned) => key(owned.entityType, owned.ownerId));
+    for (const owned of byOwner.values()) {
+      const [{ entityType, ownerId }] = owned;
       const standingId = this.aliases.get(ownerId);
-      const standingOwned = standingId === undefined ? [] : (byOwner.get(standingId) ?? []);
+      const standingOwned = standingId === undefined ? [] : (byOwner.get(key(entityType, standingId)) ?? []);
       for (const entity of owned) {
         const standing = standingOwned.find((other) => other.position === entity.position);
         if (standing) this.override(entity.id, standing.id);

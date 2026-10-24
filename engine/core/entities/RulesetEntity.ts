@@ -302,10 +302,10 @@ export default abstract class RulesetEntity<
   }
 
   /**
-   * The fields the form of an entity it owns shows (`ownedType`'s: a class level's), as the ruleset declares them: none
-   * for a kind that owns none.
+   * The fields the form of an entity it owns of a kind (`type`: a class level's) shows, as the ruleset declares them:
+   * none for a kind it doesn't own.
    */
-  describeOwnedFields(): FormField[] {
+  describeOwnedFields(_type: string): FormField[] {
     return [];
   }
 

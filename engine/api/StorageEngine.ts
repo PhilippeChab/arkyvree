@@ -521,9 +521,14 @@ export default class StorageEngine {
   }
 
   /** An owned kind's rows (`type`: a class's levels), each its id, its owner's and its position in it (a level's). */
-  ownedPositionsOf(type: string, rows: Row[]): { id: string; ownerId: string; position: number }[] {
+  ownedPositionsOf(type: string, rows: Row[]): { entityType: string; id: string; ownerId: string; position: number }[] {
     const [owner, position] = [this.ownerColumn(type), this.positionColumn(type)];
-    return rows.map((row) => ({ id: String(row.id), ownerId: String(row[owner]), position: Number(row[position]) }));
+    return rows.map((row) => ({
+      entityType: type,
+      id: String(row.id),
+      ownerId: String(row[owner]),
+      position: Number(row[position]),
+    }));
   }
 
   /** The kinds another owns (3.5's class levels), in their declarations' order. */

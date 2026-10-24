@@ -100,7 +100,7 @@ export default class RulesetEngine {
       if (type === "rulesets") return this.module.ruleset.describeSettingsFields();
       const owner = ownerOf.get(type);
       return owner
-        ? this.entities(owner as EntityType).describeOwnedFields()
+        ? this.entities(owner as EntityType).describeOwnedFields(type)
         : this.entities(type as EntityType).describeFields();
     };
     return Object.fromEntries(PROPERTY_ENTITY_TYPES.toSorted().map((type) => [type, fieldsOf(type)])) as Record<

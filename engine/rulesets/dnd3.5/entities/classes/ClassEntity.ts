@@ -61,7 +61,7 @@ export default class ClassEntity extends RulesetEntity<
   }
 
   /** The fields a class level's form shows, as the ruleset declares them: its base attack bonus, its skill points. */
-  override describeOwnedFields() {
+  override describeOwnedFields(_type: string) {
     return CLASS_LEVEL_FIELDS.describe();
   }
 
