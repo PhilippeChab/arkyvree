@@ -35,7 +35,10 @@ export default class CharacterDescription {
       const input = byKind.get(kind);
       if (input) {
         described[kind] = {
-          ...CharacterResponse.buildBondedSheet(input.record, Dnd35CharacterBuilder.build(view, input, { master })),
+          ...CharacterResponse.buildBondedSheet(
+            input.record,
+            Dnd35CharacterBuilder.build(view, input, { parent: master }),
+          ),
           bondFeatId: CharacterDescription.bondFeatOf(master, kind),
         };
       }

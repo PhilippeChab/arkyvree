@@ -613,9 +613,8 @@ engine/
 │   │                                      their declared order)
 │   ├── entities/                          (RulesetEntity: an entity kind's steps, which a ruleset's kinds extend;
 │   │                                      CustomizationPageEntity: a kind whose page shows its customizations;
-│   │                                      ListedEntity: a kind a ruleset lists, a feat in a pool, a power on a
-│   │                                      spell list; AbilityEntity, LanguageEntity, MechanicEntity, SaveEntity:
-│   │                                      the plain kinds, which a module uses as they are)
+│   │                                      MechanicEntity: a plain kind, which a module uses as it is; NAMED_LIST:
+│   │                                      a kind's list by its name and description alone)
 │   ├── fields/                            (Field: a field's declaration, FieldSpec, its kinds and the values they
 │   │                                      read; FieldCodec: an entity's fields kept in its properties, read,
 │   │                                      written, its edit's merged, its template's overrides; FieldForms: the
@@ -693,12 +692,13 @@ engine/rulesets/
     │                                      ranks scaled to its hit dice, BondedComponent, BondedPaths)
     ├── entities/                          ← the module's `entities`: an entity kind's rules, a folder per kind
     │   ├── Dnd35Entities.ts               (each kind's class, by its table: `of`)
-    │   ├── aptitudes/ classes/ feats/ items/ powers/ races/ skills/
+    │   ├── ListedEntity.ts                (a kind a ruleset lists: a feat in a pool, a power on a spell list)
+    │   ├── abilities/ aptitudes/ classes/ feats/ items/ languages/ powers/ races/ saves/ skills/
     │   │                                  (XEntity: an entity described, what saving or deleting one writes; fields.ts:
     │   │                                  its codec, built from its vocabulary's fields, and their values;
-    │   │                                  classes/ ClassLevelEntity, ClassSkills, ClassTable: a class's parts,
-    │   │                                  which ClassEntity hands out; the abilities, languages, mechanics and
-    │   │                                  saves are core's kinds as they are)
+    │   │                                  columns.ts: its form's columns and its list's; classes/
+    │   │                                  ClassLevelEntity, ClassSkills, ClassTable: a class's parts, which
+    │   │                                  ClassEntity hands out; the mechanics are core's kind as it is)
     │   └── feats/                         (GeneratedFeats: the base of a set of feats an entity brings (featsOf),
     │                                      made in the pool a ruleset names, removed by a set that removes its
     │                                      feats; SkillFocusFeats, SpellFocusFeats: a skill's Skill Focus, a

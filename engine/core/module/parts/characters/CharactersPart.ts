@@ -416,8 +416,10 @@ export default abstract class CharactersPart<D extends Descriptions> {
     for (const [column, declared] of Object.entries(this.storage.character.columns)) {
       if (declared.kind !== "link") continue;
       const picked = request.picks[column];
-      if (picked === undefined) throw new RulesError("invalid", `A new character's ${column} is required`);
-      const entity = ids.find(this.kindOfRole(declared.role), picked);
+      const kind = this.kindOfRole(declared.role);
+      if (picked === undefined)
+        throw new RulesError("invalid", `A new character's ${view.rulesetData.labelOf(kind)} is required`);
+      const entity = ids.find(kind, picked);
       this.checkCreationPick(column, entity);
       columns[column] = (entity as { id: string }).id;
     }
