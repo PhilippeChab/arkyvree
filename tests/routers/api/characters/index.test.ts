@@ -97,6 +97,11 @@ describe("characters", () => {
       }),
     );
     expect(races.items.map((r) => r.id)).toContain(ctx.raceMap.pc["Human"]);
+    // A column that's no single link of the character's picks nothing
+    for (const column of ["name", "unknown", "constructor"]) {
+      const query = { rulesetId: ctx.rulesetId };
+      await expectStatus(characters.creation[":column"].$get({ param: { column }, query }), 404);
+    }
   });
 
   test("answers how a new character of a ruleset sets its ability scores, and refuses a ruleset that isn't", async () => {
@@ -115,6 +120,9 @@ describe("characters", () => {
     expect(creation.modifiers[15]).toBe(2);
 
     await expectStatus(characters.creation.$get({ query: { link: "abilities", rulesetId: NIL_UUID } }), 404);
+    // A link that's no scored link of the character's: a picked one, an unknown one, an object's own member
+    for (const link of ["languages", "unknown", "constructor"])
+      await expectStatus(characters.creation.$get({ query: { link, rulesetId: ctx.rulesetId } }), 404);
     await expectStatus(characters.creation.$get({ query: { link: "abilities", rulesetId: "not-an-id" } }), 400);
     await expectStatus(
       guestApi.api.characters.creation.$get({ query: { link: "abilities", rulesetId: ctx.rulesetId } }),
@@ -264,14 +272,15 @@ describe("characters", () => {
     test("refuses a score past the ruleset's bounds", async () => {
       const { abilityMap } = await getSeedCtx();
       const { id } = await postCharacter();
-      for (const score of [0, 1000])
-        {await expectStatus(
+      for (const score of [0, 1000]) {
+        await expectStatus(
           character.scores[":link"].$put({
             param: { id, link: "abilities" },
             json: { [abilityMap["Strength"]]: score },
           }),
           400,
-        );}
+        );
+      }
     });
   });
 
@@ -520,6 +529,17 @@ describe("characters", () => {
       const { api: otherApi } = await createSignedInUser();
       const other = otherApi.api.characters[":id"];
       await expectStatus(other.links[":link"].$get({ param: { id, link: "languages" }, query: {} }), 404);
+    });
+
+    test("answers a link that's no picked link of the character's as not found, its scores' edit too", async () => {
+      const { id } = await postCharacter();
+      for (const link of ["abilities", "unknown", "constructor"]) {
+        await expectStatus(character.links[":link"].$get({ param: { id, link }, query: {} }), 404);
+        await expectStatus(character.links[":link"].$put({ param: { id, link }, json: { entityIds: [] } }), 404);
+        await expectStatus(character.$put({ param: { id }, json: { links: { [link]: [] } } }), 404);
+      }
+      for (const link of ["languages", "unknown", "constructor"])
+        await expectStatus(character.scores[":link"].$put({ param: { id, link }, json: {} }), 404);
     });
   });
 

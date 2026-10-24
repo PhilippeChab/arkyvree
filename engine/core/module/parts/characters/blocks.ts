@@ -29,9 +29,9 @@ export interface EntriesBlock extends BlockHead {
  * The character's own fields (`fields`): its portrait (`portrait`, its label: the block a sheet opens with alone has
  * one), then lines of fields (`lines`, laid out a line each, side by side), the fields under them, each its own line
  * (`fields`), its picked links (`links`: each link's name, what its picker says, and the entities it has: 3.5's
- * languages), and its notes, its private ones only for a reader who reads them. A field's key is the name its edit sends it by (`FieldsRequest`); what
- * an edit says (`saved`, `failed`). A sheet opens with its first; any other reads as the sheet does. 3.5's identity; a
- * partly seen character's, its race and physical traits alone.
+ * languages), and its notes, its private ones only for a reader who reads them. A field's key is the name its edit
+ * sends it by (`FieldsRequest`); what an edit says (`saved`, `failed`). A sheet opens with its first; any other reads
+ * as the sheet does. 3.5's identity; a partly seen character's, its race and physical traits alone.
  */
 export interface FieldsBlock extends BlockHead {
   failed: string;
@@ -292,9 +292,9 @@ export type SheetBlock =
 
 /**
  * A field of a `fields` block, by its kind (its key a plain name, none of those its block's form keeps for itself:
- * `notes`, `privateNotes`, `links`): a line of text (`fixed`: never edited, its value the rules' own: a 3.5
- * character's race), a whole number at least `min` (`required`: what its edit says without one; else it may be cleared),
- * one of a select's options (none: not set), or several lines of text (`placeholder`: what it says empty).
+ * `notes`, `privateNotes`, `links`): a line of text (`fixed`: never edited, its value the rules' own: a 3.5 character's
+ * race), a whole number at least `min` (`required`: what its edit says without one; else it may be cleared), one of a
+ * select's options (none: not set), or several lines of text (`placeholder`: what it says empty).
  */
 export type SheetField = { key: string; label: string } & (
   | { fixed?: boolean; kind: "text"; value: string }

@@ -31,8 +31,8 @@ export type ImportFileDescription = InferResponseType<typeof rpc.api.characters.
 
 /**
  * How a new character of a ruleset sets its scores of a scored link (`link`: 3.5's abilities), for the entities it
- * scores: its methods and bounds only a deploy changes, and its entities are refreshed with the ruleset (its key is
- * nested under it); none until it's picked.
+ * scores: its methods and bounds only a deploy changes, and a write to the ruleset's content refreshes its entities
+ * (`invalidateRulesetEdit`); none until it's picked.
  */
 export function characterCreationQuery(rulesetId: string, link: string) {
   return queryOptions({

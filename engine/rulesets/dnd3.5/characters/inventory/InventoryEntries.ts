@@ -41,8 +41,9 @@ export default class InventoryEntries {
   }
 
   /**
-   * Why `location` (in each of its `groups`, 3.5's weapon sets, stored from 0, for a hand) can't take one more item of the character's, if
-   * it can't: the entry in the way, named with its set, the entry placed (`entryId`, none for a new one) aside.
+   * Why `location` (in each of its `groups`, 3.5's weapon sets, stored from 0, for a hand) can't take one more item of
+   * the character's, if it can't: the entry in the way, named with its set, the entry placed (`entryId`, none for a new
+   * one) aside.
    */
   static describePlacement(
     view: RulesetView,

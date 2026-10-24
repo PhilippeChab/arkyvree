@@ -35,7 +35,9 @@ function stored(values: InventoryValues) {
   };
 }
 
-/** A character's inventory: the items it holds, each entry where it's worn or held, in its groups (3.5's weapon sets). */
+/**
+ * A character's inventory: the items it holds, each entry where it's worn or held, in its groups (3.5's weapon sets).
+ */
 class CharacterInventoryRepository extends include(BaseRepository<typeof inventoryInCharacter>, GuardsStaleEdits) {
   constructor() {
     super(inventoryInCharacter);

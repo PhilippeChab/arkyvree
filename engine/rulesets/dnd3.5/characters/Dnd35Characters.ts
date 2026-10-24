@@ -58,6 +58,14 @@ export default class Dnd35Characters extends CharactersPart<Dnd35Descriptions> {
     return CharacterDescription.describePartial(...args);
   }
 
+  /**
+   * How a new character's ability scores are set (its one scored link's, `abilities`): the ruleset's abilities, the
+   * SRD's methods, the scores' bounds, each score's modifier.
+   */
+  protected override describeScores(view: RulesetView) {
+    return NewCharacters.describeCreation(Dnd35View.of(view.rulesetData));
+  }
+
   /** The languages an edit stores: a new one refused when secret, or past the room its rules give the picks. */
   protected override fitLinks(view: RulesetView, character: CharacterInput, _link: string, picks: string[]) {
     return new SpokenLanguages(view, character).plan(picks);
@@ -81,14 +89,6 @@ export default class Dnd35Characters extends CharactersPart<Dnd35Descriptions> {
   /** Where an inventory entry's add or edit holds its item: the item equipped where asked, what equipping it checks. */
   protected override planPlacement(...args: Parameters<typeof InventoryEntries.planPlacement>) {
     return InventoryEntries.planPlacement(...args);
-  }
-
-  /**
-   * How a new character's ability scores are set (its one scored link's, `abilities`): the ruleset's abilities, the
-   * SRD's methods, the scores' bounds, each score's modifier.
-   */
-  override describeCreation(view: RulesetView) {
-    return NewCharacters.describeCreation(Dnd35View.of(view.rulesetData));
   }
 
   /** Why a location can't take one more item of the character's, if it can't: what the inventory dialogs warn of. */

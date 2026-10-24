@@ -61,19 +61,7 @@ class StoredCharacterLinks extends BaseRepository<typeof linksInCharacter> {
   }
 
   // Exception to soft-delete: a character's links are disposable reference data
-  async delete(db: Db, where: { characterId: string; entityId: string; link: string }) {
-    return await db
-      .delete(this.table)
-      .where(
-        StoredCharacterLinks.buildScope(
-          where.link,
-          and(eq(this.table.characterId, where.characterId), eq(this.table.entityId, where.entityId)),
-        ),
-      );
-  }
-
-  // Exception to soft-delete: a character's links are disposable reference data
-  async deleteMany(db: Db, where: { characterId: string; link: string }) {
+  async delete(db: Db, where: { characterId: string; link: string }) {
     return await db
       .delete(this.table)
       .where(StoredCharacterLinks.buildScope(where.link, eq(this.table.characterId, where.characterId)));

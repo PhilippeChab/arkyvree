@@ -30,12 +30,13 @@ export interface CharacterCard {
 }
 
 /**
- * A new character's form, as its rules lay it out: its sections in order, each under its title, its ability scores
- * (`abilities`: set the ways its ruleset's creation offers, what it says without abilities to set, `none`, and before
- * a ruleset is picked, `pick`) or its lines (`fields`). A line of one item stands alone, of several side by side from a
- * tablet's width. An item is the form's own (`name`, under its label; the picks every character is made from, its
- * `ruleset` and its `race`, under its label, which the fields marked `racePick` narrow, what's said without one,
- * `required`, and of one they rule out, `ineligible`; its `notes`) or one of its ruleset's fields (`CreationField`).
+ * A new character's form, as its rules lay it out: its sections in order, each under its title, a scored link's scores
+ * (`scores`: its `link`'s, set the ways its ruleset's creation offers, what it says without entities to score, `none`,
+ * and before a ruleset is picked, `pick`) or its lines (`fields`). A line of one item stands alone, of several side by
+ * side from a tablet's width. An item is the form's own (`name`, under its label; its `ruleset`; a creation pick,
+ * `pick`: the single link its `column` names, 3.5's race, under its label, which the fields marked `narrows` narrow,
+ * what's said without one, `required`, and of one they rule out, `ineligible`; its `notes`) or one of its ruleset's
+ * fields (`CreationField`).
  */
 export interface CharacterForm {
   sections: CreationSection[];
@@ -191,5 +192,7 @@ export type DescribedInventoryEntry<T, X = unknown> = T &
     item: ViewEntities["items"] & { modifiers: Modifier[]; properties: Property[]; requirements: Requirement[] };
   };
 
-/** An inventory entry, as where it's held reads it: whether it's equipped, where, and its groups (3.5's weapon sets). */
+/**
+ * An inventory entry, as where it's held reads it: whether it's equipped, where, and its groups (3.5's weapon sets).
+ */
 export type HeldInventoryEntry = Pick<InventoryEntryPlan, "equipped" | "groups" | "location">;

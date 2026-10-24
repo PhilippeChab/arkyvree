@@ -274,7 +274,9 @@ function ScoreCard({
   );
 }
 
-/** A new character's scores of a scored link (3.5's abilities), its form's `scores.<link>`, set as its method sets them. */
+/**
+ * A new character's scores of a scored link (3.5's abilities), its form's `scores.<link>`, set as its method sets them.
+ */
 function ScoresField({ control, creation, diceRoll, entities, link, method }: ScoresFieldProps) {
   const {
     field: { value, onChange },

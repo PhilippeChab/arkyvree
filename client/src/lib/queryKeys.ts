@@ -3,7 +3,10 @@ import type { InviteKind } from "@/client/src/components/invites/index.ts";
 export const QUERY_KEYS = {
   auth: {
     me: ["auth", "me"] as const,
-    /** Every sign-in, sign-up, verification, reset and sign-out request: whether one is in flight, whichever page sent it. */
+    /**
+     * Every sign-in, sign-up, verification, reset and sign-out request: whether one is in flight, whichever page sent
+     * it.
+     */
     requests: ["auth", "requests"] as const,
     linkedAccounts: ["auth", "linkedAccounts"] as const,
   },
@@ -24,9 +27,11 @@ export const QUERY_KEYS = {
     abilities: (id: string) => ["rulesets", "detail", id, "abilities", "options"] as const,
     /**
      * How a new character of the ruleset sets its scores of a scored link (`link`), and the entities it scores in its
-     * sheets' order. Nested in the ruleset, so its refresh refreshes them too.
+     * sheets' order. Nested under `creations`, which a write to the ruleset's content refreshes.
      */
     characterCreation: (id: string, link: string) => ["rulesets", "detail", id, "creation", link] as const,
+    /** Every scored link's creation of the ruleset (`characterCreation`'s). */
+    creations: (id: string) => ["rulesets", "detail", id, "creation"] as const,
     /**
      * The templates of an item type (the weapons, armors or shields an item can be based on). Nested under the Items
      * section key so an item's write refreshes them too.
@@ -51,7 +56,9 @@ export const QUERY_KEYS = {
       ["rulesets", "detail", id, section, "family", family, childOnly] as const,
     entity: (id: string, entityType: string, entityId: string) =>
       ["rulesets", "detail", id, "entity", entityType, entityId] as const,
-    /** An entity's customization tab's rows (its modifiers, its requirements), nested in the ruleset its saves refresh. */
+    /**
+     * An entity's customization tab's rows (its modifiers, its requirements), nested in the ruleset its saves refresh.
+     */
     customization: (id: string, entityType: string, entityId: string, tab: "modifiers" | "requirements") =>
       ["rulesets", "detail", id, "customization", entityType, entityId, tab] as const,
     targetCompletions: (id: string, prefix: string, kind: string, search: string, entityType?: string) =>
@@ -84,12 +91,15 @@ export const QUERY_KEYS = {
     contributors: (id: string) => ["characters", "detail", id, "contributors"] as const,
     inventory: (id: string) => ["characters", "detail", id, "inventory"] as const,
     /**
-     * What a character has of a picked link (`link`) and may pick, for its form's picks: nested in the character, which a
-     * save refreshes.
+     * What a character has of a picked link (`link`) and may pick, for its form's picks: nested in the character, which
+     * a save refreshes.
      */
     links: (id: string, link: string, query: Record<string, unknown>) =>
       ["characters", "detail", id, "links", link, query] as const,
-    /** What keeps a slot from taking an item, as an inventory dialog asks it: nested in the inventory, which a save refreshes. */
+    /**
+     * What keeps a slot from taking an item, as an inventory dialog asks it: nested in the inventory, which a save
+     * refreshes.
+     */
     inventoryPlacement: (id: string, query: Record<string, unknown>) =>
       ["characters", "detail", id, "inventory", "placement", query] as const,
     modifiers: (id: string) => ["characters", "detail", id, "modifiers"] as const,

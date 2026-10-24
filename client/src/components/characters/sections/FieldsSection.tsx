@@ -50,7 +50,8 @@ interface FieldsSectionProps {
 interface LinkPicksFieldProps {
   characterId: string;
   control: Control<FieldsFormData>;
-  link: NonNullable<BlockOf<"fields">["links"]>[number];
+  /** The link, as its block declares it: its name, what its picker says, and the entities the character has. */
+  declared: NonNullable<BlockOf<"fields">["links"]>[number];
   /** The viewer can't edit the character: its picks read as they are. */
   readOnly: boolean;
 }
@@ -142,21 +143,21 @@ function FieldInput({ control, field, readOnly }: FieldInputProps) {
  * for the picks the form holds. What the character has without picking it (its modifiers' grants) stays: only its
  * picks come and go.
  */
-function LinkPicksField({ characterId, control, link, readOnly }: LinkPicksFieldProps) {
-  const { field: picks } = useController({ control, name: `links.${link.link}` });
+function LinkPicksField({ characterId, control, declared, readOnly }: LinkPicksFieldProps) {
+  const { field: picks } = useController({ control, name: `links.${declared.link}` });
   const selectedIds = picks.value as unknown as string[];
   const {
     data: room = NO_ANSWER,
     error,
     isLoading,
   } = useQuery({
-    ...characterLinkQuery(characterId, link.link, selectedIds),
+    ...characterLinkQuery(characterId, declared.link, selectedIds),
     placeholderData: keepPreviousData,
     enabled: !readOnly,
   });
   const automaticIds = new Set(room.automatic.map(({ id }) => id));
   const byId = new Map<string, LinkedEntity>();
-  for (const entity of link.picked) byId.set(entity.id, entity);
+  for (const entity of declared.picked) byId.set(entity.id, entity);
   for (const entity of [...room.automatic, ...room.picks, ...room.options]) byId.set(entity.id, entity);
   const [search, setSearch] = useState("");
   const selected = selectedIds.map((id) => byId.get(id)).filter((entity): entity is LinkedEntity => !!entity);
@@ -166,7 +167,7 @@ function LinkPicksField({ characterId, control, link, readOnly }: LinkPicksField
       {readOnly ? (
         <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}>
           <Typography variant="body2" sx={{ color: "text.secondary", pr: 1 }}>
-            {link.label}:
+            {declared.label}:
           </Typography>
           {selected.length === 0 ? (
             <EmptyValue />
@@ -181,7 +182,7 @@ function LinkPicksField({ characterId, control, link, readOnly }: LinkPicksField
           options={[...selected, ...room.options]}
           filterSelectedOptions
           loading={isLoading}
-          noOptionsText={emptyOptionsText(link.label, error, link.none)}
+          noOptionsText={emptyOptionsText(declared.label, error, declared.none)}
           getOptionLabel={(option) => option.name}
           isOptionEqualToValue={(option, value) => option.id === value.id}
           value={selected}
@@ -212,7 +213,7 @@ function LinkPicksField({ characterId, control, link, readOnly }: LinkPicksField
               );
             })
           }
-          renderInput={(params) => <TextField {...params} label={link.label} variant="outlined" />}
+          renderInput={(params) => <TextField {...params} label={declared.label} variant="outlined" />}
         />
       )}
     </Box>
@@ -296,7 +297,7 @@ export function FieldsSection({
                 key={link.link}
                 characterId={characterId}
                 control={form.control}
-                link={link}
+                declared={link}
                 readOnly={readOnly}
               />
             ))}

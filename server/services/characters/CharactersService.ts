@@ -10,7 +10,7 @@ import {
   type LinkPicksPlan,
 } from "@/engine/index.ts";
 import { include } from "@/lib/mixins.ts";
-import { type RulesetScope, withRulesetScope, withRulesetScopes } from "@/server/cow/index.ts";
+import { withRulesetScope, withRulesetScopes } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import {
@@ -24,7 +24,7 @@ import {
   visibilityMap,
 } from "@/server/repositories/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
-import type { Character, Session } from "@/shared/relations.ts";
+import type { Session } from "@/shared/relations.ts";
 
 import { describeCharacterCards } from "./characterCards.ts";
 import { readBondedInputs, readCharacterInput } from "./characterInputs.ts";
@@ -34,28 +34,9 @@ import { findEditableCharacterOrBonded, getEditableCharacter } from "./editableC
 import { enqueueCharacterPdf, findExportableCharacter } from "./pdf.ts";
 
 class CharactersService extends include(Object, Archives, Imports) {
-  /**
-   * Replace a character's picks of a picked link (`link`) in-place, as the engine plans them from its rows
-   * (`planLinkPicks`: each the view's entity, a copy's when the ruleset copied one; those its rules give it left out;
-   * refused when the view has none, it's sent twice, or a new pick is past what its rules let it have): deletes the
-   * existing rows and inserts the new set. Caller is responsible for the surrounding transaction and its ruleset's
-   * scope.
-   */
-  private async replaceLinkPicks(
-    tx: Db,
-    scope: RulesetScope,
-    characterRecord: Character,
-    link: string,
-    entityIds: string[],
-  ): Promise<void> {
-    const character = await readCharacterInput(tx, characterRecord);
-    const plan = Engine.for(scope).character(character).planLinkPicks(link, entityIds);
-    await this.writeLinkPicks(tx, characterRecord.id, link, plan);
-  }
-
   /** A character's picks of a picked link (`link`) as a plan has them: its picks replaced. */
   private async writeLinkPicks(tx: Db, characterId: string, link: string, plan: LinkPicksPlan): Promise<void> {
-    await CharacterLinks.deleteMany(tx, { characterId, link });
+    await CharacterLinks.delete(tx, { characterId, link });
     await CharacterLinks.createPlanned(
       tx,
       link,
@@ -184,7 +165,9 @@ class CharactersService extends include(Object, Archives, Imports) {
     );
   }
 
-  /** How a new character of a ruleset (`rulesetId`) sets its scores of a scored link (`link`), as its rules answer it. */
+  /**
+   * How a new character of a ruleset (`rulesetId`) sets its scores of a scored link (`link`), as its rules answer it.
+   */
   async getCreation(rulesetId: string, link: string) {
     return await withRulesetScope(db, rulesetId, async (scope) =>
       Engine.for(scope).characters().describeCreation(link),
@@ -306,13 +289,19 @@ class CharactersService extends include(Object, Archives, Imports) {
     });
   }
 
-  /** Replaces a character's picks of a picked link (`link`: 3.5's languages), as its ruleset plans them. */
+  /**
+   * Replaces a character's picks of a picked link (`link`: 3.5's languages), as its ruleset plans them from its rows
+   * (`planLinkPicks`: each the view's entity, a copy's when the ruleset copied one; those its rules give it left out;
+   * refused when the view has none, it's sent twice, or a new pick is past what its rules let it have).
+   */
   async updateLinkPicks(session: Session, characterId: string, link: string, entityIds: string[]) {
     return await withTransaction(async (tx) => {
       const characterRecord = await getEditableCharacter(tx, session, characterId);
 
       return await withRulesetScope(tx, characterRecord.rulesetId, async (scope) => {
-        await this.replaceLinkPicks(tx, scope, characterRecord, link, entityIds);
+        const character = await readCharacterInput(tx, characterRecord);
+        const plan = Engine.for(scope).character(character).planLinkPicks(link, entityIds);
+        await this.writeLinkPicks(tx, characterId, link, plan);
 
         await Activities.create(tx, {
           userId: session.userId,
