@@ -14,7 +14,7 @@ const tree: Record<string, number | string> = {
   "classes.cavalier.level": 2,
   "classes.beastmaster.level": 1,
   "classes.hexblade.level": 2,
-  "abilities.charisma.modifier": -1,
+  "stats.presence.modifier": -1,
   "identity.physiology.name": "Aldric",
 };
 const traverser: TargetPathsTraverser = {
@@ -127,7 +127,7 @@ describe("templateExpression", () => {
   });
 
   test("path with garbage chars inside brackets fails gracefully", () => {
-    expect(TemplateExpression.evaluate("[abilities.charisma); evil]", components, traverser)).toBeNull();
+    expect(TemplateExpression.evaluate("[stats.presence); evil]", components, traverser)).toBeNull();
   });
 
   test("unterminated bracket fails to parse, no throw", () => {

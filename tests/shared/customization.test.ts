@@ -11,14 +11,14 @@ describe("A path segment's label", () => {
 
   test("is its override, else the segment formatted, for every segment of the paths", () => {
     expect(
-      deriveSegmentLabels([{ path: "saves.fortitude.misc" }, { path: "saves.will.total" }], { misc: "Miscellaneous" }),
-    ).toEqual({ saves: "Saves", fortitude: "Fortitude", misc: "Miscellaneous", will: "Will", total: "Total" });
+      deriveSegmentLabels([{ path: "traits.grit.misc" }, { path: "traits.will.total" }], { misc: "Miscellaneous" }),
+    ).toEqual({ traits: "Traits", grit: "Grit", misc: "Miscellaneous", will: "Will", total: "Total" });
   });
 });
 
 describe("Customizations", () => {
   test("label a property type from its constant's name", () => {
-    expect(formatPropertyType("SPELL_SCHOOL")).toBe("Spell School");
-    expect(formatPropertyType("FEAT_FAMILY")).toBe("Feat Family");
+    expect(formatPropertyType("CHARM_SCHOOL")).toBe("Charm School");
+    expect(formatPropertyType("PERK_FAMILY")).toBe("Perk Family");
   });
 });

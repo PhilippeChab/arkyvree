@@ -9,7 +9,7 @@ import { parseResponse } from "hono/client";
 import { test } from "@/tests/e2e/fixtures.ts";
 import { apiOf } from "@/tests/e2e/support/api.ts";
 import { createCampaign, postPlayerInvite } from "@/tests/e2e/support/campaigns.ts";
-import { createCharacter } from "@/tests/e2e/support/characters.ts";
+import { createCharacter } from "@/tests/e2e/support/dnd3.5/characters.ts";
 import { uniqueName } from "@/tests/e2e/support/page.ts";
 import { forkCoreRuleset } from "@/tests/e2e/support/rulesets.ts";
 import { signedInPage, signIn, submitSignIn } from "@/tests/e2e/support/signIn.ts";

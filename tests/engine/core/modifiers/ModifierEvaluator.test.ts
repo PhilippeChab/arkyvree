@@ -26,9 +26,9 @@ function modifier(values: Partial<Modifier> = {}): Modifier {
   const now = new Date().toISOString();
   return {
     id: "modifier-1",
-    sourceId: "feat-1",
-    sourceType: "feats",
-    target: "abilities.strength.misc",
+    sourceId: "perk-1",
+    sourceType: "perks",
+    target: "stats.might.misc",
     operator: "add",
     value: "1",
     valueType: "number",
@@ -56,8 +56,8 @@ describe("ModifierEvaluator", () => {
     });
   });
 
-  test("adds a value to a list and takes one from it: a spell's descriptors", () => {
-    const descriptor = { valueType: "string", target: "powers.fear.properties.SPELL_DESCRIPTOR" } as const;
+  test("adds a value to a list and takes one from it: a charm's descriptors", () => {
+    const descriptor = { valueType: "string", target: "charms.fear.properties.DESCRIPTOR" } as const;
     expect(evaluate(modifier({ ...descriptor, operator: "add", value: "Evil" }), ["Fear", "Mind-Affecting"])).toEqual({
       value: ["Fear", "Mind-Affecting", "Evil"],
       applied: 1,

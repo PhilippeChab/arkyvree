@@ -52,7 +52,12 @@ describe("application", () => {
         .filter(({ path }) => segments.has(RULESET_ROUTE.exec(path)?.[1] ?? ""))
         .map(({ method, path }) => `${method} ${path}`),
     );
-    expect(segments).toContain("feats");
+    // The kinds came through, and each kind's own route, list or entity, would be caught
+    expect(segments.size).toBeGreaterThan(0);
+    for (const segment of segments) {
+      expect(RULESET_ROUTE.exec(`/api/rulesets/:id/${segment}`)?.[1]).toBe(segment);
+      expect(RULESET_ROUTE.exec(`/api/rulesets/:id/${segment}/:entityId`)?.[1]).toBe(segment);
+    }
     expect([...ownRoutes]).toEqual([]);
   });
 });

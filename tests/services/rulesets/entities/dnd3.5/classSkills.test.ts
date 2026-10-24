@@ -7,9 +7,10 @@ import { ConflictError, ForbiddenError } from "@/server/errors/index.ts";
 import { Activities, Entities, EntitySnapshots, Joins } from "@/server/repositories/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
-import { createTestCharacter } from "@/tests/support/characters.ts";
-import { addCharacterLevel } from "@/tests/support/levels.ts";
-import { createTestRuleset, createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
+import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
+import { addCharacterLevel } from "@/tests/support/dnd3.5/levels.ts";
+import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
+import { createTestRuleset } from "@/tests/support/rulesets.ts";
 
 /** A new user's empty ruleset with two classes and two skills. */
 async function setup() {

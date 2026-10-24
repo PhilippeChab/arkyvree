@@ -49,7 +49,8 @@
  * - `environment`: the server reads its environment in `server/environment.ts` only (`readEnv`, `isProduction`…),
  *   which lists every variable: never `process.env` or `Bun.env` elsewhere in the server, `shared/` or `vocabulary/`.
  * - `test-placement`: a test named after a module sits at that module's mirror (`tests/services/…` ↔
- *   `server/services/…`); a test of a behavior across modules is free in its area.
+ *   `server/services/…`), or in a ruleset's folder there when it reads that ruleset's content
+ *   (`tests/services/rulesets/dnd3.5/…`); a test of a behavior across modules is free in its area.
  * - `error-names`: an error is named `error`: a `catch`'s binding, and an `onError` callback's first parameter.
  * - `function-declarations`: a file's own function is a `function` declaration (`function verbOf(method) {…}`), never
  *   a variable holding an arrow: an arrow is for a callback. `oxlint --fix` declares one (a typed one's parameters are
@@ -77,7 +78,7 @@ import path from "node:path";
 
 import { onImports, targetOf } from "./imports.mjs";
 import { startsWithVerb } from "./methodNames.mjs";
-import { repoPath, rootOf } from "./paths.mjs";
+import { repoPath, rootOf, rulesetsOf } from "./paths.mjs";
 
 const CAMEL_CASE = /^[a-z][a-zA-Z0-9]*$/;
 
@@ -912,7 +913,14 @@ function createTestPlacement(context) {
   if (!mirror || !extension) return {};
   const [tests, tree] = mirror;
   const name = path.posix.basename(file, extension);
-  const mirrored = `${tree}${path.posix.dirname(file.slice(tests.length))}/`.replace(/\/\.\/$/, "/");
+  const folder = path.posix.dirname(file.slice(tests.length));
+  // A test in a ruleset's folder at the mirror (`…/dnd3.5/`) tests its module over that ruleset's content
+  const ruleset = rulesetsOf(rootOf(context.filename)).has(path.posix.basename(folder))
+    ? `${path.posix.basename(folder)}/`
+    : "";
+  const mirrors = [folder, ...(ruleset ? [path.posix.dirname(folder)] : [])].map((dir) =>
+    `${tree}${dir}/`.replace(/\/\.\/$/, "/"),
+  );
   const byName = modulesIn(rootOf(context.filename), tree);
   const modules = byName.get(name);
   // A module of the test's name in another case: a rename left the test behind
@@ -927,9 +935,9 @@ function createTestPlacement(context) {
           message: `A test named after \`${recased}\` takes its name, case and all: \`${recased}.test.ts\`.`,
         });
       } else if (modules) {
-        if (modules.some((m) => path.posix.dirname(m) + "/" === mirrored)) return;
+        if (modules.some((m) => mirrors.includes(path.posix.dirname(m) + "/"))) return;
         const at = modules.map((m) =>
-          `${tests}${path.posix.dirname(m.slice(tree.length))}/${name}.test.ts`.replace("/./", "/"),
+          `${tests}${path.posix.dirname(m.slice(tree.length))}/${ruleset}${name}.test.ts`.replace("/./", "/"),
         );
         context.report({
           node,

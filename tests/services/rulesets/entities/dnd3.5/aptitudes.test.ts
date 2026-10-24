@@ -5,9 +5,9 @@ import { db } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
 import { Entities, Joins } from "@/server/repositories/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
-import { createTestCharacter } from "@/tests/support/characters.ts";
-import { addCharacterLevel, createTestKlassLevel } from "@/tests/support/levels.ts";
-import { createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
+import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
+import { addCharacterLevel, createTestKlassLevel } from "@/tests/support/dnd3.5/levels.ts";
+import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
 
 /**
  * A join's rows that name the aptitude by a part of their links: as the list a feat or a power is in (`to`), or the one

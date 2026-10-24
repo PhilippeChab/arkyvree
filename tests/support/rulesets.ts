@@ -5,17 +5,14 @@ import { RulesetSeeder } from "@/database/seeders/dnd3.5/RulesetSeeder.ts";
 import type { Db } from "@/drizzle/database.ts";
 import { rulesetExtensionsInRules, type rulesetsInRules } from "@/drizzle/schema.ts";
 import type { CowData, RulesetSources } from "@/engine/core/cow/index.ts";
-import type { Aptitude, EntityKinds } from "@/engine/index.ts";
-import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
+import type { EntityKinds } from "@/engine/index.ts";
 import { EntityCopy, RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { Entities, Properties, type RulesetEntityType, Rulesets } from "@/server/repositories/index.ts";
+import { Properties, type RulesetEntityType, Rulesets } from "@/server/repositories/index.ts";
 import type { TargetPathKind } from "@/shared/customization/target.ts";
 import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 
-import { api, expectOk } from "./api.ts";
 import { uniqueId } from "./seed.ts";
-import { createTestUser } from "./users.ts";
 
 /** An entity as its kind's page describes it (`K`, its table): what `EntitiesService.getEntity` answers of it. */
 export type Described<K extends keyof EntityKinds> = ReturnType<EntityKinds[K]["describe"]>;
@@ -58,12 +55,6 @@ export async function copyEntity(
   ruleset: RulesetSources,
 ) {
   return (await EntityCopy.create(database, entityType, entityId, ruleset)).entity;
-}
-
-/** A new seeded fork of the seed user's with an aptitude of its own: the fork's `id` and the `aptitudeId`. */
-export async function createSeededForkWithAptitude() {
-  const { id } = await createSeededTestRuleset(SEED_USER_ID);
-  return { id, aptitudeId: (await postAptitude(id)).id };
 }
 
 /**
@@ -139,34 +130,12 @@ export async function createTestRuleset(
   return ruleset;
 }
 
-/** A new user with an empty ruleset of their own, holding aptitudes of these names: their ids, in that order. */
-export async function createTestUserAndRuleset(aptitudeNames: string[] = []) {
-  const { user, session } = await createTestUser();
-  const ruleset = await createTestRuleset(user.id);
-  const aptitudes = await Entities.createMany<Aptitude>(
-    db,
-    "aptitudes",
-    aptitudeNames.map((name) => ({ name, rulesetId: ruleset.id })),
-  );
-  return { user, session, ruleset, aptitudeIds: aptitudes.map((a) => a.id) };
-}
-
 /**
  * A change to `ruleset`'s entities or customizations (`Edit`: `EntityEdit`, `CustomizationEdit`, `EntityNames`), as a
  * service makes it in its scope, outside one.
  */
 export async function editRuleset<E>(Edit: new (ruleset: RulesetSources, cow: CowData) => E, ruleset: RulesetSources) {
   return new Edit(ruleset, await RulesetViews.getCowData(ruleset));
-}
-
-/** A new aptitude of the ruleset, created through the API as the seed user. */
-export async function postAptitude(rulesetId: string) {
-  return await expectOk(
-    api.api.rulesets[":id"].entities[":entityType"].$post({
-      param: { id: rulesetId, entityType: "aptitudes" },
-      json: { name: `Aptitude ${uniqueId()}` },
-    }),
-  );
 }
 
 /** A ruleset's target paths of a kind, by its id, as the cache keeps them (`RulesetViews.getTargetPaths`). */

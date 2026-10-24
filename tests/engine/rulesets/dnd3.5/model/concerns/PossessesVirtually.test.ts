@@ -9,7 +9,7 @@ import { db } from "@/server/database/index.ts";
 import { Characters, Entities, Modifiers, Requirements } from "@/server/repositories/index.ts";
 import type { Requirement } from "@/shared/relations.ts";
 import { buildAs } from "@/tests/support/dnd3.5/characters.ts";
-import { addCharacterLevel, findKlassLevel } from "@/tests/support/levels.ts";
+import { addCharacterLevel, findKlassLevel } from "@/tests/support/dnd3.5/levels.ts";
 import { createTestRuleset } from "@/tests/support/rulesets.ts";
 import { findSeededRuleset, getSeedCtx } from "@/tests/support/seed.ts";
 

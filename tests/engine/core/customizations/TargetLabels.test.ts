@@ -4,27 +4,29 @@ import TargetLabels from "@/engine/core/customizations/TargetLabels.ts";
 
 describe("A target's labels", () => {
   const labels = {
-    abilities: "Abilities",
-    charisma: "Charisma",
+    stats: "Stats",
+    might: "Might",
     modifier: "Modifier",
-    classes: "Classes",
-    ranger: "Ranger",
+    tracks: "Tracks",
+    scout: "Scout",
   };
 
   test("are those of its path's segments that have one", () => {
-    expect(TargetLabels.pick(["abilities.charisma.unknown"], labels)).toEqual({
-      abilities: "Abilities",
-      charisma: "Charisma",
+    expect(TargetLabels.pick(["stats.might.unknown"], labels)).toEqual({
+      stats: "Stats",
+      might: "Might",
     });
   });
 
   test("are those of a template's path, bare or bracketed, and of every path of an expression", () => {
-    const charisma = { abilities: "Abilities", charisma: "Charisma", modifier: "Modifier" };
-    expect(TargetLabels.pick(["{{ abilities.charisma.modifier }}"], labels)).toEqual(charisma);
-    expect(TargetLabels.pick(["{{ [abilities.charisma.modifier] }}"], labels)).toEqual(charisma);
-    expect(
-      TargetLabels.pick(["{{ floor([classes.ranger.level] / 2) + [abilities.charisma.modifier] }}"], labels),
-    ).toEqual({ ...charisma, classes: "Classes", ranger: "Ranger" });
+    const might = { stats: "Stats", might: "Might", modifier: "Modifier" };
+    expect(TargetLabels.pick(["{{ stats.might.modifier }}"], labels)).toEqual(might);
+    expect(TargetLabels.pick(["{{ [stats.might.modifier] }}"], labels)).toEqual(might);
+    expect(TargetLabels.pick(["{{ floor([tracks.scout.level] / 2) + [stats.might.modifier] }}"], labels)).toEqual({
+      ...might,
+      tracks: "Tracks",
+      scout: "Scout",
+    });
   });
 
   test("are none of a value that's neither a path nor a template's", () => {

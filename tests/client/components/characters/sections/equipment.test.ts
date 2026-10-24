@@ -15,13 +15,13 @@ function profile(charges: number | null): PlacementProfile {
 describe("An inventory placement", () => {
   const form = { selectedItem: null, quantity: 2, groups: [2], totalCharges: 5, remainingCharges: 3 };
 
-  test("sends each of its weapon sets stored from 0", () => {
+  test("sends each of its groups stored from 0", () => {
     expect(placementPayload({ ...form, location: "Off Hand", groups: [1, 2] }, null)).toMatchObject({
       groups: [0, 1],
     });
   });
 
-  test("equips at a slot, with the weapon set stored from 0, which the server keeps for a hand only", () => {
+  test("equips at a slot, with the group stored from 0, which the server keeps for a hand only", () => {
     expect(placementPayload({ ...form, location: "Main Hand" }, profile(null))).toEqual({
       quantity: 2,
       equipped: true,
@@ -45,8 +45,8 @@ describe("An inventory placement", () => {
   });
 });
 
-describe("The weapon sets a held item is offered", () => {
-  test("are the sets the inventory and the form hold, as shown from 1, then a new one past them", () => {
+describe("The groups a held item is offered", () => {
+  test("are the groups the inventory and the form hold, as shown from 1, then a new one past them", () => {
     const entries = [{ groups: [0] }, { groups: [] }, { groups: [0, 2] }];
     expect(groupChoices(entries, [1])).toEqual([1, 3, 4]);
     expect(groupChoices(entries, [5])).toEqual([1, 3, 5, 6]);

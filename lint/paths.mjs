@@ -4,6 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 const rootCache = new Map();
+const rulesetsCache = new Map();
 
 /** Whether a linted file sits in a repo, under the folder that holds the lint config: a copy outside it doesn't. */
 export function isInRepo(file) {
@@ -23,4 +24,17 @@ export function rootOf(file) {
   while (!fs.existsSync(path.join(dir, ".oxlintrc.json")) && path.dirname(dir) !== dir) dir = path.dirname(dir);
   rootCache.set(start, dir);
   return dir;
+}
+
+/**
+ * A repo's rulesets, by the folders they run from (`engine/rulesets/<ruleset>/`): the names a ruleset's folders go by in
+ * every tree (its content, codegen, package, vocabulary, tests).
+ */
+export function rulesetsOf(root) {
+  if (!rulesetsCache.has(root)) {
+    const dir = path.join(root, "engine/rulesets");
+    const folders = fs.existsSync(dir) ? fs.readdirSync(dir, { withFileTypes: true }) : [];
+    rulesetsCache.set(root, new Set(folders.filter((entry) => entry.isDirectory()).map((entry) => entry.name)));
+  }
+  return rulesetsCache.get(root);
 }

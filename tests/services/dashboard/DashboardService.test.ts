@@ -4,8 +4,8 @@ import { db } from "@/server/database/index.ts";
 import { Campaigns, Characters, Rulesets } from "@/server/repositories/index.ts";
 import { DashboardService } from "@/server/services/dashboard/index.ts";
 import { createTestCampaign } from "@/tests/support/campaigns.ts";
-import { createTestCharacter } from "@/tests/support/characters.ts";
 import { addRulesetContributor } from "@/tests/support/contributors.ts";
+import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
 import { createTestRuleset } from "@/tests/support/rulesets.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 

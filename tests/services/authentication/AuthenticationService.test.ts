@@ -28,7 +28,7 @@ import { AuthenticationService, signInAsGoogleAccount } from "@/server/services/
 import { LinkedAccountsService, linkGoogleAccountTo } from "@/server/services/authentication/linkedAccounts/index.ts";
 import type { Session } from "@/shared/relations.ts";
 import { createTestCampaign, inviteToSlot } from "@/tests/support/campaigns.ts";
-import { createTestCharacter } from "@/tests/support/characters.ts";
+import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
 import { createTestRuleset } from "@/tests/support/rulesets.ts";
 import { NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
 import { createTestUser, findVerificationCode, makeSession } from "@/tests/support/users.ts";

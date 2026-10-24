@@ -21,10 +21,11 @@ import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import type { Session } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
-import { createTestCharacter } from "@/tests/support/characters.ts";
+import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
 import { readClassTable } from "@/tests/support/dnd3.5/classTables.ts";
-import { addCharacterLevel } from "@/tests/support/levels.ts";
-import { copyEntity, createTestRuleset, createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
+import { addCharacterLevel } from "@/tests/support/dnd3.5/levels.ts";
+import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
+import { copyEntity, createTestRuleset } from "@/tests/support/rulesets.ts";
 import { findSeededRuleset, NIL_UUID } from "@/tests/support/seed.ts";
 import { KLASS_LEVEL_BAB, KLASS_LEVEL_SKILL_POINTS } from "@/vocabulary/dnd3.5/properties/index.ts";
 

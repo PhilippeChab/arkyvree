@@ -4,7 +4,7 @@ import { FieldCodec, type FormContext } from "@/engine/core/fields/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 
 /**
- * Fields of every kind, as a vocabulary declares them: their labels, the closed lists, a reference to an ability, a
+ * Fields of every kind, as a vocabulary declares them: their labels, the closed lists, a reference to an item, a
  * field on another's condition and a group on a column's, declared among the others (a form shows it last).
  */
 const FIELDS = {
@@ -24,7 +24,7 @@ const FIELDS = {
     },
     kind: "group",
     label: "Group",
-    when: { column: "type", values: ["Weapon"] },
+    when: { column: "type", values: ["Tool"] },
   },
   count: {
     default: 1,
@@ -37,7 +37,7 @@ const FIELDS = {
   },
   tags: { description: "Its tags", kind: "list", label: "Tags", type: "TAG", values: ["x", "y"] },
   kind: { description: "Its kind", kind: "choice", label: "Kind", type: "KIND", values: ["Arcane", "Divine"] },
-  owner: { description: "Who owns it", kind: "ref", label: "Owner", references: "abilities", type: "OWNER" },
+  owner: { description: "Who owns it", kind: "ref", label: "Owner", references: "items", type: "OWNER" },
 } as const;
 
 const CODEC = new FieldCodec(FIELDS, { storesWhen: (fields) => fields.title !== null });
@@ -45,7 +45,7 @@ const CODEC = new FieldCodec(FIELDS, { storesWhen: (fields) => fields.title !== 
 /** What a form's fields are read with: ids the view resolves by prefixing them. */
 const CONTEXT: FormContext = {
   resolve: (_type, id) => {
-    if (id === "unknown") throw new RulesError("invalid", `Ability ${id} does not belong to this ruleset`);
+    if (id === "unknown") throw new RulesError("invalid", `Item ${id} does not belong to this ruleset`);
     return `view-${id}`;
   },
 };
@@ -205,10 +205,10 @@ describe("A field codec", () => {
     expect(fields[3]).toMatchObject({ default: 1, min: 1, shownWhen: [{ path: "fields.flag", values: [true] }] });
     expect(fields[4]).toMatchObject({ multiple: true, options: ["x", "y"] });
     expect(fields[5]).toMatchObject({ options: ["Arcane", "Divine"] });
-    expect(fields[6]).toMatchObject({ references: "abilities", required: false });
+    expect(fields[6]).toMatchObject({ references: "items", required: false });
     expect(fields[7]).toMatchObject({
       label: "Group",
-      shownWhen: [{ path: "type", values: ["Weapon"] }],
+      shownWhen: [{ path: "type", values: ["Tool"] }],
       fields: [
         { key: "group.level", input: "number", default: null },
         { key: "group.known", input: "flag", nullable: true },

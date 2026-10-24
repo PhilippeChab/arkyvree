@@ -5,7 +5,7 @@ import { db } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
 import { Entities, Joins } from "@/server/repositories/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
-import { createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
+import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
 
 /** A new user's empty ruleset with two abilities. */
 async function setup() {

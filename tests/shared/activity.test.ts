@@ -7,13 +7,13 @@ test("an activity about an account, a session or a linked sign-in has no page to
   expect(isNavigableTarget("sessions")).toBe(false);
   expect(isNavigableTarget("oauth_accounts")).toBe(false);
   expect(isNavigableTarget("rulesets")).toBe(true);
-  expect(isNavigableTarget("klass_levels")).toBe(true);
+  expect(isNavigableTarget("compass_points")).toBe(true);
 });
 
 test("an entity type's activities name it by its table's singular, in PascalCase", () => {
   expect(
-    ["feats", "klasses", "klass_levels", "abilities", "races", "powers", "mechanics"].map((type) =>
+    ["perks", "compasses", "compass_points", "stories", "traces", "gadgets", "mechanics"].map((type) =>
       getActivityName(type),
     ),
-  ).toEqual(["Feat", "Klass", "KlassLevel", "Ability", "Race", "Power", "Mechanic"]);
+  ).toEqual(["Perk", "Compass", "CompassPoint", "Story", "Trace", "Gadget", "Mechanic"]);
 });

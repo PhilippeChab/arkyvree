@@ -6,7 +6,7 @@ import { BadRequestError, ForbiddenError, NotFoundError } from "@/server/errors/
 import { Attachments, Blobs } from "@/server/repositories/index.ts";
 import { AttachmentsService } from "@/server/services/attachments/index.ts";
 import ObjectStorage from "@/server/storage/ObjectStorage.ts";
-import { createTestCharacter } from "@/tests/support/characters.ts";
+import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
 import { fakeStorage } from "@/tests/support/storage.ts";
 import { createTestUser } from "@/tests/support/users.ts";

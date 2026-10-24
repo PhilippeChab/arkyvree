@@ -5,9 +5,10 @@ import { db } from "@/server/database/index.ts";
 import { Characters, Entities, EntitySnapshots, Joins, Properties } from "@/server/repositories/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
-import { createTestCharacter } from "@/tests/support/characters.ts";
-import { pickFeat } from "@/tests/support/levels.ts";
-import { createTestRuleset, createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
+import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
+import { pickFeat } from "@/tests/support/dnd3.5/levels.ts";
+import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
+import { createTestRuleset } from "@/tests/support/rulesets.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/properties/index.ts";
 

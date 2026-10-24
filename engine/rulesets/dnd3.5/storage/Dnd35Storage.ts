@@ -6,7 +6,7 @@ import Dnd35FieldDefs from "./Dnd35FieldDefs.ts";
  * How 3.5 stores its data in the generic tables: its kinds' columns (a class's hit die is its `KLASS_HD` field, a
  * save's ability its `keyAbility` link), its joins (a feat's pools are its `listedIn` links), its characters' (a race is
  * a `race` link, a level an advancement, its feats `feats` picks), and its registries' rows, which migration 0080 wrote
- * (`tests/database/registries.test.ts` checks the database holds them).
+ * (`tests/database/dnd3.5/registries.test.ts` checks the database holds them).
  */
 export const DND35_STORAGE: StorageDeclaration = {
   kinds: {
