@@ -45,6 +45,11 @@ declare module "@/engine/core/module/parts/characters/plans.ts" {
 }
 
 declare module "@/engine/core/view/rows.ts" {
+  /** 3.5's owned kind: a class's levels. */
+  interface OwnedEntities {
+    klass_levels: KlassLevel;
+  }
+
   /** 3.5's kinds' rows, by table. */
   interface ViewEntities {
     abilities: RulesetAbility;

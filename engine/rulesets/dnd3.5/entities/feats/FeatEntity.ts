@@ -91,7 +91,7 @@ export default class FeatEntity extends ListedEntity<
 
   /** The pools a form links the feat to (none: an edit's kept). */
   protected override linksOf({ aptitudeIds }: FeatBody) {
-    return aptitudeIds?.map((aptitudeId) => ({ aptitudeId }));
+    return aptitudeIds?.map((listId) => ({ listId }));
   }
 
   /**

@@ -21,8 +21,14 @@ const COLUMNS: FormField[] = [
   { help: "", input: "decimal", key: "cost", label: "Cost", min: 0 },
   { help: "", input: "text", key: "type", label: "Type", multiple: false, nullable: false },
   { help: "", input: "text", key: "effect", label: "Effect", multiple: false, nullable: true },
-  { help: "", input: "aptitudes", key: "aptitudeIds", label: "Aptitudes", required: true },
-  { help: "", input: "aptitudeLevels", key: "aptitudes", label: "Lists", max: 9, min: 0, required: false },
+  {
+    help: "",
+    input: "links",
+    key: "aptitudeIds",
+    label: "Aptitudes",
+    required: "At least one aptitude must be selected",
+  },
+  { help: "", input: "leveledLinks", key: "aptitudes", label: "Lists", max: 9, min: 0 },
 ];
 
 const ID = "00000000-0000-4000-8000-000000000001";

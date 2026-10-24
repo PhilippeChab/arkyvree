@@ -131,15 +131,6 @@ export default class CopyOnWriteEngine {
     return CowSources.getReads(ruleset);
   }
 
-  /** The siblings' links to aptitudes the winner doesn't link to, by the aptitude `resolve` gives. */
-  mergeAptitudeLinks<T extends { aptitudeId: string }>(
-    own: readonly T[],
-    siblings: Iterable<readonly T[]>,
-    resolve: (id: string) => string,
-  ): T[] {
-    return SiblingMerge.mergeListLinks(own, siblings, resolve, "aptitudeId");
-  }
-
   /** What a copy of a sibling winner takes of its siblings' customizations beside its own, merged as the view merges. */
   mergeCustomizations(
     own: EntityCustomizations,
@@ -147,5 +138,14 @@ export default class CopyOnWriteEngine {
     targetEntityId: string,
   ): EntityCustomizations {
     return SiblingMerge.mergeCustomizations(own, siblings, targetEntityId, singleValued);
+  }
+
+  /** The siblings' list links the winner doesn't have, by the list `resolve` gives. */
+  mergeListLinks<T extends { listId: string }>(
+    own: readonly T[],
+    siblings: Iterable<readonly T[]>,
+    resolve: (id: string) => string,
+  ): T[] {
+    return SiblingMerge.mergeListLinks(own, siblings, resolve, "listId");
   }
 }

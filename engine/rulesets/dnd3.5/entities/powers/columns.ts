@@ -1,5 +1,6 @@
 import type { FormField } from "@/engine/core/fields/index.ts";
 import type { ListDescription } from "@/engine/core/module/index.ts";
+import { APTITUDES_REQUIRED } from "@/engine/rulesets/dnd3.5/entities/aptitudes/refusals.ts";
 import { RULESET_LIMITS } from "@/engine/rulesets/dnd3.5/limits.ts";
 
 /**
@@ -27,18 +28,18 @@ export const POWER_COLUMNS: FormField[] = [
   },
   {
     help: "The spell lists it's on, each at its spell level",
-    input: "aptitudeLevels",
+    input: "leveledLinks",
     key: "aptitudes",
     links: "powersAptitudesInRules",
     label: "Aptitudes",
     max: RULESET_LIMITS.spellLevel,
     min: 0,
-    required: true,
+    required: APTITUDES_REQUIRED,
   },
 ];
 
 /** A 3.5 spell's list: its name, its spell lists, its description. */
 export const POWER_LIST: ListDescription = {
   nameShare: 25,
-  columns: [{ key: "powersAptitudesInRules", label: "Aptitudes", reads: "aptitudes", share: 15, slot: "inline" }],
+  columns: [{ key: "powersAptitudesInRules", label: "Aptitudes", reads: "pools", share: 15, slot: "inline" }],
 };

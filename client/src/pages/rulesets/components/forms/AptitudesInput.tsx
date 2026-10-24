@@ -1,6 +1,6 @@
 import { type FieldValues, useController } from "react-hook-form";
 
-import { APTITUDES_RULES } from "@/client/src/lib/validation.ts";
+import { requiredRules } from "@/client/src/lib/validation.ts";
 import { AptitudesAutocomplete } from "@/client/src/pages/rulesets/components/AptitudesAutocomplete.tsx";
 import { byName } from "@/client/src/pages/rulesets/components/byName.ts";
 import { useAptitudeLookup } from "@/client/src/pages/rulesets/components/useAptitudeLookup.ts";
@@ -9,7 +9,7 @@ import type { EntityField } from "@/client/src/pages/rulesets/details/rulesetQue
 import type { ColumnInputProps } from "./columnContext.ts";
 
 /** A pool's links, with no level of their own. */
-type AptitudesField = Extract<EntityField, { input: "aptitudes" }>;
+type AptitudesField = Extract<EntityField, { input: "links" }>;
 
 /**
  * A pool's links (a feat's feat pools): its aptitudes, picked by name, held by their ids, sorted by name. A new entity
@@ -26,7 +26,7 @@ export function AptitudesInput<T extends FieldValues>({
   const { field: bound, fieldState } = useController({
     control: form.control,
     name,
-    rules: field.required && context.newEntity ? APTITUDES_RULES : undefined,
+    rules: field.required !== undefined && context.newEntity ? requiredRules(field.required) : undefined,
   });
   const ids: string[] = Array.isArray(bound.value) ? bound.value : [];
   return (

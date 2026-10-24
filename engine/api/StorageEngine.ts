@@ -3,6 +3,7 @@ import type {
   FieldDef,
   LinkPart,
   LinkRoleDef,
+  ListLink,
   RulesetModule,
   StepDef,
   StorageRegistries,
@@ -455,7 +456,7 @@ export default class StorageEngine {
   }
 
   /** A kind's list's join rows (`rows`, by its columns) as list links, each with the entity it's from. */
-  listLinksOf(type: string, rows: Row[]): { aptitudeId: string; fromId: string; level: number | null }[] {
+  listLinksOf(type: string, rows: Row[]): { fromId: string; level: number | null; listId: string }[] {
     const [list] = Object.values(this.kind(type).lists ?? {});
     if (!list) return [];
     const { columns } = this.join(list.join);
@@ -463,8 +464,8 @@ export default class StorageEngine {
     const [from, to, tier] = [column("from")!, column("to")!, column("tier")];
     return rows.map((row) => ({
       fromId: String(row[from]),
-      aptitudeId: String(row[to]),
       level: tier ? ((row[tier] as number | null) ?? null) : null,
+      listId: String(row[to]),
     }));
   }
 
@@ -472,13 +473,13 @@ export default class StorageEngine {
    * An entity's list links (`links`: the lists it's in, at a tier if they rank it: a spell's level) as its kind's
    * list's join rows (`join`, its name), none for a kind without a list.
    */
-  listRowsOf(type: string, entityId: string, links: { aptitudeId: string; level?: number | null }[]) {
+  listRowsOf(type: string, entityId: string, links: ListLink[]) {
     const [list] = Object.values(this.kind(type).lists ?? {});
     if (!list) return undefined;
     const { columns } = this.join(list.join);
     const parts = (link: (typeof links)[number]): Partial<Record<LinkPart, unknown>> => ({
       from: entityId,
-      to: link.aptitudeId,
+      to: link.listId,
       tier: link.level ?? null,
     });
     return {

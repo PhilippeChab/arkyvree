@@ -15,9 +15,6 @@ interface ColumnValue {
   schema: z.ZodType;
 }
 
-/** What a required list of links refuses empty on a new entity. */
-const AT_LEAST_ONE_APTITUDE = "At least one aptitude must be selected";
-
 /** The inputs an empty value is none of (an empty select, an emptied text). */
 const EMPTY_AS_NONE: ReadonlySet<FormField["input"]> = new Set(["choice", "ref", "template", "text"]);
 
@@ -65,9 +62,9 @@ export default class FormColumns {
     return values.every((value) => value.required) ? schema : schema.optional();
   }
 
-  /** A list of links, at least one on a new entity when it's `required`. */
-  private static links<T extends z.ZodType>(links: z.ZodArray<T>, required: boolean, creating: boolean) {
-    return required && creating ? links.min(1, AT_LEAST_ONE_APTITUDE) : links;
+  /** A list of links, at least one on a new entity when it's `required`, its refusal saying so. */
+  private static links<T extends z.ZodType>(links: z.ZodArray<T>, required: string | undefined, creating: boolean) {
+    return required !== undefined && creating ? links.min(1, required) : links;
   }
 
   /**
@@ -87,21 +84,14 @@ export default class FormColumns {
   /** What a column's input takes, whether none clears it, and whether a new entity's form gives it. */
   private static valueOf(column: FormField, creating: boolean): ColumnValue {
     switch (column.input) {
-      case "aptitudeLevels": {
-        const level = z.number().int().min(column.min).max(column.max);
-        const links = z.array(z.object({ id: ID, level: level.optional() }));
+      case "amounts": {
+        const amount = z.number().int().min(column.min).max(column.max);
         return {
           nullable: false,
-          required: column.required,
-          schema: FormColumns.links(links, column.required, creating),
+          required: false,
+          schema: z.array(z.object({ [column.amountKey]: amount, [column.entityKey]: ID })),
         };
       }
-      case "aptitudes":
-        return {
-          nullable: false,
-          required: column.required,
-          schema: FormColumns.links(z.array(ID), column.required, creating),
-        };
       case "choice": {
         const values = column.options.join(", ");
         const option = z.literal([...column.options], { error: () => `${column.label} must be one of: ${values}` });
@@ -123,11 +113,26 @@ export default class FormColumns {
         };
       case "flag":
         return { nullable: column.nullable, required: !column.nullable, schema: z.boolean() };
-      case "grantedFeats":
+      case "grants":
         return {
           nullable: false,
           required: false,
-          schema: z.array(z.object({ aptitudeId: ID, featId: ID, free: z.boolean().optional() })),
+          schema: z.array(z.object({ [column.viaKey]: ID, [column.entityKey]: ID, free: z.boolean().optional() })),
+        };
+      case "leveledLinks": {
+        const level = z.number().int().min(column.min).max(column.max);
+        const links = z.array(z.object({ id: ID, level: level.optional() }));
+        return {
+          nullable: false,
+          required: column.required !== undefined,
+          schema: FormColumns.links(links, column.required, creating),
+        };
+      }
+      case "links":
+        return {
+          nullable: false,
+          required: column.required !== undefined,
+          schema: FormColumns.links(z.array(ID), column.required, creating),
         };
       case "number": {
         const whole = z.number().int();
@@ -141,12 +146,6 @@ export default class FormColumns {
       }
       case "ref":
         return { nullable: !column.required, required: column.required, schema: ID };
-      case "saveBases":
-        return {
-          nullable: false,
-          required: false,
-          schema: z.array(z.object({ base: z.number().int().min(column.min).max(column.max), saveId: ID })),
-        };
       case "template":
         return { nullable: true, required: false, schema: ID };
       case "text":

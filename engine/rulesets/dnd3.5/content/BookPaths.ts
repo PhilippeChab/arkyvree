@@ -13,11 +13,8 @@ export default class BookPaths {
    * (by their `names`), and the combat, weapon, identity and spellcasting paths every character has. What the codegen
    * checks a book's modifiers and requirements against.
    */
-  static listBookTargetPaths(
-    names: { abilities: string[]; saves: string[]; skills: string[] },
-    kind: "modifier" | "requirement",
-  ) {
-    const named = (list: string[]) => list.map((name) => ({ name }));
+  static listBookTargetPaths(names: Partial<Record<string, string[]>>, kind: "modifier" | "requirement") {
+    const named = (list: string[] = []) => list.map((name) => ({ name }));
     return [
       ...AbilitiesPaths.generateAbilityPaths(named(names.abilities), kind),
       ...CombatPaths.generateCombatPaths(kind),

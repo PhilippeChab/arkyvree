@@ -96,9 +96,9 @@ describe("rules", () => {
       { label: "Animal Companion", value: "animalcompanion" },
       { label: "Special Mount", value: "mount" },
     ]);
-    expect(dnd35.lastClassLevel).toBe(20);
-    expect(dnd35.powerLevels.at(0)).toEqual({ label: "Cantrips", level: 0 });
-    expect(dnd35.powerLevels.at(-1)).toEqual({ label: "Level 9", level: 9 });
+    expect(dnd35.progression.lastLevel).toBe(20);
+    expect(dnd35.tiers.at(0)).toEqual({ label: "Cantrips", level: 0 });
+    expect(dnd35.tiers.at(-1)).toEqual({ label: "Level 9", level: 9 });
     expect(dnd35.license).toMatchObject({ text: "ogl" });
     // Its lists: a class's hit die as dice notation, an item's cost and weight in their units
     expect(dnd35.lists.klasses?.columns).toEqual([
@@ -138,12 +138,12 @@ describe("rules", () => {
     });
     // A pools column reads the links its list's rows hold
     expect(dnd35.lists.feats?.columns.map(({ key, reads }) => [key, reads])).toEqual([
-      ["featsAptitudesInRules", "aptitudes"],
+      ["featsAptitudesInRules", "pools"],
     ]);
     // Its classes' progression: a level's base attack bonus and skill points, a base per save, two spell tables
     expect(dnd35.progression.tracks.map(({ key, source }) => [key, source])).toEqual([
       ["bab", "field"],
-      ["saves", "saves"],
+      ["saves", "amounts"],
       ["skills", "field"],
     ]);
     expect(dnd35.progression.tracks[0].labels?.[6]).toBe("+6/+1");

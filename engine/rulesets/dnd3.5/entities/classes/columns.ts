@@ -24,18 +24,22 @@ export const CLASS_COLUMNS: FormField[] = [
  */
 export const CLASS_LEVEL_COLUMNS: FormField[] = [
   {
+    amountKey: "base",
+    entityKey: "saveId",
     help: "The base bonus the level gives each save",
-    input: "saveBases",
+    input: "amounts",
     key: "saves",
     label: "Saves",
     max: RULESET_LIMITS.saveBase,
     min: 0,
   },
   {
+    entityKey: "featId",
     help: "Select feats with aptitudes granted at this level",
-    input: "grantedFeats",
+    input: "grants",
     key: "feats",
     label: "Feats",
+    viaKey: "aptitudeId",
   },
 ];
 

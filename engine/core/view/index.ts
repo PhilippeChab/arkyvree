@@ -6,7 +6,7 @@
  */
 
 export { default as RequestIds } from "./RequestIds.ts";
-export type { EntityRow, LinkRow, Row, ViewEntities, ViewJoins } from "./rows.ts";
+export type { EntityRow, LinkRow, OwnedEntities, Row, StandaloneKind, ViewEntities, ViewJoins } from "./rows.ts";
 export { default as RulesetComposition, type RulesetRawData, type ViewSchema } from "./RulesetComposition.ts";
 export { default as RulesetData } from "./RulesetData.ts";
 export type { RulesetView } from "./RulesetData.ts";

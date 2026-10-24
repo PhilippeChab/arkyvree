@@ -3,9 +3,6 @@ import { sanitizeText } from "@/shared/text.ts";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-/** React Hook Form rules for a new feat's or spell's aptitudes: at least one, as the API asks. */
-export const APTITUDES_RULES = { required: "At least one aptitude must be selected" } as const;
-
 /** React Hook Form rules for a decimal written as text (an item's cost, its weight): digits with one point, or nothing. */
 export const DECIMAL_RULES = { pattern: { value: /^(\d+\.?\d*|\.\d+)?$/, message: "Must be a number" } } as const;
 

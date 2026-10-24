@@ -11,7 +11,6 @@ import { RACE_COLUMNS, RACE_LIST } from "@/engine/rulesets/dnd3.5/entities/races
 import { SAVE_COLUMNS, SAVE_LIST } from "@/engine/rulesets/dnd3.5/entities/saves/columns.ts";
 import { SKILL_COLUMNS, SKILL_LIST } from "@/engine/rulesets/dnd3.5/entities/skills/columns.ts";
 import { BONDED_KINDS } from "@/vocabulary/dnd3.5/bondedKinds.ts";
-import { MAX_CLASS_LEVEL } from "@/vocabulary/dnd3.5/classes.ts";
 import { MAX_ITEM_VARIANTS } from "@/vocabulary/dnd3.5/itemTemplates.ts";
 import { SPELL_LEVEL_LABELS, SPELL_LEVELS } from "@/vocabulary/dnd3.5/spells.ts";
 
@@ -81,7 +80,6 @@ export const RULES: RulesDescription = {
       type: "mechanics",
     },
   ],
-  lastClassLevel: MAX_CLASS_LEVEL,
   lists: {
     abilities: NAMED_LIST,
     aptitudes: NAMED_LIST,
@@ -100,8 +98,8 @@ export const RULES: RulesDescription = {
       "This notice applies to the SRD-derived Open Game Content in this system source package. It does not license the application code or designate independent user-created content as Open Game Content.",
     text: "ogl",
   },
-  powerLevels: SPELL_LEVELS.map((level) => ({ label: SPELL_LEVEL_LABELS[level], level })),
   progression: PROGRESSION,
+  tiers: SPELL_LEVELS.map((level) => ({ label: SPELL_LEVEL_LABELS[level], level })),
   words: {
     abilities: { many: "Abilities", one: "Ability" },
     aptitudes: { many: "Aptitudes", one: "Aptitude" },

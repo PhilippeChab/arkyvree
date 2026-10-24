@@ -135,7 +135,7 @@ const FLAG_CHOICES = [
 ] as const;
 
 /** The column inputs that list links (a spell's aptitudes, a level's saves and feats), below the form's fields. */
-const LINK_INPUTS = ["aptitudeLevels", "grantedFeats", "saveBases"] as const;
+const LINK_INPUTS = ["leveledLinks", "grants", "amounts"] as const;
 
 /** A form that reads nothing of its entity past its values. */
 const NO_CONTEXT: ColumnContext = {};
@@ -207,13 +207,13 @@ function FieldInput<T extends FieldValues>({ field, ...props }: FieldInputProps<
           slotProps={{ htmlInput: { inputMode: "decimal" } }}
         />
       );
-    case "aptitudeLevels":
+    case "leveledLinks":
       return <AptitudeLevelsInput {...props} field={field} name={name} />;
-    case "aptitudes":
+    case "links":
       return <AptitudesInput {...props} field={field} name={name} />;
-    case "grantedFeats":
+    case "grants":
       return <GrantedFeatsInput {...props} field={field} name={name} />;
-    case "saveBases":
+    case "amounts":
       return <SaveBasesInput {...props} field={field} name={name} />;
     case "template":
       return <TemplateInput {...props} field={field} name={name} />;
@@ -364,7 +364,7 @@ function isSwitch(field: EntityField) {
 /** Whether a field takes the grid's whole width: a group, several values, a progression, or a column's list. */
 function isWide(field: EntityField) {
   return (
-    isOneOf(field.input, ["aptitudeLevels", "aptitudes", "grantedFeats", "group", "progression", "saveBases"]) ||
+    isOneOf(field.input, ["leveledLinks", "links", "grants", "group", "progression", "amounts"]) ||
     ((field.input === "choice" || field.input === "text") && field.multiple)
   );
 }

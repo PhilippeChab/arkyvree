@@ -61,7 +61,7 @@ export function ClassSpellsSection({ rulesetId, classId, className, ruleset }: C
   const tables = rules?.progression.tables ?? [];
   // Its rules' words for a power ("Spell", "Spells")
   const [one, many] = [entityTypeLabel("powers", rules?.words), entityTypeLabel("powers", rules?.words, true)];
-  const listName = rules?.progression.spellListName?.replaceAll("{class}", className);
+  const listName = rules?.progression.listName?.replaceAll("{class}", className);
   // The table it shows is its address's (which its old Spells Known tab's opens on), else its first
   const tableParam = useSearchParam("table", tables[0]?.key ?? "perDay");
   const shown = tables.find((rules) => rules.key === tableParam.value) ?? tables.at(0);

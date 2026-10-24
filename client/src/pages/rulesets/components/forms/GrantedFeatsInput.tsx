@@ -22,7 +22,7 @@ interface FeatOption extends LevelFeat {
 }
 
 /** The feats a class level grants, each through an aptitude. */
-type GrantedFeatsField = Extract<EntityField, { input: "grantedFeats" }>;
+type GrantedFeatsField = Extract<EntityField, { input: "grants" }>;
 
 /**
  * The feats a class level grants, as chips: each a feat and the aptitude it's taken for, one option per feat and

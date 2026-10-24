@@ -269,6 +269,22 @@ describe("rulesets entities by kind", () => {
     }
   });
 
+  test("lists the pools of the scope each kind's description narrows its list by", async () => {
+    const { id } = await setup();
+    const rules = await expectOk(api.api.rules.$get());
+    const scoped = rules["Dungeons & Dragons: 3.5"].kinds.filter((kind) => kind.pools);
+    expect(scoped.map(({ pools }) => pools)).toEqual(["feats", "spells"]);
+    const idsOf = async (scope: string) =>
+      (
+        await expectOk(kinds.$get({ param: { id, entityType: "aptitudes" }, query: { limit: "100", scope } }))
+      ).items.map((pool) => pool.id);
+    const [featPools, spellLists] = await Promise.all(scoped.map(({ pools }) => idsOf(pools ?? "")));
+    // Each scope narrows the list to its own pools
+    expect(featPools.length).toBeGreaterThan(0);
+    expect(spellLists.length).toBeGreaterThan(0);
+    expect(featPools.filter((poolId) => spellLists.includes(poolId))).toEqual([]);
+  });
+
   test("reads an entity's pools where its kind's columns say its links are", async () => {
     const { id, featPool, spellList } = await setup();
     const rules = await expectOk(api.api.rules.$get());
@@ -276,7 +292,7 @@ describe("rulesets entities by kind", () => {
     const visited: string[] = [];
     for (const [type, columns] of Object.entries(rules["Dungeons & Dragons: 3.5"].columns)) {
       for (const column of columns ?? []) {
-        if ((column.input !== "aptitudes" && column.input !== "aptitudeLevels") || !column.links) continue;
+        if ((column.input !== "links" && column.input !== "leveledLinks") || !column.links) continue;
         // An entity of its kind in a pool: its read holds its link to it, its aptitude named, its level where it has one
         visited.push(type);
         expect(Object.keys(pools)).toContain(type);
@@ -291,7 +307,7 @@ describe("rulesets entities by kind", () => {
           links: expect.arrayContaining([
             expect.objectContaining({
               aptitudesInRule: expect.objectContaining({ id: pools[type], name: expect.any(String) }),
-              ...(column.input === "aptitudeLevels" && { level: expect.any(Number) }),
+              ...(column.input === "leveledLinks" && { level: expect.any(Number) }),
             }),
           ]),
         });
