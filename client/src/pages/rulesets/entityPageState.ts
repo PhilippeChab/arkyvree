@@ -1,7 +1,7 @@
 import type { RulesWords } from "@/client/src/lib/queries.ts";
 import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
-import { parseCustomizationSegment } from "@/shared/customization/entities.ts";
 import { isRecord } from "@/shared/isRecord.ts";
+import { getEntityTypeOfSegment } from "@/shared/urlSegments.ts";
 
 /** The router state a ruleset entity's page is opened with (`useOpenEntity`). */
 export interface EntityPageState {
@@ -22,7 +22,8 @@ const CUSTOMIZATION_PAGE = /^\/rulesets\/[^/]+\/([^/]+)\/[^/]+\/customization(?:
  * ruleset's words are in), else the ruleset.
  */
 function backLabel(to: string, words: RulesWords | undefined) {
-  const customized = parseCustomizationSegment(CUSTOMIZATION_PAGE.exec(to)?.[1]);
+  const segment = CUSTOMIZATION_PAGE.exec(to)?.[1];
+  const customized = segment && getEntityTypeOfSegment(segment);
   if (customized) return words?.[customized] ? `Back to ${entityTypeLabel(customized, words)}` : "Back";
   return CLASS_PAGE.test(to) ? "Back to Class" : "Back to Ruleset";
 }

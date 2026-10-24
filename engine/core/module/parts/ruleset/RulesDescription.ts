@@ -142,6 +142,12 @@ export interface RulesDescription {
    * class's hit die, an item's cost, type and slot): each keyed where its value goes in the form's body
    */
   columns: Partial<Record<string, FormField[]>>;
+  /**
+   * The kinds whose customizations have a page of their own, as its storage declares them customizable (3.5's feats,
+   * items, spells, races and class levels), an owned kind's with the kind that owns it (`owner`: a class level's
+   * class); not a kind that owns another, whose customizations are its page's tabs (a class's)
+   */
+  customizationPages: { owner?: string; type: string }[];
   /** The kinds a race or a class is for: a player character (`pc`), and those its rules add (3.5's bonded creatures) */
   entityKinds: { label: string; value: string }[];
   /**
@@ -175,3 +181,6 @@ export interface RulesWord {
   many: string;
   one: string;
 }
+
+/** What a module's rules describe of themselves: all but what the engine reads off its storage. */
+export type RulesDeclaration = Omit<RulesDescription, "customizationPages">;

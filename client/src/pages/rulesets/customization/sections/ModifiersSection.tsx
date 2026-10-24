@@ -25,16 +25,16 @@ import { formatDate } from "@/client/src/lib/formatDate.ts";
 import { type RulesetDetail } from "@/client/src/lib/queries.ts";
 import { EntityDeleteDialog, RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
 import { modifiersQuery } from "@/client/src/pages/rulesets/customization/customizationSectionQueries.ts";
-import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
+import { customizationEntityQuery, MODIFIER_PAGE } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
 import { followCopiesOf } from "@/client/src/pages/rulesets/followCopies.ts";
 import { useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
-import { buildCustomizationPath, type CustomizableEntityType } from "@/shared/customization/entities.ts";
+import { buildCustomizationPath } from "@/shared/customization/entities.ts";
 import { getUrlSegment } from "@/shared/urlSegments.ts";
 
 interface ModifiersSectionProps {
   entityId: string;
-  entityType: CustomizableEntityType;
+  entityType: string;
   followCopy?: (copyId: string, sourceId: string) => void;
   queryKeysToInvalidate?: readonly (readonly unknown[])[];
   /** A delete can be undone from Local Changes, its entity's being inherited (`useRestorableDelete`) */
@@ -139,7 +139,7 @@ export function ModifiersSection({
   };
 
   const handleRowPrefetch = (modifier: Modifier) => {
-    void queryClient.prefetchQuery(customizationEntityQuery(ruleset.id, "modifiers", modifier.id));
+    void queryClient.prefetchQuery(customizationEntityQuery(ruleset.id, MODIFIER_PAGE, modifier.id));
   };
 
   const renderCell = (modifier: Modifier, columnKey: string) => {

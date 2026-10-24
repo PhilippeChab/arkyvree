@@ -2,8 +2,13 @@ import type { Db } from "@/drizzle/database.ts";
 import { type CowData, Engine, type EntityCustomizations, type RulesetSources } from "@/engine/index.ts";
 import CowDataReader from "@/server/cow/views/CowDataReader.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
-import { Entities, EntitySnapshots, Joins, type RulesetEntityType } from "@/server/repositories/index.ts";
-import { isCustomizableEntityType } from "@/shared/customization/entities.ts";
+import {
+  CUSTOMIZABLE_TYPES,
+  Entities,
+  EntitySnapshots,
+  Joins,
+  type RulesetEntityType,
+} from "@/server/repositories/index.ts";
 
 import CustomizationCopies from "./CustomizationCopies.ts";
 import EntityRepositories, { type EntityWithId } from "./EntityRepositories.ts";
@@ -27,7 +32,7 @@ export default class EntityCopy {
     this.entityType = entityType;
     this.entityId = entityId;
     this.ruleset = ruleset;
-    this.sourceType = isCustomizableEntityType(entityType) ? entityType : undefined;
+    this.sourceType = CUSTOMIZABLE_TYPES.includes(entityType) ? entityType : undefined;
   }
 
   /**
@@ -168,7 +173,7 @@ export default class EntityCopy {
         owned.map((row) => ({ ...row, id: undefined, [owner]: targetEntityId })),
       );
       const ids = new Map(owned.map((row, index) => [row.id, copies[index].id]));
-      const customizable = isCustomizableEntityType(type) ? type : undefined;
+      const customizable = CUSTOMIZABLE_TYPES.includes(type) ? type : undefined;
       const customizations = await CustomizationCopies.read(tx, [...ids.keys()], type, customizable);
       for (const [id, copyId] of ids) {
         const own = customizations.get(id);

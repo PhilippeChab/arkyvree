@@ -14,7 +14,7 @@ import {
   ValueChip,
 } from "@/client/src/components/common/index.ts";
 import { LevelsIcon } from "@/client/src/components/icons/index.ts";
-import { useRules, useRulesetPermissions } from "@/client/src/hooks/index.ts";
+import { useCustomizationPages, useRules, useRulesetPermissions } from "@/client/src/hooks/index.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { nextClassLevel, withEntityFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
@@ -76,6 +76,7 @@ interface Track {
 export function ClassProgressionSection({ rulesetId, classId, className, ruleset }: ClassSectionProps) {
   const openEntity = useOpenEntity(rulesetId);
   const queryClient = useQueryClient();
+  const levelPage = useCustomizationPages().get("klass_levels");
   const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
   const { data: rulesetSaves, error: savesError } = useRulesetSaves(rulesetId);
   // Its tracks, a level's fields and its saves, as its rules describe them
@@ -316,7 +317,7 @@ export function ClassProgressionSection({ rulesetId, classId, className, ruleset
         columns={columns}
         onRowClick={(level) => openEntity(buildCustomizationPath("klass_levels", level.id))}
         onRowPrefetch={(level) =>
-          void queryClient.prefetchQuery(customizationEntityQuery(rulesetId, "klass_levels", level.id))
+          void queryClient.prefetchQuery(customizationEntityQuery(rulesetId, levelPage, level.id))
         }
         renderCell={renderCell}
         empty={

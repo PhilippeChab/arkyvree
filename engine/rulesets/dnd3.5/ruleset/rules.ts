@@ -1,5 +1,5 @@
 import { NAMED_LIST } from "@/engine/core/entities/index.ts";
-import type { RulesDescription } from "@/engine/core/module/index.ts";
+import type { RulesDeclaration } from "@/engine/core/module/index.ts";
 import { CHARACTER_FORM } from "@/engine/rulesets/dnd3.5/characters/form.ts";
 import { CLASS_COLUMNS, CLASS_LEVEL_COLUMNS, CLASS_LIST } from "@/engine/rulesets/dnd3.5/entities/classes/columns.ts";
 import { PROGRESSION } from "@/engine/rulesets/dnd3.5/entities/classes/progression.ts";
@@ -20,7 +20,7 @@ import { SPELL_LEVEL_LABELS, SPELL_LEVELS } from "@/vocabulary/dnd3.5/spells.ts"
  * bonded to one, a class has 20 levels and a spell 0 to 9, its system rulesets' SRD content is Open Game Content, and a
  * new character's form.
  */
-export const RULES: RulesDescription = {
+export const RULES: RulesDeclaration = {
   characterForm: CHARACTER_FORM,
   columns: {
     feats: FEAT_COLUMNS,

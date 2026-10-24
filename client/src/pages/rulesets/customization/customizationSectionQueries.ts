@@ -5,12 +5,11 @@ import { parseResponse } from "hono/client";
 
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
-import type { CustomizableEntityType, CustomizationOwnerType } from "@/shared/customization/entities.ts";
 import { getUrlSegment } from "@/shared/urlSegments.ts";
 
 const customizationApi = rpc.api.rulesets[":id"].customization[":entityType"][":entityId"];
 
-export function modifiersQuery(rulesetId: string, entityType: CustomizableEntityType, entityId: string) {
+export function modifiersQuery(rulesetId: string, entityType: string, entityId: string) {
   return queryOptions({
     queryKey: QUERY_KEYS.rulesets.customization(rulesetId, entityType, entityId, "modifiers"),
     queryFn: () =>
@@ -20,7 +19,7 @@ export function modifiersQuery(rulesetId: string, entityType: CustomizableEntity
   });
 }
 
-export function requirementsQuery(rulesetId: string, entityType: CustomizationOwnerType, entityId: string) {
+export function requirementsQuery(rulesetId: string, entityType: string, entityId: string) {
   return queryOptions({
     queryKey: QUERY_KEYS.rulesets.customization(rulesetId, entityType, entityId, "requirements"),
     queryFn: () =>

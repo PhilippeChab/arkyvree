@@ -206,6 +206,11 @@ export interface StoredJoin {
 export interface StoredKind {
   columns: Record<string, StoredColumn>;
   /**
+   * Whether a user customizes its entities: their modifiers and requirements, on a page of their own or a tab of their
+   * owner's (3.5's feats, items, spells, races, classes and class levels)
+   */
+  customizable?: true;
+  /**
    * The lists its row carries past its columns, by their names: a join's rows from the entity, each with its target's
    * row (`target`, its name), as a relational read nested them (a feat's pools, each with its aptitude)
    */

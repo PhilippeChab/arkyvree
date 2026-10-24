@@ -15,6 +15,7 @@ import {
   toggleProps,
   ValueChip,
 } from "@/client/src/components/common/index.ts";
+import { useCustomizationPages } from "@/client/src/hooks/index.ts";
 import { DURATION } from "@/client/src/theme/animations.ts";
 
 import { BlockCell } from "./BlockTable.tsx";
@@ -145,7 +146,7 @@ function PoolEntryRow({ columns, entityType, entry, rulesetId }: PoolEntryRowPro
   const [open, setOpen] = useState(false);
   const { name: nameColumn, others } = splitNameColumn(columns);
   const name = entry.cells[nameColumn.key] ?? "";
-  const link = entityPagePath(rulesetId, entityType, entry.id);
+  const link = entityPagePath(rulesetId, entityType, entry.id, useCustomizationPages());
 
   return (
     <>

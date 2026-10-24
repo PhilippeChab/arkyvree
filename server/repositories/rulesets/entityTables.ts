@@ -1,7 +1,16 @@
 import { Engine, type EntityKinds, type OwnedKind } from "@/engine/index.ts";
+import { getUrlSegment } from "@/shared/urlSegments.ts";
 
 /** A ruleset entity type: a kind a module declares, which no other entity owns. */
 export type RulesetEntityType = keyof EntityKinds;
+
+/**
+ * The kinds a user customizes (3.5's class levels, classes, feats, items, spells and races), in the order of their URLs'
+ * words, which a route's refusal of another lists.
+ */
+export const CUSTOMIZABLE_TYPES: readonly string[] = Engine.storage()
+  .customizableKinds()
+  .toSorted((a, b) => getUrlSegment(a).localeCompare(getUrlSegment(b)));
 
 /**
  * The joins an entity edits link by link, by name (3.5's class's skills), whose activities name them: the kind each is
@@ -26,6 +35,9 @@ export const OWNED_TYPES: ReadonlyMap<OwnedKind, RulesetEntityType> = new Map(
     .registries()
     .entityTypes.flatMap((def) => (def.ownerType ? [[def.type as OwnedKind, def.ownerType as RulesetEntityType]] : [])),
 );
+
+/** The types whose properties hold fields: kinds' (3.5's feats … skills) and the rulesets' (their settings). */
+export const PROPERTY_TYPES: readonly string[] = Engine.storage().propertyTypes();
 
 /** Every ruleset entity type, in the order the modules declare them: those no other type owns. */
 export const RULESET_ENTITY_TYPES = Engine.storage()

@@ -1,6 +1,5 @@
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
-import { buildCustomizationPath, CUSTOMIZATION_PAGE_TYPES } from "@/shared/customization/entities.ts";
-import { isOneOf } from "@/shared/isOneOf.ts";
+import { buildCustomizationPath } from "@/shared/customization/entities.ts";
 
 /** A sheet's block of a kind. */
 export type BlockOf<K extends SheetBlock["kind"]> = Extract<SheetBlock, { kind: K }>;
@@ -37,10 +36,15 @@ export type SheetTable = NonNullable<BlockOf<"stats">["panels"][number]["table"]
 
 /**
  * An entity's page in its ruleset, which a block's entry links to (`entityType`, its block's kind of entity): none
- * without a ruleset to read it in, an id, or a page of its kind.
+ * without a ruleset to read it in, an id, or a page of its kind (`pages`, the kinds whose customizations have one).
  */
-export function entityPagePath(rulesetId: string | undefined, entityType: string, id: string | null) {
-  if (!rulesetId || !id || !isOneOf(entityType, CUSTOMIZATION_PAGE_TYPES)) return undefined;
+export function entityPagePath(
+  rulesetId: string | undefined,
+  entityType: string,
+  id: string | null,
+  pages: ReadonlyMap<string, unknown>,
+) {
+  if (!rulesetId || !id || !pages.has(entityType)) return undefined;
   return `/rulesets/${rulesetId}/${buildCustomizationPath(entityType, id)}`;
 }
 

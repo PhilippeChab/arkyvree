@@ -159,6 +159,7 @@ export {
   type ProgressionDescription,
   type ProgressionTable,
   type ProgressionTrack,
+  type RulesDeclaration,
   type RulesDescription,
   RulesetPart,
   type RulesWord,

@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
+import { PROPERTY_TYPES } from "@/server/repositories/index.ts";
 import { RulesetFieldsService } from "@/server/services/rulesets/fields/index.ts";
-import { PROPERTY_ENTITY_TYPES } from "@/shared/customization/entities.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 import { SPELL_COMPONENTS, SPELL_SCHOOLS } from "@/vocabulary/dnd3.5/spells.ts";
 
@@ -9,7 +9,7 @@ describe("RulesetFieldsService", () => {
   test("gives each entity type's form its fields, and the ruleset's Settings', as the ruleset declares them", async () => {
     const { rulesetId } = await getSeedCtx();
     const fields = await RulesetFieldsService.getFields(rulesetId);
-    expect(Object.keys(fields).toSorted()).toEqual([...PROPERTY_ENTITY_TYPES].toSorted());
+    expect(Object.keys(fields).toSorted()).toEqual([...PROPERTY_TYPES].toSorted());
 
     expect(fields.powers.map((field) => field.key)).toEqual([
       "school",

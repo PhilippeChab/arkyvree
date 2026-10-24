@@ -15,7 +15,10 @@ type TemplateField = Extract<EntityField, { input: "template" }>;
 
 /** A template as the server holds it now (`templateId`, of `rulesetId`'s items), whose values a new item drops. */
 function fetchTemplate(queryClient: QueryClient, rulesetId: string, templateId: string) {
-  return queryClient.fetchQuery({ ...customizationEntityQuery(rulesetId, "items", templateId), staleTime: NO_TIME });
+  return queryClient.fetchQuery({
+    ...customizationEntityQuery(rulesetId, { type: "items" }, templateId),
+    staleTime: NO_TIME,
+  });
 }
 
 /** A path of a form's values, which a column's description names as text (`sourceItemId`). */

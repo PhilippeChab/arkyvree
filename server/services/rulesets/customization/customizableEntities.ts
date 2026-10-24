@@ -1,12 +1,11 @@
 import { db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
-import { Characters, Entities, Modifiers } from "@/server/repositories/index.ts";
-import { isCustomizableEntityType } from "@/shared/customization/entities.ts";
+import { Characters, CUSTOMIZABLE_TYPES, Entities, Modifiers } from "@/server/repositories/index.ts";
 import type { Modifier, Property, Requirement } from "@/shared/relations.ts";
 
 /** Whether the row of an entity customizations are made on is stored: a customizable kind's, a modifier, a character. */
 async function isStored(entityId: string, entityType: string): Promise<boolean> {
-  if (isCustomizableEntityType(entityType)) return await Entities.has(db, { entityType, id: entityId });
+  if (CUSTOMIZABLE_TYPES.includes(entityType)) return await Entities.has(db, { entityType, id: entityId });
   if (entityType === "modifiers") return !!(await Modifiers.findOne(db, { id: entityId }));
   if (entityType === "characters") return !!(await Characters.findOne(db, { id: entityId }));
   return false;

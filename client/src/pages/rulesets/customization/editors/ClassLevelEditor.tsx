@@ -11,7 +11,7 @@ import {
   withEntityFields,
 } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { EntityDetailsCard } from "@/client/src/pages/rulesets/components/index.ts";
-import type { ClassLevel } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
+import type { OwnedEntity } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
 import type { ClassLevelFormData } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 import type { EntityField } from "@/client/src/pages/rulesets/details/rulesetQueries.ts";
 import { useAllLevelSaves, useEntityFields, useEntityForm } from "@/client/src/pages/rulesets/hooks/index.ts";
@@ -19,7 +19,7 @@ import { rpc } from "@/client/src/services/rpc.ts";
 
 import type { EditorProps } from "./renderEditor.tsx";
 
-type LevelFeatRow = ClassLevel["feats"][number];
+type LevelFeatRow = OwnedEntity["feats"][number];
 
 function asLevelFeat(feat: LevelFeatRow): LevelFeat {
   return { featId: feat.id, aptitudeId: feat.aptitudeId };
@@ -28,7 +28,7 @@ function featLabel(feat: LevelFeatRow) {
   return levelFeatLabel(feat.name, feat.aptitudeName);
 }
 
-function toClassLevelForm(level: ClassLevel, fields: readonly EntityField[] | undefined): ClassLevelFormData {
+function toClassLevelForm(level: OwnedEntity, fields: readonly EntityField[] | undefined): ClassLevelFormData {
   const values: ClassLevelFormData = {
     level: level.level,
     saves: level.saves.map(({ saveId, base }) => ({ saveId, base })),
@@ -46,7 +46,7 @@ export function ClassLevelEditor({
   locked,
   followCopy,
   refetchSaved,
-}: EditorProps<ClassLevel>) {
+}: EditorProps<OwnedEntity>) {
   const { fields } = useEntityFields(rulesetId, "klass_levels");
   const { withAllSaves } = useAllLevelSaves(rulesetId);
   const { form, save } = useEntityForm({

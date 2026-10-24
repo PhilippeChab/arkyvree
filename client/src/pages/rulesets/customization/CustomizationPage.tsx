@@ -12,10 +12,16 @@ import {
   SectionTabs,
 } from "@/client/src/components/common/index.ts";
 import { TargetPathBreadcrumbs } from "@/client/src/components/customization/index.ts";
-import { usePageTitle, useRules, useRulesetPermissions } from "@/client/src/hooks/index.ts";
+import {
+  type CustomizationPage,
+  useCustomizationPages,
+  usePageTitle,
+  useRules,
+  useRulesetPermissions,
+} from "@/client/src/hooks/index.ts";
 import { entitySegment } from "@/client/src/lib/entityRequests.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
-import { type RulesetDetail, rulesetDetailQuery } from "@/client/src/lib/queries.ts";
+import { type RulesDescription, type RulesetDetail, rulesetDetailQuery } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
 import { EntityDetailLayout, EntityPageError } from "@/client/src/pages/rulesets/components/index.ts";
@@ -27,19 +33,13 @@ import {
   useRulesetSaves,
 } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
-import {
-  buildCustomizationPath,
-  CUSTOMIZATION_PAGE_TYPES,
-  type CustomizationPageType,
-  parseCustomizationSegment,
-} from "@/shared/customization/entities.ts";
+import { buildCustomizationPath } from "@/shared/customization/entities.ts";
 import { formatOperator } from "@/shared/customization/operators.ts";
-import { isOneOf } from "@/shared/isOneOf.ts";
-import { getUrlSegment } from "@/shared/urlSegments.ts";
+import { getEntityTypeOfSegment, getUrlSegment } from "@/shared/urlSegments.ts";
 
 import { modifiersQuery, requirementsQuery } from "./customizationSectionQueries.ts";
 import { type EditableEntity, isEditable, renderEditor } from "./editors/index.ts";
-import { type CustomizationEntity, customizationEntityQuery } from "./entityQueries.ts";
+import { type CustomizationEntity, customizationEntityQuery, MODIFIER_PAGE } from "./entityQueries.ts";
 import {
   CUSTOMIZATION_TABS,
   type CustomizationSection,
@@ -75,8 +75,11 @@ function CustomizationView({
 
   const type = data.type;
   const { rules } = useRules(ruleset.baseRules);
+  const pages = useCustomizationPages();
   const label = entityTypeLabel(type, rules?.words);
-  const { title, pageTitle, subtitle, backPath } = describe(data, rulesetId);
+  const { title, pageTitle, subtitle, backPath } = describe(data, rulesetId, (sourceType, sourceId) =>
+    modifierSourcePath(rulesetId, sourceType, sourceId, pages, rules),
+  );
   // Where it was opened from, else what holds it (a class's level, an entity's modifier), else its list
   const back = entityPageBack(location.state, backPath ?? `/rulesets/${rulesetId}/${type}`, rules?.words);
   usePageTitle(pageTitle);
@@ -84,7 +87,7 @@ function CustomizationView({
   const entityKey = QUERY_KEYS.rulesets.entity(rulesetId, type, entityId);
   // A class level's class: its tabs (its levels, its tables, its progression) read what the level's page changes
   const klassKey =
-    data.type === "klass_levels" ? QUERY_KEYS.rulesets.classDetail(rulesetId, data.entity.klassId) : undefined;
+    data.holder === "owned" ? QUERY_KEYS.rulesets.classDetail(rulesetId, data.entity.klassId) : undefined;
   const customizedKeys = klassKey ? [entityKey, klassKey] : [entityKey];
 
   // A copy-on-write moves the page to the copy; `copiedFrom` keeps the source on screen while the copy loads
@@ -147,7 +150,7 @@ function CustomizationView({
           value={section}
           // A tab's rows load as it's pointed at, as a ruleset's tabs do
           onTabHover={(key) => {
-            if (key === "requirements" || data.type === "modifiers")
+            if (key === "requirements" || data.holder === "modifier")
               void queryClient.prefetchQuery(requirementsQuery(rulesetId, type, entityId));
             else void queryClient.prefetchQuery(modifiersQuery(rulesetId, data.type, entityId));
           }}
@@ -166,7 +169,7 @@ function CustomizationView({
           {/* The source's customizations don't belong to the copy: wait for it. A modifier has its requirements alone */}
           {locked ? (
             <DiceSpinner sx={{ py: 4 }} />
-          ) : section === "requirements" || data.type === "modifiers" ? (
+          ) : section === "requirements" || data.holder === "modifier" ? (
             <RequirementsSection {...sectionProps} entityType={type} queryKeysToInvalidate={customizedKeys} />
           ) : (
             <ModifiersSection {...sectionProps} entityType={data.type} queryKeysToInvalidate={customizedKeys} />
@@ -179,22 +182,23 @@ function CustomizationView({
 
 /** The ruleset entity whose delete the page's comes back with: its own, a class level's class; a modifier's isn't told. */
 function deletedHolder(data: CustomizationEntity) {
-  if (data.type === "modifiers") return undefined;
-  return { id: data.type === "klass_levels" ? data.entity.klassId : data.entity.id, rulesetId: data.entity.rulesetId };
+  if (data.holder === "modifier") return undefined;
+  return { id: data.holder === "owned" ? data.entity.klassId : data.entity.id, rulesetId: data.entity.rulesetId };
 }
 
 /** What surrounds the editor: the header and where Back goes. */
 function describe(
   data: CustomizationEntity,
   rulesetId: string,
+  sourcePath: (sourceType: string, sourceId: string) => string | undefined,
 ): {
   backPath?: string;
   pageTitle: string;
   subtitle?: ReactNode;
   title: string;
 } {
-  switch (data.type) {
-    case "modifiers": {
+  switch (data.holder) {
+    case "modifier": {
       const modifier = data.entity;
       return {
         title: modifier.sourceName,
@@ -207,39 +211,54 @@ function describe(
             </Typography>
           </Stack>
         ),
-        backPath: modifierSourcePath(rulesetId, modifier.sourceType, modifier.sourceId),
+        backPath: sourcePath(modifier.sourceType, modifier.sourceId),
       };
     }
-    case "klass_levels":
+    case "owned":
       return {
         title: `${data.entity.name} Level ${data.entity.level}`,
         pageTitle: `${data.entity.name} Level ${data.entity.level}`,
-        // Its class's page, which opens on its base rules' first tab
-        backPath: `/rulesets/${rulesetId}/classes/${data.entity.klassId}`,
+        // Its owner's page, which opens on its base rules' first tab
+        backPath: `/rulesets/${rulesetId}/${getUrlSegment(data.owner)}/${data.entity.klassId}`,
       };
     default:
       return { title: data.entity.name, pageTitle: data.entity.name };
   }
 }
 
-/** Where a modifier's page goes back to: its class's Modifiers tab, its entity's customization page, or nowhere. */
-function modifierSourcePath(rulesetId: string, sourceType: string, sourceId: string) {
-  if (sourceType === "klasses") return `/rulesets/${rulesetId}/classes/${sourceId}/modifiers`;
-  if (!isOneOf(sourceType, CUSTOMIZATION_PAGE_TYPES)) return undefined;
-  return `/rulesets/${rulesetId}/${buildCustomizationPath(sourceType, sourceId)}`;
+/**
+ * Where a modifier's page goes back to: its entity's customization page (`pages`, the kinds whose customizations have
+ * one), the Modifiers tab of its own page for a kind of the rules (`rules`) that has none (a class's), or nowhere.
+ */
+function modifierSourcePath(
+  rulesetId: string,
+  sourceType: string,
+  sourceId: string,
+  pages: ReadonlyMap<string, CustomizationPage>,
+  rules: RulesDescription | undefined,
+) {
+  if (sourceType === "modifiers" || pages.has(sourceType))
+    return `/rulesets/${rulesetId}/${buildCustomizationPath(sourceType, sourceId)}`;
+  if (!rules?.kinds.some((kind) => kind.type === sourceType)) return undefined;
+  return `/rulesets/${rulesetId}/${getUrlSegment(sourceType)}/${sourceId}/modifiers`;
 }
 
 /** A modifier can only carry requirements. */
-function tabsFor(type: CustomizationPageType) {
+function tabsFor(type: string) {
   return type === "modifiers" ? CUSTOMIZATION_TABS.filter((tab) => tab.key === "requirements") : CUSTOMIZATION_TABS;
 }
 
 async function deleteEntityFn(data: EditableEntity, id: string, entityId: string) {
   const api = rpc.api.rulesets[":id"];
-  if (data.type === "klass_levels") {
+  if (data.holder === "owned") {
     await parseResponse(
       api.entities[":entityType"][":entityId"].owned[":ownedId"].$delete({
-        param: { id, entityType: "classes", entityId: data.entity.klassId, ownedId: entityId },
+        param: {
+          id,
+          entityType: entitySegment(getUrlSegment(data.owner)),
+          entityId: data.entity.klassId,
+          ownedId: entityId,
+        },
       }),
     );
     return;
@@ -265,7 +284,10 @@ export default function CustomizationPage() {
     section?: string;
   }>();
   const location = useLocation();
-  const validType = parseCustomizationSegment(entityType);
+  const pages = useCustomizationPages();
+  const pageType = entityType && getEntityTypeOfSegment(entityType);
+  const page = pageType === "modifiers" ? MODIFIER_PAGE : pageType ? pages.get(pageType) : undefined;
+  const validType = page?.type;
 
   const { copiedFrom } = entityPageState(location.state);
 
@@ -297,7 +319,7 @@ export default function CustomizationPage() {
     isPlaceholderData,
     error: entityError,
   } = useQuery({
-    ...customizationEntityQuery(rulesetId, validType, entityId),
+    ...customizationEntityQuery(rulesetId, page, entityId),
     placeholderData: keepCopySource,
   });
   // Load the editors' pickers alongside the entity.

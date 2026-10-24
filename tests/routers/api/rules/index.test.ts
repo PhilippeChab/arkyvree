@@ -1,7 +1,5 @@
 import { describe, expect, test } from "bun:test";
 
-import { CUSTOMIZATION_PAGE_TYPES } from "@/shared/customization/entities.ts";
-import { isOneOf } from "@/shared/isOneOf.ts";
 import { expectOk, guestApi } from "@/tests/support/api.ts";
 
 describe("rules", () => {
@@ -75,12 +73,19 @@ describe("rules", () => {
       abilities: "page",
       mechanics: "page",
     });
-    // A kind that opens a customization page is one such a page shows
+    // The kinds whose customizations have a page of their own: a class's level by its class, a class's on its own page
+    expect(dnd35.customizationPages).toEqual([
+      { type: "feats" },
+      { type: "powers" },
+      { type: "items" },
+      { type: "races" },
+      { type: "klass_levels", owner: "klasses" },
+    ]);
+    // A kind that opens a customization page is one such a page shows, and every kind one shows but an owned kind's
+    // (which no tab lists) opens it
     const customized = dnd35.kinds.filter(({ opens }) => opens === "customization").map(({ type }) => type);
-    expect(customized.filter((type) => !isOneOf(type, CUSTOMIZATION_PAGE_TYPES))).toEqual([]);
-    // And every kind a customization page edits (but a class's level and a modifier, which no tab lists) is one
-    const edited = CUSTOMIZATION_PAGE_TYPES.filter((type) => type !== "klass_levels" && type !== "modifiers");
-    expect(edited.filter((type) => !customized.includes(type))).toEqual([]);
+    const pages = dnd35.customizationPages.filter(({ owner }) => !owner).map(({ type }) => type);
+    expect(customized.toSorted()).toEqual(pages.toSorted());
     // Races and classes narrow by what they're for, abilities take no form, an empty list of saves its own words
     expect(dnd35.kinds.filter((kind) => kind.partitioned).map(({ type }) => type)).toEqual(["races", "klasses"]);
     expect(dnd35.kinds.filter((kind) => kind.readOnly).map(({ type }) => type)).toEqual(["abilities"]);

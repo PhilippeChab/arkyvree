@@ -328,6 +328,11 @@ export default class StorageEngine {
     return write;
   }
 
+  /** The kinds a user customizes (`StoredKind.customizable`: 3.5's feats, items, spells, races, classes and levels). */
+  customizableKinds(): string[] {
+    return Object.keys(this.kinds).filter((type) => this.kinds[type].customizable);
+  }
+
   /** A field of an owner's type (an entity type, `rulesets` or `characters`), if a module declares it. */
   field(ownerType: string, field: string): FieldDef | undefined {
     return this.merged.fieldDefs.find((def) => def.ownerType === ownerType && def.field === field);
@@ -646,6 +651,22 @@ export default class StorageEngine {
   }
 
   /**
+   * The types whose properties hold fields past their kind's columns, which their form shows and their save writes:
+   * kinds' (3.5's feats, items, spells, races, classes, class levels and skills) and the rulesets' (their settings).
+   */
+  propertyTypes(): string[] {
+    const columnFields = new Set(
+      Object.values(this.kinds).flatMap((kind) =>
+        Object.values(kind.columns).flatMap((column) => ("field" in column ? [column.field] : [])),
+      ),
+    );
+    const types = this.merged.fieldDefs
+      .filter((def) => def.ownerKind !== "character" && !columnFields.has(def.field))
+      .map((def) => def.ownerType);
+    return [...new Set(types)];
+  }
+
+  /**
    * The joins whose links to an entity of a kind (`type`) refuse its delete, by their names (a class level's base bonus
    * to a save): an entity one links to is in use.
    */
@@ -728,12 +749,15 @@ export default class StorageEngine {
       ...types.flatMap(({ ownerType }) => (ownerType ? [ownerType] : [])),
       ...joins.map(({ from }) => from),
     ]);
+    const properties = new Set(this.propertyTypes());
     this.schema = {
       // An owner before the kinds it owns, each in its declared order otherwise
       kinds: types
         .toSorted((a, b) => depth(a.type) - depth(b.type))
         .map(({ ownerType, type }) => ({
           type,
+          customizable: this.kind(type).customizable ?? false,
+          properties: properties.has(type),
           ...(ownerType
             ? { owner: { column: this.ownerColumn(type), position: this.positionColumn(type), type: ownerType } }
             : {}),

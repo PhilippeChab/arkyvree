@@ -18,5 +18,5 @@ export type {
 } from "./rows.ts";
 export { default as RulesetComposition, type RulesetRawData, type ViewSchema } from "./RulesetComposition.ts";
 export { default as RulesetData } from "./RulesetData.ts";
-export type { RulesetView } from "./RulesetData.ts";
+export type { RulesetView, ViewKind } from "./RulesetData.ts";
 export { type EntityCustomizations, default as SiblingMerge } from "./SiblingMerge.ts";

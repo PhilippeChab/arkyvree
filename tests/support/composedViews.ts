@@ -25,14 +25,23 @@ export const NO_PROPERTY_TYPES = { getTypes: () => [], getValues: () => null };
  */
 export const VIEW_SCHEMA: ViewSchema = {
   kinds: [
-    { type: "owners", tracked: true, lists: [] },
-    { type: "targets", tracked: false, lists: [] },
+    { type: "owners", customizable: false, properties: false, tracked: true, lists: [] },
+    { type: "targets", customizable: false, properties: false, tracked: false, lists: [] },
     {
       type: "listed",
+      customizable: false,
+      properties: false,
       tracked: false,
       lists: [{ name: "links", from: "listedId", target: "target", to: "targetId", toType: "targets" }],
     },
-    { type: "owned", owner: { column: "ownerId", position: "position", type: "owners" }, tracked: false, lists: [] },
+    {
+      type: "owned",
+      customizable: false,
+      owner: { column: "ownerId", position: "position", type: "owners" },
+      properties: false,
+      tracked: false,
+      lists: [],
+    },
   ],
   joins: [{ name: "owner_links", from: "owners", fromColumn: "ownerId" }],
 };

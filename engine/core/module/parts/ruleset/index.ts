@@ -5,6 +5,7 @@ export type {
   ProgressionDescription,
   ProgressionTable,
   ProgressionTrack,
+  RulesDeclaration,
   RulesDescription,
   RulesWord,
 } from "./RulesDescription.ts";

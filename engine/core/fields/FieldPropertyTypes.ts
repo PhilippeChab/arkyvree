@@ -1,5 +1,4 @@
 import type { PropertyTypesProvider } from "@/engine/core/customizations/index.ts";
-import type { PropertyEntityType } from "@/shared/customization/entities.ts";
 
 import Field, { type Fields, type LeafSpec } from "./Field.ts";
 
@@ -12,7 +11,7 @@ const FLAG_VALUES = ["true", "false"] as const;
  * a closed list (a flag's, true and false).
  */
 export default class FieldPropertyTypes implements PropertyTypesProvider {
-  constructor(entityFields: Partial<Record<PropertyEntityType, Fields>>) {
+  constructor(entityFields: Readonly<Record<string, Fields>>) {
     const leaves = Object.values(entityFields).flatMap((fields) => Field.leavesOf(fields));
     this.types = leaves.map((leaf) => leaf.type);
     this.values = new Map(leaves.flatMap((leaf) => FieldPropertyTypes.closedValuesOf(leaf)));

@@ -7,11 +7,11 @@ import { ConflictError } from "@/server/errors/index.ts";
 import {
   Modifiers,
   Properties,
+  PROPERTY_TYPES,
   Requirements,
   RULESET_ENTITY_TYPES,
   type RulesetEntityType,
 } from "@/server/repositories/index.ts";
-import { PROPERTY_ENTITY_TYPES } from "@/shared/customization/entities.ts";
 
 import { hasCharacterPicks } from "./characterPicks.ts";
 import { createListLinks } from "./listLinks.ts";
@@ -25,7 +25,7 @@ function entityTypeOf(type: string): RulesetEntityType {
 
 /** The kind a plan's writes keep properties on (`type`, the entity's): refused for a kind that keeps none. */
 function propertyTypeOf(type: string) {
-  const entityType = PROPERTY_ENTITY_TYPES.find((propertyType) => propertyType === type);
+  const entityType = PROPERTY_TYPES.find((propertyType) => propertyType === type);
   if (!entityType) throw new Error(`A ${type} entity keeps no properties`);
   return entityType;
 }
