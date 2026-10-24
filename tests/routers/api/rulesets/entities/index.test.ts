@@ -274,10 +274,15 @@ describe("rulesets entities by kind", () => {
     const rules = await expectOk(api.api.rules.$get());
     const scoped = rules["Dungeons & Dragons: 3.5"].kinds.filter((kind) => kind.pools);
     expect(scoped.map(({ pools }) => pools)).toEqual(["feats", "spells"]);
-    for (const { pools } of scoped) {
-      const query = { limit: "1", scope: pools ?? "" };
-      expect((await expectOk(kinds.$get({ param: { id, entityType: "aptitudes" }, query }))).items).toHaveLength(1);
-    }
+    const idsOf = async (scope: string) =>
+      (
+        await expectOk(kinds.$get({ param: { id, entityType: "aptitudes" }, query: { limit: "100", scope } }))
+      ).items.map((pool) => pool.id);
+    const [featPools, spellLists] = await Promise.all(scoped.map(({ pools }) => idsOf(pools ?? "")));
+    // Each scope narrows the list to its own pools
+    expect(featPools.length).toBeGreaterThan(0);
+    expect(spellLists.length).toBeGreaterThan(0);
+    expect(featPools.filter((poolId) => spellLists.includes(poolId))).toEqual([]);
   });
 
   test("reads an entity's pools where its kind's columns say its links are", async () => {

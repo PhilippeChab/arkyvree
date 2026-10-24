@@ -697,7 +697,9 @@ engine/rulesets/
     │   ├── abilities/ aptitudes/ classes/ feats/ items/ languages/ powers/ races/ saves/ skills/
     │   │                                  (XEntity: an entity described, what saving or deleting one writes; fields.ts:
     │   │                                  its codec, built from its vocabulary's fields, and their values;
-    │   │                                  columns.ts: its form's columns and its list's; classes/
+    │   │                                  columns.ts: its form's columns and its list's; aptitudes/
+    │   │                                  refusals.ts: what a feat's or spell's pools column says of
+    │   │                                  a new one's empty list; classes/
     │   │                                  ClassLevelEntity, ClassSkills, ClassTable: a class's parts, which
     │   │                                  ClassEntity hands out; the mechanics are core's kind as it is)
     │   └── feats/                         (GeneratedFeats: the base of a set of feats an entity brings (featsOf),
