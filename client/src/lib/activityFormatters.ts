@@ -105,9 +105,10 @@ function formatChange(change: ChangedField, columns: readonly Column[]): string 
 
 /**
  * A ruleset's change to what one of its entities holds, as its notification says it, by its type, as its rules describe
- * it (`rules`, its base rules', else every base rules'): a level of a kind another owns (`createKlassLevel`: "Ann added
- * a level to Fighter"), the progression of a kind whose row opens it (`updateKlassProgression`), a link through a kind's
- * join (`addKlassSkill`: "Ann added Climb to Fighter"); none for another type.
+ * it (`rules`, its base rules', else every base rules'): a level of a kind another owns, an owned entity being its
+ * owner's level (3.5's `createKlassLevel`: "Ann added a level to Fighter"), the progression of a kind whose row opens it
+ * (3.5's `updateKlassProgression`), a link through a kind's join (3.5's `addKlassSkill`: "Ann added Climb to Fighter");
+ * none for another type.
  */
 function heldChange(type: string, actor: string, d: Record<string, unknown>, rules: RulesDescriptions | undefined) {
   const baseRules = oneOf(d.baseRules, BASE_RULES_OPTIONS);
@@ -115,7 +116,7 @@ function heldChange(type: string, actor: string, d: Record<string, unknown>, rul
   for (const each of described) {
     if (!each) continue;
     // What it's of: its entity's name, else its kind's word
-    const of = (kind: string) => (d.entityName || `a ${entityTypeLabel(kind, each.words).toLowerCase()}`) as string;
+    const of = (kind: string) => String(d.entityName || `a ${entityTypeLabel(kind, each.words).toLowerCase()}`);
     for (const { owner, type: owned } of each.customizationPages) {
       if (!owner) continue;
       const name = getActivityName(owned);

@@ -33,11 +33,12 @@ import {
 } from "@/client/src/components/customization/index.ts";
 import { CopyIcon, DeleteIcon, EditIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import { useDialogState, useFormWith, useRulesetRules } from "@/client/src/hooks/index.ts";
+import { useDialogState, useFormWith } from "@/client/src/hooks/index.ts";
 import { invalidateCharacter } from "@/client/src/lib/queries.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
 import { characterModifiersQuery } from "./characterModifierQueries.ts";
+import { useCharacterRules } from "./levelUp/useCharacterRules.ts";
 
 interface CharacterModifiersDialogProps {
   characterId: string;
@@ -63,7 +64,7 @@ const MODIFIER_COLUMNS: TableColumn[] = [
 export function CharacterModifiersDialog({ open, onClose, characterId, rulesetId }: CharacterModifiersDialogProps) {
   const snackbar = useSnackbar();
   const queryClient = useQueryClient();
-  const { rules } = useRulesetRules(rulesetId);
+  const { rules } = useCharacterRules(characterId);
 
   const [createOpen, setCreateOpen] = useState(false);
   // The modifier an edit or a delete is about, kept while its dialog fades out

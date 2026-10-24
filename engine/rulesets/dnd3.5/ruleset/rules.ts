@@ -1,6 +1,7 @@
 import { NAMED_LIST } from "@/engine/core/entities/index.ts";
 import type { EntityPoolsDescription, RulesDeclaration } from "@/engine/core/module/index.ts";
 import { CHARACTER_FORM } from "@/engine/rulesets/dnd3.5/characters/form.ts";
+import { CLASS_SKILL_LINKS } from "@/engine/rulesets/dnd3.5/entities/classes/classSkillLinks.ts";
 import { CLASS_COLUMNS, CLASS_LEVEL_COLUMNS, CLASS_LIST } from "@/engine/rulesets/dnd3.5/entities/classes/columns.ts";
 import { PROGRESSION } from "@/engine/rulesets/dnd3.5/entities/classes/progression.ts";
 import { FEAT_COLUMNS, FEAT_LIST } from "@/engine/rulesets/dnd3.5/entities/feats/columns.ts";
@@ -96,11 +97,11 @@ export const RULES: RulesDeclaration = {
       fieldHelp: true,
       icon: "accessibility",
       links: {
-        join: "klass_skills",
+        join: CLASS_SKILL_LINKS.join,
         key: "skillId",
         owner: "klassId",
         target: "skillsInRule",
-        targetName: "skillName",
+        targetName: CLASS_SKILL_LINKS.targetName,
         type: "skills",
       },
       opens: "progression",

@@ -336,14 +336,14 @@ export default function CustomizationPage() {
   );
   useFormOptions(rulesetId, pageRules?.columns[validType ?? ""], canEditEntities);
 
-  const tabs = validType ? tabsFor(validType, pageRules) : [];
+  const tabs = validType ? tabsFor(validType, rules) : [];
   const currentTab = tabs.find((tab) => tab.key === section)?.key;
 
   // Normalize the URL to a tab the entity has.
   if (validType && entityId && !currentTab) {
     return (
       <Navigate
-        to={`/rulesets/${rulesetId}/${buildCustomizationPath(validType, entityId)}/${tabsFor(validType, pageRules)[0].key}`}
+        to={`/rulesets/${rulesetId}/${buildCustomizationPath(validType, entityId)}/${tabsFor(validType, rules)[0].key}`}
         replace
         state={location.state}
       />
