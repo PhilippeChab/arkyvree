@@ -58,7 +58,7 @@ export function ClassSpellListSection({ rulesetId, classId, ruleset }: ClassSect
   };
 
   const handleRowPrefetch = (spell: EntityRow) => {
-    void queryClient.prefetchQuery(customizationEntityQuery(rulesetId, "powers", spell.id));
+    void queryClient.prefetchQuery(customizationEntityQuery(rulesetId, { type: "powers" }, spell.id));
   };
 
   const renderCell = (spell: EntityRow, columnKey: string) => {

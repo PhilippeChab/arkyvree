@@ -20,8 +20,6 @@ import type {
 } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import { RequestIds, type RulesetData, type RulesetView, type ViewEntities } from "@/engine/core/view/index.ts";
-import { PROPERTY_ENTITY_TYPES } from "@/shared/customization/entities.ts";
-import { isOneOf } from "@/shared/isOneOf.ts";
 import type { Property } from "@/shared/relations.ts";
 import { getUrlSegment } from "@/shared/urlSegments.ts";
 
@@ -124,7 +122,7 @@ export default abstract class RulesetEntity<
    */
   private readFields(body: Body, entity?: ViewEntities[K]): Partial<FieldValues<S>> {
     const given = "fields" in body ? body.fields : undefined;
-    if (!isOneOf(this.type, PROPERTY_ENTITY_TYPES)) return {};
+    if (!this.rulesetData.takesProperties(this.type)) return {};
     return this.fields.parse(given, {
       kept: entity && this.fieldsOf(entity),
       resolve: (type, id) => this.ids.resolve(type, id),
@@ -297,7 +295,7 @@ export default abstract class RulesetEntity<
 
   /** The fields its form shows, as the ruleset declares them: their labels, their inputs and their options. */
   describeFields(): FormField[] {
-    if (!isOneOf(this.type, PROPERTY_ENTITY_TYPES)) return [];
+    if (!this.rulesetData.takesProperties(this.type)) return [];
     return this.fields.describe();
   }
 

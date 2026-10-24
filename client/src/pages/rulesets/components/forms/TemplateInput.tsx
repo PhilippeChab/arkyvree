@@ -21,7 +21,10 @@ type TemplateField = Extract<EntityField, { input: "template" }>;
  * keeps of its fields those that differ from the template's at that time.
  */
 function fetchTemplate(queryClient: QueryClient, rulesetId: string, templateId: string) {
-  return queryClient.fetchQuery({ ...customizationEntityQuery(rulesetId, "items", templateId), staleTime: NO_TIME });
+  return queryClient.fetchQuery({
+    ...customizationEntityQuery(rulesetId, { type: "items" }, templateId),
+    staleTime: NO_TIME,
+  });
 }
 
 /** A path of a form's values, which a column's description names as text (`sourceItemId`). */

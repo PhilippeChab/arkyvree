@@ -7,6 +7,7 @@ import {
   CharacterContributors,
   Characters,
   Contributors,
+  CUSTOMIZABLE_TYPES,
   EDITED_JOINS,
   Entities,
   Invites,
@@ -20,7 +21,7 @@ import {
   Visibility,
 } from "@/server/repositories/index.ts";
 import { isNavigableTarget } from "@/shared/activity.ts";
-import { buildCustomizationPath, CUSTOMIZATION_PAGE_TYPES } from "@/shared/customization/entities.ts";
+import { buildCustomizationPath } from "@/shared/customization/entities.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
 import type { Session } from "@/shared/relations.ts";
 import { getUrlSegment } from "@/shared/urlSegments.ts";
@@ -34,6 +35,15 @@ type ActivityUrl = string | null | { entityType: "ruleset" | "character"; noAcce
  */
 function entityPageUrl(rulesetId: string, entityType: string, entityId: string, section?: string) {
   return `/rulesets/${rulesetId}/${getUrlSegment(entityType)}/${entityId}${section ? `/${section}` : ""}`;
+}
+
+/**
+ * Whether a kind's customizations have a page of their own: a customizable kind's, but those of a kind that owns
+ * another (a class's), which are tabs of its own page; and a modifier's (its requirements).
+ */
+function hasCustomizationPage(entityType: string) {
+  if (entityType === "modifiers") return true;
+  return CUSTOMIZABLE_TYPES.includes(entityType) && !isOneOf(entityType, [...OWNED_TYPES.values()]);
 }
 
 class ActivitiesService {
@@ -106,7 +116,7 @@ class ActivitiesService {
     const rulesetId = await this.ownerRulesetId(entityId, entityType);
     if (!rulesetId) return null;
     if (isOneOf(entityType, [...OWNED_TYPES.values()])) return entityPageUrl(rulesetId, entityType, entityId, section);
-    if (!isOneOf(entityType, CUSTOMIZATION_PAGE_TYPES)) return null;
+    if (!hasCustomizationPage(entityType)) return null;
     return `/rulesets/${rulesetId}/${buildCustomizationPath(entityType, entityId)}${section ? `/${section}` : ""}`;
   }
 
@@ -132,7 +142,7 @@ class ActivitiesService {
     const entity = await EntityRepositories.of(targetTable).findOne(db, { id: targetId });
     if (!entity) return null;
 
-    return isOneOf(targetTable, CUSTOMIZATION_PAGE_TYPES)
+    return hasCustomizationPage(targetTable)
       ? `/rulesets/${entity.rulesetId}/${buildCustomizationPath(targetTable, targetId)}`
       : `/rulesets/${entity.rulesetId}/${getUrlSegment(targetTable)}/${targetId}`;
   }

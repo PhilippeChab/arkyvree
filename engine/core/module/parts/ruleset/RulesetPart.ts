@@ -4,7 +4,7 @@ import RulesError from "@/engine/core/RulesError.ts";
 import { RequestIds, type RulesetView } from "@/engine/core/view/index.ts";
 import type { RulesetKind } from "@/shared/enums.ts";
 
-import type { RulesDescription, RulesWord } from "./RulesDescription.ts";
+import type { RulesDeclaration, RulesWord } from "./RulesDescription.ts";
 
 /** The words of the types the engine itself holds, whatever the rules: a customization's modifier. */
 const ENGINE_WORDS: Readonly<Record<string, RulesWord>> = { modifiers: { many: "Modifiers", one: "Modifier" } };
@@ -22,7 +22,7 @@ export default abstract class RulesetPart {
   protected abstract readonly fields: FieldCodec<Readonly<Record<string, LeafSpec>>>;
 
   /** What every ruleset of its base rules shares: its words, its kinds, its bounds, its license */
-  protected abstract readonly rules: RulesDescription;
+  protected abstract readonly rules: RulesDeclaration;
 
   /** The content its rules make a character of that a ruleset's view lacks, each named by its kind (`race`, `skill`). */
   protected abstract findMissingContent(view: RulesetView): string[];
@@ -51,7 +51,7 @@ export default abstract class RulesetPart {
    * What every ruleset of its base rules shares, which the client reads once: its words (the engine's own types' with
    * its own), its kinds, its license…
    */
-  describeRules(): RulesDescription {
+  describeRules(): RulesDeclaration {
     return { ...this.rules, words: { ...ENGINE_WORDS, ...this.rules.words } };
   }
 

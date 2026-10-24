@@ -10,11 +10,16 @@ import {
 } from "@/server/cow/index.ts";
 import { withTransaction } from "@/server/database/index.ts";
 import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
-import { Entities, type EntityRow, Joins, type RulesetEntityType } from "@/server/repositories/index.ts";
+import {
+  CUSTOMIZABLE_TYPES,
+  Entities,
+  type EntityRow,
+  Joins,
+  type RulesetEntityType,
+} from "@/server/repositories/index.ts";
 import { createActivityWithNotifications, getChangedFields } from "@/server/services/activities/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import { getActivityName } from "@/shared/activity.ts";
-import { isCustomizableEntityType } from "@/shared/customization/entities.ts";
 import type { Session } from "@/shared/relations.ts";
 
 import { hasCharacterPicks } from "./characterPicks.ts";
@@ -58,7 +63,7 @@ export default class EntityWriter {
 
   /** The entity's customizations, copied onto the new one (`entityId`) from `sourceId`'s. */
   private async copyCustomizations(tx: Db, entityId: string, sourceId: string) {
-    const sourceType = isCustomizableEntityType(this.type) ? this.type : undefined;
+    const sourceType = CUSTOMIZABLE_TYPES.includes(this.type) ? this.type : undefined;
     const customizations = (await CustomizationCopies.read(tx, [sourceId], this.type, sourceType)).get(sourceId);
     if (customizations) await CustomizationCopies.copy(tx, entityId, this.type, customizations);
   }

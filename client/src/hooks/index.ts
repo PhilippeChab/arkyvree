@@ -2,6 +2,7 @@ export { useAnchorMenu } from "./useAnchorMenu.ts";
 export { useAttachment } from "./useAttachment.ts";
 export { useAuthRequests } from "./useAuthRequests.ts";
 export { useCharacterPortraits } from "./useCharacterPortraits.ts";
+export { type CustomizationPage, useCustomizationPages } from "./useCustomizationPages.ts";
 export { useDebouncedValue } from "./useDebouncedValue.ts";
 export { useDialogState } from "./useDialogState.ts";
 export { useDirtyForm } from "./useDirtyForm.ts";

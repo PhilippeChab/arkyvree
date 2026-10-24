@@ -1,8 +1,14 @@
 import type { Db } from "@/drizzle/database.ts";
 import type { CowData, OwnedKind, RulesetSources } from "@/engine/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
-import { Entities, Modifiers, OWNED_TYPES, Requirements, type RulesetEntityType } from "@/server/repositories/index.ts";
-import { isCustomizableEntityType } from "@/shared/customization/entities.ts";
+import {
+  CUSTOMIZABLE_TYPES,
+  Entities,
+  Modifiers,
+  OWNED_TYPES,
+  Requirements,
+  type RulesetEntityType,
+} from "@/server/repositories/index.ts";
 
 import EntityCopy from "./EntityCopy.ts";
 import EntityRepositories from "./EntityRepositories.ts";
@@ -43,7 +49,7 @@ export default class CustomizationEdit {
    * what it owns, and the owned entity mapped to its copy: a class level's class).
    */
   private async cowEntityOwner(tx: Db, entityType: string, entityId: string): Promise<Owner> {
-    if (!isCustomizableEntityType(entityType))
+    if (!CUSTOMIZABLE_TYPES.includes(entityType))
       throw new NotFoundError("Customization source not found in this ruleset");
     const ownerType = OWNED_TYPES.get(entityType as OwnedKind);
     if (ownerType) return this.cowOwnedOwner(tx, entityType, ownerType, entityId);

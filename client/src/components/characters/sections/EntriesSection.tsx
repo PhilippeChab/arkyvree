@@ -3,6 +3,7 @@ import { type ReactNode, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { BlankNote, EmptyValue, SubsectionTitle, ToggleLabel } from "@/client/src/components/common/index.ts";
+import { useCustomizationPages } from "@/client/src/hooks/index.ts";
 import { DURATION } from "@/client/src/theme/animations.ts";
 
 import { EntryTitle } from "./EntryTitle.tsx";
@@ -40,7 +41,7 @@ function EntryRow({ entry, entityType, rulesetId, extra, component }: EntryRowPr
   const [open, setOpen] = useState(false);
   const hasExtra = extra != null && extra !== false;
   const label = entry.count !== undefined ? `${entry.name} (x${entry.count})` : entry.name;
-  const path = entityPagePath(rulesetId, entityType, entry.id);
+  const path = entityPagePath(rulesetId, entityType, entry.id, useCustomizationPages());
   const name = path ? (
     <MuiLink component={Link} to={path} target="_blank" underline="hover">
       {label}

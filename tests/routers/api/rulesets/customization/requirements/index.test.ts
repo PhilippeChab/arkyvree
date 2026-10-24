@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
-import { CUSTOMIZABLE_ENTITY_TYPES } from "@/shared/customization/entities.ts";
+import { CUSTOMIZABLE_TYPES } from "@/server/repositories/index.ts";
 import { getUrlSegment } from "@/shared/urlSegments.ts";
 import { createCustomizableFeat, createEntity } from "@/tests/routers/api/rulesets/customization/entities.ts";
 import { api, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
@@ -55,7 +55,7 @@ describe("rulesets customization requirements", () => {
     });
   });
 
-  test.each([...CUSTOMIZABLE_ENTITY_TYPES])("adds a requirement to %s", async (entityType) => {
+  test.each([...CUSTOMIZABLE_TYPES])("adds a requirement to %s", async (entityType) => {
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
     const entityId = await createEntity(id, entityType);
     const created = await expectOk(

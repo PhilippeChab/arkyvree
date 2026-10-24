@@ -35,6 +35,17 @@ export interface RulesetView {
   rulesetData: RulesetData;
 }
 
+/**
+ * What a ruleset's view knows of a kind past its rows, as its module declares it: whether a user customizes its entities
+ * (`customizable`), whether their properties hold fields (`properties`), and the column an owned kind's row holds its
+ * position in its owner at (`position`: a class level's `level`).
+ */
+export interface ViewKind {
+  customizable: boolean;
+  position?: string;
+  properties: boolean;
+}
+
 /** Rows by id. */
 function buildById<T extends { id: string }>(list: readonly T[]): Map<string, T> {
   return new Map(list.map((item) => [item.id, item]));
@@ -50,18 +61,18 @@ function buildById<T extends { id: string }>(list: readonly T[]): Map<string, T>
 export default class RulesetData {
   /**
    * `propertyTypes`: the ruleset's property types, as its rules read them, which order its entities' properties;
-   * `labels`: what its module calls an entity of each kind; `positions`: the column an owned kind's row holds its
-   * position in its owner at (a class level's `level`), by its kind.
+   * `labels`: what its module calls an entity of each kind; `kinds`: what its modules declare of each kind past its rows
+   * (`ViewKind`).
    */
   constructor(
     lists: RulesetLists,
     cow: CowData,
     propertyTypes: PropertyTypesProvider,
     labels: Readonly<Record<string, string>>,
-    positions: Readonly<Record<string, string>>,
+    kinds: Readonly<Record<string, ViewKind>>,
   ) {
     this.labels = labels;
-    this.positions = positions;
+    this.kinds = kinds;
     this.entities = lists.entities;
     this.joins = lists.joins;
     this.modifiers = lists.modifiers;
@@ -84,11 +95,11 @@ export default class RulesetData {
 
   private readonly joins: ReadonlyMap<string, readonly object[]>;
 
+  private readonly kinds: Readonly<Record<string, ViewKind>>;
+
   private readonly labels: Readonly<Record<string, string>>;
 
   private readonly modifiers: Modifier[];
-
-  private readonly positions: Readonly<Record<string, string>>;
 
   private readonly properties: Property[];
 
@@ -209,6 +220,11 @@ export default class RulesetData {
     return this.byId(type).get(id);
   }
 
+  /** Whether a user customizes a kind's entities (`type`): their modifiers and requirements. */
+  isCustomizable(type: string): boolean {
+    return this.kinds[type]?.customizable ?? false;
+  }
+
   /**
    * An item's properties: its template's of each type the item doesn't set, then its own. An item made from a
    * template (`sourceItemId`) holds only what it overrides, a type at a time: its own damage types replace all the
@@ -262,7 +278,7 @@ export default class RulesetData {
 
   /** An owned entity's position in its owner (`entity`, of `type`: a class level's level), none of a kind none owns. */
   positionOf(type: string, entity: object): number | undefined {
-    const column = this.positions[type];
+    const column = this.kinds[type]?.position;
     return column === undefined ? undefined : ((entity as Record<string, number>)[column] ?? undefined);
   }
 
@@ -325,5 +341,10 @@ export default class RulesetData {
    */
   storedById<K extends keyof ViewEntities>(type: K): Map<string, ViewEntities[K]> {
     return this.indexOf(type).stored as Map<string, ViewEntities[K]>;
+  }
+
+  /** Whether a kind's entities' (`type`) properties hold fields, which their form shows and their save writes. */
+  takesProperties(type: string): boolean {
+    return this.kinds[type]?.properties ?? false;
   }
 }

@@ -1,7 +1,6 @@
 import type { Db } from "@/drizzle/database.ts";
 import type { EntityCustomizations } from "@/engine/index.ts";
-import { Modifiers, Properties, Requirements } from "@/server/repositories/index.ts";
-import { isCustomizableEntityType } from "@/shared/customization/entities.ts";
+import { CUSTOMIZABLE_TYPES, Modifiers, Properties, Requirements } from "@/server/repositories/index.ts";
 
 /**
  * An entity's customizations (its modifiers, each with its requirements, its properties and its requirements), read and
@@ -83,7 +82,7 @@ export default class CustomizationCopies {
     if (copiedIds && targetEntityIds.length > 1)
       throw new Error("copiedIds maps each source row to one copy; copy to a single target");
 
-    if (!isCustomizableEntityType(entityType) && sourceCust.modifiers.length > 0)
+    if (!CUSTOMIZABLE_TYPES.includes(entityType) && sourceCust.modifiers.length > 0)
       throw new Error(`Cannot copy modifiers onto ${entityType}`);
 
     const sourceModifierIds = new Set(sourceCust.modifiers.map((m) => m.id));

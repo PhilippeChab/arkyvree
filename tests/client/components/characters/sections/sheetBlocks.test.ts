@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { entityPagePath, type SheetBlock, withBase } from "@/client/src/components/characters/sections/sheetBlocks.ts";
+import { Engine } from "@/engine/index.ts";
 
 /** A sheet's blocks: two abilities with their bases, saves without, and a combat line. */
 const BLOCKS: SheetBlock[] = [
@@ -42,13 +43,17 @@ const BLOCKS: SheetBlock[] = [
 
 describe("A sheet's blocks", () => {
   test("links an entry to its page in its ruleset, where its kind has one", () => {
-    expect(entityPagePath("r1", "feats", "f1")).toBe("/rulesets/r1/feats/f1/customization");
-    expect(entityPagePath("r1", "powers", "p1")).toBe("/rulesets/r1/powers/p1/customization");
+    // The kinds whose customizations have a page of their own, as the rules describe them
+    const pages = new Map(
+      Object.values(Engine.rules().describeAll()).flatMap((rules) => rules.customizationPages.map((p) => [p.type, p])),
+    );
+    expect(entityPagePath("r1", "feats", "f1", pages)).toBe("/rulesets/r1/feats/f1/customization");
+    expect(entityPagePath("r1", "powers", "p1", pages)).toBe("/rulesets/r1/powers/p1/customization");
     // No ruleset to read it in, no id, or a kind without a page of its own
-    expect(entityPagePath(undefined, "feats", "f1")).toBeUndefined();
-    expect(entityPagePath("r1", "feats", null)).toBeUndefined();
-    expect(entityPagePath("r1", "klasses", "k1")).toBeUndefined();
-    expect(entityPagePath("r1", "nonsense", "x")).toBeUndefined();
+    expect(entityPagePath(undefined, "feats", "f1", pages)).toBeUndefined();
+    expect(entityPagePath("r1", "feats", null, pages)).toBeUndefined();
+    expect(entityPagePath("r1", "klasses", "k1", pages)).toBeUndefined();
+    expect(entityPagePath("r1", "nonsense", "x", pages)).toBeUndefined();
   });
 
   test("moves a score's value by its base's change, its badge kept, until the server answers", () => {

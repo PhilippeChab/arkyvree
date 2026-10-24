@@ -27,16 +27,15 @@ import {
 } from "@/client/src/components/common/index.ts";
 import { RestoreIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import { useRules } from "@/client/src/hooks/index.ts";
+import { useCustomizationPages, useRules } from "@/client/src/hooks/index.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
 import { rulesetChangesQuery } from "@/client/src/pages/rulesets/details/rulesetQueries.ts";
 import type { EntityPageState } from "@/client/src/pages/rulesets/entityPageState.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { DURATION } from "@/client/src/theme/animations.ts";
-import { buildCustomizationPath, CUSTOMIZATION_PAGE_TYPES } from "@/shared/customization/entities.ts";
+import { buildCustomizationPath } from "@/shared/customization/entities.ts";
 import type { BaseRules } from "@/shared/enums.ts";
-import { isOneOf } from "@/shared/isOneOf.ts";
 import { getUrlSegment } from "@/shared/urlSegments.ts";
 
 interface LocalChangesDialogProps {
@@ -58,10 +57,11 @@ type RestorableChange = Extract<Change, { sourceEntityId: string }>;
 
 const restoreApi = rpc.api.rulesets[":id"].entities[":entityType"][":entityId"].restore;
 
-function getEntityUrl(rulesetId: string, change: Change): string | undefined {
+/** A change's entity's page (`pages`, the kinds whose customizations have a page of their own): none once it's deleted. */
+function getEntityUrl(rulesetId: string, change: Change, pages: ReadonlyMap<string, unknown>): string | undefined {
   if (change.status === "deleted") return undefined;
   const { entityType, entityId } = change;
-  return isOneOf(entityType, CUSTOMIZATION_PAGE_TYPES)
+  return pages.has(entityType)
     ? `/rulesets/${rulesetId}/${buildCustomizationPath(entityType, entityId)}`
     : `/rulesets/${rulesetId}/${getUrlSegment(entityType)}/${entityId}`;
 }
@@ -71,6 +71,7 @@ export function LocalChangesDialog({ open, onClose, rulesetId, baseRules, canEdi
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
   const { rules } = useRules(baseRules);
+  const pages = useCustomizationPages();
 
   const {
     data: changes,
@@ -128,7 +129,7 @@ export function LocalChangesDialog({ open, onClose, rulesetId, baseRules, canEdi
                     const key = change.status === "deleted" ? change.sourceEntityId : change.entityId;
                     const chipColor =
                       change.status === "modified" ? "info" : change.status === "deleted" ? "error" : "success";
-                    const url = getEntityUrl(rulesetId, change);
+                    const url = getEntityUrl(rulesetId, change, pages);
                     const showRestore = canEdit && change.status !== "added";
                     const rowContent = (
                       <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>

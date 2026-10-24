@@ -2,12 +2,11 @@ import { Engine } from "@/engine/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { CustomizationCopies, EntityNames, RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
-import { Entities, type RulesetEntityType } from "@/server/repositories/index.ts";
+import { CUSTOMIZABLE_TYPES, Entities, type RulesetEntityType } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import type { EntityRow } from "@/server/services/rulesets/entities/rows.ts";
 import { getActivityName } from "@/shared/activity.ts";
-import { isCustomizableEntityType } from "@/shared/customization/entities.ts";
 import type { Session } from "@/shared/relations.ts";
 
 /** A copy's own name and description. */
@@ -52,7 +51,7 @@ export function Copies<B extends Constructor>(Base: B) {
             );
 
             const copiedFrom = plan.copyCustomizationsFrom;
-            const sourceType = isCustomizableEntityType(type) ? type : undefined;
+            const sourceType = CUSTOMIZABLE_TYPES.includes(type) ? type : undefined;
             const customizations = copiedFrom
               ? (await CustomizationCopies.read(tx, [copiedFrom], type, sourceType)).get(copiedFrom)
               : undefined;

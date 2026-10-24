@@ -36,7 +36,6 @@ import { requirementsQuery } from "@/client/src/pages/rulesets/customization/cus
 import { followCopiesOf } from "@/client/src/pages/rulesets/followCopies.ts";
 import { useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
-import type { CustomizationOwnerType } from "@/shared/customization/entities.ts";
 import { formatChainingOperator, formatOperator } from "@/shared/customization/operators.ts";
 import RequirementTree, {
   getNextLevel,
@@ -47,7 +46,7 @@ import { getUrlSegment } from "@/shared/urlSegments.ts";
 
 interface RequirementsSectionProps {
   entityId: string;
-  entityType: CustomizationOwnerType;
+  entityType: string;
   followCopy?: (copyId: string, sourceId: string) => void;
   queryKeysToInvalidate?: readonly (readonly unknown[])[];
   /** A delete can be undone from Local Changes, its entity's being inherited (`useRestorableDelete`) */

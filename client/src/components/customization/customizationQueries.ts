@@ -7,7 +7,6 @@ import { FIVE_SECONDS } from "@/client/src/lib/durations.ts";
 import { nextPage } from "@/client/src/lib/pageItems.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
-import type { CustomizableEntityType } from "@/shared/customization/entities.ts";
 import type { TargetPathKind } from "@/shared/customization/target.ts";
 
 import { type PathInfo, toPathInfo } from "./pathValues.ts";
@@ -16,7 +15,7 @@ import { type PathInfo, toPathInfo } from "./pathValues.ts";
  * Whose modifier or requirement a target path is written for, which the paths it offers depend on: a customizable
  * entity's, or a character's own modifier; none for a requirement.
  */
-export type TargetPathOwner = CustomizableEntityType | "characters";
+export type TargetPathOwner = string;
 
 /** Remembers what a path picked from a list takes, which the list carried, so it shows at once. */
 export function seedTargetPath(

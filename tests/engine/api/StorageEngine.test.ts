@@ -64,6 +64,25 @@ describe("A module's storage", () => {
     );
   });
 
+  test("reads the kinds a user customizes and the types whose properties hold fields into the view's kinds", () => {
+    const storage = StorageEngine.shared();
+    const { fieldDefs } = storage.registries();
+    // A property type's fields aren't its columns', and every customizable kind's are a kind's
+    const columnFields = new Set(
+      storage
+        .registries()
+        .entityTypes.flatMap(({ type }) =>
+          Object.values(storage.kind(type).columns).flatMap((column) => ("field" in column ? [column.field] : [])),
+        ),
+    );
+    for (const type of storage.propertyTypes())
+      expect(fieldDefs.some((def) => def.ownerType === type && !columnFields.has(def.field))).toBe(true);
+    for (const { customizable, properties, type } of storage.viewSchema().kinds) {
+      expect(customizable).toBe(!!storage.kind(type).customizable);
+      expect(properties).toBe(storage.propertyTypes().includes(type));
+    }
+  });
+
   test("names the column each join keeps its from-entity in", () => {
     const storage = StorageEngine.shared();
     for (const join of storage.joinNames())

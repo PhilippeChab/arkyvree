@@ -47,11 +47,16 @@ export interface RulesetRawData {
  */
 export interface ViewSchema {
   joins: { from: string; fromColumn: string; name: string }[];
-  /** Each kind, an owner before the kinds it owns; `tracked`: its visible ids read by another kind's or a join's */
+  /**
+   * Each kind, an owner before the kinds it owns; `tracked`: its visible ids read by another kind's or a join's;
+   * `customizable`: whether a user customizes its entities; `properties`: whether their properties hold fields
+   */
   kinds: {
+    customizable: boolean;
     lists: ViewList[];
     /** Its owner's kind, the column its row names its owner by, and the one it holds its position in it at */
     owner?: { column: string; position: string; type: string };
+    properties: boolean;
     tracked: boolean;
     type: string;
   }[];
@@ -312,9 +317,12 @@ export default class RulesetComposition {
   }
 
   build(): RulesetData {
-    const positions = Object.fromEntries(
-      this.schema.kinds.flatMap(({ owner, type }) => (owner ? [[type, owner.position]] : [])),
+    const kinds = Object.fromEntries(
+      this.schema.kinds.map(({ customizable, owner, properties, type }) => [
+        type,
+        { customizable, properties, ...(owner && { position: owner.position }) },
+      ]),
     );
-    return new RulesetData(this.composeLists(), this.cow, this.propertyTypes, this.labels, positions);
+    return new RulesetData(this.composeLists(), this.cow, this.propertyTypes, this.labels, kinds);
   }
 }

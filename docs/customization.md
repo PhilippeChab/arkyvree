@@ -2,7 +2,7 @@
 
 ## Overview
 
-Entities (`CUSTOMIZABLE_ENTITY_TYPES` in `shared/customization/entities.ts`: feats, powers, items, races, classes, class levels) can have **modifiers** and **requirements** attached via junction tables in the `customization` schema, and **properties**, its fields ([persistence.md](./persistence.md#the-generic-tables)). A user edits an entity's modifiers and requirements in its page's tabs; its properties are its fields, which its own form edits and its own save writes ([Properties](#properties)).
+Entities of the kinds a module's storage declares customizable (`StoredKind.customizable`: 3.5's feats, powers, items, races, classes, class levels; the server's `CUSTOMIZABLE_TYPES`, the view's `RulesetData.isCustomizable`, and the rules' `customizationPages`, the kinds whose customizations have a page of their own, a class's being its page's tabs) can have **modifiers** and **requirements** attached via junction tables in the `customization` schema, and **properties**, its fields ([persistence.md](./persistence.md#the-generic-tables)). A user edits an entity's modifiers and requirements in its page's tabs; its properties are its fields, which its own form edits and its own save writes ([Properties](#properties)).
 
 A class's own modifiers apply once to a character with any level of it, and its requirements are checked to take any level of it, with that level's own (the level-up wizard's class list), and on a character who has it. The class page's Modifiers and Requirements tabs are the sections every entity's customization page has (`ClassCustomizationSections`).
 

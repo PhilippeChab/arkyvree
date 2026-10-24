@@ -23,11 +23,11 @@ export interface EditorProps<T> {
   rulesetId: string;
 }
 
-/** An entity the customization page edits: a kind's, or a class's level; a modifier has no details to edit. */
-export type EditableEntity = Exclude<CustomizationEntity, { type: "modifiers" }>;
+/** An entity the customization page edits: a kind's, or an owned one (a class's level); a modifier has no details to edit. */
+export type EditableEntity = Exclude<CustomizationEntity, { holder: "modifier" }>;
 
 export function isEditable(data: CustomizationEntity): data is EditableEntity {
-  return data.type !== "modifiers";
+  return data.holder !== "modifier";
 }
 
 /**
@@ -39,7 +39,7 @@ export function renderEditor(
   rules: RulesDescription | undefined,
   props: Omit<EditorProps<unknown>, "entity">,
 ) {
-  if (data.type === "klass_levels") return <ClassLevelEditor {...props} entity={data.entity} />;
+  if (data.holder === "owned") return <ClassLevelEditor {...props} entity={data.entity} />;
   const kind = rules?.kinds.find((each) => each.type === data.type);
   return kind && <EntityEditor {...props} entity={data.entity} kind={kind} />;
 }

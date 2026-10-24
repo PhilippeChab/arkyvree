@@ -11,6 +11,7 @@ import {
   RowActions,
   type TableColumn,
 } from "@/client/src/components/common/index.ts";
+import { useCustomizationPages } from "@/client/src/hooks/index.ts";
 import { formatAmount, formatTrimmedAmount } from "@/client/src/lib/formatNumeric.ts";
 
 import { type BlockOf, entityPagePath, type InventoryRow } from "./sheetBlocks.ts";
@@ -35,6 +36,7 @@ const NO_WRAP_SX = { whiteSpace: "nowrap" };
  */
 export function InventoryTable({ block, load, rulesetId, renderActions }: InventoryTableProps) {
   const { columns: words } = block.words;
+  const pages = useCustomizationPages();
   const columns: TableColumn[] = [
     { key: "item", label: words.item },
     { key: "slot", label: words.slot, align: "center" },
@@ -53,7 +55,7 @@ export function InventoryTable({ block, load, rulesetId, renderActions }: Invent
           const quantity = row.quantity || 1;
           const weight = formatAmount(row.weight, block.units.weight);
           const cost = formatAmount(row.cost, block.units.cost);
-          const path = entityPagePath(rulesetId, block.entityType, row.id);
+          const path = entityPagePath(rulesetId, block.entityType, row.id, pages);
           return (
             <DataRow key={row.key} sx={[ROW_ACTIONS_HOVER_SX, { bgcolor: row.held ? "action.hover" : undefined }]}>
               <DataCell slot="primary">

@@ -1,5 +1,4 @@
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
-import type { CustomizableEntityType } from "@/shared/customization/entities.ts";
 import { api, expectOk } from "@/tests/support/api.ts";
 import { createSeededTestRuleset, postAptitude } from "@/tests/support/rulesets.ts";
 import { uniqueId } from "@/tests/support/seed.ts";
@@ -14,7 +13,7 @@ export async function createCustomizableFeat() {
  * A new entity of `entityType` created in the ruleset, so customizing it edits
  * that row instead of copying an inherited one.
  */
-export async function createEntity(rulesetId: string, entityType: CustomizableEntityType): Promise<string> {
+export async function createEntity(rulesetId: string, entityType: string): Promise<string> {
   const ruleset = api.api.rulesets[":id"];
   const kinds = ruleset.entities[":entityType"];
   const id = rulesetId;
@@ -44,5 +43,7 @@ export async function createEntity(rulesetId: string, entityType: CustomizableEn
       );
       return level.id;
     }
+    default:
+      throw new Error(`No customizable ${entityType}`);
   }
 }

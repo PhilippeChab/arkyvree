@@ -11,7 +11,13 @@ import {
   SectionContent,
 } from "@/client/src/components/common/index.ts";
 import { kindIcon } from "@/client/src/components/icons/index.ts";
-import { useRules, useRulesetPermissions, useSearchParam } from "@/client/src/hooks/index.ts";
+import {
+  type CustomizationPage,
+  useCustomizationPages,
+  useRules,
+  useRulesetPermissions,
+  useSearchParam,
+} from "@/client/src/hooks/index.ts";
 import { type EntityRow, entitySegment } from "@/client/src/lib/entityRequests.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
 import { itemsBeforeLastPage, pageItems } from "@/client/src/lib/pageItems.ts";
@@ -53,8 +59,7 @@ import {
   useSpellLevelFilter,
 } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
-import { buildCustomizationPath, CUSTOMIZATION_PAGE_TYPES } from "@/shared/customization/entities.ts";
-import { isOneOf } from "@/shared/isOneOf.ts";
+import { buildCustomizationPath } from "@/shared/customization/entities.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 import { getUrlSegment } from "@/shared/urlSegments.ts";
 
@@ -69,11 +74,15 @@ interface EntitySectionProps extends RulesetSectionProps {
 /** A new entity's form, which sends every field and needs what a new one needs (a feat's pool). */
 const NEW_ENTITY: ColumnContext = { newEntity: true };
 
-/** The customization page a kind's row opens, if it opens one: a kind no customization page shows is refused. */
-function customizationTypeOf(kind: EntityKindDescription) {
+/**
+ * The customization page a kind's row opens (`pages`, the kinds whose customizations have one), if it opens one: a kind
+ * no customization page shows is refused.
+ */
+function customizationPageOf(kind: EntityKindDescription, pages: ReadonlyMap<string, CustomizationPage>) {
   if (kind.opens !== "customization") return undefined;
-  if (!isOneOf(kind.type, CUSTOMIZATION_PAGE_TYPES)) throw new Error(`No customization page shows ${kind.type}`);
-  return kind.type;
+  const page = pages.get(kind.type);
+  if (!page) throw new Error(`No customization page shows ${kind.type}`);
+  return page;
 }
 
 /**
@@ -99,9 +108,9 @@ function duplicateForm(
 }
 
 /** Where an entity's row opens: its customization page, or its own page (a class's, on its progression). */
-function entityPath(kind: EntityKindDescription, id: string) {
-  const customization = customizationTypeOf(kind);
-  return customization ? buildCustomizationPath(customization, id) : `${getUrlSegment(kind.type)}/${id}`;
+function entityPath(kind: EntityKindDescription, id: string, pages: ReadonlyMap<string, CustomizationPage>) {
+  const customization = customizationPageOf(kind, pages);
+  return customization ? buildCustomizationPath(customization.type, id) : `${getUrlSegment(kind.type)}/${id}`;
 }
 
 /**
@@ -115,6 +124,7 @@ export function EntitySection({ ruleset, childOnly, onChildOnlyChange, kind }: E
   const openEntity = useOpenEntity(ruleset.id);
   const queryClient = useQueryClient();
   const { rules } = useRules(ruleset.baseRules);
+  const pages = useCustomizationPages();
   const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
   const one = entityTypeLabel(kind.type, rules?.words);
   const many = entityTypeLabel(kind.type, rules?.words, true);
@@ -170,7 +180,7 @@ export function EntitySection({ ruleset, childOnly, onChildOnlyChange, kind }: E
           json: toBody(data),
         }),
       ),
-    onCreateSuccess: (created) => openEntity(entityPath(kind, created.id)),
+    onCreateSuccess: (created) => openEntity(entityPath(kind, created.id, pages)),
   });
   const variants = useEntityVariants(ruleset.id, kind.type);
   const { copies } = kind;
@@ -184,11 +194,11 @@ export function EntitySection({ ruleset, childOnly, onChildOnlyChange, kind }: E
   const entities = pageItems(data);
 
   const handleRowClick = (entity: { id: string }) => {
-    openEntity(entityPath(kind, entity.id));
+    openEntity(entityPath(kind, entity.id, pages));
   };
 
   const handleRowPrefetch = (entity: { id: string }) => {
-    const customization = customizationTypeOf(kind);
+    const customization = customizationPageOf(kind, pages);
     if (customization) {
       void queryClient.prefetchQuery(customizationEntityQuery(ruleset.id, customization, entity.id));
     } else if (kind.opens === "progression") {

@@ -13,6 +13,7 @@ export const DND35_STORAGE: StorageDeclaration = {
     abilities: { columns: {} },
     aptitudes: { columns: {}, namesakes: "identity" },
     feats: {
+      customizable: true,
       columns: {
         stackable: { kind: "flag", field: "FEAT_STACKABLE", default: false },
         selectable: { kind: "flag", field: "FEAT_SELECTABLE", default: true },
@@ -22,6 +23,7 @@ export const DND35_STORAGE: StorageDeclaration = {
       namesakes: "reprints",
     },
     items: {
+      customizable: true,
       columns: {
         sourceItemId: { kind: "link", role: "madeFrom" },
         isTemplate: { kind: "flag", field: "ITEM_IS_TEMPLATE", default: false },
@@ -36,16 +38,18 @@ export const DND35_STORAGE: StorageDeclaration = {
       ],
     },
     klasses: {
+      customizable: true,
       columns: {
         hd: { kind: "number", field: "KLASS_HD", integer: true },
         parentId: { kind: "link", role: "subclassOf" },
         kind: { kind: "partition", default: "pc" },
       },
     },
-    klass_levels: { columns: { klassId: { kind: "owner" }, level: { kind: "position" } } },
+    klass_levels: { customizable: true, columns: { klassId: { kind: "owner" }, level: { kind: "position" } } },
     languages: { columns: { type: { kind: "text", field: "LANGUAGE_TYPE" } } },
     mechanics: { columns: {} },
     powers: {
+      customizable: true,
       columns: {
         saveId: { kind: "link", role: "resistedBy" },
         saveEffect: { kind: "text", field: "POWER_SAVE_EFFECT" },
@@ -54,6 +58,7 @@ export const DND35_STORAGE: StorageDeclaration = {
       namesakes: "reprints",
     },
     races: {
+      customizable: true,
       columns: {
         size: { kind: "text", field: "RACE_SIZE" },
         baseSpeed: { kind: "number", field: "RACE_BASE_SPEED", integer: true },
