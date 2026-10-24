@@ -16,6 +16,9 @@ here, locally and in cloud sessions.
   - open an issue: `gh api repos/PhilippeChab/arkyvree/issues -f title="…" -F body=@body.md -f "labels[]=bug"`
   - comment on one: `gh api repos/PhilippeChab/arkyvree/issues/<number>/comments -F body=@comment.md`
   - read a commit's checks: `gh api repos/PhilippeChab/arkyvree/commits/$(git rev-parse HEAD)/check-runs --jq '.check_runs[] | .name + " " + (.conclusion // .status)'`
+- **Database:** `.claude/settings.json` lets Claude run SQL through the Neon tools without asking
+  (`mcp__Neon__run_sql`). Against production it only reads (`SELECT`); a write goes to a throwaway Neon branch made for
+  a check, which is deleted after it.
 - **No end-to-end tests:** CI runs them on every pull request. In the cloud, Playwright's own browser isn't installed,
   and the end-to-end server binds IPv6 (`HOST=::`), which the container lacks.
 - **Screenshots:** a Chromium is installed (`/opt/pw-browsers/chromium`): Playwright drives it with

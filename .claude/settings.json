@@ -2,6 +2,11 @@
   "attribution": {
     "sessionUrl": false
   },
+  "permissions": {
+    "allow": [
+      "mcp__Neon__run_sql"
+    ]
+  },
   "hooks": {
     "SessionStart": [
       {
