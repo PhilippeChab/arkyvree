@@ -110,13 +110,13 @@ describe("Text from a request", () => {
 });
 
 describe("An entity type in a URL", () => {
-  test("is its segment, read back as the type, and never its database name", () => {
-    const entityType = buildEntityTypeSchema(["klass_levels", "klasses", "feats"] as const);
+  test("is its segment, read back as the type, and never the type's own spelling where the segment differs", () => {
+    const entityType = buildEntityTypeSchema(["class_levels", "classes", "feats"] as const);
     expect(["class-levels", "classes", "feats"].map((segment) => entityType.parse(segment))).toEqual([
-      "klass_levels",
-      "klasses",
+      "class_levels",
+      "classes",
       "feats",
     ]);
-    expect(["klass_levels", "klasses"].map((name) => entityType.safeParse(name).success)).toEqual([false, false]);
+    expect(entityType.safeParse("class_levels").success).toBe(false);
   });
 });

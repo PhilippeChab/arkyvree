@@ -35,9 +35,9 @@ import { type ClassDetail, classDetailQuery } from "./classSectionQueries.ts";
 import { getClassTabAlias, getClassTabs } from "./classTabs.ts";
 import { ClassDetails } from "./components/index.ts";
 
-/** What a class's page takes: its kind (3.5's `klasses`), and its kind's module's rules. */
+/** What a class's page takes: its kind (3.5's `classes`), and its kind's module's rules. */
 interface ClassDetailsPageProps {
-  /** Its kind (3.5's `klasses`), whose routes, columns and words its page reads */
+  /** Its kind (3.5's `classes`), whose routes, columns and words its page reads */
   classType: string;
   /** Its kind's module's rules, which its words are */
   rules: RulesDescription;
@@ -47,7 +47,7 @@ interface ClassViewProps {
   /** Where Back goes, and its name */
   back: ReturnType<typeof useEntityPageBack>;
   classId: string;
-  /** Its kind (3.5's `klasses`), whose routes, columns and words its page reads */
+  /** Its kind (3.5's `classes`), whose routes, columns and words its page reads */
   classType: string;
   /** The class's ruleset, whose base rules its forms, its fields and its tabs are */
   ruleset: RulesetDetail;

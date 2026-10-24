@@ -37,7 +37,7 @@ function backLabel(to: string, words: RulesWords | undefined, tabbedPages: Reado
 /**
  * Where an entity page's Back goes, and its name: the list the page was opened from (a ruleset's tab, a class's, another
  * entity's customization tab: its Modifiers' row), else `fallback`; an entity named in its ruleset's words (`words`,
- * once its rules are in: a 3.5 power is a "Spell"), a page with tabs by its kind's word (`tabbedPages`, by segment).
+ * once its rules are in: 3.5's `class_levels` is a "Class Level"), a page with tabs by its kind's word (`tabbedPages`, by segment).
  */
 export function entityPageBack(
   state: unknown,

@@ -35,7 +35,7 @@ interface DiagnosticsGroupProps {
 }
 
 interface DiagnosticsSectionProps {
-  /** The character's, whose words name what a rule's source is (a 3.5 power is a "Spell") */
+  /** The character's, whose words name what a rule's source is (3.5's `class_levels` is a "Class Level") */
   baseRules: BaseRules;
   modifiers: CharacterDetail["modifiers"];
   requirements: CharacterDetail["requirements"];

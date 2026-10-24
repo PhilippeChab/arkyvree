@@ -12,8 +12,8 @@ import {
 import {
   addClassLevels,
   addFeats,
-  addPowers,
   addSkills,
+  addSpells,
   createCharacter,
 } from "@/database/seeders/dnd3.5/characters/seedCharacter.ts";
 import { RulesetSeeder } from "@/database/seeders/dnd3.5/RulesetSeeder.ts";
@@ -22,7 +22,7 @@ import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
 import RequirementEvaluator from "@/engine/core/requirements/RequirementEvaluator.ts";
 import CharacterResponse from "@/engine/rulesets/dnd3.5/characters/description/CharacterResponse.ts";
 import Dnd35TargetPaths from "@/engine/rulesets/dnd3.5/Dnd35TargetPaths.ts";
-import type { Aptitude, Feat, Klass, Power, Race } from "@/engine/rulesets/dnd3.5/index.ts";
+import type { Aptitude, Feat, Klass, Race, Spell } from "@/engine/rulesets/dnd3.5/index.ts";
 import { ALLOWED_ALL, type AptitudeLevelData } from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudesComponent.ts";
 import type { WeaponSlot } from "@/engine/rulesets/dnd3.5/model/combat/CombatState.ts";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
@@ -90,9 +90,9 @@ const CASTER_SCORES = { Strength: 10, Dexterity: 10, Constitution: 10, Intellige
 
 const WIZARD_SCORES = { Strength: 10, Dexterity: 10, Constitution: 10, Intelligence: 16, Wisdom: 10, Charisma: 10 };
 
-function allPowers(detailed: Detailed) {
+function allSpells(detailed: Detailed) {
   return Object.values(detailed.components.classes.getCharacterClasses()).flatMap((klass) =>
-    klass.levels.flatMap((level) => level.powers),
+    klass.levels.flatMap((level) => level.spells),
   );
 }
 
@@ -359,13 +359,13 @@ async function setupGrantedSpell({ ownGrant = false, requirement = false, spellF
     { levelIndex: 0, featName: "Scribe Scroll", aptitude: "Wizard Bonus Feat" },
     { levelIndex: 0, featName: "Toughness", aptitude: "General" },
   ]);
-  await addPowers(
+  await addSpells(
     db,
     ctx,
     levelIds,
-    ["Detect Magic", "Read Magic", "Mage Armor"].map((powerName) => ({
+    ["Detect Magic", "Read Magic", "Mage Armor"].map((spellName) => ({
       levelIndex: 0,
-      powerName,
+      spellName,
       aptitude: "Wizard Spells",
     })),
   );
@@ -376,7 +376,7 @@ async function setupGrantedSpell({ ownGrant = false, requirement = false, spellF
     await Modifiers.create(db, {
       sourceId,
       sourceType,
-      target: "powers.magicmissile.wizard.known",
+      target: "spells.magicmissile.wizard.known",
       value: "true",
       valueType: "boolean",
       operator: "set",
@@ -384,8 +384,8 @@ async function setupGrantedSpell({ ownGrant = false, requirement = false, spellF
   }
   if (requirement) {
     await Requirements.create(db, {
-      entityId: ctx.powerMap["Magic Missile"],
-      entityType: "powers",
+      entityId: ctx.spellMap["Magic Missile"],
+      entityType: "spells",
       level: "1",
       target: "classes.wizard.level",
       operator: "greater_than_or_equal",
@@ -435,7 +435,7 @@ async function setupWeaponTrick(intelligence: number) {
   );
   await addClassLevels(db, ctx, characterId, "Wizard", [1, 2, 3, 4, 5, 6, 7], [4, 4, 4, 4, 4, 4, 4]);
   const loremaster = (await Entities.findOne<Klass>(db, {
-    entityType: "klasses",
+    entityType: "classes",
     name: "Loremaster",
     rulesetId: dmg.id,
   }))!;
@@ -510,13 +510,13 @@ describe("DetailedCharacter", () => {
       );
       // The spells it has: their entries carry their properties (a spell it hasn't is #335's)
       const spells = new Set(
-        Object.entries(elara.components.powers.getPowers())
+        Object.entries(elara.components.spells.getSpells())
           .filter(([, entry]) => isRecord(entry) && "properties" in entry)
           .map(([slug]) => slug),
       );
       const propertyPaths = paths
         .map(({ path }) => path)
-        .filter((path) => /^powers\.[a-z0-9]+\.properties\./.test(path) && spells.has(path.split(".")[1]));
+        .filter((path) => /^spells\.[a-z0-9]+\.properties\./.test(path) && spells.has(path.split(".")[1]));
       expect(propertyPaths.length).toBeGreaterThan(0);
       const errors = propertyPaths.flatMap((path) =>
         targetPaths
@@ -1719,7 +1719,7 @@ describe("DetailedCharacter", () => {
       const ctx = await getSeedCtx();
       const fork = await forkWith(DND35_DMG_NAME);
       const duelist = (await Entities.findOne<Klass>(db, {
-        entityType: "klasses",
+        entityType: "classes",
         name: "Duelist",
         rulesetId: (await findSeededRuleset(DND35_DMG_NAME)).id,
       }))!;
@@ -1744,7 +1744,7 @@ describe("DetailedCharacter", () => {
       const ctx = await getSeedCtx();
       const fork = await forkWith(DND35_DMG_NAME);
       const duelist = (await Entities.findOne<Klass>(db, {
-        entityType: "klasses",
+        entityType: "classes",
         name: "Duelist",
         rulesetId: (await findSeededRuleset(DND35_DMG_NAME)).id,
       }))!;
@@ -1990,7 +1990,7 @@ describe("DetailedCharacter", () => {
         const characterId = await seedHuman(`${className} ${levels}`, WIZARD_SCORES, { rulesetId: fork.id });
         await addClassLevels(db, ctx, characterId, "Fighter", [1], [10]);
         const klass = (await Entities.findOne<Klass>(db, {
-          entityType: "klasses",
+          entityType: "classes",
           name: className,
           rulesetId: (await findSeededRuleset(book)).id,
         }))!;
@@ -2145,7 +2145,7 @@ describe("DetailedCharacter", () => {
       // An elf wizard, INT 18: a headband's +2 makes her modifier 5, each DC one higher
       const dcs = async (carried: Carried[]) =>
         Object.values(
-          (await buildCarrying("Elara Starweaver", carried)).components.powerGroupings.getPowerGroupings(),
+          (await buildCarrying("Elara Starweaver", carried)).components.spellGroupings.getSpellGroupings(),
         ).flatMap((group) => Object.values(group).flatMap((byClass) => Object.values(byClass).map((dc) => dc.total)));
       const before = await dcs([]);
       const headband = { item: (await createAbilityItem("intelligence", 2, "Head")).id, location: "Head" as const };
@@ -2395,7 +2395,7 @@ describe("DetailedCharacter", () => {
         { rulesetId: fork.id },
       );
       const archmage = (await Entities.findOne<Klass>(db, {
-        entityType: "klasses",
+        entityType: "classes",
         name: "Archmage",
         rulesetId: dmgId,
       }))!;
@@ -2426,13 +2426,13 @@ describe("DetailedCharacter", () => {
       };
       expect(await highArcanaPicks()).toEqual({ allowed: 2, spent: 2, granted: 2 });
 
-      await EntitiesService.updateEntity(makeSession(), fork.id, "klasses", archmage.id, {
+      await EntitiesService.updateEntity(makeSession(), fork.id, "classes", archmage.id, {
         name: "Archmage",
         description: "Ours",
       });
       RulesetViews.invalidate(fork.id);
       expect(
-        await Entities.findOne<Klass>(db, { entityType: "klasses", name: "Archmage", rulesetId: fork.id }),
+        await Entities.findOne<Klass>(db, { entityType: "classes", name: "Archmage", rulesetId: fork.id }),
       ).toBeDefined();
       expect(await highArcanaPicks()).toEqual({ allowed: 2, spent: 2, granted: 2 });
     });
@@ -2444,15 +2444,15 @@ describe("DetailedCharacter", () => {
       const bjorn = await buildSeeded("Bjorn Ironhand");
       const targetPaths = new Dnd35TargetPaths();
       for (const target of [
-        "powers.fireball.dc.*.misc",
-        "powers.fireball.dc.*.total",
-        "powers.chaoshammer.dc.*.misc",
-        "powers.chaoshammer.dc.*.total",
+        "spells.fireball.dc.*.misc",
+        "spells.fireball.dc.*.total",
+        "spells.chaoshammer.dc.*.misc",
+        "spells.chaoshammer.dc.*.total",
       ])
         expect([target, targetPaths.traversePathInit(target, bjorn.components)]).toEqual([target, []]);
 
       const atLeast15 = { operator: "greater_than_or_equal", value: "15", valueType: "number" } as const;
-      const requirement = requiring("powers.fireball.dc.*.total", atLeast15);
+      const requirement = requiring("spells.fireball.dc.*.total", atLeast15);
       const evaluator = new RequirementEvaluator(targetPaths);
       evaluator.evaluateRequirements(bjorn.components, requirement);
       expect(evaluator.getRequirements().invalidRequirements).toEqual([]);
@@ -2465,7 +2465,7 @@ describe("DetailedCharacter", () => {
       const characterId = await seedHuman("Spellthief", scores, { rulesetId: fork.id });
       const adventurerId = (await findSeededRuleset(DND35_COMPLETE_ADVENTURER_NAME)).id;
       const spellthief = (await Entities.findOne<Klass>(db, {
-        entityType: "klasses",
+        entityType: "classes",
         name: "Spellthief",
         rulesetId: adventurerId,
       }))!;
@@ -2550,7 +2550,7 @@ describe("DetailedCharacter", () => {
       test("add the spell's level, the casting ability and focus bonuses, shared across its groupings", async () => {
         // A wizard, INT 18 (+4), with Spell Focus: Evocation.
         const elara = await buildSeeded("Elara Starweaver");
-        const groupings = elara.components.powerGroupings.getPowerGroupings();
+        const groupings = elara.components.spellGroupings.getSpellGroupings();
         expect(Object.keys(groupings)).toEqual(expect.arrayContaining(["evocation", "abjuration", "conjuration"]));
         expect(Object.keys(groupings["evocation"]).length).toBeGreaterThanOrEqual(2);
 
@@ -2566,13 +2566,13 @@ describe("DetailedCharacter", () => {
         });
         // The school's and the descriptor's groupings and the spell hold the same DC; the spell's name isn't a grouping
         expect(groupings["fire"]["burninghands"]["wizard"]).toBe(burningHands);
-        expect(elara.components.powers.getPower("Burning Hands")?.dc?.["wizard"]).toBe(burningHands);
+        expect(elara.components.spells.getSpell("Burning Hands")?.dc?.["wizard"]).toBe(burningHands);
         expect(groupings["burninghands"]).toBeUndefined();
       });
 
       test("use the class's casting ability: charisma for a sorcerer", async () => {
         // CHA 18 (+4), no Spell Focus.
-        const dc = (await buildSeeded("Vex Flamecaller")).components.powerGroupings.getPowerGroupings()["evocation"]?.[
+        const dc = (await buildSeeded("Vex Flamecaller")).components.spellGroupings.getSpellGroupings()["evocation"]?.[
           "burninghands"
         ]?.["sorcerer"];
         expect(dc).toMatchObject({ base: 10, level: 1, ability: 4, total: 15 });
@@ -2580,7 +2580,7 @@ describe("DetailedCharacter", () => {
 
       test("leave empty groupings for a character without spells", async () => {
         // Groupings exist for every school, so a Spell Focus has somewhere to point.
-        const groupings = (await buildSeeded("Bjorn Ironhand")).components.powerGroupings.getPowerGroupings();
+        const groupings = (await buildSeeded("Bjorn Ironhand")).components.spellGroupings.getSpellGroupings();
         expect(Object.keys(groupings).length).toBeGreaterThan(0);
         expect(Object.values(groupings).every((bucket) => Object.keys(bucket).length === 0)).toBe(true);
       });
@@ -2634,7 +2634,7 @@ describe("DetailedCharacter", () => {
         } else {
           expect(spellUses(detailed, "clericspells", [0, 1, 2, 3, 4])).toEqual([5, 4, 3, 2, 0]);
           expect([3, 4].map((level) => spellLevel(detailed, "clericspells", level).allowed)).toEqual([ALLOWED_ALL, 0]);
-          const levels = new Set(allPowers(detailed).map((p) => (p as { powerLevel?: number | null }).powerLevel));
+          const levels = new Set(allSpells(detailed).map((p) => (p as { spellLevel?: number | null }).spellLevel));
           expect([levels.has(3), levels.has(4)]).toEqual([true, false]);
         }
       });
@@ -2648,8 +2648,8 @@ describe("DetailedCharacter", () => {
         (level) => spellLevel(theron, "clericspells", level)?.allowed === ALLOWED_ALL,
       );
       expect(knowsAll).toEqual([0, 1, 2]);
-      const levels = Object.values(theron.components.powers.getFlatPowers())
-        .map((entry) => (entry.power as { powerLevel?: number | null }).powerLevel)
+      const levels = Object.values(theron.components.spells.getFlatSpells())
+        .map((entry) => (entry.spell as { spellLevel?: number | null }).spellLevel)
         .filter((level) => level != null);
       expect(levels.every((level) => knowsAll.includes(level!))).toBe(true);
     });
@@ -2671,13 +2671,13 @@ describe("DetailedCharacter", () => {
       test("join the cleric's list with the domain's tag, up to the levels it casts", async () => {
         // Sun domain: Heat Metal (2nd level, not a cleric spell), Fire Shield (4th).
         const theron = await buildSeeded("Theron Lightbringer");
-        const clericPowers = theron.components.classes
+        const clericSpells = theron.components.classes
           .getCharacterClasses()
-          ["cleric"].levels.flatMap((level) => level.powers);
-        const heatMetal = clericPowers.find((p) => p.name === "Heat Metal")!;
+          ["cleric"].levels.flatMap((level) => level.spells);
+        const heatMetal = clericSpells.find((p) => p.name === "Heat Metal")!;
         expect(heatMetal.aptitudeId).toBe(theron.components.aptitudes.getAptitudes()["clericspells"].id);
         expect(theron.getSpellTags()[heatMetal.id]).toContain("Sun Domain");
-        expect(allPowers(theron).map((p) => p.name)).not.toContain("Fire Shield");
+        expect(allSpells(theron).map((p) => p.name)).not.toContain("Fire Shield");
       });
 
       test("open with bonus caster levels", async () => {
@@ -2708,7 +2708,7 @@ describe("DetailedCharacter", () => {
           },
         ]);
         const stormlord = (await Entities.findOne<Klass>(db, {
-          entityType: "klasses",
+          entityType: "classes",
           name: "Stormlord",
           rulesetId: extension.id,
         }))!;
@@ -2746,7 +2746,7 @@ describe("DetailedCharacter", () => {
         // One domain slot a spell level, his two domains' alike, its fifth and sixth opened by the bonus caster levels
         expect(spellUses(detailed, "domainspells", [1, 2, 3, 4, 5, 6, 7])).toEqual([1, 1, 1, 1, 1, 1, 0]);
         const tags = detailed.getSpellTags();
-        const weather = allPowers(detailed)
+        const weather = allSpells(detailed)
           .filter((p) => tags[p.id]?.includes("Weather Domain"))
           .map((p) => p.name);
         expect(weather).toEqual(expect.arrayContaining(["Binding Winds", "Cloudwalkers"]));
@@ -2761,13 +2761,13 @@ describe("DetailedCharacter", () => {
         const [order] = await Entities.createMany<Aptitude>(db, "aptitudes", [
           { name: "Order Prayers", rulesetId: fork.id },
         ]);
-        const [fifth, sixth] = await Entities.createMany<Power>(db, "powers", [
+        const [fifth, sixth] = await Entities.createMany<Spell>(db, "spells", [
           { name: "Fifth Order Hymn", rulesetId: fork.id },
           { name: "Sixth Order Hymn", rulesetId: fork.id },
         ]);
-        await Joins.createMany(db, "powers_aptitudes", [
-          { powerId: fifth.id, aptitudeId: order.id, level: 5 },
-          { powerId: sixth.id, aptitudeId: order.id, level: 6 },
+        await Joins.createMany(db, "spells_aptitudes", [
+          { spellId: fifth.id, aptitudeId: order.id, level: 5 },
+          { spellId: sixth.id, aptitudeId: order.id, level: 6 },
         ]);
         const [orderDomain] = await Entities.createMany<Feat>(db, "feats", [
           { name: "Order Domain", rulesetId: fork.id },
@@ -2836,7 +2836,7 @@ describe("DetailedCharacter", () => {
           { characterLevelId: clericLevels[0], featId: orderDomain.id, aptitudeId: ctx.aptMap["Cleric Domain"] },
         ]);
         const stormlord = (await Entities.findOne<Klass>(db, {
-          entityType: "klasses",
+          entityType: "classes",
           name: "Stormlord",
           rulesetId: extension.id,
         }))!;
@@ -2894,9 +2894,9 @@ describe("DetailedCharacter", () => {
           const list = detailed.components.aptitudes.getAptitudes()["divinecrusaderspells"].id;
           return {
             uses: spellUses(detailed, "divinecrusaderspells", [1, 2, 3, 4, 5, 6, 7, 8, 9]),
-            known: allPowers(detailed)
-              .filter((power) => power.aptitudeId === list)
-              .map((power) => power.name)
+            known: allSpells(detailed)
+              .filter((spell) => spell.aptitudeId === list)
+              .map((spell) => spell.name)
               .sort(),
             divine: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].find((n) =>
               detailed.areRequirementsMet(requiring("spellcasting.divine", exactly(n))),
@@ -2936,7 +2936,7 @@ describe("DetailedCharacter", () => {
           CRUSADER_PREREQUISITES,
         );
         const cleric = (await Entities.findOne<Klass>(db, {
-          entityType: "klasses",
+          entityType: "classes",
           name: "Cleric",
           rulesetId: ctx.rulesetId,
         }))!;
@@ -2959,9 +2959,9 @@ describe("DetailedCharacter", () => {
         const detailed = await build((await Characters.findOne(db, { id: characterId }))!);
         const aptitudes = detailed.components.aptitudes.getAptitudes();
         const onList = (list: string) =>
-          allPowers(detailed)
-            .filter((power) => power.aptitudeId === aptitudes[list].id)
-            .map((power) => power.name);
+          allSpells(detailed)
+            .filter((spell) => spell.aptitudeId === aptitudes[list].id)
+            .map((spell) => spell.name);
         // Produce Flame and Wall of Fire are neither cleric spells nor first-level ones: the domain's on each list
         expect(onList("clericspells")).toEqual(expect.arrayContaining(["Burning Hands", "Produce Flame"]));
         expect(onList("clericspells")).not.toContain("Wall of Fire");
@@ -2991,8 +2991,8 @@ describe("DetailedCharacter", () => {
           { name: "Test Raider Class Feature", rulesetId: ctx.rulesetId },
           { name: "Test Raider Spells", rulesetId: ctx.rulesetId },
         ]);
-        await Joins.createMany(db, "powers_aptitudes", [
-          { powerId: ctx.powerMap["Bless"], aptitudeId: raiderSpells.id, level: 1 },
+        await Joins.createMany(db, "spells_aptitudes", [
+          { spellId: ctx.spellMap["Bless"], aptitudeId: raiderSpells.id, level: 1 },
         ]);
         const [luck] = await Entities.createMany<Feat>(db, "feats", [
           { name: "Test Raider Luck", rulesetId: ctx.rulesetId },
@@ -3031,9 +3031,9 @@ describe("DetailedCharacter", () => {
           for (let level = 1; level <= levels; level++) await addCharacterLevel(characterId, levelIds[level]);
           const detailed = await build((await Characters.findOne(db, { id: characterId }))!);
           const list = detailed.components.aptitudes.getAptitudes()["testraiderspells"].id;
-          return allPowers(detailed)
-            .filter((power) => power.aptitudeId === list)
-            .map((power) => power.name)
+          return allSpells(detailed)
+            .filter((spell) => spell.aptitudeId === list)
+            .map((spell) => spell.name)
             .sort();
         };
         // The Luck domain's first-level spell from its second level; its second-level one never: the class casts none
@@ -3047,8 +3047,8 @@ describe("DetailedCharacter", () => {
         const [sunPriestSpells] = await Entities.createMany<Aptitude>(db, "aptitudes", [
           { name: "Test Sun Priest Spells", rulesetId: ctx.rulesetId },
         ]);
-        await Joins.createMany(db, "powers_aptitudes", [
-          { powerId: ctx.powerMap["Bless"], aptitudeId: sunPriestSpells.id, level: 1 },
+        await Joins.createMany(db, "spells_aptitudes", [
+          { spellId: ctx.spellMap["Bless"], aptitudeId: sunPriestSpells.id, level: 1 },
         ]);
         const { levelIds } = await new RulesetSeeder(db, ctx).seedClass({
           name: "Test Sun Priest",
@@ -3074,7 +3074,7 @@ describe("DetailedCharacter", () => {
 
         const characterId = await seedHuman("Sun Priest", { ...WIZARD_SCORES, Wisdom: 16 });
         const cleric = (await Entities.findOne<Klass>(db, {
-          entityType: "klasses",
+          entityType: "classes",
           name: "Cleric",
           rulesetId: ctx.rulesetId,
         }))!;
@@ -3085,9 +3085,9 @@ describe("DetailedCharacter", () => {
         const detailed = await build((await Characters.findOne(db, { id: characterId }))!);
         const aptitudes = detailed.components.aptitudes.getAptitudes();
         const onList = (list: string) =>
-          allPowers(detailed)
-            .filter((power) => power.aptitudeId === aptitudes[list].id)
-            .map((power) => power.name);
+          allSpells(detailed)
+            .filter((spell) => spell.aptitudeId === aptitudes[list].id)
+            .map((spell) => spell.name);
         // The fire domain's first-level spell on both lists, its second on neither: both classes cast the first level only
         for (const list of ["clericspells", "testsunpriestspells"]) {
           expect(onList(list)).toContain("Burning Hands");
@@ -3101,7 +3101,7 @@ describe("DetailedCharacter", () => {
         const ctx = await getSeedCtx();
         const characterId = await seedHuman("Sun Fighter", { ...WIZARD_SCORES, Wisdom: 16 });
         const fighter = (await Entities.findOne<Klass>(db, {
-          entityType: "klasses",
+          entityType: "classes",
           name: "Fighter",
           rulesetId: ctx.rulesetId,
         }))!;
@@ -3113,9 +3113,9 @@ describe("DetailedCharacter", () => {
         expect(spellLevel(detailed, "sundomainspells", 1)).toMatchObject({ allowed: ALLOWED_ALL, uses: 0 });
         expect(spellLevel(detailed, "domainspells", 1)).toMatchObject({ allowed: 0, uses: 0 });
         expect(
-          allPowers(detailed)
-            .filter((power) => power.aptitudeId === sunDomainSpells)
-            .map((power) => power.name),
+          allSpells(detailed)
+            .filter((spell) => spell.aptitudeId === sunDomainSpells)
+            .map((spell) => spell.name),
         ).toEqual(["Endure Elements"]);
       });
 
@@ -3140,7 +3140,7 @@ describe("DetailedCharacter", () => {
 
         const characterId = await seedHuman("Reserve Wizard", WIZARD_SCORES, { rulesetId: fork.id });
         const wizard = (await Entities.findOne<Klass>(db, {
-          entityType: "klasses",
+          entityType: "classes",
           name: "Wizard",
           rulesetId: ctx.rulesetId,
         }))!;
@@ -3151,7 +3151,7 @@ describe("DetailedCharacter", () => {
         // A wizard 1 with Intelligence 16: one first-level spell, one for Intelligence, one from the feat
         expect(spellUses(detailed, "wizardspells", [1])).toEqual([3]);
         expect(Object.values(detailed.getSpellTags()).flat()).not.toContain("Test Arcane Reserve");
-        expect(detailed.components.powers.getSpellEntry("magicmissile", "wizard")).toBeDefined();
+        expect(detailed.components.spells.getSpellEntry("magicmissile", "wizard")).toBeDefined();
       });
 
       test("give a specialist a slot of her school at each spell level she casts, cantrips too", async () => {
@@ -3175,7 +3175,7 @@ describe("DetailedCharacter", () => {
         ]);
         const dmg = await findSeededRuleset(DND35_DMG_NAME);
         const loremaster = (await Entities.findOne<Klass>(db, {
-          entityType: "klasses",
+          entityType: "classes",
           name: "Loremaster",
           rulesetId: dmg.id,
         }))!;
@@ -3204,15 +3204,15 @@ describe("DetailedCharacter", () => {
           { name: "Moon Domain Spells", rulesetId: fork.id },
           { name: "Sun Litany", rulesetId: fork.id },
         ]);
-        const [dawn, dusk, noon] = await Entities.createMany<Power>(db, "powers", [
+        const [dawn, dusk, noon] = await Entities.createMany<Spell>(db, "spells", [
           { name: "Dawn Hymn", rulesetId: fork.id },
           { name: "Dusk Hymn", rulesetId: fork.id },
           { name: "Noon Hymn", rulesetId: fork.id },
         ]);
-        await Joins.createMany(db, "powers_aptitudes", [
-          { powerId: dawn.id, aptitudeId: prayers.id, level: 1 },
-          { powerId: dusk.id, aptitudeId: moon.id, level: 1 },
-          { powerId: noon.id, aptitudeId: litany.id, level: 1 },
+        await Joins.createMany(db, "spells_aptitudes", [
+          { spellId: dawn.id, aptitudeId: prayers.id, level: 1 },
+          { spellId: dusk.id, aptitudeId: moon.id, level: 1 },
+          { spellId: noon.id, aptitudeId: litany.id, level: 1 },
         ]);
         const [sun, moonDomain] = await Entities.createMany<Feat>(db, "feats", [
           { name: "Prayers of the Sun", rulesetId: fork.id },
@@ -3258,7 +3258,7 @@ describe("DetailedCharacter", () => {
 
         const characterId = await seedHuman("Sun Cleric", WIZARD_SCORES, { rulesetId: fork.id });
         const clericClass = (await Entities.findOne<Klass>(db, {
-          entityType: "klasses",
+          entityType: "classes",
           name: "Cleric",
           rulesetId: ctx.rulesetId,
         }))!;
@@ -3271,9 +3271,9 @@ describe("DetailedCharacter", () => {
         });
         const detailed = await build((await Characters.findOne(db, { id: characterId }))!);
         const clericSpells = detailed.components.aptitudes.getAptitudes()["clericspells"].id;
-        const onClericList = allPowers(detailed)
-          .filter((power) => power.aptitudeId === clericSpells)
-          .map((power) => power.name);
+        const onClericList = allSpells(detailed)
+          .filter((spell) => spell.aptitudeId === clericSpells)
+          .map((spell) => spell.name);
         expect(onClericList).toContain("Dawn Hymn");
         expect(onClericList).not.toContain("Dusk Hymn");
 
@@ -3290,10 +3290,10 @@ describe("DetailedCharacter", () => {
         );
         expect(tagLists["Prayers of the Sun"].joinsClassList).toBe(true);
         expect(tagLists["Moon Domain"]).toEqual({ aptitudeIds: [moon.id, clericSpells], joinsClassList: false });
-        const powers = detailed.components.powers;
-        expect(powers.getSpellEntry("dawnhymn", "sunprayers")).toBeUndefined();
-        expect(powers.getSpellEntry("duskhymn", "moondomain")).toBeUndefined();
-        expect(powers.getSpellEntry("bless", "cleric")).toBeDefined();
+        const spells = detailed.components.spells;
+        expect(spells.getSpellEntry("dawnhymn", "sunprayers")).toBeUndefined();
+        expect(spells.getSpellEntry("duskhymn", "moondomain")).toBeUndefined();
+        expect(spells.getSpellEntry("bless", "cleric")).toBeDefined();
       });
     });
 
@@ -3330,7 +3330,7 @@ describe("DetailedCharacter", () => {
 
         const elara = await buildSeeded("Elara Starweaver");
         const tags = elara.getSpellTags();
-        const byName = Object.fromEntries(allPowers(elara).map((p) => [p.name, tags[p.id] ?? []]));
+        const byName = Object.fromEntries(allSpells(elara).map((p) => [p.name, tags[p.id] ?? []]));
         expect(byName["Magic Missile"]).toContain("Evocation Specialist");
         expect(byName["Burning Hands"]).toContain("Evocation Specialist");
         expect(byName["Web"]).not.toContain("Evocation Specialist");
@@ -3348,13 +3348,13 @@ describe("DetailedCharacter", () => {
       await addFeats(db, ctx, wizardLevel, [
         { levelIndex: 0, featName: "Spell Focus: Enchantment", aptitude: "General" },
       ]);
-      await addPowers(db, ctx, wizardLevel, [{ levelIndex: 0, powerName: "Hold Person", aptitude: "Wizard Spells" }]);
-      await addPowers(db, ctx, bardLevel, [{ levelIndex: 0, powerName: "Hold Person", aptitude: "Bard Spells" }]);
+      await addSpells(db, ctx, wizardLevel, [{ levelIndex: 0, spellName: "Hold Person", aptitude: "Wizard Spells" }]);
+      await addSpells(db, ctx, bardLevel, [{ levelIndex: 0, spellName: "Hold Person", aptitude: "Bard Spells" }]);
       const record = (await Characters.findOne(db, { id: characterId }))!;
       const detailed = await build(record);
 
       // Spell Focus: Enchantment adds 1 to both
-      const dcs = detailed.components.powers.getPower("Hold Person")?.dc;
+      const dcs = detailed.components.spells.getSpell("Hold Person")?.dc;
       expect({ wizard: dcs?.["wizard"]?.total, bard: dcs?.["bard"]?.total }).toEqual({
         wizard: 10 + 3 + 3 + 1,
         bard: 10 + 2 + 1 + 1,
@@ -3380,9 +3380,9 @@ describe("DetailedCharacter", () => {
         { levelIndex: 0, featName: "Good Domain", aptitude: "Cleric Domain" },
         { levelIndex: 0, featName: "Magic Domain", aptitude: "Cleric Domain" },
       ]);
-      await addPowers(db, ctx, wizardLevels, [
-        { levelIndex: 0, powerName: "Protection from Evil", aptitude: "Wizard Spells" },
-        { levelIndex: 4, powerName: "Dispel Magic", aptitude: "Wizard Spells" },
+      await addSpells(db, ctx, wizardLevels, [
+        { levelIndex: 0, spellName: "Protection from Evil", aptitude: "Wizard Spells" },
+        { levelIndex: 4, spellName: "Dispel Magic", aptitude: "Wizard Spells" },
       ]);
       const record = (await Characters.findOne(db, { id: characterId }))!;
       const lists = CharacterResponse.buildSheet(record, await build(record)).spellGroups;
@@ -3411,7 +3411,7 @@ describe("DetailedCharacter", () => {
 
     describe("granted by a feat's modifier", () => {
       test("are known, next to those picked", async () => {
-        const spells = (await setupGrantedSpell()).components.powers;
+        const spells = (await setupGrantedSpell()).components.spells;
         expect(
           ["magicmissile", "detectmagic", "burninghands"].map((spell) => spells.getSpellEntry(spell, "wizard")?.known),
         ).toEqual([true, true, false]);
@@ -3420,14 +3420,14 @@ describe("DetailedCharacter", () => {
       test("aren't held to their own prerequisites", async () => {
         // Magic Missile needs wizard 5 here; the grant is the gate.
         const detailed = await setupGrantedSpell({ requirement: true });
-        expect(detailed.components.powers.getSpellEntry("magicmissile", "wizard")?.known).toBe(true);
+        expect(detailed.components.spells.getSpellEntry("magicmissile", "wizard")?.known).toBe(true);
         expect(requirementIssues(detailed).find((issue) => issue.entityName === "Magic Missile")).toBeUndefined();
       });
 
       test("list each of their properties' values, in the books' order", async () => {
         // Magic Missile's components: Verbal and Somatic, on a sheet's granted spells as on its others
-        const virtualPowers = (await setupGrantedSpell()).getVirtualPowers();
-        expect(virtualPowers.find((power) => power.name === "Magic Missile")?.properties).toMatchObject({
+        const virtualSpells = (await setupGrantedSpell()).getVirtualSpells();
+        expect(virtualSpells.find((spell) => spell.name === "Magic Missile")?.properties).toMatchObject({
           SPELL_COMPONENT: "Verbal, Somatic",
           SPELL_SCHOOL: "Evocation",
         });
@@ -3435,8 +3435,8 @@ describe("DetailedCharacter", () => {
 
       test("get the school's DC bonuses", async () => {
         // 10 + 1 + INT 16 (+3) + Spell Focus: Evocation.
-        const granted = (await setupGrantedSpell({ spellFocus: true })).getVirtualPowers();
-        expect(granted.find((power) => power.name === "Magic Missile")).toMatchObject({ dc: 15 });
+        const granted = (await setupGrantedSpell({ spellFocus: true })).getVirtualSpells();
+        expect(granted.find((spell) => spell.name === "Magic Missile")).toMatchObject({ dc: 15 });
       });
 
       test("are known on their list beside the same spell another class's list picked, each listed under its class", async () => {
@@ -3445,11 +3445,11 @@ describe("DetailedCharacter", () => {
         const characterId = await seedHuman("Two Lists", { ...WIZARD_SCORES, Charisma: 12 }, { xp: 1000 });
         await addClassLevels(db, ctx, characterId, "Sorcerer", [1], [4]);
         const wizardLevel = await addClassLevels(db, ctx, characterId, "Wizard", [1], [4]);
-        await addPowers(db, ctx, wizardLevel, [{ levelIndex: 0, powerName: "Light", aptitude: "Wizard Spells" }]);
+        await addSpells(db, ctx, wizardLevel, [{ levelIndex: 0, spellName: "Light", aptitude: "Wizard Spells" }]);
         await Modifiers.create(db, {
           sourceId: characterId,
           sourceType: "characters",
-          target: "powers.light.sorcerer.known",
+          target: "spells.light.sorcerer.known",
           value: "true",
           valueType: "boolean",
           operator: "set",
@@ -3458,9 +3458,9 @@ describe("DetailedCharacter", () => {
         const detailed = await build(record);
 
         const listsKnowing = detailed
-          .getHeldPowers()
-          .filter((power) => power.name === "Light")
-          .map((power) => power.aptitudeId);
+          .getHeldSpells()
+          .filter((spell) => spell.name === "Light")
+          .map((spell) => spell.aptitudeId);
         expect(listsKnowing.sort()).toEqual([ctx.aptMap["Sorcerer Spells"], ctx.aptMap["Wizard Spells"]].sort());
         const cantrips = (list: string) =>
           CharacterResponse.buildSheet(record, detailed)
@@ -3473,7 +3473,7 @@ describe("DetailedCharacter", () => {
       test("are known once on their list, however many modifiers make them known there", async () => {
         // Toughness makes Magic Missile a wizard spell known, and so does a modifier of the character's own
         const detailed = await setupGrantedSpell({ ownGrant: true });
-        expect(detailed.getVirtualPowers().map((power) => power.name)).toEqual(["Magic Missile"]);
+        expect(detailed.getVirtualSpells().map((spell) => spell.name)).toEqual(["Magic Missile"]);
       });
     });
 
@@ -3483,11 +3483,11 @@ describe("DetailedCharacter", () => {
       const characterId = await seedHuman("Light Twice", { ...WIZARD_SCORES, Charisma: 12 }, { xp: 1000 });
       const sorcererLevel = await addClassLevels(db, ctx, characterId, "Sorcerer", [1], [4]);
       const wizardLevel = await addClassLevels(db, ctx, characterId, "Wizard", [1], [4]);
-      await addPowers(db, ctx, sorcererLevel, [{ levelIndex: 0, powerName: "Light", aptitude: "Sorcerer Spells" }]);
-      await addPowers(db, ctx, wizardLevel, [{ levelIndex: 0, powerName: "Light", aptitude: "Wizard Spells" }]);
+      await addSpells(db, ctx, sorcererLevel, [{ levelIndex: 0, spellName: "Light", aptitude: "Sorcerer Spells" }]);
+      await addSpells(db, ctx, wizardLevel, [{ levelIndex: 0, spellName: "Light", aptitude: "Wizard Spells" }]);
       await Modifiers.create(db, {
-        sourceId: ctx.powerMap["Light"],
-        sourceType: "powers",
+        sourceId: ctx.spellMap["Light"],
+        sourceType: "spells",
         target: "abilities.strength.misc",
         value: "1",
         valueType: "number",
@@ -3502,10 +3502,10 @@ describe("DetailedCharacter", () => {
       const ctx = await getSeedCtx();
       const characterId = await seedHuman("Light Skipped", WIZARD_SCORES, { xp: 0 });
       const wizardLevel = await addClassLevels(db, ctx, characterId, "Wizard", [1], [4]);
-      await addPowers(db, ctx, wizardLevel, [{ levelIndex: 0, powerName: "Light", aptitude: "Wizard Spells" }]);
+      await addSpells(db, ctx, wizardLevel, [{ levelIndex: 0, spellName: "Light", aptitude: "Wizard Spells" }]);
       await Modifiers.create(db, {
-        sourceId: ctx.powerMap["Light"],
-        sourceType: "powers",
+        sourceId: ctx.spellMap["Light"],
+        sourceType: "spells",
         target: "feats.weaponfocus.possessed",
         value: "true",
         valueType: "boolean",
@@ -3561,7 +3561,7 @@ describe("DetailedCharacter", () => {
           { levelIndex: 2, featName: "Toughness", aptitude: "General" },
         ]);
         const thaumaturgist = (await Entities.findOne<Klass>(db, {
-          entityType: "klasses",
+          entityType: "classes",
           name: "Thaumaturgist",
           rulesetId: (await findSeededRuleset(DND35_DMG_NAME)).id,
         }))!;
@@ -3597,7 +3597,7 @@ describe("DetailedCharacter", () => {
         const fork = await forkWith(DND35_COMPLETE_DIVINE_NAME);
         const characterId = await seedCaster("Cleric 3 / Stormlord 2", [["Cleric", 3]], fork.id);
         const stormlord = (await Entities.findOne<Klass>(db, {
-          entityType: "klasses",
+          entityType: "classes",
           name: "Stormlord",
           rulesetId: extension.id,
         }))!;
@@ -3822,7 +3822,7 @@ describe("DetailedCharacter", () => {
       const characterId = await seedHuman("Dragon Blooded", { ...WIZARD_SCORES, Strength: 12 }, { rulesetId: fork.id });
       await addClassLevels(db, ctx, characterId, "Sorcerer", [1], [4]);
       const dragonDisciple = (await Entities.findOne<Klass>(db, {
-        entityType: "klasses",
+        entityType: "classes",
         name: "Dragon Disciple",
         rulesetId: (await findSeededRuleset(DND35_DMG_NAME)).id,
       }))!;
@@ -3844,7 +3844,7 @@ describe("DetailedCharacter", () => {
       const [lyraBefore, bjornBefore] = [await buildSeeded("Lyra Shadowstep"), await buildSeeded("Bjorn Ironhand")];
       await Modifiers.create(db, {
         sourceId: ctx.klassMap.pc["Rogue"],
-        sourceType: "klasses",
+        sourceType: "classes",
         target: "abilities.dexterity.misc",
         value: "1",
         valueType: "number",
@@ -3862,7 +3862,7 @@ describe("DetailedCharacter", () => {
       const lyraBefore = await buildSeeded("Lyra Shadowstep");
       await Modifiers.create(db, {
         sourceId: rogue,
-        sourceType: "klasses",
+        sourceType: "classes",
         target: "abilities.dexterity.misc",
         value: "1",
         valueType: "number",
@@ -3870,7 +3870,7 @@ describe("DetailedCharacter", () => {
       });
       await Requirements.create(db, {
         entityId: rogue,
-        entityType: "klasses",
+        entityType: "classes",
         level: "1",
         target: "abilities.strength.total",
         operator: "greater_than_or_equal",
@@ -3913,7 +3913,7 @@ describe("DetailedCharacter", () => {
       );
       await addClassLevels(db, ctx, characterId, "Rogue", [1, 2, 3], [6, 4, 4]);
       const assassin = (await Entities.findOne<Klass>(db, {
-        entityType: "klasses",
+        entityType: "classes",
         name: "Assassin",
         rulesetId: (await findSeededRuleset(DND35_DMG_NAME)).id,
       }))!;
@@ -3952,11 +3952,11 @@ describe("DetailedCharacter", () => {
     test("a family's name alone, or a name that only starts a feat's, names no feat", async () => {
       expect(await met("Bjorn Ironhand", "feats.weaponfocus.possessed")).toBe(false);
       // Power Attack
-      expect(await met("Bjorn Ironhand", "feats.power.possessed")).toBe(false);
+      expect(await met("Bjorn Ironhand", "feats.spell.possessed")).toBe(false);
       const issues = (await buildSeeded("Bjorn Ironhand")).getUnmetRequirementIssues(
-        requiring("feats.power.possessed"),
+        requiring("feats.spell.possessed"),
       );
-      expect(issues.map((issue) => issue.message)).toEqual(["Invalid requirement: Element not found: power"]);
+      expect(issues.map((issue) => issue.message)).toEqual(["Invalid requirement: Element not found: spell"]);
     });
 
     test("a feat's name reaches that feat, not one whose name it starts: a monk's weapons aren't all simple ones", async () => {
@@ -3973,8 +3973,8 @@ describe("DetailedCharacter", () => {
     test("a check that reaches nothing isn't met", async () => {
       // Bjorn knows no spell, so no evocation spell's DC
       const dc = { operator: "greater_than", value: "0", valueType: "number" } as const;
-      expect(await met("Bjorn Ironhand", "powers.groups.evocation.*.dc.total", dc)).toBe(false);
-      expect(await met("Elara Starweaver", "powers.groups.evocation.*.dc.total", dc)).toBe(true);
+      expect(await met("Bjorn Ironhand", "spells.groups.evocation.*.dc.total", dc)).toBe(false);
+      expect(await met("Elara Starweaver", "spells.groups.evocation.*.dc.total", dc)).toBe(true);
     });
   });
 });

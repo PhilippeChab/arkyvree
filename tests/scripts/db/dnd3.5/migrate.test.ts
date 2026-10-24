@@ -5,6 +5,7 @@ import { readFileSync } from "node:fs";
 
 import { sql } from "drizzle-orm";
 
+import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { db } from "@/server/database/index.ts";
 import { findSeededCharacter, getSeedCtx } from "@/tests/support/seed.ts";
 
@@ -49,5 +50,56 @@ describe("0079_weapon-sets", () => {
       SELECT weapon_sets FROM character.inventory WHERE character_id = ${characterId} AND location IS NULL
     `);
     expect(added).toEqual([{ weapon_sets: [] }, { weapon_sets: [] }]);
+  });
+});
+
+describe("0081_spells-and-classes", () => {
+  test("runs in the transaction of the rows before it, and renames what customizations and activities recorded", async () => {
+    const { id: characterId } = await findSeededCharacter("Bjorn Ironhand");
+    // A row whose deferred checks are pending, as 0080's are when drizzle runs 0081 in the same transaction
+    await db.execute(sql`
+      INSERT INTO character.links (character_id, role, single, entity_id, entity_type)
+      SELECT ${characterId}, 'speaks', false, e.id, 'languages' FROM rules.entities e
+      WHERE e.type = 'languages'
+        AND NOT EXISTS (SELECT 1 FROM character.links l WHERE l.character_id = ${characterId} AND l.entity_id = e.id)
+      LIMIT 1
+    `);
+    // What a customization and an activity recorded before it, in the old words
+    const { rows: spells } = await db.execute<{ id: string }>(
+      sql`SELECT id FROM rules.entities WHERE type = 'spells' LIMIT 1`,
+    );
+    const spellId = spells[0]!.id;
+    const { rows: modifiers } = await db.execute<{ id: string }>(sql`
+      INSERT INTO customization.modifiers (source_id, source_type, target, value, value_type, operator) VALUES
+        (${spellId}, 'spells', 'powers.wizard.known', '{{ [ powers.wizard.known] * 2 }}', 'number', 'add'),
+        (${spellId}, 'spells', 'powers.cleric.known', '{{ powers.cleric.known }}', 'number', 'add')
+      RETURNING id
+    `);
+    const { rows: activities } = await db.execute<{ id: string }>(sql`
+      INSERT INTO account.activities (user_id, target_id, target_table, type, data)
+      VALUES (${SEED_USER_ID}, ${spellId}, 'klass_level_powers', 'addKlassLevelPower',
+        '{"entityType":"powers","propertyType":"KLASS_HD","target":"powers.wizard.known","value":"[ powers.cleric.known ]"}')
+      RETURNING id
+    `);
+
+    for (const statement of statementsOf("0081_spells-and-classes.sql")) await db.execute(sql.raw(statement));
+
+    const { rows: modifier } = await db.execute(sql`
+      SELECT target, value FROM customization.modifiers WHERE id IN (${modifiers[0]!.id}, ${modifiers[1]!.id}) ORDER BY target DESC
+    `);
+    expect(modifier).toEqual([
+      { target: "spells.wizard.known", value: "{{ [ spells.wizard.known] * 2 }}" },
+      { target: "spells.cleric.known", value: "{{ spells.cleric.known }}" },
+    ]);
+    const { rows: activity } = await db.execute(
+      sql`SELECT target_table, type, data::text AS data FROM account.activities WHERE id = ${activities[0]!.id}`,
+    );
+    expect(activity).toEqual([
+      {
+        target_table: "class_level_spells",
+        type: "addClassLevelSpell",
+        data: '{"entityType":"spells","propertyType":"CLASS_HD","target":"spells.wizard.known","value":"[ spells.cleric.known ]"}',
+      },
+    ]);
   });
 });

@@ -38,18 +38,18 @@ export default {
     { levelIndex: 0, featName: "Cat Familiar", aptitude: "Familiar Bond" },
   ],
   // Sorcerer spells known per level: L1=4 cantrips +2 L1, L2=+1 cantrip, L3=+1 L1
-  powers: [
+  spells: [
     // L1: 4 cantrips, 2 L1 spells
-    { levelIndex: 0, powerName: "Detect Magic", aptitude: "Sorcerer Spells" },
-    { levelIndex: 0, powerName: "Light", aptitude: "Sorcerer Spells" },
-    { levelIndex: 0, powerName: "Read Magic", aptitude: "Sorcerer Spells" },
-    { levelIndex: 0, powerName: "Prestidigitation", aptitude: "Sorcerer Spells" },
-    { levelIndex: 0, powerName: "Magic Missile", aptitude: "Sorcerer Spells" },
-    { levelIndex: 0, powerName: "Burning Hands", aptitude: "Sorcerer Spells" },
+    { levelIndex: 0, spellName: "Detect Magic", aptitude: "Sorcerer Spells" },
+    { levelIndex: 0, spellName: "Light", aptitude: "Sorcerer Spells" },
+    { levelIndex: 0, spellName: "Read Magic", aptitude: "Sorcerer Spells" },
+    { levelIndex: 0, spellName: "Prestidigitation", aptitude: "Sorcerer Spells" },
+    { levelIndex: 0, spellName: "Magic Missile", aptitude: "Sorcerer Spells" },
+    { levelIndex: 0, spellName: "Burning Hands", aptitude: "Sorcerer Spells" },
     // L2: +1 cantrip
-    { levelIndex: 1, powerName: "Mage Hand", aptitude: "Sorcerer Spells" },
+    { levelIndex: 1, spellName: "Mage Hand", aptitude: "Sorcerer Spells" },
     // L3: +1 L1 spell
-    { levelIndex: 2, powerName: "Shield", aptitude: "Sorcerer Spells" },
+    { levelIndex: 2, spellName: "Shield", aptitude: "Sorcerer Spells" },
   ],
   inventory: [
     { name: "Dagger", quantity: 1, equipped: true, location: "Main Hand", groups: [0] },

@@ -1,5 +1,5 @@
 import FeatsPaths from "@/engine/rulesets/dnd3.5/model/feats/FeatsPaths.ts";
-import PowersPaths from "@/engine/rulesets/dnd3.5/model/powers/PowersPaths.ts";
+import SpellsPaths from "@/engine/rulesets/dnd3.5/model/spells/SpellsPaths.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { SPELL_FOCUS_DC_BONUS } from "@/vocabulary/dnd3.5/feats.ts";
@@ -20,7 +20,7 @@ export default class SpellFocusFeats extends GeneratedFeats {
   protected override featsOf(schoolName: string) {
     const spellFocus = `Spell Focus: ${schoolName}`;
     const dcBonus = {
-      target: PowersPaths.groupDcMisc(schoolName),
+      target: SpellsPaths.groupDcMisc(schoolName),
       operator: "add",
       value: String(SPELL_FOCUS_DC_BONUS),
       valueType: "number",

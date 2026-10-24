@@ -47,7 +47,7 @@ async function seededPerDay(name: string) {
 describe("SpellGroups", () => {
   test("shows a spell's tags on the lists they name, with whether their list joins its class's", () => {
     // Burning Hands, a cleric's through the fire domain and a specialist wizard's evocation spell
-    const burningHands = (aptitudeId: string) => ({ id: "burning", name: "Burning Hands", aptitudeId, powerLevel: 1 });
+    const burningHands = (aptitudeId: string) => ({ id: "burning", name: "Burning Hands", aptitudeId, spellLevel: 1 });
     const character = {
       components: {
         aptitudes: {
@@ -58,11 +58,11 @@ describe("SpellGroups", () => {
         },
         classes: {
           getCharacterClasses: () => ({
-            cleric: { levels: [{ klassLevel: { level: 1 }, powers: [burningHands("cleric")] }] },
-            wizard: { levels: [{ klassLevel: { level: 1 }, powers: [burningHands("wizard")] }] },
+            cleric: { levels: [{ klassLevel: { level: 1 }, spells: [burningHands("cleric")] }] },
+            wizard: { levels: [{ klassLevel: { level: 1 }, spells: [burningHands("wizard")] }] },
           }),
         },
-        powers: { getFlatPowers: () => ({}) },
+        spells: { getFlatSpells: () => ({}) },
       },
       getFeatListSpells: () => new Map(),
       getSpellTagLists: () => ({
@@ -70,7 +70,7 @@ describe("SpellGroups", () => {
         "Evocation Specialist": { aptitudeIds: ["evocation", "wizard"], joinsClassList: false },
       }),
       getSpellTags: () => ({ burning: ["Fire Domain", "Evocation Specialist"] }),
-      getVirtualPowers: () => [],
+      getVirtualSpells: () => [],
     };
     const tagsOn = (list: string) =>
       SpellGroups.describe(character).find((aptitude) => aptitude.aptitudeName === list)?.levels[0].spells[0].tags;
@@ -127,18 +127,18 @@ describe("SpellGroups", () => {
               levels: [
                 {
                   klassLevel: { level: 1 },
-                  powers: [{ id: "endure", name: "Endure Elements", aptitudeId: "sun", powerLevel: 1 }],
+                  spells: [{ id: "endure", name: "Endure Elements", aptitudeId: "sun", spellLevel: 1 }],
                 },
               ],
             },
           }),
         },
-        powers: { getFlatPowers: () => ({}) },
+        spells: { getFlatSpells: () => ({}) },
       },
       getFeatListSpells: () => new Map([["sun", new Map([[1, new Set(["endure"])]])]]),
       getSpellTagLists: () => ({}),
       getSpellTags: () => ({}),
-      getVirtualPowers: () => [],
+      getVirtualSpells: () => [],
     };
     expect(SpellGroups.describe(character)).toMatchObject([
       { aptitudeName: "Sun Domain Spells", levels: [{ level: 1, uses: null, spells: [{ name: "Endure Elements" }] }] },
@@ -206,12 +206,12 @@ describe("SpellGroups", () => {
             }),
           },
           classes: { getCharacterClasses: () => ({}) },
-          powers: { getFlatPowers: () => ({}) },
+          spells: { getFlatSpells: () => ({}) },
         },
         getFeatListSpells: () => new Map([["domain", new Map()]]),
         getSpellTagLists: () => ({ Domains: { aptitudeIds: ["domain", "cleric"], joinsClassList: false } }),
         getSpellTags: () => ({}),
-        getVirtualPowers: () => [],
+        getVirtualSpells: () => [],
       };
       expect(SpellGroups.describePerDay(character)).toEqual({
         labels: ["Level 1", "Level 2"],

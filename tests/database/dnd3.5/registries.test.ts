@@ -235,7 +235,7 @@ describe("The registry sync, which every migrate runs", () => {
     const without = declared();
     without.registries.fieldDefs = without.registries.fieldDefs.filter((def) => def.field !== "SPELL_SCHOOL");
     expect(StoredRegistries.reconcile(db, without)).rejects.toThrow(
-      "No module declares the field SPELL_SCHOOL of powers any more, but rows still use it",
+      "No module declares the field SPELL_SCHOOL of spells any more, but rows still use it",
     );
     expect(await countOf(sql`SELECT count(*) AS n FROM rules.field_defs WHERE field = 'SPELL_SCHOOL'`)).toBe(1);
   });

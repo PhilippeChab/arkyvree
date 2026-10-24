@@ -5,7 +5,7 @@ import type { BaseRules } from "@/shared/enums.ts";
 
 /**
  * What a base rules' rulesets share (`baseRules`: none while its ruleset loads), as the engine describes it: its words,
- * the kinds a race or a class is for, a class's and a power's levels, its license; none while it loads. `all`: every
+ * the kinds a race or a class is for, a class's and a spell's levels, its license; none while it loads. `all`: every
  * base rules', for a list of several rulesets' records; `isPending` until they load or fail, `retry` to ask again once
  * they failed, and `retrying` while it asks.
  */

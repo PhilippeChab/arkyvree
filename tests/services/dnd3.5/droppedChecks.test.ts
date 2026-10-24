@@ -52,7 +52,7 @@ async function rulesetWithSave() {
     rulesetId,
   });
   const save = await EntitiesService.createEntity(owner, rulesetId, "saves", { name: "Reflex", abilityId: ability.id });
-  const klass = await EntitiesService.createEntity(owner, rulesetId, "klasses", { name: "Rogue", hd: 6 });
+  const klass = await EntitiesService.createEntity(owner, rulesetId, "classes", { name: "Rogue", hd: 6 });
   return { abilityId: ability.id, klassId: klass.id, owner, rulesetId, saveId: save.id };
 }
 
@@ -63,35 +63,35 @@ describe("a ruleset's entities", () => {
     const { session: owner, ruleset } = await createTestUserAndRuleset();
     const refusal = invalidAt("hd");
     expect(
-      EntitiesService.createEntity(owner, ruleset.id, "klasses", { name: "Commoner", hd: 7 }),
+      EntitiesService.createEntity(owner, ruleset.id, "classes", { name: "Commoner", hd: 7 }),
     ).rejects.toMatchObject(refusal);
-    const fighter = await EntitiesService.createEntity(owner, ruleset.id, "klasses", { name: "Fighter", hd: 12 });
+    const fighter = await EntitiesService.createEntity(owner, ruleset.id, "classes", { name: "Fighter", hd: 12 });
     expect(fighter.hd).toBe(12);
     expect(
-      EntitiesService.updateEntity(owner, ruleset.id, "klasses", fighter.id, { name: "Fighter", hd: 7 }),
+      EntitiesService.updateEntity(owner, ruleset.id, "classes", fighter.id, { name: "Fighter", hd: 7 }),
     ).rejects.toMatchObject(refusal);
     expect(
-      EntitiesService.updateEntity(owner, ruleset.id, "klasses", fighter.id, { name: "Fighter", hd: null }),
+      EntitiesService.updateEntity(owner, ruleset.id, "classes", fighter.id, { name: "Fighter", hd: null }),
     ).rejects.toMatchObject(refusal);
     expect(
-      (await EntitiesService.updateEntity(owner, ruleset.id, "klasses", fighter.id, { name: "Fighter", hd: 4 })).hd,
+      (await EntitiesService.updateEntity(owner, ruleset.id, "classes", fighter.id, { name: "Fighter", hd: 4 })).hd,
     ).toBe(4);
   });
 
   test("refuses a class level of 0, 21 or 1.5, and one without its number", async () => {
     const { klassId, owner, rulesetId } = await rulesetWithSave();
     for (const level of [0, 21, 1.5]) {
-      expect(EntitiesService.createOwnedEntity(owner, rulesetId, "klasses", klassId, { level })).rejects.toMatchObject(
+      expect(EntitiesService.createOwnedEntity(owner, rulesetId, "classes", klassId, { level })).rejects.toMatchObject(
         invalidAt("level"),
       );
     }
-    expect(EntitiesService.createOwnedEntity(owner, rulesetId, "klasses", klassId, {})).rejects.toMatchObject(
+    expect(EntitiesService.createOwnedEntity(owner, rulesetId, "classes", klassId, {})).rejects.toMatchObject(
       invalidAt("level"),
     );
-    expect(await EntitiesService.createOwnedEntity(owner, rulesetId, "klasses", klassId, { level: 20 })).toMatchObject({
+    expect(await EntitiesService.createOwnedEntity(owner, rulesetId, "classes", klassId, { level: 20 })).toMatchObject({
       level: 20,
     });
-    expect(await EntitiesService.createOwnedEntity(owner, rulesetId, "klasses", klassId, { level: 1 })).toMatchObject({
+    expect(await EntitiesService.createOwnedEntity(owner, rulesetId, "classes", klassId, { level: 1 })).toMatchObject({
       level: 1,
     });
   });
@@ -100,35 +100,35 @@ describe("a ruleset's entities", () => {
     const { klassId, owner, rulesetId, saveId } = await rulesetWithSave();
     for (const base of [-1, 13]) {
       expect(
-        EntitiesService.createOwnedEntity(owner, rulesetId, "klasses", klassId, {
+        EntitiesService.createOwnedEntity(owner, rulesetId, "classes", klassId, {
           level: 1,
           saves: [{ base, saveId }],
         }),
       ).rejects.toMatchObject(invalidAt("saves.0.base"));
     }
-    const level = await EntitiesService.createOwnedEntity(owner, rulesetId, "klasses", klassId, {
+    const level = await EntitiesService.createOwnedEntity(owner, rulesetId, "classes", klassId, {
       level: 1,
       saves: [{ base: 12, saveId }],
     });
-    expect(await EntitiesService.getOwnedEntity(rulesetId, "klasses", klassId, level.id)).toMatchObject({
+    expect(await EntitiesService.getOwnedEntity(rulesetId, "classes", klassId, level.id)).toMatchObject({
       saves: [{ base: 12, saveId }],
     });
     for (const base of [-1, 13]) {
       expect(
-        EntitiesService.updateOwnedEntity(owner, rulesetId, "klasses", klassId, level.id, {
+        EntitiesService.updateOwnedEntity(owner, rulesetId, "classes", klassId, level.id, {
           saves: [{ base, saveId }],
         }),
       ).rejects.toMatchObject(invalidAt("saves.0.base"));
       expect(
-        EntitiesService.updateProgression(owner, rulesetId, "klasses", klassId, {
+        EntitiesService.updateProgression(owner, rulesetId, "classes", klassId, {
           levels: [{ levelId: level.id, saves: [{ base, saveId }] }],
         }),
       ).rejects.toMatchObject(invalidAt("saves.0.base"));
     }
-    await EntitiesService.updateProgression(owner, rulesetId, "klasses", klassId, {
+    await EntitiesService.updateProgression(owner, rulesetId, "classes", klassId, {
       levels: [{ levelId: level.id, saves: [{ base: 0, saveId }] }],
     });
-    expect(await EntitiesService.getOwnedEntity(rulesetId, "klasses", klassId, level.id)).toMatchObject({
+    expect(await EntitiesService.getOwnedEntity(rulesetId, "classes", klassId, level.id)).toMatchObject({
       saves: [{ base: 0, saveId }],
     });
   });

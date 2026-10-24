@@ -266,7 +266,7 @@ describe("RulesetViews", () => {
     expect(saveNames).toContain("Reflex");
     expect(saveNames).toContain("Will");
 
-    // Verify klasses include standard classes
+    // Verify the classes include the standard ones
     const klassNames = dnd35.klasses.map((k) => k.name);
     expect(klassNames).toContain("Fighter");
     expect(klassNames).toContain("Wizard");
@@ -362,7 +362,7 @@ describe("RulesetViews", () => {
       expect(raceModifierCount).toBeGreaterThan(0);
     });
 
-    test("klass sub-tables compose only rows for visible klasses/klass-levels", async () => {
+    test("class sub-tables compose only rows for visible classes and class levels", async () => {
       const seed = await getRuleset();
       const seedData = await RulesetViews.getData(seed);
       const seedView = Dnd35View.of(seedData);
@@ -656,7 +656,7 @@ describe("RulesetViews", () => {
 
       // Same sibling scenario as above, but on an item to prove compose's
       // exclusion logic works uniformly across entity types (races, items,
-      // languages, klasses — all go through the same hidden-row filter, CowData.isHidden).
+      // languages, classes — all go through the same hidden-row filter, CowData.isHidden).
       const [baseItem] = await Entities.createMany<Item>(db, "items", [
         {
           name: `Sibling Base Item ${uniqueId()}`,
@@ -749,8 +749,8 @@ describe("RulesetViews", () => {
       const seed = await getRuleset();
       const book = await createBook(seed.id);
       const name = `Homebrew Class ${uniqueId()}`;
-      const [bookClass] = await Entities.createMany<Klass>(db, "klasses", [{ name, rulesetId: book.id, hd: 8 }]);
-      const [bookFirst, bookSecond] = await Entities.createMany<KlassLevel>(db, "klass_levels", [
+      const [bookClass] = await Entities.createMany<Klass>(db, "classes", [{ name, rulesetId: book.id, hd: 8 }]);
+      const [bookFirst, bookSecond] = await Entities.createMany<KlassLevel>(db, "class_levels", [
         { klassId: bookClass.id, level: 1 },
         { klassId: bookClass.id, level: 2 },
       ]);
@@ -759,8 +759,8 @@ describe("RulesetViews", () => {
         ancestorRulesetIds: [seed.id],
         extensionRulesetIds: [book.id],
       });
-      const [ownClass] = await Entities.createMany<Klass>(db, "klasses", [{ name, rulesetId: fork.id, hd: 10 }]);
-      const [ownFirst] = await Entities.createMany<KlassLevel>(db, "klass_levels", [
+      const [ownClass] = await Entities.createMany<Klass>(db, "classes", [{ name, rulesetId: fork.id, hd: 10 }]);
+      const [ownFirst] = await Entities.createMany<KlassLevel>(db, "class_levels", [
         { klassId: ownClass.id, level: 1 },
       ]);
 
@@ -780,21 +780,21 @@ describe("RulesetViews", () => {
       const seed = await getRuleset();
       const book = await createBook(seed.id);
       const coreCleric = (await Entities.findOne<Klass>(db, {
-        entityType: "klasses",
+        entityType: "classes",
         name: "Cleric",
         rulesetId: seed.id,
       }))!;
       const coreFirst = (await findKlassLevel(coreCleric.id, 1))!;
-      await copyEntity(db, "klasses", coreCleric.id, book);
+      await copyEntity(db, "classes", coreCleric.id, book);
       const fork = await createTestRuleset(SEED_USER_ID, {
         rulesetId: seed.id,
         ancestorRulesetIds: [seed.id],
         extensionRulesetIds: [book.id],
       });
-      const [ownClass] = await Entities.createMany<Klass>(db, "klasses", [
+      const [ownClass] = await Entities.createMany<Klass>(db, "classes", [
         { name: "Cleric", rulesetId: fork.id, hd: 8 },
       ]);
-      const [ownFirst] = await Entities.createMany<KlassLevel>(db, "klass_levels", [
+      const [ownFirst] = await Entities.createMany<KlassLevel>(db, "class_levels", [
         { klassId: ownClass.id, level: 1 },
       ]);
 

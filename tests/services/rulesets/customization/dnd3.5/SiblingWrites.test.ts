@@ -30,7 +30,7 @@ import {
 import { makeSession } from "@/tests/support/users.ts";
 import { FEAT_FAMILY, FEAT_WEAPON_FINESSE, SPELL_SUBSCHOOL } from "@/vocabulary/dnd3.5/properties/index.ts";
 
-type EntityType = "feats" | "powers";
+type EntityType = "feats" | "spells";
 type Pairing = "snapshot" | "name";
 
 /**
@@ -39,7 +39,7 @@ type Pairing = "snapshot" | "name";
  */
 const PRECEDENCE: Record<EntityType, { type: string; valueOf: (index: number) => string }> = {
   feats: { type: FEAT_WEAPON_FINESSE, valueOf: (index) => String(index === 1) },
-  powers: { type: SPELL_SUBSCHOOL, valueOf: (index) => `Extension ${index}` },
+  spells: { type: SPELL_SUBSCHOOL, valueOf: (index) => `Extension ${index}` },
 };
 
 async function setup(entityType: EntityType, pairing: Pairing, extensionCount = 2) {
@@ -85,7 +85,7 @@ async function setup(entityType: EntityType, pairing: Pairing, extensionCount = 
   };
 }
 
-for (const entityType of ["feats", "powers"] as const) {
+for (const entityType of ["feats", "spells"] as const) {
   for (const pairing of ["snapshot", "name"] as const) {
     test(`${pairing} ${entityType}: removed requirements and aptitude links stay removed, including after entity deletion`, async () => {
       const { session, host, winnerId, loser, loserRulesetId, rulesetIds } = await setup(entityType, pairing);
@@ -104,7 +104,7 @@ for (const entityType of ["feats", "powers"] as const) {
       });
       if (entityType === "feats")
         await Joins.create(db, "feats_aptitudes", { featId: loser.id, aptitudeId: aptitude.id });
-      else await Joins.create(db, "powers_aptitudes", { powerId: loser.id, aptitudeId: aptitude.id });
+      else await Joins.create(db, "spells_aptitudes", { spellId: loser.id, aptitudeId: aptitude.id });
 
       invalidateTestRulesets(...rulesetIds);
       const local = await ModifiersService.createModifier(session, host.id, entityType, winnerId, STRENGTH_BONUS);
@@ -123,9 +123,9 @@ for (const entityType of ["feats", "powers"] as const) {
         expect(feat.featsAptitudesInRules.some((a) => a.aptitudeId === aptitude.id)).toBe(true);
         await EntitiesService.updateEntity(session, host.id, "feats", feat.id, { name: feat.name, aptitudeIds: [] });
       } else {
-        const power = await EntitiesService.getEntity<Described<"powers">>(host.id, "powers", local.resolvedEntityId);
-        expect(power.powersAptitudesInRules.some((a) => a.aptitudeId === aptitude.id)).toBe(true);
-        await EntitiesService.updateEntity(session, host.id, "powers", power.id, { name: power.name, aptitudes: [] });
+        const spell = await EntitiesService.getEntity<Described<"spells">>(host.id, "spells", local.resolvedEntityId);
+        expect(spell.spellsAptitudesInRules.some((a) => a.aptitudeId === aptitude.id)).toBe(true);
+        await EntitiesService.updateEntity(session, host.id, "spells", spell.id, { name: spell.name, aptitudes: [] });
       }
       for (const cold of [false, true]) {
         if (cold) invalidateTestRulesets(...rulesetIds);
@@ -138,19 +138,19 @@ for (const entityType of ["feats", "powers"] as const) {
           ).toEqual([]);
         } else {
           expect(
-            (await EntitiesService.getEntity<Described<"powers">>(host.id, "powers", local.resolvedEntityId))
-              .powersAptitudesInRules,
+            (await EntitiesService.getEntity<Described<"spells">>(host.id, "spells", local.resolvedEntityId))
+              .spellsAptitudesInRules,
           ).toEqual([]);
         }
       }
       expect(await Requirements.findOne(db, { id: requirement.id })).toEqual(requirement);
       if (entityType === "feats") await EntitiesService.deleteEntity(session, host.id, "feats", local.resolvedEntityId);
-      else await EntitiesService.deleteEntity(session, host.id, "powers", local.resolvedEntityId);
+      else await EntitiesService.deleteEntity(session, host.id, "spells", local.resolvedEntityId);
 
       invalidateTestRulesets(...rulesetIds);
       await withRulesetScope(db, host.id, async ({ rulesetData }) => {
         const entities =
-          entityType === "feats" ? Dnd35View.of(rulesetData).featsById : Dnd35View.of(rulesetData).powersById;
+          entityType === "feats" ? Dnd35View.of(rulesetData).featsById : Dnd35View.of(rulesetData).spellsById;
         for (const id of [winnerId, loser.id, local.resolvedEntityId]) expect(entities.get(id)).toBeUndefined();
         expect(rulesetData.requirementsByEntity.get(local.resolvedEntityId) ?? []).toEqual([]);
       });
@@ -168,8 +168,8 @@ for (const entityType of ["feats", "powers"] as const) {
       } else {
         expect(
           (
-            await EntitiesService.getEntity<Described<"powers">>(host.id, "powers", winnerId)
-          ).powersAptitudesInRules.some((a) => a.aptitudeId === aptitude.id),
+            await EntitiesService.getEntity<Described<"spells">>(host.id, "spells", winnerId)
+          ).spellsAptitudesInRules.some((a) => a.aptitudeId === aptitude.id),
         ).toBe(true);
       }
     });
@@ -345,7 +345,7 @@ test("installing another extension preserves the local override and exposes unre
   });
 });
 
-for (const entityType of ["feats", "powers"] as const) {
+for (const entityType of ["feats", "spells"] as const) {
   for (const pairing of ["snapshot", "name"] as const) {
     test(`${pairing} ${entityType}: copying follows display precedence across three extensions`, async () => {
       const { session, extensions, rulesetIds } = await setup(entityType, pairing, 3);

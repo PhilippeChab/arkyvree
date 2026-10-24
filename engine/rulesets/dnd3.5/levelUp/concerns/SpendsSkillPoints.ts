@@ -52,7 +52,7 @@ export function SpendsSkillPoints<B extends Constructor<LevelUpBase<DetailedChar
       const distribution = new PicksDistribution({
         ...levels,
         perLevelFeatSlots: {},
-        perLevelPowerSlots: {},
+        perLevelSpellSlots: {},
         skillContexts: PicksDistribution.contextsOf(skills),
       });
       const spread = distribution.spendSkillPoints(points);

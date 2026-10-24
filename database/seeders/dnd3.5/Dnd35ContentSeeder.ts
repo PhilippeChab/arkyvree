@@ -4,7 +4,7 @@ import type { Ids, SeedContext } from "@/database/seeders/core/SeederState.ts";
 import type { Db } from "@/drizzle/database.ts";
 
 /**
- * The 3.5 ruleset a seed writes to, and the ids of the rows its content names. Seeding aptitudes, feats or powers adds
+ * The 3.5 ruleset a seed writes to, and the ids of the rows its content names. Seeding aptitudes, feats or spells adds
  * them, so the steps after can name them.
  */
 export interface Dnd35SeedContext extends SeedContext {
@@ -13,17 +13,17 @@ export interface Dnd35SeedContext extends SeedContext {
   aptMap: Ids;
   /** Its feats and its base ruleset's, its own under a name they share. */
   featMap: Ids;
-  /** Its base ruleset's powers, which it copies before adding them to a spell list (`cowPower`). */
-  inheritedPowerMap: Ids;
-  /** Its own powers. */
-  powerMap: Ids;
+  /** Its base ruleset's spells, which it copies before adding them to a spell list (`cowSpell`). */
+  inheritedSpellMap: Ids;
   saveMap: Ids;
   skillMap: Ids;
+  /** Its own spells. */
+  spellMap: Ids;
 }
 
 /**
  * A content seeder of the 3.5 content (the core rules' `CoreContent`, an extension's `BookContent`), which names its
- * rows in 3.5's context (`Dnd35SeedContext`): a new ruleset's names none, an extension's its base's, and has no powers
+ * rows in 3.5's context (`Dnd35SeedContext`): a new ruleset's names none, an extension's its base's, and has no spells
  * of its own yet, its base's (and those its base inherits) being the ones it copies before changing them.
  */
 export abstract class Dnd35ContentSeeder extends ContentSeeder<CoreContent, BookContent> {
@@ -43,19 +43,19 @@ export abstract class Dnd35ContentSeeder extends ContentSeeder<CoreContent, Book
       skillMap: {},
       aptMap: {},
       featMap: {},
-      powerMap: {},
-      inheritedPowerMap: {},
+      spellMap: {},
+      inheritedSpellMap: {},
     };
   }
 
   /**
    * An extension's context (`rulesetId`): its base's names (`base`), in maps of its own that leave the base's as they
-   * are, and no powers of its own yet, its base's (and those its base inherits) being the ones it copies before changing
-   * them (`inheritedPowerMap`).
+   * are, and no spells of its own yet, its base's (and those its base inherits) being the ones it copies before changing
+   * them (`inheritedSpellMap`).
    */
   static override extensionContext(base: Dnd35SeedContext, rulesetId: string): Dnd35SeedContext {
-    const { powerMap, inheritedPowerMap, ...names } = structuredClone(base);
-    return { ...names, rulesetId, powerMap: {}, inheritedPowerMap: { ...inheritedPowerMap, ...powerMap } };
+    const { spellMap, inheritedSpellMap, ...names } = structuredClone(base);
+    return { ...names, rulesetId, spellMap: {}, inheritedSpellMap: { ...inheritedSpellMap, ...spellMap } };
   }
 
   /** The context of a seeded ruleset: the ids of its unarchived rows. */
@@ -68,8 +68,8 @@ export abstract class Dnd35ContentSeeder extends ContentSeeder<CoreContent, Book
       skillMap: await this.namesOf(db, rulesetId, "skills"),
       aptMap: await this.namesOf(db, rulesetId, "aptitudes"),
       featMap: await this.namesOf(db, rulesetId, "feats"),
-      powerMap: await this.namesOf(db, rulesetId, "powers"),
-      inheritedPowerMap: {},
+      spellMap: await this.namesOf(db, rulesetId, "spells"),
+      inheritedSpellMap: {},
     };
   }
 }

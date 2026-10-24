@@ -23,7 +23,7 @@ export const GENERAL_FEAT_LEVEL_INTERVAL = 3;
 export const HIT_DIE_VALUES = [4, 6, 8, 10, 12] as const;
 /** The highest character level: the app has no epic levels. */
 export const MAX_CHARACTER_LEVEL = 20;
-/** The highest class level: the app has no epic levels, and `klass_levels_level_check` holds the same bound. */
+/** The highest class level: the app has no epic levels. */
 export const MAX_CLASS_LEVEL = 20;
 /** The most feats a ruleset's Settings may have a character level give: a bound of the app's, no book's. */
 export const MAX_GENERAL_FEATS_PER_LEVEL = 10;

@@ -1,7 +1,7 @@
 import ModifierEvaluator from "@/engine/core/modifiers/ModifierEvaluator.ts";
 import type CharacterState from "@/engine/rulesets/dnd3.5/model/CharacterState.ts";
 import CombatPaths from "@/engine/rulesets/dnd3.5/model/combat/CombatPaths.ts";
-import PowersPaths from "@/engine/rulesets/dnd3.5/model/powers/PowersPaths.ts";
+import SpellsPaths from "@/engine/rulesets/dnd3.5/model/spells/SpellsPaths.ts";
 import WeaponRuleFeats, { type WeaponRule } from "@/engine/rulesets/dnd3.5/rules/WeaponRuleFeats.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import type { Modifier } from "@/shared/relations.ts";
@@ -18,10 +18,10 @@ export function Builds<B extends Constructor<CharacterState>>(Base: B) {
     /**
      * Whether a modifier applies after the spellcasting's finish (`SpellcastingComponent.finalize`): a spell's, its DC,
      * which its school's and its list's read, and its properties. A modifier that makes a spell known on a list
-     * (`powers.<spell>.<list>.known` set true) is a grant, given in the rounds as any (`PossessesVirtually`).
+     * (`spells.<spell>.<list>.known` set true) is a grant, given in the rounds as any (`PossessesVirtually`).
      */
     protected override isLateModifier(modifier: Modifier): boolean {
-      return PowersPaths.isPowerTarget(modifier.target) && !this.isGrant(modifier);
+      return SpellsPaths.isSpellTarget(modifier.target) && !this.isGrant(modifier);
     }
 
     /**

@@ -83,7 +83,7 @@ export function classListsQuery(rulesetId: string, classType: string, classId: s
   });
 }
 
-/** A class's route's params: the ruleset, and the class, an entity of its kind (`classType`: 3.5's `klasses`). */
+/** A class's route's params: the ruleset, and the class, an entity of its kind (`classType`: 3.5's `classes`). */
 export function classParam(rulesetId: string, classType: string, classId: string) {
   return { param: { id: rulesetId, entityType: entitySegment(getUrlSegment(classType)), entityId: classId } };
 }
@@ -112,7 +112,7 @@ export function classTableQuery(rulesetId: string, classType: string, classId: s
   });
 }
 
-/** A class's levels (`classType`, its kind: 3.5's `klasses`), its Progression tab's, the entities it owns. */
+/** A class's levels (`classType`, its kind: 3.5's `classes`), its Progression tab's, the entities it owns. */
 export function levelsQuery(rulesetId: string, classType: string, classId: string) {
   return queryOptions({
     queryKey: QUERY_KEYS.rulesets.levels(rulesetId, classId),

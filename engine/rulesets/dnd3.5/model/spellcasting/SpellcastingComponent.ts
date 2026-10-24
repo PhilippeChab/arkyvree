@@ -9,7 +9,7 @@ import type { Modifier } from "@/shared/relations.ts";
 import { BONUS_SPELL_MODIFIER_STEP, MAX_SPELL_LEVEL } from "@/vocabulary/dnd3.5/spells.ts";
 
 import { BonusCasterLevels } from "./concerns/BonusCasterLevels.ts";
-import { KnownPowers } from "./concerns/KnownPowers.ts";
+import { KnownSpells } from "./concerns/KnownSpells.ts";
 import SpellcastingState, { type CastingLevels } from "./SpellcastingState.ts";
 
 /**
@@ -17,7 +17,7 @@ import SpellcastingState, { type CastingLevels } from "./SpellcastingState.ts";
  * what they leave it (`finalize`): its bonus caster levels' slots, its bonus spells, its known spells and its tags. The
  * highest spell levels it casts and its highest caster levels are counted when read (`getSpellcasting`).
  */
-class SpellcastingComponent extends include(SpellcastingState, BonusCasterLevels, KnownPowers) {
+class SpellcastingComponent extends include(SpellcastingState, BonusCasterLevels, KnownSpells) {
   /**
    * What the character's modifiers leave its spellcasting, in order: the slots its bonus caster levels give (each while
    * its gate holds, `isGateMet`), the bonus spells its abilities give, the spells its lists make it know, and its spell
@@ -29,8 +29,8 @@ class SpellcastingComponent extends include(SpellcastingState, BonusCasterLevels
       feats,
       klassBonusSpellAbilityMap,
       klassLevels,
-      powers,
-    }: Pick<LoadedCharacterData, "characterLevels" | "feats" | "klassBonusSpellAbilityMap" | "klassLevels" | "powers">,
+      spells,
+    }: Pick<LoadedCharacterData, "characterLevels" | "feats" | "klassBonusSpellAbilityMap" | "klassLevels" | "spells">,
     { rulesetData }: RulesetView,
     character: BuiltCharacter,
   ) {
@@ -42,8 +42,8 @@ class SpellcastingComponent extends include(SpellcastingState, BonusCasterLevels
     this.applyBonusSpells(klassBonusSpellAbilityMap);
     // The modifiers applied once the bonus caster levels' have: what the lists the character knows read
     const { appliedModifiers } = character.modifierEvaluator.getModifiers();
-    this.collectAptitudePowers(rulesetData, powers, appliedModifiers);
-    this.enrichAllKnownPowers(rulesetData, powers, klassBonusSpellAbilityMap, appliedModifiers);
+    this.collectAptitudeSpells(rulesetData, spells, appliedModifiers);
+    this.enrichAllKnownSpells(rulesetData, spells, klassBonusSpellAbilityMap, appliedModifiers);
     this.buildSpellTags(feats, spellLists.featListIds);
   }
 

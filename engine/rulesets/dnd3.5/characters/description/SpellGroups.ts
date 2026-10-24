@@ -32,9 +32,9 @@ interface LevelSpell {
   description?: string | null;
   id: string;
   name: string;
-  powerLevel?: number | null;
   saveEffect?: string | null;
   saveName?: string | null;
+  spellLevel?: number | null;
 }
 
 /**
@@ -87,26 +87,26 @@ interface SpellRowTag {
 }
 
 /**
- * What the groups read of a character: its classes' levels, its computed powers, its aptitudes, the spells of the lists
+ * What the groups read of a character: its classes' levels, its computed spells, its aptitudes, the spells of the lists
  * a feat brings, and its spell tags.
  */
 interface SpellSheet {
   aptitudes: Record<string, { id: string; name: string }>;
-  classes: Record<string, { levels?: { klassLevel?: { level: number } | null; powers?: LevelSpell[] }[] }>;
+  classes: Record<string, { levels?: { klassLevel?: { level: number } | null; spells?: LevelSpell[] }[] }>;
   /** Each list a feat brings, by its id: its spells' ids by the spell level it has each at (none on a domain slot). */
   featListSpells: Map<string, Map<number, Set<string>>>;
-  powers: Record<
+  spells: Record<
     string,
     {
       // Its DC as each class casts it, by the class's aptitude slug
       dc?: Record<string, { total: number }> | null;
-      power?: { description?: string | null };
       properties?: Record<string, string>;
+      spell?: { description?: string | null };
     }
   >;
   spellTagLists: Record<string, SpellTagLists>;
   spellTags: Record<string, string[]>;
-  virtualPowers: GivenSpell[];
+  virtualSpells: GivenSpell[];
 }
 
 /** The character a sheet's spells are read off: a built character's components and what it has without a pick. */
@@ -114,12 +114,12 @@ interface SpellSource {
   components: {
     aptitudes: { getAptitudes(): SpellSheet["aptitudes"] };
     classes: { getCharacterClasses(): SpellSheet["classes"] };
-    powers: { getFlatPowers(): SpellSheet["powers"] };
+    spells: { getFlatSpells(): SpellSheet["spells"] };
   };
   getFeatListSpells(): SpellSheet["featListSpells"];
   getSpellTagLists(): SpellSheet["spellTagLists"];
   getSpellTags(): SpellSheet["spellTags"];
-  getVirtualPowers(): SpellSheet["virtualPowers"];
+  getVirtualSpells(): SpellSheet["virtualSpells"];
 }
 
 /**
@@ -235,24 +235,24 @@ export default class SpellGroups {
 
     for (const klass of Object.values(sheet.classes)) {
       for (const level of klass.levels || []) {
-        for (const power of level.powers || []) {
-          const group = groupOf(power.aptitudeId, power.powerLevel ?? level.klassLevel?.level ?? 0);
-          const powerData = sheet.powers[stripSeparators(power.name)];
-          const properties = powerData?.properties ?? {};
-          const tags = SpellGroups.tagsFor(sheet, power.id, power.aptitudeId);
-          const existing = group.spells.find((row) => row.name === power.name);
+        for (const spell of level.spells || []) {
+          const group = groupOf(spell.aptitudeId, spell.spellLevel ?? level.klassLevel?.level ?? 0);
+          const spellData = sheet.spells[stripSeparators(spell.name)];
+          const properties = spellData?.properties ?? {};
+          const tags = SpellGroups.tagsFor(sheet, spell.id, spell.aptitudeId);
+          const existing = group.spells.find((row) => row.name === spell.name);
           if (existing) {
             const added = tags?.filter((tag) => !existing.tags?.some((had) => had.name === tag.name)) ?? [];
             if (added.length > 0) existing.tags = [...(existing.tags || []), ...added];
             continue;
           }
           group.spells.push({
-            id: power.id,
-            name: power.name,
+            id: spell.id,
+            name: spell.name,
             school: properties[SPELL_SCHOOL] || "—",
-            save: SpellGroups.saveOf(power.saveName, power.saveEffect),
-            dc: powerData?.dc?.[SpellLists.toSpellPossessionSlug(group.aptitudeName)]?.total ?? null,
-            description: powerData?.power?.description || power.description || "",
+            save: SpellGroups.saveOf(spell.saveName, spell.saveEffect),
+            dc: spellData?.dc?.[SpellLists.toSpellPossessionSlug(group.aptitudeName)]?.total ?? null,
+            description: spellData?.spell?.description || spell.description || "",
             details: SpellGroups.detailsOf(properties),
             properties,
             tags,
@@ -261,7 +261,7 @@ export default class SpellGroups {
       }
     }
 
-    for (const given of sheet.virtualPowers) {
+    for (const given of sheet.virtualSpells) {
       const properties = given.properties ?? {};
       groupOf(given.aptitudeId, given.level).spells.push({
         id: given.id,
@@ -284,15 +284,15 @@ export default class SpellGroups {
 
   /** What a character's sheet lists its spells from. */
   private static sheetOf(character: SpellSource): SpellSheet {
-    const { aptitudes, classes, powers } = character.components;
+    const { aptitudes, classes, spells } = character.components;
     return {
       aptitudes: aptitudes.getAptitudes(),
       classes: classes.getCharacterClasses(),
       featListSpells: character.getFeatListSpells(),
-      powers: powers.getFlatPowers(),
+      spells: spells.getFlatSpells(),
       spellTagLists: character.getSpellTagLists(),
       spellTags: character.getSpellTags(),
-      virtualPowers: character.getVirtualPowers(),
+      virtualSpells: character.getVirtualSpells(),
     };
   }
 
@@ -342,10 +342,10 @@ export default class SpellGroups {
   /** A spell's tags that show on this list: a domain's on the cleric's, a school's on the wizard's. */
   private static tagsFor(
     sheet: SpellSheet,
-    powerId: string | undefined,
+    spellId: string | undefined,
     aptitudeId: string,
   ): SpellRowTag[] | undefined {
-    const kept = (powerId ? sheet.spellTags[powerId] : undefined)?.flatMap((name) => {
+    const kept = (spellId ? sheet.spellTags[spellId] : undefined)?.flatMap((name) => {
       const lists = sheet.spellTagLists[name];
       return lists?.aptitudeIds.includes(aptitudeId) ? [{ name, joinsClassList: lists.joinsClassList }] : [];
     });

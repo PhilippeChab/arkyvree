@@ -16,7 +16,7 @@ export interface EntityCopiesDescription {
 
 /**
  * An entity kind a ruleset holds (a table of its entities: races, feats), as its ruleset's page shows it: its type
- * (`klasses`), its icon, by the generic name of its picture (`face`, `bolt`: the client's set of them), what its tab
+ * (`classes`), its icon, by the generic name of its picture (`face`, `bolt`: the client's set of them), what its tab
  * says of it, when it says anything (`help`), what its empty list says past its word (`empty`: "No saving throws
  * available for this ruleset."), whether its list narrows by the kinds a race or a class is for and sorts
  * (`partitioned`), whether its entities are the rules' alone, which no form makes, edits or deletes and no search finds
@@ -54,8 +54,8 @@ export interface EntityKindDescription {
  * The entities an entity's page links it to through the join it edits (`/links`: a class's skills), on a tab of their
  * own: their kind (`type`: 3.5's `skills`), the key a link holds one by (`key`: `skillId`) and where it holds it whole
  * (`target`: `skillsInRule`), and the key it holds the entity it links by (`owner`: `klassId`, a copy's where an edit of
- * an inherited one copied it); the join its links are (`join`: `klass_skills`, which names their activities:
- * `addKlassSkill`), and where an activity of one holds the linked entity's name (`targetName`: `skillName`).
+ * an inherited one copied it); the join its links are (`join`: `class_skills`, which names their activities:
+ * `addClassSkill`), and where an activity of one holds the linked entity's name (`targetName`: `skillName`).
  */
 export interface EntityLinksDescription {
   join: string;
@@ -89,7 +89,7 @@ export interface EntityPoolsDescription {
  * - `flag`: a warning's "Yes" while it's `yesWhen` ("Trained Only" while a skill isn't usable untrained), "No" else;
  * - `template`: an item's template's name, or "Template" for a template itself;
  * - `pools`: the pools it's picked in, as chips by name (its links to them at its key, each its pool at `target`: a
- *   spell's `powersAptitudesInRules`, each at `aptitudesInRule`);
+ *   spell's `spellsAptitudesInRules`, each at `aptitudesInRule`);
  * - `text`: its text, as it is (a language's type).
  */
 export interface ListColumn {
@@ -112,7 +112,7 @@ export interface ListDescription {
 }
 
 /**
- * What a class's tables count (3.5's spells), and how its page reads and saves them: their kind (`type`: `powers`),
+ * What a class's tables count (3.5's spells), and how its page reads and saves them: their kind (`type`: `spells`),
  * the key a progression's save sends its tables' cells by (`body`: `spells`), the keys a progression's answer says by
  * which list its counts go to (`list`: `spellList`) and whether its levels count on several (`several`:
  * `severalSpellLists`), the class's table of its lists (`lists`: `spell-lists`), the URLs of its tables' tab (`tab`:
@@ -259,7 +259,7 @@ export interface RulesDescription {
    */
   tiers: { label: string; level: number }[];
   /**
-   * Its word for every entity type, by type (3.5's powers are spells), the engine's own types' (`modifiers`) included:
+   * Its word for every entity type, by type (3.5's "Class Level" for `class_levels`), the engine's own types' (`modifiers`) included:
    * every name the app gives an entity's type
    */
   words: Partial<Record<string, RulesWord>>;

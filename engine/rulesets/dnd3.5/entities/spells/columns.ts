@@ -8,7 +8,7 @@ import { RULESET_LIMITS } from "@/engine/rulesets/dnd3.5/limits.ts";
  * does, then, after its fields, its spell lists, each at its spell level (`SPELL_LEVEL` holds them; a new spell needs
  * one).
  */
-export const POWER_COLUMNS: FormField[] = [
+export const SPELL_COLUMNS: FormField[] = [
   {
     help: "The save it allows",
     input: "ref",
@@ -30,7 +30,7 @@ export const POWER_COLUMNS: FormField[] = [
     help: "The spell lists it's on, each at its spell level",
     input: "leveledLinks",
     key: "aptitudes",
-    links: "powersAptitudesInRules",
+    links: "spellsAptitudesInRules",
     label: "Aptitudes",
     max: RULESET_LIMITS.spellLevel,
     min: 0,
@@ -41,11 +41,11 @@ export const POWER_COLUMNS: FormField[] = [
 ];
 
 /** A 3.5 spell's list: its name, its spell lists, its description. */
-export const POWER_LIST: ListDescription = {
+export const SPELL_LIST: ListDescription = {
   nameShare: 25,
   columns: [
     {
-      key: "powersAptitudesInRules",
+      key: "spellsAptitudesInRules",
       label: "Aptitudes",
       reads: "pools",
       share: 15,

@@ -22,11 +22,11 @@ import {
   type Item,
   type Klass,
   type Language,
-  type Power,
   type Race,
   type RulesetAbility,
   type RulesetSave,
   type Skill,
+  type Spell,
 } from "@/engine/rulesets/dnd3.5/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Entities, Modifiers, Properties, Users } from "@/server/repositories/index.ts";
@@ -47,11 +47,11 @@ const OWNERS = {
   characters: charactersInCharacter,
   feats: entitiesInRules,
   items: entitiesInRules,
-  klass_levels: entitiesInRules,
-  klasses: entitiesInRules,
+  class_levels: entitiesInRules,
+  classes: entitiesInRules,
   languages: entitiesInRules,
   modifiers: modifiersInCustomization,
-  powers: entitiesInRules,
+  spells: entitiesInRules,
   races: entitiesInRules,
   rulesets: rulesetsInRules,
   saves: entitiesInRules,
@@ -79,18 +79,18 @@ async function createOwner(type: OwnerType, userId: string, rulesetId: string): 
       return (await Entities.create<Feat>(db, "feats", { name, rulesetId }))[0].id;
     case "items":
       return (await Entities.create<Item>(db, "items", { name, rulesetId }))[0].id;
-    case "klass_levels":
+    case "class_levels":
       return (await createTestKlassLevel(rulesetId)).klassLevel.id;
-    case "klasses":
-      return (await Entities.create<Klass>(db, "klasses", { name, rulesetId, hd: 8 }))[0].id;
+    case "classes":
+      return (await Entities.create<Klass>(db, "classes", { name, rulesetId, hd: 8 }))[0].id;
     case "languages":
       return (await Entities.create<Language>(db, "languages", { name, rulesetId, type: "Standard" }))[0].id;
     case "modifiers": {
       const [feat] = await Entities.create<Feat>(db, "feats", { name, rulesetId });
       return (await Modifiers.create(db, { ...STRENGTH_BONUS, sourceId: feat.id, sourceType: "feats" }))[0].id;
     }
-    case "powers":
-      return (await Entities.create<Power>(db, "powers", { name, rulesetId }))[0].id;
+    case "spells":
+      return (await Entities.create<Spell>(db, "spells", { name, rulesetId }))[0].id;
     case "races":
       return (await Entities.create<Race>(db, "races", { name, rulesetId, size: "Medium", baseSpeed: 30 }))[0].id;
     case "rulesets":
@@ -153,7 +153,7 @@ describe("customization cleanup", () => {
   test("deletes a class's levels' customizations with the class", async () => {
     const { ruleset } = await createTestUserAndRuleset();
     const { klass, klassLevel } = await createTestKlassLevel(ruleset.id);
-    await customize("klass_levels", klassLevel.id);
+    await customize("class_levels", klassLevel.id);
 
     // The class's levels go through their foreign key's cascade
     await db.execute(sql`DELETE FROM ${entitiesInRules} WHERE id = ${klass.id}`);
@@ -167,7 +167,7 @@ describe("customization cleanup", () => {
     const { klassLevel } = await createTestKlassLevel(fork.id);
     const character = await createTestCharacter(user.id, { rulesetId: fork.id });
     await customize("feats", await createOwner("feats", user.id, fork.id));
-    await customize("klass_levels", klassLevel.id);
+    await customize("class_levels", klassLevel.id);
     await customizeOwner("characters", character.id);
     expect(await Properties.findMany(db, { entityIds: [fork.id], entityType: "rulesets" })).not.toEqual([]);
 

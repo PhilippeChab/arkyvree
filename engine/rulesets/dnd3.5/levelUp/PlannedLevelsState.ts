@@ -43,12 +43,12 @@ const PLANNED_LEVEL = z.object({ level: z.number().max(RULESET_LIMITS.classLevel
 export default abstract class PlannedLevelsState extends include(LevelUpState, PlansAptitudeSlots) {
   /** What a save distributes its pooled picks over the planned levels by: each level's points, class skills and slots. */
   private buildDistributionData(planned: PlannedLevels, gains: LevelGains): PerLevelDistributionData {
-    const { classSkills, perLevelFeatSlots, perLevelPowerSlots, perLevelSkillPoints } = gains;
+    const { classSkills, perLevelFeatSlots, perLevelSpellSlots, perLevelSkillPoints } = gains;
     return {
       perLevelSkillPoints,
       perLevelClassSkillIds: classSkills.perLevel,
       perLevelFeatSlots,
-      perLevelPowerSlots,
+      perLevelSpellSlots,
       savedLevelCount: planned.savedLevelCount,
       skillContexts: PicksDistribution.contextsOf(
         planned.character.components.skills.getEnrichedSkills(this.dnd35.skills, classSkills.merged),
@@ -134,7 +134,7 @@ export default abstract class PlannedLevelsState extends include(LevelUpState, P
       klassLevelIds,
       grantedFeatRecords,
       Object.keys(pools.featPools),
-      Object.keys(pools.powerPools),
+      Object.keys(pools.spellPools),
       savedLevelCount,
       saved.components.aptitudes.getAptitudes(),
     );
@@ -160,7 +160,7 @@ export default abstract class PlannedLevelsState extends include(LevelUpState, P
   }
 
   /**
-   * A save's pooled picks (skill ranks, and feats and powers by pool) spread over its planned levels, each level taking
+   * A save's pooled picks (skill ranks, and feats and spells by pool) spread over its planned levels, each level taking
    * what its points and slots allow, in order, and what's past a pool's slots on the level of the feat that gives it
    * room, or the last (`PicksDistribution`). `gains`: what the levels give, when the caller has them.
    */
@@ -168,7 +168,7 @@ export default abstract class PlannedLevelsState extends include(LevelUpState, P
     const data = this.buildDistributionData(planned, gains);
     return new PicksDistribution(data).distribute(
       picks,
-      this.buildPowerLevelLookup(Object.values(picks.powers).flat()),
+      this.buildSpellLevelLookup(Object.values(picks.spells).flat()),
       this.getAptitudeSources(picks.feats, data.perLevelFeatSlots),
     );
   }

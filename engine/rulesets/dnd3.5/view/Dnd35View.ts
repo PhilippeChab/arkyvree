@@ -8,38 +8,38 @@ import type {
   Klass,
   KlassLevel,
   KlassLevelFeat,
-  KlassLevelPower,
   KlassLevelSave,
+  KlassLevelSpell,
   KlassSkill,
   Language,
   Mechanic,
-  PowerWithAptitudes,
   Race,
   RulesetAbility,
   RulesetSave,
   Skill,
+  SpellWithAptitudes,
 } from "./rows.ts";
 
 /** Each index 3.5's view builds on first read, and keeps. */
 interface Indices {
   aptitudeIdBySlug: Map<string, string>;
   aptitudeIdsWithFeats: Set<string>;
-  aptitudeIdsWithPowers: Set<string>;
+  aptitudeIdsWithSpells: Set<string>;
   featIdBySlug: Map<string, string>;
   klassLevelByKlassAndLevel: Map<string, KlassLevel>;
   klassLevelFeatsByKlassLevel: Map<string, KlassLevelFeat[]>;
   klassLevelFeatsWithFeatsByKlassLevel: Map<string, (KlassLevelFeat & { featsInRule: FeatWithAptitudes })[]>;
-  klassLevelPowersWithPowersByKlassLevel: Map<string, (KlassLevelPower & { powersInRule: PowerWithAptitudes })[]>;
   klassLevelSavesByKlassLevel: Map<string, KlassLevelSave[]>;
   klassLevelsByKlass: Map<string, KlassLevel[]>;
+  klassLevelSpellsWithSpellsByKlassLevel: Map<string, (KlassLevelSpell & { spellsInRule: SpellWithAptitudes })[]>;
   klassSkillsByKlass: Map<string, KlassSkill[]>;
   klassSkillsWithSkillsByKlass: Map<string, (KlassSkill & { skillsInRule: Skill })[]>;
   languageIdBySlug: Map<string, string>;
-  powerIdsBySlug: Map<string, string[]>;
-  /** A class's skills and a level's feats and powers by name, as the books list them */
+  /** A class's skills and a level's feats and spells by name, as the books list them */
   sortedKlassLevelFeats: KlassLevelFeat[];
-  sortedKlassLevelPowers: KlassLevelPower[];
+  sortedKlassLevelSpells: KlassLevelSpell[];
   sortedKlassSkills: KlassSkill[];
+  spellIdsBySlug: Map<string, string[]>;
 }
 
 /** Rows' ids by their name's slug (`stripSeparators`): the first row of a slug wins, as the view lists them. */
@@ -71,23 +71,23 @@ export default class Dnd35View {
   private get sortedKlassLevelFeats(): KlassLevelFeat[] {
     const feats = this.rulesetData.storedById("feats");
     return (this.built.sortedKlassLevelFeats ??= this.rulesetData
-      .joinRows("klass_level_feats")
+      .joinRows("class_level_feats")
       .toSorted((a, b) => (feats.get(a.featId)?.name ?? "").localeCompare(feats.get(b.featId)?.name ?? "")));
   }
 
-  /** A level's powers by name, as the books list them. */
-  private get sortedKlassLevelPowers(): KlassLevelPower[] {
-    const powers = this.rulesetData.storedById("powers");
-    return (this.built.sortedKlassLevelPowers ??= this.rulesetData
-      .joinRows("klass_level_powers")
-      .toSorted((a, b) => (powers.get(a.powerId)?.name ?? "").localeCompare(powers.get(b.powerId)?.name ?? "")));
+  /** A level's spells by name, as the books list them. */
+  private get sortedKlassLevelSpells(): KlassLevelSpell[] {
+    const spells = this.rulesetData.storedById("spells");
+    return (this.built.sortedKlassLevelSpells ??= this.rulesetData
+      .joinRows("class_level_spells")
+      .toSorted((a, b) => (spells.get(a.spellId)?.name ?? "").localeCompare(spells.get(b.spellId)?.name ?? "")));
   }
 
   /** A class's skills by name, as the books list them. */
   private get sortedKlassSkills(): KlassSkill[] {
     const skills = this.rulesetData.storedById("skills");
     return (this.built.sortedKlassSkills ??= this.rulesetData
-      .joinRows("klass_skills")
+      .joinRows("class_skills")
       .toSorted((a, b) => (skills.get(a.skillId)?.name ?? "").localeCompare(skills.get(b.skillId)?.name ?? "")));
   }
 
@@ -114,10 +114,10 @@ export default class Dnd35View {
     ));
   }
 
-  /** The aptitudes that have at least one power linked, from the powers' inline `powersAptitudesInRules` rows. */
-  get aptitudeIdsWithPowers(): Set<string> {
-    return (this.built.aptitudeIdsWithPowers ??= new Set(
-      this.powers.flatMap((power) => power.powersAptitudesInRules.map((l) => l.aptitudeId)),
+  /** The aptitudes that have at least one spell linked, from the spells' inline `spellsAptitudesInRules` rows. */
+  get aptitudeIdsWithSpells(): Set<string> {
+    return (this.built.aptitudeIdsWithSpells ??= new Set(
+      this.spells.flatMap((spell) => spell.spellsAptitudesInRules.map((l) => l.aptitudeId)),
     ));
   }
 
@@ -151,11 +151,11 @@ export default class Dnd35View {
   }
 
   get klasses(): Klass[] {
-    return this.rulesetData.rows("klasses");
+    return this.rulesetData.rows("classes");
   }
 
   get klassesById(): Map<string, Klass> {
-    return this.rulesetData.byId("klasses");
+    return this.rulesetData.byId("classes");
   }
 
   /** Key: `${klassId}:${level}`, the class's id resolved. */
@@ -186,29 +186,12 @@ export default class Dnd35View {
     ));
   }
 
-  /** klassLevelId → its granted powers joined with their powers: a link whose power isn't in the view is left out. */
-  get klassLevelPowersWithPowersByKlassLevel(): Map<
-    string,
-    (KlassLevelPower & { powersInRule: PowerWithAptitudes })[]
-  > {
-    const powers = this.rulesetData.storedById("powers");
-    return (this.built.klassLevelPowersWithPowersByKlassLevel ??= this.rulesetData.resolvingIds(
-      Map.groupBy(
-        this.sortedKlassLevelPowers.flatMap((klp) => {
-          const power = powers.get(klp.powerId);
-          return power ? [{ ...klp, powersInRule: power }] : [];
-        }),
-        (joined) => joined.klassLevelId,
-      ),
-    ));
-  }
-
   get klassLevels(): KlassLevel[] {
-    return this.rulesetData.rows("klass_levels");
+    return this.rulesetData.rows("class_levels");
   }
 
   get klassLevelSaves(): KlassLevelSave[] {
-    return this.rulesetData.joinRows("klass_level_saves");
+    return this.rulesetData.joinRows("class_level_saves");
   }
 
   get klassLevelSavesByKlassLevel(): Map<string, KlassLevelSave[]> {
@@ -218,7 +201,7 @@ export default class Dnd35View {
   }
 
   get klassLevelsById(): Map<string, KlassLevel> {
-    return this.rulesetData.byId("klass_levels");
+    return this.rulesetData.byId("class_levels");
   }
 
   /** klassId → its levels, sorted by level: the last is the class's highest. */
@@ -231,8 +214,25 @@ export default class Dnd35View {
     ));
   }
 
+  /** klassLevelId → its granted spells joined with their rows: a link whose spell isn't in the view is left out. */
+  get klassLevelSpellsWithSpellsByKlassLevel(): Map<
+    string,
+    (KlassLevelSpell & { spellsInRule: SpellWithAptitudes })[]
+  > {
+    const spells = this.rulesetData.storedById("spells");
+    return (this.built.klassLevelSpellsWithSpellsByKlassLevel ??= this.rulesetData.resolvingIds(
+      Map.groupBy(
+        this.sortedKlassLevelSpells.flatMap((klp) => {
+          const spell = spells.get(klp.spellId);
+          return spell ? [{ ...klp, spellsInRule: spell }] : [];
+        }),
+        (joined) => joined.klassLevelId,
+      ),
+    ));
+  }
+
   get klassSkills(): KlassSkill[] {
-    return this.rulesetData.joinRows("klass_skills");
+    return this.rulesetData.joinRows("class_skills");
   }
 
   /** klassId → its skills, the links themselves (`klassSkillsWithSkillsByKlass` joins the skills). */
@@ -290,16 +290,16 @@ export default class Dnd35View {
   }
 
   /** The ids of the ruleset's spells on a list, at a level when one is given (on any list when none is). */
-  listPowerIds(where: { aptitudeId?: string; level?: number }): string[] {
+  listSpellIds(where: { aptitudeId?: string; level?: number }): string[] {
     const listId = where.aptitudeId === undefined ? undefined : this.rulesetData.canonicalize(where.aptitudeId);
-    return this.powers
-      .filter((power) =>
-        power.powersAptitudesInRules.some(
+    return this.spells
+      .filter((spell) =>
+        spell.spellsAptitudesInRules.some(
           (link) =>
             (listId === undefined || link.aptitudeId === listId) && (where.level == null || link.level === where.level),
         ),
       )
-      .map((power) => power.id);
+      .map((spell) => spell.id);
   }
 
   get mechanics(): Mechanic[] {
@@ -308,27 +308,6 @@ export default class Dnd35View {
 
   get mechanicsById(): Map<string, Mechanic> {
     return this.rulesetData.byId("mechanics");
-  }
-
-  /**
-   * `stripSeparators(power.name)` → powerIds (several powers can share a slug): the "set powers.<slug>.<apt>.known"
-   * modifier scan. Resolve them through `powersById`, as `featIdBySlug` pairs with `featsById`.
-   */
-  get powerIdsBySlug(): Map<string, string[]> {
-    return (this.built.powerIdsBySlug ??= new Map(
-      [...Map.groupBy(this.powers, (power) => stripSeparators(power.name))].map(([slug, group]) => [
-        slug,
-        group.map((power) => power.id),
-      ]),
-    ));
-  }
-
-  get powers(): PowerWithAptitudes[] {
-    return this.rulesetData.rows("powers");
-  }
-
-  get powersById(): Map<string, PowerWithAptitudes> {
-    return this.rulesetData.byId("powers");
   }
 
   get races(): Race[] {
@@ -353,5 +332,26 @@ export default class Dnd35View {
 
   get skillsById(): Map<string, Skill> {
     return this.rulesetData.byId("skills");
+  }
+
+  /**
+   * `stripSeparators(spell.name)` → spellIds (several spells can share a slug): the "set spells.<slug>.<apt>.known"
+   * modifier scan. Resolve them through `spellsById`, as `featIdBySlug` pairs with `featsById`.
+   */
+  get spellIdsBySlug(): Map<string, string[]> {
+    return (this.built.spellIdsBySlug ??= new Map(
+      [...Map.groupBy(this.spells, (spell) => stripSeparators(spell.name))].map(([slug, group]) => [
+        slug,
+        group.map((spell) => spell.id),
+      ]),
+    ));
+  }
+
+  get spells(): SpellWithAptitudes[] {
+    return this.rulesetData.rows("spells");
+  }
+
+  get spellsById(): Map<string, SpellWithAptitudes> {
+    return this.rulesetData.byId("spells");
   }
 }

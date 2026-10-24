@@ -11,7 +11,7 @@ describe("RulesetFieldsService", () => {
     const fields = await RulesetFieldsService.getFields(rulesetId);
     expect(Object.keys(fields).toSorted()).toEqual([...PROPERTY_TYPES].toSorted());
 
-    expect(fields.powers.map((field) => field.key)).toEqual([
+    expect(fields.spells.map((field) => field.key)).toEqual([
       "school",
       "subschool",
       "descriptors",
@@ -24,7 +24,7 @@ describe("RulesetFieldsService", () => {
       "duration",
       "spellResistance",
     ]);
-    expect(fields.powers).toContainEqual(
+    expect(fields.spells).toContainEqual(
       expect.objectContaining({
         key: "school",
         label: "School",
@@ -33,10 +33,10 @@ describe("RulesetFieldsService", () => {
         options: SPELL_SCHOOLS,
       }),
     );
-    expect(fields.powers).toContainEqual(
+    expect(fields.spells).toContainEqual(
       expect.objectContaining({ key: "components", input: "choice", multiple: true, options: SPELL_COMPONENTS }),
     );
-    expect(fields.powers).toContainEqual(
+    expect(fields.spells).toContainEqual(
       expect.objectContaining({
         key: "castingTime",
         input: "text",
@@ -44,11 +44,11 @@ describe("RulesetFieldsService", () => {
         placeholder: 'e.g., "1 standard action"',
       }),
     );
-    expect(fields.klasses).toEqual([
+    expect(fields.classes).toEqual([
       expect.objectContaining({ key: "bonusSpellAbilityId", input: "ref", references: "abilities", required: false }),
       expect.objectContaining({ key: "casterType", input: "choice", options: ["Arcane", "Divine"] }),
     ]);
-    expect(fields.klass_levels).toEqual([
+    expect(fields.class_levels).toEqual([
       expect.objectContaining({ key: "bab", label: "Base Attack Bonus", input: "number", default: 0, min: 0 }),
       expect.objectContaining({ key: "skills", label: "Skill Points", input: "number", default: 0, min: 0 }),
     ]);

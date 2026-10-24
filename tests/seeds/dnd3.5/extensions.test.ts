@@ -72,24 +72,24 @@ describe("The seeded extensions", () => {
   // Force domain) lost the core spell's class spell lists, so forks using the extension lost it from Wizard Spells.
   test("keep the class spell lists of the core spells their domains copy", async () => {
     const core = await seededRows();
-    const corePowers = new Map(core.powers.map((power) => [power.id, power]));
+    const coreSpells = new Map(core.spells.map((spell) => [spell.id, spell]));
     const failures: string[] = [];
     let copies = 0;
     for (const extension of (await Rulesets.findMany(db, { system: true })).filter((r) => r.id !== core.rulesetId)) {
       const rows = await seededRows(extension.name);
       for (const { sourceEntityId, forkedEntityId } of await EntitySnapshots.findMany(db, {
         rulesetId: extension.id,
-        entityType: "powers",
+        entityType: "spells",
       })) {
-        const source = corePowers.get(sourceEntityId);
-        const copy = rows.powers.find((power) => power.id === forkedEntityId);
+        const source = coreSpells.get(sourceEntityId);
+        const copy = rows.spells.find((spell) => spell.id === forkedEntityId);
         if (!source || !copy) continue;
-        const copyLists = new Set(copy.powersAptitudesInRules.map((link) => link.aptitudeId));
+        const copyLists = new Set(copy.spellsAptitudesInRules.map((link) => link.aptitudeId));
         // A copy with a list of its own was made for a domain.
-        if (![...copyLists].some((id) => !source.powersAptitudesInRules.some((link) => link.aptitudeId === id)))
+        if (![...copyLists].some((id) => !source.spellsAptitudesInRules.some((link) => link.aptitudeId === id)))
           continue;
         copies++;
-        const lost = source.powersAptitudesInRules.filter(
+        const lost = source.spellsAptitudesInRules.filter(
           (link) => link.aptitudesInRule.name.endsWith("Spells") && !copyLists.has(link.aptitudeId),
         );
         if (lost.length > 0) {
@@ -103,35 +103,35 @@ describe("The seeded extensions", () => {
     expect(failures).toEqual([]);
 
     const divine = await seededRows(DND35_COMPLETE_DIVINE_NAME);
-    const missile = divine.powers.find((power) => power.name === "Magic Missile")!;
-    const snapshot = (await EntitySnapshots.findMany(db, { rulesetId: divine.rulesetId, entityType: "powers" })).find(
+    const missile = divine.spells.find((spell) => spell.name === "Magic Missile")!;
+    const snapshot = (await EntitySnapshots.findMany(db, { rulesetId: divine.rulesetId, entityType: "spells" })).find(
       (s) => s.forkedEntityId === missile.id,
     );
-    expect(snapshot?.sourceEntityId).toBe(core.powers.find((power) => power.name === "Magic Missile")!.id);
-    expect(missile.powersAptitudesInRules.map((link) => link.aptitudeId)).toContain(
+    expect(snapshot?.sourceEntityId).toBe(core.spells.find((spell) => spell.name === "Magic Missile")!.id);
+    expect(missile.spellsAptitudesInRules.map((link) => link.aptitudeId)).toContain(
       divine.aptitude("Force Domain Spells").id,
     );
   });
 
   test("give the prestige casters that draw on other classes' lists their spells, by their book's rules", async () => {
     /** The levels some spells are at on a seeded ruleset's list, by spell (none when it isn't on it). */
-    const levelsOn = async (rulesetName: string, list: string, spells: string[]) => {
-      const { powers } = await seededRows(rulesetName);
+    const levelsOn = async (rulesetName: string, list: string, names: string[]) => {
+      const { spells } = await seededRows(rulesetName);
       return Object.fromEntries(
-        spells.map((spell) => [
-          spell,
-          powers
-            .find((power) => power.name === spell)
-            ?.powersAptitudesInRules.find((link) => link.aptitudesInRule.name === list)?.level,
+        names.map((name) => [
+          name,
+          spells
+            .find((spell) => spell.name === name)
+            ?.spellsAptitudesInRules.find((link) => link.aptitudesInRule.name === list)?.level,
         ]),
       );
     };
     // The cleric's
     const core = await seededRows();
-    const clericSpells = core.powers.flatMap((power) =>
-      power.powersAptitudesInRules
+    const clericSpells = core.spells.flatMap((spell) =>
+      spell.spellsAptitudesInRules
         .filter((link) => link.aptitudesInRule.name === "Cleric Spells")
-        .map((link) => [power.name, link.level] as const),
+        .map((link) => [spell.name, link.level] as const),
     );
     expect(clericSpells.length).toBeGreaterThan(200);
     expect(
@@ -225,8 +225,8 @@ describe("The seeded extensions", () => {
     // spirit shaman's (Complete Divine: the druid's), each the book's own copy, which a ruleset merges with its book's
     const adventurer = await seededRows(DND35_COMPLETE_ADVENTURER_NAME);
     const lists = ["Sublime Chord Spells", "Suel Arcanamach Spells", "Spirit Shaman Spells"];
-    const fly = adventurer.powers.find((power) => power.name === "Fly, Swift")!;
-    const links = fly.powersAptitudesInRules.filter((link) => lists.includes(link.aptitudesInRule.name));
+    const fly = adventurer.spells.find((spell) => spell.name === "Fly, Swift")!;
+    const links = fly.spellsAptitudesInRules.filter((link) => lists.includes(link.aptitudesInRule.name));
     expect(Object.fromEntries(links.map((link) => [link.aptitudesInRule.name, link.level]))).toEqual({
       "Sublime Chord Spells": 2,
       "Suel Arcanamach Spells": 2,

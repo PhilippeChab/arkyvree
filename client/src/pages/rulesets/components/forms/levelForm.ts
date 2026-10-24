@@ -74,7 +74,7 @@ export function emptyLevel({ amounts, grants }: LevelKeys): LevelFormData {
   return { level: 1, ...(amounts && { [amounts.key]: [] }), ...(grants && { [grants.key]: [] }) };
 }
 
-/** A level kind's columns (`type`: 3.5's `klass_levels`) read past its fields. */
+/** A level kind's columns (`type`: 3.5's `class_levels`) read past its fields. */
 export function levelColumnsOf(rules: RulesDescription | undefined, type: string): LevelColumns {
   const columns = rules?.columns[type] ?? [];
   return {

@@ -66,7 +66,7 @@ export default class FeatEntity extends ListedEntity<
     if (feat && body.name !== feat.name && feat.generated)
       throw new RulesError("invalid", "Generated feats cannot be renamed");
     const message = "Cannot link feat to aptitude(s) already used for spells";
-    this.refuseLists(body.aptitudeIds ?? [], this.dnd35.aptitudeIdsWithPowers, message);
+    this.refuseLists(body.aptitudeIds ?? [], this.dnd35.aptitudeIdsWithSpells, message);
   }
 
   /** A form's columns: a new feat's not generated (`planCreate` marks one that stands in for a generated one). */

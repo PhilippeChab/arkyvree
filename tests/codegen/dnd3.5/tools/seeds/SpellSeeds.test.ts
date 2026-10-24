@@ -2,16 +2,16 @@ import { describe, expect, test } from "bun:test";
 
 import References from "@/codegen/dnd3.5/tools/references/References.ts";
 import Library from "@/codegen/dnd3.5/tools/seeds/Library.ts";
-import type { SpellSeed } from "@/content/dnd3.5/builders/spells/types.ts";
+import type { LeveledSpellSeed } from "@/content/dnd3.5/builders/spells/types.ts";
 import { CORE_BOOK } from "@/vocabulary/dnd3.5/books.ts";
 
 /** A spell's level on each of its lists. */
-function levelsOf(spell: SpellSeed) {
+function levelsOf(spell: LeveledSpellSeed) {
   return spell.aptitudes.map((list) => ({ list, level: spell.aptitudeLevels?.[list] ?? spell.level }));
 }
 
 /** A book's spell seeds. */
-function spellsOf(book: string): SpellSeed[] {
+function spellsOf(book: string): LeveledSpellSeed[] {
   const ref = References.find(book, "spell");
   if (!ref) throw new Error(`${book} has no spells`);
   return Library.book(book).spells(ref).seeds();

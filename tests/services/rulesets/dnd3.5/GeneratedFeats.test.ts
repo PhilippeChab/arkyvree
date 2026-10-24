@@ -118,8 +118,8 @@ async function seededForkWithClimb() {
 }
 
 /** A spell's stored properties, the rows its fields are written as. */
-async function spellFields(powerId: string) {
-  return (await Properties.findMany(db, { entityIds: [powerId], entityType: "powers" }))
+async function spellFields(spellId: string) {
+  return (await Properties.findMany(db, { entityIds: [spellId], entityType: "spells" }))
     .map((p) => `${p.type}: ${p.value}`)
     .sort();
 }
@@ -160,13 +160,13 @@ describe("Spell Focus", () => {
     ["no school", undefined, {}, []],
   ])("a spell with %s stores its fields and gets its school's feats", async (_, school, fields, expected) => {
     const { session, ruleset, spells } = await bareRuleset();
-    const power = await EntitiesService.createEntity(
+    const created = await EntitiesService.createEntity(
       session,
       ruleset.id,
-      "powers",
+      "spells",
       spell(spells.id, "Fireball", school, fields),
     );
-    expect(await spellFields(power.id)).toEqual(expected);
+    expect(await spellFields(created.id)).toEqual(expected);
     expect(await featNames(ruleset.id)).toEqual(
       school ? [`Greater Spell Focus: ${school}`, `Spell Focus: ${school}`] : [],
     );
@@ -174,13 +174,13 @@ describe("Spell Focus", () => {
 
   test("adds 1 to its school's DCs, and Greater Spell Focus requires it", async () => {
     const { session, ruleset, spells } = await bareRuleset();
-    await EntitiesService.createEntity(session, ruleset.id, "powers", spell(spells.id, "Fireball", "Evocation"));
+    await EntitiesService.createEntity(session, ruleset.id, "spells", spell(spells.id, "Fireball", "Evocation"));
     const [focus, greater] = [
       await findFeat(ruleset.id, "Spell Focus: Evocation"),
       await findFeat(ruleset.id, "Greater Spell Focus: Evocation"),
     ];
     expect(await Modifiers.findMany(db, { sourceIds: [focus.id], sourceType: "feats" })).toMatchObject([
-      { target: "powers.groups.evocation.*.dc.misc", operator: "add", value: "1" },
+      { target: "spells.groups.evocation.*.dc.misc", operator: "add", value: "1" },
     ]);
     expect(await Requirements.findMany(db, { entityIds: [greater.id], entityType: "feats" })).toMatchObject([
       { target: "feats.spellfocusevocation.possessed", operator: "equal", value: "true" },
@@ -189,7 +189,7 @@ describe("Spell Focus", () => {
 
   test("makes its school's feats as the seeded ones are", async () => {
     const { session, ruleset, spells } = await bareRuleset();
-    await EntitiesService.createEntity(session, ruleset.id, "powers", spell(spells.id, "Fireball", "Evocation"));
+    await EntitiesService.createEntity(session, ruleset.id, "spells", spell(spells.id, "Fireball", "Evocation"));
     const { rulesetId: seededId } = await getSeedCtx();
     for (const name of ["Spell Focus: Evocation", "Greater Spell Focus: Evocation"]) {
       const [made, seeded] = [await findFeat(ruleset.id, name), await findFeat(seededId, name)];
@@ -199,21 +199,21 @@ describe("Spell Focus", () => {
 
   test("regenerates a spell's fields when it changes, a new school getting its feats next to the old one's", async () => {
     const { session, ruleset, spells } = await bareRuleset();
-    const power = await EntitiesService.createEntity(
+    const created = await EntitiesService.createEntity(
       session,
       ruleset.id,
-      "powers",
+      "spells",
       spell(spells.id, "Evolving Spell", "Evocation", { castingTime: "1 standard action" }),
     );
     await EntitiesService.updateEntity(
       session,
       ruleset.id,
-      "powers",
-      power.id,
+      "spells",
+      created.id,
       spell(spells.id, "Evolving Spell", "Conjuration", { castingTime: "1 full round" }),
     );
 
-    expect(await spellFields(power.id)).toEqual(["SPELL_CASTING_TIME: 1 full round", "SPELL_SCHOOL: Conjuration"]);
+    expect(await spellFields(created.id)).toEqual(["SPELL_CASTING_TIME: 1 full round", "SPELL_SCHOOL: Conjuration"]);
     expect(await featNames(ruleset.id)).toEqual([
       "Greater Spell Focus: Conjuration",
       "Greater Spell Focus: Evocation",
@@ -225,15 +225,15 @@ describe("Spell Focus", () => {
   test("feats outlive their school's spells, once each, and serve the school's next spell", async () => {
     const { session, ruleset, spells } = await bareRuleset();
     for (const name of ["Fireball", "Lightning Bolt"]) {
-      const power = await EntitiesService.createEntity(
+      const created = await EntitiesService.createEntity(
         session,
         ruleset.id,
-        "powers",
+        "spells",
         spell(spells.id, name, "Evocation"),
       );
-      await EntitiesService.deleteEntity(session, ruleset.id, "powers", power.id);
+      await EntitiesService.deleteEntity(session, ruleset.id, "spells", created.id);
     }
-    await EntitiesService.createEntity(session, ruleset.id, "powers", spell(spells.id, "Magic Missile", "Evocation"));
+    await EntitiesService.createEntity(session, ruleset.id, "spells", spell(spells.id, "Magic Missile", "Evocation"));
     expect(await featNames(ruleset.id)).toEqual(["Greater Spell Focus: Evocation", "Spell Focus: Evocation"]);
   });
 });
@@ -320,7 +320,7 @@ test("a fork's new skills and spells put their feats in the General aptitude it 
   await EntitiesService.createEntity(
     session,
     fork.id,
-    "powers",
+    "spells",
     spell(parent.spells.id, "Lightning Bolt", "Evocation"),
   );
   for (const name of ["Skill Focus: Swim", "Spell Focus: Evocation", "Greater Spell Focus: Evocation"]) {

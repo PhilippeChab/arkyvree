@@ -386,7 +386,7 @@ export default class SheetBlocks {
         key: "spells",
         title: "Spells",
         empty: "No spells",
-        entityType: "powers",
+        entityType: "spells",
         columns: SPELL_COLUMNS,
         ...(perDay.lists.length > 0 && {
           counts: {

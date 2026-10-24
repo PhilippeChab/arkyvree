@@ -8,37 +8,37 @@ import LevelUpBase from "./LevelUpBase.ts";
 import type { LevelPickRows } from "./plans.ts";
 import type { LevelPicks } from "./requests.ts";
 
-/** The pools a character picks feats and powers in, and how many, with what a level-up plans. */
+/** The pools a character picks feats and spells in, and how many, with what a level-up plans. */
 type LevelUpPools = ReturnType<DetailedCharacter["components"]["aptitudes"]["getLevelUpPools"]>;
 
 /** A pool overfilled by a level-up's picks, as the character holding them says (`getOverfullPools`). */
 type OverfullPool = ReturnType<DetailedCharacter["components"]["aptitudes"]["getOverfullPools"]>[number];
 
-/** A level-up's feats and powers, each by the pool it's picked in. */
-export type PoolPicks = Pick<LevelPicks, "feats" | "powers">;
+/** A level-up's feats and spells, each by the pool it's picked in. */
+export type PoolPicks = Pick<LevelPicks, "feats" | "spells">;
 
 /**
  * What a 3.5 level-up flow reads past every flow's (`LevelUpBase`): the steps the wizard and the preview share, a feats
- * step, a powers step and a skills step (`SpendsSkillPoints`), and which skills a class makes class skills.
+ * step, a spells step and a skills step (`SpendsSkillPoints`), and which skills a class makes class skills.
  */
 export default abstract class LevelUpState extends include(LevelUpBase<DetailedCharacter>, SpendsSkillPoints) {
   /**
    * The picks without their latest in the overfull pool (`pool`), as many as it's over: at its spell level for a leveled
-   * one; in a shared one, its powers before its feats, the wizard's later step first.
+   * one; in a shared one, its spells before its feats, the wizard's later step first.
    */
   private dropExcess(picks: PoolPicks, { aptitudeId, level, picked, room }: OverfullPool): PoolPicks {
     let excess = picked - room;
-    const lookup = this.buildPowerLevelLookup(picks.powers[aptitudeId] ?? []);
-    const powers = [...(picks.powers[aptitudeId] ?? [])];
-    for (let i = powers.length - 1; i >= 0 && excess > 0; i--) {
-      if (String(lookup.get(`${powers[i]}:${aptitudeId}`) ?? "") !== (level ?? "")) continue;
-      powers.splice(i, 1);
+    const lookup = this.buildSpellLevelLookup(picks.spells[aptitudeId] ?? []);
+    const spells = [...(picks.spells[aptitudeId] ?? [])];
+    for (let i = spells.length - 1; i >= 0 && excess > 0; i--) {
+      if (String(lookup.get(`${spells[i]}:${aptitudeId}`) ?? "") !== (level ?? "")) continue;
+      spells.splice(i, 1);
       excess--;
     }
     const feats = level === undefined ? (picks.feats[aptitudeId] ?? []).slice(0, -excess || undefined) : undefined;
     return {
       feats: feats ? { ...picks.feats, [aptitudeId]: feats } : picks.feats,
-      powers: { ...picks.powers, [aptitudeId]: powers },
+      spells: { ...picks.spells, [aptitudeId]: spells },
     };
   }
 
@@ -54,34 +54,34 @@ export default abstract class LevelUpState extends include(LevelUpBase<DetailedC
 
   /**
    * The picks a save takes, each pool's in the order given: a stackable feat each time it's picked (a row a pick); a
-   * non-stackable feat or a power given again in its pool once, since a character takes a non-stackable feat once and
-   * knows a power once (a save refuses either picked twice at a level).
+   * non-stackable feat or a spell given again in its pool once, since a character takes a non-stackable feat once and
+   * knows a spell once (a save refuses either picked twice at a level).
    */
-  private keepTakenPicks({ feats = {}, powers = {} }: Partial<PoolPicks>): PoolPicks {
+  private keepTakenPicks({ feats = {}, spells = {} }: Partial<PoolPicks>): PoolPicks {
     return {
       feats: this.dropRepeats(feats, (id) => this.dnd35.featsById.get(id)?.stackable === true),
-      powers: this.dropRepeats(powers, () => false),
+      spells: this.dropRepeats(spells, () => false),
     };
   }
 
   /**
-   * A level-up's own picks, counted by pool (`OwnPicks`): its feats, and its powers by their spell level there, as a
+   * A level-up's own picks, counted by pool (`OwnPicks`): its feats, and its spells by their spell level there, as a
    * save takes them (`keepTakenPicks`): a stackable feat each time, a repeat of the others once.
    */
   protected countOwnPicks(picks: Partial<PoolPicks>): OwnPicks {
-    const { feats, powers } = this.keepTakenPicks(picks);
-    const lookup = this.buildPowerLevelLookup(Object.values(powers).flat());
-    const powerCounts: OwnPicks["powers"] = {};
-    for (const [aptitudeId, ids] of Object.entries(powers)) {
+    const { feats, spells } = this.keepTakenPicks(picks);
+    const lookup = this.buildSpellLevelLookup(Object.values(spells).flat());
+    const spellCounts: OwnPicks["spells"] = {};
+    for (const [aptitudeId, ids] of Object.entries(spells)) {
       const counts: Record<string, number> = {};
-      for (const powerId of ids) {
-        const level = String(lookup.get(`${powerId}:${aptitudeId}`) ?? "");
+      for (const spellId of ids) {
+        const level = String(lookup.get(`${spellId}:${aptitudeId}`) ?? "");
         counts[level] = (counts[level] ?? 0) + 1;
       }
-      powerCounts[aptitudeId] = counts;
+      spellCounts[aptitudeId] = counts;
     }
     const featCounts = Object.entries(feats).map(([aptitudeId, ids]) => [aptitudeId, ids.length]);
-    return { feats: Object.fromEntries(featCounts), powers: powerCounts };
+    return { feats: Object.fromEntries(featCounts), spells: spellCounts };
   }
 
   /**
@@ -102,7 +102,7 @@ export default abstract class LevelUpState extends include(LevelUpBase<DetailedC
   /**
    * The picks that fit their pools (`picks`, each pool's in its order), and the character holding them (`build`): those
    * a save takes (`keepTakenPicks`) but those the character holds already, as a save refuses them (`withoutHeldPicks`:
-   * a feat that doesn't stack it has, a power it knows in its pool, the level's other picks' gifts too; an edited
+   * a feat that doesn't stack it has, a spell it knows in its pool, the level's other picks' gifts too; an edited
    * level's own saved picks, `kept`, stay), then the latest picks of an overfull pool dropped, and the character built
    * again, until none is (a feat dropped takes the room it gave). What the wizard keeps of its picks, as a save would
    * take them.
@@ -110,7 +110,7 @@ export default abstract class LevelUpState extends include(LevelUpBase<DetailedC
   protected fitPicks(
     picks: Partial<PoolPicks>,
     build: (picks: PoolPicks) => DetailedCharacter,
-    kept?: Pick<LevelPickRows, "feats" | "powers">,
+    kept?: Pick<LevelPickRows, "feats" | "spells">,
   ) {
     const holding = this.buildOnce(build);
     let fitted = this.checks.withoutHeldPicks(this.keepTakenPicks(picks), holding, kept);
@@ -132,17 +132,17 @@ export default abstract class LevelUpState extends include(LevelUpBase<DetailedC
   }
 
   /**
-   * A powers step, the wizard's and the preview's alike: how many powers the character picks with what's planned
-   * (`pools`), in which pools, and the powers the class levels (`klassLevelIds`) grant, each saying whether it's free.
+   * A spells step, the wizard's and the preview's alike: how many spells the character picks with what's planned
+   * (`pools`), in which pools, and the spells the class levels (`klassLevelIds`) grant, each saying whether it's free.
    */
-  protected powerStep(pools: LevelUpPools, klassLevelIds: string[]) {
-    const { klassLevelPowersWithPowersByKlassLevel } = this.dnd35;
+  protected spellStep(pools: LevelUpPools, klassLevelIds: string[]) {
+    const { klassLevelSpellsWithSpellsByKlassLevel } = this.dnd35;
     return {
-      powersToSelect: pools.powersToSelect,
-      autoGrantedPowers: klassLevelIds.flatMap((id) =>
-        (klassLevelPowersWithPowersByKlassLevel.get(id) ?? []).map((rec) => ({ ...rec.powersInRule, free: rec.free })),
+      spellsToSelect: pools.spellsToSelect,
+      autoGrantedSpells: klassLevelIds.flatMap((id) =>
+        (klassLevelSpellsWithSpellsByKlassLevel.get(id) ?? []).map((rec) => ({ ...rec.spellsInRule, free: rec.free })),
       ),
-      aptitudePools: pools.powerPools,
+      aptitudePools: pools.spellPools,
     };
   }
 }

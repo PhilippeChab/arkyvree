@@ -12,10 +12,10 @@ import { type RulesetData } from "@/engine/core/view/index.ts";
 import type {
   Feat,
   KlassLevelFeat,
-  KlassLevelPower,
+  KlassLevelSpell,
   KlassSkill,
-  Power,
   Skill,
+  Spell,
 } from "@/engine/rulesets/dnd3.5/index.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
@@ -58,7 +58,7 @@ describe("cache join-maps — parity with repository queries", () => {
 
     const fromCache = dnd35.klassLevelFeatsWithFeatsByKlassLevel.get(klassLevel!.id) ?? [];
     const fromDb = await withRows(
-      await Joins.findMany<KlassLevelFeat>(db, { join: "klass_level_feats", fromIds: [klassLevel!.id] }),
+      await Joins.findMany<KlassLevelFeat>(db, { join: "class_level_feats", fromIds: [klassLevel!.id] }),
       "featId",
       "featsInRule",
       async (ids) => await Entities.findMany<Feat>(db, { entityType: "feats", ids }),
@@ -76,34 +76,34 @@ describe("cache join-maps — parity with repository queries", () => {
     expect(sortById(fromCache).map(mapRow)).toEqual(sortById(fromDb).map(mapRow));
   });
 
-  test("klassLevelPowersWithPowersByKlassLevel matches the class level's powers with their power", async () => {
+  test("klassLevelSpellsWithSpellsByKlassLevel matches the class level's spells with their spell", async () => {
     const dnd35 = Dnd35View.of(rulesetData);
-    // Pick a class level that's likely to have auto-granted powers — Wizard L1.
+    // Pick a class level that's likely to have auto-granted spells — Wizard L1.
     const klassId = ctx.klassMap.pc["Wizard"];
     const klassLevel = dnd35.klassLevelByKlassAndLevel.get(`${klassId}:1`);
     if (!klassLevel) return; // seed doesn't have Wizard at this level — skip
 
-    const fromCache = dnd35.klassLevelPowersWithPowersByKlassLevel.get(klassLevel.id) ?? [];
+    const fromCache = dnd35.klassLevelSpellsWithSpellsByKlassLevel.get(klassLevel.id) ?? [];
     const fromDb = await withRows(
-      await Joins.findMany<KlassLevelPower>(db, { join: "klass_level_powers", fromIds: [klassLevel.id] }),
-      "powerId",
-      "powersInRule",
-      async (ids) => await Entities.findMany<Power>(db, { entityType: "powers", ids }),
+      await Joins.findMany<KlassLevelSpell>(db, { join: "class_level_spells", fromIds: [klassLevel.id] }),
+      "spellId",
+      "spellsInRule",
+      async (ids) => await Entities.findMany<Spell>(db, { entityType: "spells", ids }),
     );
 
     expect(fromCache.length).toBe(fromDb.length);
-    // klass_level_powers has no `id` column — sort by (powerId, aptitudeId).
-    const sortByPowerApt = <T extends { aptitudeId: string; powerId: string }>(xs: T[]) =>
-      [...xs].sort((a, b) => a.powerId.localeCompare(b.powerId) || a.aptitudeId.localeCompare(b.aptitudeId));
+    // class_level_spells has no `id` column — sort by (spellId, aptitudeId).
+    const sortBySpellApt = <T extends { aptitudeId: string; spellId: string }>(xs: T[]) =>
+      [...xs].sort((a, b) => a.spellId.localeCompare(b.spellId) || a.aptitudeId.localeCompare(b.aptitudeId));
     const mapRow = (r: (typeof fromDb)[number]) => ({
       klassLevelId: r.klassLevelId,
-      powerId: r.powerId,
+      spellId: r.spellId,
       aptitudeId: r.aptitudeId,
       free: r.free,
-      powersInRuleId: r.powersInRule.id,
-      powersInRuleName: r.powersInRule.name,
+      spellsInRuleId: r.spellsInRule.id,
+      spellsInRuleName: r.spellsInRule.name,
     });
-    expect(sortByPowerApt(fromCache).map(mapRow)).toEqual(sortByPowerApt(fromDb).map(mapRow));
+    expect(sortBySpellApt(fromCache).map(mapRow)).toEqual(sortBySpellApt(fromDb).map(mapRow));
   });
 
   test("klassSkillsWithSkillsByKlass matches the class's skills with their skill", async () => {
@@ -111,7 +111,7 @@ describe("cache join-maps — parity with repository queries", () => {
 
     const fromCache = Dnd35View.of(rulesetData).klassSkillsWithSkillsByKlass.get(fighterId) ?? [];
     const fromDb = await withRows(
-      await Joins.findMany<KlassSkill>(db, { join: "klass_skills", fromIds: [fighterId] }),
+      await Joins.findMany<KlassSkill>(db, { join: "class_skills", fromIds: [fighterId] }),
       "skillId",
       "skillsInRule",
       async (ids) => await Entities.findMany<Skill>(db, { entityType: "skills", ids }),
@@ -149,10 +149,10 @@ describe("cache join-maps — parity with repository queries", () => {
       expect(actual).toEqual(expectedIds);
     }
 
-    // And: looking up a known D&D 3.5 triple returns the expected powers.
-    const evocation = rulesetData.entityIdsByProperty.get(`powers:${SPELL_SCHOOL}:Evocation`) ?? [];
+    // And: looking up a known D&D 3.5 triple returns the expected spells.
+    const evocation = rulesetData.entityIdsByProperty.get(`spells:${SPELL_SCHOOL}:Evocation`) ?? [];
     expect(evocation.length).toBeGreaterThan(0);
-    for (const id of evocation) expect(Dnd35View.of(rulesetData).powersById.has(id)).toBe(true);
+    for (const id of evocation) expect(Dnd35View.of(rulesetData).spellsById.has(id)).toBe(true);
   });
 
   test("propertiesByEntity + propertiesByEntityType cover the same row set", () => {
@@ -174,11 +174,11 @@ describe("cache join-maps — parity with repository queries", () => {
     }
   });
 
-  test("featsById / powersById / skillsById resolve every composed row", () => {
+  test("featsById / spellsById / skillsById resolve every composed row", () => {
     const dnd35 = Dnd35View.of(rulesetData);
     for (const feat of dnd35.feats) expect(dnd35.featsById.get(feat.id)).toBe(feat);
 
-    for (const power of dnd35.powers) expect(dnd35.powersById.get(power.id)).toBe(power);
+    for (const spell of dnd35.spells) expect(dnd35.spellsById.get(spell.id)).toBe(spell);
 
     for (const skill of dnd35.skills) expect(dnd35.skillsById.get(skill.id)).toBe(skill);
   });

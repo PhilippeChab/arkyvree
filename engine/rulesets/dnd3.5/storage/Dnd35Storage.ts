@@ -3,7 +3,7 @@ import type { StorageDeclaration } from "@/engine/core/module/index.ts";
 import Dnd35FieldDefs from "./Dnd35FieldDefs.ts";
 
 /**
- * How 3.5 stores its data in the generic tables: its kinds' columns (a class's hit die is its `KLASS_HD` field, a
+ * How 3.5 stores its data in the generic tables: its kinds' columns (a class's hit die is its `CLASS_HD` field, a
  * save's ability its `keyAbility` link), its joins (a feat's pools are its `listedIn` links), its characters' (a race is
  * a `race` link, a level an advancement, its feats `feats` picks), and its registries' rows, which migration 0080 wrote
  * (`tests/database/dnd3.5/registries.test.ts` checks the database holds them).
@@ -37,24 +37,24 @@ export const DND35_STORAGE: StorageDeclaration = {
         ...["name", "description", "weight", "costGp", "type", "slot"],
       ],
     },
-    klasses: {
+    classes: {
       customizable: true,
       columns: {
-        hd: { kind: "number", field: "KLASS_HD", integer: true },
+        hd: { kind: "number", field: "CLASS_HD", integer: true },
         parentId: { kind: "link", role: "subclassOf" },
         kind: { kind: "partition", default: "pc" },
       },
     },
-    klass_levels: { customizable: true, columns: { klassId: { kind: "owner" }, level: { kind: "position" } } },
+    class_levels: { customizable: true, columns: { klassId: { kind: "owner" }, level: { kind: "position" } } },
     languages: { columns: { type: { kind: "text", field: "LANGUAGE_TYPE" } } },
     mechanics: { columns: {} },
-    powers: {
+    spells: {
       customizable: true,
       columns: {
         saveId: { kind: "link", role: "resistedBy" },
-        saveEffect: { kind: "text", field: "POWER_SAVE_EFFECT" },
+        saveEffect: { kind: "text", field: "SPELL_SAVE_EFFECT" },
       },
-      lists: { powersAptitudesInRules: { join: "powers_aptitudes", target: "aptitudesInRule" } },
+      lists: { spellsAptitudesInRules: { join: "spells_aptitudes", target: "aptitudesInRule" } },
       namesakes: "reprints",
     },
     races: {
@@ -76,40 +76,40 @@ export const DND35_STORAGE: StorageDeclaration = {
       to: "aptitudes",
       columns: { featId: "from", aptitudeId: "to" },
     },
-    powers_aptitudes: {
+    spells_aptitudes: {
       role: "listedIn",
-      from: "powers",
+      from: "spells",
       to: "aptitudes",
-      columns: { powerId: "from", aptitudeId: "to", level: "tier" },
+      columns: { spellId: "from", aptitudeId: "to", level: "tier" },
     },
-    klass_skills: {
+    class_skills: {
       role: "classSkill",
-      from: "klasses",
+      from: "classes",
       to: "skills",
       columns: { klassId: "from", skillId: "to" },
       edited: true,
     },
-    klass_level_feats: {
+    class_level_feats: {
       role: "grants",
-      from: "klass_levels",
+      from: "class_levels",
       to: "feats",
       columns: { id: "id", klassLevelId: "from", featId: "to", aptitudeId: "via", free: "free" },
     },
-    klass_level_powers: {
+    class_level_spells: {
       role: "grants",
-      from: "klass_levels",
-      to: "powers",
-      columns: { klassLevelId: "from", powerId: "to", aptitudeId: "via", free: "free" },
+      from: "class_levels",
+      to: "spells",
+      columns: { klassLevelId: "from", spellId: "to", aptitudeId: "via", free: "free" },
     },
-    klass_level_saves: {
+    class_level_saves: {
       role: "baseBonus",
-      from: "klass_levels",
+      from: "class_levels",
       to: "saves",
       columns: { klassLevelId: "from", saveId: "to", base: "amount" },
     },
   },
   linkedProperties: {
-    entities: { klasses: { KLASS_BONUS_SPELL_ABILITY_ID: "bonusSpellAbility" } },
+    entities: { classes: { CLASS_BONUS_SPELL_ABILITY_ID: "bonusSpellAbility" } },
     rulesets: { RULESET_SKILL_POINT_ABILITY_ID: "skillPointAbility" },
   },
   character: {
@@ -137,7 +137,7 @@ export const DND35_STORAGE: StorageDeclaration = {
       abilityIncreases: { step: "abilities", entity: "abilityId", amount: "amount" },
       skills: { step: "skills", entity: "skillId", amount: "rank" },
       feats: { step: "feats", entity: "featId", via: "aptitudeId", id: true },
-      powers: { step: "powers", entity: "powerId", via: "aptitudeId" },
+      spells: { step: "spells", entity: "spellId", via: "aptitudeId" },
     },
   },
   registries: {
@@ -147,26 +147,26 @@ export const DND35_STORAGE: StorageDeclaration = {
         "saves",
         "skills",
         "feats",
-        "powers",
+        "spells",
         "items",
         "races",
         "languages",
-        "klasses",
+        "classes",
         "aptitudes",
         "mechanics",
       ].map((type) => ({ type, ownerType: null })),
-      { type: "klass_levels", ownerType: "klasses" },
+      { type: "class_levels", ownerType: "classes" },
     ],
     linkRoles: [
       { role: "subraceOf", fromType: "races", toType: "races", viaType: null, single: true, onDelete: "delete" },
-      { role: "subclassOf", fromType: "klasses", toType: "klasses", viaType: null, single: true, onDelete: "delete" },
+      { role: "subclassOf", fromType: "classes", toType: "classes", viaType: null, single: true, onDelete: "delete" },
       { role: "madeFrom", fromType: "items", toType: "items", viaType: null, single: true, onDelete: "refuse" },
       { role: "listedIn", fromType: "feats", toType: "aptitudes", viaType: null, single: false, onDelete: "unlink" },
-      { role: "listedIn", fromType: "powers", toType: "aptitudes", viaType: null, single: false, onDelete: "unlink" },
-      { role: "classSkill", fromType: "klasses", toType: "skills", viaType: null, single: false, onDelete: "unlink" },
+      { role: "listedIn", fromType: "spells", toType: "aptitudes", viaType: null, single: false, onDelete: "unlink" },
+      { role: "classSkill", fromType: "classes", toType: "skills", viaType: null, single: false, onDelete: "unlink" },
       {
         role: "grants",
-        fromType: "klass_levels",
+        fromType: "class_levels",
         toType: "feats",
         viaType: "aptitudes",
         single: false,
@@ -174,15 +174,15 @@ export const DND35_STORAGE: StorageDeclaration = {
       },
       {
         role: "grants",
-        fromType: "klass_levels",
-        toType: "powers",
+        fromType: "class_levels",
+        toType: "spells",
         viaType: "aptitudes",
         single: false,
         onDelete: "unlink",
       },
       {
         role: "baseBonus",
-        fromType: "klass_levels",
+        fromType: "class_levels",
         toType: "saves",
         viaType: null,
         single: false,
@@ -190,10 +190,10 @@ export const DND35_STORAGE: StorageDeclaration = {
       },
       { role: "keyAbility", fromType: "saves", toType: "abilities", viaType: null, single: true, onDelete: "delete" },
       { role: "keyAbility", fromType: "skills", toType: "abilities", viaType: null, single: true, onDelete: "delete" },
-      { role: "resistedBy", fromType: "powers", toType: "saves", viaType: null, single: true, onDelete: "unlink" },
+      { role: "resistedBy", fromType: "spells", toType: "saves", viaType: null, single: true, onDelete: "unlink" },
       {
         role: "bonusSpellAbility",
-        fromType: "klasses",
+        fromType: "classes",
         toType: "abilities",
         viaType: null,
         single: true,
@@ -216,7 +216,7 @@ export const DND35_STORAGE: StorageDeclaration = {
       { step: "abilities", entityType: "abilities", viaType: null, onDelete: "delete", repeats: false },
       { step: "skills", entityType: "skills", viaType: null, onDelete: "refuse", repeats: false },
       { step: "feats", entityType: "feats", viaType: "aptitudes", onDelete: "refuse", repeats: true },
-      { step: "powers", entityType: "powers", viaType: "aptitudes", onDelete: "refuse", repeats: false },
+      { step: "spells", entityType: "spells", viaType: "aptitudes", onDelete: "refuse", repeats: false },
     ],
     itemTypes: ["items"],
   },

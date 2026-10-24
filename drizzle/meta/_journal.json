@@ -568,6 +568,13 @@
       "when": 1792752621190,
       "tag": "0080_generic-tables",
       "breakpoints": true
+    },
+    {
+      "idx": 81,
+      "version": "7",
+      "when": 1792845433487,
+      "tag": "0081_spells-and-classes",
+      "breakpoints": true
     }
   ]
 }

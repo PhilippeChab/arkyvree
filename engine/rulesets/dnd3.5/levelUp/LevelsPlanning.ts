@@ -19,7 +19,7 @@ interface PlannedLevel {
 
 /**
  * A character a save builds with what it writes: its validation, which refuses the save unless it's forced, and the
- * feats it has and the powers it knows, each in its pool, which a level can't pick again, but a feat that stacks
+ * feats it has and the spells it knows, each in its pool, which a level can't pick again, but a feat that stacks
  * (`SelectionChecks.checkPicksNotHeld`).
  */
 export interface CheckedCharacter extends HoldingCharacter {
@@ -33,9 +33,9 @@ export interface CheckedCharacter extends HoldingCharacter {
  *   their pools, before its picks are spread over its levels (`distributePicks`): each is the view's, by the id the view
  *   keys it by, as the request entered (`LevelRequests`);
  * - each level isn't saved already (a level-up's), and raises its abilities by what the rules give it;
- * - its hit points, its selections and their pools checked, no non-stackable feat or power picked twice at a level
+ * - its hit points, its selections and their pools checked, no non-stackable feat or spell picked twice at a level
  *   (`SelectionChecks`);
- * - no pick the character holds already, forced or not (`checkPicksNotHeld`): a non-stackable feat it has, or a power
+ * - no pick the character holds already, forced or not (`checkPicksNotHeld`): a non-stackable feat it has, or a spell
  *   it knows in its pool, held (picked or granted at another of its levels, saved or planned, a later one too, or made
  *   possessed or known by a modifier), picked earlier in the level-up, or given by the level's (or the level-up's)
  *   other picks, which stay; an edited level's own saved picks stay;
@@ -45,10 +45,10 @@ export interface CheckedCharacter extends HoldingCharacter {
  */
 export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpBase<C> {
   /**
-   * The planned levels holding these of the level-up's own feats and powers (`picks`, by pool): each on the level the
+   * The planned levels holding these of the level-up's own feats and spells (`picks`, by pool): each on the level the
    * save spread it to, as often as `picks` gives it, the others left out.
    */
-  private keepPlannedPicks(planned: PlannedLevel[], picks: Pick<LevelPicks, "feats" | "powers">): PlannedLevel[] {
+  private keepPlannedPicks(planned: PlannedLevel[], picks: Pick<LevelPicks, "feats" | "spells">): PlannedLevel[] {
     // What's left of each pool's picks to keep: one kept at a level is taken off its pool's
     const left = structuredClone(picks);
     const keep = (byPool: Record<string, string[]>, leftByPool: Record<string, string[]>) =>
@@ -67,7 +67,7 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
       picks: {
         ...level.picks,
         feats: keep(level.picks.feats, left.feats),
-        powers: keep(level.picks.powers, left.powers),
+        spells: keep(level.picks.spells, left.spells),
       },
     }));
   }
@@ -89,7 +89,7 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
     const { rows } = this.character;
     const klassLevelEntries = this.rules.getPlannedKlassLevels(this.view, this.character, levels);
     // Every selection is linked to its pool before a character is built with it
-    this.checks.checkLinks(picks.feats, picks.powers);
+    this.checks.checkLinks(picks.feats, picks.spells);
     const distributed = this.rules.distributePicks(this.view, this.character, klassLevelEntries, picks);
 
     // Each level sees the saved ones and those planned before it
@@ -162,14 +162,14 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
   }
 
   /** Refuses picks (`picks`, which `holder` holds) that overfill a pool they're in, as the rules count them. */
-  private refuseOverfull(holder: C, picks: Pick<LevelPicks, "feats" | "powers">) {
+  private refuseOverfull(holder: C, picks: Pick<LevelPicks, "feats" | "spells">) {
     PicksDistribution.refuseOverfull(this.rules.findOverfullPools(this.view, this.character, holder, picks));
   }
 
   /**
    * The edit of saved level `characterLevelId`, with the character's bonded creatures' rows (`bonded`): the level as
    * saved, its new hit points, ability increases and picks, checked, its picks refused when they pick a feat that
-   * doesn't stack the character has already or a power it knows in its pool already, the level's other picks' gifts
+   * doesn't stack the character has already or a spell it knows in its pool already, the level's other picks' gifts
    * too (but the level's own saved picks), or overfill a pool (forced or not), and refused with the issues it answers
    * for unless `force`d; and what its bonded creatures become with it.
    */
@@ -210,7 +210,7 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
    * them), and what the master's bonded creatures (`bonded`, their rows) become with them. Each level is checked as the
    * levels before it see it, and refused when it's saved already, raises its abilities by other than its rules give it,
    * or picks what it can't; the picks are refused when they pick a feat that doesn't stack the character has already
-   * (at a saved level or a planned one, a later one too, or by a modifier, as an edit of it would refuse it) or a power
+   * (at a saved level or a planned one, a later one too, or by a modifier, as an edit of it would refuse it) or a spell
    * it knows in its pool already, the plan's other picks' gifts too, or overfill a pool, forced or not, and the
    * character with them with what it fails, unless `force`d. Each level's writes are its row's columns (its class level and hit points) and its rows under it
    * (its ability increases and picks).

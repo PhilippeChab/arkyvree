@@ -16,7 +16,7 @@ type Column = NonNullable<RulesDescription["columns"][string]>[number];
 /** A ruleset entity's change, as its notification says it: its verb, by the type's (`createFeat`) */
 const CONTENT_CHANGES: Record<string, string> = { create: "created", delete: "deleted", update: "updated" };
 
-/** An activity type, its verb and the entity it names as the engine does: `createKlass`, `updateKlassLevel`. */
+/** An activity type, its verb and the entity it names as the engine does: `createClass`, `updateClassLevel`. */
 const ENTITY_ACTIVITY = /^([a-z]+)([A-Z]\w*)$/;
 
 const NOTIFICATION_MESSAGES: Record<string, (actor: string, d: Record<string, unknown>) => string> = {
@@ -71,7 +71,7 @@ const REFERENCE_FIELD = /^(\w+)Id$/;
 
 /**
  * A ruleset entity's create, update or delete, named in its ruleset's word ("Ann created spell Fireball"): the entity
- * its type names (`createKlass`), by its rules' words (`entityTypeOfActivityName`).
+ * its type names (`createClass`), by its rules' words (`entityTypeOfActivityName`).
  */
 function contentChange(type: string, actor: string, d: Record<string, unknown>, rules: RulesDescriptions | undefined) {
   const [, verb = "", name = ""] = ENTITY_ACTIVITY.exec(type) ?? [];
@@ -106,8 +106,8 @@ function formatChange(change: ChangedField, columns: readonly Column[]): string 
 /**
  * A ruleset's change to what one of its entities holds, as its notification says it, by its type, as its rules describe
  * it (`rules`, its base rules', else every base rules'): a level of a kind another owns, an owned entity being its
- * owner's level (3.5's `createKlassLevel`: "Ann added a level to Fighter"), the progression of a kind whose row opens it
- * (3.5's `updateKlassProgression`), a link through a kind's join (3.5's `addKlassSkill`: "Ann added Climb to Fighter");
+ * owner's level (3.5's `createClassLevel`: "Ann added a level to Fighter"), the progression of a kind whose row opens it
+ * (3.5's `updateClassProgression`), a link through a kind's join (3.5's `addClassSkill`: "Ann added Climb to Fighter");
  * none for another type.
  */
 function heldChange(type: string, actor: string, d: Record<string, unknown>, rules: RulesDescriptions | undefined) {
@@ -203,7 +203,7 @@ export function formatActivityDetails(type: string, data: unknown, rules?: Rules
 }
 
 /**
- * An activity's type as a label, in its ruleset's words (`rules`, every base rules': "createKlass" → "Create Class"),
+ * An activity's type as a label, in its ruleset's words (`rules`, every base rules': "createClass" → "Create Class"),
  * with the entity it names.
  */
 export function formatActivityType(type: string, data?: unknown, rules?: RulesDescriptions): string {

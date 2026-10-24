@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import { type SeedContext } from "@/database/seeders/dnd3.5/characters/seedContext.ts";
 import type { LevelPlanAnswer } from "@/engine/core/module/index.ts";
-import type { LevelAbilityIncrease, LevelFeat, LevelPower, LevelSkill } from "@/engine/rulesets/dnd3.5/index.ts";
+import type { LevelAbilityIncrease, LevelFeat, LevelSkill, LevelSpell } from "@/engine/rulesets/dnd3.5/index.ts";
 import type { AbilityIncrease } from "@/engine/rulesets/dnd3.5/levelUp/plans.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
@@ -88,9 +88,9 @@ function pastLastLevel(levelsLeft: number) {
   return { refusal: "invalid", issues: [{ category: "levels", message }] };
 }
 
-/** The feats step of a plan's answer, and its powers step. */
+/** The feats step of a plan's answer, and its spells step. */
 function pickSteps(answer: LevelPlanAnswer) {
-  return { feats: stepAnswerOf(answer, "feats", "pick"), powers: stepAnswerOf(answer, "powers", "pick") };
+  return { feats: stepAnswerOf(answer, "feats", "pick"), spells: stepAnswerOf(answer, "spells", "pick") };
 }
 
 /**
@@ -118,11 +118,11 @@ async function createFighterAt(ctx: SeedContext, count: number) {
 async function createLightGivingSorcerer() {
   const ctx = await getSeedCtx();
   const fork = await createSeededTestRuleset(SEED_USER_ID);
-  const detectMagic = await copyEntity(db, "powers", ctx.powerMap["Detect Magic"], fork);
-  await give("powers", detectMagic.id, "powers.light.sorcerer.known");
+  const detectMagic = await copyEntity(db, "spells", ctx.spellMap["Detect Magic"], fork);
+  await give("spells", detectMagic.id, "spells.light.sorcerer.known");
   RulesetViews.invalidate(fork.id);
   const characterId = await createSeedCharacter(ctx, "sorcerer", { rulesetId: fork.id, xp: 1000 });
-  const forkCtx: SeedContext = { ...ctx, powerMap: { ...ctx.powerMap, "Detect Magic": detectMagic.id } };
+  const forkCtx: SeedContext = { ...ctx, spellMap: { ...ctx.spellMap, "Detect Magic": detectMagic.id } };
   return { characterId, ctx: forkCtx, rulesetId: fork.id };
 }
 
@@ -184,7 +184,7 @@ async function offeredFeats(
   level: number,
   aptitude: string,
   search: string,
-  picked: Pick<PlanPicks, "feats" | "powers"> = {},
+  picked: Pick<PlanPicks, "feats" | "spells"> = {},
 ) {
   const ctx = await getSeedCtx();
   const plan = levelUpPlan([{ klassId: ctx.klassMap.pc[klass], level, hp: 1 }], picked);
@@ -208,18 +208,18 @@ async function offeredFeats(
  * The names of the spells Add Level's picker offers on a plan of a class's `level`, in pool `aptitude`, searched by
  * `search`, with the spells picked so far (by pool).
  */
-async function offeredPowers(
+async function offeredSpells(
   characterId: string,
   klass: string,
   level: number,
   aptitude: string,
   search: string,
-  powers: PlanPicks["powers"] = {},
+  spells: PlanPicks["spells"] = {},
 ) {
   const ctx = await getSeedCtx();
-  const plan = levelUpPlan([{ klassId: ctx.klassMap.pc[klass], level, hp: 1 }], { powers });
+  const plan = levelUpPlan([{ klassId: ctx.klassMap.pc[klass], level, hp: 1 }], { spells });
   const at = { pool: ctx.aptMap[aptitude] };
-  const { items } = await getStepOptions(session, characterId, "powers", plan, at, { limit: 20, search });
+  const { items } = await getStepOptions(session, characterId, "spells", plan, at, { limit: 20, search });
   return items.map(({ name }) => name);
 }
 
@@ -250,11 +250,11 @@ async function preview(
 
 /**
  * Saves a saved level's edit as its edit's plan opens it (`getLevelPlan`): its hit points, ability increases and
- * picks, its powers those of `powers` (by pool) when given.
+ * picks, its spells those of `spells` (by pool) when given.
  */
-async function resaveAsRead(characterId: string, levelId: string, powers?: Record<string, string[]>) {
+async function resaveAsRead(characterId: string, levelId: string, spells?: Record<string, string[]>) {
   const plan = await CharacterLevelsService.getLevelPlan(session, characterId, levelId);
-  const steps = powers ? { ...plan.steps, powers: levelEditPlan({ hp: 1 }, { powers }).steps.powers } : plan.steps;
+  const steps = spells ? { ...plan.steps, spells: levelEditPlan({ hp: 1 }, { spells }).steps.spells } : plan.steps;
   return CharacterLevelsService.updatePlannedLevel(session, characterId, levelId, { ...plan, steps });
 }
 
@@ -332,7 +332,7 @@ describe("finalizing several levels at once", () => {
       plan: {
         skills: { Bluff: 5, Concentration: 5, Spellcraft: 5, "Use Magic Device": 5 },
         feats: { General: ["Toughness", "Great Fortitude"], "Familiar Bond": ["Cat Familiar"] },
-        powers: {
+        spells: {
           "Sorcerer Spells": [
             "Detect Magic",
             "Light",
@@ -387,7 +387,7 @@ describe("finalizing several levels at once", () => {
           "Knowledge (Nature)": 4,
         },
         feats: { General: ["Toughness", "Great Fortitude"], ...WIZARD_FEATS },
-        powers: WIZARD_SPELLS,
+        spells: WIZARD_SPELLS,
       },
     },
     {
@@ -419,7 +419,7 @@ describe("finalizing several levels at once", () => {
           "Fighter Bonus Feat": ["Improved Initiative"],
           ...WIZARD_FEATS,
         },
-        powers: WIZARD_SPELLS,
+        spells: WIZARD_SPELLS,
       },
     },
     {
@@ -456,15 +456,15 @@ describe("finalizing several levels at once", () => {
     expect(created).toHaveLength(levels.length);
 
     const levelIds = created.map((l) => l.id);
-    const { feats, powers } = picks(ctx, plan);
+    const { feats, spells } = picks(ctx, plan);
     expect(
       (await Picks.findMany<LevelFeat>(db, { pick: "feats", characterLevelIds: levelIds })).map((f) => f.featId).sort(),
     ).toEqual(Object.values(feats).flat().sort());
     expect(
-      (await Picks.findMany<LevelPower>(db, { pick: "powers", characterLevelIds: levelIds }))
-        .map((p) => p.powerId)
+      (await Picks.findMany<LevelSpell>(db, { pick: "spells", characterLevelIds: levelIds }))
+        .map((p) => p.spellId)
         .sort(),
-    ).toEqual(Object.values(powers).flat().sort());
+    ).toEqual(Object.values(spells).flat().sort());
     const increases = await Picks.findMany<LevelAbilityIncrease>(db, {
       pick: "abilityIncreases",
       characterLevelIds: levelIds,
@@ -731,7 +731,7 @@ describe("a pick a level takes twice", () => {
     const powerAttackTwice = { General: ["Power Attack", "Power Attack"], "Fighter Bonus Feat": ["Dodge"] };
     const lightTwice = {
       ...SORCERER_1,
-      powers: { "Sorcerer Spells": ["Detect Magic", "Light", "Light", "Read Magic"] },
+      spells: { "Sorcerer Spells": ["Detect Magic", "Light", "Light", "Read Magic"] },
     };
     for (const force of [false, true]) {
       const fighterId = await createSeedCharacter(ctx);
@@ -742,7 +742,7 @@ describe("a pick a level takes twice", () => {
       });
       const sorcererId = await createSeedCharacter(ctx, "sorcerer");
       expect(levelUp(session, ctx, sorcererId, "Sorcerer", 1, lightTwice, force)).rejects.toMatchObject({
-        message: 'Power "Light" cannot be picked more than once at a level',
+        message: 'Spell "Light" cannot be picked more than once at a level',
         refusal: "invalid",
       });
     }
@@ -948,18 +948,18 @@ describe("previewing a level-up", () => {
       ["Sorcerer", 1],
       ["Sorcerer", 2],
     ];
-    const { powers } = pickSteps(await preview(ctx, sorcerer, levels));
-    const spells = Object.values(powers.pools).find((pool) => pool.name === "Sorcerer Spells")!;
+    const { spells } = pickSteps(await preview(ctx, sorcerer, levels));
+    const pool = Object.values(spells.pools).find(({ name }) => name === "Sorcerer Spells")!;
     // A leveled pool: its room by spell level
-    expect(spells.tiers).toBeDefined();
-    expect(spells.tiers?.["0"]?.available).toBeGreaterThan(0);
-    expect(spells.tiers?.["1"]?.available).toBeGreaterThan(0);
-    expect(powers.next[spells.id]).toMatchObject({ "0": 0, "1": 0 });
+    expect(pool.tiers).toBeDefined();
+    expect(pool.tiers?.["0"]?.available).toBeGreaterThan(0);
+    expect(pool.tiers?.["1"]?.available).toBeGreaterThan(0);
+    expect(spells.next[pool.id]).toMatchObject({ "0": 0, "1": 0 });
     // The first level's four cantrips taken, the next goes on the second
     const cantrips = ["Detect Magic", "Light", "Read Magic", "Mage Hand"];
-    const picked = await preview(ctx, sorcerer, levels, undefined, { powers: { "Sorcerer Spells": cantrips } });
-    expect(pickSteps(picked).powers.next[spells.id]["0"]).toBe(1);
-    expect(pickSteps(picked).powers.fitted[spells.id]).toEqual(cantrips.map((name) => ctx.powerMap[name]));
+    const picked = await preview(ctx, sorcerer, levels, undefined, { spells: { "Sorcerer Spells": cantrips } });
+    expect(pickSteps(picked).spells.next[pool.id]["0"]).toBe(1);
+    expect(pickSteps(picked).spells.fitted[pool.id]).toEqual(cantrips.map((name) => ctx.spellMap[name]));
   });
   test("gives a spell level the character knows all of no slot from a later level's add", async () => {
     const ctx = await getSeedCtx();
@@ -969,21 +969,21 @@ describe("previewing a level-up", () => {
     await addCharacterLevel(characterId, (await findKlassLevel(cleric, 1))!.id);
     await Modifiers.create(db, {
       sourceId: (await findKlassLevel(cleric, 2))!.id,
-      sourceType: "klass_levels",
+      sourceType: "class_levels",
       target: "aptitudes.clericspells.1.allowed",
       operator: "add",
       value: "1",
       valueType: "number",
     });
     invalidateSeededRuleset(ctx.rulesetId);
-    const { powers } = pickSteps(
+    const { spells } = pickSteps(
       await preview(ctx, characterId, [
         ["Cleric", 2],
         ["Cleric", 3],
       ]),
     );
     // The second level's add gives no 1st-level slot: a 1st-level pick goes on the last planned level
-    expect(powers.next[ctx.aptMap["Cleric Spells"]]["1"]).toBe(1);
+    expect(spells.next[ctx.aptMap["Cleric Spells"]]["1"]).toBe(1);
   });
 });
 
@@ -1014,7 +1014,7 @@ describe("the feats of a level in a batch", () => {
 });
 
 describe("a spell known once in its class list", () => {
-  const KNOWN_LIGHT = { message: 'Power "Light" is already known in Sorcerer Spells', refusal: "invalid" };
+  const KNOWN_LIGHT = { message: 'Spell "Light" is already known in Sorcerer Spells', refusal: "invalid" };
   /** A sorcerer's second level: its skill points, and its one more cantrip when it picks one. */
   const SORCERER_2 = { hp: 4, skills: { Bluff: 1, Concentration: 1, Spellcraft: 1, "Knowledge (Arcana)": 1 } };
   /** A sorcerer's first two levels, but their spells: five cantrips and two first-level spells. */
@@ -1030,11 +1030,11 @@ describe("a spell known once in its class list", () => {
     for (const force of [false, true]) {
       const savedId = await createSeedCharacter(ctx, "sorcerer", { xp: 1000 });
       await levelUp(session, ctx, savedId, "Sorcerer", 1, SORCERER_1);
-      const lightAgain = { ...SORCERER_2, powers: { "Sorcerer Spells": ["Light"] } };
+      const lightAgain = { ...SORCERER_2, spells: { "Sorcerer Spells": ["Light"] } };
       expect(levelUp(session, ctx, savedId, "Sorcerer", 2, lightAgain, force)).rejects.toMatchObject(KNOWN_LIGHT);
 
       const plannedId = await createSeedCharacter(ctx, "sorcerer", { xp: 1000 });
-      const plan = { ...SORCERER_1_TO_2, powers: { "Sorcerer Spells": lightTwice } };
+      const plan = { ...SORCERER_1_TO_2, spells: { "Sorcerer Spells": lightTwice } };
       expect(finalizeBatch(ctx, plannedId, levelsOf("Sorcerer", [4, 4]), plan, force)).rejects.toMatchObject(
         KNOWN_LIGHT,
       );
@@ -1047,50 +1047,50 @@ describe("a spell known once in its class list", () => {
     await Modifiers.create(db, {
       sourceId: characterId,
       sourceType: "characters",
-      target: "powers.magicmissile.wizard.known",
+      target: "spells.magicmissile.wizard.known",
       value: "true",
       valueType: "boolean",
       operator: "set",
     });
     for (const force of [false, true]) {
       expect(levelUp(session, ctx, characterId, "Wizard", 1, WIZARD_1, force)).rejects.toMatchObject({
-        message: 'Power "Magic Missile" is already known in Wizard Spells',
+        message: 'Spell "Magic Missile" is already known in Wizard Spells',
         refusal: "invalid",
       });
     }
-    const previewed = await preview(ctx, characterId, [["Wizard", 1]], undefined, { powers: WIZARD_1.powers });
-    expect(pickSteps(previewed).powers.fitted[ctx.aptMap["Wizard Spells"]]).not.toContain(
-      ctx.powerMap["Magic Missile"],
+    const previewed = await preview(ctx, characterId, [["Wizard", 1]], undefined, { spells: WIZARD_1.spells });
+    expect(pickSteps(previewed).spells.fitted[ctx.aptMap["Wizard Spells"]]).not.toContain(
+      ctx.spellMap["Magic Missile"],
     );
   });
 
   test("previews a spell picked again in its list as the save refuses it: dropped, and the rest saved", async () => {
     const ctx = await getSeedCtx();
     const sorcererSpells = ctx.aptMap["Sorcerer Spells"];
-    const idsOf = (names: string[]) => names.map((name) => ctx.powerMap[name]);
+    const idsOf = (names: string[]) => names.map((name) => ctx.spellMap[name]);
     // A plan's second Light, past the first level's four cantrips
     const plannedId = await createSeedCharacter(ctx, "sorcerer", { xp: 1000 });
     const kept = ["Detect Magic", "Light", "Read Magic", "Mage Hand", "Resistance", "Magic Missile", "Shield"];
-    const picked = { powers: { "Sorcerer Spells": [...kept.slice(0, 4), "Light", ...kept.slice(4)] } };
+    const picked = { spells: { "Sorcerer Spells": [...kept.slice(0, 4), "Light", ...kept.slice(4)] } };
     const sorcerer1To2: [string, number][] = [
       ["Sorcerer", 1],
       ["Sorcerer", 2],
     ];
     const planned = await preview(ctx, plannedId, sorcerer1To2, undefined, picked);
-    expect(pickSteps(planned).powers.fitted[sorcererSpells]).toEqual(idsOf(kept));
-    const plan = { ...SORCERER_1_TO_2, powers: { "Sorcerer Spells": kept } };
+    expect(pickSteps(planned).spells.fitted[sorcererSpells]).toEqual(idsOf(kept));
+    const plan = { ...SORCERER_1_TO_2, spells: { "Sorcerer Spells": kept } };
     expect(await finalizeBatch(ctx, plannedId, levelsOf("Sorcerer", [4, 4]), plan)).toHaveLength(2);
 
     // A saved level's Light, picked again at the next
     const savedId = await createSeedCharacter(ctx, "sorcerer", { xp: 1000 });
     await levelUp(session, ctx, savedId, "Sorcerer", 1, SORCERER_1);
     const next = await preview(ctx, savedId, [["Sorcerer", 2]], undefined, {
-      powers: { "Sorcerer Spells": ["Light", "Resistance"] },
+      spells: { "Sorcerer Spells": ["Light", "Resistance"] },
     });
-    expect(pickSteps(next).powers.fitted[sorcererSpells]).toEqual(idsOf(["Resistance"]));
+    expect(pickSteps(next).spells.fitted[sorcererSpells]).toEqual(idsOf(["Resistance"]));
     await levelUp(session, ctx, savedId, "Sorcerer", 2, {
       ...SORCERER_2,
-      powers: { "Sorcerer Spells": ["Resistance"] },
+      spells: { "Sorcerer Spells": ["Resistance"] },
     });
   });
 
@@ -1099,14 +1099,14 @@ describe("a spell known once in its class list", () => {
     const wizardSpells = ctx.aptMap["Wizard Spells"];
     const characterId = await createSeedCharacter(ctx, "sorcerer", { xp: 1000 });
     await levelUp(session, ctx, characterId, "Sorcerer", 1, SORCERER_1);
-    const wizardLight = { powers: { "Wizard Spells": ["Light"] } };
+    const wizardLight = { spells: { "Wizard Spells": ["Light"] } };
     const previewed = await preview(ctx, characterId, [["Wizard", 1]], undefined, wizardLight);
-    expect(pickSteps(previewed).powers.fitted[wizardSpells]).toEqual([ctx.powerMap["Light"]]);
+    expect(pickSteps(previewed).spells.fitted[wizardSpells]).toEqual([ctx.spellMap["Light"]]);
     // Forced: the wizard level's other picks aren't this test's
     const [level] = await finalizeBatch(ctx, characterId, [["Wizard", 1, 4]], wizardLight, true);
-    const saved = await Picks.findMany<LevelPower>(db, { pick: "powers", characterLevelIds: [level.id] });
-    expect(saved.map(({ aptitudeId, powerId }) => ({ aptitudeId, powerId }))).toEqual([
-      { aptitudeId: wizardSpells, powerId: ctx.powerMap["Light"] },
+    const saved = await Picks.findMany<LevelSpell>(db, { pick: "spells", characterLevelIds: [level.id] });
+    expect(saved.map(({ aptitudeId, spellId }) => ({ aptitudeId, spellId }))).toEqual([
+      { aptitudeId: wizardSpells, spellId: ctx.spellMap["Light"] },
     ]);
   });
 
@@ -1116,20 +1116,20 @@ describe("a spell known once in its class list", () => {
     await Modifiers.create(db, {
       sourceId: characterId,
       sourceType: "characters",
-      target: "powers.light.sorcerer.known",
+      target: "spells.light.sorcerer.known",
       value: "true",
       valueType: "boolean",
       operator: "set",
     });
     // The wizard's spellbook's Light, which the wizard's list doesn't know. Forced: the level's other picks aren't this
     // test's
-    await finalizeBatch(ctx, characterId, [["Wizard", 1, 4]], { powers: { "Wizard Spells": ["Light"] } }, true);
-    const sorcererLight = { powers: { "Sorcerer Spells": ["Light"] } };
+    await finalizeBatch(ctx, characterId, [["Wizard", 1, 4]], { spells: { "Wizard Spells": ["Light"] } }, true);
+    const sorcererLight = { spells: { "Sorcerer Spells": ["Light"] } };
     const lightLevel = { hp: 4, ...sorcererLight };
     for (const force of [false, true])
       expect(levelUp(session, ctx, characterId, "Sorcerer", 1, lightLevel, force)).rejects.toMatchObject(KNOWN_LIGHT);
     const previewed = await preview(ctx, characterId, [["Sorcerer", 1]], undefined, sorcererLight);
-    expect(pickSteps(previewed).powers.fitted[ctx.aptMap["Sorcerer Spells"]]).toEqual([]);
+    expect(pickSteps(previewed).spells.fitted[ctx.aptMap["Sorcerer Spells"]]).toEqual([]);
   });
 
   test("lists a cleric spell a cleric/wizard's spellbook has on his cleric's list too, each at its class's DC", async () => {
@@ -1137,7 +1137,7 @@ describe("a spell known once in its class list", () => {
     const abilities = { Intelligence: 16, Wisdom: 14 };
     const characterId = await createSeedCharacter(ctx, "fighter", { xp: 1000, abilities });
     // Forced: the levels' other picks aren't this test's
-    const spellbook = { hp: 4, powers: { "Wizard Spells": ["Protection from Evil"] } };
+    const spellbook = { hp: 4, spells: { "Wizard Spells": ["Protection from Evil"] } };
     await levelUp(session, ctx, characterId, "Wizard", 1, spellbook, true);
     await levelUp(session, ctx, characterId, "Cleric", 1, WAR_CLERIC_1, true);
 
@@ -1157,22 +1157,22 @@ describe("a spell known once in its class list", () => {
   test("keeps a spell a level knows again from before the rule: each level edits as it reads, a new repeat refused", async () => {
     const ctx = await getSeedCtx();
     const sorcererSpells = ctx.aptMap["Sorcerer Spells"];
-    const [light, detectMagic] = [ctx.powerMap["Light"], ctx.powerMap["Detect Magic"]];
+    const [light, detectMagic] = [ctx.spellMap["Light"], ctx.spellMap["Detect Magic"]];
     const characterId = await createSeedCharacter(ctx, "sorcerer", { xp: 1000 });
     const first = await levelUp(session, ctx, characterId, "Sorcerer", 1, SORCERER_1);
     // A second level that knows Light again, saved before the rule: written straight to the database
     const { skills } = picks(ctx, SORCERER_2);
     const second = await addCharacterLevel(characterId, (await findKlassLevel(ctx.klassMap.pc["Sorcerer"], 2))!.id, {
-      powers: [{ powerId: light, aptitudeId: sorcererSpells }],
+      spells: [{ spellId: light, aptitudeId: sorcererSpells }],
       skills: Object.entries(skills).map(([skillId, rank]) => ({ skillId, rank })),
     });
 
     for (const level of [first, second]) await resaveAsRead(characterId, level.id);
     // Its step keeps its own Light, and drops a spell the first level knows, as its save refuses it
-    const answer = await editAnswer(characterId, second.id, { powers: { [sorcererSpells]: [light, detectMagic] } });
-    expect(pickSteps(answer).powers.fitted[sorcererSpells]).toEqual([light]);
+    const answer = await editAnswer(characterId, second.id, { spells: { [sorcererSpells]: [light, detectMagic] } });
+    expect(pickSteps(answer).spells.fitted[sorcererSpells]).toEqual([light]);
     expect(resaveAsRead(characterId, second.id, { [sorcererSpells]: [detectMagic] })).rejects.toMatchObject({
-      message: 'Power "Detect Magic" is already known in Sorcerer Spells',
+      message: 'Spell "Detect Magic" is already known in Sorcerer Spells',
       refusal: "invalid",
     });
   });
@@ -1258,7 +1258,7 @@ describe("a feat that doesn't stack, held once", () => {
 });
 
 describe("a pick the level's other picks give", () => {
-  const KNOWN_LIGHT = { message: 'Power "Light" is already known in Sorcerer Spells', refusal: "invalid" };
+  const KNOWN_LIGHT = { message: 'Spell "Light" is already known in Sorcerer Spells', refusal: "invalid" };
   const FOCUS = "Weapon Focus: Longsword";
   const WAR_WEAPON = "War Domain Weapon: Longsword";
 
@@ -1312,10 +1312,10 @@ describe("a pick the level's other picks give", () => {
   test("drops a spell another spell picked at the level makes known in its list, whatever their order, as the picker leaves it out and the save refuses it, forced or not", async () => {
     const { characterId, ctx } = await createLightGivingSorcerer();
     const sorcererSpells = ctx.aptMap["Sorcerer Spells"];
-    const pickOf = (name: string) => ({ [sorcererSpells]: [ctx.powerMap[name]] });
+    const pickOf = (name: string) => ({ [sorcererSpells]: [ctx.spellMap[name]] });
     // Its picker leaves Light out once Detect Magic is picked, and offers Detect Magic with Light picked
-    expect(await offeredPowers(characterId, "Sorcerer", 1, "Sorcerer Spells", "Light")).toContain("Light");
-    const lightOffered = await offeredPowers(
+    expect(await offeredSpells(characterId, "Sorcerer", 1, "Sorcerer Spells", "Light")).toContain("Light");
+    const lightOffered = await offeredSpells(
       characterId,
       "Sorcerer",
       1,
@@ -1324,7 +1324,7 @@ describe("a pick the level's other picks give", () => {
       pickOf("Detect Magic"),
     );
     expect(lightOffered).not.toContain("Light");
-    const detectOffered = await offeredPowers(
+    const detectOffered = await offeredSpells(
       characterId,
       "Sorcerer",
       1,
@@ -1336,31 +1336,31 @@ describe("a pick the level's other picks give", () => {
 
     // Picked first or last, Light gives way: its slot goes to the next cantrip, Detect Magic stays
     const kept = ["Detect Magic", "Read Magic", "Mage Hand", "Resistance", "Magic Missile", "Shield"];
-    for (const spells of [
+    for (const picks of [
       ["Light", ...kept],
       [...kept, "Light"],
     ]) {
-      const powers = { "Sorcerer Spells": spells };
-      const previewed = await preview(ctx, characterId, [["Sorcerer", 1]], undefined, { powers });
-      expect(pickSteps(previewed).powers.fitted[sorcererSpells]).toEqual(kept.map((name) => ctx.powerMap[name]));
-      const plan = { ...SORCERER_1, powers: { "Sorcerer Spells": spells.filter((name) => name !== "Resistance") } };
+      const spells = { "Sorcerer Spells": picks };
+      const previewed = await preview(ctx, characterId, [["Sorcerer", 1]], undefined, { spells });
+      expect(pickSteps(previewed).spells.fitted[sorcererSpells]).toEqual(kept.map((name) => ctx.spellMap[name]));
+      const plan = { ...SORCERER_1, spells: { "Sorcerer Spells": picks.filter((name) => name !== "Resistance") } };
       for (const force of [false, true])
         expect(levelUp(session, ctx, characterId, "Sorcerer", 1, plan, force)).rejects.toMatchObject(KNOWN_LIGHT);
     }
     const level = await levelUp(session, ctx, characterId, "Sorcerer", 1, {
       ...SORCERER_1,
-      powers: { "Sorcerer Spells": kept },
+      spells: { "Sorcerer Spells": kept },
     });
-    const saved = await Picks.findMany<LevelPower>(db, { pick: "powers", characterLevelIds: [level.id] });
-    expect(saved.map(({ powerId }) => powerId).sort()).toEqual(kept.map((name) => ctx.powerMap[name]).sort());
+    const saved = await Picks.findMany<LevelSpell>(db, { pick: "spells", characterLevelIds: [level.id] });
+    expect(saved.map(({ spellId }) => spellId).sort()).toEqual(kept.map((name) => ctx.spellMap[name]).sort());
   });
 
   test("drops a feat a spell picked at the level gives, as the feat picker leaves it out and the save refuses it", async () => {
     const { characterId, ctx } = await createLightGivingSorcerer();
-    await give("powers", ctx.powerMap["Detect Magic"], "feats.ironwill.possessed");
-    const detectMagic = { [ctx.aptMap["Sorcerer Spells"]]: [ctx.powerMap["Detect Magic"]] };
+    await give("spells", ctx.spellMap["Detect Magic"], "feats.ironwill.possessed");
+    const detectMagic = { [ctx.aptMap["Sorcerer Spells"]]: [ctx.spellMap["Detect Magic"]] };
     expect(await offeredFeats(characterId, "Sorcerer", 1, "General", "Iron Will")).toEqual(["Iron Will"]);
-    const detectPicked = { powers: detectMagic };
+    const detectPicked = { spells: detectMagic };
     expect(await offeredFeats(characterId, "Sorcerer", 1, "General", "Iron Will", detectPicked)).toEqual([]);
 
     const plan = { ...SORCERER_1, feats: { ...SORCERER_1.feats, General: ["Toughness", "Iron Will"] } };
@@ -1457,33 +1457,33 @@ describe("a pick the level's other picks give", () => {
   test("keeps a spell a level saved before the rule beside the pick that makes it known: it edits as it reads, a new gift refused", async () => {
     const { characterId, ctx, rulesetId } = await createLightGivingSorcerer();
     const sorcererSpells = ctx.aptMap["Sorcerer Spells"];
-    const spellPicks = (names: string[]) => ({ [sorcererSpells]: names.map((name) => ctx.powerMap[name]) });
+    const spellPicks = (names: string[]) => ({ [sorcererSpells]: names.map((name) => ctx.spellMap[name]) });
     // A sorcerer level that picks Light, which its Detect Magic makes known: written straight to the database
-    const { feats, powers, skills } = picks(ctx, SORCERER_1);
+    const { feats, spells, skills } = picks(ctx, SORCERER_1);
     const level = await addCharacterLevel(characterId, (await findKlassLevel(ctx.klassMap.pc["Sorcerer"], 1))!.id, {
       feats: Object.entries(feats).flatMap(([aptitudeId, ids]) => ids.map((featId) => ({ aptitudeId, featId }))),
-      powers: powers[sorcererSpells].map((powerId) => ({ aptitudeId: sorcererSpells, powerId })),
+      spells: spells[sorcererSpells].map((spellId) => ({ aptitudeId: sorcererSpells, spellId })),
       skills: Object.entries(skills).map(([skillId, rank]) => ({ skillId, rank })),
     });
     await resaveAsRead(characterId, level.id);
     const lightKept = await editAnswer(characterId, level.id, {
-      powers: spellPicks(SORCERER_1.powers!["Sorcerer Spells"]),
+      spells: spellPicks(SORCERER_1.spells!["Sorcerer Spells"]),
     });
-    expect(pickSteps(lightKept).powers.fitted[sorcererSpells]).toEqual(powers[sorcererSpells]);
+    expect(pickSteps(lightKept).spells.fitted[sorcererSpells]).toEqual(spells[sorcererSpells]);
 
     // A level saved without Light: its edit that picks it is refused, and its step drops it
     const otherId = await createSeedCharacter(ctx, "sorcerer", { rulesetId, xp: 1000 });
     const kept = ["Detect Magic", "Read Magic", "Mage Hand", "Resistance", "Magic Missile", "Shield"];
     const saved = await levelUp(session, ctx, otherId, "Sorcerer", 1, {
       ...SORCERER_1,
-      powers: { "Sorcerer Spells": kept },
+      spells: { "Sorcerer Spells": kept },
     });
     const withLight = kept.map((name) => (name === "Resistance" ? "Light" : name));
-    const step = pickSteps(await editAnswer(otherId, saved.id, { powers: spellPicks(withLight) })).powers;
+    const step = pickSteps(await editAnswer(otherId, saved.id, { spells: spellPicks(withLight) })).spells;
     expect(step.fitted[sorcererSpells]).toEqual(
-      withLight.filter((name) => name !== "Light").map((name) => ctx.powerMap[name]),
+      withLight.filter((name) => name !== "Light").map((name) => ctx.spellMap[name]),
     );
-    const lightPicks = picks(ctx, { ...SORCERER_1, powers: { "Sorcerer Spells": withLight } });
+    const lightPicks = picks(ctx, { ...SORCERER_1, spells: { "Sorcerer Spells": withLight } });
     for (const force of [false, true]) {
       const edit = CharacterLevelsService.updatePlannedLevel(
         session,
@@ -1503,33 +1503,33 @@ describe("a pick sent by the id of what the fork copied", () => {
     const ctx = await getSeedCtx();
     const fork = await createSeededTestRuleset(SEED_USER_ID);
     const name = "Magic Missile";
-    const copy = await EntitiesService.updateEntity(session, fork.id, "powers", ctx.powerMap[name], {
+    const copy = await EntitiesService.updateEntity(session, fork.id, "spells", ctx.spellMap[name], {
       name,
       description: "Copied",
     });
-    const forkCtx: SeedContext = { ...ctx, powerMap: { ...ctx.powerMap, [name]: copy.id } };
-    const known = SORCERER_1.powers!["Sorcerer Spells"].map((spell) => forkCtx.powerMap[spell]);
+    const forkCtx: SeedContext = { ...ctx, spellMap: { ...ctx.spellMap, [name]: copy.id } };
+    const known = SORCERER_1.spells!["Sorcerer Spells"].map((spell) => forkCtx.spellMap[spell]);
     const savedSpells = async (levelId: string) =>
-      (await Picks.findMany<LevelPower>(db, { pick: "powers", characterLevelIds: [levelId] }))
-        .map(({ powerId }) => powerId)
+      (await Picks.findMany<LevelSpell>(db, { pick: "spells", characterLevelIds: [levelId] }))
+        .map(({ spellId }) => spellId)
         .sort();
 
     // Magic Missile is a first-level spell, in the first level's room for two
     const characterId = await createSeedCharacter(ctx, "sorcerer", { rulesetId: fork.id });
-    const previewed = await preview(ctx, characterId, [["Sorcerer", 1]], undefined, { powers: SORCERER_1.powers });
-    expect(pickSteps(previewed).powers.fitted[ctx.aptMap["Sorcerer Spells"]]).toEqual(known);
+    const previewed = await preview(ctx, characterId, [["Sorcerer", 1]], undefined, { spells: SORCERER_1.spells });
+    expect(pickSteps(previewed).spells.fitted[ctx.aptMap["Sorcerer Spells"]]).toEqual(known);
     const level = await levelUp(session, ctx, characterId, "Sorcerer", 1, SORCERER_1);
     expect(await savedSpells(level.id)).toEqual(known.toSorted());
 
     // A level saved with the copy's id, edited with the source's
     const editedId = await createSeedCharacter(ctx, "sorcerer", { rulesetId: fork.id });
     const saved = await levelUp(session, forkCtx, editedId, "Sorcerer", 1, SORCERER_1);
-    const { feats, powers, skills } = picks(ctx, SORCERER_1);
+    const { feats, spells, skills } = picks(ctx, SORCERER_1);
     await CharacterLevelsService.updatePlannedLevel(
       session,
       editedId,
       saved.id,
-      levelEditPlan({ hp: 4 }, { skills, feats, powers }),
+      levelEditPlan({ hp: 4 }, { skills, feats, spells }),
     );
     expect(await savedSpells(saved.id)).toEqual(known.toSorted());
   });
@@ -1599,7 +1599,7 @@ describe("a pick sent by the id of what the fork copied", () => {
     // The sorcerer's spells, each known in the copy of the list
     const sorcererId = await createSeedCharacter(ctx, "sorcerer", { rulesetId: fork.id });
     const sorcererLevel = await levelUp(session, ctx, sorcererId, "Sorcerer", 1, SORCERER_1);
-    const spells = await Picks.findMany<LevelPower>(db, { pick: "powers", characterLevelIds: [sorcererLevel.id] });
+    const spells = await Picks.findMany<LevelSpell>(db, { pick: "spells", characterLevelIds: [sorcererLevel.id] });
     expect(new Set(spells.map(({ aptitudeId }) => aptitudeId))).toEqual(new Set([sorcererSpells.id]));
   });
 });
@@ -1678,7 +1678,7 @@ describe("re-saving a level", () => {
         "Prohibited School": ["Prohibit Illusion", "Prohibit Necromancy"],
         "Familiar Bond": ["Cat Familiar"],
       },
-      powers: {
+      spells: {
         "Wizard Spells": [
           "Detect Magic",
           "Read Magic",
@@ -1693,8 +1693,8 @@ describe("re-saving a level", () => {
       },
     };
     const level = await levelUp(session, ctx, characterId, "Wizard", 1, plan);
-    const { skills, feats, powers } = picks(ctx, { ...plan, feats: { ...plan.feats, "Prohibited School": [] } });
-    const edit = levelEditPlan({ hp: 4 }, { skills, feats, powers });
+    const { skills, feats, spells } = picks(ctx, { ...plan, feats: { ...plan.feats, "Prohibited School": [] } });
+    const edit = levelEditPlan({ hp: 4 }, { skills, feats, spells });
     expect(CharacterLevelsService.updatePlannedLevel(session, characterId, level.id, edit)).rejects.toThrow(
       /Prohibited School.*unspent/,
     );

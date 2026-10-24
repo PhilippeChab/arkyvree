@@ -9,7 +9,7 @@ import { EntityDetailsCard } from "@/client/src/pages/rulesets/components/index.
  * reads (under `ReadOnlyFields`), and its ruleset.
  */
 interface ClassDetailsProps {
-  /** Its kind (3.5's `klasses`), whose columns and fields its form shows */
+  /** Its kind (3.5's `classes`), whose columns and fields its form shows */
   classType: string;
   /** The class's form, which the card's fields bind, and its save */
   edit: ClassEditor;

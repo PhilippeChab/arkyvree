@@ -59,7 +59,7 @@ describe("ActivitiesService.getActivityUrl", () => {
     const {
       rulesetId: r,
       featMap,
-      powerMap,
+      spellMap,
       itemMap,
       raceMap,
       skillMap,
@@ -69,20 +69,20 @@ describe("ActivitiesService.getActivityUrl", () => {
     } = await getSeedCtx();
     const fighter = klassMap.pc["Fighter"];
     const [mechanic] = await Entities.create<Mechanic>(db, "mechanics", { name: "Linked Mechanic", rulesetId: r });
-    const [level] = await Entities.findMany<KlassLevel>(db, { entityType: "klass_levels", ownerIds: [fighter] });
+    const [level] = await Entities.findMany<KlassLevel>(db, { entityType: "class_levels", ownerIds: [fighter] });
     for (const [table, id, url] of [
       ["feats", featMap["Toughness"], `/rulesets/${r}/feats/${featMap["Toughness"]}/customization`],
-      ["powers", powerMap["Magic Missile"], `/rulesets/${r}/powers/${powerMap["Magic Missile"]}/customization`],
+      ["spells", spellMap["Magic Missile"], `/rulesets/${r}/spells/${spellMap["Magic Missile"]}/customization`],
       ["items", itemMap["Longsword"], `/rulesets/${r}/items/${itemMap["Longsword"]}/customization`],
       ["races", raceMap.pc["Human"], `/rulesets/${r}/races/${raceMap.pc["Human"]}/customization`],
       ["skills", skillMap["Climb"], `/rulesets/${r}/skills/${skillMap["Climb"]}`],
       ["aptitudes", aptMap["General"], `/rulesets/${r}/aptitudes/${aptMap["General"]}`],
       ["abilities", abilityMap["Strength"], `/rulesets/${r}/abilities/${abilityMap["Strength"]}`],
       ["mechanics", mechanic.id, `/rulesets/${r}/mechanics/${mechanic.id}`],
-      ["klasses", fighter, `/rulesets/${r}/classes/${fighter}`],
-      ["klass_levels", level.id, `/rulesets/${r}/classes/${fighter}`],
+      ["classes", fighter, `/rulesets/${r}/classes/${fighter}`],
+      ["class_levels", level.id, `/rulesets/${r}/classes/${fighter}`],
       // A class skill's activity targets the class.
-      ["klass_skills", fighter, `/rulesets/${r}/classes/${fighter}/skills`],
+      ["class_skills", fighter, `/rulesets/${r}/classes/${fighter}/skills`],
     ])
       expect({ table, url: await resolve(table, id) }).toEqual({ table, url });
   });
@@ -90,7 +90,7 @@ describe("ActivitiesService.getActivityUrl", () => {
   test("links a customization to its entity's customization page, on its tab", async () => {
     const { rulesetId: r, featMap, itemMap, klassMap } = await getSeedCtx();
     const [clericLevel] = await Entities.findMany<KlassLevel>(db, {
-      entityType: "klass_levels",
+      entityType: "class_levels",
       ownerIds: [klassMap.pc["Cleric"]],
     });
     const [featModifier] = await Modifiers.findMany(db, {
@@ -99,7 +99,7 @@ describe("ActivitiesService.getActivityUrl", () => {
     });
     const [levelModifier] = await Modifiers.create(db, {
       sourceId: clericLevel.id,
-      sourceType: "klass_levels",
+      sourceType: "class_levels",
       target: "combat.bab",
       value: "1",
       valueType: "number",
@@ -133,7 +133,7 @@ describe("ActivitiesService.getActivityUrl", () => {
     const [featModifier] = await Modifiers.findMany(db, { sourceIds: [featMap["Toughness"]], sourceType: "feats" });
     const [classModifier] = await Modifiers.create(db, {
       sourceId: fighter,
-      sourceType: "klasses",
+      sourceType: "classes",
       target: "combat.bab",
       value: "1",
       valueType: "number",
@@ -151,7 +151,7 @@ describe("ActivitiesService.getActivityUrl", () => {
       });
       return row;
     };
-    const classRequirement = await requirementOf(fighter, "klasses");
+    const classRequirement = await requirementOf(fighter, "classes");
     const modifierRequirement = await requirementOf(featModifier.id, "modifiers");
 
     expect(
@@ -256,8 +256,8 @@ describe("ActivitiesService.getActivityUrl", () => {
       "levels",
       "campaigns",
       "feats",
-      "klass_levels",
-      "klass_skills",
+      "class_levels",
+      "class_skills",
       "players",
       "invites",
       "player_characters",
@@ -274,10 +274,10 @@ describe("ActivitiesService.getActivityUrl", () => {
   test("links nothing for a join no entity edits link by link, whose changes no activity records", async () => {
     const { featMap, klassMap } = await getSeedCtx();
     const fighter = klassMap.pc["Fighter"];
-    const [level] = await Entities.findMany<KlassLevel>(db, { entityType: "klass_levels", ownerIds: [fighter] });
+    const [level] = await Entities.findMany<KlassLevel>(db, { entityType: "class_levels", ownerIds: [fighter] });
     for (const [table, id] of [
       ["feats_aptitudes", featMap["Toughness"]],
-      ["klass_level_feats", level.id],
+      ["class_level_feats", level.id],
     ])
       expect({ table, url: await resolve(table, id) }).toEqual({ table, url: null });
   });

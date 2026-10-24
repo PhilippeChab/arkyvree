@@ -9,7 +9,7 @@ import type { LanguageSeed } from "@/content/dnd3.5/builders/languages/types.ts"
 import type { RaceSeed } from "@/content/dnd3.5/builders/races/types.ts";
 import type { SaveSeed } from "@/content/dnd3.5/builders/saves/types.ts";
 import type { SkillSeed } from "@/content/dnd3.5/builders/skills/types.ts";
-import type { SpellSeed } from "@/content/dnd3.5/builders/spells/types.ts";
+import type { LeveledSpellSeed } from "@/content/dnd3.5/builders/spells/types.ts";
 import type { WizardSchoolSeed } from "@/content/dnd3.5/builders/wizardSchools/types.ts";
 
 /** An extension's book, as the parser generates it (`generated/<book>/index.ts`). */
@@ -22,7 +22,7 @@ export interface BookContent {
   /** Core spells the book adds to its spell lists. */
   cowSpells: CowSpellEntry[];
   domains: DomainSeed[];
-  spells: SpellSeed[];
+  spells: LeveledSpellSeed[];
   standaloneFeats: FeatSeed[];
 }
 
@@ -42,7 +42,7 @@ export interface CoreContent {
   races: RaceSeed[];
   saves: SaveSeed[];
   skills: SkillSeed[];
-  spells: SpellSeed[];
+  spells: LeveledSpellSeed[];
   /** The items others are made from, which a new ruleset starts with. */
   templateItems: ItemSeed[];
   wizardSchools: WizardSchoolSeed[];

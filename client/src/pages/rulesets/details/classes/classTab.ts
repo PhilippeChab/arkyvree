@@ -8,7 +8,7 @@ import type { RulesetDetail } from "@/client/src/lib/queries.ts";
 export interface ClassSectionProps {
   classId: string;
   className: string;
-  /** Its kind (3.5's `klasses`), whose routes its tabs read and write through */
+  /** Its kind (3.5's `classes`), whose routes its tabs read and write through */
   classType: string;
   /** A delete on its tab can be undone from Local Changes: the class is inherited (`useRestorableDelete`) */
   restorable: boolean;

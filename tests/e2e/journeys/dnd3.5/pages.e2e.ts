@@ -44,7 +44,7 @@ async function firstOf(
     | "races"
     | "feats"
     | "items"
-    | "powers",
+    | "spells",
 ) {
   const response = await apiOf(page).api.rulesets[":id"].entities[":entityType"].$get({
     param: { id: rulesetId, entityType: list },
@@ -94,7 +94,7 @@ test.describe("Every page", () => {
       "languages",
       "skills",
       "feats",
-      "powers",
+      "spells",
       "items",
       "aptitudes",
       "classes",
@@ -136,7 +136,7 @@ test.describe("Every page", () => {
       await visit(page, errors, `/rulesets/${rulesetId}/classes/${wizard.id}/${section}`, "Wizard");
   });
 
-  for (const list of ["races", "feats", "items", "powers"] as const) {
+  for (const list of ["races", "feats", "items", "spells"] as const) {
     test(`of the customization of ${list} loads, each of its sections`, async ({ page }) => {
       const rulesetId = await forkCoreRuleset(page, uniqueName("Customization Pages Fork"));
       const entity = await firstOf(page, rulesetId, list);

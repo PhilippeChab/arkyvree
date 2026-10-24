@@ -18,7 +18,7 @@ interface CreateLevelDialogProps {
   /** Its level kind's columns past its fields: its amounts, which its save sends all of */
   columns: LevelColumns;
   form: UseFormReturn<LevelFormData>;
-  /** Its level kind (3.5's `klass_levels`), whose columns and fields its form shows */
+  /** Its level kind (3.5's `class_levels`), whose columns and fields its form shows */
   levelType: string;
   onClose: () => void;
   onSubmit: (data: LevelFormData) => void;

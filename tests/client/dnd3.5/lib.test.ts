@@ -199,13 +199,13 @@ describe("Form rules", () => {
 
 describe("An entity type", () => {
   test("is named in its ruleset's words, singular or plural, the engine's own types' included", () => {
-    expect(entityTypeLabel("powers", DND35_WORDS)).toBe("Spell");
-    expect(entityTypeLabel("powers", DND35_WORDS, true)).toBe("Spells");
-    expect(entityTypeLabel("klasses", DND35_WORDS, true)).toBe("Classes");
-    expect(entityTypeLabel("klass_levels", DND35_WORDS)).toBe("Class Level");
+    expect(entityTypeLabel("spells", DND35_WORDS)).toBe("Spell");
+    expect(entityTypeLabel("spells", DND35_WORDS, true)).toBe("Spells");
+    expect(entityTypeLabel("classes", DND35_WORDS, true)).toBe("Classes");
+    expect(entityTypeLabel("class_levels", DND35_WORDS)).toBe("Class Level");
     expect(entityTypeLabel("modifiers", DND35_WORDS, true)).toBe("Modifiers");
     // Before the rules load, or for a type with no word, a generic word: never its type as the code names it
-    expect(entityTypeLabel("klass_levels", undefined)).toBe("Entity");
+    expect(entityTypeLabel("class_levels", undefined)).toBe("Entity");
     expect(entityTypeLabel("widgets", DND35_WORDS, true)).toBe("Entities");
   });
 });
@@ -213,13 +213,13 @@ describe("An entity type", () => {
 describe("An activity", () => {
   test("is labelled by its type, in its ruleset's words, with its entity", () => {
     expect(
-      formatActivityType("createPower", { baseRules: "Dungeons & Dragons: 3.5", entityName: "Fireball" }, RULES),
+      formatActivityType("createSpell", { baseRules: "Dungeons & Dragons: 3.5", entityName: "Fireball" }, RULES),
     ).toBe("Create Spell: Fireball");
     // The app's words, never the engine's names, an older activity's (its data names no base rules) by every rules'
     expect([
-      formatActivityType("createKlass", { entityName: "Fighter" }, RULES),
-      formatActivityType("updateKlassLevel", {}, RULES),
-      formatActivityType("addKlassSkill", {}, RULES),
+      formatActivityType("createClass", { entityName: "Fighter" }, RULES),
+      formatActivityType("updateClassLevel", {}, RULES),
+      formatActivityType("addClassSkill", {}, RULES),
     ]).toEqual(["Create Class: Fighter", "Update Class Level", "Add Class Skill"]);
   });
 
@@ -237,22 +237,22 @@ describe("An activity", () => {
     expect(formatNotificationMessage("revokeContributor", { actorName: "Ann" })).toBe(
       "Ann revoked your contributor access",
     );
-    // An entity is named in its ruleset's word: a 3.5 power is a spell, another ruleset's a power
+    // An entity is named in its ruleset's word, an older activity's in every rules'
     expect([
-      formatNotificationMessage("deletePower", { baseRules: "Dungeons & Dragons: 3.5", entityName: "Fireball" }, RULES),
-      formatNotificationMessage("createKlass", { actorName: "Ann", entityName: "Fighter" }, RULES),
+      formatNotificationMessage("deleteSpell", { baseRules: "Dungeons & Dragons: 3.5", entityName: "Fireball" }, RULES),
+      formatNotificationMessage("createClass", { actorName: "Ann", entityName: "Fighter" }, RULES),
       // An older activity's (its data names no base rules), in every rules' words
-      formatNotificationMessage("updatePower", { entityName: "Blast" }, RULES),
+      formatNotificationMessage("updateSpell", { entityName: "Blast" }, RULES),
     ]).toEqual(["Someone deleted spell Fireball", "Ann created class Fighter", "Someone updated spell Blast"]);
     // What an entity holds, in its rules' terms: its levels, its progression, its links, an older one's by every rules'
     const dnd35 = { baseRules: "Dungeons & Dragons: 3.5", actorName: "Ann", entityName: "Fighter" };
     expect([
-      formatNotificationMessage("createKlassLevel", dnd35, RULES),
-      formatNotificationMessage("updateKlassLevel", { actorName: "Ann" }, RULES),
-      formatNotificationMessage("deleteKlassLevel", dnd35, RULES),
-      formatNotificationMessage("updateKlassProgression", dnd35, RULES),
-      formatNotificationMessage("addKlassSkill", { ...dnd35, skillName: "Climb" }, RULES),
-      formatNotificationMessage("removeKlassSkill", { actorName: "Ann" }, RULES),
+      formatNotificationMessage("createClassLevel", dnd35, RULES),
+      formatNotificationMessage("updateClassLevel", { actorName: "Ann" }, RULES),
+      formatNotificationMessage("deleteClassLevel", dnd35, RULES),
+      formatNotificationMessage("updateClassProgression", dnd35, RULES),
+      formatNotificationMessage("addClassSkill", { ...dnd35, skillName: "Climb" }, RULES),
+      formatNotificationMessage("removeClassSkill", { actorName: "Ann" }, RULES),
     ]).toEqual([
       "Ann added a level to Fighter",
       "Ann updated a level of a class",
@@ -291,7 +291,7 @@ describe("An activity", () => {
     );
     // A field reads as its own entity's column, never another's of the same key: a class's hit die, a language's type
     const baseRules = "Dungeons & Dragons: 3.5";
-    expect(formatActivityDetails("updateKlass", { baseRules, changedFields: [{ field: "hd", to: "8" }] }, RULES)).toBe(
+    expect(formatActivityDetails("updateClass", { baseRules, changedFields: [{ field: "hd", to: "8" }] }, RULES)).toBe(
       "Hit Die set to d8",
     );
     expect(

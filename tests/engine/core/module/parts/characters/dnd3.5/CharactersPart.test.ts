@@ -18,7 +18,7 @@ const SUMMARY = {
   tracks: [
     {
       advancements: [{ edit: "Edit Fighter Level 1", id: "level", label: "Level 1" }],
-      entityType: "klasses",
+      entityType: "classes",
       id: "fighter",
       label: "Fighter 1",
       name: "Fighter",

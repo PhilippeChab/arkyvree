@@ -2,7 +2,7 @@ import { expect, test } from "bun:test";
 
 import RequirementEvaluator from "@/engine/core/requirements/RequirementEvaluator.ts";
 import Dnd35TargetPaths from "@/engine/rulesets/dnd3.5/Dnd35TargetPaths.ts";
-import type { Aptitude, Feat, Power, RulesetAbility } from "@/engine/rulesets/dnd3.5/index.ts";
+import type { Aptitude, Feat, RulesetAbility, Spell } from "@/engine/rulesets/dnd3.5/index.ts";
 import AbilitiesComponent from "@/engine/rulesets/dnd3.5/model/abilities/AbilitiesComponent.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
@@ -69,9 +69,9 @@ test("a list leaves out a book's copy that lost to another book's in its query: 
   });
   const pagination = (page: number) => ({ limit: 100, page });
   for (const getPage of [
-    (page: number) => EntitiesService.getEntities(fork.id, "powers", {}, pagination(page)),
+    (page: number) => EntitiesService.getEntities(fork.id, "spells", {}, pagination(page)),
     (page: number) => EntitiesService.getEntities(fork.id, "feats", {}, pagination(page)),
-    (page: number) => EntitiesService.getEntities(fork.id, "klasses", {}, pagination(page)),
+    (page: number) => EntitiesService.getEntities(fork.id, "classes", {}, pagination(page)),
     (page: number) => EntitiesService.getEntities(fork.id, "aptitudes", {}, pagination(page)),
   ]) {
     const pages = await readPages(getPage);
@@ -202,13 +202,13 @@ test("a sibling winner takes, of equal rows, the first sibling's, and so does it
   const { host } = await setup(
     async (rulesetId, baseId, index) => {
       const feat = (await Entities.findOne<Feat>(db, { entityType: "feats", rulesetId: baseId, name: "Toughness" }))!;
-      const power = (await Entities.findOne<Power>(db, { entityType: "powers", rulesetId: baseId, name: "Fireball" }))!;
+      const spell = (await Entities.findOne<Spell>(db, { entityType: "spells", rulesetId: baseId, name: "Fireball" }))!;
       const featCopy = await copyEntity(db, "feats", feat.id, {
         id: rulesetId,
         extensionRulesetIds: [],
         ancestorRulesetIds: [baseId],
       });
-      const powerCopy = await copyEntity(db, "powers", power.id, {
+      const spellCopy = await copyEntity(db, "spells", spell.id, {
         id: rulesetId,
         extensionRulesetIds: [],
         ancestorRulesetIds: [baseId],
@@ -238,8 +238,8 @@ test("a sibling winner takes, of equal rows, the first sibling's, and so does it
         rulesetId: baseId,
         name: "Cleric Spells",
       }))!;
-      await Joins.create(db, "powers_aptitudes", {
-        powerId: powerCopy.id,
+      await Joins.create(db, "spells_aptitudes", {
+        spellId: spellCopy.id,
         aptitudeId: clericSpells.id,
         level: 3 + index,
       });
@@ -253,8 +253,8 @@ test("a sibling winner takes, of equal rows, the first sibling's, and so does it
   const featId = view.cow.resolve(
     (await Entities.findOne<Feat>(db, { entityType: "feats", rulesetId: baseId, name: "Toughness" }))!.id,
   );
-  const powerId = view.cow.resolve(
-    (await Entities.findOne<Power>(db, { entityType: "powers", rulesetId: baseId, name: "Fireball" }))!.id,
+  const spellId = view.cow.resolve(
+    (await Entities.findOne<Spell>(db, { entityType: "spells", rulesetId: baseId, name: "Fireball" }))!.id,
   );
   const clericSpells = (await Entities.findOne<Aptitude>(db, {
     entityType: "aptitudes",
@@ -271,6 +271,6 @@ test("a sibling winner takes, of equal rows, the first sibling's, and so does it
   ]);
   expect(feat.requirements.filter((r) => r.includes("strength"))).toHaveLength(1);
   expect(feat.requirements.filter((r) => r.includes("|or|"))).toHaveLength(2);
-  expect(customizationsOf(view, powerId).links).toContain(`${clericSpells.id}|4`);
-  expect(await compareCopies(fork, [featId, powerId])).toEqual({ compared: 2, mismatches: [] });
+  expect(customizationsOf(view, spellId).links).toContain(`${clericSpells.id}|4`);
+  expect(await compareCopies(fork, [featId, spellId])).toEqual({ compared: 2, mismatches: [] });
 });

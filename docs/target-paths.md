@@ -184,7 +184,7 @@ Grouped by shield type (`SHIELD_TYPE`), as the picker lists them; an item is nev
 | `feats.<family>.*.count` | number | Times any one feat of the family was taken (req only) |
 | `feats.<family>.count` | number | Times the family's feats were taken, all together (req only) |
 
-A modifier that sets `feats.<name>.possessed` true grants the feat, and one that sets `powers.<spell>.<aptitude>.known` true the spell on its list (`languages.<name>.known`, a language): the character has it once the modifier applies, in the build's rounds behind the modifier's requirements as any modifier, its own and its source's (a feat's prerequisites, an item's own requirements, a class level's). A feat granted so is possessed, counted and listed with those the character has without a pick, and a spell known with its DC; its own modifiers then apply, behind their own requirements, not its prerequisites: the grant is its gate. A requirement that reads what another grant gives (a grant gated on `feats.<name>.possessed`) is met once that grant has applied. A grant applied while its requirements held stays given if another modifier breaks them, as any modifier does, and the validation reports it. A grant names the one feat, spell or language it gives and sets a literal `true`: a modifier on one of these paths written as a template, or on a wildcard (`feats.<family>.*.possessed`, which a requirement reads as any feat of the family), would mark it had without giving it, so its save is refused and a stored one is skipped, saying why (`CategoryPaths.findGrantError`). The editor offers neither: the modifier catalog lists no such wildcard, and marks these paths `literalOnly` from the same declaration (its category's `grants`), so the Template switch is off there. A grant on a condition takes the condition as its requirement (Great Fortitude, requiring `languages.common.known`).
+A modifier that sets `feats.<name>.possessed` true grants the feat, and one that sets `spells.<spell>.<aptitude>.known` true the spell on its list (`languages.<name>.known`, a language): the character has it once the modifier applies, in the build's rounds behind the modifier's requirements as any modifier, its own and its source's (a feat's prerequisites, an item's own requirements, a class level's). A feat granted so is possessed, counted and listed with those the character has without a pick, and a spell known with its DC; its own modifiers then apply, behind their own requirements, not its prerequisites: the grant is its gate. A requirement that reads what another grant gives (a grant gated on `feats.<name>.possessed`) is met once that grant has applied. A grant applied while its requirements held stays given if another modifier breaks them, as any modifier does, and the validation reports it. A grant names the one feat, spell or language it gives and sets a literal `true`: a modifier on one of these paths written as a template, or on a wildcard (`feats.<family>.*.possessed`, which a requirement reads as any feat of the family), would mark it had without giving it, so its save is refused and a stored one is skipped, saying why (`CategoryPaths.findGrantError`). The editor offers neither: the modifier catalog lists no such wildcard, and marks these paths `literalOnly` from the same declaration (its category's `grants`), so the Template switch is off there. A grant on a condition takes the condition as its requirement (Great Fortitude, requiring `languages.common.known`).
 
 A family is the feats sharing a `FEAT_FAMILY` property (*Feat family groupings* in [customization.md](./customization.md)). `feats.<family>.possessed` names no feat, unless a feat has the family's name: Martial Weapon Proficiency (every martial weapon) and its family (the feats for one weapon) share `feats.martialweaponproficiency`, where `possessed` and `count` are the feat's and `*` reaches the family's feats. The family's count isn't listed there.
 
@@ -206,18 +206,18 @@ Weapon items, armor items, and shield items auto-generate proficiency requiremen
 | `feats.shieldproficiency.possessed`                | Light/Heavy shield items       |
 | `feats.towershieldproficiency.possessed`           | Tower shield items             |
 
-## powers
+## spells
 
 | Path | Type | Description |
 |------|------|-------------|
-| `powers.<name>.properties.<type>` | string list | Power property values: one per property row, in the type's options' order |
-| `powers.<spell>.<aptitude>.known` | boolean | Whether spell is known via this aptitude |
+| `spells.<name>.properties.<type>` | string list | Spell property values: one per property row, in the type's options' order |
+| `spells.<spell>.<aptitude>.known` | boolean | Whether spell is known via this aptitude |
 
 A property path holds its type's values as a list (a spell's components: `Verbal`, `Somatic`, `Divine Focus`). A requirement asks whether one of them is there, whole (`contains` / `not_contains`: `Focus` isn't on a spell with only a divine focus), and a modifier adds a value or takes one (`add` / `subtract`). A sheet lists them joined, in the books' order. A template can't read one as a value: it's a list, not a string or a number.
 
 A list a feat brings (one a feat gives slots in or joins to its class's list, and no class gives slots in: a cleric's domain, a specialist wizard's school) has no known paths: its spells come with the feat.
 
-### powers (DC groupings)
+### spells (DC groupings)
 
 Grouped by spell school and spell descriptor, and reached by each spell's name. A spell has a DC for each class that casts it: its level on that class's list and that class's casting ability (a wizard/bard's Hold Person: 3rd level and Intelligence as a wizard's, 2nd and Charisma as a bard's). A DC object is shared by its spell's groupings and its entry, so modifying it via school or name affects the same DC.
 
@@ -225,10 +225,10 @@ DC formula: `base (10) + spell level + ability modifier + misc`
 
 | Path | Type | Description |
 |------|------|-------------|
-| `powers.groups.<group>.*.dc.misc` | number | DC misc modifier |
-| `powers.groups.<group>.*.dc.total` | number | DC total (read-only, recomputed) |
+| `spells.groups.<group>.*.dc.misc` | number | DC misc modifier |
+| `spells.groups.<group>.*.dc.total` | number | DC total (read-only, recomputed) |
 
-`<group>` is a spell school (e.g., `evocation`) or descriptor (e.g., `fire`); its `*` reaches each spell, and each class's DC of it. Individual spells use `powers.<spell>.dc.*.misc` and `powers.<spell>.dc.*.total`, each class's DC of the spell (`powers.fireball.dc.*.misc`; `powers.fireball.dc.wizard.misc` is the wizard's alone), without the `groups` namespace. Only powers with a spell level and ability DC get DC entries.
+`<group>` is a spell school (e.g., `evocation`) or descriptor (e.g., `fire`); its `*` reaches each spell, and each class's DC of it. Individual spells use `spells.<spell>.dc.*.misc` and `spells.<spell>.dc.*.total`, each class's DC of the spell (`spells.fireball.dc.*.misc`; `spells.fireball.dc.wizard.misc` is the wizard's alone), without the `groups` namespace. Only spells with a spell level and ability DC get DC entries.
 
 ## identity
 

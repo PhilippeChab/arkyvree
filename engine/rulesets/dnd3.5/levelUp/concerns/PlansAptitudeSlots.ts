@@ -1,6 +1,6 @@
 import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
 import type LevelUpBase from "@/engine/rulesets/dnd3.5/levelUp/LevelUpBase.ts";
-import type { FeatSlots, PowerSlots } from "@/engine/rulesets/dnd3.5/levelUp/PicksDistribution.ts";
+import type { FeatSlots, SpellSlots } from "@/engine/rulesets/dnd3.5/levelUp/PicksDistribution.ts";
 import { ALLOWED_ALL } from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudesComponent.ts";
 import AptitudeTargets from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTargets.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
@@ -9,17 +9,17 @@ import type { Constructor } from "@/lib/mixins.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 import type { Modifier } from "@/shared/relations.ts";
 
-/** A planned level's slot deltas: per feat pool, and per power pool and spell level. */
+/** A planned level's slot deltas: per feat pool, and per spell pool and spell level. */
 interface SlotDeltas {
   feats: Record<string, number>;
-  powers: Record<string, Record<string, number>>;
+  spells: Record<string, Record<string, number>>;
 }
 
 /** The slots an all-known spell level counts as: every spell of its level. */
 const ALL_KNOWN_SLOTS = 999;
 
 /**
- * Each planned level's feat and power slots, from the ruleset's modifiers rather than a character build per level:
+ * Each planned level's feat and spell slots, from the ruleset's modifiers rather than a character build per level:
  * what its class level's modifiers and the feats it grants add to a pool (`aptitudes.<slug>.allowed`, a spell level's
  * `aptitudes.<slug>.<level>.allowed`), and the general feats each character level gives, by the ruleset's Settings.
  * The character's unspent slots (a human's bonus feat) go to the first level.
@@ -28,9 +28,9 @@ export function PlansAptitudeSlots<B extends Constructor<LevelUpBase<DetailedCha
   abstract class PlanningAptitudeSlots extends Base {
     /**
      * Adds what modifiers targeting a pool's `aptitudes.<slug>.allowed` (a feat pool) or `aptitudes.<slug>.<level>.allowed`
-     * (a power pool's spell level) give a level. Setting a spell level's to -1, "all spells known", counts as all of them.
+     * (a spell pool's spell level) give a level. Setting a spell level's to -1, "all spells known", counts as all of them.
      */
-    private addModifierDeltas(deltas: SlotDeltas, modifiers: Modifier[], featSlots: FeatSlots, powerSlots: PowerSlots) {
+    private addModifierDeltas(deltas: SlotDeltas, modifiers: Modifier[], featSlots: FeatSlots, spellSlots: SpellSlots) {
       const aptitudeSlugToId = this.dnd35.aptitudeIdBySlug;
       for (const mod of modifiers) {
         // A pool's slots take a literal: an add, or a spell level's set to -1 (the paths allow nothing else)
@@ -46,11 +46,11 @@ export function PlansAptitudeSlots<B extends Constructor<LevelUpBase<DetailedCha
         const slot = AptitudeTargets.parseSpellLevel(mod.target);
         if (slot?.field === "allowed") {
           const aptId = aptitudeSlugToId.get(slot.list);
-          if (aptId && powerSlots[aptId]) {
-            if (!deltas.powers[aptId]) deltas.powers[aptId] = {};
+          if (aptId && spellSlots[aptId]) {
+            if (!deltas.spells[aptId]) deltas.spells[aptId] = {};
             const spellLevel = String(slot.level);
-            if (mod.operator === "set" && value === -1) deltas.powers[aptId][spellLevel] = ALL_KNOWN_SLOTS;
-            else deltas.powers[aptId][spellLevel] = (deltas.powers[aptId][spellLevel] ?? 0) + value;
+            if (mod.operator === "set" && value === -1) deltas.spells[aptId][spellLevel] = ALL_KNOWN_SLOTS;
+            else deltas.spells[aptId][spellLevel] = (deltas.spells[aptId][spellLevel] ?? 0) + value;
           }
         }
       }
@@ -77,12 +77,12 @@ export function PlansAptitudeSlots<B extends Constructor<LevelUpBase<DetailedCha
       autoFeatRecords: { featsInRule: { id: string } }[],
       generalFeats: number,
       featSlots: FeatSlots,
-      powerSlots: PowerSlots,
+      spellSlots: SpellSlots,
     ): SlotDeltas {
-      const deltas: SlotDeltas = { feats: {}, powers: {} };
+      const deltas: SlotDeltas = { feats: {}, spells: {} };
       const { aptitudeIdBySlug } = this.dnd35;
       const { modifiersBySource } = this.rulesetData;
-      const add = (modifiers: Modifier[]) => this.addModifierDeltas(deltas, modifiers, featSlots, powerSlots);
+      const add = (modifiers: Modifier[]) => this.addModifierDeltas(deltas, modifiers, featSlots, spellSlots);
 
       add(modifiersBySource.get(klassLevelId) ?? []);
       for (const rec of autoFeatRecords) add(modifiersBySource.get(rec.featsInRule.id) ?? []);
@@ -95,21 +95,21 @@ export function PlansAptitudeSlots<B extends Constructor<LevelUpBase<DetailedCha
 
     /**
      * Each planned level's slots (`klassLevelIds`, with the feats each grants, after the character's
-     * `savedLevelCount` levels) in the character's feat and power pools. `baselineAptitudes` are the character's
-     * aptitudes as its sheet has them: a pool's counts, and a power pool's spell levels by number.
+     * `savedLevelCount` levels) in the character's feat and spell pools. `baselineAptitudes` are the character's
+     * aptitudes as its sheet has them: a pool's counts, and a spell pool's spell levels by number.
      */
     protected planAptitudeSlots(
       klassLevelIds: string[],
       grantedFeatRecords: { aptitudeId: string; featsInRule: { id: string } }[][],
       featPoolIds: string[],
-      powerPoolIds: string[],
+      spellPoolIds: string[],
       savedLevelCount: number,
       baselineAptitudes: Record<string, { allowed: number; id: string; spent: number } & Record<string, unknown>>,
-    ): { perLevelFeatSlots: FeatSlots; perLevelPowerSlots: PowerSlots } {
+    ): { perLevelFeatSlots: FeatSlots; perLevelSpellSlots: SpellSlots } {
       const perLevelFeatSlots: FeatSlots = {};
-      const perLevelPowerSlots: PowerSlots = {};
+      const perLevelSpellSlots: SpellSlots = {};
       for (const aptId of featPoolIds) perLevelFeatSlots[aptId] = [];
-      for (const aptId of powerPoolIds) perLevelPowerSlots[aptId] = [];
+      for (const aptId of spellPoolIds) perLevelSpellSlots[aptId] = [];
       // A spell level all known (the character's already, or a planned level's set -1) takes no slot from a later add:
       // the sheet's count, and the class tables'
       const allKnown = this.allKnownLevels(baselineAptitudes);
@@ -121,19 +121,19 @@ export function PlansAptitudeSlots<B extends Constructor<LevelUpBase<DetailedCha
           grantedFeatRecords[i] ?? [],
           levelRules.countGeneralFeatsAfter(savedLevelCount + i),
           perLevelFeatSlots,
-          perLevelPowerSlots,
+          perLevelSpellSlots,
         );
         for (const aptId of featPoolIds) perLevelFeatSlots[aptId].push(Math.max(0, deltas.feats[aptId] ?? 0));
 
-        for (const aptId of powerPoolIds) {
+        for (const aptId of spellPoolIds) {
           const slots: Record<string, number> = {};
-          for (const [sl, delta] of Object.entries(deltas.powers[aptId] ?? {})) {
+          for (const [sl, delta] of Object.entries(deltas.spells[aptId] ?? {})) {
             const key = `${aptId}:${sl}`;
             if (allKnown.has(key)) continue;
             if (delta >= ALL_KNOWN_SLOTS) allKnown.add(key);
             if (delta > 0) slots[sl] = Math.min(delta, ALL_KNOWN_SLOTS);
           }
-          perLevelPowerSlots[aptId].push(slots);
+          perLevelSpellSlots[aptId].push(slots);
         }
       }
 
@@ -144,7 +144,7 @@ export function PlansAptitudeSlots<B extends Constructor<LevelUpBase<DetailedCha
           perLevelFeatSlots[apt.id][0] += baselineAvailable;
       }
 
-      return { perLevelFeatSlots, perLevelPowerSlots };
+      return { perLevelFeatSlots, perLevelSpellSlots };
     }
   }
   return PlanningAptitudeSlots;

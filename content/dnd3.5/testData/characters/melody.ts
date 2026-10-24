@@ -51,19 +51,19 @@ export default {
     { levelIndex: 2, featName: "Combat Casting", aptitude: "General" },
   ],
   // Bard spells known per level: L1=4 cantrips, L2=+1 cantrip +2 L1, L3=+1 cantrip +1 L1
-  powers: [
+  spells: [
     // L1: 4 cantrips
-    { levelIndex: 0, powerName: "Detect Magic", aptitude: "Bard Spells" },
-    { levelIndex: 0, powerName: "Light", aptitude: "Bard Spells" },
-    { levelIndex: 0, powerName: "Ghost Sound", aptitude: "Bard Spells" },
-    { levelIndex: 0, powerName: "Prestidigitation", aptitude: "Bard Spells" },
+    { levelIndex: 0, spellName: "Detect Magic", aptitude: "Bard Spells" },
+    { levelIndex: 0, spellName: "Light", aptitude: "Bard Spells" },
+    { levelIndex: 0, spellName: "Ghost Sound", aptitude: "Bard Spells" },
+    { levelIndex: 0, spellName: "Prestidigitation", aptitude: "Bard Spells" },
     // L2: +1 cantrip, +2 L1 spells
-    { levelIndex: 1, powerName: "Message", aptitude: "Bard Spells" },
-    { levelIndex: 1, powerName: "Charm Person", aptitude: "Bard Spells" },
-    { levelIndex: 1, powerName: "Cure Light Wounds", aptitude: "Bard Spells" },
+    { levelIndex: 1, spellName: "Message", aptitude: "Bard Spells" },
+    { levelIndex: 1, spellName: "Charm Person", aptitude: "Bard Spells" },
+    { levelIndex: 1, spellName: "Cure Light Wounds", aptitude: "Bard Spells" },
     // L3: +1 cantrip, +1 L1 spell
-    { levelIndex: 2, powerName: "Mage Hand", aptitude: "Bard Spells" },
-    { levelIndex: 2, powerName: "Sleep", aptitude: "Bard Spells" },
+    { levelIndex: 2, spellName: "Mage Hand", aptitude: "Bard Spells" },
+    { levelIndex: 2, spellName: "Sleep", aptitude: "Bard Spells" },
   ],
   inventory: [
     { name: "Rapier", quantity: 1, equipped: true, location: "Main Hand", groups: [0] },

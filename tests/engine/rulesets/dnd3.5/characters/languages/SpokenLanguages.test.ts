@@ -196,7 +196,7 @@ describe("A character's languages", () => {
     const { klassLevel } = await createTestKlassLevel(fork.id);
     await Modifiers.create(db, {
       sourceId: klassLevel.id,
-      sourceType: "klass_levels",
+      sourceType: "class_levels",
       target: "languages.extrapicks",
       operator: "add",
       value: "1",

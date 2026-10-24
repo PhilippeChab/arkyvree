@@ -17,10 +17,10 @@ export interface LevelGains {
   classSkillIds: Set<string>;
   /** Each feat pool's room with the level, by aptitude id: what its slots (and the levels before it left) open */
   featRoom: Map<string, number>;
-  /** Each spell list's room with the level, by aptitude id, then by spell level: the spells its class learns there */
-  powerRoom: Map<string, Map<number, number>>;
   skillPoints: number;
   skills: ReturnType<typeof PicksDistribution.contextsOf>;
+  /** Each spell list's room with the level, by aptitude id, then by spell level: the spells its class learns there */
+  spellRoom: Map<string, Map<number, number>>;
 }
 
 /**
@@ -52,8 +52,8 @@ export default class ImportedLevelGains extends PlannedLevelsState {
       gains.classSkills.merged,
     );
     const featRoom = new Map(Object.values(gains.pools.featPools).map((pool) => [pool.id, pool.available]));
-    const powerRoom = new Map(
-      Object.values(gains.pools.powerPools).map((pool) => [
+    const spellRoom = new Map(
+      Object.values(gains.pools.spellPools).map((pool) => [
         pool.id,
         new Map(
           Object.entries(pool.levels ?? {}).map(([spellLevel, { available }]) => [Number(spellLevel), available]),
@@ -63,7 +63,7 @@ export default class ImportedLevelGains extends PlannedLevelsState {
     return {
       classSkillIds: new Set(gains.classSkills.perLevel[0]),
       featRoom,
-      powerRoom,
+      spellRoom,
       skillPoints: gains.perLevelSkillPoints[0] ?? 0,
       skills: PicksDistribution.contextsOf(skills),
     };

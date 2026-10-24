@@ -29,7 +29,7 @@ export const PROGRESSION: ProgressionDescription = {
     },
     several: "severalSpellLists",
     tab: "spells",
-    type: "powers",
+    type: "spells",
   },
   grants: {
     picks: "featPicks",

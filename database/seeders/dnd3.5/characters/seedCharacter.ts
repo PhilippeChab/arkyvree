@@ -1,5 +1,5 @@
 /**
- * Seeds a character: its row, its classes' levels with their skills, feats and powers, its inventory, and its bonded
+ * Seeds a character: its row, its classes' levels with their skills, feats and spells, its inventory, and its bonded
  * creatures.
  */
 
@@ -66,7 +66,7 @@ export async function addClassLevels(
   const klassId = ctx.klassMap.pc[className];
   const levelIds: string[] = [];
 
-  const klassLevels = await Entities.findMany<KlassLevel>(db, { entityType: "klass_levels", ownerIds: [klassId] });
+  const klassLevels = await Entities.findMany<KlassLevel>(db, { entityType: "class_levels", ownerIds: [klassId] });
   for (let i = 0; i < levels.length; i++) {
     const klassLevel = klassLevels.find((row) => row.level === levels[i])!;
 
@@ -100,24 +100,6 @@ export async function addFeats(
   );
 }
 
-export async function addPowers(
-  db: Db,
-  ctx: SeedContext,
-  charLevelIds: string[],
-  powers: { aptitude: string; levelIndex: number; powerName: string }[],
-) {
-  if (powers.length === 0) return;
-  await Picks.createMany(
-    db,
-    "powers",
-    powers.map((p) => ({
-      characterLevelId: charLevelIds[p.levelIndex],
-      powerId: ctx.powerMap[p.powerName],
-      aptitudeId: ctx.aptMap[p.aptitude],
-    })),
-  );
-}
-
 export async function addSkills(
   db: Db,
   ctx: SeedContext,
@@ -135,10 +117,28 @@ export async function addSkills(
   );
 }
 
+export async function addSpells(
+  db: Db,
+  ctx: SeedContext,
+  charLevelIds: string[],
+  spells: { aptitude: string; levelIndex: number; spellName: string }[],
+) {
+  if (spells.length === 0) return;
+  await Picks.createMany(
+    db,
+    "spells",
+    spells.map((p) => ({
+      characterLevelId: charLevelIds[p.levelIndex],
+      spellId: ctx.spellMap[p.spellName],
+      aptitudeId: ctx.aptMap[p.aptitude],
+    })),
+  );
+}
+
 export async function createCharacter(
   db: Db,
   ctx: SeedContext,
-  data: Omit<CharacterSeed, "classes" | "feats" | "inventory" | "powers" | "skills"> & {
+  data: Omit<CharacterSeed, "classes" | "feats" | "inventory" | "spells" | "skills"> & {
     /** Override the ruleset (e.g., to place the character in a fork that subscribes to an extension). Defaults to seed. */
     rulesetId?: string;
   },
@@ -179,7 +179,7 @@ export async function createCharacter(
 export async function seedCharacter(
   db: Db,
   ctx: SeedContext,
-  { classes, skills, feats, powers = [], inventory, ...data }: CharacterSeed,
+  { classes, skills, feats, spells = [], inventory, ...data }: CharacterSeed,
 ) {
   const characterId = await createCharacter(db, ctx, data);
   const levelIds: string[] = [];
@@ -197,7 +197,7 @@ export async function seedCharacter(
   }
   await addSkills(db, ctx, levelIds, skills);
   await addFeats(db, ctx, levelIds, feats);
-  await addPowers(db, ctx, levelIds, powers);
+  await addSpells(db, ctx, levelIds, spells);
   await addInventory(db, ctx, characterId, inventory);
   await reconcileChildren(db, characterId);
 }

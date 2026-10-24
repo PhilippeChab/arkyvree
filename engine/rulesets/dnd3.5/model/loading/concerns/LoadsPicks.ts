@@ -5,15 +5,15 @@ import type {
   LoadedCharacterData,
   Resolve,
 } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
-import type { CharacterLevels, HeldFeat, HeldPower } from "@/engine/rulesets/dnd3.5/model/loading/loadedEntities.ts";
-import PowersComponent from "@/engine/rulesets/dnd3.5/model/powers/PowersComponent.ts";
+import type { CharacterLevels, HeldFeat, HeldSpell } from "@/engine/rulesets/dnd3.5/model/loading/loadedEntities.ts";
+import SpellsComponent from "@/engine/rulesets/dnd3.5/model/spells/SpellsComponent.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type {
   CharacterLevel,
   FeatWithAptitudes,
   KlassLevelFeat,
-  KlassLevelPower,
-  PowerWithAptitudes,
+  KlassLevelSpell,
+  SpellWithAptitudes,
 } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 
@@ -21,7 +21,7 @@ import type { Constructor } from "@/lib/mixins.ts";
  * What each saved level's class level grants (`grants`, by class level), attached to the level it's granted at. The
  * class level is the one the view stands for the level's stored one, which `resolveLevels` resolved: on a fork that
  * copied the class after the level was saved, the stored id still names the source's class level, and its copy's
- * grants are the ones the view keys. The view's grants leave out an archived feat or power.
+ * grants are the ones the view keys. The view's grants leave out an archived feat or spell.
  */
 function grantedAt<G, R>(levels: CharacterLevel[], grants: Map<string, G[]>, toRow: (grant: G) => R) {
   return levels.flatMap((level) =>
@@ -64,25 +64,25 @@ function toGrantedFeat({ featsInRule, ...grant }: KlassLevelFeat & { featsInRule
   };
 }
 
-/** A class level's granted power as the build reads it: the power, then the grant's class level, pool and flag. */
-function toGrantedPower(
-  { powersInRule, ...grant }: KlassLevelPower & { powersInRule: PowerWithAptitudes },
+/** A class level's granted spell as the build reads it: the spell, then the grant's class level, pool and flag. */
+function toGrantedSpell(
+  { spellsInRule, ...grant }: KlassLevelSpell & { spellsInRule: SpellWithAptitudes },
   rulesetData: RulesetData,
 ) {
   return {
-    ...toPowerRow(powersInRule, rulesetData),
+    ...toSpellRow(spellsInRule, rulesetData),
     klassLevelId: grant.klassLevelId,
     aptitudeId: grant.aptitudeId,
     free: grant.free,
   };
 }
 
-/** A power as a pick or a grant holds it: the view's, without its lists' links, with its save's name. */
-function toPowerRow({ powersAptitudesInRules: _links, ...power }: PowerWithAptitudes, rulesetData: RulesetData) {
-  return { ...power, saveName: PowersComponent.saveNameOf(power, rulesetData) };
+/** A spell as a pick or a grant holds it: the view's, without its lists' links, with its save's name. */
+function toSpellRow({ spellsAptitudesInRules: _links, ...spell }: SpellWithAptitudes, rulesetData: RulesetData) {
+  return { ...spell, saveName: SpellsComponent.saveNameOf(spell, rulesetData) };
 }
 
-/** The character's levels and its picks of skills, feats and powers: picked, and granted by their class levels. */
+/** The character's levels and its picks of skills, feats and spells: picked, and granted by their class levels. */
 export function LoadsPicks<B extends Constructor<CharacterDataLoader<LoadedCharacterData>>>(Base: B) {
   abstract class LoadingPicks extends Base {
     /** The feats: picked and given (deduped), in character-level order; and the given per aptitude. */
@@ -130,45 +130,45 @@ export function LoadsPicks<B extends Constructor<CharacterDataLoader<LoadedChara
     }
 
     /**
-     * The powers: picked, then given; and the given (not free) per aptitude. A pick's or a grant's spell level
+     * The spells: picked, then given; and the given (not free) per aptitude. A pick's or a grant's spell level
      * is its composed link's: the ruleset merges the books' copies of a spell and of a list, so a stored pair (Complete
      * Divine's Bane on Complete Warrior's copy of the favored soul's list) may have no link row of its own.
      */
-    private buildPowers(
+    private buildSpells(
       picks: SavedPickRows,
       rulesetData: RulesetData,
       { characterLevels }: CharacterLevels,
       resolve: Resolve,
     ) {
       const dnd35 = Dnd35View.of(rulesetData);
-      const withLevel = <T extends { aptitudeId: string; id: string }>(power: T) => ({
-        ...power,
-        powerLevel:
-          dnd35.powersById.get(power.id)?.powersAptitudesInRules.find((link) => link.aptitudeId === power.aptitudeId)
+      const withLevel = <T extends { aptitudeId: string; id: string }>(spell: T) => ({
+        ...spell,
+        spellLevel:
+          dnd35.spellsById.get(spell.id)?.spellsAptitudesInRules.find((link) => link.aptitudeId === spell.aptitudeId)
             ?.level ?? null,
       });
-      const pickedPowers = pickedAt(resolve(picks.powers), characterLevels, (link) => {
-        const power = dnd35.powersById.get(link.powerId);
-        return power && { ...toPowerRow(power, rulesetData), aptitudeId: link.aptitudeId };
+      const pickedSpells = pickedAt(resolve(picks.spells), characterLevels, (link) => {
+        const spell = dnd35.spellsById.get(link.spellId);
+        return spell && { ...toSpellRow(spell, rulesetData), aptitudeId: link.aptitudeId };
       }).map(withLevel);
-      const givenPowers = grantedAt(characterLevels, dnd35.klassLevelPowersWithPowersByKlassLevel, (grant) =>
-        toGrantedPower(grant, rulesetData),
+      const givenSpells = grantedAt(characterLevels, dnd35.klassLevelSpellsWithSpellsByKlassLevel, (grant) =>
+        toGrantedSpell(grant, rulesetData),
       ).map(withLevel);
 
-      const klassLevelPowerCountsByAptitudeId = givenPowers.reduce(
-        (acc, power) => {
-          if (!power.free) acc[power.aptitudeId] = (acc[power.aptitudeId] || 0) + 1;
+      const klassLevelSpellCountsByAptitudeId = givenSpells.reduce(
+        (acc, spell) => {
+          if (!spell.free) acc[spell.aptitudeId] = (acc[spell.aptitudeId] || 0) + 1;
           return acc;
         },
         {} as Record<string, number>,
       );
 
-      const allPowers: HeldPower[] = [...pickedPowers, ...givenPowers];
-      return { allPowers, klassLevelPowerCountsByAptitudeId };
+      const allSpells: HeldSpell[] = [...pickedSpells, ...givenSpells];
+      return { allSpells, klassLevelSpellCountsByAptitudeId };
     }
 
     /**
-     * The character's skills, feats and powers: what its levels pick and their class levels grant, as the view composes
+     * The character's skills, feats and spells: what its levels pick and their class levels grant, as the view composes
      * them.
      */
     protected buildPicks(picks: SavedPickRows, rulesetData: RulesetData, levels: CharacterLevels, resolve: Resolve) {
@@ -180,7 +180,7 @@ export function LoadsPicks<B extends Constructor<CharacterDataLoader<LoadedChara
       return {
         skills: realSkills,
         ...this.buildFeats(picks, rulesetData, levels, resolve),
-        ...this.buildPowers(picks, rulesetData, levels, resolve),
+        ...this.buildSpells(picks, rulesetData, levels, resolve),
       };
     }
 

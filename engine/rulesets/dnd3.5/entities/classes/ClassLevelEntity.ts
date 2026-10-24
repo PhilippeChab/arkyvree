@@ -36,7 +36,7 @@ const LEVEL = z.number().int().min(1).max(RULESET_LIMITS.classLevel);
  * previous level.
  */
 export default class ClassLevelEntity extends CustomizationPageEntity<
-  "klass_levels",
+  "class_levels",
   ClassLevelBody,
   { level?: number },
   typeof CLASS_LEVEL_FIELDS.fields
@@ -59,7 +59,7 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
 
   protected override readonly label = "Class level";
 
-  override readonly type = "klass_levels";
+  override readonly type = "class_levels";
 
   /**
    * Refuses a new level without its number, or past the class's bounds (its columns refuse a save's base bonus past the
@@ -201,12 +201,12 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
   private joinRows(body: ClassLevelBody) {
     const { feats, saves } = { ...body, ...this.resolveIds(body) };
     return {
-      klass_level_feats: feats?.map((feat) => ({
+      class_level_feats: feats?.map((feat) => ({
         aptitudeId: feat.aptitudeId,
         featId: feat.featId,
         free: feat.free ?? true,
       })),
-      klass_level_saves: saves?.map((save) => ({ base: save.base, saveId: save.saveId })),
+      class_level_saves: saves?.map((save) => ({ base: save.base, saveId: save.saveId })),
     };
   }
 

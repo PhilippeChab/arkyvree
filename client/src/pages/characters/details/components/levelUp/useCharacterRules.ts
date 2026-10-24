@@ -4,7 +4,7 @@ import { useRules } from "@/client/src/hooks/index.ts";
 import { characterDetailQuery } from "@/client/src/lib/queries.ts";
 
 /**
- * What the character's base rules share, as the engine describes them (its words, its power levels, its level wizard's
+ * What the character's base rules share, as the engine describes them (its words, its spell levels, its level wizard's
  * own words): none until the character and its rules load, and why either failed (`error`).
  */
 export function useCharacterRules(characterId: string) {

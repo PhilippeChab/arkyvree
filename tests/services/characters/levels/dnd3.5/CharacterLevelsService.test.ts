@@ -1,7 +1,7 @@
 import { afterAll, describe, expect, test } from "bun:test";
 
 import { DND35_DMG_NAME } from "@/content/dnd3.5/rulesetNames.ts";
-import { addClassLevels, addFeats, addPowers, addSkills } from "@/database/seeders/dnd3.5/characters/seedCharacter.ts";
+import { addClassLevels, addFeats, addSkills, addSpells } from "@/database/seeders/dnd3.5/characters/seedCharacter.ts";
 import type { LevelPlanRequest, StepOption, StepOptionGroup } from "@/engine/index.ts";
 import type {
   Aptitude,
@@ -9,16 +9,16 @@ import type {
   Klass,
   KlassLevel,
   KlassLevelFeat,
-  KlassLevelPower,
+  KlassLevelSpell,
   KlassSkill,
   LevelAbilityIncrease,
   LevelFeat,
-  LevelPower,
   LevelSkill,
-  Power,
+  LevelSpell,
   Race,
   RulesetAbility,
   Skill,
+  Spell,
 } from "@/engine/rulesets/dnd3.5/index.ts";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
@@ -72,7 +72,7 @@ import {
 } from "@/tests/support/rulesets.ts";
 import { findSeededCharacter, findSeededRuleset, getSeedCtx, NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
 import { createTestUser, makeSession } from "@/tests/support/users.ts";
-import { FEAT_FAMILY, KLASS_LEVEL_BAB, KLASS_LEVEL_SKILL_POINTS } from "@/vocabulary/dnd3.5/properties/index.ts";
+import { CLASS_LEVEL_BAB, CLASS_LEVEL_SKILL_POINTS, FEAT_FAMILY } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 /** Where a pick step's picker opens: the advancement its pick lands on, and the tier or the group it lists. */
 interface PickAt {
@@ -163,20 +163,6 @@ async function featGroups(
   return rowsOf(await getStepOptions(as, characterId, "feats", plan, { advancement, pool }, { ...page, search }), true);
 }
 
-/** A power pool's options over the plan, where `at` says: at a tier (a spell level), or at any. */
-async function powerOptions(
-  as: Session,
-  characterId: string,
-  plan: LevelPlanRequest,
-  pool: string,
-  { advancement, search, tier }: Omit<PickAt, "group"> = {},
-) {
-  return rowsOf(
-    await getStepOptions(as, characterId, "powers", plan, { advancement, pool, tier }, { ...page, search }),
-    false,
-  );
-}
-
 /**
  * The Blackguard (Dungeon Master's Guide) needs BAB 6, 5 ranks of Hide, 2 of Knowledge (Religion), Power Attack, Cleave
  * and Improved Sunder. Each case leaves one out of the character and supplies it as a pending pick.
@@ -190,7 +176,7 @@ async function setupCandidate(missing: { bab?: boolean; feat?: string; skill?: s
   const dmg = await findSeededRuleset(DND35_DMG_NAME);
   await RulesetExtensionsService.subscribeExtension(session, fork.id, [dmg.id]);
   const blackguard = (await Entities.findOne<Klass>(db, {
-    entityType: "klasses",
+    entityType: "classes",
     name: "Blackguard",
     rulesetId: dmg.id,
   }))!;
@@ -247,7 +233,7 @@ async function setupMulticlass(fighterLevels: number) {
 
 /**
  * A small ruleset of a new user's, with a class of five levels, three skills,
- * feats (Power Attack, Weapon Focus which stacks, Dodge) and powers each in an
+ * feats (Power Attack, Weapon Focus which stacks, Dodge) and spells each in an
  * aptitude of their own; and a character of the user's on it. With `fork`,
  * the content is another user's and the character is on the user's fork of it.
  */
@@ -267,25 +253,25 @@ async function setupRuleset({ fork = false } = {}) {
     size: "Medium",
     baseSpeed: 30,
   });
-  const [klass] = await Entities.create<Klass>(db, "klasses", { name: "Test Class", rulesetId, hd: 8 });
+  const [klass] = await Entities.create<Klass>(db, "classes", { name: "Test Class", rulesetId, hd: 8 });
   const klassLevels = [];
   for (let level = 1; level <= 5; level++) {
-    const [klassLevel] = await Entities.create<KlassLevel>(db, "klass_levels", { klassId: klass.id, level });
+    const [klassLevel] = await Entities.create<KlassLevel>(db, "class_levels", { klassId: klass.id, level });
     await Properties.createMany(db, [
-      { entityId: klassLevel.id, entityType: "klass_levels", type: KLASS_LEVEL_BAB, value: String(level) },
+      { entityId: klassLevel.id, entityType: "class_levels", type: CLASS_LEVEL_BAB, value: String(level) },
       {
         entityId: klassLevel.id,
-        entityType: "klass_levels",
-        type: KLASS_LEVEL_SKILL_POINTS,
+        entityType: "class_levels",
+        type: CLASS_LEVEL_SKILL_POINTS,
         value: String(2 + Math.floor(level / 2)),
       },
     ]);
     klassLevels.push(klassLevel);
   }
   const [generalAptitude] = await Entities.create<Aptitude>(db, "aptitudes", { name: "general", rulesetId });
-  const [[featAptitude], [powerAptitude]] = [
+  const [[featAptitude], [spellAptitude]] = [
     await Entities.create<Aptitude>(db, "aptitudes", { name: "Feat Aptitude", rulesetId }),
-    await Entities.create<Aptitude>(db, "aptitudes", { name: "Power Aptitude", rulesetId }),
+    await Entities.create<Aptitude>(db, "aptitudes", { name: "Spell Aptitude", rulesetId }),
   ];
   const abilities = await Entities.createMany<RulesetAbility>(
     db,
@@ -310,9 +296,9 @@ async function setupRuleset({ fork = false } = {}) {
     { name: "Weapon Focus", rulesetId, stackable: true },
     { name: "Dodge", rulesetId, stackable: false },
   ]);
-  const powerList = await Entities.createMany<Power>(
+  const spellList = await Entities.createMany<Spell>(
     db,
-    "powers",
+    "spells",
     ["Sneak Attack", "Rage", "Uncanny Dodge"].map((name) => ({ name, rulesetId })),
   );
   await Joins.createMany(
@@ -322,8 +308,8 @@ async function setupRuleset({ fork = false } = {}) {
   );
   await Joins.createMany(
     db,
-    "powers_aptitudes",
-    powerList.map((p) => ({ powerId: p.id, aptitudeId: powerAptitude.id })),
+    "spells_aptitudes",
+    spellList.map((p) => ({ spellId: p.id, aptitudeId: spellAptitude.id })),
   );
 
   const character = await createTestCharacter(user.id, { rulesetId: characterRuleset.id, raceId: race.id });
@@ -339,11 +325,11 @@ async function setupRuleset({ fork = false } = {}) {
     klassLevels,
     featAptitude,
     generalAptitude,
-    powerAptitude,
+    spellAptitude,
     abilities,
     skills: byName(skillList),
     feats: byName(featList),
-    powers: byName(powerList),
+    spells: byName(spellList),
   };
 }
 
@@ -351,14 +337,28 @@ async function setupRuleset({ fork = false } = {}) {
 async function spellNames(characterId: string, level: number, feats: PlanPicks["feats"] = {}) {
   const ctx = await getSeedCtx();
   const plan = levelUpPlan([planned(ctx.klassMap.pc["Wizard"], level)], { feats });
-  return names(await powerOptions(session, characterId, plan, ctx.aptMap["Wizard Spells"]));
+  return names(await spellOptions(session, characterId, plan, ctx.aptMap["Wizard Spells"]));
+}
+
+/** A spell pool's options over the plan, where `at` says: at a tier (a spell level), or at any. */
+async function spellOptions(
+  as: Session,
+  characterId: string,
+  plan: LevelPlanRequest,
+  pool: string,
+  { advancement, search, tier }: Omit<PickAt, "group"> = {},
+) {
+  return rowsOf(
+    await getStepOptions(as, characterId, "spells", plan, { advancement, pool, tier }, { ...page, search }),
+    false,
+  );
 }
 
 afterAll(() => lockPool.end());
 
 describe("LevelsService", () => {
   test("refuses a missing character, another user's, a missing class level, and removing from a character without levels", async () => {
-    const { session, character, klass, featAptitude, powerAptitude } = await setupRuleset();
+    const { session, character, klass, featAptitude, spellAptitude } = await setupRuleset();
     const { session: other } = await createTestUser();
     const first = levelUpPlan([planned(klass.id, 1)]);
     // The class has five levels
@@ -373,8 +373,8 @@ describe("LevelsService", () => {
       () => CharacterLevelsService.getLevelPlan(session, character.id, NIL_UUID),
       () => getStepOptions(session, NIL_UUID, "feats", first, { pool: featAptitude.id }),
       () => getStepOptions(session, character.id, "feats", past, { pool: featAptitude.id }),
-      () => getStepOptions(session, NIL_UUID, "powers", first, { pool: powerAptitude.id }),
-      () => getStepOptions(session, character.id, "powers", past, { pool: powerAptitude.id }),
+      () => getStepOptions(session, NIL_UUID, "spells", first, { pool: spellAptitude.id }),
+      () => getStepOptions(session, character.id, "spells", past, { pool: spellAptitude.id }),
       () => addOneLevel(session, NIL_UUID, klass.id, 1, 8, null, {}, {}, {}),
       () => addOneLevel(session, character.id, klass.id, 6, 8, null, {}, {}, {}),
       () => CharacterLevelsService.removeLevel(session, NIL_UUID),
@@ -414,15 +414,15 @@ describe("LevelsService", () => {
     test("counts any feat of a family a class requires, and only those", async () => {
       const ctx = await getSeedCtx();
       const fork = await createSeededTestRuleset(SEED_USER_ID);
-      const [klass] = await Entities.create<Klass>(db, "klasses", {
+      const [klass] = await Entities.create<Klass>(db, "classes", {
         name: `Kensai ${uniqueId()}`,
         rulesetId: fork.id,
         hd: 10,
       });
-      const [level] = await Entities.create<KlassLevel>(db, "klass_levels", { klassId: klass.id, level: 1 });
+      const [level] = await Entities.create<KlassLevel>(db, "class_levels", { klassId: klass.id, level: 1 });
       await Requirements.create(db, {
         entityId: level.id,
-        entityType: "klass_levels",
+        entityType: "class_levels",
         level: "1",
         target: "feats.weaponfocus.*.possessed",
         operator: "equal",
@@ -444,16 +444,16 @@ describe("LevelsService", () => {
     test("checks a class's own requirements with its next level's, in the list and on saving", async () => {
       const ctx = await getSeedCtx();
       const fork = await createSeededTestRuleset(SEED_USER_ID);
-      const [klass] = await Entities.create<Klass>(db, "klasses", {
+      const [klass] = await Entities.create<Klass>(db, "classes", {
         name: `Duelist ${uniqueId()}`,
         rulesetId: fork.id,
         hd: 10,
       });
-      const [level] = await Entities.create<KlassLevel>(db, "klass_levels", { klassId: klass.id, level: 1 });
+      const [level] = await Entities.create<KlassLevel>(db, "class_levels", { klassId: klass.id, level: 1 });
       // The class requires Power Attack, its first level a base attack bonus of +1, which a fighter 1 has
       for (const [entityId, entityType, target, operator, value, valueType] of [
-        [klass.id, "klasses", "feats.powerattack.possessed", "equal", "true", "boolean"],
-        [level.id, "klass_levels", "combat.bab", "greater_than_or_equal", "1", "number"],
+        [klass.id, "classes", "feats.powerattack.possessed", "equal", "true", "boolean"],
+        [level.id, "class_levels", "combat.bab", "greater_than_or_equal", "1", "number"],
       ])
         await Requirements.create(db, { entityId, entityType, level: "1", target, operator, value, valueType });
 
@@ -539,7 +539,7 @@ describe("LevelsService", () => {
   describe("skill slots", () => {
     test("list the ruleset's skills with the class's marked and the character's current ranks", async () => {
       const { session, character, klass, klassLevels, skills } = await setupRuleset();
-      await Joins.create<KlassSkill>(db, "klass_skills", { klassId: klass.id, skillId: skills["Diplomacy"].id });
+      await Joins.create<KlassSkill>(db, "class_skills", { klassId: klass.id, skillId: skills["Diplomacy"].id });
       const [level] = await CharacterAdvancements.create(db, {
         characterId: character.id,
         klassLevelId: klassLevels[0].id,
@@ -630,7 +630,7 @@ describe("LevelsService", () => {
           primaryAbilityId: intelligence.id,
         }),
       ];
-      await Joins.create<KlassSkill>(db, "klass_skills", { klassId: klass.id, skillId: craft.id });
+      await Joins.create<KlassSkill>(db, "class_skills", { klassId: klass.id, skillId: craft.id });
 
       const { rows } = stepAnswerOf(
         await getPlanAnswer(session, character.id, levelUpPlan([planned(klass.id, 1)])),
@@ -650,7 +650,7 @@ describe("LevelsService", () => {
   describe("feat slots and the feats of a pool", () => {
     test("list a class level's granted feats, and leave them out of the picks unless they stack", async () => {
       const { session, character, klass, klassLevels, featAptitude, feats } = await setupRuleset();
-      await Joins.create<KlassLevelFeat>(db, "klass_level_feats", {
+      await Joins.create<KlassLevelFeat>(db, "class_level_feats", {
         klassLevelId: klassLevels[0].id,
         featId: feats["Power Attack"].id,
         aptitudeId: featAptitude.id,
@@ -682,7 +682,7 @@ describe("LevelsService", () => {
     test("count the feats a level grants, free or not, toward the prerequisites of the feats it picks", async () => {
       const { session, character, klass, klassLevels, featAptitude, generalAptitude, feats, skills } =
         await setupRuleset();
-      await Joins.create<KlassLevelFeat>(db, "klass_level_feats", {
+      await Joins.create<KlassLevelFeat>(db, "class_level_feats", {
         klassLevelId: klassLevels[0].id,
         featId: feats["Power Attack"].id,
         aptitudeId: featAptitude.id,
@@ -711,19 +711,19 @@ describe("LevelsService", () => {
       const { session, ruleset, character, klass, klassLevels, featAptitude, feats } = await setupRuleset({
         fork: true,
       });
-      await Joins.create<KlassLevelFeat>(db, "klass_level_feats", {
+      await Joins.create<KlassLevelFeat>(db, "class_level_feats", {
         klassLevelId: klassLevels[0].id,
         featId: feats["Power Attack"].id,
         aptitudeId: featAptitude.id,
         free: true,
       });
       await addOneLevel(session, character.id, klass.id, 1, 8, null, {}, {}, {}, true);
-      await EntitiesService.updateEntity(session, ruleset.id, "klasses", klass.id, {
+      await EntitiesService.updateEntity(session, ruleset.id, "classes", klass.id, {
         name: "Test Class",
         description: "Ours",
       });
       const copy = (await Entities.findOne<Klass>(db, {
-        entityType: "klasses",
+        entityType: "classes",
         name: "Test Class",
         rulesetId: ruleset.id,
       }))!;
@@ -751,7 +751,7 @@ describe("LevelsService", () => {
       const { session, ruleset, character, klass, klassLevels, featAptitude, feats } = await setupRuleset({
         fork: true,
       });
-      await Joins.create<KlassLevelFeat>(db, "klass_level_feats", {
+      await Joins.create<KlassLevelFeat>(db, "class_level_feats", {
         klassLevelId: klassLevels[0].id,
         featId: feats["Power Attack"].id,
         aptitudeId: featAptitude.id,
@@ -782,7 +782,7 @@ describe("LevelsService", () => {
     test("stop granting a feat the fork deletes", async () => {
       // Deleting an inherited feat in a fork copies it there and deletes the copy: the fork no longer has the feat
       const { session, ruleset, character, klassLevels, featAptitude, feats } = await setupRuleset({ fork: true });
-      await Joins.create<KlassLevelFeat>(db, "klass_level_feats", {
+      await Joins.create<KlassLevelFeat>(db, "class_level_feats", {
         klassLevelId: klassLevels[0].id,
         featId: feats["Power Attack"].id,
         aptitudeId: featAptitude.id,
@@ -841,14 +841,14 @@ describe("LevelsService", () => {
       ).toEqual([]);
     });
 
-    test("flag a pool that powers share, optional to the feats step", async () => {
-      const { session, character, klass, feats, powers } = await setupRuleset();
+    test("flag a pool that spells share, optional to the feats step", async () => {
+      const { session, character, klass, feats, spells } = await setupRuleset();
       const [shared] = await Entities.create<Aptitude>(db, "aptitudes", {
         name: "Shared Aptitude",
         rulesetId: klass.rulesetId,
       });
       await Joins.create(db, "feats_aptitudes", { featId: feats["Dodge"].id, aptitudeId: shared.id });
-      await Joins.create(db, "powers_aptitudes", { powerId: powers["Rage"].id, aptitudeId: shared.id });
+      await Joins.create(db, "spells_aptitudes", { spellId: spells["Rage"].id, aptitudeId: shared.id });
 
       const { pools } = stepAnswerOf(
         await getPlanAnswer(session, character.id, levelUpPlan([planned(klass.id, 1)])),
@@ -858,7 +858,7 @@ describe("LevelsService", () => {
       const optionalByName = Object.fromEntries(Object.values(pools).map((p) => [p.name, p.optional]));
       expect(optionalByName).toMatchObject({
         "Shared Aptitude": true,
-        "Power Aptitude": true,
+        "Spell Aptitude": true,
         "Feat Aptitude": false,
       });
     });
@@ -1096,7 +1096,7 @@ describe("LevelsService", () => {
         const picked = { feats: { [general]: ["Power Attack", feat].map((name) => ctx.featMap[name]) } };
         const answer = await getPlanAnswer(session, characterId, editPlan(first.id, { hp: 10 }, picked));
         expect(stepAnswerOf(answer, "feats", "pick").fitted[general]).toEqual([ctx.featMap["Power Attack"]]);
-        const { skills, feats, powers } = picks(ctx, {
+        const { skills, feats, spells } = picks(ctx, {
           ...FIGHTER_LEVELS[0],
           feats: { General: ["Power Attack", feat], "Fighter Bonus Feat": ["Improved Initiative"] },
         });
@@ -1105,7 +1105,7 @@ describe("LevelsService", () => {
             session,
             characterId,
             first.id,
-            levelEditPlan({ hp: 10 }, { skills, feats, powers }),
+            levelEditPlan({ hp: 10 }, { skills, feats, spells }),
           ),
         ).rejects.toThrow(`Non-stackable feat "${feat}" is already on this character`);
       }
@@ -1226,45 +1226,45 @@ describe("LevelsService", () => {
     });
   });
 
-  describe("power slots and the powers of a pool", () => {
-    test("list a class level's granted powers, and leave them and those the character has out of the picks", async () => {
-      const { session, character, klass, klassLevels, powerAptitude, powers } = await setupRuleset();
-      await Joins.createMany<KlassLevelPower>(db, "klass_level_powers", [
-        { klassLevelId: klassLevels[1].id, powerId: powers["Rage"].id, aptitudeId: powerAptitude.id },
+  describe("spell slots and the spells of a pool", () => {
+    test("list a class level's granted spells, and leave them and those the character has out of the picks", async () => {
+      const { session, character, klass, klassLevels, spellAptitude, spells } = await setupRuleset();
+      await Joins.createMany<KlassLevelSpell>(db, "class_level_spells", [
+        { klassLevelId: klassLevels[1].id, spellId: spells["Rage"].id, aptitudeId: spellAptitude.id },
       ]);
       await addCharacterLevel(character.id, klassLevels[0].id, {
-        powers: [{ powerId: powers["Sneak Attack"].id, aptitudeId: powerAptitude.id }],
+        spells: [{ spellId: spells["Sneak Attack"].id, aptitudeId: spellAptitude.id }],
       });
 
       const plan = levelUpPlan([planned(klass.id, 2)]);
-      expect(stepAnswerOf(await getPlanAnswer(session, character.id, plan), "powers", "pick").granted).toMatchObject([
-        { id: powers["Rage"].id },
+      expect(stepAnswerOf(await getPlanAnswer(session, character.id, plan), "spells", "pick").granted).toMatchObject([
+        { id: spells["Rage"].id },
       ]);
-      const items = await powerOptions(session, character.id, plan, powerAptitude.id);
+      const items = await spellOptions(session, character.id, plan, spellAptitude.id);
       expect(items.map(({ name, eligible }) => ({ name, eligible }))).toEqual([
         { name: "Uncanny Dodge", eligible: true },
       ]);
     });
 
-    test("leave a power the level's class level grants out of its own pool only, as once the level is saved", async () => {
-      // Each pool is a list of its own: a power known in one is offered in another that lists it
-      const { session, parent, character, klass, klassLevels, powerAptitude, powers } = await setupRuleset();
+    test("leave a spell the level's class level grants out of its own pool only, as once the level is saved", async () => {
+      // Each pool is a list of its own: a spell known in one is offered in another that lists it
+      const { session, parent, character, klass, klassLevels, spellAptitude, spells } = await setupRuleset();
       const [otherAptitude] = await Entities.create<Aptitude>(db, "aptitudes", {
-        name: "Other Power Aptitude",
+        name: "Other Spell Aptitude",
         rulesetId: parent.id,
       });
-      await Joins.createMany(db, "powers_aptitudes", [{ powerId: powers["Rage"].id, aptitudeId: otherAptitude.id }]);
-      await Joins.createMany<KlassLevelPower>(db, "klass_level_powers", [
-        { klassLevelId: klassLevels[1].id, powerId: powers["Rage"].id, aptitudeId: powerAptitude.id },
+      await Joins.createMany(db, "spells_aptitudes", [{ spellId: spells["Rage"].id, aptitudeId: otherAptitude.id }]);
+      await Joins.createMany<KlassLevelSpell>(db, "class_level_spells", [
+        { klassLevelId: klassLevels[1].id, spellId: spells["Rage"].id, aptitudeId: spellAptitude.id },
       ]);
       await addCharacterLevel(character.id, klassLevels[0].id);
       const offered = async (aptitudeId: string, level: number) =>
-        names(await powerOptions(session, character.id, levelUpPlan([planned(klass.id, level)]), aptitudeId));
+        names(await spellOptions(session, character.id, levelUpPlan([planned(klass.id, level)]), aptitudeId));
 
       // Taking the level that grants Rage, then the one after it
       for (const level of [2, 3]) {
         expect(await offered(otherAptitude.id, level)).toContain("Rage");
-        expect(await offered(powerAptitude.id, level)).not.toContain("Rage");
+        expect(await offered(spellAptitude.id, level)).not.toContain("Rage");
         await addCharacterLevel(character.id, klassLevels[level - 1].id);
       }
     });
@@ -1275,14 +1275,14 @@ describe("LevelsService", () => {
       await Modifiers.create(db, {
         sourceId: characterId,
         sourceType: "characters",
-        target: "powers.magicmissile.wizard.known",
+        target: "spells.magicmissile.wizard.known",
         value: "true",
         valueType: "boolean",
         operator: "set",
       });
       const firstLevelSpells = async (list: "Sorcerer Spells" | "Wizard Spells") =>
         names(
-          await powerOptions(
+          await spellOptions(
             session,
             characterId,
             levelUpPlan([planned(ctx.klassMap.pc["Sorcerer"], 1)]),
@@ -1305,11 +1305,11 @@ describe("LevelsService", () => {
         characterId,
         "Sorcerer",
         2,
-        { hp: 4, powers: { "Sorcerer Spells": ["Resistance"] } },
+        { hp: 4, spells: { "Sorcerer Spells": ["Resistance"] } },
         true,
       );
       const cantrips = async (list: "Sorcerer Spells" | "Wizard Spells") =>
-        names(await powerOptions(session, characterId, editPlan(first.id, { hp: 4 }), ctx.aptMap[list], { tier: "0" }));
+        names(await spellOptions(session, characterId, editPlan(first.id, { hp: 4 }), ctx.aptMap[list], { tier: "0" }));
 
       // The second level's Resistance, but the edited level's own Light, which it can pick again once removed
       expect(await cantrips("Sorcerer Spells")).not.toContain("Resistance");
@@ -1321,19 +1321,19 @@ describe("LevelsService", () => {
       // No seeded class level grants a spell: a fork's sorcerer, whose second level grants Resistance
       const ctx = await getSeedCtx();
       const fork = await createSeededTestRuleset(SEED_USER_ID);
-      const sorcerer = await copyEntity(db, "klasses", ctx.klassMap.pc["Sorcerer"], fork);
+      const sorcerer = await copyEntity(db, "classes", ctx.klassMap.pc["Sorcerer"], fork);
       const second = (
-        await Entities.findMany<KlassLevel>(db, { entityType: "klass_levels", ownerIds: [sorcerer.id] })
+        await Entities.findMany<KlassLevel>(db, { entityType: "class_levels", ownerIds: [sorcerer.id] })
       ).find(({ level }) => level === 2)!;
-      const [sorcererSpells, resistance] = [ctx.aptMap["Sorcerer Spells"], ctx.powerMap["Resistance"]];
-      await Joins.createMany<KlassLevelPower>(db, "klass_level_powers", [
-        { klassLevelId: second.id, powerId: resistance, aptitudeId: sorcererSpells },
+      const [sorcererSpells, resistance] = [ctx.aptMap["Sorcerer Spells"], ctx.spellMap["Resistance"]];
+      await Joins.createMany<KlassLevelSpell>(db, "class_level_spells", [
+        { klassLevelId: second.id, spellId: resistance, aptitudeId: sorcererSpells },
       ]);
       RulesetViews.invalidate(fork.id);
       const characterId = await createSeedCharacter(ctx, "sorcerer", { xp: 1000, rulesetId: fork.id });
       const cantrips = async (levels: number[]) =>
         names(
-          await powerOptions(
+          await spellOptions(
             session,
             characterId,
             levelUpPlan(levels.map((level) => planned(sorcerer.id, level))),
@@ -1345,17 +1345,17 @@ describe("LevelsService", () => {
       expect(await cantrips([1])).toContain("Resistance");
       expect(await cantrips([1, 2])).not.toContain("Resistance");
       const levels = [1, 2].map((level) => ({ abilityIncreases: [], hp: 4, klassId: sorcerer.id, level }));
-      const plan = levelUpPlan(levels, { powers: { [sorcererSpells]: [ctx.powerMap["Light"], resistance] } });
+      const plan = levelUpPlan(levels, { spells: { [sorcererSpells]: [ctx.spellMap["Light"], resistance] } });
       const answer = await getPlanAnswer(session, characterId, plan);
-      expect(stepAnswerOf(answer, "powers", "pick").fitted[sorcererSpells]).toEqual([ctx.powerMap["Light"]]);
+      expect(stepAnswerOf(answer, "spells", "pick").fitted[sorcererSpells]).toEqual([ctx.spellMap["Light"]]);
       expect(CharacterLevelsService.addLevels(session, characterId, plan, true)).rejects.toThrow(
-        'Power "Resistance" is already known in Sorcerer Spells',
+        'Spell "Resistance" is already known in Sorcerer Spells',
       );
     });
 
-    test("list a fork's inherited powers", async () => {
-      const { session, character, klass, powerAptitude } = await setupRuleset({ fork: true });
-      const items = await powerOptions(session, character.id, levelUpPlan([planned(klass.id, 1)]), powerAptitude.id);
+    test("list a fork's inherited spells", async () => {
+      const { session, character, klass, spellAptitude } = await setupRuleset({ fork: true });
+      const items = await spellOptions(session, character.id, levelUpPlan([planned(klass.id, 1)]), spellAptitude.id);
       expect(
         items.map(({ name, eligible }) => ({ name, eligible })).sort((a, b) => a.name.localeCompare(b.name)),
       ).toEqual([
@@ -1365,25 +1365,25 @@ describe("LevelsService", () => {
       ]);
     });
 
-    test("leave out a power the character knows once the fork copies it", async () => {
-      // Editing an inherited power in a fork copies it there: the copy stands for the power a level picked or was granted
-      const { session, ruleset, character, klass, klassLevels, powerAptitude, powers } = await setupRuleset({
+    test("leave out a spell the character knows once the fork copies it", async () => {
+      // Editing an inherited spell in a fork copies it there: the copy stands for the spell a level picked or was granted
+      const { session, ruleset, character, klass, klassLevels, spellAptitude, spells } = await setupRuleset({
         fork: true,
       });
-      await Joins.createMany<KlassLevelPower>(db, "klass_level_powers", [
-        { klassLevelId: klassLevels[0].id, powerId: powers["Rage"].id, aptitudeId: powerAptitude.id },
+      await Joins.createMany<KlassLevelSpell>(db, "class_level_spells", [
+        { klassLevelId: klassLevels[0].id, spellId: spells["Rage"].id, aptitudeId: spellAptitude.id },
       ]);
       await addCharacterLevel(character.id, klassLevels[0].id, {
-        powers: [{ powerId: powers["Sneak Attack"].id, aptitudeId: powerAptitude.id }],
+        spells: [{ spellId: spells["Sneak Attack"].id, aptitudeId: spellAptitude.id }],
       });
       for (const name of ["Rage", "Sneak Attack"]) {
-        await EntitiesService.updateEntity(session, ruleset.id, "powers", powers[name].id, {
+        await EntitiesService.updateEntity(session, ruleset.id, "spells", spells[name].id, {
           name,
           description: "Ours",
         });
       }
 
-      const items = await powerOptions(session, character.id, levelUpPlan([planned(klass.id, 2)]), powerAptitude.id);
+      const items = await spellOptions(session, character.id, levelUpPlan([planned(klass.id, 2)]), spellAptitude.id);
       expect(names(items)).toEqual(["Uncanny Dodge"]);
     });
 
@@ -1393,15 +1393,15 @@ describe("LevelsService", () => {
       const fork = await createSeededTestRulesetWithExtensions(SEED_USER_ID);
       const wizardSpells = ctx.aptMap["Wizard Spells"];
       const merged = await withRulesetScope(db, fork.id, async ({ rulesetData }) => {
-        const listed = new Set(Dnd35View.of(rulesetData).listPowerIds({ aptitudeId: wizardSpells, level: 1 }));
+        const listed = new Set(Dnd35View.of(rulesetData).listSpellIds({ aptitudeId: wizardSpells, level: 1 }));
         const loserId = [...rulesetData.cow.siblingIds].find(
           (id) => rulesetData.cow.resolve(id) !== id && listed.has(rulesetData.cow.resolve(id)),
         )!;
-        return { loserId, name: Dnd35View.of(rulesetData).powersById.get(loserId)!.name };
+        return { loserId, name: Dnd35View.of(rulesetData).spellsById.get(loserId)!.name };
       });
       const characterId = await createSeedCharacter(ctx, "wizard", { rulesetId: fork.id });
       const [characterLevelId] = await addClassLevels(db, ctx, characterId, "Wizard", [1], [4]);
-      await Picks.createMany(db, "powers", [{ characterLevelId, powerId: merged.loserId, aptitudeId: wizardSpells }]);
+      await Picks.createMany(db, "spells", [{ characterLevelId, spellId: merged.loserId, aptitudeId: wizardSpells }]);
 
       expect(await spellNames(characterId, 2)).not.toContain(merged.name);
     });
@@ -1410,7 +1410,7 @@ describe("LevelsService", () => {
       const ctx = await getSeedCtx();
       const spells = async (build: "sorcerer" | "wizard", klass: string, tier: string) => {
         const characterId = await createSeedCharacter(ctx, build);
-        return await powerOptions(
+        return await spellOptions(
           session,
           characterId,
           levelUpPlan([planned(ctx.klassMap.pc[klass], 1)]),
@@ -1431,7 +1431,7 @@ describe("LevelsService", () => {
       const level = await levelUp(session, ctx, characterId, "Sorcerer", 1, SORCERER_1);
       const { pools } = stepAnswerOf(
         await getPlanAnswer(session, characterId, editPlan(level.id, { hp: 4 })),
-        "powers",
+        "spells",
         "pick",
       );
       // Four cantrips and two first-level spells, all picked at that level.
@@ -1495,7 +1495,7 @@ describe("LevelsService", () => {
   });
 
   describe("finalizing a level", () => {
-    test("saves the level with its hit points, skill ranks, feats and powers", async () => {
+    test("saves the level with its hit points, skill ranks, feats and spells", async () => {
       const ctx = await getSeedCtx();
       const characterId = await createSeedCharacter(ctx, "sorcerer");
       const level = await levelUp(session, ctx, characterId, "Sorcerer", 1, SORCERER_1);
@@ -1504,7 +1504,7 @@ describe("LevelsService", () => {
         await Picks.findMany<LevelAbilityIncrease>(db, { pick: "abilityIncreases", characterLevelIds: [level.id] }),
       ).toEqual([]);
 
-      const { skills, feats, powers } = picks(ctx, SORCERER_1);
+      const { skills, feats, spells } = picks(ctx, SORCERER_1);
       const saved = async <T>(rows: Promise<T[]>, key: (row: T) => string) => (await rows).map(key).sort();
       expect(
         await saved(
@@ -1528,10 +1528,10 @@ describe("LevelsService", () => {
       );
       expect(
         await saved(
-          Picks.findMany<LevelPower>(db, { pick: "powers", characterLevelIds: [level.id] }),
-          (p) => p.powerId,
+          Picks.findMany<LevelSpell>(db, { pick: "spells", characterLevelIds: [level.id] }),
+          (p) => p.spellId,
         ),
-      ).toEqual(Object.values(powers).flat().sort());
+      ).toEqual(Object.values(spells).flat().sort());
     });
 
     test("saves the ability increase of every fourth level", async () => {
@@ -1570,11 +1570,11 @@ describe("LevelsService", () => {
             }),
         ],
         [
-          "Power is not linked to the specified aptitude",
+          "Spell is not linked to the specified aptitude",
           async () =>
             levelUp(session, ctx, await createSeedCharacter(ctx, "sorcerer"), "Sorcerer", 1, {
               ...SORCERER_1,
-              powers: { General: ["Magic Missile"] },
+              spells: { General: ["Magic Missile"] },
             }),
         ],
         [
@@ -1616,9 +1616,9 @@ describe("LevelsService", () => {
 
     test("refuses a feat or a spell its ruleset has none of, naming it: a level-up's, an edit's and a plan's answer", async () => {
       const ctx = await getSeedCtx();
-      const unknown = { message: `Power ${NIL_UUID} does not belong to the character's ruleset`, refusal: "invalid" };
-      const { feats, powers, skills } = picks(ctx, SORCERER_1);
-      const withUnknown = { [ctx.aptMap["Sorcerer Spells"]]: [...powers[ctx.aptMap["Sorcerer Spells"]], NIL_UUID] };
+      const unknown = { message: `Spell ${NIL_UUID} does not belong to the character's ruleset`, refusal: "invalid" };
+      const { feats, spells, skills } = picks(ctx, SORCERER_1);
+      const withUnknown = { [ctx.aptMap["Sorcerer Spells"]]: [...spells[ctx.aptMap["Sorcerer Spells"]], NIL_UUID] };
       const characterId = await createSeedCharacter(ctx, "sorcerer");
       const klassId = ctx.klassMap.pc["Sorcerer"];
       const levels = [{ klassId, level: 1, hp: 4, abilityIncreases: [] }];
@@ -1626,18 +1626,18 @@ describe("LevelsService", () => {
         const levelUp = CharacterLevelsService.addLevels(
           session,
           characterId,
-          levelUpPlan(levels, { skills, feats, powers: withUnknown }),
+          levelUpPlan(levels, { skills, feats, spells: withUnknown }),
           force,
         );
         expect(levelUp).rejects.toMatchObject(unknown);
       }
 
-      const level = await addOneLevel(session, characterId, klassId, 1, 4, null, skills, feats, powers);
+      const level = await addOneLevel(session, characterId, klassId, 1, 4, null, skills, feats, spells);
       const edit = CharacterLevelsService.updatePlannedLevel(
         session,
         characterId,
         level.id,
-        levelEditPlan({ hp: 4 }, { skills, feats, powers: withUnknown }),
+        levelEditPlan({ hp: 4 }, { skills, feats, spells: withUnknown }),
       );
       expect(edit).rejects.toMatchObject(unknown);
 
@@ -1645,7 +1645,7 @@ describe("LevelsService", () => {
       const otherId = await createSeedCharacter(ctx, "sorcerer");
       const withUnknownFeat = { ...feats, [ctx.aptMap["General"]]: [NIL_UUID] };
       expect(
-        getPlanAnswer(session, otherId, levelUpPlan([planned(klassId, 1)], { skills, feats: withUnknownFeat, powers })),
+        getPlanAnswer(session, otherId, levelUpPlan([planned(klassId, 1)], { skills, feats: withUnknownFeat, spells })),
       ).rejects.toMatchObject({
         message: `Feat ${NIL_UUID} does not belong to the character's ruleset`,
         refusal: "invalid",
@@ -1865,23 +1865,23 @@ describe("LevelsService", () => {
           ...(await addClassLevels(db, ctx, characterId, "Fighter", [1], [10])),
           ...(await addClassLevels(db, ctx, characterId, "Sorcerer", [2], [4])),
         ];
-        await addPowers(db, ctx, levelIds, [
-          { levelIndex: 0, powerName: "Light", aptitude: "Sorcerer Spells" },
-          { levelIndex: 0, powerName: "Detect Magic", aptitude: "Sorcerer Spells" },
-          { levelIndex: 2, powerName: "Magic Missile", aptitude: "Sorcerer Spells" },
+        await addSpells(db, ctx, levelIds, [
+          { levelIndex: 0, spellName: "Light", aptitude: "Sorcerer Spells" },
+          { levelIndex: 0, spellName: "Detect Magic", aptitude: "Sorcerer Spells" },
+          { levelIndex: 2, spellName: "Magic Missile", aptitude: "Sorcerer Spells" },
         ]);
 
         await CharacterLevelsService.updatePlannedLevel(
           session,
           characterId,
           levelIds[2],
-          levelEditPlan({ hp: 4 }, { powers: picks(ctx, { powers: { "Sorcerer Spells": ["Magic Missile"] } }).powers }),
+          levelEditPlan({ hp: 4 }, { spells: picks(ctx, { spells: { "Sorcerer Spells": ["Magic Missile"] } }).spells }),
           true,
         );
         expect(
-          await Picks.findMany<LevelPower>(db, { pick: "powers", characterLevelIds: [levelIds[2]] }),
-        ).toMatchObject([{ powerId: ctx.powerMap["Magic Missile"] }]);
-        expect(await Picks.findMany<LevelPower>(db, { pick: "powers", characterLevelIds: [levelIds[0]] })).toHaveLength(
+          await Picks.findMany<LevelSpell>(db, { pick: "spells", characterLevelIds: [levelIds[2]] }),
+        ).toMatchObject([{ spellId: ctx.spellMap["Magic Missile"] }]);
+        expect(await Picks.findMany<LevelSpell>(db, { pick: "spells", characterLevelIds: [levelIds[0]] })).toHaveLength(
           2,
         );
       });
@@ -1959,7 +1959,7 @@ describe("LevelsService", () => {
 
   describe("the ruleset's view", () => {
     test("each flow composes it once, and builds the character in it", async () => {
-      const { session, character, klass, featAptitude, powerAptitude } = await setupRuleset();
+      const { session, character, klass, featAptitude, spellAptitude } = await setupRuleset();
       const scope = await measure(() => withRulesetScope(db, character.rulesetId, async () => {}));
       const once = scope.timing.cacheHits + scope.timing.cacheMisses;
       const plan = levelUpPlan([planned(klass.id, 1)]);
@@ -1967,7 +1967,7 @@ describe("LevelsService", () => {
         ["plan", () => getPlanAnswer(session, character.id, plan)],
         ["classes", () => getStepOptions(session, character.id, "class-plan", { steps: {} }, {}, page)],
         ["feats", () => getStepOptions(session, character.id, "feats", plan, { pool: featAptitude.id }, page)],
-        ["powers", () => getStepOptions(session, character.id, "powers", plan, { pool: powerAptitude.id }, page)],
+        ["spells", () => getStepOptions(session, character.id, "spells", plan, { pool: spellAptitude.id }, page)],
         ["finalize", () => addOneLevel(session, character.id, klass.id, 1, 8, null, {}, {}, {}, true)],
         ["remove", () => CharacterLevelsService.removeLevel(session, character.id)],
       ];

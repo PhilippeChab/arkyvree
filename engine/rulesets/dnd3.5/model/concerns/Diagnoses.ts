@@ -4,7 +4,7 @@ import type CharacterState from "@/engine/rulesets/dnd3.5/model/CharacterState.t
 import type {
   CustomizedClassLevel,
   CustomizedFeat,
-  CustomizedPower,
+  CustomizedSpell,
 } from "@/engine/rulesets/dnd3.5/model/loading/loadedEntities.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type { Klass } from "@/engine/rulesets/dnd3.5/view/rows.ts";
@@ -66,14 +66,14 @@ export function Diagnoses<B extends Constructor<CharacterState>>(Base: B) {
       return [...(unplaced > 0 ? [{ category: "integrity", message }] : []), ...super.findSourceIssues()];
     }
 
-    /** The character's race, classes, skills, feats and powers, which its source chain must hold. */
+    /** The character's race, classes, skills, feats and spells, which its source chain must hold. */
     protected override listEntityRows() {
-      const { race, klasses, skills, feats, powers } = this.data;
-      return { races: [race], klasses, skills, feats, powers };
+      const { race, klasses, skills, feats, spells } = this.data;
+      return { races: [race], klasses, skills, feats, spells };
     }
 
     /**
-     * Its race, a feat or a power it has, any class of the ruleset, a class level (its own, or one its bonus caster
+     * Its race, a feat or a spell it has, any class of the ruleset, a class level (its own, or one its bonus caster
      * levels reach) and a modifier of such a level, by name.
      */
     protected override nameEntity(entityId: string, entityType: string): string | undefined {
@@ -84,9 +84,9 @@ export function Diagnoses<B extends Constructor<CharacterState>>(Base: B) {
           break;
         case "feats":
           return idx.featsById.get(entityId)?.name;
-        case "powers":
-          return idx.powersById.get(entityId)?.name;
-        case "klasses":
+        case "spells":
+          return idx.spellsById.get(entityId)?.name;
+        case "classes":
           return idx.rulesetKlassesById.get(entityId)?.name;
         case "modifiers": {
           // A modifier of a level the bonus caster levels reach, which the spellcasting applies, not the build
@@ -95,7 +95,7 @@ export function Diagnoses<B extends Constructor<CharacterState>>(Base: B) {
 
           break;
         }
-        case "klass_levels": {
+        case "class_levels": {
           const kl = idx.klassLevelsById.get(entityId);
           if (kl) {
             const klass = idx.rulesetKlassesById.get(kl.klassId);
@@ -114,11 +114,6 @@ export function Diagnoses<B extends Constructor<CharacterState>>(Base: B) {
       return undefined;
     }
 
-    /** A power as 3.5 calls it, a "Spell"; else the engine's word. */
-    protected override nameEntityType(entityType: string): string {
-      return entityType === "powers" ? "Spell" : super.nameEntityType(entityType);
-    }
-
     override resolveModifierSourceName(modifier: Modifier): { name: string; type: string } | undefined {
       const name = this.resolveEntityName(modifier.sourceId, modifier.sourceType);
       if (name) return { name, type: modifier.sourceType };
@@ -129,8 +124,8 @@ export function Diagnoses<B extends Constructor<CharacterState>>(Base: B) {
       if (this.diagnosticsIndex) return this.diagnosticsIndex;
       const featsById = new Map<string, CustomizedFeat>();
       for (const f of this.data.feats) featsById.set(f.id, f);
-      const powersById = new Map<string, CustomizedPower>();
-      for (const p of this.data.powers) powersById.set(p.id, p);
+      const spellsById = new Map<string, CustomizedSpell>();
+      for (const p of this.data.spells) spellsById.set(p.id, p);
       const klassLevelsById = new Map<string, CustomizedClassLevel>();
       for (const kl of this.data.klassLevels) klassLevelsById.set(kl.id, kl);
       const rulesetKlassesById = new Map<string, Klass>();
@@ -151,14 +146,14 @@ export function Diagnoses<B extends Constructor<CharacterState>>(Base: B) {
       for (const kl of this.data.klassLevels) {
         const klass = rulesetKlassesById.get(kl.klassId);
         const label = klass ? `${klass.name} Level ${kl.level}` : `Level ${kl.level}`;
-        for (const m of kl.modifiers) modifierOwner.set(m.id, { name: label, type: "klass_levels" });
+        for (const m of kl.modifiers) modifierOwner.set(m.id, { name: label, type: "class_levels" });
       }
-      for (const power of this.data.powers)
-        for (const m of power.modifiers) modifierOwner.set(m.id, { name: power.name, type: "powers" });
+      for (const spell of this.data.spells)
+        for (const m of spell.modifiers) modifierOwner.set(m.id, { name: spell.name, type: "spells" });
 
       this.diagnosticsIndex = {
         featsById,
-        powersById,
+        spellsById,
         klassLevelsById,
         rulesetKlassesById,
         modifierOwner,

@@ -11,7 +11,7 @@ import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedChara
 import Dnd35CharacterBuilder from "@/engine/rulesets/dnd3.5/model/Dnd35CharacterBuilder.ts";
 import ClassPicker from "@/engine/rulesets/dnd3.5/pickers/ClassPicker.ts";
 import FeatPicker from "@/engine/rulesets/dnd3.5/pickers/FeatPicker.ts";
-import PowerPicker from "@/engine/rulesets/dnd3.5/pickers/PowerPicker.ts";
+import SpellPicker from "@/engine/rulesets/dnd3.5/pickers/SpellPicker.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type { Character } from "@/shared/relations.ts";
@@ -61,13 +61,13 @@ export default class Dnd35LevelUp extends LevelUpPart<Dnd35Descriptions> impleme
     switch (read.kind) {
       case "feats":
         return { kind: read.kind, picker: new FeatPicker(view, character, read.query) };
-      case "klasses": {
+      case "classes": {
         // Its skill points spread over the planned levels as the save spreads them
         const plan = new LevelUpPlan(view, character, this);
         return { kind: read.kind, picker: new ClassPicker(view, character, read.planned, plan) };
       }
-      case "powers":
-        return { kind: read.kind, picker: new PowerPicker(view, character, read.query) };
+      case "spells":
+        return { kind: read.kind, picker: new SpellPicker(view, character, read.query) };
     }
   }
 
@@ -120,7 +120,7 @@ export default class Dnd35LevelUp extends LevelUpPart<Dnd35Descriptions> impleme
 
   /**
    * A save's pooled picks spread over its planned levels: each skill's points within each level's points and max ranks,
-   * class skills first, and the feats and powers in each level's pool slots.
+   * class skills first, and the feats and spells in each level's pool slots.
    */
   distributePicks(view: RulesetView, character: CharacterInput, ...args: Parameters<LevelUpPlan["distributePicks"]>) {
     return new LevelUpPlan(view, character, this).distributePicks(...args);

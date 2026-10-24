@@ -20,15 +20,15 @@ export interface LevelPlan {
   ability?: string;
   feats?: Record<string, string[]>;
   hp: number;
-  powers?: Record<string, string[]>;
   skills?: Record<string, number>;
+  spells?: Record<string, string[]>;
 }
 
-/** A level's picks, by id: skill ranks, and feats and powers by the aptitude they're picked through. */
+/** A level's picks, by id: skill ranks, and feats and spells by the aptitude they're picked through. */
 export interface Picks {
   feats: Record<string, string[]>;
-  powers: Record<string, string[]>;
   skills: Record<string, number>;
+  spells: Record<string, string[]>;
 }
 
 /** A human druid's first level, with a wolf for animal companion. */
@@ -148,7 +148,7 @@ export const SORCERER_1: LevelPlan = {
   hp: 4,
   skills: { Bluff: 4, Concentration: 4, Spellcraft: 4, "Use Magic Device": 4 },
   feats: { General: ["Toughness", "Great Fortitude"], "Familiar Bond": ["Cat Familiar"] },
-  powers: { "Sorcerer Spells": ["Detect Magic", "Light", "Read Magic", "Mage Hand", "Magic Missile", "Shield"] },
+  spells: { "Sorcerer Spells": ["Detect Magic", "Light", "Read Magic", "Mage Hand", "Magic Missile", "Shield"] },
 };
 
 /** A first cleric level taken as a second character level: the War and Good domains, and the longsword as war weapon. */
@@ -175,7 +175,7 @@ export const WIZARD_1: LevelPlan = {
     "Prohibited School": ["Prohibit Illusion", "Prohibit Necromancy"],
     "Familiar Bond": ["Cat Familiar"],
   },
-  powers: {
+  spells: {
     "Wizard Spells": [
       "Detect Magic",
       "Light",
@@ -260,7 +260,7 @@ export function levelUp(
   plan: LevelPlan,
   force = false,
 ) {
-  const { skills, feats, powers } = picks(ctx, plan);
+  const { skills, feats, spells } = picks(ctx, plan);
   return addOneLevel(
     session,
     characterId,
@@ -270,7 +270,7 @@ export function levelUp(
     plan.ability ? ctx.abilityMap[plan.ability] : null,
     skills,
     feats,
-    powers,
+    spells,
     force,
   );
 }
@@ -282,7 +282,7 @@ export function picking(plan: LevelPlan, aptitude: string, feats: string[]): Lev
 }
 
 /** The ids of a plan's picks. */
-export function picks(ctx: SeedContext, { skills = {}, feats = {}, powers = {} }: Omit<LevelPlan, "hp">): Picks {
+export function picks(ctx: SeedContext, { skills = {}, feats = {}, spells = {} }: Omit<LevelPlan, "hp">): Picks {
   const byAptitude = (named: Record<string, string[]>, ids: Record<string, string>) =>
     Object.fromEntries(
       Object.entries(named).map(([aptitude, names]) => [ctx.aptMap[aptitude], names.map((name) => ids[name])]),
@@ -290,7 +290,7 @@ export function picks(ctx: SeedContext, { skills = {}, feats = {}, powers = {} }
   return {
     skills: Object.fromEntries(Object.entries(skills).map(([name, rank]) => [ctx.skillMap[name], rank])),
     feats: byAptitude(feats, ctx.featMap),
-    powers: byAptitude(powers, ctx.powerMap),
+    spells: byAptitude(spells, ctx.spellMap),
   };
 }
 

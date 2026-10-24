@@ -290,7 +290,7 @@ export default function CustomizationPage() {
   }>();
   const location = useLocation();
   const pages = useCustomizationPages();
-  // Its URL names a type by its segment, never by the type's own name ("class-levels", not "klass_levels")
+  // Its URL names a type by its segment, never by the type's own name ("class-levels", not "class_levels")
   const named = entityType && getEntityTypeOfSegment(entityType);
   const pageType = named && getUrlSegment(named) === entityType ? named : undefined;
   const page = pageType === "modifiers" ? MODIFIER_PAGE : pageType ? pages.get(pageType) : undefined;

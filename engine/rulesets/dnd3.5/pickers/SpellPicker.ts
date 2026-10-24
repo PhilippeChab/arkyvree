@@ -1,21 +1,21 @@
 import type { CharacterInput } from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import { FEAT_FIELDS } from "@/engine/rulesets/dnd3.5/entities/feats/fields.ts";
-import type { PowerPickQuery } from "@/engine/rulesets/dnd3.5/levelUp/requests.ts";
+import type { SpellPickQuery } from "@/engine/rulesets/dnd3.5/levelUp/requests.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { SPELL_SCHOOL } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 import LevelPicker from "./LevelPicker.ts";
 
 /**
- * A power picker for the character, from its rows: the pool's powers (`filters`: of a spell level, when given), but
+ * A spell picker for the character, from its rows: the pool's spells (`filters`: of a spell level, when given), but
  * those it knows in the pool at any of its levels, a later one and a planned one too (`holder`: picked, granted by its
- * class levels, the one it's taking too, or made known by its modifiers, the feats' and powers' picked so far too:
- * each pool is a list of its own, which knows a power once), those of the schools a wizard's specialization prohibits,
+ * class levels, the one it's taking too, or made known by its modifiers, the feats' and spells' picked so far too:
+ * each pool is a list of its own, which knows a spell once), those of the schools a wizard's specialization prohibits,
  * and those picked so far, in any pool.
  */
-export default class PowerPicker extends LevelPicker {
-  constructor(view: RulesetView, input: CharacterInput, query: PowerPickQuery) {
+export default class SpellPicker extends LevelPicker {
+  constructor(view: RulesetView, input: CharacterInput, query: SpellPickQuery) {
     super(view, input, query);
     this.filters = this.buildFilters(query);
   }
@@ -24,31 +24,31 @@ export default class PowerPicker extends LevelPicker {
   override readonly filters: { excludeIds: string[]; ids: string[] };
 
   /** What the picker offers and leaves out (`filters`). */
-  private buildFilters({ aptitudeId, planned = {}, powerLevel }: PowerPickQuery) {
+  private buildFilters({ aptitudeId, planned = {}, spellLevel }: SpellPickQuery) {
     // Every level the character has and plans, the one it's taking too, whose grants it holds in their pools
-    const known = this.holder.getHeldPowers().filter((power) => power.aptitudeId === aptitudeId);
+    const known = this.holder.getHeldSpells().filter((spell) => spell.aptitudeId === aptitudeId);
     const excludeIds = [
-      ...known.map((power) => power.id),
-      ...this.getProhibitedPowerIds(aptitudeId),
-      ...(planned.powerPicks ?? []).map((pick) => pick.powerId),
+      ...known.map((spell) => spell.id),
+      ...this.getProhibitedSpellIds(aptitudeId),
+      ...(planned.spellPicks ?? []).map((pick) => pick.spellId),
     ];
-    return { ids: Dnd35View.of(this.rulesetData).listPowerIds({ aptitudeId, level: powerLevel }), excludeIds };
+    return { ids: Dnd35View.of(this.rulesetData).listSpellIds({ aptitudeId, level: spellLevel }), excludeIds };
   }
 
   /** The wizard's spells of the schools its specialization prohibits: none for another pool. */
-  private getProhibitedPowerIds(aptitudeId: string): string[] {
+  private getProhibitedSpellIds(aptitudeId: string): string[] {
     const aptitude = Dnd35View.of(this.rulesetData).aptitudesById.get(aptitudeId);
     if (aptitude?.name !== "Wizard Spells") return [];
 
     const prohibitedSchools = new Set(
       this.character.getHeldFeats().flatMap((feat) => FEAT_FIELDS.read(feat.properties).prohibitedSchools),
     );
-    // The powers of each school, by the view's reverse property index
-    const excludedPowerIds = new Set<string>();
+    // The spells of each school, by the view's reverse property index
+    const excludedSpellIds = new Set<string>();
     for (const school of prohibitedSchools) {
-      const ids = this.rulesetData.entityIdsByProperty.get(`powers:${SPELL_SCHOOL}:${school}`) ?? [];
-      for (const id of ids) excludedPowerIds.add(id);
+      const ids = this.rulesetData.entityIdsByProperty.get(`spells:${SPELL_SCHOOL}:${school}`) ?? [];
+      for (const id of ids) excludedSpellIds.add(id);
     }
-    return [...excludedPowerIds];
+    return [...excludedSpellIds];
   }
 }

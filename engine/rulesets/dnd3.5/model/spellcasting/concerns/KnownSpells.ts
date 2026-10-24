@@ -1,35 +1,35 @@
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import { ALLOWED_ALL, type AptitudeLevelData } from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudesComponent.ts";
 import AptitudeTargets from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTargets.ts";
-import type { CustomizedFeat, CustomizedPower } from "@/engine/rulesets/dnd3.5/model/loading/loadedEntities.ts";
-import PowersComponent from "@/engine/rulesets/dnd3.5/model/powers/PowersComponent.ts";
+import type { CustomizedFeat, CustomizedSpell } from "@/engine/rulesets/dnd3.5/model/loading/loadedEntities.ts";
 import type SpellcastingState from "@/engine/rulesets/dnd3.5/model/spellcasting/SpellcastingState.ts";
+import SpellsComponent from "@/engine/rulesets/dnd3.5/model/spells/SpellsComponent.ts";
 import SpellLists from "@/engine/rulesets/dnd3.5/rules/SpellLists.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
-import type { Power } from "@/engine/rulesets/dnd3.5/view/rows.ts";
+import type { Spell } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import type { Modifier, Property } from "@/shared/relations.ts";
 import { MAX_SPELL_LEVEL } from "@/vocabulary/dnd3.5/spells.ts";
 
-/** The powers a character's aptitudes give it, each with what it knows of them, and the spell tags they carry. */
-export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
-  abstract class WithKnownPowers extends Base {
+/** The spells a character's aptitudes give it, each with what it knows of them, and the spell tags they carry. */
+export function KnownSpells<B extends Constructor<SpellcastingState>>(Base: B) {
+  abstract class WithKnownSpells extends Base {
     /**
-     * The class each power-giving aptitude a class level gives slots in belongs to, traced through the applied modifiers:
+     * The class each spell-giving aptitude a class level gives slots in belongs to, traced through the applied modifiers:
      * the class level's class, or the class a bonus caster level advances.
      */
     private aptitudeClassNames(appliedModifiers: Modifier[]) {
       const aptitudeIdToClassName = new Map<string, string>();
       const classes = this.classes.getClasses();
       const aptitudes = this.aptitudes.getAptitudes();
-      const aptitudePowerAptitudeIds = new Set(this.allAptitudePowers.map((p) => p.aptitudeId));
+      const aptitudeSpellAptitudeIds = new Set(this.allAptitudeSpells.map((p) => p.aptitudeId));
 
       for (const modifier of appliedModifiers) {
-        if (modifier.sourceType !== "klass_levels") continue;
+        if (modifier.sourceType !== "class_levels") continue;
         const list = AptitudeTargets.parseList(modifier.target);
         if (list === undefined) continue;
         const aptitude = aptitudes[list];
-        if (!aptitude || !aptitudePowerAptitudeIds.has(aptitude.id) || aptitudeIdToClassName.has(aptitude.id)) continue;
+        if (!aptitude || !aptitudeSpellAptitudeIds.has(aptitude.id) || aptitudeIdToClassName.has(aptitude.id)) continue;
         // Find which class owns this klass level
         for (const [className, klassData] of Object.entries(classes)) {
           if (klassData.levels.some((level) => level.klassLevel.id === modifier.sourceId)) {
@@ -49,7 +49,7 @@ export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
     /**
      * The spell levels each aptitude knows every spell of: a leveled one's levels all known, and those of the classes a
      * list joins (a cleric's domain spells, at the levels the cleric knows his list at). An unleveled one all known
-     * knows all its powers.
+     * knows all its spells.
      */
     private knownAptitudeLevels(appliedModifiers: Modifier[]) {
       const aptitudes = this.aptitudes.getAptitudes();
@@ -84,69 +84,69 @@ export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
     }
 
     /**
-     * The aptitude powers the character doesn't know yet on the list each goes on, each given at the first level of its
+     * The aptitude spells the character doesn't know yet on the list each goes on, each given at the first level of its
      * class and free: on the list a class level gives slots in, and on the list of each class a list joins that knows the
-     * power's level (a cleric's domain spells on the cleric's). A joining list's power no such list knows stays on its
+     * spell's level (a cleric's domain spells on the cleric's). A joining list's spell no such list knows stays on its
      * own list, where it knows the level itself (a domain a fighter picks through a prestige class, its slots its own). A
      * spell is known once per list, and another class's list may know it too: a cleric/wizard's cleric list knows the
      * cleric spells in his spellbook, at the cleric's DC.
      */
-    private newKnownPowers(
-      powers: CustomizedPower[],
+    private newKnownSpells(
+      spells: CustomizedSpell[],
       appliedModifiers: Modifier[],
       klassBonusSpellAbilityMap: Map<string, string>,
-    ): CustomizedPower[] {
+    ): CustomizedSpell[] {
       const aptitudeIdToClassName = this.aptitudeClassNames(appliedModifiers);
       const classes = this.classes.getClasses();
       const aptitudes = this.aptitudes.getAptitudes();
       const aptitudeKeyById = new Map(Object.entries(aptitudes).map(([key, aptitude]) => [aptitude.id, key]));
       const joining = this.joiningClassNames(appliedModifiers);
 
-      // Each power the character knows already on its list (picked, granted, or made known by a modifier), by both
-      const knownOn = new Set(powers.map((p) => `${p.id}:${p.aptitudeId}`));
-      const newPowers: CustomizedPower[] = [];
-      const give = (power: (typeof this.allAptitudePowers)[number], className: string, aptitudeId: string) => {
+      // Each spell the character knows already on its list (picked, granted, or made known by a modifier), by both
+      const knownOn = new Set(spells.map((p) => `${p.id}:${p.aptitudeId}`));
+      const newSpells: CustomizedSpell[] = [];
+      const give = (spell: (typeof this.allAptitudeSpells)[number], className: string, aptitudeId: string) => {
         const klassData = classes[className];
-        if (!klassData || klassData.levels.length === 0 || knownOn.has(`${power.id}:${aptitudeId}`)) return;
+        if (!klassData || klassData.levels.length === 0 || knownOn.has(`${spell.id}:${aptitudeId}`)) return;
         const firstLevel = klassData.levels[0];
-        const enrichedPower: CustomizedPower = {
-          ...power,
+        const enrichedSpell: CustomizedSpell = {
+          ...spell,
           // Its DC's ability, as a loaded spell's (`CustomizesEntities.withDcAbilities`): its class's bonus spell ability
           abilityDcName: klassBonusSpellAbilityMap.get(firstLevel.klassLevel.klassId) ?? null,
           aptitudeId,
           klassLevelId: firstLevel.klassLevel.id,
           characterLevelId: firstLevel.characterLevel.id,
           free: true,
-          properties: this.aptitudePowerProperties.filter((p) => p.entityId === power.id),
+          properties: this.aptitudeSpellProperties.filter((p) => p.entityId === spell.id),
           modifiers: [],
           requirements: [],
         };
-        firstLevel.powers.push(enrichedPower);
-        newPowers.push(enrichedPower);
+        firstLevel.spells.push(enrichedSpell);
+        newSpells.push(enrichedSpell);
       };
 
-      for (const power of this.allAptitudePowers) {
-        const className = aptitudeIdToClassName.get(power.aptitudeId);
-        if (className) give(power, className, power.aptitudeId);
+      for (const spell of this.allAptitudeSpells) {
+        const className = aptitudeIdToClassName.get(spell.aptitudeId);
+        if (className) give(spell, className, spell.aptitudeId);
 
-        const list = aptitudeKeyById.get(power.aptitudeId);
+        const list = aptitudeKeyById.get(spell.aptitudeId);
         const joiningClassNames = [...((list !== undefined && joining.get(list)) || [])];
         let joined = false;
         for (const joiningClassName of joiningClassNames) {
-          const classList = this.classListKnowing(joiningClassName, power.powerLevel);
+          const classList = this.classListKnowing(joiningClassName, spell.spellLevel);
           if (!classList) continue;
-          give(power, joiningClassName, aptitudes[classList].id);
+          give(spell, joiningClassName, aptitudes[classList].id);
           joined = true;
         }
-        const ownLevel = (aptitudes[list ?? ""] as Record<string, unknown> | undefined)?.[String(power.powerLevel)];
+        const ownLevel = (aptitudes[list ?? ""] as Record<string, unknown> | undefined)?.[String(spell.spellLevel)];
         if (
           !joined &&
           joiningClassNames.length > 0 &&
           (ownLevel as AptitudeLevelData | undefined)?.allowed === ALLOWED_ALL
         )
-          give(power, joiningClassNames[0], power.aptitudeId);
+          give(spell, joiningClassNames[0], spell.aptitudeId);
       }
-      return newPowers;
+      return newSpells;
     }
 
     /**
@@ -179,10 +179,10 @@ export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
       }
       if (tagsByAptitudeId.size === 0) return;
 
-      for (const link of this.powerAptitudeLinks) {
+      for (const link of this.spellAptitudeLinks) {
         for (const tag of tagsByAptitudeId.get(link.aptitudeId) ?? []) {
-          if (!this.spellTags[link.powerId]) this.spellTags[link.powerId] = [];
-          this.spellTags[link.powerId].push(tag);
+          if (!this.spellTags[link.spellId]) this.spellTags[link.spellId] = [];
+          this.spellTags[link.spellId].push(tag);
         }
       }
     }
@@ -191,41 +191,41 @@ export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
      * The spells of the lists the character knows every spell of (or a level of), off the view, with their properties
      * and the lists each is on.
      */
-    protected collectAptitudePowers(rulesetData: RulesetData, powers: CustomizedPower[], appliedModifiers: Modifier[]) {
+    protected collectAptitudeSpells(rulesetData: RulesetData, spells: CustomizedSpell[], appliedModifiers: Modifier[]) {
       const dnd35 = Dnd35View.of(rulesetData);
       const { perAptitudeLevels, unleveledAptitudeIds } = this.knownAptitudeLevels(appliedModifiers);
       if (perAptitudeLevels.size === 0 && unleveledAptitudeIds.size === 0) return;
 
-      // Iterate the composed powers once, emitting one row per matching
-      // (power, aptitude) link — mirrors the old SQL join shape.
-      const allAptitudePowers: Array<
-        Power & { aptitudeId: string; powerLevel: number | null; saveName: string | null }
+      // Iterate the composed spells once, emitting one row per matching
+      // (spell, aptitude) link — mirrors the old SQL join shape.
+      const allAptitudeSpells: Array<
+        Spell & { aptitudeId: string; saveName: string | null; spellLevel: number | null }
       > = [];
-      for (const power of dnd35.powers) {
-        const saveName = PowersComponent.saveNameOf(power, rulesetData);
-        for (const link of power.powersAptitudesInRules) {
+      for (const spell of dnd35.spells) {
+        const saveName = SpellsComponent.saveNameOf(spell, rulesetData);
+        for (const link of spell.spellsAptitudesInRules) {
           const leveledSet = perAptitudeLevels.get(link.aptitudeId);
           const isLeveled = leveledSet !== undefined && link.level !== null && leveledSet.has(link.level);
           const isUnleveled = unleveledAptitudeIds.has(link.aptitudeId);
           if (!isLeveled && !isUnleveled) continue;
-          allAptitudePowers.push({
-            ...power,
+          allAptitudeSpells.push({
+            ...spell,
             aptitudeId: link.aptitudeId,
-            powerLevel: link.level,
+            spellLevel: link.level,
             saveName,
           });
         }
       }
 
-      this.allAptitudePowers = allAptitudePowers;
-      if (this.allAptitudePowers.length === 0) return;
+      this.allAptitudeSpells = allAptitudeSpells;
+      if (this.allAptitudeSpells.length === 0) return;
 
       // Gather properties (own + template via sourceItemId-style inheritance does
-      // not apply to powers) and the power→aptitude link table from the cache.
-      // Virtuals already live in `powers` with their properties attached, so
-      // they no longer need to be folded into `aptitudePowerProperties`.
-      const aptitudePowerIds = new Set(this.allAptitudePowers.map((p) => p.id));
-      const propertyEntityIds = new Set<string>(aptitudePowerIds);
+      // not apply to spells) and the spell→aptitude link table from the cache.
+      // Virtuals already live in `spells` with their properties attached, so
+      // they no longer need to be folded into `aptitudeSpellProperties`.
+      const aptitudeSpellIds = new Set(this.allAptitudeSpells.map((p) => p.id));
+      const propertyEntityIds = new Set<string>(aptitudeSpellIds);
 
       const properties: Property[] = [];
       for (const id of propertyEntityIds) {
@@ -233,29 +233,29 @@ export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
         if (ps) properties.push(...ps);
       }
 
-      const allPowerIdSet = new Set<string>([...powers.map((p) => p.id), ...aptitudePowerIds]);
-      const powerAptitudeLinks: { aptitudeId: string; powerId: string }[] = [];
-      for (const id of allPowerIdSet) {
-        const p = dnd35.powersById.get(id);
+      const allSpellIdSet = new Set<string>([...spells.map((p) => p.id), ...aptitudeSpellIds]);
+      const spellAptitudeLinks: { aptitudeId: string; spellId: string }[] = [];
+      for (const id of allSpellIdSet) {
+        const p = dnd35.spellsById.get(id);
         if (!p) continue;
-        for (const link of p.powersAptitudesInRules)
-          powerAptitudeLinks.push({ powerId: p.id, aptitudeId: link.aptitudeId });
+        for (const link of p.spellsAptitudesInRules)
+          spellAptitudeLinks.push({ spellId: p.id, aptitudeId: link.aptitudeId });
       }
 
-      this.aptitudePowerProperties = properties;
-      this.powerAptitudeLinks = powerAptitudeLinks;
+      this.aptitudeSpellProperties = properties;
+      this.spellAptitudeLinks = spellAptitudeLinks;
     }
 
-    /** The spells the character's lists make it know, added to its powers with their DCs. */
-    protected enrichAllKnownPowers(
+    /** The spells the character's lists make it know, added to its spells with their DCs. */
+    protected enrichAllKnownSpells(
       rulesetData: RulesetData,
-      powers: CustomizedPower[],
+      spells: CustomizedSpell[],
       klassBonusSpellAbilityMap: Map<string, string>,
       appliedModifiers: Modifier[],
     ) {
-      if (this.allAptitudePowers.length === 0) return;
-      const newPowers = this.newKnownPowers(powers, appliedModifiers, klassBonusSpellAbilityMap);
-      if (newPowers.length > 0) this.registerKnownPowers(rulesetData, newPowers);
+      if (this.allAptitudeSpells.length === 0) return;
+      const newSpells = this.newKnownSpells(spells, appliedModifiers, klassBonusSpellAbilityMap);
+      if (newSpells.length > 0) this.registerKnownSpells(rulesetData, newSpells);
     }
 
     getSpellTagLists() {
@@ -267,25 +267,25 @@ export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
     }
 
     /**
-     * Adds powers the character knows past those it loaded to its spells: known in its spell map on their list, and
+     * Adds spells the character knows past those it loaded to its spells: known in its spell map on their list, and
      * grouped with their DC ability. Those its lists make it know as it finishes, and a spell a modifier's grant makes
      * known as it applies (`PossessesVirtually`).
      */
-    registerKnownPowers(rulesetData: RulesetData, newPowers: CustomizedPower[]) {
+    registerKnownSpells(rulesetData: RulesetData, newSpells: CustomizedSpell[]) {
       const { spellSlugByAptitudeId } = SpellLists.of(rulesetData);
-      this.powers.addPowerEntries(newPowers);
-      for (const power of newPowers) {
-        const list = Dnd35View.of(rulesetData).aptitudesById.get(power.aptitudeId);
+      this.spells.addSpellEntries(newSpells);
+      for (const spell of newSpells) {
+        const list = Dnd35View.of(rulesetData).aptitudesById.get(spell.aptitudeId);
         // Mark as known in spell map
         if (list) {
-          const entry = this.powers.getSpellEntry(power.name, list.name);
+          const entry = this.spells.getSpellEntry(spell.name, list.name);
           if (entry) entry.known = true;
         }
-        const aptitudeSlug = spellSlugByAptitudeId.get(power.aptitudeId) ?? power.aptitudeId;
-        this.powerGroupings.registerPower({ ...power, aptitudeSlug }, power.properties);
+        const aptitudeSlug = spellSlugByAptitudeId.get(spell.aptitudeId) ?? spell.aptitudeId;
+        this.spellGroupings.registerSpell({ ...spell, aptitudeSlug }, spell.properties);
       }
-      this.powers.readGroupings();
+      this.spells.readGroupings();
     }
   }
-  return WithKnownPowers;
+  return WithKnownSpells;
 }

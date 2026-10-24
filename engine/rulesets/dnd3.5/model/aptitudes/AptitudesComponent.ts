@@ -26,7 +26,7 @@ interface AptitudesData {
   };
 }
 
-/** A pool a level-up picks feats in: an unleveled aptitude, `shared` when its aptitude has powers too. */
+/** A pool a level-up picks feats in: an unleveled aptitude, `shared` when its aptitude has spells too. */
 interface FeatPool {
   allowed: number;
   available: number;
@@ -45,8 +45,8 @@ interface OverfullPool {
   room: number;
 }
 
-/** A pool a level-up picks powers in: a leveled aptitude, with each spell level it has left (`levels`), or a shared one. */
-interface PowerPool {
+/** A pool a level-up picks spells in: a leveled aptitude, with each spell level it has left (`levels`), or a shared one. */
+interface SpellPool {
   allowed: number;
   available: number;
   id: string;
@@ -66,16 +66,16 @@ export interface AptitudeLevelData {
 }
 
 /**
- * A level-up's own picks, counted by pool: its feats, and its powers by spell level (`""` for one picked in a pool
+ * A level-up's own picks, counted by pool: its feats, and its spells by spell level (`""` for one picked in a pool
  * without spell levels). A pool's room for them adds them back to what it has left.
  */
 export interface OwnPicks {
   feats: Record<string, number>;
-  powers: Record<string, Record<string, number>>;
+  spells: Record<string, Record<string, number>>;
 }
 
 /** No picks of a level-up's own: a pool's room is what it has left. */
-const NO_OWN_PICKS: OwnPicks = { feats: {}, powers: {} };
+const NO_OWN_PICKS: OwnPicks = { feats: {}, spells: {} };
 
 export const ALLOWED_ALL = -1;
 
@@ -85,7 +85,7 @@ function sumAvailable(pools: { available: number }[]) {
 }
 
 /**
- * A character's aptitudes: what each allows it to pick (feats, powers, a leveled one's spells by spell level) and what it
+ * A character's aptitudes: what each allows it to pick (feats, spells, a leveled one's spells by spell level) and what it
  * spent, and the pools a level-up picks in.
  */
 export default class AptitudesComponent extends CharacterComponent<LoadedCharacterData> {
@@ -114,33 +114,33 @@ export default class AptitudesComponent extends CharacterComponent<LoadedCharact
 
   /**
    * An entry per aptitude of the ruleset (one per spell level for a leveled one, a spell list's: `SpellLists`): what it
-   * allows, from the class levels' feats and powers and the general feats, and what the character spent on it.
+   * allows, from the class levels' feats and spells and the general feats, and what the character spent on it.
    */
   override initialize(
     {
       klassLevelFeatCountsByAptitudeId,
-      klassLevelPowerCountsByAptitudeId,
-    }: Pick<LoadedCharacterData, "klassLevelFeatCountsByAptitudeId" | "klassLevelPowerCountsByAptitudeId">,
+      klassLevelSpellCountsByAptitudeId,
+    }: Pick<LoadedCharacterData, "klassLevelFeatCountsByAptitudeId" | "klassLevelSpellCountsByAptitudeId">,
     { rulesetData }: RulesetView,
   ) {
     this.buildEntries(Dnd35View.of(rulesetData).aptitudes, SpellLists.of(rulesetData).leveledAptitudeIds);
     const aptitudeById: AptitudesById = new Map(
       Object.values(this.aptitudes).map((aptitude) => [aptitude.id, aptitude]),
     );
-    this.applyAllowances(aptitudeById, klassLevelFeatCountsByAptitudeId, klassLevelPowerCountsByAptitudeId);
+    this.applyAllowances(aptitudeById, klassLevelFeatCountsByAptitudeId, klassLevelSpellCountsByAptitudeId);
     this.applySpent(aptitudeById, this.countSpent());
   }
 
   /**
-   * What each aptitude allows: the feats and the (non-free) powers the class levels grant through it, and the general
+   * What each aptitude allows: the feats and the (non-free) spells the class levels grant through it, and the general
    * feats its total level gives (`countGeneralFeats`).
    */
   private applyAllowances(
     aptitudeById: AptitudesById,
     klassLevelFeatCountsByAptitudeId: Record<string, number>,
-    klassLevelPowerCountsByAptitudeId: Record<string, number>,
+    klassLevelSpellCountsByAptitudeId: Record<string, number>,
   ) {
-    for (const counts of [klassLevelFeatCountsByAptitudeId, klassLevelPowerCountsByAptitudeId]) {
+    for (const counts of [klassLevelFeatCountsByAptitudeId, klassLevelSpellCountsByAptitudeId]) {
       for (const [aptitudeId, count] of Object.entries(counts)) {
         const aptitude = aptitudeById.get(aptitudeId);
         if (aptitude) aptitude.allowed += count;
@@ -202,7 +202,7 @@ export default class AptitudesComponent extends CharacterComponent<LoadedCharact
     }
   }
 
-  /** The feats and the (non-free) powers the character took per aptitude, per spell level for a leveled power. */
+  /** The feats and the (non-free) spells the character took per aptitude, per spell level for a leveled spell. */
   private countSpent() {
     const spentByAptitudeId: Record<string, number> = {};
     const spentByAptitudeIdAndLevel: Record<string, Record<number, number>> = {};
@@ -212,14 +212,14 @@ export default class AptitudesComponent extends CharacterComponent<LoadedCharact
         for (const feat of level.feats)
           spentByAptitudeId[feat.aptitudeId] = (spentByAptitudeId[feat.aptitudeId] || 0) + 1;
 
-        for (const power of level.powers) {
-          if (power.free) continue;
-          if (power.powerLevel != null) {
-            spentByAptitudeIdAndLevel[power.aptitudeId] ??= {};
-            spentByAptitudeIdAndLevel[power.aptitudeId][power.powerLevel] =
-              (spentByAptitudeIdAndLevel[power.aptitudeId][power.powerLevel] || 0) + 1;
+        for (const spell of level.spells) {
+          if (spell.free) continue;
+          if (spell.spellLevel != null) {
+            spentByAptitudeIdAndLevel[spell.aptitudeId] ??= {};
+            spentByAptitudeIdAndLevel[spell.aptitudeId][spell.spellLevel] =
+              (spentByAptitudeIdAndLevel[spell.aptitudeId][spell.spellLevel] || 0) + 1;
           } else {
-            spentByAptitudeId[power.aptitudeId] = (spentByAptitudeId[power.aptitudeId] || 0) + 1;
+            spentByAptitudeId[spell.aptitudeId] = (spentByAptitudeId[spell.aptitudeId] || 0) + 1;
           }
         }
       }
@@ -258,10 +258,10 @@ export default class AptitudesComponent extends CharacterComponent<LoadedCharact
   }
 
   /**
-   * A leveled aptitude's power pool: what each spell level that has room left gives, or that a level-up's own picks
+   * A leveled aptitude's spell pool: what each spell level that has room left gives, or that a level-up's own picks
    * (`own`, by spell level) are in, with its room for them (what it has left, and them), and all of them.
    */
-  private toLeveledPool(aptitude: AptitudesData[string], own: Record<string, number>): PowerPool {
+  private toLeveledPool(aptitude: AptitudesData[string], own: Record<string, number>): SpellPool {
     const levels: Record<string, { allowed: number; available: number; spent: number }> = {};
     let available = 0;
     for (let spellLevel = 0; spellLevel <= MAX_SPELL_LEVEL; spellLevel++) {
@@ -289,31 +289,31 @@ export default class AptitudesComponent extends CharacterComponent<LoadedCharact
 
   /**
    * The pools a level-up picks in, by aptitude id, and what's left to pick in each kind. An unleveled aptitude is a
-   * feat pool, `shared` when its aptitude has powers too, which makes it a power pool as well: its picks count as
-   * powers. A leveled aptitude is a power pool, with what each spell level it has left gives. A pool's room for the
+   * feat pool, `shared` when its aptitude has spells too, which makes it a spell pool as well: its picks count as
+   * spells. A leveled aptitude is a spell pool, with what each spell level it has left gives. A pool's room for the
    * level-up's own picks of its kind (`own`, which the character holds) adds them back to what it has left: a shared
-   * pool's feats take room from its powers, and its powers from its feats.
+   * pool's feats take room from its spells, and its spells from its feats.
    */
-  getLevelUpPools(view: Pick<Dnd35View, "aptitudeIdsWithPowers">, own: OwnPicks = NO_OWN_PICKS) {
+  getLevelUpPools(view: Pick<Dnd35View, "aptitudeIdsWithSpells">, own: OwnPicks = NO_OWN_PICKS) {
     const featPools: Record<string, FeatPool> = {};
-    const powerPools: Record<string, PowerPool> = {};
+    const spellPools: Record<string, SpellPool> = {};
     for (const [key, aptitude] of Object.entries(this.aptitudes)) {
       const { id, name, allowed, spent, available } = aptitude;
       if (this.leveledAptitudeKeys.has(key)) {
-        powerPools[id] = this.toLeveledPool(aptitude, own.powers[id] ?? {});
+        spellPools[id] = this.toLeveledPool(aptitude, own.spells[id] ?? {});
         continue;
       }
-      const shared = view.aptitudeIdsWithPowers.has(id);
+      const shared = view.aptitudeIdsWithSpells.has(id);
       const feats = own.feats[id] ?? 0;
       featPools[id] = { id, name, allowed, spent: spent - feats, available: available + feats, shared };
-      const powers = own.powers[id]?.[""] ?? 0;
-      if (shared) powerPools[id] = { id, name, allowed, spent: spent - powers, available: available + powers };
+      const spells = own.spells[id]?.[""] ?? 0;
+      if (shared) spellPools[id] = { id, name, allowed, spent: spent - spells, available: available + spells };
     }
     return {
       featPools,
       featsToSelect: sumAvailable(Object.values(featPools).filter((pool) => !pool.shared)),
-      powerPools,
-      powersToSelect: sumAvailable(Object.values(powerPools)),
+      spellPools,
+      spellsToSelect: sumAvailable(Object.values(spellPools)),
     };
   }
 
@@ -326,12 +326,12 @@ export default class AptitudesComponent extends CharacterComponent<LoadedCharact
     for (const [key, aptitude] of Object.entries(this.aptitudes)) {
       const { id: aptitudeId, name } = aptitude;
       if (!this.leveledAptitudeKeys.has(key)) {
-        const picked = (own.feats[aptitudeId] ?? 0) + (own.powers[aptitudeId]?.[""] ?? 0);
+        const picked = (own.feats[aptitudeId] ?? 0) + (own.spells[aptitudeId]?.[""] ?? 0);
         if (picked > 0 && aptitude.available < 0)
           overfull.push({ aptitudeId, name, picked, room: aptitude.available + picked });
         continue;
       }
-      for (const [level, picked] of Object.entries(own.powers[aptitudeId] ?? {})) {
+      for (const [level, picked] of Object.entries(own.spells[aptitudeId] ?? {})) {
         const available = this.spellLevelOf(aptitude, level)?.available ?? -picked;
         if (picked > 0 && available < 0)
           overfull.push({ aptitudeId, level, name: `${name} (level ${level})`, picked, room: available + picked });

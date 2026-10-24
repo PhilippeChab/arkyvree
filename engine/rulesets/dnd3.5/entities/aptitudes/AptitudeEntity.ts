@@ -44,7 +44,7 @@ export default class AptitudeEntity extends RulesetEntity<"aptitudes", AptitudeB
 
   /** A page of the ruleset's aptitudes: a kind's pools when its query says (`scope`: the feats', the spells' lists). */
   protected override listOf(where: { childOnly?: boolean; scope?: "feats" | "spells" }) {
-    const joins = { feats: "feats_aptitudes", spells: "powers_aptitudes" } as const;
+    const joins = { feats: "feats_aptitudes", spells: "spells_aptitudes" } as const;
     const list = super.listOf(where);
     return { ...list, filters: where.scope ? { ...list.filters, joinedBy: joins[where.scope] } : list.filters };
   }

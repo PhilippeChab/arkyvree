@@ -115,14 +115,14 @@ function optionsOf<G extends boolean>(options: StepOptions, grouped: G) {
   return options as Extract<StepOptions, { grouped: G }>;
 }
 
-/** A level's picks as a plan's payloads: its skills' points, and its feats and powers, each in its pool. */
-function payloadsOf({ feats, powers, skills }: Picks) {
+/** A level's picks as a plan's payloads: its skills' points, and its feats and spells, each in its pool. */
+function payloadsOf({ feats, spells, skills }: Picks) {
   const picked = (byPool: Record<string, string[]>) =>
     Object.entries(byPool).flatMap(([pool, ids]) => ids.map((id) => ({ id, pool })));
   return {
     skills: Object.entries(skills).map(([id, points]) => ({ id, points })),
     feats: picked(feats),
-    powers: picked(powers),
+    spells: picked(spells),
   };
 }
 
@@ -194,7 +194,7 @@ describe("character level plans", () => {
       group: { many: "variants", one: "variant" },
       optional: "optional",
     });
-    expect(steps.find(({ name }) => name === "powers")?.words).toMatchObject({
+    expect(steps.find(({ name }) => name === "spells")?.words).toMatchObject({
       grantNote: "class ability",
       tiers: { "0": "Cantrips", "1": "Level 1" },
     });
@@ -204,7 +204,7 @@ describe("character level plans", () => {
       ["abilities", "choose"],
       ["skills", "spend"],
       ["feats", "pick"],
-      ["powers", "pick"],
+      ["spells", "pick"],
     ]);
 
     const [created] = await expectOk(
@@ -214,7 +214,7 @@ describe("character level plans", () => {
       }),
     );
     const edited = await expectOk(levels.steps.$get({ param: { characterId }, query: { editedLevelId: created.id } }));
-    expect(edited.steps.map(({ name }) => name)).toEqual(["hp", "abilities", "skills", "feats", "powers"]);
+    expect(edited.steps.map(({ name }) => name)).toEqual(["hp", "abilities", "skills", "feats", "spells"]);
     // Its advancement's words, though it has no class plan
     expect(edited.advancements).toEqual(advancements);
   });
@@ -264,7 +264,7 @@ describe("character level plans", () => {
     );
     // The pools with room take their next pick on the first level; the others, on the plan's last
     expect(feats.next).toEqual({ ...nextAt(feats, 1), [general]: { "": 0 }, [bonus]: { "": 0 } });
-    expect(stepOf(plan, "powers", "pick")).toMatchObject({ grouped: false, pools: {} });
+    expect(stepOf(plan, "spells", "pick")).toMatchObject({ grouped: false, pools: {} });
   });
 
   test("answers an edit's level in the level's place", async () => {
@@ -347,18 +347,18 @@ describe("character level plans", () => {
     const sorcererPlan = { steps: { "class-plan": [{ track: sorcerer.ctx.klassMap.pc["Sorcerer"], position: 1 }] } };
     const cantrips = await expectOk(
       options.$post({
-        param: { characterId: sorcerer.characterId, step: "powers" },
+        param: { characterId: sorcerer.characterId, step: "spells" },
         query: { limit: "50" },
         json: { plan: sorcererPlan, pool: sorcererSpells, tier: "0" },
       }),
     );
     const cantripIds = optionsOf(cantrips, false).items.map(({ id }) => id);
     expect(optionsOf(cantrips, false).items.map(({ name }) => name)).toEqual(CANTRIPS);
-    expect(cantripIds).toEqual(CANTRIPS.map((name) => sorcerer.ctx.powerMap[name]));
+    expect(cantripIds).toEqual(CANTRIPS.map((name) => sorcerer.ctx.spellMap[name]));
     // Its first-level spells, at tier 1: no cantrip among them
     const firsts = await expectOk(
       options.$post({
-        param: { characterId: sorcerer.characterId, step: "powers" },
+        param: { characterId: sorcerer.characterId, step: "spells" },
         query: { limit: "100" },
         json: { plan: sorcererPlan, pool: sorcererSpells, tier: "1" },
       }),
@@ -370,17 +370,17 @@ describe("character level plans", () => {
     const withPicked = {
       steps: {
         ...sorcererPlan.steps,
-        powers: [{ id: sorcerer.ctx.powerMap["Detect Magic"], pool: sorcererSpells, tier: "0" }],
+        spells: [{ id: sorcerer.ctx.spellMap["Detect Magic"], pool: sorcererSpells, tier: "0" }],
       },
     };
     const rest = await expectOk(
       options.$post({
-        param: { characterId: sorcerer.characterId, step: "powers" },
+        param: { characterId: sorcerer.characterId, step: "spells" },
         query: { limit: "50" },
         json: { plan: withPicked, pool: sorcererSpells, tier: "0" },
       }),
     );
-    expect(optionsOf(rest, false).items.map(({ id }) => id)).not.toContain(sorcerer.ctx.powerMap["Detect Magic"]);
+    expect(optionsOf(rest, false).items.map(({ id }) => id)).not.toContain(sorcerer.ctx.spellMap["Detect Magic"]);
   });
 
   test("saves a level-up's plan as the levels it writes, and an edit's as the level's", async () => {
@@ -400,7 +400,7 @@ describe("character level plans", () => {
     const edit = {
       hp: [5],
       abilities: [[]],
-      powers: [],
+      spells: [],
       skills: [
         { id: ctx.skillMap["Climb"], points: 4 },
         { id: ctx.skillMap["Swim"], points: 4 },
@@ -434,8 +434,8 @@ describe("character level plans", () => {
     };
     const [created] = await expectOk(levels.$post({ param: { characterId }, json: { steps } }));
     const saved = await readLevel(characterId, created.id);
-    expect([...(saved.powers[ctx.aptMap["Sorcerer Spells"]] ?? [])].sort()).toEqual(
-      [...(sorcerer1.powers[ctx.aptMap["Sorcerer Spells"]] ?? [])].sort(),
+    expect([...(saved.spells[ctx.aptMap["Sorcerer Spells"]] ?? [])].sort()).toEqual(
+      [...(sorcerer1.spells[ctx.aptMap["Sorcerer Spells"]] ?? [])].sort(),
     );
   });
 
@@ -530,30 +530,30 @@ describe("character level plans", () => {
     const sorcerer = await createCharacter(16);
     const sorcererClass = sorcerer.ctx.klassMap.pc["Sorcerer"];
     const sorcererSpells = sorcerer.ctx.aptMap["Sorcerer Spells"];
-    const cantrips = ["Detect Magic", "Light"].map((name) => sorcerer.ctx.powerMap[name]);
+    const cantrips = ["Detect Magic", "Light"].map((name) => sorcerer.ctx.spellMap[name]);
     const plan = await expectOk(
       levels.plan.$post({
         param: { characterId: sorcerer.characterId },
         json: {
           steps: {
             "class-plan": [{ track: sorcererClass, position: 1 }],
-            powers: cantrips.map((id) => ({ id, pool: sorcererSpells, tier: "0" })),
+            spells: cantrips.map((id) => ({ id, pool: sorcererSpells, tier: "0" })),
           },
         },
       }),
     );
     // A sorcerer 1 knows 4 cantrips and 2 first-level spells: its pool's room, before the plan's picks
-    const powers = stepOf(plan, "powers", "pick");
+    const spells = stepOf(plan, "spells", "pick");
     const fitted = { [sorcererSpells]: cantrips };
-    expect(powers).toEqual({
+    expect(spells).toEqual({
       mechanic: "pick",
       fitted,
       picked: pickedOf(fitted),
       granted: [],
       grouped: false,
-      next: nextAt(powers, 0, () => ALL_TIERS),
+      next: nextAt(spells, 0, () => ALL_TIERS),
       pools: expectedPools(
-        powers,
+        spells,
         {
           "Sorcerer Spells": {
             available: 6,
@@ -564,7 +564,7 @@ describe("character level plans", () => {
       ),
     });
     // The cantrips picked, by name, at their tier
-    expect(powers.picked[sorcererSpells]).toEqual([
+    expect(spells.picked[sorcererSpells]).toEqual([
       expect.objectContaining({ id: cantrips[0], name: "Detect Magic", tier: "0" }),
       expect.objectContaining({ id: cantrips[1], name: "Light", tier: "0" }),
     ]);
@@ -611,7 +611,7 @@ describe("character level plans", () => {
     );
 
     const feats = stepOf(plan, "feats", "pick");
-    const powers = stepOf(plan, "powers", "pick");
+    const spells = stepOf(plan, "spells", "pick");
     // The level's own picks free in its pools: their room the level's, as if none were picked
     expect(plan.steps).toEqual({
       hp: { mechanic: "value", advancements: [{ average: 2, max: 4, min: 1, roll: "d4" }] },
@@ -637,16 +637,16 @@ describe("character level plans", () => {
           "Sorcerer Class Feature": { allowed: 3, spent: 3 },
         }),
       },
-      powers: {
+      spells: {
         mechanic: "pick",
-        fitted: sorcerer1.powers,
-        picked: pickedOf(sorcerer1.powers),
+        fitted: sorcerer1.spells,
+        picked: pickedOf(sorcerer1.spells),
         granted: [],
         grouped: false,
         // At any tier, and at each its pool has: a sorcerer 1's cantrips and first-level spells
-        next: nextAt(powers, 0, (id) => (id === sorcererSpells ? ["", "0", "1"] : [""])),
+        next: nextAt(spells, 0, (id) => (id === sorcererSpells ? ["", "0", "1"] : [""])),
         pools: expectedPools(
-          powers,
+          spells,
           {
             "Sorcerer Spells": {
               available: 6,
@@ -757,7 +757,7 @@ describe("character level plans", () => {
       ...payloadsOf(picks(ctx, FIGHTER_LEVELS[3])),
     };
     // Its spells left unanswered: refused, rather than read as none
-    const { powers: _, ...unanswered } = fourth;
+    const { spells: _, ...unanswered } = fourth;
     await expectStatus(levels.$post({ param: { characterId }, json: { steps: unanswered } }), 400);
     const [created] = await expectOk(levels.$post({ param: { characterId }, json: { steps: fourth } }));
     expect(await readLevel(characterId, created.id)).toMatchObject({
@@ -795,7 +795,7 @@ describe("character level plans", () => {
     await expectStatus(options.$post({ param: { characterId, step: "feats" }, query: {}, json: { plan } }), 400);
     const pool = ctx.aptMap["General"];
     await expectStatus(
-      options.$post({ param: { characterId, step: "powers" }, query: {}, json: { plan, pool, tier: "abc" } }),
+      options.$post({ param: { characterId, step: "spells" }, query: {}, json: { plan, pool, tier: "abc" } }),
       400,
     );
     await expectStatus(levels.steps.$get({ param: { characterId }, query: { editedLevelId: NIL_UUID } }), 404);
@@ -819,14 +819,14 @@ describe("character level plans", () => {
       new Set(steps.skills.map(({ id, points }) => `${id}:${points}`)),
     );
     // Its spells at their spell levels: a cantrip at 0
-    expect(savedSteps.powers?.find(({ id }) => id === ctx.powerMap["Detect Magic"])).toMatchObject({ tier: "0" });
+    expect(savedSteps.spells?.find(({ id }) => id === ctx.spellMap["Detect Magic"])).toMatchObject({ tier: "0" });
 
     // Its plan answers as the level saved it: what it picked fits, as it was
     const plan = await expectOk(levels.plan.$post({ param: { characterId }, json: saved }));
     const sorted = (byPool: Record<string, string[]>) =>
       Object.fromEntries(Object.entries(byPool).map(([pool, ids]) => [pool, [...ids].sort()]));
     expect(sorted(stepOf(plan, "feats", "pick").fitted)).toEqual(sorted(sorcerer1.feats));
-    expect(sorted(stepOf(plan, "powers", "pick").fitted)).toEqual(sorted(sorcerer1.powers));
+    expect(sorted(stepOf(plan, "spells", "pick").fitted)).toEqual(sorted(sorcerer1.spells));
 
     // Saved back as it was, the level is the same
     const before = await readLevel(characterId, created.id);

@@ -6,13 +6,13 @@ import type { ImportedCharacter, ImportedFeat, ImportedLevel } from "@/engine/ru
 import ImportedLevelGains from "@/engine/rulesets/dnd3.5/imports/ImportedLevelGains.ts";
 import PicksPlacement, {
   type MatchedFeat,
-  type MatchedPower,
   type MatchedSkill,
+  type MatchedSpell,
 } from "@/engine/rulesets/dnd3.5/imports/PicksPlacement.ts";
 import Dnd35LevelUp from "@/engine/rulesets/dnd3.5/levelUp/Dnd35LevelUp.ts";
 import LevelByLevel from "@/engine/rulesets/dnd3.5/levelUp/LevelByLevel.ts";
 import type { PlannedClassLevel } from "@/engine/rulesets/dnd3.5/levelUp/LevelUpBase.ts";
-import type { AbilityIncrease, FeatPick, LevelWrites, PowerPick } from "@/engine/rulesets/dnd3.5/levelUp/plans.ts";
+import type { AbilityIncrease, FeatPick, LevelWrites, SpellPick } from "@/engine/rulesets/dnd3.5/levelUp/plans.ts";
 import type { LevelPicks, LevelRequest } from "@/engine/rulesets/dnd3.5/levelUp/requests.ts";
 import { ALLOWED_ALL } from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudesComponent.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
@@ -74,14 +74,14 @@ export default class LevelsImport {
     index: number,
     level: MatchedLevel,
     increases: AbilityIncrease[],
-    { feats, powers }: { feats: FeatPick[]; powers: PowerPick[] },
+    { feats, spells }: { feats: FeatPick[]; spells: SpellPick[] },
   ) {
-    const { abilitiesById, featsById, powersById } = this.dnd35;
+    const { abilitiesById, featsById, spellsById } = this.dnd35;
     const parts = [`${level.klass.name} ${level.klassLevel.level}`, `${level.hp} hit points`];
     for (const { abilityId, amount } of increases)
       parts.push(`${abilitiesById.get(abilityId)?.name} ${formatSigned(amount)}`);
     for (const { featId } of feats) parts.push(featsById.get(featId)?.name ?? featId);
-    for (const { powerId } of powers) parts.push(powersById.get(powerId)?.name ?? powerId);
+    for (const { spellId } of spells) parts.push(spellsById.get(spellId)?.name ?? spellId);
     return `Level ${index + 1}: ${parts.join(", ")}`;
   }
 
@@ -153,42 +153,6 @@ export default class LevelsImport {
     return matched;
   }
 
-  /**
-   * Each spell the character chose to know matched: the ruleset's spell of its name (an import never makes one) on
-   * the spell list of the class PCGen knows it as, at the spell level PCGen says when a list has it there, and at a
-   * spell level of its own. A spell the ruleset hasn't, one that class's lists haven't (or hold at no spell level),
-   * and one of a class the ruleset hasn't are listed.
-   */
-  private matchPowers(): MatchedPower[] {
-    const { aptitudeIdBySlug, powersById } = this.dnd35;
-    const classLists = SpellLists.of(this.view.rulesetData).classListsByKlass;
-    return this.imported.spells.flatMap((spell) => {
-      const found = this.names.findPowers(spell.name);
-      if (found.length === 0) {
-        this.report.skip(spell.line, `${spell.name} isn't a spell of the ruleset`);
-        return [];
-      }
-      const klass = this.names.findClass(spell.className);
-      if (!klass) {
-        this.report.skip(spell.line, `${spell.name}: its class, ${spell.className}, isn't a class of the ruleset`);
-        return [];
-      }
-      const lists = new Set([...(classLists.get(klass.id) ?? [])].map((slug) => aptitudeIdBySlug.get(slug)));
-      const links = found.flatMap((power) =>
-        (powersById.get(power.id)?.powersAptitudesInRules ?? []).flatMap((link) =>
-          lists.has(link.aptitudeId) && link.level !== null ? [{ ...link, name: power.name }] : [],
-        ),
-      );
-      const link = links.find(({ level }) => level === spell.level) ?? links[0];
-      if (!link) {
-        this.report.skip(spell.line, `${spell.name} isn't on the ${klass.name}'s spell list in the ruleset`);
-        return [];
-      }
-      const { aptitudeId, level, name, powerId } = link;
-      return [{ aptitudeId, level: level ?? 0, line: spell.line, name, powerId }];
-    });
-  }
-
   /** Each line of a skill of the file matched, a rank bought in a class each: a skill the ruleset hasn't is listed. */
   private matchSkills(): MatchedSkill[] {
     return this.imported.skills.flatMap((skill) => {
@@ -204,6 +168,42 @@ export default class LevelsImport {
         ranks,
         skillId: found.id,
       }));
+    });
+  }
+
+  /**
+   * Each spell the character chose to know matched: the ruleset's spell of its name (an import never makes one) on
+   * the spell list of the class PCGen knows it as, at the spell level PCGen says when a list has it there, and at a
+   * spell level of its own. A spell the ruleset hasn't, one that class's lists haven't (or hold at no spell level),
+   * and one of a class the ruleset hasn't are listed.
+   */
+  private matchSpells(): MatchedSpell[] {
+    const { aptitudeIdBySlug, spellsById } = this.dnd35;
+    const classLists = SpellLists.of(this.view.rulesetData).classListsByKlass;
+    return this.imported.spells.flatMap((spell) => {
+      const found = this.names.findSpells(spell.name);
+      if (found.length === 0) {
+        this.report.skip(spell.line, `${spell.name} isn't a spell of the ruleset`);
+        return [];
+      }
+      const klass = this.names.findClass(spell.className);
+      if (!klass) {
+        this.report.skip(spell.line, `${spell.name}: its class, ${spell.className}, isn't a class of the ruleset`);
+        return [];
+      }
+      const lists = new Set([...(classLists.get(klass.id) ?? [])].map((slug) => aptitudeIdBySlug.get(slug)));
+      const links = found.flatMap((spell) =>
+        (spellsById.get(spell.id)?.spellsAptitudesInRules ?? []).flatMap((link) =>
+          lists.has(link.aptitudeId) && link.level !== null ? [{ ...link, name: spell.name }] : [],
+        ),
+      );
+      const link = links.find(({ level }) => level === spell.level) ?? links[0];
+      if (!link) {
+        this.report.skip(spell.line, `${spell.name} isn't on the ${klass.name}'s spell list in the ruleset`);
+        return [];
+      }
+      const { aptitudeId, level, name, spellId } = link;
+      return [{ aptitudeId, level: level ?? 0, line: spell.line, name, spellId }];
     });
   }
 
@@ -239,17 +239,17 @@ export default class LevelsImport {
     }
     // A spell its class knows all of at its level (a cleric's, which a file of PCGen's AUTOSPELLS:N writes), or one a
     // modifier makes known, is no choice: left out as PCGen leaves it
-    const known = new Map(character.getHeldPowers().map((held) => [`${held.aptitudeId}:${held.id}`, held.given]));
+    const known = new Map(character.getHeldSpells().map((held) => [`${held.aptitudeId}:${held.id}`, held.given]));
     const lists = new Map(Object.values(character.components.aptitudes.getAptitudes()).map((list) => [list.id, list]));
-    const knowsAll = ({ aptitudeId, level }: MatchedPower) => {
+    const knowsAll = ({ aptitudeId, level }: MatchedSpell) => {
       const atLevel = (lists.get(aptitudeId) as Record<string, unknown> | undefined)?.[String(level)];
       return (atLevel as { allowed?: number } | undefined)?.allowed === ALLOWED_ALL;
     };
-    for (const power of placement.leftPowers()) {
-      const key = `${power.aptitudeId}:${power.powerId}`;
-      if (known.get(key) || knowsAll(power)) continue;
-      if (known.has(key)) this.report.skip(power.line, `${power.name} is imported already, from another line`);
-      else this.report.skip(power.line, `${power.name}: no level could take it (no room left at its spell level)`);
+    for (const spell of placement.leftSpells()) {
+      const key = `${spell.aptitudeId}:${spell.spellId}`;
+      if (known.get(key) || knowsAll(spell)) continue;
+      if (known.has(key)) this.report.skip(spell.line, `${spell.name} is imported already, from another line`);
+      else this.report.skip(spell.line, `${spell.name}: no level could take it (no room left at its spell level)`);
     }
     for (const skill of placement.leftSkills()) {
       this.report.skip(
@@ -305,7 +305,7 @@ export default class LevelsImport {
       this.view.rulesetData,
       this.matchFeats(),
       this.matchSkills(),
-      this.matchPowers(),
+      this.matchSpells(),
     );
     const leveling = new LevelByLevel<DetailedCharacter>(this.view, character, this.levelUp);
     const lastOfClass = new Map(levels.map((level, index) => [level.level.className, index + 1]));
@@ -325,23 +325,23 @@ export default class LevelsImport {
       });
       const featPicks = placement.placeFeats(levelGains, entry, { room: gains.featRoom, skills });
       // Its spells last, none the character knows already (its class or race makes it known, a level learned it)
-      const powerPicks = placement.hasRoomFor(gains.powerRoom)
-        ? placement.placePowers({
-            held: levelGains.buildWith(entry, skills, featPicks).getHeldPowers(),
-            room: gains.powerRoom,
+      const spellPicks = placement.hasRoomFor(gains.spellRoom)
+        ? placement.placeSpells({
+            held: levelGains.buildWith(entry, skills, featPicks).getHeldSpells(),
+            room: gains.spellRoom,
           })
         : [];
       const feats: Record<string, string[]> = {};
       for (const { aptitudeId, featId } of featPicks) (feats[aptitudeId] ??= []).push(featId);
-      const powers: Record<string, string[]> = {};
-      for (const { aptitudeId, powerId } of powerPicks) (powers[aptitudeId] ??= []).push(powerId);
+      const spells: Record<string, string[]> = {};
+      for (const { aptitudeId, spellId } of spellPicks) (spells[aptitudeId] ??= []).push(spellId);
       const request = { abilityIncreases, hp: level.hp, klassId: level.klass.id, level: level.klassLevel.level };
-      const planned = this.planLevel(leveling, request, { feats, powers, skills });
+      const planned = this.planLevel(leveling, request, { feats, spells, skills });
       // Refused even forced: the import is planned again without it, its increases out of the starting scores
       if ("refusal" in planned)
         return { refused: { count: index, reason: `A level-up refuses it: ${planned.refusal}` } };
       writes.push(planned.writes);
-      this.report.import(this.describeLevel(index, level, abilityIncreases, { feats: featPicks, powers: powerPicks }));
+      this.report.import(this.describeLevel(index, level, abilityIncreases, { feats: featPicks, spells: spellPicks }));
       // An issue the level before had already (its counts aside: an unspent point is still one) was said there
       const issues = new Map(planned.issues.map((issue) => [LevelsImport.issueKey(issue), issue.message]));
       for (const [key, message] of issues)

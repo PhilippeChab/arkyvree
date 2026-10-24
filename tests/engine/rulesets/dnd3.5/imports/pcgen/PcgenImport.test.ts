@@ -496,7 +496,7 @@ describe("A PCGen sorcerer", () => {
     const plan = await planImportOf(await readPcgenFile("selene"));
     const data = await seededData();
     const spells = plan.levels.map(({ rows }) =>
-      rows.powers.map(({ powerId }) => Dnd35View.of(data).powersById.get(powerId)?.name).toSorted(),
+      rows.spells.map(({ spellId }) => Dnd35View.of(data).spellsById.get(spellId)?.name).toSorted(),
     );
     expect(spells).toEqual([
       ["Detect Magic", "Light", "Mage Hand", "Magic Missile", "Prestidigitation", "Shield"],
@@ -530,7 +530,7 @@ describe("A PCGen sorcerer", () => {
   test("leaves out a spell its class knows all of, which a file PCGen saved without its auto-known spells holds", async () => {
     const text = `${await readPcgenFile("hilda")}\nSPELLNAME:Bless|TIMES:1|CLASS:Cleric|BOOK:Known Spells|SPELLLEVEL:1|SOURCE:[TYPE:CLASS|NAME:Cleric]`;
     const plan = await planImportOf(text);
-    expect(plan.levels.flatMap(({ rows }) => rows.powers)).toEqual([]);
+    expect(plan.levels.flatMap(({ rows }) => rows.spells)).toEqual([]);
     expect(plan.report.unmatched).toEqual([]);
   });
 });

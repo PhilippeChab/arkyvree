@@ -10,8 +10,8 @@ import { levelUpPlan } from "./levelPlans.ts";
 
 interface LevelPicks {
   feats?: { aptitudeId: string; featId: string }[];
-  powers?: { aptitudeId: string; powerId: string }[];
   skills?: { rank: number; skillId: string }[];
+  spells?: { aptitudeId: string; spellId: string }[];
 }
 
 /** A level's ability increases as 3.5 gives them: `abilityId` raised by 1, or none. */
@@ -30,8 +30,8 @@ export async function addCharacterLevel(characterId: string, klassLevelId: strin
   );
   await Picks.createMany(
     db,
-    "powers",
-    (picks.powers ?? []).map((pick) => ({ ...pick, characterLevelId })),
+    "spells",
+    (picks.spells ?? []).map((pick) => ({ ...pick, characterLevelId })),
   );
   await Picks.createMany(
     db,
@@ -55,13 +55,13 @@ export async function addOneLevel(
   abilityId: string | null,
   skills: Record<string, number> = {},
   feats: Record<string, string[]> = {},
-  powers: Record<string, string[]> = {},
+  spells: Record<string, string[]> = {},
   force = false,
 ) {
   const plan = levelUpPlan([{ klassId, level, hp, abilityIncreases: increasesOf(abilityId) }], {
     skills,
     feats,
-    powers,
+    spells,
   });
   const createdLevels = await CharacterLevelsService.addLevels(session, characterId, plan, force);
   return createdLevels[0];
@@ -69,14 +69,14 @@ export async function addOneLevel(
 
 /** A new class of the ruleset, with its first level. */
 export async function createTestKlassLevel(rulesetId: string) {
-  const [klass] = await Entities.create<Klass>(db, "klasses", { name: `Test Class ${uniqueId()}`, rulesetId, hd: 8 });
-  const [klassLevel] = await Entities.create<KlassLevel>(db, "klass_levels", { klassId: klass.id, level: 1 });
+  const [klass] = await Entities.create<Klass>(db, "classes", { name: `Test Class ${uniqueId()}`, rulesetId, hd: 8 });
+  const [klassLevel] = await Entities.create<KlassLevel>(db, "class_levels", { klassId: klass.id, level: 1 });
   return { klass, klassLevel };
 }
 
 /** A class's level `level`. */
 export async function findKlassLevel(klassId: string, level: number) {
-  return (await Entities.findMany<KlassLevel>(db, { entityType: "klass_levels", ownerIds: [klassId] })).find(
+  return (await Entities.findMany<KlassLevel>(db, { entityType: "class_levels", ownerIds: [klassId] })).find(
     (klassLevel) => klassLevel.level === level,
   );
 }

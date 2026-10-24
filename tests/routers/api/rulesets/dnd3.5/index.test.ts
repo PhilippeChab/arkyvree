@@ -124,7 +124,7 @@ describe("rulesets", () => {
       }),
     );
     expect(await expectOk(ruleset.changes.$get({ param: { id } }))).toContainEqual(
-      expect.objectContaining({ entityType: "klasses", status: "modified", sourceEntityId: entityId }),
+      expect.objectContaining({ entityType: "classes", status: "modified", sourceEntityId: entityId }),
     );
 
     await expectOk(

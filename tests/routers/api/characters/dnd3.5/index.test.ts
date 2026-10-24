@@ -179,10 +179,10 @@ describe("characters", () => {
     const spells = detail.spellGroups.flatMap((list) => list.levels.flatMap((group) => group.spells));
     const tags = [...new Set(spells.flatMap((spell) => spell.tags?.map((tag) => tag.name) ?? []))].sort();
     expect(tags).toEqual(["Healing Domain", "Sun Domain"]);
-    const classPowerIds = new Set(
-      Object.values(detail.classes).flatMap((klass) => klass.levels.flatMap((level) => level.powers.map((p) => p.id))),
+    const classSpellIds = new Set(
+      Object.values(detail.classes).flatMap((klass) => klass.levels.flatMap((level) => level.spells.map((p) => p.id))),
     );
-    expect(spells.some((spell) => spell.tags && classPowerIds.has(spell.id))).toBe(true);
+    expect(spells.some((spell) => spell.tags && classSpellIds.has(spell.id))).toBe(true);
   });
 
   describe("import", () => {
@@ -346,7 +346,7 @@ describe("characters", () => {
         tracks: [
           {
             id: wizard.klass.id,
-            entityType: "klasses",
+            entityType: "classes",
             name: "Wizard",
             label: "Wizard 1",
             words: { open: "Wizard 1 Levels", levels: "Wizard Levels", add: "Add Wizard Level" },
@@ -431,7 +431,7 @@ describe("characters", () => {
       // A wizard's spells, by list and level, and its slots per day
       const spells = master.blocks.find((block) => block.key === "spells");
       if (spells?.kind !== "pools") throw new Error("no spells");
-      expect(spells).toMatchObject({ title: "Spells", entityType: "powers", counts: { title: "Spells per Day" } });
+      expect(spells).toMatchObject({ title: "Spells", entityType: "spells", counts: { title: "Spells per Day" } });
       expect(spells.pools.map(({ name }) => name)).toEqual(
         (await sheetOf(masterId)).spellGroups.map(({ aptitudeName }) => aptitudeName),
       );

@@ -10,10 +10,10 @@ import { copyEntity, createSeededTestRuleset } from "@/tests/support/rulesets.ts
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 import {
+  CLASS_BONUS_SPELL_ABILITY_ID,
+  CLASS_CASTER_TYPE,
   FEAT_FAMILY,
   FEAT_WEAPON_FINESSE,
-  KLASS_BONUS_SPELL_ABILITY_ID,
-  KLASS_CASTER_TYPE,
   SPELL_RANGE_TYPE,
   SPELL_RESISTANCE,
   SPELL_SCHOOL,
@@ -106,29 +106,29 @@ describe("An entity's fields", () => {
     });
     expect(await EntitiesService.getEntity(rulesetId, "races", race.id)).toMatchObject({ quadruped: true });
 
-    const wizard = await EntitiesService.createEntity(session, rulesetId, "klasses", {
+    const wizard = await EntitiesService.createEntity(session, rulesetId, "classes", {
       name: "Wizard",
       fields: { bonusSpellAbilityId: intelligence.id, casterType: "Arcane" },
     });
-    expect(await EntitiesService.getEntity(rulesetId, "klasses", wizard.id)).toMatchObject({
+    expect(await EntitiesService.getEntity(rulesetId, "classes", wizard.id)).toMatchObject({
       bonusSpellAbilityId: intelligence.id,
       casterType: "Arcane",
     });
     // None, as its form's select says it
-    await EntitiesService.updateEntity(session, rulesetId, "klasses", wizard.id, {
+    await EntitiesService.updateEntity(session, rulesetId, "classes", wizard.id, {
       name: "Wizard",
       fields: { casterType: "" },
     });
-    expect(await storedProperties(wizard.id)).toEqual([`${KLASS_BONUS_SPELL_ABILITY_ID}=${intelligence.id}`]);
+    expect(await storedProperties(wizard.id)).toEqual([`${CLASS_BONUS_SPELL_ABILITY_ID}=${intelligence.id}`]);
 
-    const level = await EntitiesService.createOwnedEntity(session, rulesetId, "klasses", wizard.id, {
+    const level = await EntitiesService.createOwnedEntity(session, rulesetId, "classes", wizard.id, {
       level: 1,
       fields: { bab: 0, skills: 2 },
     });
-    await EntitiesService.updateOwnedEntity(session, rulesetId, "klasses", wizard.id, level.id, {
+    await EntitiesService.updateOwnedEntity(session, rulesetId, "classes", wizard.id, level.id, {
       fields: { skills: 4 },
     });
-    expect(await EntitiesService.getOwnedEntity(rulesetId, "klasses", wizard.id, level.id)).toMatchObject({
+    expect(await EntitiesService.getOwnedEntity(rulesetId, "classes", wizard.id, level.id)).toMatchObject({
       bab: 0,
       skills: 4,
     });
@@ -152,28 +152,28 @@ describe("An entity's fields", () => {
     });
     expect(create({ weaponFinesse: "yes" })).rejects.toMatchObject({ issues: [{ category: "fields.weaponFinesse" }] });
 
-    const wizard = await EntitiesService.createEntity(session, rulesetId, "klasses", { name: "Wizard" });
+    const wizard = await EntitiesService.createEntity(session, rulesetId, "classes", { name: "Wizard" });
     expect(
-      EntitiesService.updateEntity(session, rulesetId, "klasses", wizard.id, {
+      EntitiesService.updateEntity(session, rulesetId, "classes", wizard.id, {
         name: "Wizard",
         fields: { casterType: "Psionic" },
       }),
     ).rejects.toMatchObject({ refusal: "invalid", issues: [{ category: "fields.casterType" }] });
     expect(
-      EntitiesService.updateEntity(session, rulesetId, "klasses", wizard.id, {
+      EntitiesService.updateEntity(session, rulesetId, "classes", wizard.id, {
         name: "Wizard",
         fields: { bonusSpellAbilityId: NIL_UUID },
       }),
     ).rejects.toMatchObject({ refusal: "invalid", message: `Ability ${NIL_UUID} does not belong to this ruleset` });
     expect(
-      EntitiesService.createOwnedEntity(session, rulesetId, "klasses", wizard.id, { level: 1, fields: { skills: -1 } }),
+      EntitiesService.createOwnedEntity(session, rulesetId, "classes", wizard.id, { level: 1, fields: { skills: -1 } }),
     ).rejects.toMatchObject({ refusal: "invalid", issues: [{ category: "fields.skills" }] });
     // A base attack bonus past the last level's full one, and skill points past a table's most
     expect(
-      EntitiesService.createOwnedEntity(session, rulesetId, "klasses", wizard.id, { level: 1, fields: { bab: 21 } }),
+      EntitiesService.createOwnedEntity(session, rulesetId, "classes", wizard.id, { level: 1, fields: { bab: 21 } }),
     ).rejects.toMatchObject({ refusal: "invalid", issues: [{ category: "fields.bab" }] });
     expect(
-      EntitiesService.createOwnedEntity(session, rulesetId, "klasses", wizard.id, {
+      EntitiesService.createOwnedEntity(session, rulesetId, "classes", wizard.id, {
         level: 1,
         fields: { skills: 100 },
       }),
@@ -185,13 +185,13 @@ describe("An entity's fields", () => {
     const { session, rulesetId, spellList } = await setup();
     const spell = { name: "Bolt", aptitudes: [{ id: spellList, level: 1 }] };
     expect(
-      EntitiesService.createEntity(session, rulesetId, "powers", { ...spell, fields: { school: "Sorcery" } }),
+      EntitiesService.createEntity(session, rulesetId, "spells", { ...spell, fields: { school: "Sorcery" } }),
     ).rejects.toMatchObject({ refusal: "invalid", issues: [{ category: "fields.school" }] });
-    const bolt = await EntitiesService.createEntity(session, rulesetId, "powers", {
+    const bolt = await EntitiesService.createEntity(session, rulesetId, "spells", {
       ...spell,
       fields: { school: "Evocation" },
     });
-    await EntitiesService.updateEntity(session, rulesetId, "powers", bolt.id, {
+    await EntitiesService.updateEntity(session, rulesetId, "spells", bolt.id, {
       ...spell,
       fields: { school: "Conjuration" },
     });
@@ -214,7 +214,7 @@ describe("An entity's fields", () => {
     const { session, rulesetId, spellList } = await setup();
     const spell = { name: "Bolt", aptitudes: [{ id: spellList, level: 1 }] };
     const fields = { school: "Evocation", rangeType: "60 ft.", spellResistance: "Yes (harmless)" };
-    const bolt = await EntitiesService.createEntity(session, rulesetId, "powers", { ...spell, fields });
+    const bolt = await EntitiesService.createEntity(session, rulesetId, "spells", { ...spell, fields });
     expect(await storedProperties(bolt.id)).toEqual([
       `${SPELL_RANGE_TYPE}=60 ft.`,
       `${SPELL_RESISTANCE}=Yes (harmless)`,
@@ -225,26 +225,26 @@ describe("An entity's fields", () => {
   test("keep a stored value their ruleset no longer lists while an edit leaves its field out", async () => {
     const { session, rulesetId, spellList } = await setup();
     const spell = { name: "Bolt", aptitudes: [{ id: spellList, level: 1 }] };
-    const bolt = await EntitiesService.createEntity(session, rulesetId, "powers", {
+    const bolt = await EntitiesService.createEntity(session, rulesetId, "spells", {
       ...spell,
       fields: { school: "Conjuration" },
     });
     await Properties.createMany(db, [
-      { entityId: bolt.id, entityType: "powers", type: SPELL_SUBSCHOOL, value: "Creation or Calling" },
+      { entityId: bolt.id, entityType: "spells", type: SPELL_SUBSCHOOL, value: "Creation or Calling" },
     ]);
     RulesetViews.invalidate(rulesetId);
 
-    await EntitiesService.updateEntity(session, rulesetId, "powers", bolt.id, {
+    await EntitiesService.updateEntity(session, rulesetId, "spells", bolt.id, {
       ...spell,
       fields: { castingTime: "1 round" },
     });
-    expect(await EntitiesService.getEntity(rulesetId, "powers", bolt.id)).toMatchObject({
+    expect(await EntitiesService.getEntity(rulesetId, "spells", bolt.id)).toMatchObject({
       castingTime: "1 round",
       subschool: "Creation or Calling",
     });
     // Given back, it's refused as any value outside the list
     expect(
-      EntitiesService.updateEntity(session, rulesetId, "powers", bolt.id, {
+      EntitiesService.updateEntity(session, rulesetId, "spells", bolt.id, {
         ...spell,
         fields: { subschool: "Creation or Calling" },
       }),
@@ -258,23 +258,23 @@ describe("An entity's fields", () => {
     const wisdom = await copyEntity(db, "abilities", abilityMap["Wisdom"], fork);
     RulesetViews.invalidate(fork.id);
     const fighter = await Entities.findOne<Klass>(db, {
-      entityType: "klasses",
+      entityType: "classes",
       name: "Fighter",
       rulesetId: fork.rulesetId!,
     });
 
     // The seed's ids are the sources': the API takes them, and stores the fork's copy's
-    const saved = await EntitiesService.updateEntity(session, fork.id, "klasses", fighter!.id, {
+    const saved = await EntitiesService.updateEntity(session, fork.id, "classes", fighter!.id, {
       name: "Fighter",
       fields: { bonusSpellAbilityId: abilityMap["Wisdom"], casterType: "Divine" },
     });
     expect(saved.id).not.toBe(fighter!.id);
     expect(saved).toMatchObject({ bonusSpellAbilityId: wisdom.id, casterType: "Divine" });
     expect(await storedProperties(saved.id)).toEqual(
-      [`${KLASS_BONUS_SPELL_ABILITY_ID}=${wisdom.id}`, `${KLASS_CASTER_TYPE}=Divine`].toSorted(),
+      [`${CLASS_BONUS_SPELL_ABILITY_ID}=${wisdom.id}`, `${CLASS_CASTER_TYPE}=Divine`].toSorted(),
     );
     expect(await storedProperties(fighter!.id)).toEqual([]);
-    expect(await EntitiesService.getEntity(fork.rulesetId!, "klasses", fighter!.id)).toMatchObject({
+    expect(await EntitiesService.getEntity(fork.rulesetId!, "classes", fighter!.id)).toMatchObject({
       bonusSpellAbilityId: null,
       casterType: null,
     });

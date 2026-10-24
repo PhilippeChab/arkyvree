@@ -49,7 +49,7 @@ Reading and listing rulesets is enforced by the `findPage` scopes, not the polic
 | `base` | System base rulesets: no owner, not a fork |
 | `forked` | The user's own forks |
 | `myDrafts` | Draft rulesets where the user is owner OR active contributor |
-| `published` | Rulesets the user can play with: public ones must be `status = 'Published'`; owned and contributed-to ones bypass the status gate (Draft is fine — `Published` only governs outward discoverability for *public* rulesets). `kind = 'ruleset'`. Powers the character-creation and campaign-creation pickers — extensions are filtered out so they're never offered as a playable target |
+| `published` | Rulesets the user can play with: public ones must be `status = 'Published'`; owned and contributed-to ones bypass the status gate (Draft is fine — `Published` only governs outward discoverability for *public* rulesets). `kind = 'ruleset'`. Spells the character-creation and campaign-creation pickers — extensions are filtered out so they're never offered as a playable target |
 | `community` | Public Published user forks with `kind = 'ruleset'` (`userId IS NOT NULL`, `private = false`). Extensions (system or user) are filtered out — they live under the `extensions` scope |
 | `campaignAccessible` | Rulesets the user has access to via campaign membership |
 | `archived` | The user's archived rulesets (owner-only) |
@@ -142,7 +142,7 @@ The invite services' `acceptInvite` and `rejectInvite` (campaigns, rulesets and 
 
 ## Customizations
 
-Modifiers, properties, and requirements live on a parent entity (a feat, item, klass, race, power, klass-level, modifier, or character), properties on a ruleset too. They have no policy of their own: the gating is whichever policy owns the parent's, and the engine's customization operations check that the parent exists in the ruleset's view (`CustomizedEntity`, `engine/core/customizations/`):
+Modifiers, properties, and requirements live on a parent entity (a feat, item, klass, race, spell, klass-level, modifier, or character), properties on a ruleset too. They have no policy of their own: the gating is whichever policy owns the parent's, and the engine's customization operations check that the parent exists in the ruleset's view (`CustomizedEntity`, `engine/core/customizations/`):
 
 - Customizations on a **ruleset entity** are gated by `RulesetsPolicy.canUpdateEntity` (owner / Admin / Editor). Its properties are its fields, written by its own save, gated as its save is; a ruleset's own, its Settings (`RulesetSettingsService.updateSettings`), by `canUpdateEntity` too: who edits its content edits them, never a system ruleset.
 - Customizations on a **character** (e.g. character modifiers) go through `CharactersService` and are gated by `getEditableCharacter` (owner / contributor).

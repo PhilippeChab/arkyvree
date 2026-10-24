@@ -7,7 +7,7 @@ import type { ItemSeed } from "@/content/core/builders/items/types.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
 import { feat } from "@/content/dnd3.5/builders/feats/possession.ts";
 import type { RaceSeed } from "@/content/dnd3.5/builders/races/types.ts";
-import type { SpellSeed } from "@/content/dnd3.5/builders/spells/types.ts";
+import type { LeveledSpellSeed } from "@/content/dnd3.5/builders/spells/types.ts";
 import { ALL_CLASSES as SRD_CLASSES } from "@/content/dnd3.5/generated/srd/classes/index.ts";
 import type { Dnd35SeedContext as SeedContext } from "@/database/seeders/dnd3.5/Dnd35ContentSeeder.ts";
 import { findSpellcastingClass } from "@/database/seeders/dnd3.5/spellTable.ts";
@@ -20,17 +20,17 @@ import {
   type KlassLevelFeat,
   type KlassLevelSave,
   type KlassSkill,
-  type Power,
   type Race,
+  type Spell,
 } from "@/engine/rulesets/dnd3.5/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Entities, Joins } from "@/server/repositories/index.ts";
 import {
+  CLASS_BONUS_SPELL_ABILITY_ID,
+  CLASS_CASTER_TYPE,
+  CLASS_LEVEL_BAB,
+  CLASS_LEVEL_SKILL_POINTS,
   FEAT_FAMILY,
-  KLASS_BONUS_SPELL_ABILITY_ID,
-  KLASS_CASTER_TYPE,
-  KLASS_LEVEL_BAB,
-  KLASS_LEVEL_SKILL_POINTS,
   SPELL_SCHOOL,
 } from "@/vocabulary/dnd3.5/properties/index.ts";
 
@@ -102,7 +102,7 @@ function klass(name: string, fields: Partial<ClassSeed> = {}): ClassSeed {
 
 /** A level's properties: its base attack and skill points. */
 function levelProperties(bab: number, skillPoints: number) {
-  return [`${KLASS_LEVEL_BAB} ${bab}`, `${KLASS_LEVEL_SKILL_POINTS} ${skillPoints}`];
+  return [`${CLASS_LEVEL_BAB} ${bab}`, `${CLASS_LEVEL_SKILL_POINTS} ${skillPoints}`];
 }
 
 function race(name: string, fields: Partial<RaceSeed> = {}): RaceSeed {
@@ -115,7 +115,7 @@ function race(name: string, fields: Partial<RaceSeed> = {}): RaceSeed {
   };
 }
 
-function spell(name: string, level: number, fields: Partial<SpellSeed> = {}): SpellSeed {
+function spell(name: string, level: number, fields: Partial<LeveledSpellSeed> = {}): LeveledSpellSeed {
   return {
     name,
     description: "",
@@ -139,8 +139,8 @@ async function levelsOf(ctx: SeedContext, levelIds: Record<number, string>) {
   const feats = namesOf(ctx.featMap);
   const aptitudes = namesOf(ctx.aptMap);
   const ids = Object.values(levelIds);
-  const levelSaves = await Joins.findMany<KlassLevelSave>(db, { join: "klass_level_saves", fromIds: ids });
-  const granted = await Joins.findMany<KlassLevelFeat>(db, { join: "klass_level_feats", fromIds: ids });
+  const levelSaves = await Joins.findMany<KlassLevelSave>(db, { join: "class_level_saves", fromIds: ids });
+  const granted = await Joins.findMany<KlassLevelFeat>(db, { join: "class_level_feats", fromIds: ids });
   const levels = [];
   for (const [level, id] of Object.entries(levelIds)) {
     const { properties, modifiers, requirements } = await describeCustomizations(id);
@@ -165,13 +165,13 @@ async function rowsOf<R>(type: string, where: { id: string } | { rulesetId: stri
   return stored.filter((entity) => entity.type === type).map((entity) => Engine.storage().rowOf(entity) as R);
 }
 
-/** The spell lists a power is in, "aptitude level" each. */
-async function spellListsOf(ctx: SeedContext, powerId: string) {
+/** The spell lists a spell is in, "aptitude level" each. */
+async function spellListsOf(ctx: SeedContext, spellId: string) {
   const aptitudes = namesOf(ctx.aptMap);
   return (
     await Joins.findMany<{ aptitudeId: string; level: number | null }>(db, {
-      join: "powers_aptitudes",
-      fromIds: [powerId],
+      join: "spells_aptitudes",
+      fromIds: [spellId],
     })
   )
     .map((link) => `${aptitudes[link.aptitudeId]} ${link.level}`)
@@ -340,7 +340,7 @@ describe("Seeding", () => {
         }),
       );
 
-      const [row] = await rowsOf<Klass>("klasses", { id: klassId });
+      const [row] = await rowsOf<Klass>("classes", { id: klassId });
       expect(row).toMatchObject({
         rulesetId: ctx.rulesetId,
         name: "Test Mage",
@@ -352,13 +352,13 @@ describe("Seeding", () => {
         requirements: [],
         modifiers: [],
         properties: [
-          `${KLASS_BONUS_SPELL_ABILITY_ID} ${ctx.abilityMap["Charisma"]}`,
-          `${KLASS_CASTER_TYPE} Arcane`,
+          `${CLASS_BONUS_SPELL_ABILITY_ID} ${ctx.abilityMap["Charisma"]}`,
+          `${CLASS_CASTER_TYPE} Arcane`,
         ].sort(),
       });
       const skills = namesOf(ctx.skillMap);
       expect(
-        (await Joins.findMany<KlassSkill>(db, { join: "klass_skills", fromIds: [klassId] }))
+        (await Joins.findMany<KlassSkill>(db, { join: "class_skills", fromIds: [klassId] }))
           .map((s) => skills[s.skillId])
           .sort(),
       ).toEqual(["Climb", "Spot"]);
@@ -426,7 +426,7 @@ describe("Seeding", () => {
           spells: { slug: "testhealerspells", perDay: [[1], [2], [2, 1]], knowAll: true, noCantrips: true },
         }),
       );
-      expect((await rowsOf<Klass>("klasses", { id: klassId }))[0].kind).toBe("npc");
+      expect((await rowsOf<Klass>("classes", { id: klassId }))[0].kind).toBe("npc");
       expect(await describeCustomizations(klassId)).toEqual({ requirements: [], modifiers: [], properties: [] });
       const levels = await levelsOf(ctx, levelIds);
       expect(levels.map(({ level, properties, modifiers }) => ({ level, properties, modifiers }))).toEqual([
@@ -528,7 +528,7 @@ describe("Seeding", () => {
     const ctx = seeder.ctx;
     await seeder.seedAptitudes(["Test Arcane Spells", "Test Divine Spells"]);
     const school = { type: SPELL_SCHOOL, value: "Evocation" };
-    await seeder.seedPowers([
+    await seeder.seedSpells([
       spell("Test Bolt", 3, {
         aptitudes: ["Test Arcane Spells", "Test Divine Spells", "Test Unknown Spells"],
         aptitudeLevels: { "Test Divine Spells": 4 },
@@ -542,11 +542,11 @@ describe("Seeding", () => {
     ]);
 
     const saves = namesOf(ctx.saveMap);
-    const powers = await rowsOf<Power>("powers", { rulesetId: ctx.rulesetId });
+    const spells = await rowsOf<Spell>("spells", { rulesetId: ctx.rulesetId });
     expect(
-      powers
+      spells
         .map(({ id, name, saveId, saveEffect }) => ({
-          named: ctx.powerMap[name] === id,
+          named: ctx.spellMap[name] === id,
           name,
           save: saveId && saves[saveId],
           saveEffect,
@@ -559,19 +559,19 @@ describe("Seeding", () => {
       { named: true, name: "Test Ward", save: null, saveEffect: null },
       { named: true, name: "Test Wish", save: null, saveEffect: "See text" },
     ]);
-    expect(await spellListsOf(ctx, ctx.powerMap["Test Bolt"])).toEqual([
+    expect(await spellListsOf(ctx, ctx.spellMap["Test Bolt"])).toEqual([
       "Test Arcane Spells 3",
       "Test Divine Spells 4",
     ]);
-    expect(await spellListsOf(ctx, ctx.powerMap["Test Charm"])).toEqual(["Test Arcane Spells 1"]);
-    expect((await describeCustomizations(ctx.powerMap["Test Bolt"])).properties).toEqual([`${SPELL_SCHOOL} Evocation`]);
+    expect(await spellListsOf(ctx, ctx.spellMap["Test Charm"])).toEqual(["Test Arcane Spells 1"]);
+    expect((await describeCustomizations(ctx.spellMap["Test Bolt"])).properties).toEqual([`${SPELL_SCHOOL} Evocation`]);
 
-    await seeder.linkPower(ctx.powerMap["Test Charm"], [
+    await seeder.linkSpell(ctx.spellMap["Test Charm"], [
       { aptitudeId: ctx.aptMap["Test Arcane Spells"], level: 5 },
       { aptitudeId: ctx.aptMap["Test Divine Spells"], level: 2 },
       { aptitudeId: ctx.aptMap["Test Divine Spells"], level: 7 },
     ]);
-    expect(await spellListsOf(ctx, ctx.powerMap["Test Charm"])).toEqual([
+    expect(await spellListsOf(ctx, ctx.spellMap["Test Charm"])).toEqual([
       "Test Arcane Spells 1",
       "Test Divine Spells 2",
     ]);
@@ -606,7 +606,7 @@ describe("Seeding", () => {
     const seeder = await freshSeeder();
     const ctx = seeder.ctx;
     await seeder.seedAptitudes(["Cleric Domain"]);
-    await seeder.seedPowers([spell("Test Bless", 1), spell("Test Aid", 2)]);
+    await seeder.seedSpells([spell("Test Bless", 1), spell("Test Aid", 2)]);
     const classSkill = { target: "skills.spot.innate", operator: "set", value: "true", valueType: "boolean" };
     await seeder.seedDomains(
       [
@@ -638,8 +638,8 @@ describe("Seeding", () => {
       ].sort(),
       properties: [],
     });
-    expect(await spellListsOf(ctx, ctx.powerMap["Test Bless"])).toEqual(["Test Luck Domain Spells 1"]);
-    expect(await spellListsOf(ctx, ctx.powerMap["Test Aid"])).toEqual(["Test Luck Domain Spells 2"]);
+    expect(await spellListsOf(ctx, ctx.spellMap["Test Bless"])).toEqual(["Test Luck Domain Spells 1"]);
+    expect(await spellListsOf(ctx, ctx.spellMap["Test Aid"])).toEqual(["Test Luck Domain Spells 2"]);
   });
 
   test("gives a wizard school's specialist feat its spell list, of the school's wizard spells", async () => {
@@ -653,7 +653,7 @@ describe("Seeding", () => {
     ]);
     await seeder.seedFeats([{ name: "Evocation Specialist", description: "", aptitudes: ["Wizard Specialization"] }]);
     const school = (value: string) => [{ type: SPELL_SCHOOL, value }];
-    await seeder.seedPowers([
+    await seeder.seedSpells([
       spell("Test Bolt", 3, { aptitudes: ["Wizard Spells"], properties: school("Evocation") }),
       spell("Test Flame", 2, { properties: school("Evocation") }),
       spell("Test Mirror", 2, { aptitudes: ["Wizard Spells"], properties: school("Illusion") }),
@@ -671,10 +671,10 @@ describe("Seeding", () => {
       gatedSlots("evocationspecialistspells", "classes.wizard.level").sort(),
     );
     expect({
-      bolt: await spellListsOf(ctx, ctx.powerMap["Test Bolt"]),
-      flame: await spellListsOf(ctx, ctx.powerMap["Test Flame"]),
-      mirror: await spellListsOf(ctx, ctx.powerMap["Test Mirror"]),
-      detect: await spellListsOf(ctx, ctx.powerMap["Test Detect"]),
+      bolt: await spellListsOf(ctx, ctx.spellMap["Test Bolt"]),
+      flame: await spellListsOf(ctx, ctx.spellMap["Test Flame"]),
+      mirror: await spellListsOf(ctx, ctx.spellMap["Test Mirror"]),
+      detect: await spellListsOf(ctx, ctx.spellMap["Test Detect"]),
     }).toEqual({
       bolt: ["Evocation Specialist Spells 3", "Wizard Spells 3"],
       flame: [],
@@ -702,11 +702,11 @@ describe("Seeding", () => {
     expect(await rowsOf<Race>("races", { rulesetId: ctx.rulesetId })).toMatchObject([
       { name: "Test Cat", kind: "familiar" },
     ]);
-    expect(await rowsOf<Klass>("klasses", { rulesetId: ctx.rulesetId })).toMatchObject([
+    expect(await rowsOf<Klass>("classes", { rulesetId: ctx.rulesetId })).toMatchObject([
       { name: "Test Familiar", kind: "familiar" },
     ]);
     expect(
-      await Joins.findMany<KlassLevelFeat>(db, { join: "klass_level_feats", toIds: [ctx.featMap["Test Alertness"]] }),
+      await Joins.findMany<KlassLevelFeat>(db, { join: "class_level_feats", toIds: [ctx.featMap["Test Alertness"]] }),
     ).toMatchObject([{ aptitudeId: ctx.aptMap["Test Familiar Feature"], free: true }]);
   });
 
@@ -814,7 +814,7 @@ describe("Seeding", () => {
       const core = coreSeeder.ctx;
       await coreSeeder.seedAptitudes(["Wizard Spells", "Cleric Spells", "Test Source"]);
       const school = { type: SPELL_SCHOOL, value: "Evocation" };
-      await coreSeeder.seedPowers([
+      await coreSeeder.seedSpells([
         spell("Test Bolt", 3, {
           aptitudes: ["Wizard Spells", "Test Source"],
           savingThrow: "See text",
@@ -827,8 +827,8 @@ describe("Seeding", () => {
       const seeder = await freshExtensionSeeder(core);
       const ctx = seeder.ctx;
       await seeder.seedAptitudes(["Arcane Spells"]);
-      await seeder.seedPowers([spell("Test Ward", 2, { aptitudes: ["Arcane Spells"] })]);
-      const ownWard = ctx.powerMap["Test Ward"];
+      await seeder.seedSpells([spell("Test Ward", 2, { aptitudes: ["Arcane Spells"] })]);
+      const ownWard = ctx.spellMap["Test Ward"];
       await seeder.cowSpellsIntoExtension([
         {
           spell: "Test Bolt",
@@ -842,13 +842,13 @@ describe("Seeding", () => {
         { spell: "Test Unseeded", aptitudes: [{ aptitude: "Arcane Spells", level: 1 }] },
       ]);
 
-      const boltId = ctx.powerMap["Test Bolt"];
-      const [bolt] = await rowsOf<Power>("powers", { id: boltId });
+      const boltId = ctx.spellMap["Test Bolt"];
+      const [bolt] = await rowsOf<Spell>("spells", { id: boltId });
       expect(bolt).toMatchObject({ rulesetId: ctx.rulesetId, name: "Test Bolt", saveEffect: "See text" });
       expect(await spellListsOf(ctx, boltId)).toEqual(["Arcane Spells 2", "Wizard Spells 3"]);
       expect((await describeCustomizations(boltId)).properties).toEqual([`${SPELL_SCHOOL} Evocation`]);
       // Its own spell keeps the inherited one's lists, and isn't copied
-      expect(ctx.powerMap["Test Ward"]).toBe(ownWard);
+      expect(ctx.spellMap["Test Ward"]).toBe(ownWard);
       expect(await spellListsOf(ctx, ownWard)).toEqual(["Arcane Spells 2", "Cleric Spells 1"]);
       const snapshots = await db
         .select()
@@ -856,12 +856,12 @@ describe("Seeding", () => {
         .where(eq(entitySnapshotsInRules.rulesetId, ctx.rulesetId));
       expect(snapshots).toMatchObject([
         {
-          entityType: "powers",
-          sourceEntityId: core.powerMap["Test Bolt"],
+          entityType: "spells",
+          sourceEntityId: core.spellMap["Test Bolt"],
           forkedEntityId: boltId,
         },
       ]);
-      expect(await spellListsOf(ctx, core.powerMap["Test Bolt"])).toEqual(["Test Source 3", "Wizard Spells 3"]);
+      expect(await spellListsOf(ctx, core.spellMap["Test Bolt"])).toEqual(["Test Source 3", "Wizard Spells 3"]);
 
       // An extension of the extension copies the core's spells too
       const grandchildSeeder = await freshExtensionSeeder(ctx);
@@ -869,9 +869,9 @@ describe("Seeding", () => {
       await grandchildSeeder.cowSpellsIntoExtension([
         { spell: "Test Light", aptitudes: [{ aptitude: "Arcane Spells", level: 1 }] },
       ]);
-      const light = grandchild.powerMap["Test Light"];
-      expect(light).not.toBe(core.powerMap["Test Light"]);
-      expect((await rowsOf<Power>("powers", { id: light }))[0]).toMatchObject({
+      const light = grandchild.spellMap["Test Light"];
+      expect(light).not.toBe(core.spellMap["Test Light"]);
+      expect((await rowsOf<Spell>("spells", { id: light }))[0]).toMatchObject({
         rulesetId: grandchild.rulesetId,
         name: "Test Light",
       });

@@ -110,11 +110,11 @@ export function WritesFeats<B extends Constructor<BaseCodeFile>>(Base: B) {
       this.writeTemplateRequirements(this.itemRequirementLines(family, family.requirements, "s", families));
 
       // Use the explicit modifiers from the reference JSON. Re-write any
-      // `powers.groups.<placeholder>.` segment to the per-school slug. Other
+      // `spells.groups.<placeholder>.` segment to the per-school slug. Other
       // targets (e.g. `skills.spellcraft.misc`) are kept verbatim — schools
       // don't parameterize skill names the way SKILLS_WITH_CHECKS does.
       this.writeTemplateModifiers(modifiers, (target) =>
-        target.replace(/powers\.groups\.[^.]+\./, "powers.groups.${stripSeparators(s)}."),
+        target.replace(/spells\.groups\.[^.]+\./, "spells.groups.${stripSeparators(s)}."),
       );
       this.closeTemplate(family.familyName);
     }

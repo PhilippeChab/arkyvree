@@ -7,10 +7,10 @@ import { PROGRESSION } from "@/engine/rulesets/dnd3.5/entities/classes/progressi
 import { FEAT_COLUMNS, FEAT_LIST } from "@/engine/rulesets/dnd3.5/entities/feats/columns.ts";
 import { ITEM_COLUMNS, ITEM_LIST } from "@/engine/rulesets/dnd3.5/entities/items/columns.ts";
 import { LANGUAGE_COLUMNS, LANGUAGE_LIST } from "@/engine/rulesets/dnd3.5/entities/languages/columns.ts";
-import { POWER_COLUMNS, POWER_LIST } from "@/engine/rulesets/dnd3.5/entities/powers/columns.ts";
 import { RACE_COLUMNS, RACE_LIST } from "@/engine/rulesets/dnd3.5/entities/races/columns.ts";
 import { SAVE_COLUMNS, SAVE_LIST } from "@/engine/rulesets/dnd3.5/entities/saves/columns.ts";
 import { SKILL_COLUMNS, SKILL_LIST } from "@/engine/rulesets/dnd3.5/entities/skills/columns.ts";
+import { SPELL_COLUMNS, SPELL_LIST } from "@/engine/rulesets/dnd3.5/entities/spells/columns.ts";
 import { BONDED_KINDS } from "@/vocabulary/dnd3.5/bondedKinds.ts";
 import { MAX_ITEM_VARIANTS } from "@/vocabulary/dnd3.5/itemTemplates.ts";
 import { SPELL_LEVEL_LABELS, SPELL_LEVELS } from "@/vocabulary/dnd3.5/spells.ts";
@@ -23,7 +23,7 @@ const APTITUDE_POOLS: Omit<EntityPoolsDescription, "scope"> = {
 };
 
 /**
- * What every 3.5 ruleset shares: its entity kinds, in its page's order, and their words (its powers are spells), its
+ * What every 3.5 ruleset shares: its entity kinds, in its page's order, and their words, its
  * entities' columns (a class's hit die, an item's slot…), a race or a class is for a player character or a creature
  * bonded to one, a class has 20 levels and a spell 0 to 9, its system rulesets' SRD content is Open Game Content, and a
  * new character's form.
@@ -33,10 +33,10 @@ export const RULES: RulesDeclaration = {
   columns: {
     feats: FEAT_COLUMNS,
     items: ITEM_COLUMNS,
-    klass_levels: CLASS_LEVEL_COLUMNS,
-    klasses: CLASS_COLUMNS,
+    class_levels: CLASS_LEVEL_COLUMNS,
+    classes: CLASS_COLUMNS,
     languages: LANGUAGE_COLUMNS,
-    powers: POWER_COLUMNS,
+    spells: SPELL_COLUMNS,
     races: RACE_COLUMNS,
     saves: SAVE_COLUMNS,
     skills: SKILL_COLUMNS,
@@ -72,7 +72,7 @@ export const RULES: RulesDeclaration = {
       levels: true,
       opens: "customization",
       pools: { ...APTITUDE_POOLS, scope: "spells" },
-      type: "powers",
+      type: "spells",
       wideForm: "fixed",
     },
     {
@@ -106,7 +106,7 @@ export const RULES: RulesDeclaration = {
       },
       opens: "progression",
       partitioned: true,
-      type: "klasses",
+      type: "classes",
     },
     { empty: "No saving throws available for this ruleset.", icon: "shield", opens: "page", type: "saves" },
     { icon: "fitness", opens: "page", readOnly: true, type: "abilities" },
@@ -124,10 +124,10 @@ export const RULES: RulesDeclaration = {
     aptitudes: NAMED_LIST,
     feats: FEAT_LIST,
     items: ITEM_LIST,
-    klasses: CLASS_LIST,
+    classes: CLASS_LIST,
     languages: LANGUAGE_LIST,
     mechanics: NAMED_LIST,
-    powers: POWER_LIST,
+    spells: SPELL_LIST,
     races: RACE_LIST,
     saves: SAVE_LIST,
     skills: SKILL_LIST,
@@ -144,11 +144,11 @@ export const RULES: RulesDeclaration = {
     aptitudes: { many: "Aptitudes", one: "Aptitude" },
     feats: { many: "Feats", one: "Feat" },
     items: { many: "Items", one: "Item" },
-    klass_levels: { many: "Class Levels", one: "Class Level" },
-    klasses: { many: "Classes", one: "Class" },
+    class_levels: { many: "Class Levels", one: "Class Level" },
+    classes: { many: "Classes", one: "Class" },
     languages: { many: "Languages", one: "Language" },
     mechanics: { many: "Mechanics", one: "Mechanic" },
-    powers: { many: "Spells", one: "Spell" },
+    spells: { many: "Spells", one: "Spell" },
     races: { many: "Races", one: "Race" },
     saves: { many: "Saves", one: "Save" },
     skills: { many: "Skills", one: "Skill" },

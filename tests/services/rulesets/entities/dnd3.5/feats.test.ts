@@ -71,7 +71,7 @@ describe("EntitiesService: feats", () => {
         ruleset,
         aptitudeIds: [combat, spells],
       } = await createTestUserAndRuleset(APTITUDES);
-      await EntitiesService.createEntity(session, ruleset.id, "powers", {
+      await EntitiesService.createEntity(session, ruleset.id, "spells", {
         name: "Magic Missile",
         aptitudes: [{ id: spells }],
       });
@@ -103,7 +103,7 @@ describe("EntitiesService: feats", () => {
         return { session, fork };
       };
       const [spellFork, featFork] = [await forkOf(), await forkOf()];
-      await EntitiesService.createEntity(spellFork.session, spellFork.fork.id, "powers", {
+      await EntitiesService.createEntity(spellFork.session, spellFork.fork.id, "spells", {
         name: "Spark",
         aptitudes: [{ id: list.id }],
       });
@@ -151,12 +151,12 @@ describe("EntitiesService: feats", () => {
       name: "Doomed Feat",
       aptitudeIds: [combat],
     });
-    const [klass] = await Entities.create<Klass>(db, "klasses", {
+    const [klass] = await Entities.create<Klass>(db, "classes", {
       name: "Granting Class",
       rulesetId: ruleset.id,
       hd: 10,
     });
-    await EntitiesService.createOwnedEntity(session, ruleset.id, "klasses", klass.id, {
+    await EntitiesService.createOwnedEntity(session, ruleset.id, "classes", klass.id, {
       level: 1,
       fields: { bab: 1, skills: 2 },
       feats: [{ featId: feat.id, aptitudeId: combat }],
@@ -166,7 +166,7 @@ describe("EntitiesService: feats", () => {
 
     expect(await linkedAptitudeIds(feat.id)).toEqual([]);
     // A grant's feat is its link's to-entity
-    expect(await Joins.findMany(db, { join: "klass_level_feats", toIds: [feat.id] })).toEqual([]);
+    expect(await Joins.findMany(db, { join: "class_level_feats", toIds: [feat.id] })).toEqual([]);
   });
 
   describe("deleting a feat characters picked", () => {

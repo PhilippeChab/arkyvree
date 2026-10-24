@@ -8,10 +8,10 @@ import ClassEntity from "./classes/ClassEntity.ts";
 import FeatEntity from "./feats/FeatEntity.ts";
 import ItemEntity from "./items/ItemEntity.ts";
 import LanguageEntity from "./languages/LanguageEntity.ts";
-import PowerEntity from "./powers/PowerEntity.ts";
 import RaceEntity from "./races/RaceEntity.ts";
 import SaveEntity from "./saves/SaveEntity.ts";
 import SkillEntity from "./skills/SkillEntity.ts";
+import SpellEntity from "./spells/SpellEntity.ts";
 
 /** The 3.5 entity kinds' rules, by table. */
 export type Dnd35EntityKinds = { [K in keyof typeof ENTITY_KINDS]: InstanceType<(typeof ENTITY_KINDS)[K]> };
@@ -22,10 +22,10 @@ const ENTITY_KINDS = {
   aptitudes: AptitudeEntity,
   feats: FeatEntity,
   items: ItemEntity,
-  klasses: ClassEntity,
+  classes: ClassEntity,
   languages: LanguageEntity,
   mechanics: MechanicEntity,
-  powers: PowerEntity,
+  spells: SpellEntity,
   races: RaceEntity,
   saves: SaveEntity,
   skills: SkillEntity,

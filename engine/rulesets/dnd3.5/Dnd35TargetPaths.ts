@@ -12,10 +12,10 @@ import WeaponPaths from "./model/combat/WeaponPaths.ts";
 import FeatsPaths from "./model/feats/FeatsPaths.ts";
 import IdentityPaths from "./model/identity/IdentityPaths.ts";
 import LanguagesPaths from "./model/languages/LanguagesPaths.ts";
-import PowersPaths from "./model/powers/PowersPaths.ts";
 import SavesPaths from "./model/saves/SavesPaths.ts";
 import SkillsPaths from "./model/skills/SkillsPaths.ts";
 import SpellcastingPaths from "./model/spellcasting/SpellcastingPaths.ts";
+import SpellsPaths from "./model/spells/SpellsPaths.ts";
 
 /** The 3.5 rules' categories of target paths, in the path picker's order (`getCategories`). */
 const DND35_PATH_CATEGORIES: PathCategory<Dnd35Components>[] = [
@@ -27,7 +27,7 @@ const DND35_PATH_CATEGORIES: PathCategory<Dnd35Components>[] = [
   new ItemsPaths(),
   new ClassesPaths(),
   new FeatsPaths(),
-  new PowersPaths(),
+  new SpellsPaths(),
   new IdentityPaths(),
   new LanguagesPaths(),
   new AptitudesPaths(),

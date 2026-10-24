@@ -56,7 +56,7 @@ const FIXTURES: Record<string, string> = {
   // A mechanic, nothing points at, whose type can change; a class with its 20th level alone, a level to move
   "rules.entities": `with ruleset as (
                        select k.ruleset_id as id from rules.entities k join rules.rulesets r on r.id = k.ruleset_id
-                        where r.system and k.type = 'klasses' and k.deleted_at is null
+                        where r.system and k.type = 'classes' and k.deleted_at is null
                           and not exists (select 1 from rules.entities l where l.owner_id = k.id and l.position = 20)
                         limit 1
                      ), mechanic as (
@@ -65,10 +65,10 @@ const FIXTURES: Record<string, string> = {
                          from ruleset
                      ), klass as (
                        insert into rules.entities (ruleset_id, type, name, partition)
-                       select id, 'klasses', 'Late Bloomer', 'base' from ruleset returning id, ruleset_id
+                       select id, 'classes', 'Late Bloomer', 'base' from ruleset returning id, ruleset_id
                      )
                      insert into rules.entities (ruleset_id, type, owner_id, owner_type, position, partition)
-                     select ruleset_id, 'klass_levels', id, 'klasses', 20, '' from klass`,
+                     select ruleset_id, 'class_levels', id, 'classes', 20, '' from klass`,
   // A set's value, on a feat with neither set: a field it can move to
   "rules.entity_fields": `insert into rules.entity_fields (entity_id, entity_type, field, value_kind, multiple, text_value)
                           select e.id, 'feats', 'WIZARD_PROHIBITED_SCHOOL', 'text', true, 'Necromancy'
@@ -78,15 +78,15 @@ const FIXTURES: Record<string, string> = {
                               where f.entity_id = e.id and f.field in ('WIZARD_PROHIBITED_SCHOOL', 'FEAT_FAMILY')
                            ) limit 1`,
   // A role a class level's grant can take, and a grant
-  "rules.entity_links": `insert into rules.link_role_kinds (role, from_type, single) values ('alsoGrants', 'klass_levels', false);
+  "rules.entity_links": `insert into rules.link_role_kinds (role, from_type, single) values ('alsoGrants', 'class_levels', false);
                          insert into rules.link_roles (role, from_type, to_type, via_type, single, on_delete, via_on_delete, merge)
-                         values ('alsoGrants', 'klass_levels', 'feats', 'aptitudes', false, 'unlink', 'unlink', 'winner');
+                         values ('alsoGrants', 'class_levels', 'feats', 'aptitudes', false, 'unlink', 'unlink', 'winner');
                          insert into rules.entity_links (from_id, from_type, role, single, to_id, to_type, via_id, via_type)
-                         select l.id, 'klass_levels', 'grants', false, f.id, 'feats', a.id, 'aptitudes'
+                         select l.id, 'class_levels', 'grants', false, f.id, 'feats', a.id, 'aptitudes'
                            from rules.entities l join rules.rulesets r on r.id = l.ruleset_id
                            join rules.entities f on f.ruleset_id = l.ruleset_id and f.type = 'feats'
                            join rules.entities a on a.ruleset_id = l.ruleset_id and a.type = 'aptitudes'
-                          where r.system and l.type = 'klass_levels' and not exists (
+                          where r.system and l.type = 'class_levels' and not exists (
                             select 1 from rules.entity_links x where x.from_id = l.id and x.role = 'grants' and x.to_id = f.id
                           ) limit 1`,
   // A ruleset's field of every kind (none is seeded, and only sets of texts are declared), the set's value the newest

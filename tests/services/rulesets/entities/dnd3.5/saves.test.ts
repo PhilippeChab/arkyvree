@@ -43,13 +43,13 @@ describe("EntitiesService: saves", () => {
       name: "Fortitude",
       abilityId: constitution.id,
     });
-    const [klass] = await Entities.create<Klass>(db, "klasses", {
+    const [klass] = await Entities.create<Klass>(db, "classes", {
       name: "Saving Class",
       rulesetId: ruleset.id,
       hd: 10,
     });
-    const [klassLevel] = await Entities.create<KlassLevel>(db, "klass_levels", { klassId: klass.id, level: 1 });
-    await Joins.createMany<KlassLevelSave>(db, "klass_level_saves", [
+    const [klassLevel] = await Entities.create<KlassLevel>(db, "class_levels", { klassId: klass.id, level: 1 });
+    await Joins.createMany<KlassLevelSave>(db, "class_level_saves", [
       { klassLevelId: klassLevel.id, saveId: save.id, base: 2 },
     ]);
 

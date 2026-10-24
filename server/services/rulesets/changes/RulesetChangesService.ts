@@ -93,7 +93,12 @@ class RulesetChangesService {
       }
     }
 
-    return changes;
+    // One order, whatever the rows' storage: by kind, as walked, then by name
+    return changes.toSorted(
+      (a, b) =>
+        RULESET_ENTITY_TYPES.indexOf(a.entityType) - RULESET_ENTITY_TYPES.indexOf(b.entityType) ||
+        a.name.localeCompare(b.name),
+    );
   }
 
   /**

@@ -7,7 +7,7 @@ import type {
 import type {
   CustomizedClassLevel,
   CustomizedFeat,
-  CustomizedPower,
+  CustomizedSpell,
 } from "@/engine/rulesets/dnd3.5/model/loading/loadedEntities.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type { CharacterLevel, Klass, KlassLevel, KlassSkill } from "@/engine/rulesets/dnd3.5/view/rows.ts";
@@ -23,8 +23,8 @@ interface ClassesData {
       characterLevel: CharacterLevel;
       feats: CustomizedFeat[];
       klassLevel: CustomizedClassLevel;
-      powers: CustomizedPower[];
       skills: SkillWithRank[];
+      spells: CustomizedSpell[];
     }[];
   };
 }
@@ -41,11 +41,11 @@ export default class ClassesComponent extends CharacterComponent<LoadedCharacter
       klasses,
       klassLevels,
       klassSkills,
-      powers,
+      spells,
       skills,
     }: Pick<
       LoadedCharacterData,
-      "characterLevels" | "feats" | "klasses" | "klassLevels" | "klassSkills" | "powers" | "skills"
+      "characterLevels" | "feats" | "klasses" | "klassLevels" | "klassSkills" | "spells" | "skills"
     >,
     { rulesetData }: RulesetView,
   ) {
@@ -72,19 +72,19 @@ export default class ClassesComponent extends CharacterComponent<LoadedCharacter
       if (group) group.push(s);
       else skillsByCharacterLevelId.set(s.characterLevelId, [s]);
     }
-    const powersByCharacterLevelId = new Map<string, typeof powers>();
-    for (const p of powers) {
-      const group = powersByCharacterLevelId.get(p.characterLevelId);
+    const spellsByCharacterLevelId = new Map<string, typeof spells>();
+    for (const p of spells) {
+      const group = spellsByCharacterLevelId.get(p.characterLevelId);
       if (group) group.push(p);
-      else powersByCharacterLevelId.set(p.characterLevelId, [p]);
+      else spellsByCharacterLevelId.set(p.characterLevelId, [p]);
     }
 
     for (const characterLevel of characterLevels) {
       const klassLevel = klassLevelsById.get(characterLevel.klassLevelId);
-      if (!klassLevel) throw new Error("Klass level not found");
+      if (!klassLevel) throw new Error("Class level not found");
 
       const klass = klassesById.get(klassLevel.klassId);
-      if (!klass) throw new Error("Klass not found");
+      if (!klass) throw new Error("Class not found");
 
       const klassName = stripSeparators(klass.name);
       if (!this.classes[klassName]) {
@@ -102,7 +102,7 @@ export default class ClassesComponent extends CharacterComponent<LoadedCharacter
         characterLevel,
         feats: featsByCharacterLevelId.get(characterLevel.id) ?? [],
         skills: skillsByCharacterLevelId.get(characterLevel.id) ?? [],
-        powers: powersByCharacterLevelId.get(characterLevel.id) ?? [],
+        spells: spellsByCharacterLevelId.get(characterLevel.id) ?? [],
       });
     }
 
@@ -135,7 +135,7 @@ export default class ClassesComponent extends CharacterComponent<LoadedCharacter
       characterLevel,
       feats: [],
       skills: [],
-      powers: [],
+      spells: [],
     });
     entry.level++;
   }

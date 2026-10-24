@@ -11,5 +11,5 @@ interface ClassTables {
 
 /** One of a class's tables (`table`), as its tab reads it: the service answers any of them. */
 export async function readClassTable<T extends keyof ClassTables>(rulesetId: string, classId: string, table: T) {
-  return (await EntitiesService.getEntityTable(rulesetId, "klasses", classId, table)) as ClassTables[T];
+  return (await EntitiesService.getEntityTable(rulesetId, "classes", classId, table)) as ClassTables[T];
 }
