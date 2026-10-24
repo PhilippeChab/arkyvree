@@ -160,6 +160,7 @@ export {
   type ListDescription,
   type ProgressionCounts,
   type ProgressionDescription,
+  type ProgressionGrants,
   type ProgressionTable,
   type ProgressionTrack,
   type RulesDeclaration,

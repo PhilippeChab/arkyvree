@@ -79,13 +79,6 @@ export function classDetailQuery(rulesetId: string, classId: string) {
   });
 }
 
-export function classFeatPoolsQuery(rulesetId: string, classId: string) {
-  return queryOptions({
-    queryKey: QUERY_KEYS.rulesets.classFeatPools(rulesetId, classId),
-    queryFn: async () => (await readTable(rulesetId, classId, "feat-pools")) as TableWith<"featPools">,
-  });
-}
-
 export function classLevelsQuery(rulesetId: string, classId: string) {
   return queryOptions({
     queryKey: QUERY_KEYS.rulesets.classLevels(rulesetId, classId),
@@ -125,11 +118,14 @@ export function classProgressionQuery(rulesetId: string, classId: string) {
   });
 }
 
-/** One of a class's tables its tables' tab edits (`table`, by its name: 3.5's spells per day's `spells`). */
-export function classTableQuery(rulesetId: string, classId: string, table: string) {
+/**
+ * One of a class's tables by level (`table`, by its name: 3.5's spells per day's `spells`, its feat pools' totals'
+ * `feat-pools`); skipped without one (rules that have none).
+ */
+export function classTableQuery(rulesetId: string, classId: string, table: string | undefined) {
   return queryOptions({
-    queryKey: QUERY_KEYS.rulesets.classTable(rulesetId, classId, table),
-    queryFn: async () => (await readTable(rulesetId, classId, table)) as TableRow[],
+    queryKey: QUERY_KEYS.rulesets.classTable(rulesetId, classId, table ?? ""),
+    queryFn: table ? async () => (await readTable(rulesetId, classId, table)) as TableRow[] : skipToken,
   });
 }
 

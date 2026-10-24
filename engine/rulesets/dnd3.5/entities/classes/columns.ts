@@ -42,6 +42,7 @@ export const CLASS_LEVEL_COLUMNS: FormField[] = [
     label: "Feats",
     references: "feats",
     viaKey: "aptitudeId",
+    viaName: "aptitudeName",
   },
 ];
 

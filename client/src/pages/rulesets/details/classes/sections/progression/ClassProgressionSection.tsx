@@ -14,39 +14,40 @@ import {
   ValueChip,
 } from "@/client/src/components/common/index.ts";
 import { LevelsIcon } from "@/client/src/components/icons/index.ts";
-import { useCustomizationPages, useRules, useRulesetPermissions } from "@/client/src/hooks/index.ts";
+import { useRules, useRulesetPermissions } from "@/client/src/hooks/index.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
+import { rulesetOptionsQuery } from "@/client/src/lib/queries.ts";
+import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
 import { nextClassLevel, withEntityFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
 import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
+import { classKindOf } from "@/client/src/pages/rulesets/details/classes/classKind.ts";
 import {
-  classFeatPoolsQuery,
   type ClassLevelFormData,
-  type ClassLevelRow,
   classLevelsQuery,
   classProgressionQuery,
+  classTableQuery,
 } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 import type { ClassSectionProps } from "@/client/src/pages/rulesets/details/classes/classTab.ts";
 import { CreateLevelDialog } from "@/client/src/pages/rulesets/details/classes/components/index.ts";
 import { byLevel } from "@/client/src/pages/rulesets/details/classes/sections/byLevel.ts";
 import { useClassCopy } from "@/client/src/pages/rulesets/details/classes/sections/useClassCopy.ts";
-import {
-  useEntityFields,
-  useOpenEntity,
-  useRulesetSaves,
-  useRulesetSection,
-} from "@/client/src/pages/rulesets/hooks/index.ts";
+import { useEntityFields, useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { buildCustomizationPath } from "@/shared/customization/entities.ts";
+import { isRecord } from "@/shared/isRecord.ts";
 
 import { CHANGED_CELL_SX } from "./changedCell.ts";
 import { ClassFeaturesCard } from "./ClassFeaturesCard.tsx";
+import { levelColumnsOf, progressionKeysOf, readProgressionLevel } from "./progressionColumns.ts";
 import {
+  amountTrackKey,
   buildProgressionBody,
   describeFeatureRows,
+  type PoolRow,
+  type ProgressionLevel,
   readEditedTrack,
   readTrack,
-  saveTrackKey,
   type TrackKey,
   withAddedFeatures,
   withAddedPools,
@@ -58,8 +59,8 @@ import { useProgressionDraft } from "./useProgressionDraft.ts";
 import { useProgressionSave } from "./useProgressionSave.ts";
 
 /**
- * A track the tab edits: its key, its label (a save's name, for a track of the ruleset's saves), and its rules' track:
- * its bounds, how its values read, and the progressions it can follow.
+ * A track the tab edits: its key, its label (an entity's name, for a track of a level's amounts: 3.5's saves), and its
+ * rules' track: its bounds, how its values read, and the progressions it can follow.
  */
 interface Track {
   key: TrackKey;
@@ -67,20 +68,41 @@ interface Track {
   rules: ProgressionTrack;
 }
 
+/** A pool of a progression's answer, by the key its levels' grants hold one's id at (`viaKey`). */
+function readPool(pool: unknown, viaKey: string | undefined): PoolRow[] {
+  if (!isRecord(pool) || viaKey === undefined) return [];
+  const { name, picks } = pool;
+  const id = pool[viaKey];
+  if (typeof id !== "string" || typeof name !== "string" || !isRecord(picks)) return [];
+  return [{ id, name, picks: picks as PoolRow["picks"] }];
+}
+
 /**
  * A class's Progression tab: its table, the levels' tracks (3.5's base attack bonus, saves and skill points) and
  * features at once, which opens a level's page from its row; its progression, each track a preset to follow or its
- * levels to set; and its features and feat pools by level (shown read-only to who can't edit). What it changes waits
- * for its save bar, which writes it all at once.
+ * levels to set; and its features and pools by level (3.5's feat pools; shown read-only to who can't edit). What it
+ * changes waits for its save bar, which writes it all at once. Its levels are its rules' class kind's owned kind's,
+ * their grants and amounts at their columns' keys.
  */
 export function ClassProgressionSection({ rulesetId, classId, className, ruleset }: ClassSectionProps) {
   const openEntity = useOpenEntity(rulesetId);
   const queryClient = useQueryClient();
-  const levelPage = useCustomizationPages().get("klass_levels");
+  const { rules } = useRules(ruleset.baseRules);
+  const classType = classKindOf(rules)?.type ?? "";
+  const levelPage = rules?.customizationPages.find((page) => page.owner === classType);
+  const levelType = levelPage?.type ?? "";
+  const levelColumns = levelColumnsOf(rules, levelType);
+  const keys = progressionKeysOf(levelColumns);
+  const amountsType = levelColumns.amounts?.references ?? "";
+  const owner = entityTypeLabel(classType, rules?.words).toLowerCase();
   const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
-  const { data: rulesetSaves, error: savesError } = useRulesetSaves(rulesetId);
-  // Its tracks, a level's fields and its saves, as its rules describe them
-  const progressionRules = useRules(ruleset.baseRules).rules?.progression;
+  // A level's amounts' entities, the ruleset's (3.5's saves); none read where its levels have no amounts
+  const { data: amountEntities, error: amountsError } = useQuery(
+    rulesetOptionsQuery(amountsType, levelColumns.amounts && rulesetId),
+  );
+  // Its tracks, a level's fields and its amounts, and what its levels grant, as its rules describe them
+  const progressionRules = rules?.progression;
+  const grantsRules = progressionRules?.grants;
   const trackRules = progressionRules?.tracks ?? [];
   const fieldKeys = trackRules.filter((track) => track.source === "field").map((track) => track.key);
   const { followCopy, queryKeysToInvalidate, tag } = useClassCopy(rulesetId, classId);
@@ -88,16 +110,33 @@ export function ClassProgressionSection({ rulesetId, classId, className, ruleset
   const query = classLevelsQuery(rulesetId, classId);
   const { data: levelRows, isLoading, isFetching, error } = useQuery(query);
   const { data: progression, error: progressionError } = useQuery(classProgressionQuery(rulesetId, classId));
-  const { data: poolTotals, error: poolsError } = useQuery(classFeatPoolsQuery(rulesetId, classId));
-  const levels = levelRows?.toSorted(byLevel) ?? [];
+  // Its pools' totals, at the table its rules say; none read where its levels grant none past their columns
+  const { data: poolTotals, error: poolsError } = useQuery(classTableQuery(rulesetId, classId, grantsRules?.table));
+  const savedRows = (levelRows ?? []).toSorted(byLevel);
+  const levels = savedRows.map((row) => readProgressionLevel(row, levelColumns));
   const savedFeatures = describeFeatureRows(levels);
-  const savedPools = progression?.pools ?? [];
+  // Its pools, and the picks a granted entity gives in them, at the keys its rules say
+  const answer: Record<string, unknown> | undefined = progression;
+  const savedPools = (Array.isArray(answer?.pools) ? answer.pools : []).flatMap((pool) =>
+    readPool(pool, keys.grants?.viaKey),
+  );
+  const picksOf = (entityId: string) => {
+    const byEntity = answer?.[grantsRules?.picks ?? ""];
+    const picks = isRecord(byEntity) ? byEntity[entityId] : undefined;
+    return isRecord(picks) ? (picks as Record<string, number>) : {};
+  };
+  // A level's totals by pool name, at the key its rules say
+  const poolTotalsAt = (levelId: string) => {
+    const totals = poolTotals?.find((row) => row.id === levelId)?.[grantsRules?.totals ?? ""];
+    return isRecord(totals) ? (totals as Record<string, number>) : undefined;
+  };
   // Edits change something when they send something, or add a row a save hasn't made the class's yet
   const draft = useProgressionDraft(classId, levels, !isFetching, (edits) => {
     const body = buildProgressionBody(
       levels,
+      keys,
       fieldKeys,
-      rulesetSaves?.map(({ id }) => id),
+      amountEntities?.map(({ id }) => id),
       savedFeatures,
       savedPools,
       edits,
@@ -111,11 +150,13 @@ export function ClassProgressionSection({ rulesetId, classId, className, ruleset
   const save = useProgressionSave(rulesetId, classId, "Progression");
 
   // Its create opens on the class's next level, its fields the highest's
-  const { fields: levelFields } = useEntityFields(rulesetId, "klass_levels");
+  const { fields: levelFields } = useEntityFields(rulesetId, levelType);
+  // A message's word for a level ("Class level")
+  const levelWord = entityTypeLabel(levelType, rules?.words);
   const { createDialogProps, handleCreate } = useRulesetSection({
-    createDefaults: withEntityFields(nextClassLevel(levels), levelFields, levels.at(-1)),
+    createDefaults: withEntityFields(nextClassLevel(savedRows), levelFields, savedRows.at(-1)),
     rulesetId,
-    label: "Class level",
+    label: `${levelWord.charAt(0)}${levelWord.slice(1).toLowerCase()}`,
     query,
     data: levelRows,
     queryKeysToInvalidate,
@@ -128,16 +169,20 @@ export function ClassProgressionSection({ rulesetId, classId, className, ruleset
           }),
         ),
       ),
-    onCreateSuccess: (created) => followCopy(created.klassId, created.sourceEntityId),
+    // The class the level was made on: the copy an edit of an inherited class made, at its owner's key
+    onCreateSuccess: (created) => {
+      const made: Record<string, unknown> = created;
+      const ownerId = made[levelPage?.ownerKey ?? ""];
+      followCopy(typeof ownerId === "string" ? ownerId : classId, created.sourceEntityId);
+    },
   });
 
-  const saves = rulesetSaves ?? [];
   const tracks = trackRules.flatMap((rules): Track[] =>
     rules.source === "amounts"
-      ? saves.map((save) => ({ key: saveTrackKey(save.id), label: save.name, rules }))
+      ? (amountEntities ?? []).map((entity) => ({ key: amountTrackKey(entity.id), label: entity.name, rules }))
       : [{ key: rules.key, label: rules.label, rules }],
   );
-  const valuesOf = (read: (level: ClassLevelRow) => number) =>
+  const valuesOf = (read: (level: ProgressionLevel) => number) =>
     levels.map((level) => ({ level: level.level, levelId: level.id, value: read(level) }));
 
   const features = withAddedFeatures(savedFeatures, draft.edits).map((row) => ({
@@ -146,7 +191,7 @@ export function ClassProgressionSection({ rulesetId, classId, className, ruleset
   }));
   const pools = withAddedPools(savedPools, draft.edits).map((pool) => ({
     ...pool,
-    picks: { ...pool.picks, ...draft.edits.pools[pool.aptitudeId] },
+    picks: { ...pool.picks, ...draft.edits.pools[pool.id] },
   }));
   // What the tab changes each pool's total by at each level (by its name, then the level's id): the running difference
   // of its picks, and of the picks its features give where they're granted
@@ -161,30 +206,32 @@ export function ClassProgressionSection({ rulesetId, classId, className, ruleset
     poolChanges.set(name, byLevel);
   };
   for (const pool of pools) {
-    const saved = savedPools.find((s) => s.aptitudeId === pool.aptitudeId)?.picks ?? {};
+    const saved = savedPools.find((s) => s.id === pool.id)?.picks ?? {};
     addChanges(pool.name, (id) => (pool.picks[id] ?? 0) - (saved[id] ?? 0));
   }
   for (const row of features) {
     const saved = savedFeatures.find((s) => s.key === row.key)?.levelIds ?? [];
     const granted = (id: string) => Number(row.levelIds.includes(id)) - Number(saved.includes(id));
-    for (const [name, picks] of Object.entries(progression?.featPicks[row.featId] ?? {}))
-      addChanges(name, (id) => granted(id) * picks);
+    for (const [name, picks] of Object.entries(picksOf(row.entityId))) addChanges(name, (id) => granted(id) * picks);
   }
   const poolNames = [
     ...new Set([
-      ...(poolTotals ?? []).flatMap((level) => Object.keys(level.featPools)),
+      ...(poolTotals ?? []).flatMap((row) => Object.keys(poolTotalsAt(row.id) ?? {})),
       ...[...poolChanges].filter(([, byLevel]) => [...byLevel.values()].some(Boolean)).map(([name]) => name),
     ]),
   ].sort();
 
   const body = buildProgressionBody(
     levels,
+    keys,
     fieldKeys,
-    rulesetSaves?.map(({ id }) => id),
+    amountEntities?.map(({ id }) => id),
     savedFeatures,
     savedPools,
     draft.edits,
   );
+  // A pool's id in the save, at the key its levels' grants hold one at
+  const poolIdOf = (pool: Record<string, unknown>) => String(pool[keys.grants?.viaKey ?? ""]);
   const changes = [
     ...tracks.flatMap((track) => {
       const before = valuesOf((level) => readTrack(level, track.key));
@@ -211,13 +258,13 @@ export function ClassProgressionSection({ rulesetId, classId, className, ruleset
       .filter((row) => row.levelIds.length === 0 && !savedFeatures.some((s) => s.key === row.key))
       .map((row) => ({ key: `added:${row.key}`, label: `${row.name}: added, at no level yet` })),
     ...pools
-      .filter((pool) => !savedPools.some((s) => s.aptitudeId === pool.aptitudeId))
+      .filter((pool) => !savedPools.some((s) => s.id === pool.id))
       .filter((pool) => !Object.values(pool.picks).some((count) => count > 0))
-      .map((pool) => ({ key: `added:${pool.aptitudeId}`, label: `${pool.name}: added, at no level yet` })),
+      .map((pool) => ({ key: `added:${pool.id}`, label: `${pool.name}: added, at no level yet` })),
     ...(body.pools ?? []).map((pool) => {
-      const name = pools.find((p) => p.aptitudeId === pool.aptitudeId)?.name;
+      const name = pools.find((p) => p.id === poolIdOf(pool))?.name;
       return {
-        key: `pool:${pool.aptitudeId}`,
+        key: `pool:${poolIdOf(pool)}`,
         label: `${name}: ${formatCount(pool.picks.length, "level")}`,
       };
     }),
@@ -244,7 +291,9 @@ export function ClassProgressionSection({ rulesetId, classId, className, ruleset
     );
   };
 
-  const descriptionByFeat = new Map(levels.flatMap((level) => level.feats.map((feat) => [feat.id, feat.description])));
+  const descriptionByEntity = new Map(
+    levels.flatMap((level) => level.grants.map((grant) => [grant.entityId, grant.description])),
+  );
   const featuresAt = (levelId: string) => features.filter((row) => row.levelIds.includes(levelId));
   const columns = [
     { key: "level", label: "Level", width: "8%" },
@@ -254,11 +303,11 @@ export function ClassProgressionSection({ rulesetId, classId, className, ruleset
     { key: "special", label: progressionRules?.grantsLabel ?? "", slot: "block" as const },
   ];
 
-  const renderCell = (level: ClassLevelRow, columnKey: string) => {
+  const renderCell = (level: ProgressionLevel, columnKey: string) => {
     if (columnKey === "level") return <ValueChip label={level.level} color="primary" />;
     if (columnKey.startsWith("pool:")) {
       const name = columnKey.slice(5);
-      const saved = poolTotals?.find((row) => row.id === level.id)?.featPools[name];
+      const saved = poolTotalsAt(level.id)?.[name];
       const change = poolChanges.get(name)?.get(level.id) ?? 0;
       const total = change === 0 ? saved : (saved ?? 0) + change;
       return (
@@ -276,7 +325,7 @@ export function ClassProgressionSection({ rulesetId, classId, className, ruleset
             <Tooltip
               describeChild
               key={row.key}
-              title={descriptionByFeat.get(row.featId) || row.aptitudeName || ""}
+              title={descriptionByEntity.get(row.entityId) || row.viaName || ""}
               placement="top"
               enterDelay={300}
               slotProps={{ tooltip: { sx: { maxWidth: 400 } } }}
@@ -306,16 +355,20 @@ export function ClassProgressionSection({ rulesetId, classId, className, ruleset
   return (
     <Stack spacing={3}>
       {canEdit && <ListToolbar actions={<AddButton label="Add Level" onClick={handleCreate} />} />}
-      {!!savesError && !rulesetSaves && <LoadError what="Saves" error={savesError} />}
-      {!!progressionError && !progression && <LoadError what="Feat pools" error={progressionError} />}
-      {!!poolsError && !poolTotals && <LoadError what="Feat pool totals" error={poolsError} />}
+      {!!amountsError && !amountEntities && (
+        <LoadError what={entityTypeLabel(amountsType, rules?.words, true)} error={amountsError} />
+      )}
+      {!!progressionError && !progression && (
+        <LoadError what={grantsRules?.words.pools ?? ""} error={progressionError} />
+      )}
+      {!!poolsError && !poolTotals && <LoadError what={grantsRules?.words.totals ?? ""} error={poolsError} />}
       <RulesetSectionTable
         what="Levels"
         error={error}
         data={levelRows ? levels : undefined}
         isLoading={isLoading}
         columns={columns}
-        onRowClick={(level) => openEntity(buildCustomizationPath("klass_levels", level.id))}
+        onRowClick={(level) => openEntity(buildCustomizationPath(levelType, level.id))}
         onRowPrefetch={(level) =>
           void queryClient.prefetchQuery(customizationEntityQuery(rulesetId, levelPage, level.id))
         }
@@ -326,8 +379,8 @@ export function ClassProgressionSection({ rulesetId, classId, className, ruleset
             title="No levels"
             description={
               canEdit
-                ? "Start by adding the first level for this class."
-                : "This class doesn't have any levels defined yet."
+                ? `Start by adding the first level for this ${owner}.`
+                : `This ${owner} doesn't have any levels defined yet.`
             }
           />
         }
@@ -374,21 +427,31 @@ export function ClassProgressionSection({ rulesetId, classId, className, ruleset
         </Panel>
       )}
       {/* Its pools wait for the class's progression, so a pool it has can't be added again */}
-      {levels.length > 0 && progression && (features.length > 0 || pools.length > 0 || canEdit) && (
-        <ClassFeaturesCard
-          rulesetId={rulesetId}
-          levels={levels}
-          readOnly={!canEdit}
-          features={features}
-          savedFeatures={savedFeatures}
-          pools={pools}
-          savedPools={savedPools}
-          onFeatureLevels={draft.setFeatureLevels}
-          onPoolPick={draft.setPoolPick}
-          onAddFeature={draft.addFeature}
-          onAddPool={draft.addPool}
-        />
-      )}
+      {levels.length > 0 &&
+        progression &&
+        grantsRules &&
+        levelColumns.grants &&
+        (features.length > 0 || pools.length > 0 || canEdit) && (
+          <ClassFeaturesCard
+            grants={grantsRules}
+            granted={{
+              many: entityTypeLabel(levelColumns.grants?.references ?? "", rules?.words, true),
+              type: levelColumns.grants?.references ?? "",
+            }}
+            words={rules?.words}
+            rulesetId={rulesetId}
+            levels={levels}
+            readOnly={!canEdit}
+            features={features}
+            savedFeatures={savedFeatures}
+            pools={pools}
+            savedPools={savedPools}
+            onFeatureLevels={draft.setFeatureLevels}
+            onPoolPick={draft.setPoolPick}
+            onAddFeature={draft.addFeature}
+            onAddPool={draft.addPool}
+          />
+        )}
       {canEdit && levels.length > 0 && (
         <ProgressionSaveBar
           what="Progression"

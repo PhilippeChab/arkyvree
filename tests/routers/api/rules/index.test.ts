@@ -73,13 +73,14 @@ describe("rules", () => {
       abilities: "page",
       mechanics: "page",
     });
-    // The kinds whose customizations have a page of their own: a class's level by its class, a class's on its own page
+    // The kinds whose customizations have a page of their own: a class's level by its class (named at its owner's key),
+    // a class's on its own page
     expect(dnd35.customizationPages).toEqual([
       { type: "feats" },
       { type: "powers" },
       { type: "items" },
       { type: "races" },
-      { type: "klass_levels", owner: "klasses" },
+      { type: "klass_levels", owner: "klasses", ownerKey: "klassId" },
     ]);
     // A kind that opens a customization page is one such a page shows, and every kind one shows but an owned kind's
     // (which no tab lists) opens it
@@ -165,6 +166,13 @@ describe("rules", () => {
       ["perDay", undefined, "spells", "spellsPerDay"],
       ["known", "All", "spells-known", "spellsKnown"],
     ]);
+    // What its levels grant past their columns: feat pools, their picks and totals where its answer and table hold them
+    expect(dnd35.progression.grants).toMatchObject({
+      picks: "featPicks",
+      pools: { scope: "feats", type: "aptitudes" },
+      table: "feat-pools",
+      totals: "featPools",
+    });
     // What they count: its spells, on a class's spell list, on its Spells and Spell List tabs
     expect(dnd35.progression.counts).toMatchObject({
       lists: "spell-lists",
