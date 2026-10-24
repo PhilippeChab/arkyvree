@@ -161,10 +161,17 @@ describe("rules", () => {
       ["skills", "field"],
     ]);
     expect(dnd35.progression.tracks[0].labels?.[6]).toBe("+6/+1");
-    expect(dnd35.progression.tables.map(({ all, key }) => [key, all])).toEqual([
-      ["perDay", undefined],
-      ["known", "All"],
+    expect(dnd35.progression.tables.map(({ all, key, table, totals }) => [key, all, table, totals])).toEqual([
+      ["perDay", undefined, "spells", "spellsPerDay"],
+      ["known", "All", "spells-known", "spellsKnown"],
     ]);
+    // What they count: its spells, on a class's spell list, on its Spells and Spell List tabs
+    expect(dnd35.progression.counts).toMatchObject({
+      lists: "spell-lists",
+      listTab: "spell-list",
+      tab: "spells",
+      type: "powers",
+    });
     // Its level steps' words are their steps', which a level's steps carry: none in the rules
     expect(dnd35).not.toHaveProperty("levelUp");
   });

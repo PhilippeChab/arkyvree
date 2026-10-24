@@ -4,6 +4,7 @@ export type {
   EntityPoolsDescription,
   ListColumn,
   ListDescription,
+  ProgressionCounts,
   ProgressionDescription,
   ProgressionTable,
   ProgressionTrack,

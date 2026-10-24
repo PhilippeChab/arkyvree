@@ -1,5 +1,5 @@
-import { LevelsIcon, PowersIcon, SpellUsesIcon } from "@/client/src/components/icons/index.ts";
-import type { EntityLinksDescription, RulesDescription, RulesWords } from "@/client/src/lib/queries.ts";
+import { LevelsIcon, UsesIcon } from "@/client/src/components/icons/index.ts";
+import type { EntityLinksDescription, ProgressionCounts, RulesDescription } from "@/client/src/lib/queries.ts";
 import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
 import {
   CUSTOMIZATION_TABS,
@@ -10,19 +10,18 @@ import {
   classFeatPoolsQuery,
   classLevelsQuery,
   classLinksQuery,
+  classListsQuery,
   classProgressionQuery,
-  classSpellListsQuery,
-  classSpellsKnownQuery,
-  classSpellsPerDayQuery,
+  classTableQuery,
 } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 import type { ClassTab } from "@/client/src/pages/rulesets/details/classes/classTab.ts";
 import { getUrlSegment } from "@/shared/urlSegments.ts";
 
 import { ClassModifiersSection, ClassRequirementsSection } from "./ClassCustomizationSections.tsx";
 import { ClassLinksSection } from "./ClassLinksSection.tsx";
+import { ClassListSection } from "./progression/ClassListSection.tsx";
 import { ClassProgressionSection } from "./progression/ClassProgressionSection.tsx";
-import { ClassSpellListSection } from "./progression/ClassSpellListSection.tsx";
-import { ClassSpellsSection } from "./progression/ClassSpellsSection.tsx";
+import { ClassTablesSection } from "./progression/ClassTablesSection.tsx";
 
 /** The class's sections of the tabs that customize it, which read their own rows. */
 const CUSTOMIZATION_SECTIONS: Record<CustomizationSection, ClassTab["Section"]> = {
@@ -55,6 +54,38 @@ export const PROGRESSION_TAB: ClassTab = {
 };
 
 /**
+ * The tabs of a class whose levels count entities on its tables (`counts`, its rules' progression's: 3.5's spells),
+ * in their kind's words (`rules`): its tables', and its list's, of the entities it counts.
+ */
+export function describeCountsTabs(counts: ProgressionCounts, rules: RulesDescription): ClassTab[] {
+  return [
+    {
+      key: counts.tab,
+      label: entityTypeLabel(counts.type, rules.words, true),
+      icon: UsesIcon,
+      Section: ClassTablesSection,
+      prefetch: async (queryClient, rulesetId, classId) => {
+        await Promise.all([
+          ...rules.progression.tables.map(({ table }) =>
+            queryClient.prefetchQuery(classTableQuery(rulesetId, classId, table)),
+          ),
+          // Its list, which its editing waits for
+          queryClient.prefetchQuery(classProgressionQuery(rulesetId, classId)),
+        ]);
+      },
+    },
+    {
+      key: counts.listTab,
+      label: `${entityTypeLabel(counts.type, rules.words)} List`,
+      icon: kindIconOf(rules, counts.type),
+      Section: ClassListSection,
+      prefetch: (queryClient, rulesetId, classId) =>
+        queryClient.prefetchQuery(classListsQuery(rulesetId, classId, counts.lists)),
+    },
+  ];
+}
+
+/**
  * The tab of the entities a class links to (`links`, its rules' class kind's: 3.5's skills), at their kind's URL
  * segment, named and pictured as their kind (`rules`).
  */
@@ -67,35 +98,4 @@ export function describeLinksTab(links: EntityLinksDescription, rules: RulesDesc
     prefetch: (queryClient, rulesetId, classId) =>
       queryClient.prefetchQuery(classLinksQuery(rulesetId, classId, links.type)),
   };
-}
-
-/**
- * The tabs of a class whose rules have spell tables, in their words (`words`: 3.5's "Spells"): its spell tables, and
- * the spell list it casts from.
- */
-export function describeSpellTabs(words: RulesWords | undefined): ClassTab[] {
-  return [
-    {
-      key: "spells",
-      label: entityTypeLabel("powers", words, true),
-      icon: SpellUsesIcon,
-      Section: ClassSpellsSection,
-      prefetch: async (queryClient, rulesetId, classId) => {
-        await Promise.all([
-          queryClient.prefetchQuery(classSpellsPerDayQuery(rulesetId, classId)),
-          queryClient.prefetchQuery(classSpellsKnownQuery(rulesetId, classId)),
-          // Its spell list, which its editing waits for
-          queryClient.prefetchQuery(classProgressionQuery(rulesetId, classId)),
-        ]);
-      },
-    },
-    {
-      key: "spell-list",
-      label: `${entityTypeLabel("powers", words)} List`,
-      icon: PowersIcon,
-      Section: ClassSpellListSection,
-      prefetch: (queryClient, rulesetId, classId) =>
-        queryClient.prefetchQuery(classSpellListsQuery(rulesetId, classId)),
-    },
-  ];
 }

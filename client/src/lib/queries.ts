@@ -66,6 +66,9 @@ export type EntityKindDescription = RulesDescription["kinds"][number];
 /** The entities a kind's page links one to, on a tab of their own (3.5's class skills). */
 export type EntityLinksDescription = NonNullable<EntityKindDescription["links"]>;
 
+/** What a class's tables count, and how its page reads and saves them (3.5's spells). */
+export type ProgressionCounts = NonNullable<RulesProgression["counts"]>;
+
 /** What a base rules' rulesets share: their words, the kinds a race or a class is for, their levels, their license. */
 export type RulesDescription = RulesDescriptions[BaseRules];
 
@@ -76,7 +79,7 @@ export type RulesetDetail = InferResponseType<(typeof rpc.api.rulesets)[":id"]["
 
 export type RulesetListItem = InferResponseType<typeof rpc.api.rulesets.$get, 200>["items"][number];
 
-/** How a base rules' classes progress, as a class's Progression and Spells tabs set it: its tracks, its spell tables. */
+/** How a base rules' classes progress, as a class's Progression and tables' tabs set it: its tracks, its tables. */
 export type RulesProgression = RulesDescription["progression"];
 
 /** A ruleset's words for the entity types whose word isn't the engine's, as its rules describe them. */

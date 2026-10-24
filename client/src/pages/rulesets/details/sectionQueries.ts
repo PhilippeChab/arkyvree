@@ -42,10 +42,6 @@ interface PoolFilters extends ListFilters {
   pool?: string;
 }
 
-interface PowerFilters extends PoolFilters {
-  level?: number;
-}
-
 /** What a kind's list query reads of its kind: its type, and what narrows its list (its pools, by their key). */
 type EntityListKind = Pick<EntityKindDescription, "levels" | "partitioned" | "type"> & {
   pools?: Pick<NonNullable<EntityKindDescription["pools"]>, "key">;
@@ -173,12 +169,6 @@ export function invalidateRulesetEdit(
 ): Promise<void> {
   const all = [...keys, QUERY_KEYS.rulesets.changes(rulesetId), QUERY_KEYS.rulesets.creations(rulesetId)];
   return Promise.all(all.map((queryKey) => queryClient.invalidateQueries({ queryKey }))).then(() => undefined);
-}
-
-/** A spell list's spells of a level, as a class's Spells tab lists them: the powers' list, by pool and level. */
-export function powersQuery(rulesetId: string, filters: PowerFilters) {
-  // The powers' pools' key, as their kind's rules describe it
-  return entitiesQuery(rulesetId, { levels: true, pools: { key: "aptitudeId" }, type: "powers" }, filters);
 }
 
 /**

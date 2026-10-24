@@ -82,12 +82,12 @@ export {
   Psychology as SkillsIcon,
   Sort as SortIcon,
   AutoStories as SpellsIcon,
-  EventRepeat as SpellUsesIcon,
   StarBorder as StarBorderIcon,
   Star as StarIcon,
   Favorite as SupportIcon,
   Unarchive as UnarchiveIcon,
   PersonOff as UnassignedIcon,
+  EventRepeat as UsesIcon,
   Visibility as VisibilityIcon,
 } from "@mui/icons-material";
 export type { SvgIconComponent } from "@mui/icons-material";

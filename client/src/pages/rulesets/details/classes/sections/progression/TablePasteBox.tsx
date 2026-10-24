@@ -3,33 +3,33 @@ import { Button, Stack, Typography } from "@mui/material";
 import { TextAreaField } from "@/client/src/components/common/index.ts";
 import { useFormWith } from "@/client/src/hooks/index.ts";
 
-import { type PlacedCell, placeSpellTable, type SpellTableRules } from "./spellPaste.ts";
+import { type PlacedCell, placeTable, type TableRules } from "./tablePaste.ts";
 
 /** The pasted text, as the box's form holds it. */
 interface PasteForm {
   table: string;
 }
 
-interface SpellPasteBoxProps {
+interface TablePasteBoxProps {
   /** The pasted cells that change the table as it shows, which the box counts */
   changesOf: (cells: PlacedCell[]) => PlacedCell[];
   levels: readonly { id: string; level: number }[];
   onApply: (cells: PlacedCell[]) => void;
   onCancel: () => void;
   /** The table it's pasted into, as its rules describe it */
-  table: SpellTableRules;
+  table: TableRules;
 }
 
 /**
- * A spell table pasted from a book, a PDF or a spreadsheet, one row a class level: how many cells it changes, before
+ * A table pasted from a book, a PDF or a spreadsheet, one row a class level: how many cells it changes, before
  * Fill Grid writes them onto the grid, unsaved (a row naming its level lands on it, the others from the class's first).
  */
-export function SpellPasteBox({ changesOf, levels, onApply, onCancel, table }: SpellPasteBoxProps) {
+export function TablePasteBox({ changesOf, levels, onApply, onCancel, table }: TablePasteBoxProps) {
   const { control, watch } = useFormWith<PasteForm>({ table: "" });
   const text = watch("table");
   // Fill Grid writes every placed cell, as a paste into the grid does: what one writes can depend on another
-  // From the class's first level, and the spell level its header names (a paladin's from 1st), else from cantrips
-  const placed = placeSpellTable(text, table, levels, 0, 0);
+  // From the class's first level, and the column its header names (a paladin's from 1st), else from its first
+  const placed = placeTable(text, table, levels, 0, 0);
   const changes = changesOf(placed);
 
   return (

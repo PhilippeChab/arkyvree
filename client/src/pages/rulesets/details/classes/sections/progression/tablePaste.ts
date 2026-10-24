@@ -1,29 +1,32 @@
-/** What a pasted spell table says: its rows, as a book, a PDF or a spreadsheet writes them, read into counts. */
+/**
+ * What a pasted table of a class's says (3.5's spells per day): its rows, as a book, a PDF or a spreadsheet writes them,
+ * read into counts.
+ */
 
 import type { RulesProgression } from "@/client/src/lib/queries.ts";
 
 /** A row a paste gives: the class level it names, when it names one, and its cells from the column it lands at. */
 export interface PastedRow {
   /** Unreadable cells are `undefined`: they leave the cell they land on as it is */
-  cells: (SpellCell | undefined)[];
+  cells: (TableCell | undefined)[];
   level?: number;
 }
 
-/** A cell a paste writes: the level's, the spell level's, and what it holds. */
+/** A cell a paste writes: the level's, the column's (by index), and what it holds. */
 export interface PlacedCell {
+  column: number;
   levelId: string;
-  spellLevel: number;
-  value: SpellCell;
+  value: TableCell;
 }
 
-/** A spell table's cell: a count, every spell of the list (`"all"`, where its table takes it), or none (`null`). */
-export type SpellCell = number | "all" | null;
+/** A table's cell: a count, every value of its column (`"all"`, where its table takes it), or none (`null`). */
+export type TableCell = number | "all" | null;
 
 /**
- * A spell table as its rules describe it: its label, its cells' most, its word for every spell (`all`, none where it
- * takes none), and its columns, a spell level each, with the words a header names them by.
+ * A class's table as its rules describe it: its label, its cells' most, its word for every value (`all`, none where
+ * it takes none), and its columns (3.5's spell levels), with the words a header names them by.
  */
-export type SpellTableRules = RulesProgression["tables"][number];
+export type TableRules = RulesProgression["tables"][number];
 
 /** A row's first cell as a class level: "4", "4:", "4th", "4th:". */
 const LEVEL_CELL = /^(\d+)(?:st|nd|rd|th)?[:.)]?$/i;
@@ -32,18 +35,14 @@ const LEVEL_CELL = /^(\d+)(?:st|nd|rd|th)?[:.)]?$/i;
 const SEPARATORS = /[\s,;|]+/;
 
 /** The column a header's label names, by one of its words ("0", "1st", "Cantrips"); `undefined` for anything else. */
-function readColumnLabel(table: SpellTableRules, label: string) {
+function readColumnLabel(table: TableRules, label: string) {
   const word = label.trim().toLowerCase();
   const index = table.columns.findIndex((column) => column.aliases.includes(word));
   return index === -1 ? undefined : index;
 }
 
-/** A pasted table (`parseSpellRows`'s): its rows, and the spell level its header names its first count column (`column`). */
-function readPastedTable(
-  text: string,
-  table: SpellTableRules,
-  firstLevel: number,
-): { column?: number; rows: PastedRow[] } {
+/** A pasted table (`parseTableRows`'s): its rows, and the column its header names its first count column (`column`). */
+function readPastedTable(text: string, table: TableRules, firstLevel: number): { column?: number; rows: PastedRow[] } {
   const lines = text
     .replace(/\r/g, "")
     .split("\n")
@@ -52,8 +51,8 @@ function readPastedTable(
     .map(splitCells);
   // A table's header rows aren't levels: those with a word in them ("Level", "Cantrips", "1st"), where a level's row
   // has its level and counts (a cleric's "1+1" isn't a word),
-  const isWord = (cell: string) => /[a-z]/i.test(cell) && parseSpellCell(cell, table) === undefined;
-  // and those numbering the spell levels, 0 1 2… (a level's counts never run so)
+  const isWord = (cell: string) => /[a-z]/i.test(cell) && parseTableCell(cell, table) === undefined;
+  // and those numbering the columns, 0 1 2… (a level's counts never run so)
   const isHeader = ([lead, ...rest]: string[]) =>
     (isWord(lead) && !LEVEL_CELL.test(lead)) ||
     rest.some(isWord) ||
@@ -81,11 +80,11 @@ function readPastedTable(
     const lead = leads[index];
     const named = lead && (counting || !/^\d+$/.test(cells[0]));
     return {
-      cells: (named ? cells.slice(1) : cells).map((cell) => parseSpellCell(cell, table)),
+      cells: (named ? cells.slice(1) : cells).map((cell) => parseTableCell(cell, table)),
       ...(named && { level: Number(lead[1]) }),
     };
   });
-  // The header just above them names its spell levels over the counts: its first cell that names one ("0", "1st",
+  // The header just above them names its columns over the counts: its first cell that names one ("0", "1st",
   // "Cantrips"), past whatever stands over a level column ("Level", "Class Level", nothing)
   const headerRow = cornered ? body[0] : lines[header - 1];
   const labels = (headerRow ?? []).map((label) => readColumnLabel(table, label));
@@ -98,10 +97,10 @@ function splitCells(line: string) {
 }
 
 /**
- * A cell of a table (`table`) as it's typed or pasted (`text`): a count up to its most, its word for every spell
+ * A cell of a table (`table`) as it's typed or pasted (`text`): a count up to its most, its word for every value
  * ("All") or "*" where it takes one, none for an empty cell or a dash, and `undefined` for anything else.
  */
-export function parseSpellCell(text: string, table: SpellTableRules): SpellCell | undefined {
+export function parseTableCell(text: string, table: TableRules): TableCell | undefined {
   const cell = text.trim();
   if (cell === "" || /^[-–—]$/.test(cell)) return null;
   if (table.all !== undefined && (cell === "*" || cell.toLowerCase() === table.all.toLowerCase())) return "all";
@@ -111,20 +110,35 @@ export function parseSpellCell(text: string, table: SpellTableRules): SpellCell 
 /**
  * A pasted block's rows, one a line: each names its class level when its first cell does with a suffix or a colon
  * ("1st", "4:"), or when every row's first cell counts up one a row over three rows or more (a table's level column),
- * from 1 or from the level it's pasted at (`firstLevel`); its other cells are read by `parseSpellCell`, a spreadsheet's
+ * from 1 or from the level it's pasted at (`firstLevel`); its other cells are read by `parseTableCell`, a spreadsheet's
  * empty one as none. Header rows before them, each with a word in it, are left out, and with a level column a
  * spreadsheet's header of bare numbers over it and its spacer rows.
  */
-export function parseSpellRows(text: string, table: SpellTableRules, firstLevel = 1): PastedRow[] {
+export function parseTableRows(text: string, table: TableRules, firstLevel = 1): PastedRow[] {
   return readPastedTable(text, table, firstLevel).rows;
+}
+
+/**
+ * A table's (`table`) pasted cells where they land (`placeTableRows`'s), read once: its rows from the level at
+ * `startIndex`, its counts from the column its header names, else from `startColumn`.
+ */
+export function placeTable(
+  text: string,
+  table: TableRules,
+  levels: readonly { id: string; level: number }[],
+  startIndex: number,
+  startColumn: number,
+) {
+  const { column, rows } = readPastedTable(text, table, levels[startIndex]?.level ?? 1);
+  return placeTableRows(rows, levels, startIndex, column ?? startColumn, table.columns.length);
 }
 
 /**
  * Where a paste's rows land on a class's levels (`levels`, by their number): a row naming a level on it, the others a
  * level each after the last (from `startIndex`), their cells from `startColumn` on; a level the class lacks (the rows
- * after it go on from the next level it has), a spell level past `columns` and an unreadable cell are left out.
+ * after it go on from the next level it has), a column past `columns` and an unreadable cell are left out.
  */
-export function placeSpellRows(
+export function placeTableRows(
   rows: readonly PastedRow[],
   levels: readonly { id: string; level: number }[],
   startIndex: number,
@@ -144,23 +158,8 @@ export function placeSpellRows(
     const level = levels[index];
     if (!level) return [];
     return row.cells.flatMap((value, offset) => {
-      const spellLevel = startColumn + offset;
-      return value === undefined || spellLevel >= columns ? [] : [{ levelId: level.id, spellLevel, value }];
+      const column = startColumn + offset;
+      return value === undefined || column >= columns ? [] : [{ levelId: level.id, column, value }];
     });
   });
-}
-
-/**
- * A table's (`table`) pasted cells where they land (`placeSpellRows`'s), read once: its rows from the level at
- * `startIndex`, its counts from the spell level its header names, else from `startColumn`.
- */
-export function placeSpellTable(
-  text: string,
-  table: SpellTableRules,
-  levels: readonly { id: string; level: number }[],
-  startIndex: number,
-  startColumn: number,
-) {
-  const { column, rows } = readPastedTable(text, table, levels[startIndex]?.level ?? 1);
-  return placeSpellRows(rows, levels, startIndex, column ?? startColumn, table.columns.length);
 }
