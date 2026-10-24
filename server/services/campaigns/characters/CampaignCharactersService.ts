@@ -19,8 +19,8 @@ import {
   describeCharacterCards,
   enqueueCharacterPdf,
   findExportableCharacter,
-  readBondedInputs,
   readCharacterInput,
+  readChildInputs,
 } from "@/server/services/characters/index.ts";
 import { CampaignsPolicy } from "@/server/services/policies/index.ts";
 import type { CharacterVisibility } from "@/shared/campaigns.ts";
@@ -88,10 +88,10 @@ class CampaignCharactersService {
     const readsPrivateNotes = canEdit || isGM;
     return await withRulesetScope(db, character.rulesetId, async (scope) => {
       const input = await readCharacterInput(db, character);
-      // A partial reading shows none of the character's bonded creatures
-      const bonded = isPartial ? [] : await readBondedInputs(db, input, Visibility.All);
+      // A partial reading shows none of the character's children (3.5's bonded creatures)
+      const children = isPartial ? [] : await readChildInputs(db, input, Visibility.All);
       const reading = isPartial ? "partial" : readsPrivateNotes ? "show" : "hide";
-      const described = Engine.for(scope).character(input).describeForMember(bonded, reading);
+      const described = Engine.for(scope).character(input).describeForMember(children, reading);
       return { ...viewer, ...described, shareToken: canEdit ? described.shareToken : null };
     });
   }

@@ -42,6 +42,9 @@ export type EntityRow = Pick<EntityColumns, keyof EntityColumns>;
 /** What a link's row holds: its timestamps (a link is never archived: `deletedAt` is always null). */
 export type LinkRow = Pick<EntityRow, "createdAt" | "deletedAt" | "updatedAt">;
 
+/** The kinds of the view an entity of another kind owns (3.5's class levels). */
+export type OwnedKind = keyof OwnedEntities;
+
 /** A row as a module's storage declaration reads it: its columns by name. */
 export type Row = Record<string, unknown>;
 

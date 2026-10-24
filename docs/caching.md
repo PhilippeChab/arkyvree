@@ -75,7 +75,7 @@ The server hands the engine rows as stored: a character's (`readCharacterInput`,
 ```ts
 // The rows as stored; the character handle resolves them.
 const character = await readCharacterInput(db, record);
-return Engine.for(scope).character(character).describe(await readBondedInputs(db, character));
+return Engine.for(scope).character(character).describe(await readChildInputs(db, character));
 ```
 
 ### Layer 3 — a query on stored rows asks for equivalent ids

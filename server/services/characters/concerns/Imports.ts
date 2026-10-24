@@ -12,7 +12,7 @@ import {
   CharacterLinks,
   Characters,
 } from "@/server/repositories/index.ts";
-import { createLevelRows, writeBondedCreatures } from "@/server/services/characters/levels/index.ts";
+import { createLevelRows, writeChildren } from "@/server/services/characters/levels/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import type { Session } from "@/shared/relations.ts";
 
@@ -59,7 +59,7 @@ export function Imports<B extends Constructor>(Base: B) {
               tx,
               plan.inventory.map((entry) => ({ ...entry, characterId })),
             );
-            await writeBondedCreatures(tx, character, plan.children);
+            await writeChildren(tx, character, plan.children);
 
             await Activities.create(tx, {
               userId: session.userId,

@@ -68,6 +68,7 @@ export { default as RulesError } from "./core/RulesError.ts";
 export type {
   EntityCustomizations,
   EntityRow,
+  OwnedKind,
   RulesetData,
   RulesetRawData,
   ViewEntities,

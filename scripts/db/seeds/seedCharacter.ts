@@ -16,8 +16,8 @@ import {
   Entities,
   Picks,
 } from "@/server/repositories/index.ts";
-import { readBondedInputs, readCharacterInput } from "@/server/services/characters/index.ts";
-import { writeBondedCreatures } from "@/server/services/characters/levels/index.ts";
+import { readCharacterInput, readChildInputs } from "@/server/services/characters/index.ts";
+import { writeChildren } from "@/server/services/characters/levels/index.ts";
 
 import { type SeedContext } from "./seedContext.ts";
 import { SEED_USER_ID } from "./users.ts";
@@ -46,12 +46,8 @@ async function reconcileBondedForCharacter(tx: Db, characterId: string): Promise
 
   await withRulesetScope(tx, master.rulesetId, async (scope) => {
     const character = await readCharacterInput(tx, master);
-    const bonded = await readBondedInputs(tx, character);
-    await writeBondedCreatures(
-      tx,
-      master,
-      Engine.for(scope).character(character).levelUp().planChildren(bonded).children,
-    );
+    const children = await readChildInputs(tx, character);
+    await writeChildren(tx, master, Engine.for(scope).character(character).levelUp().planChildren(children).children);
   });
 }
 

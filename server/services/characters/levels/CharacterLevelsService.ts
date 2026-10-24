@@ -10,11 +10,11 @@ import { include } from "@/lib/mixins.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { withTransaction } from "@/server/database/index.ts";
 import { Activities, CharacterLevels, Characters, Picks } from "@/server/repositories/index.ts";
-import { readBondedInputs, readCharacterInput } from "@/server/services/characters/characterInputs.ts";
+import { readCharacterInput, readChildInputs } from "@/server/services/characters/characterInputs.ts";
 import { getEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
 import type { Session } from "@/shared/relations.ts";
 
-import { writeBondedCreatures } from "./bondedWrites.ts";
+import { writeChildren } from "./childWrites.ts";
 import { Plans } from "./concerns/Plans.ts";
 import { createLevelRows } from "./levelRows.ts";
 
@@ -33,20 +33,20 @@ class CharacterLevelsService extends include(Object, Plans) {
     session: Session,
     characterId: string,
     characterLevelId: string,
-    planOf: (levelUp: LevelUpEngine, bonded: CharacterInput[]) => ReturnType<LevelUpEngine["planLevelEdit"]>,
+    planOf: (levelUp: LevelUpEngine, children: CharacterInput[]) => ReturnType<LevelUpEngine["planLevelEdit"]>,
   ) {
     return await withTransaction(async (tx) => {
       const characterRecord = await this.lockEditableCharacter(tx, session, characterId);
 
       return await withRulesetScope(tx, characterRecord.rulesetId, async (scope) => {
         const character = await readCharacterInput(tx, characterRecord);
-        const bonded = await readBondedInputs(tx, character);
-        const edit = planOf(Engine.for(scope).character(character).levelUp(), bonded);
+        const children = await readChildInputs(tx, character);
+        const edit = planOf(Engine.for(scope).character(character).levelUp(), children);
 
         await CharacterLevels.update(tx, edit.columns, { id: characterLevelId });
         await this.deleteLevelRows(tx, characterLevelId);
         await createLevelRows(tx, characterLevelId, edit.rows);
-        await writeBondedCreatures(tx, characterRecord, edit.children);
+        await writeChildren(tx, characterRecord, edit.children);
 
         await Activities.create(tx, {
           userId: session.userId,
@@ -77,22 +77,22 @@ class CharacterLevelsService extends include(Object, Plans) {
   private async saveLevels(
     session: Session,
     characterId: string,
-    planOf: (levelUp: LevelUpEngine, bonded: CharacterInput[]) => ReturnType<LevelUpEngine["planLevelUp"]>,
+    planOf: (levelUp: LevelUpEngine, children: CharacterInput[]) => ReturnType<LevelUpEngine["planLevelUp"]>,
   ) {
     return await withTransaction(async (tx) => {
       const characterRecord = await this.lockEditableCharacter(tx, session, characterId);
 
       return await withRulesetScope(tx, characterRecord.rulesetId, async (scope) => {
         const character = await readCharacterInput(tx, characterRecord);
-        const bonded = await readBondedInputs(tx, character);
-        const plan = planOf(Engine.for(scope).character(character).levelUp(), bonded);
+        const children = await readChildInputs(tx, character);
+        const plan = planOf(Engine.for(scope).character(character).levelUp(), children);
         const createdLevels = [];
         for (const { columns, rows } of plan.levels) {
           const [created] = await CharacterLevels.create(tx, { ...columns, characterId });
           createdLevels.push(created);
           await createLevelRows(tx, created.id, rows);
         }
-        await writeBondedCreatures(tx, characterRecord, plan.children);
+        await writeChildren(tx, characterRecord, plan.children);
 
         await Activities.create(tx, {
           userId: session.userId,
@@ -113,8 +113,8 @@ class CharacterLevelsService extends include(Object, Plans) {
    * `force`d, and the save writes what it plans.
    */
   async addLevels(session: Session, characterId: string, request: LevelPlanRequest, force: boolean = false) {
-    return await this.saveLevels(session, characterId, (levelUp, bonded) =>
-      levelUp.planLevelUp(bonded, request, force),
+    return await this.saveLevels(session, characterId, (levelUp, children) =>
+      levelUp.planLevelUp(children, request, force),
     );
   }
 
@@ -128,10 +128,10 @@ class CharacterLevelsService extends include(Object, Plans) {
 
       await withRulesetScope(tx, characterRecord.rulesetId, async (scope) => {
         const character = await readCharacterInput(tx, characterRecord);
-        const bonded = await readBondedInputs(tx, character);
-        const removal = Engine.for(scope).character(character).levelUp().planRemoval(bonded);
+        const children = await readChildInputs(tx, character);
+        const removal = Engine.for(scope).character(character).levelUp().planRemoval(children);
         await CharacterLevels.delete(tx, { id: removal.level.id });
-        await writeBondedCreatures(tx, characterRecord, removal.children);
+        await writeChildren(tx, characterRecord, removal.children);
       });
 
       await Activities.create(tx, {
@@ -157,8 +157,8 @@ class CharacterLevelsService extends include(Object, Plans) {
     request: LevelPlanRequest,
     force: boolean = false,
   ) {
-    return await this.editLevel(session, characterId, characterLevelId, (levelUp, bonded) =>
-      levelUp.planLevelEdit(bonded, characterLevelId, request, force),
+    return await this.editLevel(session, characterId, characterLevelId, (levelUp, children) =>
+      levelUp.planLevelEdit(children, characterLevelId, request, force),
     );
   }
 }

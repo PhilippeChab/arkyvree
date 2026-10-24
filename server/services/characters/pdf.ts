@@ -7,7 +7,7 @@ import { Activities, Campaigns, Characters, PlayerCharacters, Visibility } from 
 import { CampaignsPolicy } from "@/server/services/policies/index.ts";
 import type { Character, Session } from "@/shared/relations.ts";
 
-import { findEditableCharacterOrBonded } from "./editableCharacter.ts";
+import { findEditableCharacterOrChild } from "./editableCharacter.ts";
 
 /**
  * Where a PDF export's activity and failure notification link to: the
@@ -61,5 +61,5 @@ export async function findExportableCharacter(userId: string, characterId: strin
     if (campaign && (await CampaignsPolicy.for(db, { userId }, campaign)).isGameMaster())
       return (await Characters.findOne(db, { id: characterId })) ?? null;
   }
-  return findEditableCharacterOrBonded(db, characterId, userId);
+  return findEditableCharacterOrChild(db, characterId, userId);
 }
