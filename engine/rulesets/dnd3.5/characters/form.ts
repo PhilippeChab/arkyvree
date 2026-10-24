@@ -1,5 +1,5 @@
 import type { CharacterForm } from "@/engine/core/module/index.ts";
-import { ALIGNMENT_OPTIONS, GENDER_OPTIONS } from "@/shared/enums.ts";
+import { ALIGNMENT_OPTIONS, GENDER_OPTIONS } from "@/vocabulary/dnd3.5/identity.ts";
 
 /**
  * A new 3.5 character's form: its name and experience, its ruleset and race, its alignment and gender (which narrow the

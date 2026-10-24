@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import type { FieldsBlock, FieldsPlan, FieldsRequest, SheetField } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
-import { ALIGNMENT_OPTIONS, GENDER_OPTIONS } from "@/shared/enums.ts";
+import { ALIGNMENT_OPTIONS, GENDER_OPTIONS } from "@/vocabulary/dnd3.5/identity.ts";
 
 /** A 3.5 character's identity, as its sheet reads it: who it is, its beliefs, its experience, and its notes. */
 interface SheetIdentity {

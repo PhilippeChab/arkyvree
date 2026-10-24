@@ -10,7 +10,7 @@ import { type RulesetScope, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Characters } from "@/server/repositories/index.ts";
 import { CharactersService, readCharacterInput } from "@/server/services/characters/index.ts";
-import type { Alignment, Gender } from "@/shared/enums.ts";
+import type { Alignment, Gender } from "@/vocabulary/dnd3.5/identity.ts";
 import type { Character, Session } from "@/shared/relations.ts";
 
 import { api, expectOk } from "./api.ts";
