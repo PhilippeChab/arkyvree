@@ -116,16 +116,28 @@ export default class RulesetComposition {
   /**
    * Each kind's rows, an owner's before the kinds it owns: an owned kind's rows whose owner the view shows (a copied
    * class's levels are overridden by its copy's, paired by `CowDataBuilder`, and a sibling loser's owner leaves its
-   * own out), and the visible ids another kind or a join reads. Then each join's rows of the entities it's from the view shows.
+   * own out), and the visible ids another kind or a join reads. Then each join's rows of the entities it's from the
+   * view shows. Answers too the owned entities the view leaves out, whose customizations go with them.
    */
   private composeEntities() {
     const visibleIds = new Map<string, Set<string>>();
     const entities = new Map<string, ViewRow[]>();
+    const leftOut = new Set<string>();
     for (const { owner, tracked, type } of this.schema.kinds) {
-      const composed = this.composeRows((raw) => raw.entities[type] ?? []);
-      const owners = owner && visibleIds.get(owner.type);
-      if (owner && !owners) throw new Error(`The view composes ${type} before its owner, ${owner.type}`);
-      const rows = owner ? composed.filter((row) => owners!.has(row[owner.column] as string)) : composed;
+      let rows: ViewRow[];
+      if (owner) {
+        const owners = visibleIds.get(owner.type);
+        if (!owners) throw new Error(`The view composes ${type} before its owner, ${owner.type}`);
+        rows = [];
+        for (const raw of this.chain) {
+          for (const row of raw.entities[type] ?? []) {
+            if (!this.cow.isHidden(row.id) && owners.has(row[owner.column] as string)) rows.push(row);
+            else leftOut.add(row.id);
+          }
+        }
+      } else {
+        rows = this.composeRows((raw) => raw.entities[type] ?? []);
+      }
       if (tracked) visibleIds.set(type, new Set(rows.map((row) => row.id)));
       entities.set(type, this.cow.resolveRows(rows));
     }
@@ -137,27 +149,23 @@ export default class RulesetComposition {
       );
       joins.set(name, this.cow.resolveRows(rows));
     }
-    return { entities, joins, visibleIds };
+    return { entities, joins, leftOut };
   }
 
   /** The composed rows, before the lookup indices: each list across the chain, COW-resolved. */
   private composeLists(): RulesetLists {
     // A row is left out when a copy overrides it or it's a sibling loser. A loser's customizations merge into its winner
     // (the customization steps below skip only the overridden ones), and every stored id resolves to the winner.
-    const { entities, joins, visibleIds } = this.composeEntities();
-    // An owned entity whose owner the view leaves out is left out with its customizations: a few owned kinds, each
-    // compared to a row's type
-    const owned = this.schema.kinds.flatMap(({ owner, type }) => (owner ? [{ ids: visibleIds.get(type)!, type }] : []));
-    const isLeftOut = (entityType: string, id: string) =>
-      owned.some((kind) => kind.type === entityType && !kind.ids.has(id));
-    const { modifiers, excludedModifierIds } = this.composeModifiers(isLeftOut);
+    // An owned entity whose owner the view leaves out is left out with its customizations: none, mostly
+    const { entities, joins, leftOut } = this.composeEntities();
+    const { modifiers, excludedModifierIds } = this.composeModifiers(leftOut);
     const composed = {
       entities,
       joins,
       tieredIds: this.composeTieredIds(),
-      properties: this.composeProperties(isLeftOut),
+      properties: this.composeProperties(leftOut),
       modifiers,
-      requirements: this.composeRequirements(isLeftOut, excludedModifierIds),
+      requirements: this.composeRequirements(leftOut, excludedModifierIds),
     };
     if (!this.cow.isEmpty()) this.resolveListLinks(entities);
 
@@ -169,12 +177,12 @@ export default class RulesetComposition {
    * loser's the merge leaves out (`SiblingMerge.mergeModifiers`); the rest of a loser's move to its winner. Every
    * modifier left out is excluded, its requirements with it.
    */
-  private composeModifiers(isLeftOut: (entityType: string, id: string) => boolean) {
+  private composeModifiers(leftOut: ReadonlySet<string>) {
     const siblingRows = new SiblingRows<Modifier>(this.cow);
     const excludedModifierIds = new Set<string>();
     for (const raw of this.chain) {
       for (const m of raw.modifiers) {
-        const isVisible = !this.cow.isOverridden(m.sourceId) && !isLeftOut(m.sourceType, m.sourceId);
+        const isVisible = !this.cow.isOverridden(m.sourceId) && !leftOut.has(m.sourceId);
         if (isVisible) siblingRows.add(m, m.sourceId);
         else excludedModifierIds.add(m.id);
       }
@@ -191,12 +199,12 @@ export default class RulesetComposition {
    * sibling loser's the merge leaves out (`SiblingMerge.mergeProperties`); the rest of a loser's move to its winner. A
    * ruleset's own properties always stay: a ruleset is never overridden.
    */
-  private composeProperties(isLeftOut: (entityType: string, id: string) => boolean): Property[] {
+  private composeProperties(leftOut: ReadonlySet<string>): Property[] {
     const siblingRows = new SiblingRows<Property>(this.cow);
     for (const raw of this.chain) {
       for (const p of raw.properties) {
         if (this.cow.isOverridden(p.entityId)) continue;
-        if (isLeftOut(p.entityType, p.entityId)) continue;
+        if (leftOut.has(p.entityId)) continue;
         siblingRows.add(p, p.entityId);
       }
     }
@@ -213,17 +221,14 @@ export default class RulesetComposition {
    * copied entity and an owned entity the view leaves out; a sibling loser's merge into its winner's as trees
    * (`SiblingMerge.mergeRequirements`, which `EntityCopy` writes the same way), after the rest.
    */
-  private composeRequirements(
-    isLeftOut: (entityType: string, id: string) => boolean,
-    excludedModifierIds: Set<string>,
-  ): Requirement[] {
+  private composeRequirements(leftOut: ReadonlySet<string>, excludedModifierIds: Set<string>): Requirement[] {
     const siblingRows = new SiblingRows<Requirement>(this.cow);
     for (const raw of this.chain) {
       for (const r of raw.requirements) {
         const isVisible =
           r.entityType === "modifiers"
             ? !excludedModifierIds.has(r.entityId)
-            : !this.cow.isOverridden(r.entityId) && !isLeftOut(r.entityType, r.entityId);
+            : !this.cow.isOverridden(r.entityId) && !leftOut.has(r.entityId);
         if (isVisible) siblingRows.add(r, r.entityId);
       }
     }
