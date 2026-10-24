@@ -1,7 +1,7 @@
 /**
  * A character's levels: the level wizards' steps, plans and pickers (`Plans`), and a level's save, edit and removal.
  * Each reads the character's rows and asks the engine, which answers by the character's ruleset; a save writes what
- * the engine plans, with what the character's bonded creatures become.
+ * the engine plans, with what the character's children (3.5's bonded creatures) become.
  */
 
 import type { Db } from "@/drizzle/database.ts";
@@ -26,7 +26,7 @@ class CharacterLevelsService extends include(Object, Plans) {
 
   /**
    * Re-saves character level `characterLevelId` as its edit plans it (`planOf`, from the character's level flows and
-   * its bonded creatures): the level's columns, its rows under it in place of those it had, what its bonded creatures
+   * its children): the level's columns, its rows under it in place of those it had, what its children
    * become, and an activity. Answers the level as it was saved before.
    */
   private async editLevel(
@@ -71,8 +71,8 @@ class CharacterLevelsService extends include(Object, Plans) {
   }
 
   /**
-   * Saves the levels a level-up plans (`planOf`, from the character's level flows and its bonded creatures): each level
-   * and its rows under it, what the bonded creatures become, and an activity. Answers the levels saved.
+   * Saves the levels a level-up plans (`planOf`, from the character's level flows and its children): each level
+   * and its rows under it, what the children become, and an activity. Answers the levels saved.
    */
   private async saveLevels(
     session: Session,
@@ -108,9 +108,9 @@ class CharacterLevelsService extends include(Object, Plans) {
   }
 
   /**
-   * Saves a level-up's plan (`request`): its levels, its picks spread over them, and what the character's bonded
-   * creatures become. The engine reads the plan by its steps, checks each level, and the character with them unless
-   * `force`d, and the save writes what it plans.
+   * Saves a level-up's plan (`request`): its levels, its picks spread over them, and what the character's children
+   * become. The engine reads the plan by its steps, checks each level, and the character with them unless `force`d, and
+   * the save writes what it plans.
    */
   async addLevels(session: Session, characterId: string, request: LevelPlanRequest, force: boolean = false) {
     return await this.saveLevels(session, characterId, (levelUp, children) =>
@@ -120,7 +120,7 @@ class CharacterLevelsService extends include(Object, Plans) {
 
   /**
    * Removes the character's most recent level, with its rows under it (the database deletes them with it), and what its
-   * bonded creatures become without it.
+   * children become without it.
    */
   async removeLevel(session: Session, characterId: string) {
     return await withTransaction(async (tx) => {

@@ -38,7 +38,6 @@
   "scripts/ops/validateCharacters",
   "server/cow/writes",
   "server/services/activities",
-  "server/services/characters/levels",
   "server/services/rulesets/extensions",
   "shared",
   "shared/customization",
