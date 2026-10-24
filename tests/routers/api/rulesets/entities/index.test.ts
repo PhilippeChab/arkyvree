@@ -229,6 +229,25 @@ describe("rulesets entities by kind", () => {
     await expectStatus(entity.links.$post({ param: klass, json: { targetId: "not-an-id" } }), 400);
   });
 
+  test("reads a class's tables and lists where its rules' progression says, a level's totals at its table's key", async () => {
+    const { id } = await setup();
+    const { progression } = (await expectOk(api.api.rules.$get()))["Dungeons & Dragons: 3.5"];
+    const [wizard] = (
+      await expectOk(kinds.$get({ param: { id, entityType: "classes" }, query: { search: "Wizard", limit: "1" } }))
+    ).items;
+    const klass = { id, entityType: "classes" as const, entityId: wizard.id };
+    for (const { table, totals } of progression.tables) {
+      const rows = await expectOk(entity.tables[":table"].$get({ param: { ...klass, table } }));
+      expect(rows.length).toBeGreaterThan(0);
+      for (const row of rows) expect(row).toHaveProperty(totals);
+    }
+    const { counts } = progression;
+    const lists = await expectOk(entity.tables[":table"].$get({ param: { ...klass, table: counts?.lists ?? "" } }));
+    expect(lists).toMatchObject([{ name: "Wizard Spells" }]);
+    const answer = await expectOk(entity.progression.$get({ param: klass }));
+    expect(answer).toMatchObject({ [counts?.list ?? ""]: { name: "Wizard Spells" }, [counts?.several ?? ""]: false });
+  });
+
   test("answers each kind's filters and actions as its rules describe it", async () => {
     const { id } = await setup();
     const rules = await expectOk(api.api.rules.$get());

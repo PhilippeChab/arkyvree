@@ -17,9 +17,22 @@ const CLASS_LEVELS = Array.from({ length: RULESET_LIMITS.classLevel }, (_, index
  * "All" carrying down. A class's spell list is the aptitude named for it ("Wizard Spells").
  */
 export const PROGRESSION: ProgressionDescription = {
+  counts: {
+    body: "spells",
+    list: "spellList",
+    lists: "spell-lists",
+    listTab: "spell-list",
+    none: {
+      editor:
+        '{class} has no spell list of its own, so no {tables}. A class that casts gets one from an aptitude named "{class} Spells".',
+      viewer: "{class} casts no spells.",
+    },
+    several: "severalSpellLists",
+    tab: "spells",
+    type: "powers",
+  },
   grantsLabel: "Special",
   lastLevel: MAX_CLASS_LEVEL,
-  listName: "{class} Spells",
   tables: [
     {
       columns: SPELL_LEVELS.map((level) => ({
@@ -30,6 +43,8 @@ export const PROGRESSION: ProgressionDescription = {
       key: "perDay",
       label: "Spells per Day",
       max: RULESET_LIMITS.tableCount,
+      table: "spells",
+      totals: "spellsPerDay",
       zeroWhereOpenedBy: "known",
     },
     {
@@ -43,6 +58,8 @@ export const PROGRESSION: ProgressionDescription = {
       key: "known",
       label: "Spells Known",
       max: RULESET_LIMITS.tableCount,
+      table: "spells-known",
+      totals: "spellsKnown",
     },
   ],
   tracks: [

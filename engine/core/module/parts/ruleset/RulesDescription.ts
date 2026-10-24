@@ -109,33 +109,57 @@ export interface ListDescription {
 }
 
 /**
+ * What a class's tables count (3.5's spells), and how its page reads and saves them: their kind (`type`: `powers`),
+ * the key a progression's save sends its tables' cells by (`body`: `spells`), the keys a progression's answer says by
+ * which list its counts go to (`list`: `spellList`) and whether its levels count on several (`several`:
+ * `severalSpellLists`), the class's table of its lists (`lists`: `spell-lists`), the URLs of its tables' tab (`tab`:
+ * `spells`) and of its list's (`listTab`: `spell-list`), and what its tables' tab says of a class with no list
+ * (`none`), to an editor (how a class gets one) and to a viewer, the class's name at `{class}` and its tables' labels
+ * at `{tables}`.
+ */
+export interface ProgressionCounts {
+  body: string;
+  list: string;
+  lists: string;
+  listTab: string;
+  none: { editor: string; viewer: string };
+  several: string;
+  tab: string;
+  type: string;
+}
+
+/**
  * How a class's levels progress, as its page sets them: its last level (`lastLevel`), its class table's tracks
  * (`tracks`, each a column its Progression tab sets), the label of its column of what a level grants (`grantsLabel`:
- * its features and feat pools), and its spell tables (`tables`, which its Spells tab edits: none where its classes cast
- * none), and the name of the pool a class's spell list is, its class's name at `{class}` (`listName`).
+ * its features and feat pools), its tables (`tables`, which its tables' tab edits: none where its classes count
+ * none) and what they count (`counts`).
  */
 export interface ProgressionDescription {
+  counts?: ProgressionCounts;
   grantsLabel: string;
   lastLevel: number;
-  listName?: string;
   tables: ProgressionTable[];
   tracks: ProgressionTrack[];
 }
 
 /**
- * A spell table a class's Spells tab edits, by the key its save takes it by (`perDay`, `known`): its label and what
- * it's for, a cell's most (`max`), the word for every value of a column, which the levels after it keep (`all`: none
- * for a table without), the table whose opening of a column makes this one's emptied cell read 0 (`zeroWhereOpenedBy`),
- * and its columns (a spell level each), each with the words a pasted table's header names it by (`aliases`).
+ * A table a class's tables' tab edits (3.5's spells per day, spells known), by the key its save takes it by (`perDay`,
+ * `known`): its label and what it's for, the class's table it's read from (`table`: `spells`) and where a level's row
+ * holds its totals (`totals`: `spellsPerDay`), a cell's most (`max`), the word for every value of a column, which the
+ * levels after it keep (`all`: none for a table without), the table whose opening of a column makes this one's emptied
+ * cell read 0 (`zeroWhereOpenedBy`), and its columns (a spell level each), each with the words a pasted table's header
+ * names it by (`aliases`).
  */
 export interface ProgressionTable {
   all?: string;
   columns: { aliases: string[]; key: string; label: string }[];
   help?: string;
-  key: "known" | "perDay";
+  key: string;
   label: string;
   max: number;
-  zeroWhereOpenedBy?: "known" | "perDay";
+  table: string;
+  totals: string;
+  zeroWhereOpenedBy?: string;
 }
 
 /**

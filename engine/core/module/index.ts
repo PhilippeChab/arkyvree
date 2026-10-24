@@ -158,6 +158,7 @@ export {
   type EntityPoolsDescription,
   type ListColumn,
   type ListDescription,
+  type ProgressionCounts,
   type ProgressionDescription,
   type ProgressionTable,
   type ProgressionTrack,
