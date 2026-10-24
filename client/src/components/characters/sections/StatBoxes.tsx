@@ -7,7 +7,7 @@ interface StatBoxesProps {
   boxes: { label: string; value: string }[];
 }
 
-/** Stats in compact boxes, side by side, each as wide as the others: an armor class's: a weapon set's, a bonded creature's. */
+/** Stats in compact boxes, side by side, each as wide as the others: an armor class's: a weapon set's, a subsheet's. */
 export function StatBoxes({ boxes }: StatBoxesProps) {
   return (
     <Box sx={{ display: "grid", gridTemplateColumns: `repeat(${boxes.length}, minmax(0, 112px))`, gap: 1 }}>

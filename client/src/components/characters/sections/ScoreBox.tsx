@@ -6,7 +6,7 @@ interface ScoreBoxProps {
   badge?: ReactNode;
   /** The lines under the value that make it up ("Base: +2"): the full form's. */
   breakdown?: string[];
-  /** The compact form: a caption over a smaller value (a bonded creature's abilities, a weapon set's armor class). */
+  /** The compact form: a caption over a smaller value (a subsheet's abilities, a weapon set's armor class). */
   compact?: boolean;
   /** What's changed above the breakdown's lines: an ability's base, raised and lowered on its owner's sheet. */
   editor?: ReactNode;

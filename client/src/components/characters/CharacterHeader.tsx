@@ -39,7 +39,7 @@ interface CharacterNameEditorProps extends CharacterRename {
 /** The character an editor renames in place, and the version the rename is made against */
 interface CharacterRename {
   characterId: string;
-  /** A bonded creature's master, whose sheet lists it by name */
+  /** The character a subsheet is under (3.5's bonded creature's master), whose sheet lists it by name */
   parentCharacterId?: string | null;
   updatedAt: string;
 }
