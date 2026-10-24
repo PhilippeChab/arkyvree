@@ -221,8 +221,8 @@ function LinkPicksField({ characterId, control, link, readOnly }: LinkPicksField
 
 /**
  * A `fields` block: the character's portrait, then its fields' lines and the fields under them, its picked links (3.5's
- * languages), and its notes (its private ones where the block gives them: who reads them alone), saved together. A partly
- * seen character shows its fields alone, and says the rest is private.
+ * languages), and its notes (its private ones where the block gives them: who reads them alone), saved together. A
+ * partly seen character shows its fields alone, and says the rest is private.
  */
 export function FieldsSection({
   block,

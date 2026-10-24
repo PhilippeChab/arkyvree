@@ -17,13 +17,19 @@ interface InventoryPlacementFieldsProps {
   form: UseFormReturn<InventoryFormData>;
   /** The item's placement; the slot fields wait for an item. */
   profile: PlacementProfile | null;
-  /** The groups a held item can be in (3.5's weapon sets), as shown, from 1: the character's, and a new one (`groupChoices`). */
+  /**
+   * The groups a held item can be in (3.5's weapon sets), as shown, from 1: the character's, and a new one
+   * (`groupChoices`).
+   */
   setChoices: number[];
   /** What the fields say: their inventory block's words. */
   words: InventoryWords;
 }
 
-/** The groups a held item is in (3.5's weapon sets), one or more, as chips ("Set 1", "Set 2"): the character's, or a new one. */
+/**
+ * The groups a held item is in (3.5's weapon sets), one or more, as chips ("Set 1", "Set 2"): the character's, or a new
+ * one.
+ */
 function GroupsField({ choices, form, words }: GroupsFieldProps) {
   const {
     field: { ref, value, onChange, ...bound },

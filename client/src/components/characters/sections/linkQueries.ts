@@ -9,7 +9,9 @@ import { rpc } from "@/client/src/services/rpc.ts";
 /** An entity a character's link names, as its picker shows it. */
 export type LinkedEntity = LinkRoom["automatic"][number];
 
-/** What a character has of a picked link and may pick, as its ruleset's rules answer it for the picks its form holds. */
+/**
+ * What a character has of a picked link and may pick, as its ruleset's rules answer it for the picks its form holds.
+ */
 export type LinkRoom = InferResponseType<(typeof rpc.api.characters)[":id"]["links"][":link"]["$get"], 200>;
 
 /**
