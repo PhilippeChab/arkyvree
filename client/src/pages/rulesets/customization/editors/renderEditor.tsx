@@ -3,8 +3,8 @@
 import type { RulesDescription } from "@/client/src/lib/queries.ts";
 import type { CustomizationEntity } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
 
-import { ClassLevelEditor } from "./ClassLevelEditor.tsx";
 import { EntityEditor } from "./EntityEditor.tsx";
+import { LevelEditor } from "./LevelEditor.tsx";
 
 /** What the customization page passes each editor of an entity's details. */
 export interface EditorProps<T> {
@@ -31,15 +31,18 @@ export function isEditable(data: CustomizationEntity): data is EditableEntity {
 }
 
 /**
- * An entity's editor: a class level's own, else its kind's, as its rules describe it (`rules`, which the app has
- * loaded: none for a kind they don't list).
+ * An entity's editor, as its rules describe it (`rules`, which the app has loaded): an owned level's (a class's), else
+ * its kind's, none for a kind they don't list.
  */
 export function renderEditor(
   data: EditableEntity,
   rules: RulesDescription | undefined,
   props: Omit<EditorProps<unknown>, "entity">,
 ) {
-  if (data.holder === "owned") return <ClassLevelEditor {...props} entity={data.entity} />;
+  if (data.holder === "owned") {
+    const { entity, owner, ownerId, type } = data;
+    return <LevelEditor {...props} entity={entity} owner={owner} ownerId={ownerId} rules={rules} type={type} />;
+  }
   const kind = rules?.kinds.find((each) => each.type === data.type);
   return kind && <EntityEditor {...props} entity={data.entity} kind={kind} />;
 }

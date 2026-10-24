@@ -25,12 +25,19 @@ type CustomizedModifier = InferResponseType<
 export type CustomizationEntity =
   | { entity: CustomizedModifier; holder: "modifier"; type: "modifiers" }
   | { entity: EntityRow; holder: "entity"; type: string }
-  | { entity: OwnedEntity; holder: "owned"; owner: string; type: string };
+  | { entity: OwnedEntity; holder: "owned"; owner: string; ownerId: string; type: string };
 
-export type OwnedEntity = InferResponseType<
-  (typeof rulesetApi)["entities"][":entityType"]["owned"][":ownedId"]["$get"],
-  200
->;
+/**
+ * An owned entity as its page reads it (a class's level): its row, its kind's columns at their keys, with its owner's
+ * name.
+ */
+export type OwnedEntity = Record<string, unknown> & {
+  id: string;
+  level: number;
+  name: string;
+  rulesetId: string;
+  updatedAt: string;
+};
 
 const rulesetApi = rpc.api.rulesets[":id"];
 
@@ -39,7 +46,7 @@ export const MODIFIER_PAGE: CustomizationPage = { type: "modifiers" };
 
 async function fetchEntity(
   id: string,
-  { owner, type }: CustomizationPage,
+  { owner, ownerKey, type }: CustomizationPage,
   entityId: string,
 ): Promise<CustomizationEntity> {
   if (type === "modifiers") {
@@ -53,18 +60,16 @@ async function fetchEntity(
       ),
     };
   }
-  // An owned entity, by its owner's kind
+  // An owned entity, by its owner's kind, its owner's id at its page's key
   if (owner) {
-    return {
-      holder: "owned",
-      owner,
-      type,
-      entity: await parseResponse(
-        rulesetApi.entities[":entityType"].owned[":ownedId"].$get({
-          param: { id, entityType: entitySegment(getUrlSegment(owner)), ownedId: entityId },
-        }),
-      ),
-    };
+    const entity: OwnedEntity = await parseResponse(
+      rulesetApi.entities[":entityType"].owned[":ownedId"].$get({
+        param: { id, entityType: entitySegment(getUrlSegment(owner)), ownedId: entityId },
+      }),
+    );
+    const ownerId = entity[ownerKey ?? ""];
+    if (typeof ownerId !== "string") throw new Error(`No owner of ${type} ${entityId}`);
+    return { holder: "owned", owner, ownerId, type, entity };
   }
   // A kind's entity, through the routes by kind
   return { holder: "entity", type, entity: await readEntityFn(id, type, entityId) };

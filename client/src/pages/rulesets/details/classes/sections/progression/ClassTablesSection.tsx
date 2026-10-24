@@ -24,7 +24,7 @@ import { emptyOptionsText } from "@/client/src/lib/errorMessage.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import type { ProgressionCounts, RulesDescription } from "@/client/src/lib/queries.ts";
 import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
-import { classKindOf } from "@/client/src/pages/rulesets/details/classes/classKind.ts";
+import { classKindOf, levelPageOf } from "@/client/src/pages/rulesets/details/classes/classKind.ts";
 import {
   type ClassProgressionBody,
   classProgressionQuery,
@@ -101,7 +101,7 @@ function ClassTables({ rulesetId, classId, className, ruleset, counts, rules }: 
 
   // Its levels are its first table's rows
   const levels = (reads[0]?.data ?? []).toSorted(byLevel);
-  const save = useProgressionSave(rulesetId, classId, many);
+  const save = useProgressionSave(rulesetId, classId, levelPageOf(rules)?.type ?? "", many);
   const saved = Object.fromEntries(
     tables.map((rules, index) => [rules.key, new Map(totalsOf(reads[index]?.data ?? [], rules).map(byId))]),
   );

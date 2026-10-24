@@ -10,11 +10,12 @@ import { rpc } from "@/client/src/services/rpc.ts";
 
 /**
  * The save of a class's Progression or tables' tab (`what`, which its messages name: "Progression", its rules' word for
- * what its tables count, 3.5's "Spells"): one request for all it changed, sent with the tokens its draft began over (`useClassDraft`'s), which
- * refreshes every tab of the class (its key's own) and follows the copy a save of an inherited class makes. It stays
+ * what its tables count, 3.5's "Spells"): one request for all it changed, sent with the tokens its draft began over
+ * (`useClassDraft`'s), which refreshes every tab of the class (its key's own) and the pages of the levels it wrote (of
+ * `levelType`, its levels' kind: 3.5's class levels), and follows the copy a save of an inherited class makes. It stays
  * pending until they're read again, so the tab never shows its changes gone before their save comes back.
  */
-export function useProgressionSave(rulesetId: string, classId: string, what: string) {
+export function useProgressionSave(rulesetId: string, classId: string, levelType: string, what: string) {
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
   const { followCopy, queryKeysToInvalidate, tag } = useClassCopy(rulesetId, classId);
@@ -40,9 +41,9 @@ export function useProgressionSave(rulesetId: string, classId: string, what: str
       await invalidateRulesetEdit(queryClient, rulesetId, queryKeysToInvalidate);
       // The pages of the levels it wrote (a row's hover warms them), their modifiers and requirements among them
       const levelKeys = (saved?.ownedIds ?? []).flatMap((levelId) => [
-        QUERY_KEYS.rulesets.entity(rulesetId, "klass_levels", levelId),
-        QUERY_KEYS.rulesets.customization(rulesetId, "klass_levels", levelId, "modifiers"),
-        QUERY_KEYS.rulesets.customization(rulesetId, "klass_levels", levelId, "requirements"),
+        QUERY_KEYS.rulesets.entity(rulesetId, levelType, levelId),
+        QUERY_KEYS.rulesets.customization(rulesetId, levelType, levelId, "modifiers"),
+        QUERY_KEYS.rulesets.customization(rulesetId, levelType, levelId, "requirements"),
       ]);
       await Promise.all(levelKeys.map((queryKey) => queryClient.invalidateQueries({ queryKey })));
     },

@@ -1,9 +1,10 @@
+import type { LevelRead } from "@/client/src/pages/rulesets/components/forms/index.ts";
+
 import {
   type FeatureRow,
   NO_EDITS,
   type PoolRow,
   type ProgressionEdits,
-  type ProgressionLevel,
   readTrack,
   type TrackKey,
 } from "./progressionDraft.ts";
@@ -17,7 +18,7 @@ import { useClassDraft } from "./useClassDraft.ts";
  */
 export function useProgressionDraft(
   classId: string,
-  levels: readonly ProgressionLevel[],
+  levels: readonly LevelRead[],
   fresh: boolean,
   changed: (edits: ProgressionEdits) => boolean,
 ) {

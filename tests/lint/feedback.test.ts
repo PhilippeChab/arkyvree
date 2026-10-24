@@ -202,7 +202,7 @@ describe("feedback rules", () => {
           "client/src/listboxError.ts":
             "export function h() {\n  const { items, error } = useListboxQuery(q);\n  return [items, error];\n}\n",
           "client/src/wrapper.ts":
-            "export function i() {\n  const { data } = useRulesetSaves(id);\n  return data;\n}\n",
+            "export function i() {\n  const { data } = useRulesetAbilities(id);\n  return data;\n}\n",
           "client/src/image.ts": "export function j() {\n  const { data } = useAttachment(slot);\n  return data;\n}\n",
         },
         ["query-errors"],
