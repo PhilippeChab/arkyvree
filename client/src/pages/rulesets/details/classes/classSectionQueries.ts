@@ -12,6 +12,7 @@ import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import type { LevelFeat, LevelSave } from "@/client/src/pages/rulesets/components/forms/classLevelForm.ts";
 import { powersQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
+import { getUrlSegment } from "@/shared/urlSegments.ts";
 
 /** A class's tables, by the name its route reads one by, each by a key its rows alone hold. */
 interface TableKeys {
@@ -51,6 +52,9 @@ export type ClassProgression = InferResponseType<(typeof classApi)["progression"
  */
 export type ClassProgressionBody = InferRequestType<(typeof classApi)["progression"]["$put"]>["json"];
 
+/** A link of a class to an entity, by the keys its kind's `links` describe: the entity's, the class's, and its row. */
+export type LinkRow = Record<string, unknown>;
+
 /** A class's routes, an entity's of the classes' kind. */
 const classApi = rpc.api.rulesets[":id"].entities[":entityType"][":entityId"];
 
@@ -89,6 +93,14 @@ export function classLevelsQuery(rulesetId: string, classId: string) {
   });
 }
 
+/** The entities of a kind (`type`: 3.5's skills) a class links to, its links' tab's, each link with its entity. */
+export function classLinksQuery(rulesetId: string, classId: string, type: string) {
+  return queryOptions({
+    queryKey: QUERY_KEYS.rulesets.classLinks(rulesetId, classId, getUrlSegment(type)),
+    queryFn: async (): Promise<LinkRow[]> => await parseResponse(classApi.links.$get(classParam(rulesetId, classId))),
+  });
+}
+
 /**
  * What a class's Progression and Spells tabs read beside its levels and tables: its pools' own picks, its spell list,
  * its feats' picks. Read again each time a tab mounts: an aptitude or a feat changed elsewhere (a spell list added)
@@ -99,13 +111,6 @@ export function classProgressionQuery(rulesetId: string, classId: string) {
     queryKey: QUERY_KEYS.rulesets.classProgression(rulesetId, classId),
     staleTime: NO_TIME,
     queryFn: () => parseResponse(classApi.progression.$get(classParam(rulesetId, classId))),
-  });
-}
-
-export function classSkillsQuery(rulesetId: string, classId: string) {
-  return queryOptions({
-    queryKey: QUERY_KEYS.rulesets.classSkills(rulesetId, classId),
-    queryFn: () => parseResponse(classApi.links.$get(classParam(rulesetId, classId))),
   });
 }
 

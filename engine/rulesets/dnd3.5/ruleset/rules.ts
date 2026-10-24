@@ -82,7 +82,14 @@ export const RULES: RulesDeclaration = {
       opens: "page",
       type: "aptitudes",
     },
-    { fieldHelp: true, icon: "accessibility", opens: "progression", partitioned: true, type: "klasses" },
+    {
+      fieldHelp: true,
+      icon: "accessibility",
+      links: { key: "skillId", owner: "klassId", target: "skillsInRule", type: "skills" },
+      opens: "progression",
+      partitioned: true,
+      type: "klasses",
+    },
     { empty: "No saving throws available for this ruleset.", icon: "shield", opens: "page", type: "saves" },
     { icon: "fitness", opens: "page", readOnly: true, type: "abilities" },
     {

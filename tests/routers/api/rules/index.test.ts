@@ -129,6 +129,13 @@ describe("rules", () => {
       ["powers", "fixed"],
       ["items", "fluid"],
     ]);
+    // A class's page links it to its class skills
+    expect(kind("klasses")?.links).toEqual({
+      key: "skillId",
+      owner: "klassId",
+      target: "skillsInRule",
+      type: "skills",
+    });
     expect(kind("feats")?.lockedName).toEqual({ flag: "generated", reason: "A generated feat keeps its name" });
     // A pool's links column reads its links where an entity read holds them
     expect(dnd35.columns.feats?.find((column) => column.key === "aptitudeIds")).toMatchObject({

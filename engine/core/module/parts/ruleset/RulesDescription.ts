@@ -24,11 +24,12 @@ export interface EntityCopiesDescription {
  * page, a class's), whether its form gives its description room (`longDescription`: a mechanic's), and whether a new
  * one's form says what each of its fields is for (`fieldHelp`: a class's), whether its form shows two fields side by
  * side in a wide dialog (`wideForm`: `fluid`, an item's; `fixed`, its height kept as its fields change, a spell's), the
- * pools its list narrows by (`pools`), whether its list narrows by a tier (`levels`: a spell's, by its level,
- * `RulesDescription.tiers`), whether its list groups an entity's variants under their family (`families`: a feat's),
- * how its row copies one (`copies`: an item's), and when its name can't change (`lockedName`: while its `flag` column
- * holds, a generated feat's, its form saying why, `reason`). Its word is its rules' (`RulesDescription.words`), and its
- * URL's segment the app's (`getUrlSegment`: `classes`). Not the kinds a race or a class is for (`entityKinds`).
+ * pools its list narrows by (`pools`), the entities its page links one to (`links`: a class's skills), whether its list
+ * narrows by a tier (`levels`: a spell's, by its level, `RulesDescription.tiers`), whether its list groups an entity's
+ * variants under their family (`families`: a feat's), how its row copies one (`copies`: an item's), and when its name
+ * can't change (`lockedName`: while its `flag` column holds, a generated feat's, its form saying why, `reason`). Its
+ * word is its rules' (`RulesDescription.words`), and its URL's segment the app's (`getUrlSegment`: `classes`). Not the
+ * kinds a race or a class is for (`entityKinds`).
  */
 export interface EntityKindDescription {
   copies?: EntityCopiesDescription;
@@ -38,6 +39,7 @@ export interface EntityKindDescription {
   help?: string;
   icon: string;
   levels?: boolean;
+  links?: EntityLinksDescription;
   lockedName?: { flag: string; reason: string };
   longDescription?: boolean;
   opens: "customization" | "page" | "progression";
@@ -46,6 +48,19 @@ export interface EntityKindDescription {
   readOnly?: boolean;
   type: string;
   wideForm?: "fixed" | "fluid";
+}
+
+/**
+ * The entities an entity's page links it to through the join it edits (`/links`: a class's skills), on a tab of their
+ * own: their kind (`type`: 3.5's `skills`), the key a link holds one by (`key`: `skillId`) and where it holds it whole
+ * (`target`: `skillsInRule`), and the key it holds the entity it links by (`owner`: `klassId`, a copy's where an edit of
+ * an inherited one copied it).
+ */
+export interface EntityLinksDescription {
+  key: string;
+  owner: string;
+  target: string;
+  type: string;
 }
 
 /**

@@ -5,6 +5,7 @@ import { useRules } from "@/client/src/hooks/index.ts";
 import { wholeNumberRules } from "@/client/src/lib/validation.ts";
 import { EntityFormFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import type { ClassLevelFormData } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
+import type { LinkWords } from "@/client/src/pages/rulesets/details/classes/classTab.ts";
 import { useAllLevelSaves } from "@/client/src/pages/rulesets/hooks/index.ts";
 import type { BaseRules } from "@/shared/enums.ts";
 
@@ -19,13 +20,15 @@ interface CreateLevelDialogProps {
   rulesetId: string;
 }
 
-interface RemoveSkillDialogProps {
+interface RemoveLinkDialogProps {
   onClose: () => void;
   onConfirm: () => void;
   open: boolean;
   pending: boolean;
   /** The removal can be undone from Local Changes: the class is inherited, or a copy of one (`useRestorableDelete`). */
   restorable: boolean;
+  /** Its rules' words: the linked entity's (`one`, "Skill") and the class's (`owner`, "class"). */
+  words: LinkWords;
 }
 
 export function CreateLevelDialog({
@@ -69,17 +72,19 @@ export function CreateLevelDialog({
   );
 }
 
-export function RemoveSkillDialog({ restorable, ...props }: RemoveSkillDialogProps) {
+/** The confirmation of a link's removal from a class (a class skill's), in its rules' words. */
+export function RemoveLinkDialog({ restorable, words, ...props }: RemoveLinkDialogProps) {
+  const one = words.one.toLowerCase();
   return (
     <DeleteDialog
       {...props}
-      title="Remove Skill"
+      title={`Remove ${words.one}`}
       message={
         restorable
-          ? "Are you sure you want to remove this skill from the class? You can restore it from Local Changes."
-          : "Are you sure you want to remove this skill from the class? This action cannot be undone."
+          ? `Are you sure you want to remove this ${one} from the ${words.owner}? You can restore it from Local Changes.`
+          : `Are you sure you want to remove this ${one} from the ${words.owner}? This action cannot be undone.`
       }
-      confirmLabel="Remove Skill"
+      confirmLabel={`Remove ${words.one}`}
     />
   );
 }

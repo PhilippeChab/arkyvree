@@ -63,6 +63,9 @@ export type Direction = NonNullable<RulesetListParams["orderDir"]>;
  */
 export type EntityKindDescription = RulesDescription["kinds"][number];
 
+/** The entities a kind's page links one to, on a tab of their own (3.5's class skills). */
+export type EntityLinksDescription = NonNullable<EntityKindDescription["links"]>;
+
 /** What a base rules' rulesets share: their words, the kinds a race or a class is for, their levels, their license. */
 export type RulesDescription = RulesDescriptions[BaseRules];
 
