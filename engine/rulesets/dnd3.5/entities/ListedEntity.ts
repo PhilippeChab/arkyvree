@@ -1,8 +1,7 @@
+import { CustomizationPageEntity } from "@/engine/core/entities/index.ts";
 import type { Fields } from "@/engine/core/fields/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { ViewEntities } from "@/engine/core/view/index.ts";
-
-import CustomizationPageEntity from "./CustomizationPageEntity.ts";
 
 /** A listed entity's links to the lists, as its row carries them. */
 type Links<K extends "feats" | "powers"> = K extends "feats"

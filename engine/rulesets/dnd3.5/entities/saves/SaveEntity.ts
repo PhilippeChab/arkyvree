@@ -1,7 +1,7 @@
+import { RulesetEntity } from "@/engine/core/entities/index.ts";
 import { FieldCodec } from "@/engine/core/fields/index.ts";
 
 import { SAVE_COLUMNS } from "./columns.ts";
-import RulesetEntity from "./RulesetEntity.ts";
 
 /** A save's form: its name, description and the ability its bonus comes from. */
 interface SaveBody {

@@ -2,11 +2,11 @@
 
 import { z } from "zod";
 
-import { ListedEntity } from "@/engine/core/entities/index.ts";
 import type { EntityFieldValues } from "@/engine/core/fields/index.ts";
 import type { EntityWrites } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import SpellFocusFeats from "@/engine/rulesets/dnd3.5/entities/feats/SpellFocusFeats.ts";
+import ListedEntity from "@/engine/rulesets/dnd3.5/entities/ListedEntity.ts";
 import { RULESET_LIMITS } from "@/engine/rulesets/dnd3.5/limits.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type { PowerWithAptitudes } from "@/engine/rulesets/dnd3.5/view/rows.ts";
