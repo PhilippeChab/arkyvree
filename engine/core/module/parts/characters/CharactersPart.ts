@@ -1,34 +1,34 @@
 import { z } from "zod";
 
-import type { CharacterInput } from "@/engine/core/module/CharacterInputs.ts";
+import type { CharacterInput, CharacterRowOf } from "@/engine/core/module/CharacterInputs.ts";
 import type { Descriptions } from "@/engine/core/module/contract.ts";
 import type { OpenedPicker } from "@/engine/core/module/pickers.ts";
+import type { StorageDeclaration } from "@/engine/core/module/storage.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import { RequestIds, type RulesetView, type ViewEntities } from "@/engine/core/view/index.ts";
-import type { Property } from "@/shared/relations.ts";
+import type { Character as CharacterRecord, Property } from "@/shared/relations.ts";
 
 import type {
   CharacterCard,
-  CharacterCreation,
   DescribedInventoryEntry,
   HeldInventoryEntry,
-  LanguagesDescription,
   NotedSheet,
   PlacementDescription,
+  ScoreBounds,
 } from "./descriptions.ts";
 import type {
-  AbilitiesPlan,
   CharacterColumns,
   CharacterEditPlan,
   FieldsPlan,
   InventoryEntryPlan,
-  LanguagesPlan,
+  LinkPicksPlan,
   NewCharacterPlan,
+  ScoresPlan,
   StartPlan,
 } from "./plans.ts";
 import type {
-  AbilitiesRequest,
   CharacterEditRequest,
+  CreationPickQuery,
   FieldsRequest,
   InventoryEntryChange,
   MemberReading,
@@ -36,27 +36,32 @@ import type {
   PlacementChange,
   PlacementQuery,
   PrivateNotes,
-  RacePickQuery,
+  ScoresRequest,
   SheetRequest,
   StartRequest,
 } from "./requests.ts";
 
 /**
  * What a ruleset answers of its characters, from the rows the server reads: their sheets (as the API answers them, as a
- * member reads them, printed), their cards, languages and inventories, how a new one's ability scores are set, what it
- * stores and the races it can pick, a languages edit, and an inventory entry's add or edit. Its descriptions are the
- * ruleset's own (`D`). What reads the schema's rows alone is every ruleset's: what a character takes from its ruleset,
- * its inventory. So are the checks that guard a character's privacy and integrity, which no ruleset can skip: a reader
- * reads the private notes the reading gives them, a partly seen character's card and summary name none of its build, an
- * entity a request names is one its ruleset's view shows (a race, an ability, a language, an item: `RequestIds`, which
- * reads a source's id as its copy's), an entry's charges agree, a score is within the ruleset's bounds and a new
- * character's race is a player's. Their operations are this part's, over hooks for what a ruleset describes or checks
- * its own way (`describeFull`, `describePartial`, `describeFullCard`, `planPlacement`, `describeCreation`, and the
- * languages a character speaks and may pick: `describeLanguageRoom`, `fitLanguages`).
+ * member reads them, printed), their cards and inventories, how a new one's scores are set, what it stores and the
+ * options its creation's picks offer, its links' edits (a scored link's amounts, a picked link's picks and the room its
+ * rules leave them), and an inventory entry's add or edit. Its descriptions are the ruleset's own (`D`). What reads the
+ * schema's rows alone is every ruleset's: what a character takes from its ruleset, its links by the names its module
+ * stores them under (`StoredCharacter.links`: a link with an amount is scored, one without picked), its inventory. So
+ * are the checks that guard a character's privacy and integrity, which no ruleset can skip: a reader reads the private
+ * notes the reading gives them, a partly seen character's card and summary name none of its build, an entity a request
+ * names is one its ruleset's view shows (a pick's, a link's, an item: `RequestIds`, which reads a source's id as its
+ * copy's), an entry's charges agree, and a score is within its link's bounds. Their operations are this part's, over
+ * hooks for what a ruleset describes or checks its own way (`describeFull`, `describePartial`, `describeFullCard`,
+ * `planPlacement`, `describeCreation`, `describeScores`, a creation pick's own check, `checkCreationPick`, and a picked
+ * link's room and fit: `describeLinkRoom`, `fitLinks`).
  */
 export default abstract class CharactersPart<D extends Descriptions> {
-  /** A form's ability scores, by ability id: each a whole number within the ruleset's bounds (`scores`). */
-  private static boundedScores({ max, min }: CharacterCreation["scores"]) {
+  /** The module's storage, whose character's links and columns name the kinds this part's requests name. */
+  constructor(private readonly storage: StorageDeclaration) {}
+
+  /** An amount of a scored link's, by entity id: each a whole number within its bounds. */
+  private static boundedScores({ max, min }: ScoreBounds) {
     return z.record(z.string(), z.number().int().min(min).max(max));
   }
 
@@ -99,11 +104,17 @@ export default abstract class CharactersPart<D extends Descriptions> {
   }
 
   /**
-   * A character's sheet as the API answers it (`NotedSheet`), its private notes as its rows have them (none when its
-   * reader doesn't read them): a player character's, its bonded creatures (`bonded`) as its blocks show them; or a
-   * bonded creature's, from its master's.
+   * Refuses a creation pick (`entity`, the one a new character's single link `column` names) a ruleset's rules don't
+   * let a new character make (3.5's race of a kind that isn't a player character's).
    */
-  protected abstract describeFull(view: RulesetView, character: CharacterInput, bonded: CharacterInput[]): D["sheet"];
+  protected abstract checkCreationPick(column: string, entity: unknown): void;
+
+  /**
+   * A character's sheet as the API answers it (`NotedSheet`), its private notes as its rows have them (none when its
+   * reader doesn't read them): a character's, its children (`children`) as its blocks show them; or a child's, from
+   * its parent's (`master`).
+   */
+  protected abstract describeFull(view: RulesetView, character: CharacterInput, children: CharacterInput[]): D["sheet"];
 
   /**
    * The card of a character (`character`, with its levels, `levels`), as a list of characters shows it to a reader who
@@ -111,8 +122,8 @@ export default abstract class CharactersPart<D extends Descriptions> {
    */
   protected abstract describeFullCard(
     view: RulesetView,
-    character: { raceId: string },
-    levels: { klassLevelId: string }[],
+    character: CharacterRecord,
+    levels: CharacterRowOf<"levels">[],
   ): CharacterCard;
 
   /**
@@ -126,27 +137,36 @@ export default abstract class CharactersPart<D extends Descriptions> {
   ): D["inventoryEntry"];
 
   /**
-   * What a character (`character`) speaks, and what its picked languages (`languageIds`, each the view's) leave it room
-   * for, as the ruleset's rules give it languages: what its languages picker offers.
+   * What a character (`character`) has of a picked link (`link`), and what its picks (`entityIds`, each the view's)
+   * leave it room for, as the ruleset's rules give it them: what its link's picker offers.
    */
-  protected abstract describeLanguageRoom(
+  protected abstract describeLinkRoom(
     view: RulesetView,
     character: CharacterInput,
-    languageIds: string[],
-  ): LanguagesDescription;
+    link: string,
+    entityIds: string[],
+  ): D["linkRoom"];
 
   /**
    * What a campaign member who reads a character partly reads of it (`character`, its rows without its private notes):
-   * who it is and what it looks like, without its bonded creatures.
+   * who it is and what it looks like, without its children.
    */
   protected abstract describePartial(view: RulesetView, character: CharacterInput): D["partialSheet"];
 
+  /** A scored link's (`link`) bounds: what an edit and a new character's form check its amounts by, and start at. */
+  protected abstract describeScores(view: RulesetView, link: string): ScoreBounds;
+
   /**
-   * The languages of an edit (`languageIds`, each the view's) a character (`character`) stores: those it picked, past
-   * those its rules give it without a pick. Refused, naming it, when one it doesn't keep (its rows' own) is past what
-   * the ruleset's rules let it speak; one it keeps never is.
+   * The picks of a picked link's edit (`link`, `entityIds`, each the view's) a character (`character`) stores: those it
+   * picked, past those its rules give it without a pick. Refused, naming it, when one it doesn't keep (its rows' own) is
+   * past what the ruleset's rules let it have; one it keeps never is.
    */
-  protected abstract fitLanguages(view: RulesetView, character: CharacterInput, languageIds: string[]): string[];
+  protected abstract fitLinks(
+    view: RulesetView,
+    character: CharacterInput,
+    link: string,
+    entityIds: string[],
+  ): string[];
 
   /**
    * What an edit of a character's (`character`) fields (`request`, by the keys its sheet's `fields` block gives them)
@@ -174,11 +194,10 @@ export default abstract class CharactersPart<D extends Descriptions> {
   ): HeldInventoryEntry;
 
   /**
-   * How a new character's ability scores are set: the ruleset's abilities, in its sheet's order, the ways its form
-   * offers, run by their kind, the scores' bounds and the one an unset ability shows, and each score's modifier over
-   * those bounds. What its creation and an ability edit check their scores by, and start an unset one at.
+   * How a new character's scores are set, as its form offers it (3.5's abilities, the ways its form rolls or buys
+   * them, their bounds and modifiers).
    */
-  abstract describeCreation(view: RulesetView): CharacterCreation;
+  abstract describeCreation(view: RulesetView): D["creation"];
 
   /**
    * Why a placement (`query`: its location, in its weapon set for a hand) can't take one more item of the character's,
@@ -190,27 +209,52 @@ export default abstract class CharactersPart<D extends Descriptions> {
   /** A character's printed sheet: the document the server renders. */
   abstract describeSheet(view: RulesetView, character: CharacterInput, request: SheetRequest): D["sheetDocument"];
 
-  /** The race picker of a new character of what its form says (`query`): the races it offers, each checked. */
-  abstract openRacePicker(
+  /**
+   * The picker of a new character's creation pick (the single link `column` names, 3.5's race) of what its form says
+   * (`query`): the entities it offers, each checked.
+   */
+  abstract openCreationPicker(
     view: RulesetView,
-    query: RacePickQuery,
-  ): OpenedPicker<{ columns: { kind: string } }, { id: string }, D["raceOption"]>;
+    column: string,
+    query: CreationPickQuery,
+  ): OpenedPicker<{ columns: Record<string, string> }, { id: string }, D["creationOption"]>;
+
+  /** The kind of the entities a role of the module's character's links names. */
+  private kindOfRole(role: string) {
+    const declared = this.storage.registries.characterRoles.find((def) => def.role === role);
+    if (!declared) throw new Error(`No character role ${role}`);
+    return declared.entityType as keyof ViewEntities;
+  }
+
+  /** A link the module stores of its characters (`name`), scored (with an amount) or picked, and its entities' kind. */
+  private linkOf(name: string, scored: boolean) {
+    const link = this.storage.character.links[name];
+    if (!link || Boolean(link.amount) !== scored) throw new Error(`No ${scored ? "scored" : "picked"} link ${name}`);
+    return { kind: this.kindOfRole(link.role), name };
+  }
+
+  /** The scored links the module stores of its characters, each with its entities' kind. */
+  private scoredLinks() {
+    return Object.entries(this.storage.character.links)
+      .filter(([, link]) => link.amount)
+      .map(([name, link]) => ({ kind: this.kindOfRole(link.role), name }));
+  }
 
   /**
-   * A character's sheet as the API answers it (`describeFull`): a player character's, its bonded creatures (`bonded`)
-   * among its blocks, or a bonded creature's, from its master's; its private notes shown or left out (`notes`). A
+   * A character's sheet as the API answers it (`describeFull`): a character's, its children (`children`) among its
+   * blocks, or a child's, from its parent's; its private notes shown or left out (`notes`). A
    * viewer who doesn't read them reads none: the ruleset describes rows without them, and the sheet's `fields` blocks
    * hold none (`NotedSheet`).
    */
   describe(
     view: RulesetView,
     character: CharacterInput,
-    bonded: CharacterInput[],
+    children: CharacterInput[],
     notes: PrivateNotes = "show",
   ): D["sheet"] {
-    if (notes === "show") return this.describeFull(view, character, bonded);
-    const creatures = bonded.map((input) => CharactersPart.withoutNotes(input));
-    const sheet = this.describeFull(view, CharactersPart.withoutNotes(character), creatures);
+    if (notes === "show") return this.describeFull(view, character, children);
+    const withoutNotes = children.map((input) => CharactersPart.withoutNotes(input));
+    const sheet = this.describeFull(view, CharactersPart.withoutNotes(character), withoutNotes);
     return CharactersPart.redactNotes(sheet);
   }
 
@@ -220,8 +264,8 @@ export default abstract class CharactersPart<D extends Descriptions> {
    */
   describeCard(
     view: RulesetView,
-    character: { raceId: string },
-    levels: { klassLevelId: string }[],
+    character: CharacterRecord,
+    levels: CharacterRowOf<"levels">[],
     partial: boolean,
   ): CharacterCard {
     const card = this.describeFullCard(view, character, levels);
@@ -231,20 +275,20 @@ export default abstract class CharactersPart<D extends Descriptions> {
 
   /**
    * A character as a campaign member reads it (`reading`): partly, from its rows without its private notes nor its
-   * bonded creatures (`describePartial`), its summary with no tracks, or its sheet, its private notes shown or left
+   * children (`describePartial`), its summary with no tracks, or its sheet, its private notes shown or left
    * out.
    */
   describeForMember(
     view: RulesetView,
     character: CharacterInput,
-    bonded: CharacterInput[],
+    children: CharacterInput[],
     reading: MemberReading,
   ): D["partialSheet"] | D["sheet"] {
     if (reading === "partial") {
       const sheet = this.describePartial(view, CharactersPart.withoutNotes(character));
       return { ...sheet, summary: { ...sheet.summary, tracks: [] } };
     }
-    return this.describe(view, character, bonded, reading);
+    return this.describe(view, character, children, reading);
   }
 
   /**
@@ -274,24 +318,13 @@ export default abstract class CharactersPart<D extends Descriptions> {
   }
 
   /**
-   * What a character speaks, and what its picked languages (`languageIds`, as an edit is being made) leave it room for
-   * (`describeLanguageRoom`), each language by the id the view keys it by. Refused, naming it, when one isn't a
-   * language of the character's ruleset, or is sent twice.
+   * What a character has of a picked link (`link`), and what its picks (`entityIds`, as an edit is being made) leave it
+   * room for (`describeLinkRoom`), each by the id the view keys it by. Refused, naming it, when one isn't an entity of
+   * the link's kind in the character's ruleset, or is sent twice.
    */
-  describeLanguages(view: RulesetView, character: CharacterInput, languageIds: string[]): LanguagesDescription {
-    const picks = CharactersPart.idsOf(view).resolveAll("languages", languageIds);
-    return this.describeLanguageRoom(view, character, picks);
-  }
-
-  /**
-   * The ability scores a character's edit stores (`abilities`, by ability id), each under the id the view keys its
-   * ability by. Refused when a score is past the ruleset's bounds (`describeCreation`), or names no ability of its
-   * ruleset, or two name one.
-   */
-  planAbilities(view: RulesetView, abilities: AbilitiesRequest): AbilitiesPlan {
-    RulesError.parse(CharactersPart.boundedScores(this.describeCreation(view).scores), abilities);
-    const scores = CharactersPart.idsOf(view).resolveKeys("abilities", abilities);
-    return { abilities: [...scores].map(([abilityId, score]) => ({ abilityId, score })) };
+  describeLinkPicks(view: RulesetView, character: CharacterInput, link: string, entityIds: string[]): D["linkRoom"] {
+    const picks = CharactersPart.idsOf(view).resolveAll(this.linkOf(link, false).kind, entityIds);
+    return this.describeLinkRoom(view, character, link, picks);
   }
 
   /**
@@ -300,17 +333,23 @@ export default abstract class CharactersPart<D extends Descriptions> {
    */
   planCreate(view: RulesetView, request: NewCharacterRequest): NewCharacterPlan {
     const { fields, ...start } = request;
-    return { ...this.planStart(view, start), columns: this.planNewFields(fields).columns };
+    const plan = this.planStart(view, start);
+    return { ...plan, columns: { ...plan.columns, ...this.planNewFields(fields).columns } };
   }
 
   /**
-   * What an edit of a character (`edit`) writes: its fields' columns (`planFields`), each checked, and its languages,
-   * when it sends them (`planLanguages`).
+   * What an edit of a character (`edit`) writes: its fields' columns (`planFields`), each checked, and each picked
+   * link's picks it sends (`planLinkPicks`).
    */
   planEdit(view: RulesetView, character: CharacterInput, edit: CharacterEditRequest): CharacterEditPlan {
+    const links = edit.links && Object.entries(edit.links);
     return {
       columns: edit.fields ? this.planFields(view, character, edit.fields).columns : {},
-      ...(edit.languageIds && { languages: this.planLanguages(view, character, edit.languageIds) }),
+      ...(links && {
+        links: Object.fromEntries(
+          links.map(([link, entityIds]) => [link, this.planLinkPicks(view, character, link, entityIds)]),
+        ),
+      }),
     };
   }
 
@@ -339,36 +378,52 @@ export default abstract class CharactersPart<D extends Descriptions> {
   }
 
   /**
-   * The languages a character's edit (`languageIds`) stores, each by the id the view keys it by: those it picked, past
-   * those its rules give it (`fitLanguages`). Refused, naming it, when one isn't a language of the character's ruleset
-   * (unknown, of an unrelated ruleset, or deleted), is sent twice (by one id, or by its source's and its copy's), or is
-   * a new pick past what the rules let the character speak.
+   * The picks a character's picked link's edit (`link`, `entityIds`) stores, each by the id the view keys it by: those
+   * it picked, past those its rules give it (`fitLinks`). Refused, naming it, when one isn't an entity of the link's
+   * kind in the character's ruleset (unknown, of an unrelated ruleset, or deleted), is sent twice (by one id, or by its
+   * source's and its copy's), or is a new pick past what the rules let the character have.
    */
-  planLanguages(view: RulesetView, character: CharacterInput, languageIds: string[]): LanguagesPlan {
-    const picks = CharactersPart.idsOf(view).resolveAll("languages", languageIds);
-    return { languageIds: this.fitLanguages(view, character, picks) };
+  planLinkPicks(view: RulesetView, character: CharacterInput, link: string, entityIds: string[]): LinkPicksPlan {
+    const picks = CharactersPart.idsOf(view).resolveAll(this.linkOf(link, false).kind, entityIds);
+    return { entityIds: this.fitLinks(view, character, link, picks) };
   }
 
   /**
-   * What a new character starts with, as its form or its import gives it: its race, and a score for each of the
-   * ruleset's abilities, the one given (`abilities`, by ability id) or the one an unset ability starts at
-   * (`describeCreation`), each by the id the view keys it by. Refused when a score is past the ruleset's bounds, its
-   * race or an ability isn't one of the ruleset's, two scores name one ability, or its race isn't a player character's
-   * (of kind `pc`).
+   * The amounts a character's scored link's edit (`link`, `scores`, by entity id) stores, each under the id the view
+   * keys its entity by. Refused when an amount is past the link's bounds (`describeScores`), or names no entity of its
+   * kind in the ruleset, or two name one.
+   */
+  planScores(view: RulesetView, link: string, scores: ScoresRequest): ScoresPlan {
+    const { kind } = this.linkOf(link, true);
+    RulesError.parse(CharactersPart.boundedScores(this.describeScores(view, link)), scores);
+    const amounts = CharactersPart.idsOf(view).resolveKeys(kind, scores);
+    return { links: [...amounts].map(([entityId, amount]) => ({ entityId, amount })) };
+  }
+
+  /**
+   * What a new character starts with, as its form or its import gives it: the entity of each of its single links
+   * (`picks`, by column: 3.5's race), and an amount for each entity of each scored link's kind, the one given (`scores`,
+   * by link, then entity id) or the one an unset entity starts at (`describeScores`), each by the id the view keys it
+   * by. Refused when an amount is past its link's bounds, a pick or a scored entity isn't one of the ruleset's, two
+   * amounts name one entity, or a pick is one its ruleset's rules refuse (`checkCreationPick`).
    */
   planStart(view: RulesetView, request: StartRequest): StartPlan {
-    const { scores } = this.describeCreation(view);
-    RulesError.parse(CharactersPart.boundedScores(scores), request.abilities, ["abilities"]);
+    const links = this.scoredLinks().map((link) => ({ ...link, bounds: this.describeScores(view, link.name) }));
+    for (const { bounds, name } of links)
+      RulesError.parse(CharactersPart.boundedScores(bounds), request.scores[name] ?? {}, [name]);
     const ids = CharactersPart.idsOf(view);
-    const race = ids.find("races", request.raceId);
-    if (race.kind !== "pc") throw new RulesError("invalid", "Race is not valid for a player character");
-    const given = ids.resolveKeys("abilities", request.abilities);
-    return {
-      abilities: view.rulesetData.rows("abilities").map((ability) => ({
-        abilityId: ability.id,
-        score: given.get(ability.id) ?? scores.start,
-      })),
-      raceId: race.id,
-    };
+    const columns: Record<string, string> = {};
+    for (const [column, declared] of Object.entries(this.storage.character.columns)) {
+      if (declared.kind !== "link") continue;
+      const entity = ids.find(this.kindOfRole(declared.role), request.picks[column]);
+      this.checkCreationPick(column, entity);
+      columns[column] = (entity as { id: string }).id;
+    }
+    const scored = links.map(({ bounds, kind, name }) => {
+      const given = ids.resolveKeys(kind, request.scores[name] ?? {});
+      const rows = view.rulesetData.rows(kind) as { id: string }[];
+      return [name, rows.map(({ id }) => ({ entityId: id, amount: given.get(id) ?? bounds.start }))];
+    });
+    return { columns: columns as Partial<CharacterColumns>, links: Object.fromEntries(scored) };
   }
 }

@@ -140,7 +140,7 @@ describe.each([...BASE_RULES_OPTIONS])("The %s module, as core runs its characte
   test("refuses a language of another ruleset, or one sent twice, and never one a character keeps", async () => {
     const record = await findSeededCharacter(rules);
     const input = await readCharacterInput(db, record);
-    const kept = input.rows.languages.map(({ languageId }) => languageId);
+    const kept = input.rows.links.languages.map(({ languageId }) => languageId);
     const otherRuleset = await createTestRuleset(null, { baseRules: rules });
     const [{ id: foreign }] = await Entities.create<Language>(db, "languages", {
       rulesetId: otherRuleset.id,
@@ -154,37 +154,37 @@ describe.each([...BASE_RULES_OPTIONS])("The %s module, as core runs its characte
         message: `Language ${foreign} does not belong to the character's ruleset`,
         refusal: "invalid",
       });
-      expect(() => character.planLanguages([...kept, foreign])).toThrow(refusal);
-      expect(() => character.describeLanguages([foreign])).toThrow(refusal);
+      expect(() => character.planLinkPicks("languages", [...kept, foreign])).toThrow(refusal);
+      expect(() => character.describeLinkPicks("languages", [foreign])).toThrow(refusal);
       if (kept.length > 0) {
-        expect(() => character.planLanguages([kept[0], kept[0]])).toThrow(
+        expect(() => character.planLinkPicks("languages", [kept[0], kept[0]])).toThrow(
           expect.objectContaining({ refusal: "invalid" }),
         );
       }
       // What it speaks without a pick isn't stored: what it stores is among what it sent
-      const { languageIds } = character.planLanguages(kept);
-      expect(languageIds.every((id) => kept.includes(id))).toBe(true);
+      const { entityIds } = character.planLinkPicks("languages", kept);
+      expect(entityIds.every((id) => kept.includes(id))).toBe(true);
     });
   });
 
   test("refuses an ability score past the ruleset's bounds, a new character's or an edit's", async () => {
     const record = await findSeededCharacter(rules);
-    const [{ abilityId }] = (await readCharacterInput(db, record)).rows.abilities;
+    const [{ abilityId }] = (await readCharacterInput(db, record)).rows.links.abilities;
     const refusal = expect.objectContaining({ message: "Request validation failed", refusal: "invalid" });
 
     await withRulesetScope(db, record.rulesetId, async (scope) => {
       const characters = Engine.for(scope).characters();
       const { max, min } = characters.describeCreation().scores;
       for (const score of [min - 1, max + 1]) {
-        expect(() => characters.planAbilities({ [abilityId]: score })).toThrow(refusal);
-        expect(() => characters.planStart({ abilities: { [abilityId]: score }, raceId: record.raceId })).toThrow(
-          refusal,
-        );
+        expect(() => characters.planScores("abilities", { [abilityId]: score })).toThrow(refusal);
+        const start = { picks: { raceId: record.raceId }, scores: { abilities: { [abilityId]: score } } };
+        expect(() => characters.planStart(start)).toThrow(refusal);
       }
-      expect(characters.planAbilities({ [abilityId]: max }).abilities).toEqual([{ abilityId, score: max }]);
-      expect(characters.planStart({ abilities: { [abilityId]: min }, raceId: record.raceId }).abilities).toContainEqual(
-        { abilityId, score: min },
-      );
+      expect(characters.planScores("abilities", { [abilityId]: max }).links).toEqual([
+        { entityId: abilityId, amount: max },
+      ]);
+      const start = { picks: { raceId: record.raceId }, scores: { abilities: { [abilityId]: min } } };
+      expect(characters.planStart(start).links.abilities).toContainEqual({ entityId: abilityId, amount: min });
     });
   });
 
@@ -215,7 +215,7 @@ describe.each([...BASE_RULES_OPTIONS])("The %s module, as core runs its characte
 
     await withRulesetScope(db, record.rulesetId, async (scope) => {
       const characters = Engine.for(scope).characters();
-      const start = { abilities: {}, raceId: record.raceId };
+      const start = { picks: { raceId: record.raceId }, scores: {} };
       const written = Object.values(characters.planCreate({ ...start, fields }).columns);
       for (const value of Object.values(fields)) expect(written).toContain(value);
       // A field its form doesn't require can be left out

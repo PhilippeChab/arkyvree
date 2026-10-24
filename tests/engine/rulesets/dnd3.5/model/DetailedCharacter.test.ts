@@ -2211,11 +2211,11 @@ describe("DetailedCharacter", () => {
       // Power Attack and Cleave need STR 13.
       const bjorn = await findSeededCharacter("Bjorn Ironhand");
       const { abilityMap } = await getSeedCtx();
-      await CharacterLinks.update(
-        db,
-        { score: 10 },
-        { link: "abilities", characterId: bjorn.id, entityIds: [abilityMap["Strength"]] },
-      );
+      await CharacterLinks.setAmount(db, 10, {
+        link: "abilities",
+        characterId: bjorn.id,
+        entityIds: [abilityMap["Strength"]],
+      });
       expect((await build(bjorn)).requirementEvaluator.getRequirements().unmetRequirementGroups.length).toBeGreaterThan(
         0,
       );

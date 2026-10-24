@@ -1,18 +1,13 @@
 import type { Db } from "@/drizzle/database.ts";
-import type { BondedPlan, NewBondedCreature } from "@/engine/index.ts";
+import type { ChildPlan, NewChild } from "@/engine/index.ts";
 import { CharacterLevels, CharacterLinks, Characters } from "@/server/repositories/index.ts";
 import type { Character } from "@/shared/relations.ts";
 
 /** A new creature, its row as the engine plans it, with its links (3.5's ability scores). */
-async function createCreature(tx: Db, creature: NewBondedCreature) {
+async function createCreature(tx: Db, creature: NewChild) {
   const [bonded] = await Characters.create(tx, creature.row);
-  for (const [link, rows] of Object.entries(creature.links)) {
-    await CharacterLinks.createMany(
-      tx,
-      link,
-      rows.map((row) => ({ ...row, characterId: bonded.id })),
-    );
-  }
+  for (const [link, links] of Object.entries(creature.links))
+    await CharacterLinks.createPlanned(tx, link, bonded.id, links);
   return bonded.id;
 }
 
@@ -24,7 +19,7 @@ async function createCreature(tx: Db, creature: NewBondedCreature) {
  * database's index of it (`characters_one_bonded_per_kind_per_master_idx`). An archived master's creatures are left as
  * they are: an archive that ran before the lock archived them with it.
  */
-export async function writeBondedCreatures(tx: Db, master: Character, plans: BondedPlan[]): Promise<void> {
+export async function writeBondedCreatures(tx: Db, master: Character, plans: ChildPlan[]): Promise<void> {
   if (!(await Characters.lock(tx, { id: master.id }))) return;
   for (const plan of plans) {
     if (plan.removedId) await Characters.delete(tx, { id: plan.removedId });

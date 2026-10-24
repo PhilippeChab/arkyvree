@@ -1,7 +1,8 @@
 import { z } from "zod";
 
-import type { CharacterColumns, CharacterCreation, CreationMethod, FieldsRequest } from "@/engine/core/module/index.ts";
+import type { CharacterColumns, FieldsRequest } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
+import type { CharacterCreation, CreationMethod } from "@/engine/rulesets/dnd3.5/descriptions.ts";
 import { RULESET_LIMITS } from "@/engine/rulesets/dnd3.5/limits.ts";
 import AbilityRules from "@/engine/rulesets/dnd3.5/rules/AbilityRules.ts";
 import { ALIGNMENT_OPTIONS, GENDER_OPTIONS } from "@/shared/enums.ts";

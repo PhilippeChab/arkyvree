@@ -4,11 +4,11 @@ import type { Db } from "@/drizzle/database.ts";
 import { charactersInCharacter } from "@/drizzle/schema.ts";
 import {
   type CharacterLanguage,
+  type CreationPickQuery,
   Engine,
   type FieldsRequest,
-  type LanguagesPlan,
+  type LinkPicksPlan,
   type Race,
-  type RacePickQuery,
 } from "@/engine/index.ts";
 import { include } from "@/lib/mixins.ts";
 import { type RulesetScope, withRulesetScope, withRulesetScopes } from "@/server/cow/index.ts";
@@ -36,7 +36,7 @@ import { enqueueCharacterPdf, findExportableCharacter } from "./pdf.ts";
 
 class CharactersService extends include(Object, Archives, Imports) {
   /**
-   * Replace a character's picked languages in-place, as the engine plans them from its rows (`planLanguages`: each the
+   * Replace a character's picked languages in-place, as the engine plans them from its rows (`planLinkPicks`: each the
    * view's language, a copy's when the ruleset copied one; those its race and classes give it left out; refused when
    * the view has none, it's sent twice, or a new pick is past what its rules let it speak): deletes the existing rows
    * and inserts the new set. Caller is responsible for the surrounding transaction and its ruleset's scope.
@@ -48,18 +48,17 @@ class CharactersService extends include(Object, Archives, Imports) {
     languageIds: string[],
   ): Promise<void> {
     const character = await readCharacterInput(tx, characterRecord);
-    const plan = Engine.for(scope).character(character).planLanguages(languageIds);
+    const plan = Engine.for(scope).character(character).planLinkPicks("languages", languageIds);
     await this.writeLanguages(tx, characterRecord.id, plan);
   }
 
   /** A character's languages as a plan has them: its picks replaced. */
-  private async writeLanguages(tx: Db, characterId: string, plan: LanguagesPlan): Promise<void> {
+  private async writeLanguages(tx: Db, characterId: string, plan: LinkPicksPlan): Promise<void> {
     const existing = await CharacterLinks.findMany<CharacterLanguage>(tx, { link: "languages", characterId });
     for (const lang of existing)
       await CharacterLinks.delete(tx, { link: "languages", characterId, entityId: lang.languageId });
 
-    for (const languageId of plan.languageIds)
-      await CharacterLinks.create(tx, "languages", { characterId, languageId });
+    for (const languageId of plan.entityIds) await CharacterLinks.create(tx, "languages", { characterId, languageId });
   }
 
   async createCharacter(
@@ -77,22 +76,19 @@ class CharactersService extends include(Object, Archives, Imports) {
       async (tx) =>
         await withRulesetScope(tx, characterData.rulesetId, async (scope) => {
           (await RulesetsPolicy.for(tx, session, scope.ruleset)).canCreateCharacter();
-          const plan = Engine.for(scope).characters().planCreate(characterData);
+          const { abilities, fields, raceId } = characterData;
+          const plan = Engine.for(scope).characters().planCreate({ fields, picks: { raceId }, scores: { abilities } });
 
           const [newCharacter] = await Characters.create(tx, {
             ...plan.columns,
             userId: session.userId,
             rulesetId: characterData.rulesetId,
-            raceId: plan.raceId,
             name: characterData.name,
             notes: characterData.notes,
           });
 
-          await CharacterLinks.createMany(
-            tx,
-            "abilities",
-            plan.abilities.map((ability) => ({ ...ability, characterId: newCharacter.id })),
-          );
+          for (const [link, links] of Object.entries(plan.links))
+            await CharacterLinks.createPlanned(tx, link, newCharacter.id, links);
 
           // Log the activity
           await Activities.create(tx, {
@@ -116,12 +112,12 @@ class CharactersService extends include(Object, Archives, Imports) {
 
   async getAvailableRaces(
     rulesetId: string,
-    formData: RacePickQuery,
+    formData: CreationPickQuery,
     where: { search?: string },
     pagination: { limit: number; page: number },
   ) {
     return await withRulesetScope(db, rulesetId, async (scope) => {
-      const picker = Engine.for(scope).characters().openRacePicker(formData);
+      const picker = Engine.for(scope).characters().openCreationPicker("raceId", formData);
       const result = await Entities.findPage<Race>(
         db,
         {
@@ -223,7 +219,7 @@ class CharactersService extends include(Object, Archives, Imports) {
     return await withRulesetScope(db, record.rulesetId, async (scope) =>
       Engine.for(scope)
         .character(await readCharacterInput(db, record))
-        .describeLanguages(languageIds),
+        .describeLinkPicks("languages", languageIds),
     );
   }
 
@@ -248,15 +244,15 @@ class CharactersService extends include(Object, Archives, Imports) {
       const characterRecord = await getEditableCharacter(tx, session, characterId);
 
       return await withRulesetScope(tx, characterRecord.rulesetId, async (scope) => {
-        const plan = Engine.for(scope).characters().planAbilities(abilities);
+        const plan = Engine.for(scope).characters().planScores("abilities", abilities);
         // A score stored before its ability was copied names the source: the copy's id the client sends matches it
-        for (const { abilityId, score } of plan.abilities) {
-          const abilityIds = scope.rulesetData.cow.getEquivalentIds(abilityId);
-          const rows = await CharacterLinks.update(
-            tx,
-            { score },
-            { link: "abilities", characterId, entityIds: abilityIds },
-          );
+        for (const { amount, entityId } of plan.links) {
+          const abilityIds = scope.rulesetData.cow.getEquivalentIds(entityId);
+          const rows = await CharacterLinks.setAmount(tx, amount!, {
+            link: "abilities",
+            characterId,
+            entityIds: abilityIds,
+          });
           if (rows.length === 0) throw new NotFoundError("Ability not found");
         }
 
@@ -295,7 +291,7 @@ class CharactersService extends include(Object, Archives, Imports) {
           ? await withRulesetScope(tx, characterRecord.rulesetId, async (scope) =>
               Engine.for(scope)
                 .character(await readCharacterInput(tx, characterRecord))
-                .planEdit({ fields, languageIds }),
+                .planEdit({ fields, ...(languageIds && { links: { languages: languageIds } }) }),
             )
           : undefined;
 
@@ -309,7 +305,7 @@ class CharactersService extends include(Object, Archives, Imports) {
       const [updatedCharacter] = updatedRows;
 
       // Its languages, atomically with it, when it sends them: none sent leaves them alone, `[]` clears them
-      if (planned?.languages) await this.writeLanguages(tx, characterId, planned.languages);
+      if (planned?.links?.languages) await this.writeLanguages(tx, characterId, planned.links.languages);
 
       await Activities.create(tx, {
         userId: session.userId,

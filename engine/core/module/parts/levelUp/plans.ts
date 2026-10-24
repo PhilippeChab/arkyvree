@@ -1,39 +1,41 @@
 /**
  * What the level-up part's `plan*` operations answer: what the server writes of a level-up, a saved level's edit, a
- * level's removal and the bonded creatures, each a named plan, without ids it doesn't have yet. A level's row and the
+ * level's removal and the character's children (the characters its levels give it: 3.5's bonded creatures), each a
+ * named plan, without ids it doesn't have yet. A level's row and the
  * rows under it are its module's, as its storage declaration writes them: its advancement's columns, and its picks by
  * the name the module declares each under.
  */
 
 import type { CharacterRows } from "@/engine/core/module/CharacterInputs.ts";
+import type { CharacterColumns, LinkPlan } from "@/engine/core/module/parts/characters/index.ts";
 import type { Character } from "@/shared/relations.ts";
 
-/** What a master's bonded creatures become: one plan per kind of creature its levels give it. */
-export interface BondedCreaturesPlan {
-  bonded: BondedPlan[];
-}
-
-/** The levels a bonded creature takes (their rows' columns), and the ids of those it loses. */
-export interface BondedLevelsPlan {
+/** The levels a child takes (their rows' columns), and the ids of those it loses. */
+export interface ChildLevelsPlan {
   added: LevelColumns[];
   removedIds: string[];
 }
 
+/** What a character's children become: one plan per kind of child its levels give it. */
+export interface ChildrenPlan {
+  children: ChildPlan[];
+}
+
 /**
  * What a saved level's edit writes, checked: the level as saved (`level`), its row's new columns (its value: a level
- * keeps its track) and its rows under it in place of those it had, and what the bonded creatures become.
+ * keeps its track) and its rows under it in place of those it had, and what the children become.
  */
-export interface LevelEditPlan extends BondedCreaturesPlan, LevelWrites {
+export interface LevelEditPlan extends ChildrenPlan, LevelWrites {
   level: CharacterRows["levels"][number];
 }
 
-/** What removing a character's last level writes: the level that goes, and what its bonded creatures become. */
-export interface LevelRemovalPlan extends BondedCreaturesPlan {
+/** What removing a character's last level writes: the level that goes, and what its children become. */
+export interface LevelRemovalPlan extends ChildrenPlan {
   level: CharacterRows["levels"][number];
 }
 
-/** What a level-up writes, checked: each level's writes, and what the master's bonded creatures become. */
-export interface LevelsPlan extends BondedCreaturesPlan {
+/** What a level-up writes, checked: each level's writes, and what the character's children become. */
+export interface LevelsPlan extends ChildrenPlan {
   levels: LevelWrites[];
 }
 
@@ -47,26 +49,23 @@ export interface LevelWrites {
 }
 
 /**
- * A bonded creature a plan makes: its character's row, whole (its master's, of its kind, and what it takes of its
- * master), and its links, by the name its module declares each under (3.5's ability scores).
+ * A child a plan makes: its character's row, whole (its parent's, of its kind, the columns its module stores of it, and
+ * what it takes of its parent), and its links, by the name its module declares each under (3.5's ability scores).
  */
-export interface NewBondedCreature {
-  links: Record<string, object[]>;
-  row: Pick<
-    Character,
-    "alignment" | "gender" | "kind" | "name" | "parentCharacterId" | "raceId" | "rulesetId" | "userId" | "xp"
-  >;
+export interface NewChild {
+  links: Record<string, LinkPlan[]>;
+  row: CharacterColumns & Pick<Character, "kind" | "name" | "parentCharacterId" | "rulesetId" | "userId">;
 }
 
 /**
- * What a master's bonded creature of a kind (`kind`, the creature's character kind) becomes once the master's levels
- * change. Without one for the kind, the creature the master had goes (`removedId`). With one, the master keeps the
- * creature it has (`keptId`), or one is made (`created`) in place of the one it had; the creature kept or made takes or
- * loses `levels`.
+ * What a character's child of a kind (`kind`, the child's character kind) becomes once the character's levels change.
+ * Without one for the kind, the child the character had goes (`removedId`). With one, the character keeps the child it
+ * has (`keptId`), or one is made (`created`) in place of the one it had; the child kept or made takes or loses
+ * `levels`.
  */
-export type BondedPlan = { kind: string; removedId?: string } & (
-  | { created: NewBondedCreature; levels: BondedLevelsPlan }
-  | { keptId: string; levels: BondedLevelsPlan }
+export type ChildPlan = { kind: string; removedId?: string } & (
+  | { created: NewChild; levels: ChildLevelsPlan }
+  | { keptId: string; levels: ChildLevelsPlan }
   | { levels: undefined }
 );
 

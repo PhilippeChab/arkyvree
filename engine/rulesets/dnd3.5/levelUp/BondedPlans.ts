@@ -1,9 +1,4 @@
-import type {
-  BondedCreaturesPlan,
-  BondedLevelsPlan,
-  CharacterInput,
-  NewBondedCreature,
-} from "@/engine/core/module/index.ts";
+import type { CharacterInput, ChildLevelsPlan, ChildrenPlan, NewChild } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import BondedRaceData from "@/engine/rulesets/dnd3.5/rules/BondedRaceData.ts";
@@ -24,7 +19,7 @@ interface BondedLevels {
  * or one is made (`created`) in place of the one of another race it had; the creature kept or made has `levels`.
  */
 type BondedCreaturePlan = { removedId?: string } & (
-  | { created: NewBondedCreature; levels: BondedLevels }
+  | { created: NewChild; levels: BondedLevels }
   | { keptId: string; levels: BondedLevels }
   | { levels?: undefined }
 );
@@ -39,13 +34,13 @@ function buildCreature(
   kind: BondedKind,
   race: { id: string; name: string },
   abilities: Dnd35View["abilities"],
-): NewBondedCreature {
+): NewChild {
   const stats = BondedRaceData.getStats(race.name);
   return {
     links: {
       abilities: abilities.map((ability) => ({
-        abilityId: ability.id,
-        score: stats?.abilities[ability.name.toLowerCase() as keyof typeof stats.abilities] ?? STARTING_ABILITY_SCORE,
+        entityId: ability.id,
+        amount: stats?.abilities[ability.name.toLowerCase() as keyof typeof stats.abilities] ?? STARTING_ABILITY_SCORE,
       })),
     },
     row: {
@@ -97,11 +92,11 @@ export default class BondedPlans {
    * first `hitDice`: its next ones, refused when the class lacks one, or its last ones. A level stores 1 hit point:
    * the creature's build gives it its hit points, from its master's or its hit dice.
    */
-  planBondedLevels(levels: { id: string }[], { hitDice, klassId }: BondedLevels): BondedLevelsPlan {
+  planBondedLevels(levels: { id: string }[], { hitDice, klassId }: BondedLevels): ChildLevelsPlan {
     const klassLevelByLevel = new Map(
       (this.view.klassLevelsByKlass.get(klassId) ?? []).map((klassLevel) => [klassLevel.level, klassLevel]),
     );
-    const added: BondedLevelsPlan["added"] = [];
+    const added: ChildLevelsPlan["added"] = [];
     for (let level = levels.length + 1; level <= hitDice; level++) {
       const klassLevel = klassLevelByLevel.get(level);
       if (!klassLevel)
@@ -116,9 +111,9 @@ export default class BondedPlans {
    * each with its rows): the creature it had removed (`removedId`), and the one it keeps (`keptId`) or makes (`created`,
    * its row whole, after its master's, `record`) with the levels it takes or loses (`levels`: a new one has none yet).
    */
-  planMasterCreatures(master: DetailedCharacter, record: Character, bonded: CharacterInput[]): BondedCreaturesPlan {
+  planMasterCreatures(master: DetailedCharacter, record: Character, bonded: CharacterInput[]): ChildrenPlan {
     return {
-      bonded: BONDED_KIND_SLUGS.map((kind) => {
+      children: BONDED_KIND_SLUGS.map((kind) => {
         const existing = bonded.find((input) => input.record.kind === kind);
         const plan = this.planBondedCreature(master, record, kind, existing?.record);
         if (!plan.levels) return { kind, levels: undefined, removedId: plan.removedId };

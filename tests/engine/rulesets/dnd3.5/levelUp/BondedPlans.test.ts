@@ -56,10 +56,7 @@ describe("planBondedCreature", () => {
     const abilityName = new Map(view.abilities.map((ability) => [ability.id, ability.name]));
     expect(
       Object.fromEntries(
-        (plan.created.links.abilities as { abilityId: string; score: number }[]).map(({ abilityId, score }) => [
-          abilityName.get(abilityId),
-          score,
-        ]),
+        plan.created.links.abilities.map(({ amount, entityId }) => [abilityName.get(entityId), amount]),
       ),
     ).toEqual({ Charisma: 6, Constitution: 15, Dexterity: 15, Intelligence: 2, Strength: 13, Wisdom: 12 });
     // Its row whole: its master's, of its kind, named for its race, of its master's alignment and gender, without xp

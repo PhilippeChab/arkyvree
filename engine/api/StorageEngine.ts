@@ -260,6 +260,19 @@ export default class StorageEngine {
     };
   }
 
+  /**
+   * A character's link a plan writes (`link`: its entity, its amount if its link holds one), of a link's (`name`), as
+   * what a write of it stores.
+   */
+  characterLinkOfPlan(name: string, characterId: string, link: { amount?: number; entityId: string }) {
+    const declared = this.characterDeclaration.links[name];
+    return this.characterLinkOf(name, {
+      characterId,
+      [declared.entity]: link.entityId,
+      ...(declared.amount ? { [declared.amount]: link.amount } : {}),
+    });
+  }
+
   /** A character's link as its module's row of `name` (its scores, its languages): its entity, its amount. */
   characterLinkRowOf(name: string, link: StoredCharacterLink): Row {
     const declared = this.characterDeclaration.links[name];

@@ -11,15 +11,19 @@ import type { RulesetPart } from "./parts/ruleset/index.ts";
 import type { StorageDeclaration } from "./storage.ts";
 
 /**
- * What a ruleset describes in its own shape, which the server hands to the client as it is: a character's sheet (as the
- * API answers it, its private notes where every ruleset's holds them; as a member who reads it partly reads it, its
- * summary as every ruleset's holds it; printed), what an inventory entry shows beside its row, what the race picker
- * adds to an option, and a level step's picker (`stepPicker`) by the kind it reads a page of.
+ * What a ruleset describes in its own shape, which the server hands to the client as it is: how a new character's
+ * scores are set (`creation`) and what its creation picker adds to an option (`creationOption`), what a picked link's
+ * room is (`linkRoom`: what a character has, and what one more pick may add), a character's sheet (as the API answers
+ * it, its private notes where every ruleset's holds them; as a member who reads it partly reads it, its summary as every
+ * ruleset's holds it; printed), what an inventory entry shows beside its row, and a level step's picker (`stepPicker`)
+ * by the kind it reads a page of.
  */
 export interface Descriptions {
+  creation: object;
+  creationOption: object;
   inventoryEntry: object;
+  linkRoom: object;
   partialSheet: { summary: SheetSummary };
-  raceOption: object;
   sheet: NotedSheet;
   sheetDocument: unknown;
   stepPicker: { kind: string };
@@ -35,7 +39,7 @@ export interface RulesetModule<
   E extends EntityKindsContract = EntityKindsContract,
   F = Record<string, Fields>,
 > {
-  /** What the ruleset answers of its characters, from the rows the server reads: their sheets, an item equipped */
+  /** What the ruleset answers of its characters, from the rows the server reads: their sheets, their links, an item */
   characters: CharactersPart<D>;
   /** What the ruleset answers its content's seeders and codegen: the paths a book can target, its fields' properties */
   content: ContentPart<F>;

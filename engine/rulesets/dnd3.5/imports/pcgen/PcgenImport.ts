@@ -1,18 +1,23 @@
 import { ImportReport } from "@/engine/core/imports/index.ts";
-import type { AbilityScore, CharacterInput, ImportedRow, ImportOwner, ImportPlan } from "@/engine/core/module/index.ts";
+import type { CharacterInput, ImportedRow, ImportOwner, ImportPlan, LinkPlan } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import Dnd35Characters from "@/engine/rulesets/dnd3.5/characters/Dnd35Characters.ts";
 import type { ImportedCharacter } from "@/engine/rulesets/dnd3.5/imports/imported.ts";
+import { DND35_STORAGE } from "@/engine/rulesets/dnd3.5/storage/Dnd35Storage.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { MAX_CHARACTER_NAME_LENGTH, MAX_CHARACTER_NUMBER } from "@/shared/characters.ts";
 import { type Gender, GENDER_OPTIONS } from "@/shared/enums.ts";
+import type { Character } from "@/shared/relations.ts";
 
 import GearImport from "./GearImport.ts";
 import LevelsImport, { type LevelStop } from "./LevelsImport.ts";
 import { PCGEN_ALIGNMENTS } from "./names.ts";
 import PcgenNames from "./PcgenNames.ts";
 import ScoresImport from "./ScoresImport.ts";
+
+/** The row a 3.5 import fills: every column of it, its race among them (a character needs one). */
+type RowWithRace = ImportedRow & Pick<Character, "age" | "deity" | "description" | "height" | "raceId" | "weight">;
 
 /** The inches in a foot, which a height PCGen writes in inches is said in. */
 const INCHES_PER_FOOT = 12;
@@ -46,7 +51,7 @@ export default class PcgenImport {
     return GENDER_OPTIONS.find((gender) => gender.toLowerCase() === wanted || gender[0].toLowerCase() === wanted);
   }
 
-  private readonly characters = new Dnd35Characters();
+  private readonly characters = new Dnd35Characters(DND35_STORAGE);
 
   private readonly names: PcgenNames;
 
@@ -78,7 +83,7 @@ export default class PcgenImport {
    * The character's rows before its levels: its row, under the id it's created with and its owner's, its ability scores,
    * and nothing else yet. What its levels, languages and gear are planned against, and its bonded creatures take after.
    */
-  private newInput(row: ImportedRow, abilities: AbilityScore[]): CharacterInput {
+  private newInput(row: RowWithRace, abilities: LinkPlan[]): CharacterInput {
     const now = new Date().toISOString();
     const stamps = { createdAt: now, deletedAt: null, updatedAt: now };
     const { characterId: id, userId } = this.owner;
@@ -94,11 +99,18 @@ export default class PcgenImport {
       userId,
     };
     const rows = {
-      abilities: abilities.map((score) => ({ ...score, ...stamps, characterId: id })),
       campaign: undefined,
       inventory: [],
-      languages: [],
       levels: [],
+      links: {
+        abilities: abilities.map(({ amount, entityId }) => ({
+          abilityId: entityId,
+          score: amount!,
+          ...stamps,
+          characterId: id,
+        })),
+        languages: [],
+      },
       modifiers: [],
       picks: { abilityIncreases: [], feats: [], powers: [], skills: [] },
       player: undefined,
@@ -114,7 +126,7 @@ export default class PcgenImport {
   private planLanguages(character: CharacterInput): string[] {
     const kept: string[] = [];
     // The last plan that took a language: what the character speaks with those kept
-    let planned = this.characters.planLanguages(this.view, character, kept);
+    let planned = this.characters.planLinkPicks(this.view, character, "languages", kept);
     for (const language of this.imported.languages) {
       const found = this.names.findLanguage(language.name);
       if (!found) {
@@ -126,25 +138,25 @@ export default class PcgenImport {
         continue;
       }
       try {
-        planned = this.characters.planLanguages(this.view, character, [...kept, found.id]);
+        planned = this.characters.planLinkPicks(this.view, character, "languages", [...kept, found.id]);
         kept.push(found.id);
       } catch (error) {
         if (!(error instanceof RulesError)) throw error;
         this.report.skip(language.line, `${language.name}: ${error.message}`);
       }
     }
-    const { languageIds } = planned;
+    const { entityIds } = planned;
     const { languagesById } = Dnd35View.of(this.view.rulesetData);
     const spoken = kept.map((id) => languagesById.get(id)?.name).join(", ");
     if (spoken) this.report.import(`Languages: ${spoken}`);
-    return languageIds;
+    return entityIds;
   }
 
   /**
    * The character's row, as the file has it: its race (refused when the ruleset hasn't it: a character needs one), its
    * alignment (True Neutral when the file's isn't one, which the report says), and the rest of who it is.
    */
-  private readRow(): ImportedRow {
+  private readRow(): RowWithRace {
     const { identity, biography } = this.imported;
     const race = this.findRace();
     const alignment = identity.alignment && PCGEN_ALIGNMENTS.get(identity.alignment.value);
@@ -185,7 +197,8 @@ export default class PcgenImport {
     const row = this.readRow();
     const levelsImport = new LevelsImport(this.view, this.imported, this.names, this.report, this.stop);
     const scores = new ScoresImport(this.view, this.imported, this.report).planScores(levelsImport.levelCount);
-    const { abilities } = this.characters.planStart(this.view, { abilities: scores.starting, raceId: row.raceId });
+    const start = { picks: { raceId: row.raceId }, scores: { abilities: scores.starting } };
+    const { abilities } = this.characters.planStart(this.view, start).links;
     const leveled = levelsImport.planLevels(this.newInput(row, abilities), scores.increases);
     if ("refused" in leveled) return leveled;
     const languageIds = this.planLanguages(leveled.character);
@@ -194,12 +207,11 @@ export default class PcgenImport {
       this.imported.gear,
     );
     const plan = {
-      abilities,
-      bonded: leveled.bonded,
       character: row,
+      children: leveled.children,
       inventory,
-      languageIds,
       levels: leveled.levels,
+      links: { abilities, languages: languageIds.map((entityId) => ({ entityId })) },
       report: this.report.describe(),
     };
     return { plan };

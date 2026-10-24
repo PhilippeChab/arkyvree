@@ -3,7 +3,7 @@
  * part's (`LevelsPlan`, `LevelEditPlan`) in 3.5's shapes.
  */
 
-import type { BondedCreaturesPlan, CharacterRows } from "@/engine/core/module/index.ts";
+import type { CharacterRows, ChildrenPlan } from "@/engine/core/module/index.ts";
 
 /** An ability a level raises, and by how much. */
 export interface AbilityIncrease {
@@ -24,7 +24,7 @@ export interface LevelColumns {
 }
 
 /** What a 3.5 edit writes of the level it edits, checked (`LevelEditPlan`): its hit points and its rows under it. */
-export interface LevelEditPlan extends BondedCreaturesPlan {
+export interface LevelEditPlan extends ChildrenPlan {
   columns: Pick<LevelColumns, "hp">;
   level: CharacterRows["levels"][number];
   rows: Pick<LevelRows, keyof LevelRows>;
@@ -43,7 +43,7 @@ export interface LevelRows extends LevelPickRows {
 }
 
 /** What a 3.5 level-up writes, checked (`LevelsPlan`): each level's writes. */
-export interface LevelsPlan extends BondedCreaturesPlan {
+export interface LevelsPlan extends ChildrenPlan {
   levels: LevelWrites[];
 }
 

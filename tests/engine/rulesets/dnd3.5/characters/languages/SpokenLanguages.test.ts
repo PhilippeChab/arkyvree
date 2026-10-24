@@ -46,7 +46,12 @@ async function createOfRace(raceId: string, scores: Record<string, number> = {},
 /** What the character speaks and may pick, with its picks `picks` (by name), as the engine answers it. */
 async function describeLanguages(record: Character, picks: string[] = []) {
   const { langMap } = await getSeedCtx();
-  return await languagesOf(record, (engine) => engine.describeLanguages(picks.map((name) => langMap[name])));
+  return await languagesOf(record, (engine) =>
+    engine.describeLinkPicks(
+      "languages",
+      picks.map((name) => langMap[name]),
+    ),
+  );
 }
 
 /** The engine bound to the character, from its rows, in its ruleset's view. */
@@ -68,9 +73,14 @@ async function newCharacter(race: string, scores: Record<string, number> = {}, r
 /** What the character's languages edit to `picks` (by name) stores, by name, as the engine plans it. */
 async function planLanguages(record: Character, picks: string[]) {
   const { langMap } = await getSeedCtx();
-  const plan = await languagesOf(record, (engine) => engine.planLanguages(picks.map((name) => langMap[name])));
+  const plan = await languagesOf(record, (engine) =>
+    engine.planLinkPicks(
+      "languages",
+      picks.map((name) => langMap[name]),
+    ),
+  );
   const names = new Map(Object.entries(langMap).map(([name, id]) => [id, name]));
-  return plan.languageIds.map((id) => names.get(id));
+  return plan.entityIds.map((id) => names.get(id));
 }
 
 /** How many languages the character picks: the picks its picker takes before it offers none. */

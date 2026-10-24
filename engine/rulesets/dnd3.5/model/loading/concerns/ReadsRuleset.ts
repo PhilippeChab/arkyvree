@@ -17,7 +17,10 @@ import type { CasterType } from "@/vocabulary/dnd3.5/classes.ts";
 export function ReadsRuleset<B extends Constructor<CharacterDataLoader<LoadedCharacterData>>>(Base: B) {
   abstract class ReadingRuleset extends Base {
     /** A character ability's score, with its ability's name. */
-    protected buildAbilityScore(record: CharacterRows["abilities"][number], abilityLookup: Map<string, string>) {
+    protected buildAbilityScore(
+      record: CharacterRows["links"]["abilities"][number],
+      abilityLookup: Map<string, string>,
+    ) {
       return {
         abilityId: record.abilityId,
         name: abilityLookup.get(record.abilityId) ?? "Unknown",
@@ -35,7 +38,7 @@ export function ReadsRuleset<B extends Constructor<CharacterDataLoader<LoadedCha
       const klassLevelsRaw = klassLevelIds.flatMap((id) => dnd35.klassLevelsById.get(id) ?? []);
       const klassEntityIds = [...new Set(klassLevelsRaw.map((level) => level.klassId))];
       return {
-        languages: rows.languages.flatMap((l) => dnd35.languagesById.get(l.languageId) ?? []),
+        languages: rows.links.languages.flatMap((l) => dnd35.languagesById.get(l.languageId) ?? []),
         klassLevelsRaw,
         klassLevelSaves: klassLevelIds.flatMap((id) => dnd35.klassLevelSavesByKlassLevel.get(id) ?? []),
         klasses: klassEntityIds.flatMap((id) => dnd35.klassesById.get(id) ?? []),

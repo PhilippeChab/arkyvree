@@ -2,7 +2,7 @@ import { and, eq, inArray, type SQL } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
 import { linksInCharacter } from "@/drizzle/schema.ts";
-import { Engine, type StoredCharacterLink } from "@/engine/index.ts";
+import { Engine, type LinkPlan, type StoredCharacterLink } from "@/engine/index.ts";
 import BaseRepository from "@/server/repositories/BaseRepository.ts";
 
 /** A character link's row, any link's, as its module's declaration reads it (an ability score, a language). */
@@ -52,6 +52,14 @@ class StoredCharacterLinks extends BaseRepository<typeof linksInCharacter> {
     return StoredCharacterLinks.mapRows<R>(link, rows);
   }
 
+  /** Writes a character's links of `link` as a plan has them (`links`: each entity, and its amount if it holds one). */
+  async createPlanned(db: Db, link: string, characterId: string, links: LinkPlan[]) {
+    if (links.length === 0) return;
+    await db
+      .insert(this.table)
+      .values(links.map((planned) => Engine.storage().characterLinkOfPlan(link, characterId, planned)));
+  }
+
   // Exception to soft-delete: a character's links are disposable reference data
   async delete(db: Db, where: { characterId: string; entityId: string; link: string }) {
     return await db
@@ -62,6 +70,17 @@ class StoredCharacterLinks extends BaseRepository<typeof linksInCharacter> {
           and(eq(this.table.characterId, where.characterId), eq(this.table.entityId, where.entityId)),
         ),
       );
+  }
+
+  /**
+   * A character's links of every name its module stores (`Engine.storage().character().links`), by name: each name's in
+   * the order they were made.
+   */
+  async findByLink(db: Db, where: { characterId: string }): Promise<Record<string, LinkRow[]>> {
+    const links: Record<string, LinkRow[]> = {};
+    for (const link of Object.keys(Engine.storage().character().links))
+      links[link] = await this.findMany(db, { ...where, link });
+    return links;
   }
 
   /** A character's links of `link`, in the order they were made. */
@@ -75,18 +94,18 @@ class StoredCharacterLinks extends BaseRepository<typeof linksInCharacter> {
   }
 
   /**
-   * Sets what a character's links of `link` to entities hold (`values`, by its row's columns: a score), the entities by
-   * every id they may hold (`entityIds`: an entity's copies and original).
+   * Sets the amount a character's links of `link` to entities hold (a score), the entities by every id they may hold
+   * (`entityIds`: an entity's copies and original).
    */
-  async update<R extends object = LinkRow>(
+  async setAmount<R extends object = LinkRow>(
     db: Db,
-    values: LinkRow,
+    amount: number,
     where: { characterId: string; entityIds: string[]; link: string },
   ): Promise<R[]> {
     if (where.entityIds.length === 0) return [];
     const rows = await db
       .update(this.table)
-      .set({ amount: Engine.storage().characterLinkOf(where.link, values).amount, updatedAt: new Date().toISOString() })
+      .set({ amount, updatedAt: new Date().toISOString() })
       .where(
         StoredCharacterLinks.buildScope(
           where.link,

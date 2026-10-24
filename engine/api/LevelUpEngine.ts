@@ -10,7 +10,7 @@ type Args<K extends keyof Module["levelUp"]> = Rest<Module["levelUp"][K], [Rules
 
 /**
  * The engine bound to a character's level flows: its wizard's steps and pickers, and what its level saves write. Its
- * character's input is read as the view reads it (`CharacterEngine` resolved it), and so are its bonded creatures' and
+ * character's input is read as the view reads it (`CharacterEngine` resolved it), and so are its children's and
  * each request, as it enters (`LevelRequests`): the ids it names resolved to the view's, a pick the view lacks refused.
  */
 export default class LevelUpEngine extends CharacterHandle {
@@ -56,21 +56,21 @@ export default class LevelUpEngine extends CharacterHandle {
     return this.module.levelUp.openStepPicker(this.view, this.input, step, resolved);
   }
 
-  /** What the character's bonded creatures become as its stored levels make them, from their rows (`bonded`). */
-  planBonded(...[bonded, ...rest]: Args<"planBonded">) {
-    return this.module.levelUp.planBonded(this.view, this.input, this.resolveBonded(bonded), ...rest);
+  /** What the character's children become as its stored levels make them, from their rows (`children`). */
+  planChildren(...[children, ...rest]: Args<"planChildren">) {
+    return this.module.levelUp.planChildren(this.view, this.input, this.resolveChildren(children), ...rest);
   }
 
   /**
    * A plan's edit of the character's saved level `characterLevelId` (`request`, read by an edit's steps, each id the
-   * view's): what it writes, checked, and what the bonded creatures become with it.
+   * view's): what it writes, checked, and what the children become with it.
    */
-  planLevelEdit(bonded: CharacterInput[], characterLevelId: string, request: LevelPlanRequest, force: boolean) {
+  planLevelEdit(children: CharacterInput[], characterLevelId: string, request: LevelPlanRequest, force: boolean) {
     const plan = { ...request, editedLevelId: characterLevelId };
     return this.module.levelUp.planLevelEdit(
       this.view,
       this.input,
-      this.resolveBonded(bonded),
+      this.resolveChildren(children),
       characterLevelId,
       this.requests.resolveSave(this.stepsOf(plan), plan),
       force,
@@ -79,15 +79,15 @@ export default class LevelUpEngine extends CharacterHandle {
 
   /**
    * A plan's level-up (`request`, read by its level's steps, each id the view's): the rows its save writes, checked,
-   * and what the master's bonded creatures become with them.
+   * and what the character's children become with them.
    */
-  planLevelUp(bonded: CharacterInput[], request: LevelPlanRequest, force: boolean) {
+  planLevelUp(children: CharacterInput[], request: LevelPlanRequest, force: boolean) {
     const resolved = this.requests.resolveSave(this.stepsOf(request), request);
-    return this.module.levelUp.planLevelUp(this.view, this.input, this.resolveBonded(bonded), resolved, force);
+    return this.module.levelUp.planLevelUp(this.view, this.input, this.resolveChildren(children), resolved, force);
   }
 
-  /** The character's last level removed: the level that goes, and what its bonded creatures become without it. */
-  planRemoval(...[bonded, ...rest]: Args<"planRemoval">) {
-    return this.module.levelUp.planRemoval(this.view, this.input, this.resolveBonded(bonded), ...rest);
+  /** The character's last level removed: the level that goes, and what its children become without it. */
+  planRemoval(...[children, ...rest]: Args<"planRemoval">) {
+    return this.module.levelUp.planRemoval(this.view, this.input, this.resolveChildren(children), ...rest);
   }
 }
