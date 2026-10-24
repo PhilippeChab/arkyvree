@@ -3,18 +3,22 @@ import { Engine, type EntityKinds, type OwnedKind } from "@/engine/index.ts";
 /** A ruleset entity type: a kind a module declares, which no other entity owns. */
 export type RulesetEntityType = keyof EntityKinds;
 
-/** The kinds a name is the identity of, whose entities of one name in a ruleset's chain pair (3.5's pools). */
-export const IDENTITY_TYPES: ReadonlySet<string> = new Set(Engine.storage().namesakeKinds("identity"));
-
-/** The joins the modules declare, by name: the kind each is from (its owner's: a class's skills') and the kind it's to. */
-export const JOIN_ENDS: ReadonlyMap<string, { from: string; to: string }> = new Map(
+/**
+ * The joins an entity edits link by link, by name (3.5's class's skills), whose activities name them: the kind each is
+ * from (the entity's) and the kind it's to.
+ */
+export const EDITED_JOINS: ReadonlyMap<string, { from: string; to: string }> = new Map(
   Engine.storage()
     .joinNames()
+    .filter((name) => Engine.storage().join(name).edited)
     .map((name) => {
       const { from, to } = Engine.storage().join(name);
       return [name, { from, to }];
     }),
 );
+
+/** The kinds a name is the identity of, whose entities of one name in a ruleset's chain pair (3.5's pools). */
+export const IDENTITY_TYPES: ReadonlySet<string> = new Set(Engine.storage().namesakeKinds("identity"));
 
 /** Each kind another owns, by its table, and the kind that owns it (3.5's class levels, by their class), in order. */
 export const OWNED_TYPES: ReadonlyMap<OwnedKind, RulesetEntityType> = new Map(

@@ -7,9 +7,9 @@ import {
   CharacterContributors,
   Characters,
   Contributors,
+  EDITED_JOINS,
   Entities,
   Invites,
-  JOIN_ENDS,
   Modifiers,
   OWNED_TYPES,
   PlayerCharacters,
@@ -121,7 +121,7 @@ class ActivitiesService {
       const [owned] = await Entities.findPositions(db, { entityType: targetTable, ids: [targetId] });
       return owned ? await this.ownerPageUrl(ownerType, owned.ownerId) : null;
     }
-    const join = JOIN_ENDS.get(targetTable);
+    const join = EDITED_JOINS.get(targetTable);
     if (join) return await this.ownerPageUrl(join.from, targetId, getUrlSegment(join.to));
     return await this.resolveRulesSubEntity(targetTable, targetId);
   }

@@ -9,9 +9,9 @@ import {
   CharacterContributors,
   Characters,
   Contributors,
+  EDITED_JOINS,
   Entities,
   Invites,
-  JOIN_ENDS,
   Modifiers,
   Notifications,
   OWNED_TYPES,
@@ -101,7 +101,7 @@ function isContentTable(table: string) {
   return (
     isOneOf(table, RULESET_ENTITY_TYPES) ||
     OWNED_TYPES.has(table as OwnedKind) ||
-    JOIN_ENDS.has(table) ||
+    EDITED_JOINS.has(table) ||
     CUSTOMIZATION_OWNERS.has(table)
   );
 }
@@ -134,7 +134,7 @@ async function findContentOwner(db: Db, { id, table }: ContentRow): Promise<Cont
     const [owned] = await Entities.findPositions(db, { entityType: table, ids: [id] });
     return owned && { id: owned.ownerId, table: ownerType };
   }
-  const join = JOIN_ENDS.get(table);
+  const join = EDITED_JOINS.get(table);
   if (join) return { id, table: join.from };
   return await CUSTOMIZATION_OWNERS.get(table)?.(db, id);
 }
