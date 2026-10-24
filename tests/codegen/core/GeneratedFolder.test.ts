@@ -55,13 +55,13 @@ describe("A generation", () => {
       // Killed mid-swap: the tree only as the previous one, and a stale copy
       mkdirSync(`${folder}.previous`);
       writeFileSync(join(`${folder}.previous`, "index.ts"), code("before"));
-      writeFileSync(join(`${folder}.previous`, "domainFeats.ts"), code("stale"));
+      writeFileSync(join(`${folder}.previous`, "domainPerks.ts"), code("stale"));
       mkdirSync(`${folder}.next`);
       writeFileSync(join(`${folder}.next`, "junk.ts"), code("junk"));
 
       expect(
         await GeneratedFolder.generateAtomically(folder, (copy) => {
-          rmSync(join(copy, "domainFeats.ts"));
+          rmSync(join(copy, "domainPerks.ts"));
           return [];
         }),
       ).toEqual([]);

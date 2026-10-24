@@ -18,7 +18,7 @@ describe("A ruleset's refusal", () => {
   });
 
   test("that's invalid carries what the character fails, as a bad request's issues", () => {
-    const issues = [{ category: "requirements" as const, message: "Requires Power Attack" }];
+    const issues = [{ category: "requirements" as const, message: "Requires Steady Hand" }];
     expect(toJson(new RulesError("invalid", "No", issues))).toEqual(toJson(new BadRequestError("No", { issues })));
     expect(toJson(new RulesError("invalid", "No", issues))[0].issues).toEqual(issues);
   });

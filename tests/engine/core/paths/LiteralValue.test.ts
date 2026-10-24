@@ -10,7 +10,7 @@ describe("LiteralValue.normalize", () => {
     ["-0", "number", "0"],
     ["1e2", "number", "100"],
     ["abc", "number", "abc"],
-    ["{{ [abilities.strength.modifier] }}", "number", "{{ [abilities.strength.modifier] }}"],
+    ["{{ [stats.might.modifier] }}", "number", "{{ [stats.might.modifier] }}"],
     ["02", "string", "02"],
     ["true", "boolean", "true"],
   ] as const)("stores %p, a %s, as %p", (value, valueType, expected) => {

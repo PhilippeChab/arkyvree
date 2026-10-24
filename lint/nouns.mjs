@@ -14,7 +14,7 @@
 
 import fs from "node:fs";
 
-import { isInRepo, repoPath } from "./paths.mjs";
+import { isInRepo, repoPath, rootOf, rulesetsOf } from "./paths.mjs";
 
 /**
  * The folders whose files still name 3.5's nouns (`notYetGeneric.json`, each a folder, not its subfolders), which phase 5
@@ -104,7 +104,7 @@ function createRulesetNouns(context) {
   if (!isInRepo(context.filename)) return {};
   const file = repoPath(context.filename);
   const folder = file.includes("/") ? file.slice(0, file.lastIndexOf("/")) : ".";
-  if (isRulesets(file) || NOT_YET_GENERIC.has(folder)) return {};
+  if (isRulesets(file, rulesetsOf(rootOf(context.filename))) || NOT_YET_GENERIC.has(folder)) return {};
   // A name read twice at one place (an import's imported and local name, a shorthand property) is reported once
   const reported = new Set();
   const report = (node, name) => {
@@ -156,8 +156,12 @@ function createRulesetNouns(context) {
 }
 
 /** Whether a file is a ruleset's, in one of its folders, or the lint's own, its word lists and their tests. */
-function isRulesets(file) {
-  return file.split("/").includes("dnd3.5") || file.startsWith("lint/") || file.startsWith("tests/lint/");
+function isRulesets(file, rulesets) {
+  return (
+    file.split("/").some((segment) => rulesets.has(segment)) ||
+    file.startsWith("lint/") ||
+    file.startsWith("tests/lint/")
+  );
 }
 
 /** The 3.5 noun a name holds, read word by word, if any. */

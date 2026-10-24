@@ -28,9 +28,9 @@ function requirement(values: Partial<Requirement> = {}): Requirement {
   return {
     id: "req-1",
     entityId: "entity-1",
-    entityType: "feats",
+    entityType: "perks",
     level: "1",
-    target: "feats.weaponfocus.*.possessed",
+    target: "perks.focus.*.possessed",
     operator: "equal",
     value: "true",
     valueType: "boolean",
@@ -49,7 +49,7 @@ function result(data: unknown, error: string | null = null): TraversePathResult 
     object: error ? null : { key: data },
     data,
     key: "possessed",
-    resolvedPath: error ? null : "feats.test.possessed",
+    resolvedPath: error ? null : "perks.test.possessed",
     error,
   };
 }
@@ -62,23 +62,23 @@ describe("RequirementEvaluator", () => {
     ["a wildcard with one match among several", {}, [false, true, false], met],
     ["a wildcard without a match", {}, [false, false, false], unmet],
     ["a wildcard that reaches nothing", {}, [], unmet],
-    ["a feat required absent, and absent", { value: "false" }, [false], met],
-    ["a feat required absent, but had", { value: "false" }, [true], unmet],
+    ["a perk required absent, and absent", { value: "false" }, [false], met],
+    ["a perk required absent, but had", { value: "false" }, [true], unmet],
     [
       "a wildcard over numbers, one above the bar",
-      { target: "powers.groups.evocation.*.dc.total", operator: "greater_than", value: "15", valueType: "number" },
+      { target: "charms.groups.flame.*.dc.total", operator: "greater_than", value: "15", valueType: "number" },
       [14, 16, 13],
       met,
     ],
     [
-      "a feat taken often enough",
-      { target: "feats.toughness.count", operator: "greater_than_or_equal", value: "2", valueType: "number" },
+      "a perk taken often enough",
+      { target: "perks.toughness.count", operator: "greater_than_or_equal", value: "2", valueType: "number" },
       [3],
       met,
     ],
     [
-      "a feat not taken often enough",
-      { target: "feats.toughness.count", operator: "greater_than_or_equal", value: "3", valueType: "number" },
+      "a perk not taken often enough",
+      { target: "perks.toughness.count", operator: "greater_than_or_equal", value: "3", valueType: "number" },
       [1],
       unmet,
     ],
@@ -88,7 +88,7 @@ describe("RequirementEvaluator", () => {
     );
   });
 
-  // A spell's components are a list: contains asks for one of them, whole; a string's is a substring
+  // A charm's components are a list: contains asks for one of them, whole; a string's is a substring
   test.each([
     ["contains", "Focus", ["Verbal", "Somatic", "Divine Focus"], unmet],
     ["contains", "Divine Focus", ["Verbal", "Somatic", "Divine Focus"], met],
@@ -96,9 +96,7 @@ describe("RequirementEvaluator", () => {
     ["not_contains", "Somatic", ["Verbal", "Somatic", "Divine Focus"], unmet],
     ["contains", "Focus", "Divine Focus", met],
   ] as const)("%s %p on %p", (operator, value, data, expected) => {
-    const group = [
-      requirement({ target: "powers.bless.properties.SPELL_COMPONENT", operator, value, valueType: "string" }),
-    ];
+    const group = [requirement({ target: "charms.bless.properties.COMPONENT", operator, value, valueType: "string" })];
     expect(evaluate(group, () => [result(data)])).toEqual({ ...expected, invalid: [] });
   });
 
@@ -141,11 +139,11 @@ describe("RequirementEvaluator", () => {
   ] as const)("counts a condition it can't read as met %s, and reports it", (_, rows, expected) => {
     const group = rows.map((row, index) => {
       const chainingOperator = "or" in row ? "or" : "and" in row ? "and" : null;
-      const target = "unread" in row ? "abilities.luck.total" : "feats.weaponfocus.*.possessed";
+      const target = "unread" in row ? "stats.luck.total" : "perks.focus.*.possessed";
       return requirement({ id: `req-${index}`, level: row.level, chainingOperator, target });
     });
     const resolve = (target: string) =>
-      target === "abilities.luck.total" ? [result(null, "Element not found: luck")] : [result(false)];
+      target === "stats.luck.total" ? [result(null, "Element not found: luck")] : [result(false)];
     expect(evaluate(group, resolve)).toEqual({ ...expected, invalid: ["Element not found: luck"] });
   });
 
@@ -154,7 +152,7 @@ describe("RequirementEvaluator", () => {
       ...unmet,
       invalid: ['Invalid boolean value: "yes"'],
     });
-    const count = { target: "feats.toughness.count", operator: "equal", value: "", valueType: "number" } as const;
+    const count = { target: "perks.toughness.count", operator: "equal", value: "", valueType: "number" } as const;
     expect(evaluate([requirement(count)], () => [result(0)])).toEqual({
       ...unmet,
       invalid: ['Invalid number value: ""'],
@@ -162,7 +160,7 @@ describe("RequirementEvaluator", () => {
   });
 
   test.each(["starts_with", "ends_with"] as const)("reports %s on a value that isn't text", (operator) => {
-    const score = { target: "abilities.strength.score", operator, value: "1", valueType: "number" } as const;
+    const score = { target: "stats.might.score", operator, value: "1", valueType: "number" } as const;
     expect(evaluate([requirement(score)], () => [result(12)])).toEqual({
       ...unmet,
       invalid: [`Invalid value type number for operator ${operator}`],

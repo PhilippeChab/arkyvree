@@ -580,7 +580,7 @@ describe("conventions", () => {
       "session-param server/services/union.ts",
     ]);
   });
-  test("a test named after a module sits at that module's mirror, case and all; a scenario test sits anywhere in its area", async () => {
+  test("a test named after a module sits at that module's mirror or a ruleset's folder there, case and all; a scenario test sits anywhere in its area", async () => {
     expect(
       await lintRepo(
         {
@@ -597,13 +597,22 @@ describe("conventions", () => {
           "codegen/dnd3.5/tools/text/sanitize.ts": "export default 1;\n",
           "tests/codegen/dnd3.5/tools/text/sanitize.test.ts": "export const t = 1;\n",
           "tests/codegen/dnd3.5/tools/text/json.test.ts": "export const t = 1;\n",
+          // A test of a module over a ruleset's content sits in that ruleset's folder at its mirror, and no deeper
+          "engine/rulesets/dnd3.5/index.ts": "export default 1;\n",
+          "server/services/BazService.ts": "export default 1;\n",
+          "tests/services/dnd3.5/BazService.test.ts": "export const t = 1;\n",
+          "tests/services/x/dnd3.5/FooService.test.ts": "export const t = 1;\n",
+          "tests/services/x/dnd3.5/y/FooService.test.ts": "export const t = 1;\n",
+          "tests/services/dnd3.5/FooService.test.ts": "export const t = 1;\n",
         },
         ["test-placement"],
       ),
     ).toEqual([
       "test-placement tests/codegen/dnd3.5/tools/text/json.test.ts",
       "test-placement tests/services/FooService.test.ts",
+      "test-placement tests/services/dnd3.5/FooService.test.ts",
       "test-placement tests/services/x/BarService.test.ts",
+      "test-placement tests/services/x/dnd3.5/y/FooService.test.ts",
       "test-placement tests/services/x/requirementTree.test.ts",
     ]);
   });

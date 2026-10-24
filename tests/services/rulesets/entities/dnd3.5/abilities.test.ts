@@ -5,7 +5,7 @@ import { db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { Entities } from "@/server/repositories/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
-import { createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
+import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
 
 describe("EntitiesService: abilities", () => {

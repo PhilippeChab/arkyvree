@@ -20,7 +20,7 @@ describe("Text", () => {
   });
 
   test("is a slug of its letters and digits, lowercased", () => {
-    expect(stripSeparators("Weapon Focus: Longsword")).toBe("weaponfocuslongsword");
+    expect(stripSeparators("Steady Hand: Longsword")).toBe("steadyhandlongsword");
     expect(stripSeparators("Knowledge (the planes)")).toBe("knowledgetheplanes");
     expect(stripSeparators("Two-Bladed Sword +1")).toBe("twobladedsword1");
   });

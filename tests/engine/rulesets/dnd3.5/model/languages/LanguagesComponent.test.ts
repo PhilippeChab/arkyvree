@@ -7,9 +7,8 @@ import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { CharacterLinks, Entities, Modifiers, Requirements } from "@/server/repositories/index.ts";
 import type { Character, Requirement } from "@/shared/relations.ts";
-import { createTestCharacter } from "@/tests/support/characters.ts";
-import { buildAs } from "@/tests/support/dnd3.5/characters.ts";
-import { pickFeat } from "@/tests/support/levels.ts";
+import { buildAs, createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
+import { pickFeat } from "@/tests/support/dnd3.5/levels.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, uniqueId } from "@/tests/support/seed.ts";
 

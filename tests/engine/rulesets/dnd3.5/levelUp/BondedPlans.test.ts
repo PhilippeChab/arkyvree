@@ -9,7 +9,7 @@ import { db } from "@/server/database/index.ts";
 import { CharacterAdvancements, Characters, Rulesets } from "@/server/repositories/index.ts";
 import { buildAs } from "@/tests/support/dnd3.5/characters.ts";
 import { createDruidWithCompanion, createWizardWithFamiliar } from "@/tests/support/dnd3.5/levelFixtures.ts";
-import { findKlassLevel } from "@/tests/support/levels.ts";
+import { findKlassLevel } from "@/tests/support/dnd3.5/levels.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
 
 /** The refusal `plan` throws. */

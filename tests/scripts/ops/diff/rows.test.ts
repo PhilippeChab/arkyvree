@@ -28,9 +28,9 @@ describe("A compared row", () => {
         selectable: true,
         cost: 5,
         source_item_id: UUID,
-        properties: { hd: 8 },
+        properties: { die: 8 },
       }),
-    ).toEqual({ name: "Dodge", selectable: true, cost: 5, properties: { hd: 8 } });
+    ).toEqual({ name: "Dodge", selectable: true, cost: 5, properties: { die: 8 } });
   });
 });
 
@@ -38,11 +38,11 @@ describe("A table's diff", () => {
   test("is the rows on one side only and the fields that differ, by business key", () => {
     const diff = collectDiff(
       [row("Dodge", { level: 1 }), row("Cleave", { level: 1 }), row("Alertness", { tags: ["a"] })],
-      [row("Dodge", { level: 2 }, "target-dodge"), row("Power Attack", {}), row("Alertness", { tags: ["a"] })],
+      [row("Dodge", { level: 2 }, "target-dodge"), row("Steady Hand", {}), row("Alertness", { tags: ["a"] })],
     );
     expect(diff).toEqual({
       onlyInRef: ["Cleave"],
-      onlyInTgt: ["Power Attack"],
+      onlyInTgt: ["Steady Hand"],
       fieldChanges: [{ bk: "Dodge", targetId: "target-dodge", field: "level", ref: 1, tgt: 2 }],
     });
     expect(diffIsEmpty(diff)).toBe(false);
@@ -81,10 +81,10 @@ describe("A table's diff", () => {
       '  reference: "It\'s dodgy"',
       '  target:    "x"',
     ]);
-    expect(renderSql("rules.feats", diff)).toEqual([
-      "-- rules.feats:",
+    expect(renderSql("rules.perks", diff)).toEqual([
+      "-- rules.perks:",
       "--   only in reference: Cleave (INSERT skipped — FK remap required)",
-      "UPDATE rules.feats SET description = $q$It's dodgy$q$ WHERE id = $q$t1$q$;  -- Dodge",
+      "UPDATE rules.perks SET description = $q$It's dodgy$q$ WHERE id = $q$t1$q$;  -- Dodge",
     ]);
   });
 });

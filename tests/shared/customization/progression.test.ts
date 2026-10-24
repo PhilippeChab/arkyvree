@@ -14,8 +14,8 @@ describe("A progression", () => {
     expect([countRegularAt(0, 6), countRegularAt(3, 0), countRegularAt(3, -3)]).toEqual([0, 0, 0]);
     // What a level may give more within its bound: none where the frequency fills it
     expect([countRoomAt(4, 8, 1), countRoomAt(4, 6, 1), countRoomAt(3, 6, 10)]).toEqual([0, 1, 9]);
-    const feats = { every: 3, extra: [{ amount: 2, level: 3 }] };
-    expect([1, 3, 6].map((level) => countProgressionAt(feats, level))).toEqual([0, 3, 1]);
+    const picks = { every: 3, extra: [{ amount: 2, level: 3 }] };
+    expect([1, 3, 6].map((level) => countProgressionAt(picks, level))).toEqual([0, 3, 1]);
   });
 
   test("is copied apart from what it's copied from", () => {

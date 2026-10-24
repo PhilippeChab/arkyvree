@@ -6,9 +6,11 @@ import { Activities, CharacterInventory, EntitySnapshots } from "@/server/reposi
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import type { Session } from "@/shared/relations.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
-import { createTestCharacter } from "@/tests/support/characters.ts";
-import { customize, findCustomizations } from "@/tests/support/customizations.ts";
-import { createTestRuleset, createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
+import { findCustomizations } from "@/tests/support/customizations.ts";
+import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
+import { customize } from "@/tests/support/dnd3.5/customizations.ts";
+import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
+import { createTestRuleset } from "@/tests/support/rulesets.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
 import { ITEM_MADE_OF } from "@/vocabulary/dnd3.5/properties/index.ts";
 

@@ -79,7 +79,7 @@ mapping and shared fixtures. During development, a focused run is fine, for exam
 (`E2E_SKIP_BUILD=1` reuses the last build when only tests changed):
 
 ```bash
-bun test:e2e tests/e2e/journeys/rulesets.e2e.ts --project=journeys
+bun test:e2e tests/e2e/journeys/dnd3.5/rulesets.e2e.ts --project=journeys
 ```
 
 `E2E_COVERAGE=1 bun test:e2e` also reports the client code the journeys run, in

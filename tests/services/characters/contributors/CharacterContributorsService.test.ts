@@ -7,7 +7,7 @@ import { CharacterContributorsService } from "@/server/services/characters/contr
 import { CharactersService } from "@/server/services/characters/index.ts";
 import { CharacterSharingService } from "@/server/services/characters/sharing/index.ts";
 import type { Session } from "@/shared/relations.ts";
-import { createCharacterAs } from "@/tests/support/characters.ts";
+import { createCharacterAs } from "@/tests/support/dnd3.5/characters.ts";
 import { uniqueId } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 

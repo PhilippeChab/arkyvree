@@ -1,7 +1,7 @@
 import { expect } from "@playwright/test";
 
 import { test } from "@/tests/e2e/fixtures.ts";
-import { fillNewCharacter } from "@/tests/e2e/support/characters.ts";
+import { fillNewCharacter } from "@/tests/e2e/support/dnd3.5/characters.ts";
 import { signIn } from "@/tests/e2e/support/signIn.ts";
 
 test.describe("Errors", () => {

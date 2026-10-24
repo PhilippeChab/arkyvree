@@ -61,7 +61,7 @@ import path from "node:path";
 
 import { onImports, targetOf } from "./imports.mjs";
 import { isVerbName } from "./methodNames.mjs";
-import { isInRepo, repoPath, rootOf } from "./paths.mjs";
+import { isInRepo, repoPath, rootOf, rulesetsOf } from "./paths.mjs";
 
 /** The server's layers above its repositories. */
 const ABOVE_REPOSITORIES = [
@@ -268,7 +268,6 @@ const ROOT_FOLDERS = {
 };
 
 /** The rulesets of each repo root, once read. */
-const rulesetsCache = new Map();
 const SET_OPERATORS = new Set(["union", "unionAll", "intersect", "intersectAll", "except", "exceptAll"]);
 /** What every ruleset runs on, which names none of them: the core's folders, the registry's readers, the server and what it shares. */
 const SHARED_HOMES = [
@@ -859,19 +858,6 @@ function rulesetOf(file, rulesets) {
     .split("/")
     .slice(0, -1)
     .find((folder) => rulesets.has(folder));
-}
-
-/**
- * A repo's rulesets, by the folders they run from (`engine/rulesets/<ruleset>/`): the names a ruleset's folders go by in
- * every tree (its content, codegen, package, vocabulary, tests).
- */
-function rulesetsOf(root) {
-  if (!rulesetsCache.has(root)) {
-    const dir = path.join(root, "engine/rulesets");
-    const folders = fs.existsSync(dir) ? fs.readdirSync(dir, { withFileTypes: true }) : [];
-    rulesetsCache.set(root, new Set(folders.filter((entry) => entry.isDirectory()).map((entry) => entry.name)));
-  }
-  return rulesetsCache.get(root);
 }
 
 /** What an expression of the view is, past what only retypes it (`rulesetData!`, `rulesetData as X`, parentheses). */

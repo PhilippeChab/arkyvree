@@ -5,8 +5,8 @@ import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.
 import { db } from "@/server/database/index.ts";
 import { Modifiers, Requirements } from "@/server/repositories/index.ts";
 import type { Requirement } from "@/shared/relations.ts";
-import { createRaceModifier } from "@/tests/support/customizations.ts";
 import { buildAs, sheetOf } from "@/tests/support/dnd3.5/characters.ts";
+import { createRaceModifier } from "@/tests/support/dnd3.5/customizations.ts";
 import { type Carried, carry, createTestItem } from "@/tests/support/items.ts";
 import { invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
 import { findSeededCharacter, getSeedCtx } from "@/tests/support/seed.ts";

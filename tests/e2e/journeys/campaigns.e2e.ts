@@ -2,7 +2,7 @@ import { expect } from "@playwright/test";
 
 import { test } from "@/tests/e2e/fixtures.ts";
 import { createCampaign } from "@/tests/e2e/support/campaigns.ts";
-import { createCharacter } from "@/tests/e2e/support/characters.ts";
+import { createCharacter } from "@/tests/e2e/support/dnd3.5/characters.ts";
 import { apiResponse, filterList, openActionsMenu } from "@/tests/e2e/support/page.ts";
 import { signIn } from "@/tests/e2e/support/signIn.ts";
 

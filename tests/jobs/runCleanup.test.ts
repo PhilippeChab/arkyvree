@@ -4,7 +4,7 @@ import { db } from "@/server/database/index.ts";
 import { runCleanupTask } from "@/server/jobs/runCleanup.ts";
 import { Attachments, Users } from "@/server/repositories/index.ts";
 import { AuthenticationService } from "@/server/services/authentication/index.ts";
-import { createTestCharacter } from "@/tests/support/characters.ts";
+import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
 import { createTestAttachment } from "@/tests/support/files.ts";
 import { silentJobHelpers } from "@/tests/support/jobs.ts";
 

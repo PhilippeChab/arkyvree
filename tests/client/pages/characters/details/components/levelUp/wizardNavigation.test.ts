@@ -9,23 +9,23 @@ const PLAN_STEP = { name: "class-plan", label: "Class Plan" };
 /** Add Level's steps: those a ruleset lists for a level, then its own review */
 const LISTED_STEPS = [
   PLAN_STEP,
-  { name: "hp", label: "Select HP" },
-  { name: "ability-increase", label: "Ability Increase" },
-  { name: "feats", label: "Feats" },
+  { name: "vigor", label: "Select Vigor" },
+  { name: "stat-increase", label: "Stat Increase" },
+  { name: "perks", label: "Perks" },
   REVIEW_STEP,
 ];
 
 /** Fewer steps, as it lists them once the save drops some under it */
-const OWN_STEPS = [PLAN_STEP, { name: "hp", label: "Select HP" }, REVIEW_STEP];
+const OWN_STEPS = [PLAN_STEP, { name: "vigor", label: "Select Vigor" }, REVIEW_STEP];
 
 /** A wizard at a step, through its navigation: the steps it's moved to, and the saves it sent (forced or not) */
 function wizardAt(activeStep: number, isLastStep = false) {
   const movedTo: number[] = [];
-  const saves: boolean[] = [];
+  const sentSaves: boolean[] = [];
   const navigation = navigationOf({
     hasProgress: true,
     onClose: () => undefined,
-    save: (force) => saves.push(force),
+    save: (force) => sentSaves.push(force),
     wizard: {
       activeStep,
       isLastStep,
@@ -34,13 +34,13 @@ function wizardAt(activeStep: number, isLastStep = false) {
       setShowCancelConfirm: () => undefined,
     },
   });
-  return { movedTo, navigation, saves };
+  return { movedTo, navigation, sentSaves };
 }
 
 describe("a level wizard's steps", () => {
   test("show the step it moved to while its steps list it", () => {
     expect(LISTED_STEPS[shownStep(LISTED_STEPS, 0)]).toBe(PLAN_STEP);
-    expect(LISTED_STEPS[shownStep(LISTED_STEPS, 3)].name).toBe("feats");
+    expect(LISTED_STEPS[shownStep(LISTED_STEPS, 3)].name).toBe("perks");
   });
 
   test("show the review when the save drops the steps the ruleset listed under the wizard at its last", () => {
@@ -58,8 +58,8 @@ describe("a level wizard's steps", () => {
   });
 
   test("save on the last step's Next instead of moving on", () => {
-    const { movedTo, navigation, saves } = wizardAt(2, true);
+    const { movedTo, navigation, sentSaves } = wizardAt(2, true);
     navigation.handleNext();
-    expect([movedTo, saves]).toEqual([[], [false]]);
+    expect([movedTo, sentSaves]).toEqual([[], [false]]);
   });
 });

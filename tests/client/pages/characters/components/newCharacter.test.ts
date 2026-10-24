@@ -20,22 +20,22 @@ const FORM: CharacterForm = {
       lines: [
         [
           { kind: "name", label: "Character Name" },
-          { key: "xp", kind: "number", label: "Experience Points", min: 0, required: "Required", start: 0 },
+          { key: "renown", kind: "number", label: "Renown", min: 0, required: "Required", start: 0 },
         ],
         [
           { kind: "ruleset" },
-          { column: "raceId", kind: "pick", label: "Race", required: "Race is required", ineligible: "Not open" },
+          { column: "originId", kind: "pick", label: "Origin", required: "Origin is required", ineligible: "Not open" },
         ],
-        [{ key: "alignment", kind: "select", label: "Alignment", narrows: true, options: ["Lawful Good"] }],
+        [{ key: "outlook", kind: "select", label: "Outlook", narrows: true, options: ["Steadfast"] }],
       ],
     },
-    { kind: "scores", link: "abilities", title: "Ability Scores", none: "None", pick: "Pick" },
+    { kind: "scores", link: "stats", title: "Stat Scores", none: "None", pick: "Pick" },
     {
       kind: "fields",
       title: "Details",
       lines: [
         [{ key: "age", kind: "number", label: "Age", min: 1 }],
-        [{ key: "deity", kind: "text", label: "Deity" }],
+        [{ key: "patron", kind: "text", label: "Patron" }],
         [{ key: "description", kind: "textarea", label: "Description", placeholder: "…" }],
         [{ kind: "notes" }],
       ],
@@ -45,7 +45,7 @@ const FORM: CharacterForm = {
 
 describe("A new character's form", () => {
   test("lists its rules' fields in its order, not the form's own items", () => {
-    expect(creationFieldsOf(FORM).map(({ key }) => key)).toEqual(["xp", "alignment", "age", "deity", "description"]);
+    expect(creationFieldsOf(FORM).map(({ key }) => key)).toEqual(["renown", "outlook", "age", "patron", "description"]);
   });
 
   test("starts with nothing picked, each field at its start, else empty: a number NaN", () => {
@@ -54,38 +54,38 @@ describe("A new character's form", () => {
     expect(empty).toMatchObject({
       rulesetId: "",
       name: "",
-      picks: { raceId: "" },
-      scores: { abilities: {} },
+      picks: { originId: "" },
+      scores: { stats: {} },
       notes: "",
-      xp: 0,
-      alignment: "",
-      deity: "",
+      renown: 0,
+      outlook: "",
+      patron: "",
       description: "",
     });
   });
 
   test('narrows its creation picks\' options by the fields that do, "" while unset', () => {
-    expect(narrowingKeysOf(FORM)).toEqual(["alignment"]);
-    expect(narrowingOf(["alignment"], [""])).toEqual({ alignment: "" });
-    expect(narrowingOf(["alignment"], [undefined])).toEqual({ alignment: "" });
-    expect(narrowingOf(["alignment"], ["Lawful Good"])).toEqual({ alignment: "Lawful Good" });
+    expect(narrowingKeysOf(FORM)).toEqual(["outlook"]);
+    expect(narrowingOf(["outlook"], [""])).toEqual({ outlook: "" });
+    expect(narrowingOf(["outlook"], [undefined])).toEqual({ outlook: "" });
+    expect(narrowingOf(["outlook"], ["Steadfast"])).toEqual({ outlook: "Steadfast" });
   });
 
   test("lists its creation picks and its scored links in its order", () => {
-    expect(creationPicksOf(FORM).map(({ column }) => column)).toEqual(["raceId"]);
-    expect(scoredLinksOf(FORM)).toEqual(["abilities"]);
+    expect(creationPicksOf(FORM).map(({ column }) => column)).toEqual(["originId"]);
+    expect(scoredLinksOf(FORM)).toEqual(["stats"]);
   });
 
   test("sends its fields by their keys, an empty number or an unset select as none", () => {
     expect(sentCreationFieldsOf(FORM, emptyNewCharacter(FORM))).toEqual({
-      xp: 0,
-      alignment: null,
+      renown: 0,
+      outlook: null,
       age: null,
-      deity: "",
+      patron: "",
       description: "",
     });
     expect(
-      sentCreationFieldsOf(FORM, { xp: 300, alignment: "Lawful Good", age: 30, deity: "Pelor", description: "Tall" }),
-    ).toEqual({ xp: 300, alignment: "Lawful Good", age: 30, deity: "Pelor", description: "Tall" });
+      sentCreationFieldsOf(FORM, { renown: 300, outlook: "Steadfast", age: 30, patron: "Aurel", description: "Tall" }),
+    ).toEqual({ renown: 300, outlook: "Steadfast", age: 30, patron: "Aurel", description: "Tall" });
   });
 });
