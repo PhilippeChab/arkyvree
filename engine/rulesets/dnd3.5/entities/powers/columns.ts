@@ -1,6 +1,6 @@
 import type { FormField } from "@/engine/core/fields/index.ts";
 import type { ListDescription } from "@/engine/core/module/index.ts";
-import { APTITUDES_REQUIRED } from "@/engine/rulesets/dnd3.5/entities/aptitudes/columns.ts";
+import { APTITUDES_REQUIRED } from "@/engine/rulesets/dnd3.5/entities/aptitudes/words.ts";
 import { RULESET_LIMITS } from "@/engine/rulesets/dnd3.5/limits.ts";
 
 /**

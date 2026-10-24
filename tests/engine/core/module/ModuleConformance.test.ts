@@ -188,6 +188,16 @@ describe.each([...BASE_RULES_OPTIONS])("The %s module, as core runs its characte
     });
   });
 
+  test("says why a new entity's required list of links is refused, in words of its own", () => {
+    const columns = Object.values(Engine.rules().describeAll()[rules].columns).flatMap((kind) => kind ?? []);
+    const required = columns.flatMap((column) =>
+      (column.input === "links" || column.input === "leveledLinks") && column.required !== undefined
+        ? [column.required]
+        : [],
+    );
+    for (const words of required) expect(words.trim()).not.toBe("");
+  });
+
   test("plans a new character from every field its form describes, an optional one left out, none it doesn't", async () => {
     const record = await findSeededCharacter(rules);
     const formFields = Engine.rules()

@@ -269,6 +269,17 @@ describe("rulesets entities by kind", () => {
     }
   });
 
+  test("lists the pools of the scope each kind's description narrows its list by", async () => {
+    const { id } = await setup();
+    const rules = await expectOk(api.api.rules.$get());
+    const scoped = rules["Dungeons & Dragons: 3.5"].kinds.filter((kind) => kind.pools);
+    expect(scoped.map(({ pools }) => pools)).toEqual(["feats", "spells"]);
+    for (const { pools } of scoped) {
+      const query = { limit: "1", scope: pools ?? "" };
+      expect((await expectOk(kinds.$get({ param: { id, entityType: "aptitudes" }, query }))).items).toHaveLength(1);
+    }
+  });
+
   test("reads an entity's pools where its kind's columns say its links are", async () => {
     const { id, featPool, spellList } = await setup();
     const rules = await expectOk(api.api.rules.$get());
