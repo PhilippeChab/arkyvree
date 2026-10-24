@@ -43,7 +43,7 @@ type RulesetSectionConfig<
 
 /** Where a section's rows are cached, which its saves refresh */
 type SectionRows<TData, TKey extends QueryKey> =
-  /** Its own rows, a factory's options (`modifiersQuery(…)`, `classLevelsQuery(…)`), read unless `data` holds them */
+  /** Its own rows, a factory's options (`modifiersQuery(…)`, `levelsQuery(…)`), read unless `data` holds them */
   | { query: UseQueryOptions<TData[], DefaultError, TData[], TKey>; sectionName?: undefined }
   /** A section that reads its rows itself (a paged list): the section they're cached under (`"feats"`) */
   | { query?: undefined; sectionName: string };

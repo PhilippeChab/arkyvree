@@ -70,7 +70,7 @@ export function buildProgressionBody(
   edits: ProgressionEdits,
 ): Omit<ClassProgressionBody, "ownedTokens"> {
   const rows = withAddedFeatures(features, edits);
-  const classLevelIds = new Set(levels.map((level) => level.id));
+  const savedLevelIds = new Set(levels.map((level) => level.id));
   const levelsOf = (row: FeatureRow) => edits.features[row.key] ?? row.levelIds;
   const valueOf = (level: LevelRead, key: TrackKey) => readEditedTrack(level, key, edits);
   const grantOf = (row: FeatureRow, level: LevelRead) =>
@@ -114,7 +114,7 @@ export function buildProgressionBody(
   const poolEdits = withAddedPools(pools, edits).flatMap((pool) => {
     // A level gone since its pick was made takes none
     const picks = Object.entries(edits.pools[pool.id] ?? {})
-      .filter(([levelId, count]) => classLevelIds.has(levelId) && count !== (pool.picks[levelId] ?? 0))
+      .filter(([levelId, count]) => savedLevelIds.has(levelId) && count !== (pool.picks[levelId] ?? 0))
       .map(([levelId, count]) => ({ levelId, count }));
     return picks.length > 0 && keys.grants ? [{ [keys.grants.viaKey]: pool.id, picks }] : [];
   });

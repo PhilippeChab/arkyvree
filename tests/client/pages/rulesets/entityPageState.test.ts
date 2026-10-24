@@ -21,10 +21,15 @@ describe("An entity page's way back", () => {
   });
 
   test("goes to the class's tab it was opened from, named for the class", () => {
-    expect(entityPageBack({ from: "/rulesets/r1/classes/c1/spells" }, FALLBACK)).toEqual({
+    const tabbedPages = new Map([["classes", "Class"]]);
+    expect(entityPageBack({ from: "/rulesets/r1/classes/c1/spells" }, FALLBACK, undefined, tabbedPages)).toEqual({
       label: "Back to Class",
       to: "/rulesets/r1/classes/c1/spells",
     });
+    // An entity's page without tabs is its ruleset's list's
+    expect(entityPageBack({ from: "/rulesets/r1/languages/l1" }, FALLBACK, undefined, tabbedPages).label).toBe(
+      "Back to Ruleset",
+    );
   });
 
   test("goes to the customization tab it was opened from, named for its entity in its ruleset's words", () => {

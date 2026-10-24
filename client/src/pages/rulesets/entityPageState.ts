@@ -11,32 +11,42 @@ export interface EntityPageState {
   from?: string;
 }
 
-/** A class's page, on any of its tabs (`/rulesets/:id/classes/:classId/:tab`); the ruleset's Classes tab isn't one. */
-const CLASS_PAGE = /^\/rulesets\/[^/]+\/classes\/[^/?#]+/;
-
 /** An entity's customization page, on any of its tabs (`/rulesets/:id/feats/:featId/customization/modifiers`): its type's segment. */
 const CUSTOMIZATION_PAGE = /^\/rulesets\/[^/]+\/([^/]+)\/[^/]+\/customization(?:[/?#]|$)/;
 
 /**
- * What a page Back goes to is, named in its ruleset's words (`words`): a class, an entity (just "Back" until its
- * ruleset's words are in), else the ruleset.
+ * An entity's page, on any of its tabs (`/rulesets/:id/classes/:classId/:tab`): its kind's segment; a ruleset's tab
+ * isn't one.
  */
-function backLabel(to: string, words: RulesWords | undefined) {
+const ENTITY_PAGE = /^\/rulesets\/[^/]+\/([^/]+)\/[^/?#]+/;
+
+/**
+ * What a page Back goes to is, named in its ruleset's words (`words`): an entity's page with tabs, by its kind's segment
+ * (`tabbedPages`: a class's, "Class"), an entity's customization page (just "Back" until its ruleset's words are in),
+ * else the ruleset.
+ */
+function backLabel(to: string, words: RulesWords | undefined, tabbedPages: ReadonlyMap<string, string>) {
   const segment = CUSTOMIZATION_PAGE.exec(to)?.[1];
   const named = segment && getEntityTypeOfSegment(segment);
   const customized = named && getUrlSegment(named) === segment ? named : undefined;
   if (customized) return words?.[customized] ? `Back to ${entityTypeLabel(customized, words)}` : "Back";
-  return CLASS_PAGE.test(to) ? "Back to Class" : "Back to Ruleset";
+  const tabbed = tabbedPages.get(ENTITY_PAGE.exec(to)?.[1] ?? "");
+  return tabbed ? `Back to ${tabbed}` : "Back to Ruleset";
 }
 
 /**
  * Where an entity page's Back goes, and its name: the list the page was opened from (a ruleset's tab, a class's, another
  * entity's customization tab: its Modifiers' row), else `fallback`; an entity named in its ruleset's words (`words`,
- * once its rules are in: a 3.5 power is a "Spell").
+ * once its rules are in: a 3.5 power is a "Spell"), a page with tabs by its kind's word (`tabbedPages`, by segment).
  */
-export function entityPageBack(state: unknown, fallback: string, words?: RulesWords) {
+export function entityPageBack(
+  state: unknown,
+  fallback: string,
+  words?: RulesWords,
+  tabbedPages: ReadonlyMap<string, string> = new Map(),
+) {
   const to = entityPageState(state).from ?? fallback;
-  return { label: backLabel(to, words), to };
+  return { label: backLabel(to, words, tabbedPages), to };
 }
 
 /** Reads an entity page's router state; anything else in it is ignored. */

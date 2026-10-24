@@ -5,13 +5,13 @@ import {
   CUSTOMIZATION_TABS,
   type CustomizationSection,
 } from "@/client/src/pages/rulesets/customization/sections/index.ts";
-import { kindIconOf } from "@/client/src/pages/rulesets/details/classes/classKind.ts";
+import { classKindOf, kindIconOf } from "@/client/src/pages/rulesets/details/classes/classKind.ts";
 import {
-  classLevelsQuery,
   classLinksQuery,
   classListsQuery,
   classProgressionQuery,
   classTableQuery,
+  levelsQuery,
 } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 import type { ClassTab } from "@/client/src/pages/rulesets/details/classes/classTab.ts";
 import { getUrlSegment } from "@/shared/urlSegments.ts";
@@ -39,6 +39,7 @@ export const CLASS_CUSTOMIZATION_TABS: ClassTab[] = CUSTOMIZATION_TABS.map((tab)
  * in their kind's words (`rules`): its tables', and its list's, of the entities it counts.
  */
 export function describeCountsTabs(counts: ProgressionCounts, rules: RulesDescription): ClassTab[] {
+  const classType = classKindOf(rules)?.type ?? "";
   return [
     {
       key: counts.tab,
@@ -48,10 +49,10 @@ export function describeCountsTabs(counts: ProgressionCounts, rules: RulesDescri
       prefetch: async (queryClient, rulesetId, classId) => {
         await Promise.all([
           ...rules.progression.tables.map(({ table }) =>
-            queryClient.prefetchQuery(classTableQuery(rulesetId, classId, table)),
+            queryClient.prefetchQuery(classTableQuery(rulesetId, classType, classId, table)),
           ),
           // Its list, which its editing waits for
-          queryClient.prefetchQuery(classProgressionQuery(rulesetId, classId)),
+          queryClient.prefetchQuery(classProgressionQuery(rulesetId, classType, classId)),
         ]);
       },
     },
@@ -61,7 +62,7 @@ export function describeCountsTabs(counts: ProgressionCounts, rules: RulesDescri
       icon: kindIconOf(rules, counts.type),
       Section: ClassListSection,
       prefetch: (queryClient, rulesetId, classId) =>
-        queryClient.prefetchQuery(classListsQuery(rulesetId, classId, counts.lists)),
+        queryClient.prefetchQuery(classListsQuery(rulesetId, classType, classId, counts.lists)),
     },
   ];
 }
@@ -71,13 +72,14 @@ export function describeCountsTabs(counts: ProgressionCounts, rules: RulesDescri
  * segment, named and pictured as their kind (`rules`).
  */
 export function describeLinksTab(links: EntityLinksDescription, rules: RulesDescription): ClassTab {
+  const classType = classKindOf(rules)?.type ?? "";
   return {
     key: getUrlSegment(links.type),
     label: entityTypeLabel(links.type, rules.words, true),
     icon: kindIconOf(rules, links.type),
     Section: ClassLinksSection,
     prefetch: (queryClient, rulesetId, classId) =>
-      queryClient.prefetchQuery(classLinksQuery(rulesetId, classId, links.type)),
+      queryClient.prefetchQuery(classLinksQuery(rulesetId, classType, classId, links.type)),
   };
 }
 
@@ -87,6 +89,7 @@ export function describeLinksTab(links: EntityLinksDescription, rules: RulesDesc
  */
 export function describeProgressionTab(rules: RulesDescription | undefined): ClassTab {
   const totals = rules?.progression.grants?.table;
+  const classType = classKindOf(rules)?.type ?? "";
   return {
     key: "progression",
     label: "Progression",
@@ -94,9 +97,9 @@ export function describeProgressionTab(rules: RulesDescription | undefined): Cla
     Section: ClassProgressionSection,
     prefetch: async (queryClient, rulesetId, classId) => {
       await Promise.all([
-        queryClient.prefetchQuery(classLevelsQuery(rulesetId, classId)),
-        queryClient.prefetchQuery(classProgressionQuery(rulesetId, classId)),
-        ...(totals ? [queryClient.prefetchQuery(classTableQuery(rulesetId, classId, totals))] : []),
+        queryClient.prefetchQuery(levelsQuery(rulesetId, classType, classId)),
+        queryClient.prefetchQuery(classProgressionQuery(rulesetId, classType, classId)),
+        ...(totals ? [queryClient.prefetchQuery(classTableQuery(rulesetId, classType, classId, totals))] : []),
       ]);
     },
   };

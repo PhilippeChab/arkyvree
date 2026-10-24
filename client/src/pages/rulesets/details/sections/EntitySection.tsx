@@ -202,7 +202,7 @@ export function EntitySection({ ruleset, childOnly, onChildOnlyChange, kind }: E
     if (customization) {
       void queryClient.prefetchQuery(customizationEntityQuery(ruleset.id, customization, entity.id));
     } else if (kind.opens === "progression") {
-      void queryClient.prefetchQuery(classDetailQuery(ruleset.id, entity.id));
+      void queryClient.prefetchQuery(classDetailQuery(ruleset.id, kind.type, entity.id));
       // And the tab its page opens on, its first
       void getClassTabs(rules)[0].prefetch?.(queryClient, ruleset.id, entity.id);
     } else {

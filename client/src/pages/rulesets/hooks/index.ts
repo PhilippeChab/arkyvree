@@ -5,6 +5,7 @@ export { useEntityFields } from "./useEntityFields.ts";
 export { useEntityFilters } from "./useEntityFilters.ts";
 export { useEntityForm } from "./useEntityForm.ts";
 export { useEntityList } from "./useEntityList.ts";
+export { useEntityPageBack } from "./useEntityPageBack.ts";
 export { useEntitySave } from "./useEntitySave.ts";
 export { useEntityVariants } from "./useEntityVariants.ts";
 export { useFormOptions } from "./useFormOptions.ts";

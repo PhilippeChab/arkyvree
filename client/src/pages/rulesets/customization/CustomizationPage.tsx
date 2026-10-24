@@ -25,8 +25,13 @@ import { type RulesDescription, type RulesetDetail, rulesetDetailQuery } from "@
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
 import { EntityDetailLayout, EntityPageError } from "@/client/src/pages/rulesets/components/index.ts";
-import { entityPageBack, entityPageState } from "@/client/src/pages/rulesets/entityPageState.ts";
-import { useCopyOnWrite, useFormOptions, useRestorableDelete } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { entityPageState } from "@/client/src/pages/rulesets/entityPageState.ts";
+import {
+  useCopyOnWrite,
+  useEntityPageBack,
+  useFormOptions,
+  useRestorableDelete,
+} from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { buildCustomizationPath } from "@/shared/customization/entities.ts";
 import { formatOperator } from "@/shared/customization/operators.ts";
@@ -76,7 +81,7 @@ function CustomizationView({
     modifierSourcePath(rulesetId, sourceType, sourceId, pages, rules),
   );
   // Where it was opened from, else what holds it (a class's level, an entity's modifier), else its list
-  const back = entityPageBack(location.state, backPath ?? `/rulesets/${rulesetId}/${type}`, rules?.words);
+  const back = useEntityPageBack(location.state, backPath ?? `/rulesets/${rulesetId}/${type}`, rules?.words);
   usePageTitle(pageTitle);
 
   const entityKey = QUERY_KEYS.rulesets.entity(rulesetId, type, entityId);
@@ -313,7 +318,7 @@ export default function CustomizationPage() {
   const { data: ruleset, isLoading: isRulesetLoading, error: rulesetError } = useQuery(rulesetDetailQuery(rulesetId));
   // Until the entity says what holds it, Back goes where the page was opened from, else to the ruleset
   const { all, rules } = useRules(ruleset?.baseRules);
-  const back = entityPageBack(location.state, `/rulesets/${rulesetId}`, rules?.words);
+  const back = useEntityPageBack(location.state, `/rulesets/${rulesetId}`, rules?.words);
   const {
     data,
     isLoading: isEntityLoading,

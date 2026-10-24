@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useDebouncedValue, useDialogState, useListboxQuery } from "@/client/src/hooks/index.ts";
 import type { EntityLinksDescription } from "@/client/src/lib/queries.ts";
-import { classLinksQuery } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
+import { classLinksQuery, classParam } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 import type { LinkWords } from "@/client/src/pages/rulesets/details/classes/classTab.ts";
 import { invalidateRulesetEdit } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import { entityOptionsQuery } from "@/client/src/pages/rulesets/optionQueries.ts";
@@ -26,7 +26,13 @@ function classOf(row: Record<string, unknown>, owner: string, classId: string) {
  * A class's links to the entities of a kind (`links`, its kind's: 3.5's class skills), which its links' tab lists, adds
  * to and removes from, each said in its rules' words (`words`).
  */
-export function useClassLinks(rulesetId: string, classId: string, links: EntityLinksDescription, words: LinkWords) {
+export function useClassLinks(
+  rulesetId: string,
+  classType: string,
+  classId: string,
+  links: EntityLinksDescription,
+  words: LinkWords,
+) {
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
   const one = words.one.toLowerCase();
@@ -35,9 +41,9 @@ export function useClassLinks(rulesetId: string, classId: string, links: EntityL
   const removeDialog = useDialogState<string>();
   // Adding or removing a link of an inherited class copies it: the page follows the copy (each request tagged with the
   // class it was sent for), which takes the class's place in the list
-  const { followCopy, queryKeysToInvalidate, tag } = useClassCopy(rulesetId, classId);
+  const { followCopy, queryKeysToInvalidate, tag } = useClassCopy(rulesetId, classType, classId);
 
-  const linksQuery = classLinksQuery(rulesetId, classId, links.type);
+  const linksQuery = classLinksQuery(rulesetId, classType, classId, links.type);
   const linksKey = linksQuery.queryKey;
   const { data: linked, isLoading, error } = useQuery(linksQuery);
 
@@ -57,7 +63,7 @@ export function useClassLinks(rulesetId: string, classId: string, links: EntityL
       tag(
         parseResponse(
           rpc.api.rulesets[":id"].entities[":entityType"][":entityId"].links.$post({
-            param: { id: rulesetId, entityType: "classes", entityId: classId },
+            ...classParam(rulesetId, classType, classId),
             json: { targetId },
           }),
         ),
@@ -105,7 +111,7 @@ export function useClassLinks(rulesetId: string, classId: string, links: EntityL
       tag(
         parseResponse(
           rpc.api.rulesets[":id"].entities[":entityType"][":entityId"].links[":targetId"].$delete({
-            param: { id: rulesetId, entityType: "classes", entityId: classId, targetId },
+            param: { ...classParam(rulesetId, classType, classId).param, targetId },
           }),
         ),
       ),

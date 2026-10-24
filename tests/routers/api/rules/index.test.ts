@@ -166,6 +166,13 @@ describe("rules", () => {
       ["perDay", undefined, "spells", "spellsPerDay"],
       ["known", "All", "spells-known", "spellsKnown"],
     ]);
+    // Its class page's old tabs' addresses, by the tab each opens now
+    expect(dnd35.progression.tabAliases).toEqual({
+      "feat-pools": "progression",
+      levels: "progression",
+      "spells-known": "spells?table=known",
+      "spells-per-day": "spells",
+    });
     // What its levels grant past their columns: feat pools, their picks and totals where its answer and table hold them
     expect(dnd35.progression.grants).toMatchObject({
       picks: "featPicks",
