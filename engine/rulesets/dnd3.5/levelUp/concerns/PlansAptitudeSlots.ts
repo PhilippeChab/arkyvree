@@ -31,7 +31,7 @@ export function PlansAptitudeSlots<B extends Constructor<LevelUpBase<DetailedCha
      * (a power pool's spell level) give a level. Setting a spell level's to -1, "all spells known", counts as all of them.
      */
     private addModifierDeltas(deltas: SlotDeltas, modifiers: Modifier[], featSlots: FeatSlots, powerSlots: PowerSlots) {
-      const aptitudeSlugToId = this.rulesetData.aptitudeIdBySlug;
+      const aptitudeSlugToId = this.dnd35.aptitudeIdBySlug;
       for (const mod of modifiers) {
         // A pool's slots take a literal: an add, or a spell level's set to -1 (the paths allow nothing else)
         const value = LiteralValue.parse(mod.value, "number");
@@ -80,7 +80,8 @@ export function PlansAptitudeSlots<B extends Constructor<LevelUpBase<DetailedCha
       powerSlots: PowerSlots,
     ): SlotDeltas {
       const deltas: SlotDeltas = { feats: {}, powers: {} };
-      const { aptitudeIdBySlug, modifiersBySource } = this.rulesetData;
+      const { aptitudeIdBySlug } = this.dnd35;
+      const { modifiersBySource } = this.rulesetData;
       const add = (modifiers: Modifier[]) => this.addModifierDeltas(deltas, modifiers, featSlots, powerSlots);
 
       add(modifiersBySource.get(klassLevelId) ?? []);

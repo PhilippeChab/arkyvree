@@ -1,8 +1,8 @@
 import { CharacterComponent } from "@/engine/core/character/index.ts";
-import type { Item } from "@/engine/core/view/index.ts";
 import { type ItemFieldValues } from "@/engine/rulesets/dnd3.5/entities/items/fields.ts";
 import type InventoryComponent from "@/engine/rulesets/dnd3.5/model/inventory/InventoryComponent.ts";
 import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
+import type { Item } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { MASTERWORK_CHECK_PENALTY_REDUCTION } from "@/vocabulary/dnd3.5/combat.ts";
 

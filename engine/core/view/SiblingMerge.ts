@@ -3,7 +3,7 @@
  * (`RulesetComposition`) and a copy of the winner writes (`EntityCopy`), the same both ways: the engine's, which both
  * ask. Each rule takes the winner's own rows and each sibling's, in the order its `CowData` pairs
  * them (`getSiblings`), and returns the siblings' rows the winner takes, in that order. A modifier, a property of a set or
- * an aptitude link whose key the winner or an earlier sibling has is left out. A single-valued property is the winner's,
+ * a list's link (`mergeListLinks`: a 3.5 feat's pool) whose key the winner or an earlier sibling has is left out. A single-valued property is the winner's,
  * else the first sibling's that holds it (its field's `fallback`), whose stores keep one value of it. Requirements merge as trees
  * (`RequirementTree`), whose top-level rows are AND'd: merging the winner with N siblings is `AND(winner, sibling 1, …)`,
  * each sibling's tree kept as it is, appended at the top level. A sibling's group gets a fresh top-level number, its
@@ -62,18 +62,6 @@ export default class SiblingMerge {
   }
 
   /**
-   * The siblings' links to aptitudes the winner doesn't link to: an aptitude is the one `resolve` gives (a stale id's
-   * copy or winner). The first link to an aptitude wins, a power's with its level.
-   */
-  static mergeAptitudeLinks<T extends { aptitudeId: string }>(
-    own: readonly T[],
-    siblings: Iterable<readonly T[]>,
-    resolve: (id: string) => string,
-  ): T[] {
-    return SiblingMerge.takeNewRows(own, siblings, (link) => resolve(link.aptitudeId));
-  }
-
-  /**
    * What a copy of a sibling winner takes of its siblings' customizations (`siblings`, in the order its `CowData` pairs
    * them) beside its own (`own`, which the copy holds): their modifiers, each with its requirements, their properties and
    * their requirements, merged as the view merges them, a requirement onto the copy (`targetEntityId`).
@@ -105,6 +93,19 @@ export default class SiblingMerge {
         targetEntityId,
       ),
     };
+  }
+
+  /**
+   * The siblings' links of a list to targets the winner doesn't link to (`to`: the column naming a link's target): a
+   * target is the one `resolve` gives (a stale id's copy or winner). The first link to a target wins, with its tier.
+   */
+  static mergeListLinks<T extends object>(
+    own: readonly T[],
+    siblings: Iterable<readonly T[]>,
+    resolve: (id: string) => string,
+    to: string,
+  ): T[] {
+    return SiblingMerge.takeNewRows(own, siblings, (link) => resolve((link as Record<string, string>)[to]));
   }
 
   /**

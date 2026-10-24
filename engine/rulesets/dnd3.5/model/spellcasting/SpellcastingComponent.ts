@@ -3,6 +3,7 @@ import type { RulesetData, RulesetView } from "@/engine/core/view/index.ts";
 import { type AptitudeLevelData } from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudesComponent.ts";
 import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
 import SpellLists from "@/engine/rulesets/dnd3.5/rules/SpellLists.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { include } from "@/lib/mixins.ts";
 import type { Modifier } from "@/shared/relations.ts";
 import { BONUS_SPELL_MODIFIER_STEP, MAX_SPELL_LEVEL } from "@/vocabulary/dnd3.5/spells.ts";
@@ -36,7 +37,7 @@ class SpellcastingComponent extends include(SpellcastingState, BonusCasterLevels
     const spellLists = SpellLists.of(rulesetData);
     const isGateMet = (modifier: Modifier, metTargets?: string[]) =>
       this.isGateMet(character, rulesetData, modifier, metTargets);
-    this.readBonusCasterLevels(rulesetData, klassLevels, feats, characterLevels, rulesetData.klasses);
+    this.readBonusCasterLevels(rulesetData, klassLevels, feats, characterLevels, Dnd35View.of(rulesetData).klasses);
     this.applyBonusCasterLevels(character, feats, spellLists.featListIds, isGateMet);
     this.applyBonusSpells(klassBonusSpellAbilityMap);
     // The modifiers applied once the bonus caster levels' have: what the lists the character knows read

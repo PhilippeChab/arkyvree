@@ -1,6 +1,7 @@
 import { expect, test } from "bun:test";
 
 import type { Aptitude, Feat } from "@/engine/index.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import {
@@ -148,7 +149,8 @@ for (const entityType of ["feats", "powers"] as const) {
 
       invalidateTestRulesets(...rulesetIds);
       await withRulesetScope(db, host.id, async ({ rulesetData }) => {
-        const entities = entityType === "feats" ? rulesetData.featsById : rulesetData.powersById;
+        const entities =
+          entityType === "feats" ? Dnd35View.of(rulesetData).featsById : Dnd35View.of(rulesetData).powersById;
         for (const id of [winnerId, loser.id, local.resolvedEntityId]) expect(entities.get(id)).toBeUndefined();
         expect(rulesetData.requirementsByEntity.get(local.resolvedEntityId) ?? []).toEqual([]);
       });
@@ -334,7 +336,7 @@ test("installing another extension preserves the local override and exposes unre
   await RulesetExtensionsService.subscribeExtension(session, host.id, [loserRulesetId]);
   await withRulesetScope(db, host.id, async ({ rulesetData }) => {
     expect(holds(rulesetData.propertiesByEntity.get(local.id) ?? [])).toBe(false);
-    expect(rulesetData.featsById.has(unrelated.id)).toBe(true);
+    expect(Dnd35View.of(rulesetData).featsById.has(unrelated.id)).toBe(true);
     expect(rulesetData.canonicalize(loser.id)).toBe(local.id);
   });
   await RulesetChangesService.revertOverride(session, host.id, "feats", winnerId);

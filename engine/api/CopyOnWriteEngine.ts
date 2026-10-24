@@ -23,8 +23,6 @@ import StorageEngine from "./StorageEngine.ts";
 export interface StoredRulesetRows {
   /** Its live entities, every kind's, by name then id */
   entities: StoredEntity[];
-  /** Of `targets`, those a link of a join with a tier points at, from any ruleset (a spell list's at a level) */
-  leveledAptitudeIds: Set<string>;
   /** Every modifier whose source is one of its entities, every requirement of them or of those modifiers */
   modifiers: Modifier[];
   requirements: Requirement[];
@@ -32,11 +30,8 @@ export interface StoredRulesetRows {
   ruleset?: StoredRuleset;
   /** The entities its entities' lists name (a feat's pools' aptitudes), wherever they're from */
   targets: StoredEntity[];
-}
-
-/** A name in camelCase (`klass_level_feats`'s `klassLevelFeats`): a ruleset's raw rows' key of a kind's or a join's. */
-function camelCase(name: string) {
-  return name.replace(/_([a-z])/g, (_, letter: string) => letter.toUpperCase());
+  /** Of `targets`, those a link of a join with a tier points at, from any ruleset (a spell list's at a level) */
+  tieredIds: Set<string>;
 }
 
 /**
@@ -75,7 +70,7 @@ export default class CopyOnWriteEngine {
     const types = storage.registries().entityTypes;
     const ids = new Set(stored.entities.map((entity) => entity.id));
     const live = stored.entities.filter((entity) => entity.ownerId === null || ids.has(entity.ownerId));
-    const raw: Record<string, unknown> = {};
+    const entities: RulesetRawData["entities"] = {};
     for (const { ownerType, type } of types) {
       const ofType = live.filter((entity) => entity.type === type);
       if (ownerType) {
@@ -83,16 +78,16 @@ export default class CopyOnWriteEngine {
           (a, b) => a.position! - b.position! || (a.ownerId! < b.ownerId! ? -1 : a.ownerId! > b.ownerId! ? 1 : 0),
         );
       }
-      raw[camelCase(type)] = ofType.map((entity) => storage.rowOf(entity, { targets }));
+      entities[type] = ofType.map(
+        (entity) => storage.rowOf(entity, { targets }) as RulesetRawData["entities"][string][number],
+      );
     }
-    const listed = new Set(
-      types.flatMap(({ type }) => Object.values(storage.kind(type).lists ?? {}).map((list) => list.join)),
-    );
-    for (const join of storage.joinNames().filter((name) => !listed.has(name)))
-      raw[camelCase(join)] = storage.joinRowsOf(join, live);
+    const joins: RulesetRawData["joins"] = {};
+    for (const { name } of storage.viewSchema().joins) joins[name] = storage.joinRowsOf(name, live);
     return {
-      ...(raw as Omit<RulesetRawData, "leveledAptitudeIds" | "modifiers" | "properties" | "requirements">),
-      leveledAptitudeIds: stored.leveledAptitudeIds,
+      entities,
+      joins,
+      tieredIds: stored.tieredIds,
       modifiers: stored.modifiers,
       properties: storage.propertiesOf({
         entities: live,
@@ -113,7 +108,14 @@ export default class CopyOnWriteEngine {
    */
   buildView(ruleset: { baseRules: BaseRules }, chain: RulesetRawData[], cow: CowData): RulesetData {
     const module = Modules.of(ruleset.baseRules);
-    return new RulesetComposition(chain, cow, module.propertyTypes, singleValued).build();
+    return new RulesetComposition(
+      chain,
+      cow,
+      module.propertyTypes,
+      singleValued,
+      StorageEngine.shared().viewSchema(),
+      module.kindLabels,
+    ).build();
   }
 
   /**
@@ -135,7 +137,7 @@ export default class CopyOnWriteEngine {
     siblings: Iterable<readonly T[]>,
     resolve: (id: string) => string,
   ): T[] {
-    return SiblingMerge.mergeAptitudeLinks(own, siblings, resolve);
+    return SiblingMerge.mergeListLinks(own, siblings, resolve, "aptitudeId");
   }
 
   /** What a copy of a sibling winner takes of its siblings' customizations beside its own, merged as the view merges. */

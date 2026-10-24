@@ -3,6 +3,7 @@ import type { RulesetView } from "@/engine/core/view/index.ts";
 import type AbilitiesComponent from "@/engine/rulesets/dnd3.5/model/abilities/AbilitiesComponent.ts";
 import type ClassesComponent from "@/engine/rulesets/dnd3.5/model/classes/ClassesComponent.ts";
 import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 interface SavesData {
@@ -38,7 +39,7 @@ export default class SavesComponent extends CharacterComponent<LoadedCharacterDa
       }
     }
 
-    for (const save of rulesetData.saves) {
+    for (const save of Dnd35View.of(rulesetData).saves) {
       const normalizedName = stripSeparators(save.name);
       const abilityName = this.abilities.getAbilityName(save.abilityId) ?? "";
       const base = saveBaseValues.get(save.id) ?? 0;

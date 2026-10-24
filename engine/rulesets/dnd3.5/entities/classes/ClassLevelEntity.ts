@@ -6,10 +6,12 @@ import { CustomizationPageEntity } from "@/engine/core/entities/index.ts";
 import type { EntityFieldValues, EntityForm } from "@/engine/core/fields/index.ts";
 import type { EntityWrites } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
-import type { Klass, KlassLevel, RulesetView } from "@/engine/core/view/index.ts";
+import type { RulesetView } from "@/engine/core/view/index.ts";
 import CombatSheet from "@/engine/rulesets/dnd3.5/characters/description/CombatSheet.ts";
 import { RULESET_LIMITS } from "@/engine/rulesets/dnd3.5/limits.ts";
 import ClassesPaths from "@/engine/rulesets/dnd3.5/model/classes/ClassesPaths.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
+import type { Klass, KlassLevel } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 
 import { CLASS_LEVEL_COLUMNS } from "./columns.ts";
 import { CLASS_LEVEL_FIELDS, type ClassLevelFieldValues } from "./fields.ts";
@@ -165,18 +167,23 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
    * A level's details: the feats it grants (each with its pool's name and whether it's free), its saves' base bonuses.
    */
   private detailsOf(level: { id: string }) {
-    const levelSaves = this.rulesetData.klassLevelSavesByKlassLevel.get(level.id) ?? [];
+    const levelSaves = this.dnd35.klassLevelSavesByKlassLevel.get(level.id) ?? [];
     return {
       feats: this.grantedFeats(level.id),
       saves: levelSaves.map((ls) => ({ saveId: ls.saveId, base: ls.base })),
     };
   }
 
+  /** The view's 3.5 lists and indices. */
+  private get dnd35(): Dnd35View {
+    return Dnd35View.of(this.rulesetData);
+  }
+
   /** The feats a class level grants, each with its pool's name and whether it's free. */
   private grantedFeats(levelId: string) {
-    const { rulesetData } = this;
-    return (rulesetData.klassLevelFeatsByKlassLevel.get(levelId) ?? []).map((lf) => {
-      const feat = rulesetData.featsById.get(lf.featId);
+    const { dnd35 } = this;
+    return (dnd35.klassLevelFeatsByKlassLevel.get(levelId) ?? []).map((lf) => {
+      const feat = dnd35.featsById.get(lf.featId);
       const aptitudeEntry = feat?.featsAptitudesInRules?.find((fa) => fa.aptitudeId === lf.aptitudeId);
       return {
         ...feat!,
@@ -208,7 +215,7 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
    * attacks a round (`babLabel`: "+6/+1").
    */
   describeAll() {
-    const levels = this.rulesetData.klassLevelsByKlass.get(this.klass.id) ?? [];
+    const levels = this.dnd35.klassLevelsByKlass.get(this.klass.id) ?? [];
     return this.describeRows(levels).map((level) => ({
       ...level,
       ...this.detailsOf(level),

@@ -1,12 +1,14 @@
 import type { CharacterInput } from "@/engine/core/module/index.ts";
 import { CharacterPicker } from "@/engine/core/pickers/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
-import type { KlassLevel, RulesetView } from "@/engine/core/view/index.ts";
+import type { RulesetView } from "@/engine/core/view/index.ts";
 import CharacterProjection from "@/engine/rulesets/dnd3.5/levelUp/CharacterProjection.ts";
 import type { PickQuery } from "@/engine/rulesets/dnd3.5/levelUp/requests.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import Dnd35CharacterBuilder from "@/engine/rulesets/dnd3.5/model/Dnd35CharacterBuilder.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
+import type { KlassLevel } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 
 /**
  * A feat or power picker: the level it picks at (`query`), the character projected to it with the feats and powers
@@ -24,7 +26,7 @@ export default abstract class LevelPicker<Details extends object = object> exten
     protected readonly query: PickQuery,
   ) {
     super(view, input, Dnd35CharacterBuilder);
-    const klassLevel = this.rulesetData.klassLevelByKlassAndLevel.get(`${query.klassId}:${query.level}`);
+    const klassLevel = Dnd35View.of(this.rulesetData).klassLevelByKlassAndLevel.get(`${query.klassId}:${query.level}`);
     if (!klassLevel) throw new RulesError("not-found", "Class level not found");
     this.klassLevel = klassLevel;
   }

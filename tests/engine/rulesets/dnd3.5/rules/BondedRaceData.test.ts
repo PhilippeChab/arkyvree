@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import SkillsPaths from "@/engine/rulesets/dnd3.5/model/skills/SkillsPaths.ts";
 import BondedRaceData from "@/engine/rulesets/dnd3.5/rules/BondedRaceData.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
@@ -20,10 +21,12 @@ describe("A stat block's feats", () => {
       }),
     );
     const bonuses = await withRulesetScope(db, ctx.rulesetId, async ({ rulesetData }) => {
-      const skillByMisc = new Map(rulesetData.skills.map((skill) => [SkillsPaths.misc(skill.name), skill.name]));
+      const skillByMisc = new Map(
+        Dnd35View.of(rulesetData).skills.map((skill) => [SkillsPaths.misc(skill.name), skill.name]),
+      );
       const byFeat: Record<string, Record<string, number>> = {};
       for (const featName of featNames) {
-        const feat = rulesetData.feats.find((f) => f.name === featName);
+        const feat = Dnd35View.of(rulesetData).feats.find((f) => f.name === featName);
         for (const modifier of (feat && rulesetData.modifiersBySource.get(feat.id)) ?? []) {
           const skillName = skillByMisc.get(modifier.target);
           if (skillName && modifier.operator === "add") (byFeat[featName] ??= {})[skillName] = Number(modifier.value);

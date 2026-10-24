@@ -1,9 +1,12 @@
 import { describe, expect, test } from "bun:test";
 
+import type { RulesetData } from "@/engine/core/view/index.ts";
 import type { Item } from "@/engine/index.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Entities, Properties } from "@/server/repositories/index.ts";
+import { composeView, type Join, type Kind, rawRows } from "@/tests/support/composedViews.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
@@ -13,7 +16,7 @@ describe("An item's properties", () => {
   test("are its template's of each type it doesn't set, then its own: its damage types replace all the template's", async () => {
     const ruleset = await createSeededTestRuleset(makeSession().userId);
     const longsword = await withRulesetScope(db, ruleset.id, async ({ rulesetData }) =>
-      rulesetData.items.find((item) => item.isTemplate && item.name === "Longsword"),
+      Dnd35View.of(rulesetData).items.find((item) => item.isTemplate && item.name === "Longsword"),
     );
     const [variant] = await Entities.createMany<Item>(db, "items", [
       { name: "Probe Blade", rulesetId: ruleset.id, sourceItemId: longsword!.id, type: "Weapon" },
@@ -67,5 +70,39 @@ describe("A ruleset's own properties", () => {
       RulesetViews.invalidate(fork.id);
       expect(await read()).toEqual([["fork", type, value]]);
     }
+  });
+});
+
+describe("A ruleset's view's reads", () => {
+  const view = composeView(
+    [rawRows({ owners: [{ id: "o1-copy" }] }), rawRows({ owners: [{ id: "o1" }, { id: "o2" }] })],
+    {
+      overrides: [["o1", "o1-copy"]],
+    },
+  );
+
+  test("find a kind's entity by a stored id, as resolving by id, and leave it unresolved as stored", () => {
+    expect(view.byId("owners" as Kind).get("o1")).toEqual({ id: "o1-copy" } as never);
+    expect(view.storedById("owners" as Kind).get("o1")).toBeUndefined();
+    expect(view.storedById("owners" as Kind).get("o1-copy")).toEqual({ id: "o1-copy" } as never);
+    expect(view.find("owners" as Kind, "missing")).toBeUndefined();
+  });
+
+  test("answer a join or a kind the module declares none of with no rows", () => {
+    expect(view.joinRows("nothing" as Join)).toEqual([]);
+    expect(view.rows("nothing" as Kind)).toEqual([]);
+  });
+
+  test("name a type by its module's label, or by itself for one it labels none of", () => {
+    expect(view.labelOf("owners")).toBe("Owner");
+    expect(view.labelOf("owned")).toBe("owned");
+  });
+
+  test("keep what a module derives of the view, built once", () => {
+    class Derived {
+      constructor(readonly data: RulesetData) {}
+    }
+    expect(view.derive(Derived)).toBe(view.derive(Derived));
+    expect(view.derive(Derived).data).toBe(view);
   });
 });

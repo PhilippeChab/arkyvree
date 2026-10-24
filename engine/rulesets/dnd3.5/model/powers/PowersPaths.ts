@@ -1,8 +1,10 @@
 import CategoryPaths from "@/engine/core/paths/CategoryPaths.ts";
 import type { PathCategory } from "@/engine/core/paths/PathCategory.ts";
-import type { PowerWithAptitudes, RulesetData } from "@/engine/core/view/index.ts";
+import type { RulesetData } from "@/engine/core/view/index.ts";
 import { type Dnd35Components } from "@/engine/rulesets/dnd3.5/model/CharacterComponents.ts";
 import SpellLists from "@/engine/rulesets/dnd3.5/rules/SpellLists.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
+import type { PowerWithAptitudes } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import { getOperators } from "@/shared/customization/operators.ts";
 import { formatPropertyType } from "@/shared/customization/properties.ts";
 import { deriveNameLabels, deriveSegmentLabels, isLeafOfKind, type TargetPath } from "@/shared/customization/target.ts";
@@ -134,7 +136,7 @@ export default class PowersPaths implements PathCategory<Dnd35Components> {
   readonly name = "powers";
 
   /** Each spell a list has at a level, by its slug: its own DC paths. */
-  private leveledPowerNames(powers: RulesetData["powers"]) {
+  private leveledPowerNames(powers: Dnd35View["powers"]) {
     return [
       ...new Set(
         powers
@@ -145,7 +147,8 @@ export default class PowersPaths implements PathCategory<Dnd35Components> {
   }
 
   generate(rulesetData: RulesetData, kind: "modifier" | "requirement"): TargetPath[] {
-    const { powers, propertiesByEntityType } = rulesetData;
+    const { powers } = Dnd35View.of(rulesetData);
+    const { propertiesByEntityType } = rulesetData;
     const spellLists = SpellLists.of(rulesetData);
     const powerProperties = propertiesByEntityType.get("powers") ?? [];
     const powersWithProperties = powers.map((power) => ({
@@ -189,14 +192,15 @@ export default class PowersPaths implements PathCategory<Dnd35Components> {
    * number names a spell level, never a value).
    */
   labelNames(rulesetData: RulesetData) {
+    const dnd35 = Dnd35View.of(rulesetData);
     const fallbacks: Record<string, string> = {};
-    for (const { name } of rulesetData.aptitudes)
+    for (const { name } of dnd35.aptitudes)
       fallbacks[SpellLists.toSpellPossessionSlug(name)] ??= name.replace(/ Spells$/, "");
     for (const { type, value } of rulesetData.propertiesByEntityType.get("powers") ?? []) {
       fallbacks[type] ??= formatPropertyType(type);
       const slug = stripSeparators(value);
       if (/[a-z]/.test(slug)) fallbacks[slug] ??= value;
     }
-    return { fallbacks, names: deriveNameLabels(rulesetData.powers.map(({ name }) => name)) };
+    return { fallbacks, names: deriveNameLabels(dnd35.powers.map(({ name }) => name)) };
   }
 }

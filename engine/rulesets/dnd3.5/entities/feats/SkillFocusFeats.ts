@@ -1,9 +1,9 @@
-import { GeneratedFeats } from "@/engine/core/entities/index.ts";
 import SkillsPaths from "@/engine/rulesets/dnd3.5/model/skills/SkillsPaths.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import { SKILL_FOCUS_BONUS } from "@/vocabulary/dnd3.5/feats.ts";
 
 import { FEAT_FIELDS } from "./fields.ts";
+import GeneratedFeats from "./GeneratedFeats.ts";
 
 /** The feats a skill makes: its Skill Focus, which a delete or a rename removes. */
 export default class SkillFocusFeats extends GeneratedFeats {

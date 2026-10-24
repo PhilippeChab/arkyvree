@@ -1,7 +1,7 @@
 import RulesError from "@/engine/core/RulesError.ts";
 
-import { KIND_LABELS } from "./kindLabels.ts";
-import type { default as RulesetData, ViewEntities } from "./RulesetData.ts";
+import type { ViewEntities } from "./rows.ts";
+import type RulesetData from "./RulesetData.ts";
 
 /**
  * The entities a request names by id, as its ruleset's view (`rulesetData`) reads them: each the one the view shows in
@@ -9,8 +9,8 @@ import type { default as RulesetData, ViewEntities } from "./RulesetData.ts";
  * none of (unknown, of an unrelated ruleset, or one the ruleset deleted) is refused as invalid, naming it: "Item <id>
  * does not belong to `owner`". Every request is read by it as it enters the rules (a level flow's by `LevelRequests`, a
  * character's creation, abilities, languages and inventory by the characters part, an entity's form by its kind's
- * `resolveIds`, a field naming an entity by its kind's codec (`FieldCodec.parse`), a class skill's add by
- * `ClassSkills`), so its checks and the rows a save writes read the view's ids, whichever the request sent.
+ * `resolveIds`, a field naming an entity by its kind's codec (`FieldCodec.parse`), a link's add by its kind's
+ * rules), so its checks and the rows a save writes read the view's ids, whichever the request sent.
  */
 export default class RequestIds {
   /** `owner`: the ruleset a refusal says the entity doesn't belong to ("the character's ruleset", "this ruleset"). */
@@ -22,7 +22,8 @@ export default class RequestIds {
   /** The id the view keys `id` by (`resolve`), not one of those `seen` already: refused, naming it, when it is. */
   private resolveOnce(type: keyof ViewEntities, id: string, seen: Set<string>) {
     const resolved = this.resolve(type, id);
-    if (seen.has(resolved)) throw new RulesError("invalid", `${KIND_LABELS[type]} ${id} is given more than once`);
+    if (seen.has(resolved))
+      throw new RulesError("invalid", `${this.rulesetData.labelOf(type)} ${id} is given more than once`);
     seen.add(resolved);
     return resolved;
   }
@@ -30,7 +31,8 @@ export default class RequestIds {
   /** The entity of `type` the view shows for `id`: refused, naming it, when it shows none. */
   find<K extends keyof ViewEntities>(type: K, id: string): ViewEntities[K] {
     const entity = this.rulesetData.find(type, id);
-    if (!entity) throw new RulesError("invalid", `${KIND_LABELS[type]} ${id} does not belong to ${this.owner}`);
+    if (!entity)
+      throw new RulesError("invalid", `${this.rulesetData.labelOf(type)} ${id} does not belong to ${this.owner}`);
     return entity;
   }
 

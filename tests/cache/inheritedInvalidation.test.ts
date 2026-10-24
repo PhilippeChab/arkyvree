@@ -1,6 +1,7 @@
 import { afterEach, expect, test } from "bun:test";
 
 import type { Feat } from "@/engine/index.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import MemoryCache from "@/server/cache/MemoryCache.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
@@ -35,8 +36,9 @@ test("extension COW invalidates the warm subscriber mapping", async () => {
   expect(after).not.toBe(before);
   expect(after.resolve(source.id)).toBe(copy.id);
   const data = await RulesetViews.getData(updatedHost);
-  expect(data.featsById.get(copy.id)?.description).toBe("Updated extension feat");
-  expect(data.feats.some((f) => f.id === source.id)).toBe(false);
+  const dataView = Dnd35View.of(data);
+  expect(dataView.featsById.get(copy.id)?.description).toBe("Updated extension feat");
+  expect(dataView.feats.some((f) => f.id === source.id)).toBe(false);
 });
 
 test("worker cache mode reads changes between builds without web invalidation", async () => {
@@ -49,10 +51,10 @@ test("worker cache mode reads changes between builds without web invalidation", 
     rulesetId: fork.id,
   });
   const first = await RulesetViews.getData(fork);
-  expect(first.featsById.get(feat.id)?.description).toBe("Before");
+  expect(Dnd35View.of(first).featsById.get(feat.id)?.description).toBe("Before");
   await Entities.update<Feat>(db, "feats", { description: "After" }, { id: feat.id });
   const next = await RulesetViews.getData(fork);
-  expect(next.featsById.get(feat.id)?.description).toBe("After");
+  expect(Dnd35View.of(next).featsById.get(feat.id)?.description).toBe("After");
 });
 
 test("disabled caches do not coalesce raw reads across worker jobs", async () => {

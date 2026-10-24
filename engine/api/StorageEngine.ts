@@ -20,6 +20,7 @@ import type {
   StoredRuleset,
   StoredWrite,
 } from "@/engine/core/module/index.ts";
+import type { ViewSchema } from "@/engine/core/view/index.ts";
 import type { BaseRules } from "@/shared/enums.ts";
 
 import Modules from "./Modules.ts";
@@ -139,6 +140,9 @@ export default class StorageEngine {
 
   private rowReads: { fields: string[]; roles: string[] } | undefined;
 
+  /** What every module declares of a view's kinds and joins, once read (`viewSchema`). */
+  private schema?: ViewSchema;
+
   /** A character link role. */
   private characterRole(role: string): CharacterRoleDef {
     return this.merged.characterRoles.find((def) => def.role === role)!;
@@ -185,6 +189,13 @@ export default class StorageEngine {
         return "integer" in column ? Number(roundDecimal(value, 0)) : roundDecimal(value, column.scale);
       }
     }
+  }
+
+  /** The column a join's row holds one of its parts in (`part`: its from-entity, its target), refused without one. */
+  private joinColumn(name: string, part: LinkPart, word: string): string {
+    const found = Object.entries(this.join(name).columns).find(([, held]) => held === part);
+    if (!found) throw new Error(`The join ${name} names no ${word}`);
+    return found[0];
   }
 
   /** A join's row of a link from an entity: its timestamps, then each part under its column's name. */
@@ -334,9 +345,7 @@ export default class StorageEngine {
 
   /** The column a join's row names its from-entity by (`name`: a class level's grants' `klassLevelId`). */
   joinFromColumn(name: string): string {
-    const found = Object.entries(this.join(name).columns).find(([, part]) => part === "from");
-    if (!found) throw new Error(`The join ${name} names no from-entity`);
-    return found[0];
+    return this.joinColumn(name, "from", "from-entity");
   }
 
   /** Every join's name. */
@@ -650,6 +659,47 @@ export default class StorageEngine {
     const found = this.merged.steps.find((def) => def.step === step);
     if (!found) throw new Error(`No module declares the step ${step}`);
     return found;
+  }
+
+  /**
+   * What a ruleset's view is composed by, of every module's declaration (`ViewSchema`): each kind's owner and the lists
+   * its rows nest, each join its kinds' lists don't nest. Read once.
+   */
+  viewSchema(): ViewSchema {
+    if (this.schema) return this.schema;
+    const types = this.merged.entityTypes;
+    const listed = new Set(types.flatMap(({ type }) => Object.values(this.kind(type).lists ?? {}).map((l) => l.join)));
+    const joins = this.joinNames()
+      .filter((name) => !listed.has(name))
+      .map((name) => ({ name, from: this.join(name).from, fromColumn: this.joinFromColumn(name) }));
+    const ownerOf = new Map(types.map(({ ownerType, type }) => [type, ownerType]));
+    const depth = (type: string): number => {
+      const owner = ownerOf.get(type);
+      return owner ? depth(owner) + 1 : 0;
+    };
+    const tracked = new Set([
+      ...types.flatMap(({ ownerType }) => (ownerType ? [ownerType] : [])),
+      ...joins.map(({ from }) => from),
+    ]);
+    this.schema = {
+      // An owner before the kinds it owns, each in its declared order otherwise
+      kinds: types
+        .toSorted((a, b) => depth(a.type) - depth(b.type))
+        .map(({ ownerType, type }) => ({
+          type,
+          ...(ownerType ? { owner: { column: this.ownerColumn(type), type: ownerType } } : {}),
+          tracked: tracked.has(type),
+          lists: Object.entries(this.kind(type).lists ?? {}).map(([name, list]) => ({
+            name,
+            target: list.target,
+            from: this.joinColumn(list.join, "from", "from-entity"),
+            to: this.joinColumn(list.join, "to", "target"),
+            toType: this.join(list.join).to,
+          })),
+        })),
+      joins,
+    };
+    return this.schema;
   }
 
   /**

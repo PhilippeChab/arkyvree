@@ -270,7 +270,7 @@ export default class LevelPlans extends LevelUpBase<DetailedCharacter> {
 
   /** The feats or powers (`kind`) that fit, by pool, each by name, a power at its spell level in its pool. */
   private pickedOf(kind: "feats" | "powers", fitted: Record<string, string[]>): PickAnswer["picked"] {
-    const { featsById, powersById } = this.rulesetData;
+    const { featsById, powersById } = this.dnd35;
     const levels = kind === "powers" ? this.buildPowerLevelLookup(Object.values(fitted).flat()) : undefined;
     return Object.fromEntries(
       Object.entries(fitted).map(([pool, ids]) => [

@@ -110,7 +110,7 @@ export function SpendsSkillPoints<B extends Constructor<LevelUpBase<DetailedChar
       points: Record<string, number>,
     ) {
       const skillPointsToSpend = this.getSkillPointsToSpend(character);
-      const stepSkills = character.components.skills.getEnrichedSkills(this.rulesetData.skills, classSkillIds);
+      const stepSkills = character.components.skills.getEnrichedSkills(this.dnd35.skills, classSkillIds);
       return {
         skillPointsToSpend,
         totalCharacterLevel: levels.savedLevelCount + levels.perLevelSkillPoints.length,

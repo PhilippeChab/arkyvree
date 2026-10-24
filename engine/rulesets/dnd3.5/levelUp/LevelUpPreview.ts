@@ -21,10 +21,7 @@ export default class LevelUpPreview extends PlannedLevelsState {
     const { classSkills, klassLevelIds, perLevelSkillPoints } = gains;
     const levels = { perLevelClassSkillIds: classSkills.perLevel, perLevelSkillPoints, savedLevelCount };
     const fitted = this.fitPicks(picks, (poolPicks) => this.buildWithPicks(planned, poolPicks, gains));
-    const pools = fitted.character.components.aptitudes.getLevelUpPools(
-      this.rulesetData,
-      this.countOwnPicks(fitted.picks),
-    );
+    const pools = fitted.character.components.aptitudes.getLevelUpPools(this.dnd35, this.countOwnPicks(fitted.picks));
     return {
       skills: this.skillStep(character, classSkills.merged, levels, picks.skills ?? {}),
       feats: { ...this.featStep(pools, klassLevelIds), fitted: fitted.picks.feats },

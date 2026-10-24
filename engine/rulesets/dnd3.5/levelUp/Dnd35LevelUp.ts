@@ -13,6 +13,7 @@ import ClassPicker from "@/engine/rulesets/dnd3.5/pickers/ClassPicker.ts";
 import FeatPicker from "@/engine/rulesets/dnd3.5/pickers/FeatPicker.ts";
 import PowerPicker from "@/engine/rulesets/dnd3.5/pickers/PowerPicker.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type { Character } from "@/shared/relations.ts";
 
 import BondedCreatures from "./BondedCreatures.ts";
@@ -179,6 +180,6 @@ export default class Dnd35LevelUp extends LevelUpPart<Dnd35Descriptions> impleme
 
   /** What a master's bonded creatures become with it: each kind's creature removed, kept or made, at its hit dice. */
   planBondedCreatures(view: RulesetView, master: DetailedCharacter, record: Character, bonded: CharacterInput[]) {
-    return new BondedPlans(view.rulesetData).planMasterCreatures(master, record, bonded);
+    return new BondedPlans(Dnd35View.of(view.rulesetData)).planMasterCreatures(master, record, bonded);
   }
 }

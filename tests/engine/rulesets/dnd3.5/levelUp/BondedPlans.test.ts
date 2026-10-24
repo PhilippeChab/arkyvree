@@ -3,6 +3,7 @@ import { describe, expect, test } from "bun:test";
 import RulesError from "@/engine/core/RulesError.ts";
 import BondedPlans from "@/engine/rulesets/dnd3.5/levelUp/BondedPlans.ts";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { CharacterLevels, Characters, Rulesets } from "@/server/repositories/index.ts";
@@ -32,27 +33,27 @@ async function masterOf(create: () => ReturnType<typeof createDruidWithCompanion
   const { ctx, masterId, bonded } = await create();
   const record = (await Characters.findOne(db, { id: masterId }))!;
   const master = await buildAs(DetailedCharacter, record);
-  const rulesetData = await RulesetViews.getData((await Rulesets.findOne(db, { id: ctx.rulesetId }))!);
-  return { bonded, ctx, master, record, rulesetData };
+  const view = Dnd35View.of(await RulesetViews.getData((await Rulesets.findOne(db, { id: ctx.rulesetId }))!));
+  return { bonded, ctx, master, record, view };
 }
 
 describe("planBondedCreature", () => {
   test("keeps the creature of the master's race for it, at the master's hit dice for its kind", async () => {
-    const { bonded, ctx, master, record, rulesetData } = await masterOf(() => createDruidWithCompanion(3));
-    expect(new BondedPlans(rulesetData).planBondedCreature(master, record, "animalcompanion", bonded)).toEqual({
+    const { bonded, ctx, master, record, view } = await masterOf(() => createDruidWithCompanion(3));
+    expect(new BondedPlans(view).planBondedCreature(master, record, "animalcompanion", bonded)).toEqual({
       keptId: bonded.id,
       levels: { hitDice: 3, klassId: ctx.klassMap.animalcompanion["Animal Companion"] },
     });
   });
 
   test("makes one of the race in place of one of another, with its stat block's ability scores", async () => {
-    const { bonded, ctx, master, record, rulesetData } = await masterOf(() => createDruidWithCompanion(3));
-    const plan = new BondedPlans(rulesetData).planBondedCreature(master, record, "animalcompanion", {
+    const { bonded, ctx, master, record, view } = await masterOf(() => createDruidWithCompanion(3));
+    const plan = new BondedPlans(view).planBondedCreature(master, record, "animalcompanion", {
       id: bonded.id,
       raceId: NIL_UUID,
     });
     if (!("created" in plan)) throw new Error("No creature made");
-    const abilityName = new Map(rulesetData.abilities.map((ability) => [ability.id, ability.name]));
+    const abilityName = new Map(view.abilities.map((ability) => [ability.id, ability.name]));
     expect(
       Object.fromEntries(
         (plan.created.links.abilities as { abilityId: string; score: number }[]).map(({ abilityId, score }) => [
@@ -80,38 +81,40 @@ describe("planBondedCreature", () => {
     });
     // A master without one gets one, and has none removed
     expect(
-      new BondedPlans(rulesetData).planBondedCreature(master, record, "animalcompanion", undefined).removedId,
+      new BondedPlans(view).planBondedCreature(master, record, "animalcompanion", undefined).removedId,
     ).toBeUndefined();
   });
 
   test("removes the creature of a kind the master has no race for", async () => {
-    const { master, record, rulesetData } = await masterOf(() => createWizardWithFamiliar());
+    const { master, record, view } = await masterOf(() => createWizardWithFamiliar());
     const companion = { id: NIL_UUID, raceId: NIL_UUID };
-    expect(new BondedPlans(rulesetData).planBondedCreature(master, record, "animalcompanion", companion)).toEqual({
+    expect(new BondedPlans(view).planBondedCreature(master, record, "animalcompanion", companion)).toEqual({
       removedId: NIL_UUID,
     });
-    expect(new BondedPlans(rulesetData).planBondedCreature(master, record, "mount", undefined)).toEqual({
+    expect(new BondedPlans(view).planBondedCreature(master, record, "mount", undefined)).toEqual({
       removedId: undefined,
     });
   });
 
   test("refuses a race or a class for the creature the ruleset doesn't have", async () => {
-    const { master, record, rulesetData } = await masterOf(() => createDruidWithCompanion(3));
+    const { master, record, view } = await masterOf(() => createDruidWithCompanion(3));
     expect(
       refusalOf(() =>
         new BondedPlans({
-          ...rulesetData,
-          klassLevelsByKlass: rulesetData.klassLevelsByKlass,
-          races: withoutCompanions(rulesetData.races),
+          abilities: view.abilities,
+          klasses: view.klasses,
+          klassLevelsByKlass: view.klassLevelsByKlass,
+          races: withoutCompanions(view.races),
         }).planBondedCreature(master, record, "animalcompanion", undefined),
       ),
     ).toEqual({ message: 'Bonded animalcompanion race "Wolf" not found in ruleset', refusal: "invalid" });
     expect(
       refusalOf(() =>
         new BondedPlans({
-          ...rulesetData,
-          klasses: withoutCompanions(rulesetData.klasses),
-          klassLevelsByKlass: rulesetData.klassLevelsByKlass,
+          abilities: view.abilities,
+          klasses: withoutCompanions(view.klasses),
+          klassLevelsByKlass: view.klassLevelsByKlass,
+          races: view.races,
         }).planBondedCreature(master, record, "animalcompanion", undefined),
       ),
     ).toEqual({ message: "Animal Companion class not found in ruleset — content seed missing", refusal: "invalid" });
@@ -120,29 +123,27 @@ describe("planBondedCreature", () => {
 
 describe("planBondedLevels", () => {
   test("takes the class's next levels up to the hit dice, or loses the creature's last ones", async () => {
-    const { bonded, ctx, rulesetData } = await masterOf(() => createDruidWithCompanion(3));
+    const { bonded, ctx, view } = await masterOf(() => createDruidWithCompanion(3));
     const klassId = ctx.klassMap.animalcompanion["Animal Companion"];
     const levels = await CharacterLevels.findMany(db, { characterId: bonded.id });
     const klassLevelIds = [(await findKlassLevel(klassId, 4))!.id, (await findKlassLevel(klassId, 5))!.id];
-    expect(new BondedPlans(rulesetData).planBondedLevels(levels, { hitDice: 5, klassId })).toEqual({
+    expect(new BondedPlans(view).planBondedLevels(levels, { hitDice: 5, klassId })).toEqual({
       added: klassLevelIds.map((klassLevelId) => ({ hp: 1, klassLevelId })),
       removedIds: [],
     });
-    expect(new BondedPlans(rulesetData).planBondedLevels(levels, { hitDice: 3, klassId })).toEqual({
+    expect(new BondedPlans(view).planBondedLevels(levels, { hitDice: 3, klassId })).toEqual({
       added: [],
       removedIds: [],
     });
-    expect(new BondedPlans(rulesetData).planBondedLevels(levels, { hitDice: 1, klassId })).toEqual({
+    expect(new BondedPlans(view).planBondedLevels(levels, { hitDice: 1, klassId })).toEqual({
       added: [],
       removedIds: levels.slice(1).map((level) => level.id),
     });
   });
 
   test("refuses a level the class doesn't have", async () => {
-    const { rulesetData } = await masterOf(() => createDruidWithCompanion(1));
-    expect(
-      refusalOf(() => new BondedPlans(rulesetData).planBondedLevels([], { hitDice: 1, klassId: NIL_UUID })),
-    ).toEqual({
+    const { view } = await masterOf(() => createDruidWithCompanion(1));
+    expect(refusalOf(() => new BondedPlans(view).planBondedLevels([], { hitDice: 1, klassId: NIL_UUID }))).toEqual({
       message: "Bonded class is missing level 1 — content seed incomplete",
       refusal: "invalid",
     });

@@ -32,10 +32,7 @@ export default class LevelUpSteps extends LevelUpState {
       (picks) => this.build(this.projectStep(klassLevel.id, projected, picks)),
       this.getSavedPicks(projected.editedLevel?.id),
     );
-    const pools = fitted.character.components.aptitudes.getLevelUpPools(
-      this.rulesetData,
-      this.countOwnPicks(fitted.picks),
-    );
+    const pools = fitted.character.components.aptitudes.getLevelUpPools(this.dnd35, this.countOwnPicks(fitted.picks));
     return { klassLevel, picks: fitted.picks, pools };
   }
 
@@ -86,16 +83,15 @@ export default class LevelUpSteps extends LevelUpState {
    * too (an edit's level takes the edited one's place). The level's points are all the character has left to spend.
    */
   private describeSkillStep(step: LevelQuery) {
+    const dnd35 = this.dnd35;
     const klassLevel = this.readKlassLevel(step);
     const projection = this.projectStep(klassLevel.id, this.readStep(step));
     const character = this.build(projection);
     // A skill's class status is any of the character's classes' (its max rank, `isClassSkill`) and the leveled class's
     // (its cost, `isCurrentClassSkill`)
-    const classSkillIds = this.getClassSkillIds(
-      this.rulesetData.klassSkillsWithSkillsByKlass.get(klassLevel.klassId) ?? [],
-    );
+    const classSkillIds = this.getClassSkillIds(dnd35.klassSkillsWithSkillsByKlass.get(klassLevel.klassId) ?? []);
     const levels = {
-      perLevelClassSkillIds: [this.rulesetData.skills.filter(({ id }) => classSkillIds.has(id)).map(({ id }) => id)],
+      perLevelClassSkillIds: [dnd35.skills.filter(({ id }) => classSkillIds.has(id)).map(({ id }) => id)],
       perLevelSkillPoints: [this.getSkillPointsToSpend(character)],
       savedLevelCount: projection.input.rows.levels.length - 1,
     };

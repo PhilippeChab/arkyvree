@@ -5,6 +5,7 @@ import PlannedLevelsState from "@/engine/rulesets/dnd3.5/levelUp/PlannedLevelsSt
 import type { FeatPick } from "@/engine/rulesets/dnd3.5/levelUp/plans.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 
 /**
  * What an imported level gives, read as a level-up of that level alone reads it (`PlannedLevelsState`), over the
@@ -47,7 +48,7 @@ export default class ImportedLevelGains extends PlannedLevelsState {
     const planned = this.buildPlannedLevels([entry]);
     const gains = this.computeLevelGains(planned);
     const skills = planned.character.components.skills.getEnrichedSkills(
-      this.rulesetData.skills,
+      Dnd35View.of(this.rulesetData).skills,
       gains.classSkills.merged,
     );
     const featRoom = new Map(Object.values(gains.pools.featPools).map((pool) => [pool.id, pool.available]));

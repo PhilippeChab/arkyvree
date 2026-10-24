@@ -1,3 +1,30 @@
 export type { SeededFields } from "./content/Dnd35Content.ts";
 export { default as Dnd35Module } from "./Dnd35Module.ts";
 export type { Dnd35EntityKinds } from "./entities/Dnd35Entities.ts";
+export type {
+  Aptitude,
+  CharacterAbility,
+  CharacterLanguage,
+  CharacterLevel,
+  Feat,
+  FeatWithAptitudes,
+  Item,
+  Klass,
+  KlassLevel,
+  KlassLevelFeat,
+  KlassLevelPower,
+  KlassLevelSave,
+  KlassSkill,
+  Language,
+  LevelAbilityIncrease,
+  LevelFeat,
+  LevelPower,
+  LevelSkill,
+  Mechanic,
+  Power,
+  PowerWithAptitudes,
+  Race,
+  RulesetAbility,
+  RulesetSave,
+  Skill,
+} from "./view/rows.ts";

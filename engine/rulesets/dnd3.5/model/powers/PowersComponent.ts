@@ -1,9 +1,11 @@
 import { CharacterComponent } from "@/engine/core/character/index.ts";
-import type { Power, PowerWithAptitudes, RulesetData, RulesetView } from "@/engine/core/view/index.ts";
+import type { RulesetData, RulesetView } from "@/engine/core/view/index.ts";
 import Dnd35PropertyTypes from "@/engine/rulesets/dnd3.5/Dnd35PropertyTypes.ts";
 import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
 import type { CustomizedPower } from "@/engine/rulesets/dnd3.5/model/loading/loadedEntities.ts";
 import SpellLists from "@/engine/rulesets/dnd3.5/rules/SpellLists.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
+import type { Power, PowerWithAptitudes } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import { formatPropertyValues, groupPropertyValues } from "@/shared/customization/properties.ts";
 import type { Property } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
@@ -50,7 +52,7 @@ export default class PowersComponent extends CharacterComponent<LoadedCharacterD
 
   /** The name of the save a power's targets make, none without one. */
   static saveNameOf(power: { saveId: string | null }, rulesetData: RulesetData): string | null {
-    return power.saveId ? (rulesetData.savesById.get(power.saveId)?.name ?? null) : null;
+    return power.saveId ? (Dnd35View.of(rulesetData).savesById.get(power.saveId)?.name ?? null) : null;
   }
 
   /**
@@ -90,13 +92,14 @@ export default class PowersComponent extends CharacterComponent<LoadedCharacterD
    * then their DCs as the power groupings hold them, an empty DC for each leveled spell without one, and the groupings.
    */
   override initialize({ powers }: Pick<LoadedCharacterData, "powers">, { rulesetData }: RulesetView) {
+    const dnd35 = Dnd35View.of(rulesetData);
     this.addPowerEntries(powers);
 
     // Build spell known data nested under each spell entry: spell → aptitude → { known }, but on the lists a feat brings
     const { featListIds, spellSlugByAptitudeId } = SpellLists.of(rulesetData);
     const aptitudeIdToSlug = new Map([...spellSlugByAptitudeId].filter(([aptitudeId]) => !featListIds.has(aptitudeId)));
 
-    for (const power of rulesetData.powers) {
+    for (const power of dnd35.powers) {
       const spellSlug = stripSeparators(power.name);
       for (const pa of power.powersAptitudesInRules) {
         if (pa.level == null) continue;
@@ -119,7 +122,7 @@ export default class PowersComponent extends CharacterComponent<LoadedCharacterD
     }
 
     this.holdDcs();
-    this.seedEmptyDcs(rulesetData.powers);
+    this.seedEmptyDcs(dnd35.powers);
     this.holdGroupings();
   }
 

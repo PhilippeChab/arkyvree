@@ -1,7 +1,9 @@
 import { CharacterComponent } from "@/engine/core/character/index.ts";
-import type { FeatWithAptitudes, RulesetData, RulesetView } from "@/engine/core/view/index.ts";
+import type { RulesetData, RulesetView } from "@/engine/core/view/index.ts";
 import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
 import type { CustomizedFeat } from "@/engine/rulesets/dnd3.5/model/loading/loadedEntities.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
+import type { FeatWithAptitudes } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 interface FeatsData {
@@ -50,7 +52,7 @@ export default class FeatsComponent extends CharacterComponent<LoadedCharacterDa
       possessedCounts.set(name, (possessedCounts.get(name) ?? 0) + 1);
     }
 
-    for (const feat of rulesetData.feats) {
+    for (const feat of Dnd35View.of(rulesetData).feats) {
       const normalizedName = stripSeparators(feat.name);
       const count = possessedCounts.get(normalizedName) ?? 0;
 

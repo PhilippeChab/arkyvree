@@ -8,16 +8,12 @@ import { z } from "zod";
 import type { EntityFieldValues } from "@/engine/core/fields/index.ts";
 import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
 import RulesError from "@/engine/core/RulesError.ts";
-import {
-  type Klass,
-  type KlassLevel,
-  RequestIds,
-  type RulesetData,
-  type RulesetView,
-} from "@/engine/core/view/index.ts";
+import { RequestIds, type RulesetData, type RulesetView } from "@/engine/core/view/index.ts";
 import { RULESET_LIMITS } from "@/engine/rulesets/dnd3.5/limits.ts";
 import AptitudeTargets from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTargets.ts";
 import SpellLists from "@/engine/rulesets/dnd3.5/rules/SpellLists.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
+import type { Klass, KlassLevel } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { SPELL_LEVELS } from "@/vocabulary/dnd3.5/spells.ts";
@@ -215,12 +211,13 @@ export default class ClassProgression {
   private static readFeatPicks(rulesetData: RulesetData) {
     const cached = ClassProgression.featPicksByView.get(rulesetData);
     if (cached) return cached;
+    const dnd35 = Dnd35View.of(rulesetData);
     const featPicks: Record<string, Record<string, number>> = {};
     for (const [sourceId, modifiers] of rulesetData.modifiersBySource) {
       for (const modifier of modifiers) {
         const slug = modifier.sourceType === "feats" ? AptitudeTargets.parsePool(modifier.target) : undefined;
         const value = LiteralValue.parse(modifier.value, "number");
-        const pool = rulesetData.aptitudesById.get(rulesetData.aptitudeIdBySlug.get(slug ?? "") ?? "");
+        const pool = dnd35.aptitudesById.get(dnd35.aptitudeIdBySlug.get(slug ?? "") ?? "");
         if (!pool || typeof value !== "number") continue;
         const picks = (featPicks[sourceId] ??= {});
         picks[pool.name] = (picks[pool.name] ?? 0) + value;
@@ -247,7 +244,12 @@ export default class ClassProgression {
 
   /** The class's levels, as the view has them, by their number. */
   private get classLevels(): KlassLevel[] {
-    return (this.rulesetData.klassLevelsByKlass.get(this.klass.id) ?? []).toSorted((a, b) => a.level - b.level);
+    return (this.dnd35.klassLevelsByKlass.get(this.klass.id) ?? []).toSorted((a, b) => a.level - b.level);
+  }
+
+  /** The view's 3.5 lists and indices. */
+  private get dnd35(): Dnd35View {
+    return Dnd35View.of(this.rulesetData);
   }
 
   /** The entities a save names by id, as the view reads them: refused, naming one it shows none of. */
@@ -345,8 +347,8 @@ export default class ClassProgression {
    */
   private get spellList() {
     const [list] = this.spellLists;
-    const id = list?.id ?? this.rulesetData.aptitudeIdBySlug.get(`${stripSeparators(this.klass.name)}spells`);
-    const aptitude = id === undefined ? undefined : this.rulesetData.aptitudesById.get(id);
+    const id = list?.id ?? this.dnd35.aptitudeIdBySlug.get(`${stripSeparators(this.klass.name)}spells`);
+    const aptitude = id === undefined ? undefined : this.dnd35.aptitudesById.get(id);
     return aptitude && { id: aptitude.id, name: aptitude.name, slug: stripSeparators(aptitude.name) };
   }
 
@@ -380,6 +382,7 @@ export default class ClassProgression {
    */
   describe() {
     const { rulesetData } = this;
+    const { dnd35 } = this;
     const lists = SpellLists.of(rulesetData).classListIds;
     const picksBySlug = new Map<string, Record<string, number>>();
     for (const level of this.classLevels) {
@@ -392,7 +395,7 @@ export default class ClassProgression {
       }
     }
     const pools = [...picksBySlug].flatMap(([slug, picks]) => {
-      const aptitude = rulesetData.aptitudesById.get(rulesetData.aptitudeIdBySlug.get(slug) ?? "");
+      const aptitude = dnd35.aptitudesById.get(dnd35.aptitudeIdBySlug.get(slug) ?? "");
       return aptitude && !lists.has(aptitude.id) ? [{ aptitudeId: aptitude.id, name: aptitude.name, picks }] : [];
     });
     const featPicks = ClassProgression.readFeatPicks(rulesetData);

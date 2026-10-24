@@ -51,7 +51,7 @@ export default abstract class PlannedLevelsState extends include(LevelUpState, P
       perLevelPowerSlots,
       savedLevelCount: planned.savedLevelCount,
       skillContexts: PicksDistribution.contextsOf(
-        planned.character.components.skills.getEnrichedSkills(this.rulesetData.skills, classSkills.merged),
+        planned.character.components.skills.getEnrichedSkills(this.dnd35.skills, classSkills.merged),
       ),
     };
   }
@@ -82,7 +82,7 @@ export default abstract class PlannedLevelsState extends include(LevelUpState, P
     for (const featId of firstPassFeatIds) {
       for (const mod of this.rulesetData.modifiersBySource.get(featId) ?? []) {
         const list = AptitudeTargets.parseAllowed(mod.target);
-        const aptId = list === undefined ? undefined : this.rulesetData.aptitudeIdBySlug.get(list);
+        const aptId = list === undefined ? undefined : this.dnd35.aptitudeIdBySlug.get(list);
         if (aptId && Object.hasOwn(feats, aptId)) sources.set(aptId, mod.sourceId);
       }
     }
@@ -99,7 +99,7 @@ export default abstract class PlannedLevelsState extends include(LevelUpState, P
       projection.addLevel(klassLevel.id, { abilityIncreases, hp: LevelRules.UNROLLED_LEVEL_HP });
     return {
       grantedFeatRecords: klassLevelEntries.map(
-        ({ klassLevel }) => this.rulesetData.klassLevelFeatsWithFeatsByKlassLevel.get(klassLevel.id) ?? [],
+        ({ klassLevel }) => this.dnd35.klassLevelFeatsWithFeatsByKlassLevel.get(klassLevel.id) ?? [],
       ),
       character: this.build(projection),
       savedLevelCount: this.character.rows.levels.length,
@@ -129,7 +129,7 @@ export default abstract class PlannedLevelsState extends include(LevelUpState, P
   protected computeLevelGains(planned: PlannedLevels) {
     const { grantedFeatRecords, character, savedLevelCount, klassLevelEntries, saved } = planned;
     const klassLevelIds = klassLevelEntries.map(({ klassLevel }) => klassLevel.id);
-    const pools = character.components.aptitudes.getLevelUpPools(this.rulesetData);
+    const pools = character.components.aptitudes.getLevelUpPools(this.dnd35);
     const slots = this.planAptitudeSlots(
       klassLevelIds,
       grantedFeatRecords,
@@ -178,8 +178,8 @@ export default abstract class PlannedLevelsState extends include(LevelUpState, P
    * skill order (what a rank costs at that level), and every planned class's together (the rank cap).
    */
   protected getPlannedClassSkills(klassIds: string[]) {
-    const { skills } = this.rulesetData;
-    const recordsOf = (klassId: string) => this.rulesetData.klassSkillsWithSkillsByKlass.get(klassId) ?? [];
+    const { skills } = this.dnd35;
+    const recordsOf = (klassId: string) => this.dnd35.klassSkillsWithSkillsByKlass.get(klassId) ?? [];
     const perLevel = klassIds.map((klassId) => {
       const ids = this.getClassSkillIds(recordsOf(klassId));
       return skills.filter((skill) => ids.has(skill.id)).map((skill) => skill.id);
@@ -199,13 +199,13 @@ export default abstract class PlannedLevelsState extends include(LevelUpState, P
     const message = `A character can't go past level ${RULESET_LIMITS.characterLevel}: ${levelsLeft} level(s) left`;
     RulesError.parse(z.array(PLANNED_LEVEL).max(levelsLeft, message), levels, ["levels"]);
     return levels.map(({ klassId, level, abilityIncreases }, i) => {
-      const klass = this.rulesetData.klassesById.get(klassId);
+      const klass = this.dnd35.klassesById.get(klassId);
       if (!klass) throw new RulesError("invalid", `Level ${i + 1}: Class does not belong to the character's ruleset`);
 
       if (klass.kind !== "pc")
         throw new RulesError("invalid", `Level ${i + 1}: Class is not valid for a player character`);
 
-      const klassLevel = this.rulesetData.klassLevelByKlassAndLevel.get(`${klassId}:${level}`);
+      const klassLevel = this.dnd35.klassLevelByKlassAndLevel.get(`${klassId}:${level}`);
       if (!klassLevel) throw new RulesError("not-found", `Level ${i + 1}: Class level not found`);
 
       return { klass, klassLevel, abilityIncreases };

@@ -1,7 +1,7 @@
-import type { CharacterLevel } from "@/engine/core/view/index.ts";
 import { ITEM_FIELDS } from "@/engine/rulesets/dnd3.5/entities/items/fields.ts";
 import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
 import ItemPlacement from "@/engine/rulesets/dnd3.5/rules/ItemPlacement.ts";
+import type { CharacterLevel } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import { include } from "@/lib/mixins.ts";
 import { UNARMED_STRIKE, UNARMED_STRIKE_STATS } from "@/vocabulary/dnd3.5/combat.ts";
 

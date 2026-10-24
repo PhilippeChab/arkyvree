@@ -1,6 +1,7 @@
 import { expect, test } from "bun:test";
 
 import type { Item, Klass, KlassLevel, Race } from "@/engine/index.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Entities, Modifiers, Properties, Rulesets } from "@/server/repositories/index.ts";
@@ -138,12 +139,14 @@ for (const action of ["add skill", "remove skill", "create level", "update level
     const { session, host, source, assertCopied } = await setup("klasses", action === "create level");
     const { assignedSkill, otherSkill, levelId } = await withRulesetScope(db, host.id, async ({ rulesetData }) => {
       const id = rulesetData.canonicalize(source.id);
-      const assigned = rulesetData.klassSkillsByKlass.get(id)!;
+      const assigned = Dnd35View.of(rulesetData).klassSkillsByKlass.get(id)!;
       return {
         assignedSkill: assigned[0].skillId,
-        otherSkill: rulesetData.skills.find((skill) => !assigned.some((row) => row.skillId === skill.id))!.id,
-        levelId: [...rulesetData.klassLevelsById.values()].find((level) => level.klassId === id && level.level === 1)!
+        otherSkill: Dnd35View.of(rulesetData).skills.find((skill) => !assigned.some((row) => row.skillId === skill.id))!
           .id,
+        levelId: [...Dnd35View.of(rulesetData).klassLevelsById.values()].find(
+          (level) => level.klassId === id && level.level === 1,
+        )!.id,
       };
     });
     if (action === "add skill") {

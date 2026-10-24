@@ -1,7 +1,9 @@
 import type { GetterOf, PathCategory } from "@/engine/core/paths/PathCategory.ts";
 import PathTraverser, { type Components, type TraversePathResult } from "@/engine/core/paths/PathTraverser.ts";
-import type { RulesetData, Skill } from "@/engine/core/view/index.ts";
+import type { RulesetData } from "@/engine/core/view/index.ts";
 import { type Dnd35Components } from "@/engine/rulesets/dnd3.5/model/CharacterComponents.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
+import type { Skill } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import { getNumericOperators, getOperators } from "@/shared/customization/operators.ts";
 import { deriveNameLabels, deriveSegmentLabels, isLeafOfKind, type TargetPath } from "@/shared/customization/target.ts";
 import { stripSeparators } from "@/shared/text.ts";
@@ -110,7 +112,7 @@ export default class SkillsPaths implements PathCategory<Dnd35Components> {
   readonly name = "skills";
 
   generate(rulesetData: RulesetData, kind: "modifier" | "requirement"): TargetPath[] {
-    return SkillsPaths.generateSkillPaths(rulesetData.skills, kind);
+    return SkillsPaths.generateSkillPaths(Dnd35View.of(rulesetData).skills, kind);
   }
 
   getSegmentLabels(): Record<string, string> {
@@ -124,7 +126,7 @@ export default class SkillsPaths implements PathCategory<Dnd35Components> {
 
   /** The ruleset's skills, labeled by their names, and the skill families no skill of their own names. */
   labelNames(rulesetData: RulesetData) {
-    const { skills } = rulesetData;
+    const { skills } = Dnd35View.of(rulesetData);
     return { names: { ...deriveNameLabels(skills.map(({ name }) => name)), ...SkillsPaths.getFamilyLabels(skills) } };
   }
 

@@ -9,6 +9,7 @@ import {
 } from "@/content/dnd3.5/rulesetNames.ts";
 import { entitiesInRules, rulesetsInRules } from "@/drizzle/schema.ts";
 import type { FeatWithAptitudes, PowerWithAptitudes } from "@/engine/index.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
@@ -58,7 +59,7 @@ async function setup() {
 describe("aptitude deduplication across sibling extensions", () => {
   test("cached aptitudes have no duplicate names", async () => {
     const { rulesetData } = await setup();
-    const names = rulesetData.aptitudes.map((a) => a.name);
+    const names = Dnd35View.of(rulesetData).aptitudes.map((a) => a.name);
     const uniqueNames = new Set(names);
     expect(names.length).toBe(uniqueNames.size);
   });
@@ -68,7 +69,7 @@ describe("aptitude deduplication across sibling extensions", () => {
     // Extensions don't create their own "General" copy (Option 2); the
     // composed view surfaces base's sole copy, and ancestry resolution
     // lands on it.
-    const general = rulesetData.aptitudes.filter((a) => a.name === "General");
+    const general = Dnd35View.of(rulesetData).aptitudes.filter((a) => a.name === "General");
     expect(general).toHaveLength(1);
     const ancestorIds = new Set(ruleset.ancestorRulesetIds);
     expect(ancestorIds.has(general[0].rulesetId)).toBe(true);
@@ -76,8 +77,9 @@ describe("aptitude deduplication across sibling extensions", () => {
 
   test("CD spell is linked to Blackguard Spells via the winner aptitude id", async () => {
     const { rulesetData } = await setup();
+    const dnd35 = Dnd35View.of(rulesetData);
     // Get the winning Blackguard Spells aptitude from the deduped cache
-    const winningApt = rulesetData.aptitudes.find((a) => a.name === "Blackguard Spells");
+    const winningApt = dnd35.aptitudes.find((a) => a.name === "Blackguard Spells");
     expect(winningApt).toBeDefined();
 
     // Find CD's "Visage of the Deity, Lesser" — it's on the Blackguard spell list.
@@ -89,7 +91,7 @@ describe("aptitude deduplication across sibling extensions", () => {
     expect(spell).toBeDefined();
 
     // Composed rulesetData already has sibling-merged + FK-remapped aptitude links.
-    const composedPower = rulesetData.powersById.get(spell.id);
+    const composedPower = dnd35.powersById.get(spell.id);
     expect(composedPower).toBeDefined();
     const blackguardLink = composedPower!.powersAptitudesInRules.find((l) => l.aptitudeId === winningApt!.id);
     expect(blackguardLink).toBeDefined();
@@ -101,7 +103,7 @@ describe("aptitude deduplication across sibling extensions", () => {
     // These aptitudes are created by multiple extensions — verify each appears exactly once
     const siblingAptitudes = ["Assassin Spells", "Hexblade Spells", "Blackguard Spells"];
     for (const name of siblingAptitudes) {
-      const matches = rulesetData.aptitudes.filter((a) => a.name === name);
+      const matches = Dnd35View.of(rulesetData).aptitudes.filter((a) => a.name === name);
       expect(matches.length).toBeLessThanOrEqual(1);
     }
   });
@@ -113,7 +115,7 @@ describe("aptitude deduplication across sibling extensions", () => {
     const allAssassinApts = await namedEntities("aptitudes", ["Assassin Spells"], extIds);
 
     expect(allAssassinApts.length).toBeGreaterThan(1);
-    const winnerApt = rulesetData.aptitudes.find((a) => a.name === "Assassin Spells");
+    const winnerApt = Dnd35View.of(rulesetData).aptitudes.find((a) => a.name === "Assassin Spells");
     expect(winnerApt).toBeDefined();
 
     // All non-winner IDs should map to the winner in the override map
@@ -175,7 +177,7 @@ describe("aptitude deduplication across sibling extensions", () => {
   test("the feats list returns no duplicate aptitude names on feats with sibling aptitudes", async () => {
     const { ruleset, rulesetData } = await setup();
     // Find a feat that has an aptitude created by multiple extensions (e.g. "Blackguard Spells")
-    const winningApt = rulesetData.aptitudes.find((a) => a.name === "Blackguard Spells");
+    const winningApt = Dnd35View.of(rulesetData).aptitudes.find((a) => a.name === "Blackguard Spells");
     expect(winningApt).toBeDefined();
 
     const { items } = await EntitiesService.getEntities<FeatWithAptitudes>(

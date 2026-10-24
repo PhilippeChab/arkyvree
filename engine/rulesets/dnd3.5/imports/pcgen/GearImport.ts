@@ -1,9 +1,11 @@
 import type { ImportedGear, ImportReport } from "@/engine/core/imports/index.ts";
 import type { CharacterInput, InventoryEntryPlan, InventoryEntryRequest } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
-import type { Item, RulesetView } from "@/engine/core/view/index.ts";
+import type { RulesetView } from "@/engine/core/view/index.ts";
 import Dnd35Characters from "@/engine/rulesets/dnd3.5/characters/Dnd35Characters.ts";
 import ItemPlacement, { type ItemPlacementDescription } from "@/engine/rulesets/dnd3.5/rules/ItemPlacement.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
+import type { Item } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import { MAX_CHARACTER_NUMBER } from "@/shared/characters.ts";
 import { MAX_FINGER_ITEMS } from "@/vocabulary/dnd3.5/equipment.ts";
 
@@ -152,7 +154,7 @@ export default class GearImport {
         );
         continue;
       }
-      const entry = this.planEntry(holder, piece, this.view.rulesetData.itemsById.get(item.id)!);
+      const entry = this.planEntry(holder, piece, Dnd35View.of(this.view.rulesetData).itemsById.get(item.id)!);
       const held = entry.location ? `, ${entry.location}` : "";
       this.report.import(`Item: ${item.name} ×${entry.quantity}${held}`);
       const key = `${entry.itemId}:${entry.remainingCharges ?? ""}`;

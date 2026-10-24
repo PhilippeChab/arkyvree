@@ -5,7 +5,8 @@ import { z } from "zod";
 import { RulesetEntity } from "@/engine/core/entities/index.ts";
 import type { EntityFieldValues } from "@/engine/core/fields/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
-import type { Klass } from "@/engine/core/view/index.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
+import type { Klass } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import { DEFAULT_HIT_DIE } from "@/vocabulary/dnd3.5/classes.ts";
 
 import ClassLevelEntity from "./ClassLevelEntity.ts";
@@ -64,7 +65,7 @@ export default class ClassEntity extends RulesetEntity<
    * its class: an inherited one's level is inherited too. Refused when the view has no such level.
    */
   describeOwned(levelId: string) {
-    const level = this.rulesetData.klassLevelsById.get(levelId);
+    const level = Dnd35View.of(this.rulesetData).klassLevelsById.get(levelId);
     if (!level) throw new RulesError("not-found", "Class level not found in this ruleset");
     const klass = this.find(level.klassId);
     return { ...this.owned(klass.id).describe(level.id), name: klass.name, rulesetId: klass.rulesetId };

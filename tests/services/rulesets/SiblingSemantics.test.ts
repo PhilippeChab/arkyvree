@@ -4,6 +4,7 @@ import RequirementEvaluator from "@/engine/core/requirements/RequirementEvaluato
 import type { Aptitude, Feat, Power, RulesetAbility } from "@/engine/index.ts";
 import Dnd35TargetPaths from "@/engine/rulesets/dnd3.5/Dnd35TargetPaths.ts";
 import AbilitiesComponent from "@/engine/rulesets/dnd3.5/model/abilities/AbilitiesComponent.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { fetchEveryPage } from "@/server/repositories/concerns/Paginates.ts";
@@ -91,8 +92,8 @@ test("editing a shared aptitude preserves references from both extensions", asyn
   });
   const read = () =>
     withRulesetScope(db, host.id, async ({ rulesetData }) => ({
-      resolved: aptitudeIds.map((id) => rulesetData.aptitudesById.get(id)?.id),
-      links: featIds.map((id) => rulesetData.featsById.get(id)!.featsAptitudesInRules[0].aptitudeId),
+      resolved: aptitudeIds.map((id) => Dnd35View.of(rulesetData).aptitudesById.get(id)?.id),
+      links: featIds.map((id) => Dnd35View.of(rulesetData).featsById.get(id)!.featsAptitudesInRules[0].aptitudeId),
     }));
   expect(await read()).toEqual({ resolved: [aptitudeIds[0], aptitudeIds[0]], links: [aptitudeIds[0], aptitudeIds[0]] });
   const local = await EntitiesService.updateEntity(session, host.id, "aptitudes", aptitudeIds[0], {

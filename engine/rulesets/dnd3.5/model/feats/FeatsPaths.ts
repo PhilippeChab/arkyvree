@@ -1,7 +1,9 @@
 import type { PathCategory } from "@/engine/core/paths/PathCategory.ts";
-import type { Feat, RulesetData } from "@/engine/core/view/index.ts";
+import type { RulesetData } from "@/engine/core/view/index.ts";
 import { FEAT_FIELDS } from "@/engine/rulesets/dnd3.5/entities/feats/fields.ts";
 import { type Dnd35Components } from "@/engine/rulesets/dnd3.5/model/CharacterComponents.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
+import type { Feat } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import { getOperators } from "@/shared/customization/operators.ts";
 import { deriveNameLabels, deriveSegmentLabels, isLeafOfKind, type TargetPath } from "@/shared/customization/target.ts";
 import { stripSeparators } from "@/shared/text.ts";
@@ -136,7 +138,7 @@ export default class FeatsPaths implements PathCategory<Dnd35Components> {
   }
 
   generate(rulesetData: RulesetData, kind: "modifier" | "requirement"): TargetPath[] {
-    const { feats } = rulesetData;
+    const { feats } = Dnd35View.of(rulesetData);
     const familyLabels = this.familyLabels(rulesetData);
     return [
       ...FeatsPaths.generateFeatPaths(feats, kind),
@@ -165,6 +167,6 @@ export default class FeatsPaths implements PathCategory<Dnd35Components> {
       fallbacks[slug] ??= value;
       if (type === FEAT_FAMILY) fallbacks[`${slug}*`] ??= `${value} (Any)`;
     }
-    return { fallbacks, names: deriveNameLabels(rulesetData.feats.map(({ name }) => name)) };
+    return { fallbacks, names: deriveNameLabels(Dnd35View.of(rulesetData).feats.map(({ name }) => name)) };
   }
 }

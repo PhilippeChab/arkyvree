@@ -1,5 +1,4 @@
 import type { RulesIssue } from "@/engine/core/RulesError.ts";
-import type { Klass } from "@/engine/core/view/index.ts";
 import { ALLOWED_ALL } from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudesComponent.ts";
 import type CharacterState from "@/engine/rulesets/dnd3.5/model/CharacterState.ts";
 import type {
@@ -7,6 +6,8 @@ import type {
   CustomizedFeat,
   CustomizedPower,
 } from "@/engine/rulesets/dnd3.5/model/loading/loadedEntities.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
+import type { Klass } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import type { Modifier } from "@/shared/relations.ts";
 import { GENERAL_FEATS_APTITUDE } from "@/vocabulary/dnd3.5/feats.ts";
@@ -133,7 +134,7 @@ export function Diagnoses<B extends Constructor<CharacterState>>(Base: B) {
       const klassLevelsById = new Map<string, CustomizedClassLevel>();
       for (const kl of this.data.klassLevels) klassLevelsById.set(kl.id, kl);
       const rulesetKlassesById = new Map<string, Klass>();
-      for (const k of this.rulesetData.klasses) rulesetKlassesById.set(k.id, k);
+      for (const k of Dnd35View.of(this.rulesetData).klasses) rulesetKlassesById.set(k.id, k);
 
       // Flat modifier.id → owning entity index. Built once by iterating every
       // entity that owns modifiers so resolveModifierSourceName becomes O(1).

@@ -1,6 +1,7 @@
 import { afterEach, expect, test } from "bun:test";
 
 import type { Feat } from "@/engine/index.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { runWithRequestCache } from "@/server/database/requestCache.ts";
@@ -58,7 +59,7 @@ for (const action of ["subscribe", "unsubscribe"] as const) {
     );
     await runWithRequestCache(async () => {
       await withRulesetScope(db, host.id, async ({ rulesetData }) => {
-        expect(rulesetData.featsById.has(feat.id)).toBe(action === "subscribe");
+        expect(Dnd35View.of(rulesetData).featsById.has(feat.id)).toBe(action === "subscribe");
       });
       const paths = await readTargetPaths(host.id, "requirement");
       expect(paths.paths.some((path) => path.path === "feats.extensionmarker.possessed")).toBe(action === "subscribe");
@@ -107,7 +108,7 @@ for (const scenario of ["entity", "cow", "paths"] as const) {
             expect(copyId).not.toBe(seed.featMap.Toughness);
             expect(rulesetData.canonicalize(seed.featMap.Toughness)).toBe(copyId!);
           } else {
-            expect(rulesetData.featsById.get(local.id)?.description).toBe("after");
+            expect(Dnd35View.of(rulesetData).featsById.get(local.id)?.description).toBe("after");
           }
         });
       }

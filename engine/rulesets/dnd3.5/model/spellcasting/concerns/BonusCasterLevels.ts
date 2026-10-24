@@ -1,12 +1,14 @@
 import type { BuiltCharacter } from "@/engine/core/character/index.ts";
 import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
-import type { CharacterLevel, Klass, KlassLevel, RulesetData } from "@/engine/core/view/index.ts";
+import type { RulesetData } from "@/engine/core/view/index.ts";
 import { ALLOWED_ALL, type AptitudeLevelData } from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudesComponent.ts";
 import AptitudesPaths from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudesPaths.ts";
 import AptitudeTargets from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTargets.ts";
 import ClassesPaths from "@/engine/rulesets/dnd3.5/model/classes/ClassesPaths.ts";
 import type { CustomizedClassLevel, CustomizedFeat } from "@/engine/rulesets/dnd3.5/model/loading/loadedEntities.ts";
 import type SpellcastingState from "@/engine/rulesets/dnd3.5/model/spellcasting/SpellcastingState.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
+import type { CharacterLevel, Klass, KlassLevel } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import type { Modifier } from "@/shared/relations.ts";
 import { MAX_SPELL_LEVEL } from "@/vocabulary/dnd3.5/spells.ts";
@@ -170,7 +172,7 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
     ) {
       const classNameByLevel = this.bonusLevelClassNames();
       const bonusKlassLevels = [...classNameByLevel.keys()].flatMap(
-        (key) => rulesetData.klassLevelByKlassAndLevel.get(key) ?? [],
+        (key) => Dnd35View.of(rulesetData).klassLevelByKlassAndLevel.get(key) ?? [],
       );
       if (bonusKlassLevels.length === 0) return;
 

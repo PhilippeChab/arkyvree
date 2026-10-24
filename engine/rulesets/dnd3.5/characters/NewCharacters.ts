@@ -9,8 +9,8 @@ import { MIN_ABILITY_SCORE, STARTING_ABILITY_SCORE } from "@/vocabulary/dnd3.5/a
 import { CREATION_METHODS } from "@/vocabulary/dnd3.5/creation.ts";
 
 /** What a new character's form reads of a ruleset's view: its abilities, each by its id and name. */
-interface CreationView {
-  rulesetData: { abilities: readonly CharacterCreation["abilities"][number][] };
+interface CreationData {
+  abilities: readonly CharacterCreation["abilities"][number][];
 }
 
 /** A 3.5 creation method, as its data writes it. */
@@ -51,7 +51,7 @@ export default class NewCharacters {
    * them, the SRD's methods, the scores' bounds and the one an unset ability shows, and each score's modifier over those
    * bounds, by the abilities' one formula.
    */
-  static describeCreation(view: CreationView): CharacterCreation {
+  static describeCreation(data: CreationData): CharacterCreation {
     const scores = { max: RULESET_LIMITS.abilityScore, min: MIN_ABILITY_SCORE, start: STARTING_ABILITY_SCORE };
     const modifiers = Object.fromEntries(
       Array.from({ length: scores.max - scores.min + 1 }, (_, index) => {
@@ -59,7 +59,7 @@ export default class NewCharacters {
         return [score, AbilityRules.computeModifier(score)];
       }),
     );
-    const abilities = view.rulesetData.abilities.map(({ id, name }) => ({ id, name }));
+    const abilities = data.abilities.map(({ id, name }) => ({ id, name }));
     return {
       abilities: AbilityRules.orderAbilities(abilities, (ability) => ability.name),
       methods: CREATION_METHODS.map((method) => NewCharacters.methodOf(method)),

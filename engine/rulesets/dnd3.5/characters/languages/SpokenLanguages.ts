@@ -1,9 +1,11 @@
 import type { CharacterInput, DescribedLanguage, LanguagesDescription } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
-import type { Language, RulesetView } from "@/engine/core/view/index.ts";
+import type { RulesetView } from "@/engine/core/view/index.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import Dnd35CharacterBuilder from "@/engine/rulesets/dnd3.5/model/Dnd35CharacterBuilder.ts";
 import LanguageRules from "@/engine/rulesets/dnd3.5/rules/LanguageRules.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
+import type { Language } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { LANGUAGE_PICK_ABILITY, SPEAK_LANGUAGE_SKILL } from "@/vocabulary/dnd3.5/languages.ts";
 
@@ -40,7 +42,7 @@ export default class SpokenLanguages {
   /** The languages of `languageIds` (each the view's) the character picked: those no modifier grants it. */
   private picksOf(languageIds: string[]): Language[] {
     const grantedIds = new Set(this.granted().map(({ id }) => id));
-    const { languagesById } = this.view.rulesetData;
+    const { languagesById } = Dnd35View.of(this.view.rulesetData);
     return languageIds
       .filter((languageId) => !grantedIds.has(languageId))
       .flatMap((languageId) => languagesById.get(languageId) ?? []);
@@ -80,8 +82,8 @@ export default class SpokenLanguages {
     const granted = this.granted();
     const picks = this.picksOf(languageIds);
     const taken = new Set([...granted, ...picks].map(({ id }) => id));
-    const options = this.view.rulesetData.languages
-      .filter((language) => !taken.has(language.id) && !this.refusalOf(language, picks.length))
+    const options = Dnd35View.of(this.view.rulesetData)
+      .languages.filter((language) => !taken.has(language.id) && !this.refusalOf(language, picks.length))
       .toSorted((a, b) => a.name.localeCompare(b.name));
     return {
       automatic: granted.map((language) => describeLanguage(language)),

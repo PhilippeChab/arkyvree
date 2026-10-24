@@ -2,6 +2,7 @@ import { CharacterComponent } from "@/engine/core/character/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import { FEAT_FIELDS } from "@/engine/rulesets/dnd3.5/entities/feats/fields.ts";
 import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type { Property } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { FEAT_FAMILIES } from "@/vocabulary/dnd3.5/feats.ts";
@@ -36,7 +37,7 @@ export default class FeatGroupingsComponent extends CharacterComponent<LoadedCha
    * fills another, since the families hold the feats' own entries.
    */
   override initialize(_data: LoadedCharacterData, { rulesetData }: RulesetView) {
-    const rulesetFeatsById = new Map(rulesetData.feats.map((feat) => [feat.id, feat]));
+    const rulesetFeatsById = new Map(Dnd35View.of(rulesetData).feats.map((feat) => [feat.id, feat]));
     for (const prop of rulesetData.propertiesByEntityType.get("feats") ?? []) {
       const feat = rulesetFeatsById.get(prop.entityId);
       if (feat) this.registerFeat(feat, [prop]);

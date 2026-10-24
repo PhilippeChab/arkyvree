@@ -1,6 +1,8 @@
 import type { PathCategory } from "@/engine/core/paths/PathCategory.ts";
-import type { RulesetAbility, RulesetData } from "@/engine/core/view/index.ts";
+import type { RulesetData } from "@/engine/core/view/index.ts";
 import { type Dnd35Components } from "@/engine/rulesets/dnd3.5/model/CharacterComponents.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
+import type { RulesetAbility } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import { getNumericOperators, getOperators } from "@/shared/customization/operators.ts";
 import { deriveNameLabels, deriveSegmentLabels, isLeafOfKind, type TargetPath } from "@/shared/customization/target.ts";
 import { stripSeparators } from "@/shared/text.ts";
@@ -58,7 +60,7 @@ export default class AbilitiesPaths implements PathCategory<Dnd35Components> {
   readonly name = "abilities";
 
   generate(rulesetData: RulesetData, kind: "modifier" | "requirement"): TargetPath[] {
-    return AbilitiesPaths.generateAbilityPaths(rulesetData.abilities, kind);
+    return AbilitiesPaths.generateAbilityPaths(Dnd35View.of(rulesetData).abilities, kind);
   }
 
   getSegmentLabels(): Record<string, string> {
@@ -67,6 +69,6 @@ export default class AbilitiesPaths implements PathCategory<Dnd35Components> {
 
   /** The ruleset's abilities, labeled by their names. */
   labelNames(rulesetData: RulesetData) {
-    return { names: deriveNameLabels(rulesetData.abilities.map(({ name }) => name)) };
+    return { names: deriveNameLabels(Dnd35View.of(rulesetData).abilities.map(({ name }) => name)) };
   }
 }

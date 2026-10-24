@@ -9,6 +9,7 @@ import { beforeAll, describe, expect, test } from "bun:test";
 
 import { type RulesetData } from "@/engine/core/view/index.ts";
 import type { Feat, KlassLevelFeat, KlassLevelPower, KlassSkill, Power, Skill } from "@/engine/index.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { type SeedContext } from "@/scripts/db/seeds/seedContext.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
@@ -43,11 +44,12 @@ describe("cache join-maps — parity with repository queries", () => {
   });
 
   test("klassLevelFeatsWithFeatsByKlassLevel matches the class level's feats with their feat", async () => {
+    const dnd35 = Dnd35View.of(rulesetData);
     const fighterId = ctx.klassMap.pc["Fighter"];
-    const klassLevel = rulesetData.klassLevelByKlassAndLevel.get(`${fighterId}:1`);
+    const klassLevel = dnd35.klassLevelByKlassAndLevel.get(`${fighterId}:1`);
     expect(klassLevel).toBeDefined();
 
-    const fromCache = rulesetData.klassLevelFeatsWithFeatsByKlassLevel.get(klassLevel!.id) ?? [];
+    const fromCache = dnd35.klassLevelFeatsWithFeatsByKlassLevel.get(klassLevel!.id) ?? [];
     const fromDb = await withRows(
       await Joins.findMany<KlassLevelFeat>(db, { join: "klass_level_feats", fromIds: [klassLevel!.id] }),
       "featId",
@@ -68,12 +70,13 @@ describe("cache join-maps — parity with repository queries", () => {
   });
 
   test("klassLevelPowersWithPowersByKlassLevel matches the class level's powers with their power", async () => {
+    const dnd35 = Dnd35View.of(rulesetData);
     // Pick a class level that's likely to have auto-granted powers — Wizard L1.
     const klassId = ctx.klassMap.pc["Wizard"];
-    const klassLevel = rulesetData.klassLevelByKlassAndLevel.get(`${klassId}:1`);
+    const klassLevel = dnd35.klassLevelByKlassAndLevel.get(`${klassId}:1`);
     if (!klassLevel) return; // seed doesn't have Wizard at this level — skip
 
-    const fromCache = rulesetData.klassLevelPowersWithPowersByKlassLevel.get(klassLevel.id) ?? [];
+    const fromCache = dnd35.klassLevelPowersWithPowersByKlassLevel.get(klassLevel.id) ?? [];
     const fromDb = await withRows(
       await Joins.findMany<KlassLevelPower>(db, { join: "klass_level_powers", fromIds: [klassLevel.id] }),
       "powerId",
@@ -99,7 +102,7 @@ describe("cache join-maps — parity with repository queries", () => {
   test("klassSkillsWithSkillsByKlass matches the class's skills with their skill", async () => {
     const fighterId = ctx.klassMap.pc["Fighter"];
 
-    const fromCache = rulesetData.klassSkillsWithSkillsByKlass.get(fighterId) ?? [];
+    const fromCache = Dnd35View.of(rulesetData).klassSkillsWithSkillsByKlass.get(fighterId) ?? [];
     const fromDb = await withRows(
       await Joins.findMany<KlassSkill>(db, { join: "klass_skills", fromIds: [fighterId] }),
       "skillId",
@@ -142,7 +145,7 @@ describe("cache join-maps — parity with repository queries", () => {
     // And: looking up a known D&D 3.5 triple returns the expected powers.
     const evocation = rulesetData.entityIdsByProperty.get(`powers:${SPELL_SCHOOL}:Evocation`) ?? [];
     expect(evocation.length).toBeGreaterThan(0);
-    for (const id of evocation) expect(rulesetData.powersById.has(id)).toBe(true);
+    for (const id of evocation) expect(Dnd35View.of(rulesetData).powersById.has(id)).toBe(true);
   });
 
   test("propertiesByEntity + propertiesByEntityType cover the same row set", () => {
@@ -165,10 +168,11 @@ describe("cache join-maps — parity with repository queries", () => {
   });
 
   test("featsById / powersById / skillsById resolve every composed row", () => {
-    for (const feat of rulesetData.feats) expect(rulesetData.featsById.get(feat.id)).toBe(feat);
+    const dnd35 = Dnd35View.of(rulesetData);
+    for (const feat of dnd35.feats) expect(dnd35.featsById.get(feat.id)).toBe(feat);
 
-    for (const power of rulesetData.powers) expect(rulesetData.powersById.get(power.id)).toBe(power);
+    for (const power of dnd35.powers) expect(dnd35.powersById.get(power.id)).toBe(power);
 
-    for (const skill of rulesetData.skills) expect(rulesetData.skillsById.get(skill.id)).toBe(skill);
+    for (const skill of dnd35.skills) expect(dnd35.skillsById.get(skill.id)).toBe(skill);
   });
 });

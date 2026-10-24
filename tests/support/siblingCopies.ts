@@ -1,6 +1,7 @@
 import type { Db } from "@/drizzle/database.ts";
 import { type RulesetData } from "@/engine/core/view/index.ts";
 import type { KlassLevel, KlassLevelFeat, KlassLevelPower } from "@/engine/index.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { EntityEdit, RulesetViews } from "@/server/cow/index.ts";
 import { withTransaction } from "@/server/database/index.ts";
 import { Entities, Joins, type RulesetEntityType } from "@/server/repositories/index.ts";
@@ -9,10 +10,7 @@ type Fork = Parameters<typeof RulesetViews.getData>[0];
 
 /** The entity type of a feat, a power or an item of the view. */
 function typeOf(data: RulesetData, id: string): RulesetEntityType | undefined {
-  if (data.featsById.has(id)) return "feats";
-  if (data.powersById.has(id)) return "powers";
-  if (data.aptitudesById.has(id)) return "aptitudes";
-  return data.itemsById.has(id) ? "items" : undefined;
+  return (["feats", "powers", "aptitudes", "items"] as const).find((type) => data.byId(type).has(id));
 }
 
 /**
@@ -78,8 +76,12 @@ export function customizationsOf(data: RulesetData, id: string) {
     properties: (data.propertiesByEntity.get(id) ?? []).map((p) => [p.type, p.value, p.description].join("|")).sort(),
     requirements: requirementsOf(id),
     links: [
-      ...(data.featsById.get(id)?.featsAptitudesInRules.map((l) => l.aptitudeId) ?? []),
-      ...(data.powersById.get(id)?.powersAptitudesInRules.map((l) => `${l.aptitudeId}|${l.level}`) ?? []),
+      ...(Dnd35View.of(data)
+        .featsById.get(id)
+        ?.featsAptitudesInRules.map((l) => l.aptitudeId) ?? []),
+      ...(Dnd35View.of(data)
+        .powersById.get(id)
+        ?.powersAptitudesInRules.map((l) => `${l.aptitudeId}|${l.level}`) ?? []),
     ].sort(),
   };
 }
@@ -121,7 +123,7 @@ export async function compareCopies(fork: Fork, winnerIds: string[]) {
 /** The classes of the fork's view, sorted: what a copy of each stores, the sweeps check (`findStaleClassCopies`). */
 export async function findKlassIds(fork: Fork) {
   const view = await RulesetViews.getData(fork);
-  return [...new Set([...view.klassesById.values()].map((klass) => klass.id))].sort();
+  return [...new Set(view.rows("klasses").map((klass) => klass.id))].sort();
 }
 
 /** The sibling winners of the fork's view, sorted: what a copy of each must hold as the view showed it. */
@@ -140,7 +142,7 @@ export async function findStaleClassCopies(fork: Fork, klassIds: string[]) {
   for (const klassId of klassIds) {
     await withCopy(fork, "klasses", klassId, async (tx, after, copyId) => {
       const ids = await findStaleAptitudeIds(tx, after, "klasses", copyId);
-      if (ids.length > 0) stale.push(`${view.klassesById.get(klassId)?.name}: ${ids}`);
+      if (ids.length > 0) stale.push(`${view.find("klasses", klassId)?.name}: ${ids}`);
     });
   }
   return stale;

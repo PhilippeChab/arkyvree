@@ -7,8 +7,10 @@ import type {
   PlacementQuery,
 } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
-import type { Item, RulesetView } from "@/engine/core/view/index.ts";
+import type { RulesetView } from "@/engine/core/view/index.ts";
 import ItemPlacement from "@/engine/rulesets/dnd3.5/rules/ItemPlacement.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
+import type { Item } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import type { Property } from "@/shared/relations.ts";
 
 import Equipping from "./Equipping.ts";
@@ -67,7 +69,7 @@ export default class InventoryEntries {
       const entry =
         "item" in change
           ? { id: null, item: change.item }
-          : { id: change.entry.id, item: view.rulesetData.itemsById.get(change.entry.itemId) };
+          : { id: change.entry.id, item: Dnd35View.of(view.rulesetData).itemsById.get(change.entry.itemId) };
       if (!entry.item) throw new RulesError("not-found", "Item not found");
       new Equipping(view, character).checkEquip({ id: entry.id, item: entry.item }, location, weaponSets, force);
     }

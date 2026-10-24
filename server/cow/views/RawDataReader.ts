@@ -12,7 +12,7 @@ export default class RawDataReader {
   /** A ruleset's own rows, and whether the cache pins them: a system ruleset's, which every fork reads. */
   static async read(rulesetId: string, campaignId?: string): Promise<{ data: RulesetRawData; pinned: boolean }> {
     const scope = campaignId ? { rulesetId, campaignId } : { rulesetId };
-    const [entities, leveledAptitudeIds, ruleset] = await Promise.all([
+    const [entities, tieredIds, ruleset] = await Promise.all([
       Entities.findStored(db, scope),
       Entities.findTieredIds(db, scope),
       campaignId ? Promise.resolve(null) : Rulesets.findOne(db, { id: rulesetId }),
@@ -33,7 +33,7 @@ export default class RawDataReader {
     });
     const data = Engine.copyOnWrite().buildRawData({
       entities,
-      leveledAptitudeIds,
+      tieredIds,
       modifiers,
       requirements,
       ruleset: rulesets[0],

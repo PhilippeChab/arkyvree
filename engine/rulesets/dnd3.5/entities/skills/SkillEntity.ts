@@ -4,8 +4,8 @@ import { RulesetEntity } from "@/engine/core/entities/index.ts";
 import type { EntityFieldValues } from "@/engine/core/fields/index.ts";
 import type { EntityWrites } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
-import type { Skill } from "@/engine/core/view/index.ts";
 import SkillFocusFeats from "@/engine/rulesets/dnd3.5/entities/feats/SkillFocusFeats.ts";
+import type { Skill } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 import { SKILL_COLUMNS } from "./columns.ts";

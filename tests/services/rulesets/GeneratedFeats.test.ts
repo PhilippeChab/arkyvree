@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import type { Aptitude, Feat, RulesetAbility, Skill } from "@/engine/index.ts";
 import SkillFocusFeats from "@/engine/rulesets/dnd3.5/entities/feats/SkillFocusFeats.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { addClassLevels } from "@/scripts/db/seeds/seedCharacter.ts";
 import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
@@ -354,7 +355,7 @@ describe("an inherited skill's Skill Focus", () => {
         operation === "rename" ? ["Skill Focus: Mountaineering"] : [],
       );
       await withRulesetScope(db, fork.id, async ({ rulesetData }) =>
-        expect(rulesetData.feats.some((f) => f.name === "Skill Focus: Climb")).toBe(false),
+        expect(Dnd35View.of(rulesetData).feats.some((f) => f.name === "Skill Focus: Climb")).toBe(false),
       );
 
       const ctx = await getSeedCtx();
@@ -461,7 +462,7 @@ describe("generated feats", () => {
   ])("keep their %s names, inherited or copied into the fork", async (family) => {
     const { session, fork } = await forkWithExtensions();
     const feat = await withRulesetScope(db, fork.id, async ({ rulesetData }) =>
-      rulesetData.feats.find((row) => row.name.startsWith(`${family}: `))!,
+      Dnd35View.of(rulesetData).feats.find((row) => row.name.startsWith(`${family}: `))!,
     );
     expect(
       EntitiesService.updateEntity(session, fork.id, "feats", feat.id, { name: "Renamed generated feat" }),
@@ -511,7 +512,7 @@ describe("generated feats", () => {
   test("include a feat made in place of one the fork deleted, which stands in for it", async () => {
     const { session, fork } = await seededFork();
     const longsword = await withRulesetScope(db, fork.id, async ({ rulesetData }) =>
-      rulesetData.feats.find((row) => row.name === "Weapon Focus: Longsword")!,
+      Dnd35View.of(rulesetData).feats.find((row) => row.name === "Weapon Focus: Longsword")!,
     );
     await EntitiesService.deleteEntity(session, fork.id, "feats", longsword.id);
     const made = await EntitiesService.createEntity(session, fork.id, "feats", {
@@ -534,7 +535,7 @@ describe("generated feats", () => {
     });
     // A class feature's option, written on its own
     const option = await withRulesetScope(db, fork.id, async ({ rulesetData }) =>
-      rulesetData.feats.find((row) => row.name.startsWith("Terrain Mastery: "))!,
+      Dnd35View.of(rulesetData).feats.find((row) => row.name.startsWith("Terrain Mastery: "))!,
     );
     expect(
       await EntitiesService.updateEntity(session, fork.id, "feats", option.id, { name: "Desert Mastery" }),
@@ -578,7 +579,9 @@ describe("generated feats", () => {
     for (const name of names) {
       await EntitiesService.updateEntity(session, fork.id, "skills", climb.id, skill(climb.primaryAbilityId, name));
       await withRulesetScope(db, fork.id, async ({ rulesetData }) => {
-        const visible = rulesetData.feats.filter((f) => names.some((label) => f.name === `Skill Focus: ${label}`));
+        const visible = Dnd35View.of(rulesetData).feats.filter((f) =>
+          names.some((label) => f.name === `Skill Focus: ${label}`),
+        );
         expect(
           visible.map((f) => [f.name, (rulesetData.modifiersBySource.get(f.id) ?? []).map((m) => m.target)]),
         ).toEqual([[`Skill Focus: ${name}`, [`skills.${name.toLowerCase()}.misc`]]]);

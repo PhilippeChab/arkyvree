@@ -1,5 +1,5 @@
 import { CharacterBase } from "@/engine/core/character/index.ts";
-import type { Klass } from "@/engine/core/view/index.ts";
+import type { Klass } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import type { Modifier } from "@/shared/relations.ts";
 
 import { type Dnd35Components } from "./CharacterComponents.ts";

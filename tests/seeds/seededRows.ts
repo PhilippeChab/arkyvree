@@ -3,6 +3,7 @@ import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Rulesets } from "@/server/repositories/index.ts";
 import type { Requirement } from "@/shared/relations.ts";
+import { rawLists } from "@/tests/support/dnd3.5/rawLists.ts";
 
 /** A requirement as its level and check, "2 classes.fighter.level greater_than_or_equal 4", or its level and chaining for a group, "1 or". */
 export function describeRequirement(r: Requirement) {
@@ -13,7 +14,8 @@ export function describeRequirement(r: Requirement) {
 export async function seededRows(rulesetName = DND35_RULESET_NAME) {
   const ruleset = await Rulesets.findOne(db, { name: rulesetName });
   if (!ruleset) throw new Error(`${rulesetName} isn't seeded`);
-  const rows = await RulesetViews.getRawData(ruleset.id);
+  const raw = await RulesetViews.getRawData(ruleset.id);
+  const rows = { ...raw, ...rawLists(raw) };
   const named = <T extends { name: string }>(list: T[], name: string) => {
     const row = list.find((r) => r.name === name);
     if (!row) throw new Error(`${name} isn't seeded in ${rulesetName}`);

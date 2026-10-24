@@ -10,19 +10,19 @@ export default class CustomizedEntity {
   private static nameOf(rulesetData: RulesetData, entityType: string, entityId: string): string | undefined {
     switch (entityType) {
       case "feats":
-        return rulesetData.featsById.get(entityId)?.name;
+        return rulesetData.find("feats", entityId)?.name;
       case "items":
-        return rulesetData.itemsById.get(entityId)?.name;
+        return rulesetData.find("items", entityId)?.name;
       case "powers":
-        return rulesetData.powersById.get(entityId)?.name;
+        return rulesetData.find("powers", entityId)?.name;
       case "klass_levels": {
-        const level = rulesetData.klassLevelsById.get(entityId);
+        const level = rulesetData.find("klass_levels", entityId);
         return level ? `Level ${level.level}` : undefined;
       }
       case "races":
-        return rulesetData.racesById.get(entityId)?.name;
+        return rulesetData.find("races", entityId)?.name;
       case "klasses":
-        return rulesetData.klassesById.get(entityId)?.name;
+        return rulesetData.find("klasses", entityId)?.name;
       case "modifiers": {
         const modifier = rulesetData.modifiersById.get(entityId);
         return modifier ? `${modifier.target} ${modifier.operator} ${modifier.value}` : undefined;

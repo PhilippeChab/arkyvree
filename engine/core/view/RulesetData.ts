@@ -1,94 +1,32 @@
 import type { CowData } from "@/engine/core/cow/index.ts";
 import { PropertyOrder, type PropertyTypesProvider } from "@/engine/core/customizations/index.ts";
 import type { Modifier, Property, Requirement, Ruleset } from "@/shared/relations.ts";
-import { stripSeparators } from "@/shared/text.ts";
 
-import type {
-  Aptitude,
-  FeatWithAptitudes,
-  Item,
-  Klass,
-  KlassLevel,
-  KlassLevelFeat,
-  KlassLevelPower,
-  KlassLevelSave,
-  KlassSkill,
-  Language,
-  Mechanic,
-  PowerWithAptitudes,
-  Race,
-  RulesetAbility,
-  RulesetSave,
-  Skill,
-} from "./rows.ts";
+import type { ViewEntities, ViewJoins } from "./rows.ts";
 
 /** Each index a ruleset's view builds on first read, and keeps. */
 interface Indices {
-  abilitiesById: Map<string, RulesetAbility>;
-  aptitudeIdBySlug: Map<string, string>;
-  aptitudeIdsWithFeats: Set<string>;
-  aptitudeIdsWithPowers: Set<string>;
-  aptitudesById: Map<string, Aptitude>;
   entityIdsByProperty: Map<string, string[]>;
-  featIdBySlug: Map<string, string>;
-  featsById: Map<string, FeatWithAptitudes>;
-  itemsById: Map<string, Item>;
-  klassesById: Map<string, Klass>;
-  klassLevelByKlassAndLevel: Map<string, KlassLevel>;
-  klassLevelFeatsByKlassLevel: Map<string, KlassLevelFeat[]>;
-  klassLevelFeatsWithFeatsByKlassLevel: Map<string, (KlassLevelFeat & { featsInRule: FeatWithAptitudes })[]>;
-  klassLevelPowersWithPowersByKlassLevel: Map<string, (KlassLevelPower & { powersInRule: PowerWithAptitudes })[]>;
-  klassLevelSavesByKlassLevel: Map<string, KlassLevelSave[]>;
-  klassLevelsById: Map<string, KlassLevel>;
-  klassLevelsByKlass: Map<string, KlassLevel[]>;
-  klassSkillsByKlass: Map<string, KlassSkill[]>;
-  klassSkillsWithSkillsByKlass: Map<string, (KlassSkill & { skillsInRule: Skill })[]>;
-  languageIdBySlug: Map<string, string>;
-  languagesById: Map<string, Language>;
-  mechanicsById: Map<string, Mechanic>;
   modifiersById: Map<string, Modifier>;
   modifiersBySource: Map<string, Modifier[]>;
-  powerIdsBySlug: Map<string, string[]>;
-  powersById: Map<string, PowerWithAptitudes>;
   propertiesByEntity: Map<string, Property[]>;
   propertiesByEntityType: Map<string, Property[]>;
-  racesById: Map<string, Race>;
   requirementsByEntity: Map<string, Requirement[]>;
-  savesById: Map<string, RulesetSave>;
-  skillsById: Map<string, Skill>;
-  /** A class's skills and a level's feats and powers by name, as the books list them; properties as stat blocks do. */
-  sortedKlassLevelFeats: KlassLevelFeat[];
-  sortedKlassLevelPowers: KlassLevelPower[];
-  sortedKlassSkills: KlassSkill[];
+  /** Properties as stat blocks show them */
   sortedProperties: Property[];
-  /** The joins' lookups: by id, before the stored ids resolve. */
-  storedFeatsById: Map<string, FeatWithAptitudes>;
-  storedPowersById: Map<string, PowerWithAptitudes>;
-  storedSkillsById: Map<string, Skill>;
 }
 
 /** A ruleset's lists, composed across its chain (`RulesetComposition`): what its view holds and indexes. */
 export interface RulesetLists {
-  abilities: RulesetAbility[];
-  aptitudes: Aptitude[];
-  feats: FeatWithAptitudes[];
-  items: Item[];
-  klasses: Klass[];
-  klassLevelFeats: KlassLevelFeat[];
-  klassLevelPowers: KlassLevelPower[];
-  klassLevels: KlassLevel[];
-  klassLevelSaves: KlassLevelSave[];
-  klassSkills: KlassSkill[];
-  languages: Language[];
-  leveledAptitudeIds: Set<string>;
-  mechanics: Mechanic[];
+  /** Each kind's rows, by its type */
+  entities: ReadonlyMap<string, readonly object[]>;
+  /** Each join's rows, by its name, but those a kind's lists nest */
+  joins: ReadonlyMap<string, readonly object[]>;
   modifiers: Modifier[];
-  powers: PowerWithAptitudes[];
   properties: Property[];
-  races: Race[];
   requirements: Requirement[];
-  saves: RulesetSave[];
-  skills: Skill[];
+  /** The entities a link of a join with a tier points at (a spell list at a level) */
+  tieredIds: Set<string>;
 }
 
 /** A ruleset as a character's build reads it: its row, and its view, composed by copy-on-write. */
@@ -97,78 +35,53 @@ export interface RulesetView {
   rulesetData: RulesetData;
 }
 
-/** A ruleset's entities as its view has them, by their table: what `RulesetData.find` finds one of. */
-export interface ViewEntities {
-  abilities: RulesetAbility;
-  aptitudes: Aptitude;
-  feats: FeatWithAptitudes;
-  items: Item;
-  klass_levels: KlassLevel;
-  klasses: Klass;
-  languages: Language;
-  mechanics: Mechanic;
-  powers: PowerWithAptitudes;
-  races: Race;
-  saves: RulesetSave;
-  skills: Skill;
-}
-
 /** Rows by id. */
-function buildById<T extends { id: string }>(list: T[]): Map<string, T> {
+function buildById<T extends { id: string }>(list: readonly T[]): Map<string, T> {
   return new Map(list.map((item) => [item.id, item]));
 }
 
-/** Rows' ids by their name's slug (`stripSeparators`): the first row of a slug wins, as the view lists them. */
-function buildIdBySlug(rows: { id: string; name: string }[]): Map<string, string> {
-  const idBySlug = new Map<string, string>();
-  for (const row of rows) {
-    const slug = stripSeparators(row.name);
-    if (!idBySlug.has(slug)) idBySlug.set(slug, row.id);
-  }
-  return idBySlug;
-}
-
 /**
- * A ruleset's view: its lists, composed across its chain by its copy-on-write data (`RulesetComposition`), and their
- * lookup indices. An index is built the first time it's read, then kept: a request pays for the indices it reads, not
- * for all of them. Every id-keyed index takes a stored (pre-COW) id too: its `.get` and `.has` resolve the key
- * (`CowData.resolve`), so consumers don't thread `cow` through or call `canonicalize` on the common lookup path.
+ * A ruleset's view: its lists, composed across its chain by its copy-on-write data (`RulesetComposition`), each kind's
+ * and each join's by name, and their lookup indices. An index is built the first time it's read, then kept: a request
+ * pays for the indices it reads, not for all of them. Every id-keyed index takes a stored (pre-COW) id too: its `.get`
+ * and `.has` resolve the key (`CowData.resolve`), so consumers don't thread `cow` through or call `canonicalize` on the
+ * common lookup path. What a module reads of it past its kinds' rows (3.5's indices) it derives (`derive`).
  */
 export default class RulesetData {
-  /** `propertyTypes`: the ruleset's property types, as its rules read them, which order its entities' properties. */
-  constructor(lists: RulesetLists, cow: CowData, propertyTypes: PropertyTypesProvider) {
-    this.abilities = lists.abilities;
-    this.aptitudes = lists.aptitudes;
-    this.feats = lists.feats;
-    this.items = lists.items;
-    this.klasses = lists.klasses;
-    this.klassLevelFeats = lists.klassLevelFeats;
-    this.klassLevelPowers = lists.klassLevelPowers;
-    this.klassLevels = lists.klassLevels;
-    this.klassLevelSaves = lists.klassLevelSaves;
-    this.klassSkills = lists.klassSkills;
-    this.languages = lists.languages;
-    this.leveledAptitudeIds = lists.leveledAptitudeIds;
-    this.mechanics = lists.mechanics;
+  /**
+   * `propertyTypes`: the ruleset's property types, as its rules read them, which order its entities' properties;
+   * `labels`: what its module calls an entity of each kind.
+   */
+  constructor(
+    lists: RulesetLists,
+    cow: CowData,
+    propertyTypes: PropertyTypesProvider,
+    labels: Readonly<Record<string, string>>,
+  ) {
+    this.labels = labels;
+    this.entities = lists.entities;
+    this.joins = lists.joins;
     this.modifiers = lists.modifiers;
-    this.powers = lists.powers;
     this.properties = lists.properties;
-    this.races = lists.races;
     this.requirements = lists.requirements;
-    this.saves = lists.saves;
-    this.skills = lists.skills;
+    this.tieredIds = lists.tieredIds;
     this.cow = cow;
     this.propertyOrder = new PropertyOrder(propertyTypes);
   }
 
   private readonly built: Partial<Indices> = {};
 
+  /** Each kind's rows by id, built the first time a kind's are read: as stored, and resolving a stored id. */
+  private readonly byIds = new Map<string, { resolved: Map<string, object>; stored: Map<string, object> }>();
+
   /** What the ruleset's module derives of the view, by what derives it (`derive`). */
   private readonly derived = new Map<new (rulesetData: RulesetData) => object, object>();
 
-  private readonly klassLevelFeats: KlassLevelFeat[];
+  private readonly entities: ReadonlyMap<string, readonly object[]>;
 
-  private readonly klassLevelPowers: KlassLevelPower[];
+  private readonly joins: ReadonlyMap<string, readonly object[]>;
+
+  private readonly labels: Readonly<Record<string, string>>;
 
   private readonly modifiers: Modifier[];
 
@@ -178,41 +91,25 @@ export default class RulesetData {
 
   private readonly requirements: Requirement[];
 
-  readonly abilities: RulesetAbility[];
-
-  readonly aptitudes: Aptitude[];
-
   /**
    * The ruleset's copy-on-write state: the id Maps resolve through it on their own; rows as stored (a character's, a
    * page's) are resolved with it (`resolveRows`), and lineage- or sibling-aware code reads it.
    */
   readonly cow: CowData;
 
-  readonly feats: FeatWithAptitudes[];
+  /** The entities a link of a join with a tier points at, from any ruleset (a spell list at a level). */
+  readonly tieredIds: Set<string>;
 
-  readonly items: Item[];
-
-  readonly klasses: Klass[];
-
-  readonly klassLevels: KlassLevel[];
-
-  readonly klassLevelSaves: KlassLevelSave[];
-
-  readonly klassSkills: KlassSkill[];
-
-  readonly languages: Language[];
-
-  readonly leveledAptitudeIds: Set<string>;
-
-  readonly mechanics: Mechanic[];
-
-  readonly powers: PowerWithAptitudes[];
-
-  readonly races: Race[];
-
-  readonly saves: RulesetSave[];
-
-  readonly skills: Skill[];
+  /** A kind's rows by id (`type`): as stored, and resolving a stored id, each built once. */
+  private indexOf(type: string) {
+    let byId = this.byIds.get(type);
+    if (!byId) {
+      const stored = buildById((this.entities.get(type) ?? []) as { id: string }[]);
+      byId = { resolved: this.resolvingIds(stored), stored };
+      this.byIds.set(type, byId);
+    }
+    return byId;
+  }
 
   /**
    * Wraps a string-keyed Map so `.get(key)` and `.has(key)` look the key up as `resolveKey` maps it: consumers can pass
@@ -234,94 +131,14 @@ export default class RulesetData {
     });
   }
 
-  /**
-   * A Map keyed by `${id}:${rest}` composites (e.g. `klassLevelByKlassAndLevel`'s `${klassId}:${level}` keys): the id
-   * portion before the first `:` resolves through `CowData.resolve`, the rest stays. So a caller passing a pre-COW
-   * klassId still lands on the right klass level.
-   */
-  private resolvingCompositeKeys<V>(map: Map<string, V>): Map<string, V> {
-    return this.resolving(map, (key) => {
-      const sep = key.indexOf(":");
-      if (sep === -1) return key;
-      return this.cow.resolve(key.slice(0, sep)) + key.slice(sep);
-    });
-  }
-
-  /** A Map keyed by entity ids, whose `.get` and `.has` take a stored (pre-COW) id. */
-  private resolvingIds<V>(map: Map<string, V>): Map<string, V> {
-    return this.resolving(map, (key) => this.cow.resolve(key));
-  }
-
-  /** A level's feats by name, as the books list them. */
-  private get sortedKlassLevelFeats(): KlassLevelFeat[] {
-    return (this.built.sortedKlassLevelFeats ??= this.klassLevelFeats.toSorted((a, b) =>
-      (this.storedFeatsById.get(a.featId)?.name ?? "").localeCompare(this.storedFeatsById.get(b.featId)?.name ?? ""),
-    ));
-  }
-
-  /** A level's powers by name, as the books list them. */
-  private get sortedKlassLevelPowers(): KlassLevelPower[] {
-    return (this.built.sortedKlassLevelPowers ??= this.klassLevelPowers.toSorted((a, b) =>
-      (this.storedPowersById.get(a.powerId)?.name ?? "").localeCompare(
-        this.storedPowersById.get(b.powerId)?.name ?? "",
-      ),
-    ));
-  }
-
-  /** A class's skills by name, as the books list them. */
-  private get sortedKlassSkills(): KlassSkill[] {
-    return (this.built.sortedKlassSkills ??= this.klassSkills.toSorted((a, b) =>
-      (this.storedSkillsById.get(a.skillId)?.name ?? "").localeCompare(
-        this.storedSkillsById.get(b.skillId)?.name ?? "",
-      ),
-    ));
-  }
-
   /** Each entity's properties as its stat block shows them, whoever reads them. */
   private get sortedProperties(): Property[] {
     return (this.built.sortedProperties ??= this.propertyOrder.sort(this.properties));
   }
 
-  private get storedFeatsById(): Map<string, FeatWithAptitudes> {
-    return (this.built.storedFeatsById ??= buildById(this.feats));
-  }
-
-  private get storedPowersById(): Map<string, PowerWithAptitudes> {
-    return (this.built.storedPowersById ??= buildById(this.powers));
-  }
-
-  private get storedSkillsById(): Map<string, Skill> {
-    return (this.built.storedSkillsById ??= buildById(this.skills));
-  }
-
-  get abilitiesById(): Map<string, RulesetAbility> {
-    return (this.built.abilitiesById ??= this.resolvingIds(buildById(this.abilities)));
-  }
-
-  /**
-   * `stripSeparators(aptitude.name)` → aptitudeId, the first match winning: what modifier targets name an aptitude by
-   * (`aptitudes.<slug>.…`), and what finalize, distribution, the pick queries and the loader map names through.
-   */
-  get aptitudeIdBySlug(): Map<string, string> {
-    return (this.built.aptitudeIdBySlug ??= buildIdBySlug(this.aptitudes));
-  }
-
-  /** The aptitudes that have at least one feat linked, from the feats' inline `featsAptitudesInRules` rows. */
-  get aptitudeIdsWithFeats(): Set<string> {
-    return (this.built.aptitudeIdsWithFeats ??= new Set(
-      this.feats.flatMap((feat) => feat.featsAptitudesInRules.map((l) => l.aptitudeId)),
-    ));
-  }
-
-  /** The aptitudes that have at least one power linked, from the powers' inline `powersAptitudesInRules` rows. */
-  get aptitudeIdsWithPowers(): Set<string> {
-    return (this.built.aptitudeIdsWithPowers ??= new Set(
-      this.powers.flatMap((power) => power.powersAptitudesInRules.map((l) => l.aptitudeId)),
-    ));
-  }
-
-  get aptitudesById(): Map<string, Aptitude> {
-    return (this.built.aptitudesById ??= this.resolvingIds(buildById(this.aptitudes)));
+  /** A kind's rows by id (`type`), a stored (pre-COW) id resolving to its copy's or its winner's. */
+  byId<K extends keyof ViewEntities>(type: K): Map<string, ViewEntities[K]> {
+    return this.indexOf(type).resolved as Map<string, ViewEntities[K]>;
   }
 
   /**
@@ -355,7 +172,7 @@ export default class RulesetData {
 
   /**
    * Reverse property index: `${entityType}:${type}:${value}` → the ids of the entities with that property. Replaces
-   * O(N) scans like `powers.filter(p => p.properties.some(x => x.type === TYPE && x.value === V))`.
+   * O(N) scans of a kind's entities' properties for one value.
    */
   get entityIdsByProperty(): Map<string, string[]> {
     return (this.built.entityIdsByProperty ??= new Map(
@@ -372,20 +189,11 @@ export default class RulesetData {
    * reverting it or unsubscribing from its book is refused while an entry holds it. An entry it doesn't is left out, as
    * a pick is.
    */
-  entriesWithItems<E extends { itemId: string }>(entries: E[]): { entry: E; item: Item }[] {
+  entriesWithItems<E extends { itemId: string }>(entries: E[]): { entry: E; item: ViewEntities["items"] }[] {
     return entries.flatMap((entry) => {
-      const item = this.itemsById.get(entry.itemId);
+      const item = this.byId("items").get(entry.itemId);
       return item ? [{ entry, item }] : [];
     });
-  }
-
-  /** `stripSeparators(feat.name)` → featId, the first match winning: the "set feats.<slug>.possessed" modifier scan. */
-  get featIdBySlug(): Map<string, string> {
-    return (this.built.featIdBySlug ??= buildIdBySlug(this.feats));
-  }
-
-  get featsById(): Map<string, FeatWithAptitudes> {
-    return (this.built.featsById ??= this.resolvingIds(this.storedFeatsById));
   }
 
   /**
@@ -393,21 +201,7 @@ export default class RulesetData {
    * builds the index of `type` alone.
    */
   find<K extends keyof ViewEntities>(type: K, id: string): ViewEntities[K] | undefined {
-    const byId: { [T in keyof ViewEntities]: () => ReadonlyMap<string, ViewEntities[T]> } = {
-      abilities: () => this.abilitiesById,
-      aptitudes: () => this.aptitudesById,
-      feats: () => this.featsById,
-      items: () => this.itemsById,
-      klass_levels: () => this.klassLevelsById,
-      klasses: () => this.klassesById,
-      languages: () => this.languagesById,
-      mechanics: () => this.mechanicsById,
-      powers: () => this.powersById,
-      races: () => this.racesById,
-      saves: () => this.savesById,
-      skills: () => this.skillsById,
-    };
-    return byId[type]().get(id);
+    return this.byId(type).get(id);
   }
 
   /**
@@ -415,11 +209,12 @@ export default class RulesetData {
    * template (`sourceItemId`) holds only what it overrides, a type at a time: its own damage types replace all the
    * template's.
    */
-  itemProperties(item: Pick<Item, "id" | "sourceItemId">): Property[] {
-    const own = this.propertiesByEntity.get(item.id) ?? [];
+  itemProperties(item: Pick<ViewEntities["items"], "id" | "sourceItemId">): Property[] {
+    const { propertiesByEntity } = this;
+    const own = propertiesByEntity.get(item.id) ?? [];
     if (!item.sourceItemId) return [...own];
     const ownTypes = new Set(own.map((property) => property.type));
-    const template = this.propertiesByEntity.get(item.sourceItemId) ?? [];
+    const template = propertiesByEntity.get(item.sourceItemId) ?? [];
     return [...template.filter((property) => !ownTypes.has(property.type)), ...own];
   }
 
@@ -427,143 +222,25 @@ export default class RulesetData {
    * An item's requirements, as its template splits them: its template's (`template`: its own when it's a template),
    * and its own on top of them (`own`: none on a template, all of a plain item's).
    */
-  itemRequirements(item: Pick<Item, "id" | "isTemplate" | "sourceItemId">) {
-    const own = this.requirementsByEntity.get(item.id) ?? [];
+  itemRequirements(item: Pick<ViewEntities["items"], "id" | "isTemplate" | "sourceItemId">) {
+    const { requirementsByEntity } = this;
+    const own = requirementsByEntity.get(item.id) ?? [];
     if (item.isTemplate) return { own: [], template: own };
-    const template = item.sourceItemId ? (this.requirementsByEntity.get(item.sourceItemId) ?? []) : [];
+    const template = item.sourceItemId ? (requirementsByEntity.get(item.sourceItemId) ?? []) : [];
     return { own, template };
   }
 
-  get itemsById(): Map<string, Item> {
-    return (this.built.itemsById ??= this.resolvingIds(buildById(this.items)));
-  }
-
-  get klassesById(): Map<string, Klass> {
-    return (this.built.klassesById ??= this.resolvingIds(buildById(this.klasses)));
-  }
-
-  /** Key: `${klassId}:${level}`, the class's id resolved. */
-  get klassLevelByKlassAndLevel(): Map<string, KlassLevel> {
-    return (this.built.klassLevelByKlassAndLevel ??= this.resolvingCompositeKeys(
-      new Map(this.klassLevels.map((kl) => [`${kl.klassId}:${kl.level}`, kl])),
-    ));
-  }
-
-  /** klassLevelId → its granted feats, the links alone (`klassLevelFeatsWithFeatsByKlassLevel` joins the feats). */
-  get klassLevelFeatsByKlassLevel(): Map<string, KlassLevelFeat[]> {
-    return (this.built.klassLevelFeatsByKlassLevel ??= this.resolvingIds(
-      Map.groupBy(this.sortedKlassLevelFeats, (klf) => klf.klassLevelId),
-    ));
-  }
-
-  /** klassLevelId → its granted feats joined with their feats: a link whose feat isn't in the view is left out. */
-  get klassLevelFeatsWithFeatsByKlassLevel(): Map<string, (KlassLevelFeat & { featsInRule: FeatWithAptitudes })[]> {
-    return (this.built.klassLevelFeatsWithFeatsByKlassLevel ??= this.resolvingIds(
-      Map.groupBy(
-        this.sortedKlassLevelFeats.flatMap((klf) => {
-          const feat = this.storedFeatsById.get(klf.featId);
-          return feat ? [{ ...klf, featsInRule: feat }] : [];
-        }),
-        (joined) => joined.klassLevelId,
-      ),
-    ));
-  }
-
-  /** klassLevelId → its granted powers joined with their powers: a link whose power isn't in the view is left out. */
-  get klassLevelPowersWithPowersByKlassLevel(): Map<
-    string,
-    (KlassLevelPower & { powersInRule: PowerWithAptitudes })[]
-  > {
-    return (this.built.klassLevelPowersWithPowersByKlassLevel ??= this.resolvingIds(
-      Map.groupBy(
-        this.sortedKlassLevelPowers.flatMap((klp) => {
-          const power = this.storedPowersById.get(klp.powerId);
-          return power ? [{ ...klp, powersInRule: power }] : [];
-        }),
-        (joined) => joined.klassLevelId,
-      ),
-    ));
-  }
-
-  get klassLevelSavesByKlassLevel(): Map<string, KlassLevelSave[]> {
-    return (this.built.klassLevelSavesByKlassLevel ??= this.resolvingIds(
-      Map.groupBy(this.klassLevelSaves, (kls) => kls.klassLevelId),
-    ));
-  }
-
-  get klassLevelsById(): Map<string, KlassLevel> {
-    return (this.built.klassLevelsById ??= this.resolvingIds(buildById(this.klassLevels)));
-  }
-
-  /** klassId → its levels, sorted by level: the last is the class's highest. */
-  get klassLevelsByKlass(): Map<string, KlassLevel[]> {
-    return (this.built.klassLevelsByKlass ??= this.resolvingIds(
-      Map.groupBy(
-        this.klassLevels.toSorted((a, b) => a.level - b.level),
-        (kl) => kl.klassId,
-      ),
-    ));
-  }
-
-  /** klassId → its skills, the links themselves (`klassSkillsWithSkillsByKlass` joins the skills). */
-  get klassSkillsByKlass(): Map<string, KlassSkill[]> {
-    return (this.built.klassSkillsByKlass ??= this.resolvingIds(
-      Map.groupBy(this.sortedKlassSkills, (ks) => ks.klassId),
-    ));
-  }
-
-  /** klassId → its skills joined with their skills: a link whose skill isn't in the view is left out. */
-  get klassSkillsWithSkillsByKlass(): Map<string, (KlassSkill & { skillsInRule: Skill })[]> {
-    return (this.built.klassSkillsWithSkillsByKlass ??= this.resolvingIds(
-      Map.groupBy(
-        this.sortedKlassSkills.flatMap((ks) => {
-          const skill = this.storedSkillsById.get(ks.skillId);
-          return skill ? [{ ...ks, skillsInRule: skill }] : [];
-        }),
-        (joined) => joined.klassId,
-      ),
-    ));
+  /** A join's rows (`join`), across the chain, as the view composes them. */
+  joinRows<J extends keyof ViewJoins>(join: J): ViewJoins[J][] {
+    return (this.joins.get(join) ?? []) as ViewJoins[J][];
   }
 
   /**
-   * `stripSeparators(language.name)` → languageId, the first match winning: the "set languages.<slug>.known" modifier
-   * scan.
+   * What the ruleset's module calls an entity of a type (`type`), as a refusal or an issue names it ("Feat <id> does
+   * not belong to this ruleset"): the type itself for one it names none of.
    */
-  get languageIdBySlug(): Map<string, string> {
-    return (this.built.languageIdBySlug ??= buildIdBySlug(this.languages));
-  }
-
-  get languagesById(): Map<string, Language> {
-    return (this.built.languagesById ??= this.resolvingIds(buildById(this.languages)));
-  }
-
-  /**
-   * The ids of the ruleset's feats on a list, as the ruleset composes it: a ruleset taking several books merges each
-   * feat's copies and each list's, and the winning copy takes every copy's links, so a query of a list's feats takes
-   * these ids, never the stored links.
-   */
-  listFeatIds(aptitudeId: string): string[] {
-    const listId = this.canonicalize(aptitudeId);
-    return this.feats
-      .filter((feat) => feat.featsAptitudesInRules.some((link) => link.aptitudeId === listId))
-      .map((feat) => feat.id);
-  }
-
-  /** The ids of the ruleset's spells on a list, at a level when one is given (on any list when none is). */
-  listPowerIds(where: { aptitudeId?: string; level?: number }): string[] {
-    const listId = where.aptitudeId === undefined ? undefined : this.canonicalize(where.aptitudeId);
-    return this.powers
-      .filter((power) =>
-        power.powersAptitudesInRules.some(
-          (link) =>
-            (listId === undefined || link.aptitudeId === listId) && (where.level == null || link.level === where.level),
-        ),
-      )
-      .map((power) => power.id);
-  }
-
-  get mechanicsById(): Map<string, Mechanic> {
-    return (this.built.mechanicsById ??= this.resolvingIds(buildById(this.mechanics)));
+  labelOf(type: string): string {
+    return this.labels[type] ?? type;
   }
 
   /**
@@ -578,39 +255,41 @@ export default class RulesetData {
     return (this.built.modifiersBySource ??= this.resolvingIds(Map.groupBy(this.modifiers, (m) => m.sourceId)));
   }
 
-  /**
-   * `stripSeparators(power.name)` → powerIds (several powers can share a slug): the "set powers.<slug>.<apt>.known"
-   * modifier scan. Resolve them through `powersById`, as `featIdBySlug` pairs with `featsById`.
-   */
-  get powerIdsBySlug(): Map<string, string[]> {
-    return (this.built.powerIdsBySlug ??= new Map(
-      [...Map.groupBy(this.powers, (power) => stripSeparators(power.name))].map(([slug, group]) => [
-        slug,
-        group.map((power) => power.id),
-      ]),
-    ));
-  }
-
-  get powersById(): Map<string, PowerWithAptitudes> {
-    return (this.built.powersById ??= this.resolvingIds(this.storedPowersById));
-  }
-
   get propertiesByEntity(): Map<string, Property[]> {
     return (this.built.propertiesByEntity ??= this.resolvingIds(Map.groupBy(this.sortedProperties, (p) => p.entityId)));
   }
 
-  /** entityType → its properties across the chain (`"items"` → every item's): what TargetPaths groups properties by. */
+  /** entityType → its properties across the chain (every entity's of a kind): what TargetPaths groups properties by. */
   get propertiesByEntityType(): Map<string, Property[]> {
     return (this.built.propertiesByEntityType ??= Map.groupBy(this.sortedProperties, (p) => p.entityType));
-  }
-
-  get racesById(): Map<string, Race> {
-    return (this.built.racesById ??= this.resolvingIds(buildById(this.races)));
   }
 
   /** entityId → its requirements (a sibling's merged into its winner's). */
   get requirementsByEntity(): Map<string, Requirement[]> {
     return (this.built.requirementsByEntity ??= this.resolvingIds(Map.groupBy(this.requirements, (r) => r.entityId)));
+  }
+
+  /**
+   * A Map keyed by `${id}:${rest}` composites (an owned entity's `${ownerId}:${position}`): the id portion before the
+   * first `:` resolves through `CowData.resolve`, the rest stays. So a caller passing a pre-COW id still lands on the
+   * right entry.
+   */
+  resolvingCompositeKeys<V>(map: Map<string, V>): Map<string, V> {
+    return this.resolving(map, (key) => {
+      const sep = key.indexOf(":");
+      if (sep === -1) return key;
+      return this.cow.resolve(key.slice(0, sep)) + key.slice(sep);
+    });
+  }
+
+  /** A Map keyed by entity ids, whose `.get` and `.has` take a stored (pre-COW) id. */
+  resolvingIds<V>(map: Map<string, V>): Map<string, V> {
+    return this.resolving(map, (key) => this.cow.resolve(key));
+  }
+
+  /** A kind's rows (`type`), across the chain, as the view composes them. */
+  rows<K extends keyof ViewEntities>(type: K): ViewEntities[K][] {
+    return (this.entities.get(type) ?? []) as ViewEntities[K][];
   }
 
   /**
@@ -629,11 +308,11 @@ export default class RulesetData {
     });
   }
 
-  get savesById(): Map<string, RulesetSave> {
-    return (this.built.savesById ??= this.resolvingIds(buildById(this.saves)));
-  }
-
-  get skillsById(): Map<string, Skill> {
-    return (this.built.skillsById ??= this.resolvingIds(this.storedSkillsById));
+  /**
+   * A kind's rows by id (`type`), as stored: a stored id isn't resolved. What a module's derived indices join rows by
+   * when they hold ids as stored.
+   */
+  storedById<K extends keyof ViewEntities>(type: K): Map<string, ViewEntities[K]> {
+    return this.indexOf(type).stored as Map<string, ViewEntities[K]>;
   }
 }

@@ -5,7 +5,7 @@
  * its `Descriptions` (`contract.ts`).
  */
 
-import type { Item, Language } from "@/engine/core/view/index.ts";
+import type { ViewEntities } from "@/engine/core/view/index.ts";
 import type { Modifier, Property, Requirement } from "@/shared/relations.ts";
 
 import type { SheetBlock } from "./blocks.ts";
@@ -162,11 +162,11 @@ export type CreationSection = { title: string } & (
  */
 export type DescribedInventoryEntry<T, X = unknown> = T &
   X & {
-    item: Item & { modifiers: Modifier[]; properties: Property[]; requirements: Requirement[] };
+    item: ViewEntities["items"] & { modifiers: Modifier[]; properties: Property[]; requirements: Requirement[] };
   };
 
 /** A language, as a character's languages name it. */
-export type DescribedLanguage = Pick<Language, "id" | "name" | "type">;
+export type DescribedLanguage = Pick<ViewEntities["languages"], "id" | "name" | "type">;
 
 /** An inventory entry, as where it's held reads it: whether it's equipped, where, and its weapon sets in a hand. */
 export type HeldInventoryEntry = Pick<InventoryEntryPlan, "equipped" | "location" | "weaponSets">;

@@ -6,9 +6,10 @@ import { ListedEntity } from "@/engine/core/entities/index.ts";
 import type { EntityFieldValues } from "@/engine/core/fields/index.ts";
 import type { EntityWrites } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
-import type { PowerWithAptitudes } from "@/engine/core/view/index.ts";
 import SpellFocusFeats from "@/engine/rulesets/dnd3.5/entities/feats/SpellFocusFeats.ts";
 import { RULESET_LIMITS } from "@/engine/rulesets/dnd3.5/limits.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
+import type { PowerWithAptitudes } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 
 import { POWER_COLUMNS } from "./columns.ts";
 import { POWER_FIELDS, type PowerFieldValues } from "./fields.ts";
@@ -61,7 +62,7 @@ export default class PowerEntity extends ListedEntity<
   protected override checkForm(body: PowerBody) {
     const listIds = (body.aptitudes ?? []).map((aptitude) => aptitude.id);
     const message = "Cannot link spell to aptitude(s) already used for feats";
-    this.refuseLists(listIds, this.rulesetData.aptitudeIdsWithFeats, message);
+    this.refuseLists(listIds, Dnd35View.of(this.rulesetData).aptitudeIdsWithFeats, message);
   }
 
   /** A form's columns: the save it gives (none clears it), an edit's that leaves it out kept. */
@@ -90,7 +91,7 @@ export default class PowerEntity extends ListedEntity<
     const listed = aptitudeId !== undefined || level != null;
     return {
       describe: <T extends Record<string, unknown> & { id: string }>(rows: T[]) => this.describeListed(rows),
-      filters: { ids: listed ? this.rulesetData.listPowerIds({ aptitudeId, level }) : undefined },
+      filters: { ids: listed ? Dnd35View.of(this.rulesetData).listPowerIds({ aptitudeId, level }) : undefined },
     };
   }
 

@@ -1,4 +1,3 @@
-import type { Item } from "@/engine/core/view/index.ts";
 import { ITEM_FIELDS, type WeaponFields } from "@/engine/rulesets/dnd3.5/entities/items/fields.ts";
 import type ClassesComponent from "@/engine/rulesets/dnd3.5/model/classes/ClassesComponent.ts";
 import type CombatState from "@/engine/rulesets/dnd3.5/model/combat/CombatState.ts";
@@ -10,6 +9,7 @@ import {
 } from "@/engine/rulesets/dnd3.5/model/combat/CombatState.ts";
 import AttackRules from "@/engine/rulesets/dnd3.5/rules/AttackRules.ts";
 import { SIZE_ORDER, WEAPON_SET_SLOTS } from "@/engine/rulesets/dnd3.5/rules/InventorySlots.ts";
+import type { Item } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import {
   COMBAT_RULES,

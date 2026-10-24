@@ -1,18 +1,19 @@
 import { CharacterDataLoader, type LoadedCharacter, type ModifierSource } from "@/engine/core/character/index.ts";
 import type { CharacterRows } from "@/engine/core/module/index.ts";
-import {
-  type CharacterLevel,
-  type Klass,
-  type KlassLevelSave,
-  type KlassSkill,
-  type Language,
-  type RulesetView,
-  type Skill,
-} from "@/engine/core/view/index.ts";
+import { type RulesetView } from "@/engine/core/view/index.ts";
 import { type SkillFieldValues } from "@/engine/rulesets/dnd3.5/entities/skills/fields.ts";
 import type { AbilityIncrease } from "@/engine/rulesets/dnd3.5/levelUp/plans.ts";
 import SavedPicks, { type SavedPickRows } from "@/engine/rulesets/dnd3.5/levelUp/SavedPicks.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
+import type {
+  CharacterLevel,
+  Klass,
+  KlassLevelSave,
+  KlassSkill,
+  Language,
+  Skill,
+} from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import { include } from "@/lib/mixins.ts";
 import type { Character } from "@/shared/relations.ts";
 import type { CasterType } from "@/vocabulary/dnd3.5/classes.ts";
@@ -117,12 +118,13 @@ export default class DetailedCharacterDataLoader extends include(
    */
   protected override partsOf(rows: CharacterRows, view: RulesetView): LoadedParts {
     const { rulesetData } = view;
+    const dnd35 = Dnd35View.of(rulesetData);
     // The character's race, from the view: racesById resolves a stored id (RulesetComposition)
-    const race = rulesetData.racesById.get(this.character.raceId);
+    const race = dnd35.racesById.get(this.character.raceId);
     if (!race) throw new Error("Race not found");
 
     const resolve: Resolve = (rows) => rulesetData.cow.resolveRows(rows);
-    const abilityLookup = new Map(rulesetData.abilities.map((a) => [a.id, a.name]));
+    const abilityLookup = new Map(dnd35.abilities.map((a) => [a.id, a.name]));
     const levels = this.resolveLevels(rows.levels, resolve);
     const { languages, klassLevelsRaw, klassLevelSaves, klasses, klassSkills, klassEntityIds } = this.readCachedRows(
       rows,
