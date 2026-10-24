@@ -19,17 +19,17 @@ export interface EntityCopiesDescription {
  * (`klasses`), its icon, by the generic name of its picture (`face`, `bolt`: the client's set of them), what its tab
  * says of it, when it says anything (`help`), what its empty list says past its word (`empty`: "No saving throws
  * available for this ruleset."), whether its list narrows by the kinds a race or a class is for and sorts
- * (`partitioned`), whether its entities are the rules' alone, which no form makes, edits or deletes and no search
- * finds (`readOnly`: an ability's), where its row opens (`opens`: its own page, its customization page, or its
- * progression page, a class's), whether its form gives its description room (`longDescription`: a mechanic's), and
- * whether a new one's form says what each of its fields is for (`fieldHelp`: a class's), whether its form shows two
- * fields side by side in a wide dialog (`wideForm`: `fluid`, an item's; `fixed`, its height kept as its fields change,
- * a spell's), the pools its list narrows by (`pools`: the scope of the pools it's picked in, a feat's `feats`),
- * whether its list narrows by a tier (`levels`: a spell's, by its level, `RulesDescription.tiers`), whether its list groups an entity's variants under
- * their family (`families`: a feat's), how its row copies one (`copies`: an item's), and when its name can't change
- * (`lockedName`: while its `flag` column holds, a generated feat's, its form saying why, `reason`). Its word is its rules'
- * (`RulesDescription.words`), and its URL's segment the app's (`getUrlSegment`: `classes`). Not the kinds a race or a
- * class is for (`entityKinds`).
+ * (`partitioned`), whether its entities are the rules' alone, which no form makes, edits or deletes and no search finds
+ * (`readOnly`: an ability's), where its row opens (`opens`: its own page, its customization page, or its progression
+ * page, a class's), whether its form gives its description room (`longDescription`: a mechanic's), and whether a new
+ * one's form says what each of its fields is for (`fieldHelp`: a class's), whether its form shows two fields side by
+ * side in a wide dialog (`wideForm`: `fluid`, an item's; `fixed`, its height kept as its fields change, a spell's), the
+ * pools its list narrows by (`pools`: the scope of the pools it's picked in, a feat's `feats`), whether its list
+ * narrows by a tier (`levels`: a spell's, by its level, `RulesDescription.tiers`), whether its list groups an entity's
+ * variants under their family (`families`: a feat's), how its row copies one (`copies`: an item's), and when its name
+ * can't change (`lockedName`: while its `flag` column holds, a generated feat's, its form saying why, `reason`). Its
+ * word is its rules' (`RulesDescription.words`), and its URL's segment the app's (`getUrlSegment`: `classes`). Not the
+ * kinds a race or a class is for (`entityKinds`).
  */
 export interface EntityKindDescription {
   copies?: EntityCopiesDescription;
@@ -82,9 +82,9 @@ export interface ListDescription {
 
 /**
  * How a class's levels progress, as its page sets them: its last level (`lastLevel`), its class table's tracks
- * (`tracks`, each a column its Progression tab sets), the label of its column of what a level grants (`grantsLabel`: its features and feat pools),
- * and its spell tables (`tables`, which its Spells tab edits: none where its classes cast none), and the name of the
- * pool a class's spell list is, its class's name at `{class}` (`listName`).
+ * (`tracks`, each a column its Progression tab sets), the label of its column of what a level grants (`grantsLabel`:
+ * its features and feat pools), and its spell tables (`tables`, which its Spells tab edits: none where its classes cast
+ * none), and the name of the pool a class's spell list is, its class's name at `{class}` (`listName`).
  */
 export interface ProgressionDescription {
   grantsLabel: string;
@@ -112,9 +112,10 @@ export interface ProgressionTable {
 
 /**
  * A column of a class's table its Progression tab sets: where a level holds it (`source`: one of its fields, by `key`,
- * or its amounts, by `key`, one per entity of a kind: 3.5's base per save of the ruleset), its labels (the table's `shortLabel`, the value's `unitLabel` when one
- * number sets every level), its bounds, each value's label from `min` (`labels[value - min]`: none reads it as it is),
- * and the progressions it follows (`presets`: each its value at each level, from the first).
+ * or its amounts, by `key`, one per entity of a kind: 3.5's base per save of the ruleset), its labels (the table's
+ * `shortLabel`, the value's `unitLabel` when one number sets every level), its bounds, each value's label from `min`
+ * (`labels[value - min]`: none reads it as it is), and the progressions it follows (`presets`: each its value at each
+ * level, from the first).
  */
 export interface ProgressionTrack {
   key: string;

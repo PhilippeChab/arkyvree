@@ -4,7 +4,9 @@ import type {
 } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 import type { Save } from "@/client/src/pages/rulesets/hooks/index.ts";
 
-/** A feat a level grants, through the aptitude it's taken for: what its feats' column (`grantedFeats`) holds of it. */
+/**
+ * A feat a level grants, through the aptitude it's taken for: what its feats' column (a `grants` input) holds of it.
+ */
 export interface LevelFeat {
   aptitudeId: string;
   featId: string;

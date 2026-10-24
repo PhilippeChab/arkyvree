@@ -179,8 +179,8 @@ export default class EntityCopy {
   }
 
   /**
-   * Merges sibling list links of a feat or a power (`copyOnWrite().mergeListLinks`), each to the list that
-   * stands for it, as the copy's own (`copyRelationships`): the losers' links, read by their stored ids.
+   * Merges sibling list links of a feat or a power (`copyOnWrite().mergeListLinks`), each to the list that stands for
+   * it, as the copy's own (`copyRelationships`): the losers' links, read by their stored ids.
    */
   private async mergeListLinks(tx: Db, targetEntityId: string, siblingIds: string[], cow: CowData) {
     const storage = Engine.storage();

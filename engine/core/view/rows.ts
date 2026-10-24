@@ -19,8 +19,8 @@ interface EntityColumns {
 
 /**
  * The kinds of the view an entity of another kind owns, by table (3.5's class levels, a class's): every registered
- * module declares its own into it. An owned kind has no rules of its own in its module's contract, its owner's answering
- * for it, and no field names one.
+ * module declares its own into it. An owned kind has no rules of its own in its module's contract, its owner's
+ * answering for it, and no field names one.
  */
 export interface OwnedEntities {}
 
