@@ -1,35 +1,25 @@
 import RulesError from "@/engine/core/RulesError.ts";
 import { type RulesetData, type RulesetView } from "@/engine/core/view/index.ts";
+import { isCustomizableEntityType } from "@/shared/customization/entities.ts";
 
 /** An entity customizations are made on, as the ruleset's view has it: its id there, and the name a history shows. */
 export default class CustomizedEntity {
   /**
-   * The name of an entity customizations can be made on, as its view has it (a class level by its level, a modifier by
-   * what it does), or none when the view has no such entity, or it isn't one customizations are made on.
+   * The name of an entity customizations can be made on, as its view has it (an owned one by its position: a class
+   * level by its level; a modifier by what it does), or none when the view has no such entity, or it isn't one
+   * customizations are made on.
    */
   private static nameOf(rulesetData: RulesetData, entityType: string, entityId: string): string | undefined {
-    switch (entityType) {
-      case "feats":
-        return rulesetData.find("feats", entityId)?.name;
-      case "items":
-        return rulesetData.find("items", entityId)?.name;
-      case "powers":
-        return rulesetData.find("powers", entityId)?.name;
-      case "klass_levels": {
-        const level = rulesetData.find("klass_levels", entityId);
-        return level ? `Level ${level.level}` : undefined;
-      }
-      case "races":
-        return rulesetData.find("races", entityId)?.name;
-      case "klasses":
-        return rulesetData.find("klasses", entityId)?.name;
-      case "modifiers": {
-        const modifier = rulesetData.modifiersById.get(entityId);
-        return modifier ? `${modifier.target} ${modifier.operator} ${modifier.value}` : undefined;
-      }
-      default:
-        return undefined;
+    if (entityType === "modifiers") {
+      const modifier = rulesetData.modifiersById.get(entityId);
+      return modifier ? `${modifier.target} ${modifier.operator} ${modifier.value}` : undefined;
     }
+    if (!isCustomizableEntityType(entityType)) return undefined;
+    const entity = rulesetData.find(entityType, entityId);
+    if (!entity) return undefined;
+    const position = rulesetData.positionOf(entityType, entity);
+    if (position !== undefined) return `Level ${position}`;
+    return "name" in entity ? entity.name : undefined;
   }
 
   /**

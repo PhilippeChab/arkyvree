@@ -201,6 +201,12 @@ export interface StoredKind {
    * row (`target`, its name), as a relational read nested them (a feat's pools, each with its aptitude)
    */
   lists?: Record<string, { join: string; target: string }>;
+  /**
+   * How its entities of one name in a ruleset's chain pair: always, a name its identity (`identity`: 3.5's pools), or,
+   * when no copy pairs them, as a book's reprint (`reprints`: 3.5's feats and spells); none, never (a race or a class
+   * of one name in two books is more likely two things)
+   */
+  namesakes?: "identity" | "reprints";
   /** The row's columns in the order its answers give them, when it isn't an entity's own then `columns` */
   order?: string[];
 }

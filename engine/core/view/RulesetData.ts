@@ -50,15 +50,18 @@ function buildById<T extends { id: string }>(list: readonly T[]): Map<string, T>
 export default class RulesetData {
   /**
    * `propertyTypes`: the ruleset's property types, as its rules read them, which order its entities' properties;
-   * `labels`: what its module calls an entity of each kind.
+   * `labels`: what its module calls an entity of each kind; `positions`: the column an owned kind's row holds its
+   * position in its owner at (a class level's `level`), by its kind.
    */
   constructor(
     lists: RulesetLists,
     cow: CowData,
     propertyTypes: PropertyTypesProvider,
     labels: Readonly<Record<string, string>>,
+    positions: Readonly<Record<string, string>> = {},
   ) {
     this.labels = labels;
+    this.positions = positions;
     this.entities = lists.entities;
     this.joins = lists.joins;
     this.modifiers = lists.modifiers;
@@ -84,6 +87,8 @@ export default class RulesetData {
   private readonly labels: Readonly<Record<string, string>>;
 
   private readonly modifiers: Modifier[];
+
+  private readonly positions: Readonly<Record<string, string>>;
 
   private readonly properties: Property[];
 
@@ -253,6 +258,12 @@ export default class RulesetData {
 
   get modifiersBySource(): Map<string, Modifier[]> {
     return (this.built.modifiersBySource ??= this.resolvingIds(Map.groupBy(this.modifiers, (m) => m.sourceId)));
+  }
+
+  /** An owned entity's position in its owner (`entity`, of `type`: a class level's level), none of a kind none owns. */
+  positionOf(type: string, entity: object): number | undefined {
+    const column = this.positions[type];
+    return column === undefined ? undefined : ((entity as Record<string, number>)[column] ?? undefined);
   }
 
   get propertiesByEntity(): Map<string, Property[]> {

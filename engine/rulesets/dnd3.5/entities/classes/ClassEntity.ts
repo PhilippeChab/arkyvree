@@ -60,6 +60,11 @@ export default class ClassEntity extends RulesetEntity<
     return { description, hd: hd ?? klass?.hd ?? DEFAULT_HIT_DIE, name };
   }
 
+  /** The fields a class level's form shows, as the ruleset declares them: its base attack bonus, its skill points. */
+  override describeOwnedFields() {
+    return CLASS_LEVEL_FIELDS.describe();
+  }
+
   /**
    * A class level by its id alone, with its details, its class's name, which its page shows, and the ruleset that holds
    * its class: an inherited one's level is inherited too. Refused when the view has no such level.
@@ -69,11 +74,6 @@ export default class ClassEntity extends RulesetEntity<
     if (!level) throw new RulesError("not-found", "Class level not found in this ruleset");
     const klass = this.find(level.klassId);
     return { ...this.owned(klass.id).describe(level.id), name: klass.name, rulesetId: klass.rulesetId };
-  }
-
-  /** The fields a class level's form shows, as the ruleset declares them: its base attack bonus, its skill points. */
-  describeOwnedFields() {
-    return CLASS_LEVEL_FIELDS.describe();
   }
 
   /**

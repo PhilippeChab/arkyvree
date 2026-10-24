@@ -9,7 +9,7 @@ import type { EntityFieldValues, FormField } from "@/engine/core/fields/index.ts
 import type { CharacterInput } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
-import type { PropertyEntityType } from "@/shared/customization/entities.ts";
+import { PROPERTY_ENTITY_TYPES, type PropertyEntityType } from "@/shared/customization/entities.ts";
 import type { RulesetKind } from "@/shared/enums.ts";
 import { getUrlSegment } from "@/shared/urlSegments.ts";
 
@@ -18,6 +18,7 @@ import CharactersEngine from "./CharactersEngine.ts";
 import ModifiersEngine from "./ModifiersEngine.ts";
 import Modules, { type Accepted, type EntityKinds, type EntityType, type Module } from "./Modules.ts";
 import RequirementsEngine from "./RequirementsEngine.ts";
+import StorageEngine from "./StorageEngine.ts";
 import TargetPathsEngine from "./TargetPathsEngine.ts";
 
 /**
@@ -90,16 +91,22 @@ export default class RulesetEngine {
    * them: what a form lays out and what its save holds each to.
    */
   describeFields(): Record<PropertyEntityType, FormField[]> {
-    return {
-      feats: this.entities("feats").describeFields(),
-      items: this.entities("items").describeFields(),
-      klass_levels: this.entities("klasses").describeOwnedFields(),
-      klasses: this.entities("klasses").describeFields(),
-      powers: this.entities("powers").describeFields(),
-      races: this.entities("races").describeFields(),
-      rulesets: this.module.ruleset.describeSettingsFields(),
-      skills: this.entities("skills").describeFields(),
+    const ownerOf = new Map(
+      StorageEngine.shared()
+        .registries()
+        .entityTypes.map(({ ownerType, type }) => [type, ownerType]),
+    );
+    const fieldsOf = (type: PropertyEntityType) => {
+      if (type === "rulesets") return this.module.ruleset.describeSettingsFields();
+      const owner = ownerOf.get(type);
+      return owner
+        ? this.entities(owner as EntityType).describeOwnedFields()
+        : this.entities(type as EntityType).describeFields();
     };
+    return Object.fromEntries(PROPERTY_ENTITY_TYPES.toSorted().map((type) => [type, fieldsOf(type)])) as Record<
+      PropertyEntityType,
+      FormField[]
+    >;
   }
 
   /**
