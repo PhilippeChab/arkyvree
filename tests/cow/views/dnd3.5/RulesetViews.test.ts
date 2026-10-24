@@ -1,7 +1,14 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 
 import { modifiersInCustomization } from "@/drizzle/schema.ts";
-import type { Aptitude, Feat, FeatWithAptitudes, Item, Klass, KlassLevel } from "@/engine/index.ts";
+import {
+  type Aptitude,
+  type Feat,
+  type FeatWithAptitudes,
+  type Item,
+  type Klass,
+  type KlassLevel,
+} from "@/engine/rulesets/dnd3.5/index.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { RulesetViews } from "@/server/cow/index.ts";

@@ -3,8 +3,8 @@ import { describe, expect, test } from "bun:test";
 import { and, eq, isNull } from "drizzle-orm";
 
 import { entitiesInRules } from "@/drizzle/schema.ts";
-import type { Item } from "@/engine/index.ts";
 import { ITEM_FIELDS } from "@/engine/rulesets/dnd3.5/entities/items/fields.ts";
+import type { Item } from "@/engine/rulesets/dnd3.5/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Entities, Properties } from "@/server/repositories/index.ts";
 import {

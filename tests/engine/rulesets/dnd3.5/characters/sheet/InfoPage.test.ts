@@ -2,9 +2,9 @@ import { describe, expect, test } from "bun:test";
 
 import { isValidElement, type ReactElement, type ReactNode } from "react";
 
-import type { RulesetAbility } from "@/engine/index.ts";
 import CombatSheet from "@/engine/rulesets/dnd3.5/characters/description/CombatSheet.ts";
 import InfoPage from "@/engine/rulesets/dnd3.5/characters/sheet/InfoPage.tsx";
+import type { RulesetAbility } from "@/engine/rulesets/dnd3.5/index.ts";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { RulesetViews } from "@/server/cow/index.ts";

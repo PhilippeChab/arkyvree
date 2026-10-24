@@ -5,7 +5,7 @@
 
 import { Joins } from "@/database/seeders/core/SeederState.ts";
 import type { Dnd35ContentSeeder } from "@/database/seeders/dnd3.5/Dnd35ContentSeeder.ts";
-import type { Feat, Power } from "@/engine/index.ts";
+import type { Feat, Power } from "@/engine/rulesets/dnd3.5/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 
 /** The links to add to a power (`links`), each at its level. */

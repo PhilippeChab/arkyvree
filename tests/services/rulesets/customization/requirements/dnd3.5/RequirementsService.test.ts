@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { requirementsInCustomization } from "@/drizzle/schema.ts";
-import type { Feat, Race } from "@/engine/index.ts";
+import type { Feat, Race } from "@/engine/rulesets/dnd3.5/index.ts";
 import { db } from "@/server/database/index.ts";
 import { ForbiddenError } from "@/server/errors/index.ts";
 import { Entities, Requirements } from "@/server/repositories/index.ts";

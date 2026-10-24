@@ -1,8 +1,8 @@
 import { describe, expect, test } from "bun:test";
 
 import { addClassLevels } from "@/database/seeders/dnd3.5/characters/seedCharacter.ts";
-import type { Aptitude, Feat, RulesetAbility, Skill } from "@/engine/index.ts";
 import SkillFocusFeats from "@/engine/rulesets/dnd3.5/entities/feats/SkillFocusFeats.ts";
+import type { Aptitude, Feat, RulesetAbility, Skill } from "@/engine/rulesets/dnd3.5/index.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";

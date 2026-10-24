@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import type { RulesetData } from "@/engine/core/view/index.ts";
-import type { Item } from "@/engine/index.ts";
+import type { Item } from "@/engine/rulesets/dnd3.5/index.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";

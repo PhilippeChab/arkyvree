@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import type { Feat } from "@/engine/index.ts";
+import type { Feat } from "@/engine/rulesets/dnd3.5/index.ts";
 import { CustomizationEdit } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Entities, Modifiers, Requirements } from "@/server/repositories/index.ts";

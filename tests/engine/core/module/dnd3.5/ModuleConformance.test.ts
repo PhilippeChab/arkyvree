@@ -4,7 +4,8 @@ import { and, asc, eq, isNull } from "drizzle-orm";
 
 import { charactersInCharacter, rulesetsInRules } from "@/drizzle/schema.ts";
 import type { PrivateNotes } from "@/engine/core/module/index.ts";
-import { Engine, type Language } from "@/engine/index.ts";
+import { Engine } from "@/engine/index.ts";
+import type { Language } from "@/engine/rulesets/dnd3.5/index.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { CharacterAdvancements, Characters, Entities, Visibility } from "@/server/repositories/index.ts";

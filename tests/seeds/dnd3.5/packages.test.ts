@@ -23,7 +23,7 @@ import { CORE, TEMPLATE_ITEMS } from "@/content/dnd3.5/packages/core.ts";
 import { DND35_RULESET_NAME } from "@/content/dnd3.5/rulesetNames.ts";
 import { CONTENT_PACKAGES } from "@/database/packages/registry.ts";
 import { entitiesInRules, entitySnapshotsInRules, rulesetsInRules } from "@/drizzle/schema.ts";
-import type { Item } from "@/engine/index.ts";
+import type { Item } from "@/engine/rulesets/dnd3.5/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Entities } from "@/server/repositories/index.ts";
 import { invalidateSeededRuleset } from "@/tests/support/rulesets.ts";

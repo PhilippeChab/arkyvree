@@ -8,7 +8,7 @@ import {
   DND35_RULESET_NAME,
 } from "@/content/dnd3.5/rulesetNames.ts";
 import { entitiesInRules, rulesetsInRules } from "@/drizzle/schema.ts";
-import type { FeatWithAptitudes, PowerWithAptitudes } from "@/engine/index.ts";
+import type { FeatWithAptitudes, PowerWithAptitudes } from "@/engine/rulesets/dnd3.5/index.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { RulesetViews } from "@/server/cow/index.ts";

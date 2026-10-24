@@ -115,7 +115,7 @@ describe("A generated requirement check", () => {
     );
     // A hand-edited reference, which types don't check
     const edited: Modifier = JSON.parse(JSON.stringify({ ...modifier, requirements: [eq(feat("Dodge"))] }));
-    expect(() => new CodeFile().plainModifier(edited)).toThrow("only a feat's modifier has requirements");
+    expect(() => new CodeFile().plainModifier(edited)).toThrow("a plain modifier takes no requirements");
   });
 
   test("names a builder its file can import", () => {

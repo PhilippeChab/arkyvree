@@ -5,7 +5,7 @@
 
 import { describe, expect, test } from "bun:test";
 
-import type { RulesetAbility, RulesetSave, Skill } from "@/engine/index.ts";
+import type { RulesetAbility, RulesetSave, Skill } from "@/engine/rulesets/dnd3.5/index.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { ForbiddenError } from "@/server/errors/index.ts";

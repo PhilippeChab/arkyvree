@@ -9,7 +9,7 @@ import { afterAll, describe, expect, test } from "bun:test";
 import { sql } from "drizzle-orm";
 
 import type { FieldsRequest } from "@/engine/core/module/index.ts";
-import type { CharacterAbility, LevelSkill, RulesetAbility } from "@/engine/index.ts";
+import type { CharacterAbility, LevelSkill, RulesetAbility } from "@/engine/rulesets/dnd3.5/index.ts";
 import { db } from "@/server/database/index.ts";
 import { createTestPool } from "@/server/database/test.ts";
 import { CharacterLinks, Characters, Entities, Picks } from "@/server/repositories/index.ts";

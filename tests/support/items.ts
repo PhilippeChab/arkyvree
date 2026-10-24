@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 
 import { inventoryInCharacter } from "@/drizzle/schema.ts";
-import type { Item } from "@/engine/index.ts";
+import type { ViewEntities } from "@/engine/index.ts";
 import { db } from "@/server/database/index.ts";
 import { CharacterInventory, Entities, Properties } from "@/server/repositories/index.ts";
 import type { ItemLocation } from "@/shared/enums.ts";
@@ -9,6 +9,9 @@ import type { Character } from "@/shared/relations.ts";
 
 import { invalidateSeededRuleset } from "./rulesets.ts";
 import { getSeedCtx, uniqueId } from "./seed.ts";
+
+/** An item, as the view registers it. */
+type Item = ViewEntities["items"];
 
 /** An inventory entry a test gives a character: a seeded item by its name, or an item's id, equipped by default. */
 export interface Carried {

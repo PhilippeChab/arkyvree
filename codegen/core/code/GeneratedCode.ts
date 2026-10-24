@@ -194,7 +194,7 @@ export abstract class GeneratedCode<T extends string> {
    * level's have requirements: one on another refuses the seed.
    */
   plainModifier(mod: Modifier): string {
-    if ("requirements" in mod) throw new Error(`${mod.target}: only a feat's modifier has requirements`);
+    if ("requirements" in mod) throw new Error(`${mod.target}: a plain modifier takes no requirements`);
     return this.modifier(mod);
   }
 

@@ -1,6 +1,6 @@
 import type { Db } from "@/drizzle/database.ts";
 import { type RulesetData } from "@/engine/core/view/index.ts";
-import type { KlassLevel, KlassLevelFeat, KlassLevelPower } from "@/engine/index.ts";
+import type { KlassLevel, KlassLevelFeat, KlassLevelPower } from "@/engine/rulesets/dnd3.5/index.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { EntityEdit, RulesetViews } from "@/server/cow/index.ts";
 import { withTransaction } from "@/server/database/index.ts";

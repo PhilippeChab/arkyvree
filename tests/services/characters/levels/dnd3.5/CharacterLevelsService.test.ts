@@ -2,6 +2,7 @@ import { afterAll, describe, expect, test } from "bun:test";
 
 import { DND35_DMG_NAME } from "@/content/dnd3.5/rulesetNames.ts";
 import { addClassLevels, addFeats, addPowers, addSkills } from "@/database/seeders/dnd3.5/characters/seedCharacter.ts";
+import type { LevelPlanRequest, StepOption, StepOptionGroup } from "@/engine/index.ts";
 import type {
   Aptitude,
   Feat,
@@ -12,16 +13,13 @@ import type {
   KlassSkill,
   LevelAbilityIncrease,
   LevelFeat,
-  LevelPlanRequest,
   LevelPower,
   LevelSkill,
   Power,
   Race,
   RulesetAbility,
   Skill,
-  StepOption,
-  StepOptionGroup,
-} from "@/engine/index.ts";
+} from "@/engine/rulesets/dnd3.5/index.ts";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";

@@ -551,7 +551,7 @@ A working mental model: if a hypothetical 5e or PF2e ruleset were to be added to
 
 ### Directory layout
 
-The engine is the root `engine/`, which computes over the data it's given and reads nothing itself. Code outside it enters it through its one entry, `engine/index.ts` (`arkyvree/engine-front-door`), as the client enters the server through its API:
+The engine is the root `engine/`, which computes over the data it's given and reads nothing itself. Code outside it enters it through its one entry, `engine/index.ts` (`arkyvree/engine-front-door`), as the client enters the server through its API; a ruleset's seeders and codegen take its rows' types from its module's entry too, types alone (`engine/rulesets/dnd3.5/index.ts`):
 
 ```
 engine/
@@ -659,7 +659,8 @@ The rulesets that run on it:
 ```
 engine/rulesets/
 └── dnd3.5/                                ← 3.5-specific implementation
-    ├── index.ts                           (what the entry takes of it: Dnd35Module)
+    ├── index.ts                           (its entry: what the engine's takes of it, Dnd35Module; its rows'
+    │                                      types, Klass, Feat…, which its seeders and codegen enter it by)
     ├── limits.ts                          (RULESET_LIMITS: the bounds its operations check on its columns)
     ├── Dnd35Module.ts                     (Dnd35Module.create(): the 3.5 module, by the contract, each part a class
     │                                      extending its abstract part)

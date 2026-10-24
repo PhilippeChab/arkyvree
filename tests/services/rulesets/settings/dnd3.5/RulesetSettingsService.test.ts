@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import { addClassLevels, createCharacter } from "@/database/seeders/dnd3.5/characters/seedCharacter.ts";
 import { rulesetsInRules } from "@/drizzle/schema.ts";
-import type { LevelAbilityIncrease } from "@/engine/index.ts";
+import type { LevelAbilityIncrease } from "@/engine/rulesets/dnd3.5/index.ts";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import { db } from "@/server/database/index.ts";
 import { ForbiddenError } from "@/server/errors/index.ts";

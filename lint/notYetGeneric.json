@@ -1,6 +1,4 @@
 [
-  "codegen/core/code",
-  "engine",
   "shared",
   "tests/shared",
   "tests/shared/customization"
