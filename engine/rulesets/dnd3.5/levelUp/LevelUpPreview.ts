@@ -1,5 +1,4 @@
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
-import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { MAX_SPELL_LEVEL } from "@/vocabulary/dnd3.5/spells.ts";
 
 import type { PoolPicks } from "./LevelUpState.ts";
@@ -22,10 +21,7 @@ export default class LevelUpPreview extends PlannedLevelsState {
     const { classSkills, klassLevelIds, perLevelSkillPoints } = gains;
     const levels = { perLevelClassSkillIds: classSkills.perLevel, perLevelSkillPoints, savedLevelCount };
     const fitted = this.fitPicks(picks, (poolPicks) => this.buildWithPicks(planned, poolPicks, gains));
-    const pools = fitted.character.components.aptitudes.getLevelUpPools(
-      Dnd35View.of(this.rulesetData),
-      this.countOwnPicks(fitted.picks),
-    );
+    const pools = fitted.character.components.aptitudes.getLevelUpPools(this.dnd35, this.countOwnPicks(fitted.picks));
     return {
       skills: this.skillStep(character, classSkills.merged, levels, picks.skills ?? {}),
       feats: { ...this.featStep(pools, klassLevelIds), fitted: fitted.picks.feats },

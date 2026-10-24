@@ -89,22 +89,22 @@ describe("RulesetViews", () => {
     const ruleset = await getRuleset();
 
     const rulesetData = await RulesetViews.getData(ruleset);
-    const rulesetView = Dnd35View.of(rulesetData);
+    const dnd35 = Dnd35View.of(rulesetData);
 
     expect(rulesetData).toBeDefined();
-    expect(rulesetView.abilities.length).toBeGreaterThan(0);
-    expect(rulesetView.saves.length).toBeGreaterThan(0);
-    expect(rulesetView.skills.length).toBeGreaterThan(0);
-    expect(rulesetView.feats.length).toBeGreaterThan(0);
-    expect(rulesetView.aptitudes.length).toBeGreaterThan(0);
-    expect(rulesetView.klasses.length).toBeGreaterThan(0);
-    expect(rulesetView.races.length).toBeGreaterThan(0);
-    expect(rulesetView.languages.length).toBeGreaterThan(0);
-    expect(rulesetView.items.length).toBeGreaterThan(0);
-    expect(rulesetView.klassLevels.length).toBeGreaterThan(0);
-    expect(rulesetView.klassSkills.length).toBeGreaterThan(0);
-    expect(rulesetView.klassLevelSaves.length).toBeGreaterThan(0);
-    expect(rulesetView.leveledAptitudeIds).toBeInstanceOf(Set);
+    expect(dnd35.abilities.length).toBeGreaterThan(0);
+    expect(dnd35.saves.length).toBeGreaterThan(0);
+    expect(dnd35.skills.length).toBeGreaterThan(0);
+    expect(dnd35.feats.length).toBeGreaterThan(0);
+    expect(dnd35.aptitudes.length).toBeGreaterThan(0);
+    expect(dnd35.klasses.length).toBeGreaterThan(0);
+    expect(dnd35.races.length).toBeGreaterThan(0);
+    expect(dnd35.languages.length).toBeGreaterThan(0);
+    expect(dnd35.items.length).toBeGreaterThan(0);
+    expect(dnd35.klassLevels.length).toBeGreaterThan(0);
+    expect(dnd35.klassSkills.length).toBeGreaterThan(0);
+    expect(dnd35.klassLevelSaves.length).toBeGreaterThan(0);
+    expect(dnd35.leveledAptitudeIds).toBeInstanceOf(Set);
     // Customization rows exposed via pre-built Maps (per-entity / per-source indices).
     expect(rulesetData.propertiesByEntity).toBeInstanceOf(Map);
     expect(rulesetData.modifiersBySource).toBeInstanceOf(Map);
@@ -201,7 +201,7 @@ describe("RulesetViews", () => {
     const cowData = await RulesetViews.getCowData(ruleset);
     const rawData = await RulesetViews.getRawData(ruleset.id);
     const rulesetData = await RulesetViews.getData(ruleset);
-    const rulesetView = Dnd35View.of(rulesetData);
+    const dnd35 = Dnd35View.of(rulesetData);
 
     RulesetViews.invalidate(ruleset.id);
 
@@ -215,12 +215,12 @@ describe("RulesetViews", () => {
     expect(rawData2).not.toBe(rawData);
 
     // Composed data is structurally equivalent.
-    expect(ruleset2View.abilities.length).toBe(rulesetView.abilities.length);
-    expect(ruleset2View.saves.length).toBe(rulesetView.saves.length);
-    expect(ruleset2View.skills.length).toBe(rulesetView.skills.length);
-    expect(ruleset2View.feats.length).toBe(rulesetView.feats.length);
-    expect(ruleset2View.aptitudes.length).toBe(rulesetView.aptitudes.length);
-    expect(ruleset2View.klasses.length).toBe(rulesetView.klasses.length);
+    expect(ruleset2View.abilities.length).toBe(dnd35.abilities.length);
+    expect(ruleset2View.saves.length).toBe(dnd35.saves.length);
+    expect(ruleset2View.skills.length).toBe(dnd35.skills.length);
+    expect(ruleset2View.feats.length).toBe(dnd35.feats.length);
+    expect(ruleset2View.aptitudes.length).toBe(dnd35.aptitudes.length);
+    expect(ruleset2View.klasses.length).toBe(dnd35.klasses.length);
   });
 
   test("invalidateAll clears all cached data including pinned entries", async () => {
@@ -245,22 +245,22 @@ describe("RulesetViews", () => {
     RulesetViews.invalidateAll();
 
     const rulesetData = await RulesetViews.getData(ruleset);
-    const rulesetView = Dnd35View.of(rulesetData);
+    const dnd35 = Dnd35View.of(rulesetData);
 
     // Verify ability names include D&D 3.5 standard abilities
-    const abilityNames = rulesetView.abilities.map((a) => a.name);
+    const abilityNames = dnd35.abilities.map((a) => a.name);
     expect(abilityNames).toContain("Strength");
     expect(abilityNames).toContain("Dexterity");
     expect(abilityNames).toContain("Intelligence");
 
     // Verify save names
-    const saveNames = rulesetView.saves.map((s) => s.name);
+    const saveNames = dnd35.saves.map((s) => s.name);
     expect(saveNames).toContain("Fortitude");
     expect(saveNames).toContain("Reflex");
     expect(saveNames).toContain("Will");
 
     // Verify klasses include standard classes
-    const klassNames = rulesetView.klasses.map((k) => k.name);
+    const klassNames = dnd35.klasses.map((k) => k.name);
     expect(klassNames).toContain("Fighter");
     expect(klassNames).toContain("Wizard");
 
@@ -729,11 +729,11 @@ describe("RulesetViews", () => {
       expect(cow.hasSiblings(ownFeat.id)).toBe(false);
 
       const view = await RulesetViews.getData(fork);
-      const view35 = Dnd35View.of(view);
-      expect(view35.feats.filter((feat) => feat.name === featName).map((feat) => feat.id)).toEqual([ownFeat.id]);
-      expect(view35.items.filter((item) => item.name === itemName).map((item) => item.id)).toEqual([ownItem.id]);
-      expect(view35.featsById.get(secondFeat.id)?.id).toBe(ownFeat.id);
-      expect(view35.items.find((item) => item.id === baseItem.id)).toBeUndefined();
+      const dnd35 = Dnd35View.of(view);
+      expect(dnd35.feats.filter((feat) => feat.name === featName).map((feat) => feat.id)).toEqual([ownFeat.id]);
+      expect(dnd35.items.filter((item) => item.name === itemName).map((item) => item.id)).toEqual([ownItem.id]);
+      expect(dnd35.featsById.get(secondFeat.id)?.id).toBe(ownFeat.id);
+      expect(dnd35.items.find((item) => item.id === baseItem.id)).toBeUndefined();
       // The book's own rows go with it: its customizations merge into none of the fork's
       expect(view.modifiersBySource.get(ownFeat.id) ?? []).toEqual([]);
     });
@@ -758,13 +758,13 @@ describe("RulesetViews", () => {
       ]);
 
       const view = await RulesetViews.getData(fork);
-      const view35 = Dnd35View.of(view);
-      expect(view35.klasses.filter((klass) => klass.name === name).map((klass) => klass.id)).toEqual([ownClass.id]);
+      const dnd35 = Dnd35View.of(view);
+      expect(dnd35.klasses.filter((klass) => klass.name === name).map((klass) => klass.id)).toEqual([ownClass.id]);
       expect(view.cow.resolve(bookFirst.id)).toBe(ownFirst.id);
-      expect(view35.klassLevels.filter((level) => level.klassId === ownClass.id).map((level) => level.id)).toEqual([
+      expect(dnd35.klassLevels.filter((level) => level.klassId === ownClass.id).map((level) => level.id)).toEqual([
         ownFirst.id,
       ]);
-      expect(view35.klassLevels.find((level) => level.id === bookSecond.id)).toBeUndefined();
+      expect(dnd35.klassLevels.find((level) => level.id === bookSecond.id)).toBeUndefined();
     });
 
     test("a core class's levels pair through a book's copy of it with the fork's class of its name", async () => {

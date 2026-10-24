@@ -31,15 +31,15 @@ export function ReadsRuleset<B extends Constructor<CharacterDataLoader<LoadedCha
      * pre-COW language ids auto-resolve on lookup.
      */
     protected readCachedRows(rows: CharacterRows, rulesetData: RulesetData, klassLevelIds: string[]) {
-      const view = Dnd35View.of(rulesetData);
-      const klassLevelsRaw = klassLevelIds.flatMap((id) => view.klassLevelsById.get(id) ?? []);
+      const dnd35 = Dnd35View.of(rulesetData);
+      const klassLevelsRaw = klassLevelIds.flatMap((id) => dnd35.klassLevelsById.get(id) ?? []);
       const klassEntityIds = [...new Set(klassLevelsRaw.map((level) => level.klassId))];
       return {
-        languages: rows.languages.flatMap((l) => view.languagesById.get(l.languageId) ?? []),
+        languages: rows.languages.flatMap((l) => dnd35.languagesById.get(l.languageId) ?? []),
         klassLevelsRaw,
-        klassLevelSaves: klassLevelIds.flatMap((id) => view.klassLevelSavesByKlassLevel.get(id) ?? []),
-        klasses: klassEntityIds.flatMap((id) => view.klassesById.get(id) ?? []),
-        klassSkills: klassEntityIds.flatMap((id) => view.klassSkillsByKlass.get(id) ?? []),
+        klassLevelSaves: klassLevelIds.flatMap((id) => dnd35.klassLevelSavesByKlassLevel.get(id) ?? []),
+        klasses: klassEntityIds.flatMap((id) => dnd35.klassesById.get(id) ?? []),
+        klassSkills: klassEntityIds.flatMap((id) => dnd35.klassSkillsByKlass.get(id) ?? []),
         klassEntityIds,
       };
     }

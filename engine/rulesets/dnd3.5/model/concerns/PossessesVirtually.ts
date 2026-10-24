@@ -35,6 +35,7 @@ export function PossessesVirtually<B extends Constructor<CharacterState>>(Base: 
       if (languageId) this.components.languages.grant(languageId);
       return [];
     }
+
     /** The view's 3.5 lists and indices. */
     private get dnd35(): Dnd35View {
       return Dnd35View.of(this.rulesetData);

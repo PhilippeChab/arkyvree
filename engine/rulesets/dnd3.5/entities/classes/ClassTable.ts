@@ -25,8 +25,9 @@ function getSpellListIds(rulesetData: RulesetData, klass: Klass): string[] {
   const lists = [...(SpellLists.of(rulesetData).classListsByKlass.get(klass.id) ?? [])];
   // A class casting from one of several lists (a pious templar's own, or its blackguard one) opens on its own
   const own = `${stripSeparators(klass.name)}spells`;
+  const { aptitudeIdBySlug } = Dnd35View.of(rulesetData);
   return [...lists.filter((list) => list === own), ...lists.filter((list) => list !== own)].flatMap(
-    (list) => Dnd35View.of(rulesetData).aptitudeIdBySlug.get(list) ?? [],
+    (list) => aptitudeIdBySlug.get(list) ?? [],
   );
 }
 
@@ -64,16 +65,16 @@ export default class ClassTable {
    */
   describeFeatPools() {
     const { rulesetData } = this.view;
-    const view35 = Dnd35View.of(rulesetData);
+    const dnd35 = Dnd35View.of(rulesetData);
     const { levels } = this;
     const featModifiers: Modifier[] = levels.flatMap((level) =>
-      (view35.klassLevelFeatsByKlassLevel.get(level.id) ?? []).flatMap((levelFeat) =>
+      (dnd35.klassLevelFeatsByKlassLevel.get(level.id) ?? []).flatMap((levelFeat) =>
         (rulesetData.modifiersBySource.get(levelFeat.featId) ?? [])
           .filter((modifier) => modifier.sourceType === "feats")
           .map((modifier) => ({ ...modifier, sourceId: levelFeat.klassLevelId })),
       ),
     );
-    const nameBySlug = new Map(view35.aptitudes.map((aptitude) => [stripSeparators(aptitude.name), aptitude.name]));
+    const nameBySlug = new Map(dnd35.aptitudes.map((aptitude) => [stripSeparators(aptitude.name), aptitude.name]));
     const totals = LevelTotals.computeRunning<number>(
       levels,
       [...getLevelModifiers(rulesetData, levels), ...featModifiers],
@@ -91,8 +92,9 @@ export default class ClassTable {
   /** The spell lists the class's levels give slots in, its own first: what its spell list page offers. */
   describeSpellLists() {
     const { rulesetData } = this.view;
+    const { aptitudesById } = Dnd35View.of(rulesetData);
     return getSpellListIds(rulesetData, this.klass).flatMap((listId) => {
-      const list = Dnd35View.of(rulesetData).aptitudesById.get(listId);
+      const list = aptitudesById.get(listId);
       return list ? [{ id: list.id, name: list.name }] : [];
     });
   }

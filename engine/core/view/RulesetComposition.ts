@@ -144,8 +144,9 @@ export default class RulesetComposition {
     const joins = new Map<string, Row[]>();
     for (const { from, fromColumn, name } of this.schema.joins) {
       const froms = visibleIds.get(from);
+      if (!froms) throw new Error(`The view composes ${name} without the visible ${from} it's from`);
       const rows = this.chain.flatMap((raw) =>
-        (raw.joins[name] ?? []).filter((row) => !froms || froms.has(row[fromColumn] as string)),
+        (raw.joins[name] ?? []).filter((row) => froms.has(row[fromColumn] as string)),
       );
       joins.set(name, this.cow.resolveRows(rows));
     }

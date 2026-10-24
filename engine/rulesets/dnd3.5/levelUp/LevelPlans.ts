@@ -12,7 +12,6 @@ import {
 import RulesError from "@/engine/core/RulesError.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
-import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { SPELL_LEVEL_LABELS, SPELL_LEVELS } from "@/vocabulary/dnd3.5/spells.ts";
 
 import LevelSelections from "./LevelSelections.ts";
@@ -271,7 +270,7 @@ export default class LevelPlans extends LevelUpBase<DetailedCharacter> {
 
   /** The feats or powers (`kind`) that fit, by pool, each by name, a power at its spell level in its pool. */
   private pickedOf(kind: "feats" | "powers", fitted: Record<string, string[]>): PickAnswer["picked"] {
-    const { featsById, powersById } = Dnd35View.of(this.rulesetData);
+    const { featsById, powersById } = this.dnd35;
     const levels = kind === "powers" ? this.buildPowerLevelLookup(Object.values(fitted).flat()) : undefined;
     return Object.fromEntries(
       Object.entries(fitted).map(([pool, ids]) => [

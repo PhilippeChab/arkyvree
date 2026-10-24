@@ -1,6 +1,5 @@
 import RulesError from "@/engine/core/RulesError.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
-import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 
 import CharacterProjection from "./CharacterProjection.ts";
 import LevelUpState, { type PoolPicks } from "./LevelUpState.ts";
@@ -33,10 +32,7 @@ export default class LevelUpSteps extends LevelUpState {
       (picks) => this.build(this.projectStep(klassLevel.id, projected, picks)),
       this.getSavedPicks(projected.editedLevel?.id),
     );
-    const pools = fitted.character.components.aptitudes.getLevelUpPools(
-      Dnd35View.of(this.rulesetData),
-      this.countOwnPicks(fitted.picks),
-    );
+    const pools = fitted.character.components.aptitudes.getLevelUpPools(this.dnd35, this.countOwnPicks(fitted.picks));
     return { klassLevel, picks: fitted.picks, pools };
   }
 
@@ -87,15 +83,15 @@ export default class LevelUpSteps extends LevelUpState {
    * too (an edit's level takes the edited one's place). The level's points are all the character has left to spend.
    */
   private describeSkillStep(step: LevelQuery) {
-    const view = Dnd35View.of(this.rulesetData);
+    const dnd35 = this.dnd35;
     const klassLevel = this.readKlassLevel(step);
     const projection = this.projectStep(klassLevel.id, this.readStep(step));
     const character = this.build(projection);
     // A skill's class status is any of the character's classes' (its max rank, `isClassSkill`) and the leveled class's
     // (its cost, `isCurrentClassSkill`)
-    const classSkillIds = this.getClassSkillIds(view.klassSkillsWithSkillsByKlass.get(klassLevel.klassId) ?? []);
+    const classSkillIds = this.getClassSkillIds(dnd35.klassSkillsWithSkillsByKlass.get(klassLevel.klassId) ?? []);
     const levels = {
-      perLevelClassSkillIds: [view.skills.filter(({ id }) => classSkillIds.has(id)).map(({ id }) => id)],
+      perLevelClassSkillIds: [dnd35.skills.filter(({ id }) => classSkillIds.has(id)).map(({ id }) => id)],
       perLevelSkillPoints: [this.getSkillPointsToSpend(character)],
       savedLevelCount: projection.input.rows.levels.length - 1,
     };

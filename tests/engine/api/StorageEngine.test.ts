@@ -54,6 +54,14 @@ describe("A module's storage", () => {
     );
     expect(schema.joins.map(({ name }) => name)).toEqual(storage.joinNames().filter((name) => !listed.has(name)));
     for (const join of schema.joins) expect(join.fromColumn).toBe(storage.joinFromColumn(join.name));
+    // A kind's visible ids are kept when an owned kind's rows or a join's read them alone
+    const read = new Set([
+      ...schema.kinds.flatMap(({ owner }) => (owner ? [owner.type] : [])),
+      ...schema.joins.map(({ from }) => from),
+    ]);
+    expect(schema.kinds.filter(({ tracked }) => tracked).map(({ type }) => type)).toEqual(
+      order.filter((type) => read.has(type)),
+    );
   });
 
   test("names the column each join keeps its from-entity in", () => {

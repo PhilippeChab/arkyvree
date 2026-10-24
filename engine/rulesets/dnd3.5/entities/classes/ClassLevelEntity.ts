@@ -181,10 +181,9 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
 
   /** The feats a class level grants, each with its pool's name and whether it's free. */
   private grantedFeats(levelId: string) {
-    const { rulesetData } = this;
-    const view = Dnd35View.of(rulesetData);
-    return (view.klassLevelFeatsByKlassLevel.get(levelId) ?? []).map((lf) => {
-      const feat = view.featsById.get(lf.featId);
+    const { dnd35 } = this;
+    return (dnd35.klassLevelFeatsByKlassLevel.get(levelId) ?? []).map((lf) => {
+      const feat = dnd35.featsById.get(lf.featId);
       const aptitudeEntry = feat?.featsAptitudesInRules?.find((fa) => fa.aptitudeId === lf.aptitudeId);
       return {
         ...feat!,

@@ -209,15 +209,15 @@ export default class ClassProgression {
    * granted at a level gives them there.
    */
   private static readFeatPicks(rulesetData: RulesetData) {
-    const view = Dnd35View.of(rulesetData);
     const cached = ClassProgression.featPicksByView.get(rulesetData);
     if (cached) return cached;
+    const dnd35 = Dnd35View.of(rulesetData);
     const featPicks: Record<string, Record<string, number>> = {};
     for (const [sourceId, modifiers] of rulesetData.modifiersBySource) {
       for (const modifier of modifiers) {
         const slug = modifier.sourceType === "feats" ? AptitudeTargets.parsePool(modifier.target) : undefined;
         const value = LiteralValue.parse(modifier.value, "number");
-        const pool = view.aptitudesById.get(view.aptitudeIdBySlug.get(slug ?? "") ?? "");
+        const pool = dnd35.aptitudesById.get(dnd35.aptitudeIdBySlug.get(slug ?? "") ?? "");
         if (!pool || typeof value !== "number") continue;
         const picks = (featPicks[sourceId] ??= {});
         picks[pool.name] = (picks[pool.name] ?? 0) + value;
@@ -346,10 +346,9 @@ export default class ClassProgression {
    * the class ("Wizard Spells") before any does; none for a class without one.
    */
   private get spellList() {
-    const view = this.dnd35;
     const [list] = this.spellLists;
-    const id = list?.id ?? view.aptitudeIdBySlug.get(`${stripSeparators(this.klass.name)}spells`);
-    const aptitude = id === undefined ? undefined : view.aptitudesById.get(id);
+    const id = list?.id ?? this.dnd35.aptitudeIdBySlug.get(`${stripSeparators(this.klass.name)}spells`);
+    const aptitude = id === undefined ? undefined : this.dnd35.aptitudesById.get(id);
     return aptitude && { id: aptitude.id, name: aptitude.name, slug: stripSeparators(aptitude.name) };
   }
 
@@ -383,7 +382,7 @@ export default class ClassProgression {
    */
   describe() {
     const { rulesetData } = this;
-    const view = Dnd35View.of(rulesetData);
+    const { dnd35 } = this;
     const lists = SpellLists.of(rulesetData).classListIds;
     const picksBySlug = new Map<string, Record<string, number>>();
     for (const level of this.classLevels) {
@@ -396,7 +395,7 @@ export default class ClassProgression {
       }
     }
     const pools = [...picksBySlug].flatMap(([slug, picks]) => {
-      const aptitude = view.aptitudesById.get(view.aptitudeIdBySlug.get(slug) ?? "");
+      const aptitude = dnd35.aptitudesById.get(dnd35.aptitudeIdBySlug.get(slug) ?? "");
       return aptitude && !lists.has(aptitude.id) ? [{ aptitudeId: aptitude.id, name: aptitude.name, picks }] : [];
     });
     const featPicks = ClassProgression.readFeatPicks(rulesetData);

@@ -44,12 +44,12 @@ describe("cache join-maps — parity with repository queries", () => {
   });
 
   test("klassLevelFeatsWithFeatsByKlassLevel matches the class level's feats with their feat", async () => {
-    const rulesetView = Dnd35View.of(rulesetData);
+    const dnd35 = Dnd35View.of(rulesetData);
     const fighterId = ctx.klassMap.pc["Fighter"];
-    const klassLevel = rulesetView.klassLevelByKlassAndLevel.get(`${fighterId}:1`);
+    const klassLevel = dnd35.klassLevelByKlassAndLevel.get(`${fighterId}:1`);
     expect(klassLevel).toBeDefined();
 
-    const fromCache = rulesetView.klassLevelFeatsWithFeatsByKlassLevel.get(klassLevel!.id) ?? [];
+    const fromCache = dnd35.klassLevelFeatsWithFeatsByKlassLevel.get(klassLevel!.id) ?? [];
     const fromDb = await withRows(
       await Joins.findMany<KlassLevelFeat>(db, { join: "klass_level_feats", fromIds: [klassLevel!.id] }),
       "featId",
@@ -70,13 +70,13 @@ describe("cache join-maps — parity with repository queries", () => {
   });
 
   test("klassLevelPowersWithPowersByKlassLevel matches the class level's powers with their power", async () => {
-    const rulesetView = Dnd35View.of(rulesetData);
+    const dnd35 = Dnd35View.of(rulesetData);
     // Pick a class level that's likely to have auto-granted powers — Wizard L1.
     const klassId = ctx.klassMap.pc["Wizard"];
-    const klassLevel = rulesetView.klassLevelByKlassAndLevel.get(`${klassId}:1`);
+    const klassLevel = dnd35.klassLevelByKlassAndLevel.get(`${klassId}:1`);
     if (!klassLevel) return; // seed doesn't have Wizard at this level — skip
 
-    const fromCache = rulesetView.klassLevelPowersWithPowersByKlassLevel.get(klassLevel.id) ?? [];
+    const fromCache = dnd35.klassLevelPowersWithPowersByKlassLevel.get(klassLevel.id) ?? [];
     const fromDb = await withRows(
       await Joins.findMany<KlassLevelPower>(db, { join: "klass_level_powers", fromIds: [klassLevel.id] }),
       "powerId",
@@ -168,11 +168,11 @@ describe("cache join-maps — parity with repository queries", () => {
   });
 
   test("featsById / powersById / skillsById resolve every composed row", () => {
-    const rulesetView = Dnd35View.of(rulesetData);
-    for (const feat of rulesetView.feats) expect(rulesetView.featsById.get(feat.id)).toBe(feat);
+    const dnd35 = Dnd35View.of(rulesetData);
+    for (const feat of dnd35.feats) expect(dnd35.featsById.get(feat.id)).toBe(feat);
 
-    for (const power of rulesetView.powers) expect(rulesetView.powersById.get(power.id)).toBe(power);
+    for (const power of dnd35.powers) expect(dnd35.powersById.get(power.id)).toBe(power);
 
-    for (const skill of rulesetView.skills) expect(rulesetView.skillsById.get(skill.id)).toBe(skill);
+    for (const skill of dnd35.skills) expect(dnd35.skillsById.get(skill.id)).toBe(skill);
   });
 });

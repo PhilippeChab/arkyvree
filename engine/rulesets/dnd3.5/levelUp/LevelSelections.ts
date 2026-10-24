@@ -1,7 +1,6 @@
 import RulesError from "@/engine/core/RulesError.ts";
 import FeatEntity, { type PoolModifier } from "@/engine/rulesets/dnd3.5/entities/feats/FeatEntity.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
-import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 
 import LevelUpBase from "./LevelUpBase.ts";
 import type { LevelPickRows } from "./plans.ts";
@@ -16,7 +15,7 @@ export default class LevelSelections extends LevelUpBase<DetailedCharacter> {
    * its powers by pool (each with its spell level in the pool when it has one).
    */
   private buildLevelSelections({ feats: levelFeats, powers: levelPowers, skills: levelSkills }: LevelPickRows) {
-    const view35 = Dnd35View.of(this.rulesetData);
+    const dnd35 = this.dnd35;
     const skills: Record<string, number> = {};
     for (const s of levelSkills) skills[s.skillId] = s.rank;
 
@@ -26,7 +25,7 @@ export default class LevelSelections extends LevelUpBase<DetailedCharacter> {
       { aptitudeModifiers: PoolModifier[]; description?: string; id: string; name: string }[]
     > = {};
     for (const f of levelFeats) {
-      const feat = view35.featsById.get(f.featId);
+      const feat = dnd35.featsById.get(f.featId);
       (feats[f.aptitudeId] ??= []).push({
         id: f.featId,
         name: feat?.name ?? f.featId,
@@ -40,7 +39,7 @@ export default class LevelSelections extends LevelUpBase<DetailedCharacter> {
     const powers: Record<string, { description?: string; id: string; name: string; powerLevel?: number }[]> = {};
     for (const p of levelPowers) {
       const level = powerLevelMap.get(`${p.powerId}:${p.aptitudeId}`);
-      const power = view35.powersById.get(p.powerId);
+      const power = dnd35.powersById.get(p.powerId);
       (powers[p.aptitudeId] ??= []).push({
         id: p.powerId,
         name: power?.name ?? p.powerId,

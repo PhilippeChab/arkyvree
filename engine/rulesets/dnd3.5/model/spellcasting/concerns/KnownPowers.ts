@@ -192,7 +192,7 @@ export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
      * and the lists each is on.
      */
     protected collectAptitudePowers(rulesetData: RulesetData, powers: CustomizedPower[], appliedModifiers: Modifier[]) {
-      const view = Dnd35View.of(rulesetData);
+      const dnd35 = Dnd35View.of(rulesetData);
       const { perAptitudeLevels, unleveledAptitudeIds } = this.knownAptitudeLevels(appliedModifiers);
       if (perAptitudeLevels.size === 0 && unleveledAptitudeIds.size === 0) return;
 
@@ -201,7 +201,7 @@ export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
       const allAptitudePowers: Array<
         Power & { aptitudeId: string; powerLevel: number | null; saveName: string | null }
       > = [];
-      for (const power of view.powers) {
+      for (const power of dnd35.powers) {
         const saveName = PowersComponent.saveNameOf(power, rulesetData);
         for (const link of power.powersAptitudesInRules) {
           const leveledSet = perAptitudeLevels.get(link.aptitudeId);
@@ -236,7 +236,7 @@ export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
       const allPowerIdSet = new Set<string>([...powers.map((p) => p.id), ...aptitudePowerIds]);
       const powerAptitudeLinks: { aptitudeId: string; powerId: string }[] = [];
       for (const id of allPowerIdSet) {
-        const p = view.powersById.get(id);
+        const p = dnd35.powersById.get(id);
         if (!p) continue;
         for (const link of p.powersAptitudesInRules)
           powerAptitudeLinks.push({ powerId: p.id, aptitudeId: link.aptitudeId });

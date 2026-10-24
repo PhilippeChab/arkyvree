@@ -84,16 +84,15 @@ export default class SelectionChecks {
    * again, at this level as at another: each pick is a row of its own.
    */
   private checkRepeatedPicks(feats: Record<string, string[]>, powers: Record<string, string[]>) {
-    const view35 = this.dnd35;
     const nonStackable = this.findRepeated(feats).find((featId) => !this.isStackable(featId));
     if (nonStackable) {
-      const name = view35.featsById.get(nonStackable)?.name ?? nonStackable;
+      const name = this.dnd35.featsById.get(nonStackable)?.name ?? nonStackable;
       throw new RulesError("invalid", `Non-stackable feat "${name}" cannot be picked more than once`);
     }
 
     const [power] = this.findRepeated(powers);
     if (!power) return;
-    const name = view35.powersById.get(power)?.name ?? power;
+    const name = this.dnd35.powersById.get(power)?.name ?? power;
     throw new RulesError("invalid", `Power "${name}" cannot be picked more than once at a level`);
   }
 
@@ -293,10 +292,9 @@ export default class SelectionChecks {
 
   /** Throws when a feat or a power isn't linked to the pool it's picked under. */
   checkLinks(feats: Record<string, string[]>, powers: Record<string, string[]>) {
-    const view35 = this.dnd35;
     for (const [aptitudeId, ids] of Object.entries(feats)) {
       for (const featId of ids) {
-        const links = view35.featsById.get(featId)?.featsAptitudesInRules ?? [];
+        const links = this.dnd35.featsById.get(featId)?.featsAptitudesInRules ?? [];
         if (!links.some((fa) => fa.aptitudeId === aptitudeId))
           throw new RulesError("invalid", "Feat is not linked to the specified aptitude");
       }
@@ -304,7 +302,7 @@ export default class SelectionChecks {
 
     for (const [aptitudeId, ids] of Object.entries(powers)) {
       for (const powerId of ids) {
-        const links = view35.powersById.get(powerId)?.powersAptitudesInRules ?? [];
+        const links = this.dnd35.powersById.get(powerId)?.powersAptitudesInRules ?? [];
         if (!links.some((pa) => pa.aptitudeId === aptitudeId))
           throw new RulesError("invalid", "Power is not linked to the specified aptitude");
       }
@@ -320,17 +318,16 @@ export default class SelectionChecks {
    * is the level's to pick.
    */
   checkPicksNotHeld(picks: PoolPicks, holding: Holding, kept?: KeptPicks) {
-    const view35 = this.dnd35;
     const { feats, powers } = this.splitHeldPicks(picks, holding, kept).refused;
     const [feat] = feats;
     if (feat) {
-      const name = view35.featsById.get(feat.featId)?.name ?? feat.featId;
+      const name = this.dnd35.featsById.get(feat.featId)?.name ?? feat.featId;
       throw new RulesError("invalid", `Non-stackable feat "${name}" is already on this character`);
     }
     const [power] = powers;
     if (!power) return;
-    const name = view35.powersById.get(power.powerId)?.name ?? power.powerId;
-    const pool = view35.aptitudesById.get(power.aptitudeId)?.name ?? power.aptitudeId;
+    const name = this.dnd35.powersById.get(power.powerId)?.name ?? power.powerId;
+    const pool = this.dnd35.aptitudesById.get(power.aptitudeId)?.name ?? power.aptitudeId;
     throw new RulesError("invalid", `Power "${name}" is already known in ${pool}`);
   }
 

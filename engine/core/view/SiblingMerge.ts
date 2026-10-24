@@ -3,7 +3,7 @@
  * (`RulesetComposition`) and a copy of the winner writes (`EntityCopy`), the same both ways: the engine's, which both
  * ask. Each rule takes the winner's own rows and each sibling's, in the order its `CowData` pairs
  * them (`getSiblings`), and returns the siblings' rows the winner takes, in that order. A modifier, a property of a set or
- * an aptitude link whose key the winner or an earlier sibling has is left out. A single-valued property is the winner's,
+ * a list's link (`mergeListLinks`: a 3.5 feat's pool) whose key the winner or an earlier sibling has is left out. A single-valued property is the winner's,
  * else the first sibling's that holds it (its field's `fallback`), whose stores keep one value of it. Requirements merge as trees
  * (`RequirementTree`), whose top-level rows are AND'd: merging the winner with N siblings is `AND(winner, sibling 1, …)`,
  * each sibling's tree kept as it is, appended at the top level. A sibling's group gets a fresh top-level number, its

@@ -35,10 +35,10 @@ export default abstract class GeneratedFeats {
    */
   make(name: string): MadeEntity[] {
     const { rulesetData } = this.view;
-    const view35 = Dnd35View.of(rulesetData);
+    const dnd35 = Dnd35View.of(rulesetData);
     const feats = this.featsOf(name);
-    const aptitudeId = view35.aptitudeIdBySlug.get(this.poolSlug);
-    if (!aptitudeId || view35.feats.some((feat) => feat.name === feats[0]?.name)) return [];
+    const aptitudeId = dnd35.aptitudeIdBySlug.get(this.poolSlug);
+    if (!aptitudeId || dnd35.feats.some((feat) => feat.name === feats[0]?.name)) return [];
     return feats.map(({ description, modifiers, name: featName, properties, requirements }) => ({
       columns: { description, generated: true, name: featName },
       links: [{ aptitudeId }],

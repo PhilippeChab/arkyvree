@@ -657,7 +657,7 @@ describe("subscribing to an extension", () => {
       const divine = await findSeededRuleset(DND35_COMPLETE_DIVINE_NAME);
       await RulesetExtensionsService.subscribeExtension(session, draft.id, [divine.id]);
       const view = await RulesetViews.getData((await Rulesets.findOne(db, { id: draft.id }))!);
-      const view35 = Dnd35View.of(view);
+      const dnd35 = Dnd35View.of(view);
       const divineList = (await Entities.findOne<Aptitude>(db, {
         entityType: "aptitudes",
         name: own.name,
@@ -665,8 +665,8 @@ describe("subscribing to an extension", () => {
       }))!;
       const named = (lists: { id: string; name: string }[]) =>
         lists.filter((list) => list.name === own.name).map((list) => list.id);
-      expect(named([...view35.aptitudesById.values()])).toEqual([own.id]);
-      expect(view35.aptitudesById.get(divineList.id)?.id).toBe(own.id);
+      expect(named([...dnd35.aptitudesById.values()])).toEqual([own.id]);
+      expect(dnd35.aptitudesById.get(divineList.id)?.id).toBe(own.id);
       const { items } = await EntitiesService.getEntities(draft.id, "aptitudes", { search: own.name }, firstPage);
       expect(named(items)).toEqual([own.id]);
 
@@ -690,7 +690,7 @@ describe("subscribing to an extension", () => {
         { pool: own.id },
         { ...firstPage, search: spell.name },
       );
-      expect(offered.items.map((power) => power.id)).toContain(view35.powersById.get(spell.id)!.id);
+      expect(offered.items.map((power) => power.id)).toContain(dnd35.powersById.get(spell.id)!.id);
     });
   });
 
@@ -1765,10 +1765,10 @@ describe("an extension's entity of a name its subscriber's own has", () => {
     });
 
     const view = await RulesetViews.getData((await Rulesets.findOne(db, { id: draft.id }))!);
-    const view35 = Dnd35View.of(view);
-    expect(view35.klassLevelFeatsByKlassLevel.get(klassLevel.id)).toMatchObject([{ featId: own.id }]);
-    expect(view35.listFeatIds(bookList.id)).toEqual([]);
-    expect(view35.listFeatIds(general).filter((id) => [own.id, bookFeat.id].includes(id))).toEqual([own.id]);
+    const dnd35 = Dnd35View.of(view);
+    expect(dnd35.klassLevelFeatsByKlassLevel.get(klassLevel.id)).toMatchObject([{ featId: own.id }]);
+    expect(dnd35.listFeatIds(bookList.id)).toEqual([]);
+    expect(dnd35.listFeatIds(general).filter((id) => [own.id, bookFeat.id].includes(id))).toEqual([own.id]);
     const described = await EntitiesService.getEntity<Described<"feats">>(draft.id, "feats", bookFeat.id);
     expect(described.id).toBe(own.id);
     expect(described.modifiers.map((modifier) => modifier.target)).toEqual([STRENGTH_BONUS.target]);

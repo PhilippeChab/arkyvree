@@ -678,7 +678,7 @@ export default class StorageEngine {
       return owner ? depth(owner) + 1 : 0;
     };
     const tracked = new Set([
-      ...types.flatMap(({ ownerType, type }) => (ownerType ? [ownerType, type] : [])),
+      ...types.flatMap(({ ownerType }) => (ownerType ? [ownerType] : [])),
       ...joins.map(({ from }) => from),
     ]);
     this.schema = {

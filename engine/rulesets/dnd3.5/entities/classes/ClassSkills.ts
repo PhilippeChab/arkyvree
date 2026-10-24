@@ -43,10 +43,10 @@ export default class ClassSkills {
    */
   planRemove(skillId: string) {
     const { rulesetData } = this.view;
-    const view35 = Dnd35View.of(rulesetData);
-    const klassSkill = view35.klassSkillsByKlass.get(this.klass.id)?.find((ks) => ks.skillId === skillId);
+    const dnd35 = Dnd35View.of(rulesetData);
+    const klassSkill = dnd35.klassSkillsByKlass.get(this.klass.id)?.find((ks) => ks.skillId === skillId);
     if (!klassSkill) throw new RulesError("not-found", "Skill is not assigned to this class");
-    const skill = view35.skillsById.get(skillId);
+    const skill = dnd35.skillsById.get(skillId);
     return {
       activity: {
         skillId: klassSkill.skillId,

@@ -92,14 +92,14 @@ export default class PowersComponent extends CharacterComponent<LoadedCharacterD
    * then their DCs as the power groupings hold them, an empty DC for each leveled spell without one, and the groupings.
    */
   override initialize({ powers }: Pick<LoadedCharacterData, "powers">, { rulesetData }: RulesetView) {
-    const view = Dnd35View.of(rulesetData);
+    const dnd35 = Dnd35View.of(rulesetData);
     this.addPowerEntries(powers);
 
     // Build spell known data nested under each spell entry: spell → aptitude → { known }, but on the lists a feat brings
     const { featListIds, spellSlugByAptitudeId } = SpellLists.of(rulesetData);
     const aptitudeIdToSlug = new Map([...spellSlugByAptitudeId].filter(([aptitudeId]) => !featListIds.has(aptitudeId)));
 
-    for (const power of view.powers) {
+    for (const power of dnd35.powers) {
       const spellSlug = stripSeparators(power.name);
       for (const pa of power.powersAptitudesInRules) {
         if (pa.level == null) continue;
@@ -122,7 +122,7 @@ export default class PowersComponent extends CharacterComponent<LoadedCharacterD
     }
 
     this.holdDcs();
-    this.seedEmptyDcs(view.powers);
+    this.seedEmptyDcs(dnd35.powers);
     this.holdGroupings();
   }
 

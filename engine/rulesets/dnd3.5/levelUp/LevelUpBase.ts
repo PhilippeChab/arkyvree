@@ -142,11 +142,10 @@ export default abstract class LevelUpBase<C> {
 
   /** A saved character level's class level and class, in the composed ruleset, or a 404. */
   protected getSavedKlassLevel(characterLevel: { klassLevelId: string }) {
-    const view = this.dnd35;
-    const klassLevel = view.klassLevelsById.get(characterLevel.klassLevelId);
+    const klassLevel = this.dnd35.klassLevelsById.get(characterLevel.klassLevelId);
     if (!klassLevel) throw new RulesError("not-found", "Class level not found");
 
-    const klass = view.klassesById.get(klassLevel.klassId);
+    const klass = this.dnd35.klassesById.get(klassLevel.klassId);
     if (!klass) throw new RulesError("not-found", "Class not found");
 
     return { klassLevel, klass };
