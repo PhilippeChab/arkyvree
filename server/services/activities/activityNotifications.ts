@@ -2,7 +2,7 @@ import type { InferInsertModel } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
 import type { activitiesInAccount } from "@/drizzle/schema.ts";
-import type { KlassLevel } from "@/engine/index.ts";
+import type { OwnedKind } from "@/engine/index.ts";
 import { EntityRepositories } from "@/server/cow/index.ts";
 import {
   Activities,
@@ -11,8 +11,10 @@ import {
   Contributors,
   Entities,
   Invites,
+  JOIN_ENDS,
   Modifiers,
   Notifications,
+  OWNED_TYPES,
   Players,
   Requirements,
   RULESET_ENTITY_TYPES,
@@ -53,18 +55,10 @@ type Recipient =
   | "rulesetStakeholders";
 
 /**
- * The rows of a ruleset's content beside its entities, by their table, and the row each belongs to: a class level's
- * class, a customization's entity (a requirement's may be a modifier). A class skill's activity targets its class.
+ * The customizations of a ruleset's content, by their table, and the row each belongs to: a customization's entity (a
+ * requirement's may be a modifier).
  */
-const CONTENT_OWNERS = new Map<string, (db: Db, id: string) => Promise<ContentRow | undefined>>([
-  [
-    "klass_levels",
-    async (db, id) => {
-      const level = await Entities.findOne<KlassLevel>(db, { entityType: "klass_levels", id });
-      return level && { id: level.klassId, table: "klasses" };
-    },
-  ],
-  ["klass_skills", async (_db, id) => ({ id, table: "klasses" })],
+const CUSTOMIZATION_OWNERS = new Map<string, (db: Db, id: string) => Promise<ContentRow | undefined>>([
   [
     "modifiers",
     async (db, id) => {
@@ -104,7 +98,12 @@ const RECIPIENTS = new Map<string, Recipient>([
 
 /** Whether a table holds a ruleset's content, whose every change its stakeholders hear of. */
 function isContentTable(table: string) {
-  return isOneOf(table, RULESET_ENTITY_TYPES) || CONTENT_OWNERS.has(table);
+  return (
+    isOneOf(table, RULESET_ENTITY_TYPES) ||
+    OWNED_TYPES.has(table as OwnedKind) ||
+    JOIN_ENDS.has(table) ||
+    CUSTOMIZATION_OWNERS.has(table)
+  );
 }
 
 /** An id an activity's data holds (`invitedUserId`, `rulesetId`), when it holds one. */
@@ -125,10 +124,25 @@ async function findChangedRuleset(
   return id ? { id, row: await Rulesets.findOne(db, { id }) } : undefined;
 }
 
+/**
+ * The row a row of a ruleset's content beside its entities belongs to: an owned entity's owner (a class level's class),
+ * a join's owner (a class's skills' activity targets the class), a customization's entity.
+ */
+async function findContentOwner(db: Db, { id, table }: ContentRow): Promise<ContentRow | undefined> {
+  const ownerType = OWNED_TYPES.get(table as OwnedKind);
+  if (ownerType) {
+    const [owned] = await Entities.findPositions(db, { entityType: table, ids: [id] });
+    return owned && { id: owned.ownerId, table: ownerType };
+  }
+  const join = JOIN_ENDS.get(table);
+  if (join) return { id, table: join.from };
+  return await CUSTOMIZATION_OWNERS.get(table)?.(db, id);
+}
+
 /** The ruleset a row of its content is in: an entity's own, or that of the row it belongs to. */
 async function findContentRuleset(db: Db, { id, table }: ContentRow): Promise<string | undefined> {
   if (isOneOf(table, RULESET_ENTITY_TYPES)) return (await EntityRepositories.of(table).findOne(db, { id }))?.rulesetId;
-  const owner = await CONTENT_OWNERS.get(table)?.(db, id);
+  const owner = await findContentOwner(db, { id, table });
   return owner && (await findContentRuleset(db, owner));
 }
 

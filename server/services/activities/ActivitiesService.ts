@@ -1,4 +1,4 @@
-import type { Klass, KlassLevel } from "@/engine/index.ts";
+import type { OwnedKind } from "@/engine/index.ts";
 import { EntityRepositories } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import {
@@ -9,7 +9,9 @@ import {
   Contributors,
   Entities,
   Invites,
+  JOIN_ENDS,
   Modifiers,
+  OWNED_TYPES,
   PlayerCharacters,
   Players,
   Requirements,
@@ -26,9 +28,12 @@ import { getUrlSegment } from "@/shared/urlSegments.ts";
 /** Where an activity links to: a page, nowhere (null), or a record the user no longer has access to. */
 type ActivityUrl = string | null | { entityType: "ruleset" | "character"; noAccess: true };
 
-/** A class's page, on its tab of `section` (its skills, modifiers or requirements) when given, else its first. */
-function classPageUrl(rulesetId: string, klassId: string, section?: string) {
-  return `/rulesets/${rulesetId}/classes/${klassId}${section ? `/${section}` : ""}`;
+/**
+ * An entity's page (`entityType`, `entityId`: a class's), on its tab of `section` (its skills, modifiers or
+ * requirements) when given, else its first.
+ */
+function entityPageUrl(rulesetId: string, entityType: string, entityId: string, section?: string) {
+  return `/rulesets/${rulesetId}/${getUrlSegment(entityType)}/${entityId}${section ? `/${section}` : ""}`;
 }
 
 class ActivitiesService {
@@ -51,16 +56,20 @@ class ActivitiesService {
     return entityUrl;
   }
 
-  /** A class's page (on its skills, `section`; else its first tab, its base rules'), or null when the class is gone. */
-  private async klassSectionUrl(klassId: string, section?: "skills") {
-    const klass = await Entities.findOne<Klass>(db, { entityType: "klasses", id: klassId });
-    if (!klass) return null;
-    return classPageUrl(klass.rulesetId, klass.id, section);
+  /**
+   * The page of an owner of other entities (`ownerType`, `ownerId`: a class), on the tab of `section` (its skills) when
+   * given, else its first: null when the owner is gone.
+   */
+  private async ownerPageUrl(ownerType: string, ownerId: string, section?: string) {
+    const owner = await Entities.findOne(db, { entityType: ownerType, id: ownerId });
+    if (!owner) return null;
+    return entityPageUrl(String(owner.rulesetId), ownerType, owner.id, section);
   }
 
   /**
-   * The ruleset an owner of customizations is of: an entity's own, a class level's class's, a modifier's source's (a
-   * requirement's owner can be a modifier); none for an owner outside a ruleset (a character's own modifiers).
+   * The ruleset an owner of customizations is of: an entity's own, an owned one's owner's (a class level's class's), a
+   * modifier's source's (a requirement's owner can be a modifier); none for an owner outside a ruleset (a character's own
+   * modifiers).
    */
   private async ownerRulesetId(entityId: string, entityType: string): Promise<string | null> {
     if (entityType === "modifiers") {
@@ -69,9 +78,10 @@ class ActivitiesService {
       if (!modifier || modifier.sourceType === "modifiers") return null;
       return await this.ownerRulesetId(modifier.sourceId, modifier.sourceType);
     }
-    if (entityType === "klass_levels") {
-      const klassLevel = await Entities.findOne<KlassLevel>(db, { entityType: "klass_levels", id: entityId });
-      return klassLevel ? await this.ownerRulesetId(klassLevel.klassId, "klasses") : null;
+    const ownerType = OWNED_TYPES.get(entityType as OwnedKind);
+    if (ownerType) {
+      const [owned] = await Entities.findPositions(db, { entityType, ids: [entityId] });
+      return owned ? await this.ownerRulesetId(owned.ownerId, ownerType) : null;
     }
     if (!isOneOf(entityType, RULESET_ENTITY_TYPES)) return null;
     return (await EntityRepositories.of(entityType).findOne(db, { id: entityId }))?.rulesetId ?? null;
@@ -85,8 +95,8 @@ class ActivitiesService {
   }
 
   /**
-   * The page that lists an owner's customizations: its customization page, or a class's page, on the tab of `section`
-   * (its modifiers' or its requirements'; a property's, its details, its first).
+   * The page that lists an owner's customizations: its customization page, or the page of a kind that owns another (a
+   * class's), on the tab of `section` (its modifiers' or its requirements'; a property's, its details, its first).
    */
   private async resolveCustomizationUrl(
     entityId: string,
@@ -95,9 +105,25 @@ class ActivitiesService {
   ): Promise<string | null> {
     const rulesetId = await this.ownerRulesetId(entityId, entityType);
     if (!rulesetId) return null;
-    if (entityType === "klasses") return classPageUrl(rulesetId, entityId, section);
+    if (isOneOf(entityType, [...OWNED_TYPES.values()])) return entityPageUrl(rulesetId, entityType, entityId, section);
     if (!isOneOf(entityType, CUSTOMIZATION_PAGE_TYPES)) return null;
     return `/rulesets/${rulesetId}/${buildCustomizationPath(entityType, entityId)}${section ? `/${section}` : ""}`;
+  }
+
+  /**
+   * A ruleset's content's page: an owned entity's owner's (a class level's class's); a join's an owner edits, the owner's
+   * on the tab of the join's targets (a class's skills, whose activity targets the class); any other entity's, its
+   * customization page when it has one, else its own.
+   */
+  private async resolveRulesEntity(targetTable: string, targetId: string): Promise<string | null> {
+    const ownerType = OWNED_TYPES.get(targetTable as OwnedKind);
+    if (ownerType) {
+      const [owned] = await Entities.findPositions(db, { entityType: targetTable, ids: [targetId] });
+      return owned ? await this.ownerPageUrl(ownerType, owned.ownerId) : null;
+    }
+    const join = JOIN_ENDS.get(targetTable);
+    if (join) return await this.ownerPageUrl(join.from, targetId, getUrlSegment(join.to));
+    return await this.resolveRulesSubEntity(targetTable, targetId);
   }
 
   /** A ruleset entity's page, any type's: its customization page when it has one, else its own. */
@@ -146,15 +172,6 @@ class ActivitiesService {
       case "campaigns":
         return (await Campaigns.findOne(db, { id: targetId }, Visibility.All)) ? `/campaigns/${targetId}` : null;
 
-      // Class sub-entities
-      case "klass_levels": {
-        const klassLevel = await Entities.findOne<KlassLevel>(db, { entityType: "klass_levels", id: targetId });
-        return klassLevel ? await this.klassSectionUrl(klassLevel.klassId) : null;
-      }
-      // targetId is klassId for klassSkills activities
-      case "klass_skills":
-        return await this.klassSectionUrl(targetId, "skills");
-
       // Campaign sub-entities
       case "players":
         return await this.playerCampaignUrl(targetId);
@@ -201,7 +218,7 @@ class ActivitiesService {
 
       // Rules sub-entities (entity has rulesetId)
       default:
-        return await this.resolveRulesSubEntity(targetTable, targetId);
+        return await this.resolveRulesEntity(targetTable, targetId);
     }
   }
 }

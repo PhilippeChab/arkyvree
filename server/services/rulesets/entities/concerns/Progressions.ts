@@ -72,7 +72,12 @@ export function Progressions<B extends Constructor>(Base: B) {
       tokens: ReadonlyMap<string, string>,
     ) {
       const { ownedType } = plan;
-      const idByPosition = await Entities.findPositions(tx, { entityType: ownedType, ownerId: target.id });
+      const idByPosition = new Map(
+        (await Entities.findPositions(tx, { entityType: ownedType, ownerIds: [target.id] })).map((owned) => [
+          owned.position,
+          owned.id,
+        ]),
+      );
       const removedIds: string[] = [];
       const added: Parameters<typeof Modifiers.createMany>[1] = [];
       const writtenIds: string[] = [];

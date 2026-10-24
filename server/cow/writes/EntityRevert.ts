@@ -1,7 +1,13 @@
 import type { Db } from "@/drizzle/database.ts";
-import type { KlassLevel } from "@/engine/index.ts";
+import type { OwnedKind } from "@/engine/index.ts";
 import { ConflictError, NotFoundError } from "@/server/errors/index.ts";
-import { Entities, EntityReferences, EntitySnapshots, type RulesetEntityType } from "@/server/repositories/index.ts";
+import {
+  Entities,
+  EntityReferences,
+  EntitySnapshots,
+  OWNED_TYPES,
+  type RulesetEntityType,
+} from "@/server/repositories/index.ts";
 
 import type EntityNames from "./EntityNames.ts";
 import EntityRepositories from "./EntityRepositories.ts";
@@ -19,29 +25,22 @@ import EntityRepositories from "./EntityRepositories.ts";
  */
 export default class EntityRevert {
   /**
-   * Moves what names a copied class's levels (a character's levels) to the source's levels of the same numbers, as the
-   * views pair them. Refused while a character took a level the source doesn't have.
+   * Moves what names a copied owner's owned entities of a kind (`ownedType`: a copied class's levels, which a
+   * character's levels name) to the source's of the same positions, as the views pair them. Refused while a character
+   * took one the source doesn't have.
    */
-  private static async repointKlassLevels(tx: Db, copyId: string, sourceId: string, rulesetId: string) {
-    const sourceLevels = new Map(
-      (await Entities.findMany<KlassLevel>(tx, { entityType: "klass_levels", ownerIds: [sourceId] })).map((l) => [
-        l.level,
-        l.id,
-      ]),
-    );
-    const copyLevels = await Entities.findMany<KlassLevel>(tx, { entityType: "klass_levels", ownerIds: [copyId] });
-    const unpaired = copyLevels.filter((level) => !sourceLevels.has(level.level)).map((level) => level.id);
-    if (await EntityReferences.exists(tx, { entityType: "klass_levels", ids: unpaired, rulesetId }))
+  private static async repointOwned(tx: Db, ownedType: OwnedKind, copyId: string, sourceId: string, rulesetId: string) {
+    const positionsOf = (ownerId: string) => Entities.findPositions(tx, { entityType: ownedType, ownerIds: [ownerId] });
+    const sourcePositions = new Map((await positionsOf(sourceId)).map((owned) => [owned.position, owned.id]));
+    const copyPositions = await positionsOf(copyId);
+    const unpaired = copyPositions.filter((owned) => !sourcePositions.has(owned.position)).map((owned) => owned.id);
+    if (await EntityReferences.exists(tx, { entityType: ownedType, ids: unpaired, rulesetId }))
       throw new ConflictError("Cannot restore: characters took levels its parent's class doesn't have");
 
-    for (const level of copyLevels) {
-      const sourceLevelId = sourceLevels.get(level.level);
-      if (!sourceLevelId) continue;
-      await EntityReferences.update(
-        tx,
-        { entityId: sourceLevelId },
-        { entityType: "klass_levels", entityId: level.id },
-      );
+    for (const owned of copyPositions) {
+      const sourceOwnedId = sourcePositions.get(owned.position);
+      if (!sourceOwnedId) continue;
+      await EntityReferences.update(tx, { entityId: sourceOwnedId }, { entityType: ownedType, entityId: owned.id });
     }
   }
 
@@ -67,7 +66,8 @@ export default class EntityRevert {
     const repository = EntityRepositories.of(entityType);
     await repository.lock(tx, { id: copyId });
     await names?.assertRestoreAvailable(tx, entityType, sourceEntityId, copyId);
-    if (entityType === "klasses") await EntityRevert.repointKlassLevels(tx, copyId, sourceEntityId, rulesetId);
+    for (const [ownedType, ownerType] of OWNED_TYPES)
+      if (ownerType === entityType) await EntityRevert.repointOwned(tx, ownedType, copyId, sourceEntityId, rulesetId);
     await EntityReferences.update(tx, { entityId: sourceEntityId }, { entityType, entityId: copyId });
     await EntitySnapshots.update(tx, { sourceEntityId }, { sourceEntityId: copyId });
     // The database deletes its own rows with it, and its customizations

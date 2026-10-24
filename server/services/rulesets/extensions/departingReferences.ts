@@ -1,22 +1,24 @@
 /**
  * What a fork keeps of a book it unsubscribes from, repaired before the book's content leaves it (`unsubscribeExtension`).
- * What leaves (`findDepartures`) is the book's entities, the fork's copies of them, and their classes' levels, each with
+ * What leaves (`findDepartures`) is the book's entities, the fork's copies of them, and what they own, each with
  * what the fork's view shows in its place once the book is gone, when anything does: the entity a book's copy stands for
  * (a core feat it overrides), or another book's copy of it, which wins once this one is gone; a reprint's namesake; the
  * list of the same name the fork or another book has, a list's name being its identity (`CowDataBuilder` pairs
- * namesakes); a class's level the level of its number in the class its class falls back to. What the fork and its
+ * namesakes); an owned entity (a class's level) its owner's fallback's of its position. What the fork and its
  * characters keep that names one names what stands in its place instead (`repointDepartingReferences`). What names one
  * with nothing in its place refuses the unsubscribe: a character's pick (its in-use check), or one of the fork's rows
  * (a link to a list no other book has, an item's template, a class's skill or granted feat…).
  */
 
 import type { Db } from "@/drizzle/database.ts";
-import type { KlassLevel, RulesetSources } from "@/engine/index.ts";
+import type { RulesetSources } from "@/engine/index.ts";
 import { CowDataReader } from "@/server/cow/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
 import {
   Entities,
   EntityReferences,
+  IDENTITY_TYPES,
+  OWNED_TYPES,
   type ReferencedType,
   RULESET_ENTITY_TYPES,
   RulesetEntities,
@@ -34,28 +36,6 @@ export type Departures = ReadonlyMap<ReferencedType, ReadonlyMap<string, string 
 
 /** How many lost references the refusal names. */
 const NAMED_LOSSES = 10;
-
-/**
- * The departing classes' levels, each with the level of its number in the class that stands in its class's place, as
- * the views pair a copy's levels (`CowDataBuilder`) and a restore moves a character's (`EntityRevert`): none when that
- * class has no such level, or when nothing stands in its class's place.
- */
-async function findLevelFallbacks(tx: Db, klasses: ReadonlyMap<string, string | undefined>) {
-  const fallbackIds = [...klasses.values()].filter((id) => id !== undefined);
-  const levels = await Entities.findMany<KlassLevel>(tx, {
-    entityType: "klass_levels",
-    ownerIds: [...klasses.keys(), ...fallbackIds],
-  });
-  const levelsOf = Map.groupBy(levels, (level) => level.klassId);
-  const fallbacks = new Map<string, string | undefined>();
-  for (const [klassId, fallbackId] of klasses) {
-    const theirs = new Map(
-      (fallbackId ? (levelsOf.get(fallbackId) ?? []) : []).map((level) => [level.level, level.id]),
-    );
-    for (const level of levelsOf.get(klassId) ?? []) fallbacks.set(level.id, theirs.get(level.level));
-  }
-  return fallbacks;
-}
 
 /**
  * The fork's rows naming what leaves with nothing in its place (`EntityReferences.findMany`), as the refusal names
@@ -76,18 +56,40 @@ async function findLostReferences(tx: Db, rulesetId: string, departures: Departu
     for (const entity of await RulesetEntities.findNames(tx, type, { ids })) names.set(entity.id, entity.name);
   }
   return references.map((reference) =>
-    typeOf.get(reference.targetId) === "aptitudes"
+    IDENTITY_TYPES.has(typeOf.get(reference.targetId)!)
       ? `${names.get(reference.targetId)}, a list no other book of this ruleset has`
       : `${reference.name}, which uses ${names.get(reference.targetId)}`,
   );
 }
 
 /**
+ * The departing owners' owned entities of a kind (`ownedType`: the departing classes' levels), each with the one of its
+ * position owned by what stands in its owner's place, as the views pair a copy's (`CowDataBuilder`) and a restore moves
+ * a character's (`EntityRevert`): none when that owner has none there, or when nothing stands in its owner's place.
+ */
+async function findOwnedFallbacks(tx: Db, ownedType: string, owners: ReadonlyMap<string, string | undefined>) {
+  const fallbackIds = [...owners.values()].filter((id) => id !== undefined);
+  const positions = await Entities.findPositions(tx, {
+    entityType: ownedType,
+    ownerIds: [...owners.keys(), ...fallbackIds],
+  });
+  const ownedOf = Map.groupBy(positions, (owned) => owned.ownerId);
+  const fallbacks = new Map<string, string | undefined>();
+  for (const [ownerId, fallbackId] of owners) {
+    const theirs = new Map(
+      (fallbackId ? (ownedOf.get(fallbackId) ?? []) : []).map((owned) => [owned.position, owned.id]),
+    );
+    for (const owned of ownedOf.get(ownerId) ?? []) fallbacks.set(owned.id, theirs.get(owned.position));
+  }
+  return fallbacks;
+}
+
+/**
  * What leaves `ruleset` with the book (`extensionId`), by entity type: the book's entities and the fork's copies of them
- * (`copies`), and their classes' levels, each with what the fork's view shows in its place once the book is gone. That
- * is the first of the ids the view now shows it for (`CowData.getEquivalentIds`: the entity a copy stands for, the other
- * books' copies of it and the namesakes paired with it) that stays, as the view without the book resolves it, when that
- * view shows it: a copy the fork deleted shows nothing.
+ * (`copies`), and what they own (their classes' levels), each with what the fork's view shows in its place once the book
+ * is gone. That is the first of the ids the view now shows it for (`CowData.getEquivalentIds`: the entity a copy stands
+ * for, the other books' copies of it and the namesakes paired with it) that stays, as the view without the book resolves
+ * it, when that view shows it: a copy the fork deleted shows nothing.
  */
 export async function findDepartures(
   tx: Db,
@@ -121,7 +123,8 @@ export async function findDepartures(
     const live = new Set((await RulesetEntities.findNames(tx, type, { ids: shown })).map((entity) => entity.id));
     departures.set(type, new Map(ids.map((id) => [id, candidates.get(id)!.find((other) => live.has(other))])));
   }
-  departures.set("klass_levels", await findLevelFallbacks(tx, departures.get("klasses")!));
+  for (const [ownedType, ownerType] of OWNED_TYPES)
+    departures.set(ownedType, await findOwnedFallbacks(tx, ownedType, departures.get(ownerType)!));
   return departures;
 }
 

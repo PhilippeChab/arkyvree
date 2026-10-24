@@ -37,7 +37,7 @@ export {
   Users,
 } from "./instances.ts";
 export type { ReferencedType } from "./rulesets/entityReferences.ts";
-export { RULESET_ENTITY_TYPES } from "./rulesets/entityTables.ts";
+export { IDENTITY_TYPES, JOIN_ENDS, OWNED_TYPES, RULESET_ENTITY_TYPES } from "./rulesets/entityTables.ts";
 export type { RulesetEntityType } from "./rulesets/entityTables.ts";
 export type { EntityListWhere, EntityRow } from "./stored/StoredEntities.ts";
 export type { JoinRow } from "./stored/StoredJoins.ts";
