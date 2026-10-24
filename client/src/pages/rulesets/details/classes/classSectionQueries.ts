@@ -7,7 +7,7 @@ import { infiniteQueryOptions, queryOptions, skipToken } from "@tanstack/react-q
 import { type InferRequestType, type InferResponseType, parseResponse } from "hono/client";
 
 import { NO_TIME } from "@/client/src/lib/durations.ts";
-import { type EntityRow, readEntityFn } from "@/client/src/lib/entityRequests.ts";
+import { type EntityRow, entitySegment, readEntityFn } from "@/client/src/lib/entityRequests.ts";
 import type { EntityKindDescription } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { entitiesQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
@@ -22,9 +22,6 @@ type TableWith<K extends string> = Extract<ClassTable, Record<K, unknown>[]>;
 
 export type ClassDetail = EntityRow;
 
-/** A class's level as its Progression tab lists it */
-export type ClassLevelRow = InferResponseType<(typeof classApi)["owned"]["$get"], 200>[number];
-
 /** A list a class's levels count on (3.5's spell lists), as its table of them gives it: its own first. */
 export type ClassList = TableWith<"name">[number];
 
@@ -36,6 +33,9 @@ export type ClassProgression = InferResponseType<(typeof classApi)["progression"
  * them, and its levels' tokens.
  */
 export type ClassProgressionBody = InferRequestType<(typeof classApi)["progression"]["$put"]>["json"];
+
+/** A class's level as its Progression tab lists it */
+export type LevelRow = InferResponseType<(typeof classApi)["owned"]["$get"], 200>[number];
 
 /** A link of a class to an entity, by the keys its kind's `links` describe: the entity's, the class's, and its row. */
 export type LinkRow = Record<string, unknown>;
@@ -49,37 +49,26 @@ export type TableRow = { id: string; level: number; updatedAt: string } & Record
 /** A class's routes, an entity's of the classes' kind. */
 const classApi = rpc.api.rulesets[":id"].entities[":entityType"][":entityId"];
 
-/** A class's route's params: the ruleset, and the class, an entity of the classes' kind. */
-function classParam(rulesetId: string, classId: string) {
-  return { param: { id: rulesetId, entityType: "classes" as const, entityId: classId } };
-}
-
 /** One of a class's tables (`table`, by its name), as its tab reads it. */
-async function readTable(rulesetId: string, classId: string, table: string): Promise<ClassTable> {
-  const { param } = classParam(rulesetId, classId);
+async function readTable(rulesetId: string, classType: string, classId: string, table: string): Promise<ClassTable> {
+  const { param } = classParam(rulesetId, classType, classId);
   return await parseResponse(classApi.tables[":table"].$get({ param: { ...param, table } }));
 }
 
-/** The class itself, shared by the class page and the classes table's row hover. */
-export function classDetailQuery(rulesetId: string, classId: string) {
+/** The class itself (of its kind, `classType`), shared by the class page and its kind's table's row hover. */
+export function classDetailQuery(rulesetId: string, classType: string, classId: string) {
   return queryOptions({
     queryKey: QUERY_KEYS.rulesets.classDetail(rulesetId, classId),
-    queryFn: () => readEntityFn(rulesetId, "klasses", classId),
-  });
-}
-
-export function classLevelsQuery(rulesetId: string, classId: string) {
-  return queryOptions({
-    queryKey: QUERY_KEYS.rulesets.classLevels(rulesetId, classId),
-    queryFn: () => parseResponse(classApi.owned.$get(classParam(rulesetId, classId))),
+    queryFn: () => readEntityFn(rulesetId, classType, classId),
   });
 }
 
 /** The entities of a kind (`type`: 3.5's skills) a class links to, its links' tab's, each link with its entity. */
-export function classLinksQuery(rulesetId: string, classId: string, type: string) {
+export function classLinksQuery(rulesetId: string, classType: string, classId: string, type: string) {
   return queryOptions({
     queryKey: QUERY_KEYS.rulesets.classLinks(rulesetId, classId, getUrlSegment(type)),
-    queryFn: async (): Promise<LinkRow[]> => await parseResponse(classApi.links.$get(classParam(rulesetId, classId))),
+    queryFn: async (): Promise<LinkRow[]> =>
+      await parseResponse(classApi.links.$get(classParam(rulesetId, classType, classId))),
   });
 }
 
@@ -87,11 +76,16 @@ export function classLinksQuery(rulesetId: string, classId: string, type: string
  * The lists a class's levels count on (`lists`, its table of them: 3.5's spell lists), its own first: its list tab's
  * picker.
  */
-export function classListsQuery(rulesetId: string, classId: string, lists: string) {
+export function classListsQuery(rulesetId: string, classType: string, classId: string, lists: string) {
   return queryOptions({
     queryKey: QUERY_KEYS.rulesets.classTable(rulesetId, classId, lists),
-    queryFn: async () => (await readTable(rulesetId, classId, lists)) as ClassList[],
+    queryFn: async () => (await readTable(rulesetId, classType, classId, lists)) as ClassList[],
   });
+}
+
+/** A class's route's params: the ruleset, and the class, an entity of its kind (`classType`: 3.5's `klasses`). */
+export function classParam(rulesetId: string, classType: string, classId: string) {
+  return { param: { id: rulesetId, entityType: entitySegment(getUrlSegment(classType)), entityId: classId } };
 }
 
 /**
@@ -99,11 +93,11 @@ export function classListsQuery(rulesetId: string, classId: string, lists: strin
  * spell list), its feats' picks. Read again each time a tab mounts: an aptitude or a feat changed elsewhere (a spell list added)
  * changes it.
  */
-export function classProgressionQuery(rulesetId: string, classId: string) {
+export function classProgressionQuery(rulesetId: string, classType: string, classId: string) {
   return queryOptions({
     queryKey: QUERY_KEYS.rulesets.classProgression(rulesetId, classId),
     staleTime: NO_TIME,
-    queryFn: () => parseResponse(classApi.progression.$get(classParam(rulesetId, classId))),
+    queryFn: () => parseResponse(classApi.progression.$get(classParam(rulesetId, classType, classId))),
   });
 }
 
@@ -111,10 +105,18 @@ export function classProgressionQuery(rulesetId: string, classId: string) {
  * One of a class's tables by level (`table`, by its name: 3.5's spells per day's `spells`, its feat pools' totals'
  * `feat-pools`); skipped without one (rules that have none).
  */
-export function classTableQuery(rulesetId: string, classId: string, table: string | undefined) {
+export function classTableQuery(rulesetId: string, classType: string, classId: string, table: string | undefined) {
   return queryOptions({
     queryKey: QUERY_KEYS.rulesets.classTable(rulesetId, classId, table ?? ""),
-    queryFn: table ? async () => (await readTable(rulesetId, classId, table)) as TableRow[] : skipToken,
+    queryFn: table ? async () => (await readTable(rulesetId, classType, classId, table)) as TableRow[] : skipToken,
+  });
+}
+
+/** A class's levels (`classType`, its kind: 3.5's `klasses`), its Progression tab's, the entities it owns. */
+export function levelsQuery(rulesetId: string, classType: string, classId: string) {
+  return queryOptions({
+    queryKey: QUERY_KEYS.rulesets.levels(rulesetId, classId),
+    queryFn: () => parseResponse(classApi.owned.$get(classParam(rulesetId, classType, classId))),
   });
 }
 

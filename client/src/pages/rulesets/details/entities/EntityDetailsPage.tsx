@@ -15,8 +15,7 @@ import {
   withEntityFields,
 } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { EntityDetailLayout, EntityPageError } from "@/client/src/pages/rulesets/components/index.ts";
-import { entityPageBack } from "@/client/src/pages/rulesets/entityPageState.ts";
-import { useEntityFields } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { useEntityFields, useEntityPageBack } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { getEntityTypeOfSegment, getUrlSegment } from "@/shared/urlSegments.ts";
 
@@ -100,7 +99,7 @@ export default function EntityDetailsPage() {
   useQuery(entityQuery(rulesetId, getEntityTypeOfSegment(section), entityId));
   const kind = rules?.kinds.find((each) => each.opens === "page" && getUrlSegment(each.type) === section);
   const label = kind ? entityTypeLabel(kind.type, rules?.words) : "Entity";
-  const back = entityPageBack(location.state, `/rulesets/${rulesetId}/${section}`, rules?.words);
+  const back = useEntityPageBack(location.state, `/rulesets/${rulesetId}/${section}`, rules?.words);
 
   if (ruleset) {
     if (!kind) return <Navigate to={`/rulesets/${rulesetId}`} replace />;

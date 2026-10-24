@@ -132,13 +132,15 @@ export interface ProgressionCounts {
  * How a class's levels progress, as its page sets them: its last level (`lastLevel`), its class table's tracks
  * (`tracks`, each a column its Progression tab sets), the label of its column of what a level grants (`grantsLabel`:
  * its features and feat pools), its tables (`tables`, which its tables' tab edits: none where its classes count
- * none) and what they count (`counts`), and what its levels grant past their columns (`grants`).
+ * none) and what they count (`counts`), what its levels grant past their columns (`grants`), and the tabs its page had
+ * before, by the address each one now opens (`tabAliases`: 3.5's Feat Pools tab's, its Progression).
  */
 export interface ProgressionDescription {
   counts?: ProgressionCounts;
   grants?: ProgressionGrants;
   grantsLabel: string;
   lastLevel: number;
+  tabAliases: Record<string, string>;
   tables: ProgressionTable[];
   tracks: ProgressionTrack[];
 }

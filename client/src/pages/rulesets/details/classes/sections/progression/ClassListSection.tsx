@@ -9,7 +9,7 @@ import type { ProgressionCounts, RulesDescription } from "@/client/src/lib/queri
 import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
 import { DescriptionCell, RulesetSectionTable, TierFilter } from "@/client/src/pages/rulesets/components/index.ts";
 import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
-import { classKindOf, kindIconOf } from "@/client/src/pages/rulesets/details/classes/classKind.ts";
+import { kindIconOf } from "@/client/src/pages/rulesets/details/classes/classKind.ts";
 import { classListsQuery, listEntitiesQuery } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 import type { ClassSectionProps } from "@/client/src/pages/rulesets/details/classes/classTab.ts";
 import { useOpenEntity, useTierFilter } from "@/client/src/pages/rulesets/hooks/index.ts";
@@ -30,7 +30,7 @@ const COLUMNS: TableColumn[] = [
  * The entities of a class's list (3.5's spells of its spell list), at a tier and searched, each opening its
  * customization page; a picker of its lists where it counts on several, its own first.
  */
-function ClassList({ rulesetId, classId, ruleset, counts, rules }: ClassListProps) {
+function ClassList({ rulesetId, classId, classType, ruleset, counts, rules }: ClassListProps) {
   const openEntity = useOpenEntity(ruleset.id);
   const queryClient = useQueryClient();
   const page = useCustomizationPages().get(counts.type);
@@ -39,14 +39,14 @@ function ClassList({ rulesetId, classId, ruleset, counts, rules }: ClassListProp
   const { search, searchBarProps } = useSearchText();
   const one = entityTypeLabel(counts.type, rules.words);
   const many = entityTypeLabel(counts.type, rules.words, true);
-  const owner = entityTypeLabel(classKindOf(rules)?.type ?? "", rules.words).toLowerCase();
+  const owner = entityTypeLabel(classType, rules.words).toLowerCase();
   const kind = { pools: rules.kinds.find(({ type }) => type === counts.type)?.pools, type: counts.type };
 
   const {
     data: lists = [],
     isLoading: isLoadingLists,
     error: listsError,
-  } = useQuery(classListsQuery(rulesetId, classId, counts.lists));
+  } = useQuery(classListsQuery(rulesetId, classType, classId, counts.lists));
   // The class's own list opens first; one it counts on too (a pious templar's blackguard list) is picked
   const listId = lists.some((list) => list.id === chosenListId) ? chosenListId : lists[0]?.id;
 

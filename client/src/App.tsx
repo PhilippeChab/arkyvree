@@ -18,12 +18,11 @@ const CampaignDetailsPage = lazy(() => import("./pages/campaigns/details/Campaig
 const CampaignsPage = lazy(() => import("./pages/campaigns/CampaignsPage.tsx"));
 const CharacterDetailsPage = lazy(() => import("./pages/characters/details/CharacterDetailsPage.tsx"));
 const CharactersPage = lazy(() => import("./pages/characters/CharactersPage.tsx"));
-const ClassDetailsPage = lazy(() => import("./pages/rulesets/details/classes/ClassDetailsPage.tsx"));
 const CustomizationPage = lazy(() => import("./pages/rulesets/customization/CustomizationPage.tsx"));
 const DemoExpiredPage = lazy(() => import("./pages/demo-expired/DemoExpiredPage.tsx"));
-const EntityDetailsPage = lazy(() => import("./pages/rulesets/details/entities/EntityDetailsPage.tsx"));
 const ForgotPasswordPage = lazy(() => import("./pages/auth/ForgotPasswordPage.tsx"));
 const InvitePage = lazy(() => import("./pages/invites/InvitePage.tsx"));
+const KindEntityPage = lazy(() => import("./pages/rulesets/details/KindEntityPage.tsx"));
 const LegalPage = lazy(() => import("./pages/legal/LegalPage.tsx"));
 const NotificationsPage = lazy(() => import("./pages/notifications/NotificationsPage.tsx"));
 const ProfilePage = lazy(() => import("./pages/profile/ProfilePage.tsx"));
@@ -65,11 +64,9 @@ const router = createBrowserRouter(
           <Route path="rulesets/:id" element={<RulesetDetailsPage />} />
           <Route path="rulesets/:id/:section" element={<RulesetDetailsPage />} />
 
-          <Route path="rulesets/:id/classes/:classId" element={<ClassDetailsPage />} />
-          <Route path="rulesets/:id/classes/:classId/:section" element={<ClassDetailsPage />} />
-
-          {/* A page kind's entity's page, by its kind's URL segment: one without customizations (a language, a skill) */}
-          <Route path="rulesets/:id/:section/:entityId" element={<EntityDetailsPage />} />
+          {/* An entity's page, by its kind's URL segment, as its kind opens it: a class's and its tab, a language's */}
+          <Route path="rulesets/:id/:section/:entityId" element={<KindEntityPage />} />
+          <Route path="rulesets/:id/:section/:entityId/:tab" element={<KindEntityPage />} />
 
           {/* A customizable entity's page: its details and its customizations' tabs */}
           <Route path="rulesets/:id/:entityType/:entityId/customization" element={<CustomizationPage />} />

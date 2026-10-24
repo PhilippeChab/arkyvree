@@ -49,6 +49,13 @@ export const PROGRESSION: ProgressionDescription = {
   },
   grantsLabel: "Special",
   lastLevel: MAX_CLASS_LEVEL,
+  // Its Levels and Feat Pools tabs are its Progression's; Spells Known's, the Spells tab on its table
+  tabAliases: {
+    "feat-pools": "progression",
+    levels: "progression",
+    "spells-known": "spells?table=known",
+    "spells-per-day": "spells",
+  },
   tables: [
     {
       columns: SPELL_LEVELS.map((level) => ({

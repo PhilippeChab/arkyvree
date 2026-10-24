@@ -14,6 +14,8 @@ interface TablePasteBoxProps {
   /** The pasted cells that change the table as it shows, which the box counts */
   changesOf: (cells: PlacedCell[]) => PlacedCell[];
   levels: readonly { id: string; level: number }[];
+  /** Its rules' word for a level a row is ("class level") */
+  levelWord: string;
   onApply: (cells: PlacedCell[]) => void;
   onCancel: () => void;
   /** The table it's pasted into, as its rules describe it */
@@ -24,7 +26,7 @@ interface TablePasteBoxProps {
  * A table pasted from a book, a PDF or a spreadsheet, one row a class level: how many cells it changes, before
  * Fill Grid writes them onto the grid, unsaved (a row naming its level lands on it, the others from the class's first).
  */
-export function TablePasteBox({ changesOf, levels, onApply, onCancel, table }: TablePasteBoxProps) {
+export function TablePasteBox({ changesOf, levels, levelWord, onApply, onCancel, table }: TablePasteBoxProps) {
   const { control, watch } = useFormWith<PasteForm>({ table: "" });
   const text = watch("table");
   // Fill Grid writes every placed cell, as a paste into the grid does: what one writes can depend on another
@@ -41,7 +43,7 @@ export function TablePasteBox({ changesOf, levels, onApply, onCancel, table }: T
         rows={4}
         autoFocus
         placeholder={"1st  3  1\n2nd  4  2\n3rd  4  2  1"}
-        helperText='One row a class level. A leading level ("1st", "4:") is optional; an empty cell or a dash is none.'
+        helperText={`One row a ${levelWord}. A leading level ("1st", "4:") is optional; an empty cell or a dash is none.`}
       />
       <Stack direction="row" spacing={1} sx={{ alignItems: "center", justifyContent: "flex-end" }}>
         <Typography variant="body2" sx={{ color: "text.secondary", flex: 1 }}>

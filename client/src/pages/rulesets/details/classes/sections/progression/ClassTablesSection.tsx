@@ -24,7 +24,7 @@ import { emptyOptionsText } from "@/client/src/lib/errorMessage.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import type { ProgressionCounts, RulesDescription } from "@/client/src/lib/queries.ts";
 import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
-import { classKindOf, levelPageOf } from "@/client/src/pages/rulesets/details/classes/classKind.ts";
+import { levelPageOf } from "@/client/src/pages/rulesets/details/classes/classKind.ts";
 import {
   type ClassProgressionBody,
   classProgressionQuery,
@@ -68,12 +68,11 @@ function byId(row: LevelTotals): [string, LevelTotals["totals"]] {
  * class's table or emptied, or from a pasted table; one save writes them all. A class with no list counts none, which
  * its editor is told how to change.
  */
-function ClassTables({ rulesetId, classId, className, ruleset, counts, rules }: ClassTablesProps) {
+function ClassTables({ rulesetId, classId, className, classType, ruleset, counts, rules }: ClassTablesProps) {
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
   const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
   const { tables } = rules.progression;
-  const classType = classKindOf(rules)?.type ?? "";
   // Its rules' words for what its tables count ("Spell", "Spells")
   const [one, many] = [entityTypeLabel(counts.type, rules.words), entityTypeLabel(counts.type, rules.words, true)];
   // The table it shows is its address's (which its old Spells Known tab's opens on), else its first
@@ -86,22 +85,31 @@ function ClassTables({ rulesetId, classId, className, ruleset, counts, rules }: 
   const [pasting, setPasting] = useState(false);
   const [classSearch, setClassSearch] = useState("");
 
-  const reads = useQueries({ queries: tables.map((rules) => classTableQuery(rulesetId, classId, rules.table)) });
-  const { data: progression, error: progressionError } = useQuery(classProgressionQuery(rulesetId, classId));
+  const reads = useQueries({
+    queries: tables.map((rules) => classTableQuery(rulesetId, classType, classId, rules.table)),
+  });
+  const { data: progression, error: progressionError } = useQuery(classProgressionQuery(rulesetId, classType, classId));
   // The list its counts go to, and whether its levels count on several, at the keys its rules say
   const answer: Record<string, unknown> | undefined = progression;
   const list = answer?.[counts.list];
   const several = answer?.[counts.several] === true;
-  // An editor's, of a class with one list: its classes to start from are only read then
+  // An editor's, of a class with one list: the others of its kind to start from are only read then
   const editable = canEdit && !!list && !several;
-  const classes = useListboxQuery({
+  const others = useListboxQuery({
     ...entityOptionsQuery(rulesetId, classType, useDebouncedValue(classSearch), { limit: 20 }),
     enabled: editable,
   });
 
   // Its levels are its first table's rows
   const levels = (reads[0]?.data ?? []).toSorted(byLevel);
-  const save = useProgressionSave(rulesetId, classId, levelPageOf(rules)?.type ?? "", many);
+  // Its rules' word for the class ("Class")
+  const word = entityTypeLabel(classType, rules.words);
+  const save = useProgressionSave(rulesetId, classId, {
+    classType,
+    levelType: levelPageOf(rules)?.type ?? "",
+    what: many,
+    word,
+  });
   const saved = Object.fromEntries(
     tables.map((rules, index) => [rules.key, new Map(totalsOf(reads[index]?.data ?? [], rules).map(byId))]),
   );
@@ -135,7 +143,7 @@ function ClassTables({ rulesetId, classId, className, ruleset, counts, rules }: 
   /** Another class's table, the one the tab shows: none for no class. */
   const readTable = async (otherId: string | undefined): Promise<LevelTotals[]> => {
     if (!otherId || !shown) return [];
-    return totalsOf(await queryClient.fetchQuery(classTableQuery(rulesetId, otherId, shown.table)), shown);
+    return totalsOf(await queryClient.fetchQuery(classTableQuery(rulesetId, classType, otherId, shown.table)), shown);
   };
 
   /** Every cell of the table from another class's, by level number: none where it has none. */
@@ -144,7 +152,7 @@ function ClassTables({ rulesetId, classId, className, ruleset, counts, rules }: 
     try {
       other = await readTable(otherId);
     } catch (error) {
-      snackbar.error(error, "Failed to load the class's table");
+      snackbar.error(error, `Failed to load the ${word.toLowerCase()}'s table`);
       return;
     }
     const totalsAt = (level: number) => other.find((row) => row.level === level)?.totals;
@@ -182,7 +190,7 @@ function ClassTables({ rulesetId, classId, className, ruleset, counts, rules }: 
       <BlankState
         icon={UsesIcon}
         title="No levels"
-        description={`Add levels to the class to give it ${many.toLowerCase()}.`}
+        description={`Add levels to the ${word.toLowerCase()} to give it ${many.toLowerCase()}.`}
       />
     );
   }
@@ -236,17 +244,17 @@ function ClassTables({ rulesetId, classId, className, ruleset, counts, rules }: 
             <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: "wrap", alignItems: "center" }}>
               <Autocomplete
                 size="small"
-                options={classes.items.filter((klass) => klass.id !== classId)}
-                getOptionLabel={(klass) => klass.name}
+                options={others.items.filter((other) => other.id !== classId)}
+                getOptionLabel={(other) => other.name}
                 value={null}
-                onChange={(_, klass) => klass && void startFrom(klass.id)}
+                onChange={(_, other) => other && void startFrom(other.id)}
                 onInputChange={(_, input, reason) => {
                   if (reason === "input") setClassSearch(input);
                 }}
                 filterOptions={(options) => options}
-                loading={classes.isLoading}
-                noOptionsText={emptyOptionsText(entityTypeLabel(classType, rules.words, true), classes.error)}
-                slotProps={{ listbox: { component: ScrollSafeListbox, onScroll: classes.onScroll } }}
+                loading={others.isLoading}
+                noOptionsText={emptyOptionsText(entityTypeLabel(classType, rules.words, true), others.error)}
+                slotProps={{ listbox: { component: ScrollSafeListbox, onScroll: others.onScroll } }}
                 renderInput={(params) => (
                   <TextField {...params} label={`Start From a ${entityTypeLabel(classType, rules.words)}`} />
                 )}
@@ -275,6 +283,7 @@ function ClassTables({ rulesetId, classId, className, ruleset, counts, rules }: 
           <TablePasteBox
             table={shown}
             levels={levels}
+            levelWord={entityTypeLabel(levelPageOf(rules)?.type ?? "", rules.words).toLowerCase()}
             changesOf={(cells) => draft.changesOf(table, cells)}
             onCancel={() => setPasting(false)}
             onApply={(cells) => {

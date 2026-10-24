@@ -14,11 +14,11 @@ import {
   EntityPageError,
 } from "@/client/src/pages/rulesets/components/index.ts";
 import type { EntityField } from "@/client/src/pages/rulesets/details/rulesetQueries.ts";
-import { entityPageBack } from "@/client/src/pages/rulesets/entityPageState.ts";
 import {
   useCopyOnWrite,
   useEntityColumns,
   useEntityForm,
+  useEntityPageBack,
   useRestorableDelete,
 } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { getEntityTypeOfSegment } from "@/shared/urlSegments.ts";
@@ -143,7 +143,7 @@ export function RulesetEntityDetail<TEntity extends EntityBase, TForm extends Fi
   const editing = editingOf?.(columns);
   const { data: ruleset, isLoading: isRulesetLoading, error: rulesetError } = useQuery(rulesetDetailQuery(rulesetId));
   const { rules } = useRules(ruleset?.baseRules);
-  const back = entityPageBack(location.state, `/rulesets/${rulesetId}/${section}`, rules?.words);
+  const back = useEntityPageBack(location.state, `/rulesets/${rulesetId}/${section}`, rules?.words);
   const { data: entity, isLoading: isEntityLoading, error: entityError } = useQuery(query(entityId));
 
   usePageTitle(entity?.name);

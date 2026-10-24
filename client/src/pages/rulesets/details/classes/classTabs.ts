@@ -10,20 +10,13 @@ import {
 } from "./sections/index.ts";
 
 /**
- * The tabs a class page had before, by the address each one now opens: its Levels and Feat Pools tabs', Progression;
- * Spells Known's, the Spells tab on its table.
+ * The tab an address of a tab a class page had before opens (`section`), as its rules' progression says
+ * (`tabAliases`); none for another.
  */
-const CLASS_TAB_ALIASES: Record<string, string> = {
-  "feat-pools": "progression",
-  levels: "progression",
-  "spells-known": "spells?table=known",
-  "spells-per-day": "spells",
-};
-
-/** The tab an address of a tab a class page had before opens (`section`); none for another. */
-export function getClassTabAlias(section: string | undefined): string | undefined {
-  if (section === undefined) return undefined;
-  return Object.hasOwn(CLASS_TAB_ALIASES, section) ? CLASS_TAB_ALIASES[section] : undefined;
+export function getClassTabAlias(rules: RulesDescription | undefined, section: string | undefined): string | undefined {
+  const aliases = rules?.progression.tabAliases;
+  if (section === undefined || !aliases) return undefined;
+  return Object.hasOwn(aliases, section) ? aliases[section] : undefined;
 }
 
 /**

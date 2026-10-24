@@ -11,7 +11,7 @@ import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
 /** A field of an entity's form, as its ruleset declares it: its label, its input, and what that input needs. */
-export type EntityField = RulesetFields["feats"][number];
+export type EntityField = RulesetFields[keyof RulesetFields][number];
 
 /** The fields each entity type's form shows, and the ruleset's Settings' (`rulesets`), as the ruleset declares them. */
 export type RulesetFields = InferResponseType<(typeof rpc.api.rulesets)[":id"]["fields"]["$get"], 200>;

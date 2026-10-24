@@ -31,9 +31,10 @@ import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/inde
 import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
 import { levelPageOf } from "@/client/src/pages/rulesets/details/classes/classKind.ts";
 import {
-  classLevelsQuery,
+  classParam,
   classProgressionQuery,
   classTableQuery,
+  levelsQuery,
 } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 import type { ClassSectionProps } from "@/client/src/pages/rulesets/details/classes/classTab.ts";
 import { CreateLevelDialog } from "@/client/src/pages/rulesets/details/classes/components/index.ts";
@@ -89,7 +90,7 @@ function readPool(pool: unknown, viaKey: string | undefined): PoolRow[] {
  * changes waits for its save bar, which writes it all at once. Its levels are its rules' class kind's owned kind's,
  * their grants and amounts at their columns' keys.
  */
-export function ClassProgressionSection({ rulesetId, classId, className, ruleset }: ClassSectionProps) {
+export function ClassProgressionSection({ rulesetId, classId, className, classType, ruleset }: ClassSectionProps) {
   const openEntity = useOpenEntity(rulesetId);
   const queryClient = useQueryClient();
   const { rules } = useRules(ruleset.baseRules);
@@ -109,13 +110,15 @@ export function ClassProgressionSection({ rulesetId, classId, className, ruleset
   const grantsRules = progressionRules?.grants;
   const trackRules = progressionRules?.tracks ?? [];
   const fieldKeys = trackRules.filter((track) => track.source === "field").map((track) => track.key);
-  const { followCopy, queryKeysToInvalidate, tag } = useClassCopy(rulesetId, classId);
+  const { followCopy, queryKeysToInvalidate, tag } = useClassCopy(rulesetId, classType, classId);
 
-  const query = classLevelsQuery(rulesetId, classId);
+  const query = levelsQuery(rulesetId, classType, classId);
   const { data: levelRows, isLoading, isFetching, error } = useQuery(query);
-  const { data: progression, error: progressionError } = useQuery(classProgressionQuery(rulesetId, classId));
+  const { data: progression, error: progressionError } = useQuery(classProgressionQuery(rulesetId, classType, classId));
   // Its pools' totals, at the table its rules say; none read where its levels grant none past their columns
-  const { data: poolTotals, error: poolsError } = useQuery(classTableQuery(rulesetId, classId, grantsRules?.table));
+  const { data: poolTotals, error: poolsError } = useQuery(
+    classTableQuery(rulesetId, classType, classId, grantsRules?.table),
+  );
   const savedRows = (levelRows ?? []).toSorted(byLevel);
   const levels = savedRows.map((row) => readLevel(row, levelColumns));
   const savedFeatures = describeFeatureRows(levels);
@@ -151,7 +154,12 @@ export function ClassProgressionSection({ rulesetId, classId, className, ruleset
     return Object.keys(body).length > 0 || added;
   });
   const [customTracks, setCustomTracks] = useState<TrackKey[]>([]);
-  const save = useProgressionSave(rulesetId, classId, levelType, "Progression");
+  const save = useProgressionSave(rulesetId, classId, {
+    classType,
+    levelType,
+    what: "Progression",
+    word: entityTypeLabel(classType, rules?.words),
+  });
 
   // Its create opens on the class's next level, its fields the highest's
   const { fields: levelFields } = useEntityFields(rulesetId, levelType);
@@ -168,7 +176,7 @@ export function ClassProgressionSection({ rulesetId, classId, className, ruleset
       tag(
         parseResponse(
           rpc.api.rulesets[":id"].entities[":entityType"][":entityId"].owned.$post({
-            param: { id: rulesetId, entityType: "classes", entityId: classId },
+            ...classParam(rulesetId, classType, classId),
             json: level,
           }),
         ),

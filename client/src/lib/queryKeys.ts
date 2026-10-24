@@ -36,11 +36,12 @@ export const QUERY_KEYS = {
     /** One item's details, as a character's add dialog reads them; nested like `itemTemplates`. */
     item: (id: string, kind: string, itemId: string) => ["rulesets", "detail", id, kind, "item", itemId] as const,
     classDetail: (id: string, classId: string) => ["rulesets", "detail", id, "class", classId] as const,
-    classLevels: (id: string, classId: string) => ["rulesets", "detail", id, "class", classId, "levels"] as const,
     classLinks: (id: string, classId: string, segment: string) =>
       ["rulesets", "detail", id, "class", classId, segment] as const,
     classTable: (id: string, classId: string, table: string) =>
       ["rulesets", "detail", id, "class", classId, "table", table] as const,
+    /** A class's levels, the entities it owns, nested in the class its saves refresh. */
+    levels: (id: string, classId: string) => ["rulesets", "detail", id, "class", classId, "levels"] as const,
     classProgression: (id: string, classId: string) =>
       ["rulesets", "detail", id, "class", classId, "progression"] as const,
     sectionGrouped: (id: string, section: string) => ["rulesets", "detail", id, section, "grouped"] as const,

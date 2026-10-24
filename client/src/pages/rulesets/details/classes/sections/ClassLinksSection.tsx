@@ -32,12 +32,12 @@ interface ClassLinksProps extends ClassSectionProps {
  * The entities a class links to, as chips, which an editor removes, and a picker of its kind's others, in its rules'
  * words.
  */
-function ClassLinks({ rulesetId, classId, ruleset, restorable, links, rules }: ClassLinksProps) {
+function ClassLinks({ rulesetId, classId, classType, ruleset, restorable, links, rules }: ClassLinksProps) {
   const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
   const one = entityTypeLabel(links.type, rules.words);
   const manyWord = entityTypeLabel(links.type, rules.words, true);
   const many = manyWord.toLowerCase();
-  const ownerOne = entityTypeLabel(classKindOf(rules)?.type ?? "", rules.words);
+  const ownerOne = entityTypeLabel(classType, rules.words);
   const owner = ownerOne.toLowerCase();
   const words = { one, owner };
   const icon = kindIconOf(rules, links.type);
@@ -56,7 +56,7 @@ function ClassLinks({ rulesetId, classId, ruleset, restorable, links, rules }: C
     removeMutation,
     handleRemove,
     confirmRemove,
-  } = useClassLinks(rulesetId, classId, links, words);
+  } = useClassLinks(rulesetId, classType, classId, links, words);
 
   // The kind's entities the class doesn't link to yet
   const unlinked = options.filter((option) => !linked?.some((link) => link[links.key] === option.id));
