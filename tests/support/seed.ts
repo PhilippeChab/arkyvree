@@ -1,9 +1,12 @@
 import { getSeedContext, type SeedContext } from "@/database/seeders/dnd3.5/characters/seedContext.ts";
-import type { Item } from "@/engine/index.ts";
+import type { ViewEntities } from "@/engine/index.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { db } from "@/server/database/index.ts";
 import { Visibility } from "@/server/repositories/BaseRepository.ts";
 import { Characters, Entities, fetchEveryPage, Rulesets } from "@/server/repositories/index.ts";
+
+/** An item, as the view registers it. */
+type Item = ViewEntities["items"];
 
 let seedContext: Promise<SeedContext> | undefined;
 

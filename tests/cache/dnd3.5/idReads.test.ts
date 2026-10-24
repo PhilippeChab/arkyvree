@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 
-import type { Aptitude, Item, RulesetAbility, RulesetSave } from "@/engine/index.ts";
+import { type Aptitude, type Item, type RulesetAbility, type RulesetSave } from "@/engine/rulesets/dnd3.5/index.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";

@@ -5,7 +5,7 @@
 
 import { describe, expect, test } from "bun:test";
 
-import type { Feat, Klass, KlassLevel, RulesetAbility } from "@/engine/index.ts";
+import type { Feat, Klass, KlassLevel, RulesetAbility } from "@/engine/rulesets/dnd3.5/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Entities, EntitySnapshots, Modifiers, Properties, Requirements } from "@/server/repositories/index.ts";
 import { RulesetChangesService } from "@/server/services/rulesets/changes/index.ts";

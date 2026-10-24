@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import type { Item } from "@/engine/index.ts";
+import type { Item } from "@/engine/rulesets/dnd3.5/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Activities, Entities, EntitySnapshots, Properties } from "@/server/repositories/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";

@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import type { Power } from "@/engine/index.ts";
+import type { Power } from "@/engine/rulesets/dnd3.5/index.ts";
 import PowersPaths from "@/engine/rulesets/dnd3.5/model/powers/PowersPaths.ts";
 import { db } from "@/server/database/index.ts";
 import { Entities, Properties } from "@/server/repositories/index.ts";

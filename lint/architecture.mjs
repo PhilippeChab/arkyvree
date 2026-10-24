@@ -18,7 +18,9 @@
  *   (`content/<ruleset>/`): its builders (what it's written with) below its hand-written data and its generated books,
  *   which its packages gather.
  * - `engine-front-door`: code outside `engine/` enters it through `engine/index.ts`, `Engine` and its handles' types,
- *   as the client enters the server through its API; a test may reach any of its modules.
+ *   as the client enters the server through its API; a ruleset's seeders and codegen (a folder of its name in
+ *   `database/seeders/` or `codegen/`) take its rows' types from its module's entry too (`engine/rulesets/dnd3.5/index.ts`,
+ *   types alone); a test may reach any of its modules.
  * - `one-engine-op`: a service's or a job's action (a method, a function) asks the engine one operation, which answers
  *   it whole: what it plans, it describes, and what it checks, it refuses. A second one is a rule the server composes.
  *   An operation is a verb-named method reached through `Engine`'s handles (`Engine.for(scope).skills().planCreate`);
@@ -72,6 +74,7 @@ const ABOVE_REPOSITORIES = [
   "server/middlewares/",
   "server/routers/",
 ];
+
 /** The server's layers whose functions are actions: each asks the engine one operation (`one-engine-op`). */
 const ACTION_LAYERS = ["server/services/", "server/jobs/"];
 /** What a box that runs the others imports: anything. */
@@ -83,7 +86,6 @@ const CLIENT_COMPONENTS = "client/src/components/";
  * runner and the dev and test seeds reach a ruleset's content and seeder.
  */
 const CONTENT_REGISTRY = "database/packages/registry.ts";
-
 /** The engine's entry's own methods, which hand out its handles. */
 const ENGINE_ENTRIES = new Set(["copyOnWrite", "for", "forRules"]);
 
@@ -105,13 +107,13 @@ const GENERIC_ROWS = new Set([
   "rulesetFieldsInRules",
   "rulesetLinksInRules",
 ]);
+
 const indexCache = new Map();
 /**
  * The trees whose folders are entered through their `index.ts`: the server's, but its routers (a route folder's
  * `index.ts` is its routes, not its folder's entry), the engine's, and the client's components.
  */
 const INDEXED_TREES = ["server/", "engine/", CLIENT_COMPONENTS];
-
 /** Each layer inside a box, and what it must not import: the server's, the content's and the engine's. */
 const LAYERS = [
   { layer: "server/database/", deny: ["server/repositories/", ...ABOVE_REPOSITORIES] },
@@ -267,6 +269,9 @@ const ROOT_FOLDERS = {
   },
 };
 
+/** The trees whose ruleset folders take their ruleset's rows' types from its module's entry: its seeders, its codegen. */
+const RULESET_DOORS = ["database/seeders/", "codegen/"];
+
 /** The rulesets of each repo root, once read. */
 const SET_OPERATORS = new Set(["union", "unionAll", "intersect", "intersectAll", "except", "exceptAll"]);
 /** What every ruleset runs on, which names none of them: the core's folders, the registry's readers, the server and what it shares. */
@@ -331,13 +336,19 @@ function createEngineFrontDoor(context) {
   const file = repoPath(context.filename);
   // The engine's own modules import each other; a test may reach any of them
   if (file.startsWith("engine/") || file.startsWith("tests/")) return {};
+  // A ruleset's seeders and codegen take its rows' types from its module's entry
+  const ruleset = RULESET_DOORS.some((tree) => file.startsWith(tree))
+    ? rulesetOf(file, rulesetsOf(rootOf(context.filename)))
+    : undefined;
+  const entry = ruleset && `engine/rulesets/${ruleset}/index.ts`;
   const message =
     "Code outside engine/ enters it through engine/index.ts, `Engine` and its handles' types, as the client enters " +
-    "the server through its API.";
-  return onImports((node, spec) => {
+    `the server through its API${entry ? `; a ruleset's own seeders and codegen take its rows' types from ${entry}` : ""}.`;
+  return onImports((node, spec, typesOnly) => {
     const target = targetOf(file, spec);
     // `@/engine` resolves to its index too, which the rules that read the front door's imports name it by
     if (!(target === "engine" || target?.startsWith("engine/")) || target === "engine/index.ts") return;
+    if (typesOnly && target === entry) return;
     context.report({ node, message });
   });
 }

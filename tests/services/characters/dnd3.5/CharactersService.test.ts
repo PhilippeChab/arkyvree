@@ -4,7 +4,13 @@ import { and, eq } from "drizzle-orm";
 import { isValidElement } from "react";
 
 import { playerCharactersInCampaign } from "@/drizzle/schema.ts";
-import type { CharacterAbility, CharacterLanguage, LevelFeat, LevelSkill, Race } from "@/engine/index.ts";
+import type {
+  CharacterAbility,
+  CharacterLanguage,
+  LevelFeat,
+  LevelSkill,
+  Race,
+} from "@/engine/rulesets/dnd3.5/index.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";

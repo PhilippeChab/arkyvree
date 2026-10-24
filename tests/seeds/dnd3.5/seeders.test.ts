@@ -12,8 +12,8 @@ import { ALL_CLASSES as SRD_CLASSES } from "@/content/dnd3.5/generated/srd/class
 import type { Dnd35SeedContext as SeedContext } from "@/database/seeders/dnd3.5/Dnd35ContentSeeder.ts";
 import { findSpellcastingClass } from "@/database/seeders/dnd3.5/spellTable.ts";
 import { entitySnapshotsInRules, requirementsInCustomization } from "@/drizzle/schema.ts";
+import { Engine } from "@/engine/index.ts";
 import {
-  Engine,
   type Feat,
   type Item,
   type Klass,
@@ -22,7 +22,7 @@ import {
   type KlassSkill,
   type Power,
   type Race,
-} from "@/engine/index.ts";
+} from "@/engine/rulesets/dnd3.5/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Entities, Joins } from "@/server/repositories/index.ts";
 import {

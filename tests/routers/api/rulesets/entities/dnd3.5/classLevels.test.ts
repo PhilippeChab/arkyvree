@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { DND35_COMPLETE_DIVINE_NAME } from "@/content/dnd3.5/rulesetNames.ts";
-import type { Klass } from "@/engine/index.ts";
+import type { Klass } from "@/engine/rulesets/dnd3.5/index.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { db } from "@/server/database/index.ts";
 import { Entities } from "@/server/repositories/index.ts";

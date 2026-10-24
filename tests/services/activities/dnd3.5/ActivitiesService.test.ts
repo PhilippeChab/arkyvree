@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import type { KlassLevel, Mechanic } from "@/engine/index.ts";
+import { type KlassLevel, type Mechanic } from "@/engine/rulesets/dnd3.5/index.ts";
 import { db } from "@/server/database/index.ts";
 import {
   CharacterContributors,

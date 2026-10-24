@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import type { KlassLevelPower } from "@/engine/index.ts";
+import type { KlassLevelPower } from "@/engine/rulesets/dnd3.5/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Activities, Joins, Properties } from "@/server/repositories/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";

@@ -12,7 +12,7 @@ import type {
   Power,
   RulesetAbility,
   RulesetSave,
-} from "@/engine/index.ts";
+} from "@/engine/rulesets/dnd3.5/index.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, toJson } from "@/server/errors/index.ts";

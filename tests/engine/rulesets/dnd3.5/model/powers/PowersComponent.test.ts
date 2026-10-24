@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import type { Power } from "@/engine/index.ts";
+import type { Power } from "@/engine/rulesets/dnd3.5/index.ts";
 import AbilitiesComponent from "@/engine/rulesets/dnd3.5/model/abilities/AbilitiesComponent.ts";
 import PowerGroupingsComponent from "@/engine/rulesets/dnd3.5/model/powers/PowerGroupingsComponent.ts";
 import PowersComponent from "@/engine/rulesets/dnd3.5/model/powers/PowersComponent.ts";

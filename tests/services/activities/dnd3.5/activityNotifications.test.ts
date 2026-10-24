@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import type { Aptitude, Klass, RulesetAbility, Skill } from "@/engine/index.ts";
+import type { Aptitude, Klass, RulesetAbility, Skill } from "@/engine/rulesets/dnd3.5/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Activities, Characters, Entities, Notifications, Players, Rulesets } from "@/server/repositories/index.ts";
 import { CampaignInvitesService } from "@/server/services/campaigns/invites/index.ts";

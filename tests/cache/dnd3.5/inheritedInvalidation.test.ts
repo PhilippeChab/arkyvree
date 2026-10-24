@@ -1,6 +1,6 @@
 import { afterEach, expect, test } from "bun:test";
 
-import type { Feat } from "@/engine/index.ts";
+import type { Feat } from "@/engine/rulesets/dnd3.5/index.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import MemoryCache from "@/server/cache/MemoryCache.ts";
 import { RulesetViews } from "@/server/cow/index.ts";

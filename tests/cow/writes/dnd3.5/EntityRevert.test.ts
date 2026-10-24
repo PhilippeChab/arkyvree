@@ -14,7 +14,7 @@ import type {
   LevelSkill,
   Power,
   Race,
-} from "@/engine/index.ts";
+} from "@/engine/rulesets/dnd3.5/index.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";

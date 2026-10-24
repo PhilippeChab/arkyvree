@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import type { Feat, Klass, KlassLevelPower, Power } from "@/engine/index.ts";
+import type { Feat, Klass, KlassLevelPower, Power } from "@/engine/rulesets/dnd3.5/index.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
 import { Entities, Joins } from "@/server/repositories/index.ts";

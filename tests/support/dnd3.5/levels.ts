@@ -1,4 +1,4 @@
-import type { Klass, KlassLevel } from "@/engine/index.ts";
+import type { Klass, KlassLevel } from "@/engine/rulesets/dnd3.5/index.ts";
 import { db } from "@/server/database/index.ts";
 import { CharacterAdvancements, Entities, Picks } from "@/server/repositories/index.ts";
 import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";

@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import { type SeedContext } from "@/database/seeders/dnd3.5/characters/seedContext.ts";
 import type { LevelPlanAnswer } from "@/engine/core/module/index.ts";
-import type { LevelAbilityIncrease, LevelFeat, LevelPower, LevelSkill } from "@/engine/index.ts";
+import type { LevelAbilityIncrease, LevelFeat, LevelPower, LevelSkill } from "@/engine/rulesets/dnd3.5/index.ts";
 import type { AbilityIncrease } from "@/engine/rulesets/dnd3.5/levelUp/plans.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { RulesetViews } from "@/server/cow/index.ts";

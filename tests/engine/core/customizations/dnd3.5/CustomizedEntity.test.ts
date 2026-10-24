@@ -1,7 +1,14 @@
 import { describe, expect, test } from "bun:test";
 
 import CustomizedEntity from "@/engine/core/customizations/CustomizedEntity.ts";
-import type { Feat, Item, Klass, KlassLevel, Power, Race } from "@/engine/index.ts";
+import {
+  type Feat,
+  type Item,
+  type Klass,
+  type KlassLevel,
+  type Power,
+  type Race,
+} from "@/engine/rulesets/dnd3.5/index.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Entities, Modifiers } from "@/server/repositories/index.ts";

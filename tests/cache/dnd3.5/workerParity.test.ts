@@ -1,7 +1,7 @@
 import { afterEach, expect, test } from "bun:test";
 
-import type { Feat } from "@/engine/index.ts";
 import CharacterResponse from "@/engine/rulesets/dnd3.5/characters/description/CharacterResponse.ts";
+import type { Feat } from "@/engine/rulesets/dnd3.5/index.ts";
 import DetailedCharacterFamiliar from "@/engine/rulesets/dnd3.5/model/bonded/DetailedCharacterFamiliar.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import MemoryCache from "@/server/cache/MemoryCache.ts";

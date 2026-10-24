@@ -11,7 +11,7 @@ function lint(files: Record<string, string>, from = ".") {
 setDefaultTimeout(30_000);
 
 describe("architecture rules", () => {
-  test("code outside engine/ enters it through engine/index.ts; the engine and a test reach any of its modules", async () => {
+  test("code outside engine/ enters it through engine/index.ts, a ruleset's own its module's entry too; the engine and a test reach any of its modules", async () => {
     expect(
       await lintRepo(
         {
@@ -24,13 +24,27 @@ describe("architecture rules", () => {
           "tests/f.test.ts": 'import { x } from "@/engine/core/view/index.ts";\nexport const f = x;\n',
           // The folder, which resolves to its index: by its name only
           "server/g.ts": 'import { x } from "@/engine";\nexport const g = x;\n',
+          // A ruleset's own code enters its module by the module's entry, and no deeper
+          "engine/rulesets/dnd3.5/index.ts": "export type T = 1;\n",
+          "database/seeders/dnd3.5/h.ts":
+            'import type { T } from "@/engine/rulesets/dnd3.5/index.ts";\nexport type H = T;\n',
+          "database/seeders/dnd3.5/i.ts":
+            'import X from "@/engine/rulesets/dnd3.5/model/skills/SkillsPaths.ts";\nexport const i = X;\n',
+          // Its types alone, from its seeders and codegen alone
+          "database/seeders/dnd3.5/j.ts":
+            'import { M } from "@/engine/rulesets/dnd3.5/index.ts";\nexport const j = M;\n',
+          "codegen/dnd3.5/k.ts": 'import type { T } from "@/engine/rulesets/dnd3.5/index.ts";\nexport type K = T;\n',
+          "server/dnd3.5/l.ts": 'import type { T } from "@/engine/rulesets/dnd3.5/index.ts";\nexport type L = T;\n',
         },
         ["engine-front-door"],
       ),
     ).toEqual([
       "engine-front-door codegen/d.ts",
       "engine-front-door database/c.ts",
+      "engine-front-door database/seeders/dnd3.5/i.ts",
+      "engine-front-door database/seeders/dnd3.5/j.ts",
       "engine-front-door server/b.ts",
+      "engine-front-door server/dnd3.5/l.ts",
       "engine-front-door server/g.ts",
     ]);
   });

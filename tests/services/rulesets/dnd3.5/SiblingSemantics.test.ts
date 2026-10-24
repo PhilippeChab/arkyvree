@@ -1,8 +1,8 @@
 import { expect, test } from "bun:test";
 
 import RequirementEvaluator from "@/engine/core/requirements/RequirementEvaluator.ts";
-import type { Aptitude, Feat, Power, RulesetAbility } from "@/engine/index.ts";
 import Dnd35TargetPaths from "@/engine/rulesets/dnd3.5/Dnd35TargetPaths.ts";
+import type { Aptitude, Feat, Power, RulesetAbility } from "@/engine/rulesets/dnd3.5/index.ts";
 import AbilitiesComponent from "@/engine/rulesets/dnd3.5/model/abilities/AbilitiesComponent.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";

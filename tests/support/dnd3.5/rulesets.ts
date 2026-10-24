@@ -1,4 +1,4 @@
-import type { Aptitude } from "@/engine/index.ts";
+import type { Aptitude } from "@/engine/rulesets/dnd3.5/index.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { db } from "@/server/database/index.ts";
 import { Entities } from "@/server/repositories/index.ts";

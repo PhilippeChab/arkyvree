@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import type { Aptitude, Klass, RulesetSave } from "@/engine/index.ts";
+import type { Aptitude, Klass, RulesetSave } from "@/engine/rulesets/dnd3.5/index.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";

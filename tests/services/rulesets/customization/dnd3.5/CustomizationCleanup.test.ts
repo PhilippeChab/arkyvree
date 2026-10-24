@@ -16,18 +16,18 @@ import {
   requirementsInCustomization,
   rulesetsInRules,
 } from "@/drizzle/schema.ts";
-import type {
-  Aptitude,
-  Feat,
-  Item,
-  Klass,
-  Language,
-  Power,
-  Race,
-  RulesetAbility,
-  RulesetSave,
-  Skill,
-} from "@/engine/index.ts";
+import {
+  type Aptitude,
+  type Feat,
+  type Item,
+  type Klass,
+  type Language,
+  type Power,
+  type Race,
+  type RulesetAbility,
+  type RulesetSave,
+  type Skill,
+} from "@/engine/rulesets/dnd3.5/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Entities, Modifiers, Properties, Users } from "@/server/repositories/index.ts";
 import { AuthenticationService } from "@/server/services/authentication/index.ts";

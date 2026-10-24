@@ -4,19 +4,19 @@ import type { InferInsertModel } from "drizzle-orm";
 
 import { DND35_COMPLETE_WARRIOR_NAME } from "@/content/dnd3.5/rulesetNames.ts";
 import { type rulesetsInRules, starredRulesetsInAccount } from "@/drizzle/schema.ts";
-import type {
-  Aptitude,
-  Feat,
-  FeatWithAptitudes,
-  Item,
-  Klass,
-  KlassLevel,
-  KlassSkill,
-  LevelFeat,
-  Race,
-  RulesetAbility,
-  Skill,
-} from "@/engine/index.ts";
+import {
+  type Aptitude,
+  type Feat,
+  type FeatWithAptitudes,
+  type Item,
+  type Klass,
+  type KlassLevel,
+  type KlassSkill,
+  type LevelFeat,
+  type Race,
+  type RulesetAbility,
+  type Skill,
+} from "@/engine/rulesets/dnd3.5/index.ts";
 import { db } from "@/server/database/index.ts";
 import {
   BadRequestError,

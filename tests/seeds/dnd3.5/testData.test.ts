@@ -12,7 +12,7 @@ import type {
   LevelFeat,
   LevelPower,
   LevelSkill,
-} from "@/engine/index.ts";
+} from "@/engine/rulesets/dnd3.5/index.ts";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import seedCharacters from "@/scripts/db/seeds/characters.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";

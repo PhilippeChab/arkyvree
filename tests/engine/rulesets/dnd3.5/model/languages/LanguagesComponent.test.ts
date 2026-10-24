@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import type { Feat } from "@/engine/index.ts";
+import type { Feat } from "@/engine/rulesets/dnd3.5/index.ts";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { RulesetViews } from "@/server/cow/index.ts";

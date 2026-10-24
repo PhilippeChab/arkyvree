@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 
-import type { Aptitude, Feat } from "@/engine/index.ts";
+import type { Aptitude, Feat } from "@/engine/rulesets/dnd3.5/index.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
