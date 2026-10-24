@@ -8,14 +8,18 @@ const NO_ROWS: CowRows = { identities: [], namesakes: [], owned: [], ownNamesake
 /** A fork of a base, of a made-up module's kinds. */
 const RULESET = { ancestorRulesetIds: ["base"], extensionRulesetIds: [], id: "fork" };
 
+/** An entity of a kind a name is the identity of, named "General", of a ruleset. */
+function named(entityType: string, id: string, rulesetId: string) {
+  return { entityType, id, name: "General", rulesetId };
+}
+
+/** An owned entity of a kind, at its position in its owner. */
+function owned(entityType: string, id: string, ownerId: string, position: number) {
+  return { entityType, id, ownerId, position };
+}
+
 describe("A ruleset's copy-on-write data, built by its module's kinds", () => {
   test("pairs an owner's owned entities by kind and position with those of the owner standing for it", () => {
-    const owned = (entityType: string, id: string, ownerId: string, position: number) => ({
-      entityType,
-      id,
-      ownerId,
-      position,
-    });
     const cow = CowDataBuilder.build(RULESET, {
       ...NO_ROWS,
       owned: [
@@ -32,12 +36,11 @@ describe("A ruleset's copy-on-write data, built by its module's kinds", () => {
   });
 
   test("pairs the namesakes of a kind a name is the identity of, never two kinds' of one name", () => {
-    const row = (entityType: string, id: string, rulesetId: string) => ({ entityType, id, name: "General", rulesetId });
     const cow = CowDataBuilder.build(
       { ...RULESET, extensionRulesetIds: ["book"] },
       {
         ...NO_ROWS,
-        identities: [row("pools", "p1", "fork"), row("pools", "p2", "book"), row("lists", "x1", "book")],
+        identities: [named("pools", "p1", "fork"), named("pools", "p2", "book"), named("lists", "x1", "book")],
       },
     );
 

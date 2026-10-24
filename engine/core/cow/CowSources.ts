@@ -1,11 +1,12 @@
 /**
  * How a module's kinds pair in a ruleset's chain, by its storage: those a name is the identity of (`identities`: 3.5's
- * pools), those a book reprints, which pair by name when no copy pairs them (`reprints`: 3.5's feats and spells), and
- * those that own another kind (`owners`: 3.5's classes, whose levels pair by position with those of the class that
- * stands for theirs).
+ * pools), those a book reprints, which pair by name when no copy pairs them (`reprints`: 3.5's feats and spells), those
+ * that own another kind (`owners`: 3.5's classes), and the kinds they own (`owned`: 3.5's class levels, which pair by
+ * position with those of the class that stands for theirs).
  */
 export interface CowKinds {
   identities: string[];
+  owned: string[];
   owners: string[];
   reprints: string[];
 }
@@ -13,9 +14,9 @@ export interface CowKinds {
 /**
  * The rows a ruleset's `CowData` is built from (`CowDataBuilder.build`), as stored, which the server reads as
  * `CowSources.getReads` says: its snapshots, and its source chain's, the owned entities of the owners it copied or its
- * own entities hide (`owned`: each its kind, its owner and its position in it), the chain's native namesakes of the kinds a book
- * reprints, the ruleset's entities and its extensions' of a name both have, and the entities of the kinds a name is the
- * identity of, its own and the chain's (`identities`).
+ * own entities hide (`owned`: each its kind, its owner and its position in it), the chain's native namesakes of the
+ * kinds a book reprints, the ruleset's entities and its extensions' of a name both have, and the entities of the kinds
+ * a name is the identity of, its own and the chain's (`identities`).
  */
 export interface CowRows {
   identities: { entityType: string; id: string; name: string; rulesetId: string }[];
@@ -73,6 +74,7 @@ export default class CowSources {
     const hasExtensions = ruleset.extensionRulesetIds.length > 0;
     return {
       identities: { entityTypes: kinds.identities, rulesetIds: hasExtensions ? [ruleset.id, ...chain] : [] },
+      owned: { entityTypes: kinds.owned },
       namesakes: {
         entityTypes: hasExtensions && chain.length > 1 ? kinds.reprints : [],
         rulesetIds: chain,

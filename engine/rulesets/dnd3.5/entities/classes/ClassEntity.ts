@@ -60,9 +60,12 @@ export default class ClassEntity extends RulesetEntity<
     return { description, hd: hd ?? klass?.hd ?? DEFAULT_HIT_DIE, name };
   }
 
-  /** The fields a class level's form shows, as the ruleset declares them: its base attack bonus, its skill points. */
-  override describeOwnedFields(_type: string) {
-    return CLASS_LEVEL_FIELDS.describe();
+  /**
+   * The fields a class level's form shows (`type`, the kind it owns: its levels), as the ruleset declares them: its base
+   * attack bonus, its skill points.
+   */
+  override describeOwnedFields(type: string) {
+    return type === this.ownedType ? CLASS_LEVEL_FIELDS.describe() : [];
   }
 
   /**

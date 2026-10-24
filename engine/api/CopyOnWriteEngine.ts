@@ -59,6 +59,7 @@ export default class CopyOnWriteEngine {
     const storage = StorageEngine.shared();
     return {
       identities: storage.namesakeKinds("identity"),
+      owned: storage.ownedTypes(),
       owners: storage.ownerKinds(),
       reprints: storage.namesakeKinds("reprints"),
     };
