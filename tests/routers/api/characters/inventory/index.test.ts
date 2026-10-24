@@ -24,7 +24,8 @@ async function setup() {
     api.api.characters.$post({
       json: {
         rulesetId,
-        raceId: ctx.raceMap.pc["Human"],
+        picks: { raceId: ctx.raceMap.pc["Human"] },
+        scores: { abilities },
         name: "Inventory Character",
         fields: {
           xp: 0,
@@ -34,7 +35,6 @@ async function setup() {
           height: "180",
           weight: "80",
         },
-        abilities,
       },
     }),
   );

@@ -3,9 +3,11 @@ import { describe, expect, test } from "bun:test";
 import {
   type CharacterForm,
   creationFieldsOf,
+  creationPicksOf,
   emptyNewCharacter,
-  racePickKeysOf,
-  racePicksOf,
+  narrowingKeysOf,
+  narrowingOf,
+  scoredLinksOf,
   sentCreationFieldsOf,
 } from "@/client/src/pages/characters/components/newCharacter.ts";
 
@@ -20,11 +22,14 @@ const FORM: CharacterForm = {
           { kind: "name", label: "Character Name" },
           { key: "xp", kind: "number", label: "Experience Points", min: 0, required: "Required", start: 0 },
         ],
-        [{ kind: "ruleset" }, { kind: "race", label: "Race", required: "Race is required", ineligible: "Not open" }],
-        [{ key: "alignment", kind: "select", label: "Alignment", options: ["Lawful Good"], racePick: true }],
+        [
+          { kind: "ruleset" },
+          { column: "raceId", kind: "pick", label: "Race", required: "Race is required", ineligible: "Not open" },
+        ],
+        [{ key: "alignment", kind: "select", label: "Alignment", narrows: true, options: ["Lawful Good"] }],
       ],
     },
-    { kind: "abilities", title: "Ability Scores", none: "None", pick: "Pick" },
+    { kind: "scores", link: "abilities", title: "Ability Scores", none: "None", pick: "Pick" },
     {
       kind: "fields",
       title: "Details",
@@ -48,9 +53,9 @@ describe("A new character's form", () => {
     expect(empty.age).toBeNaN();
     expect(empty).toMatchObject({
       rulesetId: "",
-      raceId: "",
       name: "",
-      abilities: {},
+      picks: { raceId: "" },
+      scores: { abilities: {} },
       notes: "",
       xp: 0,
       alignment: "",
@@ -59,11 +64,16 @@ describe("A new character's form", () => {
     });
   });
 
-  test('narrows the race picker by the fields that do, "" while unpicked', () => {
-    expect(racePickKeysOf(FORM)).toEqual(["alignment"]);
-    expect(racePicksOf(["alignment"], [""])).toEqual({ alignment: "" });
-    expect(racePicksOf(["alignment"], [undefined])).toEqual({ alignment: "" });
-    expect(racePicksOf(["alignment"], ["Lawful Good"])).toEqual({ alignment: "Lawful Good" });
+  test('narrows its creation picks\' options by the fields that do, "" while unset', () => {
+    expect(narrowingKeysOf(FORM)).toEqual(["alignment"]);
+    expect(narrowingOf(["alignment"], [""])).toEqual({ alignment: "" });
+    expect(narrowingOf(["alignment"], [undefined])).toEqual({ alignment: "" });
+    expect(narrowingOf(["alignment"], ["Lawful Good"])).toEqual({ alignment: "Lawful Good" });
+  });
+
+  test("lists its creation picks and its scored links in its order", () => {
+    expect(creationPicksOf(FORM).map(({ column }) => column)).toEqual(["raceId"]);
+    expect(scoredLinksOf(FORM)).toEqual(["abilities"]);
   });
 
   test("sends its fields by their keys, an empty number or an unset select as none", () => {

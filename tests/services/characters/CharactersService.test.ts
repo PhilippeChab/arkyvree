@@ -241,7 +241,7 @@ describe("CharactersService", () => {
       const copy = (await copyEntity(db, "abilities", ctx.abilityMap["Strength"], fork)).id as string;
       RulesetViews.invalidate(fork.id);
 
-      await CharactersService.updateAbilities(session, character.id, { [copy]: 17 });
+      await CharactersService.updateScores(session, character.id, "abilities", { [copy]: 17 });
       const scores = await CharacterLinks.findMany<CharacterAbility>(db, {
         link: "abilities",
         characterId: character.id,
@@ -257,7 +257,7 @@ describe("CharactersService", () => {
       const strength = await copyEntity(db, "abilities", ctx.abilityMap["Strength"], fork);
       RulesetViews.invalidate(fork.id);
 
-      await CharactersService.updateAbilities(session, character.id, { [ctx.abilityMap["Strength"]]: 15 });
+      await CharactersService.updateScores(session, character.id, "abilities", { [ctx.abilityMap["Strength"]]: 15 });
       const scores = await CharacterLinks.findMany<CharacterAbility>(db, {
         link: "abilities",
         characterId: character.id,
@@ -265,11 +265,13 @@ describe("CharactersService", () => {
       expect(scores.find(({ abilityId }) => abilityId === ctx.abilityMap["Strength"])?.score).toBe(15);
 
       const twice = { [ctx.abilityMap["Strength"]]: 15, [strength.id]: 16 };
-      expect(CharactersService.updateAbilities(session, character.id, twice)).rejects.toMatchObject({
+      expect(CharactersService.updateScores(session, character.id, "abilities", twice)).rejects.toMatchObject({
         message: `Ability ${strength.id} is given more than once`,
         refusal: "invalid",
       });
-      expect(CharactersService.updateAbilities(session, character.id, { [NIL_UUID]: 15 })).rejects.toMatchObject({
+      expect(
+        CharactersService.updateScores(session, character.id, "abilities", { [NIL_UUID]: 15 }),
+      ).rejects.toMatchObject({
         message: `Ability ${NIL_UUID} does not belong to the character's ruleset`,
         refusal: "invalid",
       });
@@ -289,20 +291,20 @@ describe("CharactersService", () => {
           ({ languageId }) => languageId,
         );
 
-      await CharactersService.updateLanguages(session, character.id, [ctx.langMap["Draconic"]]);
+      await CharactersService.updateLinkPicks(session, character.id, "languages", [ctx.langMap["Draconic"]]);
       expect(await spoken()).toEqual([draconic.id]);
       // Common is the human's own: what it speaks without a pick isn't stored
       const languageIds = [ctx.langMap["Common"], ctx.langMap["Draconic"], ctx.langMap["Elven"]];
-      await CharactersService.updateCharacter(session, character.id, { languageIds });
+      await CharactersService.updateCharacter(session, character.id, { links: { languages: languageIds } });
       expect((await spoken()).toSorted()).toEqual([draconic.id, ctx.langMap["Elven"]].toSorted());
 
       // Its source's id and its copy's name one language
       const both = [ctx.langMap["Draconic"], draconic.id];
-      expect(CharactersService.updateLanguages(session, character.id, both)).rejects.toMatchObject({
+      expect(CharactersService.updateLinkPicks(session, character.id, "languages", both)).rejects.toMatchObject({
         message: `Language ${draconic.id} is given more than once`,
         refusal: "invalid",
       });
-      expect(CharactersService.updateLanguages(session, character.id, [NIL_UUID])).rejects.toMatchObject({
+      expect(CharactersService.updateLinkPicks(session, character.id, "languages", [NIL_UUID])).rejects.toMatchObject({
         message: `Language ${NIL_UUID} does not belong to the character's ruleset`,
         refusal: "invalid",
       });
@@ -577,7 +579,7 @@ describe("CharactersService", () => {
   describe("races a new character can take", () => {
     test("are all eligible on the seeded ruleset", async () => {
       const { rulesetId } = await getSeedCtx();
-      const { items, page: pageNumber } = await CharactersService.getAvailableRaces(rulesetId, {}, {}, page);
+      const { items, page: pageNumber } = await CharactersService.getCreationOptions(rulesetId, "raceId", {}, {}, page);
       expect(pageNumber).toBe(1);
       expect(items.map((r) => r.name)).toEqual(expect.arrayContaining(["Human", "Elf", "Dwarf"]));
       expect(items.filter((r) => !r.eligible)).toEqual([]);
@@ -605,8 +607,9 @@ describe("CharactersService", () => {
       });
       invalidateSeededRuleset(rulesetId);
       const eligible = async (form: Record<string, string>) =>
-        (await CharactersService.getAvailableRaces(rulesetId, form, {}, page)).items.find((r) => r.id === race.id)!
-          .eligible;
+        (await CharactersService.getCreationOptions(rulesetId, "raceId", form, {}, page)).items.find(
+          (r) => r.id === race.id,
+        )!.eligible;
 
       expect(await eligible({ [field]: allowed })).toBe(true);
       expect(await eligible({ [field]: other })).toBe(false);
@@ -630,8 +633,9 @@ describe("CharactersService", () => {
       ]);
       invalidateSeededRuleset(rulesetId);
       const eligible = async (form: Record<string, string>) =>
-        (await CharactersService.getAvailableRaces(rulesetId, form, {}, page)).items.find((r) => r.id === race.id)!
-          .eligible;
+        (await CharactersService.getCreationOptions(rulesetId, "raceId", form, {}, page)).items.find(
+          (r) => r.id === race.id,
+        )!.eligible;
 
       expect(await eligible({})).toBe(true);
       // The alignment it doesn't say may meet the group, whatever the gender

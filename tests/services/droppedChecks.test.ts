@@ -286,10 +286,10 @@ describe("a character's identity", () => {
     const { abilityMap, raceMap, rulesetId } = await getSeedCtx();
     const create = (fields: FieldsRequest, raceId = raceMap.pc["Human"]) =>
       CharactersService.createCharacter(session, {
-        abilities: {},
         fields: { xp: 0, ...fields },
         name: "Nameless",
-        raceId,
+        picks: { raceId },
+        scores: {},
         rulesetId,
       });
     expect(create({ gender: "Male" })).rejects.toMatchObject(invalidAt("fields.alignment"));
@@ -299,12 +299,12 @@ describe("a character's identity", () => {
     expect(create({ alignment: "Lawful Good", gender: "Male" }, NIL_UUID)).rejects.toThrow(
       `Race ${NIL_UUID} does not belong to the character's ruleset`,
     );
-    // Its route requires a race
+    // Its creation requires its race: a request that picks none is refused
     const abilities = Object.fromEntries(Object.values(abilityMap).map((id) => [id, 10]));
     const fields = { xp: 0, alignment: "Lawful Good", gender: "Male" };
-    const json = { abilities, fields, name: "Nameless", rulesetId };
-    const refused = await expectStatus(api.api.characters.$post({ json: json as never }), 400);
-    expect(await refused.text()).toContain('"raceId"');
+    const json = { fields, name: "Nameless", picks: {}, rulesetId, scores: { abilities } };
+    const refused = await expectStatus(api.api.characters.$post({ json }), 400);
+    expect(await refused.text()).toContain("A new character's Race is required");
   });
 
   test("refuses an edit's negative experience, an age under 1, an alignment or a gender not among their options", async () => {
@@ -337,11 +337,11 @@ describe("a character's identity", () => {
     }
     const { id } = await createCharacterAs(session, { abilities: { [strength]: 1 } });
     for (const score of [0, 101]) {
-      expect(CharactersService.updateAbilities(session, id, { [strength]: score })).rejects.toMatchObject(
+      expect(CharactersService.updateScores(session, id, "abilities", { [strength]: score })).rejects.toMatchObject(
         invalidAt(strength),
       );
     }
-    await CharactersService.updateAbilities(session, id, { [strength]: 100 });
+    await CharactersService.updateScores(session, id, "abilities", { [strength]: 100 });
     expect(await CharacterLinks.findMany<CharacterAbility>(db, { link: "abilities", characterId: id })).toContainEqual(
       expect.objectContaining({ abilityId: strength, score: 100 }),
     );

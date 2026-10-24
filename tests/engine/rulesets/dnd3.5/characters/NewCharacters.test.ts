@@ -10,8 +10,8 @@ const DATA = {
 
 describe("A new 3.5 character's creation", () => {
   test("lists the ruleset's abilities in the order a sheet lists them: the books' first, then the others by name", () => {
-    const { abilities } = NewCharacters.describeCreation(DATA);
-    expect(abilities).toEqual(
+    const { entities } = NewCharacters.describeCreation(DATA);
+    expect(entities).toEqual(
       ["Strength", "Wisdom", "Force Points", "Sanity"].map((name) => ({ id: `${name} id`, name })),
     );
   });

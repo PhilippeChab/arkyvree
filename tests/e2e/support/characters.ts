@@ -43,7 +43,7 @@ export async function createCharacter(page: Page, name: string, scores: Record<s
   const api = apiOf(page);
   const rulesetId = await coreRulesetId(page);
   const races = await parseResponse(
-    api.api.characters["available-races"].$get({ query: { rulesetId, search: "Human" } }),
+    api.api.characters.creation[":column"].$get({ param: { column: "raceId" }, query: { rulesetId, search: "Human" } }),
   );
   const human = races.items.find((race) => race.name === "Human");
   if (!human) throw new Error("The core rules have no Human");
@@ -57,14 +57,16 @@ export async function createCharacter(page: Page, name: string, scores: Record<s
     api.api.characters.$post({
       json: {
         rulesetId,
-        raceId: human.id,
+        picks: { raceId: human.id },
         name,
         fields: {
           xp: 0,
           alignment: "True Neutral",
           gender: "Other",
         },
-        abilities: Object.fromEntries(abilities.items.map((ability) => [ability.id, scores[ability.name] ?? 10])),
+        scores: {
+          abilities: Object.fromEntries(abilities.items.map((ability) => [ability.id, scores[ability.name] ?? 10])),
+        },
       },
     }),
   );

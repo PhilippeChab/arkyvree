@@ -22,7 +22,7 @@ const BLOCK: BlockOf<"fields"> = {
     ],
   ],
   fields: [{ key: "description", kind: "textarea", label: "Description", placeholder: "", value: "Tall" }],
-  languages: { label: "Languages", none: "None", picked: [{ id: "common", name: "Common" }] },
+  links: [{ label: "Languages", link: "languages", none: "None", picked: [{ id: "common", name: "Common" }] }],
   notes: { notes: "Public" },
 };
 
@@ -36,7 +36,7 @@ describe("A fields block's form", () => {
       description: "Tall",
       notes: "Public",
       privateNotes: "",
-      languageIds: ["common"],
+      links: { languages: ["common"] },
     });
     expect(toFieldsForm(BLOCK, false)).toMatchObject({ race: "", experience: 0, age: Number.NaN, gender: "" });
   });
@@ -47,10 +47,10 @@ describe("A fields block's form", () => {
       fields: { experience: 1200, age: null, gender: null, description: "Tall" },
       notes: "Public",
       privateNotes: undefined,
-      languageIds: ["common"],
+      links: { languages: ["common"] },
     });
-    const noted = { ...BLOCK, notes: { notes: "Public", privateNotes: "" }, languages: undefined };
-    expect(sentFieldsOf(noted, form)).toMatchObject({ privateNotes: "Leaked?", languageIds: undefined });
+    const noted = { ...BLOCK, notes: { notes: "Public", privateNotes: "" }, links: undefined };
+    expect(sentFieldsOf(noted, form)).toMatchObject({ privateNotes: "Leaked?", links: undefined });
     // A block without notes leaves them, and its private ones, as they are
     expect(sentFieldsOf({ ...BLOCK, notes: undefined }, form)).toMatchObject({
       notes: undefined,

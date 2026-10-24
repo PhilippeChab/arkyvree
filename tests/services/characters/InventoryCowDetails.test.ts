@@ -23,7 +23,8 @@ async function setup() {
 
   const character = await CharactersService.createCharacter(session, {
     rulesetId: ruleset.id,
-    raceId: seed.raceMap.pc["Human"],
+    picks: { raceId: seed.raceMap.pc["Human"] },
+    scores: {},
     name: "Inventory override regression",
     fields: {
       xp: 0,
@@ -33,7 +34,6 @@ async function setup() {
       height: "180 cm",
       weight: "80 kg",
     },
-    abilities: {},
   });
   await CharacterInventoryService.addItem(session, character.id, item.id, 2, true, "Main Hand", null, null, [0]);
   return { session, ruleset, item, character };

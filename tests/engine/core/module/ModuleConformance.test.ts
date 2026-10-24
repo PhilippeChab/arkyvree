@@ -174,7 +174,7 @@ describe.each([...BASE_RULES_OPTIONS])("The %s module, as core runs its characte
 
     await withRulesetScope(db, record.rulesetId, async (scope) => {
       const characters = Engine.for(scope).characters();
-      const { max, min } = characters.describeCreation().scores;
+      const { max, min } = characters.describeCreation("abilities").scores;
       for (const score of [min - 1, max + 1]) {
         expect(() => characters.planScores("abilities", { [abilityId]: score })).toThrow(refusal);
         const start = { picks: { raceId: record.raceId }, scores: { abilities: { [abilityId]: score } } };
