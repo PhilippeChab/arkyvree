@@ -49,4 +49,4 @@ export type OwnedKind = keyof OwnedEntities;
 export type Row = Record<string, unknown>;
 
 /** The kinds of the view no entity owns: those a module's contract answers of, and a field names. */
-export type StandaloneKind = Exclude<keyof ViewEntities, keyof OwnedEntities>;
+export type StandaloneKind = Exclude<keyof ViewEntities, OwnedKind>;

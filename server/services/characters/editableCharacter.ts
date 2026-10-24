@@ -8,8 +8,8 @@ import type { Session } from "@/shared/relations.ts";
 import { readCharacterInput } from "./characterInputs.ts";
 
 /**
- * The character the user may edit (`userId`: they own it or contribute to it), or its child (3.5's bonded creature) when
- * they may edit its parent: none otherwise.
+ * The character `characterId` if the user may edit it (`userId`: they own it or contribute to it), or if it's a child
+ * (3.5's bonded creature) whose parent they may edit; null otherwise.
  */
 export async function findEditableCharacterOrChild(tx: Db, characterId: string, userId: string) {
   const pc = await Characters.findOne(tx, { id: characterId, editorId: userId });

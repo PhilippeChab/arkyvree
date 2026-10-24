@@ -37,17 +37,20 @@ async function addInventory(db: Db, ctx: SeedContext, characterId: string, items
   );
 }
 
-/** Builds a seeded master's bonded creatures (familiar, companion, mount) from its levels, as leveling up does. */
-async function reconcileBondedForCharacter(tx: Db, characterId: string): Promise<void> {
-  const master = await Characters.findOne(tx, { id: characterId });
-  if (!master) throw new NotFoundError(`Character ${characterId} not found`);
-  // A bonded creature has none of its own
-  if (master.parentCharacterId) return;
+/**
+ * Builds a seeded character's children (3.5's bonded creatures: a familiar, a companion, a mount) from its levels, as
+ * leveling up does.
+ */
+async function reconcileChildren(tx: Db, characterId: string): Promise<void> {
+  const parent = await Characters.findOne(tx, { id: characterId });
+  if (!parent) throw new NotFoundError(`Character ${characterId} not found`);
+  // A child has none of its own
+  if (parent.parentCharacterId) return;
 
-  await withRulesetScope(tx, master.rulesetId, async (scope) => {
-    const character = await readCharacterInput(tx, master);
+  await withRulesetScope(tx, parent.rulesetId, async (scope) => {
+    const character = await readCharacterInput(tx, parent);
     const children = await readChildInputs(tx, character);
-    await writeChildren(tx, master, Engine.for(scope).character(character).levelUp().planChildren(children).children);
+    await writeChildren(tx, parent, Engine.for(scope).character(character).levelUp().planChildren(children).children);
   });
 }
 
@@ -195,5 +198,5 @@ export async function seedCharacter(
   await addFeats(db, ctx, levelIds, feats);
   await addPowers(db, ctx, levelIds, powers);
   await addInventory(db, ctx, characterId, inventory);
-  await reconcileBondedForCharacter(db, characterId);
+  await reconcileChildren(db, characterId);
 }
