@@ -132,7 +132,7 @@ export function ClassProgressionSection({ rulesetId, classId, className, ruleset
 
   const saves = rulesetSaves ?? [];
   const tracks = trackRules.flatMap((rules): Track[] =>
-    rules.source === "saves"
+    rules.source === "amounts"
       ? saves.map((save) => ({ key: saveTrackKey(save.id), label: save.name, rules }))
       : [{ key: rules.key, label: rules.label, rules }],
   );

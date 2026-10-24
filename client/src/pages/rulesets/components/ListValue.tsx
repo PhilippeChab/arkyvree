@@ -73,7 +73,7 @@ export function ListValue({ column, entity, names }: ListValueProps) {
       }
       return <EmptyValue />;
     }
-    case "aptitudes": {
+    case "pools": {
       const links = valueOf(entity, column.key);
       return <AptitudeChipsCell links={Array.isArray(links) ? links : undefined} />;
     }

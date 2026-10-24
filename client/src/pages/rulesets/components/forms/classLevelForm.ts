@@ -10,7 +10,7 @@ export interface LevelFeat {
   featId: string;
 }
 
-/** A save's base bonus at a level: what its saves' column (`saveBases`) holds of it. */
+/** A save's base bonus at a level: what its saves' column (an `amounts` input) holds of it. */
 export interface LevelSave {
   base: number;
   saveId: string;

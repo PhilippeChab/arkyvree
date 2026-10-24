@@ -15,7 +15,7 @@ interface SaveBase {
 }
 
 /** A base bonus a class level gives each of the ruleset's saves. */
-type SaveBasesField = Extract<EntityField, { input: "saveBases" }>;
+type SaveBasesField = Extract<EntityField, { input: "amounts" }>;
 
 /**
  * A class level's base bonus to each of the ruleset's saves, side by side (three a row at most), each from the field's

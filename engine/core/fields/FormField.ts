@@ -25,26 +25,15 @@ interface ShownWhen {
 }
 
 /**
- * A pool's links, each with a level of its own, none too (a spell's spell lists, each at its spell level): from `min`
- * to `max`, and at least one when it's `required` on a new entity. An entity read holds them at `links` (each link its
- * aptitude, `aptitudesInRule`, and its level), which its form reads them from.
+ * An amount an entity gives each entity of a kind (3.5's class level's base bonus to each of the ruleset's saves), from
+ * `min` to `max`: a list of each one's id at `entityKey` and its amount at `amountKey`.
  */
-export interface AptitudeLevelsFormField extends FormFieldBase {
-  input: "aptitudeLevels";
-  links?: string;
+export interface AmountsFormField extends FormFieldBase {
+  amountKey: string;
+  entityKey: string;
+  input: "amounts";
   max: number;
   min: number;
-  required: boolean;
-}
-
-/**
- * A pool's links (a feat's feat pools), none too: at least one when it's `required` on a new entity. An entity read
- * holds them at `links` (each link its aptitude, `aptitudesInRule`), which its form reads them from.
- */
-export interface AptitudesFormField extends FormFieldBase {
-  input: "aptitudes";
-  links?: string;
-  required: boolean;
 }
 
 /**
@@ -99,9 +88,15 @@ export interface FlagFormField extends FormFieldBase {
   nullable: boolean;
 }
 
-/** The feats a class level grants, each through an aptitude (a feat pool) it's taken for. */
-export interface GrantedFeatsFormField extends FormFieldBase {
-  input: "grantedFeats";
+/**
+ * The entities an entity grants, each through the entity it's granted for (3.5's class level's feats, each through the
+ * pool it's taken for): a list of each one's id at `entityKey`, the one it's through at `viaKey`, and whether it's
+ * `free`.
+ */
+export interface GrantsFormField extends FormFieldBase {
+  entityKey: string;
+  input: "grants";
+  viaKey: string;
 }
 
 /** Fields of their own, which a form shows under their `label`. */
@@ -112,6 +107,29 @@ export interface GroupFormField {
   key: string;
   label: string;
   shownWhen?: readonly ShownWhen[];
+}
+
+/**
+ * Links to entities of a list, each with a level of its own, none too (3.5's spell's spell lists, each at its spell
+ * level): from `min` to `max`. A new entity's empty list is refused, saying `required`, when it has one. An entity read
+ * holds them at `links` (each link its list and its level), which its form reads them from.
+ */
+export interface LeveledLinksFormField extends FormFieldBase {
+  input: "leveledLinks";
+  links?: string;
+  max: number;
+  min: number;
+  required?: string;
+}
+
+/**
+ * Links to entities of a list (3.5's feat's pools), none too. A new entity's empty list is refused, saying `required`,
+ * when it has one. An entity read holds them at `links` (each link its list), which its form reads them from.
+ */
+export interface LinksFormField extends FormFieldBase {
+  input: "links";
+  links?: string;
+  required?: string;
 }
 
 /** A whole number in its bounds, in its `unit` ("feet"), which its label names: none, when it has no `default`. */
@@ -139,13 +157,6 @@ export interface RefFormField extends FormFieldBase {
   input: "ref";
   references: string;
   required: boolean;
-}
-
-/** A base bonus a class level gives each of the ruleset's saves, from `min` to `max`. */
-export interface SaveBasesFormField extends FormFieldBase {
-  input: "saveBases";
-  max: number;
-  min: number;
 }
 
 /**
@@ -180,16 +191,16 @@ export type EntityFieldValue = boolean | number | string | string[] | null | Ent
  * bounds, a reference's kind).
  */
 export type FormField =
-  | AptitudeLevelsFormField
-  | AptitudesFormField
+  | AmountsFormField
   | ChoiceFormField
   | DecimalFormField
   | FlagFormField
-  | GrantedFeatsFormField
+  | GrantsFormField
   | GroupFormField
+  | LeveledLinksFormField
+  | LinksFormField
   | NumberFormField
   | ProgressionFormField
   | RefFormField
-  | SaveBasesFormField
   | TemplateFormField
   | TextFormField;

@@ -26,7 +26,7 @@ export function SpellLevelFilter({ value, onChange, allowAll, baseRules }: Spell
       sx={{ minWidth: 100 }}
     >
       {allowAll && <MenuItem value="">All</MenuItem>}
-      {rules?.powerLevels.map(({ label, level }) => (
+      {rules?.tiers.map(({ label, level }) => (
         <MenuItem key={level} value={level}>
           {label}
         </MenuItem>

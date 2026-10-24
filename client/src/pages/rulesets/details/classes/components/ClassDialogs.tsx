@@ -39,7 +39,7 @@ export function CreateLevelDialog({
 }: CreateLevelDialogProps) {
   const { withAllSaves } = useAllLevelSaves(rulesetId);
   // Its rules' last class level bounds the number (none while they load: the save's check still holds it)
-  const lastLevel = useRules(baseRules).rules?.lastClassLevel;
+  const lastLevel = useRules(baseRules).rules?.progression.lastLevel;
 
   // The endpoint takes every ruleset save, 0 when unset.
   const handleSubmit = (data: ClassLevelFormData) => onSubmit({ ...data, saves: withAllSaves(data.saves ?? []) });

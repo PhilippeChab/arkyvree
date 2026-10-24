@@ -77,7 +77,7 @@ export default class PowerEntity extends ListedEntity<
 
   /** The pools a form links the power to, each at its spell level (none: an edit's kept). */
   protected override linksOf({ aptitudes }: PowerBody) {
-    return aptitudes?.map((aptitude) => ({ aptitudeId: aptitude.id, level: aptitude.level ?? null }));
+    return aptitudes?.map((aptitude) => ({ level: aptitude.level ?? null, listId: aptitude.id }));
   }
 
   /**

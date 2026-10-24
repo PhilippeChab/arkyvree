@@ -23,7 +23,7 @@ export function useSpellLevelFilter(baseRules: BaseRules, allowAll: boolean): Sp
   const known = rules
     ? oneOf(
         asked,
-        rules.powerLevels.map((option) => option.level),
+        rules.tiers.map((option) => option.level),
       )
     : Number.isInteger(asked) && asked >= 0
       ? asked

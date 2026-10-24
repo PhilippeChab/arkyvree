@@ -11,9 +11,12 @@ export default abstract class ContentPart<F> {
   /** The codecs of the fields its content seeds, by entity: what keeps an entity's fields in its properties. */
   protected abstract readonly codecs: { [K in keyof F]: FieldCodec<Extract<F[K], Fields>> };
 
-  /** The target paths a book's generated content may name, from the names it seeds. */
+  /**
+   * The target paths a book's generated content may name, from the names it seeds (`names`, by kind: 3.5's abilities',
+   * saves' and skills').
+   */
   abstract listBookTargetPaths(
-    names: { abilities: string[]; saves: string[]; skills: string[] },
+    names: Partial<Record<string, string[]>>,
     kind: "modifier" | "requirement",
   ): TargetPath[];
 

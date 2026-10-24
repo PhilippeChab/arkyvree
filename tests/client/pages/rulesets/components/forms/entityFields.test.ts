@@ -257,16 +257,15 @@ describe("an entity's columns in its form", () => {
 describe("an entity's pools in its form", () => {
   /** A pool's links, a feat's and a spell's each at its level, which an entity read holds apart from the form's keys. */
   const POOLS: EntityField[] = [
-    { ...BASE, key: "aptitudeIds", label: "Pools", input: "aptitudes", links: "poolLinks", required: true },
+    { ...BASE, key: "aptitudeIds", label: "Pools", input: "links", links: "poolLinks", required: "Pick a pool" },
     {
       ...BASE,
       key: "aptitudes",
       label: "Lists",
-      input: "aptitudeLevels",
+      input: "leveledLinks",
       links: "listLinks",
       max: 9,
       min: 0,
-      required: false,
     },
   ];
   const entity = {

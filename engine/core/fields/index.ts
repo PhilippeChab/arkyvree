@@ -4,8 +4,7 @@ export type { FormContext } from "./FieldForms.ts";
 export { default as FieldPropertyTypes } from "./FieldPropertyTypes.ts";
 export { default as FormColumns } from "./FormColumns.ts";
 export type {
-  AptitudeLevelsFormField,
-  AptitudesFormField,
+  AmountsFormField,
   ChoiceFormField,
   DecimalFormField,
   EntityFieldGroupValues,
@@ -14,12 +13,13 @@ export type {
   EntityForm,
   FlagFormField,
   FormField,
-  GrantedFeatsFormField,
+  GrantsFormField,
   GroupFormField,
+  LeveledLinksFormField,
+  LinksFormField,
   NumberFormField,
   ProgressionFormField,
   RefFormField,
-  SaveBasesFormField,
   TemplateFormField,
   TextFormField,
 } from "./FormField.ts";

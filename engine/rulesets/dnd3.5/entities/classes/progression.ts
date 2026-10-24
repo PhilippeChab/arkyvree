@@ -2,7 +2,7 @@ import type { ProgressionDescription } from "@/engine/core/module/index.ts";
 import CombatSheet from "@/engine/rulesets/dnd3.5/characters/description/CombatSheet.ts";
 import { RULESET_LIMITS } from "@/engine/rulesets/dnd3.5/limits.ts";
 import { formatSigned } from "@/shared/text.ts";
-import { BAB_PROGRESSIONS, SAVE_PROGRESSIONS } from "@/vocabulary/dnd3.5/classes.ts";
+import { BAB_PROGRESSIONS, MAX_CLASS_LEVEL, SAVE_PROGRESSIONS } from "@/vocabulary/dnd3.5/classes.ts";
 import { SPELL_LEVEL_LABELS, SPELL_LEVELS } from "@/vocabulary/dnd3.5/spells.ts";
 
 import ProgressionLabels from "./ProgressionLabels.ts";
@@ -18,7 +18,8 @@ const CLASS_LEVELS = Array.from({ length: RULESET_LIMITS.classLevel }, (_, index
  */
 export const PROGRESSION: ProgressionDescription = {
   grantsLabel: "Special",
-  spellListName: "{class} Spells",
+  lastLevel: MAX_CLASS_LEVEL,
+  listName: "{class} Spells",
   tables: [
     {
       columns: SPELL_LEVELS.map((level) => ({
@@ -78,7 +79,7 @@ export const PROGRESSION: ProgressionDescription = {
         label,
         values: CLASS_LEVELS.map((level) => progression.base + Math.floor(level / progression.hitDicePerPoint)),
       })),
-      source: "saves",
+      source: "amounts",
     },
     {
       key: "skills",

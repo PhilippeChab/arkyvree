@@ -1,4 +1,4 @@
-import type { ViewEntities } from "@/engine/core/view/index.ts";
+import type { StandaloneKind } from "@/engine/core/view/index.ts";
 import type { DeclaredProgression, ProgressionValue } from "@/shared/customization/progression.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
 
@@ -102,7 +102,7 @@ export interface ProgressionSpec extends LeafBase {
  */
 export interface RefSpec extends LeafBase {
   kind: "ref";
-  references: Exclude<keyof ViewEntities, "klass_levels">;
+  references: StandaloneKind;
   required?: boolean;
 }
 

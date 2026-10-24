@@ -24,8 +24,8 @@ export interface EntityCopiesDescription {
  * progression page, a class's), whether its form gives its description room (`longDescription`: a mechanic's), and
  * whether a new one's form says what each of its fields is for (`fieldHelp`: a class's), whether its form shows two
  * fields side by side in a wide dialog (`wideForm`: `fluid`, an item's; `fixed`, its height kept as its fields change,
- * a spell's), the pools its list narrows by (`pools`: the scope of the aptitudes it's picked in, a feat's `feats`),
- * whether its list narrows by a power's level (`levels`: a spell's), whether its list groups an entity's variants under
+ * a spell's), the pools its list narrows by (`pools`: the scope of the pools it's picked in, a feat's `feats`),
+ * whether its list narrows by a tier (`levels`: a spell's, by its level, `RulesDescription.tiers`), whether its list groups an entity's variants under
  * their family (`families`: a feat's), how its row copies one (`copies`: an item's), and when its name can't change
  * (`lockedName`: while its `flag` column holds, a generated feat's, its form saying why, `reason`). Its word is its rules'
  * (`RulesDescription.words`), and its URL's segment the app's (`getUrlSegment`: `classes`). Not the kinds a race or a
@@ -43,7 +43,7 @@ export interface EntityKindDescription {
   longDescription?: boolean;
   opens: "customization" | "page" | "progression";
   partitioned?: boolean;
-  pools?: "feats" | "spells";
+  pools?: string;
   readOnly?: boolean;
   type: string;
   wideForm?: "fixed" | "fluid";
@@ -59,14 +59,14 @@ export interface EntityKindDescription {
  * - `reference`: the name of the entity of the ruleset it names (`references`: its kind, `abilities`);
  * - `flag`: a warning's "Yes" while it's `yesWhen` ("Trained Only" while a skill isn't usable untrained), "No" else;
  * - `template`: an item's template's name, or "Template" for a template itself;
- * - `aptitudes`: the pools it's picked in, as chips (its links to them at its key: a spell's `powersAptitudesInRules`);
+ * - `pools`: the pools it's picked in, as chips (its links to them at its key: a spell's `powersAptitudesInRules`);
  * - `text`: its text, as it is (a language's type).
  */
 export interface ListColumn {
   key: string;
   label: string;
   labels?: Readonly<Record<string, string>>;
-  reads: "aptitudes" | "chip" | "decimal" | "flag" | "muted" | "number" | "reference" | "template" | "text";
+  reads: "chip" | "decimal" | "flag" | "muted" | "number" | "pools" | "reference" | "template" | "text";
   references?: string;
   share: number;
   slot?: "block" | "inline";
@@ -81,14 +81,15 @@ export interface ListDescription {
 }
 
 /**
- * How a class's levels progress, as its page sets them: its class table's tracks (`tracks`, each a column its
- * Progression tab sets), the label of its column of what a level grants (`grantsLabel`: its features and feat pools),
+ * How a class's levels progress, as its page sets them: its last level (`lastLevel`), its class table's tracks
+ * (`tracks`, each a column its Progression tab sets), the label of its column of what a level grants (`grantsLabel`: its features and feat pools),
  * and its spell tables (`tables`, which its Spells tab edits: none where its classes cast none), and the name of the
- * aptitude a class's spell list is, its class's name at `{class}` (`spellListName`).
+ * pool a class's spell list is, its class's name at `{class}` (`listName`).
  */
 export interface ProgressionDescription {
   grantsLabel: string;
-  spellListName?: string;
+  lastLevel: number;
+  listName?: string;
   tables: ProgressionTable[];
   tracks: ProgressionTrack[];
 }
@@ -111,7 +112,7 @@ export interface ProgressionTable {
 
 /**
  * A column of a class's table its Progression tab sets: where a level holds it (`source`: one of its fields, by `key`,
- * or a base per save of the ruleset, `saves`), its labels (the table's `shortLabel`, the value's `unitLabel` when one
+ * or its amounts, by `key`, one per entity of a kind: 3.5's base per save of the ruleset), its labels (the table's `shortLabel`, the value's `unitLabel` when one
  * number sets every level), its bounds, each value's label from `min` (`labels[value - min]`: none reads it as it is),
  * and the progressions it follows (`presets`: each its value at each level, from the first).
  */
@@ -123,14 +124,14 @@ export interface ProgressionTrack {
   min: number;
   presets: { key: string; label: string; values: number[] }[];
   shortLabel?: string;
-  source: "field" | "saves";
+  source: "amounts" | "field";
   unitLabel?: string;
 }
 
 /**
  * What a base rules' rulesets share, past any ruleset's view: what the app calls their entities, the columns their
- * forms show, the kinds a race or a class is for, a class's last level, a power's levels, and the license a system
- * ruleset's content is under. The client reads it once, for every base rules, and holds none of it.
+ * forms show, the kinds a race or a class is for, how a class progresses, a listed entity's tiers, and the license a
+ * system ruleset's content is under. The client reads it once, for every base rules, and holds none of it.
  */
 export interface RulesDescription {
   /** A new character's form, as its rules lay it out: its sections, their fields, its ability scores among them */
@@ -147,8 +148,6 @@ export interface RulesDescription {
    * the kinds a race or a class is for (`entityKinds`)
    */
   kinds: EntityKindDescription[];
-  /** A class's last level */
-  lastClassLevel: number;
   /**
    * What a system ruleset's content is licensed under, under its header (`text`: the license whose text the app
    * serves): none where nothing needs saying
@@ -156,10 +155,13 @@ export interface RulesDescription {
   license?: { notice: string; text: "ogl" };
   /** Each entity type's list on its ruleset's page, by type: its columns of the entities' own values */
   lists: Partial<Record<string, ListDescription>>;
-  /** The levels a power has, each with its name ("Cantrips", "Level 1") */
-  powerLevels: { label: string; level: number }[];
   /** How a class progresses, as its Progression and Spells tabs set it */
   progression: ProgressionDescription;
+  /**
+   * The tiers an entity has on a list that ranks it, each by its level with its name (3.5's spell levels: "Cantrips",
+   * "Level 1"), which the lists of a kind that narrows by them (`EntityKindDescription.levels`) offer
+   */
+  tiers: { label: string; level: number }[];
   /**
    * Its word for every entity type, by type (3.5's powers are spells), the engine's own types' (`modifiers`) included:
    * every name the app gives an entity's type

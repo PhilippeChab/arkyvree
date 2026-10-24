@@ -41,7 +41,7 @@ export default abstract class GeneratedFeats {
     if (!aptitudeId || dnd35.feats.some((feat) => feat.name === feats[0]?.name)) return [];
     return feats.map(({ description, modifiers, name: featName, properties, requirements }) => ({
       columns: { description, generated: true, name: featName },
-      links: [{ aptitudeId }],
+      links: [{ listId: aptitudeId }],
       modifiers,
       properties,
       requirements,

@@ -2,7 +2,7 @@ import { Stack, TextField, Typography } from "@mui/material";
 import { type FieldValues, useController } from "react-hook-form";
 
 import { EMPTY_VALUE_TEXT, SubsectionTitle, useReadOnlyFields } from "@/client/src/components/common/index.ts";
-import { APTITUDES_RULES, readNumberInput, wholeNumberError } from "@/client/src/lib/validation.ts";
+import { readNumberInput, requiredRules, wholeNumberError } from "@/client/src/lib/validation.ts";
 import { AptitudesAutocomplete } from "@/client/src/pages/rulesets/components/AptitudesAutocomplete.tsx";
 import { byName } from "@/client/src/pages/rulesets/components/byName.ts";
 import { useAptitudeLookup } from "@/client/src/pages/rulesets/components/useAptitudeLookup.ts";
@@ -17,7 +17,7 @@ interface AptitudeLevel {
 }
 
 /** A pool's links, each with a level of its own. */
-type AptitudeLevelsField = Extract<EntityField, { input: "aptitudeLevels" }>;
+type AptitudeLevelsField = Extract<EntityField, { input: "leveledLinks" }>;
 
 /** An aptitude and its level, none without one. */
 function aptitudeLevel(id: string, level: number | null | undefined): AptitudeLevel {
@@ -43,7 +43,7 @@ export function AptitudeLevelsInput<T extends FieldValues>({
     control: form.control,
     name,
     rules: {
-      ...(field.required && context.newEntity && APTITUDES_RULES),
+      ...(field.required !== undefined && context.newEntity && requiredRules(field.required)),
       validate: (value: AptitudeLevel[] | undefined) =>
         (value ?? []).every((aptitude) => levelError(aptitude.level) === undefined),
     },

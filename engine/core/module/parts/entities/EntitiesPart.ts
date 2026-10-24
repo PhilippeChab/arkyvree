@@ -1,15 +1,16 @@
 import type { RulesetEntity } from "@/engine/core/entities/index.ts";
 import type { Fields } from "@/engine/core/fields/index.ts";
-import type { RulesetView, ViewEntities } from "@/engine/core/view/index.ts";
+import type { RulesetView, StandaloneKind, ViewEntities } from "@/engine/core/view/index.ts";
 
 /** A kind's rules, of its table (`K`): its `RulesetEntity`, whatever form its saves take. */
 type Kind<K extends keyof ViewEntities> = RulesetEntity<K, object, object, Fields>;
 
 /**
- * The entity kinds a ruleset answers of, by the schema's tables: each its table's `RulesetEntity`, whose parts a kind
- * has or refuses (the entities it owns, the join it edits, its progression and its tables: a class's).
+ * The entity kinds a ruleset answers of, by the schema's tables, those no entity owns: each its table's
+ * `RulesetEntity`, whose parts a kind has or refuses (the entities it owns, the join it edits, its progression and its
+ * tables: a class's).
  */
-export type EntityKindsContract = { [K in Exclude<keyof ViewEntities, "klass_levels">]: Kind<K> };
+export type EntityKindsContract = { [K in StandaloneKind]: Kind<K> };
 
 /** What a ruleset answers of its entities: each kind's rules (`E`), bound to a ruleset's view. */
 export default abstract class EntitiesPart<E extends EntityKindsContract> {

@@ -179,7 +179,7 @@ export default class EntityCopy {
   }
 
   /**
-   * Merges sibling list links of a feat or a power (`copyOnWrite().mergeAptitudeLinks`), each to the aptitude that
+   * Merges sibling list links of a feat or a power (`copyOnWrite().mergeListLinks`), each to the list that
    * stands for it, as the copy's own (`copyRelationships`): the losers' links, read by their stored ids.
    */
   private async mergeListLinks(tx: Db, targetEntityId: string, siblingIds: string[], cow: CowData) {
@@ -195,7 +195,7 @@ export default class EntityCopy {
       storage.listLinksOf(this.entityType, await Joins.findMany(tx, { join: list.join, fromIds: siblingIds })),
       (link) => link.fromId,
     );
-    const links = Engine.copyOnWrite().mergeAptitudeLinks(
+    const links = Engine.copyOnWrite().mergeListLinks(
       own,
       siblingIds.map((id) => siblingLinks.get(id) ?? []),
       resolve,
@@ -203,7 +203,7 @@ export default class EntityCopy {
     const rows = storage.listRowsOf(
       this.entityType,
       targetEntityId,
-      links.map((link) => ({ ...link, aptitudeId: resolve(link.aptitudeId) })),
+      links.map((link) => ({ ...link, listId: resolve(link.listId) })),
     )!.rows;
     await Joins.createIds(tx, list.join, rows);
   }

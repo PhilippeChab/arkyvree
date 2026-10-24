@@ -21,7 +21,7 @@ type ColumnValue = LeafValue | unknown[];
 type LeafValue = boolean | number | string | string[] | null | ProgressionValue;
 
 /** A column of a pool's links: a feat's feat pools, a spell's spell lists each at its level. */
-type LinksField = Extract<EntityField, { input: "aptitudeLevels" | "aptitudes" }>;
+type LinksField = Extract<EntityField, { input: "leveledLinks" | "links" }>;
 
 /** What levels give of something, as a progression's field holds it: a frequency, and more at the levels it names. */
 type ProgressionValue = Extract<EntityField, { input: "progression" }>["default"];
@@ -53,10 +53,10 @@ function columnsByKey(columns: readonly EntityField[]): ValueField[] {
  * (`links`), off them: each its aptitude's id, at its level where the column takes one, in its aptitudes' name order.
  */
 function columnValueOf(column: ValueField, entity: unknown): unknown {
-  const linked = (column.input === "aptitudes" || column.input === "aptitudeLevels") && !!column.links;
+  const linked = (column.input === "links" || column.input === "leveledLinks") && !!column.links;
   if (!linked) return valueAt(entity, column.key);
   const links = linksOf(column, entity).sort((a, b) => byName(a.aptitude, b.aptitude));
-  if (column.input === "aptitudes") return links.map(({ aptitude }) => aptitude.id);
+  if (column.input === "links") return links.map(({ aptitude }) => aptitude.id);
   return links.map(({ aptitude, level }) =>
     typeof level === "number" ? { id: aptitude.id, level } : { id: aptitude.id },
   );
@@ -82,10 +82,10 @@ function emptyValueOf(field: ValueField): ColumnValue {
     case "ref":
     case "template":
       return "";
-    case "aptitudeLevels":
-    case "aptitudes":
-    case "grantedFeats":
-    case "saveBases":
+    case "leveledLinks":
+    case "links":
+    case "grants":
+    case "amounts":
       return [];
   }
 }
@@ -101,10 +101,10 @@ function formValueOf(field: ValueField, value: unknown): ColumnValue {
       return isProgression(value) ? copyProgression(value) : emptyValueOf(field);
     case "decimal":
       return typeof value === "number" || typeof value === "string" ? (formatDecimal(value) ?? "") : "";
-    case "aptitudeLevels":
-    case "aptitudes":
-    case "grantedFeats":
-    case "saveBases":
+    case "leveledLinks":
+    case "links":
+    case "grants":
+    case "amounts":
       return Array.isArray(value) ? value : [];
     case "choice":
       if (!field.multiple) {
@@ -242,7 +242,7 @@ export function ownFieldValues(fields: readonly EntityField[], values: unknown, 
  */
 export function poolsOf(columns: readonly EntityField[], entity: unknown): Aptitude[] {
   return columns.flatMap((column) =>
-    column.input === "aptitudes" || column.input === "aptitudeLevels"
+    column.input === "links" || column.input === "leveledLinks"
       ? linksOf(column, entity).map(({ aptitude }) => aptitude)
       : [],
   );
