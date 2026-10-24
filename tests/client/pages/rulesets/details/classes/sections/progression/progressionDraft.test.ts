@@ -1,10 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import {
-  type LevelColumns,
-  progressionKeysOf,
-  readProgressionLevel,
-} from "@/client/src/pages/rulesets/details/classes/sections/progression/progressionColumns.ts";
+import { type LevelColumns, levelKeysOf, readLevel } from "@/client/src/pages/rulesets/components/forms/levelForm.ts";
 import {
   buildProgressionBody,
   describeFeatureRows,
@@ -24,7 +20,7 @@ const EVASION = { id: "evasion", aptitudeId: "features", name: "Evasion" };
 const FIELDS = ["bab", "skills"];
 
 /** Where the save writes them: a level's `saves` and `feats`, a pool's `aptitudeId`. */
-const KEYS = progressionKeysOf(COLUMNS);
+const KEYS = levelKeysOf(COLUMNS);
 
 /** A class level as its query reads it: its base attack bonus, skill points, a save's base and its granted feats. */
 function level(id: string, number: number, feats: { aptitudeId: string; id: string; name: string }[] = []) {
@@ -37,7 +33,7 @@ function level(id: string, number: number, feats: { aptitudeId: string; id: stri
     saves: [{ saveId: "fort", base: 2 }],
     feats: feats.map((feat) => ({ ...feat, description: null, aptitudeName: "Class Features", free: false })),
   };
-  return readProgressionLevel(row, COLUMNS);
+  return readLevel(row, COLUMNS);
 }
 
 /** A class's first two levels, its second granting Evasion. */

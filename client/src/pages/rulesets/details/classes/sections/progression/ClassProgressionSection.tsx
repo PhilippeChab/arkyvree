@@ -18,12 +18,19 @@ import { useRules, useRulesetPermissions } from "@/client/src/hooks/index.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { rulesetOptionsQuery } from "@/client/src/lib/queries.ts";
 import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
-import { nextClassLevel, withEntityFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
+import {
+  levelColumnsOf,
+  type LevelFormData,
+  levelKeysOf,
+  type LevelRead,
+  nextLevel,
+  readLevel,
+  withEntityFields,
+} from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
 import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
-import { classKindOf } from "@/client/src/pages/rulesets/details/classes/classKind.ts";
+import { levelPageOf } from "@/client/src/pages/rulesets/details/classes/classKind.ts";
 import {
-  type ClassLevelFormData,
   classLevelsQuery,
   classProgressionQuery,
   classTableQuery,
@@ -39,13 +46,11 @@ import { isRecord } from "@/shared/isRecord.ts";
 
 import { CHANGED_CELL_SX } from "./changedCell.ts";
 import { ClassFeaturesCard } from "./ClassFeaturesCard.tsx";
-import { levelColumnsOf, progressionKeysOf, readProgressionLevel } from "./progressionColumns.ts";
 import {
   amountTrackKey,
   buildProgressionBody,
   describeFeatureRows,
   type PoolRow,
-  type ProgressionLevel,
   readEditedTrack,
   readTrack,
   type TrackKey,
@@ -88,13 +93,12 @@ export function ClassProgressionSection({ rulesetId, classId, className, ruleset
   const openEntity = useOpenEntity(rulesetId);
   const queryClient = useQueryClient();
   const { rules } = useRules(ruleset.baseRules);
-  const classType = classKindOf(rules)?.type ?? "";
-  const levelPage = rules?.customizationPages.find((page) => page.owner === classType);
+  const levelPage = levelPageOf(rules);
   const levelType = levelPage?.type ?? "";
   const levelColumns = levelColumnsOf(rules, levelType);
-  const keys = progressionKeysOf(levelColumns);
+  const keys = levelKeysOf(levelColumns);
   const amountsType = levelColumns.amounts?.references ?? "";
-  const owner = entityTypeLabel(classType, rules?.words).toLowerCase();
+  const owner = entityTypeLabel(levelPage?.owner ?? "", rules?.words).toLowerCase();
   const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
   // A level's amounts' entities, the ruleset's (3.5's saves); none read where its levels have no amounts
   const { data: amountEntities, error: amountsError } = useQuery(
@@ -113,7 +117,7 @@ export function ClassProgressionSection({ rulesetId, classId, className, ruleset
   // Its pools' totals, at the table its rules say; none read where its levels grant none past their columns
   const { data: poolTotals, error: poolsError } = useQuery(classTableQuery(rulesetId, classId, grantsRules?.table));
   const savedRows = (levelRows ?? []).toSorted(byLevel);
-  const levels = savedRows.map((row) => readProgressionLevel(row, levelColumns));
+  const levels = savedRows.map((row) => readLevel(row, levelColumns));
   const savedFeatures = describeFeatureRows(levels);
   // Its pools, and the picks a granted entity gives in them, at the keys its rules say
   const answer: Record<string, unknown> | undefined = progression;
@@ -147,20 +151,20 @@ export function ClassProgressionSection({ rulesetId, classId, className, ruleset
     return Object.keys(body).length > 0 || added;
   });
   const [customTracks, setCustomTracks] = useState<TrackKey[]>([]);
-  const save = useProgressionSave(rulesetId, classId, "Progression");
+  const save = useProgressionSave(rulesetId, classId, levelType, "Progression");
 
   // Its create opens on the class's next level, its fields the highest's
   const { fields: levelFields } = useEntityFields(rulesetId, levelType);
   // A message's word for a level ("Class level")
   const levelWord = entityTypeLabel(levelType, rules?.words);
   const { createDialogProps, handleCreate } = useRulesetSection({
-    createDefaults: withEntityFields(nextClassLevel(savedRows), levelFields, savedRows.at(-1)),
+    createDefaults: withEntityFields(nextLevel(levels, keys), levelFields, savedRows.at(-1)),
     rulesetId,
     label: `${levelWord.charAt(0)}${levelWord.slice(1).toLowerCase()}`,
     query,
     data: levelRows,
     queryKeysToInvalidate,
-    createFn: async (level: ClassLevelFormData) =>
+    createFn: async (level: LevelFormData) =>
       tag(
         parseResponse(
           rpc.api.rulesets[":id"].entities[":entityType"][":entityId"].owned.$post({
@@ -182,7 +186,7 @@ export function ClassProgressionSection({ rulesetId, classId, className, ruleset
       ? (amountEntities ?? []).map((entity) => ({ key: amountTrackKey(entity.id), label: entity.name, rules }))
       : [{ key: rules.key, label: rules.label, rules }],
   );
-  const valuesOf = (read: (level: ProgressionLevel) => number) =>
+  const valuesOf = (read: (level: LevelRead) => number) =>
     levels.map((level) => ({ level: level.level, levelId: level.id, value: read(level) }));
 
   const features = withAddedFeatures(savedFeatures, draft.edits).map((row) => ({
@@ -303,7 +307,7 @@ export function ClassProgressionSection({ rulesetId, classId, className, ruleset
     { key: "special", label: progressionRules?.grantsLabel ?? "", slot: "block" as const },
   ];
 
-  const renderCell = (level: ProgressionLevel, columnKey: string) => {
+  const renderCell = (level: LevelRead, columnKey: string) => {
     if (columnKey === "level") return <ValueChip label={level.level} color="primary" />;
     if (columnKey.startsWith("pool:")) {
       const name = columnKey.slice(5);
@@ -463,7 +467,13 @@ export function ClassProgressionSection({ rulesetId, classId, className, ruleset
           pending={save.isPending}
         />
       )}
-      <CreateLevelDialog {...createDialogProps} rulesetId={rulesetId} baseRules={ruleset.baseRules} />
+      <CreateLevelDialog
+        {...createDialogProps}
+        rulesetId={rulesetId}
+        baseRules={ruleset.baseRules}
+        columns={levelColumns}
+        levelType={levelType}
+      />
     </Stack>
   );
 }

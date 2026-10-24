@@ -10,7 +10,6 @@ import { NO_TIME } from "@/client/src/lib/durations.ts";
 import { type EntityRow, readEntityFn } from "@/client/src/lib/entityRequests.ts";
 import type { EntityKindDescription } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
-import type { LevelFeat, LevelSave } from "@/client/src/pages/rulesets/components/forms/classLevelForm.ts";
 import { entitiesQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { getUrlSegment } from "@/shared/urlSegments.ts";
@@ -22,16 +21,6 @@ type ClassTable = InferResponseType<(typeof classApi)["tables"][":table"]["$get"
 type TableWith<K extends string> = Extract<ClassTable, Record<K, unknown>[]>;
 
 export type ClassDetail = EntityRow;
-
-/**
- * A class level's form, its create's body: its number, base attack bonus and skill points, which its create dialog
- * sets, and its saves and granted feats, which its page edits too.
- */
-export type ClassLevelFormData = InferRequestType<(typeof classApi)["owned"]["$post"]>["json"] & {
-  feats: (LevelFeat & { free?: boolean })[];
-  level: number;
-  saves: LevelSave[];
-};
 
 /** A class's level as its Progression tab lists it */
 export type ClassLevelRow = InferResponseType<(typeof classApi)["owned"]["$get"], 200>[number];

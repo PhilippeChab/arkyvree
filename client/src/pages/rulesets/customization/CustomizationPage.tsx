@@ -26,12 +26,7 @@ import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
 import { EntityDetailLayout, EntityPageError } from "@/client/src/pages/rulesets/components/index.ts";
 import { entityPageBack, entityPageState } from "@/client/src/pages/rulesets/entityPageState.ts";
-import {
-  useCopyOnWrite,
-  useRestorableDelete,
-  useRulesetFeats,
-  useRulesetSaves,
-} from "@/client/src/pages/rulesets/hooks/index.ts";
+import { useCopyOnWrite, useFormOptions, useRestorableDelete } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { buildCustomizationPath } from "@/shared/customization/entities.ts";
 import { formatOperator } from "@/shared/customization/operators.ts";
@@ -85,10 +80,10 @@ function CustomizationView({
   usePageTitle(pageTitle);
 
   const entityKey = QUERY_KEYS.rulesets.entity(rulesetId, type, entityId);
-  // A class level's class: its tabs (its levels, its tables, its progression) read what the level's page changes
-  const klassKey =
-    data.holder === "owned" ? QUERY_KEYS.rulesets.classDetail(rulesetId, data.entity.klassId) : undefined;
-  const customizedKeys = klassKey ? [entityKey, klassKey] : [entityKey];
+  // An owned entity's owner (a class level's class): its tabs (its levels, its tables, its progression) read what the
+  // owned entity's page changes
+  const ownerQueryKey = data.holder === "owned" ? QUERY_KEYS.rulesets.classDetail(rulesetId, data.ownerId) : undefined;
+  const customizedKeys = ownerQueryKey ? [entityKey, ownerQueryKey] : [entityKey];
 
   // A copy-on-write moves the page to the copy; `copiedFrom` keeps the source on screen while the copy loads
   const copy = useCopyOnWrite(rulesetId, entityId, (id) => buildCustomizationPath(type, id));
@@ -120,8 +115,9 @@ function CustomizationView({
           ? {
               rulesetId,
               deleteFn: () => deleteEntityFn(data, rulesetId, entityId),
-              // A class level is listed by its class's levels alone: a ruleset has no list of them
-              listKeys: [klassKey ?? QUERY_KEYS.rulesets.section(rulesetId, type)],
+              // An owned entity is listed by its owner alone (a class level by its class's levels): a ruleset has no
+              // list of them
+              listKeys: [ownerQueryKey ?? QUERY_KEYS.rulesets.section(rulesetId, type)],
               entityKey,
               restorable,
               changesError,
@@ -180,10 +176,13 @@ function CustomizationView({
   );
 }
 
-/** The ruleset entity whose delete the page's comes back with: its own, a class level's class; a modifier's isn't told. */
+/**
+ * The ruleset entity whose delete the page's comes back with: its own, an owned entity's owner (a class level's class);
+ * a modifier's isn't told.
+ */
 function deletedHolder(data: CustomizationEntity) {
   if (data.holder === "modifier") return undefined;
-  return { id: data.holder === "owned" ? data.entity.klassId : data.entity.id, rulesetId: data.entity.rulesetId };
+  return { id: data.holder === "owned" ? data.ownerId : data.entity.id, rulesetId: data.entity.rulesetId };
 }
 
 /** What surrounds the editor: the header and where Back goes. */
@@ -219,7 +218,7 @@ function describe(
         title: `${data.entity.name} Level ${data.entity.level}`,
         pageTitle: `${data.entity.name} Level ${data.entity.level}`,
         // Its owner's page, which opens on its base rules' first tab
-        backPath: `/rulesets/${rulesetId}/${getUrlSegment(data.owner)}/${data.entity.klassId}`,
+        backPath: `/rulesets/${rulesetId}/${getUrlSegment(data.owner)}/${data.ownerId}`,
       };
     default:
       return { title: data.entity.name, pageTitle: data.entity.name };
@@ -256,7 +255,7 @@ async function deleteEntityFn(data: EditableEntity, id: string, entityId: string
         param: {
           id,
           entityType: entitySegment(getUrlSegment(data.owner)),
-          entityId: data.entity.klassId,
+          entityId: data.ownerId,
           ownedId: entityId,
         },
       }),
@@ -313,7 +312,7 @@ export default function CustomizationPage() {
 
   const { data: ruleset, isLoading: isRulesetLoading, error: rulesetError } = useQuery(rulesetDetailQuery(rulesetId));
   // Until the entity says what holds it, Back goes where the page was opened from, else to the ruleset
-  const { rules } = useRules(ruleset?.baseRules);
+  const { all, rules } = useRules(ruleset?.baseRules);
   const back = entityPageBack(location.state, `/rulesets/${rulesetId}`, rules?.words);
   const {
     data,
@@ -324,10 +323,12 @@ export default function CustomizationPage() {
     ...customizationEntityQuery(rulesetId, page, entityId),
     placeholderData: keepCopySource,
   });
-  // Load the editors' pickers alongside the entity.
+  // Load the editors' pickers alongside the entity: a kind is one module's, so its columns are known before its ruleset
   const { canEditEntities } = useRulesetPermissions(ruleset);
-  useRulesetSaves(rulesetId, validType === "powers" || validType === "klass_levels");
-  useRulesetFeats(rulesetId, "", validType === "klass_levels" && canEditEntities);
+  const pageRules = Object.values(all ?? {}).find((each) =>
+    each.customizationPages.some((it) => it.type === validType),
+  );
+  useFormOptions(rulesetId, pageRules?.columns[validType ?? ""], canEditEntities);
 
   const tabs = validType ? tabsFor(validType) : [];
   const currentTab = tabs.find((tab) => tab.key === section)?.key;

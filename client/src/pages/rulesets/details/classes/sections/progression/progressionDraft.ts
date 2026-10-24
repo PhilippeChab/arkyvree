@@ -4,29 +4,14 @@
  * they make, at the keys its rules' columns say.
  */
 
+import type { LevelKeys, LevelRead } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import type { ClassProgressionBody } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
-
-/** A level's amount of an entity (3.5's base of a save): the entity, and its value. */
-export interface Amount {
-  amount: number;
-  entityId: string;
-}
 
 /** A feature the class grants (3.5's feat, through a feat pool), and the levels it grants it at, by their ids. */
 export interface FeatureRow {
   entityId: string;
   key: string;
   levelIds: string[];
-  name: string;
-  viaId: string;
-  viaName: string | null;
-}
-
-/** A level's grant (3.5's feat): the entity, its name and description, the one it's through, whether it's free. */
-export interface Grant {
-  description: string | null;
-  entityId: string;
-  free: boolean;
   name: string;
   viaId: string;
   viaName: string | null;
@@ -49,25 +34,6 @@ export interface ProgressionEdits {
   pools: Record<string, Record<string, number>>;
   /** A track's values, by its key, then by level id */
   tracks: Partial<Record<TrackKey, Record<string, number>>>;
-}
-
-/**
- * Where a progression's save writes a level's amounts and grants, and a pool's picks: its rules' level columns' keys
- * (3.5's `saves` at `saveId` and `base`; `feats` at `featId` through `aptitudeId`, a pool's id's key too).
- */
-export interface ProgressionKeys {
-  amounts?: { amountKey: string; entityKey: string; key: string };
-  grants?: { entityKey: string; key: string; viaKey: string };
-}
-
-/** A class's level as its Progression tab reads it: its row (its fields), its amounts and its grants. */
-export interface ProgressionLevel {
-  amounts: Amount[];
-  grants: Grant[];
-  id: string;
-  level: number;
-  row: Record<string, unknown>;
-  updatedAt: string;
 }
 
 /** A track the Progression tab edits: a level's field, by its key (3.5's `bab`), or an amount (`amount:<id>`). */
@@ -95,8 +61,8 @@ export function amountTrackKey(entityId: string): TrackKey {
  * its amounts are of (`amountIds`: 3.5's saves; none while they load, the level's own then, never an empty list).
  */
 export function buildProgressionBody(
-  levels: readonly ProgressionLevel[],
-  keys: ProgressionKeys,
+  levels: readonly LevelRead[],
+  keys: LevelKeys,
   fieldKeys: readonly string[],
   amountIds: readonly string[] | undefined,
   features: readonly FeatureRow[],
@@ -106,11 +72,11 @@ export function buildProgressionBody(
   const rows = withAddedFeatures(features, edits);
   const classLevelIds = new Set(levels.map((level) => level.id));
   const levelsOf = (row: FeatureRow) => edits.features[row.key] ?? row.levelIds;
-  const valueOf = (level: ProgressionLevel, key: TrackKey) => readEditedTrack(level, key, edits);
-  const grantOf = (row: FeatureRow, level: ProgressionLevel) =>
+  const valueOf = (level: LevelRead, key: TrackKey) => readEditedTrack(level, key, edits);
+  const grantOf = (row: FeatureRow, level: LevelRead) =>
     level.grants.find((grant) => describeFeatureKey(grant) === row.key);
   // A grant keeps whether it's free; a new one is as its feature's first grant, or free for a new feature
-  const freeOf = (row: FeatureRow, level: ProgressionLevel) =>
+  const freeOf = (row: FeatureRow, level: LevelRead) =>
     (grantOf(row, level) ?? levels.map((other) => grantOf(row, other)).find(Boolean))?.free ?? true;
   const levelEdits = levels.flatMap((level) => {
     // The ruleset's entities, as a level's form sends their amounts; until they're read, the level's own
@@ -168,7 +134,7 @@ export function describeFeatureKey({ entityId, viaId }: { entityId: string; viaI
  * The features the class's levels grant, each with the levels it's granted at: by the first of them, then by name,
  * one an entity and the one it's granted through (3.5's feat and its pool).
  */
-export function describeFeatureRows(levels: readonly ProgressionLevel[]): FeatureRow[] {
+export function describeFeatureRows(levels: readonly LevelRead[]): FeatureRow[] {
   const rows = new Map<string, FeatureRow>();
   for (const level of levels.toSorted((a, b) => a.level - b.level)) {
     for (const grant of level.grants) {
@@ -189,12 +155,12 @@ export function describeFeatureRows(levels: readonly ProgressionLevel[]): Featur
 }
 
 /** A track's value at a level, as the tab shows it: its edit's, or the saved one. */
-export function readEditedTrack(level: ProgressionLevel, key: TrackKey, edits: ProgressionEdits) {
+export function readEditedTrack(level: LevelRead, key: TrackKey, edits: ProgressionEdits) {
   return edits.tracks[key]?.[level.id] ?? readTrack(level, key);
 }
 
 /** A track's value at a level, as saved: 0 for an entity the level has no amount of, or a field with no number. */
-export function readTrack(level: ProgressionLevel, key: TrackKey) {
+export function readTrack(level: LevelRead, key: TrackKey) {
   if (key.startsWith(AMOUNT_TRACK))
     return level.amounts.find((amount) => amountTrackKey(amount.entityId) === key)?.amount ?? 0;
   const value = level.row[key];

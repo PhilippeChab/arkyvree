@@ -3,18 +3,25 @@ import type { UseFormReturn } from "react-hook-form";
 import { CreateDialog, DeleteDialog, FormTextField } from "@/client/src/components/common/index.ts";
 import { useRules } from "@/client/src/hooks/index.ts";
 import { wholeNumberRules } from "@/client/src/lib/validation.ts";
-import { EntityFormFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
-import type { ClassLevelFormData } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
+import {
+  EntityFormFields,
+  type LevelColumns,
+  type LevelFormData,
+} from "@/client/src/pages/rulesets/components/forms/index.ts";
 import type { LinkWords } from "@/client/src/pages/rulesets/details/classes/classTab.ts";
-import { useAllLevelSaves } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { useAllAmounts } from "@/client/src/pages/rulesets/hooks/index.ts";
 import type { BaseRules } from "@/shared/enums.ts";
 
 interface CreateLevelDialogProps {
   /** The ruleset's, whose last class level bounds the level's number, and whose fields a level has. */
   baseRules: BaseRules;
-  form: UseFormReturn<ClassLevelFormData>;
+  /** Its level kind's columns past its fields: its amounts, which its save sends all of */
+  columns: LevelColumns;
+  form: UseFormReturn<LevelFormData>;
+  /** Its level kind (3.5's `klass_levels`), whose columns and fields its form shows */
+  levelType: string;
   onClose: () => void;
-  onSubmit: (data: ClassLevelFormData) => void;
+  onSubmit: (data: LevelFormData) => void;
   open: boolean;
   pending: boolean;
   rulesetId: string;
@@ -39,13 +46,17 @@ export function CreateLevelDialog({
   pending,
   rulesetId,
   baseRules,
+  columns,
+  levelType,
 }: CreateLevelDialogProps) {
-  const { withAllSaves } = useAllLevelSaves(rulesetId);
+  const { withAll } = useAllAmounts(rulesetId, columns.amounts);
   // Its rules' last class level bounds the number (none while they load: the save's check still holds it)
   const lastLevel = useRules(baseRules).rules?.progression.lastLevel;
 
-  // The endpoint takes every ruleset save, 0 when unset.
-  const handleSubmit = (data: ClassLevelFormData) => onSubmit({ ...data, saves: withAllSaves(data.saves ?? []) });
+  // The endpoint takes an amount of every entity its amounts are of (3.5's every ruleset save), 0 when unset
+  const amountsKey = columns.amounts?.key;
+  const handleSubmit = (data: LevelFormData) =>
+    onSubmit(amountsKey ? { ...data, [amountsKey]: withAll(data[amountsKey] ?? []) } : data);
 
   return (
     <CreateDialog
@@ -67,7 +78,7 @@ export function CreateLevelDialog({
           htmlInput: { min: 1, max: lastLevel },
         }}
       />
-      <EntityFormFields form={form} entityType="klass_levels" rulesetId={rulesetId} />
+      <EntityFormFields form={form} entityType={levelType} rulesetId={rulesetId} />
     </CreateDialog>
   );
 }
