@@ -16,6 +16,7 @@ export type { CowData, CowRows, RulesetSources } from "./core/cow/index.ts";
 export type { EntityAction } from "./core/entities/index.ts";
 export type { EntityFieldValues, EntityForm, FormField } from "./core/fields/index.ts";
 export type {
+  CharacterAdvancement,
   CharacterCard,
   CharacterInput,
   CharacterLinks,
@@ -78,7 +79,6 @@ export type {
   Aptitude,
   CharacterAbility,
   CharacterLanguage,
-  CharacterLevel,
   Feat,
   FeatWithAptitudes,
   Item,

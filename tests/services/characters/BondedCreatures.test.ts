@@ -11,7 +11,7 @@ import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { Visibility } from "@/server/repositories/BaseRepository.ts";
-import { CharacterLevels, Characters, Modifiers, Players } from "@/server/repositories/index.ts";
+import { CharacterAdvancements, Characters, Modifiers, Players } from "@/server/repositories/index.ts";
 import { CampaignCharactersService } from "@/server/services/campaigns/characters/index.ts";
 import { CharacterContributorsService } from "@/server/services/characters/contributors/index.ts";
 import { CharactersService } from "@/server/services/characters/index.ts";
@@ -100,7 +100,7 @@ describe("Bonded creatures", () => {
         userId: SEED_USER_ID,
         raceId: ctx.raceMap[kind][race],
       });
-      expect(await CharacterLevels.findMany(db, { characterId: bonded.id })).toHaveLength(levels);
+      expect(await CharacterAdvancements.findMany(db, { characterId: bonded.id })).toHaveLength(levels);
       const sheet = await CharactersService.getCharacter(owner, masterId);
       const bondFeat = Object.values((await sheetOf(masterId)).classes)
         .flatMap((klass) => klass.levels.flatMap((level) => level.feats))
@@ -146,7 +146,7 @@ describe("Bonded creatures", () => {
   test("a companion loses a level with each of its druid's, its last, and goes with the level that picked it", async () => {
     const { ctx, masterId, bonded } = await createDruidWithCompanion(3);
     const companionLevels = async () =>
-      (await CharacterLevels.findMany(db, { characterId: bonded.id })).map((level) => level.klassLevelId);
+      (await CharacterAdvancements.findMany(db, { characterId: bonded.id })).map((level) => level.klassLevelId);
     const companionClassLevel = async (level: number) =>
       (await findKlassLevel(ctx.klassMap.animalcompanion["Animal Companion"], level))!.id;
     await CharacterLevelsService.removeLevel(owner, masterId);
@@ -174,7 +174,7 @@ describe("Bonded creatures", () => {
 
   test("a familiar changes with its master's pick, and goes with it", async () => {
     const { ctx, masterId, bonded: cat } = await createWizardWithFamiliar();
-    const [level] = await CharacterLevels.findMany(db, { characterId: masterId });
+    const [level] = await CharacterAdvancements.findMany(db, { characterId: masterId });
     const pick = (familiar: string[], force = false) => {
       const { skills, feats, powers } = picks(ctx, picking(WIZARD_1, "Familiar Bond", familiar));
       const plan = levelEditPlan({ hp: WIZARD_1.hp }, { skills, feats, powers });
@@ -193,7 +193,7 @@ describe("Bonded creatures", () => {
 
   test("a familiar picked at two classes' levels is the later one's, however the earlier level is saved again", async () => {
     const { ctx, masterId } = await createWizardWithFamiliar();
-    const [wizardLevel] = await CharacterLevels.findMany(db, { characterId: masterId });
+    const [wizardLevel] = await CharacterAdvancements.findMany(db, { characterId: masterId });
     // A second character level: no General feat.
     await levelUp(owner, ctx, masterId, "Sorcerer", 1, { ...SORCERER_1, feats: { "Familiar Bond": ["Owl Familiar"] } });
     const master = await Characters.findOne(db, { id: masterId });

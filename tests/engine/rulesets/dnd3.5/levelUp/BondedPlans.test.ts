@@ -6,7 +6,7 @@ import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { CharacterLevels, Characters, Rulesets } from "@/server/repositories/index.ts";
+import { CharacterAdvancements, Characters, Rulesets } from "@/server/repositories/index.ts";
 import { buildAs } from "@/tests/support/dnd3.5/characters.ts";
 import { createDruidWithCompanion, createWizardWithFamiliar } from "@/tests/support/dnd3.5/levelFixtures.ts";
 import { findKlassLevel } from "@/tests/support/levels.ts";
@@ -122,7 +122,7 @@ describe("planBondedLevels", () => {
   test("takes the class's next levels up to the hit dice, or loses the creature's last ones", async () => {
     const { bonded, ctx, view } = await masterOf(() => createDruidWithCompanion(3));
     const klassId = ctx.klassMap.animalcompanion["Animal Companion"];
-    const levels = await CharacterLevels.findMany(db, { characterId: bonded.id });
+    const levels = await CharacterAdvancements.findMany(db, { characterId: bonded.id });
     const klassLevelIds = [(await findKlassLevel(klassId, 4))!.id, (await findKlassLevel(klassId, 5))!.id];
     expect(new BondedPlans(view).planBondedLevels(levels, { hitDice: 5, klassId })).toEqual({
       added: klassLevelIds.map((klassLevelId) => ({ hp: 1, klassLevelId })),

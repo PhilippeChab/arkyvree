@@ -30,7 +30,7 @@ import { db } from "@/server/database/index.ts";
 import { createTestPool } from "@/server/database/test.ts";
 import { toJson } from "@/server/errors/index.ts";
 import {
-  CharacterLevels,
+  CharacterAdvancements,
   Characters,
   Entities,
   Joins,
@@ -550,7 +550,7 @@ describe("LevelsService", () => {
     test("list the ruleset's skills with the class's marked and the character's current ranks", async () => {
       const { session, character, klass, klassLevels, skills } = await setupRuleset();
       await Joins.create<KlassSkill>(db, "klass_skills", { klassId: klass.id, skillId: skills["Diplomacy"].id });
-      const [level] = await CharacterLevels.create(db, {
+      const [level] = await CharacterAdvancements.create(db, {
         characterId: character.id,
         klassLevelId: klassLevels[0].id,
         hp: 8,
@@ -1226,7 +1226,7 @@ describe("LevelsService", () => {
         feats: { General: ["Power Attack", "Great Fortitude"], "Fighter Bonus Feat": ["Weapon Focus: Greataxe"] },
       });
       await levelUp(session, ctx, other, "Cleric", 1, WAR_CLERIC_1);
-      const levels = await CharacterLevels.findMany(db, { characterId: other });
+      const levels = await CharacterAdvancements.findMany(db, { characterId: other });
       const picked = (
         await Picks.findMany<LevelFeat>(db, { pick: "feats", characterLevelIds: levels.map((l) => l.id) })
       ).map((f) => f.featId);
@@ -2004,12 +2004,12 @@ describe("LevelsService", () => {
       const characterId = await createSeedCharacter(ctx, "fighter", { xp: 3000 });
       const klassLevel = async (klass: string, level: number) =>
         (await findKlassLevel(ctx.klassMap.pc[klass], level))!.id;
-      const [fighter2] = await CharacterLevels.create(db, {
+      const [fighter2] = await CharacterAdvancements.create(db, {
         characterId,
         klassLevelId: await klassLevel("Fighter", 2),
         hp: 10,
       });
-      const [rogue1] = await CharacterLevels.create(db, {
+      const [rogue1] = await CharacterAdvancements.create(db, {
         characterId,
         klassLevelId: await klassLevel("Rogue", 1),
         hp: 6,
@@ -2018,7 +2018,7 @@ describe("LevelsService", () => {
       await addFeats(db, ctx, [rogue1.id], [{ levelIndex: 0, featName: "Dodge", aptitude: "General" }]);
 
       expect(await CharacterLevelsService.removeLevel(session, characterId)).toMatchObject({ success: true });
-      expect(await CharacterLevels.findMany(db, { characterId })).toMatchObject([{ id: fighter2.id }]);
+      expect(await CharacterAdvancements.findMany(db, { characterId })).toMatchObject([{ id: fighter2.id }]);
       expect(await Picks.findMany<LevelSkill>(db, { pick: "skills", characterLevelIds: [rogue1.id] })).toEqual([]);
       expect(await Picks.findMany<LevelFeat>(db, { pick: "feats", characterLevelIds: [rogue1.id] })).toEqual([]);
     });
@@ -2028,7 +2028,7 @@ describe("LevelsService", () => {
     test("numbers them in the order they were made, though the test's one transaction made them at one time", async () => {
       const { ctx, characterId, levelIds } = await setupMulticlass(2);
       const positions = async () =>
-        (await CharacterLevels.findMany(db, { characterId })).map((level) => [level.id, level.position]);
+        (await CharacterAdvancements.findMany(db, { characterId })).map((level) => [level.id, level.position]);
       expect(await positions()).toEqual(levelIds.map((id, index) => [id, index + 1]));
       // The last one goes, and the next takes its place
       await CharacterLevelsService.removeLevel(session, characterId);
@@ -2038,13 +2038,13 @@ describe("LevelsService", () => {
 
     test("runs a character's level flows one at a time: a removal waits for the flow that holds the character", async () => {
       const kael = await findSeededCharacter("Kael Stormborn");
-      const levels = await CharacterLevels.findMany(db, { characterId: kael.id });
+      const levels = await CharacterAdvancements.findMany(db, { characterId: kael.id });
       await runWhileLocked(
         lockPool,
         (blockerDb) => Characters.lock(blockerDb, { id: kael.id }),
         () => CharacterLevelsService.removeLevel(session, kael.id),
       );
-      expect(await CharacterLevels.findMany(db, { characterId: kael.id })).toEqual(levels.slice(0, -1));
+      expect(await CharacterAdvancements.findMany(db, { characterId: kael.id })).toEqual(levels.slice(0, -1));
     });
   });
 });

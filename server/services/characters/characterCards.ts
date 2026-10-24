@@ -1,6 +1,6 @@
 /** A list's cards of characters from several rulesets, each described in its own ruleset's view. */
 
-import { type CharacterCard, type CharacterLevel, Engine } from "@/engine/index.ts";
+import { type CharacterAdvancement, type CharacterCard, Engine } from "@/engine/index.ts";
 import type { RulesetScope } from "@/server/cow/index.ts";
 import type { Character } from "@/shared/relations.ts";
 
@@ -17,7 +17,7 @@ const UNREAD_CARD = {
 export function describeCharacterCards(
   views: Map<string, RulesetScope>,
   characters: Character[],
-  levels: CharacterLevel[],
+  levels: CharacterAdvancement[],
   partialIds: ReadonlySet<string>,
 ) {
   const levelsByCharacter = Map.groupBy(levels, (level) => level.characterId);

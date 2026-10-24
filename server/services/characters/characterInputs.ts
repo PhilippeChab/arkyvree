@@ -2,8 +2,8 @@ import type { Db } from "@/drizzle/database.ts";
 import type { CharacterInput, CharacterRows } from "@/engine/index.ts";
 import {
   Campaigns,
+  CharacterAdvancements,
   CharacterInventory,
-  CharacterLevels,
   CharacterLinks,
   Characters,
   Modifiers,
@@ -27,7 +27,7 @@ async function readCharacterRows(database: Db, character: Character): Promise<Ch
   const campaign = player ? await Campaigns.findOne(database, { id: player.campaignId }) : undefined;
   const links = await CharacterLinks.findPerLink(database, { characterId });
   const inventory = await CharacterInventory.findMany(database, { characterId });
-  const levels = await CharacterLevels.findMany(database, { characterId });
+  const levels = await CharacterAdvancements.findMany(database, { characterId });
   const characterLevelIds = levels.map((level) => level.id);
   const picks = await Picks.findPerPick(database, { characterLevelIds });
   const modifiers = await Modifiers.findMany(database, { sourceIds: [characterId] });

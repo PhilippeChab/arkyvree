@@ -7,8 +7,8 @@ import { withRulesetScope } from "@/server/cow/index.ts";
 import { withTransaction } from "@/server/database/index.ts";
 import {
   Activities,
+  CharacterAdvancements,
   CharacterInventory,
-  CharacterLevels,
   CharacterLinks,
   Characters,
 } from "@/server/repositories/index.ts";
@@ -52,7 +52,7 @@ export function Imports<B extends Constructor>(Base: B) {
             for (const [link, links] of Object.entries(plan.links))
               await CharacterLinks.createPlanned(tx, link, characterId, links);
             for (const { columns, rows } of plan.levels) {
-              const [level] = await CharacterLevels.create(tx, { ...columns, characterId });
+              const [level] = await CharacterAdvancements.create(tx, { ...columns, characterId });
               await createLevelRows(tx, level.id, rows);
             }
             await CharacterInventory.createMany(

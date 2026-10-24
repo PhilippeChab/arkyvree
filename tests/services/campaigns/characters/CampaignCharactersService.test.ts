@@ -5,7 +5,7 @@ import { and, eq } from "drizzle-orm";
 import { playerCharactersInCampaign } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
-import { Campaigns, CharacterLevels, Characters, Players } from "@/server/repositories/index.ts";
+import { Campaigns, CharacterAdvancements, Characters, Players } from "@/server/repositories/index.ts";
 import { CampaignCharactersService } from "@/server/services/campaigns/characters/index.ts";
 import { createTestCampaign } from "@/tests/support/campaigns.ts";
 import { createTestCharacter } from "@/tests/support/characters.ts";
@@ -30,7 +30,7 @@ async function addLevels(characterId: string, levels: [string, number][]) {
   const ctx = await getSeedCtx();
   for (const [klass, level] of levels) {
     const klassLevel = (await findKlassLevel(ctx.klassMap.pc[klass], level))!;
-    await CharacterLevels.create(db, { characterId, klassLevelId: klassLevel.id, hp: 8 });
+    await CharacterAdvancements.create(db, { characterId, klassLevelId: klassLevel.id, hp: 8 });
   }
 }
 

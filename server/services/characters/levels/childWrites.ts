@@ -1,6 +1,6 @@
 import type { Db } from "@/drizzle/database.ts";
 import type { ChildPlan, NewChild } from "@/engine/index.ts";
-import { CharacterLevels, CharacterLinks, Characters } from "@/server/repositories/index.ts";
+import { CharacterAdvancements, CharacterLinks, Characters } from "@/server/repositories/index.ts";
 import type { Character } from "@/shared/relations.ts";
 
 /** A new child, its row as the engine plans it, with its links (3.5's ability scores). */
@@ -25,7 +25,7 @@ export async function writeChildren(tx: Db, parent: Character, plans: ChildPlan[
     if (plan.removedId) await Characters.delete(tx, { id: plan.removedId });
     if (!plan.levels) continue;
     const childId = "created" in plan ? await createChild(tx, plan.created) : plan.keptId;
-    for (const level of plan.levels.added) await CharacterLevels.create(tx, { ...level, characterId: childId });
-    for (const id of plan.levels.removedIds) await CharacterLevels.delete(tx, { id });
+    for (const level of plan.levels.added) await CharacterAdvancements.create(tx, { ...level, characterId: childId });
+    for (const id of plan.levels.removedIds) await CharacterAdvancements.delete(tx, { id });
   }
 }

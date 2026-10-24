@@ -24,7 +24,7 @@ import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import {
-  CharacterLevels,
+  CharacterAdvancements,
   CharacterLinks,
   Characters,
   Entities,
@@ -408,7 +408,7 @@ async function setupUncannyBlow(location: "Main Hand" | "Two Handed") {
     name: "Exotic Weapon Master Exotic Weapon Stunt",
     rulesetId: extension.id,
   }))!;
-  const [level] = await CharacterLevels.findMany(db, { characterId: bjorn.id });
+  const [level] = await CharacterAdvancements.findMany(db, { characterId: bjorn.id });
   await Picks.createMany(db, "feats", [{ characterLevelId: level.id, featId: uncannyBlow.id, aptitudeId: stunt.id }]);
   const character = { ...bjorn, rulesetId: fork.id };
   await carry(character, [{ item: "Bastard Sword", location, groups: [0] }]);

@@ -34,7 +34,7 @@ export interface CharacterLinkTypes {}
 export interface CharacterRows {
   campaign: Campaign | undefined;
   inventory: CharacterInventory[];
-  levels: CharacterRowOf<"levels">[];
+  levels: CharacterAdvancement[];
   links: CharacterLinks;
   modifiers: Modifier[];
   picks: CharacterPicks;
@@ -47,6 +47,12 @@ export interface CharacterRows {
  * (`declare module`), as its kinds' rows (`ViewEntities`).
  */
 export interface CharacterRowTypes {}
+
+/**
+ * A character's advancement, one of its levels, as its module declares its row (`CharacterRowTypes`' `levels`: 3.5's
+ * class level and hit points).
+ */
+export type CharacterAdvancement = CharacterRowOf<"levels">;
 
 /**
  * A character's rows of each link its module stores (`StoredCharacter.links`), by the link's name: each row as its

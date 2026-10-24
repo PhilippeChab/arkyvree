@@ -41,8 +41,8 @@ import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
 import { fetchEveryPage } from "@/server/repositories/concerns/Paginates.ts";
 import {
+  CharacterAdvancements,
   CharacterInventory,
-  CharacterLevels,
   CharacterLinks,
   Characters,
   Entities,
@@ -1295,10 +1295,10 @@ describe("unsubscribing from an extension", () => {
       expect(RulesetExtensionsService.unsubscribeExtension(session, draft.id, extension.id)).rejects.toThrow(
         ConflictError,
       );
-      await CharacterLevels.delete(db, { id: level.id });
+      await CharacterAdvancements.delete(db, { id: level.id });
     }
     await RulesetExtensionsService.unsubscribeExtension(session, draft.id, extension.id);
-    expect(await CharacterLevels.findOne(db, { id: kept.id })).toMatchObject({ klassLevelId: sourceLevel.id });
+    expect(await CharacterAdvancements.findOne(db, { id: kept.id })).toMatchObject({ klassLevelId: sourceLevel.id });
   });
 
   test("refuses an extension the fork doesn't use, another user, and an archived fork", async () => {

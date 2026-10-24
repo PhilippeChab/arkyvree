@@ -18,8 +18,8 @@ import seedCharacters from "@/scripts/db/seeds/characters.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { db } from "@/server/database/index.ts";
 import {
+  CharacterAdvancements,
   CharacterInventory,
-  CharacterLevels,
   CharacterLinks,
   Characters,
   Entities,
@@ -88,7 +88,7 @@ async function written(character: Character) {
     ctx.powerMap,
     ctx.itemMap,
   ].map(namesOf);
-  const levels = await CharacterLevels.findMany(db, { characterId: character.id });
+  const levels = await CharacterAdvancements.findMany(db, { characterId: character.id });
   const levelNames: Record<string, string> = {};
   for (const level of levels) {
     const klassLevel = (await Entities.findOne<KlassLevel>(db, {

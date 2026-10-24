@@ -421,7 +421,7 @@ sequenceDiagram
     Svc->>Svc: level = Engine.for(scope).entities(type).find(...)
     Svc->>Svc: autoGrantedPowers = Dnd35View.of(rulesetData).klassLevelPowersWithPowersByKlassLevel.get(...)
 
-    Svc->>Repo: CharacterLevels.findMany(db, {characterId})
+    Svc->>Repo: CharacterAdvancements.findMany(db, {characterId})
     Repo->>Dedup: miss
     Repo->>DB: SELECT ...
     DB-->>Repo: rows
@@ -431,7 +431,7 @@ sequenceDiagram
     Repo->>Dedup: HIT (same key as earlier)
     Repo-->>Svc: (same promise)
 
-    Svc->>Repo: CharacterLevels.findMany(db, {characterId})
+    Svc->>Repo: CharacterAdvancements.findMany(db, {characterId})
     Repo->>Dedup: HIT
     Repo-->>Svc: (same promise)
 

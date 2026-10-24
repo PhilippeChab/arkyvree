@@ -8,8 +8,8 @@ import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from "@
 import {
   Activities,
   Campaigns,
+  CharacterAdvancements,
   CharacterContributors,
-  CharacterLevels,
   Characters,
   PlayerCharacters,
   Players,
@@ -134,7 +134,7 @@ class CampaignCharactersService {
     if (characters.length === 0) return { items: [], page: paginationMeta.page, nextPage: paginationMeta.nextPage };
 
     // Batch fetch levels for all characters, and the ones the session contributes to: it edits them
-    const levels = await CharacterLevels.findMany(db, { characterIds });
+    const levels = await CharacterAdvancements.findMany(db, { characterIds });
     const contributions = await CharacterContributors.findMany(db, {
       characterIds,
       status: "Active",

@@ -1,7 +1,7 @@
 import type { LevelPlanAnswer, StepAnswer } from "@/engine/core/module/index.ts";
 import type { Klass, KlassLevel, LevelPlanRequest, StepPickerQuery } from "@/engine/index.ts";
 import { db } from "@/server/database/index.ts";
-import { CharacterLevels, Entities, Picks } from "@/server/repositories/index.ts";
+import { CharacterAdvancements, Entities, Picks } from "@/server/repositories/index.ts";
 import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
 import type { Session } from "@/shared/relations.ts";
 
@@ -29,7 +29,7 @@ export function stepAnswerOf<M extends StepAnswer["mechanic"]>(answer: LevelPlan
 
 /** Gives a character a level in a class level, with these picks, straight in the database: no level-up rule applies. */
 export async function addCharacterLevel(characterId: string, klassLevelId: string, picks: LevelPicks = {}) {
-  const [level] = await CharacterLevels.create(db, { characterId, klassLevelId, hp: 1 });
+  const [level] = await CharacterAdvancements.create(db, { characterId, klassLevelId, hp: 1 });
   const characterLevelId = level.id;
   await Picks.createMany(
     db,

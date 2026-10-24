@@ -14,8 +14,8 @@ import {
   Activities,
   Attachments,
   Campaigns,
+  CharacterAdvancements,
   CharacterInventory,
-  CharacterLevels,
   CharacterLinks,
   Characters,
   Entities,
@@ -432,7 +432,7 @@ describe("CharactersService", () => {
       await CharacterLinks.create(db, "languages", { characterId: character.id, languageId: ctx.langMap["Common"] });
       await CharacterInventory.create(db, { characterId: character.id, itemId: ctx.itemMap["Longsword"], quantity: 1 });
       const children = async () => ({
-        levels: (await CharacterLevels.findMany(db, { characterId: character.id })).length,
+        levels: (await CharacterAdvancements.findMany(db, { characterId: character.id })).length,
         skills: (await Picks.findMany<LevelSkill>(db, { pick: "skills", characterLevelIds: [level.id] })).length,
         feats: (await Picks.findMany<LevelFeat>(db, { pick: "feats", characterLevelIds: [level.id] })).length,
         languages: (
