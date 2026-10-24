@@ -54,10 +54,10 @@ class RulesetEntitiesRepository {
    * The rulesets' own entities of these types, by id and name, each with its type and ruleset: live rows of the
    * ruleset itself, not a campaign's, and not a copy-on-write copy (a copy pairs with its source by its snapshot).
    */
-  async findNativeNames(db: Db, where: { entityTypes: RulesetEntityType[]; rulesetIds: string[] }) {
+  async findNativeNames(db: Db, where: { entityTypes: string[]; rulesetIds: string[] }) {
     if (where.rulesetIds.length === 0) return [];
     if (where.entityTypes.length === 0) return [];
-    // One order, whatever the plan: the name pass meets its groups in it
+    // One order, whatever the plan: the reprint pass meets its groups in it
     return await db
       .select(NAMED)
       .from(entitiesInRules)

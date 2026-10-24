@@ -18,6 +18,10 @@ export interface CharacterRoleDef {
 
 /** An entity type, and the type that owns its entities (a class level's class). */
 export interface EntityTypeDef {
+  /**
+   * The kind that owns its entities (a class level's class), none for a kind no entity owns. An owned kind's row names
+   * its owner (an `owner` column) and its position in it (a `position` column), by which its copies pair
+   */
   ownerType: string | null;
   type: string;
 }
@@ -201,6 +205,12 @@ export interface StoredKind {
    * row (`target`, its name), as a relational read nested them (a feat's pools, each with its aptitude)
    */
   lists?: Record<string, { join: string; target: string }>;
+  /**
+   * How its entities of one name in a ruleset's chain pair: always, a name its identity (`identity`: 3.5's pools), or,
+   * when no copy pairs them, as a book's reprint (`reprints`: 3.5's feats and spells); none, never (a race or a class
+   * of one name in two books is more likely two things)
+   */
+  namesakes?: "identity" | "reprints";
   /** The row's columns in the order its answers give them, when it isn't an entity's own then `columns` */
   order?: string[];
 }

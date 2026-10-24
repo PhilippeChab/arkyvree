@@ -11,7 +11,7 @@ import Dnd35FieldDefs from "./Dnd35FieldDefs.ts";
 export const DND35_STORAGE: StorageDeclaration = {
   kinds: {
     abilities: { columns: {} },
-    aptitudes: { columns: {} },
+    aptitudes: { columns: {}, namesakes: "identity" },
     feats: {
       columns: {
         stackable: { kind: "flag", field: "FEAT_STACKABLE", default: false },
@@ -19,6 +19,7 @@ export const DND35_STORAGE: StorageDeclaration = {
         generated: { kind: "flag", field: "FEAT_GENERATED", default: false },
       },
       lists: { featsAptitudesInRules: { join: "feats_aptitudes", target: "aptitudesInRule" } },
+      namesakes: "reprints",
     },
     items: {
       columns: {
@@ -50,6 +51,7 @@ export const DND35_STORAGE: StorageDeclaration = {
         saveEffect: { kind: "text", field: "POWER_SAVE_EFFECT" },
       },
       lists: { powersAptitudesInRules: { join: "powers_aptitudes", target: "aptitudesInRule" } },
+      namesakes: "reprints",
     },
     races: {
       columns: {

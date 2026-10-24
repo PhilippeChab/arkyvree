@@ -301,6 +301,14 @@ export default abstract class RulesetEntity<
     return this.fields.describe();
   }
 
+  /**
+   * The fields the form of an entity it owns of a kind (`type`: a class level's) shows, as the ruleset declares them:
+   * none for a kind it doesn't own.
+   */
+  describeOwnedFields(_type: string): FormField[] {
+    return [];
+  }
+
   /** The entity the view shows for an id: refused when it shows none. */
   find(id: string): ViewEntities[K] {
     const entity = this.rulesetData.find(this.type, id);

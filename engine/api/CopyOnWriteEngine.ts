@@ -1,6 +1,7 @@
 import {
   type CowData,
   CowDataBuilder,
+  type CowKinds,
   type CowRows,
   CowSources,
   type RulesetSources,
@@ -53,7 +54,18 @@ function singleValued(entityType: string, type: string) {
  * before there's a view to bind.
  */
 export default class CopyOnWriteEngine {
-  /** A ruleset's copy-on-write data, from the rows read for it (`getReads`, `getPairedKlassIds`). */
+  /** How every module's kinds pair in a ruleset's chain, by their storage declarations. */
+  private static kinds(): CowKinds {
+    const storage = StorageEngine.shared();
+    return {
+      identities: storage.namesakeKinds("identity"),
+      owned: storage.ownedTypes(),
+      owners: storage.ownerKinds(),
+      reprints: storage.namesakeKinds("reprints"),
+    };
+  }
+
+  /** A ruleset's copy-on-write data, from the rows read for it (`getReads`, `getPairedOwnerIds`). */
   buildData(ruleset: RulesetSources, rows: CowRows): CowData {
     return CowDataBuilder.build(ruleset, rows);
   }
@@ -119,16 +131,17 @@ export default class CopyOnWriteEngine {
   }
 
   /**
-   * The classes whose levels pair by number: those the ruleset and its source chain copied (their snapshots say) and
-   * their sources, and those of its own and its extensions' of a name both have.
+   * The owners whose owned entities pair by position (3.5's classes, their levels by level): those the ruleset and its
+   * source chain copied (their snapshots say) and their sources, and those of its own and its extensions' of a name
+   * both have.
    */
-  getPairedKlassIds(rows: Pick<CowRows, "ownNamesakes" | "snapshots">) {
-    return CowSources.getPairedKlassIds(rows);
+  getPairedOwnerIds(rows: Pick<CowRows, "ownNamesakes" | "snapshots">) {
+    return CowSources.getPairedOwnerIds(rows, CopyOnWriteEngine.kinds().owners);
   }
 
   /** What a ruleset's copy-on-write data is read from, each read none when it needs none. */
   getReads(ruleset: RulesetSources) {
-    return CowSources.getReads(ruleset);
+    return CowSources.getReads(ruleset, CopyOnWriteEngine.kinds());
   }
 
   /** What a copy of a sibling winner takes of its siblings' customizations beside its own, merged as the view merges. */

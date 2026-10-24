@@ -2,4 +2,4 @@
 
 export { default as CowData } from "./CowData.ts";
 export { default as CowDataBuilder } from "./CowDataBuilder.ts";
-export { type CowRows, default as CowSources, type RulesetSources } from "./CowSources.ts";
+export { type CowKinds, type CowRows, default as CowSources, type RulesetSources } from "./CowSources.ts";

@@ -33,14 +33,14 @@ function rankNamesakes<T extends { id: string; rulesetId: string }>(
  *      aliases to extension's COW).
  *   2. Snapshot-extension siblings — when multiple extensions COW the same base entity, the non-winners become siblings
  *      of the winner.
- *   3. Name-based fallback for `NAME_FALLBACK_ENTITY_TYPES` — pairs same-name native rows across the chain when the
- *      snapshot pass didn't catch them (e.g. a spell reprinted in two D&D sourcebooks).
+ *   3. Name-based fallback for the kinds a book reprints (`CowKinds.reprints`) — pairs same-name native rows across the
+ *      chain when the snapshot pass didn't catch them (e.g. a spell reprinted in two D&D sourcebooks).
  *   4. A local copy's siblings become overrides of it.
- *   5. The aptitudes' namesakes.
+ *   5. The namesakes of the kinds a name is the identity of (`CowKinds.identities`: 3.5's pools).
  *   6. The ruleset's own entities over its extensions' of their names — an extension's entity of a name the ruleset's
  *      own has is overridden by it (a homebrew feat a book's author named as the ruleset's since it subscribed).
- *   7. The levels of a class another stands for (a copy in the chain, to its last copy; an extension's class the
- *      ruleset's own hides), paired by number with that class's.
+ *   7. The owned entities of an owner another stands for (a copy in the chain, to its last copy; an extension's owner
+ *      the ruleset's own hides), paired by position with that owner's (3.5's class levels, by level).
  *
  * One build (`build`), from the rows the server reads for it (`CowSources.getReads`) through the handle its caller
  * holds: the shared `db` for a ruleset's scope, a copy's transaction for the copy, so that what the copy stores (its
@@ -59,10 +59,10 @@ export default class CowDataBuilder {
     const builder = new CowDataBuilder(ruleset);
     if (builder.sourceChain.length > 0) builder.load(rows);
     if (builder.extensionRulesetIds.length > 0) {
-      builder.pairAptitudes(rows);
+      builder.pairIdentities(rows);
       builder.overrideOwnNamesakes(rows);
     }
-    if (builder.sourceChain.length > 0) builder.pairKlassLevels(rows);
+    if (builder.sourceChain.length > 0) builder.pairOwned(rows);
     return builder.toCowData();
   }
 
@@ -84,7 +84,7 @@ export default class CowDataBuilder {
 
   private readonly sourceChain: string[];
 
-  /** Appends: a winner's earlier losers (the snapshot pass's, the aptitudes') stay. */
+  /** Appends: a winner's earlier losers (the snapshot pass's, the identities') stay. */
   private addSiblings(winnerId: string, loserIds: string[]) {
     const existing = this.siblings.get(winnerId) ?? [];
     this.siblings.set(winnerId, [...existing, ...loserIds]);
@@ -98,7 +98,7 @@ export default class CowDataBuilder {
     if (!this.aliases.has(staleId)) this.aliases.set(staleId, id);
   }
 
-  /** The snapshot and name passes, in order. */
+  /** The snapshot, sibling and reprint passes, in order, then a local copy's siblings made its overrides. */
   private load(rows: CowRows) {
     const allRulesetIds = [this.rulesetId, ...this.sourceChain];
 
@@ -127,7 +127,7 @@ export default class CowDataBuilder {
    * its links to lists), never merged: a homebrew entity and a book's of one name may be different things. What stood
    * for it stands for the ruleset's entity now (what it copied, its sibling losers), so a row naming any of them (a
    * book's class granting it, a character's pick) reads the ruleset's. An extension's entity the view already hides
-   * (one the ruleset copied, a list paired by name) stays as it is. Of the ruleset's own entities of a name, the first
+   * (one the ruleset copied, a pool paired by name) stays as it is. Of the ruleset's own entities of a name, the first
    * stands.
    */
   private overrideOwnNamesakes(rows: CowRows) {
@@ -159,16 +159,17 @@ export default class CowDataBuilder {
   }
 
   /**
-   * Deduplicate aptitudes with the same name across the ruleset and its source chain. Each extension independently
-   * creates aptitudes it needs (self-contained), so duplicates arise when multiple extensions reference the same spell
-   * list, when an extension recreates a base aptitude (e.g., "General"), or when the ruleset has a list (its own, or its
-   * copy of an inherited one) of a name one of its books has. Pick one winner per name, the ruleset's own first, then
-   * the chain's closest; losers become its siblings (compose filters them) and aliases (so FK refs to a loser remap to
-   * the winner). Intentionally not overrides — compose-skip is for true overrides only.
+   * Deduplicate the entities of a kind a name is the identity of (3.5's pools) across the ruleset and its source chain.
+   * Each extension independently creates those it needs (self-contained), so duplicates arise when multiple extensions
+   * reference the same spell list, when an extension recreates a base pool (e.g., "General"), or when the ruleset has
+   * one (its own, or its copy of an inherited one) of a name one of its books has. Pick one winner per kind and name,
+   * the ruleset's own first, then the chain's closest; losers become its siblings (compose filters them) and aliases
+   * (so FK refs to a loser remap to the winner). Intentionally not overrides — compose-skip is for true overrides only.
    */
-  private pairAptitudes(rows: CowRows) {
+  private pairIdentities(rows: CowRows) {
     const rulesetIds = [this.rulesetId, ...this.sourceChain];
-    for (const { winner, losers } of rankNamesakes(rows.aptitudes, (apt) => apt.name, rulesetIds)) {
+    const key = (row: CowRows["identities"][number]) => `${row.entityType}|${row.name}`;
+    for (const { winner, losers } of rankNamesakes(rows.identities, key, rulesetIds)) {
       // Aliases must point directly to the visible copy, including a local COW.
       const resolvedWinnerId = this.aliases.get(winner.id) ?? winner.id;
       for (const loser of losers) this.alias(loser.id, resolvedWinnerId);
@@ -176,25 +177,6 @@ export default class CowDataBuilder {
         winner.id,
         losers.map((l) => l.id),
       );
-    }
-  }
-
-  /**
-   * Klass-level id pairs: levels aren't individually snapshotted, so the levels of each class another stands for in the
-   * view pair by number with that class's, as overrides, so that a stored klass-level id resolves to the level the view
-   * shows: a class a copy of the source chain overrides (an extension's copy of a core class), followed to the last copy
-   * as an entity id is (the ruleset's copy of that copy), and an extension's class the ruleset's own of its name hides.
-   * A level the class standing for its class doesn't have pairs with none.
-   */
-  private pairKlassLevels(rows: CowRows) {
-    const levelsByKlass = Map.groupBy(rows.klassLevels, (level) => level.klassId);
-    for (const [klassId, levels] of levelsByKlass) {
-      const standingId = this.aliases.get(klassId);
-      const standingLevels = standingId === undefined ? [] : (levelsByKlass.get(standingId) ?? []);
-      for (const level of levels) {
-        const standing = standingLevels.find((l) => l.level === level.level);
-        if (standing) this.override(level.id, standing.id);
-      }
     }
   }
 
@@ -218,6 +200,28 @@ export default class CowDataBuilder {
         winner.id,
         losers.map((l) => l.id),
       );
+    }
+  }
+
+  /**
+   * Owned entities' id pairs: owned entities aren't individually snapshotted, so those of each owner another stands for
+   * in the view pair by position with that owner's of their kind (3.5's class levels, by level), as overrides, so that
+   * a stored owned id resolves to the one the view shows: an owner a copy of the source chain overrides (an extension's
+   * copy of a core class), followed to the last copy as an entity id is (the ruleset's copy of that copy), and an
+   * extension's owner the ruleset's own of its name hides. One the owner standing for its owner doesn't have pairs with
+   * none.
+   */
+  private pairOwned(rows: CowRows) {
+    const key = (entityType: string, ownerId: string) => `${entityType}|${ownerId}`;
+    const byOwner = Map.groupBy(rows.owned, (owned) => key(owned.entityType, owned.ownerId));
+    for (const owned of byOwner.values()) {
+      const [{ entityType, ownerId }] = owned;
+      const standingId = this.aliases.get(ownerId);
+      const standingOwned = standingId === undefined ? [] : (byOwner.get(key(entityType, standingId)) ?? []);
+      for (const entity of owned) {
+        const standing = standingOwned.find((other) => other.position === entity.position);
+        if (standing) this.override(entity.id, standing.id);
+      }
     }
   }
 

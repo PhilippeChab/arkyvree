@@ -32,7 +32,7 @@ export const VIEW_SCHEMA: ViewSchema = {
       tracked: false,
       lists: [{ name: "links", from: "listedId", target: "target", to: "targetId", toType: "targets" }],
     },
-    { type: "owned", owner: { column: "ownerId", type: "owners" }, tracked: false, lists: [] },
+    { type: "owned", owner: { column: "ownerId", position: "position", type: "owners" }, tracked: false, lists: [] },
   ],
   joins: [{ name: "owner_links", from: "owners", fromColumn: "ownerId" }],
 };

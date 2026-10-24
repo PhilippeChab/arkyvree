@@ -510,9 +510,30 @@ export default class StorageEngine {
     return this.baseRules;
   }
 
+  /** The kinds whose entities of one name in a ruleset's chain pair as `pairing` says (`StoredKind.namesakes`). */
+  namesakeKinds(pairing: NonNullable<StoredKind["namesakes"]>): string[] {
+    return Object.keys(this.kinds).filter((type) => this.kinds[type].namesakes === pairing);
+  }
+
   /** The kinds a kind owns (`type`: a class's levels), whose entities go with its own. */
   ownedKinds(type: string): string[] {
     return this.merged.entityTypes.filter((def) => def.ownerType === type).map((def) => def.type);
+  }
+
+  /** An owned kind's rows (`type`: a class's levels), each its id, its owner's and its position in it (a level's). */
+  ownedPositionsOf(type: string, rows: Row[]): { entityType: string; id: string; ownerId: string; position: number }[] {
+    const [owner, position] = [this.ownerColumn(type), this.positionColumn(type)];
+    return rows.map((row) => ({
+      entityType: type,
+      id: String(row.id),
+      ownerId: String(row[owner]),
+      position: Number(row[position]),
+    }));
+  }
+
+  /** The kinds another owns (3.5's class levels), in their declarations' order. */
+  ownedTypes(): string[] {
+    return this.merged.entityTypes.flatMap((def) => (def.ownerType ? [def.type] : []));
   }
 
   /** The column an owned kind's row names its owner by (`type`: a class level's `klassId`). */
@@ -520,6 +541,11 @@ export default class StorageEngine {
     const found = Object.entries(this.kind(type).columns).find(([, column]) => column.kind === "owner");
     if (!found) throw new Error(`No module stores ${type} as owned`);
     return found[0];
+  }
+
+  /** The kinds that own another (3.5's classes, their levels'), in the order their owned kinds are declared. */
+  ownerKinds(): string[] {
+    return [...new Set(this.merged.entityTypes.flatMap((def) => (def.ownerType ? [def.ownerType] : [])))];
   }
 
   /** A pick's row (`row`, by its columns), of a step's (`name`), as what a write of it stores past its ordinal. */
@@ -553,6 +579,13 @@ export default class StorageEngine {
       updatedAt: pick.updatedAt,
       deletedAt: null,
     };
+  }
+
+  /** The column an owned kind's row holds its position in its owner at (`type`: a class level's `level`). */
+  positionColumn(type: string): string {
+    const found = Object.entries(this.kind(type).columns).find(([, column]) => column.kind === "position");
+    if (!found) throw new Error(`No module stores ${type} with a position`);
+    return found[0];
   }
 
   /**
@@ -701,7 +734,9 @@ export default class StorageEngine {
         .toSorted((a, b) => depth(a.type) - depth(b.type))
         .map(({ ownerType, type }) => ({
           type,
-          ...(ownerType ? { owner: { column: this.ownerColumn(type), type: ownerType } } : {}),
+          ...(ownerType
+            ? { owner: { column: this.ownerColumn(type), position: this.positionColumn(type), type: ownerType } }
+            : {}),
           tracked: tracked.has(type),
           lists: Object.entries(this.kind(type).lists ?? {}).map(([name, list]) => ({
             name,
