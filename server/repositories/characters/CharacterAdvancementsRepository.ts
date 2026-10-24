@@ -2,7 +2,7 @@ import { and, eq, inArray, isNull, type SQL, sql } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
 import { advancementPicksInCharacter, advancementsInCharacter } from "@/drizzle/schema.ts";
-import { type CharacterLevel, Engine } from "@/engine/index.ts";
+import { type CharacterAdvancement, Engine } from "@/engine/index.ts";
 import BaseRepository from "@/server/repositories/BaseRepository.ts";
 import StoredCharacters from "@/server/repositories/stored/StoredCharacters.ts";
 import { toQualified } from "@/server/repositories/stored/toQualified.ts";
@@ -12,13 +12,13 @@ import { toQualified } from "@/server/repositories/stored/toQualified.ts";
  * its module's value step holds of it (`advancement.value`: 3.5's hit points, its `hp` pick), each read as its module's
  * row (`Engine.storage().advancementRowOf`).
  */
-class CharacterLevelsRepository extends BaseRepository<typeof advancementsInCharacter> {
+class CharacterAdvancementsRepository extends BaseRepository<typeof advancementsInCharacter> {
   constructor() {
     super(advancementsInCharacter);
   }
 
   /** The levels a condition picks, in the order their characters took them, as the module's rows. */
-  private async rows(db: Db, where: SQL | undefined): Promise<CharacterLevel[]> {
+  private async rows(db: Db, where: SQL | undefined): Promise<CharacterAdvancement[]> {
     const { step } = Engine.storage().character().advancement.value;
     const rows = await db
       .select({
@@ -36,7 +36,7 @@ class CharacterLevelsRepository extends BaseRepository<typeof advancementsInChar
       .from(this.table)
       .where(where)
       .orderBy(this.orderBy(this.table.characterId), this.orderBy(this.table.position));
-    return rows.map((row) => Engine.storage().advancementRowOf(row) as CharacterLevel);
+    return rows.map((row) => Engine.storage().advancementRowOf(row) as CharacterAdvancement);
   }
 
   /** Writes a level's value (its hit points), replacing the one it held. */
@@ -122,4 +122,4 @@ class CharacterLevelsRepository extends BaseRepository<typeof advancementsInChar
   }
 }
 
-export default CharacterLevelsRepository;
+export default CharacterAdvancementsRepository;

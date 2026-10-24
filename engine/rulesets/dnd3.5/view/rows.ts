@@ -7,6 +7,7 @@
 import type { EntityRow, LinkRow } from "@/engine/core/view/index.ts";
 import type { ItemLocation, SizeType } from "@/shared/enums.ts";
 import type { Character } from "@/shared/relations.ts";
+import type { Alignment, Gender } from "@/vocabulary/dnd3.5/identity.ts";
 
 type FeatAptitude = LinkRow & { aptitudeId: string; featId: string };
 
@@ -72,6 +73,20 @@ declare module "@/engine/core/view/rows.ts" {
     klass_level_powers: KlassLevelPower;
     klass_level_saves: KlassLevelSave;
     klass_skills: KlassSkill;
+  }
+}
+
+declare module "@/shared/relations.ts" {
+  /** The columns of a 3.5 character's row its fields and its race hold: its identity, its experience and its race. */
+  interface CharacterFields {
+    age: number | null;
+    alignment: Alignment;
+    deity: string | null;
+    gender: Gender;
+    height: string | null;
+    raceId: string;
+    weight: string | null;
+    xp: number;
   }
 }
 

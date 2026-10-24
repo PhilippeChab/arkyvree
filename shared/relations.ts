@@ -17,7 +17,7 @@ import type {
   usersInAccount,
 } from "@/drizzle/schema.ts";
 
-import type { Alignment, BaseRules, Gender, ItemLocation } from "./enums.ts";
+import type { BaseRules, ItemLocation } from "./enums.ts";
 
 /** A property's columns (`Property`). */
 interface PropertyColumns {
@@ -32,18 +32,18 @@ interface PropertyColumns {
   value: string;
 }
 
+/**
+ * The columns of a character's row its module stores as its fields and single links, as the server reads them
+ * (`StorageEngine.characterRowOf`): its module declares its own into it (`declare module`, 3.5's identity and race).
+ */
+export interface CharacterFields {}
+
 export type Campaign = typeof campaignsInCampaign.$inferSelect;
-/** A character's row, with its identity's fields and its race. */
-export type Character = typeof charactersInCharacter.$inferSelect & {
-  age: number | null;
-  alignment: Alignment;
-  deity: string | null;
-  gender: Gender;
-  height: string | null;
-  raceId: string;
-  weight: string | null;
-  xp: number;
-};
+/**
+ * A character's row: its own columns, and those its module stores as its fields and single links (`CharacterFields`). A
+ * mapped type, as a row is plain data any record type takes (an interface isn't).
+ */
+export type Character = typeof charactersInCharacter.$inferSelect & Pick<CharacterFields, keyof CharacterFields>;
 /** An inventory entry: an item a character holds, where, in which groups (3.5's weapon sets), and its charges. */
 export type CharacterInventory = Omit<typeof inventoryInCharacter.$inferSelect, "itemType" | "location"> & {
   location: ItemLocation | null;

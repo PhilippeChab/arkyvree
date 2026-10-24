@@ -9,8 +9,8 @@ import { Engine, type KlassLevel } from "@/engine/index.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import {
+  CharacterAdvancements,
   CharacterInventory,
-  CharacterLevels,
   CharacterLinks,
   Characters,
   Entities,
@@ -69,7 +69,7 @@ export async function addClassLevels(
   for (let i = 0; i < levels.length; i++) {
     const klassLevel = klassLevels.find((row) => row.level === levels[i])!;
 
-    const [charLevel] = await CharacterLevels.create(db, {
+    const [charLevel] = await CharacterAdvancements.create(db, {
       characterId,
       klassLevelId: klassLevel.id,
       hp: hpPerLevel[i],

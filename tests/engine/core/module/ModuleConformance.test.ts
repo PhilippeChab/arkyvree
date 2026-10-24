@@ -7,7 +7,7 @@ import type { PrivateNotes } from "@/engine/core/module/index.ts";
 import { Engine, type Language } from "@/engine/index.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { CharacterLevels, Characters, Entities, Visibility } from "@/server/repositories/index.ts";
+import { CharacterAdvancements, Characters, Entities, Visibility } from "@/server/repositories/index.ts";
 import { readCharacterInput, readChildInputs } from "@/server/services/characters/characterInputs.ts";
 import { BASE_RULES_OPTIONS, type BaseRules } from "@/shared/enums.ts";
 import { createTestItem } from "@/tests/support/items.ts";
@@ -78,7 +78,7 @@ describe.each([...BASE_RULES_OPTIONS])("The %s module, as core runs its characte
     const seeded = await findSeededCharacter(rules);
     const input = await readCharacterInput(db, seeded);
     const children = await readChildInputs(db, input, Visibility.All);
-    const levels = await CharacterLevels.findMany(db, { characterIds: [seeded.id] });
+    const levels = await CharacterAdvancements.findMany(db, { characterIds: [seeded.id] });
 
     const read = await withRulesetScope(db, seeded.rulesetId, async (scope) => {
       const engine = Engine.for(scope);

@@ -16,7 +16,7 @@ import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/err
 import {
   Activities,
   Campaigns,
-  CharacterLevels,
+  CharacterAdvancements,
   CharacterLinks,
   Characters,
   Entities,
@@ -136,7 +136,7 @@ class CharactersService extends include(Object, Archives, Imports) {
     const charactersList = result.items;
     const characterIds = charactersList.map((char) => char.id);
 
-    const levels = await CharacterLevels.findMany(db, { characterIds });
+    const levels = await CharacterAdvancements.findMany(db, { characterIds });
 
     // Each card from its character's ruleset's view: a copied or renamed race or class shows its name there
     return await withRulesetScopes(

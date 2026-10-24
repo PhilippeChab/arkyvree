@@ -20,8 +20,8 @@ import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
 import {
+  CharacterAdvancements,
   CharacterInventory,
-  CharacterLevels,
   CharacterLinks,
   Characters,
   Entities,
@@ -262,7 +262,7 @@ describe("reverting a fork's copy", () => {
 
     await RulesetChangesService.revertOverride(session, fork.id, "klasses", fighter);
 
-    expect(await CharacterLevels.findOne(db, { id: level.id })).toMatchObject({ klassLevelId: sourceLevel.id });
+    expect(await CharacterAdvancements.findOne(db, { id: level.id })).toMatchObject({ klassLevelId: sourceLevel.id });
     expect(await Entities.findOne<Klass>(db, { entityType: "klasses", id: copy.id })).toBeUndefined();
   });
 

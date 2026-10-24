@@ -22,7 +22,7 @@ How the server reads them: one generic repository a table, which reads the store
 - **Entities** (`Entities`, `StoredEntities`): an entity's own columns, its fields and its links, read in one query and mapped to its kind's row (`rowOf`): every column under its name, each of its fields and single links its declaration names. A write is split back into them (`writeOf`), a column a write leaves out written with its declared default. A kind's list, page, picker options and lookups are the same methods for every kind (`findList`, `findPage`, `findOptionPage`, `findOne`), and a ruleset's view reads its stored entities whole (`findStored`), which the engine builds its raw data from (`CopyOnWriteEngine.buildRawData`).
 - **A join's row** is a link of its role (`Joins`, `StoredJoins`: a feat's pools, a class level's grants, saves and skills), mapped by `joinRowsOf`, a new one after its from-entity's last.
 - **A property** is a field the kind's columns don't hold, or a link when its value names an entity (a class's bonus spell ability, a ruleset's skill point ability): `Properties` (`StoredProperties`), read and written as properties (`Property`, `propertiesOf`).
-- **A character's row** is its own columns with its fields' values and its single links (its race), read in one query (`StoredCharacters`) and mapped by `characterRowOf`. Its links of a role (`CharacterLinks`: its scores, its languages) map by `characterLinkRowOf`, its advancements' picks by step (`Picks`: its feats, its skills) by `pickRowOf`, and its levels (`CharacterLevels`, its advancements with their hit points' picks) by `advancementRowOf`.
+- **A character's row** is its own columns with its fields' values and its single links (its race), read in one query (`StoredCharacters`) and mapped by `characterRowOf`. Its links of a role (`CharacterLinks`: its scores, its languages) map by `characterLinkRowOf`, its advancements' picks by step (`Picks`: its feats, its skills) by `pickRowOf`, and its levels (`CharacterAdvancements`, its advancements with their hit points' picks) by `advancementRowOf`.
 - A subquery reaching its query's own table names the column in full (`toQualified`): Drizzle names a selected column bare, which a subquery's table of that column name would answer.
 
 What deleting an entity does to what names it is each role's or step's rule, on every path (a service's delete, an owner's or a ruleset's cascade, a purge): a trigger on `rules.entities` (`apply_delete_rules`) deletes what a role deletes with it (a save with its key ability) and unlinks what a role unlinks; a role that refuses leaves its link, which the deferred foreign key refuses at commit. Every reference that doesn't own its row is `DEFERRABLE INITIALLY DEFERRED`, and an optional pair (an id and its type) is `MATCH FULL`. drizzle-kit records neither: `tests/database/registries.test.ts` checks the database keeps them, and `drizzle/schema.ts`'s hand fixes are listed there (its `bytea` type, a ruleset's base rules typed as the modules', a field's inheritance key, which names its type twice).
@@ -37,7 +37,7 @@ Rows whose disappearance leaves no observable history a user would expect to fin
 |---|---|
 | Customizations | `Modifiers`, `Requirements`; `Properties`, an entity's fields |
 | Joins (a feat's pools, a class's skills, a class level's grants and saves) | `Joins` |
-| Character state | `CharacterLevels`, `Picks`, `CharacterInventory`, `CharacterLinks` |
+| Character state | `CharacterAdvancements`, `Picks`, `CharacterInventory`, `CharacterLinks` |
 | Internal forking metadata | `EntitySnapshots` |
 | Ruleset entities, every kind's | `Entities` |
 | Status-driven lifecycle | `Contributors` (Pending/Active/Rejected/Revoked enum) |
@@ -145,7 +145,7 @@ A level's rows are its character's state, rewritten whole when the level is edit
 | `powers` (`Picks`, `powers`) | no | A level knows a spell once |
 | `skills` (`Picks`, `skills`) | no | A skill's ranks are a quantity, its `amount` |
 | `abilities` (`Picks`, `abilityIncreases`) | no | An increase's size is its `amount` |
-| `hp` (`CharacterLevels`) | no | A level's hit points, a value: no entity |
+| `hp` (`CharacterAdvancements`) | no | A level's hit points, a value: no entity |
 
 A stackable feat taken twice is two picks, not a count: the picks may be in two pools, and every reader (the character's build, a level's edit, the in-use checks) reads a row as one pick.
 

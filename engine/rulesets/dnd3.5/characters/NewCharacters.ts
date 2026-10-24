@@ -4,9 +4,9 @@ import type { CharacterColumns, CreationMethod, FieldsRequest, ScoresCreation } 
 import RulesError from "@/engine/core/RulesError.ts";
 import { RULESET_LIMITS } from "@/engine/rulesets/dnd3.5/limits.ts";
 import AbilityRules from "@/engine/rulesets/dnd3.5/rules/AbilityRules.ts";
-import { ALIGNMENT_OPTIONS, GENDER_OPTIONS } from "@/shared/enums.ts";
 import { MIN_ABILITY_SCORE, STARTING_ABILITY_SCORE } from "@/vocabulary/dnd3.5/abilities.ts";
 import { CREATION_METHODS } from "@/vocabulary/dnd3.5/creation.ts";
+import { ALIGNMENT_OPTIONS, GENDER_OPTIONS } from "@/vocabulary/dnd3.5/identity.ts";
 
 /** What a new character's form reads of a ruleset's view: its abilities, each by its id and name. */
 interface CreationData {

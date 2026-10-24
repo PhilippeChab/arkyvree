@@ -4,7 +4,8 @@
  * "Sword (Bastard)" is "Bastard Sword", "Rope (Hempen/50 Ft.)" is "Rope, hempen (50 ft.)").
  */
 
-import type { Alignment, ItemLocation } from "@/shared/enums.ts";
+import type { ItemLocation } from "@/shared/enums.ts";
+import type { Alignment } from "@/vocabulary/dnd3.5/identity.ts";
 
 /** The ability a PCGen stat key names. */
 export const PCGEN_ABILITIES = new Map<string, string>([

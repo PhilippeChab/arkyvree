@@ -1,4 +1,5 @@
 export {
+  type CharacterAdvancement,
   type CharacterInput,
   default as CharacterInputs,
   type CharacterLinks,

@@ -9,7 +9,7 @@ import { type CharacterInput, Engine, type LevelPlanRequest, type LevelUpEngine 
 import { include } from "@/lib/mixins.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { withTransaction } from "@/server/database/index.ts";
-import { Activities, CharacterLevels, Characters, Picks } from "@/server/repositories/index.ts";
+import { Activities, CharacterAdvancements, Characters, Picks } from "@/server/repositories/index.ts";
 import { readCharacterInput, readChildInputs } from "@/server/services/characters/characterInputs.ts";
 import { getEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
 import type { Session } from "@/shared/relations.ts";
@@ -43,7 +43,7 @@ class CharacterLevelsService extends include(Object, Plans) {
         const children = await readChildInputs(tx, character);
         const edit = planOf(Engine.for(scope).character(character).levelUp(), children);
 
-        await CharacterLevels.update(tx, edit.columns, { id: characterLevelId });
+        await CharacterAdvancements.update(tx, edit.columns, { id: characterLevelId });
         await this.deleteLevelRows(tx, characterLevelId);
         await createLevelRows(tx, characterLevelId, edit.rows);
         await writeChildren(tx, characterRecord, edit.children);
@@ -62,7 +62,7 @@ class CharacterLevelsService extends include(Object, Plans) {
 
   /**
    * The character the session may edit, locked until the transaction ends: its level flows run one at a time, so each
-   * reads the levels the one before saved, and the level it adds goes after them (`CharacterLevels.create`).
+   * reads the levels the one before saved, and the level it adds goes after them (`CharacterAdvancements.create`).
    */
   private async lockEditableCharacter(tx: Db, session: Session, characterId: string) {
     const characterRecord = await getEditableCharacter(tx, session, characterId);
@@ -88,7 +88,7 @@ class CharacterLevelsService extends include(Object, Plans) {
         const plan = planOf(Engine.for(scope).character(character).levelUp(), children);
         const createdLevels = [];
         for (const { columns, rows } of plan.levels) {
-          const [created] = await CharacterLevels.create(tx, { ...columns, characterId });
+          const [created] = await CharacterAdvancements.create(tx, { ...columns, characterId });
           createdLevels.push(created);
           await createLevelRows(tx, created.id, rows);
         }
@@ -130,7 +130,7 @@ class CharacterLevelsService extends include(Object, Plans) {
         const character = await readCharacterInput(tx, characterRecord);
         const children = await readChildInputs(tx, character);
         const removal = Engine.for(scope).character(character).levelUp().planRemoval(children);
-        await CharacterLevels.delete(tx, { id: removal.level.id });
+        await CharacterAdvancements.delete(tx, { id: removal.level.id });
         await writeChildren(tx, characterRecord, removal.children);
       });
 
