@@ -178,7 +178,7 @@ Some entities get properties, requirements, or feats generated. Every kind's for
 
 Every create's or edit's plan takes one shape, `EntityWrites` (`engine/core/module/parts/entities/plans.ts`): it says what to write beside the entity's row, without ids, and the service writes it in its transaction (`writeEntityWrites`, `server/services/rulesets/entityWrites.ts`).
 - `properties` gives the fields of the entity's form as its properties, in place of those of the same types it stored before. Its other properties stay.
-- `made` gives the entities the plan makes with it, each by its table (`type`), its row's columns, the lists it's linked to (`aptitudeIds`) and its customizations, and `removed` the ones that go with it, each by its table and id, refused while a character picked one. The core names no kind: the 3.5 module's are feats, generated in the general feats' pool (core's `GeneratedFeats`, `engine/core/entities/`: a skill's Skill Focus, a school's Spell Focus). The service writes each by its table (`EntityRepositories.of(type)`), reading of the view only its copy-on-write data.
+- `made` gives the entities the plan makes with it, each by its table (`type`), its row's columns, the lists it's linked to (`aptitudeIds`) and its customizations, and `removed` the ones that go with it, each by its table and id, refused while a character picked one. The core names no kind: the 3.5 module's are feats, generated in the general feats' pool (`GeneratedFeats`, `engine/rulesets/dnd3.5/entities/feats/GeneratedFeats.ts`: a skill's Skill Focus, a school's Spell Focus). The service writes each by its table (`EntityRepositories.of(type)`), reading of the view only its copy-on-write data.
 - `requirement` is what the entity requires (a class level's previous level).
 - A feat that's one entity's own (a skill's Skill Focus) is made, renamed and deleted with it: a new skill brings its own, even in a fork that deleted the one it inherited.
 - A feat that a grouping's entities share (a school's Spell Focus) is made when the first of them is saved, unless the ruleset or one of its sources has it, even in a fork that deleted the copy it inherited, and none goes with an entity.
@@ -335,7 +335,7 @@ On create: with a school, generates the properties from the form's fields, and t
 On update: replaces the generated property types (the spell's fields) with the form's, none without a school, and creates the feats of a school that's new. The spell's other properties remain, and so do existing school feats.
 On delete: cleans up the spell's customizations. School feats remain even if the school has no spells left.
 
-Feats auto-generated per unique school by `entities("powers").planCreate` and `planEdit` (`SpellFocusFeats`, `feats/SpellFocusFeats.ts`, a set of core's `GeneratedFeats` beside a skill's `SkillFocusFeats`):
+Feats auto-generated per unique school by `entities("powers").planCreate` and `planEdit` (`SpellFocusFeats`, `feats/SpellFocusFeats.ts`, a set of `GeneratedFeats` beside a skill's `SkillFocusFeats`):
 - `Spell Focus: <school>` — +1 `powers.groups.<stripped_school>.*.dc.misc`, linked to General aptitude
 - `Greater Spell Focus: <school>` — +1 `powers.groups.<stripped_school>.*.dc.misc`, requires `feats.spellfocus<stripped_school>.possessed == true`, linked to General aptitude
 - Created idempotently (skipped if already exist for the school)

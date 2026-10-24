@@ -166,11 +166,12 @@ describe("A PCGen fighter / rogue", () => {
   test("speaks the language it picked, and holds its gear where the file wears it", async () => {
     const plan = await planImportOf(await readPcgenFile("brannoc"));
     const data = await seededData();
-    expect(plan.languageIds.map((id) => Dnd35View.of(data).languagesById.get(id)?.name)).toEqual(["Dwarven"]);
+    const dataView = Dnd35View.of(data);
+    expect(plan.languageIds.map((id) => dataView.languagesById.get(id)?.name)).toEqual(["Dwarven"]);
     const worn = plan.inventory
       .filter((entry) => entry.equipped)
       .map((entry) =>
-        `${Dnd35View.of(data).itemsById.get(entry.itemId)?.name}: ${entry.location} ${entry.weaponSets.join(",")}`.trim(),
+        `${dataView.itemsById.get(entry.itemId)?.name}: ${entry.location} ${entry.weaponSets.join(",")}`.trim(),
       );
     expect(worn.toSorted()).toEqual([
       "Bastard Sword: Main Hand 0",
@@ -180,13 +181,12 @@ describe("A PCGen fighter / rogue", () => {
     ]);
     const carried = plan.inventory
       .filter((entry) => !entry.equipped)
-      .map((entry) => Dnd35View.of(data).itemsById.get(entry.itemId)?.name);
+      .map((entry) => dataView.itemsById.get(entry.itemId)?.name);
     expect(carried).toContain("Rope, hempen (50 ft.)");
     expect(carried).toContain("Backpack (empty)");
     expect(
-      plan.inventory.find(
-        (entry) => Dnd35View.of(data).itemsById.get(entry.itemId)?.name === "Rations, trail (per day)",
-      )?.quantity,
+      plan.inventory.find((entry) => dataView.itemsById.get(entry.itemId)?.name === "Rations, trail (per day)")
+        ?.quantity,
     ).toBe(5);
   });
 

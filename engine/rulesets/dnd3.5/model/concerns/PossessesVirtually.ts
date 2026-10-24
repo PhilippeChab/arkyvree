@@ -24,7 +24,7 @@ export function PossessesVirtually<B extends Constructor<CharacterState>>(Base: 
      */
     protected override grantsOf(modifier: Modifier): Modifier[] {
       if (!this.isGrant(modifier)) return [];
-      const { featIdBySlug, languageIdBySlug } = Dnd35View.of(this.rulesetData);
+      const { featIdBySlug, languageIdBySlug } = this.dnd35;
       const featSlug = FeatsPaths.parsePossessed(modifier.target);
       const featId = featSlug === undefined ? undefined : featIdBySlug.get(featSlug);
       if (featId) return this.possessFeat(featId, true);
@@ -35,6 +35,10 @@ export function PossessesVirtually<B extends Constructor<CharacterState>>(Base: 
       if (languageId) this.components.languages.grant(languageId);
       return [];
     }
+    /** The view's 3.5 lists and indices. */
+    private get dnd35(): Dnd35View {
+      return Dnd35View.of(this.rulesetData);
+    }
 
     /**
      * Makes the spell of `spellSlug` known on the list of `listSlug` (its first row there), a modifier's grant: one the
@@ -43,7 +47,7 @@ export function PossessesVirtually<B extends Constructor<CharacterState>>(Base: 
      * joining the build once however many lists know it. Its modifiers, when they join.
      */
     private knowPower(spellSlug: string, listSlug: string): Modifier[] {
-      const { powerIdsBySlug, powersById } = Dnd35View.of(this.rulesetData);
+      const { powerIdsBySlug, powersById } = this.dnd35;
       const aptitudeId = SpellLists.of(this.rulesetData).aptitudeIdBySpellSlug.get(listSlug);
       const powerRow = powerIdsBySlug
         .get(spellSlug)
@@ -75,7 +79,7 @@ export function PossessesVirtually<B extends Constructor<CharacterState>>(Base: 
     protected possessFeat(featId: string, given: boolean): Modifier[] {
       const held = this.data.feats.filter((feat) => feat.id === featId);
       if (given) for (const feat of held) feat.given = true;
-      const featRow = Dnd35View.of(this.rulesetData).featsById.get(featId);
+      const featRow = this.dnd35.featsById.get(featId);
       if (held.length > 0 || !featRow) return [];
       this.components.feats.grant(featRow.name);
       const feat = { ...FeatsComponent.toVirtualFeat(featRow, this.rulesetData), given };

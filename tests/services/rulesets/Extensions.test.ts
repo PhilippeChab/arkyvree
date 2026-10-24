@@ -657,6 +657,7 @@ describe("subscribing to an extension", () => {
       const divine = await findSeededRuleset(DND35_COMPLETE_DIVINE_NAME);
       await RulesetExtensionsService.subscribeExtension(session, draft.id, [divine.id]);
       const view = await RulesetViews.getData((await Rulesets.findOne(db, { id: draft.id }))!);
+      const view35 = Dnd35View.of(view);
       const divineList = (await Entities.findOne<Aptitude>(db, {
         entityType: "aptitudes",
         name: own.name,
@@ -664,8 +665,8 @@ describe("subscribing to an extension", () => {
       }))!;
       const named = (lists: { id: string; name: string }[]) =>
         lists.filter((list) => list.name === own.name).map((list) => list.id);
-      expect(named([...Dnd35View.of(view).aptitudesById.values()])).toEqual([own.id]);
-      expect(Dnd35View.of(view).aptitudesById.get(divineList.id)?.id).toBe(own.id);
+      expect(named([...view35.aptitudesById.values()])).toEqual([own.id]);
+      expect(view35.aptitudesById.get(divineList.id)?.id).toBe(own.id);
       const { items } = await EntitiesService.getEntities(draft.id, "aptitudes", { search: own.name }, firstPage);
       expect(named(items)).toEqual([own.id]);
 
@@ -689,7 +690,7 @@ describe("subscribing to an extension", () => {
         { pool: own.id },
         { ...firstPage, search: spell.name },
       );
-      expect(offered.items.map((power) => power.id)).toContain(Dnd35View.of(view).powersById.get(spell.id)!.id);
+      expect(offered.items.map((power) => power.id)).toContain(view35.powersById.get(spell.id)!.id);
     });
   });
 
@@ -785,9 +786,8 @@ describe("unsubscribing from an extension", () => {
 
     await RulesetExtensionsService.unsubscribeExtension(session, draft.id, warrior.id);
     const after = await RulesetViews.getData((await Rulesets.findOne(db, { id: draft.id }))!);
-    const dmgAssassin = [...Dnd35View.of(after).aptitudesById.values()].find(
-      (list) => list.name === "Assassin Spells",
-    )!;
+    const afterView = Dnd35View.of(after);
+    const dmgAssassin = [...afterView.aptitudesById.values()].find((list) => list.name === "Assassin Spells")!;
     expect(dmgAssassin.rulesetId).toBe(dmg.id);
     expect(
       (
@@ -805,7 +805,7 @@ describe("unsubscribing from an extension", () => {
         { aptitudeId: wizard.id, level: 3 },
       ]),
     );
-    expect(Dnd35View.of(after).listPowerIds({ aptitudeId: dmgAssassin.id })).toContain(spell.id);
+    expect(afterView.listPowerIds({ aptitudeId: dmgAssassin.id })).toContain(spell.id);
     expect(
       await Joins.findMany<KlassLevelPower>(db, { join: "klass_level_powers", fromIds: [klassLevel.id] }),
     ).toMatchObject([{ powerId: spell.id, aptitudeId: dmgAssassin.id }]);
@@ -824,14 +824,15 @@ describe("unsubscribing from an extension", () => {
 
     await RulesetExtensionsService.unsubscribeExtension(session, fork.id, warrior.id);
     const after = await RulesetViews.getData((await Rulesets.findOne(db, { id: fork.id }))!);
+    const afterView = Dnd35View.of(after);
     const links = await Joins.findMany<{ aptitudeId: string; level: number | null; powerId: string }>(db, {
       join: "powers_aptitudes",
       fromIds: [copyId],
     });
-    expect(links.filter((link) => !Dnd35View.of(after).aptitudesById.has(link.aptitudeId))).toEqual([]);
-    const assassin = [...Dnd35View.of(after).aptitudesById.values()].find((list) => list.name === "Assassin Spells")!;
+    expect(links.filter((link) => !afterView.aptitudesById.has(link.aptitudeId))).toEqual([]);
+    const assassin = [...afterView.aptitudesById.values()].find((list) => list.name === "Assassin Spells")!;
     expect(assassin.rulesetId).not.toBe(warrior.id);
-    expect(Dnd35View.of(after).listPowerIds({ aptitudeId: assassin.id })).toContain(copyId);
+    expect(afterView.listPowerIds({ aptitudeId: assassin.id })).toContain(copyId);
   });
 
   test("refuses to leave a link to a list no other book has, naming it, and changes nothing", async () => {
@@ -1764,13 +1765,10 @@ describe("an extension's entity of a name its subscriber's own has", () => {
     });
 
     const view = await RulesetViews.getData((await Rulesets.findOne(db, { id: draft.id }))!);
-    expect(Dnd35View.of(view).klassLevelFeatsByKlassLevel.get(klassLevel.id)).toMatchObject([{ featId: own.id }]);
-    expect(Dnd35View.of(view).listFeatIds(bookList.id)).toEqual([]);
-    expect(
-      Dnd35View.of(view)
-        .listFeatIds(general)
-        .filter((id) => [own.id, bookFeat.id].includes(id)),
-    ).toEqual([own.id]);
+    const view35 = Dnd35View.of(view);
+    expect(view35.klassLevelFeatsByKlassLevel.get(klassLevel.id)).toMatchObject([{ featId: own.id }]);
+    expect(view35.listFeatIds(bookList.id)).toEqual([]);
+    expect(view35.listFeatIds(general).filter((id) => [own.id, bookFeat.id].includes(id))).toEqual([own.id]);
     const described = await EntitiesService.getEntity<Described<"feats">>(draft.id, "feats", bookFeat.id);
     expect(described.id).toBe(own.id);
     expect(described.modifiers.map((modifier) => modifier.target)).toEqual([STRENGTH_BONUS.target]);

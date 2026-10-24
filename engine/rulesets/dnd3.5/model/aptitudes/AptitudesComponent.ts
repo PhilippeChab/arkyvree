@@ -294,7 +294,7 @@ export default class AptitudesComponent extends CharacterComponent<LoadedCharact
    * level-up's own picks of its kind (`own`, which the character holds) adds them back to what it has left: a shared
    * pool's feats take room from its powers, and its powers from its feats.
    */
-  getLevelUpPools(rulesetData: Pick<Dnd35View, "aptitudeIdsWithPowers">, own: OwnPicks = NO_OWN_PICKS) {
+  getLevelUpPools(view: Pick<Dnd35View, "aptitudeIdsWithPowers">, own: OwnPicks = NO_OWN_PICKS) {
     const featPools: Record<string, FeatPool> = {};
     const powerPools: Record<string, PowerPool> = {};
     for (const [key, aptitude] of Object.entries(this.aptitudes)) {
@@ -303,7 +303,7 @@ export default class AptitudesComponent extends CharacterComponent<LoadedCharact
         powerPools[id] = this.toLeveledPool(aptitude, own.powers[id] ?? {});
         continue;
       }
-      const shared = rulesetData.aptitudeIdsWithPowers.has(id);
+      const shared = view.aptitudeIdsWithPowers.has(id);
       const feats = own.feats[id] ?? 0;
       featPools[id] = { id, name, allowed, spent: spent - feats, available: available + feats, shared };
       const powers = own.powers[id]?.[""] ?? 0;

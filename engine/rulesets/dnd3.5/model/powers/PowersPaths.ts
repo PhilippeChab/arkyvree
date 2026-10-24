@@ -192,14 +192,15 @@ export default class PowersPaths implements PathCategory<Dnd35Components> {
    * number names a spell level, never a value).
    */
   labelNames(rulesetData: RulesetData) {
+    const view = Dnd35View.of(rulesetData);
     const fallbacks: Record<string, string> = {};
-    for (const { name } of Dnd35View.of(rulesetData).aptitudes)
+    for (const { name } of view.aptitudes)
       fallbacks[SpellLists.toSpellPossessionSlug(name)] ??= name.replace(/ Spells$/, "");
     for (const { type, value } of rulesetData.propertiesByEntityType.get("powers") ?? []) {
       fallbacks[type] ??= formatPropertyType(type);
       const slug = stripSeparators(value);
       if (/[a-z]/.test(slug)) fallbacks[slug] ??= value;
     }
-    return { fallbacks, names: deriveNameLabels(Dnd35View.of(rulesetData).powers.map(({ name }) => name)) };
+    return { fallbacks, names: deriveNameLabels(view.powers.map(({ name }) => name)) };
   }
 }

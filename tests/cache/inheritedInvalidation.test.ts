@@ -36,8 +36,9 @@ test("extension COW invalidates the warm subscriber mapping", async () => {
   expect(after).not.toBe(before);
   expect(after.resolve(source.id)).toBe(copy.id);
   const data = await RulesetViews.getData(updatedHost);
-  expect(Dnd35View.of(data).featsById.get(copy.id)?.description).toBe("Updated extension feat");
-  expect(Dnd35View.of(data).feats.some((f) => f.id === source.id)).toBe(false);
+  const dataView = Dnd35View.of(data);
+  expect(dataView.featsById.get(copy.id)?.description).toBe("Updated extension feat");
+  expect(dataView.feats.some((f) => f.id === source.id)).toBe(false);
 });
 
 test("worker cache mode reads changes between builds without web invalidation", async () => {

@@ -10,9 +10,14 @@ export default class ClassSkills {
     private readonly klass: Klass,
   ) {}
 
+  /** The view's 3.5 lists and indices. */
+  private get dnd35(): Dnd35View {
+    return Dnd35View.of(this.view.rulesetData);
+  }
+
   /** The class's class skills, each with its skill. */
   describe() {
-    return Dnd35View.of(this.view.rulesetData).klassSkillsWithSkillsByKlass.get(this.klass.id) ?? [];
+    return this.dnd35.klassSkillsWithSkillsByKlass.get(this.klass.id) ?? [];
   }
 
   /**
@@ -22,11 +27,7 @@ export default class ClassSkills {
    */
   planAdd(skillId: string) {
     const skill = new RequestIds(this.view.rulesetData, "this ruleset").find("skills", skillId);
-    if (
-      Dnd35View.of(this.view.rulesetData)
-        .klassSkillsByKlass.get(this.klass.id)
-        ?.some((ks) => ks.skillId === skill.id)
-    )
+    if (this.dnd35.klassSkillsByKlass.get(this.klass.id)?.some((ks) => ks.skillId === skill.id))
       throw new RulesError("conflict", "Skill is already assigned to this class");
     return {
       activity: { skillId: skill.id, entityName: this.klass.name, skillName: skill.name },
@@ -42,11 +43,10 @@ export default class ClassSkills {
    */
   planRemove(skillId: string) {
     const { rulesetData } = this.view;
-    const klassSkill = Dnd35View.of(rulesetData)
-      .klassSkillsByKlass.get(this.klass.id)
-      ?.find((ks) => ks.skillId === skillId);
+    const view35 = Dnd35View.of(rulesetData);
+    const klassSkill = view35.klassSkillsByKlass.get(this.klass.id)?.find((ks) => ks.skillId === skillId);
     if (!klassSkill) throw new RulesError("not-found", "Skill is not assigned to this class");
-    const skill = Dnd35View.of(rulesetData).skillsById.get(skillId);
+    const skill = view35.skillsById.get(skillId);
     return {
       activity: {
         skillId: klassSkill.skillId,

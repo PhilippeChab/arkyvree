@@ -83,7 +83,7 @@ export default class CopyOnWriteEngine {
       );
     }
     const joins: RulesetRawData["joins"] = {};
-    for (const { name } of StorageEngine.shared().viewSchema().joins) joins[name] = storage.joinRowsOf(name, live);
+    for (const { name } of storage.viewSchema().joins) joins[name] = storage.joinRowsOf(name, live);
     return {
       entities,
       joins,

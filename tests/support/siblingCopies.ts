@@ -10,10 +10,7 @@ type Fork = Parameters<typeof RulesetViews.getData>[0];
 
 /** The entity type of a feat, a power or an item of the view. */
 function typeOf(data: RulesetData, id: string): RulesetEntityType | undefined {
-  if (Dnd35View.of(data).featsById.has(id)) return "feats";
-  if (Dnd35View.of(data).powersById.has(id)) return "powers";
-  if (Dnd35View.of(data).aptitudesById.has(id)) return "aptitudes";
-  return Dnd35View.of(data).itemsById.has(id) ? "items" : undefined;
+  return (["feats", "powers", "aptitudes", "items"] as const).find((type) => data.byId(type).has(id));
 }
 
 /**
@@ -126,7 +123,7 @@ export async function compareCopies(fork: Fork, winnerIds: string[]) {
 /** The classes of the fork's view, sorted: what a copy of each stores, the sweeps check (`findStaleClassCopies`). */
 export async function findKlassIds(fork: Fork) {
   const view = await RulesetViews.getData(fork);
-  return [...new Set([...Dnd35View.of(view).klassesById.values()].map((klass) => klass.id))].sort();
+  return [...new Set(view.rows("klasses").map((klass) => klass.id))].sort();
 }
 
 /** The sibling winners of the fork's view, sorted: what a copy of each must hold as the view showed it. */
@@ -145,7 +142,7 @@ export async function findStaleClassCopies(fork: Fork, klassIds: string[]) {
   for (const klassId of klassIds) {
     await withCopy(fork, "klasses", klassId, async (tx, after, copyId) => {
       const ids = await findStaleAptitudeIds(tx, after, "klasses", copyId);
-      if (ids.length > 0) stale.push(`${Dnd35View.of(view).klassesById.get(klassId)?.name}: ${ids}`);
+      if (ids.length > 0) stale.push(`${view.find("klasses", klassId)?.name}: ${ids}`);
     });
   }
   return stale;

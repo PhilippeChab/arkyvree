@@ -116,7 +116,7 @@ export default abstract class LevelUpBase<C> {
   protected buildPowerLevelLookup(powerIds: string[]) {
     const lookup = new Map<string, number | null>();
     for (const powerId of powerIds) {
-      const power = Dnd35View.of(this.rulesetData).powersById.get(powerId);
+      const power = this.dnd35.powersById.get(powerId);
       if (!power) continue;
       for (const pa of power.powersAptitudesInRules) lookup.set(`${pa.powerId}:${pa.aptitudeId}`, pa.level);
     }
@@ -128,19 +128,25 @@ export default abstract class LevelUpBase<C> {
     return new SelectionChecks(this.view, this.rules);
   }
 
+  /** The view's 3.5 lists and indices. */
+  protected get dnd35(): Dnd35View {
+    return Dnd35View.of(this.rulesetData);
+  }
+
   /** The class's level `level`, in the composed ruleset, or a 404. */
   protected getKlassLevel(klassId: string, level: number) {
-    const klassLevel = Dnd35View.of(this.rulesetData).klassLevelByKlassAndLevel.get(`${klassId}:${level}`);
+    const klassLevel = this.dnd35.klassLevelByKlassAndLevel.get(`${klassId}:${level}`);
     if (!klassLevel) throw new RulesError("not-found", "Class level not found");
     return klassLevel;
   }
 
   /** A saved character level's class level and class, in the composed ruleset, or a 404. */
   protected getSavedKlassLevel(characterLevel: { klassLevelId: string }) {
-    const klassLevel = Dnd35View.of(this.rulesetData).klassLevelsById.get(characterLevel.klassLevelId);
+    const view = this.dnd35;
+    const klassLevel = view.klassLevelsById.get(characterLevel.klassLevelId);
     if (!klassLevel) throw new RulesError("not-found", "Class level not found");
 
-    const klass = Dnd35View.of(this.rulesetData).klassesById.get(klassLevel.klassId);
+    const klass = view.klassesById.get(klassLevel.klassId);
     if (!klass) throw new RulesError("not-found", "Class not found");
 
     return { klassLevel, klass };

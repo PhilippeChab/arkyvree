@@ -30,7 +30,7 @@ return await withRulesetScopes(db, rulesetIds, async (views) => {
 Inside the scope:
 
 - `ruleset` — the ruleset row (non-null; throws `NotFoundError` if missing).
-- `rulesetData` — the composed cache: `*ById` Maps, `klassLevelByKlassAndLevel`, `propertiesByEntity`, etc. Also `rulesetData.cow` exposes the underlying `CowData` (its `sourceChain`, `siblingIds`, and what an id resolves to: `resolve`, `isOverridden`, `isHidden`, `getWinner`) for lineage checks.
+- `rulesetData` — the composed cache: `byId(type)`, `rows(type)`, `joinRows(join)`, `propertiesByEntity`, etc., and what a module derives of it (3.5's `Dnd35View.of(rulesetData)`: `klassLevelByKlassAndLevel`…). Also `rulesetData.cow` exposes the underlying `CowData` (its `sourceChain`, `siblingIds`, and what an id resolves to: `resolve`, `isOverridden`, `isHidden`, `getWinner`) for lineage checks.
 
 Nothing else: a repository read inside the scope returns rows as stored, and a query takes the ids it's given. What a read needs of copy-on-write it asks `rulesetData.cow` for, explicitly ([below](#cow-transparency)): a list's filters (`listFilters`), an entity's equivalent ids for a query on stored rows (`getEquivalentIds`), the id a stored one stands for (`resolve`). Rows that reach the engine are read as the view does there.
 
@@ -57,7 +57,7 @@ Without intervention, every lookup site had to remember to do `rulesetData.byId(
 
 ### Layer 1 — cache id Maps auto-resolve on get/has
 
-Every `*ById` / `*BySource` / `*ByEntity` Map returned by `RulesetViews.getData` is wrapped in a Proxy (`RulesetData`'s `resolvingIds`). `.get(key)` and `.has(key)` run the key through `CowData.resolve` first, then hit the underlying Map. `.size`, `.values()`, `.entries()`, iteration — all behave normally (no alias dup).
+Every id-keyed Map of the view (`byId(type)`, `*BySource`, `*ByEntity`, a module's derived ones) is wrapped in a Proxy (`RulesetData`'s `resolvingIds`). `.get(key)` and `.has(key)` run the key through `CowData.resolve` first, then hit the underlying Map. `.size`, `.values()`, `.entries()`, iteration — all behave normally (no alias dup).
 
 ```ts
 // storedFeatId may be pre-COW or post-COW; both land on the post-COW entity.
@@ -150,7 +150,7 @@ One tier: per-ruleset **raw** entities, keyed by `rulesetId[:campaignId]`. The c
 ```ts
 interface RulesetRawData {
   // Entities owned by this ruleset only — no ancestor merging.
-  entities: Record<string, Row[]>; // each kind's rows, by its type (3.5's "feats", "klass_levels"…)
+  entities: Record<string, ViewRow[]>; // each kind's rows (a row with its id), by its type (3.5's "feats", "klass_levels"…)
   joins: Record<string, Row[]>; // each join's rows its kinds' lists don't nest, by its name ("klass_skills"…)
   tieredIds: Set<string>; // the entities a link of a tiered join points at (3.5's spell lists at a level)
   properties: Property[];
@@ -181,7 +181,7 @@ flowchart TD
     FKRemap --> Out([RulesetData<br/>its lookup indices built on first read:<br/>byId(type), modifiersBySource, ...<br/>a module's derived view's: Dnd35View])
 ```
 
-Roughly: concat arrays from fork+ancestors → drop COW'd ids and sibling ids → apply FK remap. The id-indexed Maps for O(1) lookups are `RulesetData`'s getters, each built the first time it's read.
+Roughly: concat arrays from fork+ancestors → drop COW'd ids and sibling ids → apply FK remap. The id-indexed Maps for O(1) lookups are `RulesetData`'s (`byId(type)`) and those its module derives (3.5's `Dnd35View`), each built the first time it's read.
 
 `CowData`'s sibling losers come in two flavors, paired by the engine's `CowDataBuilder` (`engine/core/cow/CowDataBuilder.ts`): (1) entity-level COW siblings — multiple extensions COW'd the same base entity; (2) aptitude-name collisions — independently-created copies of the same aptitude name across the chain, typically sibling-shared class spell lists like `Assassin Spells`. Both are treated identically by the compose step: losers dropped from the entities array, FKs remapped to the winner. An extension's entity of a name the fork's own entity has is overridden by it instead (`CowData.isShadowed`): dropped with its customizations, FKs remapped to the fork's (see [rulesets.md](./rulesets.md#names-of-entities)). Base-inherited aptitudes (`General`, `Cleric Domain`, etc.) are not duplicated at seed time (see `docs/packages.md`), so they don't participate.
 
@@ -228,6 +228,7 @@ The view's own, by kind (`RulesetData`, `engine/core/view/RulesetData.ts`):
 | Index | Holds |
 | --- | --- |
 | `byId(type)`, `find(type, id)` | Each entity of a kind by id (a stored pre-COW id resolves to its copy) |
+| `storedById(type)` | Each entity of a kind by id as stored, unresolved: what a module's derived indices join rows by |
 | `rows(type)`, `joinRows(join)` | A kind's rows, a join's rows, as the view composes them |
 | `propertiesByEntity` | An entity's properties |
 | `propertiesByEntityType` (key `"items"` / `"rulesets"` / ...) | Every property of one entity type |
@@ -418,7 +419,7 @@ sequenceDiagram
     RS-->>Svc: RulesetData
 
     Svc->>Svc: level = Engine.for(scope).entities(type).find(...)
-    Svc->>Svc: autoGrantedPowers = rulesetData.klassLevelPowersWithPowersByKlassLevel.get(...)
+    Svc->>Svc: autoGrantedPowers = Dnd35View.of(rulesetData).klassLevelPowersWithPowersByKlassLevel.get(...)
 
     Svc->>Repo: CharacterLevels.findMany(db, {characterId})
     Repo->>Dedup: miss

@@ -75,7 +75,7 @@ export default class LevelsImport {
     increases: AbilityIncrease[],
     { feats, powers }: { feats: FeatPick[]; powers: PowerPick[] },
   ) {
-    const { abilitiesById, featsById, powersById } = Dnd35View.of(this.view.rulesetData);
+    const { abilitiesById, featsById, powersById } = this.dnd35;
     const parts = [`${level.klass.name} ${level.klassLevel.level}`, `${level.hp} hit points`];
     for (const { abilityId, amount } of increases)
       parts.push(`${abilitiesById.get(abilityId)?.name} ${formatSigned(amount)}`);
@@ -84,9 +84,14 @@ export default class LevelsImport {
     return `Level ${index + 1}: ${parts.join(", ")}`;
   }
 
+  /** The view's 3.5 lists and indices. */
+  private get dnd35(): Dnd35View {
+    return Dnd35View.of(this.view.rulesetData);
+  }
+
   /** Each line of a feat of the file matched, with the pools it can be picked in; a domain is its domain's feat. */
   private matchFeats(): MatchedFeat[] {
-    const { aptitudes, featsById } = Dnd35View.of(this.view.rulesetData);
+    const { aptitudes, featsById } = this.dnd35;
     const domains = this.imported.domains.map(({ line, name }): ImportedFeat => ({
       line,
       name: `${name} Domain`,
@@ -124,8 +129,7 @@ export default class LevelsImport {
     const levelsLeft = LevelRules.countLevelsLeft(0);
     for (const level of this.imported.levels) {
       const klass = this.names.findClass(level.className);
-      const klassLevel =
-        klass && Dnd35View.of(this.view.rulesetData).klassLevelByKlassAndLevel.get(`${klass.id}:${level.classLevel}`);
+      const klassLevel = klass && this.dnd35.klassLevelByKlassAndLevel.get(`${klass.id}:${level.classLevel}`);
       // A class's levels come one after another: its next is one past those taken
       const taken = matched.filter((other) => other.klass.id === klass?.id).length;
       if (this.stop && matched.length === this.stop.count) {
@@ -155,7 +159,7 @@ export default class LevelsImport {
    * and one of a class the ruleset hasn't are listed.
    */
   private matchPowers(): MatchedPower[] {
-    const { aptitudeIdBySlug, powersById } = Dnd35View.of(this.view.rulesetData);
+    const { aptitudeIdBySlug, powersById } = this.dnd35;
     const classLists = SpellLists.of(this.view.rulesetData).classListsByKlass;
     return this.imported.spells.flatMap((spell) => {
       const found = this.names.findPowers(spell.name);
@@ -225,7 +229,7 @@ export default class LevelsImport {
     for (const feat of placement.leftFeats()) {
       // Two lines the ruleset reads as one feat (a choice it keeps whole): the second isn't another pick
       // A stackable feat's copy no level took is lost as any feat, however many copies the levels took
-      const stackable = Dnd35View.of(this.view.rulesetData).featsById.get(feat.featId)?.stackable === true;
+      const stackable = this.dnd35.featsById.get(feat.featId)?.stackable === true;
       if (picked.has(feat.featId) && !stackable)
         this.report.skip(feat.line, `${feat.name} is imported already, from another line`);
       else if (held.has(feat.featId) && !picked.has(feat.featId))

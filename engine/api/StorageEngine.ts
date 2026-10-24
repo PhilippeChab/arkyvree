@@ -191,6 +191,13 @@ export default class StorageEngine {
     }
   }
 
+  /** The column a join's row holds one of its parts in (`part`: its from-entity, its target), refused without one. */
+  private joinColumn(name: string, part: LinkPart, word: string): string {
+    const found = Object.entries(this.join(name).columns).find(([, held]) => held === part);
+    if (!found) throw new Error(`The join ${name} names no ${word}`);
+    return found[0];
+  }
+
   /** A join's row of a link from an entity: its timestamps, then each part under its column's name. */
   private joinRow(join: StoredJoin, fromId: string, link: StoredLink, json: boolean): Row {
     const parts: Record<LinkPart, unknown> = {
@@ -338,9 +345,7 @@ export default class StorageEngine {
 
   /** The column a join's row names its from-entity by (`name`: a class level's grants' `klassLevelId`). */
   joinFromColumn(name: string): string {
-    const found = Object.entries(this.join(name).columns).find(([, part]) => part === "from");
-    if (!found) throw new Error(`The join ${name} names no from-entity`);
-    return found[0];
+    return this.joinColumn(name, "from", "from-entity");
   }
 
   /** Every join's name. */
@@ -663,26 +668,36 @@ export default class StorageEngine {
   viewSchema(): ViewSchema {
     if (this.schema) return this.schema;
     const types = this.merged.entityTypes;
-    const columnOf = (join: string, part: LinkPart) => {
-      const { columns } = this.join(join);
-      return Object.keys(columns).find((name) => columns[name] === part)!;
-    };
     const listed = new Set(types.flatMap(({ type }) => Object.values(this.kind(type).lists ?? {}).map((l) => l.join)));
+    const joins = this.joinNames()
+      .filter((name) => !listed.has(name))
+      .map((name) => ({ name, from: this.join(name).from, fromColumn: this.joinFromColumn(name) }));
+    const ownerOf = new Map(types.map(({ ownerType, type }) => [type, ownerType]));
+    const depth = (type: string): number => {
+      const owner = ownerOf.get(type);
+      return owner ? depth(owner) + 1 : 0;
+    };
+    const tracked = new Set([
+      ...types.flatMap(({ ownerType, type }) => (ownerType ? [ownerType, type] : [])),
+      ...joins.map(({ from }) => from),
+    ]);
     this.schema = {
-      kinds: types.map(({ ownerType, type }) => ({
-        type,
-        ...(ownerType ? { owner: { column: this.ownerColumn(type), type: ownerType } } : {}),
-        lists: Object.entries(this.kind(type).lists ?? {}).map(([name, list]) => ({
-          name,
-          target: list.target,
-          from: columnOf(list.join, "from"),
-          to: columnOf(list.join, "to"),
-          toType: this.join(list.join).to,
+      // An owner before the kinds it owns, each in its declared order otherwise
+      kinds: types
+        .toSorted((a, b) => depth(a.type) - depth(b.type))
+        .map(({ ownerType, type }) => ({
+          type,
+          ...(ownerType ? { owner: { column: this.ownerColumn(type), type: ownerType } } : {}),
+          tracked: tracked.has(type),
+          lists: Object.entries(this.kind(type).lists ?? {}).map(([name, list]) => ({
+            name,
+            target: list.target,
+            from: this.joinColumn(list.join, "from", "from-entity"),
+            to: this.joinColumn(list.join, "to", "target"),
+            toType: this.join(list.join).to,
+          })),
         })),
-      })),
-      joins: this.joinNames()
-        .filter((name) => !listed.has(name))
-        .map((name) => ({ name, from: this.join(name).from, fromColumn: columnOf(name, "from") })),
+      joins,
     };
     return this.schema;
   }

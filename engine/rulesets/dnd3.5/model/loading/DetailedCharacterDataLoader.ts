@@ -118,12 +118,13 @@ export default class DetailedCharacterDataLoader extends include(
    */
   protected override partsOf(rows: CharacterRows, view: RulesetView): LoadedParts {
     const { rulesetData } = view;
+    const view35 = Dnd35View.of(rulesetData);
     // The character's race, from the view: racesById resolves a stored id (RulesetComposition)
-    const race = Dnd35View.of(rulesetData).racesById.get(this.character.raceId);
+    const race = view35.racesById.get(this.character.raceId);
     if (!race) throw new Error("Race not found");
 
     const resolve: Resolve = (rows) => rulesetData.cow.resolveRows(rows);
-    const abilityLookup = new Map(Dnd35View.of(rulesetData).abilities.map((a) => [a.id, a.name]));
+    const abilityLookup = new Map(view35.abilities.map((a) => [a.id, a.name]));
     const levels = this.resolveLevels(rows.levels, resolve);
     const { languages, klassLevelsRaw, klassLevelSaves, klasses, klassSkills, klassEntityIds } = this.readCachedRows(
       rows,

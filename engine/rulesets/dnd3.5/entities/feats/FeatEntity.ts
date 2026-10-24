@@ -66,7 +66,7 @@ export default class FeatEntity extends ListedEntity<
     if (feat && body.name !== feat.name && feat.generated)
       throw new RulesError("invalid", "Generated feats cannot be renamed");
     const message = "Cannot link feat to aptitude(s) already used for spells";
-    this.refuseLists(body.aptitudeIds ?? [], Dnd35View.of(this.rulesetData).aptitudeIdsWithPowers, message);
+    this.refuseLists(body.aptitudeIds ?? [], this.dnd35.aptitudeIdsWithPowers, message);
   }
 
   /** A form's columns: a new feat's not generated (`planCreate` marks one that stands in for a generated one). */
@@ -125,14 +125,19 @@ export default class FeatEntity extends ListedEntity<
     };
   }
 
+  /** The view's 3.5 lists and indices. */
+  private get dnd35(): Dnd35View {
+    return Dnd35View.of(this.rulesetData);
+  }
+
   /** A pool's feats' ids (`aptitudeId`), as the ruleset composes them: every feat's (`undefined`) without one. */
   private poolFeatIds(aptitudeId: string | undefined) {
-    return aptitudeId === undefined ? undefined : Dnd35View.of(this.rulesetData).listFeatIds(aptitudeId);
+    return aptitudeId === undefined ? undefined : this.dnd35.listFeatIds(aptitudeId);
   }
 
   /** The pools these feats' modifiers add slots to (`aptitudes.<slug>.allowed`), by feat id. */
   describePoolModifiers(featIds: string[]) {
-    const { aptitudeIdBySlug } = Dnd35View.of(this.rulesetData);
+    const { aptitudeIdBySlug } = this.dnd35;
     const { modifiersBySource } = this.rulesetData;
     const byFeat = new Map<string, PoolModifier[]>();
     for (const featId of featIds) {
@@ -156,7 +161,7 @@ export default class FeatEntity extends ListedEntity<
    */
   groupByFamily(featIds: string[]) {
     return featIds.flatMap((featId) => {
-      const feat = Dnd35View.of(this.rulesetData).featsById.get(featId);
+      const feat = this.dnd35.featsById.get(featId);
       if (!feat) return [];
       const { families } = this.fields.read(this.propertiesOf(feat));
       return families.filter((family) => feat.name.startsWith(family)).map((family) => ({ group: family, id: featId }));

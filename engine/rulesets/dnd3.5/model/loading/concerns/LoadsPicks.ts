@@ -92,15 +92,12 @@ export function LoadsPicks<B extends Constructor<CharacterDataLoader<LoadedChara
       { characterLevels }: CharacterLevels,
       resolve: Resolve,
     ) {
+      const view = Dnd35View.of(rulesetData);
       const pickedFeats = pickedAt(resolve(picks.feats), characterLevels, (link) => {
-        const feat = Dnd35View.of(rulesetData).featsById.get(link.featId);
+        const feat = view.featsById.get(link.featId);
         return feat && { ...toFeatRow(feat), aptitudeId: link.aptitudeId };
       });
-      const givenFeats = grantedAt(
-        characterLevels,
-        Dnd35View.of(rulesetData).klassLevelFeatsWithFeatsByKlassLevel,
-        toGrantedFeat,
-      );
+      const givenFeats = grantedAt(characterLevels, view.klassLevelFeatsWithFeatsByKlassLevel, toGrantedFeat);
 
       const pickedFeatIds = new Set(pickedFeats.filter((f) => !f.stackable).map((f) => f.id));
       const seenGivenFeatIds = new Set<string>();
@@ -143,21 +140,19 @@ export function LoadsPicks<B extends Constructor<CharacterDataLoader<LoadedChara
       { characterLevels }: CharacterLevels,
       resolve: Resolve,
     ) {
+      const view = Dnd35View.of(rulesetData);
       const withLevel = <T extends { aptitudeId: string; id: string }>(power: T) => ({
         ...power,
         powerLevel:
-          Dnd35View.of(rulesetData)
-            .powersById.get(power.id)
-            ?.powersAptitudesInRules.find((link) => link.aptitudeId === power.aptitudeId)?.level ?? null,
+          view.powersById.get(power.id)?.powersAptitudesInRules.find((link) => link.aptitudeId === power.aptitudeId)
+            ?.level ?? null,
       });
       const pickedPowers = pickedAt(resolve(picks.powers), characterLevels, (link) => {
-        const power = Dnd35View.of(rulesetData).powersById.get(link.powerId);
+        const power = view.powersById.get(link.powerId);
         return power && { ...toPowerRow(power, rulesetData), aptitudeId: link.aptitudeId };
       }).map(withLevel);
-      const givenPowers = grantedAt(
-        characterLevels,
-        Dnd35View.of(rulesetData).klassLevelPowersWithPowersByKlassLevel,
-        (grant) => toGrantedPower(grant, rulesetData),
+      const givenPowers = grantedAt(characterLevels, view.klassLevelPowersWithPowersByKlassLevel, (grant) =>
+        toGrantedPower(grant, rulesetData),
       ).map(withLevel);
 
       const klassLevelPowerCountsByAptitudeId = givenPowers.reduce(

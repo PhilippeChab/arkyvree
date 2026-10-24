@@ -77,8 +77,9 @@ describe("aptitude deduplication across sibling extensions", () => {
 
   test("CD spell is linked to Blackguard Spells via the winner aptitude id", async () => {
     const { rulesetData } = await setup();
+    const rulesetView = Dnd35View.of(rulesetData);
     // Get the winning Blackguard Spells aptitude from the deduped cache
-    const winningApt = Dnd35View.of(rulesetData).aptitudes.find((a) => a.name === "Blackguard Spells");
+    const winningApt = rulesetView.aptitudes.find((a) => a.name === "Blackguard Spells");
     expect(winningApt).toBeDefined();
 
     // Find CD's "Visage of the Deity, Lesser" — it's on the Blackguard spell list.
@@ -90,7 +91,7 @@ describe("aptitude deduplication across sibling extensions", () => {
     expect(spell).toBeDefined();
 
     // Composed rulesetData already has sibling-merged + FK-remapped aptitude links.
-    const composedPower = Dnd35View.of(rulesetData).powersById.get(spell.id);
+    const composedPower = rulesetView.powersById.get(spell.id);
     expect(composedPower).toBeDefined();
     const blackguardLink = composedPower!.powersAptitudesInRules.find((l) => l.aptitudeId === winningApt!.id);
     expect(blackguardLink).toBeDefined();

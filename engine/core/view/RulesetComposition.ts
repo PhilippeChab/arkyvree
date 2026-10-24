@@ -15,8 +15,9 @@ interface ViewList {
   name: string;
   /** The key a link holds its target's row under */
   target: string;
-  /** The column a link names its target by, and the kind its targets are */
+  /** The column a link names its target by */
   to: string;
+  /** The kind its targets are */
   toType: string;
 }
 
@@ -46,7 +47,8 @@ export interface RulesetRawData {
  */
 export interface ViewSchema {
   joins: { from: string; fromColumn: string; name: string }[];
-  kinds: { lists: ViewList[]; owner?: { column: string; type: string }; type: string }[];
+  /** Each kind, an owner before the kinds it owns; `tracked`: its visible ids read by another kind's or a join's */
+  kinds: { lists: ViewList[]; owner?: { column: string; type: string }; tracked: boolean; type: string }[];
 }
 
 /**
@@ -114,21 +116,18 @@ export default class RulesetComposition {
   /**
    * Each kind's rows, an owner's before the kinds it owns: an owned kind's rows whose owner the view shows (a copied
    * class's levels are overridden by its copy's, paired by `CowDataBuilder`, and a sibling loser's owner leaves its
-   * own out), and each kind's visible ids. Then each join's rows of the entities it's from the view shows.
+   * own out), and the visible ids another kind or a join reads. Then each join's rows of the entities it's from the view shows.
    */
   private composeEntities() {
     const visibleIds = new Map<string, Set<string>>();
     const entities = new Map<string, ViewRow[]>();
-    const kinds = [
-      ...this.schema.kinds.filter((kind) => !kind.owner),
-      ...this.schema.kinds.filter((kind) => kind.owner),
-    ];
-    for (const { owner, type } of kinds) {
+    for (const { owner, tracked, type } of this.schema.kinds) {
       const composed = this.composeRows((raw) => raw.entities[type] ?? []);
-      const owners = owner ? visibleIds.get(owner.type) : undefined;
-      const rows = owner ? composed.filter((row) => owners?.has(row[owner.column] as string)) : composed;
-      visibleIds.set(type, new Set(rows.map((row) => row.id)));
-      entities.set(type, rows);
+      const owners = owner && visibleIds.get(owner.type);
+      if (owner && !owners) throw new Error(`The view composes ${type} before its owner, ${owner.type}`);
+      const rows = owner ? composed.filter((row) => owners!.has(row[owner.column] as string)) : composed;
+      if (tracked) visibleIds.set(type, new Set(rows.map((row) => row.id)));
+      entities.set(type, this.cow.resolveRows(rows));
     }
     const joins = new Map<string, Row[]>();
     for (const { from, fromColumn, name } of this.schema.joins) {
@@ -136,10 +135,9 @@ export default class RulesetComposition {
       const rows = this.chain.flatMap((raw) =>
         (raw.joins[name] ?? []).filter((row) => !froms || froms.has(row[fromColumn] as string)),
       );
-      joins.set(name, this.cow.resolveRows(rows as ViewRow[]));
+      joins.set(name, this.cow.resolveRows(rows));
     }
-    const resolved = new Map([...entities].map(([type, rows]) => [type, this.cow.resolveRows(rows)]));
-    return { entities: resolved, joins, visibleIds };
+    return { entities, joins, visibleIds };
   }
 
   /** The composed rows, before the lookup indices: each list across the chain, COW-resolved. */
@@ -147,10 +145,11 @@ export default class RulesetComposition {
     // A row is left out when a copy overrides it or it's a sibling loser. A loser's customizations merge into its winner
     // (the customization steps below skip only the overridden ones), and every stored id resolves to the winner.
     const { entities, joins, visibleIds } = this.composeEntities();
-    // An owned entity whose owner the view leaves out is left out with its customizations
-    const ownedTypes = new Set(this.schema.kinds.filter((kind) => kind.owner).map((kind) => kind.type));
+    // An owned entity whose owner the view leaves out is left out with its customizations: a few owned kinds, each
+    // compared to a row's type
+    const owned = this.schema.kinds.flatMap(({ owner, type }) => (owner ? [{ ids: visibleIds.get(type)!, type }] : []));
     const isLeftOut = (entityType: string, id: string) =>
-      ownedTypes.has(entityType) && !visibleIds.get(entityType)?.has(id);
+      owned.some((kind) => kind.type === entityType && !kind.ids.has(id));
     const { modifiers, excludedModifierIds } = this.composeModifiers(isLeftOut);
     const composed = {
       entities,

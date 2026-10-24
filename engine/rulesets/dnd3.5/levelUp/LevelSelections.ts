@@ -16,6 +16,7 @@ export default class LevelSelections extends LevelUpBase<DetailedCharacter> {
    * its powers by pool (each with its spell level in the pool when it has one).
    */
   private buildLevelSelections({ feats: levelFeats, powers: levelPowers, skills: levelSkills }: LevelPickRows) {
+    const view35 = Dnd35View.of(this.rulesetData);
     const skills: Record<string, number> = {};
     for (const s of levelSkills) skills[s.skillId] = s.rank;
 
@@ -25,7 +26,7 @@ export default class LevelSelections extends LevelUpBase<DetailedCharacter> {
       { aptitudeModifiers: PoolModifier[]; description?: string; id: string; name: string }[]
     > = {};
     for (const f of levelFeats) {
-      const feat = Dnd35View.of(this.rulesetData).featsById.get(f.featId);
+      const feat = view35.featsById.get(f.featId);
       (feats[f.aptitudeId] ??= []).push({
         id: f.featId,
         name: feat?.name ?? f.featId,
@@ -39,7 +40,7 @@ export default class LevelSelections extends LevelUpBase<DetailedCharacter> {
     const powers: Record<string, { description?: string; id: string; name: string; powerLevel?: number }[]> = {};
     for (const p of levelPowers) {
       const level = powerLevelMap.get(`${p.powerId}:${p.aptitudeId}`);
-      const power = Dnd35View.of(this.rulesetData).powersById.get(p.powerId);
+      const power = view35.powersById.get(p.powerId);
       (powers[p.aptitudeId] ??= []).push({
         id: p.powerId,
         name: power?.name ?? p.powerId,

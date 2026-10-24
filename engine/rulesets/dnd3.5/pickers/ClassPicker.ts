@@ -49,7 +49,7 @@ export default class ClassPicker
     const left = LevelRules.countLevelsLeft(this.input.rows.levels.length);
     return (klass: EntityRow) => {
       const next = this.nextLevelOf(klass)!;
-      const last = Dnd35View.of(this.rulesetData).klassLevelsByKlass.get(klass.id)?.at(-1)?.level ?? next.level;
+      const last = this.dnd35.klassLevelsByKlass.get(klass.id)?.at(-1)?.level ?? next.level;
       return { track: { last, left, next: next.level } };
     };
   }
@@ -93,19 +93,22 @@ export default class ClassPicker
       .filter((requirements) => requirements.length > 0);
   }
 
+  /** The view's 3.5 lists and indices. */
+  private get dnd35(): Dnd35View {
+    return Dnd35View.of(this.rulesetData);
+  }
+
   /** The class's next level for the character: after its highest in the class. */
   private nextLevelOf(klass: EntityRow): KlassLevel | undefined {
     this.maxLevels ??= this.readMaxLevels();
-    return Dnd35View.of(this.rulesetData).klassLevelByKlassAndLevel.get(
-      `${klass.id}:${(this.maxLevels.get(klass.id) || 0) + 1}`,
-    );
+    return this.dnd35.klassLevelByKlassAndLevel.get(`${klass.id}:${(this.maxLevels.get(klass.id) || 0) + 1}`);
   }
 
   /** The character's highest level in each class it has levels of, by the class's id. */
   private readMaxLevels() {
     const maxLevels = new Map<string, number>();
     for (const level of this.input.rows.levels) {
-      const klassLevel = Dnd35View.of(this.rulesetData).klassLevelsById.get(level.klassLevelId);
+      const klassLevel = this.dnd35.klassLevelsById.get(level.klassLevelId);
       if (klassLevel)
         maxLevels.set(klassLevel.klassId, Math.max(maxLevels.get(klassLevel.klassId) ?? 0, klassLevel.level));
     }

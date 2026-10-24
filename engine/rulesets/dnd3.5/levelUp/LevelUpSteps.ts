@@ -87,20 +87,15 @@ export default class LevelUpSteps extends LevelUpState {
    * too (an edit's level takes the edited one's place). The level's points are all the character has left to spend.
    */
   private describeSkillStep(step: LevelQuery) {
+    const view = Dnd35View.of(this.rulesetData);
     const klassLevel = this.readKlassLevel(step);
     const projection = this.projectStep(klassLevel.id, this.readStep(step));
     const character = this.build(projection);
     // A skill's class status is any of the character's classes' (its max rank, `isClassSkill`) and the leveled class's
     // (its cost, `isCurrentClassSkill`)
-    const classSkillIds = this.getClassSkillIds(
-      Dnd35View.of(this.rulesetData).klassSkillsWithSkillsByKlass.get(klassLevel.klassId) ?? [],
-    );
+    const classSkillIds = this.getClassSkillIds(view.klassSkillsWithSkillsByKlass.get(klassLevel.klassId) ?? []);
     const levels = {
-      perLevelClassSkillIds: [
-        Dnd35View.of(this.rulesetData)
-          .skills.filter(({ id }) => classSkillIds.has(id))
-          .map(({ id }) => id),
-      ],
+      perLevelClassSkillIds: [view.skills.filter(({ id }) => classSkillIds.has(id)).map(({ id }) => id)],
       perLevelSkillPoints: [this.getSkillPointsToSpend(character)],
       savedLevelCount: projection.input.rows.levels.length - 1,
     };

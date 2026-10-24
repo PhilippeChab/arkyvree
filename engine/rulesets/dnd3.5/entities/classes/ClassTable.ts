@@ -64,17 +64,16 @@ export default class ClassTable {
    */
   describeFeatPools() {
     const { rulesetData } = this.view;
+    const view35 = Dnd35View.of(rulesetData);
     const { levels } = this;
     const featModifiers: Modifier[] = levels.flatMap((level) =>
-      (Dnd35View.of(rulesetData).klassLevelFeatsByKlassLevel.get(level.id) ?? []).flatMap((levelFeat) =>
+      (view35.klassLevelFeatsByKlassLevel.get(level.id) ?? []).flatMap((levelFeat) =>
         (rulesetData.modifiersBySource.get(levelFeat.featId) ?? [])
           .filter((modifier) => modifier.sourceType === "feats")
           .map((modifier) => ({ ...modifier, sourceId: levelFeat.klassLevelId })),
       ),
     );
-    const nameBySlug = new Map(
-      Dnd35View.of(rulesetData).aptitudes.map((aptitude) => [stripSeparators(aptitude.name), aptitude.name]),
-    );
+    const nameBySlug = new Map(view35.aptitudes.map((aptitude) => [stripSeparators(aptitude.name), aptitude.name]));
     const totals = LevelTotals.computeRunning<number>(
       levels,
       [...getLevelModifiers(rulesetData, levels), ...featModifiers],

@@ -32,6 +32,30 @@ describe("A module's storage", () => {
     expect(() => storage.ownerColumn(unowned.type)).toThrow(`No module stores ${unowned.type} as owned`);
   });
 
+  test("declares a view's kinds, an owner before what it owns, and the joins its kinds' lists don't nest", () => {
+    const storage = StorageEngine.shared();
+    const schema = storage.viewSchema();
+    expect(storage.viewSchema()).toBe(schema);
+    const order = schema.kinds.map(({ type }) => type);
+    for (const { lists, owner, type } of schema.kinds) {
+      if (owner) {
+        expect(owner.column).toBe(storage.ownerColumn(type));
+        expect(order.indexOf(owner.type)).toBeLessThan(order.indexOf(type));
+      }
+      for (const list of lists) {
+        const join = storage.join(
+          Object.values(storage.kind(type).lists ?? {}).find((l) => l.target === list.target)!.join,
+        );
+        expect([join.columns[list.from], join.columns[list.to], join.to]).toEqual(["from", "to", list.toType]);
+      }
+    }
+    const listed = new Set(
+      schema.kinds.flatMap(({ type }) => Object.values(storage.kind(type).lists ?? {}).map((l) => l.join)),
+    );
+    expect(schema.joins.map(({ name }) => name)).toEqual(storage.joinNames().filter((name) => !listed.has(name)));
+    for (const join of schema.joins) expect(join.fromColumn).toBe(storage.joinFromColumn(join.name));
+  });
+
   test("names the column each join keeps its from-entity in", () => {
     const storage = StorageEngine.shared();
     for (const join of storage.joinNames())

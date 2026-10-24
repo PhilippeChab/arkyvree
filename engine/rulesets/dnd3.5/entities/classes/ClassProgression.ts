@@ -209,6 +209,7 @@ export default class ClassProgression {
    * granted at a level gives them there.
    */
   private static readFeatPicks(rulesetData: RulesetData) {
+    const view = Dnd35View.of(rulesetData);
     const cached = ClassProgression.featPicksByView.get(rulesetData);
     if (cached) return cached;
     const featPicks: Record<string, Record<string, number>> = {};
@@ -216,9 +217,7 @@ export default class ClassProgression {
       for (const modifier of modifiers) {
         const slug = modifier.sourceType === "feats" ? AptitudeTargets.parsePool(modifier.target) : undefined;
         const value = LiteralValue.parse(modifier.value, "number");
-        const pool = Dnd35View.of(rulesetData).aptitudesById.get(
-          Dnd35View.of(rulesetData).aptitudeIdBySlug.get(slug ?? "") ?? "",
-        );
+        const pool = view.aptitudesById.get(view.aptitudeIdBySlug.get(slug ?? "") ?? "");
         if (!pool || typeof value !== "number") continue;
         const picks = (featPicks[sourceId] ??= {});
         picks[pool.name] = (picks[pool.name] ?? 0) + value;
@@ -245,9 +244,12 @@ export default class ClassProgression {
 
   /** The class's levels, as the view has them, by their number. */
   private get classLevels(): KlassLevel[] {
-    return (Dnd35View.of(this.rulesetData).klassLevelsByKlass.get(this.klass.id) ?? []).toSorted(
-      (a, b) => a.level - b.level,
-    );
+    return (this.dnd35.klassLevelsByKlass.get(this.klass.id) ?? []).toSorted((a, b) => a.level - b.level);
+  }
+
+  /** The view's 3.5 lists and indices. */
+  private get dnd35(): Dnd35View {
+    return Dnd35View.of(this.rulesetData);
   }
 
   /** The entities a save names by id, as the view reads them: refused, naming one it shows none of. */
@@ -344,10 +346,10 @@ export default class ClassProgression {
    * the class ("Wizard Spells") before any does; none for a class without one.
    */
   private get spellList() {
+    const view = this.dnd35;
     const [list] = this.spellLists;
-    const id =
-      list?.id ?? Dnd35View.of(this.rulesetData).aptitudeIdBySlug.get(`${stripSeparators(this.klass.name)}spells`);
-    const aptitude = id === undefined ? undefined : Dnd35View.of(this.rulesetData).aptitudesById.get(id);
+    const id = list?.id ?? view.aptitudeIdBySlug.get(`${stripSeparators(this.klass.name)}spells`);
+    const aptitude = id === undefined ? undefined : view.aptitudesById.get(id);
     return aptitude && { id: aptitude.id, name: aptitude.name, slug: stripSeparators(aptitude.name) };
   }
 
@@ -381,6 +383,7 @@ export default class ClassProgression {
    */
   describe() {
     const { rulesetData } = this;
+    const view = Dnd35View.of(rulesetData);
     const lists = SpellLists.of(rulesetData).classListIds;
     const picksBySlug = new Map<string, Record<string, number>>();
     for (const level of this.classLevels) {
@@ -393,9 +396,7 @@ export default class ClassProgression {
       }
     }
     const pools = [...picksBySlug].flatMap(([slug, picks]) => {
-      const aptitude = Dnd35View.of(rulesetData).aptitudesById.get(
-        Dnd35View.of(rulesetData).aptitudeIdBySlug.get(slug) ?? "",
-      );
+      const aptitude = view.aptitudesById.get(view.aptitudeIdBySlug.get(slug) ?? "");
       return aptitude && !lists.has(aptitude.id) ? [{ aptitudeId: aptitude.id, name: aptitude.name, picks }] : [];
     });
     const featPicks = ClassProgression.readFeatPicks(rulesetData);
