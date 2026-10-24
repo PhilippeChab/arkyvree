@@ -11,8 +11,6 @@ import {
 } from "./sections/index.ts";
 
 interface CharacterSheetBodyProps {
-  /** The bonded creatures' names link to their sheets: the owner's view. */
-  bondedLinkable?: boolean;
   character: CharacterData;
   characterId: string;
   /** The owner's view only: the character's diagnostics, shown under the sheet. */
@@ -26,6 +24,8 @@ interface CharacterSheetBodyProps {
   portraitUrl?: string | null;
   readOnly?: boolean;
   rulesetId?: string;
+  /** The names of the characters under it (its subsheets) link to their sheets: the owner's view. */
+  subsheetsLinkable?: boolean;
 }
 
 /**
@@ -39,7 +39,7 @@ export function CharacterSheetBody({
   identityReadOnly,
   portraitReadOnly,
   partial = false,
-  bondedLinkable = false,
+  subsheetsLinkable = false,
   equipmentMode,
   rulesetId,
   diagnostics,
@@ -68,7 +68,7 @@ export function CharacterSheetBody({
             character={character}
             characterId={characterId}
             readOnly={readOnly}
-            bondedLinkable={bondedLinkable}
+            subsheetsLinkable={subsheetsLinkable}
             equipmentMode={equipmentMode}
             rulesetId={rulesetId}
           />

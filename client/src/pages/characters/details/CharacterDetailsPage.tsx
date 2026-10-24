@@ -78,7 +78,7 @@ export default function CharacterDetailsPage() {
   const { data: character, isLoading, error } = useQuery(characterDetailQuery(id));
   const {
     isArchived,
-    isBonded,
+    isSubsheet,
     canArchive,
     canDownloadPdf,
     canEdit,
@@ -171,14 +171,14 @@ export default function CharacterDetailsPage() {
             summary={character.summary}
             rulesetId={character.rulesetId}
             rulesetName={character.rulesetName}
-            backTo={isBonded && parentCharacterId ? `/characters/${parentCharacterId}` : "/characters"}
+            backTo={isSubsheet && parentCharacterId ? `/characters/${parentCharacterId}` : "/characters"}
             onAddLevel={canEditLevels ? (trackId) => addLevel.openWith({ trackId }) : undefined}
             onEditLevel={canEditLevels ? editLevel.openWith : undefined}
-            onMenuOpen={isBonded && (isArchived || !canDownloadPdf) ? undefined : menu.openMenu}
+            onMenuOpen={isSubsheet && (isArchived || !canDownloadPdf) ? undefined : menu.openMenu}
             rename={canEdit ? { characterId: id, updatedAt: character.updatedAt, parentCharacterId } : undefined}
           />
           <Menu anchorEl={menu.anchorEl} open={menu.open} onClose={menu.closeMenu}>
-            {isBonded
+            {isSubsheet
               ? canDownloadPdf && (
                   <ActionMenuItem
                     key="download-pdf"
@@ -356,7 +356,7 @@ export default function CharacterDetailsPage() {
             />
           )}
 
-          {isBonded ? (
+          {isSubsheet ? (
             <CharacterSheetBody
               character={character}
               characterId={id}
@@ -371,7 +371,7 @@ export default function CharacterDetailsPage() {
               characterId={id}
               readOnly={!canEdit}
               portraitReadOnly={!canEditPortrait}
-              bondedLinkable
+              subsheetsLinkable
               equipmentMode="editable"
               rulesetId={character.rulesetId}
               diagnostics={character}

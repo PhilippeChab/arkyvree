@@ -2,7 +2,7 @@ import { Box, Button, Stack, TextField, Typography } from "@mui/material";
 import { memo, useCallback } from "react";
 import { type Control, useController } from "react-hook-form";
 
-import { GroupedSkillRows, SkillRow } from "@/client/src/components/characters/index.ts";
+import { GroupedRow, GroupedRows } from "@/client/src/components/characters/index.ts";
 import {
   DataCell,
   DataTable,
@@ -62,7 +62,7 @@ const SpendRow = memo(function SpendRow({ row, points, onSpend, indented, hidden
   const maxGain = valueAt(row, row.valuesByPoints.length - 1);
 
   return (
-    <SkillRow
+    <GroupedRow
       name={row.name}
       shortName={row.shortName}
       indented={indented}
@@ -116,7 +116,7 @@ const SpendRow = memo(function SpendRow({ row, points, onSpend, indented, hidden
       <DataCell slot={row.favored ? "inline" : "hidden"} phoneChildren={words.favored}>
         {row.favored ? "Yes" : "No"}
       </DataCell>
-    </SkillRow>
+    </GroupedRow>
   );
 });
 
@@ -217,10 +217,10 @@ export function SpendStep({ characterId, step, wizard }: SpendStepProps) {
         </Stack>
       </Stack>
       <DataTable size="small" columns={columns} minWidth={420} fixed sx={NARROW_HEADERS_SX}>
-        <GroupedSkillRows
-          skills={rows}
+        <GroupedRows
+          rows={rows}
           columns={columns.length}
-          renderSkill={(row, { indented, hidden }) => (
+          renderRow={(row, { indented, hidden }) => (
             <SpendRow
               key={row.id}
               row={row}

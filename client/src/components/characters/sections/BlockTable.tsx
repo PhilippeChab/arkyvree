@@ -2,7 +2,7 @@ import { Typography } from "@mui/material";
 
 import { DataCell, DataRow, DataTable, EmptyValue } from "@/client/src/components/common/index.ts";
 
-import { GroupedSkillRows, SkillRow } from "./GroupedSkillRows.tsx";
+import { GroupedRow, GroupedRows } from "./GroupedRows.tsx";
 import { type SheetColumn, type SheetRow, type SheetTable, splitNameColumn } from "./sheetBlocks.ts";
 
 interface BlockCellProps {
@@ -102,15 +102,15 @@ export function BlockTable({ table }: BlockTableProps) {
       {...(table.fixed && { fixed: true, sx: NARROW_HEADERS_SX })}
     >
       {table.grouped ? (
-        <GroupedSkillRows
-          skills={table.rows.map((row) => ({ ...row, family: row.group ?? null }))}
+        <GroupedRows
+          rows={table.rows.map((row) => ({ ...row, family: row.group ?? null }))}
           columns={table.columns.length}
-          renderSkill={(row, placement) => {
+          renderRow={(row, placement) => {
             const name = row.cells[nameColumn.key] ?? "";
             return (
-              <SkillRow key={row.key} name={name} shortName={row.short ?? name} {...placement}>
+              <GroupedRow key={row.key} name={name} shortName={row.short ?? name} {...placement}>
                 {cellsOf(row)}
-              </SkillRow>
+              </GroupedRow>
             );
           }}
         />

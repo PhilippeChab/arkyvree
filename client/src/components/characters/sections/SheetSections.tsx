@@ -8,14 +8,14 @@ import { SheetBlockView } from "./SheetBlockView.tsx";
 
 /** What a sheet passes its sections: the character, and what its viewer may do there. */
 interface SheetSectionsProps {
-  /** The bonded creatures' names link to their sheets: the owner's view. */
-  bondedLinkable: boolean;
   character: CharacterData;
   characterId: string;
   /** Who may change the inventory edits it; a read-only sheet lists the character's equipment as it is. */
   equipmentMode: "editable" | "readonly";
   readOnly: boolean;
   rulesetId?: string;
+  /** The names of the characters under it (its subsheets) link to their sheets: the owner's view. */
+  subsheetsLinkable: boolean;
 }
 
 type CampaignCharacterData = InferResponseType<
@@ -40,7 +40,7 @@ export function SheetSections({
   character,
   characterId,
   readOnly,
-  bondedLinkable,
+  subsheetsLinkable,
   equipmentMode,
   rulesetId,
 }: SheetSectionsProps) {
@@ -57,7 +57,7 @@ export function SheetSections({
         inventoryMode={equipmentMode}
         readOnly={readOnly}
         rulesetId={rulesetId}
-        subsheetsLinkable={bondedLinkable}
+        subsheetsLinkable={subsheetsLinkable}
       />
     ));
 }

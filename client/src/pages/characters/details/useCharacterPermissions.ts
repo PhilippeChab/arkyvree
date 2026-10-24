@@ -13,22 +13,22 @@ export function useCharacterPermissions(character: Pick<CharacterDetail, "delete
   const isDemo = useIsDemo();
   const isArchived = !!character?.deletedAt;
   const isOwner = !!currentUserId && character?.userId === currentUserId;
-  // A bonded creature follows its master: archived, unarchived and deleted with it
-  const isBonded = !!character && character.kind !== "pc";
+  // A character under another (a subsheet: 3.5's bonded creature) follows it: archived, unarchived and deleted with it
+  const isSubsheet = !!character && character.kind !== "pc";
 
   return {
     isArchived,
-    isBonded,
+    isSubsheet,
     /** Archive it, unarchive it, delete it for good: its owner's alone, a player character's. */
-    canArchive: isOwner && !isBonded,
+    canArchive: isOwner && !isSubsheet,
     canDownloadPdf: !isDemo,
     /** Its sheet: anyone who opened it, while it isn't archived. */
     canEdit: !isArchived,
     /**
-     * Add, edit and remove its levels: anyone who opened a player character, while it isn't archived; a bonded
-     * creature's levels are its master's.
+     * Add, edit and remove its levels: anyone who opened a player character, while it isn't archived; a subsheet's
+     * levels are the character's it's under.
      */
-    canEditLevels: !isArchived && !isBonded,
+    canEditLevels: !isArchived && !isSubsheet,
     /** Its portrait: contributors edit the sheet, but only the owner changes it. */
     canEditPortrait: isOwner && !isArchived,
     /** Invite contributors: its owner, while it isn't archived. */

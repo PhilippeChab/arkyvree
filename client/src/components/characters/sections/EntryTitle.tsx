@@ -8,7 +8,7 @@ interface EntryTitleProps {
   sx?: SxProps<Theme>;
 }
 
-/** The name of an entry in a panel's list (a feat on the sheet, a bonded creature): a heading, red at 600. */
+/** The name of an entry in a panel's list (a feat on the sheet, a subsheet): a heading, red at 600. */
 export function EntryTitle({ children, component = "h3", sx }: EntryTitleProps) {
   return (
     <Typography

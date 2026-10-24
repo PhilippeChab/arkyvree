@@ -10,7 +10,7 @@ interface ReadOnlyInventorySectionProps {
   block: BlockOf<"inventory">;
   /** The load it carries, under the table. */
   load?: ReactNode;
-  /** Links each item to its page in this ruleset, for a viewer who reads it (a bonded creature's sheet) */
+  /** Links each item to its page in this ruleset, for a viewer who reads it (a subsheet's) */
   rulesetId?: string;
 }
 
