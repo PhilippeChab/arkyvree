@@ -40,6 +40,10 @@ describe("An entity page's way back", () => {
     ).toBe("Back to Class Level");
     // Before its ruleset's words are in, never its type as the code names it
     expect(entityPageBack({ from: "/rulesets/r1/class-levels/l1/customization" }, FALLBACK).label).toBe("Back");
+    // A type by its own name, which no page's URL takes, isn't one
+    expect(entityPageBack({ from: "/rulesets/r1/klass_levels/l1/customization" }, FALLBACK, DND35_WORDS).label).toBe(
+      "Back to Ruleset",
+    );
   });
 
   test("goes to its fallback when it was opened from nowhere it knows", () => {
