@@ -2,7 +2,7 @@
  * Validates every active character:
  *  1. Reference integrity — every entity a character names is live
  *  2. Junction validity  — a pick through a pool names an entity the pool lists
- *  3. Ability increases  — on the levels its ruleset gives one, and only there
+ *  3. Due choices       — on the levels its ruleset gives one (3.5's ability increases), and only there
  *  4. Build integrity    — DetailedCharacter.build() + validate()
  *
  * Usage: bun run prod:validate-characters (or DATABASE_URL=… bun scripts/ops/validate-characters.ts)
@@ -15,9 +15,9 @@ import { db } from "@/server/database/index.ts";
 import StoredCharacters from "@/server/repositories/stored/StoredCharacters.ts";
 import type { Character } from "@/shared/relations.ts";
 
-import { checkAbilityIncreases } from "./validateCharacters/abilityIncreases.ts";
 import { checkBuilds } from "./validateCharacters/builds.ts";
 import { printCharacterData } from "./validateCharacters/characterData.ts";
+import { checkDueChoices } from "./validateCharacters/dueChoices.ts";
 import { checkJunctions } from "./validateCharacters/junctions.ts";
 import { checkReferences } from "./validateCharacters/references.ts";
 
@@ -38,7 +38,7 @@ async function main() {
   const totalIssues =
     (await checkReferences()) +
     (await checkJunctions()) +
-    (await checkAbilityIncreases(characters)) +
+    (await checkDueChoices(characters)) +
     (await checkBuilds(characters));
   console.log(
     totalIssues > 0

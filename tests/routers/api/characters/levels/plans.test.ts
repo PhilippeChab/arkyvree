@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import type { InferResponseType } from "hono/client";
 
-import { type SeedContext } from "@/scripts/db/seeds/seedContext.ts";
+import { type SeedContext } from "@/database/seeders/dnd3.5/characters/seedContext.ts";
 import { api, expectOk, expectStatus } from "@/tests/support/api.ts";
 import { postCharacter } from "@/tests/support/characters.ts";
 import { FIGHTER_LEVELS, picks, type Picks, SORCERER_1 } from "@/tests/support/dnd3.5/levelFixtures.ts";

@@ -1,8 +1,8 @@
 import { describe, expect, test } from "bun:test";
 
+import { addClassLevels, addFeats } from "@/database/seeders/dnd3.5/characters/seedCharacter.ts";
 import SpellGroups from "@/engine/rulesets/dnd3.5/characters/description/SpellGroups.ts";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
-import { addClassLevels, addFeats } from "@/scripts/db/seeds/seedCharacter.ts";
 import { db } from "@/server/database/index.ts";
 import { Characters } from "@/server/repositories/index.ts";
 import { buildAs } from "@/tests/support/dnd3.5/characters.ts";

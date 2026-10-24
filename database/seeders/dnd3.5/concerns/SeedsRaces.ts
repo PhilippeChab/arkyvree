@@ -1,10 +1,10 @@
-import type { RaceSeed } from "@/content/core/builders/races/types.ts";
-import type { SeederState } from "@/database/seeders/core/SeederState.ts";
+import type { RaceSeed } from "@/content/dnd3.5/builders/races/types.ts";
+import type { Dnd35ContentSeeder } from "@/database/seeders/dnd3.5/Dnd35ContentSeeder.ts";
 import { modifiersInCustomization } from "@/drizzle/schema.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 
 /** Seeding races. */
-export function SeedsRaces<B extends Constructor<SeederState>>(Base: B) {
+export function SeedsRaces<B extends Constructor<Dnd35ContentSeeder>>(Base: B) {
   abstract class SeedingRaces extends Base {
     /**
      * Seeds races with their modifiers and properties: of their own kind, else of `kind` (the table's default without

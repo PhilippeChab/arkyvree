@@ -1,11 +1,9 @@
-import type { CharacterSeed } from "@/content/core/builders/characters/types.ts";
 import type {
   CorePackageDefinition,
   ExtensionPackageDefinition,
   PackageDefinition,
 } from "@/content/core/builders/packages/types.ts";
 import type { ContentSeeder } from "@/database/seeders/core/ContentSeeder.ts";
-import type { SeedContext } from "@/database/seeders/core/SeederState.ts";
 import type { Db } from "@/drizzle/database.ts";
 
 /** A step that seeds or changes a package's content. */
@@ -32,14 +30,15 @@ export interface ContentPackage extends Pick<PackageDefinition, "name" | "seedsV
 /**
  * A base rules' content, as its row of the registry gives it (`database/packages/registry.ts`): its core rules'
  * package, which creates its core ruleset, its extensions' (`Core` and `Book`, what they seed), the seeder that writes
- * them, and the characters the dev and test databases are seeded with on its core rules.
+ * them, and the step that seeds the characters the dev and test databases are seeded with on its core rules.
  */
 export interface RulesetContent<Core = unknown, Book = unknown> {
   core: CorePackageDefinition<Core>;
   /** In the order the runner applies them, after the core rules. */
   extensions: ExtensionPackageDefinition<Book>[];
   seeder: SeederClass<Core, Book>;
-  testCharacters: CharacterSeed[];
+  /** Seeds the characters the dev and test databases are seeded with, on its core rules. */
+  seedTestCharacters: (db: Db) => Promise<void>;
   /** Its packages' updates, by package name (see `ContentPackage`): an update writes, so it's the database's. */
   updates?: Record<string, Record<number, Seed>>;
 }
@@ -49,4 +48,4 @@ export interface RulesetContent<Core = unknown, Book = unknown> {
  * `ContentSeeder`'s statics, which create the rulesets its packages seed (`createCore`, `createExtension`).
  */
 export type SeederClass<Core = unknown, Book = unknown> = Omit<typeof ContentSeeder, "prototype"> &
-  (new (db: Db, ctx: SeedContext) => ContentSeeder<Core, Book>);
+  (new (...args: any[]) => ContentSeeder<Core, Book>);

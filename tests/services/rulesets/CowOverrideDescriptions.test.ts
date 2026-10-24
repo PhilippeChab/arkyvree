@@ -1,8 +1,8 @@
 import { describe, expect, test } from "bun:test";
 
+import { addClassLevels, addFeats, addPowers, addSkills } from "@/database/seeders/dnd3.5/characters/seedCharacter.ts";
 import type { RulesetSave, Skill } from "@/engine/index.ts";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
-import { addClassLevels, addFeats, addPowers, addSkills } from "@/scripts/db/seeds/seedCharacter.ts";
 import { db } from "@/server/database/index.ts";
 import { Characters, Entities } from "@/server/repositories/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";

@@ -12,8 +12,8 @@
 
 import { beforeAll, describe, expect, test } from "bun:test";
 
+import { type SeedContext } from "@/database/seeders/dnd3.5/characters/seedContext.ts";
 import type { Feat } from "@/engine/index.ts";
-import { type SeedContext } from "@/scripts/db/seeds/seedContext.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { clearRequestCache, memoizeRequest, runWithRequestCache } from "@/server/database/requestCache.ts";
 import { Characters, Entities, Notifications, Rulesets } from "@/server/repositories/index.ts";

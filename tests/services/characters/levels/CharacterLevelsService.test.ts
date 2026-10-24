@@ -1,6 +1,7 @@
 import { afterAll, describe, expect, test } from "bun:test";
 
 import { DND35_DMG_NAME } from "@/content/dnd3.5/rulesetNames.ts";
+import { addClassLevels, addFeats, addPowers, addSkills } from "@/database/seeders/dnd3.5/characters/seedCharacter.ts";
 import type {
   Aptitude,
   Feat,
@@ -23,7 +24,6 @@ import type {
 } from "@/engine/index.ts";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
-import { addClassLevels, addFeats, addPowers, addSkills } from "@/scripts/db/seeds/seedCharacter.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";

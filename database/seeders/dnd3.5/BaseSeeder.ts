@@ -1,20 +1,33 @@
 import { bonus, setFlag, setNum } from "@/content/core/builders/customization/modifiers.ts";
 import { gte } from "@/content/core/builders/customization/requirements.ts";
-import type { BookContent, CoreContent } from "@/content/dnd3.5/builders/rulesets/types.ts";
-import { ContentSeeder } from "@/database/seeders/core/ContentSeeder.ts";
 import { modifiersInCustomization, requirementsInCustomization } from "@/drizzle/schema.ts";
+import { include } from "@/lib/mixins.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
+import { CopiesOnWrite } from "./concerns/CopiesOnWrite.ts";
+import { SeedsAptitudes } from "./concerns/SeedsAptitudes.ts";
+import { SeedsCoreRules } from "./concerns/SeedsCoreRules.ts";
+import { SeedsFeats } from "./concerns/SeedsFeats.ts";
+import { SeedsRaces } from "./concerns/SeedsRaces.ts";
+import { Dnd35ContentSeeder } from "./Dnd35ContentSeeder.ts";
 import { getClassSpellLevels, type SpellcastingClass } from "./spellTable.ts";
 
 type ModifierRow = typeof modifiersInCustomization.$inferInsert;
 
 /**
- * The 3.5 seeder's core, which its steps (`concerns/`) build on: a content seeder (`ContentSeeder`: its context, the
- * rows and their inserts) of the 3.5 content (the core rules' `CoreContent`, an extension's `BookContent`), and what
- * its spell lists write with.
+ * The 3.5 seeder's core, which its other steps (`concerns/`) build on: a content seeder of the 3.5 content
+ * (`Dnd35ContentSeeder`: its context, the rows and their inserts), the steps that write its aptitudes, abilities, saves
+ * and languages, feats, races, and the copies an extension makes of what it changes, and what its spell lists write
+ * with.
  */
-export abstract class BaseSeeder extends ContentSeeder<CoreContent, BookContent> {
+export abstract class BaseSeeder extends include(
+  Dnd35ContentSeeder,
+  CopiesOnWrite,
+  SeedsAptitudes,
+  SeedsCoreRules,
+  SeedsFeats,
+  SeedsRaces,
+) {
   /** A spell list's spells joining the list of the class whose level gave the source: a cleric's domain, the cleric's. */
   protected joinsClassList(sourceId: string, sourceType: string, list: string): ModifierRow {
     return { sourceId, sourceType, ...setFlag(`aptitudes.${list}.joinsclasslist`) };

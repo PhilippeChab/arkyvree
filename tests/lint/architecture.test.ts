@@ -231,14 +231,21 @@ describe("architecture rules", () => {
         "shared/bk.ts": types("@/drizzle/schema.ts"),
         "vocabulary/dnd3.5/bl.ts": types("@/shared/enums.ts"),
         // Each declared edge: the client to the server's types, the codegen to the content's builders and the core
-        // rules' feats, the database to the content's builders, packages and test data
+        // rules' feats, the database to the content's builders and packages
         "client/src/ca.ts": types("@/server/routers/application.ts"),
         "codegen/core/cb.ts": imports("@/content/core/builders/customization/requirements.ts"),
         "codegen/dnd3.5/tools/cc.ts": types("@/content/dnd3.5/builders/feats/types.ts"),
         "codegen/dnd3.5/tools/cd.ts": imports("@/content/dnd3.5/data/feats/coreFeats.ts"),
         "database/seeders/dnd3.5/ce.ts": imports("@/content/dnd3.5/builders/feats/possession.ts"),
         "database/packages/registry.ts": imports("@/content/dnd3.5/packages/core.ts"),
-        "database/packages/cf.ts": imports("@/content/dnd3.5/testData/characters.ts"),
+        // A ruleset's test characters' seeding writes its test data through the server, as the seed user: its folder's
+        // edges alone, a ruleset's, not the core's
+        "database/seeders/dnd3.5/characters/cf.ts": imports("@/content/dnd3.5/testData/characters.ts"),
+        "database/seeders/dnd3.5/characters/cg.ts": imports("@/server/services/characters/index.ts"),
+        "database/seeders/dnd3.5/characters/ci.ts": imports("@/scripts/db/seeds/users.ts"),
+        "database/seeders/dnd3.5/ch.ts": imports("@/server/services/characters/index.ts"),
+        "database/packages/cj.ts": imports("@/content/dnd3.5/testData/characters.ts"),
+        "database/seeders/core/characters/ck.ts": imports("@/server/services/characters/index.ts"),
         // The tests, the scripts and the tools' configs run the boxes: they import anything
         "tests/da.test.ts": imports("@/server/database/index.ts"),
         "scripts/db/db.ts": imports("@/server/services/index.ts"),
@@ -257,8 +264,11 @@ describe("architecture rules", () => {
       "root-folders content/core/builders/p.ts",
       "root-folders content/dnd3.5/builders/o.ts",
       "root-folders content/dnd3.5/data/n.ts",
+      "root-folders database/packages/cj.ts",
       "root-folders database/packages/f.ts",
+      "root-folders database/seeders/core/characters/ck.ts",
       "root-folders database/seeders/core/e.ts",
+      "root-folders database/seeders/dnd3.5/ch.ts",
       "root-folders database/seeders/dnd3.5/l.ts",
       "root-folders database/seeders/dnd3.5/m.ts",
       "root-folders drizzle/aa.ts",

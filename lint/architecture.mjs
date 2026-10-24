@@ -7,7 +7,8 @@
  *   role reads, and reaches another domain box (the client, the server, the content, the codegen, the database) only
  *   by an edge its table declares, with its reason: the client takes the server's types (its API's), the codegen
  *   writes in the content's builders and reads the core rules' hand-written feats, the database's seeders and runner
- *   read the content's builders, packages and test data. The client reads no ruleset's vocabulary: what it shows of it,
+ *   read the content's builders and packages, a ruleset's test characters' seeding its test data, writing through the
+ *   server (edges `from` one folder of its box, a ruleset's). The client reads no ruleset's vocabulary: what it shows of it,
  *   the engine describes. The tests and the scripts, which run the boxes, import anything; a root folder the table
  *   doesn't declare imports nothing (`ROOT_FOLDERS`).
  * - `layers`: inside a box, a layer imports only what's below it (database < repositories < copy-on-write's views < its
@@ -216,10 +217,24 @@ const ROOT_FOLDERS = {
       { to: "drizzle/" },
       { to: "content/*/builders/", why: "a seeder writes the content's seed types, with its builders" },
       { to: "content/*/packages/", why: "the runner applies the packages, and a seeder writes what one gathers" },
-      { to: "content/*/testData/", why: "the registry names each base rules' test characters" },
       {
         to: "server/repositories/stored/",
         why: "a seeder writes an entity's rows, its joins and its properties as the server does: the generic tables, by what each module declares",
+      },
+      {
+        from: "database/seeders/*/characters/",
+        to: "content/*/testData/",
+        why: "a ruleset's test characters' seeding writes its test data",
+      },
+      {
+        from: "database/seeders/*/characters/",
+        to: "server/",
+        why: "a ruleset's test characters are seeded through the server's character writes, as the app makes them",
+      },
+      {
+        from: "database/seeders/*/characters/",
+        to: "scripts/db/seeds/users.ts",
+        why: "a ruleset's test characters are the seed user's",
       },
     ],
   },
@@ -654,7 +669,11 @@ function createRootFolders(context) {
   return onImports((node, spec, types) => {
     const target = targetOf(file, spec);
     if (!target || target.split("/")[0] === root) return;
-    const named = box.imports.filter(({ to }) => isNamedBy(target, to));
+    // An edge `from` a folder of the box is that folder's alone, a ruleset's where it says `*`, never the core's
+    const named = box.imports.filter(
+      ({ from, to }) =>
+        (!from || (isNamedBy(file, from) && !isNamedBy(file, from.replace("*", "core")))) && isNamedBy(target, to),
+    );
     if (named.some((entry) => !entry.types || types)) return;
     if (named.length > 0) {
       context.report({
@@ -663,7 +682,11 @@ function createRootFolders(context) {
       });
       return;
     }
-    const imports = box.imports.map(({ to }) => to).join(", ") || "nothing of the repo";
+    const imports =
+      box.imports
+        .filter(({ from }) => !from)
+        .map(({ to }) => to)
+        .join(", ") || "nothing of the repo";
     context.report({
       node,
       message:
