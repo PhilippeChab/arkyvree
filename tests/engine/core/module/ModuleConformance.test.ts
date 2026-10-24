@@ -8,7 +8,7 @@ import { Engine, type Language } from "@/engine/index.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { CharacterLevels, Characters, Entities, Visibility } from "@/server/repositories/index.ts";
-import { readBondedInputs, readCharacterInput } from "@/server/services/characters/characterInputs.ts";
+import { readCharacterInput, readChildInputs } from "@/server/services/characters/characterInputs.ts";
 import { BASE_RULES_OPTIONS, type BaseRules } from "@/shared/enums.ts";
 import { createTestItem } from "@/tests/support/items.ts";
 import { createTestRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
@@ -49,18 +49,18 @@ describe.each([...BASE_RULES_OPTIONS])("The %s module, as core runs its characte
     const creatures = await Characters.findMany(db, { parentCharacterId: record.id }, Visibility.All);
     for (const { id } of creatures) await Characters.update(db, { privateNotes: `${NOTES} ${id}` }, { id });
     const input = await readCharacterInput(db, record);
-    const bonded = await readBondedInputs(db, input, Visibility.All);
+    const children = await readChildInputs(db, input, Visibility.All);
 
     const read = await withRulesetScope(db, record.rulesetId, async (scope) => {
       const character = Engine.for(scope).character(input);
       // Each creature's own sheet, which holds its notes; its master's shows it without them
       const creature = (reading: PrivateNotes) =>
-        bonded.map((input) => Engine.for(scope).character(input).describeForMember([], reading));
+        children.map((input) => Engine.for(scope).character(input).describeForMember([], reading));
       return {
-        hidden: [character.describeForMember(bonded, "hide"), ...creature("hide")],
-        partial: [character.describeForMember(bonded, "partial")],
-        shared: [character.describe(bonded, "hide")],
-        shown: character.describeForMember(bonded, "show"),
+        hidden: [character.describeForMember(children, "hide"), ...creature("hide")],
+        partial: [character.describeForMember(children, "partial")],
+        shared: [character.describe(children, "hide")],
+        shown: character.describeForMember(children, "show"),
         shownCreatures: creature("show"),
       };
     });
@@ -77,7 +77,7 @@ describe.each([...BASE_RULES_OPTIONS])("The %s module, as core runs its characte
   test("names none of a partly seen character's build: its card's chips its partial ones, its summary no tracks", async () => {
     const seeded = await findSeededCharacter(rules);
     const input = await readCharacterInput(db, seeded);
-    const bonded = await readBondedInputs(db, input, Visibility.All);
+    const children = await readChildInputs(db, input, Visibility.All);
     const levels = await CharacterLevels.findMany(db, { characterIds: [seeded.id] });
 
     const read = await withRulesetScope(db, seeded.rulesetId, async (scope) => {
@@ -86,8 +86,8 @@ describe.each([...BASE_RULES_OPTIONS])("The %s module, as core runs its characte
       return {
         card: engine.characters().describeCard(seeded, levels, false),
         partialCard: engine.characters().describeCard(seeded, levels, true),
-        partial: character.describeForMember(bonded, "partial"),
-        shown: character.describeForMember(bonded, "show"),
+        partial: character.describeForMember(children, "partial"),
+        shown: character.describeForMember(children, "show"),
       };
     });
 
@@ -101,12 +101,12 @@ describe.each([...BASE_RULES_OPTIONS])("The %s module, as core runs its characte
   test("asks its summary's confirmations as the client's own ask theirs: what follows, then that it's for good", async () => {
     const seeded = await findSeededCharacter(rules);
     const input = await readCharacterInput(db, seeded);
-    const bonded = await readBondedInputs(db, input, Visibility.All);
+    const children = await readChildInputs(db, input, Visibility.All);
 
     const { words } = await withRulesetScope(
       db,
       seeded.rulesetId,
-      async (scope) => Engine.for(scope).character(input).describeForMember(bonded, "show").summary,
+      async (scope) => Engine.for(scope).character(input).describeForMember(children, "show").summary,
     );
 
     for (const message of [words.deleteMessage, words.removeLastMessage]) {

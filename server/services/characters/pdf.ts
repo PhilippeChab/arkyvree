@@ -7,7 +7,7 @@ import { Activities, Campaigns, Characters, PlayerCharacters, Visibility } from 
 import { CampaignsPolicy } from "@/server/services/policies/index.ts";
 import type { Character, Session } from "@/shared/relations.ts";
 
-import { findEditableCharacterOrBonded } from "./editableCharacter.ts";
+import { findEditableCharacterOrChild } from "./editableCharacter.ts";
 
 /**
  * Where a PDF export's activity and failure notification link to: the
@@ -49,7 +49,7 @@ export async function enqueueCharacterPdf(
 
 /**
  * The character `userId` may export as a PDF, or null: one they own or
- * contribute to (or a bonded character of such a master). Through
+ * contribute to (or a child of such a parent: 3.5's bonded creature). Through
  * `campaignId`, the character must be linked to that campaign, and its Game
  * Master may export it too. Checked when the export is queued and again when
  * the worker runs it, so access revoked in between is honored.
@@ -61,5 +61,5 @@ export async function findExportableCharacter(userId: string, characterId: strin
     if (campaign && (await CampaignsPolicy.for(db, { userId }, campaign)).isGameMaster())
       return (await Characters.findOne(db, { id: characterId })) ?? null;
   }
-  return findEditableCharacterOrBonded(db, characterId, userId);
+  return findEditableCharacterOrChild(db, characterId, userId);
 }

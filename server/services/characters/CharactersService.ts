@@ -27,10 +27,10 @@ import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import type { Session } from "@/shared/relations.ts";
 
 import { describeCharacterCards } from "./characterCards.ts";
-import { readBondedInputs, readCharacterInput } from "./characterInputs.ts";
+import { readCharacterInput, readChildInputs } from "./characterInputs.ts";
 import { Archives } from "./concerns/Archives.ts";
 import { Imports } from "./concerns/Imports.ts";
-import { findEditableCharacterOrBonded, getEditableCharacter } from "./editableCharacter.ts";
+import { findEditableCharacterOrChild, getEditableCharacter } from "./editableCharacter.ts";
 import { enqueueCharacterPdf, findExportableCharacter } from "./pdf.ts";
 
 class CharactersService extends include(Object, Archives, Imports) {
@@ -99,8 +99,8 @@ class CharactersService extends include(Object, Archives, Imports) {
   }
 
   /**
-   * A character's sheet, as the API answers it: a player character's with its bonded creatures', or a creature's, which
-   * its master's editors read.
+   * A character's sheet, as the API answers it: a player character's with its children's (3.5's bonded creatures), or a
+   * child's, which its parent's editors read.
    */
   async getCharacter(session: Session, characterId: string) {
     const record = await Characters.findOne(db, { id: characterId }, Visibility.All);
@@ -111,7 +111,7 @@ class CharactersService extends include(Object, Archives, Imports) {
       const character = await readCharacterInput(db, record);
       return Engine.for(scope)
         .character(character)
-        .describe(await readBondedInputs(db, character, Visibility.All));
+        .describe(await readChildInputs(db, character, Visibility.All));
     });
   }
 
@@ -210,7 +210,7 @@ class CharactersService extends include(Object, Archives, Imports) {
    * (`entityIds`, as its edit is being made) leave it room for: what the link's picker offers.
    */
   async getLinkPicks(session: Session, characterId: string, link: string, entityIds: string[]) {
-    const record = await findEditableCharacterOrBonded(db, characterId, session.userId);
+    const record = await findEditableCharacterOrChild(db, characterId, session.userId);
     if (!record) throw new NotFoundError("Character not found");
 
     return await withRulesetScope(db, record.rulesetId, async (scope) =>
@@ -249,7 +249,7 @@ class CharactersService extends include(Object, Archives, Imports) {
     },
   ) {
     return await withTransaction(async (tx) => {
-      const characterRecord = await findEditableCharacterOrBonded(tx, characterId, session.userId);
+      const characterRecord = await findEditableCharacterOrChild(tx, characterId, session.userId);
       if (!characterRecord) throw new NotFoundError("Character not found");
 
       const { fields, links, updatedAt: expectedUpdatedAt, ...characterFields } = updateData;

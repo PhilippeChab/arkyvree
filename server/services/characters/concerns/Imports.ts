@@ -12,7 +12,7 @@ import {
   CharacterLinks,
   Characters,
 } from "@/server/repositories/index.ts";
-import { createLevelRows, writeBondedCreatures } from "@/server/services/characters/levels/index.ts";
+import { createLevelRows, writeChildren } from "@/server/services/characters/levels/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import type { Session } from "@/shared/relations.ts";
 
@@ -29,12 +29,12 @@ export function Imports<B extends Constructor>(Base: B) {
     }
 
     /**
-     * Creates the character another program's file holds (`text`) in a ruleset the session may create characters in,
-     * as the engine plans it (by the ruleset's importer that reads the file): its row, ability scores and languages,
-     * its levels as if leveled up one at a time, its inventory and its bonded creatures. Answers the character, and the
-     * report of what was imported and every line of the file that couldn't be. Planned in the transaction that writes
-     * it, as a level-up's save is, so the ruleset's view it's planned against is the one it's written in (a second or
-     * so for a high-level character, which the route's rate limit bounds).
+     * Creates the character another program's file holds (`text`) in a ruleset the session may create characters in, as
+     * the engine plans it (by the ruleset's importer that reads the file): its row, ability scores and languages, its
+     * levels as if leveled up one at a time, its inventory and its children (3.5's bonded creatures). Answers the
+     * character, and the report of what was imported and every line of the file that couldn't be. Planned in the
+     * transaction that writes it, as a level-up's save is, so the ruleset's view it's planned against is the one it's
+     * written in (a second or so for a high-level character, which the route's rate limit bounds).
      */
     async importCharacter(session: Session, rulesetId: string, text: string) {
       return await withTransaction(
@@ -59,7 +59,7 @@ export function Imports<B extends Constructor>(Base: B) {
               tx,
               plan.inventory.map((entry) => ({ ...entry, characterId })),
             );
-            await writeBondedCreatures(tx, character, plan.children);
+            await writeChildren(tx, character, plan.children);
 
             await Activities.create(tx, {
               userId: session.userId,

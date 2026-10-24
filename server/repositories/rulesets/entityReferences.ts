@@ -8,6 +8,7 @@ import {
   linksInCharacter,
   rulesetLinksInRules,
 } from "@/drizzle/schema.ts";
+import type { OwnedKind } from "@/engine/index.ts";
 
 import type { RulesetEntityType } from "./entityTables.ts";
 
@@ -17,8 +18,8 @@ export interface EntityReference {
   owner: ReferenceOwner;
 }
 
-/** What a row names: a ruleset's entity, or a class's level, which a character's level names. */
-export type ReferencedType = RulesetEntityType | "klass_levels";
+/** What a row names: a ruleset's entity, or an owned one (a class's level, which a character's level names). */
+export type ReferencedType = RulesetEntityType | OwnedKind;
 
 /**
  * What a row naming an entity belongs to. An entity's link (`fromId`): the entity it's from, or the entity that owns

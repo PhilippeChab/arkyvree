@@ -8,7 +8,7 @@ import { isProduction } from "@/server/environment.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { Activities, Characters, Visibility } from "@/server/repositories/index.ts";
 import { getSlotUrl } from "@/server/services/attachments/index.ts";
-import { readBondedInputs, readCharacterInput } from "@/server/services/characters/characterInputs.ts";
+import { readCharacterInput, readChildInputs } from "@/server/services/characters/characterInputs.ts";
 import type { Session } from "@/shared/relations.ts";
 
 class CharacterSharingService {
@@ -59,8 +59,8 @@ class CharacterSharingService {
     const portraitUrl = await getSlotUrl("portrait", characterRecord.id);
     return await withRulesetScope(db, characterRecord.rulesetId, async (scope) => {
       const character = await readCharacterInput(db, characterRecord);
-      const bonded = await readBondedInputs(db, character, Visibility.All);
-      return { ...Engine.for(scope).character(character).describe(bonded, "hide"), portraitUrl };
+      const children = await readChildInputs(db, character, Visibility.All);
+      return { ...Engine.for(scope).character(character).describe(children, "hide"), portraitUrl };
     });
   }
 

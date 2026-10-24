@@ -36,28 +36,28 @@ async function readCharacterRows(database: Db, character: Character): Promise<Ch
 }
 
 /**
- * A master's bonded creatures, each with its rows and the master's (`master`), read in the master's ruleset's scope:
- * those `visibility` shows (a sheet shows an archived master's, which are archived with it).
- */
-export async function readBondedInputs(
-  database: Db,
-  master: CharacterInput,
-  visibility: Visibility = Visibility.UnarchivedOnly,
-): Promise<CharacterInput[]> {
-  const inputs: CharacterInput[] = [];
-  for (const record of await Characters.findMany(database, { parentCharacterId: master.record.id }, visibility))
-    inputs.push({ parent: master, record, rows: await readCharacterRows(database, record) });
-  return inputs;
-}
-
-/**
- * A character's row and its rows, read in its ruleset's scope: what the engine builds it from. A bonded creature's
- * comes with its master's, archived too, whose sheet the creature's derives from.
+ * A character's row and its rows, read in its ruleset's scope: what the engine builds it from. A child's comes with its
+ * parent's, archived too, whose sheet the child's derives from.
  */
 export async function readCharacterInput(database: Db, record: Character): Promise<CharacterInput> {
   const rows = await readCharacterRows(database, record);
   if (!record.parentCharacterId) return { record, rows };
-  const master = await Characters.findOne(database, { id: record.parentCharacterId }, Visibility.All);
-  if (!master) throw new Error(`Bonded's master not found: ${record.parentCharacterId}`);
-  return { parent: await readCharacterInput(database, master), record, rows };
+  const parent = await Characters.findOne(database, { id: record.parentCharacterId }, Visibility.All);
+  if (!parent) throw new Error(`A child's parent not found: ${record.parentCharacterId}`);
+  return { parent: await readCharacterInput(database, parent), record, rows };
+}
+
+/**
+ * A character's children (3.5's bonded creatures), each with its rows and its parent's (`parent`), read in the parent's
+ * ruleset's scope: those `visibility` shows (a sheet shows an archived parent's, which are archived with it).
+ */
+export async function readChildInputs(
+  database: Db,
+  parent: CharacterInput,
+  visibility: Visibility = Visibility.UnarchivedOnly,
+): Promise<CharacterInput[]> {
+  const inputs: CharacterInput[] = [];
+  for (const record of await Characters.findMany(database, { parentCharacterId: parent.record.id }, visibility))
+    inputs.push({ parent, record, rows: await readCharacterRows(database, record) });
+  return inputs;
 }

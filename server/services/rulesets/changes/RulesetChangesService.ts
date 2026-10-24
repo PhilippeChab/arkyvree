@@ -12,7 +12,7 @@ import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
 import type { Session } from "@/shared/relations.ts";
 
-import { RESTORABLE_ENTITY_TYPES, type RestorableEntityType } from "./restorableEntityTypes.ts";
+import { RESTORABLE_ENTITY_TYPES } from "./restorableEntityTypes.ts";
 
 class RulesetChangesService {
   async getChanges(session: Session, rulesetId: string) {
@@ -33,8 +33,8 @@ class RulesetChangesService {
     }
 
     type ChangeRow =
-      | { entityId: string; entityType: RestorableEntityType; name: string; sourceEntityId: string; status: "modified" }
-      | { entityType: RestorableEntityType; name: string; sourceEntityId: string; status: "deleted" }
+      | { entityId: string; entityType: RulesetEntityType; name: string; sourceEntityId: string; status: "modified" }
+      | { entityType: RulesetEntityType; name: string; sourceEntityId: string; status: "deleted" }
       | { entityId: string; entityType: RulesetEntityType; name: string; status: "added" };
 
     const changes: ChangeRow[] = [];
@@ -62,7 +62,7 @@ class RulesetChangesService {
         });
       }
 
-      // Abilities have no snapshots: no route edits them.
+      // A read-only kind (3.5's abilities) has no snapshots: no route edits it.
       if (typeSnapshots.length === 0 || !isOneOf(entityType, RESTORABLE_ENTITY_TYPES)) continue;
 
       // Tombstones (COW hard-deleted) need the source entity's name as a fallback.
@@ -101,7 +101,7 @@ class RulesetChangesService {
    * rows, its subscribers' and their characters', names the parent's entity again. Refused while the fork's view shows
    * another entity of the parent's entity's name (`EntityNames`), which it would show twice.
    */
-  async revertOverride(session: Session, rulesetId: string, entityType: RestorableEntityType, entityId: string) {
+  async revertOverride(session: Session, rulesetId: string, entityType: RulesetEntityType, entityId: string) {
     const subscribers = await withTransaction(async (tx) => {
       const ruleset = await Rulesets.findOne(tx, { id: rulesetId });
       if (!ruleset) throw new NotFoundError("Ruleset not found");

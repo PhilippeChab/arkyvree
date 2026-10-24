@@ -54,7 +54,7 @@ export function Archives<B extends Constructor>(Base: B) {
         const inActiveCampaign = await PlayerCharacters.exists(tx, { characterId, campaignArchived: false });
         (await CharactersPolicy.for(tx, session, existingCharacter)).canHardDelete({ inActiveCampaign });
 
-        // Bonded children cascade via FK on delete, and the database deletes
+        // Children (3.5's bonded creatures) cascade via FK on delete, and the database deletes
         // their attachments and modifiers with them.
         await Characters.delete(tx, { id: characterId });
 
