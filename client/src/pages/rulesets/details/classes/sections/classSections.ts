@@ -7,7 +7,6 @@ import {
 } from "@/client/src/pages/rulesets/customization/sections/index.ts";
 import { kindIconOf } from "@/client/src/pages/rulesets/details/classes/classKind.ts";
 import {
-  classFeatPoolsQuery,
   classLevelsQuery,
   classLinksQuery,
   classListsQuery,
@@ -34,24 +33,6 @@ export const CLASS_CUSTOMIZATION_TABS: ClassTab[] = CUSTOMIZATION_TABS.map((tab)
   ...tab,
   Section: CUSTOMIZATION_SECTIONS[tab.key],
 }));
-
-/**
- * The tab every class's page opens on, warming its rows as it's pointed at: its progression (its table, its tracks, its
- * features and feat pools).
- */
-export const PROGRESSION_TAB: ClassTab = {
-  key: "progression",
-  label: "Progression",
-  icon: LevelsIcon,
-  Section: ClassProgressionSection,
-  prefetch: async (queryClient, rulesetId, classId) => {
-    await Promise.all([
-      queryClient.prefetchQuery(classLevelsQuery(rulesetId, classId)),
-      queryClient.prefetchQuery(classProgressionQuery(rulesetId, classId)),
-      queryClient.prefetchQuery(classFeatPoolsQuery(rulesetId, classId)),
-    ]);
-  },
-};
 
 /**
  * The tabs of a class whose levels count entities on its tables (`counts`, its rules' progression's: 3.5's spells),
@@ -97,5 +78,26 @@ export function describeLinksTab(links: EntityLinksDescription, rules: RulesDesc
     Section: ClassLinksSection,
     prefetch: (queryClient, rulesetId, classId) =>
       queryClient.prefetchQuery(classLinksQuery(rulesetId, classId, links.type)),
+  };
+}
+
+/**
+ * The tab every class's page opens on, warming its rows as it's pointed at (`rules`, its rules'): its progression (its
+ * table, its tracks, its features and pools, their totals' table where its levels grant past their columns).
+ */
+export function describeProgressionTab(rules: RulesDescription | undefined): ClassTab {
+  const totals = rules?.progression.grants?.table;
+  return {
+    key: "progression",
+    label: "Progression",
+    icon: LevelsIcon,
+    Section: ClassProgressionSection,
+    prefetch: async (queryClient, rulesetId, classId) => {
+      await Promise.all([
+        queryClient.prefetchQuery(classLevelsQuery(rulesetId, classId)),
+        queryClient.prefetchQuery(classProgressionQuery(rulesetId, classId)),
+        ...(totals ? [queryClient.prefetchQuery(classTableQuery(rulesetId, classId, totals))] : []),
+      ]);
+    },
   };
 }

@@ -132,14 +132,39 @@ export interface ProgressionCounts {
  * How a class's levels progress, as its page sets them: its last level (`lastLevel`), its class table's tracks
  * (`tracks`, each a column its Progression tab sets), the label of its column of what a level grants (`grantsLabel`:
  * its features and feat pools), its tables (`tables`, which its tables' tab edits: none where its classes count
- * none) and what they count (`counts`).
+ * none) and what they count (`counts`), and what its levels grant past their columns (`grants`).
  */
 export interface ProgressionDescription {
   counts?: ProgressionCounts;
+  grants?: ProgressionGrants;
   grantsLabel: string;
   lastLevel: number;
   tables: ProgressionTable[];
   tracks: ProgressionTrack[];
+}
+
+/**
+ * What a class's levels grant, past their own columns (its levels' `grants` field: 3.5's feats, each through a feat
+ * pool), as its Progression tab shows them: the pools a level gives picks in, of a kind and its scope (`pools`: 3.5's
+ * `aptitudes`, of `feats`), where a progression's answer holds the picks a granted entity gives in its pools (`picks`:
+ * `featPicks`), the class's table of each level's totals by pool (`table`: `feat-pools`, at `totals`: `featPools`), and
+ * the words its card and its failures say them in (`words`).
+ */
+export interface ProgressionGrants {
+  picks: string;
+  pools: { scope: string; type: string };
+  table: string;
+  totals: string;
+  words: {
+    add: string;
+    addPool: string;
+    feature: string;
+    help: string;
+    pool: string;
+    pools: string;
+    title: string;
+    totals: string;
+  };
 }
 
 /**
@@ -197,9 +222,10 @@ export interface RulesDescription {
   /**
    * The kinds whose customizations have a page of their own, as its storage declares them customizable (3.5's feats,
    * items, spells, races and class levels), an owned kind's with the kind that owns it (`owner`: a class level's
-   * class); not a kind that owns another, whose customizations are its page's tabs (a class's)
+   * class) and the key its rows name it at (`ownerKey`: `klassId`); not a kind that owns another, whose customizations
+   * are its page's tabs (a class's)
    */
-  customizationPages: { owner?: string; type: string }[];
+  customizationPages: { owner?: string; ownerKey?: string; type: string }[];
   /** The kinds a race or a class is for: a player character (`pc`), and those its rules add (3.5's bonded creatures) */
   entityKinds: { label: string; value: string }[];
   /**

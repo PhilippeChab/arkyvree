@@ -93,13 +93,15 @@ export interface FlagFormField extends FormFieldBase {
 /**
  * The entities an entity grants, each through the entity it's granted for (3.5's class level's feats, each through the
  * pool it's taken for): a list of each one's id at `entityKey`, an entity of its kind (`references`: 3.5's
- * `feats`), the one it's through at `viaKey`, one of the pools its kind's list reads, and whether it's `free`.
+ * `feats`), the one it's through at `viaKey`, one of the pools its kind's list reads, and whether it's `free`. An
+ * entity read gives each grant whole, its entity's own row with the name of the one it's through at `viaName`.
  */
 export interface GrantsFormField extends FormFieldBase {
   entityKey: string;
   input: "grants";
   references: string;
   viaKey: string;
+  viaName: string;
 }
 
 /** Fields of their own, which a form shows under their `label`. */

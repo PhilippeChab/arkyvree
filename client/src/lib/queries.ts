@@ -69,6 +69,9 @@ export type EntityLinksDescription = NonNullable<EntityKindDescription["links"]>
 /** What a class's tables count, and how its page reads and saves them (3.5's spells). */
 export type ProgressionCounts = NonNullable<RulesProgression["counts"]>;
 
+/** What a class's levels grant past their columns, as its Progression tab shows them (3.5's feat pools). */
+export type ProgressionGrants = NonNullable<RulesProgression["grants"]>;
+
 /** What a base rules' rulesets share: their words, the kinds a race or a class is for, their levels, their license. */
 export type RulesDescription = RulesDescriptions[BaseRules];
 

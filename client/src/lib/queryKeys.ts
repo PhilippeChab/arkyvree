@@ -41,7 +41,6 @@ export const QUERY_KEYS = {
       ["rulesets", "detail", id, "class", classId, segment] as const,
     classTable: (id: string, classId: string, table: string) =>
       ["rulesets", "detail", id, "class", classId, "table", table] as const,
-    classFeatPools: (id: string, classId: string) => ["rulesets", "detail", id, "class", classId, "featPools"] as const,
     classProgression: (id: string, classId: string) =>
       ["rulesets", "detail", id, "class", classId, "progression"] as const,
     sectionGrouped: (id: string, section: string) => ["rulesets", "detail", id, section, "grouped"] as const,

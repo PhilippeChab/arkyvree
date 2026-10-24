@@ -31,6 +31,22 @@ export const PROGRESSION: ProgressionDescription = {
     tab: "spells",
     type: "powers",
   },
+  grants: {
+    picks: "featPicks",
+    pools: { scope: "feats", type: "aptitudes" },
+    table: "feat-pools",
+    totals: "featPools",
+    words: {
+      add: "Add Class Feature",
+      addPool: "Add Feat Pool",
+      feature: "Class feature",
+      help: "A filled level grants the feature there; a feature granted at several levels stacks. A feat pool's filled level gives a pick in it; click it again for a second pick.",
+      pool: "Feat pool: picks",
+      pools: "Feat pools",
+      title: "Class Features and Feat Pools",
+      totals: "Feat pool totals",
+    },
+  },
   grantsLabel: "Special",
   lastLevel: MAX_CLASS_LEVEL,
   tables: [

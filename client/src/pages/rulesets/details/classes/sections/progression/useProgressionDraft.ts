@@ -1,10 +1,9 @@
-import type { ClassLevelRow } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
-
 import {
   type FeatureRow,
   NO_EDITS,
   type PoolRow,
   type ProgressionEdits,
+  type ProgressionLevel,
   readTrack,
   type TrackKey,
 } from "./progressionDraft.ts";
@@ -18,7 +17,7 @@ import { useClassDraft } from "./useClassDraft.ts";
  */
 export function useProgressionDraft(
   classId: string,
-  levels: readonly ClassLevelRow[],
+  levels: readonly ProgressionLevel[],
   fresh: boolean,
   changed: (edits: ProgressionEdits) => boolean,
 ) {
@@ -49,10 +48,10 @@ export function useProgressionDraft(
     setEdits((current) => ({ ...current, features: { ...current.features, [row.key]: levelIds } }));
 
   /** A pool's picks at a level. */
-  const setPoolPick = (aptitudeId: string, levelId: string, count: number) =>
+  const setPoolPick = (poolId: string, levelId: string, count: number) =>
     setEdits((current) => ({
       ...current,
-      pools: { ...current.pools, [aptitudeId]: { ...current.pools[aptitudeId], [levelId]: count } },
+      pools: { ...current.pools, [poolId]: { ...current.pools[poolId], [levelId]: count } },
     }));
 
   /** A feature the class doesn't grant yet, granted at no level until one is picked. */
@@ -66,7 +65,7 @@ export function useProgressionDraft(
   /** A pool the class's levels give no picks in yet. */
   const addPool = (pool: PoolRow) =>
     setEdits((current) =>
-      current.addedPools.some((added) => added.aptitudeId === pool.aptitudeId)
+      current.addedPools.some((added) => added.id === pool.id)
         ? current
         : { ...current, addedPools: [...current.addedPools, pool] },
     );

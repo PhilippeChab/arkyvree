@@ -6,6 +6,7 @@ export type {
   ListDescription,
   ProgressionCounts,
   ProgressionDescription,
+  ProgressionGrants,
   ProgressionTable,
   ProgressionTrack,
   RulesDeclaration,
