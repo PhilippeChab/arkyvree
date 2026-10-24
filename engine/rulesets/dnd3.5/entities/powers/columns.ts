@@ -43,5 +43,14 @@ export const POWER_COLUMNS: FormField[] = [
 /** A 3.5 spell's list: its name, its spell lists, its description. */
 export const POWER_LIST: ListDescription = {
   nameShare: 25,
-  columns: [{ key: "powersAptitudesInRules", label: "Aptitudes", reads: "pools", share: 15, slot: "inline" }],
+  columns: [
+    {
+      key: "powersAptitudesInRules",
+      label: "Aptitudes",
+      reads: "pools",
+      share: 15,
+      slot: "inline",
+      target: "aptitudesInRule",
+    },
+  ],
 };

@@ -1,5 +1,5 @@
 import { NAMED_LIST } from "@/engine/core/entities/index.ts";
-import type { RulesDeclaration } from "@/engine/core/module/index.ts";
+import type { EntityPoolsDescription, RulesDeclaration } from "@/engine/core/module/index.ts";
 import { CHARACTER_FORM } from "@/engine/rulesets/dnd3.5/characters/form.ts";
 import { CLASS_COLUMNS, CLASS_LEVEL_COLUMNS, CLASS_LIST } from "@/engine/rulesets/dnd3.5/entities/classes/columns.ts";
 import { PROGRESSION } from "@/engine/rulesets/dnd3.5/entities/classes/progression.ts";
@@ -13,6 +13,13 @@ import { SKILL_COLUMNS, SKILL_LIST } from "@/engine/rulesets/dnd3.5/entities/ski
 import { BONDED_KINDS } from "@/vocabulary/dnd3.5/bondedKinds.ts";
 import { MAX_ITEM_VARIANTS } from "@/vocabulary/dnd3.5/itemTemplates.ts";
 import { SPELL_LEVEL_LABELS, SPELL_LEVELS } from "@/vocabulary/dnd3.5/spells.ts";
+
+/** The pools a feats' or a spells' list narrows by: its aptitudes, one at a time, by their id (`?aptitude=`). */
+const APTITUDE_POOLS: Omit<EntityPoolsDescription, "scope"> = {
+  key: "aptitudeId",
+  param: "aptitude",
+  type: "aptitudes",
+};
 
 /**
  * What every 3.5 ruleset shares: its entity kinds, in its page's order, and their words (its powers are spells), its
@@ -46,10 +53,17 @@ export const RULES: RulesDeclaration = {
       icon: "spoke",
       lockedName: { flag: "generated", reason: "A generated feat keeps its name" },
       opens: "customization",
-      pools: "feats",
+      pools: { ...APTITUDE_POOLS, scope: "feats" },
       type: "feats",
     },
-    { icon: "bolt", levels: true, opens: "customization", pools: "spells", type: "powers", wideForm: "fixed" },
+    {
+      icon: "bolt",
+      levels: true,
+      opens: "customization",
+      pools: { ...APTITUDE_POOLS, scope: "spells" },
+      type: "powers",
+      wideForm: "fixed",
+    },
     {
       copies: {
         locked: ["slot", "sourceItemId", "type"],

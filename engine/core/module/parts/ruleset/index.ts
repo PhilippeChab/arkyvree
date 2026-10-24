@@ -1,5 +1,6 @@
 export type {
   EntityKindDescription,
+  EntityPoolsDescription,
   ListColumn,
   ListDescription,
   ProgressionDescription,

@@ -6,18 +6,14 @@ import { PowersIcon } from "@/client/src/components/icons/index.ts";
 import { useSearchParam, useSearchText } from "@/client/src/hooks/index.ts";
 import type { EntityRow } from "@/client/src/lib/entityRequests.ts";
 import { itemsBeforeLastPage, pageItems } from "@/client/src/lib/pageItems.ts";
-import {
-  DescriptionCell,
-  RulesetSectionTable,
-  SpellLevelFilter,
-} from "@/client/src/pages/rulesets/components/index.ts";
+import { DescriptionCell, RulesetSectionTable, TierFilter } from "@/client/src/pages/rulesets/components/index.ts";
 import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
 import {
   classSpellListsQuery,
   spellListSpellsQuery,
 } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 import type { ClassSectionProps } from "@/client/src/pages/rulesets/details/classes/classTab.ts";
-import { useOpenEntity, useSpellLevelFilter } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { useOpenEntity, useTierFilter } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { buildCustomizationPath } from "@/shared/customization/entities.ts";
 
 const COLUMNS: TableColumn[] = [
@@ -28,7 +24,7 @@ const COLUMNS: TableColumn[] = [
 export function ClassSpellListSection({ rulesetId, classId, ruleset }: ClassSectionProps) {
   const openEntity = useOpenEntity(ruleset.id);
   const queryClient = useQueryClient();
-  const { level, setLevel } = useSpellLevelFilter(ruleset.baseRules, false);
+  const { level, setLevel } = useTierFilter(ruleset.baseRules, false);
   const { value: chosenListId, setValue: setChosenListId } = useSearchParam("list");
   const { search, searchBarProps } = useSearchText();
 
@@ -97,7 +93,7 @@ export function ClassSpellListSection({ rulesetId, classId, ruleset }: ClassSect
                 </TextField>
               </Box>
             )}
-            <SpellLevelFilter baseRules={ruleset.baseRules} value={level} onChange={setLevel} />
+            <TierFilter baseRules={ruleset.baseRules} value={level} onChange={setLevel} />
           </>
         }
       />

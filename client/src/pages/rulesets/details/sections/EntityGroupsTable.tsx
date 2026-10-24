@@ -22,6 +22,7 @@ import { type SvgIconComponent } from "@/client/src/components/icons/index.ts";
 import { useListPageQuery, useToggleSet } from "@/client/src/hooks/index.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { itemsBeforeLastPage, pageItems } from "@/client/src/lib/pageItems.ts";
+import type { EntityKindDescription } from "@/client/src/lib/queries.ts";
 import {
   DescriptionCell,
   TABLE_CONTAINER_LOADING_SX,
@@ -37,16 +38,17 @@ import { useRowPrefetch } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { fadeInUpSx } from "@/client/src/theme/animations.ts";
 
 interface EntityGroupsTableProps {
-  aptitudeId?: string;
   childOnly: boolean;
   /** What it says while it lists no group */
   empty: { description: string; icon: SvgIconComponent; title: string };
-  /** Its kind's type (`feats`) */
-  entityType: string;
+  /** Its kind: its type (`feats`), and the pools it narrows by */
+  kind: Pick<EntityKindDescription, "pools" | "type">;
   /** Opens an entity's page: a row's own, or one of its variants'. */
   onRowClick: (entity: { id: string }) => void;
   /** Warms an entity's page, as it's about to be opened (`useRowPrefetch`). */
   onRowPrefetch: (entity: { id: string }) => void;
+  /** The pool it's narrowed by, its id, where its kind narrows by one */
+  pool?: string;
   rulesetId: string;
   search: string;
   /** What its rows are, as a failure names them ("Feats") */
@@ -187,17 +189,17 @@ function GroupRow({
  * Changes: a family's row expands into its variants, a row of one entity opens it.
  */
 export function EntityGroupsTable({
-  aptitudeId,
   childOnly,
   empty,
-  entityType,
+  kind,
   onRowClick,
   onRowPrefetch,
+  pool,
   rulesetId,
   search,
   what,
 }: EntityGroupsTableProps) {
-  const groups = useListPageQuery(entityGroupsQuery(rulesetId, entityType, { search, childOnly, aptitudeId }));
+  const groups = useListPageQuery(entityGroupsQuery(rulesetId, kind, { search, childOnly, pool }));
   const { keys: expandedFamilies, toggle: toggleFamily } = useToggleSet();
   return (
     <ListPageResults
@@ -216,7 +218,7 @@ export function EntityGroupsTable({
               key={row.family ?? row.representativeId}
               row={row}
               rulesetId={rulesetId}
-              entityType={entityType}
+              entityType={kind.type}
               childOnly={childOnly}
               family={family}
               isExpanded={family !== null && expandedFamilies.has(family)}

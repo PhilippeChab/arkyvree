@@ -7,7 +7,7 @@
 import { infiniteQueryOptions, type QueryClient, type QueryKey, skipToken } from "@tanstack/react-query";
 import { type InferResponseType, parseResponse } from "hono/client";
 
-import { type EntityRow, entitySegment, givenParams, readEntitiesFn } from "@/client/src/lib/entityRequests.ts";
+import { entitySegment, givenParams, readEntitiesFn } from "@/client/src/lib/entityRequests.ts";
 import { nextPage } from "@/client/src/lib/pageItems.ts";
 import type { Direction, EntityKindDescription } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
@@ -23,10 +23,9 @@ import { rulesetFieldsQuery, rulesetSettingsQuery } from "./rulesetQueries.ts";
 
 /**
  * A kind's list's filters: past every list's, those its kind narrows it by, the kind a race or a class is for and its
- * sort (`partitioned`), the pool it's picked in (`pools`), a power's level (`levels`).
+ * sort (`partitioned`), the pool it's picked in (`pool`, its id, where its kind's `pools` say), its tier (`levels`).
  */
-interface EntityFilters extends ListFilters {
-  aptitudeId?: string;
+interface EntityFilters extends PoolFilters {
   kind?: EntityKind;
   level?: number;
   orderBy?: EntitySortField;
@@ -38,16 +37,19 @@ interface ListFilters {
   search: string;
 }
 
-interface PowerFilters extends ListFilters {
-  aptitudeId?: string;
+/** A list's filters, past every list's, where its kind narrows by a pool: the pool's id (`pool`). */
+interface PoolFilters extends ListFilters {
+  pool?: string;
+}
+
+interface PowerFilters extends PoolFilters {
   level?: number;
 }
 
-/** What a kind's list query reads of its kind: its type, and what narrows its list. */
-type EntityListKind = Pick<EntityKindDescription, "levels" | "partitioned" | "pools" | "type">;
-
-/** A ruleset's aptitude, as its list and its pickers give it. */
-export type Aptitude = EntityRow;
+/** What a kind's list query reads of its kind: its type, and what narrows its list (its pools, by their key). */
+type EntityListKind = Pick<EntityKindDescription, "levels" | "partitioned" | "type"> & {
+  pools?: Pick<NonNullable<EntityKindDescription["pools"]>, "key">;
+};
 
 /** A group of an entity kind's list (a feat's family), as its grouped list gives it. */
 export type EntityGroup = InferResponseType<
@@ -63,7 +65,7 @@ function entityListKey(rulesetId: string, kind: EntityListKind, filters: EntityF
   return [
     ...sectionKey(rulesetId, getUrlSegment(kind.type), filters),
     ...(kind.partitioned ? [filters.kind, filters.orderBy, filters.orderDir] : []),
-    ...(kind.pools ? [filters.aptitudeId] : []),
+    ...(kind.pools ? [filters.pool] : []),
     ...(kind.levels ? [filters.level] : []),
   ];
 }
@@ -73,7 +75,7 @@ function entityListParams(pageParam: number, kind: EntityListKind, filters: Enti
   return {
     ...pageSearchParams(pageParam, filters),
     ...(kind.partitioned && { kind: filters.kind, orderBy: filters.orderBy, orderDir: filters.orderDir }),
-    ...(kind.pools && { aptitudeId: filters.aptitudeId }),
+    ...(kind.pools && { [kind.pools.key]: filters.pool }),
     ...(kind.levels && { level: filters.level?.toString() }),
   };
 }
@@ -129,22 +131,29 @@ export function entityFamilyQuery(rulesetId: string, type: string, family: strin
 
 /**
  * A kind's list with its variants grouped under their family (a feat's), its kind's default view, narrowed by its
- * pool where its kind is.
+ * pool where its kind is (`kind`: its type and its pools).
  */
-export function entityGroupsQuery(rulesetId: string, type: string, filters: ListFilters & { aptitudeId?: string }) {
-  const segment = getUrlSegment(type);
+export function entityGroupsQuery(
+  rulesetId: string,
+  kind: Pick<EntityListKind, "pools" | "type">,
+  filters: PoolFilters,
+) {
+  const segment = getUrlSegment(kind.type);
   return infiniteQueryOptions({
     queryKey: [
       ...QUERY_KEYS.rulesets.sectionGrouped(rulesetId, segment),
       filters.search,
       filters.childOnly,
-      filters.aptitudeId,
+      filters.pool,
     ],
     queryFn: ({ pageParam }) =>
       parseResponse(
         rpc.api.rulesets[":id"].entities[":entityType"].grouped.$get({
           param: { id: rulesetId, entityType: entitySegment(segment) },
-          query: givenParams({ ...pageSearchParams(pageParam, filters), aptitudeId: filters.aptitudeId }),
+          query: givenParams({
+            ...pageSearchParams(pageParam, filters),
+            ...(kind.pools && { [kind.pools.key]: filters.pool }),
+          }),
         }),
       ),
     initialPageParam: 1,
@@ -168,7 +177,8 @@ export function invalidateRulesetEdit(
 
 /** A spell list's spells of a level, as a class's Spells tab lists them: the powers' list, by pool and level. */
 export function powersQuery(rulesetId: string, filters: PowerFilters) {
-  return entitiesQuery(rulesetId, { levels: true, pools: "spells", type: "powers" }, filters);
+  // The powers' pools' key, as their kind's rules describe it
+  return entitiesQuery(rulesetId, { levels: true, pools: { key: "aptitudeId" }, type: "powers" }, filters);
 }
 
 /**
@@ -191,7 +201,7 @@ export function prefetchSection(
     ]);
   }
   if (!kind) return;
-  if (kind.families) return queryClient.prefetchInfiniteQuery(entityGroupsQuery(rulesetId, kind.type, filters));
+  if (kind.families) return queryClient.prefetchInfiniteQuery(entityGroupsQuery(rulesetId, kind, filters));
   const where = kind.partitioned ? { ...filters, ...DEFAULT_ENTITY_FILTERS } : filters;
   return queryClient.prefetchInfiniteQuery(entitiesQuery(rulesetId, kind, where));
 }
