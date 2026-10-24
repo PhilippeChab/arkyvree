@@ -57,6 +57,8 @@ describe("rulesets class progression", () => {
     const { param, levels } = await setup();
     const [first] = levels;
     for (const json of [
+      [],
+      null,
       { levels: "all" },
       { levels: [{ levelId: "not-an-id" }] },
       { levels: [{ levelId: first.id, fields: 1 }] },
