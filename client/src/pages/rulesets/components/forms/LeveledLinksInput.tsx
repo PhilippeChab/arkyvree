@@ -2,13 +2,13 @@ import { Stack, TextField, Typography } from "@mui/material";
 import { type FieldValues, useController } from "react-hook-form";
 
 import { EMPTY_VALUE_TEXT, SubsectionTitle, useReadOnlyFields } from "@/client/src/components/common/index.ts";
+import { useRulesetRules } from "@/client/src/hooks/index.ts";
 import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
 import { readNumberInput, requiredRules, wholeNumberError } from "@/client/src/lib/validation.ts";
 import { byName } from "@/client/src/pages/rulesets/components/byName.ts";
 import { EntitiesAutocomplete } from "@/client/src/pages/rulesets/components/EntitiesAutocomplete.tsx";
 import { useEntityLookup } from "@/client/src/pages/rulesets/components/useEntityLookup.ts";
 import type { EntityField } from "@/client/src/pages/rulesets/details/rulesetQueries.ts";
-import { useRulesetRules } from "@/client/src/pages/rulesets/hooks/index.ts";
 
 import type { ColumnInputProps } from "./columnContext.ts";
 

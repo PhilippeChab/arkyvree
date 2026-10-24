@@ -10,10 +10,10 @@ import {
   TextAreaField,
 } from "@/client/src/components/common/index.ts";
 import { DeleteIcon } from "@/client/src/components/icons/index.ts";
+import { useRulesetRules } from "@/client/src/hooks/index.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
 import { NAME_RULES } from "@/client/src/lib/validation.ts";
-import { useRulesetRules } from "@/client/src/pages/rulesets/hooks/index.ts";
 
 import { type EntityVariantsFormValues, type VariantRow, variantRow } from "./entityVariants.ts";
 

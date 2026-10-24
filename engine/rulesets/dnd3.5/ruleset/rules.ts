@@ -44,6 +44,16 @@ export const RULES: RulesDeclaration = {
     { label: "Player Character", value: "pc" },
     ...BONDED_KINDS.map((kind) => ({ label: kind.label, value: kind.slug })),
   ],
+  help: {
+    modifiers:
+      "Modifiers affect character attributes with operations like add, subtract, multiply. They can modify things like strength, AC, skills, etc.",
+    requirements:
+      "Requirements are conditions that entities must meet to be usable/available. Examples include character level requirements, feat prerequisites, etc.",
+    settings:
+      "The ruleset's own rules, such as the ability a character's skill points come from. A fork starts from its source's and can change them.",
+    templateExamples:
+      "[abilities.charisma.modifier], floor([classes.ranger.level] / 2), max(0, [classes.beastmaster.level] + 3)",
+  },
   kinds: [
     { icon: "face", opens: "customization", partitioned: true, type: "races" },
     { icon: "translate", opens: "page", type: "languages" },

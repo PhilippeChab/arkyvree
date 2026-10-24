@@ -37,7 +37,7 @@ const PAGE_ERRORS = new Set(["EntityPageError", "PageError"]);
  * The hooks that read a query: TanStack's, and the app's that hand on its result (`items` for a listbox's). An image's
  * (`useAttachment`) isn't one: an avatar or a portrait shows its placeholder for none, and for one that didn't load.
  */
-const QUERY_HOOKS = new Set(["useInfiniteQuery", "useListboxQuery", "useQuery", "useRulesetAbilities"]);
+const QUERY_HOOKS = new Set(["useInfiniteQuery", "useListboxQuery", "useQuery"]);
 
 /** The attribute `name` of a JSX element, when it has one. */
 function attribute(element, name) {

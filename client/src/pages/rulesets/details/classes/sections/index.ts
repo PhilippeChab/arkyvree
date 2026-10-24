@@ -1,5 +1,5 @@
 export {
-  CLASS_CUSTOMIZATION_TABS,
+  describeClassCustomizationTabs,
   describeCountsTabs,
   describeLinksTab,
   describeProgressionTab,

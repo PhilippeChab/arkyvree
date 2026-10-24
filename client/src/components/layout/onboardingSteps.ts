@@ -36,14 +36,14 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
       "The foundation — browse base and community rulesets, fork a base ruleset to create your own, and customize rules to fit your table.",
     help: {
       label: "Forking & Extensions",
-      text: "Forking creates your own editable copy of a base ruleset — it inherits all entities and only copies what you change. Extensions let you subscribe to sourcebook content packages that add new feats, items, classes, and more.",
+      text: "Forking creates your own editable copy of a base ruleset — it inherits all entities and only copies what you change. Extensions let you subscribe to sourcebook content packages that add new entities of every kind.",
     },
     sidebarId: "rulesets",
   },
   {
     icon: CharacterIcon,
     title: "Characters",
-    description: "Create characters using any ruleset — build sheets with stats, feats, equipment, and more.",
+    description: "Create characters using any ruleset — build sheets with stats, equipment, and more.",
     sidebarId: "characters",
   },
   {

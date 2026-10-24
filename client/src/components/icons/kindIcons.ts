@@ -1,17 +1,17 @@
 import {
-  AbilitiesIcon,
-  AptitudesIcon,
-  ClassesIcon,
+  AccessibilityIcon,
+  BoltIcon,
+  ConstructionIcon,
   EntityIcon,
-  FeatsIcon,
-  ItemsIcon,
-  LanguagesIcon,
-  MechanicsIcon,
-  PowersIcon,
-  RacesIcon,
-  SavesIcon,
-  SkillsIcon,
+  FaceIcon,
+  FitnessIcon,
+  GavelIcon,
+  PsychologyIcon,
+  ShieldIcon,
+  SpokeIcon,
+  StarsIcon,
   type SvgIconComponent,
+  TranslateIcon,
 } from "./index.ts";
 
 /**
@@ -21,27 +21,27 @@ import {
 export function kindIcon(icon: string): SvgIconComponent {
   switch (icon) {
     case "accessibility":
-      return ClassesIcon;
+      return AccessibilityIcon;
     case "bolt":
-      return PowersIcon;
+      return BoltIcon;
     case "construction":
-      return ItemsIcon;
+      return ConstructionIcon;
     case "face":
-      return RacesIcon;
+      return FaceIcon;
     case "fitness":
-      return AbilitiesIcon;
+      return FitnessIcon;
     case "gavel":
-      return MechanicsIcon;
+      return GavelIcon;
     case "psychology":
-      return SkillsIcon;
+      return PsychologyIcon;
     case "shield":
-      return SavesIcon;
+      return ShieldIcon;
     case "spoke":
-      return FeatsIcon;
+      return SpokeIcon;
     case "stars":
-      return AptitudesIcon;
+      return StarsIcon;
     case "translate":
-      return LanguagesIcon;
+      return TranslateIcon;
     default:
       return EntityIcon;
   }

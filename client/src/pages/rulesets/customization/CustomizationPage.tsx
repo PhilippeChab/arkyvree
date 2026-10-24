@@ -41,8 +41,8 @@ import { modifiersQuery, requirementsQuery } from "./customizationSectionQueries
 import { type EditableEntity, isEditable, renderEditor } from "./editors/index.ts";
 import { type CustomizationEntity, customizationEntityQuery, MODIFIER_PAGE } from "./entityQueries.ts";
 import {
-  CUSTOMIZATION_TABS,
   type CustomizationSection,
+  describeCustomizationTabs,
   ModifiersSection,
   RequirementsSection,
 } from "./sections/index.ts";
@@ -247,9 +247,10 @@ function modifierSourcePath(
   return `/rulesets/${rulesetId}/${getUrlSegment(sourceType)}/${sourceId}/modifiers`;
 }
 
-/** A modifier can only carry requirements. */
-function tabsFor(type: string) {
-  return type === "modifiers" ? CUSTOMIZATION_TABS.filter((tab) => tab.key === "requirements") : CUSTOMIZATION_TABS;
+/** An entity's customization tabs, their help its rules' (`rules`); a modifier can only carry requirements. */
+function tabsFor(type: string, rules: RulesDescription | undefined) {
+  const tabs = describeCustomizationTabs(rules);
+  return type === "modifiers" ? tabs.filter((tab) => tab.key === "requirements") : tabs;
 }
 
 async function deleteEntityFn(data: EditableEntity, id: string, entityId: string) {
@@ -335,14 +336,14 @@ export default function CustomizationPage() {
   );
   useFormOptions(rulesetId, pageRules?.columns[validType ?? ""], canEditEntities);
 
-  const tabs = validType ? tabsFor(validType) : [];
+  const tabs = validType ? tabsFor(validType, pageRules) : [];
   const currentTab = tabs.find((tab) => tab.key === section)?.key;
 
   // Normalize the URL to a tab the entity has.
   if (validType && entityId && !currentTab) {
     return (
       <Navigate
-        to={`/rulesets/${rulesetId}/${buildCustomizationPath(validType, entityId)}/${tabsFor(validType)[0].key}`}
+        to={`/rulesets/${rulesetId}/${buildCustomizationPath(validType, entityId)}/${tabsFor(validType, pageRules)[0].key}`}
         replace
         state={location.state}
       />

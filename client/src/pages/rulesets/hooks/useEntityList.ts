@@ -1,9 +1,8 @@
 import { useQueries } from "@tanstack/react-query";
 
 import type { TableColumn } from "@/client/src/components/common/index.ts";
+import { useRulesetRules } from "@/client/src/hooks/index.ts";
 import { rulesetOptionsQuery } from "@/client/src/lib/queries.ts";
-
-import { useRulesetRules } from "./useRulesetRules.ts";
 
 /**
  * An entity type's list on its ruleset's page, as its rules describe it (`lists`): its table's columns (its name's,

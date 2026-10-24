@@ -3,7 +3,7 @@ import type { RulesDescription } from "@/client/src/lib/queries.ts";
 import { classKindOf } from "./classKind.ts";
 import type { ClassTab } from "./classTab.ts";
 import {
-  CLASS_CUSTOMIZATION_TABS,
+  describeClassCustomizationTabs,
   describeCountsTabs,
   describeLinksTab,
   describeProgressionTab,
@@ -29,5 +29,5 @@ export function getClassTabs(rules: RulesDescription | undefined): ClassTab[] {
   const linksTabs = rules && links ? [describeLinksTab(links, rules)] : [];
   const counts = rules?.progression.counts;
   const countsTabs = rules && counts && rules.progression.tables.length > 0 ? describeCountsTabs(counts, rules) : [];
-  return [describeProgressionTab(rules), ...linksTabs, ...countsTabs, ...CLASS_CUSTOMIZATION_TABS];
+  return [describeProgressionTab(rules), ...linksTabs, ...countsTabs, ...describeClassCustomizationTabs(rules)];
 }

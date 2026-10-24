@@ -84,12 +84,7 @@ function rulesetTabs(rules: RulesDescription | undefined): TabConfig[] {
     ...kinds,
     {
       key: "settings",
-      label: (
-        <HelpLabel
-          label="Settings"
-          help="The ruleset's own rules, such as the ability a character's skill points come from. A fork starts from its source's and can change them."
-        />
-      ),
+      label: <HelpLabel label="Settings" help={rules?.help.settings ?? ""} />,
       icon: SettingsIcon,
       kind: null,
     },

@@ -201,8 +201,6 @@ describe("feedback rules", () => {
             "export function g() {\n  const { items, onScroll } = useListboxQuery(q);\n  return [items, onScroll];\n}\n",
           "client/src/listboxError.ts":
             "export function h() {\n  const { items, error } = useListboxQuery(q);\n  return [items, error];\n}\n",
-          "client/src/wrapper.ts":
-            "export function i() {\n  const { data } = useRulesetAbilities(id);\n  return data;\n}\n",
           "client/src/image.ts": "export function j() {\n  const { data } = useAttachment(slot);\n  return data;\n}\n",
         },
         ["query-errors"],
@@ -212,7 +210,6 @@ describe("feedback rules", () => {
       "query-errors client/src/infinite.ts",
       "query-errors client/src/listbox.ts",
       "query-errors client/src/whole.ts",
-      "query-errors client/src/wrapper.ts",
     ]);
   });
 });

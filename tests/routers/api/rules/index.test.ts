@@ -25,6 +25,9 @@ describe("rules", () => {
       "mechanics",
     ]);
     expect(dnd35.kinds.filter((kind) => kind.help).map(({ type }) => type)).toEqual(["aptitudes", "mechanics"]);
+    // Its pages' help, in its own terms
+    expect(Object.keys(dnd35.help)).toEqual(["modifiers", "requirements", "settings", "templateExamples"]);
+    expect(dnd35.help.templateExamples).toContain("[abilities.charisma.modifier]");
     // Every kind has its word and its list
     for (const { type } of dnd35.kinds) {
       expect(dnd35.words[type]).toBeDefined();
