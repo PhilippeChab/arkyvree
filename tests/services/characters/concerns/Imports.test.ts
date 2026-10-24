@@ -5,7 +5,13 @@ import type { CharacterLanguage, LevelFeat, LevelPower } from "@/engine/index.ts
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import { db } from "@/server/database/index.ts";
 import { ForbiddenError } from "@/server/errors/index.ts";
-import { CharacterAdvancements, CharacterInventory, CharacterLinks, Characters, Picks } from "@/server/repositories/index.ts";
+import {
+  CharacterAdvancements,
+  CharacterInventory,
+  CharacterLinks,
+  Characters,
+  Picks,
+} from "@/server/repositories/index.ts";
 import { CharactersService } from "@/server/services/characters/index.ts";
 import { activityTypes } from "@/tests/support/activities.ts";
 import { buildAs } from "@/tests/support/dnd3.5/characters.ts";
