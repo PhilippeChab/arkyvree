@@ -270,4 +270,15 @@ describe("ActivitiesService.getActivityUrl", () => {
     ])
       expect({ table, url: await resolve(table, NIL_UUID) }).toEqual({ table, url: null });
   });
+
+  test("links nothing for a join no entity edits link by link, whose changes no activity records", async () => {
+    const { featMap, klassMap } = await getSeedCtx();
+    const fighter = klassMap.pc["Fighter"];
+    const [level] = await Entities.findMany<KlassLevel>(db, { entityType: "klass_levels", ownerIds: [fighter] });
+    for (const [table, id] of [
+      ["feats_aptitudes", featMap["Toughness"]],
+      ["klass_level_feats", level.id],
+    ])
+      expect({ table, url: await resolve(table, id) }).toEqual({ table, url: null });
+  });
 });

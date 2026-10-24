@@ -646,20 +646,33 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
   }
 
   /**
-   * The ids of an owner's live entities of an owned kind (`ownerId`), by their place on its track (a level's number).
+   * Live entities of an owned kind, each with its owner and its place on its track (a level's number): by id (`ids`), or
+   * those its owners own (`ownerIds`), by owner, then place.
    */
-  async findPositions(db: Db, where: { entityType: string; ownerId: string }): Promise<Map<number, string>> {
+  async findPositions(
+    db: Db,
+    where: { entityType: string } & ({ ids: string[] } | { ownerIds: string[] }),
+  ): Promise<{ id: string; ownerId: string; position: number }[]> {
+    const ids = "ids" in where ? where.ids : where.ownerIds;
+    if (ids.length === 0) return [];
     const rows = await db
-      .select({ id: entitiesInRules.id, position: entitiesInRules.position })
+      .select({ id: entitiesInRules.id, ownerId: entitiesInRules.ownerId, position: entitiesInRules.position })
       .from(entitiesInRules)
       .where(
         and(
           eq(entitiesInRules.type, where.entityType),
-          eq(entitiesInRules.ownerId, where.ownerId),
+          inArray("ids" in where ? entitiesInRules.id : entitiesInRules.ownerId, ids),
           isNull(entitiesInRules.deletedAt),
         ),
+      )
+      .orderBy(
+        this.orderBy(entitiesInRules.ownerId),
+        this.orderBy(entitiesInRules.position),
+        this.orderBy(entitiesInRules.id),
       );
-    return new Map(rows.flatMap((row) => (row.position === null ? [] : [[row.position, row.id]])));
+    return rows.flatMap(({ id, ownerId, position }) =>
+      ownerId === null || position === null ? [] : [{ id, ownerId, position }],
+    );
   }
 
   /**

@@ -192,6 +192,11 @@ export interface StoredFieldValue {
 /** A join's rows: the links of a role from one kind to another, each part under its column's name. */
 export interface StoredJoin {
   columns: Record<string, LinkPart>;
+  /**
+   * Whether its from-entity edits it link by link, on a tab of its page (3.5's class's skills): each change an activity
+   * of the join's, which links to that tab
+   */
+  edited?: true;
   from: string;
   role: string;
   to: string;

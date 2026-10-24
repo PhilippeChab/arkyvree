@@ -77,7 +77,13 @@ export const DND35_STORAGE: StorageDeclaration = {
       to: "aptitudes",
       columns: { powerId: "from", aptitudeId: "to", level: "tier" },
     },
-    klass_skills: { role: "classSkill", from: "klasses", to: "skills", columns: { klassId: "from", skillId: "to" } },
+    klass_skills: {
+      role: "classSkill",
+      from: "klasses",
+      to: "skills",
+      columns: { klassId: "from", skillId: "to" },
+      edited: true,
+    },
     klass_level_feats: {
       role: "grants",
       from: "klass_levels",
