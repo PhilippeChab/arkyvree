@@ -57,7 +57,7 @@ class RulesetEntitiesRepository {
   async findNativeNames(db: Db, where: { entityTypes: string[]; rulesetIds: string[] }) {
     if (where.rulesetIds.length === 0) return [];
     if (where.entityTypes.length === 0) return [];
-    // One order, whatever the plan: the name pass meets its groups in it
+    // One order, whatever the plan: the reprint pass meets its groups in it
     return await db
       .select(NAMED)
       .from(entitiesInRules)

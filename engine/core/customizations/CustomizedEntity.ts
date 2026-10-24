@@ -6,9 +6,8 @@ import { isCustomizableEntityType } from "@/shared/customization/entities.ts";
 export default class CustomizedEntity {
   /**
    * The name of an entity customizations can be made on, as its view has it (an owned one by its position, "Level", the
-   * core's word for a position along its owner, a track: a class
-   * level by its level; a modifier by what it does), or none when the view has no such entity, or it isn't one
-   * customizations are made on.
+   * core's word for a position along its owner, a track: a class level by its level; a modifier by what it does), or
+   * none when the view has no such entity, or it isn't one customizations are made on.
    */
   private static nameOf(rulesetData: RulesetData, entityType: string, entityId: string): string | undefined {
     if (entityType === "modifiers") {
