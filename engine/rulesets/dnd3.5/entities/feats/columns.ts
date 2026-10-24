@@ -10,7 +10,9 @@ export const FEAT_COLUMNS: FormField[] = [
     key: "aptitudeIds",
     links: "featsAptitudesInRules",
     label: "Aptitudes",
+    references: "aptitudes",
     required: APTITUDES_REQUIRED,
+    target: "aptitudesInRule",
   },
 ];
 

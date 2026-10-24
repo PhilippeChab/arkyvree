@@ -26,9 +26,10 @@ const COLUMNS: FormField[] = [
     input: "links",
     key: "aptitudeIds",
     label: "Aptitudes",
+    references: "aptitudes",
     required: "At least one aptitude must be selected",
   },
-  { help: "", input: "leveledLinks", key: "aptitudes", label: "Lists", max: 9, min: 0 },
+  { help: "", input: "leveledLinks", key: "aptitudes", label: "Lists", max: 9, min: 0, references: "aptitudes" },
 ];
 
 const ID = "00000000-0000-4000-8000-000000000001";

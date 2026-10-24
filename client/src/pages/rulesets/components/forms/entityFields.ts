@@ -5,10 +5,10 @@
 
 import type { InferRequestType } from "hono/client";
 
+import type { EntityRow } from "@/client/src/lib/entityRequests.ts";
 import { formatDecimal } from "@/client/src/lib/formatNumeric.ts";
 import { byName } from "@/client/src/pages/rulesets/components/byName.ts";
 import type { EntityField } from "@/client/src/pages/rulesets/details/rulesetQueries.ts";
-import type { Aptitude } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
 import { copyProgression } from "@/shared/customization/progression.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
@@ -49,17 +49,15 @@ function columnsByKey(columns: readonly EntityField[]): ValueField[] {
 }
 
 /**
- * A column's value as an entity read holds it: at its key, or, for a pool's links an entity read holds apart
- * (`links`), off them: each its aptitude's id, at its level where the column takes one, in its aptitudes' name order.
+ * A column's value as an entity read holds it: at its key, or, for links an entity read holds apart (`links`), off
+ * them: each its linked entity's id, at its level where the column takes one, in their names' order.
  */
 function columnValueOf(column: ValueField, entity: unknown): unknown {
   const linked = (column.input === "links" || column.input === "leveledLinks") && !!column.links;
   if (!linked) return valueAt(entity, column.key);
-  const links = linksOf(column, entity).sort((a, b) => byName(a.aptitude, b.aptitude));
-  if (column.input === "links") return links.map(({ aptitude }) => aptitude.id);
-  return links.map(({ aptitude, level }) =>
-    typeof level === "number" ? { id: aptitude.id, level } : { id: aptitude.id },
-  );
+  const links = linksOf(column, entity).sort((a, b) => byName(a.linked, b.linked));
+  if (column.input === "links") return links.map(({ linked }) => linked.id);
+  return links.map(({ linked, level }) => (typeof level === "number" ? { id: linked.id, level } : { id: linked.id }));
 }
 
 /**
@@ -121,8 +119,8 @@ function formValueOf(field: ValueField, value: unknown): ColumnValue {
   }
 }
 
-/** An entity read's link to an aptitude (`aptitudesInRule`), as its server sends it. */
-function isAptitude(value: unknown): value is Aptitude {
+/** A linked entity a link of an entity read holds (at its column's `target`), as its server sends it. */
+function isLinkedEntity(value: unknown): value is EntityRow {
   return isRecord(value) && typeof value.id === "string" && typeof value.name === "string";
 }
 
@@ -137,14 +135,15 @@ function isProgression(value: unknown): value is ProgressionValue {
 }
 
 /**
- * An entity read's links of a pool's links column (`links`), each its aptitude and its level, as its server sends
- * them.
+ * An entity read's links of a links column (`links`), each its linked entity (at `target`) and its level, as its
+ * server sends them.
  */
 function linksOf(column: LinksField, entity: unknown) {
   const links = column.links ? valueAt(entity, column.links) : undefined;
-  return (Array.isArray(links) ? links : []).flatMap((link) =>
-    isRecord(link) && isAptitude(link.aptitudesInRule) ? [{ aptitude: link.aptitudesInRule, level: link.level }] : [],
-  );
+  return (Array.isArray(links) ? links : []).flatMap((link) => {
+    const linked = isRecord(link) && column.target ? link[column.target] : undefined;
+    return isRecord(link) && isLinkedEntity(linked) ? [{ linked, level: link.level }] : [];
+  });
 }
 
 /** A decimal's text as its save sends it: its number, null for none (which clears it). */
@@ -210,10 +209,10 @@ export function isFieldShown(field: EntityField, watched: readonly unknown[]) {
 }
 
 /**
- * The aptitudes an entity read links its pools' columns to (`links`), which its form shows by name, each column's in
+ * The entities an entity read links its links columns to (`links`), which its form shows by name, each column's in
  * name order.
  */
-export function linkedAptitudes(columns: readonly EntityField[], entity: unknown): Aptitude[] {
+export function linkedEntities(columns: readonly EntityField[], entity: unknown): EntityRow[] {
   return columns.flatMap((column) => poolsOf([column], entity).sort(byName));
 }
 
@@ -240,10 +239,10 @@ export function ownFieldValues(fields: readonly EntityField[], values: unknown, 
  * The pools an entity read is linked to through its pools' columns (`links`), as its server lists them: a feat's feat
  * pools, each a choice its pickers offer it in.
  */
-export function poolsOf(columns: readonly EntityField[], entity: unknown): Aptitude[] {
+export function poolsOf(columns: readonly EntityField[], entity: unknown): EntityRow[] {
   return columns.flatMap((column) =>
     column.input === "links" || column.input === "leveledLinks"
-      ? linksOf(column, entity).map(({ aptitude }) => aptitude)
+      ? linksOf(column, entity).map(({ linked }) => linked)
       : [],
   );
 }

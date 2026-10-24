@@ -26,7 +26,8 @@ interface ShownWhen {
 
 /**
  * An amount an entity gives each entity of a kind (3.5's class level's base bonus to each of the ruleset's saves), from
- * `min` to `max`: a list of each one's id at `entityKey` and its amount at `amountKey`.
+ * `min` to `max`: a list of each one's id at `entityKey` and its amount at `amountKey`, for each entity of its kind
+ * (`references`: 3.5's `saves`).
  */
 export interface AmountsFormField extends FormFieldBase {
   amountKey: string;
@@ -34,6 +35,7 @@ export interface AmountsFormField extends FormFieldBase {
   input: "amounts";
   max: number;
   min: number;
+  references: string;
 }
 
 /**
@@ -90,12 +92,13 @@ export interface FlagFormField extends FormFieldBase {
 
 /**
  * The entities an entity grants, each through the entity it's granted for (3.5's class level's feats, each through the
- * pool it's taken for): a list of each one's id at `entityKey`, the one it's through at `viaKey`, and whether it's
- * `free`.
+ * pool it's taken for): a list of each one's id at `entityKey`, an entity of its kind (`references`: 3.5's
+ * `feats`), the one it's through at `viaKey`, one of the pools its kind's list reads, and whether it's `free`.
  */
 export interface GrantsFormField extends FormFieldBase {
   entityKey: string;
   input: "grants";
+  references: string;
   viaKey: string;
 }
 
@@ -110,26 +113,32 @@ export interface GroupFormField {
 }
 
 /**
- * Links to entities of a list, each with a level of its own, none too (3.5's spell's spell lists, each at its spell
- * level): from `min` to `max`. A new entity's empty list is refused, saying `required`, when it has one. An entity read
- * holds them at `links` (each link its list and its level), which its form reads them from.
+ * Links to entities of a list, of its kind (`references`: 3.5's `aptitudes`), each with a level of its own, none too
+ * (3.5's spell's spell lists, each at its spell level): from `min` to `max`. A new entity's empty list is refused,
+ * saying `required`, when it has one. An entity read holds them at `links` (each link its list, at `target`, and its
+ * level), which its form reads them from.
  */
 export interface LeveledLinksFormField extends FormFieldBase {
   input: "leveledLinks";
   links?: string;
   max: number;
   min: number;
+  references: string;
   required?: string;
+  target?: string;
 }
 
 /**
- * Links to entities of a list (3.5's feat's pools), none too. A new entity's empty list is refused, saying `required`,
- * when it has one. An entity read holds them at `links` (each link its list), which its form reads them from.
+ * Links to entities of a list, of its kind (`references`: 3.5's `aptitudes`), none too (3.5's feat's pools). A new
+ * entity's empty list is refused, saying `required`, when it has one. An entity read holds them at `links` (each link
+ * its list, at `target`), which its form reads them from.
  */
 export interface LinksFormField extends FormFieldBase {
   input: "links";
   links?: string;
+  references: string;
   required?: string;
+  target?: string;
 }
 
 /** A whole number in its bounds, in its `unit` ("feet"), which its label names: none, when it has no `default`. */

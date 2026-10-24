@@ -6,7 +6,7 @@ import {
   emptyFieldValues,
   type EntityFieldValues,
   isFieldShown,
-  linkedAptitudes,
+  linkedEntities,
   noneLabel,
   ownFieldValues,
   poolsOf,
@@ -257,22 +257,33 @@ describe("an entity's columns in its form", () => {
 describe("an entity's pools in its form", () => {
   /** A pool's links, a feat's and a spell's each at its level, which an entity read holds apart from the form's keys. */
   const POOLS: EntityField[] = [
-    { ...BASE, key: "aptitudeIds", label: "Pools", input: "links", links: "poolLinks", required: "Pick a pool" },
+    {
+      ...BASE,
+      key: "aptitudeIds",
+      label: "Pools",
+      input: "links",
+      links: "poolLinks",
+      references: "pools",
+      required: "Pick a pool",
+      target: "linked",
+    },
     {
       ...BASE,
       key: "aptitudes",
       label: "Lists",
       input: "leveledLinks",
+      references: "pools",
       links: "listLinks",
       max: 9,
       min: 0,
+      target: "linked",
     },
   ];
   const entity = {
-    poolLinks: [{ aptitudesInRule: aptitude("b", "Bonus Feats") }, { aptitudesInRule: aptitude("a", "General") }, {}],
+    poolLinks: [{ linked: aptitude("b", "Bonus Feats") }, { linked: aptitude("a", "General") }, {}],
     listLinks: [
-      { aptitudesInRule: aptitude("w", "Wizard"), level: 3 },
-      { aptitudesInRule: aptitude("c", "Cleric"), level: null },
+      { linked: aptitude("w", "Wizard"), level: 3 },
+      { linked: aptitude("c", "Cleric"), level: null },
     ],
   };
 
@@ -281,12 +292,13 @@ describe("an entity's pools in its form", () => {
       aptitudeIds: ["b", "a"],
       aptitudes: [{ id: "c" }, { id: "w", level: 3 }],
     });
-    // An entity read without its links holds none
+    // An entity read without its links holds none, and a link's entity is at its column's target alone
     expect(toColumnValues(POOLS, {})).toEqual({ aptitudeIds: [], aptitudes: [] });
+    expect(toColumnValues(POOLS, { poolLinks: [{ other: aptitude("x", "Other") }] }).aptitudeIds).toEqual([]);
   });
 
-  test("name the aptitudes it links, which its pickers show by name", () => {
-    expect(linkedAptitudes(POOLS, entity).map(({ name }) => name)).toEqual([
+  test("name the entities it links, which its pickers show by name", () => {
+    expect(linkedEntities(POOLS, entity).map(({ name }) => name)).toEqual([
       "Bonus Feats",
       "General",
       "Cleric",
