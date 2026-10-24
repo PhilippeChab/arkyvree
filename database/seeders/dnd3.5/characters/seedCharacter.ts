@@ -3,9 +3,10 @@
  * creatures.
  */
 
-import type { CharacterSeed, InventorySeed } from "@/content/core/builders/characters/types.ts";
+import type { CharacterSeed, InventorySeed } from "@/content/dnd3.5/builders/characters/types.ts";
 import type { Db } from "@/drizzle/database.ts";
 import { Engine, type KlassLevel } from "@/engine/index.ts";
+import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import {
@@ -20,7 +21,6 @@ import { readCharacterInput, readChildInputs } from "@/server/services/character
 import { writeChildren } from "@/server/services/characters/levels/index.ts";
 
 import { type SeedContext } from "./seedContext.ts";
-import { SEED_USER_ID } from "./users.ts";
 
 async function addInventory(db: Db, ctx: SeedContext, characterId: string, items: InventorySeed[]) {
   if (items.length === 0) return;

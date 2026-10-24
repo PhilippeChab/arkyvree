@@ -14,29 +14,19 @@ import StoredEntities from "@/server/repositories/stored/StoredEntities.ts";
 import StoredJoins, { type JoinRow } from "@/server/repositories/stored/StoredJoins.ts";
 import StoredProperties, { type FieldValues } from "@/server/repositories/stored/StoredProperties.ts";
 
-type Ids = Record<string, string>;
-
 type ModifierRow = typeof modifiersInCustomization.$inferInsert;
 type RequirementRow = typeof requirementsInCustomization.$inferInsert;
 
 /**
- * The ruleset a seed writes to, and the ids of the rows its content names. Seeding aptitudes, feats or
- * powers adds them, so the steps after can name them.
+ * The ruleset a seed writes to; a module's seeder adds the ids of the rows its content names (3.5's
+ * `Dnd35SeedContext`), which its steps add as they seed them, so the steps after can name them.
  */
 export interface SeedContext {
-  abilityMap: Ids;
-  /** Its aptitudes and its base ruleset's. */
-  aptMap: Ids;
-  /** Its feats and its base ruleset's, its own under a name they share. */
-  featMap: Ids;
-  /** Its base ruleset's powers, which it copies before adding them to a spell list (`cowPower`). */
-  inheritedPowerMap: Ids;
-  /** Its own powers. */
-  powerMap: Ids;
   rulesetId: string;
-  saveMap: Ids;
-  skillMap: Ids;
 }
+
+/** Ids by name. */
+export type Ids = Record<string, string>;
 
 /** The generic tables' repositories a seeder writes through, as the server does (no request's cache: no request). */
 export const Entities = new StoredEntities();

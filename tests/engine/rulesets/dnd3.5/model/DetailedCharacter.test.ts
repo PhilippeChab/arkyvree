@@ -9,6 +9,13 @@ import {
   DND35_DMG_NAME,
   DND35_RULESET_NAME,
 } from "@/content/dnd3.5/rulesetNames.ts";
+import {
+  addClassLevels,
+  addFeats,
+  addPowers,
+  addSkills,
+  createCharacter,
+} from "@/database/seeders/dnd3.5/characters/seedCharacter.ts";
 import { RulesetSeeder } from "@/database/seeders/dnd3.5/RulesetSeeder.ts";
 import { charactersInCharacter, modifiersInCustomization, requirementsInCustomization } from "@/drizzle/schema.ts";
 import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
@@ -19,7 +26,6 @@ import Dnd35TargetPaths from "@/engine/rulesets/dnd3.5/Dnd35TargetPaths.ts";
 import { ALLOWED_ALL, type AptitudeLevelData } from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudesComponent.ts";
 import type { WeaponSlot } from "@/engine/rulesets/dnd3.5/model/combat/CombatState.ts";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
-import { addClassLevels, addFeats, addPowers, addSkills, createCharacter } from "@/scripts/db/seeds/seedCharacter.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";

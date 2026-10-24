@@ -1,8 +1,8 @@
 /** A race reference's seeds: its RaceSeed[]. */
 
 import { type RaceReference } from "@/codegen/dnd3.5/tools/types/races.ts";
-import type { RaceSeed } from "@/content/core/builders/races/types.ts";
 import { grantLanguage } from "@/content/dnd3.5/builders/languages/knowledge.ts";
+import type { RaceSeed } from "@/content/dnd3.5/builders/races/types.ts";
 import { SIZE_OPTIONS } from "@/shared/enums.ts";
 
 import { ReferenceSeeds } from "./ReferenceSeeds.ts";

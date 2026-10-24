@@ -2,8 +2,8 @@ import { describe, expect, test } from "bun:test";
 
 import type { InferResponseType } from "hono/client";
 
-import { addClassLevels, addPowers } from "@/scripts/db/seeds/seedCharacter.ts";
-import { type SeedContext } from "@/scripts/db/seeds/seedContext.ts";
+import { addClassLevels, addPowers } from "@/database/seeders/dnd3.5/characters/seedCharacter.ts";
+import { type SeedContext } from "@/database/seeders/dnd3.5/characters/seedContext.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { db } from "@/server/database/index.ts";
 import { api, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";

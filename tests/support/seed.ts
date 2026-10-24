@@ -1,10 +1,9 @@
+import { getSeedContext, type SeedContext } from "@/database/seeders/dnd3.5/characters/seedContext.ts";
 import type { Item } from "@/engine/index.ts";
-import { getSeedContext, type SeedContext } from "@/scripts/db/seeds/seedContext.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { db } from "@/server/database/index.ts";
 import { Visibility } from "@/server/repositories/BaseRepository.ts";
 import { Characters, Entities, fetchEveryPage, Rulesets } from "@/server/repositories/index.ts";
-import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 
 let seedContext: Promise<SeedContext> | undefined;
 
@@ -13,7 +12,7 @@ export const NIL_UUID = "00000000-0000-0000-0000-000000000000";
 
 /** Ids of the seeded D&D 3.5 content, by name. Loaded once per test process. */
 export function getSeedCtx() {
-  seedContext ??= getSeedContext(db, DND35_BASE_RULES);
+  seedContext ??= getSeedContext(db);
   return seedContext;
 }
 

@@ -8,10 +8,11 @@ import { and, eq, inArray, like } from "drizzle-orm";
 
 import { gte } from "@/content/core/builders/customization/requirements.ts";
 import type { CowFeatEntry, CowSpellEntry } from "@/content/dnd3.5/builders/rulesets/types.ts";
-import type { PowerLink } from "@/database/seeders/core/concerns/CopiesOnWrite.ts";
 import type { BaseSeeder } from "@/database/seeders/dnd3.5/BaseSeeder.ts";
 import { entitiesInRules, requirementsInCustomization } from "@/drizzle/schema.ts";
 import type { Constructor } from "@/lib/mixins.ts";
+
+import type { PowerLink } from "./CopiesOnWrite.ts";
 
 /** Copying the core's feats and spells into an extension that changes them. */
 export function CopiesIntoExtensions<B extends Constructor<BaseSeeder>>(Base: B) {

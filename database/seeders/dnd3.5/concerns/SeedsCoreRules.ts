@@ -1,12 +1,12 @@
-import type { AbilitySeed } from "@/content/core/builders/abilities/types.ts";
-import type { LanguageSeed } from "@/content/core/builders/languages/types.ts";
-import type { SaveSeed } from "@/content/core/builders/saves/types.ts";
-import type { SeederState } from "@/database/seeders/core/SeederState.ts";
+import type { AbilitySeed } from "@/content/dnd3.5/builders/abilities/types.ts";
+import type { LanguageSeed } from "@/content/dnd3.5/builders/languages/types.ts";
+import type { SaveSeed } from "@/content/dnd3.5/builders/saves/types.ts";
+import type { Dnd35ContentSeeder } from "@/database/seeders/dnd3.5/Dnd35ContentSeeder.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 /** Seeding a base ruleset's own rules: its abilities, saves and languages. */
-export function SeedsCoreRules<B extends Constructor<SeederState>>(Base: B) {
+export function SeedsCoreRules<B extends Constructor<Dnd35ContentSeeder>>(Base: B) {
   abstract class SeedingCoreRules extends Base {
     /**
      * Refuses abilities a sheet couldn't tell apart, among themselves or from those the ruleset has: a character's sheet

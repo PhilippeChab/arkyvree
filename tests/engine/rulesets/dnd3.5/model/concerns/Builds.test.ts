@@ -1,8 +1,8 @@
 import { describe, expect, test } from "bun:test";
 
+import { addClassLevels, createCharacter } from "@/database/seeders/dnd3.5/characters/seedCharacter.ts";
 import CombatSheet from "@/engine/rulesets/dnd3.5/characters/description/CombatSheet.ts";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
-import { addClassLevels, createCharacter } from "@/scripts/db/seeds/seedCharacter.ts";
 import { db } from "@/server/database/index.ts";
 import { Characters, Modifiers, Requirements } from "@/server/repositories/index.ts";
 import type { Modifier, Requirement } from "@/shared/relations.ts";

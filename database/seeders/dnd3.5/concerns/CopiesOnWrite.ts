@@ -3,7 +3,8 @@
  * copy in `entity_snapshots`, so the ruleset shows the copy in place of the original.
  */
 
-import { Joins, type SeederState } from "@/database/seeders/core/SeederState.ts";
+import { Joins } from "@/database/seeders/core/SeederState.ts";
+import type { Dnd35ContentSeeder } from "@/database/seeders/dnd3.5/Dnd35ContentSeeder.ts";
 import type { Feat, Power } from "@/engine/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 
@@ -20,7 +21,7 @@ export interface PowerLink {
 }
 
 /** Copying inherited feats and powers into the ruleset, and adding powers to aptitudes. */
-export function CopiesOnWrite<B extends Constructor<SeederState>>(Base: B) {
+export function CopiesOnWrite<B extends Constructor<Dnd35ContentSeeder>>(Base: B) {
   abstract class CopyingOnWrite extends Base {
     /**
      * The aptitude links each power's copy keeps of its original's (`fromIds`), by the original's id: the copy hides

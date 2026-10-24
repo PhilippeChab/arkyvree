@@ -1,8 +1,8 @@
-import type { SeederState } from "@/database/seeders/core/SeederState.ts";
+import type { Dnd35ContentSeeder } from "@/database/seeders/dnd3.5/Dnd35ContentSeeder.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 
 /** Seeding aptitudes. */
-export function SeedsAptitudes<B extends Constructor<SeederState>>(Base: B) {
+export function SeedsAptitudes<B extends Constructor<Dnd35ContentSeeder>>(Base: B) {
   abstract class SeedingAptitudes extends Base {
     /** Seeds aptitudes and adds them to the context. */
     async seedAptitudes(names: string[]) {

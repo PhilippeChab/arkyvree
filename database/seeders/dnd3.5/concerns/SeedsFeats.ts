@@ -1,10 +1,10 @@
-import type { FeatSeed } from "@/content/core/builders/feats/types.ts";
-import type { SeederState } from "@/database/seeders/core/SeederState.ts";
+import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
+import type { Dnd35ContentSeeder } from "@/database/seeders/dnd3.5/Dnd35ContentSeeder.ts";
 import { requirementsInCustomization } from "@/drizzle/schema.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 
 /** Seeding feats. */
-export function SeedsFeats<B extends Constructor<SeederState>>(Base: B) {
+export function SeedsFeats<B extends Constructor<Dnd35ContentSeeder>>(Base: B) {
   abstract class SeedingFeats extends Base {
     /** Seeds feats with their aptitudes, requirements, modifiers and properties, and adds them to the context. */
     async seedFeats(feats: FeatSeed[]) {

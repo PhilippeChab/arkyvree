@@ -2,7 +2,7 @@ import { expect, test } from "bun:test";
 
 import { eq } from "drizzle-orm";
 
-import type { CharacterSeed } from "@/content/core/builders/characters/types.ts";
+import type { CharacterSeed } from "@/content/dnd3.5/builders/characters/types.ts";
 import { CHARACTERS } from "@/content/dnd3.5/testData/characters.ts";
 import { charactersInCharacter } from "@/drizzle/schema.ts";
 import type {

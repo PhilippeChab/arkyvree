@@ -7,10 +7,10 @@
 
 import { beforeAll, describe, expect, test } from "bun:test";
 
+import { type SeedContext } from "@/database/seeders/dnd3.5/characters/seedContext.ts";
 import { type RulesetData } from "@/engine/core/view/index.ts";
 import type { Feat, KlassLevelFeat, KlassLevelPower, KlassSkill, Power, Skill } from "@/engine/index.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
-import { type SeedContext } from "@/scripts/db/seeds/seedContext.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Entities, Joins, Rulesets } from "@/server/repositories/index.ts";

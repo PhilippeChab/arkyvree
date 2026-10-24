@@ -2,15 +2,14 @@
 
 import { and, eq } from "drizzle-orm";
 
-import { RULESET_CONTENT } from "@/database/packages/registry.ts";
-import { ContentSeeder } from "@/database/seeders/core/ContentSeeder.ts";
-import type { SeedContext as RulesetSeedContext } from "@/database/seeders/core/SeederState.ts";
+import { DND35_CORE_PACKAGE } from "@/content/dnd3.5/packages/core.ts";
+import { SeederState } from "@/database/seeders/core/SeederState.ts";
+import { Dnd35ContentSeeder, type Dnd35SeedContext } from "@/database/seeders/dnd3.5/Dnd35ContentSeeder.ts";
 import type { Db } from "@/drizzle/database.ts";
 import { entitiesInRules } from "@/drizzle/schema.ts";
-import type { BaseRules } from "@/shared/enums.ts";
 
 /** The seeded core rules' ids by name: its seed context, and the languages, races, classes and items characters name. */
-export type SeedContext = RulesetSeedContext & {
+export type SeedContext = Dnd35SeedContext & {
   itemMap: Record<string, string>;
   /** Klass id by kind, then name. Use `klassMap.pc["Fighter"]`, `klassMap.familiar["Familiar"]`. */
   klassMap: Record<string, Record<string, string>>;
@@ -32,11 +31,11 @@ function buildKindMap(rows: { id: string; kind: string; name: string }[]): Recor
   return out;
 }
 
-/** The seed context of the core ruleset `baseRules`' core package seeds (its row of the registry). */
-export async function getSeedContext(db: Db, baseRules: BaseRules): Promise<SeedContext> {
-  const rulesetId = await ContentSeeder.findCoreRulesetId(db, RULESET_CONTENT[baseRules].core, "The test data");
+/** The seed context of the 3.5 core ruleset, which its core package seeds. */
+export async function getSeedContext(db: Db): Promise<SeedContext> {
+  const rulesetId = await Dnd35ContentSeeder.findCoreRulesetId(db, DND35_CORE_PACKAGE, "The test data");
   // One after the other: a transaction runs one query at a time.
-  const names = await ContentSeeder.loadContext(db, rulesetId);
+  const names = await Dnd35ContentSeeder.loadContext(db, rulesetId);
   // Each type's entities, by name and by their partition (a race's or a class's kind)
   const named = async (type: string) =>
     (await db
@@ -53,9 +52,9 @@ export async function getSeedContext(db: Db, baseRules: BaseRules): Promise<Seed
   const items = await named("items");
   return {
     ...names,
-    langMap: ContentSeeder.idsByName(langs),
+    langMap: SeederState.idsByName(langs),
     raceMap: buildKindMap(races),
     klassMap: buildKindMap(klasses),
-    itemMap: ContentSeeder.idsByName(items),
+    itemMap: SeederState.idsByName(items),
   };
 }
