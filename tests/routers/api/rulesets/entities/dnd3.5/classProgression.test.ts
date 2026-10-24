@@ -1,8 +1,9 @@
 import { describe, expect, test } from "bun:test";
 
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
-import { api, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
+import { api, createSignedInUser, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
+import { NIL_UUID } from "@/tests/support/seed.ts";
 
 const kinds = api.api.rulesets[":id"].entities[":entityType"];
 const progression = kinds[":entityId"].progression;
@@ -66,5 +67,16 @@ describe("rulesets class progression", () => {
 
     const guest = guestApi.api.rulesets[":id"].entities[":entityType"][":entityId"].progression;
     await expectStatus(guest.$put({ param, json: {} }), 401);
+  });
+
+  test("reads a body by its rules once the access check and the class's lookup pass", async () => {
+    const { param } = await setup();
+    const json = { levels: "all" } as never;
+    const { api: other } = await createSignedInUser();
+    await expectStatus(
+      other.api.rulesets[":id"].entities[":entityType"][":entityId"].progression.$put({ param, json }),
+      403,
+    );
+    await expectStatus(progression.$put({ param: { ...param, entityId: NIL_UUID }, json }), 404);
   });
 });

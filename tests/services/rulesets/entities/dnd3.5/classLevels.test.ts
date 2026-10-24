@@ -359,6 +359,8 @@ describe("EntitiesService: a class's levels", () => {
       () => createLevel(other, ruleset.id, klass.id, 2),
       () => EntitiesService.updateOwnedEntity(other, ruleset.id, "klasses", klass.id, level.id, { fields: { bab: 3 } }),
       () => EntitiesService.deleteOwnedEntity(other, ruleset.id, "klasses", klass.id, level.id),
+      // Its access checked before its class is looked up
+      () => EntitiesService.deleteOwnedEntity(other, ruleset.id, "klasses", NIL_UUID, level.id),
     ])
       expect(change()).rejects.toThrow(ForbiddenError);
   });
@@ -446,6 +448,10 @@ describe("EntitiesService: a class's levels", () => {
       await addCharacterLevel(character.id, level.id);
 
       expect(EntitiesService.deleteOwnedEntity(session, ruleset.id, "klasses", klass.id, level.id)).rejects.toThrow(
+        ConflictError,
+      );
+      // Checked before its class is looked up: sent with a class the ruleset has none of too
+      expect(EntitiesService.deleteOwnedEntity(session, ruleset.id, "klasses", NIL_UUID, level.id)).rejects.toThrow(
         ConflictError,
       );
     });

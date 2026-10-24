@@ -16,7 +16,7 @@ import { getUrlSegment } from "@/shared/urlSegments.ts";
 import CharacterEngine from "./CharacterEngine.ts";
 import CharactersEngine from "./CharactersEngine.ts";
 import ModifiersEngine from "./ModifiersEngine.ts";
-import Modules, { type EntityKinds, type EntityType, type Module } from "./Modules.ts";
+import Modules, { type Accepted, type EntityKinds, type EntityType, type Module } from "./Modules.ts";
 import RequirementsEngine from "./RequirementsEngine.ts";
 import TargetPathsEngine from "./TargetPathsEngine.ts";
 
@@ -32,7 +32,7 @@ type EntityPart = "describeOwned" | "links" | "owned" | "progression" | "tables"
 type PartOf<T, P extends EntityPart> = T extends Record<P, (id: string) => infer R> ? R : never;
 
 /** What a progression's save sends, as each registered kind that has one takes it (a class's levels' forms…). */
-export type ProgressionForm = Parameters<ReturnType<RulesetEngine["progression"]>["plan"]>[0];
+export type ProgressionForm = Accepted<ReturnType<RulesetEngine["progression"]>["plan"]>[0];
 
 /** What a refusal calls a part a kind has none of: "No links for races". */
 const PART_WORDS: Readonly<Record<EntityPart, string>> = {

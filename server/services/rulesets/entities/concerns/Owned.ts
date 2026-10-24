@@ -3,7 +3,7 @@ import type { Constructor } from "@/lib/mixins.ts";
 import { CustomizationEdit, EntityEdit, RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
-import { Entities, Joins, type RulesetEntityType } from "@/server/repositories/index.ts";
+import { Entities, Joins, type ReferencedType, type RulesetEntityType } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import { hasCharacterPicks } from "@/server/services/rulesets/characterPicks.ts";
@@ -80,12 +80,12 @@ export function Owned<B extends Constructor>(Base: B) {
           await withRulesetScope(tx, rulesetId, async (scope) => {
             const { ruleset, rulesetData } = scope;
 
-            // Access first, then the owner (its kind names the owned entity's), then what's in use
-            const policy = await RulesetsPolicy.for(tx, session, ruleset);
-            policy.canUpdateEntity();
+            // What's in use and the access first, by the owned kind its owner's declares, then the owner itself
+            const { ownedType } = Engine.for(scope).entities(type);
+            const ids = rulesetData.cow.getEquivalentIds(ownedId);
+            const inUse = ownedType ? await hasCharacterPicks(tx, ownedType as ReferencedType, ids, rulesetId) : false;
+            (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
             const owned = Engine.for(scope).owned(type, ownerId);
-            const inUse = await hasCharacterPicks(tx, owned.type, rulesetData.cow.getEquivalentIds(ownedId), rulesetId);
-            policy.canDeleteEntity({ inUse });
             const plan = owned.planDelete(ownedId);
 
             const edit = new CustomizationEdit(ruleset, rulesetData.cow);

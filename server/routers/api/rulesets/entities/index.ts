@@ -14,7 +14,6 @@ import {
   page,
 } from "@/server/routers/api/validation.ts";
 import { EntitiesService, ENTITY_TYPES } from "@/server/services/rulesets/entities/index.ts";
-import { isRecord } from "@/shared/isRecord.ts";
 
 /**
  * A route's entity kind: the ruleset (`id`), and the kind by its URL segment (`classes`), which it hands as its type.
@@ -227,13 +226,13 @@ export default new Hono<SessionContext>()
   .put(
     "/:id/entities/:entityType/:entityId/progression",
     validate("param", entityParams),
-    // A progression's save: what its kind's rules read (`ProgressionForm`, any object, which they parse), and the
-    // tokens of the owned entities its client read
+    // A progression's save: the tokens of the owned entities its client read, and what its kind's rules read and parse
+    // (`ProgressionForm`, typed alone here: the object refuses what isn't one)
     validate(
       "json",
       z
         .object({ ownedTokens: z.array(z.object({ id: z.string().uuid(), updatedAt: z.string() })).optional() })
-        .and(z.custom<ProgressionForm>((value) => isRecord(value), "Expected an object")),
+        .and(z.custom<ProgressionForm>(() => true)),
     ),
     async (c) => {
       const { id, entityType, entityId } = c.req.valid("param");

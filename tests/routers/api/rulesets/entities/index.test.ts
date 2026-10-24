@@ -210,6 +210,14 @@ describe("rulesets entities by kind", () => {
     expect(await refusalOf(entity.tables[":table"].$get({ param: { ...race, table: "spells" } }))).toMatchObject({
       message: "No tables for races",
     });
+    expect(await refusalOf(entity.links.$post({ param: race, json: { targetId: NIL_UUID } }))).toMatchObject({
+      message: "No links for races",
+    });
+    const byId = kinds.owned[":ownedId"];
+    expect(await refusalOf(byId.$get({ param: { id, entityType: "races", ownedId: NIL_UUID } }))).toMatchObject({
+      message: "No owned entities for races",
+    });
+    await expectStatus(byId.$get({ param: { id, entityType: "classes", ownedId: "not-an-id" } }), 400);
     const klass = { id, entityType: "classes" as const, entityId: (await first("classes")).id };
     expect(await refusalOf(entity.tables[":table"].$get({ param: { ...klass, table: "maneuvers" } }))).toMatchObject({
       message: "No maneuvers table for classes",

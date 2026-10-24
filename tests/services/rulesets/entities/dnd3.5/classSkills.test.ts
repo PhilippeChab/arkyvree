@@ -4,7 +4,7 @@ import type { Klass, KlassLevel, KlassSkill, RulesetAbility, Skill } from "@/eng
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError } from "@/server/errors/index.ts";
-import { Entities, EntitySnapshots, Joins } from "@/server/repositories/index.ts";
+import { Activities, Entities, EntitySnapshots, Joins } from "@/server/repositories/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
 import { createTestCharacter } from "@/tests/support/characters.ts";
@@ -49,6 +49,20 @@ describe("EntitiesService: a class's skills", () => {
     await EntitiesService.removeEntityLink(session, ruleset.id, "klasses", fighter.id, climb.id);
     expect(await skillIdsOf(ruleset.id, fighter.id)).toEqual([swim.id]);
     expect(await skillIdsOf(ruleset.id, rogue.id)).toEqual([climb.id]);
+  });
+
+  test("refuses a removal another removal took since its view was read, recording nothing", async () => {
+    const { user, session, ruleset, fighter, climb } = await setup();
+    await EntitiesService.addEntityLink(session, ruleset.id, "klasses", fighter.id, climb.id);
+    // The view still has it: another request removed it, and its invalidation hasn't run
+    expect(await skillIdsOf(ruleset.id, fighter.id)).toEqual([climb.id]);
+    await Joins.delete(db, { join: "klass_skills", fromId: fighter.id, toId: climb.id });
+
+    expect(EntitiesService.removeEntityLink(session, ruleset.id, "klasses", fighter.id, climb.id)).rejects.toThrow(
+      ConflictError,
+    );
+    const { items } = await Activities.findPage(db, { userId: user.id }, { limit: 10, page: 1 });
+    expect(items.map((activity) => activity.type)).toEqual(["addKlassSkill"]);
   });
 
   test("refuses changes from anyone but the owner", async () => {

@@ -47,6 +47,9 @@ export default class ClassEntity extends RulesetEntity<
   /** Its list's filters: the kind it's for. */
   protected override readonly listFilters = { kind: z.string() };
 
+  /** Its levels' kind, which it owns. */
+  override readonly ownedType = "klass_levels";
+
   override readonly type = "klasses";
 
   /**
