@@ -19,13 +19,19 @@ import levels from "./levels/index.ts";
 import modifiers from "./modifiers/index.ts";
 import sharing from "./sharing/index.ts";
 
-/** A character's ability score. */
-const abilityScore = z.number().int();
-
 const campaignIdParam = z.object({ campaignId: z.string().uuid() });
 
 /** A character's fields, by their keys, which its ruleset reads and checks: a text, a number, or none. */
 const characterFields = z.record(z.string(), z.union([z.string(), z.number(), z.null()]));
+
+/** A creation pick's column (3.5's `raceId`). */
+const columnParam = z.object({ column: z.string() });
+
+/** A character's link, by its name (3.5's `abilities`, `languages`). */
+const linkParams = idParam.extend({ link: z.string() });
+
+/** A character's amount of a scored link's entity (3.5's ability score). */
+const score = z.number().int();
 
 export default new Hono()
   .use(sessionMiddleware)
@@ -67,24 +73,29 @@ export default new Hono()
       );
     },
   )
-  // Get available races for character creation (annotated with eligibility)
+  // How a new character of a ruleset sets its scores of a scored link (3.5's ability scores)
+  .get("/creation", validate("query", z.object({ link: z.string(), rulesetId: z.string().uuid() })), async (c) => {
+    const { link, rulesetId } = c.req.valid("query");
+    return c.json(await CharactersService.getCreation(rulesetId, link), 200);
+  })
+  // A new character's creation pick's options (a single link's, by its column: 3.5's race), each checked
   .get(
-    "/available-races",
+    "/creation/:column",
+    validate("param", columnParam),
     validate(
       "query",
-      // Past its ruleset and its page, what the form's fields that narrow its races hold, by their keys (`racePick`)
+      // Past its ruleset and its page, what the form's fields that narrow its options hold, by their keys (`narrows`)
       z.object({ rulesetId: z.string().uuid(), limit, page, search: z.string().optional() }).catchall(z.string()),
     ),
     async (c) => {
-      const { rulesetId, limit, page, search, ...picks } = c.req.valid("query");
-      return c.json(await CharactersService.getAvailableRaces(rulesetId, picks, { search }, { limit, page }), 200);
+      const { column } = c.req.valid("param");
+      const { rulesetId, limit, page, search, ...narrowing } = c.req.valid("query");
+      return c.json(
+        await CharactersService.getCreationOptions(rulesetId, column, narrowing, { search }, { limit, page }),
+        200,
+      );
     },
   )
-  // How a new character of a ruleset sets its ability scores
-  .get("/creation", validate("query", z.object({ rulesetId: z.string().uuid() })), async (c) => {
-    const { rulesetId } = c.req.valid("query");
-    return c.json(await CharactersService.getCreation(rulesetId), 200);
-  })
   // Get characters not in a campaign
   .get(
     "/unlinked/:campaignId",
@@ -110,15 +121,15 @@ export default new Hono()
     const { id } = c.req.valid("param");
     return c.json(await CharactersService.getCharacter(c.var.requestSession, id), 200);
   })
-  // What a character speaks, and what its picked languages (as its edit is being made) leave it room for
+  // What a character has of a picked link, and what its picks (as its edit is being made) leave it room for
   .get(
-    "/:id/languages",
-    validate("param", idParam),
-    validate("query", z.object({ languageIds: idList })),
+    "/:id/links/:link",
+    validate("param", linkParams),
+    validate("query", z.object({ entityIds: idList })),
     async (c) => {
-      const { id } = c.req.valid("param");
-      const { languageIds = [] } = c.req.valid("query");
-      return c.json(await CharactersService.getLanguages(c.var.requestSession, id, languageIds), 200);
+      const { id, link } = c.req.valid("param");
+      const { entityIds = [] } = c.req.valid("query");
+      return c.json(await CharactersService.getLinkPicks(c.var.requestSession, id, link, entityIds), 200);
     },
   )
   .post(
@@ -127,9 +138,10 @@ export default new Hono()
       "json",
       z.object({
         rulesetId: z.string().uuid(),
-        raceId: z.string().uuid(),
         name: z.string().min(1).max(MAX_CHARACTER_NAME_LENGTH),
-        abilities: z.record(z.string().uuid(), abilityScore),
+        // The entity each of its creation's picks names, by column, and each scored link's amounts, by link
+        picks: z.record(z.string(), z.string().uuid()),
+        scores: z.record(z.string(), z.record(z.string().uuid(), score)),
         // Its fields, by the keys its rules' form gives them, which its ruleset reads and checks (`planCreate`)
         fields: characterFields,
         notes: z.string().optional(),
@@ -188,7 +200,8 @@ export default new Hono()
         notes: z.string().optional(),
         // Read by the character's editors and its campaign's Game Master only
         privateNotes: z.string().optional(),
-        languageIds: z.array(z.string().uuid()).optional(),
+        // Each picked link's picks, by link, which its ruleset reads and checks (`planEdit`)
+        links: z.record(z.string(), z.array(z.string().uuid())).optional(),
         updatedAt: z.string().optional(),
       }),
     ),
@@ -201,26 +214,26 @@ export default new Hono()
     },
   )
   .put(
-    "/:id/abilities",
-    validate("param", idParam),
-    validate("json", z.record(z.string().uuid(), abilityScore)),
+    "/:id/links/:link",
+    validate("param", linkParams),
+    validate("json", z.object({ entityIds: z.array(z.string().uuid()) })),
     async (c) => {
-      const { id } = c.req.valid("param");
-      const body = c.req.valid("json");
+      const { id, link } = c.req.valid("param");
+      const { entityIds } = c.req.valid("json");
 
-      await CharactersService.updateAbilities(c.var.requestSession, id, body);
+      await CharactersService.updateLinkPicks(c.var.requestSession, id, link, entityIds);
       return c.json({ success: true }, 200);
     },
   )
   .put(
-    "/:id/languages",
-    validate("param", idParam),
-    validate("json", z.object({ languageIds: z.array(z.string().uuid()) })),
+    "/:id/scores/:link",
+    validate("param", linkParams),
+    validate("json", z.record(z.string().uuid(), score)),
     async (c) => {
-      const { id } = c.req.valid("param");
-      const { languageIds } = c.req.valid("json");
+      const { id, link } = c.req.valid("param");
+      const body = c.req.valid("json");
 
-      await CharactersService.updateLanguages(c.var.requestSession, id, languageIds);
+      await CharactersService.updateScores(c.var.requestSession, id, link, body);
       return c.json({ success: true }, 200);
     },
   )

@@ -174,7 +174,7 @@ describe("A PCGen fighter / rogue", () => {
     const worn = plan.inventory
       .filter((entry) => entry.equipped)
       .map((entry) =>
-        `${dataView.itemsById.get(entry.itemId)?.name}: ${entry.location} ${entry.weaponSets.join(",")}`.trim(),
+        `${dataView.itemsById.get(entry.itemId)?.name}: ${entry.location} ${entry.groups.join(",")}`.trim(),
       );
     expect(worn.toSorted()).toEqual([
       "Bastard Sword: Main Hand 0",

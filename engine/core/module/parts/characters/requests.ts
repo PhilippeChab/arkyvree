@@ -27,13 +27,13 @@ export interface NewCharacterRequest extends StartRequest {
 }
 
 /**
- * Where an inventory dialog places an item: `location`, in each of `weaponSets` for a hand, the entry placed
- * (`entryId`) aside.
+ * Where an inventory dialog places an item: `location`, in each of `groups` (3.5's weapon sets, for a hand), the entry
+ * placed (`entryId`) aside.
  */
 export interface PlacementQuery {
   entryId: string | null;
+  groups: number[];
   location: ItemLocation;
-  weaponSets: number[];
 }
 
 /** A printed sheet's request: whether it adds the diagnostics page, and the character's portrait. */

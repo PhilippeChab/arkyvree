@@ -60,7 +60,7 @@ describe("An item's placement", () => {
   test("asks for a weapon set in a weapon's or a shield's hand only", () => {
     const asked = (type: string | null) =>
       ItemPlacement.describe({ type, slot: "Head" }, [])
-        .locations.filter((option) => option.weaponSet)
+        .locations.filter((option) => option.grouped)
         .map((option) => option.location);
     expect(asked("Weapon")).toEqual([...HAND_LOCATIONS]);
     expect(asked("Shield")).toEqual(["Off Hand"]);
@@ -78,22 +78,22 @@ describe("An item's placement", () => {
 
 describe("Where an entry is worn", () => {
   test("names each weapon set a hand holds it in, from 1", () => {
-    expect(ItemPlacement.describeSlot({ equipped: true, location: "Off Hand", weaponSets: [0, 1] })).toBe(
+    expect(ItemPlacement.describeSlot({ equipped: true, location: "Off Hand", groups: [0, 1] })).toBe(
       "Off Hand (Sets 1, 2)",
     );
-    expect(ItemPlacement.describeSlot({ equipped: true, location: "Main Hand", weaponSets: [0, 2, 3] })).toBe(
+    expect(ItemPlacement.describeSlot({ equipped: true, location: "Main Hand", groups: [0, 2, 3] })).toBe(
       "Main Hand (Sets 1, 3, 4)",
     );
   });
 
   test("is its location, its weapon set from 1 in a hand, or none while it's carried", () => {
-    expect(ItemPlacement.describeSlot({ equipped: true, location: "Main Hand", weaponSets: [0] })).toBe(
+    expect(ItemPlacement.describeSlot({ equipped: true, location: "Main Hand", groups: [0] })).toBe(
       "Main Hand (Set 1)",
     );
-    expect(ItemPlacement.describeSlot({ equipped: true, location: "Two Handed", weaponSets: [2] })).toBe(
+    expect(ItemPlacement.describeSlot({ equipped: true, location: "Two Handed", groups: [2] })).toBe(
       "Two Handed (Set 3)",
     );
-    expect(ItemPlacement.describeSlot({ equipped: true, location: "Neck", weaponSets: [] })).toBe("Neck");
-    expect(ItemPlacement.describeSlot({ equipped: false, location: null, weaponSets: [] })).toBeNull();
+    expect(ItemPlacement.describeSlot({ equipped: true, location: "Neck", groups: [] })).toBe("Neck");
+    expect(ItemPlacement.describeSlot({ equipped: false, location: null, groups: [] })).toBeNull();
   });
 });

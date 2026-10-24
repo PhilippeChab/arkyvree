@@ -37,11 +37,11 @@ import { getUrlSegment } from "@/shared/urlSegments.ts";
 
 import {
   EMPTY_INVENTORY_FORM,
+  groupChoices,
   type InventoryFormData,
   LOCATION_CHOICES,
   pickedLocation,
   placementPayload,
-  weaponSetChoices,
 } from "./equipment.ts";
 import {
   characterInventoryQuery,
@@ -51,11 +51,11 @@ import {
   type RulesetItem,
   rulesetItemQuery,
 } from "./equipmentQueries.ts";
+import { shownGroup } from "./groups.ts";
 import { InventoryPlacementFields } from "./InventoryPlacementFields.tsx";
 import { InventoryTable } from "./InventoryTable.tsx";
 import type { BlockOf, InventoryRow } from "./sheetBlocks.ts";
 import { SheetSection } from "./SheetSection.tsx";
-import { shownWeaponSet } from "./weaponSets.ts";
 
 interface InventorySectionProps {
   block: BlockOf<"inventory">;
@@ -107,9 +107,9 @@ export function InventorySection({ block, characterId, rulesetId, readOnly, load
 
   const selectedItem = addForm.watch("selectedItem");
   const addLocation = addForm.watch("location");
-  const addWeaponSets = addForm.watch("weaponSets");
+  const addGroups = addForm.watch("groups");
   const editLocation = editForm.watch("location");
-  const editWeaponSets = editForm.watch("weaponSets");
+  const editGroups = editForm.watch("groups");
 
   // The picked item's details (add dialog): how it's placed
   const { data: itemDetail, error: itemDetailError } = useQuery(
@@ -140,11 +140,11 @@ export function InventorySection({ block, characterId, rulesetId, readOnly, load
   // What keeps the picked slot from taking the item, as the server's rules say: shown above each dialog's fields, its
   // save held while it stands, which the server would refuse
   const { data: addPlacement, error: addPlacementError } = useQuery({
-    ...inventoryPlacementQuery(characterId, addLocation, addWeaponSets),
+    ...inventoryPlacementQuery(characterId, addLocation, addGroups),
     enabled: addDialog.open,
   });
   const { data: editPlacement, error: editPlacementError } = useQuery({
-    ...inventoryPlacementQuery(characterId, editLocation, editWeaponSets, editingEntry?.id),
+    ...inventoryPlacementQuery(characterId, editLocation, editGroups, editingEntry?.id),
     enabled: editDialog.open,
   });
   const addSlotWarning = addPlacement?.warning;
@@ -239,7 +239,7 @@ export function InventorySection({ block, characterId, rulesetId, readOnly, load
     editForm.reset({
       quantity: entry.quantity ?? 1,
       location: oneOf(entry.location, LOCATION_CHOICES, "none"),
-      weaponSets: entry.weaponSets.length > 0 ? entry.weaponSets.map(shownWeaponSet) : [shownWeaponSet(0)],
+      groups: entry.groups.length > 0 ? entry.groups.map(shownGroup) : [shownGroup(0)],
       totalCharges: entry.totalCharges ?? 0,
       remainingCharges: entry.remainingCharges ?? 0,
     });
@@ -442,7 +442,7 @@ export function InventorySection({ block, characterId, rulesetId, readOnly, load
         <InventoryPlacementFields
           form={addForm}
           profile={selectedItem ? addProfile : null}
-          setChoices={weaponSetChoices(inventoryItems, addWeaponSets)}
+          setChoices={groupChoices(inventoryItems, addGroups)}
           words={words}
         />
       </CreateDialog>
@@ -483,7 +483,7 @@ export function InventorySection({ block, characterId, rulesetId, readOnly, load
         <InventoryPlacementFields
           form={editForm}
           profile={editProfile}
-          setChoices={weaponSetChoices(inventoryItems, editWeaponSets)}
+          setChoices={groupChoices(inventoryItems, editGroups)}
           words={words}
         />
       </EditDialog>

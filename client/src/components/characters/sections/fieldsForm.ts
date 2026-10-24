@@ -4,9 +4,9 @@ import type { BlockOf, SheetField } from "./sheetBlocks.ts";
 
 /**
  * A `fields` block as its form holds it: each field's value by its key (a number's NaN while it's empty, a select's
- * "" while it's unset), its languages' ids, and its notes.
+ * "" while it's unset), each picked link's entities' ids by its name (`links`), and its notes.
  */
-export type FieldsFormData = Record<string, number | string | string[]>;
+export type FieldsFormData = Record<string, number | Record<string, string[]> | string>;
 
 /** A block's fields, wherever it lays them out. */
 export function fieldsOf(block: BlockOf<"fields">) {
@@ -22,7 +22,7 @@ export function formValueOf(field: SheetField) {
 
 /**
  * A form's values as the block's edit sends them: each field by its key but a fixed one (an empty number or an unset
- * select, none), its notes and its private ones and its languages, each only where the block holds them.
+ * select, none), its notes and its private ones and its picked links, each only where the block holds them.
  */
 export function sentFieldsOf(block: BlockOf<"fields">, formData: FieldsFormData) {
   return {
@@ -34,7 +34,7 @@ export function sentFieldsOf(block: BlockOf<"fields">, formData: FieldsFormData)
     // A block without notes leaves them as they are
     notes: block.notes ? String(formData.notes) : undefined,
     privateNotes: block.notes?.privateNotes !== undefined ? String(formData.privateNotes) : undefined,
-    languageIds: block.languages ? (formData.languageIds as string[]) : undefined,
+    links: block.links ? (formData.links as Record<string, string[]>) : undefined,
   };
 }
 
@@ -58,6 +58,8 @@ export function toFieldsForm(block: BlockOf<"fields">, filled: boolean): FieldsF
     ...Object.fromEntries(fieldsOf(block).map((field) => [field.key, filled ? formValueOf(field) : empty(field)])),
     notes: filled ? (block.notes?.notes ?? "") : "",
     privateNotes: filled ? (block.notes?.privateNotes ?? "") : "",
-    languageIds: filled ? (block.languages?.picked ?? []).map(({ id }) => id) : [],
+    links: Object.fromEntries(
+      (block.links ?? []).map(({ link, picked }) => [link, filled ? picked.map(({ id }) => id) : []]),
+    ),
   };
 }

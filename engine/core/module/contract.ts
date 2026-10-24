@@ -11,18 +11,15 @@ import type { RulesetPart } from "./parts/ruleset/index.ts";
 import type { StorageDeclaration } from "./storage.ts";
 
 /**
- * What a ruleset describes in its own shape, which the server hands to the client as it is: how a new character's
- * scores are set (`creation`) and what its creation picker adds to an option (`creationOption`), what a picked link's
- * room is (`linkRoom`: what a character has, and what one more pick may add), a character's sheet (as the API answers
- * it, its private notes where every ruleset's holds them; as a member who reads it partly reads it, its summary as
- * every ruleset's holds it; printed), what an inventory entry shows beside its row, and a level step's picker
- * (`stepPicker`) by the kind it reads a page of.
+ * What a ruleset describes in its own shape, which the server hands to the client as it is: what its creation picker
+ * adds to an option (`creationOption`), a character's sheet (as the API answers it, its private notes where every
+ * ruleset's holds them; as a member who reads it partly reads it, its summary as every ruleset's holds it; printed),
+ * what an inventory entry shows beside its row, and a level step's picker (`stepPicker`) by the kind it reads a page
+ * of.
  */
 export interface Descriptions {
-  creation: object;
   creationOption: object;
   inventoryEntry: object;
-  linkRoom: object;
   partialSheet: { summary: SheetSummary };
   sheet: NotedSheet;
   sheetDocument: unknown;

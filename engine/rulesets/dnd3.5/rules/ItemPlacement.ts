@@ -9,9 +9,9 @@ import { ITEM_HAS_CHARGES, WEAPON_SIZE } from "@/vocabulary/dnd3.5/properties/in
 /** An inventory entry, as where it's worn reads it. */
 interface HeldEntry {
   equipped: boolean;
+  /** The weapon sets a hand holds it in (its groups), stored from 0; none outside the hands. */
+  groups: number[];
   location: string | null;
-  /** The weapon sets a hand holds it in, stored from 0; none outside the hands. */
-  weaponSets: number[];
 }
 
 /** An item, as its placement reads it: its type, and the slot it's worn in (`"Other"` for none). */
@@ -35,7 +35,7 @@ type LocatedItemType = keyof typeof ITEM_TYPE_LOCATIONS;
 export interface ItemPlacementDescription {
   charges: number | null;
   hand: boolean;
-  locations: { location: ItemLocation; weaponSet: boolean }[];
+  locations: { grouped: boolean; location: ItemLocation }[];
   slot: ItemLocation | null;
 }
 
@@ -83,7 +83,7 @@ export default class ItemPlacement {
       hand: item.type === "Weapon",
       locations: ItemPlacement.offeredLocations(item, properties).map((location) => ({
         location,
-        weaponSet: asksWeaponSet && ItemPlacement.isHand(location),
+        grouped: asksWeaponSet && ItemPlacement.isHand(location),
       })),
       slot: typeLocations ? (typeLocations.length === 1 ? typeLocations[0] : null) : item.slot,
     };
@@ -95,15 +95,15 @@ export default class ItemPlacement {
    */
   static describeSlot(entry: HeldEntry): string | null {
     if (!entry.equipped || !entry.location) return null;
-    if (!ItemPlacement.isHand(entry.location) || entry.weaponSets.length === 0) return entry.location;
+    if (!ItemPlacement.isHand(entry.location) || entry.groups.length === 0) return entry.location;
 
-    const sets = entry.weaponSets.map((set) => set + 1).join(", ");
-    return `${entry.location} (${entry.weaponSets.length === 1 ? "Set" : "Sets"} ${sets})`;
+    const sets = entry.groups.map((set) => set + 1).join(", ");
+    return `${entry.location} (${entry.groups.length === 1 ? "Set" : "Sets"} ${sets})`;
   }
 
   /** The weapon sets a hand's entry is in, stored from 0: the first, for an entry stored without one. */
-  static heldSets(entry: Pick<HeldEntry, "weaponSets">): number[] {
-    return entry.weaponSets.length > 0 ? entry.weaponSets : [0];
+  static heldSets(entry: Pick<HeldEntry, "groups">): number[] {
+    return entry.groups.length > 0 ? entry.groups : [0];
   }
 
   /** Whether `location` is a hand, which a weapon set applies to. */

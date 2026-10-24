@@ -34,12 +34,12 @@ import { namesOf } from "./freshSeed.ts";
 
 function inventoryLine(item: {
   equipped?: boolean;
+  groups?: number[];
   location?: string | null;
   name: string;
   quantity: number;
-  weaponSets?: number[];
 }) {
-  return `${item.name} x${item.quantity}${item.equipped ? ", equipped" : ""} in ${item.location ?? "—"} set ${item.weaponSets?.join(", ") || "—"}`;
+  return `${item.name} x${item.quantity}${item.equipped ? ", equipped" : ""} in ${item.location ?? "—"} set ${item.groups?.join(", ") || "—"}`;
 }
 
 /**

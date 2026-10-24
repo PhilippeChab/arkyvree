@@ -58,14 +58,22 @@ export default class Dnd35Characters extends CharactersPart<Dnd35Descriptions> {
     return CharacterDescription.describePartial(...args);
   }
 
-  /** An ability score's bounds: the SRD's lowest and highest, and the one an unset ability starts at. */
+  /**
+   * How a new character's ability scores are set (its one scored link's, `abilities`): the ruleset's abilities, the
+   * SRD's methods, the scores' bounds, each score's modifier.
+   */
   protected override describeScores(view: RulesetView) {
-    return this.describeCreation(view).scores;
+    return NewCharacters.describeCreation(Dnd35View.of(view.rulesetData));
   }
 
   /** The languages an edit stores: a new one refused when secret, or past the room its rules give the picks. */
   protected override fitLinks(view: RulesetView, character: CharacterInput, _link: string, picks: string[]) {
     return new SpokenLanguages(view, character).plan(picks);
+  }
+
+  /** The race picker of a new character: the races it offers, and whether each is eligible. */
+  protected override openPicker(view: RulesetView, _column: string, query: CreationPickQuery) {
+    return new RacePicker(view, query);
   }
 
   /** What an edit of a character's identity writes: its fields, each checked, into its columns. */
@@ -83,14 +91,6 @@ export default class Dnd35Characters extends CharactersPart<Dnd35Descriptions> {
     return InventoryEntries.planPlacement(...args);
   }
 
-  /**
-   * How a new character's ability scores are set: the ruleset's abilities, the SRD's methods, the scores' bounds, each
-   * score's modifier.
-   */
-  override describeCreation(view: RulesetView) {
-    return NewCharacters.describeCreation(Dnd35View.of(view.rulesetData));
-  }
-
   /** Why a location can't take one more item of the character's, if it can't: what the inventory dialogs warn of. */
   override describePlacement(...args: Parameters<typeof InventoryEntries.describePlacement>) {
     return InventoryEntries.describePlacement(...args);
@@ -99,10 +99,5 @@ export default class Dnd35Characters extends CharactersPart<Dnd35Descriptions> {
   /** A character's printed sheet: the PDF document the server renders. */
   override describeSheet(...args: Parameters<typeof CharacterSheet.describeSheet>) {
     return CharacterSheet.describeSheet(...args);
-  }
-
-  /** The race picker of a new character: the races it offers, and whether each is eligible. */
-  override openCreationPicker(view: RulesetView, _column: string, query: CreationPickQuery) {
-    return new RacePicker(view, query);
   }
 }

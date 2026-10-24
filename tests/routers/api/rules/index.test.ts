@@ -41,13 +41,17 @@ describe("rules", () => {
     ]);
     expect(
       dnd35.characterForm.sections.flatMap((section) =>
-        section.kind === "fields" ? section.lines.flat().map((item) => ("key" in item ? item.key : item.kind)) : [],
+        section.kind === "fields"
+          ? section.lines
+              .flat()
+              .map((item) => ("key" in item ? item.key : item.kind === "pick" ? item.column : item.kind))
+          : [],
       ),
     ).toEqual([
       "name",
       "xp",
       "ruleset",
-      "race",
+      "raceId",
       "alignment",
       "gender",
       "age",

@@ -44,10 +44,9 @@ export type Character = typeof charactersInCharacter.$inferSelect & {
   weight: string | null;
   xp: number;
 };
-/** An inventory entry: an item a character holds, where, in which weapon sets, and its charges. */
-export type CharacterInventory = Omit<typeof inventoryInCharacter.$inferSelect, "groups" | "itemType" | "location"> & {
+/** An inventory entry: an item a character holds, where, in which groups (3.5's weapon sets), and its charges. */
+export type CharacterInventory = Omit<typeof inventoryInCharacter.$inferSelect, "itemType" | "location"> & {
   location: ItemLocation | null;
-  weaponSets: number[];
 };
 export type Invite = typeof invitesInCampaign.$inferSelect;
 export type Modifier = typeof modifiersInCustomization.$inferSelect;

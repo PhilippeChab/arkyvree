@@ -7,28 +7,34 @@ import { requiredRules, wholeNumberRules } from "@/client/src/lib/validation.ts"
 import { type InventoryFormData, type PlacementProfile } from "./equipment.ts";
 import type { InventoryWords } from "./sheetBlocks.ts";
 
-interface InventoryPlacementFieldsProps {
-  form: UseFormReturn<InventoryFormData>;
-  /** The item's placement; the slot fields wait for an item. */
-  profile: PlacementProfile | null;
-  /** The weapon sets a held item can be in, as shown, from 1: the character's, and a new one (`weaponSetChoices`). */
-  setChoices: number[];
-  /** What the fields say: their inventory block's words. */
-  words: InventoryWords;
-}
-
-interface WeaponSetsFieldProps {
+interface GroupsFieldProps {
   choices: number[];
   form: UseFormReturn<InventoryFormData>;
   words: InventoryWords;
 }
 
-/** The weapon sets a held item is in, one or more, as chips ("Set 1", "Set 2"): the character's, or a new one. */
-function WeaponSetsField({ choices, form, words }: WeaponSetsFieldProps) {
+interface InventoryPlacementFieldsProps {
+  form: UseFormReturn<InventoryFormData>;
+  /** The item's placement; the slot fields wait for an item. */
+  profile: PlacementProfile | null;
+  /**
+   * The groups a held item can be in (3.5's weapon sets), as shown, from 1: the character's, and a new one
+   * (`groupChoices`).
+   */
+  setChoices: number[];
+  /** What the fields say: their inventory block's words. */
+  words: InventoryWords;
+}
+
+/**
+ * The groups a held item is in (3.5's weapon sets), one or more, as chips ("Set 1", "Set 2"): the character's, or a new
+ * one.
+ */
+function GroupsField({ choices, form, words }: GroupsFieldProps) {
   const {
     field: { ref, value, onChange, ...bound },
     fieldState: { error },
-  } = useController({ control: form.control, name: "weaponSets", rules: requiredRules(words.weaponSetRequired) });
+  } = useController({ control: form.control, name: "groups", rules: requiredRules(words.groupRequired) });
   return (
     <Autocomplete
       {...bound}
@@ -36,26 +42,26 @@ function WeaponSetsField({ choices, form, words }: WeaponSetsFieldProps) {
       disableCloseOnSelect
       options={choices}
       value={value}
-      getOptionLabel={(set) => `${words.weaponSet} ${set}`}
+      getOptionLabel={(set) => `${words.group} ${set}`}
       onChange={(_, next) => onChange([...next].sort((a, b) => a - b))}
       renderValue={(selected, getItemProps) =>
         selected.map((set, index) => {
           const { key, ...chipProps } = getItemProps({ index });
-          return <ValueChip color="default" key={key} label={`${words.weaponSet} ${set}`} {...chipProps} />;
+          return <ValueChip color="default" key={key} label={`${words.group} ${set}`} {...chipProps} />;
         })
       }
       renderInput={(params) => (
-        <TextField {...params} inputRef={ref} label={words.weaponSets} error={!!error} helperText={error?.message} />
+        <TextField {...params} inputRef={ref} label={words.groups} error={!!error} helperText={error?.message} />
       )}
     />
   );
 }
 
-/** How many of the item, where it's worn, its weapon sets, and its charges: the add and edit dialogs' fields. */
+/** How many of the item, where it's worn, its groups, and its charges: the add and edit dialogs' fields. */
 export function InventoryPlacementFields({ form, profile, setChoices, words }: InventoryPlacementFieldsProps) {
   const location = form.watch("location");
-  // The form asks for a weapon set where the item's placement says one applies: a weapon's or a shield's hand
-  const asksWeaponSet = !!profile?.locations.some((option) => option.location === location && option.weaponSet);
+  // The form asks for its groups where the item's placement says they apply: a weapon's or a shield's hand
+  const asksGroup = !!profile?.locations.some((option) => option.location === location && option.grouped);
 
   return (
     <>
@@ -78,7 +84,7 @@ export function InventoryPlacementFields({ form, profile, setChoices, words }: I
               ...profile.locations.map((option) => option.location),
             ]}
           />
-          {asksWeaponSet && <WeaponSetsField form={form} choices={setChoices} words={words} />}
+          {asksGroup && <GroupsField form={form} choices={setChoices} words={words} />}
           {profile.charges !== null && (
             <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
               <FormTextField

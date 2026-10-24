@@ -1,8 +1,8 @@
 import { IconButton, MenuItem, Paper, Stack, TextField, Typography } from "@mui/material";
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQueries, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 import { useMemo, useState } from "react";
-import { type Control, Controller, useController } from "react-hook-form";
+import { type Control, Controller, useController, useWatch } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 
 import { NotesField } from "@/client/src/components/characters/index.ts";
@@ -31,10 +31,10 @@ import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { requiredRules, wholeNumberRules } from "@/client/src/lib/validation.ts";
 import type { CharacterPageState } from "@/client/src/pages/characters/characterPageState.ts";
 import {
-  availableRacesQuery,
   type CharacterCreation,
   characterCreationQuery,
   type CreationMethod,
+  creationOptionsQuery,
 } from "@/client/src/pages/characters/characterQueries.ts";
 import { rollDice } from "@/client/src/pages/characters/dice.ts";
 import { formatPointsSpent, pointsSpent } from "@/client/src/pages/characters/pointsSpent.ts";
@@ -49,13 +49,36 @@ import {
   type CreateCharacterFormData,
   type CreateCharacterRequest,
   type CreationItem,
+  type CreationPick,
   emptyNewCharacter,
-  racePickKeysOf,
-  racePicksOf,
+  narrowingKeysOf,
+  narrowingOf,
+  scoredLinksOf,
   sentCreationFieldsOf,
 } from "./newCharacter.ts";
 
-interface AbilityCardProps {
+interface CreateCharacterDialogProps {
+  onClose: () => void;
+  /** It has faded out: its opener lets it go, so the next opening starts clean. */
+  onExited: () => void;
+  open: boolean;
+}
+
+/** A creation pick's field: its options, as the fields that narrow them hold, each eligible or not. */
+interface CreationPickFieldProps {
+  control: Control<CreateCharacterFormData>;
+  item: CreationPick;
+  /** What the fields that narrow the options hold, by their keys */
+  narrowing: Record<string, string>;
+  rulesetId: string;
+}
+
+/** A point buy's scores, and their change. */
+interface PointBuyScoresProps extends SetScoresProps {
+  method: PointBuyMethod;
+}
+
+interface ScoreCardProps {
   bottomInfo: string;
   canDecrease: boolean;
   canIncrease: boolean;
@@ -66,33 +89,23 @@ interface AbilityCardProps {
   score: number;
 }
 
-interface AbilityScoresFieldProps {
-  abilities: AbilityOption[];
+/** A scored link's scores, its form's `scores.<link>`, set the way its method sets them. */
+interface ScoresFieldProps {
   control: Control<CreateCharacterFormData>;
   /** How the ruleset sets its scores: their bounds and modifiers. */
   creation: CharacterCreation;
   /** The dialog's roll of the scores, which they show as it tumbles. */
   diceRoll: DiceRoll;
+  entities: ScoredEntity[];
+  link: string;
   method: CreationMethod;
-}
-
-interface CreateCharacterDialogProps {
-  onClose: () => void;
-  /** It has faded out: its opener lets it go, so the next opening starts clean. */
-  onExited: () => void;
-  open: boolean;
-}
-
-/** A point buy's scores, and their change. */
-interface PointBuyScoresProps extends SetScoresProps {
-  method: PointBuyMethod;
 }
 
 /** The scores a method that sets them shows (a point buy, an array), and their change. */
 interface SetScoresProps {
-  abilities: AbilityOption[];
-  abilityValues: Record<string, number> | undefined;
+  entities: ScoredEntity[];
   onChange: (scores: Record<string, number>) => void;
+  values: Record<string, number> | undefined;
 }
 
 /** An array's scores, each with its modifier, and their change. */
@@ -101,10 +114,7 @@ interface StandardArrayScoresProps extends SetScoresProps {
   modifiers: CharacterCreation["modifiers"];
 }
 
-/** An ability of the ruleset, in the order its sheets list them. */
-type AbilityOption = CharacterCreation["abilities"][number];
-
-/** The scores taken from an array, each ability one of them. */
+/** The scores taken from an array, each entity one of them. */
 type ArrayMethod = Extract<CreationMethod, { kind: "array" }>;
 
 /** The scores bought out of a budget, each at its cost. */
@@ -113,10 +123,111 @@ type PointBuyMethod = Extract<CreationMethod, { kind: "pointBuy" }>;
 /** The scores rolled with dice. */
 type RollMethod = Extract<CreationMethod, { kind: "roll" }>;
 
-/** A new character's form before its rules' fields are known: nothing picked, no score set. */
-const NO_CHARACTER_YET: CreateCharacterFormData = { rulesetId: "", raceId: "", name: "", abilities: {}, notes: "" };
+/** An entity a scored link scores (3.5's ability), in the order its sheets list them. */
+type ScoredEntity = CharacterCreation["entities"][number];
 
-function AbilityCard({
+/** A new character's form before its rules' fields are known: nothing picked, no score set. */
+const NO_CHARACTER_YET: CreateCharacterFormData = { rulesetId: "", name: "", picks: {}, scores: {}, notes: "" };
+
+/**
+ * A new character's creation pick (`item`: 3.5's race), its form's `picks.<column>`: the options its ruleset offers,
+ * each eligible or not for what the fields that narrow them hold. One the list for the ruleset and those fields
+ * doesn't offer, once it has loaded, is refused, and the field says why; while a new list loads, the previous one is
+ * still shown, and a failed load says nothing.
+ */
+function CreationPickField({ control, item, narrowing, rulesetId }: CreationPickFieldProps) {
+  const name = `picks.${item.column}`;
+  const {
+    items: options,
+    isPending,
+    isPlaceholderData,
+    error,
+    onScroll,
+  } = useListboxQuery({
+    ...creationOptionsQuery(rulesetId, item.column, narrowing),
+    placeholderData: keepPreviousData,
+  });
+  const picked = useWatch({ control, name });
+  const settled = !!rulesetId && !isPending && !isPlaceholderData && !error;
+  const issueOf = (id: unknown) => {
+    if (typeof id !== "string" || !id || !settled) return undefined;
+    const option = options.find((candidate) => candidate.id === id);
+    if (!option) return "Not in this ruleset: pick another";
+    return option.eligible ? undefined : item.ineligible;
+  };
+  // An option the list no longer offers is refused, with why
+  const pickRules = { required: item.required, validate: (id: unknown) => issueOf(id) || true };
+  return (
+    <SelectField
+      control={control}
+      name={name}
+      label={item.label}
+      rules={pickRules}
+      helperText={issueOf(picked)}
+      loadError={error}
+      options={options.map((option) => ({ value: option.id, label: option.name, disabled: !option.eligible }))}
+      disabled={!rulesetId}
+      onMenuScroll={onScroll}
+    />
+  );
+}
+
+/**
+ * An entity's score before one is set: a point buy's lowest to buy from, an array's in order, else the rules'
+ * starting score (`start`).
+ */
+function defaultScore(method: CreationMethod, index: number, start: number) {
+  if (method.kind === "pointBuy") return method.min;
+  if (method.kind === "array") return method.scores[index] ?? method.scores[method.scores.length - 1];
+  return start;
+}
+
+/** A line's item's React key: its field's key, a pick's column, else its kind (the form's own are one each). */
+function itemKeyOf(item: CreationItem) {
+  if ("key" in item) return item.key;
+  return item.kind === "pick" ? item.column : item.kind;
+}
+
+/** What a point buy's scores cost: each score's price, summed. */
+function pointBuyCost(method: PointBuyMethod, scores: number[]) {
+  return pointsSpent(scores.map((score) => method.costs[score] ?? 0));
+}
+
+function PointBuyScores({ entities, values, method, onChange }: PointBuyScoresProps) {
+  const pointsRemaining =
+    method.budget -
+    pointBuyCost(
+      method,
+      entities.map((entity) => values?.[entity.id] ?? method.min),
+    );
+
+  return (
+    <Stack direction="row" spacing={2} sx={{ flexWrap: "wrap" }}>
+      {entities.map((entity) => {
+        const score = values?.[entity.id] ?? method.min;
+        const costNow = method.costs[score] ?? 0;
+        const costNext = method.costs[score + 1];
+        const canIncrease = score < method.max && costNext !== undefined && costNext - costNow <= pointsRemaining;
+        const canDecrease = score > method.min;
+
+        return (
+          <ScoreCard
+            key={entity.id}
+            name={entity.name}
+            score={score}
+            onIncrease={() => onChange({ ...values, [entity.id]: score + 1 })}
+            onDecrease={() => onChange({ ...values, [entity.id]: score - 1 })}
+            canIncrease={canIncrease}
+            canDecrease={canDecrease}
+            bottomInfo={`Cost: ${costNow}`}
+          />
+        );
+      })}
+    </Stack>
+  );
+}
+
+function ScoreCard({
   name,
   score,
   onIncrease,
@@ -125,7 +236,7 @@ function AbilityCard({
   canDecrease,
   bottomInfo,
   isSettled,
-}: AbilityCardProps) {
+}: ScoreCardProps) {
   return (
     <Stack
       component={Paper}
@@ -163,19 +274,21 @@ function AbilityCard({
   );
 }
 
-/** The new character's ability scores, its form's `abilities`, set the way its method sets them. */
-function AbilityScoresField({ abilities, control, creation, diceRoll, method }: AbilityScoresFieldProps) {
+/**
+ * A new character's scores of a scored link (3.5's abilities), its form's `scores.<link>`, set as its method sets them.
+ */
+function ScoresField({ control, creation, diceRoll, entities, link, method }: ScoresFieldProps) {
   const {
     field: { value, onChange },
-  } = useController({ control, name: "abilities" });
-  const abilityValues = scoresOf(abilities, value, method, creation.scores.start);
+  } = useController({ control, name: `scores.${link}` });
+  const values = scoresOf(entities, value as Record<string, number> | undefined, method, creation.scores.start);
   const { max, min } = creation.scores;
 
   if (method.kind === "array") {
     return (
       <StandardArrayScores
-        abilities={abilities}
-        abilityValues={abilityValues}
+        entities={entities}
+        values={values}
         method={method}
         modifiers={creation.modifiers}
         onChange={onChange}
@@ -184,24 +297,24 @@ function AbilityScoresField({ abilities, control, creation, diceRoll, method }: 
   }
 
   if (method.kind === "pointBuy")
-    return <PointBuyScores abilities={abilities} abilityValues={abilityValues} method={method} onChange={onChange} />;
+    return <PointBuyScores entities={entities} values={values} method={method} onChange={onChange} />;
 
   return (
     <Stack direction="row" spacing={2} sx={{ flexWrap: "wrap" }}>
-      {abilities.map((ability) => {
+      {entities.map((entity) => {
         // A score rolling shows its die's faces until it lands
-        const score = diceRoll.faceOf(ability.id) ?? abilityValues[ability.id];
+        const score = diceRoll.faceOf(entity.id) ?? values[entity.id];
         return (
-          <AbilityCard
-            key={ability.id}
-            name={ability.name}
+          <ScoreCard
+            key={entity.id}
+            name={entity.name}
             score={score}
-            onIncrease={() => onChange({ ...abilityValues, [ability.id]: Math.min(max, score + 1) })}
-            onDecrease={() => onChange({ ...abilityValues, [ability.id]: Math.max(min, score - 1) })}
+            onIncrease={() => onChange({ ...values, [entity.id]: Math.min(max, score + 1) })}
+            onDecrease={() => onChange({ ...values, [entity.id]: Math.max(min, score - 1) })}
             canIncrease={!diceRoll.rolling && score < max}
             canDecrease={!diceRoll.rolling && score > min}
             bottomInfo={`Mod: ${formatSigned(creation.modifiers[score])}`}
-            isSettled={diceRoll.hasLanded(ability.id)}
+            isSettled={diceRoll.hasLanded(entity.id)}
           />
         );
       })}
@@ -209,80 +322,26 @@ function AbilityScoresField({ abilities, control, creation, diceRoll, method }: 
   );
 }
 
-/**
- * An ability's score before one is set: a point buy's lowest to buy from, an array's in order, else the rules'
- * starting score (`start`).
- */
-function defaultScore(method: CreationMethod, index: number, start: number) {
-  if (method.kind === "pointBuy") return method.min;
-  if (method.kind === "array") return method.scores[index] ?? method.scores[method.scores.length - 1];
-  return start;
-}
-
-/** A line's item's React key: its field's key, else its kind (the form's own are one each). */
-function itemKeyOf(item: CreationItem) {
-  return "key" in item ? item.key : item.kind;
-}
-
-/** What a point buy's scores cost: each score's price, summed. */
-function pointBuyCost(method: PointBuyMethod, scores: number[]) {
-  return pointsSpent(scores.map((score) => method.costs[score] ?? 0));
-}
-
-function PointBuyScores({ abilities, abilityValues, method, onChange }: PointBuyScoresProps) {
-  const pointsRemaining =
-    method.budget -
-    pointBuyCost(
-      method,
-      abilities.map((a) => abilityValues?.[a.id] ?? method.min),
-    );
-
-  return (
-    <Stack direction="row" spacing={2} sx={{ flexWrap: "wrap" }}>
-      {abilities.map((ability) => {
-        const score = abilityValues?.[ability.id] ?? method.min;
-        const costNow = method.costs[score] ?? 0;
-        const costNext = method.costs[score + 1];
-        const canIncrease = score < method.max && costNext !== undefined && costNext - costNow <= pointsRemaining;
-        const canDecrease = score > method.min;
-
-        return (
-          <AbilityCard
-            key={ability.id}
-            name={ability.name}
-            score={score}
-            onIncrease={() => onChange({ ...abilityValues, [ability.id]: score + 1 })}
-            onDecrease={() => onChange({ ...abilityValues, [ability.id]: score - 1 })}
-            canIncrease={canIncrease}
-            canDecrease={canDecrease}
-            bottomInfo={`Cost: ${costNow}`}
-          />
-        );
-      })}
-    </Stack>
-  );
-}
-
-/** Every ability's score: the one set, or its method's default (`start`, the rules' starting score, for a roll). */
+/** Every entity's score: the one set, or its method's default (`start`, the rules' starting score, for a roll). */
 function scoresOf(
-  abilities: AbilityOption[],
+  entities: ScoredEntity[],
   values: Record<string, number> | undefined,
   method: CreationMethod,
   start: number,
 ) {
   return Object.fromEntries(
-    abilities.map((ability, index) => [ability.id, values?.[ability.id] ?? defaultScore(method, index, start)]),
+    entities.map((entity, index) => [entity.id, values?.[entity.id] ?? defaultScore(method, index, start)]),
   );
 }
 
-function StandardArrayScores({ abilities, abilityValues, method, modifiers, onChange }: StandardArrayScoresProps) {
-  // A score already given to another ability swaps with this one's
-  const handleChange = (abilityId: string, newValue: number) => {
-    if (!abilityValues) return;
-    const next = { ...abilityValues };
-    const swapId = abilities.find((a) => a.id !== abilityId && abilityValues[a.id] === newValue)?.id;
-    if (swapId) next[swapId] = abilityValues[abilityId] ?? method.scores[method.scores.length - 1];
-    next[abilityId] = newValue;
+function StandardArrayScores({ entities, values, method, modifiers, onChange }: StandardArrayScoresProps) {
+  // A score already given to another entity swaps with this one's
+  const handleChange = (entityId: string, newValue: number) => {
+    if (!values) return;
+    const next = { ...values };
+    const swapId = entities.find((other) => other.id !== entityId && values[other.id] === newValue)?.id;
+    if (swapId) next[swapId] = values[entityId] ?? method.scores[method.scores.length - 1];
+    next[entityId] = newValue;
     onChange(next);
   };
 
@@ -290,19 +349,19 @@ function StandardArrayScores({ abilities, abilityValues, method, modifiers, onCh
 
   return (
     <Stack direction="row" spacing={2} sx={{ flexWrap: "wrap" }}>
-      {abilities.map((ability) => {
-        const score = abilityValues?.[ability.id] ?? method.scores[0];
+      {entities.map((entity) => {
+        const score = values?.[entity.id] ?? method.scores[0];
         const idx = sortedAsc.indexOf(score);
         const canIncrease = idx !== -1 && idx < sortedAsc.length - 1;
         const canDecrease = idx > 0;
 
         return (
-          <AbilityCard
-            key={ability.id}
-            name={ability.name}
+          <ScoreCard
+            key={entity.id}
+            name={entity.name}
             score={score}
-            onIncrease={() => canIncrease && handleChange(ability.id, sortedAsc[idx + 1])}
-            onDecrease={() => canDecrease && handleChange(ability.id, sortedAsc[idx - 1])}
+            onIncrease={() => canIncrease && handleChange(entity.id, sortedAsc[idx + 1])}
+            onDecrease={() => canDecrease && handleChange(entity.id, sortedAsc[idx - 1])}
             canIncrease={canIncrease}
             canDecrease={canDecrease}
             bottomInfo={`Mod: ${formatSigned(modifiers[score])}`}
@@ -314,16 +373,17 @@ function StandardArrayScores({ abilities, abilityValues, method, modifiers, onCh
 }
 
 /**
- * A new character: its ruleset, race and details, and its ability scores by the roll method picked, laid out as its
- * rules' form describes it (the picked ruleset's base rules', the first's until one is picked). Mounted while it's open,
- * its form, its pickers and its roll method start clean at each opening.
+ * A new character: its ruleset, its creation's picks and details, and its scores by the roll method picked, laid out as
+ * its rules' form describes it (the picked ruleset's base rules', the first's until one is picked). Mounted while it's
+ * open, its form, its pickers and its roll methods start clean at each opening.
  */
 export function CreateCharacterDialog({ open, onClose, onExited }: CreateCharacterDialogProps) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
   const diceRoll = useDiceRoll();
-  const [methodId, setMethodId] = useState("");
+  // Each scored link's method picked, by link: its first until one is
+  const [methodIds, setMethodIds] = useState<Record<string, string>>({});
   const rulesetOptions = useRulesetPickerOptions("character", open);
   const { preselected } = rulesetOptions;
   const { all: allRules, error: rulesError } = useRules();
@@ -354,55 +414,28 @@ export function CreateCharacterDialog({ open, onClose, onExited }: CreateCharact
   // The ruleset the form holds: the one picked, else the user's own the dialog started on
   const selectedRuleset = pickedRuleset ?? (preselected?.id === selectedRulesetId ? preselected : null);
 
-  // Fetch races for selected ruleset, annotated with eligibility for what the fields that narrow them say
-  const racePickKeys = characterForm ? racePickKeysOf(characterForm) : [];
-  const racePicks = racePicksOf(racePickKeys, watch(racePickKeys));
-  const {
-    items: races,
-    isPending: isRacesPending,
-    isPlaceholderData: isRacesPlaceholder,
-    error: racesError,
-    onScroll: handleRacesScroll,
-  } = useListboxQuery({
-    ...availableRacesQuery(selectedRulesetId, racePicks),
-    placeholderData: keepPreviousData,
+  // What the fields that narrow the creation picks' options hold
+  const narrowingKeys = characterForm ? narrowingKeysOf(characterForm) : [];
+  const narrowing = narrowingOf(narrowingKeys, watch(narrowingKeys));
+
+  // How the ruleset sets each scored link's scores, its entities in its sheets' order
+  const scoredLinks = characterForm ? scoredLinksOf(characterForm) : [];
+  const creations = useQueries({
+    queries: scoredLinks.map((link) => characterCreationQuery(selectedRulesetId, link)),
   });
-
-  // A race the list for the current ruleset and picks doesn't offer, once it has loaded, is refused, and the field says
-  // why. While a new list loads, the previous one is still shown, and a failed load says nothing.
-  const selectedRaceId = watch("raceId");
-  const racesSettled = !!selectedRulesetId && !isRacesPending && !isRacesPlaceholder && !racesError;
-  const raceIssue = (raceId: string, ineligible: string) => {
-    if (!raceId || !racesSettled) return undefined;
-    const race = races.find((r) => r.id === raceId);
-    if (!race) return "Not in this ruleset: pick another";
-    return race.eligible ? undefined : ineligible;
-  };
-
-  // How the ruleset sets its scores, its abilities in its sheets' order, and the method picked: its first until one is
-  const {
-    data: creation,
-    error: creationError,
-    isLoading: creationLoading,
-  } = useQuery(characterCreationQuery(selectedRulesetId));
-  const rulesetAbilities = creation?.abilities ?? [];
-  const method = creation?.methods.find((m) => m.id === methodId) ?? creation?.methods[0];
-
-  // What a point buy's scores cost, its chip says
-  const abilityValues = watch("abilities");
-  const pointBuyPoints =
-    creation && method?.kind === "pointBuy"
-      ? pointBuyCost(method, Object.values(scoresOf(rulesetAbilities, abilityValues, method, creation.scores.start)))
-      : 0;
+  const creationOf = (link: string) => creations[scoredLinks.indexOf(link)];
+  const methodOf = (creation: CharacterCreation | undefined, link: string) =>
+    creation?.methods.find((m) => m.id === methodIds[link]) ?? creation?.methods[0];
 
   // A method that rolls dice rolls each score: they land one by one, the roll keeping the scores so far
-  const handleRollAll = (rollMethod: RollMethod, start: number) => {
-    const rolled = scoresOf(rulesetAbilities, getValues("abilities"), rollMethod, start);
+  const handleRollAll = (link: string, entities: ScoredEntity[], rollMethod: RollMethod, start: number) => {
+    const name = `scores.${link}`;
+    const rolled = scoresOf(entities, getValues(name) as Record<string, number> | undefined, rollMethod, start);
     diceRoll.roll(
-      rulesetAbilities.map((ability) => ({ key: ability.id, roll: () => rollDice(rollMethod.dice) })),
-      (abilityId, score) => {
-        rolled[abilityId] = score;
-        setValue("abilities", { ...rolled }, { shouldDirty: true });
+      entities.map((entity) => ({ key: entity.id, roll: () => rollDice(rollMethod.dice) })),
+      (entityId, score) => {
+        rolled[entityId] = score;
+        setValue(name, { ...rolled }, { shouldDirty: true });
       },
     );
   };
@@ -423,23 +456,23 @@ export function CreateCharacterDialog({ open, onClose, onExited }: CreateCharact
   // Its fields as its rules' form keys them; the scores not set yet are their method's defaults
   const handleCreate = (data: CreateCharacterFormData) => {
     if (!characterForm) return;
-    const abilities =
-      creation && method ? scoresOf(rulesetAbilities, data.abilities, method, creation.scores.start) : data.abilities;
+    const scores = Object.fromEntries(
+      scoredLinks.map((link) => {
+        const creation = creationOf(link).data;
+        const method = methodOf(creation, link);
+        const given = data.scores[link];
+        return [link, creation && method ? scoresOf(creation.entities, given, method, creation.scores.start) : given];
+      }),
+    );
     createCharacterMutation.mutate({
       rulesetId: data.rulesetId,
-      raceId: data.raceId,
       name: data.name,
-      abilities,
+      picks: data.picks,
+      scores,
       notes: data.notes || undefined,
       fields: sentCreationFieldsOf(characterForm, data),
     });
   };
-
-  // A race the ruleset's list no longer offers is refused, with why
-  const raceRulesOf = (item: Extract<CreationItem, { kind: "race" }>) => ({
-    required: item.required,
-    validate: (raceId: unknown) => (typeof raceId === "string" && raceIssue(raceId, item.ineligible)) || true,
-  });
 
   /** An item of a line of the form: one of the form's own, or one of its rules' fields, by its kind. */
   const renderItem = (item: CreationItem) => {
@@ -459,12 +492,14 @@ export function CreateCharacterDialog({ open, onClose, onExited }: CreateCharact
               <RulesetPicker
                 options={rulesetOptions}
                 value={selectedRuleset}
-                // Another ruleset's abilities start from their defaults
+                // Another ruleset's scores start from their defaults
                 onChange={(ruleset) => {
                   setPickedRuleset(ruleset);
                   field.onChange(ruleset?.id ?? "");
-                  setValue("abilities", {}, { shouldDirty: true });
-                  if (!ruleset) setValue("raceId", "", { shouldDirty: true });
+                  for (const link of scoredLinks) setValue(`scores.${link}`, {}, { shouldDirty: true });
+                  // Without a ruleset, no creation pick stands
+                  const picks = ruleset ? [] : Object.keys(getValues("picks"));
+                  for (const key of picks) setValue(`picks.${key}`, "", { shouldDirty: true });
                 }}
                 error={fieldState.error}
                 inputRef={field.ref}
@@ -472,19 +507,14 @@ export function CreateCharacterDialog({ open, onClose, onExited }: CreateCharact
             )}
           />
         );
-      case "race":
+      case "pick":
         return (
-          <SelectField
-            key="race"
+          <CreationPickField
+            key={item.column}
             control={control}
-            name="raceId"
-            label={item.label}
-            rules={raceRulesOf(item)}
-            helperText={raceIssue(selectedRaceId, item.ineligible)}
-            loadError={racesError}
-            options={races.map((race) => ({ value: race.id, label: race.name, disabled: !race.eligible }))}
-            disabled={!selectedRulesetId}
-            onMenuScroll={handleRacesScroll}
+            item={item}
+            narrowing={narrowing}
+            rulesetId={selectedRulesetId}
           />
         );
       case "number":
@@ -536,64 +566,77 @@ export function CreateCharacterDialog({ open, onClose, onExited }: CreateCharact
     }
   };
 
-  /** The form's ability scores, under their section's title, set the way the method picked sets them. */
-  const renderAbilities = (section: Extract<CharacterForm["sections"][number], { kind: "abilities" }>) => (
-    <Stack key={section.title} spacing={1}>
-      <SubsectionTitle>{section.title}</SubsectionTitle>
-      <Stack spacing={3}>
-        {creation && method && (
-          <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-            <TextField
-              select
-              label="Method"
-              value={method.id}
-              onChange={(e) => {
-                // Another method's scores start from its defaults
-                setMethodId(e.target.value);
-                setValue("abilities", {}, { shouldDirty: true });
-              }}
-              size="small"
-              sx={{ minWidth: 200 }}
-            >
-              {creation.methods.map((m) => (
-                <MenuItem key={m.id} value={m.id}>
-                  {m.label}
-                </MenuItem>
-              ))}
-            </TextField>
-            {method.kind === "roll" && (
-              <RollAllButton
-                onClick={() => handleRollAll(method, creation.scores.start)}
-                disabled={!rulesetAbilities.length || diceRoll.rolling}
-              />
-            )}
-            {method.kind === "pointBuy" && (
-              <CountChip
-                label={formatPointsSpent(pointBuyPoints, method.budget)}
-                // Its increases stop at its budget: spent whole, or not yet
-                color={pointBuyPoints === method.budget ? "success" : "default"}
-              />
-            )}
-          </Stack>
-        )}
-        {rulesetAbilities.length > 0 && creation && method ? (
-          <AbilityScoresField
-            abilities={rulesetAbilities}
-            control={control}
-            creation={creation}
-            diceRoll={diceRoll}
-            method={method}
-          />
-        ) : creationError ? (
-          <LoadError what={section.title} error={creationError} />
-        ) : creationLoading ? (
-          <DiceSpinner sx={{ py: 4 }} />
-        ) : (
-          <BlankNote>{selectedRulesetId ? section.none : section.pick}</BlankNote>
-        )}
+  /** A scored link's scores, under their section's title, set the way the method picked sets them. */
+  const renderScores = (section: Extract<CharacterForm["sections"][number], { kind: "scores" }>) => {
+    const { link } = section;
+    const { data: creation, error: creationError, isLoading: creationLoading } = creationOf(link);
+    const entities = creation?.entities ?? [];
+    const method = methodOf(creation, link);
+    // What a point buy's scores cost, its chip says
+    const given = watch(`scores.${link}`) as Record<string, number> | undefined;
+    const pointBuyPoints =
+      creation && method?.kind === "pointBuy"
+        ? pointBuyCost(method, Object.values(scoresOf(entities, given, method, creation.scores.start)))
+        : 0;
+    return (
+      <Stack key={section.title} spacing={1}>
+        <SubsectionTitle>{section.title}</SubsectionTitle>
+        <Stack spacing={3}>
+          {creation && method && (
+            <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+              <TextField
+                select
+                label="Method"
+                value={method.id}
+                onChange={(e) => {
+                  // Another method's scores start from its defaults
+                  setMethodIds((picked) => ({ ...picked, [link]: e.target.value }));
+                  setValue(`scores.${link}`, {}, { shouldDirty: true });
+                }}
+                size="small"
+                sx={{ minWidth: 200 }}
+              >
+                {creation.methods.map((m) => (
+                  <MenuItem key={m.id} value={m.id}>
+                    {m.label}
+                  </MenuItem>
+                ))}
+              </TextField>
+              {method.kind === "roll" && (
+                <RollAllButton
+                  onClick={() => handleRollAll(link, entities, method, creation.scores.start)}
+                  disabled={!entities.length || diceRoll.rolling}
+                />
+              )}
+              {method.kind === "pointBuy" && (
+                <CountChip
+                  label={formatPointsSpent(pointBuyPoints, method.budget)}
+                  // Its increases stop at its budget: spent whole, or not yet
+                  color={pointBuyPoints === method.budget ? "success" : "default"}
+                />
+              )}
+            </Stack>
+          )}
+          {entities.length > 0 && creation && method ? (
+            <ScoresField
+              control={control}
+              creation={creation}
+              diceRoll={diceRoll}
+              entities={entities}
+              link={link}
+              method={method}
+            />
+          ) : creationError ? (
+            <LoadError what={section.title} error={creationError} />
+          ) : creationLoading ? (
+            <DiceSpinner sx={{ py: 4 }} />
+          ) : (
+            <BlankNote>{selectedRulesetId ? section.none : section.pick}</BlankNote>
+          )}
+        </Stack>
       </Stack>
-    </Stack>
-  );
+    );
+  };
 
   return (
     <CreateDialog
@@ -611,8 +654,8 @@ export function CreateCharacterDialog({ open, onClose, onExited }: CreateCharact
       <BaseRulesetAlert ruleset={selectedRuleset} />
       {characterForm ? (
         characterForm.sections.map((section) =>
-          section.kind === "abilities" ? (
-            renderAbilities(section)
+          section.kind === "scores" ? (
+            renderScores(section)
           ) : (
             <Stack key={section.title} spacing={1}>
               <SubsectionTitle>{section.title}</SubsectionTitle>

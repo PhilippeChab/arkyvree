@@ -1,7 +1,6 @@
-import type { CharacterInput } from "@/engine/core/module/index.ts";
+import type { CharacterInput, DescribedLink, LinkRoom } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
-import type { DescribedLanguage, LanguagesDescription } from "@/engine/rulesets/dnd3.5/descriptions.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import Dnd35CharacterBuilder from "@/engine/rulesets/dnd3.5/model/Dnd35CharacterBuilder.ts";
 import LanguageRules from "@/engine/rulesets/dnd3.5/rules/LanguageRules.ts";
@@ -10,9 +9,9 @@ import type { Language } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { LANGUAGE_PICK_ABILITY, SPEAK_LANGUAGE_SKILL } from "@/vocabulary/dnd3.5/languages.ts";
 
-/** A language as a character's languages name it: its id, name and type. */
-function describeLanguage({ id, name, type }: Language): DescribedLanguage {
-  return { id, name, type };
+/** A language as a character's languages name it: its id and name. */
+function describeLanguage({ id, name }: Language): DescribedLink {
+  return { id, name };
 }
 
 /**
@@ -79,7 +78,7 @@ export default class SpokenLanguages {
    * What the character speaks without a pick, its picks (of `languageIds`, each the view's), and the languages one more
    * pick may add, by name: any but a secret one, while the picks leave room.
    */
-  describe(languageIds: string[]): LanguagesDescription {
+  describe(languageIds: string[]): LinkRoom {
     const granted = this.granted();
     const picks = this.picksOf(languageIds);
     const taken = new Set([...granted, ...picks].map(({ id }) => id));

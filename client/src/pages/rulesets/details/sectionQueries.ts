@@ -154,14 +154,15 @@ export function entityGroupsQuery(rulesetId: string, type: string, filters: List
 
 /**
  * After a write to a ruleset's content: the lists it shows in (a section's, a customization tab's, a class's), and the
- * ruleset's Local Changes, which any write can change. It settles once they're read again, for a write that waits.
+ * ruleset's Local Changes and new characters' creations (the entities they score), which any write can change. It
+ * settles once they're read again, for a write that waits.
  */
 export function invalidateRulesetEdit(
   queryClient: QueryClient,
   rulesetId: string,
   keys: readonly QueryKey[],
 ): Promise<void> {
-  const all = [...keys, QUERY_KEYS.rulesets.changes(rulesetId)];
+  const all = [...keys, QUERY_KEYS.rulesets.changes(rulesetId), QUERY_KEYS.rulesets.creations(rulesetId)];
   return Promise.all(all.map((queryKey) => queryClient.invalidateQueries({ queryKey }))).then(() => undefined);
 }
 

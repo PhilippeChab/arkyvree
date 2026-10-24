@@ -219,7 +219,7 @@ export default class Equipping {
       .entriesWithItems(this.input.rows.inventory)
       .filter(({ entry }) => entry.equipped && entry.id !== entryId)
       .map(({ entry, item }) => ({ ...entry, name: item.name }));
-    const sets = ItemPlacement.isHand(location) ? ItemPlacement.heldSets({ weaponSets }) : [null];
+    const sets = ItemPlacement.isHand(location) ? ItemPlacement.heldSets({ groups: weaponSets }) : [null];
     for (const weaponSet of sets) {
       const conflict = this.findConflict(location, weaponSet, equipped);
       if (conflict) return Equipping.describeSlotConflict(conflict, location, (weaponSet ?? 0) + 1);

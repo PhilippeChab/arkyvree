@@ -22,9 +22,9 @@ interface Placement {
   charges?: [number | null, number | null];
   equipped?: boolean;
   force?: boolean;
+  groups?: number[];
   location?: ItemLocation | null;
   quantity?: number;
-  weaponSets?: number[];
 }
 
 /** What the test's items weigh and cost, unless a test says otherwise. */
@@ -38,7 +38,7 @@ function add(
     quantity = 1,
     equipped = false,
     location = null,
-    weaponSets = [],
+    groups = [],
     charges = [null, null],
     force = false,
   }: Placement = {},
@@ -52,16 +52,16 @@ function add(
     location,
     charges[0],
     charges[1],
-    weaponSets,
+    groups,
     force,
   );
 }
 
-function equipped(location: ItemLocation, ...weaponSets: number[]): Placement {
+function equipped(location: ItemLocation, ...groups: number[]): Placement {
   return {
     equipped: true,
     location,
-    weaponSets,
+    groups,
   };
 }
 
@@ -86,8 +86,8 @@ async function placed() {
   await add(session, character.id, items.wizardry.id, equipped("Finger"));
   await add(session, character.id, items.longsword.id, equipped("Main Hand", 0));
   await add(session, character.id, items.greatsword.id, equipped("Two Handed", 1));
-  const warning = async (location: ItemLocation, weaponSets: number[], entryId: string | null = null) =>
-    (await CharacterInventoryService.getPlacement(session, character.id, entryId, location, weaponSets)).warning;
+  const warning = async (location: ItemLocation, groups: number[], entryId: string | null = null) =>
+    (await CharacterInventoryService.getPlacement(session, character.id, entryId, location, groups)).warning;
   return { character, items, warning };
 }
 
@@ -128,7 +128,7 @@ async function update(
     quantity = 1,
     equipped = false,
     location = null,
-    weaponSets = [],
+    groups = [],
     charges = [null, null],
     force = false,
   }: Placement = {},
@@ -143,7 +143,7 @@ async function update(
     location,
     charges[0],
     charges[1],
-    weaponSets,
+    groups,
     force,
     updatedAt,
   );
@@ -210,7 +210,7 @@ describe("InventoryService", () => {
     });
     expect(inventory.find((entry) => entry.itemId === item.id)).toMatchObject({
       slotLabel: null,
-      placement: { hand: false, slot: "Other", locations: [{ location: "Other", weaponSet: false }] },
+      placement: { hand: false, slot: "Other", locations: [{ location: "Other", grouped: false }] },
     });
   });
 
@@ -274,7 +274,7 @@ describe("InventoryService", () => {
       );
       expect(await add(session, character.id, shield.id, equipped("Off Hand", 2, 0, 2))).toMatchObject({
         location: "Off Hand",
-        weaponSets: [0, 2],
+        groups: [0, 2],
       });
       expect(add(session, character.id, otherShield.id, equipped("Off Hand", 2))).rejects.toThrow(
         "Off Hand is occupied by Heavy Steel Shield (Set 3)",
@@ -284,8 +284,8 @@ describe("InventoryService", () => {
 
       // Carried, or worn outside the hands, it's in no set
       expect(
-        await update(session, character.id, shield.id, { equipped: false, location: null, weaponSets: [0, 2] }),
-      ).toMatchObject({ weaponSets: [] });
+        await update(session, character.id, shield.id, { equipped: false, location: null, groups: [0, 2] }),
+      ).toMatchObject({ groups: [] });
     });
 
     test("needs a weapon set in a hand", async () => {
@@ -498,13 +498,13 @@ describe("InventoryService", () => {
       expect(equip(greatsword, equipped("Two Handed", 0))).rejects.toMatchObject({ refusal: "invalid" });
       expect(await equip(greatsword, equipped("Two Handed", 1))).toMatchObject({
         location: "Two Handed",
-        weaponSets: [1],
+        groups: [1],
       });
       expect(equip(otherGreatsword, equipped("Two Handed", 1))).rejects.toThrow(
         /^Two Handed is occupied by Test Item .* \(Set 2\)$/,
       );
       expect(equip(dagger, equipped("Main Hand", 1))).rejects.toMatchObject({ refusal: "invalid" });
-      expect(await equip(otherGreatsword, equipped("Two Handed", 2))).toMatchObject({ weaponSets: [2] });
+      expect(await equip(otherGreatsword, equipped("Two Handed", 2))).toMatchObject({ groups: [2] });
       // A weapon doesn't block its own slot.
       expect(
         await update(session, character.id, greatsword, { ...equipped("Two Handed", 1), quantity: 2 }),

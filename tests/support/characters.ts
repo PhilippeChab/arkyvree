@@ -29,6 +29,15 @@ interface NewFields {
 }
 
 /**
+ * A 3.5 character's start as a test names it: its race (`raceId`, its creation pick) and its ability scores
+ * (`abilities`, its scored link's amounts), which a create sends as its `picks` and `scores`.
+ */
+interface NewStart {
+  abilities?: Record<string, number>;
+  raceId?: string;
+}
+
+/**
  * A test character's fields, unless it's given its own: a True Neutral man of 25, 180 tall and 80 heavy, with no
  * experience.
  */
@@ -49,6 +58,12 @@ function splitFields<T extends NewFields & { fields?: FieldsRequest }>(values: T
     } as FieldsRequest,
     rest,
   };
+}
+
+/** A create's `picks` and `scores` of a test's 3.5 start (`raceId`, `abilities`), and the rest of what it gives. */
+function splitStart<T extends NewStart>(values: T, start: Required<NewStart>) {
+  const { abilities = start.abilities, raceId = start.raceId, ...rest } = values;
+  return { picks: { raceId }, scores: { abilities }, rest };
 }
 
 /** The notes a sheet's identity block holds: its public ones, and its private ones for a reader who reads them. */
@@ -110,15 +125,16 @@ export async function buildCharacter(
  */
 export async function createCharacterAs(
   session: Session,
-  values: Partial<Parameters<typeof CharactersService.createCharacter>[1]> & NewFields = {},
+  values: Partial<Parameters<typeof CharactersService.createCharacter>[1]> & NewFields & NewStart = {},
 ) {
   const { rulesetId, raceMap } = await getSeedCtx();
-  const { fields, rest } = splitFields(values);
+  const { fields, rest: given } = splitFields(values);
+  const { picks, scores, rest } = splitStart(given, { abilities: {}, raceId: raceMap.pc["Human"] });
   return await CharactersService.createCharacter(session, {
     rulesetId,
-    raceId: raceMap.pc["Human"],
     name: `Test Character ${uniqueId()}`,
-    abilities: {},
+    picks,
+    scores,
     ...rest,
     fields,
   });
@@ -152,16 +168,20 @@ export async function createTestCharacter(userId: string, values: Partial<Charac
  * unless `json` says otherwise.
  */
 export async function postCharacter(
-  json: Partial<InferRequestType<typeof api.api.characters.$post>["json"]> & NewFields = {},
+  json: Partial<InferRequestType<typeof api.api.characters.$post>["json"]> & NewFields & NewStart = {},
 ) {
   const ctx = await getSeedCtx();
-  const { fields, rest } = splitFields(json);
+  const { fields, rest: given } = splitFields(json);
+  const { picks, scores, rest } = splitStart(given, {
+    abilities: Object.fromEntries(Object.values(ctx.abilityMap).map((id) => [id, 10])),
+    raceId: ctx.raceMap.pc["Human"],
+  });
   const { rulesetId = ctx.rulesetId, name = `Test Character ${uniqueId()}`, ...others } = rest;
   return await expectOk(
     api.api.characters.$post({
       json: {
-        raceId: ctx.raceMap.pc["Human"],
-        abilities: Object.fromEntries(Object.values(ctx.abilityMap).map((id) => [id, 10])),
+        picks,
+        scores,
         ...others,
         fields,
         rulesetId,

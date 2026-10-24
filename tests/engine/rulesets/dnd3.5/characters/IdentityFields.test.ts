@@ -78,6 +78,13 @@ describe("IdentityFields", () => {
     const block = IdentityFields.describe({ ...IDENTITY, beliefs: { alignment: "Weird", deity: "" } });
     expect(block.lines[0][1]).toMatchObject({ key: "alignment", value: null });
     expect(block.notes).toEqual({ notes: "Public", privateNotes: "Secret" });
-    expect(block.languages?.picked).toEqual([{ id: "common", name: "Common" }]);
+    expect(block.links).toEqual([
+      {
+        label: "Languages",
+        link: "languages",
+        none: "No language left to pick",
+        picked: [{ id: "common", name: "Common" }],
+      },
+    ]);
   });
 });

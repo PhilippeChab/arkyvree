@@ -66,7 +66,7 @@ export default {
     { levelIndex: 2, powerName: "Sleep", aptitude: "Bard Spells" },
   ],
   inventory: [
-    { name: "Rapier", quantity: 1, equipped: true, location: "Main Hand", weaponSets: [0] },
+    { name: "Rapier", quantity: 1, equipped: true, location: "Main Hand", groups: [0] },
     { name: "Studded Leather", quantity: 1, equipped: true, location: "Torso" },
   ],
 } satisfies CharacterSeed;

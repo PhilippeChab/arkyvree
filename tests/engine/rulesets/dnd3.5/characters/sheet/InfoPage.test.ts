@@ -134,8 +134,8 @@ describe("InfoPage", () => {
   test("keeps the combat's heading and stats on the page of its first weapon set", async () => {
     const bjorn = await findSeededCharacter("Bjorn Ironhand");
     await carry(bjorn, [
-      { item: "Longsword", location: "Main Hand", weaponSets: [0] },
-      { item: "Greatsword", location: "Two Handed", weaponSets: [1] },
+      { item: "Longsword", location: "Main Hand", groups: [0] },
+      { item: "Greatsword", location: "Two Handed", groups: [1] },
     ]);
     const page = InfoPage({ detailedCharacter: await buildAs(DetailedCharacter, bjorn) });
     // The block a page never breaks: the heading, the stats, then the first set's heading
@@ -152,9 +152,9 @@ describe("InfoPage", () => {
   test("prints each weapon set's heading, what it holds, and its AC, touch and flat-footed before its attacks", async () => {
     const bjorn = await findSeededCharacter("Bjorn Ironhand");
     await carry(bjorn, [
-      { item: "Longsword", location: "Main Hand", weaponSets: [0] },
-      { item: "Heavy Steel Shield", location: "Off Hand", weaponSets: [0] },
-      { item: "Greatsword", location: "Two Handed", weaponSets: [1] },
+      { item: "Longsword", location: "Main Hand", groups: [0] },
+      { item: "Heavy Steel Shield", location: "Off Hand", groups: [0] },
+      { item: "Greatsword", location: "Two Handed", groups: [1] },
     ]);
     const text = textOf(InfoPage({ detailedCharacter: await buildAs(DetailedCharacter, bjorn) }));
     const set = (heading: string) => {

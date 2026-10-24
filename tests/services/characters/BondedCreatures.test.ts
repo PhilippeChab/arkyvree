@@ -244,7 +244,8 @@ describe("CharactersService with bonded creatures", () => {
     expect(
       CharactersService.createCharacter(session, {
         rulesetId: ctx.rulesetId,
-        raceId: ctx.raceMap.familiar["Cat"],
+        picks: { raceId: ctx.raceMap.familiar["Cat"] },
+        scores: {},
         name: "Cat PC",
         fields: {
           xp: 0,
@@ -254,7 +255,6 @@ describe("CharactersService with bonded creatures", () => {
           height: "0.3 m",
           weight: "5 kg",
         },
-        abilities: {},
       }),
     ).rejects.toMatchObject({ refusal: "invalid" });
     const wizardId = await createSeedCharacter(ctx, "wizard");
@@ -332,7 +332,7 @@ describe("CharactersService with bonded creatures", () => {
     ],
     ["level up", async (id: string) => addOneLevel(owner, id, (await getSeedCtx()).klassMap.pc.Wizard, 2, 4, null)],
     ["remove a level from", (id: string) => CharacterLevelsService.removeLevel(owner, id)],
-    ["set the ability scores of", (id: string) => CharactersService.updateAbilities(owner, id, {})],
+    ["set the ability scores of", (id: string) => CharactersService.updateScores(owner, id, "abilities", {})],
     ["list the inventory of", (id: string) => CharacterInventoryService.getInventory(owner, id)],
     ["list the modifiers of", (id: string) => CharacterModifiersService.getModifiers(owner, id)],
   ])("won't %s a familiar on its own", async (_, call) => {

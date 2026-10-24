@@ -70,7 +70,10 @@ async function postFilledCharacter() {
   );
   const { id } = await postCharacter({ alignment: "Chaotic Good", abilities, deity, description, notes });
   await expectOk(
-    api.api.characters[":id"].$put({ param: { id }, json: { privateNotes, languageIds: [langMap["Draconic"]] } }),
+    api.api.characters[":id"].$put({
+      param: { id },
+      json: { privateNotes, links: { languages: [langMap["Draconic"]] } },
+    }),
   );
   await addCharacterLevel(id, (await findKlassLevel(klassMap.pc["Fighter"], 1))!.id);
   return id;
@@ -273,7 +276,7 @@ describe("campaigns characters", () => {
         deity: SECRETS.deity,
         description: SECRETS.description,
       });
-      expect(identity.languages?.picked.map(({ name }) => name)).toEqual(["Common", "Draconic"]);
+      expect(identity.links?.[0].picked.map(({ name }) => name)).toEqual(["Common", "Draconic"]);
       expect(identity.notes).toEqual({ notes: SECRETS.notes, privateNotes: SECRETS.privateNotes });
       expect(whole.summary.tracks.map(({ label }) => label)).toEqual(["Fighter 1"]);
       expect((await rosterOf(viewer.api, campaignId))[0]).toMatchObject({

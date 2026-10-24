@@ -28,17 +28,17 @@ export interface EntriesBlock extends BlockHead {
 /**
  * The character's own fields (`fields`): its portrait (`portrait`, its label: the block a sheet opens with alone has
  * one), then lines of fields (`lines`, laid out a line each, side by side), the fields under them, each its own line
- * (`fields`), the languages it speaks (`languages`: what their picker says, and those it speaks), and its notes, its
- * private ones only for a reader who reads them. A field's key is the name its edit sends it by (`FieldsRequest`); what
- * an edit says (`saved`, `failed`). A sheet opens with its first; any other reads as the sheet does. 3.5's identity; a
- * partly seen character's, its race and physical traits alone.
+ * (`fields`), its picked links (`links`: each link's name, what its picker says, and the entities it has: 3.5's
+ * languages), and its notes, its private ones only for a reader who reads them. A field's key is the name its edit
+ * sends it by (`FieldsRequest`); what an edit says (`saved`, `failed`). A sheet opens with its first; any other reads
+ * as the sheet does. 3.5's identity; a partly seen character's, its race and physical traits alone.
  */
 export interface FieldsBlock extends BlockHead {
   failed: string;
   fields: SheetField[];
   kind: "fields";
-  languages?: { label: string; none: string; picked: { id: string; name: string }[] };
   lines: SheetField[][];
+  links?: { label: string; link: string; none: string; picked: { id: string; name: string }[] }[];
   notes?: { notes: string; privateNotes?: string };
   portrait?: string;
   saved: string;
@@ -90,6 +90,9 @@ export interface InventoryWords {
   create: string;
   createHint: string;
   editTitle: string;
+  group: string;
+  groupRequired: string;
+  groups: string;
   handSlot: string;
   inventory: string;
   item: string;
@@ -109,9 +112,6 @@ export interface InventoryWords {
   unknown: string;
   updated: string;
   warnings: string;
-  weaponSet: string;
-  weaponSetRequired: string;
-  weaponSets: string;
 }
 
 /**
@@ -130,12 +130,12 @@ export interface PoolsBlock extends BlockHead {
 
 /**
  * A block of scores in boxes, side by side (`scores`): each its label over its value, and the lines that make it up.
- * `edit`: its bases are the character's own, which its owner raises and lowers within their bounds, each written under
- * its score's key, with the words the edit says: a lower base's confirmation (it may break what the character took) and
- * its failure. (Its write is the character's ability scores' today, which a later step names by its block.)
+ * `edit`: its bases are the character's own amounts of a scored link (`link`: 3.5's ability scores), which its owner
+ * raises and lowers within their bounds, each written under its score's key, with the words the edit says: a lower
+ * base's confirmation (it may break what the character took) and its failure.
  */
 export interface ScoresBlock extends BlockHead {
-  edit?: { failed: string; lower: { confirm: string; message: string; title: string } };
+  edit?: { failed: string; link: string; lower: { confirm: string; message: string; title: string } };
   kind: "scores";
   scores: SheetScore[];
 }
@@ -292,9 +292,9 @@ export type SheetBlock =
 
 /**
  * A field of a `fields` block, by its kind (its key a plain name, none of those its block's form keeps for itself:
- * `notes`, `privateNotes`, `languageIds`): a line of text (`fixed`: never edited, its value the rules' own: a 3.5
- * character's race), a whole number at least `min` (`required`: what its edit says without one; else it may be cleared),
- * one of a select's options (none: not set), or several lines of text (`placeholder`: what it says empty).
+ * `notes`, `privateNotes`, `links`): a line of text (`fixed`: never edited, its value the rules' own: a 3.5 character's
+ * race), a whole number at least `min` (`required`: what its edit says without one; else it may be cleared), one of a
+ * select's options (none: not set), or several lines of text (`placeholder`: what it says empty).
  */
 export type SheetField = { key: string; label: string } & (
   | { fixed?: boolean; kind: "text"; value: string }

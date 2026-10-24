@@ -14,7 +14,7 @@ import { createTestItem } from "@/tests/support/items.ts";
 import { createTestRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
 
 /** An inventory entry's request to carry its item: unequipped, without charges. */
-const CARRIED = { equipped: false, location: null, remainingCharges: null, totalCharges: null, weaponSets: [] };
+const CARRIED = { equipped: false, location: null, remainingCharges: null, totalCharges: null, groups: [] };
 
 /** What opens each character's private notes, which a reader who doesn't read them must not find. */
 const NOTES = "Read by its editors and its Game Master alone:";
@@ -174,7 +174,7 @@ describe.each([...BASE_RULES_OPTIONS])("The %s module, as core runs its characte
 
     await withRulesetScope(db, record.rulesetId, async (scope) => {
       const characters = Engine.for(scope).characters();
-      const { max, min } = characters.describeCreation().scores;
+      const { max, min } = characters.describeCreation("abilities").scores;
       for (const score of [min - 1, max + 1]) {
         expect(() => characters.planScores("abilities", { [abilityId]: score })).toThrow(refusal);
         const start = { picks: { raceId: record.raceId }, scores: { abilities: { [abilityId]: score } } };
@@ -194,12 +194,12 @@ describe.each([...BASE_RULES_OPTIONS])("The %s module, as core runs its characte
       .describeAll()
       [rules].characterForm.sections.flatMap((section) => (section.kind === "fields" ? section.lines.flat() : []))
       .filter((item) => "key" in item);
-    // Its keys are its form's values' names, beside the form's own and the race picker's query's: one each, a plain
-    // name, which the form's paths read as it is
+    // Its keys are its form's values' names, beside the form's own and a creation pick's picker's query's: one each, a
+    // plain name, which the form's paths read as it is
     const keys = formFields.map(({ key }) => key);
     expect(new Set(keys).size).toBe(keys.length);
     for (const key of keys) {
-      expect(["abilities", "limit", "name", "notes", "page", "raceId", "rulesetId", "search"]).not.toContain(key);
+      expect(["limit", "name", "notes", "page", "picks", "rulesetId", "scores", "search"]).not.toContain(key);
       expect(key).toMatch(/^\w+$/);
     }
     const given = (field: (typeof formFields)[number]): number | string => {
