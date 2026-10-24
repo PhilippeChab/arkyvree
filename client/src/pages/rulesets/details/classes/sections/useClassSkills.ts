@@ -11,9 +11,12 @@ import { rpc } from "@/client/src/services/rpc.ts";
 
 import { useClassCopy } from "./useClassCopy.ts";
 
-/** The class a class skill's row names (`klassId`): the copy an edit of an inherited class wrote it on. */
-function classOf(row: Record<string, unknown>) {
-  return String(row.klassId);
+/**
+ * The class a class skill's row names (`klassId`): the copy an edit of an inherited class wrote it on, or the class
+ * itself (`classId`) when the row names none.
+ */
+function classOf(row: Record<string, unknown>, classId: string) {
+  return typeof row.klassId === "string" ? row.klassId : classId;
 }
 
 export function useClassSkills(rulesetId: string, classId: string) {
@@ -98,7 +101,7 @@ export function useClassSkills(rulesetId: string, classId: string) {
     },
     onSuccess: (added) => {
       snackbar.success("Skill added to class");
-      followCopy(classOf(added), added.sourceEntityId);
+      followCopy(classOf(added, classId), added.sourceEntityId);
     },
     onError: (error, _skillId, context) => {
       snackbar.error(error, "Failed to add skill to class");
@@ -141,7 +144,7 @@ export function useClassSkills(rulesetId: string, classId: string) {
     onSuccess: (removed) => {
       snackbar.success("Skill removed from class");
       removeDialog.close();
-      followCopy(classOf(removed), removed.sourceEntityId);
+      followCopy(classOf(removed, classId), removed.sourceEntityId);
     },
     onError: (error, _skillId, context) => {
       snackbar.error(error, "Failed to remove skill from class");

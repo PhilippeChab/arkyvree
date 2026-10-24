@@ -14,7 +14,7 @@ import { Entities, type EntityRow, Joins, type RulesetEntityType } from "@/serve
 import { createActivityWithNotifications, getChangedFields } from "@/server/services/activities/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import { getActivityName } from "@/shared/activity.ts";
-import { isCustomizableEntityType, PROPERTY_ENTITY_TYPES } from "@/shared/customization/entities.ts";
+import { isCustomizableEntityType } from "@/shared/customization/entities.ts";
 import type { Session } from "@/shared/relations.ts";
 
 import { hasCharacterPicks } from "./characterPicks.ts";
@@ -91,10 +91,7 @@ export default class EntityWriter {
 
   /** What a plan writes beside the entity: its properties, its requirement, the entities it makes and removes. */
   private async writeBeside(tx: Db, scope: RulesetScope, entityId: string, writes: EntityWrites | undefined) {
-    if (!writes) return;
-    const entityType = PROPERTY_ENTITY_TYPES.find((type) => type === this.type);
-    if (!entityType) throw new Error(`A ${this.type} entity keeps no properties`);
-    await writeEntityWrites(tx, scope, { entityId, entityType }, writes);
+    if (writes) await writeEntityWrites(tx, scope, { entityId, entityType: this.type }, writes);
   }
 
   /**

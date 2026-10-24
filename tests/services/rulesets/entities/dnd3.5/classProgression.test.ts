@@ -50,7 +50,7 @@ describe("EntitiesService: a class's progression", () => {
 
     expect(saved.entityId).not.toBe(klass.id);
     // The copy's levels it wrote
-    expect(saved.levelIds.toSorted()).toEqual([1, 2, 20].map((level) => levels.get(level)!.id).toSorted());
+    expect(saved.ownedIds.toSorted()).toEqual([1, 2, 20].map((level) => levels.get(level)!.id).toSorted());
     expect([1, 2, 20].map((level) => [levels.get(level)!.bab, levels.get(level)!.skills])).toEqual([
       [1, 6],
       [2, 6],
@@ -257,7 +257,7 @@ describe("EntitiesService: a class's progression", () => {
     expect(
       EntitiesService.updateProgression(session, fork.id, "klasses", own.id, {
         ...change,
-        levelTokens: [{ levelId: first, updatedAt: stale }],
+        ownedTokens: [{ id: first, updatedAt: stale }],
       }),
     ).rejects.toBeInstanceOf(ConflictError);
     const [aptitude] = await Entities.create<Aptitude>(db, "aptitudes", {
@@ -277,6 +277,21 @@ describe("EntitiesService: a class's progression", () => {
       400,
     );
     expect((await EntitiesService.getEntity(fork.id, "klasses", own.id)).updatedAt).toBe(saved.updatedAt);
+  });
+
+  test("refuses a body that isn't a save, as its rules read it, writing nothing", async () => {
+    const { session, fork, klass, levelId } = await forkWithClass("Fighter");
+    for (const body of [
+      { levels: "all" },
+      { levels: [{ levelId: "not-an-id" }] },
+      { levels: [{ levelId: levelId(1), fields: 1 }] },
+      { pools: [{ aptitudeId: levelId(1), picks: "all" }] },
+      { spells: { perDay: [{ levelId: levelId(1), counts: "all" }] } },
+    ]) {
+      const refused = EntitiesService.updateProgression(session, fork.id, "klasses", klass.id, body as never);
+      await expectRefusedWith(refused, 400);
+    }
+    expect((await EntitiesService.getEntity(fork.id, "klasses", klass.id)).updatedAt).toBe(klass.updatedAt);
   });
 
   test("writes nothing for a save that changes nothing, not even a copy of an inherited class", async () => {

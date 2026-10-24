@@ -39,7 +39,7 @@ export function useProgressionSave(rulesetId: string, classId: string, what: str
     onSettled: async (saved) => {
       await invalidateRulesetEdit(queryClient, rulesetId, queryKeysToInvalidate);
       // The pages of the levels it wrote (a row's hover warms them), their modifiers and requirements among them
-      const levelKeys = (saved?.levelIds ?? []).flatMap((levelId) => [
+      const levelKeys = (saved?.ownedIds ?? []).flatMap((levelId) => [
         QUERY_KEYS.rulesets.entity(rulesetId, "klass_levels", levelId),
         QUERY_KEYS.rulesets.customization(rulesetId, "klass_levels", levelId, "modifiers"),
         QUERY_KEYS.rulesets.customization(rulesetId, "klass_levels", levelId, "requirements"),

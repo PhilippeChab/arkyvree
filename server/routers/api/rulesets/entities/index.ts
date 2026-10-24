@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 
+import type { ProgressionForm } from "@/engine/index.ts";
 import { type SessionContext, validate } from "@/server/middlewares/index.ts";
 import { buildEntityTypeSchema } from "@/server/routers/api/schemaBuilders.ts";
 import {
@@ -13,8 +14,11 @@ import {
   page,
 } from "@/server/routers/api/validation.ts";
 import { EntitiesService, ENTITY_TYPES } from "@/server/services/rulesets/entities/index.ts";
+import { isRecord } from "@/shared/isRecord.ts";
 
-/** A route's entity kind: the ruleset (`id`), and the kind by its URL segment (`classes`), which it hands as its type. */
+/**
+ * A route's entity kind: the ruleset (`id`), and the kind by its URL segment (`classes`), which it hands as its type.
+ */
 const kindParams = idParam.extend({ entityType: buildEntityTypeSchema(ENTITY_TYPES) });
 
 /** A route's entity: its kind's params, and its id. */
@@ -47,9 +51,9 @@ const tableParams = entityParams.extend({ table: z.string() });
 /**
  * Every ruleset entity kind's routes, by its URL segment (`/rulesets/:id/entities/races`), each answered by its kind's
  * rules: its list, with its kind's filters past the shared ones (`kind`, `aptitudeId`…, which its rules read), its
- * page, its create, update and delete, and its kind's actions (its groups, its templates, a duplicate, variants), and an
- * entity's parts its kind may have: the entities it owns (a class's levels, and one by its id alone), the links it edits
- * (a class's skills), its progression and its tables.
+ * page, its create, update and delete, and its kind's actions (its groups, its templates, a duplicate, variants), and
+ * an entity's parts its kind may have: the entities it owns (a class's levels, and one by its id alone), the links it
+ * edits (a class's skills), its progression and its tables.
  */
 export default new Hono<SessionContext>()
   .get(
@@ -223,12 +227,13 @@ export default new Hono<SessionContext>()
   .put(
     "/:id/entities/:entityType/:entityId/progression",
     validate("param", entityParams),
-    // A progression's save: what its kind's rules read, and the tokens of the owned entities its client read
+    // A progression's save: what its kind's rules read (`ProgressionForm`, any object, which they parse), and the
+    // tokens of the owned entities its client read
     validate(
       "json",
-      z.looseObject({
-        levelTokens: z.array(z.object({ levelId: z.string().uuid(), updatedAt: z.string() })).optional(),
-      }),
+      z
+        .object({ ownedTokens: z.array(z.object({ id: z.string().uuid(), updatedAt: z.string() })).optional() })
+        .and(z.custom<ProgressionForm>((value) => isRecord(value), "Expected an object")),
     ),
     async (c) => {
       const { id, entityType, entityId } = c.req.valid("param");

@@ -10,6 +10,7 @@ export { default as Engine } from "./api/Engine.ts";
 export type { ImportFileDescription } from "./api/ImportsEngine.ts";
 export type { default as LevelUpEngine } from "./api/LevelUpEngine.ts";
 export type { Accepted, EntityKinds } from "./api/Modules.ts";
+export type { ProgressionForm } from "./api/RulesetEngine.ts";
 export type { default as StorageEngine } from "./api/StorageEngine.ts";
 export type { CowData, RulesetSources } from "./core/cow/index.ts";
 export type { EntityAction } from "./core/entities/index.ts";

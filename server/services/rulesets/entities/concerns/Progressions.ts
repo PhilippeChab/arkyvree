@@ -1,5 +1,5 @@
 import type { Db } from "@/drizzle/database.ts";
-import { Engine, type ProgressionPlan } from "@/engine/index.ts";
+import { Engine, type ProgressionForm, type ProgressionPlan } from "@/engine/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import {
   EntityEdit,
@@ -17,12 +17,15 @@ import { writeJoins } from "@/server/services/rulesets/entities/joinWrites.ts";
 import type { EntityRow } from "@/server/services/rulesets/entities/rows.ts";
 import { writeEntityWrites } from "@/server/services/rulesets/entityWrites.ts";
 import { getActivityName } from "@/shared/activity.ts";
-import { PROPERTY_ENTITY_TYPES } from "@/shared/customization/entities.ts";
 import type { Session } from "@/shared/relations.ts";
 
-/** The entity row a progression's save writes: the ruleset's own, or the copy of an inherited one, and what it copied. */
+/**
+ * The entity row a progression's save writes: the ruleset's own, or the copy of an inherited one, and what it copied.
+ */
 interface TargetOwner {
-  /** The entity was copied: its owned entities' modifiers are their sources' copies, by their sources' ids (`copiedIds`) */
+  /**
+   * The entity was copied: its owned entities' modifiers are their sources' copies, by their sources' ids (`copiedIds`)
+   */
   copied: boolean;
   copiedIds: ReadonlyMap<string, string>;
   id: string;
@@ -31,8 +34,8 @@ interface TargetOwner {
 
 /**
  * An entity's progression (a class's levels at once), as its kind's rules answer it
- * (`Engine.for(scope).progression(type, ownerId)`): what its tabs read, and one save of it all, in one transaction, its owned
- * entities' edits and modifiers, recorded as the kind's progression activity.
+ * (`Engine.for(scope).progression(type, ownerId)`): what its tabs read, and one save of it all, in one transaction, its
+ * owned entities' edits and modifiers, recorded as the kind's progression activity.
  */
 export function Progressions<B extends Constructor>(Base: B) {
   abstract class WithProgressions extends Base {
@@ -46,20 +49,20 @@ export function Progressions<B extends Constructor>(Base: B) {
       tx: Db,
       scope: RulesetScope,
       type: RulesetEntityType,
-      owner: { id: string; rulesetId: string },
+      { gone, owner }: Pick<ProgressionPlan, "gone" | "owner">,
     ): Promise<TargetOwner> {
       const target = await new EntityEdit(scope.ruleset).cowToEdit(tx, type, owner);
       if (!target.copied) await EntityRepositories.lock(tx, type, target.id);
       const row = await Entities.findOne<EntityRow>(tx, { entityType: type, id: target.id });
-      if (!row) throw new NotFoundError("This no longer exists; refresh the page");
+      if (!row) throw new NotFoundError(gone.owner);
       return { copied: target.copied, copiedIds: target.copiedIds, id: target.id, updatedAt: row.updatedAt };
     }
 
     /**
      * Writes each owned entity a progression's save changes on the target owner's of its place on its track (a copy's
-     * own, once the owner was copied): its `updatedAt` moved, refused when stale (`tokens`: the entity the client read; a
-     * copy's take no check), its form's edit, and its modifiers, those it drops (their copies', on a copy: refused when
-     * one is gone since) and those it adds. Answers the entities it wrote, by their ids.
+     * own, once the owner was copied): its `updatedAt` moved, refused when stale (`tokens`: the entity the client read;
+     * a copy's take no check), its form's edit, and its modifiers, those it drops (their copies', on a copy: refused
+     * when one is gone since) and those it adds. Answers the entities it wrote, by their ids.
      */
     private async writeOwned(
       tx: Db,
@@ -75,16 +78,15 @@ export function Progressions<B extends Constructor>(Base: B) {
       const writtenIds: string[] = [];
       for (const owned of plan.owned) {
         const ownedId = idByPosition.get(owned.position);
-        if (!ownedId) throw new NotFoundError("This no longer exists; refresh the page");
+        if (!ownedId) throw new NotFoundError(plan.gone.owned);
 
         const expectedUpdatedAt = target.copied ? undefined : tokens.get(owned.entity.id);
         const [row] = await Entities.update(tx, ownedType, {}, { id: ownedId, expectedUpdatedAt });
         if (!row) throw new ConflictError(STALE_ENTITY_MESSAGE);
         writtenIds.push(ownedId);
         if (owned.edit) {
-          const entityType = PROPERTY_ENTITY_TYPES.find((propertyType) => propertyType === ownedType);
-          if (owned.edit.writes && entityType)
-            await writeEntityWrites(tx, scope, { entityId: ownedId, entityType }, owned.edit.writes);
+          if (owned.edit.writes)
+            await writeEntityWrites(tx, scope, { entityId: ownedId, entityType: ownedType }, owned.edit.writes);
           await writeJoins(tx, ownedId, owned.edit.joins);
         }
 
@@ -109,29 +111,29 @@ export function Progressions<B extends Constructor>(Base: B) {
 
     /**
      * Saves an entity's progression at once (`body`), in one transaction, copying an inherited entity first. Refused
-     * when an owned entity it changes changed since the client read it (`levelTokens`). A save that changes nothing
+     * when an owned entity it changes changed since the client read it (`ownedTokens`). A save that changes nothing
      * writes nothing. Answers the entity written (`entityId`: a copy's, when it copied one), its token, and the owned
-     * entities it wrote (`levelIds`).
+     * entities it wrote (`ownedIds`).
      */
     async updateProgression(
       session: Session,
       rulesetId: string,
       type: RulesetEntityType,
       ownerId: string,
-      body: Record<string, unknown> & { levelTokens?: { levelId: string; updatedAt: string }[] },
+      body: ProgressionForm & { ownedTokens?: { id: string; updatedAt: string }[] },
     ) {
-      const { levelTokens, ...form } = body;
-      const tokens = new Map((levelTokens ?? []).map((token) => [token.levelId, token.updatedAt]));
+      const { ownedTokens, ...form } = body;
+      const tokens = new Map((ownedTokens ?? []).map((token) => [token.id, token.updatedAt]));
       const result = await withTransaction(
         async (tx) =>
           await withRulesetScope(tx, rulesetId, async (scope) => {
             (await RulesetsPolicy.for(tx, session, scope.ruleset)).canUpdateEntity();
             const plan = Engine.for(scope).progression(type, ownerId).plan(form);
-            const unchanged = { entityId: plan.owner.id, levelIds: [] as string[], updatedAt: plan.owner.updatedAt };
+            const unchanged = { entityId: plan.owner.id, ownedIds: [] as string[], updatedAt: plan.owner.updatedAt };
             if (plan.owned.length === 0) return unchanged;
 
-            const target = await this.targetOwner(tx, scope, type, plan.owner);
-            const levelIds = await this.writeOwned(tx, scope, target, plan, tokens);
+            const target = await this.targetOwner(tx, scope, type, plan);
+            const ownedIds = await this.writeOwned(tx, scope, target, plan, tokens);
 
             await createActivityWithNotifications(tx, {
               userId: session.userId,
@@ -141,7 +143,7 @@ export function Progressions<B extends Constructor>(Base: B) {
               data: plan.activity,
             });
 
-            return { entityId: target.id, levelIds, updatedAt: target.updatedAt };
+            return { entityId: target.id, ownedIds, updatedAt: target.updatedAt };
           }),
       );
       RulesetViews.invalidate(rulesetId);

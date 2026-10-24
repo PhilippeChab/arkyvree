@@ -49,7 +49,9 @@ export default class ClassEntity extends RulesetEntity<
 
   override readonly type = "klasses";
 
-  /** A form's columns: the hit die it gives (a new class's `DEFAULT_HIT_DIE` when it gives none), or the edited class's. */
+  /**
+   * A form's columns: the hit die it gives (a new class's `DEFAULT_HIT_DIE` when it gives none), or the edited class's.
+   */
   protected override columnsOf({ description, hd, name }: ClassBody, klass?: Klass) {
     return { description, hd: hd ?? klass?.hd ?? DEFAULT_HIT_DIE, name };
   }
@@ -70,7 +72,9 @@ export default class ClassEntity extends RulesetEntity<
     return CLASS_LEVEL_FIELDS.describe();
   }
 
-  /** A class's class skills (`klassId`): described, and what adding or removing one takes. Refused without the class. */
+  /**
+   * A class's class skills (`klassId`): described, and what adding or removing one takes. Refused without the class.
+   */
   links(klassId: string) {
     return new ClassSkills(this.view, this.find(klassId));
   }

@@ -1,7 +1,7 @@
 /**
  * The parts of an entity a kind may have past its own row, each bound to the entity as the view has it: the entities it
  * owns (a class's levels), the join it edits (a class's skills), its progression (its owned entities' at once) and its
- * tables. A kind that has none of one refuses it as not found (`RulesetEntity`).
+ * tables. A kind that has none of one has it refused as not found (`RulesetEngine`'s `part`).
  */
 
 import type { EntityForm } from "@/engine/core/fields/index.ts";

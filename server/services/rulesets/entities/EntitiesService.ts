@@ -20,8 +20,8 @@ export const ENTITY_TYPES: readonly RulesetEntityType[] = RULESET_ENTITY_TYPES;
  * A ruleset's entities by their kind (`type`, its table), whatever it is, as its kind's rules answer them
  * (`Engine.for(scope).entities(type)`): its list, read by the filters its rules take, and its groups, its page, and
  * what its form writes (`EntityWriter`), checked against the copies a plan reaches. An action a kind has none of (an
- * ability's create, a race's templates) its rules refuse as not found. Its copies (`Copies`: its templates,
- * variants), and an entity's parts its kind may have: the entities it owns (`Owned`: a class's levels), the links it edits
+ * ability's create, a race's templates) its rules refuse as not found. Its copies (`Copies`: its templates, variants),
+ * and an entity's parts its kind may have: the entities it owns (`Owned`: a class's levels), the links it edits
  * (`Links`: a class's skills), its progression (`Progressions`) and its tables.
  */
 class EntitiesService extends include(Object, Copies, Links, Owned, Progressions) {

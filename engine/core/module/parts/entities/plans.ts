@@ -6,8 +6,9 @@
 import type { Modifier, Requirement } from "@/shared/relations.ts";
 
 /**
- * What a create or an edit writes of an entity: its row's columns (`C`), the lists it's linked to (`links`, none: kept),
- * what it writes beside its row, and the fields the entity keeps once written (`F`, which the action answers with its row).
+ * What a create or an edit writes of an entity: its row's columns (`C`), the lists it's linked to (`links`, none:
+ * kept), what it writes beside its row, and the fields the entity keeps once written (`F`, which the action answers
+ * with its row).
  */
 interface EntityWrite<C, F> {
   columns: C;
@@ -105,7 +106,10 @@ export interface LinkAddPlan {
   row: Record<string, unknown>;
 }
 
-/** Removing a link through the join its owner edits (`join`): the owner, the link's target, and what its activity records. */
+/**
+ * Removing a link through the join its owner edits (`join`): the owner, the link's target, and what its activity
+ * records.
+ */
 export interface LinkRemovePlan {
   activity: Record<string, unknown>;
   join: string;
@@ -166,10 +170,12 @@ export interface PlanOwner {
 /**
  * One save of an owner's progression (a class's levels at once): the owner as the view has it, the kind it owns
  * (`ownedType`), each owned entity it changes, by its place on the owner's track (`position`), with its edit and the
- * modifiers it adds and removes, and what its activity records.
+ * modifiers it adds and removes, what its activity records, and what refuses it when what it writes is gone.
  */
 export interface ProgressionPlan {
   activity: Record<string, unknown>;
+  /** What refuses the save when the owner or an owned entity it writes is gone since the view was read */
+  gone: { owned: string; owner: string };
   owned: {
     added: { operator: string; target: string; value: string; valueType: "number" }[];
     edit?: OwnedEditPlan<object, object, { id: string }>;

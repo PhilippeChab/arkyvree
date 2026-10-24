@@ -20,11 +20,19 @@ import Modules, { type EntityKinds, type EntityType, type Module } from "./Modul
 import RequirementsEngine from "./RequirementsEngine.ts";
 import TargetPathsEngine from "./TargetPathsEngine.ts";
 
-/** A part of an entity a kind may have, by its method: the entities it owns, one of them by its id alone, the links it edits, its progression and its tables. */
+/**
+ * A part of an entity a kind may have, by its method: the entities it owns, one of them by its id alone, the links it
+ * edits, its progression and its tables.
+ */
 type EntityPart = "describeOwned" | "links" | "owned" | "progression" | "tables";
 
-/** What a kind (`T`, its rules) answers of a part (`P`), if it has it: none of a kind that hasn't, of each of a union. */
+/**
+ * What a kind (`T`, its rules) answers of a part (`P`), if it has it: none of a kind that hasn't, of each of a union.
+ */
 type PartOf<T, P extends EntityPart> = T extends Record<P, (id: string) => infer R> ? R : never;
+
+/** What a progression's save sends, as each registered kind that has one takes it (a class's levels' forms…). */
+export type ProgressionForm = Parameters<ReturnType<RulesetEngine["progression"]>["plan"]>[0];
 
 /** What a refusal calls a part a kind has none of: "No links for races". */
 const PART_WORDS: Readonly<Record<EntityPart, string>> = {
@@ -37,8 +45,8 @@ const PART_WORDS: Readonly<Record<EntityPart, string>> = {
 
 /**
  * The engine bound to a ruleset's view (`Engine.for(scope)`): what its rules answer, by what they're about, each a
- * handle bound to it (a character's rows, an entity kind, an entity's customizations). Its module, which its base rules pick,
- * is read once.
+ * handle bound to it (a character's rows, an entity kind, an entity's customizations). Its module, which its base rules
+ * pick, is read once.
  */
 export default class RulesetEngine {
   constructor(private readonly view: RulesetView) {
@@ -94,7 +102,9 @@ export default class RulesetEngine {
     };
   }
 
-  /** An owned entity by its id alone (`type`, its owner's kind; `ownedId`), as its page shows it, with its owner's name. */
+  /**
+   * An owned entity by its id alone (`type`, its owner's kind; `ownedId`), as its page shows it, with its owner's name.
+   */
   describeOwned<K extends EntityType>(type: K, ownedId: string) {
     return this.part(type, "describeOwned", ownedId);
   }

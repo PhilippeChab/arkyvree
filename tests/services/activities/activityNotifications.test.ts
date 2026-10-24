@@ -222,6 +222,31 @@ describe("activity notifications", () => {
     expect(await inbox(owner)).toEqual([note("addKlassSkill", author), note("removeKlassSkill", author)]);
   });
 
+  test("of a class's levels and its progression go to its ruleset's owner, each its own activity", async () => {
+    const [owner, author] = await users(2);
+    const { id: rulesetId } = await createTestRuleset(owner.user.id);
+    await addRulesetContributor(rulesetId, author.user, owner.user.id);
+    const [fighter] = await Entities.create<Klass>(db, "klasses", { name: "Fighter", rulesetId, hd: 10 });
+    const level = await EntitiesService.createOwnedEntity(author.session, rulesetId, "klasses", fighter.id, {
+      level: 1,
+      fields: { bab: 1, skills: 2 },
+    });
+    await EntitiesService.updateOwnedEntity(author.session, rulesetId, "klasses", fighter.id, level.id, {
+      fields: { bab: 1, skills: 4 },
+    });
+    await EntitiesService.updateProgression(author.session, rulesetId, "klasses", fighter.id, {
+      levels: [{ levelId: level.id, fields: { bab: 1, skills: 6 } }],
+    });
+    await EntitiesService.deleteOwnedEntity(author.session, rulesetId, "klasses", fighter.id, level.id);
+
+    expect(await inbox(owner)).toEqual([
+      note("createKlassLevel", author),
+      note("deleteKlassLevel", author),
+      note("updateKlassLevel", author),
+      note("updateKlassProgression", author),
+    ]);
+  });
+
   // The client names a change in its ruleset's words (a 3.5 power is a spell), which its base rules pick: every change to
   // a ruleset's content records them, an entity's and what belongs to one alike
   test("of a ruleset's content carry its base rules, as their activities do", async () => {

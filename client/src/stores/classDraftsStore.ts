@@ -17,7 +17,7 @@ interface ClassDraftsState {
 export interface ClassTabDraft {
   changed: boolean;
   edits: unknown;
-  tokens?: { levelTokens: { levelId: string; updatedAt: string }[] };
+  tokens?: { ownedTokens: { id: string; updatedAt: string }[] };
 }
 
 /**

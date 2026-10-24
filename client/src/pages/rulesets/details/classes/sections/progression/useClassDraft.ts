@@ -34,7 +34,7 @@ export function useClassDraft<T>(
     return state.classId === classId ? state.drafts[tab] : undefined;
   };
   const readTokens = (): DraftTokens => ({
-    levelTokens: levels.map((level) => ({ levelId: level.id, updatedAt: level.updatedAt })),
+    ownedTokens: levels.map((level) => ({ id: level.id, updatedAt: level.updatedAt })),
   });
 
   // As the tab reads them: a save's refetch can make what's left change nothing
@@ -71,9 +71,9 @@ export function useClassDraft<T>(
     tokens: (): DraftTokens => {
       const kept = current()?.tokens;
       if (!kept) return readTokens();
-      const known = new Set(kept.levelTokens.map(({ levelId }) => levelId));
-      const added = readTokens().levelTokens.filter(({ levelId }) => !known.has(levelId));
-      return { levelTokens: [...kept.levelTokens, ...added] };
+      const known = new Set(kept.ownedTokens.map(({ id }) => id));
+      const added = readTokens().ownedTokens.filter(({ id }) => !known.has(id));
+      return { ownedTokens: [...kept.ownedTokens, ...added] };
     },
   };
 }

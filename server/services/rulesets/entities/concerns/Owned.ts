@@ -10,24 +10,16 @@ import { hasCharacterPicks } from "@/server/services/rulesets/characterPicks.ts"
 import { writeJoins } from "@/server/services/rulesets/entities/joinWrites.ts";
 import { writeEntityWrites } from "@/server/services/rulesets/entityWrites.ts";
 import { getActivityName } from "@/shared/activity.ts";
-import { PROPERTY_ENTITY_TYPES } from "@/shared/customization/entities.ts";
 import type { Session } from "@/shared/relations.ts";
 
 /**
  * The entities an entity owns (a class's levels), of its kind (`type`, the owner's), as its kind's rules answer them
- * (`Engine.for(scope).owned(type, ownerId)`): their list, one described, by its id alone too, and their creates, edits and
- * deletes, each written on the owner the view's resolves to (its copy, made on its first edit) and recorded as its
+ * (`Engine.for(scope).owned(type, ownerId)`): their list, one described, by its id alone too, and their creates, edits
+ * and deletes, each written on the owner the view's resolves to (its copy, made on its first edit) and recorded as its
  * kind's activity.
  */
 export function Owned<B extends Constructor>(Base: B) {
   abstract class WithOwned extends Base {
-    /** The entity a plan's writes beside its row keep their properties on (`entityId`, of its kind `type`). */
-    private propertyOwner(type: string, entityId: string) {
-      const entityType = PROPERTY_ENTITY_TYPES.find((propertyType) => propertyType === type);
-      if (!entityType) throw new Error(`A ${type} entity keeps no properties`);
-      return { entityId, entityType };
-    }
-
     /**
      * A new entity the owner (`ownerId`) owns, off its form: the owner copied when it's inherited (the new row would
      * otherwise be the source ruleset's), its row, its joins' rows and what its form writes beside it.
@@ -49,10 +41,11 @@ export function Owned<B extends Constructor>(Base: B) {
             const plan = owned.planCreate(body);
 
             const { id: targetOwnerId } = await new EntityEdit(ruleset).cowToEdit(tx, type, plan.owner);
-            const [row] = await Entities.createOwned(tx, owned.type, targetOwnerId, plan.columns);
+            const [row] = await Entities.create(tx, owned.type, plan.columns, { ownerId: targetOwnerId });
             for (const [join, rows] of Object.entries(plan.joins))
-              if (rows) await Joins.createFrom(tx, join, row.id, rows);
-            if (plan.writes) await writeEntityWrites(tx, scope, this.propertyOwner(owned.type, row.id), plan.writes);
+              if (rows) await Joins.createMany(tx, join, rows, { fromId: row.id });
+            if (plan.writes)
+              await writeEntityWrites(tx, scope, { entityId: row.id, entityType: owned.type }, plan.writes);
 
             await createActivityWithNotifications(tx, {
               userId: session.userId,
@@ -71,9 +64,9 @@ export function Owned<B extends Constructor>(Base: B) {
     }
 
     /**
-     * An owned entity's delete (`ownedId`, of `ownerId`): refused while a character names it, the owner copied when it's
-     * inherited (the delete would otherwise remove the source ruleset's row), and its row deleted, with its links and
-     * customizations.
+     * An owned entity's delete (`ownedId`, of `ownerId`): refused while a character names it, the owner copied when
+     * it's inherited (the delete would otherwise remove the source ruleset's row), and its row deleted, with its links
+     * and customizations.
      */
     async deleteOwnedEntity(
       session: Session,
@@ -87,9 +80,12 @@ export function Owned<B extends Constructor>(Base: B) {
           await withRulesetScope(tx, rulesetId, async (scope) => {
             const { ruleset, rulesetData } = scope;
 
+            // Access first, then the owner (its kind names the owned entity's), then what's in use
+            const policy = await RulesetsPolicy.for(tx, session, ruleset);
+            policy.canUpdateEntity();
             const owned = Engine.for(scope).owned(type, ownerId);
             const inUse = await hasCharacterPicks(tx, owned.type, rulesetData.cow.getEquivalentIds(ownedId), rulesetId);
-            (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
+            policy.canDeleteEntity({ inUse });
             const plan = owned.planDelete(ownedId);
 
             const edit = new CustomizationEdit(ruleset, rulesetData.cow);
@@ -162,7 +158,8 @@ export function Owned<B extends Constructor>(Base: B) {
             const rows = await Entities.update(tx, owned.type, {}, { id: targetId, expectedUpdatedAt });
             if (expectedUpdatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
 
-            if (plan.writes) await writeEntityWrites(tx, scope, this.propertyOwner(owned.type, targetId), plan.writes);
+            if (plan.writes)
+              await writeEntityWrites(tx, scope, { entityId: targetId, entityType: owned.type }, plan.writes);
             await writeJoins(tx, targetId, plan.joins);
 
             await createActivityWithNotifications(tx, {

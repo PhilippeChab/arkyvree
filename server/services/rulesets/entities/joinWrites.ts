@@ -1,4 +1,7 @@
-/** What an entity's write writes of its joins from it, whichever save writes it: its own form's, or its owner's progression's. */
+/**
+ * What an entity's write writes of its joins from it, whichever save writes it: its own form's, or its owner's
+ * progression's.
+ */
 
 import type { Db } from "@/drizzle/database.ts";
 import type { JoinRows } from "@/engine/index.ts";
@@ -12,6 +15,6 @@ export async function writeJoins(tx: Db, fromId: string, joins: JoinRows) {
   for (const [join, rows] of Object.entries(joins)) {
     if (rows === undefined) continue;
     await Joins.delete(tx, { join, fromId });
-    await Joins.createFrom(tx, join, fromId, rows);
+    await Joins.createMany(tx, join, rows, { fromId });
   }
 }

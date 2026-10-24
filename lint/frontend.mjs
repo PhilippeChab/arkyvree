@@ -61,7 +61,7 @@
  *   `storeSaved` is one), and an infinite query's items are `pageItems(data)`.
  * - `parsed-responses`: a request's answer is read with `parseResponse(…)`.
  * - `dot-notation`: a member named by an identifier is read with a dot (`rpc.api.characters.share.$post`); brackets are
- *   for a name that isn't one (`[":id"]`, `["class-levels"]`).
+ *   for a name that isn't one (`[":id"]`, `["read-all"]`).
  * - `error-reads`: an error shows through `errorMessage`, never its raw `message` (its toast names what failed:
  *   `snackbar.error(error, "Failed to …")`, whose fallback TypeScript requires), and a server error's name, or a status
  *   a predicate names (a 429: `rateLimited`), is read by its predicate in `lib/errorMessage.ts`, written there once.
@@ -885,7 +885,7 @@ function createDotNotation(context) {
         node: key,
         message:
           "A member named by an identifier is read with a dot (`rpc.api.characters.share.$post`); brackets are for " +
-          'a name that isn\'t one (`[":id"]`, `["class-levels"]`).',
+          'a name that isn\'t one (`[":id"]`, `["read-all"]`).',
       });
     },
   };
