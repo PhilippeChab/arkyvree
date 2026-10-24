@@ -1,5 +1,5 @@
+export { AptitudeAutocomplete } from "./AptitudeAutocomplete.tsx";
 export { AptitudeChipsCell } from "./AptitudeChipsCell.tsx";
-export { AptitudeAutocomplete } from "./AptitudesAutocomplete.tsx";
 export { byName } from "./byName.ts";
 export { DescriptionCell } from "./DescriptionCell.tsx";
 export { EntityDeleteDialog } from "./EntityDeleteDialog.tsx";
@@ -13,4 +13,4 @@ export { SectionActions } from "./SectionActions.tsx";
 export { SectionSearchBar } from "./SectionSearchBar.tsx";
 export { SpellLevelFilter } from "./SpellLevelFilter.tsx";
 export { TABLE_CONTAINER_LOADING_SX, TABLE_CONTAINER_SX, TABLE_MIN_WIDTH } from "./tableStyles.ts";
-export { useAptitudeOptions } from "./useAptitudeOptions.ts";
+export { useEntityOptions } from "./useEntityOptions.ts";

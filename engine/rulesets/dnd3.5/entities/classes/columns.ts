@@ -32,6 +32,7 @@ export const CLASS_LEVEL_COLUMNS: FormField[] = [
     label: "Saves",
     max: RULESET_LIMITS.saveBase,
     min: 0,
+    references: "saves",
   },
   {
     entityKey: "featId",
@@ -39,6 +40,7 @@ export const CLASS_LEVEL_COLUMNS: FormField[] = [
     input: "grants",
     key: "feats",
     label: "Feats",
+    references: "feats",
     viaKey: "aptitudeId",
   },
 ];

@@ -6,7 +6,7 @@ import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
 import {
   type EntityFormData,
-  linkedAptitudes,
+  linkedEntities,
   RulesetEntityFormFields,
   toEntityBody,
   toEntityForm,
@@ -95,7 +95,7 @@ export function EntityEditor({
             rulesetId={rulesetId}
             columns={kind.wideForm ? 2 : undefined}
             context={{
-              knownAptitudes: linkedAptitudes(columns, entity),
+              knownLinks: linkedEntities(columns, entity),
               templateName: typeof entity.templateName === "string" ? entity.templateName : null,
             }}
             nameLocked={lockedName && entity[lockedName.flag] === true ? lockedName.reason : undefined}

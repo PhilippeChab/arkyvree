@@ -4,10 +4,10 @@ import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import {
   EMPTY_CLASS_LEVEL,
   EntityFormFields,
-  featKey,
+  grantKey,
+  grantLabel,
   type LevelFeat,
-  levelFeatLabel,
-  sortLevelFeats,
+  sortGrants,
   withEntityFields,
 } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { EntityDetailsCard } from "@/client/src/pages/rulesets/components/index.ts";
@@ -25,14 +25,14 @@ function asLevelFeat(feat: LevelFeatRow): LevelFeat {
   return { featId: feat.id, aptitudeId: feat.aptitudeId };
 }
 function featLabel(feat: LevelFeatRow) {
-  return levelFeatLabel(feat.name, feat.aptitudeName);
+  return grantLabel(feat.name, feat.aptitudeName);
 }
 
 function toClassLevelForm(level: OwnedEntity, fields: readonly EntityField[] | undefined): ClassLevelFormData {
   const values: ClassLevelFormData = {
     level: level.level,
     saves: level.saves.map(({ saveId, base }) => ({ saveId, base })),
-    feats: sortLevelFeats(level.feats, featLabel).map(asLevelFeat),
+    feats: sortGrants(level.feats, featLabel).map(asLevelFeat),
   };
   return withEntityFields(values, fields, level);
 }
@@ -86,7 +86,9 @@ export function ClassLevelEditor({
             form={form}
             entityType="klass_levels"
             rulesetId={rulesetId}
-            context={{ featLabels: new Map(level.feats.map((feat) => [featKey(asLevelFeat(feat)), featLabel(feat)])) }}
+            context={{
+              grantLabels: new Map(level.feats.map((feat) => [grantKey(feat.id, feat.aptitudeId), featLabel(feat)])),
+            }}
           />
         ),
         ...save,

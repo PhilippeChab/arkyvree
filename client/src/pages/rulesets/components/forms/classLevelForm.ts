@@ -32,16 +32,6 @@ export function allLevelSaves(rulesetSaves: Pick<Save, "id">[] | undefined, save
   return rulesetSaves.map((save) => ({ saveId: save.id, base: saves.find((s) => s.saveId === save.id)?.base ?? 0 }));
 }
 
-/** Identifies a granted feat: the same feat can be granted for several aptitudes. */
-export function featKey(feat: LevelFeat) {
-  return `${feat.featId}-${feat.aptitudeId}`;
-}
-
-/** A granted feat's label, the order a level's feats are kept in. */
-export function levelFeatLabel(featName: string, aptitudeName: string | null | undefined) {
-  return `${featName} (${aptitudeName || "Unknown"})`;
-}
-
 /**
  * A class's next level, which its create dialog opens on: one above its highest, from whose saves it starts; a class
  * without levels starts from the first's empty form. Its declared fields start from the highest's too (the class
@@ -53,9 +43,4 @@ export function nextClassLevel(
   if (!levels?.length) return EMPTY_CLASS_LEVEL;
   const highest = levels.reduce((top, level) => (level.level > top.level ? level : top));
   return { level: highest.level + 1, saves: highest.saves.map(({ saveId, base }) => ({ saveId, base })), feats: [] };
-}
-
-/** A level's granted feats in the order its form keeps them, by their labels (`labelOf`): never their picking order. */
-export function sortLevelFeats<F>(feats: readonly F[], labelOf: (feat: F) => string) {
-  return feats.toSorted((a, b) => labelOf(a).localeCompare(labelOf(b)));
 }

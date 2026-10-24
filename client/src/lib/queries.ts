@@ -15,7 +15,7 @@ import { ATTACHMENT_SLOTS, type AttachmentSlotName } from "@/shared/attachments.
 import type { BaseRules } from "@/shared/enums.ts";
 
 import { FOREVER } from "./durations.ts";
-import { type EntityRow, readEntitiesFn } from "./entityRequests.ts";
+import { readEntitiesFn } from "./entityRequests.ts";
 import { nextPage } from "./pageItems.ts";
 import { QUERY_KEYS } from "./queryKeys.ts";
 
@@ -23,11 +23,6 @@ type CampaignListParams = InferRequestType<typeof rpc.api.campaigns.$get>["query
 type CharacterListParams = InferRequestType<typeof rpc.api.characters.$get>["query"];
 
 type RulesetListParams = InferRequestType<typeof rpc.api.rulesets.$get>["query"];
-
-/** Each list of a ruleset its pickers, columns and lookups read whole, by its name: the request for its first 100. */
-type RulesetOptionRequests = {
-  [List in keyof RulesetOptions]: (id: string) => Promise<{ items: RulesetOptions[List] }>;
-};
 
 /** A record's attachment slot: its record (none until it has an id) and its slot (`ATTACHMENT_SLOTS`). */
 export interface AttachmentSlot {
@@ -52,11 +47,6 @@ export interface RulesetListFilters {
   orderDir: Direction;
   scope: RulesetListParams["scope"];
   search: string;
-}
-/** The lists of a ruleset its pickers, columns and lookups read whole (`rulesetOptionsQuery`): their rows, by name. */
-export interface RulesetOptions {
-  abilities: EntityRow[];
-  saves: EntityRow[];
 }
 
 export type CharacterDetail = InferResponseType<(typeof rpc.api.characters)[":id"]["$get"], 200>;
@@ -91,11 +81,6 @@ export type RulesWords = RulesDescription["words"];
 
 /** A list read whole: its first page of 100, the most one request returns (a ruleset has far fewer of each). */
 const FIRST_HUNDRED = { page: "1", limit: "100" };
-
-const RULESET_OPTION_REQUESTS: RulesetOptionRequests = {
-  abilities: (id) => readEntitiesFn(id, "abilities", FIRST_HUNDRED),
-  saves: (id) => readEntitiesFn(id, "saves", FIRST_HUNDRED),
-};
 
 /** How the campaigns list opens: its page reads them as its URL's defaults, and the sidebar warms its first page. */
 export const CAMPAIGN_LIST_DEFAULTS = {
@@ -257,14 +242,13 @@ export function rulesetListQuery(filters: RulesetListFilters) {
 }
 
 /**
- * Every ability or save of a ruleset, for pickers, columns and lookups: the first 100, the most one request
- * returns, waiting for the ruleset's id.
+ * Every entity of a kind of a ruleset (`type`: its abilities, its saves), for pickers, columns and lookups: the first
+ * 100, the most one request returns, waiting for the ruleset's id.
  */
-export function rulesetOptionsQuery<List extends keyof RulesetOptions>(list: List, rulesetId: string | undefined) {
-  const request = RULESET_OPTION_REQUESTS[list];
+export function rulesetOptionsQuery(type: string, rulesetId: string | undefined) {
   return queryOptions({
-    queryKey: QUERY_KEYS.rulesets[list](rulesetId ?? ""),
-    queryFn: rulesetId ? async () => (await request(rulesetId)).items : skipToken,
+    queryKey: QUERY_KEYS.rulesets.options(rulesetId ?? "", type),
+    queryFn: rulesetId ? async () => (await readEntitiesFn(rulesetId, type, FIRST_HUNDRED)).items : skipToken,
   });
 }
 

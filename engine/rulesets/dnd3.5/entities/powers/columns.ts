@@ -34,7 +34,9 @@ export const POWER_COLUMNS: FormField[] = [
     label: "Aptitudes",
     max: RULESET_LIMITS.spellLevel,
     min: 0,
+    references: "aptitudes",
     required: APTITUDES_REQUIRED,
+    target: "aptitudesInRule",
   },
 ];
 

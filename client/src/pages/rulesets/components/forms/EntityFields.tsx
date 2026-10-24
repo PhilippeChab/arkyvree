@@ -33,12 +33,12 @@ import { useEntityFields } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { countRoomAt, findProgressionIssues } from "@/shared/customization/progression.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
 
-import { AptitudeLevelsInput } from "./AptitudeLevelsInput.tsx";
-import { AptitudesInput } from "./AptitudesInput.tsx";
+import { AmountsInput } from "./AmountsInput.tsx";
 import type { ColumnContext } from "./columnContext.ts";
 import { choiceOptions, isFieldShown, noneLabel, valueAt } from "./entityFields.ts";
-import { GrantedFeatsInput } from "./GrantedFeatsInput.tsx";
-import { SaveBasesInput } from "./SaveBasesInput.tsx";
+import { GrantsInput } from "./GrantsInput.tsx";
+import { LeveledLinksInput } from "./LeveledLinksInput.tsx";
+import { LinksInput } from "./LinksInput.tsx";
 import { TemplateInput } from "./TemplateInput.tsx";
 import { useTemplateReset } from "./useTemplateReset.ts";
 
@@ -102,7 +102,7 @@ interface FlagSelectProps {
 
 /** What a reference's select takes: its field, and the list of the ruleset it picks from. */
 interface ReferenceSelectProps<T extends FieldValues> extends FieldInputProps<T, RefField> {
-  list: (typeof REFERENCE_LISTS)[number];
+  list: string;
 }
 
 /** What a field shown on its conditions takes: the paths of the form's values they read, in their order. */
@@ -150,9 +150,6 @@ const PROGRESSION_ROW_SX = {
 
 /** A progression's inputs' width: its frequency's and its levels' rows', which line up. */
 const PROGRESSION_WIDTH_SX = { maxWidth: "28rem" };
-
-/** The lists of a ruleset a reference picks from, by the kind of entity it names. */
-const REFERENCE_LISTS = ["abilities", "saves"] as const;
 
 /** Two columns past a phone's width. */
 const TWO_COLUMNS_SX = { gridTemplateColumns: { xs: "1fr", sm: "repeat(2, minmax(0, 1fr))" } };
@@ -208,21 +205,19 @@ function FieldInput<T extends FieldValues>({ field, ...props }: FieldInputProps<
         />
       );
     case "leveledLinks":
-      return <AptitudeLevelsInput {...props} field={field} name={name} />;
+      return <LeveledLinksInput {...props} field={field} name={name} />;
     case "links":
-      return <AptitudesInput {...props} field={field} name={name} />;
+      return <LinksInput {...props} field={field} name={name} />;
     case "grants":
-      return <GrantedFeatsInput {...props} field={field} name={name} />;
+      return <GrantsInput {...props} field={field} name={name} />;
     case "amounts":
-      return <SaveBasesInput {...props} field={field} name={name} />;
+      return <AmountsInput {...props} field={field} name={name} />;
     case "template":
       return <TemplateInput {...props} field={field} name={name} />;
     case "progression":
       return <ProgressionInput {...props} field={field} />;
     case "ref":
-      if (isOneOf(field.references, REFERENCE_LISTS))
-        return <ReferenceSelect {...props} field={field} list={field.references} />;
-      break;
+      return <ReferenceSelect {...props} field={field} list={field.references} />;
     case "choice":
       if (field.multiple) return <ValuesInput {...props} field={field} />;
       return (

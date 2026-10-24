@@ -4,8 +4,8 @@ import { useState } from "react";
 import { CardTitle, Panel, ScrollSafeListbox } from "@/client/src/components/common/index.ts";
 import { useDebouncedValue } from "@/client/src/hooks/index.ts";
 import { emptyOptionsText } from "@/client/src/lib/errorMessage.ts";
-import { levelFeatLabel, poolsOf } from "@/client/src/pages/rulesets/components/forms/index.ts";
-import { useAptitudeOptions } from "@/client/src/pages/rulesets/components/index.ts";
+import { grantLabel, poolsOf } from "@/client/src/pages/rulesets/components/forms/index.ts";
+import { useEntityOptions } from "@/client/src/pages/rulesets/components/index.ts";
 import { useEntityColumns, useRulesetFeats } from "@/client/src/pages/rulesets/hooks/index.ts";
 
 import { LevelToggles } from "./LevelToggles.tsx";
@@ -75,7 +75,12 @@ export function ClassFeaturesCard({
     error,
     onScroll,
   } = useRulesetFeats(rulesetId, useDebouncedValue(featSearch), !readOnly);
-  const { fetchedOptions: aptitudes, autocompleteProps } = useAptitudeOptions(rulesetId, "feats", !readOnly);
+  const { fetchedOptions: aptitudes, autocompleteProps } = useEntityOptions(rulesetId, "aptitudes", {
+    enabled: !readOnly,
+    limit: 10,
+    scope: "feats",
+    what: "Aptitudes",
+  });
   // A feat's pools, where its rules' columns say a read holds them
   const { columns: featColumns } = useEntityColumns(rulesetId, "feats");
   const featOptions = feats.flatMap((feat) =>
@@ -153,7 +158,7 @@ export function ClassFeaturesCard({
           <Autocomplete
             size="small"
             options={featOptions.filter((option) => !features.some((row) => row.key === option.key))}
-            getOptionLabel={(option) => levelFeatLabel(option.name, option.aptitudeName)}
+            getOptionLabel={(option) => grantLabel(option.name, option.aptitudeName)}
             getOptionKey={(option) => option.key}
             value={null}
             onChange={(_, option) => option && onAddFeature(option)}

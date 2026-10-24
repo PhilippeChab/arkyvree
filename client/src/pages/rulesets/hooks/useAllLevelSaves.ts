@@ -8,7 +8,7 @@ type LevelSaves = Parameters<typeof allLevelSaves>[1];
 
 /**
  * A class level's saves as its save sends them (`withAllSaves`): every ruleset save, 0 unset, off the saves its form's
- * input loaded (`SaveBasesInput`, which shows their failure); its own until they load.
+ * input loaded (`AmountsInput`, which shows their failure); its own until they load.
  */
 export function useAllLevelSaves(rulesetId: string) {
   const queryClient = useQueryClient();

@@ -30,7 +30,7 @@ import {
 } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 import type { ClassSectionProps } from "@/client/src/pages/rulesets/details/classes/classTab.ts";
 import { byLevel } from "@/client/src/pages/rulesets/details/classes/sections/byLevel.ts";
-import { classOptionsQuery } from "@/client/src/pages/rulesets/optionQueries.ts";
+import { entityOptionsQuery } from "@/client/src/pages/rulesets/optionQueries.ts";
 
 import { ProgressionSaveBar } from "./ProgressionSaveBar.tsx";
 import { NO_SPELL_EDITS, readSpellCell, SpellDraft, type SpellEdits, type SpellTable } from "./SpellDraft.ts";
@@ -78,7 +78,7 @@ export function ClassSpellsSection({ rulesetId, classId, className, ruleset }: C
   // An editor's, of a class with one spell list: its classes to start from are only read then
   const editable = canEdit && !!progression?.spellList && !progression.severalSpellLists;
   const classes = useListboxQuery({
-    ...classOptionsQuery(rulesetId, useDebouncedValue(classSearch)),
+    ...entityOptionsQuery(rulesetId, "klasses", useDebouncedValue(classSearch), { limit: 20 }),
     enabled: editable,
   });
 

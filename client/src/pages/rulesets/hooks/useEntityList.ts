@@ -1,13 +1,9 @@
 import { useQueries } from "@tanstack/react-query";
 
 import type { TableColumn } from "@/client/src/components/common/index.ts";
-import { type RulesetOptions, rulesetOptionsQuery } from "@/client/src/lib/queries.ts";
-import { isOneOf } from "@/shared/isOneOf.ts";
+import { rulesetOptionsQuery } from "@/client/src/lib/queries.ts";
 
 import { useRulesetRules } from "./useRulesetRules.ts";
-
-/** The lists of a ruleset a list's reference column names an entity of, by its kind. */
-const REFERENCE_LISTS = ["abilities", "saves"] as const satisfies readonly (keyof RulesetOptions)[];
 
 /**
  * An entity type's list on its ruleset's page, as its rules describe it (`lists`): its table's columns (its name's,
@@ -21,7 +17,7 @@ export function useEntityList(rulesetId: string, entityType: string) {
   const kinds = [
     ...new Set(
       (list?.columns ?? []).flatMap((column) =>
-        column.reads === "reference" && isOneOf(column.references, REFERENCE_LISTS) ? [column.references] : [],
+        column.reads === "reference" && column.references ? [column.references] : [],
       ),
     ),
   ];

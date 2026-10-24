@@ -1,4 +1,5 @@
 import type { InviteKind } from "@/client/src/components/invites/index.ts";
+import { getUrlSegment } from "@/shared/urlSegments.ts";
 
 export const QUERY_KEYS = {
   auth: {
@@ -20,11 +21,6 @@ export const QUERY_KEYS = {
       ["rulesets", "detail", id, section, "autocomplete", search, scope] as const,
     /** The extensions a ruleset subscribes to. */
     extensions: (id: string) => ["rulesets", "detail", id, "extensions"] as const,
-    /**
-     * Every ability of the ruleset, for pickers. Nested under the Abilities
-     * section key so invalidating the section refreshes the pickers too.
-     */
-    abilities: (id: string) => ["rulesets", "detail", id, "abilities", "options"] as const,
     /**
      * How a new character of the ruleset sets its scores of a scored link (`link`), and the entities it scores in its
      * sheets' order. Nested under `creations`, which a write to the ruleset's content refreshes.
@@ -67,8 +63,11 @@ export const QUERY_KEYS = {
     targetPath: (id: string, kind: string, path: string, entityType?: string) =>
       ["rulesets", "detail", id, "targetPath", kind, path, entityType] as const,
     changes: (id: string) => ["rulesets", "detail", id, "changes"] as const,
-    /** Every save of the ruleset, for pickers and columns; nested like `abilities`. */
-    saves: (id: string) => ["rulesets", "detail", id, "saves", "options"] as const,
+    /**
+     * Every entity of a kind of the ruleset (its abilities, its saves), for pickers and columns: nested under its
+     * kind's section key, so invalidating the section refreshes the pickers too.
+     */
+    options: (id: string, type: string) => ["rulesets", "detail", id, getUrlSegment(type), "options"] as const,
     /** The fields each entity's form shows, and the ruleset's Settings', as the ruleset declares them. */
     fields: (id: string) => ["rulesets", "detail", id, "fields"] as const,
     /** The ruleset's Settings: its own fields' values. */

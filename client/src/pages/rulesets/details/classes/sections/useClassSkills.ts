@@ -6,7 +6,7 @@ import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useDebouncedValue, useDialogState, useListboxQuery } from "@/client/src/hooks/index.ts";
 import { classSkillsQuery } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 import { invalidateRulesetEdit } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
-import { skillOptionsQuery } from "@/client/src/pages/rulesets/optionQueries.ts";
+import { entityOptionsQuery } from "@/client/src/pages/rulesets/optionQueries.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
 import { useClassCopy } from "./useClassCopy.ts";
@@ -42,7 +42,7 @@ export function useClassSkills(rulesetId: string, classId: string) {
     isLoading: isAvailableSkillsLoading,
     error: availableSkillsError,
     onScroll: handleSkillsScroll,
-  } = useListboxQuery(skillOptionsQuery(rulesetId, debouncedSkillSearch));
+  } = useListboxQuery(entityOptionsQuery(rulesetId, "skills", debouncedSkillSearch, { limit: 20 }));
 
   const addSkillMutation = useMutation({
     mutationFn: async (skillId: string) =>
