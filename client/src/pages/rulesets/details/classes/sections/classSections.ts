@@ -1,23 +1,25 @@
-import { LevelsIcon, PowersIcon, SkillsIcon, SpellUsesIcon } from "@/client/src/components/icons/index.ts";
-import type { RulesWords } from "@/client/src/lib/queries.ts";
+import { LevelsIcon, PowersIcon, SpellUsesIcon } from "@/client/src/components/icons/index.ts";
+import type { EntityLinksDescription, RulesDescription, RulesWords } from "@/client/src/lib/queries.ts";
 import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
 import {
   CUSTOMIZATION_TABS,
   type CustomizationSection,
 } from "@/client/src/pages/rulesets/customization/sections/index.ts";
+import { kindIconOf } from "@/client/src/pages/rulesets/details/classes/classKind.ts";
 import {
   classFeatPoolsQuery,
   classLevelsQuery,
+  classLinksQuery,
   classProgressionQuery,
-  classSkillsQuery,
   classSpellListsQuery,
   classSpellsKnownQuery,
   classSpellsPerDayQuery,
 } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 import type { ClassTab } from "@/client/src/pages/rulesets/details/classes/classTab.ts";
+import { getUrlSegment } from "@/shared/urlSegments.ts";
 
 import { ClassModifiersSection, ClassRequirementsSection } from "./ClassCustomizationSections.tsx";
-import { ClassSkillsSection } from "./ClassSkillsSection.tsx";
+import { ClassLinksSection } from "./ClassLinksSection.tsx";
 import { ClassProgressionSection } from "./progression/ClassProgressionSection.tsx";
 import { ClassSpellListSection } from "./progression/ClassSpellListSection.tsx";
 import { ClassSpellsSection } from "./progression/ClassSpellsSection.tsx";
@@ -35,31 +37,37 @@ export const CLASS_CUSTOMIZATION_TABS: ClassTab[] = CUSTOMIZATION_TABS.map((tab)
 }));
 
 /**
- * The tabs every class's page opens on, each warming its rows as it's pointed at: its progression (its table, its
- * tracks, its features and feat pools), the one it opens on, and its skills.
+ * The tab every class's page opens on, warming its rows as it's pointed at: its progression (its table, its tracks, its
+ * features and feat pools).
  */
-export const CLASS_TABS: ClassTab[] = [
-  {
-    key: "progression",
-    label: "Progression",
-    icon: LevelsIcon,
-    Section: ClassProgressionSection,
-    prefetch: async (queryClient, rulesetId, classId) => {
-      await Promise.all([
-        queryClient.prefetchQuery(classLevelsQuery(rulesetId, classId)),
-        queryClient.prefetchQuery(classProgressionQuery(rulesetId, classId)),
-        queryClient.prefetchQuery(classFeatPoolsQuery(rulesetId, classId)),
-      ]);
-    },
+export const PROGRESSION_TAB: ClassTab = {
+  key: "progression",
+  label: "Progression",
+  icon: LevelsIcon,
+  Section: ClassProgressionSection,
+  prefetch: async (queryClient, rulesetId, classId) => {
+    await Promise.all([
+      queryClient.prefetchQuery(classLevelsQuery(rulesetId, classId)),
+      queryClient.prefetchQuery(classProgressionQuery(rulesetId, classId)),
+      queryClient.prefetchQuery(classFeatPoolsQuery(rulesetId, classId)),
+    ]);
   },
-  {
-    key: "skills",
-    label: "Skills",
-    icon: SkillsIcon,
-    Section: ClassSkillsSection,
-    prefetch: (queryClient, rulesetId, classId) => queryClient.prefetchQuery(classSkillsQuery(rulesetId, classId)),
-  },
-];
+};
+
+/**
+ * The tab of the entities a class links to (`links`, its rules' class kind's: 3.5's skills), at their kind's URL
+ * segment, named and pictured as their kind (`rules`).
+ */
+export function describeLinksTab(links: EntityLinksDescription, rules: RulesDescription): ClassTab {
+  return {
+    key: getUrlSegment(links.type),
+    label: entityTypeLabel(links.type, rules.words, true),
+    icon: kindIconOf(rules, links.type),
+    Section: ClassLinksSection,
+    prefetch: (queryClient, rulesetId, classId) =>
+      queryClient.prefetchQuery(classLinksQuery(rulesetId, classId, links.type)),
+  };
+}
 
 /**
  * The tabs of a class whose rules have spell tables, in their words (`words`: 3.5's "Spells"): its spell tables, and

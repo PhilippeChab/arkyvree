@@ -1,2 +1,2 @@
 export { ClassDetails } from "./ClassDetails.tsx";
-export { CreateLevelDialog, RemoveSkillDialog } from "./ClassDialogs.tsx";
+export { CreateLevelDialog, RemoveLinkDialog } from "./ClassDialogs.tsx";

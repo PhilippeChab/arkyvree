@@ -20,3 +20,9 @@ export interface ClassTab extends SectionTab<string> {
   prefetch?: (queryClient: QueryClient, rulesetId: string, classId: string) => Promise<void>;
   Section: ComponentType<ClassSectionProps>;
 }
+
+/** What a class's links' tab says, in its rules' words: its entities' (`one`, "Skill"), the class's (`owner`, "class"). */
+export interface LinkWords {
+  one: string;
+  owner: string;
+}

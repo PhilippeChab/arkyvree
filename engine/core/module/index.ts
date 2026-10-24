@@ -154,6 +154,7 @@ export {
 } from "./parts/levelUp/index.ts";
 export {
   type EntityKindDescription,
+  type EntityLinksDescription,
   type EntityPoolsDescription,
   type ListColumn,
   type ListDescription,

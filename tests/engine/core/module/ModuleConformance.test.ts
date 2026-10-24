@@ -188,6 +188,18 @@ describe.each([...BASE_RULES_OPTIONS])("The %s module, as core runs its characte
     });
   });
 
+  test("describes the links a kind's page edits as the join its storage declares edited, by its columns", () => {
+    const storage = Engine.storage();
+    for (const { links, type } of Engine.rules().describeAll()[rules].kinds) {
+      if (!links) continue;
+      const joins = storage.joinNames().map((name) => ({ name, ...storage.join(name) }));
+      const [join] = joins.filter((each) => each.edited && each.from === type && each.to === links.type);
+      expect(join).toBeDefined();
+      expect(storage.joinFromColumn(join.name)).toBe(links.owner);
+      expect(Object.entries(join.columns).find(([, part]) => part === "to")?.[0]).toBe(links.key);
+    }
+  });
+
   test("says why a new entity's required list of links is refused, in words of its own", () => {
     const columns = Object.values(Engine.rules().describeAll()[rules].columns).flatMap((kind) => kind ?? []);
     const required = columns.flatMap((column) =>

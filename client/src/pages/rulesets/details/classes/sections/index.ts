@@ -1,1 +1,1 @@
-export { CLASS_CUSTOMIZATION_TABS, CLASS_TABS, describeSpellTabs } from "./classSections.ts";
+export { CLASS_CUSTOMIZATION_TABS, describeLinksTab, describeSpellTabs, PROGRESSION_TAB } from "./classSections.ts";
