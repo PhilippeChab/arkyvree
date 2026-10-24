@@ -22,7 +22,7 @@ import { wholeNumberRules } from "@/client/src/lib/validation.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
 import { type FieldsFormData, sentFieldsOf, toFieldsForm } from "./fieldsForm.ts";
-import { type CharacterLanguage, type CharacterLanguages, characterLanguagesQuery } from "./languageQueries.ts";
+import { characterLinkQuery, type LinkedEntity, type LinkRoom } from "./linkQueries.ts";
 import { NotesField, PrivateNotesField } from "./NotesFields.tsx";
 import type { BlockOf, SheetField } from "./sheetBlocks.ts";
 import { SheetSection } from "./SheetSection.tsx";
@@ -46,8 +46,14 @@ interface FieldsSectionProps {
   updatedAt: string;
 }
 
-/** A language as the picker shows it: one the character speaks, or one its rules let it pick. */
-type LanguageOption = Pick<CharacterLanguage, "id" | "name">;
+/** A picked link's field: the entities the character has of it, and those its rules let it pick. */
+interface LinkPicksFieldProps {
+  characterId: string;
+  control: Control<FieldsFormData>;
+  link: NonNullable<BlockOf<"fields">["links"]>[number];
+  /** The viewer can't edit the character: its picks read as they are. */
+  readOnly: boolean;
+}
 
 /** A grid's line of fields: one to a phone's line, two to a tablet's, four from a desktop's */
 const LINE_SX = {
@@ -56,8 +62,8 @@ const LINE_SX = {
   gap: 3,
 };
 
-/** No answer yet: no language its rules give it, nor one to add. */
-const NO_ANSWER: CharacterLanguages = { automatic: [], options: [], picks: [] };
+/** No answer yet: no entity its rules give it, nor one to add. */
+const NO_ANSWER: LinkRoom = { automatic: [], options: [], picks: [] };
 
 /** What a Partial character hides from the campaign's other players, said on its sheet and on its card. */
 export const PARTIAL_IDENTITY_NOTE = "The rest of this character's identity is private";
@@ -131,8 +137,91 @@ function FieldInput({ control, field, readOnly }: FieldInputProps) {
 }
 
 /**
- * A `fields` block: the character's portrait, then its fields' lines and the fields under them, the languages it
- * speaks, and its notes (its private ones where the block gives them: who reads them alone), saved together. A partly
+ * A picked link's field (3.5's languages), its form's `links.<link>`: staged via the form like every other field (a
+ * selection persists when the user clicks Save, as the rest of the block), what its picker offers the rules' answer
+ * for the picks the form holds. What the character has without picking it (its modifiers' grants) stays: only its
+ * picks come and go.
+ */
+function LinkPicksField({ characterId, control, link, readOnly }: LinkPicksFieldProps) {
+  const { field: picks } = useController({ control, name: `links.${link.link}` });
+  const selectedIds = picks.value as unknown as string[];
+  const {
+    data: room = NO_ANSWER,
+    error,
+    isLoading,
+  } = useQuery({
+    ...characterLinkQuery(characterId, link.link, selectedIds),
+    placeholderData: keepPreviousData,
+    enabled: !readOnly,
+  });
+  const automaticIds = new Set(room.automatic.map(({ id }) => id));
+  const byId = new Map<string, LinkedEntity>();
+  for (const entity of link.picked) byId.set(entity.id, entity);
+  for (const entity of [...room.automatic, ...room.picks, ...room.options]) byId.set(entity.id, entity);
+  const [search, setSearch] = useState("");
+  const selected = selectedIds.map((id) => byId.get(id)).filter((entity): entity is LinkedEntity => !!entity);
+
+  return (
+    <Box>
+      {readOnly ? (
+        <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}>
+          <Typography variant="body2" sx={{ color: "text.secondary", pr: 1 }}>
+            {link.label}:
+          </Typography>
+          {selected.length === 0 ? (
+            <EmptyValue />
+          ) : (
+            selected.map((entity) => <ValueChip color="default" key={entity.id} label={entity.name} />)
+          )}
+        </Stack>
+      ) : (
+        <Autocomplete
+          multiple
+          size="small"
+          options={[...selected, ...room.options]}
+          filterSelectedOptions
+          loading={isLoading}
+          noOptionsText={emptyOptionsText(link.label, error, link.none)}
+          getOptionLabel={(option) => option.name}
+          isOptionEqualToValue={(option, value) => option.id === value.id}
+          value={selected}
+          // Each render builds a new value, which the Autocomplete answers with a "reset" that would clear the search
+          // as it's typed. Typing, picking an entity and blur still set it.
+          inputValue={search}
+          onInputChange={(_, input, reason) => {
+            if (reason !== "reset") setSearch(input);
+          }}
+          onChange={(_, newValue) =>
+            picks.onChange([
+              ...selectedIds.filter((id) => automaticIds.has(id)),
+              ...newValue.map((entity) => entity.id).filter((id) => !automaticIds.has(id)),
+            ])
+          }
+          onBlur={picks.onBlur}
+          renderValue={(value, getItemProps) =>
+            value.map((option, index) => {
+              const { onDelete, ...itemProps } = getItemProps({ index });
+              return (
+                <ValueChip
+                  color="default"
+                  {...itemProps}
+                  key={option.id}
+                  label={option.name}
+                  onDelete={automaticIds.has(option.id) ? undefined : onDelete}
+                />
+              );
+            })
+          }
+          renderInput={(params) => <TextField {...params} label={link.label} variant="outlined" />}
+        />
+      )}
+    </Box>
+  );
+}
+
+/**
+ * A `fields` block: the character's portrait, then its fields' lines and the fields under them, its picked links (3.5's
+ * languages), and its notes (its private ones where the block gives them: who reads them alone), saved together. A partly
  * seen character shows its fields alone, and says the rest is private.
  */
 export function FieldsSection({
@@ -169,29 +258,6 @@ export function FieldsSection({
     onError: (error) => snackbar.error(error, block.failed),
   });
 
-  // Staged via the form like every other field — selections only persist when the user clicks Save, matching the
-  // rest of the block. What the picker offers is the rules' answer for the picks the form holds.
-  const { field: languageIds } = useController({ control: form.control, name: "languageIds" });
-  const selectedLanguageIds = languageIds.value as string[];
-  const {
-    data: languages = NO_ANSWER,
-    error: languagesError,
-    isLoading: languagesLoading,
-  } = useQuery({
-    ...characterLanguagesQuery(characterId, selectedLanguageIds),
-    placeholderData: keepPreviousData,
-    enabled: !readOnly,
-  });
-  const automaticIds = new Set(languages.automatic.map(({ id }) => id));
-  const languagesById = new Map<string, LanguageOption>();
-  for (const lang of block.languages?.picked ?? []) languagesById.set(lang.id, lang);
-  for (const lang of [...languages.automatic, ...languages.picks, ...languages.options])
-    languagesById.set(lang.id, lang);
-  const [languageSearch, setLanguageSearch] = useState("");
-  const selectedLanguages = selectedLanguageIds
-    .map((id) => languagesById.get(id))
-    .filter((l): l is LanguageOption => !!l);
-
   return (
     <SheetSection title={block.title}>
       <Stack
@@ -225,65 +291,15 @@ export function FieldsSection({
               </Box>
             ))}
 
-            {block.languages && (
-              <Box>
-                {readOnly ? (
-                  <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}>
-                    <Typography variant="body2" sx={{ color: "text.secondary", pr: 1 }}>
-                      {block.languages.label}:
-                    </Typography>
-                    {selectedLanguages.length === 0 ? (
-                      <EmptyValue />
-                    ) : (
-                      selectedLanguages.map((lang) => <ValueChip color="default" key={lang.id} label={lang.name} />)
-                    )}
-                  </Stack>
-                ) : (
-                  <Autocomplete
-                    multiple
-                    size="small"
-                    options={[...selectedLanguages, ...languages.options]}
-                    filterSelectedOptions
-                    loading={languagesLoading}
-                    noOptionsText={emptyOptionsText(block.languages.label, languagesError, block.languages.none)}
-                    getOptionLabel={(option) => option.name}
-                    isOptionEqualToValue={(option, value) => option.id === value.id}
-                    value={selectedLanguages}
-                    // Each render builds a new value, which the Autocomplete answers with a "reset" that would clear
-                    // the search as it's typed. Typing, picking a language and blur still set it.
-                    inputValue={languageSearch}
-                    onInputChange={(_, input, reason) => {
-                      if (reason !== "reset") setLanguageSearch(input);
-                    }}
-                    // Those its modifiers grant it (its race's, its classes') stay: only its picks come and go
-                    onChange={(_, newValue) =>
-                      languageIds.onChange([
-                        ...selectedLanguageIds.filter((id) => automaticIds.has(id)),
-                        ...newValue.map((l) => l.id).filter((id) => !automaticIds.has(id)),
-                      ])
-                    }
-                    onBlur={languageIds.onBlur}
-                    renderValue={(value, getItemProps) =>
-                      value.map((option, index) => {
-                        const { onDelete, ...itemProps } = getItemProps({ index });
-                        return (
-                          <ValueChip
-                            color="default"
-                            {...itemProps}
-                            key={option.id}
-                            label={option.name}
-                            onDelete={automaticIds.has(option.id) ? undefined : onDelete}
-                          />
-                        );
-                      })
-                    }
-                    renderInput={(params) => (
-                      <TextField {...params} label={block.languages?.label} variant="outlined" />
-                    )}
-                  />
-                )}
-              </Box>
-            )}
+            {block.links?.map((link) => (
+              <LinkPicksField
+                key={link.link}
+                characterId={characterId}
+                control={form.control}
+                link={link}
+                readOnly={readOnly}
+              />
+            ))}
 
             {partial ? (
               <BlankNote>{PARTIAL_IDENTITY_NOTE}</BlankNote>

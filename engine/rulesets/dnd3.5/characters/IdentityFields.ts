@@ -119,11 +119,14 @@ export default class IdentityFields {
           value: physiology.description || "",
         },
       ],
-      languages: {
-        label: "Languages",
-        none: "No language left to pick",
-        picked: (physiology.languages ?? []).map(({ id, name }) => ({ id, name })),
-      },
+      links: [
+        {
+          label: "Languages",
+          link: "languages",
+          none: "No language left to pick",
+          picked: (physiology.languages ?? []).map(({ id, name }) => ({ id, name })),
+        },
+      ],
       notes: {
         notes: background.notes || "",
         ...(background.privateNotes !== undefined && { privateNotes: background.privateNotes || "" }),

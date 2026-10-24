@@ -1,7 +1,8 @@
 /**
  * What the characters part's `describe*` operations answer in a shape every ruleset shares: a character's card, a new
- * character's form, a scored link's bounds, an inventory entry with its item, a placement's warning, and where a sheet
- * holds its private notes. What a ruleset describes in its own shape is its `Descriptions` (`contract.ts`).
+ * character's form and how its scores are set, a picked link's room, a scored link's bounds, an inventory entry with
+ * its item, a placement's warning, and where a sheet holds its private notes. What a ruleset describes in its own shape
+ * is its `Descriptions` (`contract.ts`).
  */
 
 import type { ViewEntities } from "@/engine/core/view/index.ts";
@@ -40,6 +41,24 @@ export interface CharacterForm {
   sections: CreationSection[];
 }
 
+/** An entity a character's link names, as its pickers and its sheet name it. */
+export interface DescribedLink {
+  id: string;
+  name: string;
+}
+
+/**
+ * What a character has of a picked link, and what its picks (an edit's, as it's made) leave it room for: what the
+ * link's picker offers. `automatic`: those it has without picking them (3.5's race's automatic languages, which its
+ * modifiers grant), never stored; `picks`: the picks, past those; `options`: the entities one more pick may add, by
+ * name, none once the picks fill the room its rules give them.
+ */
+export interface LinkRoom {
+  automatic: DescribedLink[];
+  options: DescribedLink[];
+  picks: DescribedLink[];
+}
+
 /**
  * What a sheet, as the API answers it, holds in every ruleset's: its blocks, in its module's order (`SheetBlock`), its
  * bonded creatures' among them (an entry's `subsheet`), and its summary. Its character's private notes are its
@@ -63,6 +82,18 @@ export interface ScoreBounds {
   max: number;
   min: number;
   start: number;
+}
+
+/**
+ * How a new character's scores of a scored link are set: the entities it scores, in the order its sheet lists them
+ * (`entities`: 3.5's abilities), the ways its form offers (`methods`), the scores' bounds and the one an entity shows
+ * before it's rolled or set (`scores`), and each score's modifier over those bounds (`modifiers`).
+ */
+export interface ScoresCreation {
+  entities: DescribedLink[];
+  methods: CreationMethod[];
+  modifiers: Record<number, number>;
+  scores: ScoreBounds;
 }
 
 /**
@@ -106,28 +137,49 @@ export interface SheetSummary {
  * A field of a new character's form, by its kind, keyed as its create sends it (`fields`): a whole number at least
  * `min` (`required`: what's said without one, else it may be left empty; `start`: its first value, else empty;
  * `stepped`: its input's own arrows stop at `min`), one of a select's options (`required`: what's said without one), a
- * line of text or several (`placeholder`: what it says empty). `racePick`: a select the race picker narrows its races
- * by. Its key is a plain name (letters, digits and `_`), none of the form's own values' nor the race picker's query's.
+ * line of text or several (`placeholder`: what it says empty). `narrows`: a select its creation picks' pickers narrow
+ * their options by (3.5's alignment and gender, a race's). Its key is a plain name (letters, digits and `_`), none of
+ * the form's own values' nor a picker's query's.
  */
 export type CreationField = { key: string; label: string } & (
   | { kind: "number"; min: number; required?: string; start?: number; stepped?: boolean }
-  | { kind: "select"; options: string[]; racePick?: boolean; required?: string }
+  | { kind: "select"; narrows?: boolean; options: string[]; required?: string }
   | { kind: "text"; placeholder?: string }
   | { kind: "textarea"; placeholder: string }
 );
 
-/** An item of a new character's form's line: one of the form's own, or one of its ruleset's fields. */
+/**
+ * An item of a new character's form's line: one of the form's own (its name, its notes, its ruleset, or a creation
+ * pick: the entity of a single link its row holds, by its `column`, picked from its picker under its label, what's said
+ * without one, `required`, and of one the fields that narrow it rule out, `ineligible`: 3.5's race), or one of its
+ * ruleset's fields.
+ */
 export type CreationItem =
   | CreationField
+  | { column: string; ineligible: string; kind: "pick"; label: string; required: string }
   | { kind: "name"; label: string }
   | { kind: "notes" }
-  | { ineligible: string; kind: "race"; label: string; required: string }
   | { kind: "ruleset" };
 
-/** A section of a new character's form, under its title: its ability scores, or its lines of items. */
+/**
+ * A way a new character's scores are set, which its form runs by its kind: rolled (`dice`: `count` dice of `sides`,
+ * the highest `keep` summed), taken from an array (`scores`, each to one entity), or bought (`costs`, each score's
+ * from `min` to `max`, out of `budget`).
+ */
+export type CreationMethod = { id: string; label: string } & (
+  | { dice: { count: number; keep: number; sides: number }; kind: "roll" }
+  | { kind: "array"; scores: readonly number[] }
+  | { budget: number; costs: Readonly<Record<number, number>>; kind: "pointBuy"; max: number; min: number }
+);
+
+/**
+ * A section of a new character's form, under its title: a scored link's amounts (`link`: 3.5's ability scores, set the
+ * ways its creation offers; what it says without entities to score, `none`, and before a ruleset is picked, `pick`),
+ * or its lines of items.
+ */
 export type CreationSection = { title: string } & (
-  | { kind: "abilities"; none: string; pick: string }
   | { kind: "fields"; lines: CreationItem[][] }
+  | { kind: "scores"; link: string; none: string; pick: string }
 );
 
 /**

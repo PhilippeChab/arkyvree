@@ -1,8 +1,7 @@
 import { z } from "zod";
 
-import type { CharacterColumns, FieldsRequest } from "@/engine/core/module/index.ts";
+import type { CharacterColumns, CreationMethod, FieldsRequest, ScoresCreation } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
-import type { CharacterCreation, CreationMethod } from "@/engine/rulesets/dnd3.5/descriptions.ts";
 import { RULESET_LIMITS } from "@/engine/rulesets/dnd3.5/limits.ts";
 import AbilityRules from "@/engine/rulesets/dnd3.5/rules/AbilityRules.ts";
 import { ALIGNMENT_OPTIONS, GENDER_OPTIONS } from "@/shared/enums.ts";
@@ -11,7 +10,7 @@ import { CREATION_METHODS } from "@/vocabulary/dnd3.5/creation.ts";
 
 /** What a new character's form reads of a ruleset's view: its abilities, each by its id and name. */
 interface CreationData {
-  abilities: readonly CharacterCreation["abilities"][number][];
+  abilities: readonly ScoresCreation["entities"][number][];
 }
 
 /** A 3.5 creation method, as its data writes it. */
@@ -52,7 +51,7 @@ export default class NewCharacters {
    * them, the SRD's methods, the scores' bounds and the one an unset ability shows, and each score's modifier over those
    * bounds, by the abilities' one formula.
    */
-  static describeCreation(data: CreationData): CharacterCreation {
+  static describeCreation(data: CreationData): ScoresCreation {
     const scores = { max: RULESET_LIMITS.abilityScore, min: MIN_ABILITY_SCORE, start: STARTING_ABILITY_SCORE };
     const modifiers = Object.fromEntries(
       Array.from({ length: scores.max - scores.min + 1 }, (_, index) => {
@@ -62,7 +61,7 @@ export default class NewCharacters {
     );
     const abilities = data.abilities.map(({ id, name }) => ({ id, name }));
     return {
-      abilities: AbilityRules.orderAbilities(abilities, (ability) => ability.name),
+      entities: AbilityRules.orderAbilities(abilities, (ability) => ability.name),
       methods: CREATION_METHODS.map((method) => NewCharacters.methodOf(method)),
       modifiers,
       scores,

@@ -72,6 +72,13 @@ class StoredCharacterLinks extends BaseRepository<typeof linksInCharacter> {
       );
   }
 
+  // Exception to soft-delete: a character's links are disposable reference data
+  async deleteMany(db: Db, where: { characterId: string; link: string }) {
+    return await db
+      .delete(this.table)
+      .where(StoredCharacterLinks.buildScope(where.link, eq(this.table.characterId, where.characterId)));
+  }
+
   /** A character's links of `link`, in the order they were made. */
   async findMany<R extends object = LinkRow>(db: Db, where: { characterId: string; link: string }): Promise<R[]> {
     const rows = await db

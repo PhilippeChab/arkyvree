@@ -9,8 +9,9 @@ import type { rpc } from "@/client/src/services/rpc.ts";
 export type CharacterForm = RulesDescription["characterForm"];
 
 /**
- * What a new character's form holds: what every character is made from (its ruleset, race, name, ability scores and
- * notes), and its rules' fields by their keys (a number's NaN while it's empty, a select's "" while it's unset).
+ * What a new character's form holds: what every character is made from (its ruleset, name, its creation's picks by
+ * column, its scored links' amounts by link, and notes), and its rules' fields by their keys (a number's NaN while
+ * it's empty, a select's "" while it's unset).
  */
 export type CreateCharacterFormData = Omit<CreateCharacterRequest, "fields" | "notes"> & {
   notes: string;
@@ -25,6 +26,9 @@ export type CreationField = Extract<CreationItem, { key: string }>;
 /** An item of a new character's form's line: one of the form's own, or one of its rules' fields. */
 export type CreationItem = Extract<CharacterForm["sections"][number], { kind: "fields" }>["lines"][number][number];
 
+/** A creation pick of a new character's form: the entity of a single link its row holds, by its column. */
+export type CreationPick = Extract<CreationItem, { kind: "pick" }>;
+
 /** The rules' fields of a new character's form, in its order. */
 export function creationFieldsOf(form: CharacterForm): CreationField[] {
   return form.sections.flatMap((section) =>
@@ -32,17 +36,24 @@ export function creationFieldsOf(form: CharacterForm): CreationField[] {
   );
 }
 
+/** The creation picks of a new character's form (each single link it picks the entity of: 3.5's race), in its order. */
+export function creationPicksOf(form: CharacterForm): CreationPick[] {
+  return form.sections.flatMap((section) =>
+    section.kind === "fields" ? section.lines.flat().filter((item): item is CreationPick => item.kind === "pick") : [],
+  );
+}
+
 /**
- * How the create dialog starts: no ruleset or race picked (the user's own ruleset, once it's known, is picked by the
- * dialog), every score its method's default, and each of its rules' fields at its start, else empty (a number `NaN`,
- * a number field's empty value), which the player gives or leaves unset.
+ * How the create dialog starts: no ruleset or creation pick made (the user's own ruleset, once it's known, is picked by
+ * the dialog), every score its method's default, and each of its rules' fields at its start, else empty (a number
+ * `NaN`, a number field's empty value), which the player gives or leaves unset.
  */
 export function emptyNewCharacter(form: CharacterForm): CreateCharacterFormData {
   return {
     rulesetId: "",
-    raceId: "",
     name: "",
-    abilities: {},
+    picks: Object.fromEntries(creationPicksOf(form).map((pick) => [pick.column, ""])),
+    scores: Object.fromEntries(scoredLinksOf(form).map((link) => [link, {}])),
     notes: "",
     ...Object.fromEntries(
       creationFieldsOf(form).map((field) => [field.key, field.kind === "number" ? (field.start ?? Number.NaN) : ""]),
@@ -50,16 +61,21 @@ export function emptyNewCharacter(form: CharacterForm): CreateCharacterFormData 
   };
 }
 
-/** The keys of the fields that narrow the race picker (`racePick`), in the form's order. */
-export function racePickKeysOf(form: CharacterForm) {
+/** The keys of the fields that narrow the creation picks' options (`narrows`), in the form's order. */
+export function narrowingKeysOf(form: CharacterForm) {
   return creationFieldsOf(form)
-    .filter((field) => field.kind === "select" && field.racePick)
+    .filter((field) => field.kind === "select" && field.narrows)
     .map((field) => field.key);
 }
 
-/** What the fields that narrow the race picker hold (`values`, each of `keys` in order), by their keys: "" unpicked. */
-export function racePicksOf(keys: string[], values: unknown[]) {
+/** What the fields that narrow the picks hold (`values`, each of `keys` in order), by their keys: "" unset. */
+export function narrowingOf(keys: string[], values: unknown[]) {
   return Object.fromEntries(keys.map((key, index) => [key, typeof values[index] === "string" ? values[index] : ""]));
+}
+
+/** The scored links a new character's form sets (its `scores` sections'), in its order. */
+export function scoredLinksOf(form: CharacterForm) {
+  return form.sections.flatMap((section) => (section.kind === "scores" ? [section.link] : []));
 }
 
 /** A form's rules' fields as its create sends them, by their keys: an empty number or an unset select, none. */

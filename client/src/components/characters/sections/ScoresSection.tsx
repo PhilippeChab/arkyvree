@@ -51,8 +51,8 @@ function EditableScores({ block, characterId, edit }: EditableScoresProps) {
   const updateMutation = useMutation({
     mutationFn: async ({ key, base }: BaseChange) =>
       parseResponse(
-        rpc.api.characters[":id"].abilities.$put({
-          param: { id: characterId },
+        rpc.api.characters[":id"].scores[":link"].$put({
+          param: { id: characterId, link: edit.link },
           json: { [key]: base },
         }),
       ),
