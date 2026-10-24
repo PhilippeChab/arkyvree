@@ -4,7 +4,6 @@ import type { Feat, Klass, KlassLevelPower, Power } from "@/engine/index.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
 import { Entities, Joins } from "@/server/repositories/index.ts";
-import { ClassLevelsService } from "@/server/services/rulesets/classes/levels/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { createTestCharacter } from "@/tests/support/characters.ts";
 import { addCharacterLevel, createTestKlassLevel } from "@/tests/support/levels.ts";
@@ -85,7 +84,7 @@ describe("EntitiesService: aptitudes", () => {
       rulesetId: ruleset.id,
       hd: 10,
     });
-    const level = await ClassLevelsService.createClassLevel(session, ruleset.id, klass.id, {
+    const level = await EntitiesService.createOwnedEntity(session, ruleset.id, "klasses", klass.id, {
       level: 1,
       fields: { bab: 1, skills: 2 },
       feats: [{ featId: feat.id, aptitudeId: featAptitude.id }],

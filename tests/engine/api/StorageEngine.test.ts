@@ -20,3 +20,21 @@ describe("A kind's write", () => {
     expect(writtenWeight("1.5e2")).toBe("150.00");
   });
 });
+
+describe("A module's storage", () => {
+  test("names the column an owned kind keeps its owner in, refusing a kind no module stores as owned", () => {
+    const storage = StorageEngine.shared();
+    const { entityTypes } = storage.registries();
+    const owned = entityTypes.filter((def) => def.ownerType !== null);
+    expect(owned.length).toBeGreaterThan(0);
+    for (const { type } of owned) expect(storage.kind(type).columns[storage.ownerColumn(type)].kind).toBe("owner");
+    const unowned = entityTypes.find((def) => def.ownerType === null)!;
+    expect(() => storage.ownerColumn(unowned.type)).toThrow(`No module stores ${unowned.type} as owned`);
+  });
+
+  test("names the column each join keeps its from-entity in", () => {
+    const storage = StorageEngine.shared();
+    for (const join of storage.joinNames())
+      expect(storage.join(join).columns[storage.joinFromColumn(join)]).toBe("from");
+  });
+});

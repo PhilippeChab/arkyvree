@@ -18,6 +18,13 @@ const entity = kinds[":entityId"];
 const grouped = kinds.grouped;
 const templates = kinds.templates;
 
+/** What a request refused as not found answers. */
+async function refusalOf<T extends { clone(): { text(): Promise<string> }; json(): Promise<unknown>; status: number }>(
+  response: Promise<T>,
+) {
+  return await (await expectStatus(response, 404)).json();
+}
+
 /** A seeded fork, and the entities a new one names: an ability, a feat pool and a spell list. */
 async function setup() {
   const { id } = await createSeededTestRuleset(SEED_USER_ID);
@@ -185,6 +192,41 @@ describe("rulesets entities by kind", () => {
       404,
     );
     await expectStatus(templates.$get({ param: { id, entityType: "feats" }, query: {} }), 404);
+  });
+
+  test("refuses a part a kind has none of, a table it has none of, and an id that isn't one", async () => {
+    const { id } = await setup();
+    const first = async (entityType: Segment) =>
+      (await expectOk(kinds.$get({ param: { id, entityType }, query: { limit: "1" } }))).items[0];
+    const race = { id, entityType: "races" as const, entityId: (await first("races")).id };
+
+    expect(await refusalOf(entity.links.$get({ param: race }))).toMatchObject({ message: "No links for races" });
+    expect(await refusalOf(entity.owned.$get({ param: race }))).toMatchObject({
+      message: "No owned entities for races",
+    });
+    expect(await refusalOf(entity.progression.$get({ param: race }))).toMatchObject({
+      message: "No progression for races",
+    });
+    expect(await refusalOf(entity.tables[":table"].$get({ param: { ...race, table: "spells" } }))).toMatchObject({
+      message: "No tables for races",
+    });
+    expect(await refusalOf(entity.links.$post({ param: race, json: { targetId: NIL_UUID } }))).toMatchObject({
+      message: "No links for races",
+    });
+    const byId = kinds.owned[":ownedId"];
+    expect(await refusalOf(byId.$get({ param: { id, entityType: "races", ownedId: NIL_UUID } }))).toMatchObject({
+      message: "No owned entities for races",
+    });
+    await expectStatus(byId.$get({ param: { id, entityType: "classes", ownedId: "not-an-id" } }), 400);
+    const klass = { id, entityType: "classes" as const, entityId: (await first("classes")).id };
+    expect(await refusalOf(entity.tables[":table"].$get({ param: { ...klass, table: "maneuvers" } }))).toMatchObject({
+      message: "No maneuvers table for classes",
+    });
+
+    await expectStatus(entity.owned.$get({ param: { ...klass, entityId: "not-an-id" } }), 400);
+    await expectStatus(entity.owned[":ownedId"].$get({ param: { ...klass, ownedId: "not-an-id" } }), 400);
+    await expectStatus(entity.links[":targetId"].$delete({ param: { ...klass, targetId: "not-an-id" } }), 400);
+    await expectStatus(entity.links.$post({ param: klass, json: { targetId: "not-an-id" } }), 400);
   });
 
   test("answers each kind's filters and actions as its rules describe it", async () => {

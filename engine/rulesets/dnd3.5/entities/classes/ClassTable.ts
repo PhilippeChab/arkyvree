@@ -1,6 +1,7 @@
 /** A class's table, as its page shows it: each level's feat pools, spells per day and spells known, and its spell lists. */
 
 import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
+import RulesError from "@/engine/core/RulesError.ts";
 import type { Klass, RulesetData, RulesetView } from "@/engine/core/view/index.ts";
 import AptitudeTargets from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTargets.ts";
 import SpellLists from "@/engine/rulesets/dnd3.5/rules/SpellLists.ts";
@@ -40,6 +41,18 @@ export default class ClassTable {
   /** The class's levels, as the view has them. */
   private get levels() {
     return this.view.rulesetData.klassLevelsByKlass.get(this.klass.id) ?? [];
+  }
+
+  /**
+   * One of the class's tables, by its name (`feat-pools`, `spell-lists`, `spells`, `spells-known`): refused as not
+   * found for a table it has none of.
+   */
+  describe(table: string) {
+    if (table === "feat-pools") return this.describeFeatPools();
+    if (table === "spell-lists") return this.describeSpellLists();
+    if (table === "spells") return this.describeSpells();
+    if (table === "spells-known") return this.describeSpellsKnown();
+    throw new RulesError("not-found", `No ${table} table for classes`);
   }
 
   /**

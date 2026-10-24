@@ -87,6 +87,12 @@ export default abstract class RulesetEntity<
   protected readonly readOnly: boolean = false;
 
   /**
+   * The kind of the entities it owns (`owned(ownerId)`: a class's levels'), none for a kind that owns none: what a
+   * delete of one reads before it finds their owner.
+   */
+  readonly ownedType: string | undefined = undefined;
+
+  /**
    * Whether a new entity standing in for an ancestor its ruleset deleted takes after the ancestor's stored row (a feat
    * its mark), which the server then reads for `planCreate`.
    */

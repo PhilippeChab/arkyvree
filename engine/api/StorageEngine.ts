@@ -332,6 +332,13 @@ export default class StorageEngine {
     return copy;
   }
 
+  /** The column a join's row names its from-entity by (`name`: a class level's grants' `klassLevelId`). */
+  joinFromColumn(name: string): string {
+    const found = Object.entries(this.join(name).columns).find(([, part]) => part === "from");
+    if (!found) throw new Error(`The join ${name} names no from-entity`);
+    return found[0];
+  }
+
   /** Every join's name. */
   joinNames(): string[] {
     return Object.keys(this.joins);
@@ -483,6 +490,13 @@ export default class StorageEngine {
   /** The kinds a kind owns (`type`: a class's levels), whose entities go with its own. */
   ownedKinds(type: string): string[] {
     return this.merged.entityTypes.filter((def) => def.ownerType === type).map((def) => def.type);
+  }
+
+  /** The column an owned kind's row names its owner by (`type`: a class level's `klassId`). */
+  ownerColumn(type: string): string {
+    const found = Object.entries(this.kind(type).columns).find(([, column]) => column.kind === "owner");
+    if (!found) throw new Error(`No module stores ${type} as owned`);
+    return found[0];
   }
 
   /** A pick's row (`row`, by its columns), of a step's (`name`), as what a write of it stores past its ordinal. */

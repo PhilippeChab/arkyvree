@@ -5,6 +5,7 @@
 
 import { z } from "zod";
 
+import type { EntityFieldValues } from "@/engine/core/fields/index.ts";
 import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import {
@@ -17,6 +18,7 @@ import {
 import { RULESET_LIMITS } from "@/engine/rulesets/dnd3.5/limits.ts";
 import AptitudeTargets from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTargets.ts";
 import SpellLists from "@/engine/rulesets/dnd3.5/rules/SpellLists.ts";
+import { isRecord } from "@/shared/isRecord.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { SPELL_LEVELS } from "@/vocabulary/dnd3.5/spells.ts";
 
@@ -40,24 +42,17 @@ interface PoolPicks {
   picks: { count: number; levelId: string }[];
 }
 
-/** What a class's progression's save sends: its levels' own forms, its pools' picks, and its spell tables' totals. */
-interface ProgressionBody {
-  levels?: LevelEdit[];
-  pools?: PoolPicks[];
-  spells?: { known?: SpellRow<number | "all">[]; perDay?: SpellRow<number>[] };
-}
-
 /** A level's totals in a spell table, by spell level from 0: none (`null`), a count, or "all" of its list's spells. */
 interface SpellRow<V> {
   counts: (V | null)[];
   levelId: string;
 }
 
-/** A level's edit of its own fields, saves and granted feats, as its form sends them (`ClassLevelEntity.planEdit`). */
-type LevelEdit = Parameters<ClassLevelEntity["planEdit"]>[1] & { levelId: string };
-
 /** A spell table's total at a spell level by a class level: none (`undefined`), a count, or every spell of its list. */
 type SpellTotal = number | "All" | undefined;
+
+/** What a class's progression's save sends, as its client writes it (`PROGRESSION_BODY`'s). */
+export type ProgressionForm = z.input<typeof PROGRESSION_BODY>;
 
 /** A count a class's table gives by a level: a pool's picks, a spell level's spells. */
 const COUNT = z.number().int().min(0).max(RULESET_LIMITS.tableCount);
@@ -72,6 +67,52 @@ const COUNTS = z.object({
     .object({
       known: z.array(z.object({ counts: z.array(KNOWN.nullable()).max(SPELL_LEVELS.length) })).optional(),
       perDay: z.array(z.object({ counts: z.array(COUNT.nullable()).max(SPELL_LEVELS.length) })).optional(),
+    })
+    .optional(),
+});
+
+/** A form's fields, an object of them, which their codec reads. */
+const FIELDS = z.custom<EntityFieldValues>((value) => isRecord(value), "Expected an object of the entity's fields");
+
+/**
+ * A progression's save, as its form sends it: its levels' forms (each its fields, its saves' base bonuses and the feats
+ * it grants), its pools' picks by level, and its spell tables' totals, a level's one a spell level from 0 (`null` for
+ * none).
+ */
+const PROGRESSION_BODY = z.object({
+  levels: z
+    .array(
+      z.object({
+        levelId: z.string().uuid(),
+        fields: FIELDS.optional(),
+        saves: z.array(z.object({ saveId: z.string().uuid(), base: z.number().int() })).optional(),
+        feats: z
+          .array(z.object({ featId: z.string().uuid(), aptitudeId: z.string().uuid(), free: z.boolean().optional() }))
+          .optional(),
+      }),
+    )
+    .optional(),
+  pools: z
+    .array(
+      z.object({
+        aptitudeId: z.string().uuid(),
+        picks: z.array(z.object({ levelId: z.string().uuid(), count: z.number().int() })),
+      }),
+    )
+    .optional(),
+  spells: z
+    .object({
+      known: z
+        .array(
+          z.object({
+            levelId: z.string().uuid(),
+            counts: z.array(z.union([z.number().int(), z.literal("all")]).nullable()),
+          }),
+        )
+        .optional(),
+      perDay: z
+        .array(z.object({ levelId: z.string().uuid(), counts: z.array(z.number().int().nullable()) }))
+        .optional(),
     })
     .optional(),
 });
@@ -314,7 +355,9 @@ export default class ClassProgression {
     return (this.lists ??= this.table.describeSpellLists());
   }
 
-  /** A spell table's totals by each level (`field`'s), of the levels' modifiers as a save plans them (`keep`: those). */
+  /**
+   * A spell table's totals by each level (`field`'s), of the levels' modifiers as a save plans them (`keep`: those).
+   */
   private spellTotals(
     field: "allowed" | "uses",
     working: Map<string, LevelModifier[]>,
@@ -363,12 +406,14 @@ export default class ClassProgression {
   }
 
   /**
-   * What one save of the class's progression writes (`body`), refused as invalid when a count is past the rules'
-   * bounds, a level isn't the class's or an entity isn't the ruleset's: the class as the view has it, and each level
-   * it changes, with its form's edit (`ClassLevelEntity.planEdit`) and the modifiers it adds and removes. A level's
-   * own modifiers it writes are its pools' picks and its spell tables' increments, never one requirements gate.
+   * What one save of the class's progression writes (`sent`, read by its schema), refused as invalid when it isn't one,
+   * a count is past the rules' bounds, a level isn't the class's or an entity isn't the ruleset's: the class as the
+   * view has it, each level it changes, by its number, with its form's edit (`ClassLevelEntity.planEdit`) and the
+   * modifiers it adds and removes, and what its activity records. A level's own modifiers it writes are its pools'
+   * picks and its spell tables' increments, never one requirements gate.
    */
-  plan(body: ProgressionBody) {
+  plan(sent: ProgressionForm) {
+    const body = RulesError.parse(PROGRESSION_BODY, sent);
     RulesError.parse(COUNTS, body);
     const original = new Map(this.classLevels.map((level) => [level.id, this.modifiersOf(level.id)]));
     const working = new Map(original);
@@ -385,7 +430,7 @@ export default class ClassProgression {
         return [edit.entity.id, edit];
       }),
     );
-    const levels = this.classLevels.flatMap((level) => {
+    const owned = this.classLevels.flatMap((level) => {
       const kept = working.get(level.id) ?? [];
       const keptIds = new Set(kept.flatMap(({ id }) => id ?? []));
       const removedIds = (original.get(level.id) ?? []).flatMap(({ id }) => (id && !keptIds.has(id) ? [id] : []));
@@ -393,8 +438,19 @@ export default class ClassProgression {
         id ? [] : [{ operator, target, value, valueType: "number" as const }],
       );
       const edit = edits.get(level.id);
-      return edit || removedIds.length > 0 || added.length > 0 ? [{ added, edit, level, removedIds }] : [];
+      return edit || removedIds.length > 0 || added.length > 0
+        ? [{ added, edit, entity: level, position: level.level, removedIds }]
+        : [];
     });
-    return { klass: this.klass, levels };
+    return {
+      activity: { entityName: this.klass.name, levels: owned.length },
+      gone: {
+        owned: "Class level no longer exists; refresh the class",
+        owner: "Class no longer exists; refresh the class",
+      },
+      owned,
+      ownedType: "klass_levels",
+      owner: this.klass,
+    };
   }
 }

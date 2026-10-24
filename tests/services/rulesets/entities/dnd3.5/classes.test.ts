@@ -16,7 +16,6 @@ import type {
 import { db } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
 import { Entities, Joins, Modifiers, Properties, Requirements } from "@/server/repositories/index.ts";
-import { ClassLevelsService } from "@/server/services/rulesets/classes/levels/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { createTestCharacter } from "@/tests/support/characters.ts";
 import { addCharacterLevel } from "@/tests/support/levels.ts";
@@ -95,7 +94,7 @@ describe("EntitiesService: classes", () => {
 
     const klass = await EntitiesService.createEntity(session, rulesetId, "klasses", { name: "Doomed Class" });
     await Joins.create<KlassSkill>(db, "klass_skills", { klassId: klass.id, skillId: skill.id });
-    const level = await ClassLevelsService.createClassLevel(session, rulesetId, klass.id, {
+    const level = await EntitiesService.createOwnedEntity(session, rulesetId, "klasses", klass.id, {
       level: 1,
       fields: { bab: 1, skills: 4 },
       feats: [{ featId: feat.id, aptitudeId: aptitude.id }],
@@ -128,7 +127,7 @@ describe("EntitiesService: classes", () => {
   test("copies an inherited class into a fork with its levels, their modifiers and those modifiers' requirements", async () => {
     const { user, session, ruleset: parent } = await createTestUserAndRuleset();
     const klass = await EntitiesService.createEntity(session, parent.id, "klasses", { name: "Cleric" });
-    const level = await ClassLevelsService.createClassLevel(session, parent.id, klass.id, {
+    const level = await EntitiesService.createOwnedEntity(session, parent.id, "klasses", klass.id, {
       level: 1,
       fields: { bab: 0, skills: 2 },
     });
@@ -171,7 +170,7 @@ describe("EntitiesService: classes", () => {
   test("refuses to delete a class a character has a level in", async () => {
     const { user, session, ruleset } = await createTestUserAndRuleset();
     const klass = await EntitiesService.createEntity(session, ruleset.id, "klasses", { name: "Taken Class" });
-    const level = await ClassLevelsService.createClassLevel(session, ruleset.id, klass.id, {
+    const level = await EntitiesService.createOwnedEntity(session, ruleset.id, "klasses", klass.id, {
       level: 1,
       fields: { bab: 1, skills: 2 },
     });

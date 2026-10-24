@@ -11,6 +11,14 @@ import { rpc } from "@/client/src/services/rpc.ts";
 
 import { useClassCopy } from "./useClassCopy.ts";
 
+/**
+ * The class a class skill's row names (`klassId`): the copy an edit of an inherited class wrote it on, or the class
+ * itself (`classId`) when the row names none.
+ */
+function classOf(row: Record<string, unknown>, classId: string) {
+  return typeof row.klassId === "string" ? row.klassId : classId;
+}
+
 export function useClassSkills(rulesetId: string, classId: string) {
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
@@ -40,9 +48,9 @@ export function useClassSkills(rulesetId: string, classId: string) {
     mutationFn: async (skillId: string) =>
       tag(
         parseResponse(
-          rpc.api.rulesets[":id"].classes[":classId"].skills.$post({
-            param: { id: rulesetId, classId },
-            json: { skillId },
+          rpc.api.rulesets[":id"].entities[":entityType"][":entityId"].links.$post({
+            param: { id: rulesetId, entityType: "classes", entityId: classId },
+            json: { targetId: skillId },
           }),
         ),
       ),
@@ -93,7 +101,7 @@ export function useClassSkills(rulesetId: string, classId: string) {
     },
     onSuccess: (added) => {
       snackbar.success("Skill added to class");
-      followCopy(added.klassId, added.sourceEntityId);
+      followCopy(classOf(added, classId), added.sourceEntityId);
     },
     onError: (error, _skillId, context) => {
       snackbar.error(error, "Failed to add skill to class");
@@ -110,8 +118,8 @@ export function useClassSkills(rulesetId: string, classId: string) {
     mutationFn: async (skillId: string) =>
       tag(
         parseResponse(
-          rpc.api.rulesets[":id"].classes[":classId"].skills[":skillId"].$delete({
-            param: { id: rulesetId, classId, skillId },
+          rpc.api.rulesets[":id"].entities[":entityType"][":entityId"].links[":targetId"].$delete({
+            param: { id: rulesetId, entityType: "classes", entityId: classId, targetId: skillId },
           }),
         ),
       ),
@@ -136,7 +144,7 @@ export function useClassSkills(rulesetId: string, classId: string) {
     onSuccess: (removed) => {
       snackbar.success("Skill removed from class");
       removeDialog.close();
-      followCopy(removed.klassId, removed.sourceEntityId);
+      followCopy(classOf(removed, classId), removed.sourceEntityId);
     },
     onError: (error, _skillId, context) => {
       snackbar.error(error, "Failed to remove skill from class");

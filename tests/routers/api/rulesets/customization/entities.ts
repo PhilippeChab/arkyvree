@@ -37,8 +37,8 @@ export async function createEntity(rulesetId: string, entityType: CustomizableEn
     case "klass_levels": {
       const klass = await expectOk(kinds.$post({ param: { id, entityType: "classes" }, json: { name } }));
       const level = await expectOk(
-        ruleset.classes[":classId"].levels.$post({
-          param: { id: rulesetId, classId: klass.id },
+        ruleset.entities[":entityType"][":entityId"].owned.$post({
+          param: { id: rulesetId, entityType: "classes", entityId: klass.id },
           json: { level: 1, fields: { bab: 1, skills: 4 } },
         }),
       );

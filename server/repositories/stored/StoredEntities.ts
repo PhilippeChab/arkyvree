@@ -328,8 +328,15 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
       await db.insert(entityLinksInRules).values(linkRows.slice(i, i + WRITE_BATCH));
   }
 
-  async create<R extends EntityRow = EntityRow>(db: Db, entityType: string, values: Record<string, unknown>) {
-    return await this.createMany<R>(db, entityType, [values]);
+  /** Writes a kind's new row (`values`, by its columns), an owned kind's under its owner (`ownerId`, its column's). */
+  async create<R extends EntityRow = EntityRow>(
+    db: Db,
+    entityType: string,
+    values: Record<string, unknown>,
+    under?: { ownerId: string },
+  ) {
+    const owner = under ? { [Engine.storage().ownerColumn(entityType)]: under.ownerId } : {};
+    return await this.createMany<R>(db, entityType, [{ ...values, ...owner }]);
   }
 
   /**
@@ -636,6 +643,23 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
     const owned = [];
     for (const entityType of ownedKinds) owned.push(...(await this.findMany(db, { entityType, ownerIds: where.ids })));
     return owned.map((entity) => entity.id);
+  }
+
+  /**
+   * The ids of an owner's live entities of an owned kind (`ownerId`), by their place on its track (a level's number).
+   */
+  async findPositions(db: Db, where: { entityType: string; ownerId: string }): Promise<Map<number, string>> {
+    const rows = await db
+      .select({ id: entitiesInRules.id, position: entitiesInRules.position })
+      .from(entitiesInRules)
+      .where(
+        and(
+          eq(entitiesInRules.type, where.entityType),
+          eq(entitiesInRules.ownerId, where.ownerId),
+          isNull(entitiesInRules.deletedAt),
+        ),
+      );
+    return new Map(rows.flatMap((row) => (row.position === null ? [] : [[row.position, row.id]])));
   }
 
   /**

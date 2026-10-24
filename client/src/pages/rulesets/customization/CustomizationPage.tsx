@@ -238,8 +238,8 @@ async function deleteEntityFn(data: EditableEntity, id: string, entityId: string
   const api = rpc.api.rulesets[":id"];
   if (data.type === "klass_levels") {
     await parseResponse(
-      api.classes[":classId"].levels[":levelId"].$delete({
-        param: { id, classId: data.entity.klassId, levelId: entityId },
+      api.entities[":entityType"][":entityId"].owned[":ownedId"].$delete({
+        param: { id, entityType: "classes", entityId: data.entity.klassId, ownedId: entityId },
       }),
     );
     return;

@@ -5,7 +5,6 @@ import { db } from "@/server/database/index.ts";
 import { Activities, Characters, Entities, Notifications, Players, Rulesets } from "@/server/repositories/index.ts";
 import { CampaignInvitesService } from "@/server/services/campaigns/invites/index.ts";
 import { CharacterContributorsService } from "@/server/services/characters/contributors/index.ts";
-import { ClassSkillsService } from "@/server/services/rulesets/classes/skills/index.ts";
 import { ContributorsService } from "@/server/services/rulesets/contributors/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { collectNotified } from "@/server/websockets/index.ts";
@@ -204,7 +203,7 @@ describe("activity notifications", () => {
   // A class skill's add and remove used to reach nobody: only a create, an update or a delete counted as a change.
   test("of a class skill go to its ruleset's owner", async () => {
     const [owner, author] = await users(2);
-    const { id: rulesetId } = await createTestRuleset(owner.user.id);
+    const { id: rulesetId, baseRules } = await createTestRuleset(owner.user.id);
     await addRulesetContributor(rulesetId, author.user, owner.user.id);
     const [ability] = await Entities.create<RulesetAbility>(db, "abilities", {
       name: "Strength",
@@ -217,10 +216,56 @@ describe("activity notifications", () => {
       rulesetId,
       primaryAbilityId: ability.id,
     });
-    await ClassSkillsService.addClassSkill(author.session, rulesetId, fighter.id, climb.id);
-    await ClassSkillsService.removeClassSkill(author.session, rulesetId, fighter.id, climb.id);
+    await EntitiesService.addEntityLink(author.session, rulesetId, "klasses", fighter.id, climb.id);
+    await EntitiesService.removeEntityLink(author.session, rulesetId, "klasses", fighter.id, climb.id);
 
     expect(await inbox(owner)).toEqual([note("addKlassSkill", author), note("removeKlassSkill", author)]);
+    const { items } = await Activities.findPage(db, { userId: author.user.id }, { limit: 10, page: 1 });
+    const recorded = new Map(items.map((activity) => [activity.type, JSON.stringify(activity.data)]));
+    expect(Object.fromEntries(recorded)).toEqual({
+      addKlassSkill: JSON.stringify({ skillId: climb.id, entityName: "Fighter", skillName: "Climb", baseRules }),
+      removeKlassSkill: JSON.stringify({
+        skillId: climb.id,
+        rulesetId,
+        entityName: "Fighter",
+        skillName: "Climb",
+        baseRules,
+      }),
+    });
+  });
+
+  test("of a class's levels and its progression go to its ruleset's owner, each its own activity", async () => {
+    const [owner, author] = await users(2);
+    const { id: rulesetId, baseRules } = await createTestRuleset(owner.user.id);
+    await addRulesetContributor(rulesetId, author.user, owner.user.id);
+    const [fighter] = await Entities.create<Klass>(db, "klasses", { name: "Fighter", rulesetId, hd: 10 });
+    const level = await EntitiesService.createOwnedEntity(author.session, rulesetId, "klasses", fighter.id, {
+      level: 1,
+      fields: { bab: 1, skills: 2 },
+    });
+    await EntitiesService.updateOwnedEntity(author.session, rulesetId, "klasses", fighter.id, level.id, {
+      fields: { bab: 1, skills: 4 },
+    });
+    await EntitiesService.updateProgression(author.session, rulesetId, "klasses", fighter.id, {
+      levels: [{ levelId: level.id, fields: { bab: 1, skills: 6 } }],
+    });
+    await EntitiesService.deleteOwnedEntity(author.session, rulesetId, "klasses", fighter.id, level.id);
+
+    expect(await inbox(owner)).toEqual([
+      note("createKlassLevel", author),
+      note("deleteKlassLevel", author),
+      note("updateKlassLevel", author),
+      note("updateKlassProgression", author),
+    ]);
+    // What each records, in the order its keys are written: the activity feed reads them
+    const { items } = await Activities.findPage(db, { userId: author.user.id }, { limit: 10, page: 1 });
+    const recorded = new Map(items.map((activity) => [activity.type, JSON.stringify(activity.data)]));
+    expect(Object.fromEntries(recorded)).toEqual({
+      createKlassLevel: JSON.stringify({ entityName: "Fighter", level: 1, baseRules }),
+      updateKlassLevel: JSON.stringify({ entityName: "Fighter", level: 1, baseRules }),
+      updateKlassProgression: JSON.stringify({ entityName: "Fighter", levels: 1, baseRules }),
+      deleteKlassLevel: JSON.stringify({ rulesetId, entityName: "Fighter", level: 1, baseRules }),
+    });
   });
 
   // The client names a change in its ruleset's words (a 3.5 power is a spell), which its base rules pick: every change to
@@ -254,7 +299,7 @@ describe("activity notifications", () => {
       rulesetId: ruleset.id,
       primaryAbilityId: ability.id,
     });
-    await ClassSkillsService.addClassSkill(author.session, ruleset.id, fighter.id, climb.id);
+    await EntitiesService.addEntityLink(author.session, ruleset.id, "klasses", fighter.id, climb.id);
     await EntitiesService.deleteEntity(author.session, ruleset.id, "feats", feat.id);
 
     const page = { limit: 50, page: 1 };

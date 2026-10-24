@@ -3,7 +3,6 @@ import { describe, expect, test } from "bun:test";
 import type { Aptitude, Klass } from "@/engine/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Characters, Entities, EntitySnapshots, Joins, Properties } from "@/server/repositories/index.ts";
-import { ClassLevelsService } from "@/server/services/rulesets/classes/levels/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
 import { createTestCharacter } from "@/tests/support/characters.ts";
@@ -156,7 +155,7 @@ describe("EntitiesService: feats", () => {
       rulesetId: ruleset.id,
       hd: 10,
     });
-    await ClassLevelsService.createClassLevel(session, ruleset.id, klass.id, {
+    await EntitiesService.createOwnedEntity(session, ruleset.id, "klasses", klass.id, {
       level: 1,
       fields: { bab: 1, skills: 2 },
       feats: [{ featId: feat.id, aptitudeId: combat }],

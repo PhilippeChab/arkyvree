@@ -4,8 +4,8 @@ import type { Klass, KlassLevel, KlassSkill, RulesetAbility, Skill } from "@/eng
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError } from "@/server/errors/index.ts";
-import { Entities, EntitySnapshots, Joins } from "@/server/repositories/index.ts";
-import { ClassSkillsService } from "@/server/services/rulesets/classes/skills/index.ts";
+import { Activities, Entities, EntitySnapshots, Joins } from "@/server/repositories/index.ts";
+import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
 import { createTestCharacter } from "@/tests/support/characters.ts";
 import { addCharacterLevel } from "@/tests/support/levels.ts";
@@ -32,11 +32,11 @@ async function setup() {
 }
 
 async function skillIdsOf(rulesetId: string, klassId: string) {
-  return (await ClassSkillsService.getClassSkills(rulesetId, klassId)).map((ks) => ks.skillId).sort();
+  return (await EntitiesService.getEntityLinks(rulesetId, "klasses", klassId)).map((ks) => ks.skillId).sort();
 }
 
 // Adding, listing and removing a class skill, and refusing one the class has, are covered in the class skills router test.
-describe("ClassSkillsService", () => {
+describe("EntitiesService: a class's skills", () => {
   test("removes a skill from one class only", async () => {
     const { session, ruleset, fighter, rogue, climb, swim } = await setup();
     for (const [klass, skill] of [
@@ -44,18 +44,34 @@ describe("ClassSkillsService", () => {
       [fighter, swim],
       [rogue, climb],
     ] as const)
-      await ClassSkillsService.addClassSkill(session, ruleset.id, klass.id, skill.id);
+      await EntitiesService.addEntityLink(session, ruleset.id, "klasses", klass.id, skill.id);
 
-    await ClassSkillsService.removeClassSkill(session, ruleset.id, fighter.id, climb.id);
+    await EntitiesService.removeEntityLink(session, ruleset.id, "klasses", fighter.id, climb.id);
     expect(await skillIdsOf(ruleset.id, fighter.id)).toEqual([swim.id]);
     expect(await skillIdsOf(ruleset.id, rogue.id)).toEqual([climb.id]);
+  });
+
+  test("refuses a removal another removal took since its view was read, recording nothing", async () => {
+    const { user, session, ruleset, fighter, climb } = await setup();
+    await EntitiesService.addEntityLink(session, ruleset.id, "klasses", fighter.id, climb.id);
+    // The view still has it: another request removed it, and its invalidation hasn't run
+    expect(await skillIdsOf(ruleset.id, fighter.id)).toEqual([climb.id]);
+    await Joins.delete(db, { join: "klass_skills", fromId: fighter.id, toId: climb.id });
+
+    expect(EntitiesService.removeEntityLink(session, ruleset.id, "klasses", fighter.id, climb.id)).rejects.toThrow(
+      ConflictError,
+    );
+    const { items } = await Activities.findPage(db, { userId: user.id }, { limit: 10, page: 1 });
+    expect(items.map((activity) => activity.type)).toEqual(["addKlassSkill"]);
   });
 
   test("refuses changes from anyone but the owner", async () => {
     const { ruleset, fighter, climb } = await setup();
     const { session: other } = await createTestUserAndRuleset();
-    expect(ClassSkillsService.addClassSkill(other, ruleset.id, fighter.id, climb.id)).rejects.toThrow(ForbiddenError);
-    expect(ClassSkillsService.removeClassSkill(other, ruleset.id, fighter.id, climb.id)).rejects.toThrow(
+    expect(EntitiesService.addEntityLink(other, ruleset.id, "klasses", fighter.id, climb.id)).rejects.toThrow(
+      ForbiddenError,
+    );
+    expect(EntitiesService.removeEntityLink(other, ruleset.id, "klasses", fighter.id, climb.id)).rejects.toThrow(
       ForbiddenError,
     );
   });
@@ -63,39 +79,50 @@ describe("ClassSkillsService", () => {
   test("doesn't find a class or skill of another ruleset, nor a skill the class doesn't have", async () => {
     const { session, ruleset, fighter, climb } = await setup();
     const other = await setup();
-    await expectRefusedWith(ClassSkillsService.getClassSkills(ruleset.id, other.fighter.id), 404);
-    await expectRefusedWith(ClassSkillsService.addClassSkill(session, ruleset.id, other.fighter.id, climb.id), 404);
+    await expectRefusedWith(EntitiesService.getEntityLinks(ruleset.id, "klasses", other.fighter.id), 404);
+    await expectRefusedWith(
+      EntitiesService.addEntityLink(session, ruleset.id, "klasses", other.fighter.id, climb.id),
+      404,
+    );
     // The skill an add sends is its body's: refused as invalid, by name
-    expect(ClassSkillsService.addClassSkill(session, ruleset.id, fighter.id, other.climb.id)).rejects.toMatchObject({
+    expect(
+      EntitiesService.addEntityLink(session, ruleset.id, "klasses", fighter.id, other.climb.id),
+    ).rejects.toMatchObject({
       message: `Skill ${other.climb.id} does not belong to this ruleset`,
       refusal: "invalid",
     });
-    await expectRefusedWith(ClassSkillsService.removeClassSkill(session, ruleset.id, fighter.id, climb.id), 404);
-    await expectRefusedWith(ClassSkillsService.removeClassSkill(session, ruleset.id, other.fighter.id, climb.id), 404);
+    await expectRefusedWith(
+      EntitiesService.removeEntityLink(session, ruleset.id, "klasses", fighter.id, climb.id),
+      404,
+    );
+    await expectRefusedWith(
+      EntitiesService.removeEntityLink(session, ruleset.id, "klasses", other.fighter.id, climb.id),
+      404,
+    );
   });
 
   test("refuses to remove a class skill while a character has a level in the class", async () => {
     const { user, session, ruleset, fighter, climb } = await setup();
-    await ClassSkillsService.addClassSkill(session, ruleset.id, fighter.id, climb.id);
+    await EntitiesService.addEntityLink(session, ruleset.id, "klasses", fighter.id, climb.id);
     const [klassLevel] = await Entities.create<KlassLevel>(db, "klass_levels", { klassId: fighter.id, level: 1 });
     const character = await createTestCharacter(user.id, { rulesetId: ruleset.id });
     await addCharacterLevel(character.id, klassLevel.id);
 
-    expect(ClassSkillsService.removeClassSkill(session, ruleset.id, fighter.id, climb.id)).rejects.toThrow(
+    expect(EntitiesService.removeEntityLink(session, ruleset.id, "klasses", fighter.id, climb.id)).rejects.toThrow(
       ConflictError,
     );
   });
 
   test("in a fork, reads the inherited class's skills and changes them on the fork's copy of the class", async () => {
     const { user, session, ruleset: parent, fighter, climb, swim } = await setup();
-    await ClassSkillsService.addClassSkill(session, parent.id, fighter.id, climb.id);
+    await EntitiesService.addEntityLink(session, parent.id, "klasses", fighter.id, climb.id);
     const fork = await createTestRuleset(user.id, { rulesetId: parent.id, ancestorRulesetIds: [parent.id] });
     expect(await skillIdsOf(fork.id, fighter.id)).toEqual([climb.id]);
 
     // The fork's changes are its copy's: the parent's cached rows, which every fork of it reads, stay
     const parentRows = await RulesetViews.getRawData(parent.id);
-    const added = await ClassSkillsService.addClassSkill(session, fork.id, fighter.id, swim.id);
-    const removed = await ClassSkillsService.removeClassSkill(session, fork.id, fighter.id, climb.id);
+    const added = await EntitiesService.addEntityLink(session, fork.id, "klasses", fighter.id, swim.id);
+    const removed = await EntitiesService.removeEntityLink(session, fork.id, "klasses", fighter.id, climb.id);
     expect(await RulesetViews.getRawData(parent.id)).toBe(parentRows);
     const snapshot = await EntitySnapshots.findOne(db, {
       sourceEntityId: fighter.id,

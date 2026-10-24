@@ -41,7 +41,7 @@ test.describe("A class created in a fork", () => {
     await level.getByLabel("Base Attack Bonus").fill("1");
     await level.getByLabel("Fortitude Save").fill("2");
     await level.getByLabel("Skill Points").fill("4");
-    const created = apiResponse(page, "POST", /\/classes\/[a-f0-9-]+\/levels$/);
+    const created = apiResponse(page, "POST", /\/entities\/classes\/[a-f0-9-]+\/owned$/);
     await level.getByRole("button", { name: "Create" }).click();
     await created;
     await page.reload();
@@ -54,7 +54,7 @@ test.describe("A class created in a fork", () => {
     await page.getByRole("tab", { name: "Skills" }).click();
     await expect(page.getByText("No class skills assigned", { exact: true })).toBeVisible();
     await page.getByLabel("Add Skill").fill("Climb");
-    const added = apiResponse(page, "POST", /\/classes\/[a-f0-9-]+\/skills$/);
+    const added = apiResponse(page, "POST", /\/entities\/classes\/[a-f0-9-]+\/links$/);
     // An option's name is the skill's, then its description
     await page.getByRole("option", { name: /^Climb\b/ }).click();
     await added;
@@ -63,7 +63,7 @@ test.describe("A class created in a fork", () => {
     await expect(skill).toBeVisible({ timeout: 10_000 });
 
     await skill.locator(".MuiChip-deleteIcon").click();
-    const removed = apiResponse(page, "DELETE", /\/classes\/[a-f0-9-]+\/skills\//);
+    const removed = apiResponse(page, "DELETE", /\/entities\/classes\/[a-f0-9-]+\/links\//);
     await page.getByRole("dialog", { name: "Remove Skill" }).getByRole("button", { name: "Remove Skill" }).click();
     await removed;
     await expect(skill).toHaveCount(0);
@@ -113,7 +113,7 @@ test.describe("A class's progression", () => {
     await expect(page).toHaveURL(new RegExp(`/classes/${monk.id}/progression`));
 
     // One save writes both, onto the fork's copy of the class, which the page follows
-    const saved = apiResponse(page, "PUT", /\/classes\/[a-f0-9-]+\/progression$/);
+    const saved = apiResponse(page, "PUT", /\/entities\/classes\/[a-f0-9-]+\/progression$/);
     await page.getByRole("button", { name: "Save Progression" }).click();
     await saved;
     await expect(page).not.toHaveURL(new RegExp(`/classes/${monk.id}/`), { timeout: 10_000 });

@@ -9,10 +9,17 @@ import { api, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { findSeededRuleset, getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 
-const klass = api.api.rulesets[":id"].classes[":classId"];
-const levels = klass.levels;
-const level = levels[":levelId"];
+const klass = api.api.rulesets[":id"].entities[":entityType"][":entityId"];
+const levels = klass.owned;
+const level = levels[":ownedId"];
 const requirements = api.api.rulesets[":id"].customization[":entityType"][":entityId"].requirements;
+
+const table = klass.tables[":table"];
+
+/** A class's route's params: the ruleset, and the class, an entity of the classes' kind. */
+function classParam(id: string, classId: string) {
+  return { id, entityType: "classes" as const, entityId: classId };
+}
 
 /** A seeded fork with a new class. */
 async function setup() {
@@ -31,17 +38,19 @@ describe("rulesets class levels", () => {
     const { id, classId } = await setup();
 
     const created = await expectOk(
-      levels.$post({ param: { id, classId }, json: { level: 1, fields: { bab: 1, skills: 4 } } }),
+      levels.$post({ param: classParam(id, classId), json: { level: 1, fields: { bab: 1, skills: 4 } } }),
     );
     expect(created).toMatchObject({ level: 1, bab: 1, skills: 4 });
-    const param = { id, classId, levelId: created.id };
+    const param = { ...classParam(id, classId), ownedId: created.id };
 
     expect(await expectOk(level.$get({ param }))).toMatchObject({ id: created.id, level: 1 });
     const byId = await expectOk(
-      api.api.rulesets[":id"]["class-levels"][":classLevelId"].$get({ param: { id, classLevelId: created.id } }),
+      api.api.rulesets[":id"].entities[":entityType"].owned[":ownedId"].$get({
+        param: { id, entityType: "classes", ownedId: created.id },
+      }),
     );
     expect(byId.id).toBe(created.id);
-    expect((await expectOk(levels.$get({ param: { id, classId } }))).map((l) => l.id)).toEqual([created.id]);
+    expect((await expectOk(levels.$get({ param: classParam(id, classId) }))).map((l) => l.id)).toEqual([created.id]);
 
     // The level number is fixed once created.
     const { updatedAt } = created;
@@ -54,16 +63,16 @@ describe("rulesets class levels", () => {
     await expectStatus(level.$put({ param, json: { fields: { bab: 4 }, updatedAt } }), 409);
 
     await expectOk(level.$delete({ param }));
-    expect(await expectOk(levels.$get({ param: { id, classId } }))).toEqual([]);
+    expect(await expectOk(levels.$get({ param: classParam(id, classId) }))).toEqual([]);
   });
 
   test("requires the previous class level from level 2 on", async () => {
     const { id, classId } = await setup();
     const first = await expectOk(
-      levels.$post({ param: { id, classId }, json: { level: 1, fields: { bab: 1, skills: 4 } } }),
+      levels.$post({ param: classParam(id, classId), json: { level: 1, fields: { bab: 1, skills: 4 } } }),
     );
     const fifth = await expectOk(
-      levels.$post({ param: { id, classId }, json: { level: 5, fields: { bab: 5, skills: 4 } } }),
+      levels.$post({ param: classParam(id, classId), json: { level: 5, fields: { bab: 5, skills: 4 } } }),
     );
 
     const param = (entityId: string) => ({ id, entityType: "class-levels" as const, entityId });
@@ -77,20 +86,23 @@ describe("rulesets class levels", () => {
     const { klassMap } = await getSeedCtx();
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
 
-    const perDay = await expectOk(klass.spells.$get({ param: { id, classId: klassMap.pc["Wizard"] } }));
-    expect(perDay.find((l) => l.level === 1)).toMatchObject({ spellsPerDay: { 0: 3, 1: 1 } });
+    const read = async (classId: string, name: string) =>
+      (await expectOk(table.$get({ param: { ...classParam(id, classId), table: name } }))) as Record<string, unknown>[];
+    const firstLevel = (rows: Record<string, unknown>[]) => rows.find((l) => l.level === 1);
 
-    const known = await expectOk(klass["spells-known"].$get({ param: { id, classId: klassMap.pc["Sorcerer"] } }));
-    expect(known.find((l) => l.level === 1)).toMatchObject({ spellsKnown: { 0: 4, 1: 2 } });
+    expect(firstLevel(await read(klassMap.pc["Wizard"], "spells"))).toMatchObject({ spellsPerDay: { 0: 3, 1: 1 } });
+    expect(firstLevel(await read(klassMap.pc["Sorcerer"], "spells-known"))).toMatchObject({
+      spellsKnown: { 0: 4, 1: 2 },
+    });
+    expect(firstLevel(await read(klassMap.pc["Fighter"], "feat-pools"))).toMatchObject({
+      featPools: { "Fighter Bonus Feat": 1 },
+    });
 
-    const pools = await expectOk(klass["feat-pools"].$get({ param: { id, classId: klassMap.pc["Fighter"] } }));
-    expect(pools.find((l) => l.level === 1)).toMatchObject({ featPools: { "Fighter Bonus Feat": 1 } });
-
-    const lists = await expectOk(klass["spell-lists"].$get({ param: { id, classId: klassMap.pc["Wizard"] } }));
+    const lists = await read(klassMap.pc["Wizard"], "spell-lists");
     expect(lists.map((list) => list.name)).toEqual(["Wizard Spells"]);
 
     // A class whose levels give slots in no list has none
-    expect(await expectOk(klass["spell-lists"].$get({ param: { id, classId: klassMap.pc["Fighter"] } }))).toEqual([]);
+    expect(await read(klassMap.pc["Fighter"], "spell-lists")).toEqual([]);
   });
 
   test("lists every spell list a class casts from, its own first: the Pious Templar's and its blackguard one", async () => {
@@ -100,13 +112,16 @@ describe("rulesets class levels", () => {
       name: "Pious Templar",
       rulesetId: divine.id,
     }))!;
-    const lists = await expectOk(klass["spell-lists"].$get({ param: { id: divine.id, classId: templar.id } }));
+    const lists = (await expectOk(
+      table.$get({ param: { ...classParam(divine.id, templar.id), table: "spell-lists" } }),
+    )) as { name: string }[];
     expect(lists.map((list) => list.name)).toEqual(["Pious Templar Spells", "Pious Templar Blackguard Spells"]);
   });
 
   test("requires a session", async () => {
     const { id, classId } = await setup();
-    await expectStatus(guestApi.api.rulesets[":id"].classes[":classId"].levels.$get({ param: { id, classId } }), 401);
+    const guestLevels = guestApi.api.rulesets[":id"].entities[":entityType"][":entityId"].owned;
+    await expectStatus(guestLevels.$get({ param: classParam(id, classId) }), 401);
   });
 
   test("rejects a level without a number or out of 1–20", async () => {
@@ -116,15 +131,15 @@ describe("rulesets class levels", () => {
       { level: "1", bab: 1, skills: 4 },
       { level: 21, bab: 1, skills: 4 },
     ])
-      await expectStatus(levels.$post({ param: { id, classId }, json: json as never }), 400);
+      await expectStatus(levels.$post({ param: classParam(id, classId), json: json as never }), 400);
   });
 
   test("returns 404 for a missing ruleset, class or level", async () => {
     const { id, classId } = await setup();
-    await expectStatus(levels.$get({ param: { id: NIL_UUID, classId } }), 404);
-    await expectStatus(levels.$get({ param: { id, classId: NIL_UUID } }), 404);
-    await expectStatus(klass.spells.$get({ param: { id, classId: NIL_UUID } }), 404);
-    const param = { id, classId, levelId: NIL_UUID };
+    await expectStatus(levels.$get({ param: classParam(NIL_UUID, classId) }), 404);
+    await expectStatus(levels.$get({ param: classParam(id, NIL_UUID) }), 404);
+    await expectStatus(table.$get({ param: { ...classParam(id, NIL_UUID), table: "spells" } }), 404);
+    const param = { ...classParam(id, classId), ownedId: NIL_UUID };
     await expectStatus(level.$get({ param }), 404);
     await expectStatus(level.$put({ param, json: { fields: { bab: 1 } } }), 404);
     await expectStatus(level.$delete({ param }), 404);

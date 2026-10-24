@@ -108,9 +108,19 @@ class StoredJoins extends BaseRepository<typeof entityLinksInRules> {
     return ids;
   }
 
-  /** Writes a join's new rows, each a link after its from-entity's last: answers them, in order. */
-  async createMany<R extends object = JoinRow>(db: Db, join: string, values: JoinRow[]): Promise<R[]> {
-    const ids = await this.createIds(db, join, values);
+  /**
+   * Writes a join's new rows, each a link after its from-entity's last, all from one entity's when given (`fromId`, its
+   * column's, which the rows leave out): answers them, in order.
+   */
+  async createMany<R extends object = JoinRow>(
+    db: Db,
+    join: string,
+    values: JoinRow[],
+    from?: { fromId: string },
+  ): Promise<R[]> {
+    const column = from ? Engine.storage().joinFromColumn(join) : undefined;
+    const rows = column ? values.map((row) => ({ ...row, [column]: from?.fromId })) : values;
+    const ids = await this.createIds(db, join, rows);
     if (ids.length === 0) return [];
     const storage = Engine.storage();
     const declared = storage.join(join);

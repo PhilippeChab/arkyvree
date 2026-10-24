@@ -23,15 +23,15 @@ export function useProgressionSave(rulesetId: string, classId: string, what: str
     mutationFn: (body: ClassProgressionBody) =>
       tag(
         parseResponse(
-          rpc.api.rulesets[":id"].classes[":classId"].progression.$put({
-            param: { id: rulesetId, classId },
-            json: body,
+          rpc.api.rulesets[":id"].entities[":entityType"][":entityId"].progression.$put({
+            param: { id: rulesetId, entityType: "classes", entityId: classId },
+            json: { ...body },
           }),
         ),
       ),
     onSuccess: (saved) => {
       snackbar.success(`Class ${what.toLowerCase()} saved`);
-      followCopy(saved.klassId, saved.sourceEntityId);
+      followCopy(saved.entityId, saved.sourceEntityId);
     },
     onError: (error) => snackbar.error(error, `Failed to save the class ${what.toLowerCase()}`),
     // The class's tabs and the classes list, refetched before the tab drops its edits (another tab's, read again as it
@@ -39,7 +39,7 @@ export function useProgressionSave(rulesetId: string, classId: string, what: str
     onSettled: async (saved) => {
       await invalidateRulesetEdit(queryClient, rulesetId, queryKeysToInvalidate);
       // The pages of the levels it wrote (a row's hover warms them), their modifiers and requirements among them
-      const levelKeys = (saved?.levelIds ?? []).flatMap((levelId) => [
+      const levelKeys = (saved?.ownedIds ?? []).flatMap((levelId) => [
         QUERY_KEYS.rulesets.entity(rulesetId, "klass_levels", levelId),
         QUERY_KEYS.rulesets.customization(rulesetId, "klass_levels", levelId, "modifiers"),
         QUERY_KEYS.rulesets.customization(rulesetId, "klass_levels", levelId, "requirements"),

@@ -8,6 +8,9 @@ import EntityWriter, { type EntityBody } from "@/server/services/rulesets/Entity
 import type { Session } from "@/shared/relations.ts";
 
 import { Copies } from "./concerns/Copies.ts";
+import { Links } from "./concerns/Links.ts";
+import { Owned } from "./concerns/Owned.ts";
+import { Progressions } from "./concerns/Progressions.ts";
 import type { EntityRow, ListWhere, Pagination } from "./rows.ts";
 
 /** Every entity kind's type, which the routes by kind take. */
@@ -17,9 +20,11 @@ export const ENTITY_TYPES: readonly RulesetEntityType[] = RULESET_ENTITY_TYPES;
  * A ruleset's entities by their kind (`type`, its table), whatever it is, as its kind's rules answer them
  * (`Engine.for(scope).entities(type)`): its list, read by the filters its rules take, and its groups, its page, and
  * what its form writes (`EntityWriter`), checked against the copies a plan reaches. An action a kind has none of (an
- * ability's create, a race's templates) its rules refuse as not found. Its copies (`Copies`): its templates, variants.
+ * ability's create, a race's templates) its rules refuse as not found. Its copies (`Copies`: its templates, variants),
+ * and an entity's parts its kind may have: the entities it owns (`Owned`: a class's levels), the links it edits
+ * (`Links`: a class's skills), its progression (`Progressions`) and its tables.
  */
-class EntitiesService extends include(Object, Copies) {
+class EntitiesService extends include(Object, Copies, Links, Owned, Progressions) {
   /** A kind's writer for an action (`action`), which opens its rules for it first: refused when it has none of it. */
   private writerOf(type: RulesetEntityType, action: EntityAction) {
     return new EntityWriter(type, (scope) => Engine.for(scope).entities(type, action));
@@ -153,6 +158,13 @@ class EntitiesService extends include(Object, Copies) {
         pagination,
       );
     });
+  }
+
+  /** One of an entity's tables (`table`, by name: a class's spells per day): refused for a table it has none of. */
+  async getEntityTable(rulesetId: string, type: RulesetEntityType, entityId: string, table: string) {
+    return await withRulesetScope(db, rulesetId, async (scope) =>
+      Engine.for(scope).tables(type, entityId).describe(table),
+    );
   }
 
   /** An entity's update off its form, checked against the copies its plan reaches (a template's type change). */

@@ -17,7 +17,10 @@ type CustomizedModifier = InferResponseType<
   200
 >;
 
-export type ClassLevel = InferResponseType<(typeof rulesetApi)["class-levels"][":classLevelId"]["$get"], 200>;
+export type ClassLevel = InferResponseType<
+  (typeof rulesetApi)["entities"][":entityType"]["owned"][":ownedId"]["$get"],
+  200
+>;
 export type CustomizationEntity =
   | { entity: EntityRow; type: CustomizedKind }
   | { entity: ClassLevel; type: "klass_levels" }
@@ -34,7 +37,9 @@ async function fetchEntity(id: string, type: CustomizationPageType, entityId: st
       return {
         type,
         entity: await parseResponse(
-          rulesetApi["class-levels"][":classLevelId"].$get({ param: { id, classLevelId: entityId } }),
+          rulesetApi.entities[":entityType"].owned[":ownedId"].$get({
+            param: { id, entityType: "classes", ownedId: entityId },
+          }),
         ),
       };
     case "modifiers":

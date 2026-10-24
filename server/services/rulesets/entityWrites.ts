@@ -11,7 +11,7 @@ import {
   RULESET_ENTITY_TYPES,
   type RulesetEntityType,
 } from "@/server/repositories/index.ts";
-import type { PropertyEntityType } from "@/shared/customization/entities.ts";
+import { PROPERTY_ENTITY_TYPES } from "@/shared/customization/entities.ts";
 
 import { hasCharacterPicks } from "./characterPicks.ts";
 import { createListLinks } from "./listLinks.ts";
@@ -20,6 +20,13 @@ import { createListLinks } from "./listLinks.ts";
 function entityTypeOf(type: string): RulesetEntityType {
   const entityType = RULESET_ENTITY_TYPES.find((known) => known === type);
   if (!entityType) throw new Error(`A save cannot write a ${type} entity`);
+  return entityType;
+}
+
+/** The kind a plan's writes keep properties on (`type`, the entity's): refused for a kind that keeps none. */
+function propertyTypeOf(type: string) {
+  const entityType = PROPERTY_ENTITY_TYPES.find((propertyType) => propertyType === type);
+  if (!entityType) throw new Error(`A ${type} entity keeps no properties`);
   return entityType;
 }
 
@@ -69,9 +76,10 @@ async function removeEntity(tx: Db, scope: RulesetScope, removal: EntityRemoval)
 export async function writeEntityWrites(
   tx: Db,
   scope: RulesetScope,
-  entity: { entityId: string; entityType: PropertyEntityType },
+  { entityId, entityType: type }: { entityId: string; entityType: string },
   writes: EntityWrites,
 ) {
+  const entity = { entityId, entityType: propertyTypeOf(type) };
   for (const removal of writes.removed ?? []) await removeEntity(tx, scope, removal);
   const properties = writes.properties?.values.map((property) => ({ ...entity, ...property })) ?? [];
   if (writes.properties) {
