@@ -131,7 +131,10 @@ class CharactersRepository extends include(
     return await this.rows(db, eq(this.table.id, created.id));
   }
 
-  /** Hard delete — bonded children follow their owner's levels (`BondedPlans`), never archived by a user. */
+  /**
+   * Hard delete — children follow their parent's levels (3.5's bonded creatures, `BondedPlans`), never archived by a
+   * user.
+   */
   async delete(db: Db, where: { id: string }) {
     return await db.delete(this.table).where(eq(this.table.id, where.id));
   }
@@ -145,7 +148,7 @@ class CharactersRepository extends include(
     return rows.map((r) => r.id);
   }
 
-  /** Characters by id, or a master's bonded creatures (`parentCharacterId`). */
+  /** Characters by id, or a parent's children (`parentCharacterId`: 3.5's bonded creatures). */
   async findMany(
     db: Db,
     where: { ids: string[] } | { parentCharacterId: string },
@@ -166,8 +169,8 @@ class CharactersRepository extends include(
   }
 
   /**
-   * A character by id; its owner's (`{ id, userId }`), or one the user may edit (`{ id, editorId }`: theirs, or one they
-   * actively contribute to); by share token; or a character's bonded creature.
+   * A character by id; its owner's (`{ id, userId }`), or one the user may edit (`{ id, editorId }`: theirs, or one
+   * they actively contribute to); by share token; or a character's child (3.5's bonded creature).
    */
   async findOne(
     db: Db,
@@ -306,8 +309,8 @@ class CharactersRepository extends include(
   }
 
   /**
-   * Writes a change to a live character (`values`), if it's still the version the editor read (`expectedUpdatedAt`): its
-   * row's columns, and what its module stores of it, its `updatedAt` moved as any change moves it. Answers it as
+   * Writes a change to a live character (`values`), if it's still the version the editor read (`expectedUpdatedAt`):
+   * its row's columns, and what its module stores of it, its `updatedAt` moved as any change moves it. Answers it as
    * written, or nothing.
    */
   async update(db: Db, values: CharacterValues, where: { expectedUpdatedAt?: string; id: string }) {

@@ -99,8 +99,8 @@ class CharactersService extends include(Object, Archives, Imports) {
   }
 
   /**
-   * A character's sheet, as the API answers it: a player character's with its bonded creatures', or a creature's, which
-   * its master's editors read.
+   * A character's sheet, as the API answers it: a player character's with its children's (3.5's bonded creatures), or a
+   * child's, which its parent's editors read.
    */
   async getCharacter(session: Session, characterId: string) {
     const record = await Characters.findOne(db, { id: characterId }, Visibility.All);

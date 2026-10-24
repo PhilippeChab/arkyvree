@@ -793,7 +793,7 @@ server/
 │   │       │                              planRemoval, each with what the bonded creatures become)
 │   │       ├── concerns/                  (Plans: a level's steps, the plan's answer, a step's picker's page,
 │   │       │                              a saved level's plan)
-│   │       └── childWrites.ts            (the bonded creatures the engine plans, written)
+│   │       └── childWrites.ts             (the children the engine plans, written: 3.5's bonded creatures)
 │   └── rulesets/                          ← entity CRUD for feats/powers/aptitudes/…
 │       └── entityWrites.ts                (what the engine plans a form writes beside its row, written)
 └── routers/

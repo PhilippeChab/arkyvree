@@ -49,7 +49,7 @@ export async function enqueueCharacterPdf(
 
 /**
  * The character `userId` may export as a PDF, or null: one they own or
- * contribute to (or a bonded character of such a master). Through
+ * contribute to (or a child of such a parent: 3.5's bonded creature). Through
  * `campaignId`, the character must be linked to that campaign, and its Game
  * Master may export it too. Checked when the export is queued and again when
  * the worker runs it, so access revoked in between is honored.
