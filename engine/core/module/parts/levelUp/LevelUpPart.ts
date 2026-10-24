@@ -8,8 +8,9 @@ import type { ChildrenPlan, LevelEditPlan, LevelRemovalPlan, LevelsPlan } from "
 /**
  * What a ruleset answers of a character's levels, from the rows the server reads: a level's steps by their mechanics,
  * the plan's answer and a step's picker over it, a saved level as an edit's plan, and what a save, an edit or a removal
- * writes, with what the character's children (3.5's bonded creatures) become. Its descriptions are the ruleset's own (`D`); its plans are
- * the rows the server writes. A plan the server hands it is read by the level's steps, each id the view's.
+ * writes, with what the character's children (3.5's bonded creatures) become. Its descriptions are the ruleset's own
+ * (`D`); its plans are the rows the server writes. A plan the server hands it is read by the level's steps, each id the
+ * view's.
  */
 export default abstract class LevelUpPart<D extends Descriptions> {
   /**

@@ -3,7 +3,12 @@
  * file, and the report of what it imported and couldn't.
  */
 
-import type { CharacterColumns, InventoryEntryPlan, LinkPlan } from "@/engine/core/module/parts/characters/index.ts";
+import type {
+  CharacterColumns,
+  CreationColumns,
+  InventoryEntryPlan,
+  LinkPlan,
+} from "@/engine/core/module/parts/characters/index.ts";
 import type { ChildrenPlan, LevelWrites } from "@/engine/core/module/parts/levelUp/index.ts";
 import type { Character } from "@/shared/relations.ts";
 
@@ -59,4 +64,4 @@ export interface ImportSource {
 }
 
 /** A new character's row, as an import fills it: its name and notes, and the columns its module stores of it. */
-export type ImportedRow = CharacterColumns & Pick<Character, "name" | "notes" | "privateNotes">;
+export type ImportedRow = CharacterColumns & CreationColumns & Pick<Character, "name" | "notes" | "privateNotes">;

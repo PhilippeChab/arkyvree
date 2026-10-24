@@ -28,7 +28,7 @@ export default abstract class CharacterBuilder<
    */
   build(view: RulesetView, input: CharacterInput, { master }: { master?: C } = {}): C {
     const character = this.create(input.record);
-    character.build(input.rows, view, master ?? (input.master && this.build(view, input.master)));
+    character.build(input.rows, view, master ?? (input.parent && this.build(view, input.parent)));
     return character;
   }
 }

@@ -44,10 +44,10 @@ export interface Dnd35Descriptions {
 }
 
 /**
- * What a character speaks, and what its picked languages (an edit's, as it's made) leave it room for: what its languages
- * picker offers. `automatic`: those it speaks without picking them (a 3.5 race's automatic languages, which its
- * modifiers grant), never stored; `picks`: the picks, past those; `options`: the languages one more pick may add, by
- * name, none once the picks fill the room its rules give them.
+ * What a character speaks, and what its picked languages (an edit's, as it's made) leave it room for: what its
+ * languages picker offers. `automatic`: those it speaks without picking them (a 3.5 race's automatic languages, which
+ * its modifiers grant), never stored; `picks`: the picks, past those; `options`: the languages one more pick may add,
+ * by name, none once the picks fill the room its rules give them.
  */
 export interface LanguagesDescription {
   automatic: DescribedLanguage[];

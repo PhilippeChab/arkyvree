@@ -49,7 +49,7 @@ export default class CharacterDescription {
    */
   static describeFull(view: RulesetView, character: CharacterInput, bonded: CharacterInput[]) {
     const built = Dnd35CharacterBuilder.build(view, character);
-    if (character.master) return CharacterResponse.toResponse(CharacterResponse.buildSheet(character.record, built));
+    if (character.parent) return CharacterResponse.toResponse(CharacterResponse.buildSheet(character.record, built));
     const sheet = CharacterResponse.buildSheet(character.record, built);
     const described = CharacterDescription.describeBonded(view, built, bonded);
     // Each creature in the details of the feat that bonds it

@@ -40,11 +40,13 @@ export type {
 export type {
   CharacterColumns,
   CharacterEditPlan,
+  CreationColumns,
   FieldsPlan,
   InventoryEntryPlan,
   LinkPicksPlan,
   LinkPlan,
   NewCharacterPlan,
+  ScorePlan,
   ScoresPlan,
   StartPlan,
 } from "./plans.ts";

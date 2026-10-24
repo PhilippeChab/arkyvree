@@ -1,8 +1,7 @@
 /**
  * What the characters part's `describe*` operations answer in a shape every ruleset shares: a character's card, a new
  * character's form, a scored link's bounds, an inventory entry with its item, a placement's warning, and where a sheet
- * holds its private notes. What a ruleset describes in its own shape is
- * its `Descriptions` (`contract.ts`).
+ * holds its private notes. What a ruleset describes in its own shape is its `Descriptions` (`contract.ts`).
  */
 
 import type { ViewEntities } from "@/engine/core/view/index.ts";

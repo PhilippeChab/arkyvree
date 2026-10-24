@@ -14,9 +14,9 @@ import type { StorageDeclaration } from "./storage.ts";
  * What a ruleset describes in its own shape, which the server hands to the client as it is: how a new character's
  * scores are set (`creation`) and what its creation picker adds to an option (`creationOption`), what a picked link's
  * room is (`linkRoom`: what a character has, and what one more pick may add), a character's sheet (as the API answers
- * it, its private notes where every ruleset's holds them; as a member who reads it partly reads it, its summary as every
- * ruleset's holds it; printed), what an inventory entry shows beside its row, and a level step's picker (`stepPicker`)
- * by the kind it reads a page of.
+ * it, its private notes where every ruleset's holds them; as a member who reads it partly reads it, its summary as
+ * every ruleset's holds it; printed), what an inventory entry shows beside its row, and a level step's picker
+ * (`stepPicker`) by the kind it reads a page of.
  */
 export interface Descriptions {
   creation: object;
@@ -31,8 +31,9 @@ export interface Descriptions {
 
 /**
  * A base rules' module: the parts the engine's handles ask what its rules answer, each an abstract class of
- * `engine/core/module/parts/` a ruleset extends (the compiler lists what a part lacks), its paths and property
- * types, and its storage. `D` is what it describes in its own shape, `E` its entity kinds by table, `F` the fields its content seeds, by entity.
+ * `engine/core/module/parts/` a ruleset extends (the compiler lists what a part lacks), its paths and property types,
+ * and its storage. `D` is what it describes in its own shape, `E` its entity kinds by table, `F` the fields its content
+ * seeds, by entity.
  */
 export interface RulesetModule<
   D extends Descriptions = Descriptions,

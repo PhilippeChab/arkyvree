@@ -18,14 +18,17 @@ export interface CharacterEditRequest {
   links?: Record<string, string[]>;
 }
 
-/** A new character, as its form sends it: what it starts with, and its ruleset's fields by their keys (`CharacterForm`'s). */
+/**
+ * A new character, as its form sends it: what it starts with, and its ruleset's fields by their keys (its
+ * `CharacterForm`'s).
+ */
 export interface NewCharacterRequest extends StartRequest {
   fields: FieldsRequest;
 }
 
 /**
- * Where an inventory dialog places an item: `location`, in each of `weaponSets` for a hand, the entry placed (`entryId`)
- * aside.
+ * Where an inventory dialog places an item: `location`, in each of `weaponSets` for a hand, the entry placed
+ * (`entryId`) aside.
  */
 export interface PlacementQuery {
   entryId: string | null;

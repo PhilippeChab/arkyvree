@@ -18,6 +18,12 @@ export interface CharacterEditPlan extends FieldsPlan {
 }
 
 /**
+ * The columns of a character's row its creation's picks write (each single link's entity: 3.5's race), which every
+ * character has: its module declares its own into it (`declare module`).
+ */
+export interface CreationColumns {}
+
+/**
  * What a character's fields edit writes: the columns its ruleset stores its fields in (`CharacterColumns`), each
  * checked.
  */
@@ -55,12 +61,17 @@ export interface LinkPlan {
  * requires among them.
  */
 export interface NewCharacterPlan extends StartPlan {
-  columns: CharacterColumns;
+  columns: CharacterColumns & CreationColumns;
+}
+
+/** A character's scored link to an entity, as a write stores it: the entity, and its amount. */
+export interface ScorePlan extends LinkPlan {
+  amount: number;
 }
 
 /** What a scored link's edit writes: the character's amount for each entity it sends. */
 export interface ScoresPlan {
-  links: LinkPlan[];
+  links: ScorePlan[];
 }
 
 /**
@@ -68,6 +79,6 @@ export interface ScoresPlan {
  * scored link's rows, by name: an amount for each entity of its kind.
  */
 export interface StartPlan {
-  columns: Partial<CharacterColumns>;
-  links: Record<string, LinkPlan[]>;
+  columns: CreationColumns;
+  links: Record<string, ScorePlan[]>;
 }

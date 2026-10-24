@@ -248,7 +248,7 @@ class CharactersService extends include(Object, Archives, Imports) {
         // A score stored before its ability was copied names the source: the copy's id the client sends matches it
         for (const { amount, entityId } of plan.links) {
           const abilityIds = scope.rulesetData.cow.getEquivalentIds(entityId);
-          const rows = await CharacterLinks.setAmount(tx, amount!, {
+          const rows = await CharacterLinks.updateAmount(tx, amount, {
             link: "abilities",
             characterId,
             entityIds: abilityIds,

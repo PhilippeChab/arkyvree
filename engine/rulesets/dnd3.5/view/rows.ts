@@ -32,13 +32,16 @@ declare module "@/engine/core/module/CharacterInputs.ts" {
 
 declare module "@/engine/core/module/parts/characters/plans.ts" {
   /**
-   * The columns of a 3.5 character's row its fields and its race write: its alignment, gender and experience, which a
-   * new row requires, and its race and details.
+   * The columns of a 3.5 character's row its fields write: its alignment, gender and experience, which a new row
+   * requires, and its details.
    */
   interface CharacterColumns
     extends
       Pick<Character, "alignment" | "gender" | "xp">,
-      Partial<Pick<Character, "age" | "deity" | "description" | "height" | "raceId" | "weight">> {}
+      Partial<Pick<Character, "age" | "deity" | "description" | "height" | "weight">> {}
+
+  /** The column of a 3.5 character's row its creation's pick writes: its race. */
+  interface CreationColumns extends Pick<Character, "raceId"> {}
 }
 
 declare module "@/engine/core/view/rows.ts" {

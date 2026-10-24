@@ -1,5 +1,5 @@
 import { ImportReport } from "@/engine/core/imports/index.ts";
-import type { CharacterInput, ImportedRow, ImportOwner, ImportPlan, LinkPlan } from "@/engine/core/module/index.ts";
+import type { CharacterInput, ImportedRow, ImportOwner, ImportPlan, ScorePlan } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import Dnd35Characters from "@/engine/rulesets/dnd3.5/characters/Dnd35Characters.ts";
@@ -16,8 +16,8 @@ import { PCGEN_ALIGNMENTS } from "./names.ts";
 import PcgenNames from "./PcgenNames.ts";
 import ScoresImport from "./ScoresImport.ts";
 
-/** The row a 3.5 import fills: every column of it, its race among them (a character needs one). */
-type RowWithRace = ImportedRow & Pick<Character, "age" | "deity" | "description" | "height" | "raceId" | "weight">;
+/** The row a 3.5 import fills: every column of it, its details too. */
+type FilledRow = ImportedRow & Pick<Character, "age" | "deity" | "description" | "height" | "weight">;
 
 /** The inches in a foot, which a height PCGen writes in inches is said in. */
 const INCHES_PER_FOOT = 12;
@@ -83,7 +83,7 @@ export default class PcgenImport {
    * The character's rows before its levels: its row, under the id it's created with and its owner's, its ability scores,
    * and nothing else yet. What its levels, languages and gear are planned against, and its bonded creatures take after.
    */
-  private newInput(row: RowWithRace, abilities: LinkPlan[]): CharacterInput {
+  private newInput(row: FilledRow, abilities: ScorePlan[]): CharacterInput {
     const now = new Date().toISOString();
     const stamps = { createdAt: now, deletedAt: null, updatedAt: now };
     const { characterId: id, userId } = this.owner;
@@ -105,7 +105,7 @@ export default class PcgenImport {
       links: {
         abilities: abilities.map(({ amount, entityId }) => ({
           abilityId: entityId,
-          score: amount!,
+          score: amount,
           ...stamps,
           characterId: id,
         })),
@@ -156,7 +156,7 @@ export default class PcgenImport {
    * The character's row, as the file has it: its race (refused when the ruleset hasn't it: a character needs one), its
    * alignment (True Neutral when the file's isn't one, which the report says), and the rest of who it is.
    */
-  private readRow(): RowWithRace {
+  private readRow(): FilledRow {
     const { identity, biography } = this.imported;
     const race = this.findRace();
     const alignment = identity.alignment && PCGEN_ALIGNMENTS.get(identity.alignment.value);

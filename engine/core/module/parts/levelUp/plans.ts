@@ -1,13 +1,12 @@
 /**
  * What the level-up part's `plan*` operations answer: what the server writes of a level-up, a saved level's edit, a
  * level's removal and the character's children (the characters its levels give it: 3.5's bonded creatures), each a
- * named plan, without ids it doesn't have yet. A level's row and the
- * rows under it are its module's, as its storage declaration writes them: its advancement's columns, and its picks by
- * the name the module declares each under.
+ * named plan, without ids it doesn't have yet. A level's row and the rows under it are its module's, as its storage
+ * declaration writes them: its advancement's columns, and its picks by the name the module declares each under.
  */
 
 import type { CharacterRows } from "@/engine/core/module/CharacterInputs.ts";
-import type { CharacterColumns, LinkPlan } from "@/engine/core/module/parts/characters/index.ts";
+import type { CharacterColumns, CreationColumns, LinkPlan } from "@/engine/core/module/parts/characters/index.ts";
 import type { Character } from "@/shared/relations.ts";
 
 /** The levels a child takes (their rows' columns), and the ids of those it loses. */
@@ -54,7 +53,9 @@ export interface LevelWrites {
  */
 export interface NewChild {
   links: Record<string, LinkPlan[]>;
-  row: CharacterColumns & Pick<Character, "kind" | "name" | "parentCharacterId" | "rulesetId" | "userId">;
+  row: CharacterColumns &
+    CreationColumns &
+    Pick<Character, "kind" | "name" | "parentCharacterId" | "rulesetId" | "userId">;
 }
 
 /**

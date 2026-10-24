@@ -2211,7 +2211,7 @@ describe("DetailedCharacter", () => {
       // Power Attack and Cleave need STR 13.
       const bjorn = await findSeededCharacter("Bjorn Ironhand");
       const { abilityMap } = await getSeedCtx();
-      await CharacterLinks.setAmount(db, 10, {
+      await CharacterLinks.updateAmount(db, 10, {
         link: "abilities",
         characterId: bjorn.id,
         entityIds: [abilityMap["Strength"]],

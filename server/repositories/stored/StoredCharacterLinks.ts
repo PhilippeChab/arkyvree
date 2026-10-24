@@ -2,7 +2,7 @@ import { and, eq, inArray, type SQL } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
 import { linksInCharacter } from "@/drizzle/schema.ts";
-import { Engine, type LinkPlan, type StoredCharacterLink } from "@/engine/index.ts";
+import { type CharacterRows, Engine, type LinkPlan, type StoredCharacterLink } from "@/engine/index.ts";
 import BaseRepository from "@/server/repositories/BaseRepository.ts";
 
 /** A character link's row, any link's, as its module's declaration reads it (an ability score, a language). */
@@ -72,17 +72,6 @@ class StoredCharacterLinks extends BaseRepository<typeof linksInCharacter> {
       );
   }
 
-  /**
-   * A character's links of every name its module stores (`Engine.storage().character().links`), by name: each name's in
-   * the order they were made.
-   */
-  async findByLink(db: Db, where: { characterId: string }): Promise<Record<string, LinkRow[]>> {
-    const links: Record<string, LinkRow[]> = {};
-    for (const link of Object.keys(Engine.storage().character().links))
-      links[link] = await this.findMany(db, { ...where, link });
-    return links;
-  }
-
   /** A character's links of `link`, in the order they were made. */
   async findMany<R extends object = LinkRow>(db: Db, where: { characterId: string; link: string }): Promise<R[]> {
     const rows = await db
@@ -94,10 +83,21 @@ class StoredCharacterLinks extends BaseRepository<typeof linksInCharacter> {
   }
 
   /**
+   * A character's links of every name its module stores (`Engine.storage().character().links`), by name: each name's in
+   * the order they were made.
+   */
+  async findPerLink(db: Db, where: { characterId: string }): Promise<CharacterRows["links"]> {
+    const links: Record<string, LinkRow[]> = {};
+    for (const link of Object.keys(Engine.storage().character().links))
+      links[link] = await this.findMany(db, { ...where, link });
+    return links as CharacterRows["links"];
+  }
+
+  /**
    * Sets the amount a character's links of `link` to entities hold (a score), the entities by every id they may hold
    * (`entityIds`: an entity's copies and original).
    */
-  async setAmount<R extends object = LinkRow>(
+  async updateAmount<R extends object = LinkRow>(
     db: Db,
     amount: number,
     where: { characterId: string; entityIds: string[]; link: string },

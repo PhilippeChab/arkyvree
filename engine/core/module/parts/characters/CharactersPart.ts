@@ -19,6 +19,7 @@ import type {
 import type {
   CharacterColumns,
   CharacterEditPlan,
+  CreationColumns,
   FieldsPlan,
   InventoryEntryPlan,
   LinkPicksPlan,
@@ -92,13 +93,13 @@ export default abstract class CharactersPart<D extends Descriptions> {
   }
 
   /**
-   * A character's rows without its private notes, nor its master's: what a reader who doesn't read them is described
+   * A character's rows without its private notes, nor its parent's: what a reader who doesn't read them is described
    * from, so no ruleset's description can show them.
    */
   private static withoutNotes(input: CharacterInput): CharacterInput {
     return {
       ...input,
-      ...(input.master && { master: CharactersPart.withoutNotes(input.master) }),
+      ...(input.parent && { parent: CharactersPart.withoutNotes(input.parent) }),
       record: { ...input.record, privateNotes: null },
     };
   }
@@ -111,8 +112,8 @@ export default abstract class CharactersPart<D extends Descriptions> {
 
   /**
    * A character's sheet as the API answers it (`NotedSheet`), its private notes as its rows have them (none when its
-   * reader doesn't read them): a character's, its children (`children`) as its blocks show them; or a child's, from
-   * its parent's (`master`).
+   * reader doesn't read them): a character's, its children (`children`) as its blocks show them; or a child's, from its
+   * parent's (`parent`).
    */
   protected abstract describeFull(view: RulesetView, character: CharacterInput, children: CharacterInput[]): D["sheet"];
 
@@ -158,8 +159,8 @@ export default abstract class CharactersPart<D extends Descriptions> {
 
   /**
    * The picks of a picked link's edit (`link`, `entityIds`, each the view's) a character (`character`) stores: those it
-   * picked, past those its rules give it without a pick. Refused, naming it, when one it doesn't keep (its rows' own) is
-   * past what the ruleset's rules let it have; one it keeps never is.
+   * picked, past those its rules give it without a pick. Refused, naming it, when one it doesn't keep (its rows' own)
+   * is past what the ruleset's rules let it have; one it keeps never is.
    */
   protected abstract fitLinks(
     view: RulesetView,
@@ -235,16 +236,16 @@ export default abstract class CharactersPart<D extends Descriptions> {
 
   /** The scored links the module stores of its characters, each with its entities' kind. */
   private scoredLinks() {
-    return Object.entries(this.storage.character.links)
-      .filter(([, link]) => link.amount)
-      .map(([name, link]) => ({ kind: this.kindOfRole(link.role), name }));
+    const { links } = this.storage.character;
+    return Object.keys(links)
+      .filter((name) => links[name].amount)
+      .map((name) => this.linkOf(name, true));
   }
 
   /**
    * A character's sheet as the API answers it (`describeFull`): a character's, its children (`children`) among its
-   * blocks, or a child's, from its parent's; its private notes shown or left out (`notes`). A
-   * viewer who doesn't read them reads none: the ruleset describes rows without them, and the sheet's `fields` blocks
-   * hold none (`NotedSheet`).
+   * blocks, or a child's, from its parent's; its private notes shown or left out (`notes`). A viewer who doesn't read
+   * them reads none: the ruleset describes rows without them, and the sheet's `fields` blocks hold none (`NotedSheet`).
    */
   describe(
     view: RulesetView,
@@ -275,8 +276,7 @@ export default abstract class CharactersPart<D extends Descriptions> {
 
   /**
    * A character as a campaign member reads it (`reading`): partly, from its rows without its private notes nor its
-   * children (`describePartial`), its summary with no tracks, or its sheet, its private notes shown or left
-   * out.
+   * children (`describePartial`), its summary with no tracks, or its sheet, its private notes shown or left out.
    */
   describeForMember(
     view: RulesetView,
@@ -402,10 +402,10 @@ export default abstract class CharactersPart<D extends Descriptions> {
 
   /**
    * What a new character starts with, as its form or its import gives it: the entity of each of its single links
-   * (`picks`, by column: 3.5's race), and an amount for each entity of each scored link's kind, the one given (`scores`,
-   * by link, then entity id) or the one an unset entity starts at (`describeScores`), each by the id the view keys it
-   * by. Refused when an amount is past its link's bounds, a pick or a scored entity isn't one of the ruleset's, two
-   * amounts name one entity, or a pick is one its ruleset's rules refuse (`checkCreationPick`).
+   * (`picks`, by column: 3.5's race), and an amount for each entity of each scored link's kind, the one given
+   * (`scores`, by link, then entity id) or the one an unset entity starts at (`describeScores`), each by the id the
+   * view keys it by. Refused when an amount is past its link's bounds, a pick or a scored entity isn't one of the
+   * ruleset's, two amounts name one entity, or a pick is one its ruleset's rules refuse (`checkCreationPick`).
    */
   planStart(view: RulesetView, request: StartRequest): StartPlan {
     const links = this.scoredLinks().map((link) => ({ ...link, bounds: this.describeScores(view, link.name) }));
@@ -415,7 +415,9 @@ export default abstract class CharactersPart<D extends Descriptions> {
     const columns: Record<string, string> = {};
     for (const [column, declared] of Object.entries(this.storage.character.columns)) {
       if (declared.kind !== "link") continue;
-      const entity = ids.find(this.kindOfRole(declared.role), request.picks[column]);
+      const picked = request.picks[column];
+      if (picked === undefined) throw new RulesError("invalid", `A new character's ${column} is required`);
+      const entity = ids.find(this.kindOfRole(declared.role), picked);
       this.checkCreationPick(column, entity);
       columns[column] = (entity as { id: string }).id;
     }
@@ -424,6 +426,6 @@ export default abstract class CharactersPart<D extends Descriptions> {
       const rows = view.rulesetData.rows(kind) as { id: string }[];
       return [name, rows.map(({ id }) => ({ entityId: id, amount: given.get(id) ?? bounds.start }))];
     });
-    return { columns: columns as Partial<CharacterColumns>, links: Object.fromEntries(scored) };
+    return { columns: columns as unknown as CreationColumns, links: Object.fromEntries(scored) };
   }
 }

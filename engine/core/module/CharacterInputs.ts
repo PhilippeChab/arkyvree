@@ -9,11 +9,11 @@ import type {
 } from "@/shared/relations.ts";
 
 /**
- * A character's row and the rows it's built from, as the server reads them in its ruleset's scope: a bonded creature's
- * with its master's (`master`), whose sheet the creature's derives from.
+ * A character's row and the rows it's built from, as the server reads them in its ruleset's scope: a child's with its
+ * parent's (`parent`, 3.5's bonded creature's master), whose sheet the child's derives from.
  */
 export interface CharacterInput {
-  master?: CharacterInput;
+  parent?: CharacterInput;
   record: CharacterRecord;
   rows: CharacterRows;
 }
@@ -26,9 +26,9 @@ export interface CharacterLinkTypes {}
 
 /**
  * A character's own rows, which the server reads (`readCharacterInput`) and its module builds the character from: its
- * seat in a campaign, its links by name (`links`), its inventory and levels, every saved level's picks under it, and the
- * modifiers set on the character itself, with their requirements. An inventory entry and a pick are the links they are,
- * whose entities are the view's. Read as stored: the engine resolves their references as they enter it
+ * seat in a campaign, its links by name (`links`), its inventory and levels, every saved level's picks under it, and
+ * the modifiers set on the character itself, with their requirements. An inventory entry and a pick are the links they
+ * are, whose entities are the view's. Read as stored: the engine resolves their references as they enter it
  * (`CharacterInputs`).
  */
 export interface CharacterRows {
@@ -66,40 +66,40 @@ export type CharacterRowOf<K extends string> = K extends keyof CharacterRowTypes
   : Record<string, unknown>;
 
 /**
- * A character's rows as its ruleset's view reads them: each reference to an entity (a link's, an advancement's track, an
- * item, a pick's) resolved to the one the view shows in its place, a copy's or a sibling winner's, since a row
+ * A character's rows as its ruleset's view reads them: each reference to an entity (a link's, an advancement's track,
+ * an item, a pick's) resolved to the one the view shows in its place, a copy's or a sibling winner's, since a row
  * stored before the copy names its source. The engine resolves what it's handed once, as it enters; the server passes
  * rows as stored.
  */
 export default class CharacterInputs {
-  /** A character's input, its master's too, its rows' references resolved. */
+  /** A character's input, its parent's too, its rows' references resolved. */
   static resolve(input: CharacterInput, cow: CowData): CharacterInput {
     if (cow.isEmpty()) return input;
     const { rows } = input;
     const [record] = cow.resolveRows([input.record]);
     return {
-      ...(input.master && { master: CharacterInputs.resolve(input.master, cow) }),
+      ...(input.parent && { parent: CharacterInputs.resolve(input.parent, cow) }),
       record,
       rows: {
         ...rows,
         inventory: cow.resolveRows(rows.inventory),
         levels: cow.resolveRows(rows.levels),
-        links: CharacterInputs.resolvePicks(
+        links: CharacterInputs.resolveNamed(
           rows.links as Record<string, Record<string, unknown>[]>,
           cow,
         ) as CharacterLinks,
-        picks: CharacterInputs.resolvePicks(rows.picks, cow),
+        picks: CharacterInputs.resolveNamed(rows.picks, cow),
       },
     };
   }
 
-  /** Several characters' inputs (a master's bonded creatures'), each resolved. */
+  /** Several characters' inputs (a parent's children's), each resolved. */
   static resolveAll(inputs: CharacterInput[], cow: CowData): CharacterInput[] {
     return inputs.map((input) => CharacterInputs.resolve(input, cow));
   }
 
-  /** A level's rows under it (or a character's links), each pick's entity and pool resolved. */
-  static resolvePicks<P extends Record<string, Record<string, unknown>[]>>(picks: P, cow: CowData): P {
+  /** A character's rows by name (a level's picks, its links), each row's entity and pool resolved. */
+  static resolveNamed<P extends Record<string, Record<string, unknown>[]>>(picks: P, cow: CowData): P {
     return Object.fromEntries(Object.entries(picks).map(([pick, rows]) => [pick, cow.resolveRows(rows)])) as P;
   }
 }
