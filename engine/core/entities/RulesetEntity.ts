@@ -4,6 +4,7 @@ import {
   type EntityForm,
   type FieldCodec,
   type Fields,
+  type FieldsWrite,
   type FieldValues,
   FormColumns,
   type FormField,
@@ -18,7 +19,6 @@ import type {
   EntityEditPlan,
   EntityWrites,
   ListLink,
-  PropertyValue,
 } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import { RequestIds, type RulesetData, type RulesetView, type ViewEntities } from "@/engine/core/view/index.ts";
@@ -111,7 +111,7 @@ export default abstract class RulesetEntity<
   ): EntityCreatePlan<Columns, FieldValues<S>> {
     const columns = this.columnsOf(body, entity);
     const writes = this.writesOf(body, given, entity);
-    const fields = this.fields.read(this.writtenValues(columns, writes?.properties?.values, entity));
+    const fields = this.fields.read(this.writtenValues(columns, writes?.fields, entity));
     return { columns, fields, links: this.linksOf(body), writes };
   }
 
@@ -258,24 +258,20 @@ export default abstract class RulesetEntity<
 
   /**
    * What a form writes beside the row (`given`: the fields it gives, read; `entity`: the one edited): its fields, those
-   * it gives over those the entity keeps, which replace their properties; nothing when it gives none. Its kind's rules
+   * it gives over those the entity keeps, which replace its stored values; nothing when it gives none. Its kind's rules
    * add theirs (the feats it makes).
    */
   protected writesOf(_body: Body, given: Partial<FieldValues<S>>, entity?: ViewEntities[K]): EntityWrites | undefined {
     const fields = this.formFields(given, entity);
-    return fields && { properties: this.fields.write(fields) };
+    return fields && { fields: this.fields.write(fields) };
   }
 
   /**
-   * The stored values a written entity's fields are read off: those the properties its form writes keep (`written`),
-   * or, when it writes none, those it keeps (`keptValues`).
+   * The stored values a written entity's fields are read off: those its form writes (`written`), or, when it writes
+   * none, those it keeps (`keptValues`).
    */
-  protected writtenValues(
-    columns: Columns,
-    written: PropertyValue[] | undefined,
-    entity?: ViewEntities[K],
-  ): StoredValues {
-    return written ? this.fields.storedOf(written) : this.keptValues(columns, entity);
+  protected writtenValues(columns: Columns, written: FieldsWrite | undefined, entity?: ViewEntities[K]): StoredValues {
+    return written ? OwnerValues.written(written) : this.keptValues(columns, entity);
   }
 
   /**

@@ -72,7 +72,7 @@ export default class FieldForms {
    * Fields as a form shows them (`placed`), in the order of their spec's leaves (`ranks`), its own fields before its
    * groups': a group's own fields, and those of its level (`level`) that a form shows in it, under its label.
    */
-  private static describePlaced(placed: Placed[], level: Fields, ranks: ReadonlyMap<string, number>): FormField[] {
+  private static describePlaced(placed: Placed[], level: Fields, ranks: ReadonlyMap<LeafSpec, number>): FormField[] {
     const order = (field: FieldSpec) => (field.kind === "group" ? ranks.size : 0) + FieldForms.rankOf(field, ranks);
     return placed
       .toSorted((a, b) => order(a.field) - order(b.field))
@@ -123,9 +123,9 @@ export default class FieldForms {
       }));
   }
 
-  /** A field's place in its form: its type's rank among its spec's leaves, a group's first field's. */
-  private static rankOf(field: FieldSpec, ranks: ReadonlyMap<string, number>): number {
-    if (field.kind !== "group") return ranks.get(field.field) ?? ranks.size;
+  /** A field's place in its form: its rank among its spec's leaves, a group's first field's. */
+  private static rankOf(field: FieldSpec, ranks: ReadonlyMap<LeafSpec, number>): number {
+    if (field.kind !== "group") return ranks.get(field) ?? ranks.size;
     return Math.min(ranks.size, ...Object.values(field.fields).map((inner) => FieldForms.rankOf(inner, ranks)));
   }
 
@@ -221,7 +221,7 @@ export default class FieldForms {
    * where its value goes, labeled and explained as it declares them.
    */
   static describe(fields: Fields): FormField[] {
-    const ranks = new Map(Field.leavesOf(fields).map((field, rank) => [field.field, rank]));
+    const ranks = new Map(Field.leavesOf(fields).map((leaf, rank) => [leaf, rank]));
     return FieldForms.describePlaced(FieldForms.placedAt(fields, ""), fields, ranks);
   }
 

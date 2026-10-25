@@ -139,14 +139,16 @@ const FORM_REFS: Record<
   },
 };
 
-/** How many of each an entity has: the one `customize` gives it, of its properties. */
+/** How many of each an entity has: the one `customize` gives it, of its stored values. */
 async function counts(entityType: (typeof ENTITY_TYPES)[number], id: string) {
-  const { modifiers, modifierRequirements, requirements, properties } = await findCustomizations(entityType, id);
+  const { modifiers, modifierRequirements, requirements, values } = await findCustomizations(entityType, id);
   return {
     modifiers: modifiers.length,
     modifierRequirements: modifierRequirements.length,
     requirements: requirements.length,
-    properties: properties.filter((p) => p.value === "doomed").length,
+    values: Object.values(values.fields)
+      .flat()
+      .filter((value) => value === "doomed").length,
   };
 }
 
@@ -338,10 +340,10 @@ describe.each(ENTITY_TYPES.filter((type) => type !== "mechanics"))("customized %
   const service = SERVICES[entityType];
   const ownsModifiers = CUSTOMIZABLE_TYPES.includes(entityType);
 
-  const none = { modifiers: 0, modifierRequirements: 0, requirements: 0, properties: 0 };
+  const none = { modifiers: 0, modifierRequirements: 0, requirements: 0, values: 0 };
   const one = { modifiers: Number(ownsModifiers), modifierRequirements: Number(ownsModifiers), requirements: 1 };
 
-  test("deletes the entity's modifiers, requirements and properties with it", async () => {
+  test("deletes the entity's modifiers, requirements and stored values with it", async () => {
     const { session, ruleset, refs } = await setup();
     const { id } = await service.create(session, ruleset.id, "Doomed Entity", refs);
     // Customizations point at their entity polymorphically: no foreign key removes them.

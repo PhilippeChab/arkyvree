@@ -143,7 +143,7 @@ A ruleset's seeder extends `ContentSeeder` (`database/seeders/core/`), the contr
 
 The dev seeds (`scripts/db/seeds/`, which seed each base rules' test characters on its core rules: its registry row's `seedTestCharacters`, `content/dnd3.5/testData/`'s characters for 3.5, `database/seeders/dnd3.5/characters/`) and the tests load the same context for the seeded ruleset (its seeder's `loadContext`).
 
-The fields the rules keep in an entity's properties (a class's, a level's, a skill's, the ruleset's own) are seeded as the engine keeps them (`Engine.forRules(DND35_BASE_RULES).toEntityProperties`), from the fields the content gives.
+The fields the rules keep in an entity's stored values (a class's, a level's, a skill's, the ruleset's own) are seeded as the engine writes them (`Engine.forRules(DND35_BASE_RULES).toFieldsWrite`), from the fields the content gives, through `Fields` (`SeederState.writeFields`). The content's other seeds still give theirs as properties (`Property`: a field's name and a value of it, as text), which the seeder turns into a write of the entity's stored values in one place (`SeederState.propertySeedsWrite`, each value typed by its field's declaration).
 
 An extension is a package file that seeds its book:
 

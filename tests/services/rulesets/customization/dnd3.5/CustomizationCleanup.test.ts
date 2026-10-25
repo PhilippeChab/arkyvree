@@ -1,7 +1,8 @@
 /**
  * A modifier or a requirement names what it belongs to by type and id, with no foreign key. The database deletes it with
  * that row, whatever deletes the row: a service, or a foreign key's cascade (drizzle/0070_customization_cleanup.sql, and
- * drizzle/0080_generic-tables.sql's for an entity). A property is a field or a link, which its foreign key deletes.
+ * drizzle/0080_generic-tables.sql's for an entity). A stored value is a field's row or a link, which its foreign key
+ * deletes.
  */
 
 import { describe, expect, test } from "bun:test";
@@ -16,6 +17,7 @@ import {
   requirementsInCustomization,
   rulesetsInRules,
 } from "@/drizzle/schema.ts";
+import type { FieldsWrite } from "@/engine/index.ts";
 import {
   type Aptitude,
   type Feat,
@@ -29,13 +31,14 @@ import {
   type Spell,
 } from "@/engine/rulesets/dnd3.5/index.ts";
 import { db } from "@/server/database/index.ts";
-import { Entities, Modifiers, Properties, Users } from "@/server/repositories/index.ts";
+import { Entities, Modifiers, Users } from "@/server/repositories/index.ts";
 import { AuthenticationService } from "@/server/services/authentication/index.ts";
 import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
 import { customize, STRENGTH_BONUS } from "@/tests/support/dnd3.5/customizations.ts";
 import { createTestKlassLevel } from "@/tests/support/dnd3.5/levels.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
 import { createSeededTestRuleset, createTestRuleset } from "@/tests/support/rulesets.ts";
+import { findStoredValues } from "@/tests/support/storedValues.ts";
 import { makeSession } from "@/tests/support/users.ts";
 import { RULESET_FEAT_ADVANCEMENT } from "@/vocabulary/dnd3.5/properties/index.ts";
 
@@ -59,12 +62,12 @@ const OWNERS = {
 } satisfies Record<string, PgTable>;
 
 /**
- * The property given a row that isn't an entity, which `customize` picks one for only of an entity's kind: a ruleset a
- * setting of its own, a character none (its fields are the character's, which no property holds).
+ * The stored values given a row that isn't an entity, which `customize` picks only for an entity's kind: a ruleset a
+ * setting of its own, a character none (its fields are its row's columns).
  */
-const PROPERTIES: Record<string, { type: string; value: string } | null> = {
+const VALUES: Record<string, FieldsWrite | null> = {
   characters: null,
-  rulesets: { type: RULESET_FEAT_ADVANCEMENT, value: "doomed" },
+  rulesets: { fields: { [RULESET_FEAT_ADVANCEMENT]: ["doomed"] }, links: {} },
 };
 
 /** A new row of the type, in a ruleset of `userId`'s. */
@@ -109,9 +112,9 @@ async function createOwner(type: OwnerType, userId: string, rulesetId: string): 
   }
 }
 
-/** Customizes a row of the type (`customize`), with its type's property. */
+/** Customizes a row of the type (`customize`), with its type's stored values. */
 async function customizeOwner(type: string, id: string) {
-  return await customize(type, id, type in PROPERTIES ? { property: PROPERTIES[type] } : {});
+  return await customize(type, id, type in VALUES ? { values: VALUES[type] } : {});
 }
 
 /** The customizations whose owner is gone, or of a type no table above holds. */
@@ -162,14 +165,14 @@ describe("customization cleanup", () => {
 
   test("deletes a demo account's customizations with its rulesets and characters", async () => {
     const { user } = await AuthenticationService.startDemo();
-    // The fork comes with copies of the seeded ruleset's properties
+    // The fork comes with a copy of the seeded ruleset's Settings
     const fork = await createSeededTestRuleset(user.id);
     const { klassLevel } = await createTestKlassLevel(fork.id);
     const character = await createTestCharacter(user.id, { rulesetId: fork.id });
     await customize("feats", await createOwner("feats", user.id, fork.id));
     await customize("class_levels", klassLevel.id);
     await customizeOwner("characters", character.id);
-    expect(await Properties.findMany(db, { entityIds: [fork.id], entityType: "rulesets" })).not.toEqual([]);
+    expect(await findStoredValues("rulesets", fork.id)).not.toEqual({ fields: {}, links: {} });
 
     // Signing out purges a demo account, and the foreign keys' cascades its rulesets and characters
     await AuthenticationService.signOut(makeSession(user.id));

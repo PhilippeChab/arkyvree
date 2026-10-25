@@ -23,4 +23,4 @@ export type {
   TemplateFormField,
   TextFormField,
 } from "./FormField.ts";
-export { default as OwnerValues, type StoredValues } from "./OwnerValues.ts";
+export { type FieldsWrite, default as OwnerValues, type StoredValues } from "./OwnerValues.ts";

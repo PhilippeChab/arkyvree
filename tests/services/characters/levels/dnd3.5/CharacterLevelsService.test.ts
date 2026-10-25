@@ -34,7 +34,6 @@ import {
   Joins,
   Modifiers,
   Picks,
-  Properties,
   Requirements,
 } from "@/server/repositories/index.ts";
 import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
@@ -71,6 +70,7 @@ import {
   invalidateSeededRuleset,
 } from "@/tests/support/rulesets.ts";
 import { findSeededCharacter, findSeededRuleset, getSeedCtx, NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
+import { findStoredValues, writeStoredValues } from "@/tests/support/storedValues.ts";
 import { createTestUser, makeSession } from "@/tests/support/users.ts";
 import { CLASS_LEVEL_BAB, CLASS_LEVEL_SKILL_POINTS, FEAT_FAMILY } from "@/vocabulary/dnd3.5/properties/index.ts";
 
@@ -257,14 +257,9 @@ async function setupRuleset({ fork = false } = {}) {
   const klassLevels = [];
   for (let level = 1; level <= 5; level++) {
     const [klassLevel] = await Entities.create<KlassLevel>(db, "class_levels", { klassId: klass.id, level });
-    await Properties.createMany(db, [
-      { entityId: klassLevel.id, entityType: "class_levels", type: CLASS_LEVEL_BAB, value: String(level) },
-      {
-        entityId: klassLevel.id,
-        entityType: "class_levels",
-        type: CLASS_LEVEL_SKILL_POINTS,
-        value: String(2 + Math.floor(level / 2)),
-      },
+    await writeStoredValues("class_levels", klassLevel.id, [
+      [CLASS_LEVEL_BAB, level],
+      [CLASS_LEVEL_SKILL_POINTS, 2 + Math.floor(level / 2)],
     ]);
     klassLevels.push(klassLevel);
   }
@@ -1164,11 +1159,10 @@ describe("LevelsService", () => {
         { target: "feats.martialweaponproficiencylongsword.possessed", value: "true", operator: "set" },
         { target: "feats.weaponfocuslongsword.possessed", value: "true", operator: "set" },
       ]);
-      expect(
-        (await Properties.findMany(db, { entityIds: [longsword], entityType: "feats", type: FEAT_FAMILY }))
-          .map((p) => p.value)
-          .sort(),
-      ).toEqual(["Martial Weapon Proficiency", "Weapon Focus"]);
+      expect((await findStoredValues("feats", longsword)).fields[FEAT_FAMILY].toSorted()).toEqual([
+        "Martial Weapon Proficiency",
+        "Weapon Focus",
+      ]);
     });
 
     test("takes Weapon Focus in that weapon off the list, and no other", async () => {

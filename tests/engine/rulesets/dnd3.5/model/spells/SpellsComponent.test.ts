@@ -6,8 +6,9 @@ import SpellGroupingsComponent from "@/engine/rulesets/dnd3.5/model/spells/Spell
 import SpellsComponent from "@/engine/rulesets/dnd3.5/model/spells/SpellsComponent.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { Entities, Properties } from "@/server/repositories/index.ts";
+import { Entities } from "@/server/repositories/index.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
+import { writeStoredValues } from "@/tests/support/storedValues.ts";
 import { makeSession } from "@/tests/support/users.ts";
 import { SPELL_COMPONENT, SPELL_DESCRIPTOR, SPELL_SCHOOL, SPELL_TARGET } from "@/vocabulary/dnd3.5/properties/index.ts";
 
@@ -16,7 +17,7 @@ describe("SpellsComponent.addSpellEntries", () => {
     const ruleset = await createSeededTestRuleset(makeSession().userId);
     const [spell] = await Entities.createMany<Spell>(db, "spells", [{ name: "Probe Chant", rulesetId: ruleset.id }]);
     // Stored backwards, as a copy can hold them, with a value no option names
-    const stored = [
+    const stored: [string, string][] = [
       [SPELL_SCHOOL, "Enchantment"],
       [SPELL_COMPONENT, "Chanting"],
       [SPELL_COMPONENT, "Somatic"],
@@ -26,10 +27,7 @@ describe("SpellsComponent.addSpellEntries", () => {
       [SPELL_DESCRIPTOR, "Language-Dependent"],
       [SPELL_TARGET, "Any number of creatures"],
     ];
-    await Properties.createMany(
-      db,
-      stored.map(([type, value]) => ({ entityId: spell.id, entityType: "spells", type, value })),
-    );
+    await writeStoredValues("spells", spell.id, stored);
     const rulesetData = await RulesetViews.getData(ruleset);
     const spells = new SpellsComponent(new SpellGroupingsComponent(new AbilitiesComponent()));
     spells.addSpellEntries([spell], rulesetData);

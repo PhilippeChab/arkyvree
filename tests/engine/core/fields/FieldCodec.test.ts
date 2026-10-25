@@ -41,7 +41,6 @@ const FIELDS = {
   kind: { description: "Its kind", kind: "choice", label: "Kind", field: "KIND", values: ["Arcane", "Divine"] },
   owner: {
     description: "Who owns it",
-    field: "OWNER",
     kind: "ref",
     label: "Owner",
     references: "items",
@@ -73,11 +72,6 @@ const PROGRESSION = new FieldCodec({
     field: "GRANT",
   },
 } as const);
-
-/** Rows of `type=value` pairs, in order: what a save writes. */
-function rows(...pairs: [string, string][]) {
-  return pairs.map(([type, value]) => ({ type, value }));
-}
 
 describe("A field codec", () => {
   test("reads each field's default without its values", () => {
@@ -155,56 +149,71 @@ describe("A field codec", () => {
     expect(CODEC.read(storedValues([["KIND", "Divine"]])).kind).toBe("Divine");
     // A stored value outside its field's closed list still reads
     expect(CODEC.read(storedValues([["SCHOOL", "Sorcery"]])).school).toBe("Sorcery");
-    // A reference's field holds none: its link does
-    expect(CODEC.read(storedValues([["OWNER", "id-1"]])).owner).toBeNull();
+    // A reference reads its link alone, no field
+    expect(CODEC.read(storedValues([["owner", "id-1"]])).owner).toBeNull();
   });
 
-  test("keeps what a save writes as the stored values it reads: each field's in order, a reference's as its link", () => {
-    const written = CODEC.storedOf(rows(["TITLE", "A"], ["TAG", "y"], ["OWNER", "id-1"], ["TAG", "x"], ["NOPE", "z"]));
+  test("writes the stored values it reads back: each field's in order, a reference's as its link", () => {
+    const written = OwnerValues.written(
+      CODEC.write({ ...CODEC.defaults, owner: "id-1", tags: ["y", "x"], title: "A" }),
+    );
     expect(written).toEqual({ fields: { TITLE: ["A"], TAG: ["y", "x"] }, links: { owner: "id-1" } });
     expect(CODEC.read(written)).toMatchObject({ owner: "id-1", tags: ["y", "x"], title: "A" });
   });
 
-  test("writes a field with a value, none for a default number, an empty text or a false two-state flag", () => {
+  test("writes a field with a value, of its kind, none for a default number, an empty text or a false two-state flag", () => {
     const values = { ...CODEC.defaults, flag: false, group: { known: false, level: 2 }, tags: ["x"], title: "A" };
-    expect(CODEC.toProperties(values)).toEqual([
-      { type: "TITLE", value: "A" },
-      { type: "LEVEL", value: "2" },
-      { type: "KNOWN", value: "false" },
-      { type: "TAG", value: "x" },
-    ]);
-    expect(CODEC.toProperties({ ...values, title: "" }).map((row) => row.type)).not.toContain("TITLE");
+    expect(OwnerValues.written(CODEC.write(values)).fields).toEqual({
+      TITLE: ["A"],
+      LEVEL: [2],
+      KNOWN: [false],
+      TAG: ["x"],
+    });
+    expect(CODEC.write({ ...values, title: "" }).fields.TITLE).toEqual([]);
   });
 
-  test("writes nothing when the entity keeps no field, and a save's write replaces every type", () => {
-    expect(CODEC.toProperties({ ...CODEC.defaults, count: 5 })).toEqual([]);
+  test("writes nothing when the entity keeps no field, a save's write names every field and link, a part its own", () => {
+    expect(OwnerValues.written(CODEC.write({ ...CODEC.defaults, count: 5 }))).toEqual(OwnerValues.NONE);
     expect(CODEC.write({ ...CODEC.defaults, title: "A" })).toEqual({
-      types: ["TITLE", "SCHOOL", "FLAG", "LEVEL", "KNOWN", "COUNT", "TAG", "KIND", "OWNER"],
-      values: [{ type: "TITLE", value: "A" }],
+      fields: { TITLE: ["A"], SCHOOL: [], FLAG: [], LEVEL: [], KNOWN: [], COUNT: [], TAG: [], KIND: [] },
+      links: { owner: null },
+    });
+    // The fields the values leave out aren't named: their owner keeps them
+    expect(CODEC.write({ owner: null, title: "A" })).toEqual({ fields: { TITLE: ["A"] }, links: { owner: null } });
+    expect(CODEC.write({ group: { known: true, level: null }, title: "A" })).toEqual({
+      fields: { KNOWN: [true], LEVEL: [], TITLE: ["A"] },
+      links: {},
     });
   });
 
   test("reads and writes a field on its condition, and merges an edit's given fields over the kept", () => {
+    const written = (values: typeof CODEC.defaults) => OwnerValues.written(CODEC.write(values)).fields;
     expect(CODEC.read(storedValues([["COUNT", 3]])).count).toBe(1);
-    expect(CODEC.toProperties({ ...CODEC.defaults, count: 3, title: "A" })).toEqual([{ type: "TITLE", value: "A" }]);
-    expect(CODEC.toProperties({ ...CODEC.defaults, count: 3, flag: true, title: "A" })).toEqual([
-      { type: "TITLE", value: "A" },
-      { type: "FLAG", value: "true" },
-      { type: "COUNT", value: "3" },
-    ]);
+    expect(written({ ...CODEC.defaults, count: 3, title: "A" })).toEqual({ TITLE: ["A"] });
+    expect(written({ ...CODEC.defaults, count: 3, flag: true, title: "A" })).toEqual({
+      TITLE: ["A"],
+      FLAG: [true],
+      COUNT: [3],
+    });
     expect(CODEC.merge({ ...CODEC.defaults, title: "A" }, { count: 2, title: undefined })).toMatchObject({
       count: 2,
       title: "A",
     });
   });
 
-  test("writes what another's values don't hold: an item's over its template's", () => {
-    const template = { ...CODEC.defaults, tags: ["y", "x"], title: "A" };
-    expect(CODEC.toOverrides({ ...template, tags: ["x", "y"] }, template)).toEqual([]);
-    expect(CODEC.toOverrides({ ...template, group: { known: false, level: null }, title: "B" }, template)).toEqual([
-      { type: "TITLE", value: "B" },
-      { type: "KNOWN", value: "false" },
-    ]);
+  test("writes what another's values don't hold, clearing the rest: an item's over its template's", () => {
+    const template = { ...CODEC.defaults, owner: "id-1", tags: ["y", "x"], title: "A" };
+    const same = CODEC.toOverrides({ ...template, tags: ["x", "y"] }, template);
+    expect(same).toEqual({ ...CODEC.write(CODEC.defaults), links: { owner: null } });
+    expect(OwnerValues.written(same)).toEqual(OwnerValues.NONE);
+    const overrides = CODEC.toOverrides(
+      { ...template, group: { known: false, level: null }, owner: "id-2", title: "B" },
+      template,
+    );
+    expect(OwnerValues.written(overrides)).toEqual({
+      fields: { TITLE: ["B"], KNOWN: [false] },
+      links: { owner: "id-2" },
+    });
   });
 
   test("reads a form's fields with each field's shape, those it gives, refusing one past its bounds or values", () => {
@@ -352,11 +361,11 @@ describe("A progression", () => {
       expect(PROGRESSION.read(values)).toEqual(PROGRESSION.defaults);
   });
 
-  test("writes its frequency's row and one per level it gives more at, which read back", () => {
+  test("writes its frequency's value and one per level it gives more at, which read back", () => {
     const grants = { every: 0, extra: [{ amount: 2, level: 4 }] };
-    expect(PROGRESSION.toProperties({ grants })).toEqual(rows(["GRANT", "every:0"], ["GRANT", "4:2"]));
-    expect(PROGRESSION.read(PROGRESSION.storedOf(PROGRESSION.toProperties({ grants })))).toEqual({ grants });
-    expect(PROGRESSION.toProperties({ grants: { every: 5, extra: [] } })).toEqual(rows(["GRANT", "every:5"]));
+    expect(PROGRESSION.write({ grants }).fields).toEqual({ GRANT: ["every:0", "4:2"] });
+    expect(PROGRESSION.read(OwnerValues.written(PROGRESSION.write({ grants })))).toEqual({ grants });
+    expect(PROGRESSION.write({ grants: { every: 5, extra: [] } }).fields).toEqual({ GRANT: ["every:5"] });
   });
 
   test("reads a form's progression sorted by level, refusing a level listed twice or giving past its bound", () => {

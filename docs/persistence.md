@@ -21,7 +21,7 @@ How the server reads them: one generic repository a table, which reads the store
 
 - **Entities** (`Entities`, `StoredEntities`): an entity's own columns, its fields and its links, read in one query and mapped to its kind's row (`rowOf`): every column under its name, each of its fields and single links its declaration names. A write is split back into them (`writeOf`), a column a write leaves out written with its declared default. A kind's list, page, picker options and lookups are the same methods for every kind (`findList`, `findPage`, `findOptionPage`, `findOne`), and a ruleset's view reads its stored entities whole (`findStored`), which the engine builds its raw data from (`CopyOnWriteEngine.buildRawData`).
 - **A join's row** is a link of its role (`Joins`, `StoredJoins`: a feat's pools, a class level's grants, saves and skills), mapped by `joinRowsOf`, a new one after its from-entity's last.
-- **A property** is a field the kind's columns don't hold, or a link when its value names an entity (a class's bonus spell ability, a ruleset's skill point ability): `Properties` (`StoredProperties`), written as properties (`Property`), and read by the engine as each owner's typed stored values (`StorageEngine.valuesOf`, `StoredValues`).
+- **An owner's stored values** are the fields its kind's columns don't hold, and the links its fields read (a class's bonus spell ability, a ruleset's skill point ability): `Fields` (`StoredFields`) reads them as each owner's typed stored values (`findMany`, `StoredValues`, as the engine holds them: `StorageEngine.storedValuesOf`), writes what a save replaces (`update`, a `FieldsWrite`: each field and link role it names, its values in their order, a set's ordinals 0 to n-1, each in its field's column by its declaration), and copies a ruleset's Settings onto its fork (`createRulesetCopy`, one `INSERT … SELECT` a table). A ruleset's view reads them with its entities (`StorageEngine.valuesOf`).
 - **A character's row** is its own columns with its fields' values and its single links (its race), read in one query (`StoredCharacters`) and mapped by `characterRowOf`. Its links of a role (`CharacterLinks`: its scores, its languages) map by `characterLinkRowOf`, its advancements' picks by step (`Picks`: its feats, its skills) by `pickRowOf`, and its levels (`CharacterAdvancements`, its advancements with their hit points' picks) by `advancementRowOf`.
 - A subquery reaching its query's own table names the column in full (`toQualified`): Drizzle names a selected column bare, which a subquery's table of that column name would answer.
 
@@ -35,7 +35,7 @@ Rows whose disappearance leaves no observable history a user would expect to fin
 
 | Category | Tables |
 |---|---|
-| Customizations | `Modifiers`, `Requirements`; `Properties`, an entity's fields |
+| Customizations | `Modifiers`, `Requirements`; `Fields`, an entity's stored values |
 | Joins (a feat's pools, a class's skills, a class level's grants and saves) | `Joins` |
 | Character state | `CharacterAdvancements`, `Picks`, `CharacterInventory`, `CharacterLinks` |
 | Internal forking metadata | `EntitySnapshots` |

@@ -109,12 +109,7 @@ export default class EntityCopy {
 
     // 3. Copy customizations
     const customizations = await CustomizationCopies.read(tx, [this.entityId], this.entityType, this.sourceType);
-    const cust = customizations.get(this.entityId) ?? {
-      modifiers: [],
-      properties: [],
-      requirements: [],
-      modifierRequirements: [],
-    };
+    const cust = customizations.get(this.entityId)!;
     await CustomizationCopies.copy(tx, newEntity.id, this.entityType, cust, this.copiedIds);
 
     // 4. Copy relationships (aptitudes, klass levels, etc.), remapped as the row was
@@ -216,8 +211,9 @@ export default class EntityCopy {
   /**
    * Merge sibling data into the copy. When multiple extensions COW the same base entity, the "winner" is copied first.
    * This merges what its siblings add, by the rules a ruleset's view merges them by (`siblingMerge.ts`), so the child
-   * fork starts from the merged view: their modifiers (each with its requirements), properties and requirements against
-   * the winner's (`own`, which the copy holds), then their aptitude links. Each copied row's id is recorded.
+   * fork starts from the merged view: their modifiers (each with its requirements) and requirements against the
+   * winner's (`own`, which the copy holds), its stored values with theirs merged in, then their aptitude links. Each
+   * copied row's id is recorded.
    */
   private async mergeSiblings(
     tx: Db,
@@ -229,7 +225,7 @@ export default class EntityCopy {
     // The losers' own rows, by their stored ids
     const siblingCusts = await CustomizationCopies.read(tx, siblingIds, this.entityType, this.sourceType);
     const siblings = siblingIds.flatMap((id) => siblingCusts.get(id) ?? []);
-    const merged = Engine.copyOnWrite().mergeCustomizations(own, siblings, targetEntityId);
+    const merged = Engine.copyOnWrite().mergeCustomizations(own, siblings, targetEntityId, this.entityType);
     await CustomizationCopies.copy(tx, targetEntityId, this.entityType, merged, this.copiedIds);
     await this.mergeListLinks(tx, targetEntityId, siblingIds, cow);
   }

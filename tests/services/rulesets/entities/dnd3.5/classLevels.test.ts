@@ -16,7 +16,7 @@ import type {
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, toJson } from "@/server/errors/index.ts";
-import { Entities, EntitySnapshots, Joins, Modifiers, Properties, Requirements } from "@/server/repositories/index.ts";
+import { Entities, EntitySnapshots, Joins, Modifiers, Requirements } from "@/server/repositories/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import type { Session } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
@@ -27,6 +27,7 @@ import { addCharacterLevel } from "@/tests/support/dnd3.5/levels.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
 import { copyEntity, createTestRuleset } from "@/tests/support/rulesets.ts";
 import { findSeededRuleset, NIL_UUID } from "@/tests/support/seed.ts";
+import { findStoredValues } from "@/tests/support/storedValues.ts";
 import { CLASS_LEVEL_BAB, CLASS_LEVEL_SKILL_POINTS } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 type LevelBody = Parameters<typeof EntitiesService.createOwnedEntity>[4];
@@ -224,8 +225,8 @@ describe("EntitiesService: a class's levels", () => {
     });
   });
 
-  test("keeps the level's other properties when its BAB changes", async () => {
-    // Regression: saving BAB or skill points once replaced every property of the level.
+  test("keeps the level's other fields when its BAB changes", async () => {
+    // Regression: saving BAB or skill points once replaced every field of the level.
     const { session, ruleset, klass } = await setup();
     const level = await createLevel(session, ruleset.id, klass.id, 1);
 
@@ -234,8 +235,8 @@ describe("EntitiesService: a class's levels", () => {
         fields: { bab: 3 },
       }),
     ).toMatchObject({ bab: 3, skills: 4 });
-    const properties = await Properties.findMany(db, { entityIds: [level.id], entityType: "class_levels" });
-    expect(properties.map((p) => p.type).sort()).toEqual([CLASS_LEVEL_BAB, CLASS_LEVEL_SKILL_POINTS]);
+    const { fields } = await findStoredValues("class_levels", level.id);
+    expect(Object.keys(fields).sort()).toEqual([CLASS_LEVEL_BAB, CLASS_LEVEL_SKILL_POINTS]);
   });
 
   test("refuses an edit started from a stale level, unless it sends no token", async () => {
@@ -437,7 +438,7 @@ describe("EntitiesService: a class's levels", () => {
 
       expect(await Modifiers.findMany(db, { sourceIds: [level.id], sourceType: "class_levels" })).toEqual([]);
       expect(await Requirements.findMany(db, { entityIds: [level.id], entityType: "class_levels" })).toEqual([]);
-      expect(await Properties.findMany(db, { entityIds: [level.id], entityType: "class_levels" })).toEqual([]);
+      expect(await findStoredValues("class_levels", level.id)).toEqual({ fields: {}, links: {} });
     });
 
     test("is refused while a character has taken it", async () => {

@@ -32,7 +32,6 @@ import {
   Modifiers,
   Picks,
   Players,
-  Properties,
   Requirements,
   Rulesets,
   StarredRulesets,
@@ -49,8 +48,9 @@ import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
 import { addCharacterLevel, createTestKlassLevel } from "@/tests/support/dnd3.5/levels.ts";
 import { copyEntity, createTestRuleset } from "@/tests/support/rulesets.ts";
 import { findSeededRuleset, getSeedCtx, NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
+import { findStoredValues, writeStoredValues } from "@/tests/support/storedValues.ts";
 import { createTestUser } from "@/tests/support/users.ts";
-import { FEAT_FAMILY, RULESET_SKILL_POINT_ABILITY_ID } from "@/vocabulary/dnd3.5/properties/index.ts";
+import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 type RulesetValues = Partial<InferInsertModel<typeof rulesetsInRules>>;
 const firstPage = { limit: 100, page: 1 };
@@ -238,9 +238,7 @@ describe("RulesetsService", () => {
         name: "Intelligence",
         rulesetId: parent.id,
       });
-      await Properties.createMany(db, [
-        { entityId: parent.id, entityType: "rulesets", type: RULESET_SKILL_POINT_ABILITY_ID, value: intelligence.id },
-      ]);
+      await writeStoredValues("rulesets", parent.id, [], { skillPointAbility: intelligence.id });
 
       const created = await fork(session, parent, { name: "My Fork", private: true });
       expect(created).toMatchObject({
@@ -264,9 +262,10 @@ describe("RulesetsService", () => {
         featsAptitudesInRules: [{ aptitudeId: aptitude.id }],
       });
       // Ruleset-wide settings are copied as they are.
-      expect(await Properties.findMany(db, { entityIds: [created.id], entityType: "rulesets" })).toMatchObject([
-        { type: RULESET_SKILL_POINT_ABILITY_ID, value: intelligence.id },
-      ]);
+      expect(await findStoredValues("rulesets", created.id)).toEqual({
+        fields: {},
+        links: { skillPointAbility: intelligence.id },
+      });
 
       expect((await fork(session, parent, { description: "Mine" })).description).toBe("Mine");
     });
@@ -318,13 +317,13 @@ describe("RulesetsService", () => {
       const { user, session } = await createTestUser();
       const ruleset = await createTestRuleset(user.id, { status: "Published" });
       const { feat, race } = await addPlayableContent(ruleset.id);
-      await Properties.createMany(db, [{ entityId: feat.id, entityType: "feats", type: FEAT_FAMILY, value: "combat" }]);
+      await writeStoredValues("feats", feat.id, [[FEAT_FAMILY, "combat"]]);
       await createTestCampaign(user.id, ruleset.id);
       await createTestCharacter(user.id, { rulesetId: ruleset.id, raceId: race.id });
 
       expect(await RulesetsService.archiveRuleset(session, ruleset.id)).toMatchObject({ status: "Archived" });
       expect(await Entities.findOne<Feat>(db, { entityType: "feats", id: feat.id })).toMatchObject({ deletedAt: null });
-      expect(await Properties.findMany(db, { entityIds: [feat.id], entityType: "feats" })).toHaveLength(1);
+      expect(await findStoredValues("feats", feat.id)).toEqual({ fields: { [FEAT_FAMILY]: ["combat"] }, links: {} });
 
       expect(await RulesetsService.unarchiveRuleset(session, ruleset.id)).toMatchObject({ status: "Draft" });
     });
@@ -548,9 +547,7 @@ describe("RulesetsService", () => {
           valueType: "number",
           operator: "add",
         });
-        await Properties.createMany(db, [
-          { entityId: copy.id, entityType: "feats", type: FEAT_FAMILY, value: "combat" },
-        ]);
+        await writeStoredValues("feats", copy.id, [[FEAT_FAMILY, "combat"]]);
         await Requirements.create(db, { entityId: copy.id, entityType: "feats", level: "1", chainingOperator: "and" });
 
         await RulesetChangesService.revertOverride(session, fork.id, "feats", modified.id);
@@ -561,7 +558,7 @@ describe("RulesetsService", () => {
           description: null,
         });
         expect(await Modifiers.findMany(db, { sourceIds: [copy.id], sourceType: "feats" })).toEqual([]);
-        expect(await Properties.findMany(db, { entityIds: [copy.id], entityType: "feats" })).toEqual([]);
+        expect(await findStoredValues("feats", copy.id)).toEqual({ fields: {}, links: {} });
         expect(await Requirements.findMany(db, { entityIds: [copy.id], entityType: "feats" })).toEqual([]);
         expect(
           await Joins.findMany<{ aptitudeId: string; featId: string }>(db, {

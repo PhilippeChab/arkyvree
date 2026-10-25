@@ -3,11 +3,12 @@ import { describe, expect, test } from "bun:test";
 import { and, eq, isNull } from "drizzle-orm";
 
 import { entitiesInRules } from "@/drizzle/schema.ts";
-import { OwnerValues } from "@/engine/core/fields/index.ts";
+import Field from "@/engine/core/fields/Field.ts";
+import { OwnerValues, type StoredValues } from "@/engine/core/fields/index.ts";
 import { ITEM_FIELDS } from "@/engine/rulesets/dnd3.5/entities/items/fields.ts";
 import type { Item } from "@/engine/rulesets/dnd3.5/index.ts";
 import { db } from "@/server/database/index.ts";
-import { Entities, Properties } from "@/server/repositories/index.ts";
+import { Entities, Fields } from "@/server/repositories/index.ts";
 import { storedValues } from "@/tests/support/storedValues.ts";
 import {
   DAMAGE_TYPE,
@@ -16,9 +17,11 @@ import {
   WEAPON_RANGE,
 } from "@/vocabulary/dnd3.5/properties/index.ts";
 
-/** Rows as a sorted list of `type=value`: a multiset. */
-function multiset(rows: { type: string; value: string }[]) {
-  return rows.map((row) => `${row.type}=${row.value}`).toSorted();
+/** Stored values as a sorted list of `field=value`: a multiset. */
+function multiset({ fields }: StoredValues) {
+  return Object.entries(fields)
+    .flatMap(([field, values]) => values.map((value) => `${field}=${value}`))
+    .toSorted();
 }
 
 describe("An item's fields", () => {
@@ -39,7 +42,7 @@ describe("An item's fields", () => {
     expect(fields.weapon.criticalRange).toBeNull();
   });
 
-  test("of every seeded item rebuild its rows: its own, and merged with its template's", async () => {
+  test("of every seeded item rebuild its stored values: its own, and merged with its template's", async () => {
     const itemIds = await db
       .select({ id: entitiesInRules.id })
       .from(entitiesInRules)
@@ -48,23 +51,20 @@ describe("An item's fields", () => {
     const sources = new Map(
       (await Entities.findMany<Item>(db, { entityType: "items", ids })).map((item) => [item.id, item.sourceItemId]),
     );
-    const rows = (await Properties.findMany(db, { entityIds: ids, entityType: "items" })).map((property) => ({
-      itemId: property.entityId,
-      sourceItemId: sources.get(property.entityId) ?? null,
-      type: property.type,
-      value: property.value,
-    }));
-    const rowsByItem = Map.groupBy(rows, (row) => row.itemId);
-    expect(rows.every((row) => ITEM_FIELDS.types.includes(row.type))).toBe(true);
-    expect(rowsByItem.size).toBeGreaterThan(400);
+    const values = await Fields.findMany(db, { ownerIds: ids, ownerType: "items" });
+    const held = [...values].filter(([, stored]) => Object.keys(stored.fields).length > 0);
+    const declared = new Set(
+      Field.leavesOf(ITEM_FIELDS.fields).flatMap((leaf) => (leaf.kind === "ref" ? [] : [leaf.field])),
+    );
+    expect(held.every(([, stored]) => Object.keys(stored.fields).every((field) => declared.has(field)))).toBe(true);
+    expect(held.length).toBeGreaterThan(400);
 
     const mismatches: string[] = [];
-    for (const [itemId, own] of rowsByItem) {
-      const ownTypes = new Set(own.map((row) => row.type));
-      const sourceItemId = own[0].sourceItemId;
-      const template = sourceItemId ? (rowsByItem.get(sourceItemId) ?? []).filter((r) => !ownTypes.has(r.type)) : [];
-      for (const stored of [own, [...template, ...own]]) {
-        const rebuilt = ITEM_FIELDS.toProperties(ITEM_FIELDS.read(ITEM_FIELDS.storedOf(stored)));
+    for (const [itemId, own] of held) {
+      const sourceItemId = sources.get(itemId);
+      const template = sourceItemId ? values.get(sourceItemId) : undefined;
+      for (const stored of [own, template ? OwnerValues.inherit(own, template) : own]) {
+        const rebuilt = OwnerValues.written(ITEM_FIELDS.write(ITEM_FIELDS.read(stored)));
         if (multiset(rebuilt).join("|") !== multiset(stored).join("|")) mismatches.push(itemId);
       }
     }

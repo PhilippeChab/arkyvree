@@ -30,7 +30,7 @@ const OWNER_FIELDS = new DeclaredFields(
       set: { description: "Its set", field: "SET", kind: "list", label: "Set", values: ["c", "b", "a"] },
       one: { description: "Its one", field: "ONE", kind: "text", label: "One" },
       extra: { description: "Its extra", field: "EXTRA", kind: "text", label: "Extra" },
-      ally: { description: "Its ally", field: "ALLY", kind: "ref", label: "Ally", references: "items", role: "ally" },
+      ally: { description: "Its ally", kind: "ref", label: "Ally", references: "items", role: "ally" },
     },
   },
   {

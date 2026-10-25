@@ -36,7 +36,7 @@ export function SeedsFeats<B extends Constructor<Dnd35ContentSeeder>>(Base: B) {
         requirementsInCustomization,
         feats.flatMap((f) => this.requirementRows(ids[f.name], "feats", f.requirements)),
       );
-      await this.insertProperties(feats.flatMap((f) => this.propertyRows(ids[f.name], "feats", f.properties)));
+      await this.writeFields(feats.map((f) => this.propertySeedsWrite(ids[f.name], "feats", f.properties)));
 
       await this.insertModifiers(
         "feats",

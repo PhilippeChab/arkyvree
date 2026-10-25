@@ -6,7 +6,7 @@ import type { LevelAbilityIncrease } from "@/engine/rulesets/dnd3.5/index.ts";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import { db } from "@/server/database/index.ts";
 import { ForbiddenError } from "@/server/errors/index.ts";
-import { Characters, Picks, Properties } from "@/server/repositories/index.ts";
+import { Characters, Picks } from "@/server/repositories/index.ts";
 import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
 import { RulesetSettingsService } from "@/server/services/rulesets/settings/index.ts";
 import { activityTypes } from "@/tests/support/activities.ts";
@@ -15,8 +15,8 @@ import { levelEditPlan, levelUpPlan, savedPicksOf } from "@/tests/support/dnd3.5
 import { getPlanAnswer, stepAnswerOf } from "@/tests/support/levels.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
+import { findStoredValues } from "@/tests/support/storedValues.ts";
 import { createTestUser, makeSession } from "@/tests/support/users.ts";
-import { RULESET_SKILL_POINT_ABILITY_ID } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 /** The core rules' feats: one every 3 levels, and one more at the first. */
 const CORE_FEATS = { every: 3, extra: [{ amount: 1, level: 1 }] };
@@ -100,10 +100,7 @@ describe("RulesetSettingsService", () => {
     expect(await fighterBudget(fork.id)).toBe(28);
 
     // Its own row in place of the copy it held; its source's as they were
-    const own = await Properties.findMany(db, { entityIds: [fork.id], entityType: "rulesets" });
-    expect(own.filter(({ type }) => type === RULESET_SKILL_POINT_ABILITY_ID)).toMatchObject([
-      { value: abilityMap["Wisdom"] },
-    ]);
+    expect((await findStoredValues("rulesets", fork.id)).links).toEqual({ skillPointAbility: abilityMap["Wisdom"] });
     expect(await RulesetSettingsService.getSettings(fork.rulesetId!)).toMatchObject({
       fields: { skillPointAbilityId: abilityMap["Intelligence"] },
     });

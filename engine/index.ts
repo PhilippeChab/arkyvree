@@ -11,7 +11,7 @@ export type { Accepted, EntityKinds } from "./api/Modules.ts";
 export type { ProgressionForm } from "./api/RulesetEngine.ts";
 export type { CowData, CowRows, RulesetSources } from "./core/cow/index.ts";
 export type { EntityAction } from "./core/entities/index.ts";
-export type { EntityFieldValues, EntityForm } from "./core/fields/index.ts";
+export type { EntityFieldValues, EntityForm, FieldsWrite, StoredValues } from "./core/fields/index.ts";
 export type {
   CharacterAdvancement,
   CharacterCard,

@@ -1,19 +1,12 @@
 import { expect, test } from "bun:test";
 
 import type { StoredValues } from "@/engine/core/fields/index.ts";
+import type { FieldValue } from "@/engine/core/module/index.ts";
 import type { Aptitude, Feat } from "@/engine/rulesets/dnd3.5/index.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import {
-  Entities,
-  EntitySnapshots,
-  Joins,
-  Modifiers,
-  Properties,
-  Requirements,
-  Rulesets,
-} from "@/server/repositories/index.ts";
+import { Entities, EntitySnapshots, Joins, Modifiers, Requirements, Rulesets } from "@/server/repositories/index.ts";
 import { RulesetChangesService } from "@/server/services/rulesets/changes/index.ts";
 import { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";
 import { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";
@@ -28,6 +21,7 @@ import {
   type Described,
   invalidateTestRulesets,
 } from "@/tests/support/rulesets.ts";
+import { findStoredValues, writeStoredValues } from "@/tests/support/storedValues.ts";
 import { makeSession } from "@/tests/support/users.ts";
 import { FEAT_FAMILY, FEAT_WEAPON_FINESSE, SPELL_SUBSCHOOL } from "@/vocabulary/dnd3.5/properties/index.ts";
 
@@ -35,11 +29,11 @@ type EntityType = "feats" | "spells";
 type Pairing = "snapshot" | "name";
 
 /**
- * A single-valued property the seeded Toughness and Magic Missile hold none of, and its value in each extension that
+ * A single-valued field the seeded Toughness and Magic Missile hold none of, and its value in each extension that
  * gives it one: the copy that wins it shows the first of them in display order.
  */
-const PRECEDENCE: Record<EntityType, { type: string; valueOf: (index: number) => string }> = {
-  feats: { type: FEAT_WEAPON_FINESSE, valueOf: (index) => String(index === 1) },
+const PRECEDENCE: Record<EntityType, { type: string; valueOf: (index: number) => FieldValue }> = {
+  feats: { type: FEAT_WEAPON_FINESSE, valueOf: (index) => index === 1 },
   spells: { type: SPELL_SUBSCHOOL, valueOf: (index) => `Extension ${index}` },
 };
 
@@ -320,9 +314,9 @@ test("copying sibling modifiers and their requirements stays batched", async () 
 test("installing another extension preserves the local override and exposes unrelated content", async () => {
   const { session, host, winnerId, loser, loserRulesetId, rulesetIds } = await setup("feats", "snapshot");
   // A family of the losing copy's own: a set, which a winner's view unions with its siblings'
-  const family = { type: FEAT_FAMILY, value: "New Extension" };
-  await Properties.createMany(db, [{ ...family, entityId: loser.id, entityType: "feats" }]);
-  const holds = ({ fields }: StoredValues) => (fields[family.type] ?? []).some((value) => value === family.value);
+  const family = "New Extension";
+  await writeStoredValues("feats", loser.id, [[FEAT_FAMILY, family]]);
+  const holds = ({ fields }: StoredValues) => (fields[FEAT_FAMILY] ?? []).includes(family);
   invalidateTestRulesets(...rulesetIds);
   await RulesetExtensionsService.unsubscribeExtension(session, host.id, loserRulesetId);
   const local = await EntitiesService.updateEntity(session, host.id, "feats", winnerId, {
@@ -352,9 +346,7 @@ for (const entityType of ["feats", "spells"] as const) {
       const precedence = PRECEDENCE[entityType];
       for (const [index, { copy }] of extensions.entries()) {
         if (index === 0) continue;
-        await Properties.createMany(db, [
-          { entityId: copy.id, entityType, type: precedence.type, value: precedence.valueOf(index) },
-        ]);
+        await writeStoredValues(entityType, copy.id, [[precedence.type, precedence.valueOf(index)]]);
         const [modifier] = await Modifiers.create(db, {
           ...STRENGTH_BONUS,
           sourceId: copy.id,
@@ -381,13 +373,12 @@ for (const entityType of ["feats", "spells"] as const) {
         invalidateTestRulesets(fork.id, ...rulesetIds);
         const winnerId = extensions[0].copy.id;
         const visible = await withRulesetScope(db, fork.id, async ({ rulesetData }) => ({
-          property: String(rulesetData.valuesOf(winnerId).fields[precedence.type]![0]),
+          value: rulesetData.valuesOf(winnerId).fields[precedence.type]![0],
           modifier: rulesetData.modifiersBySource.get(winnerId)!.find((m) => m.target === STRENGTH_BONUS.target)!,
         }));
-        expect(visible.property).toBe(precedence.valueOf(order[1]));
-        const sourceProperties = () =>
-          Properties.findMany(db, { entityIds: [extensions[order[1]].copy.id], entityType, type: precedence.type });
-        const shownProperties = await sourceProperties();
+        expect(visible.value).toBe(precedence.valueOf(order[1]));
+        const sourceValues = () => findStoredValues(entityType, extensions[order[1]].copy.id);
+        const shownValues = await sourceValues();
         const sourceRequirements = await Requirements.findMany(db, {
           entityIds: [visible.modifier.id],
           entityType: "modifiers",
@@ -409,13 +400,10 @@ for (const entityType of ["feats", "spells"] as const) {
         expect(await Requirements.findMany(db, { entityIds: [visible.modifier.id], entityType: "modifiers" })).toEqual(
           sourceRequirements,
         );
-        // The entity copied with its modifier holds the property the view showed, its source's left as it was
+        // The entity copied with its modifier holds the value the view showed, its source's left as it was
         const { sourceId: copyId } = (await Modifiers.findOne(db, { id: added.resolvedEntityId }))!;
-        const copiedProperties = await Properties.findMany(db, { entityIds: [copyId], entityType });
-        expect(copiedProperties.filter((p) => p.type === precedence.type).map((p) => p.value)).toEqual([
-          visible.property,
-        ]);
-        expect(await sourceProperties()).toEqual(shownProperties);
+        expect((await findStoredValues(entityType, copyId)).fields[precedence.type]).toEqual([visible.value]);
+        expect(await sourceValues()).toEqual(shownValues);
       }
     });
   }

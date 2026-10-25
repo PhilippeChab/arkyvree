@@ -6,14 +6,9 @@ import { entitiesInRules } from "@/drizzle/schema.ts";
 import { OwnerValues } from "@/engine/core/fields/index.ts";
 import { SPELL_FIELDS } from "@/engine/rulesets/dnd3.5/entities/spells/fields.ts";
 import { db } from "@/server/database/index.ts";
-import { Properties } from "@/server/repositories/index.ts";
-import { storedValues } from "@/tests/support/storedValues.ts";
+import { Fields } from "@/server/repositories/index.ts";
+import { listStoredValues, storedValues } from "@/tests/support/storedValues.ts";
 import { SPELL_COMPONENT, SPELL_DESCRIPTOR, SPELL_SCHOOL, SPELL_TARGET } from "@/vocabulary/dnd3.5/properties/index.ts";
-
-/** Rows as a sorted list of `type=value`. */
-function multiset(rows: { type: string; value: string }[]) {
-  return rows.map((row) => `${row.type}=${row.value}`).toSorted();
-}
 
 describe("A spell's fields", () => {
   test("are none without their values, and as stored with them: each its first value, the lists in order", () => {
@@ -39,44 +34,31 @@ describe("A spell's fields", () => {
     });
   });
 
-  test("are kept in a property per field with a value, none for an empty one, and none at all without a school", () => {
-    expect(SPELL_FIELDS.toProperties({ ...SPELL_FIELDS.defaults, duration: "1 round", target: "You" })).toEqual([]);
+  test("are kept in a value per field with a value, none for an empty one, and none at all without a school", () => {
+    const written = (values: typeof SPELL_FIELDS.defaults) => OwnerValues.written(SPELL_FIELDS.write(values));
+    expect(written({ ...SPELL_FIELDS.defaults, duration: "1 round", target: "You" })).toEqual(OwnerValues.NONE);
     expect(
-      multiset(
-        SPELL_FIELDS.toProperties({
-          ...SPELL_FIELDS.defaults,
-          components: ["V"],
-          duration: "",
-          school: "Evocation",
-          target: "You",
-        }),
+      listStoredValues(
+        written({ ...SPELL_FIELDS.defaults, components: ["V"], duration: "", school: "Evocation", target: "You" }),
       ),
     ).toEqual([`${SPELL_COMPONENT}=V`, `${SPELL_SCHOOL}=Evocation`, `${SPELL_TARGET}=You`]);
   });
 
-  test("of every seeded spell rebuild its rows", async () => {
+  test("of every seeded spell rebuild its stored values", async () => {
     const spells = await db
       .select({ id: entitiesInRules.id, name: entitiesInRules.name })
       .from(entitiesInRules)
       .where(eq(entitiesInRules.type, "spells"));
     const names = new Map(spells.map((spell) => [spell.id, spell.name]));
-    const rows = (await Properties.findMany(db, { entityIds: [...names.keys()], entityType: "spells" })).map(
-      (property) => ({
-        name: names.get(property.entityId),
-        spellId: property.entityId,
-        type: property.type,
-        value: property.value,
-      }),
-    );
-    const rowsBySpell = Map.groupBy(rows, (row) => row.spellId);
-    expect(rows.every((row) => SPELL_FIELDS.types.includes(row.type))).toBe(true);
-    expect(rowsBySpell.size).toBeGreaterThan(2000);
+    const values = await Fields.findMany(db, { ownerIds: [...names.keys()], ownerType: "spells" });
+    const held = [...values].filter(([, stored]) => Object.keys(stored.fields).length > 0);
+    expect(held.length).toBeGreaterThan(2000);
 
-    const mismatches = [...rowsBySpell].filter(
+    const mismatches = held.filter(
       ([, stored]) =>
-        multiset(SPELL_FIELDS.toProperties(SPELL_FIELDS.read(SPELL_FIELDS.storedOf(stored)))).join("|") !==
-        multiset(stored).join("|"),
+        listStoredValues(OwnerValues.written(SPELL_FIELDS.write(SPELL_FIELDS.read(stored)))).join("|") !==
+        listStoredValues(stored).join("|"),
     );
-    expect([...new Set(mismatches.map(([, stored]) => stored[0].name))]).toEqual([]);
+    expect([...new Set(mismatches.map(([spellId]) => names.get(spellId)))]).toEqual([]);
   });
 });

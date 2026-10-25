@@ -1,9 +1,9 @@
 import { eq } from "drizzle-orm";
 
 import { inventoryInCharacter } from "@/drizzle/schema.ts";
-import type { ViewEntities } from "@/engine/index.ts";
+import type { FieldValue, ViewEntities } from "@/engine/index.ts";
 import { db } from "@/server/database/index.ts";
-import { CharacterInventory, Entities, Properties } from "@/server/repositories/index.ts";
+import { CharacterInventory, Entities, Fields } from "@/server/repositories/index.ts";
 import type { ItemLocation } from "@/shared/enums.ts";
 import type { Character } from "@/shared/relations.ts";
 
@@ -39,19 +39,14 @@ export async function carry(character: Pick<Character, "id">, carried: Carried[]
 }
 
 /**
- * A new item of the seeded ruleset (or `values.rulesetId`), with these properties. Its ruleset's cached rules are
- * dropped, so what it reads next sees the item.
+ * A new item of the seeded ruleset (or `values.rulesetId`), with these stored fields' values (`fields`, a value each,
+ * by field). Its ruleset's cached rules are dropped, so what it reads next sees the item.
  */
-export async function createTestItem(values: Partial<Item> = {}, properties: Record<string, string> = {}) {
+export async function createTestItem(values: Partial<Item> = {}, fields: Record<string, FieldValue> = {}) {
   const rulesetId = values.rulesetId ?? (await getSeedCtx()).rulesetId;
   const [item] = await Entities.create<Item>(db, "items", { name: `Test Item ${uniqueId()}`, ...values, rulesetId });
-  const entries = Object.entries(properties);
-  if (entries.length > 0) {
-    await Properties.createMany(
-      db,
-      entries.map(([type, value]) => ({ entityId: item.id, entityType: "items", type, value })),
-    );
-  }
+  const written = Object.fromEntries(Object.entries(fields).map(([field, value]) => [field, [value]]));
+  await Fields.update(db, [{ id: item.id, type: "items", values: { fields: written, links: {} } }]);
   invalidateSeededRuleset(rulesetId);
   return item;
 }

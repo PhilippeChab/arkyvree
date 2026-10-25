@@ -26,7 +26,6 @@ import {
 import { db } from "@/server/database/index.ts";
 import { Entities, Joins } from "@/server/repositories/index.ts";
 import {
-  CLASS_BONUS_SPELL_ABILITY_ID,
   CLASS_CASTER_TYPE,
   CLASS_LEVEL_BAB,
   CLASS_LEVEL_SKILL_POINTS,
@@ -100,8 +99,8 @@ function klass(name: string, fields: Partial<ClassSeed> = {}): ClassSeed {
   };
 }
 
-/** A level's properties: its base attack and skill points. */
-function levelProperties(bab: number, skillPoints: number) {
+/** A level's fields: its base attack and skill points. */
+function levelFields(bab: number, skillPoints: number) {
   return [`${CLASS_LEVEL_BAB} ${bab}`, `${CLASS_LEVEL_SKILL_POINTS} ${skillPoints}`];
 }
 
@@ -133,7 +132,7 @@ async function aptitudesOfFeat(ctx: SeedContext, featId: string) {
     .sort();
 }
 
-/** Each level's properties (base attack, skill points), saves, modifiers, requirements and granted feats. */
+/** Each level's fields (base attack, skill points), saves, modifiers, requirements and granted feats. */
 async function levelsOf(ctx: SeedContext, levelIds: Record<number, string>) {
   const saves = namesOf(ctx.saveMap);
   const feats = namesOf(ctx.featMap);
@@ -143,10 +142,10 @@ async function levelsOf(ctx: SeedContext, levelIds: Record<number, string>) {
   const granted = await Joins.findMany<KlassLevelFeat>(db, { join: "class_level_feats", fromIds: ids });
   const levels = [];
   for (const [level, id] of Object.entries(levelIds)) {
-    const { properties, modifiers, requirements } = await describeCustomizations(id);
+    const { fields, modifiers, requirements } = await describeCustomizations(id);
     levels.push({
       level: Number(level),
-      properties,
+      fields,
       saves: Object.fromEntries(levelSaves.filter((s) => s.klassLevelId === id).map((s) => [saves[s.saveId], s.base])),
       modifiers,
       requirements,
@@ -282,12 +281,12 @@ describe("Seeding", () => {
           "combat.ac.dodge add 1 number",
           "combat.ac.dodge add 4 number\n  if 1 or\n  if 1.1 feats.mobility.possessed equal true\n  if 1.2 combat.bab greater_than_or_equal 6",
         ],
-        properties: ["FEAT_FAMILY Dodge"],
+        fields: ["FEAT_FAMILY Dodge"],
       });
       expect(await describeCustomizations(ctx.featMap["Test Toughness"])).toEqual({
         requirements: [],
         modifiers: [],
-        properties: [],
+        fields: [],
       });
     });
 
@@ -351,10 +350,7 @@ describe("Seeding", () => {
       expect(await describeCustomizations(klassId)).toEqual({
         requirements: [],
         modifiers: [],
-        properties: [
-          `${CLASS_BONUS_SPELL_ABILITY_ID} ${ctx.abilityMap["Charisma"]}`,
-          `${CLASS_CASTER_TYPE} Arcane`,
-        ].sort(),
+        fields: [`bonusSpellAbility ${ctx.abilityMap["Charisma"]}`, `${CLASS_CASTER_TYPE} Arcane`].sort(),
       });
       const skills = namesOf(ctx.skillMap);
       expect(
@@ -368,7 +364,7 @@ describe("Seeding", () => {
       expect(await levelsOf(ctx, levelIds)).toEqual([
         {
           level: 1,
-          properties: levelProperties(0, 4),
+          fields: levelFields(0, 4),
           saves: { Fortitude: 2, Reflex: 0, Will: 2 },
           modifiers: [
             "aptitudes.testbonusfeat.allowed add 1 number",
@@ -386,7 +382,7 @@ describe("Seeding", () => {
         },
         {
           level: 2,
-          properties: levelProperties(1, 4),
+          fields: levelFields(1, 4),
           saves: { Fortitude: 3, Reflex: 0, Will: 3 },
           modifiers: [
             "aptitudes.bonusarcanecasterlevel.allowed add 1 number",
@@ -401,7 +397,7 @@ describe("Seeding", () => {
         },
         {
           level: 3,
-          properties: levelProperties(2, 4),
+          fields: levelFields(2, 4),
           saves: { Fortitude: 3, Reflex: 1, Will: 3 },
           modifiers: [
             "aptitudes.testbonusfeat.allowed add 1 number",
@@ -427,21 +423,21 @@ describe("Seeding", () => {
         }),
       );
       expect((await rowsOf<Klass>("classes", { id: klassId }))[0].kind).toBe("npc");
-      expect(await describeCustomizations(klassId)).toEqual({ requirements: [], modifiers: [], properties: [] });
+      expect(await describeCustomizations(klassId)).toEqual({ requirements: [], modifiers: [], fields: [] });
       const levels = await levelsOf(ctx, levelIds);
-      expect(levels.map(({ level, properties, modifiers }) => ({ level, properties, modifiers }))).toEqual([
+      expect(levels.map(({ level, fields, modifiers }) => ({ level, fields, modifiers }))).toEqual([
         {
           level: 1,
-          properties: levelProperties(1, 2),
+          fields: levelFields(1, 2),
           modifiers: [
             "aptitudes.testhealerspells.1.allowed set -1 number",
             "aptitudes.testhealerspells.1.uses add 1 number",
           ],
         },
-        { level: 2, properties: levelProperties(2, 2), modifiers: ["aptitudes.testhealerspells.1.uses add 1 number"] },
+        { level: 2, fields: levelFields(2, 2), modifiers: ["aptitudes.testhealerspells.1.uses add 1 number"] },
         {
           level: 3,
-          properties: levelProperties(3, 2),
+          fields: levelFields(3, 2),
           modifiers: [
             "aptitudes.testhealerspells.2.allowed set -1 number",
             "aptitudes.testhealerspells.2.uses add 1 number",
@@ -514,12 +510,12 @@ describe("Seeding", () => {
     expect(await describeCustomizations(templates["Test Blade"])).toEqual({
       requirements: ["1 feats.martialweaponproficiency.possessed equal true"],
       modifiers: [],
-      properties: ["WEAPON_BASE_DAMAGE 1d8"],
+      fields: ["WEAPON_BASE_DAMAGE 1d8"],
     });
     expect(await describeCustomizations(made["Test Flaming Blade"])).toEqual({
       requirements: [],
       modifiers: ["weapon.tohit.misc add 1 number"],
-      properties: [],
+      fields: [],
     });
   });
 
@@ -564,7 +560,7 @@ describe("Seeding", () => {
       "Test Divine Spells 4",
     ]);
     expect(await spellListsOf(ctx, ctx.spellMap["Test Charm"])).toEqual(["Test Arcane Spells 1"]);
-    expect((await describeCustomizations(ctx.spellMap["Test Bolt"])).properties).toEqual([`${SPELL_SCHOOL} Evocation`]);
+    expect((await describeCustomizations(ctx.spellMap["Test Bolt"])).fields).toEqual([`${SPELL_SCHOOL} Evocation`]);
 
     await seeder.linkSpell(ctx.spellMap["Test Charm"], [
       { aptitudeId: ctx.aptMap["Test Arcane Spells"], level: 5 },
@@ -636,7 +632,7 @@ describe("Seeding", () => {
         "aptitudes.testluckdomainspells.joinsclasslist set true boolean",
         "skills.spot.innate set true boolean",
       ].sort(),
-      properties: [],
+      fields: [],
     });
     expect(await spellListsOf(ctx, ctx.spellMap["Test Bless"])).toEqual(["Test Luck Domain Spells 1"]);
     expect(await spellListsOf(ctx, ctx.spellMap["Test Aid"])).toEqual(["Test Luck Domain Spells 2"]);
@@ -790,7 +786,7 @@ describe("Seeding", () => {
           "2 feats.dodge.possessed equal true",
         ],
         modifiers: before.modifiers,
-        properties: before.properties,
+        fields: before.fields,
       });
       expect((await describeCustomizations(ctx.featMap["Test Single"])).requirements).toEqual([
         "1 or",
@@ -846,7 +842,7 @@ describe("Seeding", () => {
       const [bolt] = await rowsOf<Spell>("spells", { id: boltId });
       expect(bolt).toMatchObject({ rulesetId: ctx.rulesetId, name: "Test Bolt", saveEffect: "See text" });
       expect(await spellListsOf(ctx, boltId)).toEqual(["Arcane Spells 2", "Wizard Spells 3"]);
-      expect((await describeCustomizations(boltId)).properties).toEqual([`${SPELL_SCHOOL} Evocation`]);
+      expect((await describeCustomizations(boltId)).fields).toEqual([`${SPELL_SCHOOL} Evocation`]);
       // Its own spell keeps the inherited one's lists, and isn't copied
       expect(ctx.spellMap["Test Ward"]).toBe(ownWard);
       expect(await spellListsOf(ctx, ownWard)).toEqual(["Arcane Spells 2", "Cleric Spells 1"]);

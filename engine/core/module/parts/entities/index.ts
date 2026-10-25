@@ -17,5 +17,4 @@ export type {
   OwnedEditPlan,
   PlanOwner,
   ProgressionPlan,
-  PropertyValue,
 } from "./plans.ts";

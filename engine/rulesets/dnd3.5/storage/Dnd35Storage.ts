@@ -108,10 +108,6 @@ export const DND35_STORAGE: StorageDeclaration = {
       columns: { klassLevelId: "from", saveId: "to", base: "amount" },
     },
   },
-  linkedProperties: {
-    entities: { classes: { CLASS_BONUS_SPELL_ABILITY_ID: "bonusSpellAbility" } },
-    rulesets: { RULESET_SKILL_POINT_ABILITY_ID: "skillPointAbility" },
-  },
   character: {
     columns: {
       raceId: { kind: "link", role: "race" },

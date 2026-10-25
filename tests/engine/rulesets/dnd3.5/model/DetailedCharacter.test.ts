@@ -18,6 +18,7 @@ import {
 } from "@/database/seeders/dnd3.5/characters/seedCharacter.ts";
 import { RulesetSeeder } from "@/database/seeders/dnd3.5/RulesetSeeder.ts";
 import { charactersInCharacter, modifiersInCustomization, requirementsInCustomization } from "@/drizzle/schema.ts";
+import type { FieldValue } from "@/engine/core/module/index.ts";
 import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
 import RequirementEvaluator from "@/engine/core/requirements/RequirementEvaluator.ts";
 import CharacterResponse from "@/engine/rulesets/dnd3.5/characters/description/CharacterResponse.ts";
@@ -34,10 +35,10 @@ import {
   CharacterLinks,
   Characters,
   Entities,
+  Fields,
   Joins,
   Modifiers,
   Picks,
-  Properties,
   Requirements,
 } from "@/server/repositories/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
@@ -53,6 +54,7 @@ import { addCharacterLevel, createTestKlassLevel, findKlassLevel } from "@/tests
 import { type Carried, carry, createTestItem } from "@/tests/support/items.ts";
 import { createTestRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
 import { findSeededCharacter, findSeededRuleset, getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
+import { writeStoredValues } from "@/tests/support/storedValues.ts";
 import { makeSession } from "@/tests/support/users.ts";
 import {
   ARMOR_AC_BONUS,
@@ -264,7 +266,7 @@ async function mightyBow(rating: number) {
       slot: "Two Handed",
       sourceItemId: (await getSeedCtx()).itemMap["Composite Longbow"],
     },
-    { [WEAPON_MIGHTY]: String(rating) },
+    { [WEAPON_MIGHTY]: rating },
   );
 }
 
@@ -817,8 +819,8 @@ describe("DetailedCharacter", () => {
           [WEAPON_PROFICIENCY]: "Martial",
           [WEAPON_FAMILY]: "Sword",
           [WEAPON_BASE_DAMAGE]: "1d8",
-          [WEAPON_CRITICAL_RANGE]: "2",
-          [WEAPON_CRITICAL_MULTIPLIER]: "2",
+          [WEAPON_CRITICAL_RANGE]: 2,
+          [WEAPON_CRITICAL_MULTIPLIER]: 2,
           [DAMAGE_TYPE]: "Slashing",
           [WEAPON_SIZE]: "Medium",
           [WEAPON_TYPE]: "Longsword",
@@ -838,8 +840,8 @@ describe("DetailedCharacter", () => {
           [WEAPON_PROFICIENCY]: "Martial",
           [WEAPON_FAMILY]: "Sword",
           [WEAPON_BASE_DAMAGE]: "1d8",
-          [WEAPON_CRITICAL_RANGE]: "2",
-          [WEAPON_CRITICAL_MULTIPLIER]: "2",
+          [WEAPON_CRITICAL_RANGE]: 2,
+          [WEAPON_CRITICAL_MULTIPLIER]: 2,
           [DAMAGE_TYPE]: "Slashing",
           [WEAPON_SIZE]: "Medium",
           [WEAPON_TYPE]: "Longsword",
@@ -1019,21 +1021,21 @@ describe("DetailedCharacter", () => {
     });
 
     test("read how many range increments a weapon reaches off its properties, five when they don't say", async () => {
-      const weapon = (name: string, properties: Record<string, string>) =>
+      const weapon = (name: string, fields: Record<string, FieldValue>) =>
         createTestItem(
           { name, type: "Weapon", slot: "Main Hand" },
           {
             [WEAPON_PROFICIENCY]: "Simple",
             [WEAPON_BASE_DAMAGE]: "1d6",
             [WEAPON_TYPE]: name,
-            [WEAPON_RANGE]: "30",
-            ...properties,
+            [WEAPON_RANGE]: 30,
+            ...fields,
           },
         );
-      const blowgun = await weapon("Blowgun", { [WEAPON_RANGED]: "true", [WEAPON_MAX_RANGE_INCREMENTS]: "10" });
-      const stone = await weapon("Throwing Stone", { [WEAPON_RANGED]: "true" });
+      const blowgun = await weapon("Blowgun", { [WEAPON_RANGED]: true, [WEAPON_MAX_RANGE_INCREMENTS]: 10 });
+      const stone = await weapon("Throwing Stone", { [WEAPON_RANGED]: true });
       // A melee weapon one can throw, its thrown attack reaching what it says
-      const hurled = await weapon("Hurled Club", { [WEAPON_MAX_RANGE_INCREMENTS]: "3" });
+      const hurled = await weapon("Hurled Club", { [WEAPON_MAX_RANGE_INCREMENTS]: 3 });
       const bjorn = await buildCarrying("Bjorn Ironhand", [
         { item: blowgun.id, location: "Main Hand", groups: [0] },
         { item: stone.id, location: "Main Hand", groups: [1] },
@@ -1075,22 +1077,22 @@ describe("DetailedCharacter", () => {
     });
 
     test("read whether a weapon is ranged and how strength adds to its damage off its properties, not its family", async () => {
-      const weapon = (name: string, family: string, properties: Record<string, string> = {}) =>
+      const weapon = (name: string, family: string, fields: Record<string, FieldValue> = {}) =>
         createTestItem(
           { name, type: "Weapon", slot: "Main Hand" },
           {
             [WEAPON_PROFICIENCY]: "Simple",
             [WEAPON_FAMILY]: family,
             [WEAPON_BASE_DAMAGE]: "1d6",
-            [WEAPON_CRITICAL_RANGE]: "1",
-            [WEAPON_CRITICAL_MULTIPLIER]: "2",
+            [WEAPON_CRITICAL_RANGE]: 1,
+            [WEAPON_CRITICAL_MULTIPLIER]: 2,
             [WEAPON_TYPE]: name,
-            ...properties,
+            ...fields,
           },
         );
       const caster = await weapon("Spell Caster", "Sword", {
-        [WEAPON_RANGED]: "true",
-        [WEAPON_RANGE]: "30",
+        [WEAPON_RANGED]: true,
+        [WEAPON_RANGE]: 30,
         [WEAPON_STRENGTH_DAMAGE]: "None",
       });
       const stick = await weapon("Bow-shaped Stick", "Bow");
@@ -1131,13 +1133,15 @@ describe("DetailedCharacter", () => {
         expect(rapier).toMatchObject({ name: "Rapier", tohit: { strength: 6 } });
       });
 
-      test("come from a feat's property, not its name", async () => {
+      test("come from a feat's field, not its name", async () => {
         const { featMap, rulesetId } = await getSeedCtx();
-        await Properties.delete(db, {
-          entityIds: [featMap["Weapon Finesse"]],
-          entityType: "feats",
-          types: [FEAT_WEAPON_FINESSE],
-        });
+        await Fields.update(db, [
+          {
+            id: featMap["Weapon Finesse"],
+            type: "feats",
+            values: { fields: { [FEAT_WEAPON_FINESSE]: [] }, links: {} },
+          },
+        ]);
         invalidateSeededRuleset(rulesetId);
         // An elf rogue with Weapon Finesse, which no longer says it finesses: STR 10 (+0), DEX 20.
         expect(weaponSet(await buildSeeded("Lyra Shadowstep")).mainhand).toMatchObject({ tohit: { strength: 0 } });
@@ -1258,14 +1262,7 @@ describe("DetailedCharacter", () => {
       test("count a one-handed off-hand weapon as light with a feat with FEAT_OVERSIZED_TWO_WEAPON_FIGHTING", async () => {
         // The ranger's Two-Weapon Fighting made to say it's Oversized Two-Weapon Fighting: a battleaxe off hand, -2 / -2
         const { featMap, rulesetId } = await getSeedCtx();
-        await Properties.createMany(db, [
-          {
-            entityId: featMap["Two-Weapon Fighting"],
-            entityType: "feats",
-            type: FEAT_OVERSIZED_TWO_WEAPON_FIGHTING,
-            value: "true",
-          },
-        ]);
+        await writeStoredValues("feats", featMap["Two-Weapon Fighting"], [[FEAT_OVERSIZED_TWO_WEAPON_FIGHTING, true]]);
         invalidateSeededRuleset(rulesetId);
         const set = weaponSet(
           await buildRanger([
@@ -1880,11 +1877,11 @@ describe("DetailedCharacter", () => {
         {
           [ARMOR_PROFICIENCY]: "Heavy",
           [ARMOR_TYPE]: "Chain Mail",
-          [ARMOR_AC_BONUS]: "5",
-          [ARMOR_CHECK_PENALTY]: "-5",
-          [ITEM_SPELL_FAILURE]: "30",
-          [ARMOR_MAX_DEX]: "2",
-          [ITEM_MASTERWORK]: "true",
+          [ARMOR_AC_BONUS]: 5,
+          [ARMOR_CHECK_PENALTY]: -5,
+          [ITEM_SPELL_FAILURE]: 30,
+          [ARMOR_MAX_DEX]: 2,
+          [ITEM_MASTERWORK]: true,
         },
       );
       const shield = await createTestItem(
@@ -1892,10 +1889,10 @@ describe("DetailedCharacter", () => {
         {
           [SHIELD_PROFICIENCY]: "Heavy",
           [SHIELD_TYPE]: "Heavy Steel Shield",
-          [SHIELD_AC_BONUS]: "2",
-          [ARMOR_CHECK_PENALTY]: "-2",
-          [ITEM_SPELL_FAILURE]: "15",
-          [ITEM_MASTERWORK]: "true",
+          [SHIELD_AC_BONUS]: 2,
+          [ARMOR_CHECK_PENALTY]: -2,
+          [ITEM_SPELL_FAILURE]: 15,
+          [ITEM_MASTERWORK]: true,
         },
       );
       const bjorn = await buildCarrying("Bjorn Ironhand", [
@@ -1952,19 +1949,21 @@ describe("DetailedCharacter", () => {
       expect(combat.speed).toMatchObject({ base: 30, total: speed });
     });
 
-    test("of a dwarf stays 20 feet in medium or heavy armor, by the race's property", async () => {
+    test("of a dwarf stays 20 feet in medium or heavy armor, by the race's field", async () => {
       // A dwarf barbarian in scale mail: fast movement's +10 on the base, which medium armor allows
       const speed = async () => (await buildSeeded("Kael Stormborn")).components.combat.getCombat().speed;
       expect(await speed()).toMatchObject({ base: 30, misc: 0, total: 30 });
 
       const { raceMap, rulesetId } = await getSeedCtx();
-      await Properties.delete(db, {
-        entityIds: [raceMap.pc["Dwarf"]],
-        entityType: "races",
-        types: [RACE_SPEED_IGNORES_ENCUMBRANCE],
-      });
+      await Fields.update(db, [
+        {
+          id: raceMap.pc["Dwarf"],
+          type: "races",
+          values: { fields: { [RACE_SPEED_IGNORES_ENCUMBRANCE]: [] }, links: {} },
+        },
+      ]);
       invalidateSeededRuleset(rulesetId);
-      // Without the property, the armor slows it as anyone's, fast movement first: 30 feet become 20 (the SRD's
+      // Without the field, the armor slows it as anyone's, fast movement first: 30 feet become 20 (the SRD's
       // halfling barbarian)
       expect((await speed()).total).toBe(20);
     });

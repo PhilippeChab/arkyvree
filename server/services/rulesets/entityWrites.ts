@@ -5,9 +5,8 @@ import type { EntityRemoval, EntityWrites, MadeEntity } from "@/engine/index.ts"
 import { CustomizationEdit, EntityRepositories, type RulesetScope } from "@/server/cow/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
 import {
+  Fields,
   Modifiers,
-  Properties,
-  PROPERTY_TYPES,
   Requirements,
   RULESET_ENTITY_TYPES,
   type RulesetEntityType,
@@ -23,15 +22,8 @@ function entityTypeOf(type: string): RulesetEntityType {
   return entityType;
 }
 
-/** The kind a plan's writes keep properties on (`type`, the entity's): refused for a kind that keeps none. */
-function propertyTypeOf(type: string) {
-  const entityType = PROPERTY_TYPES.find((propertyType) => propertyType === type);
-  if (!entityType) throw new Error(`A ${type} entity keeps no properties`);
-  return entityType;
-}
-
 /**
- * An entity a plan makes, in the scope's ruleset: its row, its list links, its modifiers, its properties and its
+ * An entity a plan makes, in the scope's ruleset: its row, its list links, its modifiers, its stored values and its
  * requirements.
  */
 async function makeEntity(tx: Db, scope: RulesetScope, made: MadeEntity) {
@@ -43,10 +35,7 @@ async function makeEntity(tx: Db, scope: RulesetScope, made: MadeEntity) {
     tx,
     made.modifiers.map((modifier) => ({ ...modifier, sourceId: entity.id, sourceType: type })),
   );
-  await Properties.createMany(
-    tx,
-    made.properties.map((property) => ({ ...owner, ...property })),
-  );
+  await Fields.update(tx, [{ id: entity.id, type, values: made.fields }]);
   await Requirements.createMany(
     tx,
     made.requirements.map((requirement) => ({ ...owner, ...requirement })),
@@ -69,25 +58,18 @@ async function removeEntity(tx: Db, scope: RulesetScope, removal: EntityRemoval)
 }
 
 /**
- * Writes what the engine plans an entity's create or edit (`entityId`, of `entityType`) writes beside its row
- * (`writes`): the entities it removes, its properties (those of their types it had give way), a requirement on it, and
- * the entities it makes. Answers the properties it wrote, which describe the entity as written.
+ * Writes what the engine plans an entity's create or edit (`entity`: its id, of its type) writes beside its row
+ * (`writes`): the entities it removes, its stored values (each field and link role it names replaced), a requirement
+ * on it, and the entities it makes.
  */
 export async function writeEntityWrites(
   tx: Db,
   scope: RulesetScope,
-  { entityId, entityType: type }: { entityId: string; entityType: string },
+  entity: { entityId: string; entityType: string },
   writes: EntityWrites,
 ) {
-  const entity = { entityId, entityType: propertyTypeOf(type) };
   for (const removal of writes.removed ?? []) await removeEntity(tx, scope, removal);
-  const properties = writes.properties?.values.map((property) => ({ ...entity, ...property })) ?? [];
-  if (writes.properties) {
-    const { types } = writes.properties;
-    await Properties.delete(tx, { entityIds: [entity.entityId], entityType: entity.entityType, types });
-    await Properties.createMany(tx, properties);
-  }
+  if (writes.fields) await Fields.update(tx, [{ id: entity.entityId, type: entity.entityType, values: writes.fields }]);
   if (writes.requirement) await Requirements.create(tx, { ...entity, ...writes.requirement });
   for (const made of writes.made ?? []) await makeEntity(tx, scope, made);
-  return properties;
 }

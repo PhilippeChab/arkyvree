@@ -2,13 +2,14 @@ import { describe, expect, test } from "bun:test";
 
 import type { Aptitude, Klass } from "@/engine/rulesets/dnd3.5/index.ts";
 import { db } from "@/server/database/index.ts";
-import { Characters, Entities, EntitySnapshots, Joins, Properties } from "@/server/repositories/index.ts";
+import { Characters, Entities, EntitySnapshots, Joins } from "@/server/repositories/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
 import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
 import { pickFeat } from "@/tests/support/dnd3.5/levels.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
 import { createTestRuleset } from "@/tests/support/rulesets.ts";
+import { writeStoredValues } from "@/tests/support/storedValues.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/properties/index.ts";
 
@@ -124,7 +125,7 @@ describe("EntitiesService: feats", () => {
     } = await createTestUserAndRuleset(APTITUDES);
     for (const name of ["Focus: Axe", "Focus: Sword"]) {
       const feat = await EntitiesService.createEntity(session, ruleset.id, "feats", { name, aptitudeIds: [combat] });
-      await Properties.createMany(db, [{ entityId: feat.id, entityType: "feats", type: FEAT_FAMILY, value: "Focus" }]);
+      await writeStoredValues("feats", feat.id, [[FEAT_FAMILY, "Focus"]]);
     }
     await EntitiesService.createEntity(session, ruleset.id, "feats", { name: "Cleave", aptitudeIds: [combat] });
     await EntitiesService.createEntity(session, ruleset.id, "feats", { name: "Alertness", aptitudeIds: [general] });

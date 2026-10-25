@@ -83,28 +83,26 @@ function tableGains(table: number[][]) {
 /** Seeding classes. */
 export function SeedsClasses<B extends Constructor<BaseSeeder>>(Base: B) {
   abstract class SeedingClasses extends Base {
-    /** Its properties and its levels': its bonus spell ability and caster type, each level's base attack and points. */
-    private async insertClassProperties(def: ClassSeed, klassId: string, levels: Levels) {
+    /** Its fields and its levels': its bonus spell ability and caster type, each level's base attack and points. */
+    private async insertClassFields(def: ClassSeed, klassId: string, levels: Levels) {
       const bonusSpellAbilityId = (def.bonusSpellAbility && this.ctx.abilityMap[def.bonusSpellAbility]) || null;
-      await this.insertProperties([
-        ...this.propertyRows(
-          klassId,
-          "classes",
-          Engine.forRules(DND35_BASE_RULES).toEntityProperties("classes", {
+      await this.writeFields([
+        {
+          id: klassId,
+          type: "classes",
+          values: Engine.forRules(DND35_BASE_RULES).toFieldsWrite("classes", {
             bonusSpellAbilityId,
             casterType: def.casterType ?? null,
           }),
-        ),
-        ...levels.flatMap(({ id, level }) =>
-          this.propertyRows(
-            id,
-            "class_levels",
-            Engine.forRules(DND35_BASE_RULES).toEntityProperties("klassLevels", {
-              bab: babAt(def.bab, level),
-              skills: def.skillPoints,
-            }),
-          ),
-        ),
+        },
+        ...levels.map(({ id, level }) => ({
+          id,
+          type: "class_levels",
+          values: Engine.forRules(DND35_BASE_RULES).toFieldsWrite("klassLevels", {
+            bab: babAt(def.bab, level),
+            skills: def.skillPoints,
+          }),
+        })),
       ]);
     }
 
@@ -216,7 +214,7 @@ export function SeedsClasses<B extends Constructor<BaseSeeder>>(Base: B) {
       const levels = numbers.map((level, i) => ({ id: levelRowIds[i], level }));
       const levelIds: Record<number, string> = Object.fromEntries(levels.map((l) => [l.level, l.id]));
 
-      await this.insertClassProperties(def, klass.id, levels);
+      await this.insertClassFields(def, klass.id, levels);
       await this.insertSaves(def, levels);
       await this.insertLevelModifiers(def, levels);
       await this.insertLevelRequirements(def, levels, levelIds);

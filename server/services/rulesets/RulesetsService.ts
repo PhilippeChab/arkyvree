@@ -8,7 +8,7 @@ import { ConflictError, ForbiddenError, NotFoundError, STALE_ENTITY_MESSAGE } fr
 import {
   Activities,
   Contributors,
-  Properties,
+  Fields,
   RulesetExtensions,
   Rulesets,
   StarredRulesets,
@@ -58,21 +58,8 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
           await RulesetExtensions.upsert(tx, { rulesetId: newRuleset.id, extensionId: extId });
       }
 
-      // 3. Copy ruleset-level properties as-is (parent entity IDs — `CowData.resolveRows` resolves them at read time)
-      const sourceRulesetProperties = await Properties.findMany(tx, {
-        entityIds: [id],
-        entityType: "rulesets",
-      });
-      if (sourceRulesetProperties.length > 0) {
-        await Properties.createMany(
-          tx,
-          sourceRulesetProperties.map((p) => ({
-            ...p,
-            id: undefined,
-            entityId: newRuleset.id,
-          })),
-        );
-      }
+      // 3. Copy the ruleset's Settings as stored (parent entity IDs — `CowData.resolveRows` resolves them at read time)
+      await Fields.createRulesetCopy(tx, { fromId: id, toId: newRuleset.id });
 
       // 4. Log the fork activity
       await Activities.create(tx, {

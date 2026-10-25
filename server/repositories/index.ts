@@ -17,6 +17,7 @@ export {
   EntityReferences,
   EntitySnapshots,
   Exports,
+  Fields,
   Invites,
   Joins,
   Modifiers,
@@ -26,7 +27,6 @@ export {
   Picks,
   PlayerCharacters,
   Players,
-  Properties,
   Requirements,
   RulesetEntities,
   RulesetExtensions,
@@ -41,7 +41,6 @@ export {
   EDITED_JOINS,
   IDENTITY_TYPES,
   OWNED_TYPES,
-  PROPERTY_TYPES,
   RULESET_ENTITY_TYPES,
 } from "./rulesets/entityTables.ts";
 export type { RulesetEntityType } from "./rulesets/entityTables.ts";

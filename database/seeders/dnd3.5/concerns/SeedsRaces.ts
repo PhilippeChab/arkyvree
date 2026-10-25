@@ -26,7 +26,7 @@ export function SeedsRaces<B extends Constructor<Dnd35ContentSeeder>>(Base: B) {
         modifiersInCustomization,
         races.flatMap((race) => this.modifierRows(ids[race.name], "races", race.modifiers)),
       );
-      await this.insertProperties(races.flatMap((race) => this.propertyRows(ids[race.name], "races", race.properties)));
+      await this.writeFields(races.map((race) => this.propertySeedsWrite(ids[race.name], "races", race.properties)));
     }
   }
   return SeedingRaces;

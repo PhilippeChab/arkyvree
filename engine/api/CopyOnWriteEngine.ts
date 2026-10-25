@@ -128,16 +128,18 @@ export default class CopyOnWriteEngine {
     return CowSources.getReads(ruleset, CopyOnWriteEngine.kinds());
   }
 
-  /** What a copy of a sibling winner takes of its siblings' customizations beside its own, merged as the view merges. */
+  /**
+   * What a copy of a sibling winner (of `entityType`) takes of its siblings' customizations beside its own, merged as
+   * the view merges: their modifiers and requirements it lacks, and its stored values with theirs merged in.
+   */
   mergeCustomizations(
     own: EntityCustomizations,
     siblings: EntityCustomizations[],
     targetEntityId: string,
+    entityType: string,
   ): EntityCustomizations {
-    const storage = StorageEngine.shared();
-    return SiblingMerge.mergeCustomizations(own, siblings, targetEntityId, (entityType, type) =>
-      storage.propertyMerge(entityType, type),
-    );
+    const declared = StorageEngine.shared().declaredFields();
+    return SiblingMerge.mergeCustomizations(own, siblings, targetEntityId, entityType, declared);
   }
 
   /** The siblings' list links the winner doesn't have, by the list `resolve` gives. */

@@ -76,16 +76,11 @@ export interface StepDef {
   viaType: string | null;
 }
 
-/**
- * How a module stores its data: its registries' rows, its kinds' and joins' row shapes, its character's, and the
- * property types whose value names an entity, which are links (an entity's of a role, a ruleset's of a ruleset role).
- */
+/** How a module stores its data: its registries' rows, its kinds' and joins' row shapes, and its character's. */
 export interface StorageDeclaration {
   character: StoredCharacter;
   joins: Record<string, StoredJoin>;
   kinds: Record<string, StoredKind>;
-  /** The property types a link holds: an entity type's, by its role; a ruleset's, by its ruleset role */
-  linkedProperties: { entities: Record<string, Record<string, string>>; rulesets: Record<string, string> };
   registries: StorageRegistries;
 }
 

@@ -3,7 +3,7 @@ import type { RulesetView } from "@/engine/core/view/index.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 
 /** A feat a plan makes with an entity: its name and description, its customizations. */
-export type GeneratedFeat = Pick<MadeEntity, "modifiers" | "properties" | "requirements"> & {
+export type GeneratedFeat = Pick<MadeEntity, "fields" | "modifiers" | "requirements"> & {
   description: string;
   name: string;
 };
@@ -39,11 +39,11 @@ export default abstract class GeneratedFeats {
     const feats = this.featsOf(name);
     const aptitudeId = dnd35.aptitudeIdBySlug.get(this.poolSlug);
     if (!aptitudeId || dnd35.feats.some((feat) => feat.name === feats[0]?.name)) return [];
-    return feats.map(({ description, modifiers, name: featName, properties, requirements }) => ({
+    return feats.map(({ description, fields, modifiers, name: featName, requirements }) => ({
       columns: { description, generated: true, name: featName },
+      fields,
       links: [{ listId: aptitudeId }],
       modifiers,
-      properties,
       requirements,
       type: "feats",
     }));

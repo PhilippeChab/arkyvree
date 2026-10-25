@@ -16,9 +16,11 @@ export default class DeclaredFields {
     registries: { fieldDefs: readonly FieldDef[]; linkRoles: readonly LinkRoleDef[] },
   ) {
     const leaves = Object.values(fields).flatMap((owned) => Field.leavesOf(owned));
-    this.ranks = new Map(leaves.map((leaf, rank) => [leaf.field, rank]));
+    // A reference's value is a link's, which no field keeps
+    const stored = leaves.flatMap((leaf) => (leaf.kind === "ref" ? [] : [leaf]));
+    this.ranks = new Map(stored.map((leaf, rank) => [leaf.field, rank]));
     this.valueRanks = new Map(
-      leaves.flatMap((leaf) => {
+      stored.flatMap((leaf) => {
         const values = Field.closedValuesOf(leaf);
         return values ? [[leaf.field, new Map(values.map((value, rank) => [value, rank]))]] : [];
       }),

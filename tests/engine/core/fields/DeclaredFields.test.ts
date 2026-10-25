@@ -25,7 +25,6 @@ const DECLARED = new DeclaredFields(
       focusType: { description: "Its magic", field: "FOCUS", kind: "choice", label: "Focus", values: ["Arcane"] },
       patron: {
         description: "Its patron",
-        field: "PATRON",
         kind: "ref",
         label: "Patron",
         references: "items",

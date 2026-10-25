@@ -68,7 +68,7 @@ export default abstract class RulesetPart {
   /**
    * A save of the ruleset's Settings (`body.fields`, those it changes): read as an entity's fields are, against the
    * ruleset's declarations (refused as invalid otherwise), over those it has. The values it keeps once written, and
-   * the properties of the ruleset's own that keep them.
+   * the ruleset's own stored values that keep them.
    */
   planSettings(
     view: RulesetView,
@@ -81,6 +81,6 @@ export default abstract class RulesetPart {
       resolve: (type, id) => ids.resolve(type, id),
     });
     const fields = this.fields.merge(kept, given);
-    return { fields, writes: { properties: this.fields.write(fields) } };
+    return { fields, writes: { fields: this.fields.write(fields) } };
   }
 }

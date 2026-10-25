@@ -15,13 +15,13 @@ import type {
 } from "@/engine/rulesets/dnd3.5/index.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
-import { Entities, Joins, Modifiers, Properties, Requirements } from "@/server/repositories/index.ts";
+import { Entities, Joins, Modifiers, Requirements } from "@/server/repositories/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
 import { addCharacterLevel } from "@/tests/support/dnd3.5/levels.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
 import { createTestRuleset } from "@/tests/support/rulesets.ts";
-import { CLASS_BONUS_SPELL_ABILITY_ID } from "@/vocabulary/dnd3.5/properties/index.ts";
+import { findStoredValues } from "@/tests/support/storedValues.ts";
 
 // CRUD, ownership and copy-on-write are covered for every entity in EntityServices.test.ts.
 describe("EntitiesService: classes", () => {
@@ -66,9 +66,10 @@ describe("EntitiesService: classes", () => {
     expect(await EntitiesService.getEntity(ruleset.id, "classes", wizard.id)).toMatchObject({
       bonusSpellAbilityId: intelligence.id,
     });
-    expect(await Properties.findMany(db, { entityIds: [wizard.id], entityType: "classes" })).toMatchObject([
-      { type: CLASS_BONUS_SPELL_ABILITY_ID, value: intelligence.id },
-    ]);
+    expect(await findStoredValues("classes", wizard.id)).toEqual({
+      fields: {},
+      links: { bonusSpellAbility: intelligence.id },
+    });
   });
 
   test("deletes a class's levels with their feats, spells, saves and modifiers, and its class skills", async () => {
