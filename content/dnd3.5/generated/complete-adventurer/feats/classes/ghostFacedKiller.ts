@@ -46,7 +46,7 @@ export const GHOST_FACED_KILLER_CLASS_FEATS: FeatSeed[] = [
     stackable: true,
     selectable: false,
     aptitudes: ["Ghost-faced Killer Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Sudden Strike" }],
+    fields: { families: ["Sudden Strike"] },
   },
   {
     name: "Weapon and Armor Proficiency (Ghost-faced Killer)",

@@ -24,7 +24,7 @@ export const SACRED_EXORCIST_CLASS_FEATS: FeatSeed[] = [
       "A sacred exorcist who has reached 2nd level or higher may use detect evil at will as a spell-like ability.",
     selectable: false,
     aptitudes: ["Sacred Exorcist Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Detect Evil" }],
+    fields: { families: ["Detect Evil"] },
   },
   {
     name: "Dispel Evil (Sacred Exorcist)",
@@ -68,7 +68,7 @@ export const SACRED_EXORCIST_CLASS_FEATS: FeatSeed[] = [
       "Sacred exorcists possess the ability to turn undead in the same manner as clerics. If the sacred exorcist already has turning ability from a different class, her sacred exorcist levels stack with those class levels when calculating her effective turning level.",
     selectable: false,
     aptitudes: ["Sacred Exorcist Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Turn or Rebuke Undead" }],
+    fields: { families: ["Turn or Rebuke Undead"] },
   },
   {
     name: "Weapon and Armor Proficiency (Sacred Exorcist)",

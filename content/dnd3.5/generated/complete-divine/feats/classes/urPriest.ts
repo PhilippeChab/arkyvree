@@ -23,7 +23,7 @@ export const UR_PRIEST_CLASS_FEATS: FeatSeed[] = [
       "Beginning at 2nd level, an ur-priest can rebuke undead in the same fashion as an evil cleric. His ur-priest class level serves as his effective cleric level when determining the result and damage of the rebuke attempt.",
     selectable: false,
     aptitudes: ["Ur-priest Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Turn or Rebuke Undead" }],
+    fields: { families: ["Turn or Rebuke Undead"] },
   },
   {
     name: "Siphon Spell Power (Ur-priest)",

@@ -31,7 +31,7 @@ export const DUNGEON_DELVER_CLASS_FEATS: FeatSeed[] = [
       "Beginning at 4th level, a dungeon delver can avoid damage from certain attacks with a successful Reflex save. See the monk class feature of the Player's Handbook. If a dungeon delver already has evasion, he gains improved evasion instead, allowing him to avoid damage from certain attacks with a successful Reflex save and take only half damage on a failed save. See the monk class feature of the Player's Handbook.",
     selectable: false,
     aptitudes: ["Dungeon Delver Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Evasion" }],
+    fields: { families: ["Evasion"] },
   },
   {
     name: "Find the Path (Dungeon Delver)",

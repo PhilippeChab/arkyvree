@@ -8,7 +8,7 @@ export const SHADOWBANE_STALKER_CLASS_FEATS: FeatSeed[] = [
     description: "A shadowbane stalker can use detect evil at will. See the spell of the Player's Handbook.",
     selectable: false,
     aptitudes: ["Shadowbane Stalker Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Detect Evil" }],
+    fields: { families: ["Detect Evil"] },
   },
   {
     name: "Discover Subterfuge (Shadowbane Stalker)",
@@ -51,7 +51,7 @@ export const SHADOWBANE_STALKER_CLASS_FEATS: FeatSeed[] = [
     stackable: true,
     selectable: false,
     aptitudes: ["Shadowbane Stalker Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Sneak Attack" }],
+    fields: { families: ["Sneak Attack"] },
   },
   {
     name: "Spells per Day/Spells Known (Shadowbane Stalker)",

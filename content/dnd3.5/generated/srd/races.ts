@@ -15,7 +15,7 @@ export const ALL_RACES: RaceSeed[] = [
       { target: "languages.common.known", operator: "set", value: "true", valueType: "boolean" },
       { target: "languages.dwarven.known", operator: "set", value: "true", valueType: "boolean" },
     ],
-    properties: [{ type: "RACE_SPEED_IGNORES_ENCUMBRANCE", value: "true" }],
+    fields: { speedIgnoresEncumbrance: true },
   },
   {
     name: "Elf",

@@ -9,7 +9,7 @@ export const VIGILANTE_CLASS_FEATS: FeatSeed[] = [
     description: "A vigilante can use detect evil at will. See the spell of the Player's Handbook.",
     selectable: false,
     aptitudes: ["Vigilante Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Detect Evil" }],
+    fields: { families: ["Detect Evil"] },
   },
   {
     name: "Dimensional Anchor (Vigilante)",
@@ -46,7 +46,7 @@ export const VIGILANTE_CLASS_FEATS: FeatSeed[] = [
     stackable: true,
     selectable: false,
     aptitudes: ["Vigilante Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Smite" }],
+    fields: { families: ["Smite"] },
   },
   {
     name: "Speak With Dead (Vigilante)",

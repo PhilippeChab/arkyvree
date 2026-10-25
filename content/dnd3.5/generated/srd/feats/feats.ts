@@ -15,7 +15,7 @@ export const EXOTIC_WEAPON_PROFICIENCY_FEATS: FeatSeed[] = EXOTIC_WEAPONS.map((w
   generated: true,
   aptitudes: ["General", "Fighter Bonus Feat"],
   requirements: [gte("combat.bab", 1)],
-  properties: [{ type: "FEAT_FAMILY", value: "Exotic Weapon Proficiency" }],
+  fields: { families: ["Exotic Weapon Proficiency"] },
 }));
 
 export const FIGHTER_FEATS: FeatSeed[] = [
@@ -361,7 +361,7 @@ export const FIGHTER_FEATS: FeatSeed[] = [
       "When using a light weapon, rapier, whip, or spiked chain appropriately sized for your size category, you may apply your Dexterity modifier to attack rolls in place of your Strength modifier. If you carry a shield, its armor check penalty applies to your attack rolls.",
     aptitudes: ["General", "Fighter Bonus Feat"],
     requirements: [gte("combat.bab", 1)],
-    properties: [{ type: "FEAT_WEAPON_FINESSE", value: "true" }],
+    fields: { weaponFinesse: true },
   },
   {
     name: "Whirlwind Attack",
@@ -703,7 +703,7 @@ export const GREATER_SPELL_FOCUS_FEATS: FeatSeed[] = MAGIC_SCHOOLS.map((s) => ({
   modifiers: [
     { target: `spells.groups.${stripSeparators(s)}.*.dc.misc`, operator: "add", value: "1", valueType: "number" },
   ],
-  properties: [{ type: "FEAT_FAMILY", value: "Greater Spell Focus" }],
+  fields: { families: ["Greater Spell Focus"] },
 }));
 
 export const GREATER_WEAPON_FOCUS_FEATS: FeatSeed[] = ALL_WEAPONS.map((w) => ({
@@ -715,7 +715,7 @@ export const GREATER_WEAPON_FOCUS_FEATS: FeatSeed[] = ALL_WEAPONS.map((w) => ({
   modifiers: [
     { target: `items.weapons.${stripSeparators(w)}.tohit.misc`, operator: "add", value: "1", valueType: "number" },
   ],
-  properties: [{ type: "FEAT_FAMILY", value: "Greater Weapon Focus" }],
+  fields: { families: ["Greater Weapon Focus"] },
 }));
 
 export const GREATER_WEAPON_SPECIALIZATION_FEATS: FeatSeed[] = ALL_WEAPONS.map((w) => ({
@@ -732,7 +732,7 @@ export const GREATER_WEAPON_SPECIALIZATION_FEATS: FeatSeed[] = ALL_WEAPONS.map((
   modifiers: [
     { target: `items.weapons.${stripSeparators(w)}.damage.misc`, operator: "add", value: "2", valueType: "number" },
   ],
-  properties: [{ type: "FEAT_FAMILY", value: "Greater Weapon Specialization" }],
+  fields: { families: ["Greater Weapon Specialization"] },
 }));
 
 export const IMPROVED_CRITICAL_FEATS: FeatSeed[] = ALL_WEAPONS.map((w) => ({
@@ -749,7 +749,7 @@ export const IMPROVED_CRITICAL_FEATS: FeatSeed[] = ALL_WEAPONS.map((w) => ({
       valueType: "number",
     },
   ],
-  properties: [{ type: "FEAT_FAMILY", value: "Improved Critical" }],
+  fields: { families: ["Improved Critical"] },
 }));
 
 export const ITEM_CREATION_FEATS: FeatSeed[] = [
@@ -759,7 +759,7 @@ export const ITEM_CREATION_FEATS: FeatSeed[] = [
       "You can produce a potion from any spell of 3rd level or below that you know, provided it targets one or more creatures. Creating a potion requires one day of work. You determine the caster level when brewing, which must be high enough to cast the spell but cannot exceed your own level. The base cost equals the spell level multiplied by the caster level multiplied by 50 gp. You must invest 1/25 of this base cost in XP and spend raw materials worth half the base cost. All casting decisions are made during brewing, and the drinker becomes the spell's target. If the stored spell has an expensive material component or XP cost, you must pay that cost as well, on top of the base price costs.",
     aptitudes: ["General", "Wizard Bonus Feat"],
     requirements: [gte("spellcasting.casterlevel", 3)],
-    properties: [{ type: "FEAT_FAMILY", value: "Item Creation" }],
+    fields: { families: ["Item Creation"] },
   },
   {
     name: "Craft Magic Arms and Armor",
@@ -767,7 +767,7 @@ export const ITEM_CREATION_FEATS: FeatSeed[] = [
       "You can create magical weapons, armor, or shields for which you meet the prerequisites. Enchanting takes one day per 1,000 gp of the magical features' price. You must spend 1/25 of the total magical feature price in XP and consume raw materials costing half that total. You must supply a masterwork item as the base, at your own expense. You may also repair a broken magic weapon, armor, or shield that you could have created, at half the XP, half the materials, and half the time of crafting it new.",
     aptitudes: ["General", "Wizard Bonus Feat"],
     requirements: [gte("spellcasting.casterlevel", 5)],
-    properties: [{ type: "FEAT_FAMILY", value: "Item Creation" }],
+    fields: { families: ["Item Creation"] },
   },
   {
     name: "Craft Rod",
@@ -775,7 +775,7 @@ export const ITEM_CREATION_FEATS: FeatSeed[] = [
       "You can create any rod for which you meet the prerequisites. Crafting requires one day per 1,000 gp of the rod's base price. You must invest 1/25 of the base price in XP and use raw materials costing half the base price. Certain rods have additional material component or XP costs as specified in their individual descriptions, beyond the base price costs.",
     aptitudes: ["General", "Wizard Bonus Feat"],
     requirements: [gte("spellcasting.casterlevel", 9)],
-    properties: [{ type: "FEAT_FAMILY", value: "Item Creation" }],
+    fields: { families: ["Item Creation"] },
   },
   {
     name: "Craft Staff",
@@ -783,7 +783,7 @@ export const ITEM_CREATION_FEATS: FeatSeed[] = [
       "You can create any staff for which you meet the prerequisites. Crafting requires one day per 1,000 gp of the staff's base price. You must invest 1/25 of the base price in XP and use raw materials costing half the base price. A new staff holds 50 charges. Certain staffs have additional material component or XP costs as specified in their individual descriptions, beyond the base price costs.",
     aptitudes: ["General", "Wizard Bonus Feat"],
     requirements: [gte("spellcasting.casterlevel", 12)],
-    properties: [{ type: "FEAT_FAMILY", value: "Item Creation" }],
+    fields: { families: ["Item Creation"] },
   },
   {
     name: "Craft Wand",
@@ -791,7 +791,7 @@ export const ITEM_CREATION_FEATS: FeatSeed[] = [
       "You can create a wand containing any spell of 4th level or lower that you know. Crafting requires one day per 1,000 gp of the wand's base price. The base price is calculated as caster level times spell level times 750 gp. You must invest 1/25 of this base price in XP and use raw materials costing half the base price. A new wand holds 50 charges. If the stored spell has a costly material component or XP cost, you must pay fifty times that component cost or XP cost in addition to the base price costs.",
     aptitudes: ["General", "Wizard Bonus Feat"],
     requirements: [gte("spellcasting.casterlevel", 5)],
-    properties: [{ type: "FEAT_FAMILY", value: "Item Creation" }],
+    fields: { families: ["Item Creation"] },
   },
   {
     name: "Craft Wondrous Item",
@@ -799,7 +799,7 @@ export const ITEM_CREATION_FEATS: FeatSeed[] = [
       "You can create any wondrous item for which you meet the prerequisites. Enchanting requires one day per 1,000 gp of the item's price. You must invest 1/25 of the price in XP and use raw materials costing half the price. You may also repair a broken wondrous item you could have created, at half the XP, half the materials, and half the time of crafting it new. Certain wondrous items have additional material component or XP costs noted in their descriptions; these apply both to creation and repair.",
     aptitudes: ["General", "Wizard Bonus Feat"],
     requirements: [gte("spellcasting.casterlevel", 3)],
-    properties: [{ type: "FEAT_FAMILY", value: "Item Creation" }],
+    fields: { families: ["Item Creation"] },
   },
   {
     name: "Forge Ring",
@@ -807,7 +807,7 @@ export const ITEM_CREATION_FEATS: FeatSeed[] = [
       "You can create any ring for which you meet the prerequisites. Crafting requires one day per 1,000 gp of the ring's base price. You must invest 1/25 of the base price in XP and use raw materials costing half the base price. You may also repair a broken ring you could have created, at half the XP, half the materials, and half the time of forging it new. Some magic rings have additional material component or XP costs noted in their descriptions. You must pay such costs both when creating and when repairing the ring.",
     aptitudes: ["General", "Wizard Bonus Feat"],
     requirements: [gte("spellcasting.casterlevel", 12)],
-    properties: [{ type: "FEAT_FAMILY", value: "Item Creation" }],
+    fields: { families: ["Item Creation"] },
   },
   {
     name: "Scribe Scroll",
@@ -815,7 +815,7 @@ export const ITEM_CREATION_FEATS: FeatSeed[] = [
       "You can create a scroll of any spell you know. Scribing requires one day per 1,000 gp of the scroll's base price. The base price equals the spell level times the caster level times 25 gp. You must invest 1/25 of this base price in XP and use raw materials costing half the base price. If the stored spell has a costly material component or XP cost, you must pay that cost in addition to the base price costs when scribing.",
     aptitudes: ["General", "Wizard Bonus Feat", "Wizard Class Feature"],
     requirements: [gte("spellcasting.casterlevel", 1)],
-    properties: [{ type: "FEAT_FAMILY", value: "Item Creation" }],
+    fields: { families: ["Item Creation"] },
   },
 ];
 
@@ -825,63 +825,63 @@ export const METAMAGIC_FEATS: FeatSeed[] = [
     description:
       "All variable numeric effects of the spell increase by half. An empowered spell deals 1.5 times normal damage, restores 1.5 times the usual hit points, affects 1.5 times as many targets, and so on as applicable. For instance, an empowered magic missile deals 1.5 times its normal damage per missile (roll 1d4+1 and multiply by 1.5). Saving throws, opposed rolls (such as for dispel magic), and spells without random variables are unaffected. An empowered spell occupies a spell slot two levels higher than the spell's actual level.",
     aptitudes: ["General", "Wizard Bonus Feat"],
-    properties: [{ type: "FEAT_FAMILY", value: "Metamagic" }],
+    fields: { families: ["Metamagic"] },
   },
   {
     name: "Enlarge Spell",
     description:
       "You can modify a spell with a range of close, medium, or long to double its range. An enlarged close-range spell reaches 50 ft. + 5 ft./level, a medium-range spell reaches 200 ft. + 20 ft./level, and a long-range spell reaches 800 ft. + 80 ft./level. An enlarged spell occupies a spell slot one level higher than the spell's actual level. Spells whose ranges are not measured in distance or are not close, medium, or long cannot be enlarged.",
     aptitudes: ["General", "Wizard Bonus Feat"],
-    properties: [{ type: "FEAT_FAMILY", value: "Metamagic" }],
+    fields: { families: ["Metamagic"] },
   },
   {
     name: "Extend Spell",
     description:
       "An extended spell lasts twice its normal duration. Spells with a duration of concentration, instantaneous, or permanent are unaffected. An extended spell occupies a spell slot one level higher than the spell's actual level.",
     aptitudes: ["General", "Wizard Bonus Feat"],
-    properties: [{ type: "FEAT_FAMILY", value: "Metamagic" }],
+    fields: { families: ["Metamagic"] },
   },
   {
     name: "Heighten Spell",
     description:
       "A heightened spell functions at a higher spell level than its original (up to 9th level maximum). Unlike other metamagic feats, Heighten Spell genuinely raises the spell's effective level. All level-dependent effects (including saving throw DCs and the ability to bypass protections like lesser globe of invulnerability) use the heightened level. The heightened spell is as difficult to prepare and cast as a spell of its new effective level. For instance, a cleric could prepare hold person as a 4th-level spell instead of 2nd-level, and it would function in every respect as a 4th-level spell.",
     aptitudes: ["General", "Wizard Bonus Feat"],
-    properties: [{ type: "FEAT_FAMILY", value: "Metamagic" }],
+    fields: { families: ["Metamagic"] },
   },
   {
     name: "Maximize Spell",
     description:
       "All variable numeric effects of the modified spell are set to their maximum values. A maximized spell deals maximum damage, heals the greatest possible number of hit points, affects the maximum number of targets, and so forth. For instance, a maximized fireball deals 6 points of damage per caster level (maximum 60 at 10th caster level). Saving throws, opposed rolls (such as for dispel magic), and spells without random variables are unaffected. A maximized spell occupies a spell slot three levels higher than the spell's actual level. A spell that is both empowered and maximized gains both effects separately: the maximum result plus half the normally rolled result. For example, an empowered, maximized fireball from a 15th-level wizard deals 60 plus half of 10d6.",
     aptitudes: ["General", "Wizard Bonus Feat"],
-    properties: [{ type: "FEAT_FAMILY", value: "Metamagic" }],
+    fields: { families: ["Metamagic"] },
   },
   {
     name: "Quicken Spell",
     description:
       "A quickened spell is cast as a free action. You may still perform other actions in the same round, including casting another spell. Only one quickened spell is allowed per round. Spells with a casting time longer than 1 full-round action cannot be quickened. A quickened spell occupies a spell slot four levels higher than the spell's actual level. Casting a quickened spell does not provoke an attack of opportunity.",
     aptitudes: ["General", "Wizard Bonus Feat"],
-    properties: [{ type: "FEAT_FAMILY", value: "Metamagic" }],
+    fields: { families: ["Metamagic"] },
   },
   {
     name: "Silent Spell",
     description:
       "A silent spell requires no verbal components. Spells that already lack verbal components are unaffected. A silent spell occupies a spell slot one level higher than the spell's actual level.",
     aptitudes: ["General", "Wizard Bonus Feat"],
-    properties: [{ type: "FEAT_FAMILY", value: "Metamagic" }],
+    fields: { families: ["Metamagic"] },
   },
   {
     name: "Still Spell",
     description:
       "A stilled spell requires no somatic components. Spells that already lack somatic components are unaffected. A stilled spell occupies a spell slot one level higher than the spell's actual level.",
     aptitudes: ["General", "Wizard Bonus Feat"],
-    properties: [{ type: "FEAT_FAMILY", value: "Metamagic" }],
+    fields: { families: ["Metamagic"] },
   },
   {
     name: "Widen Spell",
     description:
       "You can modify a burst, emanation, line, or spread spell to increase all numeric area measurements by 100%. For instance, a fireball (normally a 20-foot-radius spread) becomes a 40-foot-radius spread when widened. A widened spell occupies a spell slot three levels higher than the spell's actual level. Spells without one of these four area shapes are unaffected by this feat.",
     aptitudes: ["General", "Wizard Bonus Feat"],
-    properties: [{ type: "FEAT_FAMILY", value: "Metamagic" }],
+    fields: { families: ["Metamagic"] },
   },
 ];
 
@@ -890,7 +890,7 @@ export const RAPID_RELOAD_FEATS: FeatSeed[] = CROSSBOW_WEAPONS.map((w) => ({
   description: `Reloading your chosen crossbow type becomes a free action (for hand or light crossbows) or a move action (for heavy crossbows). Reloading still provokes an attack of opportunity. If you have this feat for a hand or light crossbow, you can fire it as many times during a full attack as you could with a bow.`,
   generated: true,
   aptitudes: ["General", "Fighter Bonus Feat"],
-  properties: [{ type: "FEAT_FAMILY", value: "Rapid Reload" }],
+  fields: { families: ["Rapid Reload"] },
 }));
 
 export const SKILL_FOCUS_FEATS: FeatSeed[] = SKILLS_WITH_CHECKS.map((s) => ({
@@ -899,7 +899,7 @@ export const SKILL_FOCUS_FEATS: FeatSeed[] = SKILLS_WITH_CHECKS.map((s) => ({
   generated: true,
   aptitudes: ["General"],
   modifiers: [{ target: `skills.${stripSeparators(s)}.misc`, operator: "add", value: "3", valueType: "number" }],
-  properties: [{ type: "FEAT_FAMILY", value: "Skill Focus" }],
+  fields: { families: ["Skill Focus"] },
 }));
 
 export const SPECIAL_FEATS: FeatSeed[] = [
@@ -928,7 +928,7 @@ export const SPELL_FOCUS_FEATS: FeatSeed[] = MAGIC_SCHOOLS.map((s) => ({
   modifiers: [
     { target: `spells.groups.${stripSeparators(s)}.*.dc.misc`, operator: "add", value: "1", valueType: "number" },
   ],
-  properties: [{ type: "FEAT_FAMILY", value: "Spell Focus" }],
+  fields: { families: ["Spell Focus"] },
 }));
 
 export const WEAPON_FOCUS_FEATS: FeatSeed[] = ALL_WEAPONS.map((w) => ({
@@ -940,7 +940,7 @@ export const WEAPON_FOCUS_FEATS: FeatSeed[] = ALL_WEAPONS.map((w) => ({
   modifiers: [
     { target: `items.weapons.${stripSeparators(w)}.tohit.misc`, operator: "add", value: "1", valueType: "number" },
   ],
-  properties: [{ type: "FEAT_FAMILY", value: "Weapon Focus" }],
+  fields: { families: ["Weapon Focus"] },
 }));
 
 export const WEAPON_SPECIALIZATION_FEATS: FeatSeed[] = ALL_WEAPONS.map((w) => ({
@@ -952,5 +952,5 @@ export const WEAPON_SPECIALIZATION_FEATS: FeatSeed[] = ALL_WEAPONS.map((w) => ({
   modifiers: [
     { target: `items.weapons.${stripSeparators(w)}.damage.misc`, operator: "add", value: "2", valueType: "number" },
   ],
-  properties: [{ type: "FEAT_FAMILY", value: "Weapon Specialization" }],
+  fields: { families: ["Weapon Specialization"] },
 }));

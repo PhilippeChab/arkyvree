@@ -23,7 +23,7 @@ export const SHADOWDANCER_CLASS_FEATS: FeatSeed[] = [
       "From 2nd level onward, a shadowdancer gains evasion. Whenever she is subjected to an effect that permits a Reflex saving throw for half damage (for example, a fireball), a successful save means she suffers no damage at all. This ability functions only while she wears light armor or no armor.",
     selectable: false,
     aptitudes: ["Shadowdancer Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Evasion" }],
+    fields: { families: ["Evasion"] },
   },
   {
     name: "Hide in Plain Sight (Shadowdancer)",

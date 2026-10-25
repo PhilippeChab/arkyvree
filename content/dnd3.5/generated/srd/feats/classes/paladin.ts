@@ -23,7 +23,7 @@ export const PALADIN_CLASS_FEATS: FeatSeed[] = [
     description: "A paladin can use detect evil at will, functioning identically to the spell of the same name.",
     selectable: false,
     aptitudes: ["Paladin Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Detect Evil" }],
+    fields: { families: ["Detect Evil"] },
   },
   {
     name: "Divine Grace (Paladin)",
@@ -47,7 +47,7 @@ export const PALADIN_CLASS_FEATS: FeatSeed[] = [
       "From 2nd level onward, a paladin with a Charisma score of 12 or higher can mend injuries through physical contact, whether her own or those of others. Her daily healing pool equals her paladin level multiplied by her Charisma bonus. For instance, a 7th-level paladin with 16 Charisma (+3 bonus) can restore up to 21 hit points per day. This healing can be split among multiple individuals and need not be used all at once. Activating this ability requires a standard action. Alternatively, the paladin may direct some or all of this healing energy to harm undead creatures instead. Doing so requires a successful melee touch attack and does not provoke an attack of opportunity. The paladin chooses how many points from her daily pool to expend as damage after landing the touch against the undead target.",
     selectable: false,
     aptitudes: ["Paladin Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Lay on Hands" }],
+    fields: { families: ["Lay on Hands"] },
   },
   {
     name: "Remove Disease (Paladin)",
@@ -64,10 +64,7 @@ export const PALADIN_CLASS_FEATS: FeatSeed[] = [
     stackable: true,
     selectable: false,
     aptitudes: ["Paladin Class Feature"],
-    properties: [
-      { type: "FEAT_FAMILY", value: "Smite" },
-      { type: "FEAT_FAMILY", value: "Smite Evil" },
-    ],
+    fields: { families: ["Smite", "Smite Evil"] },
   },
   {
     name: "Special Mount (Paladin)",
@@ -93,7 +90,7 @@ export const PALADIN_CLASS_FEATS: FeatSeed[] = [
       "At 4th level, a paladin gains the supernatural capacity to turn undead. The number of daily uses equals 3 + her Charisma modifier. Her effective turning ability is equivalent to a cleric three levels lower than her paladin level.",
     selectable: false,
     aptitudes: ["Paladin Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Turn or Rebuke Undead" }],
+    fields: { families: ["Turn or Rebuke Undead"] },
   },
   {
     name: "Weapon and Armor Proficiency (Paladin)",

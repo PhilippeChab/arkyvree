@@ -25,7 +25,7 @@ export const SORCERER_CLASS_FEATS: FeatSeed[] = [
         valueType: "number",
       },
     ],
-    properties: [{ type: "FEAT_FAMILY", value: "Summon Familiar" }],
+    fields: { families: ["Summon Familiar"] },
   },
   {
     name: "Weapon and Armor Proficiency (Sorcerer)",

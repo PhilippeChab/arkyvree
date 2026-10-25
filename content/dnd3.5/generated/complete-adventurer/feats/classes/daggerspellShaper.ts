@@ -45,7 +45,7 @@ export const DAGGERSPELL_SHAPER_CLASS_FEATS: FeatSeed[] = [
     stackable: true,
     selectable: false,
     aptitudes: ["Daggerspell Shaper Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Sneak Attack" }],
+    fields: { families: ["Sneak Attack"] },
   },
   {
     name: "Spells per Day/Spells Known (Daggerspell Shaper)",
@@ -67,6 +67,6 @@ export const DAGGERSPELL_SHAPER_CLASS_FEATS: FeatSeed[] = [
     stackable: true,
     selectable: false,
     aptitudes: ["Daggerspell Shaper Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Wild Shape" }],
+    fields: { families: ["Wild Shape"] },
   },
 ];

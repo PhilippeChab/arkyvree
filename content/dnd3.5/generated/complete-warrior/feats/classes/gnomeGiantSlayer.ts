@@ -59,7 +59,7 @@ export const GNOME_GIANT_SLAYER_CLASS_FEATS: FeatSeed[] = [
     selectable: false,
     aptitudes: ["Gnome Giant-slayer Class Feature"],
     modifiers: [{ target: "feats.favoredenemygiant.possessed", operator: "set", value: "true", valueType: "boolean" }],
-    properties: [{ type: "FEAT_FAMILY", value: "Favored Enemy" }],
+    fields: { families: ["Favored Enemy"] },
   },
   {
     name: "Improved Mobility (Gnome Giant-slayer)",

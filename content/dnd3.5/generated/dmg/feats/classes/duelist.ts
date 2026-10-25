@@ -56,7 +56,7 @@ export const DUELIST_CLASS_FEATS: FeatSeed[] = [
         requirements: [eqNum("combat.ac.armor", 0), eqNum("combat.ac.shield", 0)],
       },
     ],
-    properties: [{ type: "FEAT_FAMILY", value: "Grace" }],
+    fields: { families: ["Grace"] },
   },
   {
     name: "Improved Reaction (Duelist)",

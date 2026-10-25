@@ -38,6 +38,6 @@ export const AVENGING_EXECUTIONER_CLASS_FEATS: FeatSeed[] = [
     stackable: true,
     selectable: false,
     aptitudes: ["Avenging Executioner Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Sudden Strike" }],
+    fields: { families: ["Sudden Strike"] },
   },
 ];

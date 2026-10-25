@@ -17,7 +17,7 @@ export const BEAR_WARRIOR_CLASS_FEATS: FeatSeed[] = [
       "At 7th level, a bear warrior gains one additional use per day of his rage or frenzy ability. For instance, a character with 7 levels of barbarian and 7 levels of bear warrior would have three daily uses of rage. If that character then gained another barbarian level, the total would increase to four uses per day.",
     selectable: false,
     aptitudes: ["Bear Warrior Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Rage" }],
+    fields: { families: ["Rage"] },
   },
   {
     name: "Scent (Bear Warrior)",

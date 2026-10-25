@@ -16,7 +16,7 @@ export const SUBLIME_CHORD_CLASS_FEATS: FeatSeed[] = [
       "A sublime chord expands her repertoire of bardic music to encompass new songs or poetics of strange and wondrous power. These effects function just as the bardic music effects. Each use of a sublime chord song expends one daily use of the character's bardic music ability. A sublime chord adds one-half her class level (rounded down) to her bard level to determine her number of daily uses of bardic music.",
     selectable: false,
     aptitudes: ["Sublime Chord Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Bardic Music" }],
+    fields: { families: ["Bardic Music"] },
   },
   {
     name: "Song of Arcane Power (Sublime Chord)",

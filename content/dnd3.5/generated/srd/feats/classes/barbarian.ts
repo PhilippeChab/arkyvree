@@ -73,7 +73,7 @@ export const BARBARIAN_CLASS_FEATS: FeatSeed[] = [
     stackable: true,
     selectable: false,
     aptitudes: ["Barbarian Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Rage" }],
+    fields: { families: ["Rage"] },
   },
   {
     name: "Tireless Rage (Barbarian)",

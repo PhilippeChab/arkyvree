@@ -84,7 +84,7 @@ export const MONK_CLASS_FEATS: FeatSeed[] = [
       "Starting at 2nd level, a monk can evade even supernatural and extraordinary attacks through sheer agility. When she succeeds on a Reflex saving throw against an effect that normally deals half damage on a successful save (such as a red dragon's fiery breath or a fireball spell), she takes no damage whatsoever. This ability functions only when the monk wears light armor or no armor. A monk who is helpless (for instance, unconscious or paralyzed) cannot benefit from evasion.",
     selectable: false,
     aptitudes: ["Monk Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Evasion" }],
+    fields: { families: ["Evasion"] },
   },
   {
     name: "Fast Movement (Monk)",
@@ -99,7 +99,7 @@ export const MONK_CLASS_FEATS: FeatSeed[] = [
       "While unarmored, a monk can trade precision for volume of attacks by unleashing a rapid barrage of strikes. This grants one additional attack per round at her highest base attack bonus, but every attack that round (including the extra one) suffers a -2 penalty. The adjusted attack bonuses appear in the Flurry of Blows Attack Bonus column of the class table. Because this penalty persists for the full round, it also applies to any attacks of opportunity the monk takes before her next turn. At 5th level the penalty decreases to -1, and at 9th level it vanishes entirely. Executing a flurry of blows requires a full attack action. During a flurry, the monk may only use unarmed strikes or special monk weapons (kama, nunchaku, quarterstaff, sai, shuriken, and siangham), and she can freely mix unarmed strikes with monk weapon attacks in any combination she chooses. When wielding weapons during a flurry of blows, the monk uses her Strength bonus (not 1-1/2 times or 1/2 times her Strength bonus) for damage on all hits, regardless of whether she holds the weapon in one or both hands. No weapon other than a special monk weapon may be employed as part of a flurry. The quarterstaff is treated as two separate weapons (one for each end) for flurry of blows purposes. Despite requiring two hands, a monk can still alternate between quarterstaff strikes and unarmed strikes within a single flurry, provided she has sufficient attacks to do so. However, she cannot wield any additional weapon simultaneously with a quarterstaff. At 11th level, the flurry of blows ability advances further: in addition to the single extra attack normally granted, the monk gains a second extra attack at her full base attack bonus.",
     selectable: false,
     aptitudes: ["Monk Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Flurry of Blows" }],
+    fields: { families: ["Flurry of Blows"] },
   },
   {
     name: "Greater Flurry (Monk)",

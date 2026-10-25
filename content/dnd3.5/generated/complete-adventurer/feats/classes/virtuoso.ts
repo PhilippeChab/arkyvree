@@ -9,7 +9,7 @@ export const VIRTUOSO_CLASS_FEATS: FeatSeed[] = [
       "Virtuoso levels stack with bard levels for the purpose of determining the virtuoso's daily uses of his bardic music abilities (if any) and the value of the bonus granted by inspire courage (if the virtuoso has that bardic music ability). For example, a 10th-level bard/4th-level virtuoso could use bardic music fourteen times per day, and his inspire courage ability would grant a +3 morale bonus on the appropriate rolls. A virtuoso also gains the fascinate bardic music ability, if he doesn't already have it. He can use his performance to cause one or more creatures to become fascinated with him. See the bard class feature of the Player's Handbook.",
     selectable: false,
     aptitudes: ["Virtuoso Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Bardic Music" }],
+    fields: { families: ["Bardic Music"] },
   },
   {
     name: "Spells per Day/Spells Known (Virtuoso)",

@@ -36,7 +36,7 @@ export const GRAY_GUARD_CLASS_FEATS: FeatSeed[] = [
       "This ability is identical to the paladin class feature of the same name (PH 44). Levels of gray guard stack with other class levels that grant lay on hands to determine the ability's total healing capacity.",
     selectable: false,
     aptitudes: ["Gray Guard Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Lay on Hands" }],
+    fields: { families: ["Lay on Hands"] },
   },
   {
     name: "Sacrament of Trust (Gray Guard)",
@@ -59,10 +59,7 @@ export const GRAY_GUARD_CLASS_FEATS: FeatSeed[] = [
     stackable: true,
     selectable: false,
     aptitudes: ["Gray Guard Class Feature"],
-    properties: [
-      { type: "FEAT_FAMILY", value: "Smite" },
-      { type: "FEAT_FAMILY", value: "Smite Evil" },
-    ],
+    fields: { families: ["Smite", "Smite Evil"] },
   },
   {
     name: "Unbound Justice (Gray Guard)",

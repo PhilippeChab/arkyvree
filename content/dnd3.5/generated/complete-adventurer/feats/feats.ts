@@ -76,7 +76,7 @@ export const FIGHTER_FEATS: FeatSeed[] = [
       "When wielding a one-handed weapon in your off hand, you take penalties for fighting with two weapons as if you were wielding a light weapon in your off hand.",
     aptitudes: ["General", "Fighter Bonus Feat"],
     requirements: [gte("abilities.strength.total", 13), eq("feats.twoweaponfighting.possessed")],
-    properties: [{ type: "FEAT_OVERSIZED_TWO_WEAPON_FIGHTING", value: "true" }],
+    fields: { oversizedTwoWeaponFighting: true },
   },
   {
     name: "Power Throw",

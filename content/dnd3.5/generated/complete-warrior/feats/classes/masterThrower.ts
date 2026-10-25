@@ -34,7 +34,7 @@ export const MASTER_THROWER_CLASS_FEATS: FeatSeed[] = [
       "Starting at 2nd level, the master thrower gains evasion. When she succeeds on a Reflex save against an effect that would normally deal half damage on a successful save, she takes no damage instead. This ability only functions while wearing light armor or no armor, and is unavailable when she is helpless (for example, unconscious or paralyzed). If the character already possesses evasion, she instead gains improved evasion, which works identically except that a failed Reflex save results in only half damage rather than full damage.",
     selectable: false,
     aptitudes: ["Master Thrower Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Evasion" }],
+    fields: { families: ["Evasion"] },
   },
   {
     name: "Palm Throw (Master Thrower Thrown Weapon Trick)",

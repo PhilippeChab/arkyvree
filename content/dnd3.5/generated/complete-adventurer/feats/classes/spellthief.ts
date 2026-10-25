@@ -46,7 +46,7 @@ export const SPELLTHIEF_CLASS_FEATS: FeatSeed[] = [
     stackable: true,
     selectable: false,
     aptitudes: ["Spellthief Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Sneak Attack" }],
+    fields: { families: ["Sneak Attack"] },
   },
   {
     name: "Spellgrace (Spellthief)",
@@ -117,7 +117,7 @@ export const SPELLTHIEF_CLASS_FEATS: FeatSeed[] = [
       "A spellthief can use the Search skill to locate traps with a DC higher than 20, and he can use Disable Device to bypass a trap or disarm magic traps. See the rogue class feature of the Player's Handbook.",
     selectable: false,
     aptitudes: ["Spellthief Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Trapfinding" }],
+    fields: { families: ["Trapfinding"] },
   },
   {
     name: "Weapon and Armor Proficiency (Spellthief)",

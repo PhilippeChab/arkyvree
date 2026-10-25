@@ -33,7 +33,7 @@ export const MOUNTEBANK_CLASS_FEATS: FeatSeed[] = [
     stackable: true,
     selectable: false,
     aptitudes: ["Mountebank Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Sneak Attack" }],
+    fields: { families: ["Sneak Attack"] },
   },
   {
     name: "Sudden Escape (Mountebank)",

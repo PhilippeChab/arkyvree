@@ -30,7 +30,7 @@ export const DARK_HUNTER_CLASS_FEATS: FeatSeed[] = [
       "Whenever a dark hunter catches a foe who cannot effectively defend against her strike, she can target a vulnerable point to inflict additional harm. If the target would be denied its Dexterity bonus to AC (regardless of whether it actually has one), the dark hunter's attack inflicts an extra 1d6 points of damage. This bonus damage is not multiplied on a critical hit. Because striking a vital area demands accuracy and depth of impact, ranged sneak attacks only apply against targets within 30 feet. Using a sap or unarmed strike, the dark hunter may deal nonlethal damage with a sneak attack instead of lethal damage. However, she cannot convert a lethal weapon to nonlethal for a sneak attack, even accepting the standard -4 penalty, since optimal weapon use is required for the precise strike. Only living creatures with identifiable anatomies are susceptible to sneak attacks - undead, constructs, oozes, plants, and incorporeal creatures have no vital areas to exploit. Creatures immune to critical hits are also immune to sneak attacks. The dark hunter must have clear sight of the target's vulnerable spot and be able to physically reach it. Sneak attacks cannot be made against creatures with concealment or against body parts of a creature whose vitals are out of reach. If the dark hunter gains sneak attack damage from another class (such as rogue), the bonus damage stacks.",
     selectable: false,
     aptitudes: ["Dark Hunter Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Sneak Attack" }],
+    fields: { families: ["Sneak Attack"] },
   },
   {
     name: "Stone's Hue (Dark Hunter)",

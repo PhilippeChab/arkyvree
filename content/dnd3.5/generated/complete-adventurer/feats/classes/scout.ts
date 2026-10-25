@@ -39,7 +39,7 @@ export const SCOUT_CLASS_FEATS: FeatSeed[] = [
       "Beginning at 5th level, a scout can avoid damage from certain attacks with a successful Reflex save. See the monk class feature of the Player's Handbook.",
     selectable: false,
     aptitudes: ["Scout Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Evasion" }],
+    fields: { families: ["Evasion"] },
   },
   {
     name: "Fast Movement (Scout)",
@@ -90,7 +90,7 @@ export const SCOUT_CLASS_FEATS: FeatSeed[] = [
     stackable: true,
     selectable: false,
     aptitudes: ["Scout Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Skirmish" }],
+    fields: { families: ["Skirmish"] },
   },
   {
     name: "Trackless Step (Scout)",
@@ -105,7 +105,7 @@ export const SCOUT_CLASS_FEATS: FeatSeed[] = [
       "A scout can use the Search skill to locate traps with a DC higher than 20, and she can use Disable Device to bypass a trap or disarm magic traps. See the rogue class feature of the Player's Handbook.",
     selectable: false,
     aptitudes: ["Scout Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Trapfinding" }],
+    fields: { families: ["Trapfinding"] },
   },
   {
     name: "Uncanny Dodge (Scout)",

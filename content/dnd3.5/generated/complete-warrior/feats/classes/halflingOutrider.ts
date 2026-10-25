@@ -23,7 +23,7 @@ export const HALFLING_OUTRIDER_CLASS_FEATS: FeatSeed[] = [
       "At 7th level, the halfling outrider gains evasion. When she succeeds on a Reflex saving throw against an effect that normally deals half damage on a successful save, she takes no damage instead. This ability only functions while wearing light armor or no armor, and is unavailable while the outrider is helpless (such as when unconscious or paralyzed). While mounted, the outrider extends this benefit to her mount, which may use either the outrider's Reflex save bonus or its own, whichever is better. If the character already possesses evasion, she instead gains improved evasion, though her mount still benefits from standard evasion as described. Improved evasion functions identically to evasion, except that on a failed Reflex save the character takes only half damage rather than full damage.",
     selectable: false,
     aptitudes: ["Halfling Outrider Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Evasion" }],
+    fields: { families: ["Evasion"] },
   },
   {
     name: "Full Mounted Attack (Halfling Outrider)",

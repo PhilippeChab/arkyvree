@@ -72,7 +72,7 @@ export const RADIANT_SERVANT_OF_PELOR_CLASS_FEATS: FeatSeed[] = [
       "A radiant servant of Pelor adds his radiant servant class levels to his cleric levels for all purposes related to turning undead.",
     selectable: false,
     aptitudes: ["Radiant Servant of Pelor Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Turn or Rebuke Undead" }],
+    fields: { families: ["Turn or Rebuke Undead"] },
   },
   {
     name: "Weapon and Armor Proficiency (Radiant Servant of Pelor)",
