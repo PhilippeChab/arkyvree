@@ -1,6 +1,6 @@
 import type { StoredValues } from "@/engine/core/fields/index.ts";
 import type { CharacterRows } from "@/engine/core/module/index.ts";
-import type { RulesetData, RulesetView, ViewEntities } from "@/engine/core/view/index.ts";
+import type { RulesetData, RulesetView, ViewKinds } from "@/engine/core/view/index.ts";
 import type { Character, CharacterInventory, Modifier, Requirement } from "@/shared/relations.ts";
 
 /**
@@ -36,7 +36,7 @@ export interface ModifierSource {
  * its own), its requirements as its template splits them, and its modifiers when it's equipped.
  */
 export type InventoryEntry = CharacterInventory & {
-  item: ViewEntities["items"] & {
+  item: ViewKinds["items"] & {
     modifiers: Modifier[];
     /** The base item's requirements: its template's, or its own when it is one */
     proficiency: Requirement[];

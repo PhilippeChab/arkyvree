@@ -3,7 +3,7 @@
 import { z } from "zod";
 
 import type { EntityFieldValues } from "@/engine/core/fields/index.ts";
-import type { EntityWrites } from "@/engine/core/module/index.ts";
+import type { EntityRecord, EntityWrites } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import SpellFocusFeats from "@/engine/rulesets/dnd3.5/entities/feats/SpellFocusFeats.ts";
 import ListedEntity from "@/engine/rulesets/dnd3.5/entities/ListedEntity.ts";
@@ -79,7 +79,7 @@ export default class SpellEntity extends ListedEntity<
 
   /**
    * A page of the ruleset's spells, as its query asks for it: what it's read with (`filters`: a list's spells, at a level
-   * when one is given), and its rows described, with their lists as the ruleset composes them. Refused at a level past
+   * when one is given), and its records described, with their links as the ruleset composes them. Refused at a level past
    * the rules' bounds.
    */
   protected override listOf(where: { aptitudeId?: string; level?: number }) {
@@ -87,7 +87,7 @@ export default class SpellEntity extends ListedEntity<
     RulesError.parse(SPELL_LEVEL.optional(), level, ["level"]);
     const listed = aptitudeId !== undefined || level != null;
     return {
-      describe: <T extends Record<string, unknown> & { id: string }>(rows: T[]) => this.describeListed(rows),
+      describe: <T extends Pick<EntityRecord, "id" | "links">>(rows: T[]) => this.describeListed(rows),
       filters: { ids: listed ? Dnd35View.of(this.rulesetData).listSpellIds({ aptitudeId, level }) : undefined },
     };
   }

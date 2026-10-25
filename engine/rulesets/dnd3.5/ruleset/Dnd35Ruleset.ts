@@ -20,8 +20,8 @@ export default class Dnd35Ruleset extends RulesetPart {
   protected override findMissingContent(view: RulesetView) {
     const { feats, klasses, races, skills } = Dnd35View.of(view.rulesetData);
     return [
-      { kind: "race", present: races.some((race) => race.kind === "pc") },
-      { kind: "class", present: klasses.some((klass) => klass.kind === "pc") },
+      { kind: "race", present: races.some((race) => race.partition === "pc") },
+      { kind: "class", present: klasses.some((klass) => klass.partition === "pc") },
       { kind: "skill", present: skills.length > 0 },
       { kind: "feat", present: feats.length > 0 },
     ]

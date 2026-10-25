@@ -8,6 +8,7 @@ import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
 import {
   type EntityFormData,
   linkedEntities,
+  ownFieldOf,
   RulesetEntityFormFields,
   toEntityBody,
   toEntityForm,
@@ -48,11 +49,11 @@ export function EntityEditor({
   const { copies, lockedName } = kind;
   const segment = getUrlSegment(kind.type);
   const { form, save } = useEntityForm({
-    empty: { ...toEntityForm<EntityFormData>(columns), ...(copies && { [copies.template]: false }) },
+    empty: { ...toEntityForm<EntityFormData>(columns), ...(copies && { [copies.template.key]: false }) },
     values: withEntityFields(
       {
         ...toEntityForm<EntityFormData>(columns, entity),
-        ...(copies && { [copies.template]: entity[copies.template] === true }),
+        ...(copies && { [copies.template.key]: ownFieldOf(entity, copies.template.field) === true }),
       },
       fields,
       entity,
@@ -94,7 +95,7 @@ export function EntityEditor({
               knownLinks: linkedEntities(columns, entity),
               templateName: typeof entity.templateName === "string" ? entity.templateName : null,
             }}
-            nameLocked={lockedName && entity[lockedName.flag] === true ? lockedName.reason : undefined}
+            nameLocked={lockedName && ownFieldOf(entity, lockedName.field) === true ? lockedName.reason : undefined}
           />
         ),
         ...save,

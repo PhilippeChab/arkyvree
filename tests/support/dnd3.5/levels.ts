@@ -5,6 +5,7 @@ import { Entities, Picks } from "@/server/repositories/index.ts";
 import { CharacterLevelsService, createAdvancement } from "@/server/services/characters/levels/index.ts";
 import type { Session } from "@/shared/relations.ts";
 import { uniqueId } from "@/tests/support/seed.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 import { createTestCharacter } from "./characters.ts";
 import { levelUpPlan } from "./levelPlans.ts";
@@ -60,15 +61,19 @@ export async function addOneLevel(
 
 /** A new class of the ruleset, with its first level. */
 export async function createTestKlassLevel(rulesetId: string) {
-  const [klass] = await Entities.create<Klass>(db, "classes", { name: `Test Class ${uniqueId()}`, rulesetId, hd: 8 });
-  const [klassLevel] = await Entities.create<KlassLevel>(db, "class_levels", { klassId: klass.id, level: 1 });
+  const [klass] = await Entities.create<Klass>(db, "classes", {
+    name: `Test Class ${uniqueId()}`,
+    rulesetId,
+    fields: { [CLASS_HD]: 8 },
+  });
+  const [klassLevel] = await Entities.create<KlassLevel>(db, "class_levels", { ownerId: klass.id, position: 1 });
   return { klass, klassLevel };
 }
 
 /** A class's level `level`. */
 export async function findKlassLevel(klassId: string, level: number) {
   return (await Entities.findMany<KlassLevel>(db, { entityType: "class_levels", ownerIds: [klassId] })).find(
-    (klassLevel) => klassLevel.level === level,
+    (klassLevel) => klassLevel.position === level,
   );
 }
 

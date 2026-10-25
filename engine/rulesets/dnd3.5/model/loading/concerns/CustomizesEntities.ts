@@ -25,7 +25,7 @@ export function CustomizesEntities<B extends Constructor<CharacterDataLoader<Loa
         klassLevels,
       }: { klassBonusSpellAbilityMap: Map<string, string>; klassLevels: KlassLevel[] },
     ): CustomizedSpell[] {
-      const klassIdByLevelId = new Map(klassLevels.map((level) => [level.id, level.klassId]));
+      const klassIdByLevelId = new Map(klassLevels.map((level) => [level.id, level.ownerId]));
       return spells.map((spell) => {
         const klassId = klassIdByLevelId.get(spell.klassLevelId);
         const abilityDcName = klassId === undefined ? undefined : klassBonusSpellAbilityMap.get(klassId);
@@ -55,7 +55,7 @@ export function CustomizesEntities<B extends Constructor<CharacterDataLoader<Loa
           modifiers: rulesetData.modifiersBySource.get(level.id) ?? [],
           requirements: rulesetData.requirementsByEntity.get(level.id) ?? [],
         }))
-        .sort((a, b) => a.level - b.level);
+        .sort((a, b) => a.position - b.position);
 
       const classLevelFields = new Map(
         klassLevels.map((level) => [level.id, CLASS_LEVEL_FIELDS.read(rulesetData.valuesOf(level.id))]),

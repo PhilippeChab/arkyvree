@@ -3,7 +3,6 @@ import type { InferInsertModel } from "drizzle-orm";
 import type { Db } from "@/drizzle/database.ts";
 import type { activitiesInAccount } from "@/drizzle/schema.ts";
 import type { OwnedKind } from "@/engine/index.ts";
-import { EntityRepositories } from "@/server/cow/index.ts";
 import {
   Activities,
   CharacterContributors,
@@ -141,7 +140,7 @@ async function findContentOwner(db: Db, { id, table }: ContentRow): Promise<Cont
 
 /** The ruleset a row of its content is in: an entity's own, or that of the row it belongs to. */
 async function findContentRuleset(db: Db, { id, table }: ContentRow): Promise<string | undefined> {
-  if (isOneOf(table, RULESET_ENTITY_TYPES)) return (await EntityRepositories.of(table).findOne(db, { id }))?.rulesetId;
+  if (isOneOf(table, RULESET_ENTITY_TYPES)) return (await Entities.findOne(db, { entityType: table, id }))?.rulesetId;
   const owner = await findContentOwner(db, { id, table });
   return owner && (await findContentRuleset(db, owner));
 }

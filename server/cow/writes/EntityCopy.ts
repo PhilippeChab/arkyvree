@@ -1,5 +1,12 @@
 import type { Db } from "@/drizzle/database.ts";
-import { type CowData, Engine, type EntityCustomizations, type RulesetSources, type ViewLink } from "@/engine/index.ts";
+import {
+  type CowData,
+  Engine,
+  type EntityCustomizations,
+  type EntityRecord,
+  type RulesetSources,
+  type ViewLink,
+} from "@/engine/index.ts";
 import CowDataReader from "@/server/cow/views/CowDataReader.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import {
@@ -12,7 +19,6 @@ import {
 } from "@/server/repositories/index.ts";
 
 import CustomizationCopies from "./CustomizationCopies.ts";
-import EntityRepositories, { type EntityWithId } from "./EntityRepositories.ts";
 
 /**
  * A copy made: the copied entity, and each customization it copied, by its source's id (equal values don't make the
@@ -20,7 +26,7 @@ import EntityRepositories, { type EntityWithId } from "./EntityRepositories.ts";
  */
 export interface CopiedEntity {
   copiedIds: ReadonlyMap<string, string>;
-  entity: EntityWithId;
+  entity: EntityRecord;
 }
 
 /**
@@ -82,8 +88,8 @@ export default class EntityCopy {
   private readonly sourceType: string | undefined;
 
   /** Copies the entity into the target ruleset, or returns the copy it already has: the newly created child entity. */
-  private async copy(tx: Db): Promise<EntityWithId> {
-    const repo = EntityRepositories.of(this.entityType);
+  private async copy(tx: Db): Promise<EntityRecord> {
+    const entityType = this.entityType;
     const { id: childRulesetId } = this.ruleset;
 
     // A second first edit must wait for the copying transaction, then see its
@@ -100,8 +106,10 @@ export default class EntityCopy {
       rulesetId: childRulesetId,
     });
     if (existingSnapshot) {
-      const exists = await repo.lock(tx, { id: existingSnapshot.forkedEntityId });
-      const existing = exists ? await repo.findOne(tx, { id: existingSnapshot.forkedEntityId }) : undefined;
+      const exists = await Entities.lock(tx, { id: existingSnapshot.forkedEntityId });
+      const existing = exists
+        ? await Entities.findOne(tx, { entityType, id: existingSnapshot.forkedEntityId })
+        : undefined;
       if (existing) return existing;
       await EntitySnapshots.delete(tx, {
         sourceEntityId: this.entityId,
@@ -110,22 +118,28 @@ export default class EntityCopy {
     }
 
     // 1. Fetch the parent entity
-    if (!(await repo.lock(tx, { id: this.entityId }, "share")))
+    if (!(await Entities.lock(tx, { id: this.entityId }, "share")))
       throw new NotFoundError("Customization source no longer exists; refresh the entity");
 
-    const parentEntity = await repo.findOne(tx, { id: this.entityId });
+    const parentEntity = await Entities.findOne(tx, { entityType, id: this.entityId });
     if (!parentEntity) throw new Error(`Parent entity not found: ${this.entityType}/${this.entityId}`);
 
     // The ruleset's copy-on-write data, as the transaction sees it, its own copies included: what the copy's references
     // (its row's, its relationships') are remapped by
     const cow = await CowDataReader.read(tx, this.ruleset);
 
-    // 2. Copy entity to child ruleset, its references to the entities the ruleset shows in their place (a race's
-    // parent, an item's template, a spell's save)
-    const { id: _id, createdAt: _ca, updatedAt: _ua, deletedAt: _da, rulesetId: _rid, ...entityData } = parentEntity;
-    const [resolvedData] = cow.resolveRows([entityData]);
-    const newRows = await repo.create(tx, { ...resolvedData, rulesetId: childRulesetId });
-    const newEntity = newRows[0];
+    // 2. Copy the entity, its own fields and its single links to the child ruleset, each link to the entity the ruleset
+    // shows in its target's place (a race's parent, an item's template, a spell's save)
+    const [{ campaignId, description, fields, links, name, partition }] = cow.resolveLinks([parentEntity]);
+    const [newEntity] = await Entities.create(tx, entityType, {
+      rulesetId: childRulesetId,
+      campaignId,
+      name: name!,
+      description,
+      partition,
+      fields,
+      links,
+    });
 
     // 3. Copy customizations
     const customizations = await CustomizationCopies.read(tx, [this.entityId], this.entityType, this.sourceType);
@@ -171,18 +185,22 @@ export default class EntityCopy {
   private async copyRelationships(tx: Db, targetEntityId: string, cow: CowData) {
     const resolve = (id: string) => cow.resolve(id);
     await this.copyLinks(tx, this.entityType, new Map([[this.entityId, targetEntityId]]), resolve);
-    const storage = Engine.storage();
-    for (const { ownerType, type } of storage.registries().entityTypes) {
+    for (const { ownerType, type } of Engine.storage().registries().entityTypes) {
       if (ownerType !== this.entityType) continue;
-      const owner = Object.keys(storage.kind(type).columns).find(
-        (name) => storage.kind(type).columns[name].kind === "owner",
-      )!;
       const owned = await Entities.findMany(tx, { entityType: type, ownerIds: [this.entityId] });
       if (owned.length === 0) continue;
+      // Each its position, its own fields and its single links (each to what stands for its target), and its times
       const copies = await Entities.createMany(
         tx,
         type,
-        owned.map((row) => ({ ...row, id: undefined, [owner]: targetEntityId })),
+        cow.resolveLinks(owned).map(({ createdAt, fields, links, position, updatedAt }) => ({
+          ownerId: targetEntityId,
+          position: position!,
+          fields,
+          links,
+          createdAt,
+          updatedAt,
+        })),
       );
       const ids = new Map(owned.map((row, index) => [row.id, copies[index].id]));
       const customizable = CUSTOMIZABLE_TYPES.includes(type) ? type : undefined;

@@ -2,7 +2,7 @@ import type { CowData } from "@/engine/core/cow/index.ts";
 import { type DeclaredFields, OwnerValues, type StoredValues } from "@/engine/core/fields/index.ts";
 import type { Modifier, Requirement } from "@/shared/relations.ts";
 
-import type { Row, ViewLink } from "./rows.ts";
+import type { ViewEntity, ViewLink } from "./rows.ts";
 import RulesetData, { type KindValue, type RulesetLists } from "./RulesetData.ts";
 import SiblingMerge from "./SiblingMerge.ts";
 import SiblingRows from "./SiblingRows.ts";
@@ -13,13 +13,10 @@ interface HeldLinks {
   type: string;
 }
 
-/** A row of the view: its id, and its columns. */
-type ViewRow = Row & { id: string };
-
 /** A ruleset's own rows, none of its sources': what the server fetches for each ruleset of a chain to compose. */
 export interface RulesetRawData {
-  /** Each kind's rows, by its type, an owned kind's by position and owner */
-  entities: Record<string, ViewRow[]>;
+  /** Each kind's entities as stored, by its type, an owned kind's by position and owner */
+  entities: Record<string, ViewEntity[]>;
   /**
    * Each kind's values kind-wide, by its type: each value of each field with the entities that hold it, in the order
    * those values were written
@@ -41,22 +38,23 @@ export interface RulesetRawData {
 }
 
 /**
- * What a ruleset's view is composed by, of its modules' storage declarations: each kind (its owner's kind and the
- * column naming it, an owned kind's), and the links whose sibling copies' merge into their winner's (`unionLinks`, each
- * by its role, from a kind to another: a feat's pools).
+ * What a ruleset's view is composed by, of its modules' storage declarations: each kind (its owner's kind, an owned
+ * kind's), and the links whose sibling copies' merge into their winner's (`unionLinks`, each by its role, from a kind
+ * to another: a feat's pools).
  */
 export interface ViewSchema {
   /**
    * Each kind, an owner before the kinds it owns; `tracked`: its visible ids read by another kind's; `customizable`:
    * whether a user customizes its entities; `fields`: whether they hold fields of their own; `inherits`: the fields
-   * they read off another entity when they hold none, and the column naming it
+   * they read off another entity when they hold none, and the role of their link to it; `ownerType`: an owned kind's
+   * owner's kind; `template`: the flag of its own that makes an entity a template others are made from
    */
   kinds: {
     customizable: boolean;
     fields: boolean;
-    inherits?: { column: string; fields: ReadonlySet<string> };
-    /** Its owner's kind, the column its row names its owner by, and the one it holds its position in it at */
-    owner?: { column: string; position: string; type: string };
+    inherits?: { fields: ReadonlySet<string>; role: string };
+    ownerType?: string;
+    template?: string;
     tracked: boolean;
     type: string;
   }[];
@@ -114,17 +112,17 @@ export default class RulesetComposition {
    */
   private composeEntities() {
     const visibleIds = new Map<string, Set<string>>();
-    const entities = new Map<string, ViewRow[]>();
+    const entities = new Map<string, ViewEntity[]>();
     const leftOut = new Set<string>();
-    for (const { owner, tracked, type } of this.schema.kinds) {
-      let rows: ViewRow[];
-      if (owner) {
-        const owners = visibleIds.get(owner.type);
-        if (!owners) throw new Error(`The view composes ${type} before its owner, ${owner.type}`);
+    for (const { ownerType, tracked, type } of this.schema.kinds) {
+      let rows: ViewEntity[];
+      if (ownerType) {
+        const owners = visibleIds.get(ownerType);
+        if (!owners) throw new Error(`The view composes ${type} before its owner, ${ownerType}`);
         rows = [];
         for (const raw of this.chain) {
           for (const row of raw.entities[type] ?? []) {
-            if (!this.cow.isHidden(row.id) && owners.has(row[owner.column] as string)) rows.push(row);
+            if (!this.cow.isHidden(row.id) && row.ownerId !== null && owners.has(row.ownerId)) rows.push(row);
             else leftOut.add(row.id);
           }
         }
@@ -132,7 +130,7 @@ export default class RulesetComposition {
         rows = this.composeRows((raw) => raw.entities[type] ?? []);
       }
       if (tracked) visibleIds.set(type, new Set(rows.map((row) => row.id)));
-      entities.set(type, this.cow.resolveRows(rows));
+      entities.set(type, this.cow.resolveLinks(rows));
     }
     return { entities, leftOut };
   }
@@ -339,9 +337,9 @@ export default class RulesetComposition {
 
   build(): RulesetData {
     const kinds = Object.fromEntries(
-      this.schema.kinds.map(({ customizable, fields, inherits, owner, type }) => [
+      this.schema.kinds.map(({ customizable, fields, inherits, template, type }) => [
         type,
-        { customizable, fields, ...(inherits && { inherits }), ...(owner && { position: owner.position }) },
+        { customizable, fields, ...(inherits && { inherits }), ...(template && { template }) },
       ]),
     );
     return new RulesetData(this.composeLists(), this.cow, this.labels, kinds);

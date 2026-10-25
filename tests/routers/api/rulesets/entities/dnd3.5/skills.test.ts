@@ -17,7 +17,8 @@ describe("rulesets entities: skills", () => {
     const columns = { name: "Test Skill", description: "A test skill", primaryAbilityId: abilityMap["Intelligence"] };
     const fields = { impactedByWeight: false, checkPenaltyMultiplier: 1, usableWithoutTraining: true };
     const created = await expectOk(kinds.$post({ param: { id, entityType }, json: { ...columns, fields } }));
-    expect(created).toMatchObject({ ...columns, ...fields });
+    const { primaryAbilityId, ...own } = columns;
+    expect(created).toMatchObject({ ...own, ...fields, links: { keyAbility: primaryAbilityId } });
     const param = { id, entityType, entityId: created.id };
 
     expect(await expectOk(entity.$get({ param }))).toMatchObject({ id: created.id, name: "Test Skill" });
@@ -27,8 +28,9 @@ describe("rulesets entities: skills", () => {
     const update = { ...columns, name: "Renamed Skill", primaryAbilityId: abilityMap["Wisdom"] };
     const updatedFields = { ...fields, impactedByWeight: true };
     expect(await expectOk(entity.$put({ param, json: { ...update, fields: updatedFields } }))).toMatchObject({
-      ...update,
+      name: update.name,
       ...updatedFields,
+      links: { keyAbility: update.primaryAbilityId },
     });
 
     await expectOk(entity.$delete({ param }));

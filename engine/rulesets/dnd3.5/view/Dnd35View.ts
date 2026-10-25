@@ -166,10 +166,10 @@ export default class Dnd35View {
     return this.rulesetData.byId("classes");
   }
 
-  /** Key: `${klassId}:${level}`, the class's id resolved. */
+  /** Key: `${ownerId}:${position}`, a level's class and its number, the class's id resolved. */
   get klassLevelByKlassAndLevel(): Map<string, KlassLevel> {
     return (this.built.klassLevelByKlassAndLevel ??= this.rulesetData.resolvingCompositeKeys(
-      new Map(this.klassLevels.map((kl) => [`${kl.klassId}:${kl.level}`, kl])),
+      new Map(this.klassLevels.map((kl) => [`${kl.ownerId}:${kl.position}`, kl])),
     ));
   }
 
@@ -181,12 +181,12 @@ export default class Dnd35View {
     return this.rulesetData.byId("class_levels");
   }
 
-  /** klassId → its levels, sorted by level: the last is the class's highest. */
+  /** A class's id → its levels (their owner), sorted by their number (`position`): the last is the class's highest. */
   get klassLevelsByKlass(): Map<string, KlassLevel[]> {
     return (this.built.klassLevelsByKlass ??= this.rulesetData.resolvingIds(
       Map.groupBy(
-        this.klassLevels.toSorted((a, b) => a.level - b.level),
-        (kl) => kl.klassId,
+        this.klassLevels.toSorted((a, b) => a.position - b.position),
+        (kl) => kl.ownerId,
       ),
     ));
   }

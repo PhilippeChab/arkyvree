@@ -72,13 +72,13 @@ export default class SpellLists {
     const { klassLevels } = this.dnd35;
     const { modifiersBySource } = this.rulesetData;
     const classListsByKlass = new Map<string, Set<string>>();
-    for (const klassLevel of klassLevels.toSorted((a, b) => a.level - b.level)) {
+    for (const klassLevel of klassLevels.toSorted((a, b) => a.position - b.position)) {
       for (const modifier of modifiersBySource.get(klassLevel.id) ?? []) {
         const list = AptitudeTargets.parseSpellLevel(modifier.target)?.list;
         if (list === undefined) continue;
-        const lists = classListsByKlass.get(klassLevel.klassId) ?? new Set<string>();
+        const lists = classListsByKlass.get(klassLevel.ownerId) ?? new Set<string>();
         lists.add(list);
-        classListsByKlass.set(klassLevel.klassId, lists);
+        classListsByKlass.set(klassLevel.ownerId, lists);
       }
     }
     return (this.built.classListsByKlass = classListsByKlass);

@@ -12,15 +12,21 @@ import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 import { writeStoredValues } from "@/tests/support/storedValues.ts";
 import { makeSession } from "@/tests/support/users.ts";
+import { ITEM_IS_TEMPLATE, ITEM_TYPE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 describe("An item's stored values", () => {
   test("are its template's of each field it doesn't set, then its own: its damage types replace all the template's", async () => {
     const ruleset = await createSeededTestRuleset(makeSession().userId);
     const longsword = await withRulesetScope(db, ruleset.id, async ({ rulesetData }) =>
-      Dnd35View.of(rulesetData).items.find((item) => item.isTemplate && item.name === "Longsword"),
+      Dnd35View.of(rulesetData).items.find((item) => item.fields[ITEM_IS_TEMPLATE] && item.name === "Longsword"),
     );
     const [variant] = await Entities.createMany<Item>(db, "items", [
-      { name: "Probe Blade", rulesetId: ruleset.id, sourceItemId: longsword!.id, type: "Weapon" },
+      {
+        name: "Probe Blade",
+        rulesetId: ruleset.id,
+        fields: { [ITEM_TYPE]: "Weapon" },
+        links: { madeFrom: longsword!.id },
+      },
     ]);
     await writeStoredValues("items", variant.id, [
       ["DAMAGE_TYPE", "Piercing"],

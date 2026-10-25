@@ -5,7 +5,7 @@
  * is its `Descriptions` (`contract.ts`).
  */
 
-import type { ViewEntities } from "@/engine/core/view/index.ts";
+import type { ViewKinds } from "@/engine/core/view/index.ts";
 import type { Modifier, Requirement } from "@/shared/relations.ts";
 
 import type { SheetBlock } from "./blocks.ts";
@@ -185,11 +185,16 @@ export type CreationSection = { title: string } & (
 
 /**
  * A character's inventory entry, as its sheet lists it: the entry, what its ruleset shows of it (`X`: where its item
- * can go, where it's worn), and its item as the view composes it, with its fields (`F`, as its kind reads them).
+ * can go, where it's worn), and its item as the view composes it, with its fields (`F`, as its kind reads them, then its
+ * own by name).
  */
 export type DescribedInventoryEntry<T, X = unknown, F = unknown> = T &
   X & {
-    item: ViewEntities["items"] & { fields: F; modifiers: Modifier[]; requirements: Requirement[] };
+    item: Omit<ViewKinds["items"], "fields"> & {
+      fields: F & ViewKinds["items"]["fields"];
+      modifiers: Modifier[];
+      requirements: Requirement[];
+    };
   };
 
 /**

@@ -1,8 +1,8 @@
-import type { RulesetRawData, ViewEntities } from "@/engine/core/view/index.ts";
+import type { RulesetRawData, ViewKinds } from "@/engine/core/view/index.ts";
 
 /** A ruleset's own rows of a kind (`type`), as the cache keeps them, typed by its module's registry. */
-function kindRows<K extends keyof ViewEntities>(raw: RulesetRawData, type: K) {
-  return (raw.entities[type] ?? []) as ViewEntities[K][];
+function kindRows<K extends keyof ViewKinds>(raw: RulesetRawData, type: K) {
+  return (raw.entities[type] ?? []) as ViewKinds[K][];
 }
 
 /** A ruleset's own links of a role from entities of a kind (`type`, `role`), to a kind (`toType`) when it says. */

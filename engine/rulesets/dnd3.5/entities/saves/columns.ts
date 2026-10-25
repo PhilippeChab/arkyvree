@@ -10,11 +10,21 @@ export const SAVE_COLUMNS: FormField[] = [
     label: "Linked Ability",
     references: "abilities",
     required: true,
+    role: "keyAbility",
   },
 ];
 
 /** A save's list: its name, the ability its bonus comes from, its description. */
 export const SAVE_LIST: ListDescription = {
   nameShare: 25,
-  columns: [{ key: "abilityId", label: "Linked Ability", reads: "reference", references: "abilities", share: 30 }],
+  columns: [
+    {
+      key: "abilityId",
+      label: "Linked Ability",
+      reads: "reference",
+      references: "abilities",
+      role: "keyAbility",
+      share: 30,
+    },
+  ],
 };

@@ -12,6 +12,7 @@ import {
 import RulesError from "@/engine/core/RulesError.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 import { SPELL_LEVEL_LABELS, SPELL_LEVELS } from "@/vocabulary/dnd3.5/spells.ts";
 
 import LevelSelections from "./LevelSelections.ts";
@@ -181,11 +182,11 @@ export default class LevelPlans extends LevelUpBase<DetailedCharacter> {
       ...Object.fromEntries(Object.keys(pool.levels ?? {}).map((tier) => [tier, 0])),
     });
     return {
-      advancements: [{ id: klassLevel.id, position: klassLevel.level, track: { id: klass.id, name: klass.name } }],
+      advancements: [{ id: klassLevel.id, position: klassLevel.position, track: { id: klass.id, name: klass.name } }],
       steps: {
         [STEP.hp.name]: {
           mechanic: "value",
-          advancements: [{ ...this.rules.hitPointsOf(klass.hd), roll: `d${klass.hd}` }],
+          advancements: [{ ...this.rules.hitPointsOf(klass.fields[CLASS_HD]), roll: `d${klass.fields[CLASS_HD]}` }],
         },
         [STEP.abilities.name]: {
           mechanic: "choose",
@@ -415,7 +416,7 @@ export default class LevelPlans extends LevelUpBase<DetailedCharacter> {
   /** The class and level of the character's saved level `characterLevelId`, which an edit keeps. */
   private trackOf(characterLevelId: string) {
     const { klass, klassLevel } = this.getSavedKlassLevel(this.findLevel(characterLevelId));
-    return { klassId: klass.id, level: klassLevel.level };
+    return { klassId: klass.id, level: klassLevel.position };
   }
 
   /**

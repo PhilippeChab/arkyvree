@@ -10,6 +10,7 @@ import { activityTypes } from "@/tests/support/activities.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
 import { NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
+import { RACE_BASE_SPEED, RACE_SIZE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 const babAtLeast5 = { level: "1", target: "combat.bab", value: "5", operator: "greater_than_or_equal" };
 const chain = { level: "1", chainingOperator: "and" };
@@ -21,8 +22,7 @@ async function setup() {
   const [race] = await Entities.create<Race>(db, "races", {
     rulesetId: ruleset.id,
     name: `Test Race ${uniqueId()}`,
-    size: "Medium",
-    baseSpeed: 30,
+    fields: { [RACE_SIZE]: "Medium", [RACE_BASE_SPEED]: 30 },
   });
   return { session, rulesetId: ruleset.id, feat, race };
 }

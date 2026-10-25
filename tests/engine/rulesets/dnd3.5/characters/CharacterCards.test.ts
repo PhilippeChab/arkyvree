@@ -10,7 +10,7 @@ const DATA = {
   ]),
   klassLevelsById: new Map(
     ["fighter", "rogue"].flatMap((klassId) =>
-      [1, 2, 3].map((level) => [`${klassId}-${level}`, { klassId, level }] as const),
+      [1, 2, 3].map((level) => [`${klassId}-${level}`, { ownerId: klassId, position: level }] as const),
     ),
   ),
   racesById: new Map([["elf", { name: "Elf" }]]),

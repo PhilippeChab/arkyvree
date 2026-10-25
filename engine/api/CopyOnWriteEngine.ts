@@ -13,6 +13,7 @@ import {
   type RulesetData,
   type RulesetRawData,
   SiblingMerge,
+  type ViewEntity,
   type ViewLink,
 } from "@/engine/core/view/index.ts";
 import type { BaseRules } from "@/shared/enums.ts";
@@ -56,10 +57,10 @@ export default class CopyOnWriteEngine {
   }
 
   /**
-   * A ruleset's own rows as its view composes them, off its stored rows (`stored`): each kind's rows by its type, as its
-   * module's declaration reads them, an owned kind's by position and owner, and only those whose owner it holds; each
-   * entity's links of the roles it holds many of (`StorageEngine.viewLinksOf`); their stored values and its own
-   * Settings', kind-wide too (`StorageEngine.valuesOf`), its modifiers and requirements.
+   * A ruleset's own rows as its view composes them, off its stored rows (`stored`): each kind's entities by its type,
+   * each its record (`StorageEngine.recordOf`: its own columns, its own fields, its single links), an owned kind's by
+   * position and owner, and only those whose owner it holds; each entity's links (`StorageEngine.viewLinksOf`); their
+   * stored values and its own Settings', kind-wide too (`StorageEngine.valuesOf`), its modifiers and requirements.
    */
   buildRawData(stored: StoredRulesetRows): RulesetRawData {
     const storage = StorageEngine.shared();
@@ -74,7 +75,7 @@ export default class CopyOnWriteEngine {
           (a, b) => a.position! - b.position! || (a.ownerId! < b.ownerId! ? -1 : a.ownerId! > b.ownerId! ? 1 : 0),
         );
       }
-      entities[type] = ofType.map((entity) => storage.rowOf(entity) as RulesetRawData["entities"][string][number]);
+      entities[type] = ofType.map((entity) => storage.recordOf(entity) as ViewEntity);
     }
     const links = new Map<string, { links: ViewLink[]; type: string }>();
     for (const entity of live) {

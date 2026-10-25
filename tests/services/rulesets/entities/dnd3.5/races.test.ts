@@ -7,6 +7,7 @@ import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
 import { createTestRuleset } from "@/tests/support/rulesets.ts";
 import { createTestUser } from "@/tests/support/users.ts";
+import { RACE_BASE_SPEED, RACE_SIZE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 const elf = { name: "Elf", description: "Graceful and long-lived", size: "Medium" as const, baseSpeed: 30 };
 
@@ -15,13 +16,17 @@ describe("EntitiesService: races", () => {
   test("stores a race's size and base speed", async () => {
     const { session, ruleset } = await createTestUserAndRuleset();
     const created = await EntitiesService.createEntity(session, ruleset.id, "races", elf);
-    expect(created).toMatchObject(elf);
+    expect(created).toMatchObject({
+      name: elf.name,
+      description: elf.description,
+      fields: { [RACE_SIZE]: elf.size, [RACE_BASE_SPEED]: elf.baseSpeed },
+    });
     const updated = await EntitiesService.updateEntity(session, ruleset.id, "races", created.id, {
       ...elf,
       size: "Large",
       baseSpeed: 40,
     });
-    expect(updated).toMatchObject({ size: "Large", baseSpeed: 40 });
+    expect(updated).toMatchObject({ fields: { [RACE_SIZE]: "Large", [RACE_BASE_SPEED]: 40 } });
   });
 
   describe("deleting a race characters use", () => {

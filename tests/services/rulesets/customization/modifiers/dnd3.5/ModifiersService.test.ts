@@ -22,6 +22,7 @@ import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
 import { createSeededTestRuleset, readTargetPaths } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
+import { RACE_BASE_SPEED, RACE_SIZE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 const strengthBonus = { target: "abilities.strength.misc", value: "2", operator: "add" };
 
@@ -36,8 +37,7 @@ async function setup() {
   const [race] = await Entities.create<Race>(db, "races", {
     name: "Test Race",
     rulesetId,
-    size: "Medium",
-    baseSpeed: 30,
+    fields: { [RACE_SIZE]: "Medium", [RACE_BASE_SPEED]: 30 },
   });
   const { klassLevel } = await createTestKlassLevel(rulesetId);
   const owners = { feats: feat.id, items: item.id, spells: spell.id, races: race.id, class_levels: klassLevel.id };

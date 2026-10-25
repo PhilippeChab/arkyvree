@@ -11,7 +11,7 @@ import {
 } from "@/server/repositories/index.ts";
 
 import EntityCopy from "./EntityCopy.ts";
-import EntityRepositories from "./EntityRepositories.ts";
+import EntityEdit from "./EntityEdit.ts";
 
 /**
  * The row a customization of an entity changes (`cowOwner`), and what its copy copied when this call copied it: a
@@ -57,12 +57,11 @@ export default class CustomizationEdit {
     const cowType = entityType as RulesetEntityType;
 
     // The entity the view shows for the id: the ruleset's copy of it, or the winner of its siblings
-    const repo = EntityRepositories.of(cowType);
-    const entity = await repo.findOne(tx, { id: this.cow.resolve(entityId) });
+    const entity = await Entities.findOne(tx, { entityType: cowType, id: this.cow.resolve(entityId) });
     if (!entity) throw new NotFoundError("Customization source not found in this ruleset");
 
     if (entity.rulesetId === this.ruleset.id) {
-      await EntityRepositories.lock(tx, cowType, entity.id);
+      await EntityEdit.lock(tx, entity.id);
       return { id: entity.id };
     }
     if (!this.cow.sourceChain.includes(entity.rulesetId))
@@ -104,7 +103,7 @@ export default class CustomizationEdit {
     const ownerRulesetId = String(owner.rulesetId);
 
     if (ownerRulesetId === this.ruleset.id) {
-      await EntityRepositories.lock(tx, ownerType, owner.id);
+      await EntityEdit.lock(tx, owner.id);
       if (!(await Entities.findOne(tx, { entityType, id: owned.id })))
         throw new NotFoundError("Customization source no longer exists; refresh the entity");
 

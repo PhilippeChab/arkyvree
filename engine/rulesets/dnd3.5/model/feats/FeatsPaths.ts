@@ -7,7 +7,7 @@ import { getOperators } from "@/shared/customization/operators.ts";
 import { deriveNameLabels, deriveSegmentLabels, isLeafOfKind, type TargetPath } from "@/shared/customization/target.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { FEAT_FAMILIES } from "@/vocabulary/dnd3.5/feats.ts";
-import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/fields/index.ts";
+import { FEAT_FAMILY, FEAT_STACKABLE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /**
  * A family's feats' paths, a requirement's only: a modifier grants one feat (`feats.<slug>.possessed`), never a family,
@@ -92,7 +92,7 @@ export default class FeatsPaths implements PathCategory<Dnd35Components> {
 
       for (const subPath of FEAT_PATHS) {
         if (!isLeafOfKind(subPath, kind)) continue;
-        if ("stackableOnly" in subPath && subPath.stackableOnly && !feat.stackable) continue;
+        if ("stackableOnly" in subPath && subPath.stackableOnly && !feat.fields[FEAT_STACKABLE]) continue;
 
         paths.push({
           path: `feats.${normalizedFeatName}.${subPath.path}`,

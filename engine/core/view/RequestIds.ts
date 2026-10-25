@@ -1,6 +1,6 @@
 import RulesError from "@/engine/core/RulesError.ts";
 
-import type { ViewEntities } from "./rows.ts";
+import type { ViewKinds } from "./rows.ts";
 import type RulesetData from "./RulesetData.ts";
 
 /**
@@ -20,7 +20,7 @@ export default class RequestIds {
   ) {}
 
   /** The id the view keys `id` by (`resolve`), not one of those `seen` already: refused, naming it, when it is. */
-  private resolveOnce(type: keyof ViewEntities, id: string, seen: Set<string>) {
+  private resolveOnce(type: keyof ViewKinds, id: string, seen: Set<string>) {
     const resolved = this.resolve(type, id);
     if (seen.has(resolved))
       throw new RulesError("invalid", `${this.rulesetData.labelOf(type)} ${id} is given more than once`);
@@ -29,7 +29,7 @@ export default class RequestIds {
   }
 
   /** The entity of `type` the view shows for `id`: refused, naming it, when it shows none. */
-  find<K extends keyof ViewEntities>(type: K, id: string): ViewEntities[K] {
+  find<K extends keyof ViewKinds>(type: K, id: string): ViewKinds[K] {
     const entity = this.rulesetData.find(type, id);
     if (!entity)
       throw new RulesError("invalid", `${this.rulesetData.labelOf(type)} ${id} does not belong to ${this.owner}`);
@@ -37,7 +37,7 @@ export default class RequestIds {
   }
 
   /** The id the view keys the entity of `type` named `id` by: refused, naming it, when it shows none. */
-  resolve(type: keyof ViewEntities, id: string): string {
+  resolve(type: keyof ViewKinds, id: string): string {
     return this.find(type, id).id;
   }
 
@@ -45,7 +45,7 @@ export default class RequestIds {
    * Ids of `type`, each the view's, in the order they came: refused, naming it, when one names none of its entities, or
    * one named already (by the same id, or by its source's and its copy's).
    */
-  resolveAll(type: keyof ViewEntities, ids: string[]): string[] {
+  resolveAll(type: keyof ViewKinds, ids: string[]): string[] {
     const seen = new Set<string>();
     return ids.map((id) => this.resolveOnce(type, id, seen));
   }
@@ -54,7 +54,7 @@ export default class RequestIds {
    * Values by the id of the entity of `type` each is for (`byId`), each under the view's id, in the order they came:
    * refused, naming it, when an id names none of its entities, or one another id names (its source's and its copy's).
    */
-  resolveKeys<V>(type: keyof ViewEntities, byId: Record<string, V>): Map<string, V> {
+  resolveKeys<V>(type: keyof ViewKinds, byId: Record<string, V>): Map<string, V> {
     const seen = new Set<string>();
     return new Map(Object.entries(byId).map(([id, value]) => [this.resolveOnce(type, id, seen), value]));
   }

@@ -1,7 +1,7 @@
 import type { ItemSeed } from "@/content/core/builders/items/types.ts";
 import type { SeederState } from "@/database/seeders/core/SeederState.ts";
 import { modifiersInCustomization, requirementsInCustomization } from "@/drizzle/schema.ts";
-import type { FieldsWrite } from "@/engine/index.ts";
+import type { EntityWrite, FieldsWrite } from "@/engine/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 
 /** Seeding items. */
@@ -12,6 +12,15 @@ export function SeedsItems<B extends Constructor<SeederState>>(Base: B) {
      * content's codec's (`Engine.forRules(baseRules).toFieldsWrite`).
      */
     protected abstract itemFieldsWrite(fields: object): FieldsWrite;
+
+    /**
+     * What an item's seed writes of it (`item`): its own fields and its link to its template (`templateId`), whether
+     * it's a template, as its module stores them.
+     */
+    protected abstract itemWrite(
+      item: ItemSeed<object>,
+      made: { isTemplate: boolean; templateId?: string },
+    ): EntityWrite;
 
     /**
      * Seeds items with their fields, requirements and modifiers, as templates or made from the templates `templateMap`
@@ -28,12 +37,10 @@ export function SeedsItems<B extends Constructor<SeederState>>(Base: B) {
           rulesetId: this.ctx.rulesetId,
           name: item.name,
           description: item.description,
-          weight: item.weight,
-          costGp: item.costGp,
-          type: item.type,
-          isTemplate: options.isTemplate ?? false,
-          slot: item.slot || undefined,
-          sourceItemId: item.sourceItem ? options.templateMap?.[item.sourceItem] : undefined,
+          ...this.itemWrite(item, {
+            isTemplate: options.isTemplate ?? false,
+            templateId: item.sourceItem ? options.templateMap?.[item.sourceItem] : undefined,
+          }),
         })),
       );
 

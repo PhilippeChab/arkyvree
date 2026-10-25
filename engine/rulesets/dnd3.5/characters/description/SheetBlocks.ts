@@ -14,8 +14,10 @@ import type {
 } from "@/engine/core/module/index.ts";
 import IdentityFields from "@/engine/rulesets/dnd3.5/characters/IdentityFields.ts";
 import { RULESET_LIMITS } from "@/engine/rulesets/dnd3.5/limits.ts";
+import type { Feat } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import { formatSigned } from "@/shared/text.ts";
 import { MIN_ABILITY_SCORE } from "@/vocabulary/dnd3.5/abilities.ts";
+import { FEAT_STACKABLE, ITEM_COST_GP, ITEM_WEIGHT } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 import type CharacterResponse from "./CharacterResponse.ts";
 import type CombatSheet from "./CombatSheet.ts";
@@ -29,14 +31,6 @@ interface SheetAbility {
   name: string;
   parts: SheetStat[];
   total: number;
-}
-
-/** A feat a sheet lists: its id, name and description, and whether the character may hold it more than once. */
-interface SheetFeat {
-  description: string | null;
-  id: string;
-  name: string;
-  stackable: boolean;
 }
 
 /**
@@ -80,6 +74,9 @@ type BondedSheet = Pick<
 > & {
   bondFeatId: string | null;
 };
+
+/** A feat a sheet lists: its id, name and description, and whether the character may hold it more than once. */
+type SheetFeat = Pick<Feat, "description" | "id" | "name"> & { fields: Pick<Feat["fields"], typeof FEAT_STACKABLE> };
 
 /**
  * An attack's columns. On a phone, its weapon leads, its attack bonus at the line's end, and the rest under them
@@ -267,7 +264,7 @@ export default class SheetBlocks {
     });
     const entries = [...byName.values()].flatMap((held, group) => {
       const [feat] = held;
-      if (feat.stackable && held.length > 1) return [entryOf(feat, `${feat.name}-${group}`, held.length)];
+      if (feat.fields[FEAT_STACKABLE] && held.length > 1) return [entryOf(feat, `${feat.name}-${group}`, held.length)];
       return held.map((each, index) => entryOf(each, `${each.name}-${group}-${index}`));
     });
     return {
@@ -295,6 +292,7 @@ export default class SheetBlocks {
       title: "Equipment & Inventory",
       empty: "No equipment",
       entityType: "items",
+      itemFields: { cost: ITEM_COST_GP, weight: ITEM_WEIGHT },
       rows: equipment.map((entry) => ({
         key: entry.id,
         id: entry.itemId,

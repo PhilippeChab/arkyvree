@@ -201,7 +201,7 @@ export default abstract class PlannedLevelsState extends include(LevelUpState, P
       const klass = this.dnd35.klassesById.get(klassId);
       if (!klass) throw new RulesError("invalid", `Level ${i + 1}: Class does not belong to the character's ruleset`);
 
-      if (klass.kind !== "pc")
+      if (klass.partition !== "pc")
         throw new RulesError("invalid", `Level ${i + 1}: Class is not valid for a player character`);
 
       const klassLevel = this.dnd35.klassLevelByKlassAndLevel.get(`${klassId}:${level}`);

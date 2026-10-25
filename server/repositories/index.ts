@@ -44,5 +44,4 @@ export {
   RULESET_ENTITY_TYPES,
 } from "./rulesets/entityTables.ts";
 export type { RulesetEntityType } from "./rulesets/entityTables.ts";
-export type { EntityRow } from "./stored/StoredEntities.ts";
 export type { NewLink } from "./stored/StoredLinks.ts";

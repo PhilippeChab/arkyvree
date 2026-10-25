@@ -10,6 +10,7 @@ import type { Constructor } from "@/lib/mixins.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import { BAB_PROGRESSIONS, SAVE_PROGRESSIONS } from "@/vocabulary/dnd3.5/classes.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** A class's levels, as seeded: each level's id and number. */
 type Levels = { id: string; level: number }[];
@@ -213,15 +214,15 @@ export function SeedsClasses<B extends Constructor<BaseSeeder>>(Base: B) {
           rulesetId: this.ctx.rulesetId,
           name: def.name,
           description: def.description,
-          hd: def.hd,
-          kind: def.kind ?? "pc",
+          fields: { [CLASS_HD]: def.hd },
+          partition: def.kind ?? "pc",
         },
       ]);
       const klass = { id: klassId };
       const numbers = Array.from({ length: def.levels }, (_, i) => i + 1);
       const levelRowIds = await this.insertRows(
         "class_levels",
-        numbers.map((level) => ({ klassId, level })),
+        numbers.map((level) => ({ ownerId: klassId, position: level })),
       );
       const levels = numbers.map((level, i) => ({ id: levelRowIds[i], level }));
       const levelIds: Record<number, string> = Object.fromEntries(levels.map((l) => [l.level, l.id]));

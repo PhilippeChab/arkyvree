@@ -7,6 +7,7 @@ import { Entities } from "@/server/repositories/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { addBaseBonuses } from "@/tests/support/dnd3.5/links.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** A new user's empty ruleset with two abilities. */
 async function setup() {
@@ -28,14 +29,18 @@ describe("EntitiesService: saves", () => {
       description: "Physical resistance",
       abilityId: constitution.id,
     });
-    expect(save).toMatchObject({ name: "Fortitude", description: "Physical resistance", abilityId: constitution.id });
+    expect(save).toMatchObject({
+      name: "Fortitude",
+      description: "Physical resistance",
+      links: { keyAbility: constitution.id },
+    });
 
     const updated = await EntitiesService.updateEntity(session, ruleset.id, "saves", save.id, {
       name: "Will",
       description: "Mental resistance",
       abilityId: wisdom.id,
     });
-    expect(updated).toMatchObject({ name: "Will", description: "Mental resistance", abilityId: wisdom.id });
+    expect(updated).toMatchObject({ name: "Will", description: "Mental resistance", links: { keyAbility: wisdom.id } });
   });
 
   test("refuses to delete a save that class levels grant", async () => {
@@ -47,9 +52,9 @@ describe("EntitiesService: saves", () => {
     const [klass] = await Entities.create<Klass>(db, "classes", {
       name: "Saving Class",
       rulesetId: ruleset.id,
-      hd: 10,
+      fields: { [CLASS_HD]: 10 },
     });
-    const [klassLevel] = await Entities.create<KlassLevel>(db, "class_levels", { klassId: klass.id, level: 1 });
+    const [klassLevel] = await Entities.create<KlassLevel>(db, "class_levels", { ownerId: klass.id, position: 1 });
     await addBaseBonuses(db, klassLevel.id, [{ saveId: save.id, base: 2 }]);
 
     expect(EntitiesService.deleteEntity(session, ruleset.id, "saves", save.id)).rejects.toThrow(ConflictError);

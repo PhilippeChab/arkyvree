@@ -48,7 +48,7 @@ function valueOf(table: typeof entityFieldsInRules | typeof rulesetFieldsInRules
 }
 
 /**
- * Owners' stored values past their kind's columns, as the generic tables store them: an entity's fields
+ * Owners' stored values but their kind's own fields, as the generic tables store them: an entity's fields
  * (`rules.entity_fields`, a set's one a row) and the links its fields read (`entity_links`: a class's bonus spell
  * ability), a ruleset's Settings (`ruleset_fields`, `ruleset_links`: its skill point ability). Read as the view holds
  * them (`Engine.storage().storedValuesOf`), and written by what a save replaces (`FieldsWrite`), each value in its
@@ -115,7 +115,7 @@ class StoredFields {
   }
 
   /**
-   * Entities' (`ids`, of `type`) fields' values past their kind's columns, and their links of the roles their kind's
+   * Entities' (`ids`, of `type`) fields' values but their kind's own, and their links of the roles their kind's
    * fields read, each with its entity's id.
    */
   private static async readEntities(db: Db, ids: string[], type: string): Promise<Owned> {
@@ -131,7 +131,7 @@ class StoredFields {
         and(
           inArray(entityFieldsInRules.entityId, ids),
           eq(entityFieldsInRules.entityType, type),
-          notInArray(entityFieldsInRules.field, storage.kindReads().fields),
+          notInArray(entityFieldsInRules.field, storage.recordReads().fields),
         ),
       );
     const roles = storage.declaredFields().fieldRoles(type);
@@ -232,7 +232,7 @@ class StoredFields {
 
   /**
    * Owners' stored values (`ownerIds`, of `ownerType`: an entity type's, or `rulesets`), by owner, as the view holds
-   * them: their fields past their kind's columns and the links their fields read; an owner that holds none, none.
+   * them: their fields but their kind's own, and the links their fields read; an owner that holds none, none.
    */
   async findMany(db: Db, where: { ownerIds: string[]; ownerType: string }): Promise<Map<string, StoredValues>> {
     if (where.ownerIds.length === 0) return new Map();

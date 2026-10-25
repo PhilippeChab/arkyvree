@@ -26,6 +26,7 @@ import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
 import {
   type ColumnContext,
   type EntityFormData,
+  ownFieldOf,
   RulesetEntityFormFields,
   toEntityBody,
   toEntityForm,
@@ -60,7 +61,6 @@ import {
 } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { buildCustomizationPath } from "@/shared/customization/entities.ts";
-import { isRecord } from "@/shared/isRecord.ts";
 import { getUrlSegment } from "@/shared/urlSegments.ts";
 
 import { EntityGroupsTable } from "./EntityGroupsTable.tsx";
@@ -96,13 +96,13 @@ function duplicateForm(
   columns: readonly EntityField[],
   fields: readonly EntityField[] | undefined,
 ): EntityFormData {
-  const values: Record<string, unknown> = isRecord(entity) ? entity : {};
-  const source = values[copies.template] === true ? entity.id : (values[copies.source] ?? "");
+  const held = toEntityForm<EntityFormData>(columns, entity);
+  const source = ownFieldOf(entity, copies.template.field) === true ? entity.id : (held[copies.source] ?? "");
   const form = {
-    ...toEntityForm<EntityFormData>(columns, entity),
+    ...held,
     name: `${entity.name} (Copy)`,
     [copies.source]: source,
-    [copies.template]: false,
+    [copies.template.key]: false,
   };
   return withEntityFields(form, fields, entity);
 }
@@ -163,7 +163,7 @@ export function EntitySection({ ruleset, childOnly, onChildOnlyChange, kind }: E
     sectionName: segment,
     label: one,
     createDefaults: withEntityFields(
-      { ...toEntityForm<EntityFormData>(formColumns), ...(kind.copies && { [kind.copies.template]: false }) },
+      { ...toEntityForm<EntityFormData>(formColumns), ...(kind.copies && { [kind.copies.template.key]: false }) },
       fields,
     ),
     createFn: async (data) =>

@@ -4,7 +4,10 @@ import ClassLevels from "@/engine/rulesets/dnd3.5/characters/ClassLevels.ts";
 /** A 3.5 character's classes, as its sheet reads them: each its class, and its levels in it, in the order it took them. */
 type SheetClasses = Record<
   string,
-  { klass: { id: string; name: string }; levels: { characterLevel: { id: string }; klassLevel: { level: number } }[] }
+  {
+    klass: { id: string; name: string };
+    levels: { characterLevel: { id: string }; klassLevel: { position: number } }[];
+  }
 >;
 
 /**
@@ -40,8 +43,8 @@ export default class SheetSummaries {
           words: { open: `${label} Levels`, levels: `${klass.name} Levels`, add: `Add ${klass.name} Level` },
           advancements: levels.map(({ characterLevel, klassLevel }) => ({
             id: characterLevel.id,
-            label: `Level ${klassLevel.level}`,
-            edit: `Edit ${klass.name} Level ${klassLevel.level}`,
+            label: `Level ${klassLevel.position}`,
+            edit: `Edit ${klass.name} Level ${klassLevel.position}`,
           })),
         };
       }),

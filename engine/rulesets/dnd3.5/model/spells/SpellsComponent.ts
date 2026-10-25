@@ -50,8 +50,9 @@ export default class SpellsComponent extends CharacterComponent<LoadedCharacterD
   }
 
   /** The name of the save a spell's targets make, none without one. */
-  static saveNameOf(spell: { saveId: string | null }, rulesetData: RulesetData): string | null {
-    return spell.saveId ? (Dnd35View.of(rulesetData).savesById.get(spell.saveId)?.name ?? null) : null;
+  static saveNameOf(spell: Pick<Spell, "links">, rulesetData: RulesetData): string | null {
+    const saveId = spell.links.resistedBy;
+    return saveId ? (Dnd35View.of(rulesetData).savesById.get(saveId)?.name ?? null) : null;
   }
 
   /** A spell's stored values (`spellId`'s, the view's) as text, by field, in their declared order: what its entry holds. */

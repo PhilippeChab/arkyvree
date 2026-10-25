@@ -14,6 +14,7 @@ import { addCharacterLevel, createTestKlassLevel, findKlassLevel, pickFeat } fro
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, uniqueId } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
+import { RACE_BASE_SPEED, RACE_SIZE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** Languages any seeded race or class picks freely, in the order a room fills: none of them granted, none secret. */
 const FREE_PICKS = ["Abyssal", "Aquan", "Auran", "Celestial", "Draconic", "Ignan", "Infernal", "Terran"];
@@ -28,9 +29,8 @@ async function createAdjustingRace(adjustment: { operator: string; target: strin
   const fork = await createSeededTestRuleset(SEED_USER_ID);
   const [race] = await Entities.create<Race>(db, "races", {
     name: `Kin ${uniqueId()}`,
-    size: "Medium",
-    baseSpeed: 30,
     rulesetId: fork.id,
+    fields: { [RACE_SIZE]: "Medium", [RACE_BASE_SPEED]: 30 },
   });
   await Modifiers.create(db, { sourceId: race.id, sourceType: "races", valueType: "number", ...adjustment });
   RulesetViews.invalidate(fork.id);

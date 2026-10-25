@@ -85,6 +85,15 @@ import {
 } from "@/tests/support/rulesets.ts";
 import { findPlainItem, findSeededRuleset, getSeedCtx, uniqueId } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
+import {
+  CLASS_HD,
+  ITEM_IS_TEMPLATE,
+  ITEM_SLOT,
+  ITEM_TYPE,
+  LANGUAGE_TYPE,
+  RACE_BASE_SPEED,
+  RACE_SIZE,
+} from "@/vocabulary/dnd3.5/fields/index.ts";
 
 type EntityType = "feats" | "spells";
 
@@ -176,39 +185,40 @@ async function createNamingEntities(rulesetId: string) {
   const name = (kind: string) => `${kind} ${uniqueId()}`;
   const [template] = await Entities.create<Item>(db, "items", {
     name: name("Blade"),
-    type: "Weapon",
-    isTemplate: true,
     rulesetId,
+    fields: { [ITEM_TYPE]: "Weapon", [ITEM_IS_TEMPLATE]: true },
   });
   const [item] = await Entities.create<Item>(db, "items", {
     name: name("Flame Blade"),
-    type: "Weapon",
-    sourceItemId: template.id,
     rulesetId,
+    fields: { [ITEM_TYPE]: "Weapon" },
+    links: { madeFrom: template.id },
   });
   const [race] = await Entities.create<Race>(db, "races", {
     name: name("Kin"),
-    size: "Small",
-    baseSpeed: 20,
     rulesetId,
+    fields: { [RACE_SIZE]: "Small", [RACE_BASE_SPEED]: 20 },
   });
   const [subrace] = await Entities.create<Race>(db, "races", {
     name: name("Deep Kin"),
-    size: "Small",
-    baseSpeed: 20,
-    parentId: race.id,
     rulesetId,
+    fields: { [RACE_SIZE]: "Small", [RACE_BASE_SPEED]: 20 },
+    links: { subraceOf: race.id },
   });
   const [save] = await Entities.create<RulesetSave>(db, "saves", {
     name: name("Luck Save"),
-    abilityId: abilityMap["Charisma"],
     rulesetId,
+    links: { keyAbility: abilityMap["Charisma"] },
   });
-  const [spell] = await Entities.create<Spell>(db, "spells", { name: name("Fortune"), saveId: save.id, rulesetId });
+  const [spell] = await Entities.create<Spell>(db, "spells", {
+    name: name("Fortune"),
+    rulesetId,
+    links: { resistedBy: save.id },
+  });
   const [skill] = await Entities.create<Skill>(db, "skills", {
     name: name("Gambling"),
-    primaryAbilityId: abilityMap["Charisma"],
     rulesetId,
+    links: { keyAbility: abilityMap["Charisma"] },
   });
   const [list] = await Entities.create<Aptitude>(db, "aptitudes", { name: name("Luck Feats"), rulesetId });
   const [feat] = await Entities.create<Feat>(db, "feats", { name: name("Lucky"), rulesetId });
@@ -219,9 +229,9 @@ async function createNamingEntities(rulesetId: string) {
   await addClassSkills(db, klass.id, [skill.id]);
   const [subclass] = await Entities.create<Klass>(db, "classes", {
     name: name("Gambler"),
-    hd: 6,
-    parentId: klass.id,
     rulesetId,
+    fields: { [CLASS_HD]: 6 },
+    links: { subclassOf: klass.id },
   });
   return {
     template: ["items", template.id],
@@ -547,8 +557,13 @@ describe("subscribing to an extension", () => {
 
       // Only feats and spells merge; two races of one name would show twice.
       const [raceA, raceB] = [await createExtension(), await createExtension()];
-      for (const { id } of [raceA, raceB])
-        await Entities.create<Race>(db, "races", { name: "Tiefling", rulesetId: id, size: "Medium", baseSpeed: 30 });
+      for (const { id } of [raceA, raceB]) {
+        await Entities.create<Race>(db, "races", {
+          name: "Tiefling",
+          rulesetId: id,
+          fields: { [RACE_SIZE]: "Medium", [RACE_BASE_SPEED]: 30 },
+        });
+      }
       await expectRefusedWith(
         RulesetExtensionsService.subscribeExtension(session, draft.id, [raceA.id, raceB.id]),
         409,
@@ -843,13 +858,13 @@ describe("unsubscribing from an extension", () => {
     const [skill] = await Entities.create<Skill>(db, "skills", {
       name: `Probe Skill ${uniqueId()}`,
       rulesetId: extension.id,
-      primaryAbilityId: strength.id,
+      links: { keyAbility: strength.id },
     });
     await RulesetExtensionsService.subscribeExtension(session, draft.id, [extension.id]);
     const [klass] = await Entities.create<Klass>(db, "classes", {
       name: `Probe Class ${uniqueId()}`,
       rulesetId: draft.id,
-      hd: 8,
+      fields: { [CLASS_HD]: 8 },
     });
     await addClassSkills(db, klass.id, [skill.id]);
 
@@ -906,34 +921,57 @@ describe("unsubscribing from an extension", () => {
       [
         "saves",
         (
-          await Entities.create<RulesetSave>(db, "saves", { name: name("Luck Save"), abilityId: charisma, rulesetId })
+          await Entities.create<RulesetSave>(db, "saves", {
+            name: name("Luck Save"),
+            rulesetId,
+            links: { keyAbility: charisma },
+          })
         )[0].id,
       ],
       [
         "skills",
         (
-          await Entities.create<Skill>(db, "skills", { name: name("Gambling"), primaryAbilityId: charisma, rulesetId })
+          await Entities.create<Skill>(db, "skills", {
+            name: name("Gambling"),
+            rulesetId,
+            links: { keyAbility: charisma },
+          })
         )[0].id,
       ],
       ["feats", (await Entities.create<Feat>(db, "feats", { name: name("Lucky"), rulesetId }))[0].id],
       ["spells", (await Entities.create<Spell>(db, "spells", { name: name("Fortune"), rulesetId }))[0].id],
-      ["items", (await Entities.create<Item>(db, "items", { name: name("Charm"), slot: "Neck", rulesetId }))[0].id],
+      [
+        "items",
+        (
+          await Entities.create<Item>(db, "items", { name: name("Charm"), rulesetId, fields: { [ITEM_SLOT]: "Neck" } })
+        )[0].id,
+      ],
       [
         "races",
         (
           await Entities.create<Race>(db, "races", {
             name: name("Halfling Kin"),
-            size: "Small",
-            baseSpeed: 20,
             rulesetId,
+            fields: { [RACE_SIZE]: "Small", [RACE_BASE_SPEED]: 20 },
           })
         )[0].id,
       ],
       [
         "languages",
-        (await Entities.create<Language>(db, "languages", { name: name("Cant"), type: "Secret", rulesetId }))[0].id,
+        (
+          await Entities.create<Language>(db, "languages", {
+            name: name("Cant"),
+            rulesetId,
+            fields: { [LANGUAGE_TYPE]: "Secret" },
+          })
+        )[0].id,
       ],
-      ["classes", (await Entities.create<Klass>(db, "classes", { name: name("Gambler"), hd: 6, rulesetId }))[0].id],
+      [
+        "classes",
+        (
+          await Entities.create<Klass>(db, "classes", { name: name("Gambler"), rulesetId, fields: { [CLASS_HD]: 6 } })
+        )[0].id,
+      ],
       ["aptitudes", (await Entities.create<Aptitude>(db, "aptitudes", { name: name("Luck Feats"), rulesetId }))[0].id],
       ["mechanics", (await Entities.create<Mechanic>(db, "mechanics", { name: name("Wager"), rulesetId }))[0].id],
     ] as const;
@@ -1091,10 +1129,9 @@ describe("unsubscribing from an extension", () => {
       (
         await Entities.create<Race>(db, "races", {
           name: `Deep Kin ${uniqueId()}`,
-          size: "Small",
-          baseSpeed: 20,
-          parentId: copies.race,
           rulesetId,
+          fields: { [RACE_SIZE]: "Small", [RACE_BASE_SPEED]: 20 },
+          links: { subraceOf: copies.race },
         })
       )[0];
     const characterOn = async (rulesetId: string) => {
@@ -1122,11 +1159,11 @@ describe("unsubscribing from an extension", () => {
     await RulesetExtensionsService.unsubscribeExtension(session, draft.id, extension.id);
     expect(await named(mine)).toEqual(core);
     expect(await Entities.findOne<Race>(db, { entityType: "races", id: ownSubrace.id })).toMatchObject({
-      parentId: core.race,
+      links: { subraceOf: core.race },
     });
     expect(await named(theirs)).toEqual(copies);
     expect(await Entities.findOne<Race>(db, { entityType: "races", id: extensionSubrace.id })).toMatchObject({
-      parentId: copies.race,
+      links: { subraceOf: copies.race },
     });
   });
 
@@ -1204,12 +1241,12 @@ describe("unsubscribing from an extension", () => {
     const [source] = await Entities.create<Klass>(db, "classes", {
       name: `Parent Class ${uniqueId()}`,
       rulesetId: parent.id,
-      hd: 8,
+      fields: { [CLASS_HD]: 8 },
     });
-    const [sourceLevel] = await Entities.create<KlassLevel>(db, "class_levels", { klassId: source.id, level: 1 });
+    const [sourceLevel] = await Entities.create<KlassLevel>(db, "class_levels", { ownerId: source.id, position: 1 });
     const copy = await copyEntity(db, "classes", source.id, extension);
     const [copyLevel] = await Entities.findMany<KlassLevel>(db, { entityType: "class_levels", ownerIds: [copy.id] });
-    const [added] = await Entities.create<KlassLevel>(db, "class_levels", { klassId: copy.id, level: 2 });
+    const [added] = await Entities.create<KlassLevel>(db, "class_levels", { ownerId: copy.id, position: 2 });
     const { klassLevel: own } = await createTestKlassLevel(extension.id);
     await RulesetExtensionsService.subscribeExtension(session, draft.id, [extension.id]);
     const character = await createTestCharacter(user.id, { rulesetId: draft.id });
@@ -1390,7 +1427,7 @@ describe("an extension's content in a fork", () => {
     }))!;
     const [first] = (
       await Entities.findMany<KlassLevel>(db, { entityType: "class_levels", ownerIds: [favoredSoul.id] })
-    ).filter((level) => level.level === 1);
+    ).filter((level) => level.position === 1);
     await addCharacterLevel(character.id, first.id, {
       spells: { [list.id]: [bane.id, blessWater.id] },
     });
@@ -1480,11 +1517,11 @@ describe("an extension's content in a fork", () => {
     const barbarianLevels = (
       await Entities.findMany<KlassLevel>(db, { entityType: "class_levels", ownerIds: [klassMap.pc["Barbarian"]] })
     )
-      .filter((l) => l.level <= 7)
-      .sort((a, b) => a.level - b.level);
+      .filter((l) => l.position <= 7)
+      .sort((a, b) => a.position - b.position);
     for (const level of barbarianLevels) {
       const picks =
-        level.level === 7
+        level.position === 7
           ? {
               feats: { [aptMap["Barbarian Class Feature"]]: [featMap["Damage Reduction (Barbarian)"]] },
             }

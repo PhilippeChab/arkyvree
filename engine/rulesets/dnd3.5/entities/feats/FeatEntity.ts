@@ -3,13 +3,14 @@
 import { z } from "zod";
 
 import type { EntityFieldValues, EntityForm } from "@/engine/core/fields/index.ts";
+import type { EntityRecord } from "@/engine/core/module/index.ts";
 import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import ListedEntity from "@/engine/rulesets/dnd3.5/entities/ListedEntity.ts";
 import AptitudeTargets from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTargets.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type { Feat } from "@/engine/rulesets/dnd3.5/view/rows.ts";
-import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/fields/index.ts";
+import { FEAT_FAMILY, FEAT_GENERATED } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 import { FEAT_COLUMNS } from "./columns.ts";
 import { FEAT_FIELDS } from "./fields.ts";
@@ -53,6 +54,9 @@ export default class FeatEntity extends ListedEntity<
   /** Its list's filters: a pool's feats, a family's. */
   protected override readonly listFilters = { aptitudeId: z.string().uuid(), family: z.string() };
 
+  /** Whether a new feat is generated: its own flag. */
+  protected override readonly storedAt = { generated: { field: FEAT_GENERATED } };
+
   /** A new feat standing in for a generated ancestor is generated. */
   override readonly takesAfterAncestor = true;
 
@@ -63,7 +67,7 @@ export default class FeatEntity extends ListedEntity<
    * which checks and generators find it by), and a feat linked to a pool the view's spells use.
    */
   protected override checkForm(body: FeatBody, feat?: Feat) {
-    if (feat && body.name !== feat.name && feat.generated)
+    if (feat && body.name !== feat.name && feat.fields[FEAT_GENERATED])
       throw new RulesError("invalid", "Generated feats cannot be renamed");
     const message = "Cannot link feat to aptitude(s) already used for spells";
     this.refuseLists(body.aptitudeIds ?? [], this.dnd35.aptitudeIdsWithSpells, message);
@@ -91,11 +95,11 @@ export default class FeatEntity extends ListedEntity<
 
   /**
    * A page of the ruleset's feats, as its query asks for it: what it's read with (`filters`: a pool's feats, a
-   * family's), and its rows described, with their pools as the ruleset composes them.
+   * family's), and its records described, with their pools as the ruleset composes them.
    */
   protected override listOf(where: { aptitudeId?: string; family?: string }) {
     return {
-      describe: <T extends Record<string, unknown> & { id: string }>(rows: T[]) => this.describeListed(rows),
+      describe: <T extends Pick<EntityRecord, "id" | "links">>(rows: T[]) => this.describeListed(rows),
       filters: {
         ids: this.poolFeatIds(where.aptitudeId),
         ...(where.family && { fields: { [FEAT_FAMILY]: where.family } }),
@@ -110,14 +114,12 @@ export default class FeatEntity extends ListedEntity<
 
   /**
    * A new feat off its form. Named as an ancestor its ruleset deleted, it stands in for it, and is generated when the
-   * ancestor was (`ancestor`: its stored row, which the server reads and the view hides, never the form's).
+   * ancestor was (`ancestor`: its stored record, which the server reads and the view hides, never the form's).
    */
-  override planCreate(form: EntityForm, ancestor?: Record<string, unknown>) {
+  override planCreate(form: EntityForm, ancestor?: EntityRecord) {
     const plan = super.planCreate(form);
-    return {
-      ...plan,
-      columns: { ...plan.columns, generated: ancestor?.generated === true },
-    };
+    const generated = ancestor?.fields[FEAT_GENERATED] === true;
+    return { ...plan, row: { ...plan.row, fields: { ...plan.row.fields, [FEAT_GENERATED]: generated } } };
   }
 
   /** The view's 3.5 lists and indices. */

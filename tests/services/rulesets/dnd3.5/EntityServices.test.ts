@@ -115,13 +115,13 @@ const FORM_REFS: Record<
     kind: "abilities",
     label: "Ability",
     ref: "abilityId",
-    stored: async (id) => [(await Entities.findOne<RulesetSave>(db, { entityType: "saves", id }))?.abilityId],
+    stored: async (id) => [(await Entities.findOne<RulesetSave>(db, { entityType: "saves", id }))?.links.keyAbility],
   },
   skills: {
     kind: "abilities",
     label: "Ability",
     ref: "abilityId",
-    stored: async (id) => [(await Entities.findOne<Skill>(db, { entityType: "skills", id }))?.primaryAbilityId],
+    stored: async (id) => [(await Entities.findOne<Skill>(db, { entityType: "skills", id }))?.links.keyAbility],
   },
 };
 

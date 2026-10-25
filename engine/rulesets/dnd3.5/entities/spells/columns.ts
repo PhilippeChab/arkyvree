@@ -2,6 +2,7 @@ import type { FormField } from "@/engine/core/fields/index.ts";
 import type { ListDescription } from "@/engine/core/module/index.ts";
 import { APTITUDES_REQUIRED } from "@/engine/rulesets/dnd3.5/entities/aptitudes/refusals.ts";
 import { RULESET_LIMITS } from "@/engine/rulesets/dnd3.5/limits.ts";
+import { SPELL_SAVE_EFFECT } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /**
  * A 3.5 spell's columns, as its form shows them beside its name and description: its saving throw and what a save
@@ -16,8 +17,10 @@ export const SPELL_COLUMNS: FormField[] = [
     label: "Saving Throw",
     references: "saves",
     required: false,
+    role: "resistedBy",
   },
   {
+    field: SPELL_SAVE_EFFECT,
     help: "What a successful save does",
     input: "text",
     key: "saveEffect",

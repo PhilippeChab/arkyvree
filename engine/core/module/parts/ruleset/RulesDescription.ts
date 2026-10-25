@@ -4,14 +4,14 @@ import type { CharacterForm } from "@/engine/core/module/parts/characters/index.
 /**
  * How a kind's row copies an entity (an item's): a duplicate, whose form keeps the columns it can't change (`locked`:
  * an item's type, slot and template), and variants, the most at once (`most`), each its own name and description. A
- * copy names the template it's from in its `source` column: a template's own, its `template` column true, or the
- * entity's own template; a copy is never a template itself.
+ * copy names the template it's from in its `source` column: a template's own, its `template` column (`key`, held at
+ * its own flag `field`) true, or the entity's own template; a copy is never a template itself.
  */
 export interface EntityCopiesDescription {
   locked: string[];
   most: number;
   source: string;
-  template: string;
+  template: { field: string; key: string };
 }
 
 /**
@@ -27,7 +27,7 @@ export interface EntityCopiesDescription {
  * pools its list narrows by (`pools`), the entities its page links one to (`links`: a class's skills), whether its list
  * narrows by a tier (`levels`: a spell's, by its level, `RulesDescription.tiers`), whether its list groups an entity's
  * variants under their family (`families`: a feat's), how its row copies one (`copies`: an item's), and when its name
- * can't change (`lockedName`: while its `flag` column holds, a generated feat's, its form saying why, `reason`). Its
+ * can't change (`lockedName`: while its own flag `field` holds, a generated feat's, its form saying why, `reason`). Its
  * word is its rules' (`RulesDescription.words`), and its URL's segment the app's (`getUrlSegment`: `classes`). Not the
  * kinds a race or a class is for (`entityKinds`).
  */
@@ -40,7 +40,7 @@ export interface EntityKindDescription {
   icon: string;
   levels?: boolean;
   links?: EntityLinksDescription;
-  lockedName?: { flag: string; reason: string };
+  lockedName?: { field: string; reason: string };
   longDescription?: boolean;
   opens: "customization" | "page" | "progression";
   partitioned?: boolean;
@@ -77,19 +77,23 @@ export interface EntityPoolsDescription {
 
 /**
  * A column of an entity's own value in its type's list, between its name and its description: its key (where its value
- * is in a listed entity, `hd`, `costGp`; its `links`; or what it shows of it, `template`), its label, its share of the
- * list's width (percent), where a phone shows it (`slot`), and how its value reads (`reads`):
+ * is in a listed entity, a declared field's, `usableWithoutTraining`; or what it shows of it, `template`), where it's
+ * stored when it's its entity's own (`field`: among its `fields`, `ITEM_COST_GP`; `role`: its link of the role among its
+ * `links`), its label, its share of the list's width (percent), where a phone shows it (`slot`), and how its value reads
+ * (`reads`):
  * - `chip`: a chip of its label (`labels`, by value: a hit die's 10 is "d10"), else of the value;
  * - `muted`: its text, quiet;
  * - `number`, `decimal`: in its `unit` ("30 ft", "15.00 gp"), a decimal with two places;
- * - `reference`: the name of the entity of the ruleset it names (`references`: its kind, `abilities`);
+ * - `reference`: the name of the entity of the ruleset it names (`references`: its kind, `abilities`), its link's
+ *   target;
  * - `flag`: a warning's "Yes" while it's `yesWhen` ("Trained Only" while a skill isn't usable untrained), "No" else;
- * - `template`: an item's template's name, or "Template" for a template itself;
- * - `pools`: the pools it's picked in, as chips by name (its links of a `role`, at its key: a spell's `listedIn`
- *   links, each its pool's name at `toName`);
+ * - `template`: an item's template's name, or "Template" for a template itself (its `field` set);
+ * - `pools`: the pools it's picked in, as chips by name (its links of a `role`: a spell's `listedIn` links, each its
+ *   pool's name at `toName`);
  * - `text`: its text, as it is (a language's type).
  */
 export interface ListColumn {
+  field?: string;
   key: string;
   label: string;
   labels?: Readonly<Record<string, string>>;
@@ -224,10 +228,9 @@ export interface RulesDescription {
   /**
    * The kinds whose customizations have a page of their own, as its storage declares them customizable (3.5's feats,
    * items, spells, races and class levels), an owned kind's with the kind that owns it (`owner`: a class level's
-   * class) and the key its rows name it at (`ownerKey`: `klassId`); not a kind that owns another, whose customizations
-   * are its page's tabs (a class's)
+   * class, its `ownerId`); not a kind that owns another, whose customizations are its page's tabs (a class's)
    */
-  customizationPages: { owner?: string; ownerKey?: string; type: string }[];
+  customizationPages: { owner?: string; type: string }[];
   /** The kinds a race or a class is for: a player character (`pc`), and those its rules add (3.5's bonded creatures) */
   entityKinds: { label: string; value: string }[];
   /**

@@ -12,7 +12,7 @@ import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
 import { createTestRuleset } from "@/tests/support/rulesets.ts";
 import { writeStoredValues } from "@/tests/support/storedValues.ts";
 import { createTestUser } from "@/tests/support/users.ts";
-import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/fields/index.ts";
+import { CLASS_HD, FEAT_FAMILY } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** The aptitudes of the test's ruleset. */
 const APTITUDES = ["Combat", "Metamagic", "General"];
@@ -134,8 +134,8 @@ describe("EntitiesService: feats", () => {
       { limit: 10, page: 1 },
     );
     expect(grouped.items.map((row) => ({ ...row, variantCount: Number(row.variantCount) }))).toMatchObject([
-      { displayName: "Cleave", family: null, variantCount: 1 },
-      { displayName: "Focus", family: "Focus", variantCount: 2 },
+      { displayName: "Cleave", group: null, variantCount: 1 },
+      { displayName: "Focus", group: "Focus", variantCount: 2 },
     ]);
   });
 
@@ -152,7 +152,7 @@ describe("EntitiesService: feats", () => {
     const [klass] = await Entities.create<Klass>(db, "classes", {
       name: "Granting Class",
       rulesetId: ruleset.id,
-      hd: 10,
+      fields: { [CLASS_HD]: 10 },
     });
     await EntitiesService.createOwnedEntity(session, ruleset.id, "classes", klass.id, {
       level: 1,

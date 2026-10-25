@@ -4,6 +4,7 @@ import type { SaveSeed } from "@/content/dnd3.5/builders/saves/types.ts";
 import type { Dnd35ContentSeeder } from "@/database/seeders/dnd3.5/Dnd35ContentSeeder.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { stripSeparators } from "@/shared/text.ts";
+import { LANGUAGE_TYPE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** Seeding a base ruleset's own rules: its abilities, saves and languages. */
 export function SeedsCoreRules<B extends Constructor<Dnd35ContentSeeder>>(Base: B) {
@@ -41,7 +42,12 @@ export function SeedsCoreRules<B extends Constructor<Dnd35ContentSeeder>>(Base: 
     async seedLanguages(languages: LanguageSeed[]) {
       await this.insertEntities(
         "languages",
-        languages.map((language) => ({ rulesetId: this.ctx.rulesetId, ...language })),
+        languages.map(({ description, name, type }) => ({
+          rulesetId: this.ctx.rulesetId,
+          name,
+          description,
+          fields: { [LANGUAGE_TYPE]: type },
+        })),
       );
     }
 
@@ -55,7 +61,7 @@ export function SeedsCoreRules<B extends Constructor<Dnd35ContentSeeder>>(Base: 
             rulesetId: this.ctx.rulesetId,
             name,
             description,
-            abilityId: this.ctx.abilityMap[ability],
+            links: { keyAbility: this.ctx.abilityMap[ability] },
           })),
         ),
       );

@@ -13,6 +13,7 @@ import SkillRules from "@/engine/rulesets/dnd3.5/rules/SkillRules.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type { Skill } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import { stripSeparators } from "@/shared/text.ts";
+import { RACE_SIZE } from "@/vocabulary/dnd3.5/fields/index.ts";
 import { SIZE_HIDE_MOD } from "@/vocabulary/dnd3.5/sizes.ts";
 
 /** The skill points' budget: a level's bonus points, an input, and the points counted from the character's levels. */
@@ -149,7 +150,7 @@ export default class SkillsComponent extends CharacterComponent<LoadedCharacterD
     }
 
     for (const skill of rulesetSkills) {
-      const abilityName = this.abilities.getAbilityName(skill.primaryAbilityId) ?? "";
+      const abilityName = (skill.links.keyAbility && this.abilities.getAbilityName(skill.links.keyAbility)) ?? "";
       this.abilityNameBySkill.set(stripSeparators(skill.name), abilityName);
       // A skill without its fields' values has their defaults: armor doesn't weigh on it, and it needs training
       const fields = skillFields.get(skill.id) ?? SKILL_FIELDS.defaults;
@@ -205,7 +206,7 @@ export default class SkillsComponent extends CharacterComponent<LoadedCharacterD
   private newSkill(skill: Skill, abilityName: string, fields: SkillFieldValues): SkillsData[string] {
     const { abilities } = this;
     const armorCheckPenalty = () => this.armorCheckPenalty();
-    const raceSize = () => this.identity.getIdentity().physiology.race.size;
+    const raceSize = () => this.identity.getIdentity().physiology.race.fields[RACE_SIZE];
     const invested = this.rankBySkillId.get(skill.id) ?? 0;
     // How many times over the skill takes the armor check penalty: none when armor doesn't weigh on it
     const checkPenaltyMultiplier = fields.impactedByWeight ? fields.checkPenaltyMultiplier : 0;

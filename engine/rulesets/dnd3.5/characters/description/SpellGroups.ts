@@ -4,7 +4,7 @@ import SpellLists from "@/engine/rulesets/dnd3.5/rules/SpellLists.ts";
 import { formatFieldName } from "@/shared/customization/fields.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 import { stripSeparators } from "@/shared/text.ts";
-import { SPELL_SCHOOL } from "@/vocabulary/dnd3.5/fields/index.ts";
+import { SPELL_SAVE_EFFECT, SPELL_SCHOOL } from "@/vocabulary/dnd3.5/fields/index.ts";
 import { SPELL_LEVEL_LABELS, SPELL_LEVELS } from "@/vocabulary/dnd3.5/spells.ts";
 
 /** An aptitude's spells, by spell level. */
@@ -26,13 +26,13 @@ interface GivenSpell {
   saveName: string | null;
 }
 
-/** A spell a class level picked or granted. */
+/** A spell a class level picked or granted: what a save against it does among its own fields. */
 interface LevelSpell {
   aptitudeId: string;
   description?: string | null;
+  fields?: Readonly<{ [SPELL_SAVE_EFFECT]?: string }>;
   id: string;
   name: string;
-  saveEffect?: string | null;
   saveName?: string | null;
   spellLevel?: number | null;
 }
@@ -92,7 +92,7 @@ interface SpellRowTag {
  */
 interface SpellSheet {
   aptitudes: Record<string, { id: string; name: string }>;
-  classes: Record<string, { levels?: { klassLevel?: { level: number } | null; spells?: LevelSpell[] }[] }>;
+  classes: Record<string, { levels?: { klassLevel?: { position: number } | null; spells?: LevelSpell[] }[] }>;
   /** Each list a feat brings, by its id: its spells' ids by the spell level it has each at (none on a domain slot). */
   featListSpells: Map<string, Map<number, Set<string>>>;
   spells: Record<
@@ -236,7 +236,7 @@ export default class SpellGroups {
     for (const klass of Object.values(sheet.classes)) {
       for (const level of klass.levels || []) {
         for (const spell of level.spells || []) {
-          const group = groupOf(spell.aptitudeId, spell.spellLevel ?? level.klassLevel?.level ?? 0);
+          const group = groupOf(spell.aptitudeId, spell.spellLevel ?? level.klassLevel?.position ?? 0);
           const spellData = sheet.spells[stripSeparators(spell.name)];
           const fields = spellData?.fields ?? {};
           const tags = SpellGroups.tagsFor(sheet, spell.id, spell.aptitudeId);
@@ -250,7 +250,7 @@ export default class SpellGroups {
             id: spell.id,
             name: spell.name,
             school: fields[SPELL_SCHOOL] || "—",
-            save: SpellGroups.saveOf(spell.saveName, spell.saveEffect),
+            save: SpellGroups.saveOf(spell.saveName, spell.fields?.[SPELL_SAVE_EFFECT]),
             dc: spellData?.dc?.[SpellLists.toSpellPossessionSlug(group.aptitudeName)]?.total ?? null,
             description: spellData?.spell?.description || spell.description || "",
             details: SpellGroups.detailsOf(fields),

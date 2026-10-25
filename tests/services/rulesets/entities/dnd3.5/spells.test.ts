@@ -12,7 +12,12 @@ import { createSeededTestRuleset, createTestRuleset } from "@/tests/support/rule
 import { getSeedCtx } from "@/tests/support/seed.ts";
 import { findStoredValues, writeStoredValues } from "@/tests/support/storedValues.ts";
 import { createTestUser } from "@/tests/support/users.ts";
-import { SPELL_CASTING_TIME, SPELL_DESCRIPTOR, SPELL_SCHOOL } from "@/vocabulary/dnd3.5/fields/index.ts";
+import {
+  SPELL_CASTING_TIME,
+  SPELL_DESCRIPTOR,
+  SPELL_SAVE_EFFECT,
+  SPELL_SCHOOL,
+} from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** The aptitudes of the test's ruleset. */
 const APTITUDES = ["Wizard", "Cleric", "Druid"];
@@ -44,14 +49,16 @@ describe("EntitiesService: spells", () => {
     expect(
       await EntitiesService.updateEntity(session, ruleset.id, "spells", spell.id, { name: "Hold Person" }),
     ).toMatchObject({
-      saveEffect: "negates",
+      fields: { [SPELL_SAVE_EFFECT]: "negates" },
     });
     expect(
-      await EntitiesService.updateEntity(session, ruleset.id, "spells", spell.id, {
-        name: "Hold Person",
-        saveEffect: "",
-      }),
-    ).toMatchObject({ saveEffect: null });
+      (
+        await EntitiesService.updateEntity(session, ruleset.id, "spells", spell.id, {
+          name: "Hold Person",
+          saveEffect: "",
+        })
+      ).fields,
+    ).toEqual({});
   });
 
   test("records the columns an edit changes, never what its form sends that it doesn't write", async () => {

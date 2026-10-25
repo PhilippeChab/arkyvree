@@ -31,16 +31,9 @@ export function CopiesOnWrite<B extends Constructor<Dnd35ContentSeeder>>(Base: B
 
     /** Copies an inherited feat into the ruleset, with its aptitudes and customizations. */
     protected async cowFeat(featId: string) {
-      const [feat] = await this.entityRows<Feat>("feats", [featId]);
+      const [feat] = await this.entityRecords<Feat>("feats", [featId]);
       const { [feat.name]: copyId } = await this.insertEntities("feats", [
-        {
-          rulesetId: this.ctx.rulesetId,
-          name: feat.name,
-          description: feat.description,
-          stackable: feat.stackable,
-          selectable: feat.selectable,
-          generated: feat.generated,
-        },
+        { rulesetId: this.ctx.rulesetId, name: feat.name, description: feat.description, fields: feat.fields },
       ]);
       await this.insertListings(
         "feats",
@@ -61,7 +54,7 @@ export function CopiesOnWrite<B extends Constructor<Dnd35ContentSeeder>>(Base: B
       if (entries.length === 0) return new Map();
       const spells = new Map(
         (
-          await this.entityRows<Spell>(
+          await this.entityRecords<Spell>(
             "spells",
             entries.map((entry) => entry.spellId),
           )
@@ -75,8 +68,8 @@ export function CopiesOnWrite<B extends Constructor<Dnd35ContentSeeder>>(Base: B
             rulesetId: this.ctx.rulesetId,
             name: spell.name,
             description: spell.description,
-            saveId: spell.saveId,
-            saveEffect: spell.saveEffect,
+            fields: spell.fields,
+            links: spell.links,
           };
         }),
       );

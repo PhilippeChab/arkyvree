@@ -66,9 +66,10 @@ interface InventorySectionProps {
   rulesetId: string;
 }
 
-/** An item's cost or weight as its read holds it: a number or a decimal's text, none else. */
-function amountOf(value: unknown) {
-  return typeof value === "number" || typeof value === "string" ? value : null;
+/** An item's cost or weight as its read holds it (`field`, its own field's): a number, none else. */
+function amountOf(item: RulesetItem, field: string) {
+  const value = item.fields[field];
+  return typeof value === "number" ? value : null;
 }
 
 /**
@@ -413,8 +414,8 @@ export function InventorySection({ block, characterId, rulesetId, readOnly, load
                     <Typography variant="body2">{option.name}</Typography>
                     {(() => {
                       const details = [
-                        formatAmount(amountOf(option.costGp), block.units.cost),
-                        formatAmount(amountOf(option.weight), block.units.weight),
+                        formatAmount(amountOf(option, block.itemFields.cost), block.units.cost),
+                        formatAmount(amountOf(option, block.itemFields.weight), block.units.weight),
                       ]
                         .filter(Boolean)
                         .join(" | ");

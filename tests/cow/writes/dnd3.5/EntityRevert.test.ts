@@ -30,6 +30,7 @@ import {
 import { copyEntity, createSeededTestRuleset, createTestRuleset } from "@/tests/support/rulesets.ts";
 import { findPlainItem, getSeedCtx, uniqueId } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
+import { CLASS_HD, RACE_BASE_SPEED, RACE_SIZE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** A user's published extension of the seeded rules, and a fork of theirs subscribing to it. */
 async function createExtensionAndHost(userId: string, coreId: string) {
@@ -121,14 +122,16 @@ describe("reverting a fork's copy", () => {
     const [spell] = await Entities.create<Spell>(db, "spells", {
       name: `Own Spell ${uniqueId()}`,
       rulesetId: fork.id,
-      saveId: copy.id,
+      links: { resistedBy: copy.id },
     });
     const { klassLevel } = await createTestKlassLevel(fork.id);
     await addBaseBonuses(db, klassLevel.id, [{ saveId: copy.id, base: 2 }]);
 
     await RulesetChangesService.revertOverride(session, fork.id, "saves", reflex);
 
-    expect(await Entities.findOne<Spell>(db, { entityType: "spells", id: spell.id })).toMatchObject({ saveId: reflex });
+    expect(await Entities.findOne<Spell>(db, { entityType: "spells", id: spell.id })).toMatchObject({
+      links: { resistedBy: reflex },
+    });
     expect(await EntityLinks.findMany(db, { fromIds: [klassLevel.id], role: "baseBonus" })).toMatchObject([
       { toId: reflex, amount: 2 },
     ]);
@@ -144,13 +147,12 @@ describe("reverting a fork's copy", () => {
     const parentClass = await copyEntity(db, "classes", fighter, fork);
     const { klass } = await createTestKlassLevel(fork.id);
     await addClassSkills(db, klass.id, [skill.id]);
-    await Entities.update<Klass>(db, "classes", { parentId: parentClass.id }, { id: klass.id });
+    await Entities.update<Klass>(db, "classes", { links: { subclassOf: parentClass.id } }, { id: klass.id });
     const [subrace] = await Entities.create<Race>(db, "races", {
       name: `Own Subrace ${uniqueId()}`,
       rulesetId: fork.id,
-      size: "Medium",
-      baseSpeed: 30,
-      parentId: race.id,
+      fields: { [RACE_SIZE]: "Medium", [RACE_BASE_SPEED]: 30 },
+      links: { subraceOf: race.id },
     });
 
     await RulesetChangesService.revertOverride(session, fork.id, "skills", climb);
@@ -161,10 +163,10 @@ describe("reverting a fork's copy", () => {
       { toId: climb },
     ]);
     expect(await Entities.findOne<Race>(db, { entityType: "races", id: subrace.id })).toMatchObject({
-      parentId: human,
+      links: { subraceOf: human },
     });
     expect(await Entities.findOne<Klass>(db, { entityType: "classes", id: klass.id })).toMatchObject({
-      parentId: fighter,
+      links: { subclassOf: fighter },
     });
   });
 
@@ -211,7 +213,7 @@ describe("reverting a fork's copy", () => {
     const [copyLevel] = await Entities.findMany<KlassLevel>(db, { entityType: "class_levels", ownerIds: [copy.id] });
     const [sourceLevel] = (
       await Entities.findMany<KlassLevel>(db, { entityType: "class_levels", ownerIds: [fighter] })
-    ).filter((level) => level.level === copyLevel.level);
+    ).filter((level) => level.position === copyLevel.position);
     const character = await createTestCharacter(user.id, { rulesetId: fork.id });
     const level = await addCharacterLevel(character.id, copyLevel.id);
 
@@ -229,11 +231,11 @@ describe("reverting a fork's copy", () => {
     const [source] = await Entities.create<Klass>(db, "classes", {
       name: `Parent Class ${uniqueId()}`,
       rulesetId: parent.id,
-      hd: 8,
+      fields: { [CLASS_HD]: 8 },
     });
-    await Entities.create<KlassLevel>(db, "class_levels", { klassId: source.id, level: 1 });
+    await Entities.create<KlassLevel>(db, "class_levels", { ownerId: source.id, position: 1 });
     const copy = await copyEntity(db, "classes", source.id, fork);
-    const [added] = await Entities.create<KlassLevel>(db, "class_levels", { klassId: copy.id, level: 2 });
+    const [added] = await Entities.create<KlassLevel>(db, "class_levels", { ownerId: copy.id, position: 2 });
     const character = await createTestCharacter(user.id, { rulesetId: fork.id });
     await addCharacterLevel(character.id, added.id);
 

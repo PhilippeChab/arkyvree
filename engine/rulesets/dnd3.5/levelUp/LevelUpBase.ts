@@ -146,7 +146,7 @@ export default abstract class LevelUpBase<C> {
     const klassLevel = characterLevel.trackId ? this.dnd35.klassLevelsById.get(characterLevel.trackId) : undefined;
     if (!klassLevel) throw new RulesError("not-found", "Class level not found");
 
-    const klass = this.dnd35.klassesById.get(klassLevel.klassId);
+    const klass = this.dnd35.klassesById.get(klassLevel.ownerId);
     if (!klass) throw new RulesError("not-found", "Class not found");
 
     return { klassLevel, klass };

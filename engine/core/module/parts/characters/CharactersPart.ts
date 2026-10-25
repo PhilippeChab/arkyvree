@@ -3,10 +3,11 @@ import { z } from "zod";
 import type { StoredValues } from "@/engine/core/fields/index.ts";
 import type { CharacterInput } from "@/engine/core/module/CharacterInputs.ts";
 import type { Descriptions } from "@/engine/core/module/contract.ts";
+import type { EntityFilters } from "@/engine/core/module/parts/entities/index.ts";
 import type { OpenedPicker } from "@/engine/core/module/pickers.ts";
-import type { StorageDeclaration, StoredAdvancement } from "@/engine/core/module/storage.ts";
+import type { EntityRecord, StorageDeclaration, StoredAdvancement } from "@/engine/core/module/storage.ts";
 import RulesError from "@/engine/core/RulesError.ts";
-import { RequestIds, type RulesetView, type ViewEntities } from "@/engine/core/view/index.ts";
+import { RequestIds, type RulesetView, type ViewKinds } from "@/engine/core/view/index.ts";
 import type { Character as CharacterRecord } from "@/shared/relations.ts";
 
 import type {
@@ -136,7 +137,7 @@ export default abstract class CharactersPart<D extends Descriptions> {
    */
   protected abstract describeInventoryEntry(
     entry: HeldInventoryEntry,
-    item: ViewEntities["items"],
+    item: ViewKinds["items"],
     values: StoredValues,
   ): D["inventoryEntry"];
 
@@ -187,7 +188,7 @@ export default abstract class CharactersPart<D extends Descriptions> {
     view: RulesetView,
     role: string,
     query: CreationPickQuery,
-  ): OpenedPicker<{ columns: Record<string, string> }, { id: string }, D["creationOption"]>;
+  ): OpenedPicker<EntityFilters, EntityRecord, D["creationOption"]>;
 
   /**
    * What an edit of a character's (`character`) fields (`request`, by the keys its sheet's `fields` block gives them)
@@ -232,7 +233,7 @@ export default abstract class CharactersPart<D extends Descriptions> {
     const declared = this.storage.registries.characterRoles.find((def) => def.role === role && !def.single);
     if (!declared || this.storage.character.scoredRoles.includes(role) !== scored)
       throw new RulesError("not-found", `No ${scored ? "scored" : "picked"} link ${role}`);
-    return { kind: declared.entityType as keyof ViewEntities, role };
+    return { kind: declared.entityType as keyof ViewKinds, role };
   }
 
   /** The scored roles the module stores of its characters, each with its entities' kind. */
@@ -305,8 +306,8 @@ export default abstract class CharactersPart<D extends Descriptions> {
   /**
    * The character's entries (`entries`, each naming its item), as its sheet lists them: each with what its ruleset
    * shows of it (`describeInventoryEntry`), and its item as the view composes it (`RulesetData.entriesWithItems`), its
-   * fields (its template's of each it holds none of, `describeInventoryItemFields`), its modifiers, and its
-   * requirements, its template's before its own.
+   * fields (its declared ones, its template's of each it holds none of, `describeInventoryItemFields`, then its own by
+   * name), its modifiers, and its requirements, its template's before its own.
    */
   describeInventory<T extends HeldInventoryEntry & { itemId: string }>(
     view: RulesetView,
@@ -321,7 +322,7 @@ export default abstract class CharactersPart<D extends Descriptions> {
         ...this.describeInventoryEntry(entry, item, values),
         item: {
           ...item,
-          fields: this.describeInventoryItemFields(values),
+          fields: { ...this.describeInventoryItemFields(values), ...item.fields },
           modifiers: rulesetData.modifiersBySource.get(item.id) ?? [],
           requirements: [...proficiency, ...requirements],
         },
@@ -444,7 +445,7 @@ export default abstract class CharactersPart<D extends Descriptions> {
     const links: Record<string, string> = {};
     for (const { entityType, role } of this.singleRoles()) {
       const picked = request.picks[role];
-      const kind = entityType as keyof ViewEntities;
+      const kind = entityType as keyof ViewKinds;
       if (picked === undefined)
         throw new RulesError("invalid", `A new character's ${view.rulesetData.labelOf(kind)} is required`);
       const entity = ids.find(kind, picked);

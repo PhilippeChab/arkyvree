@@ -4,6 +4,7 @@ import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading
 import ItemPlacement from "@/engine/rulesets/dnd3.5/rules/ItemPlacement.ts";
 import { include } from "@/lib/mixins.ts";
 import { UNARMED_STRIKE, UNARMED_STRIKE_STATS } from "@/vocabulary/dnd3.5/combat.ts";
+import { ITEM_TYPE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 import CombatState, { type CombatData, type HeldWeapon } from "./CombatState.ts";
 import { ArmorClass } from "./concerns/ArmorClass.ts";
@@ -59,17 +60,17 @@ class CombatComponent extends include(CombatState, ArmorClass, Attacks, HitPoint
    */
   private equipInventory(): void {
     for (const { entry, fields } of this.inventory.getEquipped()) {
-      if (entry.item.type === "Weapon") {
+      if (entry.item.fields[ITEM_TYPE] === "Weapon") {
         const location = entry.location as "Main Hand" | "Off Hand" | "Two Handed";
         const held = { itemId: entry.item.id, entryId: entry.id };
         for (const setIndex of ItemPlacement.heldSets(entry)) {
           const weapon = this.addWeapon(setIndex, location, entry.item, fields.weapon, held);
           if (weapon) this.heldWeapons.push({ fields: fields.weapon, location, setIndex, weapon });
         }
-      } else if (entry.item.type === "Armor") {
+      } else if (entry.item.fields[ITEM_TYPE] === "Armor") {
         // The sheet wears it: the heaviest worn slows the character down
         this.addArmor(fields);
-      } else if (entry.item.type === "Shield") {
+      } else if (entry.item.fields[ITEM_TYPE] === "Shield") {
         // Each set that holds it carries it: a tower shield's bulk
         for (const set of ItemPlacement.heldSets(entry)) this.addShield(fields, String(set));
       }

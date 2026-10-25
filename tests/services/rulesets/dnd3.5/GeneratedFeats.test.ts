@@ -22,7 +22,7 @@ import {
 import { getSeedCtx } from "@/tests/support/seed.ts";
 import { findStoredValues, writeStoredValues } from "@/tests/support/storedValues.ts";
 import { createTestUser, makeSession } from "@/tests/support/users.ts";
-import { FEAT_FAMILY, WEAPON_TYPE } from "@/vocabulary/dnd3.5/fields/index.ts";
+import { FEAT_FAMILY, FEAT_GENERATED, WEAPON_TYPE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 function skill(abilityId: string, name: string, fields: Record<string, unknown> = {}) {
   return {
@@ -72,7 +72,7 @@ async function featShape(featId: string) {
     rows.map((row) => Object.fromEntries(Object.entries(row).filter(([key]) => !/(^id$|Id$|At$)/.test(key))));
   return {
     description: feat.description,
-    generated: feat.generated,
+    generated: feat.fields[FEAT_GENERATED],
     values: await findStoredValues("feats", featId),
     modifiers: strip(await Modifiers.findMany(db, { sourceIds: [featId], sourceType: "feats" })),
     requirements: strip(await Requirements.findMany(db, { entityIds: [featId], entityType: "feats" })),
@@ -104,7 +104,7 @@ async function seededForkWithClimb() {
   }))!;
   const climbBody = {
     name: "Climb",
-    primaryAbilityId: climb.primaryAbilityId,
+    primaryAbilityId: climb.links.keyAbility,
     fields: { impactedByWeight: true, checkPenaltyMultiplier: 1, usableWithoutTraining: true },
   };
   return { session, fork, climb, climbBody, feat: await findFeat(climb.rulesetId, "Skill Focus: Climb") };
@@ -316,7 +316,7 @@ test("a fork's new skills and spells put their feats in the General aptitude it 
   );
   for (const name of ["Skill Focus: Swim", "Spell Focus: Evocation", "Greater Spell Focus: Evocation"]) {
     const feat = await findFeat(fork.id, name);
-    expect(feat.generated).toBe(true);
+    expect(feat.fields[FEAT_GENERATED]).toBe(true);
     expect(await findLists(db, [feat.id])).toMatchObject([{ toId: parent.general!.id }]);
   }
 });
@@ -483,7 +483,7 @@ describe("generated feats", () => {
       session,
       fork.id,
       "skills",
-      skill(climb.primaryAbilityId, "New Skill", { impactedByWeight: false }),
+      skill(climb.links.keyAbility!, "New Skill", { impactedByWeight: false }),
     );
     const generated = await findFeat(fork.id, "Skill Focus: New Skill");
     expect(
@@ -508,7 +508,7 @@ describe("generated feats", () => {
       name: "Weapon Focus: Longsword",
       aptitudeIds: [(await getSeedCtx()).aptMap["General"]],
     });
-    expect(made.generated).toBe(true);
+    expect(made.fields[FEAT_GENERATED]).toBe(true);
   });
 
   test("are the generators' feats, not those named like them", async () => {
@@ -564,7 +564,7 @@ describe("generated feats", () => {
 
     const names = ["Mountaineering", "Scaling", "Climb"];
     for (const name of names) {
-      await EntitiesService.updateEntity(session, fork.id, "skills", climb.id, skill(climb.primaryAbilityId, name));
+      await EntitiesService.updateEntity(session, fork.id, "skills", climb.id, skill(climb.links.keyAbility!, name));
       await withRulesetScope(db, fork.id, async ({ rulesetData }) => {
         const visible = Dnd35View.of(rulesetData).feats.filter((f) =>
           names.some((label) => f.name === `Skill Focus: ${label}`),

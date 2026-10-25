@@ -85,7 +85,7 @@ export default class ClassesComponent extends CharacterComponent<LoadedCharacter
       const klassLevel = klassLevelsById.get(characterLevel.trackId!);
       if (!klassLevel) throw new Error("Class level not found");
 
-      const klass = klassesById.get(klassLevel.klassId);
+      const klass = klassesById.get(klassLevel.ownerId);
       if (!klass) throw new Error("Class not found");
 
       const klassName = stripSeparators(klass.name);
@@ -109,7 +109,7 @@ export default class ClassesComponent extends CharacterComponent<LoadedCharacter
     }
 
     for (const klass of Object.values(this.classes)) {
-      klass.levels.sort((a, b) => a.klassLevel.level - b.klassLevel.level);
+      klass.levels.sort((a, b) => a.klassLevel.position - b.klassLevel.position);
       klass.level = klass.levels.length;
     }
 

@@ -71,7 +71,16 @@ import {
 import { findSeededCharacter, findSeededRuleset, getSeedCtx, NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
 import { findStoredValues, writeStoredValues } from "@/tests/support/storedValues.ts";
 import { createTestUser, makeSession } from "@/tests/support/users.ts";
-import { CLASS_LEVEL_BAB, CLASS_LEVEL_SKILL_POINTS, FEAT_FAMILY } from "@/vocabulary/dnd3.5/fields/index.ts";
+import {
+  CLASS_HD,
+  CLASS_LEVEL_BAB,
+  CLASS_LEVEL_SKILL_POINTS,
+  FEAT_FAMILY,
+  FEAT_SELECTABLE,
+  FEAT_STACKABLE,
+  RACE_BASE_SPEED,
+  RACE_SIZE,
+} from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** Where a pick step's picker opens: the advancement its pick lands on, and the tier or the group it lists. */
 interface PickAt {
@@ -249,13 +258,16 @@ async function setupRuleset({ fork = false } = {}) {
   const [race] = await Entities.create<Race>(db, "races", {
     name: "Test Race",
     rulesetId,
-    size: "Medium",
-    baseSpeed: 30,
+    fields: { [RACE_SIZE]: "Medium", [RACE_BASE_SPEED]: 30 },
   });
-  const [klass] = await Entities.create<Klass>(db, "classes", { name: "Test Class", rulesetId, hd: 8 });
+  const [klass] = await Entities.create<Klass>(db, "classes", {
+    name: "Test Class",
+    rulesetId,
+    fields: { [CLASS_HD]: 8 },
+  });
   const klassLevels = [];
   for (let level = 1; level <= 5; level++) {
-    const [klassLevel] = await Entities.create<KlassLevel>(db, "class_levels", { klassId: klass.id, level });
+    const [klassLevel] = await Entities.create<KlassLevel>(db, "class_levels", { ownerId: klass.id, position: level });
     await writeStoredValues("class_levels", klassLevel.id, [
       [CLASS_LEVEL_BAB, level],
       [CLASS_LEVEL_SKILL_POINTS, 2 + Math.floor(level / 2)],
@@ -286,9 +298,9 @@ async function setupRuleset({ fork = false } = {}) {
     })),
   );
   const featList = await Entities.createMany<Feat>(db, "feats", [
-    { name: "Power Attack", rulesetId, stackable: false },
-    { name: "Weapon Focus", rulesetId, stackable: true },
-    { name: "Dodge", rulesetId, stackable: false },
+    { name: "Power Attack", rulesetId, fields: { [FEAT_STACKABLE]: false } },
+    { name: "Weapon Focus", rulesetId, fields: { [FEAT_STACKABLE]: true } },
+    { name: "Dodge", rulesetId, fields: { [FEAT_STACKABLE]: false } },
   ]);
   const spellList = await Entities.createMany<Spell>(
     db,
@@ -411,9 +423,9 @@ describe("LevelsService", () => {
       const [klass] = await Entities.create<Klass>(db, "classes", {
         name: `Kensai ${uniqueId()}`,
         rulesetId: fork.id,
-        hd: 10,
+        fields: { [CLASS_HD]: 10 },
       });
-      const [level] = await Entities.create<KlassLevel>(db, "class_levels", { klassId: klass.id, level: 1 });
+      const [level] = await Entities.create<KlassLevel>(db, "class_levels", { ownerId: klass.id, position: 1 });
       await Requirements.create(db, {
         entityId: level.id,
         entityType: "class_levels",
@@ -441,9 +453,9 @@ describe("LevelsService", () => {
       const [klass] = await Entities.create<Klass>(db, "classes", {
         name: `Duelist ${uniqueId()}`,
         rulesetId: fork.id,
-        hd: 10,
+        fields: { [CLASS_HD]: 10 },
       });
-      const [level] = await Entities.create<KlassLevel>(db, "class_levels", { klassId: klass.id, level: 1 });
+      const [level] = await Entities.create<KlassLevel>(db, "class_levels", { ownerId: klass.id, position: 1 });
       // The class requires Power Attack, its first level a base attack bonus of +1, which a fighter 1 has
       for (const [entityId, entityType, target, operator, value, valueType] of [
         [klass.id, "classes", "feats.powerattack.possessed", "equal", "true", "boolean"],
@@ -617,12 +629,12 @@ describe("LevelsService", () => {
         await Entities.create<Skill>(db, "skills", {
           name: "Craft",
           rulesetId: parent.id,
-          primaryAbilityId: intelligence.id,
+          links: { keyAbility: intelligence.id },
         }),
         await Entities.create<Skill>(db, "skills", {
           name: "Craft (Alchemy)",
           rulesetId: parent.id,
-          primaryAbilityId: intelligence.id,
+          links: { keyAbility: intelligence.id },
         }),
       ];
       await addClassSkills(db, klass.id, [craft.id]);
@@ -776,7 +788,7 @@ describe("LevelsService", () => {
         );
         return detailedCharacter
           .getHeldFeats()
-          .filter((feat) => !feat.stackable)
+          .filter((feat) => !feat.fields[FEAT_STACKABLE])
           .map((feat) => feat.id);
       };
       expect(await held()).toEqual([feats["Power Attack"].id]);
@@ -790,7 +802,7 @@ describe("LevelsService", () => {
       const [classFeature] = await Entities.create<Feat>(db, "feats", {
         name: "Class Feature",
         rulesetId: klass.rulesetId,
-        selectable: false,
+        fields: { [FEAT_SELECTABLE]: false },
       });
       await addLists(db, "feats", classFeature.id, [{ aptitudeId: featAptitude.id }]);
       await addCharacterLevel(character.id, klassLevels[0].id, {
@@ -1299,7 +1311,7 @@ describe("LevelsService", () => {
       const sorcerer = await copyEntity(db, "classes", ctx.klassMap.pc["Sorcerer"], fork);
       const second = (
         await Entities.findMany<KlassLevel>(db, { entityType: "class_levels", ownerIds: [sorcerer.id] })
-      ).find(({ level }) => level === 2)!;
+      ).find(({ position }) => position === 2)!;
       const [sorcererSpells, resistance] = [ctx.aptMap["Sorcerer Spells"], ctx.spellMap["Resistance"]];
       await addGrants(db, second.id, "spells", [{ toId: resistance, aptitudeId: sorcererSpells }]);
       RulesetViews.invalidate(fork.id);

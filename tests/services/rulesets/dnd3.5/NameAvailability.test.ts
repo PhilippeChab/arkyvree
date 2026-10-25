@@ -18,6 +18,14 @@ import {
 } from "@/tests/support/rulesets.ts";
 import { findPlainItem } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
+import {
+  ITEM_COST_GP,
+  ITEM_SLOT,
+  ITEM_TYPE,
+  ITEM_WEIGHT,
+  RACE_BASE_SPEED,
+  RACE_SIZE,
+} from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** A kind a fork renames its own entity in, to the name of one of the core rules' (`taken`). */
 interface RenamedKind {
@@ -128,10 +136,10 @@ test("bulk item variants with a renamed override's original name keep the overri
   const renamed = await EntitiesService.updateEntity(session, fork.id, "items", source.id, {
     name: `${source.name} (Local)`,
     description: source.description,
-    type: source.type,
-    slot: source.slot ?? undefined,
-    weight: Number(source.weight),
-    costGp: Number(source.costGp),
+    type: source.fields[ITEM_TYPE],
+    slot: source.fields[ITEM_SLOT],
+    weight: source.fields[ITEM_WEIGHT],
+    costGp: source.fields[ITEM_COST_GP],
   });
 
   const [created] = await EntitiesService.createVariants(session, fork.id, "items", renamed.id, [
@@ -387,16 +395,14 @@ test("subscribing to an extension that shows a name its view shows twice no more
   const [twin] = await Entities.create<Race>(db, "races", {
     name: "Twin",
     rulesetId: base.id,
-    size: "Tiny",
-    baseSpeed: 10,
-    kind: "familiar",
+    partition: "familiar",
+    fields: { [RACE_SIZE]: "Tiny", [RACE_BASE_SPEED]: 10 },
   });
   await Entities.create<Race>(db, "races", {
     name: "Twin",
     rulesetId: base.id,
-    size: "Tiny",
-    baseSpeed: 10,
-    kind: "animalcompanion",
+    partition: "animalcompanion",
+    fields: { [RACE_SIZE]: "Tiny", [RACE_BASE_SPEED]: 10 },
   });
   const host = await createTestRuleset(session.userId, fork);
   const extension = await createTestRuleset(session.userId, fork);

@@ -40,7 +40,13 @@ import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
 import { createSeededTestRuleset, createTestRuleset } from "@/tests/support/rulesets.ts";
 import { findStoredValues } from "@/tests/support/storedValues.ts";
 import { makeSession } from "@/tests/support/users.ts";
-import { RULESET_FEAT_ADVANCEMENT } from "@/vocabulary/dnd3.5/fields/index.ts";
+import {
+  CLASS_HD,
+  LANGUAGE_TYPE,
+  RACE_BASE_SPEED,
+  RACE_SIZE,
+  RULESET_FEAT_ADVANCEMENT,
+} from "@/vocabulary/dnd3.5/fields/index.ts";
 
 type OwnerType = keyof typeof OWNERS;
 
@@ -85,9 +91,11 @@ async function createOwner(type: OwnerType, userId: string, rulesetId: string): 
     case "class_levels":
       return (await createTestKlassLevel(rulesetId)).klassLevel.id;
     case "classes":
-      return (await Entities.create<Klass>(db, "classes", { name, rulesetId, hd: 8 }))[0].id;
+      return (await Entities.create<Klass>(db, "classes", { name, rulesetId, fields: { [CLASS_HD]: 8 } }))[0].id;
     case "languages":
-      return (await Entities.create<Language>(db, "languages", { name, rulesetId, type: "Standard" }))[0].id;
+      return (
+        await Entities.create<Language>(db, "languages", { name, rulesetId, fields: { [LANGUAGE_TYPE]: "Standard" } })
+      )[0].id;
     case "modifiers": {
       const [feat] = await Entities.create<Feat>(db, "feats", { name, rulesetId });
       return (await Modifiers.create(db, { ...STRENGTH_BONUS, sourceId: feat.id, sourceType: "feats" }))[0].id;
@@ -95,7 +103,13 @@ async function createOwner(type: OwnerType, userId: string, rulesetId: string): 
     case "spells":
       return (await Entities.create<Spell>(db, "spells", { name, rulesetId }))[0].id;
     case "races":
-      return (await Entities.create<Race>(db, "races", { name, rulesetId, size: "Medium", baseSpeed: 30 }))[0].id;
+      return (
+        await Entities.create<Race>(db, "races", {
+          name,
+          rulesetId,
+          fields: { [RACE_SIZE]: "Medium", [RACE_BASE_SPEED]: 30 },
+        })
+      )[0].id;
     case "rulesets":
       return (await createTestRuleset(userId)).id;
     case "saves":
@@ -105,9 +119,12 @@ async function createOwner(type: OwnerType, userId: string, rulesetId: string): 
         description: "Strength",
         rulesetId,
       });
-      if (type === "saves")
-        return (await Entities.create<RulesetSave>(db, "saves", { name, rulesetId, abilityId: ability.id }))[0].id;
-      return (await Entities.create<Skill>(db, "skills", { name, rulesetId, primaryAbilityId: ability.id }))[0].id;
+      if (type === "saves") {
+        return (
+          await Entities.create<RulesetSave>(db, "saves", { name, rulesetId, links: { keyAbility: ability.id } })
+        )[0].id;
+      }
+      return (await Entities.create<Skill>(db, "skills", { name, rulesetId, links: { keyAbility: ability.id } }))[0].id;
     }
   }
 }

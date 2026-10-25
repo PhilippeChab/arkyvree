@@ -47,7 +47,13 @@ import { copyEntity, createTestRuleset } from "@/tests/support/rulesets.ts";
 import { findSeededRuleset, getSeedCtx, NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
 import { findStoredValues, writeStoredValues } from "@/tests/support/storedValues.ts";
 import { createTestUser } from "@/tests/support/users.ts";
-import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/fields/index.ts";
+import {
+  CLASS_HD,
+  FEAT_FAMILY,
+  ITEM_IS_TEMPLATE,
+  RACE_BASE_SPEED,
+  RACE_SIZE,
+} from "@/vocabulary/dnd3.5/fields/index.ts";
 
 type RulesetValues = Partial<InferInsertModel<typeof rulesetsInRules>>;
 const firstPage = { limit: 100, page: 1 };
@@ -68,12 +74,20 @@ async function addPlayableContent(rulesetId: string) {
     description: "Strength",
     rulesetId,
   });
-  const [race] = await Entities.create<Race>(db, "races", { name: "Human", rulesetId, size: "Medium", baseSpeed: 30 });
-  const [klass] = await Entities.create<Klass>(db, "classes", { name: "Fighter", rulesetId, hd: 10 });
+  const [race] = await Entities.create<Race>(db, "races", {
+    name: "Human",
+    rulesetId,
+    fields: { [RACE_SIZE]: "Medium", [RACE_BASE_SPEED]: 30 },
+  });
+  const [klass] = await Entities.create<Klass>(db, "classes", {
+    name: "Fighter",
+    rulesetId,
+    fields: { [CLASS_HD]: 10 },
+  });
   const [skill] = await Entities.create<Skill>(db, "skills", {
     name: "Climb",
     rulesetId,
-    primaryAbilityId: ability.id,
+    links: { keyAbility: ability.id },
   });
   const [feat] = await Entities.create<Feat>(db, "feats", { name: "Toughness", rulesetId });
   return { race, klass, skill, feat };
@@ -82,7 +96,11 @@ async function addPlayableContent(rulesetId: string) {
 /** A published ruleset of `userId` (a system one when null), with a template item so forking it doesn't seed the engine's. */
 async function createParent(userId: string | null = null, values: RulesetValues = {}) {
   const ruleset = await createTestRuleset(userId, { private: false, status: "Published", ...values });
-  await Entities.create<Item>(db, "items", { name: "Template", rulesetId: ruleset.id, isTemplate: true });
+  await Entities.create<Item>(db, "items", {
+    name: "Template",
+    rulesetId: ruleset.id,
+    fields: { [ITEM_IS_TEMPLATE]: true },
+  });
   return ruleset;
 }
 
@@ -273,7 +291,7 @@ describe("RulesetsService", () => {
         await Entities.findList<Item>(db, {
           entityType: "items",
           rulesetId: (await fork(session, parent)).id,
-          columns: { isTemplate: true },
+          fields: { [ITEM_IS_TEMPLATE]: true },
           order: "name",
         }),
       ).toEqual([]);
@@ -566,7 +584,7 @@ describe("RulesetsService", () => {
       test("deletes a copied class's levels and class skills", async () => {
         const { session, parent, fork } = await setupChanges();
         const { klass, skill } = await addPlayableContent(parent.id);
-        await Entities.create<KlassLevel>(db, "class_levels", { klassId: klass.id, level: 1 });
+        await Entities.create<KlassLevel>(db, "class_levels", { ownerId: klass.id, position: 1 });
         await addClassSkills(db, klass.id, [skill.id]);
         const copy = await copyEntity(db, "classes", klass.id, fork);
 
@@ -583,18 +601,18 @@ describe("RulesetsService", () => {
         const [template] = await Entities.create<Item>(db, "items", {
           name: "Longsword",
           rulesetId: parent.id,
-          isTemplate: true,
+          fields: { [ITEM_IS_TEMPLATE]: true },
         });
         const copy = await copyEntity(db, "items", template.id, fork);
         const [made] = await Entities.create<Item>(db, "items", {
           name: "Longsword +1",
           rulesetId: fork.id,
-          sourceItemId: copy.id as string,
+          links: { madeFrom: copy.id as string },
         });
 
         await RulesetChangesService.revertOverride(session, fork.id, "items", template.id);
         expect(await Entities.findOne<Item>(db, { entityType: "items", id: made.id })).toMatchObject({
-          sourceItemId: template.id,
+          links: { madeFrom: template.id },
         });
       });
 

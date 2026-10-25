@@ -12,11 +12,12 @@ import type { Item } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import type { ItemLocation } from "@/shared/enums.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
 import { ITEM_TYPE_LOCATIONS, MAX_FINGER_ITEMS, SINGLE_OCCUPANCY_LOCATIONS } from "@/vocabulary/dnd3.5/equipment.ts";
+import { ITEM_TYPE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** An inventory entry an item is equipped from: the entry (null for a new one), and its item. */
 interface EquippedEntry {
   id: string | null;
-  item: Pick<Item, "id" | "isTemplate" | "sourceItemId" | "type">;
+  item: Pick<Item, "fields" | "id" | "links">;
 }
 
 /** An equipped entry of the character's, as the slot rules read it, with its item's name as the view has it. */
@@ -102,7 +103,7 @@ export default class Equipping {
    * without its proficiency, a -4 penalty applies instead.
    */
   private checkItemRequirements(item: EquippedEntry["item"]) {
-    if (item.type === "Weapon") return;
+    if (item.fields[ITEM_TYPE] === "Weapon") return;
     const { own: requirements, template: proficiency } = this.view.rulesetData.itemRequirements(item);
     if (proficiency.length === 0 && requirements.length === 0) return;
 
@@ -120,8 +121,9 @@ export default class Equipping {
     const conflict = this.describeConflict(id, location, weaponSets);
     if (conflict) throw new RulesError("invalid", conflict);
 
-    if (ItemPlacement.isLocatedType(item.type) && !isOneOf(location, ITEM_TYPE_LOCATIONS[item.type]))
-      throw new RulesError("invalid", TYPE_LOCATION_MESSAGES[item.type]);
+    const type = item.fields[ITEM_TYPE] ?? null;
+    if (ItemPlacement.isLocatedType(type) && !isOneOf(location, ITEM_TYPE_LOCATIONS[type]))
+      throw new RulesError("invalid", TYPE_LOCATION_MESSAGES[type]);
     if (ItemPlacement.isHand(location)) this.checkWeaponHands(item.id, location);
   }
 
@@ -144,7 +146,7 @@ export default class Equipping {
    */
   private checkWeaponInOneHand(item: EquippedEntry["item"], location: ItemLocation) {
     const { rulesetData } = this.view;
-    if (item.type !== "Weapon" || !ItemPlacement.isHand(location) || location === "Two Handed") return;
+    if (item.fields[ITEM_TYPE] !== "Weapon" || !ItemPlacement.isHand(location) || location === "Two Handed") return;
     if (this.weaponFields(item.id).oneHandTraining !== true) return;
 
     const { template: proficiency } = rulesetData.itemRequirements(item);
@@ -192,7 +194,7 @@ export default class Equipping {
   /** The weapon fields of an item, its own merged with its template's. */
   private weaponFields(itemId: string) {
     const { rulesetData } = this.view;
-    const item = Dnd35View.of(rulesetData).itemsById.get(itemId) ?? { id: itemId, sourceItemId: null };
+    const item = Dnd35View.of(rulesetData).itemsById.get(itemId) ?? { id: itemId, links: {} };
     return ITEM_FIELDS.read(rulesetData.inheritedValuesOf("items", item)).weapon;
   }
 

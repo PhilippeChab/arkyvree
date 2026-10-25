@@ -19,7 +19,7 @@ function classOf(id: string, name: string, levels: number) {
     klass: { id, name },
     levels: Array.from({ length: levels }, (_, index) => ({
       characterLevel: { id: `${id}-${index + 1}` },
-      klassLevel: { level: index + 1 },
+      klassLevel: { position: index + 1 },
     })),
   };
 }

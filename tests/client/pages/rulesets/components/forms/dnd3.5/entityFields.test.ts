@@ -18,6 +18,7 @@ import {
 } from "@/client/src/pages/rulesets/components/forms/entityFields.ts";
 import type { EntityField } from "@/client/src/pages/rulesets/details/rulesetQueries.ts";
 import { Engine } from "@/engine/index.ts";
+import { CLASS_HD, ITEM_COST_GP, ITEM_SLOT, ITEM_TYPE, ITEM_WEIGHT } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** A field's description, but what it's for. */
 const BASE = { help: "" };
@@ -155,6 +156,7 @@ describe("an entity's fields in its form", () => {
       key: "sourceItemId",
       label: "Template",
       input: "template",
+      role: "madeFrom",
       typeKey: "type",
       shownWhen: [
         { path: "type", values: ["Weapon"] },
@@ -218,7 +220,10 @@ describe("an entity's columns in its form", () => {
 
   test("hold an entity's: a decimal as its text, a type a template couldn't be of, a die it doesn't offer its default", () => {
     expect(
-      toColumnValues(ITEM, { costGp: 15, weight: "2.5", type: "Ring", slot: "Finger", sourceItemId: null }),
+      toColumnValues(ITEM, {
+        fields: { [ITEM_COST_GP]: 15, [ITEM_WEIGHT]: 2.5, [ITEM_TYPE]: "Ring", [ITEM_SLOT]: "Finger" },
+        links: [],
+      }),
     ).toEqual({
       costGp: "15.00",
       slot: "Finger",
@@ -226,7 +231,10 @@ describe("an entity's columns in its form", () => {
       type: "Ring",
       weight: "2.50",
     });
-    expect(toColumnValues(CLASS, { hd: 7 })).toEqual({ hd: 8 });
+    expect(toColumnValues(CLASS, { fields: { [CLASS_HD]: 7 } })).toEqual({ hd: 8 });
+    // Its template, its link's of the template's role
+    const madeFrom = { role: "madeFrom", toId: "t", toName: "Longsword" };
+    expect(toColumnValues(ITEM, { fields: {}, links: [madeFrom] })).toMatchObject({ sourceItemId: "t" });
   });
 
   test("send a decimal's number, none null, and a column the form hides null", () => {

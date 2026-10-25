@@ -151,24 +151,29 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
   /** One of the class's levels, as the view has it: refused when there's none, or it isn't the class's. */
   override find(levelId: string) {
     const level = super.find(levelId);
-    if (level.klassId !== this.klass.id) throw new RulesError("not-found", `${this.label} not found in this ruleset`);
+    if (level.ownerId !== this.klass.id) throw new RulesError("not-found", `${this.label} not found in this ruleset`);
     return level;
   }
 
   /**
-   * A new level of the class: the class as the view has it, the level's row and links, what its form writes beside
-   * them, and the level it answers once written, with the fields it keeps.
+   * A new level of the class: the class as the view has it, the level's row (its number, its `position`) and links,
+   * what its form writes beside them, and the level it answers once written, with the fields it keeps.
    */
   override planCreate(form: EntityForm) {
     const plan = super.planCreate(form);
     const level = RulesError.parse(LEVEL, this.formOf(form).level);
-    return { ...plan, activity: { entityName: this.klass.name, level }, columns: { level }, owner: this.klass };
+    return {
+      ...plan,
+      activity: { entityName: this.klass.name, level },
+      owner: this.klass,
+      row: { ...plan.row, position: level },
+    };
   }
 
   /** Deleting one of the class's levels: the class and the level, as the view has them. */
   override planDelete(levelId: string) {
     const plan = super.planDelete(levelId);
-    const activity = { rulesetId: this.view.ruleset.id, entityName: this.klass.name, level: plan.entity.level };
+    const activity = { rulesetId: this.view.ruleset.id, entityName: this.klass.name, level: plan.entity.position };
     return { ...plan, activity, owner: this.klass };
   }
 
@@ -179,7 +184,7 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
    */
   override planEdit(levelId: string, form: EntityForm) {
     const plan = super.planEdit(levelId, form);
-    return { ...plan, activity: { entityName: this.klass.name, level: plan.entity.level }, owner: this.klass };
+    return { ...plan, activity: { entityName: this.klass.name, level: plan.entity.position }, owner: this.klass };
   }
 
   /**

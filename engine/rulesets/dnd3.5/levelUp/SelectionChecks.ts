@@ -2,6 +2,8 @@ import type { StoredPick } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
+import { type Klass } from "@/engine/rulesets/dnd3.5/view/rows.ts";
+import { CLASS_HD, FEAT_STACKABLE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 import type { LevelUpRules } from "./LevelUpBase.ts";
 import type { AbilityIncrease, FeatPick, LevelPicks, SpellPick } from "./requests.ts";
@@ -16,7 +18,7 @@ interface KeptPicks {
 interface LevelChecked {
   feats: Record<string, string[]>;
   hp: number;
-  klass: { hd: number };
+  klass: Pick<Klass, "fields">;
   spells: Record<string, string[]>;
 }
 
@@ -152,7 +154,7 @@ export default class SelectionChecks {
 
   /** Whether the ruleset's feat stacks: a character may have it more than once. */
   private isStackable(featId: string) {
-    return this.dnd35.featsById.get(featId)?.stackable === true;
+    return this.dnd35.featsById.get(featId)?.fields[FEAT_STACKABLE] === true;
   }
 
   /** A pool's picks of a kind (`picks`, by pool) as the level's picks, each named by its row (`byId`). */
@@ -281,7 +283,7 @@ export default class SelectionChecks {
    * save's next check (`checkPicksNotHeld`).
    */
   checkLevel({ klass, hp, feats, spells }: LevelChecked) {
-    const { max, min } = this.rules.hitPointsOf(klass.hd);
+    const { max, min } = this.rules.hitPointsOf(klass.fields[CLASS_HD]);
     if (hp < min || hp > max) throw new RulesError("invalid", `HP must be between ${min} and ${max}`);
 
     // Submitted ids can repeat, in a pool or under two: a stackable feat's may, checkRepeatedPicks refuses the others.

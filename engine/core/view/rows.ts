@@ -1,21 +1,11 @@
 /**
- * The rows the engine reads a ruleset's entities as, each kind's by its module's storage declaration
- * (`StorageEngine.rowOf`): what every kind's row holds, and the registries each module fills with its own kinds' rows
- * (`ViewEntities`), which the view's reads are typed by, and with the kinds an entity of another kind owns
- * (`OwnedEntities`); and an entity's links of a role it holds many of, as the view composes them (`ViewLink`).
+ * The entities a ruleset's view holds, each as stored (`ViewEntity`: its own columns, its own fields by field, its
+ * single links by role), the registries each module fills with its own kinds (`ViewKinds`), which the view's reads are
+ * typed by, and with the kinds an entity of another kind owns (`OwnedKinds`); and an entity's links as the view composes
+ * them (`ViewLink`).
  */
 
-/** An entity's own columns. */
-interface EntityColumns {
-  campaignId: string | null;
-  createdAt: string;
-  deletedAt: string | null;
-  description: string | null;
-  id: string;
-  name: string;
-  rulesetId: string;
-  updatedAt: string;
-}
+import type { EntityRecord, FieldValue } from "@/engine/core/module/index.ts";
 
 /** A link as an entity's answer carries it: the view's (`ViewLink`), with its target's name (`toName`). */
 export interface NamedLink extends ViewLink {
@@ -27,17 +17,18 @@ export interface NamedLink extends ViewLink {
  * module declares its own into it. An owned kind has no rules of its own in its module's contract, its owner's
  * answering for it, and no field names one.
  */
-export interface OwnedEntities {}
+export interface OwnedKinds {}
 
 /**
- * Each kind's row as the view holds it, by its table: every registered module declares its own kinds' into it
- * (`declare module`), which `RulesetData.rows`, `byId` and `find` answer.
+ * Each kind's entity as the view holds it, by its table (a `ViewEntity`, its own fields and single links typed): every
+ * registered module declares its own kinds' into it (`declare module`), which `RulesetData.rows`, `byId` and `find`
+ * answer.
  */
-export interface ViewEntities {}
+export interface ViewKinds {}
 
 /**
- * A link from an entity, of a role it holds many of, as the view composes it (`RulesetData.linksOf`: a feat's pool, a
- * class level's grant): its own id, the entity it's from (`fromId`) and the one it's to (`toId`, of `toType`), the pool
+ * A link from an entity, as the view composes it (`RulesetData.linksOf`: a feat's pool, a class level's grant, an
+ * item's template): its own id, the entity it's from (`fromId`) and the one it's to (`toId`, of `toType`), the pool
  * it's taken through (`viaId`), its tier and its amount, whether it's free, and its place among its entity's links
  * (`ordinal`).
  */
@@ -54,17 +45,18 @@ export interface ViewLink {
   viaId: string | null;
 }
 
-/**
- * What every ruleset entity's row holds: its scope, its name and its description, and its timestamps. A mapped type, as
- * a row's answer is plain data any record type takes (an interface isn't).
- */
-export type EntityRow = Pick<EntityColumns, keyof EntityColumns>;
-
 /** The kinds of the view an entity of another kind owns (3.5's class levels). */
-export type OwnedKind = keyof OwnedEntities;
-
-/** A row as a module's storage declaration reads it: its columns by name. */
-export type Row = Record<string, unknown>;
+export type OwnedKind = keyof OwnedKinds;
 
 /** The kinds of the view no entity owns: those a module's contract answers of, and a field names. */
-export type StandaloneKind = Exclude<keyof ViewEntities, OwnedKind>;
+export type StandaloneKind = Exclude<keyof ViewKinds, OwnedKind>;
+
+/**
+ * An entity as the view holds it: its record as stored (`EntityRecord`), its own fields' values by field (`F`, typed as
+ * its kind holds them) and its single links' targets by role (of `L`, its kind's roles), each the entity the view shows
+ * for it (its copy's, its winner's); a standalone kind's named.
+ */
+export type ViewEntity<F extends object = Readonly<Record<string, FieldValue>>, L extends string = string> = Omit<
+  EntityRecord,
+  "fields" | "links" | "name"
+> & { fields: Readonly<F>; links: Readonly<Partial<Record<L, string>>>; name: string };

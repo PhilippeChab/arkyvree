@@ -12,13 +12,15 @@ import type { ItemLocation } from "@/shared/enums.ts";
 
 import { storedGroups } from "./groups.ts";
 
-/** A ruleset's item, as the add dialog lists it: its name and description, and its cost and weight as they're read. */
+/**
+ * A ruleset's item, as the add dialog lists it: its name and description, and its own fields, its cost and weight
+ * among them (at its block's `itemFields`).
+ */
 export interface RulesetItem {
-  costGp?: unknown;
   description: string | null;
+  fields: Readonly<Record<string, unknown>>;
   id: string;
   name: string;
-  weight?: unknown;
 }
 
 /** An item the character carries, with where it's placed: an entry of its inventory. */

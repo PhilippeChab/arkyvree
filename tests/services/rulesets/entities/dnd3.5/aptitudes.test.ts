@@ -12,6 +12,7 @@ import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
 import { addCharacterLevel, createTestKlassLevel } from "@/tests/support/dnd3.5/levels.ts";
 import { addGrants } from "@/tests/support/dnd3.5/links.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /**
  * The links that name the aptitude: as the list a feat or a spell is in (their target), or the pool a grant is through
@@ -89,7 +90,7 @@ describe("EntitiesService: aptitudes", () => {
     const [klass] = await Entities.create<Klass>(db, "classes", {
       name: "Granting Class",
       rulesetId: ruleset.id,
-      hd: 10,
+      fields: { [CLASS_HD]: 10 },
     });
     const level = await EntitiesService.createOwnedEntity(session, ruleset.id, "classes", klass.id, {
       level: 1,

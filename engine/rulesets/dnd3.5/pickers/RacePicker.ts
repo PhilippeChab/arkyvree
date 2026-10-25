@@ -1,6 +1,6 @@
 /** The races a new character can pick. */
 
-import type { CreationPickQuery } from "@/engine/core/module/index.ts";
+import type { CreationPickQuery, EntityRecord } from "@/engine/core/module/index.ts";
 import type { Components } from "@/engine/core/paths/PathTraverser.ts";
 import { Picker } from "@/engine/core/pickers/index.ts";
 import RequirementEvaluator from "@/engine/core/requirements/RequirementEvaluator.ts";
@@ -13,7 +13,7 @@ import type { Requirement } from "@/shared/relations.ts";
  * given): a player character's races (`filters`), each checked against the form. A requirement on what the form doesn't
  * say counts as met, and the form says no tree of what a race fails: there's no character yet to word it for.
  */
-export default class RacePicker extends Picker<{ id: string }> {
+export default class RacePicker extends Picker<EntityRecord> {
   constructor(view: RulesetView, identity: CreationPickQuery) {
     super(view);
     // Only what the form says: a requirement on what it doesn't reads no value, which leaves it invalid, not unmet
@@ -34,8 +34,8 @@ export default class RacePicker extends Picker<{ id: string }> {
   /** The paths the races' requirements target. */
   private readonly targetPaths = new Dnd35TargetPaths();
 
-  /** What the picker offers: a player character's races. */
-  override readonly filters = { columns: { kind: "pc" } };
+  /** What the picker offers: a player character's races (their partition, `pc`). */
+  override readonly filters = { partitions: ["pc"] };
 
   /** No tree: the form has no character to word it for. */
   protected override describeFailed() {

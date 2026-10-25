@@ -1,10 +1,12 @@
+import type { ItemSeed } from "@/content/core/builders/items/types.ts";
 import type { ItemFields } from "@/content/dnd3.5/builders/items/types.ts";
 import type { BookContent, CoreContent } from "@/content/dnd3.5/builders/rulesets/types.ts";
 import { ContentSeeder } from "@/database/seeders/core/ContentSeeder.ts";
 import type { Ids, SeedContext } from "@/database/seeders/core/SeederState.ts";
 import type { Db } from "@/drizzle/database.ts";
-import { Engine } from "@/engine/index.ts";
+import { Engine, type EntityWrite } from "@/engine/index.ts";
 import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
+import { ITEM_COST_GP, ITEM_IS_TEMPLATE, ITEM_SLOT, ITEM_TYPE, ITEM_WEIGHT } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /**
  * The 3.5 ruleset a seed writes to, and the ids of the rows its content names. Seeding aptitudes, feats or spells adds
@@ -79,6 +81,26 @@ export abstract class Dnd35ContentSeeder extends ContentSeeder<CoreContent, Book
   /** An item's seeded fields as the write of its stored values, by 3.5's item codec. */
   protected override itemFieldsWrite(fields: ItemFields) {
     return Engine.forRules(DND35_BASE_RULES).toFieldsWrite("items", fields);
+  }
+
+  /**
+   * What an item's seed writes of it: its cost and weight (its seed's text, as numbers), its type and slot (`"Other"`
+   * for none), whether it's a template, and the template it's made from (its `madeFrom` link).
+   */
+  protected override itemWrite(
+    item: ItemSeed<object>,
+    { isTemplate, templateId }: { isTemplate: boolean; templateId?: string },
+  ): EntityWrite {
+    return {
+      fields: {
+        [ITEM_WEIGHT]: Number(item.weight),
+        [ITEM_COST_GP]: Number(item.costGp),
+        [ITEM_TYPE]: item.type,
+        [ITEM_IS_TEMPLATE]: isTemplate,
+        [ITEM_SLOT]: item.slot || null,
+      },
+      links: { madeFrom: templateId ?? null },
+    };
   }
 
   /**

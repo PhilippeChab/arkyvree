@@ -7,6 +7,7 @@ import SpellsComponent from "@/engine/rulesets/dnd3.5/model/spells/SpellsCompone
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type { Feat, Spell } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import type { Constructor } from "@/lib/mixins.ts";
+import { FEAT_STACKABLE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /**
  * What each saved level's class level grants (`grants`, its `grants` links, by class level), each with the entity it
@@ -90,10 +91,10 @@ export function LoadsPicks<B extends Constructor<CharacterDataLoader<LoadedChara
         toGrantedFeat,
       );
 
-      const pickedFeatIds = new Set(pickedFeats.filter((f) => !f.stackable).map((f) => f.id));
+      const pickedFeatIds = new Set(pickedFeats.filter((f) => !f.fields[FEAT_STACKABLE]).map((f) => f.id));
       const seenGivenFeatIds = new Set<string>();
       const dedupedGivenFeats = givenFeats.filter((feat) => {
-        if (!feat.stackable) {
+        if (!feat.fields[FEAT_STACKABLE]) {
           if (pickedFeatIds.has(feat.id)) return false;
           if (seenGivenFeatIds.has(feat.id)) return false;
           seenGivenFeatIds.add(feat.id);

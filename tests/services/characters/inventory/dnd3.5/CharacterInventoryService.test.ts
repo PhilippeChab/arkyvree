@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
-import type { FieldValue } from "@/engine/index.ts";
-import { type Item, type Race } from "@/engine/rulesets/dnd3.5/index.ts";
+import type { EntityWrite, FieldValue } from "@/engine/index.ts";
+import type { Race } from "@/engine/rulesets/dnd3.5/index.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
@@ -17,7 +17,16 @@ import { createTestItem } from "@/tests/support/items.ts";
 import { createSeededTestRuleset, createTestRuleset } from "@/tests/support/rulesets.ts";
 import { findPlainItem, findSeededCharacter, getSeedCtx, NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
 import { createTestUser, makeSession } from "@/tests/support/users.ts";
-import { WEAPON_PROFICIENCY, WEAPON_SIZE } from "@/vocabulary/dnd3.5/fields/index.ts";
+import {
+  ITEM_COST_GP,
+  ITEM_IS_TEMPLATE,
+  ITEM_TYPE,
+  ITEM_WEIGHT,
+  RACE_BASE_SPEED,
+  RACE_SIZE,
+  WEAPON_PROFICIENCY,
+  WEAPON_SIZE,
+} from "@/vocabulary/dnd3.5/fields/index.ts";
 
 interface Placement {
   charges?: [number | null, number | null];
@@ -29,7 +38,7 @@ interface Placement {
 }
 
 /** What the test's items weigh and cost, unless a test says otherwise. */
-const ITEM_VALUES = { weight: "5", costGp: "10" };
+const ITEM_VALUES = { [ITEM_WEIGHT]: 5, [ITEM_COST_GP]: 10 };
 
 function add(
   session: Session,
@@ -79,8 +88,8 @@ async function placed() {
     helm: await newItem({ name: "Helm" }),
     protection: await newItem({ name: "Ring of Protection" }),
     wizardry: await newItem({ name: "Ring of Wizardry" }),
-    longsword: await newItem({ name: "Longsword", type: "Weapon" }),
-    greatsword: await newItem({ name: "Greatsword", type: "Weapon" }),
+    longsword: await newItem({ name: "Longsword" }, { [ITEM_TYPE]: "Weapon" }),
+    greatsword: await newItem({ name: "Greatsword" }, { [ITEM_TYPE]: "Weapon" }),
   };
   await add(session, character.id, items.helm.id, equipped("Head"));
   await add(session, character.id, items.protection.id, equipped("Finger"));
@@ -107,8 +116,7 @@ async function setup(race?: { size: SizeType }) {
       await Entities.create<Race>(db, "races", {
         name: `Test Race ${uniqueId()}`,
         rulesetId: ruleset.id,
-        baseSpeed: 30,
-        ...race,
+        fields: { [RACE_BASE_SPEED]: 30, [RACE_SIZE]: race.size },
       })
     )[0].id;
   RulesetViews.invalidate(ruleset.id);
@@ -116,8 +124,8 @@ async function setup(race?: { size: SizeType }) {
     session,
     raceId ? { rulesetId: ruleset.id, raceId } : { rulesetId: ruleset.id },
   );
-  const newItem = (values?: Partial<Item>, fields?: Record<string, FieldValue>) =>
-    createTestItem({ rulesetId: ruleset.id, ...ITEM_VALUES, ...values }, fields);
+  const newItem = (values?: EntityWrite, fields?: Record<string, FieldValue>) =>
+    createTestItem({ rulesetId: ruleset.id, ...values }, { ...ITEM_VALUES, ...fields });
   return { session, character, newItem, item: await newItem() };
 }
 
@@ -200,7 +208,7 @@ describe("InventoryService", () => {
 
   test("lists each entry with where its item can go and where it's worn", async () => {
     const { session, character, item, newItem } = await setup();
-    const sword = await newItem({ type: "Weapon" });
+    const sword = await newItem({}, { [ITEM_TYPE]: "Weapon" });
     await add(session, character.id, sword.id, equipped("Main Hand", 0));
     await add(session, character.id, item.id);
 
@@ -228,9 +236,9 @@ describe("InventoryService", () => {
     test("names every item in the hands a two-handed one needs, a weapon's and a shield's, as the save refuses it", async () => {
       const { session, character, newItem } = await setup();
       const [sword, shield, greatsword] = [
-        await newItem({ name: "Longsword", type: "Weapon" }),
-        await newItem({ name: "Heavy Steel Shield", type: "Shield" }),
-        await newItem({ name: "Greatsword", type: "Weapon" }),
+        await newItem({ name: "Longsword" }, { [ITEM_TYPE]: "Weapon" }),
+        await newItem({ name: "Heavy Steel Shield" }, { [ITEM_TYPE]: "Shield" }),
+        await newItem({ name: "Greatsword" }, { [ITEM_TYPE]: "Weapon" }),
       ];
       await add(session, character.id, shield.id, equipped("Off Hand", 0));
       await add(session, character.id, sword.id, equipped("Main Hand", 0));
@@ -265,9 +273,9 @@ describe("InventoryService", () => {
     test("stores each set once, in order, refused when any set's hand can't take it, and is in each set's way", async () => {
       const { session, character, newItem } = await setup();
       const [shield, otherShield, greatsword] = [
-        await newItem({ name: "Heavy Steel Shield", type: "Shield" }),
-        await newItem({ name: "Light Steel Shield", type: "Shield" }),
-        await newItem({ name: "Greatsword", type: "Weapon" }),
+        await newItem({ name: "Heavy Steel Shield" }, { [ITEM_TYPE]: "Shield" }),
+        await newItem({ name: "Light Steel Shield" }, { [ITEM_TYPE]: "Shield" }),
+        await newItem({ name: "Greatsword" }, { [ITEM_TYPE]: "Weapon" }),
       ];
       await add(session, character.id, greatsword.id, equipped("Two Handed", 1));
       expect(add(session, character.id, shield.id, equipped("Off Hand", 0, 1))).rejects.toThrow(
@@ -291,7 +299,7 @@ describe("InventoryService", () => {
 
     test("needs a weapon set in a hand", async () => {
       const { session, character, newItem } = await setup();
-      const sword = await newItem({ name: "Longsword", type: "Weapon" });
+      const sword = await newItem({ name: "Longsword" }, { [ITEM_TYPE]: "Weapon" });
       expect(add(session, character.id, sword.id, equipped("Main Hand"))).rejects.toThrow(
         "A weapon set is required when equipping to a hand slot",
       );
@@ -388,10 +396,9 @@ describe("InventoryService", () => {
       const [race] = await Entities.create<Race>(db, "races", {
         name: "Test Race",
         rulesetId: grandparent.id,
-        size: "Medium",
-        baseSpeed: 30,
+        fields: { [RACE_SIZE]: "Medium", [RACE_BASE_SPEED]: 30 },
       });
-      const inherited = await createTestItem({ rulesetId: grandparent.id, ...ITEM_VALUES });
+      const inherited = await createTestItem({ rulesetId: grandparent.id }, ITEM_VALUES);
       // Forks of forks can't be made through the API, but the lineage check walks every ancestor.
       const parent = await createTestRuleset(author.id, {
         rulesetId: grandparent.id,
@@ -444,9 +451,9 @@ describe("InventoryService", () => {
     test("puts weapons in hands, body armor on the torso and shields in the off hand", async () => {
       const { session, character, newItem } = await setup();
       const [weapon, armor, shield] = [
-        await newItem({ type: "Weapon" }),
-        await newItem({ type: "Armor" }),
-        await newItem({ type: "Shield" }),
+        await newItem({}, { [ITEM_TYPE]: "Weapon" }),
+        await newItem({}, { [ITEM_TYPE]: "Armor" }),
+        await newItem({}, { [ITEM_TYPE]: "Shield" }),
       ];
       expect(add(session, character.id, weapon.id, equipped("Trinket"))).rejects.toThrow(
         "Weapons can only be equipped in hand slots",
@@ -477,7 +484,7 @@ describe("InventoryService", () => {
 
     test("needs a weapon set for a hand slot", async () => {
       const { session, character, item, newItem } = await setup();
-      const shield = await newItem({ type: "Shield" });
+      const shield = await newItem({}, { [ITEM_TYPE]: "Shield" });
       const message = "A weapon set is required when equipping to a hand slot";
       expect(add(session, character.id, item.id, equipped("Main Hand"))).rejects.toThrow(message);
       expect(add(session, character.id, shield.id, equipped("Off Hand"))).rejects.toThrow(message);
@@ -636,8 +643,8 @@ describe("InventoryService", () => {
 
     test("checks a variant's own requirements beside its template's, each starting at level 1", async () => {
       const { session, character, newItem } = await setup();
-      const template = await newItem({ type: "Armor", isTemplate: true });
-      const variant = await newItem({ type: "Armor", sourceItemId: template.id });
+      const template = await newItem({}, { [ITEM_TYPE]: "Armor", [ITEM_IS_TEMPLATE]: true });
+      const variant = await newItem({ links: { madeFrom: template.id } }, { [ITEM_TYPE]: "Armor" });
       const strengthAtLeast = (entityId: string, value: string) =>
         Requirements.create(db, {
           entityId,
@@ -660,7 +667,7 @@ describe("InventoryService", () => {
 
     test("refuses an item whose requirements the character doesn't meet, unless forced", async () => {
       const { session, character, newItem } = await setup();
-      const armor = await newItem({ type: "Armor" });
+      const armor = await newItem({}, { [ITEM_TYPE]: "Armor" });
       await Requirements.create(db, {
         entityId: armor.id,
         entityType: "items",

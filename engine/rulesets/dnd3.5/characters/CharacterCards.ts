@@ -5,7 +5,7 @@ import ClassLevels from "./ClassLevels.ts";
 /** A ruleset's view as a card reads it: the names of its races and classes, and its classes' levels. */
 interface CardData {
   klassesById: ReadonlyMap<string, { name: string }>;
-  klassLevelsById: ReadonlyMap<string, { klassId: string; level: number }>;
+  klassLevelsById: ReadonlyMap<string, { ownerId: string; position: number }>;
   racesById: ReadonlyMap<string, { name: string }>;
 }
 
@@ -21,8 +21,9 @@ export default class CharacterCards {
     for (const level of levels) {
       const klassLevel = level.trackId === null ? undefined : data.klassLevelsById.get(level.trackId);
       if (!klassLevel) continue;
-      const klassName = data.klassesById.get(klassLevel.klassId)?.name || "Unknown";
-      if (klassLevel.level > (levelByKlassName.get(klassName) || 0)) levelByKlassName.set(klassName, klassLevel.level);
+      const klassName = data.klassesById.get(klassLevel.ownerId)?.name || "Unknown";
+      if (klassLevel.position > (levelByKlassName.get(klassName) || 0))
+        levelByKlassName.set(klassName, klassLevel.position);
     }
     const classLevels = [...levelByKlassName].map(([klass, level]) => ({ klass, level }));
     const race = data.racesById.get(character.raceId)?.name ?? "Unknown";

@@ -1,11 +1,10 @@
-import { Engine } from "@/engine/index.ts";
+import { Engine, type EntityRecord } from "@/engine/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { CustomizationCopies, EntityNames, RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { CUSTOMIZABLE_TYPES, Entities, type RulesetEntityType } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
-import type { EntityRow } from "@/server/services/rulesets/entities/rows.ts";
 import { getActivityName } from "@/shared/activity.ts";
 import type { Session } from "@/shared/relations.ts";
 
@@ -58,8 +57,8 @@ export function Copies<B extends Constructor>(Base: B) {
 
             const created = [];
             for (const row of plan.rows) {
-              const [copy] = await Entities.create<EntityRow>(tx, type, { ...row, rulesetId });
-              const tombstoneAncestorId = tombstones.get(copy.name);
+              const [copy] = await Entities.create(tx, type, { ...row, rulesetId });
+              const tombstoneAncestorId = tombstones.get(row.name!);
               if (tombstoneAncestorId) await names.repointTombstone(tx, type, tombstoneAncestorId, copy.id);
 
               await createActivityWithNotifications(tx, {
@@ -89,12 +88,15 @@ export function Copies<B extends Constructor>(Base: B) {
       return result;
     }
 
-    /** The entities of a type others are made from (`templateType`: an item's templates of a type), by name. */
-    async getTemplates<R = EntityRow>(rulesetId: string, type: RulesetEntityType, templateType?: string) {
+    /**
+     * The entities of a type others are made from (`templateType`: an item's templates of a type), by name: each as
+     * stored (its own columns, its own fields, its single links), named.
+     */
+    async getTemplates(rulesetId: string, type: RulesetEntityType, templateType?: string) {
       return await withRulesetScope(db, rulesetId, async (scope) => {
         const { rulesetData } = scope;
         const { filters } = Engine.for(scope).entities(type).openTemplates(templateType);
-        return await Entities.findList<R & EntityRow>(db, {
+        return await Entities.findList<EntityRecord & { name: string }>(db, {
           entityType: type,
           rulesetId,
           ...rulesetData.cow.listFilters,

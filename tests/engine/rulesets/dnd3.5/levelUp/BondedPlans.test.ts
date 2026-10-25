@@ -23,9 +23,9 @@ function refusalOf(plan: () => unknown) {
   throw new Error("The plan wasn't refused");
 }
 
-/** The rows that aren't an animal companion's. */
-function withoutCompanions<T extends { kind: string }>(rows: T[]) {
-  return rows.filter((row) => row.kind !== "animalcompanion");
+/** The entities that aren't an animal companion's. */
+function withoutCompanions<T extends { partition: string }>(rows: T[]) {
+  return rows.filter((row) => row.partition !== "animalcompanion");
 }
 
 /** The master `create` makes, built and as its row, with its bonded creature and its ruleset's view. */

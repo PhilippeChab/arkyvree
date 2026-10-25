@@ -80,7 +80,7 @@ export default class LevelUpSteps extends LevelUpState {
     const character = this.build(projection);
     // A skill's class status is any of the character's classes' (its max rank, `isClassSkill`) and the leveled class's
     // (its cost, `isCurrentClassSkill`)
-    const classSkillIds = this.getClassSkillIds(dnd35.classSkillsOf(klassLevel.klassId));
+    const classSkillIds = this.getClassSkillIds(dnd35.classSkillsOf(klassLevel.ownerId));
     const levels = {
       perLevelClassSkillIds: [dnd35.skills.filter(({ id }) => classSkillIds.has(id)).map(({ id }) => id)],
       perLevelSkillPoints: [this.getSkillPointsToSpend(character)],

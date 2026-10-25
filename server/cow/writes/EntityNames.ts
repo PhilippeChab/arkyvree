@@ -3,13 +3,12 @@ import type { CowData, RulesetSources } from "@/engine/index.ts";
 import CowDataReader from "@/server/cow/views/CowDataReader.ts";
 import { ConflictError } from "@/server/errors/index.ts";
 import {
+  Entities,
   EntitySnapshots,
   RULESET_ENTITY_TYPES,
   RulesetEntities,
   type RulesetEntityType,
 } from "@/server/repositories/index.ts";
-
-import EntityRepositories from "./EntityRepositories.ts";
 
 /** An entity of a name, as stored: its id and its ruleset. */
 interface NamedEntity {
@@ -65,13 +64,13 @@ export default class EntityNames {
     entityType: RulesetEntityType,
     ancestors: NamedEntity[],
   ): Promise<Map<string, string>> {
-    const repo = EntityRepositories.of(entityType);
     const sourceEntityIds = ancestors.map((ancestor) => ancestor.id);
     const snapshots = await EntitySnapshots.findMany(tx, { sourceEntityIds, rulesetId: this.ruleset.id });
     const tombstoned = new Set<string>();
     for (const snapshot of snapshots) {
       // The local copy, as stored: deleted, it leaves the snapshot a tombstone
-      if (!(await repo.exists(tx, { id: snapshot.forkedEntityId }))) tombstoned.add(snapshot.sourceEntityId);
+      if (!(await Entities.has(tx, { entityType, id: snapshot.forkedEntityId })))
+        tombstoned.add(snapshot.sourceEntityId);
     }
 
     const chain = this.cow.sourceChain;

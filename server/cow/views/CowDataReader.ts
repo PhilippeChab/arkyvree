@@ -1,6 +1,6 @@
 import type { Db } from "@/drizzle/database.ts";
 import { type CowData, type CowRows, Engine, type RulesetSources } from "@/engine/index.ts";
-import { Entities, type EntityRow, EntitySnapshots, RulesetEntities } from "@/server/repositories/index.ts";
+import { Entities, EntitySnapshots, RulesetEntities } from "@/server/repositories/index.ts";
 
 /**
  * A ruleset's `CowData`: the rows the engine builds it from (`copyOnWrite().getReads`: the chain's snapshots, the owned
@@ -11,20 +11,21 @@ import { Entities, type EntityRow, EntitySnapshots, RulesetEntities } from "@/se
  */
 export default class CowDataReader {
   static async read(database: Db, ruleset: RulesetSources): Promise<CowData> {
-    const storage = Engine.storage();
     const reads = Engine.copyOnWrite().getReads(ruleset);
     const snapshots = await EntitySnapshots.findMany(database, { rulesetIds: reads.snapshotRulesetIds });
     const namesakes = await RulesetEntities.findNativeNames(database, reads.namesakes);
     const ownNamesakes = await RulesetEntities.findOwnNamesakes(database, reads.ownNamesakes);
     const ownerIds = Engine.copyOnWrite().getPairedOwnerIds({ ownNamesakes, snapshots });
     const owned: CowRows["owned"] = [];
-    for (const entityType of reads.owned.entityTypes)
-      owned.push(...storage.ownedPositionsOf(entityType, await Entities.findMany(database, { entityType, ownerIds })));
+    for (const entityType of reads.owned.entityTypes) {
+      const positions = await Entities.findPositions(database, { entityType, ownerIds });
+      owned.push(...positions.map((position) => ({ entityType, ...position })));
+    }
     const identities: CowRows["identities"] = [];
     for (const entityType of reads.identities.entityTypes) {
       const where = { entityType, rulesetIds: reads.identities.rulesetIds };
-      const rows = await Entities.findMany<EntityRow & { name: string; rulesetId: string }>(database, where);
-      identities.push(...rows.map(({ id, name, rulesetId }) => ({ entityType, id, name, rulesetId })));
+      const rows = await Entities.findMany(database, where);
+      identities.push(...rows.map(({ id, name, rulesetId }) => ({ entityType, id, name: name ?? "", rulesetId })));
     }
     return Engine.copyOnWrite().buildData(ruleset, { identities, namesakes, owned, ownNamesakes, snapshots });
   }

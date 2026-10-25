@@ -26,7 +26,7 @@ import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
 import { copyEntity, createTestRuleset } from "@/tests/support/rulesets.ts";
 import { findSeededRuleset, NIL_UUID } from "@/tests/support/seed.ts";
 import { findStoredValues } from "@/tests/support/storedValues.ts";
-import { CLASS_LEVEL_BAB, CLASS_LEVEL_SKILL_POINTS } from "@/vocabulary/dnd3.5/fields/index.ts";
+import { CLASS_LEVEL_BAB, CLASS_LEVEL_SKILL_POINTS, FEAT_STACKABLE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 type LevelBody = Parameters<typeof EntitiesService.createOwnedEntity>[4];
 
@@ -54,7 +54,11 @@ async function createSave(rulesetId: string, name: string) {
     description: name,
     rulesetId,
   });
-  const [save] = await Entities.create<RulesetSave>(db, "saves", { name, abilityId: ability.id, rulesetId });
+  const [save] = await Entities.create<RulesetSave>(db, "saves", {
+    name,
+    rulesetId,
+    links: { keyAbility: ability.id },
+  });
   return save;
 }
 
@@ -98,13 +102,13 @@ describe("EntitiesService: a class's levels", () => {
 
       expect(await EntitiesService.getOwnedEntities(ruleset.id, "classes", klass.id)).toMatchObject([
         {
-          level: 1,
+          position: 1,
           bab: 1,
           skills: 4,
           feats: [{ id: feat.id, aptitudeId: aptitude.id, aptitudeName: aptitude.name, free: false }],
           saves: [{ saveId: fortitude.id, base: 2 }],
         },
-        { level: 2, bab: 2, feats: [], saves: [] },
+        { position: 2, bab: 2, feats: [], saves: [] },
       ]);
     });
 
@@ -207,7 +211,7 @@ describe("EntitiesService: a class's levels", () => {
 
     const detail = {
       id: level.id,
-      level: 2,
+      position: 2,
       bab: 2,
       skills: 4,
       modifiers: [{ target: "combat.bab" }],
@@ -276,7 +280,7 @@ describe("EntitiesService: a class's levels", () => {
       const [bonusFeat] = await Entities.create<Feat>(db, "feats", {
         name: "Bonus Feat",
         rulesetId: ruleset.id,
-        stackable: true,
+        fields: { [FEAT_STACKABLE]: true },
       });
       await Modifiers.create(db, { ...modifier(bonusFeat.id, poolTarget, "1"), sourceType: "feats" });
       for (const level of [1, 2]) {
@@ -445,7 +449,7 @@ describe("EntitiesService: a class's levels", () => {
     test("reads the inherited class's levels", async () => {
       const { parent, fork, klass, inheritedLevel } = await setupFork();
       expect(await EntitiesService.getOwnedEntities(fork.id, "classes", klass.id)).toMatchObject([
-        { id: inheritedLevel.id, level: 1, bab: 1 },
+        { id: inheritedLevel.id, position: 1, bab: 1 },
       ]);
       expect(await EntitiesService.getOwnedEntityWithOwner(fork.id, "classes", inheritedLevel.id)).toMatchObject({
         id: inheritedLevel.id,
@@ -469,10 +473,10 @@ describe("EntitiesService: a class's levels", () => {
         sourceEntityId: klass.id,
         rulesetId: fork.id,
       });
-      expect(created.klassId).toBe(snapshot!.forkedEntityId);
+      expect(created.ownerId).toBe(snapshot!.forkedEntityId);
       expect(
         (await Entities.findMany<KlassLevel>(db, { entityType: "class_levels", ownerIds: [klass.id] })).map(
-          (l) => l.level,
+          (l) => l.position,
         ),
       ).toEqual([1]);
     });

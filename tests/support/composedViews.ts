@@ -6,14 +6,14 @@ import {
   RulesetComposition,
   type RulesetData,
   type RulesetRawData,
-  type ViewEntities,
+  type ViewKinds,
   type ViewLink,
   type ViewSchema,
 } from "@/engine/core/view/index.ts";
 import type { Modifier, Requirement } from "@/shared/relations.ts";
 
 /** A kind of the made-up module a test composes a view of, by its name. */
-export type Kind = keyof ViewEntities;
+export type Kind = keyof ViewKinds;
 
 /** No module's fields: a made-up module's owners hold values of fields none declares, in no order but their own. */
 export const NO_FIELDS = new DeclaredFields({}, { fieldDefs: [], linkRoles: [] });
@@ -30,7 +30,7 @@ export const VIEW_SCHEMA: ViewSchema = {
     {
       type: "owned",
       customizable: false,
-      owner: { column: "ownerId", position: "position", type: "owners" },
+      ownerType: "owners",
       fields: false,
       tracked: false,
     },

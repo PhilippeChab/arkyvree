@@ -1,3 +1,4 @@
+import type { ValueKind } from "@/engine/core/module/index.ts";
 import type { Character, CharacterFieldValue } from "@/shared/relations.ts";
 import type { Alignment, Gender } from "@/vocabulary/dnd3.5/identity.ts";
 
@@ -16,16 +17,19 @@ export interface Dnd35CharacterValues {
   xp: number;
 }
 
-/** The field each of a 3.5 character's values is stored in (`character.fields`), its race aside. */
+/**
+ * The field each of a 3.5 character's values is stored in (`character.fields`), its race aside, and the kind of value
+ * it holds: what its field definitions are (`Dnd35FieldDefs`).
+ */
 export const CHARACTER_FIELDS = {
-  age: "CHARACTER_AGE",
-  alignment: "CHARACTER_ALIGNMENT",
-  deity: "CHARACTER_DEITY",
-  gender: "CHARACTER_GENDER",
-  height: "CHARACTER_HEIGHT",
-  weight: "CHARACTER_WEIGHT",
-  xp: "CHARACTER_XP",
-} as const satisfies Record<Exclude<keyof Dnd35CharacterValues, "raceId">, string>;
+  age: { field: "CHARACTER_AGE", kind: "number" },
+  alignment: { field: "CHARACTER_ALIGNMENT", kind: "text" },
+  deity: { field: "CHARACTER_DEITY", kind: "text" },
+  gender: { field: "CHARACTER_GENDER", kind: "text" },
+  height: { field: "CHARACTER_HEIGHT", kind: "text" },
+  weight: { field: "CHARACTER_WEIGHT", kind: "text" },
+  xp: { field: "CHARACTER_XP", kind: "number" },
+} as const satisfies Record<Exclude<keyof Dnd35CharacterValues, "raceId">, { field: string; kind: ValueKind }>;
 
 /** The role of a 3.5 character's link to its race, a single one (`character.links`). */
 export const RACE_ROLE = "race";
@@ -34,7 +38,7 @@ export const RACE_ROLE = "race";
 export default class CharacterValues {
   /** A character's own values (`record`'s fields and single links, as stored): a field it holds none of reads null. */
   static read({ fields, links }: Pick<Character, "fields" | "links">): Dnd35CharacterValues {
-    const value = (key: keyof typeof CHARACTER_FIELDS) => fields[CHARACTER_FIELDS[key]] ?? null;
+    const value = (key: keyof typeof CHARACTER_FIELDS) => fields[CHARACTER_FIELDS[key].field] ?? null;
     return {
       age: value("age") as number | null,
       alignment: value("alignment") as Alignment,
@@ -54,7 +58,7 @@ export default class CharacterValues {
   static write({ raceId, ...values }: Partial<Dnd35CharacterValues>) {
     const fields: Record<string, CharacterFieldValue | null> = {};
     for (const [key, value] of Object.entries(values))
-      if (value !== undefined) fields[CHARACTER_FIELDS[key as keyof typeof CHARACTER_FIELDS]] = value;
+      if (value !== undefined) fields[CHARACTER_FIELDS[key as keyof typeof CHARACTER_FIELDS].field] = value;
     const links: Record<string, string> = raceId === undefined ? {} : { [RACE_ROLE]: raceId };
     return { fields, links };
   }

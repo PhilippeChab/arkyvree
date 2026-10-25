@@ -45,6 +45,20 @@ async function seededPerDay(name: string) {
 }
 
 describe("SpellGroups", () => {
+  test("says a picked spell's save: the save it allows and what a success does, its own field's, or what it does alone", async () => {
+    const character = await buildAs(DetailedCharacter, await findSeededCharacter("Elara Starweaver"));
+    const saves = new Map(
+      SpellGroups.describe(character).flatMap((list) =>
+        list.levels.flatMap((group) => group.spells.map((spell) => [spell.name, spell.save])),
+      ),
+    );
+    expect([saves.get("Burning Hands"), saves.get("Prestidigitation"), saves.get("Web")]).toEqual([
+      "Reflex half",
+      "See text",
+      "Reflex negates; see text",
+    ]);
+  });
+
   test("shows a spell's tags on the lists they name, with whether their list joins its class's", () => {
     // Burning Hands, a cleric's through the fire domain and a specialist wizard's evocation spell
     const burningHands = (aptitudeId: string) => ({ id: "burning", name: "Burning Hands", aptitudeId, spellLevel: 1 });
@@ -58,8 +72,8 @@ describe("SpellGroups", () => {
         },
         classes: {
           getCharacterClasses: () => ({
-            cleric: { levels: [{ klassLevel: { level: 1 }, spells: [burningHands("cleric")] }] },
-            wizard: { levels: [{ klassLevel: { level: 1 }, spells: [burningHands("wizard")] }] },
+            cleric: { levels: [{ klassLevel: { position: 1 }, spells: [burningHands("cleric")] }] },
+            wizard: { levels: [{ klassLevel: { position: 1 }, spells: [burningHands("wizard")] }] },
           }),
         },
         spells: { getFlatSpells: () => ({}) },
@@ -126,7 +140,7 @@ describe("SpellGroups", () => {
             fighter: {
               levels: [
                 {
-                  klassLevel: { level: 1 },
+                  klassLevel: { position: 1 },
                   spells: [{ id: "endure", name: "Endure Elements", aptitudeId: "sun", spellLevel: 1 }],
                 },
               ],

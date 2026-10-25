@@ -42,7 +42,7 @@ export default class SavesComponent extends CharacterComponent<LoadedCharacterDa
 
     for (const save of Dnd35View.of(rulesetData).saves) {
       const normalizedName = stripSeparators(save.name);
-      const abilityName = this.abilities.getAbilityName(save.abilityId) ?? "";
+      const abilityName = (save.links.keyAbility && this.abilities.getAbilityName(save.links.keyAbility)) ?? "";
       const base = saveBaseValues.get(save.id) ?? 0;
       const abilities = this.abilities;
 

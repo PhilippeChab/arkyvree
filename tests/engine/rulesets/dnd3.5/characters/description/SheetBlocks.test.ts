@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import CombatSheet from "@/engine/rulesets/dnd3.5/characters/description/CombatSheet.ts";
 import SheetBlocks from "@/engine/rulesets/dnd3.5/characters/description/SheetBlocks.ts";
+import { FEAT_STACKABLE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** What the sheet reads of a character's combat. */
 type Combat = ReturnType<Parameters<typeof CombatSheet.describe>[0]["getCombat"]>;
@@ -65,7 +66,7 @@ function combatBlock(weaponsets: Combat["weaponsets"]) {
 
 /** A feat, held at a level: `stackable` or not. */
 function feat(id: string, name: string, stackable = false) {
-  return { id, name, description: `${name}'s benefit`, stackable };
+  return { id, name, description: `${name}'s benefit`, fields: { [FEAT_STACKABLE]: stackable } };
 }
 
 /** A weapon as the sheet reads it: a longsword, `proficient` or not, its attack +3, 1d8 slashing, 19–20/×2. */

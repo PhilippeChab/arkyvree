@@ -11,6 +11,7 @@ import { createSeedCharacter } from "@/tests/support/dnd3.5/levelFixtures.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
+import { SPELL_SAVE_EFFECT } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 // A level picks the inherited feat, spell or skill by its id: the sheet must show the fork's copy of it all the same.
 describe("A fork's own description of an inherited", () => {
@@ -34,7 +35,7 @@ describe("A fork's own description of an inherited", () => {
       await EntitiesService.updateEntity(session, fork.id, "skills", skill.id, {
         name,
         description,
-        primaryAbilityId: skill.primaryAbilityId,
+        primaryAbilityId: skill.links.keyAbility,
         fields: { checkPenaltyMultiplier: 1, impactedByWeight: true, usableWithoutTraining: true },
       });
     }
@@ -85,5 +86,5 @@ test("A fork's own saving throw of an inherited spell is on the sheet", async ()
     .flatMap((k) => k.levels)
     .flatMap((level) => level.spells)
     .find((p) => p.name === name);
-  expect(spell).toMatchObject({ saveName: "Will", saveEffect: "negates" });
+  expect(spell).toMatchObject({ saveName: "Will", fields: { [SPELL_SAVE_EFFECT]: "negates" } });
 });

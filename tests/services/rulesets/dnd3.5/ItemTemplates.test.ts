@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
+import { type EntityRecord } from "@/engine/index.ts";
 import type { Item } from "@/engine/rulesets/dnd3.5/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Activities, Entities, EntitySnapshots } from "@/server/repositories/index.ts";
@@ -11,7 +12,32 @@ import { createSeededTestRuleset, type Described, invalidateSeededRuleset } from
 import { NIL_UUID } from "@/tests/support/seed.ts";
 import { findStoredValues, writeStoredValues } from "@/tests/support/storedValues.ts";
 import { createTestUser } from "@/tests/support/users.ts";
-import { ITEM_MADE_OF, WEAPON_BASE_DAMAGE } from "@/vocabulary/dnd3.5/fields/index.ts";
+import {
+  ITEM_IS_TEMPLATE,
+  ITEM_MADE_OF,
+  ITEM_SLOT,
+  ITEM_TYPE,
+  ITEM_WEIGHT,
+  WEAPON_BASE_DAMAGE,
+} from "@/vocabulary/dnd3.5/fields/index.ts";
+
+/**
+ * An item's record (none for none) as its form's columns read it: its own columns, whether it's a template, the
+ * template it's made from (null for none), its type, its slot and its weight.
+ */
+function columnsOf(record: object | undefined) {
+  if (!record) return record;
+  const item = record as Pick<EntityRecord, "description" | "fields" | "links" | "name">;
+  return {
+    name: item.name,
+    description: item.description,
+    isTemplate: item.fields[ITEM_IS_TEMPLATE],
+    sourceItemId: item.links.madeFrom ?? null,
+    type: item.fields[ITEM_TYPE] ?? null,
+    slot: item.fields[ITEM_SLOT] ?? null,
+    weight: item.fields[ITEM_WEIGHT] ?? null,
+  };
+}
 
 /**
  * Another user's private fork of the seeded base, with an item made from `templateId` there ("Secret Homebrew Blade"),
@@ -33,14 +59,18 @@ async function setup(values: { private?: boolean } = {}) {
   const { user, session } = await createTestUser();
   const ruleset = await createSeededTestRuleset(user.id, values);
   const template = async (name: string) => {
-    const found = (await EntitiesService.getTemplates<Item>(ruleset.id, "items")).find((item) => item.name === name);
+    const found = (await EntitiesService.getTemplates(ruleset.id, "items")).find((item) => item.name === name);
     if (!found) throw new Error(`Seed template ${name} not found`);
     return found;
   };
   /** A regular item made from a template. */
   const instance = async (name: string) => {
-    const { id, type } = await template(name);
-    return EntitiesService.createEntity(session, ruleset.id, "items", { name: `My ${name}`, type, sourceItemId: id });
+    const { id, fields } = await template(name);
+    return EntitiesService.createEntity(session, ruleset.id, "items", {
+      name: `My ${name}`,
+      type: fields[ITEM_TYPE],
+      sourceItemId: id,
+    });
   };
   return { session, ruleset, template, instance };
 }
@@ -139,14 +169,16 @@ describe("Item templates", () => {
       name: "Custom weapon",
       type: "Weapon",
     });
-    expect(copy).toMatchObject({ isTemplate: false, sourceItemId: mace.id });
+    expect(columnsOf(copy)).toMatchObject({ isTemplate: false, sourceItemId: mace.id });
 
     const sword = await template("Longsword");
     expect(
-      await EntitiesService.updateEntity(session, ruleset.id, "items", copy.id, {
-        name: copy.name,
-        sourceItemId: sword.id,
-      }),
+      columnsOf(
+        await EntitiesService.updateEntity(session, ruleset.id, "items", copy.id, {
+          name: copy.name,
+          sourceItemId: sword.id,
+        }),
+      ),
     ).toMatchObject({ isTemplate: false, sourceItemId: sword.id });
     expect(await EntitiesService.getEntity<Described<"items">>(ruleset.id, "items", copy.id)).toMatchObject({
       weapon: { type: "Longsword" },
@@ -162,7 +194,7 @@ describe("Item templates", () => {
       description: "Ours",
     });
     const instance = { name: "My Longsword", type: "Weapon", sourceItemId: sword.id };
-    expect(await EntitiesService.createEntity(session, ruleset.id, "items", instance)).toMatchObject({
+    expect(columnsOf(await EntitiesService.createEntity(session, ruleset.id, "items", instance))).toMatchObject({
       sourceItemId: copy.id,
     });
 
@@ -214,11 +246,13 @@ describe("Item templates", () => {
       ).toBeUndefined();
 
       expect(
-        await EntitiesService.createEntity(session, ruleset.id, "items", {
-          name: "Custom weapon template",
-          type: "Weapon",
-          isTemplate: true,
-        }),
+        columnsOf(
+          await EntitiesService.createEntity(session, ruleset.id, "items", {
+            name: "Custom weapon template",
+            type: "Weapon",
+            isTemplate: true,
+          }),
+        ),
       ).toMatchObject({ isTemplate: true, sourceItemId: null });
     });
 
@@ -247,7 +281,7 @@ describe("Item templates", () => {
         }),
         422,
       );
-      expect(await Entities.findOne<Item>(db, { entityType: "items", id: local.id })).toMatchObject({
+      expect(columnsOf(await Entities.findOne<Item>(db, { entityType: "items", id: local.id }))).toMatchObject({
         isTemplate: true,
         sourceItemId: null,
       });
@@ -257,13 +291,15 @@ describe("Item templates", () => {
       const { session, ruleset, template } = await setup();
       const mace = await template("Heavy Mace");
       const local = await EntitiesService.updateEntity(session, ruleset.id, "items", mace.id, { name: mace.name });
-      await Entities.update<Item>(db, "items", { sourceItemId: local.id }, { id: local.id });
+      await Entities.update<Item>(db, "items", { links: { madeFrom: local.id } }, { id: local.id });
 
       expect(
-        await EntitiesService.updateEntity(session, ruleset.id, "items", local.id, {
-          name: local.name,
-          description: "Updated template",
-        }),
+        columnsOf(
+          await EntitiesService.updateEntity(session, ruleset.id, "items", local.id, {
+            name: local.name,
+            description: "Updated template",
+          }),
+        ),
       ).toMatchObject({ isTemplate: true, sourceItemId: null });
     });
   });
@@ -316,11 +352,13 @@ describe("Item templates", () => {
         EntitiesService.updateEntity(session, ruleset.id, "items", sword.id, {
           name: sword.name,
           type: "Wondrous Item",
-          sourceItemId: sword.sourceItemId,
+          sourceItemId: columnsOf(sword)!.sourceItemId,
         }),
         422,
       );
-      expect(await Entities.findOne<Item>(db, { entityType: "items", id: sword.id })).toMatchObject({ type: "Weapon" });
+      expect(columnsOf(await Entities.findOne<Item>(db, { entityType: "items", id: sword.id }))).toMatchObject({
+        type: "Weapon",
+      });
     });
 
     test("refused when an edit gives a template of another type", async () => {
@@ -334,8 +372,8 @@ describe("Item templates", () => {
         }),
         422,
       );
-      expect(await Entities.findOne<Item>(db, { entityType: "items", id: sword.id })).toMatchObject({
-        sourceItemId: sword.sourceItemId,
+      expect(columnsOf(await Entities.findOne<Item>(db, { entityType: "items", id: sword.id }))).toMatchObject({
+        sourceItemId: columnsOf(sword)!.sourceItemId,
       });
     });
 
@@ -344,18 +382,22 @@ describe("Item templates", () => {
       const sword = await instance("Longsword");
       const mail = await template("Chain Mail");
       expect(
-        await EntitiesService.updateEntity(session, ruleset.id, "items", sword.id, {
-          name: sword.name,
-          type: "Armor",
-          sourceItemId: mail.id,
-        }),
+        columnsOf(
+          await EntitiesService.updateEntity(session, ruleset.id, "items", sword.id, {
+            name: sword.name,
+            type: "Armor",
+            sourceItemId: mail.id,
+          }),
+        ),
       ).toMatchObject({ type: "Armor", sourceItemId: mail.id });
       expect(
-        await EntitiesService.updateEntity(session, ruleset.id, "items", sword.id, {
-          name: sword.name,
-          type: "Ring",
-          sourceItemId: null,
-        }),
+        columnsOf(
+          await EntitiesService.updateEntity(session, ruleset.id, "items", sword.id, {
+            name: sword.name,
+            type: "Ring",
+            sourceItemId: null,
+          }),
+        ),
       ).toMatchObject({ type: "Ring", sourceItemId: null });
     });
   });
@@ -396,7 +438,9 @@ describe("Item templates", () => {
         EntitiesService.updateEntity(session, ruleset.id, "items", local.id, { name: local.name, type: "Armor" }),
         422,
       );
-      expect(await Entities.findOne<Item>(db, { entityType: "items", id: local.id })).toMatchObject({ type: "Weapon" });
+      expect(columnsOf(await Entities.findOne<Item>(db, { entityType: "items", id: local.id }))).toMatchObject({
+        type: "Weapon",
+      });
     });
 
     test("changed while another user's fork makes items from the original its copy stands for", async () => {
@@ -408,7 +452,12 @@ describe("Item templates", () => {
         description: "Local",
       });
       expect(
-        await EntitiesService.updateEntity(session, ruleset.id, "items", local.id, { name: local.name, type: "Armor" }),
+        columnsOf(
+          await EntitiesService.updateEntity(session, ruleset.id, "items", local.id, {
+            name: local.name,
+            type: "Armor",
+          }),
+        ),
       ).toMatchObject({ type: "Armor" });
     });
 
@@ -434,14 +483,21 @@ describe("Item templates", () => {
       expect(EntitiesService.updateEntity(session, ruleset.id, "items", local.id, edit)).rejects.toMatchObject({
         message: `${refusal}: "Public Blade", and 1 in rulesets built on this one`,
       });
-      expect(await Entities.findOne<Item>(db, { entityType: "items", id: local.id })).toMatchObject({ type: "Weapon" });
+      expect(columnsOf(await Entities.findOne<Item>(db, { entityType: "items", id: local.id }))).toMatchObject({
+        type: "Weapon",
+      });
     });
 
     test("changed when no item is made from it", async () => {
       const { session, ruleset, template } = await setup();
       const club = await template("Club");
       expect(
-        await EntitiesService.updateEntity(session, ruleset.id, "items", club.id, { name: club.name, type: "Shield" }),
+        columnsOf(
+          await EntitiesService.updateEntity(session, ruleset.id, "items", club.id, {
+            name: club.name,
+            type: "Shield",
+          }),
+        ),
       ).toMatchObject({ isTemplate: true, type: "Shield", slot: "Off Hand" });
     });
 
@@ -455,11 +511,13 @@ describe("Item templates", () => {
       await Entities.create<Item>(db, "items", {
         rulesetId: ruleset.id,
         name: "Old Mail",
-        type: "Armor",
-        sourceItemId: old.id,
+        fields: { [ITEM_TYPE]: "Armor" },
+        links: { madeFrom: old.id },
       });
       expect(
-        await EntitiesService.updateEntity(session, ruleset.id, "items", old.id, { name: old.name, type: "Armor" }),
+        columnsOf(
+          await EntitiesService.updateEntity(session, ruleset.id, "items", old.id, { name: old.name, type: "Armor" }),
+        ),
       ).toMatchObject({ type: "Armor" });
     });
   });
@@ -500,18 +558,24 @@ describe("Item templates", () => {
       const [ring] = await Entities.create<Item>(db, "items", {
         rulesetId: ruleset.id,
         name: "Old Ring",
-        type: "Ring",
-        isTemplate: true,
+        fields: { [ITEM_TYPE]: "Ring", [ITEM_IS_TEMPLATE]: true },
       });
       expect(
-        await EntitiesService.updateEntity(session, ruleset.id, "items", ring.id, {
-          name: ring.name,
-          type: "Ring",
-          description: "Still a ring",
-        }),
+        columnsOf(
+          await EntitiesService.updateEntity(session, ruleset.id, "items", ring.id, {
+            name: ring.name,
+            type: "Ring",
+            description: "Still a ring",
+          }),
+        ),
       ).toMatchObject({ type: "Ring", description: "Still a ring" });
       expect(
-        await EntitiesService.updateEntity(session, ruleset.id, "items", ring.id, { name: ring.name, type: "Weapon" }),
+        columnsOf(
+          await EntitiesService.updateEntity(session, ruleset.id, "items", ring.id, {
+            name: ring.name,
+            type: "Weapon",
+          }),
+        ),
       ).toMatchObject({ type: "Weapon" });
     });
   });
@@ -527,13 +591,14 @@ describe("Item templates", () => {
     });
 
     expect(edited.id).not.toBe(mace.id);
-    expect(edited).toMatchObject({
+    expect(columnsOf(edited)).toMatchObject({
       isTemplate: true,
       sourceItemId: null,
-      weight: "10.00",
+      weight: 10,
       description: "Heavier homebrew mace",
     });
-    expect((await Entities.findOne<Item>(db, { entityType: "items", id: mace.id }))?.weight).toBe(mace.weight);
+    const original = await Entities.findOne(db, { entityType: "items", id: mace.id });
+    expect(original?.fields[ITEM_WEIGHT]).toBe(mace.fields[ITEM_WEIGHT]);
   });
 
   test("can't be deleted while an item is made from them", async () => {

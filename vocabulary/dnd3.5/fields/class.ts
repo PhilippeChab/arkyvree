@@ -1,1 +1,3 @@
 export const CLASS_CASTER_TYPE = "CLASS_CASTER_TYPE";
+/** A class's hit die, its own: the die each of its levels rolls for hit points. */
+export const CLASS_HD = "CLASS_HD";

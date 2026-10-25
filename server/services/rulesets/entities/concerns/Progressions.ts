@@ -1,19 +1,12 @@
 import type { Db } from "@/drizzle/database.ts";
 import { Engine, type ProgressionForm, type ProgressionPlan } from "@/engine/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
-import {
-  EntityEdit,
-  EntityRepositories,
-  type RulesetScope,
-  RulesetViews,
-  withRulesetScope,
-} from "@/server/cow/index.ts";
+import { EntityEdit, type RulesetScope, RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Entities, Modifiers, type RulesetEntityType } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
-import type { EntityRow } from "@/server/services/rulesets/entities/rows.ts";
 import { writeEntityWrites } from "@/server/services/rulesets/entityWrites.ts";
 import { setLinks } from "@/server/services/rulesets/linkWrites.ts";
 import { getActivityName } from "@/shared/activity.ts";
@@ -52,8 +45,8 @@ export function Progressions<B extends Constructor>(Base: B) {
       { gone, owner }: Pick<ProgressionPlan, "gone" | "owner">,
     ): Promise<TargetOwner> {
       const target = await new EntityEdit(scope.ruleset).cowToEdit(tx, type, owner);
-      if (!target.copied) await EntityRepositories.lock(tx, type, target.id);
-      const row = await Entities.findOne<EntityRow>(tx, { entityType: type, id: target.id });
+      if (!target.copied) await EntityEdit.lock(tx, target.id);
+      const row = await Entities.findOne(tx, { entityType: type, id: target.id });
       if (!row) throw new NotFoundError(gone.owner);
       return { copied: target.copied, copiedIds: target.copiedIds, id: target.id, updatedAt: row.updatedAt };
     }
@@ -86,7 +79,7 @@ export function Progressions<B extends Constructor>(Base: B) {
         if (!ownedId) throw new NotFoundError(plan.gone.owned);
 
         const expectedUpdatedAt = target.copied ? undefined : tokens.get(owned.entity.id);
-        const [row] = await Entities.update(tx, ownedType, {}, { id: ownedId, expectedUpdatedAt });
+        const [row] = await Entities.update(tx, ownedType, owned.edit?.row ?? {}, { id: ownedId, expectedUpdatedAt });
         if (!row) throw new ConflictError(STALE_ENTITY_MESSAGE);
         writtenIds.push(ownedId);
         if (owned.edit) {

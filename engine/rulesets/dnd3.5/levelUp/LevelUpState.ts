@@ -3,6 +3,7 @@ import type { OwnPicks } from "@/engine/rulesets/dnd3.5/model/aptitudes/Aptitude
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import SkillRules from "@/engine/rulesets/dnd3.5/rules/SkillRules.ts";
 import { include } from "@/lib/mixins.ts";
+import { FEAT_STACKABLE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 import { SpendsSkillPoints } from "./concerns/SpendsSkillPoints.ts";
 import LevelUpBase, { type SavedLevelPicks } from "./LevelUpBase.ts";
@@ -59,7 +60,7 @@ export default abstract class LevelUpState extends include(LevelUpBase<DetailedC
    */
   private keepTakenPicks({ feats = {}, spells = {} }: Partial<PoolPicks>): PoolPicks {
     return {
-      feats: this.dropRepeats(feats, (id) => this.dnd35.featsById.get(id)?.stackable === true),
+      feats: this.dropRepeats(feats, (id) => this.dnd35.featsById.get(id)?.fields[FEAT_STACKABLE] === true),
       spells: this.dropRepeats(spells, () => false),
     };
   }

@@ -7,6 +7,7 @@ import LanguageRules from "@/engine/rulesets/dnd3.5/rules/LanguageRules.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type { Language } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import { stripSeparators } from "@/shared/text.ts";
+import { LANGUAGE_TYPE } from "@/vocabulary/dnd3.5/fields/index.ts";
 import { LANGUAGE_PICK_ABILITY, SPEAK_LANGUAGE_SKILL } from "@/vocabulary/dnd3.5/languages.ts";
 
 /** A language as a character's languages name it: its id and name. */
@@ -53,7 +54,7 @@ export default class SpokenLanguages {
    * or no room left.
    */
   private refusalOf(language: Language, taken: number): string | undefined {
-    if (LanguageRules.isSecret(language.type))
+    if (LanguageRules.isSecret(language.fields[LANGUAGE_TYPE] ?? ""))
       return `${language.name} is a secret language: only a modifier that grants it lets a character speak it`;
     const room = this.room();
     if (taken >= room)

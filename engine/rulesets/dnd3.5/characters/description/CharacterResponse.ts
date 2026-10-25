@@ -4,6 +4,7 @@ import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedChara
 import ItemPlacement from "@/engine/rulesets/dnd3.5/rules/ItemPlacement.ts";
 import type { Character, Modifier, Requirement } from "@/shared/relations.ts";
 import { formatSigned } from "@/shared/text.ts";
+import { ITEM_COST_GP, ITEM_TYPE, ITEM_WEIGHT } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 import CombatSheet from "./CombatSheet.ts";
 import SheetBlocks from "./SheetBlocks.ts";
@@ -185,10 +186,10 @@ export default class CharacterResponse {
       id: entry.id,
       itemId: entry.itemId,
       name: entry.item.name,
-      type: entry.item.type,
+      type: entry.item.fields[ITEM_TYPE] ?? null,
       description: entry.item.description,
-      weight: entry.item.weight,
-      costGp: entry.item.costGp,
+      weight: entry.item.fields[ITEM_WEIGHT] ?? null,
+      costGp: entry.item.fields[ITEM_COST_GP] ?? null,
       quantity: entry.quantity,
       equipped: entry.equipped,
       location: entry.location,

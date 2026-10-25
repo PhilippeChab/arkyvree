@@ -2,11 +2,13 @@ import type { FormField } from "@/engine/core/fields/index.ts";
 import type { ListDescription } from "@/engine/core/module/index.ts";
 import { RULESET_LIMITS } from "@/engine/rulesets/dnd3.5/limits.ts";
 import { DEFAULT_HIT_DIE, HIT_DIE_VALUES } from "@/vocabulary/dnd3.5/classes.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
-/** A 3.5 class's columns, as its form shows them beside its name and description: its hit die, `HIT_DIE` holds. */
+/** A 3.5 class's columns, as its form shows them beside its name and description: its hit die (`CLASS_HD`). */
 export const CLASS_COLUMNS: FormField[] = [
   {
     default: DEFAULT_HIT_DIE,
+    field: CLASS_HD,
     help: "The die each of the class's levels rolls for hit points",
     input: "choice",
     key: "hd",
@@ -51,6 +53,7 @@ export const CLASS_LIST: ListDescription = {
   nameShare: 25,
   columns: [
     {
+      field: CLASS_HD,
       key: "hd",
       label: "Hit Die",
       labels: Object.fromEntries(HIT_DIE_VALUES.map((die) => [die, `d${die}`])),

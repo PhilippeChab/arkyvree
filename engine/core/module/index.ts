@@ -79,6 +79,7 @@ export {
   type EntityCreatePlan,
   type EntityDeletePlan,
   type EntityEditPlan,
+  type EntityFilters,
   type EntityKindsContract,
   type EntityRemoval,
   type EntityWrites,
@@ -172,7 +173,9 @@ export type {
 } from "./pickers.ts";
 export type {
   CharacterRoleDef,
+  EntityRecord,
   EntityTypeDef,
+  EntityWrite,
   FieldDef,
   FieldValue,
   LinkRoleDef,
@@ -184,13 +187,11 @@ export type {
   StoredAdvancement,
   StoredCharacter,
   StoredCharacterLink,
-  StoredColumn,
   StoredEntity,
   StoredFieldValue,
   StoredKind,
   StoredLink,
   StoredPick,
   StoredRuleset,
-  StoredWrite,
   ValueKind,
 } from "./storage.ts";

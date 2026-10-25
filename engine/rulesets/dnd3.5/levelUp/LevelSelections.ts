@@ -1,6 +1,7 @@
 import RulesError from "@/engine/core/RulesError.ts";
 import FeatEntity, { type PoolModifier } from "@/engine/rulesets/dnd3.5/entities/feats/FeatEntity.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 import LevelUpBase, { type SavedLevelPicks } from "./LevelUpBase.ts";
 
@@ -75,9 +76,9 @@ export default class LevelSelections extends LevelUpBase<DetailedCharacter> {
       characterLevelId: level.id,
       klassId: klass.id,
       klassName: klass.name,
-      level: klassLevel.level,
-      hd: klass.hd,
-      hitPoints: this.rules.hitPointsOf(klass.hd),
+      level: klassLevel.position,
+      hd: klass.fields[CLASS_HD],
+      hitPoints: this.rules.hitPointsOf(klass.fields[CLASS_HD]),
       // Every saved level holds its hit points: its `hp` pick
       hp: picks.hp[0].amount!,
       abilityIncreases: increased

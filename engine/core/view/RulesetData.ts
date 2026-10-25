@@ -2,7 +2,7 @@ import type { CowData } from "@/engine/core/cow/index.ts";
 import { OwnerValues, type StoredValues } from "@/engine/core/fields/index.ts";
 import type { Modifier, Requirement, Ruleset } from "@/shared/relations.ts";
 
-import type { NamedLink, ViewEntities, ViewLink } from "./rows.ts";
+import type { NamedLink, ViewEntity, ViewKinds, ViewLink } from "./rows.ts";
 
 /** Each index a ruleset's view builds on first read, and keeps. */
 interface Indices {
@@ -23,8 +23,8 @@ export interface KindValue {
 
 /** A ruleset's lists, composed across its chain (`RulesetComposition`): what its view holds and indexes. */
 export interface RulesetLists {
-  /** Each kind's rows, by its type */
-  entities: ReadonlyMap<string, readonly object[]>;
+  /** Each kind's entities, by its type */
+  entities: ReadonlyMap<string, readonly ViewEntity[]>;
   /** Each kind's values kind-wide (its type's), as stat blocks show them: built when it's first read */
   kindValuesOf(type: string): KindValue[];
   /** An entity's links (`entityId`, one the view shows), as the view composes them: built when they're first read */
@@ -44,16 +44,16 @@ export interface RulesetView {
 }
 
 /**
- * What a ruleset's view knows of a kind past its rows, as its module declares it: whether a user customizes its entities
- * (`customizable`), whether they hold fields of their own (`fields`), the fields they read off another entity when they
- * hold none and the column their row names it by (`inherits`: an item's template's), and the column an owned kind's
- * row holds its position in its owner at (`position`: a class level's `level`).
+ * What a ruleset's view knows of a kind past its entities, as its module declares it: whether a user customizes its
+ * entities (`customizable`), whether they hold fields of their own (`fields`), the fields they read off another entity
+ * when they hold none and the role of their link to it (`inherits`: an item's template's), and the flag of its own
+ * that makes one of its entities a template others are made from (`template`: 3.5's item's).
  */
 export interface ViewKind {
   customizable: boolean;
   fields: boolean;
-  inherits?: { column: string; fields: ReadonlySet<string> };
-  position?: string;
+  inherits?: { fields: ReadonlySet<string>; role: string };
+  template?: string;
 }
 
 /** Rows by id. */
@@ -94,8 +94,8 @@ export default class RulesetData {
 
   private readonly built: Partial<Indices> = {};
 
-  /** Each kind's rows by id, built the first time a kind's are read: as stored, and resolving a stored id. */
-  private readonly byIds = new Map<string, { resolved: Map<string, object>; stored: Map<string, object> }>();
+  /** Each kind's entities by id, built the first time a kind's are read: as stored, and resolving a stored id. */
+  private readonly byIds = new Map<string, { resolved: Map<string, ViewEntity>; stored: Map<string, ViewEntity> }>();
 
   /** An entity's links, composed the first time they're read: what `linksOf` keeps. */
   private readonly composeLinksOf: (entityId: string) => readonly ViewLink[];
@@ -103,7 +103,7 @@ export default class RulesetData {
   /** What the ruleset's module derives of the view, by what derives it (`derive`). */
   private readonly derived = new Map<new (rulesetData: RulesetData) => object, object>();
 
-  private readonly entities: ReadonlyMap<string, readonly object[]>;
+  private readonly entities: ReadonlyMap<string, readonly ViewEntity[]>;
 
   private readonly kinds: Readonly<Record<string, ViewKind>>;
 
@@ -126,19 +126,19 @@ export default class RulesetData {
   private readonly values: ReadonlyMap<string, StoredValues>;
 
   /**
-   * The ruleset's copy-on-write state: the id Maps resolve through it on their own; rows as stored (a character's, a
-   * page's) are resolved with it (`resolveRows`), and lineage- or sibling-aware code reads it.
+   * The ruleset's copy-on-write state: the id Maps resolve through it on their own; ids as stored (a character's, a
+   * page's) are resolved with it (`resolve`), and lineage- or sibling-aware code reads it.
    */
   readonly cow: CowData;
 
   /** The entities a link with a tier points at, from any ruleset (a spell list at a level). */
   readonly tieredIds: Set<string>;
 
-  /** A kind's rows by id (`type`): as stored, and resolving a stored id, each built once. */
+  /** A kind's entities by id (`type`): as stored, and resolving a stored id, each built once. */
   private indexOf(type: string) {
     let byId = this.byIds.get(type);
     if (!byId) {
-      const stored = buildById((this.entities.get(type) ?? []) as { id: string }[]);
+      const stored = buildById(this.entities.get(type) ?? []);
       byId = { resolved: this.resolvingIds(stored), stored };
       this.byIds.set(type, byId);
     }
@@ -165,9 +165,9 @@ export default class RulesetData {
     });
   }
 
-  /** A kind's rows by id (`type`), a stored (pre-COW) id resolving to its copy's or its winner's. */
-  byId<K extends keyof ViewEntities>(type: K): Map<string, ViewEntities[K]> {
-    return this.indexOf(type).resolved as Map<string, ViewEntities[K]>;
+  /** A kind's entities by id (`type`), a stored (pre-COW) id resolving to its copy's or its winner's. */
+  byId<K extends keyof ViewKinds>(type: K): Map<string, ViewKinds[K]> {
+    return this.indexOf(type).resolved as Map<string, ViewKinds[K]>;
   }
 
   /**
@@ -205,7 +205,7 @@ export default class RulesetData {
    * reverting it or unsubscribing from its book is refused while an entry holds it. An entry it doesn't is left out, as
    * a pick is.
    */
-  entriesWithItems<E extends { itemId: string }>(entries: E[]): { entry: E; item: ViewEntities["items"] }[] {
+  entriesWithItems<E extends { itemId: string }>(entries: E[]): { entry: E; item: ViewKinds["items"] }[] {
     return entries.flatMap((entry) => {
       const item = this.byId("items").get(entry.itemId);
       return item ? [{ entry, item }] : [];
@@ -216,8 +216,17 @@ export default class RulesetData {
    * The entity of `type` an id names in the view (a stored id its copy or winner): the ruleset's own, or inherited. It
    * builds the index of `type` alone.
    */
-  find<K extends keyof ViewEntities>(type: K, id: string): ViewEntities[K] | undefined {
+  find<K extends keyof ViewKinds>(type: K, id: string): ViewKinds[K] | undefined {
     return this.byId(type).get(id);
+  }
+
+  /**
+   * The entity another of a kind (`entity`, of `type`) reads its fields off when it holds none (`ViewKind.inherits`: an
+   * item's template), by its link: none for a kind that reads none, or an entity that names none.
+   */
+  inheritedFrom(type: string, entity: Pick<ViewEntity, "links">): string | undefined {
+    const inherits = this.kinds[type]?.inherits;
+    return inherits && entity.links[inherits.role];
   }
 
   /**
@@ -225,13 +234,11 @@ export default class RulesetData {
    * template's): each such field of the other's it holds none of, the other's first, then its own. Its own alone for a
    * kind that reads none, or an entity that names none.
    */
-  inheritedValuesOf(type: string, entity: { id: string }): StoredValues {
+  inheritedValuesOf(type: string, entity: Pick<ViewEntity, "id" | "links">): StoredValues {
     const own = this.valuesOf(entity.id);
-    const inherits = this.kinds[type]?.inherits;
-    if (!inherits) return own;
-    const baseId = (entity as Record<string, unknown>)[inherits.column];
-    if (typeof baseId !== "string") return own;
-    return OwnerValues.inherit(own, this.valuesOf(baseId), inherits.fields);
+    const baseId = this.inheritedFrom(type, entity);
+    if (baseId === undefined) return own;
+    return OwnerValues.inherit(own, this.valuesOf(baseId), this.kinds[type].inherits!.fields);
   }
 
   /** Whether a user customizes a kind's entities (`type`): their modifiers and requirements. */
@@ -240,14 +247,24 @@ export default class RulesetData {
   }
 
   /**
+   * Whether an entity of a kind (`entity`, of `type`) is a template others are made from: its kind's flag
+   * (`ViewKind.template`) holds.
+   */
+  isTemplate(type: string, entity: Pick<ViewEntity, "fields">): boolean {
+    const flag = this.kinds[type]?.template;
+    return flag !== undefined && entity.fields[flag] === true;
+  }
+
+  /**
    * An item's requirements, as its template splits them: its template's (`template`: its own when it's a template),
    * and its own on top of them (`own`: none on a template, all of a plain item's).
    */
-  itemRequirements(item: Pick<ViewEntities["items"], "id" | "isTemplate" | "sourceItemId">) {
+  itemRequirements(item: Pick<ViewEntity, "fields" | "id" | "links">) {
     const { requirementsByEntity } = this;
     const own = requirementsByEntity.get(item.id) ?? [];
-    if (item.isTemplate) return { own: [], template: own };
-    const template = item.sourceItemId ? (requirementsByEntity.get(item.sourceItemId) ?? []) : [];
+    if (this.isTemplate("items", item)) return { own: [], template: own };
+    const templateId = this.inheritedFrom("items", item);
+    const template = templateId ? (requirementsByEntity.get(templateId) ?? []) : [];
     return { own, template };
   }
 
@@ -308,15 +325,9 @@ export default class RulesetData {
    */
   nameLinks(links: readonly ViewLink[]): NamedLink[] {
     return links.flatMap((link) => {
-      const target = this.find(link.toType as keyof ViewEntities, link.toId) as { name?: unknown } | undefined;
+      const target = this.find(link.toType as keyof ViewKinds, link.toId) as ViewEntity | undefined;
       return target ? [{ ...link, toName: typeof target.name === "string" ? target.name : "" }] : [];
     });
-  }
-
-  /** An owned entity's position in its owner (`entity`, of `type`: a class level's level), none of a kind none owns. */
-  positionOf(type: string, entity: object): number | undefined {
-    const column = this.kinds[type]?.position;
-    return column === undefined ? undefined : ((entity as Record<string, number>)[column] ?? undefined);
   }
 
   /** entityId → its requirements (a sibling's merged into its winner's). */
@@ -342,9 +353,9 @@ export default class RulesetData {
     return this.resolving(map, (key) => this.cow.resolve(key));
   }
 
-  /** A kind's rows (`type`), across the chain, as the view composes them. */
-  rows<K extends keyof ViewEntities>(type: K): ViewEntities[K][] {
-    return (this.entities.get(type) ?? []) as ViewEntities[K][];
+  /** A kind's entities (`type`), across the chain, as the view composes them. */
+  rows<K extends keyof ViewKinds>(type: K): ViewKinds[K][] {
+    return (this.entities.get(type) ?? []) as ViewKinds[K][];
   }
 
   /**
@@ -364,11 +375,11 @@ export default class RulesetData {
   }
 
   /**
-   * A kind's rows by id (`type`), as stored: a stored id isn't resolved. What a module's derived indices join rows by
-   * when they hold ids as stored.
+   * A kind's entities by id (`type`), as stored: a stored id isn't resolved. What a module's derived indices join
+   * entities by when they hold ids as stored.
    */
-  storedById<K extends keyof ViewEntities>(type: K): Map<string, ViewEntities[K]> {
-    return this.indexOf(type).stored as Map<string, ViewEntities[K]>;
+  storedById<K extends keyof ViewKinds>(type: K): Map<string, ViewKinds[K]> {
+    return this.indexOf(type).stored as Map<string, ViewKinds[K]>;
   }
 
   /** Whether a kind's entities (`type`) hold fields of their own, which their form shows and their save writes. */

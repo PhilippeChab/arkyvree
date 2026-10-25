@@ -1,30 +1,7 @@
 import { Field, type LeafSpec } from "@/engine/core/fields/index.ts";
-import type { FieldDef, Merge, ValueKind } from "@/engine/core/module/index.ts";
+import type { FieldDef, Merge, StorageDeclaration, ValueKind } from "@/engine/core/module/index.ts";
+import { CHARACTER_FIELDS } from "@/engine/rulesets/dnd3.5/characters/CharacterValues.ts";
 import { ENTITY_FIELDS } from "@/vocabulary/dnd3.5/fields/index.ts";
-
-/** The fields 3.5's kinds' and characters' columns are stored in: each a single value, the winning copy's. */
-const COLUMN_FIELDS: [ownerType: string, field: string, valueKind: ValueKind][] = [
-  ["classes", "CLASS_HD", "number"],
-  ["feats", "FEAT_STACKABLE", "flag"],
-  ["feats", "FEAT_SELECTABLE", "flag"],
-  ["feats", "FEAT_GENERATED", "flag"],
-  ["races", "RACE_SIZE", "text"],
-  ["races", "RACE_BASE_SPEED", "number"],
-  ["items", "ITEM_WEIGHT", "number"],
-  ["items", "ITEM_COST_GP", "number"],
-  ["items", "ITEM_TYPE", "text"],
-  ["items", "ITEM_SLOT", "text"],
-  ["items", "ITEM_IS_TEMPLATE", "flag"],
-  ["languages", "LANGUAGE_TYPE", "text"],
-  ["spells", "SPELL_SAVE_EFFECT", "text"],
-  ["characters", "CHARACTER_XP", "number"],
-  ["characters", "CHARACTER_ALIGNMENT", "text"],
-  ["characters", "CHARACTER_AGE", "number"],
-  ["characters", "CHARACTER_GENDER", "text"],
-  ["characters", "CHARACTER_HEIGHT", "text"],
-  ["characters", "CHARACTER_WEIGHT", "text"],
-  ["characters", "CHARACTER_DEITY", "text"],
-];
 
 /**
  * The role of the link an owner type's entities read their declared fields off when they hold none (an item's, off its
@@ -33,7 +10,7 @@ const COLUMN_FIELDS: [ownerType: string, field: string, valueKind: ValueKind][] 
 const INHERITS_VIA: Readonly<Record<string, string>> = { items: "madeFrom" };
 
 /**
- * The fields 3.5's owners keep past their kinds' columns, in their stored values (an entity type's, or a ruleset's
+ * The fields 3.5's owners keep past their own, in their stored values (an entity type's, or a ruleset's
  * Settings), as its vocabulary declares them (`ENTITY_FIELDS`, a reference's aside: a link keeps it), in their order:
  * each a set when it's a list or a progression, read off its template by an item that has none.
  */
@@ -65,6 +42,27 @@ function ownerKindOf(ownerType: string): FieldDef["ownerKind"] {
 }
 
 /**
+ * The fields 3.5's kinds and characters hold of their own (`kinds`' own fields, `StoredKind.fields`; a character's,
+ * `CHARACTER_FIELDS`), each with its owner's type and the kind of value it holds.
+ */
+function ownFieldsOf(kinds: StorageDeclaration["kinds"]): [ownerType: string, field: string, valueKind: ValueKind][] {
+  return [
+    ...Object.entries(kinds).flatMap(([ownerType, kind]) =>
+      Object.entries(kind.fields ?? {}).map(([field, { kind: valueKind }]): [string, string, ValueKind] => [
+        ownerType,
+        field,
+        valueKind,
+      ]),
+    ),
+    ...Object.values(CHARACTER_FIELDS).map(({ field, kind }): [string, string, ValueKind] => [
+      "characters",
+      field,
+      kind,
+    ]),
+  ];
+}
+
+/**
  * How a declared field's values are stored, by its kind: the kind of value each is (a flag's, a number's, text), and
  * whether it's a set (a list's, a progression's). A kind this doesn't name fails to type-check, never stores as text.
  */
@@ -87,7 +85,7 @@ function storedKindOf(leaf: Exclude<LeafSpec, { kind: "ref" }>): { multiple: boo
 }
 
 /**
- * How a field kept past its kind's columns merges across sibling copies: a ruleset's setting is the nearest ruleset's
+ * How a field kept past its kind's own merges across sibling copies: a ruleset's setting is the nearest ruleset's
  * in its chain, whole; a set unions its siblings' values; a single value is the winning copy's, else a sibling's.
  */
 function valueFieldMerge(ownerType: string, multiple: boolean): Merge {
@@ -96,15 +94,15 @@ function valueFieldMerge(ownerType: string, multiple: boolean): Merge {
 }
 
 /**
- * 3.5's fields, the field definitions' registry rows: its columns' (each a single value, the winning copy's) and those
- * its owners keep past them (a set's values union across sibling copies, a single value is the winning copy's else a
- * sibling's).
+ * 3.5's fields, the field definitions' registry rows: those its kinds and characters hold of their own (each a single
+ * value, the winning copy's), and those its owners keep past them, as its vocabulary declares them (a set's values union
+ * across sibling copies, a single value is the winning copy's else a sibling's).
  */
 export default class Dnd35FieldDefs {
-  /** Every field definition 3.5 declares. */
-  static build(): FieldDef[] {
+  /** Every field definition 3.5 declares, its kinds' own fields read off their declarations (`kinds`). */
+  static build(kinds: StorageDeclaration["kinds"]): FieldDef[] {
     return [
-      ...COLUMN_FIELDS.map(([ownerType, field, valueKind]): FieldDef => ({
+      ...ownFieldsOf(kinds).map(([ownerType, field, valueKind]): FieldDef => ({
         ownerKind: ownerKindOf(ownerType),
         ownerType,
         field,

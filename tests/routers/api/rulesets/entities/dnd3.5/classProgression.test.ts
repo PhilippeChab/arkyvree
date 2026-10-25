@@ -35,7 +35,7 @@ describe("rulesets class progression", () => {
 
   test("saves a level's fields on the fork's copy of an inherited class, and answers the levels it wrote", async () => {
     const { param, wizard, levels } = await setup();
-    const first = levels.find((level) => level.level === 1)!;
+    const first = levels.find((level) => level.position === 1)!;
 
     const saved = await expectOk(
       progression.$put({

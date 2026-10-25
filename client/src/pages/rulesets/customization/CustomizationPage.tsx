@@ -220,8 +220,8 @@ function describe(
     }
     case "owned":
       return {
-        title: `${data.entity.name} Level ${data.entity.level}`,
-        pageTitle: `${data.entity.name} Level ${data.entity.level}`,
+        title: `${data.entity.name} Level ${data.entity.position}`,
+        pageTitle: `${data.entity.name} Level ${data.entity.position}`,
         // Its owner's page, which opens on its base rules' first tab
         backPath: `/rulesets/${rulesetId}/${getUrlSegment(data.owner)}/${data.ownerId}`,
       };

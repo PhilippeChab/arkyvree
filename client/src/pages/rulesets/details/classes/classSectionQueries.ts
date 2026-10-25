@@ -48,10 +48,10 @@ export type LinkRow = Pick<
 >;
 
 /**
- * A level of one of a class's tables its tables' tab edits, as its route answers it: the level, and its totals at the
- * key its table's rules say (`ProgressionTable.totals`: 3.5's `spellsPerDay`).
+ * A level of one of a class's tables its tables' tab edits, as its route answers it: the level (`position`), and its
+ * totals at the key its table's rules say (`ProgressionTable.totals`: 3.5's `spellsPerDay`).
  */
-export type TableRow = { id: string; level: number; updatedAt: string } & Record<string, unknown>;
+export type TableRow = { id: string; position: number; updatedAt: string } & Record<string, unknown>;
 
 /** A class's routes, an entity's of the classes' kind. */
 const classApi = rpc.api.rulesets[":id"].entities[":entityType"][":entityId"];

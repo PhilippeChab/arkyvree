@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { expectOk, guestApi } from "@/tests/support/api.ts";
+import { FEAT_GENERATED, ITEM_IS_TEMPLATE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 describe("rules", () => {
   test("answers what every base rules' rulesets share, to anyone: words, kinds, levels, lists, progression, level wizard, a new character's form and license", async () => {
@@ -76,14 +77,14 @@ describe("rules", () => {
       abilities: "page",
       mechanics: "page",
     });
-    // The kinds whose customizations have a page of their own: a class's level by its class (named at its owner's key),
-    // a class's on its own page
+    // The kinds whose customizations have a page of their own: a class's level by its class (its owner), a class's on
+    // its own page
     expect(dnd35.customizationPages).toEqual([
       { type: "feats" },
       { type: "spells" },
       { type: "items" },
       { type: "races" },
-      { type: "class_levels", owner: "classes", ownerKey: "klassId" },
+      { type: "class_levels", owner: "classes" },
     ]);
     // A kind that opens a customization page is one such a page shows, and every kind one shows but an owned kind's
     // (which no tab lists) opens it
@@ -135,7 +136,7 @@ describe("rules", () => {
     ]);
     // A class's page links it to its class skills, by the role their activities are named for
     expect(kind("classes")?.links).toEqual({ role: "classSkill", targetName: "skillName", type: "skills" });
-    expect(kind("feats")?.lockedName).toEqual({ flag: "generated", reason: "A generated feat keeps its name" });
+    expect(kind("feats")?.lockedName).toEqual({ field: FEAT_GENERATED, reason: "A generated feat keeps its name" });
     // A pool's links column reads an entity read's links of its role
     expect(dnd35.columns.feats?.find((column) => column.key === "aptitudeIds")).toMatchObject({ role: "listedIn" });
     expect(dnd35.columns.spells?.find((column) => column.key === "aptitudes")).toMatchObject({ role: "listedIn" });
@@ -143,7 +144,7 @@ describe("rules", () => {
       locked: ["slot", "sourceItemId", "type"],
       most: 50,
       source: "sourceItemId",
-      template: "isTemplate",
+      template: { field: ITEM_IS_TEMPLATE, key: "isTemplate" },
     });
     // A pools column reads its list's rows' links of its role, each its pool's name
     expect(dnd35.lists.feats?.columns.map(({ key, reads, role }) => [key, reads, role])).toEqual([

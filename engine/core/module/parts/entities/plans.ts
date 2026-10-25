@@ -1,20 +1,22 @@
 /**
  * What an entity kind's `plan*` operations answer: what the server writes of an entity's create, edit or delete, each a
- * named plan, by table, without ids it doesn't have yet: its row, its links, what it writes beside it.
+ * named plan, by table, without ids it doesn't have yet: its row as stored, its links, what it writes beside it.
  */
 
 import type { FieldsWrite } from "@/engine/core/fields/index.ts";
+import type { EntityRecord, EntityWrite, FieldValue } from "@/engine/core/module/storage.ts";
 import type { Modifier, Requirement } from "@/shared/relations.ts";
 
 /**
- * What a create or an edit writes of an entity: its row's columns (`C`), its links of the roles it sets (`links`, each
- * set replacing the entity's of its role and kind; a role it leaves out: kept), what it writes beside its row, and the
- * fields the entity keeps once written (`F`, which the action answers with its row).
+ * What a create or an edit writes of an entity: its row (`row`: its own columns, its own fields and its single links, as
+ * stored), its links of the roles it sets many of (`links`, each set replacing the entity's of its role and kind; a
+ * role it leaves out: kept), what it writes beside its row, and the fields the entity keeps once written (`F`, which the
+ * action answers with its row).
  */
-interface EntityWrite<C, F> {
-  columns: C;
+interface EntitySave<F> {
   fields: F;
   links?: LinkSet[];
+  row: EntityWrite;
   writes?: EntityWrites;
 }
 
@@ -27,21 +29,21 @@ type RequirementWrite = Pick<Requirement, "level" | "operator" | "target" | "val
  * refuses the plan by them (`check`).
  */
 export interface EntityCopies {
-  check(copies: (Record<string, unknown> & { id: string; name: string })[]): void;
-  filters: { columns: Record<string, unknown> };
+  check(copies: EntityRecord[]): void;
+  filters: EntityFilters;
 }
 
 /**
- * What copies of an entity write (an item's variants): each copy's row's columns (`C`), and whose customizations they
+ * What copies of an entity write (an item's variants): each copy's row (`EntityWrite`), and whose customizations they
  * copy (`copyCustomizationsFrom`).
  */
-export interface EntityCopiesPlan<C = Record<string, unknown>> {
+export interface EntityCopiesPlan {
   copyCustomizationsFrom?: string;
-  rows: C[];
+  rows: EntityWrite[];
 }
 
 /** What an entity's create writes, and whose customizations the new entity copies (`copyCustomizationsFrom`). */
-export interface EntityCreatePlan<C = Record<string, unknown>, F = object> extends EntityWrite<C, F> {
+export interface EntityCreatePlan<F = object> extends EntitySave<F> {
   copyCustomizationsFrom?: string;
 }
 
@@ -56,16 +58,25 @@ export interface EntityDeletePlan<E = { id: string; name: string }> {
 }
 
 /**
- * What an entity's edit writes: the entity as the view has it (`E`), its new row and what goes beside it, and the
- * copies that may refuse it.
+ * What an entity's edit writes: the entity as the view has it (`E`), its new row and what goes beside it, what its
+ * activity compares (`changes`: the entity's values and the form's, by the form's keys: its name, its description, its
+ * columns), and the copies that may refuse it.
  */
-export interface EntityEditPlan<
-  C = Record<string, unknown>,
-  F = object,
-  E = { id: string; name: string },
-> extends EntityWrite<C, F> {
+export interface EntityEditPlan<F = object, E = { id: string; name: string }> extends EntitySave<F> {
+  changes: { after: Record<string, unknown>; before: Record<string, unknown> };
   copies?: EntityCopies;
   entity: E;
+}
+
+/**
+ * What a list of a kind's entities reads them by, past its ruleset's: the values of their fields (`fields`, one or one
+ * of several each: 3.5's item's `ITEM_IS_TEMPLATE`, a feat's family), the targets of their single links (`links`, one
+ * of several each: an item's template), their partition (`partitions`, one of: 3.5's race's `pc`).
+ */
+export interface EntityFilters {
+  fields?: Readonly<Record<string, FieldValue | readonly FieldValue[]>>;
+  links?: Readonly<Record<string, readonly string[]>>;
+  partitions?: readonly string[];
 }
 
 /**
@@ -137,20 +148,20 @@ export interface LinkWrite {
 }
 
 /**
- * An entity a plan makes with the one it writes, in the same ruleset: its table (`type`), its row's columns, its stored
- * values (`fields`), its links (`links`, by role), and its modifiers and requirements.
+ * An entity a plan makes with the one it writes, in the same ruleset: its table (`type`), its row (`EntityWrite`), its
+ * stored values (`fields`), its links (`links`, by role), and its modifiers and requirements.
  */
 export interface MadeEntity {
-  columns: Record<string, unknown> & { description: string; name: string };
   fields: FieldsWrite;
   links: LinkSet[];
   modifiers: Pick<Modifier, "operator" | "target" | "value" | "valueType">[];
   requirements: RequirementWrite[];
+  row: EntityWrite & { description: string; name: string };
   type: string;
 }
 
 /** What an owned entity's create writes past an entity's: its owner, and what its activity records. */
-export interface OwnedCreatePlan<C = Record<string, unknown>, F = object> extends EntityCreatePlan<C, F> {
+export interface OwnedCreatePlan<F = object> extends EntityCreatePlan<F> {
   activity: Record<string, unknown>;
   owner: PlanOwner;
 }
@@ -162,11 +173,7 @@ export interface OwnedDeletePlan<E = { id: string; name: string }> extends Entit
 }
 
 /** What an owned entity's edit writes past an entity's: its owner, and what its activity records. */
-export interface OwnedEditPlan<
-  C = Record<string, unknown>,
-  F = object,
-  E = { id: string; name: string },
-> extends EntityEditPlan<C, F, E> {
+export interface OwnedEditPlan<F = object, E = { id: string; name: string }> extends EntityEditPlan<F, E> {
   activity: Record<string, unknown>;
   owner: PlanOwner;
 }
@@ -189,7 +196,7 @@ export interface ProgressionPlan {
   gone: { owned: string; owner: string };
   owned: {
     added: { operator: string; target: string; value: string; valueType: "number" }[];
-    edit?: OwnedEditPlan<object, object, { id: string }>;
+    edit?: OwnedEditPlan<object, { id: string }>;
     entity: { id: string };
     position: number;
     removedIds: string[];

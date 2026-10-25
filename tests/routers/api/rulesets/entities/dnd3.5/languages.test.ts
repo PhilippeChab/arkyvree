@@ -4,6 +4,7 @@ import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { api, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
+import { LANGUAGE_TYPE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 const kinds = api.api.rulesets[":id"].entities[":entityType"];
 const entity = kinds[":entityId"];
@@ -15,15 +16,20 @@ describe("rulesets entities: languages", () => {
 
     const json = { name: "Test Language", description: "A test language", type: "Common" };
     const created = await expectOk(kinds.$post({ param: { id, entityType }, json }));
-    expect(created).toMatchObject(json);
+    const read = { name: json.name, description: json.description, fields: { [LANGUAGE_TYPE]: json.type } };
+    expect(created).toMatchObject(read);
     const param = { id, entityType, entityId: created.id };
 
-    expect(await expectOk(entity.$get({ param }))).toMatchObject({ id: created.id, ...json });
+    expect(await expectOk(entity.$get({ param }))).toMatchObject({ id: created.id, ...read });
     const list = await expectOk(kinds.$get({ param: { id, entityType }, query: { search: "Test Language" } }));
     expect(list.items.map((l) => l.id)).toContain(created.id);
 
     const update = { name: "Renamed Language", description: "Updated", type: "Exotic" };
-    expect(await expectOk(entity.$put({ param, json: update }))).toMatchObject(update);
+    expect(await expectOk(entity.$put({ param, json: update }))).toMatchObject({
+      name: update.name,
+      description: update.description,
+      fields: { [LANGUAGE_TYPE]: update.type },
+    });
 
     await expectOk(entity.$delete({ param }));
     await expectStatus(entity.$get({ param }), 404);

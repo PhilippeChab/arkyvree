@@ -1,5 +1,5 @@
 import type { Fields, NoFields } from "@/engine/core/fields/index.ts";
-import type { ViewEntities } from "@/engine/core/view/index.ts";
+import type { ViewKinds } from "@/engine/core/view/index.ts";
 import type { Requirement } from "@/shared/relations.ts";
 
 import RulesetEntity from "./RulesetEntity.ts";
@@ -10,7 +10,7 @@ import RulesetEntity from "./RulesetEntity.ts";
  * are tabs of its page, which reads them apart.
  */
 export default abstract class CustomizationPageEntity<
-  K extends keyof ViewEntities,
+  K extends keyof ViewKinds,
   Body extends object,
   Columns extends object = Body,
   S extends Fields = NoFields,
@@ -21,12 +21,15 @@ export default abstract class CustomizationPageEntity<
     return {
       ...entity,
       modifiers: this.rulesetData.modifiersBySource.get(entity.id) ?? [],
-      requirements: this.requirementsOf(entity),
+      requirements: this.requirementsOf(this.find(id)),
     };
   }
 
-  /** The requirements an entity's page shows: its own (an item's, its template's before its own). */
-  protected requirementsOf(entity: { id: string }): Requirement[] {
+  /**
+   * The requirements an entity's page shows (`entity`, as the view holds it): its own (an item's, its template's before
+   * its own).
+   */
+  protected requirementsOf(entity: ViewKinds[K]): Requirement[] {
     return this.rulesetData.requirementsByEntity.get(entity.id) ?? [];
   }
 }

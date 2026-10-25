@@ -17,7 +17,7 @@ interface RaceBody {
 }
 
 /**
- * A race as the ruleset has it: its row, its size and base speed, the fields its stored values hold (whether it walks
+ * A race as the ruleset has it: as stored, its size and base speed, the fields its stored values hold (whether it walks
  * on four legs, whether armor and load leave its speed), and its customizations.
  */
 export default class RaceEntity extends CustomizationPageEntity<
@@ -39,6 +39,9 @@ export default class RaceEntity extends CustomizationPageEntity<
 
   /** Its list's filters: the kind it's for. */
   protected override readonly listFilters = { kind: z.string() };
+
+  /** The kind it's for: its partition. */
+  protected override readonly storedAt = { kind: "partition" } as const;
 
   override readonly type = "races";
 

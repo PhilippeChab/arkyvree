@@ -14,6 +14,7 @@ import { addRulesetContributor } from "@/tests/support/contributors.ts";
 import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
 import { createTestRuleset } from "@/tests/support/rulesets.ts";
 import { createTestUser } from "@/tests/support/users.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 type User = Awaited<ReturnType<typeof createTestUser>>;
 
@@ -209,11 +210,15 @@ describe("activity notifications", () => {
       description: "",
       rulesetId,
     });
-    const [fighter] = await Entities.create<Klass>(db, "classes", { name: "Fighter", rulesetId, hd: 10 });
+    const [fighter] = await Entities.create<Klass>(db, "classes", {
+      name: "Fighter",
+      rulesetId,
+      fields: { [CLASS_HD]: 10 },
+    });
     const [climb] = await Entities.create<Skill>(db, "skills", {
       name: "Climb",
       rulesetId,
-      primaryAbilityId: ability.id,
+      links: { keyAbility: ability.id },
     });
     await EntitiesService.addEntityLink(author.session, rulesetId, "classes", fighter.id, climb.id);
     await EntitiesService.removeEntityLink(author.session, rulesetId, "classes", fighter.id, climb.id);
@@ -237,7 +242,11 @@ describe("activity notifications", () => {
     const [owner, author] = await users(2);
     const { id: rulesetId, baseRules } = await createTestRuleset(owner.user.id);
     await addRulesetContributor(rulesetId, author.user, owner.user.id);
-    const [fighter] = await Entities.create<Klass>(db, "classes", { name: "Fighter", rulesetId, hd: 10 });
+    const [fighter] = await Entities.create<Klass>(db, "classes", {
+      name: "Fighter",
+      rulesetId,
+      fields: { [CLASS_HD]: 10 },
+    });
     const level = await EntitiesService.createOwnedEntity(author.session, rulesetId, "classes", fighter.id, {
       level: 1,
       fields: { bab: 1, skills: 2 },
@@ -292,11 +301,15 @@ describe("activity notifications", () => {
       description: "",
       rulesetId: ruleset.id,
     });
-    const [fighter] = await Entities.create<Klass>(db, "classes", { name: "Fighter", rulesetId: ruleset.id, hd: 10 });
+    const [fighter] = await Entities.create<Klass>(db, "classes", {
+      name: "Fighter",
+      rulesetId: ruleset.id,
+      fields: { [CLASS_HD]: 10 },
+    });
     const [climb] = await Entities.create<Skill>(db, "skills", {
       name: "Climb",
       rulesetId: ruleset.id,
-      primaryAbilityId: ability.id,
+      links: { keyAbility: ability.id },
     });
     await EntitiesService.addEntityLink(author.session, ruleset.id, "classes", fighter.id, climb.id);
     await EntitiesService.deleteEntity(author.session, ruleset.id, "feats", feat.id);

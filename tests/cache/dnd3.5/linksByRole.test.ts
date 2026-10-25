@@ -8,7 +8,7 @@ import { beforeAll, describe, expect, test } from "bun:test";
 
 import { type SeedContext } from "@/database/seeders/dnd3.5/characters/seedContext.ts";
 import StorageEngine from "@/engine/api/StorageEngine.ts";
-import { type RulesetData, type ViewEntities, type ViewLink } from "@/engine/core/view/index.ts";
+import { type RulesetData, type ViewKinds, type ViewLink } from "@/engine/core/view/index.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
@@ -19,7 +19,7 @@ import { SPELL_SCHOOL } from "@/vocabulary/dnd3.5/fields/index.ts";
 /** Every kind a ruleset's view holds, as the modules declare them. */
 const KINDS = StorageEngine.shared()
   .viewSchema()
-  .kinds.map(({ type }) => type as keyof ViewEntities);
+  .kinds.map(({ type }) => type as keyof ViewKinds);
 
 /** Links' parts, by their target and pool, sorted. */
 function partsOf(links: readonly ViewLink[]) {

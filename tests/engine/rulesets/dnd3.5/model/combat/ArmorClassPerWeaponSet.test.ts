@@ -10,6 +10,7 @@ import { createRaceModifier } from "@/tests/support/dnd3.5/customizations.ts";
 import { type Carried, carry, createTestItem } from "@/tests/support/items.ts";
 import { invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
 import { findSeededCharacter, getSeedCtx } from "@/tests/support/seed.ts";
+import { ITEM_SLOT, ITEM_TYPE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** A requirement's values: the shield held, by the set in an armor class's gate, by any set elsewhere, is none. */
 const NO_SHIELD_HELD = { target: "combat.shield.held", operator: "equal", value: "false", valueType: "boolean" };
@@ -220,7 +221,7 @@ describe("a weapon set's attacks", () => {
 
   test("finessed, pay the check penalty only of the shield their set holds", async () => {
     // An elf rogue with Weapon Finesse: STR 10 (+0), DEX 20 (+5), proficient with shields through a charm
-    const charm = await createTestItem({ name: "Shield Charm", type: "Wondrous Item", slot: "Neck" });
+    const charm = await createTestItem({ name: "Shield Charm" }, { [ITEM_TYPE]: "Wondrous Item", [ITEM_SLOT]: "Neck" });
     await Modifiers.create(db, {
       sourceId: charm.id,
       sourceType: "items",

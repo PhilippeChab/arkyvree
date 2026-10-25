@@ -22,9 +22,22 @@ const EMPTY_AS_NONE: ReadonlySet<FormField["input"]> = new Set(["choice", "ref",
 const ID = z.string().uuid();
 
 /**
+ * A decimal kept to two places, half away from zero, as its shortest text reads it (`1.005` is `1.01`), written out
+ * whatever its size (never in exponent form: `1e-7` is `0`).
+ */
+function toHundredths(value: number): number {
+  const text = Math.abs(value).toLocaleString("en-US", { maximumFractionDigits: 20, useGrouping: false });
+  const [whole, fraction = ""] = text.split(".");
+  let hundredths = BigInt(whole + fraction.padEnd(2, "0").slice(0, 2));
+  if ((fraction[2] ?? "0") >= "5") hundredths += 1n;
+  const rounded = Number(`${hundredths / 100n}.${String(hundredths % 100n).padStart(2, "0")}`);
+  return value < 0 && rounded !== 0 ? -rounded : rounded;
+}
+
+/**
  * An entity's columns as a form gives them, read by their descriptions (its rules'), for a new entity or an edit:
  * - a column takes its input's values (a reference an id, a choice one of its options, a number a whole one in its
- *   bounds), several for a multiple one;
+ *   bounds, a decimal one kept to two places), several for a multiple one;
  * - none clears a nullable one (an empty text or select is none), and refuses any other;
  * - a new entity's form gives a required one, or its default fills it in, and a required list of links one link at
  *   least; an edit leaves those it doesn't give as they are.
@@ -109,7 +122,8 @@ export default class FormColumns {
           schema: z
             .number()
             .min(column.min ?? Number.NEGATIVE_INFINITY)
-            .max(column.max ?? Number.POSITIVE_INFINITY),
+            .max(column.max ?? Number.POSITIVE_INFINITY)
+            .transform(toHundredths),
         };
       case "flag":
         return { nullable: column.nullable, required: !column.nullable, schema: z.boolean() };

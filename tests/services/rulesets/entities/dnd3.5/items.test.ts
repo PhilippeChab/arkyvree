@@ -12,7 +12,14 @@ import { customize } from "@/tests/support/dnd3.5/customizations.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
 import { createTestRuleset } from "@/tests/support/rulesets.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
-import { ITEM_MADE_OF } from "@/vocabulary/dnd3.5/fields/index.ts";
+import {
+  ITEM_COST_GP,
+  ITEM_IS_TEMPLATE,
+  ITEM_MADE_OF,
+  ITEM_SLOT,
+  ITEM_TYPE,
+  ITEM_WEIGHT,
+} from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** The stored values `customize` gives an item: what it's made of, which it reads as its field. */
 const COLD_IRON = { fields: { [ITEM_MADE_OF]: ["Cold Iron"] }, links: {} };
@@ -53,8 +60,8 @@ async function expectTemplateInstance(rulesetId: string, itemId: string, templat
   expect(await customizationsOf(itemId)).toEqual(noCustomizations);
   const view = await EntitiesService.getEntity(rulesetId, "items", itemId);
   expect(view).toMatchObject({
-    sourceItemId: templateId,
-    isTemplate: false,
+    fields: { [ITEM_IS_TEMPLATE]: false },
+    links: [{ role: "madeFrom", toId: templateId }],
     madeOf: "Cold Iron",
     requirements: [{ target: "combat.bab" }],
     modifiers: [],
@@ -71,14 +78,13 @@ describe("EntitiesService: items", () => {
       weight: 0.5,
       costGp: 2.25,
     });
-    expect(scroll).toMatchObject({ weight: "0.50", costGp: "2.25" });
+    expect(scroll.fields).toMatchObject({ [ITEM_WEIGHT]: 0.5, [ITEM_COST_GP]: 2.25 });
     expect(
-      await EntitiesService.createEntity(session, ruleset.id, "items", { name: "Feather", weight: 0, costGp: 0 }),
-    ).toMatchObject({ weight: "0.00", costGp: "0.00" });
-    expect(await EntitiesService.createEntity(session, ruleset.id, "items", { name: "Rock" })).toMatchObject({
-      weight: null,
-      costGp: null,
-    });
+      (await EntitiesService.createEntity(session, ruleset.id, "items", { name: "Feather", weight: 0, costGp: 0 }))
+        .fields,
+    ).toMatchObject({ [ITEM_WEIGHT]: 0, [ITEM_COST_GP]: 0 });
+    const { fields: rock } = await EntitiesService.createEntity(session, ruleset.id, "items", { name: "Rock" });
+    expect([rock[ITEM_WEIGHT], rock[ITEM_COST_GP]]).toEqual([undefined, undefined]);
 
     expect(
       await EntitiesService.updateEntity(session, ruleset.id, "items", scroll.id, {
@@ -86,7 +92,7 @@ describe("EntitiesService: items", () => {
         weight: 10,
         costGp: 100,
       }),
-    ).toMatchObject({ weight: "10.00", costGp: "100.00" });
+    ).toMatchObject({ fields: { [ITEM_WEIGHT]: 10, [ITEM_COST_GP]: 100 } });
   });
 
   test("clears its slot, weight and cost when an edit gives none, and keeps them when it leaves them out", async () => {
@@ -102,7 +108,7 @@ describe("EntitiesService: items", () => {
       name: "Hat",
       description: "Floppy",
     });
-    expect(kept).toMatchObject({ slot: "Head", weight: "5.00", costGp: "10.00" });
+    expect(kept.fields).toMatchObject({ [ITEM_SLOT]: "Head", [ITEM_WEIGHT]: 5, [ITEM_COST_GP]: 10 });
 
     // A slot's none is "Other", the slot of an item worn nowhere in particular
     const cleared = await EntitiesService.updateEntity(session, ruleset.id, "items", hat.id, {
@@ -111,11 +117,10 @@ describe("EntitiesService: items", () => {
       weight: null,
       costGp: null,
     });
-    expect(cleared).toMatchObject({ slot: "Other", weight: null, costGp: null });
-    expect(await EntitiesService.getEntity(ruleset.id, "items", hat.id)).toMatchObject({
-      slot: "Other",
-      weight: null,
-      costGp: null,
+    expect(cleared.fields).toEqual({ [ITEM_IS_TEMPLATE]: false, [ITEM_SLOT]: "Other" });
+    expect((await EntitiesService.getEntity(ruleset.id, "items", hat.id)).fields).toEqual({
+      [ITEM_IS_TEMPLATE]: false,
+      [ITEM_SLOT]: "Other",
     });
   });
 
@@ -129,20 +134,20 @@ describe("EntitiesService: items", () => {
     });
 
     expect(
-      await EntitiesService.updateEntity(session, ruleset.id, "items", sword.id, { name: "Sword", type: "Weapon" }),
-    ).toMatchObject({ sourceItemId: template.id });
+      (await EntitiesService.updateEntity(session, ruleset.id, "items", sword.id, { name: "Sword", type: "Weapon" }))
+        .links,
+    ).toEqual({ madeFrom: template.id });
     expect(
-      await EntitiesService.updateEntity(session, ruleset.id, "items", sword.id, {
-        name: "Sword",
-        type: "Weapon",
-        sourceItemId: null,
-      }),
-    ).toMatchObject({ sourceItemId: null });
+      (
+        await EntitiesService.updateEntity(session, ruleset.id, "items", sword.id, {
+          name: "Sword",
+          type: "Weapon",
+          sourceItemId: null,
+        })
+      ).links,
+    ).toEqual({});
     // Its template's fields went with it
-    expect(await EntitiesService.getEntity(ruleset.id, "items", sword.id)).toMatchObject({
-      sourceItemId: null,
-      madeOf: null,
-    });
+    expect(await EntitiesService.getEntity(ruleset.id, "items", sword.id)).toMatchObject({ links: [], madeOf: null });
   });
 
   test("describes where a character carrying it can place it", async () => {
@@ -168,12 +173,10 @@ describe("EntitiesService: items", () => {
         type: "Armor",
         slot: "Other",
       }),
-    ).toMatchObject({ slot: "Torso" });
+    ).toMatchObject({ fields: { [ITEM_SLOT]: "Torso" } });
     expect(
       await EntitiesService.createEntity(session, ruleset.id, "items", { name: "Ring", slot: "Finger" }),
-    ).toMatchObject({
-      slot: "Finger",
-    });
+    ).toMatchObject({ fields: { [ITEM_SLOT]: "Finger" } });
 
     const buckler = await EntitiesService.createEntity(session, ruleset.id, "items", {
       name: "Buckler",
@@ -185,7 +188,7 @@ describe("EntitiesService: items", () => {
         type: "Shield",
         slot: "Other",
       }),
-    ).toMatchObject({ slot: "Off Hand" });
+    ).toMatchObject({ fields: { [ITEM_SLOT]: "Off Hand" } });
   });
 
   describe("duplicating", () => {
@@ -243,17 +246,20 @@ describe("EntitiesService: items", () => {
         {
           name: "Scroll of Healing",
           description: "Heals 1d8",
-          type: "Other",
-          slot: "Other",
-          weight: "0.10",
-          costGp: "25.00",
-          sourceItemId: null,
-          isTemplate: false,
+          fields: {
+            [ITEM_TYPE]: "Other",
+            [ITEM_SLOT]: "Other",
+            [ITEM_WEIGHT]: 0.1,
+            [ITEM_COST_GP]: 25,
+            [ITEM_IS_TEMPLATE]: false,
+          },
+          links: {},
           rulesetId: ruleset.id,
         },
         // A blank description stays blank rather than falling back to the source's.
-        { name: "Scroll of Light", description: null, weight: "0.10", costGp: "25.00" },
+        { name: "Scroll of Light", description: null, fields: { [ITEM_WEIGHT]: 0.1, [ITEM_COST_GP]: 25 } },
       ]);
+      expect(variants[0].links).toEqual({});
       const first = await customizationsOf(variants[0].id);
       const second = await customizationsOf(variants[1].id);
       expect(first).toMatchObject(copiedCustomizations);
@@ -301,7 +307,7 @@ describe("EntitiesService: items", () => {
       const variants = await EntitiesService.createVariants(session, fork.id, "items", source.id, [
         { name: "Forked Scroll" },
       ]);
-      expect(variants).toMatchObject([{ name: "Forked Scroll", rulesetId: fork.id, weight: "0.10" }]);
+      expect(variants).toMatchObject([{ name: "Forked Scroll", rulesetId: fork.id, fields: { [ITEM_WEIGHT]: 0.1 } }]);
     });
 
     test("are refused to anyone but the owner", async () => {
