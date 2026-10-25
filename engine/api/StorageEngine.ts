@@ -63,6 +63,13 @@ function mergeRecords<T>(modules: [BaseRules, RulesetModule][], pick: (module: R
   return merged;
 }
 
+/** A stored value's text, a number's written out whatever its size (never in exponent form), as `roundDecimal` reads it. */
+function numberText(value: unknown): string {
+  return typeof value === "number"
+    ? value.toLocaleString("en-US", { maximumFractionDigits: 20, useGrouping: false })
+    : String(value);
+}
+
 /**
  * A number's text rounded to `scale` places, half away from zero, as Postgres's `round(numeric, scale)` writes it: its
  * places always shown (`5` to 2 places is `5.00`).
@@ -77,6 +84,13 @@ function roundDecimal(given: string, scale: number): string {
   const digits = units.toString().padStart(scale + 1, "0");
   const rounded = scale === 0 ? digits : `${digits.slice(0, -scale)}.${digits.slice(-scale)}`;
   return negative && units !== 0n ? `-${rounded}` : rounded;
+}
+
+/** A value a number column is written with, refused when it's no number (a blank text, a word), as the column is. */
+function toNumber(value: unknown): number {
+  const number = typeof value === "string" && value.trim() === "" ? Number.NaN : Number(value);
+  if (!Number.isFinite(number)) throw new Error(`Not a number: ${String(value)}`);
+  return number;
 }
 
 /**
@@ -187,7 +201,9 @@ export default class StorageEngine {
         if (value === undefined) return null;
         if (column.kind === "flag") return value === true;
         if (column.kind === "text") return value;
-        return "integer" in column ? Number(roundDecimal(String(value), 0)) : roundDecimal(String(value), column.scale);
+        return "integer" in column
+          ? Number(roundDecimal(numberText(value), 0))
+          : roundDecimal(numberText(value), column.scale);
       }
     }
   }
@@ -300,7 +316,7 @@ export default class StorageEngine {
         continue;
       }
       const value = fields.find((field) => field.field === column.field)?.value ?? null;
-      row[name] = value !== null && column.kind === "number" ? Number(roundDecimal(String(value), 0)) : value;
+      row[name] = value !== null && column.kind === "number" ? Number(roundDecimal(numberText(value), 0)) : value;
     }
     return order ? Object.fromEntries(order.map((name) => [name, row[name]])) : row;
   }
@@ -318,7 +334,7 @@ export default class StorageEngine {
       // A value left undefined is left as it is, as an update leaves a column it's given undefined
       if (value === undefined) continue;
       if (column.kind !== "link") {
-        const held = value === null ? null : column.kind === "number" ? Number(value) : String(value);
+        const held = value === null ? null : column.kind === "number" ? toNumber(value) : String(value);
         write.fields.push({ field: column.field, kind: column.kind, value: held });
         continue;
       }
@@ -780,7 +796,7 @@ export default class StorageEngine {
 
   /**
    * What a write of a kind's row stores (`values`: its columns by name): the entity's own columns it gives, and the
-   * fields and single links of each column it gives, as text (a decimal rounded to its scale), or null to clear it.
+   * fields and single links of each column it gives, typed (a decimal rounded to its scale), or null to clear it.
    * `creating`: a new row's, whose every column is written, one it leaves out its default (its partition's too).
    */
   writeOf(type: string, values: Row, creating: boolean): StoredWrite {
@@ -811,7 +827,7 @@ export default class StorageEngine {
               : column.kind === "flag"
                 ? Boolean(held)
                 : column.kind === "number"
-                  ? Number("scale" in column ? roundDecimal(String(held), column.scale) : held)
+                  ? toNumber("scale" in column ? roundDecimal(numberText(held), column.scale) : held)
                   : String(held);
           write.fields.push({ field: column.field, kind: column.kind, value: typed });
         }
