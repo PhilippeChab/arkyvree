@@ -15,9 +15,10 @@ async function createChild(tx: Db, child: NewChild) {
 /**
  * Writes what a character's children become (`plans`, the engine's: 3.5's bonded creatures): each kind's child removed,
  * made (its row as the engine plans it, with its links) or kept, and the advancements the one it keeps or makes takes
- * (each with its picks) or loses. A level save plans them from the children it read with the parent locked, so two saves can't both see no child
- * and both make one, which the database's index refuses besides (`characters_one_live_child_per_kind_idx`). An
- * archived parent's children are left as they are: an archive that ran before the lock archived them with it.
+ * (each with its picks) or loses. A level save plans them from the children it read with the parent locked, so two
+ * saves can't both see no child and both make one, which the database's index refuses besides
+ * (`characters_one_live_child_per_kind_idx`). An archived parent's children are left as they are: an archive that ran
+ * before the lock archived them with it.
  */
 export async function writeChildren(tx: Db, parent: Character, plans: ChildPlan[]): Promise<void> {
   if (!(await Characters.lock(tx, { id: parent.id }))) return;

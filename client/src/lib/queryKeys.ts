@@ -103,7 +103,7 @@ export const QUERY_KEYS = {
       filters
         ? (["characters", "unlinked", campaignId, filters] as const)
         : (["characters", "unlinked", campaignId] as const),
-    /** A new character's creation pick's options (`column`'s), as the fields that narrow them hold (`filters`). */
+    /** A new character's creation pick's options (`role`'s), as the fields that narrow them hold (`filters`). */
     creationOptions: (rulesetId: string, role: string, filters?: Record<string, unknown>) =>
       ["characters", "creationOptions", rulesetId, role, filters] as const,
     /** A level-up read's cache: its key holds the query (or the body) it sends, so no parameter is left out of it. */

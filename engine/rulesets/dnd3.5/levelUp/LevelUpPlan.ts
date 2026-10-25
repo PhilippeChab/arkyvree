@@ -30,7 +30,8 @@ export default class LevelUpPlan extends PlannedLevelsState {
   /**
    * The skill points the level-up wizard has spent so far (`planned.skillPoints`), spread over the levels it plans as a
    * save spreads them (within each level's points and max ranks, class skills first): each planned level's skill
-   * ranks, as a save writes them, which the class picker projects. Refused when a planned level isn't one of the view's class levels.
+   * ranks, as a save writes them, which the class picker projects. Refused when a planned level isn't one of the view's
+   * class levels.
    */
   spreadSkillPoints({ abilityIncreases = [], klassLevelIds = [], skillPoints = {} }: PlannedSoFar) {
     if (Object.keys(skillPoints).length === 0) return [];
