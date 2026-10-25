@@ -92,7 +92,7 @@ describe("TargetPathsService", () => {
     expect(segmentLabels).toMatchObject({
       abilities: "Abilities",
       saves: "Saving Throws",
-      powers: "Spells",
+      spells: "Spells",
       classes: "Classes",
       ac: "Armor Class",
       hp: "Hit Points",
@@ -153,7 +153,7 @@ describe("TargetPathsService", () => {
           path.includes("*") ||
           path.startsWith("weapon.") ||
           path === "skills.knowledge.rank" ||
-          /^powers\.[a-z0-9]+\.properties\./.test(path),
+          /^spells\.[a-z0-9]+\.properties\./.test(path),
       ),
     ).toEqual([]);
     expect(requirement.filter((p) => p.readsMany && readable.has(p.path))).toEqual([]);
@@ -278,7 +278,7 @@ describe("TargetPathsService", () => {
   });
 
   test("takes a grant as a literal only: the editor offers no template on what a modifier grants", async () => {
-    const grants = ["feats.greatfortitude.possessed", "powers.magicmissile.wizard.known", "languages.elven.known"];
+    const grants = ["feats.greatfortitude.possessed", "spells.magicmissile.wizard.known", "languages.elven.known"];
     const literalOnlyOf = async (kind: TargetPathKind) => {
       const { paths } = await seedPaths(kind);
       return grants.map((path) => paths.find((p) => p.path === path)?.literalOnly);
@@ -325,7 +325,7 @@ describe("TargetPathsService", () => {
     expect(await pathOf("modifier", "aptitudes.firedomainspells.joinsclasslist")).toMatchObject({
       valueType: "boolean",
       operators: ["set"],
-      allowedEntityTypes: ["feats", "klass_levels"],
+      allowedEntityTypes: ["feats", "class_levels"],
     });
     expect((await pathOf("requirement", "aptitudes.firedomainspells.joinsclasslist"))?.operators).toEqual([
       "equal",
@@ -334,8 +334,8 @@ describe("TargetPathsService", () => {
     // A feat pool isn't a spell list
     expect(await pathOf("modifier", "aptitudes.general.joinsclasslist")).toBeUndefined();
     // Burning Hands, a wizard spell and a fire domain one, is known on the wizard's list only
-    expect(await pathOf("requirement", "powers.burninghands.wizard.known")).toBeDefined();
-    expect(await pathOf("requirement", "powers.burninghands.firedomain.known")).toBeUndefined();
+    expect(await pathOf("requirement", "spells.burninghands.wizard.known")).toBeDefined();
+    expect(await pathOf("requirement", "spells.burninghands.firedomain.known")).toBeUndefined();
   });
 
   test("lists what the engine reads without an entity of its own: the unarmed strike, the skill points, a skill family", async () => {
@@ -357,10 +357,10 @@ describe("TargetPathsService", () => {
   });
 
   test("offers aptitude uses and picks only to the entities that grant them", async () => {
-    for (const entityType of ["klass_levels", "feats", "races", undefined])
+    for (const entityType of ["class_levels", "feats", "races", undefined])
       expect((await pathsTaken("modifier", entityType)).some(isAptitudeGrant)).toBe(true);
 
-    for (const entityType of ["items", "powers"]) {
+    for (const entityType of ["items", "spells"]) {
       const paths = await pathsTaken("modifier", entityType);
       expect(paths.filter(isAptitudeGrant)).toEqual([]);
       expect(paths.some((p) => p.path?.startsWith("combat."))).toBe(true);
@@ -371,7 +371,7 @@ describe("TargetPathsService", () => {
     const { paths } = await seedPaths("requirement");
     expect(paths.some((p) => p.path.startsWith("aptitudes.wizardspells.0."))).toBe(true);
 
-    const known = paths.filter((p) => p.category === "powers" && p.path.endsWith(".known")).map((p) => p.path);
+    const known = paths.filter((p) => p.category === "spells" && p.path.endsWith(".known")).map((p) => p.path);
     expect(known.some((path) => path.includes(".wizard."))).toBe(true);
     expect(known.filter((path) => /spells\.known|domain|specialist/.test(path))).toEqual([]);
   });

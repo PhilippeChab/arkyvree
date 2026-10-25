@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import type { EntityWrites } from "@/engine/index.ts";
-import type { Power } from "@/engine/rulesets/dnd3.5/index.ts";
+import type { Spell } from "@/engine/rulesets/dnd3.5/index.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Entities, Properties, Requirements } from "@/server/repositories/index.ts";
@@ -16,20 +16,20 @@ function writesOf(writes: Partial<EntityWrites>): EntityWrites {
   return { ...writes };
 }
 
-/** A power of a fork of its own, with a property its writes don't keep a field in. */
-async function createPower() {
+/** A spell of a fork of its own, with a property its writes don't keep a field in. */
+async function createSpell() {
   const ruleset = await createSeededTestRuleset(makeSession().userId);
-  const [power] = await Entities.create<Power>(db, "powers", { name: "Probe Spell", rulesetId: ruleset.id });
+  const [spell] = await Entities.create<Spell>(db, "spells", { name: "Probe Spell", rulesetId: ruleset.id });
   await Properties.createMany(db, [
-    { entityId: power.id, entityType: "powers", type: SPELL_DURATION, value: "1 round" },
-    { entityId: power.id, entityType: "powers", type: SPELL_SCHOOL, value: "Evocation" },
+    { entityId: spell.id, entityType: "spells", type: SPELL_DURATION, value: "1 round" },
+    { entityId: spell.id, entityType: "spells", type: SPELL_SCHOOL, value: "Evocation" },
   ]);
-  return { entity: { entityId: power.id, entityType: "powers" } as const, rulesetId: ruleset.id };
+  return { entity: { entityId: spell.id, entityType: "spells" } as const, rulesetId: ruleset.id };
 }
 
 describe("An entity's writes", () => {
   test("keep its fields in its properties: those of their types give way, its others stay", async () => {
-    const { entity, rulesetId } = await createPower();
+    const { entity, rulesetId } = await createSpell();
     const properties = {
       types: [SPELL_SCHOOL, SPELL_SUBSCHOOL],
       values: [{ type: SPELL_SCHOOL, value: "Conjuration" }],
@@ -40,7 +40,7 @@ describe("An entity's writes", () => {
     );
 
     expect(written).toEqual([{ ...entity, type: SPELL_SCHOOL, value: "Conjuration" }]);
-    const stored = await Properties.findMany(db, { entityIds: [entity.entityId], entityType: "powers" });
+    const stored = await Properties.findMany(db, { entityIds: [entity.entityId], entityType: "spells" });
     expect(stored.map(({ type, value }) => `${type}=${value}`).toSorted()).toEqual([
       `${SPELL_DURATION}=1 round`,
       `${SPELL_SCHOOL}=Conjuration`,
@@ -48,7 +48,7 @@ describe("An entity's writes", () => {
   });
 
   test("set the requirement they plan on the entity", async () => {
-    const { entity, rulesetId } = await createPower();
+    const { entity, rulesetId } = await createSpell();
     const requirement = {
       level: "1",
       operator: "greater_than",
@@ -66,7 +66,7 @@ describe("An entity's writes", () => {
   });
 
   test("write nothing beside the row when they plan nothing", async () => {
-    const { entity, rulesetId } = await createPower();
+    const { entity, rulesetId } = await createSpell();
     await withRulesetScope(db, rulesetId, async (scope) => {
       const { result, timing } = await measure(() => writeEntityWrites(db, scope, entity, writesOf({})));
       expect(result).toEqual([]);

@@ -11,7 +11,7 @@ import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type { KlassLevel } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 
 /**
- * A feat or power picker: the level it picks at (`query`), the character projected to it with the feats and powers
+ * A feat or spell picker: the level it picks at (`query`), the character projected to it with the feats and spells
  * picked so far, whose requirements an option is checked against, and the character holding what it leaves out
  * (`holder`): with every level it has and plans, each level they project at its unrolled hit points.
  */
@@ -39,7 +39,7 @@ export default abstract class LevelPicker<Details extends object = object> exten
 
   /**
    * The character a pick is made for: as it was before the edited level (an edit), with the levels planned before this
-   * one and their ability increases, then this class level with its own and the feats and powers picked so far.
+   * one and their ability increases, then this class level with its own and the feats and spells picked so far.
    */
   protected override project() {
     const { abilityIncreases, editedLevelId, planned = {} } = this.query;
@@ -51,15 +51,15 @@ export default abstract class LevelPicker<Details extends object = object> exten
     return projection.input;
   }
 
-  /** The feats and powers the wizard picked so far, each in its pool, which the picker's level holds. */
+  /** The feats and spells the wizard picked so far, each in its pool, which the picker's level holds. */
   private get pickedSoFar() {
-    const { featPicks: feats, powerPicks: powers } = this.query.planned ?? {};
-    return { feats, powers };
+    const { featPicks: feats, spellPicks: spells } = this.query.planned ?? {};
+    return { feats, spells };
   }
 
   /**
    * The character with every level it has and the wizard plans: this class level with its own ability increases and
-   * the feats and powers picked so far, in the edited level's place (an edit), or after the levels planned before it
+   * the feats and spells picked so far, in the edited level's place (an edit), or after the levels planned before it
    * and before those planned after it.
    */
   private projectHolder() {
@@ -74,8 +74,8 @@ export default abstract class LevelPicker<Details extends object = object> exten
   }
 
   /**
-   * The character whose feats and powers the picker leaves out: with every level it has and the wizard plans, and the
-   * feats and powers picked so far, built when first asked. A level can't pick what the character holds, picked or
+   * The character whose feats and spells the picker leaves out: with every level it has and the wizard plans, and the
+   * feats and spells picked so far, built when first asked. A level can't pick what the character holds, picked or
    * granted at another level, a later one too, or given by a modifier, the picks so far's own too, as the save checks a
    * level's picks against what the character holds with its every other level and the level's other picks
    * (`SelectionChecks.checkPicksNotHeld`).

@@ -12,7 +12,7 @@ function gainsOf(skillId: string, classSkill: boolean) {
   return {
     classSkillIds: new Set(classSkill ? [skillId] : []),
     featRoom: new Map<string, number>(),
-    powerRoom: new Map<string, Map<number, number>>(),
+    spellRoom: new Map<string, Map<number, number>>(),
     skillPoints: 4,
     skills: new Map([[skillId, { currentRank: 0, isClassSkill: classSkill }]]),
   };
@@ -101,7 +101,7 @@ describe("PicksPlacement", () => {
       level,
       line: { number, text: `SPELLNAME:${name}` },
       name,
-      powerId: dataView.powers.find((power) => power.name === name)!.id,
+      spellId: dataView.spells.find((spell) => spell.name === name)!.id,
     });
     const placement = new PicksPlacement(
       data,
@@ -109,8 +109,8 @@ describe("PicksPlacement", () => {
       [],
       [spell("Light", 0, 1), spell("Magic Missile", 1, 2), spell("Scorching Ray", 2, 3), spell("Shield", 1, 4)],
     );
-    const shield = dataView.powers.find((power) => power.name === "Shield")!.id;
-    const placed = placement.placePowers({
+    const shield = dataView.spells.find((spell) => spell.name === "Shield")!.id;
+    const placed = placement.placeSpells({
       held: [{ aptitudeId: sorcerer.id, id: shield }],
       room: new Map([
         [
@@ -122,8 +122,8 @@ describe("PicksPlacement", () => {
         ],
       ]),
     });
-    expect(placed.map(({ powerId }) => dataView.powersById.get(powerId)?.name)).toEqual(["Light", "Magic Missile"]);
+    expect(placed.map(({ spellId }) => dataView.spellsById.get(spellId)?.name)).toEqual(["Light", "Magic Missile"]);
     // No room at the 2nd level yet, and Shield known already: both left for a later level, or the report
-    expect(placement.leftPowers().map(({ name }) => name)).toEqual(["Scorching Ray", "Shield"]);
+    expect(placement.leftSpells().map(({ name }) => name)).toEqual(["Scorching Ray", "Shield"]);
   });
 });

@@ -48,7 +48,7 @@ export interface LevelUpRules<C> {
     view: RulesetView,
     input: CharacterInput,
     holder: C,
-    picks: Pick<LevelPicks, "feats" | "powers">,
+    picks: Pick<LevelPicks, "feats" | "spells">,
   ): OverfullPool[];
   /** What the ability increases of the level after `totalLevel` levels add up to in the view's ruleset: 0 for none. */
   getAbilityIncreaseTotal(view: RulesetView, totalLevel: number): number;
@@ -96,13 +96,13 @@ export default abstract class LevelUpBase<C> {
   }
 
   /**
-   * `build`, which builds the character with a level's (or a level-up's) own feats and powers (`picks`, by pool), each
+   * `build`, which builds the character with a level's (or a level-up's) own feats and spells (`picks`, by pool), each
    * set of them built once: a save's checks and a preview's fit ask for the character with the same picks again.
    */
-  protected buildOnce(build: (picks: Pick<LevelPicks, "feats" | "powers">) => C) {
+  protected buildOnce(build: (picks: Pick<LevelPicks, "feats" | "spells">) => C) {
     const built = new Map<string, C>();
-    return (picks: Pick<LevelPicks, "feats" | "powers">) => {
-      const key = JSON.stringify([picks.feats, picks.powers]);
+    return (picks: Pick<LevelPicks, "feats" | "spells">) => {
+      const key = JSON.stringify([picks.feats, picks.spells]);
       const character = built.get(key) ?? build(picks);
       built.set(key, character);
       return character;
@@ -110,15 +110,15 @@ export default abstract class LevelUpBase<C> {
   }
 
   /**
-   * The spell level of each of these powers in each pool it's linked to, by `powerId:aptitudeId`: a spell can be at
+   * The spell level of each of these spells in each pool it's linked to, by `spellId:aptitudeId`: a spell can be at
    * different levels in different pools (Wizard 1, Bard 0).
    */
-  protected buildPowerLevelLookup(powerIds: string[]) {
+  protected buildSpellLevelLookup(spellIds: string[]) {
     const lookup = new Map<string, number | null>();
-    for (const powerId of powerIds) {
-      const power = this.dnd35.powersById.get(powerId);
-      if (!power) continue;
-      for (const pa of power.powersAptitudesInRules) lookup.set(`${pa.powerId}:${pa.aptitudeId}`, pa.level);
+    for (const spellId of spellIds) {
+      const spell = this.dnd35.spellsById.get(spellId);
+      if (!spell) continue;
+      for (const pa of spell.spellsAptitudesInRules) lookup.set(`${pa.spellId}:${pa.aptitudeId}`, pa.level);
     }
     return lookup;
   }
@@ -153,16 +153,16 @@ export default abstract class LevelUpBase<C> {
 
   /**
    * The rows saved level `characterLevelId` holds under it, as the character's rows hold them: its ability increases,
-   * its feats and powers, each in its pool, and its skill ranks; none for a level it hasn't saved (a level-up's).
+   * its feats and spells, each in its pool, and its skill ranks; none for a level it hasn't saved (a level-up's).
    */
   protected getSavedPicks(characterLevelId: string | undefined): LevelRows {
     const atLevel = <P extends { characterLevelId: string }>(rows: P[]) =>
       rows.filter((pick) => pick.characterLevelId === characterLevelId);
-    const { abilityIncreases, feats, powers, skills } = SavedPicks.of(this.character.rows);
+    const { abilityIncreases, feats, spells, skills } = SavedPicks.of(this.character.rows);
     return {
       abilityIncreases: atLevel(abilityIncreases),
       feats: atLevel(feats),
-      powers: atLevel(powers),
+      spells: atLevel(spells),
       skills: atLevel(skills),
     };
   }
@@ -179,11 +179,11 @@ export default abstract class LevelUpBase<C> {
     return this.view.rulesetData;
   }
 
-  /** A level's picks as the rows a save writes: its skill ranks but those at none, and its feats and powers by pool. */
-  protected toPickRows({ feats, powers, skills }: LevelPicks): LevelPickRows {
+  /** A level's picks as the rows a save writes: its skill ranks but those at none, and its feats and spells by pool. */
+  protected toPickRows({ feats, spells, skills }: LevelPicks): LevelPickRows {
     return {
       feats: Object.entries(feats).flatMap(([aptitudeId, ids]) => ids.map((featId) => ({ featId, aptitudeId }))),
-      powers: Object.entries(powers).flatMap(([aptitudeId, ids]) => ids.map((powerId) => ({ powerId, aptitudeId }))),
+      spells: Object.entries(spells).flatMap(([aptitudeId, ids]) => ids.map((spellId) => ({ spellId, aptitudeId }))),
       skills: Object.entries(skills)
         .filter(([, rank]) => rank > 0)
         .map(([skillId, rank]) => ({ skillId, rank })),

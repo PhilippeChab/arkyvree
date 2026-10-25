@@ -32,29 +32,29 @@ export function SeedsWizardSchools<B extends Constructor<BaseSeeder>>(Base: B) {
       const wizardSpells = this.ctx.aptMap[classSpells("Wizard")];
       if (!wizardSpells) return;
       // The wizard's list's spells, each with its level there and its school (its property)
-      const listed = await Joins.findMany<{ level: number | null; powerId: string }>(this.db, {
-        join: "powers_aptitudes",
+      const listed = await Joins.findMany<{ level: number | null; spellId: string }>(this.db, {
+        join: "spells_aptitudes",
         toIds: [wizardSpells],
       });
       const schoolOf = new Map(
         (
           await Properties.findMany(this.db, {
-            entityIds: listed.map((link) => link.powerId),
-            entityType: "powers",
+            entityIds: listed.map((link) => link.spellId),
+            entityType: "spells",
             type: SPELL_SCHOOL,
           })
         ).map((property) => [property.entityId, property.value]),
       );
-      const spells = listed.flatMap(({ powerId, level }) => {
-        const school = schoolOf.get(powerId);
-        return school === undefined ? [] : [{ powerId, level, school }];
+      const spells = listed.flatMap(({ spellId, level }) => {
+        const school = schoolOf.get(spellId);
+        return school === undefined ? [] : [{ spellId, level, school }];
       });
       await this.insertJoins(
-        "powers_aptitudes",
-        spells.flatMap(({ powerId, level, school }) => {
+        "spells_aptitudes",
+        spells.flatMap(({ spellId, level, school }) => {
           const aptitudeId = this.ctx.aptMap[specialistSpells(school)];
           if (school === "Universal" || !aptitudeId || level === null) return [];
-          return [{ powerId, aptitudeId, level }];
+          return [{ spellId, aptitudeId, level }];
         }),
       );
     }

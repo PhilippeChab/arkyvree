@@ -12,17 +12,17 @@ import type { BaseSeeder } from "@/database/seeders/dnd3.5/BaseSeeder.ts";
 import { entitiesInRules, requirementsInCustomization } from "@/drizzle/schema.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 
-import type { PowerLink } from "./CopiesOnWrite.ts";
+import type { SpellLink } from "./CopiesOnWrite.ts";
 
 /** Copying the core's feats and spells into an extension that changes them. */
 export function CopiesIntoExtensions<B extends Constructor<BaseSeeder>>(Base: B) {
   abstract class CopyingIntoExtensions extends Base {
     /**
-     * The links each power's copy keeps of its original's (`fromIds`), by the original's id: its spell lists ("X Spells"
+     * The links each spell's copy keeps of its original's (`fromIds`), by the original's id: its spell lists ("X Spells"
      * aptitudes), at their levels.
      */
-    protected override async keptPowerLinks(fromIds: string[]) {
-      const links = await this.listedIn("powers_aptitudes", fromIds);
+    protected override async keptSpellLinks(fromIds: string[]) {
+      const links = await this.listedIn("spells_aptitudes", fromIds);
       const aptitudeIds = [...new Set(links.map((link) => link.aptitudeId))];
       const names = new Map(
         aptitudeIds.length === 0
@@ -34,10 +34,10 @@ export function CopiesIntoExtensions<B extends Constructor<BaseSeeder>>(Base: B)
                 .where(inArray(entitiesInRules.id, aptitudeIds))
             ).map((aptitude) => [aptitude.id, aptitude.name ?? ""]),
       );
-      const kept = new Map<string, PowerLink[]>();
-      for (const { aptitudeId, level, powerId } of links) {
+      const kept = new Map<string, SpellLink[]>();
+      for (const { aptitudeId, level, spellId } of links) {
         if (!/^(\w[\w ]*) Spells$/.test(names.get(aptitudeId) ?? "")) continue;
-        kept.set(powerId!, [...(kept.get(powerId!) ?? []), { aptitudeId, level: level ?? null }]);
+        kept.set(spellId!, [...(kept.get(spellId!) ?? []), { aptitudeId, level: level ?? null }]);
       }
       return kept;
     }
@@ -119,7 +119,7 @@ export function CopiesIntoExtensions<B extends Constructor<BaseSeeder>>(Base: B)
      */
     async cowSpellsIntoExtension(entries: CowSpellEntry[]) {
       // Each spell's lists, an entry's after the one before it of the same spell
-      const bySpell = new Map<string, PowerLink[]>();
+      const bySpell = new Map<string, SpellLink[]>();
       for (const entry of entries) {
         const links = entry.aptitudes
           .filter(({ aptitude }) => this.ctx.aptMap[aptitude])
@@ -129,23 +129,23 @@ export function CopiesIntoExtensions<B extends Constructor<BaseSeeder>>(Base: B)
       const spells = [...bySpell].map(([spell, links]) => ({
         spell,
         links,
-        inheritedId: this.ctx.inheritedPowerMap[spell] as string | undefined,
-        ownId: this.ctx.powerMap[spell] as string | undefined,
+        inheritedId: this.ctx.inheritedSpellMap[spell] as string | undefined,
+        ownId: this.ctx.spellMap[spell] as string | undefined,
       }));
-      // A power of its own keeps the inherited one's spell lists too, as a copy does
+      // A spell of its own keeps the inherited one's spell lists too, as a copy does
       const owned = spells.filter((spell) => spell.ownId);
-      const kept = await this.keptPowerLinks(owned.flatMap(({ inheritedId }) => (inheritedId ? [inheritedId] : [])));
-      await this.linkPowers(
+      const kept = await this.keptSpellLinks(owned.flatMap(({ inheritedId }) => (inheritedId ? [inheritedId] : [])));
+      await this.linkSpells(
         owned.map(({ inheritedId, links, ownId }) => ({
-          powerId: ownId!,
+          spellId: ownId!,
           links: [...((inheritedId && kept.get(inheritedId)) || []), ...links],
         })),
       );
       const inherited = spells.filter((spell) => !spell.ownId && spell.inheritedId);
-      const copies = await this.cowPowers(
-        inherited.map(({ inheritedId, links }) => ({ powerId: inheritedId!, links })),
+      const copies = await this.cowSpells(
+        inherited.map(({ inheritedId, links }) => ({ spellId: inheritedId!, links })),
       );
-      for (const { inheritedId, spell } of inherited) this.ctx.powerMap[spell] = copies.get(inheritedId!)!;
+      for (const { inheritedId, spell } of inherited) this.ctx.spellMap[spell] = copies.get(inheritedId!)!;
     }
   }
   return CopyingIntoExtensions;

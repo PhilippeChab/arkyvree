@@ -8,25 +8,25 @@ import { NIL_UUID } from "@/tests/support/seed.ts";
 
 const kinds = api.api.rulesets[":id"].entities[":entityType"];
 const entity = kinds[":entityId"];
-const entityType = "powers" as const;
+const entityType = "spells" as const;
 
-describe("rulesets entities: powers", () => {
-  test("creates, reads, lists, updates and deletes a power", async () => {
+describe("rulesets entities: spells", () => {
+  test("creates, reads, lists, updates and deletes a spell", async () => {
     const { id, aptitudeId } = await createSeededForkWithAptitude();
 
-    const json = { name: "Test Power", description: "A test power", aptitudes: [{ id: aptitudeId, level: 2 }] };
+    const json = { name: "Test Spell", description: "A test spell", aptitudes: [{ id: aptitudeId, level: 2 }] };
     const created = await expectOk(kinds.$post({ param: { id, entityType }, json }));
-    expect(created).toMatchObject({ name: "Test Power", description: "A test power" });
+    expect(created).toMatchObject({ name: "Test Spell", description: "A test spell" });
     const param = { id, entityType, entityId: created.id };
 
-    expect(await expectOk(entity.$get({ param }))).toMatchObject({ id: created.id, name: "Test Power" });
+    expect(await expectOk(entity.$get({ param }))).toMatchObject({ id: created.id, name: "Test Spell" });
     const list = await expectOk(kinds.$get({ param: { id, entityType }, query: { aptitudeId } }));
     expect(list.items.map((p) => p.id)).toEqual([created.id]);
 
     const updated = await expectOk(
-      entity.$put({ param, json: { name: "Renamed Power", description: "Updated", aptitudes: [] } }),
+      entity.$put({ param, json: { name: "Renamed Spell", description: "Updated", aptitudes: [] } }),
     );
-    expect(updated).toMatchObject({ name: "Renamed Power", description: "Updated" });
+    expect(updated).toMatchObject({ name: "Renamed Spell", description: "Updated" });
 
     await expectOk(entity.$delete({ param }));
     await expectStatus(entity.$get({ param }), 404);
@@ -38,17 +38,17 @@ describe("rulesets entities: powers", () => {
     await expectStatus(guestKinds.$get({ param: { id, entityType }, query: {} }), 401);
   });
 
-  test("rejects a power without a name, with malformed aptitudes or a level above 9", async () => {
+  test("rejects a spell without a name, with malformed aptitudes or a level above 9", async () => {
     const { id, aptitudeId } = await createSeededForkWithAptitude();
     for (const json of [
       { name: "" },
-      { name: "Power", aptitudes: aptitudeId },
-      { name: "Power", aptitudes: [{ id: aptitudeId, level: 10 }] },
+      { name: "Spell", aptitudes: aptitudeId },
+      { name: "Spell", aptitudes: [{ id: aptitudeId, level: 10 }] },
     ])
       await expectStatus(kinds.$post({ param: { id, entityType }, json }), 400);
   });
 
-  test("returns 404 for a missing ruleset or power", async () => {
+  test("returns 404 for a missing ruleset or spell", async () => {
     const { id } = await createSeededForkWithAptitude();
     await expectStatus(kinds.$get({ param: { id: NIL_UUID, entityType }, query: {} }), 404);
     const param = { id, entityType, entityId: NIL_UUID };
@@ -57,7 +57,7 @@ describe("rulesets entities: powers", () => {
     await expectStatus(entity.$delete({ param }), 404);
   });
 
-  test("refuses a power in an aptitude that feats already use", async () => {
+  test("refuses a spell in an aptitude that feats already use", async () => {
     const { id, aptitudeId } = await createSeededForkWithAptitude();
     await expectOk(
       kinds.$post({ param: { id, entityType: "feats" }, json: { name: "Test Feat", aptitudeIds: [aptitudeId] } }),

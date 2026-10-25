@@ -21,7 +21,7 @@ import type { CasterType } from "@/vocabulary/dnd3.5/classes.ts";
 import { CustomizesEntities } from "./concerns/CustomizesEntities.ts";
 import { LoadsPicks } from "./concerns/LoadsPicks.ts";
 import { ReadsRuleset } from "./concerns/ReadsRuleset.ts";
-import type { CustomizedClassLevel, CustomizedFeat, CustomizedPower, CustomizedRace } from "./loadedEntities.ts";
+import type { CustomizedClassLevel, CustomizedFeat, CustomizedRace, CustomizedSpell } from "./loadedEntities.ts";
 
 /**
  * What a 3.5 character has of its ruleset's entities (`partsOf`): its data past core's, but its own row and the
@@ -55,25 +55,25 @@ export interface LoadedCharacterData extends LoadedCharacter {
   klassCasterTypeMap: Map<string, CasterType>;
   klasses: Klass[];
   klassLevelFeatCountsByAptitudeId: Record<string, number>;
-  klassLevelPowerCountsByAptitudeId: Record<string, number>;
   klassLevelProperties: Map<string, { bab: number; skills: number }>;
   klassLevels: CustomizedClassLevel[];
   klassLevelSaves: KlassLevelSave[];
+  klassLevelSpellCountsByAptitudeId: Record<string, number>;
   klassSkills: KlassSkill[];
   /** The languages it picked, as its rows store them. */
   languages: Language[];
   /** What its levels give it whatever its classes, by its ruleset's Settings: its general feats, its increases. */
   levelRules: LevelRules;
-  /**
-   * The powers it knows, each in its pool: its levels' picks and grants as it loads, then those its modifiers make it
-   * know as they apply in the build's rounds (`PossessesVirtually`), and those its lists make it know as its
-   * spellcasting finishes (`KnownPowers`).
-   */
-  powers: CustomizedPower[];
   race: CustomizedRace;
   skillFields: Map<string, SkillFieldValues>;
   skillPointAbilityId: string | null;
   skills: SkillWithRank[];
+  /**
+   * The spells it knows, each in its pool: its levels' picks and grants as it loads, then those its modifiers make it
+   * know as they apply in the build's rounds (`PossessesVirtually`), and those its lists make it know as its
+   * spellcasting finishes (`KnownSpells`).
+   */
+  spells: CustomizedSpell[];
 }
 
 /** Resolves stored ids through the override map, when there is one. */
@@ -131,7 +131,7 @@ export default class DetailedCharacterDataLoader extends include(
       rulesetData,
       levels.klassLevelIds,
     );
-    const { skills, allFeats, klassLevelFeatCountsByAptitudeId, allPowers, klassLevelPowerCountsByAptitudeId } =
+    const { skills, allFeats, klassLevelFeatCountsByAptitudeId, allSpells, klassLevelSpellCountsByAptitudeId } =
       this.buildPicks(SavedPicks.of(rows), rulesetData, levels, resolve);
 
     // Each entity's customizations: per-entity lookups resolve via the cache's pre-built Maps
@@ -155,9 +155,9 @@ export default class DetailedCharacterDataLoader extends include(
       klasses,
       feats: this.toCustomizedFeats(allFeats, rulesetData),
       skills,
-      powers: this.toCustomizedPowers(allPowers, rulesetData, dcAbilities),
+      spells: this.toCustomizedSpells(allSpells, rulesetData, dcAbilities),
       klassLevelFeatCountsByAptitudeId,
-      klassLevelPowerCountsByAptitudeId,
+      klassLevelSpellCountsByAptitudeId,
       klassLevelProperties,
       ...klassProperties,
     };
@@ -165,13 +165,13 @@ export default class DetailedCharacterDataLoader extends include(
 
   /**
    * The sources of the character's modifiers past its own, in the order they apply: its race, its equipped items, its
-   * class levels, its classes (once each, for a character with any level of it), its feats and its powers (once each,
-   * however many lists know it: its first, a pick before a grant). A feat or a power granted without a pick (a class
+   * class levels, its classes (once each, for a character with any level of it), its feats and its spells (once each,
+   * however many lists know it: its first, a pick before a grant). A feat or a spell granted without a pick (a class
    * level's) bypasses its own prerequisites: what grants it is its gate, as for one a modifier grants, whose modifiers
    * join the build as it applies (`PossessesVirtually`).
    */
   protected override sourcesOf(
-    { feats, klassEntityIds, klassLevels, powers, race }: LoadedParts,
+    { feats, klassEntityIds, klassLevels, spells, race }: LoadedParts,
     items: ModifierSource[],
     { rulesetData }: RulesetView,
   ): ModifierSource[] {
@@ -184,8 +184,8 @@ export default class DetailedCharacterDataLoader extends include(
         requirements: rulesetData.requirementsByEntity.get(klassId) ?? [],
       })),
       ...feats.map((feat) => (feat.klassLevelFeatId ? { modifiers: feat.modifiers } : feat)),
-      ...[...Map.groupBy(powers, (power) => power.id).values()].map(([power]) =>
-        power.free ? { modifiers: power.modifiers } : power,
+      ...[...Map.groupBy(spells, (spell) => spell.id).values()].map(([spell]) =>
+        spell.free ? { modifiers: spell.modifiers } : spell,
       ),
     ];
   }

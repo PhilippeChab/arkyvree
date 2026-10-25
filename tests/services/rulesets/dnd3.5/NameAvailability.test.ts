@@ -27,7 +27,7 @@ interface RenamedKind {
 }
 
 /** Each kind a fork renames its own entity in: what it creates, renames, and the name of one of the core rules'. */
-const RENAMED_KINDS: Record<"aptitudes" | "feats" | "items" | "powers", RenamedKind> = {
+const RENAMED_KINDS: Record<"aptitudes" | "feats" | "items" | "spells", RenamedKind> = {
   aptitudes: {
     create: (session, forkId, _baseId, name) => EntitiesService.createEntity(session, forkId, "aptitudes", { name }),
     rename: (session, forkId, id, name) => EntitiesService.updateEntity(session, forkId, "aptitudes", id, { name }),
@@ -50,19 +50,19 @@ const RENAMED_KINDS: Record<"aptitudes" | "feats" | "items" | "powers", RenamedK
     rename: (session, forkId, id, name) => EntitiesService.updateEntity(session, forkId, "items", id, { name }),
     taken: async (baseId) => (await findPlainItem(baseId)).name,
   },
-  powers: {
+  spells: {
     create: async (session, forkId, baseId, name) => {
       const wizard = (await Entities.findOne<Aptitude>(db, {
         entityType: "aptitudes",
         name: "Wizard Spells",
         rulesetId: baseId,
       }))!;
-      return await EntitiesService.createEntity(session, forkId, "powers", {
+      return await EntitiesService.createEntity(session, forkId, "spells", {
         name,
         aptitudes: [{ id: wizard.id, level: 1 }],
       });
     },
-    rename: (session, forkId, id, name) => EntitiesService.updateEntity(session, forkId, "powers", id, { name }),
+    rename: (session, forkId, id, name) => EntitiesService.updateEntity(session, forkId, "spells", id, { name }),
     taken: async () => "Magic Missile",
   },
 };
@@ -186,7 +186,7 @@ test("a visible inherited feat still blocks its name", async () => {
 
 // A rename takes a name as a create does: one its view shows (the ruleset's own, or a visible inherited entity's) is
 // refused, so the view never shows two of a name.
-test.each(["aptitudes", "feats", "items", "powers"] as const)(
+test.each(["aptitudes", "feats", "items", "spells"] as const)(
   "a fork's own %s renamed to a name its view shows is refused, as its create is",
   async (kind) => {
     const { session, fork, baseId } = await setup();

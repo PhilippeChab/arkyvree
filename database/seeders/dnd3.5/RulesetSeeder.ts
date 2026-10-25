@@ -8,8 +8,8 @@ import { stripSeparators } from "@/shared/text.ts";
 import { BaseSeeder } from "./BaseSeeder.ts";
 import { CopiesIntoExtensions } from "./concerns/CopiesIntoExtensions.ts";
 import { SeedsClasses } from "./concerns/SeedsClasses.ts";
-import { SeedsPowers } from "./concerns/SeedsPowers.ts";
 import { SeedsSkills } from "./concerns/SeedsSkills.ts";
+import { SeedsSpells } from "./concerns/SeedsSpells.ts";
 import { SeedsWizardSchools } from "./concerns/SeedsWizardSchools.ts";
 import { findSpellcastingClass, type SpellcastingClass } from "./spellTable.ts";
 
@@ -24,8 +24,8 @@ export class RulesetSeeder extends include(
   BaseSeeder,
   CopiesIntoExtensions,
   SeedsClasses,
-  SeedsPowers,
   SeedsSkills,
+  SeedsSpells,
   SeedsWizardSchools,
 ) {
   /** Seeds the core rules: the SRD's content, and the hand-written core content and bonded creatures. */
@@ -49,7 +49,7 @@ export class RulesetSeeder extends include(
       { templateMap: templates },
     );
 
-    await this.seedPowers(core.spells);
+    await this.seedSpells(core.spells);
     await this.seedWizardSchools(core.wizardSchools, findSpellcastingClass(core.classes, "Wizard"));
     await this.seedDomains(core.domains, findSpellcastingClass(core.classes, "Cleric"));
     for (const bond of core.bonds) await this.seedBond(bond);
@@ -65,7 +65,7 @@ export class RulesetSeeder extends include(
     await this.seedFeats(book.standaloneFeats);
     await this.seedFeats(book.classFeats);
     await this.cowFeatsIntoExtension(book.cowFeats);
-    await this.seedPowers(book.spells);
+    await this.seedSpells(book.spells);
     await this.cowSpellsIntoExtension(book.cowSpells);
     await this.seedDomains(book.domains, findSpellcastingClass(core.classes, "Cleric"));
     for (const klass of book.classes) await this.seedClass(klass);
@@ -108,17 +108,17 @@ export class RulesetSeeder extends include(
     const links = [];
     for (const d of domains) {
       for (const spell of d.spells) {
-        const powerId = await this.ownPower(spell.name);
-        if (!powerId) {
+        const spellId = await this.ownSpell(spell.name);
+        if (!spellId) {
           console.warn(`[domain seed] Domain spell not found in DB: "${spell.name}" (${domainFeat(d.name)})`);
           continue;
         }
-        links.push({ powerId, aptitudeId: this.ctx.aptMap[domainSpells(d.name)], level: spell.level });
+        links.push({ spellId, aptitudeId: this.ctx.aptMap[domainSpells(d.name)], level: spell.level });
       }
     }
     await this.insertJoins(
-      "powers_aptitudes",
-      this.uniqueBy(links, (l) => `${l.powerId}:${l.aptitudeId}`),
+      "spells_aptitudes",
+      this.uniqueBy(links, (l) => `${l.spellId}:${l.aptitudeId}`),
     );
   }
 }

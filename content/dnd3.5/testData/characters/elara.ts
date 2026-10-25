@@ -50,23 +50,23 @@ export default {
     { levelIndex: 0, featName: "Owl Familiar", aptitude: "Familiar Bond" },
   ],
   // Wizard 3 spellbook: L0=6, L1=5, L2=2
-  powers: [
+  spells: [
     // Cantrips (6)
-    { levelIndex: 0, powerName: "Detect Magic", aptitude: "Wizard Spells" },
-    { levelIndex: 0, powerName: "Light", aptitude: "Wizard Spells" },
-    { levelIndex: 0, powerName: "Read Magic", aptitude: "Wizard Spells" },
-    { levelIndex: 0, powerName: "Mage Hand", aptitude: "Wizard Spells" },
-    { levelIndex: 0, powerName: "Prestidigitation", aptitude: "Wizard Spells" },
-    { levelIndex: 0, powerName: "Resistance", aptitude: "Wizard Spells" },
+    { levelIndex: 0, spellName: "Detect Magic", aptitude: "Wizard Spells" },
+    { levelIndex: 0, spellName: "Light", aptitude: "Wizard Spells" },
+    { levelIndex: 0, spellName: "Read Magic", aptitude: "Wizard Spells" },
+    { levelIndex: 0, spellName: "Mage Hand", aptitude: "Wizard Spells" },
+    { levelIndex: 0, spellName: "Prestidigitation", aptitude: "Wizard Spells" },
+    { levelIndex: 0, spellName: "Resistance", aptitude: "Wizard Spells" },
     // Level 1 spellbook (5): 3 starting + 2 at L2
-    { levelIndex: 0, powerName: "Magic Missile", aptitude: "Wizard Spells" },
-    { levelIndex: 0, powerName: "Mage Armor", aptitude: "Wizard Spells" },
-    { levelIndex: 0, powerName: "Shield", aptitude: "Wizard Spells" },
-    { levelIndex: 1, powerName: "Sleep", aptitude: "Wizard Spells" },
-    { levelIndex: 1, powerName: "Burning Hands", aptitude: "Wizard Spells" },
+    { levelIndex: 0, spellName: "Magic Missile", aptitude: "Wizard Spells" },
+    { levelIndex: 0, spellName: "Mage Armor", aptitude: "Wizard Spells" },
+    { levelIndex: 0, spellName: "Shield", aptitude: "Wizard Spells" },
+    { levelIndex: 1, spellName: "Sleep", aptitude: "Wizard Spells" },
+    { levelIndex: 1, spellName: "Burning Hands", aptitude: "Wizard Spells" },
     // Level 2 spellbook (2): gained at L3
-    { levelIndex: 2, powerName: "Scorching Ray", aptitude: "Wizard Spells" },
-    { levelIndex: 2, powerName: "Web", aptitude: "Wizard Spells" },
+    { levelIndex: 2, spellName: "Scorching Ray", aptitude: "Wizard Spells" },
+    { levelIndex: 2, spellName: "Web", aptitude: "Wizard Spells" },
   ],
   inventory: [{ name: "Quarterstaff", quantity: 1, equipped: true, location: "Two Handed", groups: [0] }],
 } satisfies CharacterSeed;

@@ -29,7 +29,7 @@ interface ClassBody {
  * it: its levels, its class skills, its table.
  */
 export default class ClassEntity extends RulesetEntity<
-  "klasses",
+  "classes",
   ClassBody,
   { description?: string | null; hd: number; name: string },
   typeof CLASS_FIELDS.fields
@@ -49,9 +49,9 @@ export default class ClassEntity extends RulesetEntity<
   protected override readonly listFilters = { kind: z.string() };
 
   /** Its levels' kind, which it owns. */
-  override readonly ownedType = "klass_levels";
+  override readonly ownedType = "class_levels";
 
-  override readonly type = "klasses";
+  override readonly type = "classes";
 
   /**
    * A form's columns: the hit die it gives (a new class's `DEFAULT_HIT_DIE` when it gives none), or the edited class's.

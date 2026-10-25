@@ -25,11 +25,11 @@ import type {
   LevelRequest,
   LevelUpRequest,
   PlannedSoFar,
-  PowerPickQuery,
+  SpellPickQuery,
 } from "./requests.ts";
 import { LEVEL_WIZARD } from "./wizard.ts";
 
-/** The feats step's answer, or the powers', as the preview and the steps answer them. */
+/** The feats step's answer, or the spells', as the preview and the steps answer them. */
 interface PoolStep {
   aptitudePools: Record<
     string,
@@ -55,8 +55,8 @@ interface ReadPlan extends LevelUpRequest {
 /** A 3.5 step's picker, as `openStepPicker` opens it: the class picker over the plan, or a pool's at a level. */
 type StepPickerRead =
   | { kind: "feats"; query: FeatPickQuery }
-  | { kind: "klasses"; planned: PlannedSoFar }
-  | { kind: "powers"; query: PowerPickQuery };
+  | { kind: "classes"; planned: PlannedSoFar }
+  | { kind: "spells"; query: SpellPickQuery };
 
 /** A spell's tier by its spell level, named as the sheet names it ("Cantrips", "Level 1"). */
 const SPELL_TIERS = Object.fromEntries(SPELL_LEVELS.map((level) => [String(level), SPELL_LEVEL_LABELS[level]]));
@@ -70,7 +70,7 @@ const STEPS = [
     name: "class-plan",
     label: "Class Plan",
     mechanic: "plan",
-    kind: "klasses",
+    kind: "classes",
     words: { unmet: "Requirements not met" },
   },
   {
@@ -106,10 +106,10 @@ const STEPS = [
     },
   },
   {
-    name: "powers",
+    name: "spells",
     label: "Select Spells",
     mechanic: "pick",
-    kind: "powers",
+    kind: "spells",
     pools: "aptitudes",
     words: { grantNote: LEVEL_WIZARD.freeGrantNote, optional: "optional", tiers: SPELL_TIERS },
   },
@@ -121,7 +121,7 @@ const STEP = {
   feats: STEPS[4],
   hp: STEPS[1],
   plan: STEPS[0],
-  powers: STEPS[5],
+  spells: STEPS[5],
   skills: STEPS[3],
 } as const;
 
@@ -132,7 +132,7 @@ function byPool(picks: PickedEntity[]): Record<string, string[]> {
   return pools;
 }
 
-/** A pool step's pools as a `pick` step's: optional when the feats step shares them with the powers step. */
+/** A pool step's pools as a `pick` step's: optional when the feats step shares them with the spells step. */
 function poolsOf({ aptitudePools }: PoolStep): PickAnswer["pools"] {
   return Object.fromEntries(
     Object.entries(aptitudePools).map(([id, pool]) => [
@@ -170,7 +170,7 @@ export default class LevelPlans extends LevelUpBase<DetailedCharacter> {
       level: level.level,
       picks,
     };
-    const { abilities, feats, powers, skills } = new LevelUpSteps(
+    const { abilities, feats, spells, skills } = new LevelUpSteps(
       this.view,
       this.character,
       this.rules,
@@ -199,9 +199,9 @@ export default class LevelPlans extends LevelUpBase<DetailedCharacter> {
           ...this.pickOf(feats, "feats", feats.aptitudePools, atLevel),
           granted: feats.autoGrantedFeats.map(({ description, id, name }) => ({ description, free: false, id, name })),
         },
-        [STEP.powers.name]: {
-          ...this.pickOf(powers, "powers", powers.aptitudePools, atLevel),
-          granted: powers.autoGrantedPowers.map(({ description, free, id, name }) => ({ description, free, id, name })),
+        [STEP.spells.name]: {
+          ...this.pickOf(spells, "spells", spells.aptitudePools, atLevel),
+          granted: spells.autoGrantedSpells.map(({ description, free, id, name }) => ({ description, free, id, name })),
         },
       },
     };
@@ -213,7 +213,7 @@ export default class LevelPlans extends LevelUpBase<DetailedCharacter> {
    */
   private describeLevelUp({ levels, picks }: ReadPlan): LevelPlanAnswer {
     const preview = new LevelUpPreview(this.view, this.character, this.rules).describePreview({ levels, picks });
-    const { attributes, feats, levelDetails, nextPickLevels, perLevelSkillPoints, powers, skills } = preview;
+    const { attributes, feats, levelDetails, nextPickLevels, perLevelSkillPoints, spells, skills } = preview;
     return {
       advancements: levelDetails.map((detail) => ({
         id: detail.klassLevelId,
@@ -238,9 +238,9 @@ export default class LevelPlans extends LevelUpBase<DetailedCharacter> {
           ...this.pickOf(feats, "feats", nextPickLevels.feats, (id) => ({ "": id })),
           granted: feats.autoGrantedFeats.map(({ description, id, name }) => ({ description, free: false, id, name })),
         },
-        [STEP.powers.name]: {
-          ...this.pickOf(powers, "powers", nextPickLevels.powers, (levels) => levels),
-          granted: powers.autoGrantedPowers.map(({ description, free, id, name }) => ({ description, free, id, name })),
+        [STEP.spells.name]: {
+          ...this.pickOf(spells, "spells", nextPickLevels.spells, (levels) => levels),
+          granted: spells.autoGrantedSpells.map(({ description, free, id, name }) => ({ description, free, id, name })),
         },
       },
     };
@@ -268,15 +268,15 @@ export default class LevelPlans extends LevelUpBase<DetailedCharacter> {
     }));
   }
 
-  /** The feats or powers (`kind`) that fit, by pool, each by name, a power at its spell level in its pool. */
-  private pickedOf(kind: "feats" | "powers", fitted: Record<string, string[]>): PickAnswer["picked"] {
-    const { featsById, powersById } = this.dnd35;
-    const levels = kind === "powers" ? this.buildPowerLevelLookup(Object.values(fitted).flat()) : undefined;
+  /** The feats or spells (`kind`) that fit, by pool, each by name, a spell at its spell level in its pool. */
+  private pickedOf(kind: "feats" | "spells", fitted: Record<string, string[]>): PickAnswer["picked"] {
+    const { featsById, spellsById } = this.dnd35;
+    const levels = kind === "spells" ? this.buildSpellLevelLookup(Object.values(fitted).flat()) : undefined;
     return Object.fromEntries(
       Object.entries(fitted).map(([pool, ids]) => [
         pool,
         ids.map((id) => {
-          const entity = kind === "feats" ? featsById.get(id) : powersById.get(id);
+          const entity = kind === "feats" ? featsById.get(id) : spellsById.get(id);
           const level = levels?.get(`${id}:${pool}`);
           return {
             description: entity?.description ?? null,
@@ -291,11 +291,11 @@ export default class LevelPlans extends LevelUpBase<DetailedCharacter> {
 
   /**
    * A pool step's answer as a `pick` step's, but its grants: its pools, what fits, whether its options group, and where
-   * each pool's next pick lands (`next`, read by `tiersOf`: a feat pool's at any tier, a power pool's at each).
+   * each pool's next pick lands (`next`, read by `tiersOf`: a feat pool's at any tier, a spell pool's at each).
    */
   private pickOf<N>(
     step: PoolStep,
-    kind: "feats" | "powers",
+    kind: "feats" | "spells",
     next: Record<string, N>,
     tiersOf: (next: N) => Record<string, number>,
   ): Omit<PickAnswer, "granted"> {
@@ -314,12 +314,12 @@ export default class LevelPlans extends LevelUpBase<DetailedCharacter> {
     return levels.map(({ klassId, level }) => this.getKlassLevel(klassId, level).id);
   }
 
-  /** The plan's picks (`picks`) as pickers check their options against them: its feats' and its powers' pairs. */
-  private plannedPicks({ feats, powers }: LevelPicks): Pick<PlannedSoFar, "featPicks" | "powerPicks"> {
+  /** The plan's picks (`picks`) as pickers check their options against them: its feats' and its spells' pairs. */
+  private plannedPicks({ feats, spells }: LevelPicks): Pick<PlannedSoFar, "featPicks" | "spellPicks"> {
     return {
       featPicks: Object.entries(feats).flatMap(([aptitudeId, ids]) => ids.map((featId) => ({ aptitudeId, featId }))),
-      powerPicks: Object.entries(powers).flatMap(([aptitudeId, ids]) =>
-        ids.map((powerId) => ({ aptitudeId, powerId })),
+      spellPicks: Object.entries(spells).flatMap(([aptitudeId, ids]) =>
+        ids.map((spellId) => ({ aptitudeId, spellId })),
       ),
     };
   }
@@ -354,7 +354,7 @@ export default class LevelPlans extends LevelUpBase<DetailedCharacter> {
       levels,
       picks: {
         feats: byPool(Payloads.readStep(request, STEP.feats)),
-        powers: byPool(Payloads.readStep(request, STEP.powers)),
+        spells: byPool(Payloads.readStep(request, STEP.spells)),
         skills: Object.fromEntries(Payloads.readStep(request, STEP.skills).map(({ id, points }) => [id, points])),
       },
     };
@@ -448,11 +448,11 @@ export default class LevelPlans extends LevelUpBase<DetailedCharacter> {
         [STEP.feats.name]: Object.entries(saved.feats).flatMap(([pool, feats]) =>
           feats.map(({ id }) => ({ id, pool })),
         ),
-        [STEP.powers.name]: Object.entries(saved.powers).flatMap(([pool, powers]) =>
-          powers.map(({ id, powerLevel }) => ({
+        [STEP.spells.name]: Object.entries(saved.spells).flatMap(([pool, spells]) =>
+          spells.map(({ id, spellLevel }) => ({
             id,
             pool,
-            ...(powerLevel !== undefined && { tier: String(powerLevel) }),
+            ...(spellLevel !== undefined && { tier: String(spellLevel) }),
           })),
         ),
       },
@@ -494,7 +494,7 @@ export default class LevelPlans extends LevelUpBase<DetailedCharacter> {
     const picked = this.plannedPicks(plan.picks);
     if (step === STEP.plan.name) {
       return {
-        kind: "klasses",
+        kind: "classes",
         planned: {
           ...picked,
           abilityIncreases: plan.levels.map((level) => level.abilityIncreases),
@@ -503,7 +503,7 @@ export default class LevelPlans extends LevelUpBase<DetailedCharacter> {
         },
       };
     }
-    if (step !== STEP.feats.name && step !== STEP.powers.name)
+    if (step !== STEP.feats.name && step !== STEP.spells.name)
       throw new RulesError("not-found", "The step has no picker");
     if (!query.pool) throw new RulesError("invalid", "The step's picker takes a pool");
     const index = plan.editedLevelId ? 0 : (query.advancement ?? 0);
@@ -525,6 +525,6 @@ export default class LevelPlans extends LevelUpBase<DetailedCharacter> {
     };
     return step === STEP.feats.name
       ? { kind: "feats", query: { ...pick, family: query.group } }
-      : { kind: "powers", query: { ...pick, powerLevel: this.readTier(query.tier) } };
+      : { kind: "spells", query: { ...pick, spellLevel: this.readTier(query.tier) } };
   }
 }

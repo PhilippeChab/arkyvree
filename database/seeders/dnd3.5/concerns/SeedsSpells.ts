@@ -1,4 +1,4 @@
-import type { SpellSeed } from "@/content/dnd3.5/builders/spells/types.ts";
+import type { LeveledSpellSeed } from "@/content/dnd3.5/builders/spells/types.ts";
 import type { BaseSeeder } from "@/database/seeders/dnd3.5/BaseSeeder.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 
@@ -11,17 +11,17 @@ function parseSavingThrow(savingThrow: string | undefined, saveMap: Record<strin
 }
 
 /** Seeding spells. */
-export function SeedsPowers<B extends Constructor<BaseSeeder>>(Base: B) {
-  abstract class SeedingPowers extends Base {
+export function SeedsSpells<B extends Constructor<BaseSeeder>>(Base: B) {
+  abstract class SeedingSpells extends Base {
     /**
      * Seeds spells with their properties, each in its spell lists at its level there, and adds them to the context.
      * A list the ruleset doesn't have is left out: the book that has it adds the spell to it.
      */
-    async seedPowers(spells: SpellSeed[]) {
+    async seedSpells(spells: LeveledSpellSeed[]) {
       if (spells.length === 0) return;
 
       const ids = await this.insertEntities(
-        "powers",
+        "spells",
         spells.map((spell) => ({
           rulesetId: this.ctx.rulesetId,
           name: spell.name,
@@ -29,28 +29,28 @@ export function SeedsPowers<B extends Constructor<BaseSeeder>>(Base: B) {
           ...parseSavingThrow(spell.savingThrow, this.ctx.saveMap),
         })),
       );
-      Object.assign(this.ctx.powerMap, ids);
+      Object.assign(this.ctx.spellMap, ids);
 
       const links = spells.flatMap((spell) =>
         spell.aptitudes
           .filter((aptitude) => this.ctx.aptMap[aptitude])
           .map((aptitude) => ({
-            powerId: ids[spell.name],
+            spellId: ids[spell.name],
             aptitudeId: this.ctx.aptMap[aptitude],
             level: spell.aptitudeLevels?.[aptitude] ?? spell.level,
           })),
       );
       await this.insertJoins(
-        "powers_aptitudes",
-        this.uniqueBy(links, (l) => `${l.powerId}:${l.aptitudeId}`),
+        "spells_aptitudes",
+        this.uniqueBy(links, (l) => `${l.spellId}:${l.aptitudeId}`),
       );
       await this.insertProperties(
         this.uniqueBy(
-          spells.flatMap((spell) => this.propertyRows(ids[spell.name], "powers", spell.properties)),
+          spells.flatMap((spell) => this.propertyRows(ids[spell.name], "spells", spell.properties)),
           (p) => `${p.entityId}:${p.type}:${p.value}`,
         ),
       );
     }
   }
-  return SeedingPowers;
+  return SeedingSpells;
 }

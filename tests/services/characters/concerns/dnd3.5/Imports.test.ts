@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { charactersInCharacter } from "@/drizzle/schema.ts";
-import type { CharacterLanguage, LevelFeat, LevelPower } from "@/engine/rulesets/dnd3.5/index.ts";
+import type { CharacterLanguage, LevelFeat, LevelSpell } from "@/engine/rulesets/dnd3.5/index.ts";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import { db } from "@/server/database/index.ts";
 import { ForbiddenError } from "@/server/errors/index.ts";
@@ -56,11 +56,11 @@ describe("Imports", () => {
   test("writes the spells a sorcerer chose on her levels, which pass every check a level-up runs", async () => {
     const { imported } = await importAsNewUser("selene");
     const levels = await CharacterAdvancements.findMany(db, { characterId: imported.character.id });
-    const powers = await Picks.findMany<LevelPower>(db, {
-      pick: "powers",
+    const spells = await Picks.findMany<LevelSpell>(db, {
+      pick: "spells",
       characterLevelIds: levels.map(({ id }) => id),
     });
-    expect(powers).toHaveLength(10);
+    expect(spells).toHaveLength(10);
     // Her spells pass; the familiar her file has none of is hers to pick in the app, which the report says
     const built = await buildAs(DetailedCharacter, (await Characters.findOne(db, { id: imported.character.id }))!);
     expect(built.validate().issues.map(({ message }) => message)).toEqual(["Familiar Bond: 1 unspent slot(s) (0/1)"]);

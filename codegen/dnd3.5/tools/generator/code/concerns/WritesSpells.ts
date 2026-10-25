@@ -1,12 +1,12 @@
 import type { BaseCodeFile } from "@/codegen/dnd3.5/tools/generator/code/BaseCodeFile.ts";
-import type { SpellSeed } from "@/content/dnd3.5/builders/spells/types.ts";
+import type { LeveledSpellSeed } from "@/content/dnd3.5/builders/spells/types.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 
 /** Writing a spell. */
 export function WritesSpells<B extends Constructor<BaseCodeFile>>(Base: B) {
   abstract class WritingSpells extends Base {
     /** A spell written as code, a list's item, without its level: its file is its level's. */
-    spell(spell: SpellSeed): string[] {
+    spell(spell: LeveledSpellSeed): string[] {
       const levels = Object.entries(spell.aptitudeLevels ?? {})
         .sort(([a], [b]) => a.localeCompare(b))
         .map(([aptitude, level]) => `${this.quote(aptitude)}: ${level}`);

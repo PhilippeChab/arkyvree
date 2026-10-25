@@ -48,11 +48,11 @@ describe("A sheet's blocks", () => {
       Object.values(Engine.rules().describeAll()).flatMap((rules) => rules.customizationPages.map((p) => [p.type, p])),
     );
     expect(entityPagePath("r1", "feats", "f1", pages)).toBe("/rulesets/r1/feats/f1/customization");
-    expect(entityPagePath("r1", "powers", "p1", pages)).toBe("/rulesets/r1/powers/p1/customization");
+    expect(entityPagePath("r1", "spells", "p1", pages)).toBe("/rulesets/r1/spells/p1/customization");
     // No ruleset to read it in, no id, or a kind without a page of its own
     expect(entityPagePath(undefined, "feats", "f1", pages)).toBeUndefined();
     expect(entityPagePath("r1", "feats", null, pages)).toBeUndefined();
-    expect(entityPagePath("r1", "klasses", "k1", pages)).toBeUndefined();
+    expect(entityPagePath("r1", "classes", "k1", pages)).toBeUndefined();
     expect(entityPagePath("r1", "nonsense", "x", pages)).toBeUndefined();
   });
 

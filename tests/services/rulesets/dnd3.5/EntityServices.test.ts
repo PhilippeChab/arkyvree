@@ -32,7 +32,7 @@ interface Page {
 interface Refs {
   abilityId: string;
   featAptitudeId: string;
-  powerAptitudeId: string;
+  spellAptitudeId: string;
 }
 
 interface Row {
@@ -63,10 +63,10 @@ const BODIES: Partial<Record<RulesetEntityType, (refs: Refs) => Record<string, u
   aptitudes: () => ({}),
   feats: (refs) => ({ aptitudeIds: [refs.featAptitudeId] }),
   items: () => ({}),
-  klasses: () => ({}),
+  classes: () => ({}),
   languages: () => ({ type: "Standard" }),
   mechanics: () => ({}),
-  powers: (refs) => ({ aptitudes: [{ id: refs.powerAptitudeId }] }),
+  spells: (refs) => ({ aptitudes: [{ id: refs.spellAptitudeId }] }),
   races: () => ({ size: "Medium", baseSpeed: 30 }),
   saves: (refs) => ({ abilityId: refs.abilityId }),
   skills: (refs) => ({
@@ -113,14 +113,14 @@ const FORM_REFS: Record<
         await Joins.findMany<{ aptitudeId: string; featId: string }>(db, { join: "feats_aptitudes", fromIds: [id] })
       ).map(({ aptitudeId }) => aptitudeId),
   },
-  powers: {
+  spells: {
     kind: "aptitudes",
     label: "Aptitude",
-    ref: "powerAptitudeId",
+    ref: "spellAptitudeId",
     stored: async (id) =>
       (
-        await Joins.findMany<{ aptitudeId: string; level: number | null; powerId: string }>(db, {
-          join: "powers_aptitudes",
+        await Joins.findMany<{ aptitudeId: string; level: number | null; spellId: string }>(db, {
+          join: "spells_aptitudes",
           fromIds: [id],
         })
       ).map(({ aptitudeId }) => aptitudeId),
@@ -169,10 +169,10 @@ async function setup() {
     description: "Strength",
   });
   const featAptitude = await EntitiesService.createEntity(session, ruleset.id, "aptitudes", { name: "Feat Aptitude" });
-  const powerAptitude = await EntitiesService.createEntity(session, ruleset.id, "aptitudes", {
-    name: "Power Aptitude",
+  const spellAptitude = await EntitiesService.createEntity(session, ruleset.id, "aptitudes", {
+    name: "Spell Aptitude",
   });
-  const refs: Refs = { abilityId: ability.id, featAptitudeId: featAptitude.id, powerAptitudeId: powerAptitude.id };
+  const refs: Refs = { abilityId: ability.id, featAptitudeId: featAptitude.id, spellAptitudeId: spellAptitude.id };
   return { user, session, ruleset, refs };
 }
 

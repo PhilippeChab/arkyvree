@@ -152,11 +152,11 @@ describe("EntitiesService: skills", () => {
   test("deletes the class skills that point at a deleted skill", async () => {
     const { session, ruleset, body } = await setup();
     const skill = await EntitiesService.createEntity(session, ruleset.id, "skills", body());
-    const klass = await EntitiesService.createEntity(session, ruleset.id, "klasses", { name: "Skilled Class" });
-    await Joins.create<KlassSkill>(db, "klass_skills", { klassId: klass.id, skillId: skill.id });
+    const klass = await EntitiesService.createEntity(session, ruleset.id, "classes", { name: "Skilled Class" });
+    await Joins.create<KlassSkill>(db, "class_skills", { klassId: klass.id, skillId: skill.id });
 
     await EntitiesService.deleteEntity(session, ruleset.id, "skills", skill.id);
-    expect(await Joins.findMany<KlassSkill>(db, { join: "klass_skills", fromIds: [klass.id] })).toEqual([]);
+    expect(await Joins.findMany<KlassSkill>(db, { join: "class_skills", fromIds: [klass.id] })).toEqual([]);
   });
 
   test("refuses to delete a skill a character put ranks in", async () => {

@@ -34,7 +34,7 @@ export default class SheetSummaries {
         const label = ClassLevels.format(klass.name, levels.length);
         return {
           id: klass.id,
-          entityType: "klasses",
+          entityType: "classes",
           name: klass.name,
           label,
           words: { open: `${label} Levels`, levels: `${klass.name} Levels`, add: `Add ${klass.name} Level` },

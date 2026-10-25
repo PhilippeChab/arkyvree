@@ -12,15 +12,7 @@
  * Plain JS: oxlint loads its plugins without a TypeScript step.
  */
 
-import fs from "node:fs";
-
 import { isInRepo, repoPath, rootOf, rulesetsOf } from "./paths.mjs";
-
-/**
- * The folders whose files still name 3.5's nouns (`notYetGeneric.json`, each a folder, not its subfolders), which phase 5
- * of #59 makes generic one at a time: each leaves the list as it's clean, and none comes back.
- */
-const NOT_YET_GENERIC = new Set(JSON.parse(fs.readFileSync(new URL("./notYetGeneric.json", import.meta.url), "utf8")));
 
 /** The nouns 3.5 names its things by, each a word of a name (`klassLevelId`'s `klass`). */
 const NOUNS = new Set([
@@ -103,8 +95,7 @@ const WHOLE_NAMES = new Set(["classes", "saves"]);
 function createRulesetNouns(context) {
   if (!isInRepo(context.filename)) return {};
   const file = repoPath(context.filename);
-  const folder = file.includes("/") ? file.slice(0, file.lastIndexOf("/")) : ".";
-  if (isRulesets(file, rulesetsOf(rootOf(context.filename))) || NOT_YET_GENERIC.has(folder)) return {};
+  if (isRulesets(file, rulesetsOf(rootOf(context.filename)))) return {};
   // A name read twice at one place (an import's imported and local name, a shorthand property) is reported once
   const reported = new Set();
   const report = (node, name) => {

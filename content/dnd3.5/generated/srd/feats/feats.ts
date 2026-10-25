@@ -701,7 +701,7 @@ export const GREATER_SPELL_FOCUS_FEATS: FeatSeed[] = MAGIC_SCHOOLS.map((s) => ({
   aptitudes: ["General"],
   requirements: [eq(feat(`Spell Focus: ${s}`))],
   modifiers: [
-    { target: `powers.groups.${stripSeparators(s)}.*.dc.misc`, operator: "add", value: "1", valueType: "number" },
+    { target: `spells.groups.${stripSeparators(s)}.*.dc.misc`, operator: "add", value: "1", valueType: "number" },
   ],
   properties: [{ type: "FEAT_FAMILY", value: "Greater Spell Focus" }],
 }));
@@ -926,7 +926,7 @@ export const SPELL_FOCUS_FEATS: FeatSeed[] = MAGIC_SCHOOLS.map((s) => ({
   generated: true,
   aptitudes: ["General"],
   modifiers: [
-    { target: `powers.groups.${stripSeparators(s)}.*.dc.misc`, operator: "add", value: "1", valueType: "number" },
+    { target: `spells.groups.${stripSeparators(s)}.*.dc.misc`, operator: "add", value: "1", valueType: "number" },
   ],
   properties: [{ type: "FEAT_FAMILY", value: "Spell Focus" }],
 }));

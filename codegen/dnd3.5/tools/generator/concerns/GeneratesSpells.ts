@@ -20,7 +20,7 @@ export function GeneratesSpells<B extends Constructor<BaseBookGenerator>>(Base: 
       for (const level of BookLayout.spellLevels) {
         const { path, list } = BookLayout.spellFile(level);
         const levelSpells = byLevel.get(level);
-        if (levelSpells) this.writeList(path, list, "PowerSeed", levelSpells, (file, spell) => file.spell(spell));
+        if (levelSpells) this.writeList(path, list, "SpellSeed", levelSpells, (file, spell) => file.spell(spell));
       }
     }
   }

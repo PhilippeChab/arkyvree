@@ -10,7 +10,7 @@ export function EntityRights<B extends Constructor<RulesetRoles>>(Base: B) {
      * current ruleset, any descendant fork, or any host ruleset that subscribes
      * to this one as an extension. Nothing else.
      *
-     * Don't include class-side references (klass_level_feats, klass_skills, etc.)
+     * Don't include class-side references (class_level_feats, class_skills, etc.)
      * — class definitions are author-owned content; if the author deletes a feat
      * their class grants, the FK cascade wipes the grant and the author can fix
      * it. Class-granted feats that a character actually picked are recorded on

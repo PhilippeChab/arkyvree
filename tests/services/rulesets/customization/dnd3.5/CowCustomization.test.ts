@@ -17,7 +17,7 @@ import type { Session } from "@/shared/relations.ts";
 import { STRENGTH_BONUS } from "@/tests/support/dnd3.5/customizations.ts";
 import { createTestRuleset } from "@/tests/support/rulesets.ts";
 import { createTestUser } from "@/tests/support/users.ts";
-import { FEAT_FAMILY, KLASS_CASTER_TYPE } from "@/vocabulary/dnd3.5/properties/index.ts";
+import { CLASS_CASTER_TYPE, FEAT_FAMILY } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 interface Kind {
   create: (session: Session, rulesetId: string, ownerType: string, ownerId: string) => Promise<Written>;
@@ -37,9 +37,9 @@ type Written = Row & { resolvedEntityId: string };
 const CASES = [
   ["feats", "modifiers"],
   ["feats", "requirements"],
-  ["klasses", "modifiers"],
-  ["klasses", "requirements"],
-  ["klass_levels", "modifiers"],
+  ["classes", "modifiers"],
+  ["classes", "requirements"],
+  ["class_levels", "modifiers"],
   ["modifiers", "requirements"],
 ] as const;
 
@@ -119,11 +119,11 @@ async function setup() {
     value: "13",
   });
 
-  const [klass] = await Entities.create<Klass>(db, "klasses", { name: "Fighter", rulesetId, hd: 10 });
-  const [level] = await Entities.create<KlassLevel>(db, "klass_levels", { klassId: klass.id, level: 1 });
+  const [klass] = await Entities.create<Klass>(db, "classes", { name: "Fighter", rulesetId, hd: 10 });
+  const [level] = await Entities.create<KlassLevel>(db, "class_levels", { klassId: klass.id, level: 1 });
   for (const [sourceId, sourceType] of [
-    [level.id, "klass_levels"],
-    [klass.id, "klasses"],
+    [level.id, "class_levels"],
+    [klass.id, "classes"],
   ]) {
     await Modifiers.create(db, {
       sourceId,
@@ -135,12 +135,12 @@ async function setup() {
     });
   }
   await Properties.createMany(db, [
-    { entityId: klass.id, entityType: "klasses", type: KLASS_CASTER_TYPE, value: "Arcane" },
+    { entityId: klass.id, entityType: "classes", type: CLASS_CASTER_TYPE, value: "Arcane" },
   ]);
   await Requirements.create(db, {
     ...requirement,
     entityId: klass.id,
-    entityType: "klasses",
+    entityType: "classes",
     level: "1",
     target: "abilities.strength.misc",
     value: "13",
@@ -153,7 +153,7 @@ async function setup() {
     fork,
     feat,
     klass,
-    owners: { feats: feat.id, klasses: klass.id, klass_levels: level.id, modifiers: modifier.id },
+    owners: { feats: feat.id, classes: klass.id, class_levels: level.id, modifiers: modifier.id },
   };
 }
 
@@ -174,8 +174,8 @@ describe.each(CASES)("an inherited %s's %s", (ownerType, kindName) => {
     expect(created.resolvedEntityId).not.toBe(ownerId);
     expect((await kind.rowsOf(ownerType, created.resolvedEntityId)).map((r) => r.id)).toContain(created.id);
     const copied =
-      ownerType === "klasses" || ownerType === "klass_levels"
-        ? { entityType: "klasses", sourceEntityId: klass.id }
+      ownerType === "classes" || ownerType === "class_levels"
+        ? { entityType: "classes", sourceEntityId: klass.id }
         : { entityType: "feats", sourceEntityId: feat.id };
     expect(await EntitySnapshots.findMany(db, { rulesetId: fork.id })).toMatchObject([copied]);
     expect(await kind.rowsOf(ownerType, ownerId)).toEqual(parentRows);

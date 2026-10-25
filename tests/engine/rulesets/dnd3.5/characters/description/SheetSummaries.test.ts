@@ -33,7 +33,7 @@ describe("A 3.5 sheet's summary", () => {
       tracks: [
         {
           id: "fighter",
-          entityType: "klasses",
+          entityType: "classes",
           name: "Fighter",
           label: "Fighter 2",
           words: { open: "Fighter 2 Levels", levels: "Fighter Levels", add: "Add Fighter Level" },
@@ -44,7 +44,7 @@ describe("A 3.5 sheet's summary", () => {
         },
         {
           id: "rogue",
-          entityType: "klasses",
+          entityType: "classes",
           name: "Rogue",
           label: "Rogue 1",
           words: { open: "Rogue 1 Levels", levels: "Rogue Levels", add: "Add Rogue Level" },

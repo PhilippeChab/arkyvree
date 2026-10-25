@@ -112,7 +112,7 @@ export default class PcgenImport {
         languages: [],
       },
       modifiers: [],
-      picks: { abilityIncreases: [], feats: [], powers: [], skills: [] },
+      picks: { abilityIncreases: [], feats: [], spells: [], skills: [] },
       player: undefined,
       requirements: [],
     };

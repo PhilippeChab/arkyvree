@@ -38,7 +38,7 @@ async function setupOwnRows() {
     name: "Own Feat",
     aptitudeIds: [pool.id],
   });
-  const spell = await EntitiesService.createEntity(session, fork.id, "powers", {
+  const spell = await EntitiesService.createEntity(session, fork.id, "spells", {
     name: "Own Spell",
     saveId: save.id,
     aptitudes: [{ id: spellList.id, level: 1 }],
@@ -76,8 +76,8 @@ test("a fork's own feats and spells, listed alone, name a list the fork copied b
     expect(feats.items.find((row) => row.id === feat.id)?.featsAptitudesInRules).toMatchObject([
       { aptitudeId: poolCopy.id, aptitudesInRule: { id: poolCopy.id, name: "Copied Pool" } },
     ]);
-    const spells = await EntitiesService.getEntities(fork.id, "powers", { childOnly }, PAGE);
-    expect(spells.items.find((row) => row.id === spell.id)?.powersAptitudesInRules).toMatchObject([
+    const spells = await EntitiesService.getEntities(fork.id, "spells", { childOnly }, PAGE);
+    expect(spells.items.find((row) => row.id === spell.id)?.spellsAptitudesInRules).toMatchObject([
       { aptitudeId: listCopy.id, level: 1, aptitudesInRule: { id: listCopy.id, name: "Copied Spells" } },
     ]);
   }
@@ -90,10 +90,10 @@ test("a spell names its save by the view's id, and carries no stored save row", 
     abilityId: ability.id,
   });
 
-  const listed = (await EntitiesService.getEntities(fork.id, "powers", {}, PAGE)).items.find(
+  const listed = (await EntitiesService.getEntities(fork.id, "spells", {}, PAGE)).items.find(
     (row) => row.id === spell.id,
   )!;
-  const page = await EntitiesService.getEntity(fork.id, "powers", spell.id);
+  const page = await EntitiesService.getEntity(fork.id, "spells", spell.id);
   for (const read of [listed, page]) {
     expect(read.saveId).toBe(saveCopy.id);
     expect(read).not.toHaveProperty("savesInRule");

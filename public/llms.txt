@@ -15,7 +15,7 @@ A ruleset is the complete definition of a game system's mechanics. It contains:
 - **Classes** - character classes with level progression
 - **Skills** - skill definitions with class/cross-class costs
 - **Feats** - selectable features with prerequisites
-- **Powers/Spells** - magical or special abilities organized by level
+- **Spells** - magical or special abilities organized by level
 - **Items** - equipment, weapons, armor, and magical items
 - **Saves** - saving throw categories
 - **Aptitudes** - pools of choosable options that unlock at certain levels

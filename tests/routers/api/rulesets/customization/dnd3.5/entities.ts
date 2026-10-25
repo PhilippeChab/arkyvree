@@ -21,7 +21,7 @@ export async function createEntity(rulesetId: string, entityType: string): Promi
   const name = `Test ${entityType} ${uniqueId()}`;
   switch (entityType) {
     case "feats":
-    case "powers": {
+    case "spells": {
       const aptitude = await postAptitude(rulesetId);
       const pool = entityType === "feats" ? { aptitudeIds: [aptitude.id] } : { aptitudes: [{ id: aptitude.id }] };
       return (await expectOk(kinds.$post({ param: { id, entityType }, json: { name, ...pool } }))).id;
@@ -32,9 +32,9 @@ export async function createEntity(rulesetId: string, entityType: string): Promi
       const json = { name, size: "Medium", baseSpeed: 30 };
       return (await expectOk(kinds.$post({ param: { id, entityType }, json }))).id;
     }
-    case "klasses":
+    case "classes":
       return (await expectOk(kinds.$post({ param: { id, entityType: "classes" }, json: { name } }))).id;
-    case "klass_levels": {
+    case "class_levels": {
       const klass = await expectOk(kinds.$post({ param: { id, entityType: "classes" }, json: { name } }));
       const level = await expectOk(
         ruleset.entities[":entityType"][":entityId"].owned.$post({

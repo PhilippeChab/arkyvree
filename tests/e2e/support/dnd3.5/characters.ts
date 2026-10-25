@@ -28,7 +28,7 @@ export async function addFirstLevel(page: Page, characterId: string, klass: stri
     levels.$post({
       param: { characterId },
       json: {
-        steps: { ...planned, hp: [hp.advancements[0].max], abilities: [[]], skills: [], feats: [], powers: [] },
+        steps: { ...planned, hp: [hp.advancements[0].max], abilities: [[]], skills: [], feats: [], spells: [] },
         force: true,
       },
     }),

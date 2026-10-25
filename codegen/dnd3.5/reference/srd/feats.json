@@ -122,7 +122,7 @@
       "modifiers": [
         {
           "operator": "add",
-          "target": "powers.groups.school.*.dc.misc",
+          "target": "spells.groups.school.*.dc.misc",
           "value": "1",
           "valueType": "number"
         }
@@ -489,7 +489,7 @@
       "modifiers": [
         {
           "operator": "add",
-          "target": "powers.groups.school.*.dc.misc",
+          "target": "spells.groups.school.*.dc.misc",
           "value": "1",
           "valueType": "number"
         }

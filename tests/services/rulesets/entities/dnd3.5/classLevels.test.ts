@@ -7,11 +7,11 @@ import type {
   Klass,
   KlassLevel,
   KlassLevelFeat,
-  KlassLevelPower,
   KlassLevelSave,
-  Power,
+  KlassLevelSpell,
   RulesetAbility,
   RulesetSave,
+  Spell,
 } from "@/engine/rulesets/dnd3.5/index.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
@@ -27,7 +27,7 @@ import { addCharacterLevel } from "@/tests/support/dnd3.5/levels.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
 import { copyEntity, createTestRuleset } from "@/tests/support/rulesets.ts";
 import { findSeededRuleset, NIL_UUID } from "@/tests/support/seed.ts";
-import { KLASS_LEVEL_BAB, KLASS_LEVEL_SKILL_POINTS } from "@/vocabulary/dnd3.5/properties/index.ts";
+import { CLASS_LEVEL_BAB, CLASS_LEVEL_SKILL_POINTS } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 type LevelBody = Parameters<typeof EntitiesService.createOwnedEntity>[4];
 
@@ -38,7 +38,7 @@ function createLevel(
   level: number,
   body: Partial<LevelBody> = {},
 ) {
-  return EntitiesService.createOwnedEntity(session, rulesetId, "klasses", klassId, {
+  return EntitiesService.createOwnedEntity(session, rulesetId, "classes", klassId, {
     level,
     fields: { bab: level, skills: 4 },
     ...body,
@@ -46,7 +46,7 @@ function createLevel(
 }
 
 function modifier(sourceId: string, target: string, value: string) {
-  return { sourceId, sourceType: "klass_levels", target, value, valueType: "number", operator: "add" } as const;
+  return { sourceId, sourceType: "class_levels", target, value, valueType: "number", operator: "add" } as const;
 }
 
 async function createSave(rulesetId: string, name: string) {
@@ -62,7 +62,7 @@ async function createSave(rulesetId: string, name: string) {
 /** A new user's empty ruleset with a class and an aptitude. */
 async function setup() {
   const { user, session, ruleset } = await createTestUserAndRuleset();
-  const klass = await EntitiesService.createEntity(session, ruleset.id, "klasses", { name: "Test Class" });
+  const klass = await EntitiesService.createEntity(session, ruleset.id, "classes", { name: "Test Class" });
   const [aptitude] = await Entities.create<Aptitude>(db, "aptitudes", {
     name: "Fighter Bonus Feat",
     rulesetId: ruleset.id,
@@ -97,7 +97,7 @@ describe("EntitiesService: a class's levels", () => {
         saves: [{ saveId: fortitude.id, base: 2 }],
       });
 
-      expect(await EntitiesService.getOwnedEntities(ruleset.id, "klasses", klass.id)).toMatchObject([
+      expect(await EntitiesService.getOwnedEntities(ruleset.id, "classes", klass.id)).toMatchObject([
         {
           level: 1,
           bab: 1,
@@ -119,7 +119,7 @@ describe("EntitiesService: a class's levels", () => {
         await createLevel(session, ruleset.id, klass.id, level, { fields: { bab, skills: 4 } });
 
       expect(
-        (await EntitiesService.getOwnedEntities(ruleset.id, "klasses", klass.id)).map((level) => level.babLabel),
+        (await EntitiesService.getOwnedEntities(ruleset.id, "classes", klass.id)).map((level) => level.babLabel),
       ).toEqual(["+0", "+6/+1", "+11/+6/+1"]);
     });
 
@@ -138,8 +138,8 @@ describe("EntitiesService: a class's levels", () => {
       };
       RulesetViews.invalidate(fork.id);
       const grantsOf = async (levelId: string) => ({
-        feats: await Joins.findMany<KlassLevelFeat>(db, { join: "klass_level_feats", fromIds: [levelId] }),
-        saves: await Joins.findMany<KlassLevelSave>(db, { join: "klass_level_saves", fromIds: [levelId] }),
+        feats: await Joins.findMany<KlassLevelFeat>(db, { join: "class_level_feats", fromIds: [levelId] }),
+        saves: await Joins.findMany<KlassLevelSave>(db, { join: "class_level_saves", fromIds: [levelId] }),
       });
       const copied = {
         feats: [{ aptitudeId: copies.aptitude, featId: copies.feat }],
@@ -153,11 +153,11 @@ describe("EntitiesService: a class's levels", () => {
       };
       const level = await createLevel(session, fork.id, klass.id, 1, grants);
       expect(await grantsOf(level.id)).toMatchObject(copied);
-      await EntitiesService.updateOwnedEntity(session, fork.id, "klasses", klass.id, level.id, {
+      await EntitiesService.updateOwnedEntity(session, fork.id, "classes", klass.id, level.id, {
         feats: [],
         saves: [],
       });
-      await EntitiesService.updateOwnedEntity(session, fork.id, "klasses", klass.id, level.id, grants);
+      await EntitiesService.updateOwnedEntity(session, fork.id, "classes", klass.id, level.id, grants);
       expect(await grantsOf(level.id)).toMatchObject(copied);
 
       // An id it lacks was a 500; one save named by both its ids, two rows of it
@@ -185,12 +185,12 @@ describe("EntitiesService: a class's levels", () => {
         saves: [{ saveId: fortitude.id, base: 2 }],
       });
       const update = (body: Partial<LevelBody>) =>
-        EntitiesService.updateOwnedEntity(session, ruleset.id, "klasses", klass.id, level.id, body);
+        EntitiesService.updateOwnedEntity(session, ruleset.id, "classes", klass.id, level.id, body);
       const links = async () => ({
-        feats: (await Joins.findMany<KlassLevelFeat>(db, { join: "klass_level_feats", fromIds: [level.id] })).map(
+        feats: (await Joins.findMany<KlassLevelFeat>(db, { join: "class_level_feats", fromIds: [level.id] })).map(
           (f) => f.featId,
         ),
-        saves: (await Joins.findMany<KlassLevelSave>(db, { join: "klass_level_saves", fromIds: [level.id] })).map(
+        saves: (await Joins.findMany<KlassLevelSave>(db, { join: "class_level_saves", fromIds: [level.id] })).map(
           (s) => s.saveId,
         ),
       });
@@ -218,8 +218,8 @@ describe("EntitiesService: a class's levels", () => {
       modifiers: [{ target: "combat.bab" }],
       requirements: [{ target: "classes.testclass.level", value: "1" }],
     };
-    expect(await EntitiesService.getOwnedEntity(ruleset.id, "klasses", klass.id, level.id)).toMatchObject(detail);
-    expect(await EntitiesService.getOwnedEntityWithOwner(ruleset.id, "klasses", level.id)).toMatchObject({
+    expect(await EntitiesService.getOwnedEntity(ruleset.id, "classes", klass.id, level.id)).toMatchObject(detail);
+    expect(await EntitiesService.getOwnedEntityWithOwner(ruleset.id, "classes", level.id)).toMatchObject({
       ...detail,
       name: "Test Class",
     });
@@ -231,19 +231,19 @@ describe("EntitiesService: a class's levels", () => {
     const level = await createLevel(session, ruleset.id, klass.id, 1);
 
     expect(
-      await EntitiesService.updateOwnedEntity(session, ruleset.id, "klasses", klass.id, level.id, {
+      await EntitiesService.updateOwnedEntity(session, ruleset.id, "classes", klass.id, level.id, {
         fields: { bab: 3 },
       }),
     ).toMatchObject({ bab: 3, skills: 4 });
-    const properties = await Properties.findMany(db, { entityIds: [level.id], entityType: "klass_levels" });
-    expect(properties.map((p) => p.type).sort()).toEqual([KLASS_LEVEL_BAB, KLASS_LEVEL_SKILL_POINTS]);
+    const properties = await Properties.findMany(db, { entityIds: [level.id], entityType: "class_levels" });
+    expect(properties.map((p) => p.type).sort()).toEqual([CLASS_LEVEL_BAB, CLASS_LEVEL_SKILL_POINTS]);
   });
 
   test("refuses an edit started from a stale level, unless it sends no token", async () => {
     const { session, ruleset, klass } = await setup();
     const level = await createLevel(session, ruleset.id, klass.id, 1);
     const update = (bab: number, updatedAt?: string) =>
-      EntitiesService.updateOwnedEntity(session, ruleset.id, "klasses", klass.id, level.id, {
+      EntitiesService.updateOwnedEntity(session, ruleset.id, "classes", klass.id, level.id, {
         fields: { bab },
         updatedAt,
       });
@@ -287,7 +287,7 @@ describe("EntitiesService: a class's levels", () => {
       await Modifiers.create(db, { ...modifier(bonusFeat.id, poolTarget, "1"), sourceType: "feats" });
       for (const level of [1, 2]) {
         const created = await createLevel(session, ruleset.id, klass.id, level);
-        await Joins.create<KlassLevelFeat>(db, "klass_level_feats", {
+        await Joins.create<KlassLevelFeat>(db, "class_level_feats", {
           klassLevelId: created.id,
           featId: bonusFeat.id,
           aptitudeId: aptitude.id,
@@ -325,7 +325,7 @@ describe("EntitiesService: a class's levels", () => {
   test("writes 0 spells a day at a spell level the class casts but gives no uses at yet, as the SRD: a paladin's", async () => {
     const core = await findSeededRuleset(DND35_RULESET_NAME);
     const paladin = (await Entities.findOne<Klass>(db, {
-      entityType: "klasses",
+      entityType: "classes",
       name: "Paladin",
       rulesetId: core.id,
     }))!;
@@ -337,7 +337,7 @@ describe("EntitiesService: a class's levels", () => {
   test("reads a spell list's slots whatever its class's name holds: the Ur-priest's", async () => {
     const divine = await findSeededRuleset(DND35_COMPLETE_DIVINE_NAME);
     const urPriest = (await Entities.findOne<Klass>(db, {
-      entityType: "klasses",
+      entityType: "classes",
       name: "Ur-priest",
       rulesetId: divine.id,
     }))!;
@@ -358,10 +358,10 @@ describe("EntitiesService: a class's levels", () => {
     const { session: other } = await createTestUserAndRuleset();
     for (const change of [
       () => createLevel(other, ruleset.id, klass.id, 2),
-      () => EntitiesService.updateOwnedEntity(other, ruleset.id, "klasses", klass.id, level.id, { fields: { bab: 3 } }),
-      () => EntitiesService.deleteOwnedEntity(other, ruleset.id, "klasses", klass.id, level.id),
+      () => EntitiesService.updateOwnedEntity(other, ruleset.id, "classes", klass.id, level.id, { fields: { bab: 3 } }),
+      () => EntitiesService.deleteOwnedEntity(other, ruleset.id, "classes", klass.id, level.id),
       // Its access checked before its class is looked up
-      () => EntitiesService.deleteOwnedEntity(other, ruleset.id, "klasses", NIL_UUID, level.id),
+      () => EntitiesService.deleteOwnedEntity(other, ruleset.id, "classes", NIL_UUID, level.id),
     ])
       expect(change()).rejects.toThrow(ForbiddenError);
   });
@@ -376,26 +376,26 @@ describe("EntitiesService: a class's levels", () => {
       [
         "update in a missing ruleset",
         () =>
-          EntitiesService.updateOwnedEntity(session, NIL_UUID, "klasses", klass.id, level.id, { fields: { bab: 2 } }),
+          EntitiesService.updateOwnedEntity(session, NIL_UUID, "classes", klass.id, level.id, { fields: { bab: 2 } }),
       ],
       [
         "update for a missing class",
         () =>
-          EntitiesService.updateOwnedEntity(session, ruleset.id, "klasses", NIL_UUID, level.id, { fields: { bab: 2 } }),
+          EntitiesService.updateOwnedEntity(session, ruleset.id, "classes", NIL_UUID, level.id, { fields: { bab: 2 } }),
       ],
       [
         "delete in a missing ruleset",
-        () => EntitiesService.deleteOwnedEntity(session, NIL_UUID, "klasses", klass.id, level.id),
+        () => EntitiesService.deleteOwnedEntity(session, NIL_UUID, "classes", klass.id, level.id),
       ],
       [
         "delete for a missing class",
-        () => EntitiesService.deleteOwnedEntity(session, ruleset.id, "klasses", NIL_UUID, level.id),
+        () => EntitiesService.deleteOwnedEntity(session, ruleset.id, "classes", NIL_UUID, level.id),
       ],
-      ["read for a missing class", () => EntitiesService.getOwnedEntity(ruleset.id, "klasses", NIL_UUID, level.id)],
-      ["read a missing level", () => EntitiesService.getOwnedEntity(ruleset.id, "klasses", klass.id, NIL_UUID)],
+      ["read for a missing class", () => EntitiesService.getOwnedEntity(ruleset.id, "classes", NIL_UUID, level.id)],
+      ["read a missing level", () => EntitiesService.getOwnedEntity(ruleset.id, "classes", klass.id, NIL_UUID)],
       [
         "read by id through another ruleset",
-        () => EntitiesService.getOwnedEntityWithOwner(other.ruleset.id, "klasses", level.id),
+        () => EntitiesService.getOwnedEntityWithOwner(other.ruleset.id, "classes", level.id),
       ],
       ["feat pools of a missing ruleset", () => readClassTable(NIL_UUID, klass.id, "feat-pools")],
       ["feat pools of a missing class", () => readClassTable(ruleset.id, NIL_UUID, "feat-pools")],
@@ -414,32 +414,32 @@ describe("EntitiesService: a class's levels", () => {
   });
 
   describe("deleting a level", () => {
-    test("deletes its feats, powers, saves and customizations", async () => {
+    test("deletes its feats, spells, saves and customizations", async () => {
       const { session, ruleset, klass, aptitude } = await setup();
       const [feat] = await Entities.create<Feat>(db, "feats", { name: "Cleave", rulesetId: ruleset.id });
-      const [power] = await Entities.create<Power>(db, "powers", { name: "Rage", rulesetId: ruleset.id });
+      const [spell] = await Entities.create<Spell>(db, "spells", { name: "Rage", rulesetId: ruleset.id });
       const save = await createSave(ruleset.id, "Fortitude");
       await createLevel(session, ruleset.id, klass.id, 1);
       const level = await createLevel(session, ruleset.id, klass.id, 2, {
         feats: [{ featId: feat.id, aptitudeId: aptitude.id }],
         saves: [{ saveId: save.id, base: 2 }],
       });
-      await Joins.create<KlassLevelPower>(db, "klass_level_powers", {
+      await Joins.create<KlassLevelSpell>(db, "class_level_spells", {
         klassLevelId: level.id,
-        powerId: power.id,
+        spellId: spell.id,
         aptitudeId: aptitude.id,
       });
       await Modifiers.create(db, modifier(level.id, "combat.bab", "1"));
 
-      await EntitiesService.deleteOwnedEntity(session, ruleset.id, "klasses", klass.id, level.id);
+      await EntitiesService.deleteOwnedEntity(session, ruleset.id, "classes", klass.id, level.id);
 
-      expect(await Entities.findOne<KlassLevel>(db, { entityType: "klass_levels", id: level.id })).toBeUndefined();
-      for (const join of ["klass_level_feats", "klass_level_powers", "klass_level_saves"])
+      expect(await Entities.findOne<KlassLevel>(db, { entityType: "class_levels", id: level.id })).toBeUndefined();
+      for (const join of ["class_level_feats", "class_level_spells", "class_level_saves"])
         expect(await Joins.findMany(db, { join, fromIds: [level.id] })).toEqual([]);
 
-      expect(await Modifiers.findMany(db, { sourceIds: [level.id], sourceType: "klass_levels" })).toEqual([]);
-      expect(await Requirements.findMany(db, { entityIds: [level.id], entityType: "klass_levels" })).toEqual([]);
-      expect(await Properties.findMany(db, { entityIds: [level.id], entityType: "klass_levels" })).toEqual([]);
+      expect(await Modifiers.findMany(db, { sourceIds: [level.id], sourceType: "class_levels" })).toEqual([]);
+      expect(await Requirements.findMany(db, { entityIds: [level.id], entityType: "class_levels" })).toEqual([]);
+      expect(await Properties.findMany(db, { entityIds: [level.id], entityType: "class_levels" })).toEqual([]);
     });
 
     test("is refused while a character has taken it", async () => {
@@ -448,11 +448,11 @@ describe("EntitiesService: a class's levels", () => {
       const character = await createTestCharacter(user.id, { rulesetId: ruleset.id });
       await addCharacterLevel(character.id, level.id);
 
-      expect(EntitiesService.deleteOwnedEntity(session, ruleset.id, "klasses", klass.id, level.id)).rejects.toThrow(
+      expect(EntitiesService.deleteOwnedEntity(session, ruleset.id, "classes", klass.id, level.id)).rejects.toThrow(
         ConflictError,
       );
       // Checked before its class is looked up: sent with a class the ruleset has none of too
-      expect(EntitiesService.deleteOwnedEntity(session, ruleset.id, "klasses", NIL_UUID, level.id)).rejects.toThrow(
+      expect(EntitiesService.deleteOwnedEntity(session, ruleset.id, "classes", NIL_UUID, level.id)).rejects.toThrow(
         ConflictError,
       );
     });
@@ -461,14 +461,14 @@ describe("EntitiesService: a class's levels", () => {
   describe("in a fork", () => {
     test("reads the inherited class's levels", async () => {
       const { parent, fork, klass, inheritedLevel } = await setupFork();
-      expect(await EntitiesService.getOwnedEntities(fork.id, "klasses", klass.id)).toMatchObject([
+      expect(await EntitiesService.getOwnedEntities(fork.id, "classes", klass.id)).toMatchObject([
         { id: inheritedLevel.id, level: 1, bab: 1 },
       ]);
-      expect(await EntitiesService.getOwnedEntity(fork.id, "klasses", klass.id, inheritedLevel.id)).toMatchObject({
+      expect(await EntitiesService.getOwnedEntity(fork.id, "classes", klass.id, inheritedLevel.id)).toMatchObject({
         id: inheritedLevel.id,
       });
       // Held by the parent, as its class is: a delete of it in the fork can be undone
-      expect(await EntitiesService.getOwnedEntityWithOwner(fork.id, "klasses", inheritedLevel.id)).toMatchObject({
+      expect(await EntitiesService.getOwnedEntityWithOwner(fork.id, "classes", inheritedLevel.id)).toMatchObject({
         id: inheritedLevel.id,
         name: klass.name,
         rulesetId: parent.id,
@@ -488,7 +488,7 @@ describe("EntitiesService: a class's levels", () => {
       });
       expect(created.klassId).toBe(snapshot!.forkedEntityId);
       expect(
-        (await Entities.findMany<KlassLevel>(db, { entityType: "klass_levels", ownerIds: [klass.id] })).map(
+        (await Entities.findMany<KlassLevel>(db, { entityType: "class_levels", ownerIds: [klass.id] })).map(
           (l) => l.level,
         ),
       ).toEqual([1]);
@@ -499,16 +499,16 @@ describe("EntitiesService: a class's levels", () => {
       const parentRows = await RulesetViews.getRawData(parent.id);
       // Regression: the first edit copies the level mid-save, and a stat the edit leaves out was read as 0.
       expect(
-        await EntitiesService.updateOwnedEntity(session, fork.id, "klasses", klass.id, inheritedLevel.id, {
+        await EntitiesService.updateOwnedEntity(session, fork.id, "classes", klass.id, inheritedLevel.id, {
           fields: { bab: 5 },
           updatedAt: inheritedLevel.updatedAt,
         }),
       ).toMatchObject({ bab: 5, skills: 4 });
 
-      await EntitiesService.deleteOwnedEntity(session, fork.id, "klasses", klass.id, inheritedLevel.id);
+      await EntitiesService.deleteOwnedEntity(session, fork.id, "classes", klass.id, inheritedLevel.id);
       expect(await RulesetViews.getRawData(parent.id)).toBe(parentRows);
-      expect(await EntitiesService.getOwnedEntities(fork.id, "klasses", klass.id)).toEqual([]);
-      expect(await EntitiesService.getOwnedEntities(parent.id, "klasses", klass.id)).toMatchObject([
+      expect(await EntitiesService.getOwnedEntities(fork.id, "classes", klass.id)).toEqual([]);
+      expect(await EntitiesService.getOwnedEntities(parent.id, "classes", klass.id)).toMatchObject([
         { id: inheritedLevel.id, bab: 1, skills: 4 },
       ]);
     });
@@ -520,7 +520,7 @@ describe("EntitiesService: a class's levels", () => {
 
       await expectRefusedWith(createLevel(session, fork.id, other.klass.id, 1), 404);
       await expectRefusedWith(
-        EntitiesService.updateOwnedEntity(session, fork.id, "klasses", other.klass.id, otherLevel.id, {
+        EntitiesService.updateOwnedEntity(session, fork.id, "classes", other.klass.id, otherLevel.id, {
           fields: { bab: 2 },
         }),
         404,

@@ -73,7 +73,7 @@ export function WritesIndexes<B extends Constructor<BaseCodeFile>>(Base: B) {
       for (const { path, list } of files) this.gather(`./${basename(path)}`, [list]);
       this.list(
         BookLayout.files.spells.list,
-        "SpellSeed",
+        "LeveledSpellSeed",
         files.map(({ level, list }) => `  ...${list}.map((p) => ({ ...p, level: ${level} })),`),
       );
     }

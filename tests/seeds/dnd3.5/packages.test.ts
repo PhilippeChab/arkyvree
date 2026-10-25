@@ -76,7 +76,7 @@ test("Every content package seeds into a database without them, its extensions e
       name: string;
     }[];
   const coreFeats = await own("feats");
-  const corePowers = await own("powers");
+  const coreSpells = await own("spells");
   expect(sortedNames(coreFeats)).toEqual(
     [
       ...CORE.feats.map((feat) => feat.name),
@@ -84,10 +84,10 @@ test("Every content package seeds into a database without them, its extensions e
       ...BONDS.flatMap((bond) => bond.feats.map((feat) => feat.name)),
     ].sort(),
   );
-  expect(sortedNames(await own("klasses"))).toEqual(
+  expect(sortedNames(await own("classes"))).toEqual(
     [...ALL_CLASSES, ...BONDS.map((bond) => bond.klass)].map((klass) => klass.name).sort(),
   );
-  expect(sortedNames(corePowers)).toEqual(ALL_SPELLS.map((spell) => spell.name).sort());
+  expect(sortedNames(coreSpells)).toEqual(ALL_SPELLS.map((spell) => spell.name).sort());
   expect(sortedNames(await own("races"))).toEqual(
     [...ALL_RACES, ...BONDS.flatMap((bond) => bond.races)].map((race) => race.name).sort(),
   );
@@ -131,6 +131,6 @@ test("Every content package seeds into a database without them, its extensions e
       ),
     );
   expect(snapshots.length).toBeGreaterThan(0);
-  const coreIds = new Set([...coreFeats, ...corePowers].map(({ id }) => id));
+  const coreIds = new Set([...coreFeats, ...coreSpells].map(({ id }) => id));
   expect(snapshots.filter((snapshot) => !coreIds.has(snapshot.sourceEntityId))).toEqual([]);
 }, 60_000);

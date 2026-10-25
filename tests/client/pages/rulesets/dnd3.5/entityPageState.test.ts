@@ -37,7 +37,7 @@ describe("An entity page's way back", () => {
       label: "Back to Feat",
       to: "/rulesets/r1/feats/f1/customization/modifiers",
     });
-    expect(entityPageBack({ from: "/rulesets/r1/powers/p1/customization" }, FALLBACK, DND35_WORDS).label).toBe(
+    expect(entityPageBack({ from: "/rulesets/r1/spells/p1/customization" }, FALLBACK, DND35_WORDS).label).toBe(
       "Back to Spell",
     );
     expect(
@@ -46,7 +46,7 @@ describe("An entity page's way back", () => {
     // Before its ruleset's words are in, never its type as the code names it
     expect(entityPageBack({ from: "/rulesets/r1/class-levels/l1/customization" }, FALLBACK).label).toBe("Back");
     // A type by its own name, which no page's URL takes, isn't one
-    expect(entityPageBack({ from: "/rulesets/r1/klass_levels/l1/customization" }, FALLBACK, DND35_WORDS).label).toBe(
+    expect(entityPageBack({ from: "/rulesets/r1/class_levels/l1/customization" }, FALLBACK, DND35_WORDS).label).toBe(
       "Back to Ruleset",
     );
   });

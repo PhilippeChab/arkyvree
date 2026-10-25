@@ -19,7 +19,7 @@ type Seed = (db: Db) => Promise<void>;
  * existing one the updates past its version. Once every database has an update, fold it into the seeds and
  * raise `seedsVersion` to its version, so the seeds alone describe the package.
  *
- * - Never delete a seeded row (a feat, an aptitude, a power…): characters reference them by id.
+ * - Never delete a seeded row (a feat, an aptitude, a spell…): characters reference them by id.
  * - Keep an update safe to run twice (guard clauses, upserts): a retry after a failure runs it again.
  */
 export interface ContentPackage extends Pick<PackageDefinition, "name" | "seedsVersion" | "type"> {

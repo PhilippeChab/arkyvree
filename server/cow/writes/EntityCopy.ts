@@ -101,7 +101,7 @@ export default class EntityCopy {
     const cow = await CowDataReader.read(tx, this.ruleset);
 
     // 2. Copy entity to child ruleset, its references to the entities the ruleset shows in their place (a race's
-    // parent, an item's template, a power's save)
+    // parent, an item's template, a spell's save)
     const { id: _id, createdAt: _ca, updatedAt: _ua, deletedAt: _da, rulesetId: _rid, ...entityData } = parentEntity;
     const [resolvedData] = cow.resolveRows([entityData]);
     const newRows = await repo.create(tx, { ...resolvedData, rulesetId: childRulesetId });
@@ -184,7 +184,7 @@ export default class EntityCopy {
   }
 
   /**
-   * Merges sibling list links of a feat or a power (`copyOnWrite().mergeListLinks`), each to the list that stands for
+   * Merges sibling list links of a feat or a spell (`copyOnWrite().mergeListLinks`), each to the list that stands for
    * it, as the copy's own (`copyRelationships`): the losers' links, read by their stored ids.
    */
   private async mergeListLinks(tx: Db, targetEntityId: string, siblingIds: string[], cow: CowData) {

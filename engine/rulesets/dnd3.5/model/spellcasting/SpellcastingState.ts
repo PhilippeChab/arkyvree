@@ -5,9 +5,9 @@ import { ALLOWED_ALL, type AptitudeLevelData } from "@/engine/rulesets/dnd3.5/mo
 import AptitudeTargets from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTargets.ts";
 import type ClassesComponent from "@/engine/rulesets/dnd3.5/model/classes/ClassesComponent.ts";
 import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
-import type PowerGroupingsComponent from "@/engine/rulesets/dnd3.5/model/powers/PowerGroupingsComponent.ts";
-import type PowersComponent from "@/engine/rulesets/dnd3.5/model/powers/PowersComponent.ts";
-import type { KlassLevel, Power } from "@/engine/rulesets/dnd3.5/view/rows.ts";
+import type SpellGroupingsComponent from "@/engine/rulesets/dnd3.5/model/spells/SpellGroupingsComponent.ts";
+import type SpellsComponent from "@/engine/rulesets/dnd3.5/model/spells/SpellsComponent.ts";
+import type { KlassLevel, Spell } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import type { Modifier, Property } from "@/shared/relations.ts";
 import { type CasterType, MAX_CLASS_LEVEL } from "@/vocabulary/dnd3.5/classes.ts";
 import { MAX_SPELL_LEVEL } from "@/vocabulary/dnd3.5/spells.ts";
@@ -33,14 +33,14 @@ export interface SpellTagLists {
   joinsClassList: boolean;
 }
 
-/** What a character's spellcasting holds: its bonus caster levels, its aptitudes' powers, its spell tags. */
+/** What a character's spellcasting holds: its bonus caster levels, its aptitudes' spells, its spell tags. */
 export default abstract class SpellcastingState extends CharacterComponent<LoadedCharacterData> {
   constructor(
     protected readonly classes: ClassesComponent,
     protected readonly abilities: AbilitiesComponent,
     protected readonly aptitudes: AptitudesComponent,
-    protected readonly powers: PowersComponent,
-    protected readonly powerGroupings: PowerGroupingsComponent,
+    protected readonly spells: SpellsComponent,
+    protected readonly spellGroupings: SpellGroupingsComponent,
   ) {
     super();
   }
@@ -70,15 +70,15 @@ export default abstract class SpellcastingState extends CharacterComponent<Loade
     };
   })();
 
-  protected allAptitudePowers: Array<
-    Power & {
+  protected allAptitudeSpells: Array<
+    Spell & {
       aptitudeId: string;
-      powerLevel: number | null;
       saveName: string | null;
+      spellLevel: number | null;
     }
   > = [];
 
-  protected aptitudePowerProperties: Property[] = [];
+  protected aptitudeSpellProperties: Property[] = [];
 
   /** Maps bonus klass level ID → granting source name (e.g. "Stormlord Level 1") */
   protected bonusKlassLevelAttribution = new Map<string, string>();
@@ -95,7 +95,7 @@ export default abstract class SpellcastingState extends CharacterComponent<Loade
   /** Each class's spell lists, by its id (`initialize`). */
   protected classListsByKlassId = new Map<string, Set<string>>();
 
-  protected powerAptitudeLinks: { aptitudeId: string; powerId: string }[] = [];
+  protected spellAptitudeLinks: { aptitudeId: string; spellId: string }[] = [];
 
   /** Where each spell tag shows, by its name. */
   protected spellTagLists: Record<string, SpellTagLists> = {};
@@ -185,7 +185,7 @@ export default abstract class SpellcastingState extends CharacterComponent<Loade
     const classes = Object.entries(this.classes.getClasses());
     const classNameByKlassLevelId = this.classNameByKlassLevelId();
     const classOf = (modifier: Modifier) => {
-      if (modifier.sourceType === "klass_levels")
+      if (modifier.sourceType === "class_levels")
         return classNameByKlassLevelId.get(modifier.sourceId) ?? this.bonusKlassLevelClassMap.get(modifier.sourceId);
 
       if (modifier.sourceType !== "feats") return undefined;

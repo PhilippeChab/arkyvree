@@ -4,7 +4,7 @@ import type { RulesetData } from "@/engine/core/view/index.ts";
 import { type Dnd35Components } from "@/engine/rulesets/dnd3.5/model/CharacterComponents.ts";
 import SpellLists from "@/engine/rulesets/dnd3.5/rules/SpellLists.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
-import type { PowerWithAptitudes } from "@/engine/rulesets/dnd3.5/view/rows.ts";
+import type { SpellWithAptitudes } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import { getOperators } from "@/shared/customization/operators.ts";
 import { formatPropertyType } from "@/shared/customization/properties.ts";
 import { deriveNameLabels, deriveSegmentLabels, isLeafOfKind, type TargetPath } from "@/shared/customization/target.ts";
@@ -12,33 +12,33 @@ import type { Property } from "@/shared/relations.ts";
 import { capitalize, stripSeparators } from "@/shared/text.ts";
 import { SPELL_DESCRIPTOR, SPELL_SCHOOL } from "@/vocabulary/dnd3.5/properties/index.ts";
 
-const NAVIGATABLE_POWER_DC_PATHS = [
+const NAVIGATABLE_SPELL_DC_PATHS = [
   { path: "dc.misc", description: "Other bonuses to spell DC", type: "number" as const },
   { path: "dc.total", description: "Final DC for this spell", type: "number" as const, requirementOnly: true },
 ];
 
 /** The spells' target paths: each spell's DC, possession and properties. */
-export default class PowersPaths implements PathCategory<Dnd35Components> {
+export default class SpellsPaths implements PathCategory<Dnd35Components> {
   /**
-   * The DC paths of these groupings (a school or descriptor: `powers.groups.<grouping>.*.dc.misc`, each of its spells)
-   * or of these spells (`wildcard` false: `powers.<spell>.dc.*.misc`, each class's DC of it).
+   * The DC paths of these groupings (a school or descriptor: `spells.groups.<grouping>.*.dc.misc`, each of its spells)
+   * or of these spells (`wildcard` false: `spells.<spell>.dc.*.misc`, each class's DC of it).
    */
   static generateGroupingPaths(
-    powerGroupings: string[],
+    spellGroupings: string[],
     kind: "modifier" | "requirement",
     wildcard: boolean = true,
     groupLabel?: string,
   ): TargetPath[] {
     const paths: TargetPath[] = [];
 
-    for (const grouping of powerGroupings) {
-      for (const subPath of NAVIGATABLE_POWER_DC_PATHS) {
+    for (const grouping of spellGroupings) {
+      for (const subPath of NAVIGATABLE_SPELL_DC_PATHS) {
         if (!isLeafOfKind(subPath, kind)) continue;
         const prefix = groupLabel ? `${capitalize(grouping)} ${groupLabel}` : capitalize(grouping);
         const leaf = subPath.path.slice("dc.".length);
         paths.push({
-          path: wildcard ? `powers.groups.${grouping}.*.dc.${leaf}` : `powers.${grouping}.dc.*.${leaf}`,
-          category: "powers",
+          path: wildcard ? `spells.groups.${grouping}.*.dc.${leaf}` : `spells.${grouping}.dc.*.${leaf}`,
+          category: "spells",
           description: `${kind === "requirement" ? "Any" : "All"} ${prefix} — ${subPath.description}`,
           ...(groupLabel && { groupDescription: `${capitalize(grouping)} ${groupLabel} spells` }),
           valueType: subPath.type,
@@ -50,8 +50,8 @@ export default class PowersPaths implements PathCategory<Dnd35Components> {
     return paths;
   }
 
-  static generatePowerPaths(
-    powers: (PowerWithAptitudes & { properties: Property[] })[],
+  static generateSpellPaths(
+    spells: (SpellWithAptitudes & { properties: Property[] })[],
     spellSlugByAptitudeId: Map<string, string>,
     featListIds: Set<string>,
     kind: "modifier" | "requirement",
@@ -59,15 +59,15 @@ export default class PowersPaths implements PathCategory<Dnd35Components> {
     const paths: TargetPath[] = [];
 
     // Property paths
-    for (const power of powers) {
-      const normalizedPowerName = stripSeparators(power.name);
+    for (const spell of spells) {
+      const normalizedSpellName = stripSeparators(spell.name);
 
-      const propertyTypes = new Set(power.properties.map((p) => p.type));
+      const propertyTypes = new Set(spell.properties.map((p) => p.type));
       for (const type of propertyTypes) {
         paths.push({
-          path: `powers.${normalizedPowerName}.properties.${type}`,
-          category: "powers",
-          description: `${power.name} ${formatPropertyType(type)} property`,
+          path: `spells.${normalizedSpellName}.properties.${type}`,
+          category: "spells",
+          description: `${spell.name} ${formatPropertyType(type)} property`,
           valueType: "string",
           // A list of values: one of them is required or added, never the whole list as text
           operators: kind === "modifier" ? ["add", "subtract"] : ["contains", "not_contains"],
@@ -80,21 +80,21 @@ export default class PowersPaths implements PathCategory<Dnd35Components> {
     const aptitudeIdToSlug = new Map([...spellSlugByAptitudeId].filter(([aptitudeId]) => !featListIds.has(aptitudeId)));
 
     const seen = new Set<string>();
-    for (const power of powers) {
-      const spellSlug = stripSeparators(power.name);
-      for (const pa of power.powersAptitudesInRules) {
+    for (const spell of spells) {
+      const spellSlug = stripSeparators(spell.name);
+      for (const pa of spell.spellsAptitudesInRules) {
         if (pa.level == null) continue;
         const aptSlug = aptitudeIdToSlug.get(pa.aptitudeId);
         if (!aptSlug) continue;
 
-        const path = `powers.${spellSlug}.${aptSlug}.known`;
+        const path = `spells.${spellSlug}.${aptSlug}.known`;
         if (seen.has(path)) continue;
         seen.add(path);
 
         paths.push({
           path,
-          category: "powers",
-          description: `Whether ${power.name} is known`,
+          category: "spells",
+          description: `Whether ${spell.name} is known`,
           valueType: "boolean",
           operators: getOperators("boolean", kind),
         });
@@ -104,77 +104,77 @@ export default class PowersPaths implements PathCategory<Dnd35Components> {
     return paths;
   }
 
-  /** A grouping's spells' DC bonus (`powers.groups.<slug>.*.dc.misc`, each of its spells), by the grouping's name. */
+  /** A grouping's spells' DC bonus (`spells.groups.<slug>.*.dc.misc`, each of its spells), by the grouping's name. */
   static groupDcMisc(groupingName: string): string {
-    return `powers.groups.${stripSeparators(groupingName)}.*.dc.misc`;
+    return `spells.groups.${stripSeparators(groupingName)}.*.dc.misc`;
   }
 
-  /** Whether a target is a spell's (`powers.…`): a spell's modifiers apply after the others. */
-  static isPowerTarget(target: string): boolean {
-    return target.startsWith("powers.");
+  /** Whether a target is a spell's (`spells.…`): a spell's modifiers apply after the others. */
+  static isSpellTarget(target: string): boolean {
+    return target.startsWith("spells.");
   }
 
-  /** The spell and list a target makes known (`powers.<spell>.<list>.known`), or undefined for another target. */
+  /** The spell and list a target makes known (`spells.<spell>.<list>.known`), or undefined for another target. */
   static parseKnown(target: string): { list: string; spell: string } | undefined {
     const parts = target.split(".");
-    return parts.length === 4 && parts[0] === "powers" && parts[3] === "known"
+    return parts.length === 4 && parts[0] === "spells" && parts[3] === "known"
       ? { spell: parts[1], list: parts[2] }
       : undefined;
   }
 
-  readonly component = { key: "powers", getter: "getPowers" } as const;
+  readonly component = { key: "spells", getter: "getSpells" } as const;
 
   readonly description = "Spell DC, possession, and properties";
 
   /** A modifier setting a spell known on a list true grants it there (`PossessesVirtually`) */
   readonly grants = { entity: "spell", leaf: "known" };
 
-  readonly groupDescriptionTemplates = { powers: "{name} spell DC and properties" };
+  readonly groupDescriptionTemplates = { spells: "{name} spell DC and properties" };
 
   readonly label = "Spells";
 
-  readonly name = "powers";
+  readonly name = "spells";
 
   /** Each spell a list has at a level, by its slug: its own DC paths. */
-  private leveledPowerNames(powers: Dnd35View["powers"]) {
+  private leveledSpellNames(spells: Dnd35View["spells"]) {
     return [
       ...new Set(
-        powers
-          .filter((p) => p.powersAptitudesInRules.some((pa) => pa.level != null))
+        spells
+          .filter((p) => p.spellsAptitudesInRules.some((pa) => pa.level != null))
           .map((p) => stripSeparators(p.name)),
       ),
     ];
   }
 
   generate(rulesetData: RulesetData, kind: "modifier" | "requirement"): TargetPath[] {
-    const { powers } = Dnd35View.of(rulesetData);
+    const { spells } = Dnd35View.of(rulesetData);
     const { propertiesByEntityType } = rulesetData;
     const spellLists = SpellLists.of(rulesetData);
-    const powerProperties = propertiesByEntityType.get("powers") ?? [];
-    const powersWithProperties = powers.map((power) => ({
-      ...power,
-      properties: rulesetData.propertiesByEntity.get(power.id) ?? [],
+    const spellProperties = propertiesByEntityType.get("spells") ?? [];
+    const spellsWithProperties = spells.map((spell) => ({
+      ...spell,
+      properties: rulesetData.propertiesByEntity.get(spell.id) ?? [],
     }));
     return [
-      ...PowersPaths.generatePowerPaths(
-        powersWithProperties,
+      ...SpellsPaths.generateSpellPaths(
+        spellsWithProperties,
         spellLists.spellSlugByAptitudeId,
         spellLists.featListIds,
         kind,
       ),
-      ...PowersPaths.generateGroupingPaths(
-        CategoryPaths.collectPropertySlugs(powerProperties, SPELL_SCHOOL),
+      ...SpellsPaths.generateGroupingPaths(
+        CategoryPaths.collectPropertySlugs(spellProperties, SPELL_SCHOOL),
         kind,
         true,
         "school",
       ),
-      ...PowersPaths.generateGroupingPaths(
-        CategoryPaths.collectPropertySlugs(powerProperties, SPELL_DESCRIPTOR),
+      ...SpellsPaths.generateGroupingPaths(
+        CategoryPaths.collectPropertySlugs(spellProperties, SPELL_DESCRIPTOR),
         kind,
         true,
         "descriptor",
       ),
-      ...PowersPaths.generateGroupingPaths(this.leveledPowerNames(powers), kind, false),
+      ...SpellsPaths.generateGroupingPaths(this.leveledSpellNames(spells), kind, false),
     ];
   }
 
@@ -182,8 +182,8 @@ export default class PowersPaths implements PathCategory<Dnd35Components> {
     return {
       properties: "Properties",
       known: "Known",
-      // D&D 3.5 surfaces power groupings as schools in the path picker
-      ...deriveSegmentLabels(NAVIGATABLE_POWER_DC_PATHS, { dc: "DC", groups: "Schools" }),
+      // D&D 3.5 surfaces spell groupings as schools in the path picker
+      ...deriveSegmentLabels(NAVIGATABLE_SPELL_DC_PATHS, { dc: "DC", groups: "Schools" }),
     };
   }
   /**
@@ -196,11 +196,11 @@ export default class PowersPaths implements PathCategory<Dnd35Components> {
     const fallbacks: Record<string, string> = {};
     for (const { name } of dnd35.aptitudes)
       fallbacks[SpellLists.toSpellPossessionSlug(name)] ??= name.replace(/ Spells$/, "");
-    for (const { type, value } of rulesetData.propertiesByEntityType.get("powers") ?? []) {
+    for (const { type, value } of rulesetData.propertiesByEntityType.get("spells") ?? []) {
       fallbacks[type] ??= formatPropertyType(type);
       const slug = stripSeparators(value);
       if (/[a-z]/.test(slug)) fallbacks[slug] ??= value;
     }
-    return { fallbacks, names: deriveNameLabels(dnd35.powers.map(({ name }) => name)) };
+    return { fallbacks, names: deriveNameLabels(dnd35.spells.map(({ name }) => name)) };
   }
 }

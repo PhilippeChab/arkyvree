@@ -10,8 +10,8 @@ import type {
   CharacterLanguage,
   KlassLevel,
   LevelFeat,
-  LevelPower,
   LevelSkill,
+  LevelSpell,
 } from "@/engine/rulesets/dnd3.5/index.ts";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import seedCharacters from "@/scripts/db/seeds/characters.ts";
@@ -47,7 +47,7 @@ function inventoryLine(item: {
  * is its class and level there.
  */
 function seeded(
-  { classes, skills, feats, powers = [], inventory, abilities, languages, ...identity }: CharacterSeed,
+  { classes, skills, feats, spells = [], inventory, abilities, languages, ...identity }: CharacterSeed,
   rulesetId: string,
 ) {
   const levels = classes.flatMap(({ klass, hp }) => hp.map((_, i) => `${klass} ${i + 1}`));
@@ -69,7 +69,7 @@ function seeded(
     levels: classes.flatMap(({ klass, hp }) => hp.map((rolled, i) => `${klass} ${i + 1}: ${rolled} hp`)).sort(),
     skills: skills.map((s) => `${levels[s.levelIndex]}: ${s.skillName} ${s.rank}`).sort(),
     feats: feats.map((f) => `${levels[f.levelIndex]}: ${f.featName} in ${f.aptitude}`).sort(),
-    powers: powers.map((p) => `${levels[p.levelIndex]}: ${p.powerName} in ${p.aptitude}`).sort(),
+    spells: spells.map((p) => `${levels[p.levelIndex]}: ${p.spellName} in ${p.aptitude}`).sort(),
     inventory: inventory.map(inventoryLine).sort(),
   };
 }
@@ -77,7 +77,7 @@ function seeded(
 /** What the seed wrote of a character. */
 async function written(character: Character) {
   const ctx = await getSeedCtx();
-  const [races, klasses, abilities, languages, skills, feats, aptitudes, powers, items] = [
+  const [races, klasses, abilities, languages, skills, feats, aptitudes, spells, items] = [
     ctx.raceMap.pc,
     ctx.klassMap.pc,
     ctx.abilityMap,
@@ -85,14 +85,14 @@ async function written(character: Character) {
     ctx.skillMap,
     ctx.featMap,
     ctx.aptMap,
-    ctx.powerMap,
+    ctx.spellMap,
     ctx.itemMap,
   ].map(namesOf);
   const levels = await CharacterAdvancements.findMany(db, { characterId: character.id });
   const levelNames: Record<string, string> = {};
   for (const level of levels) {
     const klassLevel = (await Entities.findOne<KlassLevel>(db, {
-      entityType: "klass_levels",
+      entityType: "class_levels",
       id: level.klassLevelId,
     }))!;
     levelNames[level.id] = `${klasses[klassLevel.klassId]} ${klassLevel.level}`;
@@ -126,8 +126,8 @@ async function written(character: Character) {
     feats: (await Picks.findMany<LevelFeat>(db, { pick: "feats", characterLevelIds: levelIds }))
       .map((f) => `${levelNames[f.characterLevelId]}: ${feats[f.featId]} in ${aptitudes[f.aptitudeId]}`)
       .sort(),
-    powers: (await Picks.findMany<LevelPower>(db, { pick: "powers", characterLevelIds: levelIds }))
-      .map((p) => `${levelNames[p.characterLevelId]}: ${powers[p.powerId]} in ${aptitudes[p.aptitudeId]}`)
+    spells: (await Picks.findMany<LevelSpell>(db, { pick: "spells", characterLevelIds: levelIds }))
+      .map((p) => `${levelNames[p.characterLevelId]}: ${spells[p.spellId]} in ${aptitudes[p.aptitudeId]}`)
       .sort(),
     inventory: (await CharacterInventory.findMany(db, { characterId: character.id }))
       .map((item) => inventoryLine({ ...item, name: items[item.itemId] }))

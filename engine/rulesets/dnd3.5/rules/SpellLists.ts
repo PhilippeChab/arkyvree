@@ -5,7 +5,7 @@ import { stripSeparators } from "@/shared/text.ts";
 
 /**
  * The spell lists of a ruleset's view, derived once and kept with it (`SpellLists.of`): those its classes and feats
- * open, those leveled by spell, and each list's spell-possession slug (`powers.<spell>.<slug>.known`).
+ * open, those leveled by spell, and each list's spell-possession slug (`spells.<spell>.<slug>.known`).
  */
 export default class SpellLists {
   constructor(private readonly rulesetData: RulesetData) {}
@@ -112,11 +112,11 @@ export default class SpellLists {
   get featListSpells(): Map<string, Map<number, Set<string>>> {
     if (this.built.featListSpells) return this.built.featListSpells;
     const featListSpells = new Map([...this.featListIds].map((id) => [id, new Map<number, Set<string>>()]));
-    for (const power of this.dnd35.powers) {
-      for (const { aptitudeId, level } of power.powersAptitudesInRules) {
+    for (const spell of this.dnd35.spells) {
+      for (const { aptitudeId, level } of spell.spellsAptitudesInRules) {
         const levels = featListSpells.get(aptitudeId);
         if (level == null || !levels) continue;
-        levels.set(level, (levels.get(level) ?? new Set<string>()).add(power.id));
+        levels.set(level, (levels.get(level) ?? new Set<string>()).add(spell.id));
       }
     }
     return (this.built.featListSpells = featListSpells);
@@ -129,12 +129,12 @@ export default class SpellLists {
   get leveledAptitudeIds(): Set<string> {
     if (this.built.leveledAptitudeIds) return this.built.leveledAptitudeIds;
     const leveledAptitudeIds = new Set([...this.classListIds, ...this.featListIds]);
-    for (const power of this.dnd35.powers)
-      for (const link of power.powersAptitudesInRules) if (link.level != null) leveledAptitudeIds.add(link.aptitudeId);
+    for (const spell of this.dnd35.spells)
+      for (const link of spell.spellsAptitudesInRules) if (link.level != null) leveledAptitudeIds.add(link.aptitudeId);
     return (this.built.leveledAptitudeIds = leveledAptitudeIds);
   }
 
-  /** Each list's spell-possession slug (`powers.<spell>.<slug>.known`), by its aptitude id. */
+  /** Each list's spell-possession slug (`spells.<spell>.<slug>.known`), by its aptitude id. */
   get spellSlugByAptitudeId(): Map<string, string> {
     return (this.built.spellSlugByAptitudeId ??= new Map(
       this.dnd35.aptitudes.map((aptitude) => [aptitude.id, SpellLists.toSpellPossessionSlug(aptitude.name)]),

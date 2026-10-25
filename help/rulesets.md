@@ -13,7 +13,7 @@ A ruleset holds:
 - **Classes** with their level-by-level progression — BAB, saves, skill points, granted features.
 - **Skills**, including subtypes like Knowledge subcategories.
 - **Feats** with their prerequisites and effects.
-- **Spells** or powers organized into spellcasting pools.
+- **Spells**, organized into spellcasting pools.
 - **Items** — weapons, armor, shields, gear, magic items.
 - **Aptitudes** — pools of choosable options at certain class levels (Fighter Bonus Feats, Cleric Domains).
 - **Mechanics** — free-form rules the system doesn't model on the sheet (trip, grapple, bull rush).

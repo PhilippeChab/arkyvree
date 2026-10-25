@@ -76,7 +76,7 @@ describe("rulesets entities: feats", () => {
     const { id, aptitudeId } = await createSeededForkWithAptitude();
     await expectOk(
       kinds.$post({
-        param: { id, entityType: "powers" },
+        param: { id, entityType: "spells" },
         json: { name: "Test Spell", aptitudes: [{ id: aptitudeId }] },
       }),
     );

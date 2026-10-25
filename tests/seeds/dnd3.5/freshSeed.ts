@@ -74,7 +74,7 @@ export async function freshSeeder({ named = false } = {}) {
       await RulesetSeeder.findCoreRulesetId(db, DND35_CORE_PACKAGE, "A seed test naming its rows"),
     )),
     rulesetId: seeder.ctx.rulesetId,
-    powerMap: {},
-    inheritedPowerMap: {},
+    spellMap: {},
+    inheritedSpellMap: {},
   });
 }

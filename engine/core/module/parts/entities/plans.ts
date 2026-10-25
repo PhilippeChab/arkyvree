@@ -117,7 +117,7 @@ export interface LinkRemovePlan {
   toId: string;
 }
 
-/** A list an entity is linked to (`listId`), and its level on it (a power's spell level on a class's list). */
+/** A list an entity is linked to (`listId`), and its level on it (a spell's spell level on a class's list). */
 export interface ListLink {
   level?: number | null;
   listId: string;

@@ -21,7 +21,7 @@ export default class LevelUpPlan extends PlannedLevelsState {
 
   /**
    * The pools picks (`picks`, which `holder` holds) overfill, as its aptitudes count them: a stackable feat each time
-   * it's picked, another pick given twice once, and a power at its spell level in its pool.
+   * it's picked, another pick given twice once, and a spell at its spell level in its pool.
    */
   findOverfullPools(holder: DetailedCharacter, picks: Partial<PoolPicks>) {
     return holder.components.aptitudes.getOverfullPools(this.countOwnPicks(picks));
@@ -38,7 +38,7 @@ export default class LevelUpPlan extends PlannedLevelsState {
       ...this.getSavedKlassLevel({ klassLevelId }),
       abilityIncreases: abilityIncreases[i] ?? [],
     }));
-    const distributed = this.distributePicks(klassLevelEntries, { feats: {}, powers: {}, skills: skillPoints });
+    const distributed = this.distributePicks(klassLevelEntries, { feats: {}, spells: {}, skills: skillPoints });
     return distributed.map((levelPicks) => this.toPickRows(levelPicks).skills);
   }
 }

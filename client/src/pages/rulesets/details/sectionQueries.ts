@@ -92,7 +92,7 @@ function sectionKey(rulesetId: string, section: RulesetSection, filters: ListFil
 
 /**
  * An entity kind's list (`kind`: its type, and what narrows it: the kind a race or a class is for and its sort, a
- * pool, a power's level), through the routes by kind, under its tab's key.
+ * pool, a spell's level), through the routes by kind, under its tab's key.
  */
 export function entitiesQuery(rulesetId: string, kind: EntityListKind, filters: EntityFilters) {
   return infiniteQueryOptions({

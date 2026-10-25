@@ -22,7 +22,7 @@ test("a sibling winner's copy holds what the view showed of it, for a third of t
   expect(mismatches).toEqual([]);
 }, 600_000);
 
-test("a copied class's levels store the lists that stand for their granted feats' and powers' lists, for a third of the classes", async () => {
+test("a copied class's levels store the lists that stand for their granted feats' and spells' lists, for a third of the classes", async () => {
   const fork = await createSeededTestRulesetWithExtensions(makeSession().userId);
   const klassIds = partOf(await findKlassIds(fork), 1, 3);
   expect(klassIds.length).toBeGreaterThan(50 / 3);

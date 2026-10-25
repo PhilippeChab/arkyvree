@@ -16,7 +16,7 @@ type PickRow = LinkRow & {
   characterLevelId: string;
 };
 
-type PowerAptitude = LinkRow & { aptitudeId: string; level: number | null; powerId: string };
+type SpellAptitude = LinkRow & { aptitudeId: string; level: number | null; spellId: string };
 
 declare module "@/engine/core/module/CharacterInputs.ts" {
   /** A 3.5 character's links' rows: its ability scores and its picked languages. */
@@ -48,31 +48,31 @@ declare module "@/engine/core/module/parts/characters/plans.ts" {
 declare module "@/engine/core/view/rows.ts" {
   /** 3.5's owned kind: a class's levels. */
   interface OwnedEntities {
-    klass_levels: KlassLevel;
+    class_levels: KlassLevel;
   }
 
   /** 3.5's kinds' rows, by table. */
   interface ViewEntities {
     abilities: RulesetAbility;
     aptitudes: Aptitude;
+    class_levels: KlassLevel;
+    classes: Klass;
     feats: FeatWithAptitudes;
     items: Item;
-    klass_levels: KlassLevel;
-    klasses: Klass;
     languages: Language;
     mechanics: Mechanic;
-    powers: PowerWithAptitudes;
     races: Race;
     saves: RulesetSave;
     skills: Skill;
+    spells: SpellWithAptitudes;
   }
 
   /** 3.5's joins' rows, by name: those its kinds' lists don't nest. */
   interface ViewJoins {
-    klass_level_feats: KlassLevelFeat;
-    klass_level_powers: KlassLevelPower;
-    klass_level_saves: KlassLevelSave;
-    klass_skills: KlassSkill;
+    class_level_feats: KlassLevelFeat;
+    class_level_saves: KlassLevelSave;
+    class_level_spells: KlassLevelSpell;
+    class_skills: KlassSkill;
   }
 }
 
@@ -126,24 +126,24 @@ export type KlassLevelFeat = LinkRow & {
   id: string;
   klassLevelId: string;
 };
-export type KlassLevelPower = LinkRow & { aptitudeId: string; free: boolean; klassLevelId: string; powerId: string };
 export type KlassLevelSave = LinkRow & { base: number; klassLevelId: string; saveId: string };
+export type KlassLevelSpell = LinkRow & { aptitudeId: string; free: boolean; klassLevelId: string; spellId: string };
 export type KlassSkill = LinkRow & { klassId: string; skillId: string };
 export type Language = EntityRow & { type: string };
 /** An ability increase a character's level took. */
 export type LevelAbilityIncrease = PickRow & { abilityId: string; amount: number };
 /** A feat a character's level took, from a pool (`aptitudeId`). */
 export type LevelFeat = PickRow & { aptitudeId: string; featId: string; id: string };
-/** A spell a character's level took, from a pool (`aptitudeId`). */
-export type LevelPower = PickRow & { aptitudeId: string; powerId: string };
 /** The ranks a character's level put in a skill. */
 export type LevelSkill = PickRow & { rank: number; skillId: string };
+/** A spell a character's level took, from a pool (`aptitudeId`). */
+export type LevelSpell = PickRow & { aptitudeId: string; spellId: string };
 export type Mechanic = EntityRow;
-export type Power = EntityRow & { saveEffect: string | null; saveId: string | null };
-export type PowerWithAptitudes = Power & {
-  powersAptitudesInRules: (PowerAptitude & { aptitudesInRule: Aptitude })[];
-};
 export type Race = EntityRow & { baseSpeed: number; kind: string; parentId: string | null; size: SizeType };
 export type RulesetAbility = EntityRow & { description: string };
 export type RulesetSave = EntityRow & { abilityId: string };
 export type Skill = EntityRow & { primaryAbilityId: string };
+export type Spell = EntityRow & { saveEffect: string | null; saveId: string | null };
+export type SpellWithAptitudes = Spell & {
+  spellsAptitudesInRules: (SpellAptitude & { aptitudesInRule: Aptitude })[];
+};

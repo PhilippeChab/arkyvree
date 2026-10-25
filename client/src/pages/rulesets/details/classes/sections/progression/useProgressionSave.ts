@@ -13,9 +13,9 @@ import { rpc } from "@/client/src/services/rpc.ts";
 
 /** What a class's progression's save is of: its kind, its levels' kind, and their words. */
 interface ProgressionSaveOf {
-  /** The class's kind (3.5's `klasses`), whose routes it's sent through */
+  /** The class's kind (3.5's `classes`), whose routes it's sent through */
   classType: string;
-  /** Its levels' kind (3.5's `klass_levels`), whose pages it refreshes */
+  /** Its levels' kind (3.5's `class_levels`), whose pages it refreshes */
   levelType: string;
   /** Its messages' word for what it saves: "Progression", its rules' word for what its tables count (3.5's "Spells") */
   what: string;

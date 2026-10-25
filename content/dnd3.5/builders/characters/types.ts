@@ -20,9 +20,9 @@ export interface CharacterSeed {
   inventory: InventorySeed[];
   languages: string[];
   name: string;
-  powers?: (Picks<"powerName"> & { aptitude: string })[];
   raceName: string;
   skills: { levelIndex: number; rank: number; skillName: string }[];
+  spells?: (Picks<"spellName"> & { aptitude: string })[];
   weight: string;
   xp: number;
 }

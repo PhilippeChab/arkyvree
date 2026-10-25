@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import type { InferResponseType } from "hono/client";
 
-import { addClassLevels, addPowers } from "@/database/seeders/dnd3.5/characters/seedCharacter.ts";
+import { addClassLevels, addSpells } from "@/database/seeders/dnd3.5/characters/seedCharacter.ts";
 import { type SeedContext } from "@/database/seeders/dnd3.5/characters/seedContext.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { db } from "@/server/database/index.ts";
@@ -180,8 +180,8 @@ describe("character levels", () => {
       expect(poolNamed(feats, "General")?.available).toBe(2);
       expect(poolNamed(feats, "Fighter Bonus Feat")?.available).toBe(1);
 
-      const powers = stepOf(plan, "powers", "pick");
-      expect(Object.values(powers.pools).reduce((sum, { available }) => sum + available, 0)).toBe(0);
+      const spells = stepOf(plan, "spells", "pick");
+      expect(Object.values(spells.pools).reduce((sum, { available }) => sum + available, 0)).toBe(0);
 
       // Ability increases only come every 4 character levels.
       expect(stepOf(plan, "abilities", "choose")).toMatchObject({ advancements: [] });
@@ -260,7 +260,7 @@ describe("character levels", () => {
       const detectMagic = async (wizardLevel: number) => {
         const answer = await expectOk(
           options.$post({
-            param: { characterId, step: "powers" },
+            param: { characterId, step: "spells" },
             query: { search: "Detect Magic" },
             json: {
               plan: { steps: { "class-plan": [{ track: ctx.klassMap.pc["Wizard"], position: wizardLevel }] } },
@@ -273,20 +273,20 @@ describe("character levels", () => {
       };
 
       const [clericLevel] = await addClassLevels(db, ctx, characterId, "Cleric", [1], [8]);
-      await addPowers(
+      await addSpells(
         db,
         ctx,
         [clericLevel],
-        [{ levelIndex: 0, powerName: "Detect Magic", aptitude: "Cleric Spells" }],
+        [{ levelIndex: 0, spellName: "Detect Magic", aptitude: "Cleric Spells" }],
       );
       expect(await detectMagic(1)).toContain("Detect Magic");
 
       const [wizardLevel] = await addClassLevels(db, ctx, characterId, "Wizard", [1], [4]);
-      await addPowers(
+      await addSpells(
         db,
         ctx,
         [wizardLevel],
-        [{ levelIndex: 0, powerName: "Detect Magic", aptitude: "Wizard Spells" }],
+        [{ levelIndex: 0, spellName: "Detect Magic", aptitude: "Wizard Spells" }],
       );
       expect(await detectMagic(2)).not.toContain("Detect Magic");
     });
@@ -295,12 +295,12 @@ describe("character levels", () => {
       const { characterId, ctx } = await createCharacter();
       const wizardSpells = ctx.aptMap["Wizard Spells"];
       const classPlan = [{ track: ctx.klassMap.pc["Wizard"], position: 1 }];
-      const cantrips = async (powers: { id: string; pool: string; tier: string }[] = []) => {
+      const cantrips = async (spells: { id: string; pool: string; tier: string }[] = []) => {
         const answer = await expectOk(
           options.$post({
-            param: { characterId, step: "powers" },
+            param: { characterId, step: "spells" },
             query: { limit: "100" },
-            json: { plan: { steps: { "class-plan": classPlan, powers } }, pool: wizardSpells, tier: "0" },
+            json: { plan: { steps: { "class-plan": classPlan, spells } }, pool: wizardSpells, tier: "0" },
           }),
         );
         return optionsOf(answer, false).items;
@@ -309,8 +309,8 @@ describe("character levels", () => {
       const offered = await cantrips();
       const [picked, other] = offered;
       const left = await cantrips([{ id: picked.id, pool: wizardSpells, tier: "0" }]);
-      expect(left.map((power) => power.id)).not.toContain(picked.id);
-      expect(left.map((power) => power.id)).toContain(other.id);
+      expect(left.map((spell) => spell.id)).not.toContain(picked.id);
+      expect(left.map((spell) => spell.id)).toContain(other.id);
       expect(left).toHaveLength(offered.length - 1);
     });
 
@@ -322,7 +322,7 @@ describe("character levels", () => {
       const listNames = async (pool: string, klassId: string, tier?: string) => {
         const answer = await expectOk(
           options.$post({
-            param: { characterId, step: "powers" },
+            param: { characterId, step: "spells" },
             query: { limit: "100" },
             json: { plan: { steps: { "class-plan": [{ track: klassId, position: 1 }] } }, pool, tier },
           }),
@@ -477,13 +477,13 @@ describe("character levels", () => {
           [ctx.aptMap["General"]]: [ctx.featMap["Point Blank Shot"], ctx.featMap["Toughness"]],
           [ctx.aptMap["Favored Enemy"]]: [ctx.featMap["Favored Enemy: Humanoid (Goblinoid)"]],
         },
-        powers: {},
+        spells: {},
       });
       // Ranger 2: 8 skill points and a combat style pick.
       const secondPicks: Picks = {
         skills: skill(["Hide", "Move Silently", "Listen", "Spot", "Survival", "Climb", "Swim", "Search"], 1),
         feats: { [ctx.aptMap["Ranger Combat Style (2nd)"]]: [ctx.featMap["Rapid Shot"]] },
-        powers: {},
+        spells: {},
       };
       const second = await addLevelOk(characterId, rangerId, 2, 7, secondPicks);
 
@@ -531,7 +531,7 @@ describe("character levels", () => {
               [ctx.aptMap["General"]]: [ctx.featMap["Power Attack"], ctx.featMap["Cleave"], ctx.featMap["Toughness"]],
               [ctx.aptMap["Fighter Bonus Feat"]]: [ctx.featMap["Improved Initiative"], ctx.featMap["Dodge"]],
             },
-            powers: {},
+            spells: {},
           },
         ),
       );
@@ -573,7 +573,7 @@ describe("character levels", () => {
                 [ctx.skillMap["Swim"]]: 1,
               },
               feats: { [ctx.aptMap["Fighter Bonus Feat"]]: [ctx.featMap["Combat Reflexes"]] },
-              powers: {},
+              spells: {},
             },
           ),
         }),

@@ -214,7 +214,7 @@ describe("an entity's columns in its form", () => {
   /** 3.5's item columns, as the engine describes them: what the item form holds and sends. */
   const ITEM = Engine.rules().describeAll()["Dungeons & Dragons: 3.5"].columns.items ?? [];
   /** 3.5's class columns: a hit die among its own, 8 by default. */
-  const CLASS = Engine.rules().describeAll()["Dungeons & Dragons: 3.5"].columns.klasses ?? [];
+  const CLASS = Engine.rules().describeAll()["Dungeons & Dragons: 3.5"].columns.classes ?? [];
 
   test("start empty: a required choice its default, a decimal no text, a template none", () => {
     expect(toColumnValues(CLASS)).toEqual({ hd: 8 });

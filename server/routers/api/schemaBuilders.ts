@@ -4,7 +4,7 @@ import { getEntityTypeOfSegment, getUrlSegments } from "@/shared/urlSegments.ts"
 
 /**
  * An entity type in a URL, named by its segment ("class-levels", "classes"): the route hands its service the type
- * (`klass_levels`, `klasses`).
+ * (`class_levels`, `classes`).
  */
 export function buildEntityTypeSchema<T extends string>(entityTypes: readonly T[]) {
   return z.enum(getUrlSegments(entityTypes)).transform((segment) => getEntityTypeOfSegment(segment));

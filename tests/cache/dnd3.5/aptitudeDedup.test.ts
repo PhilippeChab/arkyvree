@@ -8,7 +8,7 @@ import {
   DND35_RULESET_NAME,
 } from "@/content/dnd3.5/rulesetNames.ts";
 import { entitiesInRules, rulesetsInRules } from "@/drizzle/schema.ts";
-import type { FeatWithAptitudes, PowerWithAptitudes } from "@/engine/rulesets/dnd3.5/index.ts";
+import type { FeatWithAptitudes, SpellWithAptitudes } from "@/engine/rulesets/dnd3.5/index.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
@@ -84,16 +84,16 @@ describe("aptitude deduplication across sibling extensions", () => {
 
     // Find CD's "Visage of the Deity, Lesser" — it's on the Blackguard spell list.
     const [spell] = await namedEntities(
-      "powers",
+      "spells",
       ["Visage of the Deity, Lesser"],
       [await rulesetIdOf(DND35_COMPLETE_DIVINE_NAME)],
     );
     expect(spell).toBeDefined();
 
     // Composed rulesetData already has sibling-merged + FK-remapped aptitude links.
-    const composedPower = dnd35.powersById.get(spell.id);
-    expect(composedPower).toBeDefined();
-    const blackguardLink = composedPower!.powersAptitudesInRules.find((l) => l.aptitudeId === winningApt!.id);
+    const composedSpell = dnd35.spellsById.get(spell.id);
+    expect(composedSpell).toBeDefined();
+    const blackguardLink = composedSpell!.spellsAptitudesInRules.find((l) => l.aptitudeId === winningApt!.id);
     expect(blackguardLink).toBeDefined();
     expect(blackguardLink!.level).toBe(4);
   });
@@ -125,35 +125,35 @@ describe("aptitude deduplication across sibling extensions", () => {
     }
   });
 
-  test("the powers list returns no duplicate aptitude names on CD spell with Blackguard Spells", async () => {
+  test("the spells list returns no duplicate aptitude names on CD spell with Blackguard Spells", async () => {
     const { ruleset } = await setup();
     // "Visage of the Deity, Lesser" is a CD spell with "Blackguard Spells" aptitude
     // Both DMG and CD create this aptitude — service should dedup
-    const { items } = await EntitiesService.getEntities<PowerWithAptitudes>(
+    const { items } = await EntitiesService.getEntities<SpellWithAptitudes>(
       ruleset.id,
-      "powers",
+      "spells",
       { search: "Visage of the Deity, Lesser" },
       { limit: 10, page: 1 },
     );
     const spell = items.find((p) => p.name === "Visage of the Deity, Lesser");
     expect(spell).toBeDefined();
 
-    const aptNames = spell!.powersAptitudesInRules.map((pa) => pa.aptitudesInRule.name);
+    const aptNames = spell!.spellsAptitudesInRules.map((pa) => pa.aptitudesInRule.name);
     const uniqueNames = new Set(aptNames);
     expect(aptNames.length).toBe(uniqueNames.size);
     expect(aptNames).toContain("Blackguard Spells");
   });
 
-  test("a power's page returns no duplicate aptitude names", async () => {
+  test("a spell's page returns no duplicate aptitude names", async () => {
     const { ruleset } = await setup();
-    const [spell] = await namedEntities(
-      "powers",
+    const [seeded] = await namedEntities(
+      "spells",
       ["Visage of the Deity, Lesser"],
       [await rulesetIdOf(DND35_COMPLETE_DIVINE_NAME)],
     );
 
-    const power = await EntitiesService.getEntity<Described<"powers">>(ruleset.id, "powers", spell.id);
-    const aptNames = power.powersAptitudesInRules.map((pa) => pa.aptitudesInRule.name);
+    const spell = await EntitiesService.getEntity<Described<"spells">>(ruleset.id, "spells", seeded.id);
+    const aptNames = spell.spellsAptitudesInRules.map((pa) => pa.aptitudesInRule.name);
     const uniqueNames = new Set(aptNames);
     expect(aptNames.length).toBe(uniqueNames.size);
   });

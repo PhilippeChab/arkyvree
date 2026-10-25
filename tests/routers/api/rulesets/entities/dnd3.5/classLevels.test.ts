@@ -108,7 +108,7 @@ describe("rulesets class levels", () => {
   test("lists every spell list a class casts from, its own first: the Pious Templar's and its blackguard one", async () => {
     const divine = await findSeededRuleset(DND35_COMPLETE_DIVINE_NAME);
     const templar = (await Entities.findOne<Klass>(db, {
-      entityType: "klasses",
+      entityType: "classes",
       name: "Pious Templar",
       rulesetId: divine.id,
     }))!;

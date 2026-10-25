@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { addClassLevels, addFeats, addPowers, addSkills } from "@/database/seeders/dnd3.5/characters/seedCharacter.ts";
+import { addClassLevels, addFeats, addSkills, addSpells } from "@/database/seeders/dnd3.5/characters/seedCharacter.ts";
 import type { RulesetSave, Skill } from "@/engine/rulesets/dnd3.5/index.ts";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import { db } from "@/server/database/index.ts";
@@ -28,7 +28,7 @@ describe("A fork's own description of an inherited", () => {
     if (kind === "feat") {
       await EntitiesService.updateEntity(session, fork.id, "feats", ctx.featMap[name], { name, description });
     } else if (kind === "spell") {
-      await EntitiesService.updateEntity(session, fork.id, "powers", ctx.powerMap[name], { name, description });
+      await EntitiesService.updateEntity(session, fork.id, "spells", ctx.spellMap[name], { name, description });
     } else {
       const skill = (await Entities.findOne<Skill>(db, { entityType: "skills", id: ctx.skillMap[name] }))!;
       await EntitiesService.updateEntity(session, fork.id, "skills", skill.id, {
@@ -44,14 +44,14 @@ describe("A fork's own description of an inherited", () => {
     if (kind === "feat")
       await addFeats(db, forkCtx, levelIds, [{ levelIndex: 0, featName: name, aptitude: "General" }]);
     else if (kind === "spell")
-      await addPowers(db, forkCtx, levelIds, [{ levelIndex: 0, powerName: name, aptitude: "Wizard Spells" }]);
+      await addSpells(db, forkCtx, levelIds, [{ levelIndex: 0, spellName: name, aptitude: "Wizard Spells" }]);
     else await addSkills(db, forkCtx, levelIds, [{ levelIndex: 0, skillName: name, rank: 4 }]);
 
     const character = await buildAs(DetailedCharacter, (await Characters.findOne(db, { id: characterId }))!);
     const levels = Object.values(character.components.classes.getCharacterClasses()).flatMap((k) => k.levels);
     const descriptions = new Map(
       levels
-        .flatMap((level) => [...level.feats, ...level.powers, ...level.skills])
+        .flatMap((level) => [...level.feats, ...level.spells, ...level.skills])
         .map((entity) => [entity.name, entity.description]),
     );
     expect(descriptions.get(name)).toBe(description);
@@ -70,7 +70,7 @@ test("A fork's own saving throw of an inherited spell is on the sheet", async ()
     rulesetId: ctx.rulesetId,
   }))!;
   const name = "Magic Missile";
-  await EntitiesService.updateEntity(session, fork.id, "powers", ctx.powerMap[name], {
+  await EntitiesService.updateEntity(session, fork.id, "spells", ctx.spellMap[name], {
     name,
     saveId: will.id,
     saveEffect: "negates",
@@ -78,12 +78,12 @@ test("A fork's own saving throw of an inherited spell is on the sheet", async ()
 
   const characterId = await createSeedCharacter(ctx, "wizard", { rulesetId: fork.id });
   const levelIds = await addClassLevels(db, forkCtx, characterId, "Wizard", [1], [4]);
-  await addPowers(db, forkCtx, levelIds, [{ levelIndex: 0, powerName: name, aptitude: "Wizard Spells" }]);
+  await addSpells(db, forkCtx, levelIds, [{ levelIndex: 0, spellName: name, aptitude: "Wizard Spells" }]);
 
   const character = await buildAs(DetailedCharacter, (await Characters.findOne(db, { id: characterId }))!);
-  const power = Object.values(character.components.classes.getCharacterClasses())
+  const spell = Object.values(character.components.classes.getCharacterClasses())
     .flatMap((k) => k.levels)
-    .flatMap((level) => level.powers)
+    .flatMap((level) => level.spells)
     .find((p) => p.name === name);
-  expect(power).toMatchObject({ saveName: "Will", saveEffect: "negates" });
+  expect(spell).toMatchObject({ saveName: "Will", saveEffect: "negates" });
 });

@@ -3,7 +3,7 @@ import type { RulesetView } from "@/engine/core/view/index.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 
 import type { LevelUpRules } from "./LevelUpBase.ts";
-import type { AbilityIncrease, FeatPick, LevelPickRows, PowerPick } from "./plans.ts";
+import type { AbilityIncrease, FeatPick, LevelPickRows, SpellPick } from "./plans.ts";
 import type { LevelPicks } from "./requests.ts";
 
 /** The level's hit points and selections a check reads, with its class. */
@@ -11,22 +11,22 @@ interface LevelChecked {
   feats: Record<string, string[]>;
   hp: number;
   klass: { hd: number };
-  powers: Record<string, string[]>;
+  spells: Record<string, string[]>;
 }
 
-/** A level's pick of either kind, in its pool: a feat or a power, named for the order picks give way in. */
+/** A level's pick of either kind, in its pool: a feat or a spell, named for the order picks give way in. */
 interface LevelPick {
   aptitudeId: string;
   id: string;
-  kind: "feats" | "powers";
+  kind: "feats" | "spells";
   name: string;
 }
 
-/** An edited level's own saved feats and powers, each in its pool: the level's, whatever else holds them. */
-type KeptPicks = Pick<LevelPickRows, "feats" | "powers">;
+/** An edited level's own saved feats and spells, each in its pool: the level's, whatever else holds them. */
+type KeptPicks = Pick<LevelPickRows, "feats" | "spells">;
 
-/** A level's (or a level-up's) own feats and powers, each by the pool it's picked in. */
-type PoolPicks = Pick<LevelPicks, "feats" | "powers">;
+/** A level's (or a level-up's) own feats and spells, each by the pool it's picked in. */
+type PoolPicks = Pick<LevelPicks, "feats" | "spells">;
 
 /**
  * A feat a character holds, as the character holds it: `given` when a modifier of the character's gives it, held by a
@@ -37,19 +37,19 @@ export interface HeldFeat {
   id: string;
 }
 
-/** A character whose feats and powers a check reads: what a level's picks are checked against. */
+/** A character whose feats and spells a check reads: what a level's picks are checked against. */
 export interface HoldingCharacter {
   /** The feats the character has: picked, granted, or made possessed by its modifiers. */
   getHeldFeats(): HeldFeat[];
-  /** The powers the character knows, each in its pool: picked, granted, or made known by its modifiers. */
-  getHeldPowers(): KnownPower[];
+  /** The spells the character knows, each in its pool: picked, granted, or made known by its modifiers. */
+  getHeldSpells(): KnownSpell[];
 }
 
 /**
- * A power a character knows, in the pool it knows it in, as the character holds it: `given` when a modifier of the
+ * A spell a character knows, in the pool it knows it in, as the character holds it: `given` when a modifier of the
  * character's makes it known there, held by a pick or a grant too or not.
  */
-export interface KnownPower {
+export interface KnownSpell {
   aptitudeId: string;
   given?: boolean;
   id: string;
@@ -60,14 +60,14 @@ export type GrantedFeatRecords =
   Dnd35View["klassLevelFeatsWithFeatsByKlassLevel"] extends Map<string, infer R> ? R : never;
 
 /**
- * The character with every level it has and plans, holding these of a level's (or a level-up's) own feats and powers
+ * The character with every level it has and plans, holding these of a level's (or a level-up's) own feats and spells
  * (`picks`, by pool) and none of the others: what a check reads off whether the character holds a pick already.
  */
 export type Holding = (picks: PoolPicks) => HoldingCharacter;
 
 /**
  * A level's selections checked against the ruleset's view (`view`): linked to their pools, and not taken twice (a
- * non-stackable feat the character has, a power in a pool it knows it in, the level's other picks' gifts too); and its
+ * non-stackable feat the character has, a spell in a pool it knows it in, the level's other picks' gifts too); and its
  * hit points and ability increases, within what the level-up rules give it (`rules`). Each selection is the ruleset's,
  * by the id its view keys it by: the level-up handle resolved the request when it entered, and refused a pick the view
  * lacks (`LevelRequests`).
@@ -79,21 +79,21 @@ export default class SelectionChecks {
   ) {}
 
   /**
-   * Throws when the level picks a non-stackable feat or a power more than once, in a pool or under two: a character
-   * takes a non-stackable feat once, and a level knows a power once (one row a power). A stackable feat may be picked
+   * Throws when the level picks a non-stackable feat or a spell more than once, in a pool or under two: a character
+   * takes a non-stackable feat once, and a level knows a spell once (one row a spell). A stackable feat may be picked
    * again, at this level as at another: each pick is a row of its own.
    */
-  private checkRepeatedPicks(feats: Record<string, string[]>, powers: Record<string, string[]>) {
+  private checkRepeatedPicks(feats: Record<string, string[]>, spells: Record<string, string[]>) {
     const nonStackable = this.findRepeated(feats).find((featId) => !this.isStackable(featId));
     if (nonStackable) {
       const name = this.dnd35.featsById.get(nonStackable)?.name ?? nonStackable;
       throw new RulesError("invalid", `Non-stackable feat "${name}" cannot be picked more than once`);
     }
 
-    const [power] = this.findRepeated(powers);
-    if (!power) return;
-    const name = this.dnd35.powersById.get(power)?.name ?? power;
-    throw new RulesError("invalid", `Power "${name}" cannot be picked more than once at a level`);
+    const [spell] = this.findRepeated(spells);
+    if (!spell) return;
+    const name = this.dnd35.spellsById.get(spell)?.name ?? spell;
+    throw new RulesError("invalid", `Spell "${name}" cannot be picked more than once at a level`);
   }
 
   /** The view's 3.5 lists and indices. */
@@ -118,17 +118,17 @@ export default class SelectionChecks {
 
   /**
    * The level's picks (`picks`, those the character holds no other way) a modifier gives, as the character holding them
-   * all says (`holding`, read only when the level picks a feat that doesn't stack or a power), in the order they give
+   * all says (`holding`, read only when the level picks a feat that doesn't stack or a spell), in the order they give
    * way in: the last by name first, then by id. A pick the level holds already (`kept`) is its own, whatever gives it.
    */
   private findGivenPicks(picks: PoolPicks, holding: Holding, kept: KeptPicks): LevelPick[] {
     const ownFeats = new Set(kept.feats.map(({ featId }) => featId));
-    const ownPowers = new Set(kept.powers.map(({ aptitudeId, powerId }) => `${powerId}:${aptitudeId}`));
-    const { featsById, powersById } = this.dnd35;
+    const ownSpells = new Set(kept.spells.map(({ aptitudeId, spellId }) => `${spellId}:${aptitudeId}`));
+    const { featsById, spellsById } = this.dnd35;
     const picked = [
       ...this.listPicks("feats", picks.feats, featsById).filter(({ id }) => !this.isStackable(id) && !ownFeats.has(id)),
-      ...this.listPicks("powers", picks.powers, powersById).filter(
-        ({ aptitudeId, id }) => !ownPowers.has(`${id}:${aptitudeId}`),
+      ...this.listPicks("spells", picks.spells, spellsById).filter(
+        ({ aptitudeId, id }) => !ownSpells.has(`${id}:${aptitudeId}`),
       ),
     ];
     if (picked.length === 0) return [];
@@ -138,10 +138,10 @@ export default class SelectionChecks {
       .sort((a, b) => b.name.localeCompare(a.name) || b.id.localeCompare(a.id));
   }
 
-  /** What the character holds a pick by: the feat's entries, or the power's in its pool. */
-  private findHeld(character: HoldingCharacter, { aptitudeId, id, kind }: LevelPick): (HeldFeat | KnownPower)[] {
+  /** What the character holds a pick by: the feat's entries, or the spell's in its pool. */
+  private findHeld(character: HoldingCharacter, { aptitudeId, id, kind }: LevelPick): (HeldFeat | KnownSpell)[] {
     if (kind === "feats") return character.getHeldFeats().filter((feat) => feat.id === id);
-    return character.getHeldPowers().filter((power) => power.id === id && power.aptitudeId === aptitudeId);
+    return character.getHeldSpells().filter((spell) => spell.id === id && spell.aptitudeId === aptitudeId);
   }
 
   /** The ids a level's selections (`picks`, by pool) give more than once, in a pool or under two, each once. */
@@ -211,48 +211,48 @@ export default class SelectionChecks {
   }
 
   /**
-   * A level's (or a level-up's) own feats and powers (`picks`, by pool, each pool's in its order) split by whether the
+   * A level's (or a level-up's) own feats and spells (`picks`, by pool, each pool's in its order) split by whether the
    * character holds them already, as `holding` builds it with some of them: a feat that doesn't stack it has, held with
-   * the level's powers (`splitHeldFeats`); a power it knows in its pool, known with the feats it keeps
-   * (`splitKnownPowers`); then a pick of either the level's other picks give (`splitGivenPicks`). A pick the level holds
+   * the level's spells (`splitHeldFeats`); a spell it knows in its pool, known with the feats it keeps
+   * (`splitKnownSpells`); then a pick of either the level's other picks give (`splitGivenPicks`). A pick the level holds
    * already (`kept`, an edited level's saved picks) is its own, whatever else holds it. What the level keeps of them
    * (`fresh`), and what gives way (`refused`), each kind's in that order.
    */
-  private splitHeldPicks(picks: PoolPicks, holding: Holding, kept: KeptPicks = { feats: [], powers: [] }) {
-    const held = () => holding({ feats: {}, powers: picks.powers }).getHeldFeats();
+  private splitHeldPicks(picks: PoolPicks, holding: Holding, kept: KeptPicks = { feats: [], spells: [] }) {
+    const held = () => holding({ feats: {}, spells: picks.spells }).getHeldFeats();
     const feats = this.splitHeldFeats(picks.feats, held, kept.feats);
-    const known = () => holding({ feats: feats.fresh, powers: {} }).getHeldPowers();
-    const powers = this.splitKnownPowers(picks.powers, known, kept.powers);
-    const { fresh, given } = this.splitGivenPicks({ feats: feats.fresh, powers: powers.fresh }, holding, kept);
+    const known = () => holding({ feats: feats.fresh, spells: {} }).getHeldSpells();
+    const spells = this.splitKnownSpells(picks.spells, known, kept.spells);
+    const { fresh, given } = this.splitGivenPicks({ feats: feats.fresh, spells: spells.fresh }, holding, kept);
     const givenOf = (kind: LevelPick["kind"]) => given.filter((pick) => pick.kind === kind);
     return {
       fresh,
       refused: {
         feats: [...feats.repeated, ...givenOf("feats").map(({ aptitudeId, id }) => ({ aptitudeId, featId: id }))],
-        powers: [...powers.repeated, ...givenOf("powers").map(({ aptitudeId, id }) => ({ aptitudeId, powerId: id }))],
+        spells: [...spells.repeated, ...givenOf("spells").map(({ aptitudeId, id }) => ({ aptitudeId, spellId: id }))],
       },
     };
   }
 
   /**
-   * A level's powers (`powers`, by pool, each pool's in its order) split by whether the character knows them in their
+   * A level's spells (`spells`, by pool, each pool's in its order) split by whether the character knows them in their
    * pool already: held there (`known`, read only when the level picks any: picked at its other levels, granted, or made
-   * known by its modifiers), or picked there before them. A character knows a power once in a pool, and may know it in
+   * known by its modifiers), or picked there before them. A character knows a spell once in a pool, and may know it in
    * another. A pick the level holds already (`kept`, an edited level's saved picks) is its own, whatever else knows it.
    */
-  private splitKnownPowers(powers: Record<string, string[]>, known: () => KnownPower[], kept: PowerPick[]) {
-    const repeated: PowerPick[] = [];
-    if (Object.values(powers).every((ids) => ids.length === 0)) return { fresh: powers, repeated };
-    const keyOf = (aptitudeId: string, powerId: string) => `${powerId}:${aptitudeId}`;
+  private splitKnownSpells(spells: Record<string, string[]>, known: () => KnownSpell[], kept: SpellPick[]) {
+    const repeated: SpellPick[] = [];
+    if (Object.values(spells).every((ids) => ids.length === 0)) return { fresh: spells, repeated };
+    const keyOf = (aptitudeId: string, spellId: string) => `${spellId}:${aptitudeId}`;
     const seen = new Set(known().map(({ aptitudeId, id }) => keyOf(aptitudeId, id)));
-    const own = new Set(kept.map(({ aptitudeId, powerId }) => keyOf(aptitudeId, powerId)));
+    const own = new Set(kept.map(({ aptitudeId, spellId }) => keyOf(aptitudeId, spellId)));
     const fresh: Record<string, string[]> = {};
-    for (const [aptitudeId, ids] of Object.entries(powers)) {
+    for (const [aptitudeId, ids] of Object.entries(spells)) {
       fresh[aptitudeId] = [];
-      for (const powerId of ids) {
-        const key = keyOf(aptitudeId, powerId);
-        if (seen.has(key) && !own.has(key)) repeated.push({ aptitudeId, powerId });
-        else fresh[aptitudeId].push(powerId);
+      for (const spellId of ids) {
+        const key = keyOf(aptitudeId, spellId);
+        if (seen.has(key) && !own.has(key)) repeated.push({ aptitudeId, spellId });
+        else fresh[aptitudeId].push(spellId);
         seen.add(key);
       }
     }
@@ -278,20 +278,20 @@ export default class SelectionChecks {
 
   /**
    * A level's hit points and selections checked, for both the level save and the level-up's: each selection linked to
-   * its pool, no non-stackable feat or power picked twice. Whether the character holds what it picks already is the
+   * its pool, no non-stackable feat or spell picked twice. Whether the character holds what it picks already is the
    * save's next check (`checkPicksNotHeld`).
    */
-  checkLevel({ klass, hp, feats, powers }: LevelChecked) {
+  checkLevel({ klass, hp, feats, spells }: LevelChecked) {
     const { max, min } = this.rules.hitPointsOf(klass.hd);
     if (hp < min || hp > max) throw new RulesError("invalid", `HP must be between ${min} and ${max}`);
 
     // Submitted ids can repeat, in a pool or under two: a stackable feat's may, checkRepeatedPicks refuses the others.
-    this.checkRepeatedPicks(feats, powers);
-    this.checkLinks(feats, powers);
+    this.checkRepeatedPicks(feats, spells);
+    this.checkLinks(feats, spells);
   }
 
-  /** Throws when a feat or a power isn't linked to the pool it's picked under. */
-  checkLinks(feats: Record<string, string[]>, powers: Record<string, string[]>) {
+  /** Throws when a feat or a spell isn't linked to the pool it's picked under. */
+  checkLinks(feats: Record<string, string[]>, spells: Record<string, string[]>) {
     for (const [aptitudeId, ids] of Object.entries(feats)) {
       for (const featId of ids) {
         const links = this.dnd35.featsById.get(featId)?.featsAptitudesInRules ?? [];
@@ -300,39 +300,39 @@ export default class SelectionChecks {
       }
     }
 
-    for (const [aptitudeId, ids] of Object.entries(powers)) {
-      for (const powerId of ids) {
-        const links = this.dnd35.powersById.get(powerId)?.powersAptitudesInRules ?? [];
+    for (const [aptitudeId, ids] of Object.entries(spells)) {
+      for (const spellId of ids) {
+        const links = this.dnd35.spellsById.get(spellId)?.spellsAptitudesInRules ?? [];
         if (!links.some((pa) => pa.aptitudeId === aptitudeId))
-          throw new RulesError("invalid", "Power is not linked to the specified aptitude");
+          throw new RulesError("invalid", "Spell is not linked to the specified aptitude");
       }
     }
   }
 
   /**
    * Throws when a level (or a level-up) picks what the character holds already, as `holding` builds it with some of its
-   * picks (`splitHeldPicks`), forced or not: a feat that doesn't stack it has, naming the feat, or a power it knows in
-   * its pool, naming the power and the pool; held at another level, granted, made possessed or known by a modifier,
+   * picks (`splitHeldPicks`), forced or not: a feat that doesn't stack it has, naming the feat, or a spell it knows in
+   * its pool, naming the spell and the pool; held at another level, granted, made possessed or known by a modifier,
    * picked earlier in the level-up, or given by the level's other picks. A pick the level holds already (`kept`, an
-   * edited level's saved picks) stays, a repeat saved before too. A feat that stacks, or a power known in another pool,
+   * edited level's saved picks) stays, a repeat saved before too. A feat that stacks, or a spell known in another pool,
    * is the level's to pick.
    */
   checkPicksNotHeld(picks: PoolPicks, holding: Holding, kept?: KeptPicks) {
-    const { feats, powers } = this.splitHeldPicks(picks, holding, kept).refused;
+    const { feats, spells } = this.splitHeldPicks(picks, holding, kept).refused;
     const [feat] = feats;
     if (feat) {
       const name = this.dnd35.featsById.get(feat.featId)?.name ?? feat.featId;
       throw new RulesError("invalid", `Non-stackable feat "${name}" is already on this character`);
     }
-    const [power] = powers;
-    if (!power) return;
-    const name = this.dnd35.powersById.get(power.powerId)?.name ?? power.powerId;
-    const pool = this.dnd35.aptitudesById.get(power.aptitudeId)?.name ?? power.aptitudeId;
-    throw new RulesError("invalid", `Power "${name}" is already known in ${pool}`);
+    const [spell] = spells;
+    if (!spell) return;
+    const name = this.dnd35.spellsById.get(spell.spellId)?.name ?? spell.spellId;
+    const pool = this.dnd35.aptitudesById.get(spell.aptitudeId)?.name ?? spell.aptitudeId;
+    throw new RulesError("invalid", `Spell "${name}" is already known in ${pool}`);
   }
 
   /**
-   * A level's (or a level-up's) own feats and powers (`picks`, by pool) but those the character holds already, as a save
+   * A level's (or a level-up's) own feats and spells (`picks`, by pool) but those the character holds already, as a save
    * refuses them (`checkPicksNotHeld`): what the save takes of them, which a preview fits.
    */
   withoutHeldPicks(picks: PoolPicks, holding: Holding, kept?: KeptPicks) {

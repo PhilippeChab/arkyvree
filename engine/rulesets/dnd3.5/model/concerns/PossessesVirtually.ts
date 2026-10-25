@@ -3,8 +3,8 @@ import type CharacterState from "@/engine/rulesets/dnd3.5/model/CharacterState.t
 import FeatsComponent from "@/engine/rulesets/dnd3.5/model/feats/FeatsComponent.ts";
 import FeatsPaths from "@/engine/rulesets/dnd3.5/model/feats/FeatsPaths.ts";
 import LanguagesPaths from "@/engine/rulesets/dnd3.5/model/languages/LanguagesPaths.ts";
-import PowersComponent from "@/engine/rulesets/dnd3.5/model/powers/PowersComponent.ts";
-import PowersPaths from "@/engine/rulesets/dnd3.5/model/powers/PowersPaths.ts";
+import SpellsComponent from "@/engine/rulesets/dnd3.5/model/spells/SpellsComponent.ts";
+import SpellsPaths from "@/engine/rulesets/dnd3.5/model/spells/SpellsPaths.ts";
 import SpellLists from "@/engine/rulesets/dnd3.5/rules/SpellLists.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type { Constructor } from "@/lib/mixins.ts";
@@ -19,7 +19,7 @@ export function PossessesVirtually<B extends Constructor<CharacterState>>(Base: 
   abstract class PossessingVirtually extends Base {
     /**
      * What a modifier that applied grants (it sets true a feat's possession, a spell's knowledge on a list, a language's
-     * knowledge), given as it applies: a feat (`possessFeat`), a spell (`knowPower`), a language it then speaks without
+     * knowledge), given as it applies: a feat (`possessFeat`), a spell (`knowSpell`), a language it then speaks without
      * a pick. The modifiers of what it gives the character, which join the build.
      */
     protected override grantsOf(modifier: Modifier): Modifier[] {
@@ -28,8 +28,8 @@ export function PossessesVirtually<B extends Constructor<CharacterState>>(Base: 
       const featSlug = FeatsPaths.parsePossessed(modifier.target);
       const featId = featSlug === undefined ? undefined : featIdBySlug.get(featSlug);
       if (featId) return this.possessFeat(featId, true);
-      const known = PowersPaths.parseKnown(modifier.target);
-      if (known) return this.knowPower(known.spell, known.list);
+      const known = SpellsPaths.parseKnown(modifier.target);
+      if (known) return this.knowSpell(known.spell, known.list);
       const languageSlug = LanguagesPaths.parseKnown(modifier.target);
       const languageId = languageSlug === undefined ? undefined : languageIdBySlug.get(languageSlug);
       if (languageId) this.components.languages.grant(languageId);
@@ -47,27 +47,27 @@ export function PossessesVirtually<B extends Constructor<CharacterState>>(Base: 
      * without a pick, at its DC (its list's ability, as a spell of the list its class casts gives it), its modifiers
      * joining the build once however many lists know it. Its modifiers, when they join.
      */
-    private knowPower(spellSlug: string, listSlug: string): Modifier[] {
-      const { powerIdsBySlug, powersById } = this.dnd35;
+    private knowSpell(spellSlug: string, listSlug: string): Modifier[] {
+      const { spellIdsBySlug, spellsById } = this.dnd35;
       const aptitudeId = SpellLists.of(this.rulesetData).aptitudeIdBySpellSlug.get(listSlug);
-      const powerRow = powerIdsBySlug
+      const spellRow = spellIdsBySlug
         .get(spellSlug)
-        ?.map((id) => powersById.get(id))
-        .find((row) => row?.powersAptitudesInRules.some((pa) => pa.aptitudeId === aptitudeId));
-      if (!powerRow || aptitudeId === undefined) return [];
-      const held = this.data.powers.filter((power) => power.id === powerRow.id && power.aptitudeId === aptitudeId);
-      for (const power of held) power.given = true;
+        ?.map((id) => spellsById.get(id))
+        .find((row) => row?.spellsAptitudesInRules.some((pa) => pa.aptitudeId === aptitudeId));
+      if (!spellRow || aptitudeId === undefined) return [];
+      const held = this.data.spells.filter((spell) => spell.id === spellRow.id && spell.aptitudeId === aptitudeId);
+      for (const spell of held) spell.given = true;
       if (held.length > 0) return [];
 
       const abilityDcName =
-        this.data.powers.findLast((power) => !power.virtual && power.aptitudeId === aptitudeId && power.abilityDcName)
+        this.data.spells.findLast((spell) => !spell.virtual && spell.aptitudeId === aptitudeId && spell.abilityDcName)
           ?.abilityDcName ?? null;
-      const power = PowersComponent.toVirtualPower(powerRow, aptitudeId, abilityDcName, this.rulesetData);
-      if (!power) return [];
-      const joined = this.data.powers.some(({ id }) => id === powerRow.id);
-      this.data.powers.push(power);
-      this.components.spellcasting.registerKnownPowers(this.rulesetData, [power]);
-      return joined ? [] : power.modifiers;
+      const spell = SpellsComponent.toVirtualSpell(spellRow, aptitudeId, abilityDcName, this.rulesetData);
+      if (!spell) return [];
+      const joined = this.data.spells.some(({ id }) => id === spellRow.id);
+      this.data.spells.push(spell);
+      this.components.spellcasting.registerKnownSpells(this.rulesetData, [spell]);
+      return joined ? [] : spell.modifiers;
     }
 
     /**
@@ -96,28 +96,28 @@ export function PossessesVirtually<B extends Constructor<CharacterState>>(Base: 
     }
 
     /**
-     * The spells the character's modifiers make it know without a pick (`set powers.<slug>.<apt>.known`), as its sheet
+     * The spells the character's modifiers make it know without a pick (`set spells.<slug>.<apt>.known`), as its sheet
      * lists them: each with its list and level, its save, its DC (its groupings' bonuses, Spell Focus, as a picked
-     * spell's: it goes through `registerPower` too) and its properties' values.
+     * spell's: it goes through `registerSpell` too) and its properties' values.
      */
-    getVirtualPowers() {
+    getVirtualSpells() {
       const { spellSlugByAptitudeId } = SpellLists.of(this.rulesetData);
-      return this.data.powers.flatMap((power) => {
-        const level = power.powerLevel;
-        if (!power.virtual || level == null) return [];
-        const aptitudeSlug = spellSlugByAptitudeId.get(power.aptitudeId) ?? power.aptitudeId;
+      return this.data.spells.flatMap((spell) => {
+        const level = spell.spellLevel;
+        if (!spell.virtual || level == null) return [];
+        const aptitudeSlug = spellSlugByAptitudeId.get(spell.aptitudeId) ?? spell.aptitudeId;
         return [
           {
-            id: power.id,
-            name: power.name,
-            description: power.description,
-            saveName: power.saveName,
-            saveEffect: power.saveEffect,
-            aptitudeId: power.aptitudeId,
+            id: spell.id,
+            name: spell.name,
+            description: spell.description,
+            saveName: spell.saveName,
+            saveEffect: spell.saveEffect,
+            aptitudeId: spell.aptitudeId,
             level,
-            dc: this.components.powers.getPower(power.name)?.dc?.[aptitudeSlug]?.total ?? null,
+            dc: this.components.spells.getSpell(spell.name)?.dc?.[aptitudeSlug]?.total ?? null,
             properties: formatPropertyValues(
-              groupPropertyValues(power.properties, Dnd35PropertyTypes.valuesOf),
+              groupPropertyValues(spell.properties, Dnd35PropertyTypes.valuesOf),
               Dnd35PropertyTypes.valuesOf,
             ),
           },

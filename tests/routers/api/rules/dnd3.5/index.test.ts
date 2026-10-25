@@ -7,8 +7,8 @@ describe("rules", () => {
     const rules = await expectOk(guestApi.api.rules.$get());
     const dnd35 = rules["Dungeons & Dragons: 3.5"];
     // Its word for every type, the engine's own (modifiers) with its own
-    expect(dnd35.words.powers).toEqual({ many: "Spells", one: "Spell" });
-    expect(dnd35.words.klasses).toEqual({ many: "Classes", one: "Class" });
+    expect(dnd35.words.spells).toEqual({ many: "Spells", one: "Spell" });
+    expect(dnd35.words.classes).toEqual({ many: "Classes", one: "Class" });
     expect(dnd35.words.modifiers).toEqual({ many: "Modifiers", one: "Modifier" });
     // Its kinds, in its page's order: each its picture, and its tab's help where it has one
     expect(dnd35.kinds.map(({ type }) => type)).toEqual([
@@ -16,10 +16,10 @@ describe("rules", () => {
       "languages",
       "skills",
       "feats",
-      "powers",
+      "spells",
       "items",
       "aptitudes",
-      "klasses",
+      "classes",
       "saves",
       "abilities",
       "mechanics",
@@ -68,10 +68,10 @@ describe("rules", () => {
       languages: "page",
       skills: "page",
       feats: "customization",
-      powers: "customization",
+      spells: "customization",
       items: "customization",
       aptitudes: "page",
-      klasses: "progression",
+      classes: "progression",
       saves: "page",
       abilities: "page",
       mechanics: "page",
@@ -80,10 +80,10 @@ describe("rules", () => {
     // a class's on its own page
     expect(dnd35.customizationPages).toEqual([
       { type: "feats" },
-      { type: "powers" },
+      { type: "spells" },
       { type: "items" },
       { type: "races" },
-      { type: "klass_levels", owner: "klasses", ownerKey: "klassId" },
+      { type: "class_levels", owner: "classes", ownerKey: "klassId" },
     ]);
     // A kind that opens a customization page is one such a page shows, and every kind one shows but an owned kind's
     // (which no tab lists) opens it
@@ -91,10 +91,10 @@ describe("rules", () => {
     const pages = dnd35.customizationPages.filter(({ owner }) => !owner).map(({ type }) => type);
     expect(customized.toSorted()).toEqual(pages.toSorted());
     // Races and classes narrow by what they're for, abilities take no form, an empty list of saves its own words
-    expect(dnd35.kinds.filter((kind) => kind.partitioned).map(({ type }) => type)).toEqual(["races", "klasses"]);
+    expect(dnd35.kinds.filter((kind) => kind.partitioned).map(({ type }) => type)).toEqual(["races", "classes"]);
     expect(dnd35.kinds.filter((kind) => kind.readOnly).map(({ type }) => type)).toEqual(["abilities"]);
     // A class's new one's form says what each field is for, a mechanic's gives its description room
-    expect(dnd35.kinds.filter((kind) => kind.fieldHelp).map(({ type }) => type)).toEqual(["klasses"]);
+    expect(dnd35.kinds.filter((kind) => kind.fieldHelp).map(({ type }) => type)).toEqual(["classes"]);
     expect(dnd35.kinds.filter((kind) => kind.longDescription).map(({ type }) => type)).toEqual(["mechanics"]);
     expect(dnd35.kinds.find((kind) => kind.type === "saves")?.empty).toBe(
       "No saving throws available for this ruleset.",
@@ -110,7 +110,7 @@ describe("rules", () => {
     expect(dnd35.tiers.at(-1)).toEqual({ label: "Level 9", level: 9 });
     expect(dnd35.license).toMatchObject({ text: "ogl" });
     // Its lists: a class's hit die as dice notation, an item's cost and weight in their units
-    expect(dnd35.lists.klasses?.columns).toEqual([
+    expect(dnd35.lists.classes?.columns).toEqual([
       expect.objectContaining({ key: "hd", labels: expect.objectContaining({ 10: "d10" }) }),
     ]);
     expect(dnd35.lists.items?.columns.map(({ key, unit }) => [key, unit])).toEqual([
@@ -125,17 +125,17 @@ describe("rules", () => {
     const aptitudes = { key: "aptitudeId", param: "aptitude", type: "aptitudes" };
     expect(dnd35.kinds.filter((each) => each.pools).map(({ pools, type }) => [type, pools])).toEqual([
       ["feats", { ...aptitudes, scope: "feats" }],
-      ["powers", { ...aptitudes, scope: "spells" }],
+      ["spells", { ...aptitudes, scope: "spells" }],
     ]);
-    expect(dnd35.kinds.filter((each) => each.levels).map(({ type }) => type)).toEqual(["powers"]);
+    expect(dnd35.kinds.filter((each) => each.levels).map(({ type }) => type)).toEqual(["spells"]);
     expect(dnd35.kinds.filter((each) => each.families).map(({ type }) => type)).toEqual(["feats"]);
     expect(dnd35.kinds.filter((each) => each.wideForm).map(({ type, wideForm }) => [type, wideForm])).toEqual([
-      ["powers", "fixed"],
+      ["spells", "fixed"],
       ["items", "fluid"],
     ]);
     // A class's page links it to its class skills, through the join their activities name
-    expect(kind("klasses")?.links).toEqual({
-      join: "klass_skills",
+    expect(kind("classes")?.links).toEqual({
+      join: "class_skills",
       key: "skillId",
       owner: "klassId",
       target: "skillsInRule",
@@ -147,8 +147,8 @@ describe("rules", () => {
     expect(dnd35.columns.feats?.find((column) => column.key === "aptitudeIds")).toMatchObject({
       links: "featsAptitudesInRules",
     });
-    expect(dnd35.columns.powers?.find((column) => column.key === "aptitudes")).toMatchObject({
-      links: "powersAptitudesInRules",
+    expect(dnd35.columns.spells?.find((column) => column.key === "aptitudes")).toMatchObject({
+      links: "spellsAptitudesInRules",
     });
     expect(kind("items")?.copies).toEqual({
       locked: ["slot", "sourceItemId", "type"],
@@ -190,7 +190,7 @@ describe("rules", () => {
       lists: "spell-lists",
       listTab: "spell-list",
       tab: "spells",
-      type: "powers",
+      type: "spells",
     });
     // Its level steps' words are their steps', which a level's steps carry: none in the rules
     expect(dnd35).not.toHaveProperty("levelUp");

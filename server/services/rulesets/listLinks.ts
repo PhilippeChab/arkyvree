@@ -1,4 +1,4 @@
-/** An entity's list links, as a plan gives them (`ListLink`): a feat's pools, a power's lists at its spell levels. */
+/** An entity's list links, as a plan gives them (`ListLink`): a feat's pools, a spell's lists at its spell levels. */
 
 import type { Db } from "@/drizzle/database.ts";
 import { Engine, type ListLink } from "@/engine/index.ts";

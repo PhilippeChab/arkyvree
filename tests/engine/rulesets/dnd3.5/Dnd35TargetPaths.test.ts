@@ -37,9 +37,9 @@ describe("Dnd35TargetPaths.findGrantError", () => {
     ["a family's feats", "feats.weaponfocus.*.possessed", "true", AS_WILDCARD],
     ["the feats a prefix starts", "feats.weaponfocus*.possessed", "true", AS_WILDCARD],
     ["every feat", "feats.*.possessed", "false", AS_WILDCARD],
-    ["a spell's grant as a template", "powers.magicmissile.wizard.known", "{{ languages.common.known }}", AS_TEMPLATE],
-    ["a list's spells", "powers.*.wizard.known", "true", AS_WILDCARD],
-    ["a spell's lists", "powers.magicmissile.*.known", "true", AS_WILDCARD],
+    ["a spell's grant as a template", "spells.magicmissile.wizard.known", "{{ languages.common.known }}", AS_TEMPLATE],
+    ["a list's spells", "spells.*.wizard.known", "true", AS_WILDCARD],
+    ["a spell's lists", "spells.magicmissile.*.known", "true", AS_WILDCARD],
     ["a language's grant as a template", "languages.elven.known", "{{ languages.common.known }}", AS_TEMPLATE],
     ["every language", "languages.*.known", "true", AS_WILDCARD],
     ["a count", "feats.toughness.count", "{{ classes.fighter.level }}", undefined],
@@ -109,15 +109,15 @@ describe("Dnd35TargetPaths.traversePathInit", () => {
       ["nothing for missing armor", "items.armors.Platemail.bonus", { armors: { chainmail: { bonus: 5 } } }, []],
       [
         "a spell's DC",
-        "powers.scorchingray.dc.total",
-        { powers: { scorchingray: { power: {}, properties: {}, dc: { total: 17 } } } },
+        "spells.scorchingray.dc.total",
+        { spells: { scorchingray: { spell: {}, properties: {}, dc: { total: 17 } } } },
         [17],
       ],
       [
         "a spell's properties next to its groupings",
-        "powers.magicmissile.properties.SPELL_SCHOOL",
+        "spells.magicmissile.properties.SPELL_SCHOOL",
         {
-          powers: {
+          spells: {
             magicmissile: { properties: { SPELL_SCHOOL: "Evocation" } },
             groups: { evocation: { magicmissile: {} } },
           },
@@ -126,8 +126,8 @@ describe("Dnd35TargetPaths.traversePathInit", () => {
       ],
       [
         "a spell's possession by a class",
-        "powers.curelightwounds.druid.known",
-        { powers: { curelightwounds: { cleric: { known: true }, druid: { known: false } } } },
+        "spells.curelightwounds.druid.known",
+        { spells: { curelightwounds: { cleric: { known: true }, druid: { known: false } } } },
         [false],
       ],
     ] as const)("%s", (_, target, data, expected) => {
@@ -150,8 +150,8 @@ describe("Dnd35TargetPaths.traversePathInit", () => {
       ["a wildcard within a grouping", "feats.weaponfocus.*.possessed", { feats }, [true, false]],
       [
         "a spell school grouping",
-        "powers.groups.evocation.*.dc.misc",
-        { powers: { groups: { evocation: { magicmissile: { dc: { misc: 0 } }, burninghands: { dc: { misc: 1 } } } } } },
+        "spells.groups.evocation.*.dc.misc",
+        { spells: { groups: { evocation: { magicmissile: { dc: { misc: 0 } }, burninghands: { dc: { misc: 1 } } } } } },
         [0, 1],
       ],
       [
@@ -237,7 +237,7 @@ describe("Dnd35TargetPaths.traversePathInit", () => {
       ],
       // Nothing is left to read in the subtypes.
       ["a prefix as the last element", "skills.craft", { skills: { craftarmorsmithing: { rank: 12 } } }],
-      ["a missing spell school", "powers.groups.illusion.*.dc.misc", { powers: {} }],
+      ["a missing spell school", "spells.groups.illusion.*.dc.misc", { spells: {} }],
     ] as const)("%s as not found, without a path", (_, target, data) => {
       const [result] = targetPaths.traversePathInit(target, components(data));
       expect(result).toMatchObject({ error: expect.stringContaining("Element not found"), resolvedPath: null });

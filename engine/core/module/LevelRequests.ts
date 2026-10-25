@@ -23,7 +23,7 @@ export default class LevelRequests {
     this.ids = new RequestIds(rulesetData, "the character's ruleset");
   }
 
-  /** What a level picks by id (an ability to increase, a feat or a power and its pool, a skill), as the view reads it. */
+  /** What a level picks by id (an ability to increase, a feat or a spell and its pool, a skill), as the view reads it. */
   private readonly ids: RequestIds;
 
   /** The id that stands for `id` in the view: its copy's or its winner's when it's stale, itself otherwise. */

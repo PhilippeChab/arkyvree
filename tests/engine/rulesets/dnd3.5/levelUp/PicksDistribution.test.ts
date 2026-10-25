@@ -26,7 +26,7 @@ const SPELL_LEVELS = new Map([
 /** Two planned levels: a General slot at the first, a first-level spell slot at the first. */
 const TWO_LEVELS: PoolSlots = {
   perLevelFeatSlots: { general: [1, 0], bonus: [0, 0] },
-  perLevelPowerSlots: { wizard: [{ 1: 1 }, {}] },
+  perLevelSpellSlots: { wizard: [{ 1: 1 }, {}] },
 };
 
 /** The distribution of `levels`' skill points, no pool slots. */
@@ -34,7 +34,7 @@ function distributionOf(levels: typeof LEVELS) {
   return new PicksDistribution({
     ...levels,
     perLevelFeatSlots: {},
-    perLevelPowerSlots: {},
+    perLevelSpellSlots: {},
     skillContexts: PicksDistribution.contextsOf(SKILLS),
   });
 }
@@ -55,7 +55,7 @@ describe("spreading a save's skill points over its planned levels", () => {
     const distribution = distributionOf(LEVELS);
     // Climb spends the first level's points: Hide is left the second's, cross-class there
     const levels = distribution.distribute(
-      { skills: { climb: 4, hide: 4 }, feats: {}, powers: {} },
+      { skills: { climb: 4, hide: 4 }, feats: {}, spells: {} },
       new Map(),
       new Map(),
     );
@@ -73,7 +73,7 @@ describe("spreading a save's skill points over its planned levels", () => {
       perLevelSkillPoints: [8, 8],
       savedLevelCount: 0,
     });
-    const levels = distribution.distribute({ skills: { climb: 8 }, feats: {}, powers: {} }, new Map(), new Map());
+    const levels = distribution.distribute({ skills: { climb: 8 }, feats: {}, spells: {} }, new Map(), new Map());
     expect(levels.map(({ skills }) => skills)).toEqual([{ climb: 4 }, { climb: 1 }]);
     expect(distribution.spendSkillPoints({ climb: 8 }).get("climb")).toEqual({ points: 5, ranks: 5 });
   });
@@ -82,19 +82,19 @@ describe("spreading a save's skill points over its planned levels", () => {
 describe("spreading a save's picks over its planned levels", () => {
   test("keeps picks past a pool's slots: a feat's and a spell's go on the last level", () => {
     const levels = poolsOnly(TWO_LEVELS).distribute(
-      { skills: {}, feats: { general: ["dodge", "toughness"] }, powers: { wizard: ["missile", "shield"] } },
+      { skills: {}, feats: { general: ["dodge", "toughness"] }, spells: { wizard: ["missile", "shield"] } },
       SPELL_LEVELS,
       new Map(),
     );
-    expect(levels.map(({ feats, powers }) => ({ feats, powers }))).toEqual([
-      { feats: { general: ["dodge"] }, powers: { wizard: ["missile"] } },
-      { feats: { general: ["toughness"] }, powers: { wizard: ["shield"] } },
+    expect(levels.map(({ feats, spells }) => ({ feats, spells }))).toEqual([
+      { feats: { general: ["dodge"] }, spells: { wizard: ["missile"] } },
+      { feats: { general: ["toughness"] }, spells: { wizard: ["shield"] } },
     ]);
   });
 
   test("puts a pool's feats past its slots on the level of the feat that gives it room", () => {
     const levels = poolsOnly(TWO_LEVELS).distribute(
-      { skills: {}, feats: { general: ["specialist"], bonus: ["school"] }, powers: {} },
+      { skills: {}, feats: { general: ["specialist"], bonus: ["school"] }, spells: {} },
       new Map(),
       new Map([["bonus", "specialist"]]),
     );

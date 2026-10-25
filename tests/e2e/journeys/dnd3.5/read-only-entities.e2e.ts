@@ -13,7 +13,7 @@ import { signIn } from "@/tests/e2e/support/signIn.ts";
  */
 interface EntityPage {
   field: string;
-  list: "classes" | "items" | "powers" | "skills";
+  list: "classes" | "items" | "spells" | "skills";
   name: string;
   path: (rulesetId: string, entityId: string) => string;
   shows: (card: Locator) => Promise<void>;
@@ -22,11 +22,11 @@ interface EntityPage {
 
 const ENTITY_PAGES: EntityPage[] = [
   {
-    list: "powers",
+    list: "spells",
     name: "Fireball",
     title: "Spell Details",
     field: "School",
-    path: (rulesetId, id) => `/rulesets/${rulesetId}/powers/${id}/customization`,
+    path: (rulesetId, id) => `/rulesets/${rulesetId}/spells/${id}/customization`,
     shows: async (card) => {
       await expect(card.getByRole("combobox", { name: "School", exact: true })).toHaveText("Evocation");
       await expect(card.getByRole("textbox", { name: "Range", exact: true })).toHaveValue("Long");

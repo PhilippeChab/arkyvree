@@ -5,7 +5,7 @@ import type { Requirement } from "@/shared/relations.ts";
 import RulesetEntity from "./RulesetEntity.ts";
 
 /**
- * A kind whose page shows its customizations (a race, a feat, a power, an item, a class level): described with its
+ * A kind whose page shows its customizations (a race, a feat, a spell, an item, a class level): described with its
  * modifiers and its requirements, as the view composes them (its properties are its fields). A class's customizations
  * are tabs of its page, which reads them apart.
  */

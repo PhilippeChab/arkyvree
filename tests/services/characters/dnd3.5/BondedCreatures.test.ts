@@ -177,8 +177,8 @@ describe("Bonded creatures", () => {
     const { ctx, masterId, bonded: cat } = await createWizardWithFamiliar();
     const [level] = await CharacterAdvancements.findMany(db, { characterId: masterId });
     const pick = (familiar: string[], force = false) => {
-      const { skills, feats, powers } = picks(ctx, picking(WIZARD_1, "Familiar Bond", familiar));
-      const plan = levelEditPlan({ hp: WIZARD_1.hp }, { skills, feats, powers });
+      const { skills, feats, spells } = picks(ctx, picking(WIZARD_1, "Familiar Bond", familiar));
+      const plan = levelEditPlan({ hp: WIZARD_1.hp }, { skills, feats, spells });
       return CharacterLevelsService.updatePlannedLevel(owner, masterId, level.id, plan, force);
     };
     await pick(["Owl Familiar"]);
@@ -202,8 +202,8 @@ describe("Bonded creatures", () => {
     expect(bond).toMatchObject({ allowed: 2, spent: 2 });
     expect((await familiarOf(masterId))?.raceId).toBe(ctx.raceMap.familiar["Owl"]);
 
-    const { skills, feats, powers } = picks(ctx, WIZARD_1);
-    const plan = levelEditPlan({ hp: WIZARD_1.hp }, { skills, feats, powers });
+    const { skills, feats, spells } = picks(ctx, WIZARD_1);
+    const plan = levelEditPlan({ hp: WIZARD_1.hp }, { skills, feats, spells });
     await CharacterLevelsService.updatePlannedLevel(owner, masterId, wizardLevel.id, plan);
     expect((await familiarOf(masterId))?.raceId).toBe(ctx.raceMap.familiar["Owl"]);
     expect((await buildAs(DetailedCharacter, master!)).components.bonded.getBondedRace("familiar")).toBe("Owl");

@@ -183,10 +183,10 @@ describe("The seeded core rules", () => {
         expect(rows.requirementsOf(feat.id)).toEqual([]);
 
         const spellList = rows.aptitude(`${domain.name} Domain Spells`);
-        const spells = rows.powers.flatMap((power) =>
-          power.powersAptitudesInRules
+        const spells = rows.spells.flatMap((spell) =>
+          spell.spellsAptitudesInRules
             .filter((link) => link.aptitudeId === spellList.id)
-            .map((link) => `${link.level} ${power.name.toLowerCase()}`),
+            .map((link) => `${link.level} ${spell.name.toLowerCase()}`),
         );
         expect({ domain: domain.name, spells: spells.sort() }).toEqual({
           domain: domain.name,
@@ -210,7 +210,7 @@ describe("The seeded core rules", () => {
       expect(rows.aptitude("Domain Spells")).toBeDefined();
     });
 
-    test("each make a domain spell a spell level known, as the cleric reaches it, join the cleric's list, and carry their other powers", async () => {
+    test("each make a domain spell a spell level known, as the cleric reaches it, join the cleric's list, and carry their granted power's modifiers", async () => {
       const rows = await seededRows();
       for (const domain of ALL_DOMAINS) {
         const feat = rows.feat(`${domain.name} Domain`);

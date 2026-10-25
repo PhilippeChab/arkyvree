@@ -4,16 +4,16 @@ import RulesError from "@/engine/core/RulesError.ts";
 import type { ViewEntities } from "@/engine/core/view/index.ts";
 
 /** A listed entity's links to the lists, as its row carries them. */
-type Links<K extends "feats" | "powers"> = K extends "feats"
+type Links<K extends "feats" | "spells"> = K extends "feats"
   ? Pick<ViewEntities["feats"], "featsAptitudesInRules">
-  : Pick<ViewEntities["powers"], "powersAptitudesInRules">;
+  : Pick<ViewEntities["spells"], "spellsAptitudesInRules">;
 
 /**
- * A kind a ruleset lists (a feat in a pool, a power on a spell list: the schema's listed tables). A list holds feats or
+ * A kind a ruleset lists (a feat in a pool, a spell on a spell list: the schema's listed tables). A list holds feats or
  * spells, never both, and a page's rows carry their lists as the ruleset composes them (`describeListed`).
  */
 export default abstract class ListedEntity<
-  K extends "feats" | "powers",
+  K extends "feats" | "spells",
   Body extends object,
   Columns extends object,
   S extends Fields,

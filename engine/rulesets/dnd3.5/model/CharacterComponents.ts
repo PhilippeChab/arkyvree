@@ -12,11 +12,11 @@ import FeatsComponent from "./feats/FeatsComponent.ts";
 import IdentityComponent from "./identity/IdentityComponent.ts";
 import InventoryComponent from "./inventory/InventoryComponent.ts";
 import LanguagesComponent from "./languages/LanguagesComponent.ts";
-import PowerGroupingsComponent from "./powers/PowerGroupingsComponent.ts";
-import PowersComponent from "./powers/PowersComponent.ts";
 import SavesComponent from "./saves/SavesComponent.ts";
 import SkillsComponent from "./skills/SkillsComponent.ts";
 import SpellcastingComponent from "./spellcasting/SpellcastingComponent.ts";
+import SpellGroupingsComponent from "./spells/SpellGroupingsComponent.ts";
+import SpellsComponent from "./spells/SpellsComponent.ts";
 
 /** The parts a 3.5 character is built from, by the key its target paths reach each by. */
 export interface Dnd35Components {
@@ -32,12 +32,12 @@ export interface Dnd35Components {
   readonly identity: IdentityComponent;
   readonly inventory: InventoryComponent;
   readonly languages: LanguagesComponent;
-  readonly powerGroupings: PowerGroupingsComponent;
-  readonly powers: PowersComponent;
   readonly saves: SavesComponent;
   readonly shields: ShieldsComponent;
   readonly skills: SkillsComponent;
   readonly spellcasting: SpellcastingComponent;
+  readonly spellGroupings: SpellGroupingsComponent;
+  readonly spells: SpellsComponent;
   readonly weapons: WeaponsComponent;
 }
 
@@ -64,9 +64,9 @@ export default class CharacterComponents {
     const saves = new SavesComponent(abilities, classes);
     const combat = new CombatComponent(abilities, classes, identity, armors, shields, encumbrance, inventory);
     const weapons = new WeaponsComponent(combat);
-    const powerGroupings = new PowerGroupingsComponent(abilities);
-    const powers = new PowersComponent(powerGroupings);
-    const spellcasting = new SpellcastingComponent(classes, abilities, aptitudes, powers, powerGroupings);
+    const spellGroupings = new SpellGroupingsComponent(abilities);
+    const spells = new SpellsComponent(spellGroupings);
+    const spellcasting = new SpellcastingComponent(classes, abilities, aptitudes, spells, spellGroupings);
     const bonded = new BondedComponent();
     return {
       classes,
@@ -84,8 +84,8 @@ export default class CharacterComponents {
       saves,
       combat,
       weapons,
-      powerGroupings,
-      powers,
+      spellGroupings,
+      spells,
       spellcasting,
       bonded,
     };

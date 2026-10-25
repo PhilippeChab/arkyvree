@@ -127,7 +127,7 @@ Others name their row the same way, and stay when it's deleted, on purpose:
 A character's `updated_at` moves only when its own row is written (its details, its share link, its archive), and it's the details form's stale-edit check (`expectedUpdatedAt`, `GuardsStaleEdits`). Its last change is a column of its own, `last_changed_at`, which the characters list's Recently Updated order reads (`CharactersRepository.findPage`). The database moves it, whatever writes, through triggers (`drizzle/0078_last-changed.sql`), so no service writes it:
 
 - A write that changes the character's row moves it (`touch_own_row`, before the update). One that writes `last_changed_at` alone keeps what it writes (the triggers' own, a backfill, a test's `backdateLastChange`).
-- Every insert, update and delete of the rows that belong to the character moves it, a foreign key's cascade included: its fields, its links (its race, scores and languages), its inventory, its advancements and their picks (feats, powers, skills, ability increases, hit points), its customizations (its modifiers and their requirements, its requirements and properties) and its portrait. One statement trigger per table and event (`touch_characters_on_insert` / `_update` / `_delete`) finds the characters of the rows it wrote and moves each once (`character.touch_characters`).
+- Every insert, update and delete of the rows that belong to the character moves it, a foreign key's cascade included: its fields, its links (its race, scores and languages), its inventory, its advancements and their picks (feats, spells, skills, ability increases, hit points), its customizations (its modifiers and their requirements, its requirements and properties) and its portrait. One statement trigger per table and event (`touch_characters_on_insert` / `_update` / `_delete`) finds the characters of the rows it wrote and moves each once (`character.touch_characters`).
 - A bonded creature's change moves its master's too: the list shows only the master, whose sheet the creature is part of. A creature added or deleted, or whose last change moved, moves its master's (`touch_masters`); a master moves before its creature, as a level-up locks them.
 - It moves to the transaction's start (`now()`), once a transaction: a character the transaction already moved isn't written again, and a transaction that started earlier never moves it back. Nothing moves `updated_at`, so an open details form still saves after a level-up in another tab.
 
@@ -142,7 +142,7 @@ A level's rows are its character's state, rewritten whole when the level is edit
 | Step | Repeats | Why |
 |---|---|---|
 | `feats` (`Picks`, `feats`) | yes | A pick is a row: a level can take a stackable feat twice, in one pool or two (Toughness in both of a human fighter 1's General slots), two picks of the same level and feat. The engine refuses what can't repeat (`SelectionChecks`) |
-| `powers` (`Picks`, `powers`) | no | A level knows a spell once |
+| `spells` (`Picks`, `spells`) | no | A level knows a spell once |
 | `skills` (`Picks`, `skills`) | no | A skill's ranks are a quantity, its `amount` |
 | `abilities` (`Picks`, `abilityIncreases`) | no | An increase's size is its `amount` |
 | `hp` (`CharacterAdvancements`) | no | A level's hit points, a value: no entity |

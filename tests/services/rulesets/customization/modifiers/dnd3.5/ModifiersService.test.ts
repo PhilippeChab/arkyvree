@@ -5,9 +5,9 @@ import {
   type Aptitude,
   type Feat,
   type Item,
-  type Power,
   type Race,
   type RulesetAbility,
+  type Spell,
 } from "@/engine/rulesets/dnd3.5/index.ts";
 import { db } from "@/server/database/index.ts";
 import { ForbiddenError } from "@/server/errors/index.ts";
@@ -31,7 +31,7 @@ async function setup() {
   await Entities.create<RulesetAbility>(db, "abilities", { name: "Strength", description: "Strength", rulesetId });
   const [feat] = await Entities.create<Feat>(db, "feats", { name: "Test Feat", rulesetId });
   const [item] = await Entities.create<Item>(db, "items", { name: "Test Item", rulesetId });
-  const [power] = await Entities.create<Power>(db, "powers", { name: "Test Power", rulesetId });
+  const [spell] = await Entities.create<Spell>(db, "spells", { name: "Test Spell", rulesetId });
   const [race] = await Entities.create<Race>(db, "races", {
     name: "Test Race",
     rulesetId,
@@ -39,7 +39,7 @@ async function setup() {
     baseSpeed: 30,
   });
   const { klassLevel } = await createTestKlassLevel(rulesetId);
-  const owners = { feats: feat.id, items: item.id, powers: power.id, races: race.id, klass_levels: klassLevel.id };
+  const owners = { feats: feat.id, items: item.id, spells: spell.id, races: race.id, class_levels: klassLevel.id };
   return { session, rulesetId, feat, item, owners };
 }
 
@@ -77,11 +77,11 @@ describe("ModifiersService", () => {
     // A spell list with a spell; a feat giving it slots makes it the feat's, its spells no longer learned
     const { session, rulesetId, feat } = await setup();
     const [list] = await Entities.create<Aptitude>(db, "aptitudes", { name: "Test Light Spells", rulesetId });
-    const [spell] = await Entities.create<Power>(db, "powers", { name: "Test Glow", rulesetId });
-    await Joins.create(db, "powers_aptitudes", { powerId: spell.id, aptitudeId: list.id, level: 1 });
+    const [spell] = await Entities.create<Spell>(db, "spells", { name: "Test Glow", rulesetId });
+    await Joins.create(db, "spells_aptitudes", { spellId: spell.id, aptitudeId: list.id, level: 1 });
     const knownPath = async () =>
       (await readTargetPaths(rulesetId, "requirement")).paths.some(
-        (path) => path.path === "powers.testglow.testlight.known",
+        (path) => path.path === "spells.testglow.testlight.known",
       );
     expect(await knownPath()).toBe(true);
 
@@ -145,7 +145,7 @@ describe("ModifiersService", () => {
     const condition = "{{ [languages.common.known] }}";
     for (const [target, entity] of [
       ["feats.greatfortitude.possessed", "feat"],
-      ["powers.magicmissile.wizard.known", "spell"],
+      ["spells.magicmissile.wizard.known", "spell"],
       ["languages.elven.known", "language"],
     ]) {
       expect(save(target, condition)).rejects.toMatchObject({

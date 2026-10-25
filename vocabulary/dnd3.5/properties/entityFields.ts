@@ -49,8 +49,12 @@ import {
   MAGIC_AURA,
   MAGIC_CASTER_LEVEL,
 } from "./item.ts";
-import { KLASS_BONUS_SPELL_ABILITY_ID, KLASS_CASTER_TYPE } from "./klass.ts";
-import { KLASS_LEVEL_BAB, KLASS_LEVEL_SKILL_POINTS } from "./klassLevel.ts";
+import { CLASS_BONUS_SPELL_ABILITY_ID, CLASS_CASTER_TYPE } from "./klass.ts";
+import { CLASS_LEVEL_BAB, CLASS_LEVEL_SKILL_POINTS } from "./klassLevel.ts";
+import { RACE_QUADRUPED, RACE_SPEED_IGNORES_ENCUMBRANCE } from "./race.ts";
+import { RULESET_ABILITY_INCREASES, RULESET_FEAT_ADVANCEMENT, RULESET_SKILL_POINT_ABILITY_ID } from "./ruleset.ts";
+import { SHIELD_AC_BONUS, SHIELD_PROFICIENCY, SHIELD_TYPE } from "./shield.ts";
+import { SKILL_CHECK_PENALTY_MULTIPLIER, SKILL_IMPACTED_BY_WEIGHT, SKILL_USABLE_WITHOUT_TRAINING } from "./skill.ts";
 import {
   SPELL_AREA_OF_EFFECT,
   SPELL_CASTING_TIME,
@@ -63,11 +67,7 @@ import {
   SPELL_SCHOOL,
   SPELL_SUBSCHOOL,
   SPELL_TARGET,
-} from "./power.ts";
-import { RACE_QUADRUPED, RACE_SPEED_IGNORES_ENCUMBRANCE } from "./race.ts";
-import { RULESET_ABILITY_INCREASES, RULESET_FEAT_ADVANCEMENT, RULESET_SKILL_POINT_ABILITY_ID } from "./ruleset.ts";
-import { SHIELD_AC_BONUS, SHIELD_PROFICIENCY, SHIELD_TYPE } from "./shield.ts";
-import { SKILL_CHECK_PENALTY_MULTIPLIER, SKILL_IMPACTED_BY_WEIGHT, SKILL_USABLE_WITHOUT_TRAINING } from "./skill.ts";
+} from "./spell.ts";
 import {
   WEAPON_BASE_DAMAGE,
   WEAPON_CRITICAL_MULTIPLIER,
@@ -380,13 +380,13 @@ const KLASS_FIELDS = {
     kind: "ref",
     label: "Bonus Spell Ability",
     references: "abilities",
-    type: KLASS_BONUS_SPELL_ABILITY_ID,
+    type: CLASS_BONUS_SPELL_ABILITY_ID,
   },
   casterType: {
     description: "Whether this class casts arcane or divine spells",
     kind: "choice",
     label: "Caster Type",
-    type: KLASS_CASTER_TYPE,
+    type: CLASS_CASTER_TYPE,
     values: CASTER_TYPES,
   },
 } as const;
@@ -404,7 +404,7 @@ const KLASS_LEVEL_FIELDS = {
     // A full base attack bonus's at the last level: one never outruns its level
     max: MAX_CLASS_LEVEL,
     min: 0,
-    type: KLASS_LEVEL_BAB,
+    type: CLASS_LEVEL_BAB,
     write: "always",
   },
   skills: {
@@ -414,89 +414,8 @@ const KLASS_LEVEL_FIELDS = {
     label: "Skill Points",
     max: MAX_TABLE_COUNT,
     min: 0,
-    type: KLASS_LEVEL_SKILL_POINTS,
+    type: CLASS_LEVEL_SKILL_POINTS,
     write: "always",
-  },
-} as const;
-
-/** A spell's fields, in the order a 3.5 stat block shows them: its school, components, range… */
-const POWER_FIELDS = {
-  school: {
-    description: "Spell school (Abjuration, Conjuration, etc.)",
-    kind: "text",
-    label: "School",
-    type: SPELL_SCHOOL,
-    values: SPELL_SCHOOLS,
-  },
-  subschool: {
-    description: "Spell subschool (Calling, Charm, Creation, etc.)",
-    kind: "text",
-    label: "Subschool",
-    type: SPELL_SUBSCHOOL,
-    values: SPELL_SUBSCHOOLS,
-  },
-  descriptors: {
-    description: "Spell descriptor (Fire, Cold, Mind-Affecting, etc.)",
-    kind: "list",
-    label: "Descriptors",
-    type: SPELL_DESCRIPTOR,
-    values: SPELL_DESCRIPTORS,
-  },
-  components: {
-    description: "Required component (Verbal, Somatic, Material, Focus, Divine Focus, XP Cost)",
-    kind: "list",
-    label: "Components",
-    type: SPELL_COMPONENT,
-    values: SPELL_COMPONENTS,
-  },
-  castingTime: {
-    description: 'Time to cast (e.g., "1 standard action", "1 round")',
-    kind: "text",
-    label: "Casting Time",
-    placeholder: 'e.g., "1 standard action"',
-    type: SPELL_CASTING_TIME,
-  },
-  rangeType: {
-    description: 'Range, as its book writes it (e.g., "Touch", "Close (25 ft. + 5 ft./2 levels)", "60 ft.")',
-    kind: "text",
-    label: "Range",
-    placeholder: 'e.g., "Close (25 ft. + 5 ft./2 levels)"',
-    type: SPELL_RANGE_TYPE,
-  },
-  target: {
-    description: 'Valid targets (e.g., "One creature", "You")',
-    kind: "text",
-    label: "Target",
-    placeholder: 'e.g., "One creature"',
-    type: SPELL_TARGET,
-  },
-  effect: {
-    description: 'What the spell brings into being (e.g., "One summoned creature", "Ray")',
-    kind: "text",
-    label: "Effect",
-    placeholder: 'e.g., "One summoned creature"',
-    type: SPELL_EFFECT,
-  },
-  areaOfEffect: {
-    description: 'Area of effect (e.g., "20-ft. radius", "Cone")',
-    kind: "text",
-    label: "Area of Effect",
-    placeholder: 'e.g., "20-ft. radius"',
-    type: SPELL_AREA_OF_EFFECT,
-  },
-  duration: {
-    description: 'Duration description (e.g., "1 round/level", "Instantaneous")',
-    kind: "text",
-    label: "Duration",
-    placeholder: 'e.g., "1 round/level"',
-    type: SPELL_DURATION,
-  },
-  spellResistance: {
-    description: 'Whether spell resistance applies, as its book writes it (e.g., "Yes", "No", "Yes (harmless)")',
-    kind: "text",
-    label: "Spell Resistance",
-    placeholder: 'e.g., "Yes (harmless)"',
-    type: SPELL_RESISTANCE,
   },
 } as const;
 
@@ -584,6 +503,87 @@ const SKILL_FIELDS = {
   },
 } as const;
 
+/** A spell's fields, in the order a 3.5 stat block shows them: its school, components, range… */
+const SPELL_FIELDS = {
+  school: {
+    description: "Spell school (Abjuration, Conjuration, etc.)",
+    kind: "text",
+    label: "School",
+    type: SPELL_SCHOOL,
+    values: SPELL_SCHOOLS,
+  },
+  subschool: {
+    description: "Spell subschool (Calling, Charm, Creation, etc.)",
+    kind: "text",
+    label: "Subschool",
+    type: SPELL_SUBSCHOOL,
+    values: SPELL_SUBSCHOOLS,
+  },
+  descriptors: {
+    description: "Spell descriptor (Fire, Cold, Mind-Affecting, etc.)",
+    kind: "list",
+    label: "Descriptors",
+    type: SPELL_DESCRIPTOR,
+    values: SPELL_DESCRIPTORS,
+  },
+  components: {
+    description: "Required component (Verbal, Somatic, Material, Focus, Divine Focus, XP Cost)",
+    kind: "list",
+    label: "Components",
+    type: SPELL_COMPONENT,
+    values: SPELL_COMPONENTS,
+  },
+  castingTime: {
+    description: 'Time to cast (e.g., "1 standard action", "1 round")',
+    kind: "text",
+    label: "Casting Time",
+    placeholder: 'e.g., "1 standard action"',
+    type: SPELL_CASTING_TIME,
+  },
+  rangeType: {
+    description: 'Range, as its book writes it (e.g., "Touch", "Close (25 ft. + 5 ft./2 levels)", "60 ft.")',
+    kind: "text",
+    label: "Range",
+    placeholder: 'e.g., "Close (25 ft. + 5 ft./2 levels)"',
+    type: SPELL_RANGE_TYPE,
+  },
+  target: {
+    description: 'Valid targets (e.g., "One creature", "You")',
+    kind: "text",
+    label: "Target",
+    placeholder: 'e.g., "One creature"',
+    type: SPELL_TARGET,
+  },
+  effect: {
+    description: 'What the spell brings into being (e.g., "One summoned creature", "Ray")',
+    kind: "text",
+    label: "Effect",
+    placeholder: 'e.g., "One summoned creature"',
+    type: SPELL_EFFECT,
+  },
+  areaOfEffect: {
+    description: 'Area of effect (e.g., "20-ft. radius", "Cone")',
+    kind: "text",
+    label: "Area of Effect",
+    placeholder: 'e.g., "20-ft. radius"',
+    type: SPELL_AREA_OF_EFFECT,
+  },
+  duration: {
+    description: 'Duration description (e.g., "1 round/level", "Instantaneous")',
+    kind: "text",
+    label: "Duration",
+    placeholder: 'e.g., "1 round/level"',
+    type: SPELL_DURATION,
+  },
+  spellResistance: {
+    description: 'Whether spell resistance applies, as its book writes it (e.g., "Yes", "No", "Yes (harmless)")',
+    kind: "text",
+    label: "Spell Resistance",
+    placeholder: 'e.g., "Yes (harmless)"',
+    type: SPELL_RESISTANCE,
+  },
+} as const;
+
 /**
  * Each entity type's fields, by name, in the order its stat block shows them (and its form its fields): the one
  * declaration of each, which the engine's codecs are built from.
@@ -591,9 +591,9 @@ const SKILL_FIELDS = {
 export const ENTITY_FIELDS = {
   feats: FEAT_FIELDS,
   items: ITEM_FIELDS,
-  klasses: KLASS_FIELDS,
-  klass_levels: KLASS_LEVEL_FIELDS,
-  powers: POWER_FIELDS,
+  classes: KLASS_FIELDS,
+  class_levels: KLASS_LEVEL_FIELDS,
+  spells: SPELL_FIELDS,
   races: RACE_FIELDS,
   rulesets: RULESET_FIELDS,
   skills: SKILL_FIELDS,

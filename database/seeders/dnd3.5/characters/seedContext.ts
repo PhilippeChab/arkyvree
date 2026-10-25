@@ -48,7 +48,7 @@ export async function getSeedContext(db: Db): Promise<SeedContext> {
     }[];
   const langs = await named("languages");
   const races = await named("races");
-  const klasses = await named("klasses");
+  const klasses = await named("classes");
   const items = await named("items");
   return {
     ...names,

@@ -30,11 +30,11 @@ export interface LevelEditPlan extends ChildrenPlan {
   rows: Pick<LevelRows, keyof LevelRows>;
 }
 
-/** A level's picks as the rows a level-up writes: its feats and powers, each in its pool, and its skill ranks. */
+/** A level's picks as the rows a level-up writes: its feats and spells, each in its pool, and its skill ranks. */
 export interface LevelPickRows {
   feats: FeatPick[];
-  powers: PowerPick[];
   skills: SkillRank[];
+  spells: SpellPick[];
 }
 
 /** A level's rows in the tables under it, by pick, as a level-up writes them: its ability increases and its picks. */
@@ -53,14 +53,14 @@ export interface LevelWrites {
   rows: Pick<LevelRows, keyof LevelRows>;
 }
 
-/** A power picked in a pool. */
-export interface PowerPick {
-  aptitudeId: string;
-  powerId: string;
-}
-
 /** A skill's ranks a level buys. */
 export interface SkillRank {
   rank: number;
   skillId: string;
+}
+
+/** A spell picked in a pool. */
+export interface SpellPick {
+  aptitudeId: string;
+  spellId: string;
 }

@@ -7,7 +7,7 @@ import BookPaths from "./BookPaths.ts";
 
 /** The fields of the entities the seeders write as their properties, by entity. */
 export interface SeededFields {
-  klasses: typeof CLASS_FIELDS.fields;
+  classes: typeof CLASS_FIELDS.fields;
   klassLevels: typeof CLASS_LEVEL_FIELDS.fields;
   rulesets: typeof RULESET_FIELDS.fields;
   skills: typeof SKILL_FIELDS.fields;
@@ -20,7 +20,7 @@ export interface SeededFields {
 export default class Dnd35Content extends ContentPart<SeededFields> {
   /** The codecs of the fields the seeders write as properties, by entity. */
   protected override readonly codecs = {
-    klasses: CLASS_FIELDS,
+    classes: CLASS_FIELDS,
     klassLevels: CLASS_LEVEL_FIELDS,
     rulesets: RULESET_FIELDS,
     skills: SKILL_FIELDS,

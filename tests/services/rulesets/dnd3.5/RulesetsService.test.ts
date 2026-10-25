@@ -72,7 +72,7 @@ async function addPlayableContent(rulesetId: string) {
     rulesetId,
   });
   const [race] = await Entities.create<Race>(db, "races", { name: "Human", rulesetId, size: "Medium", baseSpeed: 30 });
-  const [klass] = await Entities.create<Klass>(db, "klasses", { name: "Fighter", rulesetId, hd: 10 });
+  const [klass] = await Entities.create<Klass>(db, "classes", { name: "Fighter", rulesetId, hd: 10 });
   const [skill] = await Entities.create<Skill>(db, "skills", {
     name: "Climb",
     rulesetId,
@@ -369,7 +369,7 @@ describe("RulesetsService", () => {
       const partial = await createTestRuleset(user.id);
       const { race, klass } = await addPlayableContent(partial.id);
       await Entities.delete<Race>(db, { entityType: "races", id: race.id });
-      await Entities.delete<Klass>(db, { entityType: "klasses", id: klass.id });
+      await Entities.delete<Klass>(db, { entityType: "classes", id: klass.id });
       expect(RulesetsService.publishRuleset(session, partial.id)).rejects.toMatchObject({
         refusal: "unprocessable",
         message: "Ruleset requires at least one of each: race, class",
@@ -498,7 +498,7 @@ describe("RulesetsService", () => {
   });
 
   describe("a fork's changes", () => {
-    test("lists the entities it modified, deleted and added", async () => {
+    test("lists the entities it modified, deleted and added, by kind and then by name", async () => {
       const { session, fork, modified, deleted } = await setupChanges();
       expect(await RulesetChangesService.getChanges(session, fork.id)).toEqual([]);
 
@@ -509,8 +509,7 @@ describe("RulesetsService", () => {
       await EntitiesService.deleteEntity(session, fork.id, "feats", deleted.id);
       const [added] = await Entities.create<Feat>(db, "feats", { name: "Homebrew", rulesetId: fork.id });
 
-      const changes = await RulesetChangesService.getChanges(session, fork.id);
-      expect([...changes].sort((a, b) => a.name.localeCompare(b.name))).toEqual([
+      expect(await RulesetChangesService.getChanges(session, fork.id)).toEqual([
         { entityType: "feats", status: "deleted", sourceEntityId: deleted.id, name: "Cleave" },
         { entityType: "feats", status: "added", entityId: added.id, name: "Homebrew" },
         {
@@ -583,16 +582,16 @@ describe("RulesetsService", () => {
       test("deletes a copied class's levels and class skills", async () => {
         const { session, parent, fork } = await setupChanges();
         const { klass, skill } = await addPlayableContent(parent.id);
-        await Entities.create<KlassLevel>(db, "klass_levels", { klassId: klass.id, level: 1 });
-        await Joins.create<KlassSkill>(db, "klass_skills", { klassId: klass.id, skillId: skill.id });
-        const copy = await copyEntity(db, "klasses", klass.id, fork);
+        await Entities.create<KlassLevel>(db, "class_levels", { klassId: klass.id, level: 1 });
+        await Joins.create<KlassSkill>(db, "class_skills", { klassId: klass.id, skillId: skill.id });
+        const copy = await copyEntity(db, "classes", klass.id, fork);
 
-        await RulesetChangesService.revertOverride(session, fork.id, "klasses", klass.id);
+        await RulesetChangesService.revertOverride(session, fork.id, "classes", klass.id);
 
         expect(
-          await Entities.findMany<KlassLevel>(db, { entityType: "klass_levels", ownerIds: [copy.id as string] }),
+          await Entities.findMany<KlassLevel>(db, { entityType: "class_levels", ownerIds: [copy.id as string] }),
         ).toEqual([]);
-        expect(await Joins.findMany<KlassSkill>(db, { join: "klass_skills", fromIds: [copy.id as string] })).toEqual(
+        expect(await Joins.findMany<KlassSkill>(db, { join: "class_skills", fromIds: [copy.id as string] })).toEqual(
           [],
         );
       });

@@ -1,9 +1,9 @@
-/** A spell reference's seeds: its SpellSeed[], each with its level. */
+/** A spell reference's seeds: its LeveledSpellSeed[], each with its level. */
 
 import { normalizeDescription } from "@/codegen/dnd3.5/tools/text/scrapedText.ts";
 import type { InheritedSpellList } from "@/codegen/dnd3.5/tools/types/classes.ts";
 import { type SpellReference } from "@/codegen/dnd3.5/tools/types/spells.ts";
-import type { SpellSeed } from "@/content/dnd3.5/builders/spells/types.ts";
+import type { LeveledSpellSeed } from "@/content/dnd3.5/builders/spells/types.ts";
 import { CORE_BOOK } from "@/vocabulary/dnd3.5/books.ts";
 
 import { ReferenceSeeds } from "./ReferenceSeeds.ts";
@@ -69,18 +69,18 @@ export class SpellSeeds extends ReferenceSeeds<SpellReference> {
   }
 
   /** Its seeds, sorted by level, then name. */
-  seeds(): SpellSeed[] {
+  seeds(): LeveledSpellSeed[] {
     return this.memo("seeds", () => {
       const othersInherited = this.book.othersInheritedLists();
       const classSpellLists = this.book.classSpellLists();
-      const spells: SpellSeed[] = [];
+      const spells: LeveledSpellSeed[] = [];
 
       for (const entry of this.ref.raw) {
         const { aptitudes, aptitudeLevels, minLevel } = this.levels(entry, othersInherited, classSpellLists);
         const { properties, savingThrow } = this.ref.detected[entry.name];
         // Only include aptitudeLevels when not all aptitudes share the same level
         const hasVaryingLevels = Object.values(aptitudeLevels).some((l) => l !== minLevel);
-        const seed: SpellSeed = {
+        const seed: LeveledSpellSeed = {
           name: entry.name,
           description: normalizeDescription(this.ref.mapping[entry.name].description),
           aptitudes: [...aptitudes].sort(),

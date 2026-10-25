@@ -21,8 +21,8 @@ async function setup() {
     description: "Strength",
     rulesetId,
   });
-  const [fighter] = await Entities.create<Klass>(db, "klasses", { name: "Fighter", rulesetId, hd: 8 });
-  const [rogue] = await Entities.create<Klass>(db, "klasses", { name: "Rogue", rulesetId, hd: 8 });
+  const [fighter] = await Entities.create<Klass>(db, "classes", { name: "Fighter", rulesetId, hd: 8 });
+  const [rogue] = await Entities.create<Klass>(db, "classes", { name: "Rogue", rulesetId, hd: 8 });
   const [climb] = await Entities.create<Skill>(db, "skills", {
     name: "Climb",
     rulesetId,
@@ -33,7 +33,7 @@ async function setup() {
 }
 
 async function skillIdsOf(rulesetId: string, klassId: string) {
-  return (await EntitiesService.getEntityLinks(rulesetId, "klasses", klassId)).map((ks) => ks.skillId).sort();
+  return (await EntitiesService.getEntityLinks(rulesetId, "classes", klassId)).map((ks) => ks.skillId).sort();
 }
 
 // Adding, listing and removing a class skill, and refusing one the class has, are covered in the class skills router test.
@@ -45,34 +45,34 @@ describe("EntitiesService: a class's skills", () => {
       [fighter, swim],
       [rogue, climb],
     ] as const)
-      await EntitiesService.addEntityLink(session, ruleset.id, "klasses", klass.id, skill.id);
+      await EntitiesService.addEntityLink(session, ruleset.id, "classes", klass.id, skill.id);
 
-    await EntitiesService.removeEntityLink(session, ruleset.id, "klasses", fighter.id, climb.id);
+    await EntitiesService.removeEntityLink(session, ruleset.id, "classes", fighter.id, climb.id);
     expect(await skillIdsOf(ruleset.id, fighter.id)).toEqual([swim.id]);
     expect(await skillIdsOf(ruleset.id, rogue.id)).toEqual([climb.id]);
   });
 
   test("refuses a removal another removal took since its view was read, recording nothing", async () => {
     const { user, session, ruleset, fighter, climb } = await setup();
-    await EntitiesService.addEntityLink(session, ruleset.id, "klasses", fighter.id, climb.id);
+    await EntitiesService.addEntityLink(session, ruleset.id, "classes", fighter.id, climb.id);
     // The view still has it: another request removed it, and its invalidation hasn't run
     expect(await skillIdsOf(ruleset.id, fighter.id)).toEqual([climb.id]);
-    await Joins.delete(db, { join: "klass_skills", fromId: fighter.id, toId: climb.id });
+    await Joins.delete(db, { join: "class_skills", fromId: fighter.id, toId: climb.id });
 
-    expect(EntitiesService.removeEntityLink(session, ruleset.id, "klasses", fighter.id, climb.id)).rejects.toThrow(
+    expect(EntitiesService.removeEntityLink(session, ruleset.id, "classes", fighter.id, climb.id)).rejects.toThrow(
       ConflictError,
     );
     const { items } = await Activities.findPage(db, { userId: user.id }, { limit: 10, page: 1 });
-    expect(items.map((activity) => activity.type)).toEqual(["addKlassSkill"]);
+    expect(items.map((activity) => activity.type)).toEqual(["addClassSkill"]);
   });
 
   test("refuses changes from anyone but the owner", async () => {
     const { ruleset, fighter, climb } = await setup();
     const { session: other } = await createTestUserAndRuleset();
-    expect(EntitiesService.addEntityLink(other, ruleset.id, "klasses", fighter.id, climb.id)).rejects.toThrow(
+    expect(EntitiesService.addEntityLink(other, ruleset.id, "classes", fighter.id, climb.id)).rejects.toThrow(
       ForbiddenError,
     );
-    expect(EntitiesService.removeEntityLink(other, ruleset.id, "klasses", fighter.id, climb.id)).rejects.toThrow(
+    expect(EntitiesService.removeEntityLink(other, ruleset.id, "classes", fighter.id, climb.id)).rejects.toThrow(
       ForbiddenError,
     );
   });
@@ -80,50 +80,50 @@ describe("EntitiesService: a class's skills", () => {
   test("doesn't find a class or skill of another ruleset, nor a skill the class doesn't have", async () => {
     const { session, ruleset, fighter, climb } = await setup();
     const other = await setup();
-    await expectRefusedWith(EntitiesService.getEntityLinks(ruleset.id, "klasses", other.fighter.id), 404);
+    await expectRefusedWith(EntitiesService.getEntityLinks(ruleset.id, "classes", other.fighter.id), 404);
     await expectRefusedWith(
-      EntitiesService.addEntityLink(session, ruleset.id, "klasses", other.fighter.id, climb.id),
+      EntitiesService.addEntityLink(session, ruleset.id, "classes", other.fighter.id, climb.id),
       404,
     );
     // The skill an add sends is its body's: refused as invalid, by name
     expect(
-      EntitiesService.addEntityLink(session, ruleset.id, "klasses", fighter.id, other.climb.id),
+      EntitiesService.addEntityLink(session, ruleset.id, "classes", fighter.id, other.climb.id),
     ).rejects.toMatchObject({
       message: `Skill ${other.climb.id} does not belong to this ruleset`,
       refusal: "invalid",
     });
     await expectRefusedWith(
-      EntitiesService.removeEntityLink(session, ruleset.id, "klasses", fighter.id, climb.id),
+      EntitiesService.removeEntityLink(session, ruleset.id, "classes", fighter.id, climb.id),
       404,
     );
     await expectRefusedWith(
-      EntitiesService.removeEntityLink(session, ruleset.id, "klasses", other.fighter.id, climb.id),
+      EntitiesService.removeEntityLink(session, ruleset.id, "classes", other.fighter.id, climb.id),
       404,
     );
   });
 
   test("refuses to remove a class skill while a character has a level in the class", async () => {
     const { user, session, ruleset, fighter, climb } = await setup();
-    await EntitiesService.addEntityLink(session, ruleset.id, "klasses", fighter.id, climb.id);
-    const [klassLevel] = await Entities.create<KlassLevel>(db, "klass_levels", { klassId: fighter.id, level: 1 });
+    await EntitiesService.addEntityLink(session, ruleset.id, "classes", fighter.id, climb.id);
+    const [klassLevel] = await Entities.create<KlassLevel>(db, "class_levels", { klassId: fighter.id, level: 1 });
     const character = await createTestCharacter(user.id, { rulesetId: ruleset.id });
     await addCharacterLevel(character.id, klassLevel.id);
 
-    expect(EntitiesService.removeEntityLink(session, ruleset.id, "klasses", fighter.id, climb.id)).rejects.toThrow(
+    expect(EntitiesService.removeEntityLink(session, ruleset.id, "classes", fighter.id, climb.id)).rejects.toThrow(
       ConflictError,
     );
   });
 
   test("in a fork, reads the inherited class's skills and changes them on the fork's copy of the class", async () => {
     const { user, session, ruleset: parent, fighter, climb, swim } = await setup();
-    await EntitiesService.addEntityLink(session, parent.id, "klasses", fighter.id, climb.id);
+    await EntitiesService.addEntityLink(session, parent.id, "classes", fighter.id, climb.id);
     const fork = await createTestRuleset(user.id, { rulesetId: parent.id, ancestorRulesetIds: [parent.id] });
     expect(await skillIdsOf(fork.id, fighter.id)).toEqual([climb.id]);
 
     // The fork's changes are its copy's: the parent's cached rows, which every fork of it reads, stay
     const parentRows = await RulesetViews.getRawData(parent.id);
-    const added = await EntitiesService.addEntityLink(session, fork.id, "klasses", fighter.id, swim.id);
-    const removed = await EntitiesService.removeEntityLink(session, fork.id, "klasses", fighter.id, climb.id);
+    const added = await EntitiesService.addEntityLink(session, fork.id, "classes", fighter.id, swim.id);
+    const removed = await EntitiesService.removeEntityLink(session, fork.id, "classes", fighter.id, climb.id);
     expect(await RulesetViews.getRawData(parent.id)).toBe(parentRows);
     const snapshot = await EntitySnapshots.findOne(db, {
       sourceEntityId: fighter.id,
@@ -133,7 +133,7 @@ describe("EntitiesService: a class's skills", () => {
 
     expect(await skillIdsOf(fork.id, fighter.id)).toEqual([swim.id]);
     expect(
-      (await Joins.findMany<KlassSkill>(db, { join: "klass_skills", fromIds: [fighter.id] })).map((ks) => ks.skillId),
+      (await Joins.findMany<KlassSkill>(db, { join: "class_skills", fromIds: [fighter.id] })).map((ks) => ks.skillId),
     ).toEqual([climb.id]);
   });
 });

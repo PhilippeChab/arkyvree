@@ -22,7 +22,7 @@ export const INVITE_NOTIFICATION_TYPES = [
 ] as const;
 
 /**
- * The name an entity type's activities give it (`createKlass`, `updateKlassLevel`): its table's singular, in
+ * The name an entity type's activities give it (`createPerk`, `updateOwnerLevel`): its table's singular, in
  * PascalCase. A client reads the type back from it (`entityTypeOfActivityName`) to name it in its ruleset's words.
  */
 export function getActivityName(entityType: string) {

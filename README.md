@@ -117,7 +117,7 @@ server/
     exports/            # PDF exports
     notifications/      # Notifications
     policies/           # Authorization policies
-    rulesets/           # Ruleset and ruleset entity services (feats, powers, classes, etc.)
+    rulesets/           # Ruleset and ruleset entity services (feats, spells, classes, etc.)
       customization/    # Modifiers, requirements, target paths
   repositories/         # Database access layer (Drizzle ORM), in folders by domain; concerns/, the mixins they include
   cache/                # In-memory cache (a ruleset's rows, its COW data, its target paths)

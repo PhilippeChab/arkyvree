@@ -5,13 +5,13 @@ import type { SavedPickRows } from "@/engine/rulesets/dnd3.5/levelUp/SavedPicks.
 import { DND35_STORAGE } from "@/engine/rulesets/dnd3.5/storage/Dnd35Storage.ts";
 
 /** The picks 3.5's flows read of a character's saved levels: the compiler refuses a pick the shape lacks or adds. */
-const SAVED = { abilityIncreases: true, feats: true, powers: true, skills: true } satisfies Record<
+const SAVED = { abilityIncreases: true, feats: true, spells: true, skills: true } satisfies Record<
   keyof SavedPickRows,
   true
 >;
 
 /** The picks 3.5's flows write of a level: the compiler refuses a pick the shape lacks or adds. */
-const WRITTEN = { abilityIncreases: true, feats: true, powers: true, skills: true } satisfies Record<
+const WRITTEN = { abilityIncreases: true, feats: true, spells: true, skills: true } satisfies Record<
   keyof LevelRows,
   true
 >;

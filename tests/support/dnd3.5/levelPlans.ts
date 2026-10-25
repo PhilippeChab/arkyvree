@@ -20,8 +20,8 @@ export interface PlannedClassLevel {
 /** A plan's picks, by id: the points spent on each skill, and the feats and spells picked in each pool. */
 export interface PlanPicks {
   feats?: Record<string, string[]>;
-  powers?: Record<string, string[]>;
   skills?: Record<string, number>;
+  spells?: Record<string, string[]>;
 }
 
 /** A saved level's plan, read by kind: its hit points, its ability increases, and its picks. */
@@ -29,8 +29,8 @@ export interface SavedPicks {
   abilityIncreases: { abilityId: string; amount: number }[];
   feats: Record<string, string[]>;
   hp: number | undefined;
-  powers: Record<string, string[]>;
   skills: Record<string, number>;
+  spells: Record<string, string[]>;
 }
 
 /** A pick step's payload by pool: its ids, in order. */
@@ -45,14 +45,14 @@ function chosenOf(increases: PlannedClassLevel["abilityIncreases"] = []) {
   return increases.map(({ abilityId, amount }) => ({ amount, id: abilityId }));
 }
 
-/** The picks as the skills, feats and powers steps' payloads: each pool's picks in it, in order. */
-function picksOf({ feats = {}, powers = {}, skills = {} }: PlanPicks) {
+/** The picks as the skills, feats and spells steps' payloads: each pool's picks in it, in order. */
+function picksOf({ feats = {}, spells = {}, skills = {} }: PlanPicks) {
   const picked = (byPool: Record<string, string[]>) =>
     Object.entries(byPool).flatMap(([pool, ids]) => ids.map((id) => ({ id, pool })));
   return {
     skills: Object.entries(skills).map(([id, points]) => ({ id, points })),
     feats: picked(feats),
-    powers: picked(powers),
+    spells: picked(spells),
   };
 }
 
@@ -85,7 +85,7 @@ export function savedPicksOf(plan: LevelPlanRequest): SavedPicks {
     abilityIncreases: chosen.map(({ amount, id }) => ({ abilityId: id, amount })),
     feats: byPool(plan.steps.feats),
     hp,
-    powers: byPool(plan.steps.powers),
+    spells: byPool(plan.steps.spells),
     skills: Object.fromEntries(spent.map(({ id, points }) => [id, points])),
   };
 }

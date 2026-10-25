@@ -66,7 +66,7 @@ const feat = rulesetData.find("feats", storedFeatId);
 
 This covers ~30 lookup sites. Zero caller changes after the rollout. When the ruleset has no overrides (e.g. the base itself), the Proxy is skipped and the underlying Map is returned directly — zero overhead.
 
-Also at compose time: the inline join rows on feats/powers (`powersAptitudesInRules[].aptitudeId`, `featsAptitudesInRules[].aptitudeId`, and their nested `aptitudesInRule` objects) are remapped and deduped. Earlier versions missed this because `CowData.resolveRows` only touches top-level string fields — nested arrays kept pre-COW ids and broke multi-extension sibling-dedup scenarios.
+Also at compose time: the inline join rows on feats/spells (`spellsAptitudesInRules[].aptitudeId`, `featsAptitudesInRules[].aptitudeId`, and their nested `aptitudesInRule` objects) are remapped and deduped. Earlier versions missed this because `CowData.resolveRows` only touches top-level string fields — nested arrays kept pre-COW ids and broke multi-extension sibling-dedup scenarios.
 
 ### Layer 2 — the engine reads the rows it's handed as the view does
 
@@ -150,8 +150,8 @@ One tier: per-ruleset **raw** entities, keyed by `rulesetId[:campaignId]`. The c
 ```ts
 interface RulesetRawData {
   // Entities owned by this ruleset only — no ancestor merging.
-  entities: Record<string, ViewRow[]>; // each kind's rows (a row with its id), by its type (3.5's "feats", "klass_levels"…)
-  joins: Record<string, Row[]>; // each join's rows its kinds' lists don't nest, by its name ("klass_skills"…)
+  entities: Record<string, ViewRow[]>; // each kind's rows (a row with its id), by its type (3.5's "feats", "class_levels"…)
+  joins: Record<string, Row[]>; // each join's rows its kinds' lists don't nest, by its name ("class_skills"…)
   tieredIds: Set<string>; // the entities a link of a tiered join points at (3.5's spell lists at a level)
   properties: Property[];
   modifiers: Modifier[];
@@ -242,16 +242,16 @@ The view's own, by kind (`RulesetData`, `engine/core/view/RulesetData.ts`):
 
 | Index | Holds |
 | --- | --- |
-| `featsById`, `powersById`, `skillsById`, `aptitudesById`, `abilitiesById`, `savesById`, `klassesById`, `racesById`, `languagesById`, `itemsById`, `mechanicsById`, `klassLevelsById` | Each of its kinds' entities by id: the view's `byId(type)` |
+| `featsById`, `spellsById`, `skillsById`, `aptitudesById`, `abilitiesById`, `savesById`, `klassesById`, `racesById`, `languagesById`, `itemsById`, `mechanicsById`, `klassLevelsById` | Each of its kinds' entities by id: the view's `byId(type)` |
 | `klassLevelByKlassAndLevel` (key `${klassId}:${level}`) | A class's level |
 | `klassLevelsByKlass` | A class's levels, sorted: the last its highest |
-| `klassLevelFeatsWithFeatsByKlassLevel`, `klassLevelPowersWithPowersByKlassLevel` | A class level's feats and powers, each with its entity |
+| `klassLevelFeatsWithFeatsByKlassLevel`, `klassLevelSpellsWithSpellsByKlassLevel` | A class level's feats and spells, each with its entity |
 | `klassSkillsWithSkillsByKlass`, `klassSkillsByKlass` | A class's skills, with or without each skill |
 | `klassLevelSavesByKlassLevel` | A class level's saves |
 | `klassLevelFeatsByKlassLevel` | A class level's feat rows, without their feats |
-| `aptitudeIdsWithPowers` | The aptitudes some power belongs to |
+| `aptitudeIdsWithSpells` | The aptitudes some spell belongs to |
 | `leveledAptitudeIds` | The aptitudes counted by spell level (spell pools): the view's `tieredIds` |
-| `aptitudeIdBySlug`, `featIdBySlug`, `powerIdsBySlug` | An aptitude, feat or powers by the slug a target path names them by (the modifier scans for `feats.<slug>.possessed` and `powers.<slug>.<aptitude>.known`) |
+| `aptitudeIdBySlug`, `featIdBySlug`, `spellIdsBySlug` | An aptitude, feat or spells by the slug a target path names them by (the modifier scans for `feats.<slug>.possessed` and `spells.<slug>.<aptitude>.known`) |
 
 Each is built from the composed lists the first time it's read and kept with the view: a request pays for the indices it reads. Building every one costs about 2.5 ms on the core ruleset and 10 ms on a fork using every extension, on top of composing its lists (under 1 ms and about 14 ms).
 
@@ -353,7 +353,7 @@ Failed promises self-evict so a retry doesn't return the cached rejection.
 The request log line gets a `dedup: N/M` segment whenever dedup activity happened:
 
 ```
-[api] 2026-04-16T... --> POST /api/characters/levels/:id/options/powers 200 220ms (db: 180ms cpu: 40ms q: 8 cache: 4/4 dedup: 6/12)
+[api] 2026-04-16T... --> POST /api/characters/levels/:id/options/spells 200 220ms (db: 180ms cpu: 40ms q: 8 cache: 4/4 dedup: 6/12)
 ```
 
 - `cache: H/T` — ruleset cache hits / total lookups (set by `onCacheHit`/`onCacheMiss` in `MemoryCache`)
@@ -385,7 +385,7 @@ flowchart LR
 - **Sweep**: every 60s, delete expired non-pinned entries. Timer is `unref`d so it doesn't hold the process alive.
 - **Disable knob**: set `DISABLE_CACHE=true` to make every `get` miss and every `set` a no-op (for debugging).
 
-## End-to-end example: `POST /api/characters/levels/:id/options/powers`
+## End-to-end example: `POST /api/characters/levels/:id/options/spells`
 
 With both cache layers warm:
 
@@ -399,7 +399,7 @@ sequenceDiagram
     participant Dedup as Request Dedup
     participant DB
 
-    Client->>Middle: POST /options/powers
+    Client->>Middle: POST /options/spells
     Middle->>Middle: runWithRequestCache(next)
     Middle->>Svc: call
     Svc->>Repo: Characters.findOne(db, {id, userId})
@@ -419,7 +419,7 @@ sequenceDiagram
     RS-->>Svc: RulesetData
 
     Svc->>Svc: level = Engine.for(scope).entities(type).find(...)
-    Svc->>Svc: autoGrantedPowers = Dnd35View.of(rulesetData).klassLevelPowersWithPowersByKlassLevel.get(...)
+    Svc->>Svc: autoGrantedSpells = Dnd35View.of(rulesetData).klassLevelSpellsWithSpellsByKlassLevel.get(...)
 
     Svc->>Repo: CharacterAdvancements.findMany(db, {characterId})
     Repo->>Dedup: miss

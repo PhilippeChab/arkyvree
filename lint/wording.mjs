@@ -25,8 +25,8 @@
  *   writes them, capitalized (`RULESET_NOUNS`: a Class, an Alignment, "Strength", "AC"). A comment's example, a module's path,
  *   a type and a key may name them. "Level" is the app's: every ruleset's characters advance by levels.
  * - `entity-type-labels`: an entity's type shows in its ruleset's words, `entityTypeLabel(type, words)`
- *   (`lib/rulesetLabels.ts`, its rules' words: "Class Level", a 3.5 power a "Spell"), never as the code names it
- *   ("klass_levels"): an `entityType` or a `sourceType` is never rendered as it is.
+ *   (`lib/rulesetLabels.ts`, its rules' words: "Class Level" for 3.5's `class_levels`), never as the code names it
+ *   ("class_levels"): an `entityType` or a `sourceType` is never rendered as it is.
  *
  * Plain JS: oxlint loads its plugins without a TypeScript step.
  */
@@ -58,7 +58,7 @@ const DESCRIBED_SCREENS = [
   "client/src/pages/campaigns/details/sections/CharactersSection.tsx",
 ];
 
-/** The members that hold an entity's type as the code names it ("klass_levels"), which a reader sees in words */
+/** The members that hold an entity's type as the code names it ("class_levels"), which a reader sees in words */
 const ENTITY_TYPE_MEMBERS = new Set(["entityType", "sourceType"]);
 
 /**
@@ -207,7 +207,7 @@ function createEntityTypeLabels(context) {
         node,
         message:
           "An entity's type shows in its ruleset's words, `entityTypeLabel(type, words)` (`lib/rulesetLabels.ts`), " +
-          'never as the code names it ("klass_levels").',
+          'never as the code names it ("class_levels").',
       });
     },
   };

@@ -120,12 +120,12 @@ describe("A grant", () => {
     "of a spell, its requirements %s, makes it known on its list only when they hold",
     async (_, gate, known, virtual) => {
       const characterId = await seedHuman("Granted Spell");
-      await grant(characterId, "powers.magicmissile.wizard.known", gate);
+      await grant(characterId, "spells.magicmissile.wizard.known", gate);
       const detailed = await build(characterId);
 
-      expect(detailed.components.powers.getSpellEntry("Magic Missile", "Wizard Spells")?.known).toBe(known);
-      expect(detailed.getVirtualPowers().map(({ name }) => name)).toEqual([...virtual]);
-      expect(detailed.getHeldPowers().map(({ name }) => name)).toEqual([...virtual]);
+      expect(detailed.components.spells.getSpellEntry("Magic Missile", "Wizard Spells")?.known).toBe(known);
+      expect(detailed.getVirtualSpells().map(({ name }) => name)).toEqual([...virtual]);
+      expect(detailed.getHeldSpells().map(({ name }) => name)).toEqual([...virtual]);
     },
   );
 
@@ -216,12 +216,12 @@ describe("A grant", () => {
 
     test("of a spell or a language is skipped, saying why: it isn't known", async () => {
       const characterId = await seedHuman("Spell And Language By Template");
-      await setPossession(characterId, "powers.magicmissile.wizard.known", "{{ languages.common.known }}");
+      await setPossession(characterId, "spells.magicmissile.wizard.known", "{{ languages.common.known }}");
       await setPossession(characterId, "languages.elven.known", "{{ languages.common.known }}");
       const detailed = await build(characterId);
 
-      expect(detailed.components.powers.getSpellEntry("Magic Missile", "Wizard Spells")?.known).toBe(false);
-      expect(detailed.getVirtualPowers()).toEqual([]);
+      expect(detailed.components.spells.getSpellEntry("Magic Missile", "Wizard Spells")?.known).toBe(false);
+      expect(detailed.getVirtualSpells()).toEqual([]);
       expect(detailed.components.languages.getSpoken().map(({ name }) => name)).toEqual(["Common"]);
       expect(detailed.modifierEvaluator.getModifiers().skippedModifiers.map(({ warning }) => warning)).toEqual([
         expect.stringMatching(AS_TEMPLATE),
@@ -277,7 +277,7 @@ describe("A grant", () => {
       });
       const characterId = await seedHuman("Catlord", { rulesetId: fork.id });
       const animalLord = (await Entities.findOne<Klass>(db, {
-        entityType: "klasses",
+        entityType: "classes",
         name: "Animal Lord",
         rulesetId: book.id,
       }))!;

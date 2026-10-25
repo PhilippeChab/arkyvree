@@ -12,9 +12,9 @@ import type { LevelPickRows } from "./plans.ts";
 export default class LevelSelections extends LevelUpBase<DetailedCharacter> {
   /**
    * A saved level's selections: its skill ranks, its feats by pool (each with the pools its modifiers add slots to) and
-   * its powers by pool (each with its spell level in the pool when it has one).
+   * its spells by pool (each with its spell level in the pool when it has one).
    */
-  private buildLevelSelections({ feats: levelFeats, powers: levelPowers, skills: levelSkills }: LevelPickRows) {
+  private buildLevelSelections({ feats: levelFeats, spells: levelSpells, skills: levelSkills }: LevelPickRows) {
     const dnd35 = this.dnd35;
     const skills: Record<string, number> = {};
     for (const s of levelSkills) skills[s.skillId] = s.rank;
@@ -35,19 +35,19 @@ export default class LevelSelections extends LevelUpBase<DetailedCharacter> {
     }
 
     // All ids are the view's on both sides
-    const powerLevelMap = this.buildPowerLevelLookup(levelPowers.map((p) => p.powerId));
-    const powers: Record<string, { description?: string; id: string; name: string; powerLevel?: number }[]> = {};
-    for (const p of levelPowers) {
-      const level = powerLevelMap.get(`${p.powerId}:${p.aptitudeId}`);
-      const power = dnd35.powersById.get(p.powerId);
-      (powers[p.aptitudeId] ??= []).push({
-        id: p.powerId,
-        name: power?.name ?? p.powerId,
-        description: power?.description ?? undefined,
-        ...(level != null && { powerLevel: level }),
+    const spellLevelMap = this.buildSpellLevelLookup(levelSpells.map((p) => p.spellId));
+    const spells: Record<string, { description?: string; id: string; name: string; spellLevel?: number }[]> = {};
+    for (const p of levelSpells) {
+      const level = spellLevelMap.get(`${p.spellId}:${p.aptitudeId}`);
+      const spell = dnd35.spellsById.get(p.spellId);
+      (spells[p.aptitudeId] ??= []).push({
+        id: p.spellId,
+        name: spell?.name ?? p.spellId,
+        description: spell?.description ?? undefined,
+        ...(level != null && { spellLevel: level }),
       });
     }
-    return { skills, feats, powers };
+    return { skills, feats, spells };
   }
 
   /** The pools each of these picked feats' modifiers add slots to, by feat. */
@@ -58,7 +58,7 @@ export default class LevelSelections extends LevelUpBase<DetailedCharacter> {
 
   /**
    * The character's saved level `characterLevelId`: its class level, its hit points and the bounds its ruleset sets
-   * them by its class's die (`hitPoints`), its ability increases, its skill ranks, its feats by pool and its powers by
+   * them by its class's die (`hitPoints`), its ability increases, its skill ranks, its feats by pool and its spells by
    * pool. Refused when the character has no such level. Its increases are none where its rules give it none now (its
    * ruleset moved them): its edit opens without them, which a save could never keep, and writes them away.
    */

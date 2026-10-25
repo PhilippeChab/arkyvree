@@ -14,9 +14,9 @@ import {
   invalidateTestRulesets,
 } from "@/tests/support/rulesets.ts";
 import { makeSession } from "@/tests/support/users.ts";
-import { DAMAGE_TYPE, KLASS_CASTER_TYPE, RACE_QUADRUPED } from "@/vocabulary/dnd3.5/properties/index.ts";
+import { CLASS_CASTER_TYPE, DAMAGE_TYPE, RACE_QUADRUPED } from "@/vocabulary/dnd3.5/properties/index.ts";
 
-type EntityType = "races" | "klasses" | "items";
+type EntityType = "races" | "classes" | "items";
 
 /**
  * The property each sibling copy is marked with (its first's value, its second's), and what the host reads of them
@@ -24,7 +24,7 @@ type EntityType = "races" | "klasses" | "items";
  */
 const MARKERS: Record<EntityType, { merged: string[]; type: string; values: [string, string] }> = {
   races: { type: RACE_QUADRUPED, values: ["true", "false"], merged: ["true"] },
-  klasses: { type: KLASS_CASTER_TYPE, values: ["Arcane", "Divine"], merged: ["Arcane"] },
+  classes: { type: CLASS_CASTER_TYPE, values: ["Arcane", "Divine"], merged: ["Arcane"] },
   items: { type: DAMAGE_TYPE, values: ["Bludgeoning", "Piercing"], merged: ["Bludgeoning", "Piercing"] },
 };
 
@@ -35,8 +35,8 @@ async function setup(entityType: EntityType, omitLastLevel = false) {
   const source =
     entityType === "races"
       ? (await Entities.findOne<Race>(db, { entityType: "races", rulesetId: baseId, name: "Human" }))!
-      : entityType === "klasses"
-        ? (await Entities.findOne<Klass>(db, { entityType: "klasses", rulesetId: baseId, name: "Fighter" }))!
+      : entityType === "classes"
+        ? (await Entities.findOne<Klass>(db, { entityType: "classes", rulesetId: baseId, name: "Fighter" }))!
         : (await Entities.create<Item>(db, "items", { rulesetId: baseId, name: "Sibling item fixture" }))[0];
   if (entityType === "items") invalidateSeededRuleset(baseId);
   const marker = MARKERS[entityType];
@@ -47,7 +47,7 @@ async function setup(entityType: EntityType, omitLastLevel = false) {
     const copy = await copyEntity(db, entityType, source.id, extension);
     await Properties.createMany(db, [{ entityId: copy.id, entityType, type: marker.type, value: marker.values[i] }]);
     // Classes have modifiers on their levels, not directly on the class.
-    if (entityType !== "klasses") {
+    if (entityType !== "classes") {
       await Modifiers.create(db, {
         sourceId: copy.id,
         sourceType: entityType,
@@ -58,10 +58,10 @@ async function setup(entityType: EntityType, omitLastLevel = false) {
       });
     }
     if (omitLastLevel) {
-      const last = (await Entities.findMany<KlassLevel>(db, { entityType: "klass_levels", ownerIds: [copy.id] })).find(
+      const last = (await Entities.findMany<KlassLevel>(db, { entityType: "class_levels", ownerIds: [copy.id] })).find(
         (level) => level.level === 20,
       )!;
-      await EntitiesService.deleteOwnedEntity(session, extension.id, "klasses", copy.id, last.id);
+      await EntitiesService.deleteOwnedEntity(session, extension.id, "classes", copy.id, last.id);
     }
     await Rulesets.update(
       db,
@@ -87,7 +87,7 @@ async function setup(entityType: EntityType, omitLastLevel = false) {
       };
     });
   const before = await read();
-  expect(before).toEqual({ properties: marker.merged, modifiers: entityType === "klasses" ? [] : ["10", "11"] });
+  expect(before).toEqual({ properties: marker.merged, modifiers: entityType === "classes" ? [] : ["10", "11"] });
   const originals = await Properties.findMany(db, { entityIds: sourceIds });
   const assertCopied = async () => {
     for (const cold of [false, true]) {
@@ -109,7 +109,7 @@ async function setup(entityType: EntityType, omitLastLevel = false) {
   return { session, host, source, assertCopied };
 }
 
-for (const entityType of ["races", "klasses", "items"] as const) {
+for (const entityType of ["races", "classes", "items"] as const) {
   test(`${entityType}: ordinary edit copies all visible sibling customizations`, async () => {
     const { session, host, source, assertCopied } = await setup(entityType);
     if (entityType === "races") {
@@ -119,8 +119,8 @@ for (const entityType of ["races", "klasses", "items"] as const) {
         size: "Medium",
         baseSpeed: 30,
       });
-    } else if (entityType === "klasses") {
-      await EntitiesService.updateEntity(session, host.id, "klasses", source.id, {
+    } else if (entityType === "classes") {
+      await EntitiesService.updateEntity(session, host.id, "classes", source.id, {
         name: source.name,
         description: "edited description",
       });
@@ -136,7 +136,7 @@ for (const entityType of ["races", "klasses", "items"] as const) {
 
 for (const action of ["add skill", "remove skill", "create level", "update level", "delete level"] as const) {
   test(`${action} copies the inherited class with its sibling customizations`, async () => {
-    const { session, host, source, assertCopied } = await setup("klasses", action === "create level");
+    const { session, host, source, assertCopied } = await setup("classes", action === "create level");
     const { assignedSkill, otherSkill, levelId } = await withRulesetScope(db, host.id, async ({ rulesetData }) => {
       const id = rulesetData.canonicalize(source.id);
       const assigned = Dnd35View.of(rulesetData).klassSkillsByKlass.get(id)!;
@@ -150,20 +150,20 @@ for (const action of ["add skill", "remove skill", "create level", "update level
       };
     });
     if (action === "add skill") {
-      await EntitiesService.addEntityLink(session, host.id, "klasses", source.id, otherSkill);
+      await EntitiesService.addEntityLink(session, host.id, "classes", source.id, otherSkill);
     } else if (action === "remove skill") {
-      await EntitiesService.removeEntityLink(session, host.id, "klasses", source.id, assignedSkill);
+      await EntitiesService.removeEntityLink(session, host.id, "classes", source.id, assignedSkill);
     } else if (action === "create level") {
-      await EntitiesService.createOwnedEntity(session, host.id, "klasses", source.id, {
+      await EntitiesService.createOwnedEntity(session, host.id, "classes", source.id, {
         level: 20,
         fields: { bab: 20, skills: 2 },
       });
     } else if (action === "update level") {
-      await EntitiesService.updateOwnedEntity(session, host.id, "klasses", source.id, levelId, {
+      await EntitiesService.updateOwnedEntity(session, host.id, "classes", source.id, levelId, {
         fields: { skills: 3 },
       });
     } else {
-      await EntitiesService.deleteOwnedEntity(session, host.id, "klasses", source.id, levelId);
+      await EntitiesService.deleteOwnedEntity(session, host.id, "classes", source.id, levelId);
     }
     await assertCopied();
   });

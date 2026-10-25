@@ -18,24 +18,24 @@ async function forkWithClass(name: string) {
   const session = makeSession();
   const fork = await createSeededTestRuleset(session.userId);
   const klass = (await Entities.findOne<Klass>(db, {
-    entityType: "klasses",
+    entityType: "classes",
     name,
     rulesetId: fork.ancestorRulesetIds[0],
   }))!;
-  const levels = await EntitiesService.getOwnedEntities(fork.id, "klasses", klass.id);
+  const levels = await EntitiesService.getOwnedEntities(fork.id, "classes", klass.id);
   return { session, fork, klass, levelId: (level: number) => levels.find((l) => l.level === level)!.id };
 }
 
 /** A save of `klassId`'s progression in the fork, and the class's levels, spells and pools once written. */
 async function save(session: ReturnType<typeof makeSession>, rulesetId: string, klassId: string, body: Body) {
-  const saved = await EntitiesService.updateProgression(session, rulesetId, "klasses", klassId, body);
+  const saved = await EntitiesService.updateProgression(session, rulesetId, "classes", klassId, body);
   const byLevel = <T extends { level: number }>(rows: T[]) => new Map(rows.map((row) => [row.level, row]));
   return {
     saved,
-    levels: byLevel(await EntitiesService.getOwnedEntities(rulesetId, "klasses", saved.entityId)),
+    levels: byLevel(await EntitiesService.getOwnedEntities(rulesetId, "classes", saved.entityId)),
     perDay: byLevel(await readClassTable(rulesetId, saved.entityId, "spells")),
     known: byLevel(await readClassTable(rulesetId, saved.entityId, "spells-known")),
-    progression: await EntitiesService.getProgression(rulesetId, "klasses", saved.entityId),
+    progression: await EntitiesService.getProgression(rulesetId, "classes", saved.entityId),
   };
 }
 
@@ -58,7 +58,7 @@ describe("EntitiesService: a class's progression", () => {
     ]);
     // Another level, and the ancestor's class, stay as they were
     expect(levels.get(3)!).toMatchObject({ bab: 2, skills: 4 });
-    const ancestor = await EntitiesService.getOwnedEntities(fork.ancestorRulesetIds[0], "klasses", klass.id);
+    const ancestor = await EntitiesService.getOwnedEntities(fork.ancestorRulesetIds[0], "classes", klass.id);
     expect(ancestor.find((level) => level.level === 1)).toMatchObject({ bab: 0, skills: 4 });
   });
 
@@ -69,7 +69,7 @@ describe("EntitiesService: a class's progression", () => {
       name: "Fortitude",
       rulesetId: fork.ancestorRulesetIds[0],
     }))!;
-    const before = await EntitiesService.getOwnedEntities(fork.id, "klasses", klass.id);
+    const before = await EntitiesService.getOwnedEntities(fork.id, "classes", klass.id);
     const first = before.find((level) => level.level === 1)!;
     const saves = first.saves.map((s) => (s.saveId === fortitude.id ? { ...s, base: 0 } : s));
     const feats = first.feats.slice(1).map(({ id, aptitudeId }) => ({ featId: id, aptitudeId }));
@@ -159,12 +159,12 @@ describe("EntitiesService: a class's progression", () => {
     const { saved } = await save(session, fork.id, klass.id, {
       levels: [{ levelId: levelId(1), fields: { bab: 0, skills: 4 } }],
     });
-    const first = (await EntitiesService.getOwnedEntities(fork.id, "klasses", saved.entityId)).find(
+    const first = (await EntitiesService.getOwnedEntities(fork.id, "classes", saved.entityId)).find(
       (level) => level.level === 1,
     )!;
     const [gated] = await Modifiers.create(db, {
       sourceId: first.id,
-      sourceType: "klass_levels",
+      sourceType: "class_levels",
       target: "aptitudes.wizardspells.1.uses",
       operator: "add",
       value: "1",
@@ -182,7 +182,7 @@ describe("EntitiesService: a class's progression", () => {
     RulesetViews.invalidate(fork.id);
 
     await expectRefusedWith(
-      EntitiesService.updateProgression(session, fork.id, "klasses", saved.entityId, {
+      EntitiesService.updateProgression(session, fork.id, "classes", saved.entityId, {
         spells: { perDay: [{ levelId: first.id, counts: [3, 1] }] },
       }),
       400,
@@ -198,10 +198,10 @@ describe("EntitiesService: a class's progression", () => {
 
   test("refuses a spell list's picks as a pool's", async () => {
     const { session, fork, klass, levelId } = await forkWithClass("Sorcerer");
-    const list = (await EntitiesService.getProgression(fork.id, "klasses", klass.id)).spellList!;
+    const list = (await EntitiesService.getProgression(fork.id, "classes", klass.id)).spellList!;
 
     await expectRefusedWith(
-      EntitiesService.updateProgression(session, fork.id, "klasses", klass.id, {
+      EntitiesService.updateProgression(session, fork.id, "classes", klass.id, {
         pools: [{ aptitudeId: list.id, picks: [{ levelId: levelId(1), count: 1 }] }],
       }),
       400,
@@ -210,17 +210,17 @@ describe("EntitiesService: a class's progression", () => {
 
   test("reads the picks a feature gives in its pool where it's granted", async () => {
     const { fork, klass } = await forkWithClass("Fighter");
-    const levels = await EntitiesService.getOwnedEntities(fork.id, "klasses", klass.id);
+    const levels = await EntitiesService.getOwnedEntities(fork.id, "classes", klass.id);
     const bonusFeat = levels[0].feats.find((feat) => feat.name === "Bonus Feat (Fighter)")!;
 
-    const { featPicks } = await EntitiesService.getProgression(fork.id, "klasses", klass.id);
+    const { featPicks } = await EntitiesService.getProgression(fork.id, "classes", klass.id);
 
     expect(featPicks[bonusFeat.id]).toEqual({ "Fighter Bonus Feat": 1 });
   });
 
   test("moves a pool's picks between levels, and reads them back", async () => {
     const { session, fork, klass, levelId } = await forkWithClass("Wizard");
-    const before = await EntitiesService.getProgression(fork.id, "klasses", klass.id);
+    const before = await EntitiesService.getProgression(fork.id, "classes", klass.id);
     const pool = before.pools.find((p) => p.name === "Wizard Specialization")!;
     expect(pool.picks).toEqual({ [levelId(1)]: 1 });
 
@@ -236,7 +236,7 @@ describe("EntitiesService: a class's progression", () => {
       ],
     });
 
-    const copied = await EntitiesService.getOwnedEntities(fork.id, "klasses", saved.entityId);
+    const copied = await EntitiesService.getOwnedEntities(fork.id, "classes", saved.entityId);
     const third = copied.find((level) => level.level === 3)!.id;
     const picks = progression.pools.find((p) => p.name === "Wizard Specialization")!.picks;
     expect(Object.entries(picks).filter(([, count]) => count > 0)).toEqual([[third, 2]]);
@@ -248,14 +248,14 @@ describe("EntitiesService: a class's progression", () => {
     const { saved } = await save(session, fork.id, klass.id, {
       levels: [{ levelId: levelId(1), fields: { bab: 1, skills: 4 } }],
     });
-    const own = (await Entities.findOne<Klass>(db, { entityType: "klasses", id: saved.entityId }))!;
-    const ownLevels = await EntitiesService.getOwnedEntities(fork.id, "klasses", own.id);
+    const own = (await Entities.findOne<Klass>(db, { entityType: "classes", id: saved.entityId }))!;
+    const ownLevels = await EntitiesService.getOwnedEntities(fork.id, "classes", own.id);
     const first = ownLevels.find((level) => level.level === 1)!.id;
 
     const change = { levels: [{ levelId: first, fields: { bab: 1, skills: 6 } }] };
     const stale = "2000-01-01T00:00:00Z";
     expect(
-      EntitiesService.updateProgression(session, fork.id, "klasses", own.id, {
+      EntitiesService.updateProgression(session, fork.id, "classes", own.id, {
         ...change,
         ownedTokens: [{ id: first, updatedAt: stale }],
       }),
@@ -265,18 +265,18 @@ describe("EntitiesService: a class's progression", () => {
       rulesetId: fork.id,
     });
     await expectRefusedWith(
-      EntitiesService.updateProgression(session, fork.id, "klasses", own.id, {
+      EntitiesService.updateProgression(session, fork.id, "classes", own.id, {
         pools: [{ aptitudeId: aptitude.id, picks: [{ levelId: first, count: 100 }] }],
       }),
       400,
     );
     await expectRefusedWith(
-      EntitiesService.updateProgression(session, fork.id, "klasses", own.id, {
+      EntitiesService.updateProgression(session, fork.id, "classes", own.id, {
         spells: { perDay: [{ levelId: first, counts: [1] }] },
       }),
       400,
     );
-    expect((await EntitiesService.getEntity(fork.id, "klasses", own.id)).updatedAt).toBe(saved.updatedAt);
+    expect((await EntitiesService.getEntity(fork.id, "classes", own.id)).updatedAt).toBe(saved.updatedAt);
   });
 
   test("refuses a body that isn't a save, as its rules read it, writing nothing", async () => {
@@ -288,10 +288,10 @@ describe("EntitiesService: a class's progression", () => {
       { pools: [{ aptitudeId: levelId(1), picks: "all" }] },
       { spells: { perDay: [{ levelId: levelId(1), counts: "all" }] } },
     ]) {
-      const refused = EntitiesService.updateProgression(session, fork.id, "klasses", klass.id, body as never);
+      const refused = EntitiesService.updateProgression(session, fork.id, "classes", klass.id, body as never);
       await expectRefusedWith(refused, 400);
     }
-    expect((await EntitiesService.getEntity(fork.id, "klasses", klass.id)).updatedAt).toBe(klass.updatedAt);
+    expect((await EntitiesService.getEntity(fork.id, "classes", klass.id)).updatedAt).toBe(klass.updatedAt);
   });
 
   test("writes nothing for a save that changes nothing, not even a copy of an inherited class", async () => {
@@ -300,13 +300,13 @@ describe("EntitiesService: a class's progression", () => {
     const first = levels.find((level) => level.level === 1)!;
     const counts = [0, 1, 2].map((spellLevel) => first.spellsPerDay[spellLevel] ?? null);
 
-    const saved = await EntitiesService.updateProgression(session, fork.id, "klasses", klass.id, {
+    const saved = await EntitiesService.updateProgression(session, fork.id, "classes", klass.id, {
       spells: { perDay: [{ levelId: levelId(1), counts }] },
     });
 
     expect(saved.entityId).toBe(klass.id);
     expect(
-      await Entities.findOne<Klass>(db, { entityType: "klasses", name: "Wizard", rulesetId: fork.id }),
+      await Entities.findOne<Klass>(db, { entityType: "classes", name: "Wizard", rulesetId: fork.id }),
     ).toBeUndefined();
   });
 });

@@ -12,7 +12,7 @@ const DECLARED_TYPES = {
   DomainSeed: "@/content/dnd3.5/builders/domains/types.ts",
   FeatSeed: "@/content/dnd3.5/builders/feats/types.ts",
   ItemSeed: "@/content/core/builders/items/types.ts",
-  PowerSeed: "@/content/dnd3.5/builders/spells/types.ts",
+  LeveledSpellSeed: "@/content/dnd3.5/builders/spells/types.ts",
   RaceSeed: "@/content/dnd3.5/builders/races/types.ts",
   SpellSeed: "@/content/dnd3.5/builders/spells/types.ts",
   WizardSchoolSeed: "@/content/dnd3.5/builders/wizardSchools/types.ts",
