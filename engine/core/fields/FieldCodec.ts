@@ -169,7 +169,8 @@ export default class FieldCodec<S extends Fields> {
 
   /**
    * A field's value into a write (`write`): its field's values (none for no value: an empty text, a default number
-   * unless always written), or a reference's link's entity (none for no value). A field without a value writes none.
+   * unless always written; a list's each once), or a reference's link's entity (none for no value). A field without a
+   * value writes none.
    */
   private static writeField(field: FieldSpec, value: unknown, write: WriteRecord) {
     if (value === undefined || value === null) return;
@@ -181,7 +182,7 @@ export default class FieldCodec<S extends Fields> {
         if (value !== "") write.links[field.role] = String(value);
         return;
       case "list":
-        write.fields[field.field] = [...(value as string[])];
+        write.fields[field.field] = [...new Set(value as string[])];
         return;
       case "progression": {
         const { every, extra } = value as ProgressionValue;
