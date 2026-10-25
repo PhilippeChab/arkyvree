@@ -219,8 +219,8 @@ export default class EntityCopy {
    * Merge sibling data into the copy. When multiple extensions COW the same base entity, the "winner" is copied first.
    * This merges what its siblings add, by the rules a ruleset's view merges them by (`siblingMerge.ts`), so the child
    * fork starts from the merged view: their modifiers (each with its requirements) and requirements against the
-   * winner's (`own`, which the copy holds), its stored values with theirs merged in, then their links of the roles that merge (a feat's pools). Each
-   * copied row's id is recorded.
+   * winner's (`own`, which the copy holds), its stored values with theirs merged in, then their links of the roles that
+   * merge (a feat's pools). Each copied row's id is recorded.
    */
   private async mergeSiblings(
     tx: Db,

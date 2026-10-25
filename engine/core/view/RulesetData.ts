@@ -63,10 +63,11 @@ function buildById<T extends { id: string }>(list: readonly T[]): Map<string, T>
 
 /**
  * A ruleset's view: its lists, composed across its chain by its copy-on-write data (`RulesetComposition`), each kind's
- * by name, each entity's links by role (`linksOf`), and their lookup indices. An index is built the first time it's read, then kept: a request
- * pays for the indices it reads, not for all of them. Every id-keyed index takes a stored (pre-COW) id too: its `.get`
- * and `.has` resolve the key (`CowData.resolve`), so consumers don't thread `cow` through or call `canonicalize` on the
- * common lookup path. What a module reads of it past its kinds' rows (3.5's indices) it derives (`derive`).
+ * by name, each entity's links by role (`linksOf`), and their lookup indices. An index is built the first time it's
+ * read, then kept: a request pays for the indices it reads, not for all of them. Every id-keyed index takes a stored
+ * (pre-COW) id too: its `.get` and `.has` resolve the key (`CowData.resolve`), so consumers don't thread `cow` through
+ * or call `canonicalize` on the common lookup path. What a module reads of it past its kinds' rows (3.5's indices) it
+ * derives (`derive`).
  */
 export default class RulesetData {
   /**

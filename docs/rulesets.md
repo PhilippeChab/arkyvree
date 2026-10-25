@@ -455,10 +455,10 @@ See [docs/access.md](./access.md) for the full policy matrix across rulesets, ch
   unlinks the grant and the author can fix it. Class-granted feats that a
   character actually picked are recorded on the character (a `feats` pick's
   `entity_id`, `character.advancement_picks`), so the character-side check
-  already covers that case. A join whose role refuses its target's delete is the
+  already covers that case. A link whose role refuses its target's delete is the
   exception (a class level's base bonus to a save, `baseBonus`): the database
   would refuse the delete, and the check answers why first
-  (`Joins.hasRefusing`, by the joins the modules declare: `StorageEngine.refusingJoins`).
+  (`EntityLinks.hasRefusing`, by the roles the modules declare: `StorageEngine.refusingRoles`).
 
 The principle: only protect what the user *invested* in (their character
 picks). Author-owned data that breaks via cascade is recoverable by the author.
