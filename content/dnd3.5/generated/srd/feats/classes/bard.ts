@@ -10,7 +10,7 @@ export const BARD_CLASS_FEATS: FeatSeed[] = [
       "Through years of travel and swapping tales with fellow performers, a bard accumulates a wide assortment of miscellaneous lore. The bard can attempt a special bardic knowledge check, adding his bard level + his Intelligence modifier to the roll, to determine whether he recalls useful information about notable local figures, legendary artifacts, or remarkable locations. (A bard who possesses 5 or more ranks in Knowledge (history) gains an additional +2 bonus on this check.) Taking 10 or taking 20 is not permitted on this check, as this type of knowledge is inherently unpredictable.",
     selectable: false,
     aptitudes: ["Bard Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Bardic Knowledge" }],
+    fields: { families: ["Bardic Knowledge"] },
   },
   {
     name: "Bardic Music (Bard)",
@@ -18,7 +18,7 @@ export const BARD_CLASS_FEATS: FeatSeed[] = [
       "A number of times per day equal to his bard level, a bard can channel magical effects through song or spoken performance. Although these abilities are collectively called bardic music, they can be activated through any combination of singing, chanting, reciting poetry, whistling, or playing a musical instrument. Each bardic music ability has both a minimum bard level requirement and a minimum number of Perform skill ranks; a bard who lacks the required ranks in at least one Perform skill cannot use that ability until he acquires them. Initiating a bardic music effect requires a standard action. Certain bardic music abilities demand concentration, requiring a standard action each round to sustain. Even when using bardic music that does not need concentration, a bard is unable to cast spells, use spell completion items (like scrolls), spell trigger items (like wands), or command word items. Similar to casting a spell with a verbal component, a deaf bard has a 20% chance of failing when attempting bardic music. A failed attempt still counts against the bard's daily uses.",
     selectable: false,
     aptitudes: ["Bard Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Bardic Music" }],
+    fields: { families: ["Bardic Music"] },
   },
   {
     name: "Countersong (Bard)",
@@ -48,7 +48,7 @@ export const BARD_CLASS_FEATS: FeatSeed[] = [
     stackable: true,
     selectable: false,
     aptitudes: ["Bard Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Inspire Courage" }],
+    fields: { families: ["Inspire Courage"] },
   },
   {
     name: "Inspire Greatness (Bard)",

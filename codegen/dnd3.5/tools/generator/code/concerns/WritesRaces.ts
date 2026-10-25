@@ -18,11 +18,7 @@ export function WritesRaces<B extends Constructor<BaseCodeFile>>(Base: B) {
           (race.modifiers ?? []).map((m) => this.plainModifier(m)),
           "    ",
         ),
-        ...this.listField(
-          "properties",
-          (race.properties ?? []).map((p) => this.property(p)),
-          "    ",
-        ),
+        ...(race.fields ? [`    fields: ${this.fieldValue(race.fields)},`] : []),
         `  },`,
       ];
     }

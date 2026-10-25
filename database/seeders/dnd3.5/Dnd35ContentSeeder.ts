@@ -1,7 +1,10 @@
+import type { ItemFields } from "@/content/dnd3.5/builders/items/types.ts";
 import type { BookContent, CoreContent } from "@/content/dnd3.5/builders/rulesets/types.ts";
 import { ContentSeeder } from "@/database/seeders/core/ContentSeeder.ts";
 import type { Ids, SeedContext } from "@/database/seeders/core/SeederState.ts";
 import type { Db } from "@/drizzle/database.ts";
+import { Engine } from "@/engine/index.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 
 /**
  * The 3.5 ruleset a seed writes to, and the ids of the rows its content names. Seeding aptitudes, feats or spells adds
@@ -71,5 +74,10 @@ export abstract class Dnd35ContentSeeder extends ContentSeeder<CoreContent, Book
       spellMap: await this.namesOf(db, rulesetId, "spells"),
       inheritedSpellMap: {},
     };
+  }
+
+  /** An item's seeded fields as the write of its stored values, by 3.5's item codec. */
+  protected override itemFieldsWrite(fields: ItemFields) {
+    return Engine.forRules(DND35_BASE_RULES).toFieldsWrite("items", fields);
   }
 }

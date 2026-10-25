@@ -32,7 +32,7 @@ export const EYE_OF_GRUUMSH_CLASS_FEATS: FeatSeed[] = [
       "An eye of Gruumsh gains the ability to rage, functioning identically to the barbarian rage with all associated benefits and penalties. His eye of Gruumsh levels stack with any barbarian levels for the purpose of determining how many times per day he may rage. To calculate daily uses, combine levels from both classes and consult the class table. For instance, a barbarian 6/eye of Gruumsh 2 would rage three times per day (matching a barbarian of 8th level), while an eye of Gruumsh 4 with no barbarian levels would rage twice per day (matching a 4th-level barbarian).",
     selectable: false,
     aptitudes: ["Eye of Gruumsh Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Rage" }],
+    fields: { families: ["Rage"] },
   },
   {
     name: "Ritual Scarring (Eye of Gruumsh)",

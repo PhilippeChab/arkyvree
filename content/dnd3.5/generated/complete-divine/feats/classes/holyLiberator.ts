@@ -38,7 +38,7 @@ export const HOLY_LIBERATOR_CLASS_FEATS: FeatSeed[] = [
     description: "A holy liberator can use detect evil at will as a spell-like ability.",
     selectable: false,
     aptitudes: ["Holy Liberator Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Detect Evil" }],
+    fields: { families: ["Detect Evil"] },
   },
   {
     name: "Divine Grace (Holy Liberator)",
@@ -61,10 +61,7 @@ export const HOLY_LIBERATOR_CLASS_FEATS: FeatSeed[] = [
     stackable: true,
     selectable: false,
     aptitudes: ["Holy Liberator Class Feature"],
-    properties: [
-      { type: "FEAT_FAMILY", value: "Smite" },
-      { type: "FEAT_FAMILY", value: "Smite Evil" },
-    ],
+    fields: { families: ["Smite", "Smite Evil"] },
   },
   {
     name: "Spells per Day (Holy Liberator)",

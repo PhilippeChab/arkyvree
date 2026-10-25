@@ -23,7 +23,7 @@ export const HIGHLAND_STALKER_CLASS_FEATS: FeatSeed[] = [
     stackable: true,
     selectable: false,
     aptitudes: ["Highland Stalker Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Skirmish" }],
+    fields: { families: ["Skirmish"] },
   },
   {
     name: "Surefooted (Highland Stalker)",

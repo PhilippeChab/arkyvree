@@ -110,7 +110,7 @@ export const NIGHTSONG_INFILTRATOR_CLASS_FEATS: FeatSeed[] = [
       "A nightsong infiltrator can find, disarm, or bypass traps with a DC of 20 or higher. She can use the Search skill to find, and the Disable Device skill to disarm, magic traps (DC 25 + the level of the spell used to create it). If her Disable Device result exceeds the trap's DC by 10 or more, she discovers how to bypass the trap without triggering or disarming it.",
     selectable: false,
     aptitudes: ["Nightsong Infiltrator Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Trapfinding" }],
+    fields: { families: ["Trapfinding"] },
   },
   {
     name: "Weapon and Armor Proficiency (Nightsong Infiltrator)",

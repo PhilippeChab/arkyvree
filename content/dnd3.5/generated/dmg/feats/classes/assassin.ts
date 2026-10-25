@@ -31,7 +31,7 @@ export const ASSASSIN_CLASS_FEATS: FeatSeed[] = [
       "Assassins receive specialized training in handling poisons and never accidentally expose themselves to their own toxins when coating a weapon.",
     selectable: false,
     aptitudes: ["Assassin Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Poison Use" }],
+    fields: { families: ["Poison Use"] },
   },
   {
     name: "Save Against Poison (Assassin)",
@@ -47,7 +47,7 @@ export const ASSASSIN_CLASS_FEATS: FeatSeed[] = [
     stackable: true,
     selectable: false,
     aptitudes: ["Assassin Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Sneak Attack" }],
+    fields: { families: ["Sneak Attack"] },
   },
   {
     name: "Spells (Assassin)",

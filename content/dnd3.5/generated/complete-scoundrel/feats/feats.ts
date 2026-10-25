@@ -260,7 +260,7 @@ export const LUCK_FEATS: FeatSeed[] = [
     description:
       "You can expend one luck reroll as an immediate action to force a foe to reroll a critical hit confirmation roll made when attacking you. You can expend two luck rerolls as an immediate action to force a foe to reroll an attack roll made against you. You gain one luck reroll per day.",
     aptitudes: ["General"],
-    properties: [{ type: "FEAT_FAMILY", value: "Luck" }],
+    fields: { families: ["Luck"] },
   },
   {
     name: "Better Lucky than Good",
@@ -268,7 +268,7 @@ export const LUCK_FEATS: FeatSeed[] = [
       "If you roll a natural 1 when making an attack roll, you can expend one luck reroll as a swift action to instead treat the roll as a natural 20. You can use this feat once per day. You gain one luck reroll per day",
     aptitudes: ["General"],
     requirements: [gte("identity.meta.level", 6), gte("feats.luck.count", 2)],
-    properties: [{ type: "FEAT_FAMILY", value: "Luck" }],
+    fields: { families: ["Luck"] },
   },
   {
     name: "Dumb Luck",
@@ -276,62 +276,62 @@ export const LUCK_FEATS: FeatSeed[] = [
       "If you roll a natural 1 when making a saving throw, you can expend one luck reroll as an immediate action to instead trear the roll as a natural 20. You can use this feat once per day. You gain one luck reroll per day.",
     aptitudes: ["General"],
     requirements: [gte("identity.meta.level", 6), gte("feats.luck.count", 2)],
-    properties: [{ type: "FEAT_FAMILY", value: "Luck" }],
+    fields: { families: ["Luck"] },
   },
   {
     name: "Fortuitous Strike",
     description:
       "You can expend one luck reroll as a swift action to reroll a weapon damage roll. You can expend two luck rerolls as a swift action to reroll an attack roll. You gain one luck reroll per day.",
     aptitudes: ["General"],
-    properties: [{ type: "FEAT_FAMILY", value: "Luck" }],
+    fields: { families: ["Luck"] },
   },
   {
     name: "Good Karma",
     description:
       "You can expend one luck reroll as an immediate action to redirect an attack made against an adjacent ally so that it is made against you instead. You must be within reach of the attacker (if a melee attack) or within range of the attack (if a ranged attack) in order to use this ability. The attack roll result remains the same, but it is against your AC, rather than that of your ally. If the redirected attack hits you, you take an extra 50% damage from it. You gain one luck reroll per day.",
     aptitudes: ["General"],
-    properties: [{ type: "FEAT_FAMILY", value: "Luck" }],
+    fields: { families: ["Luck"] },
   },
   {
     name: "Healer's Luck",
     description:
       "You can expend one luck reroll as a swift action to reroll the number of points of damage healed by a conjuration (healing) spell you have just cast on your current turn. You gain one luck reroll per day",
     aptitudes: ["General"],
-    properties: [{ type: "FEAT_FAMILY", value: "Luck" }],
+    fields: { families: ["Luck"] },
   },
   {
     name: "Lucky Break",
     description:
       "You can expend one luck reroll as a swift action to reroll a Strength check made to break an item or burst open a door. You gain one luck reroll per day.",
     aptitudes: ["General"],
-    properties: [{ type: "FEAT_FAMILY", value: "Luck" }],
+    fields: { families: ["Luck"] },
   },
   {
     name: "Lucky Catch",
     description:
       "You can expend one luck reroll as an immediate action to reroll a Balance, Climb, or Jump check. You gain one luck reroll per day.",
     aptitudes: ["General"],
-    properties: [{ type: "FEAT_FAMILY", value: "Luck" }],
+    fields: { families: ["Luck"] },
   },
   {
     name: "Lucky Fingers",
     description:
       "You can expend one luck reroll as an immediate action to reroll a Disable Device, Open Lock, or Sleight of Hand check. You gain one luck reroll per day.",
     aptitudes: ["General"],
-    properties: [{ type: "FEAT_FAMILY", value: "Luck" }],
+    fields: { families: ["Luck"] },
   },
   {
     name: "Lucky Start",
     description: "You can expend one luck reroll to reroll an initiative check. You gain one luck reroll per day.",
     aptitudes: ["General"],
-    properties: [{ type: "FEAT_FAMILY", value: "Luck" }],
+    fields: { families: ["Luck"] },
   },
   {
     name: "Magical Fortune",
     description:
       "You can expend one luck reroll as a swift action to reroll the damage dealt by a spell you have just cast. You can expend two luck rerolls as a swift action to reroll a caster level check. You gain one luck reroll per day.",
     aptitudes: ["General"],
-    properties: [{ type: "FEAT_FAMILY", value: "Luck" }],
+    fields: { families: ["Luck"] },
   },
   {
     name: "Make Your Own Luck",
@@ -339,35 +339,35 @@ export const LUCK_FEATS: FeatSeed[] = [
       "You can expend one luck reroll as an immediate action to reroll a skill check, as long as you have at least 1 rank in that skill. You gain one luck reroll per day",
     aptitudes: ["General"],
     requirements: [gte("identity.meta.level", 6), eq("feats.luck.*.possessed")],
-    properties: [{ type: "FEAT_FAMILY", value: "Luck" }],
+    fields: { families: ["Luck"] },
   },
   {
     name: "Miser's Fortune",
     description:
       "Whenever an opponent makes a sunder attack or Strength check to damage an object within 30 feet of you, you can expend one luck reroll as an immediate action to force that opponent to reroll. In addition, as long as you still have one luck reroll remaining for the day, items in your possession receive a +5 luck bonus on saving throws. You gain one luck reroll per day.",
     aptitudes: ["General"],
-    properties: [{ type: "FEAT_FAMILY", value: "Luck" }],
+    fields: { families: ["Luck"] },
   },
   {
     name: "Psychic Luck",
     description:
       "You can expend one luck reroll as a swift action to reroll the damage dealt by a psionic power you have just manifested. You can expend two luck rerolls as a swift action to reroll a manifester level check. You gain one luck reroll per day.",
     aptitudes: ["General"],
-    properties: [{ type: "FEAT_FAMILY", value: "Luck" }],
+    fields: { families: ["Luck"] },
   },
   {
     name: "Sly Fortune",
     description:
       "You can expend one luck reroll as an immediate action to reroll a Hide, Move Silently, or Tumble check. You gain one luck reroll per day.",
     aptitudes: ["General"],
-    properties: [{ type: "FEAT_FAMILY", value: "Luck" }],
+    fields: { families: ["Luck"] },
   },
   {
     name: "Survivor's Luck",
     description:
       "You can expend one luck reroll as an immediate action to reroll a saving throw you just failed. You gain one luck reroll per day.",
     aptitudes: ["General"],
-    properties: [{ type: "FEAT_FAMILY", value: "Luck" }],
+    fields: { families: ["Luck"] },
   },
   {
     name: "Tempting Fate",
@@ -375,14 +375,14 @@ export const LUCK_FEATS: FeatSeed[] = [
       "You can expend a luck reroll to reroll a stabilization check. In addition, once per day, whenever you have at least 1 hit point remaining and would be dealt enough damage to kill you, you can expend one luck reroll as an immediate action to take only enough damage to reduce you to -9 hit points. You automatically stabilize. You gain one luck reroll per day.",
     aptitudes: ["General"],
     requirements: [gte("identity.meta.level", 6), eq("feats.luck.*.possessed")],
-    properties: [{ type: "FEAT_FAMILY", value: "Luck" }],
+    fields: { families: ["Luck"] },
   },
   {
     name: "Third Time's the Charm",
     description:
       "You can expend one luck reroll as an immediate action to use the granted power of the Luck domain an additional time per day. You can only use this benefit immediately after using the Luck domain's granted power (in effect, this feat gives you a third chance to succeed on the roll). You gain one luck reroll per day.",
     aptitudes: ["General"],
-    properties: [{ type: "FEAT_FAMILY", value: "Luck" }],
+    fields: { families: ["Luck"] },
   },
   {
     name: "Unbelievable Luck",
@@ -390,14 +390,14 @@ export const LUCK_FEATS: FeatSeed[] = [
       "As long as you have at least one luck reroll remaining for the day, you gain a +2 luck bonus on whichever of your saves has the lowest base bonus. If two or more of your saves tie for the lowest base bonus, choose when you select this feat which save it applies to. If your base save bonuses later change so that the chosen save no longer has the lowest base bonus, the luck bonus from this feat immediately applies to the save that now has the lowest base bonus. You gain two luck rerolls per day.",
     aptitudes: ["General"],
     requirements: [eq("feats.luck.*.possessed")],
-    properties: [{ type: "FEAT_FAMILY", value: "Luck" }],
+    fields: { families: ["Luck"] },
   },
   {
     name: "Victor's Luck",
     description:
       "You can expend one luck reroll as a swift action to reroll a critical threat confirmation roll. You gain one luck reroll per day.",
     aptitudes: ["General"],
-    properties: [{ type: "FEAT_FAMILY", value: "Luck" }],
+    fields: { families: ["Luck"] },
   },
 ];
 

@@ -19,7 +19,7 @@ export const RANGER_CLASS_FEATS: FeatSeed[] = [
         valueType: "number",
       },
     ],
-    properties: [{ type: "FEAT_FAMILY", value: "Animal Companion" }],
+    fields: { families: ["Animal Companion"] },
   },
   {
     name: "Camouflage (Ranger)",
@@ -52,7 +52,7 @@ export const RANGER_CLASS_FEATS: FeatSeed[] = [
       "At 9th level, the ranger develops the reflexes to completely dodge certain attacks. When he succeeds on a Reflex saving throw against an effect that would normally deal half damage on a successful save (such as a red dragon's breath weapon or a fireball spell), he instead takes no damage at all. This ability functions only while the ranger wears light armor or no armor. A helpless ranger (for example, one who is unconscious or paralyzed) cannot benefit from evasion.",
     selectable: false,
     aptitudes: ["Ranger Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Evasion" }],
+    fields: { families: ["Evasion"] },
   },
   {
     name: "Favored Enemy (Ranger)",
@@ -113,7 +113,7 @@ export const RANGER_CLASS_FEATS: FeatSeed[] = [
       "Through gestures, sounds, and body language, a ranger can shift the disposition of an animal (such as a bear or monitor lizard) in the same way a Diplomacy check improves a person's attitude. The check result equals 1d20 + his ranger level + his Charisma modifier. Domesticated animals typically start with an indifferent attitude, whereas wild animals are generally unfriendly. Both the ranger and the animal must be within 30 feet of each other under normal conditions of visibility. This process normally requires 1 minute, though it may take more or less time depending on circumstances, just as with influencing people. A ranger can also attempt to sway a magical beast that has an Intelligence of 1 or 2 (such as a basilisk or girallon), but suffers a -4 penalty on the check.",
     selectable: false,
     aptitudes: ["Ranger Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Wild Empathy" }],
+    fields: { families: ["Wild Empathy"] },
   },
   {
     name: "Woodland Stride (Ranger)",

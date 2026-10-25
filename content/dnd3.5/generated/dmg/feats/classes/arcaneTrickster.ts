@@ -26,7 +26,7 @@ export const ARCANE_TRICKSTER_CLASS_FEATS: FeatSeed[] = [
     stackable: true,
     selectable: false,
     aptitudes: ["Arcane Trickster Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Sneak Attack" }],
+    fields: { families: ["Sneak Attack"] },
   },
   {
     name: "Spells per Day (Arcane Trickster)",

@@ -32,7 +32,7 @@ export const SWASHBUCKLER_CLASS_FEATS: FeatSeed[] = [
     stackable: true,
     selectable: false,
     aptitudes: ["Swashbuckler Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Grace" }],
+    fields: { families: ["Grace"] },
   },
   {
     name: "Improved Flanking (Swashbuckler)",

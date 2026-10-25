@@ -46,7 +46,7 @@ export const NIGHTSONG_ENFORCER_CLASS_FEATS: FeatSeed[] = [
     stackable: true,
     selectable: false,
     aptitudes: ["Nightsong Enforcer Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Sneak Attack" }],
+    fields: { families: ["Sneak Attack"] },
   },
   {
     name: "Teamwork (Hear/see Allies) (Nightsong Enforcer)",

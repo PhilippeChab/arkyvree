@@ -55,7 +55,7 @@ export const NINJA_CLASS_FEATS: FeatSeed[] = [
       "Beginning at 12th level, a ninja can avoid damage from certain attacks with a successful Reflex save. A ninja's use of evasion differs slightly from a monk's use in that a ninja can use evasion only if she is wearing no armor and is carrying no more than a light load.",
     selectable: false,
     aptitudes: ["Ninja Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Evasion" }],
+    fields: { families: ["Evasion"] },
   },
   {
     name: "Ghost Mind (Ninja)",
@@ -131,7 +131,7 @@ export const NINJA_CLASS_FEATS: FeatSeed[] = [
       "A ninja can channel her ki to manifest special powers of stealth and mobility. She can use her ki powers a number of times per day equal to one-half her class level (minimum 1) plus her Wisdom bonus (if any). Ki powers can be used only if a ninja is wearing no armor and is unencumbered. As long as a ninja's ki pool isn't empty (that is, as long as she has at least one daily use remaining), she gains a +2 bonus on her Will saves. A ninja's ki powers are ghost step, ki dodge, ghost strike, greater ki dodge, and ghost walk. Each power is described under a separate entry below.",
     selectable: false,
     aptitudes: ["Ninja Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Ki Power" }],
+    fields: { families: ["Ki Power"] },
   },
   {
     name: "Poison Use (Ninja)",
@@ -139,7 +139,7 @@ export const NINJA_CLASS_FEATS: FeatSeed[] = [
       "At 3rd level and higher, a ninja never risks accidentally poisoning herself when applying poison to a weapon.",
     selectable: false,
     aptitudes: ["Ninja Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Poison Use" }],
+    fields: { families: ["Poison Use"] },
   },
   {
     name: "Speed Climb (Ninja)",
@@ -155,7 +155,7 @@ export const NINJA_CLASS_FEATS: FeatSeed[] = [
     stackable: true,
     selectable: false,
     aptitudes: ["Ninja Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Sudden Strike" }],
+    fields: { families: ["Sudden Strike"] },
   },
   {
     name: "Trapfinding (Ninja)",
@@ -163,7 +163,7 @@ export const NINJA_CLASS_FEATS: FeatSeed[] = [
       "A ninja can use the Search skill to locate traps with a DC higher than 20, and she can use Disable Device to bypass a trap or disarm magic traps. See the rogue class feature of the Player's Handbook.",
     selectable: false,
     aptitudes: ["Ninja Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Trapfinding" }],
+    fields: { families: ["Trapfinding"] },
   },
   {
     name: "Weapon and Armor Proficiency (Ninja)",

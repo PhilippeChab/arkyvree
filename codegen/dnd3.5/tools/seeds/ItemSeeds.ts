@@ -2,7 +2,7 @@
 
 import { type ItemReference } from "@/codegen/dnd3.5/tools/types/items.ts";
 import type { RequirementEntry } from "@/content/core/builders/customization/types.ts";
-import type { ItemSeed } from "@/content/core/builders/items/types.ts";
+import { armorFields, shieldFields, weaponFields } from "@/content/dnd3.5/builders/items/fields.ts";
 import {
   exotic,
   HEAVY_ARMOR_PROF,
@@ -13,23 +13,23 @@ import {
   simple,
   TOWER_SHIELD_PROF,
 } from "@/content/dnd3.5/builders/items/proficiencies.ts";
-import { armorProperties, shieldProperties, weaponProperties } from "@/content/dnd3.5/builders/items/properties.ts";
+import type { Dnd35ItemSeed } from "@/content/dnd3.5/builders/items/types.ts";
 import { ARMOR_TYPE_DEFINITIONS, SHIELD_TYPE_DEFINITIONS } from "@/vocabulary/dnd3.5/armor.ts";
 
 import { ReferenceSeeds } from "./ReferenceSeeds.ts";
 
 export interface ItemSeedSets {
-  armor: ItemSeed[];
-  exoticWeapons: ItemSeed[];
-  goods: ItemSeed[];
-  martialWeapons: ItemSeed[];
-  shields: ItemSeed[];
-  simpleWeapons: ItemSeed[];
+  armor: Dnd35ItemSeed[];
+  exoticWeapons: Dnd35ItemSeed[];
+  goods: Dnd35ItemSeed[];
+  martialWeapons: Dnd35ItemSeed[];
+  shields: Dnd35ItemSeed[];
+  simpleWeapons: Dnd35ItemSeed[];
 }
 
 /**
  * An item reference's seeds, by category (`seeds`): each item whole, its requirements (being proficient with it) and
- * its properties (its weapon, armor or shield type's) built from its name; and the weight of each weapon, armor and
+ * its fields (its weapon, armor or shield type's) built from its name; and the weight of each weapon, armor and
  * shield (`weights`), which an item made from one weighs.
  */
 export class ItemSeeds extends ReferenceSeeds<ItemReference> {
@@ -43,12 +43,12 @@ export class ItemSeeds extends ReferenceSeeds<ItemReference> {
   /** Its seeds, by category, each built from its mapping. */
   seeds(): ItemSeedSets {
     return this.memo("seeds", () => {
-      const simpleWeapons: ItemSeed[] = [];
-      const martialWeapons: ItemSeed[] = [];
-      const exoticWeapons: ItemSeed[] = [];
-      const armor: ItemSeed[] = [];
-      const shields: ItemSeed[] = [];
-      const goods: ItemSeed[] = [];
+      const simpleWeapons: Dnd35ItemSeed[] = [];
+      const martialWeapons: Dnd35ItemSeed[] = [];
+      const exoticWeapons: Dnd35ItemSeed[] = [];
+      const armor: Dnd35ItemSeed[] = [];
+      const shields: Dnd35ItemSeed[] = [];
+      const goods: Dnd35ItemSeed[] = [];
 
       // Build weapons
       for (const [srdName, det] of Object.entries(this.ref.detected.weapons)) {
@@ -62,7 +62,7 @@ export class ItemSeeds extends ReferenceSeeds<ItemReference> {
         const description =
           item.description ?? `A ${category ? `${category} ` : ""}${det.proficiency.toLowerCase()} weapon.`;
 
-        const seed: ItemSeed = {
+        const seed: Dnd35ItemSeed = {
           name: det.generatorName,
           description,
           weight,
@@ -74,7 +74,7 @@ export class ItemSeeds extends ReferenceSeeds<ItemReference> {
               : det.proficiency === "Martial"
                 ? martial(det.generatorName)
                 : exotic(det.generatorName),
-          properties: weaponProperties(det.generatorName),
+          fields: weaponFields(det.generatorName),
         };
 
         if (det.proficiency === "Simple") simpleWeapons.push(seed);
@@ -91,7 +91,7 @@ export class ItemSeeds extends ReferenceSeeds<ItemReference> {
         const categoryLabel = det.proficiencyCategory.replace(/ armor$/i, "");
         const description = item.description ?? `${det.type === "Shield" ? "A shield" : `${categoryLabel} armor`}.`;
 
-        const seed: ItemSeed = {
+        const seed: Dnd35ItemSeed = {
           name: det.generatorName,
           description,
           weight,
@@ -101,13 +101,13 @@ export class ItemSeeds extends ReferenceSeeds<ItemReference> {
             ? {
                 slot: "Torso" as const,
                 requirements: ItemSeeds.armorProficiency(ARMOR_TYPE_DEFINITIONS[det.generatorName]?.armorType),
-                properties: armorProperties(det.generatorName),
+                fields: armorFields(det.generatorName),
               }
             : {
                 slot: "Off Hand" as const,
                 requirements:
                   SHIELD_TYPE_DEFINITIONS[det.generatorName]?.shieldType === "Tower" ? TOWER_SHIELD_PROF : SHIELD_PROF,
-                properties: shieldProperties(det.generatorName),
+                fields: shieldFields(det.generatorName),
               }),
         };
 
@@ -127,7 +127,6 @@ export class ItemSeeds extends ReferenceSeeds<ItemReference> {
           costGp: item.costGp,
           type: "Other",
           slot: "Other" as const,
-          properties: [],
         });
       }
 

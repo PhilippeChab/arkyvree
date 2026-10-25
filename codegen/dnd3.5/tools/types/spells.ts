@@ -1,4 +1,4 @@
-import type { Property } from "@/content/core/builders/customization/types.ts";
+import type { SpellFields } from "@/content/dnd3.5/builders/spells/types.ts";
 
 import type { Overrides, ScrapedMeta } from "./reference.ts";
 
@@ -29,10 +29,10 @@ export interface SpellReference {
   _meta: ScrapedMeta<"spell">;
 
   /**
-   * What each spell's text gives: its properties and its saving throw, normalized, from its stat block's fields as its
+   * What each spell's text gives: its fields and its saving throw, normalized, from its stat block's fields as its
    * overrides correct them, its base spell's where it lacks some
    */
-  detected: Record<string, { properties: Property[]; savingThrow: string }>;
+  detected: Record<string, { fields: SpellFields; savingThrow: string }>;
 
   /**
    * Each spell as the seeds make it, its overrides applied: its description, and its level entries, the scraped ones

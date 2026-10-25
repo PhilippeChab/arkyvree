@@ -23,7 +23,7 @@ export const BLACK_FLAME_ZEALOT_CLASS_FEATS: FeatSeed[] = [
       "Upon reaching 2nd level, a black flame zealot learns to handle poisons without risk of accidentally poisoning himself, identical to the assassin's poison use ability.",
     selectable: false,
     aptitudes: ["Black Flame Zealot Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Poison Use" }],
+    fields: { families: ["Poison Use"] },
   },
   {
     name: "Sacred Flame (Black Flame Zealot)",
@@ -39,7 +39,7 @@ export const BLACK_FLAME_ZEALOT_CLASS_FEATS: FeatSeed[] = [
     stackable: true,
     selectable: false,
     aptitudes: ["Black Flame Zealot Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Sneak Attack" }],
+    fields: { families: ["Sneak Attack"] },
   },
   {
     name: "Spells per Day/Spells Known (Black Flame Zealot)",

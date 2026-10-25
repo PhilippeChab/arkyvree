@@ -1,4 +1,5 @@
-import type { ModifierSeed, Property, RequirementEntry } from "@/content/core/builders/customization/types.ts";
+import type { ModifierSeed, RequirementEntry } from "@/content/core/builders/customization/types.ts";
+import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
 
 import type { Overrides, ScrapedMeta } from "./reference.ts";
 
@@ -7,8 +8,8 @@ interface FeatFields {
   aptitudes?: string[];
   description?: string;
   featNameMap?: Record<string, string>;
+  fields?: FeatSeed["fields"];
   modifiers?: ModifierSeed[];
-  properties?: Property[];
   requirements?: RequirementEntry[];
   selectable?: boolean;
   skip?: boolean;
@@ -31,8 +32,8 @@ export interface FeatReference {
       /** Invalid paths that failed validation — bugs to fix */
       errors?: string[];
       featNameMap: Record<string, string>;
+      fields?: FeatSeed["fields"];
       modifiers?: ModifierSeed[];
-      properties?: Property[];
       requirements: RequirementEntry[];
       stackable?: boolean;
       template?: FeatTemplate;

@@ -72,7 +72,7 @@ export const WARPRIEST_CLASS_FEATS: FeatSeed[] = [
       "Warpriest levels stack with the character's cleric or paladin levels for the purpose of turning or rebuking undead.",
     selectable: false,
     aptitudes: ["Warpriest Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Turn or Rebuke Undead" }],
+    fields: { families: ["Turn or Rebuke Undead"] },
   },
   {
     name: "Weapon and Armor Proficiency (Warpriest)",

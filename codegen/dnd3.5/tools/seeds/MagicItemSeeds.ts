@@ -1,38 +1,29 @@
-/** A magic item reference's seeds: its ItemSeed[], by category. */
+/** A magic item reference's seeds: its Dnd35ItemSeed[], by category. */
 
 import { type MagicItemCategory, type MagicItemReference } from "@/codegen/dnd3.5/tools/types/magicItems.ts";
-import type { Property } from "@/content/core/builders/customization/types.ts";
-import type { ItemSeed } from "@/content/core/builders/items/types.ts";
-import { armorProperties } from "@/content/dnd3.5/builders/items/properties.ts";
+import { armorFields, withOwnFields } from "@/content/dnd3.5/builders/items/fields.ts";
+import type { Dnd35ItemSeed, ItemFields } from "@/content/dnd3.5/builders/items/types.ts";
 import { LOCATION_OPTIONS } from "@/shared/enums.ts";
-import { ARMOR_PROFICIENCY } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 import { ItemSeeds } from "./ItemSeeds.ts";
 import { ReferenceSeeds } from "./ReferenceSeeds.ts";
 
 export interface MagicItemSeedSets {
-  magicArmor: ItemSeed[];
-  magicShields: ItemSeed[];
-  magicWeapons: ItemSeed[];
-  rings: ItemSeed[];
-  rods: ItemSeed[];
-  staffs: ItemSeed[];
-  wondrousItems: ItemSeed[];
+  magicArmor: Dnd35ItemSeed[];
+  magicShields: Dnd35ItemSeed[];
+  magicWeapons: Dnd35ItemSeed[];
+  rings: Dnd35ItemSeed[];
+  rods: Dnd35ItemSeed[];
+  staffs: Dnd35ItemSeed[];
+  wondrousItems: Dnd35ItemSeed[];
 }
 
 /** The word a ring's, a rod's or a staff's name holds, prefixed when the SRD heading is just the bare name. */
 const CATEGORY_PREFIX: Partial<Record<MagicItemCategory, string>> = { ring: "Ring", rod: "Rod", staff: "Staff" };
 
-/** A template made of `properties`: its requirements are the proficiency with it, by its category. */
-function templateOf(properties: Property[]): Pick<ItemSeed, "isTemplate" | "requirements" | "properties"> {
-  const category = properties.find((property) => property.type === ARMOR_PROFICIENCY)?.value;
-  return { isTemplate: true, requirements: ItemSeeds.armorProficiency(category), properties };
-}
-
-/** The properties of `base`, those of `own` over them by type. */
-function withOwnProperties(base: Property[], own: Property[]): Property[] {
-  const ownTypes = new Set(own.map((property) => property.type));
-  return [...base.filter((property) => !ownTypes.has(property.type)), ...own];
+/** A template of `fields`: its requirements are the proficiency with it, by its category. */
+function templateOf(fields: ItemFields): Pick<Dnd35ItemSeed, "isTemplate" | "requirements" | "fields"> {
+  return { isTemplate: true, requirements: ItemSeeds.armorProficiency(fields.armor?.proficiency ?? undefined), fields };
 }
 
 /**
@@ -63,15 +54,15 @@ export class MagicItemSeeds extends ReferenceSeeds<MagicItemReference> {
   seeds(): MagicItemSeedSets {
     return this.memo("seeds", () => {
       const baseWeights = this.book.baseItemWeights();
-      const magicArmor: ItemSeed[] = [];
-      const magicShields: ItemSeed[] = [];
-      const magicWeapons: ItemSeed[] = [];
-      const wondrousItems: ItemSeed[] = [];
-      const rings: ItemSeed[] = [];
-      const rods: ItemSeed[] = [];
-      const staffs: ItemSeed[] = [];
+      const magicArmor: Dnd35ItemSeed[] = [];
+      const magicShields: Dnd35ItemSeed[] = [];
+      const magicWeapons: Dnd35ItemSeed[] = [];
+      const wondrousItems: Dnd35ItemSeed[] = [];
+      const rings: Dnd35ItemSeed[] = [];
+      const rods: Dnd35ItemSeed[] = [];
+      const staffs: Dnd35ItemSeed[] = [];
 
-      const categoryBuckets: Record<MagicItemCategory, ItemSeed[]> = {
+      const categoryBuckets: Record<MagicItemCategory, Dnd35ItemSeed[]> = {
         specificArmor: magicArmor,
         specificShield: magicShields,
         specificWeapon: magicWeapons,
@@ -100,7 +91,7 @@ export class MagicItemSeeds extends ReferenceSeeds<MagicItemReference> {
           if (!new RegExp(`\\b${categoryWord}\\b`, "i").test(itemName)) itemName = `${categoryWord} of ${itemName}`;
         }
 
-        // A template is made from nothing: its base armor's properties are its own, under those it changes
+        // A template is made from nothing: its base armor's fields are its own, under those it changes
         if (item.template && (det.category !== "specificArmor" || !sourceItem))
           throw new Error(`${name}: only a specific armor made from a base armor can be a template`);
 
@@ -112,8 +103,11 @@ export class MagicItemSeeds extends ReferenceSeeds<MagicItemReference> {
           type: det.itemType,
           slot: slot && this.checkedValue(slot),
           ...(item.template && sourceItem
-            ? templateOf(withOwnProperties(armorProperties(sourceItem), item.properties))
-            : { properties: item.properties, ...(sourceItem ? { sourceItem } : {}) }),
+            ? templateOf(withOwnFields(armorFields(sourceItem), item.fields))
+            : {
+                ...(Object.keys(item.fields).length > 0 ? { fields: item.fields } : {}),
+                ...(sourceItem ? { sourceItem } : {}),
+              }),
           ...(item.modifiers.length ? { modifiers: item.modifiers } : {}),
         });
       }

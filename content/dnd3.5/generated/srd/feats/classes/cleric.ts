@@ -97,7 +97,7 @@ export const CLERIC_CLASS_FEATS: FeatSeed[] = [
       "Every cleric, regardless of alignment, possesses the ability to influence undead creatures (including skeletons, zombies, ghosts, and vampires) by channeling the force of faith through a holy (or unholy) symbol. A good cleric (or a neutral cleric devoted to a good deity) can turn or destroy undead. An evil cleric (or a neutral cleric devoted to an evil deity) instead rebukes or commands such creatures, compelling them to cower before divine authority. A neutral cleric of a neutral deity must decide whether the turning ability operates as a good cleric's or an evil cleric's; this choice is permanent. This decision also determines whether the cleric spontaneously casts cure or inflict spells. A cleric can attempt to turn undead a number of times per day equal to 3 + his Charisma modifier. Having 5 or more ranks in Knowledge (religion) grants a +2 bonus on turning checks against undead.",
     selectable: false,
     aptitudes: ["Cleric Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Turn or Rebuke Undead" }],
+    fields: { families: ["Turn or Rebuke Undead"] },
   },
   {
     name: "Weapon and Armor Proficiency (Cleric)",

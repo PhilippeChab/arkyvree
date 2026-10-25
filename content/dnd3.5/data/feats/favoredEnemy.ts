@@ -4,7 +4,6 @@ import { feat } from "@/content/dnd3.5/builders/feats/possession.ts";
 import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
 import { CREATURE_TYPES } from "@/vocabulary/dnd3.5/creatureTypes.ts";
 import { FAVORED_ENEMY_FAMILY } from "@/vocabulary/dnd3.5/feats.ts";
-import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 const FAVORED_ENEMY_APTITUDE = "Favored Enemy";
 const FAVORED_ENEMY_SPECIALIZATION_APTITUDE = "Favored Enemy Specialization";
@@ -28,7 +27,7 @@ export const FAVORED_ENEMY_FEATS: FeatSeed[] = [
     description: `Designate ${t} as a favored enemy. +2 on Bluff, Listen, Sense Motive, Spot, and Survival checks made against ${t}, and +2 on weapon damage rolls targeting them.`,
     generated: true,
     aptitudes: [FAVORED_ENEMY_APTITUDE],
-    properties: [{ type: FEAT_FAMILY, value: FAVORED_ENEMY_FAMILY }],
+    fields: { families: [FAVORED_ENEMY_FAMILY] },
   })),
   // Its specialization per type
   ...CREATURE_TYPES.map((t) => ({
@@ -38,7 +37,7 @@ export const FAVORED_ENEMY_FEATS: FeatSeed[] = [
     generated: true,
     aptitudes: [FAVORED_ENEMY_SPECIALIZATION_APTITUDE],
     requirements: [eq(feat(`Favored Enemy: ${t}`))],
-    properties: [{ type: FEAT_FAMILY, value: FAVORED_ENEMY_FAMILY }],
+    fields: { families: [FAVORED_ENEMY_FAMILY] },
   })),
   favoredEnemySpecializationUmbrella,
 ];

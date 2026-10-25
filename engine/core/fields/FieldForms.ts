@@ -2,19 +2,11 @@ import { z } from "zod";
 
 import RulesError from "@/engine/core/RulesError.ts";
 import type { ViewEntities } from "@/engine/core/view/index.ts";
+import type { ChoiceSpec, FieldCondition, ListSpec, ProgressionSpec, TextSpec } from "@/shared/customization/fields.ts";
 import { copyProgression, findProgressionIssues } from "@/shared/customization/progression.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 
-import Field, {
-  type ChoiceSpec,
-  type FieldCondition,
-  type Fields,
-  type FieldSpec,
-  type LeafSpec,
-  type ListSpec,
-  type ProgressionSpec,
-  type TextSpec,
-} from "./Field.ts";
+import Field, { type Fields, type FieldSpec, type LeafSpec } from "./Field.ts";
 import type { FormField } from "./FormField.ts";
 
 /** A field where its form shows it: its spec, its name, and where its value goes (`prefix`, before its name). */

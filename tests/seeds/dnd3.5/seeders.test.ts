@@ -3,9 +3,9 @@ import { describe, expect, test } from "bun:test";
 import { eq } from "drizzle-orm";
 
 import * as r from "@/content/core/builders/customization/requirements.ts";
-import type { ItemSeed } from "@/content/core/builders/items/types.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
 import { feat } from "@/content/dnd3.5/builders/feats/possession.ts";
+import type { Dnd35ItemSeed } from "@/content/dnd3.5/builders/items/types.ts";
 import type { RaceSeed } from "@/content/dnd3.5/builders/races/types.ts";
 import type { LeveledSpellSeed } from "@/content/dnd3.5/builders/spells/types.ts";
 import { ALL_CLASSES as SRD_CLASSES } from "@/content/dnd3.5/generated/srd/classes/index.ts";
@@ -29,7 +29,6 @@ import {
   CLASS_CASTER_TYPE,
   CLASS_LEVEL_BAB,
   CLASS_LEVEL_SKILL_POINTS,
-  FEAT_FAMILY,
   SPELL_SCHOOL,
 } from "@/vocabulary/dnd3.5/properties/index.ts";
 
@@ -73,14 +72,13 @@ function gatedSlots(list: string, classTarget: string) {
   }).flat();
 }
 
-function item(name: string, fields: Partial<ItemSeed> = {}): ItemSeed {
+function item(name: string, fields: Partial<Dnd35ItemSeed> = {}): Dnd35ItemSeed {
   return {
     name,
     description: "",
     weight: "1",
     costGp: "1",
     type: "Gear",
-    properties: [],
     ...fields,
   };
 }
@@ -120,7 +118,7 @@ function spell(name: string, level: number, fields: Partial<LeveledSpellSeed> = 
     description: "",
     level,
     aptitudes: [],
-    properties: [],
+    fields: {},
     ...fields,
   };
 }
@@ -254,7 +252,7 @@ describe("Seeding", () => {
               requirements: [r.or(r.eq(feat("Mobility")), r.gte("combat.bab", 6))],
             },
           ],
-          properties: [{ type: FEAT_FAMILY, value: "Dodge" }],
+          fields: { families: ["Dodge"] },
         },
         { name: "Test Toughness", description: "", aptitudes: [], stackable: true, selectable: false },
       ]);
@@ -473,7 +471,7 @@ describe("Seeding", () => {
         item("Test Blade", {
           type: "Weapon",
           slot: "Main Hand",
-          properties: [{ type: "WEAPON_BASE_DAMAGE", value: "1d8" }],
+          fields: { weapon: { baseDamage: "1d8" } },
           requirements: [r.eq(feat("Martial Weapon Proficiency"))],
         }),
       ],
@@ -523,13 +521,12 @@ describe("Seeding", () => {
     const seeder = await freshSeeder({ named: true });
     const ctx = seeder.ctx;
     await seeder.seedAptitudes(["Test Arcane Spells", "Test Divine Spells"]);
-    const school = { type: SPELL_SCHOOL, value: "Evocation" };
     await seeder.seedSpells([
       spell("Test Bolt", 3, {
         aptitudes: ["Test Arcane Spells", "Test Divine Spells", "Test Unknown Spells"],
         aptitudeLevels: { "Test Divine Spells": 4 },
         savingThrow: "Reflex half",
-        properties: [school, school],
+        fields: { school: "Evocation" },
       }),
       spell("Test Charm", 1, { aptitudes: ["Test Arcane Spells", "Test Arcane Spells"], savingThrow: "Will negates" }),
       spell("Test Ward", 0, { savingThrow: "None" }),
@@ -648,12 +645,11 @@ describe("Seeding", () => {
       "Universal Specialist Spells",
     ]);
     await seeder.seedFeats([{ name: "Evocation Specialist", description: "", aptitudes: ["Wizard Specialization"] }]);
-    const school = (value: string) => [{ type: SPELL_SCHOOL, value }];
     await seeder.seedSpells([
-      spell("Test Bolt", 3, { aptitudes: ["Wizard Spells"], properties: school("Evocation") }),
-      spell("Test Flame", 2, { properties: school("Evocation") }),
-      spell("Test Mirror", 2, { aptitudes: ["Wizard Spells"], properties: school("Illusion") }),
-      spell("Test Detect", 0, { aptitudes: ["Wizard Spells"], properties: school("Universal") }),
+      spell("Test Bolt", 3, { aptitudes: ["Wizard Spells"], fields: { school: "Evocation" } }),
+      spell("Test Flame", 2, { fields: { school: "Evocation" } }),
+      spell("Test Mirror", 2, { aptitudes: ["Wizard Spells"], fields: { school: "Illusion" } }),
+      spell("Test Detect", 0, { aptitudes: ["Wizard Spells"], fields: { school: "Universal" } }),
     ]);
     await seeder.seedWizardSchools(
       [
@@ -721,7 +717,7 @@ describe("Seeding", () => {
           modifiers: [
             { target: "combat.ac.misc", operator: "add", value: "1", valueType: "number", requirements: [dodge] },
           ],
-          properties: [{ type: FEAT_FAMILY, value: "Test" }],
+          fields: { families: ["Test"] },
         },
         { name: "Test Single", description: "", aptitudes: ["General"], requirements: [r.gte("combat.bab", 1)] },
         { name: "Test Open", description: "", aptitudes: ["General"] },
@@ -809,12 +805,11 @@ describe("Seeding", () => {
       const coreSeeder = await freshSeeder();
       const core = coreSeeder.ctx;
       await coreSeeder.seedAptitudes(["Wizard Spells", "Cleric Spells", "Test Source"]);
-      const school = { type: SPELL_SCHOOL, value: "Evocation" };
       await coreSeeder.seedSpells([
         spell("Test Bolt", 3, {
           aptitudes: ["Wizard Spells", "Test Source"],
           savingThrow: "See text",
-          properties: [school],
+          fields: { school: "Evocation" },
         }),
         spell("Test Ward", 1, { aptitudes: ["Cleric Spells"] }),
         spell("Test Light", 0, { aptitudes: ["Cleric Spells"] }),

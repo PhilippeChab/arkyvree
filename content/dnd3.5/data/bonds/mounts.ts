@@ -3,7 +3,7 @@ import { formatWithArticle } from "@/content/dnd3.5/builders/bonds/articles.ts";
 import type { BondContent } from "@/content/dnd3.5/builders/bonds/types.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
 import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
-import { QUADRUPED } from "@/content/dnd3.5/builders/races/properties.ts";
+import { QUADRUPED_FIELDS } from "@/content/dnd3.5/builders/races/fields.ts";
 import type { RaceSeed } from "@/content/dnd3.5/builders/races/types.ts";
 
 const SPECIAL_MOUNT_APTITUDE = "Special Mount Bond";
@@ -95,7 +95,7 @@ const SPECIAL_MOUNT_RACES: RaceSeed[] = [
       "A combat-trained heavy warhorse, the standard special mount for a Medium paladin. Tough, fearless, and capable of bearing armored riders into battle.",
     size: "Large",
     baseSpeed: 50,
-    properties: QUADRUPED,
+    fields: QUADRUPED_FIELDS,
   },
   {
     name: "Warpony",
@@ -103,7 +103,7 @@ const SPECIAL_MOUNT_RACES: RaceSeed[] = [
       "A combat-trained warpony, the standard special mount for a Small paladin. Smaller than a warhorse but trained to fight and bear an armored rider.",
     size: "Medium",
     baseSpeed: 40,
-    properties: QUADRUPED,
+    fields: QUADRUPED_FIELDS,
   },
 ];
 

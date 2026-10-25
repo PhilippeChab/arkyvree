@@ -18,10 +18,7 @@ export const DOMAIN_POOL_FEATS: FeatSeed[] = [
         valueType: "boolean",
       },
     ],
-    properties: [
-      { type: "FEAT_FAMILY", value: "Weapon Focus" },
-      { type: "FEAT_FAMILY", value: "Martial Weapon Proficiency" },
-    ],
+    fields: { families: ["Weapon Focus", "Martial Weapon Proficiency"] },
   },
   {
     name: "War Domain Weapon: Light Hammer",
@@ -38,10 +35,7 @@ export const DOMAIN_POOL_FEATS: FeatSeed[] = [
         valueType: "boolean",
       },
     ],
-    properties: [
-      { type: "FEAT_FAMILY", value: "Weapon Focus" },
-      { type: "FEAT_FAMILY", value: "Martial Weapon Proficiency" },
-    ],
+    fields: { families: ["Weapon Focus", "Martial Weapon Proficiency"] },
   },
   {
     name: "War Domain Weapon: Handaxe",
@@ -57,10 +51,7 @@ export const DOMAIN_POOL_FEATS: FeatSeed[] = [
         valueType: "boolean",
       },
     ],
-    properties: [
-      { type: "FEAT_FAMILY", value: "Weapon Focus" },
-      { type: "FEAT_FAMILY", value: "Martial Weapon Proficiency" },
-    ],
+    fields: { families: ["Weapon Focus", "Martial Weapon Proficiency"] },
   },
   {
     name: "War Domain Weapon: Kukri",
@@ -71,10 +62,7 @@ export const DOMAIN_POOL_FEATS: FeatSeed[] = [
       { target: "feats.weaponfocuskukri.possessed", operator: "set", value: "true", valueType: "boolean" },
       { target: "feats.martialweaponproficiencykukri.possessed", operator: "set", value: "true", valueType: "boolean" },
     ],
-    properties: [
-      { type: "FEAT_FAMILY", value: "Weapon Focus" },
-      { type: "FEAT_FAMILY", value: "Martial Weapon Proficiency" },
-    ],
+    fields: { families: ["Weapon Focus", "Martial Weapon Proficiency"] },
   },
   {
     name: "War Domain Weapon: Light Pick",
@@ -90,10 +78,7 @@ export const DOMAIN_POOL_FEATS: FeatSeed[] = [
         valueType: "boolean",
       },
     ],
-    properties: [
-      { type: "FEAT_FAMILY", value: "Weapon Focus" },
-      { type: "FEAT_FAMILY", value: "Martial Weapon Proficiency" },
-    ],
+    fields: { families: ["Weapon Focus", "Martial Weapon Proficiency"] },
   },
   {
     name: "War Domain Weapon: Sap",
@@ -104,10 +89,7 @@ export const DOMAIN_POOL_FEATS: FeatSeed[] = [
       { target: "feats.weaponfocussap.possessed", operator: "set", value: "true", valueType: "boolean" },
       { target: "feats.martialweaponproficiencysap.possessed", operator: "set", value: "true", valueType: "boolean" },
     ],
-    properties: [
-      { type: "FEAT_FAMILY", value: "Weapon Focus" },
-      { type: "FEAT_FAMILY", value: "Martial Weapon Proficiency" },
-    ],
+    fields: { families: ["Weapon Focus", "Martial Weapon Proficiency"] },
   },
   {
     name: "War Domain Weapon: Shortsword",
@@ -123,10 +105,7 @@ export const DOMAIN_POOL_FEATS: FeatSeed[] = [
         valueType: "boolean",
       },
     ],
-    properties: [
-      { type: "FEAT_FAMILY", value: "Weapon Focus" },
-      { type: "FEAT_FAMILY", value: "Martial Weapon Proficiency" },
-    ],
+    fields: { families: ["Weapon Focus", "Martial Weapon Proficiency"] },
   },
   {
     name: "War Domain Weapon: Battleaxe",
@@ -142,10 +121,7 @@ export const DOMAIN_POOL_FEATS: FeatSeed[] = [
         valueType: "boolean",
       },
     ],
-    properties: [
-      { type: "FEAT_FAMILY", value: "Weapon Focus" },
-      { type: "FEAT_FAMILY", value: "Martial Weapon Proficiency" },
-    ],
+    fields: { families: ["Weapon Focus", "Martial Weapon Proficiency"] },
   },
   {
     name: "War Domain Weapon: Flail",
@@ -156,10 +132,7 @@ export const DOMAIN_POOL_FEATS: FeatSeed[] = [
       { target: "feats.weaponfocusflail.possessed", operator: "set", value: "true", valueType: "boolean" },
       { target: "feats.martialweaponproficiencyflail.possessed", operator: "set", value: "true", valueType: "boolean" },
     ],
-    properties: [
-      { type: "FEAT_FAMILY", value: "Weapon Focus" },
-      { type: "FEAT_FAMILY", value: "Martial Weapon Proficiency" },
-    ],
+    fields: { families: ["Weapon Focus", "Martial Weapon Proficiency"] },
   },
   {
     name: "War Domain Weapon: Longsword",
@@ -175,10 +148,7 @@ export const DOMAIN_POOL_FEATS: FeatSeed[] = [
         valueType: "boolean",
       },
     ],
-    properties: [
-      { type: "FEAT_FAMILY", value: "Weapon Focus" },
-      { type: "FEAT_FAMILY", value: "Martial Weapon Proficiency" },
-    ],
+    fields: { families: ["Weapon Focus", "Martial Weapon Proficiency"] },
   },
   {
     name: "War Domain Weapon: Heavy Pick",
@@ -194,10 +164,7 @@ export const DOMAIN_POOL_FEATS: FeatSeed[] = [
         valueType: "boolean",
       },
     ],
-    properties: [
-      { type: "FEAT_FAMILY", value: "Weapon Focus" },
-      { type: "FEAT_FAMILY", value: "Martial Weapon Proficiency" },
-    ],
+    fields: { families: ["Weapon Focus", "Martial Weapon Proficiency"] },
   },
   {
     name: "War Domain Weapon: Rapier",
@@ -213,10 +180,7 @@ export const DOMAIN_POOL_FEATS: FeatSeed[] = [
         valueType: "boolean",
       },
     ],
-    properties: [
-      { type: "FEAT_FAMILY", value: "Weapon Focus" },
-      { type: "FEAT_FAMILY", value: "Martial Weapon Proficiency" },
-    ],
+    fields: { families: ["Weapon Focus", "Martial Weapon Proficiency"] },
   },
   {
     name: "War Domain Weapon: Scimitar",
@@ -232,10 +196,7 @@ export const DOMAIN_POOL_FEATS: FeatSeed[] = [
         valueType: "boolean",
       },
     ],
-    properties: [
-      { type: "FEAT_FAMILY", value: "Weapon Focus" },
-      { type: "FEAT_FAMILY", value: "Martial Weapon Proficiency" },
-    ],
+    fields: { families: ["Weapon Focus", "Martial Weapon Proficiency"] },
   },
   {
     name: "War Domain Weapon: Trident",
@@ -251,10 +212,7 @@ export const DOMAIN_POOL_FEATS: FeatSeed[] = [
         valueType: "boolean",
       },
     ],
-    properties: [
-      { type: "FEAT_FAMILY", value: "Weapon Focus" },
-      { type: "FEAT_FAMILY", value: "Martial Weapon Proficiency" },
-    ],
+    fields: { families: ["Weapon Focus", "Martial Weapon Proficiency"] },
   },
   {
     name: "War Domain Weapon: Warhammer",
@@ -270,10 +228,7 @@ export const DOMAIN_POOL_FEATS: FeatSeed[] = [
         valueType: "boolean",
       },
     ],
-    properties: [
-      { type: "FEAT_FAMILY", value: "Weapon Focus" },
-      { type: "FEAT_FAMILY", value: "Martial Weapon Proficiency" },
-    ],
+    fields: { families: ["Weapon Focus", "Martial Weapon Proficiency"] },
   },
   {
     name: "War Domain Weapon: Falchion",
@@ -289,10 +244,7 @@ export const DOMAIN_POOL_FEATS: FeatSeed[] = [
         valueType: "boolean",
       },
     ],
-    properties: [
-      { type: "FEAT_FAMILY", value: "Weapon Focus" },
-      { type: "FEAT_FAMILY", value: "Martial Weapon Proficiency" },
-    ],
+    fields: { families: ["Weapon Focus", "Martial Weapon Proficiency"] },
   },
   {
     name: "War Domain Weapon: Glaive",
@@ -308,10 +260,7 @@ export const DOMAIN_POOL_FEATS: FeatSeed[] = [
         valueType: "boolean",
       },
     ],
-    properties: [
-      { type: "FEAT_FAMILY", value: "Weapon Focus" },
-      { type: "FEAT_FAMILY", value: "Martial Weapon Proficiency" },
-    ],
+    fields: { families: ["Weapon Focus", "Martial Weapon Proficiency"] },
   },
   {
     name: "War Domain Weapon: Greataxe",
@@ -327,10 +276,7 @@ export const DOMAIN_POOL_FEATS: FeatSeed[] = [
         valueType: "boolean",
       },
     ],
-    properties: [
-      { type: "FEAT_FAMILY", value: "Weapon Focus" },
-      { type: "FEAT_FAMILY", value: "Martial Weapon Proficiency" },
-    ],
+    fields: { families: ["Weapon Focus", "Martial Weapon Proficiency"] },
   },
   {
     name: "War Domain Weapon: Greatclub",
@@ -346,10 +292,7 @@ export const DOMAIN_POOL_FEATS: FeatSeed[] = [
         valueType: "boolean",
       },
     ],
-    properties: [
-      { type: "FEAT_FAMILY", value: "Weapon Focus" },
-      { type: "FEAT_FAMILY", value: "Martial Weapon Proficiency" },
-    ],
+    fields: { families: ["Weapon Focus", "Martial Weapon Proficiency"] },
   },
   {
     name: "War Domain Weapon: Heavy Flail",
@@ -366,10 +309,7 @@ export const DOMAIN_POOL_FEATS: FeatSeed[] = [
         valueType: "boolean",
       },
     ],
-    properties: [
-      { type: "FEAT_FAMILY", value: "Weapon Focus" },
-      { type: "FEAT_FAMILY", value: "Martial Weapon Proficiency" },
-    ],
+    fields: { families: ["Weapon Focus", "Martial Weapon Proficiency"] },
   },
   {
     name: "War Domain Weapon: Greatsword",
@@ -385,10 +325,7 @@ export const DOMAIN_POOL_FEATS: FeatSeed[] = [
         valueType: "boolean",
       },
     ],
-    properties: [
-      { type: "FEAT_FAMILY", value: "Weapon Focus" },
-      { type: "FEAT_FAMILY", value: "Martial Weapon Proficiency" },
-    ],
+    fields: { families: ["Weapon Focus", "Martial Weapon Proficiency"] },
   },
   {
     name: "War Domain Weapon: Guisarme",
@@ -404,10 +341,7 @@ export const DOMAIN_POOL_FEATS: FeatSeed[] = [
         valueType: "boolean",
       },
     ],
-    properties: [
-      { type: "FEAT_FAMILY", value: "Weapon Focus" },
-      { type: "FEAT_FAMILY", value: "Martial Weapon Proficiency" },
-    ],
+    fields: { families: ["Weapon Focus", "Martial Weapon Proficiency"] },
   },
   {
     name: "War Domain Weapon: Halberd",
@@ -423,10 +357,7 @@ export const DOMAIN_POOL_FEATS: FeatSeed[] = [
         valueType: "boolean",
       },
     ],
-    properties: [
-      { type: "FEAT_FAMILY", value: "Weapon Focus" },
-      { type: "FEAT_FAMILY", value: "Martial Weapon Proficiency" },
-    ],
+    fields: { families: ["Weapon Focus", "Martial Weapon Proficiency"] },
   },
   {
     name: "War Domain Weapon: Lance",
@@ -437,10 +368,7 @@ export const DOMAIN_POOL_FEATS: FeatSeed[] = [
       { target: "feats.weaponfocuslance.possessed", operator: "set", value: "true", valueType: "boolean" },
       { target: "feats.martialweaponproficiencylance.possessed", operator: "set", value: "true", valueType: "boolean" },
     ],
-    properties: [
-      { type: "FEAT_FAMILY", value: "Weapon Focus" },
-      { type: "FEAT_FAMILY", value: "Martial Weapon Proficiency" },
-    ],
+    fields: { families: ["Weapon Focus", "Martial Weapon Proficiency"] },
   },
   {
     name: "War Domain Weapon: Ranseur",
@@ -456,10 +384,7 @@ export const DOMAIN_POOL_FEATS: FeatSeed[] = [
         valueType: "boolean",
       },
     ],
-    properties: [
-      { type: "FEAT_FAMILY", value: "Weapon Focus" },
-      { type: "FEAT_FAMILY", value: "Martial Weapon Proficiency" },
-    ],
+    fields: { families: ["Weapon Focus", "Martial Weapon Proficiency"] },
   },
   {
     name: "War Domain Weapon: Scythe",
@@ -475,10 +400,7 @@ export const DOMAIN_POOL_FEATS: FeatSeed[] = [
         valueType: "boolean",
       },
     ],
-    properties: [
-      { type: "FEAT_FAMILY", value: "Weapon Focus" },
-      { type: "FEAT_FAMILY", value: "Martial Weapon Proficiency" },
-    ],
+    fields: { families: ["Weapon Focus", "Martial Weapon Proficiency"] },
   },
   {
     name: "War Domain Weapon: Shortbow",
@@ -494,10 +416,7 @@ export const DOMAIN_POOL_FEATS: FeatSeed[] = [
         valueType: "boolean",
       },
     ],
-    properties: [
-      { type: "FEAT_FAMILY", value: "Weapon Focus" },
-      { type: "FEAT_FAMILY", value: "Martial Weapon Proficiency" },
-    ],
+    fields: { families: ["Weapon Focus", "Martial Weapon Proficiency"] },
   },
   {
     name: "War Domain Weapon: Composite Shortbow",
@@ -514,10 +433,7 @@ export const DOMAIN_POOL_FEATS: FeatSeed[] = [
         valueType: "boolean",
       },
     ],
-    properties: [
-      { type: "FEAT_FAMILY", value: "Weapon Focus" },
-      { type: "FEAT_FAMILY", value: "Martial Weapon Proficiency" },
-    ],
+    fields: { families: ["Weapon Focus", "Martial Weapon Proficiency"] },
   },
   {
     name: "War Domain Weapon: Longbow",
@@ -533,10 +449,7 @@ export const DOMAIN_POOL_FEATS: FeatSeed[] = [
         valueType: "boolean",
       },
     ],
-    properties: [
-      { type: "FEAT_FAMILY", value: "Weapon Focus" },
-      { type: "FEAT_FAMILY", value: "Martial Weapon Proficiency" },
-    ],
+    fields: { families: ["Weapon Focus", "Martial Weapon Proficiency"] },
   },
   {
     name: "War Domain Weapon: Composite Longbow",
@@ -553,9 +466,6 @@ export const DOMAIN_POOL_FEATS: FeatSeed[] = [
         valueType: "boolean",
       },
     ],
-    properties: [
-      { type: "FEAT_FAMILY", value: "Weapon Focus" },
-      { type: "FEAT_FAMILY", value: "Martial Weapon Proficiency" },
-    ],
+    fields: { families: ["Weapon Focus", "Martial Weapon Proficiency"] },
   },
 ];

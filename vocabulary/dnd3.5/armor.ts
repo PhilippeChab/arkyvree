@@ -1,5 +1,5 @@
 /**
- * The SRD's armor and shield tables: each base armor and shield type's definition, which its properties are read from
+ * The SRD's armor and shield tables: each base armor and shield type's definition, which its fields are read from
  * (an item's builders, the codegen's items). A name the tables don't have has none. Beside them, what an item's fields
  * offer: their proficiencies, which the tables are written in, and their names, read off them.
  */
@@ -22,7 +22,7 @@ interface ShieldDefinition {
 export const ARMOR_PROFICIENCIES = ["Light", "Medium", "Heavy"] as const;
 
 /**
- * Each entry is the canonical definition for a base armor type. All properties are derived from selecting an armor type
+ * Each entry is the canonical definition for a base armor type. All its fields are derived from selecting an armor type
  * name.
  */
 export const ARMOR_TYPE_DEFINITIONS: Partial<Record<string, ArmorDefinition>> = {

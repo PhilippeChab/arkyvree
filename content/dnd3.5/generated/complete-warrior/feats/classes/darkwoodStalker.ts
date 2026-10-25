@@ -13,7 +13,7 @@ export const DARKWOOD_STALKER_CLASS_FEATS: FeatSeed[] = [
     modifiers: [
       { target: "feats.favoredenemyhumanoidorc.possessed", operator: "set", value: "true", valueType: "boolean" },
     ],
-    properties: [{ type: "FEAT_FAMILY", value: "Favored Enemy" }],
+    fields: { families: ["Favored Enemy"] },
   },
   {
     name: "Darkvision (Darkwood Stalker)",
@@ -51,7 +51,7 @@ export const DARKWOOD_STALKER_CLASS_FEATS: FeatSeed[] = [
     stackable: true,
     selectable: false,
     aptitudes: ["Darkwood Stalker Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Sneak Attack" }],
+    fields: { families: ["Sneak Attack"] },
   },
   {
     name: "Uncanny Dodge (Darkwood Stalker)",

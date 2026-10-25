@@ -17,7 +17,7 @@ export const HOSPITALER_CLASS_FEATS: FeatSeed[] = [
       "A hospitaler who has a Charisma score of at least 12 can mend injuries through physical contact. She can restore a total number of hit points per day equal to her hospitaler level multiplied by her Charisma modifier. This healing can be split across multiple targets and need not be expended all at once. Activating this ability requires a standard action. If the hospitaler possesses lay on hands from a different class, the levels from both classes are combined when calculating the total hit points she can restore daily.",
     selectable: false,
     aptitudes: ["Hospitaler Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Lay on Hands" }],
+    fields: { families: ["Lay on Hands"] },
   },
   {
     name: "Remove Disease (Hospitaler)",

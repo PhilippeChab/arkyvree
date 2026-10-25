@@ -54,7 +54,7 @@ export const BLACKGUARD_CLASS_FEATS: FeatSeed[] = [
       "Blackguards are trained in handling poisons and never accidentally expose themselves to a toxin when coating a weapon with poison.",
     selectable: false,
     aptitudes: ["Blackguard Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Poison Use" }],
+    fields: { families: ["Poison Use"] },
   },
   {
     name: "Smite Good (Blackguard)",
@@ -63,7 +63,7 @@ export const BLACKGUARD_CLASS_FEATS: FeatSeed[] = [
     stackable: true,
     selectable: false,
     aptitudes: ["Blackguard Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Smite" }],
+    fields: { families: ["Smite"] },
   },
   {
     name: "Sneak Attack (Blackguard)",
@@ -72,7 +72,7 @@ export const BLACKGUARD_CLASS_FEATS: FeatSeed[] = [
     stackable: true,
     selectable: false,
     aptitudes: ["Blackguard Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Sneak Attack" }],
+    fields: { families: ["Sneak Attack"] },
   },
   {
     name: "Spells (Blackguard)",

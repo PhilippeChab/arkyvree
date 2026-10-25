@@ -31,7 +31,7 @@ export const PURPLE_DRAGON_KNIGHT_CLASS_FEATS: FeatSeed[] = [
     stackable: true,
     selectable: false,
     aptitudes: ["Purple Dragon Knight Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Inspire Courage" }],
+    fields: { families: ["Inspire Courage"] },
   },
   {
     name: "Oath of Wrath (Purple Dragon Knight)",

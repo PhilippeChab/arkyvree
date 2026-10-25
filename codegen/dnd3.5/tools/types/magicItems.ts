@@ -1,4 +1,5 @@
-import type { Modifier, Property } from "@/content/core/builders/customization/types.ts";
+import type { Modifier } from "@/content/core/builders/customization/types.ts";
+import type { Dnd35ItemSeed } from "@/content/dnd3.5/builders/items/types.ts";
 
 import type { ItemFields } from "./items.ts";
 import type { Overrides, ScrapedMeta } from "./reference.ts";
@@ -6,13 +7,13 @@ import type { Overrides, ScrapedMeta } from "./reference.ts";
 /** A magic item's fields an override sets. */
 type MagicItemFields = ItemFields & {
   baseItem?: string | null;
+  /** Fields the item has over those the generator gives it (a composite bow's Strength rating). */
+  fields?: Dnd35ItemSeed["fields"];
   modifiers?: Modifier[];
-  /** Properties the item adds to those the generator gives it (a composite bow's Strength rating). */
-  properties?: Property[];
   slot?: string;
   /**
    * A specific armor others are made from, as its base armor is: elven chain, whose proficiency is its own (light), not
-   * its base's. Its properties are its base armor's, its own over them.
+   * its base's. Its fields are its base armor's, its own over them.
    */
   template?: boolean;
 };
@@ -41,7 +42,7 @@ export interface MagicItemReference {
 
   /**
    * Each magic item as the seeds make it, its overrides applied: its base item, cost, description, modifiers (its
-   * enhancement's too), properties (its aura's, its caster level's, its stats' and its override's), slot and weight
+   * enhancement's too), fields (its aura's, its caster level's, its stats' and its override's), slot and weight
    * (none when it weighs what its base item does), and whether it's a template or skipped
    */
   mapping: Record<
@@ -50,8 +51,8 @@ export interface MagicItemReference {
       baseItem?: string;
       costGp: string;
       description: string;
+      fields: NonNullable<Dnd35ItemSeed["fields"]>;
       modifiers: Modifier[];
-      properties: Property[];
       skip?: boolean;
       slot?: string;
       template?: boolean;

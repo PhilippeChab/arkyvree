@@ -9,7 +9,7 @@ export const FOCHLUCAN_LYRIST_CLASS_FEATS: FeatSeed[] = [
       "A Fochlucan lyrist can attempt to recall some relevant piece of information about local notable people, legendary items, or noteworthy places. See the bard class feature of the Player's Handbook. She adds her Fochlucan lyrist class level to her bardic knowledge checks, so her bardic knowledge checks have a bonus equal to her bard level + her Fochlucan lyrist level + her Int modifier.",
     selectable: false,
     aptitudes: ["Fochlucan Lyrist Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Bardic Knowledge" }],
+    fields: { families: ["Bardic Knowledge"] },
   },
   {
     name: "Bardic Music (Fochlucan Lyrist)",
@@ -17,7 +17,7 @@ export const FOCHLUCAN_LYRIST_CLASS_FEATS: FeatSeed[] = [
       "A Fochlucan lyrist adds her lyrist level to her bard level to determine the number of times per day she can use her bardic music, the bardic music abilities she can employ, and the power of those abilities. For example, a 2nd-level rogue/5th-level bard/4th-level druid/3rd-level Fochlucan lyrist can use her bardic music eight times per day, can use any bardic music ability an 8th-level bard could use (assuming she meets the Perform skill rank requirements), and is treated as an 8th-level bard for adjudicating the effects of those abilities (such as number of targets, save DC, and so forth).",
     selectable: false,
     aptitudes: ["Fochlucan Lyrist Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Bardic Music" }],
+    fields: { families: ["Bardic Music"] },
   },
   {
     name: "Spells per Day/Spells Known (Fochlucan Lyrist)",

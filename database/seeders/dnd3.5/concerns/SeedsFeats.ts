@@ -1,12 +1,14 @@
 import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
 import type { Dnd35ContentSeeder } from "@/database/seeders/dnd3.5/Dnd35ContentSeeder.ts";
 import { requirementsInCustomization } from "@/drizzle/schema.ts";
+import { Engine } from "@/engine/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 
 /** Seeding feats. */
 export function SeedsFeats<B extends Constructor<Dnd35ContentSeeder>>(Base: B) {
   abstract class SeedingFeats extends Base {
-    /** Seeds feats with their aptitudes, requirements, modifiers and properties, and adds them to the context. */
+    /** Seeds feats with their aptitudes, requirements, modifiers and fields, and adds them to the context. */
     async seedFeats(feats: FeatSeed[]) {
       if (feats.length === 0) return;
 
@@ -36,7 +38,13 @@ export function SeedsFeats<B extends Constructor<Dnd35ContentSeeder>>(Base: B) {
         requirementsInCustomization,
         feats.flatMap((f) => this.requirementRows(ids[f.name], "feats", f.requirements)),
       );
-      await this.writeFields(feats.map((f) => this.propertySeedsWrite(ids[f.name], "feats", f.properties)));
+      await this.writeFields(
+        feats.map((f) => ({
+          id: ids[f.name],
+          type: "feats",
+          values: Engine.forRules(DND35_BASE_RULES).toFieldsWrite("feats", f.fields ?? {}),
+        })),
+      );
 
       await this.insertModifiers(
         "feats",

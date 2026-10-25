@@ -26,7 +26,7 @@ export const DRUID_CLASS_FEATS: FeatSeed[] = [
         valueType: "number",
       },
     ],
-    properties: [{ type: "FEAT_FAMILY", value: "Animal Companion" }],
+    fields: { families: ["Animal Companion"] },
   },
   {
     name: "Chaotic, Evil, Good, and Lawful Spells (Druid)",
@@ -128,7 +128,7 @@ export const DRUID_CLASS_FEATS: FeatSeed[] = [
       "Through gestures, vocal tones, and general bearing, a druid can shift the disposition of an animal (such as a bear or monitor lizard) in a more favorable direction. This works identically to making a Diplomacy check to improve a person's attitude. The druid rolls 1d20 and adds both her druid level and her Charisma modifier to get the wild empathy check result. Domesticated animals typically begin with an indifferent attitude, whereas wild creatures are generally unfriendly. Both the druid and the target animal must be able to observe one another to use this ability, meaning they need to be within 30 feet under ordinary circumstances. Swaying an animal's attitude normally requires about 1 minute, though it can take more or less time depending on the situation, much like influencing a person. This ability can also be directed at magical beasts that have an Intelligence score of 1 or 2 (such as a basilisk or girallon), but the druid suffers a -4 penalty on the check when doing so.",
     selectable: false,
     aptitudes: ["Druid Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Wild Empathy" }],
+    fields: { families: ["Wild Empathy"] },
   },
   {
     name: "Wild Shape (Druid)",
@@ -137,7 +137,7 @@ export const DRUID_CLASS_FEATS: FeatSeed[] = [
     stackable: true,
     selectable: false,
     aptitudes: ["Druid Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Wild Shape" }],
+    fields: { families: ["Wild Shape"] },
   },
   {
     name: "Woodland Stride (Druid)",

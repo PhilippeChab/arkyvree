@@ -9,7 +9,6 @@ import type {
 } from "@/content/core/builders/customization/types.ts";
 import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
 import type { Constructor } from "@/lib/mixins.ts";
-import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 /**
  * Writing a feat, and a template family's feats made per item (weapon, skill, school…). What a template's code uses
@@ -19,7 +18,7 @@ export function WritesFeats<B extends Constructor<BaseCodeFile>>(Base: B) {
   abstract class WritingFeats extends Base {
     /** Ends a template: its feats' family. */
     private closeTemplate(familyName: string): void {
-      this.lines.push(`  properties: [${this.property({ type: FEAT_FAMILY, value: familyName })}],`);
+      this.lines.push(`  fields: ${this.fieldValue({ families: [familyName] })},`);
       this.lines.push(`}));`);
       this.lines.push("");
     }
@@ -201,11 +200,7 @@ export function WritesFeats<B extends Constructor<BaseCodeFile>>(Base: B) {
           (feat.modifiers ?? []).map((m) => this.modifier(m)),
           "    ",
         ),
-        ...this.listField(
-          "properties",
-          (feat.properties ?? []).map((p) => this.property(p)),
-          "    ",
-        ),
+        ...(feat.fields ? [`    fields: ${this.fieldValue(feat.fields)},`] : []),
         `  },`,
       ];
     }

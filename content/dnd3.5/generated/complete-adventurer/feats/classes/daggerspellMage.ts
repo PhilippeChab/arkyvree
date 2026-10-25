@@ -52,7 +52,7 @@ export const DAGGERSPELL_MAGE_CLASS_FEATS: FeatSeed[] = [
     stackable: true,
     selectable: false,
     aptitudes: ["Daggerspell Mage Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Sneak Attack" }],
+    fields: { families: ["Sneak Attack"] },
   },
   {
     name: "Spells per Day/Spells Known (Daggerspell Mage)",

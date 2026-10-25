@@ -305,7 +305,7 @@ export const ITEM_CREATION_FEATS: FeatSeed[] = [
     description: "You can create relics, which are special magic items imbued with divine significance.",
     aptitudes: ["General", "Wizard Bonus Feat"],
     requirements: [eq("feats.itemcreation.*.possessed")],
-    properties: [{ type: "FEAT_FAMILY", value: "Item Creation" }],
+    fields: { families: ["Item Creation"] },
   },
 ];
 
@@ -322,7 +322,7 @@ export const METAMAGIC_FEATS: FeatSeed[] = [
         eqStr("identity.beliefs.alignment", "Chaotic Good"),
       ),
     ],
-    properties: [{ type: "FEAT_FAMILY", value: "Metamagic" }],
+    fields: { families: ["Metamagic"] },
   },
   {
     name: "Corrupt Spell",
@@ -336,28 +336,28 @@ export const METAMAGIC_FEATS: FeatSeed[] = [
         eqStr("identity.beliefs.alignment", "Chaotic Evil"),
       ),
     ],
-    properties: [{ type: "FEAT_FAMILY", value: "Metamagic" }],
+    fields: { families: ["Metamagic"] },
   },
   {
     name: "Rapid Spell",
     description:
       "This metamagic feat can only be applied to spells whose casting time exceeds 1 standard action. A rapid spell that normally takes 1 full round to cast instead requires only a standard action. Spells measured in rounds become 1 full round, those measured in minutes become 1 minute, and those measured in hours become 1 hour. A rapid spell occupies a spell slot one level higher than normal.",
     aptitudes: ["General", "Wizard Bonus Feat"],
-    properties: [{ type: "FEAT_FAMILY", value: "Metamagic" }],
+    fields: { families: ["Metamagic"] },
   },
   {
     name: "Reach Spell",
     description:
       "A touch-range spell modified by this feat can be delivered at a range of up to 30 feet. The spell functions as a ray, requiring a successful ranged touch attack to affect the target. A reach spell uses a spell slot two levels higher than its actual level.",
     aptitudes: ["General", "Wizard Bonus Feat"],
-    properties: [{ type: "FEAT_FAMILY", value: "Metamagic" }],
+    fields: { families: ["Metamagic"] },
   },
   {
     name: "Transdimensional Spell",
     description:
       "A spell enhanced with this metamagic feat fully affects incorporeal creatures, creatures on the Ethereal Plane or the Plane of Shadow, and creatures occupying extradimensional spaces within the spell's area. This includes ethereal beings, creatures using blink or shadow walk, manifested ghosts, and creatures inside spaces created by effects like rope trick or portable hole. You still need to perceive a creature to target it directly, but area effects (bursts, cones, emanations, and spreads) can catch creatures you cannot perceive. The modified spell uses a slot one level higher than normal.",
     aptitudes: ["General", "Wizard Bonus Feat"],
-    properties: [{ type: "FEAT_FAMILY", value: "Metamagic" }],
+    fields: { families: ["Metamagic"] },
   },
 ];
 

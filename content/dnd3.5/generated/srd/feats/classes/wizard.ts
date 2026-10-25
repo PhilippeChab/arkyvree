@@ -36,7 +36,7 @@ export const WIZARD_CLASS_FEATS: FeatSeed[] = [
       { target: "aptitudes.familiarbond.allowed", operator: "add", value: "1", valueType: "number" },
       { target: "bonded.familiar.level", operator: "add", value: "{{ [classes.wizard.level] }}", valueType: "number" },
     ],
-    properties: [{ type: "FEAT_FAMILY", value: "Summon Familiar" }],
+    fields: { families: ["Summon Familiar"] },
   },
   {
     name: "Weapon and Armor Proficiency (Wizard)",

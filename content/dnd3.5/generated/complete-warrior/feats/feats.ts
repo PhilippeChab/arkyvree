@@ -630,7 +630,7 @@ export const POWER_CRITICAL_FEATS: FeatSeed[] = ALL_WEAPONS.map((w) => ({
   generated: true,
   aptitudes: ["General", "Fighter Bonus Feat"],
   requirements: [gte("combat.bab", 4), eq(feat(`Weapon Focus: ${w}`))],
-  properties: [{ type: "FEAT_FAMILY", value: "Power Critical" }],
+  fields: { families: ["Power Critical"] },
 }));
 
 export const STYLE_FEATS: FeatSeed[] = [

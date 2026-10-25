@@ -17,7 +17,7 @@ export const STREETFIGHTER_CLASS_FEATS: FeatSeed[] = [
       "Beginning at 3rd level, a streetfighter deals an extra 1d6 points of damage when flanking an opponent or any time the target would be denied its Dexterity bonus. This extra damage applies to ranged attacks only if the target is within 30 feet. See the rogue class feature of the Player's Handbook. If a streetfighter gets a sneak attack bonus from another source (such as levels of rogue), the bonuses on damage stack.",
     selectable: false,
     aptitudes: ["Streetfighter Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Sneak Attack" }],
+    fields: { families: ["Sneak Attack"] },
   },
   {
     name: "Stand Tough (Streetfighter)",

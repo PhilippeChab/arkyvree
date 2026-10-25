@@ -106,7 +106,7 @@ export class FeatSeeds extends ReferenceSeeds<FeatReference> {
             ...(mapped.modifiers ?? []),
             ...new GrantText(name, mapped.description ?? entry.benefit ?? "").companionModifiers(),
           ],
-          properties: mapped.properties ?? [],
+          ...(mapped.fields ? { fields: mapped.fields } : {}),
         });
       }
       return byType;

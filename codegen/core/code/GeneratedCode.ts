@@ -5,7 +5,6 @@ import type {
   Modifier,
   ModifierEffect,
   ModifierSeed,
-  Property,
   RequirementCondition,
   RequirementEntry,
 } from "@/content/core/builders/customization/types.ts";
@@ -33,7 +32,7 @@ function escapeString(s: string): string {
 /**
  * A generated file's code, any ruleset's: its lines, the content types they declare values with, the names they use (a
  * requirement's builders…) and the lists they gather (an index's), which its imports are written from; and the
- * customization values every seed writes alike (a check, a modifier, a property). A ruleset's codegen says where its
+ * customization values every seed writes alike (a check, a modifier, its fields). A ruleset's codegen says where its
  * content types (`declaredTypes`) and the names its code uses (`importTable`) come from.
  */
 export abstract class GeneratedCode<T extends string> {
@@ -141,6 +140,21 @@ export abstract class GeneratedCode<T extends string> {
     this.declared.add(type);
   }
 
+  /**
+   * A value of a seed's fields written as code: a text as a string literal, a number or a flag as it is, a list as an
+   * array of them, and a group's fields (`{ weapon: { … } }`) as an object of them, each field by its name.
+   */
+  fieldValue(value: unknown): string {
+    if (typeof value === "string") return this.quote(value);
+    if (typeof value === "number" || typeof value === "boolean" || value === null) return String(value);
+    if (Array.isArray(value)) return `[${value.map((item) => this.fieldValue(item)).join(", ")}]`;
+    if (typeof value === "object") {
+      const fields = Object.entries(value).filter(([, field]) => field !== undefined);
+      return `{ ${fields.map(([name, field]) => `${name}: ${this.fieldValue(field)}`).join(", ")} }`;
+    }
+    throw new Error(`A field's value can't be written as code: ${String(value)}`);
+  }
+
   /** The file gathers `names` from `module`, a generated file beside it (an index's lists). */
   gather(module: string, names: string[]): void {
     this.gathered.set(module, [...(this.gathered.get(module) ?? []), ...names]);
@@ -196,11 +210,6 @@ export abstract class GeneratedCode<T extends string> {
   plainModifier(mod: Modifier): string {
     if ("requirements" in mod) throw new Error(`${mod.target}: a plain modifier takes no requirements`);
     return this.modifier(mod);
-  }
-
-  /** A property written as code. */
-  property({ type, value }: Property): string {
-    return `{ type: ${this.quote(type)}, value: ${this.quote(value)} }`;
   }
 
   /** `s` as a string literal. */

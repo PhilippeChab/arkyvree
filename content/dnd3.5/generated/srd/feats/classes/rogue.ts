@@ -24,7 +24,7 @@ export const ROGUE_CLASS_FEATS: FeatSeed[] = [
       "Beginning at 2nd level, a rogue gains the agility to completely avoid certain magical and extraordinary attacks. When she succeeds on a Reflex saving throw against an effect that would normally deal half damage on a successful save (such as a dragon's breath or an explosion spell), she takes no damage whatsoever. This ability only functions while the rogue wears light armor or no armor at all. A rogue who is helpless (for example, unconscious or paralyzed) cannot benefit from this ability.",
     selectable: false,
     aptitudes: ["Rogue Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Evasion" }],
+    fields: { families: ["Evasion"] },
   },
   {
     name: "Feat (Rogue Special Ability)",
@@ -75,7 +75,7 @@ export const ROGUE_CLASS_FEATS: FeatSeed[] = [
     stackable: true,
     selectable: false,
     aptitudes: ["Rogue Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Sneak Attack" }],
+    fields: { families: ["Sneak Attack"] },
   },
   {
     name: "Special Ability (Rogue)",
@@ -100,7 +100,7 @@ export const ROGUE_CLASS_FEATS: FeatSeed[] = [
       "Only rogues are able to use the Search skill to detect traps with a Difficulty Class above 20. Locating a nonmagical trap requires a DC of at least 20, potentially higher for particularly well-concealed ones. Detecting a magical trap has a DC equal to 25 + the spell level used in its creation. Likewise, only rogues can employ the Disable Device skill to disarm magical traps. A magical trap typically has a Disable Device DC of 25 + the spell level that created it. If a rogue exceeds a trap's DC by 10 or more on her Disable Device check, she can analyze the trap's mechanism and lead her companions past it safely without actually disarming it.",
     selectable: false,
     aptitudes: ["Rogue Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Trapfinding" }],
+    fields: { families: ["Trapfinding"] },
   },
   {
     name: "Uncanny Dodge (Rogue)",

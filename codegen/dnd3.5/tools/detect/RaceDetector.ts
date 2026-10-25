@@ -47,7 +47,7 @@ export class RaceDetector extends BaseDetector<RaceReference> {
 
   /**
    * Each race as the seeds make it: its description, modifiers and languages, its name, size and speed, its override's
-   * or else what's scraped and detected; the properties its override gives, and whether its override skips it.
+   * or else what's scraped and detected; the fields its override gives, and whether its override skips it.
    */
   protected override mapping(detected: RaceReference["detected"]): RaceReference["mapping"] {
     return this.modifierMapping(
@@ -61,7 +61,7 @@ export class RaceDetector extends BaseDetector<RaceReference> {
           size: override?.size ?? entry.size,
           baseSpeed: override?.baseSpeed ?? entry.baseSpeed,
           ...(languages ? { languages } : {}),
-          ...(override?.properties?.length ? { properties: override.properties } : {}),
+          ...(override?.fields ? { fields: override.fields } : {}),
           ...(override?.skip ? { skip: true } : {}),
         };
       },

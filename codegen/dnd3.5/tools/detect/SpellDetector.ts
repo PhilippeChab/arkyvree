@@ -2,21 +2,8 @@ import { normalizeWs } from "@/codegen/core/text/whitespace.ts";
 import { sanitizeText } from "@/codegen/dnd3.5/tools/text/sanitize.ts";
 import type { StoredReference } from "@/codegen/dnd3.5/tools/types/reference.ts";
 import { type SpellReference } from "@/codegen/dnd3.5/tools/types/spells.ts";
-import type { Property } from "@/content/core/builders/customization/types.ts";
+import type { SpellFields } from "@/content/dnd3.5/builders/spells/types.ts";
 import { capitalize } from "@/shared/text.ts";
-import {
-  SPELL_AREA_OF_EFFECT,
-  SPELL_CASTING_TIME,
-  SPELL_COMPONENT,
-  SPELL_DESCRIPTOR,
-  SPELL_DURATION,
-  SPELL_EFFECT,
-  SPELL_RANGE_TYPE,
-  SPELL_RESISTANCE,
-  SPELL_SCHOOL,
-  SPELL_SUBSCHOOL,
-  SPELL_TARGET,
-} from "@/vocabulary/dnd3.5/properties/index.ts";
 import { SPELL_SUBSCHOOLS } from "@/vocabulary/dnd3.5/spells.ts";
 
 import { BaseDetector, type Resolved } from "./BaseDetector.ts";
@@ -168,34 +155,27 @@ function simplifyRange(range: string): string {
 }
 
 /**
- * A spell's properties: its school, subschool and descriptors, casting time, range, target, effect and area, duration,
- * components. A field its source leaves empty (a range, a target, a duration…) gives none.
+ * A spell's fields: its school, subschool and descriptors, components, casting time, range, target, effect and area,
+ * duration and spell resistance, in the order its stat block gives them. A field its source leaves empty (a range, a
+ * target, a duration…) gives none.
  */
-function spellProperties(entry: RawSpell): Property[] {
-  const properties: Property[] = [];
-  properties.push({ type: SPELL_SCHOOL, value: entry.school });
-  if (entry.subschool) properties.push({ type: SPELL_SUBSCHOOL, value: normalizeSubschool(entry.subschool) });
-  for (const desc of entry.descriptors) properties.push({ type: SPELL_DESCRIPTOR, value: normalizeDescriptor(desc) });
-
-  properties.push({
-    type: SPELL_CASTING_TIME,
-    value: normalizeSpellText(entry.castingTime || "1 standard action"),
-  });
-  const rangeValue = simplifyRange(normalizeSpellText(entry.range));
-  if (rangeValue) properties.push({ type: SPELL_RANGE_TYPE, value: rangeValue });
-  if (entry.target) properties.push({ type: SPELL_TARGET, value: normalizeSpellText(entry.target) });
-  if (entry.effect) properties.push({ type: SPELL_EFFECT, value: normalizeSpellText(entry.effect) });
-  if (entry.area) properties.push({ type: SPELL_AREA_OF_EFFECT, value: normalizeSpellText(entry.area) });
-  const durationValue = normalizeSpellText(entry.duration);
-  if (durationValue) properties.push({ type: SPELL_DURATION, value: durationValue });
-  properties.push({
-    type: SPELL_RESISTANCE,
-    value: normalizeSpellResistance(normalizeSpellText(entry.spellResistance || "No")),
-  });
-  for (const compName of expandComponents(entry.components))
-    properties.push({ type: SPELL_COMPONENT, value: compName });
-
-  return properties;
+function spellFields(entry: RawSpell): SpellFields {
+  const descriptors = entry.descriptors.map(normalizeDescriptor);
+  const range = simplifyRange(normalizeSpellText(entry.range));
+  const duration = normalizeSpellText(entry.duration);
+  return {
+    school: entry.school,
+    ...(entry.subschool ? { subschool: normalizeSubschool(entry.subschool) } : {}),
+    ...(descriptors.length > 0 ? { descriptors } : {}),
+    components: expandComponents(entry.components),
+    castingTime: normalizeSpellText(entry.castingTime || "1 standard action"),
+    ...(range ? { rangeType: range } : {}),
+    ...(entry.target ? { target: normalizeSpellText(entry.target) } : {}),
+    ...(entry.effect ? { effect: normalizeSpellText(entry.effect) } : {}),
+    ...(entry.area ? { areaOfEffect: normalizeSpellText(entry.area) } : {}),
+    ...(duration ? { duration } : {}),
+    spellResistance: normalizeSpellResistance(normalizeSpellText(entry.spellResistance || "No")),
+  };
 }
 
 /**
@@ -245,7 +225,7 @@ function withBaseSpellFields(rawEntry: RawSpell, spells: Map<string, RawSpell>):
 }
 
 /**
- * A spell reference's detector: what each spell's text gives (`detected`: its properties and its saving throw,
+ * A spell reference's detector: what each spell's text gives (`detected`: its fields and its saving throw,
  * normalized), its stat block's fields as its overrides correct them, those it leaves out taken from the spell it's
  * written as ("functions like", "As X, except…"), the book's or the core rules' (`coreRules`); and its description and
  * level entries, its overrides applied (`mapping`).
@@ -258,7 +238,7 @@ export class SpellDetector extends BaseDetector<SpellReference> {
     super(stored);
   }
 
-  /** Each spell's properties and saving throw. */
+  /** Each spell's fields and saving throw. */
   protected override detected(): SpellReference["detected"] {
     const spells = correctedSpells(this.stored);
     // The spells one can be written as, by lowercase name: the book's, then the core rules' it doesn't have
@@ -272,7 +252,7 @@ export class SpellDetector extends BaseDetector<SpellReference> {
     for (const corrected of spells) {
       const entry = withBaseSpellFields(corrected, byName);
       detected[entry.name] = {
-        properties: spellProperties(entry),
+        fields: spellFields(entry),
         savingThrow: normalizeSpellText(entry.savingThrow || "None"),
       };
     }
