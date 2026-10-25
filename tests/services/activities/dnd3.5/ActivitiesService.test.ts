@@ -258,7 +258,7 @@ describe("ActivitiesService.getActivityUrl", () => {
       "character_contributors",
       "modifiers",
       "requirements",
-      "properties",
+      "entity_fields",
       "notifications",
     ])
       expect({ table, url: await resolve(table, NIL_UUID) }).toEqual({ table, url: null });

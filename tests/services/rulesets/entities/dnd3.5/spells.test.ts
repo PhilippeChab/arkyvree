@@ -32,7 +32,7 @@ async function linkedAptitudes(spellId: string) {
 }
 
 // CRUD, ownership and copy-on-write are covered for every entity in EntityServices.test.ts,
-// and the spell properties a spell generates in GeneratedFeats.test.ts.
+// and the spell fields a spell generates in GeneratedFeats.test.ts.
 describe("EntitiesService: spells", () => {
   test("keeps a spell's save effect through an edit that leaves it out, and clears it with an empty one", async () => {
     const {

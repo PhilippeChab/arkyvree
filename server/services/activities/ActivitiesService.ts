@@ -106,7 +106,7 @@ class ActivitiesService {
 
   /**
    * The page that lists an owner's customizations: its customization page, or the page of a kind that owns another (a
-   * class's), on the tab of `section` (its modifiers' or its requirements'; a property's, its details, its first).
+   * class's), on the tab of `section` (its modifiers' or its requirements'; without one, its details, its first).
    */
   private async resolveCustomizationUrl(
     entityId: string,
@@ -222,10 +222,6 @@ class ActivitiesService {
           ? await this.resolveCustomizationUrl(requirement.entityId, requirement.entityType, "requirements")
           : null;
       }
-      // A property's activity names a row the generic fields replaced, which no longer has an address
-      case "properties":
-        return null;
-
       // Rules sub-entities (entity has rulesetId)
       default:
         return await this.resolveRulesEntity(targetTable, targetId);

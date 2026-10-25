@@ -9,7 +9,7 @@ import { getSeedCtx } from "@/tests/support/seed.ts";
 import { SPELL_COMPONENT } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 describe("SpellsPaths.generateSpellPaths", () => {
-  test("offers a spell's values of a type as a list: one of them required, or added or taken", async () => {
+  test("offers a spell's values of a field as a list: one of them required, or added or taken", async () => {
     const { rulesetId } = await getSeedCtx();
     const enthrall = (await Entities.findOne<Spell>(db, { entityType: "spells", name: "Enthrall", rulesetId }))!;
     const rulesetData = await RulesetViews.getData((await Rulesets.findOne(db, { id: rulesetId }))!);
@@ -20,7 +20,7 @@ describe("SpellsPaths.generateSpellPaths", () => {
         new Map(),
         new Set(),
         kind,
-      ).find((path) => path.path === `spells.enthrall.properties.${SPELL_COMPONENT}`)?.operators;
+      ).find((path) => path.path === `spells.enthrall.fields.${SPELL_COMPONENT}`)?.operators;
     expect([operatorsOf("requirement"), operatorsOf("modifier")]).toEqual([
       ["contains", "not_contains"],
       ["add", "subtract"],

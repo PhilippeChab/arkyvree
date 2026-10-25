@@ -106,18 +106,18 @@ describe("TargetPathsService", () => {
       // A class's spells read as the class.
       wizard: "Wizard",
     });
-    // A numeric property value (an armor's -1 check penalty) doesn't take over a spell level's label.
+    // A numeric field value (an armor's -1 check penalty) doesn't take over a spell level's label.
     expect(Object.entries(segmentLabels).filter(([key, label]) => /^\d+$/.test(key) && /^-\d/.test(label))).toEqual([]);
   });
 
-  test("writes descriptions for people: capitalized, without property type codes", async () => {
+  test("writes descriptions for people: capitalized, without field codes", async () => {
     const { paths } = await seedPaths("modifier");
     expect(paths.filter((p) => p.category === "combat" && p.description[0] !== p.description[0].toUpperCase())).toEqual(
       [],
     );
-    const propertyPaths = paths.filter((p) => p.path.includes(".properties."));
-    expect(propertyPaths.length).toBeGreaterThan(0);
-    expect(propertyPaths.filter((p) => /[A-Z]{2,}_[A-Z]/.test(p.description))).toEqual([]);
+    const fieldPaths = paths.filter((p) => p.path.includes(".fields."));
+    expect(fieldPaths.length).toBeGreaterThan(0);
+    expect(fieldPaths.filter((p) => /[A-Z]{2,}_[A-Z]/.test(p.description))).toEqual([]);
   });
 
   test("describes a wildcard as all of a kind when modifying, and any when requiring", async () => {
@@ -153,7 +153,7 @@ describe("TargetPathsService", () => {
           path.includes("*") ||
           path.startsWith("weapon.") ||
           path === "skills.knowledge.rank" ||
-          /^spells\.[a-z0-9]+\.properties\./.test(path),
+          /^spells\.[a-z0-9]+\.fields\./.test(path),
       ),
     ).toEqual([]);
     expect(requirement.filter((p) => p.readsMany && readable.has(p.path))).toEqual([]);

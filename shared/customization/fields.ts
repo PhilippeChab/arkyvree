@@ -2,8 +2,11 @@
  * An entity's fields as a ruleset's vocabulary declares them (`FieldSpec`, data written `as const`), and the values
  * they read (`FieldValues`): what the engine reads and writes them by (its codecs), and what a ruleset's content types
  * its seeds' fields with (`PartialFieldValues`). A reference names an entity kind (`K`), which the engine binds to its
- * view's kinds.
+ * view's kinds. And how a sheet shows them: a field's name as a label (`formatFieldName`), its values joined in their
+ * options' order (`formatFieldValues`).
  */
+
+import { sortByOrder } from "@/shared/sortByOrder.ts";
 
 import type { DeclaredProgression, ProgressionValue } from "./progression.ts";
 
@@ -170,3 +173,28 @@ export type LeafSpec<K extends string = string> = Exclude<FieldSpec<K>, GroupSpe
 export type PartialFieldValues<S extends Fields> = {
   -readonly [K in keyof S]?: S[K] extends GroupSpec ? PartialFieldValues<S[K]["fields"]> : ValueOf<S[K]>;
 };
+
+/** An UPPER_SNAKE_CASE field's name as a label ("SPELL_SCHOOL" → "Spell School"). */
+export function formatFieldName(field: string) {
+  return field
+    .split("_")
+    .map((word) => word.charAt(0) + word.slice(1).toLowerCase())
+    .join(" ");
+}
+
+/**
+ * Each field's values joined in its options' order (`optionsOf`, a ruleset's closed values for the field: a spell's
+ * components as V, S, M…, its descriptors alphabetical, as the books print them), those no option names after them as
+ * given: an entity's values as a sheet lists them, those a modifier adds included.
+ */
+export function formatFieldValues(
+  valuesByField: Record<string, string[]>,
+  optionsOf: (field: string) => readonly string[] | null,
+): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(valuesByField).map(([field, values]) => [
+      field,
+      sortByOrder(values, optionsOf(field) ?? [], (value) => value).join(", "),
+    ]),
+  );
+}
