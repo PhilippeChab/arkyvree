@@ -10,10 +10,10 @@ import { afterAll, describe, expect, test } from "bun:test";
 import { sql } from "drizzle-orm";
 
 import type { FieldsRequest } from "@/engine/core/module/index.ts";
-import type { CharacterAbility, LevelSkill, RulesetAbility } from "@/engine/rulesets/dnd3.5/index.ts";
+import type { CharacterAbility, RulesetAbility } from "@/engine/rulesets/dnd3.5/index.ts";
 import { db } from "@/server/database/index.ts";
 import { createTestPool } from "@/server/database/test.ts";
-import { CharacterLinks, Characters, Entities, Picks } from "@/server/repositories/index.ts";
+import { CharacterLinks, Characters, Entities } from "@/server/repositories/index.ts";
 import { CharactersService } from "@/server/services/characters/index.ts";
 import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
@@ -28,6 +28,7 @@ import {
   picks,
 } from "@/tests/support/dnd3.5/levelFixtures.ts";
 import { levelEditPlan, levelUpPlan } from "@/tests/support/dnd3.5/levelPlans.ts";
+import { findPicks } from "@/tests/support/dnd3.5/levels.ts";
 import { readPcgenFile } from "@/tests/support/dnd3.5/pcgenFiles.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
 import { findPlainItem, findSeededCharacter, getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
@@ -377,7 +378,7 @@ describe("a character's levels", () => {
       );
     }
     const level = await levelUp(session, ctx, characterId, "Fighter", 1, { ...first, hp: 1 });
-    expect(level.hp).toBe(1);
+    expect(await findPicks("hp", [level.id])).toMatchObject([{ amount: 1 }]);
     const edit = levelEditPlan({ hp: 0 }, picks(ctx, first));
     for (const force of [false, true]) {
       expect(CharacterLevelsService.updatePlannedLevel(session, characterId, level.id, edit, force)).rejects.toThrow(
@@ -407,9 +408,9 @@ describe("a character's levels", () => {
       "The skills step's answer isn't a spend step's",
     );
     const [saved] = await CharacterLevelsService.addLevels(session, characterId, spending({ Spot: 0 }));
-    const ranks = await Picks.findMany<LevelSkill>(db, { pick: "skills", characterLevelIds: [saved.id] });
-    expect(ranks.map(({ skillId }) => skillId)).not.toContain(ctx.skillMap["Spot"]);
-    expect(ranks.every(({ rank }) => rank > 0)).toBe(true);
+    const ranks = await findPicks("skills", [saved.id]);
+    expect(ranks.map(({ entityId }) => entityId)).not.toContain(ctx.skillMap["Spot"]);
+    expect(ranks.every(({ amount }) => amount! > 0)).toBe(true);
   });
 
   test("refuses an ability increase of 0, forced or not, on a level-up and an edit", async () => {

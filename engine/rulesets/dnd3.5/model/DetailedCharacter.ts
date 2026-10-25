@@ -1,6 +1,5 @@
 import { Validates } from "@/engine/core/character/index.ts";
 import Dnd35TargetPaths from "@/engine/rulesets/dnd3.5/Dnd35TargetPaths.ts";
-import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import SpellLists from "@/engine/rulesets/dnd3.5/rules/SpellLists.ts";
 import type { KlassLevel } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import { include } from "@/lib/mixins.ts";
@@ -67,8 +66,7 @@ export default class DetailedCharacter extends include(
     const characterLevel = {
       id: crypto.randomUUID(),
       characterId: this.character.id,
-      klassLevelId: klassLevel.id,
-      hp: LevelRules.UNROLLED_LEVEL_HP,
+      trackId: klassLevel.id,
       createdAt: now,
       updatedAt: now,
       deletedAt: null,

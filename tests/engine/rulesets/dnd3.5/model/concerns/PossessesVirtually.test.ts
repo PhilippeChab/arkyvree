@@ -292,7 +292,7 @@ describe("A grant", () => {
         rulesetId: book.id,
       }))!;
       for (let level = 1; level <= 6; level++) {
-        const picks = level === 1 ? { feats: [{ featId: catlord.id, aptitudeId: bond.id }] } : {};
+        const picks = level === 1 ? { feats: { [bond.id]: [catlord.id] } } : {};
         await addCharacterLevel(characterId, (await findKlassLevel(animalLord.id, level))!.id, picks);
       }
       const { feats } = (await build(characterId)).components;

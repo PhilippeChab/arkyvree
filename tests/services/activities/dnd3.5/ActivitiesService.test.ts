@@ -170,7 +170,7 @@ describe("ActivitiesService.getActivityUrl", () => {
     expect(
       await resolveAll([
         ["inventory", character.id],
-        ["levels", character.id],
+        ["advancements", character.id],
         ["players", player.id],
         ["invites", invite.id],
         ["player_characters", character.id],
@@ -246,7 +246,7 @@ describe("ActivitiesService.getActivityUrl", () => {
       "rulesets",
       "characters",
       "inventory",
-      "levels",
+      "advancements",
       "campaigns",
       "feats",
       "class_levels",

@@ -18,9 +18,6 @@ import {
   type Klass,
   type KlassLevel,
   type Language,
-  type LevelFeat,
-  type LevelSkill,
-  type LevelSpell,
   type Mechanic,
   type Race,
   type RulesetAbility,
@@ -43,7 +40,6 @@ import {
   EntityReferences,
   EntitySnapshots,
   Modifiers,
-  Picks,
   Requirements,
   RulesetEntities,
   type RulesetEntityType,
@@ -66,6 +62,7 @@ import {
   addOneLevel,
   createTestKlassLevel,
   findKlassLevel,
+  findPicks,
   pickFeat,
 } from "@/tests/support/dnd3.5/levels.ts";
 import {
@@ -312,24 +309,12 @@ async function forkTaking(...books: string[]) {
 async function levelPicking(userId: string, rulesetId: string, type: EntityType, entityId: string, aptitudeId: string) {
   const character = await createTestCharacter(userId, { rulesetId });
   const { klassLevel } = await createTestKlassLevel(rulesetId);
-  const picks =
-    type === "feats" ? { feats: [{ featId: entityId, aptitudeId }] } : { spells: [{ spellId: entityId, aptitudeId }] };
-  return await addCharacterLevel(character.id, klassLevel.id, picks);
+  return await addCharacterLevel(character.id, klassLevel.id, { [type]: { [aptitudeId]: [entityId] } });
 }
 
 /** A level's picks of a type, each by the entity it names and the list it's from. */
 async function picksOf(type: EntityType, characterLevelId: string) {
-  const where = { characterLevelIds: [characterLevelId] };
-  if (type === "feats") {
-    return (await Picks.findMany<LevelFeat>(db, { pick: "feats", ...where })).map(({ featId, aptitudeId }) => ({
-      entityId: featId,
-      aptitudeId,
-    }));
-  }
-  return (await Picks.findMany<LevelSpell>(db, { pick: "spells", ...where })).map(({ spellId, aptitudeId }) => ({
-    entityId: spellId,
-    aptitudeId,
-  }));
+  return (await findPicks(type, [characterLevelId])).map(({ entityId, viaId }) => ({ entityId, aptitudeId: viaId }));
 }
 
 /** The seeded base, its Complete Warrior extension, and a new user's fork of the base. */
@@ -1117,7 +1102,7 @@ describe("unsubscribing from an extension", () => {
       await CharacterLinks.create(db, "languages", { characterId: character.id, languageId: copies.language });
       const { klassLevel } = await createTestKlassLevel(rulesetId);
       const level = await addCharacterLevel(character.id, klassLevel.id, {
-        skills: [{ skillId: copies.skill, rank: 2 }],
+        skills: { [copies.skill]: 2 },
       });
       return { character, level };
     };
@@ -1127,7 +1112,7 @@ describe("unsubscribing from an extension", () => {
       language: (
         await CharacterLinks.findMany<CharacterLanguage>(db, { link: "languages", characterId: character.id })
       )[0].languageId,
-      skill: (await Picks.findMany<LevelSkill>(db, { pick: "skills", characterLevelIds: [level.id] }))[0].skillId,
+      skill: (await findPicks("skills", [level.id]))[0].entityId,
     });
     const other = await forkBase(session);
     for (const fork of [draft, other])
@@ -1239,7 +1224,7 @@ describe("unsubscribing from an extension", () => {
       await CharacterAdvancements.delete(db, { id: level.id });
     }
     await RulesetExtensionsService.unsubscribeExtension(session, draft.id, extension.id);
-    expect(await CharacterAdvancements.findOne(db, { id: kept.id })).toMatchObject({ klassLevelId: sourceLevel.id });
+    expect(await CharacterAdvancements.findOne(db, { id: kept.id })).toMatchObject({ trackId: sourceLevel.id });
   });
 
   test("refuses an extension the fork doesn't use, another user, and an archived fork", async () => {
@@ -1408,10 +1393,7 @@ describe("an extension's content in a fork", () => {
       await Entities.findMany<KlassLevel>(db, { entityType: "class_levels", ownerIds: [favoredSoul.id] })
     ).filter((level) => level.level === 1);
     await addCharacterLevel(character.id, first.id, {
-      spells: [
-        { spellId: bane.id, aptitudeId: list.id },
-        { spellId: blessWater.id, aptitudeId: list.id },
-      ],
+      spells: { [list.id]: [bane.id, blessWater.id] },
     });
 
     const detailed = await buildAs(DetailedCharacter, character);
@@ -1504,9 +1486,7 @@ describe("an extension's content in a fork", () => {
       const picks =
         level.level === 7
           ? {
-              feats: [
-                { featId: featMap["Damage Reduction (Barbarian)"], aptitudeId: aptMap["Barbarian Class Feature"] },
-              ],
+              feats: { [aptMap["Barbarian Class Feature"]]: [featMap["Damage Reduction (Barbarian)"]] },
             }
           : {};
       await addCharacterLevel(character.id, level.id, picks);
@@ -1695,7 +1675,7 @@ describe("an extension's entity of a name its subscriber's own has", () => {
     const character = await createCharacterOn(user.id, draft.id);
     const { klassLevel: ownLevel } = await createTestKlassLevel(draft.id);
     const level = await addCharacterLevel(character.id, ownLevel.id, {
-      feats: [{ featId: bookFeat.id, aptitudeId: general }],
+      feats: { [general]: [bookFeat.id] },
     });
 
     const view = await RulesetViews.getData((await Rulesets.findOne(db, { id: draft.id }))!);

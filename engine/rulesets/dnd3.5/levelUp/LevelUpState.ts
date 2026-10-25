@@ -5,8 +5,7 @@ import SkillRules from "@/engine/rulesets/dnd3.5/rules/SkillRules.ts";
 import { include } from "@/lib/mixins.ts";
 
 import { SpendsSkillPoints } from "./concerns/SpendsSkillPoints.ts";
-import LevelUpBase from "./LevelUpBase.ts";
-import type { LevelPickRows } from "./plans.ts";
+import LevelUpBase, { type SavedLevelPicks } from "./LevelUpBase.ts";
 import type { LevelPicks } from "./requests.ts";
 
 /** The pools a character picks feats and spells in, and how many, with what a level-up plans. */
@@ -111,7 +110,7 @@ export default abstract class LevelUpState extends include(LevelUpBase<DetailedC
   protected fitPicks(
     picks: Partial<PoolPicks>,
     build: (picks: PoolPicks) => DetailedCharacter,
-    kept?: Pick<LevelPickRows, "feats" | "spells">,
+    kept?: Pick<SavedLevelPicks, "feats" | "spells">,
   ) {
     const holding = this.buildOnce(build);
     let fitted = this.checks.withoutHeldPicks(this.keepTakenPicks(picks), holding, kept);

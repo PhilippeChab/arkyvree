@@ -180,7 +180,7 @@ describe("A character's languages", () => {
     const { klassMap, skillMap } = await getSeedCtx();
     const bard = await newCharacter("Human");
     const level = await findKlassLevel(klassMap.pc["Bard"], 1);
-    await addCharacterLevel(bard.id, level!.id, { skills: [{ skillId: skillMap["Speak Language"], rank: 2 }] });
+    await addCharacterLevel(bard.id, level!.id, { skills: { [skillMap["Speak Language"]]: 2 } });
 
     // Its Intelligence of 10 gives none: both are its ranks'
     expect(await roomOf(bard)).toBe(2);

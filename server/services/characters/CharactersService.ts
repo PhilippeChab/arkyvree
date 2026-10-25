@@ -136,7 +136,7 @@ class CharactersService extends include(Object, Archives, Imports) {
     const charactersList = result.items;
     const characterIds = charactersList.map((char) => char.id);
 
-    const levels = await CharacterAdvancements.findMany(db, { characterIds });
+    const advancements = await CharacterAdvancements.findMany(db, { characterIds });
 
     // Each card from its character's ruleset's view: a copied or renamed race or class shows its name there
     return await withRulesetScopes(
@@ -144,7 +144,7 @@ class CharactersService extends include(Object, Archives, Imports) {
       charactersList.map((c) => c.rulesetId),
       async (views) => {
         // The user's own characters: every card whole
-        const cards = describeCharacterCards(views, charactersList, levels, new Set());
+        const cards = describeCharacterCards(views, charactersList, advancements, new Set());
         const enrichedCharacters = charactersList.map((char) => {
           const { chips } = cards.get(char.id)!;
           return {

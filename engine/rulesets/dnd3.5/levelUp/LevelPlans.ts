@@ -248,7 +248,7 @@ export default class LevelPlans extends LevelUpBase<DetailedCharacter> {
 
   /** The character's saved level `characterLevelId`: refused when it has none. */
   private findLevel(characterLevelId: string) {
-    const level = this.character.rows.levels.find((saved) => saved.id === characterLevelId);
+    const level = this.character.rows.advancements.find((saved) => saved.id === characterLevelId);
     if (!level) throw new RulesError("not-found", "Character level not found");
     return level;
   }
@@ -339,8 +339,8 @@ export default class LevelPlans extends LevelUpBase<DetailedCharacter> {
       const hp = values[i];
       if (hp === undefined && needsHp) {
         const total = request.editedLevelId
-          ? this.character.rows.levels.indexOf(this.findLevel(request.editedLevelId))
-          : this.character.rows.levels.length + i;
+          ? this.character.rows.advancements.indexOf(this.findLevel(request.editedLevelId))
+          : this.character.rows.advancements.length + i;
         throw new RulesError("invalid", `Level ${total + 1}: its hit points are required`);
       }
       return {

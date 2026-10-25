@@ -4,6 +4,7 @@ import {
   CharactersPart,
   type CreationPickQuery,
   type FieldsRequest,
+  type StoredAdvancement,
 } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
@@ -11,7 +12,7 @@ import type { Dnd35Descriptions } from "@/engine/rulesets/dnd3.5/descriptions.ts
 import { ITEM_FIELDS } from "@/engine/rulesets/dnd3.5/entities/items/fields.ts";
 import RacePicker from "@/engine/rulesets/dnd3.5/pickers/RacePicker.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
-import type { CharacterLevel, Race } from "@/engine/rulesets/dnd3.5/view/rows.ts";
+import type { Race } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import type { Character } from "@/shared/relations.ts";
 
 import CharacterCards from "./CharacterCards.ts";
@@ -41,8 +42,8 @@ export default class Dnd35Characters extends CharactersPart<Dnd35Descriptions> {
   }
 
   /** A character's card: its race and its classes at their highest level. */
-  protected override describeFullCard(view: RulesetView, character: Character, levels: CharacterLevel[]) {
-    return CharacterCards.describe(Dnd35View.of(view.rulesetData), character, levels);
+  protected override describeFullCard(view: RulesetView, character: Character, advancements: StoredAdvancement[]) {
+    return CharacterCards.describe(Dnd35View.of(view.rulesetData), character, advancements);
   }
 
   /** An inventory entry beside its row: where its item can go, and where it's worn. */

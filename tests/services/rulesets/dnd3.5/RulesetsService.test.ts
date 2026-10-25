@@ -10,7 +10,6 @@ import {
   type Item,
   type Klass,
   type KlassLevel,
-  type LevelFeat,
   type Race,
   type RulesetAbility,
   type Skill,
@@ -28,7 +27,6 @@ import {
   EntityLinks,
   EntitySnapshots,
   Modifiers,
-  Picks,
   Players,
   Requirements,
   Rulesets,
@@ -43,7 +41,7 @@ import { createTestCampaign } from "@/tests/support/campaigns.ts";
 import { addRulesetContributor } from "@/tests/support/contributors.ts";
 import { insertRows } from "@/tests/support/database.ts";
 import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
-import { addCharacterLevel, createTestKlassLevel } from "@/tests/support/dnd3.5/levels.ts";
+import { addCharacterLevel, createTestKlassLevel, findPicks } from "@/tests/support/dnd3.5/levels.ts";
 import { addClassSkills, addLists, findLists } from "@/tests/support/dnd3.5/links.ts";
 import { copyEntity, createTestRuleset } from "@/tests/support/rulesets.ts";
 import { findSeededRuleset, getSeedCtx, NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
@@ -606,13 +604,11 @@ describe("RulesetsService", () => {
         const character = await createTestCharacter(user.id, { rulesetId: fork.id });
         const { klassLevel } = await createTestKlassLevel(fork.id);
         const level = await addCharacterLevel(character.id, klassLevel.id, {
-          feats: [{ featId: copy.id, aptitudeId: aptitude.id }],
+          feats: { [aptitude.id]: [copy.id] },
         });
 
         await RulesetChangesService.revertOverride(session, fork.id, "feats", modified.id);
-        expect(await Picks.findMany<LevelFeat>(db, { pick: "feats", characterLevelIds: [level.id] })).toMatchObject([
-          { featId: modified.id },
-        ]);
+        expect(await findPicks("feats", [level.id])).toMatchObject([{ entityId: modified.id }]);
         expect(RulesetChangesService.revertOverride(session, fork.id, "feats", untouched.id)).rejects.toThrow(
           NotFoundError,
         );

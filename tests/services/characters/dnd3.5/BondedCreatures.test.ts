@@ -147,7 +147,7 @@ describe("Bonded creatures", () => {
   test("a companion loses a level with each of its druid's, its last, and goes with the level that picked it", async () => {
     const { ctx, masterId, bonded } = await createDruidWithCompanion(3);
     const companionLevels = async () =>
-      (await CharacterAdvancements.findMany(db, { characterId: bonded.id })).map((level) => level.klassLevelId);
+      (await CharacterAdvancements.findMany(db, { characterId: bonded.id })).map((level) => level.trackId);
     const companionClassLevel = async (level: number) =>
       (await findKlassLevel(ctx.klassMap.animalcompanion["Animal Companion"], level))!.id;
     await CharacterLevelsService.removeLevel(owner, masterId);

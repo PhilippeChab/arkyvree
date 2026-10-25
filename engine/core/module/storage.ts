@@ -95,7 +95,10 @@ export interface StorageRegistries {
   steps: StepDef[];
 }
 
-/** A character's advancement as stored (`character.advancements`): its track, and its value step's amount. */
+/**
+ * A character's advancement as stored (`character.advancements`): its track (3.5's class level), and where it stands
+ * among the character's (`position`). What it picks are its picks, its value step's among them (3.5's hit points).
+ */
 export interface StoredAdvancement {
   characterId: string;
   createdAt: string;
@@ -104,24 +107,19 @@ export interface StoredAdvancement {
   position: number;
   trackId: string | null;
   updatedAt: string;
-  value: number | null;
 }
 
 /**
- * A character's data, as the module's rows name it: its columns stored as fields or as a single link (its race), its
- * links of a role with an amount (its scores) or none (its languages), and its advancements' picks by step.
+ * A character's data, as the module's rows name it: its columns stored as fields or as a single link (its race), and
+ * its links of a role with an amount (its scores) or none (its languages).
  */
 export interface StoredCharacter {
-  /** Each advancement's track (its class level), and its value step's amount (its hit points) */
-  advancement: { track: string; value: { column: string; step: string } };
   /** The character row's columns past its own, each a field or a single link's entity */
   columns: Record<string, { field: string; kind: "number" | "text" } | { kind: "link"; role: string }>;
   /** Each link role's rows: their entity's column and their amount's, if they hold one */
   links: Record<string, { amount?: string; entity: string; role: string }>;
   /** The row's columns in the order its answers give them, when it isn't the character's own then `columns` */
   order?: string[];
-  /** Each pick step's rows: their entity's column, their pool's and their amount's */
-  picks: Record<string, { amount?: string; entity: string; id?: true; step: string; via?: string }>;
 }
 
 /** A character's link of a role (`character.links`): its entity, and its amount if it holds one. */

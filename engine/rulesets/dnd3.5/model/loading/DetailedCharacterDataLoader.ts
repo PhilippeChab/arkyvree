@@ -1,12 +1,11 @@
 import { CharacterDataLoader, type LoadedCharacter, type ModifierSource } from "@/engine/core/character/index.ts";
-import type { CharacterRows } from "@/engine/core/module/index.ts";
+import type { CharacterRows, StoredAdvancement, StoredPick } from "@/engine/core/module/index.ts";
 import { type RulesetView, type ViewLink } from "@/engine/core/view/index.ts";
 import { type SkillFieldValues } from "@/engine/rulesets/dnd3.5/entities/skills/fields.ts";
-import type { AbilityIncrease } from "@/engine/rulesets/dnd3.5/levelUp/plans.ts";
-import SavedPicks, { type SavedPickRows } from "@/engine/rulesets/dnd3.5/levelUp/SavedPicks.ts";
+import type { AbilityIncrease } from "@/engine/rulesets/dnd3.5/levelUp/requests.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
-import type { CharacterLevel, Klass, Language, Skill } from "@/engine/rulesets/dnd3.5/view/rows.ts";
+import type { Klass, Language, Skill } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import { include } from "@/lib/mixins.ts";
 import type { Character } from "@/shared/relations.ts";
 import type { CasterType } from "@/vocabulary/dnd3.5/classes.ts";
@@ -38,7 +37,8 @@ export interface LoadedCharacterData extends LoadedCharacter {
   /** The character's own row: who it is (`IdentityComponent`). */
   character: Character;
   characterAbilityScores: { abilityId: string; name: string; score: number }[];
-  characterLevels: CharacterLevel[];
+  /** Its levels: its advancements, in the order it took them. */
+  characterLevels: StoredAdvancement[];
   classLevelFields: Map<string, { bab: number; skills: number }>;
   /**
    * The feats it holds: its levels' picks and grants as it loads, then those its modifiers grant it as they apply in
@@ -57,6 +57,8 @@ export interface LoadedCharacterData extends LoadedCharacter {
   klassSkills: readonly ViewLink[];
   /** The languages it picked, as its rows store them. */
   languages: Language[];
+  /** The hit points each of its levels rolled, by its advancement's id. */
+  levelHitPoints: ReadonlyMap<string, number>;
   /** What its levels give it whatever its classes, by its ruleset's Settings: its general feats, its increases. */
   levelRules: LevelRules;
   race: CustomizedRace;
@@ -70,9 +72,6 @@ export interface LoadedCharacterData extends LoadedCharacter {
    */
   spells: CustomizedSpell[];
 }
-
-/** Resolves stored ids through the override map, when there is one. */
-export type Resolve = <T extends Record<string, unknown>>(rows: T[]) => T[];
 
 export type SkillWithRank = Skill & {
   characterLevelId: string;
@@ -118,31 +117,27 @@ export default class DetailedCharacterDataLoader extends include(
     const race = dnd35.racesById.get(this.character.raceId);
     if (!race) throw new Error("Race not found");
 
-    const resolve: Resolve = (rows) => rulesetData.cow.resolveRows(rows);
     const abilityLookup = new Map(dnd35.abilities.map((a) => [a.id, a.name]));
-    const levels = this.resolveLevels(rows.levels, resolve);
+    const levels = this.sortLevels(rows.advancements, rows.picks);
     const { languages, klassLevelsRaw, klassLevelSaves, klasses, klassSkills, klassEntityIds } = this.readCachedRows(
       rows,
       rulesetData,
       levels.klassLevelIds,
     );
     const { skills, allFeats, klassLevelFeatCountsByAptitudeId, allSpells, klassLevelSpellCountsByAptitudeId } =
-      this.buildPicks(SavedPicks.of(rows), rulesetData, levels, resolve);
+      this.buildPicks(rows.picks, rulesetData, levels);
 
     // Each entity's customizations: per-entity lookups resolve via the cache's pre-built Maps
     const { klassLevels, classLevelFields } = this.toCustomizedKlassLevels(klassLevelsRaw, rulesetData);
     const classFields = this.readClassFields(klassEntityIds, rulesetData, abilityLookup);
     const dcAbilities = { klassBonusSpellAbilityMap: classFields.klassBonusSpellAbilityMap, klassLevels };
     return {
-      characterAbilityScores: resolve(rows.links.abilities).map((ca) => this.buildAbilityScore(ca, abilityLookup)),
-      abilityIncreases: this.readAbilityIncreases(
-        resolve(SavedPicks.of(rows).abilityIncreases),
-        levels.characterLevels,
-        LevelRules.of(view),
-      ),
+      characterAbilityScores: rows.links.abilities.map((ca) => this.buildAbilityScore(ca, abilityLookup)),
+      abilityIncreases: this.readAbilityIncreases(rows.picks.abilities, levels.characterLevels, LevelRules.of(view)),
       race: this.toCustomizedRace(race, rulesetData),
       languages,
       characterLevels: levels.characterLevels,
+      levelHitPoints: levels.hitPoints,
       klassEntityIds,
       klassLevels,
       klassSkills,
@@ -186,20 +181,20 @@ export default class DetailedCharacterDataLoader extends include(
   }
 
   /**
-   * The ability increases (`increases`, as the view resolves them) of the character's levels (`characterLevels`, in
-   * order) that take one by its ruleset's Settings (`levelRules`): one its Settings since moved off its level counts
-   * for nothing, as its level's edit opens it without it (`describeLevel`).
+   * The ability increases (`increases`, its `abilities` picks, as the view resolves them) of the character's levels
+   * (`characterLevels`, in order) that take one by its ruleset's Settings (`levelRules`): one its Settings since moved
+   * off its level counts for nothing, as its level's edit opens it without it (`describeLevel`).
    */
   private readAbilityIncreases(
-    increases: SavedPickRows["abilityIncreases"],
-    characterLevels: CharacterLevel[],
+    increases: StoredPick[],
+    characterLevels: StoredAdvancement[],
     levelRules: LevelRules,
-  ) {
+  ): AbilityIncrease[] {
     const taking = new Set(
       characterLevels.filter((_, before) => levelRules.isAbilityIncreaseLevel(before)).map(({ id }) => id),
     );
     return increases
-      .filter(({ characterLevelId }) => taking.has(characterLevelId))
-      .map(({ abilityId, amount }) => ({ abilityId, amount }));
+      .filter(({ advancementId }) => taking.has(advancementId))
+      .map(({ amount, entityId }) => ({ abilityId: entityId!, amount: amount! }));
   }
 }

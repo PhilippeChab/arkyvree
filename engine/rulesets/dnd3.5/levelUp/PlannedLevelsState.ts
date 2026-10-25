@@ -101,7 +101,7 @@ export default abstract class PlannedLevelsState extends include(LevelUpState, P
         this.dnd35.grantedFeatsOf(klassLevel.id).filter((grant) => this.dnd35.featsById.has(grant.toId)),
       ),
       character: this.build(projection),
-      savedLevelCount: this.character.rows.levels.length,
+      savedLevelCount: this.character.rows.advancements.length,
       klassLevelEntries,
       saved: this.build(),
     };
@@ -116,7 +116,7 @@ export default abstract class PlannedLevelsState extends include(LevelUpState, P
     const projection = new CharacterProjection(this.character);
     for (const [i, { abilityIncreases, klassLevel }] of planned.klassLevelEntries.entries()) {
       const level = projection.addLevel(klassLevel.id, { abilityIncreases, hp: LevelRules.UNROLLED_LEVEL_HP });
-      projection.pick(level, this.toPickRows(distributed[i]));
+      projection.pick(level, this.toPickPlans(distributed[i]));
     }
     return this.build(projection);
   }
@@ -194,7 +194,7 @@ export default abstract class PlannedLevelsState extends include(LevelUpState, P
    */
   getPlannedKlassLevels(levels: Omit<LevelRequest, "hp">[]): PlannedClassLevel[] {
     // No character past its last level: the planned levels come after those it has
-    const levelsLeft = LevelRules.countLevelsLeft(this.character.rows.levels.length);
+    const levelsLeft = LevelRules.countLevelsLeft(this.character.rows.advancements.length);
     const message = `A character can't go past level ${RULESET_LIMITS.characterLevel}: ${levelsLeft} level(s) left`;
     RulesError.parse(z.array(PLANNED_LEVEL).max(levelsLeft, message), levels, ["levels"]);
     return levels.map(({ klassId, level, abilityIncreases }, i) => {

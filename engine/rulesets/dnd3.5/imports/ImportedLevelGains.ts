@@ -2,7 +2,7 @@ import CharacterProjection from "@/engine/rulesets/dnd3.5/levelUp/CharacterProje
 import type { PlannedClassLevel } from "@/engine/rulesets/dnd3.5/levelUp/LevelUpBase.ts";
 import PicksDistribution from "@/engine/rulesets/dnd3.5/levelUp/PicksDistribution.ts";
 import PlannedLevelsState from "@/engine/rulesets/dnd3.5/levelUp/PlannedLevelsState.ts";
-import type { FeatPick } from "@/engine/rulesets/dnd3.5/levelUp/plans.ts";
+import type { FeatPick } from "@/engine/rulesets/dnd3.5/levelUp/requests.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
@@ -35,11 +35,11 @@ export default class ImportedLevelGains extends PlannedLevelsState {
   buildWith(entry: PlannedClassLevel, skills: Record<string, number>, feats: FeatPick[]): DetailedCharacter {
     const projection = new CharacterProjection(this.character);
     const { abilityIncreases, klassLevel } = entry;
-    const ranks = Object.entries(skills).map(([skillId, rank]) => ({ rank, skillId }));
-    projection.pick(projection.addLevel(klassLevel.id, { abilityIncreases, hp: LevelRules.UNROLLED_LEVEL_HP }), {
-      feats,
-      skills: ranks,
-    });
+    const ranks = Object.entries(skills).map(([entityId, amount]) => ({ step: "skills", entityId, amount }));
+    projection.pick(projection.addLevel(klassLevel.id, { abilityIncreases, hp: LevelRules.UNROLLED_LEVEL_HP }), [
+      ...CharacterProjection.picksOf({ featPicks: feats }),
+      ...ranks,
+    ]);
     return this.build(projection);
   }
 

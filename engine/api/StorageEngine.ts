@@ -7,7 +7,6 @@ import type {
   RulesetModule,
   StepDef,
   StorageRegistries,
-  StoredAdvancement,
   StoredCharacter,
   StoredCharacterLink,
   StoredCharacterRow,
@@ -15,7 +14,6 @@ import type {
   StoredColumn,
   StoredEntity,
   StoredKind,
-  StoredPick,
   StoredRuleset,
   StoredWrite,
 } from "@/engine/core/module/index.ts";
@@ -100,7 +98,6 @@ export default class StorageEngine {
       ...characters[0],
       columns: mergeRecords(modules, (module) => module.storage.character.columns),
       links: mergeRecords(modules, (module) => module.storage.character.links),
-      picks: mergeRecords(modules, (module) => module.storage.character.picks),
     };
     const registries = modules.map(([, module]) => module.storage.registries);
     this.merged = {
@@ -236,28 +233,7 @@ export default class StorageEngine {
     return { inherits: { column: found[0], fields: inheritance.fields } };
   }
 
-  /** A level's row (`values`, by its module's columns), as what a write of its advancement stores: its track, its value. */
-  advancementOf(values: Row): { trackId?: string; value?: number } {
-    const { track, value } = this.characterDeclaration.advancement;
-    return { trackId: values[track] as string | undefined, value: values[value.column] as number | undefined };
-  }
-
-  /** An advancement as its module's level row: its track and its value step's amount under their names. */
-  advancementRowOf(advancement: StoredAdvancement): Row {
-    const { track, value } = this.characterDeclaration.advancement;
-    return {
-      id: advancement.id,
-      characterId: advancement.characterId,
-      [track]: advancement.trackId,
-      [value.column]: advancement.value,
-      position: advancement.position,
-      createdAt: advancement.createdAt,
-      updatedAt: advancement.updatedAt,
-      deletedAt: advancement.deletedAt,
-    };
-  }
-
-  /** A character's data, as every module stores it: its columns, its links and its advancements' picks. */
+  /** A character's data, as every module stores it: its columns and its links. */
   character(): StoredCharacter {
     return this.characterDeclaration;
   }
@@ -454,39 +430,6 @@ export default class StorageEngine {
   /** The kinds that own another (3.5's classes, their levels'), in the order their owned kinds are declared. */
   ownerKinds(): string[] {
     return [...new Set(this.merged.entityTypes.flatMap((def) => (def.ownerType ? [def.ownerType] : [])))];
-  }
-
-  /** A pick's row (`row`, by its columns), of a step's (`name`), as what a write of it stores past its ordinal. */
-  pickOf(name: string, row: Row) {
-    const pick = this.characterDeclaration.picks[name];
-    const step = this.step(pick.step);
-    const viaId = pick.via ? ((row[pick.via] as string | null | undefined) ?? null) : null;
-    return {
-      id: pick.id ? (row.id as string | undefined) : undefined,
-      advancementId: row.characterLevelId as string,
-      step: pick.step,
-      entityId: row[pick.entity] as string,
-      entityType: step.entityType,
-      viaId,
-      viaType: viaId ? step.viaType : null,
-      amount: pick.amount ? (row[pick.amount] as number) : null,
-      repeats: step.repeats,
-    };
-  }
-
-  /** An advancement's pick as its module's row of `name` (its feats, its skills): its entity, its pool, its amount. */
-  pickRowOf(name: string, pick: StoredPick): Row {
-    const declared = this.characterDeclaration.picks[name];
-    return {
-      ...(declared.id ? { id: pick.id } : {}),
-      characterLevelId: pick.advancementId,
-      [declared.entity]: pick.entityId,
-      ...(declared.via ? { [declared.via]: pick.viaId } : {}),
-      ...(declared.amount ? { [declared.amount]: pick.amount } : {}),
-      createdAt: pick.createdAt,
-      updatedAt: pick.updatedAt,
-      deletedAt: null,
-    };
   }
 
   /** The column an owned kind's row holds its position in its owner at (`type`: a class level's `level`). */

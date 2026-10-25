@@ -1,4 +1,5 @@
 import { CharacterComponent } from "@/engine/core/character/index.ts";
+import type { StoredAdvancement } from "@/engine/core/module/index.ts";
 import type { RulesetView, ViewLink } from "@/engine/core/view/index.ts";
 import type {
   LoadedCharacterData,
@@ -10,7 +11,7 @@ import type {
   CustomizedSpell,
 } from "@/engine/rulesets/dnd3.5/model/loading/loadedEntities.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
-import type { CharacterLevel, Klass, KlassLevel } from "@/engine/rulesets/dnd3.5/view/rows.ts";
+import type { Klass, KlassLevel } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 interface ClassesData {
@@ -21,7 +22,7 @@ interface ClassesData {
     klassSkills: ViewLink[];
     level: number;
     levels: {
-      characterLevel: CharacterLevel;
+      characterLevel: StoredAdvancement;
       feats: CustomizedFeat[];
       klassLevel: CustomizedClassLevel;
       skills: SkillWithRank[];
@@ -81,7 +82,7 @@ export default class ClassesComponent extends CharacterComponent<LoadedCharacter
     }
 
     for (const characterLevel of characterLevels) {
-      const klassLevel = klassLevelsById.get(characterLevel.klassLevelId);
+      const klassLevel = klassLevelsById.get(characterLevel.trackId!);
       if (!klassLevel) throw new Error("Class level not found");
 
       const klass = klassesById.get(klassLevel.klassId);
@@ -127,7 +128,7 @@ export default class ClassesComponent extends CharacterComponent<LoadedCharacter
     }
   }
 
-  addProjectedLevel(klassName: string, klassLevel: KlassLevel, characterLevel: CharacterLevel): void {
+  addProjectedLevel(klassName: string, klassLevel: KlassLevel, characterLevel: StoredAdvancement): void {
     const entry = this.classes[klassName];
     if (!entry) return;
 

@@ -1,10 +1,10 @@
 import { z } from "zod";
 
 import type { StoredValues } from "@/engine/core/fields/index.ts";
-import type { CharacterInput, CharacterRowOf } from "@/engine/core/module/CharacterInputs.ts";
+import type { CharacterInput } from "@/engine/core/module/CharacterInputs.ts";
 import type { Descriptions } from "@/engine/core/module/contract.ts";
 import type { OpenedPicker } from "@/engine/core/module/pickers.ts";
-import type { StorageDeclaration } from "@/engine/core/module/storage.ts";
+import type { StorageDeclaration, StoredAdvancement } from "@/engine/core/module/storage.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import { RequestIds, type RulesetView, type ViewEntities } from "@/engine/core/view/index.ts";
 import type { Character as CharacterRecord } from "@/shared/relations.ts";
@@ -121,13 +121,14 @@ export default abstract class CharactersPart<D extends Descriptions> {
   protected abstract describeFull(view: RulesetView, character: CharacterInput, children: CharacterInput[]): D["sheet"];
 
   /**
-   * The card of a character (`character`, with its levels, `levels`), as a list of characters shows it to a reader who
-   * sees all of it, named as its ruleset's view names what it shows, a copied or renamed one by its own name.
+   * The card of a character (`character`, with its advancements, `advancements`), as a list of characters shows it to
+   * a reader who sees all of it, named as its ruleset's view names what it shows, a copied or renamed one by its own
+   * name.
    */
   protected abstract describeFullCard(
     view: RulesetView,
     character: CharacterRecord,
-    levels: CharacterRowOf<"levels">[],
+    advancements: StoredAdvancement[],
   ): CharacterCard;
 
   /**
@@ -266,16 +267,16 @@ export default abstract class CharactersPart<D extends Descriptions> {
   }
 
   /**
-   * The card of a character (`character`, with its levels, `levels`), as a list of characters shows it: a partly seen
-   * one's (`partial`) holds the chips its ruleset marks as its partial reading's alone.
+   * The card of a character (`character`, with its advancements, `advancements`), as a list of characters shows it: a
+   * partly seen one's (`partial`) holds the chips its ruleset marks as its partial reading's alone.
    */
   describeCard(
     view: RulesetView,
     character: CharacterRecord,
-    levels: CharacterRowOf<"levels">[],
+    advancements: StoredAdvancement[],
     partial: boolean,
   ): CharacterCard {
-    const card = this.describeFullCard(view, character, levels);
+    const card = this.describeFullCard(view, character, advancements);
     if (!partial) return card;
     return { chips: card.chips.filter((chip) => chip.partial) };
   }

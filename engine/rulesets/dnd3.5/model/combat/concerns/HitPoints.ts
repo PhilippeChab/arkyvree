@@ -1,5 +1,4 @@
 import type CombatState from "@/engine/rulesets/dnd3.5/model/combat/CombatState.ts";
-import type { CharacterLevel } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { MIN_HIT_POINTS_PER_LEVEL } from "@/vocabulary/dnd3.5/classes.ts";
 
@@ -20,12 +19,12 @@ export function HitPoints<B extends Constructor<CombatState>>(Base: B) {
     }
 
     /**
-     * The hit points: the rolls (base) and misc are inputs, which modifiers change; Constitution's part and the total
-     * are computed when read, so they follow the Constitution.
+     * The hit points: the rolls (base, each level's: `rolls`) and misc are inputs, which modifiers change;
+     * Constitution's part and the total are computed when read, so they follow the Constitution.
      */
-    protected initializeHitPoints(levels: CharacterLevel[]): void {
+    protected initializeHitPoints(rolls: number[]): void {
       const constitution = () => this.constitutionHitPoints();
-      this.hitDieRolls = levels.map((level) => level.hp);
+      this.hitDieRolls = rolls;
       this.combat.hp = {
         base: this.hitDieRolls.reduce((acc, roll) => acc + roll, 0),
         get constitution() {

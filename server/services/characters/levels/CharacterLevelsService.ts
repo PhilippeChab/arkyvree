@@ -4,35 +4,32 @@
  * the engine plans, with what the character's children (3.5's bonded creatures) become.
  */
 
+import { getTableName } from "drizzle-orm";
+
 import type { Db } from "@/drizzle/database.ts";
+import { advancementsInCharacter } from "@/drizzle/schema.ts";
 import { type CharacterInput, Engine, type LevelPlanRequest, type LevelUpEngine } from "@/engine/index.ts";
 import { include } from "@/lib/mixins.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { withTransaction } from "@/server/database/index.ts";
-import { Activities, CharacterAdvancements, Characters, Picks } from "@/server/repositories/index.ts";
+import { Activities, CharacterAdvancements, Characters } from "@/server/repositories/index.ts";
 import { readCharacterInput, readChildInputs } from "@/server/services/characters/characterInputs.ts";
 import { getEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
 import type { Session } from "@/shared/relations.ts";
 
+import { createAdvancement, updateAdvancement } from "./advancementWrites.ts";
 import { writeChildren } from "./childWrites.ts";
 import { Plans } from "./concerns/Plans.ts";
-import { createLevelRows } from "./levelRows.ts";
 
 class CharacterLevelsService extends include(Object, Plans) {
-  /** Deletes a level's picks, which an edit writes again. */
-  private async deleteLevelRows(tx: Db, characterLevelId: string) {
-    await Picks.delete(tx, { characterLevelId });
-  }
-
   /**
-   * Re-saves character level `characterLevelId` as its edit plans it (`planOf`, from the character's level flows and
-   * its children): the level's columns, its rows under it in place of those it had, what its children
-   * become, and an activity. Answers the level as it was saved before.
+   * Re-saves a character's level as its edit plans it (`planOf`, from the character's level flows and its children):
+   * its advancement's picks in place of those it had, what its children become, and an activity. Answers the
+   * advancement as it was saved before.
    */
   private async editLevel(
     session: Session,
     characterId: string,
-    characterLevelId: string,
     planOf: (levelUp: LevelUpEngine, children: CharacterInput[]) => ReturnType<LevelUpEngine["planLevelEdit"]>,
   ) {
     return await withTransaction(async (tx) => {
@@ -43,19 +40,17 @@ class CharacterLevelsService extends include(Object, Plans) {
         const children = await readChildInputs(tx, character);
         const edit = planOf(Engine.for(scope).character(character).levelUp(), children);
 
-        await CharacterAdvancements.update(tx, edit.columns, { id: characterLevelId });
-        await this.deleteLevelRows(tx, characterLevelId);
-        await createLevelRows(tx, characterLevelId, edit.rows);
+        await updateAdvancement(tx, edit);
         await writeChildren(tx, characterRecord, edit.children);
 
         await Activities.create(tx, {
           userId: session.userId,
           targetId: characterId,
-          targetTable: "levels",
+          targetTable: getTableName(advancementsInCharacter),
           type: "editLevel",
         });
 
-        return edit.level;
+        return edit.advancement;
       });
     });
   }
@@ -71,8 +66,8 @@ class CharacterLevelsService extends include(Object, Plans) {
   }
 
   /**
-   * Saves the levels a level-up plans (`planOf`, from the character's level flows and its children): each level
-   * and its rows under it, what the children become, and an activity. Answers the levels saved.
+   * Saves the levels a level-up plans (`planOf`, from the character's level flows and its children): each advancement
+   * and its picks, what the children become, and an activity. Answers the advancements saved.
    */
   private async saveLevels(
     session: Session,
@@ -86,23 +81,20 @@ class CharacterLevelsService extends include(Object, Plans) {
         const character = await readCharacterInput(tx, characterRecord);
         const children = await readChildInputs(tx, character);
         const plan = planOf(Engine.for(scope).character(character).levelUp(), children);
-        const createdLevels = [];
-        for (const { columns, rows } of plan.levels) {
-          const [created] = await CharacterAdvancements.create(tx, { ...columns, characterId });
-          createdLevels.push(created);
-          await createLevelRows(tx, created.id, rows);
-        }
+        const created = [];
+        for (const advancement of plan.advancements)
+          created.push(await createAdvancement(tx, characterId, advancement));
         await writeChildren(tx, characterRecord, plan.children);
 
         await Activities.create(tx, {
           userId: session.userId,
           targetId: characterId,
-          targetTable: "levels",
+          targetTable: getTableName(advancementsInCharacter),
           type: "addLevel",
-          data: { count: plan.levels.length },
+          data: { count: plan.advancements.length },
         });
 
-        return createdLevels;
+        return created;
       });
     });
   }
@@ -119,8 +111,8 @@ class CharacterLevelsService extends include(Object, Plans) {
   }
 
   /**
-   * Removes the character's most recent level, with its rows under it (the database deletes them with it), and what its
-   * children become without it.
+   * Removes the character's most recent level, its advancement with its picks (the database deletes them with it), and
+   * what its children become without it.
    */
   async removeLevel(session: Session, characterId: string) {
     return await withTransaction(async (tx) => {
@@ -130,14 +122,14 @@ class CharacterLevelsService extends include(Object, Plans) {
         const character = await readCharacterInput(tx, characterRecord);
         const children = await readChildInputs(tx, character);
         const removal = Engine.for(scope).character(character).levelUp().planRemoval(children);
-        await CharacterAdvancements.delete(tx, { id: removal.level.id });
+        await CharacterAdvancements.delete(tx, { id: removal.advancement.id });
         await writeChildren(tx, characterRecord, removal.children);
       });
 
       await Activities.create(tx, {
         userId: session.userId,
         targetId: characterId,
-        targetTable: "levels",
+        targetTable: getTableName(advancementsInCharacter),
         type: "removeLevel",
       });
 
@@ -148,7 +140,7 @@ class CharacterLevelsService extends include(Object, Plans) {
   /**
    * Re-saves a character level by an edit's plan (`request`): its hit points, ability increases and picks, read by an
    * edit's steps. The engine checks them, and refuses the issues the level answers for unless `force`d. Answers the
-   * level as it was saved before.
+   * level's advancement as it was saved before.
    */
   async updatePlannedLevel(
     session: Session,
@@ -157,7 +149,7 @@ class CharacterLevelsService extends include(Object, Plans) {
     request: LevelPlanRequest,
     force: boolean = false,
   ) {
-    return await this.editLevel(session, characterId, characterLevelId, (levelUp, children) =>
+    return await this.editLevel(session, characterId, (levelUp, children) =>
       levelUp.planLevelEdit(children, characterLevelId, request, force),
     );
   }

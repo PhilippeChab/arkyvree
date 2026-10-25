@@ -101,7 +101,7 @@ export default class BondedPlans {
       const klassLevel = klassLevelByLevel.get(level);
       if (!klassLevel)
         throw new RulesError("invalid", `Bonded class is missing level ${level} — content seed incomplete`);
-      added.push({ hp: 1, klassLevelId: klassLevel.id });
+      added.push({ trackId: klassLevel.id, picks: [{ step: "hp", amount: 1 }] });
     }
     return { added, removedIds: levels.slice(hitDice).map((level) => level.id) };
   }
@@ -117,7 +117,7 @@ export default class BondedPlans {
         const existing = bonded.find((input) => input.record.kind === kind);
         const plan = this.planBondedCreature(master, record, kind, existing?.record);
         if (!plan.levels) return { kind, levels: undefined, removedId: plan.removedId };
-        const levels = this.planBondedLevels("keptId" in plan ? (existing?.rows.levels ?? []) : [], plan.levels);
+        const levels = this.planBondedLevels("keptId" in plan ? (existing?.rows.advancements ?? []) : [], plan.levels);
         return { ...plan, kind, levels };
       }),
     };

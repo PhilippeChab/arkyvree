@@ -9,7 +9,7 @@ import type {
   InventoryEntryPlan,
   LinkPlan,
 } from "@/engine/core/module/parts/characters/index.ts";
-import type { ChildrenPlan, LevelWrites } from "@/engine/core/module/parts/levelUp/index.ts";
+import type { AdvancementPlan, ChildrenPlan } from "@/engine/core/module/parts/levelUp/index.ts";
 import type { Character } from "@/shared/relations.ts";
 
 /**
@@ -28,14 +28,14 @@ export interface ImportOwner {
 }
 
 /**
- * What an import writes: a new character's row (its owner and ruleset aside), its levels as if leveled up one at a
- * time (their rows' columns and the rows under them, in order), its links by name (each scored link's amounts, each
- * picked link's picks), its inventory entries, and what its children become; and the report of what it did.
+ * What an import writes: a new character's row (its owner and ruleset aside), its advancements as if leveled up one at
+ * a time (each its track and its picks, in order), its links by name (each scored link's amounts, each picked link's
+ * picks), its inventory entries, and what its children become; and the report of what it did.
  */
 export interface ImportPlan extends ChildrenPlan {
+  advancements: AdvancementPlan[];
   character: ImportedRow;
   inventory: (InventoryEntryPlan & { quantity: number })[];
-  levels: LevelWrites[];
   links: Record<string, LinkPlan[]>;
   report: ImportReportDescription;
 }

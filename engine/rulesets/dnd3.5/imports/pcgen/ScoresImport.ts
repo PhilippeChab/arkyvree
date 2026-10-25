@@ -3,7 +3,7 @@ import type { ScoreBounds } from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import NewCharacters from "@/engine/rulesets/dnd3.5/characters/NewCharacters.ts";
 import type { ImportedCharacter } from "@/engine/rulesets/dnd3.5/imports/imported.ts";
-import type { AbilityIncrease } from "@/engine/rulesets/dnd3.5/levelUp/plans.ts";
+import type { AbilityIncrease } from "@/engine/rulesets/dnd3.5/levelUp/requests.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { formatSigned } from "@/shared/text.ts";

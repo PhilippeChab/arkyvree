@@ -89,13 +89,6 @@ export const DND35_STORAGE: StorageDeclaration = {
       abilities: { role: "score", entity: "abilityId", amount: "score" },
       languages: { role: "speaks", entity: "languageId" },
     },
-    advancement: { track: "klassLevelId", value: { step: "hp", column: "hp" } },
-    picks: {
-      abilityIncreases: { step: "abilities", entity: "abilityId", amount: "amount" },
-      skills: { step: "skills", entity: "skillId", amount: "rank" },
-      feats: { step: "feats", entity: "featId", via: "aptitudeId", id: true },
-      spells: { step: "spells", entity: "spellId", via: "aptitudeId" },
-    },
   },
   registries: {
     entityTypes: [

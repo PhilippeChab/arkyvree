@@ -12,14 +12,14 @@ interface CardData {
 /** A 3.5 character's card, as a list of characters shows it. */
 export default class CharacterCards {
   /**
-   * The card of a character (`character`, with its levels, `levels`), named as its ruleset's view names its race and
-   * classes, a copied or renamed one by its own name: its race's chip, which a partly seen character shows, then each
-   * class at the highest level the character has in it.
+   * The card of a character (`character`, with its levels, `levels`: its advancements, each in a class level, its
+   * track), named as its ruleset's view names its race and classes, a copied or renamed one by its own name: its race's
+   * chip, which a partly seen character shows, then each class at the highest level the character has in it.
    */
-  static describe(data: CardData, character: { raceId: string }, levels: { klassLevelId: string }[]): CharacterCard {
+  static describe(data: CardData, character: { raceId: string }, levels: { trackId: string | null }[]): CharacterCard {
     const levelByKlassName = new Map<string, number>();
     for (const level of levels) {
-      const klassLevel = data.klassLevelsById.get(level.klassLevelId);
+      const klassLevel = level.trackId === null ? undefined : data.klassLevelsById.get(level.trackId);
       if (!klassLevel) continue;
       const klassName = data.klassesById.get(klassLevel.klassId)?.name || "Unknown";
       if (klassLevel.level > (levelByKlassName.get(klassName) || 0)) levelByKlassName.set(klassName, klassLevel.level);

@@ -191,3 +191,48 @@ describe("0084_link-activities", () => {
     }
   });
 });
+
+describe("0085_advancement-activities", () => {
+  test("names the advancements' table in what activities and notifications recorded of a level, and nothing else", async () => {
+    const { id: characterId } = await findSeededCharacter("Bjorn Ironhand");
+    // What an activity and a notification recorded of each change to a character's levels, and of others
+    const recorded = [
+      ["levels", "addLevel", '{"count":1}'],
+      ["levels", "editLevel", null],
+      ["levels", "removeLevel", null],
+      ["characters", "updateCharacter", null],
+      ["inventory", "addItem", '{"entityName":"levels"}'],
+    ];
+    const activityIds: string[] = [];
+    const notificationIds: string[] = [];
+    for (const [table, type, data] of recorded) {
+      const { rows: activity } = await db.execute<{ id: string }>(sql`
+        INSERT INTO account.activities (user_id, target_id, target_table, type, data)
+        VALUES (${SEED_USER_ID}, ${characterId}, ${table}, ${type}, ${data}) RETURNING id
+      `);
+      activityIds.push(activity[0]!.id);
+      const { rows: notification } = await db.execute<{ id: string }>(sql`
+        INSERT INTO account.notifications (recipient_id, actor_id, activity_id, type, target_id, target_table, data)
+        VALUES (${SEED_USER_ID}, ${SEED_USER_ID}, ${activity[0]!.id}, ${type}, ${characterId}, ${table}, ${data})
+        RETURNING id
+      `);
+      notificationIds.push(notification[0]!.id);
+    }
+
+    for (const statement of statementsOf("0085_advancement-activities.sql")) await db.execute(sql.raw(statement));
+
+    const expected = recorded
+      .map(([table, type, data]) => [table === "levels" ? "advancements" : table, type, data])
+      .map(([target_table, type, data]) => ({ target_table, type, data }));
+    for (const [table, ids] of [
+      ["account.activities", activityIds],
+      ["account.notifications", notificationIds],
+    ] as const) {
+      const { rows } = await db.execute(sql`
+        SELECT target_table, type, data::text AS data FROM ${sql.raw(table)}
+        WHERE id = ANY (${`{${ids.join(",")}}`}::uuid[]) ORDER BY array_position(${`{${ids.join(",")}}`}::uuid[], id)
+      `);
+      expect({ table, rows }).toEqual({ table, rows: expected });
+    }
+  });
+});

@@ -416,7 +416,7 @@ async function setupUncannyBlow(location: "Main Hand" | "Two Handed") {
     rulesetId: extension.id,
   }))!;
   const [level] = await CharacterAdvancements.findMany(db, { characterId: bjorn.id });
-  await Picks.createMany(db, "feats", [{ characterLevelId: level.id, featId: uncannyBlow.id, aptitudeId: stunt.id }]);
+  await Picks.createMany(db, [{ advancementId: level.id, step: "feats", entityId: uncannyBlow.id, viaId: stunt.id }]);
   const character = { ...bjorn, rulesetId: fork.id };
   await carry(character, [{ item: "Bastard Sword", location, groups: [0] }]);
   return build(character);
@@ -452,7 +452,7 @@ async function setupWeaponTrick(intelligence: number) {
     rulesetId: dmg.id,
   }))!;
   await addCharacterLevel(characterId, (await findKlassLevel(loremaster.id, 1))!.id, {
-    feats: [{ featId: weaponTrick.id, aptitudeId: secret.id }],
+    feats: { [secret.id]: [weaponTrick.id] },
   });
   const character = (await Characters.findOne(db, { id: characterId }))!;
   await carry(character, [{ item: "Quarterstaff", location: "Two Handed", groups: [0] }]);
@@ -2420,7 +2420,7 @@ describe("DetailedCharacter", () => {
           rulesetId: dmgId,
         }))!;
         await addCharacterLevel(characterId, (await findKlassLevel(archmage.id, index + 1))!.id, {
-          feats: [{ featId: feat.id, aptitudeId: highArcana.id }],
+          feats: { [highArcana.id]: [feat.id] },
         });
       }
       // Each level's High Arcana (Archmage) grants one pick of the High Arcana
@@ -2536,7 +2536,11 @@ describe("DetailedCharacter", () => {
         const pick = { featId: listFeat(list).id, aptitudeId: divine.aptitude("Pious Templar Spell List").id };
         for (let level = 1; level <= 3; level++) {
           const klassLevel = (await findKlassLevel(templar.id, level))!;
-          await addCharacterLevel(characterId, klassLevel.id, level === 1 ? { feats: [pick] } : {});
+          await addCharacterLevel(
+            characterId,
+            klassLevel.id,
+            level === 1 ? { feats: { [pick.aptitudeId]: [pick.featId] } } : {},
+          );
         }
         const detailed = await build((await Characters.findOne(db, { id: characterId }))!);
         const divineLevel = [0, 1, 2, 3, 4].find((n) =>
@@ -2625,9 +2629,7 @@ describe("DetailedCharacter", () => {
         const { featMap, aptMap } = await getSeedCtx();
         for (let level = 1; level <= bonus; level++) {
           await addCharacterLevel(theron.id, levelIds[level], {
-            feats: [
-              { featId: featMap["Advance Cleric Spellcasting"], aptitudeId: aptMap["Bonus Divine Caster Level"] },
-            ],
+            feats: { [aptMap["Bonus Divine Caster Level"]]: [featMap["Advance Cleric Spellcasting"]] },
           });
         }
 
@@ -2709,11 +2711,12 @@ describe("DetailedCharacter", () => {
           [8, 6, 7, 6, 8, 6, 7],
         );
         await addFeats(db, ctx, clericLevels, [{ levelIndex: 0, featName: "War Domain", aptitude: "Cleric Domain" }]);
-        await Picks.createMany(db, "feats", [
+        await Picks.createMany(db, [
           {
-            characterLevelId: clericLevels[0],
-            featId: divine.feat("Weather Domain").id,
-            aptitudeId: ctx.aptMap["Cleric Domain"],
+            advancementId: clericLevels[0],
+            step: "feats",
+            entityId: divine.feat("Weather Domain").id,
+            viaId: ctx.aptMap["Cleric Domain"],
           },
         ]);
         const stormlord = (await Entities.findOne<Klass>(db, {
@@ -2739,7 +2742,7 @@ describe("DetailedCharacter", () => {
           )?.id ?? ctx.aptMap["Bonus Divine Caster Level"];
         for (let level = 1; level <= 5; level++) {
           const klassLevel = (await findKlassLevel(stormlord.id, level))!;
-          await addCharacterLevel(characterId, klassLevel.id, { feats: [{ featId: advance, aptitudeId: bonusLevel }] });
+          await addCharacterLevel(characterId, klassLevel.id, { feats: { [bonusLevel]: [advance] } });
         }
 
         const detailed = await build((await Characters.findOne(db, { id: characterId }))!);
@@ -2841,8 +2844,13 @@ describe("DetailedCharacter", () => {
           [1, 2, 3, 4, 5, 6, 7],
           [8, 6, 7, 6, 8, 6, 7],
         );
-        await Picks.createMany(db, "feats", [
-          { characterLevelId: clericLevels[0], featId: orderDomain.id, aptitudeId: ctx.aptMap["Cleric Domain"] },
+        await Picks.createMany(db, [
+          {
+            advancementId: clericLevels[0],
+            step: "feats",
+            entityId: orderDomain.id,
+            viaId: ctx.aptMap["Cleric Domain"],
+          },
         ]);
         const stormlord = (await Entities.findOne<Klass>(db, {
           entityType: "classes",
@@ -2867,7 +2875,7 @@ describe("DetailedCharacter", () => {
           )?.id ?? ctx.aptMap["Bonus Divine Caster Level"];
         for (let level = 1; level <= 5; level++) {
           const klassLevel = (await findKlassLevel(stormlord.id, level))!;
-          await addCharacterLevel(characterId, klassLevel.id, { feats: [{ featId: advance, aptitudeId: bonusLevel }] });
+          await addCharacterLevel(characterId, klassLevel.id, { feats: { [bonusLevel]: [advance] } });
         }
 
         const detailed = await build((await Characters.findOne(db, { id: characterId }))!);
@@ -2897,7 +2905,11 @@ describe("DetailedCharacter", () => {
           const characterId = await divineCharacter(`Crusader ${levels}`, scores, CRUSADER_PREREQUISITES);
           for (let level = 1; level <= levels; level++) {
             const klassLevel = (await findKlassLevel(crusader.id, level))!;
-            await addCharacterLevel(characterId, klassLevel.id, level === 1 ? { feats: [fire] } : {});
+            await addCharacterLevel(
+              characterId,
+              klassLevel.id,
+              level === 1 ? { feats: { [fire.aptitudeId]: [fire.featId] } } : {},
+            );
           }
           const detailed = await build((await Characters.findOne(db, { id: characterId }))!);
           const list = detailed.components.aptitudes.getAptitudes()["divinecrusaderspells"].id;
@@ -2950,7 +2962,7 @@ describe("DetailedCharacter", () => {
           rulesetId: ctx.rulesetId,
         }))!;
         for (let level = 1; level <= 3; level++) {
-          const picks = { feats: [{ featId: ctx.featMap["Fire Domain"], aptitudeId: ctx.aptMap["Cleric Domain"] }] };
+          const picks = { feats: { [ctx.aptMap["Cleric Domain"]]: [ctx.featMap["Fire Domain"]] } };
           await addCharacterLevel(characterId, (await findKlassLevel(cleric.id, level))!.id, level === 1 ? picks : {});
         }
         const crusader = divine.klasses.find((klass) => klass.name === "Divine Crusader")!;
@@ -2962,7 +2974,7 @@ describe("DetailedCharacter", () => {
           await addCharacterLevel(
             characterId,
             (await findKlassLevel(crusader.id, level))!.id,
-            level === 1 ? { feats: [fire] } : {},
+            level === 1 ? { feats: { [fire.aptitudeId]: [fire.featId] } } : {},
           );
         }
         const detailed = await build((await Characters.findOne(db, { id: characterId }))!);
@@ -3084,7 +3096,7 @@ describe("DetailedCharacter", () => {
           rulesetId: ctx.rulesetId,
         }))!;
         await addCharacterLevel(characterId, (await findKlassLevel(cleric.id, 1))!.id, {
-          feats: [{ featId: ctx.featMap["Fire Domain"], aptitudeId: ctx.aptMap["Cleric Domain"] }],
+          feats: { [ctx.aptMap["Cleric Domain"]]: [ctx.featMap["Fire Domain"]] },
         });
         await addCharacterLevel(characterId, levelIds[1]);
         const detailed = await build((await Characters.findOne(db, { id: characterId }))!);
@@ -3111,7 +3123,7 @@ describe("DetailedCharacter", () => {
           rulesetId: ctx.rulesetId,
         }))!;
         await addCharacterLevel(characterId, (await findKlassLevel(fighter.id, 1))!.id, {
-          feats: [{ featId: ctx.featMap["Sun Domain"], aptitudeId: ctx.aptMap["Cleric Domain"] }],
+          feats: { [ctx.aptMap["Cleric Domain"]]: [ctx.featMap["Sun Domain"]] },
         });
         const detailed = await build((await Characters.findOne(db, { id: characterId }))!);
         const sunDomainSpells = detailed.components.aptitudes.getAptitudes()["sundomainspells"].id;
@@ -3150,7 +3162,7 @@ describe("DetailedCharacter", () => {
           rulesetId: ctx.rulesetId,
         }))!;
         await addCharacterLevel(characterId, (await findKlassLevel(wizard.id, 1))!.id, {
-          feats: [{ featId: reserve.id, aptitudeId: ctx.aptMap["General"] }],
+          feats: { [ctx.aptMap["General"]]: [reserve.id] },
         });
         const detailed = await build((await Characters.findOne(db, { id: characterId }))!);
         // A wizard 1 with Intelligence 16: one first-level spell, one for Intelligence, one from the feat
@@ -3188,8 +3200,11 @@ describe("DetailedCharacter", () => {
           featId: ctx.featMap["Advance Wizard Spellcasting"],
           aptitudeId: ctx.aptMap["Bonus Arcane Caster Level"],
         };
-        for (let level = 1; level <= 3; level++)
-          await addCharacterLevel(characterId, (await findKlassLevel(loremaster.id, level))!.id, { feats: [advance] });
+        for (let level = 1; level <= 3; level++) {
+          await addCharacterLevel(characterId, (await findKlassLevel(loremaster.id, level))!.id, {
+            feats: { [advance.aptitudeId]: [advance.featId] },
+          });
+        }
 
         const detailed = await build((await Characters.findOne(db, { id: characterId }))!);
         expect(spellLevel(detailed, "wizardspells", 4).uses).toBeGreaterThan(0);
@@ -3269,10 +3284,7 @@ describe("DetailedCharacter", () => {
         }))!;
         const cleric = (await findKlassLevel(clericClass.id, 1))!;
         await addCharacterLevel(characterId, cleric.id, {
-          feats: [
-            { featId: sun.id, aptitudeId: clericDomain },
-            { featId: moonDomain.id, aptitudeId: clericDomain },
-          ],
+          feats: { [clericDomain]: [sun.id, moonDomain.id] },
         });
         const detailed = await build((await Characters.findOne(db, { id: characterId }))!);
         const clericSpells = detailed.components.aptitudes.getAptitudes()["clericspells"].id;
@@ -3611,8 +3623,11 @@ describe("DetailedCharacter", () => {
           featId: featMap["Advance Cleric Spellcasting"],
           aptitudeId: aptMap["Bonus Divine Caster Level"],
         };
-        for (let level = 1; level <= 2; level++)
-          await addCharacterLevel(characterId, (await findKlassLevel(stormlord.id, level))!.id, { feats: [advance] });
+        for (let level = 1; level <= 2; level++) {
+          await addCharacterLevel(characterId, (await findKlassLevel(stormlord.id, level))!.id, {
+            feats: { [advance.aptitudeId]: [advance.featId] },
+          });
+        }
 
         const detailed = await build((await Characters.findOne(db, { id: characterId }))!);
         expect(detailed.components.classes.getCharacterClasses()["cleric"]).toMatchObject({

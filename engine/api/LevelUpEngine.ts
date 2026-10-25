@@ -45,7 +45,7 @@ export default class LevelUpEngine extends CharacterHandle {
    * such level.
    */
   listSteps(editedLevelId?: string) {
-    if (editedLevelId !== undefined && !this.input.rows.levels.some((level) => level.id === editedLevelId))
+    if (editedLevelId !== undefined && !this.input.rows.advancements.some((level) => level.id === editedLevelId))
       throw new RulesError("not-found", "Character level not found");
     return this.module.levelUp.listSteps(this.view, this.input, editedLevelId !== undefined);
   }

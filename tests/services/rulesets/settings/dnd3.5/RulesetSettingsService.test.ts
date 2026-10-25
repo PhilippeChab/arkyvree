@@ -2,7 +2,6 @@ import { describe, expect, test } from "bun:test";
 
 import { addClassLevels, createCharacter } from "@/database/seeders/dnd3.5/characters/seedCharacter.ts";
 import { rulesetsInRules } from "@/drizzle/schema.ts";
-import type { LevelAbilityIncrease } from "@/engine/rulesets/dnd3.5/index.ts";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import { db } from "@/server/database/index.ts";
 import { ForbiddenError } from "@/server/errors/index.ts";
@@ -12,6 +11,7 @@ import { RulesetSettingsService } from "@/server/services/rulesets/settings/inde
 import { activityTypes } from "@/tests/support/activities.ts";
 import { buildAs } from "@/tests/support/dnd3.5/characters.ts";
 import { levelEditPlan, levelUpPlan, savedPicksOf } from "@/tests/support/dnd3.5/levelPlans.ts";
+import { findPicks } from "@/tests/support/dnd3.5/levels.ts";
 import { getPlanAnswer, stepAnswerOf } from "@/tests/support/levels.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
@@ -156,7 +156,7 @@ describe("RulesetSettingsService", () => {
     const { characterId, levelIds } = await buildFighter(fork.id, 4);
     const fourth = levelIds[3];
     const strength = { abilityId: abilityMap["Strength"], amount: 1 };
-    await Picks.createMany(db, "abilityIncreases", [{ characterLevelId: fourth, ...strength }]);
+    await Picks.createMany(db, [{ advancementId: fourth, step: "abilities", entityId: strength.abilityId, amount: 1 }]);
     // The seed user's fighter, whose edit opens its level and saves it, its unspent skill points and bonus feat aside
     const seedUser = makeSession();
     const edit = (increases: (typeof strength)[]) =>
@@ -186,9 +186,7 @@ describe("RulesetSettingsService", () => {
     for (const increases of [[strength], [{ ...strength, abilityId: abilityMap["Dexterity"] }]])
       expect(edit(increases)).rejects.toMatchObject({ message: "Ability increase is not available at this level" });
     await edit([]);
-    expect(
-      await Picks.findMany<LevelAbilityIncrease>(db, { pick: "abilityIncreases", characterLevelIds: [fourth] }),
-    ).toEqual([]);
+    expect(await findPicks("abilities", [fourth])).toEqual([]);
   });
 
   test("refuses a setting its rules don't take: an ability the ruleset lacks, none, another field", async () => {

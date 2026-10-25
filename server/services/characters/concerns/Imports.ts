@@ -5,14 +5,8 @@ import { Engine } from "@/engine/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { withTransaction } from "@/server/database/index.ts";
-import {
-  Activities,
-  CharacterAdvancements,
-  CharacterInventory,
-  CharacterLinks,
-  Characters,
-} from "@/server/repositories/index.ts";
-import { createLevelRows, writeChildren } from "@/server/services/characters/levels/index.ts";
+import { Activities, CharacterInventory, CharacterLinks, Characters } from "@/server/repositories/index.ts";
+import { createAdvancement, writeChildren } from "@/server/services/characters/levels/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import type { Session } from "@/shared/relations.ts";
 
@@ -51,10 +45,7 @@ export function Imports<B extends Constructor>(Base: B) {
             });
             for (const [link, links] of Object.entries(plan.links))
               await CharacterLinks.createPlanned(tx, link, characterId, links);
-            for (const { columns, rows } of plan.levels) {
-              const [level] = await CharacterAdvancements.create(tx, { ...columns, characterId });
-              await createLevelRows(tx, level.id, rows);
-            }
+            for (const advancement of plan.advancements) await createAdvancement(tx, characterId, advancement);
             await CharacterInventory.createMany(
               tx,
               plan.inventory.map((entry) => ({ ...entry, characterId })),

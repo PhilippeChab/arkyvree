@@ -1,16 +1,6 @@
 import { afterEach, describe, expect, test } from "bun:test";
 
-import type {
-  CharacterLanguage,
-  Feat,
-  Klass,
-  KlassLevel,
-  LevelFeat,
-  LevelSkill,
-  LevelSpell,
-  Race,
-  Spell,
-} from "@/engine/rulesets/dnd3.5/index.ts";
+import type { CharacterLanguage, Feat, Klass, KlassLevel, Race, Spell } from "@/engine/rulesets/dnd3.5/index.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
@@ -23,12 +13,11 @@ import {
   Entities,
   EntityLinks,
   EntitySnapshots,
-  Picks,
   Rulesets,
 } from "@/server/repositories/index.ts";
 import { RulesetChangesService } from "@/server/services/rulesets/changes/index.ts";
 import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
-import { addCharacterLevel, createTestKlassLevel } from "@/tests/support/dnd3.5/levels.ts";
+import { addCharacterLevel, createTestKlassLevel, findPicks } from "@/tests/support/dnd3.5/levels.ts";
 import {
   addBaseBonuses,
   addClassSkills,
@@ -84,8 +73,8 @@ describe("reverting a fork's copy", () => {
     await addGrants(db, klassLevel.id, "spells", [{ toId: spell.id, aptitudeId: copy.id }]);
     const character = await createTestCharacter(user.id, { rulesetId: fork.id });
     const level = await addCharacterLevel(character.id, klassLevel.id, {
-      feats: [{ featId: feat.id, aptitudeId: copy.id }],
-      spells: [{ spellId: spell.id, aptitudeId: copy.id }],
+      feats: { [copy.id]: [feat.id] },
+      spells: { [copy.id]: [spell.id] },
     });
 
     await RulesetChangesService.revertOverride(session, fork.id, "aptitudes", general);
@@ -94,13 +83,8 @@ describe("reverting a fork's copy", () => {
     expect(await findLists(db, [spell.id])).toMatchObject([{ toId: general, tier: 1 }]);
     expect(await findGrants(db, [klassLevel.id], "feats")).toMatchObject([{ toId: feat.id, viaId: general }]);
     expect(await findGrants(db, [klassLevel.id], "spells")).toMatchObject([{ toId: spell.id, viaId: general }]);
-    const levelIds = { characterLevelIds: [level.id] };
-    expect(await Picks.findMany<LevelFeat>(db, { pick: "feats", ...levelIds })).toMatchObject([
-      { featId: feat.id, aptitudeId: general },
-    ]);
-    expect(await Picks.findMany<LevelSpell>(db, { pick: "spells", ...levelIds })).toMatchObject([
-      { spellId: spell.id, aptitudeId: general },
-    ]);
+    expect(await findPicks("feats", [level.id])).toMatchObject([{ entityId: feat.id, viaId: general }]);
+    expect(await findPicks("spells", [level.id])).toMatchObject([{ entityId: spell.id, viaId: general }]);
     expect(
       await withRulesetScope(db, fork.id, async ({ rulesetData }) =>
         Dnd35View.of(rulesetData)
@@ -200,8 +184,8 @@ describe("reverting a fork's copy", () => {
     const character = await createTestCharacter(user.id, { rulesetId: fork.id, raceId: race.id });
     const { klassLevel } = await createTestKlassLevel(fork.id);
     const level = await addCharacterLevel(character.id, klassLevel.id, {
-      feats: [{ featId: feat.id, aptitudeId: ctx.aptMap.General }],
-      skills: [{ skillId: skill.id, rank: 2 }],
+      feats: { [ctx.aptMap.General]: [feat.id] },
+      skills: { [skill.id]: 2 },
     });
     await CharacterInventory.create(db, { characterId: character.id, itemId: itemCopy.id, quantity: 1 });
     await CharacterLinks.create(db, "languages", { characterId: character.id, languageId: languageCopy.id });
@@ -212,11 +196,8 @@ describe("reverting a fork's copy", () => {
     await RulesetChangesService.revertOverride(session, fork.id, "items", item.id);
     await RulesetChangesService.revertOverride(session, fork.id, "languages", language);
 
-    const levelIds = { characterLevelIds: [level.id] };
-    expect(await Picks.findMany<LevelFeat>(db, { pick: "feats", ...levelIds })).toMatchObject([{ featId: dodge }]);
-    expect(await Picks.findMany<LevelSkill>(db, { pick: "skills", ...levelIds })).toMatchObject([
-      { skillId: climb, rank: 2 },
-    ]);
+    expect(await findPicks("feats", [level.id])).toMatchObject([{ entityId: dodge }]);
+    expect(await findPicks("skills", [level.id])).toMatchObject([{ entityId: climb, amount: 2 }]);
     expect(await Characters.findOne(db, { id: character.id })).toMatchObject({ raceId: human });
     expect(await CharacterInventory.findMany(db, { characterId: character.id })).toMatchObject([{ itemId: item.id }]);
     expect(
@@ -237,7 +218,7 @@ describe("reverting a fork's copy", () => {
 
     await RulesetChangesService.revertOverride(session, fork.id, "classes", fighter);
 
-    expect(await CharacterAdvancements.findOne(db, { id: level.id })).toMatchObject({ klassLevelId: sourceLevel.id });
+    expect(await CharacterAdvancements.findOne(db, { id: level.id })).toMatchObject({ trackId: sourceLevel.id });
     expect(await Entities.findOne<Klass>(db, { entityType: "classes", id: copy.id })).toBeUndefined();
   });
 
@@ -287,7 +268,7 @@ describe("reverting a fork's copy", () => {
     const character = await createTestCharacter(user.id, { rulesetId: host.id });
     const { klassLevel } = await createTestKlassLevel(host.id);
     const level = await addCharacterLevel(character.id, klassLevel.id, {
-      feats: [{ featId: dodgeCopy.id, aptitudeId: listCopy.id }],
+      feats: { [listCopy.id]: [dodgeCopy.id] },
     });
     const readHost = () =>
       withRulesetScope(db, host.id, async ({ rulesetData }) => ({
@@ -302,9 +283,7 @@ describe("reverting a fork's copy", () => {
     await RulesetChangesService.revertOverride(session, extension.id, "feats", dodge);
 
     expect(await findLists(db, [feat.id])).toMatchObject([{ toId: general }]);
-    expect(await Picks.findMany<LevelFeat>(db, { pick: "feats", characterLevelIds: [level.id] })).toMatchObject([
-      { featId: dodge, aptitudeId: general },
-    ]);
+    expect(await findPicks("feats", [level.id])).toMatchObject([{ entityId: dodge, viaId: general }]);
     expect(await EntitySnapshots.findMany(db, { rulesetId: host.id })).toMatchObject([
       { sourceEntityId: dodge, forkedEntityId: hostCopy.id },
     ]);

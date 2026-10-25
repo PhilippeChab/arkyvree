@@ -99,9 +99,9 @@ export default class PcgenImport {
       userId,
     };
     const rows = {
+      advancements: [],
       campaign: undefined,
       inventory: [],
-      levels: [],
       links: {
         abilities: abilities.map(({ amount, entityId }) => ({
           abilityId: entityId,
@@ -112,7 +112,7 @@ export default class PcgenImport {
         languages: [],
       },
       modifiers: [],
-      picks: { abilityIncreases: [], feats: [], spells: [], skills: [] },
+      picks: { hp: [], abilities: [], skills: [], feats: [], spells: [] },
       player: undefined,
       requirements: [],
     };
@@ -207,10 +207,10 @@ export default class PcgenImport {
       this.imported.gear,
     );
     const plan = {
+      advancements: leveled.advancements,
       character: row,
       children: leveled.children,
       inventory,
-      levels: leveled.levels,
       links: { abilities, languages: languageIds.map((entityId) => ({ entityId })) },
       report: this.report.describe(),
     };

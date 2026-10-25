@@ -10,16 +10,9 @@ import type { KlassLevel } from "@/engine/rulesets/dnd3.5/index.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
-import {
-  CharacterAdvancements,
-  CharacterInventory,
-  CharacterLinks,
-  Characters,
-  Entities,
-  Picks,
-} from "@/server/repositories/index.ts";
+import { CharacterInventory, CharacterLinks, Characters, Entities, Picks } from "@/server/repositories/index.ts";
 import { readCharacterInput, readChildInputs } from "@/server/services/characters/index.ts";
-import { writeChildren } from "@/server/services/characters/levels/index.ts";
+import { createAdvancement, writeChildren } from "@/server/services/characters/levels/index.ts";
 
 import { type SeedContext } from "./seedContext.ts";
 
@@ -69,14 +62,11 @@ export async function addClassLevels(
   const klassLevels = await Entities.findMany<KlassLevel>(db, { entityType: "class_levels", ownerIds: [klassId] });
   for (let i = 0; i < levels.length; i++) {
     const klassLevel = klassLevels.find((row) => row.level === levels[i])!;
-
-    const [charLevel] = await CharacterAdvancements.create(db, {
-      characterId,
-      klassLevelId: klassLevel.id,
-      hp: hpPerLevel[i],
+    const advancement = await createAdvancement(db, characterId, {
+      trackId: klassLevel.id,
+      picks: [{ step: "hp", amount: hpPerLevel[i] }],
     });
-
-    levelIds.push(charLevel.id);
+    levelIds.push(advancement.id);
   }
 
   return levelIds;
@@ -88,14 +78,13 @@ export async function addFeats(
   charLevelIds: string[],
   feats: { aptitude: string; featName: string; levelIndex: number }[],
 ) {
-  if (feats.length === 0) return;
   await Picks.createMany(
     db,
-    "feats",
     feats.map((f) => ({
-      characterLevelId: charLevelIds[f.levelIndex],
-      featId: ctx.featMap[f.featName],
-      aptitudeId: ctx.aptMap[f.aptitude],
+      advancementId: charLevelIds[f.levelIndex],
+      step: "feats",
+      entityId: ctx.featMap[f.featName],
+      viaId: ctx.aptMap[f.aptitude],
     })),
   );
 }
@@ -108,11 +97,11 @@ export async function addSkills(
 ) {
   await Picks.createMany(
     db,
-    "skills",
     skills.map((s) => ({
-      characterLevelId: charLevelIds[s.levelIndex],
-      skillId: ctx.skillMap[s.skillName],
-      rank: s.rank,
+      advancementId: charLevelIds[s.levelIndex],
+      step: "skills",
+      entityId: ctx.skillMap[s.skillName],
+      amount: s.rank,
     })),
   );
 }
@@ -123,14 +112,13 @@ export async function addSpells(
   charLevelIds: string[],
   spells: { aptitude: string; levelIndex: number; spellName: string }[],
 ) {
-  if (spells.length === 0) return;
   await Picks.createMany(
     db,
-    "spells",
     spells.map((p) => ({
-      characterLevelId: charLevelIds[p.levelIndex],
-      spellId: ctx.spellMap[p.spellName],
-      aptitudeId: ctx.aptMap[p.aptitude],
+      advancementId: charLevelIds[p.levelIndex],
+      step: "spells",
+      entityId: ctx.spellMap[p.spellName],
+      viaId: ctx.aptMap[p.aptitude],
     })),
   );
 }

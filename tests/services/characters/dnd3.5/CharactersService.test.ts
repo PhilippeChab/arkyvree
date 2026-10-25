@@ -4,13 +4,7 @@ import { and, eq } from "drizzle-orm";
 import { isValidElement } from "react";
 
 import { playerCharactersInCampaign } from "@/drizzle/schema.ts";
-import type {
-  CharacterAbility,
-  CharacterLanguage,
-  LevelFeat,
-  LevelSkill,
-  Race,
-} from "@/engine/rulesets/dnd3.5/index.ts";
+import type { CharacterAbility, CharacterLanguage, Race } from "@/engine/rulesets/dnd3.5/index.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
@@ -26,7 +20,6 @@ import {
   Characters,
   Entities,
   Modifiers,
-  Picks,
   PlayerCharacters,
   Players,
   Requirements,
@@ -38,7 +31,7 @@ import { createTestCampaign } from "@/tests/support/campaigns.ts";
 import { backdateLastChange } from "@/tests/support/characters.ts";
 import { addRulesetContributor } from "@/tests/support/contributors.ts";
 import { createCharacterAs } from "@/tests/support/dnd3.5/characters.ts";
-import { addCharacterLevel, findKlassLevel } from "@/tests/support/dnd3.5/levels.ts";
+import { addCharacterLevel, findKlassLevel, findPicks } from "@/tests/support/dnd3.5/levels.ts";
 import { createTestAttachment } from "@/tests/support/files.ts";
 import { queuedPdfJobs } from "@/tests/support/jobs.ts";
 import {
@@ -433,15 +426,15 @@ describe("CharactersService", () => {
       const ctx = await getSeedCtx();
       const character = await createCharacterAs(session);
       const level = await addCharacterLevel(character.id, (await fighterLevel()).id, {
-        skills: [{ skillId: ctx.skillMap["Climb"], rank: 1 }],
-        feats: [{ featId: ctx.featMap["Toughness"], aptitudeId: ctx.aptMap["General"] }],
+        skills: { [ctx.skillMap["Climb"]]: 1 },
+        feats: { [ctx.aptMap["General"]]: [ctx.featMap["Toughness"]] },
       });
       await CharacterLinks.create(db, "languages", { characterId: character.id, languageId: ctx.langMap["Common"] });
       await CharacterInventory.create(db, { characterId: character.id, itemId: ctx.itemMap["Longsword"], quantity: 1 });
       const children = async () => ({
         levels: (await CharacterAdvancements.findMany(db, { characterId: character.id })).length,
-        skills: (await Picks.findMany<LevelSkill>(db, { pick: "skills", characterLevelIds: [level.id] })).length,
-        feats: (await Picks.findMany<LevelFeat>(db, { pick: "feats", characterLevelIds: [level.id] })).length,
+        skills: (await findPicks("skills", [level.id])).length,
+        feats: (await findPicks("feats", [level.id])).length,
         languages: (
           await CharacterLinks.findMany<CharacterLanguage>(db, { link: "languages", characterId: character.id })
         ).filter((l) => !l.deletedAt).length,

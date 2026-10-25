@@ -1,17 +1,23 @@
 /**
  * What the level-up part's `plan*` operations answer: what the server writes of a level-up, a saved level's edit, a
  * level's removal and the character's children (the characters its levels give it: 3.5's bonded creatures), each a
- * named plan, without ids it doesn't have yet. A level's row and the rows under it are its module's, as its storage
- * declaration writes them: its advancement's columns, and its picks by the name the module declares each under.
+ * named plan, without ids it doesn't have yet. A level is an advancement as stored, its picks under it by step (its
+ * value step's too, 3.5's hit points).
  */
 
-import type { CharacterRows } from "@/engine/core/module/CharacterInputs.ts";
 import type { CharacterColumns, CreationColumns, LinkPlan } from "@/engine/core/module/parts/characters/index.ts";
+import type { StoredAdvancement } from "@/engine/core/module/storage.ts";
 import type { Character } from "@/shared/relations.ts";
 
-/** The levels a child takes (their rows' columns), and the ids of those it loses. */
+/** What a level-up writes of an advancement: its track (3.5's class level), and its picks under it. */
+export interface AdvancementPlan {
+  picks: PickPlan[];
+  trackId: string;
+}
+
+/** The advancements a child takes, and the ids of those it loses. */
 export interface ChildLevelsPlan {
-  added: LevelColumns[];
+  added: AdvancementPlan[];
   removedIds: string[];
 }
 
@@ -21,30 +27,22 @@ export interface ChildrenPlan {
 }
 
 /**
- * What a saved level's edit writes, checked: the level as saved (`level`), its row's new columns (its value: a level
- * keeps its track) and its rows under it in place of those it had, and what the children become.
+ * What a saved level's edit writes, checked: the advancement as saved (`advancement`, which keeps its track), its picks
+ * in place of those it had, and what the children become.
  */
-export interface LevelEditPlan extends ChildrenPlan, LevelWrites {
-  level: CharacterRows["levels"][number];
+export interface LevelEditPlan extends ChildrenPlan {
+  advancement: StoredAdvancement;
+  picks: PickPlan[];
 }
 
-/** What removing a character's last level writes: the level that goes, and what its children become. */
+/** What removing a character's last level writes: the advancement that goes, and what its children become. */
 export interface LevelRemovalPlan extends ChildrenPlan {
-  level: CharacterRows["levels"][number];
+  advancement: StoredAdvancement;
 }
 
-/** What a level-up writes, checked: each level's writes, and what the character's children become. */
+/** What a level-up writes, checked: each advancement's writes, and what the character's children become. */
 export interface LevelsPlan extends ChildrenPlan {
-  levels: LevelWrites[];
-}
-
-/**
- * What a level-up writes of a level: its row's columns, and its rows under it, by pick. The server writes each as it
- * is.
- */
-export interface LevelWrites {
-  columns: LevelColumns;
-  rows: LevelRows;
+  advancements: AdvancementPlan[];
 }
 
 /**
@@ -59,6 +57,18 @@ export interface NewChild {
 }
 
 /**
+ * A pick an advancement takes (`character.advancement_picks`), of a step its module declares: the entity it picks,
+ * through its pool (`viaId`) when its step takes one, and its amount when it holds one (3.5's skill ranks, an ability
+ * increase); a value step's holds its amount alone (3.5's hit points).
+ */
+export interface PickPlan {
+  amount?: number;
+  entityId?: string;
+  step: string;
+  viaId?: string;
+}
+
+/**
  * What a character's child of a kind (`kind`, the child's character kind) becomes once the character's levels change.
  * Without one for the kind, the child the character had goes (`removedId`). With one, the character keeps the child it
  * has (`keptId`), or one is made (`created`) in place of the one it had; the child kept or made takes or loses
@@ -69,12 +79,3 @@ export type ChildPlan = { kind: string; removedId?: string } & (
   | { keptId: string; levels: ChildLevelsPlan }
   | { levels: undefined }
 );
-
-/**
- * A level's row's columns, as its module's storage declaration writes an advancement (3.5's class level and hit
- * points).
- */
-export type LevelColumns = Record<string, unknown>;
-
-/** A level's rows under it, by the name of the pick its module declares each under: what a save writes under it. */
-export type LevelRows = Record<string, object[]>;

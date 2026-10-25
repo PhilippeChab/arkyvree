@@ -5,14 +5,7 @@ import { eq } from "drizzle-orm";
 import type { CharacterSeed } from "@/content/dnd3.5/builders/characters/types.ts";
 import { CHARACTERS } from "@/content/dnd3.5/testData/characters.ts";
 import { charactersInCharacter } from "@/drizzle/schema.ts";
-import type {
-  CharacterAbility,
-  CharacterLanguage,
-  KlassLevel,
-  LevelFeat,
-  LevelSkill,
-  LevelSpell,
-} from "@/engine/rulesets/dnd3.5/index.ts";
+import type { CharacterAbility, CharacterLanguage, KlassLevel } from "@/engine/rulesets/dnd3.5/index.ts";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import seedCharacters from "@/scripts/db/seeds/characters.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
@@ -23,11 +16,11 @@ import {
   CharacterLinks,
   Characters,
   Entities,
-  Picks,
   Visibility,
 } from "@/server/repositories/index.ts";
 import type { Character } from "@/shared/relations.ts";
 import { buildAs } from "@/tests/support/dnd3.5/characters.ts";
+import { findPicks } from "@/tests/support/dnd3.5/levels.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 
 import { namesOf } from "./freshSeed.ts";
@@ -93,7 +86,7 @@ async function written(character: Character) {
   for (const level of levels) {
     const klassLevel = (await Entities.findOne<KlassLevel>(db, {
       entityType: "class_levels",
-      id: level.klassLevelId,
+      id: level.trackId!,
     }))!;
     levelNames[level.id] = `${klasses[klassLevel.klassId]} ${klassLevel.level}`;
   }
@@ -119,15 +112,15 @@ async function written(character: Character) {
     languages: (await CharacterLinks.findMany<CharacterLanguage>(db, { link: "languages", characterId: character.id }))
       .map((language) => languages[language.languageId])
       .sort(),
-    levels: levels.map((level) => `${levelNames[level.id]}: ${level.hp} hp`).sort(),
-    skills: (await Picks.findMany<LevelSkill>(db, { pick: "skills", characterLevelIds: levelIds }))
-      .map((s) => `${levelNames[s.characterLevelId]}: ${skills[s.skillId]} ${s.rank}`)
+    levels: (await findPicks("hp", levelIds)).map((hp) => `${levelNames[hp.advancementId]}: ${hp.amount} hp`).sort(),
+    skills: (await findPicks("skills", levelIds))
+      .map((s) => `${levelNames[s.advancementId]}: ${skills[s.entityId!]} ${s.amount}`)
       .sort(),
-    feats: (await Picks.findMany<LevelFeat>(db, { pick: "feats", characterLevelIds: levelIds }))
-      .map((f) => `${levelNames[f.characterLevelId]}: ${feats[f.featId]} in ${aptitudes[f.aptitudeId]}`)
+    feats: (await findPicks("feats", levelIds))
+      .map((f) => `${levelNames[f.advancementId]}: ${feats[f.entityId!]} in ${aptitudes[f.viaId!]}`)
       .sort(),
-    spells: (await Picks.findMany<LevelSpell>(db, { pick: "spells", characterLevelIds: levelIds }))
-      .map((p) => `${levelNames[p.characterLevelId]}: ${spells[p.spellId]} in ${aptitudes[p.aptitudeId]}`)
+    spells: (await findPicks("spells", levelIds))
+      .map((p) => `${levelNames[p.advancementId]}: ${spells[p.entityId!]} in ${aptitudes[p.viaId!]}`)
       .sort(),
     inventory: (await CharacterInventory.findMany(db, { characterId: character.id }))
       .map((item) => inventoryLine({ ...item, name: items[item.itemId] }))
