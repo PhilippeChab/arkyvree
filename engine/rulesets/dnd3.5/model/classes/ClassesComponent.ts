@@ -131,7 +131,7 @@ export default class ClassesComponent extends CharacterComponent<LoadedCharacter
     if (!entry) return;
 
     entry.levels.push({
-      klassLevel: { ...klassLevel, modifiers: [], properties: [], requirements: [] },
+      klassLevel: { ...klassLevel, modifiers: [], requirements: [] },
       characterLevel,
       feats: [],
       skills: [],

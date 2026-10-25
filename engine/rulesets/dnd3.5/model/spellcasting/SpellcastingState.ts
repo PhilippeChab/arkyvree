@@ -8,7 +8,7 @@ import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading
 import type SpellGroupingsComponent from "@/engine/rulesets/dnd3.5/model/spells/SpellGroupingsComponent.ts";
 import type SpellsComponent from "@/engine/rulesets/dnd3.5/model/spells/SpellsComponent.ts";
 import type { KlassLevel, Spell } from "@/engine/rulesets/dnd3.5/view/rows.ts";
-import type { Modifier, Property } from "@/shared/relations.ts";
+import type { Modifier } from "@/shared/relations.ts";
 import { type CasterType, MAX_CLASS_LEVEL } from "@/vocabulary/dnd3.5/classes.ts";
 import { MAX_SPELL_LEVEL } from "@/vocabulary/dnd3.5/spells.ts";
 
@@ -77,8 +77,6 @@ export default abstract class SpellcastingState extends CharacterComponent<Loade
       spellLevel: number | null;
     }
   > = [];
-
-  protected aptitudeSpellProperties: Property[] = [];
 
   /** Maps bonus klass level ID → granting source name (e.g. "Stormlord Level 1") */
   protected bonusKlassLevelAttribution = new Map<string, string>();

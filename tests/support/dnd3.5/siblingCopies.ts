@@ -73,8 +73,8 @@ export function customizationsOf(data: RulesetData, id: string) {
     modifiers: (data.modifiersBySource.get(id) ?? [])
       .map((m) => [m.target, m.operator, m.value, m.valueType, ...requirementsOf(m.id)].join("|"))
       .sort(),
-    properties: (data.propertiesByEntity.get(id) ?? []).map((p) => [p.type, p.value, p.description].join("|")).sort(),
     requirements: requirementsOf(id),
+    values: valuesOf(data, id),
     links: [
       ...(Dnd35View.of(data)
         .featsById.get(id)
@@ -94,6 +94,15 @@ export function partOf(ids: string[], part: number, parts: number) {
   return ids.filter((_, index) => index % parts === part - 1);
 }
 
+/** An entity's stored values, as the view shows them: each field's value and each link, `<field or role>|<value>`. */
+export function valuesOf(data: RulesetData, id: string) {
+  const { fields, links } = data.valuesOf(id);
+  return [
+    ...Object.entries(fields).flatMap(([field, values]) => values.map((value) => `${field}|${String(value)}`)),
+    ...Object.entries(links).map(([role, toId]) => `${role}|${toId}`),
+  ].sort();
+}
+
 /**
  * Copies each winner into the ruleset, in a transaction rolled back, and compares the copy's customizations in the view
  * with the winner's before it was copied: the winners compared, and the mismatches, by winner and kind.
@@ -109,7 +118,7 @@ export async function compareCopies(fork: Fork, winnerIds: string[]) {
     const expected = customizationsOf(before, winnerId);
     await withCopy(fork, type, winnerId, async (tx, after, copyId) => {
       const actual = customizationsOf(after, copyId);
-      for (const kind of ["modifiers", "properties", "requirements", "links"] as const) {
+      for (const kind of ["modifiers", "values", "requirements", "links"] as const) {
         if (JSON.stringify(actual[kind]) === JSON.stringify(expected[kind])) continue;
         mismatches.push(`${type} ${winnerId} ${kind}: view ${expected[kind]} copy ${actual[kind]}`);
       }

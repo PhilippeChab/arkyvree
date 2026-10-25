@@ -42,7 +42,7 @@ const SPELL_PROPERTY_ABBR: Record<string, string> = {
 
 /** Each spell property's label, as its field declares it. */
 const SPELL_PROPERTY_LABELS = new Map<string, string>(
-  Object.values(SPELL_FIELDS.fields).map((field) => [field.type, field.label]),
+  Object.values(SPELL_FIELDS.fields).map((field) => [field.field, field.label]),
 );
 /** The spell properties in a 3.5 stat block's order (the order its fields are declared in); the others follow by name. */
 const SPELL_PROPERTY_ORDER = SPELL_FIELDS.types;

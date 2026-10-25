@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import CharacterResponse from "@/engine/rulesets/dnd3.5/characters/description/CharacterResponse.ts";
+import { ITEM_FIELDS } from "@/engine/rulesets/dnd3.5/entities/items/fields.ts";
 import type { Item } from "@/engine/rulesets/dnd3.5/index.ts";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import { db } from "@/server/database/index.ts";
@@ -71,7 +72,12 @@ describe("COW inventory item details", () => {
         type: "Weapon",
       });
       expect(entry).toMatchObject({ quantity: 2, equipped: true, location: "Main Hand", groups: [0] });
-      expect(entry.item.properties.length).toBeGreaterThan(0);
+      // Its fields, its template's of each it holds none of: the inventory's as an item's page reads them, the sheet's
+      // off its stored values
+      const fields = "fields" in entry.item ? entry.item.fields : ITEM_FIELDS.read(entry.item.values);
+      expect(fields.weapon.type).toBe("Heavy Mace");
+      const described = await EntitiesService.getEntity<Record<string, unknown>>(ruleset.id, "items", updated.id);
+      expect(fields).toEqual(Object.fromEntries(Object.keys(fields).map((key) => [key, described[key]])) as never);
 
       // Reading a fork does not rewrite the pick or change the parent item.
       const [stored] = await CharacterInventory.findMany(db, { characterId: character.id });

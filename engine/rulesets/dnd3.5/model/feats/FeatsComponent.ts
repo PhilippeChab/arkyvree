@@ -36,7 +36,6 @@ export default class FeatsComponent extends CharacterComponent<LoadedCharacterDa
       characterLevelId: "",
       aptitudeId: "",
       virtual: true,
-      properties: rulesetData.propertiesByEntity.get(featRow.id) ?? [],
       modifiers: rulesetData.modifiersBySource.get(featRow.id) ?? [],
       requirements: rulesetData.requirementsByEntity.get(featRow.id) ?? [],
     };

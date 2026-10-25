@@ -1,3 +1,4 @@
+import type { StoredValues } from "@/engine/core/fields/index.ts";
 import type {
   CharacterInput,
   HeldInventoryEntry,
@@ -11,7 +12,6 @@ import type { RulesetView } from "@/engine/core/view/index.ts";
 import ItemPlacement from "@/engine/rulesets/dnd3.5/rules/ItemPlacement.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type { Item } from "@/engine/rulesets/dnd3.5/view/rows.ts";
-import type { Property } from "@/shared/relations.ts";
 
 import Equipping from "./Equipping.ts";
 
@@ -36,8 +36,8 @@ export default class InventoryEntries {
   }
 
   /** What an inventory entry shows beside its row: where its item can go (`placement`), and where it's worn. */
-  static describeInventoryEntry(entry: HeldInventoryEntry, item: Item, properties: Property[]) {
-    return { placement: ItemPlacement.describe(item, properties), slotLabel: ItemPlacement.describeSlot(entry) };
+  static describeInventoryEntry(entry: HeldInventoryEntry, item: Item, values: StoredValues) {
+    return { placement: ItemPlacement.describe(item, values), slotLabel: ItemPlacement.describeSlot(entry) };
   }
 
   /**

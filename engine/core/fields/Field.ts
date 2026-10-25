@@ -12,11 +12,11 @@ interface FieldBase {
   when?: FieldCondition;
 }
 
-/** What a field with a value of its own declares: the property type that stores it, its label and what it's for. */
+/** What a field with a value of its own declares: the stored field that keeps it, its label and what it's for. */
 interface LeafBase extends FieldBase {
   description: string;
+  field: string;
   label: string;
-  type: string;
 }
 
 /** A field's value, by its kind (a group's, its own fields'). */
@@ -41,29 +41,29 @@ type KindValueOf<F extends FieldSpec> = F extends GroupSpec
 /** A field's value: by its kind (`KindValueOf`), unknown for any field (a kind's fields read without their spec). */
 type ValueOf<F extends FieldSpec> = [FieldSpec] extends [F] ? unknown : KindValueOf<F>;
 
-/** One of `values`, from its first row; none without one, or when its row holds another value. */
+/** One of `values`, its field's first value; none without one, or when it's another value. */
 export interface ChoiceSpec extends LeafBase {
   kind: "choice";
   values: readonly string[];
 }
 
 /**
- * True once one of its rows says `"true"`; without any, false, or none when it tells its absence apart (`absent: null`,
- * an item's: a `"false"` row is written and read too).
+ * True once one of its values is; without any, false, or none when it tells its absence apart (`absent: null`, an
+ * item's: a false value is written and read too).
  */
 export interface FlagSpec extends LeafBase {
   absent?: null;
   kind: "flag";
 }
 
-/** Fields of their own, read off the same rows (an item's weapon, its armor), which a form shows under `label`. */
+/** Fields of their own, read off the same values (an item's weapon, its armor), which a form shows under `label`. */
 export interface GroupSpec extends FieldBase {
   fields: Fields;
   kind: "group";
   label: string;
 }
 
-/** Every row of its type, in their order: one row per value, among `values` when they're a closed list. */
+/** Every value of its field, in their order: a set, among `values` when they're a closed list. */
 export interface ListSpec extends LeafBase {
   kind: "list";
   /** An example of one, when it takes any. */
@@ -72,7 +72,7 @@ export interface ListSpec extends LeafBase {
 }
 
 /**
- * A whole number, from the first row that holds one in its bounds; its default without one (none without a
+ * A whole number, its field's first value that's one in its bounds; its default without one (none without a
  * `default`). Written unless it's its default, or always (`write`).
  */
 export interface NumberSpec extends LeafBase {
@@ -97,16 +97,18 @@ export interface ProgressionSpec extends LeafBase {
 }
 
 /**
- * An entity's id, from its first row (`references`: the kind it names, `abilities`): none without one, which a form
- * may leave it at unless it's `required`.
+ * An entity's id, the one its link of `role` names (`references`: the kind it names, `abilities`): none without one,
+ * which a form may leave it at unless it's `required`. Its `field` names it in what a save still writes, which that
+ * link keeps (`StorageDeclaration.linkedProperties`).
  */
 export interface RefSpec extends LeafBase {
   kind: "ref";
   references: StandaloneKind;
   required?: boolean;
+  role: string;
 }
 
-/** A text, from its first row, among `values` when they're a closed list: none without one, none written when empty. */
+/** A text, its field's first value, among `values` when they're a closed list: none without one, or written empty. */
 export interface TextSpec extends LeafBase {
   kind: "text";
   /** An example of one, when it takes any. */
@@ -130,9 +132,9 @@ export type FieldCondition =
 export type Fields = Readonly<Record<string, FieldSpec>>;
 
 /**
- * A field an entity keeps in its properties, as its ruleset's vocabulary declares it (data, written `as const`, which
- * types its value: `FieldValues`): its kind, the property type that stores it, its label and what it's for, how its
- * rows read, when it counts and where its form shows it. A codec reads and writes it (`FieldCodec`).
+ * A field an entity keeps in its stored values, as its ruleset's vocabulary declares it (data, written `as const`, which
+ * types its value: `FieldValues`): its kind, the stored field that keeps it (a reference's link), its label and what
+ * it's for, how its values read, when it counts and where its form shows it. A codec reads and writes it (`FieldCodec`).
  */
 export type FieldSpec =
   | ChoiceSpec
@@ -147,14 +149,26 @@ export type FieldSpec =
 /** The values an entity's fields read, by name: each by its kind (`ValueOf`), a choice one of its values. */
 export type FieldValues<S extends Fields> = { -readonly [K in keyof S]: ValueOf<S[K]> };
 
-/** A field of a spec that isn't a group: a value of its own, which its property type keeps. */
+/** A field of a spec that isn't a group: a value of its own, which its stored field keeps. */
 export type LeafSpec = Exclude<FieldSpec, GroupSpec>;
 
-/** No fields: a kind whose properties hold none of its own (`FieldCodec.NONE`). */
+/** No fields: a kind whose entities hold none of their own (`FieldCodec.NONE`). */
 export type NoFields = Record<never, never>;
 
-/** What every kind of field shares: when one counts, and the leaves a spec's fields hold. */
+/** A flag's values, true first: the order a stat block lists them in. */
+const FLAG_VALUES = ["true", "false"] as const;
+
+/** What every kind of field shares: when one counts, the leaves a spec's fields hold, and a leaf's closed values. */
 export default class Field {
+  /**
+   * The values a leaf takes, in their order, when they're a closed list (a flag's, true and false; a choice's, a list's
+   * or a text's), as text: none for a free one.
+   */
+  static closedValuesOf(leaf: LeafSpec): readonly string[] | null {
+    if (leaf.kind === "flag") return FLAG_VALUES;
+    return "values" in leaf && leaf.values ? leaf.values : null;
+  }
+
   /**
    * Whether a field counts beside the values of the fields at its level (`values`): always, unless its condition names
    * one of them (`FieldCondition`) whose value isn't one it counts on. A column's condition is its form's alone.

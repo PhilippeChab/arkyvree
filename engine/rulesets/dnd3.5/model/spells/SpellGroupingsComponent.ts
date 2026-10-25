@@ -1,10 +1,10 @@
 import { CharacterComponent } from "@/engine/core/character/index.ts";
+import type { StoredValues } from "@/engine/core/fields/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import { SPELL_FIELDS } from "@/engine/rulesets/dnd3.5/entities/spells/fields.ts";
 import type AbilitiesComponent from "@/engine/rulesets/dnd3.5/model/abilities/AbilitiesComponent.ts";
 import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
 import SpellLists from "@/engine/rulesets/dnd3.5/rules/SpellLists.ts";
-import type { Property } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { SPELL_DESCRIPTOR, SPELL_SCHOOL } from "@/vocabulary/dnd3.5/properties/index.ts";
 import { SPELL_SAVE_DC_BASE } from "@/vocabulary/dnd3.5/spells.ts";
@@ -46,15 +46,15 @@ export default class SpellGroupingsComponent extends CharacterComponent<LoadedCh
    */
   override initialize({ spells }: Pick<LoadedCharacterData, "spells">, { rulesetData }: RulesetView) {
     const groupingValues = new Set<string>();
-    for (const prop of rulesetData.propertiesByEntityType.get("spells") ?? [])
-      if (prop.type === SPELL_SCHOOL || prop.type === SPELL_DESCRIPTOR) groupingValues.add(prop.value);
+    for (const { field, value } of rulesetData.kindValues("spells"))
+      if (field === SPELL_SCHOOL || field === SPELL_DESCRIPTOR) groupingValues.add(value);
 
     this.seedEmptyGroupings([...groupingValues]);
 
     const { spellSlugByAptitudeId } = SpellLists.of(rulesetData);
     for (const spell of spells) {
       const aptitudeSlug = spellSlugByAptitudeId.get(spell.aptitudeId) ?? spell.aptitudeId;
-      this.registerSpell({ ...spell, aptitudeSlug }, spell.properties);
+      this.registerSpell({ ...spell, aptitudeSlug }, rulesetData.valuesOf(spell.id));
     }
   }
 
@@ -88,7 +88,7 @@ export default class SpellGroupingsComponent extends CharacterComponent<LoadedCh
    */
   registerSpell(
     spell: { abilityDcName: string | null; aptitudeSlug: string; name: string; spellLevel: number | null },
-    properties: Property[],
+    values: StoredValues,
   ): SpellDc | null {
     if (spell.spellLevel == null || spell.abilityDcName == null) return null;
 
@@ -110,7 +110,7 @@ export default class SpellGroupingsComponent extends CharacterComponent<LoadedCh
 
     const normalizedSpellName = stripSeparators(spell.name);
     // A spell is grouped under its school and each of its descriptors
-    const { descriptors, school } = SPELL_FIELDS.read(properties);
+    const { descriptors, school } = SPELL_FIELDS.read(values);
     for (const value of school === null ? descriptors : [school, ...descriptors]) {
       const grouping = stripSeparators(value);
       if (!grouping) continue;

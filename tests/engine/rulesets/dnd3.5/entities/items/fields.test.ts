@@ -3,10 +3,12 @@ import { describe, expect, test } from "bun:test";
 import { and, eq, isNull } from "drizzle-orm";
 
 import { entitiesInRules } from "@/drizzle/schema.ts";
+import { OwnerValues } from "@/engine/core/fields/index.ts";
 import { ITEM_FIELDS } from "@/engine/rulesets/dnd3.5/entities/items/fields.ts";
 import type { Item } from "@/engine/rulesets/dnd3.5/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Entities, Properties } from "@/server/repositories/index.ts";
+import { storedValues } from "@/tests/support/storedValues.ts";
 import {
   DAMAGE_TYPE,
   ITEM_HAS_CHARGES,
@@ -20,16 +22,18 @@ function multiset(rows: { type: string; value: string }[]) {
 }
 
 describe("An item's fields", () => {
-  test("are none without their properties, and as stored with them: a flag false, a list in its rows' order", () => {
-    expect(ITEM_FIELDS.read([])).toEqual(ITEM_FIELDS.defaults);
-    const fields = ITEM_FIELDS.read([
-      { type: ITEM_HAS_CHARGES, value: "40" },
-      { type: WEAPON_FINESSABLE, value: "false" },
-      { type: WEAPON_RANGE, value: "10" },
-      { type: DAMAGE_TYPE, value: "Piercing" },
-      { type: DAMAGE_TYPE, value: "Slashing" },
-      { type: "SOMETHING_ELSE", value: "1" },
-    ]);
+  test("are none without their values, and as stored with them: a flag false, a list in its values' order", () => {
+    expect(ITEM_FIELDS.read(OwnerValues.NONE)).toEqual(ITEM_FIELDS.defaults);
+    const fields = ITEM_FIELDS.read(
+      storedValues([
+        [ITEM_HAS_CHARGES, 40],
+        [WEAPON_FINESSABLE, false],
+        [WEAPON_RANGE, 10],
+        [DAMAGE_TYPE, "Piercing"],
+        [DAMAGE_TYPE, "Slashing"],
+        ["SOMETHING_ELSE", 1],
+      ]),
+    );
     expect(fields.weapon).toMatchObject({ finessable: false, range: 10, damageTypes: ["Piercing", "Slashing"] });
     expect(fields.charges).toBe(40);
     expect(fields.weapon.criticalRange).toBeNull();
@@ -60,7 +64,7 @@ describe("An item's fields", () => {
       const sourceItemId = own[0].sourceItemId;
       const template = sourceItemId ? (rowsByItem.get(sourceItemId) ?? []).filter((r) => !ownTypes.has(r.type)) : [];
       for (const stored of [own, [...template, ...own]]) {
-        const rebuilt = ITEM_FIELDS.toProperties(ITEM_FIELDS.read(stored));
+        const rebuilt = ITEM_FIELDS.toProperties(ITEM_FIELDS.read(ITEM_FIELDS.storedOf(stored)));
         if (multiset(rebuilt).join("|") !== multiset(stored).join("|")) mismatches.push(itemId);
       }
     }

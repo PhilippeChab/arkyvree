@@ -1,26 +1,28 @@
 import { describe, expect, test } from "bun:test";
 
-import { FieldCodec, type FormContext } from "@/engine/core/fields/index.ts";
+import { FieldCodec, type FormContext, OwnerValues } from "@/engine/core/fields/index.ts";
+import type { FieldValue } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
+import { storedValues } from "@/tests/support/storedValues.ts";
 
 /**
  * Fields of every kind, as a vocabulary declares them: their labels, the closed lists, a reference to an item, a
  * field on another's condition and a group on a column's, declared among the others (a form shows it last).
  */
 const FIELDS = {
-  title: { description: "Its title", kind: "text", label: "Title", placeholder: 'e.g., "A"', type: "TITLE" },
+  title: { description: "Its title", kind: "text", label: "Title", placeholder: 'e.g., "A"', field: "TITLE" },
   school: {
     description: "Its school",
     kind: "text",
     label: "School",
-    type: "SCHOOL",
+    field: "SCHOOL",
     values: ["Evocation", "Illusion"],
   },
-  flag: { description: "Whether it's on", kind: "flag", label: "Flag", type: "FLAG" },
+  flag: { description: "Whether it's on", kind: "flag", label: "Flag", field: "FLAG" },
   group: {
     fields: {
-      level: { description: "Its level", kind: "number", label: "Level", type: "LEVEL" },
-      known: { absent: null, description: "Whether it's known", kind: "flag", label: "Known", type: "KNOWN" },
+      level: { description: "Its level", kind: "number", label: "Level", field: "LEVEL" },
+      known: { absent: null, description: "Whether it's known", kind: "flag", label: "Known", field: "KNOWN" },
     },
     kind: "group",
     label: "Group",
@@ -32,12 +34,19 @@ const FIELDS = {
     kind: "number",
     label: "Count",
     min: 1,
-    type: "COUNT",
+    field: "COUNT",
     when: { field: "flag", values: [true] },
   },
-  tags: { description: "Its tags", kind: "list", label: "Tags", type: "TAG", values: ["x", "y"] },
-  kind: { description: "Its kind", kind: "choice", label: "Kind", type: "KIND", values: ["Arcane", "Divine"] },
-  owner: { description: "Who owns it", kind: "ref", label: "Owner", references: "items", type: "OWNER" },
+  tags: { description: "Its tags", kind: "list", label: "Tags", field: "TAG", values: ["x", "y"] },
+  kind: { description: "Its kind", kind: "choice", label: "Kind", field: "KIND", values: ["Arcane", "Divine"] },
+  owner: {
+    description: "Who owns it",
+    field: "OWNER",
+    kind: "ref",
+    label: "Owner",
+    references: "items",
+    role: "owner",
+  },
 } as const;
 
 const CODEC = new FieldCodec(FIELDS, { storesWhen: (fields) => fields.title !== null });
@@ -61,18 +70,18 @@ const PROGRESSION = new FieldCodec({
     label: "Grants",
     levels: 10,
     max: 2,
-    type: "GRANT",
+    field: "GRANT",
   },
 } as const);
 
-/** Rows of `type=value` pairs, in order. */
+/** Rows of `type=value` pairs, in order: what a save writes. */
 function rows(...pairs: [string, string][]) {
   return pairs.map(([type, value]) => ({ type, value }));
 }
 
 describe("A field codec", () => {
-  test("reads each field's default without its rows", () => {
-    expect(CODEC.read([])).toEqual({
+  test("reads each field's default without its values", () => {
+    expect(CODEC.read(OwnerValues.NONE)).toEqual({
       count: 1,
       flag: false,
       group: { known: null, level: null },
@@ -82,32 +91,78 @@ describe("A field codec", () => {
       tags: [],
       title: null,
     });
-    expect(CODEC.read([])).toEqual(CODEC.defaults);
+    expect(CODEC.read(OwnerValues.NONE)).toEqual(CODEC.defaults);
   });
 
-  test("reads a flag true once a row says so, a three-state one false off a false row", () => {
-    expect(CODEC.read(rows(["FLAG", "false"], ["FLAG", "true"])).flag).toBe(true);
-    expect(CODEC.read(rows(["KNOWN", "false"])).group.known).toBe(false);
-    expect(CODEC.read(rows(["KNOWN", "false"], ["KNOWN", "true"])).group.known).toBe(true);
+  test("reads a flag true once a value is, a three-state one false off a false value", () => {
+    expect(
+      CODEC.read(
+        storedValues([
+          ["FLAG", false],
+          ["FLAG", true],
+        ]),
+      ).flag,
+    ).toBe(true);
+    expect(CODEC.read(storedValues([["KNOWN", false]])).group.known).toBe(false);
+    expect(
+      CODEC.read(
+        storedValues([
+          ["KNOWN", false],
+          ["KNOWN", true],
+        ]),
+      ).group.known,
+    ).toBe(true);
   });
 
-  test("reads a number off the first row holding one in its bounds, and its default otherwise", () => {
+  test("reads a number off the first value that's one in its bounds (as text too), and its default otherwise", () => {
     // The flag its condition reads keeps the count, which counts only while it's on
-    const counted = (...counts: string[]) =>
-      rows(["FLAG", "true"], ...counts.map((count): [string, string] => ["COUNT", count]));
-    expect(CODEC.read(counted("x", "0", "3", "4")).count).toBe(3);
-    expect(CODEC.read(counted("0")).count).toBe(1);
-    expect(CODEC.read(rows(["LEVEL", ""], ["LEVEL", "-2"])).group.level).toBe(-2);
+    const counted = (...counts: FieldValue[]) =>
+      storedValues([["FLAG", true], ...counts.map((count): [string, FieldValue] => ["COUNT", count])]);
+    expect(CODEC.read(counted("x", 0, 3, 4)).count).toBe(3);
+    expect(CODEC.read(counted(0)).count).toBe(1);
+    expect(
+      CODEC.read(
+        storedValues([
+          ["LEVEL", ""],
+          ["LEVEL", -2],
+        ]),
+      ).group.level,
+    ).toBe(-2);
+    expect(
+      CODEC.read(
+        storedValues([
+          ["LEVEL", true],
+          ["LEVEL", "7"],
+        ]),
+      ).group.level,
+    ).toBe(7);
   });
 
-  test("reads a text and a reference off their first row, a choice only among its values, a list whole", () => {
+  test("reads a text off its first value and a reference off its link, a choice only among its values, a list whole", () => {
     const read = CODEC.read(
-      rows(["TITLE", "A"], ["TITLE", "B"], ["OWNER", "id-1"], ["KIND", "Psionic"], ["TAG", "x"], ["TAG", "y"]),
+      storedValues(
+        [
+          ["TITLE", "A"],
+          ["TITLE", "B"],
+          ["KIND", "Psionic"],
+          ["TAG", "x"],
+          ["TAG", "y"],
+        ],
+        { owner: "id-1" },
+      ),
     );
     expect([read.title, read.owner, read.kind, read.tags]).toEqual(["A", "id-1", null, ["x", "y"]]);
-    expect(CODEC.read(rows(["KIND", "Divine"])).kind).toBe("Divine");
-    // A stored value outside its type's closed list still reads
-    expect(CODEC.read(rows(["SCHOOL", "Sorcery"])).school).toBe("Sorcery");
+    expect(CODEC.read(storedValues([["KIND", "Divine"]])).kind).toBe("Divine");
+    // A stored value outside its field's closed list still reads
+    expect(CODEC.read(storedValues([["SCHOOL", "Sorcery"]])).school).toBe("Sorcery");
+    // A reference's field holds none: its link does
+    expect(CODEC.read(storedValues([["OWNER", "id-1"]])).owner).toBeNull();
+  });
+
+  test("keeps what a save writes as the stored values it reads: each field's in order, a reference's as its link", () => {
+    const written = CODEC.storedOf(rows(["TITLE", "A"], ["TAG", "y"], ["OWNER", "id-1"], ["TAG", "x"], ["NOPE", "z"]));
+    expect(written).toEqual({ fields: { TITLE: ["A"], TAG: ["y", "x"] }, links: { owner: "id-1" } });
+    expect(CODEC.read(written)).toMatchObject({ owner: "id-1", tags: ["y", "x"], title: "A" });
   });
 
   test("writes a field with a value, none for a default number, an empty text or a false two-state flag", () => {
@@ -130,7 +185,7 @@ describe("A field codec", () => {
   });
 
   test("reads and writes a field on its condition, and merges an edit's given fields over the kept", () => {
-    expect(CODEC.read([{ type: "COUNT", value: "3" }]).count).toBe(1);
+    expect(CODEC.read(storedValues([["COUNT", 3]])).count).toBe(1);
     expect(CODEC.toProperties({ ...CODEC.defaults, count: 3, title: "A" })).toEqual([{ type: "TITLE", value: "A" }]);
     expect(CODEC.toProperties({ ...CODEC.defaults, count: 3, flag: true, title: "A" })).toEqual([
       { type: "TITLE", value: "A" },
@@ -231,16 +286,23 @@ describe("A field codec", () => {
     expect(keysIn(fields[1]!)).toEqual(["kind", "first.level"]);
     expect(keysIn(fields[2]!)).toEqual(["kind", "second.known"]);
 
-    expect(codec.read(rows(["KIND", "Divine"], ["LEVEL", "2"]))).toMatchObject({ first: { level: 2 }, kind: "Divine" });
+    expect(
+      codec.read(
+        storedValues([
+          ["KIND", "Divine"],
+          ["LEVEL", 2],
+        ]),
+      ),
+    ).toMatchObject({ first: { level: 2 }, kind: "Divine" });
     expect(codec.parse({ kind: "Arcane" }, CONTEXT)).toEqual({ kind: "Arcane" });
   });
 });
 
 describe("A progression", () => {
-  test("reads its frequency and each level's first more in its bounds, at most its bound; its default without a row", () => {
+  test("reads its frequency and each level's first more in its bounds, at most its bound; its default without a value", () => {
     expect(PROGRESSION.defaults).toEqual({ grants: { every: 3, extra: [{ amount: 1, level: 1 }] } });
-    expect(PROGRESSION.read([])).toEqual(PROGRESSION.defaults);
-    const stored = rows(
+    expect(PROGRESSION.read(OwnerValues.NONE)).toEqual(PROGRESSION.defaults);
+    const held = storedValues([
       ["GRANT", "5:1"],
       ["GRANT", "every:4"],
       ["GRANT", "2:1"],
@@ -249,8 +311,8 @@ describe("A progression", () => {
       ["GRANT", "11:1"],
       ["GRANT", "4:0"],
       ["GRANT", "every:x"],
-    );
-    expect(PROGRESSION.read(stored)).toEqual({
+    ]);
+    expect(PROGRESSION.read(held)).toEqual({
       grants: {
         every: 4,
         extra: [
@@ -261,7 +323,15 @@ describe("A progression", () => {
       },
     });
     // A level gives at most its bound with its frequency's: what's past it reads as its bound
-    expect(PROGRESSION.read(rows(["GRANT", "every:4"], ["GRANT", "4:5"], ["GRANT", "6:5"]))).toEqual({
+    expect(
+      PROGRESSION.read(
+        storedValues([
+          ["GRANT", "every:4"],
+          ["GRANT", "4:5"],
+          ["GRANT", "6:5"],
+        ]),
+      ),
+    ).toEqual({
       grants: {
         every: 4,
         extra: [
@@ -270,16 +340,22 @@ describe("A progression", () => {
         ],
       },
     });
-    // A frequency's row alone: none more; without a frequency in its bounds, its default
-    expect(PROGRESSION.read(rows(["GRANT", "every:0"]))).toEqual({ grants: { every: 0, extra: [] } });
-    for (const stored of [rows(["GRANT", "every:11"], ["GRANT", "5:1"]), rows(["GRANT", "6:1"])])
-      expect(PROGRESSION.read(stored)).toEqual(PROGRESSION.defaults);
+    // A frequency's value alone: none more; without a frequency in its bounds, its default
+    expect(PROGRESSION.read(storedValues([["GRANT", "every:0"]]))).toEqual({ grants: { every: 0, extra: [] } });
+    for (const values of [
+      storedValues([
+        ["GRANT", "every:11"],
+        ["GRANT", "5:1"],
+      ]),
+      storedValues([["GRANT", "6:1"]]),
+    ])
+      expect(PROGRESSION.read(values)).toEqual(PROGRESSION.defaults);
   });
 
   test("writes its frequency's row and one per level it gives more at, which read back", () => {
     const grants = { every: 0, extra: [{ amount: 2, level: 4 }] };
     expect(PROGRESSION.toProperties({ grants })).toEqual(rows(["GRANT", "every:0"], ["GRANT", "4:2"]));
-    expect(PROGRESSION.read(PROGRESSION.toProperties({ grants }))).toEqual({ grants });
+    expect(PROGRESSION.read(PROGRESSION.storedOf(PROGRESSION.toProperties({ grants })))).toEqual({ grants });
     expect(PROGRESSION.toProperties({ grants: { every: 5, extra: [] } })).toEqual(rows(["GRANT", "every:5"]));
   });
 

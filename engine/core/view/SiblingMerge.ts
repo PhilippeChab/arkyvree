@@ -2,15 +2,19 @@
  * How sibling copies' customizations merge into their winner's: one rule per kind, which a ruleset's view composes
  * (`RulesetComposition`) and a copy of the winner writes (`EntityCopy`), the same both ways: the engine's, which both
  * ask. Each rule takes the winner's own rows and each sibling's, in the order its `CowData` pairs
- * them (`getSiblings`), and returns the siblings' rows the winner takes, in that order. A modifier, a property of a set or
- * a list's link (`mergeListLinks`: a 3.5 feat's pool) whose key the winner or an earlier sibling has is left out. A single-valued property is the winner's,
- * else the first sibling's that holds it (its field's `fallback`), whose stores keep one value of it. Requirements merge as trees
+ * them (`getSiblings`), and returns the siblings' rows the winner takes, in that order. A modifier, a value of a set or
+ * a list's link (`mergeListLinks`: a 3.5 feat's pool) whose key the winner or an earlier sibling has is left out. A
+ * single value is the winner's, else the first sibling's that holds it (its field's `fallback`), whose stores keep one
+ * value of it; a ruleset's (`winner`) the winner's alone. An owner's stored values merge field by field
+ * (`mergeValues`), and the properties a copy still writes row by row (`mergeProperties`). Requirements merge as trees
  * (`RequirementTree`), whose top-level rows are AND'd: merging the winner with N siblings is `AND(winner, sibling 1, …)`,
  * each sibling's tree kept as it is, appended at the top level. A sibling's group gets a fresh top-level number, its
  * rows renumbered under it; a sibling's top-level condition keeps its level (suffixed `-2`, `-3`… when the winner has
  * it), unless the winner already holds the same condition.
  */
 
+import type { DeclaredFields, StoredValues } from "@/engine/core/fields/index.ts";
+import type { FieldValue, Merge } from "@/engine/core/module/index.ts";
 import RequirementTree, { type RequirementNode } from "@/shared/customization/RequirementTree.ts";
 import type { Modifier, Property, Requirement } from "@/shared/relations.ts";
 
@@ -70,7 +74,7 @@ export default class SiblingMerge {
     own: EntityCustomizations,
     siblings: EntityCustomizations[],
     targetEntityId: string,
-    isSingle: (entityType: string, type: string) => boolean,
+    mergeOf: (entityType: string, type: string) => Merge,
   ): EntityCustomizations {
     const modifiers = SiblingMerge.mergeModifiers(
       own.modifiers,
@@ -85,7 +89,7 @@ export default class SiblingMerge {
       properties: SiblingMerge.mergeProperties(
         own.properties,
         siblings.map((customizations) => customizations.properties),
-        isSingle,
+        mergeOf,
       ),
       requirements: SiblingMerge.mergeRequirements(
         own.requirements,
@@ -117,16 +121,18 @@ export default class SiblingMerge {
   }
 
   /**
-   * The siblings' properties the winner doesn't have: a set's values it lacks, by type and value, and a single-valued
-   * type's (`isSingle`) value, the first sibling's, when it has none of it.
+   * The siblings' properties the winner doesn't have, by their type's merge (`mergeOf`): a set's (`union`) values it
+   * lacks, by type and value, and a single value's (`fallback`), the first sibling's, when it has none of it; none of a
+   * type the winner's alone holds (`winner`).
    */
   static mergeProperties<T extends PropertyKey>(
     own: readonly T[],
     siblings: Iterable<readonly T[]>,
-    isSingle: (entityType: string, type: string) => boolean,
+    mergeOf: (entityType: string, type: string) => Merge,
   ): T[] {
-    return SiblingMerge.takeNewRows(own, siblings, (p) =>
-      isSingle(p.entityType, p.type) ? p.type : `${p.type}|${p.value}`,
+    const merged = [...siblings].map((rows) => rows.filter((p) => mergeOf(p.entityType, p.type) !== "winner"));
+    return SiblingMerge.takeNewRows(own, merged, (p) =>
+      mergeOf(p.entityType, p.type) === "union" ? `${p.type}|${p.value}` : p.type,
     );
   }
 
@@ -170,5 +176,42 @@ export default class SiblingMerge {
       }
     }
     return merged;
+  }
+
+  /**
+   * An owner's stored values (`own`, of `ownerType`) with its siblings' merged in (`siblings`, in the order its
+   * `CowData` pairs them), each field and link by its declared merge (`declared`): a set's (`union`) values it lacks,
+   * by value, in its declared order; a single value's (`fallback`) its own, else the first sibling's that holds it; one
+   * the winner's alone holds (`winner`) its own. Its fields in their declared order, and what each sibling gave
+   * (`taken`, in their order).
+   */
+  static mergeValues(
+    own: StoredValues,
+    siblings: readonly StoredValues[],
+    ownerType: string,
+    declared: DeclaredFields,
+  ): { taken: StoredValues[]; values: StoredValues } {
+    const fields: Record<string, readonly FieldValue[]> = { ...own.fields };
+    const links: Record<string, string> = { ...own.links };
+    const taken = siblings.map((sibling) => {
+      const given: { fields: Record<string, FieldValue[]>; links: Record<string, string> } = { fields: {}, links: {} };
+      for (const [field, values] of Object.entries(sibling.fields)) {
+        const merge = declared.mergeOf(ownerType, field);
+        if (merge === "fallback" && !(field in fields)) fields[field] = given.fields[field] = [...values];
+        if (merge !== "union") continue;
+        const held = new Set((fields[field] ?? []).map(String));
+        const added = values.filter((value) => !held.has(String(value)));
+        if (added.length === 0) continue;
+        given.fields[field] = added;
+        fields[field] = declared.orderValues(field, [...(fields[field] ?? []), ...added]);
+      }
+      for (const [role, toId] of Object.entries(sibling.links)) {
+        if (declared.roleMergeOf(ownerType, role) === "winner" || role in links) continue;
+        links[role] = given.links[role] = toId;
+      }
+      return given;
+    });
+    const ordered = Object.keys(fields).toSorted((a, b) => declared.compareFields(a, b));
+    return { taken, values: { fields: Object.fromEntries(ordered.map((field) => [field, fields[field]])), links } };
   }
 }

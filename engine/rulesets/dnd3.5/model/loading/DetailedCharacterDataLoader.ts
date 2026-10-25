@@ -25,7 +25,7 @@ import type { CustomizedClassLevel, CustomizedFeat, CustomizedRace, CustomizedSp
 
 /**
  * What a 3.5 character has of its ruleset's entities (`partsOf`): its data past core's, but its own row and the
- * ruleset's properties (`loadOwn`); and its classes' ids, whose modifiers it takes once each (`sourcesOf`).
+ * ruleset's Settings (`loadOwn`); and its classes' ids, whose modifiers it takes once each (`sourcesOf`).
  */
 type LoadedParts = Omit<
   LoadedCharacterData,
@@ -88,7 +88,7 @@ export type SkillWithRank = Skill & {
 /**
  * The 3.5 loader, on core's (`CharacterDataLoader`): what a character has of its ruleset's entities (its levels, its
  * picks and grants, its classes, race and languages), each with its customizations from the view, the sources of its
- * modifiers in the order they apply, and its own row, ability scores and the ruleset's properties. What its modifiers
+ * modifiers in the order they apply, and its own row, ability scores and the ruleset's Settings. What its modifiers
  * grant it (a feat, a spell, a language) isn't loaded: a grant gives it as it applies, in the build's rounds behind its
  * requirements (`PossessesVirtually`).
  */
@@ -98,7 +98,7 @@ export default class DetailedCharacterDataLoader extends include(
   LoadsPicks,
   ReadsRuleset,
 ) {
-  /** The character's data: core's (`loaded`), its parts, its own row, and the ruleset's properties. */
+  /** The character's data: core's (`loaded`), its parts, its own row, and the ruleset's Settings. */
   protected override loadOwn(
     view: RulesetView,
     { klassEntityIds: _klassEntityIds, ...parts }: LoadedParts,
@@ -108,7 +108,7 @@ export default class DetailedCharacterDataLoader extends include(
       ...loaded,
       ...parts,
       character: this.character,
-      ...this.readRulesetProperties(view, (id) => view.rulesetData.cow.resolve(id)),
+      ...this.readRulesetValues(view, (id) => view.rulesetData.cow.resolve(id)),
     };
   }
 

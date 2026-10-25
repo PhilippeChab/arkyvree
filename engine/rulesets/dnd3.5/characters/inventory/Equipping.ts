@@ -193,7 +193,7 @@ export default class Equipping {
   private weaponFields(itemId: string) {
     const { rulesetData } = this.view;
     const item = Dnd35View.of(rulesetData).itemsById.get(itemId) ?? { id: itemId, sourceItemId: null };
-    return ITEM_FIELDS.read(rulesetData.itemProperties(item)).weapon;
+    return ITEM_FIELDS.read(rulesetData.inheritedValuesOf("items", item)).weapon;
   }
 
   /**

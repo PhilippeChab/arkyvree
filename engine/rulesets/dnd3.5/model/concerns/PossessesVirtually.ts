@@ -1,4 +1,4 @@
-import Dnd35PropertyTypes from "@/engine/rulesets/dnd3.5/Dnd35PropertyTypes.ts";
+import { SPELL_FIELDS } from "@/engine/rulesets/dnd3.5/entities/spells/fields.ts";
 import type CharacterState from "@/engine/rulesets/dnd3.5/model/CharacterState.ts";
 import FeatsComponent from "@/engine/rulesets/dnd3.5/model/feats/FeatsComponent.ts";
 import FeatsPaths from "@/engine/rulesets/dnd3.5/model/feats/FeatsPaths.ts";
@@ -8,7 +8,7 @@ import SpellsPaths from "@/engine/rulesets/dnd3.5/model/spells/SpellsPaths.ts";
 import SpellLists from "@/engine/rulesets/dnd3.5/rules/SpellLists.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type { Constructor } from "@/lib/mixins.ts";
-import { formatPropertyValues, groupPropertyValues } from "@/shared/customization/properties.ts";
+import { formatPropertyValues } from "@/shared/customization/properties.ts";
 import type { Modifier } from "@/shared/relations.ts";
 
 /**
@@ -98,7 +98,7 @@ export function PossessesVirtually<B extends Constructor<CharacterState>>(Base: 
     /**
      * The spells the character's modifiers make it know without a pick (`set spells.<slug>.<apt>.known`), as its sheet
      * lists them: each with its list and level, its save, its DC (its groupings' bonuses, Spell Focus, as a picked
-     * spell's: it goes through `registerSpell` too) and its properties' values.
+     * spell's: it goes through `registerSpell` too) and its fields' values.
      */
     getVirtualSpells() {
       const { spellSlugByAptitudeId } = SpellLists.of(this.rulesetData);
@@ -116,9 +116,8 @@ export function PossessesVirtually<B extends Constructor<CharacterState>>(Base: 
             aptitudeId: spell.aptitudeId,
             level,
             dc: this.components.spells.getSpell(spell.name)?.dc?.[aptitudeSlug]?.total ?? null,
-            properties: formatPropertyValues(
-              groupPropertyValues(spell.properties, Dnd35PropertyTypes.valuesOf),
-              Dnd35PropertyTypes.valuesOf,
+            properties: formatPropertyValues(SpellsComponent.textsOf(this.rulesetData, spell.id), (field) =>
+              SPELL_FIELDS.optionsOf(field),
             ),
           },
         ];

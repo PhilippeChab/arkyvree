@@ -1,5 +1,6 @@
 import { expect, test } from "bun:test";
 
+import type { StoredValues } from "@/engine/core/fields/index.ts";
 import type { Aptitude, Feat } from "@/engine/rulesets/dnd3.5/index.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
@@ -321,8 +322,7 @@ test("installing another extension preserves the local override and exposes unre
   // A family of the losing copy's own: a set, which a winner's view unions with its siblings'
   const family = { type: FEAT_FAMILY, value: "New Extension" };
   await Properties.createMany(db, [{ ...family, entityId: loser.id, entityType: "feats" }]);
-  const holds = (properties: { type: string; value: string }[]) =>
-    properties.some((p) => p.type === family.type && p.value === family.value);
+  const holds = ({ fields }: StoredValues) => (fields[family.type] ?? []).some((value) => value === family.value);
   invalidateTestRulesets(...rulesetIds);
   await RulesetExtensionsService.unsubscribeExtension(session, host.id, loserRulesetId);
   const local = await EntitiesService.updateEntity(session, host.id, "feats", winnerId, {
@@ -335,13 +335,13 @@ test("installing another extension preserves the local override and exposes unre
   });
   await RulesetExtensionsService.subscribeExtension(session, host.id, [loserRulesetId]);
   await withRulesetScope(db, host.id, async ({ rulesetData }) => {
-    expect(holds(rulesetData.propertiesByEntity.get(local.id) ?? [])).toBe(false);
+    expect(holds(rulesetData.valuesOf(local.id))).toBe(false);
     expect(Dnd35View.of(rulesetData).featsById.has(unrelated.id)).toBe(true);
     expect(rulesetData.canonicalize(loser.id)).toBe(local.id);
   });
   await RulesetChangesService.revertOverride(session, host.id, "feats", winnerId);
   await withRulesetScope(db, host.id, async ({ rulesetData }) => {
-    expect(holds(rulesetData.propertiesByEntity.get(winnerId) ?? [])).toBe(true);
+    expect(holds(rulesetData.valuesOf(winnerId))).toBe(true);
   });
 });
 
@@ -381,10 +381,10 @@ for (const entityType of ["feats", "spells"] as const) {
         invalidateTestRulesets(fork.id, ...rulesetIds);
         const winnerId = extensions[0].copy.id;
         const visible = await withRulesetScope(db, fork.id, async ({ rulesetData }) => ({
-          property: rulesetData.propertiesByEntity.get(winnerId)!.find((p) => p.type === precedence.type)!,
+          property: String(rulesetData.valuesOf(winnerId).fields[precedence.type]![0]),
           modifier: rulesetData.modifiersBySource.get(winnerId)!.find((m) => m.target === STRENGTH_BONUS.target)!,
         }));
-        expect(visible.property.value).toBe(precedence.valueOf(order[1]));
+        expect(visible.property).toBe(precedence.valueOf(order[1]));
         const sourceProperties = () =>
           Properties.findMany(db, { entityIds: [extensions[order[1]].copy.id], entityType, type: precedence.type });
         const shownProperties = await sourceProperties();
@@ -413,7 +413,7 @@ for (const entityType of ["feats", "spells"] as const) {
         const { sourceId: copyId } = (await Modifiers.findOne(db, { id: added.resolvedEntityId }))!;
         const copiedProperties = await Properties.findMany(db, { entityIds: [copyId], entityType });
         expect(copiedProperties.filter((p) => p.type === precedence.type).map((p) => p.value)).toEqual([
-          visible.property.value,
+          visible.property,
         ]);
         expect(await sourceProperties()).toEqual(shownProperties);
       }

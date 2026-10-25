@@ -36,20 +36,6 @@ export interface StoredRulesetRows {
 }
 
 /**
- * Whether a property type holds a single value, as every module stores it: a field that isn't a set, or a property a
- * single link holds (a class's bonus spell ability). A sibling merge takes one of it (`SiblingMerge`).
- */
-function singleValued(entityType: string, type: string) {
-  const storage = StorageEngine.shared();
-  return (
-    storage
-      .registries()
-      .fieldDefs.some((field) => field.ownerType === entityType && field.field === type && !field.multiple) ||
-    storage.linkedProperty(entityType, type) !== undefined
-  );
-}
-
-/**
  * The engine's copy-on-write: what a ruleset's view is built from and of, which copy-on-write's views and writes ask
  * before there's a view to bind.
  */
@@ -73,8 +59,8 @@ export default class CopyOnWriteEngine {
   /**
    * A ruleset's own rows as its view composes them, off its stored rows (`stored`): each kind's rows by its type, as its
    * module's declaration reads them (a list's with its lists), an owned kind's by position and owner, and only those
-   * whose owner it holds; each join's rows of its entities but those a kind's list carries; their properties and its
-   * own settings', its modifiers and requirements.
+   * whose owner it holds; each join's rows of its entities but those a kind's list carries; their stored values and its
+   * own Settings', kind-wide too (`StorageEngine.valuesOf`), its modifiers and requirements.
    */
   buildRawData(stored: StoredRulesetRows): RulesetRawData {
     const storage = StorageEngine.shared();
@@ -96,16 +82,15 @@ export default class CopyOnWriteEngine {
     }
     const joins: RulesetRawData["joins"] = {};
     for (const { name } of storage.viewSchema().joins) joins[name] = storage.joinRowsOf(name, live);
+    const { kindValues, values } = storage.valuesOf({ entities: live, ruleset: stored.ruleset });
     return {
       entities,
       joins,
+      kindValues,
       tieredIds: stored.tieredIds,
       modifiers: stored.modifiers,
-      properties: storage.propertiesOf({
-        entities: live,
-        rulesets: stored.ruleset ? [stored.ruleset] : [],
-      }) as RulesetRawData["properties"],
       requirements: stored.requirements,
+      values,
     };
   }
 
@@ -116,17 +101,16 @@ export default class CopyOnWriteEngine {
 
   /**
    * A ruleset's view: its own rows and its source chain's (`chain`, its own first, then its chain's in order), composed
-   * by its copy-on-write data (`cow`), with its rules' property types: each entity's properties in their order.
+   * by its copy-on-write data (`cow`), with the fields every module declares: each owner's values in their order.
    */
   buildView(ruleset: { baseRules: BaseRules }, chain: RulesetRawData[], cow: CowData): RulesetData {
-    const module = Modules.of(ruleset.baseRules);
+    const storage = StorageEngine.shared();
     return new RulesetComposition(
       chain,
       cow,
-      module.propertyTypes,
-      singleValued,
-      StorageEngine.shared().viewSchema(),
-      module.kindLabels,
+      storage.declaredFields(),
+      storage.viewSchema(),
+      Modules.of(ruleset.baseRules).kindLabels,
     ).build();
   }
 
@@ -150,7 +134,10 @@ export default class CopyOnWriteEngine {
     siblings: EntityCustomizations[],
     targetEntityId: string,
   ): EntityCustomizations {
-    return SiblingMerge.mergeCustomizations(own, siblings, targetEntityId, singleValued);
+    const storage = StorageEngine.shared();
+    return SiblingMerge.mergeCustomizations(own, siblings, targetEntityId, (entityType, type) =>
+      storage.propertyMerge(entityType, type),
+    );
   }
 
   /** The siblings' list links the winner doesn't have, by the list `resolve` gives. */

@@ -145,19 +145,19 @@ export default class ItemsPaths implements PathCategory<Dnd35Components> {
   };
 
   generate(rulesetData: RulesetData, kind: "modifier" | "requirement"): TargetPath[] {
-    const itemProperties = rulesetData.propertiesByEntityType.get("items") ?? [];
+    const itemValues = rulesetData.kindValues("items");
     // Every character strikes unarmed, without an item: its grouping is always there
     const weaponGroupings = [
       ...new Set([
         stripSeparators(UNARMED_STRIKE),
-        ...CategoryPaths.collectPropertySlugs(itemProperties, WEAPON_TYPE),
-        ...CategoryPaths.collectPropertySlugs(itemProperties, WEAPON_PROFICIENCY),
+        ...CategoryPaths.collectValueSlugs(itemValues, WEAPON_TYPE),
+        ...CategoryPaths.collectValueSlugs(itemValues, WEAPON_PROFICIENCY),
       ]),
     ];
     return [
       ...ItemsPaths.generateWeaponPaths(weaponGroupings, kind),
-      ...ItemsPaths.generateArmorPaths(CategoryPaths.collectPropertySlugs(itemProperties, ARMOR_TYPE), kind),
-      ...ItemsPaths.generateShieldPaths(CategoryPaths.collectPropertySlugs(itemProperties, SHIELD_TYPE), kind),
+      ...ItemsPaths.generateArmorPaths(CategoryPaths.collectValueSlugs(itemValues, ARMOR_TYPE), kind),
+      ...ItemsPaths.generateShieldPaths(CategoryPaths.collectValueSlugs(itemValues, SHIELD_TYPE), kind),
     ];
   }
 
@@ -170,12 +170,13 @@ export default class ItemsPaths implements PathCategory<Dnd35Components> {
   }
 
   /**
-   * The groupings an item is reached by, labeled by their names: its properties' values (a weapon's type, its
+   * The groupings an item is reached by, labeled by their names: its fields' values (a weapon's type, its
    * proficiency; a number, or no letter at all, names none: a number is a spell level's), and the unarmed strike,
    * which no item has.
    */
   labelNames(rulesetData: RulesetData) {
-    const values = (rulesetData.propertiesByEntityType.get("items") ?? [])
+    const values = rulesetData
+      .kindValues("items")
       .map(({ value }) => value)
       .filter((value) => /[a-z]/.test(stripSeparators(value)));
     return { names: deriveNameLabels([UNARMED_STRIKE, ...values]) };

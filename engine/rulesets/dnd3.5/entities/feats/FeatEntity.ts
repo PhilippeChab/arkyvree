@@ -163,7 +163,7 @@ export default class FeatEntity extends ListedEntity<
     return featIds.flatMap((featId) => {
       const feat = this.dnd35.featsById.get(featId);
       if (!feat) return [];
-      const { families } = this.fields.read(this.propertiesOf(feat));
+      const { families } = this.fields.read(this.valuesOf(feat));
       return families.filter((family) => feat.name.startsWith(family)).map((family) => ({ group: family, id: featId }));
     });
   }

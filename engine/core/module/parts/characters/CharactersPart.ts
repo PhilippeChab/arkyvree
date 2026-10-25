@@ -1,12 +1,13 @@
 import { z } from "zod";
 
+import type { StoredValues } from "@/engine/core/fields/index.ts";
 import type { CharacterInput, CharacterRowOf } from "@/engine/core/module/CharacterInputs.ts";
 import type { Descriptions } from "@/engine/core/module/contract.ts";
 import type { OpenedPicker } from "@/engine/core/module/pickers.ts";
 import type { StorageDeclaration } from "@/engine/core/module/storage.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import { RequestIds, type RulesetView, type ViewEntities } from "@/engine/core/view/index.ts";
-import type { Character as CharacterRecord, Property } from "@/shared/relations.ts";
+import type { Character as CharacterRecord } from "@/shared/relations.ts";
 
 import type {
   CharacterCard,
@@ -130,14 +131,17 @@ export default abstract class CharactersPart<D extends Descriptions> {
   ): CharacterCard;
 
   /**
-   * What the ruleset shows of an inventory entry (`entry`, of `item`, with its `properties`) beside its row: where its
-   * item can go, where it's worn.
+   * What the ruleset shows of an inventory entry (`entry`, of `item`, with its stored values, its template's included)
+   * beside its row: where its item can go, where it's worn.
    */
   protected abstract describeInventoryEntry(
     entry: HeldInventoryEntry,
     item: ViewEntities["items"],
-    properties: Property[],
+    values: StoredValues,
   ): D["inventoryEntry"];
+
+  /** An inventory entry's item's fields, off its stored values (its template's included), as its kind reads them. */
+  protected abstract describeInventoryItemFields(values: StoredValues): D["inventoryItemFields"];
 
   /**
    * What a character (`character`) has of a picked link (`link`), and what its picks (`entityIds`, each the view's)
@@ -304,22 +308,23 @@ export default abstract class CharactersPart<D extends Descriptions> {
   /**
    * The character's entries (`entries`, each naming its item), as its sheet lists them: each with what its ruleset
    * shows of it (`describeInventoryEntry`), and its item as the view composes it (`RulesetData.entriesWithItems`), its
-   * properties, its modifiers, and its requirements, its template's before its own.
+   * fields (its template's of each it holds none of, `describeInventoryItemFields`), its modifiers, and its
+   * requirements, its template's before its own.
    */
   describeInventory<T extends HeldInventoryEntry & { itemId: string }>(
     view: RulesetView,
     entries: T[],
-  ): DescribedInventoryEntry<T, D["inventoryEntry"]>[] {
+  ): DescribedInventoryEntry<T, D["inventoryEntry"], D["inventoryItemFields"]>[] {
     const { rulesetData } = view;
     return rulesetData.entriesWithItems(entries).map(({ entry, item }) => {
-      const properties = rulesetData.itemProperties(item);
+      const values = rulesetData.inheritedValuesOf("items", item);
       const { own: requirements, template: proficiency } = rulesetData.itemRequirements(item);
       return {
         ...entry,
-        ...this.describeInventoryEntry(entry, item, properties),
+        ...this.describeInventoryEntry(entry, item, values),
         item: {
           ...item,
-          properties,
+          fields: this.describeInventoryItemFields(values),
           modifiers: rulesetData.modifiersBySource.get(item.id) ?? [],
           requirements: [...proficiency, ...requirements],
         },

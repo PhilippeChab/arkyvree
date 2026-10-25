@@ -3,9 +3,11 @@ import { describe, expect, test } from "bun:test";
 import { eq } from "drizzle-orm";
 
 import { entitiesInRules } from "@/drizzle/schema.ts";
+import { OwnerValues } from "@/engine/core/fields/index.ts";
 import { SPELL_FIELDS } from "@/engine/rulesets/dnd3.5/entities/spells/fields.ts";
 import { db } from "@/server/database/index.ts";
 import { Properties } from "@/server/repositories/index.ts";
+import { storedValues } from "@/tests/support/storedValues.ts";
 import { SPELL_COMPONENT, SPELL_DESCRIPTOR, SPELL_SCHOOL, SPELL_TARGET } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 /** Rows as a sorted list of `type=value`. */
@@ -14,18 +16,20 @@ function multiset(rows: { type: string; value: string }[]) {
 }
 
 describe("A spell's fields", () => {
-  test("are none without their properties, and as stored with them: each from its first row, the lists in order", () => {
-    expect(SPELL_FIELDS.read([])).toEqual(SPELL_FIELDS.defaults);
+  test("are none without their values, and as stored with them: each its first value, the lists in order", () => {
+    expect(SPELL_FIELDS.read(OwnerValues.NONE)).toEqual(SPELL_FIELDS.defaults);
     expect(
-      SPELL_FIELDS.read([
-        { type: SPELL_SCHOOL, value: "Evocation" },
-        { type: SPELL_DESCRIPTOR, value: "Fire" },
-        { type: SPELL_TARGET, value: "One creature" },
-        { type: SPELL_TARGET, value: "You" },
-        { type: SPELL_COMPONENT, value: "V" },
-        { type: SPELL_DESCRIPTOR, value: "Light" },
-        { type: "SOMETHING_ELSE", value: "1" },
-      ]),
+      SPELL_FIELDS.read(
+        storedValues([
+          [SPELL_SCHOOL, "Evocation"],
+          [SPELL_DESCRIPTOR, "Fire"],
+          [SPELL_TARGET, "One creature"],
+          [SPELL_TARGET, "You"],
+          [SPELL_COMPONENT, "V"],
+          [SPELL_DESCRIPTOR, "Light"],
+          ["SOMETHING_ELSE", 1],
+        ]),
+      ),
     ).toEqual({
       ...SPELL_FIELDS.defaults,
       components: ["V"],
@@ -70,7 +74,8 @@ describe("A spell's fields", () => {
 
     const mismatches = [...rowsBySpell].filter(
       ([, stored]) =>
-        multiset(SPELL_FIELDS.toProperties(SPELL_FIELDS.read(stored))).join("|") !== multiset(stored).join("|"),
+        multiset(SPELL_FIELDS.toProperties(SPELL_FIELDS.read(SPELL_FIELDS.storedOf(stored)))).join("|") !==
+        multiset(stored).join("|"),
     );
     expect([...new Set(mismatches.map(([, stored]) => stored[0].name))]).toEqual([]);
   });

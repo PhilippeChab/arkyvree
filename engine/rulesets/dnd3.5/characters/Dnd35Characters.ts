@@ -1,3 +1,4 @@
+import type { StoredValues } from "@/engine/core/fields/index.ts";
 import {
   type CharacterInput,
   CharactersPart,
@@ -7,6 +8,7 @@ import {
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import type { Dnd35Descriptions } from "@/engine/rulesets/dnd3.5/descriptions.ts";
+import { ITEM_FIELDS } from "@/engine/rulesets/dnd3.5/entities/items/fields.ts";
 import RacePicker from "@/engine/rulesets/dnd3.5/pickers/RacePicker.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type { CharacterLevel, Race } from "@/engine/rulesets/dnd3.5/view/rows.ts";
@@ -46,6 +48,11 @@ export default class Dnd35Characters extends CharactersPart<Dnd35Descriptions> {
   /** An inventory entry beside its row: where its item can go, and where it's worn. */
   protected override describeInventoryEntry(...args: Parameters<typeof InventoryEntries.describeInventoryEntry>) {
     return InventoryEntries.describeInventoryEntry(...args);
+  }
+
+  /** An inventory entry's item's fields, as an item's page shows them: its weapon's, its armor's, its charges… */
+  protected override describeInventoryItemFields(values: StoredValues) {
+    return ITEM_FIELDS.read(values);
   }
 
   /** What a character speaks without picking it, its picked languages, and what one more may add. */

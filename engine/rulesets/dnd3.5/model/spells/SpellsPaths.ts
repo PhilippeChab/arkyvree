@@ -8,7 +8,6 @@ import type { SpellWithAptitudes } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import { getOperators } from "@/shared/customization/operators.ts";
 import { formatPropertyType } from "@/shared/customization/properties.ts";
 import { deriveNameLabels, deriveSegmentLabels, isLeafOfKind, type TargetPath } from "@/shared/customization/target.ts";
-import type { Property } from "@/shared/relations.ts";
 import { capitalize, stripSeparators } from "@/shared/text.ts";
 import { SPELL_DESCRIPTOR, SPELL_SCHOOL } from "@/vocabulary/dnd3.5/properties/index.ts";
 
@@ -17,7 +16,7 @@ const NAVIGATABLE_SPELL_DC_PATHS = [
   { path: "dc.total", description: "Final DC for this spell", type: "number" as const, requirementOnly: true },
 ];
 
-/** The spells' target paths: each spell's DC, possession and properties. */
+/** The spells' target paths: each spell's DC, possession and fields. */
 export default class SpellsPaths implements PathCategory<Dnd35Components> {
   /**
    * The DC paths of these groupings (a school or descriptor: `spells.groups.<grouping>.*.dc.misc`, each of its spells)
@@ -51,19 +50,18 @@ export default class SpellsPaths implements PathCategory<Dnd35Components> {
   }
 
   static generateSpellPaths(
-    spells: (SpellWithAptitudes & { properties: Property[] })[],
+    spells: (SpellWithAptitudes & { fields: string[] })[],
     spellSlugByAptitudeId: Map<string, string>,
     featListIds: Set<string>,
     kind: "modifier" | "requirement",
   ): TargetPath[] {
     const paths: TargetPath[] = [];
 
-    // Property paths
+    // Each field a spell holds is a path of its, which the sheet names its property
     for (const spell of spells) {
       const normalizedSpellName = stripSeparators(spell.name);
 
-      const propertyTypes = new Set(spell.properties.map((p) => p.type));
-      for (const type of propertyTypes) {
+      for (const type of spell.fields) {
         paths.push({
           path: `spells.${normalizedSpellName}.properties.${type}`,
           category: "spells",
@@ -148,28 +146,27 @@ export default class SpellsPaths implements PathCategory<Dnd35Components> {
 
   generate(rulesetData: RulesetData, kind: "modifier" | "requirement"): TargetPath[] {
     const { spells } = Dnd35View.of(rulesetData);
-    const { propertiesByEntityType } = rulesetData;
     const spellLists = SpellLists.of(rulesetData);
-    const spellProperties = propertiesByEntityType.get("spells") ?? [];
-    const spellsWithProperties = spells.map((spell) => ({
+    const spellValues = rulesetData.kindValues("spells");
+    const spellsWithFields = spells.map((spell) => ({
       ...spell,
-      properties: rulesetData.propertiesByEntity.get(spell.id) ?? [],
+      fields: Object.keys(rulesetData.valuesOf(spell.id).fields),
     }));
     return [
       ...SpellsPaths.generateSpellPaths(
-        spellsWithProperties,
+        spellsWithFields,
         spellLists.spellSlugByAptitudeId,
         spellLists.featListIds,
         kind,
       ),
       ...SpellsPaths.generateGroupingPaths(
-        CategoryPaths.collectPropertySlugs(spellProperties, SPELL_SCHOOL),
+        CategoryPaths.collectValueSlugs(spellValues, SPELL_SCHOOL),
         kind,
         true,
         "school",
       ),
       ...SpellsPaths.generateGroupingPaths(
-        CategoryPaths.collectPropertySlugs(spellProperties, SPELL_DESCRIPTOR),
+        CategoryPaths.collectValueSlugs(spellValues, SPELL_DESCRIPTOR),
         kind,
         true,
         "descriptor",
@@ -188,7 +185,7 @@ export default class SpellsPaths implements PathCategory<Dnd35Components> {
   }
   /**
    * The ruleset's spells, labeled by their names; and, where no other label names them, each list's possession slug
-   * ("wizard" for Wizard Spells, which a spell's `known` path names), its spells' properties' types and values (a
+   * ("wizard" for Wizard Spells, which a spell's `known` path names), its spells' fields and their values (a
    * number names a spell level, never a value).
    */
   labelNames(rulesetData: RulesetData) {
@@ -196,8 +193,8 @@ export default class SpellsPaths implements PathCategory<Dnd35Components> {
     const fallbacks: Record<string, string> = {};
     for (const { name } of dnd35.aptitudes)
       fallbacks[SpellLists.toSpellPossessionSlug(name)] ??= name.replace(/ Spells$/, "");
-    for (const { type, value } of rulesetData.propertiesByEntityType.get("spells") ?? []) {
-      fallbacks[type] ??= formatPropertyType(type);
+    for (const { field, value } of rulesetData.kindValues("spells")) {
+      fallbacks[field] ??= formatPropertyType(field);
       const slug = stripSeparators(value);
       if (/[a-z]/.test(slug)) fallbacks[slug] ??= value;
     }

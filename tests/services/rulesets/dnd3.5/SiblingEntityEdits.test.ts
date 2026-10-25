@@ -76,10 +76,7 @@ async function setup(entityType: EntityType, omitLastLevel = false) {
     withRulesetScope(db, host.id, async ({ rulesetData }) => {
       const id = rulesetData.canonicalize(source.id);
       return {
-        properties: (rulesetData.propertiesByEntity.get(id) ?? [])
-          .filter((p) => p.type === marker.type)
-          .map((p) => p.value)
-          .sort(),
+        properties: (rulesetData.valuesOf(id).fields[marker.type] ?? []).map(String).sort(),
         modifiers: (rulesetData.modifiersBySource.get(id) ?? [])
           .filter((m) => m.target === "abilities.strength.misc" && Number(m.value) >= 10)
           .map((m) => m.value)

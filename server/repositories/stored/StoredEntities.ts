@@ -207,7 +207,7 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
 
   /**
    * Stored entities a condition picks (`where`), in `order`, a page of them if `page` says, each with its fields and
-   * links: every one when `whole` (what a view's raw data reads, its properties among them), else those a kind's row
+   * links: every one when `whole` (what a view's raw data reads, its stored values among them), else those a kind's row
    * reads (`kindReads`). A page is picked by its ids first, then read whole.
    */
   private async read(

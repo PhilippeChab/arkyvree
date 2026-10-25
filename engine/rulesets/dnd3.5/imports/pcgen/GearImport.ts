@@ -90,7 +90,7 @@ export default class GearImport {
    * slot taken, a requirement unmet): the report says which.
    */
   private planEntry(character: CharacterInput, gear: ImportedGear, item: Item): ImportedEntry {
-    const described = ItemPlacement.describe(item, this.view.rulesetData.itemProperties(item));
+    const described = ItemPlacement.describe(item, this.view.rulesetData.inheritedValuesOf("items", item));
     const placement = this.placementOf(gear, described);
     const { charges } = described;
     // The charges the file says are left, within those the item comes with

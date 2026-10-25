@@ -135,15 +135,12 @@ describe("The seeded core rules", () => {
   test("give the SRD's projectile weapons ten range increments and the net one, and no other item a count", async () => {
     // "A net's maximum range is 10 feet"; a thrown weapon, without a count, reaches five
     const rows = await seededRows();
-    const property = (itemId: string, type: string) =>
-      rows.properties.find((p) => p.entityId === itemId && p.type === type)?.value;
-    const reaches = rows.properties
-      .filter((p) => p.type === WEAPON_MAX_RANGE_INCREMENTS)
-      .map((p) => [
-        rows.items.find((item) => item.id === p.entityId)?.name,
-        p.value,
-        property(p.entityId, WEAPON_RANGE),
-      ])
+    const reaches = rows.items
+      .flatMap((item) =>
+        rows
+          .textsOf(item.id, WEAPON_MAX_RANGE_INCREMENTS)
+          .map((increments) => [item.name, increments, rows.textsOf(item.id, WEAPON_RANGE)[0]]),
+      )
       .sort(([a], [b]) => String(a).localeCompare(String(b)));
     expect(reaches).toEqual([
       ["Composite Longbow", "10", "110"],
@@ -276,8 +273,7 @@ describe("The seeded core rules", () => {
 
   test("put each class's own feat of a class feature, and a spell's Weapon Focus, in its family, and only those", async () => {
     const rows = await seededRows();
-    const familyOf = (name: string) =>
-      rows.properties.filter((p) => p.entityId === rows.feat(name).id && p.type === FEAT_FAMILY).map((p) => p.value);
+    const familyOf = (name: string) => rows.textsOf(rows.feat(name).id, FEAT_FAMILY);
     expect(
       [
         "Sneak Attack (Rogue)",
@@ -307,9 +303,7 @@ describe("The seeded core rules", () => {
       const aptitude = rows.aptitude("Favored Enemy");
       for (const name of variants) {
         const feat = rows.feat(name);
-        const family = rows.properties
-          .filter((p) => p.entityId === feat.id && p.type === FEAT_FAMILY)
-          .map((p) => p.value);
+        const family = rows.textsOf(feat.id, FEAT_FAMILY);
         expect({
           name,
           stackable: feat.stackable,

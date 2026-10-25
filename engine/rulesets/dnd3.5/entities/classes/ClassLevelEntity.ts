@@ -150,7 +150,7 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
 
   /**
    * One of the class's levels' edit: the class and the level, as the view has them, its new join rows when the form
-   * sends them, what its form writes against the properties the view composes for it (those a copy of it holds), and
+   * sends them, what its form writes against the stored values the view composes for it (those a copy of it holds), and
    * the level it answers once written, with the fields it keeps.
    */
   override planEdit(levelId: string, form: EntityForm) {

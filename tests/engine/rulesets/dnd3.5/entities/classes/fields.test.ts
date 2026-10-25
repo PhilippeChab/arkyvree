@@ -1,6 +1,8 @@
 import { describe, expect, test } from "bun:test";
 
+import { OwnerValues } from "@/engine/core/fields/index.ts";
 import { CLASS_FIELDS, CLASS_LEVEL_FIELDS } from "@/engine/rulesets/dnd3.5/entities/classes/fields.ts";
+import { storedValues } from "@/tests/support/storedValues.ts";
 import {
   CLASS_BONUS_SPELL_ABILITY_ID,
   CLASS_CASTER_TYPE,
@@ -9,27 +11,33 @@ import {
 } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 describe("A class's fields", () => {
-  test("are null without their properties, and their values with them", () => {
-    expect(CLASS_FIELDS.read([])).toEqual({ bonusSpellAbilityId: null, casterType: null });
+  test("are null without their values, and their values with them: the bonus spell ability its link's", () => {
+    expect(CLASS_FIELDS.read(OwnerValues.NONE)).toEqual({ bonusSpellAbilityId: null, casterType: null });
     expect(
-      CLASS_FIELDS.read([
-        { type: CLASS_BONUS_SPELL_ABILITY_ID, value: "wisdom-id" },
-        { type: CLASS_CASTER_TYPE, value: "Divine" },
-        { type: "SOMETHING_ELSE", value: "1" },
-      ]),
+      CLASS_FIELDS.read(
+        storedValues(
+          [
+            [CLASS_CASTER_TYPE, "Divine"],
+            ["SOMETHING_ELSE", 1],
+          ],
+          { bonusSpellAbility: "wisdom-id" },
+        ),
+      ),
     ).toEqual({ bonusSpellAbilityId: "wisdom-id", casterType: "Divine" });
   });
 
   test("take a caster type only as one the engine casts by", () => {
-    expect(CLASS_FIELDS.read([{ type: CLASS_CASTER_TYPE, value: "Psionic" }]).casterType).toBeNull();
+    expect(CLASS_FIELDS.read(storedValues([[CLASS_CASTER_TYPE, "Psionic"]])).casterType).toBeNull();
   });
 
-  test("take the first row of a type, though a class's sync stores one", () => {
+  test("take the first value of a field, though a class's sync stores one", () => {
     expect(
-      CLASS_FIELDS.read([
-        { type: CLASS_CASTER_TYPE, value: "Arcane" },
-        { type: CLASS_CASTER_TYPE, value: "Divine" },
-      ]).casterType,
+      CLASS_FIELDS.read(
+        storedValues([
+          [CLASS_CASTER_TYPE, "Arcane"],
+          [CLASS_CASTER_TYPE, "Divine"],
+        ]),
+      ).casterType,
     ).toBe("Arcane");
   });
 
@@ -40,28 +48,35 @@ describe("A class's fields", () => {
       { type: CLASS_BONUS_SPELL_ABILITY_ID, value: "wisdom-id" },
       { type: CLASS_CASTER_TYPE, value: "Divine" },
     ]);
-    expect(CLASS_FIELDS.read(rows)).toEqual({ bonusSpellAbilityId: "wisdom-id", casterType: "Divine" });
+    expect(CLASS_FIELDS.read(CLASS_FIELDS.storedOf(rows))).toEqual({
+      bonusSpellAbilityId: "wisdom-id",
+      casterType: "Divine",
+    });
   });
 });
 
 describe("A class level's fields", () => {
-  test("are 0 without their properties, and their numbers with them", () => {
-    expect(CLASS_LEVEL_FIELDS.read([])).toEqual({ bab: 0, skills: 0 });
+  test("are 0 without their values, and their numbers with them", () => {
+    expect(CLASS_LEVEL_FIELDS.read(OwnerValues.NONE)).toEqual({ bab: 0, skills: 0 });
     expect(
-      CLASS_LEVEL_FIELDS.read([
-        { type: CLASS_LEVEL_BAB, value: "3" },
-        { type: CLASS_LEVEL_SKILL_POINTS, value: "6" },
-        { type: "SOMETHING_ELSE", value: "9" },
-      ]),
+      CLASS_LEVEL_FIELDS.read(
+        storedValues([
+          [CLASS_LEVEL_BAB, 3],
+          [CLASS_LEVEL_SKILL_POINTS, 6],
+          ["SOMETHING_ELSE", 9],
+        ]),
+      ),
     ).toEqual({ bab: 3, skills: 6 });
   });
 
-  test("take the first row of a type, though a level's sync stores one", () => {
+  test("take the first value of a field, though a level's sync stores one", () => {
     expect(
-      CLASS_LEVEL_FIELDS.read([
-        { type: CLASS_LEVEL_BAB, value: "1" },
-        { type: CLASS_LEVEL_BAB, value: "2" },
-      ]).bab,
+      CLASS_LEVEL_FIELDS.read(
+        storedValues([
+          [CLASS_LEVEL_BAB, 1],
+          [CLASS_LEVEL_BAB, 2],
+        ]),
+      ).bab,
     ).toBe(1);
   });
 
@@ -71,6 +86,6 @@ describe("A class level's fields", () => {
       { type: CLASS_LEVEL_BAB, value: "2" },
       { type: CLASS_LEVEL_SKILL_POINTS, value: "4" },
     ]);
-    expect(CLASS_LEVEL_FIELDS.read(rows)).toEqual({ bab: 2, skills: 4 });
+    expect(CLASS_LEVEL_FIELDS.read(CLASS_LEVEL_FIELDS.storedOf(rows))).toEqual({ bab: 2, skills: 4 });
   });
 });

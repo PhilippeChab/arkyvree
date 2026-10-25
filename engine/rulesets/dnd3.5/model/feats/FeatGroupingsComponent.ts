@@ -1,11 +1,10 @@
 import { CharacterComponent } from "@/engine/core/character/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
-import { FEAT_FIELDS } from "@/engine/rulesets/dnd3.5/entities/feats/fields.ts";
 import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
-import type { Property } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { FEAT_FAMILIES } from "@/vocabulary/dnd3.5/feats.ts";
+import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 import type FeatsComponent from "./FeatsComponent.ts";
 import type { FeatEntry } from "./FeatsComponent.ts";
@@ -38,9 +37,12 @@ export default class FeatGroupingsComponent extends CharacterComponent<LoadedCha
    */
   override initialize(_data: LoadedCharacterData, { rulesetData }: RulesetView) {
     const rulesetFeatsById = new Map(Dnd35View.of(rulesetData).feats.map((feat) => [feat.id, feat]));
-    for (const prop of rulesetData.propertiesByEntityType.get("feats") ?? []) {
-      const feat = rulesetFeatsById.get(prop.entityId);
-      if (feat) this.registerFeat(feat, [prop]);
+    for (const { entityIds, field, value } of rulesetData.kindValues("feats")) {
+      if (field !== FEAT_FAMILY) continue;
+      for (const featId of entityIds) {
+        const feat = rulesetFeatsById.get(featId);
+        if (feat) this.registerFeat(feat, [value]);
+      }
     }
     this.seedEmptyFamilies(FEAT_FAMILIES);
     this.feats.injectGroupings(this.featGroupings);
@@ -61,9 +63,9 @@ export default class FeatGroupingsComponent extends CharacterComponent<LoadedCha
     return this.featGroupings;
   }
 
-  /** The feat in each family its properties name. */
-  registerFeat(feat: { name: string }, properties: Property[]): void {
-    for (const familyName of FEAT_FIELDS.read(properties).families) {
+  /** The feat in each of its families (`families`). */
+  registerFeat(feat: { name: string }, families: readonly string[]): void {
+    for (const familyName of families) {
       const normalizedFamily = stripSeparators(familyName);
 
       // Derive variant key: strip "Family: " prefix from feat name

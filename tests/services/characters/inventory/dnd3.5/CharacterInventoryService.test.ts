@@ -186,7 +186,7 @@ describe("InventoryService", () => {
         equipped: false,
         item: {
           name: item.name,
-          properties: [{ type: WEAPON_PROFICIENCY }],
+          fields: { weapon: { proficiency: "Martial" } },
           modifiers: [{ target: "combat.bab" }],
           requirements: [{ target: "abilities.strength.misc" }],
         },

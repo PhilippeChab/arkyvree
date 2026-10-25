@@ -3,7 +3,7 @@
 import { z } from "zod";
 
 import { CustomizationPageEntity } from "@/engine/core/entities/index.ts";
-import type { EntityFieldValues, EntityForm } from "@/engine/core/fields/index.ts";
+import { type EntityFieldValues, type EntityForm, OwnerValues, type StoredValues } from "@/engine/core/fields/index.ts";
 import type { EntityWrites, PropertyValue } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import { RULESET_LIMITS } from "@/engine/rulesets/dnd3.5/limits.ts";
@@ -63,8 +63,8 @@ function decimalColumn(value: number | null | undefined) {
 }
 
 /**
- * An item as the ruleset has it: described with its template's properties and requirements, its own over them, and
- * saved by its template rules: a template is its copies' source, never one's copy.
+ * An item as the ruleset has it: described with its template's fields and requirements, its own over them, and saved
+ * by its template rules: a template is its copies' source, never one's copy.
  */
 export default class ItemEntity extends CustomizationPageEntity<
   "items",
@@ -116,13 +116,13 @@ export default class ItemEntity extends CustomizationPageEntity<
   }
 
   /**
-   * The properties a saved item's fields are read off: the edited one's own, merged with the template it's saved with
-   * (the one it keeps when the form gives none); a new one's template's alone.
+   * The stored values a saved item's fields are read off: the edited one's own, merged with the template it's saved
+   * with (the one it keeps when the form gives none); a new one's template's alone.
    */
-  protected override keptProperties(columns: ItemColumns, item?: Item) {
+  protected override keptValues(columns: ItemColumns, item?: Item): StoredValues {
     const sourceItemId = this.templateIdOf(columns, item);
-    if (item) return this.propertiesOf({ id: item.id, sourceItemId });
-    return sourceItemId ? this.templatePropertiesOf(sourceItemId) : [];
+    if (item) return this.valuesOf({ id: item.id, sourceItemId });
+    return sourceItemId ? this.templateValuesOf(sourceItemId) : OwnerValues.NONE;
   }
 
   /** A page of the ruleset's items, each with its template's name. */
@@ -133,11 +133,6 @@ export default class ItemEntity extends CustomizationPageEntity<
       describe: <T extends Record<string, unknown> & { id: string }>(rows: T[]) =>
         list.describe(rows).map((item) => ({ ...item, templateName: this.templateNameOf(item.sourceItemId) })),
     };
-  }
-
-  /** An item's properties: its template's of each type it doesn't set, then its own. */
-  protected override propertiesOf(item: Pick<Item, "id" | "sourceItemId">) {
-    return this.rulesetData.itemProperties(item);
   }
 
   /** An item's requirements: its template's, its proficiency, before its own. */
@@ -151,6 +146,11 @@ export default class ItemEntity extends CustomizationPageEntity<
     return sourceItemId ? { sourceItemId: this.ids.resolve("items", sourceItemId) } : {};
   }
 
+  /** An item's stored values: its template's of each field it holds none of, then its own. */
+  protected override valuesOf(item: Pick<Item, "id" | "sourceItemId">): StoredValues {
+    return this.rulesetData.inheritedValuesOf("items", item);
+  }
+
   /**
    * What saving an item writes (`item`: the one edited): the fields its form gives, over those it shows (its own over
    * its template's), as the properties of its own: those its template's don't hold (`toOverrides`), so it keeps reading
@@ -160,20 +160,23 @@ export default class ItemEntity extends CustomizationPageEntity<
     const fields = this.formFields(given, item);
     if (!fields) return undefined;
     const templateId = this.templateIdOf(body, item);
-    const template = templateId ? this.fields.read(this.templatePropertiesOf(templateId)) : this.fields.defaults;
+    const template = templateId ? this.fields.read(this.templateValuesOf(templateId)) : this.fields.defaults;
     return { properties: this.fields.write(fields, this.fields.toOverrides(fields, template)) };
   }
 
   /**
-   * The properties a saved item's fields are read off: those its form writes, over its template's of the types they
-   * don't set (the one it's saved with), or those it keeps when its form writes none.
+   * The stored values a saved item's fields are read off: those the properties its form writes keep, over its
+   * template's of the fields they don't set (the one it's saved with), or those it keeps when its form writes none.
    */
-  protected override writtenProperties(columns: ItemColumns, written: PropertyValue[] | undefined, item?: Item) {
-    if (!written) return this.keptProperties(columns, item);
+  protected override writtenValues(
+    columns: ItemColumns,
+    written: PropertyValue[] | undefined,
+    item?: Item,
+  ): StoredValues {
+    if (!written) return this.keptValues(columns, item);
     const templateId = this.templateIdOf(columns, item);
-    const types = new Set(written.map((property) => property.type));
-    const template = templateId ? this.templatePropertiesOf(templateId) : [];
-    return [...template.filter((property) => !types.has(property.type)), ...written];
+    const own = this.fields.storedOf(written);
+    return templateId ? OwnerValues.inherit(own, this.templateValuesOf(templateId)) : own;
   }
 
   /**
@@ -184,7 +187,7 @@ export default class ItemEntity extends CustomizationPageEntity<
     const item = super.describe(id);
     return {
       ...item,
-      placement: ItemPlacement.describe(item, this.propertiesOf(item)),
+      placement: ItemPlacement.describe(item, this.valuesOf(item)),
       templateName: this.templateNameOf(item.sourceItemId),
     };
   }
@@ -223,7 +226,7 @@ export default class ItemEntity extends CustomizationPageEntity<
    * A duplicate of an item (`sourceItemId`), from its form: it points at the same template, isn't one itself, and takes
    * its source's customizations unless its source is a template, whose copies read the template's
    * (`copyCustomizationsFrom`). It keeps the fields its form gives, written over those it takes, or, given none, the
-   * fields its source's properties hold.
+   * fields its source's stored values hold.
    */
   override planDuplicate(sourceItemId: string, body: EntityForm) {
     const source = this.findSource(sourceItemId);
@@ -239,7 +242,7 @@ export default class ItemEntity extends CustomizationPageEntity<
    * An item's edit, and, a template's that changes its type, the items made from it (`copies`: those naming it by its
    * id or by one it stands for), which the server reads where the change reaches them (the ruleset's view, and the
    * rulesets built on it) for their check, which refuses the change while any is of another type than the new one: it
-   * would read the properties and requirements of a template of another type. The refusal names what the view shows
+   * would read the fields and requirements of a template of another type. The refusal names what the view shows
    * alone (`listCopies`).
    */
   override planEdit(itemId: string, form: EntityForm) {
@@ -310,7 +313,7 @@ export default class ItemEntity extends CustomizationPageEntity<
 
   /**
    * Refuses an item based on anything but a template of its type (the one its form gives, or the one it keeps), which
-   * it would read its properties and requirements off: a weapon's, an armor's or a shield's.
+   * it would read its fields and requirements off: a weapon's, an armor's or a shield's.
    */
   private checkTemplateOf(body: ItemBody, item?: Item) {
     const templateId = this.templateIdOf(body, item);
@@ -387,9 +390,9 @@ export default class ItemEntity extends CustomizationPageEntity<
     return item.isTemplate ? item.id : (item.sourceItemId ?? undefined);
   }
 
-  /** A template's properties, its own alone: a template is no copy. */
-  private templatePropertiesOf(templateId: string) {
-    return this.propertiesOf({ id: templateId, sourceItemId: null });
+  /** A template's stored values, its own alone: a template is no copy. */
+  private templateValuesOf(templateId: string) {
+    return this.valuesOf({ id: templateId, sourceItemId: null });
   }
 
   /** The type a form saves an item with: the form's (null: none), or the one the edited item keeps. */

@@ -8,6 +8,8 @@ import {
   FormColumns,
   type FormField,
   type NoFields,
+  OwnerValues,
+  type StoredValues,
 } from "@/engine/core/fields/index.ts";
 import type {
   EntityCopiesPlan,
@@ -20,7 +22,6 @@ import type {
 } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import { RequestIds, type RulesetData, type RulesetView, type ViewEntities } from "@/engine/core/view/index.ts";
-import type { Property } from "@/shared/relations.ts";
 import { getUrlSegment } from "@/shared/urlSegments.ts";
 
 /** An action a kind may have none of: its writes, its groups, its copies. */
@@ -33,7 +34,7 @@ const COPY_ACTIONS: readonly EntityAction[] = ["duplicate", "templates", "varian
  * A ruleset's entity kind (its table, `type`), as its rules answer the server of it in a ruleset's view. Every kind
  * takes the same steps, and adds its rules to the ones they name:
  * - an entity found by its id (`find`) and described (`describe`): its row as the view resolves it, with the fields its
- *   properties hold (`fields`), as its form shows them (`describeFields`);
+ *   stored values hold (`fields`), as its form shows them (`describeFields`);
  * - a page of its rows (`openList`): its query's filters read by their schemas (`listFilters`), what the server reads
  *   it with (`filters`, `listOf`), and its rows described alike; its groups, a kind's that lists by group
  *   (`openGroups`: `groupFilters`, `groupsOf`);
@@ -63,7 +64,7 @@ export default abstract class RulesetEntity<
   /** Whether it makes copies of its entities: their templates, a duplicate, variants (an item's). */
   protected readonly copies: boolean = false;
 
-  /** The fields its properties hold: `FieldCodec.NONE`, none of its own. */
+  /** The fields its entities hold: `FieldCodec.NONE`, none of its own. */
   protected abstract readonly fields: FieldCodec<S>;
 
   /** What its form carries past its name, its description, its fields and its columns, by key: nothing. */
@@ -110,7 +111,7 @@ export default abstract class RulesetEntity<
   ): EntityCreatePlan<Columns, FieldValues<S>> {
     const columns = this.columnsOf(body, entity);
     const writes = this.writesOf(body, given, entity);
-    const fields = this.fields.read(this.writtenProperties(columns, writes?.properties?.values, entity));
+    const fields = this.fields.read(this.writtenValues(columns, writes?.properties?.values, entity));
     return { columns, fields, links: this.linksOf(body), writes };
   }
 
@@ -122,7 +123,7 @@ export default abstract class RulesetEntity<
    */
   private readFields(body: Body, entity?: ViewEntities[K]): Partial<FieldValues<S>> {
     const given = "fields" in body ? body.fields : undefined;
-    if (!this.rulesetData.takesProperties(this.type)) return {};
+    if (!this.rulesetData.takesFields(this.type)) return {};
     return this.fields.parse(given, {
       kept: entity && this.fieldsOf(entity),
       resolve: (type, id) => this.ids.resolve(type, id),
@@ -162,14 +163,14 @@ export default abstract class RulesetEntity<
     return undefined;
   }
 
-  /** Rows as the view resolves them (a stored id, its copy or winner), each with the fields its properties hold. */
+  /** Rows as the view resolves them (a stored id, its copy or winner), each with the fields its stored values hold. */
   protected describeRows<T extends Record<string, unknown> & { id: string }>(rows: T[]): (T & FieldValues<S>)[] {
     return this.rulesetData.cow.resolveRows(rows).map((row) => ({ ...row, ...this.fieldsOf(row) }));
   }
 
-  /** The fields an entity's properties hold, a reference the id the view keys its entity by (a copy's). */
+  /** The fields an entity's stored values hold, a reference the id the view keys its entity by (a copy's). */
   protected fieldsOf(entity: { id: string }): FieldValues<S> {
-    const values = this.fields.read(this.propertiesOf(entity));
+    const values = this.fields.read(this.valuesOf(entity));
     return this.fields.resolveReferences(values, (id) => this.rulesetData.cow.resolve(id));
   }
 
@@ -205,11 +206,11 @@ export default abstract class RulesetEntity<
   }
 
   /**
-   * The properties a written entity's fields are read off when its form writes none: the edited one's, none for a new
-   * one (an item's, its template's).
+   * The stored values a written entity's fields are read off when its form writes none: the edited one's, none for a
+   * new one (an item's, its template's).
    */
-  protected keptProperties(_columns: Columns, entity?: ViewEntities[K]): Property[] {
-    return entity ? this.propertiesOf(entity) : [];
+  protected keptValues(_columns: Columns, entity?: ViewEntities[K]): StoredValues {
+    return entity ? this.valuesOf(entity) : OwnerValues.NONE;
   }
 
   /** The lists a form links the entity to: none (`undefined`, an edit's kept), unless its kind is listed. */
@@ -236,11 +237,6 @@ export default abstract class RulesetEntity<
     };
   }
 
-  /** The properties an entity's fields are read off: its own (an item's, merged with its template's). */
-  protected propertiesOf(entity: { id: string }): Property[] {
-    return this.rulesetData.propertiesByEntity.get(entity.id) ?? [];
-  }
-
   /**
    * The entities a form names by id, each the one the view shows (`ids`: a copy's for its source's id), as the fields
    * that replace the form's as it enters (`planCreate`, `planEdit`): refused, naming one the view shows none of. None,
@@ -255,6 +251,11 @@ export default abstract class RulesetEntity<
     return this.view.rulesetData;
   }
 
+  /** The stored values an entity's fields are read off: its own (an item's, merged with its template's). */
+  protected valuesOf(entity: { id: string }): StoredValues {
+    return this.rulesetData.valuesOf(entity.id);
+  }
+
   /**
    * What a form writes beside the row (`given`: the fields it gives, read; `entity`: the one edited): its fields, those
    * it gives over those the entity keeps, which replace their properties; nothing when it gives none. Its kind's rules
@@ -266,11 +267,15 @@ export default abstract class RulesetEntity<
   }
 
   /**
-   * The properties a written entity's fields are read off: those its form writes (`written`), or, when it writes none,
-   * those it keeps (`keptProperties`).
+   * The stored values a written entity's fields are read off: those the properties its form writes keep (`written`),
+   * or, when it writes none, those it keeps (`keptValues`).
    */
-  protected writtenProperties(columns: Columns, written: PropertyValue[] | undefined, entity?: ViewEntities[K]) {
-    return written ?? this.keptProperties(columns, entity);
+  protected writtenValues(
+    columns: Columns,
+    written: PropertyValue[] | undefined,
+    entity?: ViewEntities[K],
+  ): StoredValues {
+    return written ? this.fields.storedOf(written) : this.keptValues(columns, entity);
   }
 
   /**
@@ -288,14 +293,14 @@ export default abstract class RulesetEntity<
     if (!has) this.refuseAction(action);
   }
 
-  /** An entity as its page shows it: its row as the view resolves it, with the fields its properties hold. */
+  /** An entity as its page shows it: its row as the view resolves it, with the fields its stored values hold. */
   describe(id: string) {
     return this.describeRows([this.find(id)])[0];
   }
 
   /** The fields its form shows, as the ruleset declares them: their labels, their inputs and their options. */
   describeFields(): FormField[] {
-    if (!this.rulesetData.takesProperties(this.type)) return [];
+    if (!this.rulesetData.takesFields(this.type)) return [];
     return this.fields.describe();
   }
 
