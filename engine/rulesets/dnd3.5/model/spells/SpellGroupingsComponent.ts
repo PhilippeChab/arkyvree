@@ -6,7 +6,7 @@ import type AbilitiesComponent from "@/engine/rulesets/dnd3.5/model/abilities/Ab
 import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
 import SpellLists from "@/engine/rulesets/dnd3.5/rules/SpellLists.ts";
 import { stripSeparators } from "@/shared/text.ts";
-import { SPELL_DESCRIPTOR, SPELL_SCHOOL } from "@/vocabulary/dnd3.5/properties/index.ts";
+import { SPELL_DESCRIPTOR, SPELL_SCHOOL } from "@/vocabulary/dnd3.5/fields/index.ts";
 import { SPELL_SAVE_DC_BASE } from "@/vocabulary/dnd3.5/spells.ts";
 
 type SpellGroup = Record<string, SpellDcsByClass>;

@@ -4,8 +4,8 @@ import { ALL_DOMAINS } from "@/content/dnd3.5/generated/srd/domains.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { UNARMED_STRIKE } from "@/vocabulary/dnd3.5/combat.ts";
 import { CREATURE_TYPES } from "@/vocabulary/dnd3.5/creatureTypes.ts";
+import { FEAT_FAMILY, WEAPON_MAX_RANGE_INCREMENTS, WEAPON_RANGE } from "@/vocabulary/dnd3.5/fields/index.ts";
 import { SECRET_LANGUAGE_TYPE } from "@/vocabulary/dnd3.5/languages.ts";
-import { FEAT_FAMILY, WEAPON_MAX_RANGE_INCREMENTS, WEAPON_RANGE } from "@/vocabulary/dnd3.5/properties/index.ts";
 import { WEAPON_TYPE_DEFINITIONS } from "@/vocabulary/dnd3.5/weapons.ts";
 
 import { describeRequirement, seededRows } from "./seededRows.ts";

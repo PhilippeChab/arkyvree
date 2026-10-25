@@ -22,7 +22,7 @@ import {
 } from "@/tests/support/rulesets.ts";
 import { writeStoredValues } from "@/tests/support/storedValues.ts";
 import { makeSession } from "@/tests/support/users.ts";
-import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/properties/index.ts";
+import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** Every page of a list, by its size and its ids. */
 async function readPages(getPage: (page: number) => Promise<{ items: { id: string }[]; nextPage?: number }>) {

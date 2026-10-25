@@ -7,7 +7,7 @@ import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Rulesets } from "@/server/repositories/index.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
-import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/properties/index.ts";
+import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 describe("FeatsComponent.injectGroupings", () => {
   test("puts a family named like a feat in that feat's entry, and never the feat in itself", async () => {

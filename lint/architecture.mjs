@@ -33,7 +33,7 @@
  *   is named `tx`, the name it knows a query by.
  * - `generic-rows`: the generic tables' raw rows (an entity's fields and links, a ruleset's, a character's fields) are read
  *   and written in `server/repositories/` alone, where the generic repositories (`server/repositories/stored/`) give
- *   them their meaning by what each module declares: everything else reads a kind's rows, a join's, properties.
+ *   them their meaning by what each module declares: everything else reads a kind's rows, a join's, fields.
  * - `folder-index`: code outside a folder that has an `index.ts` imports it through that index (the service folders,
  *   `cow/`, `policies/`, the client's component folders; code outside a client component folder enters it at its
  *   outermost index, never a subfolder's). Files within the folder import each other directly, and a test may reach a
@@ -221,7 +221,7 @@ const ROOT_FOLDERS = {
       { to: "content/*/packages/", why: "the runner applies the packages, and a seeder writes what one gathers" },
       {
         to: "server/repositories/stored/",
-        why: "a seeder writes an entity's rows, its joins and its properties as the server does: the generic tables, by what each module declares",
+        why: "a seeder writes an entity's rows, its joins and its fields as the server does: the generic tables, by what each module declares",
       },
       {
         from: "database/seeders/*/characters/",
@@ -414,7 +414,7 @@ function createGenericRows(context) {
             node: specifier,
             message:
               `${specifier.imported.name} is a generic table's raw rows, which only server/repositories/ reads: ` +
-              "read a kind's rows, a join's or properties through their repository (server/repositories/stored/).",
+              "read a kind's rows, a join's or fields through their repository (server/repositories/stored/).",
           });
         }
       }

@@ -9,7 +9,7 @@ import { formatFieldName } from "@/shared/customization/fields.ts";
 import { getOperators } from "@/shared/customization/operators.ts";
 import { deriveNameLabels, deriveSegmentLabels, isLeafOfKind, type TargetPath } from "@/shared/customization/target.ts";
 import { capitalize, stripSeparators } from "@/shared/text.ts";
-import { SPELL_DESCRIPTOR, SPELL_SCHOOL } from "@/vocabulary/dnd3.5/properties/index.ts";
+import { SPELL_DESCRIPTOR, SPELL_SCHOOL } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 const NAVIGATABLE_SPELL_DC_PATHS = [
   { path: "dc.misc", description: "Other bonuses to spell DC", type: "number" as const },

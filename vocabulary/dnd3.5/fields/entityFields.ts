@@ -34,6 +34,8 @@ import {
 } from "@/vocabulary/dnd3.5/weapons.ts";
 
 import { ARMOR_AC_BONUS, ARMOR_CHECK_PENALTY, ARMOR_MAX_DEX, ARMOR_PROFICIENCY, ARMOR_TYPE } from "./armor.ts";
+import { CLASS_CASTER_TYPE } from "./class.ts";
+import { CLASS_LEVEL_BAB, CLASS_LEVEL_SKILL_POINTS } from "./classLevel.ts";
 import {
   FEAT_FAMILY,
   FEAT_OVERSIZED_TWO_WEAPON_FIGHTING,
@@ -49,8 +51,6 @@ import {
   MAGIC_AURA,
   MAGIC_CASTER_LEVEL,
 } from "./item.ts";
-import { CLASS_CASTER_TYPE } from "./klass.ts";
-import { CLASS_LEVEL_BAB, CLASS_LEVEL_SKILL_POINTS } from "./klassLevel.ts";
 import { RACE_QUADRUPED, RACE_SPEED_IGNORES_ENCUMBRANCE } from "./race.ts";
 import { RULESET_ABILITY_INCREASES, RULESET_FEAT_ADVANCEMENT } from "./ruleset.ts";
 import { SHIELD_AC_BONUS, SHIELD_PROFICIENCY, SHIELD_TYPE } from "./shield.ts";
@@ -87,6 +87,52 @@ import {
   WEAPON_STRENGTH_DAMAGE,
   WEAPON_TYPE,
 } from "./weapon.ts";
+
+/** A class's fields: the ability its bonus spells and spell DCs come from, and its caster type. */
+const CLASS_FIELDS = {
+  bonusSpellAbilityId: {
+    description: "Ability score used for bonus spells per day",
+    kind: "ref",
+    label: "Bonus Spell Ability",
+    references: "abilities",
+    role: "bonusSpellAbility",
+  },
+  casterType: {
+    description: "Whether this class casts arcane or divine spells",
+    kind: "choice",
+    label: "Caster Type",
+    field: CLASS_CASTER_TYPE,
+    values: CASTER_TYPES,
+  },
+} as const;
+
+/**
+ * A class level's fields: its base attack bonus and its skill points, in their bounds, 0 without their rows, both always
+ * written.
+ */
+const CLASS_LEVEL_FIELDS = {
+  bab: {
+    default: 0,
+    description: "Base attack bonus at this class level",
+    kind: "number",
+    label: "Base Attack Bonus",
+    // A full base attack bonus's at the last level: one never outruns its level
+    max: MAX_CLASS_LEVEL,
+    min: 0,
+    field: CLASS_LEVEL_BAB,
+    write: "always",
+  },
+  skills: {
+    default: 0,
+    description: "Skill points gained per level",
+    kind: "number",
+    label: "Skill Points",
+    max: MAX_TABLE_COUNT,
+    min: 0,
+    field: CLASS_LEVEL_SKILL_POINTS,
+    write: "always",
+  },
+} as const;
 
 /**
  * A feat's fields: the families it's in (a feat can be in two), the weapon rules it changes, and the schools it forbids
@@ -373,52 +419,6 @@ const ITEM_FIELDS = {
   },
 } as const;
 
-/** A class's fields: the ability its bonus spells and spell DCs come from, and its caster type. */
-const KLASS_FIELDS = {
-  bonusSpellAbilityId: {
-    description: "Ability score used for bonus spells per day",
-    kind: "ref",
-    label: "Bonus Spell Ability",
-    references: "abilities",
-    role: "bonusSpellAbility",
-  },
-  casterType: {
-    description: "Whether this class casts arcane or divine spells",
-    kind: "choice",
-    label: "Caster Type",
-    field: CLASS_CASTER_TYPE,
-    values: CASTER_TYPES,
-  },
-} as const;
-
-/**
- * A class level's fields: its base attack bonus and its skill points, in their bounds, 0 without their rows, both always
- * written.
- */
-const KLASS_LEVEL_FIELDS = {
-  bab: {
-    default: 0,
-    description: "Base attack bonus at this class level",
-    kind: "number",
-    label: "Base Attack Bonus",
-    // A full base attack bonus's at the last level: one never outruns its level
-    max: MAX_CLASS_LEVEL,
-    min: 0,
-    field: CLASS_LEVEL_BAB,
-    write: "always",
-  },
-  skills: {
-    default: 0,
-    description: "Skill points gained per level",
-    kind: "number",
-    label: "Skill Points",
-    max: MAX_TABLE_COUNT,
-    min: 0,
-    field: CLASS_LEVEL_SKILL_POINTS,
-    write: "always",
-  },
-} as const;
-
 /** A race's fields: whether armor and load leave its speed, and whether it walks on four legs. */
 const RACE_FIELDS = {
   speedIgnoresEncumbrance: {
@@ -591,8 +591,8 @@ const SPELL_FIELDS = {
 export const ENTITY_FIELDS = {
   feats: FEAT_FIELDS,
   items: ITEM_FIELDS,
-  classes: KLASS_FIELDS,
-  class_levels: KLASS_LEVEL_FIELDS,
+  classes: CLASS_FIELDS,
+  class_levels: CLASS_LEVEL_FIELDS,
   spells: SPELL_FIELDS,
   races: RACE_FIELDS,
   rulesets: RULESET_FIELDS,

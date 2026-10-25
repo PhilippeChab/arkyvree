@@ -13,7 +13,7 @@ import {
   SPELL_RANGE_TYPE,
   SPELL_RESISTANCE,
   SPELL_SCHOOL,
-} from "@/vocabulary/dnd3.5/properties/index.ts";
+} from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** The fields every module declares, 3.5's among them. */
 const DECLARED = StorageEngine.shared().declaredFields();

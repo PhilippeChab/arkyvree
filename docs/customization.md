@@ -1,8 +1,8 @@
-# Customization System — Modifiers, Requirements, Properties
+# Customization System — Modifiers, Requirements, Fields
 
 ## Overview
 
-Entities of the kinds a module's storage declares customizable (`StoredKind.customizable`: 3.5's feats, spells, items, races, classes, class levels; the server's `CUSTOMIZABLE_TYPES`, the view's `RulesetData.isCustomizable`, and the rules' `customizationPages`, the kinds whose customizations have a page of their own, a class's being its page's tabs) can have **modifiers** and **requirements** attached via junction tables in the `customization` schema, and **properties**, its fields ([persistence.md](./persistence.md#the-generic-tables)). A user edits an entity's modifiers and requirements in its page's tabs; its properties are its fields, which its own form edits and its own save writes ([Properties](#properties)).
+Entities of the kinds a module's storage declares customizable (`StoredKind.customizable`: 3.5's feats, spells, items, races, classes, class levels; the server's `CUSTOMIZABLE_TYPES`, the view's `RulesetData.isCustomizable`, and the rules' `customizationPages`, the kinds whose customizations have a page of their own, a class's being its page's tabs) can have **modifiers** and **requirements** attached via junction tables in the `customization` schema, and **fields**, its stored values ([persistence.md](./persistence.md#the-generic-tables)). A user edits an entity's modifiers and requirements in its page's tabs; its fields are its own form's, which its own save writes ([Fields](#fields)).
 
 A class's own modifiers apply once to a character with any level of it, and its requirements are checked to take any level of it, with that level's own (the level-up wizard's class list), and on a character who has it. The class page's Modifiers and Requirements tabs are the sections every entity's customization page has (`ClassCustomizationSections`).
 
@@ -89,14 +89,14 @@ requirements: [
 - Root entries: `"1"`, `"2"`, `"3"`
 - Children: `"1.1"`, `"1.2"`, nested: `"1.1.1"`, `"1.1.2"`
 
-## Properties
+## Fields
 
-Properties are key-value pairs of an entity: its fields (`rules.entity_fields`, a ruleset's `rules.ruleset_fields`), or its links when the value names an entity (a class's bonus spell ability), its stored values, which `Fields` (`server/repositories/stored/StoredFields.ts`) reads and writes ([persistence.md](./persistence.md#the-generic-tables)). They store metadata used by the character engine (e.g., weapon damage dice, armor AC bonus, spell school). See [Auto-Generated Customization](#auto-generated-customization) below for all property types.
+Fields are an entity's values past its columns, each named by its ruleset: its field rows (`rules.entity_fields`, a ruleset's `rules.ruleset_fields`), or its links when the value names an entity (a class's bonus spell ability), its stored values, which `Fields` (`server/repositories/stored/StoredFields.ts`) reads and writes ([persistence.md](./persistence.md#the-generic-tables)). They hold what the character engine reads (e.g., weapon damage dice, armor AC bonus, spell school). See [Auto-Generated Customization](#auto-generated-customization) below for every field.
 
-A property is never edited as one: it's a field of its entity, which its entity's own form shows beside its name and description, and its entity's own save writes. The client never names a property; a ruleset adds, changes or removes a field by its declarations alone, with no client change and no column.
+A field is never edited on its own: its entity's own form shows it beside its name and description, and its entity's own save writes it. The client never names a field; a ruleset adds, changes or removes a field by its declarations alone, with no client change and no column.
 
-- **Declarations**: a ruleset's property names are constants of its vocabulary (`vocabulary/dnd3.5/properties/`), which the engine, the seeds, the parser and the tests import instead of writing the name. Each entity type declares its fields once, as data written `as const` (`ENTITY_FIELDS` in `vocabulary/dnd3.5/properties/entityFields.ts`), in the order its stat block (and its form) shows them: each by its name, with the stored field that keeps it (`field`; a reference's, the role of its owner's link, `role`), its `label`, what it's for (`description`), its `kind`, the values it takes when they're a closed list (`values`: a select's options, which a save holds it to), the entity kind its value names by its id (`references`: a class's bonus spell ability is an ability's id), a text field's example (`placeholder`), its `default` and bounds, how it's written (`write: "always"`, an item's flags' `absent: null`), when it counts (`when`) and where its form shows it (`shownIn`). Its shape is the engine's `FieldSpec` (`engine/core/fields/Field.ts`), which a codec built from it checks, and a test holds each declaration to its kind's keys, each stored field to one field (`tests/vocabulary/dnd3.5/properties/entityFields.test.ts`). The module hands them to the engine (its `fields`), whose `DeclaredFields` (`engine/core/fields/DeclaredFields.ts`: the fields in their declared order, a closed list's values, a flag's true and false, and how sibling copies merge each) orders every owner's stored values in the view (`StoredValues`, which a codec reads). The declared fields are the whole list: a ruleset invents none.
-- **Codecs**: each kind keeps its fields in its properties by a codec built from its declarations (`FieldCodec`, `engine/core/fields/`, over `FieldSpec`'s kinds, `shared/customization/fields.ts`: a flag, a number in its bounds, a choice, a list, a reference, a text, a progression (`kind: "progression"`: a frequency, one every so many levels, none at 0, and more at the levels it names, kept as a row of its frequency, `every:3`, and one per level it gives more at, `5:1`, which stand for the whole together, its default without any row), a group of fields under a label), in its folder (`entities/<kind>/fields.ts`: `FEAT_FIELDS`, `new FieldCodec(ENTITY_FIELDS.feats)`, `ITEM_FIELDS`, `CLASS_FIELDS`, `CLASS_LEVEL_FIELDS`, `SPELL_FIELDS`, `RACE_FIELDS`, `SKILL_FIELDS`; the ruleset's own, `RULESET_FIELDS`, `ruleset/fields.ts`), which adds only what a declaration can't say as data, its rules (`storesWhen`: a spell without a school keeps none of its fields). Their values are typed by the declarations (`FieldValues`: a choice is one of its values, a class's `casterType` `"Arcane" | "Divine"`). A field may count on a condition (`when`): on another field's value, which the codec reads, writes and takes from a form by (a skill's armor check multiplier counts while armor weighs on it, its default otherwise), or on a column's, which only its form reads (an item's weapon group shows for a weapon, its armor's for an armor). A field may show in a group of its level rather than on its own (`shownIn`), among the group's fields in their declared order, its value its own all the same: an armor's or a shield's max Dex bonus, armor check penalty and arcane spell failure, which both keep alike, show in its Armor or Shield section, with its base armor or shield, its proficiency and its bonus. A stored value outside its type's list still reads as stored: a closed list holds what's written, never what's read.
+- **Declarations**: a ruleset's field names are constants of its vocabulary (`vocabulary/dnd3.5/fields/`), which the engine, the seeds, the parser and the tests import instead of writing the name. Each entity type declares its fields once, as data written `as const` (`ENTITY_FIELDS` in `vocabulary/dnd3.5/fields/entityFields.ts`), in the order its stat block (and its form) shows them: each by its name, with the stored field that keeps it (`field`; a reference's, the role of its owner's link, `role`), its `label`, what it's for (`description`), its `kind`, the values it takes when they're a closed list (`values`: a select's options, which a save holds it to), the entity kind its value names by its id (`references`: a class's bonus spell ability is an ability's id), a text field's example (`placeholder`), its `default` and bounds, how it's written (`write: "always"`, an item's flags' `absent: null`), when it counts (`when`) and where its form shows it (`shownIn`). Its shape is the engine's `FieldSpec` (`engine/core/fields/Field.ts`), which a codec built from it checks, and a test holds each declaration to its kind's keys, each stored field to one field (`tests/vocabulary/dnd3.5/fields/entityFields.test.ts`). The module hands them to the engine (its `fields`), whose `DeclaredFields` (`engine/core/fields/DeclaredFields.ts`: the fields in their declared order, a closed list's values, a flag's true and false, and how sibling copies merge each) orders every owner's stored values in the view (`StoredValues`, which a codec reads). The declared fields are the whole list: a ruleset invents none.
+- **Codecs**: each kind keeps its fields in its stored values by a codec built from its declarations (`FieldCodec`, `engine/core/fields/`, over `FieldSpec`'s kinds, `shared/customization/fields.ts`: a flag, a number in its bounds, a choice, a list, a reference, a text, a progression (`kind: "progression"`: a frequency, one every so many levels, none at 0, and more at the levels it names, kept as a row of its frequency, `every:3`, and one per level it gives more at, `5:1`, which stand for the whole together, its default without any row), a group of fields under a label), in its folder (`entities/<kind>/fields.ts`: `FEAT_FIELDS`, `new FieldCodec(ENTITY_FIELDS.feats)`, `ITEM_FIELDS`, `CLASS_FIELDS`, `CLASS_LEVEL_FIELDS`, `SPELL_FIELDS`, `RACE_FIELDS`, `SKILL_FIELDS`; the ruleset's own, `RULESET_FIELDS`, `ruleset/fields.ts`), which adds only what a declaration can't say as data, its rules (`storesWhen`: a spell without a school keeps none of its fields). Their values are typed by the declarations (`FieldValues`: a choice is one of its values, a class's `casterType` `"Arcane" | "Divine"`). A field may count on a condition (`when`): on another field's value, which the codec reads, writes and takes from a form by (a skill's armor check multiplier counts while armor weighs on it, its default otherwise), or on a column's, which only its form reads (an item's weapon group shows for a weapon, its armor's for an armor). A field may show in a group of its level rather than on its own (`shownIn`), among the group's fields in their declared order, its value its own all the same: an armor's or a shield's max Dex bonus, armor check penalty and arcane spell failure, which both keep alike, show in its Armor or Shield section, with its base armor or shield, its proficiency and its bonus. A stored value outside its type's list still reads as stored: a closed list holds what's written, never what's read.
 - **Forms**: an entity's own columns are its rules' to describe too, in the same shape (`RulesDescription.columns`, `GET /api/rules`: a class's hit die, a race's size and speed, a spell's save and spell lists, an item's cost, weight, type, slot and template, a level's saves and granted feats; each keyed where it goes in the body, with the inputs only a column takes: a decimal in its unit, a pool's links each at its level, a base per save, a level's granted feats, an item's template), which the client lays out around the fields (`EntityFormFields`, [frontend.md](./frontend.md)). The fields a form shows are the engine's to describe, never the client's (`FieldCodec.describe`, by `FieldForms`: each declared field's key, label, help and input, a choice's options or several values, a number's bounds and default, a progression's default, its last level and the most a level gives, a reference's kind and whether it's required, a group's fields, and when it shows, `shownWhen`). The API answers every entity type's at once, and the ruleset's Settings' (`GET /api/rulesets/:id/fields`, `Engine.for(scope).describeFields()`), and the client lays each out by its input, one generic component per kind (`EntityFields`, [frontend.md](./frontend.md)).
 - **One write path**: a field is written by its entity's own create and edit (`planCreate`, `planEdit`, a class level's through its class's owned entities: `owned(type, klassId).planCreate`, `planEdit`), from the body's `fields`, which the route carries as it is (`entityFields`, `server/routers/api/validation.ts`, typed `EntityFieldValues`). The kind's codec reads them against the ruleset's declarations (`FieldCodec.parse`): a key that's no field its entity type declares is refused as invalid, by field (`fields.school: Not a field of this entity`), and so is a value outside its type's closed list (`fields.families.0`), a number past its bounds, and a reference the view shows no entity of, naming it (`Ability <id> does not belong to this ruleset`); a reference is stored as the id the view keys its entity by (a fork's copy's for its source's). The fields it gives merge over those the entity keeps, and its plan writes them all, each field and link role of its codec replaced (`EntityWrites.fields`, a `FieldsWrite`, which `Fields.update` writes), with what its kind's rules add (a spell's school's Spell Focus feats, a skill's Skill Focus, a class level's requirement of the previous level). An inherited entity is copied first, as any edit copies it (`EntityWriter`). An edit sends the fields it changed alone (`useEntitySave`), so a stored value its ruleset no longer lists stays until it's changed, and is refused if it's given back.
 - **Items made from a template** store only the fields their template doesn't hold: a save writes its fields over those it shows (its own over its template's) as the values its template's don't hold, clearing the rest (`FieldCodec.toOverrides`, `ItemEntity.writesOf`), so the item keeps reading the rest off its template, and a template's change reaches them. A field left empty is its template's. A duplicate copies its source's customizations, then writes its form's fields over the stored values it copied.
@@ -106,7 +106,7 @@ A property is never edited as one: it's a field of its entity, which its entity'
 
 ### Feat family groupings (`feats.<family>.*.possessed`)
 
-Feats with a `FEAT_FAMILY` property are grouped by the character engine. Requirements can check "any feat in the family" using the `feats.<family>.*.possessed` wildcard. The group holds every feat of the family in the character's ruleset, had or not: the `*` expands to all of them, and the requirement is met when the character has any. `feats.<family>.*.count` reads each one's count, and `feats.<family>.count` all of them together: "any two luck feats" is `feats.luck.count >= 2`, and "Sneak attack +2d6" `feats.sneakattack.count >= 2`, every class's dice together. A family's name alone (`feats.weaponfocus.possessed`) names no feat, and a modifier on it gives none: it's skipped. A feat named like its family shares its key: `feats.martialweaponproficiency.possessed` is the feat Martial Weapon Proficiency (every martial weapon), and `feats.martialweaponproficiency.*.possessed` any feat of its family (Martial Weapon Proficiency: Rapier…), which doesn't include that feat; its `count` is the feat's, the family's isn't reachable. A family's paths are a requirement's only: a modifier grants one feat (`feats.<name>.possessed` set true), never a family, whose feats it would mark possessed without giving any. So the path picker doesn't offer `feats.<family>.*.possessed` to a modifier, the save refuses it, and the build skips one stored, saying why (see [How a sheet is built](#how-a-sheet-is-built)).
+Feats with a `FEAT_FAMILY` field are grouped by the character engine. Requirements can check "any feat in the family" using the `feats.<family>.*.possessed` wildcard. The group holds every feat of the family in the character's ruleset, had or not: the `*` expands to all of them, and the requirement is met when the character has any. `feats.<family>.*.count` reads each one's count, and `feats.<family>.count` all of them together: "any two luck feats" is `feats.luck.count >= 2`, and "Sneak attack +2d6" `feats.sneakattack.count >= 2`, every class's dice together. A family's name alone (`feats.weaponfocus.possessed`) names no feat, and a modifier on it gives none: it's skipped. A feat named like its family shares its key: `feats.martialweaponproficiency.possessed` is the feat Martial Weapon Proficiency (every martial weapon), and `feats.martialweaponproficiency.*.possessed` any feat of its family (Martial Weapon Proficiency: Rapier…), which doesn't include that feat; its `count` is the feat's, the family's isn't reachable. A family's paths are a requirement's only: a modifier grants one feat (`feats.<name>.possessed` set true), never a family, whose feats it would mark possessed without giving any. So the path picker doesn't offer `feats.<family>.*.possessed` to a modifier, the save refuses it, and the build skips one stored, saying why (see [How a sheet is built](#how-a-sheet-is-built)).
 
 ```ts
 // "Any Weapon Focus feat"
@@ -127,7 +127,7 @@ Available families: `FEAT_FAMILIES` in `vocabulary/dnd3.5/feats.ts`, the `FEAT_F
 - Feat type families, each named like its type: `metamagic`, `itemcreation`, `luck`, and Complete Arcane's `draconic` feats, by their "Draconic …" name
 - Class feature families: `turnorrebukeundead`, `wildshape`, `favoredenemy`, `smite` (any smite: smite evil's, a blackguard's smite good, a hunter of the dead's smite undead, a samurai's kiai smite…), and the features each class seeds as its own feat, "Sneak Attack (Rogue)" (`CLASS_FEATURE_FAMILIES`, which `CLASS_FEAT_FAMILIES` in `codegen/dnd3.5/tools/terms/classFeatFamilies.ts` matches): `animalcompanion`, `bardicmusic`, `evasion`, `flurryofblows`, `grace`, `inspirecourage`, `kipower`, `layonhands`, `poisonuse`, `rage`, `skirmish`, `smiteevil`, `sneakattack`, `suddenstrike`, `summonfamiliar`, `trapfinding`
 
-Grouping paths are generated from the families (`FeatsPaths`' `generateFamilyPaths`: `FEAT_FAMILIES` plus the ruleset's `FEAT_FAMILY` property values, a stored row's of another family too, which a save no longer takes) — no manual path registration needed. `FeatGroupingsComponent` holds each family's feats, which those paths read on the sheet. The parser's generator writes a check of a family by its own name ("Weapon Specialization") as a check of any of its feats (`FeatSeeds.familyChecks`), and a count of it ("Sneak attack +2d6") as the family's count.
+Grouping paths are generated from the families (`FeatsPaths`' `generateFamilyPaths`: `FEAT_FAMILIES` plus the ruleset's `FEAT_FAMILY` values, a stored row's of another family too, which a save no longer takes) — no manual path registration needed. `FeatGroupingsComponent` holds each family's feats, which those paths read on the sheet. The parser's generator writes a check of a family by its own name ("Weapon Specialization") as a check of any of its feats (`FeatSeeds.familyChecks`), and a count of it ("Sneak attack +2d6") as the family's count.
 
 ### Skill sub-type wildcards (`skills.<prefix>*.rank`)
 
@@ -174,10 +174,10 @@ Example: `"Martial Weapon Proficiency: Battleaxe"` → `"martialweaponproficienc
 
 ## Auto-Generated Customization
 
-Some entities get properties, requirements, or feats generated. Every kind's form writes its fields as its properties (`RulesetEntity.writesOf`, which each kind's rules build on); spells, skills and class levels get their effects too when they're created or edited, from the engine's plan of the form, its `writes` (`entities("spells").planCreate` and `planEdit`, `entities("skills").planCreate` and `planEdit`, `owned("classes", klassId).planCreate` and `planEdit`: `engine/rulesets/dnd3.5/entities/spells/SpellEntity.ts` with `spells/fields.ts` and `feats/SpellFocusFeats.ts`, `skills/SkillEntity.ts`, `classes/ClassLevelEntity.ts`). Weapons, armors and shields get theirs from their type's definition when the content packages write them (the tables of `vocabulary/dnd3.5/weapons.ts` and `armor.ts`, through `content/dnd3.5/builders/items/fields.ts`: `weaponFields`, `armorFields`, `shieldFields`). They're an item's fields: `ITEM_FIELDS.read` reads them (`engine/rulesets/dnd3.5/entities/items/fields.ts`, which the inventory and the equipping check read with), and `ITEM_FIELDS.write` gives them back as stored values, which a test holds every seeded item's to. Saving an item plans its slot (`entities("items").planCreate`, `planDuplicate`, `planEdit`, `planVariants`: an armor's the torso, a shield's the off hand), and its fields its form gives. An item made from a template stores only the fields it overrides (`FieldCodec.toOverrides`), and `RulesetData.inheritedValuesOf` merges its stored values with the template's before they're read; `RulesetData.itemRequirements` splits its requirements into its template's (`template`) and its own (`own`), which the 3.5 rules read as its proficiency and its other requirements.
+Some entities get fields, requirements, or feats generated. Every kind's form writes its fields as its stored values (`RulesetEntity.writesOf`, which each kind's rules build on); spells, skills and class levels get their effects too when they're created or edited, from the engine's plan of the form, its `writes` (`entities("spells").planCreate` and `planEdit`, `entities("skills").planCreate` and `planEdit`, `owned("classes", klassId).planCreate` and `planEdit`: `engine/rulesets/dnd3.5/entities/spells/SpellEntity.ts` with `spells/fields.ts` and `feats/SpellFocusFeats.ts`, `skills/SkillEntity.ts`, `classes/ClassLevelEntity.ts`). Weapons, armors and shields get theirs from their type's definition when the content packages write them (the tables of `vocabulary/dnd3.5/weapons.ts` and `armor.ts`, through `content/dnd3.5/builders/items/fields.ts`: `weaponFields`, `armorFields`, `shieldFields`). They're an item's fields: `ITEM_FIELDS.read` reads them (`engine/rulesets/dnd3.5/entities/items/fields.ts`, which the inventory and the equipping check read with), and `ITEM_FIELDS.write` gives them back as stored values, which a test holds every seeded item's to. Saving an item plans its slot (`entities("items").planCreate`, `planDuplicate`, `planEdit`, `planVariants`: an armor's the torso, a shield's the off hand), and its fields its form gives. An item made from a template stores only the fields it overrides (`FieldCodec.toOverrides`), and `RulesetData.inheritedValuesOf` merges its stored values with the template's before they're read; `RulesetData.itemRequirements` splits its requirements into its template's (`template`) and its own (`own`), which the 3.5 rules read as its proficiency and its other requirements.
 
 Every create's or edit's plan takes one shape, `EntityWrites` (`engine/core/module/parts/entities/plans.ts`): it says what to write beside the entity's row, without ids, and the service writes it in its transaction (`writeEntityWrites`, `server/services/rulesets/entityWrites.ts`).
-- `properties` gives the fields of the entity's form as its properties, in place of those of the same types it stored before. Its other properties stay.
+- `fields` gives the fields of the entity's form as its stored values (a `FieldsWrite`), in place of the values it stored before for those fields. Its other fields stay.
 - `made` gives the entities the plan makes with it, each by its table (`type`), its row's columns, the lists it's linked to (`links`, each a `ListLink`: its list, `listId`, and its level on it) and its customizations, and `removed` the ones that go with it, each by its table and id, refused while a character picked one. The core names no kind: the 3.5 module's are feats, generated in the general feats' pool (`GeneratedFeats`, `engine/rulesets/dnd3.5/entities/feats/GeneratedFeats.ts`: a skill's Skill Focus, a school's Spell Focus). The service writes each by its table (`EntityRepositories.of(type)`), reading of the view only its copy-on-write data.
 - `requirement` is what the entity requires (a class level's previous level).
 - A feat that's one entity's own (a skill's Skill Focus) is made, renamed and deleted with it: a new skill brings its own, even in a fork that deleted the one it inherited.
@@ -185,9 +185,9 @@ Every create's or edit's plan takes one shape, `EntityWrites` (`engine/core/modu
 
 ### Weapons (type = "Weapon")
 
-Properties generated from `WEAPON_TYPE_DEFINITIONS` in `vocabulary/dnd3.5/weapons.ts` (`weaponFields`, `content/dnd3.5/builders/items/fields.ts`):
+Fields generated from `WEAPON_TYPE_DEFINITIONS` in `vocabulary/dnd3.5/weapons.ts` (`weaponFields`, `content/dnd3.5/builders/items/fields.ts`):
 
-| Property Type              | Example (Longsword)                 |
+| Field                      | Example (Longsword)                 |
 |----------------------------|-------------------------------------|
 | `WEAPON_PROFICIENCY`       | Martial                             |
 | `WEAPON_FAMILY`            | Sword                               |
@@ -196,7 +196,7 @@ Properties generated from `WEAPON_TYPE_DEFINITIONS` in `vocabulary/dnd3.5/weapon
 | `WEAPON_CRITICAL_MULTIPLIER` | 2                                 |
 | `WEAPON_SIZE`              | Medium                              |
 | `WEAPON_TYPE`              | Longsword                           |
-| `DAMAGE_TYPE`              | Slashing (one property per damage type) |
+| `DAMAGE_TYPE`              | Slashing (one value per damage type) |
 | `WEAPON_FINESSABLE`        | false                               |
 | `WEAPON_RANGE`             | _(only if > 0)_                     |
 | `WEAPON_RANGED`            | _(only on a ranged weapon)_         |
@@ -234,9 +234,9 @@ An item's proficiency is its base item's requirements: its template's, or its ow
 
 ### Armor (type = "Armor")
 
-Properties generated from `ARMOR_TYPE_DEFINITIONS` in `vocabulary/dnd3.5/armor.ts` (`armorFields`):
+Fields generated from `ARMOR_TYPE_DEFINITIONS` in `vocabulary/dnd3.5/armor.ts` (`armorFields`):
 
-| Property Type        | Example (Chain Mail) |
+| Field                | Example (Chain Mail) |
 |----------------------|----------------------|
 | `ARMOR_PROFICIENCY`  | Medium               |
 | `ARMOR_TYPE`         | Chain Mail           |
@@ -254,9 +254,9 @@ Armor or a shield is equipped only when its proficiency is met, unless forced. W
 
 ### Shields (type = "Shield")
 
-Properties generated from `SHIELD_TYPE_DEFINITIONS` in `vocabulary/dnd3.5/armor.ts` (`shieldFields`):
+Fields generated from `SHIELD_TYPE_DEFINITIONS` in `vocabulary/dnd3.5/armor.ts` (`shieldFields`):
 
-| Property Type        | Example (Heavy Steel Shield) |
+| Field                | Example (Heavy Steel Shield) |
 |----------------------|------------------------------|
 | `SHIELD_PROFICIENCY` | Heavy                        |
 | `SHIELD_TYPE`        | Heavy Steel Shield           |
@@ -270,9 +270,9 @@ Proficiency requirements:
 
 ### Class Levels
 
-Properties written from a level's form's fields, its create's and its edit's, by `owned("classes", klassId).planCreate` and `planEdit` (`classes/ClassLevelEntity.ts`, with `classes/fields.ts`: `CLASS_LEVEL_FIELDS`):
+Fields written from a level's form, its create's and its edit's, by `owned("classes", klassId).planCreate` and `planEdit` (`classes/ClassLevelEntity.ts`, with `classes/fields.ts`: `CLASS_LEVEL_FIELDS`):
 
-| Property Type              | Description                              |
+| Field                      | Description                              |
 |----------------------------|------------------------------------------|
 | `CLASS_LEVEL_BAB`          | BAB for this level, based on progression type (Full/Medium/Poor), 0 to `MAX_CLASS_LEVEL` |
 | `CLASS_LEVEL_SKILL_POINTS` | Skill points per level from class definition, 0 to `MAX_TABLE_COUNT` |
@@ -280,11 +280,11 @@ Properties written from a level's form's fields, its create's and its edit's, by
 Requirement auto-generated for level 2+, when the level is created (`ClassLevelEntity.planCreate`'s `requirement`):
 - `classes.<normalized_class_name>.level > N-1` — ensures the character has reached the previous level before gaining the next
 
-On update: changing BAB progression or skill points re-syncs the properties (deletes old, creates new).
+On update: changing BAB progression or skill points rewrites the fields (their old values replaced).
 
 ### Skills
 
-Properties written from the skill form's fields by `entities("skills").planCreate` and `planEdit`. They're a skill's fields: `SKILL_FIELDS.read` reads them (`engine/rulesets/dnd3.5/entities/skills/fields.ts`, which the skill API's descriptions, `entities("skills").describe` and its list's `describe`, a save's answer and the character read with too), and the core rules' seeder writes them with `SKILL_FIELDS.write` (`Engine.forRules(baseRules).toFieldsWrite`), as a save does:
+Fields written from the skill form by `entities("skills").planCreate` and `planEdit`. They're a skill's fields: `SKILL_FIELDS.read` reads them (`engine/rulesets/dnd3.5/entities/skills/fields.ts`, which the skill API's descriptions, `entities("skills").describe` and its list's `describe`, a save's answer and the character read with too), and the core rules' seeder writes them with `SKILL_FIELDS.write` (`Engine.forRules(baseRules).toFieldsWrite`), as a save does:
 - `SKILL_IMPACTED_BY_WEIGHT` — whether armor check penalty applies
 - `SKILL_CHECK_PENALTY_MULTIPLIER` — how many times over a skill armor weighs on takes the penalty (2 on Swim; absent means 1): it counts while the skill is impacted by weight (`when`), 1 otherwise, and its form shows it then
 - `SKILL_USABLE_WITHOUT_TRAINING` — whether untrained use is allowed
@@ -303,7 +303,7 @@ skill deletes its old generated feat and its customizations, then creates the re
 
 ### Races
 
-Properties the engine reads off a race (`combat/concerns/InitiativeAndSpeed.ts`, `combat/EncumbranceComponent.ts`), seeded where the SRD says so. They're a race's fields, which its form edits and the components read with `RACE_FIELDS.read` (`entities/races/fields.ts`):
+Fields the engine reads off a race (`combat/concerns/InitiativeAndSpeed.ts`, `combat/EncumbranceComponent.ts`), seeded where the SRD says so. They're a race's fields, which its form edits and the components read with `RACE_FIELDS.read` (`entities/races/fields.ts`):
 - `RACE_SPEED_IGNORES_ENCUMBRANCE` — the race keeps its speed in medium or heavy armor and under a medium or heavy load. The dwarf has it, through the parser's override (`reference/srd/races.json`).
 - `RACE_QUADRUPED` — the race walks on four legs, so it carries more for its size: ×¼ Fine to ×24 Colossal (×1½ Medium, ×3 Large) instead of a biped's ×⅛ to ×16. The four-legged familiars, animal companions and special mounts have it (`QUADRUPED_FIELDS`, `content/dnd3.5/builders/races/fields.ts`, which `content/dnd3.5/data/bonds/` gives them); birds, bats and snakes don't.
 
@@ -315,9 +315,9 @@ Its progression, which every character of the ruleset follows whatever its class
 
 ### Spells
 
-Properties written from the spell form's fields by `entities("spells").planCreate` and `planEdit`. They're a spell's fields: `SPELL_FIELDS.read` reads them (`entities/spells/fields.ts`, which the spell groupings read a spell's school and descriptors with too), and `SPELL_FIELDS.write` writes them:
+Fields written from the spell form by `entities("spells").planCreate` and `planEdit`. They're a spell's fields: `SPELL_FIELDS.read` reads them (`entities/spells/fields.ts`, which the spell groupings read a spell's school and descriptors with too), and `SPELL_FIELDS.write` writes them:
 
-| Property Type | Description |
+| Field | Description |
 |---|---|
 | `SPELL_SCHOOL` | School of magic (required) |
 | `SPELL_SUBSCHOOL` | Subschool (optional) |
@@ -331,8 +331,8 @@ Properties written from the spell form's fields by `entities("spells").planCreat
 | `SPELL_RESISTANCE` | Whether spell resistance applies, as the book writes it: "Yes", "No", "Yes (harmless)" (optional, free text) |
 | `SPELL_COMPONENT` | Required components — one field row per value (optional, multi) |
 
-On create: with a school, generates the properties from the form's fields, and the school's Spell Focus feats unless they're there (`entities("spells").planCreate`'s `made`).
-On update: replaces the generated property types (the spell's fields) with the form's, none without a school, and creates the feats of a school that's new. The spell's other properties remain, and so do existing school feats.
+On create: with a school, writes the form's fields, and the school's Spell Focus feats unless they're there (`entities("spells").planCreate`'s `made`).
+On update: replaces the spell's fields with the form's, none without a school, and creates the feats of a school that's new. Existing school feats remain.
 On delete: cleans up the spell's customizations. School feats remain even if the school has no spells left.
 
 Feats auto-generated per unique school by `entities("spells").planCreate` and `planEdit` (`SpellFocusFeats`, `feats/SpellFocusFeats.ts`, a set of `GeneratedFeats` beside a skill's `SkillFocusFeats`):
@@ -362,7 +362,7 @@ Feats auto-generated per unique school by `entities("spells").planCreate` and `p
 
 Use `{{ target.path }}` syntax to reference another stat as the modifier value. Template modifiers are evaluated **after** all literal modifiers, so they read final resolved values (see [How a sheet is built](#how-a-sheet-is-built)).
 
-The template field's path picker lists what a template reads (the `template` kind of the target path listing): one value each from the sheet, the read-only totals and modifiers included (`abilities.charisma.modifier`, `combat.hp.total`). It leaves out what a template can't read: wildcards, a skill family's paths and a spell's property lists (`readsMany`: several values, or a list), and an item's own weapon paths (`weapon.*`), which read the item a template doesn't have.
+The template field's path picker lists what a template reads (the `template` kind of the target path listing): one value each from the sheet, the read-only totals and modifiers included (`abilities.charisma.modifier`, `combat.hp.total`). It leaves out what a template can't read: wildcards, a skill family's paths and a spell's field lists (`readsMany`: several values, or a list), and an item's own weapon paths (`weapon.*`), which read the item a template doesn't have.
 
 A template is checked when it's saved, as the sheet will evaluate it (`findTemplateError`, `shared/customization/templateExpression.ts`): it parses, calls only `min`, `max`, `floor`, `ceil` and `abs`, reads only paths of that listing, and gives the value's type: a single path of the target's type, or a number computed from numbers. The seeds' templates, which no save checks, are held to the same check by a test (`tests/seeds/dnd3.5/targets.test.ts`).
 
@@ -385,7 +385,7 @@ The character engine computes the **base, permanent character sheet** — no tem
 - Mobility (+4 AC vs AoO only)
 - Point Blank Shot (+1 within 30 ft only)
 - Power Attack / Combat Expertise (variable trade-off, player chooses)
-- Weapon Finesse (handled via the feat's `FEAT_WEAPON_FINESSE` and the weapon's `WEAPON_FINESSABLE` properties, not a modifier)
+- Weapon Finesse (handled via the feat's `FEAT_WEAPON_FINESSE` and the weapon's `WEAPON_FINESSABLE` fields, not a modifier)
 - Rage (+4 STR/CON while raging — temporary)
 - Smite Evil (+CHA to attack, +level to damage — per-use ability)
 
@@ -418,14 +418,14 @@ Ruleset customization endpoints require the source entity to belong to the compo
 Modifiers belong directly to ruleset entities, classes and class levels included. A modifier can have requirements, but cannot have other modifiers. Editing an inherited modifier or its requirements copies its owning entity and preserves the modifier requirements. Missing owners and sources outside the ruleset source chain are rejected.
 
 Modifier and requirement updates and deletes follow one pattern (an entity's
-properties are its fields, which its own save writes: see [Properties](#properties)). The
+fields are written by its own save: see [Fields](#fields)). The
 row must be shown on the entity in the composed ruleset: its own rows plus
 visible contributions from sibling extensions. `CustomizationEdit.cowCustomization` then copies the
 owning entity if it is inherited and resolves the row to its copy, so a sibling
 contribution is written through the local copy, never the stored sibling. After a
 COW copy, clients must use the returned `resolvedEntityId` and reload its customizations;
 stale ancestor customization IDs are rejected. During the initial copy, mutations
-use the exact copied IDs, including sibling properties, modifiers, and modifier
+use the exact copied IDs, including sibling fields, modifiers, and modifier
 requirements, so equal values are never used to guess a copied row's identity.
 Sibling copying follows the same source-chain order as display when selecting
 duplicate contributions across extensions.

@@ -16,7 +16,7 @@ import {
 } from "@/tests/support/rulesets.ts";
 import { findStoredValues, writeStoredValues } from "@/tests/support/storedValues.ts";
 import { makeSession } from "@/tests/support/users.ts";
-import { CLASS_CASTER_TYPE, DAMAGE_TYPE, RACE_QUADRUPED } from "@/vocabulary/dnd3.5/properties/index.ts";
+import { CLASS_CASTER_TYPE, DAMAGE_TYPE, RACE_QUADRUPED } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 type EntityType = "races" | "classes" | "items";
 

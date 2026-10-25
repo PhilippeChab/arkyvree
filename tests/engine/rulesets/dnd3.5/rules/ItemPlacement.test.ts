@@ -6,7 +6,7 @@ import ItemPlacement from "@/engine/rulesets/dnd3.5/rules/ItemPlacement.ts";
 import { LOCATION_OPTIONS } from "@/shared/enums.ts";
 import { storedValues } from "@/tests/support/storedValues.ts";
 import { HAND_LOCATIONS } from "@/vocabulary/dnd3.5/equipment.ts";
-import { ITEM_HAS_CHARGES, WEAPON_SIZE } from "@/vocabulary/dnd3.5/properties/index.ts";
+import { ITEM_HAS_CHARGES, WEAPON_SIZE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** An item's stored values, its `ITEM_HAS_CHARGES` field holding `value`. */
 function charges(value: FieldValue) {

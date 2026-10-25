@@ -29,7 +29,7 @@ import {
 import { getSeedCtx } from "@/tests/support/seed.ts";
 import { findStoredValues, writeStoredValues } from "@/tests/support/storedValues.ts";
 import { createTestUser, makeSession } from "@/tests/support/users.ts";
-import { FEAT_FAMILY, WEAPON_TYPE } from "@/vocabulary/dnd3.5/properties/index.ts";
+import { FEAT_FAMILY, WEAPON_TYPE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 function skill(abilityId: string, name: string, fields: Record<string, unknown> = {}) {
   return {

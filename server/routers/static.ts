@@ -8,7 +8,7 @@ interface RouteMeta {
 }
 
 const DEFAULT_DESCRIPTION =
-  "A programmable ruleset engine and character creator for tabletop RPGs. Customize game rules with modifiers, requirements, and properties, then build characters with real-time validation.";
+  "A programmable ruleset engine and character creator for tabletop RPGs. Customize game rules with modifiers, requirements, and fields, then build characters with real-time validation.";
 
 const DEFAULT_OG_DESCRIPTION =
   "A programmable ruleset engine and character creator for tabletop RPGs. Customize rules, build characters, and manage campaigns.";

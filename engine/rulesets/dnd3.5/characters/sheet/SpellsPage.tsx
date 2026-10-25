@@ -16,7 +16,7 @@ import {
   SPELL_SCHOOL,
   SPELL_SUBSCHOOL,
   SPELL_TARGET,
-} from "@/vocabulary/dnd3.5/properties/index.ts";
+} from "@/vocabulary/dnd3.5/fields/index.ts";
 import { SPELL_LEVEL_LABELS } from "@/vocabulary/dnd3.5/spells.ts";
 
 import ContinuationHeader from "./ContinuationHeader.tsx";

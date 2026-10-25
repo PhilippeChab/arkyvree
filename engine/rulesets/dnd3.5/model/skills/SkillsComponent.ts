@@ -86,24 +86,24 @@ export default class SkillsComponent extends CharacterComponent<LoadedCharacterD
 
   private skillPointAbilityId: string | null = null;
 
-  private skillPointKlassLevelProperties: Map<string, { bab: number; skills: number }> = new Map();
+  private skillPointClassLevelFields: Map<string, { bab: number; skills: number }> = new Map();
 
   /**
    * Each of the ruleset's skills, with the fields its stored values hold (`skillFields`) and the ranks the character's class
    * levels put in it; and the skill points' budget, from the ruleset's skill point ability (`skillPointAbilityId`) and
-   * each class level's points (`klassLevelProperties`).
+   * each class level's points (`classLevelFields`).
    */
   override initialize(
     {
-      klassLevelProperties,
+      classLevelFields,
       skillFields,
       skillPointAbilityId,
-    }: Pick<LoadedCharacterData, "klassLevelProperties" | "skillFields" | "skillPointAbilityId">,
+    }: Pick<LoadedCharacterData, "classLevelFields" | "skillFields" | "skillPointAbilityId">,
     { rulesetData }: RulesetView,
   ) {
     const rulesetSkills = Dnd35View.of(rulesetData).skills;
     this.skillPointAbilityId = skillPointAbilityId;
-    this.skillPointKlassLevelProperties = klassLevelProperties;
+    this.skillPointClassLevelFields = classLevelFields;
     const classes = this.classes.getClasses();
 
     // Build skill ID → name lookup from ruleset skills
@@ -290,7 +290,7 @@ export default class SkillsComponent extends CharacterComponent<LoadedCharacterD
       .sort((a, b) => a.characterLevel.position - b.characterLevel.position);
     return {
       pointsPerLevel: levels.map((level) =>
-        this.getLevelPointsPerLevel(this.skillPointKlassLevelProperties.get(level.klassLevel.id)?.skills ?? 0),
+        this.getLevelPointsPerLevel(this.skillPointClassLevelFields.get(level.klassLevel.id)?.skills ?? 0),
       ),
       bonusPerLevel: this.skillBudget.perlevel,
     };

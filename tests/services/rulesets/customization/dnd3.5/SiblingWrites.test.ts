@@ -23,7 +23,7 @@ import {
 } from "@/tests/support/rulesets.ts";
 import { findStoredValues, writeStoredValues } from "@/tests/support/storedValues.ts";
 import { makeSession } from "@/tests/support/users.ts";
-import { FEAT_FAMILY, FEAT_WEAPON_FINESSE, SPELL_SUBSCHOOL } from "@/vocabulary/dnd3.5/properties/index.ts";
+import { FEAT_FAMILY, FEAT_WEAPON_FINESSE, SPELL_SUBSCHOOL } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 type EntityType = "feats" | "spells";
 type Pairing = "snapshot" | "name";

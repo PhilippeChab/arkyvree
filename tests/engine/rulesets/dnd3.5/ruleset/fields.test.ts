@@ -10,7 +10,7 @@ import { createTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 import { findStoredValues, listStoredValues, storedValues } from "@/tests/support/storedValues.ts";
 import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
-import { RULESET_ABILITY_INCREASES, RULESET_FEAT_ADVANCEMENT } from "@/vocabulary/dnd3.5/properties/index.ts";
+import { RULESET_ABILITY_INCREASES, RULESET_FEAT_ADVANCEMENT } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** The core rules' progression: a feat every 3 levels and one more at the first, an ability increase every 4. */
 const CORE = {

@@ -30,7 +30,7 @@ import {
   CLASS_LEVEL_BAB,
   CLASS_LEVEL_SKILL_POINTS,
   SPELL_SCHOOL,
-} from "@/vocabulary/dnd3.5/properties/index.ts";
+} from "@/vocabulary/dnd3.5/fields/index.ts";
 
 import { describeCustomizations, freshExtensionSeeder, freshSeeder, namesOf } from "./freshSeed.ts";
 

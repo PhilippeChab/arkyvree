@@ -10,12 +10,7 @@ import type { Item } from "@/engine/rulesets/dnd3.5/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Entities, Fields } from "@/server/repositories/index.ts";
 import { storedValues } from "@/tests/support/storedValues.ts";
-import {
-  DAMAGE_TYPE,
-  ITEM_HAS_CHARGES,
-  WEAPON_FINESSABLE,
-  WEAPON_RANGE,
-} from "@/vocabulary/dnd3.5/properties/index.ts";
+import { DAMAGE_TYPE, ITEM_HAS_CHARGES, WEAPON_FINESSABLE, WEAPON_RANGE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** Stored values as a sorted list of `field=value`: a multiset. */
 function multiset({ fields }: StoredValues) {

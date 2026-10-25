@@ -17,7 +17,7 @@ import { createTestItem } from "@/tests/support/items.ts";
 import { createSeededTestRuleset, createTestRuleset } from "@/tests/support/rulesets.ts";
 import { findPlainItem, findSeededCharacter, getSeedCtx, NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
 import { createTestUser, makeSession } from "@/tests/support/users.ts";
-import { WEAPON_PROFICIENCY, WEAPON_SIZE } from "@/vocabulary/dnd3.5/properties/index.ts";
+import { WEAPON_PROFICIENCY, WEAPON_SIZE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 interface Placement {
   charges?: [number | null, number | null];

@@ -4,7 +4,7 @@ import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { FEAT_FAMILIES } from "@/vocabulary/dnd3.5/feats.ts";
-import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/properties/index.ts";
+import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 import type FeatsComponent from "./FeatsComponent.ts";
 import type { FeatEntry } from "./FeatsComponent.ts";

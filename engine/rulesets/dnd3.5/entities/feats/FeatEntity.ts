@@ -9,7 +9,7 @@ import ListedEntity from "@/engine/rulesets/dnd3.5/entities/ListedEntity.ts";
 import AptitudeTargets from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTargets.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type { FeatWithAptitudes } from "@/engine/rulesets/dnd3.5/view/rows.ts";
-import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/properties/index.ts";
+import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 import { FEAT_COLUMNS } from "./columns.ts";
 import { FEAT_FIELDS } from "./fields.ts";

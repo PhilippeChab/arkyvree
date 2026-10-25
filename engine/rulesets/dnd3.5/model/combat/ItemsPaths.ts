@@ -12,7 +12,7 @@ import { deriveNameLabels, deriveSegmentLabels, isLeafOfKind, type TargetPath } 
 import { isRecord } from "@/shared/isRecord.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { UNARMED_STRIKE } from "@/vocabulary/dnd3.5/combat.ts";
-import { ARMOR_TYPE, SHIELD_TYPE, WEAPON_PROFICIENCY, WEAPON_TYPE } from "@/vocabulary/dnd3.5/properties/index.ts";
+import { ARMOR_TYPE, SHIELD_TYPE, WEAPON_PROFICIENCY, WEAPON_TYPE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 import type ArmorsComponent from "./ArmorsComponent.ts";
 import type ShieldsComponent from "./ShieldsComponent.ts";

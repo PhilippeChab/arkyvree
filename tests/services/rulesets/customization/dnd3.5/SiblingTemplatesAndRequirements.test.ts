@@ -18,7 +18,7 @@ import {
 } from "@/tests/support/rulesets.ts";
 import { findStoredValues, writeStoredValues } from "@/tests/support/storedValues.ts";
 import { makeSession } from "@/tests/support/users.ts";
-import { WEAPON_BASE_DAMAGE, WEAPON_CRITICAL_RANGE } from "@/vocabulary/dnd3.5/properties/index.ts";
+import { WEAPON_BASE_DAMAGE, WEAPON_CRITICAL_RANGE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** What each extension's copy of the template holds of its own: a weapon field, its damage or its critical range. */
 const TEMPLATE_FIELDS: [string, FieldValue][] = [

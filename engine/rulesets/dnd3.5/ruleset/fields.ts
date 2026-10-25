@@ -1,5 +1,5 @@
 import { FieldCodec, type FieldValues } from "@/engine/core/fields/index.ts";
-import { ENTITY_FIELDS } from "@/vocabulary/dnd3.5/properties/index.ts";
+import { ENTITY_FIELDS } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** A ruleset's own fields' values. */
 export type RulesetFieldValues = FieldValues<typeof RULESET_FIELDS.fields>;

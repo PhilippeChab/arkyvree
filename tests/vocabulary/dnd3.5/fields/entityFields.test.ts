@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import Field, { type Fields, type FieldSpec } from "@/engine/core/fields/Field.ts";
-import { ENTITY_FIELDS } from "@/vocabulary/dnd3.5/properties/entityFields.ts";
+import { ENTITY_FIELDS } from "@/vocabulary/dnd3.5/fields/entityFields.ts";
 
 /** The keys each kind of field declares: what a codec reads of it, and no other (a misspelled key reads as none). */
 const KEYS: { [K in FieldSpec["kind"]]: readonly (keyof Extract<FieldSpec, { kind: K }>)[] } = {

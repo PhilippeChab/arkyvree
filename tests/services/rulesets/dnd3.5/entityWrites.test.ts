@@ -10,7 +10,7 @@ import { measure } from "@/tests/support/database.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { findStoredValues, writeStoredValues } from "@/tests/support/storedValues.ts";
 import { makeSession } from "@/tests/support/users.ts";
-import { SPELL_DURATION, SPELL_SCHOOL, SPELL_SUBSCHOOL } from "@/vocabulary/dnd3.5/properties/index.ts";
+import { SPELL_DURATION, SPELL_SCHOOL, SPELL_SUBSCHOOL } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** Writes that write nothing but what's given. */
 function writesOf(writes: Partial<EntityWrites>): EntityWrites {

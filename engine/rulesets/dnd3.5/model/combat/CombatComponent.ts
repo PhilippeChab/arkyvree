@@ -20,7 +20,7 @@ class CombatComponent extends include(CombatState, ArmorClass, Attacks, HitPoint
    * The sheet from the character's classes (its hit dice, its base attack bonus) and race (its speed), an unarmed strike
    * in its first set's main hand, then what its inventory has equipped.
    */
-  override initialize({ klassLevelProperties, race }: Pick<LoadedCharacterData, "klassLevelProperties" | "race">) {
+  override initialize({ classLevelFields, race }: Pick<LoadedCharacterData, "classLevelFields" | "race">) {
     const classes = this.classes.getClasses();
     const levels = Object.values(classes).reduce((acc, klass) => {
       for (const level of klass.levels) acc.push(level.characterLevel);
@@ -31,7 +31,7 @@ class CombatComponent extends include(CombatState, ArmorClass, Attacks, HitPoint
     this.initializeArmorClass();
     this.initializeHitPoints(levels);
     this.initializeInitiative();
-    this.initializeBaseAttackBonus(classes, klassLevelProperties);
+    this.initializeBaseAttackBonus(classes, classLevelFields);
     this.initializeGrapple();
     this.initializeSpeed(race);
 

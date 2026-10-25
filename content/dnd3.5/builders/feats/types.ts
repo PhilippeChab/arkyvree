@@ -1,6 +1,6 @@
 import type { ModifierSeed, RequirementEntry } from "@/content/core/builders/customization/types.ts";
 import type { PartialFieldValues } from "@/shared/customization/fields.ts";
-import type { ENTITY_FIELDS } from "@/vocabulary/dnd3.5/properties/index.ts";
+import type { ENTITY_FIELDS } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** A feat: the aptitudes it's taken in, what it takes, and what it gives. */
 export interface FeatSeed {

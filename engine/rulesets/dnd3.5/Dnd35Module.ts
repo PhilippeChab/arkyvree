@@ -1,5 +1,5 @@
 import type { RulesetModule } from "@/engine/core/module/index.ts";
-import { ENTITY_FIELDS } from "@/vocabulary/dnd3.5/properties/index.ts";
+import { ENTITY_FIELDS } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 import Dnd35Characters from "./characters/Dnd35Characters.ts";
 import Dnd35Content, { type SeededFields } from "./content/Dnd35Content.ts";

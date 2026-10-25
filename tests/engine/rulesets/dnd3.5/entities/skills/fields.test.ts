@@ -13,7 +13,7 @@ import {
   SKILL_CHECK_PENALTY_MULTIPLIER,
   SKILL_IMPACTED_BY_WEIGHT,
   SKILL_USABLE_WITHOUT_TRAINING,
-} from "@/vocabulary/dnd3.5/properties/index.ts";
+} from "@/vocabulary/dnd3.5/fields/index.ts";
 
 describe("A skill's fields", () => {
   test("are none without their values, and as stored with them", () => {
