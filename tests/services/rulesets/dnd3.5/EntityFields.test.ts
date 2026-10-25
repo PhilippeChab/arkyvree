@@ -92,6 +92,13 @@ describe("An entity's fields", () => {
     });
     expect(listStoredValues(await findStoredValues("feats", feat.id))).toEqual([`${FEAT_WEAPON_FINESSE}=true`]);
 
+    // A list given a value twice keeps it once
+    await EntitiesService.updateEntity(session, rulesetId, "feats", feat.id, {
+      name: "Finesse",
+      fields: { families: ["Luck", "Lore", "Luck"] },
+    });
+    expect(await EntitiesService.getEntity(rulesetId, "feats", feat.id)).toMatchObject({ families: ["Luck", "Lore"] });
+
     const race = await EntitiesService.createEntity(session, rulesetId, "races", {
       name: "Centaur",
       size: "Large",
