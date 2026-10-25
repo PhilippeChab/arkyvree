@@ -4,7 +4,6 @@ import type { FeatReference } from "@/codegen/dnd3.5/tools/types/feats.ts";
 import { and, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { FEAT_FAMILIES } from "@/vocabulary/dnd3.5/feats.ts";
-import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 import { BaseDetector } from "./BaseDetector.ts";
 import { BenefitModifiers } from "./readers/modifiers/BenefitModifiers.ts";
@@ -101,13 +100,12 @@ export class FeatDetector extends BaseDetector<FeatReference> {
       const family =
         FEAT_FAMILIES.find((name) => name.toLowerCase() === entry.featType) ??
         (entry.name.startsWith(`${DRACONIC_FAMILY} `) ? DRACONIC_FAMILY : undefined);
-      const properties = family ? [{ type: FEAT_FAMILY, value: family }] : [];
 
       detected[entry.name] = {
         aptitudes,
         requirements: prerequisites.requirements,
         modifiers: benefit.modifiers,
-        ...(properties.length > 0 ? { properties } : {}),
+        ...(family ? { fields: { families: [family] } } : {}),
         ...(errors.length > 0 ? { errors } : {}),
         ...(!template && benefit.unresolved.length > 0 ? { unresolvedModifiers: benefit.unresolved } : {}),
         ...(!template && prerequisites.unresolved.length > 0 ? { unresolvedPrereqs: prerequisites.unresolved } : {}),
@@ -155,7 +153,7 @@ export class FeatDetector extends BaseDetector<FeatReference> {
         aptitudes: [...baseAptitudes, ...extraAptitudes],
         requirements,
         modifiers: ovr?.modifiers ?? det.modifiers ?? [],
-        ...((ovr?.properties ?? det.properties)?.length ? { properties: ovr?.properties ?? det.properties } : {}),
+        ...((ovr?.fields ?? det.fields) ? { fields: ovr?.fields ?? det.fields } : {}),
         ...((ovr?.stackable ?? det.stackable) ? { stackable: true } : {}),
         ...(ovr?.selectable === false ? { selectable: false } : {}),
         ...(det.template ? { template: det.template } : {}),

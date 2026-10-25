@@ -6,12 +6,6 @@ export interface ModifierEffect {
   valueType: string;
 }
 
-/** A property: a fact about its owner, by type (a weapon's damage, a feat's family). */
-export interface Property {
-  type: string;
-  value: string;
-}
-
 /** A check: `target` compared to `value` with `operator`. */
 export interface RequirementCondition {
   operator: string;

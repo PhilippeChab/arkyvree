@@ -17,7 +17,7 @@
       "aura": "Faint transmutation"
     },
     "Oathbow": {
-      "properties": [{ "type": "WEAPON_MIGHTY", "value": "2" }]
+      "fields": { "weapon": { "mighty": 2 } }
     },
     "Security": {
       "aura": "Strong conjuration"

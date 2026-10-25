@@ -14,7 +14,6 @@ import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { FAVORED_ENEMY_FAMILY } from "@/vocabulary/dnd3.5/feats.ts";
-import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 /**
  * The creature type of each feature granting a locked favored enemy ("Favored Enemy (Giant)"), by its mapping's key
@@ -128,7 +127,7 @@ export function OwnFeats<B extends Constructor<BaseClassSeeds>>(Base: B) {
           aptitudes,
           ...(modifiers.length > 0 ? { modifiers } : {}),
           ...(requirements.length > 0 ? { requirements } : {}),
-          ...(families.length > 0 ? { properties: families.map((value) => ({ type: FEAT_FAMILY, value })) } : {}),
+          ...(families.length > 0 ? { fields: { families } } : {}),
         });
       }
 

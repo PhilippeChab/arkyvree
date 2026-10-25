@@ -5,7 +5,6 @@
 
 import { grantFeat } from "@/content/dnd3.5/builders/feats/possession.ts";
 import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
-import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/properties/index.ts";
 import { ALL_WEAPONS } from "@/vocabulary/dnd3.5/weapons.ts";
 
 const DEITYS_WEAPON_FOCUS: FeatSeed[] = ALL_WEAPONS.map((w) => ({
@@ -14,7 +13,7 @@ const DEITYS_WEAPON_FOCUS: FeatSeed[] = ALL_WEAPONS.map((w) => ({
   generated: true,
   aptitudes: ["Deity's Weapon Focus"],
   modifiers: [grantFeat(`Weapon Focus: ${w}`)],
-  properties: [{ type: FEAT_FAMILY, value: "Weapon Focus" }],
+  fields: { families: ["Weapon Focus"] },
 }));
 
 const DEITYS_WEAPON_SPECIALIZATION: FeatSeed[] = ALL_WEAPONS.map((w) => ({
@@ -23,7 +22,7 @@ const DEITYS_WEAPON_SPECIALIZATION: FeatSeed[] = ALL_WEAPONS.map((w) => ({
   generated: true,
   aptitudes: ["Deity's Weapon Specialization"],
   modifiers: [grantFeat(`Weapon Specialization: ${w}`)],
-  properties: [{ type: FEAT_FAMILY, value: "Weapon Specialization" }],
+  fields: { families: ["Weapon Specialization"] },
 }));
 
 export const DEITYS_WEAPON_FEATS = [...DEITYS_WEAPON_FOCUS, ...DEITYS_WEAPON_SPECIALIZATION];

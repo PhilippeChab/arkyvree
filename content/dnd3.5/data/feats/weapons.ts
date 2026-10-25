@@ -2,7 +2,6 @@
 
 import { gte } from "@/content/core/builders/customization/requirements.ts";
 import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
-import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/properties/index.ts";
 import { MARTIAL_WEAPONS, SIMPLE_WEAPONS } from "@/vocabulary/dnd3.5/weapons.ts";
 
 /**
@@ -15,7 +14,7 @@ export const SPELL_WEAPON_FOCUS_FEATS: FeatSeed[] = ["Ranged Spell", "Touch Spel
   generated: true,
   aptitudes: ["General", "Fighter Bonus Feat"],
   requirements: [gte("combat.bab", 1)],
-  properties: [{ type: FEAT_FAMILY, value: "Weapon Focus" }],
+  fields: { families: ["Weapon Focus"] },
 }));
 
 /**
@@ -37,6 +36,6 @@ export const WEAPON_PROFICIENCY_FEATS: FeatSeed[] = [
     description: `You are proficient with the ${w.toLowerCase()}.`,
     aptitudes: ["General"],
     generated: true,
-    properties: [{ type: FEAT_FAMILY, value: "Martial Weapon Proficiency" }],
+    fields: { families: ["Martial Weapon Proficiency"] },
   })),
 ];

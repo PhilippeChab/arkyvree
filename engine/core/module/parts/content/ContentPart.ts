@@ -1,4 +1,5 @@
-import type { FieldCodec, Fields, FieldsWrite, FieldValues } from "@/engine/core/fields/index.ts";
+import type { FieldCodec, Fields, FieldsWrite } from "@/engine/core/fields/index.ts";
+import type { PartialFieldValues } from "@/shared/customization/fields.ts";
 import type { TargetPath } from "@/shared/customization/target.ts";
 
 /**
@@ -20,11 +21,11 @@ export default abstract class ContentPart<F> {
   ): TargetPath[];
 
   /**
-   * An entity's fields as the write of the stored values that keep them: what a seeder writes for them. A field it
-   * leaves out isn't named, so the entity keeps what it has of it, or reads its default (a ruleset's progression: the
-   * core rules').
+   * An entity's fields as the write of the stored values that keep them: what a seeder writes for those its seed gives
+   * (a group's some of its own, the group then written whole: its others cleared). A field it leaves out isn't named, so
+   * the entity keeps what it has of it, or reads its default (a ruleset's progression: the core rules').
    */
-  toFieldsWrite<K extends keyof F>(entityType: K, fields: Partial<FieldValues<Extract<F[K], Fields>>>): FieldsWrite {
+  toFieldsWrite<K extends keyof F>(entityType: K, fields: PartialFieldValues<Extract<F[K], Fields>>): FieldsWrite {
     return this.codecs[entityType].write(fields);
   }
 }

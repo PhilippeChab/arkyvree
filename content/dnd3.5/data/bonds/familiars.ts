@@ -5,7 +5,7 @@ import type { BondContent } from "@/content/dnd3.5/builders/bonds/types.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
 import { grantFeat } from "@/content/dnd3.5/builders/feats/possession.ts";
 import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
-import { QUADRUPED } from "@/content/dnd3.5/builders/races/properties.ts";
+import { QUADRUPED_FIELDS } from "@/content/dnd3.5/builders/races/fields.ts";
 import type { RaceSeed } from "@/content/dnd3.5/builders/races/types.ts";
 
 const FAMILIAR_APTITUDE = "Familiar Bond";
@@ -143,7 +143,7 @@ const FAMILIAR_RACES: RaceSeed[] = [
     description: "A small feline. Cat familiars grant their masters a +3 bonus on Move Silently checks.",
     size: "Tiny",
     baseSpeed: 30,
-    properties: QUADRUPED,
+    fields: QUADRUPED_FIELDS,
   },
   {
     name: "Hawk",
@@ -157,7 +157,7 @@ const FAMILIAR_RACES: RaceSeed[] = [
     description: "A small scaled reptile. Lizard familiars grant their masters a +3 bonus on Climb checks.",
     size: "Tiny",
     baseSpeed: 20,
-    properties: QUADRUPED,
+    fields: QUADRUPED_FIELDS,
   },
   {
     name: "Owl",
@@ -171,7 +171,7 @@ const FAMILIAR_RACES: RaceSeed[] = [
     description: "A small adaptive rodent. Rat familiars grant their masters a +2 bonus on Fortitude saves.",
     size: "Tiny",
     baseSpeed: 15,
-    properties: QUADRUPED,
+    fields: QUADRUPED_FIELDS,
   },
   {
     name: "Raven",
@@ -192,14 +192,14 @@ const FAMILIAR_RACES: RaceSeed[] = [
     description: "A small amphibian. Toad familiars grant their masters +3 hit points (a flat HP bonus, not scaling).",
     size: "Diminutive",
     baseSpeed: 5,
-    properties: QUADRUPED,
+    fields: QUADRUPED_FIELDS,
   },
   {
     name: "Weasel",
     description: "A small swift carnivore. Weasel familiars grant their masters a +2 bonus on Reflex saves.",
     size: "Tiny",
     baseSpeed: 20,
-    properties: QUADRUPED,
+    fields: QUADRUPED_FIELDS,
   },
 ];
 

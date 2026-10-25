@@ -1,15 +1,10 @@
 import { inArray } from "drizzle-orm";
 import type { PgTable } from "drizzle-orm/pg-core";
 
-import type {
-  Modifier,
-  ModifierSeed,
-  Property,
-  RequirementEntry,
-} from "@/content/core/builders/customization/types.ts";
+import type { Modifier, ModifierSeed, RequirementEntry } from "@/content/core/builders/customization/types.ts";
 import type { Db } from "@/drizzle/database.ts";
 import { entitySnapshotsInRules, modifiersInCustomization, requirementsInCustomization } from "@/drizzle/schema.ts";
-import { Engine, type FieldValue } from "@/engine/index.ts";
+import { Engine } from "@/engine/index.ts";
 import StoredEntities from "@/server/repositories/stored/StoredEntities.ts";
 import StoredFields, { type FieldsUpdate } from "@/server/repositories/stored/StoredFields.ts";
 import StoredJoins, { type JoinRow } from "@/server/repositories/stored/StoredJoins.ts";
@@ -94,20 +89,6 @@ export abstract class SeederState {
       value,
       valueType,
     }));
-  }
-
-  /**
-   * An entity's seeded properties (its content's `Property` seeds: a field's name and a value of it, as text) as the
-   * write of its stored values: each field's values, in their order, typed by the field's declaration (a number's
-   * parsed, a flag's `true` or not).
-   */
-  protected propertySeedsWrite(entityId: string, entityType: string, properties: Property[] = []): FieldsUpdate {
-    const fields: Record<string, FieldValue[]> = {};
-    for (const { type, value } of properties) {
-      const kind = Engine.storage().field(entityType, type)?.valueKind;
-      (fields[type] ??= []).push(kind === "number" ? Number(value) : kind === "flag" ? value === "true" : value);
-    }
-    return { id: entityId, type: entityType, values: { fields, links: {} } };
   }
 
   /** An entity's requirements as rows: each numbered by its place in the tree ("1", "2", "2.1"…). */

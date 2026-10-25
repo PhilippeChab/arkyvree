@@ -1,5 +1,6 @@
-import type { Fields, FieldValues } from "@/engine/core/fields/index.ts";
+import type { Fields } from "@/engine/core/fields/index.ts";
 import type { ContentPart } from "@/engine/core/module/index.ts";
+import type { PartialFieldValues } from "@/shared/customization/fields.ts";
 
 /**
  * The engine bound to a base rules' content, which the seeders and the codegen ask before any ruleset has a view: its
@@ -17,7 +18,7 @@ export default class ContentEngine<F> {
    * An entity's fields as the write of the stored values that keep them: what a seeder writes for them, a field left
    * out not named, which the entity keeps.
    */
-  toFieldsWrite<K extends keyof F>(entityType: K, fields: Partial<FieldValues<Extract<F[K], Fields>>>) {
+  toFieldsWrite<K extends keyof F>(entityType: K, fields: PartialFieldValues<Extract<F[K], Fields>>) {
     return this.content.toFieldsWrite(entityType, fields);
   }
 }

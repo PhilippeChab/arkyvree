@@ -4,20 +4,13 @@
  */
 
 import type { MagicItemCategory } from "@/codegen/dnd3.5/tools/types/magicItems.ts";
-import type { Property } from "@/content/core/builders/customization/types.ts";
+import type { ItemFields } from "@/content/dnd3.5/builders/items/types.ts";
 import { capitalize } from "@/shared/text.ts";
-import {
-  ARMOR_CHECK_PENALTY,
-  ARMOR_MAX_DEX,
-  ARMOR_PROFICIENCY,
-  ITEM_MASTERWORK,
-  ITEM_SPELL_FAILURE,
-} from "@/vocabulary/dnd3.5/properties/index.ts";
 
 /** What a specific armor's or shield's text says of itself, over its base's: its stats, weight and enhancement. */
 interface ArmorStats {
   enhancement?: number;
-  properties: Property[];
+  fields: ItemFields;
   weight?: string;
 }
 
@@ -165,13 +158,16 @@ const ENHANCEMENTS: [RegExp, (bonus: number) => WeaponEnhancement][] = [
   [/enhancement bonus of \+(\d)/, (bonus) => ({ attack: bonus, damage: bonus })],
 ];
 
-/** A stat the text states ("a maximum Dexterity bonus of +4"), and its value as the property holds it. */
-const STATS: [RegExp, string, (match: RegExpMatchArray) => string][] = [
-  [/arcane spell failure chance of (\d+)%|(\d+)% arcane spell failure chance/, ITEM_SPELL_FAILURE, (m) => m[1] ?? m[2]],
-  [/maximum Dexterity bonus of \+(\d+)/, ARMOR_MAX_DEX, (m) => m[1]],
-  [/armor check penalty of [-–](\d+)|[-–](\d+) armor check penalty/, ARMOR_CHECK_PENALTY, (m) => `-${m[1] ?? m[2]}`],
-  [/no armor check penalty/, ARMOR_CHECK_PENALTY, () => "0"],
-  [/considered (light|medium|heavy) armor/, ARMOR_PROFICIENCY, (m) => capitalize(m[1])],
+/** A stat the text states ("a maximum Dexterity bonus of +4"), and the item's field that holds it. */
+const STATS: [RegExp, (match: RegExpMatchArray) => ItemFields][] = [
+  [
+    /arcane spell failure chance of (\d+)%|(\d+)% arcane spell failure chance/,
+    (m) => ({ spellFailure: Number(m[1] ?? m[2]) }),
+  ],
+  [/maximum Dexterity bonus of \+(\d+)/, (m) => ({ maxDex: Number(m[1]) })],
+  [/armor check penalty of [-–](\d+)|[-–](\d+) armor check penalty/, (m) => ({ checkPenalty: -Number(m[1] ?? m[2]) })],
+  [/no armor check penalty/, () => ({ checkPenalty: 0 })],
+  [/considered (light|medium|heavy) armor/, (m) => ({ armor: { proficiency: capitalize(m[1]) } })],
 ];
 
 /**
@@ -188,19 +184,19 @@ export class MagicItemText {
    * own.
    */
   armorStats(): ArmorStats {
-    const properties = STATS.flatMap(([pattern, type, value]) => {
+    // A stat two of its patterns match is the first pattern's, in `STATS`' order
+    const fields = STATS.reduce<ItemFields>((stated, [pattern, field]) => {
       const match = this.text.match(pattern);
-      return match ? [{ type, value: value(match) }] : [];
-    });
+      return match ? { ...field(match), ...stated } : stated;
+    }, {});
     const enhancementMatch = ENHANCEMENT.map((pattern) => this.text.match(pattern)).find(Boolean);
     const enhancement = enhancementMatch ? Number(enhancementMatch[1]) : undefined;
     const masterwork = enhancement !== undefined || /\b(?:adamantine|masterwork)\b/i.test(this.text);
-    if (masterwork && !properties.some((property) => property.type === ARMOR_CHECK_PENALTY))
-      properties.push({ type: ITEM_MASTERWORK, value: "true" });
+    if (masterwork && fields.checkPenalty === undefined) fields.masterwork = true;
 
     const weightMatch = this.text.match(/weighs (\d+)(½)? pounds/);
     const weight = weightMatch ? `${weightMatch[1]}${weightMatch[2] ? ".5" : ""}` : undefined;
-    return { properties, ...(weight && { weight }), ...(enhancement && { enhancement }) };
+    return { fields, ...(weight && { weight }), ...(enhancement && { enhancement }) };
   }
 
   /** The base item a specific weapon, armor or shield is made from: the one its description names, else its name. */

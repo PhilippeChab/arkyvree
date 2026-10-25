@@ -1,10 +1,10 @@
-import type { ItemSeed } from "@/content/core/builders/items/types.ts";
 import type { CorePackageDefinition, ExtensionPackageDefinition } from "@/content/core/builders/packages/types.ts";
 import type { AbilitySeed } from "@/content/dnd3.5/builders/abilities/types.ts";
 import type { BondContent } from "@/content/dnd3.5/builders/bonds/types.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
 import type { DomainSeed } from "@/content/dnd3.5/builders/domains/types.ts";
 import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
+import type { Dnd35ItemSeed } from "@/content/dnd3.5/builders/items/types.ts";
 import type { LanguageSeed } from "@/content/dnd3.5/builders/languages/types.ts";
 import type { RaceSeed } from "@/content/dnd3.5/builders/races/types.ts";
 import type { SaveSeed } from "@/content/dnd3.5/builders/saves/types.ts";
@@ -37,14 +37,14 @@ export interface CoreContent {
   classes: ClassSeed[];
   domains: DomainSeed[];
   feats: FeatSeed[];
-  items: ItemSeed[];
+  items: Dnd35ItemSeed[];
   languages: LanguageSeed[];
   races: RaceSeed[];
   saves: SaveSeed[];
   skills: SkillSeed[];
   spells: LeveledSpellSeed[];
   /** The items others are made from, which a new ruleset starts with. */
-  templateItems: ItemSeed[];
+  templateItems: Dnd35ItemSeed[];
   wizardSchools: WizardSchoolSeed[];
 }
 

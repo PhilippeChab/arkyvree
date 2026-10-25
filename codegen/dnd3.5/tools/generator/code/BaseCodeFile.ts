@@ -11,7 +11,7 @@ const DECLARED_TYPES = {
   CowSpellEntry: "@/content/dnd3.5/builders/rulesets/types.ts",
   DomainSeed: "@/content/dnd3.5/builders/domains/types.ts",
   FeatSeed: "@/content/dnd3.5/builders/feats/types.ts",
-  ItemSeed: "@/content/core/builders/items/types.ts",
+  Dnd35ItemSeed: "@/content/dnd3.5/builders/items/types.ts",
   LeveledSpellSeed: "@/content/dnd3.5/builders/spells/types.ts",
   RaceSeed: "@/content/dnd3.5/builders/races/types.ts",
   SpellSeed: "@/content/dnd3.5/builders/spells/types.ts",
@@ -40,7 +40,7 @@ const IMPORT_TABLE: ImportTable = [
       "TOWER_SHIELD_PROF",
     ],
   ],
-  ["@/content/dnd3.5/builders/items/properties.ts", ["weaponProperties", "armorProperties", "shieldProperties"]],
+  ["@/content/dnd3.5/builders/items/fields.ts", ["weaponFields", "armorFields", "shieldFields"]],
   [
     "@/vocabulary/dnd3.5/weapons.ts",
     ["ALL_WEAPONS", "SIMPLE_WEAPONS", "MARTIAL_WEAPONS", "EXOTIC_WEAPONS", "CROSSBOW_WEAPONS"],

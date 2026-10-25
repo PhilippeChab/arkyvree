@@ -48,16 +48,16 @@ scripts/db/
 content/core/
 └── builders/
     ├── customization/    # What every ruleset's content writes its customizations with: eq(), gte(), or(), bonus(), setFlag()…, their types
-    ├── items/            # ItemSeed: the rows every ruleset's content seeds alike, as the core's steps write them
+    ├── items/            # ItemSeed: the rows every ruleset's content seeds alike, as the core's steps write them, with the fields its ruleset declares an item's
     └── packages/         # PackageDefinition: a package as data (its name, type, seedsVersion, ruleset and content); CorePackageDefinition, ExtensionPackageDefinition
 
 content/dnd3.5/
 ├── rulesetNames.ts       # The system rulesets' display names
 ├── builders/             # What the content is written with: a type per kind of seed, and the functions that write a seed's parts
-│   ├── items/            # An item's properties (weaponProperties()…) and proficiencies (simple(), martial()…)
+│   ├── items/            # Dnd35ItemSeed and an item's fields (ItemFields: weaponFields()…, withOwnFields()) and proficiencies (simple(), martial()…)
 │   ├── classes/          # ClassSeed
-│   ├── feats/, spells/, domains/   # FeatSeed, a feat's path and grant (feat(), grantFeat()); SpellSeed, LeveledSpellSeed; DomainSeed
-│   ├── races/            # RaceSeed, a race's properties (QUADRUPED)
+│   ├── feats/, spells/, domains/   # FeatSeed (FeatFields), a feat's path and grant (feat(), grantFeat()); SpellSeed (SpellFields), LeveledSpellSeed; DomainSeed
+│   ├── races/            # RaceSeed (RaceFields), a race's fields (QUADRUPED_FIELDS)
 │   ├── abilities/, saves/, languages/   # AbilitySeed, SaveSeed, LanguageSeed: the core rules' own rows
 │   ├── characters/       # CharacterSeed: a seeded character, as its test characters are written
 │   ├── aptitudes/        # How the content names its spell lists and picks (classSpells(), domainFeat(), CLERIC_DOMAIN…)
@@ -143,7 +143,7 @@ A ruleset's seeder extends `ContentSeeder` (`database/seeders/core/`), the contr
 
 The dev seeds (`scripts/db/seeds/`, which seed each base rules' test characters on its core rules: its registry row's `seedTestCharacters`, `content/dnd3.5/testData/`'s characters for 3.5, `database/seeders/dnd3.5/characters/`) and the tests load the same context for the seeded ruleset (its seeder's `loadContext`).
 
-The fields the rules keep in an entity's stored values (a class's, a level's, a skill's, the ruleset's own) are seeded as the engine writes them (`Engine.forRules(DND35_BASE_RULES).toFieldsWrite`), from the fields the content gives, through `Fields` (`SeederState.writeFields`). The content's other seeds still give theirs as properties (`Property`: a field's name and a value of it, as text), which the seeder turns into a write of the entity's stored values in one place (`SeederState.propertySeedsWrite`, each value typed by its field's declaration).
+The fields the rules keep in an entity's stored values (a class's, a level's, a skill's, a feat's, a race's, a spell's, an item's, the ruleset's own) are seeded as the engine writes them (`Engine.forRules(DND35_BASE_RULES).toFieldsWrite`), from the fields the content gives, through `Fields` (`SeederState.writeFields`). A seed gives its fields typed by the kind's declaration (`fields`, `PartialFieldValues` of `ENTITY_FIELDS.<kind>`, `shared/customization/fields.ts`): some of them, a group's some of its own (`{ weapon: { mighty: 2 } }`), each value of its kind. A group it gives is written whole: the leaves it leaves out are cleared, which a seed's new entity doesn't mind. An item's are its ruleset's: the core's `ItemSeed` is generic in them, and its step asks the ruleset's seeder to write them (`SeedsItems.itemFieldsWrite`, 3.5's `Dnd35ContentSeeder`).
 
 An extension is a package file that seeds its book:
 

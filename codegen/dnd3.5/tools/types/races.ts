@@ -1,4 +1,5 @@
-import type { Modifier, Property } from "@/content/core/builders/customization/types.ts";
+import type { Modifier } from "@/content/core/builders/customization/types.ts";
+import type { RaceSeed } from "@/content/dnd3.5/builders/races/types.ts";
 
 import type { DetectedModifiers, NamedText, Overrides, ScrapedMeta } from "./reference.ts";
 
@@ -17,11 +18,11 @@ export interface RaceReference {
     {
       baseSpeed: number;
       description?: string;
+      fields?: RaceSeed["fields"];
       /** The languages it speaks from the start, by name: what its seed's modifiers grant */
       languages?: string[];
       modifiers?: Modifier[];
       name: string;
-      properties?: Property[];
       size: string;
       skip?: boolean;
     }
@@ -30,6 +31,8 @@ export interface RaceReference {
   overrides?: Overrides<{
     baseSpeed?: number;
     description?: string;
+    /** Fields the engine reads off the race (the dwarf's speed in armor). */
+    fields?: RaceSeed["fields"];
     /**
      * The languages it speaks from the start, when its page names none or names them wrong (the human's: its page has
      * no traits).
@@ -37,8 +40,6 @@ export interface RaceReference {
     languages?: string[];
     modifiers?: Modifier[];
     name?: string;
-    /** Properties the engine reads off the race (the dwarf's speed in armor). */
-    properties?: Property[];
     size?: string;
     skip?: boolean;
   }>;

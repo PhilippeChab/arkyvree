@@ -1,5 +1,5 @@
 /**
- * The SRD's weapons: the weapon table (each base weapon type's definition, which its properties and proficiency are read
+ * The SRD's weapons: the weapon table (each base weapon type's definition, which its fields and proficiency are read
  * from; a name the table doesn't have has none), and the weapons by proficiency, which the weapon feats and the
  * proficiency requirements name: the table's, by their proficiency, and the unarmed strike, a simple weapon that's no
  * item. Beside them, the values a weapon's stats take, which an item's fields offer: its families, proficiencies and
@@ -46,7 +46,7 @@ interface WeaponDefinition {
 }
 
 /**
- * Each entry is the canonical definition for a base weapon type. All properties are derived from selecting a weapon
+ * Each entry is the canonical definition for a base weapon type. All its fields are derived from selecting a weapon
  * type name. The weapons by proficiency list them in its order.
  */
 // oxfmt-ignore

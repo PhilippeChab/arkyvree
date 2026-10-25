@@ -4,11 +4,11 @@ import { type BaseBookGenerator } from "@/codegen/dnd3.5/tools/generator/BaseBoo
 import BookLayout from "@/codegen/dnd3.5/tools/generator/BookLayout.ts";
 import type { ItemReference } from "@/codegen/dnd3.5/tools/types/items.ts";
 import type { MagicItemReference } from "@/codegen/dnd3.5/tools/types/magicItems.ts";
-import type { ItemSeed } from "@/content/core/builders/items/types.ts";
+import type { Dnd35ItemSeed } from "@/content/dnd3.5/builders/items/types.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 
 /** A book's item seeds, by the kind each of its item files holds. */
-type ItemSeedsByKind = Partial<Record<(typeof BookLayout.itemFiles)[number]["seeds"], ItemSeed[]>>;
+type ItemSeedsByKind = Partial<Record<(typeof BookLayout.itemFiles)[number]["seeds"], Dnd35ItemSeed[]>>;
 
 /**
  * Generating a book's items, a file per kind: its mundane items' (weapons, armor, shields and goods) and its magic
@@ -21,7 +21,7 @@ export function GeneratesItems<B extends Constructor<BaseBookGenerator>>(Base: B
       for (const { path, list, seeds: kind } of BookLayout.itemFiles) {
         const items = seeds[kind];
         if (items) {
-          this.writeList(join(dirname(BookLayout.itemsIndex), path), list, "ItemSeed", items, (file, item) =>
+          this.writeList(join(dirname(BookLayout.itemsIndex), path), list, "Dnd35ItemSeed", items, (file, item) =>
             file.item(item),
           );
         }

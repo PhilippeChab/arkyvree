@@ -17,9 +17,7 @@ export function WritesSpells<B extends Constructor<BaseCodeFile>>(Base: B) {
         `    aptitudes: [${spell.aptitudes.map((name) => this.quote(name)).join(", ")}],`,
         ...(levels.length > 0 ? [`    aptitudeLevels: { ${levels.join(", ")} },`] : []),
         ...(spell.savingThrow ? [`    savingThrow: ${this.quote(spell.savingThrow)},`] : []),
-        `    properties: [`,
-        ...spell.properties.map((p) => `      ${this.property(p)},`),
-        `    ],`,
+        `    fields: ${this.fieldValue(spell.fields)},`,
         `  },`,
       ];
     }

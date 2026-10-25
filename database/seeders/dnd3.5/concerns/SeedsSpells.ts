@@ -1,6 +1,8 @@
 import type { LeveledSpellSeed } from "@/content/dnd3.5/builders/spells/types.ts";
 import type { BaseSeeder } from "@/database/seeders/dnd3.5/BaseSeeder.ts";
+import { Engine } from "@/engine/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 
 /** A saving throw as its save and effect: "Will negates" is Will, "negates". Text that names no save is all effect. */
 function parseSavingThrow(savingThrow: string | undefined, saveMap: Record<string, string>) {
@@ -14,7 +16,7 @@ function parseSavingThrow(savingThrow: string | undefined, saveMap: Record<strin
 export function SeedsSpells<B extends Constructor<BaseSeeder>>(Base: B) {
   abstract class SeedingSpells extends Base {
     /**
-     * Seeds spells with their properties, each in its spell lists at its level there, and adds them to the context.
+     * Seeds spells with their fields, each in its spell lists at its level there, and adds them to the context.
      * A list the ruleset doesn't have is left out: the book that has it adds the spell to it.
      */
     async seedSpells(spells: LeveledSpellSeed[]) {
@@ -45,13 +47,11 @@ export function SeedsSpells<B extends Constructor<BaseSeeder>>(Base: B) {
         this.uniqueBy(links, (l) => `${l.spellId}:${l.aptitudeId}`),
       );
       await this.writeFields(
-        spells.map((spell) =>
-          this.propertySeedsWrite(
-            ids[spell.name],
-            "spells",
-            this.uniqueBy(spell.properties ?? [], (p) => `${p.type}:${p.value}`),
-          ),
-        ),
+        spells.map((spell) => ({
+          id: ids[spell.name],
+          type: "spells",
+          values: Engine.forRules(DND35_BASE_RULES).toFieldsWrite("spells", spell.fields),
+        })),
       );
     }
   }

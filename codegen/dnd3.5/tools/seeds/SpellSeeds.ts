@@ -77,7 +77,7 @@ export class SpellSeeds extends ReferenceSeeds<SpellReference> {
 
       for (const entry of this.ref.raw) {
         const { aptitudes, aptitudeLevels, minLevel } = this.levels(entry, othersInherited, classSpellLists);
-        const { properties, savingThrow } = this.ref.detected[entry.name];
+        const { fields, savingThrow } = this.ref.detected[entry.name];
         // Only include aptitudeLevels when not all aptitudes share the same level
         const hasVaryingLevels = Object.values(aptitudeLevels).some((l) => l !== minLevel);
         const seed: LeveledSpellSeed = {
@@ -86,7 +86,7 @@ export class SpellSeeds extends ReferenceSeeds<SpellReference> {
           aptitudes: [...aptitudes].sort(),
           ...(hasVaryingLevels ? { aptitudeLevels } : {}),
           savingThrow,
-          properties,
+          fields,
           level: minLevel,
         };
 

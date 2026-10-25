@@ -1,24 +1,16 @@
 import type { FieldValue } from "@/engine/core/module/index.ts";
+import type { FlagSpec, NumberSpec, PartialFieldValues, ProgressionSpec } from "@/shared/customization/fields.ts";
 import { copyProgression, countRoomAt, type ProgressionValue } from "@/shared/customization/progression.ts";
 
-import Field, {
-  type Fields,
-  type FieldSpec,
-  type FieldValues,
-  type FlagSpec,
-  type LeafSpec,
-  type NoFields,
-  type NumberSpec,
-  type ProgressionSpec,
-} from "./Field.ts";
+import Field, { type Fields, type FieldSpec, type FieldValues, type LeafSpec, type NoFields } from "./Field.ts";
 import FieldForms, { type FormContext } from "./FieldForms.ts";
 import type { FormField } from "./FormField.ts";
 import type { FieldsWrite, StoredValues } from "./OwnerValues.ts";
 
 /** What a codec's rules add to its fields': when the entity keeps none of them. */
-interface FieldRules<V> {
+interface FieldRules<S extends Fields> {
   /** Whether the entity keeps its fields at all: it stores none of their rows otherwise. */
-  storesWhen?(values: Partial<V>): boolean;
+  storesWhen?(values: WrittenValues<S>): boolean;
 }
 
 /** A write being built: each field's values and each link role's entity, by name. */
@@ -26,6 +18,12 @@ interface WriteRecord {
   fields: Record<string, FieldValue[]>;
   links: Record<string, string | null>;
 }
+
+/**
+ * The values a write takes: a field's each (a save's, read whole), or some of them, a group's some of its own (a
+ * seed's), a group given written whole.
+ */
+type WrittenValues<S extends Fields> = Partial<FieldValues<S>> | PartialFieldValues<S>;
 
 /**
  * An entity's fields, read and written by one spec (`fields`, as its ruleset's vocabulary declares them: `FieldSpec`):
@@ -37,7 +35,7 @@ interface WriteRecord {
 export default class FieldCodec<S extends Fields> {
   constructor(
     readonly fields: S,
-    private readonly rules: FieldRules<FieldValues<S>> = {},
+    private readonly rules: FieldRules<S> = {},
   ) {
     this.defaults = FieldCodec.defaultsOf(fields) as FieldValues<S>;
     this.keys = Object.keys(fields) as (keyof S & string)[];
@@ -220,7 +218,7 @@ export default class FieldCodec<S extends Fields> {
    * all), none of them kept (`storesWhen`) or a value's own, each value's of its kind (a number's a number, a flag's a
    * flag).
    */
-  private writeOf(values: Partial<FieldValues<S>>): WriteRecord {
+  private writeOf(values: WrittenValues<S>): WriteRecord {
     const write: WriteRecord = { fields: {}, links: {} };
     const given = Object.entries(this.fields).filter(([key]) => values[key] !== undefined);
     for (const leaf of Field.leavesOf(Object.fromEntries(given))) {
@@ -297,7 +295,7 @@ export default class FieldCodec<S extends Fields> {
    * replaced by its value's (none when the entity keeps no field, `storesWhen`, or for a value that writes none); a
    * field they leave out isn't named, so its owner keeps it. A save's values give every field: it names them all.
    */
-  write(values: Partial<FieldValues<S>>): FieldsWrite {
+  write(values: WrittenValues<S>): FieldsWrite {
     return this.writeOf(values);
   }
 }

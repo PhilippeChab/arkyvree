@@ -43,7 +43,7 @@ export class RaceSeeds extends ReferenceSeeds<RaceReference> {
           size: this.checkedValue(size),
           baseSpeed: mapping.baseSpeed,
           ...(modifiers.length > 0 ? { modifiers } : {}),
-          ...(mapping.properties?.length ? { properties: mapping.properties } : {}),
+          ...(mapping.fields ? { fields: mapping.fields } : {}),
         };
       }),
     );
