@@ -19,7 +19,7 @@ import {
   SPELL_SCHOOL,
   SPELL_SUBSCHOOL,
   WEAPON_BASE_DAMAGE,
-} from "@/vocabulary/dnd3.5/properties/index.ts";
+} from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** A weapon's fields, each but those it gives none. */
 const WEAPON = {

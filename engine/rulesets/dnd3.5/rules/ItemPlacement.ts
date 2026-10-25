@@ -4,7 +4,7 @@ import type { StoredValues } from "@/engine/core/fields/index.ts";
 import { type ItemLocation, LOCATION_OPTIONS, SIZE_OPTIONS } from "@/shared/enums.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
 import { HAND_LOCATIONS, type HandLocation, ITEM_TYPE_LOCATIONS } from "@/vocabulary/dnd3.5/equipment.ts";
-import { ITEM_HAS_CHARGES, WEAPON_SIZE } from "@/vocabulary/dnd3.5/properties/index.ts";
+import { ITEM_HAS_CHARGES, WEAPON_SIZE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** An inventory entry, as where it's worn reads it. */
 interface HeldEntry {

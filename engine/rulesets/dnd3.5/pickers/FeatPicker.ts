@@ -3,7 +3,7 @@ import type { RulesetView } from "@/engine/core/view/index.ts";
 import FeatEntity, { type PoolModifier } from "@/engine/rulesets/dnd3.5/entities/feats/FeatEntity.ts";
 import type { FeatPickQuery } from "@/engine/rulesets/dnd3.5/levelUp/requests.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
-import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/properties/index.ts";
+import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 import LevelPicker from "./LevelPicker.ts";
 

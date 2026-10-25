@@ -11,7 +11,7 @@ import { createSeededTestRuleset, type Described, invalidateSeededRuleset } from
 import { NIL_UUID } from "@/tests/support/seed.ts";
 import { findStoredValues, writeStoredValues } from "@/tests/support/storedValues.ts";
 import { createTestUser } from "@/tests/support/users.ts";
-import { ITEM_MADE_OF, WEAPON_BASE_DAMAGE } from "@/vocabulary/dnd3.5/properties/index.ts";
+import { ITEM_MADE_OF, WEAPON_BASE_DAMAGE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /**
  * Another user's private fork of the seeded base, with an item made from `templateId` there ("Secret Homebrew Blade"),

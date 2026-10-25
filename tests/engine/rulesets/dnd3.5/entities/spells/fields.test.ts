@@ -8,7 +8,7 @@ import { SPELL_FIELDS } from "@/engine/rulesets/dnd3.5/entities/spells/fields.ts
 import { db } from "@/server/database/index.ts";
 import { Fields } from "@/server/repositories/index.ts";
 import { listStoredValues, storedValues } from "@/tests/support/storedValues.ts";
-import { SPELL_COMPONENT, SPELL_DESCRIPTOR, SPELL_SCHOOL, SPELL_TARGET } from "@/vocabulary/dnd3.5/properties/index.ts";
+import { SPELL_COMPONENT, SPELL_DESCRIPTOR, SPELL_SCHOOL, SPELL_TARGET } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 describe("A spell's fields", () => {
   test("are none without their values, and as stored with them: each its first value, the lists in order", () => {

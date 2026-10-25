@@ -28,9 +28,9 @@ describe("A compared row", () => {
         selectable: true,
         cost: 5,
         owner_id: UUID,
-        properties: { die: 8 },
+        fields: { die: 8 },
       }),
-    ).toEqual({ name: "Dodge", selectable: true, cost: 5, properties: { die: 8 } });
+    ).toEqual({ name: "Dodge", selectable: true, cost: 5, fields: { die: 8 } });
   });
 });
 

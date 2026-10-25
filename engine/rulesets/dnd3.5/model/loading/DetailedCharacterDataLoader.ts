@@ -46,6 +46,7 @@ export interface LoadedCharacterData extends LoadedCharacter {
   character: Character;
   characterAbilityScores: { abilityId: string; name: string; score: number }[];
   characterLevels: CharacterLevel[];
+  classLevelFields: Map<string, { bab: number; skills: number }>;
   /**
    * The feats it holds: its levels' picks and grants as it loads, then those its modifiers grant it as they apply in
    * the build's rounds (`PossessesVirtually`).
@@ -55,7 +56,6 @@ export interface LoadedCharacterData extends LoadedCharacter {
   klassCasterTypeMap: Map<string, CasterType>;
   klasses: Klass[];
   klassLevelFeatCountsByAptitudeId: Record<string, number>;
-  klassLevelProperties: Map<string, { bab: number; skills: number }>;
   klassLevels: CustomizedClassLevel[];
   klassLevelSaves: KlassLevelSave[];
   klassLevelSpellCountsByAptitudeId: Record<string, number>;
@@ -135,9 +135,9 @@ export default class DetailedCharacterDataLoader extends include(
       this.buildPicks(SavedPicks.of(rows), rulesetData, levels, resolve);
 
     // Each entity's customizations: per-entity lookups resolve via the cache's pre-built Maps
-    const { klassLevels, klassLevelProperties } = this.toCustomizedKlassLevels(klassLevelsRaw, rulesetData);
-    const klassProperties = this.readKlassProperties(klassEntityIds, rulesetData, abilityLookup);
-    const dcAbilities = { klassBonusSpellAbilityMap: klassProperties.klassBonusSpellAbilityMap, klassLevels };
+    const { klassLevels, classLevelFields } = this.toCustomizedKlassLevels(klassLevelsRaw, rulesetData);
+    const classFields = this.readClassFields(klassEntityIds, rulesetData, abilityLookup);
+    const dcAbilities = { klassBonusSpellAbilityMap: classFields.klassBonusSpellAbilityMap, klassLevels };
     return {
       characterAbilityScores: resolve(rows.links.abilities).map((ca) => this.buildAbilityScore(ca, abilityLookup)),
       abilityIncreases: this.readAbilityIncreases(
@@ -158,8 +158,8 @@ export default class DetailedCharacterDataLoader extends include(
       spells: this.toCustomizedSpells(allSpells, rulesetData, dcAbilities),
       klassLevelFeatCountsByAptitudeId,
       klassLevelSpellCountsByAptitudeId,
-      klassLevelProperties,
-      ...klassProperties,
+      classLevelFields,
+      ...classFields,
     };
   }
 

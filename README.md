@@ -193,7 +193,7 @@ tests/
 
 **Ruleset system:** Rulesets support COW forking (edit inherited content without modifying the parent), extensions, publishing, and multi-contributor collaboration. See [docs/rulesets.md](./docs/rulesets.md).
 
-**Ruleset engine:** `engine/` computes every ruleset rule over the data the server reads, through one entry, `Engine` (`engine/index.ts`): a handle bound to a ruleset's view and to what its rules are about (`Engine.for(scope).character(input).describe(…)`), whose operations take a character's rows or a request's body, and answer descriptions, plans of the writes the server makes, or refusals. A ruleset's module (`engine/rulesets/dnd3.5/`) builds a complete character state from its rows, evaluating modifiers, requirements, and properties, and projects level-ups before they're saved.
+**Ruleset engine:** `engine/` computes every ruleset rule over the data the server reads, through one entry, `Engine` (`engine/index.ts`): a handle bound to a ruleset's view and to what its rules are about (`Engine.for(scope).character(input).describe(…)`), whose operations take a character's rows or a request's body, and answer descriptions, plans of the writes the server makes, or refusals. A ruleset's module (`engine/rulesets/dnd3.5/`) builds a complete character state from its rows, reading its fields and evaluating modifiers and requirements, and projects level-ups before they're saved.
 
 ## Community
 

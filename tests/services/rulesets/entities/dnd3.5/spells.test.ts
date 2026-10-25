@@ -12,7 +12,7 @@ import { createSeededTestRuleset, createTestRuleset } from "@/tests/support/rule
 import { getSeedCtx } from "@/tests/support/seed.ts";
 import { findStoredValues, writeStoredValues } from "@/tests/support/storedValues.ts";
 import { createTestUser } from "@/tests/support/users.ts";
-import { SPELL_CASTING_TIME, SPELL_DESCRIPTOR, SPELL_SCHOOL } from "@/vocabulary/dnd3.5/properties/index.ts";
+import { SPELL_CASTING_TIME, SPELL_DESCRIPTOR, SPELL_SCHOOL } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** The aptitudes of the test's ruleset. */
 const APTITUDES = ["Wizard", "Cleric", "Druid"];

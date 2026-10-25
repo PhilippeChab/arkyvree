@@ -18,7 +18,7 @@ import { STRENGTH_BONUS } from "@/tests/support/dnd3.5/customizations.ts";
 import { createTestRuleset } from "@/tests/support/rulesets.ts";
 import { writeStoredValues } from "@/tests/support/storedValues.ts";
 import { createTestUser } from "@/tests/support/users.ts";
-import { CLASS_CASTER_TYPE, FEAT_FAMILY } from "@/vocabulary/dnd3.5/properties/index.ts";
+import { CLASS_CASTER_TYPE, FEAT_FAMILY } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 interface Kind {
   create: (session: Session, rulesetId: string, ownerType: string, ownerId: string) => Promise<Written>;

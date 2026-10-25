@@ -244,12 +244,12 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
 
     protected initializeBaseAttackBonus(
       classes: ReturnType<ClassesComponent["getClasses"]>,
-      klassLevelProperties: Map<string, { bab: number; skills: number }>,
+      classLevelFields: Map<string, { bab: number; skills: number }>,
     ): void {
       const baseAttackBonusFromClasses = Object.values(classes).reduce((acc, klass) => {
         const lastLevel = klass.levels.at(-1);
         if (!lastLevel) return acc;
-        return acc + (klassLevelProperties.get(lastLevel.klassLevel.id)?.bab ?? 0);
+        return acc + (classLevelFields.get(lastLevel.klassLevel.id)?.bab ?? 0);
       }, 0);
 
       this.combat.bab = baseAttackBonusFromClasses;

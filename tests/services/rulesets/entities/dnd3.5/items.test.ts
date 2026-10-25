@@ -12,7 +12,7 @@ import { customize } from "@/tests/support/dnd3.5/customizations.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
 import { createTestRuleset } from "@/tests/support/rulesets.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
-import { ITEM_MADE_OF } from "@/vocabulary/dnd3.5/properties/index.ts";
+import { ITEM_MADE_OF } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** The stored values `customize` gives an item: what it's made of, which it reads as its field. */
 const COLD_IRON = { fields: { [ITEM_MADE_OF]: ["Cold Iron"] }, links: {} };

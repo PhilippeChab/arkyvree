@@ -1,5 +1,5 @@
 import type { PartialFieldValues } from "@/shared/customization/fields.ts";
-import type { ENTITY_FIELDS } from "@/vocabulary/dnd3.5/properties/index.ts";
+import type { ENTITY_FIELDS } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** A spell: the aptitudes it's in (its spell lists), its saving throw and its fields (its stat block's). */
 export interface SpellSeed {

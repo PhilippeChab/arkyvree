@@ -115,7 +115,7 @@ From `server/cow/views/` (the scopes) and `server/cow/` (the copies):
 | `EntityRevert.revert`                   | Revert a fork's copy to its source: what names the copy (the fork's rows, its subscribers', their characters' picks) repointed, then the copy and its snapshot deleted. A restore's, and an unsubscribe's for each copy of the extension's entities. |
 | `EntityRepositories.lock`               | Lock an already-local owner before deleting its customizations.                                                                                                                 |
 
-The entity an id names in the composed view (the ruleset's own, or inherited through its source chain) is the engine's to find: `Engine.for(scope).entities(type).find(id)` (`describe()`, with its customizations), refused as not found otherwise (a 404). A service binds the engine to its scope and reads of its view only the copy-on-write data (`rulesetData.cow`; `arkyvree/opaque-view`). The engine's operations canonicalize an id (pre-COW → post-COW, `rulesetData.canonicalize(id)`), and read sibling merging (aptitude links, modifiers, properties, requirements) pre-baked into `rulesetData` by the compose step: they only read `rulesetData.byId(type)`, `rulesetData.modifiersBySource`, a module's derived view (3.5's `Dnd35View.of(rulesetData).featsById`), etc. — never merge siblings themselves.
+The entity an id names in the composed view (the ruleset's own, or inherited through its source chain) is the engine's to find: `Engine.for(scope).entities(type).find(id)` (`describe()`, with its customizations), refused as not found otherwise (a 404). A service binds the engine to its scope and reads of its view only the copy-on-write data (`rulesetData.cow`; `arkyvree/opaque-view`). The engine's operations canonicalize an id (pre-COW → post-COW, `rulesetData.canonicalize(id)`), and read sibling merging (aptitude links, modifiers, field values, requirements) pre-baked into `rulesetData` by the compose step: they only read `rulesetData.byId(type)`, `rulesetData.modifiersBySource`, a module's derived view (3.5's `Dnd35View.of(rulesetData).featsById`), etc. — never merge siblings themselves.
 
 From `server/cow/index.ts`: `RulesetViews`, the class that holds the cache (`RulesetViews.ts`). The view a read gets, `RulesetData` (`engine/core/view/`), is the engine's: `engine/index.ts` exports its type and composes it (`Engine.copyOnWrite().buildView`).
 
@@ -153,7 +153,8 @@ interface RulesetRawData {
   entities: Record<string, ViewRow[]>; // each kind's rows (a row with its id), by its type (3.5's "feats", "class_levels"…)
   joins: Record<string, Row[]>; // each join's rows its kinds' lists don't nest, by its name ("class_skills"…)
   tieredIds: Set<string>; // the entities a link of a tiered join points at (3.5's spell lists at a level)
-  properties: Property[];
+  values: ReadonlyMap<string, ReadonlyMap<string, StoredValues>>; // each owner's field values, by its type then its id
+  kindValues: ReadonlyMap<string, readonly KindValue[]>; // each kind's values kind-wide: each with the entities holding it
   modifiers: Modifier[];
   requirements: Requirement[];
 }
@@ -256,9 +257,9 @@ The view's own, by kind (`RulesetData`, `engine/core/view/RulesetData.ts`):
 
 Each is built from the composed lists the first time it's read and kept with the view: a request pays for the indices it reads. Building every one costs about 2.5 ms on the core ruleset and 10 ms on a fork using every extension, on top of composing its lists (under 1 ms and about 14 ms).
 
-Every id-keyed Map in these tables is wrapped by `RulesetData.resolvingIds` — `.get(key)` / `.has(key)` auto-resolve `key` through `CowData.resolve`. Callers can pass stored pre-COW ids directly. `RulesetData.find(type, id)` reads an entity of a table through its `byId(type)` Map (the engine's `entities(type).find(id)`), and `customizationsOf(id)` an entity's modifiers, properties and requirements (`entities(type).describe(id)`).
+Every id-keyed Map in these tables is wrapped by `RulesetData.resolvingIds` — `.get(key)` / `.has(key)` auto-resolve `key` through `CowData.resolve`. Callers can pass stored pre-COW ids directly. `RulesetData.find(type, id)` reads an entity of a table through its `byId(type)` Map (the engine's `entities(type).find(id)`), and `customizationsOf(id)` an entity's modifiers, requirements and field values (`entities(type).describe(id)`).
 
-The flat `properties` / `modifiers` / `requirements` arrays were removed from `RulesetData` — they encouraged scans (`arr.filter(p => set.has(p.entityId))`) that were all replaced with one of the Maps above. Sibling-sourced rows are pre-merged by the compose step into the winner's bucket (sourceId / entityId remapped, deduped), so every index above already reflects the full multi-extension view — consumers never see sibling-loser rows.
+The flat `modifiers` / `requirements` arrays were removed from `RulesetData`, and an owner's field values are read by its id (`valuesOf`) — flat arrays encouraged scans (`arr.filter(p => set.has(p.entityId))`) that were all replaced with one of the Maps above. Sibling-sourced rows are pre-merged by the compose step into the winner's bucket (sourceId / entityId remapped, deduped), so every index above already reflects the full multi-extension view — consumers never see sibling-loser rows.
 
 ### What's not in the ruleset cache (and why)
 

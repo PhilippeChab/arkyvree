@@ -1,5 +1,5 @@
 import { FieldCodec, type FieldValues } from "@/engine/core/fields/index.ts";
-import { ENTITY_FIELDS } from "@/vocabulary/dnd3.5/properties/index.ts";
+import { ENTITY_FIELDS } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** An item's fields' values. */
 export type ItemFieldValues = FieldValues<typeof ITEM_FIELDS.fields>;

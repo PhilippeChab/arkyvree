@@ -6,7 +6,7 @@ import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Entities, Rulesets } from "@/server/repositories/index.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
-import { SPELL_COMPONENT } from "@/vocabulary/dnd3.5/properties/index.ts";
+import { SPELL_COMPONENT } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 describe("SpellsPaths.generateSpellPaths", () => {
   test("offers a spell's values of a field as a list: one of them required, or added or taken", async () => {

@@ -48,11 +48,7 @@ export function ReadsRuleset<B extends Constructor<CharacterDataLoader<LoadedCha
     }
 
     /** Each class's fields: its bonus spell ability, by the ability's name, and its caster type. */
-    protected readKlassProperties(
-      klassEntityIds: string[],
-      rulesetData: RulesetData,
-      abilityLookup: Map<string, string>,
-    ) {
+    protected readClassFields(klassEntityIds: string[], rulesetData: RulesetData, abilityLookup: Map<string, string>) {
       const klassBonusSpellAbilityMap = new Map<string, string>();
       const klassCasterTypeMap = new Map<string, CasterType>();
       for (const klassId of klassEntityIds) {

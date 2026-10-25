@@ -3,7 +3,7 @@ import type { RulesetView } from "@/engine/core/view/index.ts";
 import { FEAT_FIELDS } from "@/engine/rulesets/dnd3.5/entities/feats/fields.ts";
 import type { SpellPickQuery } from "@/engine/rulesets/dnd3.5/levelUp/requests.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
-import { SPELL_SCHOOL } from "@/vocabulary/dnd3.5/properties/index.ts";
+import { SPELL_SCHOOL } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 import LevelPicker from "./LevelPicker.ts";
 

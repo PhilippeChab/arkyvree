@@ -3,7 +3,7 @@ import { describe, expect, test } from "bun:test";
 import { OwnerValues } from "@/engine/core/fields/index.ts";
 import { CLASS_FIELDS, CLASS_LEVEL_FIELDS } from "@/engine/rulesets/dnd3.5/entities/classes/fields.ts";
 import { storedValues } from "@/tests/support/storedValues.ts";
-import { CLASS_CASTER_TYPE, CLASS_LEVEL_BAB, CLASS_LEVEL_SKILL_POINTS } from "@/vocabulary/dnd3.5/properties/index.ts";
+import { CLASS_CASTER_TYPE, CLASS_LEVEL_BAB, CLASS_LEVEL_SKILL_POINTS } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 describe("A class's fields", () => {
   test("are null without their values, and their values with them: the bonus spell ability its link's", () => {

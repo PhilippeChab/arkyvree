@@ -1,7 +1,7 @@
 import type { Modifier } from "@/content/core/builders/customization/types.ts";
 import type { PartialFieldValues } from "@/shared/customization/fields.ts";
 import type { SizeType } from "@/shared/enums.ts";
-import type { ENTITY_FIELDS } from "@/vocabulary/dnd3.5/properties/index.ts";
+import type { ENTITY_FIELDS } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** A race: its size, its speed, its modifiers and fields, and its kind (a familiar's, an animal companion's…). */
 export interface RaceSeed {

@@ -1,4 +1,4 @@
-/** D&D 3.5 spell properties. */
+/** D&D 3.5 spell fields. */
 
 export const SPELL_AREA_OF_EFFECT = "SPELL_AREA_OF_EFFECT";
 export const SPELL_CASTING_TIME = "SPELL_CASTING_TIME";
@@ -9,7 +9,7 @@ export const SPELL_DURATION = "SPELL_DURATION";
 export const SPELL_EFFECT = "SPELL_EFFECT";
 export const SPELL_RANGE_TYPE = "SPELL_RANGE_TYPE";
 export const SPELL_RESISTANCE = "SPELL_RESISTANCE";
-/** The property a spell's school is in, which the sheets show as its own column. */
+/** The field a spell's school is in, which the sheets show as its own column. */
 export const SPELL_SCHOOL = "SPELL_SCHOOL";
 export const SPELL_SUBSCHOOL = "SPELL_SUBSCHOOL";
 export const SPELL_TARGET = "SPELL_TARGET";

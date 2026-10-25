@@ -57,10 +57,10 @@ export function CustomizesEntities<B extends Constructor<CharacterDataLoader<Loa
         }))
         .sort((a, b) => a.level - b.level);
 
-      const klassLevelProperties = new Map(
+      const classLevelFields = new Map(
         klassLevels.map((level) => [level.id, CLASS_LEVEL_FIELDS.read(rulesetData.valuesOf(level.id))]),
       );
-      return { klassLevels, klassLevelProperties };
+      return { klassLevels, classLevelFields };
     }
 
     /** The race with the fields its stored values hold (read once, here), its modifiers and requirements. */

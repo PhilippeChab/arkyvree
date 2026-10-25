@@ -50,7 +50,7 @@ import { copyEntity, createTestRuleset } from "@/tests/support/rulesets.ts";
 import { findSeededRuleset, getSeedCtx, NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
 import { findStoredValues, writeStoredValues } from "@/tests/support/storedValues.ts";
 import { createTestUser } from "@/tests/support/users.ts";
-import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/properties/index.ts";
+import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 type RulesetValues = Partial<InferInsertModel<typeof rulesetsInRules>>;
 const firstPage = { limit: 100, page: 1 };

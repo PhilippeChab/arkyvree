@@ -222,7 +222,7 @@ async function pullRulesetExtensions(query: Query, rulesetId: string): Promise<I
   );
 }
 
-/** The ruleset's fields (its former properties), each by its field and its value (a set's, all of them). */
+/** The ruleset's fields, each by its field and its value (a set's, all of them). */
 async function pullRulesetFields(query: Query, rulesetId: string): Promise<IdentifiedRow[]> {
   return keyed(
     await query<{ field: string; value: string }>(

@@ -40,7 +40,7 @@ import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
 import { createSeededTestRuleset, createTestRuleset } from "@/tests/support/rulesets.ts";
 import { findStoredValues } from "@/tests/support/storedValues.ts";
 import { makeSession } from "@/tests/support/users.ts";
-import { RULESET_FEAT_ADVANCEMENT } from "@/vocabulary/dnd3.5/properties/index.ts";
+import { RULESET_FEAT_ADVANCEMENT } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 type OwnerType = keyof typeof OWNERS;
 

@@ -1,4 +1,6 @@
+import { Field, type LeafSpec } from "@/engine/core/fields/index.ts";
 import type { FieldDef, Merge, ValueKind } from "@/engine/core/module/index.ts";
+import { ENTITY_FIELDS } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** The fields 3.5's kinds' and characters' columns are stored in: each a single value, the winning copy's. */
 const COLUMN_FIELDS: [ownerType: string, field: string, valueKind: ValueKind][] = [
@@ -25,75 +27,63 @@ const COLUMN_FIELDS: [ownerType: string, field: string, valueKind: ValueKind][] 
 ];
 
 /**
- * The fields 3.5's owners keep past their kinds' columns, in their stored values (an entity type's, or a ruleset's
- * Settings), each its owner's type, its name, its value's kind, whether it's a set, and whether an item reads it off
- * its template when it has none.
+ * The role of the link an owner type's entities read their declared fields off when they hold none (an item's, off its
+ * template): none for the others.
  */
-const VALUE_FIELDS: [ownerType: string, field: string, valueKind: ValueKind, multiple: boolean, inherits: boolean][] = [
-  ["feats", "FEAT_FAMILY", "text", true, false],
-  ["feats", "FEAT_WEAPON_FINESSE", "flag", false, false],
-  ["feats", "FEAT_OVERSIZED_TWO_WEAPON_FIGHTING", "flag", false, false],
-  ["feats", "WIZARD_PROHIBITED_SCHOOL", "text", true, false],
-  ["items", "WEAPON_TYPE", "text", false, true],
-  ["items", "WEAPON_PROFICIENCY", "text", false, true],
-  ["items", "WEAPON_FAMILY", "text", false, true],
-  ["items", "WEAPON_SIZE", "text", false, true],
-  ["items", "WEAPON_BASE_DAMAGE", "text", false, true],
-  ["items", "WEAPON_DOUBLE_DAMAGE", "text", false, true],
-  ["items", "DAMAGE_TYPE", "text", true, true],
-  ["items", "WEAPON_CRITICAL_RANGE", "number", false, true],
-  ["items", "WEAPON_CRITICAL_MULTIPLIER", "number", false, true],
-  ["items", "WEAPON_STRENGTH_DAMAGE", "text", false, true],
-  ["items", "WEAPON_MIGHTY", "number", false, true],
-  ["items", "WEAPON_RANGED", "flag", false, true],
-  ["items", "WEAPON_RANGE", "number", false, true],
-  ["items", "WEAPON_MAX_RANGE_INCREMENTS", "number", false, true],
-  ["items", "WEAPON_REACH", "number", false, true],
-  ["items", "WEAPON_FINESSABLE", "flag", false, true],
-  ["items", "WEAPON_ONE_HAND_TRAINING", "flag", false, true],
-  ["items", "WEAPON_ONE_HANDED_PENALTY", "number", false, true],
-  ["items", "ARMOR_TYPE", "text", false, true],
-  ["items", "ARMOR_PROFICIENCY", "text", false, true],
-  ["items", "ARMOR_AC_BONUS", "number", false, true],
-  ["items", "SHIELD_TYPE", "text", false, true],
-  ["items", "SHIELD_PROFICIENCY", "text", false, true],
-  ["items", "SHIELD_AC_BONUS", "number", false, true],
-  ["items", "ARMOR_MAX_DEX", "number", false, true],
-  ["items", "ARMOR_CHECK_PENALTY", "number", false, true],
-  ["items", "ITEM_SPELL_FAILURE", "number", false, true],
-  ["items", "ITEM_MASTERWORK", "flag", false, true],
-  ["items", "ITEM_MADE_OF", "text", false, true],
-  ["items", "ITEM_HAS_CHARGES", "number", false, true],
-  ["items", "MAGIC_CASTER_LEVEL", "number", false, true],
-  ["items", "MAGIC_AURA", "text", true, true],
-  ["classes", "CLASS_CASTER_TYPE", "text", false, false],
-  ["class_levels", "CLASS_LEVEL_BAB", "number", false, false],
-  ["class_levels", "CLASS_LEVEL_SKILL_POINTS", "number", false, false],
-  ["spells", "SPELL_SCHOOL", "text", false, false],
-  ["spells", "SPELL_SUBSCHOOL", "text", false, false],
-  ["spells", "SPELL_DESCRIPTOR", "text", true, false],
-  ["spells", "SPELL_COMPONENT", "text", true, false],
-  ["spells", "SPELL_CASTING_TIME", "text", false, false],
-  ["spells", "SPELL_RANGE_TYPE", "text", false, false],
-  ["spells", "SPELL_TARGET", "text", false, false],
-  ["spells", "SPELL_EFFECT", "text", false, false],
-  ["spells", "SPELL_AREA_OF_EFFECT", "text", false, false],
-  ["spells", "SPELL_DURATION", "text", false, false],
-  ["spells", "SPELL_RESISTANCE", "text", false, false],
-  ["races", "RACE_SPEED_IGNORES_ENCUMBRANCE", "flag", false, false],
-  ["races", "RACE_QUADRUPED", "flag", false, false],
-  ["rulesets", "RULESET_FEAT_ADVANCEMENT", "text", true, false],
-  ["rulesets", "RULESET_ABILITY_INCREASES", "text", true, false],
-  ["skills", "SKILL_IMPACTED_BY_WEIGHT", "flag", false, false],
-  ["skills", "SKILL_CHECK_PENALTY_MULTIPLIER", "number", false, false],
-  ["skills", "SKILL_USABLE_WITHOUT_TRAINING", "flag", false, false],
-];
+const INHERITS_VIA: Readonly<Record<string, string>> = { items: "madeFrom" };
+
+/**
+ * The fields 3.5's owners keep past their kinds' columns, in their stored values (an entity type's, or a ruleset's
+ * Settings), as its vocabulary declares them (`ENTITY_FIELDS`, a reference's aside: a link keeps it), in their order:
+ * each a set when it's a list or a progression, read off its template by an item that has none.
+ */
+function declaredFieldDefs(): FieldDef[] {
+  return Object.entries(ENTITY_FIELDS).flatMap(([ownerType, fields]) =>
+    Field.leavesOf(fields).flatMap((leaf): FieldDef[] => {
+      if (leaf.kind === "ref") return [];
+      const { multiple, valueKind } = storedKindOf(leaf);
+      return [
+        {
+          ownerKind: ownerKindOf(ownerType),
+          ownerType,
+          field: leaf.field,
+          valueKind,
+          multiple,
+          merge: valueFieldMerge(ownerType, multiple),
+          inheritsVia: INHERITS_VIA[ownerType] ?? null,
+        },
+      ];
+    }),
+  );
+}
 
 /** A field's owner's kind, by its type. */
 function ownerKindOf(ownerType: string): FieldDef["ownerKind"] {
   if (ownerType === "rulesets") return "ruleset";
   if (ownerType === "characters") return "character";
   return "entity";
+}
+
+/**
+ * How a declared field's values are stored, by its kind: the kind of value each is (a flag's, a number's, text), and
+ * whether it's a set (a list's, a progression's). A kind this doesn't name fails to type-check, never stores as text.
+ */
+function storedKindOf(leaf: Exclude<LeafSpec, { kind: "ref" }>): { multiple: boolean; valueKind: ValueKind } {
+  switch (leaf.kind) {
+    case "flag":
+    case "number":
+      return { multiple: false, valueKind: leaf.kind };
+    case "choice":
+    case "text":
+      return { multiple: false, valueKind: "text" };
+    case "list":
+    case "progression":
+      return { multiple: true, valueKind: "text" };
+    default: {
+      const unknown: never = leaf;
+      throw new Error(`No stored kind for the field ${JSON.stringify(unknown)}`);
+    }
+  }
 }
 
 /**
@@ -123,15 +113,7 @@ export default class Dnd35FieldDefs {
         merge: "winner",
         inheritsVia: null,
       })),
-      ...VALUE_FIELDS.map(([ownerType, field, valueKind, multiple, inherits]): FieldDef => ({
-        ownerKind: ownerKindOf(ownerType),
-        ownerType,
-        field,
-        valueKind,
-        multiple,
-        merge: valueFieldMerge(ownerType, multiple),
-        inheritsVia: inherits ? "madeFrom" : null,
-      })),
+      ...declaredFieldDefs(),
     ];
   }
 }
