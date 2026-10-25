@@ -224,7 +224,7 @@ describe("rulesets entities by kind", () => {
     });
 
     await expectStatus(entity.owned.$get({ param: { ...klass, entityId: "not-an-id" } }), 400);
-    await expectStatus(entity.owned[":ownedId"].$get({ param: { ...klass, ownedId: "not-an-id" } }), 400);
+    await expectStatus(entity.owned[":ownedId"].$delete({ param: { ...klass, ownedId: "not-an-id" } }), 400);
     await expectStatus(entity.links[":targetId"].$delete({ param: { ...klass, targetId: "not-an-id" } }), 400);
     await expectStatus(entity.links.$post({ param: klass, json: { targetId: "not-an-id" } }), 400);
   });

@@ -128,7 +128,7 @@ describe("An entity's fields", () => {
     await EntitiesService.updateOwnedEntity(session, rulesetId, "classes", wizard.id, level.id, {
       fields: { skills: 4 },
     });
-    expect(await EntitiesService.getOwnedEntity(rulesetId, "classes", wizard.id, level.id)).toMatchObject({
+    expect(await EntitiesService.getOwnedEntityWithOwner(rulesetId, "classes", level.id)).toMatchObject({
       bab: 0,
       skills: 4,
     });

@@ -144,19 +144,6 @@ describe("ContributorsService", () => {
     });
   });
 
-  describe("getUserInvites", () => {
-    test("lists the invites still waiting for an answer", async () => {
-      const { ownerSession, ruleset } = await setup();
-      const { user, session, invite } = await addContributor(ownerSession, ruleset.id, "Editor", true);
-      expect(await ContributorsService.getUserInvites(user.id)).toMatchObject([
-        { rulesetId: ruleset.id, rulesetsInRule: { name: ruleset.name } },
-      ]);
-
-      await ContributorsService.acceptInvite(session, invite.id);
-      expect(await ContributorsService.getUserInvites(user.id)).toEqual([]);
-    });
-  });
-
   describe("getContributors", () => {
     test("lists the contributors to the owner and to contributors, not to strangers", async () => {
       const { ownerSession, ruleset } = await setup();

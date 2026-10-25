@@ -57,7 +57,6 @@ describe("character contributors", () => {
   test("shows the invitee their invite, and lets them accept it and see the contributors", async () => {
     const { id, invitee, invite } = await setup();
     const invites = invitee.api.api.characters.contributors.invites;
-    expect((await expectOk(invites.me.$get())).map((i) => i.id)).toEqual([invite.id]);
     expect(await expectOk(invites[":id"].$get({ param: { id: invite.id } }))).toMatchObject({
       id: invite.id,
       status: "Pending",

@@ -63,27 +63,6 @@ class ContributorsRepository extends include(BaseRepository<typeof contributorsI
     });
   }
 
-  async findManyWithRuleset(
-    db: Db,
-    where: { status: ContributorStatus; userId: string },
-    pagination: { limit: number } = { limit: 100 },
-  ) {
-    return await db.query.contributorsInRules.findMany({
-      where: this.where([
-        eq(this.table.userId, where.userId),
-        eq(this.table.status, where.status),
-        isNull(this.table.deletedAt),
-      ]),
-      with: {
-        rulesetsInRule: {
-          columns: { id: true, name: true },
-        },
-      },
-      orderBy: [this.orderBy(this.table.createdAt, "desc")],
-      limit: pagination.limit,
-    });
-  }
-
   async findOne(
     db: Db,
     where:

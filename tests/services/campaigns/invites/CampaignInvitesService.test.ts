@@ -87,18 +87,6 @@ describe("CampaignInvitesService", () => {
     });
   });
 
-  describe("getUserInvites", () => {
-    test("lists the invites sent to a user", async () => {
-      const { session } = await createTestUser();
-      expect(await CampaignInvitesService.getUserInvites(session.userId)).toEqual([]);
-
-      const { invitee, slot } = await setup();
-      expect(await CampaignInvitesService.getUserInvites(invitee.user.id)).toMatchObject([
-        { userId: invitee.user.id, playerId: slot.id, status: "Pending" },
-      ]);
-    });
-  });
-
   describe("getInvite", () => {
     test("returns the invite to its recipient, still after it's answered", async () => {
       const { invitee, campaign, invite } = await setup();
@@ -236,12 +224,13 @@ describe("CampaignInvitesService", () => {
       expect((await signUpAndBackfill(email)).backfilled).toEqual([]);
     });
 
-    test("lets the new account list, accept or reject its backfilled invite", async () => {
+    test("lets the new account read, accept or reject its backfilled invite", async () => {
       const accepted = await setupEmailOnly();
       const { user } = await signUpAndBackfill(accepted.email);
-      expect(await CampaignInvitesService.getUserInvites(user.id)).toMatchObject([
-        { playerId: accepted.slot.id, status: "Pending" },
-      ]);
+      expect(await CampaignInvitesService.getInvite(makeSession(user.id), accepted.invite.id)).toMatchObject({
+        playerId: accepted.slot.id,
+        status: "Pending",
+      });
       expect(await CampaignInvitesService.acceptInvite(makeSession(user.id), accepted.invite.id)).toMatchObject({
         status: "Accepted",
       });

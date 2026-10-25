@@ -26,7 +26,6 @@ describe("rulesets contributors", () => {
     expect(list.items.map((c) => c.id)).toEqual([invite.id]);
 
     const invites = other.api.api.rulesets.contributors.invites;
-    expect((await expectOk(invites.me.$get())).map((i) => i.rulesetId)).toEqual([id]);
     expect(await expectOk(invites[":id"].$get({ param: { id: invite.id } }))).toMatchObject({
       id: invite.id,
       rulesetId: id,

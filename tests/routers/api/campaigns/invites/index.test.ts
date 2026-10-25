@@ -29,7 +29,6 @@ describe("campaigns invites", () => {
   test("shows the invitee their invite and lets them accept it", async () => {
     const { inviteId, invitee } = await createInviteForNewUser();
     const theirs = invitee.api.api.campaigns.invites;
-    expect((await expectOk(theirs.me.$get())).map((i) => i.id)).toEqual([inviteId]);
     expect(await expectOk(theirs[":inviteId"].$get({ param: { inviteId } }))).toMatchObject({
       id: inviteId,
       status: "Pending",
@@ -69,7 +68,10 @@ describe("campaigns invites", () => {
     });
     await expectOk(verified);
     const theirs = apiAs(sessionIdFrom(verified)).api.campaigns.invites;
-    expect(await expectOk(theirs.me.$get())).toMatchObject([{ id: inviteId, status: "Pending" }]);
+    expect(await expectOk(theirs[":inviteId"].$get({ param: { inviteId } }))).toMatchObject({
+      id: inviteId,
+      status: "Pending",
+    });
     expect(await expectOk(theirs[":inviteId"].accept.$post({ param: { inviteId } }))).toMatchObject({
       status: "Accepted",
     });

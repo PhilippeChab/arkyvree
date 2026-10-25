@@ -48,15 +48,14 @@ describe("activity notifications", () => {
     test("go to the invitee, and the Game Masters get the answer", async () => {
       const [gm, accepting, rejecting] = await users(3);
       const { campaign } = await createTestCampaign(gm.user.id);
+      const invites: Awaited<ReturnType<typeof inviteToSlot>>[] = [];
       for (const invitee of [accepting, rejecting]) {
         const [slot] = await Players.create(db, { campaignId: campaign.id, role: "Player Character" });
-        await inviteToSlot(gm.session, slot, invitee.user.emailAddress);
+        invites.push(await inviteToSlot(gm.session, slot, invitee.user.emailAddress));
         expect(await inbox(invitee)).toEqual([note("createCampaignInvite", gm)]);
       }
-      const [accepted] = await CampaignInvitesService.getUserInvites(accepting.user.id);
-      await CampaignInvitesService.acceptInvite(accepting.session, accepted.id);
-      const [rejected] = await CampaignInvitesService.getUserInvites(rejecting.user.id);
-      await CampaignInvitesService.rejectInvite(rejecting.session, rejected.id);
+      await CampaignInvitesService.acceptInvite(accepting.session, invites[0].id);
+      await CampaignInvitesService.rejectInvite(rejecting.session, invites[1].id);
 
       expect(await inbox(gm)).toEqual([
         note("acceptCampaignInvite", accepting),

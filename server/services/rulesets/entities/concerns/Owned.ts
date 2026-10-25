@@ -14,7 +14,7 @@ import type { Session } from "@/shared/relations.ts";
 
 /**
  * The entities an entity owns (a class's levels), of its kind (`type`, the owner's), as its kind's rules answer them
- * (`Engine.for(scope).owned(type, ownerId)`): their list, one described, by its id alone too, and their creates, edits
+ * (`Engine.for(scope).owned(type, ownerId)`): their list, one described by its id alone, and their creates, edits
  * and deletes, each written on the owner the view's resolves to (its copy, made on its first edit) and recorded as its
  * kind's activity.
  */
@@ -113,13 +113,6 @@ export function Owned<B extends Constructor>(Base: B) {
     async getOwnedEntities(rulesetId: string, type: RulesetEntityType, ownerId: string) {
       return await withRulesetScope(db, rulesetId, async (scope) =>
         Engine.for(scope).owned(type, ownerId).describeAll(),
-      );
-    }
-
-    /** One of an owner's entities (`ownedId`, of `ownerId`), with its details: refused when it isn't the owner's. */
-    async getOwnedEntity(rulesetId: string, type: RulesetEntityType, ownerId: string, ownedId: string) {
-      return await withRulesetScope(db, rulesetId, async (scope) =>
-        Engine.for(scope).owned(type, ownerId).describe(ownedId),
       );
     }
 

@@ -218,7 +218,6 @@ describe("EntitiesService: a class's levels", () => {
       modifiers: [{ target: "combat.bab" }],
       requirements: [{ target: "classes.testclass.level", value: "1" }],
     };
-    expect(await EntitiesService.getOwnedEntity(ruleset.id, "classes", klass.id, level.id)).toMatchObject(detail);
     expect(await EntitiesService.getOwnedEntityWithOwner(ruleset.id, "classes", level.id)).toMatchObject({
       ...detail,
       name: "Test Class",
@@ -391,8 +390,7 @@ describe("EntitiesService: a class's levels", () => {
         "delete for a missing class",
         () => EntitiesService.deleteOwnedEntity(session, ruleset.id, "classes", NIL_UUID, level.id),
       ],
-      ["read for a missing class", () => EntitiesService.getOwnedEntity(ruleset.id, "classes", NIL_UUID, level.id)],
-      ["read a missing level", () => EntitiesService.getOwnedEntity(ruleset.id, "classes", klass.id, NIL_UUID)],
+      ["read a missing level", () => EntitiesService.getOwnedEntityWithOwner(ruleset.id, "classes", NIL_UUID)],
       [
         "read by id through another ruleset",
         () => EntitiesService.getOwnedEntityWithOwner(other.ruleset.id, "classes", level.id),
@@ -464,7 +462,7 @@ describe("EntitiesService: a class's levels", () => {
       expect(await EntitiesService.getOwnedEntities(fork.id, "classes", klass.id)).toMatchObject([
         { id: inheritedLevel.id, level: 1, bab: 1 },
       ]);
-      expect(await EntitiesService.getOwnedEntity(fork.id, "classes", klass.id, inheritedLevel.id)).toMatchObject({
+      expect(await EntitiesService.getOwnedEntityWithOwner(fork.id, "classes", inheritedLevel.id)).toMatchObject({
         id: inheritedLevel.id,
       });
       // Held by the parent, as its class is: a delete of it in the fork can be undone

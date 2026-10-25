@@ -95,10 +95,6 @@ class CharacterContributorsService {
     return invite;
   }
 
-  async getUserInvites(userId: string) {
-    return await CharacterContributors.findManyWithCharacter(db, { userId, status: "Pending" }, { limit: 10 });
-  }
-
   async inviteContributor(session: Session, characterId: string, email: string) {
     const { contributor, emailData } = await withTransaction(async (tx) => {
       const character = await Characters.findOne(tx, { id: characterId }, Visibility.All);

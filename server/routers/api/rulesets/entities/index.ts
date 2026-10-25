@@ -125,10 +125,6 @@ export default new Hono<SessionContext>()
     const { id, entityType, entityId } = c.req.valid("param");
     return c.json(await EntitiesService.getOwnedEntities(id, entityType, entityId), 200);
   })
-  .get("/:id/entities/:entityType/:entityId/owned/:ownedId", validate("param", ownedParams), async (c) => {
-    const { id, entityType, entityId, ownedId } = c.req.valid("param");
-    return c.json(await EntitiesService.getOwnedEntity(id, entityType, entityId, ownedId), 200);
-  })
   .get("/:id/entities/:entityType/:entityId/progression", validate("param", entityParams), async (c) => {
     const { id, entityType, entityId } = c.req.valid("param");
     return c.json(await EntitiesService.getProgression(id, entityType, entityId), 200);

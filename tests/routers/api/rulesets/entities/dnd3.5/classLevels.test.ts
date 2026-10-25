@@ -43,13 +43,12 @@ describe("rulesets class levels", () => {
     expect(created).toMatchObject({ level: 1, bab: 1, skills: 4 });
     const param = { ...classParam(id, classId), ownedId: created.id };
 
-    expect(await expectOk(level.$get({ param }))).toMatchObject({ id: created.id, level: 1 });
     const byId = await expectOk(
       api.api.rulesets[":id"].entities[":entityType"].owned[":ownedId"].$get({
         param: { id, entityType: "classes", ownedId: created.id },
       }),
     );
-    expect(byId.id).toBe(created.id);
+    expect(byId).toMatchObject({ id: created.id, level: 1 });
     expect((await expectOk(levels.$get({ param: classParam(id, classId) }))).map((l) => l.id)).toEqual([created.id]);
 
     // The level number is fixed once created.
@@ -140,7 +139,8 @@ describe("rulesets class levels", () => {
     await expectStatus(levels.$get({ param: classParam(id, NIL_UUID) }), 404);
     await expectStatus(table.$get({ param: { ...classParam(id, NIL_UUID), table: "spells" } }), 404);
     const param = { ...classParam(id, classId), ownedId: NIL_UUID };
-    await expectStatus(level.$get({ param }), 404);
+    const byId = api.api.rulesets[":id"].entities[":entityType"].owned[":ownedId"];
+    await expectStatus(byId.$get({ param: { id, entityType: "classes", ownedId: NIL_UUID } }), 404);
     await expectStatus(level.$put({ param, json: { fields: { bab: 1 } } }), 404);
     await expectStatus(level.$delete({ param }), 404);
   });
