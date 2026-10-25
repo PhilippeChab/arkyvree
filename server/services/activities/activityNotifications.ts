@@ -9,7 +9,7 @@ import {
   CharacterContributors,
   Characters,
   Contributors,
-  EDITED_JOINS,
+  EDITED_LINKS,
   Entities,
   Invites,
   Modifiers,
@@ -101,7 +101,7 @@ function isContentTable(table: string) {
   return (
     isOneOf(table, RULESET_ENTITY_TYPES) ||
     OWNED_TYPES.has(table as OwnedKind) ||
-    EDITED_JOINS.has(table) ||
+    EDITED_LINKS.has(table) ||
     CUSTOMIZATION_OWNERS.has(table)
   );
 }
@@ -126,7 +126,7 @@ async function findChangedRuleset(
 
 /**
  * The row a row of a ruleset's content beside its entities belongs to: an owned entity's owner (a class level's class),
- * a join's owner (a class's skills' activity targets the class), a customization's entity.
+ * an edited link's owner (a class's skills' activity targets the class), a customization's entity.
  */
 async function findContentOwner(db: Db, { id, table }: ContentRow): Promise<ContentRow | undefined> {
   const ownerType = OWNED_TYPES.get(table as OwnedKind);
@@ -134,8 +134,8 @@ async function findContentOwner(db: Db, { id, table }: ContentRow): Promise<Cont
     const [owned] = await Entities.findPositions(db, { entityType: table, ids: [id] });
     return owned && { id: owned.ownerId, table: ownerType };
   }
-  const join = EDITED_JOINS.get(table);
-  if (join) return { id, table: join.from };
+  const edited = EDITED_LINKS.get(table);
+  if (edited) return { id, table: edited.from };
   return await CUSTOMIZATION_OWNERS.get(table)?.(db, id);
 }
 

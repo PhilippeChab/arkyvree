@@ -13,18 +13,9 @@ import type { Dnd35SeedContext as SeedContext } from "@/database/seeders/dnd3.5/
 import { findSpellcastingClass } from "@/database/seeders/dnd3.5/spellTable.ts";
 import { entitySnapshotsInRules, requirementsInCustomization } from "@/drizzle/schema.ts";
 import { Engine } from "@/engine/index.ts";
-import {
-  type Feat,
-  type Item,
-  type Klass,
-  type KlassLevelFeat,
-  type KlassLevelSave,
-  type KlassSkill,
-  type Race,
-  type Spell,
-} from "@/engine/rulesets/dnd3.5/index.ts";
+import { type Feat, type Item, type Klass, type Race, type Spell } from "@/engine/rulesets/dnd3.5/index.ts";
 import { db } from "@/server/database/index.ts";
-import { Entities, Joins } from "@/server/repositories/index.ts";
+import { Entities, EntityLinks } from "@/server/repositories/index.ts";
 import {
   CLASS_CASTER_TYPE,
   CLASS_LEVEL_BAB,
@@ -125,8 +116,8 @@ function spell(name: string, level: number, fields: Partial<LeveledSpellSeed> = 
 
 async function aptitudesOfFeat(ctx: SeedContext, featId: string) {
   const aptitudes = namesOf(ctx.aptMap);
-  return (await Joins.findMany<{ aptitudeId: string }>(db, { join: "feats_aptitudes", fromIds: [featId] }))
-    .map((link) => aptitudes[link.aptitudeId])
+  return (await EntityLinks.findMany(db, { fromIds: [featId], role: "listedIn" }))
+    .map((link) => aptitudes[link.toId])
     .sort();
 }
 
@@ -136,20 +127,20 @@ async function levelsOf(ctx: SeedContext, levelIds: Record<number, string>) {
   const feats = namesOf(ctx.featMap);
   const aptitudes = namesOf(ctx.aptMap);
   const ids = Object.values(levelIds);
-  const levelSaves = await Joins.findMany<KlassLevelSave>(db, { join: "class_level_saves", fromIds: ids });
-  const granted = await Joins.findMany<KlassLevelFeat>(db, { join: "class_level_feats", fromIds: ids });
+  const levelSaves = await EntityLinks.findMany(db, { fromIds: ids, role: "baseBonus" });
+  const granted = await EntityLinks.findMany(db, { fromIds: ids, role: "grants" });
   const levels = [];
   for (const [level, id] of Object.entries(levelIds)) {
     const { fields, modifiers, requirements } = await describeCustomizations(id);
     levels.push({
       level: Number(level),
       fields,
-      saves: Object.fromEntries(levelSaves.filter((s) => s.klassLevelId === id).map((s) => [saves[s.saveId], s.base])),
+      saves: Object.fromEntries(levelSaves.filter((s) => s.fromId === id).map((s) => [saves[s.toId], s.amount])),
       modifiers,
       requirements,
       feats: granted
-        .filter((g) => g.klassLevelId === id)
-        .map((g) => `${feats[g.featId]} in ${aptitudes[g.aptitudeId]}${g.free ? ", free" : ""}`)
+        .filter((g) => g.fromId === id && g.toType === "feats")
+        .map((g) => `${feats[g.toId]} in ${aptitudes[g.viaId!]}${g.free ? ", free" : ""}`)
         .sort(),
     });
   }
@@ -165,13 +156,8 @@ async function rowsOf<R>(type: string, where: { id: string } | { rulesetId: stri
 /** The spell lists a spell is in, "aptitude level" each. */
 async function spellListsOf(ctx: SeedContext, spellId: string) {
   const aptitudes = namesOf(ctx.aptMap);
-  return (
-    await Joins.findMany<{ aptitudeId: string; level: number | null }>(db, {
-      join: "spells_aptitudes",
-      fromIds: [spellId],
-    })
-  )
-    .map((link) => `${aptitudes[link.aptitudeId]} ${link.level}`)
+  return (await EntityLinks.findMany(db, { fromIds: [spellId], role: "listedIn" }))
+    .map((link) => `${aptitudes[link.toId]} ${link.tier}`)
     .sort();
 }
 
@@ -352,9 +338,7 @@ describe("Seeding", () => {
       });
       const skills = namesOf(ctx.skillMap);
       expect(
-        (await Joins.findMany<KlassSkill>(db, { join: "class_skills", fromIds: [klassId] }))
-          .map((s) => skills[s.skillId])
-          .sort(),
+        (await EntityLinks.findMany(db, { fromIds: [klassId], role: "classSkill" })).map((s) => skills[s.toId]).sort(),
       ).toEqual(["Climb", "Spot"]);
 
       const slot = (spellLevel: number, kind: string, operator: string, value: number) =>
@@ -698,8 +682,12 @@ describe("Seeding", () => {
       { name: "Test Familiar", kind: "familiar" },
     ]);
     expect(
-      await Joins.findMany<KlassLevelFeat>(db, { join: "class_level_feats", toIds: [ctx.featMap["Test Alertness"]] }),
-    ).toMatchObject([{ aptitudeId: ctx.aptMap["Test Familiar Feature"], free: true }]);
+      await EntityLinks.findMany(db, {
+        fromType: "class_levels",
+        role: "grants",
+        toIds: [ctx.featMap["Test Alertness"]],
+      }),
+    ).toMatchObject([{ viaId: ctx.aptMap["Test Familiar Feature"], free: true }]);
   });
 
   describe("an extension", () => {

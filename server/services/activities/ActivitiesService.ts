@@ -8,7 +8,7 @@ import {
   Characters,
   Contributors,
   CUSTOMIZABLE_TYPES,
-  EDITED_JOINS,
+  EDITED_LINKS,
   Entities,
   Invites,
   Modifiers,
@@ -121,8 +121,8 @@ class ActivitiesService {
   }
 
   /**
-   * A ruleset's content's page: an owned entity's owner's (a class level's class's); a join's an owner edits, the owner's
-   * on the tab of the join's targets (a class's skills, whose activity targets the class); any other entity's, its
+   * A ruleset's content's page: an owned entity's owner's (a class level's class's); a link of a role an owner edits, the
+   * owner's on the tab of its targets (a class's skills, whose activity targets the class); any other entity's, its
    * customization page when it has one, else its own.
    */
   private async resolveRulesEntity(targetTable: string, targetId: string): Promise<string | null> {
@@ -131,8 +131,8 @@ class ActivitiesService {
       const [owned] = await Entities.findPositions(db, { entityType: targetTable, ids: [targetId] });
       return owned ? await this.ownerPageUrl(ownerType, owned.ownerId) : null;
     }
-    const join = EDITED_JOINS.get(targetTable);
-    if (join) return await this.ownerPageUrl(join.from, targetId, getUrlSegment(join.to));
+    const edited = EDITED_LINKS.get(targetTable);
+    if (edited) return await this.ownerPageUrl(edited.from, targetId, getUrlSegment(edited.to));
     return await this.resolveRulesSubEntity(targetTable, targetId);
   }
 

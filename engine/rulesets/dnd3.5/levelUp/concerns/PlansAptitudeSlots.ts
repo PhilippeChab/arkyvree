@@ -69,12 +69,12 @@ export function PlansAptitudeSlots<B extends Constructor<LevelUpBase<DetailedCha
     }
 
     /**
-     * A planned level's slot deltas: its klass level's modifiers, the modifiers of the feats granted there, and the
-     * general feats it gives (`generalFeats`, its ruleset's Settings').
+     * A planned level's slot deltas: its klass level's modifiers, the modifiers of the feats granted there (its
+     * `grants` links' targets), and the general feats it gives (`generalFeats`, its ruleset's Settings').
      */
     private levelDeltas(
       klassLevelId: string,
-      autoFeatRecords: { featsInRule: { id: string } }[],
+      autoFeatRecords: readonly { toId: string }[],
       generalFeats: number,
       featSlots: FeatSlots,
       spellSlots: SpellSlots,
@@ -85,7 +85,7 @@ export function PlansAptitudeSlots<B extends Constructor<LevelUpBase<DetailedCha
       const add = (modifiers: Modifier[]) => this.addModifierDeltas(deltas, modifiers, featSlots, spellSlots);
 
       add(modifiersBySource.get(klassLevelId) ?? []);
-      for (const rec of autoFeatRecords) add(modifiersBySource.get(rec.featsInRule.id) ?? []);
+      for (const grant of autoFeatRecords) add(modifiersBySource.get(grant.toId) ?? []);
 
       const generalAptId = aptitudeIdBySlug.get(LevelRules.GENERAL_FEATS_APTITUDE_SLUG);
       if (generalAptId && featSlots[generalAptId] && generalFeats > 0)
@@ -100,7 +100,7 @@ export function PlansAptitudeSlots<B extends Constructor<LevelUpBase<DetailedCha
      */
     protected planAptitudeSlots(
       klassLevelIds: string[],
-      grantedFeatRecords: { aptitudeId: string; featsInRule: { id: string } }[][],
+      grantedFeatRecords: (readonly { toId: string }[])[],
       featPoolIds: string[],
       spellPoolIds: string[],
       savedLevelCount: number,

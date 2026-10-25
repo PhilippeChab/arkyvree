@@ -109,13 +109,16 @@ export function SeedsClasses<B extends Constructor<BaseSeeder>>(Base: B) {
     /** The feats its levels grant: its class features, its proficiencies and its free feats. */
     private async insertGrantedFeats(def: ClassSeed, levelIds: Record<number, string>) {
       const granted = (level: number, feat: string, aptitude: string, what: string) => ({
-        klassLevelId: levelIds[level],
-        featId: this.idOf(this.ctx.featMap, feat, `${def.name}'s ${what}`),
-        aptitudeId: this.idOf(this.ctx.aptMap, aptitude, `${def.name}'s ${what}`),
+        role: "grants",
+        fromId: levelIds[level],
+        fromType: "class_levels",
+        toId: this.idOf(this.ctx.featMap, feat, `${def.name}'s ${what}`),
+        toType: "feats",
+        viaId: this.idOf(this.ctx.aptMap, aptitude, `${def.name}'s ${what}`),
         free: true,
       });
       const featureAptitude = def.classFeatureAptitude;
-      await this.insertJoins("class_level_feats", [
+      await this.insertLinks([
         ...(featureAptitude
           ? (def.classFeatures ?? []).map(([level, feat]) =>
               granted(level, feat, featureAptitude, `class feature at level ${level}`),
@@ -168,25 +171,34 @@ export function SeedsClasses<B extends Constructor<BaseSeeder>>(Base: B) {
       ]);
     }
 
-    /** Each level's base saves. */
+    /** Each level's base saves: its `baseBonus` links. */
     private async insertSaves(def: ClassSeed, levels: Levels) {
-      await this.insertJoins(
-        "class_level_saves",
+      const base = (fromId: string, save: string, amount: number) => ({
+        role: "baseBonus",
+        fromId,
+        fromType: "class_levels",
+        toId: this.ctx.saveMap[save],
+        toType: "saves",
+        amount,
+      });
+      await this.insertLinks(
         levels.flatMap(({ id, level }) => [
-          { klassLevelId: id, saveId: this.ctx.saveMap["Fortitude"], base: saveAt(def.saves.fortitude, level) },
-          { klassLevelId: id, saveId: this.ctx.saveMap["Reflex"], base: saveAt(def.saves.reflex, level) },
-          { klassLevelId: id, saveId: this.ctx.saveMap["Will"], base: saveAt(def.saves.will, level) },
+          base(id, "Fortitude", saveAt(def.saves.fortitude, level)),
+          base(id, "Reflex", saveAt(def.saves.reflex, level)),
+          base(id, "Will", saveAt(def.saves.will, level)),
         ]),
       );
     }
 
-    /** Its class skills. */
+    /** Its class skills: its `classSkill` links. */
     private async insertSkills(def: ClassSeed, klassId: string) {
-      await this.insertJoins(
-        "class_skills",
+      await this.insertLinks(
         def.classSkills.map((name) => ({
-          klassId,
-          skillId: this.idOf(this.ctx.skillMap, name, `${def.name}'s class skill`),
+          role: "classSkill",
+          fromId: klassId,
+          fromType: "classes",
+          toId: this.idOf(this.ctx.skillMap, name, `${def.name}'s class skill`),
+          toType: "skills",
         })),
       );
     }

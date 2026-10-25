@@ -1,20 +1,27 @@
 import { describe, expect, test } from "bun:test";
 
-import type { Feat, Klass, KlassLevelSpell, Spell } from "@/engine/rulesets/dnd3.5/index.ts";
+import { eq, or } from "drizzle-orm";
+
+import { entityLinksInRules } from "@/drizzle/schema.ts";
+import type { Feat, Klass, Spell } from "@/engine/rulesets/dnd3.5/index.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
-import { Entities, Joins } from "@/server/repositories/index.ts";
+import { Entities } from "@/server/repositories/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
 import { addCharacterLevel, createTestKlassLevel } from "@/tests/support/dnd3.5/levels.ts";
+import { addGrants } from "@/tests/support/dnd3.5/links.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
 
 /**
- * A join's rows that name the aptitude by a part of their links: as the list a feat or a spell is in (`to`), or the one
- * a grant is through (`via`).
+ * The links that name the aptitude: as the list a feat or a spell is in (their target), or the pool a grant is through
+ * (their via).
  */
-async function linksOf(join: string, part: "to" | "via", aptitudeId: string) {
-  return await Joins.findMany(db, { join, ...(part === "to" ? { toIds: [aptitudeId] } : { viaIds: [aptitudeId] }) });
+async function linksOf(aptitudeId: string) {
+  return await db
+    .select({ id: entityLinksInRules.id })
+    .from(entityLinksInRules)
+    .where(or(eq(entityLinksInRules.toId, aptitudeId), eq(entityLinksInRules.viaId, aptitudeId)));
 }
 
 // CRUD, ownership and copy-on-write are covered for every entity in EntityServices.test.ts.
@@ -89,19 +96,13 @@ describe("EntitiesService: aptitudes", () => {
       fields: { bab: 1, skills: 2 },
       feats: [{ featId: feat.id, aptitudeId: featAptitude.id }],
     });
-    await Joins.create<KlassLevelSpell>(db, "class_level_spells", {
-      klassLevelId: level.id,
-      spellId: spell.id,
-      aptitudeId: spellAptitude.id,
-    });
+    await addGrants(db, level.id, "spells", [{ toId: spell.id, aptitudeId: spellAptitude.id }]);
 
     await EntitiesService.deleteEntity(session, ruleset.id, "aptitudes", featAptitude.id);
     await EntitiesService.deleteEntity(session, ruleset.id, "aptitudes", spellAptitude.id);
 
-    expect(await linksOf("feats_aptitudes", "to", featAptitude.id)).toEqual([]);
-    expect(await linksOf("spells_aptitudes", "to", spellAptitude.id)).toEqual([]);
-    expect(await linksOf("class_level_feats", "via", featAptitude.id)).toEqual([]);
-    expect(await linksOf("class_level_spells", "via", spellAptitude.id)).toEqual([]);
+    expect(await linksOf(featAptitude.id)).toEqual([]);
+    expect(await linksOf(spellAptitude.id)).toEqual([]);
   });
 
   test("refuses to delete an aptitude a character picked a feat or a spell through", async () => {

@@ -31,7 +31,7 @@ describe("rulesets class skills", () => {
 
     await expectOk(classSkills.$post({ param: classParam(id, classId), json: { targetId: skillId } }));
     const added = await expectOk(classSkills.$get({ param: classParam(id, classId) }));
-    expect(added.map((s) => s.skillId)).toEqual([skillId]);
+    expect(added.map((link) => [link.role, link.toId])).toEqual([["classSkill", skillId]]);
 
     await expectOk(classSkills[":targetId"].$delete({ param: { ...classParam(id, classId), targetId: skillId } }));
     expect(await expectOk(classSkills.$get({ param: classParam(id, classId) }))).toEqual([]);

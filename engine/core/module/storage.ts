@@ -5,7 +5,8 @@
  * character's fields and links (`character.fields`, `links`) and its advancements and their picks
  * (`character.advancements`, `advancement_picks`). The registries those rows are checked against (`rules.entity_types`,
  * `field_defs`, `link_roles`, …) hold what each module declares here, and a module's rows read as its own shapes by
- * these declarations: its kinds' columns, its joins, its character's.
+ * these declarations: its kinds' columns, its character's. An entity's links of a role many of which it holds (a feat's
+ * pools, a class level's grants) are read and written as links, by role.
  */
 
 /** A character's link of a role, to an entity of a type: whether it holds one, and what deleting it does. */
@@ -76,10 +77,9 @@ export interface StepDef {
   viaType: string | null;
 }
 
-/** How a module stores its data: its registries' rows, its kinds' and joins' row shapes, and its character's. */
+/** How a module stores its data: its registries' rows, its kinds' row shapes, and its character's. */
 export interface StorageDeclaration {
   character: StoredCharacter;
-  joins: Record<string, StoredJoin>;
   kinds: Record<string, StoredKind>;
   registries: StorageRegistries;
 }
@@ -184,19 +184,6 @@ export interface StoredFieldValue {
   value: FieldValue;
 }
 
-/** A join's rows: the links of a role from one kind to another, each part under its column's name. */
-export interface StoredJoin {
-  columns: Record<string, LinkPart>;
-  /**
-   * Whether its from-entity edits it link by link, on a tab of its page (3.5's class's skills): each change an activity
-   * of the join's, which links to that tab
-   */
-  edited?: true;
-  from: string;
-  role: string;
-  to: string;
-}
-
 /** An entity kind's row: its columns past an entity's own (id, scope, name, description, timestamps), by their names. */
 export interface StoredKind {
   columns: Record<string, StoredColumn>;
@@ -206,10 +193,10 @@ export interface StoredKind {
    */
   customizable?: true;
   /**
-   * The lists its row carries past its columns, by their names: a join's rows from the entity, each with its target's
-   * row (`target`, its name), as a relational read nested them (a feat's pools, each with its aptitude)
+   * The role of the links its entities' page edits one at a time, on a tab of its own (3.5's class's `classSkill`): each
+   * change an activity named for the role, which opens that tab
    */
-  lists?: Record<string, { join: string; target: string }>;
+  editedLinks?: string;
   /**
    * How its entities of one name in a ruleset's chain pair: always, a name its identity (`identity`: 3.5's pools), or,
    * when no copy pairs them, as a book's reprint (`reprints`: 3.5's feats and spells); none, never (a race or a class
@@ -266,9 +253,6 @@ export interface StoredWrite {
 
 /** A stored field's value, as its typed column holds it. */
 export type FieldValue = boolean | number | string;
-
-/** A link's parts, as a join's row names them. */
-export type LinkPart = "amount" | "free" | "from" | "id" | "tier" | "to" | "via";
 
 /**
  * How sibling copies of an entity merge a field or a link: the winning copy's value or none (`winner`), the winning

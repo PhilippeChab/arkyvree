@@ -92,7 +92,8 @@ export default class LevelsImport {
 
   /** Each line of a feat of the file matched, with the pools it can be picked in; a domain is its domain's feat. */
   private matchFeats(): MatchedFeat[] {
-    const { aptitudes, featsById } = this.dnd35;
+    const { dnd35 } = this;
+    const { aptitudes } = dnd35;
     const domains = this.imported.domains.map(({ line, name }): ImportedFeat => ({
       line,
       name: `${name} Domain`,
@@ -106,7 +107,7 @@ export default class LevelsImport {
           this.report.skip(feat.line, `${shown} isn't a feat of the ruleset`);
           return [];
         }
-        const poolIds = (featsById.get(found.id)?.featsAptitudesInRules ?? []).map((link) => link.aptitudeId);
+        const poolIds = dnd35.listLinksOf(found.id).map((link) => link.toId);
         const hinted = aptitudes.find((aptitude) => aptitude.name === PCGEN_POOLS.get(feat.pool))?.id;
         return [
           {
@@ -178,7 +179,8 @@ export default class LevelsImport {
    * and one of a class the ruleset hasn't are listed.
    */
   private matchSpells(): MatchedSpell[] {
-    const { aptitudeIdBySlug, spellsById } = this.dnd35;
+    const { dnd35 } = this;
+    const { aptitudeIdBySlug } = dnd35;
     const classLists = SpellLists.of(this.view.rulesetData).classListsByKlass;
     return this.imported.spells.flatMap((spell) => {
       const found = this.names.findSpells(spell.name);
@@ -193,9 +195,13 @@ export default class LevelsImport {
       }
       const lists = new Set([...(classLists.get(klass.id) ?? [])].map((slug) => aptitudeIdBySlug.get(slug)));
       const links = found.flatMap((spell) =>
-        (spellsById.get(spell.id)?.spellsAptitudesInRules ?? []).flatMap((link) =>
-          lists.has(link.aptitudeId) && link.level !== null ? [{ ...link, name: spell.name }] : [],
-        ),
+        dnd35
+          .listLinksOf(spell.id)
+          .flatMap((link) =>
+            lists.has(link.toId) && link.tier !== null
+              ? [{ aptitudeId: link.toId, level: link.tier, name: spell.name, spellId: link.fromId }]
+              : [],
+          ),
       );
       const link = links.find(({ level }) => level === spell.level) ?? links[0];
       if (!link) {

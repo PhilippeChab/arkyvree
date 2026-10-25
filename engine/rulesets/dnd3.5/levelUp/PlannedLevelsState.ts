@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import RulesError from "@/engine/core/RulesError.ts";
+import type { ViewLink } from "@/engine/core/view/index.ts";
 import { CLASS_LEVEL_FIELDS } from "@/engine/rulesets/dnd3.5/entities/classes/fields.ts";
 import { RULESET_LIMITS } from "@/engine/rulesets/dnd3.5/limits.ts";
 import AptitudeTargets from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTargets.ts";
@@ -15,7 +16,6 @@ import type { PlannedClassLevel } from "./LevelUpBase.ts";
 import LevelUpState, { type PoolPicks } from "./LevelUpState.ts";
 import PicksDistribution, { type FeatSlots, type PerLevelDistributionData } from "./PicksDistribution.ts";
 import type { LevelPicks, LevelRequest } from "./requests.ts";
-import type { GrantedFeatRecords } from "./SelectionChecks.ts";
 
 /**
  * A level-up's planned levels, built: the character with them (`character`, built with their projection), the
@@ -23,7 +23,8 @@ import type { GrantedFeatRecords } from "./SelectionChecks.ts";
  */
 export interface PlannedLevels {
   character: DetailedCharacter;
-  grantedFeatRecords: GrantedFeatRecords[];
+  /** Each planned level's granted feats the view shows: its class level's `grants` links to feats */
+  grantedFeatRecords: ViewLink[][];
   klassLevelEntries: PlannedClassLevel[];
   saved: DetailedCharacter;
   savedLevelCount: number;
@@ -96,8 +97,8 @@ export default abstract class PlannedLevelsState extends include(LevelUpState, P
     for (const { abilityIncreases, klassLevel } of klassLevelEntries)
       projection.addLevel(klassLevel.id, { abilityIncreases, hp: LevelRules.UNROLLED_LEVEL_HP });
     return {
-      grantedFeatRecords: klassLevelEntries.map(
-        ({ klassLevel }) => this.dnd35.klassLevelFeatsWithFeatsByKlassLevel.get(klassLevel.id) ?? [],
+      grantedFeatRecords: klassLevelEntries.map(({ klassLevel }) =>
+        this.dnd35.grantedFeatsOf(klassLevel.id).filter((grant) => this.dnd35.featsById.has(grant.toId)),
       ),
       character: this.build(projection),
       savedLevelCount: this.character.rows.levels.length,
@@ -177,7 +178,7 @@ export default abstract class PlannedLevelsState extends include(LevelUpState, P
    */
   protected getPlannedClassSkills(klassIds: string[]) {
     const { skills } = this.dnd35;
-    const recordsOf = (klassId: string) => this.dnd35.klassSkillsWithSkillsByKlass.get(klassId) ?? [];
+    const recordsOf = (klassId: string) => this.dnd35.classSkillsOf(klassId);
     const perLevel = klassIds.map((klassId) => {
       const ids = this.getClassSkillIds(recordsOf(klassId));
       return skills.filter((skill) => ids.has(skill.id)).map((skill) => skill.id);

@@ -7,8 +7,8 @@ import { RulesetComposition } from "@/engine/core/view/index.ts";
 import {
   composeView,
   idsOf,
-  type Join,
   type Kind,
+  linkOf,
   NO_FIELDS,
   rawRows,
   VIEW_SCHEMA,
@@ -60,13 +60,10 @@ function ownersRaw(values: Record<string, StoredValues>) {
 }
 
 describe("A ruleset's view, composed by its modules' declarations", () => {
-  test("leaves out an owned entity, its customizations and its owner's joins with an owner it doesn't show", () => {
-    const fork = rawRows(
-      { owners: [{ id: "o1-copy" }], owned: [{ id: "c", ownerId: "o1-copy" }] },
-      {
-        owner_links: [{ ownerId: "o1-copy", toId: "x" }],
-      },
-    );
+  test("leaves out an owned entity and its customizations with an owner it doesn't show, whose links are its copy's", () => {
+    const fork = rawRows({ owners: [{ id: "o1-copy" }], owned: [{ id: "c", ownerId: "o1-copy" }] }, [
+      { type: "owners", links: [linkOf("o1-copy", "ally", "x")] },
+    ]);
     const base = rawRows(
       {
         owners: [{ id: "o1" }, { id: "o2" }],
@@ -75,23 +72,20 @@ describe("A ruleset's view, composed by its modules' declarations", () => {
           { id: "b", ownerId: "o2" },
         ],
       },
-      {
-        owner_links: [
-          { ownerId: "o1", toId: "x" },
-          { ownerId: "o2", toId: "y" },
-        ],
-      },
+      [
+        { type: "owners", links: [linkOf("o1", "ally", "y")] },
+        { type: "owners", links: [linkOf("o2", "ally", "y")] },
+      ],
       ["a", "b"],
     );
     const view = composeView([fork, base], { overrides: [["o1", "o1-copy"]] });
 
     expect(idsOf(view, "owners")).toEqual(["o1-copy", "o2"]);
-    // The copied owner's own entities are its copy's
+    // The copied owner's own entities are its copy's, and so are its links, by its stored id too
     expect(idsOf(view, "owned")).toEqual(["c", "b"]);
-    expect(view.joinRows("owner_links" as Join)).toEqual([
-      { ownerId: "o1-copy", toId: "x" },
-      { ownerId: "o2", toId: "y" },
-    ] as never);
+    expect(view.linksOf("o1")).toEqual([linkOf("o1-copy", "ally", "x")]);
+    expect(view.linksOf("o2", "ally")).toEqual([linkOf("o2", "ally", "y")]);
+    expect(view.linksOf("o2", "other")).toEqual([]);
     for (const customizations of [view.modifiersBySource, view.requirementsByEntity]) {
       expect(customizations.get("a")).toBeUndefined();
       expect(customizations.get("b")).toHaveLength(1);
@@ -100,29 +94,37 @@ describe("A ruleset's view, composed by its modules' declarations", () => {
     expect(view.valuesOf("b").fields).toEqual({ T: ["v"] });
   });
 
-  test("resolves a kind's list links to the targets the view shows, and merges a sibling loser's into its winner's", () => {
+  test("resolves an entity's links to the targets the view shows, and merges a sibling loser's of a role that merges", () => {
     const fork = rawRows({ targets: [{ id: "t1-copy", name: "First copy" }] });
-    const book = rawRows({
-      listed: [{ id: "l3", links: [{ listedId: "l3", targetId: "t3", target: { id: "t3" } }] }],
-      targets: [{ id: "t3", name: "Third" }],
-    });
-    const base = rawRows({
-      listed: [
-        { id: "l1", links: [{ listedId: "l1", targetId: "t1", target: { id: "t1" } }] },
-        { id: "l2", links: [{ listedId: "l2", targetId: "t2", target: { id: "t2" } }] },
+    const book = rawRows({ listed: [{ id: "l3" }], targets: [{ id: "t3", name: "Third" }] }, [
+      {
+        type: "listed",
+        links: [linkOf("l3", "listedIn", "t3"), linkOf("l3", "other", "t3"), linkOf("l3", "listedIn", "t2")],
+      },
+    ]);
+    const base = rawRows(
+      {
+        listed: [{ id: "l1" }, { id: "l2" }],
+        targets: [
+          { id: "t1", name: "First" },
+          { id: "t2", name: "Second" },
+        ],
+      },
+      [
+        { type: "listed", links: [linkOf("l1", "listedIn", "t1")] },
+        { type: "listed", links: [linkOf("l2", "listedIn", "t2")] },
       ],
-      targets: [
-        { id: "t1", name: "First" },
-        { id: "t2", name: "Second" },
-      ],
-    });
+    );
     const view = composeView([fork, book, base], { overrides: [["t1", "t1-copy"]], siblings: [["l2", ["l3"]]] });
 
-    const links = (id: string) =>
-      (view.find("listed" as Kind, id) as unknown as { links: { target: { name: string }; targetId: string }[] }).links;
+    const targets = (id: string) => view.nameLinks(view.linksOf(id)).map(({ toId, toName }) => [toId, toName]);
     expect(idsOf(view, "listed")).toEqual(["l1", "l2"]);
-    expect(links("l1").map(({ target, targetId }) => [targetId, target.name])).toEqual([["t1-copy", "First copy"]]);
-    expect(links("l2").map(({ targetId }) => targetId)).toEqual(["t2", "t3"]);
+    expect(targets("l1")).toEqual([["t1-copy", "First copy"]]);
+    // The loser's link of a role that doesn't merge stays its own, and one to a target the winner links to collapses
+    expect(view.linksOf("l2").map(({ fromId, role, toId }) => [fromId, role, toId])).toEqual([
+      ["l2", "listedIn", "t2"],
+      ["l2", "listedIn", "t3"],
+    ]);
     // A stored id finds its winner
     expect((view.find("listed" as Kind, "l3") as unknown as { id: string }).id).toBe("l2");
   });

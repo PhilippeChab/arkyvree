@@ -133,10 +133,10 @@ for (const action of ["add skill", "remove skill", "create level", "update level
     const { session, host, source, assertCopied } = await setup("classes", action === "create level");
     const { assignedSkill, otherSkill, levelId } = await withRulesetScope(db, host.id, async ({ rulesetData }) => {
       const id = rulesetData.canonicalize(source.id);
-      const assigned = Dnd35View.of(rulesetData).klassSkillsByKlass.get(id)!;
+      const assigned = Dnd35View.of(rulesetData).classSkillsOf(id);
       return {
-        assignedSkill: assigned[0].skillId,
-        otherSkill: Dnd35View.of(rulesetData).skills.find((skill) => !assigned.some((row) => row.skillId === skill.id))!
+        assignedSkill: assigned[0].toId,
+        otherSkill: Dnd35View.of(rulesetData).skills.find((skill) => !assigned.some((link) => link.toId === skill.id))!
           .id,
         levelId: [...Dnd35View.of(rulesetData).klassLevelsById.values()].find(
           (level) => level.klassId === id && level.level === 1,

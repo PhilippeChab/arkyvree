@@ -30,27 +30,17 @@ export const SPELL_COLUMNS: FormField[] = [
     help: "The spell lists it's on, each at its spell level",
     input: "leveledLinks",
     key: "aptitudes",
-    links: "spellsAptitudesInRules",
     label: "Aptitudes",
     max: RULESET_LIMITS.spellLevel,
     min: 0,
     references: "aptitudes",
     required: APTITUDES_REQUIRED,
-    target: "aptitudesInRule",
+    role: "listedIn",
   },
 ];
 
 /** A 3.5 spell's list: its name, its spell lists, its description. */
 export const SPELL_LIST: ListDescription = {
   nameShare: 25,
-  columns: [
-    {
-      key: "spellsAptitudesInRules",
-      label: "Aptitudes",
-      reads: "pools",
-      share: 15,
-      slot: "inline",
-      target: "aptitudesInRule",
-    },
-  ],
+  columns: [{ key: "links", label: "Aptitudes", reads: "pools", role: "listedIn", share: 15, slot: "inline" }],
 };

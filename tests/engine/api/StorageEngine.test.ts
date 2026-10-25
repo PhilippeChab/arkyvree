@@ -1,6 +1,24 @@
 import { describe, expect, test } from "bun:test";
 
 import StorageEngine from "@/engine/api/StorageEngine.ts";
+import type { StoredLink } from "@/engine/core/module/index.ts";
+
+/** A stored link of a role (`role`, to an entity of `toType`), made at `createdAt`, its `ordinal`th. */
+function storedLink(role: string, toType: string, toId: string, createdAt: string, ordinal: number): StoredLink {
+  return {
+    amount: null,
+    createdAt,
+    free: false,
+    id: `${role}-${toId}`,
+    ordinal,
+    role,
+    tier: null,
+    toId,
+    toType,
+    updatedAt: createdAt,
+    viaId: null,
+  };
+}
 
 /** The value an item's weight is written as (rounded to its scale), from what its form gives. */
 function writtenWeight(weight: number | string) {
@@ -36,36 +54,28 @@ describe("A module's storage", () => {
     expect(() => storage.ownerColumn(unowned.type)).toThrow(`No module stores ${unowned.type} as owned`);
   });
 
-  test("declares a view's kinds, an owner before what it owns, and the joins its kinds' lists don't nest", () => {
+  test("declares a view's kinds, an owner before what it owns, and the links whose sibling copies' merge", () => {
     const storage = StorageEngine.shared();
     const schema = storage.viewSchema();
     expect(storage.viewSchema()).toBe(schema);
     const order = schema.kinds.map(({ type }) => type);
-    for (const { lists, owner, type } of schema.kinds) {
-      if (owner) {
-        expect(owner.column).toBe(storage.ownerColumn(type));
-        expect(order.indexOf(owner.type)).toBeLessThan(order.indexOf(type));
-      }
-      for (const list of lists) {
-        const join = storage.join(
-          Object.values(storage.kind(type).lists ?? {}).find((l) => l.target === list.target)!.join,
-        );
-        expect([join.columns[list.from], join.columns[list.to], join.to]).toEqual(["from", "to", list.toType]);
-      }
+    for (const { owner, type } of schema.kinds) {
+      if (!owner) continue;
+      expect(owner.column).toBe(storage.ownerColumn(type));
+      expect(order.indexOf(owner.type)).toBeLessThan(order.indexOf(type));
     }
-    const listed = new Set(
-      schema.kinds.flatMap(({ type }) => Object.values(storage.kind(type).lists ?? {}).map((l) => l.join)),
-    );
-    expect(schema.joins.map(({ name }) => name)).toEqual(storage.joinNames().filter((name) => !listed.has(name)));
-    for (const join of schema.joins) expect(join.fromColumn).toBe(storage.joinFromColumn(join.name));
-    // A kind's visible ids are kept when an owned kind's rows or a join's read them alone
-    const read = new Set([
-      ...schema.kinds.flatMap(({ owner }) => (owner ? [owner.type] : [])),
-      ...schema.joins.map(({ from }) => from),
-    ]);
+    // A kind's visible ids are kept when an owned kind's rows read them alone
+    const read = new Set(schema.kinds.flatMap(({ owner }) => (owner ? [owner.type] : [])));
     expect(schema.kinds.filter(({ tracked }) => tracked).map(({ type }) => type)).toEqual(
       order.filter((type) => read.has(type)),
     );
+    expect(schema.unionLinks).toEqual(
+      storage
+        .registries()
+        .linkRoles.filter((def) => !def.single && def.merge === "union")
+        .map(({ fromType, role, toType }) => ({ fromType, role, toType })),
+    );
+    expect(schema.unionLinks.length).toBeGreaterThan(0);
   });
 
   test("reads the kinds a user customizes and the types whose entities hold fields into the view's kinds", () => {
@@ -87,9 +97,36 @@ describe("A module's storage", () => {
     }
   });
 
-  test("names the column each join keeps its from-entity in", () => {
+  test("reads an entity's links of the roles it holds many of, in their order, as a view holds them", () => {
     const storage = StorageEngine.shared();
-    for (const join of storage.joinNames())
-      expect(storage.join(join).columns[storage.joinFromColumn(join)]).toBe("from");
+    const { linkRoles } = storage.registries();
+    const many = linkRoles.find((def) => !def.single)!;
+    const single = linkRoles.find((def) => def.single && def.fromType === many.fromType);
+    const links = [
+      storedLink(many.role, many.toType, "b", "2026-01-01 00:00:01+00", 0),
+      storedLink(many.role, many.toType, "c", "2026-01-01 00:00:00+00", 1),
+      storedLink(many.role, many.toType, "a", "2026-01-01 00:00:00+00", 1),
+      ...(single ? [storedLink(single.role, single.toType, "d", "2026-01-01 00:00:00+00", 0)] : []),
+    ];
+    const read = storage.viewLinksOf({ id: "e", links, type: many.fromType });
+    expect(read.map(({ fromId, role, toId }) => [fromId, role, toId])).toEqual([
+      ["e", many.role, "a"],
+      ["e", many.role, "c"],
+      ["e", many.role, "b"],
+    ]);
+    expect(storage.viewLinksOf({ id: "e", links, type: "none" })).toEqual([]);
+  });
+
+  test("names the roles an entity's page edits, and those whose links refuse their target's delete", () => {
+    const storage = StorageEngine.shared();
+    const { linkRoles } = storage.registries();
+    for (const [role, { from, to }] of storage.editedLinks()) {
+      expect(storage.kind(from).editedLinks).toBe(role);
+      expect(storage.role(role, from, to).single).toBe(false);
+    }
+    for (const { toType } of linkRoles) {
+      const refusing = linkRoles.filter((def) => def.toType === toType && def.onDelete === "refuse");
+      for (const role of storage.refusingRoles(toType)) expect(refusing.some((def) => def.role === role)).toBe(true);
+    }
   });
 });

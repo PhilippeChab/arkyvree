@@ -13,11 +13,11 @@ interface EntitiesAutocompleteProps {
   inputRef?: Ref<HTMLInputElement>;
   /** What it's labeled, its field's label, which its failure to load names */
   label: string;
-  onChange: (entities: EntityRow[]) => void;
+  onChange: (entities: Pick<EntityRow, "id" | "name">[]) => void;
   rulesetId: string;
   /** The kind its entities are of (a feat's pools' kind) */
   type: string;
-  value: EntityRow[];
+  value: Pick<EntityRow, "id" | "name">[];
 }
 
 /** A form's entities of a kind, any of the ruleset's (a feat's pools, a spell's lists): read-only under `ReadOnlyFields`. */
@@ -30,7 +30,10 @@ export function EntitiesAutocomplete({
   type,
   value,
 }: EntitiesAutocompleteProps) {
-  const { fetchedOptions, autocompleteProps } = useEntityOptions(rulesetId, type, { limit: 10, what: label });
+  const { fetchedOptions, autocompleteProps } = useEntityOptions<Pick<EntityRow, "id" | "name">>(rulesetId, type, {
+    limit: 10,
+    what: label,
+  });
   const readOnly = useReadOnlyFields();
 
   // Merge selected values with fetched options so selected items always appear

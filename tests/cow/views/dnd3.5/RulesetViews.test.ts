@@ -3,14 +3,7 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { modifiersInCustomization } from "@/drizzle/schema.ts";
 import StorageEngine from "@/engine/api/StorageEngine.ts";
 import type { ViewEntities } from "@/engine/core/view/index.ts";
-import {
-  type Aptitude,
-  type Feat,
-  type FeatWithAptitudes,
-  type Item,
-  type Klass,
-  type KlassLevel,
-} from "@/engine/rulesets/dnd3.5/index.ts";
+import { type Aptitude, type Feat, type Item, type Klass, type KlassLevel } from "@/engine/rulesets/dnd3.5/index.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
@@ -111,8 +104,8 @@ describe("RulesetViews", () => {
     expect(dnd35.languages.length).toBeGreaterThan(0);
     expect(dnd35.items.length).toBeGreaterThan(0);
     expect(dnd35.klassLevels.length).toBeGreaterThan(0);
-    expect(dnd35.klassSkills.length).toBeGreaterThan(0);
-    expect(dnd35.klassLevelSaves.length).toBeGreaterThan(0);
+    expect(dnd35.klasses.flatMap((klass) => dnd35.classSkillsOf(klass.id)).length).toBeGreaterThan(0);
+    expect(dnd35.klassLevels.flatMap((level) => dnd35.baseBonusesOf(level.id)).length).toBeGreaterThan(0);
     expect(dnd35.leveledAptitudeIds).toBeInstanceOf(Set);
     // Customization rows exposed via pre-built Maps (per-entity / per-source indices).
     expect(rulesetData.kindValues("spells").length).toBeGreaterThan(0);
@@ -337,7 +330,8 @@ describe("RulesetViews", () => {
       expect(forkView.languages.length).toBe(seedView.languages.length);
       expect(forkView.items.length).toBe(seedView.items.length);
       expect(forkView.klassLevels.length).toBe(seedView.klassLevels.length);
-      expect(forkView.klassLevelSaves.length).toBe(seedView.klassLevelSaves.length);
+      const saves = (view: Dnd35View) => view.klassLevels.flatMap((level) => view.baseBonusesOf(level.id));
+      expect(saves(forkView)).toEqual(saves(seedView));
     });
 
     test("items cache includes templates AND non-template catalog items (no isTemplate filter)", async () => {
@@ -367,17 +361,16 @@ describe("RulesetViews", () => {
       expect(raceModifierCount).toBeGreaterThan(0);
     });
 
-    test("class sub-tables compose only rows for visible classes and class levels", async () => {
+    test("a class's and a class level's links are from the class and the level the view shows", async () => {
       const seed = await getRuleset();
       const seedData = await RulesetViews.getData(seed);
       const seedView = Dnd35View.of(seedData);
 
-      const visibleKlassIds = new Set(seedView.klasses.map((k) => k.id));
-      const visibleKlassLevelIds = new Set(seedView.klassLevels.map((kl) => kl.id));
+      for (const klass of seedView.klasses)
+        for (const link of seedView.classSkillsOf(klass.id)) expect(link.fromId).toBe(klass.id);
 
-      for (const ks of seedView.klassSkills) expect(visibleKlassIds.has(ks.klassId)).toBe(true);
-
-      for (const kls of seedView.klassLevelSaves) expect(visibleKlassLevelIds.has(kls.klassLevelId)).toBe(true);
+      for (const level of seedView.klassLevels)
+        for (const link of seedView.baseBonusesOf(level.id)) expect(link.fromId).toBe(level.id);
     });
 
     test("base tier-1 is reused across multiple forks — same reference", async () => {
@@ -503,11 +496,7 @@ describe("RulesetViews", () => {
       const fork = await createFork(seed.id);
 
       const sampleFeats = await fetchEveryPage((p) =>
-        Entities.findPage<FeatWithAptitudes>(
-          db,
-          { entityType: "feats", rulesetId: seed.id, ancestorRulesetIds: [] },
-          p,
-        ),
+        Entities.findPage<Feat>(db, { entityType: "feats", rulesetId: seed.id, ancestorRulesetIds: [] }, p),
       );
       const sampleFeat = sampleFeats[0];
       expect(sampleFeat).toBeDefined();
@@ -538,11 +527,7 @@ describe("RulesetViews", () => {
       const fork = await createFork(seed.id);
 
       const sampleFeats = await fetchEveryPage((p) =>
-        Entities.findPage<FeatWithAptitudes>(
-          db,
-          { entityType: "feats", rulesetId: seed.id, ancestorRulesetIds: [] },
-          p,
-        ),
+        Entities.findPage<Feat>(db, { entityType: "feats", rulesetId: seed.id, ancestorRulesetIds: [] }, p),
       );
       const sampleFeat = sampleFeats[0];
 
@@ -587,11 +572,7 @@ describe("RulesetViews", () => {
       const fork = await createFork(seed.id);
 
       const [sampleFeat] = await fetchEveryPage((p) =>
-        Entities.findPage<FeatWithAptitudes>(
-          db,
-          { entityType: "feats", rulesetId: seed.id, ancestorRulesetIds: [] },
-          p,
-        ),
+        Entities.findPage<Feat>(db, { entityType: "feats", rulesetId: seed.id, ancestorRulesetIds: [] }, p),
       );
       const before = await composeFork(fork);
       const modifierCountBefore = (before.modifiersBySource.get(sampleFeat.id) ?? []).length;

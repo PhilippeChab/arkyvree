@@ -133,7 +133,10 @@ export default class RulesetEngine {
     return kind;
   }
 
-  /** An entity's links it edits through a join (`type`, `ownerId`: a class's skills): refused for a kind without. */
+  /**
+   * An entity's links of the role its page edits one at a time (`type`, `ownerId`: a class's skills): refused for a
+   * kind without.
+   */
   links<K extends EntityType>(type: K, ownerId: string) {
     return this.part(type, "links", ownerId) as Extract<PartOf<EntityKinds[K], "links">, EntityLinks>;
   }

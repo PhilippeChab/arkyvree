@@ -7,13 +7,10 @@ import {
   type RulesetData,
   type RulesetRawData,
   type ViewEntities,
-  type ViewJoins,
+  type ViewLink,
   type ViewSchema,
 } from "@/engine/core/view/index.ts";
 import type { Modifier, Requirement } from "@/shared/relations.ts";
-
-/** A join of the made-up module a test composes a view of, by its name. */
-export type Join = keyof ViewJoins;
 
 /** A kind of the made-up module a test composes a view of, by its name. */
 export type Kind = keyof ViewEntities;
@@ -22,30 +19,23 @@ export type Kind = keyof ViewEntities;
 export const NO_FIELDS = new DeclaredFields({}, { fieldDefs: [], linkRoles: [] });
 
 /**
- * A made-up module's declaration: owners and the entities they own, by `ownerId`; owners' links (`owner_links`); and
- * listed entities whose rows nest their links to targets (`links`, each with its target's row, `target`).
+ * A made-up module's declaration: owners and the entities they own, by `ownerId`; and listed entities, whose links to
+ * targets (`listedIn`) merge with their sibling copies' (an owner's links to targets, `ally`, don't).
  */
 export const VIEW_SCHEMA: ViewSchema = {
   kinds: [
-    { type: "owners", customizable: false, fields: false, tracked: true, lists: [] },
-    { type: "targets", customizable: false, fields: false, tracked: false, lists: [] },
-    {
-      type: "listed",
-      customizable: false,
-      fields: false,
-      tracked: false,
-      lists: [{ name: "links", from: "listedId", target: "target", to: "targetId", toType: "targets" }],
-    },
+    { type: "owners", customizable: false, fields: false, tracked: true },
+    { type: "targets", customizable: false, fields: false, tracked: false },
+    { type: "listed", customizable: false, fields: false, tracked: false },
     {
       type: "owned",
       customizable: false,
       owner: { column: "ownerId", position: "position", type: "owners" },
       fields: false,
       tracked: false,
-      lists: [],
     },
   ],
-  joins: [{ name: "owner_links", from: "owners", fromColumn: "ownerId" }],
+  unionLinks: [{ fromType: "listed", role: "listedIn", toType: "targets" }],
 };
 
 /**
@@ -73,19 +63,35 @@ export function idsOf(view: RulesetData, type: string) {
   return view.rows(type as Kind).map((row) => (row as { id: string }).id);
 }
 
+/** A link of a role from an entity to another (`fromId`, `role`, `toId`, of `toType`), its first of none else. */
+export function linkOf(fromId: string, role: string, toId: string, toType = "targets"): ViewLink {
+  return {
+    id: `${fromId}-${toId}`,
+    role,
+    fromId,
+    toId,
+    toType,
+    viaId: null,
+    tier: null,
+    amount: null,
+    free: false,
+    ordinal: 0,
+  };
+}
+
 /**
- * A ruleset's own rows of the made-up module: its kinds' and its join's, and a modifier, a field's value and a
- * requirement on each owned entity of `customized`.
+ * A ruleset's own rows of the made-up module: its kinds', its entities' links (`links`, each from an entity of its
+ * kind), and a modifier, a field's value and a requirement on each owned entity of `customized`.
  */
 export function rawRows(
   entities: Record<string, Record<string, unknown>[]>,
-  joins: Record<string, Record<string, unknown>[]> = {},
+  links: { links: ViewLink[]; type: string }[] = [],
   customized: string[] = [],
 ): RulesetRawData {
   return {
     entities: entities as RulesetRawData["entities"],
-    joins,
     kindValues: new Map(),
+    links: new Map(links.map((held) => [held.links[0].fromId, held])),
     modifiers: customized.map((sourceId) => ({ id: `m-${sourceId}`, sourceId, sourceType: "owned" }) as Modifier),
     requirements: customized.map(
       (entityId) => ({ id: `r-${entityId}`, entityId, entityType: "owned", level: "1" }) as Requirement,

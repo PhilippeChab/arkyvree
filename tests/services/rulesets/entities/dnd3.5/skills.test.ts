@@ -1,12 +1,13 @@
 import { describe, expect, test } from "bun:test";
 
-import type { KlassSkill, RulesetAbility } from "@/engine/rulesets/dnd3.5/index.ts";
+import type { RulesetAbility } from "@/engine/rulesets/dnd3.5/index.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
-import { Activities, Entities, Joins } from "@/server/repositories/index.ts";
+import { Activities, Entities, EntityLinks } from "@/server/repositories/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
 import { addCharacterLevel, createTestKlassLevel } from "@/tests/support/dnd3.5/levels.ts";
+import { addClassSkills } from "@/tests/support/dnd3.5/links.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
 
 /** A skill as it reads: its columns, and its fields beside them. */
@@ -153,10 +154,10 @@ describe("EntitiesService: skills", () => {
     const { session, ruleset, body } = await setup();
     const skill = await EntitiesService.createEntity(session, ruleset.id, "skills", body());
     const klass = await EntitiesService.createEntity(session, ruleset.id, "classes", { name: "Skilled Class" });
-    await Joins.create<KlassSkill>(db, "class_skills", { klassId: klass.id, skillId: skill.id });
+    await addClassSkills(db, klass.id, [skill.id]);
 
     await EntitiesService.deleteEntity(session, ruleset.id, "skills", skill.id);
-    expect(await Joins.findMany<KlassSkill>(db, { join: "class_skills", fromIds: [klass.id] })).toEqual([]);
+    expect(await EntityLinks.findMany(db, { fromIds: [klass.id], role: "classSkill" })).toEqual([]);
   });
 
   test("refuses to delete a skill a character put ranks in", async () => {

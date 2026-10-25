@@ -1,3 +1,4 @@
+import type { ViewLink } from "@/engine/core/view/index.ts";
 import type { OwnPicks } from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudesComponent.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import SkillRules from "@/engine/rulesets/dnd3.5/rules/SkillRules.ts";
@@ -89,11 +90,11 @@ export default abstract class LevelUpState extends include(LevelUpBase<DetailedC
    * (`pools`), in which pools, and the feats the class levels (`klassLevelIds`) grant.
    */
   protected featStep(pools: LevelUpPools, klassLevelIds: string[]) {
-    const { klassLevelFeatsWithFeatsByKlassLevel } = this.dnd35;
+    const { dnd35 } = this;
     return {
       featsToSelect: pools.featsToSelect,
       autoGrantedFeats: klassLevelIds.flatMap((id) =>
-        (klassLevelFeatsWithFeatsByKlassLevel.get(id) ?? []).map((rec) => rec.featsInRule),
+        dnd35.grantedFeatsOf(id).flatMap((grant) => dnd35.featsById.get(grant.toId) ?? []),
       ),
       aptitudePools: pools.featPools,
     };
@@ -122,10 +123,14 @@ export default abstract class LevelUpState extends include(LevelUpBase<DetailedC
     }
   }
 
-  /** The skills class skill records make class skills: theirs, and the ruleset's subtypes of them ("Craft (…)" of Craft). */
-  protected getClassSkillIds(records: { skillId: string; skillsInRule: { name: string } }[]): Set<string> {
-    const ids = new Set(records.map((record) => record.skillId));
-    const names = new Set(records.map((record) => record.skillsInRule.name));
+  /**
+   * The skills class skill links (`links`, `classSkill`) make class skills: theirs the view shows, and the ruleset's
+   * subtypes of them ("Craft (…)" of Craft).
+   */
+  protected getClassSkillIds(links: readonly ViewLink[]): Set<string> {
+    const skills = links.flatMap((link) => this.dnd35.skillsById.get(link.toId) ?? []);
+    const ids = new Set(skills.map((skill) => skill.id));
+    const names = new Set(skills.map((skill) => skill.name));
     for (const skill of this.dnd35.skills) if (SkillRules.isSubtypeOf(skill.name, names)) ids.add(skill.id);
 
     return ids;
@@ -136,11 +141,14 @@ export default abstract class LevelUpState extends include(LevelUpBase<DetailedC
    * (`pools`), in which pools, and the spells the class levels (`klassLevelIds`) grant, each saying whether it's free.
    */
   protected spellStep(pools: LevelUpPools, klassLevelIds: string[]) {
-    const { klassLevelSpellsWithSpellsByKlassLevel } = this.dnd35;
+    const { dnd35 } = this;
     return {
       spellsToSelect: pools.spellsToSelect,
       autoGrantedSpells: klassLevelIds.flatMap((id) =>
-        (klassLevelSpellsWithSpellsByKlassLevel.get(id) ?? []).map((rec) => ({ ...rec.spellsInRule, free: rec.free })),
+        dnd35.grantedSpellsOf(id).flatMap((grant) => {
+          const spell = dnd35.spellsById.get(grant.toId);
+          return spell ? [{ ...spell, free: grant.free }] : [];
+        }),
       ),
       aptitudePools: pools.spellPools,
     };

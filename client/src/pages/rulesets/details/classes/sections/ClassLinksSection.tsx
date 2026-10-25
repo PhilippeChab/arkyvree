@@ -15,10 +15,8 @@ import type { EntityLinksDescription, RulesDescription } from "@/client/src/lib/
 import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
 import { truncate } from "@/client/src/lib/truncate.ts";
 import { classKindOf, kindIconOf } from "@/client/src/pages/rulesets/details/classes/classKind.ts";
-import type { LinkRow } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 import type { ClassSectionProps } from "@/client/src/pages/rulesets/details/classes/classTab.ts";
 import { RemoveLinkDialog } from "@/client/src/pages/rulesets/details/classes/components/index.ts";
-import { isRecord } from "@/shared/isRecord.ts";
 
 import { useClassLinks } from "./useClassLinks.ts";
 
@@ -59,7 +57,7 @@ function ClassLinks({ rulesetId, classId, classType, ruleset, restorable, links,
   } = useClassLinks(rulesetId, classType, classId, links, words);
 
   // The kind's entities the class doesn't link to yet
-  const unlinked = options.filter((option) => !linked?.some((link) => link[links.key] === option.id));
+  const unlinked = options.filter((option) => !linked?.some((link) => link.toId === option.id));
 
   return (
     <Stack spacing={3}>
@@ -134,17 +132,14 @@ function ClassLinks({ rulesetId, classId, classType, ruleset, restorable, links,
       ) : (
         <Panel>
           <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
-            {linked.map((link) => {
-              const targetId = String(link[links.key]);
-              return (
-                <ValueChip
-                  key={targetId}
-                  label={linkedName(link, links)}
-                  color="primary"
-                  onDelete={canEdit ? () => handleRemove(targetId) : undefined}
-                />
-              );
-            })}
+            {linked.map((link) => (
+              <ValueChip
+                key={link.toId}
+                label={link.toName}
+                color="primary"
+                onDelete={canEdit ? () => handleRemove(link.toId) : undefined}
+              />
+            ))}
           </Stack>
         </Panel>
       )}
@@ -158,12 +153,6 @@ function ClassLinks({ rulesetId, classId, classType, ruleset, restorable, links,
       />
     </Stack>
   );
-}
-
-/** A link's entity's name, where the link holds it whole (`target`). */
-function linkedName(link: LinkRow, links: EntityLinksDescription): string {
-  const entity = link[links.target];
-  return isRecord(entity) && typeof entity.name === "string" ? entity.name : "";
 }
 
 /**

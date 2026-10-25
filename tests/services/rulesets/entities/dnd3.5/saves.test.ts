@@ -1,10 +1,11 @@
 import { describe, expect, test } from "bun:test";
 
-import type { Klass, KlassLevel, KlassLevelSave, RulesetAbility } from "@/engine/rulesets/dnd3.5/index.ts";
+import type { Klass, KlassLevel, RulesetAbility } from "@/engine/rulesets/dnd3.5/index.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
-import { Entities, Joins } from "@/server/repositories/index.ts";
+import { Entities } from "@/server/repositories/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
+import { addBaseBonuses } from "@/tests/support/dnd3.5/links.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
 
 /** A new user's empty ruleset with two abilities. */
@@ -49,9 +50,7 @@ describe("EntitiesService: saves", () => {
       hd: 10,
     });
     const [klassLevel] = await Entities.create<KlassLevel>(db, "class_levels", { klassId: klass.id, level: 1 });
-    await Joins.createMany<KlassLevelSave>(db, "class_level_saves", [
-      { klassLevelId: klassLevel.id, saveId: save.id, base: 2 },
-    ]);
+    await addBaseBonuses(db, klassLevel.id, [{ saveId: save.id, base: 2 }]);
 
     expect(EntitiesService.deleteEntity(session, ruleset.id, "saves", save.id)).rejects.toThrow(ConflictError);
   });

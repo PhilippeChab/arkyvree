@@ -7,7 +7,7 @@ import { entitySnapshotsInRules, modifiersInCustomization, requirementsInCustomi
 import { Engine } from "@/engine/index.ts";
 import StoredEntities from "@/server/repositories/stored/StoredEntities.ts";
 import StoredFields, { type FieldsUpdate } from "@/server/repositories/stored/StoredFields.ts";
-import StoredJoins, { type JoinRow } from "@/server/repositories/stored/StoredJoins.ts";
+import StoredLinks, { type NewLink } from "@/server/repositories/stored/StoredLinks.ts";
 
 type ModifierRow = typeof modifiersInCustomization.$inferInsert;
 type RequirementRow = typeof requirementsInCustomization.$inferInsert;
@@ -25,15 +25,15 @@ export type Ids = Record<string, string>;
 
 /** The generic tables' repositories a seeder writes through, as the server does (no request's cache: no request). */
 export const Entities = new StoredEntities();
+export const EntityLinks = new StoredLinks();
 export const Fields = new StoredFields();
-export const Joins = new StoredJoins();
 
 /**
  * A seeder's state, which every seeding step builds on (`concerns/`, and a ruleset's): the database it writes to, the
  * context it names rows by (`ctx`, its ruleset's id and the ids its steps add), and what the steps write with: the
- * entities' rows, their joins and their stored values as the generic tables store them (`Entities`, `Joins`, `Fields`,
- * by what the module declares), the customizations' rows and their inserts, and the copies an extension makes of what
- * it changes.
+ * entities' rows, their links and their stored values as the generic tables store them (`Entities`, `EntityLinks`,
+ * `Fields`, by what the module declares), the customizations' rows and their inserts, and the copies an extension makes
+ * of what it changes.
  */
 export abstract class SeederState {
   constructor(
@@ -162,9 +162,9 @@ export abstract class SeederState {
     return Object.fromEntries(rows.map((row, i) => [row.name as string, ids[i]]));
   }
 
-  /** Inserts a join's rows (`join`: a feat's pools, a class level's grants), each by its columns. */
-  protected async insertJoins(join: string, rows: JoinRow[]) {
-    await Joins.createIds(this.db, join, rows);
+  /** Inserts entities' links (`links`, each from its entity, by its role: a feat's pools, a class level's grants). */
+  protected async insertLinks(links: NewLink[]) {
+    await EntityLinks.createMany(this.db, links);
   }
 
   /**

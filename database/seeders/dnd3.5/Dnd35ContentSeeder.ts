@@ -80,4 +80,24 @@ export abstract class Dnd35ContentSeeder extends ContentSeeder<CoreContent, Book
   protected override itemFieldsWrite(fields: ItemFields) {
     return Engine.forRules(DND35_BASE_RULES).toFieldsWrite("items", fields);
   }
+
+  /**
+   * Inserts feats' or spells' links to the aptitudes they're listed in (`type`, `listings`: each its entity, its
+   * aptitude and, a spell's, its level there): their `listedIn` links.
+   */
+  protected async insertListings(
+    type: "feats" | "spells",
+    listings: { aptitudeId: string; entityId: string; level?: number | null }[],
+  ) {
+    await this.insertLinks(
+      listings.map(({ aptitudeId, entityId, level }) => ({
+        role: "listedIn",
+        fromId: entityId,
+        fromType: type,
+        toId: aptitudeId,
+        toType: "aptitudes",
+        tier: level ?? null,
+      })),
+    );
+  }
 }

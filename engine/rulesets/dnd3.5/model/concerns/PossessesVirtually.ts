@@ -48,12 +48,12 @@ export function PossessesVirtually<B extends Constructor<CharacterState>>(Base: 
      * joining the build once however many lists know it. Its modifiers, when they join.
      */
     private knowSpell(spellSlug: string, listSlug: string): Modifier[] {
-      const { spellIdsBySlug, spellsById } = this.dnd35;
+      const { dnd35 } = this;
       const aptitudeId = SpellLists.of(this.rulesetData).aptitudeIdBySpellSlug.get(listSlug);
-      const spellRow = spellIdsBySlug
+      const spellRow = dnd35.spellIdsBySlug
         .get(spellSlug)
-        ?.map((id) => spellsById.get(id))
-        .find((row) => row?.spellsAptitudesInRules.some((pa) => pa.aptitudeId === aptitudeId));
+        ?.map((id) => dnd35.spellsById.get(id))
+        .find((row) => row && dnd35.listLinksOf(row.id).some((link) => link.toId === aptitudeId));
       if (!spellRow || aptitudeId === undefined) return [];
       const held = this.data.spells.filter((spell) => spell.id === spellRow.id && spell.aptitudeId === aptitudeId);
       for (const spell of held) spell.given = true;

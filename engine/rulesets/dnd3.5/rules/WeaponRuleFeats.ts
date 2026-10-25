@@ -1,7 +1,7 @@
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import { FEAT_FIELDS, type FeatFieldValues } from "@/engine/rulesets/dnd3.5/entities/feats/fields.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
-import type { FeatWithAptitudes } from "@/engine/rulesets/dnd3.5/view/rows.ts";
+import type { Feat } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 
 /** A weapon rule a feat changes, by its field: Weapon Finesse's, Oversized Two-Weapon Fighting's. */
 export type WeaponRule = keyof Pick<FeatFieldValues, "oversizedTwoWeaponFighting" | "weaponFinesse">;
@@ -20,10 +20,10 @@ export default class WeaponRuleFeats {
   }
 
   /** What it derived: each rule's feats, the first time they're read. */
-  private readonly built: Partial<Record<WeaponRule, FeatWithAptitudes[]>> = {};
+  private readonly built: Partial<Record<WeaponRule, Feat[]>> = {};
 
   /** The view's feats that change `rule`, by their fields. */
-  featsWith(rule: WeaponRule): FeatWithAptitudes[] {
+  featsWith(rule: WeaponRule): Feat[] {
     return (this.built[rule] ??= Dnd35View.of(this.rulesetData).feats.filter(
       (feat) => FEAT_FIELDS.read(this.rulesetData.valuesOf(feat.id))[rule],
     ));

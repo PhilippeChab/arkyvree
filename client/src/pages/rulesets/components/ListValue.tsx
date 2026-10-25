@@ -75,7 +75,7 @@ export function ListValue({ column, entity, names }: ListValueProps) {
     }
     case "pools": {
       const links = valueOf(entity, column.key);
-      return <LinkChipsCell links={Array.isArray(links) ? links : undefined} target={column.target} />;
+      return <LinkChipsCell links={Array.isArray(links) ? links : undefined} role={column.role} />;
     }
   }
 }

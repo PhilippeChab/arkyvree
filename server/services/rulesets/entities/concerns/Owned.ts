@@ -3,12 +3,12 @@ import type { Constructor } from "@/lib/mixins.ts";
 import { CustomizationEdit, EntityEdit, RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
-import { Entities, Joins, type ReferencedType, type RulesetEntityType } from "@/server/repositories/index.ts";
+import { Entities, type ReferencedType, type RulesetEntityType } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import { hasCharacterPicks } from "@/server/services/rulesets/characterPicks.ts";
-import { writeJoins } from "@/server/services/rulesets/entities/joinWrites.ts";
 import { writeEntityWrites } from "@/server/services/rulesets/entityWrites.ts";
+import { createLinks, setLinks } from "@/server/services/rulesets/linkWrites.ts";
 import { getActivityName } from "@/shared/activity.ts";
 import type { Session } from "@/shared/relations.ts";
 
@@ -22,7 +22,7 @@ export function Owned<B extends Constructor>(Base: B) {
   abstract class WithOwned extends Base {
     /**
      * A new entity the owner (`ownerId`) owns, off its form: the owner copied when it's inherited (the new row would
-     * otherwise be the source ruleset's), its row, its joins' rows and what its form writes beside it.
+     * otherwise be the source ruleset's), its row, its links and what its form writes beside it.
      */
     async createOwnedEntity(
       session: Session,
@@ -42,8 +42,7 @@ export function Owned<B extends Constructor>(Base: B) {
 
             const { id: targetOwnerId } = await new EntityEdit(ruleset).cowToEdit(tx, type, plan.owner);
             const [row] = await Entities.create(tx, owned.type, plan.columns, { ownerId: targetOwnerId });
-            for (const [join, rows] of Object.entries(plan.joins))
-              if (rows) await Joins.createMany(tx, join, rows, { fromId: row.id });
+            await createLinks(tx, { entityId: row.id, entityType: owned.type }, plan.links ?? []);
             if (plan.writes)
               await writeEntityWrites(tx, scope, { entityId: row.id, entityType: owned.type }, plan.writes);
 
@@ -91,7 +90,7 @@ export function Owned<B extends Constructor>(Base: B) {
             const edit = new CustomizationEdit(ruleset, rulesetData.cow);
             const targetId = await edit.cowOwner(tx, owned.type, plan.entity.id);
 
-            // The database deletes its links (its joins') and its customizations with it
+            // The database deletes its links and its customizations with it
             const [row] = await Entities.delete(tx, { entityType: owned.type, id: targetId });
 
             await createActivityWithNotifications(tx, {
@@ -124,7 +123,7 @@ export function Owned<B extends Constructor>(Base: B) {
     /**
      * An owned entity's edit (`ownedId`, of `ownerId`) off its form: the owner copied when it's inherited, the row the
      * entity resolves to touched, refused when stale (`updatedAt`: a copy's never is, its token is its source's), and
-     * what its form writes beside it and its joins' rows.
+     * what its form writes beside it and its links.
      */
     async updateOwnedEntity(
       session: Session,
@@ -153,7 +152,7 @@ export function Owned<B extends Constructor>(Base: B) {
 
             if (plan.writes)
               await writeEntityWrites(tx, scope, { entityId: targetId, entityType: owned.type }, plan.writes);
-            await writeJoins(tx, targetId, plan.joins);
+            await setLinks(tx, { entityId: targetId, entityType: owned.type }, plan.links);
 
             await createActivityWithNotifications(tx, {
               userId: session.userId,

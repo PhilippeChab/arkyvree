@@ -6,13 +6,14 @@ import {
   CowSources,
   type RulesetSources,
 } from "@/engine/core/cow/index.ts";
-import type { StoredEntity, StoredRuleset } from "@/engine/core/module/index.ts";
+import type { StoredEntity, StoredLink, StoredRuleset } from "@/engine/core/module/index.ts";
 import {
   type EntityCustomizations,
   RulesetComposition,
   type RulesetData,
   type RulesetRawData,
   SiblingMerge,
+  type ViewLink,
 } from "@/engine/core/view/index.ts";
 import type { BaseRules } from "@/shared/enums.ts";
 import type { Modifier, Requirement } from "@/shared/relations.ts";
@@ -29,9 +30,7 @@ export interface StoredRulesetRows {
   requirements: Requirement[];
   /** Its own settings, none for a campaign's rows */
   ruleset?: StoredRuleset;
-  /** The entities its entities' lists name (a feat's pools' aptitudes), wherever they're from */
-  targets: StoredEntity[];
-  /** Of `targets`, those a link of a join with a tier points at, from any ruleset (a spell list's at a level) */
+  /** Of its entities, those a link with a tier points at, from any ruleset's entity (a spell list's at a level) */
   tieredIds: Set<string>;
 }
 
@@ -58,13 +57,12 @@ export default class CopyOnWriteEngine {
 
   /**
    * A ruleset's own rows as its view composes them, off its stored rows (`stored`): each kind's rows by its type, as its
-   * module's declaration reads them (a list's with its lists), an owned kind's by position and owner, and only those
-   * whose owner it holds; each join's rows of its entities but those a kind's list carries; their stored values and its
-   * own Settings', kind-wide too (`StorageEngine.valuesOf`), its modifiers and requirements.
+   * module's declaration reads them, an owned kind's by position and owner, and only those whose owner it holds; each
+   * entity's links of the roles it holds many of (`StorageEngine.viewLinksOf`); their stored values and its own
+   * Settings', kind-wide too (`StorageEngine.valuesOf`), its modifiers and requirements.
    */
   buildRawData(stored: StoredRulesetRows): RulesetRawData {
     const storage = StorageEngine.shared();
-    const targets = new Map(stored.targets.map((target) => [target.id, target]));
     const types = storage.registries().entityTypes;
     const ids = new Set(stored.entities.map((entity) => entity.id));
     const live = stored.entities.filter((entity) => entity.ownerId === null || ids.has(entity.ownerId));
@@ -76,17 +74,18 @@ export default class CopyOnWriteEngine {
           (a, b) => a.position! - b.position! || (a.ownerId! < b.ownerId! ? -1 : a.ownerId! > b.ownerId! ? 1 : 0),
         );
       }
-      entities[type] = ofType.map(
-        (entity) => storage.rowOf(entity, { targets }) as RulesetRawData["entities"][string][number],
-      );
+      entities[type] = ofType.map((entity) => storage.rowOf(entity) as RulesetRawData["entities"][string][number]);
     }
-    const joins: RulesetRawData["joins"] = {};
-    for (const { name } of storage.viewSchema().joins) joins[name] = storage.joinRowsOf(name, live);
+    const links = new Map<string, { links: ViewLink[]; type: string }>();
+    for (const entity of live) {
+      const held = storage.viewLinksOf(entity);
+      if (held.length > 0) links.set(entity.id, { links: held, type: entity.type });
+    }
     const { kindValues, values } = storage.valuesOf({ entities: live, ruleset: stored.ruleset });
     return {
       entities,
-      joins,
       kindValues,
+      links,
       tieredIds: stored.tieredIds,
       modifiers: stored.modifiers,
       requirements: stored.requirements,
@@ -142,12 +141,25 @@ export default class CopyOnWriteEngine {
     return SiblingMerge.mergeCustomizations(own, siblings, targetEntityId, entityType, declared);
   }
 
-  /** The siblings' list links the winner doesn't have, by the list `resolve` gives. */
-  mergeListLinks<T extends { listId: string }>(
+  /**
+   * What a copy of a sibling winner (of `entityType`) takes of its siblings' links beside its own, merged as the view
+   * merges them: of the roles that merge (a feat's pools), their links to targets it doesn't link to, by the target
+   * `resolve` gives.
+   */
+  mergeLinks<T extends Pick<StoredLink, "role" | "toId" | "toType">>(
     own: readonly T[],
-    siblings: Iterable<readonly T[]>,
+    siblings: (readonly T[])[],
     resolve: (id: string) => string,
+    entityType: string,
   ): T[] {
-    return SiblingMerge.mergeListLinks(own, siblings, resolve, "listId");
+    const union = StorageEngine.shared()
+      .viewSchema()
+      .unionLinks.filter((link) => link.fromType === entityType);
+    const merges = (link: T) => union.some(({ role, toType }) => role === link.role && toType === link.toType);
+    return SiblingMerge.mergeLinks(
+      own.filter(merges),
+      siblings.map((links) => links.filter(merges)),
+      resolve,
+    );
   }
 }

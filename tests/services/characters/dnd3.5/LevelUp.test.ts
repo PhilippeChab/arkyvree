@@ -8,7 +8,7 @@ import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
-import { Characters, Joins, Modifiers, Picks } from "@/server/repositories/index.ts";
+import { Characters, Modifiers, Picks } from "@/server/repositories/index.ts";
 import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { sheetOf } from "@/tests/support/dnd3.5/characters.ts";
@@ -26,6 +26,7 @@ import {
 } from "@/tests/support/dnd3.5/levelFixtures.ts";
 import { levelEditPlan, levelUpPlan, type PlanPicks, savedPicksOf } from "@/tests/support/dnd3.5/levelPlans.ts";
 import { addCharacterLevel, findKlassLevel, increasesOf } from "@/tests/support/dnd3.5/levels.ts";
+import { addLists } from "@/tests/support/dnd3.5/links.ts";
 import { getPlanAnswer, getStepOptions, stepAnswerOf } from "@/tests/support/levels.ts";
 import { copyEntity, createSeededTestRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
@@ -701,7 +702,7 @@ describe("a pick a level takes twice", () => {
     // A fork whose Toughness is a fighter's bonus feat too
     const fork = await createSeededTestRuleset(SEED_USER_ID);
     const toughness = await copyEntity(db, "feats", ctx.featMap["Toughness"], fork);
-    await Joins.create(db, "feats_aptitudes", { featId: toughness.id, aptitudeId: ctx.aptMap["Fighter Bonus Feat"] });
+    await addLists(db, "feats", toughness.id, [{ aptitudeId: ctx.aptMap["Fighter Bonus Feat"] }]);
     RulesetViews.invalidate(fork.id);
     const characterId = await createSeedCharacter(ctx);
     await Characters.update(db, { rulesetId: fork.id }, { id: characterId });

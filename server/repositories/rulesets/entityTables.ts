@@ -13,18 +13,10 @@ export const CUSTOMIZABLE_TYPES: readonly string[] = Engine.storage()
   .toSorted((a, b) => getUrlSegment(a).localeCompare(getUrlSegment(b)));
 
 /**
- * The joins an entity edits link by link, by name (3.5's class's skills), whose activities name them: the kind each is
- * from (the entity's) and the kind it's to.
+ * The roles of the links an entity's page edits one at a time, by role (3.5's class's skills), whose activities name
+ * them: the kind each is from (the entity's) and the kind it's to.
  */
-export const EDITED_JOINS: ReadonlyMap<string, { from: string; to: string }> = new Map(
-  Engine.storage()
-    .joinNames()
-    .filter((name) => Engine.storage().join(name).edited)
-    .map((name) => {
-      const { from, to } = Engine.storage().join(name);
-      return [name, { from, to }];
-    }),
-);
+export const EDITED_LINKS: ReadonlyMap<string, { from: string; to: string }> = Engine.storage().editedLinks();
 
 /** The kinds a name is the identity of, whose entities of one name in a ruleset's chain pair (3.5's pools). */
 export const IDENTITY_TYPES: ReadonlySet<string> = new Set(Engine.storage().namesakeKinds("identity"));

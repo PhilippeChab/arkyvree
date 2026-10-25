@@ -4,9 +4,9 @@ import { Entities, Fields, Modifiers, Requirements, Rulesets } from "@/server/re
 
 /**
  * A ruleset's own rows (a campaign's, with one), none of its ancestors', which the cache keeps one entry of per ruleset
- * (`RulesetViews.getRawData`): its stored entities, every kind's, with their fields and links, the entities their lists
- * name, its own settings, and every customization of them, which the engine reads as its view's rows
- * (`Engine.copyOnWrite().buildRawData`). Read through the shared `db`, each read needing the ids the one before read.
+ * (`RulesetViews.getRawData`): its stored entities, every kind's, with their fields and links, its own settings, and
+ * every customization of them, which the engine reads as its view's rows (`Engine.copyOnWrite().buildRawData`). Read
+ * through the shared `db`, each read needing the ids the one before read.
  */
 export default class RawDataReader {
   /** A ruleset's own rows, and whether the cache pins them: a system ruleset's, which every fork reads. */
@@ -22,8 +22,7 @@ export default class RawDataReader {
     const ids = entities
       .filter((entity) => entity.ownerId === null || held.has(entity.ownerId))
       .map((entity) => entity.id);
-    const [targets, rulesets, modifiers] = await Promise.all([
-      Entities.findStored(db, { ids: Engine.storage().listTargetIds(entities) }),
+    const [rulesets, modifiers] = await Promise.all([
       Fields.findRulesets(db, { ids: [rulesetId] }),
       Modifiers.findMany(db, { sourceIds: ids }),
     ]);
@@ -37,7 +36,6 @@ export default class RawDataReader {
       modifiers,
       requirements,
       ruleset: rulesets[0],
-      targets,
     });
     // Pin a system ruleset's rows (a base's, an extension's) before writing them, so they're never evicted. `system`,
     // not a missing owner: an orphaned fork mustn't be pinned. A campaign's entry never is.

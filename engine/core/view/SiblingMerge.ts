@@ -2,8 +2,8 @@
  * How sibling copies' customizations merge into their winner's: one rule per kind, which a ruleset's view composes
  * (`RulesetComposition`) and a copy of the winner writes (`EntityCopy`), the same both ways: the engine's, which both
  * ask. Each rule takes the winner's own rows and each sibling's, in the order its `CowData` pairs them (`getSiblings`),
- * and returns the siblings' rows the winner takes, in that order. A modifier, a value of a set or a list's link
- * (`mergeListLinks`: a 3.5 feat's pool) whose key the winner or an earlier sibling has is left out. A single value is
+ * and returns the siblings' rows the winner takes, in that order. A modifier, a value of a set or a link of a role that
+ * merges (`mergeLinks`: a 3.5 feat's pool) whose key the winner or an earlier sibling has is left out. A single value is
  * the winner's, else the first sibling's that holds it (its field's `fallback`), whose stores keep one value of it; a
  * ruleset's (`winner`) the winner's alone. An owner's stored values merge field by field (`mergeValues`), into the
  * winner's whole. Requirements merge as trees (`RequirementTree`), whose top-level rows are AND'd: merging the winner
@@ -100,16 +100,15 @@ export default class SiblingMerge {
   }
 
   /**
-   * The siblings' links of a list to targets the winner doesn't link to (`to`: the column naming a link's target): a
-   * target is the one `resolve` gives (a stale id's copy or winner). The first link to a target wins, with its tier.
+   * The siblings' links, of the roles that merge, to targets the winner doesn't link to by their role: a target is the
+   * one `resolve` gives (a stale id's copy or winner). The first link to a target wins, with its tier.
    */
-  static mergeListLinks<T extends object>(
+  static mergeLinks<T extends { role: string; toId: string; toType: string }>(
     own: readonly T[],
     siblings: Iterable<readonly T[]>,
     resolve: (id: string) => string,
-    to: string,
   ): T[] {
-    return SiblingMerge.takeNewRows(own, siblings, (link) => resolve((link as Record<string, string>)[to]));
+    return SiblingMerge.takeNewRows(own, siblings, (link) => `${link.role} ${link.toType} ${resolve(link.toId)}`);
   }
 
   /**

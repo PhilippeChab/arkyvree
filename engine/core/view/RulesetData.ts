@@ -2,7 +2,7 @@ import type { CowData } from "@/engine/core/cow/index.ts";
 import { OwnerValues, type StoredValues } from "@/engine/core/fields/index.ts";
 import type { Modifier, Requirement, Ruleset } from "@/shared/relations.ts";
 
-import type { ViewEntities, ViewJoins } from "./rows.ts";
+import type { NamedLink, ViewEntities, ViewLink } from "./rows.ts";
 
 /** Each index a ruleset's view builds on first read, and keeps. */
 interface Indices {
@@ -25,13 +25,13 @@ export interface KindValue {
 export interface RulesetLists {
   /** Each kind's rows, by its type */
   entities: ReadonlyMap<string, readonly object[]>;
-  /** Each join's rows, by its name, but those a kind's lists nest */
-  joins: ReadonlyMap<string, readonly object[]>;
   /** Each kind's values kind-wide (its type's), as stat blocks show them: built when it's first read */
   kindValuesOf(type: string): KindValue[];
+  /** An entity's links (`entityId`, one the view shows), as the view composes them: built when they're first read */
+  linksOf(entityId: string): readonly ViewLink[];
   modifiers: Modifier[];
   requirements: Requirement[];
-  /** The entities a link of a join with a tier points at (a spell list at a level) */
+  /** The entities a link with a tier points at (a spell list at a level) */
   tieredIds: Set<string>;
   /** Each owner's stored values (an entity's, a ruleset's own Settings), by its id: a sibling loser's in its winner's */
   values: ReadonlyMap<string, StoredValues>;
@@ -63,10 +63,11 @@ function buildById<T extends { id: string }>(list: readonly T[]): Map<string, T>
 
 /**
  * A ruleset's view: its lists, composed across its chain by its copy-on-write data (`RulesetComposition`), each kind's
- * and each join's by name, and their lookup indices. An index is built the first time it's read, then kept: a request
- * pays for the indices it reads, not for all of them. Every id-keyed index takes a stored (pre-COW) id too: its `.get`
- * and `.has` resolve the key (`CowData.resolve`), so consumers don't thread `cow` through or call `canonicalize` on the
- * common lookup path. What a module reads of it past its kinds' rows (3.5's indices) it derives (`derive`).
+ * by name, each entity's links by role (`linksOf`), and their lookup indices. An index is built the first time it's
+ * read, then kept: a request pays for the indices it reads, not for all of them. Every id-keyed index takes a stored
+ * (pre-COW) id too: its `.get` and `.has` resolve the key (`CowData.resolve`), so consumers don't thread `cow` through
+ * or call `canonicalize` on the common lookup path. What a module reads of it past its kinds' rows (3.5's indices) it
+ * derives (`derive`).
  */
 export default class RulesetData {
   /**
@@ -82,8 +83,8 @@ export default class RulesetData {
     this.labels = labels;
     this.kinds = kinds;
     this.entities = lists.entities;
-    this.joins = lists.joins;
     this.kindValuesOf = (type) => lists.kindValuesOf(type);
+    this.composeLinksOf = (entityId) => lists.linksOf(entityId);
     this.modifiers = lists.modifiers;
     this.requirements = lists.requirements;
     this.tieredIds = lists.tieredIds;
@@ -96,12 +97,13 @@ export default class RulesetData {
   /** Each kind's rows by id, built the first time a kind's are read: as stored, and resolving a stored id. */
   private readonly byIds = new Map<string, { resolved: Map<string, object>; stored: Map<string, object> }>();
 
+  /** An entity's links, composed the first time they're read: what `linksOf` keeps. */
+  private readonly composeLinksOf: (entityId: string) => readonly ViewLink[];
+
   /** What the ruleset's module derives of the view, by what derives it (`derive`). */
   private readonly derived = new Map<new (rulesetData: RulesetData) => object, object>();
 
   private readonly entities: ReadonlyMap<string, readonly object[]>;
-
-  private readonly joins: ReadonlyMap<string, readonly object[]>;
 
   private readonly kinds: Readonly<Record<string, ViewKind>>;
 
@@ -112,6 +114,9 @@ export default class RulesetData {
   private readonly kindValuesOf: (type: string) => KindValue[];
 
   private readonly labels: Readonly<Record<string, string>>;
+
+  /** Each entity's links, by its id (the one the view shows), once read. */
+  private readonly linksById = new Map<string, readonly ViewLink[]>();
 
   private readonly modifiers: Modifier[];
 
@@ -126,7 +131,7 @@ export default class RulesetData {
    */
   readonly cow: CowData;
 
-  /** The entities a link of a join with a tier points at, from any ruleset (a spell list at a level). */
+  /** The entities a link with a tier points at, from any ruleset (a spell list at a level). */
   readonly tieredIds: Set<string>;
 
   /** A kind's rows by id (`type`): as stored, and resolving a stored id, each built once. */
@@ -246,11 +251,6 @@ export default class RulesetData {
     return { own, template };
   }
 
-  /** A join's rows (`join`), across the chain, as the view composes them. */
-  joinRows<J extends keyof ViewJoins>(join: J): ViewJoins[J][] {
-    return (this.joins.get(join) ?? []) as ViewJoins[J][];
-  }
-
   /**
    * A kind's values kind-wide (`type`'s), each value of each of its fields with the entities that hold it, as stat
    * blocks show them: by field, in their declared order, then by value, in their closed list's order, then by text; the
@@ -274,6 +274,23 @@ export default class RulesetData {
   }
 
   /**
+   * An entity's links (`entityId`, a stored id its copy's or its winner's) of the roles it holds many of, as the view
+   * composes them, in their order (`RulesetComposition`: its sibling copies' merged in, each naming the entities that
+   * stand for those it names); of a role alone when `role` says, to a kind alone when `toType` says. Composed the first
+   * time they're read, then kept.
+   */
+  linksOf(entityId: string, role?: string, toType?: string): readonly ViewLink[] {
+    const id = this.cow.resolve(entityId);
+    let links = this.linksById.get(id);
+    if (!links) {
+      links = this.composeLinksOf(id);
+      this.linksById.set(id, links);
+    }
+    if (role === undefined) return links;
+    return links.filter((link) => link.role === role && (toType === undefined || link.toType === toType));
+  }
+
+  /**
    * Modifiers by id, unresolved: only an entity's copy gets copy-on-write aliases (`EntityCopy` copies its modifiers
    * under new ids), so a modifier's own id is never stale.
    */
@@ -283,6 +300,17 @@ export default class RulesetData {
 
   get modifiersBySource(): Map<string, Modifier[]> {
     return (this.built.modifiersBySource ??= this.resolvingIds(Map.groupBy(this.modifiers, (m) => m.sourceId)));
+  }
+
+  /**
+   * Links (`links`, the view's) as an answer carries them: those whose targets the view shows, each with its target's
+   * name (`toName`).
+   */
+  nameLinks(links: readonly ViewLink[]): NamedLink[] {
+    return links.flatMap((link) => {
+      const target = this.find(link.toType as keyof ViewEntities, link.toId) as { name?: unknown } | undefined;
+      return target ? [{ ...link, toName: typeof target.name === "string" ? target.name : "" }] : [];
+    });
   }
 
   /** An owned entity's position in its owner (`entity`, of `type`: a class level's level), none of a kind none owns. */

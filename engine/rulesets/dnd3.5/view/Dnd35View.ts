@@ -1,23 +1,19 @@
-import type { RulesetData } from "@/engine/core/view/index.ts";
+import type { RulesetData, ViewLink } from "@/engine/core/view/index.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 import type {
   Aptitude,
-  FeatWithAptitudes,
+  Feat,
   Item,
   Klass,
   KlassLevel,
-  KlassLevelFeat,
-  KlassLevelSave,
-  KlassLevelSpell,
-  KlassSkill,
   Language,
   Mechanic,
   Race,
   RulesetAbility,
   RulesetSave,
   Skill,
-  SpellWithAptitudes,
+  Spell,
 } from "./rows.ts";
 
 /** Each index 3.5's view builds on first read, and keeps. */
@@ -27,18 +23,8 @@ interface Indices {
   aptitudeIdsWithSpells: Set<string>;
   featIdBySlug: Map<string, string>;
   klassLevelByKlassAndLevel: Map<string, KlassLevel>;
-  klassLevelFeatsByKlassLevel: Map<string, KlassLevelFeat[]>;
-  klassLevelFeatsWithFeatsByKlassLevel: Map<string, (KlassLevelFeat & { featsInRule: FeatWithAptitudes })[]>;
-  klassLevelSavesByKlassLevel: Map<string, KlassLevelSave[]>;
   klassLevelsByKlass: Map<string, KlassLevel[]>;
-  klassLevelSpellsWithSpellsByKlassLevel: Map<string, (KlassLevelSpell & { spellsInRule: SpellWithAptitudes })[]>;
-  klassSkillsByKlass: Map<string, KlassSkill[]>;
-  klassSkillsWithSkillsByKlass: Map<string, (KlassSkill & { skillsInRule: Skill })[]>;
   languageIdBySlug: Map<string, string>;
-  /** A class's skills and a level's feats and spells by name, as the books list them */
-  sortedKlassLevelFeats: KlassLevelFeat[];
-  sortedKlassLevelSpells: KlassLevelSpell[];
-  sortedKlassSkills: KlassSkill[];
   spellIdsBySlug: Map<string, string[]>;
 }
 
@@ -53,9 +39,10 @@ function buildIdBySlug(rows: { id: string; name: string }[]): Map<string, string
 }
 
 /**
- * 3.5's view of a ruleset (`Dnd35View.of`): its kinds' rows and joins' as its rows, and the indices its rules read them
- * by, derived once with the view and kept (`RulesetData.derive`). An index is built the first time it's read; every
- * id-keyed index takes a stored (pre-COW) id too, as the view's do.
+ * 3.5's view of a ruleset (`Dnd35View.of`): its kinds' rows as its rows, its entities' links by their roles (a class's
+ * `classSkill` links, a class level's `grants` and `baseBonus`, a feat's or a spell's `listedIn`), and the indices its
+ * rules read them by, derived once with the view and kept (`RulesetData.derive`). An index is built the first time
+ * it's read; every id-keyed index takes a stored (pre-COW) id too, as the view's do.
  */
 export default class Dnd35View {
   constructor(private readonly rulesetData: RulesetData) {}
@@ -67,28 +54,23 @@ export default class Dnd35View {
 
   private readonly built: Partial<Indices> = {};
 
-  /** A level's feats by name, as the books list them. */
-  private get sortedKlassLevelFeats(): KlassLevelFeat[] {
-    const feats = this.rulesetData.storedById("feats");
-    return (this.built.sortedKlassLevelFeats ??= this.rulesetData
-      .joinRows("class_level_feats")
-      .toSorted((a, b) => (feats.get(a.featId)?.name ?? "").localeCompare(feats.get(b.featId)?.name ?? "")));
-  }
+  /** Each entity's links of a role, by their targets' names, by role and entity, once read (`linksByName`). */
+  private readonly sortedLinks = new Map<string, readonly ViewLink[]>();
 
-  /** A level's spells by name, as the books list them. */
-  private get sortedKlassLevelSpells(): KlassLevelSpell[] {
-    const spells = this.rulesetData.storedById("spells");
-    return (this.built.sortedKlassLevelSpells ??= this.rulesetData
-      .joinRows("class_level_spells")
-      .toSorted((a, b) => (spells.get(a.spellId)?.name ?? "").localeCompare(spells.get(b.spellId)?.name ?? "")));
-  }
-
-  /** A class's skills by name, as the books list them. */
-  private get sortedKlassSkills(): KlassSkill[] {
-    const skills = this.rulesetData.storedById("skills");
-    return (this.built.sortedKlassSkills ??= this.rulesetData
-      .joinRows("class_skills")
-      .toSorted((a, b) => (skills.get(a.skillId)?.name ?? "").localeCompare(skills.get(b.skillId)?.name ?? "")));
+  /**
+   * An entity's links of a role to a kind (`entityId`, `role`, `toType`), by their targets' names (`rows`, the kind's
+   * rows by id), as the books list them: a class's skills, a level's feats and spells. Kept once read.
+   */
+  private linksByName(entityId: string, role: string, toType: string, rows: ReadonlyMap<string, { name: string }>) {
+    const key = `${role} ${toType} ${this.rulesetData.canonicalize(entityId)}`;
+    let links = this.sortedLinks.get(key);
+    if (!links) {
+      links = this.rulesetData
+        .linksOf(entityId, role, toType)
+        .toSorted((a, b) => (rows.get(a.toId)?.name ?? "").localeCompare(rows.get(b.toId)?.name ?? ""));
+      this.sortedLinks.set(key, links);
+    }
+    return links;
   }
 
   get abilities(): RulesetAbility[] {
@@ -107,17 +89,17 @@ export default class Dnd35View {
     return (this.built.aptitudeIdBySlug ??= buildIdBySlug(this.aptitudes));
   }
 
-  /** The aptitudes that have at least one feat linked, from the feats' inline `featsAptitudesInRules` rows. */
+  /** The aptitudes that have at least one feat listed in them, by the feats' `listedIn` links. */
   get aptitudeIdsWithFeats(): Set<string> {
     return (this.built.aptitudeIdsWithFeats ??= new Set(
-      this.feats.flatMap((feat) => feat.featsAptitudesInRules.map((l) => l.aptitudeId)),
+      this.feats.flatMap((feat) => this.listLinksOf(feat.id).map((link) => link.toId)),
     ));
   }
 
-  /** The aptitudes that have at least one spell linked, from the spells' inline `spellsAptitudesInRules` rows. */
+  /** The aptitudes that have at least one spell listed in them, by the spells' `listedIn` links. */
   get aptitudeIdsWithSpells(): Set<string> {
     return (this.built.aptitudeIdsWithSpells ??= new Set(
-      this.spells.flatMap((spell) => spell.spellsAptitudesInRules.map((l) => l.aptitudeId)),
+      this.spells.flatMap((spell) => this.listLinksOf(spell.id).map((link) => link.toId)),
     ));
   }
 
@@ -129,17 +111,43 @@ export default class Dnd35View {
     return this.rulesetData.byId("aptitudes");
   }
 
+  /** A class level's base bonuses to the saves (`klassLevelId`): its `baseBonus` links, each its save and its amount. */
+  baseBonusesOf(klassLevelId: string): readonly ViewLink[] {
+    return this.rulesetData.linksOf(klassLevelId, "baseBonus", "saves");
+  }
+
+  /** A class's class skills (`klassId`): its `classSkill` links, by their skills' names, as the books list them. */
+  classSkillsOf(klassId: string): readonly ViewLink[] {
+    return this.linksByName(klassId, "classSkill", "skills", this.rulesetData.storedById("skills"));
+  }
+
   /** `stripSeparators(feat.name)` → featId, the first match winning: the "set feats.<slug>.possessed" modifier scan. */
   get featIdBySlug(): Map<string, string> {
     return (this.built.featIdBySlug ??= buildIdBySlug(this.feats));
   }
 
-  get feats(): FeatWithAptitudes[] {
+  get feats(): Feat[] {
     return this.rulesetData.rows("feats");
   }
 
-  get featsById(): Map<string, FeatWithAptitudes> {
+  get featsById(): Map<string, Feat> {
     return this.rulesetData.byId("feats");
+  }
+
+  /**
+   * The feats a class level grants (`klassLevelId`): its `grants` links to feats, each its feat and its pool (`viaId`)
+   * and whether it's free, by their feats' names, as the books list them.
+   */
+  grantedFeatsOf(klassLevelId: string): readonly ViewLink[] {
+    return this.linksByName(klassLevelId, "grants", "feats", this.rulesetData.storedById("feats"));
+  }
+
+  /**
+   * The spells a class level grants (`klassLevelId`): its `grants` links to spells, each its spell and its list
+   * (`viaId`) and whether it's free, by their spells' names.
+   */
+  grantedSpellsOf(klassLevelId: string): readonly ViewLink[] {
+    return this.linksByName(klassLevelId, "grants", "spells", this.rulesetData.storedById("spells"));
   }
 
   get items(): Item[] {
@@ -165,39 +173,8 @@ export default class Dnd35View {
     ));
   }
 
-  /** klassLevelId → its granted feats, the links alone (`klassLevelFeatsWithFeatsByKlassLevel` joins the feats). */
-  get klassLevelFeatsByKlassLevel(): Map<string, KlassLevelFeat[]> {
-    return (this.built.klassLevelFeatsByKlassLevel ??= this.rulesetData.resolvingIds(
-      Map.groupBy(this.sortedKlassLevelFeats, (klf) => klf.klassLevelId),
-    ));
-  }
-
-  /** klassLevelId → its granted feats joined with their feats: a link whose feat isn't in the view is left out. */
-  get klassLevelFeatsWithFeatsByKlassLevel(): Map<string, (KlassLevelFeat & { featsInRule: FeatWithAptitudes })[]> {
-    const feats = this.rulesetData.storedById("feats");
-    return (this.built.klassLevelFeatsWithFeatsByKlassLevel ??= this.rulesetData.resolvingIds(
-      Map.groupBy(
-        this.sortedKlassLevelFeats.flatMap((klf) => {
-          const feat = feats.get(klf.featId);
-          return feat ? [{ ...klf, featsInRule: feat }] : [];
-        }),
-        (joined) => joined.klassLevelId,
-      ),
-    ));
-  }
-
   get klassLevels(): KlassLevel[] {
     return this.rulesetData.rows("class_levels");
-  }
-
-  get klassLevelSaves(): KlassLevelSave[] {
-    return this.rulesetData.joinRows("class_level_saves");
-  }
-
-  get klassLevelSavesByKlassLevel(): Map<string, KlassLevelSave[]> {
-    return (this.built.klassLevelSavesByKlassLevel ??= this.rulesetData.resolvingIds(
-      Map.groupBy(this.klassLevelSaves, (kls) => kls.klassLevelId),
-    ));
   }
 
   get klassLevelsById(): Map<string, KlassLevel> {
@@ -210,48 +187,6 @@ export default class Dnd35View {
       Map.groupBy(
         this.klassLevels.toSorted((a, b) => a.level - b.level),
         (kl) => kl.klassId,
-      ),
-    ));
-  }
-
-  /** klassLevelId → its granted spells joined with their rows: a link whose spell isn't in the view is left out. */
-  get klassLevelSpellsWithSpellsByKlassLevel(): Map<
-    string,
-    (KlassLevelSpell & { spellsInRule: SpellWithAptitudes })[]
-  > {
-    const spells = this.rulesetData.storedById("spells");
-    return (this.built.klassLevelSpellsWithSpellsByKlassLevel ??= this.rulesetData.resolvingIds(
-      Map.groupBy(
-        this.sortedKlassLevelSpells.flatMap((klp) => {
-          const spell = spells.get(klp.spellId);
-          return spell ? [{ ...klp, spellsInRule: spell }] : [];
-        }),
-        (joined) => joined.klassLevelId,
-      ),
-    ));
-  }
-
-  get klassSkills(): KlassSkill[] {
-    return this.rulesetData.joinRows("class_skills");
-  }
-
-  /** klassId → its skills, the links themselves (`klassSkillsWithSkillsByKlass` joins the skills). */
-  get klassSkillsByKlass(): Map<string, KlassSkill[]> {
-    return (this.built.klassSkillsByKlass ??= this.rulesetData.resolvingIds(
-      Map.groupBy(this.sortedKlassSkills, (ks) => ks.klassId),
-    ));
-  }
-
-  /** klassId → its skills joined with their skills: a link whose skill isn't in the view is left out. */
-  get klassSkillsWithSkillsByKlass(): Map<string, (KlassSkill & { skillsInRule: Skill })[]> {
-    const skills = this.rulesetData.storedById("skills");
-    return (this.built.klassSkillsWithSkillsByKlass ??= this.rulesetData.resolvingIds(
-      Map.groupBy(
-        this.sortedKlassSkills.flatMap((ks) => {
-          const skill = skills.get(ks.skillId);
-          return skill ? [{ ...ks, skillsInRule: skill }] : [];
-        }),
-        (joined) => joined.klassId,
       ),
     ));
   }
@@ -285,8 +220,16 @@ export default class Dnd35View {
   listFeatIds(aptitudeId: string): string[] {
     const listId = this.rulesetData.canonicalize(aptitudeId);
     return this.feats
-      .filter((feat) => feat.featsAptitudesInRules.some((link) => link.aptitudeId === listId))
+      .filter((feat) => this.listLinksOf(feat.id).some((link) => link.toId === listId))
       .map((feat) => feat.id);
+  }
+
+  /**
+   * The lists a feat or a spell is on (`entityId`): its `listedIn` links, each its list (an aptitude, `toId`) and, a
+   * spell's, its level on it (`tier`).
+   */
+  listLinksOf(entityId: string): readonly ViewLink[] {
+    return this.rulesetData.linksOf(entityId, "listedIn");
   }
 
   /** The ids of the ruleset's spells on a list, at a level when one is given (on any list when none is). */
@@ -294,9 +237,9 @@ export default class Dnd35View {
     const listId = where.aptitudeId === undefined ? undefined : this.rulesetData.canonicalize(where.aptitudeId);
     return this.spells
       .filter((spell) =>
-        spell.spellsAptitudesInRules.some(
+        this.listLinksOf(spell.id).some(
           (link) =>
-            (listId === undefined || link.aptitudeId === listId) && (where.level == null || link.level === where.level),
+            (listId === undefined || link.toId === listId) && (where.level == null || link.tier === where.level),
         ),
       )
       .map((spell) => spell.id);
@@ -347,11 +290,11 @@ export default class Dnd35View {
     ));
   }
 
-  get spells(): SpellWithAptitudes[] {
+  get spells(): Spell[] {
     return this.rulesetData.rows("spells");
   }
 
-  get spellsById(): Map<string, SpellWithAptitudes> {
+  get spellsById(): Map<string, Spell> {
     return this.rulesetData.byId("spells");
   }
 }

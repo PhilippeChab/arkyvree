@@ -37,14 +37,14 @@ export function SeedsSpells<B extends Constructor<BaseSeeder>>(Base: B) {
         spell.aptitudes
           .filter((aptitude) => this.ctx.aptMap[aptitude])
           .map((aptitude) => ({
-            spellId: ids[spell.name],
+            entityId: ids[spell.name],
             aptitudeId: this.ctx.aptMap[aptitude],
             level: spell.aptitudeLevels?.[aptitude] ?? spell.level,
           })),
       );
-      await this.insertJoins(
-        "spells_aptitudes",
-        this.uniqueBy(links, (l) => `${l.spellId}:${l.aptitudeId}`),
+      await this.insertListings(
+        "spells",
+        this.uniqueBy(links, (l) => `${l.entityId}:${l.aptitudeId}`),
       );
       await this.writeFields(
         spells.map((spell) => ({

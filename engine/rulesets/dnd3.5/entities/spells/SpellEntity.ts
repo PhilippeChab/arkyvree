@@ -9,7 +9,7 @@ import SpellFocusFeats from "@/engine/rulesets/dnd3.5/entities/feats/SpellFocusF
 import ListedEntity from "@/engine/rulesets/dnd3.5/entities/ListedEntity.ts";
 import { RULESET_LIMITS } from "@/engine/rulesets/dnd3.5/limits.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
-import type { SpellWithAptitudes } from "@/engine/rulesets/dnd3.5/view/rows.ts";
+import type { Spell } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 
 import { SPELL_COLUMNS } from "./columns.ts";
 import { SPELL_FIELDS, type SpellFieldValues } from "./fields.ts";
@@ -70,14 +70,11 @@ export default class SpellEntity extends ListedEntity<
     return { description, name, saveEffect, saveId };
   }
 
-  /** A spell's pool links, as the view composes them. */
-  protected override linksIn({ spellsAptitudesInRules }: SpellWithAptitudes) {
-    return { spellsAptitudesInRules };
-  }
-
   /** The pools a form links the spell to, each at its spell level (none: an edit's kept). */
   protected override linksOf({ aptitudes }: SpellBody) {
-    return aptitudes?.map((aptitude) => ({ level: aptitude.level ?? null, listId: aptitude.id }));
+    return (
+      aptitudes && this.listedIn(aptitudes.map((aptitude) => ({ tier: aptitude.level ?? null, toId: aptitude.id })))
+    );
   }
 
   /**
@@ -111,11 +108,7 @@ export default class SpellEntity extends ListedEntity<
    * of its grouping (a spell's school: its Spell Focus) when it comes to one. A form that gives none of its fields keeps
    * those it has.
    */
-  protected override writesOf(
-    body: SpellBody,
-    given: Partial<SpellFieldValues>,
-    spell?: SpellWithAptitudes,
-  ): EntityWrites {
+  protected override writesOf(body: SpellBody, given: Partial<SpellFieldValues>, spell?: Spell): EntityWrites {
     const fields = this.formFields(given, spell);
     if (!fields) return {};
     const grouping = getGrouping(fields);

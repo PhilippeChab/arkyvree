@@ -34,8 +34,9 @@ export default class SavesComponent extends CharacterComponent<LoadedCharacterDa
     for (const klass of Object.values(classes)) {
       const lastLevel = klass.levels.at(-1);
       if (lastLevel) {
-        const levelSaves = klassLevelSaves.filter((ls) => ls.klassLevelId === lastLevel.klassLevel.id);
-        for (const ls of levelSaves) saveBaseValues.set(ls.saveId, (saveBaseValues.get(ls.saveId) ?? 0) + ls.base);
+        const levelSaves = klassLevelSaves.filter((link) => link.fromId === lastLevel.klassLevel.id);
+        for (const link of levelSaves)
+          saveBaseValues.set(link.toId, (saveBaseValues.get(link.toId) ?? 0) + (link.amount ?? 0));
       }
     }
 

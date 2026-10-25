@@ -8,11 +8,12 @@ import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { fetchEveryPage } from "@/server/repositories/concerns/Paginates.ts";
-import { Entities, Joins, Modifiers, Requirements, Rulesets } from "@/server/repositories/index.ts";
+import { Entities, Modifiers, Requirements, Rulesets } from "@/server/repositories/index.ts";
 import { RulesetChangesService } from "@/server/services/rulesets/changes/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
 import type { Requirement } from "@/shared/relations.ts";
+import { addLists } from "@/tests/support/dnd3.5/links.ts";
 import { compareCopies, customizationsOf } from "@/tests/support/dnd3.5/siblingCopies.ts";
 import {
   copyEntity,
@@ -87,14 +88,14 @@ test("editing a shared aptitude preserves references from both extensions", asyn
   const { session, host, rulesetIds } = await setup(async (rulesetId, _baseId, index) => {
     const [aptitude] = await Entities.create<Aptitude>(db, "aptitudes", { rulesetId, name: "Audit Shared Pool" });
     const [feat] = await Entities.create<Feat>(db, "feats", { rulesetId, name: `Audit Pool Feat ${index}` });
-    await Joins.create(db, "feats_aptitudes", { featId: feat.id, aptitudeId: aptitude.id });
+    await addLists(db, "feats", feat.id, [{ aptitudeId: aptitude.id }]);
     aptitudeIds.push(aptitude.id);
     featIds.push(feat.id);
   });
   const read = () =>
     withRulesetScope(db, host.id, async ({ rulesetData }) => ({
       resolved: aptitudeIds.map((id) => Dnd35View.of(rulesetData).aptitudesById.get(id)?.id),
-      links: featIds.map((id) => Dnd35View.of(rulesetData).featsById.get(id)!.featsAptitudesInRules[0].aptitudeId),
+      links: featIds.map((id) => Dnd35View.of(rulesetData).listLinksOf(id)[0].toId),
     }));
   expect(await read()).toEqual({ resolved: [aptitudeIds[0], aptitudeIds[0]], links: [aptitudeIds[0], aptitudeIds[0]] });
   const local = await EntitiesService.updateEntity(session, host.id, "aptitudes", aptitudeIds[0], {
@@ -242,11 +243,7 @@ test("a sibling winner takes, of equal rows, the first sibling's, and so does it
         rulesetId: baseId,
         name: "Cleric Spells",
       }))!;
-      await Joins.create(db, "spells_aptitudes", {
-        spellId: spellCopy.id,
-        aptitudeId: clericSpells.id,
-        level: 3 + index,
-      });
+      await addLists(db, "spells", spellCopy.id, [{ aptitudeId: clericSpells.id, level: 3 + index }]);
     },
     false,
     3,

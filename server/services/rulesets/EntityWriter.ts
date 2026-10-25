@@ -13,8 +13,8 @@ import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import {
   CUSTOMIZABLE_TYPES,
   Entities,
+  EntityLinks,
   type EntityRow,
-  Joins,
   type RulesetEntityType,
 } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications, getChangedFields } from "@/server/services/activities/index.ts";
@@ -24,7 +24,7 @@ import type { Session } from "@/shared/relations.ts";
 
 import { hasCharacterPicks } from "./characterPicks.ts";
 import { writeEntityWrites } from "./entityWrites.ts";
-import { createListLinks, setListLinks } from "./listLinks.ts";
+import { createLinks, setLinks } from "./linkWrites.ts";
 
 /** An entity a plan names, as the view has it. */
 interface PlannedEntity {
@@ -69,11 +69,12 @@ export default class EntityWriter {
   }
 
   /**
-   * Whether an entity (`entityId`) is in use, which refuses its delete: linked to by a join that refuses its delete (a
-   * class level's base bonus to a save: the database would refuse it, this answers why), or picked by a character.
+   * Whether an entity (`entityId`) is in use, which refuses its delete: linked to by a link of a role that refuses its
+   * delete (a class level's base bonus to a save: the database would refuse it, this answers why), or picked by a
+   * character.
    */
   private async inUse(tx: Db, { ruleset, rulesetData }: RulesetScope, entityId: string) {
-    if (await Joins.hasRefusing(tx, { toId: rulesetData.cow.resolve(entityId), toType: this.type })) return true;
+    if (await EntityLinks.hasRefusing(tx, { toId: rulesetData.cow.resolve(entityId), toType: this.type })) return true;
     return await hasCharacterPicks(tx, this.type, rulesetData.cow.getEquivalentIds(entityId), ruleset.id);
   }
 
@@ -123,7 +124,7 @@ export default class EntityWriter {
 
           const [row] = await Entities.create<Row>(tx, this.type, { ...planned.columns, rulesetId });
           if (tombstoneAncestorId) await names.repointTombstone(tx, this.type, tombstoneAncestorId, row.id);
-          await createListLinks(tx, this.type, row.id, planned.links ?? []);
+          await createLinks(tx, { entityId: row.id, entityType: this.type }, planned.links ?? []);
           // The customizations it copies first: the fields the plan writes replace the stored values it copied
           if (planned.copyCustomizationsFrom) await this.copyCustomizations(tx, row.id, planned.copyCustomizationsFrom);
           await this.writeBeside(tx, scope, row.id, planned.writes);
@@ -208,7 +209,7 @@ export default class EntityWriter {
           );
           if (expectedUpdatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
 
-          await setListLinks(tx, this.type, targetId, planned.links);
+          await setLinks(tx, { entityId: targetId, entityType: this.type }, planned.links);
           await this.writeBeside(tx, scope, targetId, planned.writes);
 
           const [row] = rows;

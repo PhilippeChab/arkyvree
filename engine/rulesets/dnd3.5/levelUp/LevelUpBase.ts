@@ -118,7 +118,7 @@ export default abstract class LevelUpBase<C> {
     for (const spellId of spellIds) {
       const spell = this.dnd35.spellsById.get(spellId);
       if (!spell) continue;
-      for (const pa of spell.spellsAptitudesInRules) lookup.set(`${pa.spellId}:${pa.aptitudeId}`, pa.level);
+      for (const link of this.dnd35.listLinksOf(spell.id)) lookup.set(`${link.fromId}:${link.toId}`, link.tier);
     }
     return lookup;
   }

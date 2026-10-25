@@ -3,9 +3,7 @@ import type {
   CharacterRoleDef,
   FieldDef,
   FieldValue,
-  LinkPart,
   LinkRoleDef,
-  ListLink,
   RulesetModule,
   StepDef,
   StorageRegistries,
@@ -16,19 +14,17 @@ import type {
   StoredCharacterWrite,
   StoredColumn,
   StoredEntity,
-  StoredJoin,
   StoredKind,
-  StoredLink,
   StoredPick,
   StoredRuleset,
   StoredWrite,
 } from "@/engine/core/module/index.ts";
-import type { KindValue, ViewSchema } from "@/engine/core/view/index.ts";
+import type { KindValue, ViewLink, ViewSchema } from "@/engine/core/view/index.ts";
 import type { BaseRules } from "@/shared/enums.ts";
 
 import Modules from "./Modules.ts";
 
-/** A row, any kind's or join's: its columns by their names, in the order its answers give them. */
+/** A row, any kind's: its columns by their names, in the order its answers give them. */
 type Row = Record<string, unknown>;
 
 /**
@@ -43,14 +39,6 @@ const OWNED_COLUMNS = ["createdAt", "updatedAt", "deletedAt", "id"];
 /** How two texts sort by their characters' codes, as the database's collation (C) orders text. */
 function compareText(a: string, b: string) {
   return a < b ? -1 : a > b ? 1 : 0;
-}
-
-/** Postgres's text of a timestamp (`2026-01-01 00:00:00.5+00`) as JSON gives it (`2026-01-01T00:00:00.5+00:00`). */
-function jsonTimestamp(text: string): string;
-function jsonTimestamp(text: string | null): string | null;
-function jsonTimestamp(text: string | null): string | null {
-  if (text === null) return null;
-  return text.replace(" ", "T").replace(/([+-]\d\d)$/, "$1:00");
 }
 
 /** The entries of every module's record (`pick`), one per name: a name two modules declare is refused. */
@@ -98,15 +86,14 @@ function toNumber(value: unknown): number {
 
 /**
  * How every registered module stores its data in the generic tables, which the server reads and writes them by: each
- * kind's row (`kind`), each join's (`join`), a character's (`character`), each field and link role (`field`, `role`),
- * and the registries' rows (`registries`). Names are global: two modules declaring one kind, join, field or role is
- * refused, as the registries' keys refuse it.
+ * kind's row (`kind`), an entity's links of a role it holds many of (`viewLinksOf`), a character's (`character`), each
+ * field and link role (`field`, `role`), and the registries' rows (`registries`). Names are global: two modules
+ * declaring one kind, field or role is refused, as the registries' keys refuse it.
  */
 export default class StorageEngine {
   constructor(modules: [BaseRules, RulesetModule][]) {
     this.baseRules = modules.map(([baseRules]) => baseRules);
     this.kinds = mergeRecords(modules, (module) => module.storage.kinds);
-    this.joins = mergeRecords(modules, (module) => module.storage.joins);
     this.fields = mergeRecords(modules, (module) => module.fields);
     const characters = modules.map(([, module]) => module.storage.character);
     this.characterDeclaration = {
@@ -168,8 +155,6 @@ export default class StorageEngine {
   /** Every module's owners' fields, by owner type. */
   private readonly fields: Record<string, Fields>;
 
-  private readonly joins: Record<string, StoredJoin>;
-
   private readonly kinds: Record<string, StoredKind>;
 
   private readonly merged: StorageRegistries;
@@ -179,9 +164,12 @@ export default class StorageEngine {
   /** The fields every module declares, as views keep their values, once read (`declaredFields`). */
   private declared?: DeclaredFields;
 
+  /** The roles an entity holds many links of, by its type, once read (`viewLinksOf`). */
+  private manyRoles?: Map<string, Set<string>>;
+
   private rowReads: { fields: string[]; roles: string[] } | undefined;
 
-  /** What every module declares of a view's kinds and joins, once read (`viewSchema`). */
+  /** What every module declares of a view's kinds and links, once read (`viewSchema`). */
   private schema?: ViewSchema;
 
   /** A character link role. */
@@ -246,33 +234,6 @@ export default class StorageEngine {
     );
     if (!found) throw new Error(`The kind ${type} names no ${inheritance.role} its fields are read off`);
     return { inherits: { column: found[0], fields: inheritance.fields } };
-  }
-
-  /** The column a join's row holds one of its parts in (`part`: its from-entity, its target), refused without one. */
-  private joinColumn(name: string, part: LinkPart, word: string): string {
-    const found = Object.entries(this.join(name).columns).find(([, held]) => held === part);
-    if (!found) throw new Error(`The join ${name} names no ${word}`);
-    return found[0];
-  }
-
-  /** A join's row of a link from an entity: its timestamps, then each part under its column's name. */
-  private joinRow(join: StoredJoin, fromId: string, link: StoredLink, json: boolean): Row {
-    const parts: Record<LinkPart, unknown> = {
-      amount: link.amount,
-      free: link.free,
-      from: fromId,
-      id: link.id,
-      tier: link.tier,
-      to: link.toId,
-      via: link.viaId,
-    };
-    const row: Row = {
-      createdAt: json ? jsonTimestamp(link.createdAt) : link.createdAt,
-      updatedAt: json ? jsonTimestamp(link.updatedAt) : link.updatedAt,
-      deletedAt: null,
-    };
-    for (const column in join.columns) row[column] = parts[join.columns[column]];
-    return row;
   }
 
   /** A level's row (`values`, by its module's columns), as what a write of its advancement stores: its track, its value. */
@@ -396,6 +357,22 @@ export default class StorageEngine {
     return this.declared;
   }
 
+  /**
+   * The roles whose links an entity's page edits one at a time (`StoredKind.editedLinks`: 3.5's class's skills), each
+   * with the kinds its links are from and to: what names their activities.
+   */
+  editedLinks(): Map<string, { from: string; to: string }> {
+    return new Map(
+      Object.entries(this.kinds).flatMap(([type, kind]) => {
+        if (!kind.editedLinks) return [];
+        const role = kind.editedLinks;
+        const [def, ...others] = this.merged.linkRoles.filter((held) => held.role === role && held.fromType === type);
+        if (!def || others.length > 0) throw new Error(`The kind ${type} edits its ${role} links to no one kind`);
+        return [[role, { from: type, to: def.toType }]];
+      }),
+    );
+  }
+
   /** A field of an owner's type (an entity type, `rulesets` or `characters`), if a module declares it. */
   field(ownerType: string, field: string): FieldDef | undefined {
     return this.merged.fieldDefs.find((def) => def.ownerType === ownerType && def.field === field);
@@ -410,63 +387,6 @@ export default class StorageEngine {
     return Object.keys(this.fields);
   }
 
-  /** A join's rows, by its name (`feats_aptitudes`): the links of a role from one kind to another. */
-  join(name: string): StoredJoin {
-    const join = this.joins[name];
-    if (!join) throw new Error(`No module stores the join ${name}`);
-    return join;
-  }
-
-  /**
-   * A join's row (`row`, by its columns) as a copy of its from-entity holds it: from the copy (`fromId`), the entities
-   * it names resolved (`resolve`: to what stands for them), its other parts kept; a new link, no id of its own.
-   */
-  joinCopyOf(name: string, row: Row, fromId: string, resolve: (id: string) => string): Row {
-    const { columns } = this.join(name);
-    const copy: Row = {};
-    for (const column in columns) {
-      const part = columns[column];
-      if (part === "from") copy[column] = fromId;
-      else if (part === "to" || part === "via")
-        copy[column] = row[column] === null ? null : resolve(String(row[column]));
-      else if (part !== "id") copy[column] = row[column];
-    }
-    return copy;
-  }
-
-  /** The column a join's row names its from-entity by (`name`: a class level's grants' `klassLevelId`). */
-  joinFromColumn(name: string): string {
-    return this.joinColumn(name, "from", "from-entity");
-  }
-
-  /** Every join's name. */
-  joinNames(): string[] {
-    return Object.keys(this.joins);
-  }
-
-  /**
-   * A join's rows (`name`) of entities' links (`entities`, of its from-kind): its role's to its to-kind, in their order
-   * (as they were made, each entity's in its order). `json`: their timestamps as JSON gives them (a nested row's).
-   */
-  joinRowsOf(name: string, entities: Pick<StoredEntity, "id" | "links" | "type">[], json = false): Row[] {
-    const join = this.join(name);
-    const links = entities.flatMap((entity) =>
-      entity.type !== join.from
-        ? []
-        : entity.links
-            .filter((link) => link.role === join.role && link.toType === join.to)
-            .map((link) => ({ fromId: entity.id, link })),
-    );
-    links.sort(
-      (a, b) =>
-        compareText(a.link.createdAt, b.link.createdAt) ||
-        compareText(a.fromId, b.fromId) ||
-        a.link.ordinal - b.link.ordinal ||
-        compareText(a.link.toId, b.link.toId),
-    );
-    return links.map(({ fromId, link }) => this.joinRow(join, fromId, link, json));
-  }
-
   /** An entity kind's row, by its type (`feats`): its columns past an entity's own. */
   kind(type: string): StoredKind {
     const kind = this.kinds[type];
@@ -476,94 +396,21 @@ export default class StorageEngine {
 
   /**
    * What every kind's row reads of its entity past its own columns: its columns' fields (their single value, ordinal
-   * 0), and its single links' and lists' roles. A read of rows alone reads no more (an owner's other fields, `valuesOf`'s, it leaves).
+   * 0), and its single links' roles. A read of rows alone reads no more (an owner's other fields, `valuesOf`'s, it
+   * leaves; its links of a role it holds many of, `viewLinksOf`'s).
    */
   kindReads(): { fields: string[]; roles: string[] } {
     this.rowReads ??= {
       fields: [...this.columnFields()],
       roles: [
         ...new Set(
-          Object.values(this.kinds).flatMap((kind) => [
-            ...Object.values(kind.columns).flatMap((column) => (column.kind === "link" ? [column.role] : [])),
-            ...Object.values(kind.lists ?? {}).map((list) => this.join(list.join).role),
-          ]),
+          Object.values(this.kinds).flatMap((kind) =>
+            Object.values(kind.columns).flatMap((column) => (column.kind === "link" ? [column.role] : [])),
+          ),
         ),
       ],
     };
     return this.rowReads;
-  }
-
-  /**
-   * A join's row (`values`, by its columns' names) as its link's parts: what a write of it stores, a part it leaves out
-   * its default (no pool, no tier, no amount, not free). Its timestamps and id when it gives them (a copy's).
-   */
-  linkOf(name: string, values: Row) {
-    const join = this.join(name);
-    const part = (wanted: LinkPart) => {
-      const column = Object.keys(join.columns).find((key) => join.columns[key] === wanted);
-      return column === undefined ? undefined : values[column];
-    };
-    return {
-      id: part("id") as string | undefined,
-      fromId: String(part("from")),
-      toId: String(part("to")),
-      viaId: (part("via") as string | null | undefined) ?? null,
-      tier: (part("tier") as number | null | undefined) ?? null,
-      amount: (part("amount") as number | null | undefined) ?? null,
-      free: (part("free") as boolean | undefined) ?? false,
-      createdAt: values.createdAt as string | undefined,
-      updatedAt: values.updatedAt as string | undefined,
-    };
-  }
-
-  /** A kind's list's join rows (`rows`, by its columns) as list links, each with the entity it's from. */
-  listLinksOf(type: string, rows: Row[]): { fromId: string; level: number | null; listId: string }[] {
-    const [list] = Object.values(this.kind(type).lists ?? {});
-    if (!list) return [];
-    const { columns } = this.join(list.join);
-    const column = (part: LinkPart) => Object.keys(columns).find((name) => columns[name] === part);
-    const [from, to, tier] = [column("from")!, column("to")!, column("tier")];
-    return rows.map((row) => ({
-      fromId: String(row[from]),
-      level: tier ? ((row[tier] as number | null) ?? null) : null,
-      listId: String(row[to]),
-    }));
-  }
-
-  /**
-   * An entity's list links (`links`: the lists it's in, at a tier if they rank it: a spell's level) as its kind's
-   * list's join rows (`join`, its name), none for a kind without a list.
-   */
-  listRowsOf(type: string, entityId: string, links: ListLink[]) {
-    const [list] = Object.values(this.kind(type).lists ?? {});
-    if (!list) return undefined;
-    const { columns } = this.join(list.join);
-    const parts = (link: (typeof links)[number]): Partial<Record<LinkPart, unknown>> => ({
-      from: entityId,
-      to: link.listId,
-      tier: link.level ?? null,
-    });
-    return {
-      join: list.join,
-      rows: links.map((link) => {
-        const values = parts(link);
-        const row: Row = {};
-        for (const column in columns) if (columns[column] in values) row[column] = values[columns[column]];
-        return row;
-      }),
-    };
-  }
-
-  /** The ids of the entities stored entities' lists name (a feat's pools' aptitudes): what their rows nest. */
-  listTargetIds(entities: StoredEntity[]): string[] {
-    const ids = new Set<string>();
-    for (const entity of entities) {
-      for (const list of Object.values(this.kind(entity.type).lists ?? {})) {
-        const join = this.join(list.join);
-        for (const link of entity.links) if (link.role === join.role && link.toType === join.to) ids.add(link.toId);
-      }
-    }
-    return [...ids];
   }
 
   /** The base rules of every registered module: what a ruleset's `base_rules` may name (`rules.modules`). */
@@ -650,13 +497,17 @@ export default class StorageEngine {
   }
 
   /**
-   * The joins whose links to an entity of a kind (`type`) refuse its delete, by their names (a class level's base bonus
-   * to a save): an entity one links to is in use.
+   * The roles of the links an entity holds many of that refuse their target's delete, to a kind (`type`): a class
+   * level's base bonus to a save. An entity one links to is in use.
    */
-  refusingJoins(type: string): string[] {
-    return Object.entries(this.joins)
-      .filter(([, join]) => join.to === type && this.role(join.role, join.from, join.to).onDelete === "refuse")
-      .map(([name]) => name);
+  refusingRoles(type: string): string[] {
+    return [
+      ...new Set(
+        this.merged.linkRoles
+          .filter((def) => def.toType === type && !def.single && def.onDelete === "refuse")
+          .map((def) => def.role),
+      ),
+    ];
   }
 
   /** What every module's registries hold. */
@@ -675,32 +526,15 @@ export default class StorageEngine {
 
   /**
    * A stored entity as its kind's row (its type's declaration): an entity's own columns (an owned kind's fewer), then
-   * what its fields and single links hold, in its declared order; then, given the entities its lists' links name
-   * (`targets`, by id), its lists, each join row with its target's row (a link to one it lacks left out), as a list's
-   * read nests them. `json`: its timestamps as JSON gives them (a nested row's).
+   * what its fields and single links hold, in its declared order.
    */
-  rowOf(
-    entity: StoredEntity,
-    { json = false, targets }: { json?: boolean; targets?: ReadonlyMap<string, StoredEntity> } = {},
-  ): Row {
+  rowOf(entity: StoredEntity): Row {
     const kind = this.kind(entity.type);
     // Written into one object in its order, no row built on the way: a view's rows are many, and kept
     const row: Row = {};
     for (const name of this.columnOrder(entity.type)) {
       const column = kind.columns[name];
-      if (column) row[name] = this.columnValue(entity, column);
-      else if (json && (name === "createdAt" || name === "updatedAt" || name === "deletedAt"))
-        row[name] = jsonTimestamp(entity[name]);
-      else row[name] = entity[name as keyof StoredEntity];
-    }
-    for (const [name, list] of Object.entries(targets ? (kind.lists ?? {}) : {})) {
-      const join = this.join(list.join);
-      row[name] = this.joinRowsOf(list.join, [entity], true).flatMap((joined) => {
-        const target = targets!.get(
-          String(joined[Object.keys(join.columns).find((column) => join.columns[column] === "to")!]),
-        );
-        return target ? [{ ...joined, [list.target]: this.rowOf(target, { json: true }) }] : [];
-      });
+      row[name] = column ? this.columnValue(entity, column) : entity[name as keyof StoredEntity];
     }
     return row;
   }
@@ -781,25 +615,51 @@ export default class StorageEngine {
   }
 
   /**
-   * What a ruleset's view is composed by, of every module's declaration (`ViewSchema`): each kind's owner and the lists
-   * its rows nest, each join its kinds' lists don't nest. Read once.
+   * An entity's links of the roles it holds many of (`entity`, as stored: a feat's pools, a class level's grants), as a
+   * view holds them, in their order: as they were made, then by their ordinal and their target. Its single links are
+   * its row's columns or its fields' (`rowOf`, `storedValuesOf`).
+   */
+  viewLinksOf(entity: Pick<StoredEntity, "id" | "links" | "type">): ViewLink[] {
+    this.manyRoles ??= new Map(
+      [
+        ...Map.groupBy(
+          this.merged.linkRoles.filter((def) => !def.single),
+          (def) => def.fromType,
+        ),
+      ].map(([fromType, defs]) => [fromType, new Set(defs.map((def) => def.role))]),
+    );
+    const roles = this.manyRoles.get(entity.type);
+    if (!roles) return [];
+    return entity.links
+      .filter((link) => roles.has(link.role))
+      .sort((a, b) => compareText(a.createdAt, b.createdAt) || a.ordinal - b.ordinal || compareText(a.toId, b.toId))
+      .map(({ amount, free, id, ordinal, role, tier, toId, toType, viaId }) => ({
+        id,
+        role,
+        fromId: entity.id,
+        toId,
+        toType,
+        viaId,
+        tier,
+        amount,
+        free,
+        ordinal,
+      }));
+  }
+
+  /**
+   * What a ruleset's view is composed by, of every module's declaration (`ViewSchema`): each kind's owner, and the links
+   * whose sibling copies' merge into their winner's (`unionLinks`: a feat's pools). Read once.
    */
   viewSchema(): ViewSchema {
     if (this.schema) return this.schema;
     const types = this.merged.entityTypes;
-    const listed = new Set(types.flatMap(({ type }) => Object.values(this.kind(type).lists ?? {}).map((l) => l.join)));
-    const joins = this.joinNames()
-      .filter((name) => !listed.has(name))
-      .map((name) => ({ name, from: this.join(name).from, fromColumn: this.joinFromColumn(name) }));
     const ownerOf = new Map(types.map(({ ownerType, type }) => [type, ownerType]));
     const depth = (type: string): number => {
       const owner = ownerOf.get(type);
       return owner ? depth(owner) + 1 : 0;
     };
-    const tracked = new Set([
-      ...types.flatMap(({ ownerType }) => (ownerType ? [ownerType] : [])),
-      ...joins.map(({ from }) => from),
-    ]);
+    const tracked = new Set(types.flatMap(({ ownerType }) => (ownerType ? [ownerType] : [])));
     const fields = new Set(this.fieldOwners());
     this.schema = {
       // An owner before the kinds it owns, each in its declared order otherwise
@@ -814,15 +674,10 @@ export default class StorageEngine {
             ? { owner: { column: this.ownerColumn(type), position: this.positionColumn(type), type: ownerType } }
             : {}),
           tracked: tracked.has(type),
-          lists: Object.entries(this.kind(type).lists ?? {}).map(([name, list]) => ({
-            name,
-            target: list.target,
-            from: this.joinColumn(list.join, "from", "from-entity"),
-            to: this.joinColumn(list.join, "to", "target"),
-            toType: this.join(list.join).to,
-          })),
         })),
-      joins,
+      unionLinks: this.merged.linkRoles
+        .filter((def) => !def.single && def.merge === "union")
+        .map(({ fromType, role, toType }) => ({ fromType, role, toType })),
     };
     return this.schema;
   }

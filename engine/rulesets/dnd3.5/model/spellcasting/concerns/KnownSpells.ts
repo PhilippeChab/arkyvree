@@ -202,15 +202,15 @@ export function KnownSpells<B extends Constructor<SpellcastingState>>(Base: B) {
       > = [];
       for (const spell of dnd35.spells) {
         const saveName = SpellsComponent.saveNameOf(spell, rulesetData);
-        for (const link of spell.spellsAptitudesInRules) {
-          const leveledSet = perAptitudeLevels.get(link.aptitudeId);
-          const isLeveled = leveledSet !== undefined && link.level !== null && leveledSet.has(link.level);
-          const isUnleveled = unleveledAptitudeIds.has(link.aptitudeId);
+        for (const link of dnd35.listLinksOf(spell.id)) {
+          const leveledSet = perAptitudeLevels.get(link.toId);
+          const isLeveled = leveledSet !== undefined && link.tier !== null && leveledSet.has(link.tier);
+          const isUnleveled = unleveledAptitudeIds.has(link.toId);
           if (!isLeveled && !isUnleveled) continue;
           allAptitudeSpells.push({
             ...spell,
-            aptitudeId: link.aptitudeId,
-            spellLevel: link.level,
+            aptitudeId: link.toId,
+            spellLevel: link.tier,
             saveName,
           });
         }
@@ -227,8 +227,7 @@ export function KnownSpells<B extends Constructor<SpellcastingState>>(Base: B) {
       for (const id of allSpellIdSet) {
         const p = dnd35.spellsById.get(id);
         if (!p) continue;
-        for (const link of p.spellsAptitudesInRules)
-          spellAptitudeLinks.push({ spellId: p.id, aptitudeId: link.aptitudeId });
+        for (const link of dnd35.listLinksOf(p.id)) spellAptitudeLinks.push({ spellId: p.id, aptitudeId: link.toId });
       }
 
       this.spellAptitudeLinks = spellAptitudeLinks;

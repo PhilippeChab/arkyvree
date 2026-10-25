@@ -55,10 +55,6 @@ export interface KnownSpell {
   id: string;
 }
 
-/** A class level's granted feats, as the view joins them to their feats. */
-export type GrantedFeatRecords =
-  Dnd35View["klassLevelFeatsWithFeatsByKlassLevel"] extends Map<string, infer R> ? R : never;
-
 /**
  * The character with every level it has and plans, holding these of a level's (or a level-up's) own feats and spells
  * (`picks`, by pool) and none of the others: what a check reads off whether the character holds a pick already.
@@ -294,16 +290,16 @@ export default class SelectionChecks {
   checkLinks(feats: Record<string, string[]>, spells: Record<string, string[]>) {
     for (const [aptitudeId, ids] of Object.entries(feats)) {
       for (const featId of ids) {
-        const links = this.dnd35.featsById.get(featId)?.featsAptitudesInRules ?? [];
-        if (!links.some((fa) => fa.aptitudeId === aptitudeId))
+        const links = this.dnd35.featsById.has(featId) ? this.dnd35.listLinksOf(featId) : [];
+        if (!links.some((link) => link.toId === aptitudeId))
           throw new RulesError("invalid", "Feat is not linked to the specified aptitude");
       }
     }
 
     for (const [aptitudeId, ids] of Object.entries(spells)) {
       for (const spellId of ids) {
-        const links = this.dnd35.spellsById.get(spellId)?.spellsAptitudesInRules ?? [];
-        if (!links.some((pa) => pa.aptitudeId === aptitudeId))
+        const links = this.dnd35.spellsById.has(spellId) ? this.dnd35.listLinksOf(spellId) : [];
+        if (!links.some((link) => link.toId === aptitudeId))
           throw new RulesError("invalid", "Spell is not linked to the specified aptitude");
       }
     }

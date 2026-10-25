@@ -81,7 +81,7 @@ describe("ActivitiesService.getActivityUrl", () => {
       ["classes", fighter, `/rulesets/${r}/classes/${fighter}`],
       ["class_levels", level.id, `/rulesets/${r}/classes/${fighter}`],
       // A class skill's activity targets the class.
-      ["class_skills", fighter, `/rulesets/${r}/classes/${fighter}/skills`],
+      ["classSkill", fighter, `/rulesets/${r}/classes/${fighter}/skills`],
     ])
       expect({ table, url: await resolve(table, id) }).toEqual({ table, url });
   });
@@ -250,7 +250,7 @@ describe("ActivitiesService.getActivityUrl", () => {
       "campaigns",
       "feats",
       "class_levels",
-      "class_skills",
+      "classSkill",
       "players",
       "invites",
       "player_characters",
@@ -264,13 +264,13 @@ describe("ActivitiesService.getActivityUrl", () => {
       expect({ table, url: await resolve(table, NIL_UUID) }).toEqual({ table, url: null });
   });
 
-  test("links nothing for a join no entity edits link by link, whose changes no activity records", async () => {
+  test("links nothing for a role no entity edits link by link, whose changes no activity records", async () => {
     const { featMap, klassMap } = await getSeedCtx();
     const fighter = klassMap.pc["Fighter"];
     const [level] = await Entities.findMany<KlassLevel>(db, { entityType: "class_levels", ownerIds: [fighter] });
     for (const [table, id] of [
-      ["feats_aptitudes", featMap["Toughness"]],
-      ["class_level_feats", level.id],
+      ["listedIn", featMap["Toughness"]],
+      ["grants", level.id],
     ])
       expect({ table, url: await resolve(table, id) }).toEqual({ table, url: null });
   });

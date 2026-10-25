@@ -114,7 +114,7 @@ export default class SkillsComponent extends CharacterComponent<LoadedCharacterD
     // (e.g., "Craft (Armorsmithing)" is innate if "Craft" is a class skill)
     const allKlassSkillNames = new Set<string>();
     const allKlassSkillIds = Object.values(classes).flatMap((klass) =>
-      klass.klassSkills.flatMap((klassSkill) => klassSkill.skillId),
+      klass.klassSkills.flatMap((klassSkill) => klassSkill.toId),
     );
     for (const skillId of allKlassSkillIds) {
       this.innateSkillIds.add(skillId);
@@ -131,9 +131,9 @@ export default class SkillsComponent extends CharacterComponent<LoadedCharacterD
     // Points spent on a class skill (for that class) convert 1:1.
     // Points spent on a cross-class skill convert at 0.5 ranks per point.
     for (const klass of Object.values(classes)) {
-      const klassSkillIds = new Set(klass.klassSkills.map((ks) => ks.skillId));
+      const klassSkillIds = new Set(klass.klassSkills.map((ks) => ks.toId));
       const klassSkillNames = new Set(
-        klass.klassSkills.map((ks) => skillNameById.get(ks.skillId)).filter((n): n is string => !!n),
+        klass.klassSkills.map((ks) => skillNameById.get(ks.toId)).filter((n): n is string => !!n),
       );
 
       for (const level of klass.levels) {

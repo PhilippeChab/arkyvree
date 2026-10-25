@@ -1,8 +1,8 @@
 /**
  * The rows the engine reads a ruleset's entities as, each kind's by its module's storage declaration
- * (`StorageEngine.rowOf`, `joinRowsOf`): what every kind's row holds, and the registries each module fills with its own
- * kinds' and joins' rows (`ViewEntities`, `ViewJoins`), which the view's reads are typed by, and with the kinds an
- * entity of another kind owns (`OwnedEntities`).
+ * (`StorageEngine.rowOf`): what every kind's row holds, and the registries each module fills with its own kinds' rows
+ * (`ViewEntities`), which the view's reads are typed by, and with the kinds an entity of another kind owns
+ * (`OwnedEntities`); and an entity's links of a role it holds many of, as the view composes them (`ViewLink`).
  */
 
 /** An entity's own columns. */
@@ -15,6 +15,11 @@ interface EntityColumns {
   name: string;
   rulesetId: string;
   updatedAt: string;
+}
+
+/** A link as an entity's answer carries it: the view's (`ViewLink`), with its target's name (`toName`). */
+export interface NamedLink extends ViewLink {
+  toName: string;
 }
 
 /**
@@ -30,8 +35,24 @@ export interface OwnedEntities {}
  */
 export interface ViewEntities {}
 
-/** Each join's row as the view holds it, by its name: every registered module declares its own joins' into it. */
-export interface ViewJoins {}
+/**
+ * A link from an entity, of a role it holds many of, as the view composes it (`RulesetData.linksOf`: a feat's pool, a
+ * class level's grant): its own id, the entity it's from (`fromId`) and the one it's to (`toId`, of `toType`), the pool
+ * it's taken through (`viaId`), its tier and its amount, whether it's free, and its place among its entity's links
+ * (`ordinal`).
+ */
+export interface ViewLink {
+  amount: number | null;
+  free: boolean;
+  fromId: string;
+  id: string;
+  ordinal: number;
+  role: string;
+  tier: number | null;
+  toId: string;
+  toType: string;
+  viaId: string | null;
+}
 
 /**
  * What every ruleset entity's row holds: its scope, its name and its description, and its timestamps. A mapped type, as

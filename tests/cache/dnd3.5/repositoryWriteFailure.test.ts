@@ -5,8 +5,8 @@ import { runWithRequestCache } from "@/server/database/requestCache.ts";
 import {
   Characters,
   Entities,
+  EntityLinks,
   EntitySnapshots,
-  Joins,
   Modifiers,
   Notifications,
   Requirements,
@@ -47,7 +47,7 @@ test("a query whose where matches none of its branches throws, instead of writin
   const unmatched = {} as never;
   for (const write of [
     () => Modifiers.delete(db, unmatched),
-    () => Joins.delete(db, unmatched),
+    () => EntityLinks.delete(db, unmatched),
     () => Characters.archive(db, unmatched),
     () => Sessions.archive(db, unmatched),
     () => Notifications.delete(db, unmatched),

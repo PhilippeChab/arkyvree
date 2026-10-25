@@ -1,6 +1,6 @@
 import { classSpells, specialistSpells } from "@/content/dnd3.5/builders/aptitudes/names.ts";
 import type { WizardSchoolSeed } from "@/content/dnd3.5/builders/wizardSchools/types.ts";
-import { Fields, Joins } from "@/database/seeders/core/SeederState.ts";
+import { EntityLinks, Fields } from "@/database/seeders/core/SeederState.ts";
 import type { BaseSeeder } from "@/database/seeders/dnd3.5/BaseSeeder.ts";
 import type { SpellcastingClass } from "@/database/seeders/dnd3.5/spellTable.ts";
 import type { Constructor } from "@/lib/mixins.ts";
@@ -32,24 +32,25 @@ export function SeedsWizardSchools<B extends Constructor<BaseSeeder>>(Base: B) {
       const wizardSpells = this.ctx.aptMap[classSpells("Wizard")];
       if (!wizardSpells) return;
       // The wizard's list's spells, each with its level there and its school (its field's value)
-      const listed = await Joins.findMany<{ level: number | null; spellId: string }>(this.db, {
-        join: "spells_aptitudes",
+      const listed = await EntityLinks.findMany(this.db, {
+        fromType: "spells",
+        role: "listedIn",
         toIds: [wizardSpells],
       });
       const values = await Fields.findMany(this.db, {
-        ownerIds: listed.map((link) => link.spellId),
+        ownerIds: listed.map((link) => link.fromId),
         ownerType: "spells",
       });
-      const spells = listed.flatMap(({ spellId, level }) => {
-        const [school] = values.get(spellId)?.fields[SPELL_SCHOOL] ?? [];
-        return school === undefined ? [] : [{ spellId, level, school: String(school) }];
+      const spells = listed.flatMap(({ fromId, tier }) => {
+        const [school] = values.get(fromId)?.fields[SPELL_SCHOOL] ?? [];
+        return school === undefined ? [] : [{ spellId: fromId, level: tier, school: String(school) }];
       });
-      await this.insertJoins(
-        "spells_aptitudes",
+      await this.insertListings(
+        "spells",
         spells.flatMap(({ spellId, level, school }) => {
           const aptitudeId = this.ctx.aptMap[specialistSpells(school)];
           if (school === "Universal" || !aptitudeId || level === null) return [];
-          return [{ spellId, aptitudeId, level }];
+          return [{ entityId: spellId, aptitudeId, level }];
         }),
       );
     }

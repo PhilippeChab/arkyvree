@@ -11,12 +11,13 @@ import {
 } from "@/engine/rulesets/dnd3.5/index.ts";
 import { db } from "@/server/database/index.ts";
 import { ForbiddenError } from "@/server/errors/index.ts";
-import { Entities, Joins, Requirements } from "@/server/repositories/index.ts";
+import { Entities, Requirements } from "@/server/repositories/index.ts";
 import { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";
 import { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";
 import { activityTypes } from "@/tests/support/activities.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
 import { createTestKlassLevel } from "@/tests/support/dnd3.5/levels.ts";
+import { addLists } from "@/tests/support/dnd3.5/links.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
 import { createSeededTestRuleset, readTargetPaths } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
@@ -78,7 +79,7 @@ describe("ModifiersService", () => {
     const { session, rulesetId, feat } = await setup();
     const [list] = await Entities.create<Aptitude>(db, "aptitudes", { name: "Test Light Spells", rulesetId });
     const [spell] = await Entities.create<Spell>(db, "spells", { name: "Test Glow", rulesetId });
-    await Joins.create(db, "spells_aptitudes", { spellId: spell.id, aptitudeId: list.id, level: 1 });
+    await addLists(db, "spells", spell.id, [{ aptitudeId: list.id, level: 1 }]);
     const knownPath = async () =>
       (await readTargetPaths(rulesetId, "requirement")).paths.some(
         (path) => path.path === "spells.testglow.testlight.known",

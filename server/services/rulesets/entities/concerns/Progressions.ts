@@ -13,9 +13,9 @@ import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/err
 import { Entities, Modifiers, type RulesetEntityType } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
-import { writeJoins } from "@/server/services/rulesets/entities/joinWrites.ts";
 import type { EntityRow } from "@/server/services/rulesets/entities/rows.ts";
 import { writeEntityWrites } from "@/server/services/rulesets/entityWrites.ts";
+import { setLinks } from "@/server/services/rulesets/linkWrites.ts";
 import { getActivityName } from "@/shared/activity.ts";
 import type { Session } from "@/shared/relations.ts";
 
@@ -92,7 +92,7 @@ export function Progressions<B extends Constructor>(Base: B) {
         if (owned.edit) {
           if (owned.edit.writes)
             await writeEntityWrites(tx, scope, { entityId: ownedId, entityType: ownedType }, owned.edit.writes);
-          await writeJoins(tx, ownedId, owned.edit.joins);
+          await setLinks(tx, { entityId: ownedId, entityType: ownedType }, owned.edit.links);
         }
 
         removedIds.push(...owned.removedIds);

@@ -30,7 +30,7 @@ return await withRulesetScopes(db, rulesetIds, async (views) => {
 Inside the scope:
 
 - `ruleset` — the ruleset row (non-null; throws `NotFoundError` if missing).
-- `rulesetData` — the composed cache: `byId(type)`, `rows(type)`, `joinRows(join)`, `valuesOf(id)`, etc., and what a module derives of it (3.5's `Dnd35View.of(rulesetData)`: `klassLevelByKlassAndLevel`…). Also `rulesetData.cow` exposes the underlying `CowData` (its `sourceChain`, `siblingIds`, and what an id resolves to: `resolve`, `isOverridden`, `isHidden`, `getWinner`) for lineage checks.
+- `rulesetData` — the composed cache: `byId(type)`, `rows(type)`, `linksOf(id, role)`, `valuesOf(id)`, etc., and what a module derives of it (3.5's `Dnd35View.of(rulesetData)`: `klassLevelByKlassAndLevel`…). Also `rulesetData.cow` exposes the underlying `CowData` (its `sourceChain`, `siblingIds`, and what an id resolves to: `resolve`, `isOverridden`, `isHidden`, `getWinner`) for lineage checks.
 
 Nothing else: a repository read inside the scope returns rows as stored, and a query takes the ids it's given. What a read needs of copy-on-write it asks `rulesetData.cow` for, explicitly ([below](#cow-transparency)): a list's filters (`listFilters`), an entity's equivalent ids for a query on stored rows (`getEquivalentIds`), the id a stored one stands for (`resolve`). Rows that reach the engine are read as the view does there.
 
@@ -66,7 +66,7 @@ const feat = rulesetData.find("feats", storedFeatId);
 
 This covers ~30 lookup sites. Zero caller changes after the rollout. When the ruleset has no overrides (e.g. the base itself), the Proxy is skipped and the underlying Map is returned directly — zero overhead.
 
-Also at compose time: the inline join rows on feats/spells (`spellsAptitudesInRules[].aptitudeId`, `featsAptitudesInRules[].aptitudeId`, and their nested `aptitudesInRule` objects) are remapped and deduped. Earlier versions missed this because `CowData.resolveRows` only touches top-level string fields — nested arrays kept pre-COW ids and broke multi-extension sibling-dedup scenarios.
+Also at compose time: an entity's links (`linksOf`, a feat's or a spell's `listedIn` links, a class level's `grants`) name the entities that stand for their targets and pools (`toId`, `viaId` resolved), and a sibling loser's links of a role that merges (its registry's `merge`, `union`: a feat's pools) merge into its winner's, deduped by target. `CowData.resolveRows` only touches a row's top-level string fields, so links are composed apart from the rows, the first time an entity's are read.
 
 ### Layer 2 — the engine reads the rows it's handed as the view does
 
@@ -151,8 +151,8 @@ One tier: per-ruleset **raw** entities, keyed by `rulesetId[:campaignId]`. The c
 interface RulesetRawData {
   // Entities owned by this ruleset only — no ancestor merging.
   entities: Record<string, ViewRow[]>; // each kind's rows (a row with its id), by its type (3.5's "feats", "class_levels"…)
-  joins: Record<string, Row[]>; // each join's rows its kinds' lists don't nest, by its name ("class_skills"…)
-  tieredIds: Set<string>; // the entities a link of a tiered join points at (3.5's spell lists at a level)
+  links: ReadonlyMap<string, { links: readonly ViewLink[]; type: string }>; // each entity's links of the roles it holds many of, and its kind, by its id
+  tieredIds: Set<string>; // the entities a link with a tier points at (3.5's spell lists at a level)
   values: ReadonlyMap<string, ReadonlyMap<string, StoredValues>>; // each owner's field values, by its type then its id
   kindValues: ReadonlyMap<string, readonly KindValue[]>; // each kind's values kind-wide: each with the entities holding it
   modifiers: Modifier[];
@@ -215,7 +215,7 @@ Three calls:
 | Call                                  | Clears                                                               | Use when                                                                                                                                                         |
 | ------------------------------------- | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `RulesetViews.invalidateEntities(id)` | Raw entities for this ruleset + dependent COW data; not target paths | Entity data (description, stats) edited                                                                                                                          |
-| `RulesetViews.invalidate(id)`         | Raw entities for this ruleset + dependent COW data and target paths  | Entities added/removed/renamed, or a modifier written: a list's slots and joins decide which lists have spell levels and known-spell paths (target paths change) |
+| `RulesetViews.invalidate(id)`         | Raw entities for this ruleset + dependent COW data and target paths  | Entities added/removed/renamed, or a modifier written: a list's slots and links decide which lists have spell levels and known-spell paths (target paths change) |
 | `RulesetViews.invalidateAll()`        | Every ruleset's everything                                           | Test teardown, rare                                                                                                                                              |
 
 In tests, the cache reads through the test's transaction and outlives its rollback: rows a test writes straight into a seeded ruleset stay cached once a read rebuilds that ruleset. Tests write into forks instead, or call `invalidateSeededRuleset` (`tests/support/rulesets.ts`), which `tests/setup.ts` repeats after the rollback.
@@ -230,7 +230,9 @@ The view's own, by kind (`RulesetData`, `engine/core/view/RulesetData.ts`):
 | --- | --- |
 | `byId(type)`, `find(type, id)` | Each entity of a kind by id (a stored pre-COW id resolves to its copy) |
 | `storedById(type)` | Each entity of a kind by id as stored, unresolved: what a module's derived indices join rows by |
-| `rows(type)`, `joinRows(join)` | A kind's rows, a join's rows, as the view composes them |
+| `rows(type)` | A kind's rows, as the view composes them |
+| `linksOf(id, role?, toType?)` | An entity's links of the roles it holds many of, by role, as the view composes them (`ViewLink`): composed the first time they're read |
+| `nameLinks(links)` | Links whose targets the view shows, each with its target's name (`toName`): what an entity's answer carries |
 | `valuesOf(id)` | An owner's stored values: an entity's fields past its kind's columns, and the links its fields read |
 | `inheritedValuesOf(type, entity)` | An entity's stored values with those it reads off another (an item's template's) |
 | `rulesetValuesOf(rulesetId)` | A ruleset's Settings, each field's and link's of the nearest ruleset of its chain that holds it |
@@ -238,7 +240,7 @@ The view's own, by kind (`RulesetData`, `engine/core/view/RulesetData.ts`):
 | `modifiersBySource` | A source's modifiers |
 | `requirementsByEntity` | An entity's requirements |
 | `modifiersById` | Each modifier by id |
-| `tieredIds` | The entities a tiered join's links point at |
+| `tieredIds` | The entities a link with a tier points at |
 
 3.5's, which its module derives of the view once (`Dnd35View.of(rulesetData)`, `engine/rulesets/dnd3.5/view/Dnd35View.ts`, kept with the view by `RulesetData.derive`):
 
@@ -247,11 +249,11 @@ The view's own, by kind (`RulesetData`, `engine/core/view/RulesetData.ts`):
 | `featsById`, `spellsById`, `skillsById`, `aptitudesById`, `abilitiesById`, `savesById`, `klassesById`, `racesById`, `languagesById`, `itemsById`, `mechanicsById`, `klassLevelsById` | Each of its kinds' entities by id: the view's `byId(type)` |
 | `klassLevelByKlassAndLevel` (key `${klassId}:${level}`) | A class's level |
 | `klassLevelsByKlass` | A class's levels, sorted: the last its highest |
-| `klassLevelFeatsWithFeatsByKlassLevel`, `klassLevelSpellsWithSpellsByKlassLevel` | A class level's feats and spells, each with its entity |
-| `klassSkillsWithSkillsByKlass`, `klassSkillsByKlass` | A class's skills, with or without each skill |
-| `klassLevelSavesByKlassLevel` | A class level's saves |
-| `klassLevelFeatsByKlassLevel` | A class level's feat rows, without their feats |
-| `aptitudeIdsWithSpells` | The aptitudes some spell belongs to |
+| `grantedFeatsOf(id)`, `grantedSpellsOf(id)` | A class level's `grants` links to feats and to spells, by their entities' names |
+| `classSkillsOf(id)` | A class's `classSkill` links, by their skills' names |
+| `baseBonusesOf(id)` | A class level's `baseBonus` links to the saves, each with its amount |
+| `listLinksOf(id)` | A feat's or a spell's `listedIn` links: its pools, its spell lists at their levels |
+| `aptitudeIdsWithFeats`, `aptitudeIdsWithSpells` | The aptitudes some feat, some spell is listed in |
 | `leveledAptitudeIds` | The aptitudes counted by spell level (spell pools): the view's `tieredIds` |
 | `aptitudeIdBySlug`, `featIdBySlug`, `spellIdsBySlug` | An aptitude, feat or spells by the slug a target path names them by (the modifier scans for `feats.<slug>.possessed` and `spells.<slug>.<aptitude>.known`) |
 
@@ -449,9 +451,9 @@ sequenceDiagram
 
 ## Adding a new entity to the ruleset cache
 
-1. Declare the kind in its module's storage (`RulesetModule.storage`), and its row's type in the view's registry (`ViewEntities`, `declare module` from the module's `view/rows.ts`; a join's, `ViewJoins`): `RawDataReader` reads every kind's stored entities alike, the engine builds the raw data from them by the declaration (`CopyOnWriteEngine.buildRawData`), and the compose step composes every declared kind and join alike (`RulesetComposition`, by `StorageEngine.viewSchema`: an owned kind's rows follow their owners', a join's the entities it's from, a kind's lists' links resolve to their targets).
+1. Declare the kind in its module's storage (`RulesetModule.storage`), its link roles in its registries (`linkRoles`), and its row's type in the view's registry (`ViewEntities`, `declare module` from the module's `view/rows.ts`): `RawDataReader` reads every kind's stored entities alike, the engine builds the raw data from them by the declaration (`CopyOnWriteEngine.buildRawData`: each entity's links of the roles it holds many of, `StorageEngine.viewLinksOf`), and the compose step composes every declared kind alike (`RulesetComposition`, by `StorageEngine.viewSchema`: an owned kind's rows follow their owners', an entity's links name the entities that stand for their targets, a sibling's of a role that merges merged in).
 2. Read it through the view by kind: `rulesetData.rows(type)`, `byId(type)` (built on first read, a stored pre-COW id resolving), `find(type, id)`.
-3. An index past those (a kind's rows by another key, a join's by its owner) is its module's: a getter of the view it derives (3.5's `Dnd35View`), built on first read and wrapped with `rulesetData.resolvingIds(map)` so `.get` auto-resolves stored pre-COW ids.
+3. An index past those (a kind's rows by another key, an entity's links of a role in another order) is its module's: a getter or a method of the view it derives (3.5's `Dnd35View`), built on first read and wrapped with `rulesetData.resolvingIds(map)` so `.get` auto-resolves stored pre-COW ids (`linksOf` resolves its entity's id itself).
 4. Update `tests/cow/views/dnd3.5/RulesetViews.test.ts` with a smoke test (the existing compose+invalidation patterns are copy-paste templates); include a COW-fork assertion so regressions in the auto-resolve path are caught.
 5. Migrate callers: `Repo.findOne(db, { id })` inside a `withRulesetScope` → `rulesetData.find(type, id)`. No canonicalize needed — the wrapper handles it.
 

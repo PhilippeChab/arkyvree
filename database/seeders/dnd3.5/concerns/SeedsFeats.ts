@@ -25,11 +25,11 @@ export function SeedsFeats<B extends Constructor<Dnd35ContentSeeder>>(Base: B) {
       );
       Object.assign(this.ctx.featMap, ids);
 
-      await this.insertJoins(
-        "feats_aptitudes",
+      await this.insertListings(
+        "feats",
         feats.flatMap((f) =>
           f.aptitudes.map((aptitude) => ({
-            featId: ids[f.name],
+            entityId: ids[f.name],
             aptitudeId: this.idOf(this.ctx.aptMap, aptitude, `${f.name}'s aptitude`),
           })),
         ),

@@ -51,17 +51,14 @@ export interface EntityKindDescription {
 }
 
 /**
- * The entities an entity's page links it to through the join it edits (`/links`: a class's skills), on a tab of their
- * own: their kind (`type`: 3.5's `skills`), the key a link holds one by (`key`: `skillId`) and where it holds it whole
- * (`target`: `skillsInRule`), and the key it holds the entity it links by (`owner`: `klassId`, a copy's where an edit of
- * an inherited one copied it); the join its links are (`join`: `class_skills`, which names their activities:
- * `addClassSkill`), and where an activity of one holds the linked entity's name (`targetName`: `skillName`).
+ * The entities an entity's page links it to, one at a time, by a role of its links (`/links`: a class's skills), on a
+ * tab of their own: their kind (`type`: 3.5's `skills`), the role of its links (`role`: `classSkill`, which names their
+ * activities: `addClassSkill`), each answered with the entity it's from (`fromId`, a copy's where an edit of an
+ * inherited one copied it), its target (`toId`) and its target's name (`toName`), and where an activity of one holds
+ * the linked entity's name (`targetName`: `skillName`).
  */
 export interface EntityLinksDescription {
-  join: string;
-  key: string;
-  owner: string;
-  target: string;
+  role: string;
   targetName: string;
   type: string;
 }
@@ -80,7 +77,7 @@ export interface EntityPoolsDescription {
 
 /**
  * A column of an entity's own value in its type's list, between its name and its description: its key (where its value
- * is in a listed entity, `hd`, `costGp`; or what it shows of it, `template`), its label, its share of the
+ * is in a listed entity, `hd`, `costGp`; its `links`; or what it shows of it, `template`), its label, its share of the
  * list's width (percent), where a phone shows it (`slot`), and how its value reads (`reads`):
  * - `chip`: a chip of its label (`labels`, by value: a hit die's 10 is "d10"), else of the value;
  * - `muted`: its text, quiet;
@@ -88,8 +85,8 @@ export interface EntityPoolsDescription {
  * - `reference`: the name of the entity of the ruleset it names (`references`: its kind, `abilities`);
  * - `flag`: a warning's "Yes" while it's `yesWhen` ("Trained Only" while a skill isn't usable untrained), "No" else;
  * - `template`: an item's template's name, or "Template" for a template itself;
- * - `pools`: the pools it's picked in, as chips by name (its links to them at its key, each its pool at `target`: a
- *   spell's `spellsAptitudesInRules`, each at `aptitudesInRule`);
+ * - `pools`: the pools it's picked in, as chips by name (its links of a `role`, at its key: a spell's `listedIn`
+ *   links, each its pool's name at `toName`);
  * - `text`: its text, as it is (a language's type).
  */
 export interface ListColumn {
@@ -98,9 +95,9 @@ export interface ListColumn {
   labels?: Readonly<Record<string, string>>;
   reads: "chip" | "decimal" | "flag" | "muted" | "number" | "pools" | "reference" | "template" | "text";
   references?: string;
+  role?: string;
   share: number;
   slot?: "block" | "inline";
-  target?: string;
   unit?: string;
   yesWhen?: boolean;
 }

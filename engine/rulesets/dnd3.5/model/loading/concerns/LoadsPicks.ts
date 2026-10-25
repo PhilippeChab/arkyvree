@@ -1,5 +1,5 @@
 import type { CharacterDataLoader } from "@/engine/core/character/index.ts";
-import type { RulesetData } from "@/engine/core/view/index.ts";
+import type { RulesetData, ViewLink } from "@/engine/core/view/index.ts";
 import type { SavedPickRows } from "@/engine/rulesets/dnd3.5/levelUp/SavedPicks.ts";
 import type {
   LoadedCharacterData,
@@ -8,24 +8,27 @@ import type {
 import type { CharacterLevels, HeldFeat, HeldSpell } from "@/engine/rulesets/dnd3.5/model/loading/loadedEntities.ts";
 import SpellsComponent from "@/engine/rulesets/dnd3.5/model/spells/SpellsComponent.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
-import type {
-  CharacterLevel,
-  FeatWithAptitudes,
-  KlassLevelFeat,
-  KlassLevelSpell,
-  SpellWithAptitudes,
-} from "@/engine/rulesets/dnd3.5/view/rows.ts";
+import type { CharacterLevel, Feat, Spell } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 
 /**
- * What each saved level's class level grants (`grants`, by class level), attached to the level it's granted at. The
- * class level is the one the view stands for the level's stored one, which `resolveLevels` resolved: on a fork that
- * copied the class after the level was saved, the stored id still names the source's class level, and its copy's
- * grants are the ones the view keys. The view's grants leave out an archived feat or spell.
+ * What each saved level's class level grants (`grants`, its `grants` links, by class level), each with the entity it
+ * grants (`entityOf`: one the view leaves out, an archived feat or spell, is left out), attached to the level it's
+ * granted at. The class level is the one the view stands for the level's stored one, which `resolveLevels` resolved: on
+ * a fork that copied the class after the level was saved, the stored id still names the source's class level, and its
+ * copy's grants are the ones the view keys.
  */
-function grantedAt<G, R>(levels: CharacterLevel[], grants: Map<string, G[]>, toRow: (grant: G) => R) {
+function grantedAt<E, R>(
+  levels: CharacterLevel[],
+  grants: (klassLevelId: string) => readonly ViewLink[],
+  entityOf: (link: ViewLink) => E | undefined,
+  toRow: (entity: E, grant: ViewLink) => R,
+) {
   return levels.flatMap((level) =>
-    (grants.get(level.klassLevelId) ?? []).map((grant) => ({ ...toRow(grant), characterLevelId: level.id })),
+    grants(level.klassLevelId).flatMap((grant) => {
+      const entity = entityOf(grant);
+      return entity === undefined ? [] : [{ ...toRow(entity, grant), characterLevelId: level.id }];
+    }),
   );
 }
 
@@ -48,37 +51,27 @@ function pickedAt<L extends { characterLevelId: string }, R extends object>(
   });
 }
 
-/** A feat as a pick or a grant holds it: the view's, without its pools' links. */
-function toFeatRow({ featsAptitudesInRules: _links, ...feat }: FeatWithAptitudes) {
-  return feat;
-}
-
-/** A class level's granted feat as the build reads it: the feat, then the grant's class level, pool and flag. */
-function toGrantedFeat({ featsInRule, ...grant }: KlassLevelFeat & { featsInRule: FeatWithAptitudes }) {
+/**
+ * A class level's granted feat as the build reads it (`grant`, its `grants` link): the feat, then the grant's class
+ * level, pool and flag, and its own id.
+ */
+function toGrantedFeat(feat: Feat, grant: ViewLink) {
   return {
-    ...toFeatRow(featsInRule),
-    klassLevelId: grant.klassLevelId,
-    aptitudeId: grant.aptitudeId,
+    ...feat,
+    klassLevelId: grant.fromId,
+    aptitudeId: grant.viaId!,
     free: grant.free,
     klassLevelFeatId: grant.id,
   };
 }
 
 /** A class level's granted spell as the build reads it: the spell, then the grant's class level, pool and flag. */
-function toGrantedSpell(
-  { spellsInRule, ...grant }: KlassLevelSpell & { spellsInRule: SpellWithAptitudes },
-  rulesetData: RulesetData,
-) {
-  return {
-    ...toSpellRow(spellsInRule, rulesetData),
-    klassLevelId: grant.klassLevelId,
-    aptitudeId: grant.aptitudeId,
-    free: grant.free,
-  };
+function toGrantedSpell(spell: Spell, grant: ViewLink, rulesetData: RulesetData) {
+  return { ...toSpellRow(spell, rulesetData), klassLevelId: grant.fromId, aptitudeId: grant.viaId!, free: grant.free };
 }
 
-/** A spell as a pick or a grant holds it: the view's, without its lists' links, with its save's name. */
-function toSpellRow({ spellsAptitudesInRules: _links, ...spell }: SpellWithAptitudes, rulesetData: RulesetData) {
+/** A spell as a pick or a grant holds it: the view's, with its save's name. */
+function toSpellRow(spell: Spell, rulesetData: RulesetData) {
   return { ...spell, saveName: SpellsComponent.saveNameOf(spell, rulesetData) };
 }
 
@@ -95,9 +88,14 @@ export function LoadsPicks<B extends Constructor<CharacterDataLoader<LoadedChara
       const dnd35 = Dnd35View.of(rulesetData);
       const pickedFeats = pickedAt(resolve(picks.feats), characterLevels, (link) => {
         const feat = dnd35.featsById.get(link.featId);
-        return feat && { ...toFeatRow(feat), aptitudeId: link.aptitudeId };
+        return feat && { ...feat, aptitudeId: link.aptitudeId };
       });
-      const givenFeats = grantedAt(characterLevels, dnd35.klassLevelFeatsWithFeatsByKlassLevel, toGrantedFeat);
+      const givenFeats = grantedAt(
+        characterLevels,
+        (klassLevelId) => dnd35.grantedFeatsOf(klassLevelId),
+        (grant) => rulesetData.storedById("feats").get(grant.toId),
+        toGrantedFeat,
+      );
 
       const pickedFeatIds = new Set(pickedFeats.filter((f) => !f.stackable).map((f) => f.id));
       const seenGivenFeatIds = new Set<string>();
@@ -143,16 +141,17 @@ export function LoadsPicks<B extends Constructor<CharacterDataLoader<LoadedChara
       const dnd35 = Dnd35View.of(rulesetData);
       const withLevel = <T extends { aptitudeId: string; id: string }>(spell: T) => ({
         ...spell,
-        spellLevel:
-          dnd35.spellsById.get(spell.id)?.spellsAptitudesInRules.find((link) => link.aptitudeId === spell.aptitudeId)
-            ?.level ?? null,
+        spellLevel: dnd35.listLinksOf(spell.id).find((link) => link.toId === spell.aptitudeId)?.tier ?? null,
       });
       const pickedSpells = pickedAt(resolve(picks.spells), characterLevels, (link) => {
         const spell = dnd35.spellsById.get(link.spellId);
         return spell && { ...toSpellRow(spell, rulesetData), aptitudeId: link.aptitudeId };
       }).map(withLevel);
-      const givenSpells = grantedAt(characterLevels, dnd35.klassLevelSpellsWithSpellsByKlassLevel, (grant) =>
-        toGrantedSpell(grant, rulesetData),
+      const givenSpells = grantedAt(
+        characterLevels,
+        (klassLevelId) => dnd35.grantedSpellsOf(klassLevelId),
+        (grant) => rulesetData.storedById("spells").get(grant.toId),
+        (spell, grant) => toGrantedSpell(spell, grant, rulesetData),
       ).map(withLevel);
 
       const klassLevelSpellCountsByAptitudeId = givenSpells.reduce(

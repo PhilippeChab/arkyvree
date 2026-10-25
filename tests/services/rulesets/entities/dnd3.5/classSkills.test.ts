@@ -1,10 +1,10 @@
 import { describe, expect, test } from "bun:test";
 
-import type { Klass, KlassLevel, KlassSkill, RulesetAbility, Skill } from "@/engine/rulesets/dnd3.5/index.ts";
+import type { Klass, KlassLevel, RulesetAbility, Skill } from "@/engine/rulesets/dnd3.5/index.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError } from "@/server/errors/index.ts";
-import { Activities, Entities, EntitySnapshots, Joins } from "@/server/repositories/index.ts";
+import { Activities, Entities, EntityLinks, EntitySnapshots } from "@/server/repositories/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
 import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
@@ -33,7 +33,7 @@ async function setup() {
 }
 
 async function skillIdsOf(rulesetId: string, klassId: string) {
-  return (await EntitiesService.getEntityLinks(rulesetId, "classes", klassId)).map((ks) => ks.skillId).sort();
+  return (await EntitiesService.getEntityLinks(rulesetId, "classes", klassId)).map((link) => link.toId).sort();
 }
 
 // Adding, listing and removing a class skill, and refusing one the class has, are covered in the class skills router test.
@@ -57,7 +57,7 @@ describe("EntitiesService: a class's skills", () => {
     await EntitiesService.addEntityLink(session, ruleset.id, "classes", fighter.id, climb.id);
     // The view still has it: another request removed it, and its invalidation hasn't run
     expect(await skillIdsOf(ruleset.id, fighter.id)).toEqual([climb.id]);
-    await Joins.delete(db, { join: "class_skills", fromId: fighter.id, toId: climb.id });
+    await EntityLinks.delete(db, { fromId: fighter.id, role: "classSkill", toId: climb.id });
 
     expect(EntitiesService.removeEntityLink(session, ruleset.id, "classes", fighter.id, climb.id)).rejects.toThrow(
       ConflictError,
@@ -129,11 +129,11 @@ describe("EntitiesService: a class's skills", () => {
       sourceEntityId: fighter.id,
       rulesetId: fork.id,
     });
-    expect([added.klassId, removed.klassId]).toEqual([snapshot!.forkedEntityId, snapshot!.forkedEntityId]);
+    expect([added.fromId, removed.fromId]).toEqual([snapshot!.forkedEntityId, snapshot!.forkedEntityId]);
 
     expect(await skillIdsOf(fork.id, fighter.id)).toEqual([swim.id]);
     expect(
-      (await Joins.findMany<KlassSkill>(db, { join: "class_skills", fromIds: [fighter.id] })).map((ks) => ks.skillId),
+      (await EntityLinks.findMany(db, { fromIds: [fighter.id], role: "classSkill" })).map((link) => link.toId),
     ).toEqual([climb.id]);
   });
 });

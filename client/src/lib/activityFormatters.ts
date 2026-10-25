@@ -107,8 +107,8 @@ function formatChange(change: ChangedField, columns: readonly Column[]): string 
  * A ruleset's change to what one of its entities holds, as its notification says it, by its type, as its rules describe
  * it (`rules`, its base rules', else every base rules'): a level of a kind another owns, an owned entity being its
  * owner's level (3.5's `createClassLevel`: "Ann added a level to Fighter"), the progression of a kind whose row opens it
- * (3.5's `updateClassProgression`), a link through a kind's join (3.5's `addClassSkill`: "Ann added Climb to Fighter");
- * none for another type.
+ * (3.5's `updateClassProgression`), a link of the role a kind's page edits (3.5's `addClassSkill`: "Ann added Climb to
+ * Fighter"); none for another type.
  */
 function heldChange(type: string, actor: string, d: Record<string, unknown>, rules: RulesDescriptions | undefined) {
   const baseRules = oneOf(d.baseRules, BASE_RULES_OPTIONS);
@@ -130,8 +130,8 @@ function heldChange(type: string, actor: string, d: Record<string, unknown>, rul
       const { links } = kind;
       if (!links) continue;
       const target = d[links.targetName] || `a ${entityTypeLabel(links.type, each.words).toLowerCase()}`;
-      if (type === `add${getActivityName(links.join)}`) return `${actor} added ${String(target)} to ${of(kind.type)}`;
-      if (type === `remove${getActivityName(links.join)}`)
+      if (type === `add${getActivityName(links.role)}`) return `${actor} added ${String(target)} to ${of(kind.type)}`;
+      if (type === `remove${getActivityName(links.role)}`)
         return `${actor} removed ${String(target)} from ${of(kind.type)}`;
     }
   }
