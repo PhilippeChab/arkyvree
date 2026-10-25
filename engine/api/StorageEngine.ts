@@ -185,9 +185,9 @@ export default class StorageEngine {
       default: {
         const value = entity.fields.find((field) => field.field === column.field && field.ordinal === 0)?.value;
         if (value === undefined) return null;
-        if (column.kind === "flag") return value === "true";
+        if (column.kind === "flag") return value === true;
         if (column.kind === "text") return value;
-        return "integer" in column ? Number(roundDecimal(value, 0)) : roundDecimal(value, column.scale);
+        return "integer" in column ? Number(roundDecimal(String(value), 0)) : roundDecimal(String(value), column.scale);
       }
     }
   }
@@ -300,7 +300,7 @@ export default class StorageEngine {
         continue;
       }
       const value = fields.find((field) => field.field === column.field)?.value ?? null;
-      row[name] = value !== null && column.kind === "number" ? Number(roundDecimal(value, 0)) : value;
+      row[name] = value !== null && column.kind === "number" ? Number(roundDecimal(String(value), 0)) : value;
     }
     return order ? Object.fromEntries(order.map((name) => [name, row[name]])) : row;
   }
@@ -317,13 +317,14 @@ export default class StorageEngine {
       const value = values[name];
       // A value left undefined is left as it is, as an update leaves a column it's given undefined
       if (value === undefined) continue;
-      const text = value === null ? null : String(value);
       if (column.kind !== "link") {
-        write.fields.push({ field: column.field, kind: column.kind, value: text });
+        const held = value === null ? null : column.kind === "number" ? Number(value) : String(value);
+        write.fields.push({ field: column.field, kind: column.kind, value: held });
         continue;
       }
       const role = this.characterRole(column.role);
-      write.links.push({ role: column.role, single: role.single, entityType: role.entityType, toId: text });
+      const toId = value === null ? null : String(value);
+      write.links.push({ role: column.role, single: role.single, entityType: role.entityType, toId });
     }
     return write;
   }
@@ -619,7 +620,9 @@ export default class StorageEngine {
     ];
     for (const { fields, id: entityId, links, ownerType: entityType } of owned) {
       const own = fields.filter((field) => entityType === "rulesets" || !columnFields.has(field.field));
-      rows.push(...own.map((field) => ({ ...field, entityId, entityType, type: field.field })));
+      rows.push(
+        ...own.map((field) => ({ ...field, entityId, entityType, type: field.field, value: String(field.value) })),
+      );
       for (const [type, role] of this.linkedProperties(entityType)) {
         const linked = links.filter((link: { role: string }) => link.role === role);
         rows.push(...linked.map((link) => ({ ...link, entityId, entityType, ordinal: 0, type, value: link.toId })));
@@ -802,15 +805,15 @@ export default class StorageEngine {
           });
         } else {
           const held = value ?? ("default" in column ? column.default : undefined) ?? null;
-          const text =
+          const typed =
             held === null
               ? null
               : column.kind === "flag"
-                ? String(Boolean(held))
-                : column.kind === "number" && "scale" in column
-                  ? roundDecimal(String(held), column.scale)
+                ? Boolean(held)
+                : column.kind === "number"
+                  ? Number("scale" in column ? roundDecimal(String(held), column.scale) : held)
                   : String(held);
-          write.fields.push({ field: column.field, kind: column.kind, value: text });
+          write.fields.push({ field: column.field, kind: column.kind, value: typed });
         }
       }
     }

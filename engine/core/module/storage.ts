@@ -144,16 +144,16 @@ export interface StoredCharacterLink {
  * module's declaration (`StorageEngine.characterRowOf`).
  */
 export interface StoredCharacterRow extends Record<string, unknown> {
-  fields: { field: string; value: string }[];
+  fields: { field: string; value: FieldValue }[];
   links: { role: string; toId: string }[];
 }
 
 /**
  * What a write of a character's row stores (`StorageEngine.characterWriteOf`): its own columns it gives, and the fields
- * and single links of each column its module stores it gives, as text, or null to clear it.
+ * and single links of each column its module stores it gives, each value typed, or null to clear it.
  */
 export interface StoredCharacterWrite {
-  fields: { field: string; kind: "number" | "text"; value: string | null }[];
+  fields: { field: string; kind: "number" | "text"; value: FieldValue | null }[];
   links: { entityType: string; role: string; single: boolean; toId: string | null }[];
   own: Record<string, unknown>;
 }
@@ -180,13 +180,13 @@ export interface StoredEntity {
   updatedAt: string;
 }
 
-/** A field's value as its row holds it, as text: a number's as it was written, a flag's `true` or `false`. */
+/** A field's value as its row holds it, typed by its column: a text, a number or a flag. */
 export interface StoredFieldValue {
   createdAt: string;
   field: string;
   ordinal: number;
   updatedAt: string;
-  value: string;
+  value: FieldValue;
 }
 
 /** A join's rows: the links of a role from one kind to another, each part under its column's name. */
@@ -261,13 +261,16 @@ export interface StoredRuleset {
 /**
  * What a write of a kind's row stores (`StorageEngine.writeOf`): its entity's own columns it gives (`own`: its id,
  * scope, name, description, timestamps, owner, position and partition), and the fields and single links it sets, each
- * as text, or null to clear it.
+ * value typed, or null to clear it.
  */
 export interface StoredWrite {
-  fields: { field: string; kind: ValueKind; value: string | null }[];
+  fields: { field: string; kind: ValueKind; value: FieldValue | null }[];
   links: { role: string; single: boolean; toId: string | null; toType: string }[];
   own: Partial<Omit<StoredEntity, "fields" | "links" | "type">>;
 }
+
+/** A stored field's value, as its typed column holds it. */
+export type FieldValue = boolean | number | string;
 
 /** A link's parts, as a join's row names them. */
 export type LinkPart = "amount" | "free" | "from" | "id" | "tier" | "to" | "via";

@@ -7,7 +7,7 @@ import {
   rulesetFieldsInRules,
   rulesetLinksInRules,
 } from "@/drizzle/schema.ts";
-import { Engine, type StoredRuleset } from "@/engine/index.ts";
+import { Engine, type FieldValue, type StoredRuleset } from "@/engine/index.ts";
 import type { Property } from "@/shared/relations.ts";
 
 /** A property to write: its owner, its type (the field) and its value as text. */
@@ -28,9 +28,9 @@ function columnFields(): string[] {
     );
 }
 
-/** A field's rows' text value, whichever kind holds it: a number's as it was written, a flag's `true` or `false`. */
-function textOf(table: typeof entityFieldsInRules | typeof rulesetFieldsInRules) {
-  return sql<string>`coalesce(${table.textValue}, ${table.numberValue}::text, ${table.flagValue}::text)`;
+/** A field's rows' value, typed by the column that holds it: a text, a number or a flag. */
+function valueOf(table: typeof entityFieldsInRules | typeof rulesetFieldsInRules) {
+  return sql<FieldValue>`coalesce(to_json(${table.textValue}), to_json(${table.numberValue}), to_json(${table.flagValue}))`;
 }
 
 /**
@@ -105,7 +105,7 @@ class StoredProperties {
         entityType: entityFieldsInRules.entityType,
         field: entityFieldsInRules.field,
         ordinal: entityFieldsInRules.ordinal,
-        value: textOf(entityFieldsInRules),
+        value: valueOf(entityFieldsInRules),
         createdAt: entityFieldsInRules.createdAt,
         updatedAt: entityFieldsInRules.updatedAt,
       })
@@ -309,7 +309,7 @@ class StoredProperties {
         rulesetId: rulesetFieldsInRules.rulesetId,
         field: rulesetFieldsInRules.field,
         ordinal: rulesetFieldsInRules.ordinal,
-        value: textOf(rulesetFieldsInRules),
+        value: valueOf(rulesetFieldsInRules),
         createdAt: rulesetFieldsInRules.createdAt,
         updatedAt: rulesetFieldsInRules.updatedAt,
       })

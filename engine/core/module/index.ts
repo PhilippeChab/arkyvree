@@ -180,6 +180,7 @@ export type {
   CharacterRoleDef,
   EntityTypeDef,
   FieldDef,
+  FieldValue,
   LinkPart,
   LinkRoleDef,
   Merge,
