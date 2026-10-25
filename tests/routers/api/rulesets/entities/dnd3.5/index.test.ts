@@ -343,6 +343,8 @@ describe("rulesets entities by kind", () => {
   test("refuses a kind it doesn't know, and an entity the ruleset has none of", async () => {
     const { id } = await setup();
     await expectStatus(kinds.$get({ param: { id, entityType: "widgets" as never }, query: {} }), 400);
+    // A kind of two words is named by its URL segment, never by its type's own spelling
+    await expectStatus(kinds.$get({ param: { id, entityType: "class_levels" as never }, query: {} }), 400);
     await expectStatus(entity.$get({ param: { id, entityType: "races", entityId: NIL_UUID } }), 404);
   });
 });

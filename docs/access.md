@@ -49,7 +49,7 @@ Reading and listing rulesets is enforced by the `findPage` scopes, not the polic
 | `base` | System base rulesets: no owner, not a fork |
 | `forked` | The user's own forks |
 | `myDrafts` | Draft rulesets where the user is owner OR active contributor |
-| `published` | Rulesets the user can play with: public ones must be `status = 'Published'`; owned and contributed-to ones bypass the status gate (Draft is fine — `Published` only governs outward discoverability for *public* rulesets). `kind = 'ruleset'`. Spells the character-creation and campaign-creation pickers — extensions are filtered out so they're never offered as a playable target |
+| `published` | Rulesets the user can play with: public ones must be `status = 'Published'`; owned and contributed-to ones bypass the status gate (Draft is fine — `Published` only governs outward discoverability for *public* rulesets). `kind = 'ruleset'`. Powers the character-creation and campaign-creation pickers — extensions are filtered out so they're never offered as a playable target |
 | `community` | Public Published user forks with `kind = 'ruleset'` (`userId IS NOT NULL`, `private = false`). Extensions (system or user) are filtered out — they live under the `extensions` scope |
 | `campaignAccessible` | Rulesets the user has access to via campaign membership |
 | `archived` | The user's archived rulesets (owner-only) |

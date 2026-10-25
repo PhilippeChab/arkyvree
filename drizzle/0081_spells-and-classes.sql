@@ -96,11 +96,11 @@ UPDATE "character".fields SET field = CASE field WHEN 'KLASS_HD' THEN 'CLASS_HD'
 UPDATE "character".steps SET step = CASE step WHEN 'powers' THEN 'spells' END WHERE step IN ('powers');
 UPDATE "character".advancement_picks SET step = CASE step WHEN 'powers' THEN 'spells' END WHERE step IN ('powers');
 
--- The target paths a customization names, and its formulas' (`[powers.…]`, `{{ powers.… }}`)
+-- The target paths a customization names, and its formulas' (`[powers.…]`, `{{ 1 + powers.… }}`: a path anywhere in one)
 UPDATE customization.modifiers SET target = regexp_replace(target, '^powers\.', 'spells.') WHERE target LIKE 'powers.%';
 UPDATE customization.requirements SET target = regexp_replace(target, '^powers\.', 'spells.') WHERE target LIKE 'powers.%';
-UPDATE customization.modifiers SET value = regexp_replace(value, '(\[\s*|\{\{\s*)powers\.', '\1spells.', 'g') WHERE value ~ '(\[\s*|\{\{\s*)powers\.';
-UPDATE customization.requirements SET value = regexp_replace(value, '(\[\s*|\{\{\s*)powers\.', '\1spells.', 'g') WHERE value ~ '(\[\s*|\{\{\s*)powers\.';
+UPDATE customization.modifiers SET value = regexp_replace(value, '(^|[^A-Za-z0-9_.])powers\.(?=[A-Za-z_])', '\1spells.', 'g') WHERE value ~ '(^|[^A-Za-z0-9_.])powers\.(?=[A-Za-z_])';
+UPDATE customization.requirements SET value = regexp_replace(value, '(^|[^A-Za-z0-9_.])powers\.(?=[A-Za-z_])', '\1spells.', 'g') WHERE value ~ '(^|[^A-Za-z0-9_.])powers\.(?=[A-Za-z_])';
 
 -- What activities recorded: their types (`createKlassLevel` → `createClassLevel`, `updatePower` → `updateSpell`), tables and data
 UPDATE account.activities SET type = replace(replace(type, 'Klass', 'Class'), 'Power', 'Spell') WHERE type ~ '^[a-z]+(Klass|Powers?)';
@@ -115,7 +115,7 @@ UPDATE account.activities SET data = regexp_replace(data::text, '("propertyType"
 UPDATE account.activities SET data = regexp_replace(data::text, '("propertyType"\s*:\s*")KLASS_BONUS_SPELL_ABILITY_ID"', '\1CLASS_BONUS_SPELL_ABILITY_ID"', 'g')::json WHERE data::text ~ '"propertyType"\s*:\s*"KLASS_BONUS_SPELL_ABILITY_ID"';
 UPDATE account.activities SET data = regexp_replace(data::text, '("propertyType"\s*:\s*")POWER_SAVE_EFFECT"', '\1SPELL_SAVE_EFFECT"', 'g')::json WHERE data::text ~ '"propertyType"\s*:\s*"POWER_SAVE_EFFECT"';
 UPDATE account.activities SET data = regexp_replace(data::text, '("target"\s*:\s*")powers\.', '\1spells.', 'g')::json WHERE data::text ~ '"target"\s*:\s*"powers\.';
-UPDATE account.activities SET data = regexp_replace(data::text, '(\[\s*|\{\{\s*)powers\.', '\1spells.', 'g')::json WHERE data::text ~ '(\[\s*|\{\{\s*)powers\.';
+UPDATE account.activities SET data = regexp_replace(data::text, '(^|[^A-Za-z0-9_.])powers\.(?=[A-Za-z_])', '\1spells.', 'g')::json WHERE data::text ~ '(^|[^A-Za-z0-9_.])powers\.(?=[A-Za-z_])';
 
 -- What notifications recorded: their types (`createKlassLevel` → `createClassLevel`, `updatePower` → `updateSpell`), tables and data
 UPDATE account.notifications SET type = replace(replace(type, 'Klass', 'Class'), 'Power', 'Spell') WHERE type ~ '^[a-z]+(Klass|Powers?)';
@@ -130,7 +130,7 @@ UPDATE account.notifications SET data = regexp_replace(data::text, '("propertyTy
 UPDATE account.notifications SET data = regexp_replace(data::text, '("propertyType"\s*:\s*")KLASS_BONUS_SPELL_ABILITY_ID"', '\1CLASS_BONUS_SPELL_ABILITY_ID"', 'g')::json WHERE data::text ~ '"propertyType"\s*:\s*"KLASS_BONUS_SPELL_ABILITY_ID"';
 UPDATE account.notifications SET data = regexp_replace(data::text, '("propertyType"\s*:\s*")POWER_SAVE_EFFECT"', '\1SPELL_SAVE_EFFECT"', 'g')::json WHERE data::text ~ '"propertyType"\s*:\s*"POWER_SAVE_EFFECT"';
 UPDATE account.notifications SET data = regexp_replace(data::text, '("target"\s*:\s*")powers\.', '\1spells.', 'g')::json WHERE data::text ~ '"target"\s*:\s*"powers\.';
-UPDATE account.notifications SET data = regexp_replace(data::text, '(\[\s*|\{\{\s*)powers\.', '\1spells.', 'g')::json WHERE data::text ~ '(\[\s*|\{\{\s*)powers\.';
+UPDATE account.notifications SET data = regexp_replace(data::text, '(^|[^A-Za-z0-9_.])powers\.(?=[A-Za-z_])', '\1spells.', 'g')::json WHERE data::text ~ '(^|[^A-Za-z0-9_.])powers\.(?=[A-Za-z_])';
 
 -- The foreign keys, as they were
 ALTER TABLE "character".advancement_picks ADD CONSTRAINT advancement_picks_entity_id_entity_type_fkey FOREIGN KEY (entity_id, entity_type) REFERENCES rules.entities(id, type) MATCH FULL DEFERRABLE INITIALLY DEFERRED;
@@ -172,3 +172,6 @@ ALTER TABLE rules.ruleset_fields ADD CONSTRAINT ruleset_fields_owner_type_field_
 ALTER TABLE rules.ruleset_links ADD CONSTRAINT ruleset_links_role_to_type_fkey FOREIGN KEY (role, to_type) REFERENCES rules.ruleset_roles(role, to_type);
 ALTER TABLE rules.ruleset_links ADD CONSTRAINT ruleset_links_to_id_to_type_fkey FOREIGN KEY (to_id, to_type) REFERENCES rules.entities(id, type) DEFERRABLE INITIALLY DEFERRED;
 ALTER TABLE rules.ruleset_roles ADD CONSTRAINT ruleset_roles_to_type_fkey FOREIGN KEY (to_type) REFERENCES rules.entity_types(type);
+
+-- The deferred checks deferred again, for the migrations after this one in its transaction
+SET CONSTRAINTS ALL DEFERRED;

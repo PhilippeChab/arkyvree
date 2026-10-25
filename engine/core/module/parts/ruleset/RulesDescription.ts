@@ -259,8 +259,8 @@ export interface RulesDescription {
    */
   tiers: { label: string; level: number }[];
   /**
-   * Its word for every entity type, by type (3.5's "Class Level" for `class_levels`), the engine's own types' (`modifiers`) included:
-   * every name the app gives an entity's type
+   * Its word for every entity type, by type (3.5's "Class Level" for `class_levels`), the engine's own types'
+   * (`modifiers`) included: every name the app gives an entity's type
    */
   words: Partial<Record<string, RulesWord>>;
 }

@@ -72,7 +72,7 @@ describe("0081_spells-and-classes", () => {
     const { rows: modifiers } = await db.execute<{ id: string }>(sql`
       INSERT INTO customization.modifiers (source_id, source_type, target, value, value_type, operator) VALUES
         (${spellId}, 'spells', 'powers.wizard.known', '{{ [ powers.wizard.known] * 2 }}', 'number', 'add'),
-        (${spellId}, 'spells', 'powers.cleric.known', '{{ powers.cleric.known }}', 'number', 'add')
+        (${spellId}, 'spells', 'powers.cleric.known', '{{ max(0, powers.cleric.known) + [abilities.powers.x] }}', 'number', 'add')
       RETURNING id
     `);
     const { rows: activities } = await db.execute<{ id: string }>(sql`
@@ -89,7 +89,7 @@ describe("0081_spells-and-classes", () => {
     `);
     expect(modifier).toEqual([
       { target: "spells.wizard.known", value: "{{ [ spells.wizard.known] * 2 }}" },
-      { target: "spells.cleric.known", value: "{{ spells.cleric.known }}" },
+      { target: "spells.cleric.known", value: "{{ max(0, spells.cleric.known) + [abilities.powers.x] }}" },
     ]);
     const { rows: activity } = await db.execute(
       sql`SELECT target_table, type, data::text AS data FROM account.activities WHERE id = ${activities[0]!.id}`,
