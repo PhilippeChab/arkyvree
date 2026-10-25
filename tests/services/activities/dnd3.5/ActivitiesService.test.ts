@@ -8,7 +8,6 @@ import {
   Entities,
   Invites,
   Modifiers,
-  Properties,
   Requirements,
 } from "@/server/repositories/index.ts";
 import { ActivitiesService } from "@/server/services/activities/index.ts";
@@ -88,7 +87,7 @@ describe("ActivitiesService.getActivityUrl", () => {
   });
 
   test("links a customization to its entity's customization page, on its tab", async () => {
-    const { rulesetId: r, featMap, itemMap, klassMap } = await getSeedCtx();
+    const { rulesetId: r, featMap, klassMap } = await getSeedCtx();
     const [clericLevel] = await Entities.findMany<KlassLevel>(db, {
       entityType: "class_levels",
       ownerIds: [klassMap.pc["Cleric"]],
@@ -109,10 +108,6 @@ describe("ActivitiesService.getActivityUrl", () => {
       entityIds: [featMap["Weapon Focus: Longsword"]],
       entityType: "feats",
     });
-    const [property] = await Properties.findMany(db, {
-      entityIds: [itemMap["Longsword"]],
-      entityType: "items",
-    });
 
     expect(await resolve("modifiers", featModifier.id)).toBe(
       `/rulesets/${r}/feats/${featMap["Toughness"]}/customization/modifiers`,
@@ -123,8 +118,6 @@ describe("ActivitiesService.getActivityUrl", () => {
     expect(await resolve("requirements", requirement.id)).toBe(
       `/rulesets/${r}/feats/${featMap["Weapon Focus: Longsword"]}/customization/requirements`,
     );
-    // A property is its entity's field, no row of its own: an old activity of one names a row that's gone
-    expect(await resolve("properties", property.id)).toBeNull();
   });
 
   test("links a class's customizations to its class page's tab, and a modifier's requirements to the modifier's page", async () => {

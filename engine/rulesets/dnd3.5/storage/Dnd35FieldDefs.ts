@@ -25,16 +25,11 @@ const COLUMN_FIELDS: [ownerType: string, field: string, valueKind: ValueKind][] 
 ];
 
 /**
- * The fields 3.5's properties hold (an entity type's, or a ruleset's), each its owner's type, its name (the property's
- * type), its value's kind, whether it's a set, and whether an item reads it off its template when it has none.
+ * The fields 3.5's owners keep past their kinds' columns, in their stored values (an entity type's, or a ruleset's
+ * Settings), each its owner's type, its name, its value's kind, whether it's a set, and whether an item reads it off
+ * its template when it has none.
  */
-const PROPERTY_FIELDS: [
-  ownerType: string,
-  field: string,
-  valueKind: ValueKind,
-  multiple: boolean,
-  inherits: boolean,
-][] = [
+const VALUE_FIELDS: [ownerType: string, field: string, valueKind: ValueKind, multiple: boolean, inherits: boolean][] = [
   ["feats", "FEAT_FAMILY", "text", true, false],
   ["feats", "FEAT_WEAPON_FINESSE", "flag", false, false],
   ["feats", "FEAT_OVERSIZED_TWO_WEAPON_FIGHTING", "flag", false, false],
@@ -102,17 +97,18 @@ function ownerKindOf(ownerType: string): FieldDef["ownerKind"] {
 }
 
 /**
- * How a property's field merges across sibling copies: a ruleset's setting is the nearest ruleset's in its chain,
- * whole; a set unions its siblings' values; a single value is the winning copy's, else a sibling's.
+ * How a field kept past its kind's columns merges across sibling copies: a ruleset's setting is the nearest ruleset's
+ * in its chain, whole; a set unions its siblings' values; a single value is the winning copy's, else a sibling's.
  */
-function propertyMerge(ownerType: string, multiple: boolean): Merge {
+function valueFieldMerge(ownerType: string, multiple: boolean): Merge {
   if (ownerType === "rulesets") return "winner";
   return multiple ? "union" : "fallback";
 }
 
 /**
- * 3.5's fields, the field definitions' registry rows: its columns' (each a single value, the winning copy's) and its
- * properties' (a set's values union across sibling copies, a single value is the winning copy's else a sibling's).
+ * 3.5's fields, the field definitions' registry rows: its columns' (each a single value, the winning copy's) and those
+ * its owners keep past them (a set's values union across sibling copies, a single value is the winning copy's else a
+ * sibling's).
  */
 export default class Dnd35FieldDefs {
   /** Every field definition 3.5 declares. */
@@ -127,13 +123,13 @@ export default class Dnd35FieldDefs {
         merge: "winner",
         inheritsVia: null,
       })),
-      ...PROPERTY_FIELDS.map(([ownerType, field, valueKind, multiple, inherits]): FieldDef => ({
+      ...VALUE_FIELDS.map(([ownerType, field, valueKind, multiple, inherits]): FieldDef => ({
         ownerKind: ownerKindOf(ownerType),
         ownerType,
         field,
         valueKind,
         multiple,
-        merge: propertyMerge(ownerType, multiple),
+        merge: valueFieldMerge(ownerType, multiple),
         inheritsVia: inherits ? "madeFrom" : null,
       })),
     ];

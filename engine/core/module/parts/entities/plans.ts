@@ -3,6 +3,7 @@
  * named plan, by table, without ids it doesn't have yet: its row, its lists, what it writes beside it.
  */
 
+import type { FieldsWrite } from "@/engine/core/fields/index.ts";
 import type { Modifier, Requirement } from "@/shared/relations.ts";
 
 /**
@@ -15,12 +16,6 @@ interface EntityWrite<C, F> {
   fields: F;
   links?: ListLink[];
   writes?: EntityWrites;
-}
-
-/** The properties an entity's fields are kept in: those of `types` it has give way to `values`. */
-interface PropertiesWrite {
-  types: readonly string[];
-  values: PropertyValue[];
 }
 
 /** A requirement a plan sets on an entity: what it asks of the character. */
@@ -84,13 +79,13 @@ export interface EntityRemoval {
 }
 
 /**
- * What an entity's form writes beside its row, as its ruleset's rules say: the properties its fields are kept in (none:
- * those it has stay), a requirement on it, and the entities it makes and removes with it (`made`, `removed`). The
- * server writes each by its table.
+ * What an entity's form writes beside its row, as its ruleset's rules say: its stored values its fields are kept in
+ * (`fields`, each field and link role it names replaced; none: those it has stay), a requirement on it, and the
+ * entities it makes and removes with it (`made`, `removed`). The server writes each by its table.
  */
 export interface EntityWrites {
+  fields?: FieldsWrite;
   made?: MadeEntity[];
-  properties?: PropertiesWrite;
   removed?: EntityRemoval[];
   requirement?: RequirementWrite;
 }
@@ -124,14 +119,14 @@ export interface ListLink {
 }
 
 /**
- * An entity a plan makes with the one it writes, in the same ruleset: its table (`type`), its row's columns, the lists
- * it's linked to (`links`), and its modifiers, properties and requirements.
+ * An entity a plan makes with the one it writes, in the same ruleset: its table (`type`), its row's columns, its stored
+ * values (`fields`), the lists it's linked to (`links`), and its modifiers and requirements.
  */
 export interface MadeEntity {
   columns: Record<string, unknown> & { description: string; name: string };
+  fields: FieldsWrite;
   links: ListLink[];
   modifiers: Pick<Modifier, "operator" | "target" | "value" | "valueType">[];
-  properties: PropertyValue[];
   requirements: RequirementWrite[];
   type: string;
 }
@@ -185,12 +180,6 @@ export interface ProgressionPlan {
   }[];
   ownedType: string;
   owner: PlanOwner;
-}
-
-/** A property a plan keeps a field in: its type and value, on the entity it writes. */
-export interface PropertyValue {
-  type: string;
-  value: string;
 }
 
 /**

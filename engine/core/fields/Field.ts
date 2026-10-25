@@ -12,11 +12,15 @@ interface FieldBase {
   when?: FieldCondition;
 }
 
-/** What a field with a value of its own declares: the stored field that keeps it, its label and what it's for. */
+/** What a field with a value of its own declares: its label and what it's for. */
 interface LeafBase extends FieldBase {
   description: string;
-  field: string;
   label: string;
+}
+
+/** What a field its owner's stored values keep declares past a leaf's: the stored field that keeps them. */
+interface StoredLeafBase extends LeafBase {
+  field: string;
 }
 
 /** A field's value, by its kind (a group's, its own fields'). */
@@ -42,7 +46,7 @@ type KindValueOf<F extends FieldSpec> = F extends GroupSpec
 type ValueOf<F extends FieldSpec> = [FieldSpec] extends [F] ? unknown : KindValueOf<F>;
 
 /** One of `values`, its field's first value; none without one, or when it's another value. */
-export interface ChoiceSpec extends LeafBase {
+export interface ChoiceSpec extends StoredLeafBase {
   kind: "choice";
   values: readonly string[];
 }
@@ -51,7 +55,7 @@ export interface ChoiceSpec extends LeafBase {
  * True once one of its values is; without any, false, or none when it tells its absence apart (`absent: null`, an
  * item's: a false value is written and read too).
  */
-export interface FlagSpec extends LeafBase {
+export interface FlagSpec extends StoredLeafBase {
   absent?: null;
   kind: "flag";
 }
@@ -64,7 +68,7 @@ export interface GroupSpec extends FieldBase {
 }
 
 /** Every value of its field, in their order: a set, among `values` when they're a closed list. */
-export interface ListSpec extends LeafBase {
+export interface ListSpec extends StoredLeafBase {
   kind: "list";
   /** An example of one, when it takes any. */
   placeholder?: string;
@@ -75,7 +79,7 @@ export interface ListSpec extends LeafBase {
  * A whole number, its field's first value that's one in its bounds; its default without one (none without a
  * `default`). Written unless it's its default, or always (`write`).
  */
-export interface NumberSpec extends LeafBase {
+export interface NumberSpec extends StoredLeafBase {
   default?: number;
   kind: "number";
   max?: number;
@@ -89,7 +93,7 @@ export interface NumberSpec extends LeafBase {
  * stand for the whole together, so none more is the frequency's row alone: its default without any row. A field of its
  * own, never a group's: a group's fields hold plain values.
  */
-export interface ProgressionSpec extends LeafBase {
+export interface ProgressionSpec extends StoredLeafBase {
   default: DeclaredProgression;
   kind: "progression";
   levels: number;
@@ -97,9 +101,8 @@ export interface ProgressionSpec extends LeafBase {
 }
 
 /**
- * An entity's id, the one its link of `role` names (`references`: the kind it names, `abilities`): none without one,
- * which a form may leave it at unless it's `required`. Its `field` names it in what a save still writes, which that
- * link keeps (`StorageDeclaration.linkedProperties`).
+ * An entity's id, the one its owner's link of `role` names (`references`: the kind it names, `abilities`): none without
+ * one, which a form may leave it at unless it's `required`.
  */
 export interface RefSpec extends LeafBase {
   kind: "ref";
@@ -109,7 +112,7 @@ export interface RefSpec extends LeafBase {
 }
 
 /** A text, its field's first value, among `values` when they're a closed list: none without one, or written empty. */
-export interface TextSpec extends LeafBase {
+export interface TextSpec extends StoredLeafBase {
   kind: "text";
   /** An example of one, when it takes any. */
   placeholder?: string;

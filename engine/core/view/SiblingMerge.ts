@@ -1,33 +1,30 @@
 /**
  * How sibling copies' customizations merge into their winner's: one rule per kind, which a ruleset's view composes
  * (`RulesetComposition`) and a copy of the winner writes (`EntityCopy`), the same both ways: the engine's, which both
- * ask. Each rule takes the winner's own rows and each sibling's, in the order its `CowData` pairs
- * them (`getSiblings`), and returns the siblings' rows the winner takes, in that order. A modifier, a value of a set or
- * a list's link (`mergeListLinks`: a 3.5 feat's pool) whose key the winner or an earlier sibling has is left out. A
- * single value is the winner's, else the first sibling's that holds it (its field's `fallback`), whose stores keep one
- * value of it; a ruleset's (`winner`) the winner's alone. An owner's stored values merge field by field
- * (`mergeValues`), and the properties a copy still writes row by row (`mergeProperties`). Requirements merge as trees
- * (`RequirementTree`), whose top-level rows are AND'd: merging the winner with N siblings is `AND(winner, sibling 1, …)`,
- * each sibling's tree kept as it is, appended at the top level. A sibling's group gets a fresh top-level number, its
- * rows renumbered under it; a sibling's top-level condition keeps its level (suffixed `-2`, `-3`… when the winner has
- * it), unless the winner already holds the same condition.
+ * ask. Each rule takes the winner's own rows and each sibling's, in the order its `CowData` pairs them (`getSiblings`),
+ * and returns the siblings' rows the winner takes, in that order. A modifier, a value of a set or a list's link
+ * (`mergeListLinks`: a 3.5 feat's pool) whose key the winner or an earlier sibling has is left out. A single value is
+ * the winner's, else the first sibling's that holds it (its field's `fallback`), whose stores keep one value of it; a
+ * ruleset's (`winner`) the winner's alone. An owner's stored values merge field by field (`mergeValues`), into the
+ * winner's whole. Requirements merge as trees (`RequirementTree`), whose top-level rows are AND'd: merging the winner
+ * with N siblings is `AND(winner, sibling 1, …)`, each sibling's tree kept as it is, appended at the top level. A
+ * sibling's group gets a fresh top-level number, its rows renumbered under it; a sibling's top-level condition keeps
+ * its level (suffixed `-2`, `-3`… when the winner has it), unless the winner already holds the same condition.
  */
 
 import type { DeclaredFields, StoredValues } from "@/engine/core/fields/index.ts";
-import type { FieldValue, Merge } from "@/engine/core/module/index.ts";
+import type { FieldValue } from "@/engine/core/module/index.ts";
 import RequirementTree, { type RequirementNode } from "@/shared/customization/RequirementTree.ts";
-import type { Modifier, Property, Requirement } from "@/shared/relations.ts";
+import type { Modifier, Requirement } from "@/shared/relations.ts";
 
 type ModifierKey = Pick<Modifier, "target" | "value" | "operator" | "valueType">;
 
-type PropertyKey = Pick<Property, "entityType" | "type" | "value">;
-
-/** An entity's customizations: its modifiers, with their requirements apart, its properties and its requirements. */
+/** An entity's customizations: its modifiers, with their requirements apart, its requirements and its stored values. */
 export interface EntityCustomizations {
   modifierRequirements: Requirement[];
   modifiers: Modifier[];
-  properties: Property[];
   requirements: Requirement[];
+  values: StoredValues;
 }
 
 /** The merge of sibling copies' customizations and links into their winner's, one rule per kind. */
@@ -66,15 +63,17 @@ export default class SiblingMerge {
   }
 
   /**
-   * What a copy of a sibling winner takes of its siblings' customizations (`siblings`, in the order its `CowData` pairs
-   * them) beside its own (`own`, which the copy holds): their modifiers, each with its requirements, their properties and
-   * their requirements, merged as the view merges them, a requirement onto the copy (`targetEntityId`).
+   * What a copy of a sibling winner (of `ownerType`) takes of its siblings' customizations (`siblings`, in the order its
+   * `CowData` pairs them) beside its own (`own`, which the copy holds): their modifiers, each with its requirements, and
+   * their requirements, merged as the view merges them, a requirement onto the copy (`targetEntityId`); and its stored
+   * values whole, theirs merged in by each field's and link's declared merge (`declared`, `mergeValues`).
    */
   static mergeCustomizations(
     own: EntityCustomizations,
     siblings: EntityCustomizations[],
     targetEntityId: string,
-    mergeOf: (entityType: string, type: string) => Merge,
+    ownerType: string,
+    declared: DeclaredFields,
   ): EntityCustomizations {
     const modifiers = SiblingMerge.mergeModifiers(
       own.modifiers,
@@ -86,16 +85,17 @@ export default class SiblingMerge {
       modifierRequirements: siblings
         .flatMap((customizations) => customizations.modifierRequirements)
         .filter((requirement) => modifierIds.has(requirement.entityId)),
-      properties: SiblingMerge.mergeProperties(
-        own.properties,
-        siblings.map((customizations) => customizations.properties),
-        mergeOf,
-      ),
       requirements: SiblingMerge.mergeRequirements(
         own.requirements,
         siblings.map((customizations) => customizations.requirements),
         targetEntityId,
       ),
+      values: SiblingMerge.mergeValues(
+        own.values,
+        siblings.map((customizations) => customizations.values),
+        ownerType,
+        declared,
+      ).values,
     };
   }
 
@@ -118,22 +118,6 @@ export default class SiblingMerge {
    */
   static mergeModifiers<T extends ModifierKey>(own: readonly T[], siblings: Iterable<readonly T[]>): T[] {
     return SiblingMerge.takeNewRows(own, siblings, (m) => `${m.target}|${m.value}|${m.operator}|${m.valueType}`);
-  }
-
-  /**
-   * The siblings' properties the winner doesn't have, by their type's merge (`mergeOf`): a set's (`union`) values it
-   * lacks, by type and value, and a single value's (`fallback`), the first sibling's, when it has none of it; none of a
-   * type the winner's alone holds (`winner`).
-   */
-  static mergeProperties<T extends PropertyKey>(
-    own: readonly T[],
-    siblings: Iterable<readonly T[]>,
-    mergeOf: (entityType: string, type: string) => Merge,
-  ): T[] {
-    const merged = [...siblings].map((rows) => rows.filter((p) => mergeOf(p.entityType, p.type) !== "winner"));
-    return SiblingMerge.takeNewRows(own, merged, (p) =>
-      mergeOf(p.entityType, p.type) === "union" ? `${p.type}|${p.value}` : p.type,
-    );
   }
 
   /** The siblings' requirements, merged into the winner's trees: the rows on the winner (`entityId`), source ids kept. */

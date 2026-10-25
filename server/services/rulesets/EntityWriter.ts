@@ -46,7 +46,7 @@ export type EntityBody = EntityForm & { name: string; updatedAt?: string };
  * A ruleset entity kind's writer (`type`): the steps every kind's create, update and delete
  * take, in one order, around the plan its rules give (`Engine.for(scope).entities(type)`). A create checks access,
  * keeps the name free (taking over a deleted copy's tombstone), writes the row, its list links, the customizations it
- * copies and what the plan writes beside it (its fields, over the copied properties of their types). An update keeps a
+ * copies and what the plan writes beside it (its fields, over the stored values it copied). An update keeps a
  * new name free as a create does, and writes the row the view's entity resolves to (its copy, made on its first edit),
  * refused when stale. A delete is refused while the entity is in use. Each first opens the kind's rules for its action
  * (`open`), records its activity, and the ruleset's views drop what it changed.
@@ -94,7 +94,7 @@ export default class EntityWriter {
     });
   }
 
-  /** What a plan writes beside the entity: its properties, its requirement, the entities it makes and removes. */
+  /** What a plan writes beside the entity: its stored values, its requirement, the entities it makes and removes. */
   private async writeBeside(tx: Db, scope: RulesetScope, entityId: string, writes: EntityWrites | undefined) {
     if (writes) await writeEntityWrites(tx, scope, { entityId, entityType: this.type }, writes);
   }
@@ -124,7 +124,7 @@ export default class EntityWriter {
           const [row] = await Entities.create<Row>(tx, this.type, { ...planned.columns, rulesetId });
           if (tombstoneAncestorId) await names.repointTombstone(tx, this.type, tombstoneAncestorId, row.id);
           await createListLinks(tx, this.type, row.id, planned.links ?? []);
-          // The customizations it copies first: the fields the plan writes replace their properties of their types
+          // The customizations it copies first: the fields the plan writes replace the stored values it copied
           if (planned.copyCustomizationsFrom) await this.copyCustomizations(tx, row.id, planned.copyCustomizationsFrom);
           await this.writeBeside(tx, scope, row.id, planned.writes);
 

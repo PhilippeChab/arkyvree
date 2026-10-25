@@ -14,37 +14,37 @@ import { createTestRuleset } from "@/tests/support/rulesets.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
 import { ITEM_MADE_OF } from "@/vocabulary/dnd3.5/properties/index.ts";
 
-/** The property `customize` gives an item: what it's made of, which it reads as its field. */
-const COLD_IRON = { type: ITEM_MADE_OF, value: "Cold Iron" };
+/** The stored values `customize` gives an item: what it's made of, which it reads as its field. */
+const COLD_IRON = { fields: { [ITEM_MADE_OF]: ["Cold Iron"] }, links: {} };
 
 const copiedCustomizations = {
   modifiers: [{ target: "abilities.strength.misc", requirements: ["combat.bab"] }],
-  properties: ["Cold Iron"],
+  values: ["Cold Iron"],
   requirements: ["combat.bab"],
 };
-const noCustomizations = { modifiers: [], properties: [], requirements: [] };
+const noCustomizations = { modifiers: [], values: [], requirements: [] };
 
-/** A weapon template with a property and a requirement, which its instances read, and a modifier, which they don't. */
+/** A weapon template with a field and a requirement, which its instances read, and a modifier, which they don't. */
 async function createTemplate(session: Session, rulesetId: string) {
   const template = await EntitiesService.createEntity(session, rulesetId, "items", {
     name: "Sword Template",
     type: "Weapon",
     isTemplate: true,
   });
-  await customize("items", template.id, { property: COLD_IRON });
+  await customize("items", template.id, { values: COLD_IRON });
   return template;
 }
 
 /** The customizations an item owns, by their targets and values, with each modifier's own requirements. */
 async function customizationsOf(itemId: string) {
-  const { modifiers, modifierRequirements, properties, requirements } = await findCustomizations("items", itemId);
+  const { modifiers, modifierRequirements, values, requirements } = await findCustomizations("items", itemId);
   return {
     modifiers: modifiers.map(({ id, target }) => ({
       id,
       target,
       requirements: modifierRequirements.filter((r) => r.entityId === id).map((r) => r.target),
     })),
-    properties: properties.map((p) => p.value),
+    values: Object.values(values.fields).flat(),
     requirements: requirements.map((r) => r.target),
   };
 }
@@ -138,7 +138,7 @@ describe("EntitiesService: items", () => {
         sourceItemId: null,
       }),
     ).toMatchObject({ sourceItemId: null });
-    // Its template's properties went with it
+    // Its template's fields went with it
     expect(await EntitiesService.getEntity(ruleset.id, "items", sword.id)).toMatchObject({
       sourceItemId: null,
       madeOf: null,
@@ -192,7 +192,7 @@ describe("EntitiesService: items", () => {
     test("copies the item's customizations, each modifier with its own requirements", async () => {
       const { session, ruleset } = await createTestUserAndRuleset();
       const source = await EntitiesService.createEntity(session, ruleset.id, "items", { name: "Cloak" });
-      const modifier = await customize("items", source.id, { property: COLD_IRON });
+      const modifier = await customize("items", source.id, { values: COLD_IRON });
 
       const copy = await EntitiesService.duplicateEntity(session, ruleset.id, "items", source.id, {
         name: "Cloak Copy",
@@ -233,7 +233,7 @@ describe("EntitiesService: items", () => {
         weight: 0.1,
         costGp: 25,
       });
-      await customize("items", source.id, { property: COLD_IRON });
+      await customize("items", source.id, { values: COLD_IRON });
 
       const variants = await EntitiesService.createVariants(session, ruleset.id, "items", source.id, [
         { name: "Scroll of Healing", description: "Heals 1d8" },

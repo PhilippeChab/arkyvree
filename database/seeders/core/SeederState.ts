@@ -9,10 +9,10 @@ import type {
 } from "@/content/core/builders/customization/types.ts";
 import type { Db } from "@/drizzle/database.ts";
 import { entitySnapshotsInRules, modifiersInCustomization, requirementsInCustomization } from "@/drizzle/schema.ts";
-import { Engine } from "@/engine/index.ts";
+import { Engine, type FieldValue } from "@/engine/index.ts";
 import StoredEntities from "@/server/repositories/stored/StoredEntities.ts";
+import StoredFields, { type FieldsUpdate } from "@/server/repositories/stored/StoredFields.ts";
 import StoredJoins, { type JoinRow } from "@/server/repositories/stored/StoredJoins.ts";
-import StoredProperties, { type FieldValues } from "@/server/repositories/stored/StoredProperties.ts";
 
 type ModifierRow = typeof modifiersInCustomization.$inferInsert;
 type RequirementRow = typeof requirementsInCustomization.$inferInsert;
@@ -30,13 +30,13 @@ export type Ids = Record<string, string>;
 
 /** The generic tables' repositories a seeder writes through, as the server does (no request's cache: no request). */
 export const Entities = new StoredEntities();
+export const Fields = new StoredFields();
 export const Joins = new StoredJoins();
-export const Properties = new StoredProperties();
 
 /**
  * A seeder's state, which every seeding step builds on (`concerns/`, and a ruleset's): the database it writes to, the
  * context it names rows by (`ctx`, its ruleset's id and the ids its steps add), and what the steps write with: the
- * entities' rows, their joins and their properties as the generic tables store them (`Entities`, `Joins`, `Properties`,
+ * entities' rows, their joins and their stored values as the generic tables store them (`Entities`, `Joins`, `Fields`,
  * by what the module declares), the customizations' rows and their inserts, and the copies an extension makes of what
  * it changes.
  */
@@ -96,9 +96,18 @@ export abstract class SeederState {
     }));
   }
 
-  /** An entity's properties as rows. */
-  protected propertyRows(entityId: string, entityType: string, properties: Property[] = []): FieldValues[] {
-    return properties.map(({ type, value }) => ({ entityId, entityType, type, value }));
+  /**
+   * An entity's seeded properties (its content's `Property` seeds: a field's name and a value of it, as text) as the
+   * write of its stored values: each field's values, in their order, typed by the field's declaration (a number's
+   * parsed, a flag's `true` or not).
+   */
+  protected propertySeedsWrite(entityId: string, entityType: string, properties: Property[] = []): FieldsUpdate {
+    const fields: Record<string, FieldValue[]> = {};
+    for (const { type, value } of properties) {
+      const kind = Engine.storage().field(entityType, type)?.valueKind;
+      (fields[type] ??= []).push(kind === "number" ? Number(value) : kind === "flag" ? value === "true" : value);
+    }
+    return { id: entityId, type: entityType, values: { fields, links: {} } };
   }
 
   /** An entity's requirements as rows: each numbered by its place in the tree ("1", "2", "2.1"…). */
@@ -126,7 +135,7 @@ export abstract class SeederState {
   }
 
   /**
-   * Copies entities' requirements, modifiers (with theirs) and properties onto their copies (`copies`: each entity's
+   * Copies entities' requirements, modifiers (with theirs) and stored values onto their copies (`copies`: each entity's
    * copy, by its id), of a type: a few writes, however many copies.
    */
   protected async copyCustomizations(type: string, copies: Map<string, string>) {
@@ -151,15 +160,8 @@ export abstract class SeederState {
       })),
     );
     await this.copyRequirements(modifierCopies);
-    const properties = await Properties.findMany(this.db, { entityIds: [...copies.keys()], entityType: type });
-    await this.insertProperties(
-      properties.map(({ entityId, entityType, type: propertyType, value }) => ({
-        entityId: copies.get(entityId)!,
-        entityType,
-        type: propertyType,
-        value,
-      })),
-    );
+    const values = await Fields.findMany(this.db, { ownerIds: [...copies.keys()], ownerType: type });
+    await this.writeFields([...copies].map(([id, copyId]) => ({ id: copyId, type, values: values.get(id)! })));
   }
 
   /** A kind's rows of entities (`type`, `ids`), by their columns. */
@@ -206,11 +208,6 @@ export abstract class SeederState {
     }
   }
 
-  /** Inserts properties: each an entity's or a ruleset's field, or the link its value names. */
-  protected async insertProperties(rows: FieldValues[]) {
-    await Properties.createMany(this.db, rows);
-  }
-
   /** Inserts a kind's rows (`type`), each by its columns (an owned kind's, which has no name): answers their ids. */
   protected async insertRows(type: string, rows: Record<string, unknown>[]): Promise<string[]> {
     return await Entities.createIds(this.db, type, rows);
@@ -227,5 +224,10 @@ export abstract class SeederState {
         forkedEntityId,
       })),
     );
+  }
+
+  /** Writes owners' stored values (`writes`: an entity's or a ruleset's fields, and the links its fields read). */
+  protected async writeFields(writes: FieldsUpdate[]) {
+    await Fields.update(this.db, writes);
   }
 }

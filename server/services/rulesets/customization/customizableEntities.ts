@@ -1,7 +1,7 @@
 import { db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { Characters, CUSTOMIZABLE_TYPES, Entities, Modifiers } from "@/server/repositories/index.ts";
-import type { Modifier, Property, Requirement } from "@/shared/relations.ts";
+import type { Modifier, Requirement } from "@/shared/relations.ts";
 
 /** Whether the row of an entity customizations are made on is stored: a customizable kind's, a modifier, a character. */
 async function isStored(entityId: string, entityType: string): Promise<boolean> {
@@ -12,7 +12,7 @@ async function isStored(entityId: string, entityType: string): Promise<boolean> 
 }
 
 /** A 404 unless the entity `customization` is made on is still stored, read from the database itself. */
-export async function checkCustomizedEntity(customization: Modifier | Requirement | Property) {
+export async function checkCustomizedEntity(customization: Modifier | Requirement) {
   const [entityId, entityType] =
     "sourceId" in customization
       ? [customization.sourceId, customization.sourceType]

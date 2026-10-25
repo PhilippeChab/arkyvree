@@ -55,7 +55,9 @@ describe("The 3.5 fields", () => {
 
   test("leave out the spell's fields no data holds: its level and saving throw, its material and duration type", () => {
     const dropped = ["SPELL_LEVEL", "SPELL_SAVING_THROW", "SPELL_MATERIAL", "SPELL_DURATION_TYPE"];
-    const declared = Object.values(ENTITY_FIELDS).flatMap((fields) => Field.leavesOf(fields).map(({ field }) => field));
+    const declared = Object.values(ENTITY_FIELDS).flatMap((fields) =>
+      Field.leavesOf(fields).flatMap((leaf) => (leaf.kind === "ref" ? [] : [leaf.field])),
+    );
     expect(dropped.filter((field) => declared.includes(field))).toEqual([]);
   });
 });

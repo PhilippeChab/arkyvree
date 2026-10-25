@@ -29,14 +29,14 @@ export default class SpellFocusFeats extends GeneratedFeats {
       {
         name: spellFocus,
         description: `Add +${SPELL_FOCUS_DC_BONUS} to the Difficulty Class for all saving throws against spells from the school of ${schoolName}.`,
-        properties: FEAT_FIELDS.toProperties({ ...FEAT_FIELDS.defaults, families: ["Spell Focus"] }),
+        fields: FEAT_FIELDS.write({ ...FEAT_FIELDS.defaults, families: ["Spell Focus"] }),
         modifiers: [dcBonus],
         requirements: [],
       },
       {
         name: `Greater Spell Focus: ${schoolName}`,
         description: `Add +${SPELL_FOCUS_DC_BONUS} to the Difficulty Class for all saving throws against spells from the school of ${schoolName}. This bonus stacks with the bonus granted by Spell Focus.`,
-        properties: FEAT_FIELDS.toProperties({ ...FEAT_FIELDS.defaults, families: ["Greater Spell Focus"] }),
+        fields: FEAT_FIELDS.write({ ...FEAT_FIELDS.defaults, families: ["Greater Spell Focus"] }),
         modifiers: [dcBonus],
         requirements: [
           {

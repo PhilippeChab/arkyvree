@@ -11,7 +11,7 @@ const KEYS: { [K in FieldSpec["kind"]]: readonly (keyof Extract<FieldSpec, { kin
   list: ["description", "field", "kind", "label", "placeholder", "shownIn", "values", "when"],
   number: ["default", "description", "field", "kind", "label", "max", "min", "shownIn", "when", "write"],
   progression: ["default", "description", "field", "kind", "label", "levels", "max", "shownIn", "when"],
-  ref: ["description", "field", "kind", "label", "references", "required", "role", "shownIn", "when"],
+  ref: ["description", "kind", "label", "references", "required", "role", "shownIn", "when"],
   text: ["description", "field", "kind", "label", "placeholder", "shownIn", "values", "when"],
 };
 
@@ -33,7 +33,9 @@ function findIssues(fields: Fields, path: string): string[] {
 
 describe("The 3.5 entities' fields", () => {
   test("declare each stored field once, across every entity type", () => {
-    const fields = Object.values(ENTITY_FIELDS).flatMap((owned) => Field.leavesOf(owned).map((leaf) => leaf.field));
+    const fields = Object.values(ENTITY_FIELDS).flatMap((owned) =>
+      Field.leavesOf(owned).flatMap((leaf) => (leaf.kind === "ref" ? [] : [leaf.field])),
+    );
     expect(fields.filter((field, index) => fields.indexOf(field) !== index)).toEqual([]);
   });
 

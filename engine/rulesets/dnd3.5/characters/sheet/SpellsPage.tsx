@@ -45,7 +45,7 @@ const SPELL_PROPERTY_LABELS = new Map<string, string>(
   Object.values(SPELL_FIELDS.fields).map((field) => [field.field, field.label]),
 );
 /** The spell properties in a 3.5 stat block's order (the order its fields are declared in); the others follow by name. */
-const SPELL_PROPERTY_ORDER = SPELL_FIELDS.types;
+const SPELL_PROPERTY_ORDER: string[] = Object.values(SPELL_FIELDS.fields).map((field) => field.field);
 
 const SPELL_PROPERTY_ORDER_INDEX = new Map(SPELL_PROPERTY_ORDER.map((k, i) => [k, i]));
 

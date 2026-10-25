@@ -96,7 +96,6 @@ export {
   type OwnedEditPlan,
   type PlanOwner,
   type ProgressionPlan,
-  type PropertyValue,
 } from "./parts/entities/index.ts";
 export {
   type CharacterImporter,

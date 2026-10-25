@@ -30,9 +30,9 @@ import RulesetsRepository from "./rulesets/RulesetsRepository.ts";
 import StarredRulesetsRepository from "./rulesets/StarredRulesetsRepository.ts";
 import StoredCharacterLinks from "./stored/StoredCharacterLinks.ts";
 import StoredEntities from "./stored/StoredEntities.ts";
+import StoredFields from "./stored/StoredFields.ts";
 import StoredJoins from "./stored/StoredJoins.ts";
 import StoredPicks from "./stored/StoredPicks.ts";
-import StoredProperties from "./stored/StoredProperties.ts";
 import { withRequestCache } from "./withRequestCache.ts";
 
 export const Activities = withRequestCache("Activities", new ActivitiesRepository());
@@ -53,6 +53,7 @@ export const Entities = withRequestCache("Entities", new StoredEntities());
 export const EntityReferences = withRequestCache("EntityReferences", new EntityReferencesRepository());
 export const EntitySnapshots = withRequestCache("EntitySnapshots", new EntitySnapshotsRepository());
 export const Exports = withRequestCache("Exports", new ExportsRepository());
+export const Fields = withRequestCache("Fields", new StoredFields());
 export const Invites = withRequestCache("Invites", new InvitesRepository());
 export const Joins = withRequestCache("Joins", new StoredJoins());
 export const Modifiers = withRequestCache("Modifiers", new ModifiersRepository());
@@ -62,7 +63,6 @@ export const PasswordResets = withRequestCache("PasswordResets", new AccountCode
 export const Picks = withRequestCache("Picks", new StoredPicks());
 export const PlayerCharacters = withRequestCache("PlayerCharacters", new PlayerCharactersRepository());
 export const Players = withRequestCache("Players", new PlayersRepository());
-export const Properties = withRequestCache("Properties", new StoredProperties());
 export const Requirements = withRequestCache("Requirements", new RequirementsRepository());
 export const RulesetEntities = withRequestCache("RulesetEntities", new RulesetEntitiesRepository());
 export const RulesetExtensions = withRequestCache("RulesetExtensions", new RulesetExtensionsRepository());

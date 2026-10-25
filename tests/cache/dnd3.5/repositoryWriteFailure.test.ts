@@ -9,7 +9,6 @@ import {
   Joins,
   Modifiers,
   Notifications,
-  Properties,
   Requirements,
   Rulesets,
   Sessions,
@@ -48,7 +47,6 @@ test("a query whose where matches none of its branches throws, instead of writin
   const unmatched = {} as never;
   for (const write of [
     () => Modifiers.delete(db, unmatched),
-    () => Properties.delete(db, unmatched),
     () => Joins.delete(db, unmatched),
     () => Characters.archive(db, unmatched),
     () => Sessions.archive(db, unmatched),

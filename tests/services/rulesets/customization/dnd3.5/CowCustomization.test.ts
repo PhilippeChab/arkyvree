@@ -7,7 +7,7 @@ import { describe, expect, test } from "bun:test";
 
 import type { Feat, Klass, KlassLevel, RulesetAbility } from "@/engine/rulesets/dnd3.5/index.ts";
 import { db } from "@/server/database/index.ts";
-import { Entities, EntitySnapshots, Modifiers, Properties, Requirements } from "@/server/repositories/index.ts";
+import { Entities, EntitySnapshots, Modifiers, Requirements } from "@/server/repositories/index.ts";
 import { RulesetChangesService } from "@/server/services/rulesets/changes/index.ts";
 import { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";
 import { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";
@@ -16,6 +16,7 @@ import { RulesetsService } from "@/server/services/rulesets/index.ts";
 import type { Session } from "@/shared/relations.ts";
 import { STRENGTH_BONUS } from "@/tests/support/dnd3.5/customizations.ts";
 import { createTestRuleset } from "@/tests/support/rulesets.ts";
+import { writeStoredValues } from "@/tests/support/storedValues.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 import { CLASS_CASTER_TYPE, FEAT_FAMILY } from "@/vocabulary/dnd3.5/properties/index.ts";
 
@@ -76,7 +77,7 @@ const requirement = { valueType: "number", operator: "greater_than_or_equal" } a
 
 /**
  * A published ruleset whose feat has a modifier (with a requirement of its
- * own), a property and a requirement, whose class has a modifier, a property
+ * own), a field and a requirement, whose class has a modifier, a field
  * and a requirement, and whose class level has a modifier; and another user's
  * fork of it.
  */
@@ -109,7 +110,7 @@ async function setup() {
     target: "abilities.strength.misc",
     value: "15",
   });
-  await Properties.createMany(db, [{ entityId: feat.id, entityType: "feats", type: FEAT_FAMILY, value: "combat" }]);
+  await writeStoredValues("feats", feat.id, [[FEAT_FAMILY, "combat"]]);
   await Requirements.create(db, {
     ...requirement,
     entityId: feat.id,
@@ -134,9 +135,7 @@ async function setup() {
       operator: "add",
     });
   }
-  await Properties.createMany(db, [
-    { entityId: klass.id, entityType: "classes", type: CLASS_CASTER_TYPE, value: "Arcane" },
-  ]);
+  await writeStoredValues("classes", klass.id, [[CLASS_CASTER_TYPE, "Arcane"]]);
   await Requirements.create(db, {
     ...requirement,
     entityId: klass.id,

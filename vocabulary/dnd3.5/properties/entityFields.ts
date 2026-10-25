@@ -1,10 +1,10 @@
 /**
  * The D&D 3.5 entities' fields: each entity type's, in the order a stat block shows them (and its form its fields),
  * each declared once, as data the engine builds its kind's codec from (`FieldCodec`, `engine/core/fields/`, whose
- * `FieldSpec` is a declaration's shape): its name, the stored field that keeps it (a reference's link role too), its
- * label and what it's for, its kind, its closed list of values or the entity its value names, its default and bounds,
- * when it counts (`when`) and where its form shows it (`shownIn`). The engine reads them through the 3.5 module's
- * fields too: the order a ruleset's view keeps every entity's values in (`DeclaredFields`).
+ * `FieldSpec` is a declaration's shape): its name, the stored field that keeps it (a reference's, the role of its
+ * owner's link), its label and what it's for, its kind, its closed list of values or the entity its value names, its
+ * default and bounds, when it counts (`when`) and where its form shows it (`shownIn`). The engine reads them through
+ * the 3.5 module's fields too: the order a ruleset's view keeps every entity's values in (`DeclaredFields`).
  */
 
 import {
@@ -49,10 +49,10 @@ import {
   MAGIC_AURA,
   MAGIC_CASTER_LEVEL,
 } from "./item.ts";
-import { CLASS_BONUS_SPELL_ABILITY_ID, CLASS_CASTER_TYPE } from "./klass.ts";
+import { CLASS_CASTER_TYPE } from "./klass.ts";
 import { CLASS_LEVEL_BAB, CLASS_LEVEL_SKILL_POINTS } from "./klassLevel.ts";
 import { RACE_QUADRUPED, RACE_SPEED_IGNORES_ENCUMBRANCE } from "./race.ts";
-import { RULESET_ABILITY_INCREASES, RULESET_FEAT_ADVANCEMENT, RULESET_SKILL_POINT_ABILITY_ID } from "./ruleset.ts";
+import { RULESET_ABILITY_INCREASES, RULESET_FEAT_ADVANCEMENT } from "./ruleset.ts";
 import { SHIELD_AC_BONUS, SHIELD_PROFICIENCY, SHIELD_TYPE } from "./shield.ts";
 import { SKILL_CHECK_PENALTY_MULTIPLIER, SKILL_IMPACTED_BY_WEIGHT, SKILL_USABLE_WITHOUT_TRAINING } from "./skill.ts";
 import {
@@ -380,7 +380,6 @@ const KLASS_FIELDS = {
     kind: "ref",
     label: "Bonus Spell Ability",
     references: "abilities",
-    field: CLASS_BONUS_SPELL_ABILITY_ID,
     role: "bonusSpellAbility",
   },
   casterType: {
@@ -450,7 +449,6 @@ const RULESET_FIELDS = {
     label: "Skill Point Ability",
     references: "abilities",
     required: true,
-    field: RULESET_SKILL_POINT_ABILITY_ID,
     role: "skillPointAbility",
   },
   featAdvancement: {

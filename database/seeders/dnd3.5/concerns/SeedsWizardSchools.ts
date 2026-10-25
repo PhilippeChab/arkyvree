@@ -1,6 +1,6 @@
 import { classSpells, specialistSpells } from "@/content/dnd3.5/builders/aptitudes/names.ts";
 import type { WizardSchoolSeed } from "@/content/dnd3.5/builders/wizardSchools/types.ts";
-import { Joins, Properties } from "@/database/seeders/core/SeederState.ts";
+import { Fields, Joins } from "@/database/seeders/core/SeederState.ts";
 import type { BaseSeeder } from "@/database/seeders/dnd3.5/BaseSeeder.ts";
 import type { SpellcastingClass } from "@/database/seeders/dnd3.5/spellTable.ts";
 import type { Constructor } from "@/lib/mixins.ts";
@@ -31,23 +31,18 @@ export function SeedsWizardSchools<B extends Constructor<BaseSeeder>>(Base: B) {
 
       const wizardSpells = this.ctx.aptMap[classSpells("Wizard")];
       if (!wizardSpells) return;
-      // The wizard's list's spells, each with its level there and its school (its property)
+      // The wizard's list's spells, each with its level there and its school (its field's value)
       const listed = await Joins.findMany<{ level: number | null; spellId: string }>(this.db, {
         join: "spells_aptitudes",
         toIds: [wizardSpells],
       });
-      const schoolOf = new Map(
-        (
-          await Properties.findMany(this.db, {
-            entityIds: listed.map((link) => link.spellId),
-            entityType: "spells",
-            type: SPELL_SCHOOL,
-          })
-        ).map((property) => [property.entityId, property.value]),
-      );
+      const values = await Fields.findMany(this.db, {
+        ownerIds: listed.map((link) => link.spellId),
+        ownerType: "spells",
+      });
       const spells = listed.flatMap(({ spellId, level }) => {
-        const school = schoolOf.get(spellId);
-        return school === undefined ? [] : [{ spellId, level, school }];
+        const [school] = values.get(spellId)?.fields[SPELL_SCHOOL] ?? [];
+        return school === undefined ? [] : [{ spellId, level, school: String(school) }];
       });
       await this.insertJoins(
         "spells_aptitudes",

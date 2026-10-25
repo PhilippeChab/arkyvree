@@ -44,10 +44,13 @@ export function SeedsSpells<B extends Constructor<BaseSeeder>>(Base: B) {
         "spells_aptitudes",
         this.uniqueBy(links, (l) => `${l.spellId}:${l.aptitudeId}`),
       );
-      await this.insertProperties(
-        this.uniqueBy(
-          spells.flatMap((spell) => this.propertyRows(ids[spell.name], "spells", spell.properties)),
-          (p) => `${p.entityId}:${p.type}:${p.value}`,
+      await this.writeFields(
+        spells.map((spell) =>
+          this.propertySeedsWrite(
+            ids[spell.name],
+            "spells",
+            this.uniqueBy(spell.properties ?? [], (p) => `${p.type}:${p.value}`),
+          ),
         ),
       );
     }

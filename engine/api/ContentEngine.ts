@@ -13,8 +13,11 @@ export default class ContentEngine<F> {
     return this.content.listBookTargetPaths(...args);
   }
 
-  /** An entity's fields as the properties that keep them: what a seeder writes for them, none for a field left out. */
-  toEntityProperties<K extends keyof F>(entityType: K, fields: Partial<FieldValues<Extract<F[K], Fields>>>) {
-    return this.content.toEntityProperties(entityType, fields);
+  /**
+   * An entity's fields as the write of the stored values that keep them: what a seeder writes for them, a field left
+   * out not named, which the entity keeps.
+   */
+  toFieldsWrite<K extends keyof F>(entityType: K, fields: Partial<FieldValues<Extract<F[K], Fields>>>) {
+    return this.content.toFieldsWrite(entityType, fields);
   }
 }

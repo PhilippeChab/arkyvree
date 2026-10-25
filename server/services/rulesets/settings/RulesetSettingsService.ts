@@ -21,9 +21,8 @@ class RulesetSettingsService {
 
   /**
    * A save of the ruleset's Settings (`body.fields`, those it changes), by who may edit its content: checked by its
-   * rules, written as the ruleset's own properties, which its chain's give way to, and recorded as the ruleset's own
-   * update is. Answers the Settings it keeps, as
-   * `getSettings` does.
+   * rules, written as the ruleset's own stored values, which its chain's give way to, and recorded as the ruleset's
+   * own update is. Answers the Settings it keeps, as `getSettings` does.
    */
   async updateSettings(session: Session, rulesetId: string, body: { fields?: EntityFieldValues }) {
     const result = await withTransaction(

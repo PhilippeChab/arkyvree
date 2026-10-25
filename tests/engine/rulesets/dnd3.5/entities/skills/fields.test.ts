@@ -7,18 +7,13 @@ import { OwnerValues } from "@/engine/core/fields/index.ts";
 import type { FieldValue } from "@/engine/core/module/index.ts";
 import { SKILL_FIELDS } from "@/engine/rulesets/dnd3.5/entities/skills/fields.ts";
 import { db } from "@/server/database/index.ts";
-import { Properties } from "@/server/repositories/index.ts";
-import { storedValues } from "@/tests/support/storedValues.ts";
+import { Fields } from "@/server/repositories/index.ts";
+import { listStoredValues, storedValues } from "@/tests/support/storedValues.ts";
 import {
   SKILL_CHECK_PENALTY_MULTIPLIER,
   SKILL_IMPACTED_BY_WEIGHT,
   SKILL_USABLE_WITHOUT_TRAINING,
 } from "@/vocabulary/dnd3.5/properties/index.ts";
-
-/** Rows as a sorted list of `type=value`. */
-function multiset(rows: { type: string; value: string }[]) {
-  return rows.map((row) => `${row.type}=${row.value}`).toSorted();
-}
 
 describe("A skill's fields", () => {
   test("are none without their values, and as stored with them", () => {
@@ -49,20 +44,19 @@ describe("A skill's fields", () => {
     expect(multiplierOf("none")).toBe(1);
   });
 
-  test("of every seeded skill rebuild its rows", async () => {
+  test("of every seeded skill rebuild its stored values", async () => {
     const skills = await db
       .select({ id: entitiesInRules.id })
       .from(entitiesInRules)
       .where(eq(entitiesInRules.type, "skills"));
-    const rows = await Properties.findMany(db, { entityIds: skills.map(({ id }) => id), entityType: "skills" });
-    const rowsBySkill = Map.groupBy(rows, (row) => row.entityId);
-    expect(rows.every((row) => SKILL_FIELDS.types.includes(row.type))).toBe(true);
-    expect(rowsBySkill.size).toBeGreaterThan(20);
+    const values = await Fields.findMany(db, { ownerIds: skills.map(({ id }) => id), ownerType: "skills" });
+    const held = [...values].filter(([, stored]) => Object.keys(stored.fields).length > 0);
+    expect(held.length).toBeGreaterThan(20);
 
-    const mismatches = [...rowsBySkill].filter(
+    const mismatches = held.filter(
       ([, stored]) =>
-        multiset(SKILL_FIELDS.toProperties(SKILL_FIELDS.read(SKILL_FIELDS.storedOf(stored)))).join("|") !==
-        multiset(stored).join("|"),
+        listStoredValues(OwnerValues.written(SKILL_FIELDS.write(SKILL_FIELDS.read(stored)))).join("|") !==
+        listStoredValues(stored).join("|"),
     );
     expect(mismatches).toEqual([]);
   });

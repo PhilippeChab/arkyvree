@@ -1,17 +1,20 @@
 import type { Db } from "@/drizzle/database.ts";
-import type { EntityCustomizations } from "@/engine/index.ts";
-import { CUSTOMIZABLE_TYPES, Modifiers, Properties, Requirements } from "@/server/repositories/index.ts";
+import type { EntityCustomizations, StoredValues } from "@/engine/index.ts";
+import { CUSTOMIZABLE_TYPES, Fields, Modifiers, Requirements } from "@/server/repositories/index.ts";
 
 /**
- * An entity's customizations (its modifiers, each with its requirements, its properties and its requirements), read and
- * copied onto other entities: a copy's (`EntityCopy`), and a duplicate's (an item's, its variants', a modifier's).
+ * An entity's customizations (its modifiers, each with its requirements, its requirements and its stored values), read
+ * and copied onto other entities: a copy's (`EntityCopy`), and a duplicate's (an item's, its variants', a modifier's).
  */
 export default class CustomizationCopies {
-  /** Each entity's customizations, by its id: the rows grouped by the entity they belong to, a modifier's by its source. */
+  /**
+   * Each entity's customizations, by its id: the rows grouped by the entity they belong to, a modifier's by its source,
+   * and its stored values (`values`, by its id).
+   */
   private static group(
     entityIds: string[],
     modifiers: EntityCustomizations["modifiers"],
-    properties: EntityCustomizations["properties"],
+    values: ReadonlyMap<string, StoredValues>,
     requirements: EntityCustomizations["requirements"],
     modifierRequirements: EntityCustomizations["modifierRequirements"],
   ): Map<string, EntityCustomizations> {
@@ -20,10 +23,9 @@ export default class CustomizationCopies {
 
     const map = new Map<string, EntityCustomizations>();
     for (const id of entityIds)
-      map.set(id, { modifiers: [], properties: [], requirements: [], modifierRequirements: [] });
+      map.set(id, { modifiers: [], requirements: [], modifierRequirements: [], values: values.get(id)! });
 
     for (const m of modifiers) map.get(m.sourceId)?.modifiers.push(m);
-    for (const p of properties) map.get(p.entityId)?.properties.push(p);
     for (const r of requirements) map.get(r.entityId)?.requirements.push(r);
     for (const mr of modifierRequirements) {
       const entityId = modifierToEntity.get(mr.entityId);
@@ -89,7 +91,7 @@ export default class CustomizationCopies {
     const orphan = sourceCust.modifierRequirements.find((r) => !sourceModifierIds.has(r.entityId));
     if (orphan) throw new Error(`Modifier requirement ${orphan.id} belongs to a modifier outside the copied set`);
 
-    const { modifiers, properties, requirements, modifierRequirements } = sourceCust;
+    const { modifiers, requirements, modifierRequirements, values } = sourceCust;
     const newModifiers = await CustomizationCopies.copyRows(
       tx,
       Modifiers,
@@ -98,17 +100,10 @@ export default class CustomizationCopies {
       (_, targetId) => ({ sourceId: targetId }),
       copiedIds,
     );
-    // A property is its owner's field or link: copied as a value, which no row's id names
-    await Properties.createMany(
+    // Stored values are copied as values, which no row's id names: each field and link they hold replaced
+    await Fields.update(
       tx,
-      targetEntityIds.flatMap((entityId) =>
-        properties.map(({ entityType: type, type: field, value }) => ({
-          entityId,
-          entityType: type,
-          type: field,
-          value,
-        })),
-      ),
+      targetEntityIds.map((id) => ({ id, type: entityType, values })),
     );
     await CustomizationCopies.copyRows(
       tx,
@@ -133,7 +128,7 @@ export default class CustomizationCopies {
   }
 
   /**
-   * The customizations of `entityIds` (of `entityType`), by entity, read by their stored ids: their properties and
+   * The customizations of `entityIds` (of `entityType`), by entity, read by their stored ids: their stored values and
    * requirements, and, for a type modifiers have (`sourceType`), their modifiers with each one's requirements.
    */
   static async read(
@@ -143,7 +138,7 @@ export default class CustomizationCopies {
     sourceType?: string,
   ): Promise<Map<string, EntityCustomizations>> {
     const modifiers = sourceType ? await Modifiers.findMany(tx, { sourceIds: entityIds, sourceType }) : [];
-    const properties = await Properties.findMany(tx, { entityIds, entityType });
+    const values = await Fields.findMany(tx, { ownerIds: entityIds, ownerType: entityType });
     const requirements = await Requirements.findMany(tx, { entityIds, entityType });
 
     const modifierRequirements = await Requirements.findMany(tx, {
@@ -151,6 +146,6 @@ export default class CustomizationCopies {
       entityType: "modifiers",
     });
 
-    return CustomizationCopies.group(entityIds, modifiers, properties, requirements, modifierRequirements);
+    return CustomizationCopies.group(entityIds, modifiers, values, requirements, modifierRequirements);
   }
 }

@@ -1,15 +1,9 @@
-import { Engine } from "@/engine/index.ts";
+import { Engine, type FieldsWrite } from "@/engine/index.ts";
 import { db } from "@/server/database/index.ts";
-import { Modifiers, Properties, Requirements } from "@/server/repositories/index.ts";
+import { Fields, Modifiers, Requirements } from "@/server/repositories/index.ts";
 import type { Character } from "@/shared/relations.ts";
 import { invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
-
-/** A property's type and value, as a test gives one. */
-interface Property {
-  type: string;
-  value: string;
-}
 
 /** A requirement's values: a base attack bonus of 5 or more. */
 const BAB_AT_LEAST_5 = {
@@ -29,12 +23,12 @@ export const STRENGTH_BONUS = {
 } as const;
 
 /**
- * A property of `type`'s a module declares, a text field: a value a test sets ("doomed"), or none when the type keeps
- * no property of text (an ability, a save).
+ * A write of a text field of `type`'s a module declares past its row's columns: a value a test sets ("doomed"), or
+ * none when the type keeps no such field (an ability, a save).
  */
-function textProperty(type: string): Property | null {
+function textValues(type: string): FieldsWrite | null {
   const storage = Engine.storage();
-  // The columns its row stores as fields, which aren't properties: a kind's, a character's; none of another owner's
+  // The columns its row stores as fields: a kind's, a character's; none of another owner's
   const isKind = storage.registries().entityTypes.some((def) => def.type === type);
   const columns = type === "characters" ? storage.character().columns : isKind ? storage.kind(type).columns : {};
   const def = storage
@@ -43,10 +37,9 @@ function textProperty(type: string): Property | null {
       (field) =>
         field.ownerType === type &&
         field.valueKind === "text" &&
-        !storage.linkedProperty(type, field.field) &&
         !Object.values(columns).some((column) => "field" in column && column.field === field.field),
     );
-  return def ? { type: def.field, value: "doomed" } : null;
+  return def ? { fields: { [def.field]: ["doomed"] }, links: {} } : null;
 }
 
 /**
@@ -78,18 +71,18 @@ export async function createRaceModifier(
 }
 
 /**
- * Gives a row of `type` a requirement, a property (a note by default) and, unless `modifier` is false, a Strength
+ * Gives a row of `type` a requirement, stored values (a note by default) and, unless `modifier` is false, a Strength
  * bonus with a requirement of its own: the bonus, when it has one. Customizations point at their row polymorphically,
  * so any row can have them.
  */
 export async function customize(
   type: string,
   id: string,
-  { modifier = true, property = textProperty(type) }: { modifier?: boolean; property?: Property | null } = {},
+  { modifier = true, values = textValues(type) }: { modifier?: boolean; values?: FieldsWrite | null } = {},
 ) {
   const [bonus] = modifier ? await Modifiers.create(db, { ...STRENGTH_BONUS, sourceId: id, sourceType: type }) : [];
   if (bonus) await Requirements.create(db, { ...BAB_AT_LEAST_5, entityId: bonus.id, entityType: "modifiers" });
   await Requirements.create(db, { ...BAB_AT_LEAST_5, entityId: id, entityType: type });
-  if (property) await Properties.createMany(db, [{ ...property, entityId: id, entityType: type }]);
+  if (values) await Fields.update(db, [{ id, type, values }]);
   return bonus;
 }

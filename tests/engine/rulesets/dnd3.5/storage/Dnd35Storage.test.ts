@@ -9,8 +9,8 @@ describe("3.5's storage", () => {
     ]);
   });
 
-  test("holds fields in the properties of its customizable kinds, its skills and its rulesets", () => {
-    expect(StorageEngine.shared().propertyTypes().toSorted()).toEqual([
+  test("holds fields past their columns in its customizable kinds, its skills and its rulesets", () => {
+    expect(StorageEngine.shared().fieldOwners().toSorted()).toEqual([
       ...["class_levels", "classes", "feats", "items", "races", "rulesets", "skills", "spells"],
     ]);
   });

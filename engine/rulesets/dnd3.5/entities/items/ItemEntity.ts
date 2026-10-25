@@ -3,8 +3,14 @@
 import { z } from "zod";
 
 import { CustomizationPageEntity } from "@/engine/core/entities/index.ts";
-import { type EntityFieldValues, type EntityForm, OwnerValues, type StoredValues } from "@/engine/core/fields/index.ts";
-import type { EntityWrites, PropertyValue } from "@/engine/core/module/index.ts";
+import {
+  type EntityFieldValues,
+  type EntityForm,
+  type FieldsWrite,
+  OwnerValues,
+  type StoredValues,
+} from "@/engine/core/fields/index.ts";
+import type { EntityWrites } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import { RULESET_LIMITS } from "@/engine/rulesets/dnd3.5/limits.ts";
 import ItemPlacement from "@/engine/rulesets/dnd3.5/rules/ItemPlacement.ts";
@@ -153,7 +159,7 @@ export default class ItemEntity extends CustomizationPageEntity<
 
   /**
    * What saving an item writes (`item`: the one edited): the fields its form gives, over those it shows (its own over
-   * its template's), as the properties of its own: those its template's don't hold (`toOverrides`), so it keeps reading
+   * its template's), as its own stored values: those its template's don't hold (`toOverrides`), so it keeps reading
    * the rest off its template (the one its form saves it with). Nothing when the form gives none of its fields.
    */
   protected override writesOf(body: ItemBody, given: Partial<ItemFieldValues>, item?: Item): EntityWrites | undefined {
@@ -161,21 +167,17 @@ export default class ItemEntity extends CustomizationPageEntity<
     if (!fields) return undefined;
     const templateId = this.templateIdOf(body, item);
     const template = templateId ? this.fields.read(this.templateValuesOf(templateId)) : this.fields.defaults;
-    return { properties: this.fields.write(fields, this.fields.toOverrides(fields, template)) };
+    return { fields: this.fields.toOverrides(fields, template) };
   }
 
   /**
-   * The stored values a saved item's fields are read off: those the properties its form writes keep, over its
-   * template's of the fields they don't set (the one it's saved with), or those it keeps when its form writes none.
+   * The stored values a saved item's fields are read off: those its form writes, over its template's of the fields
+   * they don't set (the one it's saved with), or those it keeps when its form writes none.
    */
-  protected override writtenValues(
-    columns: ItemColumns,
-    written: PropertyValue[] | undefined,
-    item?: Item,
-  ): StoredValues {
+  protected override writtenValues(columns: ItemColumns, written: FieldsWrite | undefined, item?: Item): StoredValues {
     if (!written) return this.keptValues(columns, item);
     const templateId = this.templateIdOf(columns, item);
-    const own = this.fields.storedOf(written);
+    const own = OwnerValues.written(written);
     return templateId ? OwnerValues.inherit(own, this.templateValuesOf(templateId)) : own;
   }
 

@@ -1,11 +1,12 @@
 import { describe, expect, test } from "bun:test";
 
+import type { FieldValue } from "@/engine/index.ts";
 import { type Item, type Race } from "@/engine/rulesets/dnd3.5/index.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError } from "@/server/errors/index.ts";
-import { CharacterInventory, Entities, Modifiers, Properties, Requirements } from "@/server/repositories/index.ts";
+import { CharacterInventory, Entities, Fields, Modifiers, Requirements } from "@/server/repositories/index.ts";
 import { CharactersService } from "@/server/services/characters/index.ts";
 import { CharacterInventoryService } from "@/server/services/characters/inventory/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
@@ -115,8 +116,8 @@ async function setup(race?: { size: SizeType }) {
     session,
     raceId ? { rulesetId: ruleset.id, raceId } : { rulesetId: ruleset.id },
   );
-  const newItem = (values?: Partial<Item>, properties?: Record<string, string>) =>
-    createTestItem({ rulesetId: ruleset.id, ...ITEM_VALUES, ...values }, properties);
+  const newItem = (values?: Partial<Item>, fields?: Record<string, FieldValue>) =>
+    createTestItem({ rulesetId: ruleset.id, ...ITEM_VALUES, ...values }, fields);
   return { session, character, newItem, item: await newItem() };
 }
 
@@ -153,8 +154,8 @@ describe("InventoryService", () => {
   test("lists what the character carries with each item's customizations, removed items gone, archived characters included", async () => {
     const { session, character, item, newItem } = await setup();
     expect(await CharacterInventoryService.getInventory(session, character.id)).toEqual([]);
-    await Properties.createMany(db, [
-      { entityId: item.id, entityType: "items", type: WEAPON_PROFICIENCY, value: "Martial" },
+    await Fields.update(db, [
+      { id: item.id, type: "items", values: { fields: { [WEAPON_PROFICIENCY]: ["Martial"] }, links: {} } },
     ]);
     await Modifiers.create(db, {
       sourceId: item.id,

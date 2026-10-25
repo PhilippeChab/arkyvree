@@ -16,7 +16,7 @@ import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { fetchEveryPage } from "@/server/repositories/concerns/Paginates.ts";
-import { Entities, Modifiers, Properties, Requirements, Rulesets } from "@/server/repositories/index.ts";
+import { Entities, Modifiers, Requirements, Rulesets } from "@/server/repositories/index.ts";
 import { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { createTestCampaign } from "@/tests/support/campaigns.ts";
@@ -25,6 +25,7 @@ import { STRENGTH_BONUS } from "@/tests/support/dnd3.5/customizations.ts";
 import { findKlassLevel } from "@/tests/support/dnd3.5/levels.ts";
 import { copyEntity, createTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, uniqueId } from "@/tests/support/seed.ts";
+import { writeStoredValues } from "@/tests/support/storedValues.ts";
 import { makeSession } from "@/tests/support/users.ts";
 
 /** A published system ruleset built on the seeded one, as a book a fork takes is. */
@@ -166,9 +167,9 @@ describe("RulesetViews", () => {
       modifier("abilities.str.score", "2026-01-02T00:00:00Z"),
       modifier("abilities.dex.score", "2026-01-01T00:00:00Z"),
     ]);
-    await Properties.createMany(db, [
-      { entityId: item.id, entityType: "items", type: "DAMAGE_TYPE", value: "Piercing" },
-      { entityId: item.id, entityType: "items", type: "DAMAGE_TYPE", value: "Slashing" },
+    await writeStoredValues("items", item.id, [
+      ["DAMAGE_TYPE", "Piercing"],
+      ["DAMAGE_TYPE", "Slashing"],
     ]);
 
     const data = await RulesetViews.getData(ruleset);
@@ -417,10 +418,10 @@ describe("RulesetViews", () => {
       expect(seedRawAfter).toBe(seedRawBefore);
     });
 
-    test("COW'ing a feat cascades to its modifiers, properties, and requirements in compose", async () => {
+    test("COW'ing a feat cascades to its modifiers and requirements in compose", async () => {
       const seed = await getRuleset();
 
-      // Create a fresh base feat with a modifier, property, and modifier-level requirement.
+      // Create a fresh base feat with a modifier, a requirement, and a modifier-level requirement.
       const [baseFeat] = await Entities.createMany<Feat>(db, "feats", [
         {
           name: `Cascade Feat ${uniqueId()}`,

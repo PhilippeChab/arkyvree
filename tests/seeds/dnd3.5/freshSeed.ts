@@ -5,7 +5,7 @@ import type { Dnd35SeedContext as SeedContext } from "@/database/seeders/dnd3.5/
 import { RulesetSeeder } from "@/database/seeders/dnd3.5/RulesetSeeder.ts";
 import { modifiersInCustomization, requirementsInCustomization } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
-import { Properties } from "@/server/repositories/index.ts";
+import { Entities, Fields } from "@/server/repositories/index.ts";
 import { uniqueId } from "@/tests/support/seed.ts";
 import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 
@@ -33,7 +33,7 @@ export function namesOf(ids: Record<string, string>) {
 
 /**
  * What an entity was seeded with, as its content reads: its requirements ("level target operator value") by level,
- * and its modifiers (each with its requirements) and properties ("type value"), sorted.
+ * and its modifiers (each with its requirements) and stored values ("field value", a link's "role entity"), sorted.
  */
 export async function describeCustomizations(entityId: string) {
   const requirementsOf = async (id: string) =>
@@ -53,11 +53,15 @@ export async function describeCustomizations(entityId: string) {
     const requirements = await requirementsOf(modifier.id);
     modifierLines.push([describeModifier(modifier), ...requirements.map((r) => `  if ${r}`)].join("\n"));
   }
-  const properties = await Properties.findMany(db, { entityIds: [entityId] });
+  const [{ type }] = await Entities.findStored(db, { ids: [entityId] });
+  const { fields, links } = (await Fields.findMany(db, { ownerIds: [entityId], ownerType: type })).get(entityId)!;
   return {
     requirements: await requirementsOf(entityId),
     modifiers: modifierLines.sort(),
-    properties: properties.map((p) => `${p.type} ${p.value}`).sort(),
+    fields: [
+      ...Object.entries(fields).flatMap(([field, values]) => values.map((value) => `${field} ${value}`)),
+      ...Object.entries(links).map(([role, toId]) => `${role} ${toId}`),
+    ].sort(),
   };
 }
 

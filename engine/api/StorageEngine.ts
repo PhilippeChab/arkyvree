@@ -1,4 +1,4 @@
-import { DeclaredFields, type Fields, type StoredValues } from "@/engine/core/fields/index.ts";
+import { DeclaredFields, type Fields, OwnerValues, type StoredValues } from "@/engine/core/fields/index.ts";
 import type {
   CharacterRoleDef,
   FieldDef,
@@ -6,7 +6,6 @@ import type {
   LinkPart,
   LinkRoleDef,
   ListLink,
-  Merge,
   RulesetModule,
   StepDef,
   StorageRegistries,
@@ -109,8 +108,6 @@ export default class StorageEngine {
     this.kinds = mergeRecords(modules, (module) => module.storage.kinds);
     this.joins = mergeRecords(modules, (module) => module.storage.joins);
     this.fields = mergeRecords(modules, (module) => module.fields);
-    this.linkedEntityProperties = mergeRecords(modules, (module) => module.storage.linkedProperties.entities);
-    this.linkedRulesetProperties = mergeRecords(modules, (module) => module.storage.linkedProperties.rulesets);
     const characters = modules.map(([, module]) => module.storage.character);
     this.characterDeclaration = {
       ...characters[0],
@@ -175,10 +172,6 @@ export default class StorageEngine {
 
   private readonly kinds: Record<string, StoredKind>;
 
-  private readonly linkedEntityProperties: Record<string, Record<string, string>>;
-
-  private readonly linkedRulesetProperties: Record<string, string>;
-
   private readonly merged: StorageRegistries;
 
   private columnFieldNames: Set<string> | undefined;
@@ -196,7 +189,7 @@ export default class StorageEngine {
     return this.merged.characterRoles.find((def) => def.role === role)!;
   }
 
-  /** The fields every kind's columns hold, which its row reads: not properties. */
+  /** The fields every kind's columns hold, which its row reads: not its owner's other stored values. */
   private columnFields(): Set<string> {
     this.columnFieldNames ??= new Set(
       Object.values(this.kinds).flatMap((kind) =>
@@ -280,43 +273,6 @@ export default class StorageEngine {
     };
     for (const column in join.columns) row[column] = parts[join.columns[column]];
     return row;
-  }
-
-  /**
-   * An owner's stored values (of `type`), off its fields (`fields`) and its links (`links`): each field's values, a set's
-   * in its declared order, its fields in theirs, and the links its type's fields read, by role. None when it holds none.
-   */
-  private storedValuesOf(
-    type: string,
-    fields: { field: string; value: FieldValue }[],
-    links: { role: string; toId: string }[],
-  ): StoredValues | undefined {
-    const declared = this.declaredFields();
-    const roles = declared.fieldRoles(type);
-    if (fields.length === 0 && (roles.length === 0 || links.length === 0)) return undefined;
-    const byField = new Map<string, FieldValue[]>();
-    for (const { field, value } of fields) {
-      const held = byField.get(field);
-      if (held) held.push(value);
-      else byField.set(field, [value]);
-    }
-    const stored: StoredValues = {
-      fields: Object.fromEntries(
-        [...byField.keys()]
-          .toSorted((a, b) => declared.compareFields(a, b))
-          .map((field) => {
-            const values = byField.get(field)!;
-            return [field, values.length > 1 ? declared.orderValues(field, values) : values];
-          }),
-      ),
-      links: Object.fromEntries(
-        roles.flatMap((role) => {
-          const link = links.find((held) => held.role === role);
-          return link ? [[role, link.toId]] : [];
-        }),
-      ),
-    };
-    return Object.keys(stored.fields).length > 0 || Object.keys(stored.links).length > 0 ? stored : undefined;
   }
 
   /** A level's row (`values`, by its module's columns), as what a write of its advancement stores: its track, its value. */
@@ -445,6 +401,15 @@ export default class StorageEngine {
     return this.merged.fieldDefs.find((def) => def.ownerType === ownerType && def.field === field);
   }
 
+  /**
+   * The types whose owners hold fields past their kind's columns, which their form shows and their save writes, as
+   * their modules declare them: kinds' (3.5's feats, items, spells, races, classes, class levels and skills) and the
+   * rulesets' (their settings).
+   */
+  fieldOwners(): string[] {
+    return Object.keys(this.fields);
+  }
+
   /** A join's rows, by its name (`feats_aptitudes`): the links of a role from one kind to another. */
   join(name: string): StoredJoin {
     const join = this.joins[name];
@@ -526,22 +491,6 @@ export default class StorageEngine {
       ],
     };
     return this.rowReads;
-  }
-
-  /** The property types a link holds, an owner type's: each with its role. */
-  linkedProperties(ownerType: string): [propertyType: string, role: string][] {
-    return Object.entries(
-      ownerType === "rulesets" ? this.linkedRulesetProperties : (this.linkedEntityProperties[ownerType] ?? {}),
-    );
-  }
-
-  /**
-   * The role of the link a property type of an owner's type holds (a class's bonus spell ability, a ruleset's skill
-   * point ability), if it holds one: an entity's link role, or a ruleset's ruleset role.
-   */
-  linkedProperty(ownerType: string, propertyType: string): string | undefined {
-    if (ownerType === "rulesets") return this.linkedRulesetProperties[propertyType];
-    return this.linkedEntityProperties[ownerType]?.[propertyType];
   }
 
   /**
@@ -701,32 +650,6 @@ export default class StorageEngine {
   }
 
   /**
-   * How sibling copies merge a property a copy still writes (`propertyType`, of an owner's type): the merge of the link
-   * role that holds it (a class's bonus spell ability), or its field's (`DeclaredFields.mergeOf`).
-   */
-  propertyMerge(ownerType: string, propertyType: string): Merge {
-    const role = this.linkedProperty(ownerType, propertyType);
-    const declared = this.declaredFields();
-    return role ? declared.roleMergeOf(ownerType, role) : declared.mergeOf(ownerType, propertyType);
-  }
-
-  /**
-   * The types whose properties hold fields past their kind's columns, which their form shows and their save writes:
-   * kinds' (3.5's feats, items, spells, races, classes, class levels and skills) and the rulesets' (their settings).
-   */
-  propertyTypes(): string[] {
-    const columnFields = new Set(
-      Object.values(this.kinds).flatMap((kind) =>
-        Object.values(kind.columns).flatMap((column) => ("field" in column ? [column.field] : [])),
-      ),
-    );
-    const types = this.merged.fieldDefs
-      .filter((def) => def.ownerKind !== "character" && !columnFields.has(def.field))
-      .map((def) => def.ownerType);
-    return [...new Set(types)];
-  }
-
-  /**
    * The joins whose links to an entity of a kind (`type`) refuse its delete, by their names (a class level's base bonus
    * to a save): an entity one links to is in use.
    */
@@ -790,6 +713,44 @@ export default class StorageEngine {
   }
 
   /**
+   * An owner's stored values (of `type`), off its fields past its kind's columns (`fields`) and its links (`links`):
+   * each field's values, a set's in its declared order, its fields in theirs, and the links its type's fields read, by
+   * role. None (`OwnerValues.NONE`) when it holds none.
+   */
+  storedValuesOf(
+    type: string,
+    fields: readonly { field: string; value: FieldValue }[],
+    links: readonly { role: string; toId: string }[],
+  ): StoredValues {
+    const declared = this.declaredFields();
+    const roles = declared.fieldRoles(type);
+    if (fields.length === 0 && (roles.length === 0 || links.length === 0)) return OwnerValues.NONE;
+    const byField = new Map<string, FieldValue[]>();
+    for (const { field, value } of fields) {
+      const held = byField.get(field);
+      if (held) held.push(value);
+      else byField.set(field, [value]);
+    }
+    const stored: StoredValues = {
+      fields: Object.fromEntries(
+        [...byField.keys()]
+          .toSorted((a, b) => declared.compareFields(a, b))
+          .map((field) => {
+            const values = byField.get(field)!;
+            return [field, values.length > 1 ? declared.orderValues(field, values) : values];
+          }),
+      ),
+      links: Object.fromEntries(
+        roles.flatMap((role) => {
+          const link = links.find((held) => held.role === role);
+          return link ? [[role, link.toId]] : [];
+        }),
+      ),
+    };
+    return Object.keys(stored.fields).length > 0 || Object.keys(stored.links).length > 0 ? stored : OwnerValues.NONE;
+  }
+
+  /**
    * The stored values of a ruleset's own owners (`owners`: its entities, and itself for its Settings), as its view
    * composes them: each owner's, by its type then its id (`values`), its fields past its kind's columns (a ruleset's
    * all of them), each set's values and the fields themselves in their declared order (`DeclaredFields`), and the
@@ -806,7 +767,7 @@ export default class StorageEngine {
     for (const entity of owners.entities) {
       const fields = entity.fields.filter((field) => !columnFields.has(field.field));
       const stored = this.storedValuesOf(entity.type, fields, entity.links);
-      if (stored)
+      if (stored !== OwnerValues.NONE)
         (values.get(entity.type) ?? values.set(entity.type, new Map()).get(entity.type)!).set(entity.id, stored);
       const rows = written.get(entity.type) ?? written.set(entity.type, []).get(entity.type)!;
       for (const { createdAt, field, value } of fields)
@@ -814,7 +775,7 @@ export default class StorageEngine {
     }
     const { ruleset } = owners;
     const settings = ruleset && this.storedValuesOf("rulesets", ruleset.fields, ruleset.links);
-    if (settings) values.set("rulesets", new Map([[ruleset.id, settings]]));
+    if (settings && settings !== OwnerValues.NONE) values.set("rulesets", new Map([[ruleset.id, settings]]));
     const kindValues = new Map([...written].map(([type, rows]) => [type, StorageEngine.kindValuesOf(rows)]));
     return { kindValues, values };
   }
@@ -839,7 +800,7 @@ export default class StorageEngine {
       ...types.flatMap(({ ownerType }) => (ownerType ? [ownerType] : [])),
       ...joins.map(({ from }) => from),
     ]);
-    const fields = new Set(this.propertyTypes());
+    const fields = new Set(this.fieldOwners());
     this.schema = {
       // An owner before the kinds it owns, each in its declared order otherwise
       kinds: types

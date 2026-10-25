@@ -15,7 +15,7 @@ export default class SkillFocusFeats extends GeneratedFeats {
       {
         name: `Skill Focus: ${skillName}`,
         description: `You get a +${SKILL_FOCUS_BONUS} bonus on all ${skillName} checks.`,
-        properties: FEAT_FIELDS.toProperties({ ...FEAT_FIELDS.defaults, families: ["Skill Focus"] }),
+        fields: FEAT_FIELDS.write({ ...FEAT_FIELDS.defaults, families: ["Skill Focus"] }),
         modifiers: [
           {
             target: SkillsPaths.misc(skillName),

@@ -27,7 +27,7 @@ export function SeedsItems<B extends Constructor<SeederState>>(Base: B) {
         })),
       );
 
-      await this.insertProperties(items.flatMap((item) => this.propertyRows(ids[item.name], "items", item.properties)));
+      await this.writeFields(items.map((item) => this.propertySeedsWrite(ids[item.name], "items", item.properties)));
       await this.insertAll(
         requirementsInCustomization,
         items.flatMap((item) => this.requirementRows(ids[item.name], "items", item.requirements)),

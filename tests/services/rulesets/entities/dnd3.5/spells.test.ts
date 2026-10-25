@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import type { KlassLevelSpell } from "@/engine/rulesets/dnd3.5/index.ts";
 import { db } from "@/server/database/index.ts";
-import { Activities, Joins, Properties } from "@/server/repositories/index.ts";
+import { Activities, Joins } from "@/server/repositories/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
 import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
@@ -10,6 +10,7 @@ import { addCharacterLevel, createTestKlassLevel } from "@/tests/support/dnd3.5/
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
 import { createSeededTestRuleset, createTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
+import { findStoredValues, writeStoredValues } from "@/tests/support/storedValues.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 import { SPELL_CASTING_TIME, SPELL_DESCRIPTOR, SPELL_SCHOOL } from "@/vocabulary/dnd3.5/properties/index.ts";
 
@@ -213,8 +214,8 @@ describe("EntitiesService: spells", () => {
     });
   });
 
-  test("keeps the properties a user added, and the fields an edit leaves out, when the spell's fields change", async () => {
-    // Regression: saving the spell fields once replaced every property of the spell, then the fields the edit left out.
+  test("keeps the values a user added, and the fields an edit leaves out, when the spell's fields change", async () => {
+    // Regression: saving the spell fields once replaced every stored value, then the fields the edit left out.
     const {
       session,
       ruleset,
@@ -225,23 +226,18 @@ describe("EntitiesService: spells", () => {
       aptitudes: [{ id: wizard }],
       fields: { school: "Evocation", castingTime: "1 round" },
     });
-    await Properties.createMany(db, [
-      { entityId: spell.id, entityType: "spells", type: SPELL_DESCRIPTOR, value: "Fire" },
-    ]);
+    await writeStoredValues("spells", spell.id, [[SPELL_DESCRIPTOR, "Fire"]]);
 
     await EntitiesService.updateEntity(session, ruleset.id, "spells", spell.id, {
       name: "Fireball",
       fields: { school: "Conjuration" },
     });
 
-    const properties = await Properties.findMany(db, { entityIds: [spell.id], entityType: "spells" });
-    expect(properties.map(({ type, value }) => ({ type, value })).sort((a, b) => a.type.localeCompare(b.type))).toEqual(
-      [
-        { type: SPELL_CASTING_TIME, value: "1 round" },
-        { type: SPELL_DESCRIPTOR, value: "Fire" },
-        { type: SPELL_SCHOOL, value: "Conjuration" },
-      ],
-    );
+    expect((await findStoredValues("spells", spell.id)).fields).toEqual({
+      [SPELL_SCHOOL]: ["Conjuration"],
+      [SPELL_DESCRIPTOR]: ["Fire"],
+      [SPELL_CASTING_TIME]: ["1 round"],
+    });
   });
 
   test("deletes a spell's aptitude and class-level links with it", async () => {

@@ -2,15 +2,15 @@ import { describe, expect, test } from "bun:test";
 
 import { rulesetsInRules } from "@/drizzle/schema.ts";
 import { OwnerValues } from "@/engine/core/fields/index.ts";
+import { Engine } from "@/engine/index.ts";
 import { RULESET_FIELDS } from "@/engine/rulesets/dnd3.5/ruleset/fields.ts";
 import { db } from "@/server/database/index.ts";
-import { Properties } from "@/server/repositories/index.ts";
-import { storedValues } from "@/tests/support/storedValues.ts";
-import {
-  RULESET_ABILITY_INCREASES,
-  RULESET_FEAT_ADVANCEMENT,
-  RULESET_SKILL_POINT_ABILITY_ID,
-} from "@/vocabulary/dnd3.5/properties/index.ts";
+import { Fields } from "@/server/repositories/index.ts";
+import { createTestRuleset } from "@/tests/support/rulesets.ts";
+import { getSeedCtx } from "@/tests/support/seed.ts";
+import { findStoredValues, listStoredValues, storedValues } from "@/tests/support/storedValues.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
+import { RULESET_ABILITY_INCREASES, RULESET_FEAT_ADVANCEMENT } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 /** The core rules' progression: a feat every 3 levels and one more at the first, an ability increase every 4. */
 const CORE = {
@@ -26,7 +26,7 @@ describe("A ruleset's own fields", () => {
         storedValues(
           [
             ["SOMETHING_ELSE", 1],
-            [RULESET_SKILL_POINT_ABILITY_ID, "wisdom"],
+            ["skillPointAbility", "wisdom"],
             [RULESET_FEAT_ADVANCEMENT, "every:3"],
             [RULESET_FEAT_ADVANCEMENT, "3:1"],
             [RULESET_FEAT_ADVANCEMENT, "5:1"],
@@ -47,29 +47,49 @@ describe("A ruleset's own fields", () => {
     });
   });
 
-  test("are kept in a property per field with a value, a progression's its frequency's and one per level more", () => {
-    expect(RULESET_FIELDS.toProperties({ skillPointAbilityId: null })).toEqual([]);
-    expect(RULESET_FIELDS.toProperties({ skillPointAbilityId: "intelligence" })).toEqual([
-      { type: RULESET_SKILL_POINT_ABILITY_ID, value: "intelligence" },
-    ]);
-    expect(RULESET_FIELDS.toProperties(CORE)).toEqual([
-      { type: RULESET_FEAT_ADVANCEMENT, value: "every:3" },
-      { type: RULESET_FEAT_ADVANCEMENT, value: "1:1" },
-      { type: RULESET_ABILITY_INCREASES, value: "every:4" },
-    ]);
+  test("are kept in a value per field with a value, a progression's its frequency's and one per level more", () => {
+    const written = (values: Partial<typeof RULESET_FIELDS.defaults>) =>
+      OwnerValues.written(RULESET_FIELDS.write(values));
+    expect(written({ skillPointAbilityId: null })).toEqual(OwnerValues.NONE);
+    expect(written({ skillPointAbilityId: "intelligence" })).toEqual({
+      fields: {},
+      links: { skillPointAbility: "intelligence" },
+    });
+    expect(written(CORE).fields).toEqual({
+      [RULESET_FEAT_ADVANCEMENT]: ["every:3", "1:1"],
+      [RULESET_ABILITY_INCREASES]: ["every:4"],
+    });
   });
 
-  test("of every seeded ruleset rebuild its rows", async () => {
+  test("written in part, as the seeder writes the skill point ability, keep the fields the write leaves out", async () => {
+    const ruleset = await createTestRuleset(null);
+    const intelligence = (await getSeedCtx()).abilityMap["Intelligence"];
+    const progression = { featAdvancement: { every: 2, extra: [{ amount: 1, level: 3 }] } };
+    await Fields.update(db, [{ id: ruleset.id, type: "rulesets", values: RULESET_FIELDS.write(progression) }]);
+
+    const partial = Engine.forRules(DND35_BASE_RULES).toFieldsWrite("rulesets", { skillPointAbilityId: intelligence });
+    expect(partial).toEqual({ fields: {}, links: { skillPointAbility: intelligence } });
+    await Fields.update(db, [{ id: ruleset.id, type: "rulesets", values: partial }]);
+    expect(RULESET_FIELDS.read(await findStoredValues("rulesets", ruleset.id))).toEqual({
+      ...CORE,
+      ...progression,
+      skillPointAbilityId: intelligence,
+    });
+  });
+
+  test("of every seeded ruleset rebuild its stored values", async () => {
     const rulesets = await db.select({ id: rulesetsInRules.id }).from(rulesetsInRules);
-    const rows = await Properties.findMany(db, { entityIds: rulesets.map(({ id }) => id), entityType: "rulesets" });
-    expect(rows.every((row) => RULESET_FIELDS.types.includes(row.type))).toBe(true);
-    expect(rows.length).toBeGreaterThan(0);
-    for (const stored of Map.groupBy(rows, (row) => row.entityId).values()) {
-      // A field the ruleset holds no row of reads as its default, which it doesn't store
-      const types = new Set(stored.map(({ type }) => type));
-      const read = RULESET_FIELDS.read(RULESET_FIELDS.storedOf(stored));
-      const rebuilt = RULESET_FIELDS.toProperties(read).filter(({ type }) => types.has(type));
-      expect(rebuilt).toEqual(stored.map(({ type, value }) => ({ type, value })));
+    const values = await Fields.findMany(db, { ownerIds: rulesets.map(({ id }) => id), ownerType: "rulesets" });
+    const held = [...values.values()].filter((stored) => listStoredValues(stored).length > 0);
+    expect(held.length).toBeGreaterThan(0);
+    for (const stored of held) {
+      // A field the ruleset holds no value of reads as its default, which it doesn't store
+      const { fields, links } = OwnerValues.written(RULESET_FIELDS.write(RULESET_FIELDS.read(stored)));
+      const rebuilt = {
+        fields: Object.fromEntries(Object.entries(fields).filter(([field]) => field in stored.fields)),
+        links: Object.fromEntries(Object.entries(links).filter(([role]) => role in stored.links)),
+      };
+      expect(listStoredValues(rebuilt)).toEqual(listStoredValues(stored));
     }
   });
 });

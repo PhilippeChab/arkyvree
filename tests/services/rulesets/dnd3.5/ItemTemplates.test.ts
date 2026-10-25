@@ -2,13 +2,14 @@ import { describe, expect, test } from "bun:test";
 
 import type { Item } from "@/engine/rulesets/dnd3.5/index.ts";
 import { db } from "@/server/database/index.ts";
-import { Activities, Entities, EntitySnapshots, Properties } from "@/server/repositories/index.ts";
+import { Activities, Entities, EntitySnapshots } from "@/server/repositories/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
 import { RulesetsService } from "@/server/services/rulesets/index.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
 import { createSeededTestRuleset, type Described, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
+import { findStoredValues, writeStoredValues } from "@/tests/support/storedValues.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 import { ITEM_MADE_OF, WEAPON_BASE_DAMAGE } from "@/vocabulary/dnd3.5/properties/index.ts";
 
@@ -96,16 +97,8 @@ describe("Item templates", () => {
     test("current fields, next to their own", async () => {
       const { ruleset, template, instance } = await setup();
       const sword = await instance("Longsword");
-      await Properties.createMany(db, [
-        { entityId: sword.id, entityType: "items", type: ITEM_MADE_OF, value: "Adamantine" },
-      ]);
-      const longsword = { entityId: (await template("Longsword")).id, entityType: "items" };
-      await Properties.delete(db, {
-        entityIds: [longsword.entityId],
-        entityType: "items",
-        types: [WEAPON_BASE_DAMAGE],
-      });
-      await Properties.createMany(db, [{ ...longsword, type: WEAPON_BASE_DAMAGE, value: "2d6" }]);
+      await writeStoredValues("items", sword.id, [[ITEM_MADE_OF, "Adamantine"]]);
+      await writeStoredValues("items", (await template("Longsword")).id, [[WEAPON_BASE_DAMAGE, "2d6"]]);
       invalidateSeededRuleset(ruleset.rulesetId!);
 
       expect(await EntitiesService.getEntity<Described<"items">>(ruleset.id, "items", sword.id)).toMatchObject({
@@ -127,7 +120,7 @@ describe("Item templates", () => {
     expect(items.find((item) => item.id === sword.id)?.templateName).toBe("Longsword");
   });
 
-  test("an item without a template has no properties or requirements of its own", async () => {
+  test("an item without a template has no stored values or requirements of its own", async () => {
     const { session, ruleset } = await setup();
     const item = await EntitiesService.createEntity(session, ruleset.id, "items", {
       name: "Custom Item",
@@ -136,7 +129,7 @@ describe("Item templates", () => {
     expect(await EntitiesService.getEntity<Described<"items">>(ruleset.id, "items", item.id)).toMatchObject({
       requirements: [],
     });
-    expect(await Properties.findMany(db, { entityIds: [item.id], entityType: "items" })).toEqual([]);
+    expect(await findStoredValues("items", item.id)).toEqual({ fields: {}, links: {} });
   });
 
   test("an instance can switch templates", async () => {

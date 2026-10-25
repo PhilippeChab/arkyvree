@@ -8,7 +8,7 @@ import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { fetchEveryPage } from "@/server/repositories/concerns/Paginates.ts";
-import { Entities, Joins, Modifiers, Properties, Requirements, Rulesets } from "@/server/repositories/index.ts";
+import { Entities, Joins, Modifiers, Requirements, Rulesets } from "@/server/repositories/index.ts";
 import { RulesetChangesService } from "@/server/services/rulesets/changes/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
@@ -20,6 +20,7 @@ import {
   createSeededTestRulesetWithExtensions,
   invalidateTestRulesets,
 } from "@/tests/support/rulesets.ts";
+import { writeStoredValues } from "@/tests/support/storedValues.ts";
 import { makeSession } from "@/tests/support/users.ts";
 import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/properties/index.ts";
 
@@ -214,7 +215,7 @@ test("a sibling winner takes, of equal rows, the first sibling's, and so does it
         ancestorRulesetIds: [baseId],
       });
       const owner = { entityId: featCopy.id, entityType: "feats" };
-      await Properties.createMany(db, [{ ...owner, type: FEAT_FAMILY, value: "shared" }]);
+      await writeStoredValues("feats", featCopy.id, [[FEAT_FAMILY, "shared"]]);
       if (index === 0) return;
       const [modifier] = await Modifiers.create(db, {
         sourceId: featCopy.id,
@@ -232,7 +233,10 @@ test("a sibling winner takes, of equal rows, the first sibling's, and so does it
         { ...owner, ...condition, level: "2.1", target: "abilities.dexterity.total", value: String(10 + index) },
         { ...owner, ...condition, level: "2.2", target: "abilities.constitution.total", value: String(10 + index) },
       ]);
-      await Properties.createMany(db, [{ ...owner, type: FEAT_FAMILY, value: "sibling" }]);
+      await writeStoredValues("feats", featCopy.id, [
+        [FEAT_FAMILY, "shared"],
+        [FEAT_FAMILY, "sibling"],
+      ]);
       const clericSpells = (await Entities.findOne<Aptitude>(db, {
         entityType: "aptitudes",
         rulesetId: baseId,

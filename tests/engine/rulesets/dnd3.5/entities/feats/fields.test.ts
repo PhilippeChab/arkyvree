@@ -32,21 +32,20 @@ describe("A feat's fields", () => {
     });
   });
 
-  test("are kept in a property per family, school and rule, which read back as the fields", () => {
+  test("are kept in a value per family, school and rule, which read back as the fields", () => {
     const fields = {
       families: ["Spell Focus"],
       oversizedTwoWeaponFighting: true,
       prohibitedSchools: ["Evocation", "Necromancy"],
       weaponFinesse: false,
     };
-    const rows = FEAT_FIELDS.toProperties(fields);
-    expect(rows.map((row) => [row.type, row.value])).toEqual([
-      [FEAT_FAMILY, "Spell Focus"],
-      [FEAT_OVERSIZED_TWO_WEAPON_FIGHTING, "true"],
-      [WIZARD_PROHIBITED_SCHOOL, "Evocation"],
-      [WIZARD_PROHIBITED_SCHOOL, "Necromancy"],
-    ]);
-    expect(FEAT_FIELDS.read(FEAT_FIELDS.storedOf(rows))).toEqual(fields);
-    expect(FEAT_FIELDS.toProperties(FEAT_FIELDS.defaults)).toEqual([]);
+    const written = OwnerValues.written(FEAT_FIELDS.write(fields));
+    expect(written.fields).toEqual({
+      [FEAT_FAMILY]: ["Spell Focus"],
+      [FEAT_OVERSIZED_TWO_WEAPON_FIGHTING]: [true],
+      [WIZARD_PROHIBITED_SCHOOL]: ["Evocation", "Necromancy"],
+    });
+    expect(FEAT_FIELDS.read(written)).toEqual(fields);
+    expect(OwnerValues.written(FEAT_FIELDS.write(FEAT_FIELDS.defaults))).toEqual(OwnerValues.NONE);
   });
 });

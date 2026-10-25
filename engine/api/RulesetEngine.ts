@@ -104,7 +104,7 @@ export default class RulesetEngine {
     };
     return Object.fromEntries(
       StorageEngine.shared()
-        .propertyTypes()
+        .fieldOwners()
         .toSorted()
         .map((type) => [type, fieldsOf(type)]),
     );
@@ -148,7 +148,7 @@ export default class RulesetEngine {
     return this.part(type, "owned", ownerId) as Extract<PartOf<EntityKinds[K], "owned">, OwnedEntities>;
   }
 
-  /** A save of the ruleset's Settings (`body.fields`): checked, the values it keeps, and the properties it writes. */
+  /** A save of the ruleset's Settings (`body.fields`): checked, the values it keeps, and the stored values it writes. */
   planSettings(body: { fields?: EntityFieldValues }) {
     return this.module.ruleset.planSettings(this.view, body);
   }
