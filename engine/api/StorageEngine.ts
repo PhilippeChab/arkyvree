@@ -63,6 +63,13 @@ function mergeRecords<T>(modules: [BaseRules, RulesetModule][], pick: (module: R
   return merged;
 }
 
+/** A stored value's text, a number's written out whatever its size (never in exponent form), as `roundDecimal` reads it. */
+function numberText(value: unknown): string {
+  return typeof value === "number"
+    ? value.toLocaleString("en-US", { maximumFractionDigits: 20, useGrouping: false })
+    : String(value);
+}
+
 /**
  * A number's text rounded to `scale` places, half away from zero, as Postgres's `round(numeric, scale)` writes it: its
  * places always shown (`5` to 2 places is `5.00`).
@@ -77,6 +84,14 @@ function roundDecimal(given: string, scale: number): string {
   const digits = units.toString().padStart(scale + 1, "0");
   const rounded = scale === 0 ? digits : `${digits.slice(0, -scale)}.${digits.slice(-scale)}`;
   return negative && units !== 0n ? `-${rounded}` : rounded;
+}
+
+/** A value a number column is written with, refused when it's no number (a blank text, a word, a flag), as the column is. */
+function toNumber(value: unknown): number {
+  const number =
+    typeof value === "number" || (typeof value === "string" && value.trim() !== "") ? Number(value) : Number.NaN;
+  if (!Number.isFinite(number)) throw new Error(`Not a number: ${String(value)}`);
+  return number;
 }
 
 /**
@@ -185,9 +200,11 @@ export default class StorageEngine {
       default: {
         const value = entity.fields.find((field) => field.field === column.field && field.ordinal === 0)?.value;
         if (value === undefined) return null;
-        if (column.kind === "flag") return value === "true";
+        if (column.kind === "flag") return value === true;
         if (column.kind === "text") return value;
-        return "integer" in column ? Number(roundDecimal(value, 0)) : roundDecimal(value, column.scale);
+        return "integer" in column
+          ? Number(roundDecimal(numberText(value), 0))
+          : roundDecimal(numberText(value), column.scale);
       }
     }
   }
@@ -300,7 +317,7 @@ export default class StorageEngine {
         continue;
       }
       const value = fields.find((field) => field.field === column.field)?.value ?? null;
-      row[name] = value !== null && column.kind === "number" ? Number(roundDecimal(value, 0)) : value;
+      row[name] = value !== null && column.kind === "number" ? Number(roundDecimal(numberText(value), 0)) : value;
     }
     return order ? Object.fromEntries(order.map((name) => [name, row[name]])) : row;
   }
@@ -317,13 +334,14 @@ export default class StorageEngine {
       const value = values[name];
       // A value left undefined is left as it is, as an update leaves a column it's given undefined
       if (value === undefined) continue;
-      const text = value === null ? null : String(value);
       if (column.kind !== "link") {
-        write.fields.push({ field: column.field, kind: column.kind, value: text });
+        const held = value === null ? null : column.kind === "number" ? toNumber(value) : String(value);
+        write.fields.push({ field: column.field, kind: column.kind, value: held });
         continue;
       }
       const role = this.characterRole(column.role);
-      write.links.push({ role: column.role, single: role.single, entityType: role.entityType, toId: text });
+      const toId = value === null ? null : String(value);
+      write.links.push({ role: column.role, single: role.single, entityType: role.entityType, toId });
     }
     return write;
   }
@@ -619,7 +637,9 @@ export default class StorageEngine {
     ];
     for (const { fields, id: entityId, links, ownerType: entityType } of owned) {
       const own = fields.filter((field) => entityType === "rulesets" || !columnFields.has(field.field));
-      rows.push(...own.map((field) => ({ ...field, entityId, entityType, type: field.field })));
+      rows.push(
+        ...own.map((field) => ({ ...field, entityId, entityType, type: field.field, value: String(field.value) })),
+      );
       for (const [type, role] of this.linkedProperties(entityType)) {
         const linked = links.filter((link: { role: string }) => link.role === role);
         rows.push(...linked.map((link) => ({ ...link, entityId, entityType, ordinal: 0, type, value: link.toId })));
@@ -777,7 +797,7 @@ export default class StorageEngine {
 
   /**
    * What a write of a kind's row stores (`values`: its columns by name): the entity's own columns it gives, and the
-   * fields and single links of each column it gives, as text (a decimal rounded to its scale), or null to clear it.
+   * fields and single links of each column it gives, typed (a decimal rounded to its scale), or null to clear it.
    * `creating`: a new row's, whose every column is written, one it leaves out its default (its partition's too).
    */
   writeOf(type: string, values: Row, creating: boolean): StoredWrite {
@@ -802,15 +822,15 @@ export default class StorageEngine {
           });
         } else {
           const held = value ?? ("default" in column ? column.default : undefined) ?? null;
-          const text =
+          const typed =
             held === null
               ? null
               : column.kind === "flag"
-                ? String(Boolean(held))
-                : column.kind === "number" && "scale" in column
-                  ? roundDecimal(String(held), column.scale)
+                ? Boolean(held)
+                : column.kind === "number"
+                  ? toNumber("scale" in column ? roundDecimal(numberText(held), column.scale) : held)
                   : String(held);
-          write.fields.push({ field: column.field, kind: column.kind, value: text });
+          write.fields.push({ field: column.field, kind: column.kind, value: typed });
         }
       }
     }

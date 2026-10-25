@@ -12,13 +12,13 @@ import { toQualified } from "./toQualified.ts";
  * (`buildColumns`) and mapped to its module's row by the engine (`mapRows`), and written as the engine splits a row.
  */
 export default class StoredCharacters {
-  /** The columns a character's read selects: its own, its fields' values as text and its single links' entities. */
+  /** The columns a character's read selects: its own, its fields' values (typed) and its single links' entities. */
   static buildColumns() {
     const id = toQualified(charactersInCharacter.id);
     return {
       ...getTableColumns(charactersInCharacter),
       fields: sql<StoredCharacterRow["fields"]>`(
-        SELECT coalesce(json_agg(json_build_object('field', ${fieldsInCharacter.field}, 'value', coalesce(${fieldsInCharacter.textValue}, ${fieldsInCharacter.numberValue}::text))), '[]')
+        SELECT coalesce(json_agg(json_build_object('field', ${fieldsInCharacter.field}, 'value', coalesce(to_json(${fieldsInCharacter.textValue}), to_json(${fieldsInCharacter.numberValue})))), '[]')
         FROM ${fieldsInCharacter} WHERE ${fieldsInCharacter.characterId} = ${id} AND ${fieldsInCharacter.ordinal} = 0)`,
       links: sql<StoredCharacterRow["links"]>`(
         SELECT coalesce(json_agg(json_build_object('role', ${linksInCharacter.role}, 'toId', ${linksInCharacter.entityId})), '[]')
@@ -68,8 +68,8 @@ export default class StoredCharacters {
           field: field.field,
           valueKind: field.kind,
           multiple: false,
-          textValue: field.kind === "text" ? field.value : null,
-          numberValue: field.kind === "number" ? field.value : null,
+          textValue: field.kind === "text" ? String(field.value) : null,
+          numberValue: field.kind === "number" ? String(field.value) : null,
         })),
       );
     }

@@ -26,6 +26,7 @@ export type {
   EntityRemoval,
   EntityWrites,
   FieldsRequest,
+  FieldValue,
   JoinRows,
   LevelPlanRequest,
   LevelRows,

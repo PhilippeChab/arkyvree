@@ -63,6 +63,9 @@ export interface EntityListWhere {
 /** A row of an entity, any kind's, as its module's declaration reads it off the stored entity. */
 export type EntityRow = Record<string, unknown> & { id: string };
 
+/** A field's value as JSON, typed by the column that holds it: a text, a number or a flag. */
+const FIELD_JSON = sql`coalesce(to_json(${entityFieldsInRules.textValue}), to_json(${entityFieldsInRules.numberValue}), to_json(${entityFieldsInRules.flagValue}))`;
+
 /** A field's text, whichever column holds it: a number's as it was written, a flag's `true` or `false`. */
 const FIELD_TEXT = sql<string>`coalesce(${entityFieldsInRules.textValue}, ${entityFieldsInRules.numberValue}::text, ${entityFieldsInRules.flagValue}::text)`;
 
@@ -234,7 +237,7 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
         ...OWN_COLUMNS,
         // An entity's fields and links in the query that reads it, their timestamps as Postgres's text
         fields: sql<StoredEntity["fields"]>`(
-          SELECT coalesce(json_agg(json_build_object('field', ${fields.field}, 'ordinal', ${fields.ordinal}, 'value', ${FIELD_TEXT}, 'createdAt', ${fields.createdAt}::text, 'updatedAt', ${fields.updatedAt}::text)), '[]')
+          SELECT coalesce(json_agg(json_build_object('field', ${fields.field}, 'ordinal', ${fields.ordinal}, 'value', ${FIELD_JSON}, 'createdAt', ${fields.createdAt}::text, 'updatedAt', ${fields.updatedAt}::text)), '[]')
           FROM ${fields} WHERE ${fields.entityId} = ${id}${whole ? sql`` : sql` AND ${fields.ordinal} = 0 AND ${inArray(fields.field, reads.fields)}`})`,
         links: sql<StoredEntity["links"]>`(
           SELECT coalesce(json_agg(json_build_object('id', ${links.id}, 'role', ${links.role}, 'toId', ${links.toId}, 'toType', ${links.toType}, 'viaId', ${links.viaId}, 'tier', ${links.tier}, 'amount', ${links.amount}, 'free', ${links.free}, 'ordinal', ${links.ordinal}, 'createdAt', ${links.createdAt}::text, 'updatedAt', ${links.updatedAt}::text)), '[]')
@@ -311,9 +314,9 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
             field,
             multiple: false,
             valueKind: kind,
-            textValue: kind === "text" ? value : null,
-            numberValue: kind === "number" ? value : null,
-            flagValue: kind === "flag" ? value === "true" : null,
+            textValue: kind === "text" ? String(value) : null,
+            numberValue: kind === "number" ? String(value) : null,
+            flagValue: kind === "flag" ? value === true : null,
           });
         }
       }
