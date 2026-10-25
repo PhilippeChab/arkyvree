@@ -188,6 +188,9 @@ export const charactersInCharacter = character.table(
     uniqueIndex("characters_share_token_unique_idx")
       .using("btree", table.shareToken.asc().nullsLast())
       .where(sql`(share_token IS NOT NULL)`),
+    uniqueIndex("characters_one_live_child_per_kind_idx")
+      .using("btree", table.parentCharacterId.asc().nullsLast(), table.kind.asc().nullsLast())
+      .where(sql`((deleted_at IS NULL) AND (parent_character_id IS NOT NULL))`),
     check("characters_no_self_parent_check", sql`id <> parent_character_id`),
   ],
 );

@@ -1,7 +1,8 @@
 /**
- * The 3.5 bounds the per-kind tables' checks, unique indexes and NOT NULLs held, which migration 0080's generic tables
- * can't know: each refused on every path a user writes it through (a service, or the route that validates it), now that
- * the 3.5 module and the services hold them.
+ * The bounds 3.5 holds what a user writes to (a class's hit die, a level's hit points, an ability score…), which the
+ * generic tables can't know: each refused on every path a user writes it through (a service, or the route that
+ * validates it), as the 3.5 module and the services hold them. And what the database still holds of a character: one
+ * live child of a kind under a parent.
  */
 
 import { afterAll, describe, expect, test } from "bun:test";
@@ -466,6 +467,25 @@ describe("a character's bonded creatures", () => {
     expect(await Characters.findMany(db, { parentCharacterId: master.id })).toMatchObject([
       { id: familiar.id, kind: "familiar" },
     ]);
+  });
+
+  test("a master keeps one live creature of a kind, which the database refuses a second of, an archived one aside", async () => {
+    const master = await findSeededCharacter("Vex Flamecaller");
+    const [familiar] = await Characters.findMany(db, { parentCharacterId: master.id });
+    const second = {
+      userId: master.userId,
+      rulesetId: master.rulesetId,
+      kind: "familiar",
+      parentCharacterId: master.id,
+    };
+    // In a savepoint, which the refusal rolls back alone
+    const refused = await db
+      .transaction((tx) => Characters.create(tx, { ...second, name: "Second Familiar" }))
+      .catch((error: unknown) => error);
+    expect(refused).toMatchObject({ cause: { code: "23505", constraint: "characters_one_live_child_per_kind_idx" } });
+    await Characters.update(db, { deletedAt: new Date().toISOString() }, { id: familiar.id });
+    const [made] = await Characters.create(db, { ...second, name: "New Familiar" });
+    expect(made).toMatchObject({ kind: "familiar", parentCharacterId: master.id });
   });
 });
 
